@@ -21,6 +21,21 @@ describe provider_class do
     provider
   end
 
+  let(:arch) { 'x86_64' }
+  let(:arch_resource) do
+    Puppet::Type.type(:package).new(
+      :name     => "#{name}.#{arch}",
+      :ensure   => :installed,
+      :provider => 'yum'
+    )
+  end
+
+  let(:arch_provider) do
+    provider = provider_class.new
+    provider.resource = arch_resource
+    provider
+  end
+
   before do
     provider_class.stubs(:command).with(:cmd).returns('/usr/bin/yum')
     provider.stubs(:rpm).returns 'rpm'
@@ -40,140 +55,6 @@ describe provider_class do
      it "should have a(n) #{method}" do
        expect(provider).to respond_to(method)
     end
-  end
-
-  describe 'package evr parsing' do
-
-    it 'should parse full simple evr' do
-      v = provider.yum_parse_evr('0:1.2.3-4.el5')
-      expect(v[:epoch]).to eq('0')
-      expect(v[:version]).to eq('1.2.3')
-      expect(v[:release]).to eq('4.el5')
-    end
-
-    it 'should parse version only' do
-      v = provider.yum_parse_evr('1.2.3')
-      expect(v[:epoch]).to eq('0')
-      expect(v[:version]).to eq('1.2.3')
-      expect(v[:release]).to eq(nil)
-    end
-
-    it 'should parse version-release' do
-      v = provider.yum_parse_evr('1.2.3-4.5.el6')
-      expect(v[:epoch]).to eq('0')
-      expect(v[:version]).to eq('1.2.3')
-      expect(v[:release]).to eq('4.5.el6')
-    end
-
-    it 'should parse release with git hash' do
-      v = provider.yum_parse_evr('1.2.3-4.1234aefd')
-      expect(v[:epoch]).to eq('0')
-      expect(v[:version]).to eq('1.2.3')
-      expect(v[:release]).to eq('4.1234aefd')
-    end
-
-    it 'should parse single integer versions' do
-      v = provider.yum_parse_evr('12345')
-      expect(v[:epoch]).to eq('0')
-      expect(v[:version]).to eq('12345')
-      expect(v[:release]).to eq(nil)
-    end
-
-    it 'should parse text in the epoch to 0' do
-      v = provider.yum_parse_evr('foo0:1.2.3-4')
-      expect(v[:epoch]).to eq('0')
-      expect(v[:version]).to eq('1.2.3')
-      expect(v[:release]).to eq('4')
-    end
-
-    it 'should parse revisions with text' do
-      v = provider.yum_parse_evr('1.2.3-SNAPSHOT20140107')
-      expect(v[:epoch]).to eq('0')
-      expect(v[:version]).to eq('1.2.3')
-      expect(v[:release]).to eq('SNAPSHOT20140107')
-    end
-
-    # test cases for PUP-682
-    it 'should parse revisions with text and numbers' do
-      v = provider.yum_parse_evr('2.2-SNAPSHOT20121119105647')
-      expect(v[:epoch]).to eq('0')
-      expect(v[:version]).to eq('2.2')
-      expect(v[:release]).to eq('SNAPSHOT20121119105647')
-    end
-
-  end
-
-  describe 'yum evr comparison' do
-
-    # currently passing tests
-    it 'should evaluate identical version-release as equal' do
-      v = provider.yum_compareEVR({:epoch => '0', :version => '1.2.3', :release => '1.el5'},
-                                  {:epoch => '0', :version => '1.2.3', :release => '1.el5'})
-      expect(v).to eq(0)
-    end
-
-    it 'should evaluate identical version as equal' do
-      v = provider.yum_compareEVR({:epoch => '0', :version => '1.2.3', :release => nil},
-                                  {:epoch => '0', :version => '1.2.3', :release => nil})
-      expect(v).to eq(0)
-    end
-
-    it 'should evaluate identical version but older release as less' do
-      v = provider.yum_compareEVR({:epoch => '0', :version => '1.2.3', :release => '1.el5'},
-                                  {:epoch => '0', :version => '1.2.3', :release => '2.el5'})
-      expect(v).to eq(-1)
-    end
-
-    it 'should evaluate identical version but newer release as greater' do
-      v = provider.yum_compareEVR({:epoch => '0', :version => '1.2.3', :release => '3.el5'},
-                                  {:epoch => '0', :version => '1.2.3', :release => '2.el5'})
-      expect(v).to eq(1)
-    end
-
-    it 'should evaluate a newer epoch as greater' do
-      v = provider.yum_compareEVR({:epoch => '1', :version => '1.2.3', :release => '4.5'},
-                                  {:epoch => '0', :version => '1.2.3', :release => '4.5'})
-      expect(v).to eq(1)
-    end
-
-    # these tests describe PUP-1244 logic yet to be implemented
-    it 'should evaluate any version as equal to the same version followed by release' do
-      v = provider.yum_compareEVR({:epoch => '0', :version => '1.2.3', :release => nil},
-                                  {:epoch => '0', :version => '1.2.3', :release => '2.el5'})
-      expect(v).to eq(0)
-    end
-
-    # test cases for PUP-682
-    it 'should evaluate same-length numeric revisions numerically' do
-      expect(provider.yum_compareEVR({:epoch => '0', :version => '2.2', :release => '405'},
-                               {:epoch => '0', :version => '2.2', :release => '406'})).to eq(-1)
-    end
-
-  end
-
-  describe 'yum version segment comparison' do
-
-    it 'should treat two nil values as equal' do
-      v = provider.compare_values(nil, nil)
-      expect(v).to eq(0)
-    end
-
-    it 'should treat a nil value as less than a non-nil value' do
-      v = provider.compare_values(nil, '0')
-      expect(v).to eq(-1)
-    end
-
-    it 'should treat a non-nil value as greater than a nil value' do
-      v = provider.compare_values('0', nil)
-      expect(v).to eq(1)
-    end
-
-    it 'should pass two non-nil values on to rpmvercmp' do
-      provider.stubs(:rpmvercmp) { 0 }
-      provider.expects(:rpmvercmp).with('s1', 's2')
-      provider.compare_values('s1', 's2')
-    end
-
   end
 
   describe 'when installing' do
@@ -248,6 +129,14 @@ describe provider_class do
       Puppet::Util::Execution.expects(:execute).with(['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :list, name]).never
       Puppet::Util::Execution.expects(:execute).with(['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, name])
       provider.install
+    end
+
+    it 'moves architecture to end of version' do
+      version = '1.2.3'
+      arch_resource[:ensure] = version
+      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, "#{name}-#{version}.#{arch}"])
+      arch_provider.stubs(:query).returns :ensure => version
+      arch_provider.install
     end
   end
 

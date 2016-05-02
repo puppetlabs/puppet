@@ -12,6 +12,7 @@ describe provider_class do
     chkconfig 0 1.3.30.2 2.el5 x86_64
     myresource 0 1.2.3.4 5.el4 noarch
     mysummaryless 0 1.2.3.4 5.el4 noarch
+    tomcat 1 1.2.3.4 5.el4 x86_64
     RPM_OUTPUT
   end
 
@@ -116,7 +117,18 @@ describe provider_class do
           :ensure => "1.3.30.2-2.el5",
         }
       )
-      expect(installed_packages.last.properties).to eq(
+      expect(installed_packages[3].properties).to eq(
+        {
+          :provider => :rpm,
+          :name => "myresource",
+          :epoch => "0",
+          :version => "1.2.3.4",
+          :release => "5.el4",
+          :arch => "noarch",
+          :ensure => "1.2.3.4-5.el4",
+        }
+      )
+      expect(installed_packages[4].properties).to eq(
         {
           :provider    => :rpm,
           :name        => "mysummaryless",
@@ -125,6 +137,17 @@ describe provider_class do
           :release     => "5.el4",
           :arch        => "noarch",
           :ensure      => "1.2.3.4-5.el4",
+        }
+      )
+      expect(installed_packages[5].properties).to eq(
+        {
+          :provider    => :rpm,
+          :name        => "tomcat",
+          :epoch       => "1",
+          :version     => "1.2.3.4",
+          :release     => "5.el4",
+          :arch        => "x86_64",
+          :ensure      => "1:1.2.3.4-5.el4",
         }
       )
     end
@@ -257,7 +280,7 @@ describe provider_class do
         :release => 'release',
         :arch => 'arch',
         :provider => :rpm,
-        :ensure => 'version-release',
+        :ensure => 'epoch:version-release',
       }
     end
     let(:line) { 'name epoch version release arch' }
@@ -269,7 +292,7 @@ describe provider_class do
           line.gsub(field, delimiter),
           package_hash.merge(
             field.to_sym => delimiter,
-            :ensure => 'version-release'.gsub(field, delimiter)
+            :ensure => 'epoch:version-release'.gsub(field, delimiter)
           )
         )
       end
@@ -479,6 +502,140 @@ describe provider_class do
     # non-upstream test cases
     it { expect(provider.rpmvercmp("405", "406")).to eq(-1) }
     it { expect(provider.rpmvercmp("1", "0")).to eq(1) }
+  end
+
+  describe 'package evr parsing' do
+
+    it 'should parse full simple evr' do
+      v = provider.rpm_parse_evr('0:1.2.3-4.el5')
+      expect(v[:epoch]).to eq('0')
+      expect(v[:version]).to eq('1.2.3')
+      expect(v[:release]).to eq('4.el5')
+    end
+
+    it 'should parse version only' do
+      v = provider.rpm_parse_evr('1.2.3')
+      expect(v[:epoch]).to eq(nil)
+      expect(v[:version]).to eq('1.2.3')
+      expect(v[:release]).to eq(nil)
+    end
+
+    it 'should parse version-release' do
+      v = provider.rpm_parse_evr('1.2.3-4.5.el6')
+      expect(v[:epoch]).to eq(nil)
+      expect(v[:version]).to eq('1.2.3')
+      expect(v[:release]).to eq('4.5.el6')
+    end
+
+    it 'should parse release with git hash' do
+      v = provider.rpm_parse_evr('1.2.3-4.1234aefd')
+      expect(v[:epoch]).to eq(nil)
+      expect(v[:version]).to eq('1.2.3')
+      expect(v[:release]).to eq('4.1234aefd')
+    end
+
+    it 'should parse single integer versions' do
+      v = provider.rpm_parse_evr('12345')
+      expect(v[:epoch]).to eq(nil)
+      expect(v[:version]).to eq('12345')
+      expect(v[:release]).to eq(nil)
+    end
+
+    it 'should parse text in the epoch to 0' do
+      v = provider.rpm_parse_evr('foo0:1.2.3-4')
+      expect(v[:epoch]).to eq(nil)
+      expect(v[:version]).to eq('1.2.3')
+      expect(v[:release]).to eq('4')
+    end
+
+    it 'should parse revisions with text' do
+      v = provider.rpm_parse_evr('1.2.3-SNAPSHOT20140107')
+      expect(v[:epoch]).to eq(nil)
+      expect(v[:version]).to eq('1.2.3')
+      expect(v[:release]).to eq('SNAPSHOT20140107')
+    end
+
+    # test cases for PUP-682
+    it 'should parse revisions with text and numbers' do
+      v = provider.rpm_parse_evr('2.2-SNAPSHOT20121119105647')
+      expect(v[:epoch]).to eq(nil)
+      expect(v[:version]).to eq('2.2')
+      expect(v[:release]).to eq('SNAPSHOT20121119105647')
+    end
+
+  end
+
+  describe 'rpm evr comparison' do
+
+    # currently passing tests
+    it 'should evaluate identical version-release as equal' do
+      v = provider.rpm_compareEVR({:epoch => '0', :version => '1.2.3', :release => '1.el5'},
+                                  {:epoch => '0', :version => '1.2.3', :release => '1.el5'})
+      expect(v).to eq(0)
+    end
+
+    it 'should evaluate identical version as equal' do
+      v = provider.rpm_compareEVR({:epoch => '0', :version => '1.2.3', :release => nil},
+                                  {:epoch => '0', :version => '1.2.3', :release => nil})
+      expect(v).to eq(0)
+    end
+
+    it 'should evaluate identical version but older release as less' do
+      v = provider.rpm_compareEVR({:epoch => '0', :version => '1.2.3', :release => '1.el5'},
+                                  {:epoch => '0', :version => '1.2.3', :release => '2.el5'})
+      expect(v).to eq(-1)
+    end
+
+    it 'should evaluate identical version but newer release as greater' do
+      v = provider.rpm_compareEVR({:epoch => '0', :version => '1.2.3', :release => '3.el5'},
+                                  {:epoch => '0', :version => '1.2.3', :release => '2.el5'})
+      expect(v).to eq(1)
+    end
+
+    it 'should evaluate a newer epoch as greater' do
+      v = provider.rpm_compareEVR({:epoch => '1', :version => '1.2.3', :release => '4.5'},
+                                  {:epoch => '0', :version => '1.2.3', :release => '4.5'})
+      expect(v).to eq(1)
+    end
+
+    # these tests describe PUP-1244 logic yet to be implemented
+    it 'should evaluate any version as equal to the same version followed by release' do
+      v = provider.rpm_compareEVR({:epoch => '0', :version => '1.2.3', :release => nil},
+                                  {:epoch => '0', :version => '1.2.3', :release => '2.el5'})
+      expect(v).to eq(0)
+    end
+
+    # test cases for PUP-682
+    it 'should evaluate same-length numeric revisions numerically' do
+      expect(provider.rpm_compareEVR({:epoch => '0', :version => '2.2', :release => '405'},
+                               {:epoch => '0', :version => '2.2', :release => '406'})).to eq(-1)
+    end
+
+  end
+
+  describe 'version segment comparison' do
+
+    it 'should treat two nil values as equal' do
+      v = provider.compare_values(nil, nil)
+      expect(v).to eq(0)
+    end
+
+    it 'should treat a nil value as less than a non-nil value' do
+      v = provider.compare_values(nil, '0')
+      expect(v).to eq(-1)
+    end
+
+    it 'should treat a non-nil value as greater than a nil value' do
+      v = provider.compare_values('0', nil)
+      expect(v).to eq(1)
+    end
+
+    it 'should pass two non-nil values on to rpmvercmp' do
+      provider.stubs(:rpmvercmp) { 0 }
+      provider.expects(:rpmvercmp).with('s1', 's2')
+      provider.compare_values('s1', 's2')
+    end
+
   end
 
 end
