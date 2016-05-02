@@ -82,7 +82,12 @@ class PSemVerRangeType < PScalarType
   def self.new_function(_, loader)
     range_expr = "\\A#{range_pattern}\\Z"
     @@new_function ||= Puppet::Functions.create_loaded_function(:new_VersionRange, loader) do
-      # Constructs a regexp pattern that matches a VersionRange as specified by
+      local_types do
+        type 'SemVerRangeString = String[1]'
+        type 'SemVerRangeHash = Struct[{min=>Variant[default,SemVer],Optional[max]=>Variant[default,SemVer],Optional[exclude_max]=>Boolean}]'
+      end
+
+      # Constructs a VersionRange from a String with a format specified by
       #
       # https://github.com/npm/node-semver#range-grammar
       #
@@ -96,19 +101,23 @@ class PSemVerRangeType < PScalarType
       # parameter containing the '||' operator.
       #
       dispatch :from_string do
-        param "Pattern[/#{range_expr}/]", :str
+        param 'SemVerRangeString', :str
       end
 
+      # Constructs a VersionRange from a min, and a max version. The Boolean argument denotes
+      # whether or not the max version is excluded or included in the range. It is included by
+      # default.
+      #
       dispatch :from_versions do
         param 'Variant[default,SemVer]', :min
         param 'Variant[default,SemVer]', :max
         optional_param 'Boolean', :exclude_max
       end
 
+      # Same as #from_versions but each argument is instead given in a Hash
+      #
       dispatch :from_hash do
-        param(
-          'Struct[{min=>Variant[default,SemVer],Optional[max]=>Variant[default,SemVer],Optional[exclude_max]=>Boolean}]',
-          :hash_args)
+        param 'SemVerRangeHash', :hash_args
       end
 
       def from_string(str)

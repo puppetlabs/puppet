@@ -27,43 +27,35 @@ class PSemVerType < PScalarType
   end
 
   # @api private
-  def self.parts_pattern
-    part = "(?<part>[0-9A-Za-z-]+)"
-    "(?<parts>#{part}(?:\\.\\g<part>)*)"
-  end
-
-  # @api private
-  def self.version_pattern
-    nr = '(?<nr>0|[1-9][0-9]*)'
-    "#{nr}\\.\\g<nr>\\.\\g<nr>(?:-#{parts_pattern})?(?:\\+\\g<parts>)?"
-  end
-
-  # @api private
   def self.new_function(_, loader)
-    version_expr = "\\A#{version_pattern}\\Z"
-    parts_expr = "\\A#{parts_pattern}\\Z"
     @@new_function ||= Puppet::Functions.create_loaded_function(:new_Version, loader) do
       local_types do
-        type 'Unsigned = Integer[0,default]'
-        type "Qualifier = Pattern[/#{parts_expr}/]"
+        type 'PositiveInteger = Integer[0,default]'
+        type 'SemVerQualifier = Pattern[/\A(?<part>[0-9A-Za-z-]+)(?:\.\g<part>)*\Z/]'
+        type 'SemVerString = String[1]'
+        type 'SemVerHash = Struct[{major=>PositiveInteger,minor=>PositiveInteger,patch=>PositiveInteger,Optional[prerelease]=>SemVerQualifier,Optional[build]=>SemVerQualifier}]'
       end
 
+      # Creates a SemVer from a string as specified by http://semver.org/
+      #
       dispatch :from_string do
-        param "Pattern[/#{version_expr}/]", :str
+        param 'SemVerString', :str
       end
 
+      # Creates a SemVer from integers, prerelease, and build arguments
+      #
       dispatch :from_args do
-        param 'Unsigned', :major
-        param 'Unsigned', :minor
-        param 'Unsigned', :patch
-        optional_param 'Qualifier', :prerelease
-        optional_param 'Qualifier', :build
+        param 'PositiveInteger', :major
+        param 'PositiveInteger', :minor
+        param 'PositiveInteger', :patch
+        optional_param 'SemVerQualifier', :prerelease
+        optional_param 'SemVerQualifier', :build
       end
 
+      # Same as #from_args but each argument is instead given in a Hash
+      #
       dispatch :from_hash do
-        param(
-          'Struct[{major=>Unsigned,minor=>Unsigned,patch=>Unsigned,Optional[prerelease]=>Qualifier,Optional[build]=>Qualifier}]',
-          :hash_args)
+        param 'SemVerHash', :hash_args
       end
 
       def from_string(str)
