@@ -43,8 +43,12 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
 
   # Provide appropriate headers.
   def headers
+    # yaml is not allowed on the network
+    network_formats = model.supported_formats.reject do |format|
+      [:yaml, :b64_zlib_yaml].include?(format)
+    end
     common_headers = {
-      "Accept"                                     => model.supported_formats.join(", "),
+      "Accept"                                     => network_formats.join(", "),
       Puppet::Network::HTTP::HEADER_PUPPET_VERSION => Puppet.version
     }
 

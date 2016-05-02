@@ -190,6 +190,18 @@ describe Puppet::Indirector::REST do
     expect(Puppet::Indirector::REST.srv_service).to eq(:puppet)
   end
 
+  it 'excludes yaml from the Accept header' do
+    model.expects(:supported_formats).returns([:pson, :yaml, :binary])
+
+    expect(terminus.headers['Accept']).to eq('pson, binary')
+  end
+
+  it 'excludes b64_zlib_yaml from the Accept header' do
+    model.expects(:supported_formats).returns([:pson, :b64_zlib_yaml])
+
+    expect(terminus.headers['Accept']).to eq('pson')
+  end
+
   describe "when creating an HTTP client" do
     it "should use the class's server and port if the indirection request provides neither" do
       @request = stub 'request', :key => "foo", :server => nil, :port => nil
