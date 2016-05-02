@@ -73,8 +73,20 @@ describe 'The type factory' do
       expect(TypeFactory.undef().class()).to eq(PUndefType)
     end
 
-    it 'undef() returns PUndefType' do
+    it 'type_alias() returns PTypeAliasType' do
       expect(TypeFactory.type_alias().class()).to eq(PTypeAliasType)
+    end
+
+    it 'sem_ver() returns PSemVerType' do
+      expect(TypeFactory.sem_ver.class).to eq(PSemVerType)
+    end
+
+    it 'sem_ver(r1, r2) returns constrained PSemVerType' do
+      expect(TypeFactory.sem_ver('1.x', '3.x').ranges).to include(Semantic::VersionRange.parse('1.x'), Semantic::VersionRange.parse('3.x'))
+    end
+
+    it 'sem_ver_range() returns PSemVerRangeType' do
+      expect(TypeFactory.sem_ver_range.class).to eq(PSemVerRangeType)
     end
 
     it 'default() returns PDefaultType' do

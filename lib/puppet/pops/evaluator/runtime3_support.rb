@@ -82,7 +82,7 @@ module Runtime3Support
       # Must convert :undef back to nil - this can happen when an undefined variable is used in a
       # parameter's default value expression - there nil must be :undef to work with the rest of 3x.
       # Now that the value comes back to 4x it is changed to nil.
-      return (x == :undef) ? nil : x
+      return :undef == x ? nil : x
     }
     # It is always ok to reference numeric variables even if they are not assigned. They are always undef
     # if not set by a match expression.
@@ -505,7 +505,7 @@ module Runtime3Support
       elsif Puppet[:strict] == :off
         p[Issues::UNKNOWN_VARIABLE] = :ignore
       else
-        Puppet[:strict_variables] 
+        Puppet[:strict_variables]
         p[Issues::UNKNOWN_VARIABLE] = Puppet[:strict]
       end
 
@@ -520,7 +520,7 @@ module Runtime3Support
     def accept(diagnostic)
       super
       IssueReporter.assert_and_report(self, {
-        :message => "Evaluation Error:", 
+        :message => "Evaluation Error:",
         :emit_warnings => true,  # log warnings
         :exception_class => Puppet::PreformattedError
       })

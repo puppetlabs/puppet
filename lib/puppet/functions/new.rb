@@ -410,13 +410,6 @@ Puppet::Functions.create_function(:new, Puppet::Functions::InternalFunction) do
   end
 
   def assert_type(type, value)
-    unless Puppet::Pops::Types::TypeCalculator.instance?(type,value)
-      inferred_type = Puppet::Pops::Types::TypeCalculator.infer_set(value)
-      raise Puppet::Pops::Types::TypeAssertionError.new(
-        Puppet::Pops::Types::TypeMismatchDescriber.singleton.describe_mismatch('new():', type, inferred_type),
-        type, inferred_type)
-    end
-    value
+    Puppet::Pops::Types::TypeAsserter.assert_instance_of('new():', type, value)
   end
-
 end

@@ -100,6 +100,18 @@ class Runtime3Converter
   end
   alias :convert2_Regexp :convert_Regexp
 
+  def convert_SemVer(o, scope, undef_value)
+    # Puppet 3x cannot handle SemVers. Use the string form
+    o.to_s
+  end
+  alias :convert2_SemVer :convert_SemVer
+
+  def convert_SemVerRange(o, scope, undef_value)
+    # Puppet 3x cannot handle SemVerRanges. Use the string form
+    o.to_s
+  end
+  alias :convert2_SemVerRange :convert_SemVerRange
+
   def convert_Symbol(o, scope, undef_value)
     case o
       # Support :undef since it may come from a 3x structure

@@ -21,7 +21,6 @@ class CompareOperator
     @@compare_visitor ||= Visitor.new(self, "cmp", 1, 1)
     @@match_visitor ||= Visitor.new(self, "match", 2, 2)
     @@include_visitor ||= Visitor.new(self, "include", 2, 2)
-    @type_calculator = Types::TypeCalculator.new()
   end
 
   def equals (a, b)
@@ -93,8 +92,13 @@ class CompareOperator
     end
   end
 
+  def cmp_Version(a, b)
+    raise ArgumentError.new('Versions not comparable to non Versions') unless b.is_a?(Semantic::Version)
+    a <=> b
+  end
+
   def cmp_Object(a, b)
-    raise ArgumentError.new("Only Strings and Numbers are comparable")
+    raise ArgumentError.new('Only Strings, Numbers, and Versions are comparable')
   end
 
 
@@ -145,8 +149,10 @@ class CompareOperator
       # Always set match data, a "not found" should not keep old match data visible
       set_match_data(matched, scope) # creates ephemeral
       return !!matched
+    when String, Semantic::Version
+      a.any? { |element| match(b, element, scope) }
     when Types::PAnyType
-      a.each {|element| return true if @type_calculator.instance?(b, element) }
+      a.each {|element| return true if b.instance?(element) }
       return false
     else
       a.each {|element| return true if equals(element, b) }
@@ -156,6 +162,10 @@ class CompareOperator
 
   def include_Hash(a, b, scope)
     include?(a.keys, b, scope)
+  end
+
+  def include_VersionRange(a, b, scope)
+    Types::PSemVerRangeType.include?(a, b)
   end
 
   # Matches in general by using == operator
@@ -171,12 +181,32 @@ class CompareOperator
     !!matched # convert to boolean
   end
 
+  # Matches against semvers and strings
+  def match_Version(version, left, scope)
+    if left.is_a?(Semantic::Version)
+      version == left
+    elsif left.is_a? String
+      begin
+        version == Semantic::Version.parse(left)
+      rescue ArgumentError
+        false
+      end
+    else
+      false
+    end
+  end
+
+  # Matches against semvers and strings
+  def match_VersionRange(range, left, scope)
+    Types::PSemVerRangeType.include?(range, left)
+  end
+
   def match_PAnyType(any_type, left, scope)
     # right is a type and left is not - check if left is an instance of the given type
     # (The reverse is not terribly meaningful - computing which of the case options that first produces
     # an instance of a given type).
     #
-    @type_calculator.instance?(any_type, left)
+    any_type.instance?(left)
   end
 
   def match_Array(array, left, scope)

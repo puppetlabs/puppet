@@ -304,6 +304,16 @@ module TypeFactory
     PCatalogEntryType::DEFAULT
   end
 
+  # Produces an instance of the SemVerRange type
+  def self.sem_ver_range
+    PSemVerRangeType::DEFAULT
+  end
+
+  # Produces an instance of the SemVer type
+  def self.sem_ver(*ranges)
+    ranges.empty? ? PSemVerType::DEFAULT : PSemVerType::new(*ranges)
+  end
+
   # Produces a PResourceType with a String type_name A PResourceType with a nil
   # or empty name is compatible with any other PResourceType.  A PResourceType
   # with a given name is only compatible with a PResourceType with the same
