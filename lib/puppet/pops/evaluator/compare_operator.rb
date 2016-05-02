@@ -149,7 +149,7 @@ class CompareOperator
       # Always set match data, a "not found" should not keep old match data visible
       set_match_data(matched, scope) # creates ephemeral
       return !!matched
-    when Semantic::Version
+    when String, Semantic::Version
       a.any? { |element| match(b, element, scope) }
     when Types::PAnyType
       a.each {|element| return true if b.instance?(element) }
@@ -179,6 +179,21 @@ class CompareOperator
     matched = regexp.match(left)
     set_match_data(matched, scope) # creates or clears ephemeral
     !!matched # convert to boolean
+  end
+
+  # Matches against semvers and strings
+  def match_Version(version, left, scope)
+    if left.is_a?(Semantic::Version)
+      version == left
+    elsif left.is_a? String
+      begin
+        version == Semantic::Version.parse(left)
+      rescue ArgumentError
+        false
+      end
+    else
+      false
+    end
   end
 
   # Matches against semvers and strings

@@ -161,6 +161,66 @@ describe 'Semantic Versions' do
       end
     end
 
+    context 'a String representing a SemVer' do
+      it 'can be matched against a version range' do
+        code = <<-CODE
+          $v = '1.1.1'
+          notice($v =~ SemVerRange('>1.0.0'))
+          notice($v =~ SemVerRange('>1.1.1'))
+          notice($v =~ SemVerRange('>=1.1.1'))
+        CODE
+        expect(eval_and_collect_notices(code)).to eql(['true', 'false', 'true'])
+      end
+
+      it 'can be matched against a SemVerRange in case expression' do
+        code = <<-CODE
+          case '1.1.1' {
+            SemVerRange('>1.1.1'): {
+              notice('high')
+            }
+            SemVerRange('>1.0.0'): {
+              notice('mid')
+            }
+            default: {
+              notice('low')
+            }
+          }
+        CODE
+        expect(eval_and_collect_notices(code)).to eql(['mid'])
+      end
+
+      it 'can be matched against a SemVer in case expression' do
+        code = <<-CODE
+          case '1.1.1' {
+            SemVer('1.1.0'): {
+              notice('high')
+            }
+            SemVer('1.1.1'): {
+              notice('mid')
+            }
+            default: {
+              notice('low')
+            }
+          }
+        CODE
+        expect(eval_and_collect_notices(code)).to eql(['mid'])
+      end
+
+      it "can be matched against a VersionRange using an 'in' expression" do
+        code = <<-CODE
+          notice('1.1.1' in SemVerRange('>1.0.0'))
+        CODE
+        expect(eval_and_collect_notices(code)).to eql(['true'])
+      end
+
+      it "can be matched against multiple VersionRanges using an 'in' expression" do
+        code = <<-CODE
+          notice('1.1.1' in [SemVerRange('>=1.0.0 <1.0.2'), SemVerRange('>=1.1.0 <1.1.2')])
+        CODE
+        expect(eval_and_collect_notices(code)).to eql(['true'])
+      end
+    end
+
     context 'matching SemVer' do
       suitability = {
         [ '1.2.3',         '1.2.2' ] => false,
