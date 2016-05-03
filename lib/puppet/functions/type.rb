@@ -9,14 +9,14 @@
 # Would notice true
 #
 # By default, the best possible inference is made where all details are retained.
-# This is good when the type is used for futher type calculations but is overwhelmingly
-# rich i information if it is used in a error message.
+# This is good when the type is used for further type calculations but is overwhelmingly
+# rich in information if it is used in a error message.
 #
 # The optional argument `inference_method` may be given as (from lowest to highest fidelity):
 #
-# * ´generalized` - reduces to common type and drops size constraints
+# * `generalized` - reduces to common type and drops size constraints
 # * `reduced` - reduces to common type in collections
-# * `detailed` - (defaut) all details about inferred types is retained
+# * `detailed` - (default) all details about inferred types is retained
 #
 # @example Using `type()` with different qualities:
 #
