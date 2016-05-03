@@ -372,6 +372,10 @@ class AccessOperator
   #
   def access_PHashType(o, scope, keys)
     keys.flatten!
+    if keys.size == 2 && keys[0].is_a?(Integer) && keys[1].is_a?(Integer)
+      return Types::PHashType.new(nil, nil, Types::PIntegerType.new(*keys))
+    end
+
     keys[0,2].each_with_index do |k, index|
       unless k.is_a?(Types::PAnyType)
         fail(Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[index], {:base_type => 'Hash-Type', :actual => k.class})
@@ -379,18 +383,18 @@ class AccessOperator
     end
     case keys.size
     when 2
-      Types::PHashType.new(keys[0], keys[1], nil)
+      size_t = nil
     when 3
       size_t = keys[2]
       size_t = Types::PIntegerType.new(size_t) unless size_t.is_a?(Types::PIntegerType)
-      Types::PHashType.new(keys[0], keys[1], size_t)
     when 4
-      Types::PHashType.new(keys[0], keys[1], collection_size_t(1, keys[2], keys[3]))
+      size_t = collection_size_t(2, keys[2], keys[3])
     else
       fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, {
         :base_type => 'Hash-Type', :min => 2, :max => 4, :actual => keys.size
       })
     end
+    Types::PHashType.new(keys[0], keys[1], size_t)
   end
 
   # CollectionType is parameterized with a range
@@ -398,9 +402,9 @@ class AccessOperator
     keys.flatten!
     case keys.size
     when 1
-      size_t = collection_size_t(1, keys[0])
+      size_t = collection_size_t(0, keys[0])
     when 2
-      size_t = collection_size_t(1, keys[0], keys[1])
+      size_t = collection_size_t(0, keys[0], keys[1])
     else
       fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic,
         {:base_type => 'Collection-Type', :min => 1, :max => 2, :actual => keys.size})
@@ -414,19 +418,31 @@ class AccessOperator
     keys.flatten!
     case keys.size
     when 1
+      unless keys[0].is_a?(Types::PAnyType)
+        fail(Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Array-Type', :actual => keys[0].class})
+      end
+      type = keys[0]
       size_t = nil
     when 2
-      size_t = collection_size_t(1, keys[1])
+      if keys[0].is_a?(Types::PAnyType)
+        size_t = collection_size_t(1, keys[1])
+        type = keys[0]
+      else
+        size_t = collection_size_t(0, keys[0], keys[1])
+        type = nil
+      end
     when 3
-      size_t = collection_size_t(1, keys[1], keys[2])
+      if keys[0].is_a?(Types::PAnyType)
+        size_t = collection_size_t(1, keys[1], keys[2])
+        type = keys[0]
+      else
+        fail(Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Array-Type', :actual => keys[0].class})
+      end
     else
       fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic,
         {:base_type => 'Array-Type', :min => 1, :max => 3, :actual => keys.size})
     end
-    unless keys[0].is_a?(Types::PAnyType)
-      fail(Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Array-Type', :actual => keys[0].class})
-    end
-    Types::PArrayType.new(keys[0], size_t)
+    Types::PArrayType.new(type, size_t)
   end
 
   # Produces an PIntegerType (range) given one or two keys.

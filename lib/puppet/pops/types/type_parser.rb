@@ -212,30 +212,43 @@ class TypeParser
     when 'array'
       case parameters.size
       when 1
+        type = assert_type(parameters[0])
       when 2
-        size_type =
-          if parameters[1].is_a?(PIntegerType)
-            parameters[1]
-          else
-            assert_range_parameter(parameters[1])
-            TypeFactory.range(parameters[1], :default)
-          end
+        if parameters[0].is_a?(PAnyType)
+          type = parameters[0]
+          size_type =
+            if parameters[1].is_a?(PIntegerType)
+              size_type = parameters[1]
+            else
+              assert_range_parameter(parameters[1])
+              TypeFactory.range(parameters[1], :default)
+            end
+        else
+          type = :default
+          assert_range_parameter(parameters[0])
+          assert_range_parameter(parameters[1])
+          size_type = TypeFactory.range(parameters[0], parameters[1])
+        end
       when 3
+        type = assert_type(parameters[0])
         assert_range_parameter(parameters[1])
         assert_range_parameter(parameters[2])
         size_type = TypeFactory.range(parameters[1], parameters[2])
       else
         raise_invalid_parameters_error('Array', '1 to 3', parameters.size)
       end
-      assert_type(parameters[0])
-      TypeFactory.array_of(parameters[0], size_type)
+      TypeFactory.array_of(type, size_type)
 
     when 'hash'
       case parameters.size
       when 2
-        assert_type(parameters[0])
-        assert_type(parameters[1])
-        TypeFactory.hash_of(parameters[1], parameters[0])
+        if parameters[0].is_a?(PAnyType) && parameters[1].is_a?(PAnyType)
+          TypeFactory.hash_of(parameters[1], parameters[0])
+        else
+          assert_range_parameter(parameters[0])
+          assert_range_parameter(parameters[1])
+          TypeFactory.hash_of(:default, :default, TypeFactory.range(parameters[0], parameters[1]))
+        end
       when 3
         size_type =
           if parameters[2].is_a?(PIntegerType)
@@ -488,7 +501,7 @@ class TypeParser
 
   def assert_type(t)
     raise_invalid_type_specification_error unless t.is_a?(PAnyType)
-    true
+    t
   end
 
   def assert_range_parameter(t)

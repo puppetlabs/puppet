@@ -197,30 +197,21 @@ describe 'The type factory' do
       expect(t.size_type.to).to eq(2)
     end
 
-    it 'it is illegal to create a typed empty array' do
-      expect {
-        Puppet::Pops::Types::TypeFactory.array_of(Puppet::Pops::Types::TypeFactory.data, Puppet::Pops::Types::TypeFactory.range(0,0))
-      }.to raise_error(/An empty collection may not specify an element type/)
-    end
-
-    it 'it is legal to create an empty array of unit element type' do
-      t = Puppet::Pops::Types::TypeFactory.array_of(Puppet::Pops::Types::PUnitType::DEFAULT, Puppet::Pops::Types::TypeFactory.range(0,0))
+    it 'a typed empty array, the resulting array erases the type' do
+      t = Puppet::Pops::Types::TypeFactory.array_of(Puppet::Pops::Types::TypeFactory.data, Puppet::Pops::Types::TypeFactory.range(0,0))
       expect(t.size_type.class).to eq(Puppet::Pops::Types::PIntegerType)
       expect(t.size_type.from).to eq(0)
       expect(t.size_type.to).to eq(0)
+      expect(t.element_type).to eq(Puppet::Pops::Types::PUnitType::DEFAULT)
     end
 
-    it 'it is illegal to create a typed empty hash' do
-      expect {
-        Puppet::Pops::Types::TypeFactory.hash_of(Puppet::Pops::Types::TypeFactory.scalar, Puppet::Pops::Types::TypeFactory.data, Puppet::Pops::Types::TypeFactory.range(0,0))
-      }.to raise_error(/An empty collection may not specify an element type/)
-    end
-
-    it 'it is legal to create an empty hash where key and value types are of Unit type' do
-      t = Puppet::Pops::Types::TypeFactory.hash_of(Puppet::Pops::Types::PUnitType::DEFAULT, Puppet::Pops::Types::PUnitType::DEFAULT, Puppet::Pops::Types::TypeFactory.range(0,0))
+    it 'a typed empty hash, the resulting hash erases the key and value type' do
+      t = Puppet::Pops::Types::TypeFactory.hash_of(Puppet::Pops::Types::TypeFactory.scalar, Puppet::Pops::Types::TypeFactory.data, Puppet::Pops::Types::TypeFactory.range(0,0))
       expect(t.size_type.class).to eq(Puppet::Pops::Types::PIntegerType)
       expect(t.size_type.from).to eq(0)
       expect(t.size_type.to).to eq(0)
+      expect(t.key_type).to eq(Puppet::Pops::Types::PUnitType::DEFAULT)
+      expect(t.element_type).to eq(Puppet::Pops::Types::PUnitType::DEFAULT)
     end
 
     context 'callable types' do

@@ -62,6 +62,14 @@ describe TypeParser do
     expect(parser.parse("Hash")).to be_the_type(types.hash_of_data)
   end
 
+  it "interprets a parameterized Array[0, 0] as an empty hash with no key and value type" do
+    expect(parser.parse("Array[0, 0]")).to be_the_type(types.array_of(types.default, types.range(0, 0)))
+  end
+
+  it "interprets a parameterized Hash[0, 0] as an empty hash with no key and value type" do
+    expect(parser.parse("Hash[0, 0]")).to be_the_type(types.hash_of(types.default, types.default, types.range(0, 0)))
+  end
+
   it "interprets a parameterized Hash[t] as a Hash of Scalar to t" do
     expect(parser.parse("Hash[Scalar, Integer]")).to be_the_type(types.hash_of(types.integer))
   end

@@ -166,6 +166,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
     # Hash Type
     #
+    it 'produces a Hash[0, 0] from the expression Hash[0, 0]' do
+      expr = fqr('Hash')[0, 0]
+      expect(evaluate(expr)).to be_the_type(types.hash_of(types.default, types.default, types.range(0, 0)))
+    end
+
     it 'produces a Hash[Scalar,String] from the expression Hash[Scalar, String]' do
       expr = fqr('Hash')[fqr('Scalar'), fqr('String')]
       expect(evaluate(expr)).to be_the_type(types.hash_of(types.string, types.scalar))
@@ -192,6 +197,15 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
     # Array Type
     #
+    it 'produces an Array[0, 0] from the expression Array[0, 0]' do
+      expr = fqr('Array')[0, 0]
+      expect(evaluate(expr)).to be_the_type(types.array_of(types.default, types.range(0, 0)))
+
+      # arguments are flattened
+      expr = fqr('Array')[[fqr('String')]]
+      expect(evaluate(expr)).to be_the_type(types.array_of(types.string))
+    end
+
     it 'produces an Array[String] from the expression Array[String]' do
       expr = fqr('Array')[fqr('String')]
       expect(evaluate(expr)).to be_the_type(types.array_of(types.string))
