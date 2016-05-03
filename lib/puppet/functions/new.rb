@@ -96,6 +96,17 @@
 # $a_number = Integer("true")      # results in 1
 # ~~~
 #
+# Conversion to Float
+# -------------------
+#
+# A new `Float` can be created from `Integer`, `Float`, `Boolean`, and `String` values.
+# For conversion `from` String both float and integer formats are supported.
+#
+# * For an integer, the floating point fraction of .0 is added to the value.
+# * A Boolean true is converted to 1.0, and a false to 0.0
+# * In String format, integer prefixes for hex and binary are understood (but not octal since
+#   floating point in string format may start with a '0'). 
+#
 # Conversion to Numeric
 # ---------------------
 #
