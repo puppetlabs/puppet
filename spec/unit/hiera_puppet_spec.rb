@@ -63,17 +63,58 @@ describe 'HieraPuppet' do
       expect(HieraPuppet.send(:hiera_config_file)).to eq(Puppet[:hiera_config])
     end
 
-    it "should use Puppet.settings[:codedir] as the base directory when hiera_config is not set" do
-      begin
-        Puppet.settings[:hiera_config] = nil
-      rescue ArgumentError => detail
-        raise unless detail.message =~ /unknown setting/
-      end
-      Puppet.settings[:codedir] = "/dev/null/puppet"
-      hiera_config = File.join(Puppet[:codedir], 'hiera.yaml')
-      Puppet::FileSystem.stubs(:exist?).with(hiera_config).returns(true)
+    context 'when hiera_config is not set' do
+      let(:code_hiera_config) { File.join(Puppet[:codedir], 'hiera.yaml') }
+      let(:conf_hiera_config) { File.join(Puppet[:confdir], 'hiera.yaml') }
 
-      expect(HieraPuppet.send(:hiera_config_file)).to eq(hiera_config)
+      before(:each) do
+        Puppet.settings.setting(:hiera_config).send(:remove_instance_variable, :@evaluated_default)
+        Puppet.settings[:hiera_config] = nil
+        Puppet.settings[:codedir] = '/dev/null/puppetlabs/code'
+        Puppet.settings[:confdir] = '/dev/null/puppetlabs/puppet'
+      end
+
+      it "should use Puppet.settings[:codedir]/hiera.yaml when '$codedir/hiera.yaml' exists and '$confdir/hiera.yaml' does not exist" do
+        Puppet::FileSystem.stubs(:exist?).with(code_hiera_config).returns(true)
+        Puppet::FileSystem.stubs(:exist?).with(conf_hiera_config).returns(false)
+
+        expect(HieraPuppet.send(:hiera_config_file)).to eq(code_hiera_config)
+      end
+
+      it "should use Puppet.settings[:confdir]/hiera.yaml when '$codedir/hiera.yaml' does not exist and '$confdir/hiera.yaml' exists" do
+        Puppet::FileSystem.stubs(:exist?).with(code_hiera_config).returns(false)
+        Puppet::FileSystem.stubs(:exist?).with(conf_hiera_config).returns(true)
+
+        expect(HieraPuppet.send(:hiera_config_file)).to eq(conf_hiera_config)
+      end
+
+      it "should use Puppet.settings[:codedir]/hiera.yaml when '$codedir/hiera.yaml' exists and '$confdir/hiera.yaml' exists" do
+        Puppet::FileSystem.stubs(:exist?).with(code_hiera_config).returns(true)
+        Puppet::FileSystem.stubs(:exist?).with(conf_hiera_config).returns(true)
+
+        expect(HieraPuppet.send(:hiera_config_file)).to eq(code_hiera_config)
+      end
+
+      it "should return nil when neither '$codedir/hiera.yaml' nor '$confdir/hiera.yaml' exists" do
+        Puppet::FileSystem.stubs(:exist?).with(code_hiera_config).returns(false)
+        Puppet::FileSystem.stubs(:exist?).with(conf_hiera_config).returns(false)
+
+        expect(HieraPuppet.send(:hiera_config_file)).to eq(nil)
+      end
+
+      it "should return explicitly set option even if both '$codedir/hiera.yaml' and '$confdir/hiera.yaml' exists" do
+        if Puppet::Util::Platform.windows?
+          explicit_hiera_config = 'C:/an/explicit/hiera.yaml'
+        else
+          explicit_hiera_config = '/an/explicit/hiera.yaml'
+        end
+        Puppet.settings[:hiera_config] = explicit_hiera_config
+        Puppet::FileSystem.stubs(:exist?).with(explicit_hiera_config).returns(true)
+        Puppet::FileSystem.stubs(:exist?).with(code_hiera_config).returns(true)
+        Puppet::FileSystem.stubs(:exist?).with(conf_hiera_config).returns(true)
+
+        expect(HieraPuppet.send(:hiera_config_file)).to eq(explicit_hiera_config)
+      end
     end
   end
 

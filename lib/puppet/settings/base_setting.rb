@@ -95,10 +95,16 @@ class Puppet::Settings::BaseSetting
 
   def default(check_application_defaults_first = false)
     if @default.is_a? Proc
-      @default = @default.call
+      # Give unit tests a chance to reevaluate the call by removing the instance variable
+      unless instance_variable_defined?(:@evaluated_default)
+        @evaluated_default = @default.call
+      end
+      default_value = @evaluated_default
+    else
+      default_value = @default
     end
-    return @default unless check_application_defaults_first
-    return @settings.value(name, :application_defaults, true) || @default
+    return default_value unless check_application_defaults_first
+    return @settings.value(name, :application_defaults, true) || default_value
   end
 
   # Convert the object to a config statement.

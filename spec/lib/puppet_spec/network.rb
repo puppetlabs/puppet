@@ -5,20 +5,20 @@ require 'puppet/network/http/api/indirected_routes'
 require 'puppet/indirector_testing'
 
 module PuppetSpec::Network
-  def not_found_code
-    Puppet::Network::HTTP::Error::HTTPNotFoundError::CODE
+  def not_found_error
+    Puppet::Network::HTTP::Error::HTTPNotFoundError
   end
 
-  def not_acceptable_code
-    Puppet::Network::HTTP::Error::HTTPNotAcceptableError::CODE
+  def not_acceptable_error
+    Puppet::Network::HTTP::Error::HTTPNotAcceptableError
   end
 
-  def bad_request_code
-    Puppet::Network::HTTP::Error::HTTPBadRequestError::CODE
+  def bad_request_error
+    Puppet::Network::HTTP::Error::HTTPBadRequestError
   end
 
-  def not_authorized_code
-    Puppet::Network::HTTP::Error::HTTPNotAuthorizedError::CODE
+  def not_authorized_error
+    Puppet::Network::HTTP::Error::HTTPNotAuthorizedError
   end
 
   def params
