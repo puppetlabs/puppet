@@ -67,21 +67,13 @@ module HieraPuppet
   end
 
   def hiera_config_file
-    config_file = nil
-
-    if Puppet.settings[:hiera_config].is_a?(String)
-      expanded_config_file = File.expand_path(Puppet.settings[:hiera_config])
-      if Puppet::FileSystem.exist?(expanded_config_file)
-        config_file = expanded_config_file
-      end
-    elsif Puppet.settings[:confdir].is_a?(String)
-      expanded_config_file = File.expand_path(File.join(Puppet.settings[:confdir], '/hiera.yaml'))
-      if Puppet::FileSystem.exist?(expanded_config_file)
-        config_file = expanded_config_file
-      end
+    hiera_config = Puppet.settings[:hiera_config]
+    if Puppet::FileSystem.exist?(hiera_config)
+      hiera_config
+    else
+      Puppet.warning "Config file #{hiera_config} not found, using Hiera defaults"
+      nil
     end
-
-    config_file
   end
 end
 
