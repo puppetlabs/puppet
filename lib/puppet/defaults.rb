@@ -421,7 +421,16 @@ deprecated and has been replaced by 'always_retry_plugins'."
       :desc    => "Where to retrive information about data.",
     },
     :hiera_config => {
-      :default => "$codedir/hiera.yaml",
+      :default => lambda do
+        config = nil
+        codedir = Puppet.settings[:codedir]
+        if codedir.is_a?(String)
+          config = File.expand_path(File.join(codedir, 'hiera.yaml'))
+          config = nil unless Puppet::FileSystem.exist?(config)
+        end
+        config = File.expand_path(File.join(Puppet.settings[:confdir], 'hiera.yaml')) if config.nil?
+        config
+      end,
       :desc    => "The hiera configuration file. Puppet only reads this file on startup, so you must restart the puppet master every time you edit it.",
       :type    => :file,
     },
