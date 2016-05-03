@@ -6,7 +6,7 @@ extend Puppet::Acceptance::EnvironmentUtils
   skip_test if agents.any? {|agent| agent['platform'] =~ /^eos/ } # see PUP-5404, ARISTA-42
 
   app_type = File.basename(__FILE__, '.*')
-  tmp_environment   = mk_tmp_environment(app_type)
+  tmp_environment   = mk_tmp_environment_with_teardown(app_type)
   exported_username = 'er0ck'
 
   teardown do
@@ -19,9 +19,6 @@ extend Puppet::Acceptance::EnvironmentUtils
     end
     on(master, "mv #{File.join('','tmp','puppet.conf')} #{master.puppet['confdir']}",
        :accept_all_exit_codes => true)
-    step 'remove the tmp environment symlink' do
-      on master, "rm -rf #{File.join(environmentpath, tmp_environment)}"
-    end
     step 'clean out collected resources' do
       on(hosts, puppet_resource("user #{exported_username} ensure=absent"), :accept_all_exit_codes => true)
     end

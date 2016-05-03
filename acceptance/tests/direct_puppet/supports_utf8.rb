@@ -3,7 +3,7 @@ require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils
 
   app_type = File.basename(__FILE__, '.*')
-  tmp_environment   = mk_tmp_environment(app_type)
+  tmp_environment   = mk_tmp_environment_with_teardown(app_type)
 
   tmp_file = {}
   agents.each do |agent|
@@ -16,9 +16,6 @@ extend Puppet::Acceptance::EnvironmentUtils
   end
 
   teardown do
-    step 'remove the tmp environment symlink' do
-      on master, "rm -rf #{File.join(environmentpath, tmp_environment)}"
-    end
     step 'clean out produced resources' do
       agents.each do |agent|
         on(agent, "rm #{tmp_file[agent.hostname]}", :accept_all_exit_codes => true)
