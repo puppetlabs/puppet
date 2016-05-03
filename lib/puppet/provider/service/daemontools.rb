@@ -19,9 +19,9 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
 
     ...or this can be overriden in the resource's attributes:
 
-        service { "myservice":
-          provider => "daemontools",
-          path     => "/path/to/daemons",
+        service { 'myservice':
+          provider => 'daemontools',
+          path     => '/path/to/daemons',
         }
 
     This provider supports out of the box:

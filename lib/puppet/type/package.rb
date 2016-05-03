@@ -238,8 +238,8 @@ module Puppet
           }
 
           package { 'openssl':
+            ensure => installed,
             name   => $ssl,
-            ensure => installed
           }
 
           . etc. .
@@ -250,9 +250,9 @@ module Puppet
           }
 
           package { 'openssh':
-            name    => $ssh
             ensure  => installed,
-            require => Package['openssl']
+            name    => $ssh,
+            require => Package['openssl'],
           }
 
       "

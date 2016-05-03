@@ -282,11 +282,11 @@ end
 
       And then call that:
 
-          zone { myzone:
-            ip           => "bge0:192.168.0.23",
-            sysidcfg     => template("site/sysidcfg.erb"),
-            path         => "/opt/zones/myzone",
-            realhostname => "fully.qualified.domain.name"
+          zone { 'myzone':
+            ip           => 'bge0:192.168.0.23',
+            sysidcfg     => template('site/sysidcfg.erb'),
+            path         => '/opt/zones/myzone',
+            realhostname => 'fully.qualified.domain.name',
           }
 
       The `sysidcfg` only matters on the first booting of the zone,

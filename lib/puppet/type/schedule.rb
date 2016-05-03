@@ -24,7 +24,7 @@ module Puppet
       the hours of two and 4 AM, then you would use this schedule:
 
           schedule { 'maint':
-            range  => "2 - 4",
+            range  => '2 - 4',
             period => daily,
             repeat => 1,
           }
@@ -57,10 +57,10 @@ module Puppet
 
             schedule { 'everyday':
               period => daily,
-              range  => "2 - 4",
+              range  => '2 - 4',
             }
 
-            exec { "/usr/bin/apt-get update":
+            exec { '/usr/bin/apt-get update':
               schedule => 'everyday',
             }
 
@@ -77,7 +77,7 @@ module Puppet
         separator. For instance:
 
             schedule { 'maintenance':
-              range => "1:30 - 4:30",
+              range => '1:30 - 4:30',
             }
 
         This is mostly useful for restricting certain resources to being

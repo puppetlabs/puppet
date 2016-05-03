@@ -7,9 +7,9 @@ module Puppet
       Symlink targets can be relative, as well as absolute:
 
           # (Useful on Solaris)
-          file { \"/etc/inetd.conf\":
+          file { '/etc/inetd.conf':
             ensure => link,
-            target => \"inet/inetd.conf\",
+            target => 'inet/inetd.conf',
           }
 
       Directories of symlinks can be served recursively by instead using the
