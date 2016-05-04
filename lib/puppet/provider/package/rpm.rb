@@ -23,6 +23,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
   self::NEVRA_FIELDS = [:name, :epoch, :version, :release, :arch]
 
   ARCH_LIST = [
+    'noarch',
     'i386',
     'i686',
     'ppc',
