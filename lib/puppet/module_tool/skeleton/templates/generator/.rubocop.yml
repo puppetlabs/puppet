@@ -1,0 +1,42 @@
+---
+AllCops:
+  DisplayCopNames: true
+  DisplayStyleGuide: true
+  Exclude:
+    - vendor/**/*
+    - pkg/**/*
+    - spec/fixtures/**/*
+
+# Cop's to ignore
+
+# With this enabled it suggests a change that will break the Gemfile
+Lint/AssignmentInCondition:
+  Enabled: false
+
+Metrics/LineLength:
+  Enabled: false
+
+# This is a good idea, but does not line up the rest of the lines making it
+# harder to read
+Style/IndentHash:
+  Enabled: false
+
+Style/Next:
+  Enabled: false
+
+# If enabled, this cop makes it harder to understand the logic
+Style/NonNilCheck:
+  Enabled: false
+
+Style/TrailingCommaInLiteral:
+  Enabled: false
+
+Style/TrailingCommaInArguments:
+  Enabled: false
+
+# Cop's that require ruby >= 1.9
+Style/HashSyntax:
+  Enabled: false
+
+Style/BracesAroundHashParameters:
+  Enabled: false

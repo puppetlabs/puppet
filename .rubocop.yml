@@ -12,6 +12,7 @@ AllCops:
     - 'lib/puppet/parser/parser.rb'
     - 'lib/puppet/pops/parser/eparser.rb'
     - 'lib/puppet/external/nagios/parser.rb'
+    - 'lib/puppet/module_tool/skeleton/**/*'
 
 Lint/ConditionPosition:
   Enabled: true
