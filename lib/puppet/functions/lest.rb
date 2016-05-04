@@ -1,6 +1,6 @@
 # Call a [lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html)
-# (which should accept to arguments) if the argument given to the function is undef.
-# Returns the result of calling the lambda if the argument is undef, otherwwise the
+# (which should accept no arguments) if the argument given to the function is `undef`.
+# Returns the result of calling the lambda if the argument is `undef`, otherwwise the
 # given argument.
 #
 # The `lest` function is useful in a chain of `then` calls, or in general
@@ -40,7 +40,7 @@
 Puppet::Functions.create_function(:lest) do
   dispatch :lest do
     param 'Any', :arg
-    block_param
+    block_param 'Callable[0,0]', :block
   end
 
   def lest(arg)
