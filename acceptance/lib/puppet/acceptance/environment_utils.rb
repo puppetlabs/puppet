@@ -362,6 +362,7 @@ module Puppet
       def random_string
         [*('a'..'z'),*('0'..'9')].shuffle[0,8].join
       end
+      private :random_string
 
       # if the first test to call this has changed the environmentpath, this will cause trouble
       #   maybe not the best idea to memoize this?
@@ -371,7 +372,7 @@ module Puppet
 
       # create a tmpdir to hold a temporary environment bound by puppet environment naming restrictions
       # symbolically link environment into environmentpath
-      def mk_tmp_environment(environment)
+      def mk_tmp_environment_with_teardown(environment)
         # add the tmp_environment to a set to ensure no collisions
         @@tmp_environment_set ||= Set.new
         deadman = 100; loop_num = 0
@@ -380,13 +381,18 @@ module Puppet
         end
         @@tmp_environment_set << tmp_environment
         tmpdir = File.join('','tmp',tmp_environment)
-
         on master, "mkdir -p #{tmpdir}/manifests #{tmpdir}/modules"
+
+        # register teardown to remove the link below
+        teardown do
+          on master, "rm -rf #{File.join(environmentpath,tmp_environment)}"
+        end
+
         # WARNING: this won't work with filesync (symlinked environments are not supported)
         on master, "ln -sf #{tmpdir} #{File.join(environmentpath,tmp_environment)}"
         return tmp_environment
       end
-      module_function :mk_tmp_environment, :environmentpath
+      module_function :mk_tmp_environment_with_teardown, :environmentpath
 
     end
   end
