@@ -1,8 +1,12 @@
-# Returns a value for a sequence of given keys/indexes
-# used to "dig into" a complex data structure. The first
-# encountered undef value stops the "dig" and undef is returned.
+# Returns a value for a sequence of given keys/indexes into a structure.
+# This function is used to "dig into" a complex data structure by
+# using a sequence of keys / indexes to access a value from which
+# the next key/index is accessed recursively.
+#
+# The first encountered `undef` value stops the "dig" and `undef` is returned.
+#
 # An error is raised if an attempt is made to "dig" into
-# something other than an Array or a Hash. 
+# something other than an `undef` (which immediately returns `undef`), an Array or a Hash. 
 #
 # @example Using `dig`
 #
