@@ -223,6 +223,28 @@ class EvaluatorImpl
           values.fetch(lval) {|k| fail(Issues::MISSING_MULTI_ASSIGNMENT_KEY, o, :key =>k)},
           o, scope)
       end
+    elsif values.is_a?(Puppet::Pops::Types::PHostClassType)
+      # assign variables from class variables
+      # lookup class resource and return one or more parameter values
+      # TODO: behavior when class_name is nil
+      resource = find_resource(scope, 'class', values.class_name)
+      if resource
+        base_name = "#{values.class_name.downcase}::"
+        idx = -1
+        result = lvalues.map do |lval|
+          idx += 1
+          varname = "#{base_name}#{lval}"
+          if variable_exists?(varname, scope)
+            result = get_variable_value(varname, o, scope)
+            assign(lval, result, o, scope)
+          else
+            fail(Puppet::Pops::Issues::MISSING_MULTI_ASSIGNMENT_VARIABLE, o.left_expr.values[idx], {:name => varname})
+          end
+        end
+      else
+        fail(Issues::UNKNOWN_RESOURCE, o.right_expr, {:type_name => 'Class', :title => values.class_name})
+      end
+
     else
       values = [values] unless values.is_a?(Array)
       if values.size != lvalues.size

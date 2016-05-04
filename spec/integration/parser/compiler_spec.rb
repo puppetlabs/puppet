@@ -1048,6 +1048,37 @@ describe Puppet::Parser::Compiler do
       end
     end
 
+    it 'assigns multiple variables from a class' do
+      node = Puppet::Node.new("testnodex")
+      catalog = compile_to_catalog(<<-PP, node)
+      class foo::bar::example($x = 100)  {
+        $a = 10
+        $c = undef
+      }
+      include foo::bar::example
+
+      [$a, $x, $c] = Class['foo::bar::example']
+      notify{'check_me': message => "$a, $x, -${c}-" }
+      PP
+      expect(catalog).to have_resource("Notify[check_me]").with_parameter(:message, "10, 100, --")
+    end
+
+    it 'errors on attempt to assigns multiple variables from a class when variable does not exist' do
+      node = Puppet::Node.new("testnodex")
+      expect do
+        compile_to_catalog(<<-PP, node)
+        class foo::bar::example($x = 100)  {
+          $ah = 10
+          $c = undef
+        }
+        include foo::bar::example
+
+        [$a, $x, $c] = Class['foo::bar::example']
+        notify{'check_me': message => "$a, $x, -${c}-" }
+        PP
+      end.to raise_error(/No value for required variable '\$foo::bar::example::a'/)
+    end
+
     it "should not create duplicate resources when a class is referenced both directly and indirectly by the node classifier (4792)" do
       node = Puppet::Node.new("testnodex")
       node.classes = ['foo', 'bar']
