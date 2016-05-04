@@ -71,6 +71,7 @@ Name: #{o[:pkg]}
 Version: #{o[:version]}
 Release: 1
 Epoch: #{o[:epoch] || 0}
+BuildArch: noarch
 License: GPL+
 Group: Development/Tools
 SOURCE0 : %{name}-%{version}.tar.gz

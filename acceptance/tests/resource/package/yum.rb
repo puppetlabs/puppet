@@ -102,11 +102,6 @@ end
 ### Epoch tests ###
 agents.each do |agent|
   step "Managing a package which includes an epoch in its version" do
-    arch = on(agent, facter('os.architecture')).stdout.chomp
-    if arch == 'i386'
-      arch = 'i686'
-    end
-
     step "Setup repo and package" do
       clean_rpm agent, no_epoch_rpm_options
       setup_rpm agent, epoch_rpm_options
@@ -129,11 +124,11 @@ agents.each do |agent|
 
     step "Installing a specific version of a known package with an epoch succeeds when epoch and arch are specified" do
       verify_absent [agent], 'epoch'
-      apply_manifest_on(agent, "package {'epoch': ensure => '1:1.1-1.#{arch}'}") do |result|
+      apply_manifest_on(agent, "package {'epoch': ensure => '1:1.1-1.noarch'}") do |result|
         assert_match('Package[epoch]/ensure: created', "#{result.host}: #{result.stdout}")
       end
 
-      apply_manifest_on(agent, "package {'epoch': ensure => '1:1.1-1.#{arch}'}") do |result|
+      apply_manifest_on(agent, "package {'epoch': ensure => '1:1.1-1.noarch'}") do |result|
         assert_no_match(/epoch/, result.stdout)
       end
     end
@@ -155,7 +150,7 @@ agents.each do |agent|
           assert_no_match(/epoch/, result.stdout)
         end
 
-        apply_manifest_on(agent, "package {'epoch': ensure => '1:1.1-1.#{arch}'}") do |result|
+        apply_manifest_on(agent, "package {'epoch': ensure => '1:1.1-1.noarch'}") do |result|
           assert_no_match(/epoch/, result.stdout)
         end
       end
@@ -178,7 +173,7 @@ agents.each do |agent|
           assert_no_match(/epoch/, result.stdout)
         end
 
-        apply_manifest_on(agent, "package {'epoch': ensure => '1:1.1-1.#{arch}'}") do |result|
+        apply_manifest_on(agent, "package {'epoch': ensure => '1:1.1-1.noarch'}") do |result|
           assert_no_match(/epoch/, result.stdout)
         end
       end
