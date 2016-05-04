@@ -288,8 +288,15 @@ file { '#{testdir}/environments/production/modules/#{module_name}/manifests/init
 file { '#{testdir}/environments/production/manifests/site.pp':
   ensure => file,
   content => "
-    node default {
-      include #{module_name}
+    site {
+      #this should not do anything on the agents as it's compiled into the environment catalog
+      # we're just ensuring it compiles, here
+      \\$lookup_port = lookup('#{hiera_data_key}')
+      notify { \\"the call to #{hiera_data_key} is coming from inside the site clause: \\$lookup_port\\": }
+      }
+
+      node default {
+        include #{module_name}
     }",
   mode => "0640",
 }
@@ -300,6 +307,8 @@ master_opts = {
   'main' => {
     'environmentpath' => "#{testdir}/environments",
     'hiera_config' => "#{testdir}/hiera.yaml",
+    # required for site{}
+    'app_management' => true,
   },
 }
 with_puppet_running_on master, master_opts, testdir do
@@ -346,7 +355,7 @@ with_puppet_running_on master, master_opts, testdir do
     assert_match("#{module_data_key} #{module_data_value}", stdout)
 
     assert_match("#{module_data_key} #{module_data_value_other}", stdout)
- 
+
     assert_match("#{env_data_override_implied_key} #{env_data_override_implied_value}", stdout)
     assert_match("#{env_data_override_key} #{env_data_override_value}", stdout)
 
