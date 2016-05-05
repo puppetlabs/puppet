@@ -91,6 +91,14 @@ module Puppet::Util::Plist
       CFPropertyList.native_types(plist_obj.value)
     end
 
+    # Helper method to convert a string into a CFProperty::Blob, which is
+    # needed to properly handle binary strings
+    #
+    # @api private
+    def string_to_blob(str)
+      CFPropertyList::Blob.new(str)
+    end
+
     # Helper method to assist in reading a file with an offset value. It's its
     # own method for stubbing purposes
     #
