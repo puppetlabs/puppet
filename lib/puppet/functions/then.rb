@@ -64,7 +64,7 @@
 Puppet::Functions.create_function(:then) do
   dispatch :then do
     param 'Any', :arg
-    block_param
+    block_param 'Callable[1,1]', :block
   end
 
   def then(arg)
