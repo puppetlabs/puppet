@@ -21,7 +21,7 @@
 #
 Puppet::Functions.create_function(:dig) do
   dispatch :dig do
-    param 'Collection', :data
+    param 'Optional[Collection]', :data
     repeated_param 'Any', :arg
   end
 
