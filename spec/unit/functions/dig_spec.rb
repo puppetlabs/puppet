@@ -11,6 +11,12 @@ describe 'the dig function' do
     expect(compile_to_catalog("notify { [testing].dig(0): }")).to have_resource('Notify[testing]')
   end
 
+  it 'returns undef if given an undef key' do
+  expect(compile_to_catalog(<<-SOURCE)).to have_resource('Notify[testing]')
+    notify { "test${[testing].dig(undef)}ing": }
+    SOURCE
+  end
+
   it 'returns a value from an hash key via given key' do
     expect(compile_to_catalog("notify { {key => testing}.dig(key): }")).to have_resource('Notify[testing]')
   end
