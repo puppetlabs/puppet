@@ -23,7 +23,7 @@ agents.each do |agent|
   on agent, puppet_resource('scheduled_task', name, 'ensure=absent')
 
   step "verify the task was deleted"
-  Timeout.timeout(5) do
+  Timeout.timeout(30) do
     loop do
       step "Win32::TaskScheduler#delete call seems to be asynchronous, so we my need to test multiple times"
       on agent, query_cmd, :acceptable_exit_codes => [0,1]
