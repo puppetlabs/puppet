@@ -47,6 +47,10 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     Puppet.override(:trusted_information => trusted) do
       send("do_#{method}", indirection, key, params, request, response)
     end
+  rescue Puppet::Network::HTTP::Error::HTTPError => e
+    return do_http_control_exception(response, e)
+  rescue StandardError => e
+    return do_exception(response, e)
   end
 
   def uri2indirection(http_method, uri, params)
@@ -88,11 +92,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
       params[:environment] = configured_environment
     end
 
-    begin
-      check_authorization(method, "#{url_prefix}/#{indirection_name}/#{key}", params)
-    rescue Puppet::Network::AuthorizationError => e
-      raise Puppet::Network::HTTP::Error::HTTPNotAuthorizedError.new(e.message)
-    end
+    check_authorization(method, "#{url_prefix}/#{indirection_name}/#{key}", params)
 
     if configured_environment.nil?
       raise ArgumentError, "Could not find environment '#{environment}'"
@@ -108,6 +108,24 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
   end
 
   private
+
+  def do_http_control_exception(response, exception)
+    msg = exception.message
+    Puppet.info(msg)
+    response.respond_with(exception.status, "text/plain", msg)
+  end
+
+  def do_exception(response, exception, status=400)
+    if exception.is_a?(Puppet::Network::AuthorizationError)
+      # make sure we return the correct status code
+      # for authorization issues
+      status = 403 if status == 400
+    end
+
+    Puppet.log_exception(exception)
+
+    response.respond_with(status, "text/plain", exception.to_s)
+  end
 
   # Execute our find.
   def do_find(indirection, key, params, request, response)
