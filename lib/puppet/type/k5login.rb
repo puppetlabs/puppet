@@ -1,5 +1,6 @@
 # Plug-in type for handling k5login files
 require 'puppet/util'
+require 'puppet/util/selinux'
 
 Puppet::Type.newtype(:k5login) do
   @doc = "Manage the `.k5login` file for a user.  Specify the full path to
@@ -31,9 +32,59 @@ Puppet::Type.newtype(:k5login) do
     defaultto { "644" }
   end
 
+  # To manage the selinux user of the file
+  newproperty(:seluser) do
+    desc "What the SELinux user component of the context of the file should be.
+      Any valid SELinux user component is accepted.  For example `user_u`.
+      If not specified it defaults to the value returned by matchpathcon for
+      the file, if any exists.  Only valid on systems with SELinux support
+      enabled."
+
+    defaultto { "user_u" }
+  end
+
+  # To manage the selinux role of the file
+  newproperty(:selrole) do
+    desc "What the SELinux role component of the context of the file should be.
+      Any valid SELinux role component is accepted.  For example `role_r`.
+      If not specified it defaults to the value returned by matchpathcon for
+      the file, if any exists.  Only valid on systems with SELinux support
+      enabled."
+
+    defaultto { "object_r" }
+  end
+
+  # To manage the selinux type of the file
+  newproperty(:seltype) do
+    desc "What the SELinux type component of the context of the file should be.
+      Any valid SELinux type component is accepted.  For example `tmp_t`.
+      If not specified it defaults to the value returned by matchpathcon for
+      the file, if any exists.  Only valid on systems with SELinux support
+      enabled."
+
+    # to my knowledge, `krb5_home_t` is the only valid type for .k5login
+    defaultto { "krb5_home_t" }
+  end
+
+  # To manage the selinux range of the file
+  newproperty(:selrange) do
+    desc "What the SELinux range component of the context of the file should be.
+      Any valid SELinux range component is accepted.  For example `s0` or
+      `SystemHigh`.  If not specified it defaults to the value returned by
+      matchpathcon for the file, if any exists.  Only valid on systems with
+      SELinux support enabled and that have support for MCS (Multi-Category
+      Security)."
+
+    defaultto { "s0" }
+  end
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+
   provide(:k5login) do
     desc "The k5login provider is the only provider for the k5login
       type."
+
+    include Puppet::Util::SELinux
 
     # Does this file exist?
     def exists?
@@ -76,6 +127,56 @@ Puppet::Type.newtype(:k5login) do
     # Set the file mode, converting from a string to an integer.
     def mode=(value)
       File.chmod(Integer("0#{value}"), @resource[:name])
+    end
+
+    # Set the file seluser
+    def seluser
+      if selinux_support?
+        context = get_selinux_current_context(@resource[:name])
+        return parse_selinux_context(:seluser, context)
+      end
+    end
+
+    def seluser=(value)
+      set_selinux_context(@resource[:name], value, :seluser)
+    end
+
+    # Set the file selrole
+    def selrole
+      if selinux_support?
+        context = get_selinux_current_context(@resource[:name])
+        return parse_selinux_context(:selrole, context)
+      end
+    end
+
+    # Set the file seltype
+    def selrole=(value)
+      set_selinux_context(@resource[:name], value, :selrole)
+    end
+
+    # Set the file seltype
+    def seltype
+      if selinux_support?
+        context = get_selinux_current_context(@resource[:name])
+        return parse_selinux_context(:seltype, context)
+      end
+    end
+
+    # Set the file selrange
+    def seltype=(value)
+      set_selinux_context(@resource[:name], value, :seltype)
+    end
+
+    # Set the file selrange
+    def selrange
+      if selinux_support?
+        context = get_selinux_current_context(@resource[:name])
+        return parse_selinux_context(:selrange, context)
+      end
+    end
+
+    def selrange=(value)
+      set_selinux_context(@resource[:name], value, :selrange)
     end
 
     private
