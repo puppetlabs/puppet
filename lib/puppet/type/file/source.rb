@@ -52,11 +52,11 @@ module Puppet
       use the first source that exists. This can be used to serve different
       files to different system types:
 
-          file { "/etc/nfs.conf":
+          file { '/etc/nfs.conf':
             source => [
-              "puppet:///modules/nfs/conf.$host",
-              "puppet:///modules/nfs/conf.$operatingsystem",
-              "puppet:///modules/nfs/conf"
+              "puppet:///modules/nfs/conf.${host}",
+              "puppet:///modules/nfs/conf.${operatingsystem}",
+              'puppet:///modules/nfs/conf'
             ]
           }
 

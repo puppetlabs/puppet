@@ -56,10 +56,10 @@ Puppet::Type.newtype(:tidy) do
 
       Example:
 
-          tidy { "/tmp":
-            age     => "1w",
+          tidy { '/tmp':
+            age     => '1w',
             recurse => 1,
-            matches => [ "[0-9]pub*.tmp", "*.temp", "tmpfile?" ]
+            matches => [ '[0-9]pub*.tmp', '*.temp', 'tmpfile?' ],
           }
 
       This removes files from `/tmp` if they are one week old or older,

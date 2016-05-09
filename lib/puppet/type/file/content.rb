@@ -23,14 +23,14 @@ module Puppet
       the manifest...
 
           define resolve(nameserver1, nameserver2, domain, search) {
-              $str = "search $search
-                  domain $domain
-                  nameserver $nameserver1
-                  nameserver $nameserver2
+              $str = "search ${search}
+                  domain ${domain}
+                  nameserver ${nameserver1}
+                  nameserver ${nameserver2}
                   "
 
-              file { "/etc/resolv.conf":
-                content => "$str",
+              file { '/etc/resolv.conf':
+                content => $str,
               }
           }
 

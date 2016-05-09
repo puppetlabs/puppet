@@ -36,13 +36,13 @@ module Puppet
 
           # Equivalent resources:
 
-          file { "/etc/inetd.conf":
-            ensure => "/etc/inet/inetd.conf",
+          file { '/etc/inetd.conf':
+            ensure => '/etc/inet/inetd.conf',
           }
 
-          file { "/etc/inetd.conf":
+          file { '/etc/inetd.conf':
             ensure => link,
-            target => "/etc/inet/inetd.conf",
+            target => '/etc/inet/inetd.conf',
           }
 
       However, we recommend using `link` and `target` explicitly, since this

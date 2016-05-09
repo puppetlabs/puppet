@@ -19,9 +19,9 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
 
     or this can be overriden in the service resource parameters::
 
-        service { "myservice":
-          provider => "runit",
-          path => "/path/to/daemons",
+        service { 'myservice':
+          provider => 'runit',
+          path     => '/path/to/daemons',
         }
 
     This provider supports out of the box:
