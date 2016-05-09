@@ -2169,6 +2169,71 @@ end
     autorelation(:notify, rel_catalog)
   end
 
+  # Adds a block producing a single name (or list of names) of the given
+  # resource type name to conflict with.
+  #
+  # @example Conflict with files File['foo', 'bar']
+  #   conflict( 'file', {|| ['foo', 'bar'] })
+  #
+  # @param name [String] the name of a type of which one or several resources should be autorelated e.g. "file"
+  # @yield [ ] a block returning list of names of given type to conflict with
+  # @yieldreturn [String, Array<String>] one or several resource names for the named type
+  # @return [void]
+  # @dsl type
+  # @api public
+  #
+  def self.conflict(name, &block)
+    @conflicts ||= {}
+    @conflicts[name] = block
+  end
+
+  # Provides iteration over added conflicts (see {conflict}).
+  # @yieldparam type [String] the name of the type to conflict with
+  # @yieldparam block [Proc] a block producing one or several resources to conflict with (see {conflict}).
+  # @yieldreturn [void]
+  # @return [void]
+  def self.eachconflict
+    @conflicts ||= {}
+    @conflicts.each { |type,block|
+      yield(type, block)
+    }
+  end
+
+  # Check for declared conflicts between resources.
+  # See {conflict} for how to add an conflict.
+  # @param rel_catalog [Puppet::Resource::Catalog, nil] the catalog to
+  #   check conflicts against. Defaults to the current catalog (set when the
+  #   type instance was added to a catalog)
+  # @raise [Puppet::DevError] if there is no catalog
+  # @raise [Puppet::DevError] if conflicts were found
+  #
+  def conflict(rel_catalog = nil)
+    rel_catalog ||= catalog
+    raise(Puppet::DevError, "You cannot check conflicts without a catalog") unless rel_catalog
+
+    self.class.eachconflict { |type, block|
+      # Ignore any types we can't find, although that would be a bit odd.
+      next unless Puppet::Type.type(type)
+
+      # Retrieve the list of names from the block.
+      next unless list = self.instance_eval(&block)
+      list = [list] unless list.is_a?(Array)
+
+      # Collect the current prereqs
+      list.each { |dep|
+        # Support them passing objects directly, to save some effort.
+        unless dep.is_a? Puppet::Type
+          # Skip conflicts that we aren't managing
+          unless dep = rel_catalog.resource(type, dep)
+            next
+          end
+        end
+
+        raise(Puppet::DevError, "Resource #{self.type}[#{self.name}] conflicts with #{type}[#{dep.name}]")
+      }
+    }
+  end
+
   # Builds the dependencies associated with this resource.
   #
   # @return [Array<Puppet::Relationship>] list of relationships to other resources

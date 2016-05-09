@@ -208,4 +208,17 @@ Puppet::Type.newtype(:augeas) do
     end
   end
 
+  conflict(:file) do
+    cons = []
+    if incl = @parameters[:incl]
+      cons << incl.value
+    end
+
+    if context = @parameters[:context]
+      cons << context.value.gsub(%r{^/files}, '')
+    end
+
+    cons.flatten.uniq
+  end
+
 end
