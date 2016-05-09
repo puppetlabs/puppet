@@ -20,8 +20,8 @@ describe 'the then function' do
   end
 
   it 'produces undef if given value is undef' do
-    expect(compile_to_catalog(<<-SOURCE)).to have_resource('Notify[testing]')
-    notify{ "test${then(undef) |$x| { testing }}ing": }
+    expect(compile_to_catalog(<<-SOURCE)).to have_resource('Notify[test-Undef-ing]')
+    notify{ "test-${type(then(undef) |$x| { testing })}-ing": }
     SOURCE
   end
 

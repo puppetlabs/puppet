@@ -12,14 +12,14 @@ describe 'the dig function' do
   end
 
   it 'returns undef if given an undef key' do
-  expect(compile_to_catalog(<<-SOURCE)).to have_resource('Notify[testing]')
-    notify { "test${[testing].dig(undef)}ing": }
+  expect(compile_to_catalog(<<-SOURCE)).to have_resource('Notify[test-Undef-ing]')
+    notify { "test-${type([testing].dig(undef))}-ing": }
     SOURCE
   end
 
   it 'returns undef if starting with undef' do
-  expect(compile_to_catalog(<<-SOURCE)).to have_resource('Notify[testing]')
-    notify { "test${undef.dig(undef)}ing": }
+  expect(compile_to_catalog(<<-SOURCE)).to have_resource('Notify[test-Undef-ing]')
+    notify { "test-${type(undef.dig(undef))}-ing": }
     SOURCE
   end
 
