@@ -222,7 +222,7 @@ Puppet::Type.newtype(:augeas) do
 
     files = []
 
-    catalog.resources.find do |r| 
+    catalog.resources.each do |r| 
       next unless r.is_a?(Puppet::Type.type(:file))
 
       if p = r.parameter(:path)
