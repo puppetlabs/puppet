@@ -224,7 +224,13 @@ Puppet::Type.newtype(:augeas) do
 
     catalog.resources.find do |r| 
       next unless r.is_a?(Puppet::Type.type(:file))
-      next unless cons.include?(r.title)
+
+      if p = r.parameter(:path)
+        next unless cons.include?(p.value)
+      else
+        next unless cons.include?(r.title)
+      end
+
       next unless r.parameter(:content) || r.parameter(:source)
       
       if rep = r.parameter(:replace)
