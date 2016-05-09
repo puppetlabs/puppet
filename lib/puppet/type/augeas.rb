@@ -219,6 +219,22 @@ Puppet::Type.newtype(:augeas) do
     end
 
     cons.flatten.uniq
+
+    files = []
+
+    catalog.resources.find do |r| 
+      next unless r.is_a?(Puppet::Type.type(:file))
+      next unless cons.include?(r.title)
+      next unless r.parameter(:content) || r.parameter(:source)
+      
+      if rep = r.parameter(:replace)
+        next if rep.value == false
+      end
+
+      files << r
+    end
+
+    files
   end
 
 end
