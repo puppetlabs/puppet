@@ -256,7 +256,7 @@ describe 'The iterable support' do
   end
 
   it 'will produce the string Iterator[T] on to_s on an iterator instance with element type T' do
-    expect(Iterable.on(18).to_s).to eq('Iterator[Integer] value')
+    expect(Iterable.on(18).to_s).to eq('Iterator[Integer]-Value')
   end
 end
 end
