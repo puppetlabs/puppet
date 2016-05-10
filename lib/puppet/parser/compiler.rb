@@ -556,7 +556,15 @@ class Puppet::Parser::Compiler
     # of resources.
     resource = astnode.ensure_in_catalog(topscope)
 
-    resource.evaluate
+    # Evaluate the AST node unless it is the 'default' node. The 'default' node will
+    # then be evaluated together with other ENC added classes when #eval_definitions
+    # is called, giving those classes a chance to override definitions that the
+    # default node is using.
+    #
+    # If the 'default' node is evaluated right here, then any definition that it
+    # instantiates, will be evaluated during the #eval_definitions phase and
+    # before evaluation of classes included by ENC.
+    resource.evaluate unless astnode.name == 'default'
 
     @node_scope = topscope.class_scope(astnode)
   end

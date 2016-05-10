@@ -662,5 +662,34 @@ describe "Two step scoping for variables" do
         MANIFEST
       end
     end
+
+    it 'ENC-node instantiated class overrides class instantiated by default node' do
+      enc_node = Puppet::Node.new('the_node', { :classes => ['override'], :parameters => {}})
+
+      expect_the_message_to_be('Overridden Message', enc_node) do <<-MANIFEST
+      define defined_type_test($value) {
+        notify { 'something':
+          message => $value,
+        }
+      }
+
+      class base {
+        defined_type_test { 'foo':
+          value => 'Original Message',
+        }
+      }
+
+      class override {
+        Defined_type_test <| title == 'foo' |> {
+          value => 'Overridden Message',
+        }
+      }
+
+      node default {
+        include base
+      }
+      MANIFEST
+      end
+    end
   end
 end
