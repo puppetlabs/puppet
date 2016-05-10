@@ -35,7 +35,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     Note that this allows you to do something `launchctl` can't do, which is to
     be in a state of "stopped/enabled" or "running/disabled".
 
-    Note that this provider does not support overriding 'restart' or 'status'.
+    Note that this provider does not support overriding 'restart'
 
   EOT
 
@@ -217,6 +217,20 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
       raise Puppet::Error.new("Unable to parse launchd plist at path: #{job_path}")
     end
     [job_path, job_plist]
+  end
+
+  # when a service includes hasstatus=>false, we override the launchctl
+  # status mechanism and fall back to the base provider status method.
+  def status
+    if @resource && ((@resource[:hasstatus] == :false) || (@resource[:status]))
+      return super
+    else
+      if @property_hash[:status].nil?
+        :absent
+      else
+        @property_hash[:status]
+      end
+    end
   end
 
   # start the service. To get to a state of running/enabled, we need to
