@@ -459,6 +459,15 @@ describe 'Puppet Type System' do
       CODE
       expect(eval_and_collect_notices(code)).to eq(['true', 'true', 'false'])
     end
+
+    it 'will not allow dynamic constructs in type definition' do
+      code = <<-CODE
+      type Foo = Enum[$facts[os][family]]
+      notice(Foo)
+      CODE
+      expect{ eval_and_collect_notices(code) }.to raise_error(Puppet::Error,
+        /The expression <\$facts\[os\]\[family\]> is not a valid type specification/)
+    end
   end
 
   context 'Type mappings' do

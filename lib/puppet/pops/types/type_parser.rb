@@ -29,24 +29,14 @@ class TypeParser
   # @api public
   #
   def parse(string, context = nil)
-    # TODO: This state (@string) can be removed since the parse result of newer future parser
-    # contains a Locator in its SourcePosAdapter and the Locator keeps the string.
-    # This way, there is no difference between a parsed "string" and something that has been parsed
-    # earlier and fed to 'interpret'
-    #
-    @string = string
-    model = @parser.parse_string(@string)
-    if model
-      interpret(model.current, context)
-    else
-      raise_invalid_type_specification_error
-    end
+    model = @parser.parse_string(string)
+    interpret(model.current.body, context)
   end
 
   # @api private
   def interpret(ast, context)
     result = @type_transformer.visit_this_1(self, ast, context)
-    raise_invalid_type_specification_error unless result.is_a?(PAnyType)
+    raise_invalid_type_specification_error(ast) unless result.is_a?(PAnyType)
     result
   end
 
@@ -57,7 +47,7 @@ class TypeParser
 
   # @api private
   def interpret_Object(o, context)
-    raise_invalid_type_specification_error
+    raise_invalid_type_specification_error(o)
   end
 
   # @api private
@@ -201,18 +191,18 @@ class TypeParser
   end
 
   # @api private
-  def interpret_AccessExpression(parameterized_ast, context)
-    parameters = parameterized_ast.keys.collect { |param| interpret_any(param, context) }
+  def interpret_AccessExpression(ast, context)
+    parameters = ast.keys.collect { |param| interpret_any(param, context) }
 
-    qref = parameterized_ast.left_expr
-    raise_invalid_type_specification_error unless qref.is_a?(Model::QualifiedReference)
+    qref = ast.left_expr
+    raise_invalid_type_specification_error(ast) unless qref.is_a?(Model::QualifiedReference)
 
     type_name = qref.value
     case type_name
     when 'array'
       case parameters.size
       when 1
-        type = assert_type(parameters[0])
+        type = assert_type(ast, parameters[0])
       when 2
         if parameters[0].is_a?(PAnyType)
           type = parameters[0]
@@ -220,19 +210,19 @@ class TypeParser
             if parameters[1].is_a?(PIntegerType)
               size_type = parameters[1]
             else
-              assert_range_parameter(parameters[1])
+              assert_range_parameter(ast, parameters[1])
               TypeFactory.range(parameters[1], :default)
             end
         else
           type = :default
-          assert_range_parameter(parameters[0])
-          assert_range_parameter(parameters[1])
+          assert_range_parameter(ast, parameters[0])
+          assert_range_parameter(ast, parameters[1])
           size_type = TypeFactory.range(parameters[0], parameters[1])
         end
       when 3
-        type = assert_type(parameters[0])
-        assert_range_parameter(parameters[1])
-        assert_range_parameter(parameters[2])
+        type = assert_type(ast, parameters[0])
+        assert_range_parameter(ast, parameters[1])
+        assert_range_parameter(ast, parameters[2])
         size_type = TypeFactory.range(parameters[1], parameters[2])
       else
         raise_invalid_parameters_error('Array', '1 to 3', parameters.size)
@@ -245,8 +235,8 @@ class TypeParser
         if parameters[0].is_a?(PAnyType) && parameters[1].is_a?(PAnyType)
           TypeFactory.hash_of(parameters[1], parameters[0])
         else
-          assert_range_parameter(parameters[0])
-          assert_range_parameter(parameters[1])
+          assert_range_parameter(ast, parameters[0])
+          assert_range_parameter(ast, parameters[1])
           TypeFactory.hash_of(:default, :default, TypeFactory.range(parameters[0], parameters[1]))
         end
       when 3
@@ -254,17 +244,17 @@ class TypeParser
           if parameters[2].is_a?(PIntegerType)
             parameters[2]
           else
-            assert_range_parameter(parameters[2])
+            assert_range_parameter(ast, parameters[2])
             TypeFactory.range(parameters[2], :default)
           end
-        assert_type(parameters[0])
-        assert_type(parameters[1])
+        assert_type(ast, parameters[0])
+        assert_type(ast, parameters[1])
         TypeFactory.hash_of(parameters[1], parameters[0], size_type)
       when 4
-        assert_range_parameter(parameters[2])
-        assert_range_parameter(parameters[3])
-        assert_type(parameters[0])
-        assert_type(parameters[1])
+        assert_range_parameter(ast, parameters[2])
+        assert_range_parameter(ast, parameters[3])
+        assert_type(ast, parameters[0])
+        assert_type(ast, parameters[1])
         TypeFactory.hash_of(parameters[1], parameters[0], TypeFactory.range(parameters[2], parameters[3]))
       else
         raise_invalid_parameters_error('Hash', '2 to 4', parameters.size)
@@ -276,12 +266,12 @@ class TypeParser
           if parameters[0].is_a?(PIntegerType)
             parameters[0]
           else
-            assert_range_parameter(parameters[0])
+            assert_range_parameter(ast, parameters[0])
             TypeFactory.range(parameters[0], :default)
           end
         when 2
-          assert_range_parameter(parameters[0])
-          assert_range_parameter(parameters[1])
+          assert_range_parameter(ast, parameters[0])
+          assert_range_parameter(ast, parameters[1])
           TypeFactory.range(parameters[0], parameters[1])
         else
           raise_invalid_parameters_error('Collection', '1 to 2', parameters.size)
@@ -339,7 +329,7 @@ class TypeParser
         # min, max specification
         min = parameters[-2]
         min = (min == :default || min == 'default') ? 0 : min
-        assert_range_parameter(parameters[-1])
+        assert_range_parameter(ast, parameters[-1])
         max = parameters[-1]
         max = max == :default ? nil : max
         parameters = parameters[0, length-2]
@@ -361,7 +351,7 @@ class TypeParser
       # 1..m parameters being types (last two optionally integer or literal default
       raise_invalid_parameters_error('Struct', '1', parameters.size) unless parameters.size == 1
       h = parameters[0]
-      raise_invalid_type_specification_error unless h.is_a?(Hash)
+      raise_invalid_type_specification_error(ast) unless h.is_a?(Hash)
       TypeFactory.struct(h)
 
     when 'integer'
@@ -386,14 +376,14 @@ class TypeParser
       if parameters.size != 1
         raise_invalid_parameters_error('Iterable', 1, parameters.size)
       end
-      assert_type(parameters[0])
+      assert_type(ast, parameters[0])
       TypeFactory.iterable(parameters[0])
 
     when 'iterator'
       if parameters.size != 1
         raise_invalid_parameters_error('Iterator', 1, parameters.size)
       end
-      assert_type(parameters[0])
+      assert_type(ast, parameters[0])
       TypeFactory.iterator(parameters[0])
 
     when 'float'
@@ -417,12 +407,12 @@ class TypeParser
         if parameters[0].is_a?(PIntegerType)
           parameters[0]
         else
-          assert_range_parameter(parameters[0])
+          assert_range_parameter(ast, parameters[0])
           TypeFactory.range(parameters[0], :default)
         end
       when 2
-        assert_range_parameter(parameters[0])
-        assert_range_parameter(parameters[1])
+        assert_range_parameter(ast, parameters[0])
+        assert_range_parameter(ast, parameters[1])
         TypeFactory.range(parameters[0], parameters[1])
       else
         raise_invalid_parameters_error('String', '1 to 2', parameters.size)
@@ -434,7 +424,7 @@ class TypeParser
         raise_invalid_parameters_error('Optional', 1, parameters.size)
       end
       param = parameters[0]
-      assert_type(param) unless param.is_a?(String)
+      assert_type(ast, param) unless param.is_a?(String)
       TypeFactory.optional(param)
 
     when 'any', 'data', 'catalogentry', 'boolean', 'scalar', 'undef', 'numeric', 'default', 'semverrange'
@@ -446,7 +436,7 @@ class TypeParser
         TypeFactory.not_undef
       when 1
         param = parameters[0]
-        assert_type(param) unless param.is_a?(String)
+        assert_type(ast, param) unless param.is_a?(String)
         TypeFactory.not_undef(param)
       else
         raise_invalid_parameters_error("NotUndef", "0 to 1", parameters.size)
@@ -456,7 +446,7 @@ class TypeParser
       if parameters.size != 1
         raise_invalid_parameters_error('Type', 1, parameters.size)
       end
-      assert_type(parameters[0])
+      assert_type(ast, parameters[0])
       TypeFactory.type_type(parameters[0])
 
     when 'runtime'
@@ -499,18 +489,18 @@ class TypeParser
     end
   end
 
-  def assert_type(t)
-    raise_invalid_type_specification_error unless t.is_a?(PAnyType)
+  def assert_type(ast, t)
+    raise_invalid_type_specification_error(ast) unless t.is_a?(PAnyType)
     t
   end
 
-  def assert_range_parameter(t)
-    raise_invalid_type_specification_error unless TypeFactory.is_range_parameter?(t)
+  def assert_range_parameter(ast, t)
+    raise_invalid_type_specification_error(ast) unless TypeFactory.is_range_parameter?(t)
   end
 
-  def raise_invalid_type_specification_error
+  def raise_invalid_type_specification_error(ast)
     raise Puppet::ParseError,
-      "The expression <#{@string}> is not a valid type specification."
+      "The expression <#{original_text_of(ast)}> is not a valid type specification."
   end
 
   def raise_invalid_parameters_error(type, required, given)
@@ -528,7 +518,7 @@ class TypeParser
 
   def original_text_of(ast)
     position = Adapters::SourcePosAdapter.adapt(ast)
-    position.extract_text
+    position.extract_tree_text
   end
 end
 end
