@@ -16,7 +16,6 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
   before do
     Puppet::IndirectorTesting.indirection.terminus_class = :memory
     Puppet::IndirectorTesting.indirection.terminus.clear
-    handler.stubs(:check_authorization)
     handler.stubs(:warn_if_near_expiration)
   end
 
@@ -219,45 +218,36 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
   end
 
   describe "when processing a request" do
-    it "should return not_authorized_code if the request is not authorized" do
-      request = a_request_that_heads(Puppet::IndirectorTesting.new("my data"))
+    it "should raise not_authorized_error when authorization fails" do
+      data = Puppet::IndirectorTesting.new("my data")
+      indirection.save(data, "my data")
+      request = a_request_that_heads(data)
 
       handler.expects(:check_authorization).raises(Puppet::Network::AuthorizationError.new("forbidden"))
 
-      handler.call(request, response)
-
-      expect(response.code).to eq(not_authorized_code)
+      expect {
+        handler.call(request, response)
+      }.to raise_error(not_authorized_error)
     end
 
-    it "should return 'not found' if the indirection does not support remote requests" do
+    it "should raise not_found_error if the indirection does not support remote requests" do
       request = a_request_that_heads(Puppet::IndirectorTesting.new("my data"))
 
       indirection.expects(:allow_remote_requests?).returns(false)
 
-      handler.call(request, response)
-
-      expect(response.code).to eq(not_found_code)
+      expect {
+        handler.call(request, response)
+      }.to raise_error(not_found_error)
     end
 
-    it "should return 'bad request' if the environment does not exist" do
+    it "should raise ArgumentError if the environment does not exist" do
       Puppet.override(:environments => Puppet::Environments::Static.new()) do
         request = a_request_that_heads(Puppet::IndirectorTesting.new("my data"))
 
-        handler.call(request, response)
-
-        expect(response.code).to eq(bad_request_code)
+        expect {
+          handler.call(request, response)
+        }.to raise_error(ArgumentError)
       end
-    end
-
-    it "should serialize a controller exception when an exception is thrown while finding the model instance" do
-      request = a_request_that_finds(Puppet::IndirectorTesting.new("key"))
-      handler.expects(:do_find).raises(ArgumentError, "The exception")
-
-      handler.call(request, response)
-
-      expect(response.code).to eq(bad_request_code)
-      expect(response.body).to eq("The exception")
-      expect(response.type).to eq("text/plain")
     end
   end
 
@@ -273,24 +263,24 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       expect(response.type).to eq(Puppet::Network::FormatHandler.format(:pson))
     end
 
-    it "responds with a not_acceptable_code error when no accept header is provided" do
+    it "raises not_acceptable_error when no accept header is provided" do
       data = Puppet::IndirectorTesting.new("my data")
       indirection.save(data, "my data")
       request = a_request_that_finds(data, :accept_header => nil)
 
-      handler.call(request, response)
-
-      expect(response.code).to eq(not_acceptable_code)
+      expect {
+        handler.call(request, response)
+      }.to raise_error(not_acceptable_error)
     end
 
-    it "raises an error when no accepted formats are known" do
+    it "raises not_acceptable_error when no accepted formats are known" do
       data = Puppet::IndirectorTesting.new("my data")
       indirection.save(data, "my data")
       request = a_request_that_finds(data, :accept_header => "unknown, also/unknown")
 
-      handler.call(request, response)
-
-      expect(response.code).to eq(not_acceptable_code)
+      expect {
+        handler.call(request, response)
+      }.to raise_error(not_acceptable_error)
     end
 
     it "should pass the result through without rendering it if the result is a string" do
@@ -305,12 +295,13 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       expect(response.type).to eq(Puppet::Network::FormatHandler.format(:pson))
     end
 
-    it "should return a not_found_code when no model instance can be found" do
+    it "should raise not_found_error when no model instance can be found" do
       data = Puppet::IndirectorTesting.new("my data")
       request = a_request_that_finds(data, :accept_header => "unknown, text/pson")
 
-      handler.call(request, response)
-      expect(response.code).to eq(not_found_code)
+      expect {
+        handler.call(request, response)
+      }.to raise_error(not_found_error)
     end
   end
 
@@ -335,13 +326,13 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       expect(response.type).to eq(Puppet::Network::FormatHandler.format(:pson))
     end
 
-    it "should return a not_found_code when searching returns nil" do
+    it "should raise not_found_error when searching returns nil" do
       request = a_request_that_searches(Puppet::IndirectorTesting.new("nothing"), :accept_header => "unknown, text/pson")
       indirection.expects(:search).returns(nil)
 
-      handler.call(request, response)
-
-      expect(response.code).to eq(not_found_code)
+      expect {
+        handler.call(request, response)
+      }.to raise_error(not_found_error)
     end
   end
 
@@ -383,9 +374,10 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       indirection.save(data, "my data")
       request = a_request_that_destroys(data, :accept_header => "unknown, also/unknown")
 
-      handler.call(request, response)
+      expect {
+        handler.call(request, response)
+      }.to raise_error(not_acceptable_error)
 
-      expect(response.code).to eq(not_acceptable_code)
       expect(Puppet::IndirectorTesting.indirection.find("my data")).not_to be_nil
     end
   end
@@ -449,10 +441,11 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       data = Puppet::IndirectorTesting.new("my data")
       request = a_request_that_submits(data, :accept_header => "unknown, also/unknown")
 
-      handler.call(request, response)
+      expect {
+        handler.call(request, response)
+      }.to raise_error(not_acceptable_error)
 
       expect(Puppet::IndirectorTesting.indirection.find("my data")).to be_nil
-      expect(response.code).to eq(not_acceptable_code)
     end
   end
 
@@ -467,15 +460,13 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       expect(response.code).to eq(nil)
     end
 
-    it "should return a not_found_code when the model head call returns false" do
+    it "should raise not_found_error when the model head call returns false" do
       data = Puppet::IndirectorTesting.new("my data")
       request = a_request_that_heads(data)
 
-      handler.call(request, response)
-
-      expect(response.code).to eq(not_found_code)
-      expect(response.type).to eq("text/plain")
-      expect(response.body).to eq("Not Found: Could not find indirector_testing my data")
+      expect {
+        handler.call(request, response)
+      }.to raise_error(not_found_error)
     end
   end
 end
