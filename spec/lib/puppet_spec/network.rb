@@ -21,6 +21,10 @@ module PuppetSpec::Network
     Puppet::Network::HTTP::Error::HTTPNotAuthorizedError
   end
 
+  def method_not_allowed_error
+    Puppet::Network::HTTP::Error::HTTPMethodNotAllowedError
+  end
+
   def params
     { :environment => "production" }
   end

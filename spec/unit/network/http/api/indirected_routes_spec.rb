@@ -39,19 +39,19 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     end
 
     it "should fail if there is no environment specified" do
-      expect(lambda { handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", {}) }).to raise_error(ArgumentError)
+      expect(lambda { handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", {}) }).to raise_error(bad_request_error)
     end
 
     it "should fail if the environment is not alphanumeric" do
-      expect(lambda { handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", {:environment => "env ness"}) }).to raise_error(ArgumentError)
+      expect(lambda { handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", {:environment => "env ness"}) }).to raise_error(bad_request_error)
     end
 
     it "should fail if the indirection does not match the prefix" do
-      expect(lambda { handler.uri2indirection("GET", "#{master_url_prefix}/certificate/foo", params) }).to raise_error(ArgumentError)
+      expect(lambda { handler.uri2indirection("GET", "#{master_url_prefix}/certificate/foo", params) }).to raise_error(bad_request_error)
     end
 
     it "should fail if the indirection does not have the correct version" do
-      expect(lambda { handler.uri2indirection("GET", "#{Puppet::Network::HTTP::CA_URL_PREFIX}/v3/certificate/foo", params) }).to raise_error(ArgumentError)
+      expect(lambda { handler.uri2indirection("GET", "#{Puppet::Network::HTTP::CA_URL_PREFIX}/v3/certificate/foo", params) }).to raise_error(bad_request_error)
     end
 
     it "should not pass a buck_path parameter through (See Bugs #13553, #13518, #13511)" do
@@ -75,7 +75,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     end
 
     it "should fail if the indirection name is not alphanumeric" do
-      expect(lambda { handler.uri2indirection("GET", "#{master_url_prefix}/foo ness/bar", params) }).to raise_error(ArgumentError)
+      expect(lambda { handler.uri2indirection("GET", "#{master_url_prefix}/foo ness/bar", params) }).to raise_error(bad_request_error)
     end
 
     it "should use the remainder of the URI as the indirection key" do
@@ -87,7 +87,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     end
 
     it "should fail if no indirection key is specified" do
-      expect(lambda { handler.uri2indirection("GET", "#{master_url_prefix}/node", params) }).to raise_error(ArgumentError)
+      expect(lambda { handler.uri2indirection("GET", "#{master_url_prefix}/node", params) }).to raise_error(bad_request_error)
     end
 
     it "should choose 'find' as the indirection method if the http method is a GET and the indirection name is singular" do
@@ -123,7 +123,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     end
 
     it "should fail if an indirection method cannot be picked" do
-      expect(lambda { handler.uri2indirection("UPDATE", "#{master_url_prefix}/node/bar", params) }).to raise_error(ArgumentError)
+      expect(lambda { handler.uri2indirection("UPDATE", "#{master_url_prefix}/node/bar", params) }).to raise_error(method_not_allowed_error)
     end
 
     it "should not URI unescape the indirection key" do
@@ -145,7 +145,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
                                                  Not(has_entry(:environment)))
       expect(lambda { handler.uri2indirection("GET",
                                               "#{master_url_prefix}/node/bar",
-                                              {:environment => 'bogus'}) }).to raise_error(ArgumentError)
+                                              {:environment => 'bogus'}) }).to raise_error(not_found_error)
     end
 
     it "should not URI unescape the indirection key as passed through to a call to check_authorization" do
@@ -240,13 +240,13 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       }.to raise_error(not_found_error)
     end
 
-    it "should raise ArgumentError if the environment does not exist" do
+    it "should raise not_found_error if the environment does not exist" do
       Puppet.override(:environments => Puppet::Environments::Static.new()) do
         request = a_request_that_heads(Puppet::IndirectorTesting.new("my data"))
 
         expect {
           handler.call(request, response)
-        }.to raise_error(ArgumentError)
+        }.to raise_error(not_found_error)
       end
     end
   end
