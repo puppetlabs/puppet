@@ -210,7 +210,7 @@ module Puppet::Pops::Types
 
     def to_s
       et = element_type
-      et.nil? ? 'Iterator value' : "Iterator[#{et.generalize}] value"
+      et.nil? ? 'Iterator-Value' : "Iterator[#{et.generalize}]-Value"
     end
 
     def unbounded?
