@@ -398,7 +398,7 @@
 #
 # Creating a SemVer
 # ---
-# A SemVer object represents a single [Semantic Versions](http://semver.org/).
+# A SemVer object represents a single [Semantic Version](http://semver.org/).
 # It can be created from a String, individual values for its parts, or a hash specifying the value per part.
 # See the specification at [semver.org](http://semver.org/) for the meaning of the SemVer's parts.
 #
@@ -433,7 +433,7 @@
 #
 # ~~~ puppet
 #
-# # Note that as a type, SemVer can describe disjunct ranges which versions can be matched
+# # As a type, SemVer can describe disjunct ranges which versions can be matched
 # # against - here the type is constructed with two SemVerRange objects.
 # $t = SemVer[SemVerRange('>=1.0.0 <2.0.0'), SemVerRange('>=3.0.0 <4.0.0')]
 # notice(SemVer('1.2.3') =~ $t) # true
@@ -447,8 +447,8 @@
 # A SemVerRange object represents a range of SemVer. It can be created from
 # a String, from two SemVer instances, where either end can be given as
 # a literal `default` to indicate infinity. The string format of a SemVerRange is specified by
-# the [SemVer Range Grammar](https://github.com/npm/node-semver#range-grammar).
-#
+# the [Semantic Version Range Grammar](https://github.com/npm/node-semver#ranges).
+# Use of the comparator sets described in the grammar (joining with `||`) is not supported.
 #
 # The signatures are:
 #
