@@ -396,6 +396,82 @@
 # Conversion to a `Struct` works exactly as conversion to a `Hash`, only that the constructed hash is
 # asserted against the given struct type.
 #
+# Creating a SemVer
+# ---
+# A SemVer object represents a single [Semantic Version](http://semver.org/).
+# It can be created from a String, individual values for its parts, or a hash specifying the value per part.
+# See the specification at [semver.org](http://semver.org/) for the meaning of the SemVer's parts.
+#
+# The signatures are:
+#
+# ~~~ puppet
+#
+# type PositiveInteger = Integer[0,default]
+# type SemVerQualifier = Pattern[/\A(?<part>[0-9A-Za-z-]+)(?:\.\g<part>)*\Z/]
+# type SemVerString = String[1]
+# type SemVerHash =Struct[{
+#   major                => PositiveInteger,
+#   minor                => PositiveInteger,
+#   patch                => PositiveInteger,
+#   Optional[prerelease] => SemVerQualifier,
+#   Optional[build]      => SemVerQualifier
+# }]
+# 
+# function SemVer.new(SemVerString $str)
+# function SemVer.new(
+#         PositiveInteger           $major
+#         PositiveInteger           $minor
+#         PositiveInteger           $patch
+#         Optional[SemVerQualifier] $prerelease = undef
+#         Optional[SemVerQualifier] $build = undef
+#         )
+# function SemVer.new(SemVerHash $hash_args)
+#
+# ~~~
+#
+# Examples of SemVer and SemVerRange usage:
+#
+# ~~~ puppet
+#
+# # As a type, SemVer can describe disjunct ranges which versions can be matched
+# # against - here the type is constructed with two SemVerRange objects.
+# $t = SemVer[SemVerRange('>=1.0.0 <2.0.0'), SemVerRange('>=3.0.0 <4.0.0')]
+# notice(SemVer('1.2.3') =~ $t) # true
+# notice(SemVer('2.3.4') =~ $t) # false
+# notice(SemVer('3.4.5') =~ $t) # true
+#
+# ~~~
+#
+# Creating a SemVerRange
+# ---
+# A SemVerRange object represents a range of SemVer. It can be created from
+# a String, from two SemVer instances, where either end can be given as
+# a literal `default` to indicate infinity. The string format of a SemVerRange is specified by
+# the [Semantic Version Range Grammar](https://github.com/npm/node-semver#ranges).
+# Use of the comparator sets described in the grammar (joining with `||`) is not supported.
+#
+# The signatures are:
+#
+# ~~~ puppet
+# type SemVerRangeString = String[1]
+# type SemVerRangeHash = Struct[{
+#   min                   => Variant[default, SemVer],
+#   Optional[max]         => Variant[default, SemVer],
+#   Optional[exclude_max] => Boolean
+# }]
+# 
+# function SemVerRange.new( SemVerRangeString $semver_range_string)
+# 
+# function SemVerRange.new(
+#               Variant[default,SemVer] $min
+#               Variant[default,SemVer] $max
+#               Optional[Boolean]       $exclude_max = undef
+#             }
+# function SemVerRange.new(SemVerRangeHash $semver_range_hash)
+# ~~~
+#
+# For examples, see `SemVer.new`.
+#
 # @since 4.5.0
 #
 Puppet::Functions.create_function(:new, Puppet::Functions::InternalFunction) do
