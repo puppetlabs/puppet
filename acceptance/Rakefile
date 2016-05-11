@@ -293,7 +293,9 @@ def get_test_sample
           ]
 
   # Add any tests modified within the last two weeks to the list
-  modified = `git log --name-only --pretty="format:" --since 2.weeks ./tests`
+  # Note that we use diff-filter to only include (A)dded or (M)odified
+  # files, carefully omitting (D)eleted files since, well, they're gone now.
+  modified = `git log --diff-filter=AM --name-only --pretty="format:" --since 2.weeks ./tests`
   tests += modified.split("\n").reject { |s| s.empty? }.collect { |s| s.sub('acceptance/', '')}
 
   tests.uniq
