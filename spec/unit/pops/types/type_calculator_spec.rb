@@ -208,6 +208,25 @@ describe 'The type calculator' do
       end
     end
 
+    context 'version' do
+      it 'translates to PVersionType' do
+        expect(calculator.infer(Semantic::Version.new(1,0,0)).class).to eq(PSemVerType)
+      end
+
+      it 'range translates to PVersionRangeType' do
+        expect(calculator.infer(Semantic::VersionRange.parse('1.x')).class).to eq(PSemVerRangeType)
+      end
+
+      it 'translates to a limited PVersionType by infer_set' do
+        v = Semantic::Version.new(1,0,0)
+        t = calculator.infer_set(v)
+        expect(t.class).to eq(PSemVerType)
+        expect(t.ranges.size).to eq(1)
+        expect(t.ranges[0].min).to eq(v)
+        expect(t.ranges[0].max).to eq(v)
+      end
+    end
+
     context 'array' do
       it 'translates to PArrayType' do
         expect(calculator.infer([1,2]).class).to eq(PArrayType)
