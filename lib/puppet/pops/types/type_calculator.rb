@@ -312,6 +312,8 @@ class TypeCalculator
         infer_set_Array(o)
       when Hash
         infer_set_Hash(o)
+      when Semantic::Version
+        infer_set_Version(o)
       else
         infer_set_Object(o)
     end
@@ -724,7 +726,7 @@ class TypeCalculator
 
   # @api private
   def infer_set_Version(o)
-    PSemVerType.new(PSemVerRangeType.new(o, o))
+    PSemVerType.new(Semantic::VersionRange.new(o, o))
   end
 
   def unwrap_single_variant(possible_variant)
