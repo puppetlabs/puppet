@@ -93,7 +93,7 @@
 # $a_number = Integer("0xFF", 16)  # results in 255
 # $a_number = Numeric("010")       # results in 8
 # $a_number = Numeric("010", 10)   # results in 10
-# $a_number = Integer("true")      # results in 1
+# $a_number = Integer(true)        # results in 1
 # ~~~
 #
 # Conversion to Float
@@ -125,7 +125,7 @@
 # @example Converting to Numeric
 #
 # ~~~ puppet
-# $a_number = Numeric("true")  # results in 1
+# $a_number = Numeric(true)    # results in 1
 # $a_number = Numeric("0xFF")  # results in 255
 # $a_number = Numeric("010")   # results in 8
 # $a_number = Numeric("3.14")  # results in 3.14 (a float)
