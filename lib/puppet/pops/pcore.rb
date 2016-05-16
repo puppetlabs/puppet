@@ -15,7 +15,7 @@ module Pcore
   end
 
   def self.add_type(type, loader)
-    loader.set_entry(Loader::Loader::TypedName.new(:type, type.name.downcase), type)
+    loader.set_entry(Loader::TypedName.new(:type, type.name.downcase), type)
   end
 
   def self.register_implementations(*impls)

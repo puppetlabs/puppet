@@ -15,7 +15,7 @@ describe 'loader helper classes' do
   end
 
   it 'TypedName holds values and is frozen' do
-    tn = Puppet::Pops::Loader::Loader::TypedName.new(:function, '::foo::bar')
+    tn = Puppet::Pops::Loader::TypedName.new(:function, '::foo::bar')
     expect(tn.frozen?).to be_truthy
     expect(tn.type).to eq(:function)
     expect(tn.name_parts).to eq(['foo', 'bar'])
@@ -320,7 +320,7 @@ describe 'loaders' do
   end
 
   def typed_name(type, name)
-    Puppet::Pops::Loader::Loader::TypedName.new(type, name)
+    Puppet::Pops::Loader::TypedName.new(type, name)
   end
 
   def config_dir(config_name)

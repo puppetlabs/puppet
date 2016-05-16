@@ -46,7 +46,7 @@ class TypeDefinitionInstantiator
   end
 
   def self.create_from_model(type_definition, loader)
-    typed_name = Loader::TypedName.new(:type, type_definition.name.downcase)
+    typed_name = TypedName.new(:type, type_definition.name.downcase)
     type = create_type(type_definition, loader)
     loader.set_entry(
       typed_name,

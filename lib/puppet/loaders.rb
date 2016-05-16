@@ -3,6 +3,7 @@ module Puppet
     require 'puppet/pops/loaders'
 
     module Loader
+      require 'puppet/pops/loader/typed_name'
       require 'puppet/pops/loader/loader'
       require 'puppet/pops/loader/base_loader'
       require 'puppet/pops/loader/gem_support'
