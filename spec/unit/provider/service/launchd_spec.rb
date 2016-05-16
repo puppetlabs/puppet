@@ -7,7 +7,7 @@ describe Puppet::Type.type(:service).provider(:launchd) do
   let (:plistlib) { Puppet::Util::Plist }
   let (:joblabel) { "com.foo.food" }
   let (:provider) { subject.class }
-  let(:resource) { Puppet::Type.type(:service).new(:name => joblabel, :provider => :launchd) }
+  let (:resource) { Puppet::Type.type(:service).new(:name => joblabel, :provider => :launchd) }
   let (:launchd_overrides_6_9) { '/var/db/launchd.db/com.apple.launchd/overrides.plist' }
   let (:launchd_overrides_10_) { '/var/db/com.apple.xpc.launchd/disabled.plist' }
   subject { resource.provider }
@@ -20,9 +20,9 @@ describe Puppet::Type.type(:service).provider(:launchd) do
 
   describe 'the status of the services' do
     it "should call the external command 'launchctl list' once" do
-     provider.expects(:launchctl).with(:list).returns(joblabel)
-     provider.expects(:jobsearch).with(nil).returns({joblabel => "/Library/LaunchDaemons/#{joblabel}"})
-     provider.prefetch({})
+      provider.expects(:launchctl).with(:list).returns(joblabel)
+      provider.expects(:jobsearch).with(nil).returns({joblabel => "/Library/LaunchDaemons/#{joblabel}"})
+      provider.prefetch({})
     end
     it "should return stopped if not listed in launchctl list output" do
       provider.expects(:launchctl).with(:list).returns('com.bar.is_running')
@@ -36,6 +36,31 @@ describe Puppet::Type.type(:service).provider(:launchd) do
     end
     after :each do
       provider.instance_variable_set(:@job_list, nil)
+    end
+
+    describe "when hasstatus is set to false" do
+      before :each do
+        resource[:hasstatus] = :false
+      end
+
+      it "should use the user-provided status command if present and return running if true" do
+        resource[:status] = '/bin/true'
+        subject.expects(:texecute).with(:status, ["/bin/true"], false).returns(0)
+        $CHILD_STATUS.stubs(:exitstatus).returns(0)
+        expect(subject.status).to eq(:running)
+      end
+
+      it "should use the user-provided status command if present and return stopped if false" do
+        resource[:status] = '/bin/false'
+        subject.expects(:texecute).with(:status, ["/bin/false"], false).returns(nil)
+        $CHILD_STATUS.stubs(:exitstatus).returns(1)
+        expect(subject.status).to eq(:stopped)
+      end
+
+      it "should fall back to getpid if no status command is provided" do
+        subject.expects(:getpid).returns(123)
+        expect(subject.status).to eq(:running)
+      end
     end
   end
 
