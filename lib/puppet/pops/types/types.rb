@@ -1294,7 +1294,7 @@ class PRegexpType < PScalarType
   def initialize(pattern)
     if pattern.is_a?(Regexp)
       @regexp = pattern
-      @pattern = pattern.source
+      @pattern = pattern.options == 0 ? pattern.source : pattern.to_s
     else
       @pattern = pattern
     end
