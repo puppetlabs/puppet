@@ -82,7 +82,7 @@ private
   def unique_sections_in(ini, file, allowed_section_names)
     ini.section_lines.collect do |section|
       if !allowed_section_names.empty? && !allowed_section_names.include?(section.name)
-        raise(Puppet::Error, "Illegal section '#{section.name}' in config file #{file} at line #{section.line_number}. The only valid puppet.conf sections are: [#{allowed_section_names.join(", ")}]. Please use the directory environments feature to specify environments. (See https://docs.puppetlabs.com/puppet/latest/reference/environments.html)")
+        raise(Puppet::Error, "Illegal section '#{section.name}' in config file #{file} at line #{section.line_number}. The only valid puppet.conf sections are: [#{allowed_section_names.join(", ")}]. Please use the directory environments feature to specify environments. (See https://docs.puppet.com/puppet/latest/reference/environments.html)")
       end
       section.name
     end.uniq
