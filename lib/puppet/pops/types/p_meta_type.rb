@@ -2,8 +2,18 @@
 # @api private
 module Puppet::Pops
 module Types
+
+KEY_NAME = 'name'.freeze
+KEY_TYPE = 'type'.freeze
+KEY_VALUE = 'value'.freeze
+
 class PMetaType < PAnyType
-  KEY_NAME = 'name'.freeze
+  include Annotatable
+
+  def accept(visitor, guard)
+    annotatable_accept(visitor, guard)
+    super
+  end
 
   # Called from the TypeParser once it has found a type using the Loader. The TypeParser will
   # interpret the contained expression and the resolved type is remembered. This method also
@@ -55,6 +65,14 @@ class PMetaType < PAnyType
     else
       o
     end
+  end
+
+  # Returns the expanded string the form of the alias, e.g. <alias name> = <resolved type>
+  #
+  # @return [String] the expanded form of this alias
+  # @api public
+  def to_s
+    TypeFormatter.singleton.alias_expanded_string(self)
   end
 end
 end

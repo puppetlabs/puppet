@@ -342,13 +342,13 @@ class TypeFormatter
         append_array('Object') do
           append_hash(t.i12n_hash.each, proc { |k| @bld << symbolic_key(k) }) do |k,v|
             case k
-            when PObjectType::KEY_ATTRIBUTES, PObjectType::KEY_FUNCTIONS
+            when KEY_ATTRIBUTES, KEY_FUNCTIONS
               # Types might need to be output as type references
               append_hash(v) do |_, fv|
                 if fv.is_a?(Hash)
                   append_hash(fv, proc { |fak| @bld << symbolic_key(fak) }) do |fak,fav|
                     case fak
-                    when PObjectType::KEY_KIND
+                    when KEY_KIND
                       @bld << fav
                     else
                       append_string(fav)
@@ -358,7 +358,7 @@ class TypeFormatter
                   append_string(fv)
                 end
               end
-            when PObjectType::KEY_EQUALITY
+            when KEY_EQUALITY
               append_array('') { append_strings(v) } if v.is_a?(Array)
             else
               append_string(v)

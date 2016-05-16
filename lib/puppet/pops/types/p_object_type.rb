@@ -3,29 +3,23 @@ require_relative 'ruby_generator'
 module Puppet::Pops
 module Types
 
+KEY_ATTRIBUTES = 'attributes'.freeze
+KEY_CHECKS = 'checks'.freeze
+KEY_EQUALITY = 'equality'.freeze
+KEY_EQUALITY_INCLUDE_TYPE = 'equality_include_type'.freeze
+KEY_FINAL = 'final'.freeze
+KEY_FUNCTIONS = 'functions'.freeze
+KEY_KIND = 'kind'.freeze
+KEY_OVERRIDE = 'override'.freeze
+KEY_PARENT = 'parent'.freeze
+
 # @api public
 class PObjectType < PMetaType
-  KEY_ANNOTATIONS = 'annotations'.freeze
-  KEY_ATTRIBUTES = 'attributes'.freeze
-  KEY_CHECKS = 'checks'.freeze
-  KEY_EQUALITY = 'equality'.freeze
-  KEY_EQUALITY_INCLUDE_TYPE = 'equality_include_type'.freeze
-  KEY_FINAL = 'final'.freeze
-  KEY_FUNCTIONS = 'functions'.freeze
-  KEY_KIND = 'kind'.freeze
-  KEY_OVERRIDE = 'override'.freeze
-  KEY_PARENT = 'parent'.freeze
-  KEY_TYPE = 'type'.freeze
-  KEY_VALUE = 'value'.freeze
 
   ATTRIBUTE_KIND_CONSTANT = 'constant'.freeze
   ATTRIBUTE_KIND_DERIVED = 'derived'.freeze
   ATTRIBUTE_KIND_GIVEN_OR_DERIVED = 'given_or_derived'.freeze
   TYPE_ATTRIBUTE_KIND = TypeFactory.enum(ATTRIBUTE_KIND_CONSTANT, ATTRIBUTE_KIND_DERIVED, ATTRIBUTE_KIND_GIVEN_OR_DERIVED)
-
-  TYPE_ANNOTATION_KEY_TYPE = PType::DEFAULT # TBD
-  TYPE_ANNOTATION_VALUE_TYPE = PStructType::DEFAULT #TBD
-  TYPE_ANNOTATIONS = PHashType.new(TYPE_ANNOTATION_KEY_TYPE, TYPE_ANNOTATION_VALUE_TYPE)
 
   TYPE_OBJECT_NAME = Pcore::TYPE_QUALIFIED_REFERENCE
   TYPE_MEMBER_NAME = PPatternType.new([PRegexpType.new(Patterns::PARAM_NAME)])
@@ -69,6 +63,7 @@ class PObjectType < PMetaType
   # @abstract Encapsulates behavior common to {PAttribute} and {PFunction}
   # @api public
   class PAnnotatedMember
+    include Annotatable
 
     # @return [PObjectType] the object type containing this member
     # @api public
@@ -81,10 +76,6 @@ class PObjectType < PMetaType
     # @return [PAnyType] the type of this member
     # @api public
     attr_reader :type
-
-    # @return [Hash{PType => Hash}] the annotations or `nil`
-    # @api public
-    attr_reader :annotations
 
     # @param name [String] The name of the member
     # @param container [PObjectType] The containing object type
@@ -102,8 +93,7 @@ class PObjectType < PMetaType
       @override = false if @override.nil?
       @final = i12n_hash[KEY_FINAL]
       @final = false if @final.nil?
-      @annotations = i12n_hash[KEY_ANNOTATIONS]
-      @annotations.freeze unless @annotations.nil?
+      init_annotatable(i12n_hash)
     end
 
     # Delegates to the contained type
@@ -111,8 +101,8 @@ class PObjectType < PMetaType
     # @param guard [RecursionGuard] guard against recursion. Only used by internal calls
     # @api public
     def accept(visitor, guard)
+      annotatable_accept(visitor, guard)
       @type.accept(visitor, guard)
-      @annotations.each_key { |key| key.accept(visitor, guard) } unless @annotations.nil?
     end
 
     # Checks if the this _member_ overrides an inherited member, and if so, that this member is declared with override = true and that
@@ -531,9 +521,7 @@ class PObjectType < PMetaType
     @equality = equality
 
     @checks = i12n_hash[KEY_CHECKS]
-
-    @annotations = i12n_hash[KEY_ANNOTATIONS]
-    @annotations.freeze unless @annotations.nil?
+    init_annotatable(i12n_hash)
   end
 
   def [](name)
@@ -551,7 +539,6 @@ class PObjectType < PMetaType
       @parent.accept(visitor, g) unless parent.nil?
       @attributes.values.each { |a| a.accept(visitor, g) }
       @functions.values.each { |f| f.accept(visitor, g) }
-      @annotations.each_key { |key| key.accept(visitor, g) } unless @annotations.nil?
     end
   end
 
@@ -591,14 +578,13 @@ class PObjectType < PMetaType
   # @return [Hash{String=>Object}] the features hash
   # @api public
   def i12n_hash(include_name = true)
-    result = {}
+    result = super()
     result[KEY_NAME] = @name if include_name && !@name.nil?
     result[KEY_PARENT] = @parent unless @parent.nil?
     result[KEY_ATTRIBUTES] = compressed_members_hash(@attributes) unless @attributes.empty?
     result[KEY_FUNCTIONS] = compressed_members_hash(@functions) unless @functions.empty?
     result[KEY_EQUALITY] = @equality unless @equality.nil?
     result[KEY_CHECKS] = @checks unless @checks.nil?
-    result[KEY_ANNOTATIONS] = @annotations unless @annotations.nil?
     result
   end
 
@@ -686,14 +672,6 @@ class PObjectType < PMetaType
       raise Puppet::Error, "The Object type '#{originator.label}' inherits from itself" if @parent.equal?(originator)
       @parent.check_self_recursion(originator)
     end
-  end
-
-  # Returns the expanded string the form of the alias, e.g. <alias name> = <resolved type>
-  #
-  # @return [String] the expanded form of this alias
-  # @api public
-  def to_s
-    TypeFormatter.singleton.alias_expanded_string(self)
   end
 
   # @api private
