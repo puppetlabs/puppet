@@ -26,6 +26,25 @@ class PSemVerType < PScalarType
     super ^ @ranges.hash
   end
 
+  # Creates a SemVer version from the given _version_ argument. If the argument is `nil` or
+  # a {Semantic::Version}, it is returned. If it is a {String}, it will be parsed into a
+  # {Semantic::Version}. Any other class will raise an {ArgumentError}.
+  #
+  # @param version [Semantic::Version,String,nil] the version to convert
+  # @return [Semantic::Version] the converted version
+  # @raise [ArgumentError] when the argument cannot be converted into a version
+  #
+  def self.convert(version)
+    case version
+    when nil, Semantic::Version
+      version
+    when String
+      Semantic::Version.parse(version)
+    else
+      raise ArgumentError, "Unable to convert a #{version.class.name} to a SemVer"
+    end
+  end
+
   # @api private
   def self.new_function(_, loader)
     @@new_function ||= Puppet::Functions.create_loaded_function(:new_Version, loader) do

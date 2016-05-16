@@ -28,6 +28,25 @@ class PSemVerRangeType < PScalarType
     end
   end
 
+  # Creates a {Semantic::VersionRange} from the given _version_range_ argument. If the argument is `nil` or
+  # a {Semantic::VersionRange}, it is returned. If it is a {String}, it will be parsed into a
+  # {Semantic::VersionRange}. Any other class will raise an {ArgumentError}.
+  #
+  # @param version_range [Semantic::VersionRange,String,nil] the version range to convert
+  # @return [Semantic::VersionRange] the converted version range
+  # @raise [ArgumentError] when the argument cannot be converted into a version range
+  #
+  def self.convert(version_range)
+    case version_range
+    when nil, Semantic::VersionRange
+      version_range
+    when String
+      Semantic::VersionRange.parse(version_range)
+    else
+      raise ArgumentError, "Unable to convert a #{version_range.class.name} to a SemVerRange"
+    end
+  end
+
   # Checks if range _a_ is a sub-range of (i.e. completely covered by) range _b_
   # @param a [Semantic::VersionRange] the first range
   # @param b [Semantic::VersionRange] the second range

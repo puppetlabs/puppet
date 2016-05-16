@@ -13,6 +13,48 @@ describe 'Semantic Versions' do
       expect(t).to be_a(PSemVerType)
       expect(t).to eql(TypeFactory.sem_ver('>=1.0.0 <4.0.0'))
     end
+
+    context 'convert method' do
+      it 'returns nil on a nil argument' do
+        expect(PSemVerType.convert(nil)).to be_nil
+      end
+
+      it 'returns its argument when the argument is a version' do
+        v = Semantic::Version.new(1,0,0)
+        expect(PSemVerType.convert(v)).to equal(v)
+      end
+
+      it 'converts a valid version string argument to a version' do
+        v = Semantic::Version.new(1,0,0)
+        expect(PSemVerType.convert('1.0.0')).to eq(v)
+      end
+
+      it 'raises an error string that does not represent a valid version' do
+        expect{PSemVerType.convert('1-3')}.to raise_error(ArgumentError)
+      end
+    end
+  end
+
+  context 'the SemVerRange type' do
+     context 'convert method' do
+      it 'returns nil on a nil argument' do
+        expect(PSemVerRangeType.convert(nil)).to be_nil
+      end
+
+      it 'returns its argument when the argument is a version range' do
+        vr = Semantic::VersionRange.parse('1.x')
+        expect(PSemVerRangeType.convert(vr)).to equal(vr)
+      end
+
+      it 'converts a valid version string argument to a version range' do
+        vr = Semantic::VersionRange.parse('1.x')
+        expect(PSemVerRangeType.convert('1.x')).to eq(vr)
+      end
+
+      it 'raises an error string that does not represent a valid version range' do
+        expect{PSemVerRangeType.convert('x3')}.to raise_error(ArgumentError)
+      end
+    end
   end
 
   context 'when used in Puppet expressions' do
