@@ -553,6 +553,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   # password hash (and Salt/Iterations value if the OS is 10.8 or greater)
   # into the ShadowHashData key of the user's plist.
   def set_shadow_hash_data(users_plist, binary_plist)
+    binary_plist = Puppet::Util::Plist.string_to_blob(binary_plist)
     if users_plist.has_key?('ShadowHashData')
       users_plist['ShadowHashData'][0] = binary_plist
     else
@@ -595,7 +596,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     shadow_hash_data['SALTED-SHA512-PBKDF2'] = Hash.new unless shadow_hash_data['SALTED-SHA512-PBKDF2']
     case field
     when 'salt', 'entropy'
-      shadow_hash_data['SALTED-SHA512-PBKDF2'][field] = base64_decode_string(value)
+      shadow_hash_data['SALTED-SHA512-PBKDF2'][field] = Puppet::Util::Plist.string_to_blob(base64_decode_string(value))
     when 'iterations'
       shadow_hash_data['SALTED-SHA512-PBKDF2'][field] = Integer(value)
     else

@@ -849,13 +849,14 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     # This will also catch the edge-case where a 10.6-style user exists on
     # a 10.8 system and Puppet attempts to set a password
     it 'should not fail if shadow_hash_data is not a Hash' do
-      provider.expects(:base64_decode_string).with(pbkdf2_password_hash).returns('binary_string')
+      Puppet::Util::Plist.expects(:string_to_blob).with(provider.base64_decode_string(pbkdf2_password_hash)).returns('binary_string')
       provider.class.expects(:convert_hash_to_binary).with(entropy_shadow_hash_data).returns('binary_plist')
       provider.expects(:set_shadow_hash_data).with({'passwd' => '********'}, 'binary_plist')
       provider.set_salted_pbkdf2({}, false, 'entropy', pbkdf2_password_hash)
     end
 
     it "should set the PBKDF2 password hash when the 'entropy' field is passed with a valid password hash" do
+      Puppet::Util::Plist.expects(:string_to_blob).with(provider.base64_decode_string(pbkdf2_password_hash))
       provider.class.expects(:convert_hash_to_binary).with(pbkdf2_embedded_bplist_hash).returns(pbkdf2_embedded_plist)
       provider.expects(:set_shadow_hash_data).with(users_plist, pbkdf2_embedded_plist)
       users_plist.expects(:[]=).with('passwd', '********')
@@ -863,6 +864,7 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     end
 
     it "should set the PBKDF2 password hash when the 'salt' field is passed with a valid password hash" do
+      Puppet::Util::Plist.expects(:string_to_blob).with(provider.base64_decode_string(pbkdf2_salt_value))
       provider.class.expects(:convert_hash_to_binary).with(pbkdf2_embedded_bplist_hash).returns(pbkdf2_embedded_plist)
       provider.expects(:set_shadow_hash_data).with(users_plist, pbkdf2_embedded_plist)
       users_plist.expects(:[]=).with('passwd', '********')
