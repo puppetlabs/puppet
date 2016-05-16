@@ -21,7 +21,7 @@ class Runtime3TypeLoader < BaseLoader
   # @return [Loader::NamedEntry, nil found/created entry, or nil if not found
   #
   def find(typed_name)
-    return nil unless typed_name.type == :type
+    return nil unless typed_name.name_authority == Pcore::RUNTIME_NAME_AUTHORITY && typed_name.type == :type
 
     name = typed_name.name
     value = @environment.known_resource_types.find_definition(name)

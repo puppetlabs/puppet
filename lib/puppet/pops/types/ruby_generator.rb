@@ -74,10 +74,10 @@ class RubyGenerator < TypeFormatter
 
     # Emit registration of contained types
     unless class_names.empty?
-      bld << "Puppet::Pops::Pcore.register_implementations(\n"
+      bld << "Puppet::Pops::Pcore.register_implementations([\n"
       class_names.each { |class_name| bld << '  ' << class_name << ",\n" }
       bld.chomp!(",\n")
-      bld << ")\n\n"
+      bld << "])\n\n"
     end
     bld.chomp!("\n")
 

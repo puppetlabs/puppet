@@ -92,6 +92,9 @@ module ModuleLoaders
     # @return [Loader::NamedEntry, nil found/created entry, or nil if not found
     #
     def find(typed_name)
+      # This loader is tailored to only find entries in the current runtime
+      return nil unless typed_name.name_authority == Pcore::RUNTIME_NAME_AUTHORITY
+
       # Assume it is a global name, and that all parts of the name should be used when looking up
       name_part_index = 0
       name_parts = typed_name.name_parts
