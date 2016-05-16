@@ -246,6 +246,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
 
     Puppet::SSL::Oids.register_puppet_oids
+    Puppet::SSL::Oids.load_custom_oid_file(Puppet[:trusted_oid_mapping_file])
 
     Puppet::Util::Log.newdestination :console
 
