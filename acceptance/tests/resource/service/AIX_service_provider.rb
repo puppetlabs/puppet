@@ -46,6 +46,12 @@ def lssrc_assert_status(host, service, expected_status)
   end
 end
 
+teardown do
+  agents.each do |agent|
+    on(agent, "rmssys -s sloth_daemon", :allowable_exit_codes => [0,1])
+  end
+end
+
 agents.each do |agent|
 
   ## Setup
@@ -55,13 +61,8 @@ agents.each do |agent|
   on agent, "chmod +x #{sloth_daemon_path}"
   on agent, "mkssys -s sloth_daemon -p #{sloth_daemon_path} -u 0 -S -n 15 -f 9"
 
-  # Creating the service also starts it. Stop it before beginning the test.
-  ensure_service_on_host(agent, 'sloth_daemon', {:ensure => 'stopped'})
-
-  teardown do
-    on agent, "rmssys -s sloth_daemon"
-    on agent, "rm #{sloth_daemon_path}"
-  end
+  # Creating the service may also start it. Stop service before beginning the test.
+  on(agent, puppet_resource('service', 'sloth_daemon', 'ensure=stopped', 'enable=false'))
 
   ## Query
   step "Verify the service exists on #{agent}"
