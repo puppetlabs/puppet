@@ -54,7 +54,7 @@ class Loader
   # @api public
   #
   def load_typed(typed_name)
-    raise NotImplementedError.new
+    raise NotImplementedError, "Class #{self.class.name} must implement method #load_typed"
   end
 
   # Returns an already loaded entry if one exists, or nil. This does not trigger loading
@@ -66,7 +66,7 @@ class Loader
   # @api public
   #
   def loaded_entry(typed_name, check_dependencies = false)
-    raise NotImplementedError.new(self.class)
+    raise NotImplementedError, "Class #{self.class.name} must implement method #loaded_entry"
   end
 
   # Produces the value associated with the given name if defined **in this loader**, or nil if not defined.
@@ -96,7 +96,7 @@ class Loader
   # @api private
   #
   def find(typed_name)
-    raise NotImplementedError.new
+    raise NotImplementedError, "Class #{self.class.name} must implement method #find"
   end
 
   # Returns the parent of the loader, or nil, if this is the top most loader. This implementation returns nil.

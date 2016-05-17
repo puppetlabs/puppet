@@ -335,41 +335,39 @@ class TypeFormatter
   end
 
   # @api private
+  def string_PTypeSetType(t)
+    append_array('TypeSet') do
+      append_hash(t.i12n_hash.each, proc { |k| @bld << symbolic_key(k) }) do |k,v|
+        case k
+        when KEY_TYPES
+          old_ts = @type_set
+          @type_set = t
+          begin
+            append_hash(v, proc { |tk| @bld << symbolic_key(tk) }) do |tk, tv|
+              if tv.is_a?(Hash)
+                append_object_hash(tv)
+              else
+                append_string(tv)
+              end
+            end
+          rescue
+            @type_set = old_ts
+          end
+        when KEY_REFERENCES
+          append_hash(v, proc { |tk| @bld << symbolic_key(tk) })
+        else
+          append_string(v)
+        end
+      end
+    end
+  end
+
+  # @api private
   def string_PObjectType(t)
     if @expanded
-      begin
-        @expanded = false
-        append_array('Object') do
-          append_hash(t.i12n_hash.each, proc { |k| @bld << symbolic_key(k) }) do |k,v|
-            case k
-            when KEY_ATTRIBUTES, KEY_FUNCTIONS
-              # Types might need to be output as type references
-              append_hash(v) do |_, fv|
-                if fv.is_a?(Hash)
-                  append_hash(fv, proc { |fak| @bld << symbolic_key(fak) }) do |fak,fav|
-                    case fak
-                    when KEY_KIND
-                      @bld << fav
-                    else
-                      append_string(fav)
-                    end
-                  end
-                else
-                  append_string(fv)
-                end
-              end
-            when KEY_EQUALITY
-              append_array('') { append_strings(v) } if v.is_a?(Array)
-            else
-              append_string(v)
-            end
-          end
-        end
-      ensure
-        @expanded = true
-      end
+      append_object_hash(t.i12n_hash(@type_set.nil? || !@type_set.defines_type?(t)))
     else
-      @bld << t.label
+      @bld << (@type_set ? @type_set.name_for(t) : t.label)
     end
   end
 
@@ -392,10 +390,18 @@ class TypeFormatter
       @guard ||= RecursionGuard.new
       expand = (@guard.add_this(t) & RecursionGuard::SELF_RECURSION_IN_THIS) == 0
     end
-    @bld << t.name
-    if expand
-      @bld << ' = '
-      append_string(t.resolved_type)
+    if @type_set.nil?
+      @bld << t.name
+      if expand
+        @bld << ' = '
+        append_string(t.resolved_type)
+      end
+    else
+      if expand && @type_set.defines_type?(t)
+        append_string(t.resolved_type)
+      else
+        @bld << @type_set.name_for(t)
+      end
     end
   end
 
@@ -488,6 +494,40 @@ class TypeFormatter
 
   def range_array_part(t)
     t.nil? || t.unbounded? ? EMPTY_ARRAY : [t.from.nil? ? 'default' : t.from.to_s , t.to.nil? ? 'default' : t.to.to_s ]
+  end
+
+  def append_object_hash(hash)
+    begin
+      @expanded = false
+      append_array('Object') do
+        append_hash(hash, proc { |k| @bld << symbolic_key(k) }) do |k,v|
+          case k
+          when KEY_ATTRIBUTES, KEY_FUNCTIONS
+            # Types might need to be output as type references
+            append_hash(v) do |_, fv|
+              if fv.is_a?(Hash)
+                append_hash(fv, proc { |fak| @bld << symbolic_key(fak) }) do |fak,fav|
+                  case fak
+                  when KEY_KIND
+                    @bld << fav
+                  else
+                    append_string(fav)
+                  end
+                end
+              else
+                append_string(fv)
+              end
+            end
+          when KEY_EQUALITY
+            append_array('') { append_strings(v) } if v.is_a?(Array)
+          else
+            append_string(v)
+          end
+        end
+      end
+    ensure
+      @expanded = true
+    end
   end
 
   def append_elements(array, to_be_continued = false)

@@ -75,6 +75,10 @@ class TypeDefinitionInstantiator
       # No need for an alias. The Object type itself will receive the name instead
       i12n_hash_expr = type_expr.keys.empty? ? nil : type_expr.keys[0]
       Types::PObjectType.new(name, i12n_hash_expr)
+    when 'TypeSet'
+      # No need for an alias. The Object type itself will receive the name instead
+      i12n_hash_expr = type_expr.keys.empty? ? nil : type_expr.keys[0]
+      Types::PTypeSetType.new(name, i12n_hash_expr, name_authority)
     else
       Types::PTypeAliasType.new(name, type_expr)
     end

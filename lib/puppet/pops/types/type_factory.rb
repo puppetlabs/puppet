@@ -157,6 +157,10 @@ module TypeFactory
     hash.nil? || hash.empty? ? PObjectType::DEFAULT : PObjectType.new(hash)
   end
 
+  def self.type_set(hash = nil)
+    hash.nil? || hash.empty? ? PTypeSetType::DEFAULT : PTypeSetType.new(hash)
+  end
+
   def self.tuple(types = [], size_type = nil)
     PTupleType.new(types.map {|elem| type_of(elem) }, size_type)
   end
