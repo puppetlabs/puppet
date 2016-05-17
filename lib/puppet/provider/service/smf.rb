@@ -21,6 +21,8 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
   commands :adm => "/usr/sbin/svcadm", :svcs => "/usr/bin/svcs"
   commands :svccfg => "/usr/sbin/svccfg"
 
+  has_feature :refreshable
+
   def setupservice
       if resource[:manifest]
         [command(:svcs), "-l", @resource[:name]]
@@ -64,7 +66,12 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
   end
 
   def restartcmd
-    [command(:adm), :restart, @resource[:name]]
+    if Puppet::Util::Package.versioncmp(Facter.value(:kernelrelease), '5.11') >= 0
+      [command(:adm), :restart, "-s", @resource[:name]]
+    else
+      # Solaris 10 does not have synchronous restart
+      [command(:adm), :restart, @resource[:name]]
+    end
   end
 
   def startcmd
