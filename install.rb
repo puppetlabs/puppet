@@ -141,6 +141,7 @@ end
 def prepare_installation
   InstallOptions.configs = true
   InstallOptions.check_prereqs = true
+  InstallOptions.batch_files = true
 
   # Only try to do docs if we're sure they have rdoc
   if $haverdoc
@@ -200,6 +201,9 @@ def prepare_installation
     end
     opts.on('--[no-]check-prereqs', 'Prevents validation of prerequisite libraries', 'Default on') do |prereq|
       InstallOptions.check_prereqs = prereq
+    end
+    opts.on('--no-batch-files', 'Prevents installation of batch files for windows', 'Default off') do |batch_files|
+      InstallOptions.batch_files = false
     end
     opts.on('--quick', 'Performs a quick installation. Only the', 'installation is done.') do |quick|
       InstallOptions.rdoc    = false
@@ -413,7 +417,7 @@ def install_binfile(from, op_file, target)
     end
   end
 
-  if $operatingsystem == "windows"
+  if $operatingsystem == "windows" && InstallOptions.batch_files
     installed_wrapper = false
 
     unless File.extname(from).match(/\.(cmd|bat)/)
