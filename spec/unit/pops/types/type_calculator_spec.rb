@@ -806,6 +806,18 @@ describe 'The type calculator' do
         expect(empty_array_t).to be_assignable_to(array_t(string_t))
         expect(empty_array_t).to be_assignable_to(array_t(integer_t))
       end
+
+      it 'A Tuple is assignable to an array' do
+        expect(tuple_t(String)).to be_assignable_to(array_t(String))
+      end
+
+      it 'A Tuple with <n> elements is assignable to an array with min size <n>' do
+        expect(tuple_t(String,String)).to be_assignable_to(array_t(String, range_t(2, :default)))
+      end
+
+      it 'A Tuple with <n> elements where the last 2 are optional is assignable to an array with size <n> - 2' do
+        expect(constrained_tuple_t(range_t(2, :default), String,String,String,String)).to be_assignable_to(array_t(String, range_t(2, :default)))
+      end
     end
 
     context 'for Hash, such that' do
