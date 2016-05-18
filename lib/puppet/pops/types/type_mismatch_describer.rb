@@ -789,6 +789,14 @@ module Types
         else
           descriptions << SizeMismatch.new(path, expected_size, actual_size)
         end
+      elsif actual.is_a?(PHashType)
+        expected_size = expected.size_type
+        actual_size = actual.size_type || PCollectionType::DEFAULT_SIZE
+        if expected_size.nil? || expected_size.assignable?(actual_size)
+          descriptions << TypeMismatch.new(path, expected, actual)
+        else
+          descriptions << SizeMismatch.new(path, expected_size, actual_size)
+        end
       else
         descriptions << TypeMismatch.new(path, expected, actual)
       end

@@ -58,6 +58,16 @@ describe 'the type mismatch describer' do
     expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /expects size to be at least 1, got 0/)
   end
 
+  it 'will report a hash size mismatch' do
+    code = <<-CODE
+      function f(Hash[String,String,1,default] $h) {
+         $h['a']
+      }
+      f({})
+    CODE
+    expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /expects size to be at least 1, got 0/)
+  end
+
   it 'will include the aliased type when reporting a mismatch that involves an alias' do
     code = <<-CODE
       type UnprivilegedPort = Integer[1024,65537]
