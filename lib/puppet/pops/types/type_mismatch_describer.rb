@@ -745,6 +745,34 @@ module Types
       end
     end
 
+    def describe_PArrayType(expected, actual, path)
+      descriptions = []
+      element_type = expected.element_type || PAnyType::DEFAULT
+      if actual.is_a?(PTupleType)
+        types = actual.types
+        expected_size = expected.size_type || PCollectionType::DEFAULT_SIZE
+        actual_size = actual.size_type || PIntegerType.new(types.size, types.size)
+        if expected_size.assignable?(actual_size)
+          types.each_with_index do |type, idx|
+            descriptions.concat(describe(element_type, type, path + [ArrayPathElement.new(idx)])) unless element_type.assignable?(type)
+          end
+        else
+          descriptions << SizeMismatch.new(path, expected_size, actual_size)
+        end
+      elsif actual.is_a?(PArrayType)
+        expected_size = expected.size_type
+        actual_size = actual.size_type || PCollectionType::DEFAULT_SIZE
+        if expected_size.nil? || expected_size.assignable?(actual_size)
+          descriptions << TypeMismatch.new(path, expected, actual)
+        else
+          descriptions << SizeMismatch.new(path, expected_size, actual_size)
+        end
+      else
+        descriptions << TypeMismatch.new(path, expected, actual)
+      end
+      descriptions
+    end
+
     def describe_PHashType(expected, actual, path)
       descriptions = []
       key_type = expected.key_type || PAnyType::DEFAULT
@@ -915,6 +943,8 @@ module Types
           describe_PHashType(expected, actual, path)
         when PTupleType
           describe_PTupleType(expected, actual, path)
+        when PArrayType
+          describe_PArrayType(expected, actual, path)
         when PCallableType
           describe_PCallableType(expected, actual, path)
         when POptionalType
