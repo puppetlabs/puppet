@@ -25,7 +25,7 @@ describe 'the type mismatch describer' do
       }
       f(['a', 23])
     CODE
-    expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /expects an Array\[String\] value, got Tuple\[String, Integer\]/)
+    expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /'f' parameter 'h' index 1 expects a String value, got Integer/)
   end
 
   it 'will not report details for a mismatch between an array and a struct' do
@@ -46,6 +46,16 @@ describe 'the type mismatch describer' do
       f(['a', 23])
     CODE
     expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /expects a Hash value, got Tuple/)
+  end
+
+  it 'will report an array size mismatch' do
+    code = <<-CODE
+      function f(Array[String,1,default] $h) {
+        $h[0]
+      }
+      f([])
+    CODE
+    expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /expects size to be at least 1, got 0/)
   end
 
   it 'will include the aliased type when reporting a mismatch that involves an alias' do

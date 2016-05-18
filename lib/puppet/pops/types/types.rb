@@ -292,20 +292,6 @@ class PAnyType < TypedModelObject
     end
   end
 
-
-  # Transform size_type to min, max
-  # if size_type == nil the constraint is 1,1
-  # if size_type.from == nil min size = 1
-  # if size_type.to == nil max size == Infinity
-  #
-  # @api private
-  def type_to_range(size_type)
-    return [1,1] if size_type.nil?
-    from = size_type.from
-    to = size_type.to
-    [from.nil? ? 1 : from, to.nil? ? Float::INFINITY : to]
-  end
-
   # Applies a transformation by sending the given _method_ and _method_args_ to each of the types of the given array
   # and collecting the results in a new array. If all transformation calls returned the type instance itself (i.e. no
   # transformation took place), then this method will return `self`. If a transformation did occur, then this method
@@ -1086,10 +1072,13 @@ class PCollectionType < PAnyType
         (@size_type || DEFAULT_SIZE).assignable?(o.size_type || DEFAULT_SIZE, guard)
       when PTupleType
         # compute the tuple's min/max size, and check if that size matches
-        from, to = type_to_range(o.size_type)
-        from = o.types.size - 1 + from
-        to = o.types.size - 1 + to
-        (@size_type || DEFAULT_SIZE).assignable?(PIntegerType.new(from, to), guard)
+        size_s = size_type || DEFAULT_SIZE
+        size_o = o.size_type
+        if size_o.nil?
+          type_count = o.types.size
+          size_o = PIntegerType.new(type_count, type_count)
+        end
+        size_s.assignable?(size_o)
       when PStructType
         from = to = o.elements.size
         (@size_type || DEFAULT_SIZE).assignable?(PIntegerType.new(from, to), guard)
@@ -2008,26 +1997,14 @@ class PArrayType < PCollectionType
       # tuple can be assigned.
       return true if s_entry.nil?
 
-      return false unless o.types.all? {|o_element_t| s_entry.assignable?(o_element_t, guard) }
-      o_regular = o.types[0..-2]
-      o_ranged = o.types[-1]
-      o_from, o_to = type_to_range(o.size_type)
-      o_required = o_regular.size + o_from
-
-      # array type may be size constrained
+      o_types = o.types
       size_s = size_type || DEFAULT_SIZE
-      min, max = size_s.range
-      # Tuple with fewer min entries can not be assigned
-      return false if o_required < min
-      # Tuple with more optionally available entries can not be assigned
-      return false if o_regular.size + o_to > max
-      # each tuple type must be assignable to the element type
-      o_required.times do |index|
-        o_entry = tuple_entry_at(o, o_to, index)
-        return false unless s_entry.assignable?(o_entry, guard)
+      size_o = o.size_type
+      if size_o.nil?
+        type_count = o_types.size
+        size_o = PIntegerType.new(type_count, type_count)
       end
-      # ... and so must the last, possibly optional (ranged) type
-      s_entry.assignable?(o_ranged)
+      size_s.assignable?(size_o) && o_types.all? { |ot| s_entry.assignable?(ot, guard) }
     elsif o.is_a?(PArrayType)
       super && (s_entry.nil? || s_entry.assignable?(o.element_type, guard))
     else
