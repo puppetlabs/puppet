@@ -308,7 +308,7 @@ module Puppet
 
         This setting must have a value set to enable **directory environments.** The
         recommended value is `$codedir/environments`. For more details, see
-        https://docs.puppetlabs.com/puppet/latest/reference/environments.html",
+        <https://docs.puppet.com/puppet/latest/reference/environments.html>",
       :type    => :path,
     },
     :always_cache_features => {
@@ -1077,7 +1077,7 @@ EOT
         directory environments instead. If you need to use something other than the
         environment's `manifests` directory as the main manifest, you can set
         `manifest` in environment.conf. For more info, see
-        https://docs.puppetlabs.com/puppet/latest/reference/environments.html",
+        <https://docs.puppet.com/puppet/latest/reference/environments.html>",
     },
     :modulepath => {
       :default => "",
@@ -1091,7 +1091,7 @@ EOT
         directory environments instead. If you need to use something other than the
         default modulepath of `<ACTIVE ENVIRONMENT'S MODULES DIR>:$basemodulepath`,
         you can set `modulepath` in environment.conf. For more info, see
-        https://docs.puppetlabs.com/puppet/latest/reference/environments.html",
+        <https://docs.puppet.com/puppet/latest/reference/environments.html>",
     },
     :config_version => {
       :default    => "",
@@ -1103,7 +1103,7 @@ EOT
       Setting a global value for config_version in puppet.conf is not allowed
       (but it can be overridden from the commandline). Please set a
       per-environment value in environment.conf instead. For more info, see
-      https://docs.puppetlabs.com/puppet/latest/reference/environments.html",
+      <https://docs.puppet.com/puppet/latest/reference/environments.html>",
     }
   )
 
@@ -1215,7 +1215,7 @@ EOT
         These are the modules that will be used by _all_ environments. Note that
         the `modules` directory of the active environment will have priority over
         any global directories. For more info, see
-        https://docs.puppetlabs.com/puppet/latest/reference/environments.html",
+        <https://docs.puppet.com/puppet/latest/reference/environments.html>",
     },
     :ssl_client_header => {
       :default    => "HTTP_X_CLIENT_DN",
