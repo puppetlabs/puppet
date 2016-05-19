@@ -20,7 +20,7 @@ describe Puppet::ModuleTool::Tar::Mini, :if => (Puppet.features.minitar? and Pup
     expect {
       minitar.unpack(sourcefile, destdir, 'uid')
     }.to raise_error(Puppet::ModuleTool::Errors::InvalidPathInPackageError,
-                     "Attempt to install file into \"/thefile\" under \"#{destdir}\"")
+                     "Attempt to install file with an invalid path into \"/thefile\" under \"#{destdir}\"")
   end
 
   it "does not allow a file to be written outside the destination directory" do
@@ -29,7 +29,7 @@ describe Puppet::ModuleTool::Tar::Mini, :if => (Puppet.features.minitar? and Pup
     expect {
       minitar.unpack(sourcefile, destdir, 'uid')
     }.to raise_error(Puppet::ModuleTool::Errors::InvalidPathInPackageError,
-                     "Attempt to install file into \"#{File.expand_path('/the/thefile')}\" under \"#{destdir}\"")
+                     "Attempt to install file with an invalid path into \"#{File.expand_path('/the/thefile')}\" under \"#{destdir}\"")
   end
 
   it "does not allow a directory to be written outside the destination directory" do
@@ -38,7 +38,7 @@ describe Puppet::ModuleTool::Tar::Mini, :if => (Puppet.features.minitar? and Pup
     expect {
       minitar.unpack(sourcefile, destdir, 'uid')
     }.to raise_error(Puppet::ModuleTool::Errors::InvalidPathInPackageError,
-                     "Attempt to install file into \"#{File.expand_path('/the/thedir')}\" under \"#{destdir}\"")
+                     "Attempt to install file with an invalid path into \"#{File.expand_path('/the/thedir')}\" under \"#{destdir}\"")
   end
 
   it "packs a tar file" do
