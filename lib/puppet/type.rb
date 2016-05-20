@@ -2132,8 +2132,10 @@ end
 
       # Collect the current prereqs
       list.each { |dep|
+        next if dep.nil?
+
         # Support them passing objects directly, to save some effort.
-        unless dep.is_a? Puppet::Type
+        unless dep.is_a?(Puppet::Type)
           # Skip autorelation that we aren't managing
           unless dep = rel_catalog.resource(type, dep)
             next
