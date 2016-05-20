@@ -1,9 +1,10 @@
-# A name/type combination that can be used as a compound hash key
-#
 module Puppet::Pops
 module Loader
+# A namespace/name/type combination that can be used as a compound hash key
+#
+# @api public
 class TypedName
-  DOUBLE_COLON = '::'
+  DOUBLE_COLON = '::'.freeze
 
   attr_reader :hash
   attr_reader :type
@@ -23,10 +24,10 @@ class TypedName
     else
       @name = name
     end
-    @name_parts = parts
+    @name_parts = parts.freeze
 
-    # Use a frozen compound key for the hash and comparison
-    @compound_name = "#{name_authority}/#{type}/#{name}".freeze
+    # Use a frozen compound key for the hash and comparison. Most varying part first
+    @compound_name = "#{@name}/#{@type}/#{@name_authority}".freeze
     @hash = @compound_name.hash
     freeze
   end
@@ -42,7 +43,7 @@ class TypedName
   end
 
   def to_s
-    @compound_name
+    "#{@name_authority}/#{@type}/#{@name}"
   end
 end
 end

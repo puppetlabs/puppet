@@ -44,8 +44,9 @@ module Pcore
 
   def self.register_aliases(aliases, name_authority = RUNTIME_NAME_AUTHORITY)
     loader = Loaders.loaders.private_environment_loader
-    aliases.each { |name, type_string| add_type(
-      Types::PTypeAliasType.new(name, Types::TypeFactory.type_reference(type_string), nil), loader, name_authority) }
+    aliases.each do |name, type_string|
+      add_type(Types::PTypeAliasType.new(name, Types::TypeFactory.type_reference(type_string), nil), loader, name_authority)
+    end
   end
 end
 end
