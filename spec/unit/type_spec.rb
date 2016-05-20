@@ -393,10 +393,46 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
         expect(relationship_graph.edges_between(src,dst).first.event).to eq(:NONE)
       end
 
+      it 'should not fail autorequire contains undef entries' do
+        type = Puppet::Type.newtype(:autorelation_two) do
+          newparam(:name) { isnamevar }
+          autorequire(:autorelation_one) { [nil, 'foo'] }
+        end
+
+        relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
+          autorelation_one { 'foo': }
+          autorelation_two { 'bar': }
+        MANIFEST
+
+        src = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Autorelation_one[foo]' }.first
+        dst = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Autorelation_two[bar]' }.first
+
+        expect(relationship_graph.edge?(src,dst)).to be_truthy
+        expect(relationship_graph.edges_between(src,dst).first.event).to eq(:NONE)
+      end
+
       it "should be able to autosubscribe resources" do
         type = Puppet::Type.newtype(:autorelation_two) do
           newparam(:name) { isnamevar }
           autosubscribe(:autorelation_one) { ['foo'] }
+        end
+
+        relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
+          autorelation_one { 'foo': }
+          autorelation_two { 'bar': }
+        MANIFEST
+
+        src = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Autorelation_one[foo]' }.first
+        dst = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Autorelation_two[bar]' }.first
+
+        expect(relationship_graph.edge?(src,dst)).to be_truthy
+        expect(relationship_graph.edges_between(src,dst).first.event).to eq(:ALL_EVENTS)
+      end
+
+      it 'should not fail if autosubscribe contains undef entries' do
+        type = Puppet::Type.newtype(:autorelation_two) do
+          newparam(:name) { isnamevar }
+          autosubscribe(:autorelation_one) { [nil, 'foo'] }
         end
 
         relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
@@ -429,10 +465,46 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
         expect(relationship_graph.edges_between(src,dst).first.event).to eq(:NONE)
       end
 
+      it "should not fail when autobefore contains undef entries" do
+        type = Puppet::Type.newtype(:autorelation_two) do
+          newparam(:name) { isnamevar }
+          autobefore(:autorelation_one) { [nil, 'foo'] }
+        end
+
+        relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
+          autorelation_one { 'foo': }
+          autorelation_two { 'bar': }
+        MANIFEST
+
+        src = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Autorelation_two[bar]' }.first
+        dst = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Autorelation_one[foo]' }.first
+
+        expect(relationship_graph.edge?(src,dst)).to be_truthy
+        expect(relationship_graph.edges_between(src,dst).first.event).to eq(:NONE)
+      end
+
       it "should be able to autonotify resources" do
         type = Puppet::Type.newtype(:autorelation_two) do
           newparam(:name) { isnamevar }
           autonotify(:autorelation_one) { ['foo'] }
+        end
+
+        relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
+          autorelation_one { 'foo': }
+          autorelation_two { 'bar': }
+        MANIFEST
+
+        src = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Autorelation_two[bar]' }.first
+        dst = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Autorelation_one[foo]' }.first
+
+        expect(relationship_graph.edge?(src,dst)).to be_truthy
+        expect(relationship_graph.edges_between(src,dst).first.event).to eq(:ALL_EVENTS)
+      end
+
+      it 'should not fail if autonotify contains undef entries' do
+        type = Puppet::Type.newtype(:autorelation_two) do
+          newparam(:name) { isnamevar }
+          autonotify(:autorelation_one) { [nil, 'foo'] }
         end
 
         relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
