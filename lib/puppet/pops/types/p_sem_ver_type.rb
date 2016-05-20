@@ -1,7 +1,7 @@
 module Puppet::Pops
 module Types
 
-# A Puppet Language Type that exposes the {{Semantic::Version}} and {{Semantic::VersionRange}}.
+# A Puppet Language Type that exposes the {{SemanticPuppet::Version}} and {{SemanticPuppet::VersionRange}}.
 # The version type is parameterized with version ranges.
 #
 # @api public
@@ -9,13 +9,13 @@ class PSemVerType < PScalarType
   attr_reader :ranges
 
   def initialize(*ranges)
-    ranges = ranges.map { |range| range.is_a?(Semantic::VersionRange) ? range : Semantic::VersionRange.parse(range) }
+    ranges = ranges.map { |range| range.is_a?(SemanticPuppet::VersionRange) ? range : SemanticPuppet::VersionRange.parse(range) }
     ranges = merge_ranges(ranges) if ranges.size > 1
     @ranges = ranges
   end
 
   def instance?(o, guard = nil)
-    o.is_a?(Semantic::Version) && (@ranges.empty? || @ranges.any? {|range| range.include?(o) })
+    o.is_a?(SemanticPuppet::Version) && (@ranges.empty? || @ranges.any? {|range| range.include?(o) })
   end
 
   def eql?(o)
@@ -78,15 +78,15 @@ class PSemVerType < PScalarType
       end
 
       def from_string(str)
-        Semantic::Version.parse(str)
+        SemanticPuppet::Version.parse(str)
       end
 
       def from_args(major, minor, patch, prerelease = nil, build = nil)
-        Semantic::Version.new(major, minor, patch, prerelease, build)
+        SemanticPuppet::Version.new(major, minor, patch, prerelease, build)
       end
 
       def from_hash(hash)
-        Semantic::Version.new(hash['major'], hash['minor'], hash['patch'], hash['prerelease'], hash['build'])
+        SemanticPuppet::Version.new(hash['major'], hash['minor'], hash['patch'], hash['prerelease'], hash['build'])
       end
     end
   end

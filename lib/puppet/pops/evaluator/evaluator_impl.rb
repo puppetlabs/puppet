@@ -548,7 +548,7 @@ class EvaluatorImpl
       return o.operator == :'=~' ? !!matched : !matched
     end
 
-    if pattern.is_a?(Semantic::VersionRange)
+    if pattern.is_a?(SemanticPuppet::VersionRange)
       # evaluate if range includes version
       matched = Types::PSemVerRangeType.include?(pattern, left)
       return o.operator == :'=~' ? matched : !matched
