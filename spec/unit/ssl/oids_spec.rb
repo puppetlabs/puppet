@@ -34,6 +34,9 @@ describe Puppet::SSL::Oids do
       'pp_apptier'          => "1.3.6.1.4.1.34380.1.1.24",
       'pp_hostname'         => "1.3.6.1.4.1.34380.1.1.25",
       'ppPrivCertExt'       => '1.3.6.1.4.1.34380.1.2',
+      'ppAuthCertExt'       =>  '1.3.6.1.4.1.34380.1.3',
+      'pp_authorization'    =>  '1.3.6.1.4.1.34380.1.3.1',
+      'pp_auth_role'        =>  '1.3.6.1.4.1.34380.1.3.13',
     }.each_pair do |sn, oid|
       it "defines #{sn} as #{oid}" do
         object_id = OpenSSL::ASN1::ObjectId.new(sn)

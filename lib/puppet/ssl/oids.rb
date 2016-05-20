@@ -13,6 +13,7 @@ require 'puppet/ssl'
 # -- privateExtensions can be extended by enterprises to suit their own needs
 # registeredExtensions OBJECT IDENTIFIER ::= { puppetCertExtensions 1 }
 # privateExtensions OBJECT IDENTIFIER ::= { puppetCertExtensions 2 }
+# authorizationExtensions OBJECT IDENTIFIER ::= { puppetCertExtensions 3 }
 #
 # -- subtree of common registered extensions
 # -- The short names for these OIDs are intentionally lowercased and formatted
@@ -58,6 +59,11 @@ module Puppet::SSL::Oids
     ["1.3.6.1.4.1.34380.1.1.25", 'pp_hostname', 'Puppet Node Hostname'],
 
     ["1.3.6.1.4.1.34380.1.2", 'ppPrivCertExt', 'Puppet Private Certificate Extension'],
+
+    ["1.3.6.1.4.1.34380.1.3", 'ppAuthCertExt', 'Puppet Certificate Authorization Extension'],
+
+    ["1.3.6.1.4.1.34380.1.3.1",  'pp_authorization', 'Certificate Extension Authorization'],
+    ["1.3.6.1.4.1.34380.1.3.13", 'pp_auth_role', 'Puppet Node Role Name for Authorization'],
   ]
 
   # Register our custom Puppet OIDs with OpenSSL so they can be used as CSR
