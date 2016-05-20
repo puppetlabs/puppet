@@ -475,7 +475,7 @@ FileUtils.cd File.dirname(__FILE__) do
   #build_ri(ri) if InstallOptions.ri
   do_configs(configs, InstallOptions.config_dir) if InstallOptions.configs
   do_bins(bins, InstallOptions.bin_dir)
-  do_bins(windows_bins, InstallOptions.bin_dir, 'ext/windows/') if $operatingsystem == "windows"
+  do_bins(windows_bins, InstallOptions.bin_dir, 'ext/windows/') if $operatingsystem == "windows" && InstallOptions.batch_files
   do_libs(libs)
   do_man(man) unless $operatingsystem == "windows"
 end
