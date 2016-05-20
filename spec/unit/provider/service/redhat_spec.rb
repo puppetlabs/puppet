@@ -21,6 +21,15 @@ describe provider_class, :as_platform => :posix do
     FileTest.stubs(:executable?).with('/sbin/service').returns true
   end
 
+  osfamily = [ 'redhat', 'suse' ]
+
+  osfamily.each do |osfamily|
+    it "should be the default provider on #{osfamily}" do
+      Facter.expects(:value).with(:osfamily).returns(osfamily)
+      provider_class.default?.should be_true
+    end
+  end
+
   # test self.instances
   describe "when getting all service instances" do
     before :each do

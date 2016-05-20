@@ -17,6 +17,14 @@ describe provider_class do
     @provider.resource = @resource
   end
 
+  osfamily = [ 'redhat', 'suse' ]
+
+  osfamily.each do |osfamily|
+    it "should be the default provider on #{osfamily}" do
+      pending "This test is pending the change in RedHat-related Linuxes to systemd for service management"
+    end
+  end
+
   [:enabled?, :enable, :disable, :start, :stop, :status, :restart].each do |method|
     it "should have a #{method} method" do
       @provider.should respond_to(method)
