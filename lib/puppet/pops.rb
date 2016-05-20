@@ -10,14 +10,14 @@ module Puppet
   #
   # @api public
   module Pops
-    EMPTY_HASH = {}.freeze
+     EMPTY_HASH = {}.freeze
     EMPTY_ARRAY = [].freeze
     EMPTY_STRING = ''.freeze
 
     DOUBLE_COLON = '::'.freeze
     USCORE = '_'.freeze
 
-    require 'semantic'
+    require 'semantic_puppet'
 
     require 'puppet/pops/patterns'
     require 'puppet/pops/utils'

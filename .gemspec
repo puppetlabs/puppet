@@ -36,5 +36,5 @@ Gem::Specification.new do |s|
   s.specification_version = 3
   s.add_runtime_dependency(%q<facter>, [">= 2.0.1", "< 4"])
   s.add_runtime_dependency(%q<hiera>, [">= 2.0", "< 4"])
-  s.add_runtime_dependency(%q<semantic_puppet>, "0.1.1")
+  s.add_runtime_dependency(%q<semantic_puppet>, ['>= 0.1.2', '< 2'])
 end
