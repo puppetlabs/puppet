@@ -33,7 +33,11 @@ class TypeParser
     interpret(model.current.body, context)
   end
 
-  # @api private
+  # @param ast [Puppet::Pops::Model::PopsObject] the ast to interpret
+  # @param context [Puppet::Parser::Scope,Loader::Loader, nil] scope or loader to use when loading type aliases
+  # @return [PAnyType] a specialization of the PAnyType representing the type.
+  #
+  # @api public
   def interpret(ast, context)
     result = @type_transformer.visit_this_1(self, ast, context)
     raise_invalid_type_specification_error(ast) unless result.is_a?(PAnyType)
