@@ -159,16 +159,6 @@ describe Puppet::Application::Device do
         expect(Puppet::Util::Log.level).to eq(:info)
       end
 
-      [:verbose, :debug].each do |level|
-        it "should set console as the log destination with level #{level}" do
-          @device.options.stubs(:[]).with(level).returns(true)
-
-          Puppet::Util::Log.expects(:newdestination).with(:console)
-
-          @device.setup_logs
-        end
-      end
-
       it "should set a default log destination if no --logdest" do
         @device.options.stubs(:[]).with(:setdest).returns(false)
 
