@@ -82,7 +82,7 @@ module Runtime3Support
       # Must convert :undef back to nil - this can happen when an undefined variable is used in a
       # parameter's default value expression - there nil must be :undef to work with the rest of 3x.
       # Now that the value comes back to 4x it is changed to nil.
-      return :undef == x ? nil : x
+      return :undef.equal?(x) ? nil : x
     }
     # It is always ok to reference numeric variables even if they are not assigned. They are always undef
     # if not set by a match expression.
