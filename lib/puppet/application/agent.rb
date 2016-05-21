@@ -379,6 +379,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     options[:verbose] = true
     Puppet[:onetime] = true
     options[:detailed_exitcodes] = true
+    handle_logdest_arg("console") if !options[:setdest]
   end
 
   def setup
