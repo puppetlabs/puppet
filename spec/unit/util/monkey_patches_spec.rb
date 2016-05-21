@@ -15,7 +15,6 @@ describe Symbol do
   end
 
   it "should have an eql? that is not true for a string with same letters" do
-    pending "JRuby is incompatible with MRI - Cannot test this on JRuby" if RUBY_PLATFORM == 'java'
     symbol = :undef
     expect(symbol).to_not eql('undef')
   end
