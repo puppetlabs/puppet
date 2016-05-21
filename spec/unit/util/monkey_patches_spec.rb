@@ -9,6 +9,22 @@ describe Symbol do
     $unique_warnings.delete('symbol_comparison') if $unique_warnings
   end
 
+  it 'should have an equal? that is not true for a string with same letters' do
+    symbol = :undef
+    expect(symbol).to_not equal('undef')
+  end
+
+  it "should have an eql? that is not true for a string with same letters" do
+    symbol = :undef
+    expect(symbol).to_not eql('undef')
+  end
+
+  it "should have an == that is not true for a string with same letters" do
+    pending "JRuby is incompatible with MRI - Cannot test this on JRuby" if RUBY_PLATFORM == 'java'
+    symbol = :undef
+    expect(symbol == 'undef').to_not be(true)
+  end
+
   it "should return self from #intern" do
     symbol = :foo
     expect(symbol).to equal symbol.intern
