@@ -134,7 +134,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
   end
 
   def set_scope_nesting_level(scope, level)
-    # Yup, 3x uses this method to reset the level, it also supports passing :all to destroy all 
+    # Yup, 3x uses this method to reset the level, it also supports passing :all to destroy all
     # ephemeral/local scopes - which is a sure way to create havoc.
     #
     scope.unset_ephemeral_var(level)
@@ -261,24 +261,26 @@ module Puppet::Pops::Evaluator::Runtime3Support
   end
 
   def call_function(name, args, o, scope, &block)
-    # Call via 4x API if the function exists there
-    loaders = scope.compiler.loaders
-    # find the loader that loaded the code, or use the private_environment_loader (sees env + all modules)
-    adapter = Puppet::Pops::Utils.find_adapter(o, Puppet::Pops::Adapters::LoaderAdapter)
-    loader = adapter.nil? ? loaders.private_environment_loader : adapter.loader
-    if loader && func = loader.load(:function, name)
-      return func.call(scope, *args, &block)
+    # Prefer already loaded functions (like include, etc)
+    if Puppet::Parser::Functions.function(name)
+      # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
+      # NOTE: Passing an empty string last converts nil/:undef to empty string
+      mapped_args = Puppet::Pops::Evaluator::Runtime3Converter.map_args(args, scope, '')
+      result = scope.send("function_#{name}", mapped_args, &block)
+      # Prevent non r-value functions from leaking their result (they are not written to care about this)
+      Puppet::Parser::Functions.rvalue?(name) ? result : nil
+    else
+      # Call via 4x API if the function exists there
+      loaders = scope.compiler.loaders
+      # find the loader that loaded the code, or use the private_environment_loader (sees env + all modules)
+      adapter = Puppet::Pops::Utils.find_adapter(o, Puppet::Pops::Adapters::LoaderAdapter)
+      loader = adapter.nil? ? loaders.private_environment_loader : adapter.loader
+      if loader && func = loader.load(:function, name)
+        return func.call(scope, *args, &block)
+      else
+        fail(Puppet::Pops::Issues::UNKNOWN_FUNCTION, o, {:name => name})
+      end
     end
-
-    # Call via 3x API if function exists there
-    fail(Puppet::Pops::Issues::UNKNOWN_FUNCTION, o, {:name => name}) unless Puppet::Parser::Functions.function(name)
-
-    # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
-    # NOTE: Passing an empty string last converts nil/:undef to empty string
-    mapped_args = Puppet::Pops::Evaluator::Runtime3Converter.map_args(args, scope, '')
-    result = scope.send("function_#{name}", mapped_args, &block)
-    # Prevent non r-value functions from leaking their result (they are not written to care about this)
-    Puppet::Parser::Functions.rvalue?(name) ? result : nil
   end
 
   # The o is used for source reference
@@ -515,7 +517,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
     def accept(diagnostic)
       super
       Puppet::Pops::IssueReporter.assert_and_report(self, {
-        :message => "Evaluation Error:", 
+        :message => "Evaluation Error:",
         :emit_warnings => true,  # log warnings
         :exception_class => Puppet::PreformattedError
       })
