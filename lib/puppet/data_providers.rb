@@ -25,6 +25,6 @@ module Puppet::DataProviders
 
   def self.lookup_adapter(lookup_invocation)
     assert_loaded()
-    LookupAdapter.adapt(lookup_invocation.scope.environment)
+    LookupAdapter.adapt(lookup_invocation.scope.compiler)
   end
 end
