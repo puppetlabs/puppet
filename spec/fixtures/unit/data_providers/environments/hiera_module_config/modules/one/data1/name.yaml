@@ -1,1 +1,2 @@
 one::test::param_b: module data param_b is 200
+one::my_var: 'In name.yaml'

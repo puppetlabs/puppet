@@ -1,6 +1,8 @@
-# A LookupAdapter is a specialized DataAdapter that uses its hash to store module providers. It also remembers the environment
-# that it is attached to and maintains a cache of _lookup options_ retrieved from its data providers.
+# A LookupAdapter is a specialized DataAdapter that uses its hash to store module providers. It also remembers the compiler
+# that it is attached to and maintains a cache of _lookup options_ retrieved from the data providers associated with the
+# compiler's environment.
 #
+# @api private
 class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
 
   LOOKUP_OPTIONS = Puppet::Pops::Lookup::LOOKUP_OPTIONS
@@ -9,13 +11,13 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
   HASH = 'hash'.freeze
   MERGE = 'merge'.freeze
 
-  def self.create_adapter(env)
-    new(env)
+  def self.create_adapter(compiler)
+    new(compiler)
   end
 
-  def initialize(env)
+  def initialize(compiler)
     super()
-    @env = env
+    @compiler = compiler
     @lookup_options = {}
   end
 
@@ -77,7 +79,7 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
     lookup_invocation.with(:global, terminus) do
       catch(:no_such_key) do
         return lookup_invocation.report_found(name, Puppet::DataBinding.indirection.find(name,
-            { :environment => @env, :variables => lookup_invocation.scope, :merge => merge_strategy }))
+            { :environment => environment, :variables => lookup_invocation.scope, :merge => merge_strategy }))
       end
       lookup_invocation.report_not_found(name)
       throw :no_such_key
@@ -101,7 +103,7 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
     throw :no_such_key if module_name.nil?
 
     lookup_invocation.with(:module, module_name) do
-      if @env.module(module_name).nil?
+      if environment.module(module_name).nil?
         lookup_invocation.report_module_not_found
         throw :no_such_key
       end
@@ -157,7 +159,7 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
     meta_invocation = Puppet::Pops::Lookup::Invocation.new(lookup_invocation.scope)
     meta_invocation.top_key = lookup_invocation.top_key
     env_opts = env_lookup_options(meta_invocation, merge_strategy)
-    unless module_name.nil? || @env.module(module_name).nil?
+    unless module_name.nil? || environment.module(module_name).nil?
       catch(:no_such_key) do
         meta_invocation.module_name = module_name
         options = module_provider(module_name).lookup(LOOKUP_OPTIONS, meta_invocation, merge_strategy)
@@ -168,7 +170,7 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
     env_opts
   end
 
-  # Retrieve and cache lookup options specific to the environment that this adapter is attached to (i.e. a merge
+  # Retrieve and cache lookup options specific to the environment of the compiler that this adapter is attached to (i.e. a merge
   # of global and environment lookup options).
   def env_lookup_options(meta_invocation, merge_strategy)
     if !instance_variable_defined?(:@env_lookup_options)
@@ -214,9 +216,9 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
     service = injector.lookup(nil, service_type, service_name)
     provider = service[provider_name]
     unless provider
-      raise Puppet::Error.new("Environment '#{@env.name}', cannot find module_data_provider '#{provider_name}'")
+      raise Puppet::Error.new("Environment '#{environment.name}', cannot find module_data_provider '#{provider_name}'")
     end
-    # Provider is configured per module but cached using environment life cycle so it must be cloned
+    # Provider is configured per module but cached using compiler life cycle so it must be cloned
     provider.clone
   end
 
@@ -227,7 +229,7 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
     return EnvironmentDataProvider.new() unless injector
 
     # Get the name of the data provider from the environment's configuration and find the bound implementation
-    provider_name = @env.configuration.environment_data_provider
+    provider_name = environment.configuration.environment_data_provider
     service_type = Registry.hash_of_environment_data_providers
     service_name = ENV_DATA_PROVIDERS_KEY
 
@@ -235,7 +237,7 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
     service = injector.lookup(nil, service_type, service_name)
     provider = service[provider_name]
     unless provider
-      raise Puppet::Error.new("Environment '#{@env.name}', cannot find environment_data_provider '#{provider_name}'")
+      raise Puppet::Error.new("Environment '#{environment.name}', cannot find environment_data_provider '#{provider_name}'")
     end
     provider
   end
@@ -243,5 +245,10 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
   def extract_module_name(name)
     qual_index = name.index('::')
     qual_index.nil? ? nil : name[0..qual_index-1]
+  end
+
+  # @return [Puppet::Node::Environment] the environment of the compiler that this adapter is associated with
+  def environment
+    @compiler.environment
   end
 end

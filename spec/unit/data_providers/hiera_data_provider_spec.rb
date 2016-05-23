@@ -28,14 +28,18 @@ describe "when using a hiera data provider" do
   end
 
   def compile_and_get_notifications(environment, code = nil)
-    compile(environment, code).resources.map(&:ref).select { |r| r.start_with?('Notify[') }.map { |r| r[7..-2] }
+    extract_notifications(compile(environment, code))
   end
 
   def compile(environment, code = nil)
     Puppet[:code] = code if code
     node = Puppet::Node.new("testnode", :facts => facts, :environment => environment)
     compiler = Puppet::Parser::Compiler.new(node)
-    block_given? ? compiler.compile() { |catalog| yield(compiler); catalog } : compiler.compile()
+    block_given? ? compiler.compile { |catalog| yield(compiler); catalog } : compiler.compile
+  end
+
+  def extract_notifications(catalog)
+    catalog.resources.map(&:ref).select { |r| r.start_with?('Notify[') }.map { |r| r[7..-2] }
   end
 
   it 'uses default configuration for environment and module data' do
@@ -145,6 +149,22 @@ describe "when using a hiera data provider" do
   it 'performs single quoted interpolation' do
     resources = compile_and_get_notifications('hiera_misc', 'notify{lookup(km_sqalias):}')
     expect(resources).to include('Value from interpolation with alias')
+  end
+
+  it 'uses compiler lifecycle for caching' do
+    Puppet[:code] = 'notify{lookup(one::my_var):}'
+    node = Puppet::Node.new('testnode', :facts => facts, :environment => 'hiera_module_config')
+
+    compiler = Puppet::Parser::Compiler.new(node)
+    compiler.topscope['my_fact'] = 'server1'
+    expect(extract_notifications(compiler.compile)).to include('server1')
+
+    compiler = Puppet::Parser::Compiler.new(node)
+    compiler.topscope['my_fact'] = 'server2'
+    expect(extract_notifications(compiler.compile)).to include('server2')
+
+    compiler = Puppet::Parser::Compiler.new(node)
+    expect(extract_notifications(compiler.compile)).to include('In name.yaml')
   end
 
   it 'traps endless interpolate recursion' do
