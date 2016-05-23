@@ -70,6 +70,24 @@ describe Puppet::Transaction::Report do
     expect(report.cached_catalog_status).to eq("explicitly_requested")
   end
 
+  it "should set noop to true if Puppet[:noop] is true" do
+    Puppet[:noop] = true
+    report = Puppet::Transaction::Report.new("apply")
+    expect(report.noop).to be_truthy
+  end
+
+  it "should set noop to false if Puppet[:noop] is false" do
+    Puppet[:noop] = false
+    report = Puppet::Transaction::Report.new("apply")
+    expect(report.noop).to be_falsey
+  end
+
+  it "should set noop to false if Puppet[:noop] is unset" do
+    Puppet[:noop] = nil
+    report = Puppet::Transaction::Report.new("apply")
+    expect(report.noop).to be_falsey
+  end
+
   it "should take 'environment' as an argument" do
     expect(Puppet::Transaction::Report.new("inspect", "some configuration version", "some environment").environment).to eq("some environment")
   end

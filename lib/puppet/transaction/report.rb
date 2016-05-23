@@ -108,6 +108,11 @@ class Puppet::Transaction::Report
   #
   attr_reader :report_format
 
+  # Whether the puppet run was started in noop mode
+  # @return [Boolean]
+  #
+  attr_reader :noop
+
   def self.from_data_hash(data)
     obj = self.allocate
     obj.initialize_from_hash(data)
@@ -183,7 +188,7 @@ class Puppet::Transaction::Report
     @host = Puppet[:node_name_value]
     @time = Time.now
     @kind = kind
-    @report_format = 5
+    @report_format = 6
     @puppet_version = Puppet.version
     @configuration_version = configuration_version
     @transaction_uuid = transaction_uuid
@@ -192,6 +197,7 @@ class Puppet::Transaction::Report
     @cached_catalog_status = nil
     @environment = environment
     @status = 'failed' # assume failed until the report is finalized
+    @noop = Puppet[:noop]
   end
 
   # @api private
@@ -202,6 +208,7 @@ class Puppet::Transaction::Report
     @transaction_uuid = data['transaction_uuid']
     @environment = data['environment']
     @status = data['status']
+    @noop = data['noop']
     @host = data['host']
     @time = data['time']
 
@@ -255,6 +262,7 @@ class Puppet::Transaction::Report
       'puppet_version' => @puppet_version,
       'kind' => @kind,
       'status' => @status,
+      'noop' => @noop,
       'environment' => @environment,
 
       'logs' => @logs,
