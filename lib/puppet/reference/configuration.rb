@@ -32,6 +32,8 @@ config = Puppet::Util::Reference.newreference(:configuration, :depth => 1, :doc 
       val = 'Unix/Linux: /var/run/puppetlabs -- Windows: C:\ProgramData\PuppetLabs\puppet\var\run -- Non-root user: ~/.puppetlabs/var/run'
     elsif name.to_s == 'logdir'
       val = 'Unix/Linux: /var/log/puppetlabs/puppet -- Windows: C:\ProgramData\PuppetLabs\puppet\var\log -- Non-root user: ~/.puppetlabs/var/log'
+    elsif name.to_s == 'hiera.yaml'
+      val = '$confdir/hiera.yaml. However, if a file exists at $codedir/hiera.yaml, Puppet uses that instead.'
     end
 
     # Leave out the section information; it was apparently confusing people.
