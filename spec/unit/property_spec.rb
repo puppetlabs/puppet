@@ -429,6 +429,7 @@ describe Puppet::Property do
       it "should return true if should is empty with is => #{input.inspect}" do
         property.should = []
         expect(property).to be_insync(input)
+        expect(property.insync_values?([], input)).to be true
       end
     end
   end
@@ -443,35 +444,52 @@ describe Puppet::Property do
       it_should_behave_like "#insync?"
 
       context "if the should value is an array" do
-        before :each do property.should = [1, 2] end
+        let(:input) { [1,2] }
+        before :each do property.should = input end
 
         it "should match if is exactly matches" do
-          expect(property).to be_insync [1, 2]
+          val = [1, 2]
+          expect(property).to be_insync val
+          expect(property.insync_values?(input, val)).to be true
         end
 
         it "should match if it matches, but all stringified" do
-          expect(property).to be_insync ["1", "2"]
+          val = ["1", "2"]
+          expect(property).to be_insync val
+          expect(property.insync_values?(input, val)).to be true
         end
 
         it "should not match if some-but-not-all values are stringified" do
-          expect(property).to_not be_insync ["1", 2]
-          expect(property).to_not be_insync [1, "2"]
+          val = ["1", 2]
+          expect(property).to_not be_insync val
+          expect(property.insync_values?(input, val)).to_not be true
+          val = [1, "2"]
+          expect(property).to_not be_insync val
+          expect(property.insync_values?(input, val)).to_not be true
         end
 
         it "should not match if order is different but content the same" do
-          expect(property).to_not be_insync [2, 1]
+          val = [2, 1]
+          expect(property).to_not be_insync val
+          expect(property.insync_values?(input, val)).to_not be true
         end
 
         it "should not match if there are more items in should than is" do
-          expect(property).to_not be_insync [1]
+          val = [1]
+          expect(property).to_not be_insync val
+          expect(property.insync_values?(input, val)).to_not be true
         end
 
         it "should not match if there are less items in should than is" do
-          expect(property).to_not be_insync [1, 2, 3]
+          val = [1, 2, 3]
+          expect(property).to_not be_insync val
+          expect(property.insync_values?(input, val)).to_not be true
         end
 
         it "should not match if `is` is empty but `should` isn't" do
-          expect(property).to_not be_insync []
+          val = []
+          expect(property).to_not be_insync val
+          expect(property.insync_values?(input, val)).to_not be true
         end
       end
     end
@@ -490,26 +508,33 @@ describe Puppet::Property do
        [0, 1, 2],               # matching value in the middle
       ].each do |input|
         it "should by true if one unmodified should value of #{input.inspect} matches what is" do
+          val = 1
           property.should = input
-          expect(property).to be_insync 1
+          expect(property).to be_insync val
+          expect(property.insync_values?(input, val)).to be true
         end
 
         it "should be true if one stringified should value of #{input.inspect} matches what is" do
+          val = "1"
           property.should = input
-          expect(property).to be_insync "1"
+          expect(property).to be_insync val
+          expect(property.insync_values?(input, val)).to be true
         end
       end
 
       it "should not match if we expect a string but get the non-stringified value" do
         property.should = ["1"]
         expect(property).to_not be_insync 1
+        expect(property.insync_values?(["1"], 1)).to_not be true
       end
 
       [[0], [0, 2]].each do |input|
         it "should not match if no should values match what is" do
           property.should = input
           expect(property).to_not be_insync 1
+          expect(property.insync_values?(input, 1)).to_not be true
           expect(property).to_not be_insync "1" # shouldn't match either.
+          expect(property.insync_values?(input, "1")).to_not be true
         end
       end
     end

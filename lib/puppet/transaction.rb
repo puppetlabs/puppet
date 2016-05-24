@@ -15,6 +15,7 @@ class Puppet::Transaction
   require 'puppet/transaction/event_manager'
   require 'puppet/transaction/resource_harness'
   require 'puppet/resource/status'
+  require 'puppet/transaction/persistence'
 
   attr_accessor :catalog, :ignoreschedules, :for_network_device
 
@@ -29,11 +30,18 @@ class Puppet::Transaction
 
   attr_reader :prefetched_providers
 
+  # @!attribute [r] persistence
+  #   @return [Puppet::Transaction::Persistence] persistence object for cross
+  #      transaction storage.
+  attr_reader :persistence
+
   include Puppet::Util
   include Puppet::Util::Tagging
 
   def initialize(catalog, report, prioritizer)
     @catalog = catalog
+
+    @persistence = Puppet::Transaction::Persistence.new
 
     @report = report || Puppet::Transaction::Report.new("apply", catalog.version, catalog.environment)
 
@@ -85,6 +93,8 @@ class Puppet::Transaction
 
     perform_pre_run_checks
 
+    persistence.load if catalog.host_config?
+
     Puppet.info "Applying configuration version '#{catalog.version}'" if catalog.version
 
     continue_while = lambda { !stop_processing? }
@@ -134,6 +144,8 @@ class Puppet::Transaction
           Puppet.log_exception(detail, "post_resource_eval failed for provider #{provider}")
         end
       end
+
+      persistence.save if catalog.host_config?
     end
 
     # Generate the relationship graph, set up our generator to use it

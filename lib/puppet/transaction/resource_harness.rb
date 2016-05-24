@@ -10,6 +10,7 @@ class Puppet::Transaction::ResourceHarness
 
   def initialize(transaction)
     @transaction = transaction
+    @persistence = transaction.persistence
   end
 
   def evaluate(resource)
@@ -92,6 +93,25 @@ class Puppet::Transaction::ResourceHarness
     end
 
     capture_audit_events(resource, context)
+    persist_system_values(resource, context)
+  end
+
+  # We persist the last known values for the properties of a resource after resource
+  # application.
+  # @param [Puppet::Type] resource resource whose values we are to persist.
+  # @param [ResourceApplicationContent] context the application context to operate on.
+  def persist_system_values(resource, context)
+    param_to_event = {}
+    context.status.events.each do |ev|
+      param_to_event[ev.property] = ev
+    end
+
+    context.system_value_params.each do |pname, param|
+      @persistence.set_system_value(resource.name, pname.to_s,
+                                    new_system_value(param,
+                                                     param_to_event[pname.to_s],
+                                                     @persistence.get_system_value(resource.name, pname.to_s)))
+    end
   end
 
   def sync_if_needed(param, context)
@@ -138,6 +158,7 @@ class Puppet::Transaction::ResourceHarness
       raise
     ensure
       if event
+        event.calculate_corrective_change(@persistence.get_system_value(context.resource.name, param.name.to_s))
         context.record(event)
         event.send_log
         context.synced_params << param.name
@@ -240,20 +261,44 @@ class Puppet::Transaction::ResourceHarness
     end
   end
 
+  # Given an event and its property, calculate the system_value to persist
+  # for future calculations.
+  # @param [Puppet::Transaction::Event] event event to use for processing
+  # @param [Puppet::Property] property correlating property
+  # @param [Object] old_system_value system_value from last transaction
+  # @return [Object] system_value to be used for next transaction
+  def new_system_value(property, event, old_system_value)
+    if event
+      if event.status == "success"
+        # Success events, we presume work so we persist the desired_value
+        event.desired_value
+      else
+        # For non-success events, we persist the old_system_value if it is defined,
+        # or use the event previous_value.
+        old_system_value.nil? ? event.previous_value : old_system_value
+      end
+    else
+      # For non events, we just want to store the parameters agent value.
+      property.value
+    end
+  end
+
   # @api private
   ResourceApplicationContext = Struct.new(:resource,
                                           :current_values,
                                           :historical_values,
                                           :audited_params,
                                           :synced_params,
-                                          :status) do
+                                          :status,
+                                          :system_value_params) do
     def self.from_resource(resource, status)
       ResourceApplicationContext.new(resource,
                                      resource.retrieve_resource.to_hash,
                                      Puppet::Util::Storage.cache(resource).dup,
                                      (resource[:audit] || []).map { |p| p.to_sym },
                                      [],
-                                     status)
+                                     status,
+                                     resource.parameters.select { |n,p| p.is_a?(Puppet::Property) && !p.sensitive })
     end
 
     def resource_present?

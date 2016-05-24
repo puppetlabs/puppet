@@ -102,6 +102,22 @@ class Puppet::Property < Puppet::Parameter
       raise ArgumentError, "Supported values for Property#array_matching are 'first' and 'all'" unless [:first, :all].include?(value)
       @array_matching = value
     end
+
+    # Used to mark a type property as having or lacking idempotency (on purpose
+    # generally). This is used to avoid marking the property as a
+    # corrective_change when there is known idempotency issues with the property
+    # rendering a corrective_change flag as useless.
+    # @return [Boolean] true if the property is marked as idempotent
+    def idempotent
+      @idempotent.nil? ? @idempotent = true : @idempotent
+    end
+
+    # Attribute setter for the idempotent attribute.
+    # @param [bool] value boolean indicating if the property is idempotent.
+    # @see idempotent
+    def idempotent=(value)
+      @idempotent = value
+    end
   end
 
   # Looks up a value's name among valid values, to enable option lookup with result as a key.
@@ -346,6 +362,29 @@ class Puppet::Property < Puppet::Parameter
     end
   end
 
+  # This method tests if two values are insync? outside of the properties current
+  # should value. This works around the requirement for corrective_change analysis
+  # that requires two older values to be compared with the properties potentially
+  # custom insync? code.
+  #
+  # @param [Object] should the value it should be
+  # @param [Object] is the value it is
+  # @return [Boolean] whether or not the values are in sync or not
+  # @api private
+  def insync_values?(should, is)
+    # Here be dragons. We're duplicating the resource property itself so we can pass
+    # a new should value without side-effect. This kind of mechanism is undesirable,
+    # but it avoids the risk of causing side-effects on live properties somewhere
+    # else in code. The duplicate should be short-lived and is only required for this
+    # comparison so it can be GC'd directly afterwards. Unfortunately there isn't
+    # an api compatible way of avoiding this, as both should and insync? behaviours
+    # are part of the API. Future API work should factor this kind of arbitrary comparison
+    # into the API to remove this complexity. -ken
+    test_property = self.dup
+    test_property.should = should
+    test_property.insync?(is)
+  end
+
   # Checks if the given current and desired values are equal.
   # This default implementation performs this check in a backwards compatible way where
   # the equality of the two values is checked, and then the equality of current with desired
@@ -388,6 +427,12 @@ class Puppet::Property < Puppet::Parameter
   # @return [Boolean] whether the {array_matching} mode is set to `:all` or not
   def match_all?
     self.class.array_matching == :all
+  end
+
+  # @return [Boolean] whether the property is marked as idempotent for the purposes
+  #   of calculating corrective change.
+  def idempotent?
+    self.class.idempotent
   end
 
   # @return [Symbol] the name of the property as stated when the property was created.

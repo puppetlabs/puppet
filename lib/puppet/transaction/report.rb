@@ -122,6 +122,11 @@ class Puppet::Transaction::Report
   #
   attr_reader :noop
 
+  # @!attribute [r] corrective_change
+  #   @return [Boolean] true if the report contains any events and resources that had
+  #      corrective changes.
+  attr_reader :corrective_change
+
   def self.from_data_hash(data)
     obj = self.allocate
     obj.initialize_from_hash(data)
@@ -184,6 +189,7 @@ class Puppet::Transaction::Report
   # @api private
   def finalize_report
     prune_internal_data
+    calculate_report_corrective_change
 
     resource_metrics = add_metric(:resources, calculate_resource_metrics)
     add_metric(:time, calculate_time_metrics)
@@ -215,6 +221,7 @@ class Puppet::Transaction::Report
     @status = 'failed' # assume failed until the report is finalized
     @noop = Puppet[:noop]
     @noop_pending = false
+    @corrective_change = false
   end
 
   # @api private
@@ -229,6 +236,7 @@ class Puppet::Transaction::Report
     @noop_pending = data['noop_pending']
     @host = data['host']
     @time = data['time']
+    @corrective_change = data['corrective_change']
 
     if master_used = data['master_used']
       @master_used = master_used
@@ -288,10 +296,10 @@ class Puppet::Transaction::Report
       'noop_pending' => @noop_pending,
       'environment' => @environment,
       'master_used' => @master_used,
-
       'logs' => @logs,
       'metrics' => @metrics,
       'resource_statuses' => @resource_statuses,
+      'corrective_change' => @corrective_change,
     }
   end
 
@@ -385,6 +393,13 @@ class Puppet::Transaction::Report
   end
 
   private
+
+  # Mark the report as corrective, if there are any resource_status marked corrective.
+  def calculate_report_corrective_change
+    @corrective_change = resource_statuses.any? do |name, status|
+      status.corrective_change
+    end
+  end
 
   def calculate_change_metric
     resource_statuses.map { |name, status| status.change_count || 0 }.inject(0) { |a,b| a+b }

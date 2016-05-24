@@ -11,8 +11,8 @@ class Puppet::Transaction::Event
   include Puppet::Util::Logging
   include Puppet::Network::FormatSupport
 
-  ATTRIBUTES = [:name, :resource, :property, :previous_value, :desired_value, :historical_value, :status, :message, :file, :line, :source_description, :audited, :invalidate_refreshes, :redacted]
-  YAML_ATTRIBUTES = %w{@audited @property @previous_value @desired_value @historical_value @message @name @status @time @redacted}.map(&:to_sym)
+  ATTRIBUTES = [:name, :resource, :property, :previous_value, :desired_value, :historical_value, :status, :message, :file, :line, :source_description, :audited, :invalidate_refreshes, :redacted, :corrective_change]
+  YAML_ATTRIBUTES = %w{@audited @property @previous_value @desired_value @historical_value @message @name @status @time @redacted @corrective_change}.map(&:to_sym)
   attr_accessor *ATTRIBUTES
   attr_accessor :time
   attr_reader :default_log_level
@@ -28,6 +28,7 @@ class Puppet::Transaction::Event
   def initialize(options = {})
     @audited = false
     @redacted = false
+    @corrective_change = false
 
     set_options(options)
     @time = Time.now
@@ -45,6 +46,7 @@ class Puppet::Transaction::Event
     @time = data['time']
     @time = Time.parse(@time) if @time.is_a? String
     @redacted = data.fetch('redacted', false)
+    @corrective_change = data['corrective_change']
   end
 
   def to_data_hash
@@ -58,11 +60,13 @@ class Puppet::Transaction::Event
       'name' => @name,
       'status' => @status,
       'time' => @time.iso8601(9),
-      'redacted' => @redacted
+      'redacted' => @redacted,
+      'corrective_change' => @corrective_change,
     }
   end
 
   def property=(prop)
+    @property_instance = prop
     @property = prop.to_s
   end
 
@@ -92,6 +96,23 @@ class Puppet::Transaction::Event
 
   def to_yaml_properties
     YAML_ATTRIBUTES & super
+  end
+
+  # Calculate and set the corrective_change parameter, based on the old_system_value of the property.
+  # @param [Object] old_system_value system_value from last transaction
+  # @return [bool] true if this is a corrective_change
+  def calculate_corrective_change(old_system_value)
+    # Only idempotent properties, and cases where we have an old system_value
+    # are corrective_changes.
+    if @property_instance.idempotent? &&
+       !@property_instance.sensitive &&
+       !old_system_value.nil?
+
+      # If the values aren't insync, we have confirmed a corrective_change
+      @corrective_change = !@property_instance.insync_values?(old_system_value, previous_value)
+    else
+      @corrective_change = false
+    end
   end
 
   private

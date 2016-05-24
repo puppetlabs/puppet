@@ -1348,6 +1348,14 @@ EOT
         this file reflects the state discovered through interacting
         with clients."
       },
+    :transactionstorefile => {
+      :default => "$statedir/transactionstore.yaml",
+      :type => :file,
+      :mode => "0660",
+      :desc => "Transactional storage file for persisting data between
+        transactions for the purposes of infering information (such as
+        corrective_change) on new data received."
+    },
     :clientyamldir => {
       :default => "$vardir/client_yaml",
       :type => :directory,
