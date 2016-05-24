@@ -15,7 +15,11 @@ Puppet::Type.type(:zfs).provide(:zfs) do
     Puppet::Type.type(:zfs).validproperties.each do |property|
       next if property == :ensure
       if value = @resource[property] and value != ""
-        properties << "-o" << "#{property}=#{value}"
+        if property == :volsize
+          properties << "-V" << "#{value}"
+        else
+          properties << "-o" << "#{property}=#{value}"
+        end
       end
     end
     properties
