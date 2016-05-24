@@ -34,7 +34,7 @@ Puppet::Type.type(:mailalias).provide(
       if record[:recipient]
 	dest = record[:recipient].collect do |d|
 	  # Quote aliases that have non-alpha chars
-	  if d =~ /[^-\w@.]/
+	  if d =~ /[^-+\w@.]/
 	    '"%s"' % d
 	  else
 	    d
