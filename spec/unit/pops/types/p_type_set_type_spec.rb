@@ -195,7 +195,7 @@ module Puppet::Pops
                 }
               OBJECT
               expect { parse_type_set('MySet', ts) }.to raise_error(TypeAssertionError,
-                /key of entry 'car' expected a match for Pattern\[\/\[A-Z\]\\w\*\/\], got 'car'/)
+                /key of entry 'car' expected a match for Pattern\[\/\\A\[A-Z\]\\w\*\\z\/\], got 'car'/)
             end
           end
 
@@ -240,7 +240,7 @@ module Puppet::Pops
                 }
               OBJECT
               expect { parse_type_set('MySet', ts) }.to raise_error(ArgumentError,
-                /references TypeSet 'http:\/\/puppet\.com\/2016\.1\/runtime\/Vehicle::Cars'/)
+                /references TypeSet 'http:\/\/puppet\.com\/2016\.1\/runtime\/Vehicle::Cars' more than once using overlapping version ranges/)
             end
 
             it 'contains an initialization maps with an alias that collides with a type name' do
@@ -286,7 +286,7 @@ module Puppet::Pops
                   references => { Ref => { name => 'cars', version_range => '1.x' } }
                 OBJECT
                 expect { parse_type_set('MySet', ts) }.to raise_error(TypeAssertionError,
-                  /entry 'references' entry 'Ref' entry 'name' expected a match for Pattern\[\/\\A\(\(::\)\{0,1\}\[A-Z\]\[\\w\]\*\)\+\\z\/\], got 'cars'/)
+                  /entry 'references' entry 'Ref' entry 'name' expected a match for Pattern\[\/\\A\[A-Z\]\[\\w\]\*\(\?:::\[A-Z\]\[\\w\]\*\)\*\\z\/], got 'cars'/)
               end
 
               it 'has a version_range that is not a valid SemVer range' do
@@ -306,7 +306,7 @@ module Puppet::Pops
                   references => { 'cars' => { name => 'X', version_range => '1.x' } }
                 OBJECT
                 expect { parse_type_set('MySet', ts) }.to raise_error(TypeAssertionError,
-                  /entry 'references' key of entry 'cars' expected a match for Pattern\[\/\[A-Z\]\\w\*\/\], got 'cars'/)
+                  /entry 'references' key of entry 'cars' expected a match for Pattern\[\/\\A\[A-Z\]\\w\*\\z\/\], got 'cars'/)
               end
             end
           end

@@ -4,8 +4,11 @@ module Puppet::Pops
 module Pcore
   TYPE_URI_RX = Types::TypeFactory.regexp(URI.regexp)
   TYPE_URI = Types::TypeFactory.pattern(TYPE_URI_RX)
-  TYPE_SIMPLE_TYPE_NAME = Types::TypeFactory.pattern(/[A-Z]\w*/)
-  TYPE_QUALIFIED_REFERENCE = Types::TypeFactory.pattern(Types::TypeFactory.regexp(Patterns::CLASSREF_EXT))
+  TYPE_SIMPLE_TYPE_NAME = Types::TypeFactory.pattern(/\A[A-Z]\w*\z/)
+
+  CLASSREF_EXT = %r{\A((::){0,1}[A-Z][\w]*)+\z}
+
+  TYPE_QUALIFIED_REFERENCE = Types::TypeFactory.pattern(/\A[A-Z][\w]*(?:::[A-Z][\w]*)*\z/)
 
   KEY_PCORE_URI = 'pcore_uri'.freeze
   KEY_PCORE_VERSION = 'pcore_version'.freeze
