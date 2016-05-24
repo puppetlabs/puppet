@@ -225,9 +225,9 @@
 # | Format  | Integer Formats
 # | ------  | ---------------
 # | d       | Decimal, negative values produces leading '-'
-# | x X     | Hexadecimal in lower or upper case. Uses ..f/..F for negative values unless # is also used
-# | o       | Octal. Uses ..0 for negative values unless # is also used
-# | b B     | Binary with prefix 'b' or 'B'. Uses ..1/..1 for negative values unless # is also used
+# | x X     | Hexadecimal in lower or upper case. Uses ..f/..F for negative values unless + is also used. A `#` adds prefix 0x/0X.
+# | o       | Octal. Uses ..0 for negative values unless ´+´ is also used. A `#` adds prefix 0.
+# | b B     | Binary with prefix 'b' or 'B'. Uses ..1/..1 for negative values unless `+` is also used
 # | c       | numeric value representing a Unicode value, result is a one unicode character string, quoted if alternative flag # is used
 # | s       | same as d, or d in quotes if alternative flag # is used
 # | p       | same as d

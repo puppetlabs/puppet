@@ -21,7 +21,7 @@ evaluating resource and relationship expressions.
 "
 ) do |classes|
   scope = self
-
+  require 'byebug'; debugger
   # Make call patterns uniform and protected against nested arrays, also make
   # names absolute if so desired.
   classes = transform_and_assert_classnames(classes.is_a?(Array) ? classes.flatten : [classes])
