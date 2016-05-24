@@ -1,5 +1,6 @@
 require 'net/http'
 require 'uri'
+require 'json'
 
 require 'puppet/network/http'
 require 'puppet/network/http_pool'
@@ -218,7 +219,20 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def convert_to_http_error(response)
-    message = "Error #{response.code} on SERVER: #{(response.body||'').empty? ? response.message : uncompress_body(response)}"
+    if response.body.to_s.empty? && response.respond_to?(:message)
+      returned_message = response.message
+    elsif response['content-type'].is_a?(String)
+      content_type, body = parse_response(response)
+      if content_type =~ /[pj]son/
+        returned_message = JSON.parse(body)["message"]
+      else
+        returned_message = uncompress_body(response)
+      end
+    else
+      returned_message = uncompress_body(response)
+    end
+
+    message = "Error #{response.code} on SERVER: #{returned_message}"
     Net::HTTPError.new(message, response)
   end
 
