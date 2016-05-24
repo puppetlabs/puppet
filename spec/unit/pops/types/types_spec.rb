@@ -526,7 +526,7 @@ describe 'Puppet Type System' do
         type Integer = String
         notice 'hello' =~ Integer
       CODE
-      expect{ eval_and_collect_notices(code) }.to raise_error(/Attempt to redefine entity 'type\/integer'. Originally set by Puppet-Type-System\/Static-Loader/)
+      expect{ eval_and_collect_notices(code) }.to raise_error(/Attempt to redefine entity 'http:\/\/puppet\.com\/2016\.1\/runtime\/type\/integer'. Originally set by Puppet-Type-System\/Static-Loader/)
     end
   end
 

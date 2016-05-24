@@ -60,11 +60,11 @@ class Loaders
     loaders.nil? ? nil : loaders.implementation_registry
   end
 
-  def register_implementations(*obj_classes)
+  def register_implementations(obj_classes, name_authority)
     loader = @private_environment_loader
     types = obj_classes.map do |obj_class|
       type = obj_class._ptype
-      typed_name = Loader::Loader::TypedName.new(:type, type.name.downcase)
+      typed_name = Loader::TypedName.new(:type, type.name.downcase, name_authority)
       entry = loader.loaded_entry(typed_name)
       loader.set_entry(typed_name, type, obj_class._plocation) if entry.nil? || entry.value.nil?
       type
@@ -85,7 +85,7 @@ class Loaders
     unless loaders.nil?
       name = name.to_s
       caps_name = Types::TypeFormatter.singleton.capitalize_segments(name)
-      typed_name = Loader::Loader::TypedName.new(:type, name.downcase)
+      typed_name = Loader::TypedName.new(:type, name.downcase)
       loaders.runtime3_type_loader.set_entry(typed_name, Types::PResourceType.new(caps_name), origin)
     end
     nil

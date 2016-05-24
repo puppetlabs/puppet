@@ -275,6 +275,15 @@ class AccessOperator
     end
   end
 
+  def access_PTypeSetType(o, scope, keys)
+    keys.flatten!
+    if keys.size == 1
+      Types::TypeFactory.type_set(keys[0])
+    else
+      fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'TypeSet-Type', :min => 1, :actual => keys.size})
+    end
+  end
+
   def access_PNotUndefType(o, scope, keys)
     keys.flatten!
     case keys.size

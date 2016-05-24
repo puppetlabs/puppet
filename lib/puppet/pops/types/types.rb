@@ -1060,6 +1060,7 @@ class PCollectionType < PAnyType
 
   DEFAULT_SIZE = PIntegerType.new(0)
   ZERO_SIZE = PIntegerType.new(0, 0)
+  NOT_EMPTY_SIZE = PIntegerType.new(1)
   DEFAULT = PCollectionType.new(nil)
 
   protected
@@ -1235,7 +1236,7 @@ class PStringType < PScalarType
   end
 
   DEFAULT = PStringType.new(nil)
-  NON_EMPTY = PStringType.new(PIntegerType.new(1))
+  NON_EMPTY = PStringType.new(PCollectionType::NOT_EMPTY_SIZE)
 
   # Iterates over each character of the string
   ITERABLE_TYPE = PIterableType.new(PStringType.new(PIntegerType.new(1,1)))
@@ -1294,7 +1295,7 @@ class PRegexpType < PScalarType
   def initialize(pattern)
     if pattern.is_a?(Regexp)
       @regexp = pattern
-      @pattern = pattern.source
+      @pattern = pattern.options == 0 ? pattern.source : pattern.to_s
     else
       @pattern = pattern
     end
@@ -2722,7 +2723,11 @@ class PTypeAliasType < PAnyType
       @resolved_type = PTypeReferenceType::DEFAULT
       @self_recursion = true # assumed while it being found out below
       begin
-        @resolved_type = type_parser.interpret(@type_expr, loader).normalize
+        if @type_expr.is_a?(PTypeReferenceType)
+          @resolved_type = @type_expr.resolve(type_parser, loader)
+        else
+          @resolved_type = type_parser.interpret(@type_expr, loader).normalize
+        end
 
         # Find out if this type is recursive. A recursive type has performance implications
         # on several methods and this knowledge is used to avoid that for non-recursive
@@ -2758,7 +2763,7 @@ class PTypeAliasType < PAnyType
   def accept(visitor, guard)
     guarded_recursion(guard, nil) do |g|
       super(visitor, g)
-      resolved_type.accept(visitor, g)
+      @resolved_type.accept(visitor, g) unless @resolved_type.nil?
     end
   end
 
@@ -2848,8 +2853,12 @@ end
 require 'puppet/pops/pcore'
 
 require_relative 'puppet_object'
+require_relative 'annotatable'
+require_relative 'p_meta_type'
 require_relative 'p_object_type'
 require_relative 'p_runtime_type'
 require_relative 'p_sem_ver_type'
 require_relative 'p_sem_ver_range_type'
+require_relative 'p_type_set_type'
+require_relative 'type_set_reference'
 require_relative 'implementation_registry'

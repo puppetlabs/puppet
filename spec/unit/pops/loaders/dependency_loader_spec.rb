@@ -114,6 +114,6 @@ Puppet::Functions.create_function('testmodule::foo') {
   end
 
   def typed_name(type, name)
-    Puppet::Pops::Loader::Loader::TypedName.new(type, name)
+    Puppet::Pops::Loader::TypedName.new(type, name)
   end
 end

@@ -15,11 +15,27 @@ class Puppet::Pops::Loader::NullLoader < Puppet::Pops::Loader::Loader
     @parent
   end
 
+  def find(typed_name)
+    if @parent.nil?
+      nil
+    else
+      @parent.find(typed_name)
+    end
+  end
+
   def load_typed(typed_name)
     if @parent.nil?
       nil
     else
       @parent.load_typed(typed_name)
+    end
+  end
+
+  def loaded_entry(typed_name, check_dependencies = false)
+    if @parent.nil?
+      nil
+    else
+      @parent.loaded_entry(typed_name, check_dependencies)
     end
   end
 

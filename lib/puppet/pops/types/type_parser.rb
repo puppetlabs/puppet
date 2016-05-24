@@ -161,6 +161,7 @@ class TypeParser
         'object'       => TypeFactory.object,
         'typealias'    => TypeFactory.type_alias,
         'typereference' => TypeFactory.type_reference,
+        'typeset'      => TypeFactory.type_set,
       # A generic callable as opposed to one that does not accept arguments
         'callable'     => TypeFactory.all_callables,
         'semver'       => TypeFactory.sem_ver,
@@ -376,6 +377,10 @@ class TypeParser
       raise_invalid_parameters_error('Object', 1, parameters.size) unless parameters.size == 1
       TypeFactory.object(parameters[0])
 
+    when 'typeset'
+      raise_invalid_parameters_error('Object', 1, parameters.size) unless parameters.size == 1
+      TypeFactory.type_set(parameters[0])
+
     when 'iterable'
       if parameters.size != 1
         raise_invalid_parameters_error('Iterable', 1, parameters.size)
@@ -472,7 +477,7 @@ class TypeParser
       if type.nil?
         TypeFactory.type_reference(original_text_of(qref.eContainer))
       elsif type.is_a?(PResourceType)
-        raise_invalid_parameters_error(type_name, 1, parameters.size) unless parameters.size == 1
+        raise_invalid_parameters_error(qref.cased_value, 1, parameters.size) unless parameters.size == 1
         TypeFactory.resource(type.type_name, parameters[0])
       else
         # Must be a type alias. They can't use parameters (yet)

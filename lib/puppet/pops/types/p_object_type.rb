@@ -3,30 +3,23 @@ require_relative 'ruby_generator'
 module Puppet::Pops
 module Types
 
+KEY_ATTRIBUTES = 'attributes'.freeze
+KEY_CHECKS = 'checks'.freeze
+KEY_EQUALITY = 'equality'.freeze
+KEY_EQUALITY_INCLUDE_TYPE = 'equality_include_type'.freeze
+KEY_FINAL = 'final'.freeze
+KEY_FUNCTIONS = 'functions'.freeze
+KEY_KIND = 'kind'.freeze
+KEY_OVERRIDE = 'override'.freeze
+KEY_PARENT = 'parent'.freeze
+
 # @api public
-class PObjectType < PAnyType
-  KEY_ANNOTATIONS = 'annotations'.freeze
-  KEY_ATTRIBUTES = 'attributes'.freeze
-  KEY_CHECKS = 'checks'.freeze
-  KEY_EQUALITY = 'equality'.freeze
-  KEY_EQUALITY_INCLUDE_TYPE = 'equality_include_type'.freeze
-  KEY_FINAL = 'final'.freeze
-  KEY_FUNCTIONS = 'functions'.freeze
-  KEY_KIND = 'kind'.freeze
-  KEY_NAME = 'name'.freeze
-  KEY_OVERRIDE = 'override'.freeze
-  KEY_PARENT = 'parent'.freeze
-  KEY_TYPE = 'type'.freeze
-  KEY_VALUE = 'value'.freeze
+class PObjectType < PMetaType
 
   ATTRIBUTE_KIND_CONSTANT = 'constant'.freeze
   ATTRIBUTE_KIND_DERIVED = 'derived'.freeze
   ATTRIBUTE_KIND_GIVEN_OR_DERIVED = 'given_or_derived'.freeze
   TYPE_ATTRIBUTE_KIND = TypeFactory.enum(ATTRIBUTE_KIND_CONSTANT, ATTRIBUTE_KIND_DERIVED, ATTRIBUTE_KIND_GIVEN_OR_DERIVED)
-
-  TYPE_ANNOTATION_KEY_TYPE = PType::DEFAULT # TBD
-  TYPE_ANNOTATION_VALUE_TYPE = PStructType::DEFAULT #TBD
-  TYPE_ANNOTATIONS = PHashType.new(TYPE_ANNOTATION_KEY_TYPE, TYPE_ANNOTATION_VALUE_TYPE)
 
   TYPE_OBJECT_NAME = Pcore::TYPE_QUALIFIED_REFERENCE
   TYPE_MEMBER_NAME = PPatternType.new([PRegexpType.new(Patterns::PARAM_NAME)])
@@ -70,6 +63,7 @@ class PObjectType < PAnyType
   # @abstract Encapsulates behavior common to {PAttribute} and {PFunction}
   # @api public
   class PAnnotatedMember
+    include Annotatable
 
     # @return [PObjectType] the object type containing this member
     # @api public
@@ -82,10 +76,6 @@ class PObjectType < PAnyType
     # @return [PAnyType] the type of this member
     # @api public
     attr_reader :type
-
-    # @return [Hash{PType => Hash}] the annotations or `nil`
-    # @api public
-    attr_reader :annotations
 
     # @param name [String] The name of the member
     # @param container [PObjectType] The containing object type
@@ -103,8 +93,7 @@ class PObjectType < PAnyType
       @override = false if @override.nil?
       @final = i12n_hash[KEY_FINAL]
       @final = false if @final.nil?
-      @annotations = i12n_hash[KEY_ANNOTATIONS]
-      @annotations.freeze unless @annotations.nil?
+      init_annotatable(i12n_hash)
     end
 
     # Delegates to the contained type
@@ -112,8 +101,8 @@ class PObjectType < PAnyType
     # @param guard [RecursionGuard] guard against recursion. Only used by internal calls
     # @api public
     def accept(visitor, guard)
+      annotatable_accept(visitor, guard)
       @type.accept(visitor, guard)
-      @annotations.each_key { |key| key.accept(visitor, guard) } unless @annotations.nil?
     end
 
     # Checks if the this _member_ overrides an inherited member, and if so, that this member is declared with override = true and that
@@ -454,58 +443,6 @@ class PObjectType < PAnyType
     @equality_include_type && !(@parent.is_a?(PObjectType) && parent.include_class_in_equality?)
   end
 
-  # Called from the TypeParser once it has found a type using the Loader. The TypeParser will
-  # interpret the contained expression and the resolved type is remembered. This method also
-  # checks and remembers if the resolve type contains self recursion.
-  #
-  # @param type_parser [TypeParser] type parser that will interpret the type expression
-  # @param loader [Loader::Loader] loader to use when loading type aliases
-  # @return [PObjectType] the receiver of the call, i.e. `self`
-  # @api private
-  def resolve(type_parser, loader)
-    unless @i12n_hash_expression.nil?
-      @self_recursion = true # assumed while it being found out below
-
-      i12n_hash_expression = @i12n_hash_expression
-      @i12n_hash_expression = nil
-      if i12n_hash_expression.is_a?(Model::LiteralHash)
-        i12n_hash = resolve_literal_hash(type_parser, loader, i12n_hash_expression)
-      else
-        i12n_hash = resolve_hash(type_parser, loader, i12n_hash_expression)
-      end
-      initialize_from_hash(i12n_hash)
-
-      # Find out if this type is recursive. A recursive type has performance implications
-      # on several methods and this knowledge is used to avoid that for non-recursive
-      # types.
-      guard = RecursionGuard.new
-      accept(NoopTypeAcceptor::INSTANCE, guard)
-      @self_recursion = guard.recursive_this?(self)
-    end
-    self
-  end
-
-  def resolve_literal_hash(type_parser, loader, i12n_hash_expression)
-    type_parser.interpret_LiteralHash(i12n_hash_expression, loader)
-  end
-
-  def resolve_hash(type_parser, loader, i12n_hash)
-    resolve_type_refs(type_parser, loader, i12n_hash)
-  end
-
-  def resolve_type_refs(type_parser, loader, o)
-    case o
-    when Hash
-      Hash[o.map { |k, v| [resolve_type_refs(type_parser, loader, k), resolve_type_refs(type_parser, loader, v)] }]
-    when Array
-      o.map { |e| resolve_type_refs(type_parser, loader, e) }
-    when PTypeReferenceType
-      o.resolve(type_parser, loader)
-    else
-      o
-    end
-  end
-
   # @api private
   def initialize_from_hash(i12n_hash)
     TypeAsserter.assert_instance_of('object initializer', TYPE_OBJECT_I12N, i12n_hash)
@@ -584,9 +521,7 @@ class PObjectType < PAnyType
     @equality = equality
 
     @checks = i12n_hash[KEY_CHECKS]
-
-    @annotations = i12n_hash[KEY_ANNOTATIONS]
-    @annotations.freeze unless @annotations.nil?
+    init_annotatable(i12n_hash)
   end
 
   def [](name)
@@ -604,7 +539,6 @@ class PObjectType < PAnyType
       @parent.accept(visitor, g) unless parent.nil?
       @attributes.values.each { |a| a.accept(visitor, g) }
       @functions.values.each { |f| f.accept(visitor, g) }
-      @annotations.each_key { |key| key.accept(visitor, g) } unless @annotations.nil?
     end
   end
 
@@ -644,14 +578,13 @@ class PObjectType < PAnyType
   # @return [Hash{String=>Object}] the features hash
   # @api public
   def i12n_hash(include_name = true)
-    result = {}
+    result = super()
     result[KEY_NAME] = @name if include_name && !@name.nil?
     result[KEY_PARENT] = @parent unless @parent.nil?
     result[KEY_ATTRIBUTES] = compressed_members_hash(@attributes) unless @attributes.empty?
     result[KEY_FUNCTIONS] = compressed_members_hash(@functions) unless @functions.empty?
     result[KEY_EQUALITY] = @equality unless @equality.nil?
     result[KEY_CHECKS] = @checks unless @checks.nil?
-    result[KEY_ANNOTATIONS] = @annotations unless @annotations.nil?
     result
   end
 
@@ -739,14 +672,6 @@ class PObjectType < PAnyType
       raise Puppet::Error, "The Object type '#{originator.label}' inherits from itself" if @parent.equal?(originator)
       @parent.check_self_recursion(originator)
     end
-  end
-
-  # Returns the expanded string the form of the alias, e.g. <alias name> = <resolved type>
-  #
-  # @return [String] the expanded form of this alias
-  # @api public
-  def to_s
-    TypeFormatter.singleton.alias_expanded_string(self)
   end
 
   # @api private

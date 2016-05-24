@@ -90,6 +90,6 @@ describe 'FileBased module loader' do
   end
 
   def typed_name(type, name)
-    Puppet::Pops::Loader::Loader::TypedName.new(type, name)
+    Puppet::Pops::Loader::TypedName.new(type, name)
   end
 end

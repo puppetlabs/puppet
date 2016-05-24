@@ -1,12 +1,14 @@
+module Puppet::Pops
+module Loader
 # BaseLoader
 # ===
-# An abstract implementation of Puppet::Pops::Loader::Loader
+# An abstract implementation of Loader
 #
 # A derived class should implement `find(typed_name)` and set entries, and possible handle "miss caching".
 #
 # @api private
 #
-class Puppet::Pops::Loader::BaseLoader < Puppet::Pops::Loader::Loader
+class BaseLoader < Loader
 
   # The parent loader
   attr_reader :parent
@@ -76,7 +78,7 @@ class Puppet::Pops::Loader::BaseLoader < Puppet::Pops::Loader::Loader
       end
     end
 
-    @last_result = Puppet::Pops::Loader::Loader::NamedEntry.new(typed_name, value, origin)
+    @last_result = Loader::NamedEntry.new(typed_name, value, origin)
     @last_name = typed_name
     @named_values[typed_name] = @last_result
   end
@@ -84,7 +86,7 @@ class Puppet::Pops::Loader::BaseLoader < Puppet::Pops::Loader::Loader
   # @api private
   #
   def add_entry(type, name, value, origin)
-    set_entry(Puppet::Pops::Loader::Loader::TypedName.new(type, name), value, origin)
+    set_entry(TypedName.new(type, name), value, origin)
   end
 
   # Promotes an already created entry (typically from another loader) to this loader
@@ -140,4 +142,6 @@ class Puppet::Pops::Loader::BaseLoader < Puppet::Pops::Loader::Loader
     te
   end
 
+end
+end
 end
