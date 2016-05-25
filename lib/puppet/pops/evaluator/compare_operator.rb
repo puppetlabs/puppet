@@ -93,7 +93,7 @@ class CompareOperator
   end
 
   def cmp_Version(a, b)
-    raise ArgumentError.new('Versions not comparable to non Versions') unless b.is_a?(Semantic::Version)
+    raise ArgumentError.new('Versions not comparable to non Versions') unless b.is_a?(SemanticPuppet::Version)
     a <=> b
   end
 
@@ -149,7 +149,7 @@ class CompareOperator
       # Always set match data, a "not found" should not keep old match data visible
       set_match_data(matched, scope) # creates ephemeral
       return !!matched
-    when String, Semantic::Version
+    when String, SemanticPuppet::Version
       a.any? { |element| match(b, element, scope) }
     when Types::PAnyType
       a.each {|element| return true if b.instance?(element) }
@@ -183,11 +183,11 @@ class CompareOperator
 
   # Matches against semvers and strings
   def match_Version(version, left, scope)
-    if left.is_a?(Semantic::Version)
+    if left.is_a?(SemanticPuppet::Version)
       version == left
     elsif left.is_a? String
       begin
-        version == Semantic::Version.parse(left)
+        version == SemanticPuppet::Version.parse(left)
       rescue ArgumentError
         false
       end
