@@ -27,19 +27,19 @@ class PSemVerType < PScalarType
   end
 
   # Creates a SemVer version from the given _version_ argument. If the argument is `nil` or
-  # a {Semantic::Version}, it is returned. If it is a {String}, it will be parsed into a
-  # {Semantic::Version}. Any other class will raise an {ArgumentError}.
+  # a {SemanticPuppet::Version}, it is returned. If it is a {String}, it will be parsed into a
+  # {SemanticPuppet::Version}. Any other class will raise an {ArgumentError}.
   #
-  # @param version [Semantic::Version,String,nil] the version to convert
-  # @return [Semantic::Version] the converted version
+  # @param version [SemanticPuppet::Version,String,nil] the version to convert
+  # @return [SemanticPuppet::Version] the converted version
   # @raise [ArgumentError] when the argument cannot be converted into a version
   #
   def self.convert(version)
     case version
-    when nil, Semantic::Version
+    when nil, SemanticPuppet::Version
       version
     when String
-      Semantic::Version.parse(version)
+      SemanticPuppet::Version.parse(version)
     else
       raise ArgumentError, "Unable to convert a #{version.class.name} to a SemVer"
     end

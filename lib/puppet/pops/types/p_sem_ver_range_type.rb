@@ -6,7 +6,7 @@ module Types
 # @api public
 class PSemVerRangeType < PScalarType
   # Check if a version is included in a version range. The version can be a string or
-  # a `Semantic::SemVer`
+  # a `SemanticPuppet::SemVer`
   #
   # @param range [SemanticPuppet::VersionRange] the range to match against
   # @param version [SemanticPuppet::Version,String] the version to match
@@ -28,20 +28,20 @@ class PSemVerRangeType < PScalarType
     end
   end
 
-  # Creates a {Semantic::VersionRange} from the given _version_range_ argument. If the argument is `nil` or
-  # a {Semantic::VersionRange}, it is returned. If it is a {String}, it will be parsed into a
-  # {Semantic::VersionRange}. Any other class will raise an {ArgumentError}.
+  # Creates a {SemanticPuppet::VersionRange} from the given _version_range_ argument. If the argument is `nil` or
+  # a {SemanticPuppet::VersionRange}, it is returned. If it is a {String}, it will be parsed into a
+  # {SemanticPuppet::VersionRange}. Any other class will raise an {ArgumentError}.
   #
-  # @param version_range [Semantic::VersionRange,String,nil] the version range to convert
-  # @return [Semantic::VersionRange] the converted version range
+  # @param version_range [SemanticPuppet::VersionRange,String,nil] the version range to convert
+  # @return [SemanticPuppet::VersionRange] the converted version range
   # @raise [ArgumentError] when the argument cannot be converted into a version range
   #
   def self.convert(version_range)
     case version_range
-    when nil, Semantic::VersionRange
+    when nil, SemanticPuppet::VersionRange
       version_range
     when String
-      Semantic::VersionRange.parse(version_range)
+      SemanticPuppet::VersionRange.parse(version_range)
     else
       raise ArgumentError, "Unable to convert a #{version_range.class.name} to a SemVerRange"
     end
