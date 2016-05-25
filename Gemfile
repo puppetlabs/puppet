@@ -26,7 +26,7 @@ end
 gem "puppet", :path => File.dirname(__FILE__), :require => false
 gem "facter", *location_for(ENV['FACTER_LOCATION'] || ['> 2.0', '< 4'])
 gem "hiera", *location_for(ENV['HIERA_LOCATION'] || ['>= 2.0', '< 4'])
-gem "semantic_puppet", *location_for(ENV['SEMANTIC_PUPPET_LOCATION'] || ['>= 0.1.2', '< 2'])
+gem "semantic_puppet", *location_for(ENV['SEMANTIC_PUPPET_LOCATION'] || ['>= 0.1.3', '< 2'])
 gem "rake", "10.1.1", :require => false
 # Hiera has an unbound dependency on json_pure
 # json_pure 2.0.2+ officially requires Ruby >= 2.0, but should have specified that in 2.0
