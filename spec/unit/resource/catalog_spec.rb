@@ -871,16 +871,16 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to pson"
         catalog = compile_to_catalog("notify {'foo': message => SemVer('1.0.0') }")
         catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog.to_json))
         message = catalog2.resource('notify', 'foo')['message']
-        expect(message).to be_a(Semantic::Version)
-        expect(message).to eql(Semantic::Version.parse('1.0.0'))
+        expect(message).to be_a(SemanticPuppet::Version)
+        expect(message).to eql(SemanticPuppet::Version.parse('1.0.0'))
       end
 
       it 'should read and convert ext_parameters containing VersionRange from json' do
         catalog = compile_to_catalog("notify {'foo': message => SemVerRange('>=1.0.0') }")
         catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog.to_json))
         message = catalog2.resource('notify', 'foo')['message']
-        expect(message).to be_a(Semantic::VersionRange)
-        expect(message).to eql(Semantic::VersionRange.parse('>=1.0.0'))
+        expect(message).to be_a(SemanticPuppet::VersionRange)
+        expect(message).to eql(SemanticPuppet::VersionRange.parse('>=1.0.0'))
       end
 
       it 'should read and convert ext_parameters containing Timespan from json' do
@@ -904,7 +904,7 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to pson"
         catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog.to_json))
         message = catalog2.resource('notify', 'foo')['message']
         expect(message).to be_a(Hash)
-        expect(message['version']).to eql(Semantic::Version.parse('1.0.0'))
+        expect(message['version']).to eql(SemanticPuppet::Version.parse('1.0.0'))
         expect(message['time']).to eql(Puppet::Pops::Time::Timestamp.parse('2016-09-15T08:32:16.123 UTC'))
       end
 
@@ -913,7 +913,7 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to pson"
         catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog.to_json))
         message = catalog2.resource('notify', 'foo')['message']
         expect(message).to be_a(Array)
-        expect(message[0]).to eql(Semantic::Version.parse('1.0.0'))
+        expect(message[0]).to eql(SemanticPuppet::Version.parse('1.0.0'))
         expect(message[1]).to eql(Puppet::Pops::Time::Timestamp.parse('2016-09-15T08:32:16.123 UTC'))
       end
     end

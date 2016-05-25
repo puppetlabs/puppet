@@ -414,8 +414,8 @@ class amod::bad_type {
         apply.expects(:apply_catalog).with do |catalog|
           catalog.resource(:notify, 'rx')['message'].is_a?(Regexp)
           catalog.resource(:notify, 'bin')['message'].is_a?(Puppet::Pops::Types::PBinaryType::Binary)
-          catalog.resource(:notify, 'ver')['message'].is_a?(Semantic::Version)
-          catalog.resource(:notify, 'vrange')['message'].is_a?(Semantic::VersionRange)
+          catalog.resource(:notify, 'ver')['message'].is_a?(SemanticPuppet::Version)
+          catalog.resource(:notify, 'vrange')['message'].is_a?(SemanticPuppet::VersionRange)
           catalog.resource(:notify, 'tspan')['message'].is_a?(Puppet::Pops::Time::Timespan)
           catalog.resource(:notify, 'tstamp')['message'].is_a?(Puppet::Pops::Time::Timestamp)
         end
