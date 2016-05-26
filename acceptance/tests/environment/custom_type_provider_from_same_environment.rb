@@ -11,7 +11,8 @@ extend Puppet::Acceptance::EnvironmentUtils
 
   teardown do
     step 'clean out production env' do
-      on(hosts, "rm -rf #{fq_prod_environmentpath}/modules/*", :accept_all_exit_codes => true)
+      on(master, "rm -rf #{fq_prod_environmentpath}/modules/*",         :accept_all_exit_codes => true)
+      on(master, "rm     #{fq_prod_environmentpath}/manifests/site.pp", :accept_all_exit_codes => true)
     end
     step 'clean out file resources' do
       on(hosts, "rm #{file_correct} #{file_wrong}", :accept_all_exit_codes => true)
