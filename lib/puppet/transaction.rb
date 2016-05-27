@@ -230,10 +230,6 @@ class Puppet::Transaction
     end
   end
 
-  def failed?(resource)
-    s = resource_status(resource) and s.failed?
-  end
-
   # Does this resource have any failed dependencies?
   def failed_dependencies?(resource)
     # When we introduced the :whit into the graph, to reduce the combinatorial
