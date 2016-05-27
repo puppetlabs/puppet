@@ -505,7 +505,6 @@ module Runtime3Support
       elsif Puppet[:strict] == :off
         p[Issues::UNKNOWN_VARIABLE] = :ignore
       else
-        Puppet[:strict_variables]
         p[Issues::UNKNOWN_VARIABLE] = Puppet[:strict]
       end
 
