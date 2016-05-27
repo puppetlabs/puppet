@@ -592,7 +592,7 @@ class PEnumType < PScalarType
   attr_reader :values
 
   def initialize(values)
-    @values = values.sort.freeze
+    @values = values.uniq.sort.freeze
   end
 
   # Returns Enumerator if no block is given, otherwise, calls the given

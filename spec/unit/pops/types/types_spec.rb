@@ -153,6 +153,22 @@ describe 'Puppet Type System' do
     end
   end
 
+  context 'Enum type' do
+    it 'sorts its entries' do
+      code = <<-CODE
+        Enum[c,b,a].each |$e| { notice $e }
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['a', 'b', 'c'])
+    end
+
+    it 'makes entries unique' do
+      code = <<-CODE
+        Enum[a,b,c,b,a].each |$e| { notice $e }
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['a', 'b', 'c'])
+    end
+  end
+
   context 'Iterable type' do
     it 'can be parameterized with element type' do
       code = <<-CODE
