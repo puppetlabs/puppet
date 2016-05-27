@@ -51,6 +51,13 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     end
   end
 
+  it "should be the default provider on cumulus3" do
+    Facter.stubs(:value).with(:osfamily).returns(:debian)
+    Facter.stubs(:value).with(:operatingsystem).returns('CumulusLinux')
+    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("3")
+    expect(described_class).to be_default
+  end
+
   it "should be the default provider on sles12" do
     Facter.stubs(:value).with(:osfamily).returns(:suse)
     Facter.stubs(:value).with(:operatingsystemmajrelease).returns("12")

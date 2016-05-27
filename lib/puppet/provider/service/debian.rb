@@ -17,7 +17,7 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
   commands :invoke_rc => "/usr/sbin/invoke-rc.d"
   commands :service => "/usr/sbin/service"
 
-  defaultfor :operatingsystem => :cumuluslinux
+  defaultfor :operatingsystem => :cumuluslinux, :operatingsystemmajrelease => ['1','2']
   defaultfor :operatingsystem => :debian, :operatingsystemmajrelease => ['5','6','7']
 
   # Remove the symlinks
