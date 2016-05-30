@@ -309,6 +309,10 @@ call_method_with_lambda_expression
         result = val[0].dot(Factory.fqn(val[2][:value]))
         loc result, val[1], val[2]
       }
+    | expression DOT TYPE {
+        result = val[0].dot(Factory.fqn(val[2][:value]))
+        loc result, val[1], val[2]
+      }
 
 #---LAMBDA
 #
