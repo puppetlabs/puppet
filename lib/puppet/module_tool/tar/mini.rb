@@ -1,7 +1,7 @@
 class Puppet::ModuleTool::Tar::Mini
   def unpack(sourcefile, destdir, _)
     Zlib::GzipReader.open(sourcefile) do |reader|
-      Archive::Tar::Minitar.unpack(reader, destdir, find_valid_files(reader)) do |action, name, stats|
+      Archive::Tar::Minitar.unpack(reader, destdir, find_valid_files(reader).collect(&:full_name)) do |action, name, stats|
         case action
         when :file_done
           File.chmod(0644, "#{destdir}/#{name}")
@@ -19,6 +19,10 @@ class Puppet::ModuleTool::Tar::Mini
     end
   end
 
+  def entries(sourcefile)
+    find_valid_files(sourcefile).select { |f| !f.nil? }
+  end
+
   private
 
   # Find all the valid files in tarfile.
@@ -31,7 +35,7 @@ class Puppet::ModuleTool::Tar::Mini
     Archive::Tar::Minitar.open(tarfile).collect do |entry|
       flag = entry.typeflag
       if flag.nil? || flag =~ /[[:digit:]]/ && (0..7).include?(flag.to_i)
-        entry.full_name
+        entry
       else
         Puppet.debug "Invalid tar flag '#{flag}' will not be extracted: #{entry.name}"
         next

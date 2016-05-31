@@ -21,6 +21,7 @@ module Puppet::ModuleTool
         Puppet.notice "Building #{@path} for release"
         pack
         relative = Pathname.new(archive_file).relative_path_from(Pathname.new(File.expand_path(Dir.pwd)))
+        minitar_verify
 
         # Return the Pathname object representing the path to the release
         # archive just created. This return value is used by the module_tool
@@ -38,6 +39,22 @@ module Puppet::ModuleTool
 
       def archive_file
         File.join(@pkg_path, "#{metadata.release_name}.tar.gz")
+      end
+
+      def minitar_verify
+        begin
+          # assume valid if minitar inaccessible (i.e. immediate rescue loading gem)
+          require 'archive/tar/minitar'
+        rescue
+          return true
+        end
+
+        # minitar present, so assume invalid
+        files = Puppet::ModuleTool::Tar::Mini.new.entries(archive_file)
+        valid = files.all? { |f| f.full_name == f.name }
+        if !valid
+          raise Puppet::ModuleTool::Errors::ModuleToolError, "Archive contains invalid entries - may fail minitar extraction on Windows."
+        end
       end
 
       def pack
