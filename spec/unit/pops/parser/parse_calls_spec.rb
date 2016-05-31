@@ -103,6 +103,14 @@ describe "egrammar parsing function calls" do
         ")))"
         ].join("\n"))
     end
+
+    it "notice 42.type()" do
+      expect(dump(parse("notice 42.type()"))).to eq('(invoke notice (call-method (. 42 type)))')
+    end
+
+    it "notice 42.type(detailed)" do
+      expect(dump(parse("notice 42.type(detailed)"))).to eq('(invoke notice (call-method (. 42 type) detailed))')
+    end
   end
 
   context "When parsing an illegal argument list" do
