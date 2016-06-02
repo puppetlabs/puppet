@@ -3226,6 +3226,7 @@ end
 
 require 'puppet/pops/pcore'
 
+require_relative 'puppet_object'
 require_relative 'annotatable'
 require_relative 'p_meta_type'
 require_relative 'p_object_type'
@@ -3236,5 +3237,6 @@ require_relative 'p_sensitive_type'
 require_relative 'p_type_set_type'
 require_relative 'p_timespan_type'
 require_relative 'p_timestamp_type'
+require_relative 'p_binary_type'
 require_relative 'type_set_reference'
 require_relative 'implementation_registry'

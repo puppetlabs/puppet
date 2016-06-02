@@ -688,6 +688,11 @@ class TypeCalculator
   end
 
   # @api private
+  def infer_Binary(o)
+    PBinaryType::DEFAULT
+  end
+
+  # @api private
   def infer_Version(o)
     PSemVerType::DEFAULT
   end

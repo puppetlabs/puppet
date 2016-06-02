@@ -214,6 +214,12 @@ describe 'The type calculator' do
       end
     end
 
+    context 'binary' do
+      it 'translates to PBinaryType' do
+        expect(calculator.infer(PBinaryType::Binary.from_binary_string("binary")).class).to eq(PBinaryType)
+      end
+    end
+
     context 'version' do
       it 'translates to PVersionType' do
         expect(calculator.infer(Semantic::Version.new(1,0,0)).class).to eq(PSemVerType)

@@ -147,6 +147,19 @@ class CompareOperator
     end
   end
 
+  def include_Binary(a, b, scope)
+    case b
+    when Puppet::Pops::Types::PBinaryType::Binary
+      a.binary_buffer.include?(b.binary_buffer)
+    when String
+      a.binary_buffer.include?(b)
+    when Numeric
+      a.binary_buffer.bytes.include?(b)
+    else
+      false
+    end
+  end
+
   def include_Array(a, b, scope)
     case b
     when Regexp

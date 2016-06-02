@@ -140,6 +140,7 @@ class TypeParser
         'iterable'     => TypeFactory.iterable,
         'iterator'     => TypeFactory.iterator,
         'string'       => TypeFactory.string,
+        'binary'       => TypeFactory.binary,
         'sensitive'    => TypeFactory.sensitive,
         'enum'         => TypeFactory.enum,
         'boolean'      => TypeFactory.boolean,
