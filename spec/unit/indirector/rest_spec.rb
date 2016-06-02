@@ -1,5 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'json'
 require 'puppet/indirector'
 require 'puppet/indirector/errors'
 require 'puppet/indirector/rest'
@@ -12,15 +13,34 @@ shared_examples_for "a REST terminus method" do |terminus_method|
 
   HTTP_ERROR_CODES.each do |code|
     describe "when the response code is #{code}" do
-      let(:response) { mock_response(code, 'error messaged!!!') }
+      let(:message) { 'error messaged!!!' }
+      let(:body) do
+        JSON.generate({
+          :issue_kind => 'server-error',
+          :message    => message,
+          :stacktrace => ['worst/stack/trace/ever.rb:4']
+        })
+      end
+      let(:response) { mock_response(code, body, 'application/json') }
 
-      it "raises an http error with the body of the response" do
-        expect {
-          terminus.send(terminus_method, request)
-        }.to raise_error(Net::HTTPError, "Error #{code} on SERVER: #{response.body}")
+      describe "when the response is plain text" do
+        let(:response) { mock_response(code, message) }
+
+        it "raises an http error with the body of the response when plain text" do
+
+          expect {
+            terminus.send(terminus_method, request)
+          }.to raise_error(Net::HTTPError, "Error #{code} on SERVER: #{message}")
+        end
       end
 
-      it "does not attempt to deserialize the response" do
+      it "raises an http error with the body's message field when json" do
+        expect {
+          terminus.send(terminus_method, request)
+        }.to raise_error(Net::HTTPError, "Error #{code} on SERVER: #{message}")
+      end
+
+      it "does not attempt to deserialize the response into a model" do
         model.expects(:convert_from).never
 
         expect {
@@ -40,15 +60,14 @@ shared_examples_for "a REST terminus method" do |terminus_method|
 
       describe "and the body is compressed" do
         it "raises an http error with the decompressed body of the response" do
-          uncompressed_body = "why"
-          compressed_body = Zlib::Deflate.deflate(uncompressed_body)
+          compressed_body = Zlib::Deflate.deflate(body)
 
-          response = mock_response(code, compressed_body, 'text/plain', 'deflate')
-          connection.expects(http_method).returns(response)
+          compressed_response = mock_response(code, compressed_body, 'application/json', 'deflate')
+          connection.expects(http_method).returns(compressed_response)
 
           expect {
             terminus.send(terminus_method, request)
-          }.to raise_error(Net::HTTPError, "Error #{code} on SERVER: #{uncompressed_body}")
+          }.to raise_error(Net::HTTPError, "Error #{code} on SERVER: #{message}")
         end
       end
     end

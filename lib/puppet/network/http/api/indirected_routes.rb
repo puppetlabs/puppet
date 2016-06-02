@@ -47,10 +47,6 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     Puppet.override(:trusted_information => trusted) do
       send("do_#{method}", indirection, key, params, request, response)
     end
-  rescue Puppet::Network::HTTP::Error::HTTPError => e
-    return do_http_control_exception(response, e)
-  rescue StandardError => e
-    return do_exception(response, e)
   end
 
   def uri2indirection(http_method, uri, params)
@@ -60,7 +56,8 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     environment = params.delete(:environment)
 
     if indirection_name !~ /^\w+$/
-      raise ArgumentError, "The indirection name must be purely alphanumeric, not '#{indirection_name}'"
+      raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
+        "The indirection name must be purely alphanumeric, not '#{indirection_name}'")
     end
 
     # this also depluralizes the indirection_name if it is a search
@@ -69,21 +66,25 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     # check whether this indirection matches the prefix and version in the
     # request
     if url_prefix != IndirectionType.url_prefix_for(indirection_name)
-      raise ArgumentError, "Indirection '#{indirection_name}' does not match url prefix '#{url_prefix}'"
+      raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
+        "Indirection '#{indirection_name}' does not match url prefix '#{url_prefix}'")
     end
 
     indirection = Puppet::Indirector::Indirection.instance(indirection_name.to_sym)
     if !indirection
       raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(
-        "Could not find indirection '#{indirection_name}'", Puppet::Network::HTTP::Issues::HANDLER_NOT_FOUND)
+        "Could not find indirection '#{indirection_name}'",
+        Puppet::Network::HTTP::Issues::HANDLER_NOT_FOUND)
     end
 
     if !environment
-      raise ArgumentError, "An environment parameter must be specified"
+      raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
+        "An environment parameter must be specified")
     end
 
     if ! Puppet::Node::Environment.valid_name?(environment)
-      raise ArgumentError, "The environment must be purely alphanumeric, not '#{environment}'"
+      raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
+        "The environment must be purely alphanumeric, not '#{environment}'")
     end
 
     configured_environment = Puppet.lookup(:environments).get(environment)
@@ -92,40 +93,28 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
       params[:environment] = configured_environment
     end
 
-    check_authorization(method, "#{url_prefix}/#{indirection_name}/#{key}", params)
+    begin
+      check_authorization(method, "#{url_prefix}/#{indirection_name}/#{key}", params)
+    rescue Puppet::Network::AuthorizationError => e
+      raise Puppet::Network::HTTP::Error::HTTPNotAuthorizedError.new(e.message)
+    end
 
     if configured_environment.nil?
-      raise ArgumentError, "Could not find environment '#{environment}'"
+      raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(
+        "Could not find environment '#{environment}'")
     end
 
     params.delete(:bucket_path)
 
     if key == "" or key.nil?
-      raise ArgumentError, "No request key specified in #{uri}"
+      raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
+        "No request key specified in #{uri}")
     end
 
     [indirection, method, key, params]
   end
 
   private
-
-  def do_http_control_exception(response, exception)
-    msg = exception.message
-    Puppet.info(msg)
-    response.respond_with(exception.status, "text/plain", msg)
-  end
-
-  def do_exception(response, exception, status=400)
-    if exception.is_a?(Puppet::Network::AuthorizationError)
-      # make sure we return the correct status code
-      # for authorization issues
-      status = 403 if status == 400
-    end
-
-    Puppet.log_exception(exception)
-
-    response.respond_with(status, "text/plain", exception.to_s)
-  end
 
   # Execute our find.
   def do_find(indirection, key, params, request, response)
@@ -207,10 +196,12 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
   end
 
   def indirection_method(http_method, indirection)
-    raise ArgumentError, "No support for http method #{http_method}" unless METHOD_MAP[http_method]
+    raise Puppet::Network::HTTP::Error::HTTPMethodNotAllowedError.new(
+      "No support for http method #{http_method}") unless METHOD_MAP[http_method]
 
     unless method = METHOD_MAP[http_method][plurality(indirection)]
-      raise ArgumentError, "No support for plurality #{plurality(indirection)} for #{http_method} operations"
+      raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
+        "No support for plurality #{plurality(indirection)} for #{http_method} operations")
     end
 
     method
