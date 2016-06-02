@@ -157,7 +157,7 @@ module Puppet::Util::HttpProxy
   end
 
   # Retrieve a document through HTTP(s), following redirects if necessary.
-  # 
+  #
   # Based on the the client implementation in the HTTP pool.
   #
   # @see Puppet::Network::HTTP::Connection#request_with_redirects
@@ -172,7 +172,10 @@ module Puppet::Util::HttpProxy
 
     0.upto(redirect_limit) do |redirection|
       proxy = get_http_object(current_uri)
-      response = proxy.send(:head, current_uri.path)
+      # This is a workaround to support backwards compatibility for Ruby 1.9.3,
+      # once that support is dropped the entire URI object can be used.
+      request_path = "#{current_uri.path}?#{current_uri.query}"
+      response = proxy.send(:head, request_path)
 
       if [301, 302, 307].include?(response.code.to_i)
         # handle the redirection
@@ -182,12 +185,20 @@ module Puppet::Util::HttpProxy
 
       if block_given?
         headers = {'Accept' => 'binary', 'accept-encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3'}
-        response = proxy.send("request_#{method}".to_sym, current_uri.path, headers, &block)
+        response = proxy.send("request_#{method}".to_sym, request_path, headers, &block)
+        if !response.code.match(/^2/) && method == :head
+          method = :get
+          response = proxy.send(:request_get, request_path, headers, &block)
+        end
       else
-        response = proxy.send(method, current_uri.path)
+        response = proxy.send(method, request_path)
+        if !response.code.match(/^2/) && method == :head
+          method = :get
+          response = proxy.send(:get, request_path)
+        end
       end
 
-      Puppet.debug("HTTP #{method.to_s.upcase} request to #{current_uri} returned #{response.code} #{response.message}")
+      Puppet.debug("HTTP #{method.to_s.upcase} request to #{request_path} returned #{response.code} #{response.message}")
 
       return response
     end
