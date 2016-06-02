@@ -30,6 +30,15 @@ describe 'Binary Type' do
     end
 
   context 'a Binary instance' do
+    it 'can be created from a Base64 encoded String using %s, string mode' do
+      # the text 'binar' needs padding with '='
+      code = <<-CODE
+        $x = Binary('binary', '%s')
+        notice(assert_type(Binary, $x))
+      CODE
+      expect(eval_and_collect_notices(code)).to eql(['YmluYXJ5'])
+    end
+
     it 'can be created from a Base64 encoded String' do
       code = <<-CODE
         $x = Binary('YmluYXJ5')
@@ -38,7 +47,7 @@ describe 'Binary Type' do
       expect(eval_and_collect_notices(code)).to eql(['YmluYXJ5'])
     end
 
-    it 'can be created from a Base64 encoded String using %s, strict mode' do
+    it 'can be created from a Base64 encoded String using %B, strict mode' do
       # the text 'binar' needs padding with '='
       code = <<-CODE
         $x = Binary('YmluYXI=', '%B')

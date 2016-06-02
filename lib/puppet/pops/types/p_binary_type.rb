@@ -56,15 +56,12 @@ class PBinaryType < PAnyType
     # This means that this binary will have the exact same content, but the string will considered
     # to hold a sequence of bytes in the range 0 to 255.
     #
-    # The given string will be frozen as a side effect if it is in ASCII-8BIT encoding. If this is not
-    # wanted, a copy should be given to this method.
-    #
     # @param [String] A string with binary data
     # @api private
     #
     def initialize(bin)
       # TODO: When Ruby 1.9.3 support is dropped change this to `bin.b` for binary encoding instead of force_encoding
-      @binary_buffer = (bin.encoding.name == "ASCII-8BIT" ? bin : bin.force_encoding("ASCII-8BIT")).freeze
+      @binary_buffer = (bin.encoding.name == "ASCII-8BIT" ? bin : bin.dup.force_encoding("ASCII-8BIT")).freeze
     end
 
     # Presents the binary content as a string base64 encoded string (without line breaks).
@@ -105,7 +102,7 @@ class PBinaryType < PAnyType
     @@new_function ||= Puppet::Functions.create_loaded_function(:new_Binary, loader) do
       local_types do
         type 'ByteInteger = Integer[0,255]'
-        type 'Base64Format = Enum["%b", "%u", "%B"]'
+        type 'Base64Format = Enum["%b", "%u", "%B", "%s"]'
         type 'StringHash = Struct[{value => String, "format" => Optional[Base64Format]}]'
         type 'ArrayHash = Struct[{value => Array[ByteInteger]}]'
         type 'BinaryArgsHash = Variant[StringHash, ArrayHash]'
@@ -139,6 +136,9 @@ class PBinaryType < PAnyType
 
         when "%B"
           Binary.new(Base64.strict_decode64(str))
+
+        when "%s"
+          Binary.new(str)
 
         else
           raise ArgumentError, "Unsupported Base64 format '#{format}'"
