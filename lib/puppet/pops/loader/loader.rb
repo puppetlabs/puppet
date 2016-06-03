@@ -171,10 +171,8 @@ class Puppet::Pops::Loader::Loader
     # of it cached.
     def self.new(type, name)
       @cache ||= {}
-      @cache.fetch(:"#{type}/#{name.gsub /^::/, ''}") do
-        puts "new TypedName registered: #{type}/#{name}, count: #{@cache.size}"
-        super
-      end
+      key = :"#{type}/#{name.to_s.gsub /^::/, ''}"
+      @cache.fetch(key) { @cache[key] = super }
     end
 
     # Force identity equality since this is now immutable
