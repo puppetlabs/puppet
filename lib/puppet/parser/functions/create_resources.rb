@@ -58,10 +58,11 @@ Puppet::Parser::Functions::newfunction(:create_resources, :arity => -3, :doc => 
       Puppet::Parser::AST::ResourceInstance.new(
         :title => Puppet::Parser::AST::Leaf.new(:value => title),
         :parameters => defaults.merge(params).collect do |name, value|
+          next if (value == :undef || value.nil?)
           Puppet::Parser::AST::ResourceParam.new(
             :param => name,
             :value => Puppet::Parser::AST::Leaf.new(:value => value))
-        end)
+        end.compact)
     end)
 
   if type.start_with? '@@'
