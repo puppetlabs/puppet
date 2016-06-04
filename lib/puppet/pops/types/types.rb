@@ -2256,6 +2256,10 @@ class PArrayType < PCollectionType
           from
         when Hash
           wrap ? [from] : from.to_a
+
+        when PBinaryType::Binary
+          wrap ? [from] : from.binary_buffer.bytes
+
         else
           if wrap
             [from]

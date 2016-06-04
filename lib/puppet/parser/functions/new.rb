@@ -709,6 +709,8 @@ When given a single value as argument:
 * An empty `Hash` becomes an empty array.
 * An `Array` is simply returned.
 * An `Iterable[T]` is turned into an array of `T` instances.
+* A `Binary` is converted to an `Array[Integer[0,255]]` of byte values
+
 
 When given a second Boolean argument:
 

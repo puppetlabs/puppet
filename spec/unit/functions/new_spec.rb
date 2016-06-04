@@ -488,6 +488,22 @@ describe 'the new function' do
         )).to have_resource(result)
       end
     end
+
+    it 'produces an array of byte integer values when given a Binary' do
+      expect(compile_to_catalog(<<-MANIFEST
+        $x = Array.new(Binary('ABC', '%s'))
+        notify { "${type($x, generalized)}, $x": }
+      MANIFEST
+      )).to have_resource('Notify[Array[Integer], [65, 66, 67]]')
+    end
+
+    it 'wraps a binary when given extra argument true' do
+      expect(compile_to_catalog(<<-MANIFEST
+        $x = Array[Any].new(Binary('ABC', '%s'), true)
+        notify { "${type($x, generalized)}, $x": }
+      MANIFEST
+      )).to have_resource('Notify[Array[Binary], [QUJD]]')
+    end
   end
 
   context 'when invoked on Tuple' do
