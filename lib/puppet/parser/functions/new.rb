@@ -626,6 +626,21 @@ Defaults to `s` at top level and `p` inside array or hash.
 | s         | Same as d.
 | p         | Same as d.
 
+### Binary value to String
+
+| Format    | Default formats
+| ------    | ---------------
+| s         | binary as unquoted characters
+| p         | 'Binary("<base64strict>")'
+| b         | '<base64>' - base64 string with newlines inserted
+| B         | '<base64strict>' - base64 strict string (without newlines inserted)
+| u         | '<base64urlsafe>' - base64 urlsafe string
+| t         | 'Binary' - outputs the name of the type only
+| T         | 'BINARY' - output the name of the type in all caps only
+
+The alternate form flag `#` will quote the binary or base64 text output
+The width and precision values are applied to the text part only in `%p` format.
+
 ### Array & Tuple to String
 
 | Format    | Array/Tuple Formats

@@ -70,6 +70,18 @@ class PBinaryType < PAnyType
       Base64.strict_encode64(@binary_buffer)
     end
 
+    # Returns the binary content as a "relaxed" base64 (standard) encoding where
+    # the string is broken up with new lines.
+    def relaxed_to_s
+      Base64.encode64(@binary_buffer)
+    end
+
+    # Returns the binary content as a url safe base64 string (where + and / are replaced by - and _)
+    #
+    def urlsafe_to_s
+      Base64.urlsafe_encode64(@binary_buffer)
+    end
+
     def eql?(o)
       self.class == o.class && @binary_buffer == o.binary_buffer
     end
