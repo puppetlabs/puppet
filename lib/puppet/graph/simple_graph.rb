@@ -246,8 +246,6 @@ class Puppet::Graph::SimpleGraph
     # This does not use the DOT graph library, just writes the content
     # directly.  Given the complexity of this, there didn't seem much point
     # using a heavy library to generate exactly the same content. --daniel 2011-01-27
-    Puppet.settings.use(:graphing)
-
     graph = ["digraph Resource_Cycles {"]
     graph << '  label = "Resource Cycles"'
 
@@ -463,8 +461,6 @@ class Puppet::Graph::SimpleGraph
   # Produce the graph files if requested.
   def write_graph(name)
     return unless Puppet[:graph]
-
-    Puppet.settings.use(:graphing)
 
     file = File.join(Puppet[:graphdir], "#{name}.dot")
     File.open(file, "w") { |f|
