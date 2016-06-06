@@ -1,5 +1,5 @@
 test_name "puppet module upgrade (that was installed twice)"
-skip_test "This test does not seem to properly respect the given modulepath"
+skip_test "This test is blocked by PUP-6244"
 
 step 'Setup'
 
