@@ -98,25 +98,13 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     expect(described_class).not_to be_default
   end
 
-  it "should be the default provider on ubuntu15.04" do
-    Facter.stubs(:value).with(:osfamily).returns(:debian)
-    Facter.stubs(:value).with(:operatingsystem).returns(:ubuntu)
-    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("15.04")
-    expect(described_class).to be_default
-  end
-
-  it "should be the default provider on ubuntu15.10" do
-    Facter.stubs(:value).with(:osfamily).returns(:debian)
-    Facter.stubs(:value).with(:operatingsystem).returns(:ubuntu)
-    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("15.10")
-    expect(described_class).to be_default
-  end
-
-  it "should be the default provider on ubuntu16.04" do
-    Facter.stubs(:value).with(:osfamily).returns(:debian)
-    Facter.stubs(:value).with(:operatingsystem).returns(:ubuntu)
-    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("16.04")
-    expect(described_class).to be_default
+  [ '15.04', '15.10', '16.04' ].each do |ver|
+    it "should be the default provider on ubuntu#{ver}" do
+      Facter.stubs(:value).with(:osfamily).returns(:debian)
+      Facter.stubs(:value).with(:operatingsystem).returns(:ubuntu)
+      Facter.stubs(:value).with(:operatingsystemmajrelease).returns("#{ver}")
+      expect(described_class).to be_default
+    end
   end
 
   [:enabled?, :enable, :disable, :start, :stop, :status, :restart].each do |method|
