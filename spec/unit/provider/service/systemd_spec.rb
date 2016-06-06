@@ -98,7 +98,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     expect(described_class).not_to be_default
   end
 
-  [ '15.04', '15.10', '16.04' ].each do |ver|
+  [ '15.04', '15.10', '16.04', '16.10' ].each do |ver|
     it "should be the default provider on ubuntu#{ver}" do
       Facter.stubs(:value).with(:osfamily).returns(:debian)
       Facter.stubs(:value).with(:operatingsystem).returns(:ubuntu)
