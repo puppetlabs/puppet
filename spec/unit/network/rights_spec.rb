@@ -24,7 +24,7 @@ describe Puppet::Network::Rights do
       rights = Puppet::Network::Rights.new
       why_forbidden = rights.is_request_forbidden_and_why?(:head, "/indirection_name/key", {})
       expect(why_forbidden).to be_instance_of(Puppet::Network::AuthorizationError)
-      expect(why_forbidden.to_s).to eq("Forbidden request:  access to /indirection_name/key [find]")
+      expect(why_forbidden.to_s).to eq("Forbidden request: /indirection_name/key [find]")
     end
   end
 

@@ -53,17 +53,7 @@ class Rights
 
     # if we end up here, then that means we either didn't match or failed, in any
     # case will return an error to the outside world
-    host_description = args[:node] ? "#{args[:node]}(#{args[:ip]})" : args[:ip]
-
-    msg = "#{host_description} access to #{name} [#{args[:method]}]"
-
-    if args[:authenticated]
-      msg += " authenticated "
-    end
-
-    if right
-      msg += " at #{right.file}:#{right.line}"
-    end
+    msg = "#{name} [#{args[:method]}]"
 
     AuthorizationError.new("Forbidden request: #{msg}")
   end
