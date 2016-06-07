@@ -15,6 +15,7 @@
         "puppet_version",
         "kind",
         "status",
+        "noop",
         "environment"
     ],
 
@@ -115,7 +116,7 @@
         "report_format": {
             "description": "The report format version documented by this schema",
             "type":        "integer",
-            "enum":        ["5", 5]
+            "enum":        ["6", 6]
         },
 
         "puppet_version": {
@@ -138,6 +139,11 @@
                 "changed",
                 "unchanged"
             ]
+        },
+
+        "noop": {
+            "description": "Whether the puppet run was started in noop mode",
+            "type":        "boolean"
         },
 
         "environment": {
