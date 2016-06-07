@@ -158,6 +158,11 @@ module Win32
 
     MAX_RUN_TIMES = TASK_MAX_RUN_TIMES
 
+    #260 as per Windows API MAX_PATH specification
+    APPLICATIONNAME_MAXSIZE = 260
+    PARAMETERS_MAXSIZE = 4096
+
+
     # Returns a new TaskScheduler object. If a work_item (and possibly the
     # the trigger) are passed as arguments then a new work item is created and
     # associated with that trigger, although you can still activate other tasks
@@ -374,7 +379,7 @@ module Win32
         @pITask.GetApplicationName(ptr)
 
         ptr.read_com_memory_pointer do |str_ptr|
-          app = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+          app = str_ptr.read_arbitrary_wide_string_up_to(APPLICATIONNAME_MAXSIZE) if ! str_ptr.null?
         end
       end
 
@@ -400,15 +405,13 @@ module Win32
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
       param = nil
-
       FFI::MemoryPointer.new(:pointer) do |ptr|
         @pITask.GetParameters(ptr)
 
         ptr.read_com_memory_pointer do |str_ptr|
-          param = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+          param = str_ptr.read_arbitrary_wide_string_up_to(PARAMETERS_MAXSIZE) if ! str_ptr.null?
         end
       end
-
       param
     end
 
