@@ -6,9 +6,9 @@ require 'tempfile'
 require 'uri'
 require 'pathname'
 require 'json'
-require 'semantic_puppet'
+require 'semantic'
 
-class Puppet::Forge < SemanticPuppet::Dependency::Source
+class Puppet::Forge < Semantic::Dependency::Source
   require 'puppet/forge/cache'
   require 'puppet/forge/repository'
   require 'puppet/forge/errors'
@@ -83,9 +83,9 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
   # Fetches {ModuleRelease} entries for each release of the named module.
   #
   # @param input [String] the module name to look up
-  # @return [Array<SemanticPuppet::Dependency::ModuleRelease>] a list of releases for
+  # @return [Array<Semantic::Dependency::ModuleRelease>] a list of releases for
   #         the given name
-  # @see SemanticPuppet::Dependency::Source#fetch
+  # @see Semantic::Dependency::Source#fetch
   def fetch(input)
     name = input.tr('/', '-')
     uri = "/v3/releases?module=#{name}"
@@ -114,7 +114,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
     @repository.make_http_request(*args)
   end
 
-  class ModuleRelease < SemanticPuppet::Dependency::ModuleRelease
+  class ModuleRelease < Semantic::Dependency::ModuleRelease
     attr_reader :install_dir, :metadata
 
     def initialize(source, data)
@@ -122,7 +122,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
       @metadata = meta = data['metadata']
 
       name = meta['name'].tr('/', '-')
-      version = SemanticPuppet::Version.parse(meta['version'])
+      version = Semantic::Version.parse(meta['version'])
       release = "#{name}@#{version}"
 
       if meta['dependencies']

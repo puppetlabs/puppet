@@ -10,7 +10,7 @@ module Puppet
   #
   # @api public
   module Pops
-    require 'semantic_puppet'
+    require 'semantic'
 
     require 'puppet/pops/patterns'
     require 'puppet/pops/utils'

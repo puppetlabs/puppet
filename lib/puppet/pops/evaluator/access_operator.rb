@@ -156,7 +156,7 @@ class AccessOperator
 
   def access_PSemVerType(o, scope, keys)
     keys.flatten!
-    assert_keys(keys, o, 1, Float::INFINITY, String, SemanticPuppet::VersionRange)
+    assert_keys(keys, o, 1, Float::INFINITY, String, Semantic::VersionRange)
     Types::TypeFactory.sem_ver(*keys)
   end
 

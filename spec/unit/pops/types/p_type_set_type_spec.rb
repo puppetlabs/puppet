@@ -123,7 +123,7 @@ module Puppet::Pops
             version => '1.x',
             pcore_version => '1.0.0',
             OBJECT
-            expect { parse_type_set('MySet', ts) }.to raise_error(SemanticPuppet::Version::ValidationFailure)
+            expect { parse_type_set('MySet', ts) }.to raise_error(Semantic::Version::ValidationFailure)
           end
 
           it 'the pcore_version is an invalid semantic version' do
@@ -131,7 +131,7 @@ module Puppet::Pops
             version => '1.0.0',
             pcore_version => '1.x',
             OBJECT
-            expect { parse_type_set('MySet', ts) }.to raise_error(SemanticPuppet::Version::ValidationFailure)
+            expect { parse_type_set('MySet', ts) }.to raise_error(Semantic::Version::ValidationFailure)
           end
 
           it 'the pcore_version is outside of the range of that is parsable by this runtime' do
