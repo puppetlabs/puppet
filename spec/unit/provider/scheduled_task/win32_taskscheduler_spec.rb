@@ -1922,5 +1922,81 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
         expect(task.trigger(0)['start_day']).to eq(@now.day)
       end
     end
+
+    describe 'enforces maximum lengths' do
+      let(:task) { Win32::TaskScheduler.new(name, { 'trigger_type' => Win32::TaskScheduler::ONCE }) }
+
+      it 'on account user name' do
+        expect {
+          task.set_account_information('a' * (Win32::TaskScheduler::MAX_ACCOUNT_LENGTH + 1), 'pass')
+        }.to raise_error(Puppet::Error)
+      end
+
+      it 'on application name' do
+        expect {
+          task.application_name = 'a' * (Win32::TaskScheduler::MAX_PATH + 1)
+        }.to raise_error(Puppet::Error)
+      end
+
+      it 'on parameters' do
+        expect {
+          task.parameters = 'a' * (Win32::TaskScheduler::MAX_PARAMETERS_LENGTH + 1)
+        }.to raise_error(Puppet::Error)
+      end
+
+      it 'on working directory' do
+        expect {
+          task.working_directory = 'a' * (Win32::TaskScheduler::MAX_PATH + 1)
+        }.to raise_error(Puppet::Error)
+      end
+
+      it 'on comment' do
+        expect {
+          task.comment = 'a' * (Win32::TaskScheduler::MAX_COMMENT_LENGTH + 1)
+        }.to raise_error(Puppet::Error)
+      end
+
+      it 'on creator' do
+        expect {
+          task.creator = 'a' * (Win32::TaskScheduler::MAX_ACCOUNT_LENGTH + 1)
+        }.to raise_error(Puppet::Error)
+      end
+    end
+
+    describe 'does not corrupt tasks' do
+      it 'when setting maximum length values for all settings' do
+        begin
+          task = Win32::TaskScheduler.new(name, { 'trigger_type' => Win32::TaskScheduler::ONCE })
+
+          application_name = 'a' * Win32::TaskScheduler::MAX_PATH
+          parameters = 'b' * Win32::TaskScheduler::MAX_PARAMETERS_LENGTH
+          working_directory = 'c' * Win32::TaskScheduler::MAX_PATH
+          comment = 'd' * Win32::TaskScheduler::MAX_COMMENT_LENGTH
+          creator = 'e' * Win32::TaskScheduler::MAX_ACCOUNT_LENGTH
+
+          task.application_name = application_name
+          task.parameters = parameters
+          task.working_directory = working_directory
+          task.comment = comment
+          task.creator = creator
+          # NOTE: to properly save the task, this API must be called prior to save
+          task.set_account_information('', nil)
+
+          # saving and reloading (activating) can induce COM load errors when
+          # file is corrupted, which can happen when the upper bounds of these lengths are set too high
+          task.save()
+          task.activate(name)
+
+          # furthermore, corrupted values may not necessarily be read back properly
+          expect(task.application_name).to eq(application_name)
+          expect(task.parameters).to eq(parameters)
+          expect(task.working_directory).to eq(working_directory)
+          expect(task.comment).to eq(comment)
+          expect(task.creator).to eq(creator)
+        ensure
+          task.delete(name) if Win32::TaskScheduler.new.exists?(name)
+        end
+      end
+    end
   end
 end
