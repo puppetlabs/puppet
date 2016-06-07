@@ -1,7 +1,7 @@
 module Puppet::Pops
 module Types
 
-# A Puppet Language Type that exposes the {{SemanticPuppet::Version}} and {{SemanticPuppet::VersionRange}}.
+# A Puppet Language Type that exposes the {{Semantic::Version}} and {{Semantic::VersionRange}}.
 # The version type is parameterized with version ranges.
 #
 # @api public
@@ -9,13 +9,13 @@ class PSemVerType < PScalarType
   attr_reader :ranges
 
   def initialize(*ranges)
-    ranges = ranges.map { |range| range.is_a?(SemanticPuppet::VersionRange) ? range : SemanticPuppet::VersionRange.parse(range) }
+    ranges = ranges.map { |range| range.is_a?(Semantic::VersionRange) ? range : Semantic::VersionRange.parse(range) }
     ranges = merge_ranges(ranges) if ranges.size > 1
     @ranges = ranges
   end
 
   def instance?(o, guard = nil)
-    o.is_a?(SemanticPuppet::Version) && (@ranges.empty? || @ranges.any? {|range| range.include?(o) })
+    o.is_a?(Semantic::Version) && (@ranges.empty? || @ranges.any? {|range| range.include?(o) })
   end
 
   def eql?(o)
@@ -27,19 +27,19 @@ class PSemVerType < PScalarType
   end
 
   # Creates a SemVer version from the given _version_ argument. If the argument is `nil` or
-  # a {SemanticPuppet::Version}, it is returned. If it is a {String}, it will be parsed into a
-  # {SemanticPuppet::Version}. Any other class will raise an {ArgumentError}.
+  # a {Semantic::Version}, it is returned. If it is a {String}, it will be parsed into a
+  # {Semantic::Version}. Any other class will raise an {ArgumentError}.
   #
-  # @param version [SemanticPuppet::Version,String,nil] the version to convert
-  # @return [SemanticPuppet::Version] the converted version
+  # @param version [Semantic::Version,String,nil] the version to convert
+  # @return [Semantic::Version] the converted version
   # @raise [ArgumentError] when the argument cannot be converted into a version
   #
   def self.convert(version)
     case version
-    when nil, SemanticPuppet::Version
+    when nil, Semantic::Version
       version
     when String
-      SemanticPuppet::Version.parse(version)
+      Semantic::Version.parse(version)
     else
       raise ArgumentError, "Unable to convert a #{version.class.name} to a SemVer"
     end
@@ -78,15 +78,15 @@ class PSemVerType < PScalarType
       end
 
       def from_string(str)
-        SemanticPuppet::Version.parse(str)
+        Semantic::Version.parse(str)
       end
 
       def from_args(major, minor, patch, prerelease = nil, build = nil)
-        SemanticPuppet::Version.new(major, minor, patch, prerelease, build)
+        Semantic::Version.new(major, minor, patch, prerelease, build)
       end
 
       def from_hash(hash)
-        SemanticPuppet::Version.new(hash['major'], hash['minor'], hash['patch'], hash['prerelease'], hash['build'])
+        Semantic::Version.new(hash['major'], hash['minor'], hash['patch'], hash['prerelease'], hash['build'])
       end
     end
   end

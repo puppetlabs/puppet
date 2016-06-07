@@ -11,8 +11,8 @@ module Pcore
   KEY_PCORE_VERSION = 'pcore_version'.freeze
 
   PCORE_URI = 'http://puppet.com/2016.1/pcore'
-  PCORE_VERSION = SemanticPuppet::Version.new(1,0,0)
-  PARSABLE_PCORE_VERSIONS = SemanticPuppet::VersionRange.parse('1.x')
+  PCORE_VERSION = Semantic::Version.new(1,0,0)
+  PARSABLE_PCORE_VERSIONS = Semantic::VersionRange.parse('1.x')
 
   RUNTIME_NAME_AUTHORITY = 'http://puppet.com/2016.1/runtime'
 

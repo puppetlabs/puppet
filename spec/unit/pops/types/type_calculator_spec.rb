@@ -210,15 +210,15 @@ describe 'The type calculator' do
 
     context 'version' do
       it 'translates to PVersionType' do
-        expect(calculator.infer(SemanticPuppet::Version.new(1,0,0)).class).to eq(PSemVerType)
+        expect(calculator.infer(Semantic::Version.new(1,0,0)).class).to eq(PSemVerType)
       end
 
       it 'range translates to PVersionRangeType' do
-        expect(calculator.infer(SemanticPuppet::VersionRange.parse('1.x')).class).to eq(PSemVerRangeType)
+        expect(calculator.infer(Semantic::VersionRange.parse('1.x')).class).to eq(PSemVerRangeType)
       end
 
       it 'translates to a limited PVersionType by infer_set' do
-        v = SemanticPuppet::Version.new(1,0,0)
+        v = Semantic::Version.new(1,0,0)
         t = calculator.infer_set(v)
         expect(t.class).to eq(PSemVerType)
         expect(t.ranges.size).to eq(1)

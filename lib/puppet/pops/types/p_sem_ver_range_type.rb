@@ -6,21 +6,21 @@ module Types
 # @api public
 class PSemVerRangeType < PScalarType
   # Check if a version is included in a version range. The version can be a string or
-  # a `SemanticPuppet::SemVer`
+  # a `Semantic::SemVer`
   #
-  # @param range [SemanticPuppet::VersionRange] the range to match against
-  # @param version [SemanticPuppet::Version,String] the version to match
+  # @param range [Semantic::VersionRange] the range to match against
+  # @param version [Semantic::Version,String] the version to match
   # @return [Boolean] `true` if the range includes the given version
   #
   # @api public
   def self.include?(range, version)
     case version
-    when SemanticPuppet::Version
+    when Semantic::Version
       range.include?(version)
     when String
       begin
-        range.include?(SemanticPuppet::Version.parse(version))
-      rescue SemanticPuppet::Version::ValidationFailure
+        range.include?(Semantic::Version.parse(version))
+      rescue Semantic::Version::ValidationFailure
         false
       end
     else
@@ -28,28 +28,28 @@ class PSemVerRangeType < PScalarType
     end
   end
 
-  # Creates a {SemanticPuppet::VersionRange} from the given _version_range_ argument. If the argument is `nil` or
-  # a {SemanticPuppet::VersionRange}, it is returned. If it is a {String}, it will be parsed into a
-  # {SemanticPuppet::VersionRange}. Any other class will raise an {ArgumentError}.
+  # Creates a {Semantic::VersionRange} from the given _version_range_ argument. If the argument is `nil` or
+  # a {Semantic::VersionRange}, it is returned. If it is a {String}, it will be parsed into a
+  # {Semantic::VersionRange}. Any other class will raise an {ArgumentError}.
   #
-  # @param version_range [SemanticPuppet::VersionRange,String,nil] the version range to convert
-  # @return [SemanticPuppet::VersionRange] the converted version range
+  # @param version_range [Semantic::VersionRange,String,nil] the version range to convert
+  # @return [Semantic::VersionRange] the converted version range
   # @raise [ArgumentError] when the argument cannot be converted into a version range
   #
   def self.convert(version_range)
     case version_range
-    when nil, SemanticPuppet::VersionRange
+    when nil, Semantic::VersionRange
       version_range
     when String
-      SemanticPuppet::VersionRange.parse(version_range)
+      Semantic::VersionRange.parse(version_range)
     else
       raise ArgumentError, "Unable to convert a #{version_range.class.name} to a SemVerRange"
     end
   end
 
   # Checks if range _a_ is a sub-range of (i.e. completely covered by) range _b_
-  # @param a [SemanticPuppet::VersionRange] the first range
-  # @param b [SemanticPuppet::VersionRange] the second range
+  # @param a [Semantic::VersionRange] the first range
+  # @param b [Semantic::VersionRange] the second range
   #
   # @return [Boolean] `true` if _a_ is completely covered by _b_
   def self.covered_by?(a, b)
@@ -59,9 +59,9 @@ class PSemVerRangeType < PScalarType
   # Merge two ranges so that the result matches all versions matched by both. A merge
   # is only possible when the ranges are either adjacent or have an overlap.
   #
-  # @param a [SemanticPuppet::VersionRange] the first range
-  # @param b [SemanticPuppet::VersionRange] the second range
-  # @return [SemanticPuppet::VersionRange,nil] the result of the merge
+  # @param a [Semantic::VersionRange] the first range
+  # @param b [Semantic::VersionRange] the second range
+  # @return [Semantic::VersionRange,nil] the result of the merge
   #
   # @api public
   def self.merge(a, b)
@@ -73,13 +73,13 @@ class PSemVerRangeType < PScalarType
       elsif b.exclude_end?
         exclude_end = max == b.end && (max > a.end || a.exclude_end?)
       end
-      SemanticPuppet::VersionRange.new([a.begin, b.begin].min, max, exclude_end)
+      Semantic::VersionRange.new([a.begin, b.begin].min, max, exclude_end)
     elsif a.exclude_end? && a.end == b.begin
       # Adjacent, a before b
-      SemanticPuppet::VersionRange.new(a.begin, b.end, b.exclude_end?)
+      Semantic::VersionRange.new(a.begin, b.end, b.exclude_end?)
     elsif b.exclude_end? && b.end == a.begin
       # Adjacent, b before a
-      SemanticPuppet::VersionRange.new(b.begin, a.end, a.exclude_end?)
+      Semantic::VersionRange.new(b.begin, a.end, a.exclude_end?)
     else
       # No overlap
       nil
@@ -87,7 +87,7 @@ class PSemVerRangeType < PScalarType
   end
 
   def instance?(o, guard = nil)
-    o.is_a?(SemanticPuppet::VersionRange)
+    o.is_a?(Semantic::VersionRange)
   end
 
   def eql?(o)
@@ -111,7 +111,7 @@ class PSemVerRangeType < PScalarType
       # https://github.com/npm/node-semver#range-grammar
       #
       # The logical or || operator is not implemented since it effectively builds
-      # an array of ranges that may be disparate. The {{SemanticPuppet::VersionRange}} inherits
+      # an array of ranges that may be disparate. The {{Semantic::VersionRange}} inherits
       # from the standard ruby range. It must be possible to describe that range in terms
       # of min, max, and exclude max.
       #
@@ -140,13 +140,13 @@ class PSemVerRangeType < PScalarType
       end
 
       def from_string(str)
-        SemanticPuppet::VersionRange.parse(str)
+        Semantic::VersionRange.parse(str)
       end
 
       def from_versions(min, max = :default, exclude_max = false)
-        min = SemanticPuppet::Version::MIN if min == :default
-        max = SemanticPuppet::Version::MAX if max == :default
-        SemanticPuppet::VersionRange.new(min, max, exclude_max)
+        min = Semantic::Version::MIN if min == :default
+        max = Semantic::Version::MAX if max == :default
+        Semantic::VersionRange.new(min, max, exclude_max)
       end
 
       def from_hash(hash)

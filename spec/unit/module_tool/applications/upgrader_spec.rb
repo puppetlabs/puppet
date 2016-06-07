@@ -26,7 +26,7 @@ describe Puppet::ModuleTool::Applications::Upgrader do
   end
 
   before do
-    SemanticPuppet::Dependency.clear_sources
+    Semantic::Dependency.clear_sources
     installer = Puppet::ModuleTool::Applications::Upgrader.any_instance
     installer.stubs(:module_repository).returns(remote_source)
   end

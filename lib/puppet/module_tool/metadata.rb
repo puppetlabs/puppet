@@ -213,7 +213,7 @@ module Puppet::ModuleTool
 
     # Validates that the version range can be parsed by Semantic.
     def validate_version_range(version_range)
-      SemanticPuppet::VersionRange.parse(version_range)
+      Semantic::VersionRange.parse(version_range)
     rescue ArgumentError => e
       raise ArgumentError, "Invalid 'version_range' field in metadata.json: #{e}"
     end
