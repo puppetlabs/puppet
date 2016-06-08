@@ -161,25 +161,22 @@ describe 'Binary Type' do
       end
     end
 
-
-
-      it 'can be matched against a Binary in case expression' do
-        code = <<-CODE
-          case Binary('YmluYXJ5') {
-            Binary('YWxpZW4='): {
-              notice('nope')
-            }
-            Binary('YmluYXJ5'): {
-              notice('yay')
-            }
-            default: {
-              notice('nope')
-            }
+    it 'can be matched against a Binary in case expression' do
+      code = <<-CODE
+        case Binary('YmluYXJ5') {
+          Binary('YWxpZW4='): {
+            notice('nope')
           }
-        CODE
-        expect(eval_and_collect_notices(code)).to eql(['yay'])
-      end
-
+          Binary('YmluYXJ5'): {
+            notice('yay')
+          }
+          default: {
+            notice('nope')
+          }
+        }
+      CODE
+      expect(eval_and_collect_notices(code)).to eql(['yay'])
+    end
 
     it "can be matched against a Binary subsequence using 'in' expression" do
       # finding 'one' in 'one two three'
