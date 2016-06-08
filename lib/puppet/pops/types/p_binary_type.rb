@@ -89,6 +89,10 @@ class PBinaryType < PAnyType
     def ==(o)
       self.eql?(o)
     end
+
+    def length()
+      @binary_buffer.length
+    end
   end
 
 

@@ -196,6 +196,12 @@ describe 'Binary Type' do
       CODE
       expect(eval_and_collect_notices(code)).to eql(['true', 'true', 'false'])
     end
+
+    it "has a length method in ruby returning the length measured in bytes" do
+      # \u{1f452} is "woman's hat emoji - 4 bytes in UTF-8"
+      a_binary = PBinaryType::Binary.new("\u{1f452}")
+      expect(a_binary.length).to be(4)
+    end
   end
 
 end
