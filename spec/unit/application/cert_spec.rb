@@ -52,6 +52,26 @@ describe Puppet::Application::Cert => true do
     expect(@cert_app.signed).to be_truthy
   end
 
+  it "should set human to true for --human-readable" do
+    @cert_app.handle_human_readable(0)
+    expect(@cert_app.options[:format]).to be :human
+  end
+
+  it "should set machine to true for --machine-readable" do
+    @cert_app.handle_machine_readable(0)
+    expect(@cert_app.options[:format]).to be :machine
+  end
+
+  it "should set interactive to true for --interactive" do
+    @cert_app.handle_interactive(0)
+    expect(@cert_app.options[:interactive]).to be_truthy
+  end
+
+  it "should set yes to true for --assume-yes" do
+    @cert_app.handle_assume_yes(0)
+    expect(@cert_app.options[:yes]).to be_truthy
+  end
+
   Puppet::SSL::CertificateAuthority::Interface::INTERFACE_METHODS.reject { |m| m == :destroy }.each do |method|
     it "should set cert_mode to #{method} with option --#{method}" do
       @cert_app.send("handle_#{method}".to_sym, nil)
