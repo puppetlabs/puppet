@@ -65,7 +65,7 @@ $picked = assert_type(String,
 Would notice "Picked Beatle 'Paul'", and would raise an error if the result
 was not a String.
 
-Since 4.5.0
+* Since 4.5.0
 
 DOC
 ) do |args|

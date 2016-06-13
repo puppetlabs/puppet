@@ -521,7 +521,7 @@ function SemVerRange.new(
 
 For examples of `SemVerRange` use see "Creating a SemVer"
 
-Since 4.5.0
+* Since 4.5.0
 
 DOC
 ) do |args|

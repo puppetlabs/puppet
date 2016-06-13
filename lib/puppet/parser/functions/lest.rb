@@ -42,7 +42,7 @@ notice $data.dig(a, b, c)
 
 Would notice the value `20`
 
-Since 4.5.0
+* Since 4.5.0
 DOC
 ) do |args|
   function_fail(["lest() is only available when parser/evaluator future is in effect"])
