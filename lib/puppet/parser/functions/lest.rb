@@ -19,7 +19,7 @@ if $x == undef { do_things() }
 lest($x) || { do_things() }
 ```
 
-Example Using `lest`:
+**Example:** Using the `lest` function
 
 ```puppet
 $data = {a => [ b, c ] }
