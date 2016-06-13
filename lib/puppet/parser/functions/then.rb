@@ -12,7 +12,7 @@ result may be `undef` (which makes the entire sequence `undef`).
 The `then` function is especially useful with the function `dig` which
 performs in a similar way "digging out" a value in a complex structure.
 
-Example - Using `dig` and `then`:
+**Example:** Using `dig` and `then`
 
 ```puppet
 $data = {a => { b => [{x => 10, y => 20}, {x => 100, y => 200}]}}
@@ -38,7 +38,9 @@ by 2 or `undef`.
 Calls to `then` can be chained. In the next example, a structure is using an offset based on
 using 1 as the index to the first element (instead of 0 which is used in the language).
 We are not sure if user input actually contains an index at all, or if it is
-outside the range of available names:
+outside the range of available names.args.
+
+**Example:** Chaining calls to the `then` function
 
 ```puppet
 # Names to choose from
