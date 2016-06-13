@@ -14,19 +14,19 @@ performs in a similar way "digging out" a value in a complex structure.
 
 Example - Using `dig` and `then`:
 
-~~~ puppet
+```puppet
 $data = {a => { b => [{x => 10, y => 20}, {x => 100, y => 200}]}}
 notice $data.dig(a, b, 1, x).then |$x| { $x * 2 }
-~~~
+```
 
 Would notice the value 200
 
 Contrast this with:
 
-~~~ puppet
+```puppet
 $data = {a => { b => [{x => 10, y => 20}, {ex => 100, why => 200}]}}
 notice $data.dig(a, b, 1, x).then |$x| { $x * 2 }
-~~~
+```
 
 Which would notice `undef` since the last lookup of 'x' results in `undef` which
 is returned (without calling the lambda given to the `then` function).
@@ -40,7 +40,7 @@ using 1 as the index to the first element (instead of 0 which is used in the lan
 We are not sure if user input actually contains an index at all, or if it is
 outside the range of available names:
 
-~~~ puppet
+```puppet
 # Names to choose from
 $names = ['Ringo', 'Paul', 'George', 'John']
 
@@ -58,8 +58,7 @@ $picked = assert_type(String,
     # so we can construct a string with that beatle's name
     .then |$x| { "Picked Beatle '${x}'" }
 )
-
-~~~ puppet
+```
 
 Would notice "Picked Beatle 'Paul'", and would raise an error if the result
 was not a String.
