@@ -3230,7 +3230,6 @@ end
 
 require 'puppet/pops/pcore'
 
-require_relative 'puppet_object'
 require_relative 'annotatable'
 require_relative 'p_meta_type'
 require_relative 'p_object_type'

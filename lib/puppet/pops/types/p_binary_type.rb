@@ -95,6 +95,9 @@ class PBinaryType < PAnyType
     end
   end
 
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'AnyType')
+  end
 
   def initialize()
   end
@@ -115,7 +118,7 @@ class PBinaryType < PAnyType
 
   # @api private
   def self.new_function(_, loader)
-    @@new_function ||= Puppet::Functions.create_loaded_function(:new_Binary, loader) do
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_Binary, loader) do
       local_types do
         type 'ByteInteger = Integer[0,255]'
         type 'Base64Format = Enum["%b", "%u", "%B", "%s"]'
