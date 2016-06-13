@@ -12,7 +12,7 @@ just created instance as an argument.
 Calling this function is equivalent to directly
 calling the data type:
 
-Example - `new` and calling type directly are equivalent:
+**Example:** `new` and calling type directly are equivalent
 
 ```puppet
 $a = Integer.new("42")
@@ -21,7 +21,7 @@ $b = Integer("42")
 
 These would both convert the string `"42"` to the decimal value `42`.
 
-Example - arguments by position or by name:
+**Example:** arguments by position or by name
 
 ```puppet
 $a = Integer.new("42", 8)
@@ -45,7 +45,7 @@ The arguments that can be given is determined by the data type.
 
 > An assertion is always made that the produced value complies with the given type constraints.
 
-Example - data type constraints are checked:
+**Example:** data type constraints are checked
 
 ```puppet
 Integer[0].new("-100")
@@ -170,7 +170,7 @@ the found format is used to convert the given value.
 The mapping from data type to format is referred to as the *format map*. This map
 allows different formatting depending on type.
 
-Example - Positive Integers in Hexadecimal prefixed with '0x', negative in Decimal
+**Example:** Positive Integers in Hexadecimal prefixed with '0x', negative in Decimal
 
 ```puppet
 $format_map = {
@@ -226,21 +226,21 @@ Where:
   these nested formats are not applicable to data types that are containers; they are always formatted as per the top level
   format specification.
 
-Example - Simple Conversion to String (using defaults):
+**Example:** Simple Conversion to String (using defaults)
 
 ```puppet
 $str = String(10)      # produces '10'
 $str = String([10])    # produces '["10"]'
 ```
 
-Example - Simple Conversion to String specifying the format for the given value directly:
+**Example:** Simple Conversion to String specifying the format for the given value directly
 
 ```puppet
 $str = String(10, "%#x")    # produces '0x10'
 $str = String([10], "%(a")  # produces '("10")'
 ```
 
-Example - Specifying type for values contained in an array:
+**Example:** Specifying type for values contained in an array
 
 ```puppet
 $formats = { 
@@ -411,7 +411,7 @@ When given a second Boolean argument:
 * if `true`, a value that is not already an array is returned as a one element array
 * if `false`, (the default), converts the first argument as shown above.
 
-Example - Ensuring value is an array
+**Example:** Ensuring value is an array
 
 ```puppet
 $arr = Array($value, true)
@@ -468,7 +468,7 @@ function SemVer.new(
 function SemVer.new(SemVerHash $hash_args)
 ```
 
-Examples - SemVer and SemVerRange usage:
+**Examples:** SemVer and SemVerRange usage
 
 ```puppet
 # As a type, SemVer can describe disjunct ranges which versions can be
@@ -519,7 +519,7 @@ function SemVerRange.new(
 )
 ```
 
-For examples see "Creating a SemVer"
+For examples of `SemVerRange` use see "Creating a SemVer"
 
 Since 4.5.0
 
