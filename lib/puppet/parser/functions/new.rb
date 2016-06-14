@@ -5,7 +5,7 @@ Puppet::Parser::Functions::newfunction(
   :doc => <<-DOC
 Creates a new instance/object of a given data type.
 
-This functions makes it possible to create new instances of
+This function makes it possible to create new instances of
 concrete data types. If a block is given it is called with the
 just created instance as an argument.
 
@@ -83,22 +83,22 @@ function Integer.new(
 )
 ```
 
-* When converting from `String` the default radix is 10
+* When converting from `String` the default radix is 10.
 * If radix is not specified an attempt is made to detect the radix from the start of the string:
-  * `0b` or `0B` is taken as radix 2,
-  * `0x` or `0X` is taken as radix 16,
-  * `0` as radix 8,
-  * all other are decimal
+  * `0b` or `0B` is taken as radix 2.
+  * `0x` or `0X` is taken as radix 16.
+  * `0` as radix 8.
+  * All others are decimal.
 * Conversion from `String` accepts an optional sign in the string.
-* For hexadecimal (radix 16) conversion an optional leading "0x", or "0X" is accepted
-* For octal (radix 8) an optional leading "0" is accepted
-* For binary (radix 2) an optional leading "0b" or "0B" is accepted
-* When `radix` is set to `default`, the conversion is based on the leading
+* For hexadecimal (radix 16) conversion an optional leading "0x", or "0X" is accepted.
+* For octal (radix 8) an optional leading "0" is accepted.
+* For binary (radix 2) an optional leading "0b" or "0B" is accepted.
+* When `radix` is set to `default`, the conversion is based on the leading.
   characters in the string. A leading "0" for radix 8, a leading "0x", or "0X" for
   radix 16, and leading "0b" or "0B" for binary.
 * Conversion from `Boolean` results in 0 for `false` and 1 for `true`.
 * Conversion from `Integer`, `Float`, and `Boolean` ignores the radix.
-* `Float` value fractions are truncated (no rounding)
+* `Float` value fractions are truncated (no rounding).
 
 Examples - Converting to Integer:
 
@@ -160,7 +160,7 @@ Conversion to `String` is the most comprehensive conversion as there are many
 use cases where a string representation is wanted. The defaults for the many options
 have been chosen with care to be the most basic "value in textual form" representation.
 The more advanced forms of formatting are intended to enable writing special purposes formatting
-functions in the puppet language.
+functions in the Puppet language.
 
 A new string can be created from all other data types. The process is performed in
 several steps - first the data type of the given value is inferred, then the resulting data type
@@ -259,14 +259,14 @@ the specificity of the mapped type; for example, different formats can be used f
 
 | Format  | Integer Formats
 | ------  | ---------------
-| d       | Decimal, negative values produces leading '-'
+| d       | Decimal, negative values produces leading '-'.
 | x X     | Hexadecimal in lower or upper case. Uses ..f/..F for negative values unless + is also used. A `#` adds prefix 0x/0X.
 | o       | Octal. Uses ..0 for negative values unless `+` is also used. A `#` adds prefix 0.
-| b B     | Binary with prefix 'b' or 'B'. Uses ..1/..1 for negative values unless `+` is also used
-| c       | numeric value representing a Unicode value, result is a one unicode character string, quoted if alternative flag # is used
-| s       | same as d, or d in quotes if alternative flag # is used
-| p       | same as d
-| eEfgGaA | converts integer to float and formats using the floating point rules
+| b B     | Binary with prefix 'b' or 'B'. Uses ..1/..1 for negative values unless `+` is also used.
+| c       | Numeric value representing a Unicode value, result is a one unicode character string, quoted if alternative flag # is used
+| s       | Same as d, or d in quotes if alternative flag # is used.
+| p       | Same as d.
+| eEfgGaA | Converts integer to float and formats using the floating point rules.
 
 Defaults to `d`.
 
@@ -274,13 +274,13 @@ Defaults to `d`.
 
 | Format  | Float formats
 | ------  | -------------
-| f       | floating point in non exponential notation
-| e E     | exponential notation with 'e' or 'E'
-| g G     | conditional exponential with 'e' or 'E' if exponent < -4 or >= the precision
-| a A     | hexadecimal exponential form, using 'x'/'X' as prefix and 'p'/'P' before exponent
-| s       | converted to string using format p, then applying string formatting rule, alternate form # quotes result
-| p       | f format with minimum significant number of fractional digits, prec has no effect
-| dxXobBc | converts float to integer and formats using the integer rules
+| f       | Floating point in non exponential notation.
+| e E     | Exponential notation with 'e' or 'E'.
+| g G     | Conditional exponential with 'e' or 'E' if exponent < -4 or >= the precision.
+| a A     | Hexadecimal exponential form, using 'x'/'X' as prefix and 'p'/'P' before exponent.
+| s       | Converted to string using format p, then applying string formatting rule, alternate form # quotes result.
+| p       | Same as f format with minimum significant number of fractional digits, prec has no effect.
+| dxXobBc | Converts float to integer and formats using the integer rules.
 
 Defaults to `p`.
 
@@ -288,13 +288,13 @@ Defaults to `p`.
 
 | Format | String
 | ------ | ------
-| s      | unquoted string, verbatim output of control chars
-| p      | programmatic representation - strings are quoted, interior quotes and control chars are escaped
-| C      | each `::` name segment capitalized, quoted if alternative flag `#` is used
-| c      | capitalized string, quoted if alternative flag `#` is used
-| d      | downcased string, quoted if alternative flag `#` is used
-| u      | upcased string, quoted if alternative flag `#` is used
-| t      | trims leading and trailing whitespace from the string, quoted if alternative flag `#` is used
+| s      | Unquoted string, verbatim output of control chars.
+| p      | Programmatic representation - strings are quoted, interior quotes and control chars are escaped.
+| C      | Each `::` name segment capitalized, quoted if alternative flag `#` is used.
+| c      | Capitalized string, quoted if alternative flag `#` is used.
+| d      | Downcased string, quoted if alternative flag `#` is used.
+| u      | Upcased string, quoted if alternative flag `#` is used.
+| t      | Trims leading and trailing whitespace from the string, quoted if alternative flag `#` is used.
 
 Defaults to `s` at top level and `p` inside array or hash.
 
@@ -302,48 +302,48 @@ Defaults to `s` at top level and `p` inside array or hash.
 
 | Format    | Boolean Formats
 | ----      | -------------------   
-| t T       | 'true'/'false' or 'True'/'False', first char if alternate form is used (i.e. 't'/'f' or 'T'/'F').
-| y Y       | 'yes'/'no', 'Yes'/'No', 'y'/'n' or 'Y'/'N' if alternative flag `#` is used
-| dxXobB    | numeric value 0/1 in accordance with the given format which must be valid integer format
-| eEfgGaA   | numeric value 0.0/1.0 in accordance with the given float format and flags
-| s         | 'true' / 'false'
-| p         | 'true' / 'false'
+| t T       | String 'true'/'false' or 'True'/'False', first char if alternate form is used (i.e. 't'/'f' or 'T'/'F').
+| y Y       | String 'yes'/'no', 'Yes'/'No', 'y'/'n' or 'Y'/'N' if alternative flag `#` is used.
+| dxXobB    | Numeric value 0/1 in accordance with the given format which must be valid integer format.
+| eEfgGaA   | Numeric value 0.0/1.0 in accordance with the given float format and flags.
+| s         | String 'true' / 'false'.
+| p         | String 'true' / 'false'.
 
 ### Regexp to String
 
 | Format    | Regexp Formats
 | ----      | --------------
-| s         | `/ /` delimiters, alternate flag `#` replaces `/` delimiters with quotes
-| p         | `/ /` delimiters
+| s         | Delimiters `/ /`, alternate flag `#` replaces `/` delimiters with quotes.
+| p         | Delimiters `/ /`.
 
 ### Undef to String
 
 | Format    | Undef formats
 | ------    | -------------
-| s         | empty string, or quoted empty string if alternative flag `#` is used
-| p         | 'undef', or quoted '"undef"' if alternative flag `#` is used
-| n         | 'nil', or 'null' if alternative flag `#` is used
-| dxXobB    | 'NaN'
-| eEfgGaA   | 'NaN'
-| v         | 'n/a'
-| V         | 'N/A'
-| u         | 'undef', or 'undefined' if alternative `#` flag is used
+| s         | Empty string, or quoted empty string if alternative flag `#` is used.
+| p         | String 'undef', or quoted '"undef"' if alternative flag `#` is used.
+| n         | String 'nil', or 'null' if alternative flag `#` is used.
+| dxXobB    | String 'NaN'.
+| eEfgGaA   | String 'NaN'.
+| v         | String 'n/a'.
+| V         | String 'N/A'.
+| u         | String 'undef', or 'undefined' if alternative `#` flag is used.
 
 ### Default value to String
 
 | Format    | Default formats
 | ------    | ---------------
-| d D       | 'default' or 'Default', alternative form `#` causes value to be quoted
-| s         | same as d
-| p         | same as d
+| d D       | String 'default' or 'Default', alternative form `#` causes value to be quoted.
+| s         | Same as d.
+| p         | Same as d.
 
 ### Array & Tuple to String
 
 | Format    | Array/Tuple Formats
 | ------    | -------------
-| a         | formats with `[ ]` delimiters and `,`, alternate form `#` indents nested arrays/hashes
-| s         | same as a
-| p         | same as a
+| a         | Formats with `[ ]` delimiters and `,`, alternate form `#` indents nested arrays/hashes.
+| s         | Same as a.
+| p         | Same as a.
 
 See "Flags" `<[({\|` for formatting of delimiters, and "Additional parameters for containers; Array and Hash" for
 more information about options.
@@ -356,10 +356,10 @@ is exceeded, each element will be indented.
 
 | Format    | Hash/Struct Formats
 | ------    | -------------
-| h         | formats with `{ }` delimiters, `,` element separator and ` => ` inner element separator unless overridden by flags 
-| s         | same as h
-| p         | same as h
-| a         | converts the hash to an array of [k,v] tuples and formats it using array rule(s)
+| h         | Formats with `{ }` delimiters, `,` element separator and ` => ` inner element separator unless overridden by flags.
+| s         | Same as h.
+| p         | Same as h.
+| a         | Converts the hash to an array of [k,v] tuples and formats it using array rule(s).
 
 See "Flags" `<[({\|` for formatting of delimiters, and "Additional parameters for containers; Array and Hash" for
 more information about options.
@@ -370,19 +370,19 @@ The alternate form flag `#` will format each hash key/value entry indented on a 
 
 | Format    | Array/Tuple Formats
 | ------    | -------------
-| s         | The same as `p`, quoted if alternative flag `#` is used
-| p         | Outputs the type in string form as specified by the Puppet Language
+| s         | The same as `p`, quoted if alternative flag `#` is used.
+| p         | Outputs the type in string form as specified by the Puppet Language.
 
 ### Flags
 
 | Flag     | Effect 
 | ------   | ------
-| (space)  | a space instead of `+` for numeric output (`-` is shown), for containers skips delimiters
-| #        | alternate format; prefix 0x/0x, 0 (octal) and 0b/0B for binary, Floats force decimal '.'. For g/G keep trailing 0.
-| +        | show sign +/- depending on value's sign, changes x, X, o, b, B format to not use 2's complement form
-| -        | left justify the value in the given width
-| 0        | pad with 0 instead of space for widths larger than value
-| <[({\|   | defines an enclosing pair <> [] () {} or \| \| when used with a container type
+| (space)  | A space instead of `+` for numeric output (`-` is shown), for containers skips delimiters.
+| #        | Alternate format; prefix 0x/0x, 0 (octal) and 0b/0B for binary, Floats force decimal '.'. For g/G keep trailing 0.
+| +        | Show sign +/- depending on value's sign, changes x, X, o, b, B format to not use 2's complement form.
+| -        | Left justify the value in the given width.
+| 0        | Pad with 0 instead of space for widths larger than value.
+| <[({\|   | Defines an enclosing pair <> [] () {} or \| \| when used with a container type.
 
 Conversion to Boolean
 ---
@@ -401,14 +401,14 @@ Conversion to Array and Tuple
 
 When given a single value as argument:
 
-* A non empty `Hash` is converted to an array matching `Array[Tuple[Any,Any], 1]`
-* An empty `Hash` becomes an empty array
-* An `Array` is simply returned
-* An `Iterable[T]` is turned into an array of `T` instances
+* A non empty `Hash` is converted to an array matching `Array[Tuple[Any,Any], 1]`.
+* An empty `Hash` becomes an empty array.
+* An `Array` is simply returned.
+* An `Iterable[T]` is turned into an array of `T` instances.
 
 When given a second Boolean argument:
 
-* if `true`, a value that is not already an array is returned as a one element array
+* if `true`, a value that is not already an array is returned as a one element array.
 * if `false`, (the default), converts the first argument as shown above.
 
 **Example:** Ensuring value is an array

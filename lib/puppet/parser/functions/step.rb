@@ -70,7 +70,7 @@ $transformed_data contains [0,50,100,150,200]
 
 ```puppet
 # For the array $data, return an array, set to the first and each 5th
-# successor,in reverse order, multiplied by 10
+# successor, in reverse order, multiplied by 10
 $data = Integer[0,20]
 $transformed_data = map(step($data, 5)) |$item| { $item * 10 }
 $transformed_data contains [0,50,100,150,200]

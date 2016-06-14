@@ -5,7 +5,7 @@ Puppet::Parser::Functions::newfunction(
   :doc => <<-DOC
 Call a [lambda](https://docs.puppet.com/puppet/latest/reference/lang_lambdas.html)
 (which should accept no arguments) if the argument given to the function is `undef`.
-Returns the result of calling the lambda if the argument is `undef`, otherwwise the
+Returns the result of calling the lambda if the argument is `undef`, otherwise the
 given argument.
 
 The `lest` function is useful in a chain of `then` calls, or in general

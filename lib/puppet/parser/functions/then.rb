@@ -31,7 +31,7 @@ notice $data.dig(a, b, 1, x).then |$x| { $x * 2 }
 Which would notice `undef` since the last lookup of 'x' results in `undef` which
 is returned (without calling the lambda given to the `then` function).
 
-As a result there was no need for conditional logic or a temporary (non local) 
+As a result there is no need for conditional logic or a temporary (non local) 
 variable as the result is now either the wanted value (`x`) multiplied
 by 2 or `undef`.
 
