@@ -145,5 +145,37 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   def statuscmd
     [command(:systemctl), "is-active", @resource[:name]]
   end
+
+  def restart
+    begin
+      super
+    rescue Puppet::Error => e
+      raise Puppet::Error.new(prepare_error_message(@resource[:name], 'restart', e))
+    end
+  end
+
+  def start
+    begin
+      super
+    rescue Puppet::Error => e
+      raise Puppet::Error.new(prepare_error_message(@resource[:name], 'start', e))
+    end
+  end
+
+  def stop
+    begin
+      super
+    rescue Puppet::Error => e
+      raise Puppet::Error.new(prepare_error_message(@resource[:name], 'stop', e))
+    end
+  end
+
+  def prepare_error_message(name, action, exception)
+    error_return = "Systemd #{action} for #{name} failed!\n"
+    journalctl_command = "journalctl -n 50 --since '5 minutes ago' -u #{name} --no-pager"
+    Puppet.debug("Runing journalctl command to get logs for systemd #{action} failure: #{journalctl_command}")
+    journalctl_output = execute(journalctl_command)
+    error_return << "journalctl log for #{name}:\n#{journalctl_output}"
+  end
 end
 
