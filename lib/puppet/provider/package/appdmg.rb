@@ -7,7 +7,7 @@
 # and are easier to manage.
 #
 # Note: the 'apple' Provider checks for the package name
-# in /L/Receipts.  Since we possibly install multiple apps's from
+# in /L/Receipts.  Since we possibly install multiple apps from
 # a single source, we treat the source .app.dmg file as the package name.
 # As a result, we store installed .app.dmg file names
 # in /var/db/.puppet_appdmg_installed_<name>
@@ -100,10 +100,10 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
   def install
     source = nil
     unless source = @resource[:source]
-      self.fail "Mac OS X PKG DMG's must specify a package source."
+      self.fail "Mac OS X PKG DMGs must specify a package source."
     end
     unless name = @resource[:name]
-      self.fail "Mac OS X PKG DMG's must specify a package name."
+      self.fail "Mac OS X PKG DMGs must specify a package name."
     end
     self.class.installpkgdmg(source,name)
   end
