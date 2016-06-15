@@ -101,9 +101,9 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
       return :true
     elsif [101, 105].include?($CHILD_STATUS.exitstatus)
       # 101 is action not allowed, which means we have to do the check manually.
-      # 105 is unknown, which generally means the iniscript does not support query
+      # 105 is unknown, which generally means the initscript does not support query
       # The debian policy states that the initscript should support methods of query
-      # For those that do not, peform the checks manually
+      # For those that do not, perform the checks manually
       # http://www.debian.org/doc/debian-policy/ch-opersys.html
       if get_start_link_count >= 4
         return :true
