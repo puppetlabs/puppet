@@ -149,7 +149,7 @@ module Puppet
         options[:environment]
       elsif options[:environment]
         # This use of looking up an environment is correct since it honours
-        # a reguest to get a particular environment via environment name.
+        # a request to get a particular environment via environment name.
         Puppet.lookup(:environments).get!(options[:environment])
       else
         Puppet.lookup(:current_environment)
@@ -162,7 +162,7 @@ module Puppet
     # @param where [String] a description of the thing we're parsing the
     #        dependency expression for
     # @param dep [Hash] the dependency description to parse
-    # @return [Array(String, Semantic::VersionRange, String)] an tuple of the
+    # @return [Array(String, Semantic::VersionRange, String)] a tuple of the
     #         dependent module's name, the version range dependency, and the
     #         unparsed range expression.
     def self.parse_module_dependency(where, dep)
