@@ -1,16 +1,16 @@
 require 'puppet/provider/package'
 
 Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package do
-  desc "OpenSolaris image packaging system. See pkg(5) for more information"
+  desc "OpenSolaris image packaging system. See pkg(5) for more information."
   # https://docs.oracle.com/cd/E19963-01/html/820-6572/managepkgs.html
-  # A few notes before we start :
+  # A few notes before we start:
   # Opensolaris pkg has two slightly different formats (as of now.)
   # The first one is what is distributed with the Solaris 11 Express 11/10 dvd
   # The latest one is what you get when you update package.
   # To make things more interesting, pkg version just returns a sha sum.
   # dvd:     pkg version => 052adf36c3f4
   # updated: pkg version => 630e1ffc7a19
-  # Thankfully, solaris has not changed the commands to be used.
+  # Thankfully, Solaris has not changed the commands to be used.
   # TODO: We still have to allow packages to specify a preferred publisher.
 
   has_feature :versionable
@@ -29,11 +29,11 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     pkg(:list, '-Hv').split("\n").map{|l| new(parse_line(l))}
   end
 
-  # The IFO flag field is just what it names, the first field can have ether
+  # The IFO flag field is just what it names, the first field can have either
   # i_nstalled or -, and second field f_rozen or -, and last
   # o_bsolate or r_rename or -
   # so this checks if the installed field is present, and also verifies that
-  # if not the field is -, else we dont know what we are doing and exit with
+  # if not the field is -, else we don't know what we are doing and exit with
   # out doing more damage.
   def self.ifo_flag(flags)
     (
