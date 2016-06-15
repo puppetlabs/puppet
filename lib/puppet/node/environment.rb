@@ -75,7 +75,7 @@ class Puppet::Node::Environment
   # Instantiate a new environment
   #
   # @note {Puppet::Node::Environment.new} is private for historical reasons, as
-  #   previously it had been overridden to return memorized objects and was
+  #   previously it had been overridden to return memoized objects and was
   #   replaced with {Puppet::Node::Environment.create}, so this will not be
   #   invoked with the normal Ruby initialization semantics.
   #
