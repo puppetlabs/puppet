@@ -11,7 +11,7 @@ module Puppet
   end
 end
 
-# This module defines methods for execution of system commands. It is intented for inclusion
+# This module defines methods for execution of system commands. It is intended for inclusion
 # in classes that needs to execute system commands.
 # @api public
 module Puppet::Util::Execution
@@ -48,7 +48,7 @@ module Puppet::Util::Execution
   # @yield [pipe] to a block executing a subprocess
   # @yieldparam pipe [IO] the opened pipe
   # @yieldreturn [String] the output to return
-  # @raise [Puppet::ExecutionFailure] if the executed chiled process did not
+  # @raise [Puppet::ExecutionFailure] if the executed child process did not
   #   exit with status == 0 and `failonfail` is `true`.
   # @return [String] a string with the output from the subprocess executed by
   #   the given block
