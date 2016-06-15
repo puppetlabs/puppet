@@ -40,7 +40,7 @@ Puppet::Type.type(:service).provide :bsd, :parent => :init do
   end
 
   # Override stop/start commands to use one<cmd>'s and the avoid race condition
-  # where provider trys to stop/start the service before it is enabled
+  # where provider tries to stop/start the service before it is enabled
   def startcmd
     [self.initscript, :onestart]
   end
