@@ -23,7 +23,7 @@ module Puppet::Agent::Locker
         lockfile.unlock
       end
     else
-      fail Puppet::LockError, 'Failed to aquire lock'
+      fail Puppet::LockError, 'Failed to acquire lock'
     end
   end
 
