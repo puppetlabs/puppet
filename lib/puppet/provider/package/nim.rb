@@ -114,7 +114,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
       # Now we know if the package type is RPM or not, and we can adjust our
       # `pkg` string for passing to the install command accordingly.
       if (package_type == :rpm)
-        # RPM's expect a hyphen between the package name and the version number
+        # RPMs expect a hyphen between the package name and the version number
         version_separator = "-"
       else
         # installp/BFF packages expect a space between the package name and the
