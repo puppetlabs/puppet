@@ -60,7 +60,7 @@ module Puppet::Util::InstanceLoader
     @autoloaders[type.intern]
   end
 
-  # Retrieve an alread-loaded instance, or attempt to load our instance.
+  # Retrieve an already-loaded instance, or attempt to load our instance.
   def loaded_instance(type, name)
     name = name.intern
     return nil unless instances = instance_hash(type)
