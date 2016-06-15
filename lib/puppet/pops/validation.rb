@@ -17,7 +17,7 @@ module Validation
   # validation configuration depending on the context/type of validation that should be performed (static, vs. runtime, etc.).
   #
   # This class is abstract and must be subclassed. The subclass must implement the methods
-  # {#label_provider} and {#checker}. It is also expected that the sublcass will override
+  # {#label_provider} and {#checker}. It is also expected that the subclass will override
   # the severity_producer and configure the issues that should be reported as errors (i.e. if they should be ignored, produce
   # a warning, or a deprecation warning).
   #
@@ -384,12 +384,12 @@ module Validation
       errors? || warnings?
     end
 
-    # Returns the diagnosed errors in the order thwy were reported.
+    # Returns the diagnosed errors in the order they were reported.
     def errors
       @diagnostics.select {|d| d.severity == :error }
     end
 
-    # Returns the diagnosed warnings in the order thwy were reported.
+    # Returns the diagnosed warnings in the order they were reported.
     # (This includes :warning and :deprecation severity)
     def warnings
       @diagnostics.select {|d| d.severity == :warning || d.severity == :deprecation }
@@ -399,7 +399,7 @@ module Validation
       @diagnostics.select {|d| d.severity != :ignore }
     end
 
-    # Returns the ignored diagnostics in the order thwy were reported (if reported at all)
+    # Returns the ignored diagnostics in the order they were reported (if reported at all)
     def ignored
       @diagnostics.select {|d| d.severity == :ignore }
     end
