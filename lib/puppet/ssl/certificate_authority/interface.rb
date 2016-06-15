@@ -9,6 +9,7 @@ module Puppet
         SUBJECTLESS_METHODS = [:list, :reinventory]
 
         CERT_STATUS_GLYPHS = {:signed => '+', :request => ' ', :invalid => '-'}
+        VALID_CONFIRMATION_VALUES = %w{y Y yes Yes YES}
 
         class InterfaceError < ArgumentError; end
 
@@ -265,11 +266,35 @@ module Puppet
           end
         end
 
-        # Signs given certificates or waiting of subjects == :all
+        # Signs given certificates or all waiting if subjects == :all
         def sign(ca)
           list = subjects == :all ? ca.waiting? : subjects
           raise InterfaceError, "No waiting certificate requests to sign" if list.empty?
+
           list.each do |host|
+            cert = Puppet::SSL::CertificateRequest.indirection.find(host)
+
+            # ca.sign will also do this - and it should if it is called
+            # elsewhere - but we want to reject an attempt to sign a
+            # problematic csr as early as possible for usability concerns.
+            ca.check_internal_signing_policies(host, cert, options[:allow_dns_alt_names])
+
+            name_width = host.inspect.length
+            info = {:type => :request, :cert => cert}
+            host_string = format_host(host, info, name_width, options[:format])
+            puts "Signing Certificate Request for:\n#{host_string}"
+
+            if options[:interactive]
+              STDOUT.print "Sign Certificate Request? [y/N] "
+
+              if !options[:yes]
+                input = STDIN.gets.chomp
+                raise ArgumentError, "NOT Signing Certificate Request" unless VALID_CONFIRMATION_VALUES.include?(input)
+              else
+                puts "Assuming YES from `-y' or `--assume-yes' flag"
+              end
+            end
+
             ca.sign(host, options[:allow_dns_alt_names])
           end
         end

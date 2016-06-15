@@ -156,11 +156,56 @@ describe Puppet::SSL::CertificateAuthority::Interface do
     end
 
     describe ":sign" do
+      describe "when run in interactive mode" do
+        before do
+          @csr1 = Puppet::SSL::CertificateRequest.new 'baz'
+          Puppet::SSL::CertificateRequest.indirection.stubs(:find).with("csr1").returns @csr1
+
+          @ca.stubs(:waiting?).returns(%w{csr1})
+          @ca.stubs(:check_internal_signing_policies).returns(true)
+        end
+
+        it "should prompt before signing cert" do
+          @applier = @class.new(:sign, :to => :all, :interactive => true)
+          @applier.stubs(:format_host).returns("(host info)")
+
+          @applier.expects(:puts).
+            with("Signing Certificate Request for:\n(host info)")
+
+          STDOUT.expects(:print).with("Sign Certificate Request? [y/N] ")
+
+          STDIN.stubs(:gets).returns('y')
+          @ca.expects(:sign).with("csr1", nil)
+
+          @applier.apply(@ca)
+        end
+
+        it "a yes answer can be assumed via options" do
+          @applier = @class.new(:sign, :to => :all, :interactive => true, :yes => true)
+          @applier.stubs(:format_host).returns("(host info)")
+
+          @applier.expects(:puts).
+            with("Signing Certificate Request for:\n(host info)")
+
+          STDOUT.expects(:print).with("Sign Certificate Request? [y/N] ")
+
+          @applier.expects(:puts).
+            with("Assuming YES from `-y' or `--assume-yes' flag")
+
+          @ca.expects(:sign).with("csr1", nil)
+
+          @applier.apply(@ca)
+        end
+      end
+
       describe "and an array of names was provided" do
         let(:applier) { @class.new(:sign, @options.merge(:to => %w{host1 host2})) }
 
         it "should sign the specified waiting certificate requests" do
           @options = {:allow_dns_alt_names => false}
+          applier.stubs(:format_host).returns("")
+          applier.stubs(:puts)
+          @ca.stubs(:check_internal_signing_policies).returns(true)
 
           @ca.expects(:sign).with("host1", false)
           @ca.expects(:sign).with("host2", false)
@@ -170,6 +215,9 @@ describe Puppet::SSL::CertificateAuthority::Interface do
 
         it "should sign the certificate requests with alt names if specified" do
           @options = {:allow_dns_alt_names => true}
+          applier.stubs(:format_host).returns("")
+          applier.stubs(:puts)
+          @ca.stubs(:check_internal_signing_policies).returns(true)
 
           @ca.expects(:sign).with("host1", true)
           @ca.expects(:sign).with("host2", true)
@@ -181,11 +229,14 @@ describe Puppet::SSL::CertificateAuthority::Interface do
       describe "and :all was provided" do
         it "should sign all waiting certificate requests" do
           @ca.stubs(:waiting?).returns(%w{cert1 cert2})
+          @ca.stubs(:check_internal_signing_policies).returns(true)
 
           @ca.expects(:sign).with("cert1", nil)
           @ca.expects(:sign).with("cert2", nil)
 
           @applier = @class.new(:sign, :to => :all)
+          @applier.stubs(:format_host).returns("")
+          @applier.stubs(:puts)
           @applier.apply(@ca)
         end
 
