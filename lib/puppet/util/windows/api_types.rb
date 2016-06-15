@@ -59,7 +59,7 @@ module Puppet::Util::Windows::APITypes
       str.encode(dst_encoding)
     end
 
-    # @param max_char_length [Integer] Maximum number of wide chars tp return (typically excluding NULLs), *not* bytes
+    # @param max_char_length [Integer] Maximum number of wide chars to return (typically excluding NULLs), *not* bytes
     # @param null_terminator [Symbol] Number of number of null wchar characters, *not* bytes, that determine the end of the string
     #   null_terminator = :single_null, then the terminating sequence is two bytes of zero.   This is UNIT16 = 0
     #   null_terminator = :double_null, then the terminating sequence is four bytes of zero.  This is UNIT32 = 0
