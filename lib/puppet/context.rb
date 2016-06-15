@@ -4,7 +4,7 @@
 # {#override}, that provides a different value.
 #
 # When binding a {Proc}, the proc is called when the value is looked up, and the result
-# is memoized for subsequent lookups. This provides a lazy mechanism that can be used to
+# is memorized for subsequent lookups. This provides a lazy mechanism that can be used to
 # delay expensive production of values until they are needed.
 #
 # @api private
