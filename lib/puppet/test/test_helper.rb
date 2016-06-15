@@ -38,7 +38,7 @@ module Puppet::Test
     def self.initialize()
       # This meta class instance variable is used as a guard to ensure that
       # before_each, and after_each are only called once. This problem occurs
-      # when there are more than one puppet test infrastructure "orchestrator in us.
+      # when there are more than one puppet test infrastructure orchestrator in use.
       # The use of both puppetabs-spec_helper, and rodjek-rspec_puppet will cause
       # two resets of the puppet environment, and will cause problem rolling back to
       # a known point as there is no way to differentiate where the calls are coming
@@ -84,7 +84,7 @@ module Puppet::Test
     #
     ROLLBACK_MARK = "initial testing state"
 
-    # Call this method once per test, prior to execution of each invididual test.
+    # Call this method once per test, prior to execution of each individual test.
     # @return nil
     def self.before_each_test()
       # When using both rspec-puppet and puppet-rspec-helper, there are two packages trying
