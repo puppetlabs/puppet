@@ -118,7 +118,7 @@ Puppet::Type.newtype(:scheduled_task) do
           * `months` --- Which months the task should run, as an array. Defaults to
             all months. Each month must be an integer between 1 and 12.
           * `on` **(Required)** --- Which days of the month the task should run,
-            as an array. Each day must beeither an integer between 1 and 31,
+            as an array. Each day must be either an integer between 1 and 31,
             or the special value `last,` which is always the last day of the month.
       * For `monthly` (by weekday) triggers:
           * `months` --- Which months the task should run, as an array. Defaults to
