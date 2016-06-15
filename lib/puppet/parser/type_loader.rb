@@ -71,7 +71,7 @@ class Puppet::Parser::TypeLoader
           return result
         end
       rescue TypeLoaderError => detail
-        # I'm not convienced we should just drop these errors, but this
+        # I'm not convinced we should just drop these errors, but this
         # preserves existing behaviours.
       end
     end
