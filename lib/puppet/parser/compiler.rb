@@ -795,7 +795,7 @@ class Puppet::Parser::Compiler
     # 2.2.2 some other terminus having stored a fact called "trusted" (most likely that would have failed earlier, but could
     #       be spoofed).
     #
-    # For the reasons above, the resurection of trusted node data with authenticated => true is only performed
+    # For the reasons above, the resurrection of trusted node data with authenticated => true is only performed
     # if user is running as root, else it is resurrected as unauthenticated.
     #
     trusted_param = node.parameters['trusted']
@@ -807,7 +807,7 @@ class Puppet::Parser::Compiler
         trusted_param = nil
       end
     else
-      # trusted may be boolean false if set as a fact by someone
+      # trusted may be Boolean false if set as a fact by someone
       trusted_param = nil
     end
 
@@ -872,7 +872,7 @@ class Puppet::Parser::Compiler
   # Return an array of all of the unevaluated resources.  These will be definitions,
   # which need to get evaluated into native resources.
   def unevaluated_resources
-    # The order of these is significant for speed due to short-circuting
+    # The order of these is significant for speed due to short-circuiting
     resources.reject { |resource| resource.evaluated? or resource.virtual? or resource.builtin_type? }
   end
 
