@@ -505,7 +505,7 @@ class Puppet::Provider
   # structure of the provider - this hash holds the current state property values of system entities
   # as they are being discovered by querying or other operations (typically getters).
   #
-  # @todo The use of a hash as a parameter needs a better exaplanation; why is this done? What is the intent?
+  # @todo The use of a hash as a parameter needs a better explanation; why is this done? What is the intent?
   # @param resource [Puppet::Resource, Hash] optional resource or hash
   #
   def initialize(resource = nil)
