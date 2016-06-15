@@ -29,7 +29,7 @@ class Puppet::Interface
       # We use module_eval, which I don't like much, because we can't have an
       # argument to a block with a default value in Ruby 1.8, and I don't like
       # the side-effects (eg: no argument count validation) of using blocks
-      # without as metheds.  When we are 1.9 only (hah!) you can totally
+      # without as methods.  When we are 1.9 only (hah!) you can totally
       # replace this with some up-and-up define_method. --daniel 2011-04-29
       module_eval(<<-EOT, __FILE__, __LINE__ + 1)
         def #{name}(value = nil)
