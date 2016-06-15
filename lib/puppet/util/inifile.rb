@@ -56,7 +56,7 @@ module Puppet::Util::IniConfig
     end
 
     # Set the entry 'key=value'. If no entry with the
-    # given key exists, one is appended to teh end of the section
+    # given key exists, one is appended to the end of the section
     def []=(key, value)
       entry = find_entry(key)
       @dirty = true
