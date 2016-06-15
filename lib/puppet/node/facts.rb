@@ -59,7 +59,7 @@ class Puppet::Node::Facts
     end
   end
 
-  # Sanitize fact values by converting everything not a string, boolean
+  # Sanitize fact values by converting everything not a string, Boolean
   # numeric, array or hash into strings.
   def sanitize
     values.each do |fact, value|
