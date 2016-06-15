@@ -69,7 +69,7 @@ class Loaders
       loader.set_entry(typed_name, type, obj_class._plocation) if entry.nil? || entry.value.nil?
       type
     end
-    # Resolve lazy so that all types can cross reference eachother
+    # Resolve lazy so that all types can cross reference each other
     parser = Types::TypeParser.singleton
     types.each { |type| type.resolve(parser, loader) }
   end
