@@ -77,7 +77,7 @@ module Puppet::Util::Plist
       File.open(file, args).read
     end
 
-    # Helper method to assist in generating a new CFPropertList Plist. It's
+    # Helper method to assist in generating a new CFPropertyList Plist. It's
     # its own method for stubbing purposes
     #
     # @api private
@@ -85,7 +85,7 @@ module Puppet::Util::Plist
       CFPropertyList::List.new(plist_opts)
     end
 
-    # Helper method to assist in converting a native CFPropertList object to a
+    # Helper method to assist in converting a native CFPropertyList object to a
     # native Ruby object (hash). It's its own method for stubbing purposes
     #
     # @api private
