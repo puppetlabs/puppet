@@ -4,7 +4,7 @@ require 'puppet/parameter/boolean'
 Puppet::Type.newtype(:resources) do
   @doc = "This is a metatype that can manage other resource types.  Any
     metaparams specified here will be passed on to any generated resources,
-    so you can purge umanaged resources but set `noop` to true so the
+    so you can purge unmanaged resources but set `noop` to true so the
     purging is only logged and does not actually happen."
 
 
