@@ -26,7 +26,7 @@ class Puppet::Transaction::AdditionalResourceGenerator
       @catalog.resource(res.ref) || res
     end
     unless resource.depthfirst?
-      # This is reversed becuase PUP-1963 changed how generated
+      # This is reversed because PUP-1963 changed how generated
       # resources were added to the catalog. It exists for backwards
       # compatibility only, and can probably be removed in Puppet 5
       #
