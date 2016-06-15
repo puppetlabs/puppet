@@ -63,7 +63,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
   def self.instances
     # JJM Class method that provides an array of instance objects of this
     #     type.
-    # JJM: Properties are dependent on the Puppet::Type we're managine.
+    # JJM: Properties are dependent on the Puppet::Type we're managing.
     type_property_array = [:name] + @resource_type.validproperties
 
     # Create a new instance of this Puppet::Type for each object present
@@ -126,7 +126,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
 
     # NBK: need to read the existing password here as it's not actually
     # stored in the user record. It is stored at a path that involves the
-    # UUID of the user record for non-Mobile local acccounts.
+    # UUID of the user record for non-Mobile local accounts.
     # Mobile Accounts are out of scope for this provider for now
     attribute_hash[:password] = self.get_password(attribute_hash[:guid], attribute_hash[:name]) if @resource_type.validproperties.include?(:password) and Puppet.features.root?
     attribute_hash
@@ -167,8 +167,8 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
 
     command_vector = [ command(:dscl), "-plist", "." ]
 
-    # JJM: The actual action to perform.  See "man dscl"
-    #      Common actiosn: -create, -delete, -merge, -append, -passwd
+    # JJM: The actual action to perform. See "man dscl".
+    #      Common actions: -create, -delete, -merge, -append, -passwd
     command_vector << ds_action
     # JJM: get_ds_path will spit back "Users" or "Groups",
     # etc...  Depending on the Puppet::Type of our self.
@@ -186,7 +186,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     # 10.7 uses salted SHA512 password hashes which are 128 characters plus
     # an 8 character salt. Previous versions used a SHA1 hash padded with
     # zeroes. If someone attempts to use a password hash that worked with
-    # a previous version of OX X, we will fail early and warn them.
+    # a previous version of OS X, we will fail early and warn them.
     if password_hash.length != 136
       fail("OS X 10.7 requires a Salted SHA512 hash password of 136 characters. \
            Please check your password and try again.")
