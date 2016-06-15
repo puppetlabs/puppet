@@ -144,7 +144,7 @@ http://links.puppetlabs.com/lookup-docs
 
 OPTIONS
 -------
-These options and their effects are decribed in more detail in
+These options and their effects are described in more detail in
 the puppet lookup function linked to above.
 
 * --help:
@@ -174,7 +174,7 @@ the puppet lookup function linked to above.
 
 * --explain
   Print an explanation for the details of how the lookup performed rather
-  than the value returned for the key. The explaination will describe how
+  than the value returned for the key. The explanation will describe how
   the result was obtained or why lookup failed to obtain the result.
 
 * --explain-options
