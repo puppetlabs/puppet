@@ -75,7 +75,7 @@ class Puppet::Node::Environment
   # Instantiate a new environment
   #
   # @note {Puppet::Node::Environment.new} is private for historical reasons, as
-  #   previously it had been overridden to return memoized objects and was
+  #   previously it had been overridden to return memorized objects and was
   #   replaced with {Puppet::Node::Environment.create}, so this will not be
   #   invoked with the normal Ruby initialization semantics.
   #
@@ -521,7 +521,7 @@ class Puppet::Node::Environment
     raise error
   end
 
-  # Return an empty toplevel hostclass to indicate that no file was loaded
+  # Return an empty top-level hostclass to indicate that no file was loaded
   #
   # @return [Puppet::Parser::AST::Hostclass]
   def empty_parse_result
