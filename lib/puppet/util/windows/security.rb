@@ -262,7 +262,7 @@ module Puppet::Util::Windows::Security
   }
 
   # Set the mode of the object referenced by +path+ to the specified
-  # +mode+.  The mode should be specified as POSIX-stye read, write,
+  # +mode+. The mode should be specified as POSIX-style read, write,
   # and execute modes for the user, group, and other classes,
   # e.g. 0640. The sticky bit, S_ISVTX, is supported, but is only
   # meaningful for directories. If set, group and others are not
