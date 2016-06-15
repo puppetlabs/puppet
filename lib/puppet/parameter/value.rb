@@ -11,7 +11,7 @@ class Puppet::Parameter::Value
 
   # Adds an alias for this value.
   # Makes the given _name_ be an alias for this acceptable value.
-  # @param name [Symbol] the additonal alias this value should be known as
+  # @param name [Symbol] the additional alias this value should be known as
   # @api private
   #
   def alias(name)
