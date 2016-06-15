@@ -2,7 +2,7 @@ require 'puppet/provider/package'
 
 # OS X Packaging sucks.  We can install packages, but that's about it.
 Puppet::Type.type(:package).provide :apple, :parent => Puppet::Provider::Package do
-  desc "Package management based on OS X's builtin packaging system.  This is
+  desc "Package management based on OS X's built-in packaging system.  This is
     essentially the simplest and least functional package system in existence --
     it only supports installation; no deletion or upgrades.  The provider will
     automatically add the `.pkg` extension, so leave that off when specifying
