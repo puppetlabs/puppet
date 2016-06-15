@@ -57,7 +57,7 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
       # Don't fail when the exit status is not 0.
       ucommand(:status, false)
 
-      # Expicitly calling exitstatus to facilitate testing
+      # Explicitly calling exitstatus to facilitate testing
       if $CHILD_STATUS.exitstatus == 0
         return :running
       else
