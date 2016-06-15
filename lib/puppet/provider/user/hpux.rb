@@ -3,7 +3,7 @@ Puppet::Type.type(:user).provide :hpuxuseradd, :parent => :useradd do
     switch to HP-UX's special `usermod` binary to work around the fact that
     its standard `usermod` cannot make changes while the user is logged in.
     New functionality provides for changing trusted computing passwords and
-    resetting password expirations under trusted computing"
+    resetting password expirations under trusted computing."
 
   defaultfor :operatingsystem => "hp-ux"
   confine :operatingsystem => "hp-ux"
