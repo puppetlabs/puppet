@@ -163,12 +163,14 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     it "should return :true if the service is enabled" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:execute).with(['/bin/systemctl','is-enabled','sshd.service'], :failonfail => false).returns "enabled\n"
+      $CHILD_STATUS.stubs(:exitstatus).returns(0)
       expect(provider.enabled?).to eq(:true)
     end
 
     it "should return :true if the service is static" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:execute).with(['/bin/systemctl','is-enabled','sshd.service'], :failonfail => false).returns "static\n"
+      $CHILD_STATUS.stubs(:exitstatus).returns(0)
       expect(provider.enabled?).to eq(:true)
     end
 

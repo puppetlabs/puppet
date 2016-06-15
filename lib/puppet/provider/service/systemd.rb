@@ -72,6 +72,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   def enabled?
     output = cached_enabled?
+    code = $CHILD_STATUS.exitstatus
 
     # The masked state is equivalent to the disabled state in terms of
     # comparison so we only care to check if it is masked if we want to keep
@@ -80,9 +81,8 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     # We only return :mask if we're trying to mask the service. This prevents
     # flapping when simply trying to disable a masked service.
     return :mask if (@resource[:enable] == :mask) && (output == 'masked')
-    return :true if ['static', 'enabled'].include? output
-    return :false if ['disabled', 'linked', 'indirect', 'masked'].include? output
-    if (output.empty?) && (Facter.value(:osfamily).downcase == 'debian')
+    return :true if (code == 0)
+    if (output.empty?) && (code > 0) && (Facter.value(:osfamily).downcase == 'debian')
       ret = debian_enabled?
       return ret if ret
     end
