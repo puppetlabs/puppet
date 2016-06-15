@@ -44,7 +44,7 @@
 # When the function is called, puppet searches the signatures for one that
 # matches the supplied arguments. Each signature is part of a dispatch, which
 # specifies the method that should be called for that signature. When a
-# matching signature is found, the corrosponding method is called.
+# matching signature is found, the corresponding method is called.
 #
 # Documentation for the function should be placed as comments to the
 # implementation method(s).
