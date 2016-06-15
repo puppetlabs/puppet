@@ -36,7 +36,7 @@ Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource types a
 - *Providers* provide low-level functionality for a given resource type.  This is
   usually in the form of calling out to external commands.
 
-  When required binaries are specified for providers, fully qualifed paths
+  When required binaries are specified for providers, fully qualified paths
   indicate that the binary must exist at that specific path and unqualified
   binaries indicate that Puppet will search for the binary using the shell
   path.
