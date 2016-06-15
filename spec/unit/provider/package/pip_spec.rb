@@ -120,7 +120,7 @@ describe provider_class do
     context "connecting directly" do
 
       before :each do
-        XMLRPC::Client.expects(:new2).with("http://pypi.python.org/pypi", nil).returns(@client)
+        XMLRPC::Client.expects(:new2).with("https://pypi.python.org/pypi", nil).returns(@client)
       end
 
       it "should find a version number for real_package" do
@@ -145,7 +145,7 @@ describe provider_class do
       before :each do
         Puppet::Util::HttpProxy.expects(:http_proxy_host).returns 'some_host'
         Puppet::Util::HttpProxy.expects(:http_proxy_port).returns 'some_port'
-        XMLRPC::Client.expects(:new2).with("http://pypi.python.org/pypi", "some_host:some_port").returns(@client)
+        XMLRPC::Client.expects(:new2).with("https://pypi.python.org/pypi", "some_host:some_port").returns(@client)
       end
 
       it "should find a version number for real_package" do

@@ -66,7 +66,7 @@ Puppet::Type.type(:package).provide :pip,
       proxy = http_proxy_host
     end
 
-    client = XMLRPC::Client.new2("http://pypi.python.org/pypi", proxy)
+    client = XMLRPC::Client.new2("https://pypi.python.org/pypi", proxy)
     client.http_header_extra = {"Content-Type" => "text/xml"}
     client.timeout = 10
     result = client.call("package_releases", @resource[:name])
