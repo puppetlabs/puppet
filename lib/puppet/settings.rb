@@ -878,7 +878,7 @@ class Puppet::Settings
   #           also supports additional options such as "mode", "owner", "group"
   #       :directory - A (single) directory path; puppet may attempt to create this file depending on how the settings are used.  This type
   #           also supports additional options such as "mode", "owner", "group"
-  #       :path - This is intended to be used for settings whose value can contain multiple directory paths, respresented
+  #       :path - This is intended to be used for settings whose value can contain multiple directory paths, represented
   #           as strings separated by the system path separator (e.g. system path, module path, etc.).
   #     [:mode] => an (optional) octal value to be used as the permissions/mode for :file and :directory settings
   #     [:owner] => optional owner username/uid for :file and :directory settings
