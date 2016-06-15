@@ -158,7 +158,7 @@ module Puppet::Plugins::DataProviders
     attr_reader :original_path, :path
 
     # @param original_path [String] path as found in declaration. May contain interpolation expressions
-    # @param path [Pathname] the expanded absolue path
+    # @param path [Pathname] the expanded absolute path
     # @api public
     def initialize(original_path, path)
       @original_path = original_path
