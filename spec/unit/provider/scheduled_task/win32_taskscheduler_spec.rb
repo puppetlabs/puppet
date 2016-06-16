@@ -1856,4 +1856,71 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       resource.provider.create
     end
   end
+
+  describe "Win32::TaskScheduler", :if => Puppet.features.microsoft_windows? do
+
+    let(:name) { SecureRandom.uuid }
+
+    describe 'sets appropriate generic trigger defaults' do
+      before(:each) do
+        @now = Time.now
+        Time.stubs(:now).returns(@now)
+      end
+
+      it 'for a ONCE schedule' do
+        task = Win32::TaskScheduler.new(name, { 'trigger_type' => Win32::TaskScheduler::ONCE })
+        expect(task.trigger(0)['start_year']).to eq(@now.year)
+        expect(task.trigger(0)['start_month']).to eq(@now.month)
+        expect(task.trigger(0)['start_day']).to eq(@now.day)
+      end
+
+      it 'for a DAILY schedule' do
+        trigger = {
+          'trigger_type' => Win32::TaskScheduler::DAILY,
+          'type' => { 'days_interval' => 1 }
+        }
+        task = Win32::TaskScheduler.new(name, trigger)
+
+        expect(task.trigger(0)['start_year']).to eq(@now.year)
+        expect(task.trigger(0)['start_month']).to eq(@now.month)
+        expect(task.trigger(0)['start_day']).to eq(@now.day)
+      end
+
+      it 'for a WEEKLY schedule' do
+        trigger = {
+          'trigger_type' => Win32::TaskScheduler::WEEKLY,
+          'type' => { 'weeks_interval' => 1, 'days_of_week' => 1 }
+        }
+        task = Win32::TaskScheduler.new(name, trigger)
+
+        expect(task.trigger(0)['start_year']).to eq(@now.year)
+        expect(task.trigger(0)['start_month']).to eq(@now.month)
+        expect(task.trigger(0)['start_day']).to eq(@now.day)
+      end
+
+      it 'for a MONTHLYDATE schedule' do
+        trigger = {
+          'trigger_type' => Win32::TaskScheduler::MONTHLYDATE,
+          'type' => { 'days' => 1, 'months' => 1 }
+        }
+        task = Win32::TaskScheduler.new(name, trigger)
+
+        expect(task.trigger(0)['start_year']).to eq(@now.year)
+        expect(task.trigger(0)['start_month']).to eq(@now.month)
+        expect(task.trigger(0)['start_day']).to eq(@now.day)
+      end
+
+      it 'for a MONTHLYDOW schedule' do
+        trigger = {
+          'trigger_type' => Win32::TaskScheduler::MONTHLYDOW,
+          'type' => { 'weeks' => 1, 'days_of_week' => 1, 'months' => 1 }
+        }
+        task = Win32::TaskScheduler.new(name, trigger)
+
+        expect(task.trigger(0)['start_year']).to eq(@now.year)
+        expect(task.trigger(0)['start_month']).to eq(@now.month)
+        expect(task.trigger(0)['start_day']).to eq(@now.day)
+      end
+    end
+  end
 end
