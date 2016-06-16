@@ -104,6 +104,8 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
         resource[:checksum] = metadata.checksum_type
       end
       store_content(request, resource)
+    when 'link'
+      resource[:target] = metadata.destination
     end
 
     old_source = resource.delete(:source)
