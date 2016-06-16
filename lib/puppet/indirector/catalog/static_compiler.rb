@@ -97,14 +97,15 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
     resource[:mode] ||= metadata.send(:mode).to_s(8)
 
     resource[:ensure] = metadata.ftype
-    if metadata.ftype == "file"
+    case resource[:ensure]
+    when 'file'
       unless resource[:content]
         resource[:content] = metadata.checksum
         resource[:checksum] = metadata.checksum_type
       end
+      store_content(request, resource)
     end
 
-    store_content(request, resource) if resource[:ensure] == "file"
     old_source = resource.delete(:source)
     Puppet.info "Metadata for #{resource} in catalog for '#{request.key}' added from '#{old_source}'"
   end
