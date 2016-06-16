@@ -927,9 +927,10 @@ module Win32
 
           trigger_struct = COM::TASK_TRIGGER.new(trigger_ptr)
           trigger_struct[:cbTriggerSize] = COM::TASK_TRIGGER.size
-          trigger_struct[:wBeginYear] = trigger['start_year'] || 0
-          trigger_struct[:wBeginMonth] = trigger['start_month'] || 0
-          trigger_struct[:wBeginDay] = trigger['start_day'] || 0
+          now = Time.now
+          trigger_struct[:wBeginYear] = trigger['start_year'] || now.year
+          trigger_struct[:wBeginMonth] = trigger['start_month'] || now.month
+          trigger_struct[:wBeginDay] = trigger['start_day'] || now.day
           trigger_struct[:wEndYear] = trigger['end_year'] || 0
           trigger_struct[:wEndMonth] = trigger['end_month'] || 0
           trigger_struct[:wEndDay] = trigger['end_day'] || 0
@@ -940,7 +941,7 @@ module Win32
           trigger_struct[:rgFlags] = trigger['flags'] || 0
           trigger_struct[:TriggerType] = trigger['trigger_type'] || :TASK_TIME_TRIGGER_ONCE
           trigger_struct[:Type] = trigger_type_union
-          trigger_struct[:wRandomMinutesInterval] = trigger['random_minutes_interval']
+          trigger_struct[:wRandomMinutesInterval] = trigger['random_minutes_interval'] || 0
 
           task_trigger.SetTrigger(trigger_struct)
         end
