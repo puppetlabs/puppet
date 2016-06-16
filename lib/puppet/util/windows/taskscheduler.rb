@@ -274,7 +274,9 @@ module Win32
 
       begin
         @pITask.QueryInstance(COM::PersistFile) do |pIPersistFile|
-          pIPersistFile.Save(wide_string(file), 1)
+          wide_file = wide_string(file)
+          pIPersistFile.Save(wide_file, 1)
+          pIPersistFile.SaveCompleted(wide_file)
         end
       rescue
         reset = false
