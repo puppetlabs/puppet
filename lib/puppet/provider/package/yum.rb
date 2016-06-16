@@ -130,9 +130,22 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     '0'
   end
 
+  def self.update_command
+    # In yum both `upgrade` and `update` can be used to update packages
+    # `yum upgrade` == `yum --obsoletes update`
+    # Quote the DNF docs:
+    # "Yum does this if its obsoletes config option is enabled but
+    # the behavior is not properly documented and can be harmful."
+    # So we'll stick with the safter option
+    # If a user wants to remove obsoletes, they can use { :install_options => '--obsoletes' }
+    # More detail here: https://bugzilla.redhat.com/show_bug.cgi?id=1096506
+    'update'
+  end
+
   def install
     wanted = @resource[:name]
     error_level = self.class.error_level
+    update_command = self.class.update_command
     # If not allowing virtual packages, do a query to ensure a real package exists
     unless @resource.allow_virtual?
       execute([command(:cmd), '-d', '0', '-e', error_level, '-y', install_options, :list, wanted].compact)
@@ -154,10 +167,15 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
         wanted.gsub!(/(.+)(#{ARCH_REGEX})(.+)/,'\1\3\2')
       end
 
-      is = self.query
-      if is && rpm_compareEVR(rpm_parse_evr(should), rpm_parse_evr(is[:ensure])) < 0
-        self.debug "Downgrading package #{@resource[:name]} from version #{is[:ensure]} to #{should}"
-        operation = :downgrade
+      current_package = self.query
+      if current_package
+        if rpm_compareEVR(rpm_parse_evr(should), rpm_parse_evr(current_package[:ensure])) < 0
+          self.debug "Downgrading package #{@resource[:name]} from version #{current_package[:ensure]} to #{should}"
+          operation = :downgrade
+        elsif rpm_compareEVR(rpm_parse_evr(should), rpm_parse_evr(current_package[:ensure])) > 0
+          self.debug "Upgrading package #{@resource[:name]} from version #{current_package[:ensure]} to #{should}"
+          operation = update_command
+        end
       end
     end
 
