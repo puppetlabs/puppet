@@ -16,6 +16,7 @@
         "kind",
         "status",
         "noop",
+        "noop_pending",
         "environment"
     ],
 
@@ -143,6 +144,11 @@
 
         "noop": {
             "description": "Whether the puppet run was started in noop mode",
+            "type":        "boolean"
+        },
+
+        "noop_pending": {
+            "description": "Whether there are changes that we decided not to apply because of noop",
             "type":        "boolean"
         },
 

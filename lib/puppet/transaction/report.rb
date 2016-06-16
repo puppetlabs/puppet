@@ -113,6 +113,11 @@ class Puppet::Transaction::Report
   #
   attr_reader :noop
 
+  # Whether there are changes that we decided not to apply because of noop
+  # @return [Boolean]
+  #
+  attr_reader :noop_pending
+
   def self.from_data_hash(data)
     obj = self.allocate
     obj.initialize_from_hash(data)
@@ -163,6 +168,11 @@ class Puppet::Transaction::Report
   end
 
   # @api private
+  def has_noop_events?(resource)
+    resource.events.any? { |event| event.status == 'noop' }
+  end
+
+  # @api private
   def prune_internal_data
     resource_statuses.delete_if {|name,res| res.resource_type == 'Whit'}
   end
@@ -177,6 +187,7 @@ class Puppet::Transaction::Report
     add_metric(:changes, {"total" => change_metric})
     add_metric(:events, calculate_event_metrics)
     @status = compute_status(resource_metrics, change_metric)
+    @noop_pending = @resource_statuses.any? { |name,res| has_noop_events?(res) }
   end
 
   # @api private
@@ -198,6 +209,7 @@ class Puppet::Transaction::Report
     @environment = environment
     @status = 'failed' # assume failed until the report is finalized
     @noop = Puppet[:noop]
+    @noop_pending = false
   end
 
   # @api private
@@ -209,6 +221,7 @@ class Puppet::Transaction::Report
     @environment = data['environment']
     @status = data['status']
     @noop = data['noop']
+    @noop_pending = data['noop_pending']
     @host = data['host']
     @time = data['time']
 
@@ -263,6 +276,7 @@ class Puppet::Transaction::Report
       'kind' => @kind,
       'status' => @status,
       'noop' => @noop,
+      'noop_pending' => @noop_pending,
       'environment' => @environment,
 
       'logs' => @logs,

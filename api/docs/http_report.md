@@ -59,6 +59,7 @@ example is formatted for readability)
      "kind"=>"apply",
      "status"=>"unchanged",
      "noop"=>false,
+     "noop_pending"=>false,
      "environment"=>"test_environment",
      "logs"=>
       [{"level"=>"warning",

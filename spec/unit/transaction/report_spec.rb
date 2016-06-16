@@ -236,7 +236,6 @@ describe Puppet::Transaction::Report do
       end
     end
 
-
     [:time, :resources, :changes, :events].each do |type|
       it "should add #{type} metrics" do
         @report.finalize_report
@@ -350,6 +349,50 @@ describe Puppet::Transaction::Report do
           @report.finalize_report
           expect(metric(:events, status_name)).to eq(9)
         end
+      end
+    end
+
+    describe "for noop events" do
+      it "should have 'noop_pending == false' when no events are available" do
+        add_statuses(3)
+        @report.finalize_report
+        expect(@report.noop_pending).to be_falsey
+      end
+
+      it "should have 'noop_pending == false' when no 'noop' events are available" do
+        add_statuses(3) do |status|
+          ['success', 'audit'].each do |status_name|
+            event = Puppet::Transaction::Event.new
+            event.status = status_name
+            status.add_event(event)
+          end
+        end
+        @report.finalize_report
+        expect(@report.noop_pending).to be_falsey
+      end
+
+      it "should have 'noop_pending == true' when 'noop' events are available" do
+        add_statuses(3) do |status|
+          ['success', 'audit', 'noop'].each do |status_name|
+            event = Puppet::Transaction::Event.new
+            event.status = status_name
+            status.add_event(event)
+          end
+        end
+        @report.finalize_report
+        expect(@report.noop_pending).to be_truthy
+      end
+
+      it "should have 'noop_pending == true' when 'noop' and 'failure' events are available" do
+        add_statuses(3) do |status|
+          ['success', 'failure', 'audit', 'noop'].each do |status_name|
+            event = Puppet::Transaction::Event.new
+            event.status = status_name
+            status.add_event(event)
+          end
+        end
+        @report.finalize_report
+        expect(@report.noop_pending).to be_truthy
       end
     end
   end
