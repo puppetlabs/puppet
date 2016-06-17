@@ -1,5 +1,5 @@
 # Puppet package provider for Python's `pip` package management frontend.
-# <http://pip.openplans.org/>
+# <http://pip.pypa.io/>
 
 require 'puppet/provider/package'
 require 'xmlrpc/client'
