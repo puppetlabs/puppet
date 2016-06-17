@@ -327,6 +327,15 @@ module Win32
     # bad. In this case the task is created but a warning is generated and
     # false is returned.
     #
+    # Note that if intending to use SYSTEM, specify an empty user and nil password
+    #
+    # Calling task.set_account_information('SYSTEM', nil) will generally not
+    # work, except for one special case where flags are also set like:
+    # task.flags = Win32::TaskScheduler::TASK_FLAG_RUN_ONLY_IF_LOGGED_ON
+    #
+    # This must be done prior to the 1st save() call for the task to be
+    # properly registered and visible through the MMC snap-in / schtasks.exe
+    #
     def set_account_information(user, password)
       raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
@@ -566,6 +575,13 @@ module Win32
           end
         end
       end
+
+      # preload task with the SYSTEM account
+      # empty string '' means 'SYSTEM' per MSDN, so default it
+      # given an account is necessary for creation of a task
+      # note that a user may set SYSTEM explicitly, but that has problems
+      # https://msdn.microsoft.com/en-us/library/windows/desktop/aa381276(v=vs.85).aspx
+      set_account_information('', nil)
 
       @pITask
     end
