@@ -496,28 +496,30 @@ module Win32
       raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
+      priority_name = ''
+
       FFI::MemoryPointer.new(:dword, 1) do |ptr|
         @pITask.GetPriority(ptr)
 
         pri = ptr.read_dword
         if (pri & IDLE) != 0
-          priority = 'idle'
+          priority_name = 'idle'
         elsif (pri & NORMAL) != 0
-          priority = 'normal'
+          priority_name = 'normal'
         elsif (pri & HIGH) != 0
-          priority = 'high'
+          priority_name = 'high'
         elsif (pri & REALTIME) != 0
-          priority = 'realtime'
+          priority_name = 'realtime'
         elsif (pri & BELOW_NORMAL) != 0
-          priority = 'below_normal'
+          priority_name = 'below_normal'
         elsif (pri & ABOVE_NORMAL) != 0
-          priority = 'above_normal'
+          priority_name = 'above_normal'
         else
-          priority = 'unknown'
+          priority_name = 'unknown'
         end
       end
 
-      priority
+      priority_name
     end
 
     # Sets the priority of the task. The +priority+ should be a numeric
