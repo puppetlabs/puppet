@@ -122,7 +122,6 @@ describe 'agent logging' do
   # @return Set<Symbol> of expected loggers
   def self.expected_loggers(argv)
     loggers = Set.new
-    loggers << CONSOLE if verbose_or_debug_set_in_argv(argv)
     loggers << 'console' if log_dest_is_set_to(argv, LOGDEST_CONSOLE)
     loggers << '/dev/null/foo' if log_dest_is_set_to(argv, LOGDEST_FILE)
     if Puppet.features.microsoft_windows?
