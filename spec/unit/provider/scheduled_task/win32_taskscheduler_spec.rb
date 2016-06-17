@@ -1979,8 +1979,6 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           task.working_directory = working_directory
           task.comment = comment
           task.creator = creator
-          # NOTE: to properly save the task, this API must be called prior to save
-          task.set_account_information('', nil)
 
           # saving and reloading (activating) can induce COM load errors when
           # file is corrupted, which can happen when the upper bounds of these lengths are set too high
@@ -1988,6 +1986,8 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           task.activate(name)
 
           # furthermore, corrupted values may not necessarily be read back properly
+          # note that SYSTEM is always returned as an empty string in account_information
+          expect(task.account_information).to eq('')
           expect(task.application_name).to eq(application_name)
           expect(task.parameters).to eq(parameters)
           expect(task.working_directory).to eq(working_directory)
