@@ -33,7 +33,7 @@ module Puppet::Util::Plist
       # NOTE: We used IO.read originally to be Ruby 1.8.x compatible.
       if read_file_with_offset(file_path, binary_plist_magic_number.length) == binary_plist_magic_number
         plist_obj = new_cfpropertylist(:file => file_path)
-        convert_cfpropertylist_to_native_types(plist_obj)
+        return convert_cfpropertylist_to_native_types(plist_obj)
       else
         plist_data = open_file_with_args(file_path, "r:UTF-8")
         plist = parse_plist(plist_data, file_path)
@@ -48,6 +48,7 @@ module Puppet::Util::Plist
           Puppet.warning("Cannot read file #{file_path}; Puppet is skipping it.\n" + "Details: #{detail}")
         end
       end
+      return nil
     end
 
     # Read plist text using the CFPropertyList gem.
@@ -60,7 +61,8 @@ module Puppet::Util::Plist
 
       begin
         plist_obj = new_cfpropertylist(:data => plist_data)
-      rescue CFFormatError => e
+      # CFPropertyList library will raise NoMethodError for invalid data
+      rescue CFFormatError, NoMethodError => e
         Puppet.debug "Failed with #{e.class} on #{file_path}: #{e.inspect}"
         return nil
       end
