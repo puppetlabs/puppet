@@ -222,16 +222,17 @@ module Puppet::Util::FileParsing
   # Split a bunch of text into lines and then parse them individually.
   def parse(text)
     count = 1
-    lines(text).collect do |line|
+    res = lines(text).collect do |line|
       count += 1
       if val = parse_line(line)
         val
       else
-        error = Puppet::ResourceError.new("Could not parse line #{line.inspect}")
-        error.line = count
-        raise error
+        Puppet.warning("Could not parse line #{line.inspect}")
+        nil
       end
     end
+    # Delete lines of wrong format
+    res.compact
   end
 
   # Handle parsing a single line.
