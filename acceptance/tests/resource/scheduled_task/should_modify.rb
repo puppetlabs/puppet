@@ -3,6 +3,8 @@ test_name "should modify a scheduled task"
 name = "pl#{rand(999999).to_i}"
 confine :to, :platform => 'windows'
 
+verylongstring = 'a' * 1024
+
 agents.each do |agent|
   # Have to use /v1 parameter for Vista and later, older versions
   # don't accept the parameter
@@ -15,12 +17,13 @@ agents.each do |agent|
   on agent, "schtasks.exe /create #{version} /tn #{name} /tr c:\\\\windows\\\\system32\\\\notepad.exe /sc daily /ru system"
 
   step "modify the task"
-  on agent, puppet_resource('scheduled_task', name, ['ensure=present', 'command=c:\\\\windows\\\\system32\\\\notepad2.exe', "arguments=args-#{name}"])
+  # use long arg string, but be careful not to exceed Windows maximum command line length of 8191 on XP+
+  on agent, puppet_resource('scheduled_task', name, ['ensure=present', 'command=c:\\\\windows\\\\system32\\\\notepad2.exe', "arguments=args-#{verylongstring}"])
 
   step "verify the arguments were updated"
   on agent, puppet_resource('scheduled_task', name) do
     assert_match(/command\s*=>\s*'c:\\windows\\system32\\notepad2.exe'/, stdout)
-    assert_match(/arguments\s*=>\s*'args-#{name}'/, stdout)
+    assert_match(/arguments\s*=>\s*'args-#{verylongstring}'/, stdout)
   end
 
   step "delete the task"

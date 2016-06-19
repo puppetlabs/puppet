@@ -158,6 +158,20 @@ module Win32
 
     MAX_RUN_TIMES = TASK_MAX_RUN_TIMES
 
+    # unfortunately MSTask.h does not specify the limits for any settings
+    # so these were determined with some experimentation
+    # if values too large are written, its suspected there may be internal
+    # limits may be exceeded, corrupting the job
+    # used for max application name and path values
+    MAX_PATH                = 260
+    # UNLEN from lmcons.h is 256
+    # https://technet.microsoft.com/it-it/library/bb726984(en-us).aspx specifies 104
+    MAX_ACCOUNT_LENGTH      = 256
+    # command line max length is limited to 8191, choose something high but still enough that we don't blow out CLI
+    MAX_PARAMETERS_LENGTH   = 4096
+    # in testing, this value could be set to a length of 99999, but saving / loading the task failed
+    MAX_COMMENT_LENGTH      = 8192
+
     # Returns a new TaskScheduler object. If a work_item (and possibly the
     # the trigger) are passed as arguments then a new work item is created and
     # associated with that trigger, although you can still activate other tasks
@@ -212,7 +226,7 @@ module Win32
                 name_ptr_ptr = FFI::Pointer.new(:pointer, names_array_ptr)
                 for i in 0 ... count
                   name_ptr_ptr[i].read_com_memory_pointer do |name_ptr|
-                    array << name_ptr.read_arbitrary_wide_string_up_to(256)
+                    array << name_ptr.read_arbitrary_wide_string_up_to(MAX_PATH)
                   end
                 end
               end
@@ -274,7 +288,9 @@ module Win32
 
       begin
         @pITask.QueryInstance(COM::PersistFile) do |pIPersistFile|
-          pIPersistFile.Save(wide_string(file), 1)
+          wide_file = wide_string(file)
+          pIPersistFile.Save(wide_file, 1)
+          pIPersistFile.SaveCompleted(wide_file)
         end
       rescue
         reset = false
@@ -311,6 +327,15 @@ module Win32
     # bad. In this case the task is created but a warning is generated and
     # false is returned.
     #
+    # Note that if intending to use SYSTEM, specify an empty user and nil password
+    #
+    # Calling task.set_account_information('SYSTEM', nil) will generally not
+    # work, except for one special case where flags are also set like:
+    # task.flags = Win32::TaskScheduler::TASK_FLAG_RUN_ONLY_IF_LOGGED_ON
+    #
+    # This must be done prior to the 1st save() call for the task to be
+    # properly registered and visible through the MMC snap-in / schtasks.exe
+    #
     def set_account_information(user, password)
       raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
@@ -321,6 +346,9 @@ module Win32
         if (user.nil? || user=="") && (password.nil? || password=="")
           @pITask.SetAccountInformation(wide_string(""), FFI::Pointer::NULL)
         else
+          if user.length > MAX_ACCOUNT_LENGTH
+            raise Error.new("User has exceeded maximum allowed length #{MAX_ACCOUNT_LENGTH}")
+          end
           user = wide_string(user)
           password = wide_string(password)
           @pITask.SetAccountInformation(user, password)
@@ -350,7 +378,7 @@ module Win32
         FFI::MemoryPointer.new(:pointer) do |ptr|
           @pITask.GetAccountInformation(ptr)
           ptr.read_com_memory_pointer do |str_ptr|
-            user = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+            user = str_ptr.read_arbitrary_wide_string_up_to(MAX_ACCOUNT_LENGTH) if ! str_ptr.null?
           end
         end
       rescue Puppet::Util::Windows::Error => e
@@ -374,7 +402,7 @@ module Win32
         @pITask.GetApplicationName(ptr)
 
         ptr.read_com_memory_pointer do |str_ptr|
-          app = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+          app = str_ptr.read_arbitrary_wide_string_up_to(MAX_PATH) if ! str_ptr.null?
         end
       end
 
@@ -388,6 +416,10 @@ module Win32
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless app.is_a?(String)
 
+      # the application name is written to a .job file on disk, so is subject to path limitations
+      if app.length > MAX_PATH
+        raise Error.new("Application name has exceeded maximum allowed length #{MAX_PATH}")
+      end
       @pITask.SetApplicationName(wide_string(app))
 
       app
@@ -405,7 +437,7 @@ module Win32
         @pITask.GetParameters(ptr)
 
         ptr.read_com_memory_pointer do |str_ptr|
-          param = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+          param = str_ptr.read_arbitrary_wide_string_up_to(MAX_PARAMETERS_LENGTH) if ! str_ptr.null?
         end
       end
 
@@ -420,6 +452,10 @@ module Win32
       raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless param.is_a?(String)
+
+      if param.length > MAX_PARAMETERS_LENGTH
+        raise Error.new("Parameters has exceeded maximum allowed length #{MAX_PARAMETERS_LENGTH}")
+      end
 
       @pITask.SetParameters(wide_string(param))
 
@@ -438,7 +474,7 @@ module Win32
         @pITask.GetWorkingDirectory(ptr)
 
         ptr.read_com_memory_pointer do |str_ptr|
-          dir = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+          dir = str_ptr.read_arbitrary_wide_string_up_to(MAX_PATH) if ! str_ptr.null?
         end
       end
 
@@ -451,6 +487,10 @@ module Win32
       raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless dir.is_a?(String)
+
+      if dir.length > MAX_PATH
+        raise Error.new("Working directory has exceeded maximum allowed length #{MAX_PATH}")
+      end
 
       @pITask.SetWorkingDirectory(wide_string(dir))
 
@@ -465,28 +505,30 @@ module Win32
       raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
+      priority_name = ''
+
       FFI::MemoryPointer.new(:dword, 1) do |ptr|
         @pITask.GetPriority(ptr)
 
         pri = ptr.read_dword
         if (pri & IDLE) != 0
-          priority = 'idle'
+          priority_name = 'idle'
         elsif (pri & NORMAL) != 0
-          priority = 'normal'
+          priority_name = 'normal'
         elsif (pri & HIGH) != 0
-          priority = 'high'
+          priority_name = 'high'
         elsif (pri & REALTIME) != 0
-          priority = 'realtime'
+          priority_name = 'realtime'
         elsif (pri & BELOW_NORMAL) != 0
-          priority = 'below_normal'
+          priority_name = 'below_normal'
         elsif (pri & ABOVE_NORMAL) != 0
-          priority = 'above_normal'
+          priority_name = 'above_normal'
         else
-          priority = 'unknown'
+          priority_name = 'unknown'
         end
       end
 
-      priority
+      priority_name
     end
 
     # Sets the priority of the task. The +priority+ should be a numeric
@@ -533,6 +575,13 @@ module Win32
           end
         end
       end
+
+      # preload task with the SYSTEM account
+      # empty string '' means 'SYSTEM' per MSDN, so default it
+      # given an account is necessary for creation of a task
+      # note that a user may set SYSTEM explicitly, but that has problems
+      # https://msdn.microsoft.com/en-us/library/windows/desktop/aa381276(v=vs.85).aspx
+      set_account_information('', nil)
 
       @pITask
     end
@@ -699,7 +748,7 @@ module Win32
         @pITask.GetComment(ptr)
 
         ptr.read_com_memory_pointer do |str_ptr|
-          comment = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+          comment = str_ptr.read_arbitrary_wide_string_up_to(MAX_COMMENT_LENGTH) if ! str_ptr.null?
         end
       end
 
@@ -711,6 +760,10 @@ module Win32
     def comment=(comment)
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless comment.is_a?(String)
+
+      if comment.length > MAX_COMMENT_LENGTH
+        raise Error.new("Comment has exceeded maximum allowed length #{MAX_COMMENT_LENGTH}")
+      end
 
       @pITask.SetComment(wide_string(comment))
       comment
@@ -727,7 +780,7 @@ module Win32
         @pITask.GetCreator(ptr)
 
         ptr.read_com_memory_pointer do |str_ptr|
-          creator = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+          creator = str_ptr.read_arbitrary_wide_string_up_to(MAX_ACCOUNT_LENGTH) if ! str_ptr.null?
         end
       end
 
@@ -739,6 +792,11 @@ module Win32
     def creator=(creator)
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless creator.is_a?(String)
+
+      if creator.length > MAX_ACCOUNT_LENGTH
+        raise Error.new("Creator has exceeded maximum allowed length #{MAX_ACCOUNT_LENGTH}")
+      end
+
 
       @pITask.SetCreator(wide_string(creator))
       creator
@@ -927,9 +985,10 @@ module Win32
 
           trigger_struct = COM::TASK_TRIGGER.new(trigger_ptr)
           trigger_struct[:cbTriggerSize] = COM::TASK_TRIGGER.size
-          trigger_struct[:wBeginYear] = trigger['start_year'] || 0
-          trigger_struct[:wBeginMonth] = trigger['start_month'] || 0
-          trigger_struct[:wBeginDay] = trigger['start_day'] || 0
+          now = Time.now
+          trigger_struct[:wBeginYear] = trigger['start_year'] || now.year
+          trigger_struct[:wBeginMonth] = trigger['start_month'] || now.month
+          trigger_struct[:wBeginDay] = trigger['start_day'] || now.day
           trigger_struct[:wEndYear] = trigger['end_year'] || 0
           trigger_struct[:wEndMonth] = trigger['end_month'] || 0
           trigger_struct[:wEndDay] = trigger['end_day'] || 0
@@ -940,7 +999,7 @@ module Win32
           trigger_struct[:rgFlags] = trigger['flags'] || 0
           trigger_struct[:TriggerType] = trigger['trigger_type'] || :TASK_TIME_TRIGGER_ONCE
           trigger_struct[:Type] = trigger_type_union
-          trigger_struct[:wRandomMinutesInterval] = trigger['random_minutes_interval']
+          trigger_struct[:wRandomMinutesInterval] = trigger['random_minutes_interval'] || 0
 
           task_trigger.SetTrigger(trigger_struct)
         end
