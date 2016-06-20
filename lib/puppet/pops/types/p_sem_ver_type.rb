@@ -6,9 +6,18 @@ module Types
 #
 # @api public
 class PSemVerType < PScalarType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'ScalarType',
+       'ranges' => {
+         KEY_TYPE => PArrayType.new(PVariantType.new([PSemVerRangeType::DEFAULT,PStringType::NON_EMPTY])),
+         KEY_VALUE => []
+       }
+    )
+  end
+
   attr_reader :ranges
 
-  def initialize(*ranges)
+  def initialize(ranges)
     ranges = ranges.map { |range| range.is_a?(Semantic::VersionRange) ? range : Semantic::VersionRange.parse(range) }
     ranges = merge_ranges(ranges) if ranges.size > 1
     @ranges = ranges
@@ -91,7 +100,7 @@ class PSemVerType < PScalarType
     end
   end
 
-  DEFAULT = PSemVerType.new
+  DEFAULT = PSemVerType.new(EMPTY_ARRAY)
 
   protected
 

@@ -8,6 +8,10 @@
 module Puppet::Pops
 module Types
 class TypeParser
+  def self.singleton
+    @singleton ||= TypeParser.new
+  end
+
   # @api public
   def initialize
     @parser = Parser::Parser.new
