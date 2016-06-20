@@ -283,6 +283,7 @@ module Win32
     #
     def save(file = nil)
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new('Account information must be set on the current task to save it properly.') if !@account_information_set
 
       reset = true
 
@@ -354,6 +355,7 @@ module Win32
           @pITask.SetAccountInformation(user, password)
         end
 
+        @account_information_set = true
         bool = true
       rescue Puppet::Util::Windows::Error => e
         raise e unless e.code == SCHED_E_ACCOUNT_INFORMATION_NOT_SET
@@ -945,6 +947,7 @@ module Win32
       # Ensure that COM reference is decremented properly
       @pITask.Release if @pITask && ! @pITask.null?
       @pITask = nil
+      @account_information_set = false
     end
 
     def populate_trigger(task_trigger, trigger)
