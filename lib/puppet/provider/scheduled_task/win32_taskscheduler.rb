@@ -226,6 +226,12 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
   def flush
     unless resource[:ensure] == :absent
       self.fail('Parameter command is required.') unless resource[:command]
+      # HACK: even though the user may actually be insync?, for task changes to
+      # fully propagate, it is necessary to explicitly set the user for the task,
+      # even when it is SYSTEM (and has a nil password)
+      # this is a Windows security feature with the v1 COM APIs that prevent
+      # arbitrary reassignment of a task scheduler command to run as SYSTEM
+      # without the authorization to do so
       self.user = resource[:user]
       task.save
       @task = nil
