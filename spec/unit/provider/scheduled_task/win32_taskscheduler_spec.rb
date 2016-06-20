@@ -3,6 +3,44 @@ require 'spec_helper'
 
 require 'puppet/util/windows/taskscheduler' if Puppet.features.microsoft_windows?
 
+describe "Puppet::Util::Windows::TaskScheduler", :if => Puppet.features.microsoft_windows? do
+
+  def dummy_time_trigger
+    now = Time.now
+    {
+        'flags'                   => 0,
+        'random_minutes_interval' => 0,
+        'end_day'                 => 0,
+        'end_year'                => 0,
+        'minutes_interval'        => 0,
+        'end_month'               => 0,
+        'minutes_duration'        => 0,
+        'start_year'              => now.year,
+        'start_month'             => now.month,
+        'start_day'               => now.day,
+        'start_hour'              => now.hour,
+        'start_minute'            => now.min,
+        'trigger_type'            => Win32::TaskScheduler::ONCE,
+    }
+  end
+
+  describe '#parameters' do
+
+    let(:resource) { Puppet::Type.type(:scheduled_task).new(:name => SecureRandom.uuid, :command => 'C:\Windows\System32\notepad.exe') }
+
+    it "should read over 300 character arguments" do
+
+      verylongstring = 'a' * 301
+
+      subject = Win32::TaskScheduler.new(resource[:name], dummy_time_trigger)
+      subject.application_name=(resource[:command])
+      subject.parameters=(verylongstring)
+
+      expect(subject.parameters).to eq(verylongstring)
+    end
+  end
+end
+
 shared_examples_for "a trigger that handles start_date and start_time" do
   let(:trigger) do
     described_class.new(
