@@ -1,3 +1,5 @@
+require 'rexml/document'
+
 test_name "should modify a scheduled task"
 
 name = "pl#{rand(999999).to_i}"
@@ -20,10 +22,23 @@ agents.each do |agent|
   # use long arg string, but be careful not to exceed Windows maximum command line length of 8191 on XP+
   on agent, puppet_resource('scheduled_task', name, ['ensure=present', 'command=c:\\\\windows\\\\system32\\\\notepad2.exe', "arguments=args-#{verylongstring}"])
 
-  step "verify the arguments were updated"
+  # note that this only verifies the output of the ITaskScheduler / ITask COM API
+  # and unfortunately schtasks.exe and the MMC snap-in may get out of sync
+  step "verify the arguments were updated from Puppet"
   on agent, puppet_resource('scheduled_task', name) do
     assert_match(/command\s*=>\s*'c:\\windows\\system32\\notepad2.exe'/, stdout)
     assert_match(/arguments\s*=>\s*'args-#{verylongstring}'/, stdout)
+  end
+
+  step "verify that schtasks reports the same output"
+  on agent, "schtasks.exe /query /tn #{name} /xml" do
+    xml = REXML::Document.new(stdout)
+
+    command =  xml.root.elements['//Actions/Exec/Command/text()']
+    arguments = xml.root.elements['//Actions/Exec/Arguments/text()']
+
+    assert_match('c:\\windows\\system32\\notepad2.exe', command)
+    assert_match('args-#{verylongstring}', arguments)
   end
 
   step "delete the task"

@@ -1997,6 +1997,30 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           task.delete(name) if Win32::TaskScheduler.new.exists?(name)
         end
       end
+
+      it 'by preventing a save() not preceded by a set_account_information()' do
+        begin
+          # creates a default new task with SYSTEM user
+          task = Win32::TaskScheduler.new(name, { 'trigger_type' => Win32::TaskScheduler::ONCE })
+          # save automatically resets the current task
+          task.save()
+
+          # re-activate named task, try to modify, and save
+          task.activate(name)
+          task.application_name = 'c:/windows/system32/notepad.exe'
+
+          expect { task.save() }.to raise_error(Puppet::Error, /Account information must be set on the current task to save it properly/)
+
+          # on a failed save, the current task is still active - add SYSTEM
+          task.set_account_information('', nil)
+          expect(task.save()).to be_instance_of(Win32::TaskScheduler::COM::Task)
+
+          # the most appropriate additional validation here would be to confirm settings with schtasks.exe
+          # but that test can live inside a system-level acceptance test
+        ensure
+          task.delete(name) if Win32::TaskScheduler.new.exists?(name)
+        end
+      end
     end
   end
 end

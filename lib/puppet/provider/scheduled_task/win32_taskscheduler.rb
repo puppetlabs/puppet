@@ -226,6 +226,7 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
   def flush
     unless resource[:ensure] == :absent
       self.fail('Parameter command is required.') unless resource[:command]
+      self.user = resource[:user]
       task.save
       @task = nil
     end
