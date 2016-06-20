@@ -1,0 +1,18 @@
+type Puppet::Resource = Object[{
+  attributes => {
+    file => {type => Optional[String],  value => undef },
+    line => {type => Optional[Integer], value => undef },
+    exported => {type => Boolean, value => false },
+    virtual  => {type => Boolean, value => false },
+
+    # skipping 'strict' which allows an instance to reference an unknown type
+    #
+
+    # class method "from_data_hash" is the protocol with which instances are deserialized in 3.x
+    # this is not needed when pcore based resource is only used on the compile side
+
+    # class method "to_data_hash" is the protocol with which instances are serialized, the impl
+    # must have this in order to comply with the catalog's idea of serialization of resources
+    # This method must take any rich data type and handle it differently.
+  }
+}]
