@@ -75,6 +75,15 @@ describe 'function for dynamically creating resources' do
       expect(rg.path_between(test,foo)).to be
     end
 
+    it 'should filter out undefined edges as they cause errors' do
+      rg = compile_to_relationship_graph("notify { test: }\n create_resources('notify', {'foo'=>{'require'=>undef}})")
+      test  = rg.vertices.find { |v| v.title == 'test' }
+      foo   = rg.vertices.find { |v| v.title == 'foo' }
+      expect(test).to be
+      expect(foo).to be
+      expect(rg.path_between(foo,nil)).to_not be
+    end
+
     it 'should account for default values' do
       catalog = compile_to_catalog("create_resources('file', {'/etc/foo'=>{'ensure'=>'present'}, '/etc/baz'=>{'group'=>'food'}}, {'group' => 'bar'})")
       expect(catalog.resource(:file, "/etc/foo")['group']).to eq('bar')
