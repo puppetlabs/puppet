@@ -686,6 +686,27 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
     end
   end
 
+  describe '#command_insync?', :if => Puppet.features.microsoft_windows? do
+    let(:command)  { 'C:\Windows\System32\notepad.exe' } # mixed case
+    let(:resource) { described_class.new(:name => 'foobar', :command => command.downcase) }
+
+    it 'should consider the command as in sync if the name matches case insensitively' do
+      # mixed case vs upper
+      expect(resource).to be_command_insync(command, [command.upcase])
+
+      # mixed case vs lower
+      expect(resource).to be_command_insync(command, [command.downcase])
+
+      # lower vs upper
+      expect(resource).to be_command_insync(command.downcase, [command.upcase])
+    end
+
+    it 'should consider the command as in sync after the path is normalized' do
+      # different style slashes, repeated slashes, goofy casing
+      expect(resource).to be_command_insync('c://WINDOWS/system32\\\\notepad.exe', [command])
+    end
+  end
+
   describe '#user_insync?', :if => Puppet.features.microsoft_windows? do
     let(:resource) { described_class.new(:name => 'foobar', :command => 'C:\Windows\System32\notepad.exe') }
 
