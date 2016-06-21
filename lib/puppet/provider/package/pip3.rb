@@ -1,5 +1,5 @@
 # Puppet package provider for Python's `pip3` package management frontend.
-# <http://pip.openplans.org/>
+# <http://pip.pypa.io/>
 
 require 'puppet/provider/package/pip'
 
