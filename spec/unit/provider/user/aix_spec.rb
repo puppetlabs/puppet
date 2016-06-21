@@ -55,6 +55,7 @@ guest id=100 pgrp=usr groups=usr home=/home/guest
 
     describe "invoked via manifest" do
       let(:attribute_array) { ["rlogin=false", "login =true"] }
+      let(:single_attribute_array) { "rlogin=false" }
 
       it "should return only the keys of the attribute key=value pair from manifest" do
         keys = @provider.managed_attribute_keys(existing_attributes)
@@ -78,6 +79,12 @@ guest id=100 pgrp=usr groups=usr home=/home/guest
         keys = @provider.managed_attribute_keys(existing_attributes)
         all_symbols = keys.all? {|k| k.is_a? Symbol}
         all_symbols.should be_true
+      end
+
+      it "should allow a single attribute to be specified" do
+        @resource.stubs(:original_parameters).returns({ :attributes => single_attribute_array })
+        keys = @provider.managed_attribute_keys(existing_attributes)
+        keys.should be_include(:rlogin)
       end
     end
 
