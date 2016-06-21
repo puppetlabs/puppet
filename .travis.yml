@@ -8,6 +8,7 @@ script:
 notifications:
   email: false
 rvm:
+  - ruby-head
   - 2.3.1
   - 2.2.4
   - 2.1.7
@@ -21,6 +22,8 @@ env:
 
 matrix:
   exclude:
+    - rvm: ruby-head
+      env: "CHECK=rubocop"
     - rvm: 2.3.1
       env: "CHECK=rubocop"
     - rvm: 2.2.4
@@ -29,6 +32,8 @@ matrix:
       env: "CHECK=rubocop"
     - rvm: 1.9.3
       env: "CHECK=rubocop"
+    - rvm: ruby-head
+      env: "CHECK=commits"
     - rvm: 2.3.1
       env: "CHECK=commits"
     - rvm: 2.2.4
