@@ -205,6 +205,45 @@ describe Puppet::Indirector::REST do
     expect(terminus_class.port).to eq(543)
   end
 
+  it "should use a failover-selected server if set" do
+    terminus_class.expects(:server_setting).returns nil
+    Puppet.override(:server => "myserver") do
+      expect(terminus_class.server).to eq("myserver")
+    end
+  end
+
+  it "should use a failover-selected port if set" do
+    terminus_class.expects(:port_setting).returns nil
+    Puppet.override(:serverport => 321) do
+      expect(terminus_class.port).to eq(321)
+    end
+  end
+
+  it "should use an explicitly specified more-speciic server when failover is active" do
+    terminus_class.expects(:server_setting).returns :ca_server
+    Puppet[:ca_server] = "myserver"
+    Puppet.override(:server => "anotherserver") do
+      expect(terminus_class.server).to eq("myserver")
+    end
+  end
+
+  it "should use an explicitly specified more-specific port when failover is active" do
+    terminus_class.expects(:port_setting).returns :ca_port
+    Puppet[:ca_port] = 321
+    Puppet.override(:serverport => 543) do
+      expect(terminus_class.port).to eq(321)
+    end
+  end
+
+  it "should use a default port when a more-specific server is set" do
+    terminus_class.expects(:server_setting).returns :ca_server
+    terminus_class.expects(:port_setting).returns :ca_port
+    Puppet[:ca_server] = "myserver"
+    Puppet.override(:server => "anotherserver", :port => 666) do
+      expect(terminus_class.port).to eq(8140)
+    end
+  end
+
   it 'should default to :puppet for the srv_service' do
     expect(Puppet::Indirector::REST.srv_service).to eq(:puppet)
   end

@@ -181,16 +181,6 @@ class Puppet::Configurer
   # which accepts :tags and :ignoreschedules.
   def run(options = {})
     pool = Puppet::Network::HTTP::Pool.new(Puppet[:http_keepalive_timeout])
-    begin
-      Puppet.override(:http_pool => pool) do
-        run_internal(options)
-      end
-    ensure
-      pool.close
-    end
-  end
-
-  def run_internal(options)
     # We create the report pre-populated with default settings for
     # environment and transaction_uuid very early, this is to ensure
     # they are sent regardless of any catalog compilation failures or
@@ -200,6 +190,41 @@ class Puppet::Configurer
     init_storage
 
     Puppet::Util::Log.newdestination(report)
+
+    begin
+      Puppet.override(:http_pool => pool) do
+
+        # Skip failover logic if the server_list setting is empty
+        if Puppet.settings[:server_list].nil? || Puppet.settings[:server_list].empty?
+          do_failover = false;
+        else
+          do_failover = true
+        end
+        # When we are passed a catalog, that means we're in apply
+        # mode. We shouldn't try to do any failover in that case.
+        if options[:catalog].nil? && do_failover
+          found = find_functional_server()
+          server = found[:server]
+          if server.nil?
+            Puppet.warning "Could not select a functional puppet master"
+            server = [nil, nil]
+          end
+          Puppet.override(:server => server[0], :serverport => server[1]) do
+            Puppet.debug "Selected master: #{server[0]}:#{server[1]}"
+
+            run_internal(options.merge(:node => found[:node]))
+          end
+        else
+          run_internal(options)
+        end
+      end
+    ensure
+      pool.close
+    end
+  end
+
+  def run_internal(options)
+    report = options[:report]
 
     # If a cached catalog is explicitly requested, attempt to retrieve it. Skip the node request,
     # don't pluginsync and switch to the catalog's environment if we successfully retrieve it.
@@ -233,7 +258,7 @@ class Puppet::Configurer
       # We only need to find out the environment to run in if we don't already have a catalog
       unless (options[:catalog] || Puppet[:strict_environment_mode])
         begin
-          if node = Puppet::Node.indirection.find(Puppet[:node_name_value],
+          if node = options[:node] || Puppet::Node.indirection.find(Puppet[:node_name_value],
               :environment => Puppet::Node::Environment.remote(@environment),
               :configured_environment => configured_environment,
               :ignore_cache => true,
@@ -327,6 +352,35 @@ class Puppet::Configurer
     Puppet.pop_context
   end
   private :run_internal
+
+  def find_functional_server()
+    configured_environment = Puppet[:environment] if Puppet.settings.set_by_config?(:environment)
+
+    node = nil
+    selected_server = Puppet.settings[:server_list].find do |server|
+      # Puppet.override doesn't return the result of its block, so we
+      # need to handle this manually
+      found = false
+      server[1] ||= Puppet[:masterport]
+      Puppet.override(:server => server[0], :serverport => server[1]) do
+        begin
+          node = Puppet::Node.indirection.find(Puppet[:node_name_value],
+              :environment => Puppet::Node::Environment.remote(@environment),
+              :configured_environment => configured_environment,
+              :ignore_cache => true,
+              :transaction_uuid => @transaction_uuid,
+              :fail_on_404 => false)
+          found = true
+        rescue Exception => e
+          # Nothing to see here
+        end
+      end
+      found
+    end
+    { :node => node,
+      :server => selected_server }
+  end
+  private :find_functional_server
 
   def send_report(report)
     puts report.summary if Puppet[:summarize]
