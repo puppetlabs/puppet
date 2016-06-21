@@ -232,7 +232,7 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
       # this is a Windows security feature with the v1 COM APIs that prevent
       # arbitrary reassignment of a task scheduler command to run as SYSTEM
       # without the authorization to do so
-      self.user = resource[:user]
+      # self.user = resource[:user]
       task.save
       @task = nil
     end

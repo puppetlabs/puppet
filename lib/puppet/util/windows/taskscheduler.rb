@@ -283,7 +283,7 @@ module Win32
     #
     def save(file = nil)
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
-      raise Error.new('Account information must be set on the current task to save it properly.') if !@account_information_set
+      # raise Error.new('Account information must be set on the current task to save it properly.') if !@account_information_set
 
       reset = true
 
