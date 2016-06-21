@@ -13,8 +13,6 @@ manifest_netconsole_enabled = %Q{
 }
 
 init_script = "/etc/init.d/netconsole"
-start_symlink = "S50netconsole"
-kill_symlink = "K50netconsole"
 
 start_runlevels = ["2", "3", "4", "5"]
 kill_runlevels = ["0", "1", "6"]
@@ -27,14 +25,14 @@ agents.each do |agent|
   step "ensure enabling the netconsole service creates the S-symlinks"
   apply_manifest_on(agent, manifest_netconsole_enabled, :catch_failures => true) do
     start_runlevels.each do |runlevel|
-      on agent, "test -L /etc/rc.d/rc#{runlevel}.d/#{start_symlink} && test -f #{init_script}"
+      on agent, "test -L /etc/rc.d/rc#{runlevel}.d/S*netconsole && test -f #{init_script}"
     end
   end
 
   step "ensure enabling the netconsole service creates the K-symlinks"
   apply_manifest_on(agent, manifest_netconsole_enabled, :catch_failures => true) do
     kill_runlevels.each do |runlevel|
-      on agent, "test -L /etc/rc.d/rc#{runlevel}.d/#{kill_symlink} && test -f #{init_script}"
+      on agent, "test -L /etc/rc.d/rc#{runlevel}.d/K*netconsole && test -f #{init_script}"
     end
   end
 end
