@@ -34,11 +34,11 @@ agents.each do |agent|
   on agent, "schtasks.exe /query /tn #{name} /xml" do
     xml = REXML::Document.new(stdout)
 
-    command =  xml.root.elements['//Actions/Exec/Command/text()']
-    arguments = xml.root.elements['//Actions/Exec/Arguments/text()']
+    command =  xml.root.elements['//Actions/Exec/Command/text()'].value
+    arguments = xml.root.elements['//Actions/Exec/Arguments/text()'].value
 
     assert_match('c:\\windows\\system32\\notepad2.exe', command)
-    assert_match('args-#{verylongstring}', arguments)
+    assert_match("args-#{verylongstring}", arguments)
   end
 
   step "delete the task"
