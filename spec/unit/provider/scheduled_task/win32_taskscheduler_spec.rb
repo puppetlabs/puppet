@@ -1583,6 +1583,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       end
 
       it 'should save the task' do
+        @mock_task.expects(:set_account_information).with(nil, nil)
         @mock_task.expects(:save)
 
         resource.provider.flush
@@ -1979,8 +1980,6 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           task.working_directory = working_directory
           task.comment = comment
           task.creator = creator
-          # NOTE: to properly save the task, this API must be called prior to save
-          task.set_account_information('', nil)
 
           # saving and reloading (activating) can induce COM load errors when
           # file is corrupted, which can happen when the upper bounds of these lengths are set too high
@@ -1988,11 +1987,37 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           task.activate(name)
 
           # furthermore, corrupted values may not necessarily be read back properly
+          # note that SYSTEM is always returned as an empty string in account_information
+          expect(task.account_information).to eq('')
           expect(task.application_name).to eq(application_name)
           expect(task.parameters).to eq(parameters)
           expect(task.working_directory).to eq(working_directory)
           expect(task.comment).to eq(comment)
           expect(task.creator).to eq(creator)
+        ensure
+          task.delete(name) if Win32::TaskScheduler.new.exists?(name)
+        end
+      end
+
+      it 'by preventing a save() not preceded by a set_account_information()' do
+        begin
+          # creates a default new task with SYSTEM user
+          task = Win32::TaskScheduler.new(name, { 'trigger_type' => Win32::TaskScheduler::ONCE })
+          # save automatically resets the current task
+          task.save()
+
+          # re-activate named task, try to modify, and save
+          task.activate(name)
+          task.application_name = 'c:/windows/system32/notepad.exe'
+
+          expect { task.save() }.to raise_error(Puppet::Error, /Account information must be set on the current task to save it properly/)
+
+          # on a failed save, the current task is still active - add SYSTEM
+          task.set_account_information('', nil)
+          expect(task.save()).to be_instance_of(Win32::TaskScheduler::COM::Task)
+
+          # the most appropriate additional validation here would be to confirm settings with schtasks.exe
+          # but that test can live inside a system-level acceptance test
         ensure
           task.delete(name) if Win32::TaskScheduler.new.exists?(name)
         end
