@@ -868,14 +868,8 @@ module Win32
 
     # Returns whether or not the scheduled task exists.
     def exists?(job_name)
-      bool = false
-      Dir.foreach("#{ENV['SystemRoot']}/Tasks"){ |file|
-        if File.basename(file, '.job') == job_name
-          bool = true
-          break
-        end
-      }
-      bool
+      # task name comparison is case insensitive
+      tasks.any? { |name| name.casecmp(job_name + '.job') == 0 }
     end
 
     private

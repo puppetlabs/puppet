@@ -600,16 +600,6 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
 
       expect(resource.provider.exists?).to eq(true)
     end
-
-    it "uses SystemRoot in the path of Task folder" do
-      Win32::TaskScheduler.unstub(:new)
-      exists_test_task = Win32::TaskScheduler.new
-      Dir.stubs(:foreach).with('D:/WinNT/Tasks').returns([])
-
-      Puppet::Util.withenv('SystemRoot' => 'D:/WinNT') do
-        exists_test_task.exists?('Test Task')
-      end
-    end
   end
 
   describe '#clear_task' do
@@ -1961,6 +1951,35 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
         expect {
           task.creator = 'a' * (Win32::TaskScheduler::MAX_ACCOUNT_LENGTH + 1)
         }.to raise_error(Puppet::Error)
+      end
+    end
+
+    describe '#exists?' do
+      it 'works with Unicode task names' do
+        task_name = name + "\u16A0\u16C7\u16BB" # ᚠᛇᚻ
+
+        begin
+          task = Win32::TaskScheduler.new(task_name, { 'trigger_type' => Win32::TaskScheduler::ONCE })
+          task.save()
+
+          expect(Puppet::FileSystem.exist?("C:\\Windows\\Tasks\\#{task_name}.job")).to be_truthy
+          expect(task.exists?(task_name)).to be_truthy
+        ensure
+          task.delete(task_name) if Win32::TaskScheduler.new.exists?(task_name)
+        end
+      end
+
+      it 'is case insensitive' do
+        task_name = name + 'abc' # name is a guid, but might not have alpha chars
+
+        begin
+          task = Win32::TaskScheduler.new(task_name.upcase, { 'trigger_type' => Win32::TaskScheduler::ONCE })
+          task.save()
+
+          expect(task.exists?(task_name.downcase)).to be_truthy
+        ensure
+          task.delete(task_name) if Win32::TaskScheduler.new.exists?(task_name)
+        end
       end
     end
 
