@@ -369,10 +369,13 @@ module Puppet
       def environmentpath
         @@memoized_environmentpath ||= master.puppet['environmentpath']
       end
+      module_function :environmentpath
 
       # create a tmpdir to hold a temporary environment bound by puppet environment naming restrictions
       # symbolically link environment into environmentpath
-      def mk_tmp_environment_with_teardown(environment)
+      # we can't use the temp_file utils in our own lib because host.tmpdir violates puppet's naming requirements
+      # in rare cases we want to do this on agents when testing things that use the default manifest
+      def mk_tmp_environment_with_teardown(host, environment)
         # add the tmp_environment to a set to ensure no collisions
         @@tmp_environment_set ||= Set.new
         deadman = 100; loop_num = 0
@@ -381,18 +384,18 @@ module Puppet
         end
         @@tmp_environment_set << tmp_environment
         tmpdir = File.join('','tmp',tmp_environment)
-        on master, "mkdir -p #{tmpdir}/manifests #{tmpdir}/modules"
+        on host, "mkdir -p #{tmpdir}/manifests #{tmpdir}/modules; chmod -R 755 #{tmpdir}"
 
         # register teardown to remove the link below
         teardown do
-          on master, "rm -rf #{File.join(environmentpath,tmp_environment)}"
+          on host, "rm -rf #{File.join(environmentpath,tmp_environment)}"
         end
 
         # WARNING: this won't work with filesync (symlinked environments are not supported)
-        on master, "ln -sf #{tmpdir} #{File.join(environmentpath,tmp_environment)}"
+        on host, "ln -sf #{tmpdir} #{File.join(environmentpath,tmp_environment)}"
         return tmp_environment
       end
-      module_function :mk_tmp_environment_with_teardown, :environmentpath
+      module_function :mk_tmp_environment_with_teardown
 
     end
   end

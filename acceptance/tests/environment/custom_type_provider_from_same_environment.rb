@@ -3,7 +3,7 @@ require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils
 
   app_type        = File.basename(__FILE__, '.*')
-  tmp_environment = mk_tmp_environment_with_teardown(app_type)
+  tmp_environment = mk_tmp_environment_with_teardown(master, app_type)
   file_correct    = "#{tmp_environment}-correct.txt"
   file_wrong      = "#{tmp_environment}-wrong.txt"
   fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"
