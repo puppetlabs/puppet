@@ -48,6 +48,24 @@ describe Puppet::Face[:help, '0.0.1'] do
       to eq(subject.help(:huzzah, :version => :current))
   end
 
+  it "raises an ArgumentError if the face raises a StandardError" do
+    face = Puppet::Face[:module, :current]
+    face.stubs(:short_description).raises(StandardError, "whoops")
+
+    expect {
+      subject.help(:module)
+    }.to raise_error(ArgumentError, /Detail: "whoops"/)
+  end
+
+  it "raises an ArgumentError if the face raises a LoadError" do
+    face = Puppet::Face[:module, :current]
+    face.stubs(:short_description).raises(LoadError, "cannot load such file -- yard")
+
+    expect {
+      subject.help(:module)
+    }.to raise_error(ArgumentError, /Detail: "cannot load such file -- yard"/)
+  end
+
   context "when listing subcommands" do
     subject { Puppet::Face[:help, :current].help }
 
@@ -90,6 +108,12 @@ describe Puppet::Face[:help, '0.0.1'] do
       expect(subject).to match(/agent\s+! Subcommand unavailable due to error\. Check error logs\./)
     end
 
+    it "returns an 'unavailable' summary if the legacy application raises a LoadError" do
+      Puppet::Application['agent'].class.any_instance.stubs(:help).raises(LoadError, "cannot load such file -- yard")
+
+      expect(subject).to match(/agent\s+! Subcommand unavailable due to error\. Check error logs\./)
+    end
+
     context "face summaries" do
       it "can generate face summaries" do
         faces = Puppet::Face.faces
@@ -97,6 +121,13 @@ describe Puppet::Face[:help, '0.0.1'] do
         faces.each do |name|
           expect(Puppet::Face[name, :current]).to have_a_summary
         end
+      end
+
+      it "returns an 'unavailable' summary if the face application raises a LoadError" do
+        face = Puppet::Face[:module, :current]
+        face.stubs(:summary).raises(LoadError, "cannot load such file -- yard")
+
+        expect(Puppet::Face[:help, :current].help).to match(/module\s+! Subcommand unavailable due to error\. Check error logs\./)
       end
     end
 
@@ -146,6 +177,22 @@ describe Puppet::Face[:help, '0.0.1'] do
     it "fails when asked for an action on a legacy command" do
       expect { subject.help(appname, :whatever) }.
         to raise_error ArgumentError, /Legacy subcommands don't take actions/
+    end
+
+    it "raises an ArgumentError if a legacy application raises a StandardError" do
+      Puppet::Application[appname].class.any_instance.stubs(:help).raises(StandardError, "whoops")
+
+      expect {
+        subject.help(appname)
+      }.to raise_error ArgumentError, /Detail: "whoops"/
+    end
+
+    it "raises an ArgumentError if a legacy application raises a LoadError" do
+      Puppet::Application[appname].class.any_instance.stubs(:help).raises(LoadError, "cannot load such file -- yard")
+
+      expect {
+        subject.help(appname)
+      }.to raise_error ArgumentError, /Detail: "cannot load such file -- yard"/
     end
   end
 end
