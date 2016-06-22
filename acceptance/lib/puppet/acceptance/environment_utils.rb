@@ -397,6 +397,13 @@ module Puppet
       end
       module_function :mk_tmp_environment_with_teardown
 
+      # create sitepp in a tmp_environment as created by mk_tmp_environment_with_teardown
+      def create_sitepp(host, tmp_environment, file_content)
+        file_path = File.join('','tmp',tmp_environment,'manifests','site.pp')
+        create_remote_file(host, file_path, file_content)
+        on host, "chmod -R 755 #{file_path}"
+      end
+
     end
   end
 end
