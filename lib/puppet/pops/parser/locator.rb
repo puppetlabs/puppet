@@ -8,7 +8,7 @@ class Locator
   #
   def self.locator(string, file, index = nil, char_offsets = false)
     if char_offsets
-      LocatorForChars.new(string, file, index);
+      LocatorForChars.new(string, file, index)
     else
       Locator19.new(string, file, index)
     end
