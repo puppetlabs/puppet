@@ -2403,7 +2403,7 @@ class PVariantType < PAnyType
     if array.size > 1
       parts = array.partition {|t| t.is_a?(PSemVerType) }
       ranges = parts[0]
-      array = [PSemVerType.new(*ranges.map(&:ranges).flatten)] + parts[1] if ranges.size > 1
+      array = [PSemVerType.new(ranges.map(&:ranges).flatten)] + parts[1] if ranges.size > 1
     end
     array
   end

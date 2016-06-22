@@ -249,7 +249,8 @@ class PObjectType < PMetaType
         if @kind == ATTRIBUTE_KIND_DERIVED || @kind == ATTRIBUTE_KIND_GIVEN_OR_DERIVED
           raise Puppet::ParseError, "#{label} of kind '#{@kind}' cannot be combined with an attribute value"
         end
-        @value = TypeAsserter.assert_instance_of(nil, type, i12n_hash[KEY_VALUE]) {"#{label} #{KEY_VALUE}" }
+        v = i12n_hash[KEY_VALUE]
+        @value = v == :default ? v : TypeAsserter.assert_instance_of(nil, type, v) {"#{label} #{KEY_VALUE}" }
       else
         raise Puppet::ParseError, "#{label} of kind 'constant' requires a value" if @kind == ATTRIBUTE_KIND_CONSTANT
         @value = :undef # Not to be confused with nil or :default

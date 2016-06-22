@@ -8,7 +8,7 @@ module Types
 class PSemVerType < PScalarType
   attr_reader :ranges
 
-  def initialize(*ranges)
+  def initialize(ranges)
     ranges = ranges.map { |range| range.is_a?(Semantic::VersionRange) ? range : Semantic::VersionRange.parse(range) }
     ranges = merge_ranges(ranges) if ranges.size > 1
     @ranges = ranges
@@ -91,7 +91,7 @@ class PSemVerType < PScalarType
     end
   end
 
-  DEFAULT = PSemVerType.new
+  DEFAULT = PSemVerType.new(EMPTY_ARRAY)
 
   protected
 

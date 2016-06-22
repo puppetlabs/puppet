@@ -726,7 +726,7 @@ class TypeCalculator
 
   # @api private
   def infer_set_Version(o)
-    PSemVerType.new(Semantic::VersionRange.new(o, o))
+    PSemVerType.new([Semantic::VersionRange.new(o, o)])
   end
 
   def unwrap_single_variant(possible_variant)
