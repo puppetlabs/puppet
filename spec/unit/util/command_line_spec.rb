@@ -66,6 +66,17 @@ describe Puppet::Util::CommandLine do
         end.to have_printed(/^#{Regexp.escape(Puppet.version)}$/)
       end
     end
+
+    %w{--help -h}.each do|arg|
+      it "should print help" do
+        commandline = Puppet::Util::CommandLine.new("puppet", [arg])
+        commandline.expects(:exec).never
+
+        expect {
+          commandline.execute
+        }.to have_printed(/Usage: puppet <subcommand> \[options\] <action> \[options\]/).and_exit_with(0)
+      end
+    end
   end
 
   describe "when dealing with puppet commands" do

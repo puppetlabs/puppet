@@ -81,7 +81,11 @@ module Puppet
 
       def find_subcommand
         if subcommand_name.nil?
-          NilSubcommand.new(self)
+          if args.include?("--help") || args.include?("-h")
+            ApplicationSubcommand.new("help", CommandLine.new("puppet", ["help"]))
+          else
+            NilSubcommand.new(self)
+          end
         elsif Puppet::Application.available_application_names.include?(subcommand_name)
           ApplicationSubcommand.new(subcommand_name, self)
         elsif path_to_subcommand = external_subcommand
