@@ -18,7 +18,7 @@ describe 'the regsubst function' do
     Puppet.lookup(:loaders).puppet_system_loader.load(:function, 'regsubst').call({}, *args)
   end
 
-  let(:type_parser) { Puppet::Pops::Types::TypeParser.new }
+  let(:type_parser) { Puppet::Pops::Types::TypeParser.singleton }
 
   context 'when using a string pattern' do
     it 'should raise an Error if there is less than 3 arguments' do

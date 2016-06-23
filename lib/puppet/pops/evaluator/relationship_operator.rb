@@ -32,7 +32,6 @@ class RelationshipOperator
   def initialize
     @type_transformer_visitor = Visitor.new(self, "transform", 1, 1)
     @type_calculator = Types::TypeCalculator.new()
-    @type_parser = Types::TypeParser.new()
 
     tf = Types::TypeFactory
     @catalog_type = tf.variant(tf.catalog_entry, tf.type_type(tf.catalog_entry))
@@ -57,7 +56,7 @@ class RelationshipOperator
   # A string must be a type reference in string format
   # @api private
   def transform_String(o, scope)
-    assert_catalog_type(@type_parser.parse(o, scope), scope)
+    assert_catalog_type(Types::TypeParser.singleton.parse(o, scope), scope)
   end
 
   # A qualified name is short hand for a class with this name

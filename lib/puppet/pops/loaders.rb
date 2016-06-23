@@ -70,7 +70,7 @@ class Loaders
       type
     end
     # Resolve lazy so that all types can cross reference eachother
-    parser = Types::TypeParser.new
+    parser = Types::TypeParser.singleton
     types.each { |type| type.resolve(parser, loader) }
   end
 

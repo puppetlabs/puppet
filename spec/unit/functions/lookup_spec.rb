@@ -558,7 +558,7 @@ EOS
     it 'will explain deep merge results without options' do
       assemble_and_compile('${r}', "'abc::a'") do |scope|
         lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
-        Puppet::Pops::Lookup.lookup('abc::e', Puppet::Pops::Types::TypeParser.new.parse('Hash[String,String]'), nil, false, 'deep', lookup_invocation)
+        Puppet::Pops::Lookup.lookup('abc::e', Puppet::Pops::Types::TypeParser.singleton.parse('Hash[String,String]'), nil, false, 'deep', lookup_invocation)
         expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
 Merge strategy deep
   Data Binding "hiera"
@@ -586,7 +586,7 @@ EOS
       assemble_and_compile('${r}', "'abc::a'") do |scope|
         Hiera.any_instance.expects(:lookup).with(any_parameters).returns({'k1' => 'global_g1'})
         lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
-        Puppet::Pops::Lookup.lookup('abc::e', Puppet::Pops::Types::TypeParser.new.parse('Hash[String,String]'), nil, false, {'strategy' => 'deep', 'merge_hash_arrays' => true}, lookup_invocation)
+        Puppet::Pops::Lookup.lookup('abc::e', Puppet::Pops::Types::TypeParser.singleton.parse('Hash[String,String]'), nil, false, {'strategy' => 'deep', 'merge_hash_arrays' => true}, lookup_invocation)
         expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
 Merge strategy deep
   Options: {
@@ -645,7 +645,7 @@ EOS
     it 'will explain value access caused by dot notation in key' do
       assemble_and_compile('${r}', "'abc::a'") do |scope|
         lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
-        Puppet::Pops::Lookup.lookup('abc::f.k1.s1', Puppet::Pops::Types::TypeParser.new.parse('String'), nil, false, nil, lookup_invocation)
+        Puppet::Pops::Lookup.lookup('abc::f.k1.s1', Puppet::Pops::Types::TypeParser.singleton.parse('String'), nil, false, nil, lookup_invocation)
         expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
 Merge strategy first
   Data Binding "hiera"
@@ -667,7 +667,7 @@ EOS
     it 'will provide a hash containing all explanation elements' do
       assemble_and_compile('${r}', "'abc::a'") do |scope|
         lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
-        Puppet::Pops::Lookup.lookup('abc::e', Puppet::Pops::Types::TypeParser.new.parse('Hash[String,String]'), nil, false, {'strategy' => 'deep', 'merge_hash_arrays' => true}, lookup_invocation)
+        Puppet::Pops::Lookup.lookup('abc::e', Puppet::Pops::Types::TypeParser.singleton.parse('Hash[String,String]'), nil, false, {'strategy' => 'deep', 'merge_hash_arrays' => true}, lookup_invocation)
         expect(lookup_invocation.explainer.to_hash).to eq(
             {
               :branches => [

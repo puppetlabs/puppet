@@ -7,7 +7,7 @@ module Puppet::Pops
     describe 'The TypeSet Type' do
       include PuppetSpec::Compiler
 
-      let(:parser) { TypeParser.new }
+      let(:parser) { TypeParser.singleton }
       let(:pp_parser) { Parser::EvaluatingParser.new }
       let(:env) { Puppet::Node::Environment.create('test', []) }
       let(:loaders) { Loaders.new(env) }

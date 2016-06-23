@@ -42,7 +42,7 @@ module Puppet::DataProviders
       hierarchy_elem_type_v2 = hierarchy_elem_type_base + ',paths=>Array[String[1]]}]'
       hierarchy_elem_type_v3 = hierarchy_elem_type_base + '}]'
 
-      Puppet::Pops::Types::TypeParser.new.parse('Struct[{'\
+      Puppet::Pops::Types::TypeParser.singleton.parse('Struct[{'\
         'version=>Integer[4],'\
         "hierarchy=>Optional[Array[Variant[#{hierarchy_elem_type_v1},#{hierarchy_elem_type_v2},#{hierarchy_elem_type_v3}]]],"\
         'datadir=>Optional[String[1]]}]')

@@ -294,7 +294,7 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
     generate_scope do |scope|
       lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, explain ? Puppet::Pops::Lookup::Explainer.new(explain_options, only_explain_options) : nil)
       begin
-        type = options.include?(:type) ? Puppet::Pops::Types::TypeParser.new.parse(options[:type], scope) : nil
+        type = options.include?(:type) ? Puppet::Pops::Types::TypeParser.singleton.parse(options[:type], scope) : nil
         result = Puppet::Pops::Lookup.lookup(keys, type, options[:default_value], use_default_value, merge_options, lookup_invocation)
         puts renderer.render(result) unless explain
       rescue Puppet::DataBinding::LookupError
