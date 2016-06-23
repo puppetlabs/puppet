@@ -40,16 +40,24 @@ describe Puppet::Indirector::Face do
   end
 
   [:find, :search, :save, :destroy].each do |method|
+    def params(method, options)
+      if method == :save
+        [nil, options]
+      else
+        [options]
+      end
+    end
+
     it "should define a '#{method}' action" do
       expect(Puppet::Indirector::Face).to be_action(method)
     end
 
     it "should call the indirection method with options when the '#{method}' action is invoked" do
-      subject.indirection.expects(method).with(:test, {})
+      subject.indirection.expects(method).with(:test, *params(method, {}))
       subject.send(method, :test)
     end
     it "should forward passed options" do
-      subject.indirection.expects(method).with(:test, {'one'=>'1'})
+      subject.indirection.expects(method).with(:test, *params(method, {'one'=>'1'}))
       subject.send(method, :test, :extra => {'one'=>'1'})
     end
   end

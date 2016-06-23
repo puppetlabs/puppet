@@ -123,7 +123,7 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
 
       Puppet::Resource::Catalog.indirection.terminus_class = :yaml
       Puppet::Face[:catalog, "0.0.1"].save(catalog)
-      Puppet.notice "Saved catalog for #{Puppet[:certname]} to yaml"
+      Puppet.notice "Saved catalog for #{Puppet[:certname]} to #{Puppet::Resource::Catalog.indirection.terminus.path(Puppet[:certname])}"
       nil
     end
   end
