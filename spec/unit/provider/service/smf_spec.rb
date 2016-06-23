@@ -20,6 +20,8 @@ describe provider_class, :if => Puppet.features.posix? do
     FileTest.stubs(:executable?).with('/usr/sbin/svcadm').returns true
     FileTest.stubs(:file?).with('/usr/bin/svcs').returns true
     FileTest.stubs(:executable?).with('/usr/bin/svcs').returns true
+    Facter.stubs(:value).with(:operatingsystem).returns('Solaris')
+    Facter.stubs(:value).with(:osfamily).returns('Solaris')
     Facter.stubs(:value).with(:kernelrelease).returns '5.11'
   end
 
