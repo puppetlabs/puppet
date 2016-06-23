@@ -8,7 +8,7 @@ module Puppet::Pops
 
     # The type used for validation of the _merge_ argument
     def self.merge_t
-      @@merge_t ||=  Types::TypeParser.new.parse("Variant[String[1],Runtime[ruby,'Symbol'],Hash[Variant[String[1],Runtime[ruby,'Symbol']],Scalar,1]]")
+      @@merge_t ||=  Types::TypeParser.singleton.parse("Variant[String[1],Runtime[ruby,'Symbol'],Hash[Variant[String[1],Runtime[ruby,'Symbol']],Scalar,1]]")
     end
     private_class_method :merge_t
 
@@ -149,7 +149,7 @@ module Puppet::Pops
     # @return [Types::PStructType] the puppet type
     #
     def options_t
-      @options_t ||=Types::TypeParser.new.parse("Struct[{strategy=>Optional[Pattern[#{self.class.key}]]}]")
+      @options_t ||=Types::TypeParser.singleton.parse("Struct[{strategy=>Optional[Pattern[#{self.class.key}]]}]")
     end
 
     # Returns the type used to validate the options hash
@@ -217,7 +217,7 @@ module Puppet::Pops
     protected
 
     def value_t
-      @value_t ||= Types::TypeParser.new.parse('Hash[String,Data]')
+      @value_t ||= Types::TypeParser.singleton.parse('Hash[String,Data]')
     end
 
     MergeStrategy.add_strategy(self)
@@ -249,7 +249,7 @@ module Puppet::Pops
     protected
 
     def value_t
-      @value_t ||= Types::TypeParser.new.parse('Variant[Scalar,Array[Data]]')
+      @value_t ||= Types::TypeParser.singleton.parse('Variant[Scalar,Array[Data]]')
     end
 
     MergeStrategy.add_strategy(self)
@@ -320,7 +320,7 @@ module Puppet::Pops
     #
     # @return [Types::PAnyType] the puppet type used when validating the options hash
     def options_t
-      @options_t ||= Types::TypeParser.new.parse('Struct[{'\
+      @options_t ||= Types::TypeParser.singleton.parse('Struct[{'\
           "strategy=>Optional[Pattern[#{self.class.key}]],"\
           'knockout_prefix=>Optional[String],'\
           'merge_debug=>Optional[Boolean],'\
@@ -330,7 +330,7 @@ module Puppet::Pops
     end
 
     def value_t
-      @value_t ||= Types::TypeParser.new.parse('Variant[Array[Data],Hash[String,Data]]')
+      @value_t ||= Types::TypeParser.singleton.parse('Variant[Array[Data],Hash[String,Data]]')
     end
 
     MergeStrategy.add_strategy(self)

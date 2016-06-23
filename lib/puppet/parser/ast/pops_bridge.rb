@@ -278,7 +278,7 @@ class Puppet::Parser::AST::PopsBridge
     #
     def instantiate_TypeMapping(type_mapping, modname)
       loader = Puppet::Pops::Loaders.find_loader(modname)
-      tf = Puppet::Pops::Types::TypeParser.new
+      tf = Puppet::Pops::Types::TypeParser.singleton
       lhs = tf.interpret(type_mapping.type_expr, loader)
       rhs = tf.interpret_any(type_mapping.mapping_expr, loader)
       Puppet::Pops::Loaders.implementation_registry.register_type_mapping(lhs, rhs, loader)

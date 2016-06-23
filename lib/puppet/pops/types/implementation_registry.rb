@@ -21,7 +21,6 @@ module Types
       @implementations_per_type_name = {}
       @type_name_substitutions = []
       @impl_name_substitutions = []
-      @type_parser = TypeParser.new
       TypeParser.type_map.values.each { |type| register_implementation(type.simple_name, type.class.name, static_loader) }
     end
 
@@ -123,7 +122,7 @@ module Types
       if name_and_loader.nil?
         nil
       else
-        @type_parser.parse(*name_and_loader)
+        TypeParser.singleton.parse(*name_and_loader)
       end
     end
 

@@ -89,7 +89,7 @@ Puppet::Functions.create_function(:assert_type, Puppet::Functions::InternalFunct
   # @param value [Object] the value to assert
   #
   def assert_type_s(scope, type_string, value, &proc)
-    t = Puppet::Pops::Types::TypeParser.new.parse(type_string, scope)
+    t = Puppet::Pops::Types::TypeParser.singleton.parse(type_string, scope)
     block_given? ? assert_type(t, value, &proc) : assert_type(t, value)
   end
 end

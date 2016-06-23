@@ -12,7 +12,7 @@ module Types
 describe 'Puppet Ruby Generator' do
   include PuppetSpec::Compiler
 
-  let!(:parser) { TypeParser.new }
+  let!(:parser) { TypeParser.singleton }
   let(:generator) { RubyGenerator.new }
 
   context 'when generating from Object types' do

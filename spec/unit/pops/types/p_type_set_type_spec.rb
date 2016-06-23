@@ -7,7 +7,7 @@ module Puppet::Pops
     describe 'The TypeSet Type' do
       include PuppetSpec::Compiler
 
-      let(:parser) { TypeParser.new }
+      let(:parser) { TypeParser.singleton }
       let(:pp_parser) { Parser::EvaluatingParser.new }
       let(:env) { Puppet::Node::Environment.create('test', []) }
       let(:loaders) { Loaders.new(env) }
@@ -286,7 +286,7 @@ module Puppet::Pops
                   references => { Ref => { name => 'cars', version_range => '1.x' } }
                 OBJECT
                 expect { parse_type_set('MySet', ts) }.to raise_error(TypeAssertionError,
-                  /entry 'references' entry 'Ref' entry 'name' expected a match for Pattern\[\/\\A\[A-Z\]\[\\w\]\*\(\?:::\[A-Z\]\[\\w\]\*\)\*\\z\/], got 'cars'/)
+                  /entry 'references' entry 'Ref' entry 'name' expected a match for Pattern\[\/\\A\[A-Z\]\[\\w\]\*\(\?:::\[A-Z\]\[\\w\]\*\)\*\\z\/\], got 'cars'/)
               end
 
               it 'has a version_range that is not a valid SemVer range' do

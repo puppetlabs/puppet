@@ -7,7 +7,7 @@ module Types
 describe 'The Object Type' do
   include PuppetSpec::Compiler
 
-  let(:parser) { TypeParser.new }
+  let(:parser) { TypeParser.singleton }
   let(:pp_parser) { Parser::EvaluatingParser.new }
   let(:loader) { Loader::BaseLoader.new(nil, 'type_parser_unit_test_loader') }
   let(:factory) { TypeFactory }
