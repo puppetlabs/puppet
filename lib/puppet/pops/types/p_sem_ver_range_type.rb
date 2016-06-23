@@ -5,6 +5,10 @@ module Types
 #
 # @api public
 class PSemVerRangeType < PScalarType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'ScalarType')
+  end
+
   # Check if a version is included in a version range. The version can be a string or
   # a `Semantic::SemVer`
   #

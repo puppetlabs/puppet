@@ -60,6 +60,10 @@ class PObjectType < PMetaType
     KEY_ANNOTATIONS =>  TypeFactory.optional(TYPE_ANNOTATIONS)
   })
 
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'AnyType', 'i12n_hash' => TYPE_OBJECT_I12N)
+  end
+
   # @abstract Encapsulates behavior common to {PAttribute} and {PFunction}
   # @api public
   class PAnnotatedMember
