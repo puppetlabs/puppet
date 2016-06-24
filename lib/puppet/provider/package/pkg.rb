@@ -23,7 +23,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
 
   confine :osfamily => :solaris
 
-  defaultfor :osfamily => :solaris, :kernelrelease => '5.11'
+  defaultfor :osfamily => :solaris, :kernelrelease => ['5.11', '5.12']
 
   def self.instances
     pkg(:list, '-Hv').split("\n").map{|l| new(parse_line(l))}
