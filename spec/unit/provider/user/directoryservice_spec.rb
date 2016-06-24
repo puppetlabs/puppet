@@ -350,6 +350,33 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     end
   end
 
+  describe 'self#generate_attribute_hash empty shadowhashdata' do
+    let(:user_plist_resource) do
+      {
+        :ensure         => :present,
+        :provider       => :directoryservice,
+        :groups         => 'testgroup,third',
+        :comment        => username,
+        :password       => '*',
+        :shadowhashdata => nil,
+        :name           => username,
+        :uid            => 1000,
+        :gid            => 22,
+        :home           => user_path
+      }
+    end
+
+    it 'should handle empty shadowhashdata' do
+      provider.class.stubs(:get_os_version).returns('10.7')
+      provider.class.stubs(:get_all_users).returns(testuser_hash)
+      provider.class.stubs(:get_attribute_from_dscl).with('Users', username, 'ShadowHashData').returns(nil)
+      provider.class.stubs(:get_list_of_groups).returns(group_plist_hash_guid)
+      provider.class.stubs(:convert_binary_to_hash).with(sha512_embedded_bplist).returns(sha512_embedded_bplist_hash)
+      provider.class.prefetch({})
+      expect(provider.class.generate_attribute_hash(user_plist_hash)).to eq(user_plist_resource)
+    end
+  end
+
   describe '#exists?' do
     # This test expects an error to be raised
     # I'm PROBABLY doing this wrong...
