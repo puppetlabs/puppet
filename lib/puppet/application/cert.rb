@@ -79,7 +79,7 @@ class Puppet::Application::Cert < Puppet::Application
     set_log_level
   end
 
-  option("--human-readable", "-h") do |arg|
+  option("--human-readable", "-H") do |arg|
     options[:format] = :human
   end
 
@@ -148,7 +148,7 @@ The most important actions for day-to-day use are 'list' and 'sign'.
   List outstanding certificate requests. If '--all' is specified, signed
   certificates are also listed, prefixed by '+', and revoked or invalid
   certificates are prefixed by '-' (the verification outcome is printed
-  in parenthesis). If '--human-readable' or '-h' is specified listed
+  in parenthesis). If '--human-readable' or '-H' is specified listed
   certificates are formatted in a way to improve human scan-ability. If
   '--machine-readable' or '-m' is specified output is formatted in a
   line-wise format optimal for scripted consumption.
