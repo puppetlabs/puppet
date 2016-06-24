@@ -11,7 +11,7 @@ agents.each do |agent|
   # Have to use /v1 parameter for Vista and later, older versions
   # don't accept the parameter
   version = '/v1'
-  on agents, facter('kernelmajversion') do
+  on agent, facter('kernelmajversion') do
     version = '' if stdout.chomp.to_f < 6.0
   end
 
@@ -32,6 +32,9 @@ agents.each do |agent|
 
   step "verify that schtasks reports the same output"
   on agent, "schtasks.exe /query /tn #{name} /xml" do
+    # Ruby 1.9.3 has an ecoding bug in REXML.  Instead we modify the XML Encoding header returned by schtasks.exe to be UTF-8 not UTF-16
+    stdout.gsub!('UTF-16','UTF-8') if RUBY_VERSION =~ /^1\.9/
+
     xml = REXML::Document.new(stdout)
 
     command =  xml.root.elements['//Actions/Exec/Command/text()'].value
