@@ -11,7 +11,7 @@ agents.each do |agent|
   # Have to use /v1 parameter for Vista and later, older versions
   # don't accept the parameter
   version = '/v1'
-  on agents, facter('kernelmajversion') do
+  on agent, facter('kernelmajversion') do
     version = '' if stdout.chomp.to_f < 6.0
   end
 
