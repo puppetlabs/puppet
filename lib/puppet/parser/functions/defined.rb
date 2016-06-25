@@ -100,32 +100,8 @@ defined('$tmp_file2')
 - Since 2.7.0
 - Since 3.6.0 variable reference and future parser types
 - Since 3.8.1 type specific requests with future parser
-- Since 4.0.0
+- Since 4.0.0 includes all future parser features
 DOC
 ) do |vals|
-  vals = [vals] unless vals.is_a?(Array)
-  vals.any? do |val|
-    case val
-    when String
-      if m = /^\$(.+)$/.match(val)
-        exist?(m[1])
-      else
-        find_resource_type(val) || find_definition(val) || find_hostclass(val)
-      end
-    when Puppet::Resource
-      compiler.findresource(val.type, val.title)
-    when Puppet::Pops::Types::PResourceType
-      raise ArgumentError, "The given resource type is a reference to all kind of types" if val.type_name.nil?
-      if val.title.nil?
-        find_builtin_resource_type(val.type_name) || find_definition(val.type_name)
-      else
-        compiler.findresource(val.type_name, val.title)
-      end
-    when Puppet::Pops::Types::PHostClassType
-      raise  ArgumentError, "The given class type is a reference to all classes" if val.class_name.nil?
-      find_hostclass(val.class_name)
-    else
-      raise ArgumentError, "Invalid argument of type '#{val.class}' to 'defined'"
-    end
-  end
+  function_fail(["defined() is a 4.x function - an illegal call was made to this function using old API"])
 end
