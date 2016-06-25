@@ -116,11 +116,11 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
             next nil
           when 'main'
             # Find the main class (known as ''), it does not have to be in the catalog
-            scope.find_hostclass('')
+            scope.environment.known_resource_types.find_hostclass('')
           else
             # Find a resource type, definition or class definition
-            scope.find_resource_type(val) || scope.find_definition(val) || scope.find_hostclass(val)
-            #scope.compiler.findresource(:class, val)
+            krt = scope.environment.known_resource_types
+            scope.find_resource_type(val) || krt.find_definition(val) || krt.find_hostclass(val)
           end
         end
       when Puppet::Resource
@@ -130,7 +130,7 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
       when Puppet::Pops::Types::PResourceType
         raise ArgumentError, 'The given resource type is a reference to all kind of types' if val.type_name.nil?
         if val.title.nil?
-          scope.find_builtin_resource_type(val.type_name) || scope.find_definition(val.type_name)
+          scope.find_builtin_resource_type(val.type_name) || scope.environment.known_resource_types.find_definition(val.type_name)
         else
           scope.compiler.findresource(val.type_name, val.title)
         end
@@ -151,7 +151,7 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
           # (this is the same as asking for just the class' name, but with the added certainty that it cannot be a defined type.
           #
           raise  ArgumentError, 'The given class type is a reference to all classes' if val.type.class_name.nil?
-          scope.find_hostclass(val.type.class_name)
+          scope.environment.known_resource_types.find_hostclass(val.type.class_name)
         end
       else
         raise ArgumentError, "Invalid argument of type '#{val.class}' to 'defined'"

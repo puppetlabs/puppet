@@ -792,7 +792,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
         Puppet.override({:global_scope => scope,
                          :environments => Puppet::Environments::Static.new(@node.environment)
         }, "gets class parameter test") do
-          scope.known_resource_types.import_ast(ast, '')
+          scope.environment.known_resource_types.import_ast(ast, '')
           expect(ast.code.safeevaluate(scope)).to eq('chocolate')
         end
       end

@@ -15,7 +15,7 @@ describe "The require function" do
   end
 
   it "should add a dependency between the 'required' class and our class" do
-    @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "requiredclass")
+    @compiler.environment.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "requiredclass")
 
     @scope.function_require(["requiredclass"])
     expect(@scope.resource["require"]).not_to be_nil
@@ -25,8 +25,8 @@ describe "The require function" do
   end
 
   it "should queue relationships between the 'required' class and our classes" do
-    @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "requiredclass1")
-    @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "requiredclass2")
+    @compiler.environment.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "requiredclass1")
+    @compiler.environment.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "requiredclass2")
 
     @scope.function_require(["requiredclass1"])
     @scope.function_require(["requiredclass2"])

@@ -99,10 +99,6 @@ describe Puppet::Parser::Compiler do
     expect { Puppet::Parser::Compiler.compile(@node) }.to raise_error(Puppet::Error, /Compilation has been halted because.*bad environment/)
   end
 
-  it "should include the resource type collection helper" do
-    expect(Puppet::Parser::Compiler.ancestors).to be_include(Puppet::Resource::TypeCollectionHelper)
-  end
-
   it "should be able to return a class list containing all added classes" do
     @compiler.add_class ""
     @compiler.add_class "one"
@@ -117,13 +113,8 @@ describe Puppet::Parser::Compiler do
       expect(@compiler.node).to equal(@node)
     end
 
-    it "should detect when ast nodes are absent" do
-      expect(@compiler.ast_nodes?).to be_falsey
-    end
-
-    it "should detect when ast nodes are present" do
-      @known_resource_types.expects(:nodes?).returns true
-      expect(@compiler.ast_nodes?).to be_truthy
+    it "the set of ast_nodes should be empty" do
+      expect(@compiler.environment.known_resource_types.nodes?).to be_falsey
     end
 
     it "should copy the known_resource_types version to the catalog" do
@@ -608,14 +599,13 @@ describe Puppet::Parser::Compiler do
     end
 
     it "should raise an error if a class is not found" do
-      @scope.expects(:find_hostclass).with("notfound").returns(nil)
+      @scope.environment.known_resource_types.expects(:find_hostclass).with("notfound").returns(nil)
       expect{ @compiler.evaluate_classes(%w{notfound}, @scope) }.to raise_error(Puppet::Error, /Could not find class/)
     end
 
     it "should raise an error when it can't find class" do
       klasses = {'foo'=>nil}
       @node.classes = klasses
-      @compiler.topscope.expects(:find_hostclass).with('foo').returns(nil)
       expect{ @compiler.compile }.to raise_error(Puppet::Error, /Could not find class foo for testnode/)
     end
   end
@@ -624,9 +614,7 @@ describe Puppet::Parser::Compiler do
 
     before do
       Puppet.settings[:data_binding_terminus] = "none"
-      @class = stub 'class', :name => "my::class"
-      @scope.stubs(:find_hostclass).with("myclass").returns(@class)
-
+      @class = @known_resource_types.add Puppet::Resource::Type.new(:hostclass, "myclass")
       @resource = stub 'resource', :ref => "Class[myclass]", :type => "file"
     end
 
@@ -658,7 +646,7 @@ describe Puppet::Parser::Compiler do
       def define_class(name, parameters)
         @node.classes[name] = parameters
         klass = Puppet::Resource::Type.new(:hostclass, name, :arguments => {'p1' => @ast_obj, 'p2' => @ast_obj})
-        @compiler.topscope.known_resource_types.add klass
+        @compiler.environment.known_resource_types.add klass
       end
 
       def compile
@@ -697,7 +685,7 @@ describe Puppet::Parser::Compiler do
         ast_obj = Puppet::Parser::AST::Leaf.new(:value => 'foo')
         klasses.each do |name|
           klass = Puppet::Resource::Type.new(:hostclass, name, :arguments => {'p1' => ast_obj, 'p2' => ast_obj})
-          @compiler.topscope.known_resource_types.add klass
+          @compiler.environment.known_resource_types.add klass
         end
         catalog = @compiler.compile
 
@@ -710,7 +698,7 @@ describe Puppet::Parser::Compiler do
       klass = {'foo'=>{'a'=>'one'}}
       @node.classes = klass
       klass = Puppet::Resource::Type.new(:hostclass, 'foo', :arguments => {'a' => nil, 'b' => nil})
-      @compiler.topscope.known_resource_types.add klass
+      @compiler.environment.known_resource_types.add klass
       expect { @compiler.compile }.to raise_error(Puppet::PreformattedError, /Class\[Foo\]: expects a value for parameter 'b'/)
     end
 
@@ -718,14 +706,14 @@ describe Puppet::Parser::Compiler do
       klass = {'foo'=>{'3'=>'one'}}
       @node.classes = klass
       klass = Puppet::Resource::Type.new(:hostclass, 'foo', :arguments => {})
-      @compiler.topscope.known_resource_types.add klass
+      @compiler.environment.known_resource_types.add klass
       expect { @compiler.compile }.to raise_error(Puppet::PreformattedError, /Class\[Foo\]: has no parameter named '3'/)
     end
 
     it "should ensure class is in catalog without params" do
       @node.classes = klasses = {'foo'=>nil}
       foo = Puppet::Resource::Type.new(:hostclass, 'foo')
-      @compiler.topscope.known_resource_types.add foo
+      @compiler.environment.known_resource_types.add foo
       catalog = @compiler.compile
       expect(catalog.classes).to include 'foo'
     end
@@ -766,7 +754,7 @@ describe Puppet::Parser::Compiler do
 
     it "should skip classes previously evaluated with different capitalization" do
       @compiler.catalog.stubs(:tag)
-      @scope.stubs(:find_hostclass).with("MyClass").returns(@class)
+      @scope.environment.known_resource_types.stubs(:find_hostclass).with("MyClass").returns(@class)
       @scope.stubs(:class_scope).with(@class).returns(@scope)
       @compiler.expects(:add_resource).never
       @resource.expects(:evaluate).never
@@ -778,8 +766,7 @@ describe Puppet::Parser::Compiler do
   describe "when evaluating AST nodes with no AST nodes present" do
 
     it "should do nothing" do
-      @compiler.expects(:ast_nodes?).returns(false)
-      @compiler.known_resource_types.expects(:nodes).never
+      @compiler.environment.known_resource_types.stubs(:nodes).returns(false)
       Puppet::Parser::Resource.expects(:new).never
 
       @compiler.send(:evaluate_ast_node)
@@ -789,16 +776,16 @@ describe Puppet::Parser::Compiler do
   describe "when evaluating AST nodes with AST nodes present" do
 
     before do
-      @compiler.known_resource_types.stubs(:nodes?).returns true
+      @compiler.environment.known_resource_types.stubs(:nodes?).returns true
 
       # Set some names for our test
       @node.stubs(:names).returns(%w{a b c})
-      @compiler.known_resource_types.stubs(:node).with("a").returns(nil)
-      @compiler.known_resource_types.stubs(:node).with("b").returns(nil)
-      @compiler.known_resource_types.stubs(:node).with("c").returns(nil)
+      @compiler.environment.known_resource_types.stubs(:node).with("a").returns(nil)
+      @compiler.environment.known_resource_types.stubs(:node).with("b").returns(nil)
+      @compiler.environment.known_resource_types.stubs(:node).with("c").returns(nil)
 
       # It should check this last, of course.
-      @compiler.known_resource_types.stubs(:node).with("default").returns(nil)
+      @compiler.environment.known_resource_types.stubs(:node).with("default").returns(nil)
     end
 
     it "should fail if the named node cannot be found" do
@@ -807,7 +794,7 @@ describe Puppet::Parser::Compiler do
 
     it "should evaluate the first node class matching the node name" do
       node_class = stub 'node', :name => "c", :evaluate_code => nil
-      @compiler.known_resource_types.stubs(:node).with("c").returns(node_class)
+      @compiler.environment.known_resource_types.stubs(:node).with("c").returns(node_class)
 
       node_resource = stub 'node resource', :ref => "Node[c]", :evaluate => nil, :type => "node"
       node_class.expects(:ensure_in_catalog).returns(node_resource)
@@ -817,7 +804,7 @@ describe Puppet::Parser::Compiler do
 
     it "should match the default node if no matching node can be found" do
       node_class = stub 'node', :name => "default", :evaluate_code => nil
-      @compiler.known_resource_types.stubs(:node).with("default").returns(node_class)
+      @compiler.environment.known_resource_types.stubs(:node).with("default").returns(node_class)
 
       node_resource = stub 'node resource', :ref => "Node[default]", :evaluate => nil, :type => "node"
       node_class.expects(:ensure_in_catalog).returns(node_resource)
@@ -827,7 +814,7 @@ describe Puppet::Parser::Compiler do
 
     it "should evaluate the node resource immediately rather than using lazy evaluation" do
       node_class = stub 'node', :name => "c"
-      @compiler.known_resource_types.stubs(:node).with("c").returns(node_class)
+      @compiler.environment.known_resource_types.stubs(:node).with("c").returns(node_class)
 
       node_resource = stub 'node resource', :ref => "Node[c]", :type => "node"
       node_class.expects(:ensure_in_catalog).returns(node_resource)
@@ -968,7 +955,6 @@ describe Puppet::Parser::Compiler do
       end
     end
   end
-
 
   describe "when managing resource overrides" do
 

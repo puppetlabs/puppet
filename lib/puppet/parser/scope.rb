@@ -18,7 +18,6 @@ class Puppet::Parser::Scope
   extend Forwardable
   include Puppet::Util::MethodHelper
 
-  include Puppet::Resource::TypeCollectionHelper
   require 'puppet/parser/resource'
 
   AST = Puppet::Parser::AST
@@ -349,11 +348,11 @@ class Puppet::Parser::Scope
   end
 
   def find_hostclass(name)
-    known_resource_types.find_hostclass(name)
+    environment.known_resource_types.find_hostclass(name)
   end
 
   def find_definition(name)
-    known_resource_types.find_definition(name)
+    environment.known_resource_types.find_definition(name)
   end
 
   def find_global_scope()
@@ -467,7 +466,8 @@ class Puppet::Parser::Scope
   # Look up a defined type.
   def lookuptype(name)
     # This happens a lot, avoid making a call to make a call
-    known_resource_types.find_definition(name) || known_resource_types.find_hostclass(name)
+    krt = environment.known_resource_types
+    krt.find_definition(name) || krt.find_hostclass(name)
   end
 
   def undef_as(x,v)
@@ -987,7 +987,7 @@ class Puppet::Parser::Scope
   end
 
   def find_defined_resource_type(type)
-    known_resource_types.find_definition(type.to_s.downcase)
+    environment.known_resource_types.find_definition(type.to_s.downcase)
   end
 
 

@@ -46,7 +46,7 @@ resource and relationship expressions.
 
   vals.each do |klass|
     # lookup the class in the scopes
-    if classobj = find_hostclass(klass)
+    if classobj = environment.known_resource_types.find_hostclass(klass)
       klass = classobj.name
     else
       raise Puppet::ParseError, "Could not find class #{klass}"
