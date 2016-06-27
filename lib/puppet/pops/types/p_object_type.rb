@@ -371,46 +371,17 @@ class PObjectType < PMetaType
 
   # @api private
   def create_new_function(loader)
-    impl_name = Loaders.implementation_registry.module_name_for_type(self)
-    if impl_name.nil?
-      # Use generator to create a default implementation
-      impl_class = RubyGenerator.new.create_class(self)
-      class_name = "Anonymous Ruby class for #{name}"
-    else
-      # Can the mapping be loaded?
-      class_name = impl_name[0]
-      impl_class = ClassLoader.provide(class_name)
+    impl_class = implementation_class
+    class_name = impl_class.name || "Anonymous Ruby class for #{name}"
 
-      raise Puppet::Error, "Unable to load class #{class_name}" if impl_class.nil?
-      unless impl_class < PuppetObject
-        raise Puppet::Error, "Unable to create an instance of #{name}. #{class_name} does not include module #{PuppetObject.name}"
-      end
-    end
-
-    i12n_t = i12n_type
-    from_hash_type = TypeFactory.callable(i12n_t, 1, 1)
-
-    # Create a types and a names array where optional entries ends up last
-    opt_types = []
-    opt_names = []
-    non_opt_types = []
-    non_opt_names = []
-    i12n_t.elements.each do |se|
-      if se.key_type.is_a?(POptionalType)
-        opt_names << se.name
-        opt_types << se.value_type
-      else
-        non_opt_names << se.name
-        non_opt_types << se.value_type
-      end
-    end
-    param_names = non_opt_names + opt_names
-    param_types = non_opt_types + opt_types
+    (param_names, param_types, required_param_count) = parameter_info
 
     # Create the callable with a size that reflects the required and optional parameters
-    param_types << non_opt_types.size
+    param_types << required_param_count
     param_types << param_names.size
+
     create_type = TypeFactory.callable(*param_types)
+    from_hash_type = TypeFactory.callable(i12n_type, 1, 1)
 
     # Create and return a #new_XXX function where the dispatchers are added programmatically.
     Puppet::Functions.create_loaded_function(:"new_#{name}", loader) do
@@ -440,6 +411,59 @@ class PObjectType < PMetaType
       def create(*args)
         self.class.impl_class.new(*args)
       end
+    end
+  end
+
+  # @api private
+  def implementation_class
+    if @implementation_class.nil?
+      impl_name = Loaders.implementation_registry.module_name_for_type(self)
+      if impl_name.nil?
+        # Use generator to create a default implementation
+        @implementation_class = RubyGenerator.new.create_class(self)
+      else
+        # Can the mapping be loaded?
+        class_name = impl_name[0]
+        @implementation_class = ClassLoader.provide(class_name)
+
+        raise Puppet::Error, "Unable to load class #{class_name}" if @implementation_class.nil?
+        unless @implementation_class < PuppetObject || @implementation_class.respond_to?(:ecore)
+          raise Puppet::Error, "Unable to create an instance of #{name}. #{class_name} does not include module #{PuppetObject.name}"
+        end
+      end
+    end
+    @implementation_class
+  end
+
+  # @api private
+  # @return [(Array<String>, Array<PAnyType>, Integer)] array of parameter names, array of parameter types, and a count reflecting the required number of parameters
+  def parameter_info(attr_readers = false)
+    # Create a types and a names array where optional entries ends up last
+    opt_types = []
+    opt_names = []
+    non_opt_types = []
+    non_opt_names = []
+    i12n_type.elements.each do |se|
+      if se.key_type.is_a?(POptionalType)
+        opt_names << (attr_readers ? attr_reader_name(se) : se.name)
+        opt_types << se.value_type
+      else
+        non_opt_names << (attr_readers ? attr_reader_name(se) : se.name)
+        non_opt_types << se.value_type
+      end
+    end
+    param_names = non_opt_names + opt_names
+    param_types = non_opt_types + opt_types
+
+    [param_names, param_types, non_opt_types.size]
+  end
+
+  # @api private
+  def attr_reader_name(se)
+    if se.value_type.is_a?(PBooleanType) || se.value_type.is_a?(POptionalType) && se.value_type.type.is_a?(PBooleanType)
+      "#{se.name}?"
+    else
+      se.name
     end
   end
 
