@@ -205,6 +205,15 @@ class Locator
       return low
     end
 
+    def hash
+      [string, file, line_index].hash
+    end
+
+    # Equal method needed by serializer to perform tabulation
+    def eql?(o)
+      self.class == o.class && string == o.string && file == o.file && line_index == o.line_index
+    end
+
     # Common impl for 18 and 19 since scanner is byte based
     def compute_line_index
       scanner = StringScanner.new(string)

@@ -369,7 +369,38 @@ class PObjectType < PMetaType
     @new_function ||= create_new_function(loader)
   end
 
+  # Assign a new instance reader to this type
+  # @param [Serialization::InstanceReader] reader the reader to assign
   # @api private
+  def reader=(reader)
+    @reader = reader
+  end
+
+  # Assign a new instance write to this type
+  # @param [Serialization::InstanceWriter] the writer to assign
+  # @api private
+  def writer=(writer)
+    @writer = writer
+  end
+
+  # Read an instance of this type from a deserializer
+  # @param [Integer] value_count the number attributes needed to create the instance
+  # @param [Serialization::Deserializer] deserializer the deserializer to read from
+  # @return [Object] the created instance
+  # @api private
+  def read(value_count, deserializer)
+    reader.read(implementation_class, value_count, deserializer)
+  end
+
+  # Write an instance of this type using a serializer
+  # @param [Object] value the instance to write
+  # @param [Serialization::Serializer] the serializer to write to
+  # @api private
+  def write(value, serializer)
+    writer.write(self, value, serializer)
+  end
+
+    # @api private
   def create_new_function(loader)
     impl_class = implementation_class
     class_name = impl_class.name || "Anonymous Ruby class for #{name}"
@@ -794,6 +825,14 @@ class PObjectType < PMetaType
     else
       yield(guard)
     end
+  end
+
+  def reader
+    @reader ||= Serialization::ObjectReader::INSTANCE
+  end
+
+  def writer
+    @writer ||= Serialization::ObjectWriter::INSTANCE
   end
 end
 end

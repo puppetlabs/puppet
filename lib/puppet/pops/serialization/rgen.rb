@@ -1,8 +1,49 @@
+require_relative 'instance_reader'
+require_relative 'instance_writer'
+
 module Puppet::Pops
 module Serialization
 
 # @api private
 module RGen
+  class Base
+    def features(impl_class)
+      impl_class.ecore.eAllStructuralFeatures.reject {|feature| feature.derived }
+    end
+  end
+
+  # Instance reader for RGen::Ecore objects
+  # @api private
+  class RGenReader < Base
+    include InstanceReader
+
+    def read(impl_class, value_count, deserializer)
+      features = features(impl_class)
+      raise SerializationError, "Feature count mismatch for #{impl_class}" unless value_count == features.size
+      # Deserializer must know about this instance before we read its attributes
+      obj = deserializer.remember(impl_class.new)
+      features.each { |feature| obj.setGeneric(feature.name, deserializer.read) }
+      obj
+    end
+
+    INSTANCE = RGenReader.new
+  end
+
+  # Instance writer for RGen::Ecore objects
+  # @api private
+  class RGenWriter < Base
+    include InstanceWriter
+
+    def write(type, value, serializer)
+      impl_class = value.class
+      features = features(impl_class)
+      serializer.start_object(type.name, features.size)
+      features.each { |feature| serializer.write(value.getGeneric(feature.name)) }
+    end
+
+    INSTANCE = RGenWriter.new
+  end
+
   # A generator that produces a {Types::PTypeSetType} instance based on an ruby {Module}
   # that represents an RGen::ECore::EPackage.
   #
@@ -29,6 +70,11 @@ module RGen
         Types::KEY_VERSION => '0.1.0',
         Types::KEY_TYPES => types
       }, Pcore::RUNTIME_NAME_AUTHORITY).resolve(Types::TypeParser.singleton, loader)
+
+      type_set.types.values.each do |type|
+        type.reader = RGenReader::INSTANCE
+        type.writer = RGenWriter::INSTANCE
+      end
       type_set
     end
 
