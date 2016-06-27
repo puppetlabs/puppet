@@ -34,22 +34,24 @@ gem_platform_dependencies:
     gem_runtime_dependencies:
       # Pinning versions that require native extensions
       ffi: '~> 1.9.6'
-      win32-dir: '~> 0.4.9'
-      win32-eventlog: '~> 0.6.2'
-      win32-process: '~> 0.7.4'
+      # win32-xxxx gems are pinned due to PUP-6445
+      win32-dir: '= 0.4.9'
+      win32-eventlog: '= 0.6.5'
+      win32-process: '= 0.7.5'
       # Use of win32-security is deprecated
-      win32-security: '~> 0.2.5'
-      win32-service: '~> 0.8.6'
+      win32-security: '= 0.2.5'
+      win32-service: '= 0.8.7'
       minitar: '~> 0.5.4'
   x64-mingw32:
     gem_runtime_dependencies:
       ffi: '~> 1.9.6'
-      win32-dir: '~> 0.4.9'
-      win32-eventlog: '~> 0.6.2'
-      win32-process: '~> 0.7.4'
+      # win32-xxxx gems are pinned due to PUP-6445
+      win32-dir: '= 0.4.9'
+      win32-eventlog: '= 0.6.5'
+      win32-process: '= 0.7.5'
       # Use of win32-security is deprecated
-      win32-security: '~> 0.2.5'
-      win32-service: '~> 0.8.6'
+      win32-security: '= 0.2.5'
+      win32-service: '= 0.8.7'
       minitar: '~> 0.5.4'
 bundle_platforms:
   universal-darwin: ruby
