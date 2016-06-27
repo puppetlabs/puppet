@@ -2786,6 +2786,7 @@ class PTypeAliasType < PAnyType
 
   # Delegates to resolved type
   def method_missing(name, *arguments, &block)
+    super if @resolved_type.equal?(PTypeReferenceType::DEFAULT)
     resolved_type.send(name, *arguments, &block)
   end
 
@@ -2797,6 +2798,12 @@ class PTypeAliasType < PAnyType
       return 0 if guard.add_this(self) == RecursionGuard::SELF_RECURSION_IN_BOTH
     end
     resolved_type.really_instance?(o, guard)
+  end
+
+  # @return `nil` to prevent serialization of the type_expr used when first initializing this instance
+  # @api private
+  def type_expr
+    nil
   end
 
   protected
