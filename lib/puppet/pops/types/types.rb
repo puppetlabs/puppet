@@ -1480,7 +1480,7 @@ class PStructType < PAnyType
   include Enumerable
 
   def initialize(elements)
-    @elements = elements.sort.freeze
+    @elements = elements.freeze
   end
 
   def accept(visitor, guard)
