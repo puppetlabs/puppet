@@ -66,10 +66,10 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
   end
 
   def restartcmd
-    if Puppet::Util::Package.versioncmp(Facter.value(:kernelrelease), '5.11') >= 0
+    if Puppet::Util::Package.versioncmp(Facter.value(:operatingsystemrelease), '11.2') >= 0
       [command(:adm), :restart, "-s", @resource[:name]]
     else
-      # Solaris 10 does not have synchronous restart
+      # Synchronous restart only supported in Solaris 11.2 and above
       [command(:adm), :restart, @resource[:name]]
     end
   end
