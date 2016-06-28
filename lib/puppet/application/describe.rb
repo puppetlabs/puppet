@@ -11,7 +11,7 @@ class Formatter
     work = (opts[:scrub] ? scrub(txt) : txt)
     indent = (opts[:indent] ? opts[:indent] : 0)
     textLen = @width - indent
-    patt = Regexp.new("^(.{0,#{textLen}})[ \n]")
+    patt = Regexp.new("\\A(.{0,#{textLen}})[ \n]")
     prefix = " " * indent
 
     res = []
