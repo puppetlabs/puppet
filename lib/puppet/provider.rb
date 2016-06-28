@@ -291,16 +291,8 @@ class Puppet::Provider
   end
 
   def self.fact_match(fact, values)
-    values = [values] unless values.is_a? Array
-    values.map! { |v| v.to_s.downcase.intern }
-
-    if fval = Facter.value(fact).to_s and fval != ""
-      fval = fval.to_s.downcase.intern
-
-      values.include?(fval)
-    else
-      false
-    end
+    fact_val = Facter.value(fact).to_s.downcase
+    fact_val != "" and [*values].any? { |v| v === fact_val }
   end
 
   def self.feature_match(value)
