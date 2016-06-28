@@ -16,9 +16,26 @@ describe "validating 4x" do
     acceptor
   end
 
-  it 'should raise error for illegal names' do
+  it 'should raise error for illegal class names' do
     expect(validate(parse('class aaa::_bbb {}'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_NAME)
     expect(validate(parse('class Aaa {}'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_NAME)
+    expect(validate(parse('class ::aaa {}'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_NAME)
+  end
+
+  it 'should raise error for illegal define names' do
+    expect(validate(parse('define aaa::_bbb {}'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_NAME)
+    expect(validate(parse('define Aaa {}'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_NAME)
+    expect(validate(parse('define ::aaa {}'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_NAME)
+  end
+
+  it 'should raise error for illegal function names' do
+    expect(validate(parse('function aaa::_bbb() {}'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_NAME)
+    expect(validate(parse('function Aaa() {}'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_NAME)
+    expect(validate(parse('function ::aaa() {}'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_NAME)
+  end
+
+  it 'should raise error for illegal type names' do
+    expect(validate(parse('type ::Aaa = Any'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_NAME)
   end
 
   it 'should raise error for illegal variable names' do
