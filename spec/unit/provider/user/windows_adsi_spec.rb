@@ -99,6 +99,10 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
         resource[:membership] = :inclusive
       end
 
+      it "should return true when current and should contain the same groups in a different order" do
+        expect(provider.groups_insync?(['group1', 'group2', 'group3'], ['group3', 'group1', 'group2'])).to be_truthy
+      end
+
       it "should return false when current contains different groups than should" do
         expect(provider.groups_insync?(['group1'], ['group2'])).to be_falsey
       end
