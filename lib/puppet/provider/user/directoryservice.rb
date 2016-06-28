@@ -141,7 +141,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     ################################
     # Get Password/Salt/Iterations #
     ################################
-    if attribute_hash[:shadowhashdata].empty?
+    if attribute_hash[:shadowhashdata].nil? or attribute_hash[:shadowhashdata].empty?
       attribute_hash[:password] = '*'
     else
       embedded_binary_plist = get_embedded_binary_plist(attribute_hash[:shadowhashdata])
