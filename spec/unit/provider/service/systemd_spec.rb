@@ -140,8 +140,23 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     it "should start the service with systemctl start otherwise" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:systemctl).with(:unmask, 'sshd.service')
-      provider.expects(:execute).with(['/bin/systemctl','start','sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
+      provider.expects(:execute).with(['/bin/systemctl','start','sshd.service'], {:failonfail => true, :override_locale => false, :squelch => false, :combine => true})
       provider.start
+    end
+
+    it "should show journald logs on failure" do
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      provider.expects(:systemctl).with(:unmask, 'sshd.service')
+      provider.expects(:execute).with(['/bin/systemctl','start','sshd.service'],{:failonfail => true, :override_locale => false, :squelch => false, :combine => true})
+        .raises(Puppet::ExecutionFailure, "Failed to start sshd.service: Unit sshd.service failed to load: Invalid argument. See system logs and 'systemctl status sshd.service' for details.")
+      journalctl_logs = <<-EOS
+-- Logs begin at Tue 2016-06-14 11:59:21 UTC, end at Tue 2016-06-14 21:45:02 UTC. --
+Jun 14 21:41:34 foo.example.com systemd[1]: Stopping sshd Service...
+Jun 14 21:41:35 foo.example.com systemd[1]: Starting sshd Service...
+Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= and ExecStop= setting. Refusing.
+      EOS
+      provider.expects(:execute).with("journalctl -n 50 --since '5 minutes ago' -u sshd.service --no-pager").returns(journalctl_logs)
+      expect { provider.start }.to raise_error(Puppet::Error, /Systemd start for sshd.service failed![\n]+journalctl log for sshd.service:[\n]+-- Logs begin at Tue 2016-06-14 11:59:21 UTC, end at Tue 2016-06-14 21:45:02 UTC. --/m)
     end
   end
 
@@ -156,6 +171,20 @@ describe Puppet::Type.type(:service).provider(:systemd) do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:execute).with(['/bin/systemctl','stop','sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.stop
+    end
+
+    it "should show journald logs on failure" do
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      provider.expects(:execute).with(['/bin/systemctl','stop','sshd.service'],{:failonfail => true, :override_locale => false, :squelch => false, :combine => true})
+        .raises(Puppet::ExecutionFailure, "Failed to stop sshd.service: Unit sshd.service failed to load: Invalid argument. See system logs and 'systemctl status sshd.service' for details.")
+      journalctl_logs = <<-EOS
+-- Logs begin at Tue 2016-06-14 11:59:21 UTC, end at Tue 2016-06-14 21:45:02 UTC. --
+Jun 14 21:41:34 foo.example.com systemd[1]: Stopping sshd Service...
+Jun 14 21:41:35 foo.example.com systemd[1]: Starting sshd Service...
+Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= and ExecStop= setting. Refusing.
+      EOS
+      provider.expects(:execute).with("journalctl -n 50 --since '5 minutes ago' -u sshd.service --no-pager").returns(journalctl_logs)
+      expect { provider.stop }.to raise_error(Puppet::Error, /Systemd stop for sshd.service failed![\n]+journalctl log for sshd.service:[\n]-- Logs begin at Tue 2016-06-14 11:59:21 UTC, end at Tue 2016-06-14 21:45:02 UTC. --/m)
     end
   end
 
@@ -262,6 +291,20 @@ describe Puppet::Type.type(:service).provider(:systemd) do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:execute).with(['/bin/systemctl','restart','sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.restart
+    end
+
+    it "should show journald logs on failure" do
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      provider.expects(:execute).with(['/bin/systemctl','restart','sshd.service'],{:failonfail => true, :override_locale => false, :squelch => false, :combine => true})
+        .raises(Puppet::ExecutionFailure, "Failed to restart sshd.service: Unit sshd.service failed to load: Invalid argument. See system logs and 'systemctl status sshd.service' for details.")
+      journalctl_logs = <<-EOS
+-- Logs begin at Tue 2016-06-14 11:59:21 UTC, end at Tue 2016-06-14 21:45:02 UTC. --
+Jun 14 21:41:34 foo.example.com systemd[1]: Stopping sshd Service...
+Jun 14 21:41:35 foo.example.com systemd[1]: Starting sshd Service...
+Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= and ExecStop= setting. Refusing.
+      EOS
+      provider.expects(:execute).with("journalctl -n 50 --since '5 minutes ago' -u sshd.service --no-pager").returns(journalctl_logs)
+      expect { provider.restart }.to raise_error(Puppet::Error, /Systemd restart for sshd.service failed![\n]+journalctl log for sshd.service:[\n]+-- Logs begin at Tue 2016-06-14 11:59:21 UTC, end at Tue 2016-06-14 21:45:02 UTC. --/m)
     end
   end
 
