@@ -59,6 +59,10 @@ class Puppet::Transaction::Report
   # or 'on_failure'
   attr_accessor :cached_catalog_status
 
+  # Contains the name and port of the master that was successfully contacted
+  # @return [String] a string of the format 'servername:port'
+  attr_accessor :master_used
+
   # The host name for which the report is generated
   # @return [String] the host name
   attr_accessor :host
@@ -206,6 +210,7 @@ class Puppet::Transaction::Report
     @code_id = nil
     @catalog_uuid = nil
     @cached_catalog_status = nil
+    @master_used = nil
     @environment = environment
     @status = 'failed' # assume failed until the report is finalized
     @noop = Puppet[:noop]
@@ -224,6 +229,10 @@ class Puppet::Transaction::Report
     @noop_pending = data['noop_pending']
     @host = data['host']
     @time = data['time']
+
+    if master_used = data['master_used']
+      @master_used = master_used
+    end
 
     if catalog_uuid = data['catalog_uuid']
       @catalog_uuid = catalog_uuid
@@ -278,6 +287,7 @@ class Puppet::Transaction::Report
       'noop' => @noop,
       'noop_pending' => @noop_pending,
       'environment' => @environment,
+      'master_used' => @master_used,
 
       'logs' => @logs,
       'metrics' => @metrics,
