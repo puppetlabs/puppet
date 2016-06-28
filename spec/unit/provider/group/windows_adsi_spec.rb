@@ -74,6 +74,10 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
           resource[:auth_membership] = true
         end
 
+        it "should return true when current and should contain the same users in a different order" do
+          expect(provider.members_insync?(['user1', 'user2', 'user3'], ['user3', 'user1', 'user2'])).to be_truthy
+        end
+
         it "should return false when current is nil" do
           expect(provider.members_insync?(nil, ['user2'])).to be_falsey
         end

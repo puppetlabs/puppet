@@ -27,10 +27,13 @@ Puppet::Type.type(:group).provide :windows_adsi do
     current_users = Puppet::Util::Windows::ADSI::Group.name_sid_hash(current)
     specified_users = Puppet::Util::Windows::ADSI::Group.name_sid_hash(should)
 
+    current_sids = current_users.keys.to_a
+    specified_sids = specified_users.keys.to_a
+
     if @resource[:auth_membership]
-      current_users.keys.to_a == specified_users.keys.to_a
+      current_sids.sort == specified_sids.sort
     else
-      (specified_users.keys.to_a & current_users.keys.to_a) == specified_users.keys.to_a
+      (specified_sids & current_sids) == specified_sids
     end
   end
 
