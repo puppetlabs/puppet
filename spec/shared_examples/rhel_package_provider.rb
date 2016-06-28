@@ -33,12 +33,16 @@ shared_examples "RHEL package provider" do |provider_class, provider_name|
       let(:error_level) { '0' }
     when 'dnf'
       let(:error_level) { '1' }
+    when 'tdnf'
+      let(:error_level) { '1' }
     end
 
     case provider_name
     when 'yum'
       let(:upgrade_command) { 'update' }
     when 'dnf'
+      let(:upgrade_command) { 'upgrade' }
+    when 'tdnf'
       let(:upgrade_command) { 'upgrade' }
     end
 
