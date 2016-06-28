@@ -26,10 +26,18 @@ module Puppet::Pops::Patterns
   #
   CLASSREF_EXT = %r{\A((::){0,1}[A-Z][\w]*)+\z}
 
+  # Same as CLASSREF_EXT but cannot start with '::'
+  #
+  CLASSREF_EXT_DECL = %r{\A[A-Z][\w]*(?:::[A-Z][\w]*)*\z}
+
   # CLASSREF matches a class reference the way it is represented internally in the
   # model (i.e. in lower case).
   #
   CLASSREF = %r{\A((::){0,1}[a-z][\w]*)+\z}
+
+  # Same as CLASSREF but cannot start with '::'
+  #
+  CLASSREF_DECL = %r{\A[a-z][\w]*(?:::[a-z][\w]*)*\z}
 
   # DOLLAR_VAR matches a variable name including the initial $ character
   DOLLAR_VAR     = %r{\$(::)?(\w+::)*\w+}
