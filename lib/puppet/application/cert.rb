@@ -148,10 +148,10 @@ The most important actions for day-to-day use are 'list' and 'sign'.
   List outstanding certificate requests. If '--all' is specified, signed
   certificates are also listed, prefixed by '+', and revoked or invalid
   certificates are prefixed by '-' (the verification outcome is printed
-  in parenthesis). If '--human-readable' or '-H' is specified listed
+  in parenthesis). If '--human-readable' or '-H' is specified,
   certificates are formatted in a way to improve human scan-ability. If
-  '--machine-readable' or '-m' is specified output is formatted in a
-  line-wise format optimal for scripted consumption.
+  '--machine-readable' or '-m' is specified, output is formatted concisely
+  for consumption by a script.
 
 * print:
   Print the full-text version of a host's certificate.
