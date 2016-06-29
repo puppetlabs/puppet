@@ -22,35 +22,12 @@ agents.each do |agent|
 
   start_runlevels     = ["2", "3", "4", "5"]
   kill_runlevels      = ["0", "1", "6"]
-  if platform == 'debian' && majrelease == 6
-    start_symlink     = "S20apache2"
-    kill_symlink      = "K01apache2"
-  elsif platform == 'debian' && majrelease == 7
-    start_symlink     = "S17apache2"
-    kill_symlink      = "K01apache2"
-  elsif platform == 'debian' && majrelease == 8
-    start_symlink     = "S02apache2"
-    kill_symlink      = "K01apache2"
-  elsif platform == 'sles'   && majrelease == 10
-    start_symlink     = "S13apache2"
-    kill_symlink      = "K09apache2"
-    start_runlevels   = ["3", "5"]
-    kill_runlevels    = ["3", "5"]
-  elsif platform == 'sles'   && majrelease == 11
-    start_symlink     = "S11apache2"
-    kill_symlink      = "K01apache2"
+  if platform == 'sles'
     start_runlevels   = ["3", "5"]
     kill_runlevels    = ["3", "5"]
   elsif platform == 'ubuntu'
-    # Due to https://bugs.launchpad.net/ubuntu/+source/systemd/+bug/1447807, we can't test
-    # a service without a systemd unit file. Instead we use the systemd-managed cron.service.
-    start_symlink     = "S02cron"
-    kill_symlink      = "K01cron"
     start_runlevels   = ["2", "3", "4", "5"]
     kill_runlevels    = ["2", "3", "4", "5"]
-  else
-    start_symlink     = "S85httpd"
-    kill_symlink      = "K15httpd"
   end
 
   manifest_uninstall_package = %Q{
@@ -75,11 +52,7 @@ agents.each do |agent|
   }
 
   teardown do
-    if platform == 'sles'
-      on agent, 'zypper remove -y apache2 apache2-prefork apache2-worker libapr1 libapr-util1'
-    else
-      apply_manifest_on(agent, manifest_uninstall_package)
-    end
+    apply_manifest_on(agent, manifest_uninstall_package)
   end
 
   step "installing #{package_name[platform]}"
@@ -96,7 +69,7 @@ agents.each do |agent|
       on agent, "ln -s /etc/ /etc/rc.d", :accept_all_exit_codes => true
       rc_symlinks = on(agent, "find /etc/ -name *#{package_name[platform]}", :accept_all_exit_codes => true).stdout
       start_runlevels.each do |runlevel|
-        assert_match("#{runlevel}.d/#{start_symlink}", rc_symlinks, "did not find #{start_symlink} in runlevel #{runlevel}")
+        assert_match(/rc#{runlevel}\.d\/S\d\d#{package_name[platform]}/, rc_symlinks, "did not find start symlink for #{package_name[platform]} in runlevel #{runlevel}")
         assert_match(/\/etc(\/rc\.d)?\/init\.d\/#{package_name[platform]}/, rc_symlinks, "did not find #{package_name[platform]} init script")
       end
 
@@ -104,7 +77,7 @@ agents.each do |agent|
       # the service is enabled, unlike Apache2.
       unless platform == 'ubuntu'
         kill_runlevels.each do |runlevel|
-          assert_match("#{runlevel}.d/#{kill_symlink}", rc_symlinks, "did not find #{kill_symlink} in runlevel #{runlevel}")
+          assert_match(/rc#{runlevel}\.d\/K\d\d#{package_name[platform]}/, rc_symlinks, "did not find kill symlink for #{package_name[platform]} in runlevel #{runlevel}")
         end
       end
     else
@@ -121,7 +94,7 @@ agents.each do |agent|
       # sles removes rc.d symlinks
       if platform != 'sles'
         (start_runlevels + kill_runlevels).each do |runlevel|
-          assert_match("#{runlevel}.d/#{kill_symlink}", rc_symlinks, "did not find #{kill_symlink} in runlevel #{runlevel}")
+          assert_match(/rc#{runlevel}\.d\/K\d\d#{package_name[platform]}/, rc_symlinks, "did not find kill symlink for #{package_name[platform]} in runlevel #{runlevel}")
         end
       end
     else
