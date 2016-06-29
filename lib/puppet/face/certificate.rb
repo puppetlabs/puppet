@@ -129,7 +129,9 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
           raise ArgumentError, "This process is not configured as a certificate authority"
         end
 
-        ca.sign(name, options[:allow_dns_alt_names])
+        signing_options = {allow_dns_alt_names: options[:allow_dns_alt_names]}
+
+        ca.sign(name, signing_options)
       end
     end
   end
