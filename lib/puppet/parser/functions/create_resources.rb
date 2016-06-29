@@ -42,6 +42,10 @@ Puppet::Parser::Functions::newfunction(:create_resources, :arity => -3, :doc => 
 
         create_resources("@user", $myusers)
 
+    Note that `create_resources` will filter out parameter values that are `undef` so that normal
+    data binding and puppet default value expressions are considered (in that order) for the
+    final value of a parameter (just as when setting a parameter to `undef` in a puppet language
+    resource declaration).
   ENDHEREDOC
   raise ArgumentError, ("create_resources(): wrong number of arguments (#{args.length}; must be 2 or 3)") if args.length > 3
   raise ArgumentError, ('create_resources(): second argument must be a hash') unless args[1].is_a?(Hash)
