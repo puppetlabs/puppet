@@ -3,6 +3,7 @@ require 'puppet/module_tool/applications'
 require 'puppet_spec/module_tool/shared_functions'
 require 'puppet_spec/module_tool/stub_source'
 require 'semver'
+require 'tmpdir'
 
 describe Puppet::ModuleTool::Applications::Upgrader do
   include PuppetSpec::ModuleTool::SharedFunctions
@@ -29,6 +30,13 @@ describe Puppet::ModuleTool::Applications::Upgrader do
     SemanticPuppet::Dependency.clear_sources
     installer = Puppet::ModuleTool::Applications::Upgrader.any_instance
     installer.stubs(:module_repository).returns(remote_source)
+  end
+
+  if Puppet.features.microsoft_windows?
+    before :each do
+      Puppet.settings.stubs(:[])
+      Puppet.settings.stubs(:[]).with(:module_working_dir).returns(Dir.mktmpdir('upgradertmp'))
+    end
   end
 
   def upgrader(name, options = {})

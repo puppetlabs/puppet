@@ -4,6 +4,8 @@ require 'puppet_spec/module_tool/shared_functions'
 require 'puppet_spec/module_tool/stub_source'
 require 'semver'
 
+require 'tmpdir'
+
 describe Puppet::ModuleTool::Applications::Installer do
   include PuppetSpec::ModuleTool::SharedFunctions
   include PuppetSpec::Files
@@ -30,6 +32,13 @@ describe Puppet::ModuleTool::Applications::Installer do
     SemanticPuppet::Dependency.clear_sources
     installer = Puppet::ModuleTool::Applications::Installer.any_instance
     installer.stubs(:module_repository).returns(remote_source)
+  end
+
+  if Puppet.features.microsoft_windows?
+    before :each do
+      Puppet.settings.stubs(:[])
+      Puppet.settings.stubs(:[]).with(:module_working_dir).returns(Dir.mktmpdir('installertmp'))
+    end
   end
 
   def installer(modname, target_dir, options)
@@ -358,6 +367,6 @@ describe Puppet::ModuleTool::Applications::Installer do
         end
       end
     end
-
   end
+
 end

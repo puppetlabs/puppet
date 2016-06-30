@@ -1308,27 +1308,6 @@ describe Puppet::Settings do
       @settings.to_catalog
     end
 
-    describe "on Microsoft Windows" do
-      before :each do
-        Puppet.features.stubs(:root?).returns true
-        Puppet.features.stubs(:microsoft_windows?).returns true
-
-        @settings.define_settings :foo,
-            :mkusers => { :type => :boolean, :default => true, :desc => "e" },
-            :user => { :default => "suser", :desc => "doc" },
-            :group => { :default => "sgroup", :desc => "doc" }
-        @settings.define_settings :other,
-            :otherdir => { :type => :directory, :default => "/otherdir", :desc => "a", :owner => "service", :group => "service"}
-
-        @catalog = @settings.to_catalog
-      end
-
-      it "it should not add users and groups to the catalog" do
-        expect(@catalog.resource(:user, "suser")).to be_nil
-        expect(@catalog.resource(:group, "sgroup")).to be_nil
-      end
-    end
-
     describe "adding default directory environment to the catalog" do
       let(:tmpenv) { tmpdir("envs") }
       let(:default_path) { "#{tmpenv}/environments" }
@@ -1374,7 +1353,79 @@ describe Puppet::Settings do
       end
     end
 
-    describe "when adding users and groups to the catalog" do
+    describe "on Microsoft Windows" do
+      before do
+        Puppet.features.stubs(:root?).returns true
+        Puppet.features.stubs(:microsoft_windows?).returns true
+
+        @settings.define_settings :foo,
+                                  :mkusers => { :type => :boolean, :default => true, :desc => "e" },
+                                  :user => { :default => "suser", :desc => "doc" },
+                                  :group => { :default => "sgroup", :desc => "doc" }
+        @settings.define_settings :other, :otherdir => {:type => :directory, :default => "/otherdir", :desc => "a", :owner => "service", :group => "service"}
+
+        @catalog = @settings.to_catalog
+      end
+
+      it "should not add users and groups to the catalog" do
+        expect(@catalog.resource(:user, "suser")).to be_nil
+        expect(@catalog.resource(:group, "sgroup")).to be_nil
+      end
+
+      it "should vacuously add each specified user and group to the catalog if :mkusers is a valid setting, is enabled, and we're running as root" do
+        expect(@catalog.resource(:user, "suser")).to be_nil
+        expect(@catalog.resource(:group, "sgroup")).to be_nil
+      end
+
+      it "should vacuously only add users and groups to the catalog from specified sections" do
+        @settings.define_settings :yay, :yaydir => { :type => :directory, :default => "/yaydir", :desc => "a", :owner => "service", :group => "service"}
+        catalog = @settings.to_catalog(:other)
+        expect(catalog.resource(:user, "jane")).to be_nil
+        expect(catalog.resource(:group, "billy")).to be_nil
+      end
+
+      it "should vacuously not add users or groups to the catalog if :mkusers not running as root" do
+        Puppet.features.stubs(:root?).returns false
+
+        catalog = @settings.to_catalog
+        expect(catalog.resource(:user, "suser")).to be_nil
+        expect(catalog.resource(:group, "sgroup")).to be_nil
+      end
+
+      it "should vacuously not add users or groups to the catalog if :mkusers is not a valid setting" do
+        Puppet.features.stubs(:root?).returns true
+        settings = Puppet::Settings.new
+        settings.define_settings :other, :otherdir => {:type => :directory, :default => "/otherdir", :desc => "a", :owner => "service", :group => "service"}
+
+        catalog = settings.to_catalog
+        expect(catalog.resource(:user, "suser")).to be_nil
+        expect(catalog.resource(:group, "sgroup")).to be_nil
+      end
+
+      it "should vacuously not add users or groups to the catalog if :mkusers is a valid setting but is disabled" do
+        @settings[:mkusers] = false
+
+        catalog = @settings.to_catalog
+        expect(catalog.resource(:user, "suser")).to be_nil
+        expect(catalog.resource(:group, "sgroup")).to be_nil
+      end
+
+      it "should vacuously not try to add users or groups to the catalog twice" do
+        @settings.define_settings :yay, :yaydir => {:type => :directory, :default => "/yaydir", :desc => "a", :owner => "service", :group => "service"}
+
+        # This would fail if users/groups were added twice
+        expect { @settings.to_catalog }.not_to raise_error
+      end
+
+      it "should vacuously not attempt to manage the root user" do
+        Puppet.features.stubs(:root?).returns true
+        @settings.define_settings :foo, :foodir => {:type => :directory, :default => "/foodir", :desc => "a", :owner => "root", :group => "service"}
+
+        expect(@settings.to_catalog.resource(:user, "root")).to be_nil
+      end
+    end
+
+    describe "when adding users and groups to the catalog on non-Windows platforms", :unless => Puppet::Util::Platform.windows? do
       before do
         Puppet.features.stubs(:root?).returns true
         Puppet.features.stubs(:microsoft_windows?).returns false
