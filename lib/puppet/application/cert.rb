@@ -79,6 +79,22 @@ class Puppet::Application::Cert < Puppet::Application
     set_log_level
   end
 
+  option("--human-readable", "-H") do |arg|
+    options[:format] = :human
+  end
+
+  option("--machine-readable", "-m") do |arg|
+    options[:format] = :machine
+  end
+
+  option("--interactive", "-i") do |arg|
+    options[:interactive] = true
+  end
+
+  option("--assume-yes", "-y") do |arg|
+    options[:yes] = true
+  end
+
   def help
     <<-'HELP'
 
@@ -132,7 +148,10 @@ The most important actions for day-to-day use are 'list' and 'sign'.
   List outstanding certificate requests. If '--all' is specified, signed
   certificates are also listed, prefixed by '+', and revoked or invalid
   certificates are prefixed by '-' (the verification outcome is printed
-  in parenthesis).
+  in parenthesis). If '--human-readable' or '-H' is specified,
+  certificates are formatted in a way to improve human scan-ability. If
+  '--machine-readable' or '-m' is specified, output is formatted concisely
+  for consumption by a script.
 
 * print:
   Print the full-text version of a host's certificate.
@@ -145,7 +164,10 @@ The most important actions for day-to-day use are 'list' and 'sign'.
   needs to be restarted after revoking certificates.
 
 * sign:
-  Sign an outstanding certificate request.
+  Sign an outstanding certificate request. If '--interactive' or '-i' is
+  supplied the user will be prompted to confirm that they are signing the
+  correct certificate (recommended). If '--assume-yes' or '-y' is supplied
+  the interactive prompt will assume the answer of 'yes'.
 
 * verify:
   Verify the named certificate against the local CA certificate.
@@ -284,6 +306,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
         exit
       end
     end
+
     result
   end
 
