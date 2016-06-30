@@ -7,6 +7,12 @@ describe Puppet::Type.type(:service).provider(:upstart) do
   let(:start_on_default_runlevels) {  "\nstart on runlevel [2,3,4,5]" }
   let(:provider_class) { Puppet::Type.type(:service).provider(:upstart) }
 
+  if Puppet.features.microsoft_windows?
+    # Get a pid for $CHILD_STATUS to latch on to
+    command = "cmd.exe /c \"exit 0\""
+    Puppet::Util::Execution.execute(command, {:failonfail => false})
+  end
+
   def given_contents_of(file, content)
     File.open(file, 'w') do |file|
       file.write(content)

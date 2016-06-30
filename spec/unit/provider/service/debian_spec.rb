@@ -9,6 +9,12 @@ provider_class = Puppet::Type.type(:service).provider(:debian)
 
 describe provider_class do
 
+  if Puppet.features.microsoft_windows?
+    # Get a pid for $CHILD_STATUS to latch on to
+    command = "cmd.exe /c \"exit 0\""
+    Puppet::Util::Execution.execute(command, {:failonfail => false})
+  end
+
   before(:each) do
     # Create a mock resource
     @resource = stub 'resource'
