@@ -1,9 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-module Puppet::Util::Plist
-end
-
 describe Puppet::Type.type(:package).provider(:pkgdmg) do
   let(:resource) { Puppet::Type.type(:package).new(:name => 'foo', :provider => :pkgdmg) }
   let(:provider) { described_class.new(resource) }

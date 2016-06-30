@@ -1,4 +1,4 @@
-require 'cfpropertylist'
+require 'cfpropertylist' if Puppet.features.cfpropertylist?
 require 'puppet/util/execution'
 
 module Puppet::Util::Plist
