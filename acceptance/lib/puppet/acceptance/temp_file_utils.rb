@@ -77,6 +77,8 @@ module Puppet
       # Given a relative path, returns an absolute path for a test file.  Basically, this just prepends the
       # a unique temp dir path (specific to the current test execution) to your relative path.
       def get_test_file_path(host, file_rel_path)
+        initialize_temp_dirs unless @host_test_tmp_dirs
+
         File.join(@host_test_tmp_dirs[host.name], file_rel_path)
       end
 

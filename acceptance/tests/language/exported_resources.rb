@@ -6,7 +6,7 @@ extend Puppet::Acceptance::EnvironmentUtils
   skip_test if agents.any? {|agent| agent['platform'] =~ /^eos/ } # see PUP-5404, ARISTA-42
 
   app_type = File.basename(__FILE__, '.*')
-  tmp_environment   = mk_tmp_environment_with_teardown(app_type)
+  tmp_environment   = mk_tmp_environment_with_teardown(master, app_type)
   exported_username = 'er0ck'
 
   teardown do
