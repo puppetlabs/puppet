@@ -1,8 +1,6 @@
 require 'spec_helper'
-require 'puppet/util/plist' if Puppet.features.cfpropertylist?
+require 'puppet/util/plist'
 require 'puppet_spec/files'
-
-module Puppet::Util::Plist; end
 
 describe Puppet::Util::Plist, :if => Puppet.features.cfpropertylist? do
   include PuppetSpec::Files
