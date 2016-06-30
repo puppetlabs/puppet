@@ -104,4 +104,18 @@ describe "Defaults" do
       expect(Puppet.settings[:supported_checksum_types]).to eq(['sha256', 'md5lite', 'mtime'])
     end
   end
+  
+  describe 'server vs server_list' do
+    it 'should warn when both settings are set in code' do
+      Puppet.expects(:deprecation_warning).with('Attempted to set both server and server_list. Server setting will not be used.', :SERVER_DUPLICATION)
+      Puppet.settings[:server] = 'test_server'
+      Puppet.settings[:server_list] = ['one', 'two']
+    end
+
+    it 'should warn when both settings are set by command line' do
+      Puppet.expects(:deprecation_warning).with('Attempted to set both server and server_list. Server setting will not be used.', :SERVER_DUPLICATION)
+      Puppet.settings.handlearg("--server_list", "one,two")
+      Puppet.settings.handlearg("--server", "test_server")
+    end
+  end
 end

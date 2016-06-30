@@ -34,12 +34,49 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     @srv_service || :puppet
   end
 
+  # The logic for server and port is kind of gross. In summary:
+  # IF an endpoint-specific setting is requested AND that setting has been set by the user
+  #    Use that setting.
+  #         The defaults for these settings are the "normal" server/masterport settings, so
+  #         when they are unset we instead want to "fall back" to the failover-selected
+  #         host/port pair.
+  # ELSE IF we have a failover-selected host/port
+  #    Use what the failover logic came up with
+  # ELSE
+  #    Go for the legacy server/masterport settings, and hope for the best
   def self.server
-    Puppet.settings[server_setting || :server]
+    setting = server_setting()
+    if setting && setting != :server && Puppet.settings.set_by_config?(setting)
+      Puppet.settings[setting]
+    else
+      begin
+        Puppet.lookup(:server)
+      rescue
+        Puppet.debug "Dynamically-bound server lookup failed, falling back to #{setting} setting"
+        Puppet.settings[setting || :server]
+      end
+    end
   end
 
+  # For port there's a little bit of an extra snag: setting a specific
+  # server setting and relying on the default port for that server is
+  # common, so we also want to check if the assocaited SERVER setting
+  # has been set by the user. If either of those are set we ignore the
+  # failover-selected port.
   def self.port
-    Puppet.settings[port_setting || :masterport].to_i
+    setting = port_setting()
+    srv_setting = server_setting()
+    if (setting && setting != :masterport && Puppet.settings.set_by_config?(setting)) ||
+       (srv_setting && srv_setting != :server && Puppet.settings.set_by_config?(srv_setting))
+      Puppet.settings[setting].to_i
+    else
+      begin
+        Puppet.lookup(:serverport).to_i
+      rescue
+        Puppet.debug "Dynamically-bound port lookup failed; falling back to #{setting} setting"
+        Puppet.settings[setting || :masterport].to_i
+      end
+    end
   end
 
   # Provide appropriate headers.
