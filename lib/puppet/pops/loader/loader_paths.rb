@@ -150,7 +150,6 @@ module Puppet::Pops::Loader::LoaderPaths
   end
 
   class TypePathPP < PuppetSmartPath
-    # Navigate to directory where 'lib' is, then down again
     TYPE_PATH_PP = File.join('types')
 
     def relative_path
