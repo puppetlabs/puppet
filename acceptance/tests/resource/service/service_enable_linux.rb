@@ -89,44 +89,60 @@ agents.each do |agent|
   is_sysV = ((platform == 'centos' || platform == 'el') && majrelease < 7) ||
               platform == 'debian' || platform == 'ubuntu' ||
              (platform == 'sles'                        && majrelease < 12)
+
   apply_manifest_on(agent, manifest_service_disabled, :catch_failures => true)
-  apply_manifest_on(agent, manifest_service_enabled, :catch_failures => true) do
-    if is_sysV
-      # debian platforms using sysV put rc runlevels directly in /etc/
-      on agent, "ln -s /etc/ /etc/rc.d", :accept_all_exit_codes => true
-      rc_symlinks = on(agent, "find /etc/ -name *#{package_name[platform]}", :accept_all_exit_codes => true).stdout
-      start_runlevels.each do |runlevel|
-        assert_match("#{runlevel}.d/#{start_symlink}", rc_symlinks, "did not find #{start_symlink} in runlevel #{runlevel}")
-        assert_match(/\/etc(\/rc\.d)?\/init\.d\/#{package_name[platform]}/, rc_symlinks, "did not find #{package_name[platform]} init script")
-      end
 
-      # Temporary measure until the Ubuntu SysV bugs are fixed. The cron service doesn't keep kill symlinks around while
-      # the service is enabled, unlike Apache2.
-      unless platform == 'ubuntu'
-        kill_runlevels.each do |runlevel|
-          assert_match("#{runlevel}.d/#{kill_symlink}", rc_symlinks, "did not find #{kill_symlink} in runlevel #{runlevel}")
+  result = apply_manifest_on(agent, manifest_service_enabled)
+  if platform == 'ubuntu' && majrelease == 15
+    expect_failure 'legit failures on ubuntu15; see: PUP-5149' do
+      assert_no_match(/Could not enable/, result.output, 'could not enable http service')
+    end
+    skip_test
+  else
+    assert_no_match(/Could not enable/, result.output, 'could not enable http service')
+  end
+
+  if is_sysV
+    # debian platforms using sysV put rc runlevels directly in /etc/
+    on agent, "ln -s /etc/ /etc/rc.d", :accept_all_exit_codes => true
+    rc_symlinks = on(agent, "find /etc/ -name *#{package_name[platform]}", :accept_all_exit_codes => true).stdout
+    start_runlevels.each do |runlevel|
+      assert_match("#{runlevel}.d/#{start_symlink}", rc_symlinks, "did not find #{start_symlink} in runlevel #{runlevel}")
+      assert_match(/\/etc(\/rc\.d)?\/init\.d\/#{package_name[platform]}/, rc_symlinks, "did not find #{package_name[platform]} init script")
+    end
+    kill_runlevels.each do |runlevel|
+      assert_match("#{runlevel}.d/#{kill_symlink}", rc_symlinks, "did not find #{kill_symlink} in runlevel #{runlevel}")
+    end
+  else
+    rc_symlinks = on(agent, "ls #{symlink_systemd} #{init_script_systemd}", :accept_all_exit_codes => true).stdout
+    assert_match("#{symlink_systemd}",     rc_symlinks, "did not find #{symlink_systemd}")
+    assert_match("#{init_script_systemd}", rc_symlinks, "did not find #{init_script_systemd}")
+  end
+
+  if platform != 'sles'
+    step "ensure disabling service removes start symlinks" do
+      apply_manifest_on(agent, manifest_service_disabled, :catch_failures => true) do
+        if is_sysV
+          rc_symlinks = on(agent, "find /etc/ -name *#{package_name[platform]}", :accept_all_exit_codes => true).stdout
+          # sles removes rc.d symlinks
+          if (platform == 'debian' && majrelease == 8)
+            # debian8 leaves the start links
+            start_runlevels.each do |runlevel|
+              expect_failure 'legit failures on debian8; see: PUP-5149' do
+                assert_match("#{runlevel}.d/#{kill_symlink}", rc_symlinks, "did not find #{kill_symlink} in runlevel #{runlevel}")
+              end
+            end
+          else
+            (start_runlevels + kill_runlevels).each do |runlevel|
+              assert_match("#{runlevel}.d/#{kill_symlink}", rc_symlinks, "did not find #{kill_symlink} in runlevel #{runlevel}")
+            end
+          end
+        else
+          rc_symlinks = on(agent, "ls #{symlink_systemd}", :accept_all_exit_codes => true).stdout
+          refute_match("#{symlink_systemd}",     rc_symlinks, "should not have found #{symlink_systemd}")
         end
       end
-    else
-      rc_symlinks = on(agent, "ls #{symlink_systemd} #{init_script_systemd}", :accept_all_exit_codes => true).stdout
-      assert_match("#{symlink_systemd}",     rc_symlinks, "did not find #{symlink_systemd}")
-      assert_match("#{init_script_systemd}", rc_symlinks, "did not find #{init_script_systemd}")
     end
   end
 
-  step "ensure disabling service removes start symlinks"
-  apply_manifest_on(agent, manifest_service_disabled, :catch_failures => true) do
-    if is_sysV
-      rc_symlinks = on(agent, "find /etc/ -name *#{package_name[platform]}", :accept_all_exit_codes => true).stdout
-      # sles removes rc.d symlinks
-      if platform != 'sles'
-        (start_runlevels + kill_runlevels).each do |runlevel|
-          assert_match("#{runlevel}.d/#{kill_symlink}", rc_symlinks, "did not find #{kill_symlink} in runlevel #{runlevel}")
-        end
-      end
-    else
-      rc_symlinks = on(agent, "ls #{symlink_systemd}", :accept_all_exit_codes => true).stdout
-      refute_match("#{symlink_systemd}",     rc_symlinks, "should not have found #{symlink_systemd}")
-    end
-  end
 end
