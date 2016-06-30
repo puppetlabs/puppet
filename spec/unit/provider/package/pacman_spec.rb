@@ -438,13 +438,13 @@ EOF
 
     it 'should raise an error on non-zero pacman exit without a filter' do
       executor.expects(:open).with('| /usr/bin/pacman -Sgg 2>&1').returns 'error!'
-      $CHILD_STATUS.stubs(:exitstatus).returns 1
+      Puppet::Util::Execution.expects(:exitstatus).returns 1
       expect { described_class.get_installed_groups(installed_packages) }.to raise_error(Puppet::ExecutionFailure, 'error!')
     end
 
     it 'should return empty groups on non-zero pacman exit with a filter' do
       executor.expects(:open).with('| /usr/bin/pacman -Sgg git 2>&1').returns ''
-      $CHILD_STATUS.stubs(:exitstatus).returns 1
+      Puppet::Util::Execution.expects(:exitstatus).returns 1
       expect(described_class.get_installed_groups(installed_packages, 'git')).to eq({})
     end
 
@@ -452,7 +452,7 @@ EOF
       pipe = stub()
       pipe.expects(:each_line)
       executor.expects(:open).with('| /usr/bin/pacman -Sgg 2>&1').yields(pipe).returns ''
-      $CHILD_STATUS.stubs(:exitstatus).returns 0
+      Puppet::Util::Execution.expects(:exitstatus).returns 0
       expect(described_class.get_installed_groups(installed_packages)).to eq({})
     end
 
@@ -460,7 +460,7 @@ EOF
       pipe = stub()
       pipe.expects(:each_line).multiple_yields(*groups)
       executor.expects(:open).with('| /usr/bin/pacman -Sgg 2>&1').yields(pipe).returns ''
-      $CHILD_STATUS.stubs(:exitstatus).returns 0
+      Puppet::Util::Execution.expects(:exitstatus).returns 0
       expect(described_class.get_installed_groups(installed_packages)).to eq({'foo' => 'package1 1.0, package2 2.0'})
     end
   end

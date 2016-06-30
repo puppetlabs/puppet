@@ -12,6 +12,12 @@ describe Puppet::Type.type(:service).provider(:launchd) do
   let (:launchd_overrides_10_) { '/var/db/com.apple.xpc.launchd/disabled.plist' }
   subject { resource.provider }
 
+  if Puppet.features.microsoft_windows?
+    # Get a pid for $CHILD_STATUS to latch on to
+    command = "cmd.exe /c \"exit 0\""
+    Puppet::Util::Execution.execute(command, {:failonfail => false})
+  end
+
   describe "the type interface" do
     %w{ start stop enabled? enable disable status}.each do |method|
       it { is_expected.to respond_to method.to_sym }

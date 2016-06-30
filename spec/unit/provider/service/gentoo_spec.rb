@@ -4,6 +4,12 @@ require 'spec_helper'
 
 describe Puppet::Type.type(:service).provider(:gentoo) do
 
+  if Puppet.features.microsoft_windows?
+    # Get a pid for $CHILD_STATUS to latch on to
+    command = "cmd.exe /c \"exit 0\""
+    Puppet::Util::Execution.execute(command, {:failonfail => false})
+  end
+
   before :each do
     Puppet::Type.type(:service).stubs(:defaultprovider).returns described_class
     FileTest.stubs(:file?).with('/sbin/rc-update').returns true
