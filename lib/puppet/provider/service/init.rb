@@ -11,6 +11,8 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
       "/sbin/init.d"
     when "Archlinux"
       "/etc/rc.d"
+    when "AIX"
+      "/etc/rc.d/init.d"
     else
       "/etc/init.d"
     end
