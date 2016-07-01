@@ -201,7 +201,7 @@ class Puppet::Parser::Scope
           scope.new_match_scope(nil)
           return as_read_only { expression.safeevaluate(scope) }
         end
-        raise Puppet::Error, "default expression for $#{name} tries to illegally access not yet evaluated $#{bad}"
+        parameter_reference_failure(name, bad)
       end
     end
 
@@ -211,12 +211,21 @@ class Puppet::Parser::Scope
           scope.new_match_scope(nil)
           return as_read_only { evaluator.evaluate(expression, scope) }
         end
-        raise Puppet::Error, "default expression for $#{name} tries to illegally access not yet evaluated $#{bad}"
+        parameter_reference_failure(name, bad)
       end
     end
 
-    def initialize(parent, param_names)
+    def parameter_reference_failure(from, to)
+      # Parameters are evaluated in the order they have in the @params hash.
+      keys = @params.keys
+      raise Puppet::Error, "#{@callee_name}: expects a value for parameter $#{to}" if keys.index(to) < keys.index(from)
+      raise Puppet::Error, "#{@callee_name}: default expression for $#{from} tries to illegally access not yet evaluated $#{to}"
+    end
+    private :parameter_reference_failure
+
+    def initialize(parent, callee_name, param_names)
       super(parent)
+      @callee_name = callee_name
       @params = {}
       param_names.each { |name| @params[name] = Access.new }
     end
@@ -913,9 +922,12 @@ class Puppet::Parser::Scope
   end
 
   # Nests a parameter scope
+  # @param [String] callee_name the name of the function, template, or resource that defines the parameters
+  # @param [Array<String>] param_names list of parameter names
+  # @yieldparam [ParameterScope] param_scope the nested scope
   # @api private
-  def with_parameter_scope(param_names)
-    param_scope = ParameterScope.new(@ephemeral.last, param_names)
+  def with_parameter_scope(callee_name, param_names)
+    param_scope = ParameterScope.new(@ephemeral.last, callee_name, param_names)
     with_guarded_scope do
       @ephemeral.push(param_scope)
       yield(param_scope)
