@@ -14,10 +14,8 @@ class Puppet::Configurer::PluginHandler
 
     result = []
 
-    if Puppet.features.external_facts?
-      plugin_fact_downloader = @factory.create_plugin_facts_downloader(environment)
-      result += plugin_fact_downloader.evaluate
-    end
+    plugin_fact_downloader = @factory.create_plugin_facts_downloader(environment)
+    result += plugin_fact_downloader.evaluate
 
     result += plugin_downloader.evaluate
     Puppet::Util::Autoload.reload_changed
