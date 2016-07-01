@@ -44,7 +44,7 @@ class Closure < CallableSignature
   def call_by_name(args_hash, enforce_parameters)
     if enforce_parameters
       # Push a temporary parameter scope used while resolving the parameter defaults
-      @enclosing_scope.with_parameter_scope(parameter_names) do |param_scope|
+      @enclosing_scope.with_parameter_scope(closure_name, parameter_names) do |param_scope|
         # Assign all non-nil values, even those that represent non-existent paramaters.
         args_hash.each { |k, v| param_scope[k] = v unless v.nil? }
         parameters.each do |p|
@@ -146,7 +146,7 @@ class Closure < CallableSignature
   end
 
   def combine_values_with_parameters(scope, args)
-    scope.with_parameter_scope(parameter_names) do |param_scope|
+    scope.with_parameter_scope(closure_name, parameter_names) do |param_scope|
       parameters.each_with_index do |parameter, index|
         param_captures     = parameter.captures_rest
         default_expression = parameter.value

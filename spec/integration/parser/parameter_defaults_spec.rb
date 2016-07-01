@@ -120,7 +120,7 @@ require 'puppet_spec/language'
       end
 
       it 'fails when no value is provided for required first parameter', :if => call_type == 'EPP' do
-        expect_fail(params, [], /default expression for \$b tries to illegally access not yet evaluated \$a/)
+        expect_fail(params, [], /expects a value for parameter \$a/)
       end
 
       it "will use the referenced parameter's given value" do

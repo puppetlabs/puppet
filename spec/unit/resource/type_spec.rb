@@ -326,6 +326,15 @@ describe Puppet::Resource::Type do
         expect(@scope['third']).to eq('h')
       end
 
+      it 'fails when the referenced variable is unassigned' do
+        @type.set_arguments({
+          :first => nil,
+          :second => variable_expression('first'),
+        })
+        expect { @type.set_resource_parameters(@resource, @scope) }.to raise_error(
+          Puppet::Error, 'Foo[bar]: expects a value for parameter $first')
+      end
+
       it 'does not clobber a given value' do
         @type.set_arguments({
           :first => number_expression(10),
@@ -371,7 +380,7 @@ describe Puppet::Resource::Type do
 
       it 'fails when the default expression is evaluated' do
         @resource[:first] = 1
-        expect { @type.set_resource_parameters(@resource, @scope) }.to raise_error(Puppet::Error, 'default expression for $second tries to illegally access not yet evaluated $third')
+        expect { @type.set_resource_parameters(@resource, @scope) }.to raise_error(Puppet::Error, 'Foo[bar]: default expression for $second tries to illegally access not yet evaluated $third')
       end
     end
 
@@ -379,7 +388,7 @@ describe Puppet::Resource::Type do
       @type.set_arguments({
         :first => variable_expression('first')
       })
-      expect { @type.set_resource_parameters(@resource, @scope) }.to raise_error(Puppet::Error, 'default expression for $first tries to illegally access not yet evaluated $first')
+      expect { @type.set_resource_parameters(@resource, @scope) }.to raise_error(Puppet::Error, 'Foo[bar]: default expression for $first tries to illegally access not yet evaluated $first')
     end
 
     context 'when using match scope' do

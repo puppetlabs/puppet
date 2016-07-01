@@ -369,7 +369,7 @@ class Puppet::Resource::Type
     end
     scope.class_set(self.name,scope) if hostclass? || node?
 
-    param_hash = scope.with_parameter_scope(arguments.keys) do |param_scope|
+    param_hash = scope.with_parameter_scope(resource.to_s, arguments.keys) do |param_scope|
       # Assign directly to the parameter scope to avoid scope parameter validation at this point. It
       # will happen anyway when the values are assigned to the scope after the parameter scoped has
       # been popped.
