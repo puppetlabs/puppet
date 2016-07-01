@@ -210,7 +210,10 @@ class Puppet::Configurer
             server = [nil, nil]
           end
           Puppet.override(:server => server[0], :serverport => server[1]) do
-            Puppet.debug "Selected master: #{server[0]}:#{server[1]}"
+            if !server.first.nil?
+              Puppet.debug "Selected master: #{server[0]}:#{server[1]}"
+              report.master_used = "#{server[0]}:#{server[1]}"
+            end
 
             run_internal(options.merge(:node => found[:node]))
           end
