@@ -55,6 +55,10 @@ class Puppet::Property < Puppet::Parameter
   #
   attr_writer :noop
 
+  # @!attribute [rw] sensitive
+  #   @return [true, false] If this property has been tagged as sensitive.
+  attr_accessor :sensitive
+
   class << self
     # @todo Figure out what this is used for. Can not find any logic in the puppet code base that
     #   reads or writes this attribute.
@@ -230,6 +234,7 @@ class Puppet::Property < Puppet::Parameter
   # * `:property` - reference to this property
   # * `:source_description` - the _path_ (?? See todo)
   # * `:invalidate_refreshes` - if scheduled refreshes should be invalidated
+  # * `:redacted` - if the event will be redacted (due to this property being sensitive)
   #
   # @todo What is the intent of this method? What is the meaning of the :source_description passed in the
   #   options to the created event?
@@ -240,6 +245,7 @@ class Puppet::Property < Puppet::Parameter
     if should and value = self.class.value_collection.match?(should)
       attrs[:invalidate_refreshes] = true if value.invalidate_refreshes
     end
+    attrs[:redacted] = @sensitive
     resource.event attrs
   end
 
