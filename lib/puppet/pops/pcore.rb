@@ -22,11 +22,38 @@ module Pcore
     add_alias('Pcore::SimpleTypeName', TYPE_SIMPLE_TYPE_NAME, loader)
     add_alias('Pcore::TypeName', TYPE_QUALIFIED_REFERENCE, loader)
     add_alias('Pcore::QRef', TYPE_QUALIFIED_REFERENCE, loader)
+    Types::TypedModelObject.register_ptypes(loader, ir)
 
     ir.register_implementation_namespace('Pcore', 'Puppet::Pops::Pcore', loader)
+    ir.register_implementation_namespace('Puppet::AST', 'Puppet::Pops::Model', loader)
+    ast_type_set = Serialization::RGen::TypeGenerator.new.generate_type_set('Puppet::AST', Puppet::Pops::Model, loader)
+
+    # Extend the Puppet::AST type set with the Locator (it's not an RGen class, but nevertheless, used in the model)
+    ast_ts_i12n = ast_type_set.i12n_hash
+    ast_ts_i12n['types'] = ast_ts_i12n['types'].merge('Locator' => Parser::Locator::Locator19.register_ptype(loader, ir))
+    add_type(Types::PTypeSetType.new(ast_ts_i12n), loader)
   end
 
-  def self.add_object(name, body, loader)
+  # Create and register a new `Object` type in the Puppet Type System and map it to an implementation class
+  #
+  # @param loader [Loader::Loader] The loader where the new type will be registered
+  # @param ir [ImplementationRegistry] The implementation registry that maps this class to the new type
+  # @param impl_class [Class] The class that is the implementation of the type
+  # @param type_name [String] The fully qualified name of the new type
+  # @param parent_name [String,nil] The fully qualified name of the parent type
+  # @param attributes_hash [Hash{String => Object}] A hash of attribute definitions for the new type
+  # @return [PObjectType] the created type. Not yet resolved
+  #
+  # @api private
+  def self.create_object_type(loader, ir, impl_class, type_name, parent_name, attributes_hash = EMPTY_HASH)
+    i12n_hash = {}
+    i12n_hash[Types::KEY_PARENT] = Types::PTypeReferenceType.new(parent_name) unless parent_name.nil?
+    i12n_hash[Types::KEY_ATTRIBUTES] = attributes_hash unless attributes_hash.empty?
+    ir.register_implementation(type_name, impl_class, loader)
+    add_type(Types::PObjectType.new(type_name, i12n_hash), loader)
+  end
+
+  def self.add_object_type(name, body, loader)
     add_type(Types::PObjectType.new(name, Parser::EvaluatingParser.new.parse_string(body).current.body), loader)
   end
 
@@ -36,6 +63,7 @@ module Pcore
 
   def self.add_type(type, loader, name_authority = RUNTIME_NAME_AUTHORITY)
     loader.set_entry(Loader::TypedName.new(:type, type.name.downcase, name_authority), type)
+    type
   end
 
   def self.register_implementations(impls, name_authority = RUNTIME_NAME_AUTHORITY)

@@ -169,12 +169,7 @@ class PTypeSetType < PMetaType
     result[KEY_NAME_AUTHORITY] = @name_authority unless @name_authority.nil?
     result[KEY_NAME] = @name
     result[KEY_VERSION] = @version.to_s
-    unless @types.empty?
-      result[KEY_TYPES] = Hash[@types.map do |key, type|
-        type = type.i12n_hash(false) if type.is_a?(PObjectType)
-        [key, type]
-      end]
-    end
+    result[KEY_TYPES] = @types unless @types.empty?
     result[KEY_REFERENCES] = Hash[@references.map { |ref_alias, ref| [ref_alias, ref.i12n_hash] }] unless @references.empty?
     result
   end

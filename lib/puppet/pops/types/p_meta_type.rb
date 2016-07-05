@@ -10,6 +10,10 @@ KEY_VALUE = 'value'.freeze
 class PMetaType < PAnyType
   include Annotatable
 
+  def self.register_ptype(loader, ir)
+    # Abstract type. It doesn't register anything
+  end
+
   def accept(visitor, guard)
     annotatable_accept(visitor, guard)
     super

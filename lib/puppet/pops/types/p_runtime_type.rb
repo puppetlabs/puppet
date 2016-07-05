@@ -5,6 +5,19 @@ module Types
 class PRuntimeType < PAnyType
   TYPE_NAME_OR_PATTERN = PVariantType.new([PStringType::NON_EMPTY, PTupleType.new([PRegexpType::DEFAULT, PStringType::NON_EMPTY])])
 
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'AnyType',
+      'runtime' => {
+        KEY_TYPE => POptionalType.new(PStringType::NON_EMPTY),
+        KEY_VALUE => nil
+      },
+      'name_or_pattern' => {
+        KEY_TYPE => POptionalType.new(TYPE_NAME_OR_PATTERN),
+        KEY_VALUE => nil
+      }
+    )
+  end
+
   attr_reader :runtime, :name_or_pattern
 
   # Creates a new instance of a Runtime type
