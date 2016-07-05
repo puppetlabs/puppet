@@ -42,13 +42,9 @@ shared_examples_for "a yumrepo parameter that expects a natural value" do |param
 end
 
 shared_examples_for "a yumrepo parameter that expects a boolean parameter" do |param|
-  valid_values = %w[True False 0 1 No Yes]
+  valid_values = %w[true false 0 1 no yes]
 
   valid_values.each do |value|
-    it "accepts a valid value of #{value}" do
-      instance = described_class.new(:name => 'puppetlabs', param => value)
-      expect(instance[param]).to eq value
-    end
     it "accepts #{value} downcased to #{value.downcase} and capitalizes it" do
       instance = described_class.new(:name => 'puppetlabs', param => value.downcase)
       expect(instance[param]).to eq value.downcase.capitalize
