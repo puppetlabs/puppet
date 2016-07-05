@@ -29,8 +29,7 @@ gem "hiera", *location_for(ENV['HIERA_LOCATION'] || ['>= 2.0', '< 4'])
 gem "rake", "10.1.1", :require => false
 
 group(:development, :test) do
-  # RSpec 3.5.z is not compatible with parallel:spec.  The version pin of '< 3.5.0', be removed once PUP-6466 is resolved
-  gem "rspec", "~> 3.1", "< 3.5.0", :require => false
+  gem "rspec", "~> 3.1", :require => false
   gem "rspec-its", "~> 1.1", :require => false
   gem "rspec-collection_matchers", "~> 1.1", :require => false
   gem "rspec-legacy_formatters", "~> 1.0", :require => false
