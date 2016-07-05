@@ -2,6 +2,10 @@ require_relative 'extension'
 
 module Puppet::Pops
 module Serialization
+
+MAX_INTEGER =  0x7fffffffffffffff
+MIN_INTEGER = -0x8000000000000000
+
 # Abstract class for protocol specific writers such as MsgPack or JSON
 # The abstract write is capable of writing the primitive scalars:
 # - Boolean
@@ -45,6 +49,9 @@ class AbstractWriter
   def write(value)
     written = false
     case value
+    when Integer
+      # not tabulated, but integers larger than 64-bit cannot be allowed.
+      raise SerializationError, 'Integer out of bounds' if value > MAX_INTEGER || value < MIN_INTEGER
     when Numeric, Symbol, Extension::NotTabulated, true, false, nil
       # not tabulated
     else

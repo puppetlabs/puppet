@@ -169,8 +169,13 @@ module JSON
     def write_scalar(obj)
       ext = @type_registry[obj.class]
       if ext.nil?
-        @io << obj.to_json
-        write_delim
+        case obj
+        when Numeric, String, true, false, nil
+          @io << obj.to_json
+          write_delim
+        else
+          raise SerializationError, "Unable to serialize a #{obj.class.name}"
+        end
       else
         write_extension(ext, obj)
       end

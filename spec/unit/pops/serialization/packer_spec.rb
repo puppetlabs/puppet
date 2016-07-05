@@ -30,8 +30,16 @@ describe "the Puppet::Pops::Serialization when using #{packer_module.name}" do
       expect(val2).to eql(val)
     end
 
-    it 'Integer' do
-      val = 32
+    it 'positive Integer' do
+      val = 2**63-1
+      write(val)
+      val2 = read
+      expect(val2).to be_a(Integer)
+      expect(val2).to eql(val)
+    end
+
+    it 'negative Integer' do
+      val = -2**63
       write(val)
       val2 = read
       expect(val2).to be_a(Integer)
@@ -117,6 +125,20 @@ describe "the Puppet::Pops::Serialization when using #{packer_module.name}" do
       write(val)
       val2 = read
       expect(val).not_to eq(val2)
+    end
+  end
+
+  context 'will fail on attempts to write' do
+    it 'Integer larger than 2**63-1' do
+      expect { write(2**63) }.to raise_error(SerializationError, 'Integer out of bounds')
+    end
+
+    it 'Integer smaller than -2**63' do
+      expect { write(-2**63-1) }.to raise_error(SerializationError, 'Integer out of bounds')
+    end
+
+    it 'objects unknown to Puppet serialization' do
+      expect { write("".class) }.to raise_error(SerializationError, 'Unable to serialize a Class')
     end
   end
 
