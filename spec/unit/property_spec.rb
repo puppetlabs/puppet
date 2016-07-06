@@ -50,6 +50,17 @@ describe Puppet::Property do
     expect(property.to_s).to eq(property.name.to_s)
   end
 
+  describe 'formatting messages' do
+    it "formats messages as-is when the property is not sensitive" do
+      expect(property.format("hello %s", "world")).to eq("hello world")
+    end
+
+    it "formats messages with redacted values when the property is not sensitive" do
+      property.sensitive = true
+      expect(property.format("hello %s", "world")).to eq("hello [redacted]")
+    end
+  end
+
   describe "when returning the default event name" do
     it "should use the current 'should' value to pick the event name" do
       property.expects(:should).returns "myvalue"

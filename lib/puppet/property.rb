@@ -205,6 +205,22 @@ class Puppet::Property < Puppet::Parameter
     end
   end
 
+  # Formats the given string and conditionally redacts the provided interpolation variables, depending on if
+  # this property is sensitive.
+  #
+  # @note Because the default implementation of #is_to_s returns the current value as-is, it doesn't necessarily
+  #   return a string. For the sake of sanity we just cast everything to a string for interpolation so we don't
+  #   introduce issues with unexpected property values.
+  #
+  # @see String#format
+  # @param fmt [String] The format string to interpolate.
+  # @param args [Array<String>] One or more strings to conditionally redact and interpolate into the format string.
+  #
+  # @return [String]
+  def format(fmt, *args)
+    fmt % args.map { |arg| @sensitive ? "[redacted]" : arg.to_s }
+  end
+
   # Produces the name of the event to use to describe a change of this property's value.
   # The produced event name is either the event name configured for this property, or a generic
   # event based on the name of the property with suffix `_changed`, or if the property is

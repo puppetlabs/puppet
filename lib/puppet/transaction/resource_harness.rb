@@ -124,13 +124,17 @@ class Puppet::Transaction::ResourceHarness
 
       event = create_change_event(param, current_value, historical_value)
       event.status = "failure"
-      event.message = "change from #{param.is_to_s(current_value)} to #{param.should_to_s(param.should)} failed: #{detail}"
+      event.message = param.format("change from %s to %s failed: #{detail}",
+                                   param.is_to_s(current_value),
+                                   param.should_to_s(param.should))
       event
     rescue Exception => detail
       # Execution will halt on Exceptions, they get raised to the application
       event = create_change_event(param, current_value, historical_value)
       event.status = "failure"
-      event.message = "change from #{param.is_to_s(current_value)} to #{param.should_to_s(param.should)} failed: #{detail}"
+      event.message = param.format("change from %s to %s failed: #{detail}",
+                                   param.is_to_s(current_value),
+                                   param.should_to_s(param.should))
       raise
     ensure
       if event
@@ -166,7 +170,9 @@ class Puppet::Transaction::ResourceHarness
     event.audited = true
     event.status = "audit"
     if !are_audited_values_equal(event.historical_value, event.previous_value)
-      event.message = "audit change: previously recorded value #{property.is_to_s(event.historical_value)} has been changed to #{property.is_to_s(event.previous_value)}"
+      event.message = property.format("audit change: previously recorded value %s has been changed to %s",
+                 property.is_to_s(event.historical_value),
+                 property.is_to_s(event.previous_value))
     end
 
     event
@@ -174,20 +180,26 @@ class Puppet::Transaction::ResourceHarness
 
   def audit_message(param, do_audit, historical_value, current_value)
     if do_audit && historical_value && !are_audited_values_equal(historical_value, current_value)
-      " (previously recorded value was #{param.is_to_s(historical_value)})"
+      param.format(" (previously recorded value was %s)", param.is_to_s(historical_value))
     else
       ""
     end
   end
 
   def noop(event, param, current_value, audit_message)
-    event.message = "current_value #{param.is_to_s(current_value)}, should be #{param.should_to_s(param.should)} (noop)#{audit_message}"
+    event.message = param.format("current_value %s, should be %s (noop)#{audit_message}",
+                                 param.is_to_s(current_value),
+                                 param.should_to_s(param.should))
     event.status = "noop"
   end
 
   def sync(event, param, current_value, audit_message)
     param.sync
-    event.message = "#{param.change_to_s(current_value, param.should)}#{audit_message}"
+    if param.sensitive
+      event.message = param.format("changed %s to %s#{audit_message}", param.is_to_s(current_value), param.should_to_s(param.should))
+    else
+      event.message = "#{param.change_to_s(current_value, param.should)}#{audit_message}"
+    end
     event.status = "success"
   end
 
@@ -204,7 +216,8 @@ class Puppet::Transaction::ResourceHarness
           context.record(event)
         end
       else
-        resource.property(param_name).notice "audit change: newly-recorded value #{context.current_values[param_name]}"
+        property = resource.property(param_name)
+        property.notice(property.format("audit change: newly-recorded value %s", context.current_values[param_name]))
       end
     end
   end
