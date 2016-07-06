@@ -163,7 +163,7 @@ Detail: "#{detail.message}"
         end
       end
     rescue StandardError
-      result << [ "! #{appname}", "! Subcommand unavailable due to error. Check error logs." ]
+      return "! Subcommand unavailable due to error. Check error logs."
     end
     return ''
   end

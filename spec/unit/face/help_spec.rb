@@ -84,6 +84,12 @@ describe Puppet::Face[:help, '0.0.1'] do
       end
     end
 
+    it "returns an 'unavailable' summary if the 'agent' application fails to generate help" do
+      Puppet::Application['agent'].class.any_instance.stubs(:help).raises(ArgumentError, "whoops")
+
+      expect(subject).to match(/agent\s+! Subcommand unavailable due to error\. Check error logs\./)
+    end
+
     context "face summaries" do
       it "can generate face summaries" do
         faces = Puppet::Face.faces
