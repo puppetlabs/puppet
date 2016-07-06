@@ -557,7 +557,7 @@ class StringConverter
 
   def string_PDefaultType(val_type, val, format_map, _)
     f = get_format(val_type, format_map)
-    format_literal(f, case f.format
+    apply_string_flags(f, case f.format
     when :d, :s, :p
       f.alt? ? '"default"' : 'default'
     when :D
@@ -570,7 +570,7 @@ class StringConverter
   # @api private
   def string_PUndefType(val_type, val, format_map, _)
     f = get_format(val_type, format_map)
-    format_literal(f, case f.format
+    apply_string_flags(f, case f.format
     when :n
       f.alt? ? 'null' : 'nil'
     when :u
@@ -597,22 +597,22 @@ class StringConverter
     when :t
       # 'true'/'false' or 't'/'f' if in alt mode
       str_bool = val.to_s
-      format_literal(f, f.alt? ? str_bool[0] : str_bool)
+      apply_string_flags(f, f.alt? ? str_bool[0] : str_bool)
 
     when :T
       # 'True'/'False' or 'T'/'F' if in alt mode
       str_bool = val.to_s.capitalize
-      format_literal(f, f.alt? ? str_bool[0] : str_bool)
+      apply_string_flags(f, f.alt? ? str_bool[0] : str_bool)
 
     when :y
       # 'yes'/'no' or 'y'/'n' if in alt mode
       str_bool = val ? 'yes' : 'no'
-      format_literal(f, f.alt? ? str_bool[0] : str_bool)
+      apply_string_flags(f, f.alt? ? str_bool[0] : str_bool)
 
     when :Y
       # 'Yes'/'No' or 'Y'/'N' if in alt mode
       str_bool = val ? 'Yes' : 'No'
-      format_literal(f, f.alt? ? str_bool[0] : str_bool)
+      apply_string_flags(f, f.alt? ? str_bool[0] : str_bool)
 
     when :d, :x, :X, :o, :b, :B
       # Boolean in numeric form, formated by integer rule
@@ -627,10 +627,10 @@ class StringConverter
       _convert(TypeCalculator.infer_set(numeric_bool), numeric_bool, string_formats, indentation)
 
     when :s
-      format_literal(f, val.to_s)
+      apply_string_flags(f, val.to_s)
 
     when :p
-      format_literal(f, val.inspect)
+      apply_string_flags(f, val.inspect)
 
     else
       raise FormatError.new('Boolean', f.format, 'tTyYdxXobBeEfgGaAsp')
@@ -638,7 +638,7 @@ class StringConverter
   end
 
   # Performs post-processing of literals to apply width and precision flags
-  def format_literal(f, literal_str)
+  def apply_string_flags(f, literal_str)
     if f.left || f.width || f.prec
       fmt = '%'
       fmt << '-' if f.left
@@ -650,7 +650,7 @@ class StringConverter
       literal_str
     end
   end
-  private :format_literal
+  private :apply_string_flags
 
   # @api private
   def string_PIntegerType(val_type, val, format_map, _)
