@@ -25,12 +25,12 @@ module Puppet::Pops::LabelProvider
     "#{article(text).capitalize} #{text}"
   end
 
-  # Produces a label for the given text with *definitie article* (the).
+  # Produces a label for the given text with *definite article* (the).
   def the o
     "the #{label(o)}"
   end
 
-  # Produces a label for the given text with *definitie article* (The).
+  # Produces a label for the given text with *definite article* (The).
   def the_uc o
     "The #{label(o)}"
   end

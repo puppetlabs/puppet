@@ -343,7 +343,7 @@ end
 
   validate do
     return unless self[:ip]
-    # self[:ip] reflects the type passed from proeprty:ip.should. If we
+    # self[:ip] reflects the type passed from property:ip.should. If we
     # override it and pass @should, then we get an array here back.
     self[:ip].each do |ip|
       interface, address, router = ip.split(':')

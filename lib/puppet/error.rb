@@ -93,7 +93,7 @@ module Puppet
   class MissingCommand < Puppet::Error
   end
 
-  # Raised when we failed to aquire a lock
+  # Raised when we failed to acquire a lock
   class LockError < Puppet::Error
   end
 

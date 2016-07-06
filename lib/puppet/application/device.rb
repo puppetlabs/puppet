@@ -118,7 +118,7 @@ parameter, so you can specify '--server <servername>' as an argument.
   code of '1' means at least one device had a compile failure, an exit code of
   '2' means at least one device had resource changes, and an exit code of '4'
   means at least one device had resource failures. Exit codes of '3', '5', '6',
-  or '7' means that a bitwise combination of the preceeding exit codes happened.
+  or '7' means that a bitwise combination of the preceding exit codes happened.
 
 * --help:
   Print this help message

@@ -968,7 +968,7 @@ Puppet::Type.newtype(:file) do
     properties.each do |thing|
       next unless [:mode, :owner, :group, :seluser, :selrole, :seltype, :selrange].include?(thing.name)
 
-      # Make sure we get a new stat objct
+      # Make sure we get a new stat object
       @stat = :needs_stat
       currentvalue = thing.retrieve
       thing.sync unless thing.safe_insync?(currentvalue)

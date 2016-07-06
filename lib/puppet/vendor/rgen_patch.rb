@@ -12,7 +12,7 @@
 #
 # This patch changes the implementation so that the test for MMBase/
 # MMGeneric is made prior to the iteration, thus avoiding the iteration
-# alltogether for all non model objects
+# altogether for all non model objects
 #
 # The patch also changes the setXXX method to allow it to optimize the way
 # it ensures that the added elements are unique. Calling the addXXX method

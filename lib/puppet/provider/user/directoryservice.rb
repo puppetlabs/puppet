@@ -367,7 +367,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     # flushing the dscl cache to allow all dscl calls to get INTO the cache
     # first. This could be made faster (and avoid a sleep call) by finding
     # a way to enter calls into the dscl cache faster. A sleep time of 1
-    # second would intermittantly require a second Puppet run to set
+    # second would intermittently require a second Puppet run to set
     # properties, so 2 seconds seems to be the minimum working value.
     sleep 2
     flush_dscl_cache

@@ -41,7 +41,7 @@ module Puppet::Util::Profiler
   # This outputs logs entries to the Puppet masters logging destination
   # providing the time it took, a message describing the profiled code
   # and a leaf location marking where the profile method was called
-  # in the profiled hierachy.
+  # in the profiled hierarchy.
   #
   # @param message [String] A description of the profiled event
   # @param metric_id [Array] A list of strings making up the ID of a metric to profile

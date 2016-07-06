@@ -1,7 +1,7 @@
 # A Visitor performs delegation to a given receiver based on the configuration of the Visitor.
 # A new visitor is created with a given receiver, a method prefix, min, and max argument counts.
 # e.g.
-#   vistor = Visitor.new(self, "visit_from", 1, 1)
+#   visitor = Visitor.new(self, "visit_from", 1, 1)
 # will make the visitor call "self.visit_from_CLASS(x)" where CLASS is resolved to the given
 # objects class, or one of is ancestors, the first class for which there is an implementation of
 # a method will be selected.
@@ -72,7 +72,7 @@ class Puppet::Pops::Visitor
   end
 
   # Visit an explicit receiver with 2 args
-  # (This is ~30% faster than calling th general method)
+  # (This is ~30% faster than calling the general method)
   #
   def visit_this_2(receiver, thing, arg1, arg2)
     if method_name = @cache[thing.class]

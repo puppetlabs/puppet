@@ -47,7 +47,7 @@ Puppet::Type.type(:zfs).provide(:zfs) do
   [:aclmode, :shareiscsi].each do |field|
     # The zfs commands use the property value '-' to indicate that the
     # property is not set. We make use of this value to indicate that the
-    # property is not set since it is not avaliable. Conversely, if these
+    # property is not set since it is not available. Conversely, if these
     # properties are attempted to be unset, and resulted in an error, our
     # best bet is to catch the exception and continue.
     define_method(field) do

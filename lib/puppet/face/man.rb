@@ -12,7 +12,7 @@ Puppet::Face.define(:man, '0.0.1') do
   description <<-EOT
     This subcommand displays manual pages for all Puppet subcommands. If the
     `ronn` gem (<https://github.com/rtomayko/ronn/>) is installed on your
-    system, puppet man will display fully-formated man pages. If `ronn` is not
+    system, puppet man will display fully-formatted man pages. If `ronn` is not
     available, puppet man will display the raw (but human-readable) source text
     in a pager.
   EOT

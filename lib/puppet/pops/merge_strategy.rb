@@ -123,7 +123,7 @@ module Puppet::Pops
       result
     end
 
-    # Converts a single value to the type expeced when peforming a merge of two elements
+    # Converts a single value to the type expected when merging two elements
     # @param value [Object] the value to convert
     # @return [Object] the converted value
     def convert_value(value)

@@ -13,7 +13,7 @@ class Puppet::Transaction::EventManager
   # @!attribute [r] events
   #   @todo Determine if this instance variable is used for anything aside from testing.
   #   @return [Array<Puppet::Transaction::Events>] A list of events that can be
-  #     handled by the target resouce. Events that cannot be handled by the
+  #     handled by the target resource. Events that cannot be handled by the
   #     target resource will be discarded.
   attr_reader :events
 

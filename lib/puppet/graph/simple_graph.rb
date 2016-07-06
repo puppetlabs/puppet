@@ -399,7 +399,7 @@ class Puppet::Graph::SimpleGraph
   end
 
   # Return an array of the edge-sets between a series of n+1 vertices (f=v0,v1,v2...t=vn)
-  #   connecting the two given verticies.  The ith edge set is an array containing all the
+  #   connecting the two given vertices.  The ith edge set is an array containing all the
   #   edges between v(i) and v(i+1); these are (by definition) never empty.
   #
   #     * if f == t, the list is empty
@@ -468,7 +468,7 @@ class Puppet::Graph::SimpleGraph
     }
   end
 
-  # This flag may be set to true to use the new YAML serialzation
+  # This flag may be set to true to use the new YAML serialization
   # format (where @vertices is a simple list of vertices rather than a
   # list of VertexWrapper objects).  Deserialization supports both
   # formats regardless of the setting of this flag.

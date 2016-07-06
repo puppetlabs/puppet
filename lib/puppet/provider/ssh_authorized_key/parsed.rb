@@ -68,7 +68,7 @@ Puppet::Type.type(:ssh_authorized_key).provide(
     end
   end
 
-  # parse sshv2 option strings, wich is a comma separated list of
+  # Parse sshv2 option strings, which is a comma-separated list of
   # either key="values" elements or bare-word elements
   def self.parse_options(options)
     result = []

@@ -333,7 +333,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     # syntax.  It's important that we use a copy of the new param instance
     # here, not the old one, and not the original new one, so that the source
     # is registered correctly for later overrides but the values aren't
-    # implcitly shared when multiple resources are overrriden at once (see
+    # implicitly shared when multiple resources are overridden at once (see
     # ticket #3556).
     if param.add
       param = param.dup

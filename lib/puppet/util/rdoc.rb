@@ -2,7 +2,7 @@ require 'puppet/util'
 module Puppet::Util::RDoc
   module_function
 
-  # launch a rdoc documenation process
+  # launch a rdoc documentation process
   # with the files/dir passed in +files+
   def rdoc(outputdir, files, charset = nil)
 
@@ -26,7 +26,7 @@ module Puppet::Util::RDoc
 
     options << "--force-update"
     options += [ "--charset", charset] if charset
-    # Rdoc root default is Dir.pwd, but the win32-dir gem monkey patchs Dir.pwd
+    # Rdoc root default is Dir.pwd, but the win32-dir gem monkey patches Dir.pwd
     # replacing Ruby's normal / with \.  When RDoc generates relative paths it
     # uses relative_path_from that will generate errors when the slashes don't
     # properly match.  This is a workaround for that issue.

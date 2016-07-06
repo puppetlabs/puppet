@@ -106,7 +106,7 @@ Puppet::Type.newtype(:augeas) do
     desc "The changes which should be applied to the filesystem. This
     can be a command or an array of commands. The following commands are supported:
 
-    * `set <PATH> <VALUE>` --- Sets the value `VALUE` at loction `PATH`
+    * `set <PATH> <VALUE>` --- Sets the value `VALUE` at location `PATH`
     * `setm <PATH> <SUB> <VALUE>` --- Sets multiple nodes (matching `SUB` relative to `PATH`) to `VALUE`
     * `rm <PATH>` --- Removes the node at location `PATH`
     * `remove <PATH>` --- Synonym for `rm`
@@ -137,7 +137,7 @@ Puppet::Type.newtype(:augeas) do
 
   newparam(:force) do
     desc "Optional command to force the augeas type to execute even if it thinks changes
-    will not be made. This does not overide the `onlyif` parameter."
+    will not be made. This does not override the `onlyif` parameter."
 
     defaultto false
   end
@@ -192,7 +192,7 @@ Puppet::Type.newtype(:augeas) do
     end
 
     # if the onlyif resource is provided, then the value is parsed.
-    # a return value of 0 will stop exection because it matches the
+    # a return value of 0 will stop execution because it matches the
     # default value.
     def retrieve
       if @resource.provider.need_to_run?()

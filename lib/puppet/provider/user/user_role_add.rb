@@ -161,7 +161,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
     return @shadow_entry if defined? @shadow_entry
     @shadow_entry = File.readlines(target_file_path).
       reject { |r| r =~ /^[^\w]/ }.
-      # PUP-229 dont suppress the empty fields
+      # PUP-229: don't suppress the empty fields
       collect { |l| l.chomp.split(':', -1) }.
       find { |user, _| user == @resource[:name] }
   end

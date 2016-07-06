@@ -47,7 +47,7 @@ class Puppet::Util::Windows::AccessControlEntry
 
   # Returns true if this ACE applies to child directories.
   #
-  # @return [Boolean] true if the ACE applies to child direcories
+  # @return [Boolean] true if the ACE applies to child directories
   def container_inherit?
     (@flags & CONTAINER_INHERIT_ACE) == CONTAINER_INHERIT_ACE
   end

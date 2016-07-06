@@ -57,7 +57,7 @@ module Puppet::Util::Windows::ADSI
     end
 
     # This method should *only* be used to generate WinNT://<SID> style monikers
-    # used for IAdsGroup::Add / IAdsGroup::Remove.  These URIs are not useable
+    # used for IAdsGroup::Add / IAdsGroup::Remove.  These URIs are not usable
     # to resolve an account with WIN32OLE.connect
     # Valid input is a SID::Principal, S-X-X style SID string or any valid
     # account name with or without domain prefix
@@ -377,7 +377,7 @@ module Puppet::Util::Windows::ADSI
         Puppet::Util::Windows::ADSI.wmi_connection.Delete("Win32_UserProfile.SID='#{sid}'")
       rescue WIN32OLERuntimeError => e
         # https://social.technet.microsoft.com/Forums/en/ITCG/thread/0f190051-ac96-4bf1-a47f-6b864bfacee5
-        # Prior to Vista SP1, there's no builtin way to programmatically
+        # Prior to Vista SP1, there's no built-in way to programmatically
         # delete user profiles (except for delprof.exe). So try to delete
         # but warn if we fail
         raise e unless e.message.include?('80041010')

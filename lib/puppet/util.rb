@@ -118,8 +118,8 @@ module Util
 
   # Run some code with a specific environment.  Resets the environment back to
   # what it was at the end of the code.
-  # Windows can store unicode chars in the environment as keys or values, but
-  # Rubys ENV tries to roundtrip them through the local codepage, which can
+  # Windows can store Unicode chars in the environment as keys or values, but
+  # Ruby's ENV tries to roundtrip them through the local codepage, which can
   # cause encoding problems - underlying helpers use Windows APIs on Windows
   # see https://bugs.ruby-lang.org/issues/8822
   def withenv(hash, mode = :posix)

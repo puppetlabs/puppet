@@ -11,7 +11,7 @@ Puppet::Type.newtype(:yumrepo) do
 
     Continuation lines that yum supports (for the `baseurl`, for example)
     are not supported. This type does not attempt to read or verify the
-    exinstence of files listed in the `include` attribute."
+    existence of files listed in the `include` attribute."
 
   # Ensure yumrepos can be removed too.
   ensurable

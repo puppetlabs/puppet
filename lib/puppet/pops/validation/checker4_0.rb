@@ -310,7 +310,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   # Only used for function names, grammar should not be able to produce something faulty, but
-  # check anyway if model is created programatically (it will fail in transformation to AST for sure).
+  # check anyway if model is created programmatically (it will fail in transformation to AST for sure).
   def check_NamedAccessExpression(o)
     name = o.right_expr
     unless name.is_a? Model::QualifiedName
