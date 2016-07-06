@@ -700,34 +700,74 @@ class StringConverter
   def string_PStringType(val_type, val, format_map, _)
     f = get_format(val_type, format_map)
     case f.format
-    when :s, :p
+    when :s
       Kernel.format(f.orig_fmt, val)
+
+    when :p
+      apply_string_flags(f, puppet_quote(val))
 
     when :c
       c_val = val.capitalize
-      substitute = f.alt? ? 'p' : 's'
-      Kernel.format(f.orig_fmt.gsub('c', substitute), c_val)
+      f.alt? ? apply_string_flags(f, puppet_quote(c_val)) :  Kernel.format(f.orig_fmt.gsub('c', 's'), c_val)
 
     when :C
       c_val = val.split('::').map {|s| s.capitalize }.join('::')
-      substitute = f.alt? ? 'p' : 's'
-      Kernel.format(f.orig_fmt.gsub('C', substitute), c_val)
+      f.alt? ? apply_string_flags(f, puppet_quote(c_val)) :  Kernel.format(f.orig_fmt.gsub('C', 's'), c_val)
 
     when :u
-      substitute = f.alt? ? 'p' : 's'
-      Kernel.format(f.orig_fmt.gsub('u', substitute), val).upcase
+      c_val = val.upcase
+      f.alt? ? apply_string_flags(f, puppet_quote(c_val)) :  Kernel.format(f.orig_fmt.gsub('u', 's'), c_val)
 
     when :d
-      substitute = f.alt? ? 'p' : 's'
-      Kernel.format(f.orig_fmt.gsub('d', substitute), val).downcase
+      c_val = val.downcase
+      f.alt? ? apply_string_flags(f, puppet_quote(c_val)) :  Kernel.format(f.orig_fmt.gsub('d', 's'), c_val)
 
     when :t  # trim
       c_val = val.strip
-      substitute = f.alt? ? 'p' : 's'
-      Kernel.format(f.orig_fmt.gsub('t', substitute), c_val)
+      f.alt? ? apply_string_flags(f, puppet_quote(c_val)) :  Kernel.format(f.orig_fmt.gsub('t', 's'), c_val)
 
     else
       raise FormatError.new('String', f.format, 'cCudspt')
+    end
+  end
+
+  # Performs a '%p' formatting of the given _str_ such that the output conforms to Puppet syntax. An ascii string
+  # without control characters, dollar, single-qoute, or backslash, will be quoted using single quotes. All other
+  # strings will be quoted using double quotes.
+  #
+  # @param [String] str the string that should be formatted
+  # @return [String] the formatted string
+  #
+  # @api public
+  def puppet_quote(str)
+    if str.ascii_only? && (str =~ /(?:'|\$|\p{Cntrl}|\\)/).nil?
+      "'#{str}'"
+    else
+      bld = '"'
+      str.codepoints do |codepoint|
+        case codepoint
+        when 0x09
+          bld << '\\t'
+        when 0x0a
+          bld << '\\n'
+        when 0x0d
+          bld << '\\r'
+        when 0x22
+          bld << '\\"'
+        when 0x24
+          bld << '\\$'
+        when 0x5c
+          bld << '\\\\'
+        else
+          if codepoint < 0x20 || codepoint > 0x7f
+            bld << sprintf('\\u{%X}', codepoint)
+          else
+            bld.concat(codepoint)
+          end
+        end
+      end
+      bld << '"'
+      bld
     end
   end
 

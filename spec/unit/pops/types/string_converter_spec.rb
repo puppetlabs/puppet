@@ -115,18 +115,44 @@ describe 'The string converter' do
       expect(converter.convert('3.1415', string_formats)).to eq('3.1415')
     end
 
-    it 'The %p format for string produces quoted string' do
-      string_formats = { Puppet::Pops::Types::PStringType::DEFAULT => '%p'}
-      expect(converter.convert("hello\tworld", string_formats)).to eq('"hello\\tworld"')
+    context 'The %p format for string produces' do
+      let!(:string_formats) { { Puppet::Pops::Types::PStringType::DEFAULT => '%p'} }
+      it 'double quoted result for string that contains control characters' do
+         expect(converter.convert("hello\tworld.\r\nSun is brigth today.", string_formats)).to eq('"hello\\tworld.\\r\\nSun is brigth today."')
+      end
+
+      it 'singe quoted result for string that is plain ascii without \\, $ or control characters' do
+        expect(converter.convert('hello world', string_formats)).to eq("'hello world'")
+      end
+
+      it 'quoted 5-byte unicode chars' do
+        expect(converter.convert("smile \u{1f603}.", string_formats)).to eq('"smile \\u{1F603}."')
+      end
+
+      it 'quoted 2-byte unicode chars' do
+        expect(converter.convert("esc \u{1b}.", string_formats)).to eq('"esc \\u{1B}."')
+      end
+
+      it 'escape for $' do
+        expect(converter.convert('escape the $ sign', string_formats)).to eq('"escape the \$ sign"')
+      end
+
+      it 'escape for double qoute but not for single quote' do
+        expect(converter.convert('the \' single and " double quote', string_formats)).to eq('"the \' single and \\" double quote"')
+      end
+
+      it 'no escape for #' do
+        expect(converter.convert('do not escape #{x}', string_formats)).to eq('\'do not escape #{x}\'')
+      end
     end
 
     {
       '%s'   => 'hello::world',
-      '%p'   => '"hello::world"',
+      '%p'   => "'hello::world'",
       '%c'   => 'Hello::world',
-      '%#c'   => '"Hello::world"',
+      '%#c'   => "'Hello::world'",
       '%u'   => 'HELLO::WORLD',
-      '%#u'   => '"HELLO::WORLD"',
+      '%#u'   => "'HELLO::WORLD'",
     }.each do |fmt, result |
       it "the format #{fmt} produces #{result}" do
         string_formats = { Puppet::Pops::Types::PStringType::DEFAULT => fmt}
@@ -136,9 +162,9 @@ describe 'The string converter' do
 
     {
       '%c'   => 'Hello::world',
-      '%#c'  => '"Hello::world"',
+      '%#c'  => "'Hello::world'",
       '%d'   => 'hello::world',
-      '%#d'  => '"hello::world"',
+      '%#d'  => "'hello::world'",
     }.each do |fmt, result |
       it "the format #{fmt} produces #{result}" do
         string_formats = { Puppet::Pops::Types::PStringType::DEFAULT => fmt}
@@ -170,9 +196,9 @@ describe 'The string converter' do
     end
 
     {
-      '   a b  ' => '"a b"',
-      'a b  '    => '"a b"',
-      '   a b'   => '"a b"',
+      '   a b  ' => "'a b'",
+      'a b  '    => "'a b'",
+      '   a b'   => "'a b'",
     }.each do |input, result |
       it "the input #{input} is trimmed to #{result} by using format '%#t'" do
         string_formats = { Puppet::Pops::Types::PStringType::DEFAULT => '%#t'}
@@ -204,13 +230,13 @@ describe 'The string converter' do
 
     {
       '%4.2s'   => '  he',
-      '%4.2p'   => '  "h',
+      '%4.2p'   => "  'h",
       '%4.2c'   => '  He',
-      '%#4.2c'  => '  "H',
+      '%#4.2c'  => "  'H",
       '%4.2u'   => '  HE',
-      '%#4.2u'  => '  "H',
+      '%#4.2u'  => "  'H",
       '%4.2d'   => '  he',
-      '%#4.2d'  => '  "h',
+      '%#4.2d'  => "  'h"
     }.each do |fmt, result |
       it "width and precision can be combined with #{fmt}" do
         string_formats = { Puppet::Pops::Types::PStringType::DEFAULT => fmt}
@@ -590,30 +616,30 @@ describe 'The string converter' do
 
   context 'when converting array' do
     it 'the default string representation is using [] delimiters, joins with ',' and uses %p for values' do
-      expect(converter.convert(["hello", "world"], :default)).to eq('["hello", "world"]')
+      expect(converter.convert(["hello", "world"], :default)).to eq("['hello', 'world']")
     end
 
-    { "%s"  => '[1, "hello"]',
-      "%p"  => '[1, "hello"]',
-      "%a"  => '[1, "hello"]',
-      "%<a"  => '<1, "hello">',
-      "%[a"  => '[1, "hello"]',
-      "%(a"  => '(1, "hello")',
-      "%{a"  => '{1, "hello"}',
-      "% a"  => '1, "hello"',
+    { "%s"  => "[1, 'hello']",
+      "%p"  => "[1, 'hello']",
+      "%a"  => "[1, 'hello']",
+      "%<a"  => "<1, 'hello'>",
+      "%[a"  => "[1, 'hello']",
+      "%(a"  => "(1, 'hello')",
+      "%{a"  => "{1, 'hello'}",
+      "% a"  => "1, 'hello'",
 
       {'format' => '%(a',
         'separator' => ''
-      } => '(1 "hello")',
+      } => "(1 'hello')",
 
       {'format' => '%|a',
         'separator' => ''
-      } => '|1 "hello"|',
+      } => "|1 'hello'|",
 
-      {'format' => '%(a', 
-        'separator' => '', 
+      {'format' => '%(a',
+        'separator' => '',
         'string_formats' => {Puppet::Pops::Types::PIntegerType::DEFAULT => '%#x'}
-      } => '(0x1 "hello")',
+      } => "(0x1 'hello')",
     }.each do |fmt, result |
       it "the format #{fmt} produces #{result}" do
         string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => fmt}
@@ -624,7 +650,7 @@ describe 'The string converter' do
     it "multiple rules selects most specific" do
       short_array_t = factory.array_of(factory.integer, factory.range(1,2))
       long_array_t = factory.array_of(factory.integer, factory.range(3,100))
-      string_formats = { 
+      string_formats = {
         short_array_t => "%(a",
         long_array_t  => "%[a",
       }
@@ -725,27 +751,27 @@ describe 'The string converter' do
 
   context 'when converting hash' do
     it 'the default string representation is using {} delimiters, joins with '=>' and uses %p for values' do
-      expect(converter.convert({"hello" => "world"}, :default)).to eq('{"hello" => "world"}')
+      expect(converter.convert({"hello" => "world"}, :default)).to eq("{'hello' => 'world'}")
     end
 
-    { "%s"  => '{1 => "world"}',
-      "%p"  => '{1 => "world"}',
-      "%h"  => '{1 => "world"}',
-      "%a"  => '[[1, "world"]]',
-      "%<h"  => '<1 => "world">',
-      "%[h"  => '[1 => "world"]',
-      "%(h"  => '(1 => "world")',
-      "%{h"  => '{1 => "world"}',
-      "% h"  => '1 => "world"',
+    { "%s"  => "{1 => 'world'}",
+      "%p"  => "{1 => 'world'}",
+      "%h"  => "{1 => 'world'}",
+      "%a"  => "[[1, 'world']]",
+      "%<h"  => "<1 => 'world'>",
+      "%[h"  => "[1 => 'world']",
+      "%(h"  => "(1 => 'world')",
+      "%{h"  => "{1 => 'world'}",
+      "% h"  => "1 => 'world'",
 
       {'format' => '%(h',
         'separator2' => ' '
-      } => '(1 "world")',
+      } => "(1 'world')",
 
-      {'format' => '%(h', 
-        'separator2' => ' ', 
+      {'format' => '%(h',
+        'separator2' => ' ',
         'string_formats' => {Puppet::Pops::Types::PIntegerType::DEFAULT => '%#x'}
-      } => '(0x1 "world")',
+      } => "(0x1 'world')",
     }.each do |fmt, result |
       it "the format #{fmt} produces #{result}" do
         string_formats = { Puppet::Pops::Types::PHashType::DEFAULT => fmt}
@@ -753,17 +779,17 @@ describe 'The string converter' do
       end
     end
 
-    {  "%s"  => '{1 => "hello", 2 => "world"}',
+    {  "%s"  => "{1 => 'hello', 2 => 'world'}",
 
        {'format' => '%(h',
          'separator2' => ' '
-       } => '(1 "hello", 2 "world")',
+       } => "(1 'hello', 2 'world')",
 
-       {'format' => '%(h', 
-         'separator' => ' >>', 
-         'separator2' => ' <=> ', 
+       {'format' => '%(h',
+         'separator' => ' >>',
+         'separator2' => ' <=> ',
          'string_formats' => {Puppet::Pops::Types::PIntegerType::DEFAULT => '%#x'}
-       } => '(0x1 <=> "hello" >> 0x2 <=> "world")',
+       } => "(0x1 <=> 'hello' >> 0x2 <=> 'world')",
      }.each do |fmt, result |
        it "the format #{fmt} produces #{result}" do
          string_formats = { Puppet::Pops::Types::PHashType::DEFAULT => fmt}
@@ -780,9 +806,9 @@ describe 'The string converter' do
       # formatting matters here
       result = [
        "{",
-       "  1 => \"hello\",",
+       "  1 => 'hello',",
        "  2 => {",
-       "    3 => \"world\"",
+       "    3 => 'world'",
        "  }",
        "}"
        ].join("\n")
@@ -792,7 +818,7 @@ describe 'The string converter' do
 
     context "containing an array" do
       it 'the hash and array renders without breaks and indentation by default' do
-        result = '{1 => [1, 2, 3]}'
+        result = "{1 => [1, 2, 3]}"
         formatted = converter.convert({ 1 => [1, 2, 3] }, :default)
         expect(formatted).to eq(result)
       end

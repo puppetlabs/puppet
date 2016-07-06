@@ -565,7 +565,7 @@ describe 'the new function' do
   context 'when invoked on String' do
     { {}            => 'Notify[String, {}]',
       []            => 'Notify[String, []]',
-      {'a'=>true}   => 'Notify[String, {"a" => true}]',
+      {'a'=>true}   => "Notify[String, {'a' => true}]",
       [1,2,3,4]     => 'Notify[String, [1, 2, 3, 4]]',
       [[1,2],[3,4]] => 'Notify[String, [[1, 2], [3, 4]]]',
       'abcd'        => 'Notify[String, abcd]',
