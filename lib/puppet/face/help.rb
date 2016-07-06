@@ -77,25 +77,31 @@ Puppet::Face.define(:help, '0.0.1') do
 
   def render_application_help(applicationname)
     return Puppet::Application[applicationname].help
+  rescue StandardError, LoadError => detail
+    msg = <<-MSG
+Could not load help for the application #{applicationname}.
+Please check the error logs for more information.
+
+Detail: "#{detail.message}"
+MSG
+    fail ArgumentError, msg, detail.backtrace
   end
 
   def render_face_help(facename, actionname, version)
     face, action = load_face_help(facename, actionname, version)
     return template_for(face, action).result(binding)
-  end
-
-  def load_face_help(facename, actionname, version)
-    begin
-      face = Puppet::Face[facename.to_sym, version]
-    rescue Puppet::Error => detail
-      msg = <<-MSG
+  rescue StandardError, LoadError => detail
+    msg = <<-MSG
 Could not load help for the face #{facename}.
 Please check the error logs for more information.
 
 Detail: "#{detail.message}"
-      MSG
-      fail ArgumentError, msg, detail.backtrace
-    end
+MSG
+    fail ArgumentError, msg, detail.backtrace
+  end
+
+  def load_face_help(facename, actionname, version)
+    face = Puppet::Face[facename.to_sym, version]
     if actionname
       action = face.get_action(actionname.to_sym)
       if not action
@@ -141,7 +147,7 @@ Detail: "#{detail.message}"
         begin
           face = Puppet::Face[appname, :current]
           result << [appname, face.summary]
-        rescue Puppet::Error
+        rescue StandardError, LoadError
           result << [ "! #{appname}", "! Subcommand unavailable due to error. Check error logs." ]
         end
       else
@@ -162,7 +168,7 @@ Detail: "#{detail.message}"
           return md[1]
         end
       end
-    rescue StandardError
+    rescue StandardError, LoadError
       return "! Subcommand unavailable due to error. Check error logs."
     end
     return ''
