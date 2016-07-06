@@ -90,6 +90,26 @@ describe 'the new function' do
       )).to have_resource('Notify[Integer, 1]')
     end
 
+    context 'when prefixed by a sign' do
+      { '+1'     => 1,
+        '-1'     => -1,
+        '+ 1'    => 1,
+        '- 1'    => -1,
+        '+0x10'  => 16,
+        '+ 0x10' => 16,
+        '-0x10'  => -16,
+        '- 0x10' => -16
+      }.each do |str, result|
+        it "produces #{result} from the string '#{str}'" do
+          expect(compile_to_catalog(<<-"MANIFEST"
+            $x = Integer.new("#{str}")
+            notify { "${type($x, generalized)}, $x": }
+          MANIFEST
+          )).to have_resource("Notify[Integer, #{result}]")
+        end
+      end
+    end
+
     context "when radix is not set it uses default and" do
       { "10"     => 10,
         "010"    => 8,
@@ -131,7 +151,11 @@ describe 'the new function' do
         "010"    => 2,
         "00010"  => 2,
         '0B111'  => 7,
-        '0b111'  => 7
+        '0b111'  => 7,
+        '+0B111' => 7,
+        '-0b111' => -7,
+        '+ 0B111'=> 7,
+        '- 0b111'=> -7
       }.each do |str, result|
         it "produces #{result} from the string '#{str}'" do
           expect(compile_to_catalog(<<-"MANIFEST"
@@ -142,8 +166,12 @@ describe 'the new function' do
         end
       end
 
-      { "0x10"  => :error,
-        '0X10'  => :error
+      { '0x10'  => :error,
+        '0X10'  => :error,
+        '+0X10' => :error,
+        '-0X10' => :error,
+        '+ 0X10'=> :error,
+        '- 0X10'=> :error
       }.each do |str, result|
         it "errors when given the non binary value compliant string '#{str}'" do
           expect{compile_to_catalog(<<-"MANIFEST"
@@ -158,6 +186,10 @@ describe 'the new function' do
       { "10"     => 8,
         "010"    => 8,
         "00010"  => 8,
+        '+00010' => 8,
+        '-00010' => -8,
+        '+ 00010'=> 8,
+        '- 00010'=> -8,
       }.each do |str, result|
         it "produces #{result} from the string '#{str}'" do
           expect(compile_to_catalog(<<-"MANIFEST"
@@ -172,6 +204,10 @@ describe 'the new function' do
         '0X10'  => :error,
         '0B10'  => :error,
         '0b10'  => :error,
+        '+0b10' => :error,
+        '-0b10' => :error,
+        '+ 0b10'=> :error,
+        '- 0b10'=> :error,
       }.each do |str, result|
         it "errors when given the non octal value compliant string '#{str}'" do
           expect{compile_to_catalog(<<-"MANIFEST"
@@ -190,6 +226,10 @@ describe 'the new function' do
         "0X10"   => 16,
         "0b1"    => 16*11+1,
         "0B1"    => 16*11+1,
+        '+0B1'   => 16*11+1,
+        '-0B1'   => -16*11-1,
+        '+ 0B1'  => 16*11+1,
+        '- 0B1'  => -16*11-1,
       }.each do |str, result|
         it "produces #{result} from the string '#{str}'" do
           expect(compile_to_catalog(<<-"MANIFEST"
@@ -201,6 +241,10 @@ describe 'the new function' do
       end
 
       { '0XGG'  => :error,
+        '+0XGG' => :error,
+        '-0XGG' => :error,
+        '+ 0XGG'=> :error,
+        '- 0XGG'=> :error,
       }.each do |str, result|
         it "errors when given the non octal value compliant string '#{str}'" do
           expect{compile_to_catalog(<<-"MANIFEST"
@@ -226,7 +270,6 @@ describe 'the new function' do
       end
 
       { '0X10'  => :error,
-        '0X10'  => :error,
         '0b10'  => :error,
         '0B10'  => :error,
       }.each do |str, result|
@@ -291,6 +334,10 @@ describe 'the new function' do
     { 42 => "Notify[Integer, 42]",
       42.3 => "Notify[Float, 42.3]",
       "42.0" => "Notify[Float, 42.0]",
+      "+42.0" => "Notify[Float, 42.0]",
+      "-42.0" => "Notify[Float, -42.0]",
+      "+ 42.0" => "Notify[Float, 42.0]",
+      "- 42.0" => "Notify[Float, -42.0]",
       "42.3" => "Notify[Float, 42.3]",
       "0x10" => "Notify[Integer, 16]",
       "010" => "Notify[Integer, 8]",
@@ -321,6 +368,10 @@ describe 'the new function' do
     { 42     => "Notify[Float, 42.0]",
       42.3   => "Notify[Float, 42.3]",
       "42.0" => "Notify[Float, 42.0]",
+      "+42.0" => "Notify[Float, 42.0]",
+      "-42.0" => "Notify[Float, -42.0]",
+      "+ 42.0" => "Notify[Float, 42.0]",
+      "- 42.0" => "Notify[Float, -42.0]",
       "42.3" => "Notify[Float, 42.3]",
       "0x10" => "Notify[Float, 16.0]",
       "010"  => "Notify[Float, 10.0]",
