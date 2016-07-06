@@ -147,6 +147,18 @@ describe 'The string converter' do
     end
 
     {
+      [nil, '%.1p']  => 'u',
+      [nil, '%#.2p'] => '"u',
+      [:default, '%.1p'] => 'd',
+      [true, '%.2s'] => 'tr',
+      [true, '%.2y'] => 'ye',
+    }.each do |args, result |
+      it "the format #{args[1]} produces #{result} for value #{args[0]}" do
+        expect(converter.convert(*args)).to eq(result)
+      end
+    end
+
+    {
       '   a b  ' => 'a b',
       'a b  '    => 'a b',
       '   a b'   => 'a b',
@@ -197,8 +209,6 @@ describe 'The string converter' do
       '%#4.2c'  => '  "H',
       '%4.2u'   => '  HE',
       '%#4.2u'  => '  "H',
-      '%4.2c'   => '  He',
-      '%#4.2c'  => '  "H',
       '%4.2d'   => '  he',
       '%#4.2d'  => '  "h',
     }.each do |fmt, result |
