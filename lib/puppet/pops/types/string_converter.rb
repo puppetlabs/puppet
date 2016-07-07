@@ -452,10 +452,10 @@ class StringConverter
   def convert(value, string_formats = :default)
     options = DEFAULT_STRING_FORMATS
 
+    value_type = TypeCalculator.infer_set(value)
     if string_formats.is_a?(String)
       # add the format given for the exact type
-      t = TypeCalculator.infer_set(value)
-      string_formats = { t => string_formats }
+      string_formats = { value_type => string_formats }
     end
 
     case string_formats
@@ -471,7 +471,7 @@ class StringConverter
       raise ArgumentError, "string conversion expects a Default value or a Hash of type to format mappings, got a '#{string_formats.class}'"
     end
 
-    _convert(TypeCalculator.infer_set(value), value, options, DEFAULT_INDENTATION)
+    _convert(value_type, value, options, DEFAULT_INDENTATION)
   end
 
 #  # A method only used for manual debugging as the default output of the formatting rules is
@@ -557,21 +557,20 @@ class StringConverter
 
   def string_PDefaultType(val_type, val, format_map, _)
     f = get_format(val_type, format_map)
-    case f.format
+    format_literal(f, case f.format
     when :d, :s, :p
       f.alt? ? '"default"' : 'default'
     when :D
       f.alt? ? '"Default"' : 'Default'
     else
       raise FormatError.new('Default', f.format, 'dDsp')
-    end
+    end)
   end
 
   # @api private
   def string_PUndefType(val_type, val, format_map, _)
     f = get_format(val_type, format_map)
-    undef_str =
-    case f.format
+    format_literal(f, case f.format
     when :n
       f.alt? ? 'null' : 'nil'
     when :u
@@ -588,12 +587,7 @@ class StringConverter
       f.alt? ? '"undef"' : 'undef'
     else
       raise FormatError.new('Undef', f.format, 'nudxXobBeEfgGaAvVsp')
-    end
-    fmt = "%#{f.left ? '-' : ''}"
-    fmt << "#{f.width}" if f.width
-    fmt << ".#{f.prec}" if f.prec
-    fmt << "s"
-    Kernel.format(fmt,undef_str)
+    end)
   end
 
   # @api private
@@ -603,22 +597,22 @@ class StringConverter
     when :t
       # 'true'/'false' or 't'/'f' if in alt mode
       str_bool = val.to_s
-      f.alt? ? str_bool[0] : str_bool
+      format_literal(f, f.alt? ? str_bool[0] : str_bool)
 
     when :T
       # 'True'/'False' or 'T'/'F' if in alt mode
       str_bool = val.to_s.capitalize
-      f.alt? ? str_bool[0] : str_bool
+      format_literal(f, f.alt? ? str_bool[0] : str_bool)
 
     when :y
       # 'yes'/'no' or 'y'/'n' if in alt mode
       str_bool = val ? 'yes' : 'no'
-      f.alt? ? str_bool[0] : str_bool
+      format_literal(f, f.alt? ? str_bool[0] : str_bool)
 
     when :Y
       # 'Yes'/'No' or 'Y'/'N' if in alt mode
       str_bool = val ? 'Yes' : 'No'
-      f.alt? ? str_bool[0] : str_bool
+      format_literal(f, f.alt? ? str_bool[0] : str_bool)
 
     when :d, :x, :X, :o, :b, :B
       # Boolean in numeric form, formated by integer rule
@@ -633,15 +627,30 @@ class StringConverter
       _convert(TypeCalculator.infer_set(numeric_bool), numeric_bool, string_formats, indentation)
 
     when :s
-      val.to_s
+      format_literal(f, val.to_s)
 
     when :p
-      val.inspect
+      format_literal(f, val.inspect)
 
     else
       raise FormatError.new('Boolean', f.format, 'tTyYdxXobBeEfgGaAsp')
     end
   end
+
+  # Performs post-processing of literals to apply width and precision flags
+  def format_literal(f, literal_str)
+    if f.left || f.width || f.prec
+      fmt = '%'
+      fmt << '-' if f.left
+      fmt << f.width.to_s if f.width
+      fmt << '.' << f.prec.to_s if f.prec
+      fmt << 's'
+      Kernel.format(fmt, literal_str)
+    else
+      literal_str
+    end
+  end
+  private :format_literal
 
   # @api private
   def string_PIntegerType(val_type, val, format_map, _)

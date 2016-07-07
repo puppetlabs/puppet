@@ -14,6 +14,10 @@ module Puppet::Pops::Patterns
   #
   NUMERIC = %r{\A[[:blank:]]*([-+]?)[[:blank:]]*((0[xX][0-9A-Fa-f]+)|(0?\d+)((?:\.\d+)?(?:[eE]-?\d+)?))[[:blank:]]*\z}
 
+  # Special expression that tests if there is whitespace between sign and number. The expression is used
+  # to strip such whitespace when normal Float or Integer conversion fails.
+  WS_BETWEEN_SIGN_AND_NUMBER = %r{\A([+-])[[:blank:]]+(.*)\z}
+
   # ILLEGAL_P3_1_HOSTNAME matches if a hostname contains illegal characters.
   # This check does not prevent pathological names like 'a....b', '.....', "---". etc.
   ILLEGAL_HOSTNAME_CHARS = %r{[^-\w.]}

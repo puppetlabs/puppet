@@ -968,6 +968,16 @@ class PIntegerType < PNumericType
           rescue TypeError => e
             raise TypeConversionError.new(e.message)
           rescue ArgumentError => e
+            # Test for special case where there is whitespace between sign and number
+            match = Patterns::WS_BETWEEN_SIGN_AND_NUMBER.match(from)
+            if match
+              begin
+                # Try again, this time with whitespace removed
+                return from_args(match[1] + match[2], radix)
+              rescue TypeConversionError
+                # Ignored to retain original error
+              end
+            end
             raise TypeConversionError.new(e.message)
           end
         else
@@ -1067,6 +1077,16 @@ class PFloatType < PNumericType
           rescue TypeError => e
             raise TypeConversionError.new(e.message)
           rescue ArgumentError => e
+            # Test for special case where there is whitespace between sign and number
+            match = Patterns::WS_BETWEEN_SIGN_AND_NUMBER.match(from)
+            if match
+              begin
+                # Try again, this time with whitespace removed
+                return from_args(match[1] + match[2])
+              rescue TypeConversionError
+                # Ignored to retain original error
+              end
+            end
             raise TypeConversionError.new(e.message)
           end
         else

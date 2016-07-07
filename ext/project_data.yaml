@@ -32,9 +32,8 @@ gem_platform_dependencies:
       CFPropertyList: '~> 2.2.6'
   x86-mingw32:
     gem_runtime_dependencies:
-      # ffi is pinned due to PUP-6473.
-      # Can be removed once https://github.com/ffi/ffi/issues/506 is resolved
-      ffi: ['~> 1.9.6', '<= 1.9.10']
+      # Pinning versions that require native extensions
+      ffi: '~> 1.9.6'
       # win32-xxxx gems are pinned due to PUP-6445
       win32-dir: '= 0.4.9'
       win32-eventlog: '= 0.6.5'
@@ -45,9 +44,7 @@ gem_platform_dependencies:
       minitar: '~> 0.5.4'
   x64-mingw32:
     gem_runtime_dependencies:
-      # ffi is pinned due to PUP-6473.
-      # Can be removed once https://github.com/ffi/ffi/issues/506 is resolved
-      ffi: ['~> 1.9.6', '<= 1.9.10']
+      ffi: '~> 1.9.6'
       # win32-xxxx gems are pinned due to PUP-6445
       win32-dir: '= 0.4.9'
       win32-eventlog: '= 0.6.5'
