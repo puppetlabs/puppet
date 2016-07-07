@@ -3,7 +3,7 @@ require 'puppet/pops'
 
 module Puppet::Pops
 module Serialization
-[JSON].each do |packer_module|
+[MsgPack, JSON].each do |packer_module|
   describe "the Puppet::Pops::Serialization over #{packer_module.name}" do
   let!(:dumper) { Model::ModelTreeDumper.new }
   let(:io) { StringIO.new }

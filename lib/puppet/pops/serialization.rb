@@ -12,6 +12,7 @@ end
 require_relative 'serialization/serializer'
 require_relative 'serialization/deserializer'
 require_relative 'serialization/json'
+require_relative 'serialization/msg_pack'
 require_relative 'serialization/time_factory'
 require_relative 'serialization/rgen'
 require_relative 'serialization/object'

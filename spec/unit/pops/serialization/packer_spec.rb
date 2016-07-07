@@ -3,7 +3,7 @@ require 'puppet/pops/serialization'
 
 module Puppet::Pops
 module Serialization
-[JSON].each do |packer_module|
+[MsgPack, JSON].each do |packer_module|
 describe "the Puppet::Pops::Serialization when using #{packer_module.name}" do
   let(:io) { StringIO.new }
   let(:reader_class) { packer_module::Reader }

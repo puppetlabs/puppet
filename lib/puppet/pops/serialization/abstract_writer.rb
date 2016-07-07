@@ -117,6 +117,11 @@ class AbstractWriter
   end
 
   # @api private
+  def type_registered?(payload_class)
+    @packer.type_registered?(payload_class)
+  end
+
+  # @api private
   def register_types
     # 0x00 - 0x0F are reserved for low-level serialization / tabulation extensions
 

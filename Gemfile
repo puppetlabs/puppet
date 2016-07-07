@@ -28,6 +28,7 @@ gem "facter", *location_for(ENV['FACTER_LOCATION'] || ['> 2.0', '< 4'])
 gem "hiera", *location_for(ENV['HIERA_LOCATION'] || ['>= 2.0', '< 4'])
 gem "semantic_puppet", *location_for(ENV['SEMANTIC_PUPPET_LOCATION'] || ['>= 0.1.3', '< 2'])
 gem "rake", "10.1.1", :require => false
+gem "msgpack", "~> 0.7.6", :require => false
 # Hiera has an unbound dependency on json_pure
 # json_pure 2.0.2+ officially requires Ruby >= 2.0, but should have specified that in 2.0
 gem 'json_pure', '~> 1.8', :require => false
@@ -76,7 +77,6 @@ group(:extra) do
   gem "net-ssh", '~> 2.1', :require => false
   gem "puppetlabs_spec_helper", :require => false
   gem "tzinfo", :require => false
-  gem "msgpack", :require => false
 end
 
 require 'yaml'
