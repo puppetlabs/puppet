@@ -4,11 +4,16 @@ require 'pathname'
 
 describe "Puppet.version Public API" do
   before :each do
+    @current_ver = Puppet.version
     Puppet.instance_eval do
       if @puppet_version
         @puppet_version = nil
       end
     end
+  end
+
+  after :each do
+    Puppet.version = @current_ver
   end
 
   context "without a VERSION file" do
@@ -39,4 +44,14 @@ describe "Puppet.version Public API" do
       expect(Puppet.version).to eq('1.2.3')
     end
   end
+
+  context "Using version setter" do
+    it "does not read VERSION file if using set version" do
+      Puppet.expects(:read_version_file).never
+      Puppet.version = '1.2.3'
+      expect(Puppet.version).to eq('1.2.3')
+    end
+  end
 end
+
+
