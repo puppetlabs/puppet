@@ -14,6 +14,7 @@ module Puppet
 
     require 'puppet/pops/patterns'
     require 'puppet/pops/utils'
+    require 'puppet/pops/puppet_stack'
 
     require 'puppet/pops/adaptable'
     require 'puppet/pops/adapters'
