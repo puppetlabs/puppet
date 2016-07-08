@@ -353,7 +353,7 @@ describe 'Puppet Type System' do
     end
 
     it 'can be created with a runtime and, puppet name pattern, and runtime replacement' do
-      expect(tf.runtime('ruby', [/^MyPackage::(.*)$/, 'MyModule::\1']).to_s).to eq("Runtime[ruby, [/^MyPackage::(.*)$/, 'MyModule::\\1']]")
+      expect(tf.runtime('ruby', [/^MyPackage::(.*)$/, 'MyModule::\1']).to_s).to eq("Runtime[ruby, [/^MyPackage::(.*)$/, \"MyModule::\\\\1\"]]")
     end
 
     it 'will map a Puppet name to a runtime type' do
