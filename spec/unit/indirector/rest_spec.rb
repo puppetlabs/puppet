@@ -219,6 +219,34 @@ describe Puppet::Indirector::REST do
     end
   end
 
+  it "should use server_list for server when available" do
+    terminus_class.expects(:server_setting).returns nil
+    Puppet[:server_list] = [["foo", "123"]]
+    expect(terminus_class.server).to eq("foo")
+  end
+
+  it "should prefer failover-selected server from server list" do
+    terminus_class.expects(:server_setting).returns nil
+    Puppet[:server_list] = [["foo", "123"],["bar", "321"]]
+    Puppet.override(:server => "bar") do
+      expect(terminus_class.server).to eq("bar")
+    end
+  end
+
+  it "should use server_list for port when available" do
+    terminus_class.expects(:port_setting).returns nil
+    Puppet[:server_list] = [["foo", "123"]]
+    expect(terminus_class.port).to eq(123)
+  end
+
+  it "should prefer failover-selected port from server list" do
+    terminus_class.expects(:port_setting).returns nil
+    Puppet[:server_list] = [["foo", "123"],["bar", "321"]]
+    Puppet.override(:serverport => "321") do
+      expect(terminus_class.port).to eq(321)
+    end
+  end
+
   it "should use an explicitly specified more-speciic server when failover is active" do
     terminus_class.expects(:server_setting).returns :ca_server
     Puppet[:ca_server] = "myserver"

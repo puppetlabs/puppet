@@ -42,6 +42,9 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   #         host/port pair.
   # ELSE IF we have a failover-selected host/port
   #    Use what the failover logic came up with
+  # ELSE IF the server_list setting is in use
+  #    Use the first entry - failover hasn't happened yet, but that
+  #    setting is still authoritative
   # ELSE
   #    Go for the legacy server/masterport settings, and hope for the best
   def self.server
@@ -52,8 +55,14 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
       begin
         Puppet.lookup(:server)
       rescue
-        Puppet.debug "Dynamically-bound server lookup failed, falling back to #{setting} setting"
-        Puppet.settings[setting || :server]
+        if primary_server = Puppet.settings[:server_list][0]
+          Puppet.debug "Dynamically-bound server lookup failed; using first entry"
+          primary_server[0]
+        else
+          setting ||= :server
+          Puppet.debug "Dynamically-bound server lookup failed, falling back to #{setting} setting"
+          Puppet.settings[setting]
+        end
       end
     end
   end
@@ -73,8 +82,18 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
       begin
         Puppet.lookup(:serverport).to_i
       rescue
-        Puppet.debug "Dynamically-bound port lookup failed; falling back to #{setting} setting"
-        Puppet.settings[setting || :masterport].to_i
+        if primary_server = Puppet.settings[:server_list][0]
+          Puppet.debug "Dynamically-bound port lookup failed; using first entry"
+
+          # Port might not be set, so we want to fallback in that
+          # case. We know we don't need to use `setting` here, since
+          # the default value of every port setting is `masterport`
+          (primary_server[1] || Puppet.settings[:masterport]).to_i
+        else
+          setting ||= :masterport
+          Puppet.debug "Dynamically-bound port lookup failed; falling back to #{setting} setting"
+          Puppet.settings[setting].to_i
+        end
       end
     end
   end
