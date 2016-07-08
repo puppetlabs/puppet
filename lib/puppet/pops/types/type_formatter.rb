@@ -434,8 +434,7 @@ class TypeFormatter
   # @api private
   def string_String(t)
     # Use single qoute on strings that does not contain single quotes, control characters, or backslashes.
-    # TODO: This should move to StringConverter when this formatter is changed to take advantage of it
-    @bld << (t.ascii_only? && (t =~ /^(?:'|\p{Cntrl}|\\)$/).nil? ? "'#{t}'" : t.inspect)
+    @bld << StringConverter.singleton.puppet_quote(t)
   end
 
   # @api private
