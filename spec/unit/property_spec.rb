@@ -146,6 +146,11 @@ describe Puppet::Property do
       property.class.stubs(:value_collection).returns(collection)
       expect(property.event.invalidate_refreshes).to be_truthy
     end
+
+    it "sets the redacted field on the event when the property is sensitive" do
+      property.sensitive = true
+      expect(property.event.redacted).to eq true
+    end
   end
 
   describe "when defining new values" do
