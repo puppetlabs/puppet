@@ -39,30 +39,4 @@ describe Puppet::Configurer::PluginHandler do
       expect(pluginhandler.download_plugins(environment)).to match_array(%w[/a /b])
     end
   end
-
-  context "when external facts are not supported" do
-    before :each do
-      Puppet.features.stubs(:external_facts?).returns(false)
-    end
-
-    it "downloads plugins only" do
-      plugin_downloader = stub('plugin-downloader', :evaluate => [])
-
-      factory.expects(:create_plugin_downloader).returns(plugin_downloader)
-      factory.expects(:create_plugin_facts_downloader).never
-
-      pluginhandler.download_plugins(environment)
-    end
-
-    it "returns downloaded plugin filenames only" do
-      Puppet.features.stubs(:external_facts?).returns(false)
-
-      plugin_downloader = stub('plugin-downloader', :evaluate => %w[/a])
-      facts_downloader = stub('facts-downloader')
-
-      factory.expects(:create_plugin_downloader).returns(plugin_downloader)
-
-      expect(pluginhandler.download_plugins(environment)).to match_array(%w[/a])
-    end
-  end
 end
