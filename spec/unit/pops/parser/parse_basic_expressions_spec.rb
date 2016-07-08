@@ -307,5 +307,13 @@ describe "egrammar parsing basic expressions" do
       expect(dump(parse("$a = \"yo${var.foo}yo\""))).to eq("(= $a (cat 'yo' (str (call-method (. $var foo))) 'yo'))")
       expect(dump(parse("$a = \"yo${var.foo.bar}yo\""))).to eq("(= $a (cat 'yo' (str (call-method (. (call-method (. $var foo)) bar))) 'yo'))")
     end
+
+    it "should interpolate interpolated expressions with a variable, \"yo${\"$var\"}yo\"" do
+      expect(dump(parse("$a = \"yo${\"$var\"}yo\""))).to eq("(= $a (cat 'yo' (str (cat '' (str $var) '')) 'yo'))")
+    end
+
+    it "should interpolate interpolated expressions with an expression, \"yo${\"${$var+2}\"}yo\"" do
+      expect(dump(parse("$a = \"yo${\"${$var+2}\"}yo\""))).to eq("(= $a (cat 'yo' (str (cat '' (str (+ $var 2)) '')) 'yo'))")
+    end
   end
 end
