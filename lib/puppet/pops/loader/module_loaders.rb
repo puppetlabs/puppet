@@ -119,6 +119,7 @@ module ModuleLoaders
         case typed_name.type
         when :function
         when :resource_type
+        when :resource_type_pp
         when :type
         else
           # anything else cannot possibly be in this module

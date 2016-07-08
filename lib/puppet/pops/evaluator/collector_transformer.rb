@@ -19,7 +19,7 @@ class CollectorTransformer
       fail "Classes cannot be collected"
     end
 
-    resource_type = Runtime3ResourceSupport.find_resource_type(scope.environment, type)
+    resource_type = Runtime3ResourceSupport.find_resource_type(scope, type)
 
     fail "Resource type #{type} doesn't exist" unless resource_type
 

@@ -117,11 +117,11 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
             next nil
           when 'main'
             # Find the main class (known as ''), it does not have to be in the catalog
-            Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_main_class(env)
+            Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_main_class(scope)
           else
             # Find a resource type, definition or class definition
             krt = scope.environment.known_resource_types
-            Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_resource_type_or_class(env, val)
+            Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_resource_type_or_class(scope, val)
           end
         end
       when Puppet::Resource
@@ -131,7 +131,7 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
       when Puppet::Pops::Types::PResourceType
         raise ArgumentError, 'The given resource type is a reference to all kind of types' if val.type_name.nil?
         if val.title.nil?
-          Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_resource_type(env, val.type_name)
+          Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_resource_type(scope, val.type_name)
         else
           scope.compiler.findresource(val.type_name, val.title)
         end
@@ -152,7 +152,7 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
           # (this is the same as asking for just the class' name, but with the added certainty that it cannot be a defined type.
           #
           raise  ArgumentError, 'The given class type is a reference to all classes' if val.type.class_name.nil?
-          Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_hostclass(env, val.type.class_name)
+          Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_hostclass(scope, val.type.class_name)
           #scope.environment.known_resource_types.find_hostclass(val.type.class_name)
         end
       else

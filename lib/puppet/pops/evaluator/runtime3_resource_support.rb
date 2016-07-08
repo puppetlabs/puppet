@@ -20,7 +20,7 @@ module Runtime3ResourceSupport
       resolved_type = CLASS_STRING
     else
       # resolve a resource type - pcore based, ruby impl, user defined, or application
-      fully_qualified_type = find_resource_type(env, type_name)
+      fully_qualified_type = find_resource_type(scope, type_name)
       type = fully_qualified_type.name if fully_qualified_type
       resolved_type = fully_qualified_type
     end
@@ -68,14 +68,14 @@ module Runtime3ResourceSupport
     end
   end
 
-  def self.find_resource_type(env, type_name)
+  def self.find_resource_type(scope, type_name)
     type_name = type_name.to_s.downcase
-    find_builtin_resource_type(env, type_name) || find_defined_resource_type(env, type_name)
+    find_builtin_resource_type(scope, type_name) || find_defined_resource_type(scope, type_name)
   end
 
-  def self.find_resource_type_or_class(env, name)
+  def self.find_resource_type_or_class(scope, name)
     type_name = type_name.to_s.downcase
-    find_builtin_resource_type(env, name) || find_defined_resource_type(env, name) || find_hostclass(env, name)
+    find_builtin_resource_type(scope, name) || find_defined_resource_type(scope, name) || find_hostclass(scope, name)
   end
 
   def self.resource_to_ptype(resource)
@@ -84,27 +84,35 @@ module Runtime3ResourceSupport
     Puppet::Pops::Types::TypeCalculator.singleton().infer(resource).type
   end
 
-  def self.find_main_class(env)
+  def self.find_main_class(scope)
     # Find the main class (known as ''), it does not have to be in the catalog
-    env.known_resource_types.find_hostclass('')
+    scope.environment.known_resource_types.find_hostclass('')
   end
 
-  def self.find_hostclass(env, class_name)
-    env.known_resource_types.find_hostclass(class_name)
+  def self.find_hostclass(scope, class_name)
+    scope.environment.known_resource_types.find_hostclass(class_name)
   end
 
   private
 
-  def self.find_builtin_resource_type(env, type_name)
-    # TODO: IF 4.X LOADER FINDS TYPE - USE IT
-    # Step 1 - use cheat for notify by doing return Puppet::Pops::Resource::ResourceTypeImpl.notify_cheat()
+  def self.find_builtin_resource_type(scope, type_name)
+    if type_name.include?(':')
+      # Skip the search for built in types as they are always in global namespace
+      # (At least for now).
+      return nil
+    end
 
-    # horrible
+    loader = scope.compiler.loaders.private_environment_loader
+    if loaded = loader.load(:resource_type_pp, type_name)
+      return loaded
+    end
+
+    # horrible - should be loaded by a "last loader" in 4.x loaders instead.
     Puppet::Type.type(type_name)
   end
 
-  def self.find_defined_resource_type(env, type_name)
-    krt = env.known_resource_types
+  def self.find_defined_resource_type(scope, type_name)
+    krt = scope.environment.known_resource_types
     krt.find_definition(type_name) || krt.application(type_name)
   end
 
