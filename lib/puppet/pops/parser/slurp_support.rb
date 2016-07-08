@@ -11,9 +11,9 @@ module Parser
 module SlurpSupport
   include LexerSupport
 
-  SLURP_SQ_PATTERN  = /(?:[^\\]|^|[^\\])(?:[\\]{2})*[']/
-  SLURP_DQ_PATTERN  = /(?:[^\\]|^|[^\\])(?:[\\]{2})*(["]|[$]\{?)/
-  SLURP_UQ_PATTERN  = /(?:[^\\]|^|[^\\])(?:[\\]{2})*([$]\{?|\z)/
+  SLURP_SQ_PATTERN  = /(?:[^\\]|^)(?:[\\]{2})*[']/
+  SLURP_DQ_PATTERN  = /(?:[^\\]|^)(?:[\\]{2})*(["]|[$]\{?)/
+  SLURP_UQ_PATTERN  = /(?:[^\\]|^)(?:[\\]{2})*([$]\{?|\z)/
   # unquoted, no escapes
   SLURP_UQNE_PATTERN  = /(\$\{?|\z)/m
   SLURP_ALL_PATTERN = /.*(\z)/m
