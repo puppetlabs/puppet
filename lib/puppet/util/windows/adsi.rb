@@ -191,6 +191,8 @@ module Puppet::Util::Windows::ADSI
     end
 
     def self.logon(name, password)
+      # this underlying check will throw when password is nil or empty
+      # as the Windows LogonUserW API does not support that
       Puppet::Util::Windows::User.password_is?(name, password)
     end
 

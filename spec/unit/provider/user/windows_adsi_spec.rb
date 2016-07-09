@@ -228,6 +228,21 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
       expect(provider.password).to be_nil
     end
 
+    it "should generate a warning with an empty password" do
+      resource[:password] = ''
+
+      # expect
+    end
+
+    it "should generate a warning with a nil password" do
+      # TODO: can we use error code 1327 to identify that a user in fact has an empty password
+      # i.e. is the error code returned when logging in unsuccessfully with a valid empty password
+      # any different than trying to login with an invalid non-empty password?
+      resource[:password] = ''
+
+      # expect
+    end
+
     it 'should not create a user if a group by the same name exists' do
       Puppet::Util::Windows::ADSI::User.expects(:create).with('testuser').raises( Puppet::Error.new("Cannot create user if group 'testuser' exists.") )
       expect{ provider.create }.to raise_error( Puppet::Error,

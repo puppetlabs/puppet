@@ -52,9 +52,20 @@ module Puppet::Util::Windows::User
   module_function :check_token_membership
 
   def password_is?(name, password)
-    logon_user(name, password) { |token| }
-  rescue Puppet::Util::Windows::Error
-    false
+    # Windows API LogonUserW always disallows this with error 1327:
+    # Logon failure: user account restriction. Possible reasons are blank passwords
+    # not allowed, logon hour restrictions, or a policy restriction has been enforced.
+    if password.nil? || password == ''
+      raise Puppet::Util::Windows::Error.new(
+        "Windows does not have the ability to verify NULL or empty passwords"
+      )
+    end
+
+    begin
+      logon_user(name, password) { |token| }
+    rescue Puppet::Util::Windows::Error
+      return false
+    end
   end
   module_function :password_is?
 
