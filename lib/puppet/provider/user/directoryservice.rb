@@ -121,7 +121,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     end
     attribute_hash[:ensure]         = :present
     attribute_hash[:provider]       = :directoryservice
-    attribute_hash[:shadowhashdata] = get_attribute_from_dscl('Users', attribute_hash[:name], 'ShadowHashData')
+    attribute_hash[:shadowhashdata] = input_hash['dsAttrTypeNative:ShadowHashData']
 
     ##############
     # Get Groups #
@@ -145,12 +145,12 @@ Puppet::Type.type(:user).provide :directoryservice do
       attribute_hash[:password] = '*'
     else
       embedded_binary_plist = get_embedded_binary_plist(attribute_hash[:shadowhashdata])
-      if embedded_binary_plist['SALTED-SHA512']
-        attribute_hash[:password] = get_salted_sha512(embedded_binary_plist)
-      else
+      if embedded_binary_plist['SALTED-SHA512-PBKDF2']
         attribute_hash[:password]   = get_salted_sha512_pbkdf2('entropy', embedded_binary_plist)
         attribute_hash[:salt]       = get_salted_sha512_pbkdf2('salt', embedded_binary_plist)
         attribute_hash[:iterations] = get_salted_sha512_pbkdf2('iterations', embedded_binary_plist)
+      elsif embedded_binary_plist['SALTED-SHA512']
+        attribute_hash[:password] = get_salted_sha512(embedded_binary_plist)
       end
     end
 
@@ -178,7 +178,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   # plist library doesn't read binary plists, so we need to
   # extract the binary plist, convert it to XML, and return it.
   def self.get_embedded_binary_plist(shadow_hash_data)
-    embedded_binary_plist = Array(shadow_hash_data['dsAttrTypeNative:ShadowHashData'][0].delete(' ')).pack('H*')
+    embedded_binary_plist = Array(shadow_hash_data[0].delete(' ')).pack('H*')
     convert_binary_to_hash(embedded_binary_plist)
   end
 
@@ -237,13 +237,7 @@ Puppet::Type.type(:user).provide :directoryservice do
 ##                   ##
 
   def exists?
-    begin
-      dscl '.', 'read', "/Users/#{@resource.name}"
-    rescue Puppet::ExecutionFailure => e
-      Puppet.debug("User was not found, dscl returned: #{e.inspect}")
-      return false
-    end
-    true
+    return @property_hash.any?
   end
 
   # This method is called if ensure => present is passed and the exists?
