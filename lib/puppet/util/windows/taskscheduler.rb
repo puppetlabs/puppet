@@ -351,8 +351,9 @@ module Win32
             raise Error.new("User has exceeded maximum allowed length #{MAX_ACCOUNT_LENGTH}")
           end
           user = wide_string(user)
-          password = wide_string(password)
-          @pITask.SetAccountInformation(user, password)
+          FFI::MemoryPointer.from_string_to_secure_wide_string(password) do |password_pointer|
+            @pITask.SetAccountInformation(user, password)
+          end
         end
 
         @account_information_set = true

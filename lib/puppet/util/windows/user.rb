@@ -65,9 +65,11 @@ module Puppet::Util::Windows::User
     token = nil
     begin
       FFI::MemoryPointer.new(:handle, 1) do |token_pointer|
-        if LogonUserW(wide_string(name), wide_string('.'), wide_string(password),
-            fLOGON32_LOGON_NETWORK, fLOGON32_PROVIDER_DEFAULT, token_pointer) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new("Failed to logon user #{name.inspect}")
+        FFI::MemoryPointer.from_string_to_secure_wide_string(password) do |password_pointer|
+          if LogonUserW(wide_string(name), wide_string('.'), password_pointer,
+              fLOGON32_LOGON_NETWORK, fLOGON32_PROVIDER_DEFAULT, token_pointer) == FFI::WIN32_FALSE
+            raise Puppet::Util::Windows::Error.new("Failed to logon user #{name.inspect}")
+          end
         end
 
         yield token = token_pointer.read_handle

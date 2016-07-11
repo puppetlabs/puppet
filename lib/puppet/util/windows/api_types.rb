@@ -33,6 +33,22 @@ module Puppet::Util::Windows::APITypes
       nil
     end
 
+    def self.from_string_to_secure_wide_string(str, &block)
+      from_string_to_wide_string(str) do |ptr|
+        begin
+          yield ptr
+        ensure
+          if ptr && ! ptr.null?
+            # write all 0s to the address to securely wipe it from memory
+            FFI::WIN32::memset(ptr, 0, ptr.size)
+          end
+        end
+      end
+
+      # ptr has already had free called, so nothing to return
+      nil
+    end
+
     def read_win32_bool
       # BOOL is always a 32-bit integer in Win32
       # some Win32 APIs return 1 for true, while others are non-0
@@ -207,6 +223,7 @@ module Puppet::Util::Windows::APITypes
         end
       end
 
+      # TODO: I don't think this is actually defined!
       def ==(other) Windows.memcmp(other, self, size) == 0 end
     end
 
@@ -271,5 +288,30 @@ module Puppet::Util::Windows::APITypes
     # );
     ffi_lib :ole32
     attach_function :CoTaskMemFree, [:lpvoid], :void
+
+    # SecureZeroMemory is defined inline (as an alias for RtlSecureZeroMemory), and
+    # is therefore not callable - its designed to make sure compilers don't
+    # optimize away the call, which doesn't affect this Ruby code which makes
+    # calls through FFI at runtime
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/aa366877(v=vs.85).aspx
+    # Also cannot use RtlZeroMemory as it lives in ntoskrnl.exe and not ntdll.dll
+    # https://msdn.microsoft.com/en-us/library/windows/hardware/ff563610(v=vs.85).aspx
+    # VOID RtlZeroMemory(
+    #   _Out_ VOID UNALIGNED *Destination,
+    #   _In_  SIZE_T         Length
+    # );
+    # In reality, they're all wrappers around memset from the C runtime
+    # http://stackoverflow.com/questions/3038302/why-do-zeromemory-etc-exist-when-there-are-memset-etc-already
+    # https://msdn.microsoft.com/en-us/library/1fdeehz6.aspx
+    # void *memset(
+    #    void *dest,
+    #    int c,
+    #    size_t count
+    # );
+    # C void* is a platform specific pointer
+    # C int is a platform specific integer - 4 bytes on 32-bit, 8 bytes on 64-bit
+    # C size_t is a platform specific usigned integer
+    ffi_lib FFI::Library::LIBC
+    attach_function :memset, [:pointer, :int, :size_t], :pointer
   end
 end
