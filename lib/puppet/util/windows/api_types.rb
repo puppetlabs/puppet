@@ -223,8 +223,7 @@ module Puppet::Util::Windows::APITypes
         end
       end
 
-      # TODO: I don't think this is actually defined!
-      def ==(other) Windows.memcmp(other, self, size) == 0 end
+      def ==(other) FFI::WIN32.memcmp(other, self, size) == 0 end
     end
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/ms724950(v=vs.85).aspx
@@ -313,5 +312,14 @@ module Puppet::Util::Windows::APITypes
     # C size_t is a platform specific usigned integer
     ffi_lib FFI::Library::LIBC
     attach_function :memset, [:pointer, :int, :size_t], :pointer
+
+
+    # int memcmp(
+    #    const void *buf1,
+    #    const void *buf2,
+    #    size_t count
+    # );
+    ffi_lib FFI::Library::LIBC
+    attach_function :memcmp, [:pointer, :pointer, :size_t], :int
   end
 end
