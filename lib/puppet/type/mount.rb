@@ -176,6 +176,30 @@ module Puppet
         appear in fstab. For many platforms this is a comma delimited string.
         Consult the fstab(5) man page for system-specific details."
 
+          def insync?(is)
+
+            if @resource[:ensure] == :mounted && !provider.property_hash[:live_options].nil?
+              fstab_options = provider.property_hash[:options] || ''
+              mount_options = provider.property_hash[:live_options] || ''
+              resource_options = @resource[:options] || ''
+
+              mount_list = mount_options.split(',')
+              resource_list = resource_options.split(',')
+              resource_list.delete('defaults')
+
+              # are the options in fstab in sync?
+              if fstab_options != resource_options
+                return false
+              elsif !(resource_list - mount_list).empty?
+                return false
+              else
+                return true
+              end
+            else
+              super
+            end
+          end
+
       validate do |value|
         raise Puppet::Error, "options must not contain whitespace: #{value}" if value =~ /\s/
         raise Puppet::Error, "options must not be an empty string" if value.empty?
