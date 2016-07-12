@@ -311,7 +311,7 @@ describe Puppet::Util::Execution do
 
           Puppet::Util::Execution.stubs(:execute_windows).returns(proc_info_stub)
           stub_process_wait(real_exit_status)
-          $CHILD_STATUS.stubs(:exitstatus).returns(real_exit_status % 256) # The exitstatus is changed to be mod 256 so that ruby can fit it into 8 bits.
+          Puppet::Util::Execution.stubs(:exitstatus).returns(real_exit_status % 256) # The exitstatus is changed to be mod 256 so that ruby can fit it into 8 bits.
 
           expect(Puppet::Util::Execution.execute('test command', :failonfail => false).exitstatus).to eq(real_exit_status)
         end
