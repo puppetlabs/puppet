@@ -153,8 +153,10 @@ Puppet::Type.type(:package).provide :pip,
       process.collect do |line|
         # PIP OUTPUT: Could not find a version that satisfies the requirement Django==versionplease (from versions: 1.1.3, 1.8rc1)
         if line =~ /from versions: /
-          textAfterLastMatch = $'
-          versionList = textAfterLastMatch.chomp(")\n").split(', ')
+          textAfterLastMatch = $'.chomp(")\n")
+          versionList = textAfterLastMatch.split(', ').sort do |x,y|
+            Puppet::Util::Package.versioncmp(x, y)
+          end
           return versionList.last
         end
       end
