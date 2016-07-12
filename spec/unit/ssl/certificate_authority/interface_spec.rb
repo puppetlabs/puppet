@@ -265,7 +265,7 @@ describe Puppet::SSL::CertificateAuthority::Interface do
 
         @csr.stubs(:subject_alt_names).returns request_alt_names
         @csr.stubs(:custom_attributes).returns custom_attrs
-        @csr.stubs(:extension_requests).returns ext_requests
+        @csr.stubs(:request_extensions).returns ext_requests
 
         Puppet::SSL::Certificate.indirection.stubs(:find).returns @cert
         Puppet::SSL::CertificateRequest.indirection.stubs(:find).returns @csr

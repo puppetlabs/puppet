@@ -233,7 +233,7 @@ module Puppet
           exts = []
           exts += cert.custom_extensions if cert.respond_to?(:custom_extensions)
           exts += cert.custom_attributes if cert.respond_to?(:custom_attributes)
-          exts += cert.extension_requests if cert.respond_to?(:extension_requests)
+          exts += cert.request_extensions if cert.respond_to?(:request_extensions)
 
           exts.map {|e| "#{e['oid']}: #{e['value'].inspect}" }.sort
         end
