@@ -45,7 +45,7 @@ notice 42 =~ MyInteger
     end
 
     step '(large) manifest with exported resources' do
-      fixture_path = 'fixtures/manifest_large_exported_classes_node.pp'
+      fixture_path = File.join(File.dirname(__FILE__), '..', '..', 'fixtures/manifest_large_exported_classes_node.pp')
       create_test_file(agent, "#{app_type}_exported.pp", File.read(fixture_path))
       tmp_manifest = get_test_file_path(agent, "#{app_type}_exported.pp")
       on(agent, puppet("parser validate #{tmp_manifest}"))
