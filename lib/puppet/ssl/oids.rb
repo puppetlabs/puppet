@@ -26,6 +26,10 @@ require 'puppet/ssl'
 # @api private
 module Puppet::SSL::Oids
 
+  # Note: When updating the following OIDs make sure to also update the OID
+  # definitions here:
+  # https://github.com/puppetlabs/puppetserver/blob/master/src/clj/puppetlabs/puppetserver/certificate_authority.clj#L122-L159
+
   PUPPET_OIDS = [
     ["1.3.6.1.4.1.34380", 'puppetlabs', 'Puppet Labs'],
     ["1.3.6.1.4.1.34380.1", 'ppCertExt', 'Puppet Certificate Extension'],
