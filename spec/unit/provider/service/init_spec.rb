@@ -6,6 +6,13 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:service).provider(:init) do
+
+  if Puppet.features.microsoft_windows?
+    # Get a pid for $CHILD_STATUS to latch on to
+    command = "cmd.exe /c \"exit 0\""
+    Puppet::Util::Execution.execute(command, {:failonfail => false})
+  end
+
   before do
     Puppet::Type.type(:service).defaultprovider = described_class
   end
