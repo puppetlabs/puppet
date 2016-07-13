@@ -99,6 +99,7 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
         # Ruby seems to use the local codepage when making COM calls
         # if this fails, might want to use Windows API directly instead to ensure bytes
         user = Puppet::Util::Windows::ADSI.create(username, 'user')
+        user.SetPassword('PUPPET_RULeZ_123!')
         user.SetInfo()
 
         # compare the new SID to the name_to_sid result

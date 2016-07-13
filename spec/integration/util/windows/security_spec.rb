@@ -476,6 +476,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           it "should retrieve the user sid" do
             sid = nil
             user = Puppet::Util::Windows::ADSI::User.create("puppet#{rand(10000)}")
+            user.password = 'PUPPET_RULeZ_123!'
             user.commit
             begin
               sid = Puppet::Util::Windows::ADSI::User.new(user.name).sid.sid
