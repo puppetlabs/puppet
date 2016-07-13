@@ -175,7 +175,7 @@ describe Puppet::SSL::CertificateAuthority::Interface do
           STDOUT.expects(:print).with("Sign Certificate Request? [y/N] ")
 
           STDIN.stubs(:gets).returns('y')
-          @ca.expects(:sign).with("csr1", nil)
+          @ca.expects(:sign).with("csr1", {})
 
           @applier.apply(@ca)
         end
@@ -192,7 +192,7 @@ describe Puppet::SSL::CertificateAuthority::Interface do
           @applier.expects(:puts).
             with("Assuming YES from `-y' or `--assume-yes' flag")
 
-          @ca.expects(:sign).with("csr1", nil)
+          @ca.expects(:sign).with("csr1", {})
 
           @applier.apply(@ca)
         end
@@ -207,8 +207,8 @@ describe Puppet::SSL::CertificateAuthority::Interface do
           applier.stubs(:puts)
           @ca.stubs(:check_internal_signing_policies).returns(true)
 
-          @ca.expects(:sign).with("host1", false)
-          @ca.expects(:sign).with("host2", false)
+          @ca.expects(:sign).with("host1", @options)
+          @ca.expects(:sign).with("host2", @options)
 
           applier.apply(@ca)
         end
@@ -219,8 +219,8 @@ describe Puppet::SSL::CertificateAuthority::Interface do
           applier.stubs(:puts)
           @ca.stubs(:check_internal_signing_policies).returns(true)
 
-          @ca.expects(:sign).with("host1", true)
-          @ca.expects(:sign).with("host2", true)
+          @ca.expects(:sign).with("host1", @options)
+          @ca.expects(:sign).with("host2", @options)
 
           applier.apply(@ca)
         end
@@ -231,8 +231,8 @@ describe Puppet::SSL::CertificateAuthority::Interface do
           @ca.stubs(:waiting?).returns(%w{cert1 cert2})
           @ca.stubs(:check_internal_signing_policies).returns(true)
 
-          @ca.expects(:sign).with("cert1", nil)
-          @ca.expects(:sign).with("cert2", nil)
+          @ca.expects(:sign).with("cert1", {})
+          @ca.expects(:sign).with("cert2", {})
 
           @applier = @class.new(:sign, :to => :all)
           @applier.stubs(:format_host).returns("")

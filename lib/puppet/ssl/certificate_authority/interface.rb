@@ -271,13 +271,17 @@ module Puppet
           list = subjects == :all ? ca.waiting? : subjects
           raise InterfaceError, "No waiting certificate requests to sign" if list.empty?
 
+          signing_options = options.select { |k,_|
+            [:allow_authorization_extensions, :allow_dns_alt_names].include?(k)
+          }
+
           list.each do |host|
             cert = Puppet::SSL::CertificateRequest.indirection.find(host)
 
             # ca.sign will also do this - and it should if it is called
             # elsewhere - but we want to reject an attempt to sign a
             # problematic csr as early as possible for usability concerns.
-            ca.check_internal_signing_policies(host, cert, options[:allow_dns_alt_names])
+            ca.check_internal_signing_policies(host, cert, signing_options)
 
             name_width = host.inspect.length
             info = {:type => :request, :cert => cert}
@@ -295,7 +299,7 @@ module Puppet
               end
             end
 
-            ca.sign(host, options[:allow_dns_alt_names])
+            ca.sign(host, signing_options)
           end
         end
 

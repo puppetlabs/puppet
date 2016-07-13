@@ -233,7 +233,7 @@ ERROR_STRING
     # should use it to sign our request; else, just try to read
     # the cert.
     if ! certificate and ca = Puppet::SSL::CertificateAuthority.instance
-      ca.sign(self.name, true)
+      ca.sign(self.name, {allow_dns_alt_names: true})
     end
   end
 
