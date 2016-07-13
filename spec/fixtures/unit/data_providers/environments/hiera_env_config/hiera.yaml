@@ -9,14 +9,27 @@
   - :name: "utf8"
     :backend: yaml
     :path: "utf8"
+
+  - :name: "hocon1"
+    :backend: hocon
+  - :name: "second hocon"
+    :backend: hocon
+    :path: "hocon_two"
+
   - :name: "three paths"
     :backend: json
     :paths:
       - "first"
       - "second"
       - "third_utf8"
+
   - :name:  'other datadir'
     :backend: yaml
     :datadir: "data2"
     :path: "single"
+
+  - :name: "other datadir hocon"
+    :backend: hocon
+    :datadir: "data2"
+    :path: "hocon_utf8"
 :datadir: "data1"

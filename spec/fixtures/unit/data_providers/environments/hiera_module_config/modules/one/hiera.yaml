@@ -5,6 +5,8 @@
     :backend: yaml
   - :name: "name"
     :backend: yaml
+  - :name: "hocon1"
+    :backend: hocon
   - :name: "one path"
     :backend: yaml
     :path: "single"
@@ -17,4 +19,8 @@
     :backend: yaml
     :datadir: "data2"
     :path: "single"
+  - :name:  'hocon other datadir'
+    :backend: hocon
+    :datadir: "data2"
+    :path: "hocon2" 
 :datadir: "data1"

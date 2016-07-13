@@ -47,14 +47,19 @@ describe "when using a hiera data provider" do
     expect(resources).to include('module data param_a is 100, param default is 200, env data param_c is 300')
   end
 
-  it 'reads hiera.yaml in environment root and configures multiple json and yaml providers' do
+  it 'reads hiera.yaml in environment root and configures multiple hocon, json, and yaml providers' do
     resources = compile_and_get_notifications('hiera_env_config')
-    expect(resources).to include("env data param_a is 10, env data param_b is 20, env data param_c is 30, env data param_d is 40, env data param_e is 50, env data param_yaml_utf8 is \u16EB\u16D2\u16E6, env data param_json_utf8 is \u16A0\u16C7\u16BB")
+    expect(resources).to include("env data param_a is 10, env data param_b is 20, env data param_c is 30, env data param_d is 40, env data param_e is 50, env data param_f is 60, env data param_g is 70, env data param_yaml_utf8 is \u16EB\u16D2\u16E6, env data param_json_utf8 is \u16A0\u16C7\u16BB, env data param_hocon_utf8 is \u16A1\u16A3\u16A4")
   end
 
-  it 'reads hiera.yaml in module root and configures multiple json and yaml providers' do
+  it 'reads hiera.yaml in module root and configures multiple hocon, json, and yaml providers' do
     resources = compile_and_get_notifications('hiera_module_config')
-    expect(resources).to include('module data param_a is 100, module data param_b is 200, module data param_c is 300, module data param_d is 400, module data param_e is 500')
+    expect(resources).to include('module data param_a is 100, module data param_b is 200, module data param_c is 300, module data param_d is 400, module data param_e is 500, module data param_f is 600, module data param_g is 700')
+  end
+
+  it 'uses ' do
+    resources = compile_and_get_notifications('hiera_defaults')
+    expect(resources).to include('module data param_a is 100, param default is 200, env data param_c is 300')
   end
 
   it 'keeps lookup_options in one module separate from lookup_options in another' do
@@ -189,6 +194,12 @@ describe "when using a hiera data provider" do
     expect do
       compile_and_get_notifications('hiera_bad_syntax_yaml')
     end.to raise_error(Puppet::DataBinding::LookupError, /Unable to parse \(#{environmentpath}[^)]+\):/)
+  end
+
+  it 'reports syntax errors for HOCON files' do
+    expect do
+      compile_and_get_notifications('hiera_bad_syntax_hocon')
+    end.to raise_error(Puppet::DataBinding::LookupError, /Unable to parse #{environmentpath}/)
   end
 
   describe 'when using explain' do
