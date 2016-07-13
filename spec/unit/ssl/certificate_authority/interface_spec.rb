@@ -156,9 +156,12 @@ describe Puppet::SSL::CertificateAuthority::Interface do
     end
 
     describe ":sign" do
+      before do
+        @csr1 = Puppet::SSL::CertificateRequest.new 'baz'
+      end
+
       describe "when run in interactive mode" do
         before do
-          @csr1 = Puppet::SSL::CertificateRequest.new 'baz'
           Puppet::SSL::CertificateRequest.indirection.stubs(:find).with("csr1").returns @csr1
 
           @ca.stubs(:waiting?).returns(%w{csr1})
@@ -199,6 +202,11 @@ describe Puppet::SSL::CertificateAuthority::Interface do
       end
 
       describe "and an array of names was provided" do
+        before do
+          Puppet::SSL::CertificateRequest.indirection.stubs(:find).with("host1").returns @csr1
+          Puppet::SSL::CertificateRequest.indirection.stubs(:find).with("host2").returns @csr1
+        end
+
         let(:applier) { @class.new(:sign, @options.merge(:to => %w{host1 host2})) }
 
         it "should sign the specified waiting certificate requests" do
@@ -229,6 +237,8 @@ describe Puppet::SSL::CertificateAuthority::Interface do
       describe "and :all was provided" do
         it "should sign all waiting certificate requests" do
           @ca.stubs(:waiting?).returns(%w{cert1 cert2})
+          Puppet::SSL::CertificateRequest.indirection.stubs(:find).with("cert1").returns @csr1
+          Puppet::SSL::CertificateRequest.indirection.stubs(:find).with("cert2").returns @csr1
           @ca.stubs(:check_internal_signing_policies).returns(true)
 
           @ca.expects(:sign).with("cert1", {})

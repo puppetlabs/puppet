@@ -278,6 +278,8 @@ module Puppet
           list.each do |host|
             cert = Puppet::SSL::CertificateRequest.indirection.find(host)
 
+            raise InterfaceError, "Could not find CSR for: #{host.inspect}." unless cert
+
             # ca.sign will also do this - and it should if it is called
             # elsewhere - but we want to reject an attempt to sign a
             # problematic csr as early as possible for usability concerns.
