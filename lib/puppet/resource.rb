@@ -141,12 +141,14 @@ class Puppet::Resource
 
   # Compatibility method.
   def builtin?
+    # TODO: should be deprecated (was only used in one place in puppet codebase)
     builtin_type?
   end
 
   # Is this a builtin resource type?
   def builtin_type?
-    resource_type.is_a?(Class)
+    # Note - old implementation only checked if the resource_type was a Class
+    resource_type.is_a?(Puppet::CompilableResourceType)
   end
 
   # Iterate over each param/value pair, as required for Enumerable.
@@ -231,12 +233,23 @@ class Puppet::Resource
       end
 
       environment = attributes[:environment]
-      if type.is_a?(Class) && type < Puppet::Type
-        # Set the resource type to avoid an expensive `known_resource_types`
-        # lookup.
+      # In order to avoid an expensive search of 'known_resource_types" and
+      # to obey/preserve the implementation of the resource's type - if the
+      # given type is a resource type implementation (one of):
+      #   * a "classic" 3.x ruby plugin
+      #   * a compatible implementation (e.g. loading from pcore metadata)
+      #   * a resolved user defined type
+      # 
+      # ...then, modify the parameters to the "old" (agent side compatible) way
+      # of describing the type/title with string/symbols.
+      #
+      # TODO: Further optimizations should be possible as the "type juggling" is
+      # not needed when the type implementation is known.
+      # 
+      if type.is_a?(Puppet::CompilableResourceType) || type.is_a?(Puppet::Resource::Type)
+        # set the resource type implementation
         self.resource_type = type
-        # From this point on, the constructor behaves the same as if `type` had
-        # been passed as a symbol.
+        # set the type name to the symbolic name
         type = type.name
       end
 
@@ -584,7 +597,7 @@ class Puppet::Resource
   def parse_title
     h = {}
     type = resource_type
-    if type.respond_to? :title_patterns
+    if type.respond_to?(:title_patterns) && !type.title_patterns.nil?
       type.title_patterns.each { |regexp, symbols_and_lambdas|
         if captures = regexp.match(title.to_s)
           symbols_and_lambdas.zip(captures[1..-1]).each do |symbol_and_lambda,capture|

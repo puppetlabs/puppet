@@ -656,7 +656,7 @@ describe Puppet::Resource::Type do
 
         @compiler.add_resource @scope, @parent_resource
 
-        @type.resource_type_collection = @scope.known_resource_types
+        @type.resource_type_collection = @scope.environment.known_resource_types
         @type.resource_type_collection.add @parent_type
       end
 
@@ -696,7 +696,7 @@ describe Puppet::Resource::Type do
 
         @compiler.add_resource @scope, @parent_resource
 
-        @type.resource_type_collection = @scope.known_resource_types
+        @type.resource_type_collection = @scope.environment.known_resource_types
         @type.resource_type_collection.add(@parent_type)
       end
 

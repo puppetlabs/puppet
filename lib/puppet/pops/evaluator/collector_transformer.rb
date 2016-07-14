@@ -19,7 +19,8 @@ class CollectorTransformer
       fail "Classes cannot be collected"
     end
 
-    resource_type = scope.find_resource_type(type)
+    resource_type = Runtime3ResourceSupport.find_resource_type(scope, type)
+
     fail "Resource type #{type} doesn't exist" unless resource_type
 
     adapter = Adapters::SourcePosAdapter.adapt(o)

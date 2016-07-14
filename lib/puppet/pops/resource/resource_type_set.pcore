@@ -1,0 +1,21 @@
+type Puppet::Resource::Param = Object[{
+  attributes => {
+    type => Type,
+    name => String[1],
+    name_var => { type => Boolean, value => false }
+  },
+  equality => [name],
+}]
+
+
+type Puppet::Resource::ResourceType3 = Object[{
+  attributes => {
+    name           => String[1],
+    properties     => { type => Array[Puppet::Resource::Param], value = []},
+    parameters     => { type => Array[Puppet::Resource::Param], value = []},
+    title_patterns => { type => Optional[Hash[Regexp, Array[String[1]]], value => nil },
+    isomorphic     => { type => Boolean, value => true },
+  },
+  equality => [name],
+}]
+

@@ -22,8 +22,6 @@ class Parser
   #
   Factory = Model::Factory
 
-  include Puppet::Resource::TypeCollectionHelper
-
   attr_accessor :lexer
   attr_reader :definitions
 

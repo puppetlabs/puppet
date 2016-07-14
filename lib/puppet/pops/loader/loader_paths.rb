@@ -25,6 +25,8 @@ module Puppet::Pops::Loader::LoaderPaths
         # When wanted also add FunctionPath3x to load 3x functions
     when :type
       result << TypePathPP.new(loader) if loader.loadables.include?(:type_pp)
+    when :resource_type_pp
+      result << ResourceTypeImplPP.new(loader) if loader.loadables.include?(:resource_type_pp)
     else
       # unknown types, simply produce an empty result; no paths to check, nothing to find... move along...
       []
@@ -100,7 +102,6 @@ module Puppet::Pops::Loader::LoaderPaths
     end
 
     def root_path
-      # Drop the lib part (it may not exist and cannot be navigated to in a relative way)
       Puppet::FileSystem.dir_string(@loader.path)
     end
 
@@ -150,7 +151,6 @@ module Puppet::Pops::Loader::LoaderPaths
   end
 
   class TypePathPP < PuppetSmartPath
-    # Navigate to directory where 'lib' is, then down again
     TYPE_PATH_PP = File.join('types')
 
     def relative_path
@@ -159,6 +159,28 @@ module Puppet::Pops::Loader::LoaderPaths
 
     def instantiator()
       Puppet::Pops::Loader::TypeDefinitionInstantiator
+    end
+  end
+
+  class ResourceTypeImplPP < PuppetSmartPath
+    RESOURCE_TYPES_PATH_PP = File.join('resource_types')
+
+    def relative_path
+      RESOURCE_TYPES_PATH_PP
+    end
+
+    def instantiator()
+      Puppet::Pops::Loader::PuppetResourceTypeImplInstantiator
+    end
+
+    # The effect paths for resource type impl is the full name
+    # since resource types are not name spaced.
+    # This overrides the default PuppetSmartPath.
+    #
+    def effective_path(typed_name, start_index_in_name)
+      # Resource type to name does not skip the name-space
+      # i.e. <module>/mymodule/resource_types/foo.pp is the reource type foo
+      "#{File.join(generic_path, typed_name.name_parts)}.pp"
     end
   end
 

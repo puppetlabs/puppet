@@ -43,6 +43,16 @@ describe 'function for dynamically creating resources' do
       expect(catalog.resource(:file, "/etc/foo")['ensure']).to eq('present')
     end
 
+    it 'should pick up and pass on file and line information' do
+      # mock location as the compile_to_catalog sets Puppet[:code} which does not
+      # have file/line support.
+      Puppet::Pops::PuppetStack.expects(:stacktrace).once.returns([['test.pp', 1234]])
+      catalog = compile_to_catalog("create_resources('file', {'/etc/foo'=>{'ensure'=>'present'}})")
+      r = catalog.resource(:file, "/etc/foo")
+      expect(r.file).to eq('test.pp')
+      expect(r.line).to eq(1234)
+    end
+
     it 'should be able to add virtual resources' do
       catalog = compile_to_catalog("create_resources('@file', {'/etc/foo'=>{'ensure'=>'present'}})\nrealize(File['/etc/foo'])")
       expect(catalog.resource(:file, "/etc/foo")['ensure']).to eq('present')
@@ -54,16 +64,16 @@ describe 'function for dynamically creating resources' do
       expect(catalog.resource(:file, "/etc/foo").exported).to eq(true)
     end
 
-    it 'should accept multiple types' do
+    it 'should accept multiple resources' do
       catalog = compile_to_catalog("create_resources('notify', {'foo'=>{'message'=>'one'}, 'bar'=>{'message'=>'two'}})")
       expect(catalog.resource(:notify, "foo")['message']).to eq('one')
       expect(catalog.resource(:notify, "bar")['message']).to eq('two')
     end
 
-    it 'should fail to add non-existing type' do
+    it 'should fail to add non-existing resource type' do
       expect do
         @scope.function_create_resources(['create-resource-foo', { 'foo' => {} }])
-      end.to raise_error(/Invalid resource type create-resource-foo/)
+      end.to raise_error(/Unknown resource type: 'create-resource-foo'/)
     end
 
     it 'should be able to add edges' do
@@ -112,7 +122,7 @@ describe 'function for dynamically creating resources' do
 
           create_resources('foocreateresource', {'blah'=>{}})
         MANIFEST
-      }.to raise_error(Puppet::Error, /Foocreateresource\[blah\]: expects a value for parameter 'one' on node test/)
+      }.to raise_error(Puppet::Error, /Foocreateresource\[blah\]: expects a value for parameter 'one'/)
     end
 
     it 'should be able to add multiple defines' do

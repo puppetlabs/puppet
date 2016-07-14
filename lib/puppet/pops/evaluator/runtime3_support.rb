@@ -266,10 +266,12 @@ module Runtime3Support
   end
 
   def call_function(name, args, o, scope, &block)
+    file, line = extract_file_line(o)
     loader = Adapters::LoaderAdapter.loader_for_model_object(o, scope)
     if loader && func = loader.load(:function, name)
       Puppet::Util::Profiler.profile(name, [:functions, name]) do
-        return func.call(scope, *args, &block)
+        # Add stack frame when calling
+        return Puppet::Pops::PuppetStack.stack(file, line, func, :call, [scope, *args], &block)
       end
     end
     # Call via 3x API if function exists there
@@ -278,7 +280,7 @@ module Runtime3Support
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
     # NOTE: Passing an empty string last converts nil/:undef to empty string
     mapped_args = Runtime3Converter.map_args(args, scope, '')
-    result = scope.send("function_#{name}", mapped_args, &block)
+    result = Puppet::Pops::PuppetStack.stack(file, line, scope, "function_#{name}", [mapped_args], &block)
     # Prevent non r-value functions from leaking their result (they are not written to care about this)
     Puppet::Parser::Functions.rvalue?(name) ? result : nil
   end
@@ -298,48 +300,14 @@ module Runtime3Support
     Runtime3Converter.convert(value, scope, undef_value)
   end
 
-  CLASS_STRING = 'class'.freeze
-
   def create_resources(o, scope, virtual, exported, type_name, resource_titles, evaluated_parameters)
-
-    # TODO: Unknown resource causes creation of Resource to fail with ArgumentError, should give
-    # a proper Issue. Now the result is "Error while evaluating a Resource Statement" with the message
-    # from the raised exception. (It may be good enough).
-
-
-    # resolve in scope.
-    fully_qualified_type, resource_titles = scope.resolve_type_and_titles(type_name, resource_titles)
-
     # Not 100% accurate as this is the resource expression location and each title is processed separately
     # The titles are however the result of evaluation and they have no location at this point (an array
     # of positions for the source expressions are required for this to work).
     # TODO: Revisit and possible improve the accuracy.
     #
     file, line = extract_file_line(o)
-    # Build a resource for each title
-    resource_titles.map do |resource_title|
-        resource = Puppet::Parser::Resource.new(
-          fully_qualified_type, resource_title,
-          :parameters => evaluated_parameters,
-          :file => file,
-          :line => line,
-          :exported => exported,
-          :virtual => virtual,
-          # WTF is this? Which source is this? The file? The name of the context ?
-          :source => scope.source,
-          :scope => scope,
-          :strict => true
-        )
-
-        if resource.resource_type.is_a? Puppet::Resource::Type
-          resource.resource_type.instantiate_resource(scope, resource)
-        end
-        scope.compiler.add_resource(scope, resource)
-        scope.compiler.evaluate_classes([resource_title], scope, false) if fully_qualified_type == CLASS_STRING
-        # Turn the resource into a PType (a reference to a resource type)
-        # weed out nil's
-        resource_to_ptype(resource)
-    end
+    Runtime3ResourceSupport.create_resources(file, line, scope, virtual, exported, type_name, resource_titles, evaluated_parameters)
   end
 
   # Defines default parameters for a type with the given name.

@@ -153,7 +153,7 @@ module Puppet::Util::ClassGen
   # @api private
   #
   def handleclassconst(klass, name, options)
-    const = genconst_string(name, options)
+   const = genconst_string(name, options)
 
     if is_constant_defined?(const)
       if options[:overwrite]

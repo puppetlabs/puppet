@@ -18,7 +18,7 @@ describe "the require function" do
 
     @scope.stubs(:findresource)
     @klass = stub 'class', :name => "myclass"
-    @scope.stubs(:find_hostclass).returns(@klass)
+    @scope.environment.known_resource_types.stubs(:find_hostclass).returns(@klass)
 
     @resource = Puppet::Parser::Resource.new(:file, "/my/file", :scope => @scope, :source => "source")
     @scope.stubs(:resource).returns @resource
@@ -45,7 +45,7 @@ describe "the require function" do
   it "should lookup the absolute class path" do
     @scope.compiler.stubs(:evaluate_classes)
 
-    @scope.expects(:find_hostclass).with("::myclass").returns(@klass)
+    @scope.environment.known_resource_types.expects(:find_hostclass).with("::myclass").returns(@klass)
     @klass.expects(:name).returns("myclass")
 
     @scope.function_require(["myclass"])
