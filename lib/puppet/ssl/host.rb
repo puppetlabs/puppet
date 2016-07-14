@@ -218,7 +218,7 @@ On the master:
   puppet cert clean #{Puppet[:certname]}
 On the agent:
   1a. On most platforms: find #{Puppet[:ssldir]} -name #{Puppet[:certname]}.pem -delete
-  1b. On Windows: del "#{Puppet[:ssldir]}/#{Puppet[:certname]}.pem" /f
+  1b. On Windows: del "#{Puppet[:certdir].gsub('/', '\\')}\\#{Puppet[:certname]}.pem" /f
   2. puppet agent -t
 ERROR_STRING
     end
