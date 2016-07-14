@@ -280,6 +280,8 @@ module Puppet
 
             raise InterfaceError, "Could not find CSR for: #{host.inspect}." unless cert
 
+            # This allows for various bootstrapping scenarios
+            options[:allow_dns_alt_names] = true if host == Puppet[:certname].downcase
             # ca.sign will also do this - and it should if it is called
             # elsewhere - but we want to reject an attempt to sign a
             # problematic csr as early as possible for usability concerns.
