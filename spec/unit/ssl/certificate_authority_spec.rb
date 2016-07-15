@@ -575,11 +575,20 @@ describe Puppet::SSL::CertificateAuthority do
       it "should reject a subjectAltName for a non-DNS value" do
         @request.stubs(:subject_alt_names).returns ['DNS:foo', 'email:bar@example.com']
         expect {
-          @ca.check_internal_signing_policies(@name, @request, {allow_dns_alt_names:true})
+          @ca.check_internal_signing_policies(@name, @request, {allow_dns_alt_names: true})
         }.to raise_error(
           Puppet::SSL::CertificateAuthority::CertificateSigningError,
           /subjectAltName outside the DNS label space/
         )
+      end
+
+      it "should allow a subjectAltName if subject matches CA's certname" do
+        @request.stubs(:subject_alt_names).returns ['DNS:foo']
+        Puppet[:certname] = @name
+
+        expect {
+          @ca.check_internal_signing_policies(@name, @request, {allow_dns_alt_names: false})
+        }.to_not raise_error
       end
 
       it "should reject a wildcard subject" do
