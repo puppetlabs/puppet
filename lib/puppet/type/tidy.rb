@@ -16,6 +16,9 @@ Puppet::Type.newtype(:tidy) do
     actual deletion.
     "
 
+  # Tidy names are not isomorphic with the objects.
+  @isomorphic = false
+
   newparam(:path) do
     desc "The path to the file or directory to manage.  Must be fully
       qualified."
