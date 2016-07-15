@@ -295,8 +295,6 @@ class Puppet::SSL::CertificateAuthority
       cert_type = :server
       issuer = host.certificate.content
 
-      # This allows for various bootstrapping scenarios
-      options[:allow_dns_alt_names] = true if hostname == Puppet[:certname].downcase
       # Make sure that the CSR conforms to our internal signing policies.
       # This will raise if the CSR doesn't conform, but just in case...
       check_internal_signing_policies(hostname, csr, options) or
@@ -330,6 +328,8 @@ class Puppet::SSL::CertificateAuthority
   def check_internal_signing_policies(hostname, csr, options = {})
     options[:allow_authorization_extensions] ||= false
     options[:allow_dns_alt_names] ||= false
+    # This allows for masters to bootstrap themselves in certain scenarios
+    options[:allow_dns_alt_names] = true if hostname == Puppet[:certname].downcase
 
     # Reject unknown request extensions.
     unknown_req = csr.request_extensions.reject do |x|
