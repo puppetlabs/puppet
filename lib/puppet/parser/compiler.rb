@@ -4,7 +4,6 @@ require 'puppet/node'
 require 'puppet/resource/catalog'
 require 'puppet/util/errors'
 
-require 'puppet/resource/type_collection_helper'
 require 'puppet/loaders'
 require 'puppet/pops'
 

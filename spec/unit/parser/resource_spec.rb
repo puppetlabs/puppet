@@ -54,10 +54,6 @@ describe Puppet::Parser::Resource do
     expect(Puppet::Parser::Resource.new("file", "whatever", :scope => scope).environment).to eq("foo")
   end
 
-  it "should use the resource type collection helper module" do
-    expect(Puppet::Parser::Resource.ancestors).to be_include(Puppet::Resource::TypeCollectionHelper)
-  end
-
   it "should use the scope's environment as its environment" do
     @scope.expects(:environment).returns("myenv").at_least_once
     expect(Puppet::Parser::Resource.new("file", "whatever", :scope => @scope).environment).to eq("myenv")

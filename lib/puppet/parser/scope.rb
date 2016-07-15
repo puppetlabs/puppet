@@ -6,7 +6,6 @@ require 'forwardable'
 require 'puppet/parser'
 require 'puppet/parser/templatewrapper'
 
-require 'puppet/resource/type_collection_helper'
 require 'puppet/util/methodhelper'
 
 # This class is part of the internal parser/evaluator/compiler functionality of Puppet.

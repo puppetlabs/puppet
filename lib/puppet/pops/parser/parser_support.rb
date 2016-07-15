@@ -1,7 +1,6 @@
 require 'puppet/parser/functions'
 require 'puppet/parser/files'
 require 'puppet/resource/type_collection'
-require 'puppet/resource/type_collection_helper'
 require 'puppet/resource/type'
 require 'monitor'
 
