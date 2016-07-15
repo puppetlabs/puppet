@@ -722,11 +722,11 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
       FileUtils.mkdir_p(srcdir)
       FileUtils.mkdir_p(dstdir)
-      
+
       srcfile = File.join(srcdir, "file.src")
       cpyfile = File.join(dstdir, "file.src")
       ignfile = File.join(srcdir, "file.ign")
-      
+
       File.open(srcfile, "w") { |f| f.puts "don't ignore me" }
       File.open(ignfile, "w") { |f| f.puts "you better ignore me" }
 
@@ -735,7 +735,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
                              :name => srcdir,
                              :ensure => 'directory',
                              :mode => '0755',)
-      
+
       catalog.add_resource described_class.new(
                              :name => dstdir,
                              :ensure => 'directory',
@@ -743,7 +743,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
                              :source => srcdir,
                              :recurse => true,
                              :ignore => '*.ign',)
-      
+
       catalog.apply
       expect(Puppet::FileSystem.exist?(srcdir)).to be_truthy
       expect(Puppet::FileSystem.exist?(dstdir)).to be_truthy
@@ -1395,7 +1395,6 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           @sids = {
             :current_user => Puppet::Util::Windows::ADSI::User.current_user_sid.sid,
             :system => Puppet::Util::Windows::SID::LocalSystem,
-            :guest => Puppet::Util::Windows::SID.name_to_sid("Guest"),
             :users => Puppet::Util::Windows::SID::BuiltinUsers,
             :power_users => Puppet::Util::Windows::SID::PowerUsers,
             :none => Puppet::Util::Windows::SID::Nobody
@@ -1415,8 +1414,8 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
           describe "when permissions are not insync?" do
             before :each do
-              @file[:owner] = 'None'
-              @file[:group] = 'None'
+              @file[:owner] = @sids[:none]
+              @file[:group] = @sids[:none]
             end
 
             it "preserves the inherited SYSTEM ACE for an existing file" do
@@ -1503,8 +1502,8 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
           describe "when permissions are not insync?" do
             before :each do
-              @directory[:owner] = 'None'
-              @directory[:group] = 'None'
+              @directory[:owner] = @sids[:none]
+              @directory[:group] = @sids[:none]
             end
 
             it "preserves the inherited SYSTEM ACEs for an existing directory" do
@@ -1726,7 +1725,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         catalog.apply
         expect(Puppet::FileSystem).to be_directory(copy)
       end
-    
+
       it "should copy the link itself if :links => manage" do
         catalog.add_resource described_class.new(
           :name => target,
@@ -1746,7 +1745,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         expect(Dir.entries(link)).to eq(Dir.entries(copy))
       end
     end
-  
+
     context "and the recurse attribute is true" do
       it "should recursively copy the directory if :links => follow" do
         catalog.add_resource described_class.new(

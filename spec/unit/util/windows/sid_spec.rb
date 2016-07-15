@@ -10,17 +10,20 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
   let(:sid)          { Puppet::Util::Windows::SID::LocalSystem }
   let(:invalid_sid)  { 'bogus' }
   let(:unknown_sid)  { 'S-0-0-0' }
+  let(:null_sid)     { 'S-1-0-0' }
   let(:unknown_name) { 'chewbacca' }
 
   context "#octet_string_to_sid_object" do
-    it "should properly convert an array of bytes for a well-known SID" do
-      bytes = [1, 1, 0, 0, 0, 0, 0, 5, 18, 0, 0, 0]
+    it "should properly convert an array of bytes for a well-known non-localized SID" do
+      bytes = [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
       converted = subject.octet_string_to_sid_object(bytes)
 
       expect(converted).to be_an_instance_of Puppet::Util::Windows::SID::Principal
       expect(converted.sid_bytes).to eq(bytes)
-      expect(converted.sid).to eq(sid)
-      expect(converted.account).to eq('SYSTEM')
+      expect(converted.sid).to eq(null_sid)
+
+      # carefully select a SID here that is not localized on international Windows
+      expect(converted.account).to eq('NULL SID')
     end
 
     it "should raise an error for non-array input" do
@@ -63,6 +66,8 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
     end
 
     it "should accept unqualified account name" do
+      # NOTE: lookup by name works in localized environments only for a few instances
+      # this works in French Windows, even though the account is really Syst\u00E8me
       expect(subject.name_to_sid('SYSTEM')).to eq(sid)
     end
 
@@ -85,6 +90,8 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
     end
 
     it "should accept domain qualified account names" do
+      # NOTE: lookup by name works in localized environments only for a few instances
+      # this works in French Windows, even though the account is really AUTORITE NT\\Syst\u00E8me
       expect(subject.name_to_sid('NT AUTHORITY\SYSTEM')).to eq(sid)
     end
 
@@ -131,18 +138,26 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
     end
 
     it "should accept unqualified account name" do
+      # NOTE: lookup by name works in localized environments only for a few instances
+      # this works in French Windows, even though the account is really Syst\u00E8me
       expect(subject.name_to_sid_object('SYSTEM').sid).to eq(sid)
     end
 
     it "should be case-insensitive" do
+      # NOTE: lookup by name works in localized environments only for a few instances
+      # this works in French Windows, even though the account is really Syst\u00E8me
       expect(subject.name_to_sid_object('SYSTEM')).to eq(subject.name_to_sid_object('system'))
     end
 
     it "should be leading and trailing whitespace-insensitive" do
+      # NOTE: lookup by name works in localized environments only for a few instances
+      # this works in French Windows, even though the account is really Syst\u00E8me
       expect(subject.name_to_sid_object('SYSTEM')).to eq(subject.name_to_sid_object(' SYSTEM '))
     end
 
     it "should accept domain qualified account names" do
+      # NOTE: lookup by name works in localized environments only for a few instances
+      # this works in French Windows, even though the account is really AUTORITE NT\\Syst\u00E8me
       expect(subject.name_to_sid_object('NT AUTHORITY\SYSTEM').sid).to eq(sid)
     end
   end
@@ -153,7 +168,10 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
     end
 
     it "should accept a sid" do
-      expect(subject.sid_to_name(sid)).to eq("NT AUTHORITY\\SYSTEM")
+      # choose a value that is not localized, for instance
+      # S-1-5-18 can be NT AUTHORITY\\SYSTEM or AUTORITE NT\\Syst\u00E8me
+      # but NULL SID appears universal
+      expect(subject.sid_to_name(null_sid)).to eq('NULL SID')
     end
   end
 

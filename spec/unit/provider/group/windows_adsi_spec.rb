@@ -278,6 +278,14 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
   end
 
   it "should prefer the domain component from the resolved SID" do
-    expect(provider.members_to_s(['.\Administrators'])).to eq('BUILTIN\Administrators')
+    # must lookup well known S-1-5-32-544 as actual 'Administrators' name may be localized
+    admins_sid_bytes = [1, 2, 0, 0, 0, 0, 0, 5, 32, 0, 0, 0, 32, 2, 0, 0]
+    admins_group = Puppet::Util::Windows::SID::Principal.lookup_account_sid(admins_sid_bytes)
+    # prefix just the name like .\Administrators
+    converted = provider.members_to_s([".\\#{admins_group.account}"])
+
+    # and ensure equivalent of BUILTIN\Administrators, without a leading .
+    expect(converted).to eq(admins_group.domain_account)
+    expect(converted[0]).to_not eq('.')
   end
 end
