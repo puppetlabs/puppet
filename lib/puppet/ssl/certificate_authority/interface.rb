@@ -233,7 +233,7 @@ module Puppet
           exts = []
           exts += cert.custom_extensions if cert.respond_to?(:custom_extensions)
           exts += cert.custom_attributes if cert.respond_to?(:custom_attributes)
-          exts += cert.extension_requests if cert.respond_to?(:extension_requests)
+          exts += cert.request_extensions if cert.respond_to?(:request_extensions)
 
           exts.map {|e| "#{e['oid']}: #{e['value'].inspect}" }.sort
         end
@@ -277,6 +277,8 @@ module Puppet
 
           list.each do |host|
             cert = Puppet::SSL::CertificateRequest.indirection.find(host)
+
+            raise InterfaceError, "Could not find CSR for: #{host.inspect}." unless cert
 
             # ca.sign will also do this - and it should if it is called
             # elsewhere - but we want to reject an attempt to sign a

@@ -288,7 +288,6 @@ class Puppet::SSL::CertificateAuthority
       cert_type = :ca
       issuer = csr.content
     else
-      options[:allow_dns_alt_names] = true if hostname == Puppet[:certname].downcase
       unless csr = Puppet::SSL::CertificateRequest.indirection.find(hostname)
         raise ArgumentError, "Could not find certificate request for #{hostname}"
       end
@@ -329,6 +328,8 @@ class Puppet::SSL::CertificateAuthority
   def check_internal_signing_policies(hostname, csr, options = {})
     options[:allow_authorization_extensions] ||= false
     options[:allow_dns_alt_names] ||= false
+    # This allows for masters to bootstrap themselves in certain scenarios
+    options[:allow_dns_alt_names] = true if hostname == Puppet[:certname].downcase
 
     # Reject unknown request extensions.
     unknown_req = csr.request_extensions.reject do |x|
