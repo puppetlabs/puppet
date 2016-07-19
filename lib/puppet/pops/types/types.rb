@@ -396,6 +396,12 @@ class PTypeWithContainedType < PAnyType
   def eql?(o)
     self.class == o.class && @type == o.type
   end
+
+  def resolve(type_parser, loader)
+    rtype = @type
+    rtype = rtype.resolve(type_parser, loader) unless rtype.nil?
+    rtype.equal?(@type) ? self : self.class.new(rtype)
+  end
 end
 
 # The type of types.
@@ -1155,6 +1161,12 @@ class PCollectionType < PAnyType
     assignable?(TypeCalculator.infer(o), guard)
   end
 
+  def resolve(type_parser, loader)
+    relement_type = @element_type
+    relement_type = relement_type.resolve(type_parser, loader) unless relement_type.nil?
+    relement_type.equal?(@element_type) ? self : self.class.new(relement_type, @size_type)
+  end
+
   # Returns an array with from (min) size to (max) size
   def size_range
     (@size_type || DEFAULT_SIZE).range
@@ -1636,6 +1648,14 @@ class PStructElement < TypedModelObject
     @value_type.equal?(nv_type) ? self : PStructElement.new(@key_type, nv_type)
   end
 
+  def resolve(type_parser, loader)
+    rkey_type = @key_type
+    rkey_type = rkey_type.resolve(type_parser, loader) unless rkey_type.nil?
+    rvalue_type = @value_type
+    rvalue_type = rvalue_type.resolve(type_parser, loader) unless rvalue_type.nil?
+    rkey_type.equal?(@key_type) && rvalue_type.equal?(@value_type) ? self : self.class.new(rkey_type, rvalue_type)
+  end
+
   def <=>(o)
     self.name <=> o.name
   end
@@ -1714,6 +1734,16 @@ class PStructType < PAnyType
           PVariantType.maybe_create(@elements.map {|se| se.value_type })],
           PHashType::KEY_PAIR_TUPLE_SIZE))
     end
+  end
+
+  def resolve(type_parser, loader)
+    changed = false
+    relements = @elements.map do |elem|
+      relem = elem.resolve(type_parser, loader)
+      changed ||= !relem.equal?(elem)
+      relem
+    end
+    changed ? self.class.new(relements) : self
   end
 
   def eql?(o)
@@ -1884,6 +1914,16 @@ class PTupleType < PAnyType
     else
       alter_type_array(@types, :normalize, guard) { |altered_types| PTupleType.new(altered_types, @size_type) }
     end
+  end
+
+  def resolve(type_parser, loader)
+    changed = false
+    rtypes = @types.map do |type|
+      rtype = type.resolve(type_parser, loader)
+      changed ||= !rtype.equal?(type)
+      rtype
+    end
+    changed ? self.class.new(rtypes, @size_type) : self
   end
 
   def instance?(o, guard = nil)
@@ -2086,6 +2126,14 @@ class PCallableType < PAnyType
 
   def eql?(o)
     self.class == o.class && @param_types == o.param_types && @block_type == o.block_type
+  end
+
+  def resolve(type_parser, loader)
+    rparam_types = @param_types
+    rparam_types = rparam_types.resolve(type_parser, loader) unless rparam_types.nil?
+    rblock_type = @block_type
+    rblock_type = rblock_type.resolve(type_parser, loader) unless rblock_type.nil?
+    rparam_types.equal?(@param_types) && rblock_type.equal?(@block_type) ? self : self.class.new(rparam_types, rblock_type)
   end
 
   DEFAULT = PCallableType.new(nil)
@@ -2323,6 +2371,14 @@ class PHashType < PCollectionType
 
   def is_the_empty_hash?
     self == EMPTY
+  end
+
+  def resolve(type_parser, loader)
+    rkey_type = @key_type
+    rkey_type = rkey_type.resolve(type_parser, loader) unless rkey_type.nil?
+    rvalue_type = @element_type
+    rvalue_type = rvalue_type.resolve(type_parser, loader) unless rvalue_type.nil?
+    rkey_type.equal?(@key_type) && rvalue_type.equal?(@element_type) ? self : self.class.new(rkey_type, rvalue_type, @size_type)
   end
 
   # Returns a new function that produces a  Hash
