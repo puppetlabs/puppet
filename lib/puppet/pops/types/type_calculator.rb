@@ -644,6 +644,11 @@ class TypeCalculator
   end
 
   # @api private
+  def infer_Sensitive(o)
+    PSensitiveType.new(infer(o.unwrap))
+  end
+
+  # @api private
   def infer_TrueClass(o)
     PBooleanType::DEFAULT
   end
