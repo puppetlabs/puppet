@@ -342,6 +342,18 @@ describe Puppet::Type.type(:file) do
       expect(file[:path]).to eq(title)
     end
 
+    it "should allow a single slash for a title and create the path" do
+      title = File.expand_path("/")
+      file = described_class.new(:title => title)
+      expect(file[:path]).to eq(title)
+    end
+
+    it "should allow multiple slashes for a title and create the path" do
+      title = File.expand_path("/") + "//"
+      file = described_class.new(:title => title)
+      expect(file[:path]).to eq(File.expand_path("/"))
+    end
+
     it "should set a desired 'ensure' value if none is set and 'content' is set" do
       file = described_class.new(:path => path, :content => "/foo/bar")
       expect(file[:ensure]).to eq(:file)
