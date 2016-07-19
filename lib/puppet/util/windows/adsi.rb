@@ -107,8 +107,18 @@ module Puppet::Util::Windows::ADSI
   end
 
   module Shared
+    def localized_domains
+      @localized_domains ||= [
+        # localized version of BUILTIN
+        # for instance VORDEFINIERT on German Windows
+        Puppet::Util::Windows::SID.sid_to_name('S-1-5-32'),
+        # localized version of NT AUTHORITY (can't use S-1-5)
+        # for instance AUTORITE NT on French Windows
+        Puppet::Util::Windows::SID.name_to_sid_object('SYSTEM').domain
+    ]
+  end
     def uri(name, host = '.')
-      host = '.' if ['NT AUTHORITY', 'BUILTIN', Socket.gethostname].include?(host)
+      host = '.' if (localized_domains << Socket.gethostname).include?(host)
 
       # group or user
       account_type = self.name.split('::').last.downcase

@@ -6,6 +6,10 @@ require 'puppet/util/windows'
 
 describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? do
   let(:connection) { stub 'connection' }
+  let(:builtin_localized) { Puppet::Util::Windows::SID.sid_to_name('S-1-5-32') }
+  # SYSTEM is special as English can retrieve it via Windows API
+  # but will return localized names
+  let(:ntauthority_localized) { Puppet::Util::Windows::SID::Principal.lookup_account_name('SYSTEM').domain }
 
   before(:each) do
     Puppet::Util::Windows::ADSI.instance_variable_set(:@computer_name, 'testcomputername')
@@ -65,6 +69,14 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
 
     it "should generate the correct URI for a user with a domain" do
       expect(Puppet::Util::Windows::ADSI::User.uri(username, domain)).to eq("WinNT://#{domain}/#{username},user")
+    end
+
+    it "should generate the correct URI for a BUILTIN user" do
+      expect(Puppet::Util::Windows::ADSI::User.uri(username, builtin_localized)).to eq("WinNT://./#{username},user")
+    end
+
+    it "should generate the correct URI for a NT AUTHORITY user" do
+      expect(Puppet::Util::Windows::ADSI::User.uri(username, ntauthority_localized)).to eq("WinNT://./#{username},user")
     end
 
     it "should be able to parse a username without a domain" do
@@ -422,6 +434,14 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
 
     it "should generate the correct URI" do
       expect(Puppet::Util::Windows::ADSI::Group.uri("people")).to eq("WinNT://./people,group")
+    end
+
+    it "should generate the correct URI for a BUILTIN group" do
+      expect(Puppet::Util::Windows::ADSI::Group.uri(groupname, builtin_localized)).to eq("WinNT://./#{groupname},group")
+    end
+
+    it "should generate the correct URI for a NT AUTHORITY group" do
+      expect(Puppet::Util::Windows::ADSI::Group.uri(groupname, ntauthority_localized)).to eq("WinNT://./#{groupname},group")
     end
 
     it "should be able to create a group" do
