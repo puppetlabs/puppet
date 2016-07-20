@@ -10,6 +10,7 @@ class Puppet::Module
   class UnsupportedPlatform < Error; end
   class IncompatiblePlatform < Error; end
   class MissingMetadata < Error; end
+  class FaultyMetadata < Error; end
   class InvalidName < Error; end
   class InvalidFilePattern < Error; end
 
@@ -92,7 +93,13 @@ class Puppet::Module
     begin
       metadata =  JSON.parse(File.read(metadata_file, :encoding => 'utf-8'))
     rescue JSON::JSONError => e
-      Puppet.debug("#{name} has an invalid and unparsable metadata.json file.  The parse error: #{e.message}")
+      msg = "#{name} has an invalid and unparsable metadata.json file. The parse error: #{e.message}"
+      case Puppet[:strict]
+      when :off, :warning
+        Puppet.warning(msg)
+      when :error
+        raise FaultyMetadata, msg
+      end
       return false
     end
 
