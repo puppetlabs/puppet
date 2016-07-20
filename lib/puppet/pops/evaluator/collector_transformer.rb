@@ -155,6 +155,10 @@ protected
     @@evaluator.evaluate(o, scope)
   end
 
+  def query_LiteralUndef(o, scope)
+    nil
+  end
+
   def query_QualifiedName(o, scope)
     @@evaluator.evaluate(o, scope)
   end
@@ -203,6 +207,10 @@ protected
 
   def match_LiteralString(o, scope)
     @@evaluator.evaluate(o, scope)
+  end
+
+  def match_LiteralUndef(o, scope)
+    nil
   end
 
   def match_ConcatenatedString(o, scope)
