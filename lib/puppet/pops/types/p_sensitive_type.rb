@@ -27,8 +27,7 @@ class PSensitiveType < Puppet::Pops::Types::PTypeWithContainedType
   end
 
   def initialize(type = nil)
-    super
-    @type ||= PAnyType.new
+    @type = type.nil? ? PAnyType.new : type.generalize
   end
 
   def instance?(o, guard = nil)

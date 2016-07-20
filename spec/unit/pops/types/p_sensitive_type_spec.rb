@@ -56,6 +56,15 @@ describe 'Sensitive Type' do
           CODE
           expect(eval_and_collect_notices(code)).to eq(['false', 'false'])
         end
+
+        it 'generalizes passed types to prevent information leakage' do
+          code =<<-CODE
+            $it = String[7, 7]
+            $st = Sensitive[$it]
+            notice(type($st))
+          CODE
+          expect(eval_and_collect_notices(code)).to eq(['Type[Sensitive[String]]'])
+        end
       end
     end
   end
@@ -64,9 +73,10 @@ describe 'Sensitive Type' do
     it 'can be created from a string and does not leak its contents' do
       code =<<-CODE
         $o = Sensitive("hunter2")
-        notice(assert_type(Sensitive, $o))
+        notice($o)
+        notice(type($o))
       CODE
-      expect(eval_and_collect_notices(code)).to eq(['Sensitive [value redacted]'])
+      expect(eval_and_collect_notices(code)).to eq(['Sensitive [value redacted]', 'Sensitive[String]'])
     end
 
     it 'matches the appropriate parameterized type' do
@@ -79,6 +89,7 @@ describe 'Sensitive Type' do
     end
 
     it 'verifies the constrains of the parameterized type' do
+      pending "the ability to enforce constraints without leaking information"
       code =<<-CODE
         $o = Sensitive("hunter2")
         notice(assert_type(Sensitive[String[10, 20]], $o))
@@ -95,7 +106,7 @@ describe 'Sensitive Type' do
           "$expected != $actual"
         })
       CODE
-      expect(eval_and_collect_notices(code)).to eq(['Sensitive[Integer] != Sensitive[String[7, 7]]'])
+      expect(eval_and_collect_notices(code)).to eq(['Sensitive[Integer] != Sensitive[String]'])
     end
 
     it 'can be created from another sensitive instance ' do
@@ -106,6 +117,22 @@ describe 'Sensitive Type' do
       CODE
       expect(eval_and_collect_notices(code)).to eq(['Sensitive [value redacted]'])
     end
+  end
+
+  it "enforces wrapped type constraints" do
+    pending "the ability to enforce constraints without leaking information"
+    code =<<-CODE
+        class secrets_handler(Sensitive[Array[String[4, 8]]] $pwlist) {
+            notice($pwlist)
+        }
+
+        class { "secrets_handler":
+            pwlist => Sensitive(['hi', 'longlonglong'])
+        }
+    CODE
+    expect {
+      expect(eval_and_collect_notices(code))
+    }.to raise_error(Puppet::Error, /expects a String\[4, 8\], got String/)
   end
 end
 end
