@@ -132,7 +132,10 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           end
 
           it "should raise an exception when setting to a different user" do
-            expect { winsec.set_owner(sids[:guest], path) }.to raise_error(Puppet::Error, /This security ID may not be assigned as the owner of this object./)
+            expect { winsec.set_owner(sids[:guest], path) }.to raise_error do |error|
+              expect(error).to be_a(Puppet::Util::Windows::Error)
+              expect(error.code).to eq(1307) # ERROR_INVALID_OWNER
+            end
           end
         end
 
@@ -142,7 +145,10 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           end
 
           it "should raise an exception if an invalid path is provided" do
-            expect { winsec.get_owner("c:\\doesnotexist.txt") }.to raise_error(Puppet::Error, /The system cannot find the file specified./)
+            expect { winsec.get_owner("c:\\doesnotexist.txt") }.to raise_error do |error|
+              expect(error).to be_a(Puppet::Util::Windows::Error)
+              expect(error.code).to eq(2) # ERROR_FILE_NOT_FOUND
+            end
           end
         end
 
@@ -164,7 +170,10 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           end
 
           it "should raise an exception if an invalid path is provided" do
-            expect { winsec.get_group("c:\\doesnotexist.txt") }.to raise_error(Puppet::Error, /The system cannot find the file specified./)
+            expect { winsec.get_group("c:\\doesnotexist.txt") }.to raise_error do |error|
+              expect(error).to be_a(Puppet::Util::Windows::Error)
+              expect(error.code).to eq(2) # ERROR_FILE_NOT_FOUND
+            end
           end
         end
 
@@ -300,7 +309,10 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           end
 
           it "should raise an exception if an invalid path is provided" do
-            expect { winsec.set_mode(sids[:guest], "c:\\doesnotexist.txt") }.to raise_error(Puppet::Error, /The system cannot find the file specified./)
+            expect { winsec.set_mode(sids[:guest], "c:\\doesnotexist.txt") }.to raise_error do |error|
+              expect(error).to be_a(Puppet::Util::Windows::Error)
+              expect(error.code).to eq(2) # ERROR_FILE_NOT_FOUND
+            end
           end
         end
 
@@ -344,7 +356,10 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           end
 
           it "should raise an exception if an invalid path is provided" do
-            expect { winsec.get_mode("c:\\doesnotexist.txt") }.to raise_error(Puppet::Error, /The system cannot find the file specified./)
+            expect { winsec.get_mode("c:\\doesnotexist.txt") }.to raise_error do |error|
+              expect(error).to be_a(Puppet::Util::Windows::Error)
+              expect(error.code).to eq(2) # ERROR_FILE_NOT_FOUND
+            end
           end
         end
 
@@ -424,7 +439,10 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           end
 
           it "should raise an exception if an invalid path is provided" do
-            expect { winsec.set_owner(sids[:guest], "c:\\doesnotexist.txt") }.to raise_error(Puppet::Error, /The system cannot find the file specified./)
+            expect { winsec.set_owner(sids[:guest], "c:\\doesnotexist.txt") }.to raise_error do |error|
+              expect(error).to be_a(Puppet::Util::Windows::Error)
+              expect(error.code).to eq(2) # ERROR_FILE_NOT_FOUND
+            end
           end
         end
 
@@ -463,7 +481,10 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           end
 
           it "should raise an exception if an invalid path is provided" do
-            expect { winsec.set_group(sids[:guest], "c:\\doesnotexist.txt") }.to raise_error(Puppet::Error, /The system cannot find the file specified./)
+            expect { winsec.set_group(sids[:guest], "c:\\doesnotexist.txt") }.to raise_error do |error|
+              expect(error).to be_a(Puppet::Util::Windows::Error)
+              expect(error.code).to eq(2) # ERROR_FILE_NOT_FOUND
+            end
           end
         end
 

@@ -61,7 +61,10 @@ describe Puppet::Provider::Package::Windows::Package do
 
       expect {
         subject.with_key{ |key, values| }
-      }.to raise_error(Puppet::Util::Windows::Error, /Access is denied/)
+      }.to raise_error do |error|
+        expect(error).to be_a(Puppet::Util::Windows::Error)
+        expect(error.code).to eq(5) # ERROR_ACCESS_DENIED
+      end
     end
   end
 

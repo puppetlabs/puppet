@@ -27,8 +27,10 @@ describe "Puppet::Util::Windows::Process", :if => Puppet.features.microsoft_wind
     end
 
     it "should raise an error for an unknown privilege name" do
-      fail_msg = /LookupPrivilegeValue\(, foo, .*\):  A specified privilege does not exist/
-      expect { Puppet::Util::Windows::Process.lookup_privilege_value('foo') }.to raise_error(Puppet::Util::Windows::Error, fail_msg)
+      expect { Puppet::Util::Windows::Process.lookup_privilege_value('foo') }.to raise_error do |error|
+        expect(error).to be_a(Puppet::Util::Windows::Error)
+        expect(error.code).to eq(1313) # ERROR_NO_SUCH_PRIVILEGE
+      end
     end
   end
 

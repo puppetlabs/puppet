@@ -40,14 +40,20 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
         # S-1-1-1 which is not a valid account
         valid_octet_invalid_user =[1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0]
         subject.octet_string_to_sid_object(valid_octet_invalid_user)
-      }.to raise_error(Puppet::Util::Windows::Error, /Failed to call LookupAccountSidW:  No mapping between account names and security IDs was done./)
+      }.to raise_error do |error|
+        expect(error).to be_a(Puppet::Util::Windows::Error)
+        expect(error.code).to eq(1332) # ERROR_NONE_MAPPED
+      end
     end
 
     it "should raise an error for a malformed byte array" do
       expect {
         invalid_octet = [2]
         subject.octet_string_to_sid_object(invalid_octet)
-      }.to raise_error(Puppet::Util::Windows::Error, /Failed to call LookupAccountSidW:  The parameter is incorrect./)
+      }.to raise_error do |error|
+        expect(error).to be_a(Puppet::Util::Windows::Error)
+        expect(error.code).to eq(87) # ERROR_INVALID_PARAMETER
+      end
     end
   end
 
