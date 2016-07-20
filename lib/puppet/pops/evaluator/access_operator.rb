@@ -605,29 +605,14 @@ class AccessOperator
       # does not have a title. This should probably be deprecated.
       #
       result = keys.each_with_index.map do |c, i|
-        # PUP-6083 - Using Class[Foo] is deprecated since an arbitrary foo will trigger a "resource not found"
-        # This check is needed for two cases below.
-        #
-        strict_check = lambda do
-          if Puppet[:strict] != :off
-            msg = 'Upper cased class-name in a Class[<class-name>] is deprecated, class-name should be a lowercase string'
-            case Puppet[:strict]
-            when :error
-              fail(Issues::ILLEGAL_HOSTCLASS_NAME, @semantic.keys[i], {:name => c})
-            when :warning
-              Puppet.warn_once(:deprecation, 'ClassReferenceInUpperCase', msg)
-            end
-          end
-        end
-
         name = if c.is_a?(Types::PResourceType) && !c.type_name.nil? && c.title.nil?
-                 strict_check.call
+                 strict_check(c, i)
                  # type_name is already downcase. Don't waste time trying to downcase again
                  c.type_name
                elsif c.is_a?(String)
                  c.downcase
                elsif c.is_a?(Types::PTypeReferenceType)
-                 strict_check.call
+                 strict_check(c, i)
                  c.type_string.downcase
                else
                  fail(Issues::ILLEGAL_HOSTCLASS_NAME, @semantic.keys[i], {:name => c})
@@ -660,6 +645,21 @@ class AccessOperator
     # returns single type as type, else an array of types
     return result_type_array ? result : result.pop
   end
+
+  # PUP-6083 - Using Class[Foo] is deprecated since an arbitrary foo will trigger a "resource not found"
+  # @api private
+  def strict_check(name, index)
+    if Puppet[:strict] != :off
+      msg = 'Upper cased class-name in a Class[<class-name>] is deprecated, class-name should be a lowercase string'
+      case Puppet[:strict]
+      when :error
+        fail(Issues::ILLEGAL_HOSTCLASS_NAME, @semantic.keys[index], {:name => name})
+      when :warning
+        Puppet.warn_once(:deprecation, 'ClassReferenceInUpperCase', msg)
+      end
+    end
+  end
+
 end
 end
 end
