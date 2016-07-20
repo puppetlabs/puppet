@@ -4,6 +4,7 @@ require 'puppet/util/windows'
 
 describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft_windows? do
 
+  let (:current_user_sid) { Puppet::Util::Windows::ADSI::User.current_user_sid }
   let (:system_bytes) { [1, 1, 0, 0, 0, 0, 0, 5, 18, 0, 0, 0] }
   let (:administrator_bytes) { [1, 2, 0, 0, 0, 0, 0, 5, 32, 0, 0, 0, 32, 2, 0, 0] }
 
@@ -17,7 +18,7 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
       expect(principal.domain_account).to eq('NT AUTHORITY\\SYSTEM')
 
       # Windows API LookupAccountSid behaves differently if current user is SYSTEM
-      if Puppet::Util::Windows::ADSI::User.current_user_name != 'SYSTEM'
+      if current_user_sid.sid_bytes != system_bytes
         account_type = :SidTypeWellKnownGroup
       else
         account_type = :SidTypeUser
@@ -35,7 +36,7 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
       expect(principal.domain_account).to eq('NT AUTHORITY\\SYSTEM')
 
       # Windows API LookupAccountSid behaves differently if current user is SYSTEM
-      if Puppet::Util::Windows::ADSI::User.current_user_name != 'SYSTEM'
+      if current_user_sid.sid_bytes != system_bytes
         account_type = :SidTypeWellKnownGroup
       else
         account_type = :SidTypeUser
@@ -45,9 +46,8 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
     end
 
     it "should create an instance from a local account prefixed with hostname" do
-      current_user_name = Puppet::Util::Windows::ADSI::User.current_user_name
-      running_as_system = (current_user_name == 'SYSTEM')
-      username = running_as_system ? 'Administrator' : current_user_name
+      running_as_system = (current_user_sid.sid_bytes == system_bytes)
+      username = running_as_system ? 'Administrator' : current_user_sid.account
 
       user_exists = Puppet::Util::Windows::ADSI::User.exists?(".\\#{username}")
 
@@ -112,7 +112,7 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
       expect(principal.domain_account).to eq('NT AUTHORITY\\SYSTEM')
 
       # Windows API LookupAccountSid behaves differently if current user is SYSTEM
-      if Puppet::Util::Windows::ADSI::User.current_user_name != 'SYSTEM'
+      if current_user_sid.sid_bytes != system_bytes
         account_type = :SidTypeWellKnownGroup
       else
         account_type = :SidTypeUser

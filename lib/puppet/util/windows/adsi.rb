@@ -334,6 +334,10 @@ module Puppet::Util::Windows::ADSI
       user_name
     end
 
+    def self.current_user_sid
+      Puppet::Util::Windows::SID.name_to_sid_object(current_user_name)
+    end
+
     def self.exists?(name_or_sid)
       well_known = false
       if (sid = Puppet::Util::Windows::SID.name_to_sid_object(name_or_sid))

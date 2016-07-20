@@ -1393,7 +1393,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       describe "when processing SYSTEM ACEs" do
         before do
           @sids = {
-            :current_user => Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name),
+            :current_user => Puppet::Util::Windows::ADSI::User.current_user_sid.sid,
             :system => Puppet::Util::Windows::SID::LocalSystem,
             :guest => Puppet::Util::Windows::SID.name_to_sid("Guest"),
             :users => Puppet::Util::Windows::SID::BuiltinUsers,
