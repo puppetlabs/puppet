@@ -5,6 +5,18 @@ require 'puppet/util/windows'
 describe Puppet::Util::Windows::ADSI::User,
   :if => Puppet.features.microsoft_windows? do
 
+  describe ".initialize" do
+    it "cannot reference BUILTIN accounts like SYSTEM due to WinNT moniker limitations" do
+      system = Puppet::Util::Windows::ADSI::User.new('SYSTEM')
+      # trying to retrieve COM object should fail to load with a localized version of:
+      # ADSI connection error: failed to parse display name of moniker `WinNT://./SYSTEM,user'
+      #     HRESULT error code:0x800708ad
+      #           The user name could not be found.
+      # Matching on error code alone is sufficient
+      expect { system.native_user }.to raise_error(/0x800708ad/)
+    end
+  end
+
   describe '.each' do
     it 'should return a list of users with UTF-8 names' do
       begin
