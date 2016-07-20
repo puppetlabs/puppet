@@ -1169,15 +1169,62 @@ describe Puppet::Parser::Compiler do
       end.to raise_error(/Resource Override can only.*got: Class\[a\].*/)
     end
 
-    describe "when resolving class references" do
+    describe 'when resolving class references' do
       include Matchers::Resource
+      ## BEFORE
+      describe 'and classname is a Resource Reference and strict == :error' do
+        before(:each) do
+          Puppet[:strict] = :error
+        end
+
+        it 'is reported as an error' do
+          expect { 
+            compile_to_catalog(<<-PP)
+              notice Class[ToothFairy]
+            PP
+          }.to raise_error(/Illegal Class name in class reference. A TypeReference\['ToothFairy'\]-Type cannot be used where a String is expected/)
+        end
+      end
+
+      describe 'and classname is a Resource Reference and strict == :warning' do
+        before(:each) do
+          Puppet[:strict] = :warning
+        end
+
+        it 'is reported as a deprecation warning' do
+          expect { 
+            compile_to_catalog(<<-PP)
+              notice Class[ToothFairy]
+            PP
+            expect(@logs).to have_matching_log(/Upper cased class-name in a Class\[<class-name>\] is deprecated, class-name should be a lowercase string/)
+
+          }.to_not raise_error()
+        end
+      end
+
+      describe 'and classname is a Resource Reference and strict == :off' do
+        before(:each) do
+          Puppet[:strict] = :off
+        end
+
+        it 'is not reported' do
+          expect { 
+            compile_to_catalog(<<-PP)
+              notice Class[ToothFairy]
+            PP
+            expect(@logs).to_not have_matching_log(/Warning: Upper cased class-name in a Class\[<class-name>\] is deprecated, class-name should be a lowercase string/)
+
+          }.to_not raise_error()
+        end
+      end
+
       it "should not favor local scope (with class included in topscope)" do
         catalog = compile_to_catalog(<<-PP)
           class experiment {
             class baz {
             }
-            notify {"x" : require => Class[Baz] }
-            notify {"y" : require => Class[Experiment::Baz] }
+            notify {"x" : require => Class['baz'] }
+            notify {"y" : require => Class['experiment::baz'] }
           }
           class baz {
           }
@@ -1195,8 +1242,8 @@ describe Puppet::Parser::Compiler do
           class experiment {
             class baz {
             }
-            notify {"x" : require => Class[Baz] }
-            notify {"y" : require => Class[Experiment::Baz] }
+            notify {"x" : require => Class['baz'] }
+            notify {"y" : require => Class['experiment::baz'] }
           }
           class baz {
           }
