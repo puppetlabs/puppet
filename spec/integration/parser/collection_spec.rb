@@ -201,6 +201,16 @@ describe 'collectors' do
       end.to raise_error(/Resource type someresource doesn't exist/)
     end
 
+    it 'allows query for literal undef' do
+      expect_the_message_to_be(["foo::baz::quux"], <<-MANIFEST)
+        define foo ($x = undef, $y = undef) {
+          notify { 'testing': message => "foo::${x}::${y}" }
+        }
+        foo { 'bar': y => 'quux' }
+        Foo <| x == undef |> { x => 'baz' }
+      MANIFEST
+    end
+
     context "overrides" do
       it "modifies an existing array" do
         expect_the_message_to_be([["original message", "extra message"]], <<-MANIFEST)
