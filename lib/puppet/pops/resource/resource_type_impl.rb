@@ -1,6 +1,14 @@
-require 'puppet/pops/resource/param'
+require_relative 'param'
+
 module Puppet::Pops
 module Resource
+
+def self.register_ptypes(loader, ir)
+  types = [Param, ResourceTypeImpl].map do |c|
+    c.register_ptype(loader, ir)
+  end
+  types.each {|t| t.resolve(Types::TypeParser.singleton, loader) }
+end
 
 class ResourceTypeImpl
   # Make instances of this class directly createable from the Puppet Language
@@ -14,7 +22,35 @@ class ResourceTypeImpl
 
   # Returns the Puppet Type for this instance.
   def self._ptype
-    # todo - should return an instance of PObjectType.
+    @ptype
+  end
+
+  def self.register_ptype(loader, ir)
+    param_ref = Types::PTypeReferenceType.new('Puppet::Resource::Param')
+    @ptype = Pcore::create_object_type(loader, ir, self, 'Puppet::Resource::ResourceType3', nil,
+      {
+        Types::KEY_NAME => Types::PStringType::NON_EMPTY,
+        'properties' => {
+          Types::KEY_TYPE => Types::PArrayType.new(param_ref),
+          Types::KEY_VALUE => EMPTY_ARRAY
+        },
+        'parameters' => {
+          Types::KEY_TYPE => Types::PArrayType.new(param_ref),
+          Types::KEY_VALUE => EMPTY_ARRAY
+        },
+        'title_patterns' => {
+          Types::KEY_TYPE => Types::POptionalType.new(
+            Types::PHashType.new(Types::PRegexpType::DEFAULT, Types::PArrayType.new(Types::PStringType::NON_EMPTY))),
+          Types::KEY_VALUE => nil
+        },
+        'isomorphic' => {
+          Types::KEY_TYPE => Types::PBooleanType::DEFAULT,
+          Types::KEY_VALUE => true
+        },
+      },
+      EMPTY_HASH,
+      [Types::KEY_NAME]
+    )
   end
 
   # Compares this type against the given _other_ (type) and returns -1, 0, or +1 depending on the order.
@@ -29,16 +65,6 @@ class ResourceTypeImpl
     return nil unless other.is_a?(Puppet::CompilableResourceType)
     # against other type instances.
     self.ref <=> other.ref
-  end
-
-
-  # Mocking - an imaginary loaded 'notify'
-  def self.notify_cheat()
-    new(
-      'notify',
-      [],          # prop
-      [Param.new(String, 'message')] # param
-      )
   end
 
   METAPARAMS = [
@@ -66,7 +92,7 @@ class ResourceTypeImpl
   attr_reader :title_patterns
   attr_reader :isomorphic
 
-  def initialize(name, properties, parameters, title_patterns = nil, isomorphic = true)
+  def initialize(name, properties = EMPTY_ARRAY, parameters = EMPTY_ARRAY, title_patterns = nil, isomorphic = true)
     @name = name
     @properties = properties
     @parameters = parameters
@@ -84,8 +110,6 @@ class ResourceTypeImpl
     # Add all meta params
     METAPARAMS.each {|p| @attr_types[p] = :meta }
 
-    # Compute the set of property names (claimed to be used millions of times
-    # But may only by at apply time
     @property_set = Set.new(properties.map do |p|
       symname = p.name.to_sym
       @attributes[symname] = p
@@ -94,8 +118,6 @@ class ResourceTypeImpl
       symname
     end).freeze
 
-    # Compute the set of parameter names (claimed to be used millions of times
-    # But may only by at apply time
     @param_set = Set.new(parameters.map do |p|
       symname = p.name.to_sym
       @attributes[symname] = p

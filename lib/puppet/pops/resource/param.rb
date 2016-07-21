@@ -18,6 +18,21 @@ class Param
   # This make this class instantiateable from Puppet
   include Puppet::Pops::Types::PuppetObject
 
+  def self.register_ptype(loader, ir)
+    @ptype = Pcore::create_object_type(loader, ir, self, 'Puppet::Resource::Param', nil,
+      {
+        Types::KEY_TYPE => Types::PType::DEFAULT,
+        Types::KEY_NAME => Types::PStringType::NON_EMPTY,
+        'name_var' => {
+          Types::KEY_TYPE => Types::PBooleanType::DEFAULT,
+          Types::KEY_VALUE => false
+        }
+      },
+      EMPTY_HASH,
+      [Types::KEY_NAME]
+    )
+  end
+
   attr_reader :name
   attr_reader :type
   attr_reader :name_var
@@ -29,7 +44,7 @@ class Param
   end
 
   def self._ptype
-    # TODO
+    @ptype
   end
 end
 end
