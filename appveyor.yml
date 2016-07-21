@@ -31,10 +31,12 @@ before_test:
       };
 
 test_script:
-  - REM NOOP4
-  - REM NOOP3
-  - REM NOOP2
-  - REM NOOP1
+  # The REMs are needed to help AppVeyor NOT to lose console messages after a reboot (locale change)
+  # Typcially the first 2 or 3 are dropped.  Don't know why. Just Coz.
+  - REM Sarting in 4
+  - REM Sarting in 3
+  - REM Sarting in 2
+  - REM Sarting in 1
   - SET
   - chcp
   - ps: Get-WinSystemLocale
