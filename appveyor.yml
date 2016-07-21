@@ -31,14 +31,10 @@ before_test:
       };
 
 test_script:
-  - ps: Start-Sleep -Seconds 120
-  - ps: Write-Output 'No Op'
-  - ps: Write-Output 'No Op'
-  - ps: Write-Output 'No Op'
   # Changing Locales requires a reboot.  Need a delay here to allow Appveyor log message receiver to wakeup
   - ps: >-
       if ( (Get-WinSystemLocale).Name -ne 'en-US') {
-        120..1 | % { Write-Output "Pause: $_"; Start-Sleep -Seconds 1 }
+        240..1 | % { Write-Output "Pause: $_"; Start-Sleep -Seconds 1 }
       }
   - SET
   - chcp
