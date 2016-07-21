@@ -105,20 +105,19 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     expect(described_class).to be_default
   end
 
-  it "should not be the default provider on ubuntu14.04" do
+  it "should not be the default provider if systemd is not running on
+Ubuntu" do
     Facter.stubs(:value).with(:osfamily).returns(:debian)
     Facter.stubs(:value).with(:operatingsystem).returns(:ubuntu)
-    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("14.04")
+    Facter.stubs(:value).with(:running_on_systemd).returns(:false)
     expect(described_class).not_to be_default
   end
 
-  [ '15.04', '15.10', '16.04', '16.10' ].each do |ver|
-    it "should be the default provider on ubuntu#{ver}" do
-      Facter.stubs(:value).with(:osfamily).returns(:debian)
-      Facter.stubs(:value).with(:operatingsystem).returns(:ubuntu)
-      Facter.stubs(:value).with(:operatingsystemmajrelease).returns("#{ver}")
-      expect(described_class).to be_default
-    end
+  it "should be the default provider if systemd is running on Ubuntu" do
+    Facter.stubs(:value).with(:osfamily).returns(:debian)
+    Facter.stubs(:value).with(:operatingsystem).returns(:ubuntu)
+    Facter.stubs(:value).with(:running_on_systemd).returns(:true)
+    expect(described_class).to be_default
   end
 
   [:enabled?, :enable, :disable, :start, :stop, :status, :restart].each do |method|

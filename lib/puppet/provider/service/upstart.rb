@@ -11,14 +11,20 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   see <http://upstart.ubuntu.com/>.
   "
 
+  Facter.add(:running_on_systemd) do
+    setcode do
+      Dir.exists? "/run/systemd/system"
+    end
+  end
+
   confine :any => [
-    Facter.value(:operatingsystem) == 'Ubuntu',
+    (Facter.value(:operatingsystem) == 'Ubuntu' and Facter.value(:running_on_systemd) == :false),
     (Facter.value(:osfamily) == 'RedHat' and Facter.value(:operatingsystemrelease) =~ /^6\./),
     Facter.value(:operatingsystem) == 'Amazon',
     Facter.value(:operatingsystem) == 'LinuxMint',
   ]
 
-  defaultfor :operatingsystem => :ubuntu, :operatingsystemmajrelease => ["10.04", "12.04", "14.04", "14.10"]
+  defaultfor :operatingsystem => :ubuntu, :running_on_systemd => :false
 
   commands :start   => "/sbin/start",
            :stop    => "/sbin/stop",

@@ -28,9 +28,9 @@ describe Puppet::Type.type(:service).provider(:upstart) do
     provider_class.stubs(:which).with("/sbin/initctl").returns("/sbin/initctl")
   end
 
-  it "should be the default provider on Ubuntu" do
+  it "should be the default provider on Ubuntu if systemd is not running" do
     Facter.expects(:value).with(:operatingsystem).returns("Ubuntu")
-    Facter.expects(:value).with(:operatingsystemmajrelease).returns("12.04")
+    Facter.expects(:value).with(:running_on_systemd).returns(:false)
     expect(described_class.default?).to be_truthy
   end
 
