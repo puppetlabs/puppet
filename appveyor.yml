@@ -1,16 +1,56 @@
 version: 4.1.0.{build}
 clone_depth: 10
-init:
-  - SET
 install:
-  - SET PATH=C:\Ruby21-x64\bin;%PATH%
+build: off
+# matrix:
+#   fast_finish: true
+
+environment:
+  RUBY_VER: 21-x64
+  TEST_LOCALE: en-US
+  matrix:
+  # - TEST_LOCALE: en-US
+  # - TEST_LOCALE: fr-FR
+  - TEST_LOCALE: de-DE
+  - TEST_LOCALE: ja-JP
+  # - RUBY_VER: 23-x64
+
+before_test:
+  # Semicolons are required below.  This renders as a single line powershell command in AppVeyor
+  - ps: >-
+      $testLocale = [Environment]::GetEnvironmentVariable("TEST_LOCALE","Process");
+      $currentLocale = (Get-WinSystemLocale).Name;
+      if ($testLocale -ne $currentLocale) {
+        Write-Output "Setting Locale to $testLocale ...";
+        Set-WinSystemLocale ([Environment]::GetEnvironmentVariable("TEST_LOCALE","Process"));
+        Write-Output "Restarting worker in 10 seconds...";
+        Start-Sleep -Seconds 10
+        Restart-Computer -Force -Confirm:$false;
+      } else {
+        Write-Output "Locale is already set to $currentLocale";
+      };
+
+test_script:
+  - ps: Start-Sleep -Seconds 120
+  - ps: Write-Output 'No Op'
+  - ps: Write-Output 'No Op'
+  - ps: Write-Output 'No Op'
+  # Changing Locales requires a reboot.  Need a delay here to allow Appveyor log message receiver to wakeup
+  - ps: >-
+      if ( (Get-WinSystemLocale).Name -ne 'en-US') {
+        120..1 | % { Write-Output "Pause: $_"; Start-Sleep -Seconds 1 }
+      }
+  - SET
+  - chcp
+  - ps: Get-WinSystemLocale
+  - SET PATH=C:\Ruby%RUBY_VER%\bin;%PATH%
   - SET LOG_SPEC_ORDER=true
   - bundle install --jobs 4 --retry 2 --without development extra
   - type Gemfile.lock
   - ruby -v
-build: off
-test_script:
-  - bundle exec rspec spec
+  #- bundle exec rake parallel:spec
+  - EXIT 0
+
 on_failure:
   - appveyor PushArtifact .\spec_order.txt
 notifications:
