@@ -71,6 +71,11 @@ class Puppet::Transaction::Report
   # @return [String] the environment name
   attr_accessor :environment
 
+  # Whether there are changes that we decided not to apply because of noop
+  # @return [Boolean]
+  #
+  attr_accessor :noop_pending
+
   # A hash with a map from resource to status
   # @return [Hash{String => Puppet::Resource::Status}] Resource name to status.
   attr_reader :resource_statuses
@@ -116,11 +121,6 @@ class Puppet::Transaction::Report
   # @return [Boolean]
   #
   attr_reader :noop
-
-  # Whether there are changes that we decided not to apply because of noop
-  # @return [Boolean]
-  #
-  attr_reader :noop_pending
 
   def self.from_data_hash(data)
     obj = self.allocate
