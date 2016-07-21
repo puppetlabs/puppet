@@ -5,15 +5,17 @@ build: off
 # matrix:
 #   fast_finish: true
 
+# Note that locales are mainly code page changes and are not the FULL localization changes that 
+#   happen when you install French/Germam/Japanese Windows
 environment:
   RUBY_VER: 21-x64
   TEST_LOCALE: en-US
   matrix:
-  # - TEST_LOCALE: en-US
-  # - TEST_LOCALE: fr-FR
+  - TEST_LOCALE: en-US
+  - TEST_LOCALE: fr-FR
   - TEST_LOCALE: de-DE
   - TEST_LOCALE: ja-JP
-  # - RUBY_VER: 23-x64
+  - RUBY_VER: 23-x64
 
 before_test:
   # Semicolons are required below.  This renders as a single line powershell command in AppVeyor
@@ -33,10 +35,10 @@ before_test:
 test_script:
   # The REMs are needed to help AppVeyor NOT to lose console messages after a reboot (locale change)
   # Typcially the first 2 or 3 are dropped.  Don't know why. Just Coz.
-  - REM Sarting in 4
-  - REM Sarting in 3
-  - REM Sarting in 2
-  - REM Sarting in 1
+  - REM Starting in 4
+  - REM Starting in 3
+  - REM Starting in 2
+  - REM Starting in 1
   - SET
   - chcp
   - ps: Get-WinSystemLocale
