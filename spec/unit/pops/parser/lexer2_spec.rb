@@ -25,7 +25,7 @@ describe 'Lexer2' do
     :RBRACK => ']',
     :LBRACE => '{',
     :RBRACE => '}',
-    :LPAREN => '(',
+    :WSLPAREN => '(', # since it is first on a line it is special (LPAREN handled separately)
     :RPAREN => ')',
     :EQUALS => '=',
     :ISEQUAL => '==',
@@ -331,7 +331,11 @@ describe 'Lexer2' do
   { "=~" => [:MATCH, "=~ /./"],
     "!~" => [:NOMATCH, "!~ /./"],
     ","  => [:COMMA, ", /./"],
-    "("  => [:LPAREN, "( /./"],
+
+    "("       => [:WSLPAREN, "( /./"],
+    "x ("     => [[:NAME, :LPAREN], "x ( /./"],
+    "x\\t ("  => [[:NAME, :LPAREN], "x\t ( /./"],
+
     "[ (liststart)"             => [:LISTSTART, "[ /./"],
     "[ (LBRACK)"                => [[:NAME, :LBRACK], "a[ /./"],
     "[ (liststart after name)"  => [[:NAME, :LISTSTART], "a [ /./"],

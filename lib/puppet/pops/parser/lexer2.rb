@@ -37,6 +37,7 @@ class Lexer2
   TOKEN_RBRACE       = [:RBRACE,       '}'.freeze,   1].freeze
   TOKEN_SELBRACE     = [:SELBRACE,     '{'.freeze,   1].freeze
   TOKEN_LPAREN       = [:LPAREN,       '('.freeze,   1].freeze
+  TOKEN_WSLPAREN     = [:WSLPAREN,     '('.freeze,   1].freeze
   TOKEN_RPAREN       = [:RPAREN,       ')'.freeze,   1].freeze
 
   TOKEN_EQUALS       = [:EQUALS,       '='.freeze,   1].freeze
@@ -219,7 +220,17 @@ class Lexer2
         end
       end,
       ']' => lambda { emit(TOKEN_RBRACK, @scanner.pos) },
-      '(' => lambda { emit(TOKEN_LPAREN, @scanner.pos) },
+      '(' => lambda do
+        before = @scanner.pos
+        pos_on_line = locator.pos_on_line(before)
+        # If first on a line, or only whitespace between start of line and '('
+        # then the token is special to avoid being taken as start of a call.
+        if pos_on_line == 1 || @scanner.string[locator.char_offset(before)-pos_on_line+1, pos_on_line-1] =~ /\A[[:blank:]\r\n]+\Z/
+          emit(TOKEN_WSLPAREN, before)
+        else
+          emit(TOKEN_LPAREN, before)
+        end
+      end,
       ')' => lambda { emit(TOKEN_RPAREN, @scanner.pos) },
       ';' => lambda { emit(TOKEN_SEMIC, @scanner.pos) },
       '?' => lambda { emit(TOKEN_QMARK, @scanner.pos) },
