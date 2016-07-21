@@ -426,8 +426,9 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
 
       it "should generate the correct URI" do
         adsi_group.expects(:objectSID).returns([0])
-        Socket.expects(:gethostname).returns('testcomputername')
-        Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([0]).returns(stub(:account => groupname,:domain => 'testcomputername'))
+        Socket.expects(:gethostname).returns('TESTcomputerNAME')
+        computer_sid = stub(:account => groupname,:domain => 'testcomputername')
+        Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([0]).returns(computer_sid)
         expect(group.uri).to eq("WinNT://./#{groupname},group")
       end
     end
