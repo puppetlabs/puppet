@@ -32,19 +32,20 @@ before_test:
 
 test_script:
   # Changing Locales requires a reboot.  Need a delay here to allow Appveyor log message receiver to wakeup
-  - ps: >-
-      if ( (Get-WinSystemLocale).Name -ne 'en-US') {
-        240..1 | % { Write-Output "Pause: $_"; Start-Sleep -Seconds 1 }
-      }
-  - REM NOOP
-  - REM NOOP
-  - REM NOOP
-  - REM NOOP
-  - REM NOOP
-  - REM NOOP
-  - REM NOOP
-  - REM NOOP
-  - REM NOOP
+  #- ps: >-
+  #    if ( (Get-WinSystemLocale).Name -ne 'en-US') {
+  #      240..1 | % { Write-Output "Pause: $_"; Start-Sleep -Seconds 1 }
+  #    }
+  - REM NOOP10
+  - REM NOOP9
+  - REM NOOP8
+  - REM NOOP7
+  - REM NOOP6
+  - REM NOOP5
+  - REM NOOP4
+  - REM NOOP3
+  - REM NOOP2
+  - REM NOOP1
   - SET
   - chcp
   - ps: Get-WinSystemLocale
@@ -54,7 +55,6 @@ test_script:
   - type Gemfile.lock
   - ruby -v
   #- bundle exec rake parallel:spec
-  - ECHO I am a meat popsicle
   - EXIT 0
 
 on_failure:
