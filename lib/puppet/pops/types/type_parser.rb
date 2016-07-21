@@ -140,6 +140,7 @@ class TypeParser
         'iterable'     => TypeFactory.iterable,
         'iterator'     => TypeFactory.iterator,
         'string'       => TypeFactory.string,
+        'sensitive'    => TypeFactory.sensitive,
         'enum'         => TypeFactory.enum,
         'boolean'      => TypeFactory.boolean,
         'pattern'      => TypeFactory.pattern,
@@ -431,6 +432,17 @@ class TypeParser
         raise_invalid_parameters_error('String', '1 to 2', parameters.size)
       end
       TypeFactory.string(size_type)
+
+    when 'sensitive'
+      if parameters.size == 0
+        TypeFactory.sensitive
+      elsif parameters.size == 1
+        param = parameters[0]
+        assert_type(ast, param)
+        TypeFactory.sensitive(param)
+      else
+        raise_invalid_parameters_error('Sensitive', '0 to 1', parameters.size)
+      end
 
     when 'optional'
       if parameters.size != 1

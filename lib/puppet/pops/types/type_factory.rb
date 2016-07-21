@@ -40,6 +40,13 @@ module TypeFactory
     PFloatType::DEFAULT
   end
 
+  # Produces the Sensitive type
+  # @api public
+  #
+  def self.sensitive(type = nil)
+    PSensitiveType.new(type)
+  end
+
   # Produces the Numeric type
   # @api public
   #

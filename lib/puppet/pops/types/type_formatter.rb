@@ -372,6 +372,11 @@ class TypeFormatter
   end
 
   # @api private
+  def string_PSensitiveType(t)
+    append_array('Sensitive') { append_string(t.type) }
+  end
+
+  # @api private
   def string_POptionalType(t)
     optional_type = t.optional_type
     append_array('Optional', optional_type.nil?) do

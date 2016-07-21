@@ -266,6 +266,19 @@ class AccessOperator
     end
   end
 
+  def access_PSensitiveType(o, scope, keys)
+    keys.flatten!
+    if keys.size == 1
+      type = keys[0]
+      unless type.is_a?(Types::PAnyType)
+        fail(Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Sensitive-Type', :actual => type.class})
+      end
+      Types::PSensitiveType.new(type)
+    else
+      fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Sensitive-Type', :min => 1, :actual => keys.size})
+    end
+  end
+
   def access_PObjectType(o, scope, keys)
     keys.flatten!
     if keys.size == 1

@@ -208,6 +208,12 @@ describe 'The type calculator' do
       end
     end
 
+    context 'sensitive' do
+      it 'translates to PSensitiveType' do
+        expect(calculator.infer(PSensitiveType::Sensitive.new("hunter2")).class).to eq(PSensitiveType)
+      end
+    end
+
     context 'version' do
       it 'translates to PVersionType' do
         expect(calculator.infer(Semantic::Version.new(1,0,0)).class).to eq(PSemVerType)
