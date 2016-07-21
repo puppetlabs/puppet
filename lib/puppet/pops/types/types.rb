@@ -16,7 +16,20 @@ require_relative 'puppet_object'
 module Puppet::Pops
 module Types
 
-EMPTY_HASH = {}.freeze
+# The EMPTY_xxx declarations is for backward compatibility. They should not be explicitly referenced
+
+# @api private
+# @deprecated
+EMPTY_HASH = Puppet::Pops::EMPTY_HASH
+
+# @api private
+# @deprecated
+EMPTY_ARRAY = Puppet::Pops::EMPTY_ARRAY
+
+# @api private
+# @deprecated
+EMPTY_STRING = Puppet::Pops::EMPTY_STRING
+
 # The Types model is a model of Puppet Language types.
 #
 # The exact relationship between types is not visible in this model wrt. the PDataType which is an abstraction

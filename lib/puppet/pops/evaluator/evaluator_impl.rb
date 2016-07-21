@@ -34,7 +34,6 @@ class EvaluatorImpl
   include Runtime3Support
   include ExternalSyntaxSupport
 
-  EMPTY_STRING = ''.freeze
   COMMA_SEPARATOR = ', '.freeze
 
   # Reference to Issues name space makes it easier to refer to issues
