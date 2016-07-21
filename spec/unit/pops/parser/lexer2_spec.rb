@@ -303,6 +303,26 @@ describe 'Lexer2' do
     expect(tokens_scanned_from("a [1]")).to match_tokens2(:NAME, :LISTSTART, :NUMBER, :RBRACK)
   end
 
+  it "differentiates between '(' first on line, and not first on line" do
+    expect(tokens_scanned_from("(")).to match_tokens2(:WSLPAREN)
+    expect(tokens_scanned_from("\n(")).to match_tokens2(:WSLPAREN)
+    expect(tokens_scanned_from("\n\r(")).to match_tokens2(:WSLPAREN)
+    expect(tokens_scanned_from("\n\t(")).to match_tokens2(:WSLPAREN)
+    expect(tokens_scanned_from("\n\r\t(")).to match_tokens2(:WSLPAREN)
+    expect(tokens_scanned_from("\n\u00a0(")).to match_tokens2(:WSLPAREN)
+
+    expect(tokens_scanned_from("x(")).to match_tokens2(:NAME, :LPAREN)
+    expect(tokens_scanned_from("\nx(")).to match_tokens2(:NAME, :LPAREN)
+    expect(tokens_scanned_from("\n\rx(")).to match_tokens2(:NAME, :LPAREN)
+    expect(tokens_scanned_from("\n\tx(")).to match_tokens2(:NAME, :LPAREN)
+    expect(tokens_scanned_from("\n\r\tx(")).to match_tokens2(:NAME, :LPAREN)
+    expect(tokens_scanned_from("\n\u00a0x(")).to match_tokens2(:NAME, :LPAREN)
+
+    expect(tokens_scanned_from("x (")).to match_tokens2(:NAME, :LPAREN)
+    expect(tokens_scanned_from("x\t(")).to match_tokens2(:NAME, :LPAREN)
+    expect(tokens_scanned_from("x\u00a0(")).to match_tokens2(:NAME, :LPAREN)
+  end
+
   it "skips whitepsace" do
     expect(tokens_scanned_from(" if if if ")).to match_tokens2(:IF, :IF, :IF)
     expect(tokens_scanned_from(" if \n\r\t\nif if ")).to match_tokens2(:IF, :IF, :IF)
