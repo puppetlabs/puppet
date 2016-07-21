@@ -326,6 +326,7 @@ describe 'Lexer2' do
   it "skips whitepsace" do
     expect(tokens_scanned_from(" if if if ")).to match_tokens2(:IF, :IF, :IF)
     expect(tokens_scanned_from(" if \n\r\t\nif if ")).to match_tokens2(:IF, :IF, :IF)
+    expect(tokens_scanned_from(" if \n\r\t\n\u00a0if\u00a0 if ")).to match_tokens2(:IF, :IF, :IF)
   end
 
   it "skips single line comments" do
