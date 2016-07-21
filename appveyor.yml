@@ -36,6 +36,14 @@ test_script:
       if ( (Get-WinSystemLocale).Name -ne 'en-US') {
         240..1 | % { Write-Output "Pause: $_"; Start-Sleep -Seconds 1 }
       }
+  - ps: Write-Output "NOOP"
+  - ps: Write-Output "NOOP"
+  - ps: Write-Output "NOOP"
+  - ps: Write-Output "NOOP"
+  - ps: Write-Output "NOOP"
+  - ps: Write-Output "NOOP"
+  - ps: Write-Output "NOOP"
+  - ps: Write-Output "NOOP"
   - SET
   - chcp
   - ps: Get-WinSystemLocale
