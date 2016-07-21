@@ -301,7 +301,6 @@ describe 'Lexer2' do
     expect(tokens_scanned_from("$a [1]")).to match_tokens2(:VARIABLE, :LISTSTART, :NUMBER, :RBRACK)
     expect(tokens_scanned_from("a[1]")).to match_tokens2(:NAME, :LBRACK, :NUMBER, :RBRACK)
     expect(tokens_scanned_from("a [1]")).to match_tokens2(:NAME, :LISTSTART, :NUMBER, :RBRACK)
-    expect(tokens_scanned_from(" if \n\r\t\nif if ")).to match_tokens2(:IF, :IF, :IF)
   end
 
   it "skips whitepsace" do
