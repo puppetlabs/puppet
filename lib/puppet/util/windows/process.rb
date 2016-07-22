@@ -269,6 +269,11 @@ module Puppet::Util::Windows::Process
   end
   module_function :set_environment_variable
 
+  def get_system_default_ui_language
+    GetSystemDefaultUILanguage()
+  end
+  module_function :get_system_default_ui_language
+
   # Returns whether or not the OS has the ability to set elevated
   # token information.
   #
@@ -476,4 +481,9 @@ module Puppet::Util::Windows::Process
   ffi_lib :kernel32
   attach_function_private :GetVersionExW,
     [:pointer], :win32_bool
+
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/dd318123(v=vs.85).aspx
+  # LANGID GetSystemDefaultUILanguage(void);
+  ffi_lib :kernel32
+  attach_function_private :GetSystemDefaultUILanguage, [], :word
 end

@@ -194,7 +194,10 @@ module Puppet::Util::Windows::ADSI
     end
 
     def [](attribute)
-      native_user.Get(attribute)
+      value = native_user.Get(attribute)
+      # Rubys WIN32OLE errantly converts UTF-16 values to Encoding.default_external
+      return value.encode(Encoding::UTF_8) if value.is_a?(String)
+      value
     end
 
     def []=(attribute, value)
@@ -244,7 +247,8 @@ module Puppet::Util::Windows::ADSI
       # https://msdn.microsoft.com/en-us/library/aa746342.aspx
       # WIN32OLE objects aren't enumerable, so no map
       groups = []
-      native_user.Groups.each {|g| groups << g.Name} rescue nil
+      # Rubys WIN32OLE errantly converts UTF-16 values to Encoding.default_external
+      native_user.Groups.each {|g| groups << g.Name.encode(Encoding::UTF_8)} rescue nil
       groups
     end
 
@@ -330,6 +334,10 @@ module Puppet::Util::Windows::ADSI
       user_name
     end
 
+    def self.current_user_sid
+      Puppet::Util::Windows::SID.name_to_sid_object(current_user_name)
+    end
+
     def self.exists?(name_or_sid)
       well_known = false
       if (sid = Puppet::Util::Windows::SID.name_to_sid_object(name_or_sid))
@@ -363,7 +371,8 @@ module Puppet::Util::Windows::ADSI
 
       users = []
       wql.each do |u|
-        users << new(u.name)
+        # Rubys WIN32OLE errantly converts UTF-16 values to Encoding.default_external
+        users << new(u.name.encode(Encoding::UTF_8))
       end
 
       users.each(&block)
@@ -455,7 +464,8 @@ module Puppet::Util::Windows::ADSI
     def members
       # WIN32OLE objects aren't enumerable, so no map
       members = []
-      native_group.Members.each {|m| members << m.Name}
+      # Rubys WIN32OLE errantly converts UTF-16 values to Encoding.default_external
+      native_group.Members.each {|m| members << m.Name.encode(Encoding::UTF_8)}
       members
     end
 
@@ -524,7 +534,8 @@ module Puppet::Util::Windows::ADSI
 
       groups = []
       wql.each do |g|
-        groups << new(g.name)
+        # Rubys WIN32OLE errantly converts UTF-16 values to Encoding.default_external
+        groups << new(g.name.encode(Encoding::UTF_8))
       end
 
       groups.each(&block)
