@@ -64,7 +64,7 @@ class PMetaType < PAnyType
       Hash[o.map { |k, v| [resolve_type_refs(type_parser, loader, k), resolve_type_refs(type_parser, loader, v)] }]
     when Array
       o.map { |e| resolve_type_refs(type_parser, loader, e) }
-    when PTypeReferenceType
+    when PAnyType
       o.resolve(type_parser, loader)
     else
       o

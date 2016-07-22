@@ -32,6 +32,8 @@ module Pcore
     ast_ts_i12n = ast_type_set.i12n_hash
     ast_ts_i12n['types'] = ast_ts_i12n['types'].merge('Locator' => Parser::Locator::Locator19.register_ptype(loader, ir))
     add_type(Types::PTypeSetType.new(ast_ts_i12n), loader)
+
+    Resource.register_ptypes(loader, ir)
   end
 
   # Create and register a new `Object` type in the Puppet Type System and map it to an implementation class
@@ -42,13 +44,17 @@ module Pcore
   # @param type_name [String] The fully qualified name of the new type
   # @param parent_name [String,nil] The fully qualified name of the parent type
   # @param attributes_hash [Hash{String => Object}] A hash of attribute definitions for the new type
+  # @param functions_hash [Hash{String => Object}] A hash of function definitions for the new type
+  # @param equality [Array<String>] An array with names of attributes that participate in equality comparison
   # @return [PObjectType] the created type. Not yet resolved
   #
   # @api private
-  def self.create_object_type(loader, ir, impl_class, type_name, parent_name, attributes_hash = EMPTY_HASH)
+  def self.create_object_type(loader, ir, impl_class, type_name, parent_name, attributes_hash = EMPTY_HASH, functions_hash = EMPTY_HASH, equality = nil)
     i12n_hash = {}
     i12n_hash[Types::KEY_PARENT] = Types::PTypeReferenceType.new(parent_name) unless parent_name.nil?
     i12n_hash[Types::KEY_ATTRIBUTES] = attributes_hash unless attributes_hash.empty?
+    i12n_hash[Types::KEY_FUNCTIONS] = functions_hash unless functions_hash.empty?
+    i12n_hash[Types::KEY_EQUALITY] = equality unless equality.nil?
     ir.register_implementation(type_name, impl_class, loader)
     add_type(Types::PObjectType.new(type_name, i12n_hash), loader)
   end

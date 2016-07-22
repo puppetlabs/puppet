@@ -75,6 +75,7 @@ module Puppet
 #
 #
 class Type
+  extend Puppet::CompilableResourceType
   include Puppet::Util
   include Puppet::Util::Errors
   include Puppet::Util::Logging
@@ -90,9 +91,9 @@ class Type
   # @see Comparable
   #
   def <=>(other)
-    # We only order against other types, not arbitrary objects.
-    return nil unless other.is_a? Puppet::Type
-    # Our natural order is based on the reference name we use when comparing
+    # Order is only maintained against other types, not arbitrary objects.
+    # The natural order is based on the reference name used when comparing
+    return nil unless other.is_a?(Puppet::CompilableResourceType) || other.class.is_a?(Puppet::CompilableResourceType)
     # against other type instances.
     self.ref <=> other.ref
   end

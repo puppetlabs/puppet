@@ -1,0 +1,1 @@
+Puppet::Resource::ResourceType3.new('notwrongname')

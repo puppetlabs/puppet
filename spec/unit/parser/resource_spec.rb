@@ -54,10 +54,6 @@ describe Puppet::Parser::Resource do
     expect(Puppet::Parser::Resource.new("file", "whatever", :scope => scope).environment).to eq("foo")
   end
 
-  it "should use the resource type collection helper module" do
-    expect(Puppet::Parser::Resource.ancestors).to be_include(Puppet::Resource::TypeCollectionHelper)
-  end
-
   it "should use the scope's environment as its environment" do
     @scope.expects(:environment).returns("myenv").at_least_once
     expect(Puppet::Parser::Resource.new("file", "whatever", :scope => @scope).environment).to eq("myenv")
@@ -157,7 +153,7 @@ describe Puppet::Parser::Resource do
     end
 
     it "should add an edge to any specified stage for class resources" do
-      @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", {})
+      @compiler.environment.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", {})
 
       other_stage = Puppet::Parser::Resource.new(:stage, "other", :scope => @scope, :catalog => @catalog)
       @compiler.add_resource(@scope, other_stage)
@@ -171,7 +167,7 @@ describe Puppet::Parser::Resource do
     end
 
     it "should fail if an unknown stage is specified" do
-      @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", {})
+      @compiler.environment.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", {})
 
       resource = Puppet::Parser::Resource.new(:class, "foo", :scope => @scope, :catalog => @catalog)
       resource[:stage] = 'other'
@@ -183,7 +179,7 @@ describe Puppet::Parser::Resource do
       main      = @compiler.catalog.resource(:stage, :main)
       foo_stage = Puppet::Parser::Resource.new(:stage, :foo_stage, :scope => @scope, :catalog => @catalog)
       @compiler.add_resource(@scope, foo_stage)
-      @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", {})
+      @compiler.environment.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", {})
       resource = Puppet::Parser::Resource.new(:class, "foo", :scope => @scope, :catalog => @catalog)
       resource[:stage] = 'foo_stage'
       @compiler.add_resource(@scope, resource)
@@ -246,7 +242,7 @@ describe Puppet::Parser::Resource do
 
     it "should add edges from top-level class resources to the main stage if no stage is specified" do
       main = @compiler.catalog.resource(:stage, :main)
-      @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", {})
+      @compiler.environment.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", {})
       resource = Puppet::Parser::Resource.new(:class, "foo", :scope => @scope, :catalog => @catalog)
       @compiler.add_resource(@scope, resource)
 

@@ -9,8 +9,6 @@ class AccessOperator
   #
   include Runtime3Support
 
-  EMPTY_STRING = ''.freeze
-
   attr_reader :semantic
 
   # Initialize with AccessExpression to enable reporting issues

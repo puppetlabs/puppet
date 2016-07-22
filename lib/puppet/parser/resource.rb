@@ -7,9 +7,6 @@ class Puppet::Parser::Resource < Puppet::Resource
   require 'puppet/parser/resource/param'
   require 'puppet/util/tagging'
   require 'puppet/parser/yaml_trimmer'
-  require 'puppet/resource/type_collection_helper'
-
-  include Puppet::Resource::TypeCollectionHelper
 
   include Puppet::Util
   include Puppet::Util::MethodHelper
@@ -75,7 +72,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     return if evaluated?
     Puppet::Util::Profiler.profile("Evaluated resource #{self}", [:compiler, :evaluate_resource, self]) do
       @evaluated = true
-      if builtin?
+      if builtin_type?
         devfail "Cannot evaluate a builtin type (#{type})"
       elsif resource_type.nil?
         self.fail "Cannot find definition #{type}"
@@ -256,7 +253,7 @@ class Puppet::Parser::Resource < Puppet::Resource
       scope.with_global_scope do |global_scope|
         cns_scope = global_scope.newscope(:source => self, :resource => self)
         cns.to_hash.each { |name, value| cns_scope[name.to_s] = value }
-  
+
         # evaluate mappings in that scope
         resource_type.arguments.keys.each do |name|
           if expr = blueprint[:mappings][name]

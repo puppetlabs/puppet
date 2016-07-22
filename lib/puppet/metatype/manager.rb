@@ -183,13 +183,13 @@ module Manager
   # Defaults to an instance of {Puppet::Util::Autoload} if no other auto loader has been set.
   # @return [Puppet::Util::Autoload] the loader to use.
   # @api private
-  def typeloader
-    unless defined?(@typeloader)
-      @typeloader = Puppet::Util::Autoload.new(self, "puppet/type")
-    end
-
-    @typeloader
+def typeloader
+  unless defined?(@typeloader)
+    @typeloader = Puppet::Util::Autoload.new(self, "puppet/type")
   end
+
+  @typeloader
+end
 end
 end
 

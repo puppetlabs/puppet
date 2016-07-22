@@ -4,7 +4,6 @@ require 'puppet/node'
 require 'puppet/resource/catalog'
 require 'puppet/util/errors'
 
-require 'puppet/resource/type_collection_helper'
 require 'puppet/loaders'
 require 'puppet/pops'
 
@@ -16,7 +15,6 @@ class Puppet::Parser::Compiler
   include Puppet::Util
   include Puppet::Util::Errors
   include Puppet::Util::MethodHelper
-  include Puppet::Resource::TypeCollectionHelper
   include Puppet::Pops::Evaluator::Runtime3Support
 
   def self.compile(node, code_id = nil)
@@ -138,9 +136,6 @@ class Puppet::Parser::Compiler
       raise ArgumentError, "Application instances like '#{resource}' can only be contained within a Site"
     end
   end
-
-  # Do we use nodes found in the code, vs. the external node sources?
-  def_delegator :known_resource_types, :nodes?, :ast_nodes?
 
   # Store the fact that we've evaluated a class
   def add_class(name)
@@ -267,7 +262,7 @@ class Puppet::Parser::Compiler
   def evaluate_site
     # Has a site been defined? If not, do nothing but issue a warning.
     #
-    site = known_resource_types.find_site()
+    site = environment.known_resource_types.find_site()
     unless site
       on_empty_site()
       return
@@ -384,7 +379,7 @@ class Puppet::Parser::Compiler
     end
 
     hostclasses = classes.collect do |name|
-      scope.find_hostclass(name) or raise Puppet::Error, "Could not find class #{name} for #{node.name}"
+      environment.known_resource_types.find_hostclass(name) or raise Puppet::Error, "Could not find class #{name} for #{node.name}"
     end
 
     if class_parameters
@@ -507,7 +502,7 @@ class Puppet::Parser::Compiler
   end
 
   def evaluate_capability_mappings
-    krt = known_resource_types
+    krt = environment.known_resource_types
     krt.capability_mappings.each_value do |capability_mapping|
       args = capability_mapping.arguments
       component_ref = args['component']
@@ -540,15 +535,16 @@ class Puppet::Parser::Compiler
 
   # If ast nodes are enabled, then see if we can find and evaluate one.
   def evaluate_ast_node
-    return unless ast_nodes?
+    krt = environment.known_resource_types
+    return unless krt.nodes? #ast_nodes?
 
     # Now see if we can find the node.
     astnode = nil
     @node.names.each do |name|
-      break if astnode = known_resource_types.node(name.to_s.downcase)
+      break if astnode = krt.node(name.to_s.downcase)
     end
 
-    unless (astnode ||= known_resource_types.node("default"))
+    unless (astnode ||= krt.node("default"))
       raise Puppet::ParseError, "Could not find node statement with name 'default' or '#{node.names.join(", ")}'"
     end
 
@@ -627,9 +623,10 @@ class Puppet::Parser::Compiler
 
   # Find and evaluate our main object, if possible.
   def evaluate_main
-    @main = known_resource_types.find_hostclass("") || known_resource_types.add(Puppet::Resource::Type.new(:hostclass, ""))
+    krt = environment.known_resource_types
+    @main = krt.find_hostclass('') || krt.add(Puppet::Resource::Type.new(:hostclass, ''))
     @topscope.source = @main
-    @main_resource = Puppet::Parser::Resource.new("class", :main, :scope => @topscope, :source => @main)
+    @main_resource = Puppet::Parser::Resource.new('class', :main, :scope => @topscope, :source => @main)
     @topscope.resource = @main_resource
 
     add_resource(@topscope, @main_resource)
@@ -762,7 +759,7 @@ class Puppet::Parser::Compiler
     #
     Puppet.override( @context_overrides , "For initializing compiler") do
       # THE MAGIC STARTS HERE ! This triggers parsing, loading etc.
-      @catalog.version = known_resource_types.version
+      @catalog.version = environment.known_resource_types.version
     end
 
     @catalog.add_resource(Puppet::Parser::Resource.new("stage", :main, :scope => @topscope))

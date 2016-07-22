@@ -1,7 +1,6 @@
 require 'puppet/parser/functions'
 require 'puppet/parser/files'
 require 'puppet/resource/type_collection'
-require 'puppet/resource/type_collection_helper'
 require 'puppet/resource/type'
 require 'monitor'
 
@@ -21,8 +20,6 @@ class Parser
   # All model construction/manipulation is made by the Factory.
   #
   Factory = Model::Factory
-
-  include Puppet::Resource::TypeCollectionHelper
 
   attr_accessor :lexer
   attr_reader :definitions

@@ -19,7 +19,6 @@ class BaseLoader < Loader
   def initialize(parent_loader, loader_name)
     @parent = parent_loader # the higher priority loader to consult
     @named_values = {}      # hash name => NamedEntry
-    @last_name = nil        # the last name asked for (optimization)
     @last_result = nil      # the value of the last name (optimization)
     @loader_name = loader_name # the name of the loader (not the name-space it is a loader for)
   end
@@ -32,11 +31,10 @@ class BaseLoader < Loader
     # These modules are typically parented by the same
     # loader as the one initiating the search. It is inefficient to again try to search the same loader for
     # the same name.
-    if typed_name == @last_name
-      @last_result
-    else
-      @last_name = typed_name
+    if @last_result.nil? || typed_name != @last_result.typed_name
       @last_result = internal_load(typed_name)
+    else
+      @last_result
     end
   end
 
@@ -63,7 +61,6 @@ class BaseLoader < Loader
   # @api private
   #
   def set_entry(typed_name, value, origin = nil)
-
     # It is never ok to redefine in the very same loader unless redefining a 'not found'
     if entry = @named_values[typed_name]
       fail_redefine(entry) unless entry.value.nil?
@@ -79,7 +76,6 @@ class BaseLoader < Loader
     end
 
     @last_result = Loader::NamedEntry.new(typed_name, value, origin)
-    @last_name = typed_name
     @named_values[typed_name] = @last_result
   end
 

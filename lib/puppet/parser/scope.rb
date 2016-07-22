@@ -6,7 +6,6 @@ require 'forwardable'
 require 'puppet/parser'
 require 'puppet/parser/templatewrapper'
 
-require 'puppet/resource/type_collection_helper'
 require 'puppet/util/methodhelper'
 
 # This class is part of the internal parser/evaluator/compiler functionality of Puppet.
@@ -18,7 +17,6 @@ class Puppet::Parser::Scope
   extend Forwardable
   include Puppet::Util::MethodHelper
 
-  include Puppet::Resource::TypeCollectionHelper
   require 'puppet/parser/resource'
 
   AST = Puppet::Parser::AST
@@ -349,11 +347,11 @@ class Puppet::Parser::Scope
   end
 
   def find_hostclass(name)
-    known_resource_types.find_hostclass(name)
+    environment.known_resource_types.find_hostclass(name)
   end
 
   def find_definition(name)
-    known_resource_types.find_definition(name)
+    environment.known_resource_types.find_definition(name)
   end
 
   def find_global_scope()
@@ -467,7 +465,8 @@ class Puppet::Parser::Scope
   # Look up a defined type.
   def lookuptype(name)
     # This happens a lot, avoid making a call to make a call
-    known_resource_types.find_definition(name) || known_resource_types.find_hostclass(name)
+    krt = environment.known_resource_types
+    krt.find_definition(name) || krt.find_hostclass(name)
   end
 
   def undef_as(x,v)
@@ -976,18 +975,19 @@ class Puppet::Parser::Scope
     end
   end
 
+  # @api private
   def find_resource_type(type)
-    # It still works fine without the type == 'class' short-cut, but it is a lot slower.
-    return nil if ["class", "node"].include? type.to_s.downcase
-    find_builtin_resource_type(type) || find_defined_resource_type(type)
+    raise Puppet::DevError, "Scope#find_resource_type() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
   end
 
+  # @api private
   def find_builtin_resource_type(type)
-    Puppet::Type.type(type.to_s.downcase.to_sym)
+    raise Puppet::DevError, "Scope#find_builtin_resource_type() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
   end
 
+  # @api private
   def find_defined_resource_type(type)
-    known_resource_types.find_definition(type.to_s.downcase)
+    raise Puppet::DevError, "Scope#find_defined_resource_type() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
   end
 
 
@@ -1005,25 +1005,33 @@ class Puppet::Parser::Scope
     end
   end
 
+  # Called from two places:
+  # runtime3support when creating resources
+  # ast::resource - used by create resources ?
+  # @api private
   def resolve_type_and_titles(type, titles)
-    raise ArgumentError, "titles must be an array" unless titles.is_a?(Array)
+    raise Puppet::DevError, "Scope#resolve_type_and_title() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
 
-    case type.downcase
-    when "class"
-      # resolve the titles
-      titles = titles.collect do |a_title|
-        hostclass = find_hostclass(a_title)
-        hostclass ?  hostclass.name : a_title
-      end
-    when "node"
-      # no-op
-    else
-      # resolve the type
-      resource_type = find_resource_type(type)
-      type = resource_type.name if resource_type
-    end
-
-    return [type, titles]
+#    Puppet.deprecation_warning('Scope#resolve_type_and_titles is deprecated.')
+#
+#    raise ArgumentError, "titles must be an array" unless titles.is_a?(Array)
+#
+#    case type.downcase
+#    when "class"
+#      # resolve the titles
+#      titles = titles.collect do |a_title|
+#        hostclass = find_hostclass(a_title)
+#        hostclass ?  hostclass.name : a_title
+#      end
+#    when "node"
+#      # no-op
+#    else
+#      # resolve the type
+#      resource_type = find_resource_type(type)
+#      type = resource_type.name if resource_type
+#    end
+#
+#    return [type, titles]
   end
 
   # Transforms references to classes to the form suitable for
