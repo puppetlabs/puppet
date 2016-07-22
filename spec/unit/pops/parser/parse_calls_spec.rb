@@ -45,6 +45,11 @@ describe "egrammar parsing function calls" do
       it "notice type(42)" do
         expect(dump(parse("notice type(42)"))).to eq('(invoke notice (call type 42))')
       end
+
+      it "is required to place the '(' on the same line as the name of the function to recognize it as arguments in call" do
+        expect(dump(parse("notice foo\n(42)"))).to eq("(block\n  (invoke notice foo)\n  42\n)")
+      end
+
     end
 
     context "in nested scopes" do
@@ -110,6 +115,10 @@ describe "egrammar parsing function calls" do
 
     it "notice 42.type(detailed)" do
       expect(dump(parse("notice 42.type(detailed)"))).to eq('(invoke notice (call-method (. 42 type) detailed))')
+    end
+
+    it "is required to place the '(' on the same line as the name of the method to recognize it as arguments in call" do
+      expect(dump(parse("notice 42.type\n(detailed)"))).to eq("(block\n  (invoke notice (call-method (. 42 type)))\n  detailed\n)")
     end
   end
 

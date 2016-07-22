@@ -8,7 +8,7 @@ token STRING DQPRE DQMID DQPOST
 token WORD
 token LBRACK  RBRACK LBRACE RBRACE SYMBOL FARROW COMMA TRUE
 token FALSE EQUALS APPENDS DELETES LESSEQUAL NOTEQUAL DOT COLON LLCOLLECT RRCOLLECT
-token QMARK LPAREN RPAREN ISEQUAL GREATEREQUAL GREATERTHAN LESSTHAN
+token QMARK WSLPAREN LPAREN RPAREN ISEQUAL GREATEREQUAL GREATERTHAN LESSTHAN
 token IF ELSE
 token DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN
 token NAME SEMIC CASE DEFAULT AT ATAT LCOLLECT RCOLLECT CLASSREF
@@ -30,7 +30,7 @@ prechigh
   left  HIGH
   left  SEMIC
   left  PIPE
-  left  LPAREN
+  left  LPAREN WSLPAREN
   left  RPAREN
   left  DOT
   nonassoc EPP_START
@@ -220,6 +220,7 @@ expression
   | expression OR           expression                 { result = val[0].or  val[2]       ; loc result, val[1] }
   | expression QMARK selector_entries                  { result = val[0].select(*val[2])  ; loc result, val[0] }
   |            LPAREN       assignment RPAREN          { result = val[1].paren()          ; loc result, val[0] }
+  |            WSLPAREN     assignment RPAREN          { result = val[1].paren()          ; loc result, val[0] }
 
 bracketed_expression
   : expression LBRACK       expressions endcomma RBRACK =LBRACK { result = val[0][*val[2]]         ; loc result, val[0], val[4] }
@@ -654,9 +655,11 @@ classname
 
 # Produces Array<Model::Parameter>
 parameter_list
-  : nil                               { result = [] }
-  | LPAREN  RPAREN                    { result = [] }
-  | LPAREN parameters endcomma RPAREN { result = val[1] }
+  : nil                                   { result = [] }
+  | LPAREN  RPAREN                        { result = [] }
+  | WSLPAREN  RPAREN                      { result = [] }
+  | LPAREN parameters endcomma RPAREN     { result = val[1] }
+  | WSLPAREN parameters endcomma RPAREN   { result = val[1] }
 
 # Produces Array<Model::Parameter>
 parameters
