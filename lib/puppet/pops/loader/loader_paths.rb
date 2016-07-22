@@ -163,7 +163,7 @@ module Puppet::Pops::Loader::LoaderPaths
   end
 
   class ResourceTypeImplPP < PuppetSmartPath
-    RESOURCE_TYPES_PATH_PP = File.join('resource_types')
+    RESOURCE_TYPES_PATH_PP = File.join('.resource_types')
 
     def relative_path
       RESOURCE_TYPES_PATH_PP

@@ -5,6 +5,61 @@ module Puppet::Pops
 module Loader
 class StaticLoader < Loader
 
+  BUILTIN_TYPE_NAMES = %w{
+      Auegas
+      Component
+      Computer
+      Cron
+      Exec
+      File
+      Filebucket
+      Group
+      Host
+      Interface
+      K5login
+      Macauthorization
+      Mailalias
+      Maillist
+      Mcx
+      Mount
+      Nagios_command
+      Nagios_contact
+      Nagios_contactgroup
+      Nagios_host
+      Nagios_hostdependency
+      Nagios_hostescalation
+      Nagios_hostgroup
+      Nagios_hostextinfo
+      Nagios_service
+      Nagios_servicedependency
+      Nagios_serviceescalation
+      Nagios_serviceextinfo
+      Nagios_servicegroup
+      Nagios_timeperiod
+      Notify
+      Package
+      Resources
+      Router
+      Schedule
+      Scheduled_task
+      Selboolean
+      Selmodule
+      Service
+      Ssh_authorized_key
+      Sshkey
+      Stage
+      Tidy
+      User
+      Vlan
+      Whit
+      Yumrepo
+      Zfs
+      Zone
+      Zpool
+    }.freeze
+
+  BUILTIN_TYPE_NAMES_LC = Set.new(BUILTIN_TYPE_NAMES.map { |n| n.downcase }).freeze
+
   attr_reader :loaded
   def initialize
     @loaded = {}

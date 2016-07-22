@@ -40,6 +40,42 @@ describe 'loaders' do
   # Loaders caches the puppet_system_loader, must reset between tests
   before(:each) { Puppet::Pops::Loaders.clear() }
 
+  context 'when loading pp resource types using auto loading' do
+    let(:pp_resources) { config_dir('pp_resources') }
+    let(:environments) { Puppet::Environments::Directories.new(my_fixture_dir, []) }
+    let(:env) { Puppet::Node::Environment.create(:'pp_resources', [File.join(pp_resources, 'modules')]) }
+    let(:scope) { Puppet::Parser::Compiler.new(Puppet::Node.new("test", :environment => env)).newscope(nil) }
+    let(:loader) { Puppet::Pops::Loaders.loaders.find_loader(nil) }
+    around(:each) do |example|
+      Puppet.override(:environments => environments, :current_environment => scope.environment, :global_scope => scope) do
+        Puppet.override(:loaders => Puppet::Pops::Loaders.new(env)) do
+          example.run
+        end
+      end
+    end
+
+    it 'finds a resource type that resides under <environment root>/.resource_types' do
+      rt = loader.load(:resource_type_pp, 'myresource')
+      expect(rt).to be_a(Puppet::Pops::Resource::ResourceTypeImpl)
+    end
+
+    it 'does not allow additional logic in the file' do
+      expect{loader.load(:resource_type_pp, 'addlogic')}.to raise_error(ArgumentError, /it has additional logic/)
+    end
+
+    it 'does not allow creation of classes other than Puppet::Resource::ResourceType3' do
+      expect{loader.load(:resource_type_pp, 'badcall')}.to raise_error(ArgumentError, /no call to Puppet::Resource::ResourceType3.new found/)
+    end
+
+    it 'does not allow creation of other types' do
+      expect{loader.load(:resource_type_pp, 'wrongname')}.to raise_error(ArgumentError, /produced resource type with the wrong name, expected 'wrongname', actual 'notwrongname'/)
+    end
+
+    it 'errors with message about empty file for files that contain no logic' do
+      expect{loader.load(:resource_type_pp, 'empty')}.to raise_error(ArgumentError, /it is empty/)
+    end
+  end
+
   it 'creates a puppet_system loader' do
     loaders = Puppet::Pops::Loaders.new(empty_test_env)
     expect(loaders.puppet_system_loader()).to be_a(Puppet::Pops::Loader::ModuleLoaders::FileBased)
@@ -313,7 +349,6 @@ describe 'loaders' do
       end
     end
   end
-
 
   def environment_for(*module_paths)
     Puppet::Node::Environment.create(:'*test*', module_paths)

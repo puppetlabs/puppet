@@ -19,12 +19,40 @@ class PuppetResourceTypeImplInstantiator
 
     # parse and validate
     result = parser.parse_string(pp_code_string, source_ref)
-    # TODO:Only one resource type impl is allowed, and nothing else
-    # raise ArgumentError, "The code loaded from #{source_ref} must contain only the resource type '#{typed_name.name}' - it has additional logic."
+    model = result.model
+    statements = if model.is_a?(Model::Program)
+      if model.body.is_a?(Model::BlockExpression)
+        statements = model.body.statements
+      else
+        statements = [model.body]
+      end
+    else
+      statements = EMPTY_ARRAY
+    end
+    statements = statements.reject { |s| s.is_a?(Model::Nop) }
+    if statements.empty?
+      raise ArgumentError, "The code loaded from #{source_ref} does not create the resource type '#{typed_name.name}' - it is empty"
+    end
 
-    # TODO: introspect the parsed code to ensure there is only a call to a new Puppet::ResourceTypeImpl
-    # TODO: the Puppet::ResourceTypeImpl type must be bound to the correct implementation type
-    #
+    rname = Resource::ResourceTypeImpl._ptype.name
+    unless statements.find do |s|
+      if s.is_a?(Model::CallMethodExpression)
+        functor_expr = s.functor_expr
+        functor_expr.is_a?(Model::NamedAccessExpression) &&
+          functor_expr.left_expr.is_a?(Model::QualifiedReference) &&
+          functor_expr.left_expr.cased_value == rname &&
+          functor_expr.right_expr.is_a?(Model::QualifiedName) &&
+          functor_expr.right_expr.value == 'new'
+      else
+        false
+      end
+    end
+      raise ArgumentError, "The code loaded from #{source_ref} does not create the resource type '#{typed_name.name}' - no call to #{rname}.new found."
+    end
+
+    unless statements.size == 1
+      raise ArgumentError, "The code loaded from #{source_ref} must contain only the creation of resource type '#{typed_name.name}' - it has additional logic."
+    end
 
     closure_scope = Puppet.lookup(:global_scope) { {} }
     resource_type_impl = parser.evaluate(closure_scope, result)
@@ -35,8 +63,8 @@ class PuppetResourceTypeImplInstantiator
     end
 
     unless resource_type_impl.name == typed_name.name
-      expected = type_name.name
-      got = resource_type_impl.name
+      expected = typed_name.name
+      actual = resource_type_impl.name
       raise ArgumentError, "The code loaded from #{source_ref} produced resource type with the wrong name, expected '#{expected}', actual '#{actual}'"
     end
 
