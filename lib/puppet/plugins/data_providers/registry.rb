@@ -68,6 +68,12 @@ module Puppet::Plugins::DataProviders
       end
 
       default_bindings.bind do
+        name('hocon')
+        in_multibind(PATH_BASED_DATA_PROVIDER_FACTORIES_KEY)
+        to_instance('Puppet::DataProviders::HoconDataProviderFactory')
+      end
+
+      default_bindings.bind do
         name('json')
         in_multibind(PATH_BASED_DATA_PROVIDER_FACTORIES_KEY)
         to_instance('Puppet::DataProviders::JsonDataProviderFactory')

@@ -27,6 +27,7 @@ gem "puppet", :path => File.dirname(__FILE__), :require => false
 gem "facter", *location_for(ENV['FACTER_LOCATION'] || ['> 2.0', '< 4'])
 gem "hiera", *location_for(ENV['HIERA_LOCATION'] || ['>= 2.0', '< 4'])
 gem "rake", "10.1.1", :require => false
+gem 'hocon', '~> 1.1.2'
 
 group(:development, :test) do
   gem "rspec", "~> 3.1", :require => false
