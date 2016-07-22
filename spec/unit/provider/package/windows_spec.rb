@@ -131,7 +131,10 @@ describe Puppet::Type.type(:package).provider(:windows) do
 
       expect do
         provider.install
-      end.to raise_error(Puppet::Util::Windows::Error, /Access is denied/)
+      end.to raise_error do |error|
+        expect(error).to be_a(Puppet::Util::Windows::Error)
+        expect(error.code).to eq(5) # ERROR_ACCESS_DENIED
+      end
     end
   end
 
@@ -183,7 +186,10 @@ describe Puppet::Type.type(:package).provider(:windows) do
 
       expect do
         provider.uninstall
-      end.to raise_error(Puppet::Util::Windows::Error, /Failed to uninstall.*Access is denied/)
+      end.to raise_error do |error|
+        expect(error).to be_a(Puppet::Util::Windows::Error)
+        expect(error.code).to eq(5) # ERROR_ACCESS_DENIED
+      end
     end
   end
 

@@ -12,11 +12,16 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
   include PuppetSpec::Files
 
   before :all do
+
+    # necessary for localized name of guests
+    guests_name = Puppet::Util::Windows::SID.sid_to_name('S-1-5-32-546')
+    guests = Puppet::Util::Windows::ADSI::Group.new(guests_name)
+
     @sids = {
       :current_user => Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name),
       :system => Puppet::Util::Windows::SID::LocalSystem,
       :administrators => Puppet::Util::Windows::SID::BuiltinAdministrators,
-      :guest => Puppet::Util::Windows::SID.name_to_sid("Guest"),
+      :guest => Puppet::Util::Windows::SID.name_to_sid(guests.members[0]),
       :users => Puppet::Util::Windows::SID::BuiltinUsers,
       :power_users => Puppet::Util::Windows::SID::PowerUsers,
       :none => Puppet::Util::Windows::SID::Nobody,
@@ -132,7 +137,10 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           end
 
           it "should raise an exception when setting to a different user" do
-            expect { winsec.set_owner(sids[:guest], path) }.to raise_error(Puppet::Error, /This security ID may not be assigned as the owner of this object./)
+            expect { winsec.set_owner(sids[:guest], path) }.to raise_error do |error|
+              expect(error).to be_a(Puppet::Util::Windows::Error)
+              expect(error.code).to eq(1307) # ERROR_INVALID_OWNER
+            end
           end
         end
 
@@ -142,7 +150,10 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           end
 
           it "should raise an exception if an invalid path is provided" do
-            expect { winsec.get_owner("c:\\doesnotexist.txt") }.to raise_error(Puppet::Error, /The system cannot find the file specified./)
+            expect { winsec.get_owner("c:\\doesnotexist.txt") }.to raise_error do |error|
+              expect(error).to be_a(Puppet::Util::Windows::Error)
+              expect(error.code).to eq(2) # ERROR_FILE_NOT_FOUND
+            end
           end
         end
 
@@ -164,7 +175,10 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           end
 
           it "should raise an exception if an invalid path is provided" do
-            expect { winsec.get_group("c:\\doesnotexist.txt") }.to raise_error(Puppet::Error, /The system cannot find the file specified./)
+            expect { winsec.get_group("c:\\doesnotexist.txt") }.to raise_error do |error|
+              expect(error).to be_a(Puppet::Util::Windows::Error)
+              expect(error.code).to eq(2) # ERROR_FILE_NOT_FOUND
+            end
           end
         end
 
@@ -300,7 +314,10 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           end
 
           it "should raise an exception if an invalid path is provided" do
-            expect { winsec.set_mode(sids[:guest], "c:\\doesnotexist.txt") }.to raise_error(Puppet::Error, /The system cannot find the file specified./)
+            expect { winsec.set_mode(sids[:guest], "c:\\doesnotexist.txt") }.to raise_error do |error|
+              expect(error).to be_a(Puppet::Util::Windows::Error)
+              expect(error.code).to eq(2) # ERROR_FILE_NOT_FOUND
+            end
           end
         end
 
@@ -344,7 +361,10 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           end
 
           it "should raise an exception if an invalid path is provided" do
-            expect { winsec.get_mode("c:\\doesnotexist.txt") }.to raise_error(Puppet::Error, /The system cannot find the file specified./)
+            expect { winsec.get_mode("c:\\doesnotexist.txt") }.to raise_error do |error|
+              expect(error).to be_a(Puppet::Util::Windows::Error)
+              expect(error.code).to eq(2) # ERROR_FILE_NOT_FOUND
+            end
           end
         end
 
@@ -424,7 +444,10 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           end
 
           it "should raise an exception if an invalid path is provided" do
-            expect { winsec.set_owner(sids[:guest], "c:\\doesnotexist.txt") }.to raise_error(Puppet::Error, /The system cannot find the file specified./)
+            expect { winsec.set_owner(sids[:guest], "c:\\doesnotexist.txt") }.to raise_error do |error|
+              expect(error).to be_a(Puppet::Util::Windows::Error)
+              expect(error.code).to eq(2) # ERROR_FILE_NOT_FOUND
+            end
           end
         end
 
@@ -463,7 +486,10 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           end
 
           it "should raise an exception if an invalid path is provided" do
-            expect { winsec.set_group(sids[:guest], "c:\\doesnotexist.txt") }.to raise_error(Puppet::Error, /The system cannot find the file specified./)
+            expect { winsec.set_group(sids[:guest], "c:\\doesnotexist.txt") }.to raise_error do |error|
+              expect(error).to be_a(Puppet::Util::Windows::Error)
+              expect(error.code).to eq(2) # ERROR_FILE_NOT_FOUND
+            end
           end
         end
 
