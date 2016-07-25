@@ -146,12 +146,20 @@ class Puppet::Transaction::ResourceHarness
   end
 
   def create_change_event(property, current_value, historical_value)
-    event = property.event
-    event.previous_value = current_value
-    event.desired_value = property.should
-    event.historical_value = historical_value
+    options = {}
+    should = property.should
 
-    event
+    if property.sensitive
+      options[:previous_value] = current_value.nil? ? nil : '[redacted]'
+      options[:desired_value] = should.nil? ? nil : '[redacted]'
+      options[:historical_value] = historical_value.nil? ? nil : '[redacted]'
+    else
+      options[:previous_value] = current_value
+      options[:desired_value] = should
+      options[:historical_value] = historical_value
+    end
+
+    property.event(options)
   end
 
   # This method is an ugly hack because, given a Time object with nanosecond

@@ -256,8 +256,8 @@ class Puppet::Property < Puppet::Parameter
   #   options to the created event?
   # @return [Puppet::Transaction::Event] the created event
   # @see Puppet::Type#event
-  def event
-    attrs = { :name => event_name, :desired_value => should, :property => self, :source_description => path }
+  def event(options = {})
+    attrs = { :name => event_name, :desired_value => should, :property => self, :source_description => path }.merge(options)
     if should and value = self.class.value_collection.match?(should)
       attrs[:invalidate_refreshes] = true if value.invalidate_refreshes
     end

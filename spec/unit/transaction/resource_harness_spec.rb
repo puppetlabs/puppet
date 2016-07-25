@@ -438,10 +438,11 @@ describe Puppet::Transaction::ResourceHarness do
         expect(sync_event.message).to eq 'changed [redacted] to [redacted]'
       end
 
-      it "redacts event messages for sensitive properties" do
+      it "redacts event contents for sensitive properties" do
         status = @harness.evaluate(resource)
         sync_event = status.events[0]
-        expect(sync_event.message).to eq 'changed [redacted] to [redacted]'
+        expect(sync_event.previous_value).to eq '[redacted]'
+        expect(sync_event.desired_value).to eq '[redacted]'
       end
 
       it "redacts event messages for sensitive properties when simulating noop changes" do
@@ -474,6 +475,13 @@ describe Puppet::Transaction::ResourceHarness do
           status = @harness.evaluate(resource)
           sync_event = status.events[0]
           expect(sync_event.message).to eq 'current_value [redacted], should be [redacted] (noop) (previously recorded value was [redacted])'
+        end
+
+        it "redacts event contents for sensitive properties" do
+          Puppet::Util::Storage.stubs(:cache).with(resource).returns({:content => "historical world"})
+          status = @harness.evaluate(resource)
+          sync_event = status.events[0]
+          expect(sync_event.historical_value).to eq '[redacted]'
         end
       end
     end
