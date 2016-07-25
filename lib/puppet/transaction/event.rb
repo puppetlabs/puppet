@@ -11,8 +11,8 @@ class Puppet::Transaction::Event
   include Puppet::Util::Logging
   include Puppet::Network::FormatSupport
 
-  ATTRIBUTES = [:name, :resource, :property, :previous_value, :desired_value, :historical_value, :status, :message, :file, :line, :source_description, :audited, :invalidate_refreshes, :redacted, :corrective_change]
-  YAML_ATTRIBUTES = %w{@audited @property @previous_value @desired_value @historical_value @message @name @status @time @redacted @corrective_change}.map(&:to_sym)
+  ATTRIBUTES = [:name, :resource, :property, :previous_value, :desired_value, :historical_value, :status, :message, :file, :line, :source_description, :audited, :invalidate_refreshes, :redacted]
+  YAML_ATTRIBUTES = %w{@audited @property @previous_value @desired_value @historical_value @message @name @status @time @redacted}.map(&:to_sym)
   attr_accessor *ATTRIBUTES
   attr_accessor :time
   attr_reader :default_log_level
@@ -28,7 +28,6 @@ class Puppet::Transaction::Event
   def initialize(options = {})
     @audited = false
     @redacted = false
-    @corrective_change = false
 
     set_options(options)
     @time = Time.now
@@ -46,7 +45,6 @@ class Puppet::Transaction::Event
     @time = data['time']
     @time = Time.parse(@time) if @time.is_a? String
     @redacted = data.fetch('redacted', false)
-    @corrective_change = data['corrective_change']
   end
 
   def to_data_hash
@@ -60,8 +58,7 @@ class Puppet::Transaction::Event
       'name' => @name,
       'status' => @status,
       'time' => @time.iso8601(9),
-      'redacted' => @redacted,
-      'corrective_change' => @corrective_change,
+      'redacted' => @redacted
     }
   end
 

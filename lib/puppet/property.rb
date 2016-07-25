@@ -102,21 +102,6 @@ class Puppet::Property < Puppet::Parameter
       raise ArgumentError, "Supported values for Property#array_matching are 'first' and 'all'" unless [:first, :all].include?(value)
       @array_matching = value
     end
-
-    # Used to mark a type property as having or lacking idempotency (on purpose
-    # generally). This is used to avoid marking the property as a
-    # corrective_change when there is known idempotency issues with the property
-    # rendering a corrective_change flag as useless.
-    # @return [Boolean] returns true if the property is marked as non-idempotent
-    def idempotent
-      @idempotent.nil? ? @idempotent = true : @idempotent
-    end
-
-    # Attribute setter for the idempotent attribute.
-    # @see idempotent
-    def idempotent=(value)
-      @idempotent = value
-    end
   end
 
   # Looks up a value's name among valid values, to enable option lookup with result as a key.
@@ -403,12 +388,6 @@ class Puppet::Property < Puppet::Parameter
   # @return [Boolean] whether the {array_matching} mode is set to `:all` or not
   def match_all?
     self.class.array_matching == :all
-  end
-
-  # @return [Boolean] whether the property is marked as idempotent for the purposes
-  #   of calculating corrective change.
-  def idempotent?
-    self.class.idempotent
   end
 
   # @return [Symbol] the name of the property as stated when the property was created.

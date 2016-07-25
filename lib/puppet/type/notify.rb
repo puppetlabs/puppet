@@ -6,7 +6,7 @@ module Puppet
   Type.newtype(:notify) do
     @doc = "Sends an arbitrary message to the agent run-time log."
 
-    newproperty(:message, :idempotent => false) do
+    newproperty(:message) do
       desc "The message to be sent to the log."
       def sync
         case @resource["withpath"]
