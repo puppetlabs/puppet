@@ -37,7 +37,9 @@ Puppet::Type.newtype(:file) do
     "The provider can manage symbolic links."
 
   def self.title_patterns
-    [ [ /^(.*?)\/*\Z/m, [ [ :path ] ] ] ]
+    # strip trailing slashes from path but allow the root directory, including
+    # for example "/" or "C:/"
+    [ [ %r{^(/|.+:/|.*[^/])/*\Z}m, [ [ :path ] ] ] ]
   end
 
   newparam(:path) do
