@@ -160,11 +160,6 @@
         "environment": {
             "description": "The name of the environment that was used for the puppet run (e.g. \"production\").",
             "type":        "string"
-        },
-
-        "corrective_change": {
-            "description": "True if this report suffered an unexpected change, and Puppet corrected it, or was intending to correct it if the resource or entire run was noop.",
-            "type":        "boolean"
         }
     },
 
@@ -309,8 +304,7 @@
                                     "skipped",
                                     "failed_to_restart",
                                     "restarted",
-                                    "scheduled",
-                                    "corrective_change"
+                                    "scheduled"
                                 ]
                             },
                             {
@@ -323,8 +317,7 @@
                                     "Skipped",
                                     "Failed to restart",
                                     "Restarted",
-                                    "Scheduled",
-                                    "Corrective change"
+                                    "Scheduled"
                                 ]
                             },
                             {
@@ -533,11 +526,6 @@
                     "description": "An array of strings; each element represents a container (type or class) that, together, make up the path of the resource in the catalog.",
                     "type":        "array",
                     "items":       { "type": "string" }
-                },
-
-                "corrective_change": {
-                    "description": "True if this resource suffered an unexpected change, and Puppet corrected it, or was intending to correct it if the resource was marked noop.",
-                    "type":        "boolean"
                 }
             },
 
@@ -549,8 +537,7 @@
                 "tags",
                 "events",
                 "skipped",
-                "containment_path",
-                "corrective_change"
+                "containment_path"
             ],
             "additionalProperties":   false
         },
@@ -629,11 +616,6 @@
                 "time": {
                     "description": "The time at which the property was evaluated. In ISO 8601 format with 9 characters second-fragment",
                     "type":        "string"
-                },
-
-                "corrective_change": {
-                    "description": "True if this property suffered an unexpected change, and Puppet corrected it, or was intending to correct it if the resource was marked noop.",
-                    "type":        "boolean"
                 }
             },
             "required": [
@@ -642,8 +624,7 @@
                 "message",
                 "name",
                 "status",
-                "time",
-                "corrective_change"
+                "time"
             ],
 
             "additionalProperties": false

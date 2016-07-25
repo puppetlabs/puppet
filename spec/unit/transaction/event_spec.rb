@@ -129,8 +129,7 @@ describe Puppet::Transaction::Event do
                                              :message => "Help I'm trapped in a spec test",
                                              :name => :mode_changed, :previous_value => 6, :property => :mode,
                                              :status => 'success',
-                                             :redacted => false,
-                                             :corrective_change => false)
+                                             :redacted => false)
       expect(event.to_yaml_properties).to match_array(Puppet::Transaction::Event::YAML_ATTRIBUTES)
     end
   end
