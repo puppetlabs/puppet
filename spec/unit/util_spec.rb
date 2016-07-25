@@ -117,37 +117,104 @@ describe Puppet::Util do
       end
     end
 
-    it "works around Ruby bug 8822 (which fails to preserve UTF-8 properly when accessing ENV)" do
+
+    def withenv_utf8(&block)
       env_var_name = SecureRandom.uuid
       utf_8_bytes = [225, 154, 160] # rune ᚠ
-      utf_8_str = env_var_name + utf_8_bytes.pack('c*').force_encoding(Encoding::UTF_8)
 
-      Puppet::Util.withenv({utf_8_str => utf_8_str}, :windows) do
-        # the true Windows environemnt APIs see the variables correctly
-        expect(process.get_environment_strings[utf_8_str]).to eq(utf_8_str)
+      utf_8_key = env_var_name + utf_8_bytes.pack('c*').force_encoding(Encoding::UTF_8)
+      utf_8_value = utf_8_key + 'value'
+      codepage_key = utf_8_key.dup.force_encoding(Encoding.default_external)
 
-        # document buggy Ruby behavior here for https://bugs.ruby-lang.org/issues/8822
-        # Ruby retrieves / stores ENV names in the current codepage
-        # when these tests no longer pass, Ruby has fixed its bugs and workarounds can be removed
-        # interestingly we would expect some of these tests to fail when codepage is 65001
-        # but instead the env values are in Encoding::ASCII_8BIT!
+      Puppet::Util.withenv({utf_8_key => utf_8_value}, :windows) do
+        # the true Windows environment APIs see the variables correctly
+        expect(process.get_environment_strings[utf_8_key]).to eq(utf_8_value)
 
-        # both a string in UTF-8 and current codepage are deemed valid keys to the hash
-        # which in a sane world shouldn't be true
-        codepage_key = utf_8_str.dup.force_encoding(Encoding.default_external)
-        expect(ENV.key?(codepage_key)).to eq(true)
-        expect(ENV.key?(utf_8_str)).to eq(true)
-        # similarly the value stored at the key is in current codepage and won't match UTF-8 value
-        env_value = ENV[utf_8_str]
-        expect(env_value).to_not eq(utf_8_str)
-        expect(env_value.encoding).to_not eq(Encoding::UTF_8)
-        # but it can be forced back to UTF-8 to make it match.. ugh
-        converted_value = ENV[utf_8_str].dup.force_encoding(Encoding::UTF_8)
-        expect(converted_value).to eq(utf_8_str)
+        # the string contain the same bytes, but have different Ruby metadata
+        expect(utf_8_key.bytes.to_a).to eq(codepage_key.bytes.to_a)
+
+        yield utf_8_key, utf_8_value, codepage_key
       end
 
       # real environment shouldn't have env var anymore
-      expect(process.get_environment_strings[utf_8_str]).to eq(nil)
+      expect(process.get_environment_strings[utf_8_key]).to eq(nil)
+    end
+
+    # document buggy Ruby behavior here for https://bugs.ruby-lang.org/issues/8822
+    # Ruby retrieves / stores ENV names in the current codepage
+    # when these tests no longer pass, Ruby has fixed its bugs and workarounds can be removed
+
+
+    # interestingly we would expect some of these tests to fail when codepage is 65001
+    # but instead the env values are in Encoding::ASCII_8BIT!
+    it "works around Ruby bug 8822 (which fails to preserve UTF-8 properly when accessing ENV) (Ruby <= 2.1) ",
+      :if => ((RUBY_VERSION =~ /^(1\.|2\.0\.|2\.1\.)/) && Puppet.features.microsoft_windows?) do
+
+      withenv_utf8 do |utf_8_key, utf_8_value, codepage_key|
+        # both a string in UTF-8 and current codepage are deemed valid keys to the hash
+        # which is because Ruby compares the BINARY versions of the string, but ignores encoding
+        expect(ENV.key?(codepage_key)).to eq(true)
+        expect(ENV.key?(utf_8_key)).to eq(true)
+
+        # Ruby's ENV.keys has slightly different behavior than ENV.key?(key)
+        # the keys collection in 2.1 has a string with the correct bytes
+        # (codepage_key / utf_8_key have same bytes for the sake of searching)
+        found = ENV.keys.find { |k| k.bytes == codepage_key.bytes }
+        # but the string is actually a binary string
+        expect(found.encoding).to eq(Encoding::BINARY)
+        # meaning we can't use include? to find it in either UTF-8 or codepage encoding
+        expect(ENV.keys.include?(codepage_key)).to eq(false)
+        expect(ENV.keys.include?(utf_8_key)).to eq(false)
+
+        # and can only search with a BINARY encoded string
+        expect(ENV.keys.include?(utf_8_key.dup.force_encoding(Encoding::BINARY))).to eq(true)
+
+        # similarly the value stored at the real key is in current codepage
+        # but won't match real UTF-8 value
+        env_value = ENV[utf_8_key]
+        expect(env_value).to_not eq(utf_8_value)
+        expect(env_value.encoding).to_not eq(Encoding::UTF_8)
+
+        # but it can be forced back to UTF-8 to make it match.. ugh
+        converted_value = ENV[utf_8_key].dup.force_encoding(Encoding::UTF_8)
+        expect(converted_value).to eq(utf_8_value)
+      end
+    end
+
+    # but in 2.3, the behavior is correct when external codepage is 65001 / UTF-8
+    it "works around Ruby bug 8822 (which fails to preserve UTF-8 properly when accessing ENV) (Ruby >= 2.3.x) ",
+      :if => ((match = RUBY_VERSION.match(/^2\.(\d+)\./)) && match.captures[0].to_i >= 3 && Puppet.features.microsoft_windows?) do
+
+      withenv_utf8 do |utf_8_key, utf_8_value, codepage_key|
+        # Ruby 2.3 fixes access by the original UTF-8 key, and behaves differently than 2.1
+        # keying by local codepage will work only when the UTF-8 can be converted to local codepage
+        # the key selected for this test contains characters unavailable to a local codepage, hence doesn't work
+        expect(ENV.key?(codepage_key)).to eq(false)
+        expect(ENV.key?(utf_8_key)).to eq(true)
+
+        # Ruby's ENV.keys has slightly different behavior than ENV.key?(key), and 2.3 differs from 2.1
+        # (codepage_key / utf_8_key have same bytes for the sake of searching)
+        found = ENV.keys.find { |k| k.bytes == codepage_key.bytes }
+
+        # the keys collection in 2.3 does not have a string with the correct bytes!
+        # a corrupt version of the key exists with the bytes [225, 154, 160] replaced with [63]!
+        expect(found).to be_nil
+
+        # given the key is corrupted, include? cannot be used to find it in either UTF-8 or codepage encoding
+        expect(ENV.keys.include?(codepage_key)).to eq(false)
+        expect(ENV.keys.include?(utf_8_key)).to eq(false)
+
+        # The value stored at the UTF-8 key is a corrupted current codepage string and won't match UTF-8 value
+        # again the bytes [225, 154, 160] have irreversibly been changed to [63]!
+        env_value = ENV[utf_8_key]
+        expect(env_value).to_not eq(utf_8_value)
+        expect(env_value.encoding).to_not eq(Encoding::UTF_8)
+
+        # the ENV value returned will be in the local codepage which may or may not be able to be
+        # encoded to UTF8.  Our test UTF8 data is not convertible to non-Unicode codepages
+        converted_value = ENV[utf_8_key].dup.force_encoding(Encoding::UTF_8)
+        expect(converted_value).to_not eq(utf_8_value)
+      end
     end
 
     it "should preseve existing environment and should not corrupt UTF-8 environment variables" do
