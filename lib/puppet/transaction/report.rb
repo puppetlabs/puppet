@@ -1,5 +1,6 @@
 require 'puppet'
 require 'puppet/indirector'
+require 'puppet/transaction/persistence'
 
 # This class is used to report what happens on a client.
 # There are two types of data in a report; _Logs_ and _Metrics_.
@@ -122,6 +123,10 @@ class Puppet::Transaction::Report
   #
   attr_reader :noop
 
+  # @return [Boolean] true if the report contains any events and resources that had corrective
+  #    changes.
+  attr_reader :corrective_change
+
   def self.from_data_hash(data)
     obj = self.allocate
     obj.initialize_from_hash(data)
@@ -184,6 +189,7 @@ class Puppet::Transaction::Report
   # @api private
   def finalize_report
     prune_internal_data
+    process_resource_inferences
 
     resource_metrics = add_metric(:resources, calculate_resource_metrics)
     add_metric(:time, calculate_time_metrics)
@@ -215,6 +221,7 @@ class Puppet::Transaction::Report
     @status = 'failed' # assume failed until the report is finalized
     @noop = Puppet[:noop]
     @noop_pending = false
+    @corrective_change = false
   end
 
   # @api private
@@ -229,6 +236,7 @@ class Puppet::Transaction::Report
     @noop_pending = data['noop_pending']
     @host = data['host']
     @time = data['time']
+    @corrective_change = data['corrective_change']
 
     if master_used = data['master_used']
       @master_used = master_used
@@ -288,10 +296,10 @@ class Puppet::Transaction::Report
       'noop_pending' => @noop_pending,
       'environment' => @environment,
       'master_used' => @master_used,
-
       'logs' => @logs,
       'metrics' => @metrics,
       'resource_statuses' => @resource_statuses,
+      'corrective_change' => @corrective_change,
     }
   end
 
@@ -385,6 +393,101 @@ class Puppet::Transaction::Report
   end
 
   private
+
+  # Using the last applied values from our persistence store, and the current
+  # report data, iterate across all events finding any corrective_change that
+  # might exist and marking the event, resource and report appropriately.
+  def process_resource_inferences
+    persistence = Puppet::Transaction::Persistence.new
+    persistence.load
+
+    new_resources = {}
+
+    resource_statuses.each do |name, status|
+      # Initialize data structure for resource
+      new_resources[name] ||= {}
+      params = new_resources[name]["parameters"] ||= {}
+
+      # Populate new hash with events mapped to params
+      param_to_event = {}
+      status.events.each do |ev|
+        param_to_event[ev.property] = ev
+      end
+
+      status.real_resource.parameters.each do |pname,param|
+        # Skip if if the data is sensitive, or if its just a property
+        next if !param.is_a?(Puppet::Property) || param.sensitive
+
+        # Create new resource parameter definition in new hash
+        new_param_values = params[pname.to_s] ||= {}
+        event = param_to_event[pname.to_s]
+
+        # Retrieve the old system value
+        old_system_value = persistence.get_system_value(name, pname.to_s)
+
+        # Store the new system value for persistence
+        new_param_values["system_value"] = new_system_value(param, event, old_system_value)
+
+        # Calculate corrective change if there is a related event
+        event.corrective_change = is_corrective_change(param, event, old_system_value) if event
+      end
+
+      # Mark resource and report with corrective_change if there is one
+      status.events.each do |e|
+        if e.corrective_change
+          status.corrective_change = true
+          @corrective_change = true
+          break
+        end
+      end
+    end
+
+    # Persist our new values to the resources storage.
+    persistence.resources = new_resources
+    persistence.save
+  end
+
+  # Given an event and its property, calculate the system_value to persist
+  # for future calculations.
+  # @param [Puppet::Transaction::Event] event event to use for processing
+  # @param [Puppet::Property] property correlating property
+  # @param [Object] system_value system_value from last transaction
+  # @return [Object] system_value to be used for next transaction
+  def new_system_value(property, event, system_value)
+    if event
+      if event.status == "success"
+        # Success events, we presume work so we persist the desired_value
+        event.desired_value
+      else
+        # For non-success events, we persist the old system_value if it exists,
+        # or use the event previous_value.
+        system_value.nil? ? event.previous_value : system_value
+      end
+    else
+      # For non events, we just want to store the parameters agent value.
+      property.value
+    end
+  end
+
+  # @param [Puppet::Transaction::Event] event event to use for processing
+  # @param [Puppet::Property] property correlating property
+  # @param [Object] system_value system_value from last transaction
+  # @return [bool] system_value to persist
+  def is_corrective_change(property, event, system_value)
+    # Only idempotent properties, and cases where we have an old system_value
+    # are corrective_changes.
+    if property.idempotent? && !system_value.nil?
+      # Here we duplicate the property to avoid side-effects, and modify its should value
+      # so we can use insync?
+      test_property = property.dup
+      test_property.should = system_value
+
+      # If the values aren't insync, we have confirmed a corrective_change
+      !test_property.insync?(event.previous_value)
+    else
+      false
+    end
+  end
 
   def calculate_change_metric
     resource_statuses.map { |name, status| status.change_count || 0 }.inject(0) { |a,b| a+b }
