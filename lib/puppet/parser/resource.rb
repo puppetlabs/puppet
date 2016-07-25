@@ -106,6 +106,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     @finished = true
     add_defaults
     add_scope_tags
+    replace_sensitive_data
     validate if do_validate
   end
 
@@ -301,6 +302,15 @@ class Puppet::Parser::Resource < Puppet::Resource
     scope_resource = scope.resource
     unless scope_resource.nil? || scope_resource.equal?(self)
       merge_tags(scope_resource)
+    end
+  end
+
+  def replace_sensitive_data
+    parameters.each_pair do |name, param|
+      if param.value.is_a?(Puppet::Pops::Types::PSensitiveType::Sensitive)
+        @sensitive_parameters << name
+        param.value = param.value.unwrap
+      end
     end
   end
 

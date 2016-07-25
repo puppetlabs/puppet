@@ -254,9 +254,6 @@ describe Puppet::Parser::Resource do
 
   describe "when finishing" do
     before do
-      @class = newclass "myclass"
-      @nodedef = newnode("mynode")
-
       @resource = Puppet::Parser::Resource.new("file", "whatever", :scope => @scope, :source => @source)
     end
 
@@ -290,6 +287,13 @@ describe Puppet::Parser::Resource do
       @resource.finish
 
       expect(@resource[:owner]).to eq("other")
+    end
+
+    it "converts parameters with Sensitive values to unwrapped values and metadata" do
+      @resource[:content] = Puppet::Pops::Types::PSensitiveType::Sensitive.new("hunter2")
+      @resource.finish
+      expect(@resource[:content]).to eq "hunter2"
+      expect(@resource.sensitive_parameters).to eq [:content]
     end
   end
 
