@@ -48,7 +48,8 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
   ARCH_REGEX = Regexp.new(ARCH_LIST.join('|\.'))
 
   commands :rpm => "rpm"
-
+  commands :sudo => "sudo"
+  
   if command('rpm')
     confine :true => begin
       rpm('--version')
@@ -149,7 +150,15 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     flag = ["-i"]
     flag = ["-U", "--oldpackage"] if version && (version != :absent && version != :purged)
     flag += install_options if resource[:install_options]
-    rpm flag, source
+    user = `whoami`
+    if Puppet.features.root?
+    	Puppet.debug "Exceution as root user #{user} ,#{flag}, #{source}"
+    	rpm flag, source
+    else
+    	Puppet.debug "Execution as non root sudo user  #{user} ,#{flag}, #{source}"
+    	cmd = [command(:rpm), flag,  source]
+    	sudo *cmd
+    end
   end
 
   def uninstall
@@ -174,7 +183,15 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
 
     flag = ['-e']
     flag += uninstall_options if resource[:uninstall_options]
-    rpm flag, nvr
+    user = `whoami`
+    if Puppet.features.root?
+    	Puppet.debug "Exceuting as a root user #{user} ,#{flag}"
+    	rpm flag, nvr
+    else
+    	Puppet.debug "execution by non root sudo user  #{user} ,#{flag}"
+    	cmd = [command(:rpm), flag,  nvr]
+    	sudo *cmd
+    end
   end
 
   def update
