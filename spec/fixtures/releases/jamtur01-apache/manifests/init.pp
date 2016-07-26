@@ -11,6 +11,13 @@ class apache {
     enable    => true,
     subscribe => Package['httpd'],
   }
+  if ($::operatingsystem == 'Fedora') and ($::operatingsystemmajrelease == '23') {
+    package{'libnghttp2':
+      ensure => latest,
+      install_options => '--best',
+      before => Package['httpd'],
+    }
+  }
   #
   # May want to purge all none realize modules using the resources resource type.
   # A2mod resource type is broken.  Look into fixing it and moving it into apache.
