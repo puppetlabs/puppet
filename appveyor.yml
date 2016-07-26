@@ -1,16 +1,23 @@
 version: 4.1.0.{build}
 clone_depth: 10
-init:
-  - SET
 install:
-  - SET PATH=C:\Ruby21-x64\bin;%PATH%
+build: off
+
+environment:
+  matrix:
+  - RUBY_VER: 23-x64
+  - RUBY_VER: 22-x64
+  - RUBY_VER: 21-x64
+
+test_script:
+  - SET
+  - SET PATH=C:\Ruby%RUBY_VER%\bin;%PATH%
   - SET LOG_SPEC_ORDER=true
   - bundle install --jobs 4 --retry 2 --without development extra
   - type Gemfile.lock
   - ruby -v
-build: off
-test_script:
   - bundle exec rspec spec
+
 on_failure:
   - appveyor PushArtifact .\spec_order.txt
 notifications:
