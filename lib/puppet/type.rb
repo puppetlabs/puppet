@@ -2394,6 +2394,47 @@ end
       adderrorcontext(error, detail)
       raise error
     end
+
+    set_sensitive_parameters(resource.sensitive_parameters)
+  end
+
+  protected
+
+  # Mark parameters associated with this type as sensitive, based on the associated resource.
+  #
+  # Currently, only instances of `Puppet::Property` can be easily marked for sensitive data handling
+  # and information redaction is limited to redacting events generated while synchronizing
+  # properties. While support for redaction will be broadened in the future we can't automatically
+  # deduce how to redact arbitrary parameters, so if a parameter is marked for redaction the best
+  # we can do is warn that we can't handle treating that parameter as sensitive and move on.
+  #
+  # In some unusual cases a given parameter will be marked as sensitive but that sensitive context
+  # needs to be transferred to another parameter. In this case resource types may need to override
+  # this method in order to copy the sensitive context from one parameter to another (and in the
+  # process force the early generation of a parameter that might otherwise be lazily generated.)
+  # See `Puppet::Type.type(:file)#set_sensitive_parameters` for an example of this.
+  #
+  # @note This method visibility is protected since it should only be called by #initialize, but is
+  #   marked as public as subclasses may need to override this method.
+  #
+  # @api public
+  #
+  # @param sensitive_parameters [Array<Symbol>] A list of parameters to mark as sensitive.
+  #
+  # @return [void]
+  def set_sensitive_parameters(sensitive_parameters)
+    sensitive_parameters.each do |name|
+      p = parameter(name)
+      if p.is_a?(Puppet::Property)
+        p.sensitive = true
+      elsif p.is_a?(Puppet::Parameter)
+        warning("Unable to mark '#{name}' as sensitive: #{name} is a parameter and not a property, and cannot be automatically redacted.")
+      elsif self.class.attrclass(name)
+        warning("Unable to mark '#{name}' as sensitive: the property itself was not assigned a value.")
+      else
+        err("Unable to mark '#{name}' as sensitive: the property itself is not defined on #{type}.")
+      end
+    end
   end
 
   private
