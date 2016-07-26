@@ -15,6 +15,16 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
     end
   end
 
+  def initialize(node, options = {})
+    super
+    add_function_overrides
+  end
+
+  def add_function_overrides
+    hiera_include = proc { Puppet.debug "Ignoring hiera_include() during environment catalog compilation" }
+    loaders.puppet_system_loader.add_entry(:function, 'hiera_include', hiera_include, nil)
+  end
+
   def add_catalog_validators
     super
     add_catalog_validator(CatalogValidator::SiteValidator)
