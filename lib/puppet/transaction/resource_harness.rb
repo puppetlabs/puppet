@@ -103,7 +103,7 @@ class Puppet::Transaction::ResourceHarness
       if param.should && !param.safe_insync?(current_value)
         event = create_change_event(param, current_value, historical_value)
         if do_audit
-          event = audit_event(event, param)
+          event = audit_event(event, param, context)
         end
 
         brief_audit_message = audit_message(param, do_audit, historical_value, current_value)
@@ -174,10 +174,20 @@ class Puppet::Transaction::ResourceHarness
   end
   private :are_audited_values_equal
 
-  def audit_event(event, property)
+  # Populate an existing event with audit information.
+  #
+  # @param event [Puppet::Transaction::Event] The event to be populated.
+  # @param property [Puppet::Property] The property being audited.
+  # @param context [ResourceApplicationContext]
+  #
+  # @return [Puppet::Transaction::Event] The given event, populated with the audit information.
+  def audit_event(event, property, context)
     event.audited = true
     event.status = "audit"
-    if !are_audited_values_equal(event.historical_value, event.previous_value)
+
+    # The event we've been provided might have been redacted so we need to use the state stored within
+    # the resource application context to see if an event was actually generated.
+    if !are_audited_values_equal(context.historical_values[property.name], context.current_values[property.name])
       event.message = property.format("audit change: previously recorded value %s has been changed to %s",
                  property.is_to_s(event.historical_value),
                  property.is_to_s(event.previous_value))
@@ -219,7 +229,7 @@ class Puppet::Transaction::ResourceHarness
           event = audit_event(create_change_event(parameter,
                                                   context.current_values[param_name],
                                                   context.historical_values[param_name]),
-                              parameter)
+                              parameter, context)
           event.send_log
           context.record(event)
         end
