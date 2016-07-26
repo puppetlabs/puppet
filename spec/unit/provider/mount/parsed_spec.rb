@@ -166,7 +166,7 @@ FSTAB
       expect(mounts[5]).to eq({ :name => '/ghost', :mounted => :yes })
     end
 
-    it "should get name from mountoutput found on Linux" do
+    it "should get name and mount options from mountoutput found on Linux" do
       Facter.stubs(:value).with(:osfamily).returns 'Gentoo'
       Facter.stubs(:value).with(:kernel).returns 'Linux'
       described_class.stubs(:mountcmd).returns(File.read(my_fixture('linux.mount')))
