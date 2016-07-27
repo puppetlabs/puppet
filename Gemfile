@@ -27,6 +27,10 @@ gem "puppet", :path => File.dirname(__FILE__), :require => false
 gem "facter", *location_for(ENV['FACTER_LOCATION'] || ['> 2.0', '< 4'])
 gem "hiera", *location_for(ENV['HIERA_LOCATION'] || ['>= 2.0', '< 4'])
 gem "rake", "10.1.1", :require => false
+# Hiera has an unbound dependency on json_pure
+# json_pure 2.0.2+ requires Ruby >= 2.0
+# Ensure json_pure maximum version 2.0.1 on Ruby 1.x
+gem 'json_pure', '<= 2.0.1', :require => false if RUBY_VERSION =~ /^1\./
 
 group(:development, :test) do
   gem "rspec", "~> 3.1", :require => false
