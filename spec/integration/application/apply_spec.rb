@@ -202,5 +202,6 @@ describe "apply" do
         expect(logs).to include(match(/doesn't match server specified environment/))
       end
     end
+
   end
 end
