@@ -123,17 +123,15 @@ Description: Centralised configuration management - master setup to run under mo
 
 Package: vim-puppet
 Architecture: all
-Depends: ${misc:Depends}
+Depends: ${misc:Depends}, puppet (= ${source:Version})
 Recommends: vim-addon-manager
-Conflicts: puppet (<< ${source:Version})
 Description: syntax highlighting for puppet manifests in vim
  The vim-puppet package provides filetype detection and syntax highlighting for
  puppet manifests (files ending with ".pp").
 
 Package: puppet-el
 Architecture: all
-Depends: ${misc:Depends}, emacsen-common
-Conflicts: puppet (<< ${source:Version})
+Depends: ${misc:Depends}, emacsen-common, puppet (= ${source:Version})
 Description: syntax highlighting for puppet manifests in emacs
  The puppet-el package provides syntax highlighting for puppet manifests
 
