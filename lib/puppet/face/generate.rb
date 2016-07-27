@@ -45,7 +45,19 @@ Puppet::Face.define(:generate, '0.1.0') do
     when_invoked do |options|
       generator = Puppet::Generate::Type
       inputs = generator.find_inputs(options[:format].to_sym)
-      generator.generate(inputs, options[:force])
+      environment = Puppet.lookup(:current_environment)
+
+      # get the common output directory (in <envroot>/.resource_types) - create it if it does not exists
+      # error if it exists and is not a directory
+      #
+      path_to_env = environment.configuration.path_to_env
+      outputdir = File.join(path_to_env, '.resource_types')
+      if Puppet::FileSystem.exist?(outputdir) && !Puppet::FileSystem.directory?(outputdir)
+        raise ArgumentError, "The output directory '#{outputdir}' exists and is not a directory"
+      end
+      Puppet::FileSystem::mkpath(outputdir)
+
+      generator.generate(inputs, outputdir, options[:force])
       nil
     end
   end

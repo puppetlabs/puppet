@@ -22,6 +22,9 @@ module Puppet
           # Gets the title patterns of the type
           attr_reader :title_patterns
 
+          # Gets the isomorphic member attribute of the type
+          attr_reader :isomorphic
+
           # Initializes a type model.
           # @param type [Puppet::Type] The Puppet type to model.
           # @return [void]
@@ -32,7 +35,7 @@ module Puppet
             @parameters = type.parameters.map do |name|
               Property.new(type.paramclass(name))
             end
-            @title_patterns = type.title_patterns.map do |mapping|
+            @title_patterns = Hash[type.title_patterns.map do |mapping|
               [
                 "/#{mapping[0].source.gsub(/\//, '\/')}/",
                 mapping[1].map { |names|
@@ -41,7 +44,8 @@ module Puppet
                   Util::to_puppet_string(names[0].to_s)
                 }
               ]
-            end.to_h
+            end]
+            @isomorphic = type.isomorphic?
           end
 
           def render(template)

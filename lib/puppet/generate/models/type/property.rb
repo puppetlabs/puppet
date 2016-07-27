@@ -56,6 +56,8 @@ module Puppet
             return 'Any' if strings.empty? && regexes.empty?
 
             # Calculate a variant of supported values
+            # Note that boolean strings are mapped to Variant[Boolean, Enum['true', 'false']]
+            # because of tech debt...
             enum = "Enum[#{strings.join(', ')}]" unless strings.empty?
             pattern = "Pattern[#{regexes.join(', ')}]" unless regexes.empty?
             boolean = 'Boolean' if strings.include?('\'true\'') || strings.include?('\'false\'')

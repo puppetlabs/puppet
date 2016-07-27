@@ -42,9 +42,23 @@ module Puppet
         end
 
         # Determines if the output file is up-to-date with respect to the input file.
+        # @param [String, nil] The path to output to, or nil if determined by input
         # @return [Boolean] Returns true if the output is up-to-date or false if not.
-        def up_to_date?
-          Puppet::FileSystem::exist?(output_path) && (Puppet::FileSystem::stat(@path) <=> Puppet::FileSystem::stat(output_path)) <= 0
+        def up_to_date?(outputdir)
+          f = effective_output_path(outputdir)
+          Puppet::FileSystem::exist?(f) && (Puppet::FileSystem::stat(@path) <=> Puppet::FileSystem::stat(f)) <= 0
+        end
+
+        # Gets the filename of the output file.
+        # @return [String] Returns the name to the output file.
+        def output_name
+          @output_name ||=
+            case @format
+            when :pcore
+              "#{File.basename(@path, '.rb')}.pp"
+            else
+              raise "unsupported format '#{@format}'."
+            end
         end
 
         # Gets the path to the output file.
@@ -53,7 +67,7 @@ module Puppet
           @output_path ||=
             case @format
             when :pcore
-              File.join(@base, 'pcore', 'types', "#{File.basename(@path, '.rb')}.pp")
+              File.join(@base, 'pcore', 'types', output_name)
             else
               raise "unsupported format '#{@format}'."
             end
@@ -64,6 +78,14 @@ module Puppet
         # @return [String] Returns the new path to the output file.
         def output_path=(path)
           @output_path = path
+        end
+
+        # Returns the outputpath to use given an outputdir that may be nil
+        # If outputdir is not nil, the returned path is relative to that outpudir
+        # otherwise determined by this input.
+        # @param [String, nil] The outputdirectory to use, or nil if to be determined by this Input
+        def effective_output_path(outputdir)
+          outputdir ? File.join(outputdir, output_name) : output_path
         end
 
         # Gets the path to the template to use for this input.
@@ -92,7 +114,6 @@ module Puppet
       # @return [Array<Input>] Returns the array of inputs.
       def self.find_inputs(format = :pcore, environment = Puppet.lookup(:current_environment))
         Puppet.debug "Searching environment '#{environment.name}' for custom types."
-
         inputs = []
         environment.modules.each do |mod|
           directory = File.join(Puppet::Util::Autoload.cleanpath(mod.plugin_directory), 'puppet', 'type')
@@ -114,10 +135,27 @@ module Puppet
       end
 
       # Generates files for the given inputs.
+      # If a file is up to date (newer than input) it is kept.
+      # If a file is out of date it is regenerated.
+      # If there is a file for a non existing output in a given output directory it is removed.
+      # If using input specific output removal must be made by hand if input is removed.
+      #
       # @param inputs [Array<Input>] The inputs to generate files for.
+      # @param outputdir [String, nil] the outputdir where all output should be generated, or nil if next to input
       # @param force [Boolean] True to force the generation of the output files (skip up-to-date checks) or false if not.
       # @return [void]
-      def self.generate(inputs, force = false)
+      def self.generate(inputs, outputdir = nil, force = false)
+        # remove files for non existing inputs
+        unless outputdir.nil?
+          filenames_to_keep = inputs.map {|i| i.output_name }
+          existing_files = Puppet::FileSystem.children(outputdir).map {|f| Puppet::FileSystem.basename(f) }
+          files_to_remove = existing_files - filenames_to_keep
+          files_to_remove.each do |f|
+            Puppet::FileSystem.unlink(File.join(outputdir, f))
+          end
+          Puppet.notice("Removed output '#{files_to_remove}' for non existing inputs") unless files_to_remove.empty?
+        end
+
         if inputs.empty?
           Puppet.notice 'No custom types were found.'
           return nil
@@ -134,7 +172,7 @@ module Puppet
         up_to_date = true
         Puppet.notice 'Generating Puppet resource types.'
         inputs.each do |input|
-          if !force && input.up_to_date?
+          if !force && input.up_to_date?(outputdir)
             Puppet.debug "Skipping '#{input}' because it is up-to-date."
             next
           end
@@ -158,7 +196,7 @@ module Puppet
 
           # Assume the type follows the naming convention
           unless type = types[type_name]
-            Puppet.error "Custom type '#{type_name}' was not defined in '#{input}'."
+            Puppet.err "Custom type '#{type_name}' was not defined in '#{input}'."
             next
           end
 
@@ -182,12 +220,13 @@ module Puppet
           # Write the output file
           begin
             Puppet.notice "Generating '#{input.output_path}' using '#{input.format}' format."
-            FileUtils.mkdir_p(File.dirname(input.output_path))
-            File.open(input.output_path, 'w') do |file|
+            effective_output_path = input.effective_output_path(outputdir)
+            FileUtils.mkdir_p(File.dirname(effective_output_path))
+            File.open(effective_output_path, 'w') do |file|
               file.write(result)
             end
           rescue Exception => e
-            Puppet.log_exception(e, "Failed to generate '#{input.output_path}': #{e.message}")
+            Puppet.log_exception(e, "Failed to generate '#{effective_output_path}': #{e.message}")
             # Move on to the next input
             next
           end

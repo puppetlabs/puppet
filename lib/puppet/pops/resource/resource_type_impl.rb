@@ -38,7 +38,7 @@ class ResourceTypeImpl
           Types::KEY_TYPE => Types::PArrayType.new(param_ref),
           Types::KEY_VALUE => EMPTY_ARRAY
         },
-        'title_patterns' => {
+        'title_patterns_hash' => {
           Types::KEY_TYPE => Types::POptionalType.new(
             Types::PHashType.new(Types::PRegexpType::DEFAULT, Types::PArrayType.new(Types::PStringType::NON_EMPTY))),
           Types::KEY_VALUE => nil
@@ -89,14 +89,15 @@ class ResourceTypeImpl
   attr_reader :name
   attr_reader :properties
   attr_reader :parameters
+  attr_reader :title_patterns_hash
   attr_reader :title_patterns
   attr_reader :isomorphic
 
-  def initialize(name, properties = EMPTY_ARRAY, parameters = EMPTY_ARRAY, title_patterns = nil, isomorphic = true)
+  def initialize(name, properties = EMPTY_ARRAY, parameters = EMPTY_ARRAY, title_patterns_hash = nil, isomorphic = true)
     @name = name
     @properties = properties
     @parameters = parameters
-    @title_patterns = title_patterns
+    @title_patterns_hash = title_patterns_hash
     @isomorphic = isomorphic
 
     # Compute attributes hash
@@ -125,6 +126,39 @@ class ResourceTypeImpl
       @attr_types[symname] = :param
       symname
     end).freeze
+
+    # API for title patterns is [ [regexp, [ [ [sym, <lambda>], [sym, <lambda>] ] ] ] ]
+    # Where lambdas are optional. This resource type impl does not support lambdas
+    # Note that the pcore file has a simpler hashmap that is post processed here
+    # since the structure must have Symbol instances for names which the .pp representation
+    # does not deliver.
+    #
+    @title_patterns =
+      case @key_attributes.length
+      when 0
+        # TechDebt: The case of specifying title patterns when having no name vars is unspecified behavior in puppet
+        # Here it is silently ignored.
+        []
+      when 1
+        if @title_pattners_hash.nil?
+          [ [ /(.*)/m, [ [@key_attributes.first] ] ] ]
+        else
+          # TechDebt: The case of having one namevar and an empty title patterns is unspecified behavior in puppet.
+          # Here, it may lead to an empty map which may or may not trigger the wanted/expected behavior.
+          #
+          @title_patterns_hash.map {|k,v| [ k, [ v.map {|n| n.to_sym } ] ] }
+        end
+      else
+        if @title_patterns_hash.nil? || @title_patterns_hash.empty?
+          # TechDebt: While title patterns must be specified when more than one is used, they do not have
+          # to match/set them all since some namevars can be omitted (to support the use case in
+          # the 'package' type where 'provider' attribute is handled as part of the key without being
+          # set from the title.
+          #
+          raise Puppet::DevError,"you must specify title patterns when there are two or more key attributes"
+        end
+        @title_patterns_hash.nil? ? [] : @title_patterns_hash.map {|k,v| [ k, [ v.map {|n| n.to_sym } ] ] }
+      end
   end
 
   # Override CompilableResource inclusion
