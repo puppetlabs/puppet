@@ -215,7 +215,9 @@ module ModuleLoaders
 
     def existing_path(effective_path)
       # Optimized, checks index instead of visiting file system
-      @path_index.include?(effective_path) ? effective_path : nil
+      # TODO: has this killed the optimization? The problem is we may be comparing 8.3 paths to expanded paths found by Dir.glob
+      # and there is no canonical form
+      @path_index.find { |f| File.identical?(f, effective_path) }
     end
 
     def meaningful_to_search?(smart_path)
@@ -227,7 +229,16 @@ module ModuleLoaders
     end
 
     def add_to_index(smart_path)
-      found = Dir.glob(File.join(smart_path.generic_path, '**', "*#{smart_path.extension}"))
+      # TODO: previous code - Dir.glob will expand 8.3 ADMINI~1 to Administrator
+      # which is a behavioral breakage
+      # found = Dir.glob(File.join(smart_path.generic_path, '**', "*#{smart_path.extension}"))
+      search_path = Pathname(smart_path.generic_path)
+      return [] if !search_path.exist?
+
+      found = []
+      search_path.find do |p|
+        found << p.to_s if p.file? && p.extname == smart_path.extension
+      end
       @path_index.merge(found)
       found
     end

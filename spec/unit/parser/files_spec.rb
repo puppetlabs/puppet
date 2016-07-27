@@ -84,13 +84,19 @@ describe Puppet::Parser::Files do
     end
 
     it "returns the name of the module and the manifests from the first found module" do
-      expect(Puppet::Parser::Files.find_manifests_in_modules("mymod/init.pp", environment)
-            ).to eq(["mymod", [mymod_init_manifest]])
+      found = Puppet::Parser::Files.find_manifests_in_modules("mymod/init.pp", environment)
+      found[1] = found[1].map { |f| Dir.glob(f) }
+      expected = ["mymod", [mymod_init_manifest]]
+      expected[1] = expected[1].map { |f| Dir.glob(f) }
+      expect(found).to eq(expected)
     end
 
     it "always includes init.pp if present" do
-      expect(Puppet::Parser::Files.find_manifests_in_modules("mymod/another.pp", environment)
-            ).to eq(["mymod", [mymod_init_manifest, mymod_another_manifest]])
+      found = Puppet::Parser::Files.find_manifests_in_modules("mymod/another.pp", environment)
+      found[1] = found[1].map { |f| Dir.glob(f) }
+      expected = ["mymod", [mymod_init_manifest, mymod_another_manifest]]
+      expected[1] = expected[1].map { |f| Dir.glob(f) }
+      expect(found).to eq(expected)
     end
 
     it "does not find the module when it is a different environment" do

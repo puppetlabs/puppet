@@ -38,6 +38,8 @@ describe 'loader paths' do
     expect(effective_paths.size).to eq(1)
     expect(module_loader.path_index.size).to eq(1)
     path_index = module_loader.path_index
-    expect(path_index).to include(File.join(module_dir, 'lib', 'puppet', 'functions', 'foo4x.rb'))
+
+    expected = File.join(module_dir, 'lib', 'puppet', 'functions', 'foo4x.rb')
+    expect(path_index.find { |f| File.identical?(f, expected) }).to be_truthy
   end
 end

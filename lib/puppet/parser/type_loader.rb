@@ -20,6 +20,9 @@ class Puppet::Parser::TypeLoader
       abspat = File.expand_path(pattern, dir)
       file_pattern = abspat + (File.extname(abspat).empty? ? '.pp' : '' )
 
+      # require 'pry'; binding.pry
+      # TODO: replace Dir.glob?  - need to verify what comes in for file_pattern to see if it's replaceable
+      puts "Called import with #{file_pattern}"
       files = Dir.glob(file_pattern).uniq.reject { |f| FileTest.directory?(f) }
       modname = nil
 
