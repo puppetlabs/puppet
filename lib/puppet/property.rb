@@ -248,12 +248,12 @@ class Puppet::Property < Puppet::Parameter
   # * `:name` - the event_name
   # * `:desired_value` - a.k.a _should_ or _wanted value_
   # * `:property` - reference to this property
-  # * `:source_description` - the _path_ (?? See todo)
+  # * `:source_description` - The containment path of this property, indicating what resource this
+  #                           property is associated with and in what stage and class that resource
+  #                           was declared, e.g. "/Stage[main]/Myclass/File[/tmp/example]/ensure"
   # * `:invalidate_refreshes` - if scheduled refreshes should be invalidated
   # * `:redacted` - if the event will be redacted (due to this property being sensitive)
   #
-  # @todo What is the intent of this method? What is the meaning of the :source_description passed in the
-  #   options to the created event?
   # @return [Puppet::Transaction::Event] the created event
   # @see Puppet::Type#event
   def event(options = {})
