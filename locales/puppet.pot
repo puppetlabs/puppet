@@ -1,0 +1,148 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2016 Puppet, LLC.
+# This file is distributed under the same license as the Puppet package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Puppet 4.5.2-443-g0e3b44a\n"
+"\n"
+"Report-Msgid-Bugs-To: docs@puppet.com\n"
+"POT-Creation-Date: 2016-07-26 03:40+0000\n"
+"PO-Revision-Date: 2016-07-26 03:40+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: ../lib/puppet/face/help.rb:9
+msgid "Apache 2 license; see COPYING"
+msgstr ""
+
+#: ../lib/puppet/face/help.rb:11
+msgid "Display Puppet help."
+msgstr ""
+
+#: ../lib/puppet/face/help.rb:14
+msgid "Display help about Puppet subcommands and their actions."
+msgstr ""
+
+#: ../lib/puppet/face/help.rb:15
+msgid "[<subcommand>] [<action>]"
+msgstr ""
+
+#: ../lib/puppet/face/help.rb:16
+msgid "Short help text for the specified subcommand or action."
+msgstr ""
+
+#: ../lib/puppet/face/help.rb:17
+msgid ""
+"      Get help for an action:\n"
+"\n"
+"      $ puppet help\n"
+msgstr ""
+
+#: ../lib/puppet/face/help.rb:23
+msgid "--version VERSION"
+msgstr ""
+
+#: ../lib/puppet/face/help.rb:24
+msgid "The version of the subcommand for which to show help."
+msgstr ""
+
+#. Check our invocation, because we want varargs and can't do defaults
+#. yet.  REVISIT: when we do option defaults, and positional options, we
+#. should rewrite this to use those. --daniel 2011-04-04
+#: ../lib/puppet/face/help.rb:50
+msgid "Puppet help only takes two (optional) arguments: a subcommand and an action"
+msgstr ""
+
+#: ../lib/puppet/face/help.rb:59
+msgid "Version only makes sense when a Faces subcommand is given"
+msgstr ""
+
+#: ../lib/puppet/face/help.rb:69
+msgid "Legacy subcommands don't take actions"
+msgstr ""
+
+#: ../lib/puppet/face/help.rb:81
+msgid ""
+"Could not load help for the application #{applicationname}.\n"
+"Please check the error logs for more information.\n"
+"\n"
+"Detail: \"%{msg}\"\n"
+msgstr ""
+
+#: ../lib/puppet/face/help.rb:94
+msgid ""
+"Could not load help for the face #{facename}.\n"
+"Please check the error logs for more information.\n"
+"\n"
+"Detail: \"%{msg}\"\n"
+msgstr ""
+
+#: ../lib/puppet/face/help.rb:108
+msgid "\"Unable to load action #{actionname} from #{face}\""
+msgstr ""
+
+#. Return a list of all applications (both legacy and Face applications), along with a summary
+#. of their functionality.
+#. @return [Array] An Array of Arrays.  The outer array contains one entry per application; each
+#. element in the outer array is a pair whose first element is a String containing the application
+#. name, and whose second element is a String containing the summary for that application.
+#. Now we find the line with our summary, extract it, and return it.  This
+#. depends on the implementation coincidence of how our pages are
+#. formatted.  If we can't match the pattern we expect we return the empty
+#. string to ensure we don't blow up in the summary. --daniel 2011-04-11
+#: ../lib/puppet/face/help.rb:151 ../lib/puppet/face/help.rb:172
+msgid "! Subcommand unavailable due to error. Check error logs."
+msgstr ""
+
+#. @api private
+#: ../lib/puppet/pops/types/type_formatter.rb:112
+msgid "Any"
+msgstr ""
+
+#. @api private
+#: ../lib/puppet/pops/types/type_formatter.rb:115
+msgid "Undef"
+msgstr ""
+
+#. @api private
+#: ../lib/puppet/pops/types/type_formatter.rb:118
+msgid "Default"
+msgstr ""
+
+#. @api private
+#: ../lib/puppet/pops/types/type_formatter.rb:121
+msgid "Boolean"
+msgstr ""
+
+#. @api private
+#: ../lib/puppet/pops/types/type_formatter.rb:124
+msgid "Scalar"
+msgstr ""
+
+#. @api private
+#: ../lib/puppet/pops/types/type_formatter.rb:127
+msgid "Data"
+msgstr ""
+
+#. @api private
+#: ../lib/puppet/pops/types/type_formatter.rb:130
+msgid "Numeric"
+msgstr ""
+
+#. @api private
+#: ../lib/puppet/pops/types/type_formatter.rb:254
+msgid "Unit"
+msgstr ""
+
+#. @api private
+#: ../lib/puppet/pops/types/type_formatter.rb:290
+msgid "CatalogEntry"
+msgstr ""
