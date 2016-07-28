@@ -3,6 +3,25 @@ require 'puppet/util/windows'
 
 class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
 
+  def expand_path(path, dir_string = nil)
+    # ensure `nil` values behave like underlying File.expand_path
+    string_path = ::File.expand_path(path.nil? ? nil : path_string(path), dir_string)
+    # if no tildes, nothing to expand, no need to call Windows API, return original string
+    return string_path if !string_path.index('~')
+
+    begin
+      # no need to do existence check up front as GetLongPathName implies that check is performed
+      # and it should be the exception that files aren't actually present
+      string_path = Puppet::Util::Windows::File.get_long_pathname(string_path)
+    rescue Puppet::Util::Windows::Error => e
+      # preserve original File.expand_path behavior for file / path not found by returning string
+      raise if (e.code != Puppet::Util::Windows::File::ERROR_FILE_NOT_FOUND &&
+        e.code != Puppet::Util::Windows::File::ERROR_PATH_NOT_FOUND)
+    end
+
+    string_path
+  end
+
   def exist?(path)
     return Puppet::Util::Windows::File.exist?(path)
   end

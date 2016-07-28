@@ -147,8 +147,10 @@ module Puppet::Environments
     include EnvironmentLoader
 
     def initialize(environment_dir, global_module_path)
-      @environment_dir = environment_dir
-      @global_module_path = global_module_path
+      @environment_dir =  Puppet::FileSystem.expand_path(environment_dir)
+      @global_module_path = global_module_path ?
+        global_module_path.map { |p| Puppet::FileSystem.expand_path(p) } :
+        nil
     end
 
     # Generate an array of directory loaders from a path string.

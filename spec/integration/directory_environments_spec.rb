@@ -29,6 +29,22 @@ describe "directory environments" do
         expect { puppet.run }.to exit_with(0)
       end.to have_printed('/completely/different')
     end
+
+    it 'given an 8.3 style path on Windows, will config print an expanded path',
+      :if => Puppet::Util::Platform.windows? do
+
+      # ensure an 8.3 style path is set for environmentpath
+      shortened = Puppet::Util::Windows::File.get_short_pathname(Puppet[:environmentpath])
+      expanded = Puppet::FileSystem.expand_path(shortened)
+
+      Puppet[:environmentpath] = shortened
+      expect(Puppet[:environmentpath]).to match(/~/)
+
+      Puppet.settings.initialize_global_settings(args)
+      expect do
+        expect { puppet.run }.to exit_with(0)
+      end.to have_printed(expanded)
+    end
   end
 
   context "with an environmentpath having multiple directories" do

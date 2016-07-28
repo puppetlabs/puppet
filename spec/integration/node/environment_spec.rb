@@ -37,6 +37,27 @@ describe Puppet::Node::Environment do
     end
   end
 
+  it "should expand 8.3 paths on Windows when creating an environment",
+    :if => Puppet::Util::Platform.windows? do
+
+    # asking for short names only works on paths that exist
+    base = Puppet::Util::Windows::File.get_short_pathname(tmpdir("env_modules"))
+    parent_modules_dir = File.join(base, 'testmoduledir')
+
+    # make sure the paths have ~ in them, indicating unexpanded 8.3 paths
+    expect(parent_modules_dir).to match(/~/)
+
+    module_dir = a_module_in('testmodule', parent_modules_dir)
+
+    # create the environment with unexpanded 8.3 paths
+    environment = Puppet::Node::Environment.create(:foo, [parent_modules_dir])
+
+    # and expect fully expanded paths inside the environment
+    # necessary for comparing module paths internally by the parser
+    expect(environment.modulepath).to eq([Puppet::FileSystem.expand_path(parent_modules_dir)])
+    expect(environment.modules.first.path).to eq(Puppet::FileSystem.expand_path(module_dir))
+  end
+
   it "should not yield the same module from different module paths" do
     base = tmpfile("env_modules")
     Dir.mkdir(base)

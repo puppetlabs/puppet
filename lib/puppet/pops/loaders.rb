@@ -218,6 +218,7 @@ class Loaders
 
     # The environment is not a namespace, so give it a nil "module_name"
     loader_name = "environment:#{environment.name}"
+    # env_conf is setup from the environment_dir value passed into Puppet::Environments::Directories.new
     env_conf = Puppet.lookup(:environments).get_conf(environment.name)
     env_path = env_conf.nil? || !env_conf.is_a?(Puppet::Settings::EnvironmentConf) ? nil : env_conf.path_to_env
 

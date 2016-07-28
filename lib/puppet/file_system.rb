@@ -330,6 +330,21 @@ module Puppet::FileSystem
     @impl.pathname(path)
   end
 
+  # Produces a string representation of the opaque path handle, with expansions
+  # performed on ~.  For Windows, this means that C:\Users\Admini~1\AppData will
+  # be expanded to C:\Users\Administrator\AppData.  On POSIX filesystems, the
+  # value ~ will be expanded to something like /Users/Foo
+  #
+  # This method exists primarlily to resolve a Ruby deficiency where
+  # File.expand_path doesn't handle ~ in each segment on a Windows path
+  #
+  # @param path [Object] a path handle produced by {#pathname}
+  # @return [String] a string representation of the path
+  #
+  def self.expand_path(path, dir_string = nil)
+    @impl.expand_path(path, dir_string)
+  end
+
   # Asserts that the given path is of the expected type produced by #pathname
   #
   # @raise [ArgumentError] when path is not of the expected type
