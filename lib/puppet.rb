@@ -18,7 +18,6 @@ require 'puppet/util/run_mode'
 require 'puppet/external/pson/common'
 require 'puppet/external/pson/version'
 require 'puppet/external/pson/pure'
-require 'gettext-setup'
 
 #------------------------------------------------------------
 # the top-level module
@@ -37,9 +36,6 @@ module Puppet
   require 'puppet/environments'
 
   class << self
-    GettextSetup.initialize(File.absolute_path('../locales', File.dirname(__FILE__)))
-    FastGettext.locale = GettextSetup.negotiate_locale(ENV["LANG"])
-
     include Puppet::Util
     attr_reader :features
   end
