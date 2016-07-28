@@ -480,7 +480,6 @@ EOS
     end
   end
 
-
   describe "in the environment catalog" do
     it "does not fail if there is no site expression" do
       expect {
@@ -488,6 +487,18 @@ EOS
         notify { 'ignore me':}
       EOC
       }.to_not raise_error()
+    end
+
+    it "ignores usage of hiera_include() at topscope for classification" do
+      Puppet.expects(:debug).with(regexp_matches /Ignoring hiera_include/)
+
+      expect {
+        catalog = compile_to_env_catalog(<<-EOC).to_resource
+        hiera_include('classes')
+        site { }
+        EOC
+      }.to_not raise_error()
+
     end
 
     it "includes components and capability resources" do
