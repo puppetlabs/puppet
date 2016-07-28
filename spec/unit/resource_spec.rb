@@ -811,6 +811,12 @@ describe Puppet::Resource do
       expect(result["fee"]).to eq(%w{baz})
     end
 
+    it "should set sensitive parameters as an array of strings" do
+      resource = Puppet::Resource.new("File", "/foo", :sensitive_parameters => [:foo, :fee])
+      result = PSON.parse(resource.to_pson)
+      expect(result["sensitive_parameters"]).to eq ["foo", "fee"]
+    end
+
     it "should serialize relationships as reference strings" do
       resource = Puppet::Resource.new("File", "/foo")
       resource[:requires] = Puppet::Resource.new("File", "/bar")
@@ -894,11 +900,24 @@ describe Puppet::Resource do
       resource = Puppet::Resource.from_data_hash(@data)
       expect(resource['foo']).to eq(%w{one})
     end
+
+    it "converts deserialized sensitive parameters as symbols" do
+      @data['sensitive_parameters'] = ['content', 'mode']
+      expect(Puppet::Resource.from_data_hash(@data).sensitive_parameters).to eq [:content, :mode]
+    end
   end
 
   it "implements copy_as_resource" do
     resource = Puppet::Resource.new("file", "/my/file")
     expect(resource.copy_as_resource).to eq(resource)
+  end
+
+  describe "when copying resources" do
+    it "deep copies over 'sensitive' values" do
+      rhs = Puppet::Resource.new("file", "/my/file", {:parameters => {:content => "foo"}, :sensitive_parameters => [:content]})
+      lhs = Puppet::Resource.new(rhs)
+      expect(lhs.sensitive_parameters).to eq [:content]
+    end
   end
 
   describe "because it is an indirector model" do

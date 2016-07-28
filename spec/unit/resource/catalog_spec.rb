@@ -818,6 +818,11 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to pson"
     expect(catalog.to_pson).to validate_against('api/schemas/catalog.json')
   end
 
+  it "should validate a single sensitive parameter resource catalog against the schema" do
+    catalog = compile_to_catalog("create_resources('file', {'/etc/foo'=>{'ensure'=>'present','content'=>Sensitive('hunter2')}})")
+    expect(catalog.to_pson).to validate_against('api/schemas/catalog.json')
+  end
+
   it "should validate a two resource catalog against the schema" do
     catalog = compile_to_catalog("create_resources('notify', {'foo'=>{'message'=>'one'}, 'bar'=>{'message'=>'two'}})")
     expect(catalog.to_pson).to validate_against('api/schemas/catalog.json')

@@ -14,6 +14,11 @@ class Puppet::Resource
   attr_accessor :file, :line, :catalog, :exported, :virtual, :strict
   attr_reader :type, :title
 
+  # @!attribute [rw] sensitive_parameters
+  #   @api private
+  #   @return [Array<Symbol>] A list of parameters to be treated as sensitive
+  attr_accessor :sensitive_parameters
+
   # @deprecated
   attr_accessor :validate_parameters
 
@@ -34,6 +39,10 @@ class Puppet::Resource
 
     if params = data['parameters']
       params.each { |param, value| resource[param] = value }
+    end
+
+    if sensitive_parameters = data['sensitive_parameters']
+      resource.sensitive_parameters = sensitive_parameters.map(&:to_sym)
     end
 
     if tags = data['tags']
@@ -73,6 +82,8 @@ class Puppet::Resource
     end
 
     data["parameters"] = params unless params.empty?
+
+    data["sensitive_parameters"] = sensitive_parameters unless sensitive_parameters.empty?
 
     data
   end
@@ -199,6 +210,7 @@ class Puppet::Resource
   # @api public
   def initialize(type, title = nil, attributes = {})
     @parameters = {}
+    @sensitive_parameters = []
     if type.is_a?(Puppet::Resource)
       # Copy constructor. Let's avoid munging, extracting, tagging, etc
       src = type
@@ -226,6 +238,7 @@ class Puppet::Resource
 
         self[p] = v
       end
+      @sensitive_parameters.replace(type.sensitive_parameters)
     else
       if type.is_a?(Hash)
         raise ArgumentError, "Puppet::Resource.new does not take a hash as the first argument. "+
