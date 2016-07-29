@@ -887,6 +887,40 @@ Puppet::Type.newtype(:file) do
 
   private
 
+  # Carry the context of sensitive parameters to the the properties that will actually handle that
+  # sensitive data.
+  #
+  # The file type can accept file content from a number of origins and depending on the current
+  # state of the system different properties will be responsible for synchronizing the file
+  # content. This method handles the necessary mapping of originating parameters to the
+  # responsible parameters.
+  def set_sensitive_parameters(sensitive_parameters)
+    # If we have content that's marked as sensitive but the file doesn't exist then the ensure
+    # property will be responsible for syncing content, so we have to mark ensure as sensitive as well.
+    if sensitive_parameters.include?(:content)
+      # The `ensure` parameter is not guaranteed to be defined either and will be conditionally set when
+      # the `content` property is set, so we need to force the creation of the `ensure` property to
+      # set the sensitive context.
+      newattr(:ensure).sensitive = true
+    end
+
+    # The source parameter isn't actually a property but works by injecting information into the
+    # content property. In order to preserve the intended sensitive context we need to mark content
+    # as sensitive instead.
+    if sensitive_parameters.include?(:source)
+      sensitive_parameters.delete(:source)
+      # The `source` parameter will generate the `content` property when the resource state is retrieved
+      # but that's long after we've set the sensitive context. Force the early creation of the `content`
+      # attribute so we can mark it as sensitive.
+      newattr(:content).sensitive = true
+      # As noted above, making the `content` property sensitive requires making the `ensure` property
+      # sensitive as well.
+      newattr(:ensure).sensitive = true
+    end
+
+    super(sensitive_parameters)
+  end
+
   # @return [String] The type of the current file, cast to a string.
   def read_current_type
     stat_info = stat

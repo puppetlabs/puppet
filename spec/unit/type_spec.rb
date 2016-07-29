@@ -556,6 +556,38 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
         expect(params[:fstype]).to eq("boo")
         expect(params[:atboot]).to eq(:yes)
       end
+
+      it "copies sensitive parameters to the appropriate properties" do
+        resource = Puppet::Resource.new(:mount, "/foo",
+                                        :parameters => {:atboot => :yes, :fstype => "boo"},
+                                        :sensitive_parameters => [:fstype])
+        type = Puppet::Type.type(:mount).new(resource)
+        expect(type.property(:fstype).sensitive).to eq true
+      end
+
+      it "logs a warning when a parameter is marked as sensitive" do
+        resource = Puppet::Resource.new(:mount, "/foo",
+                                        :parameters => {:atboot => :yes, :fstype => "boo", :remounts => true},
+                                        :sensitive_parameters => [:remounts])
+        Puppet::Type.type(:mount).any_instance.expects(:warning).with(regexp_matches(/Unable to mark 'remounts' as sensitive: remounts is a parameter and not a property/))
+        Puppet::Type.type(:mount).new(resource)
+      end
+
+      it "logs a warning when a property is not set but is marked as sensitive" do
+        resource = Puppet::Resource.new(:mount, "/foo",
+                                        :parameters => {:atboot => :yes, :fstype => "boo"},
+                                        :sensitive_parameters => [:device])
+        Puppet::Type.type(:mount).any_instance.expects(:warning).with("Unable to mark 'device' as sensitive: the property itself was not assigned a value.")
+        Puppet::Type.type(:mount).new(resource)
+      end
+
+      it "logs an error when a property is not defined on the type but is marked as sensitive" do
+        resource = Puppet::Resource.new(:mount, "/foo",
+                                        :parameters => {:atboot => :yes, :fstype => "boo"},
+                                        :sensitive_parameters => [:content])
+        Puppet::Type.type(:mount).any_instance.expects(:err).with("Unable to mark 'content' as sensitive: the property itself is not defined on mount.")
+        Puppet::Type.type(:mount).new(resource)
+      end
     end
 
     describe "and passed a Hash" do
