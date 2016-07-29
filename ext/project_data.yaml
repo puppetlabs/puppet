@@ -40,7 +40,7 @@ gem_platform_dependencies:
       win32-process: '= 0.7.5'
       # Use of win32-security is deprecated
       win32-security: '= 0.2.5'
-      win32-service: '= 0.8.7'
+      win32-service: '= 0.8.8'
       minitar: '~> 0.5.4'
   x64-mingw32:
     gem_runtime_dependencies:
@@ -51,7 +51,7 @@ gem_platform_dependencies:
       win32-process: '= 0.7.5'
       # Use of win32-security is deprecated
       win32-security: '= 0.2.5'
-      win32-service: '= 0.8.7'
+      win32-service: '= 0.8.8'
       minitar: '~> 0.5.4'
 bundle_platforms:
   universal-darwin: all
