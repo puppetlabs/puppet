@@ -117,7 +117,7 @@ describe Puppet::Util do
       end
     end
 
-    it "works around Ruby bug 8822 (which fails to preserve UTF-8 properly when accessing ENV)" do
+    it "works around Ruby bug 8822 (which fails to preserve UTF-8 properly when accessing ENV) (Ruby <= 2.1) ", :if => (RUBY_VERSION =~ /^(1\.|2\.0\.|2\.1\.)/) && (Puppet.features.microsoft_windows?) do
       env_var_name = SecureRandom.uuid
       utf_8_bytes = [225, 154, 160] # rune ᚠ
       utf_8_str = env_var_name + utf_8_bytes.pack('c*').force_encoding(Encoding::UTF_8)
@@ -144,6 +144,78 @@ describe Puppet::Util do
         # but it can be forced back to UTF-8 to make it match.. ugh
         converted_value = ENV[utf_8_str].dup.force_encoding(Encoding::UTF_8)
         expect(converted_value).to eq(utf_8_str)
+      end
+
+      # real environment shouldn't have env var anymore
+      expect(process.get_environment_strings[utf_8_str]).to eq(nil)
+    end
+
+    it "works around Ruby bug 8822 (which fails to preserve UTF-8 properly when accessing ENV) (Ruby = 2.2.x) ", :if=> (RUBY_VERSION =~ /^2\.2\./) && (Puppet.features.microsoft_windows?) do
+      env_var_name = SecureRandom.uuid
+      utf_8_bytes = [225, 154, 160] # rune ᚠ
+      utf_8_str = env_var_name + utf_8_bytes.pack('c*').force_encoding(Encoding::UTF_8)
+
+      Puppet::Util.withenv({utf_8_str => utf_8_str}, :windows) do
+        # the true Windows environemnt APIs see the variables correctly
+        expect(process.get_environment_strings[utf_8_str]).to eq(utf_8_str)
+
+        # document buggy Ruby behavior here for https://bugs.ruby-lang.org/issues/8822
+        # Ruby retrieves / stores ENV names in the current codepage
+        # when these tests no longer pass, Ruby has fixed its bugs and workarounds can be removed
+        # interestingly we would expect some of these tests to fail when codepage is 65001
+        # but instead the env values are in Encoding::ASCII_8BIT!
+
+        # both a string in UTF-8 and current codepage are deemed valid keys to the hash
+        # which in a sane world shouldn't be true
+        codepage_key = utf_8_str.dup.force_encoding(Encoding.default_external)
+        expect(ENV.key?(codepage_key)).to eq(true)
+        expect(ENV.key?(utf_8_str)).to eq(true)
+        # similarly the value stored at the key is in current codepage and won't match UTF-8 value
+        env_value = ENV[utf_8_str]
+        expect(env_value).to_not eq(utf_8_str)
+        expect(env_value.encoding).to_not eq(Encoding::UTF_8)
+        # the ENV value returned will be in the local codepage which may or may not be able to be
+        # encoded to UTF8.  As we're using the rune characters it will not be available in the default
+        # IBM437 codepage and will fail.
+        converted_value = ENV[utf_8_str].dup.force_encoding(Encoding::UTF_8)
+        expect(converted_value).to_not eq(utf_8_str)
+      end
+
+      # real environment shouldn't have env var anymore
+      expect(process.get_environment_strings[utf_8_str]).to eq(nil)
+    end
+
+    it "works around Ruby bug 8822 (which fails to preserve UTF-8 properly when accessing ENV) (Ruby = 2.3.x) ", :if=> (RUBY_VERSION =~ /^2\.3\./) && (Puppet.features.microsoft_windows?) do
+      env_var_name = SecureRandom.uuid
+      utf_8_bytes = [225, 154, 160] # rune ᚠ
+      utf_8_str = env_var_name + utf_8_bytes.pack('c*').force_encoding(Encoding::UTF_8)
+
+      Puppet::Util.withenv({utf_8_str => utf_8_str}, :windows) do
+        # the true Windows environemnt APIs see the variables correctly
+        expect(process.get_environment_strings[utf_8_str]).to eq(utf_8_str)
+
+        # document buggy Ruby behavior here for https://bugs.ruby-lang.org/issues/8822
+        # Ruby retrieves / stores ENV names in the current codepage
+        # when these tests no longer pass, Ruby has fixed its bugs and workarounds can be removed
+        # interestingly we would expect some of these tests to fail when codepage is 65001
+        # but instead the env values are in Encoding::ASCII_8BIT!
+
+        # the ENV keys are stored in a UTF8 format, therefore accessing the ENV var by UTF8 name should
+        # succeed.  However accessing the ENV var by a keyname that has been localized to the external
+        # code may not succeeded.  As we're using the rune characters in the default IBM437 codepage this
+        # will not succeed as the run characters appear mangled
+        codepage_key = utf_8_str.dup.force_encoding(Encoding.default_external)
+        expect(ENV.key?(codepage_key)).to eq(false)
+        expect(ENV.key?(utf_8_str)).to eq(true)
+        # similarly the value stored at the key is in current codepage and won't match UTF-8 value
+        env_value = ENV[utf_8_str]
+        expect(env_value).to_not eq(utf_8_str)
+        expect(env_value.encoding).to_not eq(Encoding::UTF_8)
+        # the ENV value returned will be in the local codepage which may or may not be able to be
+        # encoded to UTF8.  As we're using the rune characters it will not be available in the default
+        # IBM437 codepage and will fail.
+        converted_value = ENV[utf_8_str].dup.force_encoding(Encoding::UTF_8)
+        expect(converted_value).to_not eq(utf_8_str)
       end
 
       # real environment shouldn't have env var anymore
