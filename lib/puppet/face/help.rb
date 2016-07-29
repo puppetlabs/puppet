@@ -6,22 +6,22 @@ require 'erb'
 
 Puppet::Face.define(:help, '0.0.1') do
   copyright "Puppet Labs", 2011
-  license   _("Apache 2 license; see COPYING")
+  license   "Apache 2 license; see COPYING"
 
-  summary _("Display Puppet help.")
+  summary "Display Puppet help."
 
   action(:help) do
-    summary _("Display help about Puppet subcommands and their actions.")
-    arguments _("[<subcommand>] [<action>]")
-    returns _("Short help text for the specified subcommand or action.")
-    examples _(<<-'EOT')
+    summary "Display help about Puppet subcommands and their actions."
+    arguments "[<subcommand>] [<action>]"
+    returns "Short help text for the specified subcommand or action."
+    examples <<-'EOT'
       Get help for an action:
 
       $ puppet help
     EOT
 
-    option _("--version VERSION") do
-      summary _("The version of the subcommand for which to show help.")
+    option "--version VERSION" do
+      summary "The version of the subcommand for which to show help."
     end
 
     default
@@ -47,7 +47,7 @@ Puppet::Face.define(:help, '0.0.1') do
           EOT
           353.times{i,x=i.divmod(1184);a,b=x.divmod(37);print(c[a]*b)}
         end
-        raise ArgumentError, _("Puppet help only takes two (optional) arguments: a subcommand and an action")
+        raise ArgumentError, "Puppet help only takes two (optional) arguments: a subcommand and an action"
       end
 
       version = :current
@@ -56,7 +56,7 @@ Puppet::Face.define(:help, '0.0.1') do
           version = options[:version]
         else
           if args.length == 0 then
-            raise ArgumentError, _("Version only makes sense when a Faces subcommand is given")
+            raise ArgumentError, "Version only makes sense when a Faces subcommand is given"
           end
         end
       end
@@ -66,7 +66,7 @@ Puppet::Face.define(:help, '0.0.1') do
       facename, actionname = args
       if legacy_applications.include? facename then
         if actionname then
-          raise ArgumentError, _("Legacy subcommands don't take actions")
+          raise ArgumentError, "Legacy subcommands don't take actions"
         end
         return render_application_help(facename)
       else
@@ -78,11 +78,11 @@ Puppet::Face.define(:help, '0.0.1') do
   def render_application_help(applicationname)
     return Puppet::Application[applicationname].help
   rescue StandardError, LoadError => detail
-    msg = _(<<-MSG) % {msg: detail.message}
+    msg = <<-MSG
 Could not load help for the application #{applicationname}.
 Please check the error logs for more information.
 
-Detail: "%{msg}"
+Detail: "#{detail.message}"
 MSG
     fail ArgumentError, msg, detail.backtrace
   end
@@ -91,11 +91,11 @@ MSG
     face, action = load_face_help(facename, actionname, version)
     return template_for(face, action).result(binding)
   rescue StandardError, LoadError => detail
-    msg = _(<<-MSG) % {msg: detail.message}
+    msg = <<-MSG
 Could not load help for the face #{facename}.
 Please check the error logs for more information.
 
-Detail: "%{msg}"
+Detail: "#{detail.message}"
 MSG
     fail ArgumentError, msg, detail.backtrace
   end
@@ -105,7 +105,7 @@ MSG
     if actionname
       action = face.get_action(actionname.to_sym)
       if not action
-        fail ArgumentError, _("Unable to load action #{actionname} from #{face}")
+        fail ArgumentError, "Unable to load action #{actionname} from #{face}"
       end
     end
 
@@ -148,7 +148,7 @@ MSG
           face = Puppet::Face[appname, :current]
           result << [appname, face.summary]
         rescue StandardError, LoadError
-          result << [ "! #{appname}", _("! Subcommand unavailable due to error. Check error logs.") ]
+          result << [ "! #{appname}", "! Subcommand unavailable due to error. Check error logs." ]
         end
       else
         result << [appname, horribly_extract_summary_from(appname)]
@@ -169,7 +169,7 @@ MSG
         end
       end
     rescue StandardError, LoadError
-      return _("! Subcommand unavailable due to error. Check error logs.")
+      return "! Subcommand unavailable due to error. Check error logs."
     end
     return ''
   end
