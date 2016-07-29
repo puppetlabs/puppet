@@ -272,7 +272,7 @@ Puppet::Type.type(:mount).provide(
     end
     mount_output.each do |line|
       if match = regex.match(line) and name = match.captures.first
-        live_options_platforms = ["Linux"]
+        live_options_platforms = ["Linux", "Darwin"]
         if live_options_platforms.include? Facter.value(:kernel)
           options = line[/\(.*\)/].tr('()', '')
           instances << {:name => name, :mounted => :yes, :live_options => options}

@@ -152,18 +152,18 @@ FSTAB
       expect(mounts[16]).to eq({ :name => '/ghost', :mounted => :yes })
     end
 
-    it "should get name from mountoutput found on Darwin" do
+    it "should get name and mount options from mountoutput found on Darwin" do
       Facter.stubs(:value).with(:osfamily).returns 'Darwin'
       Facter.stubs(:value).with(:kernel).returns 'Darwin'
       described_class.stubs(:mountcmd).returns(File.read(my_fixture('darwin.mount')))
       mounts = described_class.mountinstances
       expect(mounts.size).to eq(6)
-      expect(mounts[0]).to eq({ :name => '/', :mounted => :yes })
-      expect(mounts[1]).to eq({ :name => '/dev', :mounted => :yes })
-      expect(mounts[2]).to eq({ :name => '/net', :mounted => :yes })
-      expect(mounts[3]).to eq({ :name => '/home', :mounted => :yes })
-      expect(mounts[4]).to eq({ :name => '/usr', :mounted => :yes })
-      expect(mounts[5]).to eq({ :name => '/ghost', :mounted => :yes })
+      expect(mounts[0]).to eq({ :name => '/', :mounted => :yes, :live_options=>"hfs, local, journaled"})
+      expect(mounts[1]).to eq({ :name => '/dev', :mounted => :yes, :live_options=>"devfs, local, nobrowse"})
+      expect(mounts[2]).to eq({ :name => '/net', :mounted => :yes, :live_options=>"autofs, nosuid, automounted, nobrowse"})
+      expect(mounts[3]).to eq({ :name => '/home', :mounted => :yes, :mounted=>:yes, :live_options=>"autofs, automounted, nobrowse"})
+      expect(mounts[4]).to eq({ :name => '/usr', :mounted => :yes, :mounted=>:yes, :live_options=>"hfs, local, journaled"})
+      expect(mounts[5]).to eq({ :name => '/ghost', :mounted => :yes, :live_options => "hfs, local, journaled"})
     end
 
     it "should get name and mount options from mountoutput found on Linux" do
