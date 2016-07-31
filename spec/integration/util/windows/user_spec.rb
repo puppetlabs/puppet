@@ -110,6 +110,10 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
         expect { Puppet::Util::Windows::User.password_is?(username, nil) }.to raise_error(Puppet::Util::Windows::Error)
       end
 
+      it "should raise an error given an empty password" do
+        expect { Puppet::Util::Windows::User.password_is?(username, '') }.to raise_error(Puppet::Util::Windows::Error)
+      end
+
       it "should return false given a nil username and an incorrect password" do
         expect(Puppet::Util::Windows::User.password_is?(nil, bad_password)).to be_falsey
       end
