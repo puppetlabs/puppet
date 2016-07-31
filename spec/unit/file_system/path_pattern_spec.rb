@@ -120,7 +120,8 @@ describe Puppet::FileSystem::PathPattern do
   end
 
   it "applies the pattern to the filesystem as a glob" do
-    dir = tmpdir('globtest')
+    # Dir.glob is necessary on Windows since it expand 8.3 dirs as of Ruby 2.3+
+    dir = Dir.glob(tmpdir('globtest'))[0]
     create_file_in(dir, "found_one")
     create_file_in(dir, "found_two")
     create_file_in(dir, "third_not_found")

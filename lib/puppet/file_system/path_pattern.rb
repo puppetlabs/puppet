@@ -31,6 +31,8 @@ module Puppet::FileSystem
     end
 
     def glob
+      # require 'pry'; binding.pry
+      # TODO: replacing / removing this is going to be too hard given usage
       Dir.glob(pathname.to_s)
     end
 

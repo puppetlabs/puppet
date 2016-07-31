@@ -180,7 +180,8 @@ class Puppet::Module
 
     # (#4220) Always ensure init.pp in case class is defined there.
     init_manifest = manifest("init.pp")
-    if !init_manifest.nil? && !searched_manifests.include?(init_manifest)
+    if !init_manifest.nil? && !searched_manifests.find { |f| File.identical?(f, init_manifest) }
+
       searched_manifests.unshift(init_manifest)
     end
     searched_manifests
@@ -189,7 +190,11 @@ class Puppet::Module
   def all_manifests
     return [] unless Puppet::FileSystem.exist?(manifests)
 
-    Dir.glob(File.join(manifests, '**', '*.pp'))
+    found = []
+    Pathname(manifests).find do |p|
+      found << p if p.file? && p.extname == '.pp'
+    end
+    found
   end
 
   def metadata_file

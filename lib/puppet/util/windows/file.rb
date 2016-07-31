@@ -257,6 +257,24 @@ module Puppet::Util::Windows::File
   end
   module_function :readlink
 
+  def get_long_pathname(path)
+    converted = ''
+    FFI::Pointer.from_string_to_wide_string(path) do |path_ptr|
+      # includes terminating NULL
+      buffer_size = GetLongPathNameW(path_ptr, FFI::Pointer::NULL, 0)
+      FFI::MemoryPointer.new(:wchar, buffer_size) do |converted_ptr|
+        if GetLongPathNameW(path_ptr, converted_ptr, buffer_size) == FFI::WIN32_FALSE
+          raise Puppet::Util::Windows::Error.new("Failed to call GetLongPathName")
+        end
+
+        converted = converted_ptr.read_wide_string(buffer_size - 1)
+      end
+    end
+
+    converted
+  end
+  module_function :get_long_pathname
+
   def stat(file_name)
     file_name = file_name.to_s # accommodate PathName or String
     stat = File.stat(file_name)
@@ -317,6 +335,7 @@ module Puppet::Util::Windows::File
 
     path
   end
+
 
   ffi_convention :stdcall
 
@@ -422,4 +441,14 @@ module Puppet::Util::Windows::File
            # technically a WCHAR buffer, but we care about size in bytes here
            :PathBuffer, [:byte, MAXIMUM_REPARSE_DATA_BUFFER_SIZE - 20]
   end
+
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa364980(v=vs.85).aspx
+  # DWORD WINAPI GetLongPathName(
+  #   _In_  LPCTSTR lpszShortPath,
+  #   _Out_ LPTSTR  lpszLongPath,
+  #   _In_  DWORD   cchBuffer
+  # );
+  ffi_lib :kernel32
+  attach_function_private :GetLongPathNameW,
+    [:lpcwstr, :lpwstr, :dword], :dword
 end

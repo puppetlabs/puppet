@@ -102,9 +102,16 @@ class Puppet::Util::Autoload
 
     def files_in_dir(dir, path)
       dir = Pathname.new(File.expand_path(dir))
-      Dir.glob(File.join(dir, path, "*.rb")).collect do |file|
-        Pathname.new(file).relative_path_from(dir).to_s
+      files = []
+      search_path = Pathname(File.join(dir, path))
+      return [] if !search_path.exist?
+      search_path.find do |p|
+        files << Pathname.new(p).relative_path_from(dir).to_s if p.file? && p.extname == '.rb'
       end
+      files
+      # Dir.glob(File.join(dir, path, "*.rb")).collect do |file|
+      #   Pathname.new(file).relative_path_from(dir).to_s
+      # end
     end
 
     def module_directories(env)
