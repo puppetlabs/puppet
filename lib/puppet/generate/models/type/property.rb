@@ -1,5 +1,3 @@
-require 'puppet/generate/util/helpers'
-
 module Puppet
   module Generate
     module Models
@@ -19,7 +17,7 @@ module Puppet
           # @param property [Puppet::Property] The Puppet property to model.
           # @return [void]
           def initialize(property)
-            @name = Util::to_puppet_string(property.name.to_s)
+            @name = Puppet::Pops::Types::StringConverter.convert(property.name.to_s, '%p')
             @type = self.class.get_puppet_type(property)
             @doc = property.doc.strip
             @is_namevar = property.isnamevar?
@@ -46,9 +44,9 @@ module Puppet
                 next
               end
 
-              strings << Util::to_puppet_string(value.name.to_s)
+              strings << Puppet::Pops::Types::StringConverter.convert(value.name.to_s, '%p')
               value.aliases.each do |a|
-                strings << Util::to_puppet_string(a.to_s)
+                strings << Puppet::Pops::Types::StringConverter.convert(a.to_s, '%p')
               end
             end
 

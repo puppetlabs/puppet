@@ -1,5 +1,4 @@
 require 'puppet/generate/models/type/property'
-require 'puppet/generate/util/helpers'
 
 module Puppet
   module Generate
@@ -29,7 +28,7 @@ module Puppet
           # @param type [Puppet::Type] The Puppet type to model.
           # @return [void]
           def initialize(type)
-            @name = Util::to_puppet_string(type.name.to_s)
+            @name = Puppet::Pops::Types::StringConverter.convert(type.name.to_s, '%p')
             @doc = type.doc.strip
             @properties = type.properties.map { |p| Property.new(p) }
             @parameters = type.parameters.map do |name|
@@ -41,7 +40,7 @@ module Puppet
                 mapping[1].map { |names|
                   next if names.empty?
                   raise Puppet::Error, 'title patterns that use procs are not supported.' if names.size != 1
-                  Util::to_puppet_string(names[0].to_s)
+                  Puppet::Pops::Types::StringConverter.convert(names[0].to_s, '%p')
                 }
               ]
             end]
