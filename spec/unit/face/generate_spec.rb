@@ -150,7 +150,7 @@ describe Puppet::Face[:generate, :current] do
         expect(Puppet::FileSystem.exist?(outputdir)).to be(false)
         genface.types
         children = Puppet::FileSystem.children(outputdir).map {|p| Puppet::FileSystem.basename_string(p) }
-        expect(children).to eql(['test1.pp', 'test2.pp'])
+        expect(children.sort).to eql(['test1.pp', 'test2.pp'])
       end
 
       it 'tolerates that <env>/.resource_types/ directory exists' do
