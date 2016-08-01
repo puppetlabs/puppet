@@ -56,9 +56,9 @@ module Puppet
             # Calculate a variant of supported values
             # Note that boolean strings are mapped to Variant[Boolean, Enum['true', 'false']]
             # because of tech debt...
-            enum = "Enum[#{strings.join(', ')}]" unless strings.empty?
-            pattern = "Pattern[#{regexes.join(', ')}]" unless regexes.empty?
-            boolean = 'Boolean' if strings.include?('\'true\'') || strings.include?('\'false\'')
+            enum    = strings.empty? ? nil : "Enum[#{strings.join(', ')}]"
+            pattern = regexes.empty? ? nil : "Pattern[#{regexes.join(', ')}]"
+            boolean = strings.include?('\'true\'') || strings.include?('\'false\'') ? 'Boolean' : nil
             variant = [boolean, enum, pattern].reject { |t| t.nil? }
             return variant[0] if variant.size == 1
             "Variant[#{variant.join(', ')}]"
