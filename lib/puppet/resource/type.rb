@@ -215,11 +215,17 @@ class Puppet::Resource::Type
 
   def add_produces(blueprint)
     @produces ||= []
+    if @produces.any? {|bp| bp[:capability] == blueprint[:capability]}
+      raise Puppet::ParseError, "Capability mapping error: produces clause redefines mapping for #{blueprint[:capability]} #{@name}"
+    end
     @produces << blueprint
   end
 
   def add_consumes(blueprint)
     @consumes ||= []
+    if @consumes.any? {|bp| bp[:capability] == blueprint[:capability]}
+      raise Puppet::ParseError, "Capability mapping error: consumes clause redefines mapping for #{blueprint[:capability]} #{@name}"
+    end
     @consumes << blueprint
   end
 
