@@ -186,7 +186,7 @@ context 'installing myresource' do
     describe "listing gems" do
       describe "searching for a single package" do
         it "searches for an exact match" do
-          provider_class.expects(:execute).with(includes('^bundler$')).returns(File.read(my_fixture('gem-list-single-package')))
+          provider_class.expects(:execute).with(includes('^bundler$'), {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}}).returns(File.read(my_fixture('gem-list-single-package')))
           expected = {:name => 'bundler', :ensure => %w[1.6.2], :provider => :gem}
           expect(provider_class.gemlist({:justme => 'bundler'})).to eq(expected)
         end
