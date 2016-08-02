@@ -152,6 +152,8 @@ RSpec.configure do |config|
     Puppet[:rundir] = "$vardir/run"
     Puppet[:hiera_config] = File.join(base, 'hiera')
 
+    FileUtils.mkdir_p Puppet[:statedir]
+
     Puppet::Test::TestHelper.before_each_test()
   end
 
