@@ -31,4 +31,10 @@ describe Puppet::Util::Windows::File, :if => Puppet::Util::Platform.windows? do
       expect(described_class.get_attributes(nonexist_file, false)).to eq(invalid_file_attributes)
     end
   end
+
+  describe "get_known_folder_path" do
+    it "should return the same value for :FOLDERID_Windows as ENV['SystemRoot']" do
+      expect(described_class.get_known_folder_path(:FOLDERID_Windows)).to eq(ENV['SystemRoot'])
+    end
+  end
 end

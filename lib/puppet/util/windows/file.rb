@@ -257,6 +257,31 @@ module Puppet::Util::Windows::File
   end
   module_function :readlink
 
+
+  LFN_MAX_PATH = 32767
+  def get_known_folder_path(knownfolderid, flag = :KF_FLAG_DEFAULT, user_handle = FFI::Pointer::NULL_HANDLE)
+    path = nil
+    folderid = Puppet::Util::Windows::KNOWNFOLDERID[knownfolderid]
+
+    if folderid.nil?
+      raise ArgumentError, "SHGetKnownFolderPath Folder ID: #{knownfolderid} is invalid for this system"
+    end
+
+    FFI::MemoryPointer.new(:pointer) do |string_ptr_ptr|
+      if (SHGetKnownFolderPath(folderid, flag, user_handle, string_ptr_ptr) !=
+          Puppet::Util::Windows::COM::S_OK)
+        raise Puppet::Util::Windows::Error.new("Failed to call SHGetKnownFolderPath with Folder ID: #{knownfolderid}")
+      end
+
+      string_ptr_ptr.read_com_memory_pointer do |str_ptr|
+        path = str_ptr.read_arbitrary_wide_string_up_to(LFN_MAX_PATH) if ! str_ptr.null?
+      end
+    end
+
+    path
+  end
+  module_function :get_known_folder_path
+
   def stat(file_name)
     file_name = file_name.to_s # accommodate PathName or String
     stat = File.stat(file_name)
@@ -422,4 +447,29 @@ module Puppet::Util::Windows::File
            # technically a WCHAR buffer, but we care about size in bytes here
            :PathBuffer, [:byte, MAXIMUM_REPARSE_DATA_BUFFER_SIZE - 20]
   end
+
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/dd378447(v=vs.85).aspx
+  KNOWN_FOLDER_FLAG = enum(
+    :KF_FLAG_DEFAULT,                       0x00000000,
+    :KF_FLAG_SIMPLE_IDLIST,                 0x00000100,
+    :KF_FLAG_NOT_PARENT_RELATIVE,           0x00000200,
+    :KF_FLAG_DEFAULT_PATH,                  0x00000400,
+    :KF_FLAG_INIT,                          0x00000800,
+    :KF_FLAG_NO_ALIAS,                      0x00001000,
+    :KF_FLAG_DONT_UNEXPAND,                 0x00002000,
+    :KF_FLAG_DONT_VERIFY,                   0x00004000,
+    :KF_FLAG_CREATE,                        0x00008000,
+    :KF_FLAG_NO_APPCONTAINER_REDIRECTION,   0x00010000,
+    :KF_FLAG_ALIAS_ONLY,                    0x80000000,
+  )
+
+  # HRESULT SHGetKnownFolderPath(
+  #   _In_     REFKNOWNFOLDERID rfid,
+  #   _In_     DWORD            dwFlags,
+  #   _In_opt_ HANDLE           hToken,
+  #   _Out_    PWSTR            *ppszPath
+  # );
+  ffi_lib :shell32
+  attach_function_private :SHGetKnownFolderPath,
+    [FFI::WIN32::GUID.by_ref, KNOWN_FOLDER_FLAG, :handle, :lpwstr], :hresult
 end

@@ -19,6 +19,7 @@ module Puppet::Util::Windows
     require 'puppet/util/windows/com'
     require 'puppet/util/windows/sid'
     require 'puppet/util/windows/principal'
+    require 'puppet/util/windows/known_folders'
     require 'puppet/util/windows/file'
     require 'puppet/util/windows/security'
     require 'puppet/util/windows/user'
