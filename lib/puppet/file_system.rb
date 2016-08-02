@@ -1,4 +1,5 @@
 module Puppet::FileSystem
+  require 'puppet/util'
   require 'puppet/file_system/path_pattern'
   require 'puppet/file_system/file_impl'
   require 'puppet/file_system/memory_file'

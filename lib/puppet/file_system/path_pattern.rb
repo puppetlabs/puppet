@@ -1,4 +1,5 @@
 require 'pathname'
+require 'puppet/error'
 
 module Puppet::FileSystem
   class PathPattern
