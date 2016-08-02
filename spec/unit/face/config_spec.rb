@@ -2,7 +2,7 @@
 require 'spec_helper'
 require 'puppet/face'
 
-module PuppetFaceSpecs 
+module PuppetFaceSpecs
 describe Puppet::Face[:config, '0.0.1'] do
 
   FS = Puppet::FileSystem
@@ -63,7 +63,7 @@ syslogfacility = file
         expect { subject.print(*add_section_option(args, section)) }.to have_printed(<<-OUTPUT)
 environmentpath = #{File.expand_path("/dev/null/environments")}
 manifest = #{File.expand_path("/dev/null/environments/production/manifests")}
-modulepath = #{File.expand_path("/dev/null/environments/production/modules")}#{File::PATH_SEPARATOR}#{File.expand_path("/some/base")}
+modulepath = #{File.expand_path("/dev/null/environments/production/site")}#{File::PATH_SEPARATOR}#{File.expand_path("/dev/null/environments/production/modules")}#{File::PATH_SEPARATOR}#{File.expand_path("/some/base")}
 environment = production
 basemodulepath = #{File.expand_path("/some/base")}
         OUTPUT
@@ -104,7 +104,7 @@ basemodulepath = #{File.expand_path("/some/base")}
         expect { subject.print(*add_section_option(args, section)) }.to have_printed(<<-OUTPUT)
 environmentpath = #{File.expand_path("/dev/null/environments")}
 manifest = no_manifest
-modulepath = 
+modulepath =
 environment = doesnotexist
 basemodulepath = #{File.expand_path("/some/base")}
         OUTPUT

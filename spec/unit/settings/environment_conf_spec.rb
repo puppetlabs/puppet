@@ -64,7 +64,8 @@ describe Puppet::Settings::EnvironmentConf do
 
     it "returns a default modulepath when config has none, with global_module_path" do
       expect(envconf.modulepath).to eq(
-        [File.expand_path('/some/direnv/modules'),
+        [File.expand_path('/some/direnv/site'),
+        File.expand_path('/some/direnv/modules'),
         File.expand_path('/global/modulepath')].join(File::PATH_SEPARATOR)
       )
     end
