@@ -137,12 +137,12 @@ context 'installing myresource' do
       end
 
       it "should return an empty array when no gems installed" do
-        provider_class.expects(:execute).with(%w{/my/gem list --local}).returns("\n")
+        provider_class.expects(:execute).with(%w{/my/gem list --local}, {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}}).returns("\n")
         expect(provider_class.instances).to eq([])
       end
 
       it "should return ensure values as an array of installed versions" do
-        provider_class.expects(:execute).with(%w{/my/gem list --local}).returns <<-HEREDOC.gsub(/        /, '')
+        provider_class.expects(:execute).with(%w{/my/gem list --local}, {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}}).returns <<-HEREDOC.gsub(/        /, '')
         systemu (1.2.0)
         vagrant (0.8.7, 0.6.9)
         HEREDOC
@@ -154,7 +154,7 @@ context 'installing myresource' do
       end
 
       it "should ignore platform specifications" do
-        provider_class.expects(:execute).with(%w{/my/gem list --local}).returns <<-HEREDOC.gsub(/        /, '')
+        provider_class.expects(:execute).with(%w{/my/gem list --local}, {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}}).returns <<-HEREDOC.gsub(/        /, '')
         systemu (1.2.0)
         nokogiri (1.6.1 ruby java x86-mingw32 x86-mswin32-60, 1.4.4.1 x86-mswin32)
         HEREDOC
@@ -166,7 +166,7 @@ context 'installing myresource' do
       end
 
       it "should not fail when an unmatched line is returned" do
-        provider_class.expects(:execute).with(%w{/my/gem list --local}).
+        provider_class.expects(:execute).with(%w{/my/gem list --local}, {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}}).
           returns(File.read(my_fixture('line-with-1.8.5-warning')))
 
         expect(provider_class.instances.map {|p| p.properties}).
