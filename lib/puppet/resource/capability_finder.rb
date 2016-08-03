@@ -19,7 +19,7 @@ module Puppet::Resource::CapabilityFinder
   #
   # @param environment [String] environment name
   # @param code_id [String,nil] code_id of the catalog
-  # @param cap [Puppet::Type] the capability resource type instance
+  # @param cap [Puppet::Resource] the capability resource type instance
   # @return [Puppet::Resource,nil] The found capability resource or `nil` if it could not be found
   def self.find(environment, code_id, cap)
     unless Puppet::Util.const_defined?('Puppetdb')
@@ -33,24 +33,22 @@ module Puppet::Resource::CapabilityFinder
       resources = resources.select { |r| r['tags'].any? { |t| t == "producer:#{environment}" } }
     end
 
-    if resources.size > 1 && code_id
-      Puppet.debug "Found multiple resources when looking up capability #{cap}, filtering by code id #{code_id}"
-      resources = search(environment, code_id, cap)
-    end
-
-    if resources.size > 1
+    if resources.empty?
+      Puppet.debug "Could not find capability resource #{cap} in PuppetDB"
+    elsif resources.size == 1
+      resource_hash = resources.first
+    elsif code_id_resource = disambiguate_by_code_id(environment, code_id, cap)
+      resource_hash = code_id_resource
+    else
       raise Puppet::DevError,
         "Unexpected response from PuppetDB when looking up #{cap}:\n" \
         "expected exactly one resource but got #{resources.size};\n" \
         "returned data is:\n#{resources.inspect}"
     end
 
-    if resource_hash = resources.first
+    if resource_hash
       resource_hash['type'] = cap.resource_type
       instantiate_resource(resource_hash)
-    else
-      Puppet.debug "Could not find capability resource #{cap} in PuppetDB"
-      nil
     end
   end
 
@@ -110,6 +108,27 @@ module Puppet::Resource::CapabilityFinder
   end
 
   private
+
+  # Find a distinct copy of the given capability resource by searching for only
+  # resources matching the given code_id. Returns `nil` if no code_id is
+  # supplied or if there isn't exactly one matching resource.
+  #
+  # @param environment [String] environment name
+  # @param code_id [String,nil] code_id of the catalog
+  # @param cap [Puppet::Resource] the capability resource type instance
+  def self.disambiguate_by_code_id(environment, code_id, cap)
+    if code_id
+      Puppet.debug "Found multiple resources when looking up capability #{cap}, filtering by code id #{code_id}"
+      resources = search(environment, code_id, cap)
+
+      if resources.size > 1
+        Puppet.debug "Found multiple resources matching code id #{code_id} when looking up #{cap}"
+        nil
+      else
+        resources.first
+      end
+    end
+  end
 
   def self.instantiate_resource(resource_hash)
     real_type = resource_hash['type']
