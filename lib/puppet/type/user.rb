@@ -200,6 +200,10 @@ module Puppet
           well as the password.
         * Windows passwords can only be managed in cleartext, as there is no Windows API
           for setting the password hash.
+        * Windows passwords shouldn't be specified as empty (zero-length) strings, even
+          if you've configured Windows to allow blank passwords. If you do specify a
+          blank password, Puppet will report a change on every run because there is no
+          way to verify that an existing password is blank.
 
         [stdlib]: https://github.com/puppetlabs/puppetlabs-stdlib/
 

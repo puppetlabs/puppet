@@ -36,6 +36,16 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
     expect(provider.user).to be_a(Puppet::Util::Windows::ADSI::User)
   end
 
+  describe "when retrieving the password property" do
+    context "when the resource has a nil password" do
+      it "should never issue a logon attempt" do
+        resource.stubs(:[]).with(any_of(:name, :password)).returns(nil)
+        Puppet::Util::Windows::User.expects(:logon_user).never
+        provider.password
+      end
+    end
+  end
+
   describe "when managing groups" do
     it 'should return the list of groups as an array of strings' do
       provider.user.stubs(:groups).returns nil
@@ -226,6 +236,16 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
       provider.user.expects(:password_is?).with('plaintext').returns false
 
       expect(provider.password).to be_nil
+    end
+
+    it "should generate a warning with an empty password" do
+      connection.expects(:SetPassword).with('')
+      connection.expects(:SetInfo).twice
+      connection.expects(:Get).with('UserFlags')
+      connection.expects(:Put).with('UserFlags', true)
+
+      provider.password = ''
+      expect(@logs).to have_matching_log(/Puppet cannot verify a blank password with the operating system/)
     end
 
     it 'should not create a user if a group by the same name exists' do
