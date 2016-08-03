@@ -18,6 +18,8 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
   before :each do
     Puppet::Util::Windows::ADSI.stubs(:computer_name).returns('testcomputername')
     Puppet::Util::Windows::ADSI.stubs(:connect).returns connection
+    # this would normally query the system, but not needed for these tests
+    Puppet::Util::Windows::ADSI::User.stubs(:localized_domains).returns([])
   end
 
   describe ".instances" do

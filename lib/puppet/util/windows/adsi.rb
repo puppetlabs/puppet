@@ -115,8 +115,9 @@ module Puppet::Util::Windows::ADSI
         # localized version of NT AUTHORITY (can't use S-1-5)
         # for instance AUTORITE NT on French Windows
         Puppet::Util::Windows::SID.name_to_sid_object('SYSTEM').domain.upcase
-    ]
-  end
+      ]
+    end
+
     def uri(name, host = '.')
       host = '.' if (localized_domains << Socket.gethostname.upcase).include?(host.upcase)
 
