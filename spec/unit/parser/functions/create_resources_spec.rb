@@ -1,9 +1,11 @@
 require 'puppet'
 require 'spec_helper'
 require 'puppet_spec/compiler'
+require 'puppet_spec/files'
 
 describe 'function for dynamically creating resources' do
   include PuppetSpec::Compiler
+  include PuppetSpec::Files
 
   before :each do
     node      = Puppet::Node.new("floppy", :environment => 'production')
@@ -31,6 +33,35 @@ describe 'function for dynamically creating resources' do
     expect { @scope.function_create_resources(['foo',{},'foo']) }.to raise_error(ArgumentError, 'create_resources(): third argument, if provided, must be a hash')
   end
 
+  context 'when being called from a manifest in a file' do
+    let(:dir) do
+      dir_containing('manifests', {
+              'site.pp' => <<-EOF
+                # comment here to make the call be on a particular
+                # source line (3)
+                create_resources('notify', {
+                  'a'  => { 'message'=>'message a'},
+                  'b'  => { 'message'=>'message b'},
+                  }
+                )
+              EOF
+          }
+      )
+    end
+
+    it 'file and line information where call originates is written to all resources created in one call' do
+      node = Puppet::Node.new('test')
+      file = File.join(dir, 'site.pp')
+      Puppet[:manifest] = file
+      catalog = Puppet::Parser::Compiler.compile(node).filter { |r| r.virtual? }
+
+      expect(catalog.resource(:notify, 'a').file).to eq(file)
+      expect(catalog.resource(:notify, 'a').line).to eq(3)
+      expect(catalog.resource(:notify, 'b').file).to eq(file)
+      expect(catalog.resource(:notify, 'b').line).to eq(3)
+    end
+
+  end
   describe 'when creating native types' do
     it 'empty hash should not cause resources to be added' do
       noop_catalog = compile_to_catalog("create_resources('file', {})")
