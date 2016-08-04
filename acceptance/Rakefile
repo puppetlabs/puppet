@@ -289,6 +289,8 @@ def get_test_sample
             'tests/ticket_4622_filebucket_diff_test.rb',
             'tests/pluginsync/4420_pluginfacts_should_be_resolvable_on_agent.rb',
             'tests/ssl/puppet_cert_generate_and_autosign.rb',
+            'tests/resource/package/yum.rb',
+            'tests/resource/service/ticket_5024_systemd_enabling_masked_service.rb',
             'tests/resource/service/puppet_mcollective_service_management.rb'
           ]
 
