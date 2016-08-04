@@ -107,10 +107,10 @@ class Puppet::Transaction::ResourceHarness
     end
 
     context.system_value_params.each do |pname, param|
-      @persistence.set_system_value(resource.name, pname.to_s,
+      @persistence.set_system_value(resource.ref, pname.to_s,
                                     new_system_value(param,
                                                      param_to_event[pname.to_s],
-                                                     @persistence.get_system_value(resource.name, pname.to_s)))
+                                                     @persistence.get_system_value(resource.ref, pname.to_s)))
     end
   end
 
@@ -158,7 +158,7 @@ class Puppet::Transaction::ResourceHarness
       raise
     ensure
       if event
-        event.calculate_corrective_change(@persistence.get_system_value(context.resource.name, param.name.to_s))
+        event.calculate_corrective_change(@persistence.get_system_value(context.resource.ref, param.name.to_s))
         context.record(event)
         event.send_log
         context.synced_params << param.name
