@@ -351,6 +351,21 @@ describe Puppet::Parser::Compiler do
     describe 'when resolving class references' do
       include Matchers::Resource
 
+      { 'string'             => 'myWay',
+        'class reference'    => 'Class["myWay"]',
+        'resource reference' => 'Resource["class", "myWay"]'
+      }.each do |label, code|
+        it "allows camel cased class name reference in 'include' using a #{label}" do
+          catalog = compile_to_catalog(<<-"PP")
+            class myWay {
+              notify { 'I did it': message => 'my way'}
+            }
+            include #{code}
+          PP
+          expect(catalog).to have_resource("Notify[I did it]")
+        end
+      end
+
       describe 'and classname is a Resource Reference and strict == :error' do
         before(:each) do
           Puppet[:strict] = :error
