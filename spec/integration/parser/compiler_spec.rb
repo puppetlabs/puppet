@@ -210,7 +210,7 @@ describe Puppet::Parser::Compiler do
       end
     end
   end
-  describe "the compiler when using future parser and evaluator" do
+  describe "the compiler when using 4.x language constructs" do
     include PuppetSpec::Compiler
 
     if Puppet.features.microsoft_windows?
