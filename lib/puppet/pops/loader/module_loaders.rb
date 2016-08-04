@@ -46,6 +46,15 @@ module ModuleLoaders
                                                        )
   end
 
+  def self.pcore_resource_type_loader_from(parent_loader, loaders, environment_path)
+    ModuleLoaders::FileBased.new(parent_loader,
+      loaders,
+      nil,
+      environment_path,
+      'pcore_resource_types'
+    )
+  end
+
   class AbstractPathBasedModuleLoader < BaseLoader
 
     # The name of the module, or nil, if this is a global "component"
