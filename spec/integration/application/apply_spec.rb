@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'puppet_spec/files'
+require 'puppet_spec/compiler'
 
 describe "apply" do
   include PuppetSpec::Files
@@ -24,6 +25,89 @@ describe "apply" do
 
       expect(Puppet::FileSystem.exist?(file_to_create)).to be_truthy
       expect(File.read(file_to_create)).to eq("my stuff")
+    end
+
+    context 'from environment with a pcore defined resource type' do
+      include PuppetSpec::Compiler
+
+      let!(:envdir) { tmpdir('environments') }
+      let(:env_name) { 'spec' }
+      let(:dir_structure) {
+        {
+          '.resource_types' => {
+            'applytest.pp' => <<-CODE
+            Puppet::Resource::ResourceType3.new('applytest', [Puppet::Resource::Param.new(String, 'message')], [Puppet::Resource::Param.new(String, 'name', true)])
+          CODE
+          },
+          'modules' => {
+            'amod' => {
+              'lib' => {
+                'puppet' => {
+                  'type' => { 'applytest.rb' => <<-CODE
+Puppet::Type.newtype(:applytest) do
+newproperty(:message) do
+  def sync
+    Puppet.send(@resource[:loglevel], self.should)
+  end
+
+  def retrieve
+    :absent
+  end
+
+  def insync?(is)
+    false
+  end
+
+  defaultto { @resource[:name] }
+end
+
+newparam(:name) do
+  desc "An arbitrary tag for your own reference; the name of the message."
+  Puppet.notice('the Puppet::Type says hello')
+  isnamevar
+end
+end
+                  CODE
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      let(:environments) { Puppet::Environments::Directories.new(envdir, []) }
+      let(:env) { Puppet::Node::Environment.create(:'spec', [File.join(envdir, 'spec', 'modules')]) }
+      let(:node) { Puppet::Node.new('test', :environment => env) }
+      around(:each) do |example|
+        Puppet[:environment] = env_name
+        dir_contained_in(envdir, env_name => dir_structure)
+        Puppet.override(:environments => environments, :current_environment => env) do
+          example.run
+        end
+      end
+
+      it 'does not load the pcore type' do
+        catalog = compile_to_catalog('applytest { "applytest was here": }', node)
+        apply = Puppet::Application[:apply]
+        apply.options[:catalog] = file_containing('manifest', catalog.to_pson)
+
+        Puppet[:environmentpath] = envdir
+        Puppet::Pops::Loader::Runtime3TypeLoader.any_instance.expects(:find).never
+        expect { apply.run }.to have_printed(/the Puppet::Type says hello.*applytest was here/m)
+      end
+
+      # Test just to verify that the Pcore Resource Type and not the Ruby one is produced when the catalog is produced
+      it 'loads pcore resource type instead of ruby resource type during compile' do
+        Puppet[:code] = 'applytest { "applytest was here": }'
+        compiler = Puppet::Parser::Compiler.new(node)
+        tn = Puppet::Pops::Loader::TypedName.new(:resource_type_pp, 'applytest')
+        rt = Puppet::Pops::Resource::ResourceTypeImpl.new('applytest', [Puppet::Pops::Resource::Param.new(String, 'message')], [Puppet::Pops::Resource::Param.new(String, 'name', true)])
+
+        compiler.loaders.runtime3_type_loader.instance_variable_get(:@resource_3x_loader).expects(:set_entry).once.with(tn, rt, is_a(String))
+          .returns(Puppet::Pops::Loader::Loader::NamedEntry.new(tn, rt, nil))
+        expect { compiler.compile }.not_to have_printed(/the Puppet::Type says hello/)
+      end
     end
   end
 
