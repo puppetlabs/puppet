@@ -11,7 +11,7 @@ Puppet::Parser::Functions::newfunction(:generate, :arity => -2, :type => :rvalue
     generators, so all shell metacharacters are passed directly to
     the generator.") do |args|
 
-      raise Puppet::ParseError, "Generators must be fully qualified" unless Puppet::Util.absolute_path?(args[0])
+      raise Puppet::ParseError, "Generators must be fully qualified" unless Puppet::FileSystem.absolute_path?(args[0])
 
       if Puppet.features.microsoft_windows?
         valid = args[0] =~ /^[a-z]:(?:[\/\\][-.~\w]+)+$/i

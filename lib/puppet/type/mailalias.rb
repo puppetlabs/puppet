@@ -35,7 +35,7 @@ module Puppet
         recipient entries are mutually exclusive."
 
       validate do |value|
-	unless Puppet::Util.absolute_path?(value)
+	unless Puppet::FileSystem.absolute_path?(value)
 	  fail Puppet::Error, "File paths must be fully qualified, not '#{value}'"
 	end
       end

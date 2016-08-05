@@ -112,7 +112,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
         raise Puppet::Error.new("puppet:// URLs are not supported as gem sources")
       else
         # check whether it's an absolute file path to help Windows out
-        if Puppet::Util.absolute_path?(source)
+        if Puppet::FileSystem.absolute_path?(source)
           command << source
         else
           # interpret it as a gem repository

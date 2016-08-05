@@ -259,33 +259,34 @@ describe Puppet::Util do
       end
     end
 
-    describe "when using platform :posix" do
-      %w[/ /foo /foo/../bar //foo //Server/Foo/Bar //?/C:/foo/bar /\Server/Foo /foo//bar/baz].each do |path|
-        it "should return true for #{path}" do
-          expect(Puppet::Util).to be_absolute_path(path, :posix)
-        end
-      end
+    # TODO: we wouldn't need these if we could find a way to fake out the OS
+    # describe "when using platform :posix" do
+    #   %w[/ /foo /foo/../bar //foo //Server/Foo/Bar //?/C:/foo/bar /\Server/Foo /foo//bar/baz].each do |path|
+    #     it "should return true for #{path}" do
+    #       expect(Puppet::Util).to be_absolute_path(path, :posix)
+    #     end
+    #   end
 
-      %w[. ./foo \foo C:/foo \\Server\Foo\Bar \\?\C:\foo\bar \/?/foo\bar \/Server/foo foo//bar/baz].each do |path|
-        it "should return false for #{path}" do
-          expect(Puppet::Util).not_to be_absolute_path(path, :posix)
-        end
-      end
-    end
+    #   %w[. ./foo \foo C:/foo \\Server\Foo\Bar \\?\C:\foo\bar \/?/foo\bar \/Server/foo foo//bar/baz].each do |path|
+    #     it "should return false for #{path}" do
+    #       expect(Puppet::Util).not_to be_absolute_path(path, :posix)
+    #     end
+    #   end
+    # end
 
-    describe "when using platform :windows" do
-      %w[C:/foo C:\foo \\\\Server\Foo\Bar \\\\?\C:\foo\bar //Server/Foo/Bar //?/C:/foo/bar /\?\C:/foo\bar \/Server\Foo/Bar c:/foo//bar//baz].each do |path|
-        it "should return true for #{path}" do
-          expect(Puppet::Util).to be_absolute_path(path, :windows)
-        end
-      end
+    # describe "when using platform :windows" do
+    #   %w[C:/foo C:\foo \\\\Server\Foo\Bar \\\\?\C:\foo\bar //Server/Foo/Bar //?/C:/foo/bar /\?\C:/foo\bar \/Server\Foo/Bar c:/foo//bar//baz].each do |path|
+    #     it "should return true for #{path}" do
+    #       expect(Puppet::Util).to be_absolute_path(path, :windows)
+    #     end
+    #   end
 
-      %w[/ . ./foo \foo /foo /foo/../bar //foo C:foo/bar foo//bar/baz].each do |path|
-        it "should return false for #{path}" do
-          expect(Puppet::Util).not_to be_absolute_path(path, :windows)
-        end
-      end
-    end
+    #   %w[/ . ./foo \foo /foo /foo/../bar //foo C:foo/bar foo//bar/baz].each do |path|
+    #     it "should return false for #{path}" do
+    #       expect(Puppet::Util).not_to be_absolute_path(path, :windows)
+    #     end
+    #   end
+    # end
   end
 
   describe "#path_to_uri" do

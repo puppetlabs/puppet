@@ -172,7 +172,7 @@ class Puppet::Util::Autoload
       # There are two cases here because cleanpath does not handle absolute
       # paths correctly on windows (c:\ and c:/ are treated as distinct) but
       # we don't want to convert relative paths to absolute
-      if Puppet::Util.absolute_path?(path)
+      if Puppet::FileSystem.absolute_path?(path)
         File.expand_path(path)
       else
         Pathname.new(path).cleanpath.to_s
@@ -184,7 +184,7 @@ class Puppet::Util::Autoload
 
   def initialize(obj, path, options = {})
     @path = path.to_s
-    raise ArgumentError, "Autoload paths cannot be fully qualified" if Puppet::Util.absolute_path?(@path)
+    raise ArgumentError, "Autoload paths cannot be fully qualified" if Puppet::FileSystem.absolute_path?(@path)
     @object = obj
 
     set_options(options)

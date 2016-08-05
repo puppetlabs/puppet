@@ -8,7 +8,7 @@ module Puppet::FileServing::TerminusSelector
     # We rely on the request's parsing of the URI.
 
     # Short-circuit to :file if it's a fully-qualified path or specifies a 'file' protocol.
-    if Puppet::Util.absolute_path?(request.key)
+    if Puppet::FileSystem.absolute_path?(request.key)
       return :file
     end
 

@@ -65,7 +65,7 @@ module Puppet::Parser::Files
 
   # @api private
   def find_in_module(reference, environment)
-    if Puppet::Util.absolute_path?(reference)
+    if Puppet::FileSystem.absolute_path?(reference)
       reference
     else
       path, file = split_file_path(reference)
@@ -83,7 +83,7 @@ module Puppet::Parser::Files
   # nil if the path is empty or absolute (starts with a /).
   # @api private
   def split_file_path(path)
-    if path == "" || Puppet::Util.absolute_path?(path)
+    if path == "" || Puppet::FileSystem.absolute_path?(path)
       nil
     else
       path.split(File::SEPARATOR, 2)

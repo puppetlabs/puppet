@@ -67,7 +67,7 @@ module Puppet
     validate do |sources|
       sources = [sources] unless sources.is_a?(Array)
       sources.each do |source|
-        next if Puppet::Util.absolute_path?(source)
+        next if Puppet::FileSystem.absolute_path?(source)
 
         begin
           uri = URI.parse(URI.escape(source))
@@ -90,7 +90,7 @@ module Puppet
       sources.map do |source|
         source = self.class.normalize(source)
 
-        if Puppet::Util.absolute_path?(source)
+        if Puppet::FileSystem.absolute_path?(source)
           URI.unescape(Puppet::Util.path_to_uri(source).to_s)
         else
           source
