@@ -281,8 +281,10 @@ module Util
   # TODO: probably want to ditch 'platform' - only used in tests, not much utility
   def absolute_path?(path, platform=nil)
     Puppet.deprecation_warning('Puppet::Util.absolute_path? is deprecated. Use Puppet::FileSystem.absolute_path? instead')
+    # TODO: why are nils getting passed in here??
+    return false if path.nil?
     # puts "platform #{platform} specified by #{caller}"
-    raise ('Path must be a Pathname or string') if !path.is_a?(String) && !path.is_a?(Pathname)
+    raise ("Path must be a Pathname or string - not a #{path.class} of value #{path}") if !path.is_a?(String) && !path.is_a?(Pathname)
     Puppet::FileSystem.absolute_path?(path)
   end
   module_function :absolute_path?

@@ -213,6 +213,7 @@ module Puppet::FileSystem
   end
 
   def self.absolute_path?(path)
+    return false if path.nil?
     puts "received path: #{path} of type #{path.class}" if !path.is_a?(String) && !path.is_a?(Pathname)
     @impl.absolute_path?(assert_path(path))
   end
