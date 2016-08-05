@@ -5,10 +5,18 @@ require 'puppet/network/http'
 describe Puppet::Network::HTTP::API::Master::V3::Environment do
   let(:response) { Puppet::Network::HTTP::MemoryResponse.new }
 
+  let(:environment) { Puppet::Node::Environment.create(:production, [], '/manifests') }
+  let(:loader) { Puppet::Environments::Static.new(environment) }
+
   around :each do |example|
-    environment = Puppet::Node::Environment.create(:production, [], '/manifests')
-    loader = Puppet::Environments::Static.new(environment)
+    Puppet[:app_management] = true
     Puppet.override(:environments => loader) do
+      Puppet::Type.newtype :sql, :is_capability => true do
+        newparam :name, :namevar => true
+      end
+      Puppet::Type.newtype :http, :is_capability => true do
+        newparam :name, :namevar => true
+      end
       example.run
     end
   end
@@ -23,6 +31,124 @@ describe Puppet::Network::HTTP::API::Master::V3::Environment do
     catalog = JSON.parse(response.body)
     expect(catalog['environment']).to eq('production')
     expect(catalog['applications']).to eq({})
+  end
+
+  describe "processing the environment catalog" do
+    def compile_site_to_catalog(site, code_id=nil)
+      Puppet[:code] = <<-MANIFEST
+      define db() { }
+      Db produces Sql { }
+
+      define web() { }
+      Web consumes Sql { }
+      Web produces Http { }
+
+      application myapp() {
+        db { $name:
+          export => Sql[$name],
+        }
+        web { $name:
+          consume => Sql[$name],
+          export => Http[$name],
+        }
+      }
+      site {
+        #{site}
+      }
+      MANIFEST
+      Puppet::Parser::EnvironmentCompiler.compile(environment, code_id).filter { |r| r.virtual? }
+    end
+
+
+    it "includes specified applications" do
+      catalog = compile_site_to_catalog <<-MANIFEST
+      myapp { 'test':
+        nodes => {
+          Node['foo.example.com'] => Db['test'],
+          Node['bar.example.com'] => Web['test'],
+        },
+      }
+      MANIFEST
+
+      result = subject.build_environment_graph(catalog)
+
+      expect(result[:applications]).to eq({'Myapp[test]' =>
+                                            {'Db[test]' => {:produces => ['Sql[test]'], :consumes => [], :node => 'foo.example.com'},
+                                             'Web[test]' => {:produces => ['Http[test]'], :consumes => ['Sql[test]'], :node => 'bar.example.com'}}})
+    end
+
+    it "fails if a component isn't mapped to a node" do
+      catalog = compile_site_to_catalog <<-MANIFEST
+      myapp { 'test':
+        nodes => {
+          Node['foo.example.com'] => Db['test'],
+        }
+      }
+      MANIFEST
+
+      expect { subject.build_environment_graph(catalog) }.to raise_error(Puppet::ParseError, /has components without assigned nodes/)
+    end
+
+    it "fails if a non-existent component is mapped to a node" do
+      catalog = compile_site_to_catalog <<-MANIFEST
+      myapp { 'test':
+        nodes => {
+          Node['foo.example.com'] => [ Db['test'], Web['test'], Web['foobar'] ],
+        }
+      }
+      MANIFEST
+
+      expect { subject.build_environment_graph(catalog) }.to raise_error(Puppet::ParseError, /assigns nodes to non-existent components/)
+    end
+
+    it "fails if a component is mapped twice" do
+      catalog = compile_site_to_catalog <<-MANIFEST
+      myapp { 'test':
+        nodes => {
+          Node['foo.example.com'] => [ Db['test'], Web['test'] ],
+          Node['bar.example.com'] => [ Web['test'] ],
+        }
+      }
+      MANIFEST
+
+      expect { subject.build_environment_graph(catalog) }.to raise_error(Puppet::ParseError, /assigns multiple nodes to component/)
+    end
+
+    it "fails if an application maps components from other applications" do
+      catalog = compile_site_to_catalog <<-MANIFEST
+      myapp { 'test':
+        nodes => {
+          Node['foo.example.com'] => [ Db['test'], Web['test'] ],
+        }
+      }
+      myapp { 'other':
+        nodes => {
+          Node['foo.example.com'] => [ Db['other'], Web['other'], Web['test'] ],
+        }
+      }
+      MANIFEST
+
+      expect { subject.build_environment_graph(catalog) }.to raise_error(Puppet::ParseError, /assigns nodes to non-existent components/)
+    end
+
+    it "doesn't fail if the catalog contains a node cycle" do
+      catalog = compile_site_to_catalog <<-MANIFEST
+      myapp { 'test':
+        nodes => {
+          Node['foo.example.com'] => [ Db['test'] ],
+          Node['bar.example.com'] => [ Web['test'] ],
+        }
+      }
+      myapp { 'other':
+        nodes => {
+          Node['foo.example.com'] => [ Web['other'] ],
+          Node['bar.example.com'] => [ Db['other'] ],
+        }
+      }
+      MANIFEST
+
+      expect { subject.build_environment_graph(catalog) }.not_to raise_error
+    end
   end
 
   it "returns 404 if the environment doesn't exist" do
