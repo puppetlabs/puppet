@@ -372,17 +372,29 @@ class Puppet::Property < Puppet::Parameter
   # @return [Boolean] whether or not the values are in sync or not
   # @api private
   def insync_values?(should, is)
-    # Here be dragons. We're duplicating the resource property itself so we can pass
-    # a new should value without side-effect. This kind of mechanism is undesirable,
-    # but it avoids the risk of causing side-effects on live properties somewhere
-    # else in code. The duplicate should be short-lived and is only required for this
-    # comparison so it can be GC'd directly afterwards. Unfortunately there isn't
-    # an api compatible way of avoiding this, as both should and insync? behaviours
-    # are part of the API. Future API work should factor this kind of arbitrary comparison
-    # into the API to remove this complexity. -ken
-    test_property = self.dup
-    test_property.should = should
-    test_property.insync?(is)
+    # Here be dragons. We're setting the should value of a property purely just to
+    # call its insync? method, as it lacks a way to pass in a should.
+    # Unfortunately there isn't an API compatible way of avoiding this, as both should
+    # an insync? behaviours are part of the public API. Future API work should factor
+    # this kind of arbitrary comparisons into the API to remove this complexity. -ken
+
+    # Backup old should, set it to the new value, then call insync? on the property.
+    old_should = self.should
+
+    begin
+      self.should = should
+      insync?(is)
+    rescue => detail
+      # Certain operations may fail, but we don't want to fail the transaction if we can
+      # avoid it
+      Puppet.log_exception(detail, "Unknown failure comparing values #{should} and #{is} using insync? on type: #{self.resource.ref} property: #{self.name}")
+
+      # Return nil, ie. unknown
+      nil
+    ensure
+      # Always restore old should
+      self.should = old_should
+    end
   end
 
   # Checks if the given current and desired values are equal.

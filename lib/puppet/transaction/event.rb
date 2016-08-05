@@ -109,7 +109,10 @@ class Puppet::Transaction::Event
        !old_system_value.nil?
 
       # If the values aren't insync, we have confirmed a corrective_change
-      @corrective_change = !@property_instance.insync_values?(old_system_value, previous_value)
+      insync = @property_instance.insync_values?(old_system_value, previous_value)
+
+      # Preserve the nil state, but flip true/false
+      @corrective_change = insync.nil? ? nil : !insync
     else
       @corrective_change = false
     end
