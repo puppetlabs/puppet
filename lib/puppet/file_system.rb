@@ -212,6 +212,11 @@ module Puppet::FileSystem
     @impl.mkpath(assert_path(path))
   end
 
+  def self.absolute_path?(path)
+    puts "received path: #{path} of type #{path.class}" if !path.is_a?(String) && !path.is_a?(Pathname)
+    @impl.absolute_path?(assert_path(path))
+  end
+
   # @return [Array<Object>] references to all of the children of the given
   #   directory path, excluding `.` and `..`.
   # @api public

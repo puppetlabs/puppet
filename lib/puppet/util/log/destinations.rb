@@ -47,7 +47,11 @@ Puppet::Util::Log.newdesttype :file do
   require 'fileutils'
 
   def self.match?(obj)
-    Puppet::Util.absolute_path?(obj)
+    # TODO: what on earth is this supposed to be doing
+    # it's mostly pushing Puppet::Test::LogCollector objects across
+    return Puppet::FileSystem.absolute_path?(obj) if obj.is_a?(String) || obj.is_a?(Pathname)
+
+    false
   end
 
   def close

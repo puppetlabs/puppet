@@ -95,6 +95,10 @@ class Puppet::FileSystem::FileImpl
     ::File.file?(path)
   end
 
+  def absolute_path?(path)
+    path.absolute?
+  end
+
   def executable?(path)
     ::File.executable?(path)
   end

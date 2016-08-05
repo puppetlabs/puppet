@@ -15,6 +15,10 @@ class Puppet::FileSystem::MemoryImpl
     path.file?
   end
 
+  def absolute_path?(path)
+    path.absolute?
+  end
+
   def executable?(path)
     path.executable?
   end
