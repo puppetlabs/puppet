@@ -94,7 +94,7 @@ describe Puppet::Util::Logging do
 
   describe "when sending a deprecation warning" do
     it "does not log a message when deprecation warnings are disabled" do
-      Puppet.expects(:[]).with(:disable_warnings).returns %w[deprecations]
+      Puppet.expects(:[]).with(:disable_warnings).returns(%w[deprecations]).times(2)
       @logger.expects(:warning).never
       @logger.deprecation_warning 'foo'
     end

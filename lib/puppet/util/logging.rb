@@ -272,7 +272,7 @@ module Logging
   private
 
   def issue_deprecation_warning(message, key, file, line, use_caller)
-    return if Puppet[:disable_warnings].include?('deprecations')
+    return if Puppet[:disable_warnings] && Puppet[:disable_warnings].include?('deprecations')
     $deprecation_warnings ||= {}
     if $deprecation_warnings.length < 100 then
       key ||= (offender = get_deprecation_offender)
