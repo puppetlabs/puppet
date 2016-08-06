@@ -42,19 +42,26 @@ class EvaluatorImpl
   Issues = Issues
 
   def initialize
+    @@initialized ||= static_initialize
+
+    # Use null migration checker unless given in context
+    @migration_checker = (Puppet.lookup(:migration_checker) { Migration::MigrationChecker.singleton() })
+  end
+
+  # @api private
+  def static_initialize
     @@eval_visitor     ||= Visitor.new(self, "eval", 1, 1)
     @@lvalue_visitor   ||= Visitor.new(self, "lvalue", 1, 1)
     @@assign_visitor   ||= Visitor.new(self, "assign", 3, 3)
     @@string_visitor   ||= Visitor.new(self, "string", 1, 1)
 
-    @@type_calculator  ||= Types::TypeCalculator.new()
+    @@type_calculator  ||= Types::TypeCalculator.singleton()
 
-    @@compare_operator     ||= CompareOperator.new()
+    @@compare_operator      ||= CompareOperator.new()
     @@relationship_operator ||= RelationshipOperator.new()
-
-    # Use null migration checker unless given in context
-    @migration_checker = (Puppet.lookup(:migration_checker) { Migration::MigrationChecker.new() })
+    true
   end
+  private :static_initialize
 
   # @api private
   def type_calculator

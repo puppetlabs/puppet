@@ -26,12 +26,16 @@ require 'puppet_spec/language'
 
     let (:compiler) { Puppet::Parser::Compiler.new(Puppet::Node.new('specification')) }
 
+    let (:topscope) { compiler.topscope }
+
     def collect_notices(code)
       logs = []
       Puppet[:code] = code
       Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
-        compiler.compile
-        yield
+        Puppet.override(:global_scope => topscope) do
+          compiler.compile
+          yield
+        end
       end
       logs.select { |log| log.level == :notice }.map { |log| log.message }
     end

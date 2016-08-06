@@ -48,10 +48,11 @@ class PuppetFunctionInstantiator
     private_loader = loader.private_loader
     Adapters::LoaderAdapter.adapt(the_function_definition).loader = private_loader
 
-    # TODO: Cheating wrt. scope - assuming it is found in the context
-    closure_scope = Puppet.lookup(:global_scope) { {} }
+    # Cannot bind loaded functions to global scope, that must be done without binding that scope as
+    # loaders survive a compilation.
+    closure_scope = nil # Puppet.lookup(:global_scope) { {} }
 
-    created = create_function_class(the_function_definition, closure_scope)
+    created = create_function_class(the_function_definition)
     # create the function instance - it needs closure (scope), and loader (i.e. where it should start searching for things
     # when calling functions etc.
     # It should be bound to global scope
@@ -64,18 +65,19 @@ class PuppetFunctionInstantiator
   #   typed name, and an instantiated function with global scope closure associated with the given loader
   #
   def self.create_from_model(function_definition, loader)
-    closure_scope = Puppet.lookup(:global_scope) { {} }
-    created = create_function_class(function_definition, closure_scope)
+    closure_scope = nil; # Puppet.lookup(:global_scope) { {} }
+    created = create_function_class(function_definition)
     typed_name = TypedName.new(:function, function_definition.name)
     [typed_name, created.new(closure_scope, loader)]
   end
 
-  def self.create_function_class(function_definition, closure_scope)
+  def self.create_function_class(function_definition)
     # Create a 4x function wrapper around a named closure
     Puppet::Functions.create_function(function_definition.name, Puppet::Functions::PuppetFunction) do
+      # This is highly problematic - it binds both an Evaluator and closure_scope
       init_dispatch(Evaluator::Closure::Named.new(
         function_definition.name,
-        Evaluator::EvaluatorImpl.new(), function_definition, closure_scope))
+        Evaluator::EvaluatorImpl.new(), function_definition, nil))
     end
   end
 end
