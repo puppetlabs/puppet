@@ -6,6 +6,10 @@ class Puppet::Pops::Migration::MigrationChecker
   def initialize()
   end
 
+  def self.singleton
+    @@null_checker ||= self.new
+  end
+
   # Produces a hash of available migrations; a map from a symbolic name in string form to a brief description.
   # This version has no such supported migrations.
   def available_migrations()
