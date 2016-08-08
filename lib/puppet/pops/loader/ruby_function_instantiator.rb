@@ -30,10 +30,9 @@ class Puppet::Pops::Loader::RubyFunctionInstantiator
     # when calling functions etc.
     # It should be bound to global scope
 
-    # Cheating wrt. scope - assuming it is found in the context (else an empty hash is used).
-    closure_scope = Puppet.lookup(:global_scope) { {} }
+    # Sets closure scope to nil, to let it be picked up at runtime from Puppet.lookup(:global_scope)
     # If function definition used the loader from the binding to create a new loader, that loader wins
-    created.new(closure_scope, loader_for_function)
+    created.new(nil, loader_for_function)
   end
 
   private
