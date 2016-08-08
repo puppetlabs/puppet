@@ -58,7 +58,7 @@ describe 'FileBased module loader' do
   end
 
   it 'system loader has itself as private loader' do
-    module_loader = Puppet::Pops::Loader::ModuleLoaders.system_loader_from(static_loader, loaders)
+    module_loader = loaders.puppet_system_loader
     expect(module_loader.private_loader).to be(module_loader)
   end
 

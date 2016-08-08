@@ -13,14 +13,11 @@ class BaseLoader < Loader
   # The parent loader
   attr_reader :parent
 
-  # An internal name used for debugging and error message purposes
-  attr_reader :loader_name
-
   def initialize(parent_loader, loader_name)
+    super(loader_name)
     @parent = parent_loader # the higher priority loader to consult
     @named_values = {}      # hash name => NamedEntry
     @last_result = nil      # the value of the last name (optimization)
-    @loader_name = loader_name # the name of the loader (not the name-space it is a loader for)
   end
 
   # @api public
