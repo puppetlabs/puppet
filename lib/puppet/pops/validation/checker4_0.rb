@@ -418,6 +418,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   def check_FunctionDefinition(o)
     check_NamedDefinition(o)
+    internal_check_return_type(o)
     internal_check_parameter_name_uniqueness(o)
   end
 
@@ -435,6 +436,11 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     internal_check_parameter_name_uniqueness(o)
     internal_check_reserved_params(o)
     internal_check_no_idem_last(o)
+  end
+
+  def internal_check_return_type(o)
+    r = o.return_type
+    internal_check_type_ref(o, r) unless r.nil?
   end
 
   def internal_check_type_ref(o, r)
@@ -515,6 +521,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   def check_LambdaExpression(o)
     internal_check_capture_last(o)
+    internal_check_return_type(o)
   end
 
   def check_LiteralList(o)

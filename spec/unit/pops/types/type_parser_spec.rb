@@ -272,6 +272,18 @@ describe TypeParser do
     expect(parser.parse("Callable[String, Callable[Boolean]]")).to be_the_type(types.callable(String, types.callable(true)))
   end
 
+  it 'parses a parameterized callable type with return type' do
+    expect(parser.parse("Callable[[String, Integer],Float]")).to be_the_type(types.callable([String, Integer],Float))
+  end
+
+  it 'parses a parameterized callable type with min/max and return type' do
+    expect(parser.parse("Callable[[String, Integer, 1, default],Float]")).to be_the_type(types.callable([String, Integer, 1, :default], Float))
+  end
+
+  it 'parses a parameterized callable type with block and return type' do
+    expect(parser.parse("Callable[[String, Callable[Boolean]],Float]")).to be_the_type(types.callable([String, types.callable(true)], Float))
+  end
+
   it 'parses a parameterized callable type with 0 min/max' do
     t = parser.parse("Callable[0,0]")
     expect(t).to be_the_type(types.callable(0,0))

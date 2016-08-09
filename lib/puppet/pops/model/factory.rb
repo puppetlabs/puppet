@@ -228,10 +228,11 @@ class Factory
     end
   end
 
-  def build_LambdaExpression(o, parameters, body)
+  def build_LambdaExpression(o, parameters, body, return_type)
     o.parameters = parameters.map {|p| build(p) }
     b = f_build_body(body)
     o.body = to_ops(b) if b
+    o.return_type = to_ops(return_type) unless return_type.nil?
     o
   end
 
@@ -240,6 +241,15 @@ class Factory
     b = f_build_body(body)
     o.body = b.current if b
     o.name = name
+    o
+  end
+
+  def build_FunctionDefinition(o, name, parameters, body, return_type)
+    o.parameters = parameters.map {|p| build(p) }
+    b = f_build_body(body)
+    o.body = b.current if b
+    o.name = name
+    o.return_type = to_ops(return_type) unless return_type.nil?
     o
   end
 
@@ -690,7 +700,7 @@ class Factory
       params = parameters
       parameters_specified = true
     end
-    LAMBDA(params, new(EppExpression, parameters_specified, body))
+    LAMBDA(params, new(EppExpression, parameters_specified, body), nil)
   end
 
   def self.RESERVED(name, future=false)
@@ -817,12 +827,12 @@ class Factory
     new(Application, name, parameters, body)
   end
 
-  def self.FUNCTION(name, parameters, body)
-    new(FunctionDefinition, name, parameters, body)
+  def self.FUNCTION(name, parameters, body, return_type)
+    new(FunctionDefinition, name, parameters, body, return_type)
   end
 
-  def self.LAMBDA(parameters, body)
-    new(LambdaExpression, parameters, body)
+  def self.LAMBDA(parameters, body, return_type)
+    new(LambdaExpression, parameters, body, return_type)
   end
 
   def self.TYPE_ASSIGNMENT(lhs, rhs)

@@ -172,6 +172,14 @@ class AccessOperator
   end
 
   def access_PCallableType(o, scope, keys)
+    if keys.size > 0 && keys[0].is_a?(Array)
+      unless keys.size == 2
+        fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, :base_type => o, :min=>2, :max => 2, :actual => keys.size)
+      end
+      unless keys[1].is_a?(Types::PAnyType)
+        bad_type_specialization_key_type(o, 1, k, Types::PAnyType)
+      end
+    end
     Types::TypeFactory.callable(*keys)
   end
 

@@ -355,6 +355,9 @@ class TypeParser
 
     when 'callable'
       # 1..m parameters being types (last three optionally integer or literal default, and a callable)
+      if parameters.size > 1 && parameters[0].is_a?(Array)
+        raise_invalid_parameters_error('callable', '2 when first parameter is an array', parameters.size) unless parameters.size == 2
+      end
       TypeFactory.callable(*parameters)
 
     when 'struct'

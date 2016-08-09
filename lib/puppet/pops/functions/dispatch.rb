@@ -1,3 +1,5 @@
+module Puppet::Pops
+  module Functions
 # Defines a connection between a implementation method and the signature that
 # the method will handle.
 #
@@ -5,7 +7,7 @@
 # constructed using the DSL defined in {Puppet::Functions}.
 #
 # @api private
-class Puppet::Pops::Functions::Dispatch < Puppet::Pops::Evaluator::CallableSignature
+class Dispatch < Evaluator::CallableSignature
   # @api public
   attr_reader :type
   # TODO: refactor to parameter_names since that makes it API
@@ -42,7 +44,10 @@ class Puppet::Pops::Functions::Dispatch < Puppet::Pops::Evaluator::CallableSigna
 
   # @api private
   def invoke(instance, calling_scope, args, &block)
-    instance.send(@method_name, *weave(calling_scope, args), &block)
+    result = instance.send(@method_name, *weave(calling_scope, args), &block)
+    return_type = @type.return_type
+    Types::TypeAsserter.assert_instance_of(nil, return_type, result) { "value returned from function '#{@method_name}'" } unless return_type.nil?
+    result
   end
 
   # @api private
@@ -82,4 +87,6 @@ class Puppet::Pops::Functions::Dispatch < Puppet::Pops::Evaluator::CallableSigna
       new_args
     end
   end
+end
+end
 end

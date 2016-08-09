@@ -141,6 +141,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   def dump_LambdaExpression o
     result = ["lambda"]
     result << ["parameters"] + o.parameters.collect {|p| do_dump(p) } if o.parameters.size() > 0
+    result << ['return_type', do_dump(o.return_type)] unless o.return_type.nil?
     if o.body
       result << do_dump(o.body)
     else
@@ -248,6 +249,18 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     # the nil must be replaced with a string
     result = [nil, o.name]
     result << ["parameters"] + o.parameters.collect {|p| do_dump(p) } if o.parameters.size() > 0
+    if o.body
+      result << do_dump(o.body)
+    else
+      result << []
+    end
+    result
+  end
+
+  def dump_FunctionDefinition o
+    result = ['function', o.name]
+    result << ['parameters'] + o.parameters.collect {|p| do_dump(p) } if o.parameters.size() > 0
+    result << ['return_type', do_dump(o.return_type)] unless o.return_type.nil?
     if o.body
       result << do_dump(o.body)
     else

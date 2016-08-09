@@ -318,9 +318,9 @@ call_method_with_lambda_expression
 #---LAMBDA
 #
 lambda
-  : lambda_parameter_list lambda_rest {
-      result = Factory.LAMBDA(val[0][:value], val[1][:value])
-      loc result, val[0][:start], val[1][:end]
+  : lambda_parameter_list opt_return_type lambda_rest {
+      result = Factory.LAMBDA(val[0][:value], val[2][:value], val[1])
+      loc result, val[0][:start], val[2][:end]
     }
 
 lambda_rest
@@ -635,10 +635,15 @@ node_definition_expression
 #---FUNCTION DEFINITION
 #
 function_definition
-  : FUNCTION classname parameter_list LBRACE opt_statements RBRACE {
-      result = add_definition(Factory.FUNCTION(val[1][:value], val[2], val[4]))
-      loc result, val[0], val[5]
+  : FUNCTION classname parameter_list opt_return_type LBRACE opt_statements RBRACE {
+      result = add_definition(Factory.FUNCTION(val[1][:value], val[2], val[5], val[3]))
+      loc result, val[0], val[6]
     }
+
+opt_return_type
+  : RSHIFT type { result = val[1] ; loc result, val[0], val[1] }
+  | RSHIFT type LBRACK expressions RBRACK { result = val[1][*val[3]] ; loc result, val[0], val[4] }
+  | nil
 
 #---NAMES AND PARAMETERS COMMON TO SEVERAL RULES
 #   Produces String

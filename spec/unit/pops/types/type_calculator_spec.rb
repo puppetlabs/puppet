@@ -1720,7 +1720,7 @@ describe 'The type calculator' do
       it 'a Closure should be considered a Callable' do
         factory = Model::Factory
         params = [factory.PARAM('a')]
-        the_block = factory.LAMBDA(params,factory.literal(42))
+        the_block = factory.LAMBDA(params,factory.literal(42), nil)
         the_closure = Evaluator::Closure.new(:fake_evaluator, the_block, :fake_scope)
         expect(calculator.instance?(all_callables_t, the_closure)).to be_truthy
         expect(calculator.instance?(callable_t(object_t), the_closure)).to be_truthy
