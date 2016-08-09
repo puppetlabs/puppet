@@ -2063,7 +2063,7 @@ class PCallableType < PAnyType
   attr_reader :block_type
 
   # @param param_types [PTupleType]
-  # @param block_type [PAnyType|nil]
+  # @param block_type [PAnyType]
   def initialize(param_types, block_type = nil)
     @param_types = param_types
     @block_type = block_type
@@ -2106,7 +2106,7 @@ class PCallableType < PAnyType
   end
 
   def kind_of_callable?(optional=true, guard = nil)
-      true
+    true
   end
 
   # Returns the number of accepted arguments [min, max]
@@ -2190,7 +2190,7 @@ class PArrayType < PCollectionType
     param_t = callable.param_types
     block_t = callable.block_type
     # does not support calling with a block, but have to check that callable is ok with missing block
-    (param_t.nil? || param_t.assignable?(self, guard)) && (block_t.nil? || block_t.assignable(PUndefType::DEFAULT, guard))
+    (param_t.nil? || param_t.assignable?(self, guard)) && (block_t.nil? || block_t.assignable?(PUndefType::DEFAULT, guard))
   end
 
   def generalize
