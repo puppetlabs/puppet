@@ -1,4 +1,13 @@
 module Puppet::Pops
+# This is the container for all Loader instances. Each Loader instance has a `loader_name` by which it can be uniquely
+# identified within this container.
+# A Loader can be private or public. In general, code will have access to the private loader associated with the
+# location of the code. It will be parented by a loader that in turn have access to other public loaders that
+# can load only such entries that have been publicly available. The split between public and private is not
+# yet enforced in Puppet.
+#
+# The name of a private loader should always end with ' private'
+#
 class Loaders
   class LoaderError < Puppet::Error; end
 
@@ -106,6 +115,11 @@ class Loaders
     loaders
   end
 
+  # Lookup a loader by its unique name.
+  #
+  # @param [String] loader_name the name of the loader to lookup
+  # @return [Loader] the found loader
+  # @raise [Puppet::ParserError] if no loader is found
   def [](loader_name)
     loader = @loaders_by_name[loader_name]
     if loader.nil?

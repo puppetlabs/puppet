@@ -29,7 +29,7 @@ class Loader
 
   # @param [String] name the name of the loader. Must be unique among all loaders maintained by a {Loader} instance
   def initialize(loader_name)
-    @loader_name = loader_name
+    @loader_name = loader_name.freeze
   end
 
   # Produces the value associated with the given name if already loaded, or available for loading
