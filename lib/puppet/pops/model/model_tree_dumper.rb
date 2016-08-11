@@ -344,6 +344,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   def dump_CallNamedFunctionExpression o
     result = [o.rval_required ? "call" : "invoke", do_dump(o.functor_expr)]
     o.arguments.collect {|a| result << do_dump(a) }
+    result << do_dump(o.lambda) if o.lambda
     result
   end
 
