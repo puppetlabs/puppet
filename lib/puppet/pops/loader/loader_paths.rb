@@ -169,6 +169,10 @@ module Puppet::Pops::Loader::LoaderPaths
       RESOURCE_TYPES_PATH_PP
     end
 
+    def root_path
+      @loader.path
+    end
+
     def instantiator()
       Puppet::Pops::Loader::PuppetResourceTypeImplInstantiator
     end

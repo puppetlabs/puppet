@@ -46,7 +46,7 @@ class PuppetFunctionInstantiator
     # loader to use when making calls to the new function API. Such logic have a hard time finding the closure (where
     # the loader is known - hence this mechanism
     private_loader = loader.private_loader
-    Adapters::LoaderAdapter.adapt(the_function_definition).loader = private_loader
+    Adapters::LoaderAdapter.adapt(the_function_definition).loader_name = private_loader.loader_name
 
     # TODO: Cheating wrt. scope - assuming it is found in the context
     closure_scope = Puppet.lookup(:global_scope) { {} }

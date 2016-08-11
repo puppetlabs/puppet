@@ -7,10 +7,10 @@ module Loader
 #
 # @api private
 class Runtime3TypeLoader < BaseLoader
-  def initialize(parent_loader, environment, env_path)
+  def initialize(parent_loader, loaders, environment, env_path)
     super(parent_loader, environment.name)
     @environment = environment
-    @resource_3x_loader = env_path.nil? ? nil : ModuleLoaders.module_loader_from(parent_loader, self, 'environment', env_path)
+    @resource_3x_loader = env_path.nil? ? nil : ModuleLoaders.pcore_resource_type_loader_from(parent_loader, loaders, env_path)
   end
 
   def to_s()

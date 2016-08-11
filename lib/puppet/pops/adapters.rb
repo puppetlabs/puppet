@@ -120,10 +120,9 @@ module Adapters
   # object is adapted with the correct loader.
   #
   # @see Utils#find_adapter
-  #
+  # @api private
   class LoaderAdapter < Adaptable::Adapter
-    # @return [Loader::Loader] the loader
-    attr_accessor :loader
+    attr_accessor :loader_name
 
     # Finds the loader to use when loading originates from the source position of the given argument.
     #
@@ -132,18 +131,18 @@ module Adapters
     # @return [Loader,nil] the found loader or `nil` if it could not be found
     #
     def self.loader_for_model_object(model, scope)
-      # find the loader that loaded the code, or use the private_environment_loader (sees env + all modules)
-      adapter = Utils.find_adapter(model, self)
-      return adapter.loader unless adapter.nil?
-
       if scope.nil?
         loaders = Puppet.lookup(:loaders) { nil }
         loaders.nil? ? nil : loaders.private_environment_loader
       else
-        # Use source location to determine calling module, or use the private_environment_loader (sees env + all modules)
-        # This is necessary since not all .pp files are loaded by a Loader (see PUP-1833)
-        adapter = adapt_by_source(scope, model)
-        adapter.nil? ? scope.compiler.loaders.private_environment_loader : adapter.loader
+        # find the loader that loaded the code, or use the private_environment_loader (sees env + all modules)
+        adapter = Utils.find_adapter(model, self)
+        if adapter.nil?
+          # Use source location to determine calling module, or use the private_environment_loader (sees env + all modules)
+          # This is necessary since not all .pp files are loaded by a Loader (see PUP-1833)
+          adapter = adapt_by_source(scope, model)
+        end
+        adapter.nil? ? scope.compiler.loaders.private_environment_loader : adapter.loader(scope)
       end
     end
 
@@ -161,13 +160,20 @@ module Adapters
       source_pos = Utils.find_adapter(instance, SourcePosAdapter)
       unless source_pos.nil?
         mod = find_module_for_file(scope.environment, source_pos.locator.file)
-        unless mod.nil?
-          adapter = LoaderAdapter.adapt(source_pos.adapted)
-          adapter.loader = scope.compiler.loaders.private_loader_for_module(mod.name)
-          return adapter
+        adapter = LoaderAdapter.adapt(source_pos.adapted)
+        loaders = scope.compiler.loaders
+        if mod.nil?
+          adapter.loader_name = loaders.private_environment_loader.loader_name
+        else
+          adapter.loader_name = "#{mod.name} private"
         end
+        return adapter
       end
       nil
+    end
+
+    def loader(scope)
+      scope.compiler.loaders[loader_name]
     end
 
     def self.find_module_for_file(environment, file)
