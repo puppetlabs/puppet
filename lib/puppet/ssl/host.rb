@@ -213,7 +213,7 @@ DOC
       raise Puppet::Error, <<ERROR_STRING
 The certificate retrieved from the master does not match the agent's private key.
 Certificate fingerprint: #{certificate.fingerprint}
-To fix this, remove the certificate from both the master and the agent and then start a puppet run, which will automatically regenerate a certficate.
+To fix this, remove the certificate from both the master and the agent and then start a puppet run, which will automatically regenerate a certificate.
 On the master:
   puppet cert clean #{Puppet[:certname]}
 On the agent:
@@ -233,7 +233,7 @@ ERROR_STRING
     # should use it to sign our request; else, just try to read
     # the cert.
     if ! certificate and ca = Puppet::SSL::CertificateAuthority.instance
-      ca.sign(self.name, true)
+      ca.sign(self.name, {allow_dns_alt_names: true})
     end
   end
 

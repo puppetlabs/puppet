@@ -14,6 +14,11 @@ class Puppet::Resource
   attr_accessor :file, :line, :catalog, :exported, :virtual, :strict
   attr_reader :type, :title
 
+  # @!attribute [rw] sensitive_parameters
+  #   @api private
+  #   @return [Array<Symbol>] A list of parameters to be treated as sensitive
+  attr_accessor :sensitive_parameters
+
   # @deprecated
   attr_accessor :validate_parameters
 
@@ -34,6 +39,10 @@ class Puppet::Resource
 
     if params = data['parameters']
       params.each { |param, value| resource[param] = value }
+    end
+
+    if sensitive_parameters = data['sensitive_parameters']
+      resource.sensitive_parameters = sensitive_parameters.map(&:to_sym)
     end
 
     if tags = data['tags']
@@ -73,6 +82,8 @@ class Puppet::Resource
     end
 
     data["parameters"] = params unless params.empty?
+
+    data["sensitive_parameters"] = sensitive_parameters unless sensitive_parameters.empty?
 
     data
   end
@@ -141,12 +152,14 @@ class Puppet::Resource
 
   # Compatibility method.
   def builtin?
+    # TODO: should be deprecated (was only used in one place in puppet codebase)
     builtin_type?
   end
 
   # Is this a builtin resource type?
   def builtin_type?
-    resource_type.is_a?(Class)
+    # Note - old implementation only checked if the resource_type was a Class
+    resource_type.is_a?(Puppet::CompilableResourceType)
   end
 
   # Iterate over each param/value pair, as required for Enumerable.
@@ -197,6 +210,7 @@ class Puppet::Resource
   # @api public
   def initialize(type, title = nil, attributes = {})
     @parameters = {}
+    @sensitive_parameters = []
     if type.is_a?(Puppet::Resource)
       # Copy constructor. Let's avoid munging, extracting, tagging, etc
       src = type
@@ -224,6 +238,7 @@ class Puppet::Resource
 
         self[p] = v
       end
+      @sensitive_parameters.replace(type.sensitive_parameters)
     else
       if type.is_a?(Hash)
         raise ArgumentError, "Puppet::Resource.new does not take a hash as the first argument. "+
@@ -231,12 +246,23 @@ class Puppet::Resource
       end
 
       environment = attributes[:environment]
-      if type.is_a?(Class) && type < Puppet::Type
-        # Set the resource type to avoid an expensive `known_resource_types`
-        # lookup.
+      # In order to avoid an expensive search of 'known_resource_types" and
+      # to obey/preserve the implementation of the resource's type - if the
+      # given type is a resource type implementation (one of):
+      #   * a "classic" 3.x ruby plugin
+      #   * a compatible implementation (e.g. loading from pcore metadata)
+      #   * a resolved user defined type
+      # 
+      # ...then, modify the parameters to the "old" (agent side compatible) way
+      # of describing the type/title with string/symbols.
+      #
+      # TODO: Further optimizations should be possible as the "type juggling" is
+      # not needed when the type implementation is known.
+      # 
+      if type.is_a?(Puppet::CompilableResourceType) || type.is_a?(Puppet::Resource::Type)
+        # set the resource type implementation
         self.resource_type = type
-        # From this point on, the constructor behaves the same as if `type` had
-        # been passed as a symbol.
+        # set the type name to the symbolic name
         type = type.name
       end
 
@@ -584,7 +610,7 @@ class Puppet::Resource
   def parse_title
     h = {}
     type = resource_type
-    if type.respond_to? :title_patterns
+    if type.respond_to?(:title_patterns) && !type.title_patterns.nil?
       type.title_patterns.each { |regexp, symbols_and_lambdas|
         if captures = regexp.match(title.to_s)
           symbols_and_lambdas.zip(captures[1..-1]).each do |symbol_and_lambda,capture|

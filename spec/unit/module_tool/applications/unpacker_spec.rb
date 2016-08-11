@@ -14,7 +14,8 @@ describe Puppet::ModuleTool::Applications::Unpacker do
   let(:working_dir) { tmpdir("working_dir") }
 
   before :each do
-    Puppet.settings[:module_working_dir] = working_dir
+    Puppet.settings.stubs(:[])
+    Puppet.settings.stubs(:[]).with(:module_working_dir).returns(working_dir)
   end
 
   it "should attempt to untar file to temporary location" do

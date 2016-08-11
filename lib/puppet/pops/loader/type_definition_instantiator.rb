@@ -42,12 +42,12 @@ class TypeDefinitionInstantiator
     # the loader is known - hence this mechanism
     private_loader = loader.private_loader
     Adapters::LoaderAdapter.adapt(type_definition).loader = private_loader
-    create_type(type_definition, loader)
+    create_runtime_type(type_definition)
   end
 
   def self.create_from_model(type_definition, loader)
-    typed_name = Loader::TypedName.new(:type, type_definition.name.downcase)
-    type = create_type(type_definition, loader)
+    typed_name = TypedName.new(:type, type_definition.name.downcase)
+    type = create_runtime_type(type_definition)
     loader.set_entry(
       typed_name,
       type,
@@ -55,23 +55,39 @@ class TypeDefinitionInstantiator
     type
   end
 
-  def self.create_type(type_definition, loader)
-    type_expr = type_definition.type_expr
-    name = type_definition.name
-    if object_definition?(type_expr)
+  # @api private
+  def self.create_runtime_type(type_definition)
+    # Using the RUNTIME_NAME_AUTHORITY as the name_authority is motivated by the fact that the type
+    # alias name (managed by the runtime) becomes the name of the created type
+    #
+    create_type(type_definition.name, type_definition.type_expr, Pcore::RUNTIME_NAME_AUTHORITY)
+  end
+
+  # @api private
+  def self.create_type(name, type_expr, name_authority)
+    create_named_type(name, named_definition(type_expr), type_expr, name_authority)
+  end
+
+  # @api private
+  def self.create_named_type(name, type_name, type_expr, name_authority)
+    case type_name
+    when 'Object'
       # No need for an alias. The Object type itself will receive the name instead
-      i12n_hash_expr = type_expr.keys.empty? ? nil : type_expr.keys[0]
-      Types::PObjectType.new(name, i12n_hash_expr)
+      type_expr = type_expr.keys.empty? ? nil : type_expr.keys[0] unless type_expr.is_a?(Hash)
+      Types::PObjectType.new(name, type_expr)
+    when 'TypeSet'
+      # No need for an alias. The Object type itself will receive the name instead
+      type_expr = type_expr.keys.empty? ? nil : type_expr.keys[0] unless type_expr.is_a?(Hash)
+      Types::PTypeSetType.new(name, type_expr, name_authority)
     else
       Types::PTypeAliasType.new(name, type_expr)
     end
   end
-  private_class_method :create_type
 
-  def self.object_definition?(te)
-    te.is_a?(Model::AccessExpression) && (left = te.left_expr).is_a?(Model::QualifiedReference) && left.cased_value == 'Object'
+  # @api private
+  def self.named_definition(te)
+    te.is_a?(Model::AccessExpression) && (left = te.left_expr).is_a?(Model::QualifiedReference) ? left.cased_value : nil
   end
-  private_class_method :object_definition?
 end
 end
 end

@@ -17,7 +17,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
     * `/var/lib/service`
     * `/etc`
 
-    ...or this can be overriden in the resource's attributes:
+    ...or this can be overridden in the resource's attributes:
 
         service { 'myservice':
           provider => 'daemontools',
@@ -106,7 +106,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
   end
 
   # returns the full path to the current daemon directory
-  # note that this path can be overriden in the resource
+  # note that this path can be overridden in the resource
   # definition
   def daemon
     File.join(resource[:path], resource[:name])

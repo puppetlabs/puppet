@@ -178,7 +178,7 @@ class Puppet::Indirector::Request
     return(uri ? uri : "/#{indirection_name}/#{key}")
   end
 
-  def do_request(srv_service=:puppet, default_server=Puppet.settings[:server], default_port=Puppet.settings[:masterport], &block)
+  def do_request(srv_service=:puppet, default_server=nil, default_port=nil, &block)
     # We were given a specific server to use, so just use that one.
     # This happens if someone does something like specifying a file
     # source using a puppet:// URI with a specific server.
@@ -197,9 +197,30 @@ class Puppet::Indirector::Request
     end
 
     # ... Fall back onto the default server.
-    Puppet.debug "No more servers left, falling back to #{default_server}:#{default_port}" if Puppet.settings[:use_srv_records]
-    self.server = default_server
-    self.port   = default_port
+    begin
+      bound_server = Puppet.lookup(:server)
+    rescue
+      if primary_server = Puppet.settings[:server_list][0]
+        bound_server = primary_server[0]
+      else
+        bound_server = nil
+      end
+    end
+
+    begin
+      bound_port = Puppet.lookup(:serverport)
+    rescue
+      if primary_server = Puppet.settings[:server_list][0]
+        bound_port = primary_server[1]
+      else
+        bound_port = nil
+      end
+    end
+    self.server = default_server || bound_server || Puppet.settings[:server]
+    self.port   = default_port || bound_port || Puppet.settings[:masterport]
+
+    Puppet.debug "No more servers left, falling back to #{self.server}:#{self.port}" if Puppet.settings[:use_srv_records]
+
     return yield(self)
   end
 

@@ -59,6 +59,10 @@ class Puppet::Transaction::Report
   # or 'on_failure'
   attr_accessor :cached_catalog_status
 
+  # Contains the name and port of the master that was successfully contacted
+  # @return [String] a string of the format 'servername:port'
+  attr_accessor :master_used
+
   # The host name for which the report is generated
   # @return [String] the host name
   attr_accessor :host
@@ -66,6 +70,11 @@ class Puppet::Transaction::Report
   # The name of the environment the host is in
   # @return [String] the environment name
   attr_accessor :environment
+
+  # Whether there are changes that we decided not to apply because of noop
+  # @return [Boolean]
+  #
+  attr_accessor :noop_pending
 
   # A hash with a map from resource to status
   # @return [Hash{String => Puppet::Resource::Status}] Resource name to status.
@@ -107,6 +116,16 @@ class Puppet::Transaction::Report
   #    changes the API for the various objects that make up a report.
   #
   attr_reader :report_format
+
+  # Whether the puppet run was started in noop mode
+  # @return [Boolean]
+  #
+  attr_reader :noop
+
+  # @!attribute [r] corrective_change
+  #   @return [Boolean] true if the report contains any events and resources that had
+  #      corrective changes.
+  attr_reader :corrective_change
 
   def self.from_data_hash(data)
     obj = self.allocate
@@ -158,6 +177,11 @@ class Puppet::Transaction::Report
   end
 
   # @api private
+  def has_noop_events?(resource)
+    resource.events.any? { |event| event.status == 'noop' }
+  end
+
+  # @api private
   def prune_internal_data
     resource_statuses.delete_if {|name,res| res.resource_type == 'Whit'}
   end
@@ -165,6 +189,7 @@ class Puppet::Transaction::Report
   # @api private
   def finalize_report
     prune_internal_data
+    calculate_report_corrective_change
 
     resource_metrics = add_metric(:resources, calculate_resource_metrics)
     add_metric(:time, calculate_time_metrics)
@@ -172,6 +197,7 @@ class Puppet::Transaction::Report
     add_metric(:changes, {"total" => change_metric})
     add_metric(:events, calculate_event_metrics)
     @status = compute_status(resource_metrics, change_metric)
+    @noop_pending = @resource_statuses.any? { |name,res| has_noop_events?(res) }
   end
 
   # @api private
@@ -183,15 +209,19 @@ class Puppet::Transaction::Report
     @host = Puppet[:node_name_value]
     @time = Time.now
     @kind = kind
-    @report_format = 5
+    @report_format = 6
     @puppet_version = Puppet.version
     @configuration_version = configuration_version
     @transaction_uuid = transaction_uuid
     @code_id = nil
     @catalog_uuid = nil
     @cached_catalog_status = nil
+    @master_used = nil
     @environment = environment
     @status = 'failed' # assume failed until the report is finalized
+    @noop = Puppet[:noop]
+    @noop_pending = false
+    @corrective_change = false
   end
 
   # @api private
@@ -202,8 +232,15 @@ class Puppet::Transaction::Report
     @transaction_uuid = data['transaction_uuid']
     @environment = data['environment']
     @status = data['status']
+    @noop = data['noop']
+    @noop_pending = data['noop_pending']
     @host = data['host']
     @time = data['time']
+    @corrective_change = data['corrective_change']
+
+    if master_used = data['master_used']
+      @master_used = master_used
+    end
 
     if catalog_uuid = data['catalog_uuid']
       @catalog_uuid = catalog_uuid
@@ -255,11 +292,14 @@ class Puppet::Transaction::Report
       'puppet_version' => @puppet_version,
       'kind' => @kind,
       'status' => @status,
+      'noop' => @noop,
+      'noop_pending' => @noop_pending,
       'environment' => @environment,
-
+      'master_used' => @master_used,
       'logs' => @logs,
       'metrics' => @metrics,
       'resource_statuses' => @resource_statuses,
+      'corrective_change' => @corrective_change,
     }
   end
 
@@ -353,6 +393,13 @@ class Puppet::Transaction::Report
   end
 
   private
+
+  # Mark the report as corrective, if there are any resource_status marked corrective.
+  def calculate_report_corrective_change
+    @corrective_change = resource_statuses.any? do |name, status|
+      status.corrective_change
+    end
+  end
 
   def calculate_change_metric
     resource_statuses.map { |name, status| status.change_count || 0 }.inject(0) { |a,b| a+b }

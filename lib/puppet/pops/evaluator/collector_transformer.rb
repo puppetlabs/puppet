@@ -19,7 +19,8 @@ class CollectorTransformer
       fail "Classes cannot be collected"
     end
 
-    resource_type = scope.find_resource_type(type)
+    resource_type = Runtime3ResourceSupport.find_resource_type(scope, type)
+
     fail "Resource type #{type} doesn't exist" unless resource_type
 
     adapter = Adapters::SourcePosAdapter.adapt(o)
@@ -155,6 +156,10 @@ protected
     @@evaluator.evaluate(o, scope)
   end
 
+  def query_LiteralUndef(o, scope)
+    nil
+  end
+
   def query_QualifiedName(o, scope)
     @@evaluator.evaluate(o, scope)
   end
@@ -203,6 +208,10 @@ protected
 
   def match_LiteralString(o, scope)
     @@evaluator.evaluate(o, scope)
+  end
+
+  def match_LiteralUndef(o, scope)
+    nil
   end
 
   def match_ConcatenatedString(o, scope)

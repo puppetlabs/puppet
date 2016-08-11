@@ -36,7 +36,7 @@ module Puppet
     end
 
     # Reads the routes YAML settings from the file specified by Puppet[:route_file]
-    # and resets indirector terminii for the current application class if listed.
+    # and resets indirector termini for the current application class if listed.
     #
     # For instance, PE uses this to set the master facts terminus
     # to 'puppetdb' and its cache terminus to 'yaml'.

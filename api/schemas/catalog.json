@@ -51,6 +51,13 @@
                     "exported": {
                         "type": "boolean"
                     },
+                    "sensitive_parameters": {
+                        "description": "An optional list of resource parameters to be treated as sensitive.",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
                     "tags": {
                         "description": "Tags: regex is from https://docs.puppetlabs.com/puppet/latest/reference/lang_reserved.html",
                         "type": "array",

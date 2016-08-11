@@ -81,7 +81,11 @@ module Puppet
 
       def find_subcommand
         if subcommand_name.nil?
-          NilSubcommand.new(self)
+          if args.include?("--help") || args.include?("-h")
+            ApplicationSubcommand.new("help", CommandLine.new("puppet", ["help"]))
+          else
+            NilSubcommand.new(self)
+          end
         elsif Puppet::Application.available_application_names.include?(subcommand_name)
           ApplicationSubcommand.new(subcommand_name, self)
         elsif path_to_subcommand = external_subcommand
@@ -102,7 +106,7 @@ module Puppet
           # For most applications, we want to be able to load code from the modulepath,
           # such as apply, describe, resource, and faces.
           # For agent, we only want to load pluginsync'ed code from libdir.
-          # For master, we shouldn't ever be loading per-enviroment code into the master's
+          # For master, we shouldn't ever be loading per-environment code into the master's
           # ruby process, but that requires fixing (#17210, #12173, #8750). So for now
           # we try to restrict to only code that can be autoloaded from the node's
           # environment.

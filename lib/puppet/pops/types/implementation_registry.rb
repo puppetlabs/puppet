@@ -21,11 +21,6 @@ module Types
       @implementations_per_type_name = {}
       @type_name_substitutions = []
       @impl_name_substitutions = []
-      @type_parser = Types::TypeParser.new
-
-      register_implementation('Pcore::AST::Locator', 'Puppet::Pops::Parser::Locator::Locator19', static_loader)
-      register_implementation_namespace('Pcore::AST', 'Puppet::Pops::Model', static_loader)
-
       TypeParser.type_map.values.each { |type| register_implementation(type.simple_name, type.class.name, static_loader) }
     end
 
@@ -59,8 +54,8 @@ module Types
     def register_implementation_namespace(type_namespace, impl_namespace, loader)
       ns = TypeFormatter::NAME_SEGMENT_SEPARATOR
       register_implementation_regexp(
-        [Regexp.compile("^#{type_namespace}#{ns}(\\w+)$"), "#{impl_namespace}#{ns}\\1"],
-        [Regexp.compile("^#{impl_namespace}#{ns}(\\w+)$"), "#{type_namespace}#{ns}\\1"],
+        [/\A#{type_namespace}#{ns}(\w+)\z/, "#{impl_namespace}#{ns}\\1"],
+        [/\A#{impl_namespace}#{ns}(\w+)\z/, "#{type_namespace}#{ns}\\1"],
         loader)
     end
 
@@ -127,7 +122,7 @@ module Types
       if name_and_loader.nil?
         nil
       else
-        @type_parser.parse(*name_and_loader)
+        TypeParser.singleton.parse(*name_and_loader)
       end
     end
 

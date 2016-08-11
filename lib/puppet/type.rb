@@ -75,6 +75,7 @@ module Puppet
 #
 #
 class Type
+  extend Puppet::CompilableResourceType
   include Puppet::Util
   include Puppet::Util::Errors
   include Puppet::Util::Logging
@@ -90,9 +91,9 @@ class Type
   # @see Comparable
   #
   def <=>(other)
-    # We only order against other types, not arbitrary objects.
-    return nil unless other.is_a? Puppet::Type
-    # Our natural order is based on the reference name we use when comparing
+    # Order is only maintained against other types, not arbitrary objects.
+    # The natural order is based on the reference name used when comparing
+    return nil unless other.is_a?(Puppet::CompilableResourceType) || other.class.is_a?(Puppet::CompilableResourceType)
     # against other type instances.
     self.ref <=> other.ref
   end
@@ -600,7 +601,7 @@ class Type
     validattr?(name)
   end
 
-  # @return [Boolean] Returns true if the wanted state of the resoure is that it should be absent (i.e. to be deleted).
+  # @return [Boolean] Returns true if the wanted state of the resource is that it should be absent (i.e. to be deleted).
   def deleting?
     obj = @parameters[:ensure] and obj.should == :absent
   end
@@ -741,7 +742,7 @@ class Type
     (prop = @parameters[name] and prop.is_a?(Puppet::Property)) ? prop.should : nil
   end
 
-  # Registers an attribute to this resource type insance.
+  # Registers an attribute to this resource type instance.
   # Requires either the attribute name or class as its argument.
   # This is a noop if the named property/parameter is not supported
   # by this resource. Otherwise, an attribute instance is created
@@ -861,7 +862,7 @@ class Type
     self.class.name
   end
 
-  # @todo Comment says "Return a specific value for an attribute.", as opposed to what "An upspecific value"???
+  # @todo Comment says "Return a specific value for an attribute.", as opposed to what "An unspecific value"???
   # @todo is this the 'is' or the 'should' value?
   # @todo why is the return restricted to things that respond to :value? (Only non structural basic data types
   #   supported?
@@ -894,7 +895,7 @@ class Type
   # See the overview of this class for a longer explanation of the concept _isomorphism_.
   # Defaults to true.
   #
-  # @return [Boolan] true, if this type's name is isomorphic with the object
+  # @return [Boolean] true, if this type's name is isomorphic with the object
   def self.isomorphic?
     if defined?(@isomorphic)
       return @isomorphic
@@ -1052,7 +1053,7 @@ class Type
 
   # Retrieves the current value of all contained properties.
   # Parameters and meta-parameters are not included in the result.
-  # @todo As oposed to all non contained properties? How is this different than any of the other
+  # @todo As opposed to all non contained properties? How is this different than any of the other
   #   methods that also "gets" properties/parameters/etc. ?
   # @return [Puppet::Resource] array of all property values (mix of types)
   # @raise [fail???] if there is a provider and it is not suitable for the host this is evaluated for.
@@ -1152,7 +1153,7 @@ class Type
   # Retrieves all known instances.
   # @todo Retrieves them from where? Known to whom?
   # Either requires providers or must be overridden.
-  # @raise [Puppet::DevError] when there are no providers and the implementation has not overridded this method.
+  # @raise [Puppet::DevError] when there are no providers and the implementation has not overridden this method.
   def self.instances
     raise Puppet::DevError, "#{self.name} has no providers and has not overridden 'instances'" if provider_hash.empty?
 
@@ -1223,7 +1224,7 @@ class Type
   end
 
 
-  # Returns an array of strings representing the containment heirarchy
+  # Returns an array of strings representing the containment hierarchy
   # (types/classes) that make up the path to the resource from the root
   # of the catalog.  This is mostly used for logging purposes.
   #
@@ -1523,7 +1524,7 @@ class Type
         end
 
         # Are we requiring them, or vice versa?  See the method docs
-        # for futher info on this.
+        # for further info on this.
         if self.class.direction == :in
           source = related_resource
           target = @resource
@@ -1550,7 +1551,7 @@ class Type
     end
   end
 
-  # @todo document this, have no clue what this does... it retuns "RelationshipMetaparam.subclasses"
+  # @todo document this, have no clue what this does... it returns "RelationshipMetaparam.subclasses"
   #
   def self.relationship_params
     RelationshipMetaparam.subclasses
@@ -1558,7 +1559,7 @@ class Type
 
 
   # Note that the order in which the relationships params is defined
-  # matters.  The labelled params (notify and subcribe) must be later,
+  # matters.  The labeled params (notify and subscribe) must be later,
   # so that if both params are used, those ones win.  It's a hackish
   # solution, but it works.
 
@@ -2059,7 +2060,7 @@ end
   end
 
   # Provides iteration over added auto-requirements (see {autorequire}).
-  # @yieldparam type [String] the name of the type to autoriquire an instance of
+  # @yieldparam type [String] the name of the type to autorequire an instance of
   # @yieldparam block [Proc] a block producing one or several dependencies to auto require (see {autorequire}).
   # @yieldreturn [void]
   # @return [void]
@@ -2071,7 +2072,7 @@ end
   end
 
   # Provides iteration over added auto-requirements (see {autobefore}).
-  # @yieldparam type [String] the name of the type to autoriquire an instance of
+  # @yieldparam type [String] the name of the type to autorequire an instance of
   # @yieldparam block [Proc] a block producing one or several dependencies to auto require (see {autobefore}).
   # @yieldreturn [void]
   # @return [void]
@@ -2083,7 +2084,7 @@ end
   end
 
   # Provides iteration over added auto-requirements (see {autosubscribe}).
-  # @yieldparam type [String] the name of the type to autoriquire an instance of
+  # @yieldparam type [String] the name of the type to autorequire an instance of
   # @yieldparam block [Proc] a block producing one or several dependencies to auto require (see {autosubscribe}).
   # @yieldreturn [void]
   # @return [void]
@@ -2095,7 +2096,7 @@ end
   end
 
   # Provides iteration over added auto-requirements (see {autonotify}).
-  # @yieldparam type [String] the name of the type to autoriquire an instance of
+  # @yieldparam type [String] the name of the type to autorequire an instance of
   # @yieldparam block [Proc] a block producing one or several dependencies to auto require (see {autonotify}).
   # @yieldreturn [void]
   # @return [void]
@@ -2192,7 +2193,7 @@ end
   # @comment - these two comments were floating around here, and turned up as documentation
   #  for the attribute "title", much to my surprise and amusement. Clearly these comments
   #  are orphaned ... I think they can just be removed as what they say should be covered
-  #  by the now added yardoc. <irony>(Yo! to quote some of the other actual awsome specific comments applicable
+  #  by the now added yardoc. <irony>(Yo! to quote some of the other actual awesome specific comments applicable
   #  to objects called from elsewhere, or not. ;-)</irony>
   #
   # @comment Types (which map to resources in the languages) are entirely composed of
@@ -2271,7 +2272,7 @@ end
   # Returns the name of this type (if specified) or the parent type #to_s.
   # The returned name is on the form "Puppet::Type::<name>", where the first letter of name is
   # capitalized.
-  # @return [String] the fully qualified name Puppet::Type::<name> where the first letter of name is captialized
+  # @return [String] the fully qualified name Puppet::Type::<name> where the first letter of name is capitalized
   #
   def self.to_s
     if defined?(@name)
@@ -2392,6 +2393,47 @@ end
       error = Puppet::ResourceError.new("Validation of #{ref} failed: #{detail}")
       adderrorcontext(error, detail)
       raise error
+    end
+
+    set_sensitive_parameters(resource.sensitive_parameters)
+  end
+
+  protected
+
+  # Mark parameters associated with this type as sensitive, based on the associated resource.
+  #
+  # Currently, only instances of `Puppet::Property` can be easily marked for sensitive data handling
+  # and information redaction is limited to redacting events generated while synchronizing
+  # properties. While support for redaction will be broadened in the future we can't automatically
+  # deduce how to redact arbitrary parameters, so if a parameter is marked for redaction the best
+  # we can do is warn that we can't handle treating that parameter as sensitive and move on.
+  #
+  # In some unusual cases a given parameter will be marked as sensitive but that sensitive context
+  # needs to be transferred to another parameter. In this case resource types may need to override
+  # this method in order to copy the sensitive context from one parameter to another (and in the
+  # process force the early generation of a parameter that might otherwise be lazily generated.)
+  # See `Puppet::Type.type(:file)#set_sensitive_parameters` for an example of this.
+  #
+  # @note This method visibility is protected since it should only be called by #initialize, but is
+  #   marked as public as subclasses may need to override this method.
+  #
+  # @api public
+  #
+  # @param sensitive_parameters [Array<Symbol>] A list of parameters to mark as sensitive.
+  #
+  # @return [void]
+  def set_sensitive_parameters(sensitive_parameters)
+    sensitive_parameters.each do |name|
+      p = parameter(name)
+      if p.is_a?(Puppet::Property)
+        p.sensitive = true
+      elsif p.is_a?(Puppet::Parameter)
+        warning("Unable to mark '#{name}' as sensitive: #{name} is a parameter and not a property, and cannot be automatically redacted.")
+      elsif self.class.attrclass(name)
+        warning("Unable to mark '#{name}' as sensitive: the property itself was not assigned a value.")
+      else
+        err("Unable to mark '#{name}' as sensitive: the property itself is not defined on #{type}.")
+      end
     end
   end
 
@@ -2543,14 +2585,14 @@ end
     end
   end
 
-  # Returns the title of this object, or its name if title was not explicetly set.
+  # Returns the title of this object, or its name if title was not explicitly set.
   # If the title is not already set, it will be computed by looking up the {#name_var} and using
   # that value as the title.
   # @todo it is somewhat confusing that if the name_var is a valid parameter, it is assumed to
   #  be the name_var called :name, but if it is a property, it uses the name_var.
   #  It is further confusing as Type in some respects supports multiple namevars.
   #
-  # @return [String] Returns the title of this object, or its name if title was not explicetly set.
+  # @return [String] Returns the title of this object, or its name if title was not explicitly set.
   # @raise [??? devfail] if title is not set, and name_var can not be found.
   def title
     unless @title

@@ -15,7 +15,7 @@ require 'hiera/puppet_function'
 #     searching the rest of the hierarchy.
 #
 # The `hiera` function does **not** find all matches throughout a hierarchy, instead
-# returining the first specific value starting at the top of the hierarchy. To search
+# returning the first specific value starting at the top of the hierarchy. To search
 # throughout a hierarchy, use the `hiera_array` or `hiera_hash` functions.
 #
 # @example Using `hiera`

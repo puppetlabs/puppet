@@ -10,7 +10,6 @@ require 'puppet/parser/functions'
 require 'puppet/parser/files'
 require 'puppet/parser/relationship'
 
-require 'puppet/resource/type_collection_helper'
 require 'puppet/resource/type'
 require 'monitor'
 

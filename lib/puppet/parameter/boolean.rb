@@ -1,6 +1,6 @@
 require 'puppet/coercion'
 
-# This specialized {Puppet::Parameter} handles boolean options, accepting lots
+# This specialized {Puppet::Parameter} handles Boolean options, accepting lots
 # of strings and symbols for both truthiness and falsehood.
 #
 class Puppet::Parameter::Boolean < Puppet::Parameter

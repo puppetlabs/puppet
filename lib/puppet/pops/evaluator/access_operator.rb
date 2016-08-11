@@ -9,8 +9,6 @@ class AccessOperator
   #
   include Runtime3Support
 
-  EMPTY_STRING = ''.freeze
-
   attr_reader :semantic
 
   # Initialize with AccessExpression to enable reporting issues
@@ -266,12 +264,34 @@ class AccessOperator
     end
   end
 
+  def access_PSensitiveType(o, scope, keys)
+    keys.flatten!
+    if keys.size == 1
+      type = keys[0]
+      unless type.is_a?(Types::PAnyType)
+        fail(Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Sensitive-Type', :actual => type.class})
+      end
+      Types::PSensitiveType.new(type)
+    else
+      fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Sensitive-Type', :min => 1, :actual => keys.size})
+    end
+  end
+
   def access_PObjectType(o, scope, keys)
     keys.flatten!
     if keys.size == 1
       Types::TypeFactory.object(keys[0])
     else
       fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Object-Type', :min => 1, :actual => keys.size})
+    end
+  end
+
+  def access_PTypeSetType(o, scope, keys)
+    keys.flatten!
+    if keys.size == 1
+      Types::TypeFactory.type_set(keys[0])
+    else
+      fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'TypeSet-Type', :min => 1, :actual => keys.size})
     end
   end
 
@@ -597,11 +617,13 @@ class AccessOperator
       #
       result = keys.each_with_index.map do |c, i|
         name = if c.is_a?(Types::PResourceType) && !c.type_name.nil? && c.title.nil?
+                 strict_check(c, i)
                  # type_name is already downcase. Don't waste time trying to downcase again
                  c.type_name
                elsif c.is_a?(String)
                  c.downcase
                elsif c.is_a?(Types::PTypeReferenceType)
+                 strict_check(c, i)
                  c.type_string.downcase
                else
                  fail(Issues::ILLEGAL_HOSTCLASS_NAME, @semantic.keys[i], {:name => c})
@@ -634,6 +656,21 @@ class AccessOperator
     # returns single type as type, else an array of types
     return result_type_array ? result : result.pop
   end
+
+  # PUP-6083 - Using Class[Foo] is deprecated since an arbitrary foo will trigger a "resource not found"
+  # @api private
+  def strict_check(name, index)
+    if Puppet[:strict] != :off
+      msg = 'Upper cased class-name in a Class[<class-name>] is deprecated, class-name should be a lowercase string'
+      case Puppet[:strict]
+      when :error
+        fail(Issues::ILLEGAL_HOSTCLASS_NAME, @semantic.keys[index], {:name => name})
+      when :warning
+        Puppet.warn_once(:deprecation, 'ClassReferenceInUpperCase', msg)
+      end
+    end
+  end
+
 end
 end
 end

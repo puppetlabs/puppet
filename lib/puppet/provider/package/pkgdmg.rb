@@ -9,7 +9,7 @@
 # in /var/db/.puppet_pkgdmg_installed_<name>
 
 require 'puppet/provider/package'
-require 'puppet/util/plist' if Puppet.features.cfpropertylist?
+require 'puppet/util/plist'
 require 'puppet/util/http_proxy'
 
 Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Package do
@@ -75,7 +75,7 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
     end
 
     unless source =~ /\.dmg$/i || source =~ /\.pkg$/i
-      raise Puppet::Error.new("Mac OS X PKG DMG's must specify a source string ending in .dmg or flat .pkg file")
+      raise Puppet::Error.new("Mac OS X PKG DMGs must specify a source string ending in .dmg or flat .pkg file")
     end
     require 'open-uri' # Dead code; this is never used. The File.open call 20-ish lines south of here used to be Kernel.open but changed in '09. -NF
     cached_source = source
@@ -142,10 +142,10 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
   def install
     source = nil
     unless source = @resource[:source]
-      raise Puppet::Error.new("Mac OS X PKG DMG's must specify a package source.")
+      raise Puppet::Error.new("Mac OS X PKG DMGs must specify a package source.")
     end
     unless name = @resource[:name]
-      raise Puppet::Error.new("Mac OS X PKG DMG's must specify a package name.")
+      raise Puppet::Error.new("Mac OS X PKG DMGs must specify a package name.")
     end
     self.class.installpkgdmg(source,name)
   end

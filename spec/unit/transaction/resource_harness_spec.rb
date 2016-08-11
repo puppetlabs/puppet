@@ -418,6 +418,97 @@ describe Puppet::Transaction::ResourceHarness do
     end
   end
 
+  describe "handling sensitive properties" do
+    describe 'when syncing' do
+      let(:test_file) do
+        tmpfile('foo').tap do |path|
+          File.open(path, 'w') { |fh| fh.write("goodbye world") }
+        end
+      end
+
+      let(:resource) do
+        Puppet::Type.type(:file).new(:path => test_file, :backup => false, :content => "hello world").tap do |r|
+          r.parameter(:content).sensitive = true
+        end
+      end
+
+      it "redacts event messages for sensitive properties" do
+        status = @harness.evaluate(resource)
+        sync_event = status.events[0]
+        expect(sync_event.message).to eq 'changed [redacted] to [redacted]'
+      end
+
+      it "redacts event contents for sensitive properties" do
+        status = @harness.evaluate(resource)
+        sync_event = status.events[0]
+        expect(sync_event.previous_value).to eq '[redacted]'
+        expect(sync_event.desired_value).to eq '[redacted]'
+      end
+
+      it "redacts event messages for sensitive properties when simulating noop changes" do
+        resource[:noop] = true
+        status = @harness.evaluate(resource)
+        sync_event = status.events[0]
+        expect(sync_event.message).to eq 'current_value [redacted], should be [redacted] (noop)'
+      end
+
+      describe 'auditing' do
+        before do
+          resource[:audit] = ['content']
+        end
+
+        it "redacts notices when a parameter is newly audited" do
+          resource.property(:content).expects(:notice).with("audit change: newly-recorded value [redacted]")
+          @harness.evaluate(resource)
+        end
+
+        it "redacts event messages for sensitive properties" do
+          Puppet::Util::Storage.stubs(:cache).with(resource).returns({:content => "historical world"})
+          status = @harness.evaluate(resource)
+          sync_event = status.events[0]
+          expect(sync_event.message).to eq 'changed [redacted] to [redacted] (previously recorded value was [redacted])'
+        end
+
+        it "redacts audit event messages for sensitive properties when simulating noop changes" do
+          Puppet::Util::Storage.stubs(:cache).with(resource).returns({:content => "historical world"})
+          resource[:noop] = true
+          status = @harness.evaluate(resource)
+          sync_event = status.events[0]
+          expect(sync_event.message).to eq 'current_value [redacted], should be [redacted] (noop) (previously recorded value was [redacted])'
+        end
+
+        it "redacts event contents for sensitive properties" do
+          Puppet::Util::Storage.stubs(:cache).with(resource).returns({:content => "historical world"})
+          status = @harness.evaluate(resource)
+          sync_event = status.events[0]
+          expect(sync_event.historical_value).to eq '[redacted]'
+        end
+      end
+    end
+
+    describe 'handling errors' do
+      it "redacts event messages generated when syncing a param raises a StandardError" do
+        stub_provider = make_stub_provider
+        resource = stub_provider.new :name => 'name', :bar => 1
+        resource.parameter(:bar).sensitive = true
+        status = @harness.evaluate(resource)
+
+        error_event = status.events[0]
+        expect(error_event.message).to eq "change from [redacted] to [redacted] failed: bar"
+      end
+
+      it "redacts event messages generated when syncing a param raises an Exception" do
+        stub_provider = make_stub_provider
+        resource = stub_provider.new :name => 'name', :baz => 1
+        resource.parameter(:baz).sensitive = true
+
+        expect { @harness.evaluate(resource) }.to raise_error(Exception, 'baz')
+
+        expect(@logs.first.message).to eq "change from [redacted] to [redacted] failed: baz"
+      end
+    end
+  end
+
   describe "when finding the schedule" do
     before do
       @catalog = Puppet::Resource::Catalog.new

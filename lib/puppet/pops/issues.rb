@@ -351,7 +351,7 @@ module Issues
     "Illegal variable expression. #{label.a_an_uc(semantic)} did not produce a variable name (String or Numeric)."
   end
 
-  # Issues when an expression is used illegaly in a query.
+  # Issues when an expression is used illegally in a query.
   # query only supports == and !=, and not <, > etc.
   #
   ILLEGAL_QUERY_EXPRESSION = hard_issue :ILLEGAL_QUERY_EXPRESSION do

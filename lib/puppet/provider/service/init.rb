@@ -11,6 +11,8 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
       "/sbin/init.d"
     when "Archlinux"
       "/etc/rc.d"
+    when "AIX"
+      "/etc/rc.d/init.d"
     else
       "/etc/init.d"
     end
@@ -28,7 +30,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
   #confine :exists => defpath
 
   # some init scripts are not safe to execute, e.g. we do not want
-  # to suddently run /etc/init.d/reboot.sh status and reboot our system. The
+  # to suddenly run /etc/init.d/reboot.sh status and reboot our system. The
   # exclude list could be platform agnostic but I assume an invalid init script
   # on system A will never be a valid init script on system B
   def self.excludes
@@ -46,7 +48,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     # launchpad bug
     # (https://bugs.launchpad.net/ubuntu/+source/upstart/+bug/962047) that may
     # eventually explain how to use the wait-for-state service or perhaps why
-    # it should remain excluded. When that bug is adddressed this should be
+    # it should remain excluded. When that bug is addressed this should be
     # reexamined.
     excludes += %w{wait-for-state portmap-wait}
     # these excludes were found with grep -r -L start /etc/init.d
@@ -153,7 +155,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     raise Puppet::Error, "Could not find init script for '#{name}'"
   end
 
-  # The start command is just the init scriptwith 'start'.
+  # The start command is just the init script with 'start'.
   def startcmd
     [initscript, :start]
   end

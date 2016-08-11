@@ -1375,8 +1375,21 @@ describe Puppet::Settings do
     end
 
     describe "when adding users and groups to the catalog" do
+      before :all do
+        # when this spec is run in isolation to build a settings catalog
+        # it will not be able to autorequire and load types for the first time
+        # on Windows with microsoft_windows? stubbed to false, because
+        # Puppet::Util.path_to_uri is called to generate a URI to load code
+        # and it manipulates the path based on OS
+        # so instead we forcefully "prime" the cached types
+        Puppet::Type.type(:user).new(:name => 'foo')
+        Puppet::Type.type(:group).new(:name => 'bar')
+        Puppet::Type.type(:file).new(:name => Dir.pwd) # appropriate for OS
+      end
+
       before do
         Puppet.features.stubs(:root?).returns true
+        # stubbed to false, as Windows catalogs don't add users / groups
         Puppet.features.stubs(:microsoft_windows?).returns false
 
         @settings.define_settings :foo,

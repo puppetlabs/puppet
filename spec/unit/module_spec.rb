@@ -651,6 +651,49 @@ describe Puppet::Module do
     expect(@module.has_metadata?).to be_falsey
   end
 
+  describe 'when --strict is warning' do
+    before :each do
+      Puppet[:strict] = :warning
+    end
+
+    it "should warn about a failure to parse" do
+      Puppet::FileSystem.expects(:exist?).with(@module.metadata_file).returns true
+      File.stubs(:read).with(@module.metadata_file, {:encoding => 'utf-8'}).returns(my_fixture('trailing-comma.json'))
+
+      expect(@module.has_metadata?).to be_falsey
+      expect(@logs).to have_matching_log(/mymod has an invalid and unparsable metadata\.json file/)
+    end
+  end
+
+    describe 'when --strict is off' do
+      before :each do
+        Puppet[:strict] = :off
+      end
+
+      it "should warn about a failure to parse" do
+        Puppet::FileSystem.expects(:exist?).with(@module.metadata_file).returns true
+        File.stubs(:read).with(@module.metadata_file, {:encoding => 'utf-8'}).returns(my_fixture('trailing-comma.json'))
+
+        expect(@module.has_metadata?).to be_falsey
+        expect(@logs).to have_matching_log(/mymod has an invalid and unparsable metadata\.json file.*/)
+      end
+    end
+
+    describe 'when --strict is error' do
+      before :each do
+        Puppet[:strict] = :error
+      end
+
+      it "should fail on a failure to parse" do
+        Puppet::FileSystem.expects(:exist?).with(@module.metadata_file).returns true
+        File.stubs(:read).with(@module.metadata_file, {:encoding => 'utf-8'}).returns(my_fixture('trailing-comma.json'))
+
+        expect do
+        expect(@module.has_metadata?).to be_falsey
+        end.to raise_error(/mymod has an invalid and unparsable metadata\.json file/)
+      end
+    end
+
   def a_module_with_metadata(data)
     text = data.to_pson
 

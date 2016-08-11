@@ -5,6 +5,13 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:service).provider(:systemd) do
+
+  if Puppet.features.microsoft_windows?
+    # Get a pid for $CHILD_STATUS to latch on to
+    command = "cmd.exe /c \"exit 0\""
+    Puppet::Util::Execution.execute(command, {:failonfail => false})
+  end
+
   before :each do
     Puppet::Type.type(:service).stubs(:defaultprovider).returns described_class
     described_class.stubs(:which).with('systemctl').returns '/bin/systemctl'
@@ -49,6 +56,13 @@ describe Puppet::Type.type(:service).provider(:systemd) do
       Facter.stubs(:value).with(:operatingsystemmajrelease).returns("#{ver}")
       expect(described_class).to be_default
     end
+  end
+
+  it "should be the default provider on cumulus3" do
+    Facter.stubs(:value).with(:osfamily).returns(:debian)
+    Facter.stubs(:value).with(:operatingsystem).returns('CumulusLinux')
+    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("3")
+    expect(described_class).to be_default
   end
 
   it "should be the default provider on sles12" do
@@ -98,25 +112,13 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     expect(described_class).not_to be_default
   end
 
-  it "should be the default provider on ubuntu15.04" do
-    Facter.stubs(:value).with(:osfamily).returns(:debian)
-    Facter.stubs(:value).with(:operatingsystem).returns(:ubuntu)
-    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("15.04")
-    expect(described_class).to be_default
-  end
-
-  it "should be the default provider on ubuntu15.10" do
-    Facter.stubs(:value).with(:osfamily).returns(:debian)
-    Facter.stubs(:value).with(:operatingsystem).returns(:ubuntu)
-    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("15.10")
-    expect(described_class).to be_default
-  end
-
-  it "should be the default provider on ubuntu16.04" do
-    Facter.stubs(:value).with(:osfamily).returns(:debian)
-    Facter.stubs(:value).with(:operatingsystem).returns(:ubuntu)
-    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("16.04")
-    expect(described_class).to be_default
+  [ '15.04', '15.10', '16.04', '16.10' ].each do |ver|
+    it "should be the default provider on ubuntu#{ver}" do
+      Facter.stubs(:value).with(:osfamily).returns(:debian)
+      Facter.stubs(:value).with(:operatingsystem).returns(:ubuntu)
+      Facter.stubs(:value).with(:operatingsystemmajrelease).returns("#{ver}")
+      expect(described_class).to be_default
+    end
   end
 
   [:enabled?, :enable, :disable, :start, :stop, :status, :restart].each do |method|
@@ -152,8 +154,23 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     it "should start the service with systemctl start otherwise" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:systemctl).with(:unmask, 'sshd.service')
-      provider.expects(:execute).with(['/bin/systemctl','start','sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
+      provider.expects(:execute).with(['/bin/systemctl','start','sshd.service'], {:failonfail => true, :override_locale => false, :squelch => false, :combine => true})
       provider.start
+    end
+
+    it "should show journald logs on failure" do
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      provider.expects(:systemctl).with(:unmask, 'sshd.service')
+      provider.expects(:execute).with(['/bin/systemctl','start','sshd.service'],{:failonfail => true, :override_locale => false, :squelch => false, :combine => true})
+        .raises(Puppet::ExecutionFailure, "Failed to start sshd.service: Unit sshd.service failed to load: Invalid argument. See system logs and 'systemctl status sshd.service' for details.")
+      journalctl_logs = <<-EOS
+-- Logs begin at Tue 2016-06-14 11:59:21 UTC, end at Tue 2016-06-14 21:45:02 UTC. --
+Jun 14 21:41:34 foo.example.com systemd[1]: Stopping sshd Service...
+Jun 14 21:41:35 foo.example.com systemd[1]: Starting sshd Service...
+Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= and ExecStop= setting. Refusing.
+      EOS
+      provider.expects(:execute).with("journalctl -n 50 --since '5 minutes ago' -u sshd.service --no-pager").returns(journalctl_logs)
+      expect { provider.start }.to raise_error(Puppet::Error, /Systemd start for sshd.service failed![\n]+journalctl log for sshd.service:[\n]+-- Logs begin at Tue 2016-06-14 11:59:21 UTC, end at Tue 2016-06-14 21:45:02 UTC. --/m)
     end
   end
 
@@ -169,36 +186,55 @@ describe Puppet::Type.type(:service).provider(:systemd) do
       provider.expects(:execute).with(['/bin/systemctl','stop','sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.stop
     end
+
+    it "should show journald logs on failure" do
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      provider.expects(:execute).with(['/bin/systemctl','stop','sshd.service'],{:failonfail => true, :override_locale => false, :squelch => false, :combine => true})
+        .raises(Puppet::ExecutionFailure, "Failed to stop sshd.service: Unit sshd.service failed to load: Invalid argument. See system logs and 'systemctl status sshd.service' for details.")
+      journalctl_logs = <<-EOS
+-- Logs begin at Tue 2016-06-14 11:59:21 UTC, end at Tue 2016-06-14 21:45:02 UTC. --
+Jun 14 21:41:34 foo.example.com systemd[1]: Stopping sshd Service...
+Jun 14 21:41:35 foo.example.com systemd[1]: Starting sshd Service...
+Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= and ExecStop= setting. Refusing.
+      EOS
+      provider.expects(:execute).with("journalctl -n 50 --since '5 minutes ago' -u sshd.service --no-pager").returns(journalctl_logs)
+      expect { provider.stop }.to raise_error(Puppet::Error, /Systemd stop for sshd.service failed![\n]+journalctl log for sshd.service:[\n]-- Logs begin at Tue 2016-06-14 11:59:21 UTC, end at Tue 2016-06-14 21:45:02 UTC. --/m)
+    end
   end
 
   describe "#enabled?" do
     it "should return :true if the service is enabled" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:execute).with(['/bin/systemctl','is-enabled','sshd.service'], :failonfail => false).returns "enabled\n"
+      $CHILD_STATUS.stubs(:exitstatus).returns(0)
       expect(provider.enabled?).to eq(:true)
     end
 
     it "should return :true if the service is static" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:execute).with(['/bin/systemctl','is-enabled','sshd.service'], :failonfail => false).returns "static\n"
+      $CHILD_STATUS.stubs(:exitstatus).returns(0)
       expect(provider.enabled?).to eq(:true)
     end
 
     it "should return :false if the service is disabled" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:execute).with(['/bin/systemctl','is-enabled','sshd.service'], :failonfail => false).returns "disabled\n"
+      $CHILD_STATUS.stubs(:exitstatus).returns(1)
       expect(provider.enabled?).to eq(:false)
     end
 
     it "should return :false if the service is masked and the resource is attempting to be disabled" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :enable => false))
       provider.expects(:execute).with(['/bin/systemctl','is-enabled','sshd.service'], :failonfail => false).returns "masked\n"
+      $CHILD_STATUS.stubs(:exitstatus).returns(1)
       expect(provider.enabled?).to eq(:false)
     end
 
     it "should return :mask if the service is masked and the resource is attempting to be masked" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :enable => 'mask'))
       provider.expects(:execute).with(['/bin/systemctl','is-enabled','sshd.service'], :failonfail => false).returns "masked\n"
+      $CHILD_STATUS.stubs(:exitstatus).returns(1)
       expect(provider.enabled?).to eq(:mask)
     end
   end
@@ -272,6 +308,20 @@ describe Puppet::Type.type(:service).provider(:systemd) do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:execute).with(['/bin/systemctl','restart','sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.restart
+    end
+
+    it "should show journald logs on failure" do
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      provider.expects(:execute).with(['/bin/systemctl','restart','sshd.service'],{:failonfail => true, :override_locale => false, :squelch => false, :combine => true})
+        .raises(Puppet::ExecutionFailure, "Failed to restart sshd.service: Unit sshd.service failed to load: Invalid argument. See system logs and 'systemctl status sshd.service' for details.")
+      journalctl_logs = <<-EOS
+-- Logs begin at Tue 2016-06-14 11:59:21 UTC, end at Tue 2016-06-14 21:45:02 UTC. --
+Jun 14 21:41:34 foo.example.com systemd[1]: Stopping sshd Service...
+Jun 14 21:41:35 foo.example.com systemd[1]: Starting sshd Service...
+Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= and ExecStop= setting. Refusing.
+      EOS
+      provider.expects(:execute).with("journalctl -n 50 --since '5 minutes ago' -u sshd.service --no-pager").returns(journalctl_logs)
+      expect { provider.restart }.to raise_error(Puppet::Error, /Systemd restart for sshd.service failed![\n]+journalctl log for sshd.service:[\n]+-- Logs begin at Tue 2016-06-14 11:59:21 UTC, end at Tue 2016-06-14 21:45:02 UTC. --/m)
     end
   end
 

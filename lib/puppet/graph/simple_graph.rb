@@ -246,8 +246,6 @@ class Puppet::Graph::SimpleGraph
     # This does not use the DOT graph library, just writes the content
     # directly.  Given the complexity of this, there didn't seem much point
     # using a heavy library to generate exactly the same content. --daniel 2011-01-27
-    Puppet.settings.use(:graphing)
-
     graph = ["digraph Resource_Cycles {"]
     graph << '  label = "Resource Cycles"'
 
@@ -401,7 +399,7 @@ class Puppet::Graph::SimpleGraph
   end
 
   # Return an array of the edge-sets between a series of n+1 vertices (f=v0,v1,v2...t=vn)
-  #   connecting the two given verticies.  The ith edge set is an array containing all the
+  #   connecting the two given vertices.  The ith edge set is an array containing all the
   #   edges between v(i) and v(i+1); these are (by definition) never empty.
   #
   #     * if f == t, the list is empty
@@ -464,15 +462,13 @@ class Puppet::Graph::SimpleGraph
   def write_graph(name)
     return unless Puppet[:graph]
 
-    Puppet.settings.use(:graphing)
-
     file = File.join(Puppet[:graphdir], "#{name}.dot")
     File.open(file, "w") { |f|
       f.puts to_dot("name" => name.to_s.capitalize)
     }
   end
 
-  # This flag may be set to true to use the new YAML serialzation
+  # This flag may be set to true to use the new YAML serialization
   # format (where @vertices is a simple list of vertices rather than a
   # list of VertexWrapper objects).  Deserialization supports both
   # formats regardless of the setting of this flag.

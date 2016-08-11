@@ -1,7 +1,5 @@
 module Puppet::Pops
 module Types
-  EMPTY_ARRAY = [].freeze
-
   class TypePathElement
     attr_reader :key
 

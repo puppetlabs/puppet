@@ -23,7 +23,8 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   defaultfor :osfamily => :redhat, :operatingsystem => :fedora
   defaultfor :osfamily => :suse
   defaultfor :operatingsystem => :debian, :operatingsystemmajrelease => "8"
-  defaultfor :operatingsystem => :ubuntu, :operatingsystemmajrelease => ["15.04","15.10","16.04"]
+  defaultfor :operatingsystem => :ubuntu, :operatingsystemmajrelease => ["15.04","15.10","16.04","16.10"]
+  defaultfor :operatingsystem => :cumuluslinux, :operatingsystemmajrelease => ["3"]
 
   def self.instances
     i = []
@@ -72,6 +73,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   def enabled?
     output = cached_enabled?
+    code = $CHILD_STATUS.exitstatus
 
     # The masked state is equivalent to the disabled state in terms of
     # comparison so we only care to check if it is masked if we want to keep
@@ -80,9 +82,8 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     # We only return :mask if we're trying to mask the service. This prevents
     # flapping when simply trying to disable a masked service.
     return :mask if (@resource[:enable] == :mask) && (output == 'masked')
-    return :true if ['static', 'enabled'].include? output
-    return :false if ['disabled', 'linked', 'indirect', 'masked'].include? output
-    if (output.empty?) && (Facter.value(:osfamily).downcase == 'debian')
+    return :true if (code == 0)
+    if (output.empty?) && (code > 0) && (Facter.value(:osfamily).downcase == 'debian')
       ret = debian_enabled?
       return ret if ret
     end
@@ -101,9 +102,9 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
       return :true
     elsif [101, 105].include?($CHILD_STATUS.exitstatus)
       # 101 is action not allowed, which means we have to do the check manually.
-      # 105 is unknown, which generally means the iniscript does not support query
+      # 105 is unknown, which generally means the initscript does not support query
       # The debian policy states that the initscript should support methods of query
-      # For those that do not, peform the checks manually
+      # For those that do not, perform the checks manually
       # http://www.debian.org/doc/debian-policy/ch-opersys.html
       if get_start_link_count >= 4
         return :true
@@ -144,6 +145,38 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   def statuscmd
     [command(:systemctl), "is-active", @resource[:name]]
+  end
+
+  def restart
+    begin
+      super
+    rescue Puppet::Error => e
+      raise Puppet::Error.new(prepare_error_message(@resource[:name], 'restart', e))
+    end
+  end
+
+  def start
+    begin
+      super
+    rescue Puppet::Error => e
+      raise Puppet::Error.new(prepare_error_message(@resource[:name], 'start', e))
+    end
+  end
+
+  def stop
+    begin
+      super
+    rescue Puppet::Error => e
+      raise Puppet::Error.new(prepare_error_message(@resource[:name], 'stop', e))
+    end
+  end
+
+  def prepare_error_message(name, action, exception)
+    error_return = "Systemd #{action} for #{name} failed!\n"
+    journalctl_command = "journalctl -n 50 --since '5 minutes ago' -u #{name} --no-pager"
+    Puppet.debug("Runing journalctl command to get logs for systemd #{action} failure: #{journalctl_command}")
+    journalctl_output = execute(journalctl_command)
+    error_return << "journalctl log for #{name}:\n#{journalctl_output}"
   end
 end
 

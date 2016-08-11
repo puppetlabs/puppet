@@ -86,21 +86,22 @@ describe 'agent logging' do
       end
 
     else
+      if no_log_dest_set_in(argv)
+        it "when evoked with #{argv}, logs to #{expected[:loggers].inspect} at level #{expected[:level]}" do
+          # This logger is created by the Puppet::Settings object which creates and
+          # applies a catalog to ensure that configuration files and users are in
+          # place.
+          #
+          # It's not something we are specifically testing here since it occurs
+          # regardless of user flags.
+          Puppet::Util::Log.expects(:newdestination).with(instance_of(Puppet::Transaction::Report)).at_least_once
+          expected[:loggers].each do |logclass|
+            Puppet::Util::Log.expects(:newdestination).with(logclass).at_least_once
+          end
+          double_of_bin_puppet_agent_call(argv)
 
-      it "when evoked with #{argv}, logs to #{expected[:loggers].inspect} at level #{expected[:level]}" do
-        # This logger is created by the Puppet::Settings object which creates and
-        # applies a catalog to ensure that configuration files and users are in
-        # place.
-        #
-        # It's not something we are specifically testing here since it occurs
-        # regardless of user flags.
-        Puppet::Util::Log.expects(:newdestination).with(instance_of(Puppet::Transaction::Report)).at_least_once
-        expected[:loggers].each do |logclass|
-          Puppet::Util::Log.expects(:newdestination).with(logclass).at_least_once
+          expect(Puppet::Util::Log.level).to eq(expected[:level])
         end
-        double_of_bin_puppet_agent_call(argv)
-
-        expect(Puppet::Util::Log.level).to eq(expected[:level])
       end
 
     end

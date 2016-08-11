@@ -40,6 +40,13 @@ module TypeFactory
     PFloatType::DEFAULT
   end
 
+  # Produces the Sensitive type
+  # @api public
+  #
+  def self.sensitive(type = nil)
+    PSensitiveType.new(type)
+  end
+
   # Produces the Numeric type
   # @api public
   #
@@ -157,6 +164,10 @@ module TypeFactory
     hash.nil? || hash.empty? ? PObjectType::DEFAULT : PObjectType.new(hash)
   end
 
+  def self.type_set(hash = nil)
+    hash.nil? || hash.empty? ? PTypeSetType::DEFAULT : PTypeSetType.new(hash)
+  end
+
   def self.tuple(types = [], size_type = nil)
     PTupleType.new(types.map {|elem| type_of(elem) }, size_type)
   end
@@ -181,13 +192,7 @@ module TypeFactory
   # @api public
   #
   def self.regexp(pattern = nil)
-    if pattern
-      t = PRegexpType.new(pattern.is_a?(Regexp) ? pattern.inspect[1..-2] : pattern)
-      t.regexp unless pattern.nil? # compile pattern to catch errors
-      t
-    else
-      PRegexpType::DEFAULT
-    end
+    pattern ?  PRegexpType.new(pattern) : PRegexpType::DEFAULT
   end
 
   def self.pattern(*regular_expressions)
@@ -199,10 +204,7 @@ module TypeFactory
         re_t
 
       when Regexp
-        # Regep.to_s includes options user did not enter and does not escape source
-        # to work either as a string or as a // regexp. The inspect method does a better
-        # job, but includes the //
-        PRegexpType.new(re.inspect[1..-2])
+        PRegexpType.new(re)
 
       when PRegexpType
         re
@@ -311,7 +313,7 @@ module TypeFactory
 
   # Produces an instance of the SemVer type
   def self.sem_ver(*ranges)
-    ranges.empty? ? PSemVerType::DEFAULT : PSemVerType::new(*ranges)
+    ranges.empty? ? PSemVerType::DEFAULT : PSemVerType::new(ranges)
   end
 
   # Produces a PResourceType with a String type_name A PResourceType with a nil

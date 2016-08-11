@@ -521,7 +521,7 @@ class Puppet::Node::Environment
     raise error
   end
 
-  # Return an empty toplevel hostclass to indicate that no file was loaded
+  # Return an empty top-level hostclass to indicate that no file was loaded
   #
   # @return [Puppet::Parser::AST::Hostclass]
   def empty_parse_result

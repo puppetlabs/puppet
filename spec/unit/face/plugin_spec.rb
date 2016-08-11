@@ -12,10 +12,6 @@ describe Puppet::Face[:plugin, :current] do
   end
 
   context "download" do
-    before :each do
-      Puppet.features.stubs(:external_facts?).returns(true)
-    end
-
     it "downloads plugins and external facts" do
       Puppet::Configurer::Downloader.any_instance.expects(:evaluate).twice.returns([])
 

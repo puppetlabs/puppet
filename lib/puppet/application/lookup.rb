@@ -144,7 +144,7 @@ http://links.puppetlabs.com/lookup-docs
 
 OPTIONS
 -------
-These options and their effects are decribed in more detail in
+These options and their effects are described in more detail in
 the puppet lookup function linked to above.
 
 * --help:
@@ -174,7 +174,7 @@ the puppet lookup function linked to above.
 
 * --explain
   Print an explanation for the details of how the lookup performed rather
-  than the value returned for the key. The explaination will describe how
+  than the value returned for the key. The explanation will describe how
   the result was obtained or why lookup failed to obtain the result.
 
 * --explain-options
@@ -294,7 +294,7 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
     generate_scope do |scope|
       lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, explain ? Puppet::Pops::Lookup::Explainer.new(explain_options, only_explain_options) : nil)
       begin
-        type = options.include?(:type) ? Puppet::Pops::Types::TypeParser.new.parse(options[:type], scope) : nil
+        type = options.include?(:type) ? Puppet::Pops::Types::TypeParser.singleton.parse(options[:type], scope) : nil
         result = Puppet::Pops::Lookup.lookup(keys, type, options[:default_value], use_default_value, merge_options, lookup_invocation)
         puts renderer.render(result) unless explain
       rescue Puppet::DataBinding::LookupError

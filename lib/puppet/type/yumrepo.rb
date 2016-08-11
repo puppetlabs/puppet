@@ -11,15 +11,15 @@ Puppet::Type.newtype(:yumrepo) do
 
     Continuation lines that yum supports (for the `baseurl`, for example)
     are not supported. This type does not attempt to read or verify the
-    exinstence of files listed in the `include` attribute."
+    existence of files listed in the `include` attribute."
 
   # Ensure yumrepos can be removed too.
   ensurable
   # Doc string for properties that can be made 'absent'
   ABSENT_DOC="Set this to `absent` to remove it from the file completely."
   # False can be false/0/no and True can be true/1/yes in yum.
-  YUM_BOOLEAN=/^(True|False|0|1|No|Yes)$/i
-  YUM_BOOLEAN_DOC="Valid values are: False/0/No or True/1/Yes."
+  YUM_BOOLEAN=/^(true|false|0|1|no|yes)$/
+  YUM_BOOLEAN_DOC="Valid values are: false/0/no or true/1/yes."
 
   # Common munge logic for YUM_BOOLEAN values. Munges for two requirements:
   # 1) Because of how regex validation works in Puppet::Parameter::Value,

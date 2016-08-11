@@ -276,7 +276,7 @@ module Puppet
     # provider. So far, the logic that determines uniqueness appears to just
     # "Do The Right Thing™" when the provider is explicitly set by the user.
     #
-    # The following resources will be seen as uniqe by puppet:
+    # The following resources will be seen as unique by puppet:
     #
     #     # Uniqueness Key: ['mysql', nil]
     #     package{'mysql': }

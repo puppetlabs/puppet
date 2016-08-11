@@ -91,10 +91,6 @@ describe Puppet::Parser::Scope do
     }.to raise_error(Puppet::DevError, /you must pass a compiler instance/)
   end
 
-  it "should use the resource type collection helper to find its known resource types" do
-    expect(Puppet::Parser::Scope.ancestors).to include(Puppet::Resource::TypeCollectionHelper)
-  end
-
   describe "when custom functions are called" do
     let(:env) { Puppet::Node::Environment.create(:testing, []) }
     let(:compiler) { Puppet::Parser::Compiler.new(Puppet::Node.new('foo', :environment => env)) }
@@ -230,7 +226,7 @@ describe Puppet::Parser::Scope do
 
     describe "and the variable is qualified" do
       before :each do
-        @known_resource_types = @scope.known_resource_types
+        @known_resource_types = @scope.environment.known_resource_types
 
         node      = Puppet::Node.new('localhost')
         @compiler = Puppet::Parser::Compiler.new(node)

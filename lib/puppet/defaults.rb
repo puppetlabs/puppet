@@ -112,7 +112,8 @@ module Puppet
         Valid values for this setting are:
 
         * `deprecations` --- disables deprecation warnings.
-        * `undefined_variables` --- disables warnings about non existing variables.",
+        * `undefined_variables` --- disables warnings about non existing variables.
+        * `undefined_resources` --- disables warnings about non existing resources.",
       :hook      => proc do |value|
         values = munge(value)
         valid   = %w[deprecations undefined_variables undefined_resources]
@@ -418,7 +419,7 @@ deprecated and has been replaced by 'always_retry_plugins'."
     :data_binding_terminus => {
       :type    => :terminus,
       :default => "hiera",
-      :desc    => "Where to retrive information about data.",
+      :desc    => "Where to retrieve information about data.",
     },
     :hiera_config => {
       :default => lambda do
@@ -639,7 +640,7 @@ deprecated and has been replaced by 'always_retry_plugins'."
     Puppet.define_settings(
     :main,
 
-    # We have to downcase the fqdn, because the current ssl stuff (as oppsed to in master) doesn't have good facilities for
+    # We have to downcase the fqdn, because the current ssl stuff (as opposed to in master) doesn't have good facilities for
     # manipulating naming.
     :certname => {
       :default => lambda { Puppet::Settings.default_certname.downcase },
@@ -1073,7 +1074,7 @@ EOT
         this path as a directory if one exists or if the path ends with a / or \\.
 
         Setting a global value for `manifest` in puppet.conf is not allowed
-        (but it can be overridden from them commandline). Please use
+        (but it can be overridden from the commandline). Please use
         directory environments instead. If you need to use something other than the
         environment's `manifests` directory as the main manifest, you can set
         `manifest` in environment.conf. For more info, see
@@ -1226,7 +1227,7 @@ EOT
       field for authorization.
 
       Note that the name of the HTTP header gets munged by the web server
-      common gateway inteface: an `HTTP_` prefix is added, dashes are converted
+      common gateway interface: an `HTTP_` prefix is added, dashes are converted
       to underscores, and all letters are uppercased.  Thus, to use the
       `X-Client-DN` header, this setting should be `HTTP_X_CLIENT_DN`.",
     },
@@ -1237,7 +1238,7 @@ EOT
       client successfully authenticated, and anything else otherwise.
 
       Note that the name of the HTTP header gets munged by the web server
-      common gateway inteface: an `HTTP_` prefix is added, dashes are converted
+      common gateway interface: an `HTTP_` prefix is added, dashes are converted
       to underscores, and all letters are uppercased.  Thus, to use the
       `X-Client-Verify` header, this setting should be
       `HTTP_X_CLIENT_VERIFY`.",
@@ -1347,6 +1348,14 @@ EOT
         this file reflects the state discovered through interacting
         with clients."
       },
+    :transactionstorefile => {
+      :default => "$statedir/transactionstore.yaml",
+      :type => :file,
+      :mode => "0660",
+      :desc => "Transactional storage file for persisting data between
+        transactions for the purposes of infering information (such as
+        corrective_change) on new data received."
+    },
     :clientyamldir => {
       :default => "$vardir/client_yaml",
       :type => :directory,
@@ -1395,7 +1404,25 @@ EOT
     },
     :server => {
       :default => "puppet",
-      :desc => "The puppet master server to which the puppet agent should connect."
+      :desc => "The puppet master server to which the puppet agent should connect.",
+      :call_hook => :on_initialize_and_write,
+      :hook => proc { |value|
+        if Puppet.settings.set_by_config?(:server) && Puppet.settings.set_by_config?(:server_list)
+          Puppet.deprecation_warning('Attempted to set both server and server_list. Server setting will not be used.', :SERVER_DUPLICATION)
+        end
+      }
+    },
+    :server_list => {
+      :default => [],
+      :type => :server_list,
+      :desc => "The list of puppet master servers to which the puppet agent should connect,
+        in the order that they will be tried.",
+      :call_hook => :on_initialize_and_write,
+      :hook => proc { |value|
+        if Puppet.settings.set_by_config?(:server) && Puppet.settings.set_by_config?(:server_list)
+          Puppet.deprecation_warning('Attempted to set both server and server_list. Server setting will not be used.', :SERVER_DUPLICATION)
+        end
+      }
     },
     :use_srv_records => {
       :default    => false,

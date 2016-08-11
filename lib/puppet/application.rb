@@ -75,7 +75,7 @@ module Puppet
 # Refer to +OptionParser+ documentation for the exact format.
 # * If the option method is given a block, this one will be called whenever
 # the option is encountered in the command-line argument.
-# * If the option method has no block, a default functionnality will be used, that
+# * If the option method has no block, a default functionality will be used, that
 # stores the argument (or true/false if the option doesn't require an argument) in
 # the global (to the application) options array.
 # * If a given option was not defined by a the +option+ method, but it exists as a Puppet settings:
@@ -83,7 +83,7 @@ module Puppet
 #  * if +unknown+ wasn't used, then the option/argument is handed to Puppet.settings.handlearg for
 #    a default behavior
 #
-# --help is managed directly by the Puppet::Application class, but can be overriden.
+# --help is managed directly by the Puppet::Application class, but can be overridden.
 #
 # === Setup
 # Applications can use the setup block to perform any initialization.
@@ -357,8 +357,10 @@ class Application
   end
 
   def setup_logs
-    if options[:debug] || options[:verbose]
-      Puppet::Util::Log.newdestination(:console)
+    unless options[:setdest]
+      if options[:debug] || options[:verbose]
+        Puppet::Util::Log.newdestination(:console)
+      end
     end
 
     set_log_level

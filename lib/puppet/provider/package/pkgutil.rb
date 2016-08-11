@@ -78,7 +78,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
   # Turn our pkgutil -c listing into a hash for a single package.
   def pkgsingle(resource)
     # The --single option speeds up the execution, because it queries
-    # the package managament system for one package only.
+    # the package management system for one package only.
     command = ["-c", "--single", resource[:name]]
     self.class.parse_pkglist(run_pkgutil(resource, command), { :justme => resource[:name] })
   end

@@ -3,8 +3,8 @@ confine :except, :platform => 'windows'
 confine :except, :platform => /^cisco_/ # See PUP-5828
 
 name = "pl#{rand(999999).to_i}"
-gid1  = rand(999999).to_i
-gid2  = rand(999999).to_i
+gid1  = (rand(989999).to_i + 10000)
+gid2  = (rand(989999).to_i + 10000)
 
 agents.each do |agent|
   step "ensure that the group exists with gid #{gid1}"

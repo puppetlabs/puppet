@@ -15,6 +15,8 @@
         "puppet_version",
         "kind",
         "status",
+        "noop",
+        "noop_pending",
         "environment"
     ],
 
@@ -112,10 +114,15 @@
             ]
         },
 
+        "master_used": {
+            "description": "The name of the master that was used to compile the catalog. If failover occurred, this will hold the first master successfully contacted. If this run had no master (e.g. a `puppet apply` run), this field will be blank",
+            "type": "string"
+        },
+
         "report_format": {
             "description": "The report format version documented by this schema",
             "type":        "integer",
-            "enum":        ["5", 5]
+            "enum":        ["6", 6]
         },
 
         "puppet_version": {
@@ -140,9 +147,24 @@
             ]
         },
 
+        "noop": {
+            "description": "Whether the puppet run was started in noop mode",
+            "type":        "boolean"
+        },
+
+        "noop_pending": {
+            "description": "Whether there are changes that we decided not to apply because of noop",
+            "type":        "boolean"
+        },
+
         "environment": {
             "description": "The name of the environment that was used for the puppet run (e.g. \"production\").",
             "type":        "string"
+        },
+
+        "corrective_change": {
+            "description": "True if a change or noop event in this report was caused by an unexpected change to the system between Puppet runs.",
+            "type":        "boolean"
         }
     },
 
@@ -287,7 +309,8 @@
                                     "skipped",
                                     "failed_to_restart",
                                     "restarted",
-                                    "scheduled"
+                                    "scheduled",
+                                    "corrective_change"
                                 ]
                             },
                             {
@@ -300,7 +323,8 @@
                                     "Skipped",
                                     "Failed to restart",
                                     "Restarted",
-                                    "Scheduled"
+                                    "Scheduled",
+                                    "Corrective change"
                                 ]
                             },
                             {
@@ -509,6 +533,11 @@
                     "description": "An array of strings; each element represents a container (type or class) that, together, make up the path of the resource in the catalog.",
                     "type":        "array",
                     "items":       { "type": "string" }
+                },
+
+                "corrective_change": {
+                    "description": "True if a change or noop event on this resource was caused by an unexpected change to the system between Puppet runs.",
+                    "type":        "boolean"
                 }
             },
 
@@ -520,7 +549,8 @@
                 "tags",
                 "events",
                 "skipped",
-                "containment_path"
+                "containment_path",
+                "corrective_change"
             ],
             "additionalProperties":   false
         },
@@ -582,6 +612,11 @@
                     "type":        "string"
                 },
 
+                "redacted": {
+                  "description": "Whether this event has been redacted",
+                  "type": "boolean"
+                },
+
                 "status": {
                     "description": "One of the following strings:\n\n* `success` - property was out of sync, and was successfully changed to be in sync.\n* `failure`- property was out of sync, and couldn't be changed to be in sync due to an error.\n* `noop` - property was out of sync, and wasn't changed due to noop mode.\n* `audit` - property was in sync, and was being audited.\n\ndepending on the type of the event. Always `audit` in reports of `inspect` kind.\n",
                     "enum": [
@@ -594,6 +629,11 @@
                 "time": {
                     "description": "The time at which the property was evaluated. In ISO 8601 format with 9 characters second-fragment",
                     "type":        "string"
+                },
+
+                "corrective_change": {
+                    "description": "True if this event was caused by an unexpected change to the system between Puppet runs.",
+                    "type":        "boolean"
                 }
             },
             "required": [
@@ -602,7 +642,8 @@
                 "message",
                 "name",
                 "status",
-                "time"
+                "time",
+                "corrective_change"
             ],
 
             "additionalProperties": false

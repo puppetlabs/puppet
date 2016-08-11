@@ -446,7 +446,7 @@ Puppet::Type.newtype(:cron) do
   # @api public
   #
   # @note This overrides the Puppet::Type method in order to handle
-  #   an edge case that has so far been observed during testig only.
+  #   an edge case that has so far been observed during testing only.
   #   Without forcing the should-value for the user property to be
   #   identical to the original cron file, purging from a fixture
   #   will not work, because the user property defaults to the user

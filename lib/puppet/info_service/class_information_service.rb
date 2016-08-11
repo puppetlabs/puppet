@@ -36,8 +36,7 @@ class Puppet::InfoService::ClassInformationService
   private
 
   def type_parser
-    # Safe to cache this as it would otherwise constantly build up the visitor cache
-    @@type_parser ||= Puppet::Pops::Types::TypeParser.new
+    Puppet::Pops::Types::TypeParser.singleton
   end
 
   def literal_evaluator

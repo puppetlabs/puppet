@@ -33,7 +33,7 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
   # Valid attributes to be managed by this provider.
   # It is a list with of hash
   #  :aix_attr      AIX command attribute name
-  #  :puppet_prop   Puppet propertie name
+  #  :puppet_prop   Puppet property name
   #  :to            Method to adapt puppet property to aix command value. Optional.
   #  :from          Method to adapt aix command value to puppet property. Optional
   self.attribute_mapping = [
@@ -94,9 +94,9 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
 
 
   #--------------
-  # Overwrite get_arguments to add the attributes arguments
+  # Overwrite get_arguments to add the attributes' arguments
   def get_arguments(key, value, mapping, objectinfo)
-    # In the case of attributes, return a list of key=vlaue
+    # In the case of attributes, return a list of key=value
     if key == :attributes
       raise Puppet::Error, "Attributes must be a list of pairs key=value on #{@resource.class.name}[#{@resource.name}]" \
         unless value and value.is_a? Hash
@@ -106,7 +106,7 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
   end
 
   def filter_attributes(hash)
-    # Return only not managed attributtes.
+    # Return only not managed attributes.
     hash.select {
         |k,v| !self.class.attribute_mapping_from.include?(k) and
                 !self.class.attribute_ignore.include?(k)

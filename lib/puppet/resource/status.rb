@@ -30,7 +30,7 @@ module Puppet
       attr_accessor :evaluation_time
 
       # Boolean status types set while evaluating `@real_resource`.
-      STATES = [:skipped, :failed, :failed_to_restart, :restarted, :changed, :out_of_sync, :scheduled]
+      STATES = [:skipped, :failed, :failed_to_restart, :restarted, :changed, :out_of_sync, :scheduled, :corrective_change]
       attr_accessor *STATES
 
       # @!attribute [r] source_description
@@ -83,6 +83,10 @@ module Puppet
       #     while evaluating `@real_resource`.
       attr_reader :events
 
+      # @!attribute [r] corrective_change
+      #   @return [Boolean] true if the resource contained a corrective change.
+      attr_reader :corrective_change
+
       # @!attribute [rw] failed_dependencies
       #   @return [Array<Puppet::Resource>] A cache of all
       #   dependencies of this resource that failed to apply.
@@ -130,6 +134,9 @@ module Puppet
           @out_of_sync_count += 1
           @out_of_sync = true
         end
+        if event.corrective_change
+          @corrective_change = true
+        end
       end
 
       def failed_because(detail)
@@ -153,6 +160,7 @@ module Puppet
         @out_of_sync = false
         @skipped = false
         @failed = false
+        @corrective_change = false
 
         @file = resource.file
         @line = resource.line
@@ -181,7 +189,7 @@ module Puppet
         @changed = data['changed']
         @skipped = data['skipped']
         @failed = data['failed']
-
+        @corrective_change = data['corrective_change']
         @events = data['events'].map do |event|
           # in YAML (for reports) we serialize this as an object, but
           # in PSON it becomes a hash. Depending on where we came from
@@ -212,6 +220,7 @@ module Puppet
           'change_count' => @change_count,
           'out_of_sync_count' => @out_of_sync_count,
           'events' => @events,
+          'corrective_change' => @corrective_change,
         }
       end
 

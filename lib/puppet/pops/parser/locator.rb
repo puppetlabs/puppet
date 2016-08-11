@@ -8,7 +8,7 @@ class Locator
   #
   def self.locator(string, file, index = nil, char_offsets = false)
     if char_offsets
-      LocatorForChars.new(string, file, index);
+      LocatorForChars.new(string, file, index)
     else
       Locator19.new(string, file, index)
     end
@@ -205,6 +205,15 @@ class Locator
       return low
     end
 
+    def hash
+      [string, file, line_index].hash
+    end
+
+    # Equal method needed by serializer to perform tabulation
+    def eql?(o)
+      self.class == o.class && string == o.string && file == o.file && line_index == o.line_index
+    end
+
     # Common impl for 18 and 19 since scanner is byte based
     def compute_line_index
       scanner = StringScanner.new(string)
@@ -262,6 +271,26 @@ class Locator
   # strings are frozen).
   #
   class Locator19 < AbstractLocator
+    include Types::PuppetObject
+
+    def self._ptype
+      @type
+    end
+
+    # The Locator is not part of the Ecore model so no ObjectType is automatically inferred. Instead the
+    # type is explicitly added here.
+    # TODO: LocatorForChars is never added. It looks like it could be removed (remnant from Ruby 1.8 compatibility?)
+    # @api private
+    def self.register_ptype(loader, ir)
+      @type = Pcore::create_object_type(loader, ir, self, 'Puppet::AST::Locator', 'Any',
+        'string' => Types::PStringType::DEFAULT,
+        'file' => Types::PStringType::DEFAULT,
+        'line_index' => {
+          Types::KEY_TYPE => Types::POptionalType.new(Types::PArrayType.new(Types::PIntegerType::DEFAULT)),
+          Types::KEY_VALUE => nil
+        }
+      ).resolve(Types::TypeParser.singleton, loader)
+    end
 
     # Returns the offset on line (first offset on a line is 0).
     # Ruby 19 is multibyte but has no character position methods, must use byteslice

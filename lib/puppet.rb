@@ -273,6 +273,7 @@ end
 #  effort, but I think we should strive for it and revisit this at some point.  --cprice 2012-03-16
 
 require 'puppet/indirector'
+require 'puppet/compilable_resource_type'
 require 'puppet/type'
 require 'puppet/resource'
 require 'puppet/parser'

@@ -3,30 +3,23 @@ require_relative 'ruby_generator'
 module Puppet::Pops
 module Types
 
+KEY_ATTRIBUTES = 'attributes'.freeze
+KEY_CHECKS = 'checks'.freeze
+KEY_EQUALITY = 'equality'.freeze
+KEY_EQUALITY_INCLUDE_TYPE = 'equality_include_type'.freeze
+KEY_FINAL = 'final'.freeze
+KEY_FUNCTIONS = 'functions'.freeze
+KEY_KIND = 'kind'.freeze
+KEY_OVERRIDE = 'override'.freeze
+KEY_PARENT = 'parent'.freeze
+
 # @api public
-class PObjectType < PAnyType
-  KEY_ANNOTATIONS = 'annotations'.freeze
-  KEY_ATTRIBUTES = 'attributes'.freeze
-  KEY_CHECKS = 'checks'.freeze
-  KEY_EQUALITY = 'equality'.freeze
-  KEY_EQUALITY_INCLUDE_TYPE = 'equality_include_type'.freeze
-  KEY_FINAL = 'final'.freeze
-  KEY_FUNCTIONS = 'functions'.freeze
-  KEY_KIND = 'kind'.freeze
-  KEY_NAME = 'name'.freeze
-  KEY_OVERRIDE = 'override'.freeze
-  KEY_PARENT = 'parent'.freeze
-  KEY_TYPE = 'type'.freeze
-  KEY_VALUE = 'value'.freeze
+class PObjectType < PMetaType
 
   ATTRIBUTE_KIND_CONSTANT = 'constant'.freeze
   ATTRIBUTE_KIND_DERIVED = 'derived'.freeze
   ATTRIBUTE_KIND_GIVEN_OR_DERIVED = 'given_or_derived'.freeze
   TYPE_ATTRIBUTE_KIND = TypeFactory.enum(ATTRIBUTE_KIND_CONSTANT, ATTRIBUTE_KIND_DERIVED, ATTRIBUTE_KIND_GIVEN_OR_DERIVED)
-
-  TYPE_ANNOTATION_KEY_TYPE = PType::DEFAULT # TBD
-  TYPE_ANNOTATION_VALUE_TYPE = PStructType::DEFAULT #TBD
-  TYPE_ANNOTATIONS = PHashType.new(TYPE_ANNOTATION_KEY_TYPE, TYPE_ANNOTATION_VALUE_TYPE)
 
   TYPE_OBJECT_NAME = Pcore::TYPE_QUALIFIED_REFERENCE
   TYPE_MEMBER_NAME = PPatternType.new([PRegexpType.new(Patterns::PARAM_NAME)])
@@ -67,9 +60,14 @@ class PObjectType < PAnyType
     KEY_ANNOTATIONS =>  TypeFactory.optional(TYPE_ANNOTATIONS)
   })
 
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'AnyType', 'i12n_hash' => TYPE_OBJECT_I12N)
+  end
+
   # @abstract Encapsulates behavior common to {PAttribute} and {PFunction}
   # @api public
   class PAnnotatedMember
+    include Annotatable
 
     # @return [PObjectType] the object type containing this member
     # @api public
@@ -82,10 +80,6 @@ class PObjectType < PAnyType
     # @return [PAnyType] the type of this member
     # @api public
     attr_reader :type
-
-    # @return [Hash{PType => Hash}] the annotations or `nil`
-    # @api public
-    attr_reader :annotations
 
     # @param name [String] The name of the member
     # @param container [PObjectType] The containing object type
@@ -103,8 +97,7 @@ class PObjectType < PAnyType
       @override = false if @override.nil?
       @final = i12n_hash[KEY_FINAL]
       @final = false if @final.nil?
-      @annotations = i12n_hash[KEY_ANNOTATIONS]
-      @annotations.freeze unless @annotations.nil?
+      init_annotatable(i12n_hash)
     end
 
     # Delegates to the contained type
@@ -112,8 +105,8 @@ class PObjectType < PAnyType
     # @param guard [RecursionGuard] guard against recursion. Only used by internal calls
     # @api public
     def accept(visitor, guard)
+      annotatable_accept(visitor, guard)
       @type.accept(visitor, guard)
-      @annotations.each_key { |key| key.accept(visitor, guard) } unless @annotations.nil?
     end
 
     # Checks if the this _member_ overrides an inherited member, and if so, that this member is declared with override = true and that
@@ -260,7 +253,8 @@ class PObjectType < PAnyType
         if @kind == ATTRIBUTE_KIND_DERIVED || @kind == ATTRIBUTE_KIND_GIVEN_OR_DERIVED
           raise Puppet::ParseError, "#{label} of kind '#{@kind}' cannot be combined with an attribute value"
         end
-        @value = TypeAsserter.assert_instance_of(nil, type, i12n_hash[KEY_VALUE]) {"#{label} #{KEY_VALUE}" }
+        v = i12n_hash[KEY_VALUE]
+        @value = v == :default ? v : TypeAsserter.assert_instance_of(nil, type, v) {"#{label} #{KEY_VALUE}" }
       else
         raise Puppet::ParseError, "#{label} of kind 'constant' requires a value" if @kind == ATTRIBUTE_KIND_CONSTANT
         @value = :undef # Not to be confused with nil or :default
@@ -375,48 +369,50 @@ class PObjectType < PAnyType
     @new_function ||= create_new_function(loader)
   end
 
+  # Assign a new instance reader to this type
+  # @param [Serialization::InstanceReader] reader the reader to assign
   # @api private
+  def reader=(reader)
+    @reader = reader
+  end
+
+  # Assign a new instance write to this type
+  # @param [Serialization::InstanceWriter] the writer to assign
+  # @api private
+  def writer=(writer)
+    @writer = writer
+  end
+
+  # Read an instance of this type from a deserializer
+  # @param [Integer] value_count the number attributes needed to create the instance
+  # @param [Serialization::Deserializer] deserializer the deserializer to read from
+  # @return [Object] the created instance
+  # @api private
+  def read(value_count, deserializer)
+    reader.read(implementation_class, value_count, deserializer)
+  end
+
+  # Write an instance of this type using a serializer
+  # @param [Object] value the instance to write
+  # @param [Serialization::Serializer] the serializer to write to
+  # @api private
+  def write(value, serializer)
+    writer.write(self, value, serializer)
+  end
+
+    # @api private
   def create_new_function(loader)
-    impl_name = Loaders.implementation_registry.module_name_for_type(self)
-    if impl_name.nil?
-      # Use generator to create a default implementation
-      impl_class = RubyGenerator.new.create_class(self)
-      class_name = "Anonymous Ruby class for #{name}"
-    else
-      # Can the mapping be loaded?
-      class_name = impl_name[0]
-      impl_class = ClassLoader.provide(class_name)
+    impl_class = implementation_class
+    class_name = impl_class.name || "Anonymous Ruby class for #{name}"
 
-      raise Puppet::Error, "Unable to load class #{class_name}" if impl_class.nil?
-      unless impl_class < PuppetObject
-        raise Puppet::Error, "Unable to create an instance of #{name}. #{class_name} does not include module #{PuppetObject.name}"
-      end
-    end
-
-    i12n_t = i12n_type
-    from_hash_type = TypeFactory.callable(i12n_t, 1, 1)
-
-    # Create a types and a names array where optional entries ends up last
-    opt_types = []
-    opt_names = []
-    non_opt_types = []
-    non_opt_names = []
-    i12n_t.elements.each do |se|
-      if se.key_type.is_a?(POptionalType)
-        opt_names << se.name
-        opt_types << se.value_type
-      else
-        non_opt_names << se.name
-        non_opt_types << se.value_type
-      end
-    end
-    param_names = non_opt_names + opt_names
-    param_types = non_opt_types + opt_types
+    (param_names, param_types, required_param_count) = parameter_info
 
     # Create the callable with a size that reflects the required and optional parameters
-    param_types << non_opt_types.size
+    param_types << required_param_count
     param_types << param_names.size
+
     create_type = TypeFactory.callable(*param_types)
+    from_hash_type = TypeFactory.callable(i12n_type, 1, 1)
 
     # Create and return a #new_XXX function where the dispatchers are added programmatically.
     Puppet::Functions.create_loaded_function(:"new_#{name}", loader) do
@@ -450,60 +446,61 @@ class PObjectType < PAnyType
   end
 
   # @api private
+  def implementation_class
+    if @implementation_class.nil?
+      impl_name = Loaders.implementation_registry.module_name_for_type(self)
+      if impl_name.nil?
+        # Use generator to create a default implementation
+        @implementation_class = RubyGenerator.new.create_class(self)
+      else
+        # Can the mapping be loaded?
+        class_name = impl_name[0]
+        @implementation_class = ClassLoader.provide(class_name)
+
+        raise Puppet::Error, "Unable to load class #{class_name}" if @implementation_class.nil?
+        unless @implementation_class < PuppetObject || @implementation_class.respond_to?(:ecore)
+          raise Puppet::Error, "Unable to create an instance of #{name}. #{class_name} does not include module #{PuppetObject.name}"
+        end
+      end
+    end
+    @implementation_class
+  end
+
+  # @api private
+  # @return [(Array<String>, Array<PAnyType>, Integer)] array of parameter names, array of parameter types, and a count reflecting the required number of parameters
+  def parameter_info(attr_readers = false)
+    # Create a types and a names array where optional entries ends up last
+    opt_types = []
+    opt_names = []
+    non_opt_types = []
+    non_opt_names = []
+    i12n_type.elements.each do |se|
+      if se.key_type.is_a?(POptionalType)
+        opt_names << (attr_readers ? attr_reader_name(se) : se.name)
+        opt_types << se.value_type
+      else
+        non_opt_names << (attr_readers ? attr_reader_name(se) : se.name)
+        non_opt_types << se.value_type
+      end
+    end
+    param_names = non_opt_names + opt_names
+    param_types = non_opt_types + opt_types
+
+    [param_names, param_types, non_opt_types.size]
+  end
+
+  # @api private
+  def attr_reader_name(se)
+    if se.value_type.is_a?(PBooleanType) || se.value_type.is_a?(POptionalType) && se.value_type.type.is_a?(PBooleanType)
+      "#{se.name}?"
+    else
+      se.name
+    end
+  end
+
+  # @api private
   def include_class_in_equality?
     @equality_include_type && !(@parent.is_a?(PObjectType) && parent.include_class_in_equality?)
-  end
-
-  # Called from the TypeParser once it has found a type using the Loader. The TypeParser will
-  # interpret the contained expression and the resolved type is remembered. This method also
-  # checks and remembers if the resolve type contains self recursion.
-  #
-  # @param type_parser [TypeParser] type parser that will interpret the type expression
-  # @param loader [Loader::Loader] loader to use when loading type aliases
-  # @return [PObjectType] the receiver of the call, i.e. `self`
-  # @api private
-  def resolve(type_parser, loader)
-    unless @i12n_hash_expression.nil?
-      @self_recursion = true # assumed while it being found out below
-
-      i12n_hash_expression = @i12n_hash_expression
-      @i12n_hash_expression = nil
-      if i12n_hash_expression.is_a?(Model::LiteralHash)
-        i12n_hash = resolve_literal_hash(type_parser, loader, i12n_hash_expression)
-      else
-        i12n_hash = resolve_hash(type_parser, loader, i12n_hash_expression)
-      end
-      initialize_from_hash(i12n_hash)
-
-      # Find out if this type is recursive. A recursive type has performance implications
-      # on several methods and this knowledge is used to avoid that for non-recursive
-      # types.
-      guard = RecursionGuard.new
-      accept(NoopTypeAcceptor::INSTANCE, guard)
-      @self_recursion = guard.recursive_this?(self)
-    end
-    self
-  end
-
-  def resolve_literal_hash(type_parser, loader, i12n_hash_expression)
-    type_parser.interpret_LiteralHash(i12n_hash_expression, loader)
-  end
-
-  def resolve_hash(type_parser, loader, i12n_hash)
-    resolve_type_refs(type_parser, loader, i12n_hash)
-  end
-
-  def resolve_type_refs(type_parser, loader, o)
-    case o
-    when Hash
-      Hash[o.map { |k, v| [resolve_type_refs(type_parser, loader, k), resolve_type_refs(type_parser, loader, v)] }]
-    when Array
-      o.map { |e| resolve_type_refs(type_parser, loader, e) }
-    when PTypeReferenceType
-      o.resolve(type_parser, loader)
-    else
-      o
-    end
   end
 
   # @api private
@@ -584,9 +581,7 @@ class PObjectType < PAnyType
     @equality = equality
 
     @checks = i12n_hash[KEY_CHECKS]
-
-    @annotations = i12n_hash[KEY_ANNOTATIONS]
-    @annotations.freeze unless @annotations.nil?
+    init_annotatable(i12n_hash)
   end
 
   def [](name)
@@ -604,7 +599,6 @@ class PObjectType < PAnyType
       @parent.accept(visitor, g) unless parent.nil?
       @attributes.values.each { |a| a.accept(visitor, g) }
       @functions.values.each { |f| f.accept(visitor, g) }
-      @annotations.each_key { |key| key.accept(visitor, g) } unless @annotations.nil?
     end
   end
 
@@ -644,14 +638,13 @@ class PObjectType < PAnyType
   # @return [Hash{String=>Object}] the features hash
   # @api public
   def i12n_hash(include_name = true)
-    result = {}
+    result = super()
     result[KEY_NAME] = @name if include_name && !@name.nil?
     result[KEY_PARENT] = @parent unless @parent.nil?
     result[KEY_ATTRIBUTES] = compressed_members_hash(@attributes) unless @attributes.empty?
     result[KEY_FUNCTIONS] = compressed_members_hash(@functions) unless @functions.empty?
     result[KEY_EQUALITY] = @equality unless @equality.nil?
     result[KEY_CHECKS] = @checks unless @checks.nil?
-    result[KEY_ANNOTATIONS] = @annotations unless @annotations.nil?
     result
   end
 
@@ -739,14 +732,6 @@ class PObjectType < PAnyType
       raise Puppet::Error, "The Object type '#{originator.label}' inherits from itself" if @parent.equal?(originator)
       @parent.check_self_recursion(originator)
     end
-  end
-
-  # Returns the expanded string the form of the alias, e.g. <alias name> = <resolved type>
-  #
-  # @return [String] the expanded form of this alias
-  # @api public
-  def to_s
-    TypeFormatter.singleton.alias_expanded_string(self)
   end
 
   # @api private
@@ -840,6 +825,14 @@ class PObjectType < PAnyType
     else
       yield(guard)
     end
+  end
+
+  def reader
+    @reader ||= Serialization::ObjectReader::INSTANCE
+  end
+
+  def writer
+    @writer ||= Serialization::ObjectWriter::INSTANCE
   end
 end
 end

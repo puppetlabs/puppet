@@ -6,7 +6,7 @@ module Types
 describe TypeParser do
   extend RSpec::Matchers::DSL
 
-  let(:parser) { TypeParser.new }
+  let(:parser) { TypeParser.singleton }
   let(:types)  { TypeFactory }
   it "rejects a puppet expression" do
     expect { parser.parse("1 + 1") }.to raise_error(Puppet::ParseError, /The expression <1 \+ 1> is not a valid type specification/)

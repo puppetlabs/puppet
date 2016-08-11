@@ -30,7 +30,7 @@ module Puppet::Util::HttpProxy
   # Other documentation suggests that just a leading '.' indicates a domain
   # level exclusion, e.g.:
   #   .example.com
-  # We'll accomodate both here.
+  # We'll accommodate both here.
   def self.no_proxy?(dest)
     unless no_proxy_env = ENV["no_proxy"] || ENV["NO_PROXY"]
       return false

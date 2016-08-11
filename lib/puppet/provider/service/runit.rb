@@ -17,7 +17,7 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
     * `/etc/sv`
     * `/var/lib/service`
 
-    or this can be overriden in the service resource parameters::
+    or this can be overridden in the service resource parameters:
 
         service { 'myservice':
           provider => 'runit',

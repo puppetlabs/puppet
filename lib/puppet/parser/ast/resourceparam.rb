@@ -3,6 +3,11 @@
 class Puppet::Parser::AST::ResourceParam < Puppet::Parser::AST::Branch
   attr_accessor :value, :param, :add
 
+  def initialize(argshash)
+    Puppet.warn_once('deprecation', 'AST::ResourceParam', 'Use of Puppet::Parser::AST::ResourceParam is deprecated and not fully functional')
+    super(argshash)
+  end
+
   def each
     [@param, @value].each { |child| yield child }
   end

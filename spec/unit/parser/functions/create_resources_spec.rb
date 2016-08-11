@@ -1,9 +1,11 @@
 require 'puppet'
 require 'spec_helper'
 require 'puppet_spec/compiler'
+require 'puppet_spec/files'
 
 describe 'function for dynamically creating resources' do
   include PuppetSpec::Compiler
+  include PuppetSpec::Files
 
   before :each do
     node      = Puppet::Node.new("floppy", :environment => 'production')
@@ -31,6 +33,35 @@ describe 'function for dynamically creating resources' do
     expect { @scope.function_create_resources(['foo',{},'foo']) }.to raise_error(ArgumentError, 'create_resources(): third argument, if provided, must be a hash')
   end
 
+  context 'when being called from a manifest in a file' do
+    let(:dir) do
+      dir_containing('manifests', {
+              'site.pp' => <<-EOF
+                # comment here to make the call be on a particular
+                # source line (3)
+                create_resources('notify', {
+                  'a'  => { 'message'=>'message a'},
+                  'b'  => { 'message'=>'message b'},
+                  }
+                )
+              EOF
+          }
+      )
+    end
+
+    it 'file and line information where call originates is written to all resources created in one call' do
+      node = Puppet::Node.new('test')
+      file = File.join(dir, 'site.pp')
+      Puppet[:manifest] = file
+      catalog = Puppet::Parser::Compiler.compile(node).filter { |r| r.virtual? }
+
+      expect(catalog.resource(:notify, 'a').file).to eq(file)
+      expect(catalog.resource(:notify, 'a').line).to eq(3)
+      expect(catalog.resource(:notify, 'b').file).to eq(file)
+      expect(catalog.resource(:notify, 'b').line).to eq(3)
+    end
+
+  end
   describe 'when creating native types' do
     it 'empty hash should not cause resources to be added' do
       noop_catalog = compile_to_catalog("create_resources('file', {})")
@@ -41,6 +72,16 @@ describe 'function for dynamically creating resources' do
     it 'should be able to add' do
       catalog = compile_to_catalog("create_resources('file', {'/etc/foo'=>{'ensure'=>'present'}})")
       expect(catalog.resource(:file, "/etc/foo")['ensure']).to eq('present')
+    end
+
+    it 'should pick up and pass on file and line information' do
+      # mock location as the compile_to_catalog sets Puppet[:code} which does not
+      # have file/line support.
+      Puppet::Pops::PuppetStack.expects(:stacktrace).once.returns([['test.pp', 1234]])
+      catalog = compile_to_catalog("create_resources('file', {'/etc/foo'=>{'ensure'=>'present'}})")
+      r = catalog.resource(:file, "/etc/foo")
+      expect(r.file).to eq('test.pp')
+      expect(r.line).to eq(1234)
     end
 
     it 'should be able to add virtual resources' do
@@ -54,16 +95,16 @@ describe 'function for dynamically creating resources' do
       expect(catalog.resource(:file, "/etc/foo").exported).to eq(true)
     end
 
-    it 'should accept multiple types' do
+    it 'should accept multiple resources' do
       catalog = compile_to_catalog("create_resources('notify', {'foo'=>{'message'=>'one'}, 'bar'=>{'message'=>'two'}})")
       expect(catalog.resource(:notify, "foo")['message']).to eq('one')
       expect(catalog.resource(:notify, "bar")['message']).to eq('two')
     end
 
-    it 'should fail to add non-existing type' do
+    it 'should fail to add non-existing resource type' do
       expect do
         @scope.function_create_resources(['create-resource-foo', { 'foo' => {} }])
-      end.to raise_error(/Invalid resource type create-resource-foo/)
+      end.to raise_error(/Unknown resource type: 'create-resource-foo'/)
     end
 
     it 'should be able to add edges' do
@@ -112,7 +153,7 @@ describe 'function for dynamically creating resources' do
 
           create_resources('foocreateresource', {'blah'=>{}})
         MANIFEST
-      }.to raise_error(Puppet::Error, /Foocreateresource\[blah\]: expects a value for parameter 'one' on node test/)
+      }.to raise_error(Puppet::Error, /Foocreateresource\[blah\]: expects a value for parameter 'one'/)
     end
 
     it 'should be able to add multiple defines' do

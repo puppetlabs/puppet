@@ -2,12 +2,12 @@
 # simple `require 'puppet/version'` allows a rubygems gemspec or bundler
 # Gemfile to get the Puppet version of the gem install.
 #
-# The version is programatically settable because we want to allow the
+# The version can be set programmatically because we want to allow the
 # Raketasks and such to set the version based on the output of `git describe`
 
 
 module Puppet
-  PUPPETVERSION = '4.5.4'
+  PUPPETVERSION = '4.6.0'
 
   ##
   # version is a public API method intended to always provide a fast and

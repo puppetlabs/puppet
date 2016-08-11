@@ -1,5 +1,6 @@
 require 'net/http'
 require 'uri'
+require 'json'
 
 require 'puppet/network/http'
 require 'puppet/network/http_pool'
@@ -33,12 +34,68 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     @srv_service || :puppet
   end
 
+  # The logic for server and port is kind of gross. In summary:
+  # IF an endpoint-specific setting is requested AND that setting has been set by the user
+  #    Use that setting.
+  #         The defaults for these settings are the "normal" server/masterport settings, so
+  #         when they are unset we instead want to "fall back" to the failover-selected
+  #         host/port pair.
+  # ELSE IF we have a failover-selected host/port
+  #    Use what the failover logic came up with
+  # ELSE IF the server_list setting is in use
+  #    Use the first entry - failover hasn't happened yet, but that
+  #    setting is still authoritative
+  # ELSE
+  #    Go for the legacy server/masterport settings, and hope for the best
   def self.server
-    Puppet.settings[server_setting || :server]
+    setting = server_setting()
+    if setting && setting != :server && Puppet.settings.set_by_config?(setting)
+      Puppet.settings[setting]
+    else
+      begin
+        Puppet.lookup(:server)
+      rescue
+        if primary_server = Puppet.settings[:server_list][0]
+          Puppet.debug "Dynamically-bound server lookup failed; using first entry"
+          primary_server[0]
+        else
+          setting ||= :server
+          Puppet.debug "Dynamically-bound server lookup failed, falling back to #{setting} setting"
+          Puppet.settings[setting]
+        end
+      end
+    end
   end
 
+  # For port there's a little bit of an extra snag: setting a specific
+  # server setting and relying on the default port for that server is
+  # common, so we also want to check if the assocaited SERVER setting
+  # has been set by the user. If either of those are set we ignore the
+  # failover-selected port.
   def self.port
-    Puppet.settings[port_setting || :masterport].to_i
+    setting = port_setting()
+    srv_setting = server_setting()
+    if (setting && setting != :masterport && Puppet.settings.set_by_config?(setting)) ||
+       (srv_setting && srv_setting != :server && Puppet.settings.set_by_config?(srv_setting))
+      Puppet.settings[setting].to_i
+    else
+      begin
+        Puppet.lookup(:serverport).to_i
+      rescue
+        if primary_server = Puppet.settings[:server_list][0]
+          Puppet.debug "Dynamically-bound port lookup failed; using first entry"
+
+          # Port might not be set, so we want to fallback in that
+          # case. We know we don't need to use `setting` here, since
+          # the default value of every port setting is `masterport`
+          (primary_server[1] || Puppet.settings[:masterport]).to_i
+        else
+          setting ||= :masterport
+          Puppet.debug "Dynamically-bound port lookup failed; falling back to #{setting} setting"
+          Puppet.settings[setting].to_i
+        end
+      end
+    end
   end
 
   # Provide appropriate headers.
@@ -218,7 +275,20 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def convert_to_http_error(response)
-    message = "Error #{response.code} on SERVER: #{(response.body||'').empty? ? response.message : uncompress_body(response)}"
+    if response.body.to_s.empty? && response.respond_to?(:message)
+      returned_message = response.message
+    elsif response['content-type'].is_a?(String)
+      content_type, body = parse_response(response)
+      if content_type =~ /[pj]son/
+        returned_message = JSON.parse(body)["message"]
+      else
+        returned_message = uncompress_body(response)
+      end
+    else
+      returned_message = uncompress_body(response)
+    end
+
+    message = "Error #{response.code} on SERVER: #{returned_message}"
     Net::HTTPError.new(message, response)
   end
 

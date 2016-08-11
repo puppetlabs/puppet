@@ -3,7 +3,7 @@ test_name 'C97760: Bignum in reduce() should not cause exception' do
   extend Puppet::Acceptance::EnvironmentUtils
 
   app_type = File.basename(__FILE__, '.*')
-  tmp_environment = mk_tmp_environment_with_teardown(app_type)
+  tmp_environment = mk_tmp_environment_with_teardown(master, app_type)
   on(master, "chmod -R 666 #{File.join(environmentpath,tmp_environment)}")
 
   step 'On master, create site.pp with bignum' do

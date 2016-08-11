@@ -70,6 +70,24 @@ describe Puppet::Transaction::Report do
     expect(report.cached_catalog_status).to eq("explicitly_requested")
   end
 
+  it "should set noop to true if Puppet[:noop] is true" do
+    Puppet[:noop] = true
+    report = Puppet::Transaction::Report.new("apply")
+    expect(report.noop).to be_truthy
+  end
+
+  it "should set noop to false if Puppet[:noop] is false" do
+    Puppet[:noop] = false
+    report = Puppet::Transaction::Report.new("apply")
+    expect(report.noop).to be_falsey
+  end
+
+  it "should set noop to false if Puppet[:noop] is unset" do
+    Puppet[:noop] = nil
+    report = Puppet::Transaction::Report.new("apply")
+    expect(report.noop).to be_falsey
+  end
+
   it "should take 'environment' as an argument" do
     expect(Puppet::Transaction::Report.new("inspect", "some configuration version", "some environment").environment).to eq("some environment")
   end
@@ -218,7 +236,6 @@ describe Puppet::Transaction::Report do
       end
     end
 
-
     [:time, :resources, :changes, :events].each do |type|
       it "should add #{type} metrics" do
         @report.finalize_report
@@ -332,6 +349,50 @@ describe Puppet::Transaction::Report do
           @report.finalize_report
           expect(metric(:events, status_name)).to eq(9)
         end
+      end
+    end
+
+    describe "for noop events" do
+      it "should have 'noop_pending == false' when no events are available" do
+        add_statuses(3)
+        @report.finalize_report
+        expect(@report.noop_pending).to be_falsey
+      end
+
+      it "should have 'noop_pending == false' when no 'noop' events are available" do
+        add_statuses(3) do |status|
+          ['success', 'audit'].each do |status_name|
+            event = Puppet::Transaction::Event.new
+            event.status = status_name
+            status.add_event(event)
+          end
+        end
+        @report.finalize_report
+        expect(@report.noop_pending).to be_falsey
+      end
+
+      it "should have 'noop_pending == true' when 'noop' events are available" do
+        add_statuses(3) do |status|
+          ['success', 'audit', 'noop'].each do |status_name|
+            event = Puppet::Transaction::Event.new
+            event.status = status_name
+            status.add_event(event)
+          end
+        end
+        @report.finalize_report
+        expect(@report.noop_pending).to be_truthy
+      end
+
+      it "should have 'noop_pending == true' when 'noop' and 'failure' events are available" do
+        add_statuses(3) do |status|
+          ['success', 'failure', 'audit', 'noop'].each do |status_name|
+            event = Puppet::Transaction::Event.new
+            event.status = status_name
+            status.add_event(event)
+          end
+        end
+        @report.finalize_report
+        expect(@report.noop_pending).to be_truthy
       end
     end
   end
@@ -509,6 +570,7 @@ describe Puppet::Transaction::Report do
     report.code_id = "some code id"
     report.catalog_uuid = "some catalog uuid"
     report.cached_catalog_status = "not_used"
+    report.master_used = "test:000"
     report.add_resource_status(status)
     report.finalize_report
     report
@@ -525,6 +587,7 @@ describe Puppet::Transaction::Report do
     report.code_id = "some code id"
     report.catalog_uuid = "some catalog uuid"
     report.cached_catalog_status = "not_used"
+    report.master_used = "test:000"
     report.add_resource_status(status)
     report.finalize_report
     report

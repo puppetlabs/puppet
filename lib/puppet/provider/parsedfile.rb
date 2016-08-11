@@ -109,7 +109,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   # An optional regular expression matched by third party headers.
   #
   # For example, this can be used to filter the vixie cron headers as
-  # erronously exported by older cron versions.
+  # erroneously exported by older cron versions.
   #
   # @api private
   # @abstract Providers based on ParsedFile may implement this to make it
@@ -120,7 +120,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   #   The expression must be tailored to match exactly one third party header.
   # @see drop_native_header
   # @note When specifying regular expressions in multiline mode, avoid
-  #   greedy repititions such as '.*' (use .*? instead). Otherwise, the
+  #   greedy repetitions such as '.*' (use .*? instead). Otherwise, the
   #   provider may drop file content between sparse headers.
   def self.native_header_regex
     nil

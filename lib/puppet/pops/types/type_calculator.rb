@@ -644,6 +644,11 @@ class TypeCalculator
   end
 
   # @api private
+  def infer_Sensitive(o)
+    PSensitiveType.new(infer(o.unwrap))
+  end
+
+  # @api private
   def infer_TrueClass(o)
     PBooleanType::DEFAULT
   end
@@ -726,7 +731,7 @@ class TypeCalculator
 
   # @api private
   def infer_set_Version(o)
-    PSemVerType.new(Semantic::VersionRange.new(o, o))
+    PSemVerType.new([Semantic::VersionRange.new(o, o)])
   end
 
   def unwrap_single_variant(possible_variant)

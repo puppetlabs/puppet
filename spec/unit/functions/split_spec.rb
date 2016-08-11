@@ -18,7 +18,7 @@ describe 'the split function' do
     Puppet.lookup(:loaders).puppet_system_loader.load(:function, 'split').call({}, *args)
   end
 
-  let(:type_parser) { Puppet::Pops::Types::TypeParser.new }
+  let(:type_parser) { Puppet::Pops::Types::TypeParser.singleton }
 
   it 'should raise an Error if there is less than 2 arguments' do
     expect { split('a,b') }.to raise_error(/'split' expects 2 arguments, got 1/)

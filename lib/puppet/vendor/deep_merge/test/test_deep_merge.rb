@@ -213,7 +213,7 @@ class TestDeepMerge < Test::Unit::TestCase
     DeepMerge::deep_merge!(hash_src, hash_dst)
     assert_equal({"property" => {"bedroom_count" => {"king_bed" => [nil, 3], "queen_bed" => [4, nil, 1]}, "bathroom_count" => [nil, "2", "1"]}}, hash_dst)
 
-    # test parameter management for knockout_prefix and overwrite unmergable
+    # test parameter management for knockout_prefix and overwrite unmergeable
     assert_raise(DeepMerge::InvalidParameter) {DeepMerge::deep_merge!(hash_src, hash_dst, {:knockout_prefix => ""})}
     assert_raise(DeepMerge::InvalidParameter) {DeepMerge::deep_merge!(hash_src, hash_dst, {:preserve_unmergeables => true, :knockout_prefix => ""})}
     assert_raise(DeepMerge::InvalidParameter) {DeepMerge::deep_merge!(hash_src, hash_dst, {:preserve_unmergeables => true, :knockout_prefix => "--"})}

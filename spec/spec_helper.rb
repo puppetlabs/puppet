@@ -43,6 +43,10 @@ Pathname.glob("#{dir}/shared_behaviours/**/*.rb") do |behaviour|
   require behaviour.relative_path_from(Pathname.new(dir))
 end
 
+Pathname.glob("#{dir}/shared_examples/**/*.rb") do |behaviour|
+  require behaviour.relative_path_from(Pathname.new(dir))
+end
+
 require 'vcr'
 VCR.configure do |vcr|
   vcr.cassette_library_dir = File.expand_path('vcr/cassettes', PuppetSpec::FIXTURE_DIR)
@@ -147,6 +151,8 @@ RSpec.configure do |config|
     Puppet[:logdir] = "$vardir/log"
     Puppet[:rundir] = "$vardir/run"
     Puppet[:hiera_config] = File.join(base, 'hiera')
+
+    FileUtils.mkdir_p Puppet[:statedir]
 
     Puppet::Test::TestHelper.before_each_test()
   end

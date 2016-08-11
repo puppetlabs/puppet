@@ -16,7 +16,6 @@ module Evaluator
 #
 class LiteralEvaluator
 
-  EMPTY_STRING = ''.freeze
   COMMA_SEPARATOR = ', '.freeze
 
   def initialize

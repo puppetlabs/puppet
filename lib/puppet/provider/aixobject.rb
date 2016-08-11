@@ -26,7 +26,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
   # Valid attributes to be managed by this provider.
   # It is a list of hashes
   #  :aix_attr      AIX command attribute name
-  #  :puppet_prop   Puppet propertie name
+  #  :puppet_prop   Puppet property name
   #  :to            Optional. Method name that adapts puppet property to aix command value.
   #  :from          Optional. Method to adapt aix command line value to puppet property. Optional
   class << self
@@ -226,7 +226,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
       begin
         output = execute(self.lscmd)
         @objectinfo = self.parse_command_output(output)
-        # All attributtes without translation
+        # All attributes without translation
         @objectosinfo = self.parse_command_output(output, nil)
       rescue Puppet::ExecutionFailure => detail
         # Print error if needed. FIXME: Do not check the user here.
@@ -237,7 +237,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
   end
 
   # Like getinfo, but it will not use the mapping to translate the keys and values.
-  # It might be usefult to retrieve some raw information.
+  # It might be useful to retrieve some raw information.
   def getosinfo(refresh = false)
     if @objectosinfo.nil? or refresh == true
       getinfo(refresh)

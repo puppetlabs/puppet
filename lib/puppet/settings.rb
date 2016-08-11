@@ -29,6 +29,7 @@ class Puppet::Settings
   require 'puppet/settings/config_file'
   require 'puppet/settings/value_translator'
   require 'puppet/settings/environment_conf'
+  require 'puppet/settings/server_list_setting'
 
   # local reference for convenience
   PuppetOptionParser = Puppet::Util::CommandLine::PuppetOptionParser
@@ -667,6 +668,7 @@ class Puppet::Settings
       :symbolic_enum   => SymbolicEnumSetting,
       :priority   => PrioritySetting,
       :autosign   => AutosignSetting,
+      :server_list => ServerListSetting
   }
 
   # Create a new setting.  The value is passed in because it's used to determine
@@ -876,7 +878,7 @@ class Puppet::Settings
   #           also supports additional options such as "mode", "owner", "group"
   #       :directory - A (single) directory path; puppet may attempt to create this file depending on how the settings are used.  This type
   #           also supports additional options such as "mode", "owner", "group"
-  #       :path - This is intended to be used for settings whose value can contain multiple directory paths, respresented
+  #       :path - This is intended to be used for settings whose value can contain multiple directory paths, represented
   #           as strings separated by the system path separator (e.g. system path, module path, etc.).
   #     [:mode] => an (optional) octal value to be used as the permissions/mode for :file and :directory settings
   #     [:owner] => optional owner username/uid for :file and :directory settings
@@ -1360,12 +1362,21 @@ Generated on #{Time.now}.
           "Attempt to assign a value to unknown setting #{name.inspect}"
       end
 
-      if default.has_hook?
-        default.handle(value)
-      end
-
+      # This little exception-handling dance ensures that a hook is
+      # able to check whether a value for itself has been explicitly
+      # set, while still preserving the existing value if the hook
+      # throws (as was existing behavior)
+      old_value = @values[name]
       @values[name] = value
-    end
+      begin
+        if default.has_hook?
+          default.handle(value)
+        end
+      rescue Exception => e
+        @values[name] = old_value
+        raise e
+      end
+     end
 
     def inspect
       %Q{<#{self.class}:#{self.object_id} @name="#{@name}" @values="#{@values}">}

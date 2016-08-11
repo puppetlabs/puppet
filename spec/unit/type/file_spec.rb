@@ -342,6 +342,18 @@ describe Puppet::Type.type(:file) do
       expect(file[:path]).to eq(title)
     end
 
+    it "should allow a single slash for a title and create the path" do
+      title = File.expand_path("/")
+      file = described_class.new(:title => title)
+      expect(file[:path]).to eq(title)
+    end
+
+    it "should allow multiple slashes for a title and create the path" do
+      title = File.expand_path("/") + "//"
+      file = described_class.new(:title => title)
+      expect(file[:path]).to eq(File.expand_path("/"))
+    end
+
     it "should set a desired 'ensure' value if none is set and 'content' is set" do
       file = described_class.new(:path => path, :content => "/foo/bar")
       expect(file[:ensure]).to eq(:file)
@@ -350,6 +362,21 @@ describe Puppet::Type.type(:file) do
     it "should set a desired 'ensure' value if none is set and 'target' is set", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
       file = described_class.new(:path => path, :target => File.expand_path(__FILE__))
       expect(file[:ensure]).to eq(:link)
+    end
+
+    describe "marking properties as sensitive" do
+      it "marks content and ensure as sensitive when source is sensitive" do
+        resource = Puppet::Resource.new(:file, make_absolute("/tmp/foo"), :parameters => {:source => make_absolute('/tmp/bar')}, :sensitive_parameters => [:source])
+        file = described_class.new(resource)
+        expect(file.property(:content).sensitive).to eq true
+        expect(file.property(:ensure).sensitive).to eq true
+      end
+
+      it "marks ensure as sensitive when content is sensitive" do
+        resource = Puppet::Resource.new(:file, make_absolute("/tmp/foo"), :parameters => {:content => 'hello world!'}, :sensitive_parameters => [:content])
+        file = described_class.new(resource)
+        expect(file.property(:ensure).sensitive).to eq true
+      end
     end
   end
 

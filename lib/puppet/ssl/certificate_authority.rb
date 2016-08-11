@@ -127,7 +127,7 @@ class Puppet::SSL::CertificateAuthority
     host.generate_certificate_request(:dns_alt_names => san)
     # CSR may have been implicitly autosigned, generating a certificate
     # Or sign explicitly
-    host.certificate || sign(name, !!san)
+    host.certificate || sign(name, {allow_dns_alt_names: !!san})
   end
 
   # Generate our CA certificate.
@@ -145,7 +145,8 @@ class Puppet::SSL::CertificateAuthority
     request.generate(host.key)
 
     # Create a self-signed certificate.
-    @certificate = sign(host.name, false, request)
+    @certificate = sign(host.name, {allow_dns_alt_names: false,
+                                    self_signing_csr: request})
 
     # And make sure we initialize our CRL.
     crl
@@ -271,8 +272,13 @@ class Puppet::SSL::CertificateAuthority
   end
 
   # Sign a given certificate request.
-  def sign(hostname, allow_dns_alt_names = false, self_signing_csr = nil)
-    # This is a self-signed certificate
+  def sign(hostname, options={})
+    options[:allow_authorization_extensions] ||= false
+    options[:allow_dns_alt_names] ||= false
+    options[:self_signing_csr] ||= nil
+
+    self_signing_csr = options.delete(:self_signing_csr)
+
     if self_signing_csr
       # # This is a self-signed certificate, which is for the CA.  Since this
       # # forces the certificate to be self-signed, anyone who manages to trick
@@ -282,7 +288,6 @@ class Puppet::SSL::CertificateAuthority
       cert_type = :ca
       issuer = csr.content
     else
-      allow_dns_alt_names = true if hostname == Puppet[:certname].downcase
       unless csr = Puppet::SSL::CertificateRequest.indirection.find(hostname)
         raise ArgumentError, "Could not find certificate request for #{hostname}"
       end
@@ -292,7 +297,7 @@ class Puppet::SSL::CertificateAuthority
 
       # Make sure that the CSR conforms to our internal signing policies.
       # This will raise if the CSR doesn't conform, but just in case...
-      check_internal_signing_policies(hostname, csr, allow_dns_alt_names) or
+      check_internal_signing_policies(hostname, csr, options) or
         raise CertificateSigningError.new(hostname), "CSR had an unknown failure checking internal signing policies, will not sign!"
     end
 
@@ -320,12 +325,18 @@ class Puppet::SSL::CertificateAuthority
     cert
   end
 
-  def check_internal_signing_policies(hostname, csr, allow_dns_alt_names)
+  def check_internal_signing_policies(hostname, csr, options = {})
+    options[:allow_authorization_extensions] ||= false
+    options[:allow_dns_alt_names] ||= false
+    # This allows for masters to bootstrap themselves in certain scenarios
+    options[:allow_dns_alt_names] = true if hostname == Puppet[:certname].downcase
+
     # Reject unknown request extensions.
     unknown_req = csr.request_extensions.reject do |x|
       RequestExtensionWhitelist.include? x["oid"] or
         Puppet::SSL::Oids.subtree_of?('ppRegCertExt', x["oid"], true) or
-        Puppet::SSL::Oids.subtree_of?('ppPrivCertExt', x["oid"], true)
+        Puppet::SSL::Oids.subtree_of?('ppPrivCertExt', x["oid"], true) or
+        Puppet::SSL::Oids.subtree_of?('ppAuthCertExt', x["oid"], true)
     end
 
     if unknown_req and not unknown_req.empty?
@@ -356,10 +367,22 @@ class Puppet::SSL::CertificateAuthority
       raise CertificateSigningError.new(hostname), "CSR contains a public key that does not correspond to the signing key"
     end
 
+    auth_extensions = csr.request_extensions.select do |extension|
+      Puppet::SSL::Oids.subtree_of?('ppAuthCertExt', extension['oid'], true)
+    end
+
+    if auth_extensions.any? && !options[:allow_authorization_extensions]
+      ext_names = auth_extensions.map do |extension|
+        extension['oid']
+      end
+
+      raise CertificateSigningError.new(hostname), "CSR '#{csr.name}' contains authorization extensions (#{ext_names.join(', ')}), which are disallowed by default. Use `puppet cert --allow-authorization-extensions sign #{csr.name}` to sign this request."
+    end
+
     unless csr.subject_alt_names.empty?
       # If you alt names are allowed, they are required. Otherwise they are
       # disallowed. Self-signed certs are implicitly trusted, however.
-      unless allow_dns_alt_names
+      unless options[:allow_dns_alt_names]
         raise CertificateSigningError.new(hostname), "CSR '#{csr.name}' contains subject alternative names (#{csr.subject_alt_names.join(', ')}), which are disallowed. Use `puppet cert --allow-dns-alt-names sign #{csr.name}` to sign this request."
       end
 

@@ -8,6 +8,9 @@ module Puppet
         DESTRUCTIVE_METHODS = [:destroy, :revoke]
         SUBJECTLESS_METHODS = [:list, :reinventory]
 
+        CERT_STATUS_GLYPHS = {:signed => '+', :request => ' ', :invalid => '-'}
+        VALID_CONFIRMATION_VALUES = %w{y Y yes Yes YES}
+
         class InterfaceError < ArgumentError; end
 
         attr_reader :method, :subjects, :digest, :options
@@ -71,19 +74,30 @@ module Puppet
           return if hosts.empty?
 
           hosts.uniq.sort.each do |host|
+            verify_error = nil
+
             begin
               ca.verify(host) unless requests.include?(host)
             rescue Puppet::SSL::CertificateAuthority::CertificateVerificationError => details
-              verify_error = details.to_s
+              verify_error = "(#{details.to_s})"
             end
 
             if verify_error
-              certs[:invalid][host] = [ Puppet::SSL::Certificate.indirection.find(host), verify_error ]
+              type = :invalid
+              cert = Puppet::SSL::Certificate.indirection.find(host)
             elsif (signed and signed.include?(host))
-              certs[:signed][host]  = Puppet::SSL::Certificate.indirection.find(host)
+              type = :signed
+              cert = Puppet::SSL::Certificate.indirection.find(host)
             else
-              certs[:request][host] = Puppet::SSL::CertificateRequest.indirection.find(host)
+              type = :request
+              cert = Puppet::SSL::CertificateRequest.indirection.find(host)
             end
+
+            certs[type][host] = {
+              :cert         => cert,
+              :type         => type,
+              :verify_error => verify_error,
+            }
           end
 
           names = certs.values.map(&:keys).flatten
@@ -95,37 +109,133 @@ module Puppet
           output = [:request, :signed, :invalid].map do |type|
             next if certs[type].empty?
 
-            certs[type].map do |host,info|
-              format_host(ca, host, type, info, name_width)
+            certs[type].map do |host, info|
+              format_host(host, info, name_width, options[:format])
             end
           end.flatten.compact.sort.join("\n")
 
           puts output
         end
 
-        def format_host(ca, host, type, info, width)
-          cert, verify_error = info
-          alt_names = case type
-                      when :signed
-                        cert.subject_alt_names
-                      when :request
-                        cert.subject_alt_names
-                      else
-                        []
-                      end
+        def format_host(host, info, width, format)
+          case format
+          when :machine
+            machine_host_formatting(host, info)
+          when :human
+            human_host_formatting(host, info)
+          else
+            if options[:verbose]
+              machine_host_formatting(host, info)
+            else
+              legacy_host_formatting(host, info, width)
+            end
+          end
+        end
 
-          alt_names.delete(host)
+        def machine_host_formatting(host, info)
+          type         = info[:type]
+          verify_error = info[:verify_error]
+          cert         = info[:cert]
+          alt_names    = cert.subject_alt_names - [host]
+          extensions   = format_attrs_and_exts(cert)
 
-          alt_str = "(alt names: #{alt_names.map(&:inspect).join(', ')})" unless alt_names.empty?
-
-          glyph = {:signed => '+', :request => ' ', :invalid => '-'}[type]
-
-          name = host.inspect.ljust(width)
+          glyph       = CERT_STATUS_GLYPHS[type]
+          name        = host.inspect
           fingerprint = cert.digest(@digest).to_s
 
-          explanation = "(#{verify_error})" if verify_error
+          expiration  = cert.expiration.iso8601 if type == :signed
 
-          [glyph, name, fingerprint, alt_str, explanation].compact.join(' ')
+          if type != :invalid
+            if !alt_names.empty?
+              extensions.unshift("alt names: #{alt_names.map(&:inspect).join(', ')}")
+            end
+
+            if !extensions.empty?
+              metadata_string = "(#{extensions.join(', ')})" unless extensions.empty?
+            end
+          end
+
+          [glyph, name, fingerprint, expiration, metadata_string, verify_error].compact.join(' ')
+        end
+
+        def human_host_formatting(host, info)
+          type         = info[:type]
+          verify_error = info[:verify_error]
+          cert         = info[:cert]
+          alt_names    = cert.subject_alt_names - [host]
+          extensions   = format_attrs_and_exts(cert)
+
+          glyph       = CERT_STATUS_GLYPHS[type]
+          fingerprint = cert.digest(@digest).to_s
+
+          if type == :invalid || (extensions.empty? && alt_names.empty?)
+            extension_string = ''
+          else
+            if !alt_names.empty?
+              extensions.unshift("alt names: #{alt_names.map(&:inspect).join(', ')}")
+            end
+
+            extension_string = "\n    Extensions:\n      "
+            extension_string << extensions.join("\n      ")
+          end
+
+          if type == :signed
+            expiration_string = "\n    Expiration: #{cert.expiration.iso8601}"
+          else
+            expiration_string = ''
+          end
+
+          status = case type
+                   when :invalid then "Invalid - #{verify_error}"
+                   when :request then "Request Pending"
+                   when :signed then "Signed"
+                   end
+
+          output = "#{glyph} #{host.inspect}"
+          output << "\n  #{fingerprint}"
+          output << "\n    Status: #{status}"
+          output << expiration_string
+          output << extension_string
+          output << "\n"
+
+          output
+        end
+
+        def legacy_host_formatting(host, info, width)
+          type         = info[:type]
+          verify_error = info[:verify_error]
+          cert         = info[:cert]
+          alt_names    = cert.subject_alt_names - [host]
+          extensions   = format_attrs_and_exts(cert)
+
+          glyph       = CERT_STATUS_GLYPHS[type]
+          name        = host.inspect.ljust(width)
+          fingerprint = cert.digest(@digest).to_s
+
+          if type != :invalid
+            if alt_names.empty?
+              alt_name_string = nil
+            else
+              alt_name_string = "(alt names: #{alt_names.map(&:inspect).join(', ')})"
+            end
+
+            if extensions.empty?
+              extension_string = nil
+            else
+              extension_string = "**"
+            end
+          end
+
+          [glyph, name, fingerprint, alt_name_string, verify_error, extension_string].compact.join(' ')
+        end
+
+        def format_attrs_and_exts(cert)
+          exts = []
+          exts += cert.custom_extensions if cert.respond_to?(:custom_extensions)
+          exts += cert.custom_attributes if cert.respond_to?(:custom_attributes)
+          exts += cert.request_extensions if cert.respond_to?(:request_extensions)
+
+          exts.map {|e| "#{e['oid']}: #{e['value'].inspect}" }.sort
         end
 
         # Set the method to apply.
@@ -156,12 +266,42 @@ module Puppet
           end
         end
 
-        # Signs given certificates or waiting of subjects == :all
+        # Signs given certificates or all waiting if subjects == :all
         def sign(ca)
           list = subjects == :all ? ca.waiting? : subjects
           raise InterfaceError, "No waiting certificate requests to sign" if list.empty?
+
+          signing_options = options.select { |k,_|
+            [:allow_authorization_extensions, :allow_dns_alt_names].include?(k)
+          }
+
           list.each do |host|
-            ca.sign(host, options[:allow_dns_alt_names])
+            cert = Puppet::SSL::CertificateRequest.indirection.find(host)
+
+            raise InterfaceError, "Could not find CSR for: #{host.inspect}." unless cert
+
+            # ca.sign will also do this - and it should if it is called
+            # elsewhere - but we want to reject an attempt to sign a
+            # problematic csr as early as possible for usability concerns.
+            ca.check_internal_signing_policies(host, cert, signing_options)
+
+            name_width = host.inspect.length
+            info = {:type => :request, :cert => cert}
+            host_string = format_host(host, info, name_width, options[:format])
+            puts "Signing Certificate Request for:\n#{host_string}"
+
+            if options[:interactive]
+              STDOUT.print "Sign Certificate Request? [y/N] "
+
+              if !options[:yes]
+                input = STDIN.gets.chomp
+                raise InterfaceError, "NOT Signing Certificate Request" unless VALID_CONFIRMATION_VALUES.include?(input)
+              else
+                puts "Assuming YES from `-y' or `--assume-yes' flag"
+              end
+            end
+
+            ca.sign(host, signing_options)
           end
         end
 

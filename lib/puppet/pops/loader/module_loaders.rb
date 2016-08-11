@@ -92,6 +92,9 @@ module ModuleLoaders
     # @return [Loader::NamedEntry, nil found/created entry, or nil if not found
     #
     def find(typed_name)
+      # This loader is tailored to only find entries in the current runtime
+      return nil unless typed_name.name_authority == Pcore::RUNTIME_NAME_AUTHORITY
+
       # Assume it is a global name, and that all parts of the name should be used when looking up
       name_part_index = 0
       name_parts = typed_name.name_parts
@@ -116,6 +119,7 @@ module ModuleLoaders
         case typed_name.type
         when :function
         when :resource_type
+        when :resource_type_pp
         when :type
         else
           # anything else cannot possibly be in this module
@@ -190,7 +194,7 @@ module ModuleLoaders
     def private_loader
       # The system loader has a nil module_name and it does not have a private_loader as there are no functions
       # that can only by called by puppet runtime - if so, it acts as the private loader directly.
-      @private_loader ||= ((module_name.nil? && self) || @loaders.private_loader_for_module(module_name))
+      @private_loader ||= (module_name.nil? || module_name == 'environment' ? self : @loaders.private_loader_for_module(module_name))
     end
   end
 

@@ -81,12 +81,12 @@ Could not install module '#{@requested_module}' (#{@requested_version})
     def initialize(options)
       @entry_path = options[:entry_path]
       @directory  = options[:directory]
-      super "Attempt to install file into #{@entry_path.inspect} under #{@directory.inspect}"
+      super "Attempt to install file with an invalid path into #{@entry_path.inspect} under #{@directory.inspect}"
     end
 
     def multiline
       <<-MSG.strip
-Could not install package
+Could not install package with an invalid path.
   Package attempted to install file into
   #{@entry_path.inspect} under #{@directory.inspect}.
       MSG

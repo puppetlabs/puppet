@@ -42,6 +42,10 @@ Puppet::Parser::Functions::newfunction(:create_resources, :arity => -3, :doc => 
 
         create_resources("@user", $myusers)
 
+    Note that `create_resources` will filter out parameter values that are `undef` so that normal
+    data binding and puppet default value expressions are considered (in that order) for the
+    final value of a parameter (just as when setting a parameter to `undef` in a puppet language
+    resource declaration).
   ENDHEREDOC
   raise ArgumentError, ("create_resources(): wrong number of arguments (#{args.length}; must be 2 or 3)") if args.length > 3
   raise ArgumentError, ('create_resources(): second argument must be a hash') unless args[1].is_a?(Hash)
@@ -49,35 +53,46 @@ Puppet::Parser::Functions::newfunction(:create_resources, :arity => -3, :doc => 
     raise ArgumentError, ('create_resources(): third argument, if provided, must be a hash') unless args[2].is_a?(Hash)
   end
 
-
   type, instances, defaults = args
   defaults ||= {}
+  type_name = type.sub(/^@{1,2}/, '').downcase
 
-  resource = Puppet::Parser::AST::Resource.new(:type => type.sub(/^@{1,2}/, '').downcase, :instances =>
-    instances.collect do |title, params|
-      Puppet::Parser::AST::ResourceInstance.new(
-        :title => Puppet::Parser::AST::Leaf.new(:value => title),
-        :parameters => defaults.merge(params).collect do |name, value|
-          next if (value == :undef || value.nil?)
-          Puppet::Parser::AST::ResourceParam.new(
-            :param => name,
-            :value => Puppet::Parser::AST::Leaf.new(:value => value))
-        end.compact)
-    end)
+  # Get file/line information from the puppet stack (where call comes from in puppet source)
+  # If relayed via other puppet functions in ruby that do not nest their calls, the source position
+  # will be in the original puppet source.
+  #
+  stacktrace = Puppet::Pops::PuppetStack.stacktrace()
+  if stacktrace.size > 0
+    file, line = stacktrace[0]
+  else
+    file = nil
+    line = nil
+  end
 
   if type.start_with? '@@'
-    resource.exported = true
+    exported = true
   elsif type.start_with? '@'
-    resource.virtual = true
+    virtual = true
   end
 
-  begin
-    resource.safeevaluate(self)
-  rescue Puppet::ParseError => internal_error
-    if internal_error.original.nil?
-      raise internal_error
-    else
-      raise internal_error.original
-    end
-  end
+  instances.map do |title, params|
+    # Add support for iteration if title is an array
+    resource_titles = title.is_a?(Array) ? title  : [title]
+    Puppet::Pops::Evaluator::Runtime3ResourceSupport.create_resources(
+      file, line,
+      self,
+      virtual, exported,
+      type_name,
+      resource_titles,
+      defaults.merge(params).map do |name, value|
+        next if (value == :undef || value.nil?)
+        Puppet::Parser::Resource::Param.new(
+          :name   => name,
+          :value  => value, # wide open to various data types, must be correct
+          :source => self.source, # TODO: support :line => line, :file => file,
+          :add    => false
+        )
+      end.compact
+      )
+  end.flatten.compact
 end

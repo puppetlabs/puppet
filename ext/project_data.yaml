@@ -54,7 +54,7 @@ gem_platform_dependencies:
       win32-service: '= 0.8.8'
       minitar: '~> 0.5.4'
 bundle_platforms:
-  universal-darwin: ruby
+  universal-darwin: all
   x86-mingw32: mingw
   x64-mingw32: x64_mingw
 pre_tasks:

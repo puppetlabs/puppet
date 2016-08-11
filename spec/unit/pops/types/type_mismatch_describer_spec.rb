@@ -138,7 +138,7 @@ describe 'the type mismatch describer' do
   end
 
   context 'when using present tense' do
-    let(:parser) { TypeParser.new }
+    let(:parser) { TypeParser.singleton }
     let(:subject) { TypeMismatchDescriber.singleton }
     it 'reports a missing parameter as "has no parameter"' do
       t = parser.parse('Struct[{a=>String}]')
@@ -166,7 +166,7 @@ describe 'the type mismatch describer' do
   end
 
   context 'when using past tense' do
-    let(:parser) { TypeParser.new }
+    let(:parser) { TypeParser.singleton }
     let(:subject) { TypeMismatchDescriber.singleton }
     it 'reports a missing parameter as "did not have a parameter"' do
       t = parser.parse('Struct[{a=>String}]')

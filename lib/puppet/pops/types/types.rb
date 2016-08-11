@@ -11,11 +11,25 @@ require_relative 'type_factory'
 require_relative 'type_parser'
 require_relative 'class_loader'
 require_relative 'type_mismatch_describer'
+require_relative 'puppet_object'
 
 module Puppet::Pops
 module Types
 
-EMPTY_HASH = {}.freeze
+# The EMPTY_xxx declarations is for backward compatibility. They should not be explicitly referenced
+
+# @api private
+# @deprecated
+EMPTY_HASH = Puppet::Pops::EMPTY_HASH
+
+# @api private
+# @deprecated
+EMPTY_ARRAY = Puppet::Pops::EMPTY_ARRAY
+
+# @api private
+# @deprecated
+EMPTY_STRING = Puppet::Pops::EMPTY_STRING
+
 # The Types model is a model of Puppet Language types.
 #
 # The exact relationship between types is not visible in this model wrt. the PDataType which is an abstraction
@@ -32,14 +46,40 @@ EMPTY_HASH = {}.freeze
 #
 # TODO: See PUP-2978 for possible performance optimization
 class TypedModelObject < Object
+  include PuppetObject
   include Visitable
   include Adaptable
+
+  def self._ptype
+    @type
+  end
+
+  def self.create_ptype(loader, ir, parent_name, attributes_hash = EMPTY_HASH)
+    @type = Pcore::create_object_type(loader, ir, self, "Pcore::#{simple_name}Type", "Pcore::#{parent_name}", attributes_hash)
+  end
+
+  def self.register_ptypes(loader, ir)
+    types = []
+    Types.constants.each do |c|
+      cls = Types.const_get(c)
+      next unless cls.is_a?(Class) && cls < self
+      type = cls.register_ptype(loader, ir)
+      types << type unless type.nil?
+    end
+    tp = TypeParser.singleton
+    types.each { |type| type.resolve(tp, loader) }
+  end
 end
 
 # Base type for all types
 # @api public
 #
 class PAnyType < TypedModelObject
+
+  def self.register_ptype(loader, ir)
+    @type = Pcore::create_object_type(loader, ir, self, 'Pcore::AnyType', 'Any', EMPTY_HASH)
+  end
+
   # Accept a visitor that will be sent the message `visit`, once with `self` as the
   # argument. The visitor will then visit all types that this type contains.
   #
@@ -222,12 +262,19 @@ class PAnyType < TypedModelObject
     eql?(o)
   end
 
+  def simple_name
+    self.class.simple_name
+  end
+
   # Strips the class name from all module prefixes, the leading 'P' and the ending 'Type'. I.e.
   # an instance of PVariantType will return 'Variant'
   # @return [String] the simple name of this type
-  def simple_name
-    n = self.class.name
-    n[n.rindex('::')+3..n.size-5]
+  def self.simple_name
+    if @simple_name.nil?
+      n = name
+      @simple_name = n[n.rindex('::')+3..n.size-5]
+    end
+    @simple_name
   end
 
   def to_alias_expanded_s
@@ -322,6 +369,10 @@ end
 # @abstract Encapsulates common behavior for a type that contains one type
 # @api public
 class PTypeWithContainedType < PAnyType
+  def self.register_ptype(loader, ir)
+    # Abstract type. It doesn't register anything
+  end
+
   attr_reader :type
 
   def initialize(type)
@@ -358,12 +409,28 @@ class PTypeWithContainedType < PAnyType
   def eql?(o)
     self.class == o.class && @type == o.type
   end
+
+  def resolve(type_parser, loader)
+    rtype = @type
+    rtype = rtype.resolve(type_parser, loader) unless rtype.nil?
+    rtype.equal?(@type) ? self : self.class.new(rtype)
+  end
 end
 
 # The type of types.
 # @api public
 #
 class PType < PTypeWithContainedType
+
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'AnyType',
+       'type' => {
+         KEY_TYPE => POptionalType.new(PType::DEFAULT),
+         KEY_VALUE => nil
+       }
+    )
+  end
+
   def instance?(o, guard = nil)
     if o.is_a?(PAnyType)
       type.nil? || type.assignable?(o, guard)
@@ -403,7 +470,7 @@ class PType < PTypeWithContainedType
     self.class == o.class && @type == o.type
   end
 
-  def simple_name
+  def self.simple_name
     # since this the class is inconsistently named PType and not PTypeType
     'Type'
   end
@@ -422,6 +489,15 @@ class PType < PTypeWithContainedType
 end
 
 class PNotUndefType < PTypeWithContainedType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'AnyType',
+       'type' => {
+         KEY_TYPE => POptionalType.new(PType::DEFAULT),
+         KEY_VALUE => nil
+       }
+    )
+  end
+
   def initialize(type = nil)
     super(type.class == PAnyType ? nil : type)
   end
@@ -469,6 +545,10 @@ end
 # @api public
 #
 class PUndefType < PAnyType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'AnyType')
+  end
+
   def instance?(o, guard = nil)
     o.nil? || o == :undef
   end
@@ -492,6 +572,10 @@ end
 # @api private
 #
 class PUnitType < PAnyType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'AnyType')
+  end
+
   def instance?(o, guard = nil)
     true
   end
@@ -521,6 +605,10 @@ end
 # @api public
 #
 class PDefaultType < PAnyType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'AnyType')
+  end
+
   def instance?(o, guard = nil)
     o == :default
   end
@@ -539,6 +627,10 @@ end
 # @api public
 #
 class PDataType < PAnyType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'AnyType')
+  end
+
   def eql?(o)
     self.class == o.class || o == PVariantType::DATA
   end
@@ -570,6 +662,9 @@ end
 # @api public
 #
 class PScalarType < PAnyType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'AnyType')
+  end
 
   def instance?(o, guard = nil)
     assignable?(TypeCalculator.infer(o), guard)
@@ -589,6 +684,10 @@ end
 # @api public
 #
 class PEnumType < PScalarType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'ScalarType', 'values' => PArrayType.new(PStringType::NON_EMPTY))
+  end
+
   attr_reader :values
 
   def initialize(values)
@@ -645,6 +744,13 @@ end
 # @api public
 #
 class PNumericType < PScalarType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'ScalarType',
+      'from' => { KEY_TYPE => PNumericType::DEFAULT, KEY_VALUE => :default },
+      'to' => { KEY_TYPE => PNumericType::DEFAULT, KEY_VALUE => :default }
+    )
+  end
+
   def initialize(from, to = Float::INFINITY)
     from = -Float::INFINITY if from.nil? || from == :default
     to = Float::INFINITY if to.nil? || to == :default
@@ -767,6 +873,10 @@ end
 # @api public
 #
 class PIntegerType < PNumericType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'NumericType')
+  end
+
   # Will respond `true` for any range that is bounded at both ends.
   #
   # @return [Boolean] `true` if the type describes a finite range.
@@ -919,6 +1029,10 @@ end
 # @api public
 #
 class PFloatType < PNumericType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'NumericType')
+  end
+
   def generalize
     DEFAULT
   end
@@ -1012,6 +1126,15 @@ end
 # @api public
 #
 class PCollectionType < PAnyType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'AnyType',
+      'element_type' => {
+        KEY_TYPE => POptionalType.new(PType::DEFAULT),
+        KEY_VALUE => nil
+      }
+    )
+  end
+
   attr_reader :element_type, :size_type
 
   def initialize(element_type, size_type = nil)
@@ -1051,6 +1174,12 @@ class PCollectionType < PAnyType
     assignable?(TypeCalculator.infer(o), guard)
   end
 
+  def resolve(type_parser, loader)
+    relement_type = @element_type
+    relement_type = relement_type.resolve(type_parser, loader) unless relement_type.nil?
+    relement_type.equal?(@element_type) ? self : self.class.new(relement_type, @size_type)
+  end
+
   # Returns an array with from (min) size to (max) size
   def size_range
     (@size_type || DEFAULT_SIZE).range
@@ -1080,6 +1209,7 @@ class PCollectionType < PAnyType
 
   DEFAULT_SIZE = PIntegerType.new(0)
   ZERO_SIZE = PIntegerType.new(0, 0)
+  NOT_EMPTY_SIZE = PIntegerType.new(1)
   DEFAULT = PCollectionType.new(nil)
 
   protected
@@ -1109,6 +1239,15 @@ class PCollectionType < PAnyType
 end
 
 class PIterableType < PTypeWithContainedType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'AnyType',
+      'element_type' => {
+        KEY_TYPE => POptionalType.new(PType::DEFAULT),
+        KEY_VALUE => nil
+      }
+    )
+  end
+
   def element_type
     @type
   end
@@ -1158,6 +1297,15 @@ end
 # @api public
 #
 class PIteratorType < PTypeWithContainedType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'AnyType',
+      'element_type' => {
+        KEY_TYPE => POptionalType.new(PType::DEFAULT),
+        KEY_VALUE => nil
+      }
+    )
+  end
+
   def element_type
     @type
   end
@@ -1187,6 +1335,19 @@ end
 # @api public
 #
 class PStringType < PScalarType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'ScalarType',
+      'size_type' => {
+        KEY_TYPE => POptionalType.new(PType.new(PIntegerType::DEFAULT)),
+        KEY_VALUE => nil
+      },
+      'values' => {
+        KEY_TYPE => PArrayType.new(PStringType::DEFAULT),
+        KEY_VALUE => EMPTY_ARRAY
+      }
+    )
+  end
+
   attr_reader :size_type, :values
 
   def initialize(size_type, values = EMPTY_ARRAY)
@@ -1255,7 +1416,7 @@ class PStringType < PScalarType
   end
 
   DEFAULT = PStringType.new(nil)
-  NON_EMPTY = PStringType.new(PIntegerType.new(1))
+  NON_EMPTY = PStringType.new(PCollectionType::NOT_EMPTY_SIZE)
 
   # Iterates over each character of the string
   ITERABLE_TYPE = PIterableType.new(PStringType.new(PIntegerType.new(1,1)))
@@ -1309,12 +1470,19 @@ end
 # @api public
 #
 class PRegexpType < PScalarType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'ScalarType',
+      'pattern' => {
+        KEY_TYPE => PVariantType.new([PUndefType::DEFAULT, PStringType::DEFAULT, PRegexpType::DEFAULT]),
+        KEY_VALUE => nil
+      })
+  end
   attr_reader :pattern
 
   def initialize(pattern)
     if pattern.is_a?(Regexp)
       @regexp = pattern
-      @pattern = pattern.source
+      @pattern = pattern.options == 0 ? pattern.source : pattern.to_s
     else
       @pattern = pattern
     end
@@ -1349,6 +1517,10 @@ end
 # @api public
 #
 class PPatternType < PScalarType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'ScalarType', 'patterns' => PArrayType.new(PRegexpType::DEFAULT))
+  end
+
   attr_reader :patterns
 
   def initialize(patterns)
@@ -1399,6 +1571,9 @@ end
 # @api public
 #
 class PBooleanType < PScalarType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'ScalarType')
+  end
 
   def instance?(o, guard = nil)
     o == true || o == false
@@ -1448,6 +1623,12 @@ end
 # @api public
 #
 class PStructElement < TypedModelObject
+  def self.register_ptype(loader, ir)
+    @type = Pcore::create_object_type(loader, ir, self, 'Pcore::StructElement'.freeze, nil,
+      'key_type' => PType::DEFAULT,
+      'value_type' => PType::DEFAULT)
+  end
+
   attr_accessor :key_type, :value_type
 
   def accept(visitor, guard)
@@ -1480,6 +1661,14 @@ class PStructElement < TypedModelObject
     @value_type.equal?(nv_type) ? self : PStructElement.new(@key_type, nv_type)
   end
 
+  def resolve(type_parser, loader)
+    rkey_type = @key_type
+    rkey_type = rkey_type.resolve(type_parser, loader) unless rkey_type.nil?
+    rvalue_type = @value_type
+    rvalue_type = rvalue_type.resolve(type_parser, loader) unless rvalue_type.nil?
+    rkey_type.equal?(@key_type) && rvalue_type.equal?(@value_type) ? self : self.class.new(rkey_type, rvalue_type)
+  end
+
   def <=>(o)
     self.name <=> o.name
   end
@@ -1498,8 +1687,12 @@ end
 class PStructType < PAnyType
   include Enumerable
 
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'AnyType', 'elements' => PArrayType.new(PTypeReferenceType.new('Pcore::StructElement')))
+  end
+
   def initialize(elements)
-    @elements = elements.sort.freeze
+    @elements = elements.freeze
   end
 
   def accept(visitor, guard)
@@ -1554,6 +1747,16 @@ class PStructType < PAnyType
           PVariantType.maybe_create(@elements.map {|se| se.value_type })],
           PHashType::KEY_PAIR_TUPLE_SIZE))
     end
+  end
+
+  def resolve(type_parser, loader)
+    changed = false
+    relements = @elements.map do |elem|
+      relem = elem.resolve(type_parser, loader)
+      changed ||= !relem.equal?(elem)
+      relem
+    end
+    changed ? self.class.new(relements) : self
   end
 
   def eql?(o)
@@ -1639,6 +1842,16 @@ end
 class PTupleType < PAnyType
   include Enumerable
 
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'AnyType',
+      'types' => PArrayType.new(PType::DEFAULT),
+      'size_type' => {
+        KEY_TYPE => POptionalType.new(PType.new(PIntegerType::DEFAULT)),
+        KEY_VALUE => nil
+      }
+    )
+  end
+
   # If set, describes min and max required of the given types - if max > size of
   # types, the last type entry repeats
   #
@@ -1714,6 +1927,16 @@ class PTupleType < PAnyType
     else
       alter_type_array(@types, :normalize, guard) { |altered_types| PTupleType.new(altered_types, @size_type) }
     end
+  end
+
+  def resolve(type_parser, loader)
+    changed = false
+    rtypes = @types.map do |type|
+      rtype = type.resolve(type_parser, loader)
+      changed ||= !rtype.equal?(type)
+      rtype
+    end
+    changed ? self.class.new(rtypes, @size_type) : self
   end
 
   def instance?(o, guard = nil)
@@ -1816,6 +2039,19 @@ end
 # @api public
 #
 class PCallableType < PAnyType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'AnyType',
+      'param_types' => {
+        KEY_TYPE => POptionalType.new(PTupleType::DEFAULT),
+        KEY_VALUE => nil
+      },
+      'block_type' => {
+        KEY_TYPE => POptionalType.new(PCallableType::DEFAULT),
+        KEY_VALUE => nil
+      }
+    )
+  end
+
   # Types of parameters as a Tuple with required/optional count, or an Integer with min (required), max count
   # @return [PTupleType] the tuple representing the parameter types
   attr_reader :param_types
@@ -1905,6 +2141,14 @@ class PCallableType < PAnyType
     self.class == o.class && @param_types == o.param_types && @block_type == o.block_type
   end
 
+  def resolve(type_parser, loader)
+    rparam_types = @param_types
+    rparam_types = rparam_types.resolve(type_parser, loader) unless rparam_types.nil?
+    rblock_type = @block_type
+    rblock_type = rblock_type.resolve(type_parser, loader) unless rblock_type.nil?
+    rparam_types.equal?(@param_types) && rblock_type.equal?(@block_type) ? self : self.class.new(rparam_types, rblock_type)
+  end
+
   DEFAULT = PCallableType.new(nil)
 
   protected
@@ -1931,6 +2175,15 @@ end
 # @api public
 #
 class PArrayType < PCollectionType
+
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'CollectionType',
+      'size_type' => {
+        KEY_TYPE => POptionalType.new(PType.new(PIntegerType::DEFAULT)),
+        KEY_VALUE => nil
+      }
+    )
+  end
 
   # @api private
   def callable_args?(callable, guard = nil)
@@ -2036,7 +2289,27 @@ end
 # @api public
 #
 class PHashType < PCollectionType
+
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'CollectionType',
+      'key_type' => {
+        KEY_TYPE => POptionalType.new(PType::DEFAULT),
+        KEY_VALUE => nil
+      },
+      'element_type' => {
+        KEY_TYPE => POptionalType.new(PType::DEFAULT),
+        KEY_VALUE => nil,
+        KEY_OVERRIDE => true
+      },
+      'size_type' => {
+        KEY_TYPE => POptionalType.new(PType.new(PIntegerType::DEFAULT)),
+        KEY_VALUE => nil
+      }
+    )
+  end
+
   attr_accessor :key_type
+  alias value_type element_type
 
   def initialize(key_type, value_type, size_type = nil)
     super(value_type, size_type)
@@ -2111,6 +2384,14 @@ class PHashType < PCollectionType
 
   def is_the_empty_hash?
     self == EMPTY
+  end
+
+  def resolve(type_parser, loader)
+    rkey_type = @key_type
+    rkey_type = rkey_type.resolve(type_parser, loader) unless rkey_type.nil?
+    rvalue_type = @element_type
+    rvalue_type = rvalue_type.resolve(type_parser, loader) unless rvalue_type.nil?
+    rkey_type.equal?(@key_type) && rvalue_type.equal?(@element_type) ? self : self.class.new(rkey_type, rvalue_type, @size_type)
   end
 
   # Returns a new function that produces a  Hash
@@ -2195,6 +2476,10 @@ end
 #
 class PVariantType < PAnyType
   include Enumerable
+
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'AnyType', 'types' => PArrayType.new(PType::DEFAULT))
+  end
 
   attr_reader :types
 
@@ -2422,7 +2707,7 @@ class PVariantType < PAnyType
     if array.size > 1
       parts = array.partition {|t| t.is_a?(PSemVerType) }
       ranges = parts[0]
-      array = [PSemVerType.new(*ranges.map(&:ranges).flatten)] + parts[1] if ranges.size > 1
+      array = [PSemVerType.new(ranges.map(&:ranges).flatten)] + parts[1] if ranges.size > 1
     end
     array
   end
@@ -2452,6 +2737,9 @@ end
 # @api public
 #
 class PCatalogEntryType < PAnyType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'AnyType')
+  end
 
   DEFAULT = PCatalogEntryType.new
 
@@ -2472,6 +2760,15 @@ end
 class PHostClassType < PCatalogEntryType
   attr_reader :class_name
 
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'CatalogEntryType',
+      'class_name' => {
+        KEY_TYPE => POptionalType.new(PStringType::NON_EMPTY),
+        KEY_VALUE => nil
+      }
+    )
+  end
+
   NAME = 'Class'.freeze
 
   def initialize(class_name)
@@ -2485,7 +2782,7 @@ class PHostClassType < PCatalogEntryType
     self.class == o.class && @class_name == o.class_name
   end
 
-  def simple_name
+  def self.simple_name
     NAME
   end
 
@@ -2507,6 +2804,20 @@ end
 # @api public
 #
 class PResourceType < PCatalogEntryType
+
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'CatalogEntryType',
+      'type_name' => {
+        KEY_TYPE => POptionalType.new(PStringType::NON_EMPTY),
+        KEY_VALUE => nil
+      },
+      'title' => {
+        KEY_TYPE => POptionalType.new(PStringType::NON_EMPTY),
+        KEY_VALUE => nil
+      }
+    )
+  end
+
   attr_reader :type_name, :title, :downcased_name
 
   def initialize(type_name, title = nil)
@@ -2538,6 +2849,16 @@ end
 # @api public
 #
 class POptionalType < PTypeWithContainedType
+
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'CatalogEntryType',
+      'type' => {
+        KEY_TYPE => POptionalType.new(PType::DEFAULT),
+        KEY_VALUE => nil
+      }
+    )
+  end
+
   def optional_type
     @type
   end
@@ -2588,6 +2909,11 @@ class POptionalType < PTypeWithContainedType
 end
 
 class PTypeReferenceType < PAnyType
+
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'AnyType', 'type_string' => PStringType::NON_EMPTY)
+  end
+
   attr_reader :type_string
 
   def initialize(type_string)
@@ -2632,6 +2958,18 @@ end
 #
 # @api public
 class PTypeAliasType < PAnyType
+
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'AnyType',
+       'name' => PStringType::NON_EMPTY,
+       'type_expr' => PAnyType::DEFAULT,
+       'resolved_type' => {
+         KEY_TYPE => POptionalType.new(PType::DEFAULT),
+         KEY_VALUE => nil
+       }
+    )
+  end
+
   attr_reader :name
 
   # @param name [String] The name of the type
@@ -2742,7 +3080,11 @@ class PTypeAliasType < PAnyType
       @resolved_type = PTypeReferenceType::DEFAULT
       @self_recursion = true # assumed while it being found out below
       begin
-        @resolved_type = type_parser.interpret(@type_expr, loader).normalize
+        if @type_expr.is_a?(PTypeReferenceType)
+          @resolved_type = @type_expr.resolve(type_parser, loader)
+        else
+          @resolved_type = type_parser.interpret(@type_expr, loader).normalize
+        end
 
         # Find out if this type is recursive. A recursive type has performance implications
         # on several methods and this knowledge is used to avoid that for non-recursive
@@ -2778,7 +3120,7 @@ class PTypeAliasType < PAnyType
   def accept(visitor, guard)
     guarded_recursion(guard, nil) do |g|
       super(visitor, g)
-      resolved_type.accept(visitor, g)
+      @resolved_type.accept(visitor, g) unless @resolved_type.nil?
     end
   end
 
@@ -2801,6 +3143,7 @@ class PTypeAliasType < PAnyType
 
   # Delegates to resolved type
   def method_missing(name, *arguments, &block)
+    super if @resolved_type.equal?(PTypeReferenceType::DEFAULT)
     resolved_type.send(name, *arguments, &block)
   end
 
@@ -2812,6 +3155,12 @@ class PTypeAliasType < PAnyType
       return 0 if guard.add_this(self) == RecursionGuard::SELF_RECURSION_IN_BOTH
     end
     resolved_type.really_instance?(o, guard)
+  end
+
+  # @return `nil` to prevent serialization of the type_expr used when first initializing this instance
+  # @api private
+  def type_expr
+    nil
   end
 
   protected
@@ -2867,9 +3216,13 @@ end
 
 require 'puppet/pops/pcore'
 
-require_relative 'puppet_object'
+require_relative 'annotatable'
+require_relative 'p_meta_type'
 require_relative 'p_object_type'
 require_relative 'p_runtime_type'
 require_relative 'p_sem_ver_type'
 require_relative 'p_sem_ver_range_type'
+require_relative 'p_sensitive_type'
+require_relative 'p_type_set_type'
+require_relative 'type_set_reference'
 require_relative 'implementation_registry'

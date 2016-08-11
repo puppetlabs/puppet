@@ -5,6 +5,10 @@ module Types
 #
 # @api public
 class PSemVerRangeType < PScalarType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'ScalarType')
+  end
+
   # Check if a version is included in a version range. The version can be a string or
   # a `Semantic::SemVer`
   #
@@ -25,6 +29,25 @@ class PSemVerRangeType < PScalarType
       end
     else
       false
+    end
+  end
+
+  # Creates a {Semantic::VersionRange} from the given _version_range_ argument. If the argument is `nil` or
+  # a {Semantic::VersionRange}, it is returned. If it is a {String}, it will be parsed into a
+  # {Semantic::VersionRange}. Any other class will raise an {ArgumentError}.
+  #
+  # @param version_range [Semantic::VersionRange,String,nil] the version range to convert
+  # @return [Semantic::VersionRange] the converted version range
+  # @raise [ArgumentError] when the argument cannot be converted into a version range
+  #
+  def self.convert(version_range)
+    case version_range
+    when nil, Semantic::VersionRange
+      version_range
+    when String
+      Semantic::VersionRange.parse(version_range)
+    else
+      raise ArgumentError, "Unable to convert a #{version_range.class.name} to a SemVerRange"
     end
   end
 

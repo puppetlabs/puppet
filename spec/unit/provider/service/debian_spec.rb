@@ -9,6 +9,12 @@ provider_class = Puppet::Type.type(:service).provider(:debian)
 
 describe provider_class do
 
+  if Puppet.features.microsoft_windows?
+    # Get a pid for $CHILD_STATUS to latch on to
+    command = "cmd.exe /c \"exit 0\""
+    Puppet::Util::Execution.execute(command, {:failonfail => false})
+  end
+
   before(:each) do
     # Create a mock resource
     @resource = stub 'resource'
@@ -33,15 +39,18 @@ describe provider_class do
     @provider.stubs(:invoke_rc)
   end
 
-  operatingsystem = [ 'Debian', 'CumulusLinux' ]
-  operatingsystem.each do |os|
-    it "should be the default provider on #{os}" do
-      Facter.expects(:value).with(:operatingsystem).at_least_once.returns(os)
-      if os == 'Debian'
-        Facter.expects(:value).with(:operatingsystemmajrelease).returns('7')
-      end
+  ['1','2'].each do |version|
+    it "should be the default provider on CumulusLinux #{version}" do
+      Facter.expects(:value).with(:operatingsystem).at_least_once.returns('CumulusLinux')
+      Facter.expects(:value).with(:operatingsystemmajrelease).returns(version)
       expect(provider_class.default?).to be_truthy
     end
+  end
+
+  it "should be the default provider on Debian" do
+    Facter.expects(:value).with(:operatingsystem).at_least_once.returns('Debian')
+    Facter.expects(:value).with(:operatingsystemmajrelease).returns('7')
+    expect(provider_class.default?).to be_truthy
   end
 
   it "should have an enabled? method" do

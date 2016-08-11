@@ -3,6 +3,7 @@ module Puppet
     require 'puppet/pops/loaders'
 
     module Loader
+      require 'puppet/pops/loader/typed_name'
       require 'puppet/pops/loader/loader'
       require 'puppet/pops/loader/base_loader'
       require 'puppet/pops/loader/gem_support'
@@ -14,6 +15,7 @@ module Puppet
       require 'puppet/pops/loader/ruby_function_instantiator'
       require 'puppet/pops/loader/puppet_function_instantiator'
       require 'puppet/pops/loader/type_definition_instantiator'
+      require 'puppet/pops/loader/puppet_resource_type_impl_instantiator'
       require 'puppet/pops/loader/loader_paths'
       require 'puppet/pops/loader/simple_environment_loader'
       require 'puppet/pops/loader/predefined_loader'

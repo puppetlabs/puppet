@@ -7,9 +7,6 @@ class Puppet::Parser::Resource < Puppet::Resource
   require 'puppet/parser/resource/param'
   require 'puppet/util/tagging'
   require 'puppet/parser/yaml_trimmer'
-  require 'puppet/resource/type_collection_helper'
-
-  include Puppet::Resource::TypeCollectionHelper
 
   include Puppet::Util
   include Puppet::Util::MethodHelper
@@ -75,7 +72,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     return if evaluated?
     Puppet::Util::Profiler.profile("Evaluated resource #{self}", [:compiler, :evaluate_resource, self]) do
       @evaluated = true
-      if builtin?
+      if builtin_type?
         devfail "Cannot evaluate a builtin type (#{type})"
       elsif resource_type.nil?
         self.fail "Cannot find definition #{type}"
@@ -109,6 +106,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     @finished = true
     add_defaults
     add_scope_tags
+    replace_sensitive_data
     validate if do_validate
   end
 
@@ -256,7 +254,7 @@ class Puppet::Parser::Resource < Puppet::Resource
       scope.with_global_scope do |global_scope|
         cns_scope = global_scope.newscope(:source => self, :resource => self)
         cns.to_hash.each { |name, value| cns_scope[name.to_s] = value }
-  
+
         # evaluate mappings in that scope
         resource_type.arguments.keys.each do |name|
           if expr = blueprint[:mappings][name]
@@ -307,6 +305,15 @@ class Puppet::Parser::Resource < Puppet::Resource
     end
   end
 
+  def replace_sensitive_data
+    parameters.each_pair do |name, param|
+      if param.value.is_a?(Puppet::Pops::Types::PSensitiveType::Sensitive)
+        @sensitive_parameters << name
+        param.value = param.value.unwrap
+      end
+    end
+  end
+
   # Accept a parameter from an override.
   def override_parameter(param)
     # This can happen if the override is defining a new parameter, rather
@@ -333,7 +340,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     # syntax.  It's important that we use a copy of the new param instance
     # here, not the old one, and not the original new one, so that the source
     # is registered correctly for later overrides but the values aren't
-    # implcitly shared when multiple resources are overrriden at once (see
+    # implicitly shared when multiple resources are overridden at once (see
     # ticket #3556).
     if param.add
       param = param.dup

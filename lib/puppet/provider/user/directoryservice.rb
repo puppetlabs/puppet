@@ -141,7 +141,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     ################################
     # Get Password/Salt/Iterations #
     ################################
-    if attribute_hash[:shadowhashdata].empty?
+    if attribute_hash[:shadowhashdata].nil? or attribute_hash[:shadowhashdata].empty?
       attribute_hash[:password] = '*'
     else
       embedded_binary_plist = get_embedded_binary_plist(attribute_hash[:shadowhashdata])
@@ -367,7 +367,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     # flushing the dscl cache to allow all dscl calls to get INTO the cache
     # first. This could be made faster (and avoid a sleep call) by finding
     # a way to enter calls into the dscl cache faster. A sleep time of 1
-    # second would intermittantly require a second Puppet run to set
+    # second would intermittently require a second Puppet run to set
     # properties, so 2 seconds seems to be the minimum working value.
     sleep 2
     flush_dscl_cache
@@ -553,6 +553,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   # password hash (and Salt/Iterations value if the OS is 10.8 or greater)
   # into the ShadowHashData key of the user's plist.
   def set_shadow_hash_data(users_plist, binary_plist)
+    binary_plist = Puppet::Util::Plist.string_to_blob(binary_plist)
     if users_plist.has_key?('ShadowHashData')
       users_plist['ShadowHashData'][0] = binary_plist
     else
@@ -595,7 +596,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     shadow_hash_data['SALTED-SHA512-PBKDF2'] = Hash.new unless shadow_hash_data['SALTED-SHA512-PBKDF2']
     case field
     when 'salt', 'entropy'
-      shadow_hash_data['SALTED-SHA512-PBKDF2'][field] = base64_decode_string(value)
+      shadow_hash_data['SALTED-SHA512-PBKDF2'][field] = Puppet::Util::Plist.string_to_blob(base64_decode_string(value))
     when 'iterations'
       shadow_hash_data['SALTED-SHA512-PBKDF2'][field] = Integer(value)
     else

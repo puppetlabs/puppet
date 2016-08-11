@@ -72,7 +72,7 @@ Puppet::Face.define(:epp, '0.0.1') do
           status &&= tmp
         else
           # This is not an error since a validate of all files in an empty
-          # directry should not be treated as a failed validation.
+          # directory should not be treated as a failed validation.
           Puppet.notice "No template specified. No action taken"
         end
       end
@@ -115,10 +115,10 @@ Puppet::Face.define(:epp, '0.0.1') do
       If no arguments are given, the stdin is read (unless it is attached to a terminal)
 
       If multiple templates are given, they are separated with a header indicating the
-      name of the template. This can be surpressed with the option --no-header.
-      The option --[no-]header has no effect whe a single template is dumped.
+      name of the template. This can be suppressed with the option --no-header.
+      The option --[no-]header has no effect when a single template is dumped.
 
-      When debugging the epp parser itself, it may be useful to surpress the valiation
+      When debugging the epp parser itself, it may be useful to suppress the validation
       step with the `--no-validate` option to observe what the parser produced from the
       given source.
 
@@ -238,7 +238,7 @@ Puppet::Face.define(:epp, '0.0.1') do
 
       When designing EPP templates, it is strongly recommended to define all template arguments
       in the template, and to give them in a hash when calling `epp` or `inline_epp` and to use
-      as few global variables as possible, preferrably only the $facts hash. This makes templates
+      as few global variables as possible, preferably only the $facts hash. This makes templates
       more free standing and are easier to reuse, and to test.
     EOT
 

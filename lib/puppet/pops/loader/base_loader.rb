@@ -1,12 +1,14 @@
+module Puppet::Pops
+module Loader
 # BaseLoader
 # ===
-# An abstract implementation of Puppet::Pops::Loader::Loader
+# An abstract implementation of Loader
 #
 # A derived class should implement `find(typed_name)` and set entries, and possible handle "miss caching".
 #
 # @api private
 #
-class Puppet::Pops::Loader::BaseLoader < Puppet::Pops::Loader::Loader
+class BaseLoader < Loader
 
   # The parent loader
   attr_reader :parent
@@ -17,7 +19,6 @@ class Puppet::Pops::Loader::BaseLoader < Puppet::Pops::Loader::Loader
   def initialize(parent_loader, loader_name)
     @parent = parent_loader # the higher priority loader to consult
     @named_values = {}      # hash name => NamedEntry
-    @last_name = nil        # the last name asked for (optimization)
     @last_result = nil      # the value of the last name (optimization)
     @loader_name = loader_name # the name of the loader (not the name-space it is a loader for)
   end
@@ -30,11 +31,10 @@ class Puppet::Pops::Loader::BaseLoader < Puppet::Pops::Loader::Loader
     # These modules are typically parented by the same
     # loader as the one initiating the search. It is inefficient to again try to search the same loader for
     # the same name.
-    if typed_name == @last_name
-      @last_result
-    else
-      @last_name = typed_name
+    if @last_result.nil? || typed_name != @last_result.typed_name
       @last_result = internal_load(typed_name)
+    else
+      @last_result
     end
   end
 
@@ -61,7 +61,6 @@ class Puppet::Pops::Loader::BaseLoader < Puppet::Pops::Loader::Loader
   # @api private
   #
   def set_entry(typed_name, value, origin = nil)
-
     # It is never ok to redefine in the very same loader unless redefining a 'not found'
     if entry = @named_values[typed_name]
       fail_redefine(entry) unless entry.value.nil?
@@ -76,15 +75,14 @@ class Puppet::Pops::Loader::BaseLoader < Puppet::Pops::Loader::Loader
       end
     end
 
-    @last_result = Puppet::Pops::Loader::Loader::NamedEntry.new(typed_name, value, origin)
-    @last_name = typed_name
+    @last_result = Loader::NamedEntry.new(typed_name, value, origin)
     @named_values[typed_name] = @last_result
   end
 
   # @api private
   #
   def add_entry(type, name, value, origin)
-    set_entry(Puppet::Pops::Loader::Loader::TypedName.new(type, name), value, origin)
+    set_entry(TypedName.new(type, name), value, origin)
   end
 
   # Promotes an already created entry (typically from another loader) to this loader
@@ -140,4 +138,6 @@ class Puppet::Pops::Loader::BaseLoader < Puppet::Pops::Loader::Loader
     te
   end
 
+end
+end
 end

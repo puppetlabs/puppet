@@ -1,8 +1,6 @@
 require 'spec_helper'
-require 'puppet/util/plist' if Puppet.features.cfpropertylist?
+require 'puppet/util/plist'
 require 'puppet_spec/files'
-
-module Puppet::Util::Plist; end
 
 describe Puppet::Util::Plist, :if => Puppet.features.cfpropertylist? do
   include PuppetSpec::Files
@@ -54,6 +52,12 @@ describe Puppet::Util::Plist, :if => Puppet.features.cfpropertylist? do
     </dict>
     </plist>'
   end
+  let(:non_plist_data) do
+    "Take my love, take my land
+     Take me where I cannot stand
+     I don't care, I'm still free
+     You can't take the sky from me."
+   end
   let(:valid_xml_plist_hash) { {"LastUsedPrinters"=>[{"Network"=>"10.85.132.1", "PrinterID"=>"baskerville_corp_puppetlabs_net"}, {"Network"=>"10.14.96.1", "PrinterID"=>"Statler"}]} }
   let(:plist_path) { file_containing('sample.plist', valid_xml_plist) }
   let(:binary_plist_magic_number) { 'bplist00' }
@@ -88,6 +92,15 @@ describe Puppet::Util::Plist, :if => Puppet.features.cfpropertylist? do
       Puppet::Util::Execution.expects(:execute).with(['/usr/bin/plutil', '-convert', 'xml1', '-o', '/dev/stdout', plist_path],
                                                      {:failonfail => true, :combine => true}).returns(valid_xml_plist)
       expect(subject.read_plist_file(plist_path)).to eq(valid_xml_plist_hash)
+    end
+    it "returns nil when direct parsing and plutil conversion both fail" do
+      subject.stubs(:read_file_with_offset).with(plist_path, 8).returns('notbinary')
+      subject.stubs(:open_file_with_args).with(plist_path, 'r:UTF-8').returns(non_plist_data)
+      Puppet.expects(:debug).with(regexp_matches(/^Failed with NoMethodError/))
+      Puppet.expects(:debug).with("Plist #{plist_path} ill-formatted, converting with plutil")
+      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/plutil', '-convert', 'xml1', '-o', '/dev/stdout', plist_path],
+                                                     {:failonfail => true, :combine => true}).raises(Puppet::ExecutionFailure, 'boom')
+      expect(subject.read_plist_file(plist_path)).to eq(nil)
     end
   end
 

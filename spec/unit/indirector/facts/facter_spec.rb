@@ -60,14 +60,6 @@ describe Puppet::Node::Facts::Facter do
       @facter.find(@request)
     end
 
-    it 'should not include external facts when feature is not present' do
-      reset = sequence 'reset'
-      Puppet.features.stubs(:external_facts?).returns false
-      Facter.expects(:reset).in_sequence(reset)
-      Puppet::Node::Facts::Facter.expects(:setup_search_paths).in_sequence(reset)
-      @facter.find(@request)
-    end
-
     it "should return a Facts instance" do
       expect(@facter.find(@request)).to be_instance_of(Puppet::Node::Facts)
     end
@@ -140,7 +132,7 @@ describe Puppet::Node::Facts::Facter do
     end
   end
 
-  describe 'when setting up external search paths', :if => Puppet.features.external_facts? do
+  describe 'when setting up external search paths' do
     let(:pluginfactdest) { File.expand_path 'plugin/dest' }
     let(:modulepath) { File.expand_path 'module/foo' }
     let(:modulefactsd) { File.expand_path 'module/foo/facts.d'  }

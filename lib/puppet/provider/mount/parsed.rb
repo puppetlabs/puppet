@@ -61,7 +61,7 @@ Puppet::Type.type(:mount).provide(
           ret[filesystem_index] = filesystem_stanza.join("\n") if filesystem_stanza
           filesystem_stanza = Array(line)
           filesystem_index = i
-          # Eat the preceeding blank line
+          # Eat the preceding blank line
           ret[i-1] = nil if i > 0 and ret[i-1] and ret[i-1].match(%r{^\s*$})
           nil
         elsif line.match(%r{^(\s*\*.*|\s*)$})

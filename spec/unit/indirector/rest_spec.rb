@@ -1,5 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'json'
 require 'puppet/indirector'
 require 'puppet/indirector/errors'
 require 'puppet/indirector/rest'
@@ -12,15 +13,34 @@ shared_examples_for "a REST terminus method" do |terminus_method|
 
   HTTP_ERROR_CODES.each do |code|
     describe "when the response code is #{code}" do
-      let(:response) { mock_response(code, 'error messaged!!!') }
+      let(:message) { 'error messaged!!!' }
+      let(:body) do
+        JSON.generate({
+          :issue_kind => 'server-error',
+          :message    => message,
+          :stacktrace => ['worst/stack/trace/ever.rb:4']
+        })
+      end
+      let(:response) { mock_response(code, body, 'application/json') }
 
-      it "raises an http error with the body of the response" do
-        expect {
-          terminus.send(terminus_method, request)
-        }.to raise_error(Net::HTTPError, "Error #{code} on SERVER: #{response.body}")
+      describe "when the response is plain text" do
+        let(:response) { mock_response(code, message) }
+
+        it "raises an http error with the body of the response when plain text" do
+
+          expect {
+            terminus.send(terminus_method, request)
+          }.to raise_error(Net::HTTPError, "Error #{code} on SERVER: #{message}")
+        end
       end
 
-      it "does not attempt to deserialize the response" do
+      it "raises an http error with the body's message field when json" do
+        expect {
+          terminus.send(terminus_method, request)
+        }.to raise_error(Net::HTTPError, "Error #{code} on SERVER: #{message}")
+      end
+
+      it "does not attempt to deserialize the response into a model" do
         model.expects(:convert_from).never
 
         expect {
@@ -40,15 +60,14 @@ shared_examples_for "a REST terminus method" do |terminus_method|
 
       describe "and the body is compressed" do
         it "raises an http error with the decompressed body of the response" do
-          uncompressed_body = "why"
-          compressed_body = Zlib::Deflate.deflate(uncompressed_body)
+          compressed_body = Zlib::Deflate.deflate(body)
 
-          response = mock_response(code, compressed_body, 'text/plain', 'deflate')
-          connection.expects(http_method).returns(response)
+          compressed_response = mock_response(code, compressed_body, 'application/json', 'deflate')
+          connection.expects(http_method).returns(compressed_response)
 
           expect {
             terminus.send(terminus_method, request)
-          }.to raise_error(Net::HTTPError, "Error #{code} on SERVER: #{uncompressed_body}")
+          }.to raise_error(Net::HTTPError, "Error #{code} on SERVER: #{message}")
         end
       end
     end
@@ -184,6 +203,73 @@ describe Puppet::Indirector::REST do
     terminus_class.expects(:port_setting).returns nil
     Puppet[:masterport] = "543"
     expect(terminus_class.port).to eq(543)
+  end
+
+  it "should use a failover-selected server if set" do
+    terminus_class.expects(:server_setting).returns nil
+    Puppet.override(:server => "myserver") do
+      expect(terminus_class.server).to eq("myserver")
+    end
+  end
+
+  it "should use a failover-selected port if set" do
+    terminus_class.expects(:port_setting).returns nil
+    Puppet.override(:serverport => 321) do
+      expect(terminus_class.port).to eq(321)
+    end
+  end
+
+  it "should use server_list for server when available" do
+    terminus_class.expects(:server_setting).returns nil
+    Puppet[:server_list] = [["foo", "123"]]
+    expect(terminus_class.server).to eq("foo")
+  end
+
+  it "should prefer failover-selected server from server list" do
+    terminus_class.expects(:server_setting).returns nil
+    Puppet[:server_list] = [["foo", "123"],["bar", "321"]]
+    Puppet.override(:server => "bar") do
+      expect(terminus_class.server).to eq("bar")
+    end
+  end
+
+  it "should use server_list for port when available" do
+    terminus_class.expects(:port_setting).returns nil
+    Puppet[:server_list] = [["foo", "123"]]
+    expect(terminus_class.port).to eq(123)
+  end
+
+  it "should prefer failover-selected port from server list" do
+    terminus_class.expects(:port_setting).returns nil
+    Puppet[:server_list] = [["foo", "123"],["bar", "321"]]
+    Puppet.override(:serverport => "321") do
+      expect(terminus_class.port).to eq(321)
+    end
+  end
+
+  it "should use an explicitly specified more-speciic server when failover is active" do
+    terminus_class.expects(:server_setting).returns :ca_server
+    Puppet[:ca_server] = "myserver"
+    Puppet.override(:server => "anotherserver") do
+      expect(terminus_class.server).to eq("myserver")
+    end
+  end
+
+  it "should use an explicitly specified more-specific port when failover is active" do
+    terminus_class.expects(:port_setting).returns :ca_port
+    Puppet[:ca_port] = 321
+    Puppet.override(:serverport => 543) do
+      expect(terminus_class.port).to eq(321)
+    end
+  end
+
+  it "should use a default port when a more-specific server is set" do
+    terminus_class.expects(:server_setting).returns :ca_server
+    terminus_class.expects(:port_setting).returns :ca_port
+    Puppet[:ca_server] = "myserver"
+    Puppet.override(:server => "anotherserver", :port => 666) do
+      expect(terminus_class.port).to eq(8140)
+    end
   end
 
   it 'should default to :puppet for the srv_service' do

@@ -34,7 +34,6 @@ class EvaluatorImpl
   include Runtime3Support
   include ExternalSyntaxSupport
 
-  EMPTY_STRING = ''.freeze
   COMMA_SEPARATOR = ', '.freeze
 
   # Reference to Issues name space makes it easier to refer to issues
@@ -49,7 +48,6 @@ class EvaluatorImpl
     @@string_visitor   ||= Visitor.new(self, "string", 1, 1)
 
     @@type_calculator  ||= Types::TypeCalculator.new()
-    @@type_parser      ||= Types::TypeParser.new()
 
     @@compare_operator     ||= CompareOperator.new()
     @@relationship_operator ||= RelationshipOperator.new()
@@ -300,7 +298,7 @@ class EvaluatorImpl
   # A QualifiedReference (i.e. a  capitalized qualified name such as Foo, or Foo::Bar) evaluates to a PType
   #
   def eval_QualifiedReference(o, scope)
-    type = @@type_parser.interpret(o, scope)
+    type = Types::TypeParser.singleton.interpret(o, scope)
     fail(Issues::UNKNOWN_RESOURCE_TYPE, o, {:type_name => type.type_string }) if type.is_a?(Types::PTypeReferenceType)
     type
   end
@@ -451,7 +449,7 @@ class EvaluatorImpl
     keys = o.keys || []
     if left.is_a?(Types::PHostClassType)
       # Evaluate qualified references without errors no undefined types
-      keys = keys.map {|key| key.is_a?(Model::QualifiedReference) ? @@type_parser.interpret(key, scope) : evaluate(key, scope) }
+      keys = keys.map {|key| key.is_a?(Model::QualifiedReference) ? Types::TypeParser.singleton.interpret(key, scope) : evaluate(key, scope) }
     else
       keys = keys.map {|key| evaluate(key, scope) }
       # Resource[File] becomes File

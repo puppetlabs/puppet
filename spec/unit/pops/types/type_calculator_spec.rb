@@ -208,6 +208,12 @@ describe 'The type calculator' do
       end
     end
 
+    context 'sensitive' do
+      it 'translates to PSensitiveType' do
+        expect(calculator.infer(PSensitiveType::Sensitive.new("hunter2")).class).to eq(PSensitiveType)
+      end
+    end
+
     context 'version' do
       it 'translates to PVersionType' do
         expect(calculator.infer(Semantic::Version.new(1,0,0)).class).to eq(PSemVerType)
@@ -651,7 +657,7 @@ describe 'The type calculator' do
         # Add a non-empty variant
         all_instances << variant_t(PAnyType::DEFAULT, PUnitType::DEFAULT)
         # Add a type alias that doesn't resolve to 't'
-        all_instances << type_alias_t('MyInt', 'Integer').resolve(TypeParser.new, nil)
+        all_instances << type_alias_t('MyInt', 'Integer').resolve(TypeParser.singleton, nil)
 
         all_instances.each { |i| expect(i).not_to be_assignable_to(t) }
       end
@@ -1347,7 +1353,7 @@ describe 'The type calculator' do
     end
 
     context 'for TypeAlias, such that' do
-      let!(:parser) { TypeParser.new }
+      let!(:parser) { TypeParser.singleton }
 
       it 'it is assignable to the type that it is an alias for' do
         t = type_alias_t('Alias', 'Integer').resolve(parser, nil)
@@ -1740,7 +1746,7 @@ describe 'The type calculator' do
     end
 
     context 'and t is a TypeAlias' do
-      let!(:parser) { TypeParser.new }
+      let!(:parser) { TypeParser.singleton }
 
       it 'should consider x an instance of the aliased simple type' do
         t = type_alias_t('Alias', 'Integer').resolve(parser, nil)

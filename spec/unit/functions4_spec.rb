@@ -14,11 +14,11 @@ module FunctionAPISpecModule
     end
 
     def add_function(name, function)
-      set_entry(Puppet::Pops::Loader::Loader::TypedName.new(:function, name), function, __FILE__)
+      set_entry(Puppet::Pops::Loader::TypedName.new(:function, name), function, __FILE__)
     end
 
     def add_type(name, type)
-      set_entry(Puppet::Pops::Loader::Loader::TypedName.new(:type, name), type, __FILE__)
+      set_entry(Puppet::Pops::Loader::TypedName.new(:type, name), type, __FILE__)
     end
 
     def set_entry(typed_name, value, origin = nil)

@@ -185,11 +185,18 @@ module Puppet::Pops::Parser::InterpolationSupport
     scn = @scanner
     ctx = @lexing_context
     queue = @token_queue
+    queue_base = @token_queue[0]
 
     scn.skip(self.class::PATTERN_WS)
     queue_size = queue.size
     until scn.eos? do
       if token = lex_token
+        if token.equal?(queue_base)
+          # A nested #interpolate_dq call shifted the queue_base token from the @token_queue. It must
+          # be put back since it is intended for the top level #interpolate_dq call only.
+          queue.insert(0, token)
+          next # all relevant tokens are already on the queue
+        end
         token_name = token[0]
         ctx[:after] = token_name
         if token_name == :RBRACE && ctx[:brace_count] == brace_count

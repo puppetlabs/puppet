@@ -98,6 +98,8 @@ class ModelLabelProvider
   def label_TypeAlias o                   ; "Type Alias"                        end
   def label_TypeMapping o                 ; "Type Mapping"                      end
   def label_TypeDefinition o              ; "Type Definition"                   end
+  def label_Application o                 ; "Application"                       end
+  def label_Sensitive o                   ; "Sensitive"                         end
 
   def label_PResourceType o
     if o.title

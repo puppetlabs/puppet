@@ -920,4 +920,50 @@ describe Puppet::Configurer do
       expect(described_class).not_to be_should_pluginsync
     end
   end
+
+  describe "when attempting failover" do
+    it "should not failover if server_list is not set" do
+      Puppet.settings[:server_list] = []
+      @agent.expects(:find_functional_server).never
+      @agent.run
+    end
+
+    it "should not failover during an apply run" do
+      Puppet.settings[:server_list] = ["myserver:123"]
+      @agent.expects(:find_functional_server).never
+      catalog = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote(Puppet[:environment].to_sym))
+      @agent.run :catalog => catalog
+    end
+
+    it "should select a server when provided" do
+      Puppet.settings[:server_list] = ["myserver:123"]
+      pool = Puppet::Network::HTTP::Pool.new(Puppet[:http_keepalive_timeout])
+      Puppet::Network::HTTP::Pool.expects(:new).returns(pool)
+      Puppet.expects(:override).with({:http_pool => pool}).yields
+      Puppet.expects(:override).with({:server => "myserver", :serverport => '123'}).twice.yields
+      Puppet::Node.indirection.expects(:find).returns(nil)
+      @agent.expects(:run_internal).returns(nil)
+      @agent.run
+    end
+
+    it "should fallback to an empty server when failover fails" do
+      Puppet.settings[:server_list] = ["myserver:123"]
+      pool = Puppet::Network::HTTP::Pool.new(Puppet[:http_keepalive_timeout])
+      Puppet::Network::HTTP::Pool.expects(:new).returns(pool)
+      Puppet.expects(:override).with({:http_pool => pool}).yields
+      Puppet.expects(:override).with({:server => "myserver", :serverport => '123'}).yields
+      Puppet.expects(:override).with({:server => nil, :serverport => nil}).yields
+      error = Net::HTTPError.new(400, 'dummy server communication error')
+      Puppet::Node.indirection.expects(:find).raises(error)
+      @agent.expects(:run_internal).returns(nil)
+      @agent.run
+    end
+
+    it "should not make multiple node requets when the server is found" do
+      Puppet.settings[:server_list] = ["myserver:123"]
+      Puppet::Node.indirection.expects(:find).returns("mynode").once
+      @agent.expects(:prepare_and_retrieve_catalog).returns(nil)
+      @agent.run
+    end
+  end
 end

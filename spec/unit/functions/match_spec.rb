@@ -18,7 +18,7 @@ describe 'the match function' do
     Puppet.lookup(:loaders).puppet_system_loader.load(:function, 'match')
   end
 
-  let(:type_parser) { Puppet::Pops::Types::TypeParser.new }
+  let(:type_parser) { Puppet::Pops::Types::TypeParser.singleton }
 
 
   it 'matches string and regular expression without captures' do
@@ -52,6 +52,6 @@ describe 'the match function' do
   end
 
   def type(s)
-    Puppet::Pops::Types::TypeParser.new.parse(s) 
+    Puppet::Pops::Types::TypeParser.singleton.parse(s)
   end
 end

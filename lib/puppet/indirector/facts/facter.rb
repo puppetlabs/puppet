@@ -26,7 +26,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     # fact. This is because in Facter 2.x, the first `Facter.add` causes Facter to create
     # its directory loaders which cannot be changed, meaning other external facts won't
     # be resolved. (PUP-4607)
-    self.class.setup_external_search_paths(request) if Puppet.features.external_facts?
+    self.class.setup_external_search_paths(request)
     self.class.setup_search_paths(request)
 
     # Initialize core Puppet facts, such as puppetversion

@@ -141,7 +141,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     # first we re-read the right just to make sure we're in sync for
     # values that weren't specified in the manifest. As we're supplying
     # the whole plist when specifying the right it seems safest to be
-    # paranoid given the low cost of quering the db once more.
+    # paranoid given the low cost of querying the db once more.
     cmds = []
     cmds << :security << "authorizationdb" << "read" << resource[:name]
     output = execute(cmds, :failonfail => false, :combine => false)

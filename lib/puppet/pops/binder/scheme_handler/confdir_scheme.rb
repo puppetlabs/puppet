@@ -6,7 +6,7 @@ require 'puppet/pops/binder/scheme_handler/symbolic_scheme'
 # URI
 # ---
 # The URI scheme is `confdir:/[<FQN>]['?' | [?optional]` where FQN is the fully qualified name of the bindings to load.
-# The referecence is made optional by using a URI query of `?` or `?optional`.
+# The reference is made optional by using a URI query of `?` or `?optional`.
 #
 # @todo
 #   If the file to load is outside of the file system rooted at $confdir (in a gem, or just on the Ruby path), it can not

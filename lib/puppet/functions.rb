@@ -44,7 +44,7 @@
 # When the function is called, puppet searches the signatures for one that
 # matches the supplied arguments. Each signature is part of a dispatch, which
 # specifies the method that should be called for that signature. When a
-# matching signature is found, the corrosponding method is called.
+# matching signature is found, the corresponding method is called.
 #
 # Documentation for the function should be placed as comments to the
 # implementation method(s).
@@ -272,9 +272,8 @@ module Puppet::Functions
 
     # @api private
     def self.builder
-      @type_parser ||= Puppet::Pops::Types::TypeParser.new
       @all_callables ||= Puppet::Pops::Types::TypeFactory.all_callables
-      DispatcherBuilder.new(dispatcher, @type_parser, @all_callables, loader)
+      DispatcherBuilder.new(dispatcher, Puppet::Pops::Types::TypeParser.singleton, @all_callables, loader)
     end
 
     # Dispatch any calls that match the signature to the provided method name.
@@ -602,9 +601,8 @@ module Puppet::Functions
   class InternalFunction < Function
     # @api private
     def self.builder
-      @type_parser ||= Puppet::Pops::Types::TypeParser.new
       @all_callables ||= Puppet::Pops::Types::TypeFactory.all_callables
-      InternalDispatchBuilder.new(dispatcher, @type_parser, @all_callables, loader)
+      InternalDispatchBuilder.new(dispatcher, Puppet::Pops::Types::TypeParser.singleton, @all_callables, loader)
     end
 
     # Defines class level injected attribute with reader method

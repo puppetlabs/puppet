@@ -8,7 +8,7 @@
 
 module DOT
 
-  # These glogal vars are used to make nice graph source.
+  # These global vars are used to make nice graph source.
 
   $tab  = '    '
   $tab2 = $tab * 2

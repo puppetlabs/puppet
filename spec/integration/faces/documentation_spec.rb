@@ -46,7 +46,7 @@ describe "documentation of faces" do
       context "licensing of Puppet Labs face '#{face_name}'" do
         subject { Puppet::Face[face_name, :current] }
         its :license   do should =~ /Apache\s*2/ end
-        its :copyright do should =~ /Puppet Labs/ end
+        its :copyright do should =~ /Puppet Labs|Puppet Inc\./ end
 
         # REVISIT: This is less that ideal, I think, but right now I am more
         # comfortable watching us ship with some copyright than without any; we

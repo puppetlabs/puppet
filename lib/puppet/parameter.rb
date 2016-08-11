@@ -376,7 +376,7 @@ class Puppet::Parameter
     tmp
   end
 
-  # Returns an array of strings representing the containment heirarchy
+  # Returns an array of strings representing the containment hierarchy
   # (types/classes) that make up the path to the resource from the root
   # of the catalog.  This is mostly used for logging purposes.
   #
@@ -479,7 +479,7 @@ class Puppet::Parameter
   #   calls both validate and munge on the given value, so no late binding.
   #
   # The given value is validated and then munged (if munging has been specified). The result is store
-  # as the value of this arameter.
+  # as the value of this parameter.
   # @return [Object] The given `value` after munging.
   # @raise (see #validate)
   #
@@ -501,7 +501,7 @@ class Puppet::Parameter
 
   # @return [Array<Symbol>] Returns an array of the associated resource's symbolic tags (including the parameter itself).
   # Returns an array of the associated resource's symbolic tags (including the parameter itself).
-  # At a minimun, the array contains the name of the parameter. If the associated resource
+  # At a minimum, the array contains the name of the parameter. If the associated resource
   # has tags, these tags are also included in the array.
   # @todo The original comment says = _"The properties need to return tags so that logs correctly
   #   collect them."_ what if anything of that is of interest to document. Should tags and their relationship

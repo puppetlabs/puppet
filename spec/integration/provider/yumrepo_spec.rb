@@ -87,7 +87,7 @@ describe Puppet::Type.type(:yumrepo).provider(:inifile), '(integration)',
     properties = {"bandwidth"      => "42M",
                   "baseurl"        => "http://er0ck",
                   "cost"           => "42",
-                  "enabled"        => "Yes",
+                  "enabled"        => "yes",
                   "exclude"        => "er0ckSet2.0",
                   "failovermethod" => "roundrobin",
                   "include"        => "https://er0ck",
@@ -107,6 +107,9 @@ describe Puppet::Type.type(:yumrepo).provider(:inifile), '(integration)',
       apply_with_error_check(manifest)
       file_lines = File.read(File.join(@yumrepo_dir, super_creative + '.repo'))
       properties.each do |property_key, property_value|
+        if property_value =~ /^(true|false|no|yes)$/
+          property_value = property_value.capitalize
+        end
         expect(file_lines).to match(/^#{property_key}=#{Regexp.escape(property_value)}$/)
       end
     end

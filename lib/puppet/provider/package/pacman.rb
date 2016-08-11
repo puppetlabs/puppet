@@ -36,7 +36,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   end
 
   # Install a package using 'pacman', or 'yaourt' if available.
-  # Installs quietly, without confirmation or progressbar, updates package
+  # Installs quietly, without confirmation or progress bar, updates package
   # list from servers defined in pacman.conf.
   def install
     if @resource[:source]
@@ -163,7 +163,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     end
   end
 
-  # Querys information for a package or package group
+  # Queries information for a package or package group
   def query
     installed_packages = self.class.get_installed_packages
     resource_name = @resource[:name]

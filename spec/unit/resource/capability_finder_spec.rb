@@ -65,12 +65,60 @@ describe Puppet::Resource::CapabilityFinder do
         result = Puppet::Resource::CapabilityFinder.find('production', nil, Puppet::Resource.new('Cap', 'cap'))
         expect(result['host']).to eq('ahost')
       end
+    end
 
-      it 'should include code_id in query' do
-        code_id = 'b59e5df0578ef411f773ee6c33d8073c50e7b8fe'
-        Puppet::Util::Puppetdb::Http.expects(:action).with(regexp_matches(Regexp.new(CGI.escape('"=","code_id","' + code_id + "")))).returns(response)
+    describe '#find' do
+      let(:capability) { Puppet::Resource.new('Cap', 'cap') }
+      let(:code_id) { 'b59e5df0578ef411f773ee6c33d8073c50e7b8fe' }
+
+      it 'should search for the resource without including code_id' do
+        resources = [{"type"=>"Cap", "title"=>"cap", "parameters"=>{"host"=>"ahost"}}]
+        Puppet::Resource::CapabilityFinder.stubs(:search).with('production', nil, capability).returns resources
+
         result = Puppet::Resource::CapabilityFinder.find('production', code_id, Puppet::Resource.new('Cap', 'cap'))
         expect(result['host']).to eq('ahost')
+      end
+
+      it 'should return nil if no resource is found' do
+        Puppet::Resource::CapabilityFinder.stubs(:search).with('production', nil, capability).returns []
+
+        result = Puppet::Resource::CapabilityFinder.find('production', code_id, capability)
+        expect(result).to be_nil
+      end
+
+      describe 'when multiple results are returned' do
+        let(:resources) do
+          [{"type"=>"Cap", "title"=>"cap", "parameters"=>{"host"=>"ahost"}},
+           {"type"=>"Cap", "title"=>"cap", "parameters"=>{"host"=>"bhost"}}]
+        end
+
+        before :each do
+          Puppet::Resource::CapabilityFinder.stubs(:search).with('production', nil, capability).returns resources
+        end
+
+        it 'should return the resource matching code_id' do
+          Puppet::Resource::CapabilityFinder.stubs(:search).with('production', code_id, capability).returns [{"type"=>"Cap", "title"=>"cap", "parameters"=>{"host"=>"chost"}}]
+
+          result = Puppet::Resource::CapabilityFinder.find('production', code_id, capability)
+          expect(result['host']).to eq('chost')
+        end
+
+        it 'should return nil if no resource matches code_id' do
+          Puppet::Resource::CapabilityFinder.stubs(:search).with('production', code_id, capability).returns []
+
+          result = Puppet::Resource::CapabilityFinder.find('production', code_id, capability)
+          expect(result).to be_nil
+        end
+
+        it 'should fail if multiple resources match code_id' do
+          Puppet::Resource::CapabilityFinder.stubs(:search).with('production', code_id, capability).returns resources
+
+          expect { Puppet::Resource::CapabilityFinder.find('production', code_id, capability) }.to raise_error(Puppet::DevError, /expected exactly one resource/)
+        end
+
+        it 'should fail if no code_id was specified' do
+          expect { Puppet::Resource::CapabilityFinder.find('production', nil, capability) }.to raise_error(Puppet::DevError, /expected exactly one resource/)
+        end
       end
     end
   end

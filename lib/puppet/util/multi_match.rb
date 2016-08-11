@@ -3,7 +3,7 @@
 # "each v === other.each v". 
 #
 # This class is useful in situations when the Puppet Type System cannot be used
-# (e.g. in Logging, since it needs to be able to log very early i the intialization
+# (e.g. in Logging, since it needs to be able to log very early in the initialization
 # cycle of puppet)
 #
 # Typically used with the constants

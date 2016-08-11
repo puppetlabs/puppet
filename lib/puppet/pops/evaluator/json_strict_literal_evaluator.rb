@@ -21,7 +21,6 @@ require 'rgen/ecore/ecore'
 class Puppet::Pops::Evaluator::JsonStrictLiteralEvaluator
   #include Puppet::Pops::Utils
 
-  EMPTY_STRING = ''.freeze
   COMMA_SEPARATOR = ', '.freeze
 
   def initialize

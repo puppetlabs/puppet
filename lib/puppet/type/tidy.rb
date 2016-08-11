@@ -73,7 +73,7 @@ Puppet::Type.newtype(:tidy) do
       Finally, note that you must now specify a non-zero/non-false value
       for recurse if matches is used, as matches only apply to files found
       by recursion (there's no reason to use static patterns match against
-      a statically determined path).  Requiering explicit recursion clears
+      a statically determined path).  Requiring explicit recursion clears
       up a common source of confusion.
     EOT
 

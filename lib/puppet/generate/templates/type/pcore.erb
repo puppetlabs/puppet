@@ -1,0 +1,41 @@
+# This file was automatically generated on <%= Time.now %>.
+# Use the 'puppet generate types' command to regenerate this file.
+
+<%- unless doc.empty? -%>
+  <%- doc.each_line do |line| -%>
+# <%= line -%>
+  <%- end %>
+<%- end -%>
+Puppet::Resource::ResourceType3.new(
+  <%= name %>,
+  [
+<%- properties.each_with_index do |property, index| -%>
+  <%- unless property.doc.empty? -%>
+    <%- property.doc.each_line do |line| -%>
+    # <%= line -%>
+    <%- end %>
+  <%- end -%>
+    Puppet::Resource::Param(<%= property.type %>, <%= property.name %><% if property.is_namevar? %>, true<% end %>)<% if index + 1 < properties.size %>,
+
+    <%- end -%>
+<%- end %>
+  ],
+  [
+<%- parameters.each_with_index do |parameter, index| -%>
+  <%- unless parameter.doc.empty? -%>
+    <%- parameter.doc.each_line do |line| -%>
+    # <%= line -%>
+    <%- end %>
+  <%- end -%>
+    Puppet::Resource::Param(<%= parameter.type %>, <%= parameter.name %><% if parameter.is_namevar? %>, true<% end %>)<% if index + 1 < parameters.size %>,
+
+    <%- end -%>
+<%- end %>
+  ],
+  {
+<%- title_patterns.each_with_index do |mapping, index| -%>
+    <%= mapping[0] %> => [<%= mapping[1].join(', ')%>]<%= "," if index + 1 < title_patterns.size %>
+<%- end -%>
+  },
+  <%= isomorphic -%>
+)
