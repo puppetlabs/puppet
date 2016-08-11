@@ -467,7 +467,7 @@ describe 'the 4x function api' do
         # evaluate a puppet call
         source = "testing::test(10) |$x| { $x+1 }"
         program = parser.parse_string(source, __FILE__)
-        Puppet::Pops::Adapters::LoaderAdapter.adapt(program.model).loader = the_loader
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).returns(the_loader)
         expect(parser.evaluate(scope, program)).to eql(11)
       end
     end
@@ -513,7 +513,7 @@ describe 'the 4x function api' do
         CODE
         the_loader.add_function('testing::test', fc.new({}, the_loader))
         program = parser.parse_string('testing::test(10)', __FILE__)
-        Puppet::Pops::Adapters::LoaderAdapter.adapt(program.model).loader = the_loader
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).returns(the_loader)
         expect(parser.evaluate({}, program)).to eql(10)
       end
 
@@ -532,7 +532,7 @@ describe 'the 4x function api' do
         CODE
         the_loader.add_function('testing::test', fc.new({}, the_loader))
         program = parser.parse_string('testing::test(10)', __FILE__)
-        Puppet::Pops::Adapters::LoaderAdapter.adapt(program.model).loader = the_loader
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).returns(the_loader)
         expect { parser.evaluate({}, program) }.to raise_error(Puppet::Error, /parameter 'x' references an unresolved type 'MyAlias'/)
       end
 
@@ -554,7 +554,7 @@ describe 'the 4x function api' do
         CODE
         the_loader.add_function('testing::test', fc.new({}, the_loader))
         program = parser.parse_string('testing::test([10,20])', __FILE__)
-        Puppet::Pops::Adapters::LoaderAdapter.adapt(program.model).loader = the_loader
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).returns(the_loader)
         expect(parser.evaluate({}, program)).to eq([10,20])
       end
 
@@ -577,7 +577,7 @@ describe 'the 4x function api' do
         CODE
         the_loader.add_function('testing::test', fc.new({}, the_loader))
         program = parser.parse_string("testing::test({'x' => [10,20]})", __FILE__)
-        Puppet::Pops::Adapters::LoaderAdapter.adapt(program.model).loader = the_loader
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).returns(the_loader)
         expect(parser.evaluate({}, program)).to eq({'x' => [10,20]})
       end
 
@@ -599,7 +599,7 @@ describe 'the 4x function api' do
         CODE
         the_loader.add_function('testing::test', fc.new({}, the_loader))
         program = parser.parse_string("testing::test({'x' => {'y' => 'n'}})", __FILE__)
-        Puppet::Pops::Adapters::LoaderAdapter.adapt(program.model).loader = the_loader
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).returns(the_loader)
         expect(parser.evaluate({}, program)).to eq({'x' => {'y' => 'n'}})
       end
     end

@@ -46,6 +46,15 @@ module ModuleLoaders
                                                        )
   end
 
+  def self.pcore_resource_type_loader_from(parent_loader, loaders, environment_path)
+    ModuleLoaders::FileBased.new(parent_loader,
+      loaders,
+      nil,
+      environment_path,
+      'pcore_resource_types'
+    )
+  end
+
   class AbstractPathBasedModuleLoader < BaseLoader
 
     # The name of the module, or nil, if this is a global "component"
@@ -66,6 +75,7 @@ module ModuleLoaders
 
     # Initialize a kind of ModuleLoader for one module
     # @param parent_loader [Loader] loader with higher priority
+    # @param loaders [Loaders] the container for this loader
     # @param module_name [String] the name of the module (non qualified name), may be nil for a global "component"
     # @param path [String] the path to the root of the module (semantics defined by subclass)
     # @param loader_name [String] a name that is used for human identification (useful when module_name is nil)
@@ -81,6 +91,7 @@ module ModuleLoaders
       unless (loadables - LOADABLE_KINDS).empty?
         raise ArgumentError, 'given loadables are not of supported loadable kind'
       end
+      loaders.add_loader_by_name(self)
     end
 
     def loadables

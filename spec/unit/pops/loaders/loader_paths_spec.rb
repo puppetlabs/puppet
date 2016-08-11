@@ -7,7 +7,7 @@ describe 'loader paths' do
   include PuppetSpec::Files
 
   let(:static_loader) { Puppet::Pops::Loader::StaticLoader.new() }
-  let(:unused_loaders) { nil }
+  let(:unused_loaders) { Puppet::Pops::Loaders.new(Puppet::Node::Environment.create(:'*test*', [])) }
 
   it 'module loader has smart-paths that prunes unavailable paths' do
     module_dir = dir_containing('testmodule', {'lib' => {'puppet' => {'functions' =>

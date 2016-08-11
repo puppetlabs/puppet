@@ -71,8 +71,7 @@ class PuppetResourceTypeImplInstantiator
     # Adapt the resource type definition with loader - this is used from logic contained in it body to find the
     # loader to use when making calls to the new function API. Such logic have a hard time finding the closure (where
     # the loader is known - hence this mechanism
-    private_loader = loader.private_loader
-    Adapters::LoaderAdapter.adapt(resource_type_impl).loader = private_loader
+    Adapters::LoaderAdapter.adapt(resource_type_impl).loader_name = loader.loader_name
     resource_type_impl
   end
 

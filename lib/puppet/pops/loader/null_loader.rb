@@ -6,7 +6,7 @@ class Puppet::Pops::Loader::NullLoader < Puppet::Pops::Loader::Loader
   # Construct a NullLoader, optionally with a parent loader
   #
   def initialize(parent_loader=nil, loader_name = "null-loader")
-    @loader_name = loader_name
+    super(loader_name)
     @parent = parent_loader
   end
 
