@@ -41,7 +41,7 @@ class TypeDefinitionInstantiator
     # loader to use when resolving contained aliases API. Such logic have a hard time finding the closure (where
     # the loader is known - hence this mechanism
     private_loader = loader.private_loader
-    Adapters::LoaderAdapter.adapt(type_definition).loader = private_loader
+    Adapters::LoaderAdapter.adapt(type_definition).loader_name = private_loader.loader_name
     create_runtime_type(type_definition)
   end
 

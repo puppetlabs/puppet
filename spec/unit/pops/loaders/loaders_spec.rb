@@ -87,7 +87,7 @@ describe 'loaders' do
     expect(loaders.public_environment_loader()).to be_a(Puppet::Pops::Loader::SimpleEnvironmentLoader)
     expect(loaders.public_environment_loader().to_s).to eql("(SimpleEnvironmentLoader 'environment:*test*')")
     expect(loaders.private_environment_loader()).to be_a(Puppet::Pops::Loader::DependencyLoader)
-    expect(loaders.private_environment_loader().to_s).to eql("(DependencyLoader 'environment' [])")
+    expect(loaders.private_environment_loader().to_s).to eql("(DependencyLoader 'environment private' [])")
   end
 
   context 'when loading from a module' do
