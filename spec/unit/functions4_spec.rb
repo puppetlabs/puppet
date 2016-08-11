@@ -491,7 +491,7 @@ describe 'the 4x function api' do
         CODE
         the_loader.add_function('testing::test', fc.new({}, the_loader))
         program = parser.parse_string('testing::test(10)', __FILE__)
-        Puppet::Pops::Adapters::LoaderAdapter.adapt(program.model).loader = the_loader
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).returns(the_loader)
         expect { parser.evaluate({}, program) }.to raise_error(Puppet::Error,
           /value returned from function 'test' had wrong type, expected a String value, got Integer/)
       end
