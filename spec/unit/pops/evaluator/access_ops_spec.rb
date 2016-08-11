@@ -464,7 +464,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
     it 'produces Callable instance without return type' do
       type_expr = fqr('Callable')[fqr('String')]
       tf = Puppet::Pops::Types::TypeFactory
-      expect(evaluate(type_expr)).to eql(tf.callable([String], Object))
+      expect(evaluate(type_expr)).to eql(tf.callable(String))
     end
 
     it 'produces Callable instance with parameters and return type' do

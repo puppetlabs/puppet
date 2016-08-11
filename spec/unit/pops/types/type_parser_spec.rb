@@ -257,19 +257,31 @@ describe TypeParser do
   end
 
   it 'parses a callable type' do
-    expect(parser.parse("Callable")).to be_the_type(types.all_callables())
+    t = parser.parse("Callable")
+    expect(t).to be_the_type(types.all_callables())
+    expect(t.return_type).to be_nil
   end
 
   it 'parses a parameterized callable type' do
-    expect(parser.parse("Callable[String, Integer]")).to be_the_type(types.callable(String, Integer))
+    t = parser.parse("Callable[String, Integer]")
+    expect(t).to be_the_type(types.callable(String, Integer))
+    expect(t.return_type).to be_nil
   end
 
   it 'parses a parameterized callable type with min/max' do
-    expect(parser.parse("Callable[String, Integer, 1, default]")).to be_the_type(types.callable(String, Integer, 1, :default))
+    t = parser.parse("Callable[String, Integer, 1, default]")
+    expect(t).to be_the_type(types.callable(String, Integer, 1, :default))
+    expect(t.return_type).to be_nil
   end
 
   it 'parses a parameterized callable type with block' do
-    expect(parser.parse("Callable[String, Callable[Boolean]]")).to be_the_type(types.callable(String, types.callable(true)))
+    t = parser.parse("Callable[String, Callable[Boolean]]")
+    expect(t).to be_the_type(types.callable(String, types.callable(true)))
+    expect(t.return_type).to be_nil
+  end
+
+  it 'parses a callable with no parameters and return type' do
+    expect(parser.parse("Callable[[],Float]")).to be_the_type(types.callable([],Float))
   end
 
   it 'parses a parameterized callable type with return type' do
@@ -288,6 +300,14 @@ describe TypeParser do
     t = parser.parse("Callable[0,0]")
     expect(t).to be_the_type(types.callable(0,0))
     expect(t.param_types.types).to be_empty
+    expect(t.return_type).to be_nil
+  end
+
+  it 'parses a parameterized callable type with 0 min/max and return_type' do
+    t = parser.parse("Callable[[0,0],Float]")
+    expect(t).to be_the_type(types.callable([0,0],Float))
+    expect(t.param_types.types).to be_empty
+    expect(t.return_type).to be_the_type(types.float)
   end
 
   it 'parses a parameterized callable type with >0 min/max' do
@@ -295,6 +315,15 @@ describe TypeParser do
     expect(t).to be_the_type(types.callable(0,1))
     # Contains a Unit type to indicate "called with what you accept"
     expect(t.param_types.types[0]).to be_the_type(PUnitType.new())
+    expect(t.return_type).to be_nil
+  end
+
+  it 'parses a parameterized callable type with >0 min/max and a return type' do
+    t = parser.parse("Callable[[0,1],Float]")
+    expect(t).to be_the_type(types.callable([0,1], Float))
+    # Contains a Unit type to indicate "called with what you accept"
+    expect(t.param_types.types[0]).to be_the_type(PUnitType.new())
+    expect(t.return_type).to be_the_type(types.float)
   end
 
   it 'parses all known literals' do
