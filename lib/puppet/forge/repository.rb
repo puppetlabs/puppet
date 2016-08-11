@@ -45,7 +45,7 @@ class Puppet::Forge
     # Return a Net::HTTPResponse read for this +path+.
     def make_http_request(path, io = nil)
       Puppet.debug "HTTP GET #{@host}#{path}"
-      request = get_request_object(path)
+      request = get_request_object(@uri.path.chomp('/')+path)
       return read_response(request, io)
     end
 
