@@ -2071,7 +2071,7 @@ class PCallableType < PAnyType
   def initialize(param_types, block_type = nil, return_type = nil)
     @param_types = param_types
     @block_type = block_type
-    @return_type = return_type
+    @return_type = return_type == PAnyType::DEFAULT ? nil : return_type
   end
 
   def accept(visitor, guard)
@@ -2142,11 +2142,11 @@ class PCallableType < PAnyType
   end
 
   def hash
-    @param_types.hash ^ @block_type.hash
+    [@param_types, @block_type, @return_type].hash
   end
 
   def eql?(o)
-    self.class == o.class && @param_types == o.param_types && @block_type == o.block_type
+    self.class == o.class && @param_types == o.param_types && @block_type == o.block_type && @return_type == o.return_type
   end
 
   def resolve(type_parser, loader)
