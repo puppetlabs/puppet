@@ -459,6 +459,20 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect(evaluate(type_expr)).to eql(tf.ruby_type('String'))
     end
 
+    # Callable Type
+    #
+    it 'produces Callable instance without return type' do
+      type_expr = fqr('Callable')[fqr('String')]
+      tf = Puppet::Pops::Types::TypeFactory
+      expect(evaluate(type_expr)).to eql(tf.callable(String))
+    end
+
+    it 'produces Callable instance with parameters and return type' do
+      type_expr = fqr('Callable')[[fqr('String')], fqr('Integer')]
+      tf = Puppet::Pops::Types::TypeFactory
+      expect(evaluate(type_expr)).to eql(tf.callable([String], Integer))
+    end
+
   end
 
   matcher :be_the_type do |type|

@@ -2052,6 +2052,9 @@ class PCallableType < PAnyType
     )
   end
 
+  # @return [PAnyType] The type for the values returned by this callable. Returns `nil` if return value is unconstrained
+  attr_reader :return_type
+
   # Types of parameters as a Tuple with required/optional count, or an Integer with min (required), max count
   # @return [PTupleType] the tuple representing the parameter types
   attr_reader :param_types
@@ -2063,16 +2066,19 @@ class PCallableType < PAnyType
   attr_reader :block_type
 
   # @param param_types [PTupleType]
-  # @param block_type [PAnyType|nil]
-  def initialize(param_types, block_type = nil)
+  # @param block_type [PAnyType]
+  # @param return_type [PAnyType]
+  def initialize(param_types, block_type = nil, return_type = nil)
     @param_types = param_types
     @block_type = block_type
+    @return_type = return_type == PAnyType::DEFAULT ? nil : return_type
   end
 
   def accept(visitor, guard)
     super
     @param_types.accept(visitor, guard) unless @param_types.nil?
     @block_type.accept(visitor, guard) unless @block_type.nil?
+    @return_type.accept(visitor, guard) unless @return_type.nil?
   end
 
   def generalize
@@ -2081,7 +2087,8 @@ class PCallableType < PAnyType
     else
       params_t = @param_types.nil? ? nil : @param_types.generalize
       block_t = @block_type.nil? ? nil : @block_type.generalize
-      @param_types.equal?(params_t) && @block_type.equal?(block_t) ? self : PCallableType.new(params_t, block_t)
+      return_t = @return_type.nil? ? nil : @return_type.generalize
+      @param_types.equal?(params_t) && @block_type.equal?(block_t) && @return_type.equal?(return_t) ? self : PCallableType.new(params_t, block_t, return_t)
     end
   end
 
@@ -2091,7 +2098,8 @@ class PCallableType < PAnyType
     else
       params_t = @param_types.nil? ? nil : @param_types.normalize(guard)
       block_t = @block_type.nil? ? nil : @block_type.normalize(guard)
-      @param_types.equal?(params_t) && @block_type.equal?(block_t) ? self : PCallableType.new(params_t, block_t)
+      return_t = @return_type.nil? ? nil : @return_type.normalize(guard)
+      @param_types.equal?(params_t) && @block_type.equal?(block_t) && @return_type.equal?(return_t) ? self : PCallableType.new(params_t, block_t, return_t)
     end
   end
 
@@ -2106,7 +2114,7 @@ class PCallableType < PAnyType
   end
 
   def kind_of_callable?(optional=true, guard = nil)
-      true
+    true
   end
 
   # Returns the number of accepted arguments [min, max]
@@ -2134,29 +2142,30 @@ class PCallableType < PAnyType
   end
 
   def hash
-    @param_types.hash ^ @block_type.hash
+    [@param_types, @block_type, @return_type].hash
   end
 
   def eql?(o)
-    self.class == o.class && @param_types == o.param_types && @block_type == o.block_type
+    self.class == o.class && @param_types == o.param_types && @block_type == o.block_type && @return_type == o.return_type
   end
 
   def resolve(type_parser, loader)
-    rparam_types = @param_types
-    rparam_types = rparam_types.resolve(type_parser, loader) unless rparam_types.nil?
-    rblock_type = @block_type
-    rblock_type = rblock_type.resolve(type_parser, loader) unless rblock_type.nil?
-    rparam_types.equal?(@param_types) && rblock_type.equal?(@block_type) ? self : self.class.new(rparam_types, rblock_type)
+    params_t = @param_types.nil? ? nil : @param_types.resolve(type_parser, loader)
+    block_t = @block_type.nil? ? nil : @block_type.resolve(type_parser, loader)
+    return_t = @return_type.nil? ? nil : @return_type.resolve(type_parser, loader)
+    @param_types.equal?(params_t) && @block_type.equal?(block_t) && @return_type.equal?(return_t) ? self : self.class.new(params_t, block_t, return_t)
   end
 
-  DEFAULT = PCallableType.new(nil)
+  DEFAULT = PCallableType.new(nil, nil, nil)
 
   protected
 
   # @api private
   def _assignable?(o, guard)
     return false unless o.is_a?(PCallableType)
-    # nil param_types means, any other Callable is assignable
+    return false unless @return_type.nil? || @return_type.assignable?(o.return_type || PAnyType::DEFAULT, guard)
+
+    # nil param_types and compatible return type means other Callable is assignable
     return true if @param_types.nil?
 
     # NOTE: these tests are made in reverse as it is calling the callable that is constrained
@@ -2190,7 +2199,7 @@ class PArrayType < PCollectionType
     param_t = callable.param_types
     block_t = callable.block_type
     # does not support calling with a block, but have to check that callable is ok with missing block
-    (param_t.nil? || param_t.assignable?(self, guard)) && (block_t.nil? || block_t.assignable(PUndefType::DEFAULT, guard))
+    (param_t.nil? || param_t.assignable?(self, guard)) && (block_t.nil? || block_t.assignable?(PUndefType::DEFAULT, guard))
   end
 
   def generalize

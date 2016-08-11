@@ -440,6 +440,29 @@ describe "validating 4x" do
       end
     end
 
+    context 'that are functions' do
+      it 'accepts typed parameters' do
+        source = <<-CODE
+          function f(Integer $a) { $a }
+        CODE
+        expect(validate(parse(source))).not_to have_any_issues
+      end
+
+      it 'accepts return types' do
+        source = <<-CODE
+          function f() >> Integer { 42 }
+        CODE
+        expect(validate(parse(source))).not_to have_any_issues
+      end
+
+      it 'accepts block with return types' do
+        source = <<-CODE
+          map([1,2]) |Integer $x| >> Integer { $x + 3 }
+        CODE
+        expect(validate(parse(source))).not_to have_any_issues
+      end
+    end
+
     context 'that are type mappings' do
       it 'accepts a valid type mapping expression' do
         source = <<-CODE

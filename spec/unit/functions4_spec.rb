@@ -475,6 +475,27 @@ describe 'the 4x function api' do
     context 'can use a loader when parsing types in function dispatch, and' do
       let(:parser) {  Puppet::Pops::Parser::EvaluatingParser.new }
 
+      it 'uses return_type to validate returned value' do
+        the_loader = loader()
+        here = get_binding(the_loader)
+        fc = eval(<<-CODE, here)
+          Puppet::Functions.create_function('testing::test') do
+            dispatch :test do
+              param 'Integer', :x
+              return_type 'String'
+            end
+            def test(x)
+              x
+            end
+          end
+        CODE
+        the_loader.add_function('testing::test', fc.new({}, the_loader))
+        program = parser.parse_string('testing::test(10)', __FILE__)
+        Puppet::Pops::Adapters::LoaderAdapter.adapt(program.model).loader = the_loader
+        expect { parser.evaluate({}, program) }.to raise_error(Puppet::Error,
+          /value returned from function 'test' had wrong type, expected a String value, got Integer/)
+      end
+
       it 'resolve a referenced Type alias' do
         the_loader = loader()
         the_loader.add_type('myalias', type_alias_t('MyAlias', 'Integer'))
@@ -483,6 +504,7 @@ describe 'the 4x function api' do
           Puppet::Functions.create_function('testing::test') do
             dispatch :test do
               param 'MyAlias', :x
+              return_type 'MyAlias'
             end
             def test(x)
               x

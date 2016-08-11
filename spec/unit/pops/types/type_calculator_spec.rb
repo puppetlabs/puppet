@@ -559,6 +559,24 @@ describe 'The type calculator' do
         expect(common_t.param_types.class).to be(PTupleType)
         expect(common_t.block_type).to eql(callable_t(scalar_t))
       end
+
+      it 'return_type is included in the check (incompatible return_type)' do
+        t1 = callable_t([String], String)
+        t2 = callable_t([String], Integer)
+        common_t = calculator.common_type(t1, t2)
+        expect(common_t.class).to be(PCallableType)
+        expect(common_t.param_types).to be_nil
+        expect(common_t.return_type).to be_nil
+      end
+
+      it 'return_type is included in the check (compatible return_type)' do
+        t1 = callable_t([String], Numeric)
+        t2 = callable_t([String], Integer)
+        common_t = calculator.common_type(t1, t2)
+        expect(common_t.class).to be(PCallableType)
+        expect(common_t.param_types).to be_a(PTupleType)
+        expect(common_t.return_type).to eql(PNumericType::DEFAULT)
+      end
     end
   end
 
@@ -875,8 +893,8 @@ describe 'The type calculator' do
       end
 
       it 'A tuple with parameters is assignable to the default Tuple' do
-        t = Puppet::Pops::Types::PTupleType::DEFAULT
-        t2 = Puppet::Pops::Types::PTupleType.new([Puppet::Pops::Types::PStringType::DEFAULT])
+        t = PTupleType::DEFAULT
+        t2 = PTupleType.new([PStringType::DEFAULT])
         expect(t2).to be_assignable_to(t)
       end
 
@@ -967,11 +985,39 @@ describe 'The type calculator' do
       end
 
       it 'a callable with parameter is assignable to the default callable' do
-        expect(callable_t(string_t)).to be_assignable_to(Puppet::Pops::Types::PCallableType::DEFAULT)
+        expect(callable_t(string_t)).to be_assignable_to(PCallableType::DEFAULT)
       end
 
       it 'the default callable is not assignable to a callable with parameter' do
-        expect(Puppet::Pops::Types::PCallableType::DEFAULT).not_to be_assignable_to(callable_t(string_t))
+        expect(PCallableType::DEFAULT).not_to be_assignable_to(callable_t(string_t))
+      end
+
+      it 'a callable with a return type is assignable to the default callable' do
+        expect(callable_t([], string_t)).to be_assignable_to(PCallableType::DEFAULT)
+      end
+
+      it 'the default callable is not assignable to a callable with a return type' do
+        expect(PCallableType::DEFAULT).not_to be_assignable_to(callable_t([],string_t))
+      end
+
+      it 'a callable with a return type Any is assignable to the default callable' do
+        expect(callable_t([], object_t)).to be_assignable_to(PCallableType::DEFAULT)
+      end
+
+      it 'a callable with a return type Any is equal to a callable with the same parameters and no return type' do
+        expect(callable_t([string_t], object_t)).to eql(callable_t(string_t))
+      end
+
+      it 'a callable with a return type different than Any is not equal to a callable with the same parameters and no return type' do
+        expect(callable_t([string_t], string_t)).not_to eql(callable_t(string_t))
+      end
+
+      it 'a callable with a return type is assignable from another callable with an assignable return type' do
+        expect(callable_t([], string_t)).to be_assignable_to(callable_t([], PScalarType::DEFAULT))
+      end
+
+      it 'a callable with a return type is not assignable from another callable unless the return type is assignable' do
+        expect(callable_t([], string_t)).not_to be_assignable_to(callable_t([], integer_t))
       end
     end
 
@@ -1720,7 +1766,7 @@ describe 'The type calculator' do
       it 'a Closure should be considered a Callable' do
         factory = Model::Factory
         params = [factory.PARAM('a')]
-        the_block = factory.LAMBDA(params,factory.literal(42))
+        the_block = factory.LAMBDA(params,factory.literal(42), nil)
         the_closure = Evaluator::Closure.new(:fake_evaluator, the_block, :fake_scope)
         expect(calculator.instance?(all_callables_t, the_closure)).to be_truthy
         expect(calculator.instance?(callable_t(object_t), the_closure)).to be_truthy

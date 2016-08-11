@@ -284,6 +284,7 @@ module Puppet::Pops::Model
 
   # A function written in the Puppet Langauge
   class FunctionDefinition < NamedDefinition
+    contains_one_uni 'return_type', Expression
   end
 
   # A resource type definition (a 'define' in the DSL).
@@ -376,6 +377,7 @@ module Puppet::Pops::Model
   class LambdaExpression < Expression
     contains_many_uni 'parameters', Parameter
     contains_one_uni 'body', Expression
+    contains_one_uni 'return_type', Expression
   end
 
   # If expression. If test is true, the then_expr part should be evaluated, else the (optional)

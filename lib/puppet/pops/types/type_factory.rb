@@ -250,6 +250,12 @@ module TypeFactory
   # Params are given as a sequence of arguments to {#type_of}.
   #
   def self.callable(*params)
+    if params.size == 2 && params[0].is_a?(Array)
+      return_t = type_of(params[1])
+      params = params[0]
+    else
+      return_t = nil
+    end
     last_callable = TypeCalculator.is_kind_of_callable?(params.last)
     block_t = last_callable ? params.pop : nil
 
@@ -272,7 +278,7 @@ module TypeFactory
     end
     # create a signature
     tuple_t = tuple(types, size_type)
-    PCallableType.new(tuple_t, block_t)
+    PCallableType.new(tuple_t, block_t, return_t)
   end
 
   # Produces the abstract type Collection

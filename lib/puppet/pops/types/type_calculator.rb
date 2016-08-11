@@ -620,9 +620,8 @@ class TypeCalculator
       max += 1
       PAnyType::DEFAULT
     end
-    mapped_types << min
-    mapped_types << max
-    TypeFactory.callable(*mapped_types)
+    param_types = Types::PTupleType.new(mapped_types, Types::PIntegerType.new(min, max))
+    Types::PCallableType.new(param_types)
   end
 
   # @api private

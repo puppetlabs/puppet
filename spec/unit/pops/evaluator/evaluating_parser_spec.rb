@@ -1040,6 +1040,12 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       expect{parser.evaluate_string(scope, "assert_no_undef({1 => undef})")}.to_not raise_error()
     end
 
+    it 'a lambda return value is checked using the return type' do
+      expect(parser.evaluate_string(scope, "[1,2].map |Integer $x| >> Integer { $x }")).to eql([1,2])
+      expect { parser.evaluate_string(scope, "[1,2].map |Integer $x| >> String { $x }") }.to raise_error(
+        /value returned from lambda had wrong type, expected a String value, got Integer/)
+    end
+
     context 'using the 3x function api' do
       it 'can call a 3x function' do
         Puppet::Parser::Functions.newfunction("bazinga", :type => :rvalue) { |args| args[0] }

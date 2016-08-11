@@ -65,7 +65,9 @@ class Closure < CallableSignature
       Types::TypeMismatchDescriber.validate_parameters(closure_name, params_struct, args_hash)
     end
 
-    @evaluator.evaluate_block_with_bindings(@enclosing_scope, args_hash, @model.body)
+    Types::TypeAsserter.assert_instance_of(nil, return_type, @evaluator.evaluate_block_with_bindings(@enclosing_scope, args_hash, @model.body)) do
+      "value returned from #{closure_name}"
+    end
   end
 
   def parameters
@@ -82,6 +84,10 @@ class Closure < CallableSignature
   # @api public
   def parameter_names
     @model.parameters.collect(&:name)
+  end
+
+  def return_type
+    @return_type ||= create_return_type
   end
 
   # @api public
@@ -139,7 +145,9 @@ class Closure < CallableSignature
     end)
 
     if type.callable?(final_args)
-      @evaluator.evaluate_block_with_bindings(scope, variable_bindings, @model.body)
+      Types::TypeAsserter.assert_instance_of(nil, return_type, @evaluator.evaluate_block_with_bindings(scope, variable_bindings, @model.body)) do
+        "value returned from #{closure_name}"
+      end
     else
       raise ArgumentError, Types::TypeMismatchDescriber.describe_signatures(closure_name, [self], final_args)
     end
@@ -194,7 +202,8 @@ class Closure < CallableSignature
 
   def create_callable_type()
     types = []
-    range = [0, 0]
+    from = 0
+    to = 0
     in_optional_parameters = false
     parameters.each do |param|
       type, param_range = create_param_type(param)
@@ -207,15 +216,11 @@ class Closure < CallableSignature
         @evaluator.fail(Issues::REQUIRED_PARAMETER_AFTER_OPTIONAL, param, { :param_name => param.name })
       end
 
-      range[0] += param_range[0]
-      range[1] += param_range[1]
+      from += param_range[0]
+      to += param_range[1]
     end
-
-    if range[1] == Float::INFINITY
-      range[1] = :default
-    end
-
-    Types::TypeFactory.callable(*(types + range))
+    param_types = Types::PTupleType.new(types, Types::PIntegerType.new(from, to))
+    Types::PCallableType.new(param_types, nil, return_type)
   end
 
   def create_params_struct
@@ -229,6 +234,14 @@ class Closure < CallableSignature
       members[key_type] = arg_type
     end
     type_factory.struct(members)
+  end
+
+  def create_return_type
+    if @model.return_type
+      @evaluator.evaluate(@model.return_type, @enclosing_scope)
+    else
+      Types::PAnyType::DEFAULT
+    end
   end
 
   def create_param_type(param)

@@ -141,6 +141,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   def dump_LambdaExpression o
     result = ["lambda"]
     result << ["parameters"] + o.parameters.collect {|p| do_dump(p) } if o.parameters.size() > 0
+    result << ['return_type', do_dump(o.return_type)] unless o.return_type.nil?
     if o.body
       result << do_dump(o.body)
     else
@@ -256,6 +257,18 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     result
   end
 
+  def dump_FunctionDefinition o
+    result = ['function', o.name]
+    result << ['parameters'] + o.parameters.collect {|p| do_dump(p) } if o.parameters.size() > 0
+    result << ['return_type', do_dump(o.return_type)] unless o.return_type.nil?
+    if o.body
+      result << do_dump(o.body)
+    else
+      result << []
+    end
+    result
+  end
+
   def dump_ResourceTypeDefinition o
     result = dump_NamedDefinition(o)
     result[0] = 'define'
@@ -331,6 +344,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   def dump_CallNamedFunctionExpression o
     result = [o.rval_required ? "call" : "invoke", do_dump(o.functor_expr)]
     o.arguments.collect {|a| result << do_dump(a) }
+    result << do_dump(o.lambda) if o.lambda
     result
   end
 

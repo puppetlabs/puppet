@@ -269,8 +269,16 @@ end
       expect(s.string(f.callable)).to eql('Callable[0, 0]')
     end
 
+    it "should yield 'Callable[[0,0],rt]' for callable without params but with return type" do
+      expect(s.string(f.callable([], Float))).to eql('Callable[[0, 0], Float]')
+    end
+
     it "should yield 'Callable[t,t]' for callable with typed parameters" do
       expect(s.string(f.callable(String, Integer))).to eql('Callable[String, Integer]')
+    end
+
+    it "should yield 'Callable[[t,t],rt]' for callable with typed parameters and return type" do
+      expect(s.string(f.callable([String, Integer], Float))).to eql('Callable[[String, Integer], Float]')
     end
 
     it "should yield 'Callable[t,min,max]' for callable with size constraint (infinite max)" do

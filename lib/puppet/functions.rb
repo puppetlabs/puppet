@@ -162,7 +162,7 @@ module Puppet::Functions
   end
 
   # Creates a function in, or in a local loader under the given loader.
-  # This method should only be used when manually creating functions 
+  # This method should only be used when manually creating functions
   # for the sake of testing. Functions that are autoloaded should
   # always use the `create_function` method and the autoloader will supply
   # the correct loader.
@@ -258,8 +258,8 @@ module Puppet::Functions
   def self.any_signature(from, to, names)
     # Construct the type for the signature
     # Tuple[Object, from, to]
-    factory = Puppet::Pops::Types::TypeFactory
-    [factory.callable(factory.any, from, to), names]
+    param_types = Puppet::Pops::Types::PTupleType.new([Puppet::Pops::Types::PAnyType::DEFAULT], Puppet::Pops::Types::PIntegerType.new(from, to))
+    [Puppet::Pops::Types::PCallableType.new(param_types), names]
   end
 
   # Function
@@ -272,8 +272,7 @@ module Puppet::Functions
 
     # @api private
     def self.builder
-      @all_callables ||= Puppet::Pops::Types::TypeFactory.all_callables
-      DispatcherBuilder.new(dispatcher, Puppet::Pops::Types::TypeParser.singleton, @all_callables, loader)
+      DispatcherBuilder.new(dispatcher, Puppet::Pops::Types::TypeParser.singleton, Puppet::Pops::Types::PCallableType::DEFAULT, loader)
     end
 
     # Dispatch any calls that match the signature to the provided method name.
@@ -310,7 +309,7 @@ module Puppet::Functions
         t = Puppet::Pops::Loader::TypeDefinitionInstantiator.create_from_model(type_alias_expr, aliases.loader)
 
         # Also define a method for convenient access to the defined type alias.
-        # Since initial capital letter in Ruby means a Constant these names use a prefix of 
+        # Since initial capital letter in Ruby means a Constant these names use a prefix of
         # `type`. As an example, the type 'MyType' is accessed by calling `type_MyType`.
         define_method("type_#{t.name}") { t }
       end
@@ -466,6 +465,15 @@ module Puppet::Functions
       @block_type = Puppet::Pops::Types::TypeFactory.optional(@block_type)
     end
 
+    # Defines the return type. Defaults to 'Any'
+    # @param [String] type a reference to a Puppet Data Type
+    #
+    # @api public
+    def return_type(type)
+      raise ArgumentError, "Argument to 'return_type' must be a String reference to a Puppet Data Type. Got #{type.class}" unless type.is_a?(String)
+      @return_type = type
+    end
+
     private
 
     # @api private
@@ -505,8 +513,9 @@ module Puppet::Functions
       @max = 0
       @block_type = nil
       @block_name = nil
+      @return_type = nil
       self.instance_eval &block
-      callable_t = create_callable(@types, @block_type, @min, @max)
+      callable_t = create_callable(@types, @block_type, @return_type, @min, @max)
       @dispatcher.add_dispatch(callable_t, meth_name, @names, @block_name, @injections, @weaving, @max == :default)
     end
 
@@ -516,28 +525,19 @@ module Puppet::Functions
     # Optional[Callable], Callable, or nil.
     #
     # @api private
-    def create_callable(types, block_type, from, to)
+    def create_callable(types, block_type, return_type, from, to)
       mapped_types = types.map do |t|
         @type_parser.parse(t, loader)
       end
-
-      if from != to
-        # :optional and/or :repeated parameters are present.
-        mapped_types << from
-        mapped_types << to
-      end
-
-      if block_type
-        mapped_types << block_type
-      end
-
-      Puppet::Pops::Types::TypeFactory.callable(*mapped_types)
+      param_types = Puppet::Pops::Types::PTupleType.new(mapped_types, from == to ? nil : Puppet::Pops::Types::PIntegerType.new(from, to))
+      return_type = @type_parser.parse(return_type, loader) unless return_type.nil?
+      Puppet::Pops::Types::PCallableType.new(param_types, block_type, return_type)
     end
   end
 
   # The LocalTypeAliasBuilder is used by the 'local_types' method to collect the individual
   # type aliases given by the function's author.
-  # 
+  #
   class LocalTypeAliasesBuilder
     attr_reader :local_types, :parser, :loader
 
@@ -552,7 +552,7 @@ module Puppet::Functions
     # in string form without the leading 'type' keyword.
     # Calls to local_type must be made before the first parameter definition or an error will
     # be raised.
-    # 
+    #
     # @param assignment_string [String] a string on the form 'AliasType = ExistingType'
     # @api public
     #
@@ -601,8 +601,7 @@ module Puppet::Functions
   class InternalFunction < Function
     # @api private
     def self.builder
-      @all_callables ||= Puppet::Pops::Types::TypeFactory.all_callables
-      InternalDispatchBuilder.new(dispatcher, Puppet::Pops::Types::TypeParser.singleton, @all_callables, loader)
+      InternalDispatchBuilder.new(dispatcher, Puppet::Pops::Types::TypeParser.singleton, Puppet::Pops::Types::PCallableType::DEFAULT, loader)
     end
 
     # Defines class level injected attribute with reader method
