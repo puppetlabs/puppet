@@ -219,8 +219,8 @@ module Puppet
 
           # Write the output file
           begin
-            Puppet.notice "Generating '#{input.output_path}' using '#{input.format}' format."
             effective_output_path = input.effective_output_path(outputdir)
+            Puppet.notice "Generating '#{effective_output_path}' using '#{input.format}' format."
             FileUtils.mkdir_p(File.dirname(effective_output_path))
             File.open(effective_output_path, 'w') do |file|
               file.write(result)
