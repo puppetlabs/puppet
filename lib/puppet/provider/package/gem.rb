@@ -92,7 +92,12 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
 
   def install(useversion = true)
     command = [command(:gemcmd), "install"]
-    command << "-v" << resource[:ensure] if (! resource[:ensure].is_a? Symbol) and useversion
+    if Puppet.features.microsoft_windows?
+      version = resource[:ensure]
+      command << "-v" << %Q["#{version}"] if (! resource[:ensure].is_a? Symbol) and useversion
+    else
+      command << "-v" << resource[:ensure] if (! resource[:ensure].is_a? Symbol) and useversion
+    end
 
     if source = resource[:source]
       begin
