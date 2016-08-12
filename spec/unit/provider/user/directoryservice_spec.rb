@@ -60,12 +60,18 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     }
   end
 
+  let(:sha512_shadowhashdata_array) do
+    ['62706c69 73743030 d101025d 53414c54 45442d53 48413531 324f1044 7ea7d592 131f57b2 c8f8bdbc '\
+     'ec8d9df1 2128a386 393a4f00 c7619bac 2622a44d 451419d1 1da512d5 915ab98e 39718ac9 4083fe2e '\
+     'fd6bf710 a54d477f 8ff735b1 2587192d 080b1900 00000000 00010100 00000000 00000300 00000000 '\
+     '00000000 00000000 000060']
+  end
   # The below value is the result of executing
   # `dscl -plist . read /Users/<username> ShadowHashData` on a 10.7
   # system and converting it to a native Ruby Hash with Plist.parse_xml
   let(:sha512_shadowhashdata_hash) do
     {
-      'dsAttrTypeNative:ShadowHashData' => ['62706c69 73743030 d101025d 53414c54 45442d53 48413531 324f1044 7ea7d592 131f57b2 c8f8bdbc ec8d9df1 2128a386 393a4f00 c7619bac 2622a44d 451419d1 1da512d5 915ab98e 39718ac9 4083fe2e fd6bf710 a54d477f 8ff735b1 2587192d 080b1900 00000000 00010100 00000000 00000300 00000000 00000000 00000000 000060']
+      'dsAttrTypeNative:ShadowHashData' => sha512_shadowhashdata_array
     }
   end
 
@@ -93,12 +99,21 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     '7ea7d592131f57b2c8f8bdbcec8d9df12128a386393a4f00c7619bac2622a44d451419d11da512d5915ab98e39718ac94083fe2efd6bf710a54d477f8ff735b12587192d'
   end
 
+  let(:pbkdf2_shadowhashdata_array) do
+    ['62706c69 73743030 d101025f 10145341 4c544544 2d534841 3531322d 50424b44 4632d303 04050607 '\
+     '0857656e 74726f70 79547361 6c745a69 74657261 74696f6e 734f1080 0590ade1 9e6953c1 35ae872a '\
+     'e7761823 5df7d46c 63de7f9a 0fcdf2cd 9e7d85e4 b7ca8681 01235b61 58e05a30 9805ee48 14b027a4 '\
+     'be9c23ec 2926bc81 72269aff ba5c9a59 85e81091 fa689807 6d297f1f aa75fa61 7551ef16 71d75200 '\
+     '55c4a0d9 7b9b9c58 05aa322b aedbcd8e e9c52381 1653ac2e a9e9c8d8 f1ac519a 0f2b595e 4f102093 '\
+     '77c46908 a1c8ac2c 3e45c0d4 4da8ad0f cd85ec5c 14d9a59f fc40c9da 31f0ec11 60b0080b 22293136 '\
+     '41c4e700 00000000 00010100 00000000 00000900 00000000 00000000 00000000 0000ea']
+  end
   # The below value is the result of executing
   # `dscl -plist . read /Users/<username> ShadowHashData` on a 10.8
   # system and converting it to a native Ruby Hash with Plist.parse_xml
   let(:pbkdf2_shadowhashdata_hash) do
     {
-      "dsAttrTypeNative:ShadowHashData"=>["62706c69 73743030 d101025f 10145341 4c544544 2d534841 3531322d 50424b44 4632d303 04050607 0857656e 74726f70 79547361 6c745a69 74657261 74696f6e 734f1080 0590ade1 9e6953c1 35ae872a e7761823 5df7d46c 63de7f9a 0fcdf2cd 9e7d85e4 b7ca8681 01235b61 58e05a30 9805ee48 14b027a4 be9c23ec 2926bc81 72269aff ba5c9a59 85e81091 fa689807 6d297f1f aa75fa61 7551ef16 71d75200 55c4a0d9 7b9b9c58 05aa322b aedbcd8e e9c52381 1653ac2e a9e9c8d8 f1ac519a 0f2b595e 4f102093 77c46908 a1c8ac2c 3e45c0d4 4da8ad0f cd85ec5c 14d9a59f fc40c9da 31f0ec11 60b0080b 22293136 41c4e700 00000000 00010100 00000000 00000900 00000000 00000000 00000000 0000ea"]
+      "dsAttrTypeNative:ShadowHashData"=> pbkdf2_shadowhashdata_array
     }
   end
 
@@ -148,12 +163,47 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     24752
   end
 
+  let(:pbkdf2_and_ssha512_shadowhashdata_array) do
+    ['62706c69 73743030 d2010203 0a5f1014 53414c54 45442d53 48413531 322d5042 4b444632 5d53414c '\
+     '5445442d 53484135 3132d304 05060708 0957656e 74726f70 79547361 6c745a69 74657261 74696f6e '\
+     '734f1080 0590ade1 9e6953c1 35ae872a e7761823 5df7d46c 63de7f9a 0fcdf2cd 9e7d85e4 b7ca8681 '\
+     '01235b61 58e05a30 9805ee48 14b027a4 be9c23ec 2926bc81 72269aff ba5c9a59 85e81091 fa689807 '\
+     '6d297f1f aa75fa61 7551ef16 71d75200 55c4a0d9 7b9b9c58 05aa322b aedbcd8e e9c52381 1653ac2e '\
+     'a9e9c8d8 f1ac519a 0f2b595e 4f102093 77c46908 a1c8ac2c 3e45c0d4 4da8ad0f cd85ec5c 14d9a59f '\
+     'fc40c9da 31f0ec11 60b04f10 447ea7d5 92131f57 b2c8f8bd bcec8d9d f12128a3 86393a4f 00c7619b '\
+     'ac2622a4 4d451419 d11da512 d5915ab9 8e39718a c94083fe 2efd6bf7 10a54d47 7f8ff735 b1258719 '\
+     '2d000800 0d002400 32003900 41004600 5100d400 f700fa00 00000000 00020100 00000000 00000b00 '\
+     '00000000 00000000 00000000 000141']
+  end
+
+  let(:pbkdf2_and_ssha512_shadowhashdata_hash) do
+    {
+      'dsAttrTypeNative:ShadowHashData' => pbkdf2_and_ssha512_shadowhashdata_array
+    }
+  end
+
+  let (:pbkdf2_and_ssha512_embedded_plist) do
+    "bplist00\xD2\x01\x02\x03\n_\x10\x14SALTED-SHA512-PBKDF2]SALTED-SHA512\xD3\x04\x05\x06\a\b\tWentropyTsaltZiterationsO\x10\x80\x05\x90\xAD\xE1\x9EiS\xC15\xAE\x87*\xE7v\x18#]\xF7\xD4lc\xDE\x7F\x9A\x0F\xCD\xF2\xCD\x9E}\x85\xE4\xB7\xCA\x86\x81\x01#[aX\xE0Z0\x98\x05\xEEH\x14\xB0'\xA4\xBE\x9C#\xEC)&\xBC\x81r&\x9A\xFF\xBA\\\x9AY\x85\xE8\x10\x91\xFAh\x98\am)\x7F\x1F\xAAu\xFAauQ\xEF\x16q\xD7R\x00U\xC4\xA0\xD9{\x9B\x9CX\x05\xAA2+\xAE\xDB\xCD\x8E\xE9\xC5#\x81\x16S\xAC.\xA9\xE9\xC8\xD8\xF1\xACQ\x9A\x0F+Y^O\x10 \x93w\xC4i\b\xA1\xC8\xAC,>E\xC0\xD4M\xA8\xAD\x0F\xCD\x85\xEC\\\x14\xD9\xA5\x9F\xFC@\xC9\xDA1\xF0\xEC\x11`\xB0O\x10D~\xA7\xD5\x92\x13\x1FW\xB2\xC8\xF8\xBD\xBC\xEC\x8D\x9D\xF1!(\xA3\x869:O\x00\xC7a\x9B\xAC&\"\xA4ME\x14\x19\xD1\x1D\xA5\x12\xD5\x91Z\xB9\x8E9q\x8A\xC9@\x83\xFE.\xFDk\xF7\x10\xA5MG\x7F\x8F\xF75\xB1%\x87\x19-\x00\b\x00\r\x00$\x002\x009\x00A\x00F\x00Q\x00\xD4\x00\xF7\x00\xFA\x00\x00\x00\x00\x00\x00\x02\x01\x00\x00\x00\x00\x00\x00\x00\v\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01A"
+  end
+
+  let (:pbkdf2_and_ssha512_embedded_bplist_hash) do
+    {
+      "SALTED-SHA512-PBKDF2" => {
+        "entropy"     => pbkdf2_pw_string,
+        "salt"        => pbkdf2_salt_value,
+        "iterations"  => pbkdf2_iterations_value,
+      },
+      "SALTED-SHA512" => sha512_password_hash
+    }
+  end
+
   # The below represents output of 'dscl -plist . readall /Users' converted to
   # a native Ruby hash if only one user were installed on the system.
   # This lets us check the behavior of all the methods necessary to return a
   # user's groups property by controlling the data provided by dscl
-  let(:testuser_hash) do
-    [{"dsAttrTypeStandard:RecordName"             =>["nonexistent_user"],
+  let(:testuser_base) do
+    {
+      "dsAttrTypeStandard:RecordName"             =>["nonexistent_user"],
       "dsAttrTypeStandard:UniqueID"               =>["1000"],
       "dsAttrTypeStandard:AuthenticationAuthority"=>
        [";Kerberosv5;;testuser@LKDC:SHA1.4383E152D9D394AA32D13AE98F6F6E1FE8D00F81;LKDC:SHA1.4383E152D9D394AA32D13AE98F6F6E1FE8D00F81",
@@ -172,7 +222,14 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
        ["<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n          <!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n          <plist version=\"1.0\">\n          <dict>\n            <key>failedLoginCount</key>\n            <integer>0</integer>\n            <key>failedLoginTimestamp</key>\n            <date>2001-01-01T00:00:00Z</date>\n            <key>lastLoginTimestamp</key>\n            <date>2001-01-01T00:00:00Z</date>\n            <key>passwordTimestamp</key>\n            <date>2012-08-10T23:53:50Z</date>\n          </dict>\n          </plist>\n          "],
       "dsAttrTypeStandard:UserShell"              =>["/bin/bash"],
       "dsAttrTypeNative:ShadowHashData"           =>
-       ["62706c69 73743030 d101025d 53414c54 45442d53 48413531 324f1044 7ea7d592 131f57b2 c8f8bdbc ec8d9df1 2128a386 393a4f00 c7619bac 2622a44d 451419d1 1da512d5 915ab98e 39718ac9 4083fe2e fd6bf710 a54d477f 8ff735b1 2587192d 080b1900 00000000 00010100 00000000 00000300 00000000 00000000 00000000 000060"]}]
+       ["62706c69 73743030 d101025d 53414c54 45442d53 48413531 324f1044 7ea7d592 131f57b2 c8f8bdbc ec8d9df1 2128a386 393a4f00 c7619bac 2622a44d 451419d1 1da512d5 915ab98e 39718ac9 4083fe2e fd6bf710 a54d477f 8ff735b1 2587192d 080b1900 00000000 00010100 00000000 00000300 00000000 00000000 00000000 000060"]
+     }
+  end
+  let(:testuser_hash) do
+    [
+      testuser_base.merge(sha512_shadowhashdata_hash),
+      testuser_base.merge(pbkdf2_shadowhashdata_hash),
+    ]
   end
 
   # The below represents the result of running Plist.parse_xml on XML
@@ -320,7 +377,7 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
         :groups         => 'testgroup,third',
         :comment        => username,
         :password       => sha512_password_hash,
-        :shadowhashdata => sha512_shadowhashdata_hash,
+        :shadowhashdata => sha512_shadowhashdata_array,
         :name           => username,
         :uid            => 1000,
         :gid            => 22,
@@ -331,9 +388,9 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     before :each do
       provider.class.stubs(:get_os_version).returns('10.7')
       provider.class.stubs(:get_all_users).returns(testuser_hash)
-      provider.class.stubs(:get_attribute_from_dscl).with('Users', username, 'ShadowHashData').returns(sha512_shadowhashdata_hash)
       provider.class.stubs(:get_list_of_groups).returns(group_plist_hash_guid)
       provider.class.stubs(:convert_binary_to_hash).with(sha512_embedded_bplist).returns(sha512_embedded_bplist_hash)
+      provider.class.stubs(:convert_binary_to_hash).with(pbkdf2_embedded_plist).returns(pbkdf2_embedded_bplist_hash)
       provider.class.prefetch({})
     end
 
@@ -346,8 +403,39 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     end
 
     it 'should return a hash of resource attributes' do
-      expect(provider.class.generate_attribute_hash(user_plist_hash)).to eq(user_plist_resource)
+      expect(provider.class.generate_attribute_hash(user_plist_hash.merge(sha512_shadowhashdata_hash))).to eq(user_plist_resource)
     end
+  end
+
+  describe 'self#generate_attribute_hash with pbkdf2 and ssha512' do
+    let(:user_plist_resource) do
+      {
+        :ensure         => :present,
+        :provider       => :directoryservice,
+        :groups         => 'testgroup,third',
+        :comment        => username,
+        :password       => pbkdf2_password_hash,
+        :iterations     => pbkdf2_iterations_value,
+        :salt           => pbkdf2_salt_value,
+        :shadowhashdata => pbkdf2_and_ssha512_shadowhashdata_array,
+        :name           => username,
+        :uid            => 1000,
+        :gid            => 22,
+        :home           => user_path
+      }
+    end
+
+    before :each do
+      provider.class.stubs(:get_os_version).returns('10.7')
+      provider.class.stubs(:get_all_users).returns(testuser_hash)
+      provider.class.stubs(:get_list_of_groups).returns(group_plist_hash_guid)
+      provider.class.prefetch({})
+    end
+
+    it 'should return a hash of resource attributes' do
+      expect(provider.class.generate_attribute_hash(user_plist_hash.merge(pbkdf2_and_ssha512_shadowhashdata_hash))).to eq(user_plist_resource)
+    end
+
   end
 
   describe 'self#generate_attribute_hash empty shadowhashdata' do
@@ -368,26 +456,10 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
 
     it 'should handle empty shadowhashdata' do
       provider.class.stubs(:get_os_version).returns('10.7')
-      provider.class.stubs(:get_all_users).returns(testuser_hash)
-      provider.class.stubs(:get_attribute_from_dscl).with('Users', username, 'ShadowHashData').returns(nil)
+      provider.class.stubs(:get_all_users).returns([testuser_base])
       provider.class.stubs(:get_list_of_groups).returns(group_plist_hash_guid)
-      provider.class.stubs(:convert_binary_to_hash).with(sha512_embedded_bplist).returns(sha512_embedded_bplist_hash)
       provider.class.prefetch({})
       expect(provider.class.generate_attribute_hash(user_plist_hash)).to eq(user_plist_resource)
-    end
-  end
-
-  describe '#exists?' do
-    # This test expects an error to be raised
-    # I'm PROBABLY doing this wrong...
-    it 'should return false if the dscl command errors out' do
-      provider.expects(:dscl).with('.', 'read', user_path).raises(Puppet::ExecutionFailure, 'Dscl Fails')
-      expect(provider.exists?).to eq(false)
-    end
-
-    it 'should return true if the dscl command does not error' do
-      provider.expects(:dscl).with('.', 'read', user_path).returns(user_plist_xml)
-      expect(provider.exists?).to eq(true)
     end
   end
 
@@ -445,16 +517,17 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
 
     before :each do
       provider.class.stubs(:get_all_users).returns(testuser_hash)
-      provider.class.stubs(:get_attribute_from_dscl).with('Users', username, 'ShadowHashData').returns([])
       provider.class.stubs(:get_os_version).returns('10.7')
     end
 
     it "should return a list of groups if the user's name matches GroupMembership" do
       provider.class.expects(:get_list_of_groups).returns(group_plist_hash)
+      provider.class.expects(:get_list_of_groups).returns(group_plist_hash)
       expect(provider.class.prefetch({}).first.groups).to eq('second,testgroup')
     end
 
     it "should return a list of groups if the user's GUID matches GroupMembers" do
+      provider.class.expects(:get_list_of_groups).returns(group_plist_hash_guid)
       provider.class.expects(:get_list_of_groups).returns(group_plist_hash_guid)
       expect(provider.class.prefetch({}).first.groups).to eq('testgroup,third')
     end
@@ -505,7 +578,6 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     end
 
     it 'should call dscl to add necessary groups' do
-      provider.class.expects(:get_attribute_from_dscl).with('Users', username, 'ShadowHashData').returns([])
       provider.class.expects(:get_attribute_from_dscl).with('Users', username, 'GeneratedUID').returns({'dsAttrTypeStandard:GeneratedUID' => ['guidnonexistent_user']})
       provider.expects(:groups).returns('two,three')
       provider.expects(:dscl).with('.', '-merge', '/Groups/one', 'GroupMembership', 'nonexistent_user')
@@ -515,15 +587,15 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     end
 
     it 'should call the get_salted_sha512 method on 10.7 and return the correct hash' do
-      provider.class.expects(:get_attribute_from_dscl).with('Users', username, 'ShadowHashData').returns(sha512_shadowhashdata_hash)
       provider.class.expects(:convert_binary_to_hash).with(sha512_embedded_bplist).returns(sha512_embedded_bplist_hash)
+      provider.class.expects(:convert_binary_to_hash).with(pbkdf2_embedded_plist).returns(pbkdf2_embedded_bplist_hash)
       expect(provider.class.prefetch({}).first.password).to eq(sha512_password_hash)
     end
 
     it 'should call the get_salted_sha512_pbkdf2 method on 10.8 and return the correct hash' do
-      provider.class.expects(:get_attribute_from_dscl).with('Users', username,'ShadowHashData').returns(pbkdf2_shadowhashdata_hash)
+      provider.class.expects(:convert_binary_to_hash).with(sha512_embedded_bplist).returns(sha512_embedded_bplist_hash)
       provider.class.expects(:convert_binary_to_hash).with(pbkdf2_embedded_plist).returns(pbkdf2_embedded_bplist_hash)
-      expect(provider.class.prefetch({}).first.password).to eq(pbkdf2_password_hash)
+      expect(provider.class.prefetch({}).last.password).to eq(pbkdf2_password_hash)
     end
 
   end
@@ -1057,7 +1129,6 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     before :each do
       provider.class.stubs(:get_all_users).returns(all_users_hash)
       provider.class.stubs(:get_list_of_groups).returns(group_plist_hash_guid)
-      provider.class.stubs(:get_attribute_from_dscl).with('Users', 'testuser', 'ShadowHashData').returns({})
       provider.class.prefetch({})
     end
 
