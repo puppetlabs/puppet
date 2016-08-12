@@ -22,6 +22,14 @@ module Puppet::Util::Windows::User
   # https://msdn.microsoft.com/en-us/library/windows/desktop/ee207397(v=vs.85).aspx
   SECURITY_MAX_SID_SIZE = 68
 
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/ms681385(v=vs.85).aspx
+  # These error codes indicate successful authentication but failure to
+  # logon for a separate reason
+  ERROR_ACCOUNT_RESTRICTION = 1327
+  ERROR_INVALID_LOGON_HOURS = 1328
+  ERROR_INVALID_WORKSTATION = 1329
+  ERROR_ACCOUNT_DISABLED    = 1331
+
   def check_token_membership
     is_admin = false
     FFI::MemoryPointer.new(:byte, SECURITY_MAX_SID_SIZE) do |sid_pointer|
@@ -63,8 +71,16 @@ module Puppet::Util::Windows::User
 
     begin
       logon_user(name, password) { |token| }
-    rescue Puppet::Util::Windows::Error
-      return false
+    rescue Puppet::Util::Windows::Error => detail
+
+      authenticated_error_codes = Set[
+        ERROR_ACCOUNT_RESTRICTION,
+        ERROR_INVALID_LOGON_HOURS,
+        ERROR_INVALID_WORKSTATION,
+        ERROR_ACCOUNT_DISABLED,
+      ]
+
+      return authenticated_error_codes.include?(detail.code)
     end
   end
   module_function :password_is?

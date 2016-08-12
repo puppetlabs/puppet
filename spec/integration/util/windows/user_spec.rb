@@ -117,6 +117,28 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
       it "should return false given a nil username and an incorrect password" do
         expect(Puppet::Util::Windows::User.password_is?(nil, bad_password)).to be_falsey
       end
+
+      context "with a correct password" do
+        it "should return true even if account restrictions are in place " do
+          Puppet::Util::Windows::User.stubs(:logon_user).raises(Puppet::Util::Windows::Error.new('', 1327))
+          expect(Puppet::Util::Windows::User.password_is?(username, 'p@ssword')).to be(true)
+        end
+
+        it "should return true even for an account outside of logon hours" do
+          Puppet::Util::Windows::User.stubs(:logon_user).raises(Puppet::Util::Windows::Error.new('', 1328))
+          expect(Puppet::Util::Windows::User.password_is?(username, 'p@ssword')).to be(true)
+        end
+
+        it "should return true even for an account not allowed to log into this workstation" do
+          Puppet::Util::Windows::User.stubs(:logon_user).raises(Puppet::Util::Windows::Error.new('', 1329))
+          expect(Puppet::Util::Windows::User.password_is?(username, 'p@ssword')).to be(true)
+        end
+
+        it "should return true even for a disabled account" do
+          Puppet::Util::Windows::User.stubs(:logon_user).raises(Puppet::Util::Windows::Error.new('', 1331))
+          expect(Puppet::Util::Windows::User.password_is?(username, 'p@ssword')).to be(true)
+        end
+      end
     end
 
     describe "check_token_membership" do
