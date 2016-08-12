@@ -135,6 +135,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     @label_to_path_map = {}
     launchd_paths.each do |path|
       return_globbed_list_of_file_paths(path).each do |filepath|
+        Puppet.debug("Reading launchd plist #{filepath}")
         job = read_plist(filepath)
         next if job.nil?
         if job.has_key?("Label")
