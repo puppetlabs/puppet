@@ -152,7 +152,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
       full_name = get_full_name(latest)
     else
       e_vars = {}
-      full_name = @resource[:source]
+      full_name = get_full_name(latest)
     end
 
     cmd << install_options
