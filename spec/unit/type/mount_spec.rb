@@ -588,32 +588,24 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
 
     it "adds the parent autorequire and the file autorequire for a mount with one parent" do
       parent_relationship = var_mount.autorequire[0]
-      file_relationship = var_mount.autorequire[1]
 
-      expect(var_mount.autorequire).to have_exactly(2).items
+      expect(var_mount.autorequire).to have_exactly(1).item
 
       expect(parent_relationship.source).to eq root_mount
       expect(parent_relationship.target).to eq var_mount
-
-      expect(file_relationship.source).to eq var_file
-      expect(file_relationship.target).to eq var_mount
     end
 
     it "adds both parent autorequires and the file autorequire for a mount with two parents" do
       grandparent_relationship = log_mount.autorequire[0]
       parent_relationship = log_mount.autorequire[1]
-      file_relationship = log_mount.autorequire[2]
 
-      expect(log_mount.autorequire).to have_exactly(3).items
+      expect(log_mount.autorequire).to have_exactly(2).items
 
       expect(grandparent_relationship.source).to eq root_mount
       expect(grandparent_relationship.target).to eq log_mount
 
       expect(parent_relationship.source).to eq var_mount
       expect(parent_relationship.target).to eq log_mount
-
-      expect(file_relationship.source).to eq log_file
-      expect(file_relationship.target).to eq log_mount
     end
 
     it "adds the child autobefore for a mount with one file child" do
