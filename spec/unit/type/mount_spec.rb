@@ -577,9 +577,10 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
     let(:var_file) { create_file_resource('/var') }
     let(:log_file) { create_file_resource('/var/log') }
     let(:puppet_file) { create_file_resource('/var/log/puppet') }
+    let(:opt_file) { create_file_resource('/opt/var/puppet') }
 
     before do
-      create_catalog(root_mount, var_mount, log_mount, var_file, log_file, puppet_file)
+      create_catalog(root_mount, var_mount, log_mount, var_file, log_file, puppet_file, opt_file)
     end
 
     it "adds no autorequires for the root mount" do
@@ -617,7 +618,7 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
       expect(child_relationship.target).to eq puppet_file
     end
 
-    it "adds both child autobefores for a mount with two file childs" do
+    it "adds both child autobefores for a mount with two file children" do
       child_relationship = var_mount.autobefore[0]
       grandchild_relationship = var_mount.autobefore[1]
 

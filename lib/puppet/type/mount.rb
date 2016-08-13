@@ -300,7 +300,7 @@ module Puppet
     autobefore(:file) do
       dependencies = []
       file_resources = catalog.resources.select { |resource| resource.type == :file }
-      children_file_resources = file_resources.select { |resource| File.expand_path(resource[:path]) =~ %r(#{self[:name]}/.) }
+      children_file_resources = file_resources.select { |resource| File.expand_path(resource[:path]) =~ %r(^#{self[:name]}/.) }
       children_file_resources.each do |child|
         dependencies.push Pathname.new(child[:path])
       end
