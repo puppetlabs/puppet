@@ -83,7 +83,6 @@ describe 'when pcore described resources types are in use' do
       Puppet[:manifest] = ''
       loader = Puppet::Environments::Directories.new(dir, [])
       Puppet.override(:environments => loader) do
-        #require 'byebug'; debugger
         Puppet.override(:current_environment => loader.get('production')) do
           example.run
         end
