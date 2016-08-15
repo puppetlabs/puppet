@@ -164,8 +164,10 @@ describe "Puppet resource expressions" do
              path => '/somewhere',
              * => $y }"  => "File[$t][mode] == '0666' and File[$t][owner] == 'the_x' and File[$t][path] == '/somewhere'")
 
-    produces("notify{title:}; Notify[title] { * => { message => set}}" => "Notify[title][message] == 'set'")
-    produces("Notify { * => { message => set}}; notify{title:}"      => "Notify[title][message] == 'set'")
+    produces("notify{title:}; Notify[title] { * => { message => set}}"  => "Notify[title][message] == 'set'")
+    produces("Notify { * => { message => set}}; notify{title:}"         => "Notify[title][message] == 'set'")
+    produces('define foo($x) { notify { "title": message =>"aaa${x}bbb"} } foo{ test: x => undef }' => "Notify[title][message] == 'aaabbb'")
+    produces('define foo($x="xx") { notify { "title": message =>"aaa${x}bbb"} } foo{ test: x => undef }' => "Notify[title][message] == 'aaaxxbbb'")
 
     fails("notify { title: unknown => value }" => /no parameter named 'unknown'/)
 
