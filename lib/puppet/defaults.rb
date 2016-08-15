@@ -616,7 +616,7 @@ deprecated and has been replaced by 'always_retry_plugins'."
 
   Puppet.define_settings(:module_tool,
     :module_repository  => {
-      :default  => 'https://forgeapi.puppet.com',
+      :default  => 'https://forgeapi.puppetlabs.com',
       :desc     => "The module repository",
     },
     :module_working_dir => {
