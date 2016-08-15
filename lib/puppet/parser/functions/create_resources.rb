@@ -85,7 +85,7 @@ Puppet::Parser::Functions::newfunction(:create_resources, :arity => -3, :doc => 
       type_name,
       resource_titles,
       defaults.merge(params).map do |name, value|
-        next if (value == :undef || value.nil?)
+        value = nil if value == :undef
         Puppet::Parser::Resource::Param.new(
           :name   => name,
           :value  => value, # wide open to various data types, must be correct
