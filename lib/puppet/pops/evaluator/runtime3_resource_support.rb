@@ -20,9 +20,7 @@ module Runtime3ResourceSupport
       resolved_type = CLASS_STRING
     else
       # resolve a resource type - pcore based, ruby impl, user defined, or application
-      fully_qualified_type = find_resource_type(scope, type_name)
-      type = fully_qualified_type.name if fully_qualified_type
-      resolved_type = fully_qualified_type
+      resolved_type = find_resource_type(scope, type_name)
     end
 
     # TODO: Unknown resource causes creation of Resource to fail with ArgumentError, should give
@@ -60,7 +58,7 @@ module Runtime3ResourceSupport
         scope.compiler.add_resource(scope, resource)
 
         # Classes are evaluated immediately
-        scope.compiler.evaluate_classes([resource_title], scope, false) if fully_qualified_type == CLASS_STRING
+        scope.compiler.evaluate_classes([resource_title], scope, false) if resolved_type == CLASS_STRING
 
         # Turn the resource into a PType (a reference to a resource type)
         # weed out nil's

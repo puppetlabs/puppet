@@ -196,6 +196,16 @@ describe Puppet::Parser::Resource do
       expect(edges).to include(['Class[main]', 'Notify[hello]'])
     end
 
+    it 'should evaluate class in the same file without include' do
+      Puppet[:code] = <<-MANIFEST
+        class a($myvar = 'hello') {}
+        class { 'a': myvar => 'goodbye' }
+        notify { $a::myvar: }
+      MANIFEST
+      catalog = Puppet::Parser::Compiler.compile(Puppet::Node.new 'anyone')
+      expect(catalog.resource('Notify[goodbye]')).to be_a(Puppet::Resource)
+    end
+
     it "should allow edges to propagate multiple levels down the scope hierarchy" do
       Puppet[:code] = <<-MANIFEST
         stage { before: before => Stage[main] }
