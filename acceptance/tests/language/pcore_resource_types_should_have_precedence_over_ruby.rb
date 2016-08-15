@@ -1,18 +1,17 @@
 test_name 'C98097 - generated pcore resource types should be loaded instead of ruby for custom types' do
   environment = 'production'
   step 'setup - install module with custom ruby resource type' do
-    agents.each do |agent|
-      #{{{
-      testdir = agent.tmpdir('c98097')
-      codedir = "#{testdir}/codedir"
+    #{{{
+    testdir = master.tmpdir('c98097')
+    codedir = "#{testdir}/codedir"
 
-      site_manifest_content =<<EOM
+    site_manifest_content =<<EOM
 node default {
   notice(mycustomtype{"foobar":})
 }
 EOM
 
-      custom_type_content =<<EOM
+    custom_type_content =<<EOM
 Puppet::Type.newtype(:mycustomtype) do
   @doc = "Create a new mycustomtype thing."
 
@@ -27,7 +26,7 @@ Puppet::Type.newtype(:mycustomtype) do
 end
 EOM
 
-      apply_manifest_on(agents, <<MANIFEST, :catch_failures => true)
+    apply_manifest_on(master, <<MANIFEST, :catch_failures => true)
 File {
   ensure => directory,
   mode   => "0755",
@@ -58,54 +57,43 @@ file { '#{codedir}/environments/#{environment}/modules/mymodule/lib/puppet/type/
 }
 MANIFEST
 
-      conf_opts = {
-        'main' => {
-          'environmentpath' => "#{codedir}/environments"
-        }
+    conf_opts = {
+      'main' => {
+        'environmentpath' => "#{codedir}/environments"
       }
+    }
 
-      backup_file = backup_the_file(agent, agent.puppet('master')['confdir'], testdir, 'puppet.conf')
-      lay_down_new_puppet_conf agent, conf_opts, testdir
+    backup_file = backup_the_file(master, master.puppet('master')['confdir'], testdir, 'puppet.conf')
+    lay_down_new_puppet_conf master, conf_opts, testdir
 
-      teardown do
-        restore_puppet_conf_from_backup( agent, backup_file )
-      end
-      #}}}
+    teardown do
+      restore_puppet_conf_from_backup( master, backup_file )
     end
+    #}}}
 
     catalog_results = {}
-    agents.each do |agent|
-      catalog_results[agent.hostname] = { 'ruby_cat' => '', 'pcore_cat' => '' }
-    end
+    catalog_results[master.hostname] = { 'ruby_cat' => '', 'pcore_cat' => '' }
 
     step 'compile catalog using ruby resource' do
-      agents.each do |agent|
-        on agent, puppet('master', '--compile', agent.hostname) do |result|
-          assert_match(/running ruby code/, result.stderr)
-          catalog_results[agent.hostname]['ruby_cat'] = JSON.parse(result.stdout.sub(/^[^{]+/,''))
-        end
+      on master, puppet('master', '--compile', master.hostname) do |result|
+        assert_match(/running ruby code/, result.stderr)
+        catalog_results[master.hostname]['ruby_cat'] = JSON.parse(result.stdout.sub(/^[^{]+/,''))
       end
     end
 
     step 'generate pcore type from ruby type' do
-      agents.each do |agent|
-        on agent, puppet('generate', 'types', '--environment', environment)
-      end
+      on master, puppet('generate', 'types', '--environment', environment)
     end
 
     step 'compile catalog and make sure that ruby code is NOT executed' do
-      agents.each do |agent|
-        on agent, puppet('master', '--compile', agent.hostname) do |result|
-          assert_no_match(/running ruby code/, result.stderr)
-          catalog_results[agent.hostname]['pcore_cat'] = JSON.parse(result.stdout.sub(/^[^{]+/,''))
-        end
+      on master, puppet('master', '--compile', master.hostname) do |result|
+        assert_no_match(/running ruby code/, result.stderr)
+        catalog_results[master.hostname]['pcore_cat'] = JSON.parse(result.stdout.sub(/^[^{]+/,''))
       end
     end
 
     step 'ensure that the resources created in the catalog using ruby and pcore are the same' do
-      agents.each do |agent|
-        assert_equal(catalog_results[agent.hostname]['ruby_cat']['resources'], catalog_results[agent.hostname]['pcore_cat']['resources'])
-      end
+      assert_equal(catalog_results[master.hostname]['ruby_cat']['resources'], catalog_results[master.hostname]['pcore_cat']['resources'])
     end
 
   end
