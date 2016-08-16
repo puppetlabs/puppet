@@ -113,13 +113,10 @@ describe Puppet::Parser::Compiler do
     end
   end
 
-  # COPY OF UNIT TEST (HAS ONE NEW TEST EMBEDDED)
-  #
   describe "when evaluating node classes" do
     include PuppetSpec::Compiler
 
     describe "when provided classes in hash format" do
-      # NEW INTEGRATION TEST 
       it 'looks up default parameter values from inherited class (PUP-2532)' do
         catalog = compile_to_catalog(<<-CODE)
           class a {
@@ -213,7 +210,7 @@ describe Puppet::Parser::Compiler do
       end
     end
   end
-  describe "the compiler when using future parser and evaluator" do
+  describe "the compiler when using 4.x language constructs" do
     include PuppetSpec::Compiler
 
     if Puppet.features.microsoft_windows?
@@ -353,7 +350,22 @@ describe Puppet::Parser::Compiler do
 
     describe 'when resolving class references' do
       include Matchers::Resource
-      ## BEFORE
+
+      { 'string'             => 'myWay',
+        'class reference'    => 'Class["myWay"]',
+        'resource reference' => 'Resource["class", "myWay"]'
+      }.each do |label, code|
+        it "allows camel cased class name reference in 'include' using a #{label}" do
+          catalog = compile_to_catalog(<<-"PP")
+            class myWay {
+              notify { 'I did it': message => 'my way'}
+            }
+            include #{code}
+          PP
+          expect(catalog).to have_resource("Notify[I did it]")
+        end
+      end
+
       describe 'and classname is a Resource Reference and strict == :error' do
         before(:each) do
           Puppet[:strict] = :error

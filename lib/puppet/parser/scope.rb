@@ -1064,7 +1064,7 @@ class Puppet::Parser::Scope
       when Puppet::Pops::Types::PResourceType
         assert_class_and_title(name.type_name, name.title)
         name.title.sub(/^([^:]{1,2})/, '::\1')
-      end
+      end.downcase
     end
   end
 
