@@ -84,7 +84,7 @@ guest id=100 pgrp=usr groups=usr home=/home/guest
       it "should allow a single attribute to be specified" do
         @resource.stubs(:original_parameters).returns({ :attributes => single_attribute_array })
         keys = @provider.managed_attribute_keys(existing_attributes)
-        keys.should be_include(:rlogin)
+        expect(keys).to be_include(:rlogin)
       end
     end
 
