@@ -424,6 +424,14 @@ describe Puppet::Configurer do
     end
   end
 
+  describe "when initialized with a transaction_uuid" do
+    it "stores it" do
+      SecureRandom.expects(:uuid).never
+      configurer = Puppet::Configurer.new(Puppet::Configurer::DownloaderFactory.new, 'foo')
+      expect(configurer.instance_variable_get(:@transaction_uuid) == 'foo')
+    end
+  end
+
   describe "when sending a report" do
     include PuppetSpec::Files
 

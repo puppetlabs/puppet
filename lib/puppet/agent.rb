@@ -39,7 +39,7 @@ class Puppet::Agent
     block_run = Puppet::Application.controlled_run do
       splay client_options.fetch :splay, Puppet[:splay]
       result = run_in_fork(should_fork) do
-        with_client do |client|
+        with_client(client_options[:transaction_uuid]) do |client|
           begin
             client_args = client_options.merge(:pluginsync => Puppet::Configurer.should_pluginsync?)
             lock { client.run(client_args) }
@@ -88,9 +88,9 @@ class Puppet::Agent
 
   # Create and yield a client instance, keeping a reference
   # to it during the yield.
-  def with_client
+  def with_client(transaction_uuid)
     begin
-      @client = client_class.new
+      @client = client_class.new(Puppet::Configurer::DownloaderFactory.new, transaction_uuid)
     rescue StandardError => detail
       Puppet.log_exception(detail, "Could not create instance of #{client_class}: #{detail}")
       return
