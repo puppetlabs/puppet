@@ -238,14 +238,11 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
       expect(provider.password).to be_nil
     end
 
-    it "should generate a warning with an empty password" do
-      connection.expects(:SetPassword).with('')
-      connection.expects(:SetInfo).twice
-      connection.expects(:Get).with('UserFlags')
-      connection.expects(:Put).with('UserFlags', true)
+    it "should test a blank user password" do
+      resource[:password] = ''
+      provider.user.expects(:password_is?).with('').returns true
 
-      provider.password = ''
-      expect(@logs).to have_matching_log(/Puppet cannot verify a blank password with the operating system/)
+      expect(provider.password).to eq('')
     end
 
     it 'should not create a user if a group by the same name exists' do
