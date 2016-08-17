@@ -33,6 +33,7 @@ describe 'loaders' do
   let(:mix_4x_and_3x_functions) { config_dir('mix_4x_and_3x_functions') }
   let(:module_with_metadata) { File.join(config_dir('single_module'), 'modules') }
   let(:dependent_modules_with_metadata) { config_dir('dependent_modules_with_metadata') }
+  let(:no_modules) { config_dir('no_modules') }
   let(:user_metadata_path) { File.join(dependent_modules_with_metadata, 'modules/user/metadata.json') }
 
   let(:empty_test_env) { environment_for() }
@@ -307,6 +308,21 @@ describe 'loaders' do
       function = moduleb_loader.load_typed(typed_name(:function, 'moduleb::rb_func_b')).value
 
       expect(function.call({})).to eql("I am modulea::rb_func_a() + I am moduleb::rb_func_b()")
+    end
+  end
+
+  context 'when loading from an environment without modules' do
+    let(:node) { Puppet::Node.new('test', :facts => Puppet::Node::Facts.new('facts', {}), :environment => 'no_modules') }
+
+    it 'can load the same function twice with two different compilations' do
+      Puppet.settings.initialize_global_settings
+      environments = Puppet::Environments::Directories.new(my_fixture_dir, [])
+      Puppet.override(:environments => environments) do
+        compiler = Puppet::Parser::Compiler.new(node)
+        compiler.compile
+        compiler = Puppet::Parser::Compiler.new(node)
+        compiler.compile
+      end
     end
   end
 
