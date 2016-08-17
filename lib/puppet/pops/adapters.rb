@@ -38,26 +38,19 @@ module Adapters
       # The locator is always the parent locator, all positioned objects are positioned within their
       # parent. If a positioned object also has a locator that locator is for its children!
       #
-      @locator ||= find_locator(@adapted.eContainer)
+      @locator ||= self.class.find_locator(@adapted.eContainer)
     end
 
-    def find_locator(o)
-      if o.nil?
-        raise ArgumentError, "InternalError: SourcePosAdapter for something that has no locator among parents"
-      end
-      case
-      when o.is_a?(Model::Program)
-        return o.locator
-      # TODO_HEREDOC use case of SubLocator instead
-      when o.is_a?(Model::SubLocatedExpression) && !(found_locator = o.locator).nil?
-        return found_locator
-      when adapter = self.class.get(o)
-        return adapter.locator
-      else
-        find_locator(o.eContainer)
-      end
+    # @api private
+    def self.find_locator(o)
+      raise ArgumentError, 'InternalError: SourcePosAdapter for something that has no locator among parents' if o.nil?
+      found_locator = o.respond_to?(:locator) ? o.locator : nil
+      return found_locator unless found_locator.nil?
+      adapter = get(o)
+      return adapter.locator unless adapter.nil?
+      container = o.eContainer
+      container.nil? ? nil : find_locator(container)
     end
-    private :find_locator
 
     def offset
       @adapted.offset
@@ -71,8 +64,7 @@ module Adapters
     # @note This is an expensive operation
     #
     def line
-      # Optimization: manual inlining of locator accessor since this method is frequently called
-      (@locator ||= find_locator(@adapted.eContainer)).line_for_offset(offset)
+      locator.line_for_offset(offset)
     end
 
     # Produces the position on the line of the given offset.
