@@ -222,10 +222,10 @@ class Lexer2
       ']' => lambda { emit(TOKEN_RBRACK, @scanner.pos) },
       '(' => lambda do
         before = @scanner.pos
-        pos_on_line = locator.pos_on_line(before)
         # If first on a line, or only whitespace between start of line and '('
         # then the token is special to avoid being taken as start of a call.
-        if pos_on_line == 1 || @scanner.string[locator.char_offset(before)-pos_on_line+1, pos_on_line-1] =~ /\A[[:blank:]\r\n]+\Z/
+        line_start = @lexing_context[:line_lexical_start]
+        if before == line_start || @scanner.string.byteslice(line_start, before - line_start) =~ /\A[[:blank:]\r]+\Z/
           emit(TOKEN_WSLPAREN, before)
         else
           emit(TOKEN_LPAREN, before)
@@ -500,6 +500,7 @@ class Lexer2
         else
           @scanner.pos += 1
         end
+        ctx[:line_lexical_start] = @scanner.pos
         nil
       end,
       '' => lambda { nil } # when the peek(1) returns empty
@@ -667,6 +668,7 @@ class Lexer2
     @lexing_context = {
       :brace_count => 0,
       :after => nil,
+      :line_lexical_start => 0
     }
     appm_mode = Puppet[:app_management] ? :with_appm : :without_appm
     @appm_keywords = APP_MANAGEMENT_TOKENS[appm_mode]
