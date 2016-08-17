@@ -268,18 +268,22 @@ class Puppet::Transaction::ResourceHarness
   # @param [Object] old_system_value system_value from last transaction
   # @return [Object] system_value to be used for next transaction
   def new_system_value(property, event, old_system_value)
-    if event
-      if event.status == "success"
-        # Success events, we presume work so we persist the desired_value
-        event.desired_value
-      else
-        # For non-success events, we persist the old_system_value if it is defined,
-        # or use the event previous_value.
-        old_system_value.nil? ? event.previous_value : old_system_value
-      end
+    if event && event.status != "success"
+      # For non-success events, we persist the old_system_value if it is defined,
+      # or use the event previous_value.
+      # If we're using the event previous_value, we ensure that it's
+      # an array. This is needed because properties assume that their
+      # `should` value is an array, and we will use this value later
+      # on in property insync? logic.
+      event_value = [event.previous_value] unless event.previous_value.is_a?(Array)
+      old_system_value.nil? ? event_value : old_system_value
     else
-      # For non events, we just want to store the parameters agent value.
-      property.value
+      # For non events, or for success cases, we just want to store
+      # the parameters agent value.
+      # We use instance_variable_get here because we want this process to bypass any
+      # munging/unmunging or validation that the property might try to do, since those
+      # operations may not be correctly implemented for custom types.
+      property.instance_variable_get(:@should)
     end
   end
 

@@ -379,10 +379,10 @@ class Puppet::Property < Puppet::Parameter
     # this kind of arbitrary comparisons into the API to remove this complexity. -ken
 
     # Backup old should, set it to the new value, then call insync? on the property.
-    old_should = self.should
+    old_should = @should
 
     begin
-      self.should = should
+      @should = should
       insync?(is)
     rescue => detail
       # Certain operations may fail, but we don't want to fail the transaction if we can
@@ -393,7 +393,7 @@ class Puppet::Property < Puppet::Parameter
       nil
     ensure
       # Always restore old should
-      self.should = old_should
+      @should = old_should
     end
   end
 
