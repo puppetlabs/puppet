@@ -147,7 +147,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     # Test the resource scope, to make sure the resource is even allowed
     # to override.
     unless self.source.object_id == resource.source.object_id || resource.source.child_of?(self.source)
-      raise Puppet::ParseError.new("Only subclasses can override parameters", resource.line, resource.file)
+      raise Puppet::ParseError.new("Only subclasses can override parameters", resource.file, resource.line)
     end
     # Some of these might fail, but they'll fail in the way we want.
     resource.parameters.each do |name, param|
@@ -331,7 +331,7 @@ class Puppet::Parser::Resource < Puppet::Resource
         msg += " at #{fields.join(":")}"
       end
       msg += "; cannot redefine"
-      raise Puppet::ParseError.new(msg, param.line, param.file)
+      raise Puppet::ParseError.new(msg, param.file, param.line)
     end
 
     # If we've gotten this far, we're allowed to override.
