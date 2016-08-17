@@ -267,11 +267,11 @@ module Runtime3Support
 
   def call_function(name, args, o, scope, &block)
     file, line = extract_file_line(o)
-    loader = Adapters::LoaderAdapter.loader_for_model_object(o, scope)
+    loader = Adapters::LoaderAdapter.loader_for_model_object(o, scope, file)
     if loader && func = loader.load(:function, name)
       Puppet::Util::Profiler.profile(name, [:functions, name]) do
-        # Add stack frame when calling
-        return Puppet::Pops::PuppetStack.stack(file, line, func, :call, [scope, *args], &block)
+        # Add stack frame when calling. See Puppet::Pops::PuppetStack
+        return Kernel.eval('func.call(scope, *args, &block)', Kernel.binding, file || '', line)
       end
     end
     # Call via 3x API if function exists there
@@ -433,14 +433,21 @@ module Runtime3Support
   end
 
   def extract_file_line(o)
-    source_pos = Utils.find_closest_positioned(o)
-    return [nil, -1] unless source_pos
-    [source_pos.locator.file, source_pos.line]
+    positioned = find_closest_with_offset(o)
+    unless positioned.nil?
+      locator = Adapters::SourcePosAdapter.find_locator(positioned)
+      return [locator.file, locator.line_for_offset(positioned.offset)] unless locator.nil?
+    end
+    [nil, -1]
   end
 
-  def find_closest_positioned(o)
-    return nil if o.nil? || o.is_a?(Model::Program)
-    o.offset.nil? ? find_closest_positioned(o.eContainer) : Adapters::SourcePosAdapter.adapt(o)
+  def find_closest_with_offset(o)
+    if o.offset.nil?
+      c = o.eContainer
+      c.nil? ? nil : find_closest_with_offset(c)
+    else
+      o
+    end
   end
 
   # Creates a diagnostic producer

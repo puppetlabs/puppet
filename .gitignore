@@ -27,3 +27,4 @@ acceptance/log
 acceptance/.bundle
 # emacs backup files
 *~
+/*.samples

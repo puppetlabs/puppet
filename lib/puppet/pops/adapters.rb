@@ -38,26 +38,19 @@ module Adapters
       # The locator is always the parent locator, all positioned objects are positioned within their
       # parent. If a positioned object also has a locator that locator is for its children!
       #
-      @locator ||= find_locator(@adapted.eContainer)
+      @locator ||= self.class.find_locator(@adapted.eContainer)
     end
 
-    def find_locator(o)
-      if o.nil?
-        raise ArgumentError, "InternalError: SourcePosAdapter for something that has no locator among parents"
-      end
-      case
-      when o.is_a?(Model::Program)
-        return o.locator
-      # TODO_HEREDOC use case of SubLocator instead
-      when o.is_a?(Model::SubLocatedExpression) && !(found_locator = o.locator).nil?
-        return found_locator
-      when adapter = self.class.get(o)
-        return adapter.locator
-      else
-        find_locator(o.eContainer)
-      end
+    # @api private
+    def self.find_locator(o)
+      raise ArgumentError, 'InternalError: SourcePosAdapter for something that has no locator among parents' if o.nil?
+      found_locator = o.respond_to?(:locator) ? o.locator : nil
+      return found_locator unless found_locator.nil?
+      adapter = get(o)
+      return adapter.locator unless adapter.nil?
+      container = o.eContainer
+      container.nil? ? nil : find_locator(container)
     end
-    private :find_locator
 
     def offset
       @adapted.offset
@@ -71,8 +64,7 @@ module Adapters
     # @note This is an expensive operation
     #
     def line
-      # Optimization: manual inlining of locator accessor since this method is frequently called
-      (@locator ||= find_locator(@adapted.eContainer)).line_for_offset(offset)
+      locator.line_for_offset(offset)
     end
 
     # Produces the position on the line of the given offset.
@@ -126,24 +118,24 @@ module Adapters
 
     # Finds the loader to use when loading originates from the source position of the given argument.
     #
-    # @param instance [Model::PopsObject] The model object
-    # @param scope [Puppet::Parser::Scope] The scope to use
+    # @param [Model::PopsObject] instance The model object
+    # @param [Puppet::Parser::Scope] scope The scope to use
+    # @param [String] file the file from where the model was parsed
     # @return [Loader,nil] the found loader or `nil` if it could not be found
     #
-    def self.loader_for_model_object(model, scope)
+    def self.loader_for_model_object(model, scope, file = nil)
       if scope.nil?
         loaders = Puppet.lookup(:loaders) { nil }
         loaders.nil? ? nil : loaders.private_environment_loader
       else
-        # find the loader that loaded the code, or use the private_environment_loader (sees env + all modules)
-        adapter = Utils.find_adapter(model, self)
-        if adapter.nil?
-          # Use source location to determine calling module, or use the private_environment_loader (sees env + all modules)
-          # This is necessary since not all .pp files are loaded by a Loader (see PUP-1833)
-          adapter = adapt_by_source(scope, model)
-        end
-        adapter.nil? ? scope.compiler.loaders.private_environment_loader : adapter.loader(scope)
+        loaders = scope.compiler.loaders
+        loader_name = loader_name_by_source(scope.environment, model, file)
+        loader_name.nil? ? loaders.private_environment_loader : loaders[loader_name]
       end
+    end
+
+    class PathsAndNameCacheAdapter < Puppet::Pops::Adaptable::Adapter
+      attr_accessor :cache, :paths
     end
 
     # Attempts to find the module that `instance` originates from by looking at it's {SourcePosAdapter} and
@@ -156,32 +148,29 @@ module Adapters
     #
     # @param scope
     # @param instance
-    def self.adapt_by_source(scope, instance)
-      source_pos = Utils.find_adapter(instance, SourcePosAdapter)
-      unless source_pos.nil?
-        mod = find_module_for_file(scope.environment, source_pos.locator.file)
-        adapter = LoaderAdapter.adapt(source_pos.adapted)
-        loaders = scope.compiler.loaders
-        if mod.nil?
-          adapter.loader_name = loaders.private_environment_loader.loader_name
-        else
-          adapter.loader_name = "#{mod.name} private"
-        end
-        return adapter
-      end
-      nil
-    end
-
-    def loader(scope)
-      scope.compiler.loaders[loader_name]
-    end
-
-    def self.find_module_for_file(environment, file)
+    # @api private
+    def self.loader_name_by_source(environment, instance, file)
+      file = find_file(instance) if file.nil?
       return nil if file.nil?
-      file_path = Pathname.new(file)
-      environment.modulepath.each do |path|
+      pn_adapter = PathsAndNameCacheAdapter.adapt(environment) do |a|
+        a.paths ||= environment.modulepath.map { |p| Pathname.new(p) }
+        a.cache ||= {}
+      end
+      dir = File.dirname(file)
+      pn_adapter.cache.fetch(dir) do |key|
+        mod = find_module_for_dir(environment, pn_adapter.paths, dir)
+        loader_name = mod.nil? ? nil : "#{mod.name} private"
+        pn_adapter.cache[key] = loader_name
+      end
+    end
+
+    # @api private
+    def self.find_module_for_dir(environment, paths, dir)
+      return nil if dir.nil?
+      file_path = Pathname.new(dir)
+      paths.each do |path|
         begin
-          relative_path = file_path.relative_path_from(Pathname.new(path)).to_s.split(File::SEPARATOR)
+          relative_path = file_path.relative_path_from(path).to_s.split(File::SEPARATOR)
         rescue ArgumentError
           # file_path was not relative to the module_path. That's OK.
           next
@@ -193,7 +182,12 @@ module Adapters
       end
       nil
     end
-    private_class_method :find_module_for_file
+
+    # @api private
+    def self.find_file(instance)
+      source_pos = Utils.find_closest_positioned(instance)
+      source_pos.nil? ? nil : source_pos.locator.file
+    end
   end
 end
 end

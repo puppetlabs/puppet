@@ -125,6 +125,15 @@ describe 'function for dynamically creating resources' do
       expect(rg.path_between(foo,nil)).to_not be
     end
 
+    it 'should filter out undefined edges in an array as they cause errors' do
+      rg = compile_to_relationship_graph("notify { test: }\n create_resources('notify', {'foo'=>{'require'=>[undef]}})")
+      test  = rg.vertices.find { |v| v.title == 'test' }
+      foo   = rg.vertices.find { |v| v.title == 'foo' }
+      expect(test).to be
+      expect(foo).to be
+      expect(rg.path_between(foo,nil)).to_not be
+    end
+
     it 'should account for default values' do
       catalog = compile_to_catalog("create_resources('file', {'/etc/foo'=>{'ensure'=>'present'}, '/etc/baz'=>{'group'=>'food'}}, {'group' => 'bar'})")
       expect(catalog.resource(:file, "/etc/foo")['group']).to eq('bar')
@@ -154,6 +163,28 @@ describe 'function for dynamically creating resources' do
           create_resources('foocreateresource', {'blah'=>{}})
         MANIFEST
       }.to raise_error(Puppet::Error, /Foocreateresource\[blah\]: expects a value for parameter 'one'/)
+    end
+
+    it 'should accept undef as explicit value when parameter has no default value' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          define foocreateresource($one) {
+            notify { $name: message => "aaa${one}bbb" }
+          }
+
+          create_resources('foocreateresource', {'blah'=>{ one => undef}})
+        MANIFEST
+      expect(catalog.resource(:notify, "blah")['message']).to eq('aaabbb')
+    end
+
+    it 'should use default value expression if given value is undef' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          define foocreateresource($one = 'xx') {
+            notify { $name: message => "aaa${one}bbb" }
+          }
+
+          create_resources('foocreateresource', {'blah'=>{ one => undef}})
+        MANIFEST
+      expect(catalog.resource(:notify, "blah")['message']).to eq('aaaxxbbb')
     end
 
     it 'should be able to add multiple defines' do
