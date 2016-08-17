@@ -236,7 +236,7 @@ describe 'loaders' do
           expect(resource['message']).to eq(desc[:expects])
         end
 
-        it 'can not call ruby function in a dependent module from outside a function if dependency is missing in existing metadata.json' do
+        it "can not call #{desc[:called]} from #{desc[:from]} if dependency is missing in existing metadata.json" do
           File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => []).to_pson
           Puppet[:code] = "$case_number = #{case_number}\ninclude ::user"
           expect { catalog = compiler.compile }.to raise_error(Puppet::Error, /Unknown function/)
