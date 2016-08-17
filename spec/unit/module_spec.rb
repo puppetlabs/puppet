@@ -614,13 +614,6 @@ describe Puppet::Module do
     expect(@module).to be_has_metadata
   end
 
-  it "should have metadata if it has a metadata file and its data is not empty" do
-    Puppet::FileSystem.expects(:exist?).with(@module.metadata_file).returns true
-    File.stubs(:read).with(@module.metadata_file, {:encoding => 'utf-8'}).returns "{\"foo\" : \"bar\"}"
-
-    expect(@module).to be_has_metadata
-  end
-
   it "should not have metadata if has a metadata file and its data is empty" do
     Puppet::FileSystem.expects(:exist?).with(@module.metadata_file).returns true
     File.stubs(:read).with(@module.metadata_file, {:encoding => 'utf-8'}).returns "This is some invalid json.\n"
