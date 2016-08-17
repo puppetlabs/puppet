@@ -53,6 +53,11 @@ class ResourceTypeImpl
     )
   end
 
+  def eql?(other)
+    other.is_a?(Puppet::CompilableResourceType) && @name == other.name
+  end
+  alias == eql?
+
   # Compares this type against the given _other_ (type) and returns -1, 0, or +1 depending on the order.
   # @param other [Object] the object to compare against (produces nil, if not kind of Type}
   # @return [-1, 0, +1, nil] produces -1 if this type is before the given _other_ type, 0 if equals, and 1 if after.
