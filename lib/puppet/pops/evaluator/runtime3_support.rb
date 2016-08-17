@@ -267,7 +267,7 @@ module Runtime3Support
 
   def call_function(name, args, o, scope, &block)
     file, line = extract_file_line(o)
-    loader = Adapters::LoaderAdapter.loader_for_model_object(o, scope)
+    loader = Adapters::LoaderAdapter.loader_for_model_object(o, scope, file)
     if loader && func = loader.load(:function, name)
       Puppet::Util::Profiler.profile(name, [:functions, name]) do
         # Add stack frame when calling
