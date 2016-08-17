@@ -5,17 +5,21 @@ test_name 'PA-466: Ensure env_windows_installdir fact is present and correct' do
 
   confine :to, :platform => 'windows'
 
+  require 'json'
+
   agents.each do |agent|
-    step "test for presence/accurance of fact on #{agent}" do
+    step "test for presence/accuracy of fact on #{agent}" do
       platform = agent[:platform]
       ruby_arch = agent[:ruby_arch] || 'x86' # ruby_arch defaults to x86 if nil
 
       install_dir = platform =~ /-64$/ && ruby_arch == 'x86' ?
-        "C:\\\\Program Files (x86)\\\\Puppet Labs\\\\Puppet" :
-        "C:\\\\Program Files\\\\Puppet Labs\\\\Puppet"
+        "C:\\Program Files (x86)\\Puppet Labs\\Puppet" :
+        "C:\\Program Files\\Puppet Labs\\Puppet"
 
-      on agent, puppet('facts') do
-        assert_match(/"env_windows_installdir": "#{install_dir}"/, stdout, "env_windows_installdir fact did not match expected output")
+      on agent, puppet('facts', '--render-as json') do |result|
+        facts = JSON.parse(result.stdout)
+        actual_value = facts["values"]["env_windows_installdir"]
+        assert_equal(install_dir, actual_value, "env_windows_installdir fact did not match expected output")
       end
     end
   end
