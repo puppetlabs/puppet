@@ -190,4 +190,15 @@ describe Puppet::Parameter do
       )).to eq("{'1' => 'foo', 'bar' => ['2', '3', '4'], 'baz' => {'quux' => 'two', 'qux' => '1'}}")
     end
   end
+
+  describe 'formatting messages' do
+    it "formats messages as-is when the parameter is not sensitive" do
+      expect(@parameter.format("hello %s", "world")).to eq("hello world")
+    end
+
+    it "formats messages with redacted values when the parameter is not sensitive" do
+      @parameter.sensitive = true
+      expect(@parameter.format("hello %s", "world")).to eq("hello [redacted]")
+    end
+  end
 end

@@ -313,6 +313,33 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
     end
   end
 
+  describe "determining if a diff should be shown" do
+    let(:content) { described_class.new(:resource => resource) }
+
+    before do
+      Puppet[:show_diff] = true
+      resource[:show_diff] = true
+    end
+
+    it "is true if there are changes and the global and per-resource show_diff settings are true" do
+      expect(content.show_diff?(true)).to be_truthy
+    end
+
+    it "is false if there are no changes" do
+      expect(content.show_diff?(false)).to be_falsey
+    end
+
+    it "is false if show_diff is globally disabled" do
+      Puppet[:show_diff] = false
+      expect(content.show_diff?(false)).to be_falsey
+    end
+
+    it "is false if show_diff is disabled on the resource" do
+      resource[:show_diff] = false
+      expect(content.show_diff?(false)).to be_falsey
+    end
+  end
+
   describe "when changing the content" do
     let(:content) { described_class.new(:resource => resource) }
 
