@@ -14,8 +14,7 @@ module Puppet
 
       **Autorequires:** If Puppet is managing any parents of a mount resource ---
       that is, other mount points higher up in the filesystem --- the child
-      mount will autorequire them. If Puppet is managing the file path of a
-      mount point, the mount resource will autorequire it.
+      mount will autorequire them.
 
       **Autobefores:**  If Puppet is managing any child file paths of a mount
       point, the mount resource will autobefore them."
@@ -297,14 +296,11 @@ module Puppet
       dependencies[0..-2]
     end
 
-    # Autorequire the mount point's file resource
-    autorequire(:file) { Pathname.new(self[:name]) }
-
     # Autobefore the mount point's child file paths
     autobefore(:file) do
       dependencies = []
       file_resources = catalog.resources.select { |resource| resource.type == :file }
-      children_file_resources = file_resources.select { |resource| File.expand_path(resource[:path]) =~ %r(#{self[:name]}/.) }
+      children_file_resources = file_resources.select { |resource| File.expand_path(resource[:path]) =~ %r(^#{self[:name]}/.) }
       children_file_resources.each do |child|
         dependencies.push Pathname.new(child[:path])
       end
