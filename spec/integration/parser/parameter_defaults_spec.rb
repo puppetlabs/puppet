@@ -32,10 +32,10 @@ require 'puppet_spec/language'
       logs = []
       Puppet[:code] = code
       Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
-        Puppet.override(:global_scope => topscope) do
-          compiler.compile
-          yield
-        end
+          compiler.compile do |catalog|
+            yield
+            catalog
+          end
       end
       logs.select { |log| log.level == :notice }.map { |log| log.message }
     end

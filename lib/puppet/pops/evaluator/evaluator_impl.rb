@@ -922,7 +922,7 @@ class EvaluatorImpl
   private :call_function_with_block
 
   def proc_from_lambda(lambda, scope)
-    closure = Closure.new(self, lambda, scope)
+    closure = Closure::Dynamic.new(self, lambda, scope)
     PuppetProc.new(closure) { |*args| closure.call(*args) }
   end
   private :proc_from_lambda

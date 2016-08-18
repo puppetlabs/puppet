@@ -55,7 +55,7 @@ class EvaluatingParser
 
   # Create a closure that can be called in the given scope
   def closure(model, scope)
-    Evaluator::Closure.new(evaluator, model, scope)
+    Evaluator::Closure::Dynamic.new(evaluator, model, scope)
   end
 
   def evaluate(scope, model)

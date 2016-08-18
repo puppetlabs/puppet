@@ -18,10 +18,9 @@ class Closure < CallableSignature
   attr_reader :model
   attr_reader :enclosing_scope
 
-  def initialize(evaluator, model, scope)
+  def initialize(evaluator, model)
     @evaluator = evaluator
     @model = model
-    @enclosing_scope = scope
   end
 
   # Evaluates a closure in its enclosing scope after having matched given arguments with parameters (from left to right)
@@ -113,10 +112,21 @@ class Closure < CallableSignature
     CLOSURE_NAME
   end
 
+  class Dynamic < Closure
+    def initialize(evaluator, model, scope)
+      @enclosing_scope = scope
+      super(evaluator, model)
+    end
+
+    def enclosing_scope
+      @enclosing_scope
+    end
+  end
+
   class Named < Closure
-    def initialize(name, evaluator, model, scope)
+    def initialize(name, evaluator, model)
       @name = name
-      super(evaluator, model, scope)
+      super(evaluator, model)
     end
 
     def closure_name
@@ -132,7 +142,7 @@ class Closure < CallableSignature
       # Unnamed closures are always a runtime construct, they are never bound by a loader
       # and are thus garbage collected at end of a compilation.
       #
-      super || Puppet.lookup(:global_scope) { {} }
+      Puppet.lookup(:global_scope) { {} }
     end
   end
 
@@ -208,8 +218,10 @@ class Closure < CallableSignature
     types = []
     range = [0, 0]
     in_optional_parameters = false
+    closure_scope = enclosing_scope
+
     parameters.each do |param|
-      type, param_range = create_param_type(param)
+      type, param_range = create_param_type(param, closure_scope)
 
       types << type
 
@@ -233,9 +245,10 @@ class Closure < CallableSignature
   def create_params_struct
     type_factory = Types::TypeFactory
     members = {}
+    closure_scope = enclosing_scope
 
     parameters.each do |param|
-      arg_type, param_range = create_param_type(param)
+      arg_type, param_range = create_param_type(param, closure_scope)
       key_type = type_factory.string(nil, param.name.to_s)
       key_type = type_factory.optional(key_type) unless param.value.nil?
       members[key_type] = arg_type
@@ -243,9 +256,9 @@ class Closure < CallableSignature
     type_factory.struct(members)
   end
 
-  def create_param_type(param)
+  def create_param_type(param, closure_scope)
     type = if param.type_expr
-             @evaluator.evaluate(param.type_expr, @enclosing_scope)
+             @evaluator.evaluate(param.type_expr, closure_scope)
            else
              Types::PAnyType::DEFAULT
            end

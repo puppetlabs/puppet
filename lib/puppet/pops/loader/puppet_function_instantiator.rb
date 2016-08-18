@@ -77,7 +77,7 @@ class PuppetFunctionInstantiator
       # This is highly problematic - it binds both an Evaluator and closure_scope
       init_dispatch(Evaluator::Closure::Named.new(
         function_definition.name,
-        Evaluator::EvaluatorImpl.new(), function_definition, nil))
+        Evaluator::EvaluatorImpl.new(), function_definition))
     end
   end
 end
