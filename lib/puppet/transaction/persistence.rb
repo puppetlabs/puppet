@@ -54,7 +54,7 @@ class Puppet::Transaction::Persistence
     result = nil
     Puppet::Util.benchmark(:debug, "Loaded transaction store file") do
       begin
-        result = Puppet::Util::Yaml.load_file(filename)
+        result = Puppet::Util::Yaml.load_file(filename, false, true)
       rescue Puppet::Util::Yaml::YamlLoadError => detail
         Puppet.log_exception(detail, "Transaction store file #{filename} is corrupt (#{detail}); replacing", { :level => :warning })
 
