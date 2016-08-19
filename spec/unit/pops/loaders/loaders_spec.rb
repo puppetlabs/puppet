@@ -323,6 +323,7 @@ describe 'loaders' do
         catalog = compiler.compile
         expect(catalog.resource('Notify[first]')).to be_a(Puppet::Resource)
 
+        Puppet::Pops::Loader::RubyFunctionInstantiator.expects(:create).never
         compiler = Puppet::Parser::Compiler.new(node)
         compiler.topscope['value_from_scope'] = 'second'
         catalog = compiler.compile

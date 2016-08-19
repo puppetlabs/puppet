@@ -17,8 +17,19 @@ class Loaders
   attr_reader :private_environment_loader
   attr_reader :implementation_registry
 
-  def initialize(environment)
+  def self.new(environment)
+    obj = environment.loaders
+    if obj.nil?
+      obj = self.allocate
+      obj.send(:initialize, environment)
+    end
+    obj
+  end
 
+  def initialize(environment)
+    # Protect against environment havoc
+    raise ArgumentError.new("Attempt to redefine already initialized loaders for environment") unless environment.loaders.nil?
+    environment.loaders = self
     @loaders_by_name = {}
 
     add_loader_by_name(self.class.static_loader)

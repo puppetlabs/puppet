@@ -3,6 +3,7 @@ function bar() {
 }
 
 class foo::bar {
+  with(1) |$x| { notice $x }
   notify { bar(): }
 }
 

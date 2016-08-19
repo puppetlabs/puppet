@@ -166,6 +166,10 @@ class Puppet::Node::Environment
   #     (optional)
   attr_reader :config_version
 
+  # Cached loaders - management of value handled by Puppet::Pops::Loaders
+  # @api private
+  attr_accessor :loaders
+
   # Checks to make sure that this environment did not have a manifest set in
   # its original environment.conf if Puppet is configured with
   # +disable_per_environment_manifest+ set true.  If it did, the environment's
