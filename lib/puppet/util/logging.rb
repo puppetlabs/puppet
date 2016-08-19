@@ -55,7 +55,7 @@ module Logging
       backtrace = []
       build_exception_trace(backtrace, exception, trace)
       Puppet::Util::Log.create({
-          :level => :err,
+          :level => options[:level] || :err,
           :source => log_source,
           :message => exception.basic_message,
           :issue_code => exception.issue_code,
