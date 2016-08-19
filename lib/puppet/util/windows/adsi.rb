@@ -191,8 +191,6 @@ module Puppet::Util::Windows::ADSI
     end
 
     def self.logon(name, password)
-      # this underlying check will throw when password is nil or empty
-      # as the Windows LogonUserW API does not support that
       Puppet::Util::Windows::User.password_is?(name, password)
     end
 
@@ -238,9 +236,6 @@ module Puppet::Util::Windows::ADSI
 
     def password=(password)
       if !password.nil?
-        if password == ''
-          Puppet.warning("Blank (zero length) passwords are not recommended. Blank passwords might be allowed on your system based on policy, but Puppet cannot verify a blank password with the operating system. Because of this a password change event will be executed by Puppet on every run.")
-        end
         native_user.SetPassword(password)
         commit
       end

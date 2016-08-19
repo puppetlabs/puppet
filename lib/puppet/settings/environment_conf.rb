@@ -157,7 +157,7 @@ class Puppet::Settings::EnvironmentConf
       # Path begins with $something interpolatable
       path
     else
-      File.expand_path(path, @path_to_env)
+      Puppet::FileSystem.expand_path(path, @path_to_env)
     end
   end
 

@@ -36,7 +36,6 @@ describe Puppet::Transaction::Persistence do
     describe "when the file/directory exists" do
       before(:each) do
         @tmpfile = tmpfile('storage_test')
-        FileUtils.touch(@tmpfile)
         Puppet[:transactionstorefile] = @tmpfile
       end
 
@@ -48,6 +47,8 @@ describe Puppet::Transaction::Persistence do
         resource = "Foo[bar]"
         property = "my"
         value = "something"
+
+        Puppet.expects(:err).never
 
         persistence = Puppet::Transaction::Persistence.new
         persistence.set_system_value(resource, property, value)
@@ -61,6 +62,8 @@ describe Puppet::Transaction::Persistence do
         test_yaml = {"resources"=>{"a"=>"b"}}
         write_state_file(test_yaml.to_yaml)
 
+        Puppet.expects(:err).never
+
         persistence = Puppet::Transaction::Persistence.new
         persistence.load
 
@@ -70,6 +73,8 @@ describe Puppet::Transaction::Persistence do
       it "should initialize with a clear internal state if the file does not contain valid YAML" do
         write_state_file('{ invalid')
 
+        Puppet.expects(:err).with(regexp_matches(/Transaction store file .* is corrupt/))
+
         persistence = Puppet::Transaction::Persistence.new
         persistence.load
 
@@ -78,6 +83,8 @@ describe Puppet::Transaction::Persistence do
 
       it "should initialize with a clear internal state if the file does not contain a hash of data" do
         write_state_file("not_a_hash")
+
+        Puppet.expects(:err).with(regexp_matches(/Transaction store file .* is valid YAML but not returning a hash/))
 
         persistence = Puppet::Transaction::Persistence.new
         persistence.load
@@ -90,6 +97,9 @@ describe Puppet::Transaction::Persistence do
 
         File.expects(:rename).raises(SystemCallError)
 
+        Puppet.expects(:err).with(regexp_matches(/Transaction store file .* is corrupt/))
+        Puppet.expects(:err).with(regexp_matches(/Unable to rename/))
+
         persistence = Puppet::Transaction::Persistence.new
         expect { persistence.load }.to raise_error(Puppet::Error, /Could not rename/)
       end
@@ -99,6 +109,8 @@ describe Puppet::Transaction::Persistence do
 
         File.expects(:rename).at_least_once
 
+        Puppet.expects(:err).with(regexp_matches(/Transaction store file .* is corrupt/))
+
         persistence = Puppet::Transaction::Persistence.new
         persistence.load
       end
@@ -106,6 +118,8 @@ describe Puppet::Transaction::Persistence do
       it "should fail gracefully on load() if the file is not a regular file" do
         FileUtils.rm_f(@tmpfile)
         Dir.mkdir(@tmpfile)
+
+        Puppet.expects(:warning).with(regexp_matches(/Transaction store file .* is not a file/))
 
         persistence = Puppet::Transaction::Persistence.new
         persistence.load

@@ -17,8 +17,19 @@ class Loaders
   attr_reader :private_environment_loader
   attr_reader :implementation_registry
 
-  def initialize(environment)
+  def self.new(environment)
+    obj = environment.loaders
+    if obj.nil?
+      obj = self.allocate
+      obj.send(:initialize, environment)
+    end
+    obj
+  end
 
+  def initialize(environment)
+    # Protect against environment havoc
+    raise ArgumentError.new("Attempt to redefine already initialized loaders for environment") unless environment.loaders.nil?
+    environment.loaders = self
     @loaders_by_name = {}
 
     add_loader_by_name(self.class.static_loader)
@@ -218,6 +229,7 @@ class Loaders
 
     # The environment is not a namespace, so give it a nil "module_name"
     loader_name = "environment:#{environment.name}"
+    # env_conf is setup from the environment_dir value passed into Puppet::Environments::Directories.new
     env_conf = Puppet.lookup(:environments).get_conf(environment.name)
     env_path = env_conf.nil? || !env_conf.is_a?(Puppet::Settings::EnvironmentConf) ? nil : env_conf.path_to_env
 

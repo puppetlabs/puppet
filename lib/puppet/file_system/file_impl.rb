@@ -22,6 +22,11 @@ class Puppet::FileSystem::FileImpl
     path.to_s
   end
 
+  def expand_path(path, dir_string = nil)
+    # ensure `nil` values behave like underlying File.expand_path
+    ::File.expand_path(path.nil? ? nil : path_string(path), dir_string)
+  end
+
   def open(path, mode, options, &block)
     ::File.open(path, options, mode, &block)
   end

@@ -47,27 +47,30 @@ class Puppet::Transaction::Persistence
       return
     end
     unless File.file?(filename)
-      Puppet.warning("Persistence file #{filename} is not a file, ignoring")
+      Puppet.warning("Transaction store file #{filename} is not a file, ignoring")
       return
     end
 
     result = nil
     Puppet::Util.benchmark(:debug, "Loaded transaction store file") do
       begin
-        result = Puppet::Util::Yaml.load_file(filename)
+        result = Puppet::Util::Yaml.load_file(filename, false, true)
       rescue Puppet::Util::Yaml::YamlLoadError => detail
-        Puppet.err "Transaction store file #{filename} is corrupt (#{detail}); replacing"
+        Puppet.log_exception(detail, "Transaction store file #{filename} is corrupt (#{detail}); replacing", { :level => :warning })
 
         begin
           File.rename(filename, filename + ".bad")
-        rescue
+        rescue => detail
+          Puppet.log_exception(detail, "Unable to rename corrupt transaction store file: #{detail}")
           raise Puppet::Error, "Could not rename corrupt transaction store file #{filename}; remove manually", detail.backtrace
         end
+
+        result = {}
       end
     end
 
     unless result.is_a?(Hash)
-      Puppet.err "Transaction state file #{filename} is valid YAML but not returning a hash. Check the file for corruption, or remove it before continuing."
+      Puppet.err "Transaction store file #{filename} is valid YAML but not returning a hash. Check the file for corruption, or remove it before continuing."
       return
     end
 

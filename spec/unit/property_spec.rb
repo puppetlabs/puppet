@@ -555,4 +555,11 @@ describe Puppet::Property do
       expect(property.property_matches?(1, "1")).to be_falsey
     end
   end
+
+  describe "#insync_values?" do
+    it "should log an exception when insync? throws one" do
+      property.expects(:insync?).raises ArgumentError
+      expect(property.insync_values?("foo","bar")).to be nil
+    end
+  end
 end

@@ -48,7 +48,7 @@ class Puppet::Node::Environment
     obj.send(:initialize,
              name.intern,
              expand_dirs(extralibs() + modulepath),
-             manifest == NO_MANIFEST ? manifest : File.expand_path(manifest),
+             manifest == NO_MANIFEST ? manifest : Puppet::FileSystem.expand_path(manifest),
              config_version)
     obj
   end
@@ -165,6 +165,10 @@ class Puppet::Node::Environment
   #   @return [String] path to a script whose output will be added to report logs
   #     (optional)
   attr_reader :config_version
+
+  # Cached loaders - management of value handled by Puppet::Pops::Loaders
+  # @api private
+  attr_accessor :loaders
 
   # Checks to make sure that this environment did not have a manifest set in
   # its original environment.conf if Puppet is configured with
@@ -467,7 +471,7 @@ class Puppet::Node::Environment
 
   def self.expand_dirs(dirs)
     dirs.collect do |dir|
-      File.expand_path(dir)
+      Puppet::FileSystem.expand_path(dir)
     end
   end
 

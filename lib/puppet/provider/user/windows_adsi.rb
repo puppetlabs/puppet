@@ -119,7 +119,7 @@ Puppet::Type.type(:user).provide :windows_adsi do
   def password
     # avoid a LogonUserW style password check when the resource is not yet
     # populated with a password (as is the case with `puppet resource user`)
-    return nil if @resource[:password].nil? || @resource[:password] == ''
+    return nil if @resource[:password].nil?
     user.password_is?( @resource[:password] ) ? @resource[:password] : nil
   end
 

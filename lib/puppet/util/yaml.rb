@@ -9,9 +9,21 @@ module Puppet::Util::Yaml
 
   class YamlLoadError < Puppet::Error; end
 
-  def self.load_file(filename, default_value = false)
-    yaml = YAML.load_file(filename)
-    yaml || default_value
+  def self.load_file(filename, default_value = false, strip_classes = false)
+    if(strip_classes) then
+      data = YAML::parse_file(filename)
+      data.root.each do |o|
+        if o.respond_to?(:tag=) and
+           o.tag != nil and
+           o.tag.start_with?("!ruby")
+          o.tag = nil
+        end
+      end
+      data.to_ruby || default_value
+    else
+      yaml = YAML.load_file(filename)
+      yaml || default_value
+    end
   rescue *YamlLoadExceptions => detail
     raise YamlLoadError.new(detail.message, detail)
   end
