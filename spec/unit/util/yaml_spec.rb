@@ -47,6 +47,18 @@ describe Puppet::Util::Yaml do
     end
   end
 
+  it "should allow one to strip ruby tags that would otherwise not parse" do
+    write_file(filename, "---\nweirddata: !ruby/hash:Not::A::Valid::Class {}")
+
+    expect(Puppet::Util::Yaml.load_file(filename, {}, true)).to eq({"weirddata" => {}})
+  end
+
+  it "should not strip non-ruby tags" do
+    write_file(filename, "---\nweirddata: !binary |-\n          e21kNX04MTE4ZGY2NmM5MTc3OTg4ZWE4Y2JiOWEzMjMyNzFkYg==")
+
+    expect(Puppet::Util::Yaml.load_file(filename, {}, true)).to eq({"weirddata" => "{md5}8118df66c9177988ea8cbb9a323271db"})
+  end
+
   def write_file(name, contents)
     File.open(name, "w") do |fh|
       fh.write(contents)
