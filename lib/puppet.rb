@@ -197,7 +197,8 @@ module Puppet
       :http_pool => proc {
         require 'puppet/network/http'
         Puppet::Network::HTTP::NoCachePool.new
-      }
+      },
+      :ssl_host => proc { Puppet::SSL::Host.localhost },
     }
   end
 
