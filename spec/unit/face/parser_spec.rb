@@ -14,6 +14,12 @@ describe Puppet::Face[:parser, :current] do
         from_an_interactive_terminal
       end
 
+      after(:each) do
+        # Reset cache of loaders (many examples run in the *root* environment
+        # which exists in "eternity")
+        Puppet.lookup(:current_environment).loaders = nil
+      end
+
       it "validates the configured site manifest when no files are given" do
         manifest = file_containing('site.pp', "{ invalid =>")
 
