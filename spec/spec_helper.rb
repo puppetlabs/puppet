@@ -72,8 +72,8 @@ RSpec.configure do |config|
 
   config.mock_with :mocha
 
-  tmpdir = Dir.mktmpdir("rspecrun")
-  oldtmpdir = Dir.tmpdir()
+  tmpdir = Puppet::FileSystem.expand_path(Dir.mktmpdir("rspecrun"))
+  oldtmpdir = Puppet::FileSystem.expand_path(Dir.tmpdir())
   ENV['TMPDIR'] = tmpdir
 
   if Puppet::Util::Platform.windows?

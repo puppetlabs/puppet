@@ -62,15 +62,43 @@ describe "environment settings" do
       end
 
       it "reads the configured manifest" do
-        expect(Puppet.settings.value(:manifest, :testing)).to eq(File.expand_path('/special/manifest'))
+        expect(Puppet.settings.value(:manifest, :testing)).to eq(Puppet::FileSystem.expand_path('/special/manifest'))
       end
 
       it "reads the configured modulepath" do
-        expect(Puppet.settings.value(:modulepath, :testing)).to eq(File.expand_path('/special/modulepath'))
+        expect(Puppet.settings.value(:modulepath, :testing)).to eq(Puppet::FileSystem.expand_path('/special/modulepath'))
       end
 
       it "reads the configured config_version" do
-        expect(Puppet.settings.value(:config_version, :testing)).to eq(File.expand_path('/special/config_version'))
+        expect(Puppet.settings.value(:config_version, :testing)).to eq(Puppet::FileSystem.expand_path('/special/config_version'))
+      end
+    end
+
+    context "with an environment.conf containing 8.3 style Windows paths",
+      :if => Puppet::Util::Platform.windows? do
+
+      before(:each) do
+        # set 8.3 style Windows paths
+        @modulepath = Puppet::Util::Windows::File.get_short_pathname(PuppetSpec::Files.tmpdir('fakemodulepath'))
+
+        # for expansion to work, the file must actually exist
+        @manifest = PuppetSpec::Files.tmpfile('foo.pp', @modulepath)
+        # but tmpfile won't create an empty file
+        Puppet::FileSystem.touch(@manifest)
+        @manifest = Puppet::Util::Windows::File.get_short_pathname(@manifest)
+
+        set_environment_conf(environmentpath, 'testing', <<-EOF)
+          manifest=#{@manifest}
+          modulepath=#{@modulepath}
+        EOF
+      end
+
+      it "reads the configured manifest as a fully expanded path" do
+        expect(Puppet.settings.value(:manifest, :testing)).to eq(Puppet::FileSystem.expand_path(@manifest))
+      end
+
+      it "reads the configured modulepath as a fully expanded path" do
+        expect(Puppet.settings.value(:modulepath, :testing)).to eq(Puppet::FileSystem.expand_path(@modulepath))
       end
     end
 
@@ -91,7 +119,7 @@ describe "environment settings" do
 
         it "reads manifest from environment.conf settings" do
           expect(Puppet.settings.value(:environmentpath)).to eq(environmentpath)
-          expect(Puppet.settings.value(:manifest, :main)).to eq(File.expand_path("/special/manifest"))
+          expect(Puppet.settings.value(:manifest, :main)).to eq(Puppet::FileSystem.expand_path("/special/manifest"))
         end
       end
     end

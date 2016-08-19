@@ -48,7 +48,7 @@ class Puppet::Node::Environment
     obj.send(:initialize,
              name.intern,
              expand_dirs(extralibs() + modulepath),
-             manifest == NO_MANIFEST ? manifest : File.expand_path(manifest),
+             manifest == NO_MANIFEST ? manifest : Puppet::FileSystem.expand_path(manifest),
              config_version)
     obj
   end
@@ -471,7 +471,7 @@ class Puppet::Node::Environment
 
   def self.expand_dirs(dirs)
     dirs.collect do |dir|
-      File.expand_path(dir)
+      Puppet::FileSystem.expand_path(dir)
     end
   end
 

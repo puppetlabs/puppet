@@ -3,6 +3,10 @@ class Puppet::FileSystem::MemoryImpl
     @files = files + all_children_of(files)
   end
 
+  def expand_path(path, dir_string = nil)
+    File.expand_path(path, dir_string)
+  end
+
   def exist?(path)
     path.exist?
   end
