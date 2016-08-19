@@ -42,8 +42,9 @@ class Closure < CallableSignature
   # Call closure with argument assignment by name
   def call_by_name(args_hash, enforce_parameters)
     if enforce_parameters
+      closure_scope = enclosing_scope
       # Push a temporary parameter scope used while resolving the parameter defaults
-      enclosing_scope.with_parameter_scope(closure_name, parameter_names) do |param_scope|
+      closure_scope.with_parameter_scope(closure_name, parameter_names) do |param_scope|
         # Assign all non-nil values, even those that represent non-existent paramaters.
         args_hash.each { |k, v| param_scope[k] = v unless v.nil? }
         parameters.each do |p|
@@ -55,7 +56,7 @@ class Closure < CallableSignature
               # No default. Assign nil if the args_hash included it
               param_scope[name] = nil if args_hash.include?(name)
             else
-              param_scope[name] = param_scope.evaluate(name, p.value, enclosing_scope, @evaluator)
+              param_scope[name] = param_scope.evaluate(name, p.value, closure_scope, @evaluator)
             end
           end
         end

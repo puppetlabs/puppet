@@ -45,7 +45,7 @@ class EvaluatorImpl
     @@initialized ||= static_initialize
 
     # Use null migration checker unless given in context
-    @migration_checker = (Puppet.lookup(:migration_checker) { Migration::MigrationChecker.singleton() })
+    @migration_checker = Puppet.lookup(:migration_checker) { Migration::MigrationChecker.singleton }
   end
 
   # @api private
@@ -55,10 +55,10 @@ class EvaluatorImpl
     @@assign_visitor   ||= Visitor.new(self, "assign", 3, 3)
     @@string_visitor   ||= Visitor.new(self, "string", 1, 1)
 
-    @@type_calculator  ||= Types::TypeCalculator.singleton()
+    @@type_calculator  ||= Types::TypeCalculator.singleton
 
-    @@compare_operator      ||= CompareOperator.new()
-    @@relationship_operator ||= RelationshipOperator.new()
+    @@compare_operator      ||= CompareOperator.new
+    @@relationship_operator ||= RelationshipOperator.new
     true
   end
   private :static_initialize

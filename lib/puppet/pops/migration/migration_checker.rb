@@ -7,7 +7,7 @@ class Puppet::Pops::Migration::MigrationChecker
   end
 
   def self.singleton
-    @@null_checker ||= self.new
+    @null_checker ||= self.new
   end
 
   # Produces a hash of available migrations; a map from a symbolic name in string form to a brief description.

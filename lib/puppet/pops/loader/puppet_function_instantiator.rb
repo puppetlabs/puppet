@@ -65,16 +65,15 @@ class PuppetFunctionInstantiator
   #   typed name, and an instantiated function with global scope closure associated with the given loader
   #
   def self.create_from_model(function_definition, loader)
-    closure_scope = nil; # Puppet.lookup(:global_scope) { {} }
     created = create_function_class(function_definition)
     typed_name = TypedName.new(:function, function_definition.name)
-    [typed_name, created.new(closure_scope, loader)]
+    [typed_name, created.new(nil, loader)]
   end
 
   def self.create_function_class(function_definition)
     # Create a 4x function wrapper around a named closure
     Puppet::Functions.create_function(function_definition.name, Puppet::Functions::PuppetFunction) do
-      # This is highly problematic - it binds both an Evaluator and closure_scope
+      # TODO: should not create a new evaluator per function
       init_dispatch(Evaluator::Closure::Named.new(
         function_definition.name,
         Evaluator::EvaluatorImpl.new(), function_definition))
