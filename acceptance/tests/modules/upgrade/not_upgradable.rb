@@ -60,9 +60,9 @@ end
 #   pattern = Regexp.new([
 #     %Q{.*Notice: Preparing to upgrade 'nginx' .*},
 #     %Q{.*Notice: Found 'nginx' \\(.*\\?\\?\\?.*\\) in #{default_moduledir} .*},
-#     %Q{.*Notice: Downloading from https://forgeapi.puppetlabs.com .*},
+#     %Q{.*Notice: Downloading from https://forgeapi.puppet.com .*},
 #     %Q{.*Error: Could not upgrade module 'nginx' \\(\\?\\?\\? -> latest\\)},
-#     %Q{  Module 'nginx' does not exist on https://forgeapi.puppetlabs.com.*},
+#     %Q{  Module 'nginx' does not exist on https://forgeapi.puppet.com.*},
 #   ].join("\n"), Regexp::MULTILINE)
 #   assert_match(pattern, result.output)
 # end

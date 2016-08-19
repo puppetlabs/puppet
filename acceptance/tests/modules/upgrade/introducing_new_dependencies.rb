@@ -30,7 +30,7 @@ on master, puppet("module upgrade pmtacceptance-postql") do
   assert_equal <<-OUTPUT, stdout
 \e[mNotice: Preparing to upgrade 'pmtacceptance-postql' ...\e[0m
 \e[mNotice: Found 'pmtacceptance-postql' (\e[0;36mv0.0.2\e[m) in #{default_moduledir} ...\e[0m
-\e[mNotice: Downloading from https://forgeapi.puppetlabs.com ...\e[0m
+\e[mNotice: Downloading from https://forgeapi.puppet.com ...\e[0m
 \e[mNotice: Upgrading -- do not interrupt ...\e[0m
 #{default_moduledir}
 └─┬ pmtacceptance-postql (\e[0;36mv0.0.2 -> v1.0.0\e[0m)
