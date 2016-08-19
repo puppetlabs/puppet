@@ -364,10 +364,11 @@ describe Puppet::Type.type(:file) do
       expect(file[:ensure]).to eq(:link)
     end
 
-    describe "marking properties as sensitive" do
-      it "marks content and ensure as sensitive when source is sensitive" do
+    describe "marking parameters as sensitive" do
+      it "marks sensitive, content, and ensure as sensitive when source is sensitive" do
         resource = Puppet::Resource.new(:file, make_absolute("/tmp/foo"), :parameters => {:source => make_absolute('/tmp/bar')}, :sensitive_parameters => [:source])
         file = described_class.new(resource)
+        expect(file.parameter(:source).sensitive).to eq true
         expect(file.property(:content).sensitive).to eq true
         expect(file.property(:ensure).sensitive).to eq true
       end

@@ -184,25 +184,30 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
           expect(content.respond_to?("diff")).to eq(false)
         end
 
-        [true, false].product([true, false]).each do |cfg, param|
-          describe "and Puppet[:show_diff] is #{cfg} and show_diff => #{param}" do
+        describe "showing the diff" do
+          it "doesn't show the diff when #show_diff? is false" do
+            content.expects(:show_diff?).returns false
+            content.expects(:diff).never
+            expect(content).not_to be_safe_insync("other content")
+          end
+
+          describe "and #show_diff? is true" do
             before do
-              Puppet[:show_diff] = cfg
-              resource.stubs(:show_diff?).returns param
+              content.expects(:show_diff?).returns true
               resource[:loglevel] = "debug"
             end
 
-            if cfg and param
-              it "should display a diff" do
-                content.expects(:diff).returns("my diff").once
-                content.expects(:debug).with("\nmy diff").once
-                expect(content).not_to be_safe_insync("other content")
-              end
-            else
-              it "should not display a diff" do
-                content.expects(:diff).never
-                expect(content).not_to be_safe_insync("other content")
-              end
+            it "prints the diff" do
+              content.expects(:diff).returns("my diff").once
+              content.expects(:debug).with("\nmy diff").once
+              expect(content).not_to be_safe_insync("other content")
+            end
+
+            it "redacts the diff when the property is sensitive" do
+              content.sensitive = true
+              content.expects(:diff).returns("my diff").never
+              content.expects(:debug).with("[diff redacted]").once
+              expect(content).not_to be_safe_insync("other content")
             end
           end
         end
@@ -305,6 +310,33 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
           expect(@new_resource.parameters[:content]).to be_safe_insync("{#{checksum_type}}#{checksum}")
         end
       end
+    end
+  end
+
+  describe "determining if a diff should be shown" do
+    let(:content) { described_class.new(:resource => resource) }
+
+    before do
+      Puppet[:show_diff] = true
+      resource[:show_diff] = true
+    end
+
+    it "is true if there are changes and the global and per-resource show_diff settings are true" do
+      expect(content.show_diff?(true)).to be_truthy
+    end
+
+    it "is false if there are no changes" do
+      expect(content.show_diff?(false)).to be_falsey
+    end
+
+    it "is false if show_diff is globally disabled" do
+      Puppet[:show_diff] = false
+      expect(content.show_diff?(false)).to be_falsey
+    end
+
+    it "is false if show_diff is disabled on the resource" do
+      resource[:show_diff] = false
+      expect(content.show_diff?(false)).to be_falsey
     end
   end
 

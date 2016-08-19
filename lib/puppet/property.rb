@@ -55,10 +55,6 @@ class Puppet::Property < Puppet::Parameter
   #
   attr_writer :noop
 
-  # @!attribute [rw] sensitive
-  #   @return [true, false] If this property has been tagged as sensitive.
-  attr_accessor :sensitive
-
   class << self
     # @todo Figure out what this is used for. Can not find any logic in the puppet code base that
     #   reads or writes this attribute.
@@ -219,22 +215,6 @@ class Puppet::Property < Puppet::Parameter
       Puppet.log_exception(detail, message)
       raise Puppet::DevError, message, detail.backtrace
     end
-  end
-
-  # Formats the given string and conditionally redacts the provided interpolation variables, depending on if
-  # this property is sensitive.
-  #
-  # @note Because the default implementation of #is_to_s returns the current value as-is, it doesn't necessarily
-  #   return a string. For the sake of sanity we just cast everything to a string for interpolation so we don't
-  #   introduce issues with unexpected property values.
-  #
-  # @see String#format
-  # @param fmt [String] The format string to interpolate.
-  # @param args [Array<String>] One or more strings to conditionally redact and interpolate into the format string.
-  #
-  # @return [String]
-  def format(fmt, *args)
-    fmt % args.map { |arg| @sensitive ? "[redacted]" : arg.to_s }
   end
 
   # Produces the name of the event to use to describe a change of this property's value.

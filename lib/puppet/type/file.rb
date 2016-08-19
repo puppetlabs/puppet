@@ -906,9 +906,10 @@ Puppet::Type.newtype(:file) do
 
     # The source parameter isn't actually a property but works by injecting information into the
     # content property. In order to preserve the intended sensitive context we need to mark content
-    # as sensitive instead.
+    # as sensitive as well.
     if sensitive_parameters.include?(:source)
       sensitive_parameters.delete(:source)
+      parameter(:source).sensitive = true
       # The `source` parameter will generate the `content` property when the resource state is retrieved
       # but that's long after we've set the sensitive context. Force the early creation of the `content`
       # attribute so we can mark it as sensitive.
