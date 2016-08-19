@@ -314,14 +314,20 @@ describe 'loaders' do
   context 'when loading from an environment without modules' do
     let(:node) { Puppet::Node.new('test', :facts => Puppet::Node::Facts.new('facts', {}), :environment => 'no_modules') }
 
-    it 'can load the same function twice with two different compilations' do
+    it 'can load the same function twice with two different compilations and produce different values' do
       Puppet.settings.initialize_global_settings
       environments = Puppet::Environments::Directories.new(my_fixture_dir, [])
       Puppet.override(:environments => environments) do
         compiler = Puppet::Parser::Compiler.new(node)
-        compiler.compile
+        compiler.topscope['value_from_scope'] = 'first'
+        catalog = compiler.compile
+        expect(catalog.resource('Notify[first]')).to be_a(Puppet::Resource)
+
         compiler = Puppet::Parser::Compiler.new(node)
-        compiler.compile
+        compiler.topscope['value_from_scope'] = 'second'
+        catalog = compiler.compile
+        expect(catalog.resource('Notify[first]')).to be_nil
+        expect(catalog.resource('Notify[second]')).to be_a(Puppet::Resource)
       end
     end
   end

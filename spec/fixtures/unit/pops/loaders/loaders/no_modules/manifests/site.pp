@@ -1,9 +1,9 @@
 function bar() {
-  'some data'
+  $value_from_scope
 }
 
 class foo::bar {
-  notify { "${bar()}": }
+  notify { bar(): }
 }
 
 include foo::bar
