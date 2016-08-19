@@ -106,16 +106,34 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
         expect(Puppet::Util::Windows::User.password_is?(username, bad_password)).to be_falsey
       end
 
-      it "should raise an error given a nil password" do
-        expect { Puppet::Util::Windows::User.password_is?(username, nil) }.to raise_error(Puppet::Util::Windows::Error)
-      end
-
-      it "should raise an error given an empty password" do
-        expect { Puppet::Util::Windows::User.password_is?(username, '') }.to raise_error(Puppet::Util::Windows::Error)
-      end
-
       it "should return false given a nil username and an incorrect password" do
         expect(Puppet::Util::Windows::User.password_is?(nil, bad_password)).to be_falsey
+      end
+
+      context "with a correct password" do
+        it "should return true even if account restrictions are in place " do
+          error = Puppet::Util::Windows::Error.new('', Puppet::Util::Windows::User::ERROR_ACCOUNT_RESTRICTION)
+          Puppet::Util::Windows::User.stubs(:logon_user).raises(error)
+          expect(Puppet::Util::Windows::User.password_is?(username, 'p@ssword')).to be(true)
+        end
+
+        it "should return true even for an account outside of logon hours" do
+          error = Puppet::Util::Windows::Error.new('', Puppet::Util::Windows::User::ERROR_INVALID_LOGON_HOURS)
+          Puppet::Util::Windows::User.stubs(:logon_user).raises(error)
+          expect(Puppet::Util::Windows::User.password_is?(username, 'p@ssword')).to be(true)
+        end
+
+        it "should return true even for an account not allowed to log into this workstation" do
+          error = Puppet::Util::Windows::Error.new('', Puppet::Util::Windows::User::ERROR_INVALID_WORKSTATION)
+          Puppet::Util::Windows::User.stubs(:logon_user).raises(error)
+          expect(Puppet::Util::Windows::User.password_is?(username, 'p@ssword')).to be(true)
+        end
+
+        it "should return true even for a disabled account" do
+          error = Puppet::Util::Windows::Error.new('', Puppet::Util::Windows::User::ERROR_ACCOUNT_DISABLED)
+          Puppet::Util::Windows::User.stubs(:logon_user).raises(error)
+          expect(Puppet::Util::Windows::User.password_is?(username, 'p@ssword')).to be(true)
+        end
       end
     end
 
