@@ -82,11 +82,18 @@ MANIFEST
      agents.each do |agent|
        on(agent, puppet('config print statedir')) do |command_result|
          report_path = command_result.stdout.chomp + '/last_run_report.yaml'
-         on(agent, "cat #{report_path}") do |report_yaml|
+         on(agent, "cat #{report_path}").stdout do |report_contents|
 
-           #stripping out ruby class definitions from the report yaml
-           report_yaml = YAML.load(report_yaml.stdout.gsub(/\!ruby[^\n]*/, ''))
-           report_yaml.inspect
+           yaml_data = YAML::parse(report_contents)
+           # Remove any Ruby class tags from the yaml
+           yaml_data.root.each do |o|
+             if o.respond_to?(:tag=) and
+                o.tag != nil and
+                o.tag.start_with?("!ruby")
+               o.tag = nil
+             end
+           end
+           report_yaml = yaml_data.to_ruby
            file_resource_details = report_yaml["resource_statuses"]["File[#{tmp_file[agent.hostname]}]"]
            assert(file_resource_details.has_key?("corrective_change"),'corrective_change key is missing')
            corrective_change_value =  file_resource_details["corrective_change"]
