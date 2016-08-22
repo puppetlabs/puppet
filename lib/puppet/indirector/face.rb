@@ -39,7 +39,12 @@ class Puppet::Indirector::Face < Puppet::Face
 
   def call_indirection_method(method, key, options)
     begin
-      result = indirection.__send__(method, key, options)
+      if method == :save
+        # key is really the instance to save
+        result = indirection.__send__(method, key, nil, options)
+      else
+        result = indirection.__send__(method, key, options)
+      end
     rescue => detail
       message = "Could not call '#{method}' on '#{indirection_name}': #{detail}"
       Puppet.log_exception(detail, message)
