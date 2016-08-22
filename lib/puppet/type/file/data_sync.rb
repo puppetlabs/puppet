@@ -34,14 +34,22 @@ module Puppet
 
       return true if ! resource.replace?
 
-      result = yield(is)
+      is_insync = yield(is)
 
-      if !result && Puppet[:show_diff] && resource.show_diff?
-        write_temporarily(param) do |path|
-          send resource[:loglevel], "\n" + diff(resource[:path], path)
+      if show_diff?(!is_insync)
+        if param.sensitive
+          send resource[:loglevel], "[diff redacted]"
+        else
+          write_temporarily(param) do |path|
+            send resource[:loglevel], "\n" + diff(resource[:path], path)
+          end
         end
       end
-      result
+      is_insync
+    end
+
+    def show_diff?(has_changes)
+      has_changes && Puppet[:show_diff] && resource.show_diff?
     end
 
     def date_matches?(checksum_type, current, desired)

@@ -295,6 +295,10 @@ class Puppet::Parameter
   #
   attr_accessor :parent
 
+  # @!attribute [rw] sensitive
+  #   @return [true, false] If this parameter has been tagged as sensitive.
+  attr_accessor :sensitive
+
   # Returns a string representation of the resource's containment path in
   # the catalog.
   # @return [String]
@@ -520,6 +524,22 @@ class Puppet::Parameter
   # @return [String] The name of the parameter in string form.
   def to_s
     name.to_s
+  end
+
+  # Formats the given string and conditionally redacts the provided interpolation variables, depending on if
+  # this property is sensitive.
+  #
+  # @note Because the default implementation of Puppet::Property#is_to_s returns the current value as-is, it
+  #   doesn't necessarily return a string. For the sake of sanity we just cast everything to a string for
+  #   interpolation so we don't introduce issues with unexpected property values.
+  #
+  # @see String#format
+  # @param fmt [String] The format string to interpolate.
+  # @param args [Array<String>] One or more strings to conditionally redact and interpolate into the format string.
+  #
+  # @return [String]
+  def format(fmt, *args)
+    fmt % args.map { |arg| @sensitive ? "[redacted]" : arg.to_s }
   end
 
   # Produces a String with the value formatted for display to a human.
