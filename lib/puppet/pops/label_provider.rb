@@ -40,8 +40,6 @@ module Puppet::Pops::LabelProvider
     count == 1 ? text : "#{text}s"
   end
 
-  private
-
   # Produces an *indefinite article* (a/an) for the given text ('a' if
   # it starts with a vowel) This is obviously flawed in the general
   # sense as may labels have punctuation at the start and this method
@@ -51,6 +49,8 @@ module Puppet::Pops::LabelProvider
   def article s
     article_for_letter(first_letter_of(s))
   end
+
+  private
 
   def first_letter_of(string)
     char = string[0,1]

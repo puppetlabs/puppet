@@ -430,6 +430,11 @@ module Issues
     "#{label.a_an_uc(left_value)}[] cannot use #{actual} where #{expected_text} expected"
   end
 
+  BAD_STRING_SLICE_KEY_TYPE = issue :BAD_STRING_SLICE_KEY_TYPE, :left_value, :actual_type do
+    actual_type_text = "#{label.article(actual_type)} #{actual_type}"
+    "A substring operation does not accept #{actual_type_text} as a character index. Expected an Integer"
+  end
+
   BAD_NOT_UNDEF_SLICE_TYPE = issue :BAD_NOT_UNDEF_SLICE_TYPE, :base_type, :actual do
     "#{base_type}[] argument must be a Type or a String. Got #{actual}"
   end
