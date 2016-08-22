@@ -179,25 +179,45 @@ module Puppet
           def insync?(is)
 
             if @resource[:ensure] == :mounted && !provider.property_hash[:live_options].nil?
+
+              # The mount options according to /etc/fstab. It is possible for puppet to
+              # update this file to reflect new options even if the remount to update
+              # the options has actually failed
               fstab_options = provider.property_hash[:options] || ''
+              # The mount options according to the output of the 'mount' command. These will
+              # always reflect the options of the actual mounted device
               mount_options = provider.property_hash[:live_options] || ''
+              # The desired mount options that have been specified in the puppet manifest
               resource_options = @resource[:options] || ''
 
               mount_list = mount_options.split(',')
               resource_list = resource_options.split(',')
+              # Remove the string 'defaults' from the list of resources, because when
+              # we are comparing against the mount command output 'defaults' will be
+              # expanded into the full list of default options for the OS and file system
               resource_list.delete('defaults')
 
-              # are the options in fstab in sync?
+              # Do the options in fstab match the options that the user has defined?
               if fstab_options != resource_options
                 return false
-              elsif !(resource_list - mount_list).empty?
-                return false
-              else
-                return true
               end
-            else
-              super
+
+              # Do the options provided by the 'mount' command match the options that
+              # the user has defined? We have to check this too because fstab could provide
+              # a false positive if a remount has failed
+              #
+              # We want to see if the mount command options contain the list of user
+              # specified options from the manifest. The reason we cannot do a 1:1
+              # comparison is because the expanded list of default options may be included
+              # in the mount output. These vary between OS and file system so since we don't
+              # have a good way to find out what they are, just check for the specific options
+              # the user has specified
+              if !(resource_list - mount_list).empty?
+                return false
+              end
             end
+
+            super
           end
 
       validate do |value|
