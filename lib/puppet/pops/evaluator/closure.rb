@@ -41,8 +41,8 @@ class Closure < CallableSignature
 
   # Call closure with argument assignment by name
   def call_by_name(args_hash, enforce_parameters)
+    closure_scope = enclosing_scope
     if enforce_parameters
-      closure_scope = enclosing_scope
       # Push a temporary parameter scope used while resolving the parameter defaults
       closure_scope.with_parameter_scope(closure_name, parameter_names) do |param_scope|
         # Assign all non-nil values, even those that represent non-existent paramaters.
@@ -65,7 +65,7 @@ class Closure < CallableSignature
       Types::TypeMismatchDescriber.validate_parameters(closure_name, params_struct, args_hash)
     end
 
-    @evaluator.evaluate_block_with_bindings(enclosing_scope, args_hash, @model.body)
+    @evaluator.evaluate_block_with_bindings(closure_scope, args_hash, @model.body)
   end
 
   def parameters
