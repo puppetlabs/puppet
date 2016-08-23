@@ -21,7 +21,7 @@ The function returns an array of references to the classes that were contained t
 allowing the function call to `contain` to directly continue.
 
 - Since 4.0.0 support for Class and Resource Type values, absolute names
-- Since 4.7.0 an Array[Class[n], Class[n+1], ...] is returned based on the input to the function
+- Since 4.7.0 an Array[Type[Class[n]]] is returned with all the contained classes
 "
 ) do |classes|
   # Call the 4.x version of this function in case 3.x ruby code uses this function
