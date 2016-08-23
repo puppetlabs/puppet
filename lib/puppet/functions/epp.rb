@@ -18,7 +18,7 @@
 # template and pass the `docroot` and `virtual_docroot` parameters, call the `epp`
 # function like this:
 #
-# `epp('apache/templates/vhost/_docroot.epp', { 'docroot' => '/var/www/html',
+# `epp('apache/vhost/_docroot.epp', { 'docroot' => '/var/www/html',
 # 'virtual_docroot' => '/var/www/example' })`
 #
 # Puppet produces a syntax error if you pass more parameters than are declared in
