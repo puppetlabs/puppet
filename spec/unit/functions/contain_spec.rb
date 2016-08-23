@@ -5,7 +5,7 @@ require 'puppet/parser/functions'
 require 'matchers/containment_matchers'
 require 'matchers/resource'
 require 'matchers/include_in_order'
-require 'unit/parser/functions/shared'
+require 'unit/functions/shared'
 
 
 describe 'The "contain" function' do
@@ -227,7 +227,73 @@ describe 'The "contain" function' do
     end
   end
 
-  it_should_behave_like 'all functions transforming relative to absolute names', :function_contain
+  it 'produces an array with a single class references given a single argument' do
+    catalog = compile_to_catalog(<<-MANIFEST)
+      class a {
+        notify { "a": }
+      }
+
+      class container {
+        $x = contain(a)
+        Array[Type[Class], 1, 1].assert_type($x)
+        notify { 'feedback': message => "$x" }
+      }
+
+      include container
+    MANIFEST
+
+    feedback = catalog.resource("Notify", "feedback")
+    expect(feedback[:message]).to eql("[Class[a]]")
+  end
+
+  it 'produces an array with class references given multiple arguments' do
+    catalog = compile_to_catalog(<<-MANIFEST)
+      class a {
+        notify { "a": }
+      }
+
+      class b {
+        notify { "b": }
+      }
+
+      class container {
+        $x = contain(a, b)
+        Array[Type[Class], 2, 2].assert_type($x)
+        notify { 'feedback': message => "$x" }
+      }
+
+      include container
+    MANIFEST
+
+    feedback = catalog.resource("Notify", "feedback")
+    expect(feedback[:message]).to eql("[Class[a], Class[b]]")
+  end
+
+  it 'allows the result to be used in a relationship operation' do
+    catalog = compile_to_catalog(<<-MANIFEST)
+      class a {
+        notify { "a": }
+      }
+
+      class b {
+        notify { "b": }
+      }
+
+      notify { 'c': }
+
+      class container {
+        contain(a, b) -> Notify[c]
+      }
+
+      include container
+    MANIFEST
+
+    # Assert relationships are formed
+    expect(catalog.resource("Class", "a")[:before][0]).to eql('Notify[c]')
+    expect(catalog.resource("Class", "b")[:before][0]).to eql('Notify[c]')
+  end
+
+  it_should_behave_like 'all functions transforming relative to absolute names', :contain
   it_should_behave_like 'an inclusion function, regardless of the type of class reference,', :contain
 
 end
