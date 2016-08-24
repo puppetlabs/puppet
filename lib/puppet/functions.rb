@@ -521,7 +521,7 @@ module Puppet::Functions
         @type_parser.parse(t, loader)
       end
 
-      if from != to
+      if from == 0 || from != to
         # :optional and/or :repeated parameters are present.
         mapped_types << from
         mapped_types << to
