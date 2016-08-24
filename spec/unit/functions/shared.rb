@@ -1,8 +1,11 @@
 shared_examples_for 'all functions transforming relative to absolute names' do |func_name|
-
-  it 'transforms relative names to absolute' do
-    @scope.compiler.expects(:evaluate_classes).with(["::myclass"], @scope, false)
-    @scope.call_function(func_name, ["myclass"])
+  before(:each) do
+    # mock that the class 'myclass' exists which are needed for the 'require' functions
+    # as it checks the existence of the required class
+    @klass = stub 'class', :name => "myclass"
+    @scope.environment.known_resource_types.stubs(:find_hostclass).returns(@klass)
+    @resource = Puppet::Parser::Resource.new(:file, "/my/file", :scope => @scope, :source => "source")
+    @scope.stubs(:resource).returns @resource
   end
 
   it 'accepts a Class[name] type' do
