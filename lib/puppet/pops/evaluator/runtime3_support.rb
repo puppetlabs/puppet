@@ -238,7 +238,7 @@ module Runtime3Support
   # @param name [String] the name of the function (without the 'function_' prefix used by scope)
   # @param args [Array] arguments, may be empty
   # @param scope [Object] the (runtime specific) scope where evaluation takes place
-  # @raise ArgumentError 'unknown function' if the function does not exist
+  # @raise [ArgumentError] 'unknown function' if the function does not exist
   #
   def external_call_function(name, args, scope, &block)
     # Call via 4x API if the function exists there
