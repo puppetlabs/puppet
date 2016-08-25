@@ -33,7 +33,10 @@ describe Puppet::Application do
   describe "application defaults" do
     it "should fail if required app default values are missing" do
       @app.stubs(:app_defaults).returns({ :foo => 'bar' })
-      Puppet.expects(:err).with(regexp_matches(/missing required app default setting/))
+      Puppet::Util::Log.expects(:create).with do |value|
+        value[:level] == :err and
+          value[:message] =~ /missing required app default setting/
+      end
       expect {
         @app.run
       }.to exit_with(1)
@@ -55,10 +58,11 @@ describe Puppet::Application do
     end
 
     it "should error if it can't find a class" do
-      Puppet.expects(:err).with do |value|
-        value =~ /Unable to find application 'ThisShallNeverEverEverExist'/ and
-          value =~ /puppet\/application\/thisshallneverevereverexist/ and
-          value =~ /no such file to load|cannot load such file/
+      Puppet::Util::Log.expects(:create).with do |value|
+        value[:level] == :err and
+          value[:message] =~ /Unable to find application 'ThisShallNeverEverEverExist'/ and
+          value[:message] =~ /puppet\/application\/thisshallneverevereverexist/ and
+          value[:message] =~ /no such file to load|cannot load such file/
       end
 
       expect {
@@ -517,19 +521,19 @@ describe Puppet::Application do
     end
 
     it "should warn and exit if no command can be called" do
-      Puppet.expects(:err)
+      Puppet::Util::Log.expects(:create).with(has_entry(:level => :err))
       expect { @app.run }.to exit_with 1
     end
 
     it "should raise an error if dispatch returns no command" do
       @app.stubs(:get_command).returns(nil)
-      Puppet.expects(:err)
+      Puppet::Util::Log.expects(:create).with(has_entry(:level => :err))
       expect { @app.run }.to exit_with 1
     end
 
     it "should raise an error if dispatch returns an invalid command" do
       @app.stubs(:get_command).returns(:this_function_doesnt_exist)
-      Puppet.expects(:err)
+      Puppet::Util::Log.expects(:create).with(has_entry(:level => :err))
       expect { @app.run }.to exit_with 1
     end
   end

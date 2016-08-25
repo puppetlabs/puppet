@@ -67,7 +67,7 @@ module Logging
           :node => exception.node
         }.merge(log_metadata))
     else
-      err(format_exception(exception, message, trace))
+      send_log(options[:level] || :err, format_exception(exception, message, trace))
     end
   end
 

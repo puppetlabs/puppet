@@ -801,7 +801,7 @@ describe Puppet::SSL::Host do
       @host.stubs(:generate)
       @host.stubs(:sleep)
 
-      Puppet.expects(:err)
+      Puppet::Util::Log.expects(:create).with(has_entry(:level => :err))
 
       @host.wait_for_cert(1)
     end
