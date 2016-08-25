@@ -501,6 +501,17 @@ EOS
 
     end
 
+    it 'removes overriden functions after compile' do
+      expect {
+        compile_to_env_catalog(<<-EOC)
+          hiera_include('classes')
+          site { }
+        EOC
+      }.to_not raise_error()
+      func = Puppet::Pops::Loaders.loaders.puppet_system_loader.load(:function, 'hiera_include')
+      expect(func).to be_a(Puppet::Functions::Function)
+    end
+
     it "includes components and capability resources" do
       catalog = compile_to_env_catalog(MANIFEST).to_resource
       apps = catalog.resources.select do |res|
