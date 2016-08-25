@@ -1,6 +1,12 @@
 Resource Type
 =============
 
+> **Deprecation note:** This endpoint was
+[deprecated](https://docs.puppet.com/puppet/4.5/reference/deprecated_api.html) in Puppet
+4.5.0 in favor of the
+[`environment_classes`](https://docs.puppet.com/puppetserver/2.5/puppet-api/v3/environment_classes.html)
+endpoint provided by Puppet Server 2.3.0 and later.
+
 The `resource_type` and `resource_types` endpoints return information about the
 following kinds of objects available to the puppet master:
 

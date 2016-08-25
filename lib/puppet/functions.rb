@@ -529,7 +529,7 @@ module Puppet::Functions
       mapped_types = types.map do |t|
         @type_parser.parse(t, loader)
       end
-      param_types = Puppet::Pops::Types::PTupleType.new(mapped_types, from == to ? nil : Puppet::Pops::Types::PIntegerType.new(from, to))
+      param_types = Puppet::Pops::Types::PTupleType.new(mapped_types, from > 0 && from == to ? nil : Puppet::Pops::Types::PIntegerType.new(from, to))
       return_type = @type_parser.parse(return_type, loader) unless return_type.nil?
       Puppet::Pops::Types::PCallableType.new(param_types, block_type, return_type)
     end

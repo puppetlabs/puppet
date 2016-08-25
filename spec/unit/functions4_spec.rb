@@ -113,6 +113,13 @@ describe 'the 4x function api' do
     end.to raise_error(ArgumentError, "'min' expects 2 arguments, got 3")
   end
 
+  it 'correct dispatch is chosen when zero parameter dispatch exists' do
+    f = create_function_with_no_parameter_dispatch
+    func = f.new(:closure_scope, :loader)
+    expect(func.is_a?(Puppet::Functions::Function)).to be_truthy
+    expect(func.call({}, 1)).to eql(1)
+  end
+
   it 'an error is raised if simple function-name and method are not matched' do
     expect do
       f = create_badly_named_method_function_class()
@@ -935,6 +942,22 @@ describe 'the 4x function api' do
       end
       def test(x)
         yield(5,x) if block_given?
+      end
+    end
+  end
+
+  def create_function_with_no_parameter_dispatch
+    f = Puppet::Functions.create_function('test') do
+      dispatch :test_no_args do
+      end
+      dispatch :test_one_arg do
+        param 'Integer', :x
+      end
+      def test_no_args
+        0
+      end
+      def test_one_arg(x)
+        x
       end
     end
   end
