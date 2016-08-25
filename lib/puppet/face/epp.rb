@@ -62,6 +62,8 @@ Puppet::Face.define(:epp, '0.0.1') do
     EOT
     when_invoked do |*args|
       options = args.pop
+      # pass a dummy node, as facts are not needed for validation
+      options[:node] = node = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}))
       compiler = create_compiler(options)
 
       status = true # no validation error yet
@@ -141,6 +143,8 @@ Puppet::Face.define(:epp, '0.0.1') do
     when_invoked do |*args|
       require 'puppet/pops'
       options = args.pop
+      # pass a dummy node, as facts are not needed for dump
+      options[:node] = node = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}))
       options[:header] = options[:header].nil? ? true : options[:header]
       options[:validate] = options[:validate].nil? ? true : options[:validate]
 
@@ -224,8 +228,12 @@ Puppet::Face.define(:epp, '0.0.1') do
       showing the name of the template before the output. The header output can be turned off with
       `--no-header`. This also concatenates the template results without any added newline separators.
 
-      Facts for the simulated node can be feed to the rendering process by referencing a .yaml file
-      with facts using the --facts option. (Values can be obtained in yaml format directly from
+      Facts from the node where the command is being run are used by default.args Facts can be obtained
+      for other nodes if they have called in, and reported their facts by using the `--node <nodename>`
+      flag.
+
+      Overriding node facts as well as additional facts can be given in a .yaml or .json file and referencing
+      it with the --facts option. (Values can be obtained in yaml format directly from
       `facter`, or from puppet for a given node). Note that it is not possible to simulate the
       reserved variable name `$facts` in any other way.
 
@@ -278,6 +286,10 @@ Puppet::Face.define(:epp, '0.0.1') do
           $ puppet epp render -e '<% $facts[osfamily] %>' --facts data.yaml
     EOT
 
+    option("--node <node_name>") do
+      summary "The name of the node for which facts are obtained. Defaults to facts for the local node."
+    end
+
     option "--e <source>" do
       default_to { nil }
       summary "Render one inline epp template given on the command line."
@@ -291,8 +303,8 @@ Puppet::Face.define(:epp, '0.0.1') do
       summary "A .pp or .yaml file that is processed to produce a hash of values for the template."
     end
 
-    option("--facts <yaml_file>") do
-      summary "A .yaml file containing a hash of facts made available in $facts"
+    option("--facts <yaml_file>[<json_file>]") do
+      summary "A .yaml or .json file containing a hash of facts made available in $facts and $trusted"
     end
 
     option("--[no-]header") do
@@ -444,16 +456,48 @@ Puppet::Face.define(:epp, '0.0.1') do
 
   # @api private
   def create_compiler(options)
-    fact_values = options[:facts] ? YAML.load_file(options[:facts]) : {}
-    node = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", fact_values))
+    if options[:node]
+      node = options[:node]
+    else
+      node = Puppet[:node_name_value]
+
+      # If we want to lookup the node we are currently on
+      # we must returning these settings to their default values
+      Puppet.settings[:facts_terminus] = 'facter'
+      Puppet.settings[:node_cache_terminus] = nil
+    end
+
+    unless node.is_a?(Puppet::Node)
+      node = Puppet::Node.indirection.find(node)
+      # Found node must be given the environment to use in some cases, use the one configured
+      # or given on the command line
+      node.environment = Puppet[:environment]
+    end
+
+    fact_file = options[:facts]
+
+    if fact_file
+      if fact_file.end_with?("json")
+        given_facts = JSON.parse(Puppet::FileSystem.read(fact_file, :encoding => 'utf-8'))
+      else
+        given_facts = YAML.load(Puppet::FileSystem.read(fact_file, :encoding => 'utf-8'))
+      end
+
+      unless given_facts.instance_of?(Hash)
+        raise "Incorrect formatted data in #{fact_file} given via the --facts flag"
+      end
+      # It is difficult to add to or modify the set of facts once the node is created
+      # as changes does not show up in parameters. Rather than manually patching up
+      # a node and risking future regressions, a new node is created from scratch
+      node = Puppet::Node.new(node.name, :facts => Puppet::Node::Facts.new("facts", node.facts.values.merge(given_facts)))
+      node.environment = Puppet[:environment]
+      node.merge(node.facts.values)
+    end
+
     compiler = Puppet::Parser::Compiler.new(node)
     # configure compiler with facts and node related data
     # Set all global variables from facts
-    fact_values.each {|param, value| compiler.topscope[param] = value }
-    # Configured trusted data (even if there are none)
-    compiler.topscope.set_trusted(node.trusted_data)
-    # Set the facts hash
-    compiler.topscope.set_facts(fact_values)
+    compiler.send(:set_node_parameters)
 
     # pretend that the main class (named '') has been evaluated
     # since it is otherwise not possible to resolve top scope variables
