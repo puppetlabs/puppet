@@ -15,7 +15,7 @@ describe 'The "require" function' do
 
   before(:each) do
     compiler  = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
-    @scope = Puppet::Parser::Scope.new(compiler)
+    @scope = compiler.topscope
   end
 
   it 'includes a class that is not already included' do
