@@ -82,6 +82,14 @@ class BaseLoader < Loader
     set_entry(TypedName.new(type, name), value, origin)
   end
 
+  # @api private
+  #
+  def remove_entry(typed_name)
+    unless @named_values.delete(typed_name).nil?
+      @last_result = nil unless @last_result.nil? || typed_name != @last_result.typed_name
+    end
+  end
+
   # Promotes an already created entry (typically from another loader) to this loader
   #
   # @api private

@@ -17,12 +17,34 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
 
   def initialize(node, options = {})
     super
-    add_function_overrides
+    @overridden_functions = {}
   end
 
   def add_function_overrides
-    hiera_include = proc { Puppet.debug "Ignoring hiera_include() during environment catalog compilation" }
-    loaders.puppet_system_loader.add_entry(:function, 'hiera_include', hiera_include, nil)
+    add_function_override('hiera_include', proc { Puppet.debug "Ignoring hiera_include() during environment catalog compilation" })
+  end
+
+  def add_function_override(func_name, override)
+    typed_name = Puppet::Pops::Loader::TypedName.new(:function, func_name)
+    loader = loaders.puppet_system_loader
+
+    # Remove and preserve existing entry. A `nil` is also preserved to indicate
+    # an override that didn't replace a loaded function.
+    entry = loader.get_entry(typed_name)
+    existing = entry.nil? ? nil : entry.value
+    loader.remove_entry(typed_name) unless existing.nil?
+    @overridden_functions[typed_name] = existing
+
+    # Add the override to the loader
+    loader.set_entry(typed_name, override)
+  end
+
+  def remove_function_overrides
+    loader = loaders.puppet_system_loader
+    @overridden_functions.each_pair do |typed_name, overridden|
+      loader.remove_entry(typed_name)
+      loader.set_entry(typed_name, overridden) unless overridden.nil?
+    end
   end
 
   def add_catalog_validators
@@ -32,38 +54,43 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
   end
 
   def compile
-    Puppet.override(@context_overrides, "For compiling environment catalog #{environment.name}") do
-      @catalog.environment_instance = environment
+    add_function_overrides
+    begin
+      Puppet.override(@context_overrides, "For compiling environment catalog #{environment.name}") do
+        @catalog.environment_instance = environment
 
-      Puppet::Util::Profiler.profile("Env Compile: Created settings scope", [:compiler, :create_settings_scope]) { create_settings_scope }
+        Puppet::Util::Profiler.profile("Env Compile: Created settings scope", [:compiler, :create_settings_scope]) { create_settings_scope }
 
-      activate_binder
+        activate_binder
 
-      Puppet::Util::Profiler.profile("Env Compile: Evaluated main", [:compiler, :evaluate_main]) { evaluate_main }
+        Puppet::Util::Profiler.profile("Env Compile: Evaluated main", [:compiler, :evaluate_main]) { evaluate_main }
 
-      Puppet::Util::Profiler.profile("Env Compile: Evaluated site", [:compiler, :evaluate_site]) { evaluate_site }
+        Puppet::Util::Profiler.profile("Env Compile: Evaluated site", [:compiler, :evaluate_site]) { evaluate_site }
 
-      Puppet::Util::Profiler.profile("Env Compile: Evaluated application instances", [:compiler, :evaluate_applications]) { evaluate_applications }
+        Puppet::Util::Profiler.profile("Env Compile: Evaluated application instances", [:compiler, :evaluate_applications]) { evaluate_applications }
 
-      Puppet::Util::Profiler.profile("Env Compile: Prune", [:compiler, :prune_catalog]) { prune_catalog }
+        Puppet::Util::Profiler.profile("Env Compile: Prune", [:compiler, :prune_catalog]) { prune_catalog }
 
-      Puppet::Util::Profiler.profile("Env Compile: Validate Catalog pre-finish", [:compiler, :validate_pre_finish]) do
-        validate_catalog(CatalogValidator::PRE_FINISH)
+        Puppet::Util::Profiler.profile("Env Compile: Validate Catalog pre-finish", [:compiler, :validate_pre_finish]) do
+          validate_catalog(CatalogValidator::PRE_FINISH)
+        end
+
+        Puppet::Util::Profiler.profile("Env Compile: Finished catalog", [:compiler, :finish_catalog]) { finish }
+
+        fail_on_unevaluated
+
+        Puppet::Util::Profiler.profile("Env Compile: Validate Catalog final", [:compiler, :validate_final]) do
+          validate_catalog(CatalogValidator::FINAL)
+        end
+
+        if block_given?
+          yield @catalog
+        else
+          @catalog
+        end
       end
-
-      Puppet::Util::Profiler.profile("Env Compile: Finished catalog", [:compiler, :finish_catalog]) { finish }
-
-      fail_on_unevaluated
-
-      Puppet::Util::Profiler.profile("Env Compile: Validate Catalog final", [:compiler, :validate_final]) do
-        validate_catalog(CatalogValidator::FINAL)
-      end
-
-      if block_given?
-        yield @catalog
-      else
-        @catalog
-      end
+    ensure
+      remove_function_overrides
     end
   end
 
