@@ -126,15 +126,12 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
         end
       when Puppet::Resource
         # Find instance of given resource type and title that is in the catalog
-        scope.compiler.findresource(val.type, val.title)
+        scope.compiler.findresource(val.resource_type, val.title)
 
       when Puppet::Pops::Types::PResourceType
         raise ArgumentError, 'The given resource type is a reference to all kind of types' if val.type_name.nil?
-        if val.title.nil?
-          Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_resource_type(scope, val.type_name)
-        else
-          scope.compiler.findresource(val.type_name, val.title)
-        end
+        type = Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_resource_type(scope, val.type_name)
+        val.title.nil? ? type : scope.compiler.findresource(type, val.title)
 
       when Puppet::Pops::Types::PHostClassType
         raise  ArgumentError, 'The given class type is a reference to all classes' if val.class_name.nil?

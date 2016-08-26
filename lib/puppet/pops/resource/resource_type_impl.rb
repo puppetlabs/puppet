@@ -143,7 +143,7 @@ class ResourceTypeImpl
       when 0
         # TechDebt: The case of specifying title patterns when having no name vars is unspecified behavior in puppet
         # Here it is silently ignored.
-        []
+        nil
       when 1
         if @title_pattners_hash.nil?
           [ [ /(.*)/m, [ [@key_attributes.first] ] ] ]
@@ -168,6 +168,10 @@ class ResourceTypeImpl
 
   # Override CompilableResource inclusion
   def is_3x_ruby_plugin?
+    false
+  end
+
+  def is_capability?
     false
   end
 

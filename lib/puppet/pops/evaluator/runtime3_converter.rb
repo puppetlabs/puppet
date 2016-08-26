@@ -138,8 +138,9 @@ class Runtime3Converter
     # due to Puppet::Resource's idiosyncratic behavior where some references must be
     # absolute and others cannot be.
     # Thus there is no need to call scope.resolve_type_and_titles to do dynamic lookup.
-
-    Puppet::Resource.new(*catalog_type_to_split_type_title(o))
+    t, title = catalog_type_to_split_type_title(o)
+    t = Runtime3ResourceSupport.find_resource_type(scope, t) unless t == 'class' || t == 'node'
+    Puppet::Resource.new(t, title)
   end
   alias :convert2_PCatalogEntryType :convert_PCatalogEntryType
 
