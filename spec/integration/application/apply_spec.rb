@@ -36,7 +36,10 @@ describe "apply" do
         {
           '.resource_types' => {
             'applytest.pp' => <<-CODE
-            Puppet::Resource::ResourceType3.new('applytest', [Puppet::Resource::Param.new(String, 'message')], [Puppet::Resource::Param.new(String, 'name', true)])
+            Puppet::Resource::ResourceType3.new(
+              'applytest',
+              [Puppet::Resource::Param.new(String, 'message')],
+              [Puppet::Resource::Param.new(String, 'name', true)])
           CODE
           },
           'modules' => {
@@ -80,6 +83,7 @@ end
       let(:env) { Puppet::Node::Environment.create(:'spec', [File.join(envdir, 'spec', 'modules')]) }
       let(:node) { Puppet::Node.new('test', :environment => env) }
       around(:each) do |example|
+        Puppet::Type.rmtype(:applytest)
         Puppet[:environment] = env_name
         dir_contained_in(envdir, env_name => dir_structure)
         Puppet.override(:environments => environments, :current_environment => env) do
@@ -88,7 +92,7 @@ end
       end
 
       it 'does not load the pcore type' do
-        catalog = compile_to_catalog('applytest { "applytest was here": }', node)
+        catalog = compile_to_catalog('applytest { "applytest was here":}', node)
         apply = Puppet::Application[:apply]
         apply.options[:catalog] = file_containing('manifest', catalog.to_pson)
 
@@ -107,6 +111,25 @@ end
         compiler.loaders.runtime3_type_loader.instance_variable_get(:@resource_3x_loader).expects(:set_entry).once.with(tn, rt, is_a(String))
           .returns(Puppet::Pops::Loader::Loader::NamedEntry.new(tn, rt, nil))
         expect { compiler.compile }.not_to have_printed(/the Puppet::Type says hello/)
+      end
+
+      it "does not fail when pcore type is loaded twice" do
+        Puppet[:code] = 'applytest { xyz: alias => aptest }; Resource[applytest]'
+        compiler = Puppet::Parser::Compiler.new(node)
+        expect { compiler.compile }.not_to raise_error
+      end
+
+      it "does not load the ruby type when using function 'defined()' on a loaded resource that is missing from the catalog" do
+        # Ensure that the Resource[applytest,foo] is loaded'
+        eval_and_collect_notices('applytest { xyz: }', node)
+
+        # Ensure that:
+        # a) The catalog contains aliases (using a name for the abc resource ensures this)
+        # b) That Resource[applytest,xyz] is not defined in the catalog (although it's loaded)
+        # c) That this doesn't trigger a load of the Puppet::Type
+        notices = eval_and_collect_notices('applytest { abc: name => some_alias }; notice(defined(Resource[applytest,xyz]))', node)
+        expect(notices).to include('false')
+        expect(notices).not_to include('the Puppet::Type says hello')
       end
     end
   end
