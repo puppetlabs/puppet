@@ -237,7 +237,13 @@ Puppet::Type.type(:user).provide :directoryservice do
 ##                   ##
 
   def exists?
-    return @property_hash.any?
+    begin
+      dscl '.', 'read', "/Users/#{@resource.name}"
+    rescue Puppet::ExecutionFailure => e
+      Puppet.debug("User was not found, dscl returned: #{e.inspect}")
+      return false
+    end
+    true
   end
 
   # This method is called if ensure => present is passed and the exists?
