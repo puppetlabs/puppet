@@ -63,7 +63,7 @@ class Runtime3TypeLoader < BaseLoader
   #
   def find_impl(typed_name)
     name = typed_name.name
-    te = StaticLoader::BUILTIN_TYPE_NAMES_LC.include?(name) ? nil : @resource_3x_loader.find(typed_name)
+    te = StaticLoader::BUILTIN_TYPE_NAMES_LC.include?(name) ? nil : @resource_3x_loader.load_typed(typed_name)
     if te.nil? || te.value.nil?
       # Look for Puppet::Type
       value = Puppet::Type.type(name) unless typed_name.qualified?

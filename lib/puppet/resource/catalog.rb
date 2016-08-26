@@ -350,15 +350,18 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
   # Look a resource up by its reference (e.g., File[/etc/passwd]).
   def resource(type, title = nil)
-    type, title = Puppet::Resource.type_and_title(type, title)
-    title_key   = [type, title.to_s]
+    # Retain type if it's a type
+    type_name = type.is_a?(Puppet::CompilableResourceType) || type.is_a?(Puppet::Resource::Type) ? type.name : type
+    type_name, title = Puppet::Resource.type_and_title(type_name, title)
+    type = type_name if type.is_a?(String)
+    title_key   = [type_name, title.to_s]
     result = @resource_table[title_key]
     if result.nil?
       # an instance has to be created in order to construct the unique key used when
       # searching for aliases.
       unless @aliases.empty? && !Puppet[:app_management]
         res = Puppet::Resource.new(type, title, { :environment => @environment_instance })
-        result = @resource_table[[type, res.uniqueness_key].flatten]
+        result = @resource_table[[type_name, res.uniqueness_key].flatten]
       end
 
       if result.nil? && Puppet[:app_management]

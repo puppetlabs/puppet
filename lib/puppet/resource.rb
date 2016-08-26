@@ -226,12 +226,12 @@ class Puppet::Resource
 
       src.to_hash.each do |p, v|
         if v.is_a?(Puppet::Resource)
-          v = Puppet::Resource.new(v.type, v.title)
+          v = v.copy_as_resource
         elsif v.is_a?(Array)
           # flatten resource references arrays
           v = v.flatten if v.flatten.find { |av| av.is_a?(Puppet::Resource) }
           v = v.collect do |av|
-            av = Puppet::Resource.new(av.type, av.title) if av.is_a?(Puppet::Resource)
+            av = av.copy_as_resource if av.is_a?(Puppet::Resource)
             av
           end
         end
@@ -258,7 +258,7 @@ class Puppet::Resource
       #
       # TODO: Further optimizations should be possible as the "type juggling" is
       # not needed when the type implementation is known.
-      # 
+      #
       if type.is_a?(Puppet::CompilableResourceType) || type.is_a?(Puppet::Resource::Type)
         # set the resource type implementation
         self.resource_type = type
@@ -274,24 +274,26 @@ class Puppet::Resource
 
       @type, @title = self.class.type_and_title(type, title)
 
-      if params = attributes[:parameters]
-        extract_parameters(params)
+      rt = resource_type
+
+      if strict? && rt.nil?
+        if self.class?
+          raise ArgumentError, "Could not find declared class #{title}"
+        else
+          raise ArgumentError, "Invalid resource type #{type}"
+        end
       end
 
-      if resource_type && resource_type.respond_to?(:deprecate_params)
-        resource_type.deprecate_params(title, attributes[:parameters])
+      params = attributes[:parameters]
+      unless params.nil? || params.empty?
+        extract_parameters(params)
+        if rt && rt.respond_to?(:deprecate_params)
+          rt.deprecate_params(title, params)
+        end
       end
 
       tag(self.type)
       tag_if_valid(self.title)
-    end
-
-    if strict? and ! resource_type
-      if self.class?
-        raise ArgumentError, "Could not find declared class #{title}"
-      else
-        raise ArgumentError, "Invalid resource type #{type}"
-      end
     end
   end
 
