@@ -203,6 +203,7 @@ module Runtime3Support
     else
       # transform into the wonderful String representation in 3x
       type, title = Runtime3Converter.instance.catalog_type_to_split_type_title(source)
+      type = Runtime3ResourceSupport.find_resource_type(scope, type) unless type == 'class' || type == 'node'
       source_resource = Puppet::Resource.new(type, title)
     end
     if target.is_a?(Collectors::AbstractCollector)
@@ -211,6 +212,7 @@ module Runtime3Support
     else
       # transform into the wonderful String representation in 3x
       type, title = Runtime3Converter.instance.catalog_type_to_split_type_title(target)
+      type = Runtime3ResourceSupport.find_resource_type(scope, type) unless type == 'class' || type == 'node'
       target_resource = Puppet::Resource.new(type, title)
     end
     # Add the relationship to the compiler for later evaluation.
@@ -343,8 +345,9 @@ module Runtime3Support
       unless r.is_a?(Types::PResourceType) && r.type_name != 'class'
         fail(Issues::ILLEGAL_OVERRIDEN_TYPE, o, {:actual => r} )
       end
+      t = Runtime3ResourceSupport.find_resource_type(scope, r.type_name)
       resource = Puppet::Parser::Resource.new(
-      r.type_name, r.title,
+        t, r.title,
         :parameters => evaluated_parameters,
         :file => file,
         :line => line,
