@@ -13,6 +13,6 @@ describe "the split function" do
   end
 
   it 'should raise a ParseError' do
-    expect { @scope.function_split([ '130;236;254;10', ';']) }.to raise_error(Puppet::ParseError, /converted to 4x API/)
+    expect { @scope.function_split([ '130;236;254;10', ';']) }.to raise_error(Puppet::ParseError, /can only be called using the 4.x function API/)
   end
 end

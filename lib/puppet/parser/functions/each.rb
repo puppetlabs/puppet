@@ -100,5 +100,5 @@ documentation.
 - Since 4.0.0
 DOC
 ) do |args|
-  function_fail(["each() is only available when parser/evaluator future is in effect"])
+  Error.is4x('each')
 end

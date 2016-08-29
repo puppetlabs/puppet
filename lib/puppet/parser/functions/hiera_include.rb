@@ -82,7 +82,7 @@ nodes.
 - Since 4.0.0
 DOC
   ) do |*args|
-    function_fail(["hiera_include() has been converted to 4x API"])
+    Error.is4x('hiera_include')
   end
 end
 

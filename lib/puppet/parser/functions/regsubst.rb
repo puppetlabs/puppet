@@ -24,7 +24,8 @@
 # other dealings in this Software without prior written authorization
 # from Thomas Bellman.
 
-Puppet::Parser::Functions::newfunction(
+module Puppet::Parser::Functions
+  newfunction(
   :regsubst, :type => :rvalue,
   :arity => -4,
 
@@ -56,5 +57,6 @@ Put angle brackets around each octet in the node's IP address:
 
     $x = regsubst($ipaddress, '([0-9]+)', '<\\1>', 'G')
 ") do |args|
-    function_fail(['regsubst() has been converted to 4x API'])
+    Error.is4x('regsubst')
+end
 end

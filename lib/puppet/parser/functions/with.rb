@@ -13,8 +13,8 @@ class using variables whose values cannot be accessed outside of the lambda.
 
 ~~~ puppet
 # Concatenate three strings into a single string formatted as a list.
-$fruit = with("apples", "oranges", "bananas") |$x, $y, $z| { 
-  "${x}, ${y}, and ${z}" 
+$fruit = with("apples", "oranges", "bananas") |$x, $y, $z| {
+  "${x}, ${y}, and ${z}"
 }
 $check_var = $x
 # $fruit contains "apples, oranges, and bananas"
@@ -24,5 +24,5 @@ $check_var = $x
 - Since 4.0.0
 DOC
 ) do |args|
-  function_fail(["with() is only available when parser/evaluator future is in effect"])
+  Error.is4x('with')
 end

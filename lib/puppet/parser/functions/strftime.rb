@@ -169,5 +169,5 @@ notice($duration.strftime('%M:%S')) # outputs '200:30'
 - Since 4.7.0
 DOC
 ) do |args|
-  function_fail(["strftime() is only available when parser/evaluator future is in effect"])
+  Error.is4x('strftime')
 end

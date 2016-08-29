@@ -125,7 +125,7 @@ function Float.new(
 * For an integer, the floating point fraction of `.0` is added to the value.
 * A `Boolean` `true` is converted to 1.0, and a `false` to 0.0
 * In `String` format, integer prefixes for hex and binary are understood (but not octal since
-  floating point in string format may start with a '0'). 
+  floating point in string format may start with a '0').
 
 Conversion to Numeric
 ---------------------
@@ -243,7 +243,7 @@ $str = String([10], "%(a")  # produces '("10")'
 **Example:** Specifying type for values contained in an array
 
 ```puppet
-$formats = { 
+$formats = {
   Array => {
     format => '%(a',
     string_formats => { Integer => '%#x' }
@@ -301,7 +301,7 @@ Defaults to `s` at top level and `p` inside array or hash.
 ### Boolean to String
 
 | Format    | Boolean Formats
-| ----      | -------------------   
+| ----      | -------------------
 | t T       | String 'true'/'false' or 'True'/'False', first char if alternate form is used (i.e. 't'/'f' or 'T'/'F').
 | y Y       | String 'yes'/'no', 'Yes'/'No', 'y'/'n' or 'Y'/'N' if alternative flag `#` is used.
 | dxXobB    | Numeric value 0/1 in accordance with the given format which must be valid integer format.
@@ -375,7 +375,7 @@ The alternate form flag `#` will format each hash key/value entry indented on a 
 
 ### Flags
 
-| Flag     | Effect 
+| Flag     | Effect
 | ------   | ------
 | (space)  | A space instead of `+` for numeric output (`-` is shown), for containers skips delimiters.
 | #        | Alternate format; prefix 0x/0x, 0 (octal) and 0b/0B for binary, Floats force decimal '.'. For g/G keep trailing 0.
@@ -476,7 +476,7 @@ function SemVer.new(SemVerHash $hash_args)
 # SemVerRange objects.
 #
 $t = SemVer[
-  SemVerRange('>=1.0.0 <2.0.0'), 
+  SemVerRange('>=1.0.0 <2.0.0'),
   SemVerRange('>=3.0.0 <4.0.0')
 ]
 notice(SemVer('1.2.3') =~ $t) # true
@@ -525,6 +525,6 @@ For examples of `SemVerRange` use see "Creating a SemVer"
 
 DOC
 ) do |args|
-  function_fail(["new() is only available when parser/evaluator future is in effect"])
+  Error.is4x('new')
 end
 

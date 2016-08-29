@@ -32,5 +32,5 @@ function fails to pass any required parameter.
 
 - Since 4.0.0") do |args|
 
-  function_fail(["epp() is only available when parser/evaluator future is in effect"])
+  Error.is4x('epp')
 end
