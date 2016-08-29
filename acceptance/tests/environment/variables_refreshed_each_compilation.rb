@@ -50,7 +50,11 @@ extend Puppet::Acceptance::EnvironmentUtils
           uptime = result.stdout.match(/Notice: #{local_uptime_pattern}/)[0]
           module_uptime = result.stdout.match(/"seconds"=>(\d+),/)[0]
         end
-        sleep 1
+        if agent.platform =~ /solaris/
+          sleep 61  # See FACT-1497;
+        else
+          sleep 1
+        end
         on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment}"),
            :accept_all_exit_codes => true) do |result|
           assert_equal(2, result.exit_code, 'wrong exit_code')
