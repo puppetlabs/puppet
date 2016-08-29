@@ -178,6 +178,22 @@ end
       expect(s.string(f.iterator(f.integer))).to eq('Iterator[Integer]')
     end
 
+    it "should yield 'Timespan' for PTimespanType" do
+      expect(s.string(f.timespan())).to eq('Timespan')
+    end
+
+    it "should yield 'Timespan[{hours => 1}] for PTimespanType[Timespan]" do
+      expect(s.string(f.timespan({'hours' => 1}))).to eq('Timespan[{hours => 1}]')
+    end
+
+    it "should yield 'Timespan[?, {hours => 2}] for PTimespanType[nil, Timespan]" do
+      expect(s.string(f.timespan(nil, {'hours' => 2}))).to eq('Timespan[default, {hours => 2}]')
+    end
+
+    it "should yield 'Timespan[{hours => 1}, {hours => 2}] for PTimespanType[Timespan, Timespan]" do
+      expect(s.string(f.timespan({'hours' => 1}, {'hours' => 2}))).to eq('Timespan[{hours => 1}, {hours => 2}]')
+    end
+
     it "should yield 'Tuple[Integer]' for PTupleType[PIntegerType]" do
       expect(s.string(f.tuple([f.integer]))).to eq('Tuple[Integer]')
     end

@@ -19,6 +19,7 @@ MIN_INTEGER = -0x8000000000000000
 # - Regexp
 # - Version
 # - VersionRange
+# - Timespan
 # - Timestamp
 # - Default
 #
@@ -161,8 +162,12 @@ class AbstractWriter
       build_payload { |ep| ep.write(o.to_s) }
     end
 
-    register_type(Extension::TIME, Time) do |o|
-      build_payload { |ep| ep.write(o.tv_sec); ep.write(o.tv_nsec) }
+    register_type(Extension::TIME, Time::Timestamp) do |o|
+      build_payload { |ep| nsecs = o.nsecs; ep.write(nsecs / 1000000000); ep.write(nsecs % 1000000000) }
+    end
+
+    register_type(Extension::TIMESPAN, Time::Timespan) do |o|
+      build_payload { |ep| nsecs = o.nsecs; ep.write(nsecs / 1000000000); ep.write(nsecs % 1000000000) }
     end
 
     register_type(Extension::VERSION, Semantic::Version) do |o|

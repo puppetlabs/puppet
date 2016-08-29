@@ -158,6 +158,18 @@ class AccessOperator
     Types::TypeFactory.sem_ver(*keys)
   end
 
+  def access_PTimestampType(o, scope, keys)
+    keys.flatten!
+    fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, :base_type => o, :min=>0, :max => 2, :actual => keys.size) if keys.size > 2
+    Types::TypeFactory.timestamp(*keys)
+  end
+
+  def access_PTimespanType(o, scope, keys)
+    keys.flatten!
+    fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, :base_type => o, :min=>0, :max => 2, :actual => keys.size) if keys.size > 2
+    Types::TypeFactory.timespan(*keys)
+  end
+
   def access_PTupleType(o, scope, keys)
     keys.flatten!
     if Types::TypeFactory.is_range_parameter?(keys[-2]) && Types::TypeFactory.is_range_parameter?(keys[-1])

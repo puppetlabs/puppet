@@ -168,6 +168,14 @@ module TypeFactory
     hash.nil? || hash.empty? ? PTypeSetType::DEFAULT : PTypeSetType.new(hash)
   end
 
+  def self.timestamp(*args)
+    args.empty? ? PTimestampType::DEFAULT : PTimestampType.new(*args)
+  end
+
+  def self.timespan(*args)
+    args.empty? ? PTimespanType::DEFAULT : PTimespanType.new(*args)
+  end
+
   def self.tuple(types = [], size_type = nil)
     PTupleType.new(types.map {|elem| type_of(elem) }, size_type)
   end

@@ -16,6 +16,7 @@ module Serialization
 # - Regexp
 # - Version
 # - VersionRange
+# - Timespan
 # - Timestamp
 # - Default
 #
@@ -132,7 +133,15 @@ class AbstractReader
       read_payload(data) do |ep|
         sec = ep.read
         nsec = ep.read
-        TimeFactory.from_sec_nsec(sec, nsec)
+        Time::Timestamp.new(sec * 1000000000 + nsec)
+      end
+    end
+
+    register_type(Extension::TIMESPAN) do |data|
+      read_payload(data) do |ep|
+        sec = ep.read
+        nsec = ep.read
+        Time::Timespan.new(sec * 1000000000 + nsec)
       end
     end
 

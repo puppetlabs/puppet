@@ -648,6 +648,16 @@ class TypeCalculator
   end
 
   # @api private
+  def infer_Timespan(o)
+    PTimespanType.new(o, o)
+  end
+
+  # @api private
+  def infer_Timestamp(o)
+    PTimestampType.new(o, o)
+  end
+
+  # @api private
   def infer_TrueClass(o)
     PBooleanType::DEFAULT
   end

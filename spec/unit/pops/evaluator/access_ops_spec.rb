@@ -235,6 +235,40 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect { evaluate(expr)}.to raise_error(/Array-Type\[\] arguments must be types/)
     end
 
+    # Timespan Type
+    #
+    it 'produdes a Timespan type with a lower bound' do
+      expr = fqr('Timespan')[{fqn('hours') => literal(3)}]
+      expect(evaluate(expr)).to be_the_type(types.timespan({'hours' => 3}))
+    end
+
+    it 'produdes a Timespan type with an upper bound' do
+      expr = fqr('Timespan')[literal(:default), {fqn('hours') => literal(9)}]
+      expect(evaluate(expr)).to be_the_type(types.timespan(nil, {'hours' => 9}))
+    end
+
+    it 'produdes a Timespan type with both lower and upper bounds' do
+      expr = fqr('Timespan')[{fqn('hours') => literal(3)}, {fqn('hours') => literal(9)}]
+      expect(evaluate(expr)).to be_the_type(types.timespan({'hours' => 3}, {'hours' => 9}))
+    end
+
+    # Timestamp Type
+    #
+    it 'produdes a Timestamp type with a lower bound' do
+      expr = fqr('Timestamp')[literal('2014-12-12T13:14:15 CET')]
+      expect(evaluate(expr)).to be_the_type(types.timestamp('2014-12-12T13:14:15 CET'))
+    end
+
+    it 'produdes a Timestamp type with an upper bound' do
+      expr = fqr('Timestamp')[literal(:default), literal('2016-08-23T17:50:00 CET')]
+      expect(evaluate(expr)).to be_the_type(types.timestamp(nil, '2016-08-23T17:50:00 CET'))
+    end
+
+    it 'produdes a Timestamp type with both lower and upper bounds' do
+      expr = fqr('Timestamp')[literal('2014-12-12T13:14:15 CET'), literal('2016-08-23T17:50:00 CET')]
+      expect(evaluate(expr)).to be_the_type(types.timestamp('2014-12-12T13:14:15 CET', '2016-08-23T17:50:00 CET'))
+    end
+
     # Tuple Type
     #
     it 'produces a Tuple[String] from the expression Tuple[String]' do
