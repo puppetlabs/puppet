@@ -18,9 +18,9 @@ module Puppet::Pops::Lookup
     end
 
     def to_s
-      io = StringIO.new
+      io = ''
       dump_on(io, '', '')
-      io.string
+      io
     end
 
     def dump_on(io, indent, first_indent)
@@ -218,7 +218,7 @@ module Puppet::Pops::Lookup
       # It's pointless to report a merge where there's only one branch
       return branches[0].dump_on(io, indent, first_indent) if branches.size == 1
 
-      io << first_indent << 'Merge strategy ' << @merge.class.key << "\n"
+      io << first_indent << 'Merge strategy ' << @merge.class.key.to_s << "\n"
       indent = increase_indent(indent)
       options = options_wo_strategy
       unless options.nil?
@@ -297,7 +297,7 @@ module Puppet::Pops::Lookup
     end
 
     def dump_on(io, indent, first_indent)
-      io << first_indent << 'Data Binding "' << @binding_terminus << "\"\n"
+      io << first_indent << 'Data Binding "' << @binding_terminus.to_s << "\"\n"
       indent = increase_indent(indent)
       branches.each {|b| b.dump_on(io, indent, indent)}
       dump_outcome(io, indent)
@@ -323,7 +323,7 @@ module Puppet::Pops::Lookup
     def dump_on(io, indent, first_indent)
       io << first_indent << 'Data Provider "' << @provider.name << "\"\n"
       indent = increase_indent(indent)
-      io << indent << 'ConfigurationPath "' << @provider.config_path << "\"\n" if @provider.respond_to?(:config_path)
+      io << indent << 'ConfigurationPath "' << @provider.config_path.to_s << "\"\n" if @provider.respond_to?(:config_path)
       branches.each {|b| b.dump_on(io, indent, indent)}
       dump_outcome(io, indent)
     end
@@ -347,7 +347,7 @@ module Puppet::Pops::Lookup
     end
 
     def dump_on(io, indent, first_indent)
-      io << indent << 'Path "' << @path.path << "\"\n"
+      io << indent << 'Path "' << @path.path.to_s << "\"\n"
       indent = increase_indent(indent)
       io << indent << 'Original path: "' << @path.original_path << "\"\n"
       branches.each {|b| b.dump_on(io, indent, indent)}
