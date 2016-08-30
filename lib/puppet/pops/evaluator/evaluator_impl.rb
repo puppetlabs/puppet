@@ -117,6 +117,9 @@ class EvaluatorImpl
       # call stack instead
       fail(Issues::RUNTIME_ERROR, target, {:detail => e.message}, e.original || e)
 
+    rescue StopIteration => e
+      raise e
+
     rescue StandardError => e
       # All other errors, use its message and call stack
       fail(Issues::RUNTIME_ERROR, target, {:detail => e.message}, e)
@@ -618,9 +621,7 @@ class EvaluatorImpl
   # Evaluates all statements and produces the last evaluated value
   #
   def eval_BlockExpression o, scope
-    r = nil
-    o.statements.each {|s| r = evaluate(s, scope)}
-    r
+    o.statements.reduce(nil) {|memo, s| evaluate(s, scope)}
   end
 
   # Performs optimized search over case option values, lazily evaluating each

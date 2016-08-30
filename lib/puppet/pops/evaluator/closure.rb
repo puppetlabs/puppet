@@ -1,5 +1,24 @@
 module Puppet::Pops
 module Evaluator
+  class Jumper < Exception
+    attr_reader :value
+    def initialize(value)
+      @value = value
+    end
+  end
+
+  class Next < Jumper
+    def initialize(value)
+      super
+    end
+  end
+
+  class Return < Jumper
+    def initialize(value)
+      super
+    end
+  end
+
 # A Closure represents logic bound to a particular scope.
 # As long as the runtime (basically the scope implementation) has the behavior of Puppet 3x it is not
 # safe to return and later use this closure.
@@ -63,7 +82,10 @@ class Closure < CallableSignature
         args_hash = param_scope.to_hash
       end
       Types::TypeMismatchDescriber.validate_parameters(closure_name, params_struct, args_hash)
-      Types::TypeAsserter.assert_instance_of(nil, return_type, @evaluator.evaluate_block_with_bindings(closure_scope, args_hash, @model.body)) do
+      result = catch(:next) do
+        @evaluator.evaluate_block_with_bindings(closure_scope, args_hash, @model.body)
+      end
+      Types::TypeAsserter.assert_instance_of(nil, return_type, result) do
         "value returned from #{closure_name}"
       end
     else
@@ -169,7 +191,10 @@ class Closure < CallableSignature
     end)
 
     if type.callable?(final_args)
-      Types::TypeAsserter.assert_instance_of(nil, return_type, @evaluator.evaluate_block_with_bindings(scope, variable_bindings, @model.body)) do
+      result = catch(:next) do
+        @evaluator.evaluate_block_with_bindings(scope, variable_bindings, @model.body)
+      end
+      Types::TypeAsserter.assert_instance_of(nil, return_type, result) do
         "value returned from #{closure_name}"
       end
     else
