@@ -41,7 +41,21 @@ class Puppet::Pops::Functions::Function
   #
   # @api public
   def call(scope, *args, &block)
-    self.class.dispatcher.dispatch(self, scope, args, &block)
+    begin
+      self.class.dispatcher.dispatch(self, scope, args, &block)
+    rescue Puppet::Pops::Evaluator::Next => jumper
+      begin
+        throw :next, jumper.value
+      rescue Puppet::Parser::Scope::UNCAUGHT_THROW_EXCEPTION => uncaught
+        raise ArgumentError, "Use of 'next()' from context where this is illegal"
+      end
+    rescue Puppet::Pops::Evaluator::Return => jumper
+      begin
+        throw :return, jumper.value
+      rescue Puppet::Parser::Scope::UNCAUGHT_THROW_EXCEPTION => uncaught
+        raise ArgumentError, "Use of 'return()' from context where this is illegal"
+      end
+    end
   end
 
   # Allows the implementation of a function to call other functions by name. The callable functions

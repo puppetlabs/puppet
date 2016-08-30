@@ -303,7 +303,7 @@ Puppet::Face.define(:epp, '0.0.1') do
       summary "A .pp or .yaml file that is processed to produce a hash of values for the template."
     end
 
-    option("--facts <yaml_file>[<json_file>]") do
+    option("--facts <facts_file>") do
       summary "A .yaml or .json file containing a hash of facts made available in $facts and $trusted"
     end
 
