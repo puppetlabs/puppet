@@ -33,9 +33,12 @@ class Timestamp < TimeData
     end
   end
 
-  undef_method :-@, :+@, :%,:modulo,:divmod, :div, :fdiv, :abs, :abs2, :magnitude # does not make sense on a Timestamp
+  undef_method :-@, :+@, :div, :fdiv, :abs, :abs2, :magnitude # does not make sense on a Timestamp
   if method_defined?(:negative?)
     undef_method :negative?, :positive?
+  end
+  if method_defined?(:%)
+    undef_method :%, :modulo, :divmod
   end
 
   def +(o)

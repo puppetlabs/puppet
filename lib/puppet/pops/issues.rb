@@ -255,6 +255,10 @@ module Issues
     "Operator '#{operator}' is not applicable to #{label.a_an(left_value)}."
   end
 
+  OPERATOR_NOT_APPLICABLE_WHEN = hard_issue :OPERATOR_NOT_APPLICABLE_WHEN, :operator, :left_value, :right_value do
+    "Operator '#{operator}' is not applicable to #{label.a_an(left_value)} when right side is #{label.a_an(right_value)}."
+  end
+
   COMPARISON_NOT_POSSIBLE = hard_issue :COMPARISON_NOT_POSSIBLE, :operator, :left_value, :right_value, :detail do
     "Comparison of: #{label(left_value)} #{operator} #{label(right_value)}, is not possible. Caused by '#{detail}'."
   end

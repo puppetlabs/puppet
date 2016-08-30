@@ -410,7 +410,20 @@ class EvaluatorImpl
       begin
         if operator == :'%' && (left.is_a?(Float) || right.is_a?(Float))
           # Deny users the fun of seeing severe rounding errors and confusing results
-          fail(Issues::OPERATOR_NOT_APPLICABLE, left_o, {:operator => operator, :left_value => left})
+          fail(Issues::OPERATOR_NOT_APPLICABLE, left_o, {:operator => operator, :left_value => left}) if left.is_a?(Float)
+          fail(Issues::OPERATOR_NOT_APPLICABLE_WHEN, left_o, {:operator => operator, :left_value => left, :right_value => right})
+        end
+        if right.is_a?(Time::TimeData) && !left.is_a?(Time::TimeData)
+          if operator == :'+' || operator == :'*' && right.is_a?(Time::Timespan)
+            # Switch places. Let the TimeData do the arithmetic
+            x = left
+            left = right
+            right = x
+          elsif operator == :'-' && right.is_a?(Time::Timespan)
+            left = Time::Timespan.new((left * Time::NSECS_PER_SEC).to_i)
+          else
+            fail(Issues::OPERATOR_NOT_APPLICABLE_WHEN, left_o, {:operator => operator, :left_value => left, :right_value => right})
+          end
         end
         result = left.send(operator, right)
       rescue NoMethodError => e
