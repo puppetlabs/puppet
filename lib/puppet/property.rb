@@ -367,7 +367,8 @@ class Puppet::Property < Puppet::Parameter
     rescue => detail
       # Certain operations may fail, but we don't want to fail the transaction if we can
       # avoid it
-      Puppet.log_exception(detail, "Unknown failure comparing values #{should} and #{is} using insync? on type: #{self.resource.ref} property: #{self.name}", { :level => :info })
+      msg = "Unknown failure using insync_values? on type: #{self.resource.ref} / property: #{self.name} to compare values #{should} and #{is}"
+      Puppet.info(msg)
 
       # Return nil, ie. unknown
       nil
