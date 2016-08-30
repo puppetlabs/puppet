@@ -162,12 +162,14 @@ describe Puppet::Application::Lookup do
       end
     end
 
-    it '--explain produces human readable text by default' do
+    it '--explain produces human readable text by default and does not produce output to debug logger' do
       lookup.options[:node] = node
       lookup.options[:explain] = true
       lookup.command_line.stubs(:args).returns(['a'])
+      logs = []
       begin
-        expect { lookup.run_command }.to output(<<-EXPLANATION).to_stdout
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          expect { lookup.run_command }.to output(<<-EXPLANATION).to_stdout
 Merge strategy first
   Data Binding "hiera"
     No such key: "a"
@@ -179,9 +181,11 @@ Merge strategy first
         Found key: "a" value: "This is A"
   Merged result: "This is A"
         EXPLANATION
+          end
       rescue SystemExit => e
         expect(e.status).to eq(0)
       end
+      expect(logs.any? { |log| log.level == :debug }).to be_falsey
     end
 
     it '--explain produces human readable text by default and --debug produces the same output to debug logger' do
