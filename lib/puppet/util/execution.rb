@@ -29,6 +29,8 @@ module Puppet::Util::Execution
     def initialize(value,exitstatus)
       super(value)
       @exitstatus = exitstatus
+
+      raise Puppet::ExecutionFailure, "Execution returned #{exitstatus}" unless exitstatus == 0
     end
   end
 
