@@ -77,7 +77,7 @@ class Puppet::Parser::Resource < Puppet::Resource
       elsif resource_type.nil?
         self.fail "Cannot find definition #{type}"
       else
-        finish(false) # Call finish but do not validate
+        finish_evaluation() # do not finish completely (as that destroys Sensitive data)
         resource_type.evaluate_code(self)
       end
     end
@@ -94,8 +94,18 @@ class Puppet::Parser::Resource < Puppet::Resource
     end
   end
 
-  # Do any finishing work on this object, called before evaluation or
-  # before storage/translation. The method does nothing the second time
+  # Finish the evaluation by assigning defaults and scope tags
+  # @api private
+  #
+  def finish_evaluation
+    return if @evaluation_finished
+    add_defaults
+    add_scope_tags
+    @evaluation_finished = true
+  end
+
+  # Do any finishing work on this object, called before
+  # storage/translation. The method does nothing the second time
   # it is called on the same resource.
   #
   # @param do_validate [Boolean] true if validation should be performed
@@ -104,8 +114,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   def finish(do_validate = true)
     return if finished?
     @finished = true
-    add_defaults
-    add_scope_tags
+    finish_evaluation
     replace_sensitive_data
     validate if do_validate
   end

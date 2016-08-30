@@ -71,6 +71,10 @@ Puppet::Type.newtype(:component) do
     reference.to_s
   end
 
+  # Overrides the default implementation to do nothing
+  def set_sensitive_parameters(sensitive_parameters)
+  end
+
   private
 
   attr_reader :reference

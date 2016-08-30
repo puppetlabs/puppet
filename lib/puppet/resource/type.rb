@@ -427,7 +427,15 @@ class Puppet::Resource::Type
   # Validate that all parameters given to the resource are correct
   # @param resource [Puppet::Resource] the resource to validate
   def validate_resource(resource)
-    validate_resource_hash(resource, Hash[resource.parameters.map { |name, value| [name.to_s, value.value] }])
+    # Since Sensitive values have special encoding (in a separate parameter) an unwrapped sensitive value must be
+    # recreated as a Sensitive in order to perform correct type checking.
+    sensitives = Set.new(resource.sensitive_parameters)
+    validate_resource_hash(resource,
+      Hash[resource.parameters.map do |name, value|
+        value_to_validate = sensitives.include?(name) ? Puppet::Pops::Types::PSensitiveType::Sensitive.new(value.value) : value.value
+        [name.to_s, value_to_validate]
+      end
+    ])
   end
 
   # Check whether a given argument is valid.
