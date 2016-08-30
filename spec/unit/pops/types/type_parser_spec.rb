@@ -111,6 +111,16 @@ describe TypeParser do
     expect(the_type_parsed_from(opt_t)).to be_the_type(opt_t)
   end
 
+  it "parses timespan type" do
+    timespan_t = types.timespan
+    expect(the_type_parsed_from(timespan_t)).to be_the_type(timespan_t)
+  end
+
+  it "parses timestamp type" do
+    timestamp_t = types.timestamp
+    expect(the_type_parsed_from(timestamp_t)).to be_the_type(timestamp_t)
+  end
+
   it "parses tuple type" do
     tuple_t = types.tuple([Integer, String])
     expect(the_type_parsed_from(tuple_t)).to be_the_type(tuple_t)
@@ -246,6 +256,38 @@ describe TypeParser do
 
   it 'parses a collection size range' do
    expect(parser.parse("Collection[1,2]")).to be_the_type(types.collection(types.range(1,2)))
+  end
+
+  it 'parses a timespan type' do
+    expect(parser.parse("Timespan")).to be_the_type(types.timespan)
+  end
+
+  it 'parses a timespan type with a lower bound' do
+    expect(parser.parse("Timespan[{hours => 3}]")).to be_the_type(types.timespan({'hours' => 3}))
+  end
+
+  it 'parses a timespan type with an upper bound' do
+    expect(parser.parse("Timespan[default, {hours => 9}]")).to be_the_type(types.timespan(nil, {'hours' => 9}))
+  end
+
+  it 'parses a timespan type with both lower and upper bounds' do
+    expect(parser.parse("Timespan[{hours => 3}, {hours => 9}]")).to be_the_type(types.timespan({'hours' => 3}, {'hours' => 9}))
+  end
+
+  it 'parses a timestamp type' do
+    expect(parser.parse("Timestamp")).to be_the_type(types.timestamp)
+  end
+
+  it 'parses a timestamp type with a lower bound' do
+    expect(parser.parse("Timestamp['2014-12-12T13:14:15 CET']")).to be_the_type(types.timestamp('2014-12-12T13:14:15 CET'))
+  end
+
+  it 'parses a timestamp type with an upper bound' do
+    expect(parser.parse("Timestamp[default, '2014-12-12T13:14:15 CET']")).to be_the_type(types.timestamp(nil, '2014-12-12T13:14:15 CET'))
+  end
+
+  it 'parses a timestamp type with both lower and upper bounds' do
+    expect(parser.parse("Timestamp['2014-12-12T13:14:15 CET', '2016-08-23T17:50:00 CET']")).to be_the_type(types.timestamp('2014-12-12T13:14:15 CET', '2016-08-23T17:50:00 CET'))
   end
 
   it 'parses a type type' do

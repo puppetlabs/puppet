@@ -92,13 +92,23 @@ class CompareOperator
     end
   end
 
+  def cmp_Timespan(a, b)
+    raise ArgumentError.new('Timespans are only comparable to Timespans, Integers, and Floats') unless b.is_a?(Numeric)
+    a <=> b
+  end
+
+  def cmp_Timestamp(a, b)
+    raise ArgumentError.new('Timestamps are only comparable to Timestamps, Integers, and Floats') unless b.is_a?(Numeric)
+    a <=> b
+  end
+
   def cmp_Version(a, b)
     raise ArgumentError.new('Versions not comparable to non Versions') unless b.is_a?(Semantic::Version)
     a <=> b
   end
 
   def cmp_Object(a, b)
-    raise ArgumentError.new('Only Strings, Numbers, and Versions are comparable')
+    raise ArgumentError.new('Only Strings, Numbers, Timespans, Timestamps, and Versions are comparable')
   end
 
 

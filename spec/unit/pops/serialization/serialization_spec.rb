@@ -94,12 +94,19 @@ module Serialization
       expect(val2).to eql(val)
     end
 
-    it 'Time created by TimeFactory' do
-      # It does succeed on rare occasions, so we need to repeat
-      val = TimeFactory.now
+    it 'Timespan' do
+      val = Time::Timespan.from_fields(false, 3, 12, 40, 31, 123)
       write(val)
       val2 = read
-      expect(val2).to be_a(Time)
+      expect(val2).to be_a(Time::Timespan)
+      expect(val2).to eql(val)
+    end
+
+    it 'Timestamp' do
+      val = Time::Timestamp.now
+      write(val)
+      val2 = read
+      expect(val2).to be_a(Time::Timestamp)
       expect(val2).to eql(val)
     end
 

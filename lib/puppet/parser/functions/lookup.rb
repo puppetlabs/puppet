@@ -1,4 +1,5 @@
-Puppet::Parser::Functions.newfunction(:lookup, :type => :rvalue, :arity => -2, :doc => <<-'ENDHEREDOC') do |args|
+module Puppet::Parser::Functions
+  newfunction(:lookup, :type => :rvalue, :arity => -2, :doc => <<-'ENDHEREDOC') do |args|
 Uses the Puppet lookup system to retrieve a value for a given key. By default,
 this returns the first value found (and fails compilation if no values are
 available), but you can configure it to merge multiple values into one, fail
@@ -126,5 +127,6 @@ remove values by prefixing them with `--`:
     })
 
 ENDHEREDOC
-  function_fail(["lookup() has been converted to 4x API"])
+  Error.is4x('lookup')
+end
 end

@@ -1,7 +1,8 @@
 require 'spec_helper'
 require 'puppet/pops/serialization'
 
-module Puppet::Pops::Serialization
+module Puppet::Pops
+module Serialization
 [JSON].each do |packer_module|
 describe "the Puppet::Pops::Serialization when using #{packer_module.name}" do
   let(:io) { StringIO.new }
@@ -86,11 +87,19 @@ describe "the Puppet::Pops::Serialization when using #{packer_module.name}" do
       expect(val2).to eql(val)
     end
 
-    it 'Time created by TimeFactory' do
-      val = TimeFactory.now
+    it 'Timespan' do
+      val = Time::Timespan.from_fields(false, 3, 12, 40, 31, 123)
       write(val)
       val2 = read
-      expect(val2).to be_a(Time)
+      expect(val2).to be_a(Time::Timespan)
+      expect(val2).to eql(val)
+    end
+
+    it 'Timestamp' do
+      val = Time::Timestamp.now
+      write(val)
+      val2 = read
+      expect(val2).to be_a(Time::Timestamp)
       expect(val2).to eql(val)
     end
 
@@ -108,23 +117,6 @@ describe "the Puppet::Pops::Serialization when using #{packer_module.name}" do
       val2 = read
       expect(val2).to be_a(Semantic::VersionRange)
       expect(val2).to eql(val)
-    end
-
-    it 'will never fail write and read of Time created by TimeFactory' do
-      val = Time.now
-      val = TimeFactory.at(val.tv_sec, val.tv_nsec / 1000 + 0.123)
-      write(val)
-      val2 = read
-      expect(val).to eq(val2)
-    end
-
-    # Windows doesn't seem ot have fine enough granularity to provoke the problem
-    it 'will fail on Time not created by TimeFactory' do
-      val = Time.now
-      val = Time.at(val.tv_sec, val.tv_nsec / 1000 + 0.123)
-      write(val)
-      val2 = read
-      expect(val).not_to eq(val2)
     end
   end
 
@@ -148,6 +140,7 @@ describe "the Puppet::Pops::Serialization when using #{packer_module.name}" do
     expect(read(2)).to eql([val, val])
     expect(@deserializer.primitive_count).to eql(1)
   end
+end
 end
 end
 end

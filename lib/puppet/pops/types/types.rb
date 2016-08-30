@@ -956,7 +956,7 @@ class PIntegerType < PNumericType
     @@new_function ||= Puppet::Functions.create_loaded_function(:new, loader) do
       local_types do
         type 'Radix       = Variant[Default, Integer[2,2], Integer[8,8], Integer[10,10], Integer[16,16]]'
-        type 'Convertible = Variant[Undef, Integer, Float, Boolean, String]'
+        type 'Convertible = Variant[Undef, Numeric, Boolean, String]'
         type 'NamedArgs   = Struct[{from => Convertible, Optional[radix] => Radix}]'
       end
 
@@ -973,7 +973,7 @@ class PIntegerType < PNumericType
         case from
         when NilClass
           throw :undefined_value
-        when Float
+        when Float, Time::TimeData
           from.to_i
         when Integer
           from
@@ -1062,7 +1062,7 @@ class PFloatType < PNumericType
   def self.new_function(_, loader)
     @new_function ||= Puppet::Functions.create_loaded_function(:new_float, loader) do
       local_types do
-        type 'Convertible = Variant[Undef, Integer, Float, Boolean, String]'
+        type 'Convertible = Variant[Undef, Numeric, Boolean, String]'
         type 'NamedArgs   = Struct[{from => Convertible}]'
       end
 
@@ -1082,6 +1082,8 @@ class PFloatType < PNumericType
           from
         when Integer
           Float(from)
+        when Time::TimeData
+          from.to_f
         when TrueClass
           1.0
         when FalseClass
@@ -2565,9 +2567,11 @@ class PVariantType < PAnyType
         types = swap_optionals(types)
         types = merge_enums(types)
         types = merge_patterns(types)
-        types = merge_int_ranges(types)
-        types = merge_float_ranges(types)
         types = merge_version_ranges(types)
+        types = merge_numbers(PIntegerType, types)
+        types = merge_numbers(PFloatType, types)
+        types = merge_numbers(PTimespanType, types)
+        types = merge_numbers(PTimestampType, types)
 
         if types.size == 1
           types[0]
@@ -2694,18 +2698,9 @@ class PVariantType < PAnyType
   end
 
   # @api private
-  def merge_int_ranges(array)
+  def merge_numbers(clazz, array)
     if array.size > 1
-      parts = array.partition {|t| t.is_a?(PIntegerType) }
-      ranges = parts[0]
-      array = merge_ranges(ranges) + parts[1] if ranges.size > 1
-    end
-    array
-  end
-
-  def merge_float_ranges(array)
-    if array.size > 1
-      parts = array.partition {|t| t.is_a?(PFloatType) }
+      parts = array.partition {|t| t.is_a?(clazz) }
       ranges = parts[0]
       array = merge_ranges(ranges) + parts[1] if ranges.size > 1
     end
@@ -3233,5 +3228,7 @@ require_relative 'p_sem_ver_type'
 require_relative 'p_sem_ver_range_type'
 require_relative 'p_sensitive_type'
 require_relative 'p_type_set_type'
+require_relative 'p_timespan_type'
+require_relative 'p_timestamp_type'
 require_relative 'type_set_reference'
 require_relative 'implementation_registry'

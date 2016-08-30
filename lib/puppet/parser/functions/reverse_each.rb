@@ -79,5 +79,5 @@ $transformed_data = map(reverse_each($data)) |$item| { $item * 10 }
 
 DOC
 ) do |args|
-  function_fail(["reverse_each() is only available when parser/evaluator future is in effect"])
+  Error.is4x('reverse_each')
 end

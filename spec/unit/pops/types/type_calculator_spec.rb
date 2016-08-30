@@ -233,6 +233,34 @@ describe 'The type calculator' do
       end
     end
 
+    context 'timespan' do
+      it 'translates to PTimespanType' do
+        expect(calculator.infer(Time::Timespan.from_fields_hash('days' => 2))).to be_a(PTimespanType)
+      end
+
+      it 'translates to a limited PTimespanType by infer_set' do
+        ts = Time::Timespan.from_fields_hash('days' => 2)
+        t = calculator.infer_set(ts)
+        expect(t.class).to eq(PTimespanType)
+        expect(t.from).to be(ts)
+        expect(t.to).to be(ts)
+      end
+    end
+
+    context 'timestamp' do
+      it 'translates to PTimespanType' do
+        expect(calculator.infer(Time::Timestamp.now)).to be_a(PTimestampType)
+      end
+
+      it 'translates to a limited PTimespanType by infer_set' do
+        ts = Time::Timestamp.now
+        t = calculator.infer_set(ts)
+        expect(t.class).to eq(PTimestampType)
+        expect(t.from).to be(ts)
+        expect(t.to).to be(ts)
+      end
+    end
+
     context 'array' do
       it 'translates to PArrayType' do
         expect(calculator.infer([1,2]).class).to eq(PArrayType)
@@ -879,6 +907,34 @@ describe 'The type calculator' do
 
       it 'Struct is not assignable to Hash with Enum unless all keys match' do
         expect(struct_t({'a' => integer_t, 'y' => integer_t})).not_to be_assignable_to(hash_t(enum_t('x', 'y', 'z'), factory.any))
+      end
+    end
+
+    context 'for Timespan such that' do
+      it 'Timespan is assignable to less constrained Timespan' do
+        t1 = PTimespanType.new('00:00:10', '00:00:20')
+        t2 = PTimespanType.new('00:00:11', '00:00:19')
+        expect(t2).to be_assignable_to(t1)
+      end
+
+      it 'Timespan is not assignable to more constrained Timespan' do
+        t1 = PTimespanType.new('00:00:10', '00:00:20')
+        t2 = PTimespanType.new('00:00:11', '00:00:19')
+        expect(t1).not_to be_assignable_to(t2)
+      end
+    end
+
+    context 'for Timestamp such that' do
+      it 'Timestamp is assignable to less constrained Timestamp' do
+        t1 = PTimestampType.new('2016-01-01', '2016-12-31')
+        t2 = PTimestampType.new('2016-02-01', '2016-11-30')
+        expect(t2).to be_assignable_to(t1)
+      end
+
+      it 'Timestamp is not assignable to more constrained Timestamp' do
+        t1 = PTimestampType.new('2016-01-01', '2016-12-31')
+        t2 = PTimestampType.new('2016-02-01', '2016-11-30')
+        expect(t1).not_to be_assignable_to(t2)
       end
     end
 
