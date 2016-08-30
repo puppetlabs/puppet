@@ -162,12 +162,14 @@ describe Puppet::Application::Lookup do
       end
     end
 
-    it '--explain produces human readable text by default' do
+    it '--explain produces human readable text by default and does not produce output to debug logger' do
       lookup.options[:node] = node
       lookup.options[:explain] = true
       lookup.command_line.stubs(:args).returns(['a'])
+      logs = []
       begin
-        expect { lookup.run_command }.to output(<<-EXPLANATION).to_stdout
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          expect { lookup.run_command }.to output(<<-EXPLANATION).to_stdout
 Merge strategy first
   Data Binding "hiera"
     No such key: "a"
@@ -179,12 +181,54 @@ Merge strategy first
         Found key: "a" value: "This is A"
   Merged result: "This is A"
         EXPLANATION
+          end
       rescue SystemExit => e
         expect(e.status).to eq(0)
       end
+      expect(logs.any? { |log| log.level == :debug }).to be_falsey
     end
 
-    it '--explain produces human readable text of a hash merge when using --explain-options' do
+    it '--explain produces human readable text by default and --debug produces the same output to debug logger' do
+      lookup.options[:node] = node
+      lookup.options[:explain] = true
+      lookup.command_line.stubs(:args).returns(['a'])
+      Puppet.debug = true
+      logs = []
+      begin
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          expect { lookup.run_command }.to output(<<-EXPLANATION).to_stdout
+Merge strategy first
+  Data Binding "hiera"
+    No such key: "a"
+  Data Provider "Hiera Data Provider, version 4"
+    ConfigurationPath "#{environmentpath}/production/hiera.yaml"
+    Data Provider "common"
+      Path "#{environmentpath}/production/data/common.yaml"
+        Original path: "common"
+        Found key: "a" value: "This is A"
+  Merged result: "This is A"
+          EXPLANATION
+        end
+      rescue SystemExit => e
+        expect(e.status).to eq(0)
+      end
+      logs = logs.select { |log| log.level == :debug }.map { |log| log.message }
+      expect(logs).to include(<<-EXPLANATION.chomp)
+Lookup of 'a'
+  Merge strategy first
+    Data Binding "hiera"
+      No such key: "a"
+    Data Provider "Hiera Data Provider, version 4"
+      ConfigurationPath "#{environmentpath}/production/hiera.yaml"
+      Data Provider "common"
+        Path "#{environmentpath}/production/data/common.yaml"
+          Original path: "common"
+          Found key: "a" value: "This is A"
+    Merged result: "This is A"
+      EXPLANATION
+    end
+
+    it '--explain-options produces human readable text of a hash merge' do
       lookup.options[:node] = node
       lookup.options[:explain_options] = true
       begin
@@ -207,6 +251,53 @@ Merge strategy hash
       rescue SystemExit => e
         expect(e.status).to eq(0)
       end
+    end
+
+    it '--explain-options produces human readable text of a hash merge and --debug produces the same output to debug logger' do
+      lookup.options[:node] = node
+      lookup.options[:explain_options] = true
+      Puppet.debug = true
+      logs = []
+      begin
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          expect { lookup.run_command }.to output(<<-EXPLANATION).to_stdout
+Merge strategy hash
+  Data Binding "hiera"
+    No such key: "lookup_options"
+  Data Provider "Hiera Data Provider, version 4"
+    ConfigurationPath "#{environmentpath}/production/hiera.yaml"
+    Data Provider "common"
+      Path "#{environmentpath}/production/data/common.yaml"
+        Original path: "common"
+        Found key: "lookup_options" value: {
+          "a" => "first"
+        }
+  Merged result: {
+    "a" => "first"
+  }
+          EXPLANATION
+        end
+      rescue SystemExit => e
+        expect(e.status).to eq(0)
+      end
+      logs = logs.select { |log| log.level == :debug }.map { |log| log.message }
+      expect(logs).to include(<<-EXPLANATION.chomp)
+Lookup of '__global__'
+  Merge strategy hash
+    Data Binding "hiera"
+      No such key: "lookup_options"
+    Data Provider "Hiera Data Provider, version 4"
+      ConfigurationPath "#{environmentpath}/production/hiera.yaml"
+      Data Provider "common"
+        Path "#{environmentpath}/production/data/common.yaml"
+          Original path: "common"
+          Found key: "lookup_options" value: {
+            "a" => "first"
+          }
+    Merged result: {
+      "a" => "first"
+    }
+      EXPLANATION
     end
 
     it '--explain produces human readable text of a hash merge when using both --explain and --explain-options' do
