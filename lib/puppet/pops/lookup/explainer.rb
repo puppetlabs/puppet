@@ -506,4 +506,28 @@ module Puppet::Pops::Lookup
       branches.size == 1 ? branches[0].to_hash : super
     end
   end
+
+  class DebugExplainer < Explainer
+    attr_reader :wrapped_explainer
+
+    def initialize(wrapped_explainer)
+      @wrapped_explainer = wrapped_explainer
+      if wrapped_explainer.nil?
+        @current = self
+        @explain_options = false
+        @only_explain_options = false
+      else
+        @current = wrapped_explainer
+        @explain_options = wrapped_explainer.explain_options?
+        @only_explain_options = wrapped_explainer.only_explain_options?
+      end
+    end
+
+    def emit_debug_info(preamble)
+      io = ''
+      io << preamble << "\n"
+      @current.dump_on(io, '  ', '  ')
+      Puppet.debug(io.chomp!)
+    end
+  end
 end
