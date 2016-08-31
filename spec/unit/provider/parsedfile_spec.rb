@@ -6,7 +6,7 @@ require 'puppet/provider/parsedfile'
 # Most of the tests for this are still in test/ral/provider/parsedfile.rb.
 describe Puppet::Provider::ParsedFile do
   before do
-    @class = Class.new(Puppet::Provider::ParsedFile)
+    @class = Puppet::Type.newtype(:parsedfile_type).provide(:parsedfile_provider, :parent => Puppet::Provider::ParsedFile)
   end
 
   describe "when looking up records loaded from disk" do
@@ -31,6 +31,27 @@ describe Puppet::Provider::ParsedFile do
       end
 
       @class.instances.should == results
+    end
+
+    it "should ignore target when retrieve fails" do
+      @class.expects(:targets).returns %w{/one /two /three}
+      @class.stubs(:skip_record?).returns false
+      @class.expects(:retrieve).with("/one").returns [
+        {:name => 'target1_record1'},
+        {:name => 'target1_record2'}
+      ]
+      @class.expects(:retrieve).with("/two").raises Puppet::Error, "some error"
+      @class.expects(:retrieve).with("/three").returns [
+        {:name => 'target3_record1'},
+        {:name => 'target3_record2'}
+      ]
+      Puppet.expects(:err).with('Could not prefetch parsedfile_type provider \'parsedfile_provider\' target \'/two\': some error. Treating as empty')
+      @class.expects(:new).with(:name => 'target1_record1', :on_disk => true, :target => '/one', :ensure => :present).returns 'r1'
+      @class.expects(:new).with(:name => 'target1_record2', :on_disk => true, :target => '/one', :ensure => :present).returns 'r2'
+      @class.expects(:new).with(:name => 'target3_record1', :on_disk => true, :target => '/three', :ensure => :present).returns 'r3'
+      @class.expects(:new).with(:name => 'target3_record2', :on_disk => true, :target => '/three', :ensure => :present).returns 'r4'
+
+      @class.instances.should == %w{r1 r2 r3 r4}
     end
 
     it "should skip specified records" do

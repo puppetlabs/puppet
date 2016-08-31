@@ -216,7 +216,16 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
   # Prefetch an individual target.
   def self.prefetch_target(target)
-    target_records = retrieve(target).each do |r|
+
+    begin
+      target_records = retrieve(target)
+    rescue => detail
+      puts detail.backtrace if Puppet[:trace]
+      Puppet.err "Could not prefetch #{self.resource_type.name} provider '#{self.name}' target '#{target}': #{detail}. Treating as empty"
+      target_records = []
+    end
+
+    target_records.each do |r|
       r[:on_disk] = true
       r[:target] = target
       r[:ensure] = :present
