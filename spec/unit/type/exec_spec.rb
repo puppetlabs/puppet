@@ -168,15 +168,16 @@ describe Puppet::Type.type(:exec) do
 
     describe "on platforms where path separator is not :" do
       before :each do
-        @old_verbosity = $VERBOSE
-        $VERBOSE = nil
-        @old_separator = File::PATH_SEPARATOR
-        File::PATH_SEPARATOR = 'q'
+        with_verbose_disabled do
+          @old_separator = File::PATH_SEPARATOR
+          File::PATH_SEPARATOR = 'q'
+        end
       end
 
       after :each do
-        File::PATH_SEPARATOR = @old_separator
-        $VERBOSE = @old_verbosity
+        with_verbose_disabled do
+          File::PATH_SEPARATOR = @old_separator
+        end
       end
 
       it "should use the path separator of the current platform" do

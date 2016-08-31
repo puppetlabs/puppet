@@ -11,13 +11,6 @@ class AgentTestClient
   end
 end
 
-def without_warnings
-  flag = $VERBOSE
-  $VERBOSE = nil
-  yield
-  $VERBOSE = flag
-end
-
 describe Puppet::Agent do
   before do
     @agent = Puppet::Agent.new(AgentTestClient)
@@ -26,7 +19,7 @@ describe Puppet::Agent do
     @agent.stubs(:lock).yields
 
     # make Puppet::Application safe for stubbing; restore in an :after block; silence warnings for this.
-    without_warnings { Puppet::Application = Class.new(Puppet::Application) }
+    with_verbose_disabled { Puppet::Application = Class.new(Puppet::Application) }
     Puppet::Application.stubs(:clear?).returns(true)
     Puppet::Application.class_eval do
       class << self
@@ -39,7 +32,7 @@ describe Puppet::Agent do
 
   after do
     # restore Puppet::Application from stub-safe subclass, and silence warnings
-    without_warnings { Puppet::Application = Puppet::Application.superclass }
+    with_verbose_disabled { Puppet::Application = Puppet::Application.superclass }
   end
 
   it "should set its client class at initialization" do
@@ -90,12 +83,6 @@ describe Puppet::Agent do
     before do
       @agent.stubs(:running?).returns false
       @agent.stubs(:disabled?).returns false
-    end
-
-    it "should splay" do
-      @agent.expects(:splay)
-
-      @agent.run
     end
 
     it "should do nothing if already running" do
@@ -177,44 +164,6 @@ describe Puppet::Agent do
 
       client.expects(:run).with("testargs")
       @agent.run("testargs")
-    end
-  end
-
-  describe "when splaying" do
-    before do
-      Puppet.settings.stubs(:value).with(:splay).returns true
-      Puppet.settings.stubs(:value).with(:splaylimit).returns "10"
-    end
-
-    it "should do nothing if splay is disabled" do
-      Puppet.settings.expects(:value).returns false
-      @agent.expects(:sleep).never
-      @agent.splay
-    end
-
-    it "should do nothing if it has already splayed" do
-      @agent.expects(:splayed?).returns true
-      @agent.expects(:sleep).never
-      @agent.splay
-    end
-
-    it "should log that it is splaying" do
-      @agent.stubs :sleep
-      Puppet.expects :info
-      @agent.splay
-    end
-
-    it "should sleep for a random portion of the splaylimit plus 1" do
-      Puppet.settings.expects(:value).with(:splaylimit).returns "50"
-      @agent.expects(:rand).with(51).returns 10
-      @agent.expects(:sleep).with(10)
-      @agent.splay
-    end
-
-    it "should mark that it has splayed" do
-      @agent.stubs(:sleep)
-      @agent.splay
-      @agent.should be_splayed
     end
   end
 
