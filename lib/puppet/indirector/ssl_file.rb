@@ -82,12 +82,17 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
 
   # Find the file on disk, returning an instance of the model.
   def find(request)
-    path = path(request.key)
+    mypath = path(request.key)
 
-    return nil unless FileTest.exist?(path) or rename_files_with_uppercase(path)
+    exists = FileTest.exist?(mypath)
+    readable = exists && FileTest.readable?(mypath)
+    if exists and not readable
+      Puppet.warning("Certificate file has wrong permissions (not readable): #{mypath}")
+    end
+    return nil unless (exists and readable) or rename_files_with_uppercase(mypath)
 
     result = model.new(request.key)
-    result.read(path)
+    result.read(mypath)
     result
   end
 
@@ -106,7 +111,15 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
   # an instance for every file in the directory.
   def search(request)
     dir = collection_directory
-    Dir.entries(dir).reject { |file| file !~ /\.pem$/ }.collect do |file|
+    Dir.entries(dir).
+        reject { |file| file !~ /\.pem$/ }.
+        reject do |file|
+          full_path = File.join(dir, file)
+          bad = !FileTest.readable?(full_path)
+          Puppet.warning("Certificate file has wrong permissions (not readable): #{full_path}") if bad
+          bad
+        end.
+        collect do |file|
       name = file.sub(/\.pem$/, '')
       result = model.new(name)
       result.read(File.join(dir, file))
