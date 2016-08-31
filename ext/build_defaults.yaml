@@ -2,7 +2,7 @@
 packaging_url: 'git://github.com/puppetlabs/packaging.git --branch=master'
 packaging_repo: 'packaging'
 packager: 'puppetlabs'
-gpg_key: '4BD6EC30'
+gpg_key: '7F438280EF8D349F'
 
 # These are the build targets used by the packaging repo. Uncomment to allow use.
 #final_mocks: 'pl-el-5-i386 pl-el-6-i386 pl-el-7-x86_64'
