@@ -373,8 +373,10 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   def enable_disable_client(agent)
     if options[:enable]
+      Puppet.notice "Enabling Puppet."
       agent.enable
     elsif options[:disable]
+      Puppet.notice "Disabling Puppet."
       agent.disable
     end
     exit(0)
