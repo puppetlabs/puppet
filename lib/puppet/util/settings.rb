@@ -852,15 +852,20 @@ if @config.include?(:run_mode)
     result = Hash.new { |names, name|
       names[name] = {}
     }
-
     count = 0
-
+    prev = ""
     # Default to 'main' for the section.
     section = :main
     result[section][:_meta] = {}
     text.split(/\n/).each { |line|
       count += 1
+      line = line.gsub(/^\s+/,"") ## leading spaces:  we don't care about them anyhow.
+      line = "#{prev}#{line}"     ## eat the previous line (if there is one).
+      prev = ""                   ## burp, clean this now.
       case line
+      when /^\s*(.*?)\\$/
+        prev = $1.intern          ## wait with processing until we have the complete 'line'.
+        next
       when /^\s*\[(\w+)\]\s*$/
         section = $1.intern # Section names
         # Add a meta section
