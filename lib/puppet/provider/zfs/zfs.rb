@@ -1,8 +1,17 @@
-Puppet::Type.type(:zfs).provide(:solaris) do
-  desc "Provider for Solaris zfs."
+Puppet::Type.type(:zfs).provide(:zfs) do
+  desc "Provider for zfs."
 
-  commands :zfs => "/usr/sbin/zfs"
-  defaultfor :operatingsystem => :solaris
+  zfspath = case Facter.value(:operatingsystem)
+            when /^(Solaris|SunOS|Darwin)/i
+              '/usr/sbin'
+            else
+              '/sbin'
+            end
+
+  commands :zfs => "#{zfspath}/zfs"
+
+  defaultfor :kernel => :linux
+  defaultfor :operatingsystem => [:solaris, :sunos, :darwin, :freebsd, :netbsd, :"gnu/kfreebsd"]
 
   def add_properties
     properties = []
@@ -31,7 +40,7 @@ Puppet::Type.type(:zfs).provide(:solaris) do
     end
   end
 
-  [:aclinherit, :aclmode, :atime, :canmount, :checksum, :compression, :copies, :devices, :exec, :logbias, :mountpoint, :nbmand, :primarycache, :quota, :readonly, :recordsize, :refquota, :refreservation, :reservation, :secondarycache, :setuid, :shareiscsi, :sharenfs, :sharesmb, :snapdir, :version, :volsize, :vscan, :xattr, :zoned, :vscan].each do |field|
+  [:aclinherit, :aclmode, :atime, :canmount, :checksum, :compression, :copies, :dedup, :devices, :exec, :logbias, :mountpoint, :nbmand, :primarycache, :quota, :readonly, :recordsize, :refquota, :refreservation, :reservation, :secondarycache, :setuid, :shareiscsi, :sharenfs, :sharesmb, :snapdir, :version, :volsize, :vscan, :xattr, :zoned].each do |field|
     define_method(field) do
       zfs(:get, "-H", "-o", "value", field, @resource[:name]).strip
     end

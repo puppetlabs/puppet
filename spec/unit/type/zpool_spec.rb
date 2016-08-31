@@ -24,6 +24,11 @@ describe zpool do
       zpool.attrclass(parameter).ancestors.should be_include(Puppet::Parameter)
     end
   end
+
+  it "should select the zpool provider" do
+    zpool.new(:name => 'foo').provider.class.should be(Puppet::Type::Zpool::ProviderZpool)
+  end
+
 end
 
 vdev_property = Puppet::Property::VDev

@@ -40,6 +40,10 @@ parent zfs instances, the zfs resource will autorequire them."
       desc "The copies property. Valid values are `1`, `2`, `3`."
     end
 
+    newproperty(:dedup) do
+      desc "The dedup property. Valid values are `on`, `off`."
+    end
+
     newproperty(:devices) do
       desc "The devices property. Valid values are `on`, `off`."
     end
