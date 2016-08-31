@@ -1498,19 +1498,18 @@ class Type
   def self.providify
     return if @paramhash.has_key? :provider
 
-    newparam(:provider) do
-      # We're using a hacky way to get the name of our type, since there doesn't
-      # seem to be a correct way to introspect this at the time this code is run.
-      # We expect that the class in which this code is executed will be something
-      # like Puppet::Type::Ssh_authorized_key::ParameterProvider.
-      desc <<-EOT
-        The specific backend to use for this `#{self.to_s.split('::')[2].downcase}`
-        resource. You will seldom need to specify this --- Puppet will usually
-        discover the appropriate provider for your platform.
-      EOT
-
-      # This is so we can refer back to the type to get a list of
-      # providers for documentation.
+    # JJM - Be careful with this block's scope...  It will be evaluated using
+    # class_eval inside of a generated class from genthing().  There will be no
+    # reference to the type the parameter is associated with when the block is
+    # evaluated.  As a result, it is likely much more robust to call methods on
+    # provider_param directly, after the class and instance have been  created,
+    # because you'll be sure to have your statements evaluated in a known
+    # context instead of somewhere off in the magical world of genthing().
+    # Please see #13070 for more information about why this is a risky section
+    # of user-facing code.
+    provider_param = newparam(:provider) do
+      # This is so we can refer back to the type to get a list of providers for
+      # documentation.
       class << self
         attr_accessor :parenttype
       end
@@ -1552,7 +1551,28 @@ class Type
           provider
         end
       end
-    end.parenttype = self
+    end
+
+    # JJM - Explicitly set the description.  We do this here, outside the
+    # initialization block passed to newparam() because we don't have a binding
+    # to this scope when the block passed to newparam() is evaluated.  As a
+    # result, it's difficult to figure out which type this specific parameter
+    # is associated with.  Setting the description here, outside of the block,
+    # allows us to much more easily figure out the type the parameter is
+    # associated with because we maintain a binding to this scope.
+    # The ( ... || self.to_s).downcase is simply a defensive mechanism to make
+    # absolutely sure we don't send a message to a nil object as reported in
+    # #13070.
+    provider_param.desc <<-EOT
+      The specific backend to use for this `#{(self.to_s.split('::')[2] || self.to_s).downcase}`
+      resource. You will seldom need to specify this --- Puppet will usually
+      discover the appropriate provider for your platform.
+    EOT
+
+    # Bind the parameter to the type
+    provider_param.parenttype = self
+
+    provider_param
   end
 
   def self.unprovide(name)
