@@ -1,0 +1,14 @@
+proj1
+        projid : 6900
+        comment: "Single group"
+        users  : (none)
+        groups : group
+        attribs:
+proj2
+        projid : 7000
+        comment: "Multi group"
+        users  : (none)
+        groups : group1
+                 group2
+                 group3
+        attribs:

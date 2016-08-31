@@ -1,0 +1,12 @@
+min.project
+        projid : 0
+        comment: ""
+        users  : (none)
+        groups : (none)
+        attribs:
+max.project
+        projid : 2147483647
+        comment: ""
+        users  : (none)
+        groups : (none)
+        attribs:
