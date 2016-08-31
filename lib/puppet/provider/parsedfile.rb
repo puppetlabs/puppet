@@ -103,6 +103,19 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 # HEADER: is definitely not recommended.\n}
   end
 
+  # A regular expression object for finding a vendor header in a file's
+  # content. Useful for filtering e.g. the vixie cron header.
+  def self.native_header_regex
+    nil
+  end
+
+  # Whether a parsed vendor header should be removed before emitting
+  # the generated content. This is a good idea for e.g. vixie cron.
+  # Defaults to false.
+  def self.drop_native_header
+    false
+  end
+
   # Add another type var.
   def self.initvars
     @records = []
@@ -301,6 +314,13 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
   def self.to_file(records)
     text = super
+    if native_header_regex and text =~ native_header_regex then
+      if drop_native_header then
+	return header + $` + $'
+      else
+	return nheader + header + $` + $'
+      end
+    end
     header + text
   end
 
