@@ -8,18 +8,18 @@ require "rdoc/code_objects"
 require "puppet/util/rdoc/code_objects"
 require "rdoc/tokenstream"
 
-if ::RUBY_VERSION =~ /1.9/
-	require "rdoc/markup/preprocess"
-	require "rdoc/parser"
-else
+if ::RUBY_VERSION =~ /^1.8/
 	require "rdoc/markup/simple_markup/preprocess"
 	require "rdoc/parsers/parserfactory"
+else
+	require "rdoc/markup/preprocess"
+	require "rdoc/parser"
 end
 
 module RDoc
 
 class Parser
-  extend ParserFactory unless ::RUBY_VERSION =~ /1.9/
+  extend ParserFactory if ::RUBY_VERSION =~ /^1.8/
 
   SITE = "__site__"
 

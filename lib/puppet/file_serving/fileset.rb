@@ -136,7 +136,7 @@ class Puppet::FileServing::Fileset
     result = []
     return result unless recurse?(depth)
 
-    while dir_path = current_dirs.shift or ((depth += 1) and recurse?(depth) and current_dirs = next_dirs and next_dirs = [] and dir_path = current_dirs.shift)
+    while dir_path = current_dirs.shift
       next unless stat = stat(dir_path)
       next unless stat.directory?
 
@@ -152,6 +152,14 @@ class Puppet::FileServing::Fileset
 
         # And to our list of files/directories to iterate over.
         next_dirs << File.join(dir_path, file_path)
+      end
+
+      # Move to the next recusion level
+      if current_dirs.empty?
+        depth += 1
+        break unless recurse?(depth)
+        current_dirs = next_dirs
+        next_dirs = []
       end
     end
 
