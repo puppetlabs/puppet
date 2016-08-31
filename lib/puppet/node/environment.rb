@@ -52,11 +52,12 @@ class Puppet::Node::Environment
   end
 
   def self.root
-    @root
+    @root ||= new(:'*root*')
   end
 
   def self.clear
     @seen.clear
+    @root = nil
     Thread.current[:environment] = nil
   end
 
@@ -211,6 +212,4 @@ class Puppet::Node::Environment
     # perform_initial_import when no file was actually loaded.
     return Puppet::Parser::AST::Hostclass.new('')
   end
-
-  @root = new(:'*root*')
 end
