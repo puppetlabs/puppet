@@ -50,7 +50,7 @@ describe 'Puppet::Pops::PuppetStack' do
   end
 
   it 'returns an array from stacktrace with information about each level with oldest frame last' do
-    expect(StackTraceTest.new.two_levels).to eql([['two_levels.pp', 1237], ['level2.pp', 1240]])
+    expect(StackTraceTest.new.two_levels).to eql([['level2.pp', 1240], ['two_levels.pp', 1237]])
   end
 
   it 'accepts file to be nil' do
