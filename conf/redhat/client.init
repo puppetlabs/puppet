@@ -50,9 +50,28 @@ start() {
 
 stop() {
     echo -n $"Stopping puppet: "
+    pid=`cat $pidfile 2> /dev/null`
     killproc $pidopts $puppetd
     RETVAL=$?
     echo
+    # wait until really stopped
+    i=0
+    if [ -n "${pid:-}" ]; then
+      while kill -0 "${pid:-}" 2> /dev/null;  do
+          if [ $i = '60' ]; then
+              kill -9 $pid
+              break;
+          else
+              if [ $i = '0' ]; then
+                  echo -n " ... waiting "
+              else
+                  echo -n "."
+              fi
+              i=$(($i+1))
+              sleep 1
+          fi
+      done
+    fi
     [ $RETVAL = 0 ] && rm -f ${lockfile} ${pidfile}
 }
 
