@@ -46,7 +46,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     should = @resource[:ensure]
 
     checkforcdrom
-    cmd = %w{-q -y}
+    cmd = %w{-q -y --no-remove}
 
     keep = ""
     if config = @resource[:configfiles]
