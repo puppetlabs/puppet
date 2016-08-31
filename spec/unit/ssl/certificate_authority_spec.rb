@@ -1,4 +1,5 @@
 #!/usr/bin/env rspec
+# encoding: UTF-8
 require 'spec_helper'
 
 require 'puppet/ssl/certificate_authority'
