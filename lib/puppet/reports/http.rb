@@ -16,7 +16,10 @@ Puppet::Reports.register_report(:http) do
     req.body = self.to_yaml
     req.content_type = "application/x-yaml"
     Net::HTTP.new(url.host, url.port).start {|http|
-      http.request(req)
+      response = http.request(req)
+      unless response.code == 200
+        Puppet.err "Unable to submit report to #{Puppet[:reporturl].to_s} [#{response.code}] #{response.msg}"
+      end
     }
   end
 end
