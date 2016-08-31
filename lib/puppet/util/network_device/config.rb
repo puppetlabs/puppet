@@ -2,6 +2,7 @@ require 'ostruct'
 require 'puppet/util/loadedfile'
 
 class Puppet::Util::NetworkDevice::Config < Puppet::Util::LoadedFile
+  class ConfigurationError < Puppet::Error; end
 
   def self.main
     @main ||= self.new
