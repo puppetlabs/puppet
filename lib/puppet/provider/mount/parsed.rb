@@ -196,9 +196,11 @@ Puppet::Type.type(:mount).provide(
   end
 
   # Every entry in fstab is :unmounted until we can prove different
+  # Add :realpath to entries with absolute pathnames
   def self.prefetch_hook(target_records)
     target_records.collect do |record|
       record[:ensure] = :unmounted if record[:record_type] == :parsed
+      record[:realpath] = Pathname.new(record[:name]).realpath.to_s if record[:name] =~ /^\//
       record
     end
   end
@@ -209,7 +211,7 @@ Puppet::Type.type(:mount).provide(
 
     # Update fstab entries that are mounted
     providers.each do |prov|
-      if mounts.delete({:name => prov.get(:name), :mounted => :yes}) then
+      if mounts.delete({:name => prov.get(:realpath), :mounted => :yes}) then
         prov.set(:ensure => :mounted)
       end
     end
@@ -225,13 +227,18 @@ Puppet::Type.type(:mount).provide(
     # Get providers for all resources the user defined and that match
     # a record in /etc/fstab.
     super
+    # Prepare resources hash indexed by realpath
+    res_by_realpath = Hash.new;
+    resources.each do |name,resource|
+      res_by_realpath[resource.provider.get(:realpath)] = resource
+    end
     # We need to do two things now:
     # - Update ensure from :unmounted to :mounted if the resource is mounted
     # - Check for mounted devices that are not in fstab and
     #   set ensure to :ghost (if the user wants to add an entry
     #   to fstab we need to know if the device was mounted before)
     mountinstances.each do |hash|
-      if mount = resources[hash[:name]]
+      if mount = res_by_realpath[hash[:name]]
         case mount.provider.get(:ensure)
         when :absent  # Mount not in fstab
           mount.provider.set(:ensure => :ghost)
