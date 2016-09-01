@@ -71,6 +71,17 @@ Puppet::Type.newtype(:component) do
     reference.to_s
   end
 
+  # Overrides the default implementation to do nothing.
+  # This type contains data from class/define parameters, but does
+  # not have actual parameters or properties at the Type level. We can
+  # simply ignore anything flagged as sensitive here, since any
+  # contained resources will handle that sensitivity themselves. There
+  # is no risk of this information leaking into reports, since no
+  # Component instances survive the graph transmutation.
+  #
+  def set_sensitive_parameters(sensitive_parameters)
+  end
+
   private
 
   attr_reader :reference

@@ -117,6 +117,36 @@ describe 'Sensitive Type' do
       CODE
       expect(eval_and_collect_notices(code)).to eq(['Sensitive [value redacted]'])
     end
+
+    it 'can be given to a user defined resource as a parameter' do
+      code =<<-CODE
+        define keeper_of_secrets(Sensitive $x) {
+          notice(assert_type(Sensitive[String], $x))
+        }
+        keeper_of_secrets { 'test': x => Sensitive("long toe") }
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['Sensitive [value redacted]'])
+    end
+
+    it 'can be given to a class as a parameter' do
+      code =<<-CODE
+        class keeper_of_secrets(Sensitive $x) {
+          notice(assert_type(Sensitive[String], $x))
+        }
+        class { 'keeper_of_secrets': x => Sensitive("long toe") }
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['Sensitive [value redacted]'])
+    end
+
+    it 'can be given to a function as a parameter' do
+      code =<<-CODE
+        function keeper_of_secrets(Sensitive $x) {
+          notice(assert_type(Sensitive[String], $x))
+        }
+        keeper_of_secrets(Sensitive("long toe"))
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['Sensitive [value redacted]'])
+    end
   end
 
   it "enforces wrapped type constraints" do
