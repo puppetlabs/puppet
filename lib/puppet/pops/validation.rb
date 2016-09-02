@@ -200,7 +200,15 @@ module Validation
       # TODO: this support is questionable, it requires knowledge that :detail is special
       arguments[:detail] ||= ''
 
-      if semantic.is_a?(Puppet::Parser::Resource)
+      # Accept an Error as semantic if it supports methods #file(), #line(), and #pos()
+      if semantic.is_a?(StandardError)
+        unless semantic.respond_to?(:file) && semantic.respond_to?(:line) && semantic.respond_to?(:pos)
+          raise Puppet::DevError("Issue #{issue.issue_code}: Cannot pass a #{semantic.class} as a semantic object when it does not support #pos(), #file() and #line()")
+        end
+        source_pos = semantic
+        file = semantic.file
+
+      elsif semantic.is_a?(Puppet::Parser::Resource)
         source_pos = semantic
         file = semantic.file
       else
