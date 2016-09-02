@@ -1,13 +1,13 @@
 require 'yaml'
-
-test_name "C98092 - a new resource should not be reported as a corrective change" do
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils
+
+test_name "C98093 - a resource changed outside of Puppet will be reported as a corrective change" do
 
   test_file_name = File.basename(__FILE__, '.*')
   tmp_environment   = mk_tmp_environment_with_teardown(master, test_file_name)
   tmp_file = {}
-  
+
   agents.each do |agent|
     tmp_file[agent.hostname] = agent.tmpfile(tmp_environment)
   end
@@ -17,13 +17,13 @@ extend Puppet::Acceptance::EnvironmentUtils
       agents.each do |agent|
         if tmp_file.has_key?(agent.hostname) && tmp_file[agent.hostname] != ''  
           on(agent, "rm #{tmp_file[agent.hostname]}", :accept_all_exit_codes => true)
-        end 
+        end
       end
     end
   end
 
   step 'create file resource - site.pp to verify corrective change flag' do
-    file_contents     = 'this is a test'   
+    file_contents = 'this is a test'
     manifest = <<MANIFEST
 file { '#{environmentpath}/#{tmp_environment}/manifests/site.pp':
   ensure => file,
@@ -32,7 +32,7 @@ file { '#{environmentpath}/#{tmp_environment}/manifests/site.pp':
 file { \$test_path:
   content => @(UTF8)
     #{file_contents}
-    | UTF8 
+    | UTF8
 }
   ',
 }
@@ -50,6 +50,23 @@ MANIFEST
           on(agent, puppet("agent -t --environment #{tmp_environment} --server #{master.hostname}"),:acceptable_exit_codes => 2)
         end
 
+        #Verify the file resource is created
+        step 'Verify the file resource is created' do
+          on(agent, "cat #{tmp_file[fqdn]}").stdout do |file_result|
+            assert_equal(file_contents, file_result, 'file contents did not match accepted')
+          end
+        end
+
+        #Delete the file
+        step 'Delete the file' do
+          on(agent, "rm #{tmp_file[fqdn]}", :accept_all_exit_codes => true)
+        end
+
+        #Run agent to correct the file's absence
+        step 'Run agent to correct the files absence' do
+          on(agent, puppet("agent -t --environment #{tmp_environment} --server #{master.hostname}"),:acceptable_exit_codes => 2)
+        end
+ 
         #Verify the file resource is created
         step 'Verify the file resource is created' do
           on(agent, "cat #{tmp_file[fqdn]}").stdout do |file_result|
@@ -81,7 +98,7 @@ MANIFEST
           file_resource_details = report_yaml["resource_statuses"]["File[#{tmp_file[agent.hostname]}]"]
           assert(file_resource_details.has_key?("corrective_change"),'corrective_change key is missing')
           corrective_change_value =  file_resource_details["corrective_change"]
-          assert_equal(false, corrective_change_value, 'corrective_change flag should be false')
+          assert_equal(true, corrective_change_value, 'corrective_change flag should be true') 
         end
       end
     end
