@@ -1,4 +1,4 @@
-test_name "C97899 - Agent run should fail if environment is unreadable" do
+test_name "C98160 - Agent run should fail if an environment's site.pp is unreadable" do
   skip_test 'requires a master for managing the environment' if hosts_with_role(hosts, 'master').length == 0
 
   testdir = ''
@@ -26,14 +26,10 @@ test_name "C97899 - Agent run should fail if environment is unreadable" do
       }
       file { '#{test_env}/manifests/site.pp':
         ensure => file,
-        mode => "0640",
+        mode => "0000",  # <- NOTE: this is unreadable
         content => 'node default { notify { "Hello agent": } }',
       }
     MANIFEST
-  end
-
-  step 'change permissions of envdir to 644' do
-    on(master, "chmod 644 #{test_env}")
   end
 
   step 'verify environment fails with puppet agent run' do
@@ -46,10 +42,8 @@ test_name "C97899 - Agent run should fail if environment is unreadable" do
       agents.each do |agent|
         on(agent, puppet("agent --test --server #{master} --environment testing"), :accept_all_exit_codes => true) do |result|
           refute_equal(2, result.exit_code, 'agent run should not apply changes')
-          expect_failure('expected to fail until PUP-6241 is resolved') do
-            refute_equal(0, result.exit_code, 'agent run should not succeed')
-            refute_empty(result.stderr, 'an appropriate error is expected')
-          end
+          refute_equal(0, result.exit_code, 'agent run should not succeed')
+          refute_empty(result.stderr, 'an appropriate error is expected')
         end
       end
     end
