@@ -174,7 +174,7 @@ module Time
       when Float
         to_f.divmod(o)
       else
-        raise ArgumentError, "Can not do modulus on a Timestamp using a #{a_an(o)}"
+        raise ArgumentError, "Can not do modulus on a Timespan using a #{a_an(o)}"
       end
     end
 
