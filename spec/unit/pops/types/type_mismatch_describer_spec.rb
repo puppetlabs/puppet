@@ -112,6 +112,42 @@ describe 'the type mismatch describer' do
        /parameter 'evars' expects a match for EVariants = Enum\['a', 'b', 'c', 'd'\], got 'n'/))
   end
 
+  it "will not generalize a string that doesn't match an enum in a function call" do
+    code = <<-CODE
+      function check_enums(Enum[a,b] $arg) {}
+      check_enums('c')
+    CODE
+    expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
+      /parameter 'arg' expects a match for Enum\['a', 'b'\], got 'c'/))
+  end
+
+  it "will not disclose a Sensitive that doesn't match an enum in a function call" do
+    code = <<-CODE
+      function check_enums(Enum[a,b] $arg) {}
+      check_enums(Sensitive('c'))
+    CODE
+    expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
+      /parameter 'arg' expects a match for Enum\['a', 'b'\], got Sensitive/))
+  end
+
+  it "will not generalize a string that doesn't match an enum in a define call" do
+    code = <<-CODE
+      define check_enums(Enum[a,b] $arg) {}
+      check_enums { x: arg => 'c' }
+    CODE
+    expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
+      /parameter 'arg' expects a match for Enum\['a', 'b'\], got 'c'/))
+  end
+
+  it "will not disclose a Sensitive that doesn't match an enum in a define call" do
+    code = <<-CODE
+      define check_enums(Enum[a,b] $arg) {}
+      check_enums { x: arg => Sensitive('c') }
+    CODE
+    expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
+      /parameter 'arg' expects a match for Enum\['a', 'b'\], got Sensitive/))
+  end
+
   context 'when reporting a mismatch between' do
     let(:parser) { TypeParser.new }
     let(:subject) { TypeMismatchDescriber.singleton }
