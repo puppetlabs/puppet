@@ -32,9 +32,13 @@ MANIFEST
       end
     end
 
-    step "Ensure the files are removed:" do
+    step "Verify that the files are actually removed successfully:" do
       present = files.map {|file| "-f #{File.join(dir, file)}"}.join(' -o ')
       on(agent, "[ #{present} ]", :acceptable_exit_codes => [1])
+    end
+
+    teardown do
+      on(agent, "puppet apply -e \"file{'#{dir}': ensure => absent, force => true}\"")
     end
   end
 end
