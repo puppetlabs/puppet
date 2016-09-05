@@ -30,14 +30,6 @@ module Time
       @nsecs = nano_seconds
     end
 
-    def eql?(o)
-      o.class == self.class && @nsecs.eql?(o.nsecs)
-    end
-
-    def ==(o)
-      eql?(o)
-    end
-
     def <=>(o)
       case o
       when self.class
