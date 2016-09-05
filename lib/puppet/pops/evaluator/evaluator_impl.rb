@@ -118,6 +118,7 @@ class EvaluatorImpl
       fail(Issues::RUNTIME_ERROR, target, {:detail => e.message}, e.original || e)
 
     rescue StopIteration => e
+      # Ensure these are not rescued as StandardError
       raise e
 
     rescue StandardError => e
@@ -707,7 +708,16 @@ class EvaluatorImpl
   end
 
   def eval_Program(o, scope)
-    evaluate(o.body, scope)
+    begin
+      file = o.locator.file
+      line = 0
+      # Add stack frame for "top scope" logic. See Puppet::Pops::PuppetStack
+      return Puppet::Pops::PuppetStack.stack(file, line, self, 'evaluate', [o.body, scope])
+      #evaluate(o.body, scope)
+    rescue Puppet::Pops::Evaluator::PuppetStopIteration => ex
+      # breaking out of a file level program is not allowed
+      raise Puppet::ParseError.new("break() from context where this is illegal", ex.file, ex.line)
+    end
   end
 
   # Produces Array[PAnyType], an array of resource references

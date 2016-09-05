@@ -2,20 +2,40 @@ module Puppet::Pops
 module Evaluator
   class Jumper < Exception
     attr_reader :value
-    def initialize(value)
+    attr_reader :file
+    attr_reader :line
+    def initialize(value, file, line)
       @value = value
+      @file = file
+      @line = line
     end
   end
 
   class Next < Jumper
-    def initialize(value)
+    def initialize(value, file, line)
       super
     end
   end
 
   class Return < Jumper
-    def initialize(value)
+    def initialize(value, file, line)
       super
+    end
+  end
+
+  class PuppetStopIteration < StopIteration
+    attr_reader :file
+    attr_reader :line
+    attr_reader :pos
+
+    def initialize(file, line, pos = nil)
+      @file = file
+      @line = line
+      @pos = pos
+    end
+
+    def message
+      "break() from context where this is illegal"
     end
   end
 
@@ -150,6 +170,16 @@ class Closure < CallableSignature
 
     def enclosing_scope
       @enclosing_scope
+    end
+
+    def call(*args)
+      # A return from an unnamed closure is treated as a return from the context evaluating
+      # calling this closure - that is, as if it was the return call itself.
+      #
+      jumper = catch(:return) do
+        return call_with_scope(enclosing_scope, args)
+      end
+      raise jumper
     end
   end
 
