@@ -167,7 +167,7 @@ describe 'Timespan type' do
         expect(eval_and_collect_notices(code)).to eq(%w(false false true true false false true true))
       end
 
-      it 'is not equal to integer that represents seconds' do
+      it 'is equal to integer that represents seconds' do
         code = <<-CODE
             $o1 = Timespan('02', '%S')
             $o2 = 2
@@ -175,10 +175,10 @@ describe 'Timespan type' do
             notice($o1 != $o2)
             notice(Integer($o1) == $o2)
         CODE
-        expect(eval_and_collect_notices(code)).to eq(%w(false true true))
+        expect(eval_and_collect_notices(code)).to eq(%w(true false true))
       end
 
-      it 'integer that represents seconds is not equal to it' do
+      it 'integer that represents seconds is equal to it' do
         code = <<-CODE
             $o1 = 2
             $o2 = Timespan('02', '%S')
@@ -186,7 +186,7 @@ describe 'Timespan type' do
             notice($o1 != $o2)
             notice($o1 == Integer($o2))
         CODE
-        expect(eval_and_collect_notices(code)).to eq(%w(false true true))
+        expect(eval_and_collect_notices(code)).to eq(%w(true false true))
       end
 
       it 'can be compared to float that represents seconds with fraction' do
@@ -223,7 +223,7 @@ describe 'Timespan type' do
         expect(eval_and_collect_notices(code)).to eq(%w(false false true true false false true true))
       end
 
-      it 'is not equal to float that represents seconds with fraction' do
+      it 'is equal to float that represents seconds with fraction' do
         code = <<-CODE
             $o1 = Timespan('02.123456789', '%S.%N')
             $o2 = 2.123456789
@@ -231,10 +231,10 @@ describe 'Timespan type' do
             notice($o1 != $o2)
             notice(Float($o1) == $o2)
         CODE
-        expect(eval_and_collect_notices(code)).to eq(%w(false true true))
+        expect(eval_and_collect_notices(code)).to eq(%w(true false true))
       end
 
-      it 'float that represents seconds with fraction is not equal to it' do
+      it 'float that represents seconds with fraction is equal to it' do
         code = <<-CODE
             $o1 = 2.123456789
             $o2 = Timespan('02.123456789', '%S.%N')
@@ -242,7 +242,7 @@ describe 'Timespan type' do
             notice($o1 != $o2)
             notice($o1 == Float($o2))
         CODE
-        expect(eval_and_collect_notices(code)).to eq(%w(false true true))
+        expect(eval_and_collect_notices(code)).to eq(%w(true false true))
       end
     end
   end

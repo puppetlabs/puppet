@@ -165,7 +165,7 @@ describe 'Timestamp type' do
         expect(eval_and_collect_notices(code)).to eq(%w(false false true true false false true true))
       end
 
-      it 'is not equal to integer that represents seconds since epoch' do
+      it 'is equal to integer that represents seconds since epoch' do
         code = <<-CODE
             $o1 = Timestamp('2015-06-01T00:00:00 UTC')
             $o2 = 1433116800
@@ -173,10 +173,10 @@ describe 'Timestamp type' do
             notice($o1 != $o2)
             notice(Integer($o1) == $o2)
         CODE
-        expect(eval_and_collect_notices(code)).to eq(%w(false true true))
+        expect(eval_and_collect_notices(code)).to eq(%w(true false true))
       end
 
-      it 'integer that represents seconds is not equal to it' do
+      it 'integer that represents seconds is equal to it' do
         code = <<-CODE
             $o1 = 1433116800
             $o2 = Timestamp('2015-06-01T00:00:00 UTC')
@@ -184,7 +184,7 @@ describe 'Timestamp type' do
             notice($o1 != $o2)
             notice($o1 == Integer($o2))
         CODE
-        expect(eval_and_collect_notices(code)).to eq(%w(false true true))
+        expect(eval_and_collect_notices(code)).to eq(%w(true false true))
       end
 
       it 'can be compared to float that represents seconds with fraction since epoch' do
@@ -221,7 +221,7 @@ describe 'Timestamp type' do
         expect(eval_and_collect_notices(code)).to eq(%w(false false true true false false true true))
       end
 
-      it 'is not equal to float that represents seconds with fraction since epoch' do
+      it 'is equal to float that represents seconds with fraction since epoch' do
         code = <<-CODE
             $o1 = Timestamp('2015-06-01T00:00:00.123456789 UTC')
             $o2 = 1433116800.123456789
@@ -229,10 +229,10 @@ describe 'Timestamp type' do
             notice($o1 != $o2)
             notice(Float($o1) == $o2)
         CODE
-        expect(eval_and_collect_notices(code)).to eq(%w(false true true))
+        expect(eval_and_collect_notices(code)).to eq(%w(true false true))
       end
 
-      it 'float that represents seconds with fraction is not equal to it' do
+      it 'float that represents seconds with fraction is equal to it' do
         code = <<-CODE
             $o1 = 1433116800.123456789
             $o2 = Timestamp('2015-06-01T00:00:00.123456789 UTC')
@@ -240,7 +240,7 @@ describe 'Timestamp type' do
             notice($o1 != $o2)
             notice($o1 == Float($o2))
         CODE
-        expect(eval_and_collect_notices(code)).to eq(%w(false true true))
+        expect(eval_and_collect_notices(code)).to eq(%w(true false true))
       end
     end
   end
