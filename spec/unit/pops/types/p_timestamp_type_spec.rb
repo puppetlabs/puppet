@@ -242,6 +242,13 @@ describe 'Timestamp type' do
         CODE
         expect(eval_and_collect_notices(code)).to eq(%w(true false true))
       end
+
+      it 'it cannot be compared to a Timespan' do
+        code = <<-CODE
+            notice(Timestamp() > Timespan(3))
+        CODE
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Timestamps are only comparable to Timestamps, Integers, and Floats/)
+      end
     end
   end
 end
