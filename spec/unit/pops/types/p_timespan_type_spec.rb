@@ -33,6 +33,13 @@ describe 'Timespan type' do
         expect(eval_and_collect_notices(code)).to eq(%w(true true))
       end
 
+      it 'using just one parameter is the same as using that parameter twice' do
+        code = <<-CODE
+            notice(Timespan['01:00:00'] == Timespan['01:00:00', '01:00:00'])
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(%w(true))
+      end
+
       it 'orders parameterized types based on range inclusion' do
         code = <<-CODE
             notice(Timespan['01:00:00', '13:00:00'] < Timespan['00:00:00', '14:00:00'])
@@ -49,7 +56,7 @@ describe 'Timespan type' do
             notice($o)
             notice(type($o))
         CODE
-        expect(eval_and_collect_notices(code)).to eq(['3-11:00:00', 'Timespan[{days => 3, hours => 11}, {days => 3, hours => 11}]'])
+        expect(eval_and_collect_notices(code)).to eq(['3-11:00:00', 'Timespan[{days => 3, hours => 11}]'])
       end
 
       it 'can be created from a string and format' do

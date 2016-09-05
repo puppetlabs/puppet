@@ -203,7 +203,7 @@ class TypeFormatter
     max = t.to
     append_array('Timestamp', min.nil? && max.nil?) do
       min.nil? ? append_default : append_string(min)
-      unless max.nil?
+      unless max.nil? || max == min
         @bld << COMMA_SEP
         append_string(max)
       end
@@ -216,7 +216,7 @@ class TypeFormatter
     max = t.to
     append_array('Timespan', min.nil? && max.nil?) do
       min.nil? ? append_default : append_string(min)
-      unless max.nil?
+      unless max.nil? || max == min
         @bld << COMMA_SEP
         append_string(max)
       end

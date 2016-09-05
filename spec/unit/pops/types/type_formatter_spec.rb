@@ -186,12 +186,28 @@ end
       expect(s.string(f.timespan({'hours' => 1}))).to eq('Timespan[{hours => 1}]')
     end
 
-    it "should yield 'Timespan[?, {hours => 2}] for PTimespanType[nil, Timespan]" do
+    it "should yield 'Timespan[default, {hours => 2}] for PTimespanType[nil, Timespan]" do
       expect(s.string(f.timespan(nil, {'hours' => 2}))).to eq('Timespan[default, {hours => 2}]')
     end
 
     it "should yield 'Timespan[{hours => 1}, {hours => 2}] for PTimespanType[Timespan, Timespan]" do
       expect(s.string(f.timespan({'hours' => 1}, {'hours' => 2}))).to eq('Timespan[{hours => 1}, {hours => 2}]')
+    end
+
+    it "should yield 'Timestamp' for PTimestampType" do
+      expect(s.string(f.timestamp())).to eq('Timestamp')
+    end
+
+    it "should yield 'Timestamp['2016-09-05T13:00:00.000 UTC'] for PTimestampType[Timestamp]" do
+      expect(s.string(f.timestamp('2016-09-05T13:00:00.000 UTC'))).to eq("Timestamp['2016-09-05T13:00:00.000 UTC']")
+    end
+
+    it "should yield 'Timestamp[default, '2016-09-05T13:00:00.000 UTC'] for PTimestampType[nil, Timestamp]" do
+      expect(s.string(f.timestamp(nil, '2016-09-05T13:00:00.000 UTC'))).to eq("Timestamp[default, '2016-09-05T13:00:00.000 UTC']")
+    end
+
+    it "should yield 'Timestamp['2016-09-05T13:00:00.000 UTC', '2016-12-01T00:00:00.000 UTC'] for PTimestampType[Timestamp, Timestamp]" do
+      expect(s.string(f.timestamp('2016-09-05T13:00:00.000 UTC', '2016-12-01T00:00:00.000 UTC'))).to eq("Timestamp['2016-09-05T13:00:00.000 UTC', '2016-12-01T00:00:00.000 UTC']")
     end
 
     it "should yield 'Tuple[Integer]' for PTupleType[PIntegerType]" do

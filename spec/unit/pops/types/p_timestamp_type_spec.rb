@@ -34,6 +34,13 @@ describe 'Timestamp type' do
         expect(eval_and_collect_notices(code)).to eq(%w(true true))
       end
 
+      it 'using just one parameter is the same as using that parameter twice' do
+        code = <<-CODE
+            notice(Timestamp['2015-03-01'] == Timestamp['2015-03-01', '2015-03-01'])
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(%w(true))
+      end
+
       it 'orders parameterized types based on range inclusion' do
         code = <<-CODE
             notice(Timestamp['2015-03-01', '2015-09-30'] < Timestamp['2015-02-01', '2015-10-30'])
@@ -50,7 +57,7 @@ describe 'Timestamp type' do
             notice($o)
             notice(type($o))
         CODE
-        expect(eval_and_collect_notices(code)).to eq(['2015-03-01T00:00:00.000 UTC', "Timestamp['2015-03-01T00:00:00.000 UTC', '2015-03-01T00:00:00.000 UTC']"])
+        expect(eval_and_collect_notices(code)).to eq(['2015-03-01T00:00:00.000 UTC', "Timestamp['2015-03-01T00:00:00.000 UTC']"])
       end
 
       it 'can be created from a string and format' do
