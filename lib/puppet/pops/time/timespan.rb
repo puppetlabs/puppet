@@ -474,7 +474,7 @@ module Time
         end
 
         def multiplier
-          width = @widht || @default_width
+          width = @width || @default_width
           if width < 9
             10 ** (9 - width)
           else
@@ -484,7 +484,7 @@ module Time
 
         def append_to(bld, ts)
           ns = ts.total_nano_seconds
-          width = @widht || @default_width
+          width = @width || @default_width
           if width < 9
             # Truncate digits to the right, i.e. let %6N reflect microseconds
             ns /= 10 ** (9 - width)

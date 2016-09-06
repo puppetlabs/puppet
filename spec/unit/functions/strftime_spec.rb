@@ -10,12 +10,12 @@ describe 'the strftime function' do
 
   context 'when applied to a Timespan' do
     [
-      ['hours', 'H', 2, true],
-      ['minutes', 'M', 2, true],
-      ['seconds', 'S', 2, true],
-      ['milli_seconds', 'L', 3, true],
-      ['nano_seconds', 'N', 9, false],
-    ].each do |field, fmt, dflt_width, has_width|
+      ['hours', 'H', 2],
+      ['minutes', 'M', 2],
+      ['seconds', 'S', 2],
+      ['milli_seconds', 'L', 3],
+      ['nano_seconds', 'N', 9],
+    ].each do |field, fmt, dflt_width|
       ctor_arg = "{#{field}=>3}"
       it "%#{fmt} width defaults to #{dflt_width}" do
         test_format(ctor_arg, "%#{fmt}", sprintf("%0#{dflt_width}d", 3))
@@ -39,6 +39,25 @@ describe 'the strftime function' do
 
       it "%-10#{fmt} does not pad even if width is specified" do
         test_format(ctor_arg, "%-10#{fmt}", '3')
+      end
+    end
+
+    [
+      ['milli_seconds', '3N', 3],
+      ['micro_seconds', '6N', 6],
+      ['nano_seconds', '9N', 9],
+    ].each do |field, fmt, dflt_width|
+      ctor_arg = "{#{field}=>3}"
+      it "%#{fmt} width defaults to #{dflt_width}" do
+        test_format(ctor_arg, "%#{fmt}", sprintf("%0#{dflt_width}d", 3))
+      end
+
+      it "%_#{fmt} pads with space" do
+        test_format(ctor_arg, "%_#{fmt}", sprintf("% #{dflt_width}d", 3))
+      end
+
+      it "%-#{fmt} does not pad" do
+        test_format(ctor_arg, "%-#{fmt}", '3')
       end
     end
 
