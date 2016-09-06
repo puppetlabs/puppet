@@ -1,7 +1,7 @@
 require 'puppet/util/tag_set'
 
 module Puppet::Util::Tagging
-  ValidTagRegex = /^[0-9A-Za-z_][0-9A-Za-z_:.-]*$/
+  ValidTagRegex = /\A[0-9A-Za-z_][0-9A-Za-z_:.-]*\Z/
 
   # Add a tag to the current tag set.
   # When a tag set is used for a scope, these tags will be added to all of
