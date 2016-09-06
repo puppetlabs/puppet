@@ -324,7 +324,7 @@ a conversion specifier as follows:
 | -     | Don't pad numerical output
 | _     | Use spaces for padding
 | 0     | Use zeros for padding
-| #     | Change case
+| #     | Change names to upper-case or change case of am/pm
 | ^     | Use uppercase
 | :     | Use colons for %z
 
