@@ -153,6 +153,278 @@ $a_number = Numeric("010")   # results in 8
 $a_number = Numeric("3.14")  # results in 3.14 (a float)
 ```
 
+Conversion to Timespan
+-------------------
+
+A new `Timespan` can be created from `Integer`, `Float`, `String`, and `Hash` values. Several variants of the constructor are provided.
+
+#### Timespan from seconds
+
+```puppet
+function Timespan.new(
+  Variant[Float, Integer] $value
+)
+```
+
+#### Timespan from days, hours, mintues, seconds, and fractions of a second
+
+The arguments can be passed separately in which case the first four, days, hours, minutes, and seconds are mandatory and the rest are optional:
+
+```puppet
+function Timespan.new(
+  Integer $days, Integer $hours, Integer $minutes, Integer $seconds,
+  Integer $milli_seconds = 0, Integer $micro_seconds = 0, Integer $nano_seconds = 0
+)
+```
+
+or, all arguments can be passed as a `Hash`, in which case all entries are optional:
+
+```puppet
+function Timespan.new(
+  Struct[{
+    Optional[negative] => Boolean,
+    Optional[days] => Integer,
+    Optional[hours] => Integer,
+    Optional[minutes] => Integer,
+    Optional[seconds] => Integer,
+    Optional[milli_seconds] => Integer,
+    Optional[micro_seconds] => Integer,
+    Optional[nano_seconds] => Integer
+  }] $hash
+)
+```
+
+#### Timespan from String and patterns consisting of format directives
+
+The first argument is parsed using the format directives optinally passed as a string or array of strings. If the second argument is omitted, an array of default format directives will be used:
+
+```puppet
+function Timespan.new(
+  String $string, Variant[String[2],Array[String[2]], 1] $format = <default format>)
+)
+```
+
+the arguments may also be passed as a `Hash`:
+
+```puppet
+function Timespan.new(
+  Struct[{
+    string => String[1],
+    Optional[format] => Variant[String[2],Array[String[2]], 1]
+  }] $hash
+)
+```
+
+The directive consists of a percent (%) character, zero or more flags, optional minimum field width and
+a conversion specifier as follows:
+```
+%[Flags][Width]Conversion
+```
+
+##### Flags:
+
+| Flag  | Meaning
+| ----  | ---------------
+| -     | Don't pad numerical output
+| _     | Use spaces for padding
+| 0     | Use zeros for padding
+
+##### Format directives:
+
+| Format | Meaning |
+| ------ | ------- |
+| D | Number of Days |
+| H | Hour of the day, 24-hour clock |
+| M | Minute of the hour (00..59) |
+| S | Second of the minute (00..59) |
+| L | Millisecond of the second (000..999) |
+| N | Fractional seconds digits |
+
+The format directive that represents the highest magnitude in the format will be allowed to
+overflow. I.e. if no "%D" is used but a "%H" is present, then the hours may be more than 23.
+
+The default array contains the following patterns:
+
+```
+['%D-%H:%M:%S', '%D-%H:%M', '%H:%M:%S', '%H:%M']
+```
+
+Examples - Converting to Timespan
+
+```puppet
+$duration = Timespan(13.5)       # 13 seconds and 500 milliseconds
+$duration = Timespan({days=>4})  # 4 days
+$duration = Timespan(4, 0, 0, 2) # 4 days and 2 seconds
+$duration = Timespan('13:20')    # 13 hours and 20 minutes (using default pattern)
+$duration = Timespan('10:03.5', '%M:%S.%L') # 10 minutes, 3 seconds, and 5 milli-seconds
+$duration = Timespan('10:03.5', '%M:%S.%N') # 10 minutes, 3 seconds, and 5 nano-seconds
+```
+
+Conversion to Timestamp
+-------------------
+
+A new `Timestamp` can be created from `Integer`, `Float`, `String`, and `Hash` values. Several variants of the constructor are provided.
+
+#### Timestamp from seconds since epoch (1970-01-01 00:00:00 UTC)
+
+```puppet
+function Timestamp.new(
+  Variant[Float, Integer] $value
+)
+```
+
+#### Timestamp from String and patterns consisting of format directives
+
+The first argument is parsed using the format directives optinally passed as a string or array of strings. If the second argument is omitted, an array of default format directives will be used:
+
+```puppet
+function Timestamp.new(
+  String $string, Variant[String[2],Array[String[2]], 1] $format = <default format>)
+)
+```
+
+the arguments may also be passed as a `Hash`:
+
+```puppet
+function Timestamp.new(
+  Struct[{
+    string => String[1],
+    Optional[format] => Variant[String[2],Array[String[2]], 1]
+  }] $hash
+)
+```
+
+The directive consists of a percent (%) character, zero or more flags, optional minimum field width and
+a conversion specifier as follows:
+```
+%[Flags][Width]Conversion
+```
+
+##### Flags:
+
+| Flag  | Meaning
+| ----  | ---------------
+| -     | Don't pad numerical output
+| _     | Use spaces for padding
+| 0     | Use zeros for padding
+| #     | Change case
+| ^     | Use uppercase
+| :     | Use colons for %z
+
+##### Format directives (names and padding can be altered using flags):
+
+**Date (Year, Month, Day):**
+
+| Format | Meaning |
+| ------ | ------- |
+| Y | Year with century, zero-padded to at least 4 digits |
+| C | year / 100 (rounded down such as 20 in 2009) |
+| y | year % 100 (00..99) |
+| m | Month of the year, zero-padded (01..12) |
+| B | The full month name ("January") |
+| b | The abbreviated month name ("Jan") |
+| h | Equivalent to %b |
+| d | Day of the month, zero-padded (01..31) |
+| e | Day of the month, blank-padded ( 1..31) |
+| j | Day of the year (001..366) |
+
+**Time (Hour, Minute, Second, Subsecond):**
+
+| Format | Meaning |
+| ------ | ------- |
+| H | Hour of the day, 24-hour clock, zero-padded (00..23) |
+| k | Hour of the day, 24-hour clock, blank-padded ( 0..23) |
+| I | Hour of the day, 12-hour clock, zero-padded (01..12) |
+| l | Hour of the day, 12-hour clock, blank-padded ( 1..12) |
+| P | Meridian indicator, lowercase ("am" or "pm") |
+| p | Meridian indicator, uppercase ("AM" or "PM") |
+| M | Minute of the hour (00..59) |
+| S | Second of the minute (00..60) |
+| L | Millisecond of the second (000..999). Digits under millisecond are truncated to not produce 1000 |
+| N | Fractional seconds digits, default is 9 digits (nanosecond). Digits under a specified width are truncated to avoid carry up |
+
+**Time (Hour, Minute, Second, Subsecond):**
+
+| Format | Meaning |
+| ------ | ------- |
+| z   | Time zone as hour and minute offset from UTC (e.g. +0900) |
+| :z  | hour and minute offset from UTC with a colon (e.g. +09:00) |
+| ::z | hour, minute and second offset from UTC (e.g. +09:00:00) |
+| Z   | Abbreviated time zone name or similar information.  (OS dependent) |
+
+**Weekday:**
+
+| Format | Meaning |
+| ------ | ------- |
+| A | The full weekday name ("Sunday") |
+| a | The abbreviated name ("Sun") |
+| u | Day of the week (Monday is 1, 1..7) |
+| w | Day of the week (Sunday is 0, 0..6) |
+
+**ISO 8601 week-based year and week number:**
+
+The first week of YYYY starts with a Monday and includes YYYY-01-04.
+The days in the year before the first week are in the last week of
+the previous year.
+
+| Format | Meaning |
+| ------ | ------- |
+| G | The week-based year |
+| g | The last 2 digits of the week-based year (00..99) |
+| V | Week number of the week-based year (01..53) |
+
+**Week number:**
+
+The first week of YYYY that starts with a Sunday or Monday (according to %U
+or %W). The days in the year before the first week are in week 0.
+
+| Format | Meaning |
+| ------ | ------- |
+| U | Week number of the year. The week starts with Sunday. (00..53) |
+| W | Week number of the year. The week starts with Monday. (00..53) |
+
+**Seconds since the Epoch:**
+
+| Format | Meaning |
+| s | Number of seconds since 1970-01-01 00:00:00 UTC. |
+
+**Literal string:**
+
+| Format | Meaning |
+| ------ | ------- |
+| n | Newline character (\n) |
+| t | Tab character (\t) |
+| % | Literal "%" character |
+
+**Combination:**
+
+| Format | Meaning |
+| ------ | ------- |
+| c | date and time (%a %b %e %T %Y) |
+| D | Date (%m/%d/%y) |
+| F | The ISO 8601 date format (%Y-%m-%d) |
+| v | VMS date (%e-%^b-%4Y) |
+| x | Same as %D |
+| X | Same as %T |
+| r | 12-hour time (%I:%M:%S %p) |
+| R | 24-hour time (%H:%M) |
+| T | 24-hour time (%H:%M:%S) |
+
+The default array contains the following patterns:
+
+```
+['%FT%T.%L %Z', '%FT%T %Z', '%F %Z', '%FT%T.L', '%FT%T', '%F']
+```
+
+Examples - Converting to Timestamp
+
+```puppet
+$ts = Timestamp(1473150899)                              # 2016-09-06 08:34:59 UTC
+$ts = Timestamp({string=>'2015', format=>'%Y'})          # 2015-01-01 00:00:00.000 UTC
+$ts = Timestamp('Wed Aug 24 12:13:14 2016', '%c')        # 2016-08-24 12:13:14 UTC
+$ts = Timestamp('Wed Aug 24 12:13:14 2016 PDT', '%c %Z') # 2016-08-24 19:13:14.000 UTC
+```
+
 Conversion to String
 --------------------
 
