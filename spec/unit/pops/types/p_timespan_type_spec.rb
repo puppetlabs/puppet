@@ -67,6 +67,14 @@ describe 'Timespan type' do
         expect(eval_and_collect_notices(code)).to eq(%w(1-11:23:00))
       end
 
+      it 'can be created from a hash with string and format' do
+        code = <<-CODE
+            $o = Timespan({string => '1d11h23m', format => '%Dd%Hh%Mm'})
+            notice($o)
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(%w(1-11:23:00))
+      end
+
       it 'can be created from a string and array of formats' do
         code = <<-CODE
             $fmts = ['%Dd%Hh%Mm%Ss', '%Hh%Mm%Ss', '%Dd%Hh%Mm', '%Dd%Hh', '%Hh%Mm', '%Mm%Ss', '%Dd', '%Hh', '%Mm', '%Ss' ]

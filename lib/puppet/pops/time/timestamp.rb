@@ -12,7 +12,7 @@ class Timestamp < TimeData
   end
 
   def self.from_hash(args_hash)
-    parse(args[KEY_STRING], args[KEY_FORMAT] || DEFAULT_FORMATS)
+    parse(args_hash[KEY_STRING], args_hash[KEY_FORMAT] || DEFAULT_FORMATS)
   end
 
   def self.parse(str, format = DEFAULT_FORMATS)

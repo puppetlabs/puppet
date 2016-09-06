@@ -41,7 +41,7 @@ module Types
         end
 
         def from_string_hash(args_hash)
-          Time::Timestamp.from_string_hash(args)
+          Time::Timestamp.from_hash(args_hash)
         end
 
         def from_seconds(seconds)

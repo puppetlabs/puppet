@@ -68,6 +68,14 @@ describe 'Timestamp type' do
         expect(eval_and_collect_notices(code)).to eq(['2016-08-28T00:00:00.000 UTC'])
       end
 
+      it 'can be created from a hash with string and format' do
+        code = <<-CODE
+            $o = Timestamp({ string => 'Sunday, 28 August, 2016', format => '%A, %d %B, %Y' })
+            notice($o)
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(['2016-08-28T00:00:00.000 UTC'])
+      end
+
       it 'can be created from a string and array of formats' do
         code = <<-CODE
             $fmts = [
