@@ -865,11 +865,32 @@ class Puppet::Parser::Compiler
     scope = @topscope.class_scope(settings_type)
 
     env = environment
+    settings_hash = {}
     Puppet.settings.each do |name, setting|
       next if name == :name
-      scope[name.to_s] = env[name]
+      name = name.to_s
+      # Construct a hash (in anticipation it will be set in top scope under a name like $settings)
+      settings_hash[name] = transform_setting(env[name])
+      scope[name.to_s] = settings_hash[name]
     end
   end
+
+  def transform_setting(val)
+    case val
+    when Integer, Float, String
+      val
+    when Symbol
+      val == :undef ? nil : val.to_s
+    when Array
+      val.map {|entry| transform_setting(entry) }
+    when Hash
+      Hash[val.map {|k,v| [transform_setting(k), transform_setting(v)] }]
+    else
+      # not ideal, but required as there are settings values that are special
+      val.to_s
+    end
+  end
+  private :transform_setting
 
   # Return an array of all of the unevaluated resources.  These will be definitions,
   # which need to get evaluated into native resources.
