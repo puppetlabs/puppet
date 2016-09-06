@@ -169,11 +169,25 @@ module TypeFactory
   end
 
   def self.timestamp(*args)
-    args.empty? ? PTimestampType::DEFAULT : PTimestampType.new(*args)
+    case args.size
+    when 0
+      PTimestampType::DEFAULT
+    when 1
+      PTimestampType.new(args[0], args[0])
+    else
+      PTimestampType.new(*args)
+    end
   end
 
   def self.timespan(*args)
-    args.empty? ? PTimespanType::DEFAULT : PTimespanType.new(*args)
+    case args.size
+    when 0
+      PTimespanType::DEFAULT
+    when 1
+      PTimespanType.new(args[0], args[0])
+    else
+      PTimespanType.new(*args)
+    end
   end
 
   def self.tuple(types = [], size_type = nil)

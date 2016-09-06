@@ -130,13 +130,13 @@ or %W). The days in the year before the first week are in week 0.
 **Example**: Using `strftime` with a `Timestamp`:
 
 ~~~ puppet
-$duration = Timestamp('2016-08-24T12:13:14')
+$timestamp = Timestamp('2016-08-24T12:13:14')
 
-# Notice the duration using a format that notices <hours>:<minutes>:<seconds>
-notice($duration.strftime('%F')) # outputs '2016-08-24'
+# Notice the timestamp using a format that notices the ISO 8601 date format
+notice($timestamp.strftime('%F')) # outputs '2016-08-24'
 
-# Notice the duration using a format that notices <minutes>:<seconds>
-notice($duration.strftime('%c')) # outputs 'Wed Aug 24 12:13:14 2016'
+# Notice the timestamp using a format that notices weekday, month, day, time, and year
+notice($$timestamp.strftime('%c')) # outputs 'Wed Aug 24 12:13:14 2016'
 ~~~
 
 ### Format directives applicable to `Timespan`:
