@@ -160,6 +160,8 @@ A new `Timespan` can be created from `Integer`, `Float`, `String`, and `Hash` va
 
 #### Timespan from seconds
 
+When a Float is used, the decimal part represents fractions of a second.
+
 ```puppet
 function Timespan.new(
   Variant[Float, Integer] $value
@@ -168,7 +170,12 @@ function Timespan.new(
 
 #### Timespan from days, hours, mintues, seconds, and fractions of a second
 
-The arguments can be passed separately in which case the first four, days, hours, minutes, and seconds are mandatory and the rest are optional:
+The arguments can be passed separately in which case the first four, days, hours, minutes, and seconds are mandatory and the rest are optional.
+All values may overflow and/or be negative. The internal 128-bit nano-second integer is calculated as:
+
+```
+(((((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000 + milli_seconds) * 1000 + micro_seconds) * 1000 + nano_seconds
+```
 
 ```puppet
 function Timespan.new(
@@ -194,9 +201,13 @@ function Timespan.new(
 )
 ```
 
-#### Timespan from String and patterns consisting of format directives
+#### Timespan from String and format directive patterns
 
-The first argument is parsed using the format directives optinally passed as a string or array of strings. If the second argument is omitted, an array of default format directives will be used:
+The first argument is parsed using the format optionally passed as a string or array of strings. When an array is used, an attempt
+will be made to parse the string using the first entry and then with each entry in succession until parsing succeeds. If the second
+argument is omitted, an array of default formats will be used.
+
+An exception is raised when no format was able to parse the given string.
 
 ```puppet
 function Timespan.new(
@@ -267,6 +278,8 @@ A new `Timestamp` can be created from `Integer`, `Float`, `String`, and `Hash` v
 
 #### Timestamp from seconds since epoch (1970-01-01 00:00:00 UTC)
 
+When a Float is used, the decimal part represents fractions of a second.
+
 ```puppet
 function Timestamp.new(
   Variant[Float, Integer] $value
@@ -275,7 +288,11 @@ function Timestamp.new(
 
 #### Timestamp from String and patterns consisting of format directives
 
-The first argument is parsed using the format directives optinally passed as a string or array of strings. If the second argument is omitted, an array of default format directives will be used:
+The first argument is parsed using the format optionally passed as a string or array of strings. When an array is used, an attempt
+will be made to parse the string using the first entry and then with each entry in succession until parsing succeeds. If the second
+argument is omitted, an array of default formats will be used.
+
+An exception is raised when no format was able to parse the given string.
 
 ```puppet
 function Timestamp.new(
