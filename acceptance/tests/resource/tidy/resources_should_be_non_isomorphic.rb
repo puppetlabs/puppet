@@ -38,7 +38,7 @@ MANIFEST
     end
 
     teardown do
-      on(agent, "puppet apply -e \"file{'#{dir}': ensure => absent, force => true}\"")
+      on(agent, puppet("apply -e \"file{'#{dir}': ensure => absent, force => true}\""))
     end
   end
 end
