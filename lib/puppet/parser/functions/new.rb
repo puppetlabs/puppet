@@ -174,13 +174,13 @@ The arguments can be passed separately in which case the first four, days, hours
 All values may overflow and/or be negative. The internal 128-bit nano-second integer is calculated as:
 
 ```
-(((((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000 + milli_seconds) * 1000 + micro_seconds) * 1000 + nano_seconds
+(((((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000 + milliseconds) * 1000 + microseconds) * 1000 + nanoseconds
 ```
 
 ```puppet
 function Timespan.new(
   Integer $days, Integer $hours, Integer $minutes, Integer $seconds,
-  Integer $milli_seconds = 0, Integer $micro_seconds = 0, Integer $nano_seconds = 0
+  Integer $milliseconds = 0, Integer $microseconds = 0, Integer $nanoseconds = 0
 )
 ```
 
@@ -194,9 +194,9 @@ function Timespan.new(
     Optional[hours] => Integer,
     Optional[minutes] => Integer,
     Optional[seconds] => Integer,
-    Optional[milli_seconds] => Integer,
-    Optional[micro_seconds] => Integer,
-    Optional[nano_seconds] => Integer
+    Optional[milliseconds] => Integer,
+    Optional[microseconds] => Integer,
+    Optional[nanoseconds] => Integer
   }] $hash
 )
 ```
