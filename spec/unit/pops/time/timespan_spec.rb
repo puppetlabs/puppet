@@ -8,7 +8,7 @@ describe 'Timespan' do
   include PuppetSpec::Compiler
 
   let! (:simple) { Timespan.from_fields(false, 1, 3, 10, 11) }
-  let! (:all_fields_hash) { {'days' => 1, 'hours' => 7, 'minutes' => 10, 'seconds' => 11, 'milli_seconds' => 123, 'micro_seconds' => 456, 'nano_seconds' => 789} }
+  let! (:all_fields_hash) { {'days' => 1, 'hours' => 7, 'minutes' => 10, 'seconds' => 11, 'milliseconds' => 123, 'microseconds' => 456, 'nanoseconds' => 789} }
   let! (:complex) { Timespan.from_fields_hash(all_fields_hash) }
 
   context 'can be created from a String' do
@@ -77,7 +77,7 @@ describe 'Timespan' do
 
     it 'produces a compact hash with seconds and nanoseconds for #to_hash(true)' do
       hash = complex.to_hash(true)
-      expect(hash).to eql({'seconds' => 112211, 'nano_seconds' => 123456789})
+      expect(hash).to eql({'seconds' => 112211, 'nanoseconds' => 123456789})
     end
 
     context 'from a negative value' do
@@ -88,7 +88,7 @@ describe 'Timespan' do
 
       it 'produces a compact hash with negative seconds and negative nanoseconds for #to_hash(true)' do
         hash = (-complex).to_hash(true)
-        expect(hash).to eql({'seconds' => -112211, 'nano_seconds' => -123456789})
+        expect(hash).to eql({'seconds' => -112211, 'nanoseconds' => -123456789})
       end
     end
   end

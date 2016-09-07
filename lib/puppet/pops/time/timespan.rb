@@ -14,9 +14,9 @@ module Time
   KEY_HOURS = 'hours'.freeze
   KEY_MINUTES = 'minutes'.freeze
   KEY_SECONDS = 'seconds'.freeze
-  KEY_MILLI_SECONDS = 'milli_seconds'.freeze
-  KEY_MICRO_SECONDS = 'micro_seconds'.freeze
-  KEY_NANO_SECONDS = 'nano_seconds'.freeze
+  KEY_MILLISECONDS = 'milliseconds'.freeze
+  KEY_MICROSECONDS = 'microseconds'.freeze
+  KEY_NANOSECONDS = 'nanoseconds'.freeze
 
   # TimeData is a Numeric that stores its value internally as nano-seconds but will be considered to be seconds and fractions of
   # seconds when used in arithmetic or comparison with other Numeric types.
@@ -26,8 +26,8 @@ module Time
 
     attr_reader :nsecs
 
-    def initialize(nano_seconds)
-      @nsecs = nano_seconds
+    def initialize(nanoseconds)
+      @nsecs = nanoseconds
     end
 
     def <=>(o)
@@ -75,8 +75,8 @@ module Time
   end
 
   class Timespan < TimeData
-    def self.from_fields(negative, days, hours, minutes, seconds, milli_seconds = 0, micro_seconds = 0, nano_seconds = 0)
-      ns = (((((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000 + milli_seconds) * 1000 + micro_seconds) * 1000 + nano_seconds
+    def self.from_fields(negative, days, hours, minutes, seconds, milliseconds = 0, microseconds = 0, nanoseconds = 0)
+      ns = (((((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000 + milliseconds) * 1000 + microseconds) * 1000 + nanoseconds
       new(negative ? -ns : ns)
     end
 
@@ -95,9 +95,9 @@ module Time
         hash[KEY_HOURS] || 0,
         hash[KEY_MINUTES] || 0,
         hash[KEY_SECONDS] || 0,
-        hash[KEY_MILLI_SECONDS] || 0,
-        hash[KEY_MICRO_SECONDS] || 0,
-        hash[KEY_NANO_SECONDS] || 0)
+        hash[KEY_MILLISECONDS] || 0,
+        hash[KEY_MICROSECONDS] || 0,
+        hash[KEY_NANOSECONDS] || 0)
     end
 
     def self.parse(str, format = Format::DEFAULTS)
@@ -215,13 +215,13 @@ module Time
     end
 
     # @return [Integer] a positive integer, 0 - 999 denoting milliseconds of second
-    def milli_seconds
-      total_milli_seconds % 1000
+    def milliseconds
+      total_milliseconds % 1000
     end
 
     # @return [Integer] a positive integer, 0 - 999.999.999 denoting nanoseconds of second
-    def nano_seconds
-      total_nano_seconds % NSECS_PER_SEC
+    def nanoseconds
+      total_nanoseconds % NSECS_PER_SEC
     end
 
     # Formats this timestamp into a string according to the given `format`
@@ -245,21 +245,21 @@ module Time
 
     def to_hash(compact = false)
       result = {}
-      n = nano_seconds
+      n = nanoseconds
       if compact
         s = total_seconds
         result[KEY_SECONDS] = negative? ? -s : s
-        result[KEY_NANO_SECONDS] = negative? ? -n : n unless n == 0
+        result[KEY_NANOSECONDS] = negative? ? -n : n unless n == 0
       else
         add_unless_zero(result, KEY_DAYS, days)
         add_unless_zero(result, KEY_HOURS, hours)
         add_unless_zero(result, KEY_MINUTES, minutes)
         add_unless_zero(result, KEY_SECONDS, seconds)
         unless n == 0
-          add_unless_zero(result, KEY_NANO_SECONDS, n % 1000)
+          add_unless_zero(result, KEY_NANOSECONDS, n % 1000)
           n /= 1000
-          add_unless_zero(result, KEY_MICRO_SECONDS, n % 1000)
-          add_unless_zero(result, KEY_MILLI_SECONDS, n /= 1000)
+          add_unless_zero(result, KEY_MICROSECONDS, n % 1000)
+          add_unless_zero(result, KEY_MILLISECONDS, n /= 1000)
         end
         result[KEY_NEGATIVE] = true if negative?
       end
@@ -273,36 +273,36 @@ module Time
 
     # @api private
     def total_days
-      total_nano_seconds / NSECS_PER_DAY
+      total_nanoseconds / NSECS_PER_DAY
     end
 
     # @api private
     def total_hours
-      total_nano_seconds / NSECS_PER_HOUR
+      total_nanoseconds / NSECS_PER_HOUR
     end
 
     # @api private
     def total_minutes
-      total_nano_seconds / NSECS_PER_MIN
+      total_nanoseconds / NSECS_PER_MIN
     end
 
     # @api private
     def total_seconds
-      total_nano_seconds / NSECS_PER_SEC
+      total_nanoseconds / NSECS_PER_SEC
     end
 
     # @api private
-    def total_milli_seconds
-      total_nano_seconds / NSECS_PER_MSEC
+    def total_milliseconds
+      total_nanoseconds / NSECS_PER_MSEC
     end
 
     # @api private
-    def total_micro_seconds
-      total_nano_seconds / NSECS_PER_USEC
+    def total_microseconds
+      total_nanoseconds / NSECS_PER_USEC
     end
 
     # @api private
-    def total_nano_seconds
+    def total_nanoseconds
       @nsecs.abs
     end
 
@@ -464,7 +464,7 @@ module Time
         end
 
         def append_to(bld, ts)
-          append_value(bld, use_total? ? ts.total_milli_seconds : ts.milli_seconds)
+          append_value(bld, use_total? ? ts.total_milliseconds : ts.milliseconds)
         end
       end
 
@@ -483,7 +483,7 @@ module Time
         end
 
         def append_to(bld, ts)
-          ns = ts.total_nano_seconds
+          ns = ts.total_nanoseconds
           width = @width || @default_width
           if width < 9
             # Truncate digits to the right, i.e. let %6N reflect microseconds
@@ -510,15 +510,15 @@ module Time
       def parse(timespan)
         md = regexp.match(timespan)
         raise ArgumentError, "Unable to parse '#{timespan}' using format '#{@format}'" if md.nil?
-        nano_seconds = 0
+        nanoseconds = 0
         md.captures.each_with_index do |group, index|
           segment = @segments[index]
           next if segment.is_a?(LiteralSegment)
           group.lstrip!
           raise ArgumentError, "Unable to parse '#{timespan}' using format '#{@format}'" unless group =~ /\A[0-9]+\z/
-          nano_seconds += group.to_i * segment.multiplier
+          nanoseconds += group.to_i * segment.multiplier
         end
-        Timespan.new(timespan.start_with?('-') ? -nano_seconds : nano_seconds)
+        Timespan.new(timespan.start_with?('-') ? -nanoseconds : nanoseconds)
       end
 
       def to_s

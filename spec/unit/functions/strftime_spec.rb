@@ -13,8 +13,8 @@ describe 'the strftime function' do
       ['hours', 'H', 2],
       ['minutes', 'M', 2],
       ['seconds', 'S', 2],
-      ['milli_seconds', 'L', 3],
-      ['nano_seconds', 'N', 9],
+      ['milliseconds', 'L', 3],
+      ['nanoseconds', 'N', 9],
     ].each do |field, fmt, dflt_width|
       ctor_arg = "{#{field}=>3}"
       it "%#{fmt} width defaults to #{dflt_width}" do
@@ -43,9 +43,9 @@ describe 'the strftime function' do
     end
 
     [
-      ['milli_seconds', '3N', 3],
-      ['micro_seconds', '6N', 6],
-      ['nano_seconds', '9N', 9],
+      ['milliseconds', '3N', 3],
+      ['microseconds', '6N', 6],
+      ['nanoseconds', '9N', 9],
     ].each do |field, fmt, dflt_width|
       ctor_arg = "{#{field}=>3}"
       it "%#{fmt} width defaults to #{dflt_width}" do
