@@ -2,7 +2,10 @@ module Puppet::Pops
 module Types
   class PTimestampType < PAbstractTimeDataType
     def self.register_ptype(loader, ir)
-      create_ptype(loader, ir, 'NumericType')
+      create_ptype(loader, ir, 'ScalarType',
+        'from' => { KEY_TYPE => PTimestampType::DEFAULT, KEY_VALUE => :default },
+        'to' => { KEY_TYPE => PTimestampType::DEFAULT, KEY_VALUE => :default }
+      )
     end
 
     def self.new_function(_, loader)

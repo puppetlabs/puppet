@@ -741,16 +741,9 @@ class PEnumType < PScalarType
   end
 end
 
+# Abstract class that encapsulates behavior common to PNumericType and PAbstractTimeDataType
 # @api public
-#
-class PNumericType < PScalarType
-  def self.register_ptype(loader, ir)
-    create_ptype(loader, ir, 'ScalarType',
-      'from' => { KEY_TYPE => PNumericType::DEFAULT, KEY_VALUE => :default },
-      'to' => { KEY_TYPE => PNumericType::DEFAULT, KEY_VALUE => :default }
-    )
-  end
-
+class PAbstractRangeType < PScalarType
   def initialize(from, to = Float::INFINITY)
     from = -Float::INFINITY if from.nil? || from == :default
     to = Float::INFINITY if to.nil? || to == :default
@@ -807,11 +800,22 @@ class PNumericType < PScalarType
   def unbounded?
     @from == -Float::INFINITY && @to == Float::INFINITY
   end
+end
+
+# @api public
+#
+class PNumericType < PAbstractRangeType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'ScalarType',
+      'from' => { KEY_TYPE => PNumericType::DEFAULT, KEY_VALUE => :default },
+      'to' => { KEY_TYPE => PNumericType::DEFAULT, KEY_VALUE => :default }
+    )
+  end
 
   def self.new_function(_, loader)
     @new_function ||= Puppet::Functions.create_loaded_function(:new_numeric, loader) do
       local_types do
-        type 'Convertible = Variant[Undef, Integer, Float, Boolean, String]'
+        type 'Convertible = Variant[Undef, Integer, Float, Boolean, String, Timespan, Timestamp]'
         type 'NamedArgs   = Struct[{from => Convertible}]'
       end
 
@@ -830,6 +834,8 @@ class PNumericType < PScalarType
           from
         when Integer
           from
+        when Time::TimeData
+          from.to_f
         when TrueClass
           1
         when FalseClass
@@ -858,8 +864,6 @@ class PNumericType < PScalarType
     end
   end
 
-  DEFAULT = PNumericType.new(-Float::INFINITY)
-
   protected
 
   # @api_private
@@ -868,6 +872,8 @@ class PNumericType < PScalarType
     # If o min and max are within the range of t
     @from <= o.numeric_from && @to >= o.numeric_to
   end
+
+  DEFAULT = PNumericType.new(-Float::INFINITY)
 end
 
 # @api public
@@ -956,7 +962,7 @@ class PIntegerType < PNumericType
     @@new_function ||= Puppet::Functions.create_loaded_function(:new, loader) do
       local_types do
         type 'Radix       = Variant[Default, Integer[2,2], Integer[8,8], Integer[10,10], Integer[16,16]]'
-        type 'Convertible = Variant[Undef, Numeric, Boolean, String]'
+        type 'Convertible = Variant[Undef, Numeric, Boolean, String, Timespan, Timestamp]'
         type 'NamedArgs   = Struct[{from => Convertible, Optional[radix] => Radix}]'
       end
 
@@ -1062,7 +1068,7 @@ class PFloatType < PNumericType
   def self.new_function(_, loader)
     @new_function ||= Puppet::Functions.create_loaded_function(:new_float, loader) do
       local_types do
-        type 'Convertible = Variant[Undef, Numeric, Boolean, String]'
+        type 'Convertible = Variant[Undef, Numeric, Boolean, String, Timespan, Timestamp]'
         type 'NamedArgs   = Struct[{from => Convertible}]'
       end
 
