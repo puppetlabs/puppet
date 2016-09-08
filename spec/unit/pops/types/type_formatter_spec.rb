@@ -183,15 +183,15 @@ end
     end
 
     it "should yield 'Timespan[{hours => 1}] for PTimespanType[Timespan]" do
-      expect(s.string(f.timespan({'hours' => 1}))).to eq('Timespan[{hours => 1}]')
+      expect(s.string(f.timespan({'hours' => 1}))).to eq("Timespan['0-01:00:00.0']")
     end
 
     it "should yield 'Timespan[default, {hours => 2}] for PTimespanType[nil, Timespan]" do
-      expect(s.string(f.timespan(nil, {'hours' => 2}))).to eq('Timespan[default, {hours => 2}]')
+      expect(s.string(f.timespan(nil, {'hours' => 2}))).to eq("Timespan[default, '0-02:00:00.0']")
     end
 
     it "should yield 'Timespan[{hours => 1}, {hours => 2}] for PTimespanType[Timespan, Timespan]" do
-      expect(s.string(f.timespan({'hours' => 1}, {'hours' => 2}))).to eq('Timespan[{hours => 1}, {hours => 2}]')
+      expect(s.string(f.timespan({'hours' => 1}, {'hours' => 2}))).to eq("Timespan['0-01:00:00.0', '0-02:00:00.0']")
     end
 
     it "should yield 'Timestamp' for PTimestampType" do

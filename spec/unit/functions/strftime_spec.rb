@@ -13,8 +13,6 @@ describe 'the strftime function' do
       ['hours', 'H', 2],
       ['minutes', 'M', 2],
       ['seconds', 'S', 2],
-      ['milliseconds', 'L', 3],
-      ['nanoseconds', 'N', 9],
     ].each do |field, fmt, dflt_width|
       ctor_arg = "{#{field}=>3}"
       it "%#{fmt} width defaults to #{dflt_width}" do
@@ -43,26 +41,48 @@ describe 'the strftime function' do
     end
 
     [
+      ['milliseconds', 'L', 3],
+      ['nanoseconds', 'N', 9],
       ['milliseconds', '3N', 3],
       ['microseconds', '6N', 6],
       ['nanoseconds', '9N', 9],
     ].each do |field, fmt, dflt_width|
-      ctor_arg = "{#{field}=>3}"
+      ctor_arg = "{#{field}=>3000}"
       it "%#{fmt} width defaults to #{dflt_width}" do
-        test_format(ctor_arg, "%#{fmt}", sprintf("%0#{dflt_width}d", 3))
+        test_format(ctor_arg, "%#{fmt}", sprintf("%-#{dflt_width}d", 3000))
       end
 
       it "%_#{fmt} pads with space" do
-        test_format(ctor_arg, "%_#{fmt}", sprintf("% #{dflt_width}d", 3))
+        test_format(ctor_arg, "%_#{fmt}", sprintf("%-#{dflt_width}d", 3000))
       end
 
       it "%-#{fmt} does not pad" do
-        test_format(ctor_arg, "%-#{fmt}", '3')
+        test_format(ctor_arg, "%-#{fmt}", '3000')
       end
     end
 
     it 'can use a format containing all format characters, flags, and widths' do
-      test_format("{string => '100-14:02:24.123456789', format => '%D-%H:%M:%S.%9N'}", '%_10D%%%03H:%-M:%S.%9N', '       100%014:2:24.123456789')
+      test_format("{string => '100-14:02:24.123456000', format => '%D-%H:%M:%S.%9N'}", '%_10D%%%03H:%-M:%S.%9N', '       100%014:2:24.123456000')
+    end
+
+    it 'can format and strip excess zeroes from fragment using no-padding flag' do
+      test_format("{string => '100-14:02:24.123456000', format => '%D-%H:%M:%S.%N'}", '%D-%H:%M:%S.%-N', '100-14:02:24.123456')
+    end
+
+    it 'can format and replace excess zeroes with spaces from fragment using space-padding flag and default widht' do
+      test_format("{string => '100-14:02:24.123456000', format => '%D-%H:%M:%S.%N'}", '%D-%H:%M:%S.%_N', '100-14:02:24.123456   ')
+    end
+
+    it 'can format and replace excess zeroes with spaces from fragment using space-padding flag and specified width' do
+      test_format("{string => '100-14:02:24.123400000', format => '%D-%H:%M:%S.%N'}", '%D-%H:%M:%S.%_6N', '100-14:02:24.1234  ')
+    end
+
+    it 'can format and retain excess zeroes in fragment using default width' do
+      test_format("{string => '100-14:02:24.123400000', format => '%D-%H:%M:%S.%N'}", '%D-%H:%M:%S.%N', '100-14:02:24.123400000')
+    end
+
+    it 'can format and retain excess zeroes in fragment using specified width' do
+      test_format("{string => '100-14:02:24.123400000', format => '%D-%H:%M:%S.%N'}", '%D-%H:%M:%S.%6N', '100-14:02:24.123400')
     end
   end
 end

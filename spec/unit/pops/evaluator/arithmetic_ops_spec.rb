@@ -80,22 +80,22 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
       it 'Timespan + Timespan = Timespan' do
         code = 'notice(assert_type(Timespan, Timespan({days => 3}) + Timespan({hours => 12})))'
-        expect(eval_and_collect_notices(code)).to eql(['3-12:00:00'])
+        expect(eval_and_collect_notices(code)).to eql(['3-12:00:00.0'])
       end
 
       it 'Timespan - Timespan = Timespan' do
         code = 'notice(assert_type(Timespan, Timespan({days => 3}) - Timespan({hours => 12})))'
-        expect(eval_and_collect_notices(code)).to eql(['2-12:00:00'])
+        expect(eval_and_collect_notices(code)).to eql(['2-12:00:00.0'])
       end
 
       it 'Timespan + -Timespan = Timespan' do
         code = 'notice(assert_type(Timespan, Timespan({days => 3}) + -Timespan({hours => 12})))'
-        expect(eval_and_collect_notices(code)).to eql(['2-12:00:00'])
+        expect(eval_and_collect_notices(code)).to eql(['2-12:00:00.0'])
       end
 
       it 'Timespan - -Timespan = Timespan' do
         code = 'notice(assert_type(Timespan, Timespan({days => 3}) - -Timespan({hours => 12})))'
-        expect(eval_and_collect_notices(code)).to eql(['3-12:00:00'])
+        expect(eval_and_collect_notices(code)).to eql(['3-12:00:00.0'])
       end
 
       it 'Timespan / Timespan = Float' do
@@ -110,12 +110,12 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
       it 'Timespan + Numeric = Timespan (numeric treated as seconds)' do
         code = 'notice(assert_type(Timespan, Timespan({days => 3}) + 7300.0))'
-        expect(eval_and_collect_notices(code)).to eql(['3-02:01:40'])
+        expect(eval_and_collect_notices(code)).to eql(['3-02:01:40.0'])
       end
 
       it 'Timespan - Numeric = Timespan (numeric treated as seconds)' do
-        code = "notice(strftime(assert_type(Timespan, Timespan({days => 3}) - 7300.123), '%H:%M:%S.%L'))"
-        expect(eval_and_collect_notices(code)).to eql(['69:58:19.877'])
+        code = "notice(assert_type(Timespan, Timespan({days => 3}) - 7300.123))"
+        expect(eval_and_collect_notices(code)).to eql(['2-21:58:19.877'])
       end
 
       it 'Timespan * Numeric = Timespan (numeric treated as seconds)' do
@@ -125,7 +125,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
       it 'Numeric + Timespan = Timespan (numeric treated as seconds)' do
         code = 'notice(assert_type(Timespan, 7300.0 + Timespan({days => 3})))'
-        expect(eval_and_collect_notices(code)).to eql(['3-02:01:40'])
+        expect(eval_and_collect_notices(code)).to eql(['3-02:01:40.0'])
       end
 
       it 'Numeric - Timespan = Timespan (numeric treated as seconds)' do
@@ -185,7 +185,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
       it 'Timestamp - Timestamp = Timespan' do
         code = "notice(assert_type(Timespan, Timestamp('2016-10-10') - Timestamp('2015-10-10')))"
-        expect(eval_and_collect_notices(code)).to eql(['366-00:00:00'])
+        expect(eval_and_collect_notices(code)).to eql(['366-00:00:00.0'])
       end
 
       it 'Timestamp - Timespan = Timestamp' do
