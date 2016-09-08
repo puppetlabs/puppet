@@ -36,16 +36,24 @@ describe 'Timespan' do
       expect(Timespan.parse('97811', '%S')).to eql(simple)
     end
 
-    it 'using %L as the biggest quantity' do
-      expect(Timespan.parse('97811000', '%L')).to eql(simple)
-    end
-
-    it 'using %N as the biggest quantity' do
-      expect(Timespan.parse('112211123456789', '%N')).to eql(complex)
-    end
-
     it 'where biggest quantity is not frist' do
       expect(Timespan.parse('11:1630', '%S:%M')).to eql(simple)
+    end
+
+    it 'raises an error when using %L as the biggest quantity' do
+      expect { Timespan.parse('123', '%L') }.to raise_error(ArgumentError, /denotes fractions and must be used together with a specifier of higher magnitude/)
+    end
+
+    it 'raises an error when using %N as the biggest quantity' do
+      expect { Timespan.parse('123', '%N') }.to raise_error(ArgumentError, /denotes fractions and must be used together with a specifier of higher magnitude/)
+    end
+
+    it 'where %L is treated as fractions of a second' do
+      expect(Timespan.parse('0.4', '%S.%L')).to eql(Timespan.from_fields(false, 0, 0, 0, 0, 400))
+    end
+
+    it 'where %N is treated as fractions of a second' do
+      expect(Timespan.parse('0.4', '%S.%N')).to eql(Timespan.from_fields(false, 0, 0, 0, 0, 400))
     end
   end
 
@@ -65,6 +73,22 @@ describe 'Timespan' do
 
       it 'produces a leading dash for negative instance' do
         expect((-complex).format('%D-%H:%M:%S')).to eql('-1-07:10:11')
+      end
+
+      it 'produces a string without trailing zeros for %-N' do
+        expect(Timespan.parse('2.345', '%S.%N').format('%-S.%-N')).to eql('2.345')
+      end
+
+      it 'produces a string with trailing zeros for %N' do
+        expect(Timespan.parse('2.345', '%S.%N').format('%-S.%N')).to eql('2.345000000')
+      end
+
+      it 'produces a string with trailing zeros for %0N' do
+        expect(Timespan.parse('2.345', '%S.%N').format('%-S.%0N')).to eql('2.345000000')
+      end
+
+      it 'produces a string with trailing spaces for %_N' do
+        expect(Timespan.parse('2.345', '%S.%N').format('%-S.%_N')).to eql('2.345      ')
       end
     end
   end

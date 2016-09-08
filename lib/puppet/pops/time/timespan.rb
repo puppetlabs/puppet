@@ -343,7 +343,7 @@ module Time
           @literal.concat(codepoint)
         end
 
-        def multiplier
+        def nanoseconds
           0
         end
       end
@@ -351,16 +351,21 @@ module Time
       class ValueSegment < Segment
         def initialize(padchar, width, default_width)
           @use_total = false
-          @format = case padchar
+          @padchar = padchar
+          @width = width
+          @default_width = default_width
+          @format = create_format
+        end
+
+        def create_format
+          case @padchar
           when nil
             '%d'
           when ' '
-            "%#{width || default_width}d"
+            "%#{@width || @default_width}d"
           else
-            "%#{padchar}#{width || default_width}d"
+            "%#{@padchar}#{@width || @default_width}d"
           end
-          @width = width
-          @default_width = default_width
         end
 
         def append_regexp(bld)
@@ -369,9 +374,9 @@ module Time
             when nil
               bld << (use_total? ? '([0-9]+)' : "([0-9]{1,#{@default_width}})")
             when '0'
-              bld << (use_total? ? '([0-9]+)' : "([0-9]{#{@default_width}})")
+              bld << (use_total? ? '([0-9]+)' : "([0-9]{1,#{@default_width}})")
             else
-              bld << (use_total? ? '\s*([0-9]+)' : "([0-9\\s]{#{@default_width}})")
+              bld << (use_total? ? '\s*([0-9]+)' : "([0-9\\s]{1,#{@default_width}})")
             end
           else
             case @padchar
@@ -383,6 +388,14 @@ module Time
               bld << "([0-9\\s]{#{@width}})"
             end
           end
+        end
+
+        def nanoseconds(group)
+          group.to_i * multiplier
+        end
+
+        def multiplier
+          0
         end
 
         def set_use_total
@@ -454,7 +467,34 @@ module Time
         end
       end
 
-      class MilliSecondSegment < ValueSegment
+      # Class that assumes that leading zeroes are significant and that trailing zeroes are not and left justifies when formatting.
+      # Applicable after a decimal point, and hence to the %L and %N formats.
+      class FragmentSegment < ValueSegment
+        def nanoseconds(group)
+          # Using %L or %N to parse a string only makes sense when they are considered to be fractions. Using them
+          # as a total quantity would introduce ambiguities.
+          raise ArgumentError, 'Format specifiers %L and %N denotes fractions and must be used together with a specifier of higher magnitude' if use_total?
+          n = group.to_i
+          p = 9 - group.length
+          p <= 0 ? n : n * 10 ** p
+        end
+
+        def create_format
+          if @padchar.nil?
+            '%d'
+          else
+            "%-#{@width || @default_width}d"
+          end
+        end
+
+        def append_value(bld, n)
+          # Strip trailing zeroes when default format is used
+          n = n.to_s.sub(/\A([0-9]+?)0*\z/, '\1').to_i unless use_total? || @padchar == '0'
+          super(bld, n)
+        end
+      end
+
+      class MilliSecondSegment < FragmentSegment
         def initialize(padchar, width)
           super(padchar, width, 3)
         end
@@ -468,7 +508,7 @@ module Time
         end
       end
 
-      class NanoSecondSegment < ValueSegment
+      class NanoSecondSegment < FragmentSegment
         def initialize(padchar, width)
           super(padchar, width, 9)
         end
@@ -516,7 +556,7 @@ module Time
           next if segment.is_a?(LiteralSegment)
           group.lstrip!
           raise ArgumentError, "Unable to parse '#{timespan}' using format '#{@format}'" unless group =~ /\A[0-9]+\z/
-          nanoseconds += group.to_i * segment.multiplier
+          nanoseconds += segment.nanoseconds(group)
         end
         Timespan.new(timespan.start_with?('-') ? -nanoseconds : nanoseconds)
       end
