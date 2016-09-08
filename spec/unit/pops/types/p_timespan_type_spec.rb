@@ -6,9 +6,9 @@ module Puppet::Pops
 module Types
 describe 'Timespan type' do
   it 'is normalized in a Variant' do
-    t = TypeFactory.variant(TypeFactory.timespan('10:00', '15:00'), TypeFactory.timespan('14:00', '17:00')).normalize
+    t = TypeFactory.variant(TypeFactory.timespan('10:00:00', '15:00:00'), TypeFactory.timespan('14:00:00', '17:00:00')).normalize
     expect(t).to be_a(PTimespanType)
-    expect(t).to eql(TypeFactory.timespan('10:00', '17:00'))
+    expect(t).to eql(TypeFactory.timespan('10:00:00', '17:00:00'))
   end
 
   context 'when used in Puppet expressions' do
@@ -56,7 +56,7 @@ describe 'Timespan type' do
             notice($o)
             notice(type($o))
         CODE
-        expect(eval_and_collect_notices(code)).to eq(['3-11:00:00', 'Timespan[{days => 3, hours => 11}]'])
+        expect(eval_and_collect_notices(code)).to eq(['3-11:00:00.0', 'Timespan[{days => 3, hours => 11}]'])
       end
 
       it 'can be created from a string and format' do
@@ -64,7 +64,7 @@ describe 'Timespan type' do
             $o = Timespan('1d11h23m', '%Dd%Hh%Mm')
             notice($o)
         CODE
-        expect(eval_and_collect_notices(code)).to eq(%w(1-11:23:00))
+        expect(eval_and_collect_notices(code)).to eq(%w(1-11:23:00.0))
       end
 
       it 'can be created from a hash with string and format' do
@@ -72,7 +72,7 @@ describe 'Timespan type' do
             $o = Timespan({string => '1d11h23m', format => '%Dd%Hh%Mm'})
             notice($o)
         CODE
-        expect(eval_and_collect_notices(code)).to eq(%w(1-11:23:00))
+        expect(eval_and_collect_notices(code)).to eq(%w(1-11:23:00.0))
       end
 
       it 'can be created from a string and array of formats' do
@@ -90,7 +90,7 @@ describe 'Timespan type' do
             notice(Timespan('13s', $fmts))
         CODE
         expect(eval_and_collect_notices(code)).to eq(
-          %w(1-11:23:13 0-11:23:13 1-11:23:00 1-11:00:00 0-11:23:00 0-00:23:13 1-00:00:00 0-11:00:00 0-00:23:00 0-00:00:13))
+          %w(1-11:23:13.0 0-11:23:13.0 1-11:23:00.0 1-11:00:00.0 0-11:23:00.0 0-00:23:13.0 1-00:00:00.0 0-11:00:00.0 0-00:23:00.0 0-00:00:13.0))
       end
 
       it 'can be created from a integer that represents seconds since epoch' do
@@ -116,7 +116,7 @@ describe 'Timespan type' do
             $o = Timespan('3-11:12:13')
             notice(assert_type(Timespan['3-00:00:00', '4-00:00:00'], $o))
         CODE
-        expect(eval_and_collect_notices(code)).to eq(['3-11:12:13'])
+        expect(eval_and_collect_notices(code)).to eq(['3-11:12:13.0'])
       end
 
       it 'does not match an inappropriate parameterized type' do

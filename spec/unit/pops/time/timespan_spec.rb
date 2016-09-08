@@ -51,7 +51,7 @@ describe 'Timespan' do
 
   context 'when presented as a String' do
     it 'uses default format for #to_s' do
-      expect(simple.to_s).to eql('1-03:10:11')
+      expect(simple.to_s).to eql('1-03:10:11.0')
     end
 
     context 'using a format' do

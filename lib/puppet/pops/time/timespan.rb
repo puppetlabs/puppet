@@ -671,7 +671,7 @@ module Time
     end
 
     class Format
-      DEFAULTS = ['%D-%H:%M:%S', '%D-%H:%M', '%H:%M:%S', '%H:%M'].map { |str| FormatParser.singleton.parse_format(str) }
+      DEFAULTS = ['%D-%H:%M:%S.%-N', '%H:%M:%S.%-N', '%M:%S.%-N', '%S.%-N', '%D-%H:%M:%S', '%H:%M:%S', '%D-%H:%M', '%S'].map { |str| FormatParser.singleton.parse_format(str) }
     end
   end
 end
