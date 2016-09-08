@@ -56,7 +56,7 @@ describe 'Timespan type' do
             notice($o)
             notice(type($o))
         CODE
-        expect(eval_and_collect_notices(code)).to eq(['3-11:00:00.0', 'Timespan[{days => 3, hours => 11}]'])
+        expect(eval_and_collect_notices(code)).to eq(%w(3-11:00:00.0 Timespan['3-11:00:00.0']))
       end
 
       it 'can be created from a string and format' do

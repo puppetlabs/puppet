@@ -505,12 +505,10 @@ class TypeFormatter
   def string_VersionRange(t) ; @bld << "'#{t}'"  ; end
 
   # @api private
-  def string_Timestamp(t)    ; @bld << "'#{t}'"  ; end
+  def string_Timespan(t)    ; @bld << "'#{t}'"  ; end
 
   # @api private
-  def string_Timespan(o)
-    append_hash(o.to_hash, proc { |k| @bld << symbolic_key(k) })
-  end
+  def string_Timestamp(t)    ; @bld << "'#{t}'"  ; end
 
   # Debugging to_s to reduce the amount of output
   def to_s
