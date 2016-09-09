@@ -92,7 +92,21 @@ class Puppet::Network::HTTP::RackREST
     # NOTE: The SSL_CLIENT_CERT environment variable will be the empty string
     # when Puppet agent nodes have not yet obtained a signed certificate.
     if cert.nil? || cert.empty?
-      nil
+      # When running with unicorn, the SSL_CLIENT_CERT variable is not available
+      # in the environment, therefore we have to pass a header: 'X-SSL-Client-Cert'
+      cert = request.env['HTTP_X_SSL_CLIENT_CERT']
+      if cert.nil? || cert.empty?
+        nil
+      else
+        # in contrast to the environment variable, the client cert is passed in
+        # as single string, therefore restore the certificate to a valid pem
+        # encoded certificate
+        cert.gsub!(/ /, "\n")
+        cert.gsub!(/BEGIN\nCERT/, "BEGIN CERT")
+        cert.gsub!(/END\nCERT/, "END CERT")
+        cert = Puppet::SSL::Certificate.from_instance(OpenSSL::X509::Certificate.new(cert))
+        cert
+      end
     else
       cert = Puppet::SSL::Certificate.from_instance(OpenSSL::X509::Certificate.new(cert))
       warn_if_near_expiration(cert)
