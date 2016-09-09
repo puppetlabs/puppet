@@ -868,10 +868,10 @@ class Puppet::Parser::Compiler
     settings_hash = {}
     Puppet.settings.each do |name, setting|
       next if name == :name
-      name = name.to_s
+      s_name = name.to_s
       # Construct a hash (in anticipation it will be set in top scope under a name like $settings)
-      settings_hash[name] = transform_setting(env[name])
-      scope[name.to_s] = settings_hash[name]
+      settings_hash[s_name] = transform_setting(env[name])
+      scope[s_name] = settings_hash[s_name]
     end
   end
 
@@ -884,7 +884,9 @@ class Puppet::Parser::Compiler
     when Array
       val.map {|entry| transform_setting(entry) }
     when Hash
-      Hash[val.map {|k,v| [transform_setting(k), transform_setting(v)] }]
+      result = {}
+      val.each {|k,v| result[transform_setting(k)] = transform_setting(v) }
+      result
     else
       # not ideal, but required as there are settings values that are special
       val.to_s
