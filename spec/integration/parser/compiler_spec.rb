@@ -153,6 +153,17 @@ describe Puppet::Parser::Compiler do
     end
   end
 
+  context 'when working with $settings name space' do
+    include PuppetSpec::Compiler
+    it 'makes $settings::strict available as string' do
+      node = Puppet::Node.new("testing")
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+          notify { 'test': message => $settings::strict == 'warning' }
+      MANIFEST
+      expect(catalog).to have_resource("Notify[test]").with_parameter(:message, true)
+    end
+  end
+
   context 'when working with $server_facts' do
     include PuppetSpec::Compiler
     context 'and have opted in to trusted_server_facts' do
