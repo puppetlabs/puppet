@@ -208,6 +208,15 @@ describe Puppet::Parser::Compiler do
 
         expect(catalog).to have_resource("Notify[test]").with_parameter(:message, true)
       end
+      it 'should warn about assignment to $server_facts' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+            $server_facts = 'changed'
+            notify { 'test': message => $server_facts == 'changed' }
+        MANIFEST
+        expect(@logs).to have_matching_log(/Assignment to \$server_facts is deprecated/)
+
+        expect(catalog).to have_resource("Notify[test]").with_parameter(:message, true)
+      end
     end
   end
   describe "the compiler when using 4.x language constructs" do

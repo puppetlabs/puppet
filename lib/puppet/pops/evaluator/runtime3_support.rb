@@ -59,10 +59,18 @@ module Runtime3Support
     # The error is not specific enough to allow catching it - need to check the actual message text.
     # TODO: Improve the messy implementation in Scope.
     #
+    if name == "server_facts"
+      if Puppet[:trusted_server_facts] || Puppet[:strict] == :error
+        fail(Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, {:name => name} )
+      elsif Puppet[:strict] == :warning
+        file, line = extract_file_line(o)
+        msg = "Assignment to $server_facts is deprecated"
+        Puppet.warn_once(:deprecation, msg, msg, file, line)
+      end
+    end
+
     if scope.bound?(name)
       if Puppet::Parser::Scope::RESERVED_VARIABLE_NAMES.include?(name)
-        fail(Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, {:name => name} )
-      elsif name == "server_facts" && Puppet[:trusted_server_facts]
         fail(Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, {:name => name} )
       else
         fail(Issues::ILLEGAL_REASSIGNMENT, o, {:name => name} )
