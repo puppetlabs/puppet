@@ -100,7 +100,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   # supported by the user type.
   def self.generate_attribute_hash(input_hash)
     attribute_hash = {}
-    input_hash.keys.each do |key|
+    input_hash.each_key do |key|
       ds_attribute = key.sub("dsAttrTypeStandard:", "")
       next unless ds_to_ns_attribute_map.keys.include?(ds_attribute)
       ds_value = input_hash[key]

@@ -58,7 +58,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   # @return [void]
   def self.prefetch(resources)
     repos = instances
-    resources.keys.each do |name|
+    resources.each_key do |name|
       if provider = repos.find { |repo| repo.name == name }
         resources[name].provider = provider
       end

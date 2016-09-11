@@ -36,7 +36,7 @@ Puppet::Type.type(:mcx).provide :mcxcontent, :parent => Puppet::Provider do
 
   def self.instances
     mcx_list = []
-    TypeMap.keys.each do |ds_type|
+    TypeMap.each_key do |ds_type|
       ds_path = "/Local/Default/#{TypeMap[ds_type]}"
       output = dscl 'localhost', '-list', ds_path
       member_list = output.split
