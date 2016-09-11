@@ -269,4 +269,10 @@ module Puppet::Parser::Functions
       environment_module(environment).get_function_info(name.intern) || environment_module(Puppet.lookup(:root_environment)).get_function_info(name.intern)
     end
   end
+
+  class Error
+    def self.is4x(name)
+      raise Puppet::ParseError, "#{name}() can only be called using the 4.x function API. See Scope#call_function"
+    end
+  end
 end

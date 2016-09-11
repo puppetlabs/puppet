@@ -12,7 +12,7 @@ This function takes at least one string argument, which can be a class name, typ
 resource reference, or variable reference of the form `'$name'`.
 
 The `defined` function checks both native and defined types, including types
-provided by modules. Types and classes are matched by their names. The function matches 
+provided by modules. Types and classes are matched by their names. The function matches
 resource declarations by using resource references.
 
 **Examples**: Different types of `defined` function matches
@@ -103,5 +103,5 @@ defined('$tmp_file2')
 - Since 4.0.0 includes all future parser features
 DOC
 ) do |vals|
-  function_fail(["defined() is a 4.x function - an illegal call was made to this function using old API"])
+  Error.is4x('defined')
 end

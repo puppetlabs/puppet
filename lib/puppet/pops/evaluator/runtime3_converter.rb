@@ -112,6 +112,18 @@ class Runtime3Converter
   end
   alias :convert2_SemVerRange :convert_SemVerRange
 
+  def convert_Timespan(o, scope, undef_value)
+    # Puppet 3x cannot handle Timespans. Use the string form
+    o.to_s
+  end
+  alias :convert2_Timespan :convert_Timespan
+
+  def convert_Timestamp(o, scope, undef_value)
+    # Puppet 3x cannot handle Timestamps. Use the string form
+    o.to_s
+  end
+  alias :convert2_Timestamp :convert_Timestamp
+
   def convert_Symbol(o, scope, undef_value)
     case o
       # Support :undef since it may come from a 3x structure

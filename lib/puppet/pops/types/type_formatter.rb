@@ -69,6 +69,10 @@ class TypeFormatter
   end
 
 
+  def append_default
+    @bld << 'default'
+  end
+
   def append_string(t)
     if @ruby && t.is_a?(PAnyType)
       @ruby = false
@@ -194,6 +198,32 @@ class TypeFormatter
   end
 
   # @api private
+  def string_PTimestampType(t)
+    min = t.from
+    max = t.to
+    append_array('Timestamp', min.nil? && max.nil?) do
+      min.nil? ? append_default : append_string(min)
+      unless max.nil?
+        @bld << COMMA_SEP
+        append_string(max)
+      end
+    end
+  end
+
+  # @api private
+  def string_PTimespanType(t)
+    min = t.from
+    max = t.to
+    append_array('Timespan', min.nil? && max.nil?) do
+      min.nil? ? append_default : append_string(min)
+      unless max.nil?
+        @bld << COMMA_SEP
+        append_string(max)
+      end
+    end
+  end
+
+  # @api private
   def string_PTupleType(t)
     append_array('Tuple', t.types.empty?) do
       append_strings(t.types, true)
@@ -204,21 +234,35 @@ class TypeFormatter
 
   # @api private
   def string_PCallableType(t)
-    append_array('Callable', t.param_types.nil?) do
-      # translate to string, and skip Unit types
-      append_strings(t.param_types.types.reject {|t2| t2.class == PUnitType }, true)
-
-      if t.param_types.types.empty?
-        append_strings([0, 0], true)
+    if t.return_type.nil?
+      append_array('Callable', t.param_types.nil?) { append_callable_params(t) }
+    else
+      if t.param_types.nil?
+        append_array('Callable', false) { append_strings([[], t.return_type], false) }
       else
-        append_elements(range_array_part(t.param_types.size_type), true)
+        append_array('Callable', false) do
+          append_array('', false) { append_callable_params(t) }
+          @bld << COMMA_SEP
+          append_string(t.return_type)
+        end
       end
-
-      # Add block T last (after min, max) if present)
-      #
-      append_strings([t.block_type], true) unless t.block_type.nil?
-      chomp_list
     end
+  end
+
+  def append_callable_params(t)
+    # translate to string, and skip Unit types
+    append_strings(t.param_types.types.reject {|t2| t2.class == PUnitType }, true)
+
+    if t.param_types.types.empty?
+      append_strings([0, 0], true)
+    else
+      append_elements(range_array_part(t.param_types.size_type), true)
+    end
+
+    # Add block T last (after min, max) if present)
+    #
+    append_strings([t.block_type], true) unless t.block_type.nil?
+    chomp_list
   end
 
   # @api private
@@ -459,6 +503,14 @@ class TypeFormatter
 
   # @api private
   def string_VersionRange(t) ; @bld << "'#{t}'"  ; end
+
+  # @api private
+  def string_Timestamp(t)    ; @bld << "'#{t}'"  ; end
+
+  # @api private
+  def string_Timespan(o)
+    append_hash(o.to_hash, proc { |k| @bld << symbolic_key(k) })
+  end
 
   # Debugging to_s to reduce the amount of output
   def to_s

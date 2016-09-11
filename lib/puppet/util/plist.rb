@@ -54,9 +54,14 @@ module Puppet::Util::Plist
     # Read plist text using the CFPropertyList gem.
     def parse_plist(plist_data, file_path = '')
       bad_xml_doctype = /^.*<!DOCTYPE plist PUBLIC -\/\/Apple Computer.*$/
-      if plist_data =~ bad_xml_doctype
-        plist_data.gsub!( bad_xml_doctype, plist_xml_doctype )
-        Puppet.debug("Had to fix plist with incorrect DOCTYPE declaration: #{file_path}")
+      begin
+        if plist_data =~ bad_xml_doctype
+          plist_data.gsub!( bad_xml_doctype, plist_xml_doctype )
+          Puppet.debug("Had to fix plist with incorrect DOCTYPE declaration: #{file_path}")
+        end
+      rescue ArgumentError => e
+        Puppet.debug "Failed with #{e.class} on #{file_path}: #{e.inspect}"
+        return nil
       end
 
       begin

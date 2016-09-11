@@ -33,31 +33,8 @@ you may also directly use Class and Resource Type values that are produced when 
 resource and relationship expressions.
 
 - Since 4.0.0 Class and Resource types, absolute names
-") do |vals|
-  # Make call patterns uniform and protected against nested arrays, also make
-  # names absolute if so desired.
-  vals = transform_and_assert_classnames(vals.is_a?(Array) ? vals.flatten : [vals])
-
-  # This is the same as calling the include function (but faster) since it again
-  # would otherwise need to perform the optional absolute name transformation
-  # (for no reason since they are already made absolute here).
-  #
-  compiler.evaluate_classes(vals, self, false)
-
-  vals.each do |klass|
-    # lookup the class in the scopes
-    if classobj = environment.known_resource_types.find_hostclass(klass)
-      klass = classobj.name
-    else
-      raise Puppet::ParseError, "Could not find class #{klass}"
-    end
-
-    # This is a bit hackish, in some ways, but it's the only way
-    # to configure a dependency that will make it to the client.
-    # The 'obvious' way is just to add an edge in the catalog,
-    # but that is considered a containment edge, not a dependency
-    # edge, so it usually gets lost on the client.
-    ref = Puppet::Resource.new(:class, klass)
-    resource.set_parameter(:require, [resource[:require]].flatten.compact << ref)
-  end
+- Since 4.7.0 Returns an Array[Type[Class]] with references to the required classes
+") do |classes|
+  Puppet.warn_once(:deprecation, '3xfunction#require', "Calling function_require via the Scope class is deprecated. Use Scope#call_function instead")
+  call_function('require', classes)
 end

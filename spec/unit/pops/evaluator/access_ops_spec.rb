@@ -235,6 +235,40 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect { evaluate(expr)}.to raise_error(/Array-Type\[\] arguments must be types/)
     end
 
+    # Timespan Type
+    #
+    it 'produdes a Timespan type with a lower bound' do
+      expr = fqr('Timespan')[{fqn('hours') => literal(3)}]
+      expect(evaluate(expr)).to be_the_type(types.timespan({'hours' => 3}))
+    end
+
+    it 'produdes a Timespan type with an upper bound' do
+      expr = fqr('Timespan')[literal(:default), {fqn('hours') => literal(9)}]
+      expect(evaluate(expr)).to be_the_type(types.timespan(nil, {'hours' => 9}))
+    end
+
+    it 'produdes a Timespan type with both lower and upper bounds' do
+      expr = fqr('Timespan')[{fqn('hours') => literal(3)}, {fqn('hours') => literal(9)}]
+      expect(evaluate(expr)).to be_the_type(types.timespan({'hours' => 3}, {'hours' => 9}))
+    end
+
+    # Timestamp Type
+    #
+    it 'produdes a Timestamp type with a lower bound' do
+      expr = fqr('Timestamp')[literal('2014-12-12T13:14:15 CET')]
+      expect(evaluate(expr)).to be_the_type(types.timestamp('2014-12-12T13:14:15 CET'))
+    end
+
+    it 'produdes a Timestamp type with an upper bound' do
+      expr = fqr('Timestamp')[literal(:default), literal('2016-08-23T17:50:00 CET')]
+      expect(evaluate(expr)).to be_the_type(types.timestamp(nil, '2016-08-23T17:50:00 CET'))
+    end
+
+    it 'produdes a Timestamp type with both lower and upper bounds' do
+      expr = fqr('Timestamp')[literal('2014-12-12T13:14:15 CET'), literal('2016-08-23T17:50:00 CET')]
+      expect(evaluate(expr)).to be_the_type(types.timestamp('2014-12-12T13:14:15 CET', '2016-08-23T17:50:00 CET'))
+    end
+
     # Tuple Type
     #
     it 'produces a Tuple[String] from the expression Tuple[String]' do
@@ -457,6 +491,20 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       # arguments are flattened
       type_expr = fqr('Runtime')[['ruby', 'String']]
       expect(evaluate(type_expr)).to eql(tf.ruby_type('String'))
+    end
+
+    # Callable Type
+    #
+    it 'produces Callable instance without return type' do
+      type_expr = fqr('Callable')[fqr('String')]
+      tf = Puppet::Pops::Types::TypeFactory
+      expect(evaluate(type_expr)).to eql(tf.callable(String))
+    end
+
+    it 'produces Callable instance with parameters and return type' do
+      type_expr = fqr('Callable')[[fqr('String')], fqr('Integer')]
+      tf = Puppet::Pops::Types::TypeFactory
+      expect(evaluate(type_expr)).to eql(tf.callable([String], Integer))
     end
 
   end

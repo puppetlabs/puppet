@@ -35,5 +35,5 @@ to empty arrays for a hash.
 - Since 4.0.0
 DOC
 ) do |args|
-  function_fail(["slice() is only available when parser/evaluator future is in effect"])
+  Error.is4x('slice')
 end

@@ -168,6 +168,14 @@ module TypeFactory
     hash.nil? || hash.empty? ? PTypeSetType::DEFAULT : PTypeSetType.new(hash)
   end
 
+  def self.timestamp(*args)
+    args.empty? ? PTimestampType::DEFAULT : PTimestampType.new(*args)
+  end
+
+  def self.timespan(*args)
+    args.empty? ? PTimespanType::DEFAULT : PTimespanType.new(*args)
+  end
+
   def self.tuple(types = [], size_type = nil)
     PTupleType.new(types.map {|elem| type_of(elem) }, size_type)
   end
@@ -250,6 +258,12 @@ module TypeFactory
   # Params are given as a sequence of arguments to {#type_of}.
   #
   def self.callable(*params)
+    if params.size == 2 && params[0].is_a?(Array)
+      return_t = type_of(params[1])
+      params = params[0]
+    else
+      return_t = nil
+    end
     last_callable = TypeCalculator.is_kind_of_callable?(params.last)
     block_t = last_callable ? params.pop : nil
 
@@ -272,7 +286,7 @@ module TypeFactory
     end
     # create a signature
     tuple_t = tuple(types, size_type)
-    PCallableType.new(tuple_t, block_t)
+    PCallableType.new(tuple_t, block_t, return_t)
   end
 
   # Produces the abstract type Collection

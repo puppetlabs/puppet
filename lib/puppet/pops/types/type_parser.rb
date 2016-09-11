@@ -170,7 +170,9 @@ class TypeParser
       # A generic callable as opposed to one that does not accept arguments
         'callable'     => TypeFactory.all_callables,
         'semver'       => TypeFactory.sem_ver,
-        'semverrange'  => TypeFactory.sem_ver_range
+        'semverrange'  => TypeFactory.sem_ver_range,
+        'timestamp'    => TypeFactory.timestamp,
+        'timespan'     => TypeFactory.timespan
     }
   end
 
@@ -355,6 +357,9 @@ class TypeParser
 
     when 'callable'
       # 1..m parameters being types (last three optionally integer or literal default, and a callable)
+      if parameters.size > 1 && parameters[0].is_a?(Array)
+        raise_invalid_parameters_error('callable', '2 when first parameter is an array', parameters.size) unless parameters.size == 2
+      end
       TypeFactory.callable(*parameters)
 
     when 'struct'
@@ -477,6 +482,14 @@ class TypeParser
     when 'runtime'
       raise_invalid_parameters_error('Runtime', '2', parameters.size) unless parameters.size == 2
       TypeFactory.runtime(*parameters)
+
+    when 'timespan'
+      raise_invalid_parameters_error('Timespan', '0 to 2', parameters.size) unless parameters.size <= 2
+      TypeFactory.timespan(*parameters)
+
+    when 'timestamp'
+      raise_invalid_parameters_error('Timestamp', '0 to 2', parameters.size) unless parameters.size <= 2
+      TypeFactory.timestamp(*parameters)
 
     when 'semver'
       raise_invalid_parameters_error('SemVer', '1 or more', parameters.size) unless parameters.size >= 1

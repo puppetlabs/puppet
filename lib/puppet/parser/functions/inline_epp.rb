@@ -47,5 +47,5 @@ END
 - Since 3.5
 - Requires [future parser](/puppet/3.8/reference/experiments_future.html) in Puppet 3.5 to 3.8") do |arguments|
 
-  function_fail(["inline_epp() is only available when parser/evaluator future is in effect"])
+  Error.is4x('inline_epp')
 end

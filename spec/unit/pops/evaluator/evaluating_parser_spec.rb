@@ -746,8 +746,9 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "Array[Integer,1,2,3]"        => 'Array-Type[] accepts 1 to 3 arguments. Got 4',
       "Array[Integer,String]"       => "A Type's size constraint arguments must be a single Integer type, or 1-2 integers (or default). Got a String-Type",
       "Hash[Integer,String, 1,2,3]" => 'Hash-Type[] accepts 2 to 4 arguments. Got 5',
-      "'abc'[x]"                    => "The value 'x' cannot be converted to Numeric",
-      "'abc'[1.0]"                  => "A String[] cannot use Float where Integer is expected",
+      "'abc'[x]"                    => "A substring operation does not accept a String as a character index. Expected an Integer",
+      "'abc'[1.0]"                  => "A substring operation does not accept a Float as a character index. Expected an Integer",
+      "'abc'[1, x]"                 => "A substring operation does not accept a String as a character index. Expected an Integer",
       "'abc'[1,2,3]"                => "String supports [] with one or two arguments. Got 3",
       "NotUndef[0]"                 => 'NotUndef-Type[] argument must be a Type or a String. Got Fixnum',
       "NotUndef[a,b]"               => 'NotUndef-Type[] accepts 0 to 1 arguments. Got 2',
@@ -1038,6 +1039,12 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       expect{parser.evaluate_string(scope, "assert_no_undef([undef])")}.to_not raise_error()
       expect{parser.evaluate_string(scope, "assert_no_undef({undef => 1})")}.to_not raise_error()
       expect{parser.evaluate_string(scope, "assert_no_undef({1 => undef})")}.to_not raise_error()
+    end
+
+    it 'a lambda return value is checked using the return type' do
+      expect(parser.evaluate_string(scope, "[1,2].map |Integer $x| >> Integer { $x }")).to eql([1,2])
+      expect { parser.evaluate_string(scope, "[1,2].map |Integer $x| >> String { $x }") }.to raise_error(
+        /value returned from lambda had wrong type, expected a String value, got Integer/)
     end
 
     context 'using the 3x function api' do

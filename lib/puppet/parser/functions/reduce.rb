@@ -102,5 +102,5 @@ $combine = $data.reduce( [d, 4] ) |$memo, $value| {
 - Since 4.0.0
 DOC
 ) do |args|
-  function_fail(["reduce() is only available when parser/evaluator future is in effect"])
+  Error.is4x('reduce')
 end

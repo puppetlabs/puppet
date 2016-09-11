@@ -23,6 +23,7 @@ module Puppet::Pops::Lookup
       unless explainer.is_a?(Explainer)
         explainer = explainer == true ? Explainer.new : nil
       end
+      explainer = DebugExplainer.new(explainer) if Puppet[:debug] && !explainer.is_a?(DebugExplainer)
       @explainer = explainer
     end
 
@@ -41,6 +42,14 @@ module Puppet::Pops::Lookup
         raise Puppet::DataBinding::LookupError.new(detail.message, detail)
       ensure
         @name_stack.pop
+      end
+    end
+
+    def emit_debug_info(preamble)
+      debug_explainer = @explainer
+      if debug_explainer.is_a?(DebugExplainer)
+        @explainer = debug_explainer.wrapped_explainer
+        debug_explainer.emit_debug_info(preamble)
       end
     end
 

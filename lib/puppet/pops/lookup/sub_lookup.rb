@@ -9,7 +9,7 @@ module SubLookup
   # parameter block. The block must return an exception instance.
   #
   # @param key [String] the string to split
-  # @return Array<String> the array of segments
+  # @return [Array<String>] the array of segments
   # @yieldparam problem [String] the problem, i.e. 'Syntax error'
   # @yieldreturn [Exception] the exception to raise
   #
