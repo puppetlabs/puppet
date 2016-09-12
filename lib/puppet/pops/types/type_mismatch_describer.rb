@@ -1,5 +1,6 @@
 module Puppet::Pops
 module Types
+  # @api private
   class TypePathElement
     attr_reader :key
 
@@ -20,30 +21,35 @@ module Types
     end
    end
 
+  # @api private
   class SubjectPathElement < TypePathElement
     def to_s
       key
     end
   end
 
+  # @api private
   class EntryValuePathElement < TypePathElement
     def to_s
       "entry '#{key}'"
     end
   end
 
+  # @api private
   class EntryKeyPathElement < TypePathElement
     def to_s
       "key of entry '#{key}'"
     end
   end
 
+  # @api private
   class ParameterPathElement < TypePathElement
     def to_s
       "parameter '#{key}'"
     end
   end
 
+  # @api private
   class BlockPathElement < ParameterPathElement
     def initialize(name = 'block')
       super(name)
@@ -54,18 +60,21 @@ module Types
     end
   end
 
+  # @api private
   class ArrayPathElement < TypePathElement
     def to_s
       "index #{key}"
     end
   end
 
+  # @api private
   class VariantPathElement < TypePathElement
     def to_s
       "variant #{key}"
     end
   end
 
+  # @api private
   class SignaturePathElement < VariantPathElement
     def to_s
       "#{key+1}."
@@ -77,6 +86,7 @@ module Types
   # All method names prefixed with "it_" to avoid conflict with Mocha expectations. Adding a method
   # named 'expects' just doesn't work.
   #
+  # @api private
   module TenseVariants
     def it_expects(tense)
       case tense
@@ -115,6 +125,7 @@ module Types
     end
   end
 
+  # @api private
   class Mismatch
     include TenseVariants
     attr_reader :path
@@ -181,6 +192,7 @@ module Types
   end
 
   # @abstract
+  # @api private
   class KeyMismatch < Mismatch
     attr_reader :key
 
@@ -198,42 +210,49 @@ module Types
     end
   end
 
+  # @api private
   class MissingKey < KeyMismatch
     def message(variant, position, tense = :present)
       "#{variant}#{position} #{it_expects(tense)} a value for key '#{key}'"
     end
   end
 
+  # @api private
   class MissingParameter < KeyMismatch
     def message(variant, position, tense = :present)
       "#{variant}#{position} #{it_expects(tense)} a value for parameter '#{key}'"
     end
   end
 
+  # @api private
   class ExtraneousKey < KeyMismatch
     def message(variant, position, tense = :present)
       "#{variant}#{position} unrecognized key '#{@key}'"
     end
   end
 
+  # @api private
   class InvalidParameter < ExtraneousKey
     def message(variant, position, tense = :present)
       "#{variant}#{position} #{it_has_no(tense)} parameter named '#{@key}'"
     end
   end
 
+  # @api private
   class UnexpectedBlock < Mismatch
     def message(variant, position, tense = :present)
       "#{variant}#{position} #{it_does_not_expect(tense)} a block"
     end
   end
 
+  # @api private
   class MissingRequiredBlock < Mismatch
     def message(variant, position, tense = :present)
       "#{variant}#{position} #{it_expects(tense)} a block"
     end
   end
 
+  # @api private
   class UnresolvedTypeReference < Mismatch
     attr_reader :unresolved
 
@@ -255,6 +274,7 @@ module Types
     end
   end
 
+  # @api private
   class ExpectedActualMismatch < Mismatch
     attr_reader :expected, :actual
 
@@ -279,6 +299,7 @@ module Types
     end
   end
 
+  # @api private
   class TypeMismatch < ExpectedActualMismatch
     include LabelProvider
 
@@ -424,6 +445,7 @@ module Types
     end
   end
 
+  # @api private
   class PatternMismatch < TypeMismatch
     def message(variant, position, tense = :present)
       "#{variant}#{position} #{it_expects(tense)} a match for #{expected.to_alias_expanded_s}, got #{actual_string}"
@@ -435,6 +457,7 @@ module Types
     end
   end
 
+  # @api private
   class SizeMismatch < ExpectedActualMismatch
     def from
       @expected.from || 0
@@ -469,6 +492,7 @@ module Types
     end
   end
 
+  # @api private
   class CountMismatch < SizeMismatch
     def initialize(path, expected, actual)
       super(path, expected, actual)
@@ -482,6 +506,7 @@ module Types
     end
   end
 
+  # @api private
   class TypeMismatchDescriber
     include TenseVariants
 
