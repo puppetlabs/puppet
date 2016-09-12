@@ -1,18 +1,7 @@
 # Loads a binary file from a module or file system and returns its contents as a Binary.
+# (Documented in 3.x stub)
 #
-# The argument to this function should be a `<MODULE NAME>/<FILE>`
-# reference, which will load `<FILE>` from a module's `files`
-# directory. (For example, the reference `mysql/mysqltuner.pl` will load the
-# file `<MODULES DIRECTORY>/mysql/files/mysqltuner.pl`.)
-#
-# This function also accepts an absolute file path that allows reading
-# binary file content from anywhere on disk.
-#
-# An error is raised if the given file does not exists.
-#
-# To search for the existence of files, use the `find_file()` function.
-#
-# @since 4.6.0
+# @since 4.8.0
 #
 Puppet::Functions.create_function(:binary_file, Puppet::Functions::InternalFunction) do
   dispatch :binary_file do
