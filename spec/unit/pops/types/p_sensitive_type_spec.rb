@@ -96,7 +96,7 @@ describe 'Sensitive Type' do
       CODE
       expect {
         eval_and_collect_notices(code)
-      }.to raise_error(Puppet::Error, /expected a Sensitive\[String\[10, 20\]\] value, got Sensitive\[String\[7, 7\]\]/)
+      }.to raise_error(Puppet::Error, /expects a Sensitive\[String\[10, 20\]\] value, got Sensitive\[String\[7, 7\]\]/)
     end
 
     it 'does not match an inappropriate parameterized type' do

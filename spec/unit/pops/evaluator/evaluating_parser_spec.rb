@@ -1044,7 +1044,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     it 'a lambda return value is checked using the return type' do
       expect(parser.evaluate_string(scope, "[1,2].map |Integer $x| >> Integer { $x }")).to eql([1,2])
       expect { parser.evaluate_string(scope, "[1,2].map |Integer $x| >> String { $x }") }.to raise_error(
-        /value returned from lambda had wrong type, expected a String value, got Integer/)
+        /value returned from lambda has wrong type, expects a String value, got Integer/)
     end
 
     context 'using the 3x function api' do

@@ -107,7 +107,7 @@ module Puppet::Pops
             version => '1.0.0',
             OBJECT
             expect { parse_type_set('MySet', ts) }.to raise_error(TypeAssertionError,
-              /expected a value for key 'pcore_version'/)
+              /expects a value for key 'pcore_version'/)
           end
 
           it 'version is missing' do
@@ -115,7 +115,7 @@ module Puppet::Pops
             pcore_version => '1.0.0',
             OBJECT
             expect { parse_type_set('MySet', ts) }.to raise_error(TypeAssertionError,
-              /expected a value for key 'version'/)
+              /expects a value for key 'version'/)
           end
 
           it 'the version is an invalid semantic version' do
@@ -150,7 +150,7 @@ module Puppet::Pops
             name_authority => 'not a valid URI'
             OBJECT
             expect { parse_type_set('MySet', ts) }.to raise_error(TypeAssertionError,
-              /entry 'name_authority' expected a match for Pattern\[.*\], got 'not a valid URI'/m)
+              /entry 'name_authority' expects a match for Pattern\[.*\], got 'not a valid URI'/m)
           end
 
           context 'the types map' do
@@ -161,7 +161,7 @@ module Puppet::Pops
                 types => {}
               OBJECT
               expect { parse_type_set('MySet', ts) }.to raise_error(TypeAssertionError,
-                /entry 'types' expected size to be at least 1, got 0/)
+                /entry 'types' expects size to be at least 1, got 0/)
             end
 
             it 'is not a map' do
@@ -171,7 +171,7 @@ module Puppet::Pops
                 types => []
               OBJECT
               expect { parse_type_set('MySet', ts) }.to raise_error(Puppet::Error,
-                /entry 'types' expected a Hash value, got Array/)
+                /entry 'types' expects a Hash value, got Array/)
             end
 
             it 'contains values that are not types' do
@@ -195,7 +195,7 @@ module Puppet::Pops
                 }
               OBJECT
               expect { parse_type_set('MySet', ts) }.to raise_error(TypeAssertionError,
-                /key of entry 'car' expected a match for Pattern\[\/\\A\[A-Z\]\\w\*\\z\/\], got 'car'/)
+                /key of entry 'car' expects a match for Pattern\[\/\\A\[A-Z\]\\w\*\\z\/\], got 'car'/)
             end
           end
 
@@ -207,7 +207,7 @@ module Puppet::Pops
                 references => {}
               OBJECT
               expect { parse_type_set('MySet', ts) }.to raise_error(TypeAssertionError,
-                /entry 'references' expected size to be at least 1, got 0/)
+                /entry 'references' expects size to be at least 1, got 0/)
             end
 
             it 'is not a hash' do
@@ -217,7 +217,7 @@ module Puppet::Pops
                 references => []
               OBJECT
               expect { parse_type_set('MySet', ts) }.to raise_error(TypeAssertionError,
-                /entry 'references' expected a Hash value, got Array/)
+                /entry 'references' expects a Hash value, got Array/)
             end
 
             it 'contains something other than reference initialization maps' do
@@ -227,7 +227,7 @@ module Puppet::Pops
                 references => {Ref => 2}
               OBJECT
               expect { parse_type_set('MySet', ts) }.to raise_error(TypeAssertionError,
-                /entry 'references' entry 'Ref' expected a Struct value, got Integer/)
+                /entry 'references' entry 'Ref' expects a Struct value, got Integer/)
             end
 
             it 'contains several initialization that refers to the same TypeSet' do
@@ -266,7 +266,7 @@ module Puppet::Pops
                   references => { Ref => { name => 'X' } }
                 OBJECT
                 expect { parse_type_set('MySet', ts) }.to raise_error(TypeAssertionError,
-                  /entry 'references' entry 'Ref' expected a value for key 'version_range'/)
+                  /entry 'references' entry 'Ref' expects a value for key 'version_range'/)
               end
 
               it 'has no name' do
@@ -276,7 +276,7 @@ module Puppet::Pops
                   references => { Ref => { version_range => '1.x' } }
                 OBJECT
                 expect { parse_type_set('MySet', ts) }.to raise_error(TypeAssertionError,
-                  /entry 'references' entry 'Ref' expected a value for key 'name'/)
+                  /entry 'references' entry 'Ref' expects a value for key 'name'/)
               end
 
               it 'has a name that is not a QRef' do
@@ -286,7 +286,7 @@ module Puppet::Pops
                   references => { Ref => { name => 'cars', version_range => '1.x' } }
                 OBJECT
                 expect { parse_type_set('MySet', ts) }.to raise_error(TypeAssertionError,
-                  /entry 'references' entry 'Ref' entry 'name' expected a match for Pattern\[\/\\A\[A-Z\]\[\\w\]\*\(\?:::\[A-Z\]\[\\w\]\*\)\*\\z\/\], got 'cars'/)
+                  /entry 'references' entry 'Ref' entry 'name' expects a match for Pattern\[\/\\A\[A-Z\]\[\\w\]\*\(\?:::\[A-Z\]\[\\w\]\*\)\*\\z\/\], got 'cars'/)
               end
 
               it 'has a version_range that is not a valid SemVer range' do
@@ -306,7 +306,7 @@ module Puppet::Pops
                   references => { 'cars' => { name => 'X', version_range => '1.x' } }
                 OBJECT
                 expect { parse_type_set('MySet', ts) }.to raise_error(TypeAssertionError,
-                  /entry 'references' key of entry 'cars' expected a match for Pattern\[\/\\A\[A-Z\]\\w\*\\z\/\], got 'cars'/)
+                  /entry 'references' key of entry 'cars' expects a match for Pattern\[\/\\A\[A-Z\]\\w\*\\z\/\], got 'cars'/)
               end
             end
           end

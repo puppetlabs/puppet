@@ -500,7 +500,7 @@ describe 'the 4x function api' do
         program = parser.parse_string('testing::test(10)', __FILE__)
         Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).returns(the_loader)
         expect { parser.evaluate({}, program) }.to raise_error(Puppet::Error,
-          /value returned from function 'test' had wrong type, expected a String value, got Integer/)
+          /value returned from function 'test' has wrong type, expects a String value, got Integer/)
       end
 
       it 'resolve a referenced Type alias' do

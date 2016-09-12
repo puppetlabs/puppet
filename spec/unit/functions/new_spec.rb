@@ -28,7 +28,7 @@ describe 'the new function' do
       $x = Integer.new(undef)
       notify { "one${x}word": }
     MANIFEST
-    )}.to raise_error(Puppet::Error, /expected an Integer value, got Undef/)
+    )}.to raise_error(Puppet::Error, /expects an Integer value, got Undef/)
   end
 
   it 'errors if converted value is not assignable to the type' do
@@ -36,7 +36,7 @@ describe 'the new function' do
       $x = Integer[1,5].new('42')
       notify { "one${x}word": }
     MANIFEST
-    )}.to raise_error(Puppet::Error, /expected an Integer\[1, 5\] value, got Integer\[42, 42\]/)
+    )}.to raise_error(Puppet::Error, /expects an Integer\[1, 5\] value, got Integer\[42, 42\]/)
   end
 
   context 'when invoked on NotUndef' do
@@ -441,7 +441,7 @@ describe 'the new function' do
       expect{compile_to_catalog(<<-"MANIFEST"
         $x = Boolean.new(undef)
       MANIFEST
-      )}.to raise_error(Puppet::Error, /expected a Boolean value, got Undef/)
+      )}.to raise_error(Puppet::Error, /expects a Boolean value, got Undef/)
     end
   end
 
@@ -507,7 +507,7 @@ describe 'the new function' do
       expect{compile_to_catalog(<<-"MANIFEST"
         $x = Tuple[Integer,6].new(3)
       MANIFEST
-      )}.to raise_error(Puppet::Error, /expected size to be at least 6, got 3/)
+      )}.to raise_error(Puppet::Error, /expects size to be at least 6, got 3/)
     end
   end
 
@@ -558,7 +558,7 @@ describe 'the new function' do
       expect{compile_to_catalog(<<-"MANIFEST"
         $x = Struct[{a => Integer[2]}].new({a => 0})
       MANIFEST
-      )}.to raise_error(Puppet::Error, /entry 'a' expected an Integer\[2, default\]/)
+      )}.to raise_error(Puppet::Error, /entry 'a' expects an Integer\[2, default\]/)
     end
   end
 
