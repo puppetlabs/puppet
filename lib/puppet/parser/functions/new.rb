@@ -827,6 +827,46 @@ function SemVerRange.new(
 
 For examples of `SemVerRange` use see "Creating a SemVer"
 
+Creating a Binary
+---
+
+A `Binary` object represents a sequence of bytes and it can be created from a String in Base64 format,
+an Array containing byte values. A Binary can also be created from a Hash containing the value to convert to
+a `Binary`.
+
+The signatures are:
+
+```puppet
+type ByteInteger = Integer[0,255]
+type Base64Format = Enum["%b", "%u", "%B", "%s"]
+type StringHash = Struct[{value => String, "format" => Optional[Base64Format]}]
+type ArrayHash = Struct[{value => Array[ByteInteger]}]
+type BinaryArgsHash = Variant[StringHash, ArrayHash]
+
+function Binary.new(
+  String $base64_str, 
+  Optional[Base64Format] $format
+)
+
+
+function Binary.new(
+  Array[ByteInteger] $byte_array
+}
+
+# Same as for String, or for Array, but where arguments are given in a Hash.
+function Binary.new(BinaryArgsHash $hash_args)
+```
+
+**Examples:** Creating a Binary
+
+```puppet
+# create the binary content "abc"
+$a = Binary('YWJj')
+
+# create the binary content from content in a module's file
+$b = binary_file('mymodule/mypicture.jpg')
+```
+
 * Since 4.5.0
 * Binary type since 4.8.0
 
