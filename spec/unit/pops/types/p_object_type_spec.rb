@@ -31,7 +31,7 @@ describe 'The Object Type' do
         }
       OBJECT
       expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError,
-        /attribute MyObject\[a\] had wrong type, expected a Type value, got Integer/)
+        /attribute MyObject\[a\] has wrong type, expects a Type value, got Integer/)
     end
 
     it 'raises an error if the type is missing' do
@@ -41,7 +41,7 @@ describe 'The Object Type' do
         }
       OBJECT
       expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError,
-        /expected a value for key 'type'/)
+        /expects a value for key 'type'/)
     end
 
     it 'raises an error when value is of incompatible type' do
@@ -51,7 +51,7 @@ describe 'The Object Type' do
         }
       OBJECT
       expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError,
-        /attribute MyObject\[a\] value had wrong type, expected an Integer value, got String/)
+        /attribute MyObject\[a\] value has wrong type, expects an Integer value, got String/)
     end
 
     it 'raises an error if the kind is invalid' do
@@ -61,7 +61,7 @@ describe 'The Object Type' do
         }
       OBJECT
       expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError,
-        /expected a match for Enum\['constant', 'derived', 'given_or_derived'\], got 'derivd'/)
+        /expects a match for Enum\['constant', 'derived', 'given_or_derived'\], got 'derivd'/)
     end
 
     it 'stores value in attribute' do
@@ -155,7 +155,7 @@ describe 'The Object Type' do
         }
       OBJECT
       expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError,
-        /function MyObject\[a\] had wrong type, expected a Type\[Callable\] value, got Type\[String\]/)
+        /function MyObject\[a\] has wrong type, expects a Type\[Callable\] value, got Type\[String\]/)
     end
 
     it 'raises an error when a function has the same name as an attribute' do
@@ -494,7 +494,7 @@ describe 'The Object Type' do
         a => Integer
       }
     OBJECT
-    expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError, /object initializer had wrong type, unrecognized key 'attribrutes'/)
+    expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError, /object initializer has wrong type, unrecognized key 'attribrutes'/)
   end
 
   it 'raises an error when attribute contains invalid keys' do
@@ -503,7 +503,7 @@ describe 'The Object Type' do
         a => { type => Integer, knid => constant }
       }
     OBJECT
-    expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError, /initializer for attribute MyObject\[a\] had wrong type, unrecognized key 'knid'/)
+    expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError, /initializer for attribute MyObject\[a\] has wrong type, unrecognized key 'knid'/)
   end
 
   context 'when inheriting from a another Object type' do
