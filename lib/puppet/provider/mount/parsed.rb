@@ -209,14 +209,20 @@ Puppet::Type.type(:mount).provide(
 
     # Update fstab entries that are mounted
     providers.each do |prov|
-      if mounts.delete({:name => prov.get(:name), :mounted => :yes}) then
-        prov.set(:ensure => :mounted)
+      mounts.delete_if do |mount|
+        if mount[:name] == prov.get(:name) && mount[:mounted] == :yes
+          prov.set(:ensure => :mounted)
+          prov.set(:live_options => mount[:live_options])
+          true
+        else
+          false
+        end
       end
     end
 
     # Add mounts that are not in fstab but mounted
     mounts.each do |mount|
-      providers << new(:ensure => :ghost, :name => mount[:name])
+      providers << new(:ensure => :ghost, :name => mount[:name], :live_options => mount[:live_options])
     end
     providers
   end
@@ -232,6 +238,7 @@ Puppet::Type.type(:mount).provide(
     #   to fstab we need to know if the device was mounted before)
     mountinstances.each do |hash|
       if mount = resources[hash[:name]]
+        mount.provider.set(:live_options => hash[:live_options])
         case mount.provider.get(:ensure)
         when :absent  # Mount not in fstab
           mount.provider.set(:ensure => :ghost)
@@ -254,6 +261,7 @@ Puppet::Type.type(:mount).provide(
       else
         / on (\S*)/
     end
+
     instances = []
     mount_output = mountcmd.split("\n")
     if mount_output.length >= 2 and mount_output[1] =~ /^[- \t]*$/
@@ -264,7 +272,13 @@ Puppet::Type.type(:mount).provide(
     end
     mount_output.each do |line|
       if match = regex.match(line) and name = match.captures.first
-        instances << {:name => name, :mounted => :yes} # Only :name is important here
+        live_options_platforms = ["Linux", "Darwin"]
+        if live_options_platforms.include? Facter.value(:kernel)
+          options = line[/\(.*\)/].tr('()', '')
+          instances << {:name => name, :mounted => :yes, :live_options => options}
+        else
+          instances << {:name => name, :mounted => :yes}
+        end
       else
         raise Puppet::Error, "Could not understand line #{line} from mount output"
       end

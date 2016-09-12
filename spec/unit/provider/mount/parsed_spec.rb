@@ -115,6 +115,7 @@ FSTAB
   describe "mountinstances" do
     it "should get name from mountoutput found on Solaris" do
       Facter.stubs(:value).with(:osfamily).returns 'Solaris'
+      Facter.stubs(:value).with(:kernel).returns 'SunOS'
       described_class.stubs(:mountcmd).returns(File.read(my_fixture('solaris.mount')))
       mounts = described_class.mountinstances
       expect(mounts.size).to eq(6)
@@ -128,6 +129,7 @@ FSTAB
 
     it "should get name from mountoutput found on HP-UX" do
       Facter.stubs(:value).with(:osfamily).returns 'HP-UX'
+      Facter.stubs(:value).with(:kernel).returns 'HP-UX'
       described_class.stubs(:mountcmd).returns(File.read(my_fixture('hpux.mount')))
       mounts = described_class.mountinstances
       expect(mounts.size).to eq(17)
@@ -150,32 +152,35 @@ FSTAB
       expect(mounts[16]).to eq({ :name => '/ghost', :mounted => :yes })
     end
 
-    it "should get name from mountoutput found on Darwin" do
+    it "should get name and mount options from mountoutput found on Darwin" do
       Facter.stubs(:value).with(:osfamily).returns 'Darwin'
+      Facter.stubs(:value).with(:kernel).returns 'Darwin'
       described_class.stubs(:mountcmd).returns(File.read(my_fixture('darwin.mount')))
       mounts = described_class.mountinstances
       expect(mounts.size).to eq(6)
-      expect(mounts[0]).to eq({ :name => '/', :mounted => :yes })
-      expect(mounts[1]).to eq({ :name => '/dev', :mounted => :yes })
-      expect(mounts[2]).to eq({ :name => '/net', :mounted => :yes })
-      expect(mounts[3]).to eq({ :name => '/home', :mounted => :yes })
-      expect(mounts[4]).to eq({ :name => '/usr', :mounted => :yes })
-      expect(mounts[5]).to eq({ :name => '/ghost', :mounted => :yes })
+      expect(mounts[0]).to eq({ :name => '/', :mounted => :yes, :live_options=>"hfs, local, journaled"})
+      expect(mounts[1]).to eq({ :name => '/dev', :mounted => :yes, :live_options=>"devfs, local, nobrowse"})
+      expect(mounts[2]).to eq({ :name => '/net', :mounted => :yes, :live_options=>"autofs, nosuid, automounted, nobrowse"})
+      expect(mounts[3]).to eq({ :name => '/home', :mounted => :yes, :mounted=>:yes, :live_options=>"autofs, automounted, nobrowse"})
+      expect(mounts[4]).to eq({ :name => '/usr', :mounted => :yes, :mounted=>:yes, :live_options=>"hfs, local, journaled"})
+      expect(mounts[5]).to eq({ :name => '/ghost', :mounted => :yes, :live_options => "hfs, local, journaled"})
     end
 
-    it "should get name from mountoutput found on Linux" do
+    it "should get name and mount options from mountoutput found on Linux" do
       Facter.stubs(:value).with(:osfamily).returns 'Gentoo'
+      Facter.stubs(:value).with(:kernel).returns 'Linux'
       described_class.stubs(:mountcmd).returns(File.read(my_fixture('linux.mount')))
       mounts = described_class.mountinstances
-      expect(mounts[0]).to eq({ :name => '/', :mounted => :yes })
-      expect(mounts[1]).to eq({ :name => '/lib64/rc/init.d', :mounted => :yes })
-      expect(mounts[2]).to eq({ :name => '/sys', :mounted => :yes })
-      expect(mounts[3]).to eq({ :name => '/usr/portage', :mounted => :yes })
-      expect(mounts[4]).to eq({ :name => '/ghost', :mounted => :yes })
+      expect(mounts[0]).to eq({ :name => '/', :mounted => :yes, :live_options=>"rw,noatime"})
+      expect(mounts[1]).to eq({ :name => '/lib64/rc/init.d', :mounted => :yes, :live_options => "rw,nosuid,nodev,noexec,relatime,size=1024k,mode=755" })
+      expect(mounts[2]).to eq({ :name => '/sys', :mounted => :yes, :live_options => "rw,nosuid,nodev,noexec,relatime"})
+      expect(mounts[3]).to eq({ :name => '/usr/portage', :mounted => :yes, :live_options => "rw" })
+      expect(mounts[4]).to eq({ :name => '/ghost', :mounted => :yes, :live_options => "rw" })
     end
 
     it "should get name from mountoutput found on AIX" do
       Facter.stubs(:value).with(:osfamily).returns 'AIX'
+      Facter.stubs(:value).with(:kernel).returns 'AIX'
       described_class.stubs(:mountcmd).returns(File.read(my_fixture('aix.mount')))
       mounts = described_class.mountinstances
       expect(mounts[0]).to eq({ :name => '/', :mounted => :yes })
@@ -224,29 +229,42 @@ FSTAB
           platform != 'solaris' or
             skip "We need to stub the operatingsystem fact at load time, but can't"
         end
-
-        # Stub the mount output to our fixture.
-        begin
-          mount = my_fixture(platform + '.mount')
-          described_class.stubs(:mountcmd).returns File.read(mount)
-        rescue
-          skip "is #{platform}.mount missing at this point?"
-        end
-
-        # Note: we have to stub default_target before creating resources
-        # because it is used by Puppet::Type::Mount.new to populate the
-        # :target property.
-        described_class.stubs(:default_target).returns fstab
-        @retrieve = described_class.instances.collect { |prov| {:name => prov.get(:name), :ensure => prov.get(:ensure)}}
       end
 
       # Following mountpoint are present in all fstabs/mountoutputs
       describe "on other platforms than Solaris", :if => Facter.value(:osfamily) != 'Solaris' do
-        it "should include unmounted resources" do
+        before :each do
+          # Stub the mount output to our fixture.
+          begin
+            mount = my_fixture(platform + '.mount')
+            described_class.stubs(:mountcmd).returns File.read(mount)
+          rescue
+            skip "is #{platform}.mount missing at this point?"
+          end
+
+          # Note: we have to stub default_target before creating resources
+          # because it is used by Puppet::Type::Mount.new to populate the
+          # :target property.
+          described_class.stubs(:default_target).returns fstab
+
+          platforms = {
+            'linux' => ['Gentoo', 'Linux'],
+            'freebsd' => ['BSD', 'BSD'],
+            'openbsd' => ['BSD', 'BSD'],
+            'netbsd' => ['BSd', 'BSD']
+          }
+          Facter.stubs(:value).with(:osfamily).returns(platforms[platform][0])
+          Facter.stubs(:value).with(:kernel).returns(platforms[platform][1])
+
+          @retrieve = described_class.instances.collect { |prov| {:name => prov.get(:name), :ensure => prov.get(:ensure)}}
+        end
+        
+        it "should include mounted resources" do
           expect(@retrieve).to include(:name => '/', :ensure => :mounted)
         end
 
-        it "should include mounted resources" do
+        it "should include unmounted resources" do
+        @retrieve = described_class.instances.collect { |prov| {:name => prov.get(:name), :ensure => prov.get(:ensure)}}
           expect(@retrieve).to include(:name => '/boot', :ensure => :unmounted)
         end
 
