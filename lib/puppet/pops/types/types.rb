@@ -816,17 +816,28 @@ class PNumericType < PAbstractRangeType
     @new_function ||= Puppet::Functions.create_loaded_function(:new_numeric, loader) do
       local_types do
         type 'Convertible = Variant[Undef, Integer, Float, Boolean, String, Timespan, Timestamp]'
-        type 'NamedArgs   = Struct[{from => Convertible}]'
+        type 'NamedArgs   = Struct[{from => Convertible, Optional[abs] => Boolean}]'
       end
 
       dispatch :from_args do
         param          'Convertible',  :from
+        optional_param 'Boolean',      :abs
       end
 
       dispatch :from_hash do
         param          'NamedArgs',  :hash_args
       end
-      def from_args(from)
+
+      def from_args(from, abs = false)
+        result = from_convertible(from)
+        abs ? result.abs : result
+      end
+
+      def from_hash(args_hash)
+        from_args(args_hash['from'], args_hash['abs'] || false)
+      end
+
+      def from_convertible(from)
         case from
         when NilClass
           throw :undefined_value
@@ -856,10 +867,6 @@ class PNumericType < PAbstractRangeType
           t = Puppet::Pops::Types::TypeCalculator.singleton.infer(from).generalize
           raise TypeConversionError.new("Value of type '#{t}' cannot be converted to Numeric")
         end
-      end
-
-      def from_hash(args_hash)
-        from_args(args_hash['from'])
       end
     end
   end
@@ -963,19 +970,29 @@ class PIntegerType < PNumericType
       local_types do
         type 'Radix       = Variant[Default, Integer[2,2], Integer[8,8], Integer[10,10], Integer[16,16]]'
         type 'Convertible = Variant[Undef, Numeric, Boolean, String, Timespan, Timestamp]'
-        type 'NamedArgs   = Struct[{from => Convertible, Optional[radix] => Radix}]'
+        type 'NamedArgs   = Struct[{from => Convertible, Optional[radix] => Radix, Optional[abs] => Boolean}]'
       end
 
       dispatch :from_args do
         param          'Convertible',  :from
         optional_param 'Radix',   :radix
+        optional_param 'Boolean', :abs
       end
 
       dispatch :from_hash do
         param          'NamedArgs',  :hash_args
       end
 
-      def from_args(from, radix = :default)
+      def from_args(from, radix = :default, abs = false)
+        result = from_convertible(from, radix)
+        abs ? result.abs : result
+      end
+
+      def from_hash(args_hash)
+        from_args(args_hash['from'], args_hash['radix'] || :default, args_hash['abs'] || false)
+      end
+
+      def from_convertible(from, radix)
         case from
         when NilClass
           throw :undefined_value
@@ -1009,12 +1026,6 @@ class PIntegerType < PNumericType
           t = Puppet::Pops::Types::TypeCalculator.singleton.infer(from).generalize
           raise TypeConversionError.new("Value of type '#{t}' cannot be converted to an Integer")
         end
-      end
-
-      def from_hash(args_hash)
-        from = args_hash['from']
-        radix = args_hash['radix'] || :default
-        from_args(from, radix)
       end
 
       def assert_radix(radix)
@@ -1069,18 +1080,28 @@ class PFloatType < PNumericType
     @new_function ||= Puppet::Functions.create_loaded_function(:new_float, loader) do
       local_types do
         type 'Convertible = Variant[Undef, Numeric, Boolean, String, Timespan, Timestamp]'
-        type 'NamedArgs   = Struct[{from => Convertible}]'
+        type 'NamedArgs   = Struct[{from => Convertible, Optional[abs] => Boolean}]'
       end
 
       dispatch :from_args do
         param          'Convertible',  :from
+        optional_param 'Boolean',      :abs
       end
 
       dispatch :from_hash do
         param          'NamedArgs',  :hash_args
       end
 
-      def from_args(from)
+      def from_args(from, abs = false)
+        result = from_convertible(from)
+        abs ? result.abs : result
+      end
+
+      def from_hash(args_hash)
+        from_args(args_hash['from'], args_hash['abs'] || false)
+      end
+
+      def from_convertible(from)
         case from
         when NilClass
           throw :undefined_value
@@ -1120,10 +1141,6 @@ class PFloatType < PNumericType
           t = Puppet::Pops::Types::TypeCalculator.singleton.infer(from).generalize
           raise TypeConversionError.new("Value of type '#{t}' cannot be converted to Float")
         end
-      end
-
-      def from_hash(args_hash)
-        from_args(args_hash['from'])
       end
     end
   end
