@@ -162,6 +162,14 @@ describe Puppet::Parser::Compiler do
       MANIFEST
       expect(catalog).to have_resource("Notify[test]").with_parameter(:message, true)
     end
+
+    it 'can return boolean settings as Boolean' do
+      node = Puppet::Node.new("testing")
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+          notify { 'test': message => $settings::storeconfigs == false }
+      MANIFEST
+      expect(catalog).to have_resource("Notify[test]").with_parameter(:message, true)
+    end
   end
 
   context 'when working with $server_facts' do

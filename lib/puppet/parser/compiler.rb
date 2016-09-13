@@ -877,7 +877,7 @@ class Puppet::Parser::Compiler
 
   def transform_setting(val)
     case val
-    when Integer, Float, String
+    when Integer, Float, String, TrueClass, FalseClass
       val
     when Symbol
       val == :undef ? nil : val.to_s
