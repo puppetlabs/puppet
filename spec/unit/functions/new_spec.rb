@@ -90,6 +90,34 @@ describe 'the new function' do
       )).to have_resource('Notify[Integer, 1]')
     end
 
+    it "produces an absolute value when third argument is 'true'" do
+      expect(eval_and_collect_notices(<<-MANIFEST
+        notice(Integer.new(-42, 10, true))
+      MANIFEST
+      )).to eql(['42'])
+    end
+
+    it "does not produce an absolute value when third argument is 'false'" do
+      expect(eval_and_collect_notices(<<-MANIFEST
+        notice(Integer.new(-42, 10, false))
+      MANIFEST
+      )).to eql(['-42'])
+    end
+
+    it "produces an absolute value from hash {from => val, abs => true}" do
+      expect(eval_and_collect_notices(<<-MANIFEST
+        notice(Integer.new({from => -42, abs => true}))
+      MANIFEST
+      )).to eql(['42'])
+    end
+
+    it "does not produce an absolute value from hash {from => val, abs => false}" do
+      expect(eval_and_collect_notices(<<-MANIFEST
+        notice(Integer.new({from => -42, abs => false}))
+      MANIFEST
+      )).to eql(['-42'])
+    end
+
     context 'when prefixed by a sign' do
       { '+1'     => 1,
         '-1'     => -1,
@@ -362,6 +390,34 @@ describe 'the new function' do
       MANIFEST
       )).to have_resource('Notify[Integer, 42]')
     end
+
+    it "produces an absolute value when second argument is 'true'" do
+      expect(eval_and_collect_notices(<<-MANIFEST
+        notice(Numeric.new(-42.3, true))
+      MANIFEST
+      )).to eql(['42.3'])
+    end
+
+    it "does not produce an absolute value when second argument is 'false'" do
+      expect(eval_and_collect_notices(<<-MANIFEST
+        notice(Numeric.new(-42.3, false))
+      MANIFEST
+      )).to eql(['-42.3'])
+    end
+
+    it "produces an absolute value from hash {from => val, abs => true}" do
+      expect(eval_and_collect_notices(<<-MANIFEST
+        notice(Numeric.new({from => -42.3, abs => true}))
+      MANIFEST
+      )).to eql(['42.3'])
+    end
+
+    it "does not produce an absolute value from hash {from => val, abs => false}" do
+      expect(eval_and_collect_notices(<<-MANIFEST
+        notice(Numeric.new({from => -42.3, abs => false}))
+      MANIFEST
+      )).to eql(['-42.3'])
+    end
   end
 
   context 'when invoked on Float' do
@@ -396,6 +452,34 @@ describe 'the new function' do
         notify { "${type($x, generalized)}, $x": }
       MANIFEST
       )).to have_resource('Notify[Float, 42.0]')
+    end
+
+    it "produces an absolute value when second argument is 'true'" do
+      expect(eval_and_collect_notices(<<-MANIFEST
+        notice(Float.new(-42.3, true))
+      MANIFEST
+      )).to eql(['42.3'])
+    end
+
+    it "does not produce an absolute value when second argument is 'false'" do
+      expect(eval_and_collect_notices(<<-MANIFEST
+        notice(Float.new(-42.3, false))
+      MANIFEST
+      )).to eql(['-42.3'])
+    end
+
+    it "produces an absolute value from hash {from => val, abs => true}" do
+      expect(eval_and_collect_notices(<<-MANIFEST
+        notice(Float.new({from => -42.3, abs => true}))
+      MANIFEST
+      )).to eql(['42.3'])
+    end
+
+    it "does not produce an absolute value from hash {from => val, abs => false}" do
+      expect(eval_and_collect_notices(<<-MANIFEST
+        notice(Float.new({from => -42.3, abs => false}))
+      MANIFEST
+      )).to eql(['-42.3'])
     end
   end
 
