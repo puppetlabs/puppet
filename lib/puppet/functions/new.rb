@@ -26,6 +26,6 @@ Puppet::Functions.create_function(:new, Puppet::Functions::InternalFunction) do
   end
 
   def assert_type(type, value)
-    Puppet::Pops::Types::TypeAsserter.assert_instance_of("Converted value from #{type.to_s}.new()", type, value)
+    Puppet::Pops::Types::TypeAsserter.assert_instance_of(['Converted value from %s.new()', type], type, value)
   end
 end
