@@ -82,6 +82,10 @@ class PBinaryType < PAnyType
       Base64.urlsafe_encode64(@binary_buffer)
     end
 
+    def hash
+      @binary_buffer.hash
+    end
+
     def eql?(o)
       self.class == o.class && @binary_buffer == o.binary_buffer
     end
@@ -99,9 +103,6 @@ class PBinaryType < PAnyType
     create_ptype(loader, ir, 'AnyType')
   end
 
-  def initialize()
-  end
-
   # Only instances of Binary are instances of the PBinaryType
   #
   def instance?(o, guard = nil)
@@ -110,10 +111,6 @@ class PBinaryType < PAnyType
 
   def eql?(o)
     self.class == o.class
-  end
-
-  def hash?
-    super
   end
 
   # @api private
