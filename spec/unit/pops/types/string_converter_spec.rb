@@ -937,7 +937,7 @@ describe 'The string converter' do
 
     it '%#s formats as quoted string with escaped non printable bytes' do
       string_formats = { Puppet::Pops::Types::PBinaryType::DEFAULT => '%#s'}
-      expect(converter.convert(binary.from_base64("apa"), string_formats)).to eq("\"j\\x96\"")
+      expect(converter.convert(binary.from_base64("apa="), string_formats)).to eq("\"j\\x96\"")
     end
 
     { "%s"    => 'binary',
