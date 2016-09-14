@@ -2258,7 +2258,8 @@ class PArrayType < PCollectionType
           wrap ? [from] : from.to_a
 
         when PBinaryType::Binary
-          wrap ? [from] : from.binary_buffer.bytes
+          # For older rubies, the #bytes method returns an Enumerator that must be rolled out
+          wrap ? [from] : from.binary_buffer.bytes.to_a
 
         else
           if wrap

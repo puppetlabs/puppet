@@ -24,7 +24,7 @@ class Puppet::SyntaxCheckers::Base64 < Puppet::Plugins::SyntaxCheckers::SyntaxCh
       # simply skips all non base64 characters
       Base64.strict_decode64(cleaned_text)
     rescue => e
-      if (cleaned_text.bytes.size * 8) % 6 != 0
+      if (cleaned_text.bytes.to_a.size * 8) % 6 != 0
         msg2 = "padding is not correct"
       else
         msg2 = "contains letters outside strict base 64 range (or whitespace)"
