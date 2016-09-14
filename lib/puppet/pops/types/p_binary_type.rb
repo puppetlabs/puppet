@@ -145,7 +145,9 @@ class PBinaryType < PAnyType
         format ||= '%b'
         case format
         when "%b"
-          Binary.new(Base64.decode64(str))
+          # padding must be added for older rubies to avoid truncation
+          padding = '=' * (str.length % 3)
+          Binary.new(Base64.decode64(str + padding))
 
         when "%u"
           Binary.new(Base64.urlsafe_decode64(str))

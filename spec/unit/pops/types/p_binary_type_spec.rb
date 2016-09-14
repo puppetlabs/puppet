@@ -66,12 +66,21 @@ describe 'Binary Type' do
     end
 
     it 'will not error creation in base mode if padding is missing' do
-      # the text 'binar' needs padding with '=' (missing here to trigger error
+      # the text 'binar' needs padding with '=' (missing here to trigger possible error)
       code = <<-CODE
         $x = Binary('YmluYXI', '%b')
         notice(assert_type(Binary, $x))
       CODE
       expect(eval_and_collect_notices(code)).to eql(['YmluYXI='])
+    end
+
+    it 'will not error creation in base mode if padding is not required' do
+      # the text 'binary' does not need padding with '='
+      code = <<-CODE
+        $x = Binary('YmluYXJ5', '%b')
+        notice(assert_type(Binary, $x))
+      CODE
+      expect(eval_and_collect_notices(code)).to eql(['YmluYXJ5'])
     end
 
     it 'can be compared to another instance for equality' do
