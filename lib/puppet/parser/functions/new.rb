@@ -630,7 +630,7 @@ Defaults to `s` at top level and `p` inside array or hash.
 
 | Format    | Default formats
 | ------    | ---------------
-| s         | binary as unquoted characters
+| s         | binary as unquoted UTF-8 characters (errors if byte sequence is invalid UTF-8)
 | p         | 'Binary("<base64strict>")'
 | b         | '<base64>' - base64 string with newlines inserted
 | B         | '<base64strict>' - base64 strict string (without newlines inserted)
@@ -856,6 +856,17 @@ function Binary.new(
 # Same as for String, or for Array, but where arguments are given in a Hash.
 function Binary.new(BinaryArgsHash $hash_args)
 ```
+
+The formats have the following meaning:
+
+| format | explanation |
+| ----   | ----        |
+| b | The data is in base64 encoding, padding as required by base64 strict is added by default
+| u | The data is in URL safe base64 encoding
+| B | The data is in base64 strict encoding
+| s | The data is a puppet string used verbatim as a binary byte sequence
+
+The default format is `%b`.
 
 **Examples:** Creating a Binary
 
