@@ -75,11 +75,13 @@ type Radix = Variant[Default, Integer[2,2], Integer[8,8], Integer[10,10], Intege
 
 function Integer.new(
   String $value,
-  Radix $radix = 10
+  Radix $radix = 10,
+  Boolean $abs = false
 )
 
 function Integer.new(
-  Variant[Numeric, Boolean] $value
+  Variant[Numeric, Boolean] $value,
+  Boolean $abs = false
 )
 ```
 
@@ -99,14 +101,16 @@ function Integer.new(
 * Conversion from `Boolean` results in 0 for `false` and 1 for `true`.
 * Conversion from `Integer`, `Float`, and `Boolean` ignores the radix.
 * `Float` value fractions are truncated (no rounding).
+* When `abs` is set to `true`, the result will be an absolute integer.
 
 Examples - Converting to Integer:
 
 ```puppet
-$a_number = Integer("0xFF", 16)  # results in 255
-$a_number = Numeric("010")       # results in 8
-$a_number = Numeric("010", 10)   # results in 10
-$a_number = Integer(true)        # results in 1
+$a_number = Integer("0xFF", 16)    # results in 255
+$a_number = Integer("010")         # results in 8
+$a_number = Integer("010", 10)     # results in 10
+$a_number = Integer(true)          # results in 1
+$a_number = Integer(-38, 10, true) # results in 38
 ```
 
 Conversion to Float
@@ -117,7 +121,8 @@ For conversion from `String` both float and integer formats are supported.
 
 ```puppet
 function Float.new(
-  Variant[Numeric, Boolean, String] $value
+  Variant[Numeric, Boolean, String] $value,
+  Boolean $abs = true
 )
 ```
 
@@ -126,6 +131,7 @@ function Float.new(
 * A `Boolean` `true` is converted to 1.0, and a `false` to 0.0
 * In `String` format, integer prefixes for hex and binary are understood (but not octal since
   floating point in string format may start with a '0').
+* When `abs` is set to `true`, the result will be an absolute floating point value.
 
 Conversion to Numeric
 ---------------------
@@ -135,7 +141,8 @@ A new `Integer` or `Float` can be created from `Integer`, `Float`, `Boolean` and
 
 ```puppet
 function Numeric.new(
-  Variant[Numeric, Boolean, String] $value
+  Variant[Numeric, Boolean, String] $value,
+  Boolean $abs = true
 )
 ```
 
@@ -143,14 +150,17 @@ function Numeric.new(
   (e/E), the result is a `Float`, otherwise the value is an `Integer`. The
   conversion from `String` always uses a radix based on the prefix of the string.
 * Conversion from `Boolean` results in 0 for `false` and 1 for `true`.
+* When `abs` is set to `true`, the result will be an absolute `Float`or `Integer` value.
 
 Examples - Converting to Numeric
 
 ```puppet
-$a_number = Numeric(true)    # results in 1
-$a_number = Numeric("0xFF")  # results in 255
-$a_number = Numeric("010")   # results in 8
-$a_number = Numeric("3.14")  # results in 3.14 (a float)
+$a_number = Numeric(true)        # results in 1
+$a_number = Numeric("0xFF")      # results in 255
+$a_number = Numeric("010")       # results in 8
+$a_number = Numeric("3.14")      # results in 3.14 (a float)
+$a_number = Numeric(-42.3, true) # results in 42.3
+$a_number = Numeric(-42, true)   # results in 42
 ```
 
 Conversion to Timespan
