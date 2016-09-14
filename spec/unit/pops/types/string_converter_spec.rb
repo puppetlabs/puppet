@@ -940,6 +940,19 @@ describe 'The string converter' do
       expect(converter.convert(binary.from_base64("apa="), string_formats)).to eq("\"j\\x96\"")
     end
 
+    it '%s formats as unquoted string with valid UTF-8 chars' do
+      string_formats = { Puppet::Pops::Types::PBinaryType::DEFAULT => '%s'}
+      # womans hat emoji is E318, a three byte UTF-8 char EE 8C 98
+      expect(converter.convert(binary.from_binary_string("\xEE\x8C\x98"), string_formats)).to eq("\uE318")
+    end
+
+    it '%s errors if given non UTF-8 bytes' do
+      string_formats = { Puppet::Pops::Types::PBinaryType::DEFAULT => '%s'}
+      expect {
+        converter.convert(binary.from_base64("apa="), string_formats)
+      }.to raise_error(Encoding::UndefinedConversionError)
+    end
+
     { "%s"    => 'binary',
       "%#s"   => '"binary"',
       "%8s"   => '  binary',

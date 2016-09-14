@@ -718,7 +718,19 @@ class StringConverter
     substitute = f.alt? ? 'p' : 's'
     case f.format
     when :s
-      Kernel.format(f.orig_fmt.gsub('s', substitute), val.binary_buffer)
+      val_to_convert = val.binary_buffer
+      if !f.alt?
+        # Assume it is valid UTF-8
+        val_to_convert = val_to_convert.dup.force_encoding('UTF-8')
+        # If it isn't
+        unless val_to_convert.valid_encoding?
+          # try to convert and fail with details about what is wrong
+          val_to_convert = val.binary_buffer.encode('UTF-8')
+        end
+      else
+        val_to_convert = val.binary_buffer
+      end
+      Kernel.format(f.orig_fmt.gsub('s', substitute), val_to_convert)
 
     when :p
       # width & precision applied to string, not the the name of the type
