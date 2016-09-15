@@ -59,8 +59,12 @@ module PuppetSpec::Compiler
     logs
   end
 
-  def eval_and_collect_notices(code, node = Puppet::Node.new('foonode'))
+  def eval_and_collect_notices(code, node = Puppet::Node.new('foonode'), topscope_vars = {})
     collect_notices(code, node) do |compiler|
+      unless topscope_vars.empty?
+        scope = compiler.topscope
+        topscope_vars.each {|k,v| scope.setvar(k, v) }
+      end
       if block_given?
         compiler.compile do |catalog|
           yield(compiler.topscope, catalog)
