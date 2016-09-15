@@ -86,32 +86,6 @@ class Runtime3Converter
     raise Puppet::Error, 'Use of an Iterator is not supported here'
   end
 
-  def convert_Regexp(o, scope, undef_value)
-    # Puppet 3x cannot handle parameter values that are reqular expressions. Turn into regexp string in
-    # source form
-    o.inspect
-  end
-
-  def convert_SemVer(o, scope, undef_value)
-    # Puppet 3x cannot handle SemVers. Use the string form
-    o.to_s
-  end
-
-  def convert_SemVerRange(o, scope, undef_value)
-    # Puppet 3x cannot handle SemVerRanges. Use the string form
-    o.to_s
-  end
-
-  def convert_Timespan(o, scope, undef_value)
-    # Puppet 3x cannot handle Timespans. Use the string form
-    o.to_s
-  end
-
-  def convert_Timestamp(o, scope, undef_value)
-    # Puppet 3x cannot handle Timestamps. Use the string form
-    o.to_s
-  end
-
   def convert_Symbol(o, scope, undef_value)
     o == :undef && !@inner ? undef_value : o
   end
@@ -159,13 +133,47 @@ class Runtime3Converter
 
   protected
 
-  def initialize(inner)
+  def initialize(inner = false)
     @inner = inner
     @inner_converter = inner ? self : self.class.new(true)
     @convert_visitor = Puppet::Pops::Visitor.new(self, 'convert', 2, 2)
   end
 
-  @instance = self.new(false)
+  @instance = self.new
+end
+
+# A Ruby function written for the 3.x API cannot be expected to handle extended data types. This
+# converter ensures that they are converted to String format
+# @api private
+class Runtime3FunctionArgumentConverter < Runtime3Converter
+
+  def convert_Regexp(o, scope, undef_value)
+    # Puppet 3x cannot handle parameter values that are reqular expressions. Turn into regexp string in
+    # source form
+    o.inspect
+  end
+
+  def convert_Version(o, scope, undef_value)
+    # Puppet 3x cannot handle SemVers. Use the string form
+    o.to_s
+  end
+
+  def convert_VersionRange(o, scope, undef_value)
+    # Puppet 3x cannot handle SemVerRanges. Use the string form
+    o.to_s
+  end
+
+  def convert_Timespan(o, scope, undef_value)
+    # Puppet 3x cannot handle Timespans. Use the string form
+    o.to_s
+  end
+
+  def convert_Timestamp(o, scope, undef_value)
+    # Puppet 3x cannot handle Timestamps. Use the string form
+    o.to_s
+  end
+
+  @instance = self.new
 end
 
 end

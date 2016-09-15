@@ -126,7 +126,7 @@ class Puppet::Pops::Functions::Function
     # Call via 3x API
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
     # NOTE: Passing an empty string last converts nil/:undef to empty string
-    result = scope.send(func_3x, Puppet::Pops::Evaluator::Runtime3Converter.map_args(args, loader_scope, ''), &block)
+    result = scope.send(func_3x, Puppet::Pops::Evaluator::Runtime3FunctionArgumentConverter.map_args(args, loader_scope, ''), &block)
 
     # Prevent non r-value functions from leaking their result (they are not written to care about this)
     Puppet::Parser::Functions.rvalue?(function_name) ? result : nil
