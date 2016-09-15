@@ -548,6 +548,52 @@ describe Puppet::Configurer do
     end
   end
 
+  describe "when saving the last run report file" do
+    include PuppetSpec::Files
+
+    before do
+      @configurer = Puppet::Configurer.new
+      @report = Puppet::Transaction::Report.new("apply")
+      Puppet[:lastrunreport] = tmpfile('last_run_report')
+    end
+
+    it "should write the last run report" do
+      @configurer.save_last_run_report(@report)
+      expect(Puppet::FileSystem.exist?(Puppet[:lastrunreport])).to be_truthy
+    end
+
+    it "should write the last run report as yaml" do
+      @configurer.save_last_run_report(@report)
+      expect(File.read(Puppet[:lastrunreport])).to eq(YAML.dump(@report))
+    end
+
+    it "should create the last run report with the correct mode" do
+      Puppet.settings.setting(:lastrunreport).expects(:mode).returns('640')
+      @configurer.save_last_run_report(@report)
+
+      if Puppet::Util::Platform.windows?
+        require 'puppet/util/windows/security'
+        mode = Puppet::Util::Windows::Security.get_mode(Puppet[:lastrunreport])
+      else
+        mode = Puppet::FileSystem.stat(Puppet[:lastrunreport]).mode
+      end
+      expect(mode & 0777).to eq(0640)
+    end
+
+    it "should write the report locally even if sending the report fails" do
+      Puppet[:lastrunreport] = tmpfile('report_server_unreachable')
+      Puppet::Transaction::Report.indirection.expects(:save).with(@report, nil, anything).raises(Timeout::Error, "execution expired")
+      @agent.send_report(@report)
+      expect(Puppet::FileSystem.exist?(Puppet[:lastrunreport])).to be_truthy
+    end
+
+    it "should log but not fail if saving the report file fails" do
+      Puppet::Util.expects(:replace_file).raises("foo")
+      Puppet.expects(:log_exception).with(instance_of(RuntimeError), "Could not save last run local report: foo")
+      expect { @configurer.save_last_run_summary(@report) }.to_not raise_error
+    end
+  end
+
   describe "when requesting a node" do
     it "uses the transaction uuid in the request" do
       Puppet::Node.indirection.expects(:find).with(anything, has_entries(:transaction_uuid => anything)).twice

@@ -310,12 +310,6 @@ describe Puppet::Application::Agent do
       @puppetd.setup
     end
 
-    it "should tell the report handler to cache locally as yaml" do
-      Puppet::Transaction::Report.indirection.expects(:cache_class=).with(:yaml)
-
-      @puppetd.setup
-    end
-
     it "should default catalog_terminus setting to 'rest'" do
       @puppetd.initialize_app_defaults
       expect(Puppet[:catalog_terminus]).to eq(:rest)
