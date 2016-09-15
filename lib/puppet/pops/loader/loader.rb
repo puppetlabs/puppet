@@ -166,15 +166,21 @@ class Puppet::Pops::Loader::Loader
       @hash
     end
 
-    def ==(o)
-      o.class == self.class && type == o.type && name == o.name
+    # For all intents and purposes TypedName can be immutable,
+    # equality operations aliased to identity equality and instances
+    # of it cached.
+    def self.new(type, name)
+      @cache ||= {}
+      key = :"#{type}/#{name.to_s.gsub /^::/, ''}"
+      @cache.fetch(key) { @cache[key] = super }
     end
 
-    alias eql? ==
+    # Force identity equality since this is now immutable
+    alias == equal?
+    alias eql? equal?
 
     def to_s
       "#{type}/#{name}"
     end
   end
 end
-
