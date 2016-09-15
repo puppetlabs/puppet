@@ -13,21 +13,7 @@ describe 'Binary Type' do
       expect(t).to be_a(PBinaryType)
       expect(t).to eql(PBinaryType::DEFAULT)
     end
-
-    context 'when used in Puppet expressions' do
-
-        it 'the Binary type is equal to itself only' do
-          code = <<-CODE
-            $t = Binary
-            notice(Binary =~ Type[ Binary ])
-            notice(Binary == Binary)
-            notice(Binary < Binary)
-            notice(Binary > Binary)
-          CODE
-          expect(eval_and_collect_notices(code)).to eql(['true', 'true', 'false', 'false'])
-        end
-      end
-    end
+  end
 
   context 'a Binary instance' do
     it 'can be created from a Base64 encoded String using %s, string mode' do

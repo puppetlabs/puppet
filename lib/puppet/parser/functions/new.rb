@@ -630,7 +630,7 @@ Defaults to `s` at top level and `p` inside array or hash.
 
 | Format    | Default formats
 | ------    | ---------------
-| s         | binary as unquoted UTF-8 characters (errors if byte sequence is invalid UTF-8)
+| s         | binary as unquoted UTF-8 characters (errors if byte sequence is invalid UTF-8). Alternate form escapes non ascii bytes.
 | p         | 'Binary("<base64strict>")'
 | b         | '<base64>' - base64 string with newlines inserted
 | B         | '<base64strict>' - base64 strict string (without newlines inserted)
@@ -638,8 +638,10 @@ Defaults to `s` at top level and `p` inside array or hash.
 | t         | 'Binary' - outputs the name of the type only
 | T         | 'BINARY' - output the name of the type in all caps only
 
-The alternate form flag `#` will quote the binary or base64 text output
-The width and precision values are applied to the text part only in `%p` format.
+* The alternate form flag `#` will quote the binary or base64 text output.
+* The format `%#s` allows invalid UTF-8 characters and outputs all non ascii bytes
+  as hex escaped characters on the form `\\xHH` where `H` is a hex digit.
+* The width and precision values are applied to the text part only in `%p` format.
 
 ### Array & Tuple to String
 
@@ -864,7 +866,7 @@ The formats have the following meaning:
 | b | The data is in base64 encoding, padding as required by base64 strict is added by default
 | u | The data is in URL safe base64 encoding
 | B | The data is in base64 strict encoding
-| s | The data is a puppet string used verbatim as a binary byte sequence
+| s | The data is a puppet string seen as the verbatim byte sequence representing the string in its given encoding.
 
 The default format is `%b`.
 
