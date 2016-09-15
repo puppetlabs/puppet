@@ -191,13 +191,13 @@ class Puppet::Parser::Resource < Puppet::Resource
   def to_hash
     @parameters.reduce({}) do |result, (_, param)|
       value = param.value
-      value = (value == :undef) ? nil : value
+      value = (:undef == value) ? nil : value
 
       unless value.nil?
         case param.name
         when :before, :subscribe, :notify, :require
           if value.is_a?(Array)
-            value = value.flatten.reject {|v| v.nil? || v == :undef }
+            value = value.flatten.reject {|v| v.nil? || :undef == v }
           end
           result[param.name] = value
         else
