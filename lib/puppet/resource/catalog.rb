@@ -419,8 +419,10 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     end
 
     if resources = data['resources']
+      # TODO: The deserializer needs a loader in order to deserialize types defined using the puppet language.
+      json_deserializer = Puppet::Pops::Serialization::Deserializer.new(Puppet::Pops::Serialization::JSON::Reader.new([]), nil)
       result.add_resource(*resources.collect do |res|
-        Puppet::Resource.from_data_hash(res)
+        Puppet::Resource.from_data_hash(res, json_deserializer)
       end)
     end
 
@@ -472,6 +474,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       h
     end
 
+    json_serializer = Puppet::Pops::Serialization::Serializer.new(Puppet::Pops::Serialization::JSON::Writer.new(''))
     {
       'tags'      => tags,
       'name'      => name,
@@ -480,7 +483,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       'catalog_uuid' => catalog_uuid,
       'catalog_format' => catalog_format,
       'environment'  => environment.to_s,
-      'resources' => @resources.collect { |v| @resource_table[v].to_data_hash },
+      'resources' => @resources.collect { |v| @resource_table[v].to_data_hash(json_serializer) },
       'edges'     => edges.   collect { |e| e.to_data_hash },
       'classes'   => classes,
     }.merge(metadata_hash.empty? ? {} : {'metadata' => metadata_hash})

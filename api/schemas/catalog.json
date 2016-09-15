@@ -73,6 +73,14 @@
                             "^[a-z][a-z0-9_]*$": {}
                         },
                         "additionalProperties": false
+                    },
+                    "ext_parameters": {
+                        "description": "Parameters with extended type: regex is from https://docs.puppetlabs.com/puppet/latest/reference/lang_reserved.html",
+                        "type": "object",
+                        "patternProperties": {
+                            "^[a-z][a-z0-9_]*$": {}
+                        },
+                        "additionalProperties": false
                     }
                 },
                 "required": ["type", "title", "tags", "exported"],

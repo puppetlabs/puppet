@@ -31,7 +31,7 @@ class Puppet::Resource
   TYPE_NODE  = 'Node'.freeze
   TYPE_SITE  = 'Site'.freeze
 
-  def self.from_data_hash(data)
+  def self.from_data_hash(data, json_deserializer = nil)
     raise ArgumentError, "No resource type provided in serialized data" unless type = data['type']
     raise ArgumentError, "No resource title provided in serialized data" unless title = data['title']
 
@@ -39,6 +39,15 @@ class Puppet::Resource
 
     if params = data['parameters']
       params.each { |param, value| resource[param] = value }
+    end
+
+    if ext_params = data['ext_parameters']
+      raise Puppet::Error, 'Unable to deserialize non-Data type parameters unless a deserializer is provided' unless json_deserializer
+      reader = json_deserializer.reader
+      ext_params.each do |param, value|
+        reader.re_initialize([value])
+        resource[param] = json_deserializer.read
+      end
     end
 
     if sensitive_parameters = data['sensitive_parameters']
@@ -62,7 +71,7 @@ class Puppet::Resource
     "#{@type}[#{@title}]#{to_hash.inspect}"
   end
 
-  def to_data_hash
+  def to_data_hash(json_serializer = nil)
     data = ([:type, :title, :tags] + ATTRIBUTES).inject({}) do |hash, param|
       next hash unless value = self.send(param)
       hash[param.to_s] = value
@@ -71,21 +80,52 @@ class Puppet::Resource
 
     data["exported"] ||= false
 
-    params = self.to_hash.inject({}) do |hash, ary|
-      param, value = ary
-
+    ext_params = {}
+    params = {}
+    self.to_hash.each_pair do |param, value|
       # Don't duplicate the title as the namevar
-      next hash if param == namevar and value == title
-
-      hash[param] = Puppet::Resource.value_to_pson_data(value)
-      hash
+      unless param == namevar and value == title
+        value = Puppet::Resource.value_to_pson_data(value)
+        if is_json_type?(value)
+          params[param] = value
+        else
+          ext_params[param] = value
+        end
+      end
     end
 
-    data["parameters"] = params unless params.empty?
+    data['parameters'] = params unless params.empty?
+    unless ext_params.empty?
+      raise Puppet::Error, 'Unable to serialize non-Data type parameters unless a serializer is provided' unless json_serializer
+      writer = json_serializer.writer
+      ext_params.each_key do |key|
+        writer.clear_io
+        json_serializer.write(ext_params[key])
+        writer.finish
+        ext_params[key] = writer.to_a[0]
+      end
+      data['ext_parameters'] = ext_params
+    end
 
     data["sensitive_parameters"] = sensitive_parameters unless sensitive_parameters.empty?
 
     data
+  end
+
+  # @param [Object] value The value to test
+  # @return [Boolean] `true` if the value can be represented as JSON
+  # @api private
+  def is_json_type?(value)
+    case value
+    when NilClass, TrueClass, FalseClass, Integer, Float, String
+      true
+    when Array
+      value.all? { |elem| is_json_type?(elem) }
+    when Hash
+      value.all? { |key, val| key.is_a?(String) && is_json_type(val) }
+    else
+      false
+    end
   end
 
   def self.value_to_pson_data(value)
