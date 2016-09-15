@@ -16,13 +16,45 @@ describe 'Binary Type' do
   end
 
   context 'a Binary instance' do
-    it 'can be created from a Base64 encoded String using %s, string mode' do
+    it 'can be created from a raw String using %r, raw string mode' do
+      str = [0xF1].pack("C*")
+      code = <<-CODE
+        $x = Binary($testing, '%r')
+        notice(assert_type(Binary, $x))
+      CODE
+      expect(eval_and_collect_notices(code, Puppet::Node.new('foonode'), { 'testing' => str })).to eql(['8Q=='])
+    end
+
+    it 'can be created from a String using %s, string mode' do
       # the text 'binar' needs padding with '='
       code = <<-CODE
         $x = Binary('binary', '%s')
         notice(assert_type(Binary, $x))
       CODE
       expect(eval_and_collect_notices(code)).to eql(['YmluYXJ5'])
+    end
+
+    it 'format %s errors if encoding is bad in given string when using format %s and a broken UTF-8 string' do
+      str = [0xF1].pack("C*")
+      str.force_encoding('UTF-8')
+      code = <<-CODE
+        $x = Binary($testing, '%s')
+        notice(assert_type(Binary, $x))
+      CODE
+      expect {
+        eval_and_collect_notices(code, Puppet::Node.new('foonode'), { 'testing' => str })
+      }.to raise_error(/.*The given string in encoding 'UTF-8' is invalid\. Cannot create a Binary UTF-8 representation.*/)
+    end
+
+    it 'format %s errors if encoding is correct but string cannot be transcoded to UTF-8' do
+      str = [0xF1].pack("C*")
+      code = <<-CODE
+        $x = Binary($testing, '%s')
+        notice(assert_type(Binary, $x))
+      CODE
+      expect {
+        eval_and_collect_notices(code, Puppet::Node.new('foonode'), { 'testing' => str })
+      }.to raise_error(/.*"\\xF1" from ASCII-8BIT to UTF-8.*/)
     end
 
     it 'can be created from a Base64 encoded String' do

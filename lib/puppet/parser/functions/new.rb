@@ -866,9 +866,12 @@ The formats have the following meaning:
 | b | The data is in base64 encoding, padding as required by base64 strict is added by default
 | u | The data is in URL safe base64 encoding
 | B | The data is in base64 strict encoding
-| s | The data is a puppet string seen as the verbatim byte sequence representing the string in its given encoding.
+| s | The data is a puppet string. The string must be valid UTF-8, or convertible to UTF-8 or an error is raised.
+| r | (Ruby Raw) the byte sequence in the given string is used verbatim irrespective of possible encoding errors
 
-The default format is `%b`.
+* The default format is `%b`.
+* Note that the format `%r` should be used sparingly, or not at all. It exists for backwards compatibility reasons when someone receiving
+  a string from some function and that string should be treated as Binary. Such code should be changed to return a Binary instead of a String.
 
 **Examples:** Creating a Binary
 

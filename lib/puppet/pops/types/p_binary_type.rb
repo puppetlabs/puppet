@@ -37,7 +37,7 @@ class PBinaryType < PAnyType
     end
 
     # Creates a new Binary from a String containing binary data. If the string's encoding
-    # is not already ASCII-8BIT, the string is transcoded to ASCII-8BIT (that is Ruby's "binary" format).
+    # is not already ASCII-8BIT, a copy of the string is force encoded as ASCII-8BIT (that is Ruby's "binary" format).
     # This means that this binary will have the exact same content, but the string will considered
     # to hold a sequence of bytes in the range 0 to 255.
     #
@@ -51,8 +51,32 @@ class PBinaryType < PAnyType
       new(bin)
     end
 
-    # Creates a new Binary from a String containing binary data. If the string's encoding
-    # is not already ASCII-8BIT, the string is transcoded to ASCII-8BIT (that is Ruby's "binary" format).
+    # Creates a new Binary from a String containing text/binary in its given encoding. If the string's encoding
+    # is not already UTF-8, the string is first transcoded to UTF-8.
+    # This means that this binary will have the UTF-8 byte representation of the original string.
+    # For this to be valid, the encoding used in the given string must be valid.
+    # The validity of the given string is therefore asserted.
+    #
+    # The given string will be frozen as a side effect if it is in ASCII-8BIT encoding. If this is not
+    # wanted, a copy should be given to this method.
+    #
+    # @param [String] A string with valid content in its given encoding
+    # @return [Puppet::Pops::Types::PBinaryType::Binary] with the UTF-8 representation of the UTF-8 transcoded string
+    # @api public
+    #
+    def self.from_string(encoded_string)
+      enc = encoded_string.encoding.name
+      unless encoded_string.valid_encoding?
+        raise ArgumentError, "The given string in encoding '#{enc}' is invalid. Cannot create a Binary UTF-8 representation"
+      end
+      # Convert to UTF-8 (if not already UTF-8), and then to binary
+      encoded_string = (enc == "UTF-8") ? encoded_string.dup : encoded_string.encode('UTF-8')
+      encoded_string.force_encoding("ASCII-8BIT")
+      new(encoded_string)
+    end
+
+    # Creates a new Binary from a String containing raw binary data of unknown encoding. If the string's encoding
+    # is not already ASCII-8BIT, a copy of the string is forced to ASCII-8BIT (that is Ruby's "binary" format).
     # This means that this binary will have the exact same content, but the string will considered
     # to hold a sequence of bytes in the range 0 to 255.
     #
@@ -118,13 +142,13 @@ class PBinaryType < PAnyType
     @new_function ||= Puppet::Functions.create_loaded_function(:new_Binary, loader) do
       local_types do
         type 'ByteInteger = Integer[0,255]'
-        type 'Base64Format = Enum["%b", "%u", "%B", "%s"]'
+        type 'Base64Format = Enum["%b", "%u", "%B", "%s", "%r"]'
         type 'StringHash = Struct[{value => String, "format" => Optional[Base64Format]}]'
         type 'ArrayHash = Struct[{value => Array[ByteInteger]}]'
         type 'BinaryArgsHash = Variant[StringHash, ArrayHash]'
       end
 
-      # Creates a binary from a base64 encoded string in one of the formats %b (
+      # Creates a binary from a base64 encoded string in one of the formats %b, %u, %B, %s, or %r
       dispatch :from_string do
         param 'String', :str
         optional_param 'Base64Format', :format
@@ -156,7 +180,10 @@ class PBinaryType < PAnyType
           Binary.new(Base64.strict_decode64(str))
 
         when "%s"
-          Binary.new(str)
+          Binary.from_string(str)
+
+        when "%r"
+          Binary.from_binary_string(str)
 
         else
           raise ArgumentError, "Unsupported Base64 format '#{format}'"
