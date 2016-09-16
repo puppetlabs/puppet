@@ -2273,6 +2273,11 @@ class PArrayType < PCollectionType
           from
         when Hash
           wrap ? [from] : from.to_a
+
+        when PBinaryType::Binary
+          # For older rubies, the #bytes method returns an Enumerator that must be rolled out
+          wrap ? [from] : from.binary_buffer.bytes.to_a
+
         else
           if wrap
             [from]
@@ -3253,5 +3258,6 @@ require_relative 'p_sensitive_type'
 require_relative 'p_type_set_type'
 require_relative 'p_timespan_type'
 require_relative 'p_timestamp_type'
+require_relative 'p_binary_type'
 require_relative 'type_set_reference'
 require_relative 'implementation_registry'

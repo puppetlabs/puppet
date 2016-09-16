@@ -636,6 +636,23 @@ Defaults to `s` at top level and `p` inside array or hash.
 | s         | Same as d.
 | p         | Same as d.
 
+### Binary value to String
+
+| Format    | Default formats
+| ------    | ---------------
+| s         | binary as unquoted UTF-8 characters (errors if byte sequence is invalid UTF-8). Alternate form escapes non ascii bytes.
+| p         | 'Binary("<base64strict>")'
+| b         | '<base64>' - base64 string with newlines inserted
+| B         | '<base64strict>' - base64 strict string (without newlines inserted)
+| u         | '<base64urlsafe>' - base64 urlsafe string
+| t         | 'Binary' - outputs the name of the type only
+| T         | 'BINARY' - output the name of the type in all caps only
+
+* The alternate form flag `#` will quote the binary or base64 text output.
+* The format `%#s` allows invalid UTF-8 characters and outputs all non ascii bytes
+  as hex escaped characters on the form `\\xHH` where `H` is a hex digit.
+* The width and precision values are applied to the text part only in `%p` format.
+
 ### Array & Tuple to String
 
 | Format    | Array/Tuple Formats
@@ -704,6 +721,8 @@ When given a single value as argument:
 * An empty `Hash` becomes an empty array.
 * An `Array` is simply returned.
 * An `Iterable[T]` is turned into an array of `T` instances.
+* A `Binary` is converted to an `Array[Integer[0,255]]` of byte values
+
 
 When given a second Boolean argument:
 
@@ -820,7 +839,62 @@ function SemVerRange.new(
 
 For examples of `SemVerRange` use see "Creating a SemVer"
 
+Creating a Binary
+---
+
+A `Binary` object represents a sequence of bytes and it can be created from a String in Base64 format,
+an Array containing byte values. A Binary can also be created from a Hash containing the value to convert to
+a `Binary`.
+
+The signatures are:
+
+```puppet
+type ByteInteger = Integer[0,255]
+type Base64Format = Enum["%b", "%u", "%B", "%s"]
+type StringHash = Struct[{value => String, "format" => Optional[Base64Format]}]
+type ArrayHash = Struct[{value => Array[ByteInteger]}]
+type BinaryArgsHash = Variant[StringHash, ArrayHash]
+
+function Binary.new(
+  String $base64_str, 
+  Optional[Base64Format] $format
+)
+
+
+function Binary.new(
+  Array[ByteInteger] $byte_array
+}
+
+# Same as for String, or for Array, but where arguments are given in a Hash.
+function Binary.new(BinaryArgsHash $hash_args)
+```
+
+The formats have the following meaning:
+
+| format | explanation |
+| ----   | ----        |
+| b | The data is in base64 encoding, padding as required by base64 strict is added by default
+| u | The data is in URL safe base64 encoding
+| B | The data is in base64 strict encoding
+| s | The data is a puppet string. The string must be valid UTF-8, or convertible to UTF-8 or an error is raised.
+| r | (Ruby Raw) the byte sequence in the given string is used verbatim irrespective of possible encoding errors
+
+* The default format is `%b`.
+* Note that the format `%r` should be used sparingly, or not at all. It exists for backwards compatibility reasons when someone receiving
+  a string from some function and that string should be treated as Binary. Such code should be changed to return a Binary instead of a String.
+
+**Examples:** Creating a Binary
+
+```puppet
+# create the binary content "abc"
+$a = Binary('YWJj')
+
+# create the binary content from content in a module's file
+$b = binary_file('mymodule/mypicture.jpg')
+```
+
 * Since 4.5.0
+* Binary type since 4.8.0
 
 DOC
 ) do |args|

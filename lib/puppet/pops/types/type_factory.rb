@@ -329,6 +329,12 @@ module TypeFactory
     PDefaultType::DEFAULT
   end
 
+  # Creates an instance of the Binary type
+  # @api public
+  def self.binary
+    PBinaryType::DEFAULT
+  end
+
   # Produces an instance of the abstract type PCatalogEntryType
   def self.catalog_entry
     PCatalogEntryType::DEFAULT

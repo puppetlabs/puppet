@@ -65,5 +65,13 @@ module Puppet::Plugins::Configuration
       in_multibind(checkers_name)
       to_instance('Puppet::SyntaxCheckers::Json')
     end
+
+    bindings.bind do
+      name('base64')
+      instance_of(checkers_type)
+      in_multibind(checkers_name)
+      to_instance('Puppet::SyntaxCheckers::Base64')
+    end
+
     Puppet::Plugins::DataProviders::Registry.register_defaults(bindings)
 end

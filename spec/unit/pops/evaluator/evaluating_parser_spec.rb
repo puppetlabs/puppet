@@ -1281,7 +1281,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       expect(parser.evaluate_string(scope, src)).to eq("Tex\tt\\n")
     end
 
-    it "parses syntax checked specification" do
+    it "parses json syntax checked specification" do
       src = <<-CODE
       @(END:json)
       ["foo", "bar"]
@@ -1290,13 +1290,31 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       expect(parser.evaluate_string(scope, src)).to eq('["foo", "bar"]')
     end
 
-    it "parses syntax checked specification with error and reports it" do
+    it "parses base64 syntax checked specification" do
+      src = <<-CODE
+      @(END:base64)
+        dGhlIHF1aWNrIHJlZCBmb3g=
+        |- END
+      CODE
+      expect(parser.evaluate_string(scope, src)).to eq('dGhlIHF1aWNrIHJlZCBmb3g=')
+    end
+
+    it "parses json syntax checked specification with error and reports it" do
       src = <<-CODE
       @(END:json)
       ['foo', "bar"]
       |- END
       CODE
       expect { parser.evaluate_string(scope, src)}.to raise_error(/Cannot parse invalid JSON string/)
+    end
+
+    it "parses base syntax checked specification with error and reports it" do
+      src = <<-CODE
+      @(END:base64)
+        dGhlIHF1aWNrIHJlZCBmb3g
+        |- END
+      CODE
+      expect { parser.evaluate_string(scope, src)}.to raise_error(/Cannot parse invalid Base64 string/)
     end
 
     it "parses interpolated heredoc expression" do

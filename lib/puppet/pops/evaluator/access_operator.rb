@@ -30,6 +30,10 @@ class AccessOperator
     fail(Issues::OPERATOR_NOT_APPLICABLE, @semantic.left_expr, :operator=>'[]', :left_value => o)
   end
 
+  def access_Binary(o, scope, keys)
+    Puppet::Pops::Types::PBinaryType::Binary.from_binary_string(access_String(o.binary_buffer, scope, keys))
+  end
+
   def access_String(o, scope, keys)
     keys.flatten!
     result = case keys.size

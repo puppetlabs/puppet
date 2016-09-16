@@ -4,7 +4,7 @@ require 'spec_helper'
 require 'puppet/pops'
 require 'puppet/pops/evaluator/evaluator_impl'
 require 'puppet/pops/types/type_factory'
-
+require 'base64'
 
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/evaluator_rspec_helper')
@@ -18,6 +18,13 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
   def float_range(from, to)
     Puppet::Pops::Types::TypeFactory.float_range(from, to)
+  end
+
+  def binary(s)
+    # Note that the factory is not aware of Binary and cannot operate on a
+    # literal binary. Instead, it must create a call to Binary.new() with the base64 encoded
+    # string as an argument
+    CALL_NAMED(QREF("Binary"), true, [Base64.encode64(s)])
   end
 
   context 'The evaluator when operating on a String' do
@@ -42,6 +49,31 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
     it 'raises an error if arity is wrong for []' do
       expect{evaluate(literal('abc')[])}.to raise_error(/String supports \[\] with one or two arguments\. Got 0/)
       expect{evaluate(literal('abc')[1,2,3])}.to raise_error(/String supports \[\] with one or two arguments\. Got 3/)
+    end
+  end
+
+  context 'The evaluator when operating on a Binary' do
+    it 'can get a single character using a single key index to []' do
+      expect(evaluate(binary('abc')[1]).binary_buffer).to eql('b')
+    end
+
+    it 'can get the last character using the key -1 in []' do
+      expect(evaluate(binary('abc')[-1]).binary_buffer).to eql('c')
+    end
+
+    it 'can get a substring by giving two keys' do
+      expect(evaluate(binary('abcd')[1,2]).binary_buffer).to eql('bc')
+      # flattens keys
+      expect(evaluate(binary('abcd')[[1,2]]).binary_buffer).to eql('bc')
+    end
+
+    it 'produces empty string for a substring out of range' do
+      expect(evaluate(binary('abc')[100]).binary_buffer).to eql('')
+    end
+
+    it 'raises an error if arity is wrong for []' do
+      expect{evaluate(binary('abc')[])}.to raise_error(/String supports \[\] with one or two arguments\. Got 0/)
+      expect{evaluate(binary('abc')[1,2,3])}.to raise_error(/String supports \[\] with one or two arguments\. Got 3/)
     end
   end
 

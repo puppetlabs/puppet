@@ -279,6 +279,7 @@ class StringConverter
     PNumericType::DEFAULT  => Format.new('%d').freeze,    # decimal number
     PArrayType::DEFAULT    => DEFAULT_ARRAY_FORMAT.freeze,
     PHashType::DEFAULT     => DEFAULT_HASH_FORMAT.freeze,
+    PBinaryType::DEFAULT   => Format.new('%B').freeze,    # strict base64 string unquoted
     PAnyType::DEFAULT      => Format.new('%s').freeze,    # unquoted string
   }.freeze
 
@@ -384,6 +385,21 @@ class StringConverter
   # | d D       | 'default' or 'Default', alternative form # causes value to be quoted
   # | s         | same as d
   # | p         | same as d
+  #
+  # ### Binary (value)
+  #
+  # | Format    | Default formats
+  # | ------    | ---------------
+  # | s         | binary as unquoted characters
+  # | p         | 'Binary("<base64strict>")'
+  # | b         | '<base64>' - base64 string with newlines inserted
+  # | B         | '<base64strict>' - base64 strict string (without newlines inserted)
+  # | u         | '<base64urlsafe>' - base64 urlsafe string
+  # | t         | 'Binary' - outputs the name of the type only
+  # | T         | 'BINARY' - output the name of the type in all caps only
+  #
+  # The alternate form flag `#` will quote the binary or base64 text output
+  # The width and precision values are applied to the text part only in `%p` format.
   #
   # ### Array & Tuple
   #
@@ -693,6 +709,52 @@ class StringConverter
 
     else
       raise FormatError.new('Float', f.format, 'dxXobBeEfgGaAsp')
+    end
+  end
+
+  # @api private
+  def string_PBinaryType(val_type, val, format_map, _)
+    f = get_format(val_type, format_map)
+    substitute = f.alt? ? 'p' : 's'
+    case f.format
+    when :s
+      val_to_convert = val.binary_buffer
+      if !f.alt?
+        # Assume it is valid UTF-8
+        val_to_convert = val_to_convert.dup.force_encoding('UTF-8')
+        # If it isn't
+        unless val_to_convert.valid_encoding?
+          # try to convert and fail with details about what is wrong
+          val_to_convert = val.binary_buffer.encode('UTF-8')
+        end
+      else
+        val_to_convert = val.binary_buffer
+      end
+      Kernel.format(f.orig_fmt.gsub('s', substitute), val_to_convert)
+
+    when :p
+      # width & precision applied to string, not the the name of the type
+      "Binary(\"#{Kernel.format(f.orig_fmt.gsub('p', 's'), val.to_s)}\")"
+
+    when :b
+      Kernel.format(f.orig_fmt.gsub('b', substitute), val.relaxed_to_s)
+
+    when :B
+      Kernel.format(f.orig_fmt.gsub('B', substitute), val.to_s)
+
+    when :u
+      Kernel.format(f.orig_fmt.gsub('u', substitute), val.urlsafe_to_s)
+
+    when :t
+      # Output as the type without any data
+      Kernel.format(f.orig_fmt.gsub('t', substitute), 'Binary')
+
+    when :T
+      # Output as the type without any data in all caps
+      Kernel.format(f.orig_fmt.gsub('T', substitute), 'BINARY')
+
+    else
+      raise FormatError.new('Binary', f.format, 'bButTsp')
     end
   end
 
