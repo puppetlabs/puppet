@@ -2,7 +2,6 @@
 # <http://pip.pypa.io/>
 
 require 'puppet/provider/package'
-require 'xmlrpc/client'
 require 'puppet/util/http_proxy'
 
 Puppet::Type.type(:package).provide :pip,
