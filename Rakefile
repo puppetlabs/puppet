@@ -77,10 +77,15 @@ end
 
 desc "verify that commit messages match CONTRIBUTING.md requirements"
 task(:commits) do
-  # This git command looks at the summary from every commit from this branch not in master.
-  # Ideally this would compare against the branch that a PR is submitted against, but I don't
-  # know how to get that information. Absent that, comparing with master should work in most cases.
-  %x{git log --no-merges --pretty=%s master..$HEAD}.each_line do |commit_summary|
+  # This rake task looks at the summary from every commit from this branch not
+  # in the branch targeted for a PR. This is accomplished by using the
+  # TRAVIS_COMMIT_RANGE environment variable, which is present in travis CI and
+  # populated with the range of commits the PR contains. If not available, this
+  # falls back to `master..HEAD` as a next best bet as `master` is unlikely to
+  # ever be absent.
+  commit_range = ENV['TRAVIS_COMMIT_RANGE'].nil? ? 'master..HEAD' : ENV['TRAVIS_COMMIT_RANGE']
+  puts "Checking commits..."
+  %x{git log --no-merges --pretty=%s #{commit_range}}.each_line do |commit_summary|
     # This regex tests for the currently supported commit summary tokens: maint, doc, packaging, or pup-<number>.
     # The exception tries to explain it in more full.
     if /^\((maint|doc|docs|packaging|pup-\d+)\)|revert/i.match(commit_summary).nil?
@@ -92,6 +97,9 @@ task(:commits) do
         "\t\t(maint)\n" \
         "\t\t(packaging)\n" \
         "\n\tThis test for the commit summary is case-insensitive.\n\n\n"
+    else
+      puts "#{commit_summary}"
     end
+    puts "...passed"
   end
 end
