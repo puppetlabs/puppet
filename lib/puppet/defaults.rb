@@ -1926,4 +1926,24 @@ EOT
           generate manifest documentation.",
     }
   )
+
+  define_settings(
+    :main,
+    :rich_data => {
+      :default  => false,
+      :type     => :boolean,
+      :hook    => proc do |value|
+        envs = Puppet.lookup(:environments) { nil }
+        envs.clear_all unless envs.nil?
+      end,
+      :desc     => <<-'EOT'
+        Enables storage of extended data in the catalog by introducing the new Resource
+        property `ext_parameters`. When enabled, values of type Regexp, SemVer, SemVerRange,
+        Timespan, and Timestamp, will no longer be converted to strings. Instead, they will
+        be serialized using Pcore serialization which allowes them to retain their type. It
+        will also be possible to use parameters that store a Binary.
+      EOT
+    }
+  )
+
 end

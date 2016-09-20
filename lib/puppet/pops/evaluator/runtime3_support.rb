@@ -307,7 +307,8 @@ module Runtime3Support
   end
 
   def convert(value, scope, undef_value)
-    Runtime3Converter.convert(value, scope, undef_value)
+    converter = scope.environment.rich_data? ? Runtime3Converter.instance : Runtime3FunctionArgumentConverter.instance
+    converter.convert(value, scope, undef_value)
   end
 
   def create_resources(o, scope, virtual, exported, type_name, resource_titles, evaluated_parameters)

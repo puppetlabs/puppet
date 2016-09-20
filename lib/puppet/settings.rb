@@ -1430,7 +1430,7 @@ Generated on #{Time.now}.
     end
 
     def conf
-      @conf ||= if environments = Puppet.lookup(:environments)
+      @conf ||= if environments = Puppet.lookup(:environments) { nil }
                   environments.get_conf(@environment_name)
                 end
     end
