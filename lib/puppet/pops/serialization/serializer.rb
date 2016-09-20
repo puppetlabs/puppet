@@ -67,7 +67,7 @@ module Serialization
     def write_tabulated_first_time(value)
       @written[value.object_id] = @written.size
       case value
-      when Symbol, Regexp, Semantic::Version, Semantic::VersionRange, Time::Timestamp, Time::Timespan
+      when Symbol, Regexp, Semantic::Version, Semantic::VersionRange, Time::Timestamp, Time::Timespan, Types::PSensitiveType::Sensitive
         @writer.write(value)
       when Array
         start_array(value.size)

@@ -6,7 +6,7 @@ module Types
 #
 #
 # @api public
-class PSensitiveType < Puppet::Pops::Types::PTypeWithContainedType
+class PSensitiveType < PTypeWithContainedType
 
   class Sensitive
     def initialize(value)
@@ -24,6 +24,10 @@ class PSensitiveType < Puppet::Pops::Types::PTypeWithContainedType
     def inspect
       "#<#{to_s}>"
     end
+  end
+
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'AnyType')
   end
 
   def initialize(type = nil)
