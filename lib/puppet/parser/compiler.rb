@@ -169,8 +169,6 @@ class Puppet::Parser::Compiler
 
       activate_binder
 
-      Puppet::Util::Profiler.profile("Compile: Evaluated capability mappings", [:compiler, :evaluate_capability_mappings]) { evaluate_capability_mappings }
-
       Puppet::Util::Profiler.profile("Compile: Evaluated main", [:compiler, :evaluate_main]) { evaluate_main }
 
       Puppet::Util::Profiler.profile("Compile: Evaluated site", [:compiler, :evaluate_site]) { evaluate_site }
@@ -357,7 +355,7 @@ class Puppet::Parser::Compiler
     end
   end
 
-  # Evaluates each specified class in turn. If there are any classes that 
+  # Evaluates each specified class in turn. If there are any classes that
   # can't be found, an error is raised. This method really just creates resource objects
   # that point back to the classes, and then the resources are themselves
   # evaluated later in the process.
@@ -530,7 +528,6 @@ class Puppet::Parser::Compiler
         component.add_consumes(blueprint)
       end
     end
-    krt.capability_mappings.clear # No longer needed
   end
 
   # If ast nodes are enabled, then see if we can find and evaluate one.

@@ -186,6 +186,27 @@ describe 'Capability types' do
         }.to raise_error(Puppet::Error,
                          /#{kw} clause references nonexistent type Test/)
       end
+
+      it "it does not allow #{kw} mappings to be redefined" do
+        manifest = <<-MANIFEST
+        define test() {
+          notify { "hello":}
+        }
+
+        Test #{kw} Cap {
+          host => $hostname
+        }
+        Test #{kw} Cap {
+          host => 'foo'
+        }
+      MANIFEST
+
+
+        expect {
+          compile_to_catalog(manifest, node)
+        }.to raise_error(Puppet::Error,
+                         /#{kw} /)
+      end
     end
   end
 
