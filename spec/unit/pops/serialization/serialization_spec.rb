@@ -37,7 +37,7 @@ module Serialization
     parser.parse_string(string, '/home/tester/experiments/manifests/init.pp').current
   end
 
-  context 'can write and read a Scalar' do
+  context 'can write and read a' do
     it 'String' do
       val = 'the value'
       write(val)
@@ -94,6 +94,15 @@ module Serialization
       expect(val2).to eql(val)
     end
 
+    it 'Sensitive' do
+      sval = 'the sensitive value'
+      val = Types::PSensitiveType::Sensitive.new(sval)
+      write(val)
+      val2 = read
+      expect(val2).to be_a(Types::PSensitiveType::Sensitive)
+      expect(val2.unwrap).to eql(sval)
+    end
+
     it 'Timespan' do
       val = Time::Timespan.from_fields(false, 3, 12, 40, 31, 123)
       write(val)
@@ -126,6 +135,16 @@ module Serialization
       val2 = read
       expect(val2).to be_a(Semantic::VersionRange)
       expect(val2).to eql(val)
+    end
+
+    it 'Sensitive with rich data' do
+      sval = Time::Timestamp.now
+      val = Types::PSensitiveType::Sensitive.new(sval)
+      write(val)
+      val2 = read
+      expect(val2).to be_a(Types::PSensitiveType::Sensitive)
+      expect(val2.unwrap).to be_a(Time::Timestamp)
+      expect(val2.unwrap).to eql(sval)
     end
   end
 

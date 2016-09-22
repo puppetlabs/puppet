@@ -36,6 +36,7 @@ shared_context 'types_setup' do
       Puppet::Pops::Types::PSemVerRangeType,
       Puppet::Pops::Types::PTimespanType,
       Puppet::Pops::Types::PTimestampType,
+      Puppet::Pops::Types::PSensitiveType,
     ]
   end
 
