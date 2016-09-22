@@ -122,16 +122,6 @@ describe 'collectors' do
       MANIFEST
     end
 
-    it "allows criteria to be combined with 'or'" do
-      expect_the_message_to_be(["the message", "other message"], <<-MANIFEST)
-        @notify { "testing": message => "the message" }
-        @notify { "other": message => "other message" }
-        @notify { "yet another": message => "different message" }
-
-        Notify <| title == "testing" or message == "other message" |>
-      MANIFEST
-    end
-
     it "allows criteria to be grouped with parens" do
       expect_the_message_to_be(["the message", "different message"], <<-MANIFEST)
         @notify { "testing":     message => "different message", withpath => true }
@@ -159,8 +149,8 @@ describe 'collectors' do
       MANIFEST
     end
 
-    it "does not exclude resources with unequal arrays" do
-      expect_the_message_to_be(["message", ["not this message", "or this one"]], <<-MANIFEST)
+    it "excludes resources with unequal arrays" do
+      expect_the_message_to_be(["message"], <<-MANIFEST)
         @notify { "testing": message => "message" }
         @notify { "the wrong one": message => ["not this message", "or this one"] }
 
@@ -168,12 +158,53 @@ describe 'collectors' do
       MANIFEST
     end
 
-    it "does not exclude tags with inequalities" do
-      expect_the_message_to_be(["wanted message", "the way it works"], <<-MANIFEST)
+    it "excludes tags with inequalities" do
+      expect_the_message_to_be(["wanted message"], <<-MANIFEST)
         @notify { "testing": tag => ["wanted"], message => "wanted message" }
         @notify { "other": tag => ["why"], message => "the way it works" }
 
         Notify <| tag != "why" |>
+      MANIFEST
+    end
+
+    it "allows criteria to be excluded with 'and'" do
+      expect_the_message_to_be(["the message"], <<-MANIFEST)
+        @notify { "testing": message => "not the message" }
+        @notify { "other": message => "the message" }
+
+        Notify <| title != "testing" and message != "not the message" |>
+      MANIFEST
+    end
+
+    it "allows criteria to be excluded with 'or'" do
+      expect_the_message_to_be(["different message"], <<-MANIFEST)
+        @notify { "testing": message => "the message" }
+        @notify { "other": message => "other message" }
+        @notify { "yet another": message => "different message" }
+
+        Notify <| title != "testing" or message != "other message" |>
+      MANIFEST
+    end
+
+    it "allows arrays to be excluded with 'and'" do
+      expect_the_message_to_be(["3rd message"], <<-MANIFEST)
+        @notify { "first": message => "1st message", tag => ['one','another'] }
+        @notify { "second": message => "2nd message", tag => ['two','another'] }
+        @notify { "third": message => "3rd message", tag => ['three','another'] }
+        @notify { "fourth": message => "4th message", tag => ['one','two','another'] }
+
+        Notify <| tag != "one" and tag != "two" |>
+      MANIFEST
+    end
+
+    it "allows arrays to be excluded with 'or'" do
+      expect_the_message_to_be(["3rd message"], <<-MANIFEST)
+        @notify { "first": message => "1st message", tag => ['one','another'] }
+        @notify { "second": message => "2nd message", tag => ['two','another'] }
+        @notify { "third": message => "3rd message", tag => ['three','another'] }
+        @notify { "fourth": message => "4th message", tag => ['one','two','another'] }
+
+        Notify <| tag != "one" or tag != "two" |>
       MANIFEST
     end
 
