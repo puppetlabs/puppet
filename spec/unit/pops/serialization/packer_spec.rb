@@ -128,6 +128,14 @@ describe "the Puppet::Pops::Serialization when using #{packer_module.name}" do
       expect(val2).to eql(val)
     end
 
+    it 'Binary' do
+      val = Types::PBinaryType::Binary.from_base64('w5ZzdGVuIG1lZCByw7ZzdGVuCg==')
+      write(val)
+      val2 = read
+      expect(val2).to be_a(Types::PBinaryType::Binary)
+      expect(val2).to eql(val)
+    end
+
     it 'Sensitive with rich data' do
       sval = Time::Timestamp.now
       val = Types::PSensitiveType::Sensitive.new(sval)

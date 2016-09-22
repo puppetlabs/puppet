@@ -181,6 +181,10 @@ class AbstractWriter
     register_type(Extension::SENSITIVE, Types::PSensitiveType::Sensitive) do |o|
       build_payload { |ep| ep.write(o.unwrap) }
     end
+
+    register_type(Extension::BINARY, Types::PBinaryType::Binary) do |o|
+      build_payload { |ep| ep.write(o.to_s) }
+    end
   end
 end
 end

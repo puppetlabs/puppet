@@ -156,6 +156,10 @@ class AbstractReader
     register_type(Extension::SENSITIVE) do |data|
       read_payload(data) { |ep| Types::PSensitiveType::Sensitive.new(ep.read) }
     end
+
+    register_type(Extension::BINARY) do |data|
+      read_payload(data) { |ep| Types::PBinaryType::Binary.from_base64_strict(ep.read) }
+    end
   end
 end
 end
