@@ -65,6 +65,11 @@
       "github": "jtappa",
       "email": "jorie@puppet.com",
       "name": "Jorie Tappa"
+    },
+    {
+      "github": "MosesMendoza",
+      "email": "moses@puppet.com",
+      "name": "Moses Mendoza"
     }
   ]
 }
