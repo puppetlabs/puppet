@@ -68,12 +68,37 @@ describe 'Timestamp type' do
         expect(eval_and_collect_notices(code)).to eq(['2016-08-28T00:00:00.000 UTC'])
       end
 
+      it 'can be created from a string, format, and a timezone' do
+        code = <<-CODE
+            $o = Timestamp('Sunday, 28 August, 2016', '%A, %d %B, %Y', 'EST')
+            notice($o)
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(['2016-08-28T05:00:00.000 UTC'])
+      end
+
+      it 'can be not be created from a string, format with timezone designator, and a timezone' do
+        code = <<-CODE
+            $o = Timestamp('Sunday, 28 August, 2016 UTC', '%A, %d %B, %Y %z', 'EST')
+            notice($o)
+        CODE
+        expect { eval_and_collect_notices(code) }.to raise_error(
+          /Using a Timezone designator in format specification is mutually exclusive to providing an explicit timezone argument/)
+      end
+
       it 'can be created from a hash with string and format' do
         code = <<-CODE
             $o = Timestamp({ string => 'Sunday, 28 August, 2016', format => '%A, %d %B, %Y' })
             notice($o)
         CODE
         expect(eval_and_collect_notices(code)).to eq(['2016-08-28T00:00:00.000 UTC'])
+      end
+
+      it 'can be created from a hash with string, format, and a timezone' do
+        code = <<-CODE
+            $o = Timestamp({ string => 'Sunday, 28 August, 2016', format => '%A, %d %B, %Y', timezone => 'EST' })
+            notice($o)
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(['2016-08-28T05:00:00.000 UTC'])
       end
 
       it 'can be created from a string and array of formats' do
@@ -89,6 +114,21 @@ describe 'Timestamp type' do
         CODE
         expect(eval_and_collect_notices(code)).to eq(
           ['2016-08-28T12:15:00.000 UTC', '2016-07-24T01:20:00.000 UTC', '2016-06-21T18:23:15.000 UTC'])
+      end
+
+      it 'can be created from a string, array of formats, and a timezone' do
+        code = <<-CODE
+            $fmts = [
+              '%A, %d %B, %Y at %r',
+              '%b %d, %Y, %l:%M %P',
+              '%y-%m-%d %H:%M:%S'
+            ]
+            notice(Timestamp('Sunday, 28 August, 2016 at 12:15:00 PM', $fmts, 'CET'))
+            notice(Timestamp('Jul 24, 2016, 1:20 am', $fmts, 'CET'))
+            notice(Timestamp('16-06-21 18:23:15', $fmts, 'CET'))
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(
+          ['2016-08-28T11:15:00.000 UTC', '2016-07-24T00:20:00.000 UTC', '2016-06-21T17:23:15.000 UTC'])
       end
 
       it 'can be created from a integer that represents seconds since epoch' do

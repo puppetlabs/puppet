@@ -1,7 +1,7 @@
 Puppet::Parser::Functions::newfunction(
   :strftime,
   :type => :rvalue,
-  :arity => 2,
+  :arity => -3,
   :doc => <<DOC
 Formats timestamp or timespan according to the directives in the given format string. The directives begins with a percent (%) character.
 Any text not listed as a directive will be passed through to the output string.
@@ -135,8 +135,14 @@ $timestamp = Timestamp('2016-08-24T12:13:14')
 # Notice the timestamp using a format that notices the ISO 8601 date format
 notice($timestamp.strftime('%F')) # outputs '2016-08-24'
 
-# Notice the timestamp using a format that notices weekday, month, day, time, and year
-notice($$timestamp.strftime('%c')) # outputs 'Wed Aug 24 12:13:14 2016'
+# Notice the timestamp using a format that notices weekday, month, day, time (as UTC), and year
+notice($timestamp.strftime('%c')) # outputs 'Wed Aug 24 12:13:14 2016'
+
+# Notice the timestamp using a specific timezone
+notice($timestamp.strftime('%F %T %z', 'PST')) # outputs '2016-08-24 04:13:14 -0800'
+
+# Notice the timestamp using timezone that is current for the evaluating process
+notice($timestamp.strftime('%F %T', 'CURRENT')) # outputs the timestamp using the timezone for the current process
 ~~~
 
 ### Format directives applicable to `Timespan`:
@@ -166,7 +172,7 @@ notice($duration.strftime('%H:%M:%S')) # outputs '03:20:30'
 notice($duration.strftime('%M:%S')) # outputs '200:30'
 ~~~
 
-- Since 4.7.0
+- Since 4.8.0
 DOC
 ) do |args|
   Error.is4x('strftime')
