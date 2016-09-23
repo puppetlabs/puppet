@@ -302,11 +302,22 @@ The first argument is parsed using the format optionally passed as a string or a
 will be made to parse the string using the first entry and then with each entry in succession until parsing succeeds. If the second
 argument is omitted, an array of default formats will be used.
 
+A third optional timezone argument can be provided. The first argument will then be parsed as if it represents a local time in that
+timezone. The timezone can be any timezone that is recognized when using the '%z' or '%Z' formats, or the word 'current', in which
+case the current timezone of the evaluating process will be used. The timezone argument is case insensitive.
+
+The default timezone, when no argument is provided, or when using the keyword `default`, is 'UTC'.
+
+It is illegal to provide a timezone argument other than `default` in combination with a format that contains '%z' or '%Z' since that
+would introduce an ambiguity as to which timezone to use. The one extracted from the string, or the one provided as an argument.
+
 An exception is raised when no format was able to parse the given string.
 
 ```puppet
 function Timestamp.new(
-  String $string, Variant[String[2],Array[String[2]], 1] $format = <default format>)
+  String $string,
+  Variant[String[2],Array[String[2]], 1] $format = <default format>,
+  String $timezone = default)
 )
 ```
 
@@ -316,7 +327,8 @@ the arguments may also be passed as a `Hash`:
 function Timestamp.new(
   Struct[{
     string => String[1],
-    Optional[format] => Variant[String[2],Array[String[2]], 1]
+    Optional[format] => Variant[String[2],Array[String[2]], 1],
+    Optional[timezone] => String[1]
   }] $hash
 )
 ```
@@ -439,6 +451,14 @@ or %W). The days in the year before the first week are in week 0.
 
 The default array contains the following patterns:
 
+When a timezone argument (other than `default`) is explicitly provided:
+
+```
+['%FT%T.L', '%FT%T', '%F']
+```
+
+otherwise:
+
 ```
 ['%FT%T.%L %Z', '%FT%T %Z', '%F %Z', '%FT%T.L', '%FT%T', '%F']
 ```
@@ -450,6 +470,9 @@ $ts = Timestamp(1473150899)                              # 2016-09-06 08:34:59 U
 $ts = Timestamp({string=>'2015', format=>'%Y'})          # 2015-01-01 00:00:00.000 UTC
 $ts = Timestamp('Wed Aug 24 12:13:14 2016', '%c')        # 2016-08-24 12:13:14 UTC
 $ts = Timestamp('Wed Aug 24 12:13:14 2016 PDT', '%c %Z') # 2016-08-24 19:13:14.000 UTC
+$ts = Timestamp('2016-08-24 12:13:14', '%F %T', 'PST')   # 2016-08-24 20:13:14.000 UTC
+$ts = Timestamp('2016-08-24T12:13:14', default, 'PST')   # 2016-08-24 20:13:14.000 UTC
+
 ```
 
 Conversion to String
@@ -856,7 +879,7 @@ type ArrayHash = Struct[{value => Array[ByteInteger]}]
 type BinaryArgsHash = Variant[StringHash, ArrayHash]
 
 function Binary.new(
-  String $base64_str, 
+  String $base64_str,
   Optional[Base64Format] $format
 )
 

@@ -23,14 +23,16 @@ module Types
 
         dispatch :from_string do
           param           'String[1]', :string
-          optional_param  'Formats', :format
+          optional_param  'Formats',   :format
+          optional_param  'String[1]', :timezone
         end
 
         dispatch :from_string_hash do
           param <<-TYPE, :hash_arg
             Struct[{
               string => String[1],
-              Optional[format] => Formats
+              Optional[format] => Formats,
+              Optional[timezone] => String[1]
             }]
           TYPE
         end
@@ -39,8 +41,8 @@ module Types
           Time::Timestamp.now
         end
 
-        def from_string(string, format = Time::Timestamp::DEFAULT_FORMATS)
-          Time::Timestamp.parse(string, format)
+        def from_string(string, format = :default, timezone = nil)
+          Time::Timestamp.parse(string, format, timezone)
         end
 
         def from_string_hash(args_hash)
