@@ -50,7 +50,7 @@ extend Puppet::Acceptance::EnvironmentUtils
           uptime = result.stdout.match(/Notice: #{local_uptime_pattern}/)[0]
           module_uptime = result.stdout.match(/"seconds"=>(\d+),/)[0]
         end
-        if agent.platform =~ /solaris/
+        if agent.platform =~ /solaris|aix/
           sleep 61  # See FACT-1497;
         else
           sleep 1
