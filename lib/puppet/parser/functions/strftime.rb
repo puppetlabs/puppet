@@ -6,6 +6,12 @@ Puppet::Parser::Functions::newfunction(
 Formats timestamp or timespan according to the directives in the given format string. The directives begins with a percent (%) character.
 Any text not listed as a directive will be passed through to the output string.
 
+A third optional timezone argument can be provided. The first argument will then be formatted to represent a local time in that
+timezone. The timezone can be any timezone that is recognized when using the '%z' or '%Z' formats, or the word 'current', in which
+case the current timezone of the evaluating process will be used. The timezone argument is case insensitive.
+
+The default timezone, when no argument is provided, or when using the keyword `default`, is 'UTC'.
+
 The directive consists of a percent (%) character, zero or more flags, optional minimum field width and
 a conversion specifier as follows:
 ```
@@ -142,7 +148,7 @@ notice($timestamp.strftime('%c')) # outputs 'Wed Aug 24 12:13:14 2016'
 notice($timestamp.strftime('%F %T %z', 'PST')) # outputs '2016-08-24 04:13:14 -0800'
 
 # Notice the timestamp using timezone that is current for the evaluating process
-notice($timestamp.strftime('%F %T', 'CURRENT')) # outputs the timestamp using the timezone for the current process
+notice($timestamp.strftime('%F %T', 'current')) # outputs the timestamp using the timezone for the current process
 ~~~
 
 ### Format directives applicable to `Timespan`:

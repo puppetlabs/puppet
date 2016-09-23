@@ -451,11 +451,14 @@ or %W). The days in the year before the first week are in week 0.
 
 The default array contains the following patterns:
 
-When a timezone argument (other than `default`) is exclicitly provided:
+When a timezone argument (other than `default`) is explicitly provided:
+
 ```
 ['%FT%T.L', '%FT%T', '%F']
 ```
+
 otherwise:
+
 ```
 ['%FT%T.%L %Z', '%FT%T %Z', '%F %Z', '%FT%T.L', '%FT%T', '%F']
 ```
