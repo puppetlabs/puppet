@@ -47,6 +47,10 @@ class ResourceTypeImpl
           Types::KEY_TYPE => Types::PBooleanType::DEFAULT,
           Types::KEY_VALUE => true
         },
+        'capability' => {
+          Types::KEY_TYPE => Types::PBooleanType::DEFAULT,
+          Types::KEY_VALUE => false
+        },
       },
       EMPTY_HASH,
       [Types::KEY_NAME]
@@ -96,14 +100,14 @@ class ResourceTypeImpl
   attr_reader :parameters
   attr_reader :title_patterns_hash
   attr_reader :title_patterns
-  attr_reader :isomorphic
 
-  def initialize(name, properties = EMPTY_ARRAY, parameters = EMPTY_ARRAY, title_patterns_hash = nil, isomorphic = true)
+  def initialize(name, properties = EMPTY_ARRAY, parameters = EMPTY_ARRAY, title_patterns_hash = nil, isomorphic = true, capability = false)
     @name = name
     @properties = properties
     @parameters = parameters
     @title_patterns_hash = title_patterns_hash
     @isomorphic = isomorphic
+    @capability = capability
 
     # Compute attributes hash
     # Compute key_names (possibly compound key if there are multiple name vars).
@@ -172,7 +176,7 @@ class ResourceTypeImpl
   end
 
   def is_capability?
-    false
+    @capability
   end
 
   # Answers if the parameter name is a parameter/attribute of this type
@@ -259,7 +263,7 @@ class ResourceTypeImpl
 
   # Answers :property, :param or :meta depending on the type of the attribute
   # According to original version, this is called millions of times
-  # and a cache is required. 
+  # and a cache is required.
   # @param name [Symbol]
   def attrtype(name)
     raise NotImplementedError, "attrtype() - returns the kind (:meta, :param, or :property) of the parameter"

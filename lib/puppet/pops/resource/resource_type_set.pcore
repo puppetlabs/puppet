@@ -15,6 +15,7 @@ type Puppet::Resource::ResourceType3 = Object[{
     parameters     => { type => Array[Puppet::Resource::Param], value = []},
     title_patterns => { type => Optional[Hash[Regexp, Array[String[1]]], value => nil },
     isomorphic     => { type => Boolean, value => true },
+    capability     => { type => Boolean, value => false },
   },
   equality => [name],
 }]
