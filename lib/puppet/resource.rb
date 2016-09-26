@@ -252,7 +252,7 @@ class Puppet::Resource
       #   * a "classic" 3.x ruby plugin
       #   * a compatible implementation (e.g. loading from pcore metadata)
       #   * a resolved user defined type
-      # 
+      #
       # ...then, modify the parameters to the "old" (agent side compatible) way
       # of describing the type/title with string/symbols.
       #
@@ -319,7 +319,7 @@ class Puppet::Resource
   # A resource is a capability (instance) if its underlying type is a
   # capability type
   def is_capability?
-    resource_type and resource_type.is_capability?
+    !resource_type.nil? && resource_type.is_capability?
   end
 
   # Returns the value of the 'export' metaparam as an Array
