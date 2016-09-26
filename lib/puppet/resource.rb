@@ -84,7 +84,7 @@ class Puppet::Resource
     params = {}
     self.to_hash.each_pair do |param, value|
       # Don't duplicate the title as the namevar
-      unless param == namevar and value == title
+      unless param == namevar && value == title
         value = Puppet::Resource.value_to_pson_data(value)
         if is_json_type?(value)
           params[param] = value

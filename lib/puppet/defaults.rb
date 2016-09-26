@@ -1937,11 +1937,10 @@ EOT
         envs.clear_all unless envs.nil?
       end,
       :desc     => <<-'EOT'
-        Enables storage of extended data in the catalog by introducing the new Resource
-        property `ext_parameters`. When enabled, values of type Regexp, SemVer, SemVerRange,
-        Timespan, and Timestamp, will no longer be converted to strings. Instead, they will
-        be serialized using Pcore serialization which allowes them to retain their type. It
-        will also be possible to use parameters that store a Binary.
+        Enables having extended data in the catalog by adding the key `ext_parameters` to serialized
+        resources. When enabled, resource containing values of the data types `Binary`, `Regexp`,
+        `SemVer`, `SemVerRange`, `Timespan` and `Timestamp`, as well as instances of types derived
+        from `Object` retain their data type and are serialized using Pcore in `ext_parameters`.
       EOT
     }
   )
