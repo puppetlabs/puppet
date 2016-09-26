@@ -163,6 +163,11 @@ class Runtime3FunctionArgumentConverter < Runtime3Converter
     o.to_s
   end
 
+  def convert_Binary(o, scope, undef_value)
+    # Puppet 3x cannot handle Binary. Use the string form
+    o.to_s
+  end
+
   def convert_Timespan(o, scope, undef_value)
     # Puppet 3x cannot handle Timespans. Use the string form
     o.to_s

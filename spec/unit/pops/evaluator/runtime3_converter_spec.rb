@@ -75,6 +75,16 @@ describe 'when converting to 3.x' do
     expect(converter.convert(v, {}, nil)).to equal(v)
   end
 
+  it 'does not convert a Sensitive instance to string' do
+    v = Puppet::Pops::Types::PSensitiveType::Sensitive.new("don't reveal this")
+    expect(converter.convert(v, {}, nil)).to equal(v)
+  end
+
+  it 'does not convert a Binary instance to string' do
+    v = Puppet::Pops::Types::PBinaryType::Binary.from_base64('w5ZzdGVuIG1lZCByw7ZzdGVuCg==')
+    expect(converter.convert(v, {}, nil)).to equal(v)
+  end
+
   context 'the Runtime3FunctionArgumentConverter' do
     let(:converter) { Puppet::Pops::Evaluator::Runtime3FunctionArgumentConverter.instance }
 
@@ -106,6 +116,18 @@ describe 'when converting to 3.x' do
       c = converter.convert(Puppet::Pops::Time::Timestamp.parse('2016-09-15T12:24:47.193 UTC'), {}, nil)
       expect(c).to be_a(String)
       expect(c).to eql('2016-09-15T12:24:47.193 UTC')
+    end
+
+    it 'converts a Binary instance to string' do
+      b64 = 'w5ZzdGVuIG1lZCByw7ZzdGVuCg=='
+      c = converter.convert(Puppet::Pops::Types::PBinaryType::Binary.from_base64(b64), {}, nil)
+      expect(c).to be_a(String)
+      expect(c).to eql(b64)
+    end
+
+    it 'does not convert a Sensitive instance to string' do
+      v = Puppet::Pops::Types::PSensitiveType::Sensitive.new("don't reveal this")
+      expect(converter.convert(v, {}, nil)).to equal(v)
     end
   end
 end
