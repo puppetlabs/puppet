@@ -37,9 +37,9 @@ describe 'when pcore described resources types are in use' do
              } }
           },
         },
-        'm2' => { 
+        'm2' => {
           'lib' => { 'puppet' => { 'type' => {
-            'test2.rb' => <<-EOF
+            'test2.rb' => <<-EOF,
             module Puppet
             Type.newtype(:test2) do
               @doc = "Docs for resource"
@@ -54,6 +54,16 @@ describe 'when pcore described resources types are in use' do
               newparam(:color) do
                 desc "Docs for 'color' parameter"
                 newvalues(:red, :green, :blue, /#[0-9A-Z]{6}/)
+              end
+            end;end
+            EOF
+            'cap.rb' => <<-EOF
+            module Puppet
+            Type.newtype(:cap, :is_capability => true) do
+              @doc = "Docs for capability"
+              @isomorphic = false
+              newproperty(:message) do
+                desc "Docs for 'message' property"
               end
             end;end
             EOF
@@ -102,14 +112,18 @@ describe 'when pcore described resources types are in use' do
         test2 { 'b':
           message => 'b works'
         }
+        cap { 'c':
+          message => 'c works'
+        }
       MANIFEST
       expect(catalog.resource(:test1, "a")['message']).to eq('a works')
       expect(catalog.resource(:test2, "b")['message']).to eq('b works')
+      expect(catalog.resource(:cap, "c")['message']).to eq('c works')
     end
 
     it 'the validity of attribute names are checked' do
       genface.types
-      expect do 
+      expect do
         compile_to_catalog(<<-MANIFEST)
           test1 { 'a':
             mezzage => 'a works'
@@ -129,12 +143,35 @@ describe 'when pcore described resources types are in use' do
       expect(catalog.resource(:test1, "a")['noop']).to eq(true)
     end
 
+    it 'capability is propagated to the catalog' do
+      genface.types
+      catalog = compile_to_catalog(<<-MANIFEST)
+        test2 { 'r':
+          message => 'a resource'
+        }
+        cap { 'c':
+          message => 'a cap'
+        }
+      MANIFEST
+      expect(catalog.resource(:test2, "r").is_capability?).to eq(false)
+      expect(catalog.resource(:cap, "c").is_capability?).to eq(true)
+    end
+
     it 'a generated type describes if it is isomorphic' do
       generate_and_in_a_compilers_context do |compiler|
         t1 = find_resource_type(compiler.topscope, 'test1')
         expect(t1.isomorphic?).to be(true)
         t2 = find_resource_type(compiler.topscope, 'test2')
         expect(t2.isomorphic?).to be(false)
+      end
+    end
+
+    it 'a generated type describes if it is a capability' do
+      generate_and_in_a_compilers_context do |compiler|
+        t1 = find_resource_type(compiler.topscope, 'test1')
+        expect(t1.is_capability?).to be(false)
+        t2 = find_resource_type(compiler.topscope, 'cap')
+        expect(t2.is_capability?).to be(true)
       end
     end
 
