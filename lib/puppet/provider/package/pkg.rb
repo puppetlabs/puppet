@@ -203,10 +203,14 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     else
       command = 'update'
     end
+    args = ['--accept']
+    if Puppet::Util::Package.versioncmp(Facter.value(:operatingsystemrelease), '11.2') >= 0
+      args.push('--sync-actuators-timeout', '900')
+    end
     unless should.is_a? Symbol
       name += "@#{should}"
     end
-    r = exec_cmd(command(:pkg), command, '--accept', name)
+    r = exec_cmd(command(:pkg), command, *args, name)
     return r if nofail
     raise Puppet::Error, "Unable to update #{r[:out]}" if r[:exit] != 0
   end
