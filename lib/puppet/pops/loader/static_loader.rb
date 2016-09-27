@@ -99,6 +99,81 @@ class StaticLoader < Loader
     @loaded[typed_name]
   end
 
+  # The following comments are used to document the metaprogrammed logging functions created
+  # in create_logging_functions below.
+
+  # @!parse
+  #   # Log a message on the server at level debug.
+  #   Puppet::Functions.create_function(:debug) do
+  #     # @param [String] message
+  #     # @return [Undef]
+  #     def debug(message)
+  #       Puppet::Util::Log.create({:level => :debug, :source => scope, :message => message})
+  #     end
+  #   end
+  # @!parse
+  #   # Log a message on the server at level info.
+  #   Puppet::Functions.create_function(:info) do
+  #     # @param [String] message
+  #     # @return [Undef]
+  #     def info(message)
+  #       Puppet::Util::Log.create({:level => :info, :source => scope, :message => message})
+  #     end
+  #   end
+  # @!parse
+  #   # Log a message on the server at level notice.
+  #   Puppet::Functions.create_function(:notice) do
+  #     # @param [String] message
+  #     # @return [Undef]
+  #     def notice(message)
+  #       Puppet::Util::Log.create({:level => :notice, :source => scope, :message => message})
+  #     end
+  #   end
+  # @!parse
+  #   # Log a message on the server at level warning.
+  #   Puppet::Functions.create_function(:warning) do
+  #     # @param [String] message
+  #     # @return [Undef]
+  #     def warning(message)
+  #       Puppet::Util::Log.create({:level => :warning, :source => scope, :message => message})
+  #     end
+  #   end
+  # @!parse
+  #   # Log a message on the server at level err.
+  #   Puppet::Functions.create_function(:err) do
+  #     # @param [String] message
+  #     # @return [Undef]
+  #     def err(message)
+  #       Puppet::Util::Log.create({:level => :err, :source => scope, :message => message})
+  #     end
+  #   end
+  # @!parse
+  #   # Log a message on the server at level alert.
+  #   Puppet::Functions.create_function(:alert) do
+  #     # @param [String] message
+  #     # @return [Undef]
+  #     def alert(message)
+  #       Puppet::Util::Log.create({:level => :alert, :source => scope, :message => message})
+  #     end
+  #   end
+  # @!parse
+  #   # Log a message on the server at level emerg.
+  #   Puppet::Functions.create_function(:emerg) do
+  #     # @param [String] message
+  #     # @return [Undef]
+  #     def emerg(message)
+  #       Puppet::Util::Log.create({:level => :emerg, :source => scope, :message => message})
+  #     end
+  #   end
+  # @!parse
+  #   # Log a message on the server at level crit.
+  #   Puppet::Functions.create_function(:crit) do
+  #     # @param [String] message
+  #     # @return [Undef]
+  #     def crit(message)
+  #       Puppet::Util::Log.create({:level => :crit, :source => scope, :message => message})
+  #     end
+  #   end
   # Creates a function for each of the specified log levels
   #
   def create_logging_functions()
