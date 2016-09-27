@@ -2,6 +2,7 @@
   "version": 1,
   "file_format": "This MAINTAINERS file format is described at https://github.com/puppetlabs/maintainers",
   "issues": "https://tickets.puppet.com/browse/PUP",
+  "internal_list": "https://groups.google.com/a/puppet.com/forum/?hl=en#!forum/discuss-puppet-maintainers",
   "people": [
     {
       "github": "hlindberg",
