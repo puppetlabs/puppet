@@ -245,6 +245,30 @@ class Puppet::Util::Log
     obj
   end
 
+  # Log output using scope and level
+  #
+  # @param [Puppet::Parser::Scope] scope
+  # @param [Symbol] level log level
+  # @param [Array<Object>] vals the values to log (will be converted to string and joined with space)
+  #
+  def self.log_func(scope, level, vals)
+    # NOTE: 3x, does this: vals.join(" ")
+    # New implementation uses the evaluator to get proper formatting per type
+    vals = vals.map { |v| Puppet::Pops::Evaluator::EvaluatorImpl.new.string(v, scope) }
+
+    # Bypass Puppet.<level> call since it picks up source from "self" which is not applicable in the 4x
+    # Function API.
+    # TODO: When a function can obtain the file, line, pos of the call merge those in (3x supports
+    #       options :file, :line. (These were never output when calling the 3x logging functions since
+    #       3x scope does not know about the calling location at that detailed level, nor do they
+    #       appear in a report to stdout/error when included). Now, the output simply uses scope (like 3x)
+    #       as this is good enough, but does not reflect the true call-stack, but is a rough estimate
+    #       of where the logging call originates from).
+    #
+    Puppet::Util::Log.create({:level => level, :source => scope, :message => vals.join(" ")})
+  end
+
+
   attr_accessor :time, :remote, :file, :line, :pos, :source, :issue_code, :environment, :node, :backtrace
   attr_reader :level, :message
 

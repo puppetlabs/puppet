@@ -20,32 +20,6 @@ describe 'the static loader' do
     expect(loader.find(a_typed_name)).to be(nil)
   end
 
-  context 'provides access to logging functions' do
-    let(:loader) { loader = Puppet::Pops::Loader::StaticLoader.new() }
-    # Ensure all logging functions produce output
-    before(:each) { Puppet::Util::Log.level = :debug }
-
-    Puppet::Util::Log.levels.each do |level|
-      it "defines the function #{level.to_s}" do
-        expect(loader.load(:function, level).class.name).to eql(level.to_s)
-      end
-
-      it 'and #{level.to_s} can be called' do
-        expect(loader.load(:function, level).call({}, 'yay').to_s).to eql('yay')
-      end
-
-      it "uses the evaluator to format output" do
-        expect(loader.load(:function, level).call({}, ['yay', 'surprise']).to_s).to eql('[yay, surprise]')
-      end
-
-      it 'outputs name of source (scope) by passing it to the Log utility' do
-        the_scope = {}
-        Puppet::Util::Log.any_instance.expects(:source=).with(the_scope)
-        loader.load(:function, level).call(the_scope, 'x')
-      end
-    end
-  end
-
   context 'provides access to resource types built into puppet' do
     let(:loader) { loader = Puppet::Pops::Loader::StaticLoader.new() }
 
