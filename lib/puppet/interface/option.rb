@@ -17,7 +17,7 @@ class Puppet::Interface::Option
     dups = {}
     declaration.each do |item|
       if item.is_a? String and item.to_s =~ /^-/ then
-        unless item =~ /^-[a-z]\b/ or item =~ /^--[^-]/ then
+        unless item =~ /^-[a-zA-Z]\b/ or item =~ /^--[^-]/ then
           raise ArgumentError, "#{item.inspect}: long options need two dashes (--)"
         end
         @optparse << item
@@ -90,7 +90,7 @@ class Puppet::Interface::Option
   # @api private
   def optparse_to_name(declaration)
     name = optparse_to_optionname(declaration).tr('-', '_')
-    raise "#{name.inspect} is an invalid option name" unless name.to_s =~ /^[a-z]\w*$/
+    raise "#{name.inspect} is an invalid option name" unless name.to_s =~ /^[a-zA-Z]\w*$/
     name.to_sym
   end
 
