@@ -5,6 +5,7 @@ Puppet::Functions.create_function(:debug, Puppet::Functions::InternalFunction) d
   dispatch :debug do
     scope_param
     repeated_param 'Any', :values
+    return_type 'Undef'
   end
 
   def debug(scope, *values)

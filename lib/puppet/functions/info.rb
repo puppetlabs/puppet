@@ -5,6 +5,7 @@ Puppet::Functions.create_function(:info, Puppet::Functions::InternalFunction) do
   dispatch :info do
     scope_param
     repeated_param 'Any', :values
+    return_type 'Undef'
   end
 
   def info(scope, *values)
