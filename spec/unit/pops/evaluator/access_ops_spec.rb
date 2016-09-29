@@ -24,7 +24,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
     # Note that the factory is not aware of Binary and cannot operate on a
     # literal binary. Instead, it must create a call to Binary.new() with the base64 encoded
     # string as an argument
-    CALL_NAMED(QREF("Binary"), true, [Base64.encode64(s)])
+    CALL_NAMED(QREF("Binary"), true, [Base64.strict_encode64(s)])
   end
 
   context 'The evaluator when operating on a String' do

@@ -57,12 +57,21 @@ describe 'Binary Type' do
       }.to raise_error(/.*"\\xF1" from ASCII-8BIT to UTF-8.*/)
     end
 
-    it 'can be created from a Base64 encoded String' do
+    it 'can be created from a strict Base64 encoded String using default format' do
       code = <<-CODE
-        $x = Binary('YmluYXJ5')
+        $x = Binary('YmluYXI=')
         notice(assert_type(Binary, $x))
       CODE
-      expect(eval_and_collect_notices(code)).to eql(['YmluYXJ5'])
+      expect(eval_and_collect_notices(code)).to eql(['YmluYXI='])
+    end
+
+    it 'will error creation in strict mode if padding is missing when using default format' do
+      # the text 'binar' needs padding with '=' (missing here to trigger error
+      code = <<-CODE
+        $x = Binary('YmluYXI')
+        notice(assert_type(Binary, $x))
+      CODE
+      expect{ eval_and_collect_notices(code) }.to raise_error(/invalid base64/)
     end
 
     it 'can be created from a Base64 encoded String using %B, strict mode' do
@@ -130,13 +139,11 @@ describe 'Binary Type' do
     end
 
     it "can be created from an hash with value and default format" do
-      # default format skips URL safe encoded chars (this is used to test that %b was selected
-      # by default.
       code = <<-CODE
-        $x = Binary({value => '--__YmluYXJ5'})
+        $x = Binary({value => 'YmluYXI='})
         notice(assert_type(Binary, $x))
       CODE
-      expect(eval_and_collect_notices(code)).to eql(['YmluYXJ5'])
+      expect(eval_and_collect_notices(code)).to eql(['YmluYXI='])
     end
 
     it 'can be created from a hash with value being an array' do
