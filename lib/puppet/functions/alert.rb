@@ -5,6 +5,7 @@ Puppet::Functions.create_function(:alert, Puppet::Functions::InternalFunction) d
   dispatch :alert do
     scope_param
     repeated_param 'Any', :values
+    return_type 'Undef'
   end
 
   def alert(scope, *values)

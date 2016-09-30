@@ -5,6 +5,7 @@ Puppet::Functions.create_function(:crit, Puppet::Functions::InternalFunction) do
   dispatch :crit do
     scope_param
     repeated_param 'Any', :values
+    return_type 'Undef'
   end
 
   def crit(scope, *values)

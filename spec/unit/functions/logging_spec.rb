@@ -42,6 +42,13 @@ describe 'the log function' do
         # Not using the evaluator would result in yay {"a"=>"b", "c"=>"d"}
         expect_log("#{level.to_s}('yay', {a => b, c => d})", level, 'yay {a => b, c => d}')
       end
+
+      it 'returns undef value' do
+        logs = collect_logs("notice(type(#{level.to_s}('yay')))")
+        expect(logs.size).to eql(2)
+        expect(logs[1].level).to eql(:notice)
+        expect(logs[1].message).to eql('Undef')
+      end
     end
   end
 end

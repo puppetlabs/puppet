@@ -5,6 +5,7 @@ Puppet::Functions.create_function(:err, Puppet::Functions::InternalFunction) do
   dispatch :err do
     scope_param
     repeated_param 'Any', :values
+    return_type 'Undef'
   end
 
   def err(scope, *values)

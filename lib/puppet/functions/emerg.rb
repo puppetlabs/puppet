@@ -5,6 +5,7 @@ Puppet::Functions.create_function(:emerg, Puppet::Functions::InternalFunction) d
   dispatch :emerg do
     scope_param
     repeated_param 'Any', :values
+    return_type 'Undef'
   end
 
   def emerg(scope, *values)

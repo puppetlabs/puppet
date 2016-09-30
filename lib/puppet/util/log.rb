@@ -266,6 +266,7 @@ class Puppet::Util::Log
     #       of where the logging call originates from).
     #
     Puppet::Util::Log.create({:level => level, :source => scope, :message => vals.join(" ")})
+    nil
   end
 
 
