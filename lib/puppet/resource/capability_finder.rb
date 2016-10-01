@@ -41,6 +41,7 @@ module Puppet::Resource::CapabilityFinder
     end
 
     if resource_hash = resources.first
+      resource_hash['type'] = cap.resource_type
       instantiate_resource(resource_hash)
     else
       Puppet.debug "Could not find capability resource #{cap} in PuppetDB"
@@ -101,13 +102,8 @@ module Puppet::Resource::CapabilityFinder
   private
 
   def self.instantiate_resource(resource_hash)
-    resource = Puppet::Resource.new(resource_hash['type'],
-                                    resource_hash['title'])
-    real_type = Puppet::Type.type(resource.type)
-    if real_type.nil?
-      fail Puppet::ParseError,
-        "Could not find resource type #{resource.type} returned from PuppetDB"
-    end
+    real_type = resource_hash['type']
+    resource = Puppet::Resource.new(real_type, resource_hash['title'])
     real_type.parameters.each do |param|
       param = param.to_s
       next if param == 'name'
