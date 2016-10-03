@@ -88,17 +88,17 @@ agents.each do |agent|
 
   functions_4x = [
     {:name => :assert_type,      :args => '"String[1]", "Valar morghulis"',    :lambda => nil, :expected => 'Valar morghulis', :rvalue => true},
-    {:name => :each,             :args => '[1,2,3]',                           :lambda => '|$x| {notice $x}', :expected => '[1, 2, 3]', :rvalue => true},
+    {:name => :each,             :args => '[1,2,3]',                           :lambda => '|$x| {$x}', :expected => '[1, 2, 3]', :rvalue => true},
     {:name => :epp,              :args => '"call_em_all/template.epp",{x=>droid}', :lambda => nil, :expected => 'This is the droid you are looking for!', :rvalue => true},
     {:name => :filter,           :args => '[4,5,6]',                           :lambda => '|$x| {true}', :expected => '[4, 5, 6]', :rvalue => true},
     {:name => :inline_epp,       :args => '\'<%= $x %>\',{x=>10}',             :lambda => nil, :expected => '10', :rvalue => true},
-    {:name => :map,              :args => '[7,8,9]',                           :lambda => '|$x| {notice $x}', :expected => '[7, 8, 9]', :rvalue => true},
+    {:name => :map,              :args => '[7,8,9]',                           :lambda => '|$x| {$x * $x}', :expected => '[49, 64, 81]', :rvalue => true},
     {:name => :match,            :args => '"abc", /b/',                        :lambda => nil, :expected => '[b]', :rvalue => true},
     {:name => :reduce,           :args => '[4,5,6]',                           :lambda => '|$sum, $n| { $sum+$n }', :expected => '15', :rvalue => true},
     #         :reuse,:recycle
     {:name => :slice,            :args => '[1,2,3,4,5,6], 2',                  :lambda => nil, :expected => '[[1, 2], [3, 4], [5, 6]]', :rvalue => true},
     {:name => :strftime,         :args => 'Timestamp("4216-09-23T13:14:15.123 UTC"), "%C"',    :lambda => nil, :expected => '42', :rvalue => true},
-    {:name => :with,             :args => '1, "Catelyn"',                      :lambda => '|$x, $y| {notice [$x, $y]}', :expected => '[1, Catelyn]', :rvalue => true},
+    {:name => :with,             :args => '1, "Catelyn"',                      :lambda => '|$x, $y| {"$x, $y"}', :expected => '1, Catelyn', :rvalue => true},
   ]
 
   module_manifest = <<PP
