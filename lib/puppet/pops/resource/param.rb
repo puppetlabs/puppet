@@ -10,7 +10,7 @@
 # This implementation does not support
 # * setting 'strict' - strictness (must refer to an existing type) is always true
 # * does not support the indirector
-# 
+#
 #
 module Puppet::Pops
 module Resource
@@ -41,6 +41,10 @@ class Param
     @type = type
     @name = name
     @name_var = name_var
+  end
+
+  def to_s
+    name
   end
 
   def self._ptype

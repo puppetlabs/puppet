@@ -176,6 +176,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   # the resource tags with its value.
   def set_parameter(param, value = nil)
     if ! param.is_a?(Puppet::Parser::Resource::Param)
+      param = param.name if param.is_a?(Puppet::Pops::Resource::Param)
       param = Puppet::Parser::Resource::Param.new(
         :name => param, :value => value, :source => self.source
       )
@@ -244,7 +245,9 @@ class Puppet::Parser::Resource < Puppet::Resource
       raise Puppet::Error, "Invalid consume in #{self.ref}: #{ref} is not a resource" unless ref.is_a?(Puppet::Resource)
 
       # Resolve references
-      cap = catalog.resource(ref.type, ref.title)
+      t = ref.type
+      t = Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_resource_type(scope, t) unless t == 'class' || t == 'node'
+      cap = catalog.resource(t, ref.title)
       if cap.nil?
         raise "Resource #{ref} could not be found; it might not have been produced yet"
       end
