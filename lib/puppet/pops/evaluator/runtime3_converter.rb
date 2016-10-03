@@ -15,7 +15,7 @@ class Runtime3Converter
   # @return [Array] The converted values
   #
   def self.map_args(args, scope, undef_value)
-    @@instance.map_args(args, scope, undef_value)
+    @instance.map_args(args, scope, undef_value)
   end
 
   # Converts 4x supported values to a 3x values. Same as calling Runtime3Converter.instance.convert(...)
@@ -26,13 +26,13 @@ class Runtime3Converter
   # @return [Object] The converted value
   #
   def self.convert(o, scope, undef_value)
-    @@instance.convert(o, scope, undef_value)
+    @instance.convert(o, scope, undef_value)
   end
 
   # Returns the singleton instance of this class.
   # @return [Runtime3Converter] The singleton instance
   def self.instance
-    @@instance
+    @instance
   end
 
   # Converts 4x supported values to a 3x values.
@@ -58,91 +58,41 @@ class Runtime3Converter
   end
 
   def convert_NilClass(o, scope, undef_value)
-    undef_value
-  end
-
-  def convert2_NilClass(o, scope, undef_value)
-    :undef
+    @inner ? :undef : undef_value
   end
 
   def convert_String(o, scope, undef_value)
     # although wasteful, needed because user code may mutate these strings in Resources
     o.frozen? ? o.dup : o
   end
-  alias convert2_String :convert_String
 
   def convert_Object(o, scope, undef_value)
     o
   end
-  alias :convert2_Object :convert_Object
 
   def convert_Array(o, scope, undef_value)
-    o.map {|x| convert2(x, scope, undef_value) }
+    ic = @inner_converter
+    o.map {|x| ic.convert(x, scope, undef_value) }
   end
-  alias :convert2_Array :convert_Array
 
   def convert_Hash(o, scope, undef_value)
     result = {}
-    o.each {|k,v| result[convert2(k, scope, undef_value)] = convert2(v, scope, undef_value) }
+    ic = @inner_converter
+    o.each {|k,v| result[ic.convert(k, scope, undef_value)] = ic.convert(v, scope, undef_value) }
     result
   end
-  alias :convert2_Hash :convert_Hash
 
   def convert_Iterator(o, scope, undef_value)
     raise Puppet::Error, 'Use of an Iterator is not supported here'
   end
-  alias :convert2_Iterator :convert_Iterator
-
-  def convert_Regexp(o, scope, undef_value)
-    # Puppet 3x cannot handle parameter values that are reqular expressions. Turn into regexp string in
-    # source form
-    o.inspect
-  end
-  alias :convert2_Regexp :convert_Regexp
-
-  def convert_SemVer(o, scope, undef_value)
-    # Puppet 3x cannot handle SemVers. Use the string form
-    o.to_s
-  end
-  alias :convert2_SemVer :convert_SemVer
-
-  def convert_SemVerRange(o, scope, undef_value)
-    # Puppet 3x cannot handle SemVerRanges. Use the string form
-    o.to_s
-  end
-  alias :convert2_SemVerRange :convert_SemVerRange
-
-  def convert_Timespan(o, scope, undef_value)
-    # Puppet 3x cannot handle Timespans. Use the string form
-    o.to_s
-  end
-  alias :convert2_Timespan :convert_Timespan
-
-  def convert_Timestamp(o, scope, undef_value)
-    # Puppet 3x cannot handle Timestamps. Use the string form
-    o.to_s
-  end
-  alias :convert2_Timestamp :convert_Timestamp
 
   def convert_Symbol(o, scope, undef_value)
-    case o
-      # Support :undef since it may come from a 3x structure
-      when :undef
-        undef_value  # 3x wants undef as either empty string or :undef
-      else
-        o   # :default, and all others are verbatim since they are new in future evaluator
-    end
-  end
-
-  # The :undef symbol should not be converted when nested in arrays or hashes
-  def convert2_Symbol(o, scope, undef_value)
-    o
+    o == :undef && !@inner ? undef_value : o
   end
 
   def convert_PAnyType(o, scope, undef_value)
     o
   end
-  alias :convert2_PAnyType :convert_PAnyType
 
   def convert_PCatalogEntryType(o, scope, undef_value)
     # Since 4x does not support dynamic scoping, all names are absolute and can be
@@ -154,7 +104,6 @@ class Runtime3Converter
     t = Runtime3ResourceSupport.find_resource_type(scope, t) unless t == 'class' || t == 'node'
     Puppet::Resource.new(t, title)
   end
-  alias :convert2_PCatalogEntryType :convert_PCatalogEntryType
 
   # Produces an array with [type, title] from a PCatalogEntryType
   # This method is used to produce the arguments for creation of reference resource instances
@@ -182,24 +131,54 @@ class Runtime3Converter
     end
   end
 
-  private
+  protected
 
-  def initialize
-    @convert_visitor  = Puppet::Pops::Visitor.new(self, 'convert', 2, 2)
-    @convert2_visitor = Puppet::Pops::Visitor.new(self, 'convert2', 2, 2)
+  def initialize(inner = false)
+    @inner = inner
+    @inner_converter = inner ? self : self.class.new(true)
+    @convert_visitor = Puppet::Pops::Visitor.new(self, 'convert', 2, 2)
   end
 
-  @@instance = self.new
-
-  # Converts a nested 4x supported value to a 3x value.
-  #
-  # @param o [Object]The value to convert
-  # @param scope [Puppet::Parser::Scope] The scope to use when converting
-  # @param undef_value [Object] The value that nil is converted to
-  # @return [Object] The converted value
-  #
-  def convert2(o, scope, undef_value)
-    @convert2_visitor.visit_this_2(self, o, scope, undef_value)
-  end
+  @instance = self.new
 end
+
+# A Ruby function written for the 3.x API cannot be expected to handle extended data types. This
+# converter ensures that they are converted to String format
+# @api private
+class Runtime3FunctionArgumentConverter < Runtime3Converter
+
+  def convert_Regexp(o, scope, undef_value)
+    # Puppet 3x cannot handle parameter values that are reqular expressions. Turn into regexp string in
+    # source form
+    o.inspect
+  end
+
+  def convert_Version(o, scope, undef_value)
+    # Puppet 3x cannot handle SemVers. Use the string form
+    o.to_s
+  end
+
+  def convert_VersionRange(o, scope, undef_value)
+    # Puppet 3x cannot handle SemVerRanges. Use the string form
+    o.to_s
+  end
+
+  def convert_Binary(o, scope, undef_value)
+    # Puppet 3x cannot handle Binary. Use the string form
+    o.to_s
+  end
+
+  def convert_Timespan(o, scope, undef_value)
+    # Puppet 3x cannot handle Timespans. Use the string form
+    o.to_s
+  end
+
+  def convert_Timestamp(o, scope, undef_value)
+    # Puppet 3x cannot handle Timestamps. Use the string form
+    o.to_s
+  end
+
+  @instance = self.new
+end
+
 end

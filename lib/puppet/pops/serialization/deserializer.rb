@@ -6,6 +6,10 @@ module Serialization
   # resolving tabulations and assembling complex objects. The type of the complex objects are resolved using a loader.
   # @api public
   class Deserializer
+    # Provides access to the reader.
+    # @api private
+    attr_reader :reader
+
     # @param [AbstractReader] reader the reader used when reading primitive objects from a stream
     # @param [Loader::Loader] loader the loader used when resolving names of types
     # @api public

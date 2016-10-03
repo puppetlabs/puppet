@@ -6,6 +6,10 @@ module Serialization
   # tabulating and disassembling complex objects.
   # @api public
   class Serializer
+    # Provides access to the writer.
+    # @api private
+    attr_reader :writer
+
     # @param [AbstractWriter] writer the writer that is used for writing primitive values
     # @api public
     def initialize(writer)

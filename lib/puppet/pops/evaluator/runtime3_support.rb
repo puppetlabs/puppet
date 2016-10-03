@@ -269,7 +269,7 @@ module Runtime3Support
 
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
     # NOTE: Passing an empty string last converts nil/:undef to empty string
-    mapped_args = Runtime3Converter.map_args(args, scope, '')
+    mapped_args = Runtime3FunctionArgumentConverter.map_args(args, scope, '')
     result = scope.send("function_#{name}", mapped_args, &block)
     # Prevent non r-value functions from leaking their result (they are not written to care about this)
     Puppet::Parser::Functions.rvalue?(name) ? result : nil
@@ -289,7 +289,7 @@ module Runtime3Support
 
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
     # NOTE: Passing an empty string last converts nil/:undef to empty string
-    mapped_args = Runtime3Converter.map_args(args, scope, '')
+    mapped_args = Runtime3FunctionArgumentConverter.map_args(args, scope, '')
     result = Puppet::Pops::PuppetStack.stack(file, line, scope, "function_#{name}", [mapped_args], &block)
     # Prevent non r-value functions from leaking their result (they are not written to care about this)
     Puppet::Parser::Functions.rvalue?(name) ? result : nil
@@ -307,7 +307,8 @@ module Runtime3Support
   end
 
   def convert(value, scope, undef_value)
-    Runtime3Converter.convert(value, scope, undef_value)
+    converter = scope.environment.rich_data? ? Runtime3Converter.instance : Runtime3FunctionArgumentConverter.instance
+    converter.convert(value, scope, undef_value)
   end
 
   def create_resources(o, scope, virtual, exported, type_name, resource_titles, evaluated_parameters)

@@ -309,6 +309,82 @@ end
         expect(logs).to include(match(/doesn't match server specified environment/))
       end
     end
+  end
+
+  context 'when compiling a provided catalog with rich data and then applying from file' do
+    include PuppetSpec::Compiler
+
+    let(:env_dir) { tmpdir('environments') }
+    let(:execute) { 'include amod' }
+    let(:rich_data) { false }
+    let(:env_name) { 'spec' }
+    let(:populated_env_dir) do
+      dir_contained_in(env_dir, {
+        env_name => {
+          'modules' => {
+            'amod' => {
+              'manifests' => {
+                'init.pp' => <<-EOF
+class amod {
+  notify { rx: message => /[Rr]eg[Ee]xp/ }
+  notify { bin: message => Binary('w5ZzdGVuIG1lZCByw7ZzdGVuCg==') }
+  notify { ver: message  => SemVer('2.3.1') }
+  notify { vrange: message => SemVerRange('>=2.3.0') }
+  notify { tspan: message => Timespan(3600) }
+  notify { tstamp: message => Timestamp('2012-03-04T18:15:11.001') }
+}
+              EOF
+              }
+            }
+          }
+        }
+      })
+      env_dir
+    end
+
+    let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(populated_env_dir, 'spec', 'modules')]) }
+    let(:node) { Puppet::Node.new('test', :environment => env) }
+
+    around(:each) do |example|
+      Puppet[:rich_data] = rich_data
+      example.run
+    end
+
+    context 'and rich_data is set to false during compile' do
+      it 'will notify a string that is the result of Regexp#inspect (from Runtime3xConverter)' do
+        catalog = compile_to_catalog(execute, node)
+        apply = Puppet::Application[:apply]
+        apply.options[:catalog] = file_containing('manifest', catalog.to_pson)
+        apply.expects(:apply_catalog).with do |catalog|
+          catalog.resource(:notify, 'rx')['message'].is_a?(String)
+          catalog.resource(:notify, 'bin')['message'].is_a?(String)
+          catalog.resource(:notify, 'ver')['message'].is_a?(String)
+          catalog.resource(:notify, 'vrange')['message'].is_a?(String)
+          catalog.resource(:notify, 'tspan')['message'].is_a?(String)
+          catalog.resource(:notify, 'tstamp')['message'].is_a?(String)
+        end
+        apply.run
+      end
+    end
+
+    context 'and rich_data is set to true during compile' do
+      let(:rich_data) { true }
+
+      it 'will notify a regexp using Regexp#to_s' do
+        catalog = compile_to_catalog(execute, node)
+        apply = Puppet::Application[:apply]
+        apply.options[:catalog] = file_containing('manifest', catalog.to_pson)
+        apply.expects(:apply_catalog).with do |catalog|
+          catalog.resource(:notify, 'rx')['message'].is_a?(Regexp)
+          catalog.resource(:notify, 'bin')['message'].is_a?(Puppet::Pops::Types::PBinaryType::Binary)
+          catalog.resource(:notify, 'ver')['message'].is_a?(Semantic::Version)
+          catalog.resource(:notify, 'vrange')['message'].is_a?(Semantic::VersionRange)
+          catalog.resource(:notify, 'tspan')['message'].is_a?(Puppet::Pops::Time::Timespan)
+          catalog.resource(:notify, 'tstamp')['message'].is_a?(Puppet::Pops::Time::Timestamp)
+        end
+        apply.run
+      end
+    end
 
   end
 end
