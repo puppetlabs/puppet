@@ -14,7 +14,7 @@ class PBinaryType < PAnyType
     attr_reader :binary_buffer
 
     # Constructs an instance of Binary from a base64 urlsafe encoded string (RFC 2045).
-    # @param [String] A string with RFC 2045 compliant encoded binary 
+    # @param [String] A string with RFC 2045 compliant encoded binary
     #
     def self.from_base64(str)
       new(Base64.decode64(str))
@@ -31,7 +31,7 @@ class PBinaryType < PAnyType
     # Where correct padding must be used and line breaks causes an error to be raised.
     #
     # @param [String] A string with RFC 4648 compliant encoded binary
-    # 
+    #
     def self.from_base64_strict(str)
       new(Base64.strict_decode64(str))
     end
@@ -166,7 +166,7 @@ class PBinaryType < PAnyType
       end
 
       def from_string(str, format = nil)
-        format ||= '%b'
+        format ||= '%B'
         case format
         when "%b"
           # padding must be added for older rubies to avoid truncation
