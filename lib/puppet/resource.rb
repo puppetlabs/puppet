@@ -122,7 +122,7 @@ class Puppet::Resource
     when Array
       value.all? { |elem| is_json_type?(elem) }
     when Hash
-      value.all? { |key, val| key.is_a?(String) && is_json_type(val) }
+      value.all? { |key, val| key.is_a?(String) && is_json_type?(val) }
     else
       false
     end
