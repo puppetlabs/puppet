@@ -1,5 +1,5 @@
 Puppet::Parser::Functions::newfunction(
-  :lest,
+  :then,
   :type => :rvalue,
   :arity => -2,
   :doc => <<-DOC
