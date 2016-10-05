@@ -129,14 +129,22 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
       return
     end
 
+    # Check to see if the service exists
+    cmd = Array[command(:svccfg), "select", @resource[:name]]
+    output = Puppet::Util::Execution.execute(
+        cmd, :combine => true, :failonfail => false)
+    if $CHILD_STATUS.exitstatus != 0
+      info output
+    end
+
     begin
       # get the current state and the next state, and if the next
       # state is set (i.e. not "-") use it for state comparison
       states = service_states
       state = states[1] == "-" ? states[0] : states[1]
     rescue Puppet::ExecutionFailure
-      info "Could not get status on service #{self.name}"
-      return :stopped
+      debug "Could not get status on service #{self.name} #{$!}"
+      return :absent
     end
 
     case state
