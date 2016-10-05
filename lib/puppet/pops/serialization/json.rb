@@ -211,7 +211,9 @@ module JSON
 
     def write_extension(ext, obj)
       @io << '[' << extension_indicator(ext).to_json << ','
+      @nested << nil
       write_extension_payload(ext, obj)
+      @nested.pop
       if obj.is_a?(Extension::SequenceStart) && obj.sequence_size > 0
         @nested << [false, obj.sequence_size]
       else

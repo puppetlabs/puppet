@@ -203,6 +203,34 @@ module Serialization
       end
     end
 
+    it 'Array of rich data' do
+      # Sensitive omitted because it doesn't respond to ==
+      val = [
+        Time::Timespan.from_fields(false, 3, 12, 40, 31, 123),
+        Time::Timestamp.now,
+        Semantic::Version.parse('1.2.3-alpha2'),
+        Semantic::VersionRange.parse('>=1.2.3-alpha2 <1.2.4'),
+        Types::PBinaryType::Binary.from_base64('w5ZzdGVuIG1lZCByw7ZzdGVuCg==')
+      ]
+      write(val)
+      val2 = read
+      expect(val2).to eql(val)
+    end
+
+    it 'Hash of rich data' do
+      # Sensitive omitted because it doesn't respond to ==
+      val = {
+        'duration' => Time::Timespan.from_fields(false, 3, 12, 40, 31, 123),
+        'time' => Time::Timestamp.now,
+        'version' => Semantic::Version.parse('1.2.3-alpha2'),
+        'range' => Semantic::VersionRange.parse('>=1.2.3-alpha2 <1.2.4'),
+        'binary' => Types::PBinaryType::Binary.from_base64('w5ZzdGVuIG1lZCByw7ZzdGVuCg==')
+      }
+      write(val)
+      val2 = read
+      expect(val2).to eql(val)
+    end
+
     context 'an AST model' do
       it "Locator" do
         val = Parser::Locator::Locator19.new('here is some text', '/tmp/foo', [5])
