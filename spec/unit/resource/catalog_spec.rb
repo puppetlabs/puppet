@@ -898,6 +898,24 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to pson"
         expect(message).to be_a(Puppet::Pops::Time::Timestamp)
         expect(message).to eql(Puppet::Pops::Time::Timestamp.parse('2016-09-15T08:32:16.123 UTC'))
       end
+
+      it 'should read and convert ext_parameters containing hash with rich data from json' do
+        catalog = compile_to_catalog("notify {'foo': message => { 'version' => SemVer('1.0.0'), 'time' => Timestamp('2016-09-15T08:32:16.123 UTC') }}")
+        catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog.to_json))
+        message = catalog2.resource('notify', 'foo')['message']
+        expect(message).to be_a(Hash)
+        expect(message['version']).to eql(Semantic::Version.parse('1.0.0'))
+        expect(message['time']).to eql(Puppet::Pops::Time::Timestamp.parse('2016-09-15T08:32:16.123 UTC'))
+      end
+
+      it 'should read and convert ext_parameters containing an array with rich data from json' do
+        catalog = compile_to_catalog("notify {'foo': message => [ SemVer('1.0.0'), Timestamp('2016-09-15T08:32:16.123 UTC') ] }")
+        catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog.to_json))
+        message = catalog2.resource('notify', 'foo')['message']
+        expect(message).to be_a(Array)
+        expect(message[0]).to eql(Semantic::Version.parse('1.0.0'))
+        expect(message[1]).to eql(Puppet::Pops::Time::Timestamp.parse('2016-09-15T08:32:16.123 UTC'))
+      end
     end
 
     context 'and rich_data is disabled' do
