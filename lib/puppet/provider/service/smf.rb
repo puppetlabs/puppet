@@ -80,7 +80,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
     when :maintenance, :degraded
       [command(:adm), :clear, @resource[:name]]
     else
-      [command(:adm), :enable, "-s", @resource[:name]]
+      [command(:adm), :enable, "-rs", @resource[:name]]
     end
   end
 
