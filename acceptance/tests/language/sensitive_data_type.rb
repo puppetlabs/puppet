@@ -9,7 +9,11 @@ extend Puppet::Acceptance::PuppetTypeTestTools
   tmp_filename_win = tmp_filename_else = ''
   agents.each do |agent|
     # ugh... this won't work with more than two agents of two types
-    tmp_filename_win  = "C:\\cygwin64\\tmp\\#{tmp_environment}.txt"
+    if agent.platform =~ /32$/
+      tmp_filename_win  = "C:\\cygwin\\tmp\\#{tmp_environment}.txt"
+    else
+      tmp_filename_win  = "C:\\cygwin64\\tmp\\#{tmp_environment}.txt"
+    end
     tmp_filename_else = "/tmp/#{tmp_environment}.txt"
     if agent.platform =~ /windows/
       tmp_filename = tmp_filename_win
