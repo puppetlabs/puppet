@@ -333,7 +333,27 @@ class amod {
   notify { tspan: message => Timespan(3600) }
   notify { tstamp: message => Timestamp('2012-03-04T18:15:11.001') }
 }
+
+class amod::bad_type {
+  notify { bogus: message => amod::bogus() }
+}
               EOF
+              },
+              'lib' => {
+                'puppet' => {
+                  'functions' => {
+                    'amod' => {
+                      'bogus.rb' => <<-RUBY
+                        # Function that leaks an object that is not recognized in the catalog
+                        Puppet::Functions.create_function(:'amod::bogus') do
+                          def bogus()
+                            Time.new(2016, 10, 6, 23, 51, 14, '+02:00')
+                          end
+                        end
+                      RUBY
+                    }
+                  }
+                }
               }
             }
           }
@@ -347,7 +367,7 @@ class amod {
 
     around(:each) do |example|
       Puppet[:rich_data] = rich_data
-      example.run
+      Puppet.override(:loaders => Puppet::Pops::Loaders.new(env)) { example.run }
     end
 
     context 'and rich_data is set to false during compile' do
@@ -362,6 +382,23 @@ class amod {
           catalog.resource(:notify, 'vrange')['message'].is_a?(String)
           catalog.resource(:notify, 'tspan')['message'].is_a?(String)
           catalog.resource(:notify, 'tstamp')['message'].is_a?(String)
+        end
+        apply.run
+      end
+
+      it 'will notify a string that is the result of to_s on uknown data types' do
+        logs = []
+        json = Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+           compile_to_catalog('include amod::bad_type', node).to_pson
+        end
+        logs = logs.select { |log| log.level == :warning }.map { |log| log.message }
+        expect(logs.empty?).to be_falsey
+        expect(logs[0]).to eql("Resource 'Notify[bogus]' contains a Time value. It will be converted to the String '2016-10-06 23:51:14 +0200'")
+
+        apply = Puppet::Application[:apply]
+        apply.options[:catalog] = file_containing('manifest', json)
+        apply.expects(:apply_catalog).with do |catalog|
+          catalog.resource(:notify, 'bogus')['message'].is_a?(String)
         end
         apply.run
       end
@@ -383,6 +420,11 @@ class amod {
           catalog.resource(:notify, 'tstamp')['message'].is_a?(Puppet::Pops::Time::Timestamp)
         end
         apply.run
+      end
+
+      it 'will raise an error on uknown data types' do
+        catalog = compile_to_catalog('include amod::bad_type', node)
+        expect { catalog.to_pson }.to raise_error(/No Puppet Type found for Time/)
       end
     end
 

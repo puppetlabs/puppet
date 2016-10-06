@@ -88,6 +88,9 @@ class Puppet::Resource
         value = Puppet::Resource.value_to_pson_data(value)
         if is_json_type?(value)
           params[param] = value
+        elsif json_serializer.nil?
+          Puppet.warning("Resource '#{to_s}' contains a #{value.class.name} value. It will be converted to the String '#{value}'")
+          params[param] = value
         else
           ext_params[param] = value
         end
@@ -96,7 +99,6 @@ class Puppet::Resource
 
     data['parameters'] = params unless params.empty?
     unless ext_params.empty?
-      raise Puppet::Error, 'Unable to serialize non-Data type parameters unless a serializer is provided' unless json_serializer
       writer = json_serializer.writer
       ext_params.each_key do |key|
         writer.clear_io
