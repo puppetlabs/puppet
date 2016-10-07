@@ -3,6 +3,10 @@ module Puppet::Pops::Lookup
     attr_reader :scope, :override_values, :default_values, :explainer
     attr_accessor :module_name, :top_key
 
+    def self.current
+        nil # TODO, determine how to obtain the current lookup invocation.
+    end
+
     # Creates a context object for a lookup invocation. The object contains the current scope, overrides, and default
     # values and may optionally contain an {ExplanationAcceptor} instance that will receive book-keeping information
     # about the progress of the lookup.
@@ -122,6 +126,12 @@ module Puppet::Pops::Lookup
 
     def report_module_not_found
       @explainer.accept_module_not_found unless @explainer.nil?
+    end
+
+    def report_text(&block)
+      unless @explainer.nil?
+        @explainer.accept_text(block.call)
+      end
     end
   end
 end

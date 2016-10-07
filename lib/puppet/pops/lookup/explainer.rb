@@ -34,6 +34,7 @@ module Puppet::Pops::Lookup
     def initialize(parent)
       @parent = parent
       @event = nil
+      @texts = nil
     end
 
     def found_in_overrides(key, value)
@@ -59,6 +60,11 @@ module Puppet::Pops::Lookup
       @event = :result
     end
 
+    def text(text)
+      @texts ||= []
+      @texts << text
+    end
+
     def not_found(key)
       @key = key
       @event = :not_found
@@ -81,6 +87,7 @@ module Puppet::Pops::Lookup
       hash[:key] = @key unless @key.nil?
       hash[:value] = @value if [:found, :found_in_defaults, :found_in_overrides, :result].include?(@event)
       hash[:event] = @event unless @event.nil?
+      hash[:texts] = @texts unless @texts.nil?
       hash[:type] = type
       hash
     end
@@ -98,6 +105,11 @@ module Puppet::Pops::Lookup
         io << ' in defaults' if @event == :found_in_defaults
         io << "\n"
       end
+      dump_texts(io, indent, @texts)
+    end
+
+    def dump_texts(io, indent, texts)
+      texts.each { |text| io << indent << text << "\n" } unless texts.nil?
     end
 
     def dump_value(io, indent, value)
@@ -496,6 +508,10 @@ module Puppet::Pops::Lookup
 
     def accept_result(result)
       @current.result(result)
+    end
+
+    def accept_text(text)
+      @current.text(text)
     end
 
     def dump_on(io, indent, first_indent)
