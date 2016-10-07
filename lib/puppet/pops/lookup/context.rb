@@ -24,6 +24,7 @@ module Puppet::Pops
             'cache_all' => tf.callable([tf.hash_kv(tf.scalar, tf.any)], tf.undef),
             'cached_value' => tf.callable([tf.scalar], tf.any),
             'cached_entries' => tf.variant(
+              tf.callable([0, 0, tf.callable(1,1)], tf.undef),
               tf.callable([0, 0, tf.callable(2,2)], tf.undef),
               tf.callable([0, 0], tf.iterable(tf.tuple([tf.scalar, tf.any])))
             )
@@ -55,12 +56,16 @@ module Puppet::Pops
         @cache[key]
       end
 
-      def cached_entries
+      def cached_entries(&block)
         @cache
         if block_given?
           enumerator = @cache.each_pair
           @cache.size.times do
-            yield(*enumerator.next)
+            if block.arity == 2
+              yield(*enumerator.next)
+            else
+              yield(enumerator.next)
+            end
           end
           nil
         else

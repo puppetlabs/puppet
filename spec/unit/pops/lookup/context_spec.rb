@@ -66,6 +66,35 @@ describe 'Puppet::Pops::Lookup::Context' do
       expect(eval_and_collect_notices(code)).to eql(%w(v1 first v2 second v3 third))
     end
 
+    it 'can iterate the cache using one argument block' do
+      code = <<-PUPPET.unindent
+        $ctx = Puppet::LookupContext.new('e', 'm')
+        $ctx.cache_all({ 'v1' => 'first', 'v2' => 'second' })
+        $ctx.cached_entries |$entry| { notice($entry[0]); notice($entry[1]) }
+      PUPPET
+      expect(eval_and_collect_notices(code)).to eql(%w(v1 first v2 second))
+    end
+
+    it 'can replace individual cached entries' do
+      code = <<-PUPPET.unindent
+        $ctx = Puppet::LookupContext.new('e', 'm')
+        $ctx.cache_all({ 'v1' => 'first', 'v2' => 'second' })
+        $ctx.cache('v2', 'changed')
+        $ctx.cached_entries |$key, $value| { notice($key); notice($value) }
+      PUPPET
+      expect(eval_and_collect_notices(code)).to eql(%w(v1 first v2 changed))
+    end
+
+    it 'can replace multiple cached entries' do
+      code = <<-PUPPET.unindent
+        $ctx = Puppet::LookupContext.new('e', 'm')
+        $ctx.cache_all({ 'v1' => 'first', 'v2' => 'second', 'v3' => 'third' })
+        $ctx.cache_all({ 'v1' => 'one', 'v3' => 'three' })
+        $ctx.cached_entries |$key, $value| { notice($key); notice($value) }
+      PUPPET
+      expect(eval_and_collect_notices(code)).to eql(%w(v1 one v2 second v3 three))
+    end
+
     it 'cached_entries returns an Iterable when called without a block' do
       code = <<-PUPPET.unindent
         $ctx = Puppet::LookupContext.new('e', 'm')
@@ -89,7 +118,7 @@ describe 'Puppet::Pops::Lookup::Context' do
       let(:invocation) { Invocation.new({}) }
       let(:invocation_with_explain) { Invocation.new({}, {}, {}, true) }
 
-      it 'will no call explain unless explanations are active' do
+      it 'will not call explain unless explanations are active' do
         Invocation.expects(:current).returns(invocation)
         code = <<-PUPPET.unindent
           $ctx = Puppet::LookupContext.new('e', 'm')
