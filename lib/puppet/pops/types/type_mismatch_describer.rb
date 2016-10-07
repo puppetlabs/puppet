@@ -50,6 +50,17 @@ module Types
   end
 
   # @api private
+  class ReturnTypeElement < TypePathElement
+    def initialize(name = 'return')
+      super(name)
+    end
+
+    def to_s
+      key
+    end
+  end
+
+  # @api private
   class BlockPathElement < ParameterPathElement
     def initialize(name = 'block')
       super(name)
@@ -871,7 +882,7 @@ module Types
     end
 
     def describe_tuple(expected, actual, path, size_mismatch_class)
-      return if expected == actual || expected.types.empty? && (actual.is_a?(PArrayType))
+      return EMPTY_ARRAY if expected == actual || expected.types.empty? && (actual.is_a?(PArrayType))
       expected_size = expected.size_type || TypeFactory.range(*expected.size_range)
 
       if actual.is_a?(PTupleType)
@@ -881,10 +892,11 @@ module Types
         if expected_size.assignable?(actual_size)
           etypes = expected.types
           descriptions = []
-          actual.types.each_with_index do |atype, index|
-            adx = index >= etypes.size ? etypes.size - 1 : index
-            etype = etypes[adx]
-            descriptions.concat(describe(etypes[adx], atype, path + [ArrayPathElement.new(adx)]))
+          unless etypes.empty?
+            actual.types.each_with_index do |atype, index|
+              adx = index >= etypes.size ? etypes.size - 1 : index
+              descriptions.concat(describe(etypes[adx], atype, path + [ArrayPathElement.new(adx)]))
+            end
           end
           descriptions
         else
@@ -919,21 +931,27 @@ module Types
     def describe_PCallableType(expected, actual, path)
       if actual.is_a?(PCallableType)
         # nil param_types means, any other Callable is assignable
-        if expected.param_types.nil?
+        if expected.param_types.nil? && expected.return_type.nil?
           EMPTY_ARRAY
         else
           # NOTE: these tests are made in reverse as it is calling the callable that is constrained
           # (it's lower bound), not its upper bound
           param_errors = describe_argument_tuple(expected.param_types, actual.param_types, path)
           if param_errors.empty?
-            # names are ignored, they are just information
-            # Blocks must be compatible
-            this_block_t = expected.block_type || PUndefType::DEFAULT
-            that_block_t = actual.block_type || PUndefType::DEFAULT
-            if that_block_t.assignable?(this_block_t)
-              EMPTY_ARRAY
+            this_return_t = expected.return_type || PAnyType::DEFAULT
+            that_return_t = actual.return_type || PAnyType::DEFAULT
+            unless this_return_t.assignable?(that_return_t)
+              [TypeMismatch.new(path + [ReturnTypeElement.new], this_return_t, that_return_t)]
             else
-              [TypeMismatch.new(path + BlockPathElement.new, this_block_t, that_block_t)]
+              # names are ignored, they are just information
+              # Blocks must be compatible
+              this_block_t = expected.block_type || PUndefType::DEFAULT
+              that_block_t = actual.block_type || PUndefType::DEFAULT
+              if that_block_t.assignable?(this_block_t)
+                EMPTY_ARRAY
+              else
+                [TypeMismatch.new(path + [BlockPathElement.new], this_block_t, that_block_t)]
+              end
             end
           else
             param_errors
