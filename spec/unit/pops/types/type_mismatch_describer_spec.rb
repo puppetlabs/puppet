@@ -195,6 +195,13 @@ describe 'the type mismatch describer' do
       dispatch = Functions::Dispatch.new(callable, 'foo', ['a','b'], nil, nil, nil, false)
       expect(subject.describe_signatures('function', [dispatch], args_tuple)).to eq("'function' does not expect a block")
     end
+
+    it 'reports a block return type mismatch' do
+      callable = parser.parse('Callable[[0,0,Callable[ [0,0],String]],Undef]')
+      args_tuple = parser.parse('Tuple[Callable[[0,0],Integer]]')
+      dispatch = Functions::Dispatch.new(callable, 'foo', [], 'block', nil, nil, false)
+      expect(subject.describe_signatures('function', [dispatch], args_tuple)).to eq("'function' block return expects a String value, got Integer")
+    end
   end
 end
 end
