@@ -10,6 +10,18 @@ describe 'dependency loader' do
   let(:loaders) { Puppet::Pops::Loaders.new(Puppet::Node::Environment.create(:testing, [])) }
 
   describe 'FileBased module loader' do
+    it 'prints a pretty name for itself when inspected' do
+      module_dir = dir_containing('testmodule', {
+      'lib' => { 'puppet' => { 'functions' => { 'testmodule' => {
+        'foo.rb' => 'Puppet::Functions.create_function("foo") { def foo; end; }'
+      }}}}})
+
+      loader = loader_for('testmodule', module_dir)
+
+      expect(loader.inspect).to eq("(DependencyLoader 'test-dep' [(ModuleLoader::FileBased 'testmodule' 'testmodule')])")
+      expect(loader.to_s).to eq("(DependencyLoader 'test-dep' [(ModuleLoader::FileBased 'testmodule' 'testmodule')])")
+    end
+
     it 'load something in global name space raises an error' do
       module_dir = dir_containing('testmodule', {
       'lib' => { 'puppet' => { 'functions' => { 'testmodule' => {
