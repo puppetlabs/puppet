@@ -20,6 +20,7 @@ gem_runtime_dependencies:
   facter: ['> 2.0', '< 4']
   hiera: ['>= 2.0', '< 4']
   json_pure: '~> 1.8'
+  gettext-setup: '~> 0.6'
 gem_rdoc_options:
   - --title
   - "Puppet - Configuration Management"
