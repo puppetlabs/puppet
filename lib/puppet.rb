@@ -18,7 +18,20 @@ require 'puppet/util/run_mode'
 require 'puppet/external/pson/common'
 require 'puppet/external/pson/version'
 require 'puppet/external/pson/pure'
-require 'gettext-setup'
+
+## It would be really nice to use Puppet.features here, but we have to
+## do gettext setup before all of that machinery is loaded. Instead,
+## we will use a simple boolean to handle gettext availability in this
+## file, and drop in a "stub" translation function here.
+begin
+  require 'gettext-setup'
+  GETTEXT_AVAILABLE=true
+rescue LoadError
+  def _(msg)
+    msg
+  end
+  GETTEXT_AVAILABLE=false
+end
 
 #------------------------------------------------------------
 # the top-level module
@@ -37,8 +50,10 @@ module Puppet
   require 'puppet/environments'
 
   class << self
-    GettextSetup.initialize(File.absolute_path('../locales', File.dirname(__FILE__)))
-    FastGettext.locale = GettextSetup.negotiate_locale(ENV["LANG"])
+    if GETTEXT_AVAILABLE
+      GettextSetup.initialize(File.absolute_path('../locales', File.dirname(__FILE__)))
+      FastGettext.locale = GettextSetup.negotiate_locale(ENV["LANG"])
+    end
 
     include Puppet::Util
     attr_reader :features
