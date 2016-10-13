@@ -127,6 +127,11 @@ class Puppet::Transaction::Report
   #      corrective changes.
   attr_reader :corrective_change
 
+  # @return [Boolean] true if one or more resources attempted to generate
+  #   resources and failed
+  #
+  attr_accessor :resources_failed_to_generate
+
   def self.from_data_hash(data)
     obj = self.allocate
     obj.initialize_from_hash(data)
@@ -167,7 +172,7 @@ class Puppet::Transaction::Report
 
   # @api private
   def compute_status(resource_metrics, change_metric)
-    if (resource_metrics["failed"] || 0) > 0
+    if resources_failed_to_generate || (resource_metrics["failed"] || 0) > 0
       'failed'
     elsif change_metric > 0
       'changed'
@@ -381,7 +386,7 @@ class Puppet::Transaction::Report
   # @api private
   #
   def to_yaml_properties
-    super - [:@external_times]
+    super - [:@external_times, :@resources_failed_to_generate]
   end
 
   def self.supported_formats
