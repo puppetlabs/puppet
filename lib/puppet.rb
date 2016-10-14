@@ -51,8 +51,26 @@ module Puppet
 
   class << self
     if GETTEXT_AVAILABLE
-      GettextSetup.initialize(File.absolute_path('../locales', File.dirname(__FILE__)))
-      FastGettext.locale = GettextSetup.negotiate_locale(ENV["LANG"])
+      # TODO: Handle the rubygems case?
+      local_locale_path = File.absolute_path('../locales', File.dirname(__FILE__))
+      posix_system_locale_path = File.absolute_path('../../../share/puppet/locale', File.dirname(__FILE__))
+      win32_system_locale_path = File.absolute_path('../../../../../puppet/share/puppet/locale', File.dirname(__FILE__))
+
+      if File.exist?(local_locale_path)
+        locale_path = local_locale_path
+      elsif File.exist?(win32_system_locale_path)
+        locale_path = win32_system_locale_path
+      elsif File.exist?(posix_system_locale_path)
+        locale_path = posix_system_locale_path
+      else
+        # We couldn't load our locale data. Possibly we're loaded as a rubygem or something?
+        locale_path = nil
+      end
+
+      if locale_path
+        GettextSetup.initialize(locale_path)
+        FastGettext.locale = GettextSetup.negotiate_locale(ENV["LANG"])
+      end
     end
 
     include Puppet::Util
