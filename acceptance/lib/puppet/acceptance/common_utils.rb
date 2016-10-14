@@ -134,7 +134,11 @@ module Puppet
       def gem_command(host, type='aio')
         if type == 'aio'
           if host['platform'] =~ /windows/
-            "env PATH=\"#{host['privatebindir']}:${PATH}\" cmd /c gem"
+            if host['platform'] =~ /-64$/ && host['ruby_arch'] != 'x64'
+              "env SSL_CERT_FILE=\"C:/Program Files (x86)/Puppet Labs/Puppet/puppet/ssl/cert.pem\" PATH=\"#{host['privatebindir']}:${PATH}\" cmd /c gem"
+            else
+              "env SSL_CERT_FILE=\"C:/Program Files/Puppet Labs/Puppet/puppet/ssl/cert.pem\" PATH=\"#{host['privatebindir']}:${PATH}\" cmd /c gem"
+            end
           else
             "env PATH=\"#{host['privatebindir']}:${PATH}\" gem"
           end
