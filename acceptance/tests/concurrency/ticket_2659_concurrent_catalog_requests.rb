@@ -5,6 +5,7 @@ confine :except, :platform => 'windows'
 confine :except, :platform => /osx/ # see PUP-4820
 confine :except, :platform => 'solaris'
 confine :except, :platform => 'aix'
+confine :except, :platform => /^cisco_/ # PA-622
 
 step "setup a manifest"
 
