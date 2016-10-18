@@ -376,7 +376,7 @@ describe Puppet::Graph::RbTreeMap do
   describe "#each" do
     it "should yield each pair in the tree in order if a block is provided" do
       # Insert in reverse to demonstrate they aren't being yielded in insertion order
-      (1..5).to_a.reverse.each {|i| subject[i] = i.to_s}
+      (1..5).to_a.reverse_each {|i| subject[i] = i.to_s}
 
       nodes = []
       subject.each do |key,value|
