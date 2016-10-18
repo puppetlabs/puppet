@@ -1,3 +1,13 @@
+#
+# Local settings can be configured without being overwritten by package upgrades, for example
+# if you want to increase puppet open-files-limit to 10000,
+# you need to increase systemd's LimitNOFILE setting, so create a file named
+# "/etc/systemd/system/puppet.service.d/limits.conf" containing:
+# [Service]
+# LimitNOFILE=10000
+# You can confirm it worked by running systemctl daemon-reload
+# then running systemctl show puppet | grep LimitNOFILE
+#
 [Unit]
 Description=Puppet agent
 Wants=basic.target
