@@ -517,6 +517,10 @@ deprecated and has been replaced by 'always_retry_plugins'."
       read after the elapsed interval then the connection will be closed. The default value is unlimited.
       #{AS_DURATION}",
     },
+    :http_user_agent => {
+      :default => "Puppet/#{Puppet.version} Ruby/#{RUBY_VERSION}-p#{RUBY_PATCHLEVEL} (#{RUBY_PLATFORM})",
+      :desc    => "The HTTP User-Agent string to send when making network requests."
+    },
     :filetimeout => {
       :default    => "15s",
       :type       => :duration,
