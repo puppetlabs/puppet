@@ -16,9 +16,10 @@ module Puppet
       about them.  It does not directly modify `/etc/passwd` or anything.
 
       **Autorequires:** If Puppet is managing the user's primary group (as
-      provided in the `gid` attribute), the user resource will autorequire
-      that group. If Puppet is managing any role accounts corresponding to the
-      user's roles, the user resource will autorequire those role accounts."
+      provided in the `gid` attribute) or any group listed in the `groups`
+      attribute then the user resource will autorequire that group. If Puppet
+      is managing any role accounts corresponding to the user's roles, the
+      user resource will autorequire those role accounts."
 
     feature :allows_duplicates,
       "The provider supports duplicate users with the same UID."
