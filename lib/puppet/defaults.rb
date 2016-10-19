@@ -1719,7 +1719,7 @@ EOT
     },
 
     :pluginsignore => {
-        :default  => ".svn CVS .git",
+        :default  => ".svn CVS .git .hg",
         :desc     => "What files to ignore when pulling down plugins.",
     }
   )
