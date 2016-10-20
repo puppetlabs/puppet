@@ -28,14 +28,14 @@ end
 adduser_manifest = <<MANIFEST
 user { '#{username}':
   ensure   => 'present',
-  password => 'apassword',
+  password => 'Apassw0rd!',
 }
 MANIFEST
 
 changepass_manifest = <<MANIFEST
 user { '#{username}':
   ensure   => 'present',
-  password => 'newpassword',
+  password => 'Anewpassw0rd!',
   noop     => true,
 }
 MANIFEST
