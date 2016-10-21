@@ -1,3 +1,4 @@
+# @api private
 module Puppet::Plugins::DataProviders
   class Registry
     def self.register_extensions(extensions)

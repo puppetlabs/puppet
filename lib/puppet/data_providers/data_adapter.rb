@@ -1,5 +1,6 @@
 # A DataAdapter adapts an object with a Hash of data
 #
+# @api private
 class Puppet::DataProviders::DataAdapter < Puppet::Pops::Adaptable::Adapter
   include Puppet::Plugins::DataProviders
 
