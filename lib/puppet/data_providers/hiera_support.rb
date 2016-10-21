@@ -1,5 +1,6 @@
 require_relative 'hiera_config'
 
+# @api private
 module Puppet::DataProviders::HieraSupport
   def config_path
     @hiera_config.nil? ? 'not yet configured' : @hiera_config.config_path
@@ -15,8 +16,6 @@ module Puppet::DataProviders::HieraSupport
   # @param key [String] The key to lookup
   # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
   # @param merge [Puppet::Pops::MergeStrategy,String,Hash<String,Object>,nil] Merge strategy or hash with strategy and options
-  #
-  # @api public
   def unchecked_lookup(key, lookup_invocation, merge)
     lookup_invocation.with(:data_provider, self) do
       merge_strategy = Puppet::Pops::MergeStrategy.strategy(merge)
