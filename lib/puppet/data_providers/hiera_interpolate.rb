@@ -1,3 +1,4 @@
+# TODO: API 5.0, remove this module
 # @deprecated Moved to Puppet::Pops::Lookup::Interpolation
 module Puppet::DataProviders::HieraInterpolate
   include Puppet::Pops::Lookup::Interpolation

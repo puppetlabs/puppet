@@ -1,8 +1,11 @@
 require 'pathname'
 require 'puppet/pops/lookup/interpolation'
 
+# @api private
 module Puppet::DataProviders
+  # TODO: API 5.0, remove this class
   # @api private
+  # @deprecated
   class HieraConfig
     include Puppet::Plugins::DataProviders
     include Puppet::Pops::Lookup::Interpolation
@@ -61,6 +64,10 @@ module Puppet::DataProviders
       @config_root = config_root
       @config_path = config_root + 'hiera.yaml'
       if @config_path.exist?
+        unless Puppet[:strict] == :off
+          Puppet.warn_once(:deprecation, 'hiera.yaml',
+            "Use of 'hiera.yaml' is deprecated. A 'config.yaml' should be used instead", config_path.to_s)
+        end
         @config = validate_config(HieraConfig.symkeys_to_string(YAML.load_file(@config_path)))
         @config['hierarchy'] ||= DEFAULT_CONFIG['hierarchy']
         @config['datadir'] ||= DEFAULT_CONFIG['datadir']

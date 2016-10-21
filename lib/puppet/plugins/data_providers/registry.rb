@@ -1,4 +1,6 @@
+# TODO: API 5.0, remove this module
 # @api private
+# @deprecated
 module Puppet::Plugins::DataProviders
   class Registry
     def self.register_extensions(extensions)

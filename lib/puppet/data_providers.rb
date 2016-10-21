@@ -1,4 +1,6 @@
+# TODO: API 5.0, remove this module
 # @api private
+# @deprecated
 module Puppet::DataProviders
 
   def self.assert_loaded
@@ -25,6 +27,9 @@ module Puppet::DataProviders
   end
 
   def self.lookup_adapter(lookup_invocation)
+    unless Puppet[:strict] == :off
+      Puppet.deprecation_warning('The method Puppet::DataProviders.lookup_adapter is deprecated and will be removed in the next major release of Puppet.')
+    end
     assert_loaded()
     LookupAdapter.adapt(lookup_invocation.scope.compiler)
   end

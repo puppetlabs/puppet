@@ -1,6 +1,8 @@
 # A DataAdapter adapts an object with a Hash of data
 #
+# TODO: API 5.0, remove this class
 # @api private
+# @deprecated
 class Puppet::DataProviders::DataAdapter < Puppet::Pops::Adaptable::Adapter
   include Puppet::Plugins::DataProviders
 
@@ -11,6 +13,10 @@ class Puppet::DataProviders::DataAdapter < Puppet::Pops::Adaptable::Adapter
   end
 
   def initialize
+    unless Puppet[:strict] == :off
+      Puppet.warn_once(:deprecation, 'Puppet::DataProviders::DataAdapter',
+        'Puppet::DataProviders::DataAdapter is deprecated and will be removed in the next major version of Puppet')
+    end
     @data = {}
   end
 
