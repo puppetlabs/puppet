@@ -327,6 +327,44 @@ describe Puppet::Transaction do
     end
   end
 
+  describe "after resource traversal" do
+    let(:catalog) { Puppet::Resource::Catalog.new }
+    let(:prioritizer) { Puppet::Graph::RandomPrioritizer.new }
+    let(:report) { Puppet::Transaction::Report.new("apply") }
+    let(:transaction) { Puppet::Transaction.new(catalog, report, prioritizer) }
+    let(:generator) { Puppet::Transaction::AdditionalResourceGenerator.new(catalog, nil, prioritizer) }
+
+    before :each do
+      generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, nil, prioritizer)
+      Puppet::Transaction::AdditionalResourceGenerator.stubs(:new).returns(generator)
+    end
+
+    it "should should query the generator for whether resources failed to generate" do
+      relationship_graph = Puppet::Graph::RelationshipGraph.new(prioritizer)
+      catalog.stubs(:relationship_graph).returns(relationship_graph)
+
+      sequence = sequence(:traverse_first)
+      relationship_graph.expects(:traverse).in_sequence(sequence)
+      generator.expects(:resources_failed_to_generate).in_sequence(sequence)
+
+      transaction.evaluate
+    end
+
+    it "should report that resources failed to generate" do
+      generator.expects(:resources_failed_to_generate).returns(true)
+      report.expects(:resources_failed_to_generate=).with(true)
+
+      transaction.evaluate
+    end
+
+    it "should not report that resources failed to generate if none did" do
+      generator.expects(:resources_failed_to_generate).returns(false)
+      report.expects(:resources_failed_to_generate=).never
+
+      transaction.evaluate
+    end
+  end
+
   describe "when performing pre-run checks" do
     let(:resource) { Puppet::Type.type(:notify).new(:title => "spec") }
     let(:transaction) { transaction_with_resource(resource) }
