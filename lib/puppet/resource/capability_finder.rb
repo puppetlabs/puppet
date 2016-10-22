@@ -26,7 +26,12 @@ module Puppet::Resource::CapabilityFinder
       raise Puppet::DevError, 'PuppetDB is not available'
     end
 
-    resources = search(environment, nil, cap)
+    resources = search(nil, nil, cap)
+
+    if resources.size > 1
+      Puppet.debug "Found multiple resources when looking up capability #{cap}, filtering by environment #{environment}"
+      resources = resources.select { |r| r['tags'].any? { |t| t == "producer:#{environment}" } }
+    end
 
     if resources.size > 1 && code_id
       Puppet.debug "Found multiple resources when looking up capability #{cap}, filtering by code id #{code_id}"
@@ -54,8 +59,13 @@ module Puppet::Resource::CapabilityFinder
       'and',
       ['=', 'type', cap.type.capitalize],
       ['=', 'title', cap.title.to_s],
-      ['=', 'tag', "producer:#{environment}"]
     ]
+
+    if environment.nil?
+      query_terms << ['~', 'tag', "^producer:"]
+    else
+      query_terms << ['=', 'tag', "producer:#{environment}"]
+    end
 
     unless code_id.nil?
       query_terms << ['in', 'certname',
