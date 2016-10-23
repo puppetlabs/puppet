@@ -4,16 +4,22 @@ require 'puppet/pops/lookup/interpolation'
 # @api private
 # @deprecated
 module Puppet::Plugins::DataProviders
+  # @deprecated
   module DataProvider
+    include Puppet::Pops::Lookup::DataProvider
     include Puppet::Pops::Lookup::Interpolation
 
-    # Performs a lookup with an endless recursion check.
-    #
-    # @param key [String] The key to lookup
-    # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
-    # @param merge [String|Hash<String,Object>|nil] Merge strategy or hash with strategy and options
-    def lookup(name, lookup_invocation, merge)
-      lookup_invocation.check(name) { unchecked_lookup(name, lookup_invocation, merge) }
+    def key_lookup(key, lookup_invocation, merge)
+      lookup(key.to_s, lookup_invocation, merge)
+    end
+
+    def unchecked_key_lookup(key, lookup_invocation, merge)
+      unchecked_lookup(key.to_s, lookup_invocation, merge)
+    end
+
+    # @deperecated
+    def lookup(key, lookup_invocation, merge)
+      lookup_invocation.check(key) { unchecked_lookup(key, lookup_invocation, merge) }
     end
 
     # Performs a lookup with the assumption that a recursive check has been made.
@@ -70,8 +76,8 @@ module Puppet::Plugins::DataProviders
           'DataProvider#data is deprecated and will be removed in the next major version of Puppet')
       end
       compiler = lookup_invocation.scope.compiler
-      adapter = Puppet::Pops::Lookup::DataAdapter.get(compiler) || Puppet::Pops::Lookup::DataAdapter.adapt(compiler)
-      adapter.data[data_key] ||= validate_data(initialize_data(data_key, lookup_invocation), data_key)
+      adapter = Puppet::DataProviders::DataAdapter.get(compiler) || Puppet::DataProviders::DataAdapter.adapt(compiler)
+      adapter.data[data_key] ||= validate_data(initialize_data(data_key, lookup_invocation))
     end
     protected :data
 
@@ -118,14 +124,17 @@ module Puppet::Plugins::DataProviders
   # @deprecated
   # @api private
   class ModuleDataProvider
-    LOOKUP_OPTIONS = Puppet::Pops::Lookup::LOOKUP_OPTIONS
+    LOOKUP_OPTIONS = 'lookup_options'.freeze
     include DataProvider
 
-    def initialize
+    attr_reader :module_name
+
+    def initialize(module_name = nil)
       unless Puppet[:strict] == :off
         Puppet.warn_once(:deprecation, 'Plugins::DataProviders::ModuleDataProvider',
           'Plugins::DataProviders::ModuleDataProvider is deprecated and will be removed in the next major version of Puppet')
       end
+      @module_name = module_name || Puppet::Pops::Lookup::Invocation.current.module_name
     end
 
     # Retrieve the first segment of the qualified name _key_. This method will throw
@@ -136,7 +145,7 @@ module Puppet::Plugins::DataProviders
     # @api private
     # @deprecated
     def data_key(key, lookup_invocation)
-      return lookup_invocation.module_name if key == LOOKUP_OPTIONS
+      return module_name if key == LOOKUP_OPTIONS
       qual_index = key.index('::')
       throw :no_such_key if qual_index.nil?
       key[0..qual_index-1]
@@ -209,6 +218,7 @@ module Puppet::Plugins::DataProviders
       @exists = @path.exist? if @exists.nil?
       @exists
     end
+    alias exist? exists?
   end
 
   # A data provider that is initialized with a set of _paths_. When performing lookup, each
@@ -252,7 +262,7 @@ module Puppet::Plugins::DataProviders
     # @deperecated
     def load_data(path, data_key, lookup_invocation)
       compiler = lookup_invocation.scope.compiler
-      adapter = Puppet::Pops::Lookup::DataAdapter.get(compiler) || Puppet::Pops::Lookup::DataAdapter.adapt(compiler)
+      adapter = Puppet::DataProviders::DataAdapter.get(compiler) || Puppet::DataProviders::DataAdapter.adapt(compiler)
       adapter.data[path] ||= validate_data(initialize_data(path, lookup_invocation), data_key)
     end
     protected :data
@@ -278,7 +288,7 @@ module Puppet::Plugins::DataProviders
         merge_strategy = Puppet::Pops::MergeStrategy.strategy(merge)
         lookup_invocation.with(:merge, merge_strategy) do
           merged_result = merge_strategy.merge_lookup(@paths) do |path|
-            lookup_invocation.with(:path, path) do
+            lookup_invocation.with(:location, path) do
               if path.exists?
                 hash = load_data(path.path, module_name, lookup_invocation)
                 value = hash[root_key]
@@ -290,7 +300,7 @@ module Puppet::Plugins::DataProviders
                   throw :no_such_key
                 end
               else
-                lookup_invocation.report_path_not_found
+                lookup_invocation.report_location_not_found
                 throw :no_such_key
               end
             end
@@ -380,7 +390,8 @@ module Puppet::Plugins::DataProviders
         ext = path_extension
         paths.each_with_index do |path, idx|
           path = path + ext unless path.end_with?(ext)
-          resolved_paths << ResolvedPath.new(declared_paths[idx], datadir + path)
+          path = datadir + path
+          resolved_paths << Puppet::Pops::Lookup::ResolvedLocation.new(declared_paths[idx], path, path.exist?)
         end
       end
       resolved_paths

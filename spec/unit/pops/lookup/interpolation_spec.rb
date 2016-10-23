@@ -6,13 +6,20 @@ require 'puppet/data_providers/hiera_interpolate'
 
 module Puppet::Pops
 describe 'Puppet::Pops::Lookup::Interpolation' do
+  include Lookup::SubLookup
 
   let(:interpolator) { Class.new { include Lookup::Interpolation }.new }
   let(:scope) { {} }
   let(:lookup_invocation) { Lookup::Invocation.new(scope, {}, {}, nil) }
 
   def expect_lookup(*keys)
-    keys.each { |key| Lookup.expects(:lookup).with(key, nil, '', true, nil, lookup_invocation).returns(data[key]) }
+    keys.each do |key|
+      segments = split_key(key)
+      root_key = segments.shift
+      found = data[root_key]
+      found = sub_lookup(key, lookup_invocation, segments, found) unless segments.empty?
+      Lookup.expects(:lookup).with(key, nil, '', true, nil, lookup_invocation).returns(found)
+    end
   end
 
   context 'when interpolating nested data' do
@@ -148,12 +155,12 @@ describe 'Puppet::Pops::Lookup::Interpolation' do
     end
 
     it 'should find an entry using a quoted interpolation with method lookup' do
-      expect_lookup('a.b')
+      expect_lookup("'a.b'")
       expect(interpolator.interpolate("a dot c: %{lookup(\"'a.b'\")}", lookup_invocation, true)).to eq('a dot c: (lookup) a dot b')
     end
 
     it 'should find an entry using a quoted interpolation with method alias' do
-      expect_lookup('a.b')
+      expect_lookup("'a.b'")
       expect(interpolator.interpolate("%{alias(\"'a.b'\")}", lookup_invocation, true)).to eq('(lookup) a dot b')
     end
 
@@ -165,8 +172,8 @@ describe 'Puppet::Pops::Lookup::Interpolation' do
       expect(interpolator.interpolate('a dot n: %{a.n}', lookup_invocation, true)).to eq('a dot n: ')
     end
 
-    it 'should use a dotted key to navigate into a structure when when it is not quoted with method lookup' do
-      expect_lookup('a')
+    it 'should use a dotted key to navigate into a structure when it is not quoted with method lookup' do
+      expect_lookup('a.d')
       expect(interpolator.interpolate("a dot e: %{lookup('a.d')}", lookup_invocation, true)).to eq('a dot e: (lookup) a dot d is a hash entry')
     end
 
@@ -175,7 +182,7 @@ describe 'Puppet::Pops::Lookup::Interpolation' do
     end
 
     it 'should use a mix of quoted and dotted keys to navigate into a structure containing dotted keys and quoted key is last and method is lookup' do
-      expect_lookup('a')
+      expect_lookup("a.'d.x'")
       expect(interpolator.interpolate("a dot ex: %{lookup(\"a.'d.x'\")}", lookup_invocation, true)).to eq('a dot ex: (lookup) a dot d.x is a hash entry')
     end
 
@@ -184,7 +191,7 @@ describe 'Puppet::Pops::Lookup::Interpolation' do
     end
 
     it 'should use a mix of quoted and dotted keys to navigate into a structure containing dotted keys and quoted key is first and method is lookup' do
-      expect_lookup('a.x')
+      expect_lookup("'a.x'.d")
       expect(interpolator.interpolate("a dot xe: %{lookup(\"'a.x'.d\")}", lookup_invocation, true)).to eq('a dot xe: (lookup) a.x dot d is a hash entry')
     end
 
@@ -193,7 +200,7 @@ describe 'Puppet::Pops::Lookup::Interpolation' do
     end
 
     it 'should use a mix of quoted and dotted keys to navigate into a structure containing dotted keys and quoted key is in the middle and method is lookup' do
-      expect_lookup('a')
+      expect_lookup("a.'d.z'.g")
       expect(interpolator.interpolate("a dot xm: %{lookup(\"a.'d.z'.g\")}", lookup_invocation, true)).to eq('a dot xm: (lookup) a dot d.z dot g is a hash entry')
     end
 
@@ -202,7 +209,7 @@ describe 'Puppet::Pops::Lookup::Interpolation' do
     end
 
     it 'should use a mix of several quoted and dotted keys to navigate into a structure containing dotted keys and quoted key is in the middle and method is lookup' do
-      expect_lookup('a.x')
+      expect_lookup("'a.x'.'d.z'.g")
       expect(interpolator.interpolate("a dot xx: %{lookup(\"'a.x'.'d.z'.g\")}", lookup_invocation, true)).to eq('a dot xx: (lookup) a.x dot d.z dot g is a hash entry')
     end
 
@@ -211,7 +218,7 @@ describe 'Puppet::Pops::Lookup::Interpolation' do
     end
 
     it 'should find an entry using using a quoted interpolation on dotted key containing numbers using method lookup' do
-      expect_lookup('x.1')
+      expect_lookup("'x.1'")
       expect(interpolator.interpolate("x dot 2: %{lookup(\"'x.1'\")}", lookup_invocation, true)).to eq('x dot 2: (lookup) x dot 1')
     end
 
@@ -220,13 +227,12 @@ describe 'Puppet::Pops::Lookup::Interpolation' do
     end
 
     it 'should not find a subkey when the dotted key is quoted with method lookup' do
-      expect_lookup('a.d')
+      expect_lookup("'a.d'")
       expect(interpolator.interpolate("a dot f: %{lookup(\"'a.d'\")}", lookup_invocation, true)).to eq('a dot f: ')
     end
 
     it 'should not find a subkey that is matched within a string' do
-      expect_lookup('key')
-      expect{ interpolator.interpolate('%{hiera("key.subkey")}', lookup_invocation, true) }.to raise_error(/Got String when a hash-like object was expected to access value using 'subkey' from key 'key.subkey'/)
+      expect{ expect_lookup('key.subkey') }.to raise_error(/Got String when a hash-like object was expected to access value using 'subkey' from key 'key.subkey'/)
     end
   end
 
@@ -259,27 +265,27 @@ describe 'Puppet::Pops::Lookup::Interpolation' do
     end
 
     it 'allows dotted keys with non alphanumeric characters' do
-      expect_lookup('very_angry', '!$\%!')
+      expect_lookup('very_angry', '!$\%!.\#@!&%|')
       expect(interpolator.interpolate("%{lookup('very_angry')}", lookup_invocation, true)).to eq('not happy at all')
     end
 
     it 'allows dotted keys with nested white space' do
-      expect_lookup('a key with')
+      expect_lookup('a key with.nested whitespace')
       expect(interpolator.interpolate("%{lookup('a key with.nested whitespace')}", lookup_invocation, true)).to eq('value for nested ws key')
     end
 
     it 'will trim each key element' do
-      expect_lookup('a key with')
+      expect_lookup(' a key with . nested whitespace ')
       expect(interpolator.interpolate("%{lookup(' a key with . nested whitespace ')}", lookup_invocation, true)).to eq('value for nested ws key')
     end
 
     it 'will not trim quoted key element' do
-      expect_lookup('a key with')
+      expect_lookup(' a key with ." untrimmed whitespace "')
       expect(interpolator.interpolate("%{lookup(' a key with .\" untrimmed whitespace \"')}", lookup_invocation, true)).to eq('value for untrimmed ws key')
     end
 
     it 'will not trim spaces outside of quoted key element' do
-      expect_lookup('a key with')
+      expect_lookup(' a key with .  " untrimmed whitespace "  ')
       expect(interpolator.interpolate("%{lookup(' a key with .  \" untrimmed whitespace \"  ')}", lookup_invocation, true)).to eq('value for untrimmed ws key')
     end
   end

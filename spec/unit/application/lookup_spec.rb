@@ -101,11 +101,10 @@ describe Puppet::Application::Lookup do
       },
       {
         'type' => 'data_provider',
-        'name' => 'Hiera Data Provider, version 4',
-        'configuration_path' => "#{environmentpath}/production/hiera.yaml",
+        'name' => 'Environment Data Provider (lookup version 5)',
         'branches' => [
         {
-          'name' => 'common',
+          'name' => 'Hierarchy entry "Common"',
           'type' => 'data_provider',
           'branches' => [
           {
@@ -113,7 +112,7 @@ describe Puppet::Application::Lookup do
             'value' => 'This is A',
             'event' => 'found',
             'type' => 'path',
-            'original_path' => 'common',
+            'original_path' => 'common.yaml',
             'path' => "#{environmentpath}/production/data/common.yaml",
           }]
         }]
@@ -133,19 +132,18 @@ describe Puppet::Application::Lookup do
         },
         {
           :type => :data_provider,
-          :name => 'Hiera Data Provider, version 4',
-          :configuration_path => "#{environmentpath}/production/hiera.yaml",
+          :name => 'Environment Data Provider (lookup version 5)',
           :branches => [
             {
               :type => :data_provider,
-              :name => 'common',
+              :name => 'Hierarchy entry "Common"',
               :branches => [
                 {
                   :key => 'a',
                   :value => 'This is A',
                   :event => :found,
                   :type => :path,
-                  :original_path => 'common',
+                  :original_path => 'common.yaml',
                   :path => "#{environmentpath}/production/data/common.yaml",
                 }]
             }]
@@ -173,11 +171,10 @@ describe Puppet::Application::Lookup do
 Merge strategy first
   Data Binding "hiera"
     No such key: "a"
-  Data Provider "Hiera Data Provider, version 4"
-    ConfigurationPath "#{environmentpath}/production/hiera.yaml"
-    Data Provider "common"
+  Environment Data Provider (lookup version 5)
+    Hierarchy entry "Common"
       Path "#{environmentpath}/production/data/common.yaml"
-        Original path: "common"
+        Original path: "common.yaml"
         Found key: "a" value: "This is A"
   Merged result: "This is A"
         EXPLANATION
@@ -200,11 +197,10 @@ Merge strategy first
 Merge strategy first
   Data Binding "hiera"
     No such key: "a"
-  Data Provider "Hiera Data Provider, version 4"
-    ConfigurationPath "#{environmentpath}/production/hiera.yaml"
-    Data Provider "common"
+  Environment Data Provider (lookup version 5)
+    Hierarchy entry "Common"
       Path "#{environmentpath}/production/data/common.yaml"
-        Original path: "common"
+        Original path: "common.yaml"
         Found key: "a" value: "This is A"
   Merged result: "This is A"
           EXPLANATION
@@ -218,11 +214,10 @@ Lookup of 'a'
   Merge strategy first
     Data Binding "hiera"
       No such key: "a"
-    Data Provider "Hiera Data Provider, version 4"
-      ConfigurationPath "#{environmentpath}/production/hiera.yaml"
-      Data Provider "common"
+    Environment Data Provider (lookup version 5)
+      Hierarchy entry "Common"
         Path "#{environmentpath}/production/data/common.yaml"
-          Original path: "common"
+          Original path: "common.yaml"
           Found key: "a" value: "This is A"
     Merged result: "This is A"
       EXPLANATION
@@ -236,11 +231,10 @@ Lookup of 'a'
 Merge strategy hash
   Data Binding "hiera"
     No such key: "lookup_options"
-  Data Provider "Hiera Data Provider, version 4"
-    ConfigurationPath "#{environmentpath}/production/hiera.yaml"
-    Data Provider "common"
+  Environment Data Provider (lookup version 5)
+    Hierarchy entry "Common"
       Path "#{environmentpath}/production/data/common.yaml"
-        Original path: "common"
+        Original path: "common.yaml"
         Found key: "lookup_options" value: {
           "a" => "first"
         }
@@ -264,11 +258,10 @@ Merge strategy hash
 Merge strategy hash
   Data Binding "hiera"
     No such key: "lookup_options"
-  Data Provider "Hiera Data Provider, version 4"
-    ConfigurationPath "#{environmentpath}/production/hiera.yaml"
-    Data Provider "common"
+  Environment Data Provider (lookup version 5)
+    Hierarchy entry "Common"
       Path "#{environmentpath}/production/data/common.yaml"
-        Original path: "common"
+        Original path: "common.yaml"
         Found key: "lookup_options" value: {
           "a" => "first"
         }
@@ -286,11 +279,10 @@ Lookup of '__global__'
   Merge strategy hash
     Data Binding "hiera"
       No such key: "lookup_options"
-    Data Provider "Hiera Data Provider, version 4"
-      ConfigurationPath "#{environmentpath}/production/hiera.yaml"
-      Data Provider "common"
+    Environment Data Provider (lookup version 5)
+      Hierarchy entry "Common"
         Path "#{environmentpath}/production/data/common.yaml"
-          Original path: "common"
+          Original path: "common.yaml"
           Found key: "lookup_options" value: {
             "a" => "first"
           }
@@ -311,11 +303,10 @@ Searching for "lookup_options"
   Merge strategy hash
     Data Binding "hiera"
       No such key: "lookup_options"
-    Data Provider "Hiera Data Provider, version 4"
-      ConfigurationPath "#{environmentpath}/production/hiera.yaml"
-      Data Provider "common"
+    Environment Data Provider (lookup version 5)
+      Hierarchy entry "Common"
         Path "#{environmentpath}/production/data/common.yaml"
-          Original path: "common"
+          Original path: "common.yaml"
           Found key: "lookup_options" value: {
             "a" => "first"
           }
@@ -326,11 +317,10 @@ Searching for "a"
   Merge strategy first
     Data Binding "hiera"
       No such key: "a"
-    Data Provider "Hiera Data Provider, version 4"
-      ConfigurationPath "#{environmentpath}/production/hiera.yaml"
-      Data Provider "common"
+    Environment Data Provider (lookup version 5)
+      Hierarchy entry "Common"
         Path "#{environmentpath}/production/data/common.yaml"
-          Original path: "common"
+          Original path: "common.yaml"
           Found key: "a" value: "This is A"
     Merged result: "This is A"
         EXPLANATION

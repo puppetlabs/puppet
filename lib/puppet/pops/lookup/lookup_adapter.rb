@@ -1,14 +1,13 @@
-require 'puppet/plugins/data_providers'
-
 require_relative 'data_adapter'
+require_relative 'lookup_key'
 
-# A LookupAdapter is a specialized DataAdapter that uses its hash to store module providers. It also remembers the compiler
+module Puppet::Pops
+module Lookup
+# A LookupAdapter is a specialized DataAdapter that uses its hash to store data providers. It also remembers the compiler
 # that it is attached to and maintains a cache of _lookup options_ retrieved from the data providers associated with the
 # compiler's environment.
 #
 # @api private
-module Puppet::Pops
-module Lookup
 class LookupAdapter < DataAdapter
 
   LOOKUP_OPTIONS_PREFIX = LOOKUP_OPTIONS + '.'
@@ -32,10 +31,10 @@ class LookupAdapter < DataAdapter
   # and the first found entry is returned.
   #
   # @param key [String] The key to lookup
-  # @param merge [Puppet::Pops::MergeStrategy,String,Hash<String,Object>,nil] Merge strategy or hash with strategy and options
-  # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] Invocation data containing scope, overrides, and defaults
-  # @return [Object] The found value
-  # @throws :no_such_key if the given key is not found
+  # @param lookup_invocation [Invocation] the lookup invocation
+  # @param merge [MergeStrategy,String,Hash{String => Object},nil] Merge strategy, merge strategy name, strategy and options hash, or nil (implies "first found")
+  # @return [Object] the found object
+  # @throw :no_such_key when the object is not found
   #
   def lookup(key, lookup_invocation, merge)
     # The 'lookup_options' key is reserved and not found as normal data
@@ -45,48 +44,31 @@ class LookupAdapter < DataAdapter
       end
     end
 
-    lookup_invocation.top_key ||= key
-    merge_explained = false
-    if lookup_invocation.explain_options?
-      catch(:no_such_key) do
-        module_name = extract_module_name(key) unless key == GLOBAL
-        lookup_invocation.module_name = module_name
-        if lookup_invocation.only_explain_options?
-          do_lookup(LOOKUP_OPTIONS, lookup_invocation, HASH)
-          return nil
+    key = LookupKey.new(key)
+    lookup_invocation.lookup(key, key.module_name) do
+      merge_explained = false
+      if lookup_invocation.only_explain_options?
+        catch(:no_such_key) { do_lookup(LookupKey::LOOKUP_OPTIONS, lookup_invocation, HASH) }
+        nil
+      else
+        if merge.nil?
+          # Used cached lookup_options
+          merge = lookup_merge_options(key, lookup_invocation)
+          lookup_invocation.report_merge_source(LOOKUP_OPTIONS) unless merge.nil?
         end
-
-        # Bypass cache and do a "normal" lookup of the lookup_options
-        lookup_invocation.with(:meta, LOOKUP_OPTIONS) do
-          key_options = do_lookup(LOOKUP_OPTIONS, lookup_invocation, HASH)[key]
-          merge = key_options[MERGE] unless key_options.nil?
-          merge_explained = true
-        end
+        lookup_invocation.with(:data, key.to_s) { do_lookup(key, lookup_invocation, merge) }
       end
-    elsif merge.nil?
-      # Used cached lookup_options
-      merge = lookup_merge_options(key, lookup_invocation)
-      lookup_invocation.report_merge_source('lookup_options') unless merge.nil?
-    end
-
-    if merge_explained
-      # Merge lookup is explained in detail so we need to explain the data in a section
-      # on the same level to avoid confusion
-      lookup_invocation.with(:data, key) { do_lookup(key, lookup_invocation, merge) }
-    else
-      do_lookup(key, lookup_invocation, merge)
     end
   end
 
-  # @api private
-  def lookup_global(name, lookup_invocation, merge_strategy)
+  def lookup_global(key, lookup_invocation, merge_strategy)
     terminus = Puppet[:data_binding_terminus]
     lookup_invocation.with(:global, terminus) do
       catch(:no_such_key) do
-        return lookup_invocation.report_found(name, Puppet::DataBinding.indirection.find(name,
-                                                                                         { :environment => environment, :variables => lookup_invocation.scope, :merge => merge_strategy }))
+        return lookup_invocation.report_found(key, Puppet::DataBinding.indirection.find(key.root_key,
+          {:environment => environment, :variables => lookup_invocation.scope, :merge => merge_strategy}))
       end
-      lookup_invocation.report_not_found(name)
+      lookup_invocation.report_not_found(key)
       throw :no_such_key
     end
   rescue Puppet::DataBinding::LookupError => detail
@@ -95,48 +77,51 @@ class LookupAdapter < DataAdapter
     raise error
   end
 
-  # @api private
-  def lookup_in_environment(name, lookup_invocation, merge_strategy)
-    env_provider.lookup(name, lookup_invocation, merge_strategy)
+  def lookup_in_environment(key, lookup_invocation, merge_strategy)
+    provider = env_provider
+    throw :no_such_key if provider.nil?
+    provider.key_lookup(key, lookup_invocation, merge_strategy)
   end
 
-  # @api private
-  def lookup_in_module(name, lookup_invocation, merge_strategy)
-    module_name = lookup_invocation.module_name || extract_module_name(name)
+  def lookup_in_module(key, lookup_invocation, merge_strategy)
+    module_name = lookup_invocation.module_name
 
     # Do not attempt to do a lookup in a module unless the name is qualified.
     throw :no_such_key if module_name.nil?
 
-    lookup_invocation.with(:module, module_name) do
+    provider = module_provider(module_name)
+    if provider.nil?
       if environment.module(module_name).nil?
-        lookup_invocation.report_module_not_found
-        throw :no_such_key
+        lookup_invocation.report_module_not_found(module_name)
+      else
+        lookup_invocation.report_module_provider_not_found(module_name)
       end
-      module_provider(module_name).lookup(name, lookup_invocation, merge_strategy)
+      throw :no_such_key
     end
+    provider.key_lookup(key, lookup_invocation, merge_strategy)
   end
 
   # Retrieve the merge options that match the given `name`.
   #
-  # @param name [String] The key for which we want merge options
-  # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] the lookup invocation
+  # @param key [LookupKey] The key for which we want merge options
+  # @param lookup_invocation [Invocation] the lookup invocation
   # @return [String,Hash,nil] The found merge options or nil
   #
-  def lookup_merge_options(name, lookup_invocation)
-    lookup_options = lookup_lookup_options(name, lookup_invocation)
+  def lookup_merge_options(key, lookup_invocation)
+    lookup_options = lookup_lookup_options(key, lookup_invocation)
     lookup_options.nil? ? nil : lookup_options[MERGE]
   end
 
   # Retrieve the lookup options that match the given `name`.
   #
-  # @param name [String] The key for which we want lookup options
+  # @param key [LookupKey] The key for which we want lookup options
   # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] the lookup invocation
   # @return [String,Hash,nil] The found lookup options or nil
   #
-  def lookup_lookup_options(name, lookup_invocation)
-    module_name = extract_module_name(name)
+  def lookup_lookup_options(key, lookup_invocation)
+    module_name = key.module_name
 
-    # Retrieve the options for the module. We use nil as a key in case we have none
+    # Retrieve the options for the module. We use nil as a key in case we have no module
     if !@lookup_options.include?(module_name)
       options = retrieve_lookup_options(module_name, lookup_invocation, MergeStrategy.strategy(HASH))
       raise Puppet::DataBinding::LookupError.new("value of #{LOOKUP_OPTIONS} must be a hash") unless options.nil? || options.is_a?(Hash)
@@ -144,112 +129,170 @@ class LookupAdapter < DataAdapter
     else
       options = @lookup_options[module_name]
     end
-    options.nil? ? nil : options[name]
+    options.nil? ? nil : options[key.root_key]
   end
 
   private
 
+  PROVIDER_STACK = [:lookup_global, :lookup_in_environment, :lookup_in_module].freeze
+
   def do_lookup(key, lookup_invocation, merge)
-    merge_strategy = MergeStrategy.strategy(merge)
-    lookup_invocation.with(:merge, merge_strategy) do
-      result = merge_strategy.merge_lookup([:lookup_global, :lookup_in_environment, :lookup_in_module]) { |m| send(m, key, lookup_invocation, merge_strategy) }
-      lookup_invocation.report_result(result)
-      result
-    end
+    merge_strategy = Puppet::Pops::MergeStrategy.strategy(merge)
+    key.dig(lookup_invocation,
+      merge_strategy.lookup(PROVIDER_STACK, lookup_invocation) { |m| send(m, key, lookup_invocation, merge_strategy) })
   end
+
+  GLOBAL_ENV_MERGE = 'Global and Environment'.freeze
 
   # Retrieve lookup options that applies when using a specific module (i.e. a merge of the pre-cached
   # `env_lookup_options` and the module specific data)
   def retrieve_lookup_options(module_name, lookup_invocation, merge_strategy)
     meta_invocation = Invocation.new(lookup_invocation.scope)
-    meta_invocation.top_key = lookup_invocation.top_key
-    env_opts = env_lookup_options(meta_invocation, merge_strategy)
-    unless module_name.nil? || environment.module(module_name).nil?
-      catch(:no_such_key) do
-        meta_invocation.module_name = module_name
-        options = module_provider(module_name).lookup(LOOKUP_OPTIONS, meta_invocation, merge_strategy)
-        options = merge_strategy.merge(env_opts, options) unless env_opts.nil?
-        return options
+    meta_invocation.lookup(LookupKey::LOOKUP_OPTIONS, lookup_invocation.module_name) do
+      meta_invocation.with(:meta, LOOKUP_OPTIONS) do
+        opts = env_lookup_options(meta_invocation, merge_strategy)
+        catch(:no_such_key) do
+          module_opts = lookup_in_module(LookupKey::LOOKUP_OPTIONS, meta_invocation, merge_strategy)
+          opts = if opts.nil?
+            module_opts
+          else
+            env_name =
+            merge_strategy.lookup([GLOBAL_ENV_MERGE, "Module #{lookup_invocation.module_name}"], meta_invocation) do |n|
+              meta_invocation.with(:scope, n) { meta_invocation.report_found(LOOKUP_OPTIONS,  n == GLOBAL_ENV_MERGE ? opts : module_opts) }
+            end
+          end
+        end
+        opts
       end
     end
-    env_opts
   end
 
   # Retrieve and cache lookup options specific to the environment of the compiler that this adapter is attached to (i.e. a merge
   # of global and environment lookup options).
-  def env_lookup_options(meta_invocation, merge_strategy)
+  def env_lookup_options(lookup_invocation, merge_strategy)
     if !instance_variable_defined?(:@env_lookup_options)
-      @env_lookup_options = nil
-      catch(:no_such_key) do
-        @env_lookup_options = merge_strategy.merge_lookup([:lookup_global, :lookup_in_environment]) do |m|
-          send(m, LOOKUP_OPTIONS, meta_invocation, merge_strategy)
-        end
+      @global_lookup_options = nil
+      catch(:no_such_key) { @global_lookup_options = lookup_global(LookupKey::LOOKUP_OPTIONS, lookup_invocation, merge_strategy) }
+      @env_only_lookup_options = nil
+      catch(:no_such_key) { @env_only_lookup_options = lookup_in_environment(LookupKey::LOOKUP_OPTIONS, lookup_invocation, merge_strategy) }
+      if @global_lookup_options.nil?
+        @env_lookup_options = @env_only_lookup_options
+      elsif @env_only_lookup_options.nil?
+        @env_lookup_options = @global_lookup_options
+      else
+        @env_lookup_options = merge_strategy.merge(@global_lookup_options, @env_only_lookup_options)
       end
     end
     @env_lookup_options
   end
 
   def env_provider
-    @env_provider ||= initialize_env_provider
+    @env_provider = initialize_env_provider unless instance_variable_defined?(:@env_provider)
+    @env_provider
   end
 
   def module_provider(module_name)
     # Test if the key is present for the given module_name. It might be there even if the
     # value is nil (which indicates that no module provider is configured for the given name)
-    unless data.include?(module_name)
-      data[module_name] = initialize_module_provider(module_name)
+    unless self.include?(module_name)
+      self[module_name] = initialize_module_provider(module_name)
     end
-    data[module_name]
+    self[module_name]
   end
 
   def initialize_module_provider(module_name)
-    injector = Puppet.lookup(:injector) { nil }
+    mod = environment.module(module_name)
+    if mod.nil?
+      nil
+    elsif mod.has_lookup_conf?
+      ModuleDataProvider.new(module_name)
+    else
+      # TODO: API 5.0, replace this else clause with a nil
+      metadata = mod.metadata
+      unless metadata.nil?
+        provider_name = metadata['data_provider']
+        unless provider_name.nil? || Puppet[:strict] == :off
+          Puppet.warn_once(:deprecation, 'metadata.json#data_provider',
+            "Defining \"data_provider\": \"#{provider_name}\" in metadata.json is deprecated. A '#{LookupConfig::CONFIG_FILE_NAME}' file should be used instead",
+            mod.metadata_file)
+        end
+      end
 
-    # Support running tests without an injector being configured == using a null implementation
-    return Puppet::Plugins::DataProviders::ModuleDataProvider.new() unless injector
+      if provider_name.nil? || Puppet[:strict] == :off
+        provider_name = bound_module_provider_name(module_name)
+        unless provider_name.nil?
+          Puppet.warn_once(:deprecation, 'ModuleBinding#data_provider',
+            "Defining data_provider '#{provider_name}' as a Puppet::Binding is deprecated. A '#{LookupConfig::CONFIG_FILE_NAME}' file should be used instead")
+        end
+      end
 
-    # Get the registry of module to provider implementation name
-    module_service_type = Puppet::Plugins::DataProviders::Registry.hash_of_per_module_data_provider
-    module_service_name = Puppet::Plugins::DataProviders::PER_MODULE_DATA_PROVIDER_KEY
-    module_service = injector.lookup(nil, module_service_type, module_service_name)
-    provider_name = module_service[module_name] || 'none'
-
-    service_type = Puppet::Plugins::DataProviders::Registry.hash_of_module_data_providers
-    service_name = Puppet::Plugins::DataProviders::MODULE_DATA_PROVIDERS_KEY
-
-    # Get the service (registry of known implementations)
-    service = injector.lookup(nil, service_type, service_name)
-    provider = service[provider_name]
-    unless provider
-      raise Puppet::Error.new("Environment '#{environment.name}', cannot find module_data_provider '#{provider_name}'")
+      case provider_name
+      when nil, 'none'
+        nil
+      when 'hiera'
+        ModuleDataProvider.new(module_name)
+      when 'function'
+        ModuleDataProvider.new(module_name, LookupConfig.legacy_function_config("#{module_name}::data"))
+      else
+        injector = Puppet.lookup(:injector) { nil }
+        provider = injector.lookup(nil,
+          Puppet::Plugins::DataProviders::Registry.hash_of_module_data_providers,
+          Puppet::Plugins::DataProviders::MODULE_DATA_PROVIDERS_KEY)[provider_name]
+        unless provider
+          raise Puppet::Error.new("Environment '#{environment.name}', cannot find module_data_provider '#{provider_name}'")
+        end
+        # Provider is configured per module but cached using compiler life cycle so it must be cloned
+        provider.clone
+      end
     end
-    # Provider is configured per module but cached using compiler life cycle so it must be cloned
-    provider.clone
+  end
+
+  def bound_module_provider_name(module_name)
+    injector = Puppet.lookup(:injector) { nil }
+    injector.nil? ? nil : injector.lookup(nil,
+      Puppet::Plugins::DataProviders::Registry.hash_of_per_module_data_provider,
+      Puppet::Plugins::DataProviders::PER_MODULE_DATA_PROVIDER_KEY)[module_name]
   end
 
   def initialize_env_provider
-    injector = Puppet.lookup(:injector) { nil }
+    env_conf = environment.configuration
+    env_path = env_conf.nil? ? nil : env_conf.path_to_env
+    if env_path && (Pathname.new(env_path) + LookupConfig::CONFIG_FILE_NAME).exist?
+      EnvironmentDataProvider.new
+    else
+      # TODO: API 5.0, replace this else clause with a nil
+      # Get the name of the data provider from the environment's configuration and find the bound implementation
+      provider_name = env_conf.nil? ? nil : env_conf.environment_data_provider
+      unless provider_name.nil? || Puppet[:strict] == :off
+        Puppet.warn_once(:deprecation, 'environment.conf#data_provider',
+          "Defining environment_data_provider='#{provider_name}' in environment.conf is deprecated. A '#{LookupConfig::CONFIG_FILE_NAME}' file should be used instead",
+          env_path + '/environment.conf')
+      end
 
-    # Support running tests without an injector being configured == using a null implementation
-    return Puppet::Plugins::DataProviders::EnvironmentDataProvider.new() unless injector
+      case provider_name
+      when nil, 'none'
+        nil
+      when 'hiera'
+        # Use hiera.yaml och default settings if it is missing
+        EnvironmentDataProvider.new
+      when 'function'
+        EnvironmentDataProvider.new(LookupConfig.legacy_function_config('environment::data'))
+      else
+         injector = Puppet.lookup(:injector) { nil }
 
-    # Get the name of the data provider from the environment's configuration and find the bound implementation
-    provider_name = environment.configuration.environment_data_provider
-    service_type = Puppet::Plugins::DataProviders::Registry.hash_of_environment_data_providers
-    service_name = Puppet::Plugins::DataProviders::ENV_DATA_PROVIDERS_KEY
+        # Support running tests without an injector being configured == using a null implementation
+        return nil unless injector
 
-    # Get the service (registry of known implementations)
-    service = injector.lookup(nil, service_type, service_name)
-    provider = service[provider_name]
-    unless provider
-      raise Puppet::Error.new("Environment '#{environment.name}', cannot find environment_data_provider '#{provider_name}'")
+        # Get the service (registry of known implementations)
+        provider = injector.lookup(nil,
+          Puppet::Plugins::DataProviders::Registry.hash_of_environment_data_providers,
+          Puppet::Plugins::DataProviders::ENV_DATA_PROVIDERS_KEY)[provider_name]
+        unless provider
+          raise Puppet::Error.new("Environment '#{environment.name}', cannot find environment_data_provider '#{provider_name}'")
+        end
+        provider
+      end
     end
-    provider
-  end
-
-  def extract_module_name(name)
-    qual_index = name.index('::')
-    qual_index.nil? ? nil : name[0..qual_index-1]
   end
 
   # @return [Puppet::Node::Environment] the environment of the compiler that this adapter is associated with
@@ -259,3 +302,7 @@ class LookupAdapter < DataAdapter
 end
 end
 end
+
+require_relative 'invocation'
+require_relative 'environment_data_provider'
+require_relative 'module_data_provider'

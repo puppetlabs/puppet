@@ -58,19 +58,19 @@ module Lookup
     end
 
     def found_in_overrides(key, value)
-      @key = key
+      @key = key.to_s
       @value = value
       @event = :found_in_overrides
     end
 
     def found_in_defaults(key, value)
-      @key = key
+      @key = key.to_s
       @value = value
       @event = :found_in_defaults
     end
 
     def found(key, value)
-      @key = key
+      @key = key.to_s
       @value = value
       @event = :found
     end
@@ -81,16 +81,12 @@ module Lookup
     end
 
     def not_found(key)
-      @key = key
+      @key = key.to_s
       @event = :not_found
     end
 
-    def path_not_found
-      @event = :path_not_found
-    end
-
-    def module_not_found
-      @event = :module_not_found
+    def location_not_found
+      @event = :location_not_found
     end
 
     def increase_indent(indent)
@@ -157,13 +153,17 @@ module Lookup
         io << value.inspect
       end
     end
+
+    def to_s
+      "#{self.class.name}: #{@key}, #{@event}"
+    end
   end
 
   class ExplainTop < ExplainTreeNode
     def initialize(parent, type, key)
       super(parent)
       @type = type
-      self.key = key
+      self.key = key.to_s
     end
 
     def dump_on(io, indent, first_indent)
@@ -176,7 +176,7 @@ module Lookup
   class ExplainInvalidKey < ExplainTreeNode
     def initialize(parent, key)
       super(parent)
-      @key = key
+      @key = key.to_s
     end
 
     def dump_on(io, indent, first_indent)
@@ -205,6 +205,34 @@ module Lookup
 
     def type
       :merge_source
+    end
+  end
+
+  class ExplainModule < ExplainTreeNode
+    def initialize(parent, module_name)
+      super(parent)
+      @module_name = module_name
+    end
+
+    def dump_on(io, indent, first_indent)
+      case @event
+      when :module_not_found
+        io << indent << 'Module "' << @module_name << "\" not found\n"
+      when :module_provider_not_found
+        io << indent << 'Module provider for module "' << @module_name << "\" not found\n"
+      end
+    end
+
+    def module_not_found
+      @event = :module_not_found
+    end
+
+    def module_provider_not_found
+      @event = :module_provider_not_found
+    end
+
+    def type
+      :module
     end
   end
 
@@ -282,39 +310,6 @@ module Lookup
     end
   end
 
-  class ExplainModule < ExplainTreeNode
-    def initialize(parent, mod)
-      super(parent)
-      @module = mod
-    end
-
-    def dump_on(io, indent, first_indent)
-      io << indent << 'Module "' << @module << '"'
-      if branches.size == 1
-        branches[0].dump_on(io, indent, ' using ')
-      else
-        io << "\n"
-        indent = increase_indent(indent)
-        branches.each {|b| b.dump_on(io, indent, indent)}
-      end
-      io << indent << "Module not found\n" if @event == :module_not_found
-    end
-
-    def to_hash
-      if branches.size == 1
-        branches[0].to_hash.merge(:module => @module)
-      else
-        hash = super
-        hash[:module] = @module
-        hash
-      end
-    end
-
-    def type
-      :module
-    end
-  end
-
   class ExplainGlobal < ExplainTreeNode
     def initialize(parent, binding_terminus)
       super(parent)
@@ -346,11 +341,11 @@ module Lookup
     end
 
     def dump_on(io, indent, first_indent)
-      io << first_indent << 'Data Provider "' << @provider.name << "\"\n"
+      io << first_indent << @provider.name << "\n"
       indent = increase_indent(indent)
       if @provider.respond_to?(:config_path)
         path = @provider.config_path
-        io << indent << 'ConfigurationPath "' << path.to_s << "\"\n" unless path.nil?
+        io << indent << 'Using configuration "' << path.to_s << "\"\n" unless path.nil?
       end
       branches.each {|b| b.dump_on(io, indent, indent)}
       dump_outcome(io, indent)
@@ -363,6 +358,7 @@ module Lookup
         path = @provider.config_path
         hash[:configuration_path] = path.to_s unless path.nil?
       end
+      hash[:module] = @provider.module_name if @provider.is_a?(ModuleDataProvider)
       hash
     end
 
@@ -371,30 +367,38 @@ module Lookup
     end
   end
 
-  class ExplainPath < ExplainTreeNode
-    def initialize(parent, path)
+  class ExplainLocation < ExplainTreeNode
+    def initialize(parent, location)
       super(parent)
-      @path = path
+      @location = location
     end
 
     def dump_on(io, indent, first_indent)
-      io << indent << 'Path "' << @path.path.to_s << "\"\n"
+      location = @location.location
+      type_name = type == :path ? 'Path' : 'URI'
+      io << indent << type_name << ' "' << location.to_s << "\"\n"
       indent = increase_indent(indent)
-      io << indent << 'Original path: "' << @path.original_path << "\"\n"
+      io << indent << 'Original ' << type_name.downcase << ': "' << @location.original_location << "\"\n"
       branches.each {|b| b.dump_on(io, indent, indent)}
-      io << indent << "Path not found\n" if @event == :path_not_found
+      io << indent << type_name << " not found\n" if @event == :location_not_found
       dump_outcome(io, indent)
     end
 
     def to_hash
       hash = super
-      hash[:original_path] = @path.original_path
-      hash[:path] = @path.path.to_s
+      location = @location.location
+      if type == :path
+        hash[:original_path] = @location.original_location
+        hash[:path] = location.to_s
+      else
+        hash[:original_uri] = @location.original_location
+        hash[:uri] = location.to_s
+      end
       hash
     end
 
     def type
-      :path
+      @location.location.is_a?(Pathname) ? :path :uri
     end
   end
 
@@ -432,14 +436,21 @@ module Lookup
   end
 
   class ExplainScope < ExplainTreeNode
-    def initialize(parent)
+    def initialize(parent, name)
       super(parent)
+      @name = name
     end
 
     def dump_on(io, indent, first_indent)
-      io << indent << 'Global Scope' << "\n"
+      io << indent << @name << "\n"
       indent = increase_indent(indent)
       dump_outcome(io, indent)
+    end
+
+    def to_hash
+      hash = super
+      hash[:name] = @name
+      hash
     end
 
     def type
@@ -458,18 +469,18 @@ module Lookup
       node = case (qualifier_type)
         when :global
          ExplainGlobal.new(@current, qualifier)
-        when :path
-          ExplainPath.new(@current, qualifier)
-        when :module
-          ExplainModule.new(@current, qualifier)
+        when :location
+          ExplainLocation.new(@current, qualifier)
         when :interpolate
           ExplainInterpolate.new(@current, qualifier)
         when :data_provider
           ExplainDataProvider.new(@current, qualifier)
         when :merge
           ExplainMerge.new(@current, qualifier)
+        when :module
+          ExplainModule.new(@current, qualifier)
         when :scope
-          ExplainScope.new(@current)
+          ExplainScope.new(@current, qualifier)
         when :sub_lookup
           ExplainSubLookup.new(@current, qualifier)
         when :segment
@@ -517,12 +528,20 @@ module Lookup
       @current.not_found(key)
     end
 
-    def accept_path_not_found
-      @current.path_not_found
+    def accept_location_not_found
+      @current.location_not_found
     end
 
-    def accept_module_not_found
+    def accept_module_not_found(module_name)
+      push(:module, module_name)
       @current.module_not_found
+      pop
+    end
+
+    def accept_module_provider_not_found(module_name)
+      push(:module, module_name)
+      @current.module_provider_not_found
+      pop
     end
 
     def accept_result(result)

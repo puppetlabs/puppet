@@ -40,6 +40,20 @@ module Puppet::Pops::LabelProvider
     count == 1 ? text : "#{text}s"
   end
 
+  # Combines several strings using comman and a final conjunction
+  def combine_strings(strings, conjunction = 'or')
+    case strings.size
+    when 0
+      ''
+    when 1
+      strings[0]
+    when 2
+      "#{strings[0]} #{conjunction} #{strings[1]}"
+    else
+      "#{strings[0...-1].join(', ')}, #{conjunction} #{strings.last}"
+    end
+  end
+
   # Produces an *indefinite article* (a/an) for the given text ('a' if
   # it starts with a vowel) This is obviously flawed in the general
   # sense as may labels have punctuation at the start and this method

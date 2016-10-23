@@ -16,6 +16,6 @@ module Puppet::DataProviders::HieraInterpolate
         Puppet.warn_once(:deprecation, 'HieraInterpolate#qualified_lookup', msg)
       end
     end
-    sub_lookup('<unknown key>', Puppet::Pops::Lookup::Invocation.new(nil), segments, value)
+    sub_lookup('<unknown key>', Puppet::Pops::Lookup::Invocation.current, segments, value)
   end
 end
