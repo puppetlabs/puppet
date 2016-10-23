@@ -297,11 +297,13 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
         type = options.include?(:type) ? Puppet::Pops::Types::TypeParser.singleton.parse(options[:type], scope) : nil
         result = Puppet::Pops::Lookup.lookup(keys, type, options[:default_value], use_default_value, merge_options, lookup_invocation)
         puts renderer.render(result) unless explain
-      rescue Puppet::DataBinding::LookupError
+      rescue Puppet::DataBinding::LookupError => e
+        lookup_invocation.report_text { e.message }
         exit(1) unless explain
       end
       puts format == :s ? lookup_invocation.explainer.to_s : renderer.render(lookup_invocation.explainer.to_hash) if explain
     end
+    exit(0)
   end
 
   def generate_scope
