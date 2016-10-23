@@ -1,24 +1,25 @@
 require 'spec_helper'
 require 'puppet/pops/types/type_acceptor'
 
+class PuppetSpec::TestTypeAcceptor
+  include Puppet::Pops::Types::TypeAcceptor
+  attr_reader :visitors, :guard
+
+  def initialize
+    @visitors = []
+    @guard = nil
+  end
+
+  def visit(type, guard)
+    @visitors << type
+    @guard = guard
+  end
+end
+
 module Puppet::Pops::Types
 describe 'the Puppet::Pops::Types::TypeAcceptor' do
-  let!(:acceptor_class) do
-    Class.new do
-      include TypeAcceptor
-      attr_reader :visitors, :guard
 
-      def initialize
-        @visitors = []
-        @guard = nil
-      end
-
-      def visit(type, guard)
-        @visitors << type
-        @guard = guard
-      end
-    end
-  end
+  let!(:acceptor_class) { PuppetSpec::TestTypeAcceptor }
 
   let(:acceptor) { acceptor_class.new }
   let(:guard) { RecursionGuard.new }
