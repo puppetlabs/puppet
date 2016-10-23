@@ -196,7 +196,7 @@ describe "when using a hiera data provider" do
       compile('hiera_misc', '$target_scope = "with scope"') do |compiler|
         lookup_invocation = Puppet::Pops::Lookup::Invocation.new(compiler.topscope, {}, {}, true)
         value = Puppet::Pops::Lookup.lookup('km_scope', nil, nil, nil, nil, lookup_invocation)
-        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+        expect(lookup_invocation.explainer.explain).to eq(<<EOS)
 Merge strategy first
   Data Binding "hiera"
     No such key: "km_scope"
@@ -218,7 +218,7 @@ EOS
       compile('hiera_misc', '$target_scope = "with scope"') do |compiler|
         lookup_invocation = Puppet::Pops::Lookup::Invocation.new(compiler.topscope, {}, {}, true)
         value = Puppet::Pops::Lookup.lookup('one::loptsm_test::hash', nil, nil, nil, nil, lookup_invocation)
-        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+        expect(lookup_invocation.explainer.explain).to eq(<<EOS)
 Using merge options from "lookup_options" hash
 Merge strategy deep
   Data Binding "hiera"
@@ -267,7 +267,7 @@ EOS
       compile('hiera_misc', '$target_scope = "with scope"') do |compiler|
         lookup_invocation = Puppet::Pops::Lookup::Invocation.new(compiler.topscope, {}, {}, Puppet::Pops::Lookup::Explainer.new(true))
         value = Puppet::Pops::Lookup.lookup('one::loptsm_test::hash', nil, nil, nil, nil, lookup_invocation)
-        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+        expect(lookup_invocation.explainer.explain).to eq(<<EOS)
 Searching for "lookup_options"
   Merge strategy hash
     Data Binding "hiera"
@@ -348,7 +348,7 @@ EOS
       compile('hiera_misc', '$target_scope = "with scope"') do |compiler|
         lookup_invocation = Puppet::Pops::Lookup::Invocation.new(compiler.topscope, {}, {}, Puppet::Pops::Lookup::Explainer.new(true, true))
         value = Puppet::Pops::Lookup.lookup('one::loptsm_test::hash', nil, nil, nil, nil, lookup_invocation)
-        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+        expect(lookup_invocation.explainer.explain).to eq(<<EOS)
 Merge strategy hash
   Data Binding "hiera"
     No such key: "lookup_options"

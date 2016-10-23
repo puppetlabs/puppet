@@ -136,7 +136,7 @@ describe 'Puppet::Pops::Lookup::Context' do
           PUPPET
           expect(eval_and_collect_notices(code)).to eql(['called'])
         end
-        expect(invocation_with_explain.explainer.to_s).to eql(<<-TEXT.unindent)
+        expect(invocation_with_explain.explainer.explain).to eql(<<-TEXT.unindent)
           Data Binding "test"
             good
         TEXT

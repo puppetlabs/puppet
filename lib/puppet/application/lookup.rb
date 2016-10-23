@@ -301,7 +301,7 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
         lookup_invocation.report_text { e.message }
         exit(1) unless explain
       end
-      puts format == :s ? lookup_invocation.explainer.to_s : renderer.render(lookup_invocation.explainer.to_hash) if explain
+      puts format == :s ? lookup_invocation.explainer.explain : renderer.render(lookup_invocation.explainer.to_hash) if explain
     end
     exit(0)
   end

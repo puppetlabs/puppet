@@ -1,4 +1,5 @@
-module Puppet::Pops::Lookup
+module Puppet::Pops
+module Lookup
 
 # The ExplainNode contains information of a specific node in a tree traversed during
 # lookup. The tree can be traversed using the `parent` and `branches` attributes of
@@ -17,13 +18,33 @@ module Puppet::Pops::Lookup
       hash
     end
 
-    def to_s
+    def explain
       io = ''
       dump_on(io, '', '')
       io
     end
 
+    def inspect
+      to_s
+    end
+
+    def to_s
+      s = self.class.name
+      s = "#{s} with #{@branches.size} branches" unless @branches.nil?
+      s
+    end
+
+    def text(text)
+      @texts ||= []
+      @texts << text
+    end
+
     def dump_on(io, indent, first_indent)
+      dump_texts(io, indent)
+    end
+
+    def dump_texts(io, indent)
+      @texts.each { |text| io << indent << text << "\n" } if instance_variable_defined?(:@texts)
     end
   end
 
@@ -34,7 +55,6 @@ module Puppet::Pops::Lookup
     def initialize(parent)
       @parent = parent
       @event = nil
-      @texts = nil
     end
 
     def found_in_overrides(key, value)
@@ -58,11 +78,6 @@ module Puppet::Pops::Lookup
     def result(value)
       @value = value
       @event = :result
-    end
-
-    def text(text)
-      @texts ||= []
-      @texts << text
     end
 
     def not_found(key)
@@ -97,19 +112,17 @@ module Puppet::Pops::Lookup
     end
 
     def dump_outcome(io, indent)
-      io << indent << 'No such key: "' << @key << "\"\n" if @event == :not_found
-      if [:found, :found_in_overrides, :found_in_defaults].include?(@event)
+      case @event
+      when :not_found
+        io << indent << 'No such key: "' << @key << "\"\n"
+      when :found, :found_in_overrides, :found_in_defaults
         io << indent << 'Found key: "' << @key << '" value: '
         dump_value(io, indent, @value)
         io << ' in overrides' if @event == :found_in_overrides
         io << ' in defaults' if @event == :found_in_defaults
         io << "\n"
       end
-      dump_texts(io, indent, @texts)
-    end
-
-    def dump_texts(io, indent, texts)
-      texts.each { |text| io << indent << text << "\n" } unless texts.nil?
+      dump_texts(io, indent)
     end
 
     def dump_value(io, indent, value)
@@ -335,7 +348,10 @@ module Puppet::Pops::Lookup
     def dump_on(io, indent, first_indent)
       io << first_indent << 'Data Provider "' << @provider.name << "\"\n"
       indent = increase_indent(indent)
-      io << indent << 'ConfigurationPath "' << @provider.config_path.to_s << "\"\n" if @provider.respond_to?(:config_path)
+      if @provider.respond_to?(:config_path)
+        path = @provider.config_path
+        io << indent << 'ConfigurationPath "' << path.to_s << "\"\n" unless path.nil?
+      end
       branches.each {|b| b.dump_on(io, indent, indent)}
       dump_outcome(io, indent)
     end
@@ -343,7 +359,10 @@ module Puppet::Pops::Lookup
     def to_hash
       hash = super
       hash[:name] = @provider.name
-      hash[:configuration_path] = @provider.config_path.to_s if @provider.respond_to?(:config_path)
+      if @provider.respond_to?(:config_path)
+        path = @provider.config_path
+        hash[:configuration_path] = path.to_s unless path.nil?
+      end
       hash
     end
 
@@ -516,6 +535,7 @@ module Puppet::Pops::Lookup
 
     def dump_on(io, indent, first_indent)
       branches.each { |b| b.dump_on(io, indent, first_indent) }
+      dump_texts(io, indent)
     end
 
     def to_hash
@@ -546,4 +566,5 @@ module Puppet::Pops::Lookup
       Puppet.debug(io.chomp!)
     end
   end
+end
 end

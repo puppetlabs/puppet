@@ -473,7 +473,7 @@ describe "when performing lookup" do
           Puppet::Pops::Lookup.lookup('empty_key_yaml::has_undef_value',nil, nil, false, nil, lookup_invocation)
         rescue Puppet::Error
         end
-        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+        expect(lookup_invocation.explainer.explain).to eq(<<EOS)
 Merge strategy first
   Data Binding "hiera"
     No such key: "empty_key_yaml::has_undef_value"
@@ -498,7 +498,7 @@ EOS
           Puppet::Pops::Lookup.lookup('empty_key_json::has_undef_value',nil, nil, false, nil, lookup_invocation)
         rescue Puppet::Error
         end
-        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+        expect(lookup_invocation.explainer.explain).to eq(<<EOS)
 Merge strategy first
   Data Binding "hiera"
     No such key: "empty_key_json::has_undef_value"
@@ -524,7 +524,7 @@ EOS
           Puppet::Pops::Lookup.lookup('ppx::e',nil, nil, false, nil, lookup_invocation)
         rescue Puppet::Error
         end
-        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+        expect(lookup_invocation.explainer.explain).to eq(<<EOS)
 Merge strategy first
   Data Binding "hiera"
     No such key: "ppx::e"
@@ -543,7 +543,7 @@ EOS
           Puppet::Pops::Lookup.lookup('abc::x', nil, nil, false, nil, lookup_invocation)
         rescue Puppet::Error
         end
-        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+        expect(lookup_invocation.explainer.explain).to eq(<<EOS)
 Merge strategy first
   Data Binding "hiera"
     No such key: "abc::x"
@@ -559,7 +559,7 @@ EOS
       assemble_and_compile('${r}', "'abc::a'") do |scope|
         lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
         Puppet::Pops::Lookup.lookup('abc::e', Puppet::Pops::Types::TypeParser.singleton.parse('Hash[String,String]'), nil, false, 'deep', lookup_invocation)
-        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+        expect(lookup_invocation.explainer.explain).to eq(<<EOS)
 Merge strategy deep
   Data Binding "hiera"
     No such key: "abc::e"
@@ -587,7 +587,7 @@ EOS
         Hiera.any_instance.expects(:lookup).with(any_parameters).returns({'k1' => 'global_g1'})
         lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
         Puppet::Pops::Lookup.lookup('abc::e', Puppet::Pops::Types::TypeParser.singleton.parse('Hash[String,String]'), nil, false, {'strategy' => 'deep', 'merge_hash_arrays' => true}, lookup_invocation)
-        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+        expect(lookup_invocation.explainer.explain).to eq(<<EOS)
 Merge strategy deep
   Options: {
     "merge_hash_arrays" => true
@@ -622,7 +622,7 @@ EOS
           Puppet::Pops::Lookup.lookup('hieraprovider::test::not_found', nil, nil, false, nil, lookup_invocation)
         rescue Puppet::DataBinding::LookupError
         end
-        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+        expect(lookup_invocation.explainer.explain).to eq(<<EOS)
 Merge strategy first
   Data Binding "hiera"
     No such key: "hieraprovider::test::not_found"
@@ -646,7 +646,7 @@ EOS
       assemble_and_compile('${r}', "'abc::a'") do |scope|
         lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
         Puppet::Pops::Lookup.lookup('abc::f.k1.s1', Puppet::Pops::Types::TypeParser.singleton.parse('String'), nil, false, nil, lookup_invocation)
-        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+        expect(lookup_invocation.explainer.explain).to eq(<<EOS)
 Merge strategy first
   Data Binding "hiera"
     No such key: "abc::f.k1.s1"
@@ -710,7 +710,7 @@ EOS
           Puppet::Pops::Lookup.lookup('lookup_options', nil, nil, false, nil, lookup_invocation)
         rescue Puppet::Error
         end
-        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+        expect(lookup_invocation.explainer.explain).to eq(<<EOS)
 Invalid key "lookup_options"
 EOS
       end
@@ -723,7 +723,7 @@ EOS
           Puppet::Pops::Lookup.lookup('lookup_options.subkey', nil, nil, false, nil, lookup_invocation)
         rescue Puppet::Error
         end
-        expect(lookup_invocation.explainer.to_s).to eq(<<EOS)
+        expect(lookup_invocation.explainer.explain).to eq(<<EOS)
 Invalid key "lookup_options"
 EOS
       end
