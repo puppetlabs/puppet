@@ -70,7 +70,7 @@ module Puppet::Plugins::DataProviders
           'DataProvider#data is deprecated and will be removed in the next major version of Puppet')
       end
       compiler = lookup_invocation.scope.compiler
-      adapter = Puppet::DataProviders::DataAdapter.get(compiler) || Puppet::DataProviders::DataAdapter.adapt(compiler)
+      adapter = Puppet::Pops::Lookup::DataAdapter.get(compiler) || Puppet::Pops::Lookup::DataAdapter.adapt(compiler)
       adapter.data[data_key] ||= validate_data(initialize_data(data_key, lookup_invocation), data_key)
     end
     protected :data
@@ -252,7 +252,7 @@ module Puppet::Plugins::DataProviders
     # @deperecated
     def load_data(path, data_key, lookup_invocation)
       compiler = lookup_invocation.scope.compiler
-      adapter = Puppet::DataProviders::DataAdapter.get(compiler) || Puppet::DataProviders::DataAdapter.adapt(compiler)
+      adapter = Puppet::Pops::Lookup::DataAdapter.get(compiler) || Puppet::Pops::Lookup::DataAdapter.adapt(compiler)
       adapter.data[path] ||= validate_data(initialize_data(path, lookup_invocation), data_key)
     end
     protected :data

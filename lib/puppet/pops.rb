@@ -41,6 +41,7 @@ module Puppet
     require 'puppet/pops/lookup/invocation'
     require 'puppet/pops/lookup/sub_lookup'
     require 'puppet/pops/lookup/explainer'
+    require 'puppet/pops/lookup/lookup_adapter'
 
     require 'puppet/pops/model/model'
 

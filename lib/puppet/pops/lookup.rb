@@ -73,8 +73,8 @@ module Lookup
   end
 
   # @api private
-  def self.search_and_merge(name, lookup_invocation, merge)
-    return Puppet::DataProviders.lookup_adapter(lookup_invocation).lookup(name, lookup_invocation, merge)
+  def self.search_and_merge(name, invocation, merge)
+    LookupAdapter.adapt(invocation.scope.compiler).lookup(name, invocation, merge)
   end
 
   def self.assert_type(subject, type, value)

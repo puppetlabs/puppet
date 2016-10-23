@@ -1,11 +1,16 @@
+require 'puppet/plugins/data_providers'
+
+require_relative 'data_adapter'
+
 # A LookupAdapter is a specialized DataAdapter that uses its hash to store module providers. It also remembers the compiler
 # that it is attached to and maintains a cache of _lookup options_ retrieved from the data providers associated with the
 # compiler's environment.
 #
 # @api private
-class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
+module Puppet::Pops
+module Lookup
+class LookupAdapter < DataAdapter
 
-  LOOKUP_OPTIONS = Puppet::Pops::Lookup::LOOKUP_OPTIONS
   LOOKUP_OPTIONS_PREFIX = LOOKUP_OPTIONS + '.'
   LOOKUP_OPTIONS_PREFIX.freeze
   HASH = 'hash'.freeze
@@ -44,7 +49,7 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
     merge_explained = false
     if lookup_invocation.explain_options?
       catch(:no_such_key) do
-        module_name = extract_module_name(key) unless key == Puppet::Pops::Lookup::GLOBAL
+        module_name = extract_module_name(key) unless key == GLOBAL
         lookup_invocation.module_name = module_name
         if lookup_invocation.only_explain_options?
           do_lookup(LOOKUP_OPTIONS, lookup_invocation, HASH)
@@ -79,7 +84,7 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
     lookup_invocation.with(:global, terminus) do
       catch(:no_such_key) do
         return lookup_invocation.report_found(name, Puppet::DataBinding.indirection.find(name,
-            { :environment => environment, :variables => lookup_invocation.scope, :merge => merge_strategy }))
+                                                                                         { :environment => environment, :variables => lookup_invocation.scope, :merge => merge_strategy }))
       end
       lookup_invocation.report_not_found(name)
       throw :no_such_key
@@ -133,7 +138,7 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
 
     # Retrieve the options for the module. We use nil as a key in case we have none
     if !@lookup_options.include?(module_name)
-      options = retrieve_lookup_options(module_name, lookup_invocation, Puppet::Pops::MergeStrategy.strategy(HASH))
+      options = retrieve_lookup_options(module_name, lookup_invocation, MergeStrategy.strategy(HASH))
       raise Puppet::DataBinding::LookupError.new("value of #{LOOKUP_OPTIONS} must be a hash") unless options.nil? || options.is_a?(Hash)
       @lookup_options[module_name] = options
     else
@@ -145,7 +150,7 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
   private
 
   def do_lookup(key, lookup_invocation, merge)
-    merge_strategy = Puppet::Pops::MergeStrategy.strategy(merge)
+    merge_strategy = MergeStrategy.strategy(merge)
     lookup_invocation.with(:merge, merge_strategy) do
       result = merge_strategy.merge_lookup([:lookup_global, :lookup_in_environment, :lookup_in_module]) { |m| send(m, key, lookup_invocation, merge_strategy) }
       lookup_invocation.report_result(result)
@@ -156,7 +161,7 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
   # Retrieve lookup options that applies when using a specific module (i.e. a merge of the pre-cached
   # `env_lookup_options` and the module specific data)
   def retrieve_lookup_options(module_name, lookup_invocation, merge_strategy)
-    meta_invocation = Puppet::Pops::Lookup::Invocation.new(lookup_invocation.scope)
+    meta_invocation = Invocation.new(lookup_invocation.scope)
     meta_invocation.top_key = lookup_invocation.top_key
     env_opts = env_lookup_options(meta_invocation, merge_strategy)
     unless module_name.nil? || environment.module(module_name).nil?
@@ -201,16 +206,16 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
     injector = Puppet.lookup(:injector) { nil }
 
     # Support running tests without an injector being configured == using a null implementation
-    return ModuleDataProvider.new() unless injector
+    return Puppet::Plugins::DataProviders::ModuleDataProvider.new() unless injector
 
     # Get the registry of module to provider implementation name
-    module_service_type = Registry.hash_of_per_module_data_provider
-    module_service_name = PER_MODULE_DATA_PROVIDER_KEY
+    module_service_type = Puppet::Plugins::DataProviders::Registry.hash_of_per_module_data_provider
+    module_service_name = Puppet::Plugins::DataProviders::PER_MODULE_DATA_PROVIDER_KEY
     module_service = injector.lookup(nil, module_service_type, module_service_name)
     provider_name = module_service[module_name] || 'none'
 
-    service_type = Registry.hash_of_module_data_providers
-    service_name = MODULE_DATA_PROVIDERS_KEY
+    service_type = Puppet::Plugins::DataProviders::Registry.hash_of_module_data_providers
+    service_name = Puppet::Plugins::DataProviders::MODULE_DATA_PROVIDERS_KEY
 
     # Get the service (registry of known implementations)
     service = injector.lookup(nil, service_type, service_name)
@@ -226,12 +231,12 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
     injector = Puppet.lookup(:injector) { nil }
 
     # Support running tests without an injector being configured == using a null implementation
-    return EnvironmentDataProvider.new() unless injector
+    return Puppet::Plugins::DataProviders::EnvironmentDataProvider.new() unless injector
 
     # Get the name of the data provider from the environment's configuration and find the bound implementation
     provider_name = environment.configuration.environment_data_provider
-    service_type = Registry.hash_of_environment_data_providers
-    service_name = ENV_DATA_PROVIDERS_KEY
+    service_type = Puppet::Plugins::DataProviders::Registry.hash_of_environment_data_providers
+    service_name = Puppet::Plugins::DataProviders::ENV_DATA_PROVIDERS_KEY
 
     # Get the service (registry of known implementations)
     service = injector.lookup(nil, service_type, service_name)
@@ -251,4 +256,6 @@ class Puppet::DataProviders::LookupAdapter < Puppet::DataProviders::DataAdapter
   def environment
     @compiler.environment
   end
+end
+end
 end
