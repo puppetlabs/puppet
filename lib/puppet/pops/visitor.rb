@@ -1,3 +1,4 @@
+module Puppet::Pops
 # A Visitor performs delegation to a given receiver based on the configuration of the Visitor.
 # A new visitor is created with a given receiver, a method prefix, min, and max argument counts.
 # e.g.
@@ -9,7 +10,7 @@
 # Raises RuntimeError if there are too few or too many arguments, or if the receiver is not
 # configured to handle a given visiting object.
 #
-class Puppet::Pops::Visitor
+class Visitor
   attr_reader :receiver, :message, :min_args, :max_args, :cache
   def initialize(receiver, message, min_args=0, max_args=nil)
     raise ArgumentError.new("min_args must be >= 0") if min_args < 0
@@ -27,8 +28,7 @@ class Puppet::Pops::Visitor
     visit_this(@receiver, thing, args)
   end
 
-  DOUBLE_COLON = '::'
-  NO_ARGS = [].freeze
+  NO_ARGS = EMPTY_ARRAY
 
   # Visit an explicit receiver
   def visit_this(receiver, thing, args)
@@ -91,4 +91,5 @@ class Puppet::Pops::Visitor
     visit_this(receiver, thing, [arg1, arg2, arg3])
   end
 
+end
 end

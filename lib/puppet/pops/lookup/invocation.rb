@@ -1,4 +1,5 @@
-module Puppet::Pops::Lookup
+module Puppet::Pops
+module Lookup
   class Invocation
     attr_reader :scope, :override_values, :default_values, :explainer
     attr_accessor :module_name, :top_key
@@ -19,7 +20,7 @@ module Puppet::Pops::Lookup
     # @param override_values [Hash<String,Object>|nil] A map to use as override. Values found here are returned immediately (no merge)
     # @param default_values [Hash<String,Object>] A map to use as the last resort (but before default)
     # @param explainer [boolean,Explanainer] An boolean true to use the default explanation acceptor or an explainer instance that will receive information about the lookup
-    def initialize(scope, override_values = {}, default_values = {}, explainer = nil)
+    def initialize(scope, override_values = EMPTY_HASH, default_values = EMPTY_HASH, explainer = nil)
       @name_stack = []
       @scope = scope
       @override_values = override_values
@@ -135,4 +136,4 @@ module Puppet::Pops::Lookup
     end
   end
 end
-
+end

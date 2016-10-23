@@ -14,6 +14,9 @@ module Puppet
     EMPTY_ARRAY = [].freeze
     EMPTY_STRING = ''.freeze
 
+    DOUBLE_COLON = '::'.freeze
+    USCORE = '_'.freeze
+
     require 'semantic'
 
     require 'puppet/pops/patterns'
