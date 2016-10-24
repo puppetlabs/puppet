@@ -23,6 +23,7 @@ class LookupConfig
   KEY_GLOBS = 'globs'.freeze
   KEY_URI = 'uri'.freeze
   KEY_URIS = 'uris'.freeze
+  KEY_DEFAULTS = 'defaults'.freeze
   KEY_DATA_HASH = DataHashFunctionProvider::TAG
   KEY_LOOKUP_KEY = LookupKeyFunctionProvider::TAG
   KEY_DATA_DIG = DataDigFunctionProvider::TAG
@@ -30,17 +31,20 @@ class LookupConfig
 
   DEFAULT_CONFIG = {
     KEY_VERSION => 5,
-    KEY_DATADIR => 'data',
+    KEY_DEFAULTS => {
+      KEY_DATADIR => 'data',
+      KEY_DATA_HASH => 'yaml_data'
+    },
     KEY_HIERARCHY => [
       {
         KEY_NAME => 'Common',
         KEY_PATH => 'common.yaml',
-        KEY_DATA_HASH => 'yaml_data'
       }
     ]
   }.freeze
 
-  FUNCTION_KEYS = [KEY_DATA_HASH, KEY_LOOKUP_KEY, KEY_DATA_DIG, KEY_LEGACY_DATA_HASH]
+  FUNCTION_KEYS = [KEY_DATA_HASH, KEY_LOOKUP_KEY, KEY_DATA_DIG]
+  ALL_FUNCTION_KEYS = FUNCTION_KEYS + [KEY_LEGACY_DATA_HASH]
   LOCATION_KEYS = [KEY_PATH, KEY_PATHS, KEY_GLOB, KEY_GLOBS, KEY_URI, KEY_URIS]
   FUNCTION_PROVIDERS = {
     KEY_DATA_HASH => DataHashFunctionProvider,
@@ -87,9 +91,16 @@ class LookupConfig
     nes_t = Types::PStringType::NON_EMPTY
     tf.struct({
       KEY_VERSION => tf.range(5, 5),
-      tf.optional(KEY_DATADIR) => nes_t,
-      tf.optional(KEY_HIERARCHY) => tf.array_of(tf.struct(
-        {KEY_NAME => nes_t,
+      tf.optional(KEY_DEFAULTS) => tf.struct(
+        {
+          tf.optional(KEY_DATA_HASH) => nes_t,
+          tf.optional(KEY_LOOKUP_KEY) => nes_t,
+          tf.optional(KEY_DATA_DIG) => nes_t,
+          tf.optional(KEY_DATADIR) => nes_t
+        }),
+        tf.optional(KEY_HIERARCHY) => tf.array_of(tf.struct(
+        {
+          KEY_NAME => nes_t,
           tf.optional(KEY_OPTIONS) => tf.hash_kv(option_name_t, tf.data),
           tf.optional(KEY_DATA_HASH) => nes_t,
           tf.optional(KEY_LOOKUP_KEY) => nes_t,
@@ -100,7 +111,8 @@ class LookupConfig
           tf.optional(KEY_GLOB) => nes_t,
           tf.optional(KEY_GLOBS) => tf.array_of(nes_t, tf.range(1, :default)),
           tf.optional(KEY_URI) => uri_t,
-          tf.optional(KEY_URIS) => tf.array_of(uri_t, tf.range(1, :default))
+          tf.optional(KEY_URIS) => tf.array_of(uri_t, tf.range(1, :default)),
+          tf.optional(KEY_DATADIR) => nes_t
         }))
     })
   end
@@ -122,9 +134,10 @@ class LookupConfig
       @config_root = config_root
       @config_path = config_root + CONFIG_FILE_NAME
       if @config_path.exist?
-        @config = validate_config(YAML.load_file(@config_path))
-        @config[KEY_HIERARCHY] ||= DEFAULT_CONFIG[KEY_HIERARCHY]
-        @config[KEY_DATADIR] ||= DEFAULT_CONFIG[KEY_DATADIR]
+        config = YAML.load_file(@config_path)
+        config[KEY_DEFAULTS] ||= DEFAULT_CONFIG[KEY_DEFAULTS]
+        config[KEY_HIERARCHY] ||= DEFAULT_CONFIG[KEY_HIERARCHY]
+        @config = validate_config(config)
       else
         @config = DEFAULT_CONFIG
         @config_path = nil
@@ -139,7 +152,8 @@ class LookupConfig
   # @param parent_data_provider [DataProvider] The data provider that loaded this configuration
   # @return [Array<DataProvider>] the created providers
   def create_configured_data_providers(lookup_invocation, parent_data_provider)
-    datadir = @config.include?('datadir') ? @config_root + @config['datadir'] : nil
+    defaults = @config[KEY_DEFAULTS] || EMPTY_HASH
+    datadir = defaults[KEY_DATADIR] || 'data'
 
     # Hashes enumerate their values in the order that the corresponding keys were inserted so it's safe to use
     # a hash for the data_providers.
@@ -147,19 +161,25 @@ class LookupConfig
     @config[KEY_HIERARCHY].each do |he|
       name = he[KEY_NAME]
       raise Puppet::DataBinding::LookupError, "#{@config_path}: Name '#{name}' defined more than once" if data_providers.include?(name)
-      function_kind = FUNCTION_KEYS.find { |key| he.include?(key) }
-      function_name = he[function_kind]
+      function_kind = ALL_FUNCTION_KEYS.find { |key| he.include?(key) }
+      if function_kind.nil?
+        function_kind = FUNCTION_KEYS.find { |key| defaults.include?(key) }
+        function_name = defaults[function_kind]
+      else
+        function_name = he[function_kind]
+      end
 
+      entry_datadir = @config_root.nil? ? nil : @config_root + (he[KEY_DATADIR] || datadir)
       location_key = LOCATION_KEYS.find { |key| he.include?(key) }
       locations = case location_key
       when KEY_PATHS
-        resolve_paths(datadir, he[location_key], lookup_invocation)
+        resolve_paths(entry_datadir, he[location_key], lookup_invocation)
       when KEY_PATH
-        resolve_paths(datadir, [he[location_key]], lookup_invocation)
+        resolve_paths(entry_datadir, [he[location_key]], lookup_invocation)
       when KEY_GLOBS
-        expand_globs(datadir, he[location_key], lookup_invocation)
+        expand_globs(entry_datadir, he[location_key], lookup_invocation)
       when KEY_GLOB
-        expand_globs(datadir, [he[location_key]], lookup_invocation)
+        expand_globs(entry_datadir, [he[location_key]], lookup_invocation)
       when KEY_URIS
         expand_uris(he[location_key], lookup_invocation)
       when KEY_URI
@@ -186,17 +206,24 @@ class LookupConfig
 
   def validate_config(config)
     Types::TypeAsserter.assert_instance_of(["The Lookup Configuration at '%s'", @config_path], self.class.config_type, config)
+    defaults = config[KEY_DEFAULTS]
+    validate_defaults(defaults) unless defaults.nil?
     config[KEY_HIERARCHY].each do |he|
       name = he[KEY_NAME]
-      case FUNCTION_KEYS.count { |key| he.include?(key) }
+      case ALL_FUNCTION_KEYS.count { |key| he.include?(key) }
+      when 0
+        if defaults.nil? || FUNCTION_KEYS.count { |key| defaults.include?(key) } == 0
+          raise Puppet::DataBinding::LookupError,
+              "#{@config_path}: One of #{combine_strings(FUNCTION_KEYS)} must defined in hierarchy '#{name}'"
+        end
       when 1
         # OK
       when 0
         raise Puppet::DataBinding::LookupError,
-          "#{@config_path}: One of #{combine_strings(FUNCTION_KEYS - [KEY_LEGACY_DATA_HASH])} must defined in hierarchy '#{name}'"
+          "#{@config_path}: One of #{combine_strings(FUNCTION_KEYS)} must defined in hierarchy '#{name}'"
       else
         raise Puppet::DataBinding::LookupError,
-          "#{@config_path}: Only one of #{combine_strings(FUNCTION_KEYS - [KEY_LEGACY_DATA_HASH])} can defined in hierarchy '#{name}'"
+          "#{@config_path}: Only one of #{combine_strings(FUNCTION_KEYS)} can defined in hierarchy '#{name}'"
       end
 
       if LOCATION_KEYS.count { |key| he.include?(key) } > 1
@@ -205,6 +232,16 @@ class LookupConfig
       end
     end
     config
+  end
+
+  def validate_defaults(defaults)
+    case FUNCTION_KEYS.count { |key| defaults.include?(key) }
+    when 0, 1
+      # OK
+    else
+      raise Puppet::DataBinding::LookupError,
+            "#{@config_path}: Only one of #{combine_strings(FUNCTION_KEYS)} can defined in defaults"
+    end
   end
 end
 end
