@@ -84,6 +84,11 @@ syslogfacility = file
       subject.set('foo', 'bar', {:section => "baz"})
 
     end
+
+    it "opens the file with UTF-8 encoding" do
+      Puppet::FileSystem.expects(:open).with(path, nil, 'r+:UTF-8')
+      subject.set('foo', 'bar')
+    end
   end
 
   shared_examples_for :config_printing_a_section do |section|
