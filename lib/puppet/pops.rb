@@ -41,9 +41,13 @@ module Puppet
 
     require 'puppet/pops/model/model'
 
+    require 'puppet/pops/time/timespan'
+    require 'puppet/pops/time/timestamp'
+
     # (the Types module initializes itself)
     require 'puppet/pops/types/types'
     require 'puppet/pops/types/string_converter'
+    require 'puppet/pops/lookup/context'
 
     require 'puppet/pops/merge_strategy'
 

@@ -16,7 +16,7 @@ require 'rgen/ecore/ecore'
 #   * Default is not accepted as being literal
 #   * Regular Expression is not accepted as being literal
 #   * Hash with non String keys
-#   * String with interpolatin
+#   * String with interpolation
 #
 class Puppet::Pops::Evaluator::JsonStrictLiteralEvaluator
   #include Puppet::Pops::Utils

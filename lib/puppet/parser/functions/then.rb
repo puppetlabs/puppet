@@ -69,5 +69,5 @@ was not a String.
 
 DOC
 ) do |args|
-  function_fail(["then() is only available when parser/evaluator future is in effect"])
+  Error.is4x('then')
 end

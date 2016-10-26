@@ -71,29 +71,50 @@ describe Puppet::Resource::CapabilityFinder do
       let(:capability) { Puppet::Resource.new('Cap', 'cap') }
       let(:code_id) { 'b59e5df0578ef411f773ee6c33d8073c50e7b8fe' }
 
-      it 'should search for the resource without including code_id' do
+      it 'should search for the resource without including code_id or environment' do
         resources = [{"type"=>"Cap", "title"=>"cap", "parameters"=>{"host"=>"ahost"}}]
-        Puppet::Resource::CapabilityFinder.stubs(:search).with('production', nil, capability).returns resources
+        Puppet::Resource::CapabilityFinder.stubs(:search).with(nil, nil, capability).returns resources
 
         result = Puppet::Resource::CapabilityFinder.find('production', code_id, Puppet::Resource.new('Cap', 'cap'))
         expect(result['host']).to eq('ahost')
       end
 
       it 'should return nil if no resource is found' do
-        Puppet::Resource::CapabilityFinder.stubs(:search).with('production', nil, capability).returns []
+        Puppet::Resource::CapabilityFinder.stubs(:search).with(nil, nil, capability).returns []
 
         result = Puppet::Resource::CapabilityFinder.find('production', code_id, capability)
         expect(result).to be_nil
       end
 
-      describe 'when multiple results are returned' do
+      describe 'when multiple results are returned for different environments' do
         let(:resources) do
-          [{"type"=>"Cap", "title"=>"cap", "parameters"=>{"host"=>"ahost"}},
-           {"type"=>"Cap", "title"=>"cap", "parameters"=>{"host"=>"bhost"}}]
+          [{"type"=>"Cap", "title"=>"cap", "parameters"=>{"host"=>"ahost"}, "tags"=>["producer:production"]},
+           {"type"=>"Cap", "title"=>"cap", "parameters"=>{"host"=>"bhost"}, "tags"=>["producer:other_env"]}]
         end
 
         before :each do
-          Puppet::Resource::CapabilityFinder.stubs(:search).with('production', nil, capability).returns resources
+          Puppet::Resource::CapabilityFinder.stubs(:search).with(nil, nil, capability).returns resources
+        end
+
+        it 'should return the resource matching environment' do
+          result = Puppet::Resource::CapabilityFinder.find('production', code_id, capability)
+          expect(result['host']).to eq('ahost')
+        end
+
+        it 'should return nil if no resource matches environment' do
+          result = Puppet::Resource::CapabilityFinder.find('bad_env', code_id, capability)
+          expect(result).to be_nil
+        end
+      end
+
+      describe 'when multiple results are returned for the same environment' do
+        let(:resources) do
+          [{"type"=>"Cap", "title"=>"cap", "parameters"=>{"host"=>"ahost"}, "tags"=>["producer:production"]},
+           {"type"=>"Cap", "title"=>"cap", "parameters"=>{"host"=>"bhost"}, "tags"=>["producer:production"]}]
+        end
+
+        before :each do
+          Puppet::Resource::CapabilityFinder.stubs(:search).with(nil, nil, capability).returns resources
         end
 
         it 'should return the resource matching code_id' do
@@ -117,6 +138,7 @@ describe Puppet::Resource::CapabilityFinder do
         end
 
         it 'should fail if no code_id was specified' do
+          Puppet::Resource::CapabilityFinder.stubs(:search).with('production', nil, capability).returns resources
           expect { Puppet::Resource::CapabilityFinder.find('production', nil, capability) }.to raise_error(Puppet::DevError, /expected exactly one resource/)
         end
       end

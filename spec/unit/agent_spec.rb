@@ -63,6 +63,17 @@ describe Puppet::Agent do
     @agent.run
   end
 
+  it "should initialize the client's transaction_uuid if passed as a client_option" do
+    client = mock 'client'
+    transaction_uuid = 'foo'
+    AgentTestClient.expects(:new).with(anything, transaction_uuid).returns client
+
+    client.expects(:run)
+
+    @agent.stubs(:disabled?).returns false
+    @agent.run(:transaction_uuid => transaction_uuid)
+  end
+
   it "should be considered running if the lock file is locked" do
     lockfile = mock 'lockfile'
 

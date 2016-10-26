@@ -34,7 +34,7 @@ throughout a hierarchy, use the `hiera_array` or `hiera_hash` functions.
 #   - common
 
 # Assuming web01.example.com.yaml:
-# users: 
+# users:
 #   - "Amy Barry"
 #   - "Carrie Douglas"
 
@@ -58,7 +58,7 @@ $users = hiera('users', undef)
 ~~~
 
 You can optionally generate the default value with a
-[lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html) that 
+[lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html) that
 takes one parameter.
 
 **Example**: Using `hiera` with a lambda
@@ -74,7 +74,7 @@ $users = hiera('users') | $key | { "Key \'${key}\' not found" }
 # "Key 'users' not found".
 ~~~
 
-The returned value's data type depends on the types of the results. In the example 
+The returned value's data type depends on the types of the results. In the example
 above, Hiera matches the 'users' key and returns it as a hash.
 
 See
@@ -84,6 +84,6 @@ for more information about Hiera lookup functions.
 - Since 4.0.0
 DOC
   ) do |*args|
-    function_fail(["hiera() has been converted to 4x API"])
+    Error.is4x('hiera')
   end
 end

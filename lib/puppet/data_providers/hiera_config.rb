@@ -2,6 +2,7 @@ require 'pathname'
 require 'puppet/pops/lookup/interpolation'
 
 module Puppet::DataProviders
+  # @api private
   class HieraConfig
     include Puppet::Plugins::DataProviders
     include Puppet::Pops::Lookup::Interpolation

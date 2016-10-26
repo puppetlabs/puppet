@@ -3,6 +3,10 @@ module Puppet::Pops::Lookup
     attr_reader :scope, :override_values, :default_values, :explainer
     attr_accessor :module_name, :top_key
 
+    def self.current
+        nil # TODO, determine how to obtain the current lookup invocation.
+    end
+
     # Creates a context object for a lookup invocation. The object contains the current scope, overrides, and default
     # values and may optionally contain an {ExplanationAcceptor} instance that will receive book-keeping information
     # about the progress of the lookup.
@@ -23,6 +27,7 @@ module Puppet::Pops::Lookup
       unless explainer.is_a?(Explainer)
         explainer = explainer == true ? Explainer.new : nil
       end
+      explainer = DebugExplainer.new(explainer) if Puppet[:debug] && !explainer.is_a?(DebugExplainer)
       @explainer = explainer
     end
 
@@ -41,6 +46,14 @@ module Puppet::Pops::Lookup
         raise Puppet::DataBinding::LookupError.new(detail.message, detail)
       ensure
         @name_stack.pop
+      end
+    end
+
+    def emit_debug_info(preamble)
+      debug_explainer = @explainer
+      if debug_explainer.is_a?(DebugExplainer)
+        @explainer = debug_explainer.wrapped_explainer
+        debug_explainer.emit_debug_info(preamble)
       end
     end
 
@@ -113,6 +126,12 @@ module Puppet::Pops::Lookup
 
     def report_module_not_found
       @explainer.accept_module_not_found unless @explainer.nil?
+    end
+
+    def report_text(&block)
+      unless @explainer.nil?
+        @explainer.accept_text(block.call)
+      end
     end
   end
 end

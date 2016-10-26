@@ -201,17 +201,23 @@ class PObjectType < PMetaType
       @dispatch ||= create_dispatch(receiver)
 
       args_type = TypeCalculator.infer_set(block_given? ? args + [block] : args)
-      unless @dispatch.type.callable?(args_type)
-        raise ArgumentError, TypeMismatchDescriber.describe_signatures(label, [@dispatch], args_type)
-      end
-      @dispatch.invoke(receiver, scope, args, &block)
+      found = @dispatch.find { |d| d.type.callable?(args_type) }
+      raise ArgumentError, TypeMismatchDescriber.describe_signatures(label, @dispatch, args_type) if found.nil?
+      found.invoke(receiver, scope, args, &block)
     end
 
     # @api private
     def create_dispatch(instance)
       # TODO: Assumes Ruby implementation for now
-      Functions::Dispatch.new(callable_type, name, [],
-        callable_type.block_type.nil? ? nil : 'block', nil, nil, false)
+      if(callable_type.is_a?(PVariantType))
+        callable_type.types.map do |ct|
+          Functions::Dispatch.new(ct, name, [],
+            ct.block_type.nil? ? nil : 'block', nil, nil, false)
+        end
+      else
+        [Functions::Dispatch.new(callable_type, name, [],
+          callable_type.block_type.nil? ? nil : 'block', nil, nil, false)]
+      end
     end
 
     # @api private

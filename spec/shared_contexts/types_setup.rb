@@ -34,6 +34,10 @@ shared_context 'types_setup' do
       Puppet::Pops::Types::PTypeAliasType,
       Puppet::Pops::Types::PSemVerType,
       Puppet::Pops::Types::PSemVerRangeType,
+      Puppet::Pops::Types::PTimespanType,
+      Puppet::Pops::Types::PTimestampType,
+      Puppet::Pops::Types::PSensitiveType,
+      Puppet::Pops::Types::PBinaryType,
     ]
   end
 
@@ -51,6 +55,8 @@ shared_context 'types_setup' do
       Puppet::Pops::Types::PEnumType,
       Puppet::Pops::Types::PSemVerType,
       Puppet::Pops::Types::PSemVerRangeType,
+      Puppet::Pops::Types::PTimespanType,
+      Puppet::Pops::Types::PTimestampType,
     ]
   end
 

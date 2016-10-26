@@ -98,6 +98,17 @@ describe Puppet::Transaction::Report do
     expect(report.environment).to eq("some environment")
   end
 
+  it "should be able to set resources_failed_to_generate" do
+    report = Puppet::Transaction::Report.new("apply")
+    report.resources_failed_to_generate = true
+    expect(report.resources_failed_to_generate).to be_truthy
+  end
+
+  it "resources_failed_to_generate should not be true by default" do
+    report = Puppet::Transaction::Report.new("apply")
+    expect(report.resources_failed_to_generate).to be_falsey
+  end
+
   it "should not include whits" do
     Puppet::FileBucket::File.indirection.stubs(:save)
 
@@ -267,6 +278,12 @@ describe Puppet::Transaction::Report do
 
       it "should mark the report as 'failed' if there are failing resources" do
         add_statuses(1) { |status| status.failed = true }
+        @report.finalize_report
+        expect(@report.status).to eq('failed')
+      end
+
+      it "should mark the report as 'failed' if resources_failed_to_generate" do
+        @report.resources_failed_to_generate = true
         @report.finalize_report
         expect(@report.status).to eq('failed')
       end
@@ -454,6 +471,12 @@ describe Puppet::Transaction::Report do
       report = Puppet::Transaction::Report.new('apply')
       report.add_times('config_retrieval', 1.0)
       expect(report.to_yaml_properties).not_to include('@external_times')
+    end
+
+    it "should not include @resources_failed_to_generate" do
+      report = Puppet::Transaction::Report.new("apply")
+      report.resources_failed_to_generate = true
+      expect(report.to_yaml_properties).not_to include('@resources_failed_to_generate')
     end
   end
 

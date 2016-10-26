@@ -80,5 +80,5 @@ $transformed_data contains [0,50,100,150,200]
 
 DOC
 ) do |args|
-  function_fail(["step() is only available when parser/evaluator future is in effect"])
+  Error.is4x('step')
 end

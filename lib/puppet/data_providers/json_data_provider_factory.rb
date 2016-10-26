@@ -3,6 +3,7 @@
 require 'json'
 
 module Puppet::DataProviders
+  # @api private
   class JsonDataProviderFactory < Puppet::Plugins::DataProviders::FileBasedDataProviderFactory
     def create(name, paths, parent_data_provider)
       JsonDataProvider.new(name, paths, parent_data_provider)
@@ -13,6 +14,7 @@ module Puppet::DataProviders
     end
   end
 
+  # @api private
   class JsonDataProvider < Puppet::Plugins::DataProviders::PathBasedDataProvider
     def initialize_data(path, lookup_invocation)
       JSON.parse(Puppet::FileSystem.read(path, :encoding => 'utf-8'))

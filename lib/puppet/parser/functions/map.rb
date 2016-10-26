@@ -72,5 +72,5 @@ $transformed_data = $data.map |$key,$value| { $value }
 - Since 4.0.0
 DOC
 ) do |args|
-  function_fail(["map() is only available when parser/evaluator future is in effect"])
+  Error.is4x('map')
 end

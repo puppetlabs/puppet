@@ -6,6 +6,10 @@ module Serialization
   # tabulating and disassembling complex objects.
   # @api public
   class Serializer
+    # Provides access to the writer.
+    # @api private
+    attr_reader :writer
+
     # @param [AbstractWriter] writer the writer that is used for writing primitive values
     # @api public
     def initialize(writer)
@@ -67,7 +71,7 @@ module Serialization
     def write_tabulated_first_time(value)
       @written[value.object_id] = @written.size
       case value
-      when Symbol, Regexp, Semantic::Version, Semantic::VersionRange
+      when Symbol, Regexp, Semantic::Version, Semantic::VersionRange, Time::Timestamp, Time::Timespan, Types::PSensitiveType::Sensitive, Types::PBinaryType::Binary
         @writer.write(value)
       when Array
         start_array(value.size)

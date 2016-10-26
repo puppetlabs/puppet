@@ -102,9 +102,6 @@ describe Puppet::Face[:epp, :current] do
     end
   end
 
-  context "render" do
-
-  end
 
   context "dump" do
     it "prints the AST of a template given with the -e option" do
@@ -230,6 +227,28 @@ describe Puppet::Face[:epp, :current] do
         :values_file => values_file,
         :values => '{x => "mr Y"}')
         ).to eq("goodbye mr Y")
+    end
+
+    it "sets $facts" do
+      expect(eppface.render({ :e => 'facts is hash: <%= $facts =~ Hash %>' })).to eql("facts is hash: true")
+    end
+
+    it "sets $trusted" do
+      expect(eppface.render({ :e => 'trusted is hash: <%= $trusted =~ Hash %>' })).to eql("trusted is hash: true")
+    end
+
+    it "facts can be added to" do
+      expect(eppface.render({
+        :facts => {'the_crux' => 'biscuit'},
+        :e     => '<%= $facts[the_crux] %>', 
+      })).to eql("biscuit")
+    end
+
+    it "facts can be overridden" do
+      expect(eppface.render({
+        :facts => {'operatingsystem' => 'Merwin'},
+        :e     => '<%= $facts[operatingsystem] %>', 
+      })).to eql("Merwin")
     end
 
     context "in an environment with templates" do

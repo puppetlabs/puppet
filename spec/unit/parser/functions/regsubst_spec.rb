@@ -19,6 +19,6 @@ describe "the regsubst function" do
         'b[an]*a',
         'coconut'
       ])
-    end.to raise_error(Puppet::ParseError, /converted to 4x API/)
+    end.to raise_error(Puppet::ParseError, /can only be called using the 4.x function API/)
   end
 end

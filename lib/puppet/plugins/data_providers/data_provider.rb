@@ -1,6 +1,7 @@
 require 'puppet/pops/lookup/interpolation'
 
 module Puppet::Plugins::DataProviders
+  # @api private
   module DataProvider
     include Puppet::Pops::Lookup::Interpolation
 
@@ -9,8 +10,6 @@ module Puppet::Plugins::DataProviders
     # @param key [String] The key to lookup
     # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
     # @param merge [String|Hash<String,Object>|nil] Merge strategy or hash with strategy and options
-    #
-    # @api public
     def lookup(name, lookup_invocation, merge)
       lookup_invocation.check(name) { unchecked_lookup(name, lookup_invocation, merge) }
     end
@@ -20,8 +19,6 @@ module Puppet::Plugins::DataProviders
     # @param key [String] The key to lookup
     # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
     # @param merge [String|Hash<String,Object>|nil] Merge strategy or hash with strategy and options
-    #
-    # @api public
     def unchecked_lookup(key, lookup_invocation, merge)
       segments = split_key(key)
       root_key = segments.shift
@@ -44,8 +41,6 @@ module Puppet::Plugins::DataProviders
     # @param value [Object] The value to perform post processing on
     # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
     # @return [Object] The result of post processing the value.
-    #
-    # @api public
     def post_process(value, lookup_invocation)
       interpolate(value, lookup_invocation, true)
     end
@@ -61,8 +56,6 @@ module Puppet::Plugins::DataProviders
     # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
     # @param merge [String|Hash<String,Object>|nil] Merge strategy or hash with strategy and options
     # @return [Hash] The data hash for the given _key_
-    #
-    # @api public
     def data(data_key, lookup_invocation)
       compiler = lookup_invocation.scope.compiler
       adapter = Puppet::DataProviders::DataAdapter.get(compiler) || Puppet::DataProviders::DataAdapter.adapt(compiler)
@@ -74,8 +67,6 @@ module Puppet::Plugins::DataProviders
     #
     # @param key [String] The key to lookup
     # @return [String,nil] The data key or nil if not applicable
-    #
-    # @api public
     def data_key(key, lookup_invocation)
       nil
     end
@@ -85,8 +76,6 @@ module Puppet::Plugins::DataProviders
     # @param data_key [String] The data key such as the name of a module or the constant 'environment'
     # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
     # @return [Hash] The hash of values
-    #
-    # @api public
     def initialize_data(data_key, lookup_invocation)
       {}
     end
@@ -102,6 +91,7 @@ module Puppet::Plugins::DataProviders
     end
   end
 
+  # @api private
   class ModuleDataProvider
     LOOKUP_OPTIONS = Puppet::Pops::Lookup::LOOKUP_OPTIONS
     include DataProvider
@@ -142,6 +132,7 @@ module Puppet::Plugins::DataProviders
     end
   end
 
+  # @api private
   class EnvironmentDataProvider
     include DataProvider
 
@@ -153,13 +144,12 @@ module Puppet::Plugins::DataProviders
   # Class that keeps track of the original path (as it appears in the declaration, before interpolation),
   # the fully resolved path, and whether or the resolved path exists.
   #
-  # @api public
+  # @api private
   class ResolvedPath
     attr_reader :original_path, :path
 
     # @param original_path [String] path as found in declaration. May contain interpolation expressions
     # @param path [Pathname] the expanded absolute path
-    # @api public
     def initialize(original_path, path)
       @original_path = original_path
       @path = path
@@ -179,7 +169,7 @@ module Puppet::Plugins::DataProviders
   # will be merged according to a given (optional) merge strategy.
   #
   # @abstract
-  # @api public
+  # @api private
   class PathBasedDataProvider
     include DataProvider
 
@@ -188,8 +178,6 @@ module Puppet::Plugins::DataProviders
     # @param name [String] The name of the data provider
     # @param paths [Array<ResolvedPath>] Paths used by this provider
     # @param parent_data_provider [DataProvider] The data provider that is the container of this data provider
-    #
-    # @api public
     def initialize(name, paths, parent_data_provider = nil)
       @name = name
       @paths = paths
@@ -208,8 +196,6 @@ module Puppet::Plugins::DataProviders
     # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
     # @param merge [String|Hash<String,Object>|nil] Merge strategy or hash with strategy and options
     # @return [Hash] The data hash for the given _key_
-    #
-    # @api public
     def load_data(path, data_key, lookup_invocation)
       compiler = lookup_invocation.scope.compiler
       adapter = Puppet::DataProviders::DataAdapter.get(compiler) || Puppet::DataProviders::DataAdapter.adapt(compiler)
@@ -227,8 +213,6 @@ module Puppet::Plugins::DataProviders
     # @param key [String] The key to lookup
     # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
     # @param merge [Puppet::Pops::MergeStrategy,String,Hash<String,Object>,nil] Merge strategy or hash with strategy and options
-    #
-    # @api public
     def unchecked_lookup(key, lookup_invocation, merge)
       segments = split_key(key)
       root_key = segments.shift
@@ -264,7 +248,7 @@ module Puppet::Plugins::DataProviders
   # Factory for creating path based data providers
   #
   # @abstract
-  # @api public
+  # @api private
   class PathBasedDataProviderFactory
     # Create a path based data provider with the given _name_ and _paths_
     #
@@ -272,8 +256,6 @@ module Puppet::Plugins::DataProviders
     # @param paths [Array<String>] array of resolved paths
     # @param parent_data_provider [DataProvider] The data provider that is the container of this data provider
     # @return [DataProvider] The created data provider
-    #
-    # @api public
     def create(name, paths, parent_data_provider)
       raise NotImplementedError, "Subclass of PathBasedDataProviderFactory must implement 'create' method"
     end
@@ -289,8 +271,6 @@ module Puppet::Plugins::DataProviders
     # @param paths [Array<String>] paths that have been preprocessed (interpolations resolved)
     # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
     # @return [Array<ResolvedPath>] Array of resolved paths
-    #
-    # @api public
     def resolve_paths(datadir, declared_paths, paths, lookup_invocation)
       []
     end
@@ -298,7 +278,6 @@ module Puppet::Plugins::DataProviders
     # Returns the data provider factory version.
     #
     # return [Integer] the version of this data provider factory
-    # @api public
     def version
       2
     end
@@ -309,7 +288,7 @@ module Puppet::Plugins::DataProviders
   # file system.
   #
   # @abstract
-  # @api public
+  # @api private
   class FileBasedDataProviderFactory < PathBasedDataProviderFactory
     # @param datadir [Pathname] The base when creating absolute paths
     # @param declared_paths [Array<String>] paths as found in declaration. May contain interpolation expressions

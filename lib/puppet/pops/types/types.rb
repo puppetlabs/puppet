@@ -741,16 +741,9 @@ class PEnumType < PScalarType
   end
 end
 
+# Abstract class that encapsulates behavior common to PNumericType and PAbstractTimeDataType
 # @api public
-#
-class PNumericType < PScalarType
-  def self.register_ptype(loader, ir)
-    create_ptype(loader, ir, 'ScalarType',
-      'from' => { KEY_TYPE => PNumericType::DEFAULT, KEY_VALUE => :default },
-      'to' => { KEY_TYPE => PNumericType::DEFAULT, KEY_VALUE => :default }
-    )
-  end
-
+class PAbstractRangeType < PScalarType
   def initialize(from, to = Float::INFINITY)
     from = -Float::INFINITY if from.nil? || from == :default
     to = Float::INFINITY if to.nil? || to == :default
@@ -807,22 +800,44 @@ class PNumericType < PScalarType
   def unbounded?
     @from == -Float::INFINITY && @to == Float::INFINITY
   end
+end
+
+# @api public
+#
+class PNumericType < PAbstractRangeType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'ScalarType',
+      'from' => { KEY_TYPE => PNumericType::DEFAULT, KEY_VALUE => :default },
+      'to' => { KEY_TYPE => PNumericType::DEFAULT, KEY_VALUE => :default }
+    )
+  end
 
   def self.new_function(_, loader)
     @new_function ||= Puppet::Functions.create_loaded_function(:new_numeric, loader) do
       local_types do
-        type 'Convertible = Variant[Undef, Integer, Float, Boolean, String]'
-        type 'NamedArgs   = Struct[{from => Convertible}]'
+        type 'Convertible = Variant[Undef, Integer, Float, Boolean, String, Timespan, Timestamp]'
+        type 'NamedArgs   = Struct[{from => Convertible, Optional[abs] => Boolean}]'
       end
 
       dispatch :from_args do
         param          'Convertible',  :from
+        optional_param 'Boolean',      :abs
       end
 
       dispatch :from_hash do
         param          'NamedArgs',  :hash_args
       end
-      def from_args(from)
+
+      def from_args(from, abs = false)
+        result = from_convertible(from)
+        abs ? result.abs : result
+      end
+
+      def from_hash(args_hash)
+        from_args(args_hash['from'], args_hash['abs'] || false)
+      end
+
+      def from_convertible(from)
         case from
         when NilClass
           throw :undefined_value
@@ -830,6 +845,8 @@ class PNumericType < PScalarType
           from
         when Integer
           from
+        when Time::TimeData
+          from.to_f
         when TrueClass
           1
         when FalseClass
@@ -851,14 +868,8 @@ class PNumericType < PScalarType
           raise TypeConversionError.new("Value of type '#{t}' cannot be converted to Numeric")
         end
       end
-
-      def from_hash(args_hash)
-        from_args(args_hash['from'])
-      end
     end
   end
-
-  DEFAULT = PNumericType.new(-Float::INFINITY)
 
   protected
 
@@ -868,6 +879,8 @@ class PNumericType < PScalarType
     # If o min and max are within the range of t
     @from <= o.numeric_from && @to >= o.numeric_to
   end
+
+  DEFAULT = PNumericType.new(-Float::INFINITY)
 end
 
 # @api public
@@ -956,24 +969,34 @@ class PIntegerType < PNumericType
     @@new_function ||= Puppet::Functions.create_loaded_function(:new, loader) do
       local_types do
         type 'Radix       = Variant[Default, Integer[2,2], Integer[8,8], Integer[10,10], Integer[16,16]]'
-        type 'Convertible = Variant[Undef, Integer, Float, Boolean, String]'
-        type 'NamedArgs   = Struct[{from => Convertible, Optional[radix] => Radix}]'
+        type 'Convertible = Variant[Undef, Numeric, Boolean, String, Timespan, Timestamp]'
+        type 'NamedArgs   = Struct[{from => Convertible, Optional[radix] => Radix, Optional[abs] => Boolean}]'
       end
 
       dispatch :from_args do
         param          'Convertible',  :from
         optional_param 'Radix',   :radix
+        optional_param 'Boolean', :abs
       end
 
       dispatch :from_hash do
         param          'NamedArgs',  :hash_args
       end
 
-      def from_args(from, radix = :default)
+      def from_args(from, radix = :default, abs = false)
+        result = from_convertible(from, radix)
+        abs ? result.abs : result
+      end
+
+      def from_hash(args_hash)
+        from_args(args_hash['from'], args_hash['radix'] || :default, args_hash['abs'] || false)
+      end
+
+      def from_convertible(from, radix)
         case from
         when NilClass
           throw :undefined_value
-        when Float
+        when Float, Time::TimeData
           from.to_i
         when Integer
           from
@@ -1003,12 +1026,6 @@ class PIntegerType < PNumericType
           t = Puppet::Pops::Types::TypeCalculator.singleton.infer(from).generalize
           raise TypeConversionError.new("Value of type '#{t}' cannot be converted to an Integer")
         end
-      end
-
-      def from_hash(args_hash)
-        from = args_hash['from']
-        radix = args_hash['radix'] || :default
-        from_args(from, radix)
       end
 
       def assert_radix(radix)
@@ -1062,19 +1079,29 @@ class PFloatType < PNumericType
   def self.new_function(_, loader)
     @new_function ||= Puppet::Functions.create_loaded_function(:new_float, loader) do
       local_types do
-        type 'Convertible = Variant[Undef, Integer, Float, Boolean, String]'
-        type 'NamedArgs   = Struct[{from => Convertible}]'
+        type 'Convertible = Variant[Undef, Numeric, Boolean, String, Timespan, Timestamp]'
+        type 'NamedArgs   = Struct[{from => Convertible, Optional[abs] => Boolean}]'
       end
 
       dispatch :from_args do
         param          'Convertible',  :from
+        optional_param 'Boolean',      :abs
       end
 
       dispatch :from_hash do
         param          'NamedArgs',  :hash_args
       end
 
-      def from_args(from)
+      def from_args(from, abs = false)
+        result = from_convertible(from)
+        abs ? result.abs : result
+      end
+
+      def from_hash(args_hash)
+        from_args(args_hash['from'], args_hash['abs'] || false)
+      end
+
+      def from_convertible(from)
         case from
         when NilClass
           throw :undefined_value
@@ -1082,6 +1109,8 @@ class PFloatType < PNumericType
           from
         when Integer
           Float(from)
+        when Time::TimeData
+          from.to_f
         when TrueClass
           1.0
         when FalseClass
@@ -1112,10 +1141,6 @@ class PFloatType < PNumericType
           t = Puppet::Pops::Types::TypeCalculator.singleton.infer(from).generalize
           raise TypeConversionError.new("Value of type '#{t}' cannot be converted to Float")
         end
-      end
-
-      def from_hash(args_hash)
-        from_args(args_hash['from'])
       end
     end
   end
@@ -2052,6 +2077,9 @@ class PCallableType < PAnyType
     )
   end
 
+  # @return [PAnyType] The type for the values returned by this callable. Returns `nil` if return value is unconstrained
+  attr_reader :return_type
+
   # Types of parameters as a Tuple with required/optional count, or an Integer with min (required), max count
   # @return [PTupleType] the tuple representing the parameter types
   attr_reader :param_types
@@ -2063,16 +2091,19 @@ class PCallableType < PAnyType
   attr_reader :block_type
 
   # @param param_types [PTupleType]
-  # @param block_type [PAnyType|nil]
-  def initialize(param_types, block_type = nil)
+  # @param block_type [PAnyType]
+  # @param return_type [PAnyType]
+  def initialize(param_types, block_type = nil, return_type = nil)
     @param_types = param_types
     @block_type = block_type
+    @return_type = return_type == PAnyType::DEFAULT ? nil : return_type
   end
 
   def accept(visitor, guard)
     super
     @param_types.accept(visitor, guard) unless @param_types.nil?
     @block_type.accept(visitor, guard) unless @block_type.nil?
+    @return_type.accept(visitor, guard) unless @return_type.nil?
   end
 
   def generalize
@@ -2081,7 +2112,8 @@ class PCallableType < PAnyType
     else
       params_t = @param_types.nil? ? nil : @param_types.generalize
       block_t = @block_type.nil? ? nil : @block_type.generalize
-      @param_types.equal?(params_t) && @block_type.equal?(block_t) ? self : PCallableType.new(params_t, block_t)
+      return_t = @return_type.nil? ? nil : @return_type.generalize
+      @param_types.equal?(params_t) && @block_type.equal?(block_t) && @return_type.equal?(return_t) ? self : PCallableType.new(params_t, block_t, return_t)
     end
   end
 
@@ -2091,7 +2123,8 @@ class PCallableType < PAnyType
     else
       params_t = @param_types.nil? ? nil : @param_types.normalize(guard)
       block_t = @block_type.nil? ? nil : @block_type.normalize(guard)
-      @param_types.equal?(params_t) && @block_type.equal?(block_t) ? self : PCallableType.new(params_t, block_t)
+      return_t = @return_type.nil? ? nil : @return_type.normalize(guard)
+      @param_types.equal?(params_t) && @block_type.equal?(block_t) && @return_type.equal?(return_t) ? self : PCallableType.new(params_t, block_t, return_t)
     end
   end
 
@@ -2106,7 +2139,7 @@ class PCallableType < PAnyType
   end
 
   def kind_of_callable?(optional=true, guard = nil)
-      true
+    true
   end
 
   # Returns the number of accepted arguments [min, max]
@@ -2134,29 +2167,30 @@ class PCallableType < PAnyType
   end
 
   def hash
-    @param_types.hash ^ @block_type.hash
+    [@param_types, @block_type, @return_type].hash
   end
 
   def eql?(o)
-    self.class == o.class && @param_types == o.param_types && @block_type == o.block_type
+    self.class == o.class && @param_types == o.param_types && @block_type == o.block_type && @return_type == o.return_type
   end
 
   def resolve(type_parser, loader)
-    rparam_types = @param_types
-    rparam_types = rparam_types.resolve(type_parser, loader) unless rparam_types.nil?
-    rblock_type = @block_type
-    rblock_type = rblock_type.resolve(type_parser, loader) unless rblock_type.nil?
-    rparam_types.equal?(@param_types) && rblock_type.equal?(@block_type) ? self : self.class.new(rparam_types, rblock_type)
+    params_t = @param_types.nil? ? nil : @param_types.resolve(type_parser, loader)
+    block_t = @block_type.nil? ? nil : @block_type.resolve(type_parser, loader)
+    return_t = @return_type.nil? ? nil : @return_type.resolve(type_parser, loader)
+    @param_types.equal?(params_t) && @block_type.equal?(block_t) && @return_type.equal?(return_t) ? self : self.class.new(params_t, block_t, return_t)
   end
 
-  DEFAULT = PCallableType.new(nil)
+  DEFAULT = PCallableType.new(nil, nil, nil)
 
   protected
 
   # @api private
   def _assignable?(o, guard)
     return false unless o.is_a?(PCallableType)
-    # nil param_types means, any other Callable is assignable
+    return false unless @return_type.nil? || @return_type.assignable?(o.return_type || PAnyType::DEFAULT, guard)
+
+    # nil param_types and compatible return type means other Callable is assignable
     return true if @param_types.nil?
 
     # NOTE: these tests are made in reverse as it is calling the callable that is constrained
@@ -2190,7 +2224,7 @@ class PArrayType < PCollectionType
     param_t = callable.param_types
     block_t = callable.block_type
     # does not support calling with a block, but have to check that callable is ok with missing block
-    (param_t.nil? || param_t.assignable?(self, guard)) && (block_t.nil? || block_t.assignable(PUndefType::DEFAULT, guard))
+    (param_t.nil? || param_t.assignable?(self, guard)) && (block_t.nil? || block_t.assignable?(PUndefType::DEFAULT, guard))
   end
 
   def generalize
@@ -2239,6 +2273,11 @@ class PArrayType < PCollectionType
           from
         when Hash
           wrap ? [from] : from.to_a
+
+        when PBinaryType::Binary
+          # For older rubies, the #bytes method returns an Enumerator that must be rolled out
+          wrap ? [from] : from.binary_buffer.bytes.to_a
+
         else
           if wrap
             [from]
@@ -2556,9 +2595,11 @@ class PVariantType < PAnyType
         types = swap_optionals(types)
         types = merge_enums(types)
         types = merge_patterns(types)
-        types = merge_int_ranges(types)
-        types = merge_float_ranges(types)
         types = merge_version_ranges(types)
+        types = merge_numbers(PIntegerType, types)
+        types = merge_numbers(PFloatType, types)
+        types = merge_numbers(PTimespanType, types)
+        types = merge_numbers(PTimestampType, types)
 
         if types.size == 1
           types[0]
@@ -2685,18 +2726,9 @@ class PVariantType < PAnyType
   end
 
   # @api private
-  def merge_int_ranges(array)
+  def merge_numbers(clazz, array)
     if array.size > 1
-      parts = array.partition {|t| t.is_a?(PIntegerType) }
-      ranges = parts[0]
-      array = merge_ranges(ranges) + parts[1] if ranges.size > 1
-    end
-    array
-  end
-
-  def merge_float_ranges(array)
-    if array.size > 1
-      parts = array.partition {|t| t.is_a?(PFloatType) }
+      parts = array.partition {|t| t.is_a?(clazz) }
       ranges = parts[0]
       array = merge_ranges(ranges) + parts[1] if ranges.size > 1
     end
@@ -3224,5 +3256,8 @@ require_relative 'p_sem_ver_type'
 require_relative 'p_sem_ver_range_type'
 require_relative 'p_sensitive_type'
 require_relative 'p_type_set_type'
+require_relative 'p_timespan_type'
+require_relative 'p_timestamp_type'
+require_relative 'p_binary_type'
 require_relative 'type_set_reference'
 require_relative 'implementation_registry'

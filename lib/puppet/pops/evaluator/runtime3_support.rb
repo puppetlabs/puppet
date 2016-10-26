@@ -59,10 +59,18 @@ module Runtime3Support
     # The error is not specific enough to allow catching it - need to check the actual message text.
     # TODO: Improve the messy implementation in Scope.
     #
+    if name == "server_facts"
+      if Puppet[:trusted_server_facts] || Puppet[:strict] == :error
+        fail(Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, {:name => name} )
+      elsif Puppet[:strict] == :warning
+        file, line = extract_file_line(o)
+        msg = "Assignment to $server_facts is deprecated"
+        Puppet.warn_once(:deprecation, msg, msg, file, line)
+      end
+    end
+
     if scope.bound?(name)
       if Puppet::Parser::Scope::RESERVED_VARIABLE_NAMES.include?(name)
-        fail(Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, {:name => name} )
-      elsif name == "server_facts" && Puppet[:trusted_server_facts]
         fail(Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, {:name => name} )
       else
         fail(Issues::ILLEGAL_REASSIGNMENT, o, {:name => name} )
@@ -240,7 +248,7 @@ module Runtime3Support
   # @param name [String] the name of the function (without the 'function_' prefix used by scope)
   # @param args [Array] arguments, may be empty
   # @param scope [Object] the (runtime specific) scope where evaluation takes place
-  # @raise ArgumentError 'unknown function' if the function does not exist
+  # @raise [ArgumentError] 'unknown function' if the function does not exist
   #
   def external_call_function(name, args, scope, &block)
     # Call via 4x API if the function exists there
@@ -261,7 +269,7 @@ module Runtime3Support
 
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
     # NOTE: Passing an empty string last converts nil/:undef to empty string
-    mapped_args = Runtime3Converter.map_args(args, scope, '')
+    mapped_args = Runtime3FunctionArgumentConverter.map_args(args, scope, '')
     result = scope.send("function_#{name}", mapped_args, &block)
     # Prevent non r-value functions from leaking their result (they are not written to care about this)
     Puppet::Parser::Functions.rvalue?(name) ? result : nil
@@ -281,7 +289,7 @@ module Runtime3Support
 
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
     # NOTE: Passing an empty string last converts nil/:undef to empty string
-    mapped_args = Runtime3Converter.map_args(args, scope, '')
+    mapped_args = Runtime3FunctionArgumentConverter.map_args(args, scope, '')
     result = Puppet::Pops::PuppetStack.stack(file, line, scope, "function_#{name}", [mapped_args], &block)
     # Prevent non r-value functions from leaking their result (they are not written to care about this)
     Puppet::Parser::Functions.rvalue?(name) ? result : nil
@@ -299,7 +307,8 @@ module Runtime3Support
   end
 
   def convert(value, scope, undef_value)
-    Runtime3Converter.convert(value, scope, undef_value)
+    converter = scope.environment.rich_data? ? Runtime3Converter.instance : Runtime3FunctionArgumentConverter.instance
+    converter.convert(value, scope, undef_value)
   end
 
   def create_resources(o, scope, virtual, exported, type_name, resource_titles, evaluated_parameters)

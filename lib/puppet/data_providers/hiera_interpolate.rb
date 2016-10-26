@@ -3,6 +3,7 @@ module Puppet::DataProviders::HieraInterpolate
   include Puppet::Pops::Lookup::Interpolation
 
   # For backward compatibility
+  # @api private
   # @deprecated
   def qualified_lookup(segments, value)
     if Puppet[:strict] != :off

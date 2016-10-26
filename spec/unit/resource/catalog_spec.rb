@@ -843,6 +843,133 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to pson"
     MANIFEST
     expect(catalog.to_pson).to validate_against('api/schemas/catalog.json')
   end
+
+  context 'when dealing with parameters that have non-Data values' do
+    context 'and rich_data is enabled' do
+      before(:each) do
+        Puppet[:rich_data] = true
+      end
+
+      let(:catalog_w_regexp)  { compile_to_catalog("notify {'foo': message => /[a-z]+/ }") }
+
+      it 'should generate ext_parameters for parameter values that are not Data' do
+        expect(catalog_w_regexp.to_json).to include('"ext_parameters":{"message":[48,"[a-z]+"]}')
+      end
+
+      it 'should validate ext_parameters against the schema' do
+        expect(catalog_w_regexp.to_json).to validate_against('api/schemas/catalog.json')
+      end
+
+      it 'should read and convert ext_parameters containing Regexp from json' do
+        catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog_w_regexp.to_json))
+        message = catalog2.resource('notify', 'foo')['message']
+        expect(message).to be_a(Regexp)
+        expect(message).to eql(/[a-z]+/)
+      end
+
+      it 'should read and convert ext_parameters containing Version from json' do
+        catalog = compile_to_catalog("notify {'foo': message => SemVer('1.0.0') }")
+        catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog.to_json))
+        message = catalog2.resource('notify', 'foo')['message']
+        expect(message).to be_a(Semantic::Version)
+        expect(message).to eql(Semantic::Version.parse('1.0.0'))
+      end
+
+      it 'should read and convert ext_parameters containing VersionRange from json' do
+        catalog = compile_to_catalog("notify {'foo': message => SemVerRange('>=1.0.0') }")
+        catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog.to_json))
+        message = catalog2.resource('notify', 'foo')['message']
+        expect(message).to be_a(Semantic::VersionRange)
+        expect(message).to eql(Semantic::VersionRange.parse('>=1.0.0'))
+      end
+
+      it 'should read and convert ext_parameters containing Timespan from json' do
+        catalog = compile_to_catalog("notify {'foo': message => Timespan(1234) }")
+        catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog.to_json))
+        message = catalog2.resource('notify', 'foo')['message']
+        expect(message).to be_a(Puppet::Pops::Time::Timespan)
+        expect(message).to eql(Puppet::Pops::Time::Timespan.parse('1234', '%S'))
+      end
+
+      it 'should read and convert ext_parameters containing Timestamp from json' do
+        catalog = compile_to_catalog("notify {'foo': message => Timestamp('2016-09-15T08:32:16.123 UTC') }")
+        catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog.to_json))
+        message = catalog2.resource('notify', 'foo')['message']
+        expect(message).to be_a(Puppet::Pops::Time::Timestamp)
+        expect(message).to eql(Puppet::Pops::Time::Timestamp.parse('2016-09-15T08:32:16.123 UTC'))
+      end
+
+      it 'should read and convert ext_parameters containing hash with rich data from json' do
+        catalog = compile_to_catalog("notify {'foo': message => { 'version' => SemVer('1.0.0'), 'time' => Timestamp('2016-09-15T08:32:16.123 UTC') }}")
+        catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog.to_json))
+        message = catalog2.resource('notify', 'foo')['message']
+        expect(message).to be_a(Hash)
+        expect(message['version']).to eql(Semantic::Version.parse('1.0.0'))
+        expect(message['time']).to eql(Puppet::Pops::Time::Timestamp.parse('2016-09-15T08:32:16.123 UTC'))
+      end
+
+      it 'should read and convert ext_parameters containing an array with rich data from json' do
+        catalog = compile_to_catalog("notify {'foo': message => [ SemVer('1.0.0'), Timestamp('2016-09-15T08:32:16.123 UTC') ] }")
+        catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog.to_json))
+        message = catalog2.resource('notify', 'foo')['message']
+        expect(message).to be_a(Array)
+        expect(message[0]).to eql(Semantic::Version.parse('1.0.0'))
+        expect(message[1]).to eql(Puppet::Pops::Time::Timestamp.parse('2016-09-15T08:32:16.123 UTC'))
+      end
+    end
+
+    context 'and rich_data is disabled' do
+      before(:each) do
+        Puppet[:rich_data] = false
+      end
+
+      let(:catalog_w_regexp)  { compile_to_catalog("notify {'foo': message => /[a-z]+/ }") }
+
+      it 'should not generate ext_parameters for parameter values that are not Data' do
+        expect(catalog_w_regexp.to_json).not_to include('"ext_parameters":{"message":[48,"[a-z]+"]}')
+      end
+
+      it 'should convert parameter containing Regexp into strings' do
+        catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog_w_regexp.to_json))
+        message = catalog2.resource('notify', 'foo')['message']
+        expect(message).to be_a(String)
+        expect(message).to eql('/[a-z]+/')
+      end
+
+      it 'should convert parameter containing Version into string' do
+        catalog = compile_to_catalog("notify {'foo': message => SemVer('1.0.0') }")
+        catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog.to_json))
+        message = catalog2.resource('notify', 'foo')['message']
+        expect(message).to be_a(String)
+        expect(message).to eql('1.0.0')
+      end
+
+      it 'should convert parameter containing VersionRange into string' do
+        catalog = compile_to_catalog("notify {'foo': message => SemVerRange('>=1.0.0') }")
+        catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog.to_json))
+        message = catalog2.resource('notify', 'foo')['message']
+        expect(message).to be_a(String)
+        expect(message).to eql('>=1.0.0')
+      end
+
+      it 'should convert parameter containing Timespan into string' do
+        catalog = compile_to_catalog("notify {'foo': message => Timespan(1234) }")
+        catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog.to_json))
+        message = catalog2.resource('notify', 'foo')['message']
+        expect(message).to be_a(String)
+        expect(message).to eql('0-00:20:34.0')
+      end
+
+      it 'should convert parameter containing Timestamp into string' do
+        catalog = compile_to_catalog("notify {'foo': message => Timestamp('2016-09-15T08:32:16.123 UTC') }")
+        catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog.to_json))
+        message = catalog2.resource('notify', 'foo')['message']
+        expect(message).to be_a(String)
+        expect(message).to eql('2016-09-15T08:32:16.123 UTC')
+      end
+    end
+
+  end
 end
 
 describe Puppet::Resource::Catalog, "when converting to pson" do

@@ -299,6 +299,20 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
         include_in_order("Notify[before]", "Generator[thing]", "Notify[hello]", "Notify[third]", "Notify[after]"))
     end
 
+    it "sets resources_failed_to_generate to true if resource#eval_generate raises an exception" do
+
+      catalog = compile_to_ral(<<-MANIFEST)
+        notify { 'hello': }
+      MANIFEST
+
+      catalog.resource("Notify[hello]").stubs(:eval_generate).raises(RuntimeError)
+      relationship_graph = relationship_graph_for(catalog)
+      generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, relationship_graph, prioritizer)
+      generator.eval_generate(catalog.resource("Notify[hello]"))
+
+      expect(generator.resources_failed_to_generate).to be_truthy
+    end
+
     def relationships_after_eval_generating(manifest, resource_to_generate)
       catalog = compile_to_ral(manifest)
       relationship_graph = relationship_graph_for(catalog)
@@ -457,6 +471,22 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
                          "Notify[hello]",
                          "Empty[hello]",
                          "Notify[goodbye]"))
+    end
+
+    it "sets resources_failed_to_generate to true if resource#generate raises an exception" do
+
+      catalog = compile_to_ral(<<-MANIFEST)
+        user { 'foo':
+          ensure => present,
+        }
+      MANIFEST
+
+      catalog.resource("User[foo]").stubs(:generate).raises(RuntimeError)
+      relationship_graph = relationship_graph_for(catalog)
+      generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, relationship_graph, prioritizer)
+      generator.generate_additional_resources(catalog.resource("User[foo]"))
+
+      expect(generator.resources_failed_to_generate).to be_truthy
     end
 
     def relationships_after_generating(manifest, resource_to_generate)

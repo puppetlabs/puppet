@@ -1,6 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/pops'
+require 'puppet_spec/files'
 require 'puppet_spec/compiler'
 
 module Puppet::Pops
@@ -30,6 +31,79 @@ describe "Puppet::Pops::Resource" do
       expect(rt.valid_parameter?(:nonesuch)).to be_falsey
       expect(rt.valid_parameter?(:message)).to be_truthy
       expect(rt.valid_parameter?(:loglevel)).to be_truthy
+    end
+  end
+
+
+  context 'when used with capability resource with producers/consumers' do
+    include PuppetSpec::Files
+
+    let!(:env_name) { 'spec' }
+    let!(:env_dir) { tmpdir('environments') }
+    let!(:populated_env_dir) do
+      dir_contained_in(env_dir, env_name => {
+        '.resource_types' => {
+          'capability.pp' => <<-PUPPET
+            Puppet::Resource::ResourceType3.new(
+              'capability',
+              [],
+              [Puppet::Resource::Param(Any, 'name', true)],
+              { /(.*)/ => ['name'] },
+              true,
+              true)
+        PUPPET
+        },
+        'modules' => {
+          'test' => {
+            'lib' => {
+              'puppet' => {
+                'type' => { 'capability.rb' => <<-RUBY
+                  Puppet::Type.newtype(:capability, :is_capability => true) do
+                    newparam :name, :namevar => true
+                    raise Puppet::Error, 'Ruby resource was loaded'
+                  end
+                RUBY
+                }
+              }
+            }
+          }
+        }
+      })
+    end
+
+    let!(:code) { <<-PUPPET }
+      define producer() {
+        notify { "producer":}
+      }
+
+      define consumer() {
+        notify { $title:}
+      }
+
+      Producer produces Capability {}
+
+      Consumer consumes Capability {}
+
+      producer {x: export => Capability[cap]}
+      consumer {x: consume => Capability[cap]}
+      consumer {y: require => Capability[cap]}
+    PUPPET
+
+    let(:environments) { Puppet::Environments::Directories.new(populated_env_dir, []) }
+    let(:env) { Puppet::Node::Environment.create(:'spec', [File.join(env_dir, 'spec', 'modules')]) }
+    let(:node) { Puppet::Node.new('test', :environment => env) }
+    around(:each) do |example|
+      Puppet[:app_management] = true
+      Puppet[:environment] = env_name
+      Puppet.override(:environments => environments, :current_environment => env) do
+        example.run
+      end
+      Puppet::Type.rmtype(:capability)
+      Puppet[:app_management] = false
+    end
+
+    it 'does not load the Ruby resource' do
+      expect { compile_to_catalog(code, node) }.not_to raise_error
     end
   end
 end

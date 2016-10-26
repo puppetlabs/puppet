@@ -75,11 +75,13 @@ type Radix = Variant[Default, Integer[2,2], Integer[8,8], Integer[10,10], Intege
 
 function Integer.new(
   String $value,
-  Radix $radix = 10
+  Radix $radix = 10,
+  Boolean $abs = false
 )
 
 function Integer.new(
-  Variant[Numeric, Boolean] $value
+  Variant[Numeric, Boolean] $value,
+  Boolean $abs = false
 )
 ```
 
@@ -99,14 +101,16 @@ function Integer.new(
 * Conversion from `Boolean` results in 0 for `false` and 1 for `true`.
 * Conversion from `Integer`, `Float`, and `Boolean` ignores the radix.
 * `Float` value fractions are truncated (no rounding).
+* When `abs` is set to `true`, the result will be an absolute integer.
 
 Examples - Converting to Integer:
 
 ```puppet
-$a_number = Integer("0xFF", 16)  # results in 255
-$a_number = Numeric("010")       # results in 8
-$a_number = Numeric("010", 10)   # results in 10
-$a_number = Integer(true)        # results in 1
+$a_number = Integer("0xFF", 16)    # results in 255
+$a_number = Integer("010")         # results in 8
+$a_number = Integer("010", 10)     # results in 10
+$a_number = Integer(true)          # results in 1
+$a_number = Integer(-38, 10, true) # results in 38
 ```
 
 Conversion to Float
@@ -117,7 +121,8 @@ For conversion from `String` both float and integer formats are supported.
 
 ```puppet
 function Float.new(
-  Variant[Numeric, Boolean, String] $value
+  Variant[Numeric, Boolean, String] $value,
+  Boolean $abs = true
 )
 ```
 
@@ -125,7 +130,8 @@ function Float.new(
 * For an integer, the floating point fraction of `.0` is added to the value.
 * A `Boolean` `true` is converted to 1.0, and a `false` to 0.0
 * In `String` format, integer prefixes for hex and binary are understood (but not octal since
-  floating point in string format may start with a '0'). 
+  floating point in string format may start with a '0').
+* When `abs` is set to `true`, the result will be an absolute floating point value.
 
 Conversion to Numeric
 ---------------------
@@ -135,7 +141,8 @@ A new `Integer` or `Float` can be created from `Integer`, `Float`, `Boolean` and
 
 ```puppet
 function Numeric.new(
-  Variant[Numeric, Boolean, String] $value
+  Variant[Numeric, Boolean, String] $value,
+  Boolean $abs = true
 )
 ```
 
@@ -143,14 +150,329 @@ function Numeric.new(
   (e/E), the result is a `Float`, otherwise the value is an `Integer`. The
   conversion from `String` always uses a radix based on the prefix of the string.
 * Conversion from `Boolean` results in 0 for `false` and 1 for `true`.
+* When `abs` is set to `true`, the result will be an absolute `Float`or `Integer` value.
 
 Examples - Converting to Numeric
 
 ```puppet
-$a_number = Numeric(true)    # results in 1
-$a_number = Numeric("0xFF")  # results in 255
-$a_number = Numeric("010")   # results in 8
-$a_number = Numeric("3.14")  # results in 3.14 (a float)
+$a_number = Numeric(true)        # results in 1
+$a_number = Numeric("0xFF")      # results in 255
+$a_number = Numeric("010")       # results in 8
+$a_number = Numeric("3.14")      # results in 3.14 (a float)
+$a_number = Numeric(-42.3, true) # results in 42.3
+$a_number = Numeric(-42, true)   # results in 42
+```
+
+Conversion to Timespan
+-------------------
+
+A new `Timespan` can be created from `Integer`, `Float`, `String`, and `Hash` values. Several variants of the constructor are provided.
+
+#### Timespan from seconds
+
+When a Float is used, the decimal part represents fractions of a second.
+
+```puppet
+function Timespan.new(
+  Variant[Float, Integer] $value
+)
+```
+
+#### Timespan from days, hours, mintues, seconds, and fractions of a second
+
+The arguments can be passed separately in which case the first four, days, hours, minutes, and seconds are mandatory and the rest are optional.
+All values may overflow and/or be negative. The internal 128-bit nano-second integer is calculated as:
+
+```
+(((((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000 + milliseconds) * 1000 + microseconds) * 1000 + nanoseconds
+```
+
+```puppet
+function Timespan.new(
+  Integer $days, Integer $hours, Integer $minutes, Integer $seconds,
+  Integer $milliseconds = 0, Integer $microseconds = 0, Integer $nanoseconds = 0
+)
+```
+
+or, all arguments can be passed as a `Hash`, in which case all entries are optional:
+
+```puppet
+function Timespan.new(
+  Struct[{
+    Optional[negative] => Boolean,
+    Optional[days] => Integer,
+    Optional[hours] => Integer,
+    Optional[minutes] => Integer,
+    Optional[seconds] => Integer,
+    Optional[milliseconds] => Integer,
+    Optional[microseconds] => Integer,
+    Optional[nanoseconds] => Integer
+  }] $hash
+)
+```
+
+#### Timespan from String and format directive patterns
+
+The first argument is parsed using the format optionally passed as a string or array of strings. When an array is used, an attempt
+will be made to parse the string using the first entry and then with each entry in succession until parsing succeeds. If the second
+argument is omitted, an array of default formats will be used.
+
+An exception is raised when no format was able to parse the given string.
+
+```puppet
+function Timespan.new(
+  String $string, Variant[String[2],Array[String[2]], 1] $format = <default format>)
+)
+```
+
+the arguments may also be passed as a `Hash`:
+
+```puppet
+function Timespan.new(
+  Struct[{
+    string => String[1],
+    Optional[format] => Variant[String[2],Array[String[2]], 1]
+  }] $hash
+)
+```
+
+The directive consists of a percent (%) character, zero or more flags, optional minimum field width and
+a conversion specifier as follows:
+```
+%[Flags][Width]Conversion
+```
+
+##### Flags:
+
+| Flag  | Meaning
+| ----  | ---------------
+| -     | Don't pad numerical output
+| _     | Use spaces for padding
+| 0     | Use zeros for padding
+
+##### Format directives:
+
+| Format | Meaning |
+| ------ | ------- |
+| D | Number of Days |
+| H | Hour of the day, 24-hour clock |
+| M | Minute of the hour (00..59) |
+| S | Second of the minute (00..59) |
+| L | Millisecond of the second (000..999) |
+| N | Fractional seconds digits |
+
+The format directive that represents the highest magnitude in the format will be allowed to
+overflow. I.e. if no "%D" is used but a "%H" is present, then the hours may be more than 23.
+
+The default array contains the following patterns:
+
+```
+['%D-%H:%M:%S', '%D-%H:%M', '%H:%M:%S', '%H:%M']
+```
+
+Examples - Converting to Timespan
+
+```puppet
+$duration = Timespan(13.5)       # 13 seconds and 500 milliseconds
+$duration = Timespan({days=>4})  # 4 days
+$duration = Timespan(4, 0, 0, 2) # 4 days and 2 seconds
+$duration = Timespan('13:20')    # 13 hours and 20 minutes (using default pattern)
+$duration = Timespan('10:03.5', '%M:%S.%L') # 10 minutes, 3 seconds, and 5 milli-seconds
+$duration = Timespan('10:03.5', '%M:%S.%N') # 10 minutes, 3 seconds, and 5 nano-seconds
+```
+
+Conversion to Timestamp
+-------------------
+
+A new `Timestamp` can be created from `Integer`, `Float`, `String`, and `Hash` values. Several variants of the constructor are provided.
+
+#### Timestamp from seconds since epoch (1970-01-01 00:00:00 UTC)
+
+When a Float is used, the decimal part represents fractions of a second.
+
+```puppet
+function Timestamp.new(
+  Variant[Float, Integer] $value
+)
+```
+
+#### Timestamp from String and patterns consisting of format directives
+
+The first argument is parsed using the format optionally passed as a string or array of strings. When an array is used, an attempt
+will be made to parse the string using the first entry and then with each entry in succession until parsing succeeds. If the second
+argument is omitted, an array of default formats will be used.
+
+A third optional timezone argument can be provided. The first argument will then be parsed as if it represents a local time in that
+timezone. The timezone can be any timezone that is recognized when using the '%z' or '%Z' formats, or the word 'current', in which
+case the current timezone of the evaluating process will be used. The timezone argument is case insensitive.
+
+The default timezone, when no argument is provided, or when using the keyword `default`, is 'UTC'.
+
+It is illegal to provide a timezone argument other than `default` in combination with a format that contains '%z' or '%Z' since that
+would introduce an ambiguity as to which timezone to use. The one extracted from the string, or the one provided as an argument.
+
+An exception is raised when no format was able to parse the given string.
+
+```puppet
+function Timestamp.new(
+  String $string,
+  Variant[String[2],Array[String[2]], 1] $format = <default format>,
+  String $timezone = default)
+)
+```
+
+the arguments may also be passed as a `Hash`:
+
+```puppet
+function Timestamp.new(
+  Struct[{
+    string => String[1],
+    Optional[format] => Variant[String[2],Array[String[2]], 1],
+    Optional[timezone] => String[1]
+  }] $hash
+)
+```
+
+The directive consists of a percent (%) character, zero or more flags, optional minimum field width and
+a conversion specifier as follows:
+```
+%[Flags][Width]Conversion
+```
+
+##### Flags:
+
+| Flag  | Meaning
+| ----  | ---------------
+| -     | Don't pad numerical output
+| _     | Use spaces for padding
+| 0     | Use zeros for padding
+| #     | Change names to upper-case or change case of am/pm
+| ^     | Use uppercase
+| :     | Use colons for %z
+
+##### Format directives (names and padding can be altered using flags):
+
+**Date (Year, Month, Day):**
+
+| Format | Meaning |
+| ------ | ------- |
+| Y | Year with century, zero-padded to at least 4 digits |
+| C | year / 100 (rounded down such as 20 in 2009) |
+| y | year % 100 (00..99) |
+| m | Month of the year, zero-padded (01..12) |
+| B | The full month name ("January") |
+| b | The abbreviated month name ("Jan") |
+| h | Equivalent to %b |
+| d | Day of the month, zero-padded (01..31) |
+| e | Day of the month, blank-padded ( 1..31) |
+| j | Day of the year (001..366) |
+
+**Time (Hour, Minute, Second, Subsecond):**
+
+| Format | Meaning |
+| ------ | ------- |
+| H | Hour of the day, 24-hour clock, zero-padded (00..23) |
+| k | Hour of the day, 24-hour clock, blank-padded ( 0..23) |
+| I | Hour of the day, 12-hour clock, zero-padded (01..12) |
+| l | Hour of the day, 12-hour clock, blank-padded ( 1..12) |
+| P | Meridian indicator, lowercase ("am" or "pm") |
+| p | Meridian indicator, uppercase ("AM" or "PM") |
+| M | Minute of the hour (00..59) |
+| S | Second of the minute (00..60) |
+| L | Millisecond of the second (000..999). Digits under millisecond are truncated to not produce 1000 |
+| N | Fractional seconds digits, default is 9 digits (nanosecond). Digits under a specified width are truncated to avoid carry up |
+
+**Time (Hour, Minute, Second, Subsecond):**
+
+| Format | Meaning |
+| ------ | ------- |
+| z   | Time zone as hour and minute offset from UTC (e.g. +0900) |
+| :z  | hour and minute offset from UTC with a colon (e.g. +09:00) |
+| ::z | hour, minute and second offset from UTC (e.g. +09:00:00) |
+| Z   | Abbreviated time zone name or similar information.  (OS dependent) |
+
+**Weekday:**
+
+| Format | Meaning |
+| ------ | ------- |
+| A | The full weekday name ("Sunday") |
+| a | The abbreviated name ("Sun") |
+| u | Day of the week (Monday is 1, 1..7) |
+| w | Day of the week (Sunday is 0, 0..6) |
+
+**ISO 8601 week-based year and week number:**
+
+The first week of YYYY starts with a Monday and includes YYYY-01-04.
+The days in the year before the first week are in the last week of
+the previous year.
+
+| Format | Meaning |
+| ------ | ------- |
+| G | The week-based year |
+| g | The last 2 digits of the week-based year (00..99) |
+| V | Week number of the week-based year (01..53) |
+
+**Week number:**
+
+The first week of YYYY that starts with a Sunday or Monday (according to %U
+or %W). The days in the year before the first week are in week 0.
+
+| Format | Meaning |
+| ------ | ------- |
+| U | Week number of the year. The week starts with Sunday. (00..53) |
+| W | Week number of the year. The week starts with Monday. (00..53) |
+
+**Seconds since the Epoch:**
+
+| Format | Meaning |
+| s | Number of seconds since 1970-01-01 00:00:00 UTC. |
+
+**Literal string:**
+
+| Format | Meaning |
+| ------ | ------- |
+| n | Newline character (\n) |
+| t | Tab character (\t) |
+| % | Literal "%" character |
+
+**Combination:**
+
+| Format | Meaning |
+| ------ | ------- |
+| c | date and time (%a %b %e %T %Y) |
+| D | Date (%m/%d/%y) |
+| F | The ISO 8601 date format (%Y-%m-%d) |
+| v | VMS date (%e-%^b-%4Y) |
+| x | Same as %D |
+| X | Same as %T |
+| r | 12-hour time (%I:%M:%S %p) |
+| R | 24-hour time (%H:%M) |
+| T | 24-hour time (%H:%M:%S) |
+
+The default array contains the following patterns:
+
+When a timezone argument (other than `default`) is explicitly provided:
+
+```
+['%FT%T.L', '%FT%T', '%F']
+```
+
+otherwise:
+
+```
+['%FT%T.%L %Z', '%FT%T %Z', '%F %Z', '%FT%T.L', '%FT%T', '%F']
+```
+
+Examples - Converting to Timestamp
+
+```puppet
+$ts = Timestamp(1473150899)                              # 2016-09-06 08:34:59 UTC
+$ts = Timestamp({string=>'2015', format=>'%Y'})          # 2015-01-01 00:00:00.000 UTC
+$ts = Timestamp('Wed Aug 24 12:13:14 2016', '%c')        # 2016-08-24 12:13:14 UTC
+$ts = Timestamp('Wed Aug 24 12:13:14 2016 PDT', '%c %Z') # 2016-08-24 19:13:14.000 UTC
+$ts = Timestamp('2016-08-24 12:13:14', '%F %T', 'PST')   # 2016-08-24 20:13:14.000 UTC
+$ts = Timestamp('2016-08-24T12:13:14', default, 'PST')   # 2016-08-24 20:13:14.000 UTC
+
 ```
 
 Conversion to String
@@ -243,7 +565,7 @@ $str = String([10], "%(a")  # produces '("10")'
 **Example:** Specifying type for values contained in an array
 
 ```puppet
-$formats = { 
+$formats = {
   Array => {
     format => '%(a',
     string_formats => { Integer => '%#x' }
@@ -301,7 +623,7 @@ Defaults to `s` at top level and `p` inside array or hash.
 ### Boolean to String
 
 | Format    | Boolean Formats
-| ----      | -------------------   
+| ----      | -------------------
 | t T       | String 'true'/'false' or 'True'/'False', first char if alternate form is used (i.e. 't'/'f' or 'T'/'F').
 | y Y       | String 'yes'/'no', 'Yes'/'No', 'y'/'n' or 'Y'/'N' if alternative flag `#` is used.
 | dxXobB    | Numeric value 0/1 in accordance with the given format which must be valid integer format.
@@ -336,6 +658,23 @@ Defaults to `s` at top level and `p` inside array or hash.
 | d D       | String 'default' or 'Default', alternative form `#` causes value to be quoted.
 | s         | Same as d.
 | p         | Same as d.
+
+### Binary value to String
+
+| Format    | Default formats
+| ------    | ---------------
+| s         | binary as unquoted UTF-8 characters (errors if byte sequence is invalid UTF-8). Alternate form escapes non ascii bytes.
+| p         | 'Binary("<base64strict>")'
+| b         | '<base64>' - base64 string with newlines inserted
+| B         | '<base64strict>' - base64 strict string (without newlines inserted)
+| u         | '<base64urlsafe>' - base64 urlsafe string
+| t         | 'Binary' - outputs the name of the type only
+| T         | 'BINARY' - output the name of the type in all caps only
+
+* The alternate form flag `#` will quote the binary or base64 text output.
+* The format `%#s` allows invalid UTF-8 characters and outputs all non ascii bytes
+  as hex escaped characters on the form `\\xHH` where `H` is a hex digit.
+* The width and precision values are applied to the text part only in `%p` format.
 
 ### Array & Tuple to String
 
@@ -375,7 +714,7 @@ The alternate form flag `#` will format each hash key/value entry indented on a 
 
 ### Flags
 
-| Flag     | Effect 
+| Flag     | Effect
 | ------   | ------
 | (space)  | A space instead of `+` for numeric output (`-` is shown), for containers skips delimiters.
 | #        | Alternate format; prefix 0x/0x, 0 (octal) and 0b/0B for binary, Floats force decimal '.'. For g/G keep trailing 0.
@@ -405,6 +744,8 @@ When given a single value as argument:
 * An empty `Hash` becomes an empty array.
 * An `Array` is simply returned.
 * An `Iterable[T]` is turned into an array of `T` instances.
+* A `Binary` is converted to an `Array[Integer[0,255]]` of byte values
+
 
 When given a second Boolean argument:
 
@@ -476,7 +817,7 @@ function SemVer.new(SemVerHash $hash_args)
 # SemVerRange objects.
 #
 $t = SemVer[
-  SemVerRange('>=1.0.0 <2.0.0'), 
+  SemVerRange('>=1.0.0 <2.0.0'),
   SemVerRange('>=3.0.0 <4.0.0')
 ]
 notice(SemVer('1.2.3') =~ $t) # true
@@ -521,10 +862,65 @@ function SemVerRange.new(
 
 For examples of `SemVerRange` use see "Creating a SemVer"
 
+Creating a Binary
+---
+
+A `Binary` object represents a sequence of bytes and it can be created from a String in Base64 format,
+an Array containing byte values. A Binary can also be created from a Hash containing the value to convert to
+a `Binary`.
+
+The signatures are:
+
+```puppet
+type ByteInteger = Integer[0,255]
+type Base64Format = Enum["%b", "%u", "%B", "%s"]
+type StringHash = Struct[{value => String, "format" => Optional[Base64Format]}]
+type ArrayHash = Struct[{value => Array[ByteInteger]}]
+type BinaryArgsHash = Variant[StringHash, ArrayHash]
+
+function Binary.new(
+  String $base64_str,
+  Optional[Base64Format] $format
+)
+
+
+function Binary.new(
+  Array[ByteInteger] $byte_array
+}
+
+# Same as for String, or for Array, but where arguments are given in a Hash.
+function Binary.new(BinaryArgsHash $hash_args)
+```
+
+The formats have the following meaning:
+
+| format | explanation |
+| ----   | ----        |
+| B | The data is in base64 strict encoding
+| u | The data is in URL safe base64 encoding
+| b | The data is in base64 encoding, padding as required by base64 strict, is added by default
+| s | The data is a puppet string. The string must be valid UTF-8, or convertible to UTF-8 or an error is raised.
+| r | (Ruby Raw) the byte sequence in the given string is used verbatim irrespective of possible encoding errors
+
+* The default format is `%B`.
+* Note that the format `%r` should be used sparingly, or not at all. It exists for backwards compatibility reasons when someone receiving
+  a string from some function and that string should be treated as Binary. Such code should be changed to return a Binary instead of a String.
+
+**Examples:** Creating a Binary
+
+```puppet
+# create the binary content "abc"
+$a = Binary('YWJj')
+
+# create the binary content from content in a module's file
+$b = binary_file('mymodule/mypicture.jpg')
+```
+
 * Since 4.5.0
+* Binary type since 4.8.0
 
 DOC
 ) do |args|
-  function_fail(["new() is only available when parser/evaluator future is in effect"])
+  Error.is4x('new')
 end
 

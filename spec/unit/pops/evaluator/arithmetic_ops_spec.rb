@@ -1,5 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'puppet_spec/compiler'
 
 require 'puppet/pops'
 require 'puppet/pops/evaluator/evaluator_impl'
@@ -71,6 +72,175 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
       it "'012.3' + '010'  ==  20.3 (not error, floats can start with 0)" do
         expect(evaluate(literal('012.3') + literal('010'))).to eq(20.3)
+      end
+    end
+
+    context 'on timespans' do
+      include PuppetSpec::Compiler
+
+      it 'Timespan + Timespan = Timespan' do
+        code = 'notice(assert_type(Timespan, Timespan({days => 3}) + Timespan({hours => 12})))'
+        expect(eval_and_collect_notices(code)).to eql(['3-12:00:00.0'])
+      end
+
+      it 'Timespan - Timespan = Timespan' do
+        code = 'notice(assert_type(Timespan, Timespan({days => 3}) - Timespan({hours => 12})))'
+        expect(eval_and_collect_notices(code)).to eql(['2-12:00:00.0'])
+      end
+
+      it 'Timespan + -Timespan = Timespan' do
+        code = 'notice(assert_type(Timespan, Timespan({days => 3}) + -Timespan({hours => 12})))'
+        expect(eval_and_collect_notices(code)).to eql(['2-12:00:00.0'])
+      end
+
+      it 'Timespan - -Timespan = Timespan' do
+        code = 'notice(assert_type(Timespan, Timespan({days => 3}) - -Timespan({hours => 12})))'
+        expect(eval_and_collect_notices(code)).to eql(['3-12:00:00.0'])
+      end
+
+      it 'Timespan / Timespan = Float' do
+        code = "notice(assert_type(Float, Timespan({days => 3}) / Timespan('0-12:00:00')))"
+        expect(eval_and_collect_notices(code)).to eql(['6.0'])
+      end
+
+      it 'Timespan * Timespan is an error' do
+        code = 'notice(Timespan({days => 3}) * Timespan({hours => 12}))'
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /A Timestamp cannot be multiplied by a Timespan/)
+      end
+
+      it 'Timespan + Numeric = Timespan (numeric treated as seconds)' do
+        code = 'notice(assert_type(Timespan, Timespan({days => 3}) + 7300.0))'
+        expect(eval_and_collect_notices(code)).to eql(['3-02:01:40.0'])
+      end
+
+      it 'Timespan - Numeric = Timespan (numeric treated as seconds)' do
+        code = "notice(assert_type(Timespan, Timespan({days => 3}) - 7300.123))"
+        expect(eval_and_collect_notices(code)).to eql(['2-21:58:19.877'])
+      end
+
+      it 'Timespan * Numeric = Timespan (numeric treated as seconds)' do
+        code = "notice(strftime(assert_type(Timespan, Timespan({days => 3}) * 2), '%D'))"
+        expect(eval_and_collect_notices(code)).to eql(['6'])
+      end
+
+      it 'Numeric + Timespan = Timespan (numeric treated as seconds)' do
+        code = 'notice(assert_type(Timespan, 7300.0 + Timespan({days => 3})))'
+        expect(eval_and_collect_notices(code)).to eql(['3-02:01:40.0'])
+      end
+
+      it 'Numeric - Timespan = Timespan (numeric treated as seconds)' do
+        code = "notice(strftime(assert_type(Timespan, 300000 - Timespan({days => 3})), '%H:%M'))"
+        expect(eval_and_collect_notices(code)).to eql(['11:20'])
+      end
+
+      it 'Numeric * Timespan = Timespan (numeric treated as seconds)' do
+        code = "notice(strftime(assert_type(Timespan, 2 * Timespan({days => 3})), '%D'))"
+        expect(eval_and_collect_notices(code)).to eql(['6'])
+      end
+
+      it 'Timespan + Timestamp = Timestamp' do
+        code = "notice(assert_type(Timestamp, Timespan({days => 3}) + Timestamp('2016-08-27T16:44:49.999 UTC')))"
+        expect(eval_and_collect_notices(code)).to eql(['2016-08-30T16:44:49.999 UTC'])
+      end
+
+      it 'Timespan - Timestamp is an error' do
+        code = 'notice(Timespan({days => 3}) - Timestamp())'
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /A Timestamp cannot be subtracted from a Timespan/)
+      end
+
+      it 'Timespan * Timestamp is an error' do
+        code = 'notice(Timespan({days => 3}) * Timestamp())'
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /A Timestamp cannot be multiplied by a Timestamp/)
+      end
+
+      it 'Timespan / Timestamp is an error' do
+        code = 'notice(Timespan({days => 3}) / Timestamp())'
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /A Timespan cannot be divided by a Timestamp/)
+      end
+    end
+
+
+    context 'on timestamps' do
+      include PuppetSpec::Compiler
+
+      it 'Timestamp + Timestamp is an error' do
+        code = 'notice(Timestamp() + Timestamp())'
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /A Timestamp cannot be added to a Timestamp/)
+      end
+
+      it 'Timestamp + Timespan = Timestamp' do
+        code = "notice(assert_type(Timestamp, Timestamp('2016-10-10') + Timespan('0-12:00:00')))"
+        expect(eval_and_collect_notices(code)).to eql(['2016-10-10T12:00:00.000 UTC'])
+      end
+
+      it 'Timestamp + Numeric = Timestamp' do
+        code = "notice(assert_type(Timestamp, Timestamp('2016-10-10T12:00:00.000') + 3600.123))"
+        expect(eval_and_collect_notices(code)).to eql(['2016-10-10T13:00:00.123 UTC'])
+      end
+
+      it 'Numeric + Timestamp = Timestamp' do
+        code = "notice(assert_type(Timestamp, 3600.123 + Timestamp('2016-10-10T12:00:00.000')))"
+        expect(eval_and_collect_notices(code)).to eql(['2016-10-10T13:00:00.123 UTC'])
+      end
+
+      it 'Timestamp - Timestamp = Timespan' do
+        code = "notice(assert_type(Timespan, Timestamp('2016-10-10') - Timestamp('2015-10-10')))"
+        expect(eval_and_collect_notices(code)).to eql(['366-00:00:00.0'])
+      end
+
+      it 'Timestamp - Timespan = Timestamp' do
+        code = "notice(assert_type(Timestamp, Timestamp('2016-10-10') - Timespan('0-12:00:00')))"
+        expect(eval_and_collect_notices(code)).to eql(['2016-10-09T12:00:00.000 UTC'])
+      end
+
+      it 'Timestamp - Numeric = Timestamp' do
+        code = "notice(assert_type(Timestamp, Timestamp('2016-10-10') - 3600.123))"
+        expect(eval_and_collect_notices(code)).to eql(['2016-10-09T22:59:59.877 UTC'])
+      end
+
+      it 'Numeric - Timestamp = Timestamp' do
+        code = "notice(assert_type(Timestamp, 123 - Timestamp('2016-10-10')))"
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '-' is not applicable.*when right side is a Timestamp/)
+      end
+
+      it 'Timestamp / Timestamp is an error' do
+        code = "notice(Timestamp('2016-10-10') / Timestamp())"
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\/' is not applicable to a Timestamp/)
+      end
+
+      it 'Timestamp / Timespan is an error' do
+        code = "notice(Timestamp('2016-10-10') / Timespan('0-12:00:00'))"
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\/' is not applicable to a Timestamp/)
+      end
+
+      it 'Timestamp / Numeric is an error' do
+        code = "notice(Timestamp('2016-10-10') / 3600.123)"
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\/' is not applicable to a Timestamp/)
+      end
+
+      it 'Numeric / Timestamp is an error' do
+        code = "notice(3600.123 / Timestamp('2016-10-10'))"
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\/' is not applicable.*when right side is a Timestamp/)
+      end
+
+      it 'Timestamp * Timestamp is an error' do
+        code = "notice(Timestamp('2016-10-10') * Timestamp())"
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\*' is not applicable to a Timestamp/)
+      end
+
+      it 'Timestamp * Timespan is an error' do
+        code = "notice(Timestamp('2016-10-10') * Timespan('0-12:00:00'))"
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\*' is not applicable to a Timestamp/)
+      end
+
+      it 'Timestamp * Numeric is an error' do
+        code = "notice(Timestamp('2016-10-10') * 3600.123)"
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\*' is not applicable to a Timestamp/)
+      end
+
+      it 'Numeric * Timestamp is an error' do
+        code = "notice(3600.123 * Timestamp('2016-10-10'))"
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\*' is not applicable.*when right side is a Timestamp/)
       end
     end
   end

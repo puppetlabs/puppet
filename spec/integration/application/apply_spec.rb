@@ -309,6 +309,124 @@ end
         expect(logs).to include(match(/doesn't match server specified environment/))
       end
     end
+  end
+
+  context 'when compiling a provided catalog with rich data and then applying from file' do
+    include PuppetSpec::Compiler
+
+    let(:env_dir) { tmpdir('environments') }
+    let(:execute) { 'include amod' }
+    let(:rich_data) { false }
+    let(:env_name) { 'spec' }
+    let(:populated_env_dir) do
+      dir_contained_in(env_dir, {
+        env_name => {
+          'modules' => {
+            'amod' => {
+              'manifests' => {
+                'init.pp' => <<-EOF
+class amod {
+  notify { rx: message => /[Rr]eg[Ee]xp/ }
+  notify { bin: message => Binary('w5ZzdGVuIG1lZCByw7ZzdGVuCg==') }
+  notify { ver: message  => SemVer('2.3.1') }
+  notify { vrange: message => SemVerRange('>=2.3.0') }
+  notify { tspan: message => Timespan(3600) }
+  notify { tstamp: message => Timestamp('2012-03-04T18:15:11.001') }
+}
+
+class amod::bad_type {
+  notify { bogus: message => amod::bogus() }
+}
+              EOF
+              },
+              'lib' => {
+                'puppet' => {
+                  'functions' => {
+                    'amod' => {
+                      'bogus.rb' => <<-RUBY
+                        # Function that leaks an object that is not recognized in the catalog
+                        Puppet::Functions.create_function(:'amod::bogus') do
+                          def bogus()
+                            Time.new(2016, 10, 6, 23, 51, 14, '+02:00')
+                          end
+                        end
+                      RUBY
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      })
+      env_dir
+    end
+
+    let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(populated_env_dir, 'spec', 'modules')]) }
+    let(:node) { Puppet::Node.new('test', :environment => env) }
+
+    around(:each) do |example|
+      Puppet[:rich_data] = rich_data
+      Puppet.override(:loaders => Puppet::Pops::Loaders.new(env)) { example.run }
+    end
+
+    context 'and rich_data is set to false during compile' do
+      it 'will notify a string that is the result of Regexp#inspect (from Runtime3xConverter)' do
+        catalog = compile_to_catalog(execute, node)
+        apply = Puppet::Application[:apply]
+        apply.options[:catalog] = file_containing('manifest', catalog.to_pson)
+        apply.expects(:apply_catalog).with do |catalog|
+          catalog.resource(:notify, 'rx')['message'].is_a?(String)
+          catalog.resource(:notify, 'bin')['message'].is_a?(String)
+          catalog.resource(:notify, 'ver')['message'].is_a?(String)
+          catalog.resource(:notify, 'vrange')['message'].is_a?(String)
+          catalog.resource(:notify, 'tspan')['message'].is_a?(String)
+          catalog.resource(:notify, 'tstamp')['message'].is_a?(String)
+        end
+        apply.run
+      end
+
+      it 'will notify a string that is the result of to_s on uknown data types' do
+        logs = []
+        json = Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+           compile_to_catalog('include amod::bad_type', node).to_pson
+        end
+        logs = logs.select { |log| log.level == :warning }.map { |log| log.message }
+        expect(logs.empty?).to be_falsey
+        expect(logs[0]).to eql("Resource 'Notify[bogus]' contains a Time value. It will be converted to the String '2016-10-06 23:51:14 +0200'")
+
+        apply = Puppet::Application[:apply]
+        apply.options[:catalog] = file_containing('manifest', json)
+        apply.expects(:apply_catalog).with do |catalog|
+          catalog.resource(:notify, 'bogus')['message'].is_a?(String)
+        end
+        apply.run
+      end
+    end
+
+    context 'and rich_data is set to true during compile' do
+      let(:rich_data) { true }
+
+      it 'will notify a regexp using Regexp#to_s' do
+        catalog = compile_to_catalog(execute, node)
+        apply = Puppet::Application[:apply]
+        apply.options[:catalog] = file_containing('manifest', catalog.to_pson)
+        apply.expects(:apply_catalog).with do |catalog|
+          catalog.resource(:notify, 'rx')['message'].is_a?(Regexp)
+          catalog.resource(:notify, 'bin')['message'].is_a?(Puppet::Pops::Types::PBinaryType::Binary)
+          catalog.resource(:notify, 'ver')['message'].is_a?(Semantic::Version)
+          catalog.resource(:notify, 'vrange')['message'].is_a?(Semantic::VersionRange)
+          catalog.resource(:notify, 'tspan')['message'].is_a?(Puppet::Pops::Time::Timespan)
+          catalog.resource(:notify, 'tstamp')['message'].is_a?(Puppet::Pops::Time::Timestamp)
+        end
+        apply.run
+      end
+
+      it 'will raise an error on uknown data types' do
+        catalog = compile_to_catalog('include amod::bad_type', node)
+        expect { catalog.to_pson }.to raise_error(/No Puppet Type found for Time/)
+      end
+    end
 
   end
 end

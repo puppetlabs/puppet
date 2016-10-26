@@ -1,3 +1,4 @@
+# @api private
 module Puppet::DataProviders
 
   def self.assert_loaded

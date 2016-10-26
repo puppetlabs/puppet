@@ -130,7 +130,9 @@ class Puppet::Resource::Type
       if blueprint.nil?
         raise Puppet::ParseError, "Resource type #{resource.type} does not produce #{ex.type}"
       end
-      produced_resource = Puppet::Parser::Resource.new(ex.type, ex.title, :scope => scope, :source => self)
+      t = ex.type
+      t = Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_resource_type(scope, t) unless t == 'class' || t == 'node'
+      produced_resource = Puppet::Parser::Resource.new(t, ex.title, :scope => scope, :source => self)
 
       produced_resource.resource_type.parameters.each do |name|
         next if name == :name

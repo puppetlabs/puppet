@@ -6,7 +6,7 @@ module HeredocSupport
   # Pattern for heredoc `@(endtag[:syntax][/escapes])
   # Produces groups for endtag (group 1), syntax (group 2), and escapes (group 3)
   #
-  PATTERN_HEREDOC = %r{@\(([^:/\r\n\)]+)(?::[:blank:]*([a-z][a-zA-Z0-9_+]+)[:blank:]*)?(?:/((?:\w|[$])*)[:blank:]*)?\)}
+  PATTERN_HEREDOC = %r{@\(([^:/\r\n\)]+)(?::[[:blank:]]*([a-z][a-zA-Z0-9_+]+)[[:blank:]]*)?(?:/((?:\w|[$])*)[[:blank:]]*)?\)}
 
 
   def heredoc
@@ -19,7 +19,6 @@ module HeredocSupport
     # find end of the heredoc spec
     str = scn.scan_until(/\)/) || lex_error(Issues::HEREDOC_UNCLOSED_PARENTHESIS, :followed_by => followed_by)
     pos_after_heredoc = scn.pos
-
     # Note: allows '+' as separator in syntax, but this needs validation as empty segments are not allowed
     md = str.match(PATTERN_HEREDOC)
     lex_error(Issues::HEREDOC_INVALID_SYNTAX) unless md

@@ -710,7 +710,7 @@ class Puppet::Parser::Scope
 
     params.each { |param|
       if table.include?(param.name)
-        raise Puppet::ParseError.new("Default already defined for #{type} { #{param.name} }; cannot redefine", param.line, param.file)
+        raise Puppet::ParseError.new("Default already defined for #{type} { #{param.name} }; cannot redefine", param.file, param.line)
       end
       table[param.name] = param
     }

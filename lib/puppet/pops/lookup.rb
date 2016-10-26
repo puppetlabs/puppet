@@ -54,10 +54,22 @@ module Lookup
       elsif has_default
         answer = assert_type('Default value', value_type, default_value)
       else
+        lookup_invocation.emit_debug_info(debug_preamble(names)) if Puppet[:debug]
         fail_lookup(names)
       end
     end
+    lookup_invocation.emit_debug_info(debug_preamble(names)) if Puppet[:debug]
     answer
+  end
+
+  # @api private
+  def self.debug_preamble(names)
+    if names.size == 1
+      names = "'#{names[0]}'"
+    else
+      names = names.map { |n| "'#{n}'" }.join(', ')
+    end
+    "Lookup of #{names}"
   end
 
   # @api private

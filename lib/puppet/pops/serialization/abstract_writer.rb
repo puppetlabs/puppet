@@ -19,6 +19,7 @@ MIN_INTEGER = -0x8000000000000000
 # - Regexp
 # - Version
 # - VersionRange
+# - Timespan
 # - Timestamp
 # - Default
 #
@@ -52,7 +53,7 @@ class AbstractWriter
     when Integer
       # not tabulated, but integers larger than 64-bit cannot be allowed.
       raise SerializationError, 'Integer out of bounds' if value > MAX_INTEGER || value < MIN_INTEGER
-    when Numeric, Symbol, Extension::NotTabulated, true, false, nil
+    when Numeric, Symbol, Types::PSensitiveType::Sensitive, Extension::NotTabulated, true, false, nil
       # not tabulated
     else
       if @tabulate
@@ -161,8 +162,12 @@ class AbstractWriter
       build_payload { |ep| ep.write(o.to_s) }
     end
 
-    register_type(Extension::TIME, Time) do |o|
-      build_payload { |ep| ep.write(o.tv_sec); ep.write(o.tv_nsec) }
+    register_type(Extension::TIME, Time::Timestamp) do |o|
+      build_payload { |ep| nsecs = o.nsecs; ep.write(nsecs / 1000000000); ep.write(nsecs % 1000000000) }
+    end
+
+    register_type(Extension::TIMESPAN, Time::Timespan) do |o|
+      build_payload { |ep| nsecs = o.nsecs; ep.write(nsecs / 1000000000); ep.write(nsecs % 1000000000) }
     end
 
     register_type(Extension::VERSION, Semantic::Version) do |o|
@@ -170,6 +175,14 @@ class AbstractWriter
     end
 
     register_type(Extension::VERSION_RANGE, Semantic::VersionRange) do |o|
+      build_payload { |ep| ep.write(o.to_s) }
+    end
+
+    register_type(Extension::SENSITIVE, Types::PSensitiveType::Sensitive) do |o|
+      build_payload { |ep| ep.write(o.unwrap) }
+    end
+
+    register_type(Extension::BINARY, Types::PBinaryType::Binary) do |o|
       build_payload { |ep| ep.write(o.to_s) }
     end
   end

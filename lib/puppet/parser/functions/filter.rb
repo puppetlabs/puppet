@@ -74,5 +74,5 @@ $filtered_data = $data.filter |$keys, $values| { $keys =~ /berry$/ and $values <
 - Since 4.0.0
 DOC
 ) do |args|
-  function_fail(["filter() is only available when parser/evaluator future is in effect"])
+  Error.is4x('filter')
 end

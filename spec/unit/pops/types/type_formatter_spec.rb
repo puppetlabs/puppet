@@ -178,6 +178,38 @@ end
       expect(s.string(f.iterator(f.integer))).to eq('Iterator[Integer]')
     end
 
+    it "should yield 'Timespan' for PTimespanType" do
+      expect(s.string(f.timespan())).to eq('Timespan')
+    end
+
+    it "should yield 'Timespan[{hours => 1}] for PTimespanType[Timespan]" do
+      expect(s.string(f.timespan({'hours' => 1}))).to eq("Timespan['0-01:00:00.0']")
+    end
+
+    it "should yield 'Timespan[default, {hours => 2}] for PTimespanType[nil, Timespan]" do
+      expect(s.string(f.timespan(nil, {'hours' => 2}))).to eq("Timespan[default, '0-02:00:00.0']")
+    end
+
+    it "should yield 'Timespan[{hours => 1}, {hours => 2}] for PTimespanType[Timespan, Timespan]" do
+      expect(s.string(f.timespan({'hours' => 1}, {'hours' => 2}))).to eq("Timespan['0-01:00:00.0', '0-02:00:00.0']")
+    end
+
+    it "should yield 'Timestamp' for PTimestampType" do
+      expect(s.string(f.timestamp())).to eq('Timestamp')
+    end
+
+    it "should yield 'Timestamp['2016-09-05T13:00:00.000 UTC'] for PTimestampType[Timestamp]" do
+      expect(s.string(f.timestamp('2016-09-05T13:00:00.000 UTC'))).to eq("Timestamp['2016-09-05T13:00:00.000 UTC']")
+    end
+
+    it "should yield 'Timestamp[default, '2016-09-05T13:00:00.000 UTC'] for PTimestampType[nil, Timestamp]" do
+      expect(s.string(f.timestamp(nil, '2016-09-05T13:00:00.000 UTC'))).to eq("Timestamp[default, '2016-09-05T13:00:00.000 UTC']")
+    end
+
+    it "should yield 'Timestamp['2016-09-05T13:00:00.000 UTC', '2016-12-01T00:00:00.000 UTC'] for PTimestampType[Timestamp, Timestamp]" do
+      expect(s.string(f.timestamp('2016-09-05T13:00:00.000 UTC', '2016-12-01T00:00:00.000 UTC'))).to eq("Timestamp['2016-09-05T13:00:00.000 UTC', '2016-12-01T00:00:00.000 UTC']")
+    end
+
     it "should yield 'Tuple[Integer]' for PTupleType[PIntegerType]" do
       expect(s.string(f.tuple([f.integer]))).to eq('Tuple[Integer]')
     end
@@ -269,8 +301,16 @@ end
       expect(s.string(f.callable)).to eql('Callable[0, 0]')
     end
 
+    it "should yield 'Callable[[0,0],rt]' for callable without params but with return type" do
+      expect(s.string(f.callable([], Float))).to eql('Callable[[0, 0], Float]')
+    end
+
     it "should yield 'Callable[t,t]' for callable with typed parameters" do
       expect(s.string(f.callable(String, Integer))).to eql('Callable[String, Integer]')
+    end
+
+    it "should yield 'Callable[[t,t],rt]' for callable with typed parameters and return type" do
+      expect(s.string(f.callable([String, Integer], Float))).to eql('Callable[[String, Integer], Float]')
     end
 
     it "should yield 'Callable[t,min,max]' for callable with size constraint (infinite max)" do

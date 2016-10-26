@@ -4,7 +4,7 @@ require 'spec_helper'
 require 'puppet/pops'
 require 'puppet/pops/evaluator/evaluator_impl'
 require 'puppet/pops/types/type_factory'
-
+require 'base64'
 
 # relative to this spec file (./) does not work as this file is loaded by rspec
 require File.join(File.dirname(__FILE__), '/evaluator_rspec_helper')
@@ -18,6 +18,13 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
   def float_range(from, to)
     Puppet::Pops::Types::TypeFactory.float_range(from, to)
+  end
+
+  def binary(s)
+    # Note that the factory is not aware of Binary and cannot operate on a
+    # literal binary. Instead, it must create a call to Binary.new() with the base64 encoded
+    # string as an argument
+    CALL_NAMED(QREF("Binary"), true, [Base64.strict_encode64(s)])
   end
 
   context 'The evaluator when operating on a String' do
@@ -42,6 +49,31 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
     it 'raises an error if arity is wrong for []' do
       expect{evaluate(literal('abc')[])}.to raise_error(/String supports \[\] with one or two arguments\. Got 0/)
       expect{evaluate(literal('abc')[1,2,3])}.to raise_error(/String supports \[\] with one or two arguments\. Got 3/)
+    end
+  end
+
+  context 'The evaluator when operating on a Binary' do
+    it 'can get a single character using a single key index to []' do
+      expect(evaluate(binary('abc')[1]).binary_buffer).to eql('b')
+    end
+
+    it 'can get the last character using the key -1 in []' do
+      expect(evaluate(binary('abc')[-1]).binary_buffer).to eql('c')
+    end
+
+    it 'can get a substring by giving two keys' do
+      expect(evaluate(binary('abcd')[1,2]).binary_buffer).to eql('bc')
+      # flattens keys
+      expect(evaluate(binary('abcd')[[1,2]]).binary_buffer).to eql('bc')
+    end
+
+    it 'produces empty string for a substring out of range' do
+      expect(evaluate(binary('abc')[100]).binary_buffer).to eql('')
+    end
+
+    it 'raises an error if arity is wrong for []' do
+      expect{evaluate(binary('abc')[])}.to raise_error(/String supports \[\] with one or two arguments\. Got 0/)
+      expect{evaluate(binary('abc')[1,2,3])}.to raise_error(/String supports \[\] with one or two arguments\. Got 3/)
     end
   end
 
@@ -233,6 +265,40 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
     it "Array parameterization gives an error if parameter is not a type" do
       expr = fqr('Array')['String']
       expect { evaluate(expr)}.to raise_error(/Array-Type\[\] arguments must be types/)
+    end
+
+    # Timespan Type
+    #
+    it 'produdes a Timespan type with a lower bound' do
+      expr = fqr('Timespan')[{fqn('hours') => literal(3)}]
+      expect(evaluate(expr)).to be_the_type(types.timespan({'hours' => 3}))
+    end
+
+    it 'produdes a Timespan type with an upper bound' do
+      expr = fqr('Timespan')[literal(:default), {fqn('hours') => literal(9)}]
+      expect(evaluate(expr)).to be_the_type(types.timespan(nil, {'hours' => 9}))
+    end
+
+    it 'produdes a Timespan type with both lower and upper bounds' do
+      expr = fqr('Timespan')[{fqn('hours') => literal(3)}, {fqn('hours') => literal(9)}]
+      expect(evaluate(expr)).to be_the_type(types.timespan({'hours' => 3}, {'hours' => 9}))
+    end
+
+    # Timestamp Type
+    #
+    it 'produdes a Timestamp type with a lower bound' do
+      expr = fqr('Timestamp')[literal('2014-12-12T13:14:15 CET')]
+      expect(evaluate(expr)).to be_the_type(types.timestamp('2014-12-12T13:14:15 CET'))
+    end
+
+    it 'produdes a Timestamp type with an upper bound' do
+      expr = fqr('Timestamp')[literal(:default), literal('2016-08-23T17:50:00 CET')]
+      expect(evaluate(expr)).to be_the_type(types.timestamp(nil, '2016-08-23T17:50:00 CET'))
+    end
+
+    it 'produdes a Timestamp type with both lower and upper bounds' do
+      expr = fqr('Timestamp')[literal('2014-12-12T13:14:15 CET'), literal('2016-08-23T17:50:00 CET')]
+      expect(evaluate(expr)).to be_the_type(types.timestamp('2014-12-12T13:14:15 CET', '2016-08-23T17:50:00 CET'))
     end
 
     # Tuple Type
@@ -457,6 +523,20 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       # arguments are flattened
       type_expr = fqr('Runtime')[['ruby', 'String']]
       expect(evaluate(type_expr)).to eql(tf.ruby_type('String'))
+    end
+
+    # Callable Type
+    #
+    it 'produces Callable instance without return type' do
+      type_expr = fqr('Callable')[fqr('String')]
+      tf = Puppet::Pops::Types::TypeFactory
+      expect(evaluate(type_expr)).to eql(tf.callable(String))
+    end
+
+    it 'produces Callable instance with parameters and return type' do
+      type_expr = fqr('Callable')[[fqr('String')], fqr('Integer')]
+      tf = Puppet::Pops::Types::TypeFactory
+      expect(evaluate(type_expr)).to eql(tf.callable([String], Integer))
     end
 
   end

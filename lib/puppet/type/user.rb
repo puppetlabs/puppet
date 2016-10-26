@@ -16,9 +16,10 @@ module Puppet
       about them.  It does not directly modify `/etc/passwd` or anything.
 
       **Autorequires:** If Puppet is managing the user's primary group (as
-      provided in the `gid` attribute), the user resource will autorequire
-      that group. If Puppet is managing any role accounts corresponding to the
-      user's roles, the user resource will autorequire those role accounts."
+      provided in the `gid` attribute) or any group listed in the `groups`
+      attribute then the user resource will autorequire that group. If Puppet
+      is managing any role accounts corresponding to the user's roles, the
+      user resource will autorequire those role accounts."
 
     feature :allows_duplicates,
       "The provider supports duplicate users with the same UID."
@@ -323,9 +324,14 @@ module Puppet
     end
 
     newparam(:membership) do
-      desc "Whether specified groups should be considered the **complete list**
-        (`inclusive`) or the **minimum list** (`minimum`) of groups to which
-        the user belongs. Defaults to `minimum`."
+      desc "If `minimum` is specified, Puppet will ensure that the user is a
+        member of all specified groups, but will not remove any other groups
+        that the user is a part of.
+
+        If `inclusive` is specified, Puppet will ensure that the user is a
+        member of **only** specified groups.
+
+        Defaults to `minimum`."
 
       newvalues(:inclusive, :minimum)
 

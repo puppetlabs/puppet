@@ -1,3 +1,4 @@
+# @api private
 module Puppet::DataProviders::DataFunctionSupport
   def initialize_data(data_key, lookup_invocation)
     name = "#{data_key}::data"
