@@ -221,7 +221,7 @@ describe Puppet::Indirector::SslFile do
           @searcher.class.store_in @setting
           fh = mock 'filehandle'
           fh.stubs :print
-          Puppet.settings.setting(@setting).expects(:open_file).with(@certpath, 'w').yields fh
+          Puppet.settings.setting(@setting).expects(:open_file).with(@certpath, 'w:ASCII').yields fh
 
           @searcher.save(@request)
         end
@@ -233,7 +233,7 @@ describe Puppet::Indirector::SslFile do
 
           fh = mock 'filehandle'
           fh.stubs :print
-          Puppet.settings.setting(@setting).expects(:open).with('w').yields fh
+          Puppet.settings.setting(@setting).expects(:open).with('w:ASCII').yields fh
           @searcher.save(@request)
         end
       end
@@ -246,7 +246,7 @@ describe Puppet::Indirector::SslFile do
 
           fh = mock 'filehandle'
           fh.stubs :print
-          Puppet.settings.setting(:cakey).expects(:open).with('w').yields fh
+          Puppet.settings.setting(:cakey).expects(:open).with('w:ASCII').yields fh
           @searcher.stubs(:ca?).returns true
           @searcher.save(@request)
         end
