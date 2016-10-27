@@ -59,7 +59,7 @@ class Puppet::Util::NetworkDevice::Config
             device.options = { :debug => false }
             Puppet.debug "found device: #{device.name} at #{device.line}"
             devices[name] = device
-          when /^\s*(type|url|debug)(\s+(.+))*$/
+          when /^\s*(type|url|debug)(\s+(.+)\s*)*$/
             parse_directive(device, $1, $3, count)
           else
             raise Puppet::Error, "Invalid line #{count}: #{line}"
