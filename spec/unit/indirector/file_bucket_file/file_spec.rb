@@ -88,6 +88,13 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
             expect(Puppet::FileSystem.binread("#{dir_path}/contents")).to eq(plaintext)
             expect(File.read("#{dir_path}/paths")).to eq("foo/bar\nfoo/baz\n")
           end
+
+          it "should exclusive_open the paths file with UTF-8 encoding" do
+            paths_file = Pathname.new(File.join(Puppet[:bucketdir], bucket_dir, "paths"))
+            bucket_file = Puppet::FileBucket::File.new(plaintext)
+            Puppet::FileSystem.expects(:exclusive_open).with(paths_file, anything, 'a+:UTF-8')
+            Puppet::FileBucket::File.indirection.save(bucket_file, "#{bucket_file.name}/foo/baz")
+          end
         end
       end
 
@@ -182,6 +189,14 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
             find_result = Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}/foo/bar")
             expect(find_result.checksum).to eq("{#{digest_algorithm}}#{checksum}")
             expect(find_result.to_s).to eq(contents)
+          end
+
+          it "should open the paths file with UTF-8 encoding" do
+            paths_file = Pathname.new("#{Puppet[:bucketdir]}/#{bucket_dir}/paths")
+            contents_file = Pathname.new("#{Puppet[:bucketdir]}/#{bucket_dir}/contents")
+            Puppet::FileSystem.stubs(:exist?).with(contents_file).returns(true)
+            Puppet::FileSystem.expects(:open).with(paths_file, anything, 'a+:UTF-8')
+            Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}/foo/bar")
           end
         end
 

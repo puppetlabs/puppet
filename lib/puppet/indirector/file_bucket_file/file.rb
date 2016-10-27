@@ -115,7 +115,7 @@ module Puppet::FileBucketFile
     # @param files_original_path [String]
     #
     def matches(paths_file, files_original_path)
-      Puppet::FileSystem.open(paths_file, 0640, 'a+') do |f|
+      Puppet::FileSystem.open(paths_file, 0640, 'a+:UTF-8') do |f|
         path_match(f, files_original_path)
       end
     end
@@ -138,7 +138,7 @@ module Puppet::FileBucketFile
           Puppet::FileSystem.dir_mkpath(paths_file)
         end
 
-        Puppet::FileSystem.exclusive_open(paths_file, 0640, 'a+') do |f|
+        Puppet::FileSystem.exclusive_open(paths_file, 0640, 'a+:UTF-8') do |f|
           if Puppet::FileSystem.exist?(contents_file)
             verify_identical_file!(contents_file, bucket_file)
             Puppet::FileSystem.touch(contents_file)
