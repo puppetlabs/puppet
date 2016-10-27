@@ -56,7 +56,7 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
 
       return packages
     rescue Puppet::ExecutionFailure
-      nil
+      return []
     end
   end
 
