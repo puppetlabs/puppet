@@ -739,7 +739,9 @@ module Puppet
     def unknown_keys_in_file(keyfile)
       names = []
       name_index = 0
-      File.new(keyfile).each do |line|
+      # RFC 4716 specifies UTF-8 allowed in public key files per https://www.ietf.org/rfc/rfc4716.txt
+      # the authorized_keys file may contain UTF-8 comments
+      Puppet::FileSystem.open(keyfile, nil, 'r:UTF-8').each do |line|
         next unless line =~ Puppet::Type.type(:ssh_authorized_key).keyline_regex
         # the name is stored in the 4th capture of the regex
         name = $4
