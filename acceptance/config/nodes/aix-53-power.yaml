@@ -11,6 +11,7 @@ HOSTS:
       - agent
     platform: aix-5.3-power
     hypervisor: none
+    vmhostname: pe-aix-53-acceptance.delivery.puppetlabs.net 
 CONFIG:
   datastore: instance0
   resourcepool: delivery/Quality Assurance/FOSS/Dynamic
