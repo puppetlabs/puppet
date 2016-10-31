@@ -92,13 +92,23 @@ class CompareOperator
     end
   end
 
+  def cmp_Timespan(a, b)
+    raise ArgumentError.new('Timespans are only comparable to Timespans, Integers, and Floats') unless b.is_a?(Time::Timespan) ||  b.is_a?(Integer) || b.is_a?(Float)
+    a <=> b
+  end
+
+  def cmp_Timestamp(a, b)
+    raise ArgumentError.new('Timestamps are only comparable to Timestamps, Integers, and Floats') unless b.is_a?(Time::Timestamp) ||  b.is_a?(Integer) || b.is_a?(Float)
+    a <=> b
+  end
+
   def cmp_Version(a, b)
     raise ArgumentError.new('Versions not comparable to non Versions') unless b.is_a?(Semantic::Version)
     a <=> b
   end
 
   def cmp_Object(a, b)
-    raise ArgumentError.new('Only Strings, Numbers, and Versions are comparable')
+    raise ArgumentError.new('Only Strings, Numbers, Timespans, Timestamps, and Versions are comparable')
   end
 
 
@@ -132,6 +142,19 @@ class CompareOperator
     when Numeric
       # convert string to number, true if ==
       equals(a, b)
+    else
+      false
+    end
+  end
+
+  def include_Binary(a, b, scope)
+    case b
+    when Puppet::Pops::Types::PBinaryType::Binary
+      a.binary_buffer.include?(b.binary_buffer)
+    when String
+      a.binary_buffer.include?(b)
+    when Numeric
+      a.binary_buffer.bytes.include?(b)
     else
       false
     end

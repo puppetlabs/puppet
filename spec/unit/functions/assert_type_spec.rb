@@ -22,7 +22,7 @@ describe 'the assert_type function' do
   it 'asserts non compliant type by raising an error' do
     expect do
       func.call({}, type(Integer), 'hello world')
-    end.to raise_error(Puppet::Pops::Types::TypeAssertionError, /expected an Integer value, got String/)
+    end.to raise_error(Puppet::Pops::Types::TypeAssertionError, /expects an Integer value, got String/)
   end
 
   it 'checks that first argument is a type' do
@@ -84,7 +84,7 @@ describe 'the assert_type function' do
       assert_type(UnprivilegedPort, 345)
       notice('ok')
     CODE
-    expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /expected an UnprivilegedPort = Integer\[1024, 65537\] value, got Integer\[345, 345\]/)
+    expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /expects an UnprivilegedPort = Integer\[1024, 65537\] value, got Integer\[345, 345\]/)
   end
 
   it 'will use infer_set to report detailed information about complex mismatches' do
@@ -92,6 +92,6 @@ describe 'the assert_type function' do
       assert_type(Struct[{a=>Integer,b=>Boolean}], {a=>hej,x=>s})
     CODE
     expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error,
-      /entry 'a' expected an Integer value, got String.*expected a value for key 'b'.*unrecognized key 'x'/m)
+      /entry 'a' expects an Integer value, got String.*expects a value for key 'b'.*unrecognized key 'x'/m)
   end
 end

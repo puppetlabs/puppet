@@ -2,6 +2,7 @@
 require_relative 'hiera_support'
 
 module Puppet::DataProviders
+  # @api private
   class HieraEnvDataProvider < Puppet::Plugins::DataProviders::EnvironmentDataProvider
     include HieraSupport
 

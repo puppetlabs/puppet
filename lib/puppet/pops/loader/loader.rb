@@ -150,6 +150,23 @@ class Loader
     LOADABLE_KINDS
   end
 
+  # A loader may want to implement its own version with more detailed information.
+  def to_s
+    loader_name
+  end
+
+  # Loaders may contain references to the environment they load items within.
+  # Consequently, calling Kernel#inspect may return strings that are large
+  # enough to cause OutOfMemoryErrors on some platforms.
+  #
+  # We do not call alias_method here as that would copy the content of to_s
+  # at this point to inspect (ie children would print out `loader_name`
+  # rather than their version of to_s if they chose to implement it).
+  def inspect
+    self.to_s
+  end
+
+
   # An entry for one entity loaded by the loader.
   #
   class NamedEntry

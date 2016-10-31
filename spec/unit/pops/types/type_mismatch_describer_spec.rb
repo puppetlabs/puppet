@@ -112,84 +112,95 @@ describe 'the type mismatch describer' do
        /parameter 'evars' expects a match for EVariants = Enum\['a', 'b', 'c', 'd'\], got 'n'/))
   end
 
+  it "will not generalize a string that doesn't match an enum in a function call" do
+    code = <<-CODE
+      function check_enums(Enum[a,b] $arg) {}
+      check_enums('c')
+    CODE
+    expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
+      /parameter 'arg' expects a match for Enum\['a', 'b'\], got 'c'/))
+  end
+
+  it "will not disclose a Sensitive that doesn't match an enum in a function call" do
+    code = <<-CODE
+      function check_enums(Enum[a,b] $arg) {}
+      check_enums(Sensitive('c'))
+    CODE
+    expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
+      /parameter 'arg' expects a match for Enum\['a', 'b'\], got Sensitive/))
+  end
+
+  it "will not generalize a string that doesn't match an enum in a define call" do
+    code = <<-CODE
+      define check_enums(Enum[a,b] $arg) {}
+      check_enums { x: arg => 'c' }
+    CODE
+    expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
+      /parameter 'arg' expects a match for Enum\['a', 'b'\], got 'c'/))
+  end
+
+  it "will not disclose a Sensitive that doesn't match an enum in a define call" do
+    code = <<-CODE
+      define check_enums(Enum[a,b] $arg) {}
+      check_enums { x: arg => Sensitive('c') }
+    CODE
+    expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
+      /parameter 'arg' expects a match for Enum\['a', 'b'\], got Sensitive/))
+  end
+
   context 'when reporting a mismatch between' do
-    let(:parser) { TypeParser.new }
+    let(:parser) { TypeParser.singleton }
     let(:subject) { TypeMismatchDescriber.singleton }
 
     context 'hash and struct' do
       it 'reports a size mismatch when hash has unlimited size' do
         expected = parser.parse('Struct[{a=>Integer,b=>Integer}]')
         actual = parser.parse('Hash[String,Integer]')
-        expect(subject.describe_mismatch('', expected, actual)).to eq('expected size to be 2, got unlimited')
+        expect(subject.describe_mismatch('', expected, actual)).to eq('expects size to be 2, got unlimited')
       end
 
       it 'reports a size mismatch when hash has specified but incorrect size' do
         expected = parser.parse('Struct[{a=>Integer,b=>Integer}]')
         actual = parser.parse('Hash[String,Integer,1,1]')
-        expect(subject.describe_mismatch('', expected, actual)).to eq('expected size to be 2, got 1')
+        expect(subject.describe_mismatch('', expected, actual)).to eq('expects size to be 2, got 1')
       end
 
       it 'reports a full type mismatch when size is correct but hash value type is incorrect' do
         expected = parser.parse('Struct[{a=>Integer,b=>String}]')
         actual = parser.parse('Hash[String,Integer,2,2]')
-        expect(subject.describe_mismatch('', expected, actual)).to eq("expected a Struct[{'a' => Integer, 'b' => String}] value, got Hash[String, Integer]")
+        expect(subject.describe_mismatch('', expected, actual)).to eq("expects a Struct[{'a' => Integer, 'b' => String}] value, got Hash[String, Integer]")
       end
     end
-  end
 
-  context 'when using present tense' do
-    let(:parser) { TypeParser.singleton }
-    let(:subject) { TypeMismatchDescriber.singleton }
     it 'reports a missing parameter as "has no parameter"' do
       t = parser.parse('Struct[{a=>String}]')
-      expect { subject.validate_parameters('v', t, {'a'=>'a','b'=>'b'}, false, :present) }.to raise_error(Puppet::Error, "v: has no parameter named 'b'")
+      expect { subject.validate_parameters('v', t, {'a'=>'a','b'=>'b'}, false) }.to raise_error(Puppet::Error, "v: has no parameter named 'b'")
     end
 
     it 'reports a missing value as "expects a value"' do
       t = parser.parse('Struct[{a=>String,b=>String}]')
-      expect { subject.validate_parameters('v', t, {'a'=>'a'}, false, :present) }.to raise_error(Puppet::Error, "v: expects a value for parameter 'b'")
+      expect { subject.validate_parameters('v', t, {'a'=>'a'}, false) }.to raise_error(Puppet::Error, "v: expects a value for parameter 'b'")
     end
 
     it 'reports a missing block as "expects a block"' do
       callable = parser.parse('Callable[String,String,Callable]')
       args_tuple = parser.parse('Tuple[String,String]')
       dispatch = Functions::Dispatch.new(callable, 'foo', ['a','b'], 'block', nil, nil, false)
-      expect(subject.describe_signatures('function', [dispatch], args_tuple, :present)).to eq("'function' expects a block")
+      expect(subject.describe_signatures('function', [dispatch], args_tuple)).to eq("'function' expects a block")
     end
 
     it 'reports an unexpected block as "does not expect a block"' do
       callable = parser.parse('Callable[String,String]')
       args_tuple = parser.parse('Tuple[String,String,Callable]')
       dispatch = Functions::Dispatch.new(callable, 'foo', ['a','b'], nil, nil, nil, false)
-      expect(subject.describe_signatures('function', [dispatch], args_tuple, :present)).to eq("'function' does not expect a block")
-    end
-  end
-
-  context 'when using past tense' do
-    let(:parser) { TypeParser.singleton }
-    let(:subject) { TypeMismatchDescriber.singleton }
-    it 'reports a missing parameter as "did not have a parameter"' do
-      t = parser.parse('Struct[{a=>String}]')
-      expect { subject.validate_parameters('v', t, {'a'=>'a','b'=>'b'}, false, :past) }.to raise_error(Puppet::Error, "v: did not have a parameter named 'b'")
+      expect(subject.describe_signatures('function', [dispatch], args_tuple)).to eq("'function' does not expect a block")
     end
 
-    it 'reports a missing value as "expected a value"' do
-      t = parser.parse('Struct[{a=>String,b=>String}]')
-      expect { subject.validate_parameters('v', t, {'a'=>'a'}, false, :past) }.to raise_error(Puppet::Error, "v: expected a value for parameter 'b'")
-    end
-
-    it 'reports a missing block as "expected a block"' do
-      callable = parser.parse('Callable[String,String,Callable]')
-      args_tuple = parser.parse('Tuple[String,String]')
-      dispatch = Functions::Dispatch.new(callable, 'foo', ['a','b'], 'block', nil, nil, false)
-      expect(subject.describe_signatures('function', [dispatch], args_tuple, :past)).to eq("'function' expected a block")
-    end
-
-    it 'reports an unexpected block as "did not expect a block"' do
-      callable = parser.parse('Callable[String,String]')
-      args_tuple = parser.parse('Tuple[String,String,Callable]')
-      dispatch = Functions::Dispatch.new(callable, 'foo', ['a','b'], nil, nil, nil, false)
-      expect(subject.describe_signatures('function', [dispatch], args_tuple, :past)).to eq("'function' did not expect a block")
+    it 'reports a block return type mismatch' do
+      callable = parser.parse('Callable[[0,0,Callable[ [0,0],String]],Undef]')
+      args_tuple = parser.parse('Tuple[Callable[[0,0],Integer]]')
+      dispatch = Functions::Dispatch.new(callable, 'foo', [], 'block', nil, nil, false)
+      expect(subject.describe_signatures('function', [dispatch], args_tuple)).to eq("'function' block return expects a String value, got Integer")
     end
   end
 end

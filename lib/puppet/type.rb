@@ -113,7 +113,8 @@ class Type
     attr_accessor :is_capability
 
     def is_capability?
-      is_capability
+      c = is_capability
+      c.nil? ? false : c
     end
   end
 

@@ -56,5 +56,5 @@ For more information about data types, see the
 - Since 4.0.0
 DOC
 ) do |args|
-  function_fail(["assert_type() is only available when parser/evaluator future is in effect"])
+  Error.is4x('assert_type')
 end

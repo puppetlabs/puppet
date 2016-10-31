@@ -4,7 +4,8 @@ module Serialization
   # the created Time object can be serialized and deserialized using its
   # seconds and nanoseconds without loss of precision.
   #
-  # @api public
+  # @deprecated No longer in use. Functionality replaced by Timestamp
+  # @api private
   class TimeFactory
 
     NANO_DENOMINATOR = 10**9

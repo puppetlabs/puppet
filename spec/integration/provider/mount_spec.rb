@@ -149,9 +149,10 @@ describe "mount provider (integration)", :unless => Puppet.features.microsoft_wi
       pending "Due to bug 6309"
       @mounted = true
       @current_device = "/dev/disk2s2"
+      @current_options = "local"
       create_fake_fstab(true)
       @desired_options = "local"
-      run_in_catalog(:ensure=>:mounted, :options=>'local')
+      run_in_catalog(:ensure=>:mounted, :options=>'msdos,local')
       expect(@current_device).to eq("/dev/disk1s1")
       expect(@mounted).to eq(true)
       expect(@current_options).to eq('local')

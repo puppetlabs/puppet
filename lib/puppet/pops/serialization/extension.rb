@@ -26,6 +26,8 @@ module Extension
   TIMESPAN = 0x34
   VERSION = 0x35
   VERSION_RANGE = 0x36
+  SENSITIVE = 0x37
+  BINARY = 0x38
 
   # Marker module indicating whether or not an instance is tabulated or not
   module NotTabulated; end

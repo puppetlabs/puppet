@@ -14,17 +14,22 @@ the format string. The result of the scan is an array, with each successfully sc
 The scanning stops if a scan is unsuccessful, and the scanned result up to that point is returned. If there
 was no successful scan, the result is an empty array.
 
-   "42".scanf("%i")
+```puppet
+"42".scanf("%i")
+```
 
 You can also optionally pass a lambda to scanf, to do additional validation or processing.
 
-    "42".scanf("%i") |$x| {
-      unless $x[0] =~ Integer {
-        fail "Expected a well formed integer value, got '$x[0]'"
-      }
-      $x[0]
-    }
-- since 4.0.0
+```puppet
+"42".scanf("%i") |$x| {
+  unless $x[0] =~ Integer {
+    fail "Expected a well formed integer value, got '$x[0]'"
+  }
+  $x[0]
+}
+```
+
+- Since 4.0.0
 DOC
 ) do |args|
   data = args[0]

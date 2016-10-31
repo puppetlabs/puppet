@@ -19,7 +19,7 @@ For example, to call the apache module's `templates/vhost/_docroot.epp`
 template and pass the `docroot` and `virtual_docroot` parameters, call the `epp`
 function like this:
 
-`epp('apache/templates/vhost/_docroot.epp', { 'docroot' => '/var/www/html',
+`epp('apache/vhost/_docroot.epp', { 'docroot' => '/var/www/html',
 'virtual_docroot' => '/var/www/example' })`
 
 Puppet produces a syntax error if you pass more parameters than are declared in
@@ -32,5 +32,5 @@ function fails to pass any required parameter.
 
 - Since 4.0.0") do |args|
 
-  function_fail(["epp() is only available when parser/evaluator future is in effect"])
+  Error.is4x('epp')
 end

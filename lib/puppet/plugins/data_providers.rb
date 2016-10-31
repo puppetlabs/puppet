@@ -1,5 +1,6 @@
 module Puppet::Plugins; end
 
+# @api private
 module Puppet::Plugins::DataProviders
 
   # The lookup **key** for the multibind containing data provider name per module

@@ -585,6 +585,11 @@ class Puppet::Parser::Compiler
         urs = unevaluated_resources.each do |resource|
          begin
             resource.evaluate
+         rescue Puppet::Pops::Evaluator::PuppetStopIteration => detail
+           # needs to be handled specifically as the error has the file/line/position where this
+           # occurred rather than the resource
+           fail(Puppet::Pops::Issues::RUNTIME_ERROR, detail, {:detail => detail.message}, detail)
+
           rescue Puppet::Error => e
             # PuppetError has the ability to wrap an exception, if so, use the wrapped exception's
             # call stack instead
@@ -860,11 +865,34 @@ class Puppet::Parser::Compiler
     scope = @topscope.class_scope(settings_type)
 
     env = environment
+    settings_hash = {}
     Puppet.settings.each do |name, setting|
       next if name == :name
-      scope[name.to_s] = env[name]
+      s_name = name.to_s
+      # Construct a hash (in anticipation it will be set in top scope under a name like $settings)
+      settings_hash[s_name] = transform_setting(env[name])
+      scope[s_name] = settings_hash[s_name]
     end
   end
+
+  def transform_setting(val)
+    case val
+    when Integer, Float, String, TrueClass, FalseClass, NilClass
+      val
+    when Symbol
+      val == :undef ? nil : val.to_s
+    when Array
+      val.map {|entry| transform_setting(entry) }
+    when Hash
+      result = {}
+      val.each {|k,v| result[transform_setting(k)] = transform_setting(v) }
+      result
+    else
+      # not ideal, but required as there are settings values that are special
+      val.to_s
+    end
+  end
+  private :transform_setting
 
   # Return an array of all of the unevaluated resources.  These will be definitions,
   # which need to get evaluated into native resources.

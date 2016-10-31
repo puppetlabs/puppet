@@ -54,7 +54,7 @@ with_puppet_running_on master, master_opts, testdir do
     pattern = Regexp.new([
       ".*Notice: Preparing to upgrade 'pmtacceptance-java' .*",
       ".*Notice: Found 'pmtacceptance-java' \\(.*v1.6.0.*\\) in #{master['distmoduledir']} .*",
-      ".*Notice: Downloading from https://forgeapi.puppetlabs.com .*",
+      ".*Notice: Downloading from https://forgeapi.puppet.com .*",
       ".*Notice: Upgrading -- do not interrupt .*",
       "#{master['distmoduledir']}",
       "└── pmtacceptance-java \\(.*v1.6.0 -> v1.7.1.*\\)",

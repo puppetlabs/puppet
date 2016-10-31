@@ -156,6 +156,16 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     operation = :install
 
     case should
+    when :latest
+      current_package = self.query
+      if current_package && !current_package[:ensure].to_s.empty?
+        operation = update_command
+        self.debug "Ensuring latest, so using #{operation}"
+      else
+        self.debug "Ensuring latest, but package is absent, so using #{:install}"
+        operation = :install
+      end
+      should = nil
     when true, false, Symbol
       # pass
       should = nil

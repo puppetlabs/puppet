@@ -32,7 +32,9 @@ class Puppet::Pops::Functions::Dispatcher
     actual = tc.infer_set(block_given? ? args + [block] : args)
     found = @dispatchers.find { |d| tc.callable?(d.type, actual) }
     if found
-      found.invoke(instance, calling_scope, args, &block)
+      catch(:next) do
+        found.invoke(instance, calling_scope, args, &block)
+      end
     else
       raise ArgumentError, Puppet::Pops::Types::TypeMismatchDescriber.describe_signatures(instance.class.name, @dispatchers, actual)
     end

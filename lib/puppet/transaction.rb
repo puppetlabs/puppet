@@ -165,6 +165,12 @@ class Puppet::Transaction
       end
     end
 
+    # if one or more resources has attempted and failed to generate resources,
+    # report it
+    if generator.resources_failed_to_generate
+      report.resources_failed_to_generate = true
+    end
+
     Puppet.debug "Finishing transaction #{object_id}"
   end
 

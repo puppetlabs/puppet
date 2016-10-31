@@ -111,6 +111,16 @@ describe TypeParser do
     expect(the_type_parsed_from(opt_t)).to be_the_type(opt_t)
   end
 
+  it "parses timespan type" do
+    timespan_t = types.timespan
+    expect(the_type_parsed_from(timespan_t)).to be_the_type(timespan_t)
+  end
+
+  it "parses timestamp type" do
+    timestamp_t = types.timestamp
+    expect(the_type_parsed_from(timestamp_t)).to be_the_type(timestamp_t)
+  end
+
   it "parses tuple type" do
     tuple_t = types.tuple([Integer, String])
     expect(the_type_parsed_from(tuple_t)).to be_the_type(tuple_t)
@@ -248,6 +258,38 @@ describe TypeParser do
    expect(parser.parse("Collection[1,2]")).to be_the_type(types.collection(types.range(1,2)))
   end
 
+  it 'parses a timespan type' do
+    expect(parser.parse("Timespan")).to be_the_type(types.timespan)
+  end
+
+  it 'parses a timespan type with a lower bound' do
+    expect(parser.parse("Timespan[{hours => 3}]")).to be_the_type(types.timespan({'hours' => 3}))
+  end
+
+  it 'parses a timespan type with an upper bound' do
+    expect(parser.parse("Timespan[default, {hours => 9}]")).to be_the_type(types.timespan(nil, {'hours' => 9}))
+  end
+
+  it 'parses a timespan type with both lower and upper bounds' do
+    expect(parser.parse("Timespan[{hours => 3}, {hours => 9}]")).to be_the_type(types.timespan({'hours' => 3}, {'hours' => 9}))
+  end
+
+  it 'parses a timestamp type' do
+    expect(parser.parse("Timestamp")).to be_the_type(types.timestamp)
+  end
+
+  it 'parses a timestamp type with a lower bound' do
+    expect(parser.parse("Timestamp['2014-12-12T13:14:15 CET']")).to be_the_type(types.timestamp('2014-12-12T13:14:15 CET'))
+  end
+
+  it 'parses a timestamp type with an upper bound' do
+    expect(parser.parse("Timestamp[default, '2014-12-12T13:14:15 CET']")).to be_the_type(types.timestamp(nil, '2014-12-12T13:14:15 CET'))
+  end
+
+  it 'parses a timestamp type with both lower and upper bounds' do
+    expect(parser.parse("Timestamp['2014-12-12T13:14:15 CET', '2016-08-23T17:50:00 CET']")).to be_the_type(types.timestamp('2014-12-12T13:14:15 CET', '2016-08-23T17:50:00 CET'))
+  end
+
   it 'parses a type type' do
     expect(parser.parse("Type[Integer]")).to be_the_type(types.type_type(types.integer))
   end
@@ -257,25 +299,57 @@ describe TypeParser do
   end
 
   it 'parses a callable type' do
-    expect(parser.parse("Callable")).to be_the_type(types.all_callables())
+    t = parser.parse("Callable")
+    expect(t).to be_the_type(types.all_callables())
+    expect(t.return_type).to be_nil
   end
 
   it 'parses a parameterized callable type' do
-    expect(parser.parse("Callable[String, Integer]")).to be_the_type(types.callable(String, Integer))
+    t = parser.parse("Callable[String, Integer]")
+    expect(t).to be_the_type(types.callable(String, Integer))
+    expect(t.return_type).to be_nil
   end
 
   it 'parses a parameterized callable type with min/max' do
-    expect(parser.parse("Callable[String, Integer, 1, default]")).to be_the_type(types.callable(String, Integer, 1, :default))
+    t = parser.parse("Callable[String, Integer, 1, default]")
+    expect(t).to be_the_type(types.callable(String, Integer, 1, :default))
+    expect(t.return_type).to be_nil
   end
 
   it 'parses a parameterized callable type with block' do
-    expect(parser.parse("Callable[String, Callable[Boolean]]")).to be_the_type(types.callable(String, types.callable(true)))
+    t = parser.parse("Callable[String, Callable[Boolean]]")
+    expect(t).to be_the_type(types.callable(String, types.callable(true)))
+    expect(t.return_type).to be_nil
+  end
+
+  it 'parses a callable with no parameters and return type' do
+    expect(parser.parse("Callable[[],Float]")).to be_the_type(types.callable([],Float))
+  end
+
+  it 'parses a parameterized callable type with return type' do
+    expect(parser.parse("Callable[[String, Integer],Float]")).to be_the_type(types.callable([String, Integer],Float))
+  end
+
+  it 'parses a parameterized callable type with min/max and return type' do
+    expect(parser.parse("Callable[[String, Integer, 1, default],Float]")).to be_the_type(types.callable([String, Integer, 1, :default], Float))
+  end
+
+  it 'parses a parameterized callable type with block and return type' do
+    expect(parser.parse("Callable[[String, Callable[Boolean]],Float]")).to be_the_type(types.callable([String, types.callable(true)], Float))
   end
 
   it 'parses a parameterized callable type with 0 min/max' do
     t = parser.parse("Callable[0,0]")
     expect(t).to be_the_type(types.callable(0,0))
     expect(t.param_types.types).to be_empty
+    expect(t.return_type).to be_nil
+  end
+
+  it 'parses a parameterized callable type with 0 min/max and return_type' do
+    t = parser.parse("Callable[[0,0],Float]")
+    expect(t).to be_the_type(types.callable([0,0],Float))
+    expect(t.param_types.types).to be_empty
+    expect(t.return_type).to be_the_type(types.float)
   end
 
   it 'parses a parameterized callable type with >0 min/max' do
@@ -283,6 +357,15 @@ describe TypeParser do
     expect(t).to be_the_type(types.callable(0,1))
     # Contains a Unit type to indicate "called with what you accept"
     expect(t.param_types.types[0]).to be_the_type(PUnitType.new())
+    expect(t.return_type).to be_nil
+  end
+
+  it 'parses a parameterized callable type with >0 min/max and a return type' do
+    t = parser.parse("Callable[[0,1],Float]")
+    expect(t).to be_the_type(types.callable([0,1], Float))
+    # Contains a Unit type to indicate "called with what you accept"
+    expect(t.param_types.types[0]).to be_the_type(PUnitType.new())
+    expect(t.return_type).to be_the_type(types.float)
   end
 
   it 'parses all known literals' do

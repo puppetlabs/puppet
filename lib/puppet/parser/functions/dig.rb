@@ -25,5 +25,5 @@ Would notice the value 100.
 * Since 4.5.0
 DOC
 ) do |args|
-  function_fail(["dig() is only available when parser/evaluator future is in effect"])
+  Error.is4x('dig')
 end

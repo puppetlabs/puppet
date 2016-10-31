@@ -38,6 +38,8 @@ agents.each do |agent|
 
   functions_3x = [
     {:name => :alert,            :args => '"consider yourself on alert"',      :lambda => nil, :expected => 'consider yourself on alert', :rvalue => false},
+    {:name => :binary_file,      :args => '"call_em_all/rickon.txt"',          :lambda => nil, :expected => '', :rvalue => true},
+    #{:name => :break,            :args => '',                                  :lambda => nil, :expected => '', :rvalue => false},
     # this is explicitly called from call_em_all module which is included below
     #{:name => :contain,          :args => 'call_em_all',                       :lambda => nil, :expected => '', :rvalue => true},
     # below doens't instance the resource. no output
@@ -46,6 +48,7 @@ agents.each do |agent|
     {:name => :debug,            :args => '"consider yourself bugged"',        :lambda => nil, :expected => '', :rvalue => false}, # no output expected unless run with debug
     {:name => :defined,          :args => 'File["/tmp"]',                      :lambda => nil, :expected => 'false', :rvalue => true},
     {:name => :digest,           :args => '"Sansa"',                           :lambda => nil, :expected => 'f16491bf0133c6103918b2edcd00cf89', :rvalue => true},
+    {:name => :dig,              :args => '[100]',                             :lambda => nil, :expected => '[100]', :rvalue => true},
     {:name => :emerg,            :args => '"consider yourself emergent"',      :lambda => nil, :expected => 'consider yourself emergent', :rvalue => false},
     {:name => :err,              :args => '"consider yourself in err"',        :lambda => nil, :expected => 'consider yourself in err', :rvalue => false},
     {:name => :file,             :args => '"call_em_all/rickon.txt"',          :lambda => nil, :expected => 'who?', :rvalue => true},
@@ -62,6 +65,8 @@ agents.each do |agent|
     # test the living life out of this thing in lookup.rb, and it doesn't allow for a default value
     #{:name => :lookup,           :args => 'date,lookup_date',                  :lambda => nil, :expected => '', :rvalue => true},  # well tested elsewhere
     {:name => :md5,              :args => '"Bran"',                            :lambda => nil, :expected => '723f9ac32ceb881ddf4fb8fc1020cf83', :rvalue => true},
+    # Integer.new
+    {:name => :Integer,          :args => '"100"',                             :lambda => nil, :expected => '100', :rvalue => true},
     {:name => :notice,           :args => '"consider yourself under notice"',  :lambda => nil, :expected => 'consider yourself under notice', :rvalue => false},
     {:name => :realize,          :args => 'User[arya]',                        :lambda => nil, :expected => '', :rvalue => false},  # TODO: create a virtual first
     {:name => :regsubst,         :args => '"Cersei","Cer(\\\\w)ei","Daenery\\\\1"',:lambda => nil, :expected => 'Daenerys', :rvalue => true},
@@ -74,10 +79,12 @@ agents.each do |agent|
     # 4x output contains brackets around split output and commas btwn values
     {:name => :split,            :args => '"9,8,7",","',                       :lambda => nil, :expected => '[9, 8, 7]', :rvalue => true},
     {:name => :sprintf,          :args => '"%b","123"',                        :lambda => nil, :expected => '1111011', :rvalue => true},
+    {:name => :step,             :args => '[100,99],1',                        :lambda => nil, :expected => 'Iterator[Integer]-Value', :rvalue => true},
     # explicitly called in call_em_all
     #{:name => :tag,              :args => '[4,5,6]',                          :lambda => nil, :expected => '', :rvalue => true},
     {:name => :tagged,           :args => '"yer_it"',                          :lambda => nil, :expected => 'false', :rvalue => true},
     {:name => :template,         :args => '"call_em_all/template.erb"',        :lambda => nil, :expected => 'no defaultsno space', :rvalue => true},
+    {:name => :type,             :args => '42',                                :lambda => nil, :expected => 'Integer[42, 42]', :rvalue => true},
     {:name => :versioncmp,       :args => '"1","2"',                           :lambda => nil, :expected => '-1', :rvalue => true},
     {:name => :warning,          :args => '"consider yourself warned"',        :lambda => nil, :expected => 'consider yourself warned', :rvalue => false},
     # do this one last or it will not allow the others to run.
@@ -88,16 +95,24 @@ agents.each do |agent|
 
   functions_4x = [
     {:name => :assert_type,      :args => '"String[1]", "Valar morghulis"',    :lambda => nil, :expected => 'Valar morghulis', :rvalue => true},
-    {:name => :each,             :args => '[1,2,3]',                           :lambda => '|$x| {notice $x}', :expected => '[1, 2, 3]', :rvalue => true},
+    {:name => :each,             :args => '[1,2,3]',                           :lambda => '|$x| {$x}', :expected => '[1, 2, 3]', :rvalue => true},
     {:name => :epp,              :args => '"call_em_all/template.epp",{x=>droid}', :lambda => nil, :expected => 'This is the droid you are looking for!', :rvalue => true},
     {:name => :filter,           :args => '[4,5,6]',                           :lambda => '|$x| {true}', :expected => '[4, 5, 6]', :rvalue => true},
+    # find_file() called by binary_file
+    #{:name => :find_file,           :args => '[4,5,6]',                           :lambda => '|$x| {true}', :expected => '[4, 5, 6]', :rvalue => true},
     {:name => :inline_epp,       :args => '\'<%= $x %>\',{x=>10}',             :lambda => nil, :expected => '10', :rvalue => true},
-    {:name => :map,              :args => '[7,8,9]',                           :lambda => '|$x| {notice $x}', :expected => '[7, 8, 9]', :rvalue => true},
+    #{:name => :lest,             :args => '100',                               :lambda => '"100"', :expected => '100', :rvalue => true},
+    {:name => :map,              :args => '[7,8,9]',                           :lambda => '|$x| {$x * $x}', :expected => '[49, 64, 81]', :rvalue => true},
     {:name => :match,            :args => '"abc", /b/',                        :lambda => nil, :expected => '[b]', :rvalue => true},
+    #{:name => :next,             :args => '100',                               :lambda => nil, :expected => '100', :rvalue => true},
     {:name => :reduce,           :args => '[4,5,6]',                           :lambda => '|$sum, $n| { $sum+$n }', :expected => '15', :rvalue => true},
+    #{:name => :return,           :args => '100',                               :lambda => nil, :expected => '100', :rvalue => true},
+    {:name => :reverse_each,     :args => '[100,99]',                          :lambda => nil, :expected => 'Iterator[Integer]-Value', :rvalue => true},
     #         :reuse,:recycle
     {:name => :slice,            :args => '[1,2,3,4,5,6], 2',                  :lambda => nil, :expected => '[[1, 2], [3, 4], [5, 6]]', :rvalue => true},
-    {:name => :with,             :args => '1, "Catelyn"',                      :lambda => '|$x, $y| {notice [$x, $y]}', :expected => '[1, Catelyn]', :rvalue => true},
+    {:name => :strftime,         :args => 'Timestamp("4216-09-23T13:14:15.123 UTC"), "%C"',    :lambda => nil, :expected => '42', :rvalue => true},
+    {:name => :then,             :args => '100',                               :lambda => '|$x| {$x}', :expected => '100', :rvalue => true},
+    {:name => :with,             :args => '1, "Catelyn"',                      :lambda => '|$x, $y| {"$x, $y"}', :expected => '1, Catelyn', :rvalue => true},
   ]
 
   module_manifest = <<PP

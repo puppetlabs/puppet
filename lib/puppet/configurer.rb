@@ -56,12 +56,12 @@ class Puppet::Configurer
     end
   end
 
-  def initialize(factory = Puppet::Configurer::DownloaderFactory.new)
+  def initialize(factory = Puppet::Configurer::DownloaderFactory.new, transaction_uuid = nil)
     @running = false
     @splayed = false
     @cached_catalog_status = 'not_used'
     @environment = Puppet[:environment]
-    @transaction_uuid = SecureRandom.uuid
+    @transaction_uuid = transaction_uuid || SecureRandom.uuid
     @static_catalog = true
     @checksum_type = Puppet[:supported_checksum_types]
     @handler = Puppet::Configurer::PluginHandler.new(factory)

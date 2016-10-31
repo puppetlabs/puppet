@@ -32,12 +32,12 @@ module PuppetStack
   end
 
   def self.stacktrace
-    result = caller().reduce([]) do |memo, loc|
-      if loc =~ /^(.*\.pp)?:([0-9]+):in `stack'/
+    caller().reduce([]) do |memo, loc|
+      if loc =~ /^(.*\.pp)?:([0-9]+):in (`stack'|`block in call_function')/
         memo << [$1.nil? ? 'unknown' : $1, $2.to_i]
       end
       memo
-    end.reverse
+    end
   end
 end
 end

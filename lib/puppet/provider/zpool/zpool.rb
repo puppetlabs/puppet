@@ -23,7 +23,7 @@ Puppet::Type.type(:zpool).provide(:zpool) do
     tmp = []
 
     #order matters here :(
-    pool_array.reverse.each do |value|
+    pool_array.reverse_each do |value|
       sym = nil
       case value
       when "spares";

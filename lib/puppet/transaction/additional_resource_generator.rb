@@ -6,11 +6,14 @@
 # @api private
 class Puppet::Transaction::AdditionalResourceGenerator
   attr_writer :relationship_graph
+  # [boolean] true if any resource has attempted and failed to generate resources
+  attr_reader :resources_failed_to_generate
 
   def initialize(catalog, relationship_graph, prioritizer)
     @catalog = catalog
     @relationship_graph = relationship_graph
     @prioritizer = prioritizer
+    @resources_failed_to_generate = false
   end
 
   def generate_additional_resources(resource)
@@ -18,6 +21,7 @@ class Puppet::Transaction::AdditionalResourceGenerator
     begin
       generated = resource.generate
     rescue => detail
+      @resources_failed_to_generate = true
       resource.log_exception(detail, "Failed to generate additional resources using 'generate': #{detail}")
     end
     return unless generated
@@ -52,6 +56,7 @@ class Puppet::Transaction::AdditionalResourceGenerator
       generated = replace_duplicates_with_catalog_resources(resource.eval_generate)
       return false if generated.empty?
     rescue => detail
+      @resources_failed_to_generate = true
       resource.log_exception(detail, "Failed to generate additional resources using 'eval_generate': #{detail}")
       return false
     end

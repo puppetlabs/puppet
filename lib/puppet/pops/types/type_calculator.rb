@@ -620,9 +620,8 @@ class TypeCalculator
       max += 1
       PAnyType::DEFAULT
     end
-    mapped_types << min
-    mapped_types << max
-    TypeFactory.callable(*mapped_types)
+    param_types = Types::PTupleType.new(mapped_types, Types::PIntegerType.new(min, max))
+    Types::PCallableType.new(param_types)
   end
 
   # @api private
@@ -646,6 +645,16 @@ class TypeCalculator
   # @api private
   def infer_Sensitive(o)
     PSensitiveType.new(infer(o.unwrap))
+  end
+
+  # @api private
+  def infer_Timespan(o)
+    PTimespanType.new(o, o)
+  end
+
+  # @api private
+  def infer_Timestamp(o)
+    PTimestampType.new(o, o)
   end
 
   # @api private
@@ -676,6 +685,11 @@ class TypeCalculator
     else
       PArrayType.new(infer_and_reduce_type(o), size_as_type(o))
     end
+  end
+
+  # @api private
+  def infer_Binary(o)
+    PBinaryType::DEFAULT
   end
 
   # @api private

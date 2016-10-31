@@ -16,6 +16,7 @@ module Serialization
 # - Regexp
 # - Version
 # - VersionRange
+# - Timespan
 # - Timestamp
 # - Default
 #
@@ -132,7 +133,15 @@ class AbstractReader
       read_payload(data) do |ep|
         sec = ep.read
         nsec = ep.read
-        TimeFactory.from_sec_nsec(sec, nsec)
+        Time::Timestamp.new(sec * 1000000000 + nsec)
+      end
+    end
+
+    register_type(Extension::TIMESPAN) do |data|
+      read_payload(data) do |ep|
+        sec = ep.read
+        nsec = ep.read
+        Time::Timespan.new(sec * 1000000000 + nsec)
       end
     end
 
@@ -142,6 +151,14 @@ class AbstractReader
 
     register_type(Extension::VERSION_RANGE) do |data|
       read_payload(data) { |ep| Semantic::VersionRange.parse(ep.read) }
+    end
+
+    register_type(Extension::SENSITIVE) do |data|
+      read_payload(data) { |ep| Types::PSensitiveType::Sensitive.new(ep.read) }
+    end
+
+    register_type(Extension::BINARY) do |data|
+      read_payload(data) { |ep| Types::PBinaryType::Binary.from_base64_strict(ep.read) }
     end
   end
 end

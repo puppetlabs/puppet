@@ -29,6 +29,11 @@ class Puppet::Parser::AST
     # is called so many times during parsing.
     begin
       return self.evaluate(scope)
+    rescue Puppet::Pops::Evaluator::PuppetStopIteration => detail
+      raise detail
+#      # Only deals with StopIteration from the break() function as a general
+#      # StopIteration is a general runtime problem
+#      raise Puppet::ParseError.new(detail.message, detail.file, detail.line, detail)
     rescue Puppet::Error => detail
       raise adderrorcontext(detail)
     rescue => detail

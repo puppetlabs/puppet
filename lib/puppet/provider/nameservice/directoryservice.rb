@@ -22,6 +22,12 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
   confine :feature         => :cfpropertylist
   defaultfor :operatingsystem => :darwin
 
+  # There is no generalized mechanism for provider cache management, but we can
+  # use post_resource_eval, which will be run for each suitable provider at the
+  # end of each transaction. Use this to clear @all_present after each run.
+  def self.post_resource_eval
+    @all_present = nil
+  end
 
   # JJM 2007-07-25: This map is used to map NameService attributes to their
   #     corresponding DirectoryService attribute names.
@@ -87,13 +93,15 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
   end
 
   def self.list_all_present
-    # JJM: List all objects of this Puppet::Type already present on the system.
-    begin
-      dscl_output = execute(get_exec_preamble("-list"))
-    rescue Puppet::ExecutionFailure
-      fail("Could not get #{@resource_type.name} list from DirectoryService")
+    @all_present ||= begin
+      # JJM: List all objects of this Puppet::Type already present on the system.
+      begin
+        dscl_output = execute(get_exec_preamble("-list"))
+      rescue Puppet::ExecutionFailure
+        fail("Could not get #{@resource_type.name} list from DirectoryService")
+      end
+      dscl_output.split("\n")
     end
-    dscl_output.split("\n")
   end
 
   def self.parse_dscl_plist_data(dscl_output)
@@ -102,7 +110,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
 
   def self.generate_attribute_hash(input_hash, *type_properties)
     attribute_hash = {}
-    input_hash.keys.each do |key|
+    input_hash.each_key do |key|
       ds_attribute = key.sub("dsAttrTypeStandard:", "")
       next unless (ds_to_ns_attribute_map.keys.include?(ds_attribute) and type_properties.include? ds_to_ns_attribute_map[ds_attribute])
       ds_value = input_hash[key]

@@ -3,6 +3,7 @@
 require 'yaml'
 
 module Puppet::DataProviders
+  # @api private
   class YamlDataProviderFactory < Puppet::Plugins::DataProviders::FileBasedDataProviderFactory
     def create(name, paths, parent_data_provider)
       YamlDataProvider.new(name, paths, parent_data_provider)
@@ -13,6 +14,7 @@ module Puppet::DataProviders
     end
   end
 
+  # @api private
   class YamlDataProvider < Puppet::Plugins::DataProviders::PathBasedDataProvider
     def initialize_data(path, lookup_invocation)
       data = YAML.load_file(path)

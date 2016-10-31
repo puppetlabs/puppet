@@ -255,6 +255,10 @@ module Issues
     "Operator '#{operator}' is not applicable to #{label.a_an(left_value)}."
   end
 
+  OPERATOR_NOT_APPLICABLE_WHEN = hard_issue :OPERATOR_NOT_APPLICABLE_WHEN, :operator, :left_value, :right_value do
+    "Operator '#{operator}' is not applicable to #{label.a_an(left_value)} when right side is #{label.a_an(right_value)}."
+  end
+
   COMPARISON_NOT_POSSIBLE = hard_issue :COMPARISON_NOT_POSSIBLE, :operator, :left_value, :right_value, :detail do
     "Comparison of: #{label(left_value)} #{operator} #{label(right_value)}, is not possible. Caused by '#{detail}'."
   end
@@ -428,6 +432,11 @@ module Issues
       "#{expected_classes[0]} is"
     end
     "#{label.a_an_uc(left_value)}[] cannot use #{actual} where #{expected_text} expected"
+  end
+
+  BAD_STRING_SLICE_KEY_TYPE = issue :BAD_STRING_SLICE_KEY_TYPE, :left_value, :actual_type do
+    actual_type_text = "#{label.article(actual_type)} #{actual_type}"
+    "A substring operation does not accept #{actual_type_text} as a character index. Expected an Integer"
   end
 
   BAD_NOT_UNDEF_SLICE_TYPE = issue :BAD_NOT_UNDEF_SLICE_TYPE, :base_type, :actual do

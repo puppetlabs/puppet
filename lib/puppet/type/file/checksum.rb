@@ -16,6 +16,7 @@ Puppet::Type.type(:file).newparam(:checksum) do
   end
 
   def sum(content)
+    content = content.is_a?(Puppet::Pops::Types::PBinaryType::Binary) ? content.binary_buffer : content
     type = digest_algorithm()
     "{#{type}}" + send(type, content)
   end

@@ -45,13 +45,13 @@ module Puppet
     munge do |value|
       if value == :absent
         value
-      elsif checksum?(value)
+      elsif value.is_a?(String) && checksum?(value)
         # XXX This is potentially dangerous because it means users can't write a file whose
-        # entire contents are a plain checksum
+        # entire contents are a plain checksum unless it is a Binary content.
         value
       else
-        @actual_content = value
-        resource.parameter(:checksum).sum(value)
+        @actual_content = value.is_a?(Puppet::Pops::Types::PBinaryType::Binary) ? value.binary_buffer : value
+        resource.parameter(:checksum).sum(@actual_content)
       end
     end
 

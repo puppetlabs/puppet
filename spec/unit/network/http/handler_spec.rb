@@ -74,9 +74,15 @@ describe Puppet::Network::HTTP::Handler do
       expect(res[:status]).to eq(404)
     end
 
-    it "returns a structured error response with a stacktrace when the server encounters an internal error" do
+    it "returns a structured error response when the server encounters an internal error" do
+      error = StandardError.new("the sky is falling!")
+      error.set_backtrace(['a.rb', 'b.rb'])
+
       handler = PuppetSpec::Handler.new(
-        Puppet::Network::HTTP::Route.path(/.*/).get(lambda { |_, _| raise StandardError.new("the sky is falling!")}))
+        Puppet::Network::HTTP::Route.path(/.*/).get(lambda { |_, _| raise error}))
+
+      # Stacktraces should be included in logs
+      Puppet.expects(:err).with("Server Error: the sky is falling!\na.rb\nb.rb")
 
       req = a_request("GET", "/vtest/foo")
       res = {}
@@ -88,8 +94,11 @@ describe Puppet::Network::HTTP::Handler do
       expect(res[:content_type_header]).to eq("application/json")
       expect(res_body["issue_kind"]).to eq(Puppet::Network::HTTP::Issues::RUNTIME_ERROR.to_s)
       expect(res_body["message"]).to eq("Server Error: the sky is falling!")
-      expect(res_body["stacktrace"].is_a?(Array) && !res_body["stacktrace"].empty?).to be_truthy
-      expect(res_body["stacktrace"][0]).to match("spec/unit/network/http/handler_spec.rb")
+
+      # Stactraces may contain sensitive information, returning them to API
+      # consumers is not a best practice. See
+      # https://tickets.puppetlabs.com/browse/PUP-6659
+      expect(res_body["stacktrace"]).to be_nil
       expect(res[:status]).to eq(500)
     end
 

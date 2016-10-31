@@ -68,7 +68,8 @@ module Puppet::Network::HTTP::Handler
     new_response.respond_with(e.status, "application/json", e.to_json)
   rescue StandardError => e
     http_e = Puppet::Network::HTTP::Error::HTTPServerError.new(e)
-    Puppet.err(http_e.message)
+    log_msg = [http_e.message, *http_e.backtrace].join("\n")
+    Puppet.err(log_msg)
     new_response.respond_with(http_e.status, "application/json", http_e.to_json)
   ensure
     if profiler
@@ -167,7 +168,7 @@ module Puppet::Network::HTTP::Handler
 
   def configure_profiler(request_headers, request_params)
     if (request_headers.has_key?(Puppet::Network::HTTP::HEADER_ENABLE_PROFILING.downcase) or Puppet[:profile])
-      Puppet::Util::Profiler.add_profiler(Puppet::Util::Profiler::Aggregate.new(Puppet.method(:debug), request_params.object_id))
+      Puppet::Util::Profiler.add_profiler(Puppet::Util::Profiler::Aggregate.new(Puppet.method(:info), request_params.object_id))
     end
   end
 

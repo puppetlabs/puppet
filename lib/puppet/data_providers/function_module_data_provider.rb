@@ -8,6 +8,7 @@ module Puppet::DataProviders; end
 # The function is called on demand, and is associated with the compiler via an Adapter. This ensures that the data
 # is only produced once per compilation.
 #
+# @api private
 class Puppet::DataProviders::FunctionModuleDataProvider < Puppet::Plugins::DataProviders::ModuleDataProvider
   include Puppet::DataProviders::DataFunctionSupport
 

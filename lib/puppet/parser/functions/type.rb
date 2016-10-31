@@ -49,5 +49,5 @@ function type(Any $value, InferenceFidelity $fidelity = 'detailed') # returns Ty
 
 DOC
 ) do |args|
-  function_fail(["type() is only available when parser/evaluator future is in effect"])
+  Error.is4x('type')
 end

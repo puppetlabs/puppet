@@ -1,41 +1,44 @@
-shared_examples_for 'all functions transforming relative to absolute names' do |func_method|
-
-  it 'transforms relative names to absolute' do
-    @scope.compiler.expects(:evaluate_classes).with(["::myclass"], @scope, false)
-    @scope.send(func_method, ["myclass"])
+shared_examples_for 'all functions transforming relative to absolute names' do |func_name|
+  before(:each) do
+    # mock that the class 'myclass' exists which are needed for the 'require' functions
+    # as it checks the existence of the required class
+    @klass = stub 'class', :name => "myclass"
+    @scope.environment.known_resource_types.stubs(:find_hostclass).returns(@klass)
+    @resource = Puppet::Parser::Resource.new(:file, "/my/file", :scope => @scope, :source => "source")
+    @scope.stubs(:resource).returns @resource
   end
 
   it 'accepts a Class[name] type' do
     @scope.compiler.expects(:evaluate_classes).with(["::myclass"], @scope, false)
-    @scope.send(func_method, [Puppet::Pops::Types::TypeFactory.host_class('myclass')])
+    @scope.call_function(func_name, [Puppet::Pops::Types::TypeFactory.host_class('myclass')])
   end
 
   it 'accepts a Resource[class, name] type' do
     @scope.compiler.expects(:evaluate_classes).with(["::myclass"], @scope, false)
-    @scope.send(func_method, [Puppet::Pops::Types::TypeFactory.resource('class', 'myclass')])
+    @scope.call_function(func_name, [Puppet::Pops::Types::TypeFactory.resource('class', 'myclass')])
   end
 
   it 'raises and error for unspecific Class' do
     expect {
-      @scope.send(func_method, [Puppet::Pops::Types::TypeFactory.host_class()])
+      @scope.call_function(func_name, [Puppet::Pops::Types::TypeFactory.host_class()])
     }.to raise_error(ArgumentError, /Cannot use an unspecific Class\[\] Type/)
   end
 
   it 'raises and error for Resource that is not of class type' do
     expect {
-      @scope.send(func_method, [Puppet::Pops::Types::TypeFactory.resource('file')])
+      @scope.call_function(func_name, [Puppet::Pops::Types::TypeFactory.resource('file')])
     }.to raise_error(ArgumentError, /Cannot use a Resource\[File\] where a Resource\['class', name\] is expected/)
   end
 
   it 'raises and error for Resource that is unspecific' do
     expect {
-      @scope.send(func_method, [Puppet::Pops::Types::TypeFactory.resource()])
+      @scope.call_function(func_name, [Puppet::Pops::Types::TypeFactory.resource()])
     }.to raise_error(ArgumentError, /Cannot use an unspecific Resource\[\] where a Resource\['class', name\] is expected/)
   end
 
   it 'raises and error for Resource[class] that is unspecific' do
     expect {
-      @scope.send(func_method, [Puppet::Pops::Types::TypeFactory.resource('class')])
+      @scope.call_function(func_name, [Puppet::Pops::Types::TypeFactory.resource('class')])
     }.to raise_error(ArgumentError, /Cannot use an unspecific Resource\['class'\] where a Resource\['class', name\] is expected/)
   end
 

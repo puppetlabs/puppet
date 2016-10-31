@@ -18,9 +18,9 @@ module Puppet::Pops::Lookup
     end
 
     def to_s
-      io = StringIO.new
+      io = ''
       dump_on(io, '', '')
-      io.string
+      io
     end
 
     def dump_on(io, indent, first_indent)
@@ -34,6 +34,7 @@ module Puppet::Pops::Lookup
     def initialize(parent)
       @parent = parent
       @event = nil
+      @texts = nil
     end
 
     def found_in_overrides(key, value)
@@ -59,6 +60,11 @@ module Puppet::Pops::Lookup
       @event = :result
     end
 
+    def text(text)
+      @texts ||= []
+      @texts << text
+    end
+
     def not_found(key)
       @key = key
       @event = :not_found
@@ -81,6 +87,7 @@ module Puppet::Pops::Lookup
       hash[:key] = @key unless @key.nil?
       hash[:value] = @value if [:found, :found_in_defaults, :found_in_overrides, :result].include?(@event)
       hash[:event] = @event unless @event.nil?
+      hash[:texts] = @texts unless @texts.nil?
       hash[:type] = type
       hash
     end
@@ -98,6 +105,11 @@ module Puppet::Pops::Lookup
         io << ' in defaults' if @event == :found_in_defaults
         io << "\n"
       end
+      dump_texts(io, indent, @texts)
+    end
+
+    def dump_texts(io, indent, texts)
+      texts.each { |text| io << indent << text << "\n" } unless texts.nil?
     end
 
     def dump_value(io, indent, value)
@@ -218,7 +230,7 @@ module Puppet::Pops::Lookup
       # It's pointless to report a merge where there's only one branch
       return branches[0].dump_on(io, indent, first_indent) if branches.size == 1
 
-      io << first_indent << 'Merge strategy ' << @merge.class.key << "\n"
+      io << first_indent << 'Merge strategy ' << @merge.class.key.to_s << "\n"
       indent = increase_indent(indent)
       options = options_wo_strategy
       unless options.nil?
@@ -297,7 +309,7 @@ module Puppet::Pops::Lookup
     end
 
     def dump_on(io, indent, first_indent)
-      io << first_indent << 'Data Binding "' << @binding_terminus << "\"\n"
+      io << first_indent << 'Data Binding "' << @binding_terminus.to_s << "\"\n"
       indent = increase_indent(indent)
       branches.each {|b| b.dump_on(io, indent, indent)}
       dump_outcome(io, indent)
@@ -323,7 +335,7 @@ module Puppet::Pops::Lookup
     def dump_on(io, indent, first_indent)
       io << first_indent << 'Data Provider "' << @provider.name << "\"\n"
       indent = increase_indent(indent)
-      io << indent << 'ConfigurationPath "' << @provider.config_path << "\"\n" if @provider.respond_to?(:config_path)
+      io << indent << 'ConfigurationPath "' << @provider.config_path.to_s << "\"\n" if @provider.respond_to?(:config_path)
       branches.each {|b| b.dump_on(io, indent, indent)}
       dump_outcome(io, indent)
     end
@@ -347,7 +359,7 @@ module Puppet::Pops::Lookup
     end
 
     def dump_on(io, indent, first_indent)
-      io << indent << 'Path "' << @path.path << "\"\n"
+      io << indent << 'Path "' << @path.path.to_s << "\"\n"
       indent = increase_indent(indent)
       io << indent << 'Original path: "' << @path.original_path << "\"\n"
       branches.each {|b| b.dump_on(io, indent, indent)}
@@ -498,12 +510,40 @@ module Puppet::Pops::Lookup
       @current.result(result)
     end
 
+    def accept_text(text)
+      @current.text(text)
+    end
+
     def dump_on(io, indent, first_indent)
       branches.each { |b| b.dump_on(io, indent, first_indent) }
     end
 
     def to_hash
       branches.size == 1 ? branches[0].to_hash : super
+    end
+  end
+
+  class DebugExplainer < Explainer
+    attr_reader :wrapped_explainer
+
+    def initialize(wrapped_explainer)
+      @wrapped_explainer = wrapped_explainer
+      if wrapped_explainer.nil?
+        @current = self
+        @explain_options = false
+        @only_explain_options = false
+      else
+        @current = wrapped_explainer
+        @explain_options = wrapped_explainer.explain_options?
+        @only_explain_options = wrapped_explainer.only_explain_options?
+      end
+    end
+
+    def emit_debug_info(preamble)
+      io = ''
+      io << preamble << "\n"
+      @current.dump_on(io, '  ', '  ')
+      Puppet.debug(io.chomp!)
     end
   end
 end

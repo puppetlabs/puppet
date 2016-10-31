@@ -34,6 +34,7 @@ module Pcore
     add_type(Types::PTypeSetType.new(ast_ts_i12n), loader)
 
     Resource.register_ptypes(loader, ir)
+    Lookup::Context.register_ptype(loader, ir);
   end
 
   # Create and register a new `Object` type in the Puppet Type System and map it to an implementation class

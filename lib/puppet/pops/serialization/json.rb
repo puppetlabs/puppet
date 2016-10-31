@@ -15,6 +15,13 @@ module JSON
       super(Packer.new(io, options), options)
     end
 
+    # Clear the underlying io stream but does not clear tabulation cache
+    # Specifically designed to enable tabulation to span more than one
+    # separately deserialized object.
+    def clear_io
+      @packer.clear_io
+    end
+
     def extension_packer
       @packer
     end
@@ -25,6 +32,10 @@ module JSON
 
     def build_payload
       yield(@packer)
+    end
+
+    def to_a
+      @packer.to_a
     end
 
     def to_json
@@ -39,6 +50,10 @@ module JSON
       super(Unpacker.new(io))
     end
 
+    def re_initialize(io)
+      @unpacker.re_initialize(io)
+    end
+
     def read_payload(data)
       yield(@unpacker)
     end
@@ -49,6 +64,7 @@ module JSON
   class Packer
     def initialize(io, options = {})
       @io = io
+      @io << '['
       @type_registry = {}
       @nested = []
       @verbose = options[:verbose]
@@ -60,27 +76,33 @@ module JSON
       @type_registry[klass] = [type, klass, block]
     end
 
+    def clear_io
+      # Truncate everything except leading '['
+      if @io.is_a?(String)
+        @io.slice!(1..-1)
+      else
+        @io.truncate(1)
+      end
+    end
+
     def empty?
-      @io.pos == 0
+      @io.is_a?(String) ? io.length == 1 : @io.pos == 1
     end
 
     def flush
-      pos = @io.pos
-      case pos
-      when 1
-        # Just start marker present.
-      when 0
-        @io << '['
+      # Drop last comma unless just start marker present
+      if @io.is_a?(String)
+        @io.chop! unless @io.length == 1
+        @io << ']'
       else
-        # Drop last comma
-        @io.pos = pos - 1
+        pos = @io.pos
+        @io.pos = pos - 1 unless pos == 1
+        @io << ']'
+        @io.flush
       end
-      @io << ']'
-      @io.flush
     end
 
     def write(obj)
-      assert_started
       case obj
       when Array
         write_array_header(obj.size)
@@ -97,7 +119,6 @@ module JSON
     alias pack write
 
     def write_array_header(n)
-      assert_started
       if n < 1
         @io << '[]'
       else
@@ -107,7 +128,6 @@ module JSON
     end
 
     def write_map_header(n)
-      assert_started
       if n < 1
         @io << '{}'
       else
@@ -117,7 +137,6 @@ module JSON
     end
 
     def write_nil
-      assert_started
       @io << 'null'
       write_delim
     end
@@ -126,13 +145,16 @@ module JSON
       to_json
     end
 
+    def to_a
+      ::JSON.parse(io_string)
+    end
+
     def to_json
-      string = @io.string
       if @indent > 0
-        options = { :indent => ' ' * @indent }
-        string = ::JSON.pretty_unparse(::JSON.parse(string), options)
+        ::JSON.pretty_unparse(to_a, { :indent => ' ' * @indent })
+      else
+        io_string
       end
-      string
     end
 
     # Write a payload object. Not subject to extensions
@@ -140,10 +162,15 @@ module JSON
       @io << obj.to_json << ','
     end
 
-    def assert_started
-      @io << '[' if @io.pos == 0
+    def io_string
+      if @io.is_a?(String)
+        @io
+      else
+        @io.pos = 0
+        @io.read
+      end
     end
-    private :assert_started
+    private :io_string
 
     def write_delim
       nesting = @nested.last
@@ -184,11 +211,17 @@ module JSON
 
     def write_extension(ext, obj)
       @io << '[' << extension_indicator(ext).to_json << ','
+      @nested << nil
       write_extension_payload(ext, obj)
+      @nested.pop
       if obj.is_a?(Extension::SequenceStart) && obj.sequence_size > 0
         @nested << [false, obj.sequence_size]
       else
-        @io.pos -= 1
+        if @io.is_a?(String)
+          @io.chop!
+        else
+          @io.pos -= 1
+        end
         @io << ']'
         write_delim
       end
@@ -208,11 +241,15 @@ module JSON
 
   class Unpacker
     def initialize(io)
-      parsed = ::JSON.parse(io.read(nil))
-      raise SerializationError, "JSON stream is not an array" unless parsed.is_a?(Array)
-      @etor_stack = [parsed.each]
+      re_initialize(io)
       @type_registry = {}
       @nested = []
+    end
+
+    def re_initialize(io)
+      parsed = parse_io(io)
+      raise SerializationError, "JSON stream is not an array. It is a #{io.class.name}" unless parsed.is_a?(Array)
+      @etor_stack = [parsed.each]
     end
 
     def read
@@ -240,6 +277,19 @@ module JSON
 
     def register_type(extension_number, &block)
       @type_registry[extension_number] = block
+    end
+
+    private
+
+    def parse_io(io)
+      case io
+      when IO, StringIO
+        ::JSON.parse(io.read)
+      when String
+        ::JSON.parse(io)
+      else
+        io
+      end
     end
   end
 end
