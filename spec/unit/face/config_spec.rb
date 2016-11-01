@@ -64,7 +64,7 @@ syslogfacility = file
       subject.set('foo', 'bar')
     end
 
-    it "sets the supplied config/value" do
+    it "sets the supplied config/value in the default section (main)" do
       Puppet::FileSystem.stubs(:open).with(path, anything, anything).yields(StringIO.new)
       config = Puppet::Settings::IniFile.new([Puppet::Settings::IniFile::DefaultSection.new])
       manipulator = Puppet::Settings::IniFile::Manipulator.new(config)
