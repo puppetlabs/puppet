@@ -50,7 +50,7 @@ class Configuration
 
   # read_file makes testing easier.
   def read_file(path)
-    File.read(path)
+    Puppet::FileSystem.read(path, :encoding => 'utf-8')
   end
   private :read_file
 end

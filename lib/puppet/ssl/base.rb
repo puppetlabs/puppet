@@ -81,7 +81,7 @@ class Puppet::SSL::Base
 
   # Read content from disk appropriately.
   def read(path)
-    @content = wrapped_class.new(File.read(path))
+    @content = wrapped_class.new(Puppet::FileSystem.read(path, :encoding => 'utf-8'))
   end
 
   # Convert our thing to pem.

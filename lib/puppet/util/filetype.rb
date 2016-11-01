@@ -105,7 +105,7 @@ class Puppet::Util::FileType
     # Read the file.
     def read
       if Puppet::FileSystem.exist?(@path)
-        File.read(@path)
+        Puppet::FileSystem.read(@path, :encoding => 'utf-8')
       else
         return nil
       end
@@ -118,7 +118,7 @@ class Puppet::Util::FileType
 
     # Overwrite the file.
     def write(text)
-      tf = Tempfile.new("puppet")
+      tf = Tempfile.new("puppet", :encoding => 'utf-8')
       tf.print text; tf.flush
       File.chmod(@default_mode, tf.path) if @default_mode
       FileUtils.cp(tf.path, @path)
@@ -197,7 +197,7 @@ class Puppet::Util::FileType
     # Overwrite a specific @path's cron tab; must be passed the @path name
     # and the text with which to create the cron tab.
     def write(text)
-      IO.popen("#{cmdbase()} -", "w") { |p|
+      IO.popen("#{cmdbase()} -", "w", :encoding => 'utf-8') { |p|
         p.print text
       }
     end
@@ -242,7 +242,7 @@ class Puppet::Util::FileType
     # Overwrite a specific @path's cron tab; must be passed the @path name
     # and the text with which to create the cron tab.
     def write(text)
-      output_file = Tempfile.new("puppet_suntab")
+      output_file = Tempfile.new("puppet_suntab", :encoding => 'utf-8')
       begin
         output_file.print text
         output_file.close
@@ -284,7 +284,7 @@ class Puppet::Util::FileType
     # Overwrite a specific @path's cron tab; must be passed the @path name
     # and the text with which to create the cron tab.
     def write(text)
-      output_file = Tempfile.new("puppet_aixtab")
+      output_file = Tempfile.new("puppet_aixtab", :encoding => 'utf-8')
 
       begin
         output_file.print text

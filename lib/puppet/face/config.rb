@@ -108,6 +108,7 @@ Puppet::Face.define(:config, '0.0.1') do
     when_invoked do |name, value, options|
       path = Puppet::FileSystem.pathname(Puppet.settings.which_configuration_file)
       Puppet::FileSystem.touch(path)
+      # TODO: encoding utf8
       Puppet::FileSystem.open(path, nil, 'r+') do |file|
         Puppet::Settings::IniFile.update(file) do |config|
           config.set(options[:section], name, value)
