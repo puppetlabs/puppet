@@ -62,6 +62,22 @@ name = value
     CONF
   end
 
+  it "can update values within a UTF-8 section of an existing file" do
+    config_fh = a_config_file_containing(<<-CONF)
+    [#{mixed_utf8}]
+    foo = default
+    CONF
+
+    Puppet::Settings::IniFile.update(config_fh) do |config|
+      config.set(mixed_utf8, 'foo', 'bar')
+    end
+
+    expect(config_fh.string).to eq(<<-CONF)
+    [#{mixed_utf8}]
+    foo = bar
+    CONF
+  end
+
   it "preserves comments when writing a new name and value" do
     config_fh = a_config_file_containing("# this is a comment")
 
