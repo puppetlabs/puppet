@@ -15,7 +15,7 @@ class Puppet::Settings::IniFile
       case line
       when /^(\s*)\[(\w+)\](\s*)$/
         config.append(SectionLine.new($1, $2, $3))
-      when /^(\s*)(\w+)(\s*=\s*)(.*?)(\s*)$/
+      when /^(\s*)([[:word:]]+)(\s*=\s*)(.*?)(\s*)$/
         config.append(SettingLine.new($1, $2, $3, $4, $5))
       else
         config.append(Line.new(line))
