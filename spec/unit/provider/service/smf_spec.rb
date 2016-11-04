@@ -76,9 +76,9 @@ describe provider_class, :if => Puppet.features.posix? do
       @provider.expects(:svcs).with('-H', '-o', 'state,nstate', "/system/myservice").returns("online\t-")
       @provider.status
     end
-    it "should return stopped if svcs can't find the service" do
+    it "should return absent if svcs can't find the service" do
       @provider.stubs(:svcs).raises(Puppet::ExecutionFailure.new("no svc found"))
-      expect(@provider.status).to eq(:stopped)
+      expect(@provider.status).to eq(:absent)
     end
     it "should return running if online in svcs output" do
       @provider.stubs(:svcs).returns("online\t-")
