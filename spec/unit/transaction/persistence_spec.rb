@@ -148,7 +148,12 @@ describe Puppet::Transaction::Persistence do
       persistence = Puppet::Transaction::Persistence.new
 
       if Puppet.features.microsoft_windows?
-        expect { persistence.save }.to raise_error(Puppet::Util::Windows::Error, /Access is denied/)
+        expect do
+          persistence.save
+        end.to raise_error do |error|
+          expect(error).to be_a(Puppet::Util::Windows::Error)
+          expect(error.code).to eq(5) # ERROR_ACCESS_DENIED
+        end
       else
         expect { persistence.save }.to raise_error(Errno::EISDIR, /Is a directory/)
       end
