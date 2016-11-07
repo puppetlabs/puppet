@@ -52,10 +52,14 @@ test_name 'C98345: ensure puppet generate assures env. isolation' do
                        'did not produce environment isolation issue as expected')
         end
       end
-      step 'generate pcore files' do
-        on(master, puppet("generate types --environment #{tmp_environment}"))
-        on(master, puppet("generate types --environment #{tmp_environment2}"))
-      end
+    end
+
+    step 'generate pcore files' do
+      on(master, puppet("generate types --environment #{tmp_environment}"))
+      on(master, puppet("generate types --environment #{tmp_environment2}"))
+    end
+
+    agents.each do |agent|
       step 'rerun agents after generate, ensure proper runs' do
         on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment}"),
            :acceptable_exit_codes => 2)
