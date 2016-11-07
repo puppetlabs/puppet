@@ -64,6 +64,36 @@ test_name 'C98120, C98077: Sensitive Data is redacted on CLI, logs, reports' do
   sitepp_content = generate_manifest(test_resources)
   assertion_code = generate_assertions(test_resources)
 
+  # Make a copy of the full set of 'test_resources' but filtered down to include
+  # only the assertions of type ':refute_match'.  So for example, where the
+  # 'test_resources' array might have an entry like this...
+  #
+  #  {:type => 'notify', ...
+  #   :assertions => [{:refute_match => 'sekrit1'},
+  #                   {:assert_match => "1:#{notify_redacted}"}]}
+  #
+  # ... the ':assert_match' entry would be filtered out in the new
+  # 'refutation_resources' array, producing:
+  #
+  #  {:type => 'notify', ...
+  #   :assertions => [{:refute_match => 'sekrit1'}]}
+  #
+  # This is done so that when validating the syslog output, we can refute the
+  # existence of any of the sensitive info in the syslog without having to
+  # assert that redacted info is in the syslog.  The redacted info appears in
+  # the console output from the Puppet agent run - by virtue of including a
+  # '--debug' flag on the agent command line - whereas the redacted info is not
+  # expected to be piped into the syslog.
+
+  refutation_resources = test_resources.collect do |assertion_group|
+    refutation_group = assertion_group.clone
+    refutation_group[:assertions] = assertion_group[:assertions].select do |assertion|
+      assertion.has_key?(:refute_match)
+    end
+    refutation_group
+  end
+  refutation_code = generate_assertions(refutation_resources)
+
   create_sitepp(master, tmp_environment, sitepp_content)
 
   step "run agent in #{tmp_environment}, run all assertions" do
@@ -75,13 +105,20 @@ test_name 'C98120, C98077: Sensitive Data is redacted on CLI, logs, reports' do
           run_assertions(assertion_code, result)
         end
 
-        if agent['platform'] =~ /fedora|centos|el|redhat|scientific|ubuntu|debian|cumulus/
-          step "assert no redacted data in syslog" do
-            #sigh.  gee, thanks for the help, beaker!
-            result = dump_puppet_log(agent)
-            raise if result.length < 3
-            string_io_index = 2
-            run_assertions(assertion_code, result[string_io_index].string)
+        step "assert no redacted data in syslog" do
+          #sigh.  gee, thanks for the help, beaker!
+          syslogfile = case agent['platform']
+                         when /fedora|centos|el|redhat|scientific/
+                           '/var/log/messages'
+                         when /ubuntu|debian|cumulus/
+                           '/var/log/syslog'
+                         else
+                           logger.warn "Could not determine syslog for #{agent['platform']}, so skipping syslog validation"
+                           nil
+                       end
+          if syslogfile
+            result = on(agent, "tail -n 100 #{syslogfile}").stdout.chomp
+            run_assertions(refutation_code, result)
           end
         end
 
