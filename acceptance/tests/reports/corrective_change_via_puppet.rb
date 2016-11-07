@@ -48,28 +48,28 @@ MANIFEST
   step 'run agent(s) to create the new resource' do
     with_puppet_running_on(master, {}) do
       agents.each do |agent|
-        fqdn = agent.hostname
-
         step 'Run agent once to create new File resource' do
           on(agent, puppet("agent -t --environment #{tmp_environment} --server #{master.hostname}"),:acceptable_exit_codes => 2)
         end
 
         step 'Verify the file resource is created' do
-          on(agent, "cat #{tmp_file[fqdn]}").stdout do |file_contents|
+          on(agent, "cat #{tmp_file[agent.hostname]}").stdout do |file_contents|
             assert_equal(original_test_data, file_contents, 'file contents did not match expected contents')
           end
         end
+      end
 
-        step 'Change the manifest for the resource' do
-          create_manifest_for_file_resource(tmp_file, modified_test_data, tmp_environment)
-        end
+      step 'Change the manifest for the resource' do
+        create_manifest_for_file_resource(tmp_file, modified_test_data, tmp_environment)
+      end
 
+      agents.each do |agent|
         step 'Run agent a 2nd time to change the File resource' do
           on(agent, puppet("agent -t --environment #{tmp_environment} --server #{master.hostname}"),:acceptable_exit_codes => 2)
         end
 
         step 'Verify the file resource is created' do
-          on(agent, "cat #{tmp_file[fqdn]}").stdout do |file_contents|
+          on(agent, "cat #{tmp_file[agent.hostname]}").stdout do |file_contents|
             assert_equal(modified_test_data, file_contents, 'file contents did not match expected contents')
           end
         end
