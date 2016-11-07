@@ -44,8 +44,7 @@ describe Puppet::SSL::Configuration do
     end
 
     it "#ca_auth_certificates returns an Array<OpenSSL::X509::Certificate>" do
-      subject.stubs(:read_file).returns(master_ca_pem + root_ca_pem)
-
+      Puppet::FileSystem.expects(:read).with(subject.ca_auth_file, :encoding => 'UTF-8').returns(master_ca_pem + root_ca_pem)
       certs = subject.ca_auth_certificates
       certs.each { |cert| expect(cert).to be_a_kind_of OpenSSL::X509::Certificate }
     end

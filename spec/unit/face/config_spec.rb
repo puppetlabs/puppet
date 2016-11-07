@@ -44,6 +44,53 @@ syslogfacility = file
     subject.print('all')
   end
 
+  context "when setting config values" do
+    let(:config_file) { '/foo/puppet.conf' }
+    let(:path) { Pathname.new(config_file) }
+    before(:each) do
+      Puppet[:config] = '/foo/puppet.conf'
+      Puppet::FileSystem.stubs(:pathname).with(config_file).returns(path)
+      Puppet::FileSystem.stubs(:touch)
+    end
+
+    it "writes to the correct puppet config file" do
+      Puppet::FileSystem.expects(:open).with(path, anything, anything)
+      subject.set('foo', 'bar')
+    end
+
+    it "creates a config file if one does not exist" do
+      Puppet::FileSystem.stubs(:open).with(path, anything, anything).yields(StringIO.new)
+      Puppet::FileSystem.expects(:touch).with(path)
+      subject.set('foo', 'bar')
+    end
+
+    it "sets the supplied config/value in the default section (main)" do
+      Puppet::FileSystem.stubs(:open).with(path, anything, anything).yields(StringIO.new)
+      config = Puppet::Settings::IniFile.new([Puppet::Settings::IniFile::DefaultSection.new])
+      manipulator = Puppet::Settings::IniFile::Manipulator.new(config)
+      Puppet::Settings::IniFile::Manipulator.stubs(:new).returns(manipulator)
+
+      manipulator.expects(:set).with("main", "foo", "bar")
+      subject.set('foo', 'bar')
+    end
+
+    it "sets the value in the supplied section" do
+      Puppet::FileSystem.stubs(:open).with(path, anything, anything).yields(StringIO.new)
+      config = Puppet::Settings::IniFile.new([Puppet::Settings::IniFile::DefaultSection.new])
+      manipulator = Puppet::Settings::IniFile::Manipulator.new(config)
+      Puppet::Settings::IniFile::Manipulator.stubs(:new).returns(manipulator)
+
+      manipulator.expects(:set).with("baz", "foo", "bar")
+      subject.set('foo', 'bar', {:section => "baz"})
+
+    end
+
+    it "opens the file with UTF-8 encoding" do
+      Puppet::FileSystem.expects(:open).with(path, nil, 'r+:UTF-8')
+      subject.set('foo', 'bar')
+    end
+  end
+
   shared_examples_for :config_printing_a_section do |section|
 
     def add_section_option(args, section)

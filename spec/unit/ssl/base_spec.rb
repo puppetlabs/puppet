@@ -45,6 +45,15 @@ describe Puppet::SSL::Certificate do
     end
   end
 
+  describe "when initializing wrapped class from a file with #read" do
+    it "should open the file with UTF-8 encoding" do
+      path = '/foo/bar/cert'
+      Puppet::SSL::Base.stubs(:valid_certname).returns(true)
+      Puppet::FileSystem.expects(:read).with(path, :encoding => 'UTF-8').returns("bar")
+      @base.read(path)
+    end
+  end
+
   describe "#digest_algorithm" do
     let(:content) { stub 'content' }
     let(:base) {
