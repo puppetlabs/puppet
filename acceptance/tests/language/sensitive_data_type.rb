@@ -64,6 +64,15 @@ extend Puppet::Acceptance::PuppetTypeTestTools
   sitepp_content = generate_manifest(test_resources)
   assertion_code = generate_assertions(test_resources)
 
+  refutation_resources = test_resources.collect do |assertion_group|
+    refutation_group = assertion_group.clone
+    refutation_group[:assertions] = assertion_group[:assertions].select do |assertion|
+      assertion.has_key?(:refute_match)
+    end
+    refutation_group
+  end
+  refutation_code = generate_assertions(refutation_resources)
+
   create_sitepp(master, tmp_environment, sitepp_content)
 
   step "run agent in #{tmp_environment}, run all assertions" do
@@ -75,13 +84,20 @@ extend Puppet::Acceptance::PuppetTypeTestTools
           run_assertions(assertion_code, result)
         end
 
-        if agent['platform'] =~ /fedora|centos|el|redhat|scientific|ubuntu|debian|cumulus/
-          step "assert no redacted data in syslog" do
-            #sigh.  gee, thanks for the help, beaker!
-            result = dump_puppet_log(agent)
-            raise if result.length < 3
-            string_io_index = 2
-            run_assertions(assertion_code, result[string_io_index].string)
+        step "assert no redacted data in syslog" do
+          #sigh.  gee, thanks for the help, beaker!
+          syslogfile = case agent['platform']
+                         when /fedora|centos|el|redhat|scientific/ then
+                           '/var/log/messages'
+                         when /ubuntu|debian|cumulus/ then
+                           '/var/log/syslog'
+                         else
+                           nil
+                       end
+          if syslogfile
+            result = agent.exec(Command.new("tail -n 100 #{syslogfile}"),
+                                :acceptable_exit_codes => [0, 1]).stdout.chomp
+            run_assertions(refutation_code, result)
           end
         end
 
