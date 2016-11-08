@@ -437,7 +437,7 @@ class TypeCalculator
     if t1.is_a?(PRegexpType) && t2.is_a?(PRegexpType)
       # if they were identical, the general rule would return a parameterized regexp
       # since they were not, the result is a generic regexp type
-      return PPatternType::DEFAULT
+      return PRegexpType::DEFAULT
     end
 
     if t1.is_a?(PCallableType) && t2.is_a?(PCallableType)

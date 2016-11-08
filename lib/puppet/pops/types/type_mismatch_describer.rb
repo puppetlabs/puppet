@@ -329,8 +329,7 @@ module Types
           a = detailed_actual_to_s(e, a)
           e = e.map { |t| t.to_alias_expanded_s }
         else
-          sns = e.map { |t| t.simple_name }.uniq
-          e = e.map { |t| s = t.simple_name; sns.count {|x| x == s } == 1 ? s : t.to_s }.uniq
+          e = e.map { |t| t.simple_name }.uniq
           a = a.simple_name
         end
         case e.size
