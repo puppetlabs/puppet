@@ -315,7 +315,11 @@ def prepare_installation
   if not InstallOptions.localedir.nil?
     localedir = InstallOptions.localedir
   else
-    localedir = "/opt/puppetlabs/puppet/share/puppet/locale"
+    if $operatingsystem == "windows"
+      localedir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "share", "puppet", "locale")
+    else
+      localedir = "/opt/puppetlabs/puppet/share/puppet/locale"
+    end
   end
 
   if not InstallOptions.sitelibdir.nil?

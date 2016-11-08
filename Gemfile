@@ -33,6 +33,7 @@ gem "rake", "10.1.1", :require => false
 gem 'json_pure', '~> 1.8', :require => false
 # i18n support (gettext-setup and dependencies)
 gem 'gettext-setup', '~> 0.6', :require => false
+gem 'locale', '~> 2.1', :require => false
 
 group(:development, :test) do
   gem "rspec", "~> 3.1", :require => false
