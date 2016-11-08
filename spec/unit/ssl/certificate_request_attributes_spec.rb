@@ -9,6 +9,12 @@ describe Puppet::SSL::CertificateRequestAttributes do
       "custom_attributes" => {
         "1.3.6.1.4.1.34380.2.2"=>[3232235521, 3232235777], # system IPs in hex
         "1.3.6.1.4.1.34380.2.0"=>"hostname.domain.com",
+        # different UTF-8 widths
+        # 1-byte A
+        # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
+        # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
+        # 4-byte 𠜎 - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
+        "1.2.840.113549.1.9.7"=>"utf8passwordA\u06FF\u16A0\u{2070E}"
       }
     }
   end
