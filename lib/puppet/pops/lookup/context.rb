@@ -58,7 +58,7 @@ end
 # to provide explanation support and the {FunctionContext} object needed to provide the private cache.
 # The {Context} is part of the public API. It will be passed to a _data_hash_, _data_dig_, or _lookup_key_ function and its
 # attributes and methods can be used in a Puppet function as well as in a Ruby function.
-# The {Context} is maps to the Pcore type 'Puppet::Lookupcontext'
+# The {Context} is maps to the Pcore type 'Puppet::LookupContext'
 #
 # @api public
 class Context

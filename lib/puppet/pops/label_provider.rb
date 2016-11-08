@@ -40,7 +40,7 @@ module Puppet::Pops::LabelProvider
     count == 1 ? text : "#{text}s"
   end
 
-  # Combines several strings using comman and a final conjunction
+  # Combines several strings using commas and a final conjunction
   def combine_strings(strings, conjunction = 'or')
     case strings.size
     when 0

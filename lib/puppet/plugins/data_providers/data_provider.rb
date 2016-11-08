@@ -383,7 +383,7 @@ module Puppet::Plugins::DataProviders
     # @param paths [Array<String>] paths that have been preprocessed (interpolations resolved)
     # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
     # @return [Array<Puppet::DataProviders::ResolvedLocation>] Array of resolved paths
-    # @deperecated
+    # @deprecated
     def resolve_paths(datadir, declared_paths, paths, lookup_invocation)
       resolved_paths = []
       unless paths.nil? || datadir.nil?
@@ -397,7 +397,7 @@ module Puppet::Plugins::DataProviders
       resolved_paths
     end
 
-    # @deperecated
+    # @deprecated
     def path_extension
       raise NotImplementedError, "Subclass of FileBasedProviderFactory must implement 'path_extension' method"
     end

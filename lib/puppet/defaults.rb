@@ -561,7 +561,7 @@ deprecated and has been replaced by 'always_retry_plugins'."
       obtained by calling the function 'environment::data()') and 'hiera' (data obtained using a data
       provider configured using a hiera.yaml file in root of the environment).
       Other environment data providers may be registered in modules on the module path. For such
-      custom data providers see the respective module documentation. Setting is deprecated",
+      custom data providers see the respective module documentation. This setting is deprecated.",
       :hook => proc { |value|
         unless value.nil? || Puppet[:strict] == :off
           Puppet.deprecation_warning "Setting 'environment_data_provider' is deprecated."
