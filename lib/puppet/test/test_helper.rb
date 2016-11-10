@@ -132,6 +132,10 @@ module Puppet::Test
       Puppet::Application.clear!
       Puppet::Util::Profiler.clear
 
+      # Every query to the facts indirection will call load_all in facter.
+      # This is really slow, so stub it out.
+      Facter::Util::Loader.any_instance.stubs(:load_all)
+
       Puppet.clear_deprecation_warnings
 
       Puppet::DataBinding::Hiera.instance_variable_set("@hiera", nil)
