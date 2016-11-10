@@ -6,6 +6,28 @@ class Puppet::Transaction::Report::Yaml < Puppet::Indirector::Yaml
 
   # Force report to be saved there
   def path(name,ext='.yaml')
-    Puppet[:lastrunreport]
+    Puppet[:lastrunreport].first
   end
+
+  def save(request)
+    # Have the superclass save it
+    super
+
+    # Make copies in other locations, if needed
+    path, *copies = Puppet[:lastrunreport]
+    copies.each do |target|
+      copy_report(path, target)
+    end
+  end
+
+  private
+
+  def copy_report(src, dest)
+    basedir = File.dirname(dest)
+
+    Puppet::FileSystem.dir_mkpath(basedir) unless Puppet::FileSystem.dir_exist?(basedir)
+
+    FileUtils.copy_file(src, dest)
+  end
+
 end

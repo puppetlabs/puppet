@@ -127,8 +127,38 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
   def to_resource
     return nil unless type = self.type
 
-    path = self.value
+    create_resource(type, self.value)
+  end
 
+  # Make sure any provided variables look up to something.
+  def validate(value)
+    return true unless value.is_a? String
+    value.scan(/\$(\w+)/) { |name|
+      name = $1
+      unless @settings.include?(name)
+        raise ArgumentError,
+          "Settings parameter '#{name}' is undefined"
+      end
+    }
+  end
+
+  # @api private
+  def exclusive_open(option = 'r', &block)
+    controlled_access do |mode|
+      Puppet::FileSystem.exclusive_open(file(), mode, option, &block)
+    end
+  end
+
+  # @api private
+  def open(option = 'r', &block)
+    controlled_access do |mode|
+      Puppet::FileSystem.open(file, mode, option, &block)
+    end
+  end
+
+  private
+
+  def create_resource(type, path)
     return nil unless path.is_a?(String)
 
     # Make sure the paths are fully qualified.
@@ -171,34 +201,6 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
 
     resource
   end
-
-  # Make sure any provided variables look up to something.
-  def validate(value)
-    return true unless value.is_a? String
-    value.scan(/\$(\w+)/) { |name|
-      name = $1
-      unless @settings.include?(name)
-        raise ArgumentError,
-          "Settings parameter '#{name}' is undefined"
-      end
-    }
-  end
-
-  # @api private
-  def exclusive_open(option = 'r', &block)
-    controlled_access do |mode|
-      Puppet::FileSystem.exclusive_open(file(), mode, option, &block)
-    end
-  end
-
-  # @api private
-  def open(option = 'r', &block)
-    controlled_access do |mode|
-      Puppet::FileSystem.open(file, mode, option, &block)
-    end
-  end
-
-  private
 
   def file
     Puppet::FileSystem.pathname(value)
