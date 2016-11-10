@@ -161,6 +161,10 @@ describe 'Puppet::Pops::Lookup::Interpolation' do
       expect(interpolator.interpolate('a dot e: %{a.d}', lookup_invocation, true)).to eq('a dot e: (scope) a dot d is a hash entry')
     end
 
+    it 'should report a key missing and replace with empty string when a dotted key is used to navigate into a structure and then not found' do
+      expect(interpolator.interpolate('a dot n: %{a.n}', lookup_invocation, true)).to eq('a dot n: ')
+    end
+
     it 'should use a dotted key to navigate into a structure when when it is not quoted with method lookup' do
       expect_lookup('a')
       expect(interpolator.interpolate("a dot e: %{lookup('a.d')}", lookup_invocation, true)).to eq('a dot e: (lookup) a dot d is a hash entry')

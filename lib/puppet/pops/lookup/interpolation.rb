@@ -52,7 +52,11 @@ module Interpolation
           segments = split_key(key) { |problem| Puppet::DataBinding::LookupError.new("#{problem} in string: #{subject}") }
           root_key = segments.shift
           value = interpolate_method(method_key).call(root_key, lookup_invocation)
-          value = sub_lookup(key, lookup_invocation, segments, value) unless segments.empty?
+          unless segments.empty?
+            found = '';
+            catch(:no_such_key) { found = sub_lookup(key, lookup_invocation, segments, value) }
+            value = found;
+          end
           value = lookup_invocation.check(key) { interpolate(value, lookup_invocation, allow_methods) }
 
           # break gsub and return value immediately if this was an alias substitution. The value might be something other than a String
