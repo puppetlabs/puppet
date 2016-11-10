@@ -17,7 +17,7 @@ this.
 ## Ruby versions
 
 Puppet needs to work across a variety of ruby versions, including ruby
-1.9.3, 2.0.0 and 2.1.0.
+1.9.3 and up. Ruby 1.8.7 is no longer supported.
 
 Popular ways of making sure you have access to the various versions of ruby are
 to use either [rbenv](https://github.com/sstephenson/rbenv) or
@@ -47,16 +47,28 @@ To run puppet itself (for a resource lookup say):
 
     $ bundle exec puppet resource host localhost
 
+To apply a test manifest:
+
+    $ bundle exec puppet apply -e 'notify { "hello world": }'
+
 ## Running Spec Tests
 
 Puppet projects use a common convention of using Rake to run unit tests.
 The tests can be run with the following rake task:
 
-    bundle exec rake spec
+    $ bundle exec rake spec
 
 To run a single file's worth of tests (much faster!), give the filename:
 
-    bundle exec rake spec TEST=spec/unit/ssl/host_spec.rb
+    $ bundle exec rake spec TEST=spec/unit/ssl/host_spec.rb
+
+To run a single test or group of tests, give the filename and line number:
+
+    $ bundle exec rake spec TEST=spec/unit/ssl/host_spec.rb:42
+
+To run all tests in parallel:
+
+    $ bundle exec rake parallel:spec
 
 When tests fail, it is often useful to capture Puppet's log of a test
 run. The test harness pays attention to two environment variables that can

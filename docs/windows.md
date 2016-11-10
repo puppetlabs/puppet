@@ -1,16 +1,14 @@
-# Windows #
+# Windows
 
-If you'd like to run Puppet from source on Windows platforms, the
-include `ext/envpuppet.bat` will help.
+If you'd like to run Puppet from source on Windows platforms, follow the [Quickstart](./quickstart.md) to using bundler and installing the necessary gems on Windows.
 
-To quickly run Puppet from source, assuming you already have Ruby installed
-from [rubyinstaller.org](http://rubyinstaller.org).
+You will need to install Ruby on Windows from [rubyinstaller.org](http://rubyinstaller.org).
 
     C:\> cd C:\work\puppet
-    C:\work\puppet> set PATH=%PATH%;C:\work\puppet\ext
-    C:\work\puppet> envpuppet bundle install
-    C:\work\puppet> envpuppet puppet --version
-    2.7.9
+    C:\work\puppet> gem install bundler
+    C:\work\puppet> bundle install --path .bundle
+    C:\work\puppet> bundle exec puppet --version
+    4.7.1
 
 When writing a test that cannot possibly run on Windows, e.g. there is
 no mount type on windows, do the following:
@@ -31,7 +29,7 @@ If the test doesn't currently pass on Windows, e.g. due to on going porting, the
 
 Then run the test as:
 
-    C:\work\puppet> envpuppet bundle exec rspec spec
+    C:\work\puppet> bundle exec rspec spec
 
 ## Common Issues ##
 
