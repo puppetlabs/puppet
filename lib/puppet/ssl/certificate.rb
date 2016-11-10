@@ -60,6 +60,8 @@ DOC
         Puppet::SSL::Oids.subtree_of?('ppPrivCertExt', ext.oid)
     end
 
-    custom_exts.map { |ext| {'oid' => ext.oid, 'value' => ext.value} }
+    extensions = []
+    custom_exts.map { |ext| extensions << {'oid' => ext.oid, 'value' => ext.value} }
+    return extensions
   end
 end
