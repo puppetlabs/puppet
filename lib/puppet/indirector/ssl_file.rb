@@ -159,9 +159,9 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
   # the work or opening a filehandle manually.
   def write(name, path)
     if ca?(name) and ca_location
-      Puppet.settings.setting(self.class.ca_setting).open('w') { |f| yield f }
+      Puppet.settings.setting(self.class.ca_setting).exclusive_open('w') { |f| yield f }
     elsif file_location
-      Puppet.settings.setting(self.class.file_setting).open('w') { |f| yield f }
+      Puppet.settings.setting(self.class.file_setting).exclusive_open('w') { |f| yield f }
     elsif setting = self.class.directory_setting
       begin
         Puppet.settings.setting(setting).open_file(path, 'w') { |f| yield f }
