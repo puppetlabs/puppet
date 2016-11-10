@@ -1,0 +1,6 @@
+source :rubygems
+
+gem "rspec", "2.9.0"
+gem "mocha", "0.10.5"
+gem "rack", "1.1.0"
+gem "rake"
