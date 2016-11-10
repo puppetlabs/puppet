@@ -70,14 +70,13 @@ behavior (which are done with expectations)
 ```ruby
 # This is an example; it sets the test name and defines the test to run
 specify "one equals one" do
-  # 'should' is an expectation; it adds a check to make sure that the left argument
-  # matches the right argument
-  1.should == 1
+  # add an expectation that left and right arguments are equal
+  expect(1).to eq(1)
 end
 
 # Examples can be declared with either 'it' or 'specify'
 it "one doesn't equal two" do
-  1.should_not == 2
+  expect(1).to_not eq(2)
 end
 ```
 
@@ -85,6 +84,9 @@ Good examples generally do as little setup as possible and only test one or two
 things; it makes tests easier to understand and easier to debug.
 
 More complete documentation on expectations is available at https://www.relishapp.com/rspec/rspec-expectations/docs
+
+Note Puppet supports the [RSpec 3](http://rspec.info/blog/2013/07/the-plan-for-rspec-3/)
+API, so please do not use RSpec 2 "should" syntax like `1.should == 1`.
 
 ### Example groups
 
@@ -95,15 +97,15 @@ set.
 describe "the number one" do
 
   it "is larger than zero" do
-    1.should be > 0
+    expect(1).to be > 0
   end
 
   it "is an odd number" do
-    1.odd?.should be true
+    expect(1).to be_odd # calls 1.odd?
   end
 
   it "is not nil" do
-    1.should_not be_nil
+    expect(1).to be
   end
 end
 ```
@@ -166,11 +168,11 @@ describe "a helper object" do
   end
 
   it "is an array" do
-    my_helper.should be_a_kind_of Array
+    expect(my_helper).to be_a_kind_of Array
   end
 
   it "has three elements" do
-    my_helper.should have(3).items
+    expect(my_helper.size).to eq(3)
   end
 end
 ```
@@ -198,7 +200,7 @@ describe "stubbing a method on an object" do
   end
 
   it 'has three items before being stubbed' do
-    my_helper.size.should == 3
+    expect(my_helper.size).to eq(3)
   end
 
   describe 'when stubbing the size' do
@@ -207,7 +209,7 @@ describe "stubbing a method on an object" do
     end
 
     it 'has the stubbed value for size' do
-      my_helper.size.should == 10
+      expect(my_helper.size).to eq(10)
     end
   end
 end
@@ -222,7 +224,7 @@ describe "stubbing an object" do
   end
 
   it 'has the stubbed size'
-    my_helper.size.should == 10
+    expect(my_helper.size).to eq(10)
   end
 end
 ```
@@ -327,7 +329,7 @@ describe "fixture data" do
 
     it "can be stubbed" do
       @fixture.stubs(:foo).returns :bar
-      @fixture.foo.should == :bar
+      expect(@fixture.foo).to eq(:bar)
     end
 
     it "does not keep state between tests" do
@@ -345,7 +347,7 @@ describe "fixture data" do
 
     it "can be stubbed" do
       fixture.stubs(:foo).returns :bar
-      fixture.foo.should == :bar
+      expect(fixture.foo).to eq(:bar)
     end
 
     it "does not keep state between tests" do
