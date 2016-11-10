@@ -246,8 +246,7 @@ Merge strategy deep
           "c" => "C",
           "m" => {
             "ma" => "MA",
-            "mc" => "MC",
-            "mb" => "MB"
+            "mc" => "MC"
           }
         }
   Merged result: {
@@ -328,8 +327,7 @@ Searching for "one::loptsm_test::hash"
             "c" => "C",
             "m" => {
               "ma" => "MA",
-              "mc" => "MC",
-              "mb" => "MB"
+              "mc" => "MC"
             }
           }
     Merged result: {
