@@ -28,7 +28,7 @@ module Serialization
     # @api public
     def write(value)
       case value
-      when Integer, Float, String, true, false, nil, Time
+      when Integer, Float, String, true, false, nil
         @writer.write(value)
       when :default
         @writer.write(Extension::Default::INSTANCE)
@@ -76,13 +76,19 @@ module Serialization
       @written[value.object_id] = @written.size
     end
 
+    # Write the start of a sensitive object
+    # @api private
+    def start_sensitive
+      @writer.write(Extension::SensitiveStart::INSTANCE)
+    end
+
     # First time write of a tabulated object. This means that the object is written and then remembered. Subsequent writes
     # of the same object will yield a write of a tabulation index instead.
     # @param [Object] value the value to write
     # @api private
     def write_tabulated_first_time(value)
       case value
-      when Symbol, Regexp, SemanticPuppet::Version, SemanticPuppet::VersionRange, Time::Timestamp, Time::Timespan, Types::PSensitiveType::Sensitive, Types::PBinaryType::Binary
+      when Symbol, Regexp, SemanticPuppet::Version, SemanticPuppet::VersionRange, Time::Timestamp, Time::Timespan, Types::PBinaryType::Binary
         push_written(value)
         @writer.write(value)
       when Array
@@ -93,6 +99,9 @@ module Serialization
         push_written(value)
         start_map(value.size)
         value.each_pair { |key, val| write(key); write(val) }
+      when Types::PSensitiveType::Sensitive
+        start_sensitive
+        write(value.unwrap)
       when Types::PTypeReferenceType
         push_written(value)
         @writer.write(value)

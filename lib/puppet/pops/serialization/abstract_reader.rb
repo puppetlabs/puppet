@@ -121,6 +121,10 @@ class AbstractReader
       read_payload(data) { |ep| Extension::Comment.new(ep.read) }
     end
 
+    register_type(Extension::SENSITIVE_START) do |data|
+      read_payload(data) { |ep| Extension::SensitiveStart::INSTANCE }
+    end
+
     register_type(Extension::REGEXP) do |data|
       read_payload(data) { |ep| Regexp.new(ep.read) }
     end
@@ -155,10 +159,6 @@ class AbstractReader
 
     register_type(Extension::VERSION_RANGE) do |data|
       read_payload(data) { |ep| SemanticPuppet::VersionRange.parse(ep.read) }
-    end
-
-    register_type(Extension::SENSITIVE) do |data|
-      read_payload(data) { |ep| Types::PSensitiveType::Sensitive.new(ep.read) }
     end
 
     register_type(Extension::BINARY) do |data|

@@ -38,6 +38,8 @@ module Serialization
         result = remember({})
         val.size.times { key = read; result[key] = read }
         result
+      when Extension::SensitiveStart
+        Types::PSensitiveType::Sensitive.new(read)
       when Extension::PcoreObjectStart
         type_name = val.type_name
         type = Types::TypeParser.singleton.parse(type_name, @loader)
