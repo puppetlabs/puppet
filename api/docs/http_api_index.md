@@ -105,11 +105,11 @@ with JSON (MIME type of `application/json`).
 
 ### Puppet Server-specific endpoints
 
-When using [Puppet Server 2.3 or newer](https://docs.puppetlabs.com/puppetserver/2.3/)
+When using [Puppet Server 2.3 or newer](https://docs.puppet.com/puppetserver/2.3/)
 as a Puppet master, Puppet Server adds additional `/puppet/v3/` endpoints:
 
-* [Static File Content](https://docs.puppetlabs.com/puppetserver/latest/puppet-api/v3/static_file_content.md)
-* [Environment Classes](https://docs.puppetlabs.com/puppetserver/latest/puppet-api/v3/environment_classes.md)
+* [Static File Content](https://docs.puppet.com/puppetserver/latest/puppet-api/v3/static_file_content.md)
+* [Environment Classes](https://docs.puppet.com/puppetserver/latest/puppet-api/v3/environment_classes.md)
 
 #### Error Responses
 
