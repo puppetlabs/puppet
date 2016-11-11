@@ -84,7 +84,7 @@ task(:commits) do
   # falls back to `master..HEAD` as a next best bet as `master` is unlikely to
   # ever be absent.
   commit_range = ENV['TRAVIS_COMMIT_RANGE'].nil? ? 'master..HEAD' : ENV['TRAVIS_COMMIT_RANGE']
-  puts "Checking commits..."
+  puts "Checking commits #{commit_range}"
   %x{git log --no-merges --pretty=%s #{commit_range}}.each_line do |commit_summary|
     # This regex tests for the currently supported commit summary tokens: maint, doc, packaging, or pup-<number>.
     # The exception tries to explain it in more full.
