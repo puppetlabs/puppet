@@ -419,7 +419,21 @@ deprecated and has been replaced by 'always_retry_plugins'."
     :data_binding_terminus => {
       :type    => :terminus,
       :default => "hiera",
-      :desc    => "Where to retrieve information about data.",
+      :desc    =>
+        "This setting has been deprecated in favor of using lookup. It will be removed in major release of puppet.
+
+         This setting controls which data binding terminus to use for global automatic data binding (across all environments).
+         Typical (deprecated) usage is to use the default value 'hiera'. After having configured lookup per environment, this
+         setting should be changed to an empty string (or nil) as that will turn off global data binding.",
+      :call_hook => :on_initialize_and_write,
+      :hook => proc do |value|
+        if Puppet[:strict] != :off
+          s_val = value.to_s # because sometimes the value is a symbol
+          unless s_val == 'hiera' || s_val == 'none' || value == '' || value.nil?
+            Puppet.deprecation_warning "Setting 'data_binding_terminus' is deprecated. Convert custom terminus to hiera 5 API."
+          end
+        end
+      end
     },
     :hiera_config => {
       :default => lambda do
