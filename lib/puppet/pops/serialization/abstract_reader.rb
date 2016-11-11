@@ -130,7 +130,7 @@ class AbstractReader
     end
 
     register_type(Extension::TYPE_REFERENCE) do |data|
-      read_payload(data) { |ep| Types::PTypeReferenceType.new(read_tpl_qname(ep)) }
+      read_payload(data) { |ep| Types::PTypeReferenceType.new(ep.read) }
     end
 
     register_type(Extension::SYMBOL) do |data|
@@ -161,8 +161,14 @@ class AbstractReader
       read_payload(data) { |ep| SemanticPuppet::VersionRange.parse(ep.read) }
     end
 
-    register_type(Extension::BINARY) do |data|
+    register_type(Extension::BASE64) do |data|
       read_payload(data) { |ep| Types::PBinaryType::Binary.from_base64_strict(ep.read) }
+    end
+
+    register_type(Extension::BINARY) do |data|
+      # The Ruby MessagePack implementation have special treatment for "ASCII-8BIT" strings. They
+      # are written as binary data.
+      read_payload(data) { |ep| Types::PBinaryType::Binary.new(ep.read) }
     end
   end
 end

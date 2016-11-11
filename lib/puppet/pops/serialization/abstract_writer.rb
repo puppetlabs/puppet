@@ -45,6 +45,10 @@ class AbstractWriter
     @packer.flush
   end
 
+  def supports_binary?
+    false
+  end
+
   # Write a value on the underlying stream
   # @api public
   def write(value)
@@ -163,7 +167,7 @@ class AbstractWriter
     end
 
     register_type(Extension::TYPE_REFERENCE, Types::PTypeReferenceType) do |o|
-      build_payload { |ep| write_tpl_qname(ep, o.type_string) }
+      build_payload { |ep| ep.write(o.type_string) }
     end
 
     register_type(Extension::SYMBOL, Symbol) do |o|
@@ -186,8 +190,16 @@ class AbstractWriter
       build_payload { |ep| ep.write(o.to_s) }
     end
 
-    register_type(Extension::BINARY, Types::PBinaryType::Binary) do |o|
-      build_payload { |ep| ep.write(o.to_s) }
+    if supports_binary?
+      register_type(Extension::BINARY, Types::PBinaryType::Binary) do |o|
+        # The Ruby MessagePack implementation have special treatment for "ASCII-8BIT" strings. They
+        # are written as binary data.
+        build_payload { |ep| ep.write(o.binary_buffer) }
+      end
+    else
+      register_type(Extension::BASE64, Types::PBinaryType::Binary) do |o|
+        build_payload { |ep| ep.write(o.to_s) }
+      end
     end
   end
 end
