@@ -148,7 +148,7 @@ describe 'The Object Type' do
   end
 
   context 'when dealing with functions' do
-    it 'raises an error when the function type is a Type[Callable]' do
+    it 'raises an error unless the function type is a Type[Callable]' do
       obj = <<-OBJECT
         functions => {
           a => String
@@ -207,7 +207,7 @@ describe 'The Object Type' do
         'function MyDerivedObject[a] attempts to override attribute MyObject[a]')
     end
 
-    it 'raises an error when the an function overrides an attribute' do
+    it 'raises an error when the a function overrides an attribute' do
       parent = <<-OBJECT
         functions => {
           a => Callable

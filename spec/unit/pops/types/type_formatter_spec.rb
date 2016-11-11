@@ -75,7 +75,7 @@ end
       expect(s.string(f.type_type)).to eq('Type')
     end
 
-    it "should yield 'Object' for PAnyType" do
+    it "should yield 'Any' for PAnyType" do
       expect(s.string(f.any)).to eq('Any')
     end
 
