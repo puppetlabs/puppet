@@ -38,7 +38,7 @@ module RGen
       impl_class = value.class
       features = features(impl_class)
       serializer.push_written(value)
-      serializer.start_object(type.name, features.size)
+      serializer.start_pcore_object(type.name, features.size)
       features.each { |feature| serializer.write(value.getGeneric(feature.name)) }
     end
 

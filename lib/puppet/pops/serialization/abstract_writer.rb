@@ -192,7 +192,7 @@ class AbstractWriter
 
     if supports_binary?
       register_type(Extension::BINARY, Types::PBinaryType::Binary) do |o|
-        # The Ruby MessagePack implementation have special treatment for "ASCII-8BIT" strings. They
+        # The Ruby MessagePack implementation has special treatment for "ASCII-8BIT" strings. They
         # are written as binary data.
         build_payload { |ep| ep.write(o.binary_buffer) }
       end
@@ -205,4 +205,3 @@ class AbstractWriter
 end
 end
 end
-

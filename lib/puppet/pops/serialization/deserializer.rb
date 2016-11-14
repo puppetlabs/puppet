@@ -56,7 +56,7 @@ module Serialization
       when Extension::ObjectStart
         type = read
         type.read(val.attribute_count - 1, self)
-      when Numeric, String, true, false, nil, Time
+      when Numeric, String, true, false, nil
         val
       else
         remember(val)

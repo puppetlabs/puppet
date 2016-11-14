@@ -14,7 +14,7 @@ class ObjectReader
     (names, types, required_count) = type.parameter_info(impl_class)
     max = names.size
     unless value_count >= required_count && value_count <= max
-      raise Serialization::SerializationError, "Feature count mismatch for #{impl_class.name}. Expected #{min} - #{max}, actual #{value_count}"
+      raise Serialization::SerializationError, "Feature count mismatch for #{impl_class.name}. Expected #{required_count} - #{max}, actual #{value_count}"
     end
     # Deserializer must know about this instance before we read its attributes
     val = deserializer.remember(impl_class.allocate)
@@ -54,9 +54,9 @@ class ObjectWriter
 
     if type.name.start_with?('Pcore::')
       serializer.push_written(value)
-      serializer.start_object(type.name, args.size)
+      serializer.start_pcore_object(type.name, args.size)
     else
-      serializer.start_pcore_object(args.size + 1)
+      serializer.start_object(args.size + 1)
       serializer.write(type)
       serializer.push_written(value)
     end
