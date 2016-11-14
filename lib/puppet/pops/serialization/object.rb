@@ -46,9 +46,9 @@ class ObjectWriter
     (names, types, required_count) = type.parameter_info(impl_class, true)
     args = names.map { |name| value.send(name) }
 
-    # Pop optional arguments that are nil
+    # Pop optional arguments that are default
     while args.size > required_count
-      break unless args.last.nil?
+      break unless args.last == type[names[args.size-1]].value
       args.pop
     end
 
