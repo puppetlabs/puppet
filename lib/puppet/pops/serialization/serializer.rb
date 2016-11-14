@@ -37,7 +37,7 @@ module Serialization
         if index.nil?
           write_tabulated_first_time(value)
         else
-          @writer.write(Extension::Tabulation.new(index)) unless index.nil?
+          @writer.write(Extension::Tabulation.new(index))
         end
       end
     end

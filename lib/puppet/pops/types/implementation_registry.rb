@@ -59,7 +59,7 @@ module Types
         loader)
     end
 
-    # Register a bidiractional regexp mapping
+    # Register a bidirectional regexp mapping
     #
     # @param type_name_subst [Array(Regexp,String)] regexp and replacement mapping type names to runtime names
     # @param impl_name_subst [Array(Regexp,String)] regexp and replacement mapping runtime names to type names
