@@ -822,8 +822,8 @@ end
 class PNumericType < PAbstractRangeType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'ScalarType',
-      'from' => { KEY_TYPE => PNumericType::DEFAULT, KEY_VALUE => :default },
-      'to' => { KEY_TYPE => PNumericType::DEFAULT, KEY_VALUE => :default }
+      'from' => { KEY_TYPE => POptionalType.new(PNumericType::DEFAULT), KEY_VALUE => nil },
+      'to' => { KEY_TYPE => POptionalType.new(PNumericType::DEFAULT), KEY_VALUE => nil }
     )
   end
 
