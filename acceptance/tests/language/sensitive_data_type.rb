@@ -110,7 +110,7 @@ extend Puppet::Acceptance::PuppetTypeTestTools
         end
 
         step "assert no redacted data in log" do
-          result = agent.exec(Command.new("tail -n 100 #{logfile}"),
+          result = agent.exec(Command.new("tail -100 #{logfile}"),
                                                     :acceptable_exit_codes => [0, 1]).stdout.chomp
           run_assertions(refutation_code, result)
         end
