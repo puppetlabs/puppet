@@ -8,7 +8,7 @@ module Lookup
 class ConfiguredDataProvider
   include DataProvider
 
-  # @param [LookupConfig,nil] config the configuration
+  # @param config [LookupConfig,nil] the configuration
   def initialize(config = nil)
     @config = config
   end

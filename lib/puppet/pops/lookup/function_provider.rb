@@ -39,7 +39,7 @@ class FunctionProvider
     name
   end
 
-  # Obtain the options to send to the function, optionally merged with a 'path' or 'uri' option
+  # Obtains the options to send to the function, optionally merged with a 'path' or 'uri' option
   #
   # @param [Pathname,URI] location The location to add to the options
   # @return [Hash{String => Object}] The options hash

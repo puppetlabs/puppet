@@ -3,7 +3,7 @@ require_relative 'interpolation'
 module Puppet::Pops
 module Lookup
 # A FunctionContext is created for each unique hierarchy entry and adapted to the Compiler (and hence shares
-# the compilers life-cycle).
+# the compiler's life-cycle).
 # @api private
 class FunctionContext
   include Interpolation

@@ -35,6 +35,8 @@ describe 'lookup' do
                   merge: hash
               YAML
           }
+        },
+        'someother' => {
         }
       }
     end
@@ -91,7 +93,9 @@ describe 'lookup' do
     context 'configured with the wrong environment' do
       let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(populated_env_dir, env_name, 'modules')]) }
       it 'does not find data in non-existing environment' do
-        expect(lookup('a')).to eql('value a')
+        Puppet.override(:environments => environments, :current_environment => 'someother') do
+          expect(lookup('a', {}, true)).to match(/did not find a value for the name 'a'/)
+        end
       end
     end
 
@@ -143,7 +147,7 @@ describe 'lookup' do
         expect(lookup('"mod_a::a.quoted.key"')).to eql('value mod_a::a.quoted.key (from mod_a)')
       end
 
-      it 'will merge hashes from environment and module when merge strategy hash is used' do
+      it 'merges hashes from environment and module when merge strategy hash is used' do
         expect(lookup('mod_a::hash_a', :merge => 'hash')).to eql({'a' => 'value mod_a::hash_a.a (from environment)', 'b' => 'value mod_a::hash_a.b (from mod_a)'})
       end
     end

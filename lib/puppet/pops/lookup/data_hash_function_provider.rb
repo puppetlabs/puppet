@@ -85,11 +85,13 @@ class DataHashFunctionProvider < FunctionProvider
   end
 end
 
-class LegacyDataHashFunctionProvider < DataHashFunctionProvider
-  TAG = 'legacy_data_hash'.freeze
+# TODO: API 5.0, remove this class
+# @api private
+class V4DataHashFunctionProvider < DataHashFunctionProvider
+  TAG = 'v4_data_hash'.freeze
 
   def name
-    "Legacy function \"#{function_name}\""
+    "deprecated API function \"#{function_name}\""
   end
 
   def call_data_hash_function(ctx, lookup_invocation, location)

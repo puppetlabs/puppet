@@ -24,7 +24,7 @@ class LookupKey
   end
 
   # Prunes a found root value with respect to subkeys in this key. The given _value_ is returned untouched
-  # if this key has no subkeys. Otherise an attempt is made to create a Hash or Array that contains only the
+  # if this key has no subkeys. Otherwise an attempt is made to create a Hash or Array that contains only the
   # path to the appointed value and that value.
   #
   # If subkeys exists and no value is found, then this method will return `nil`, an empty `Array` or an empty `Hash`

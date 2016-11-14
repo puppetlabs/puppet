@@ -219,7 +219,7 @@ module Lookup
       when :module_not_found
         io << indent << 'Module "' << @module_name << "\" not found\n"
       when :module_provider_not_found
-        io << indent << 'Module provider for module "' << @module_name << "\" not found\n"
+        io << indent << 'Module data provider for module "' << @module_name << "\" not found\n"
       end
     end
 

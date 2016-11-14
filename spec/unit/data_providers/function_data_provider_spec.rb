@@ -90,7 +90,7 @@ describe "when using function data provider" do
     env_loader.add_entry(:function, 'environment::data', f.new(compiler.topscope, env_loader), nil)
     expect do
       compiler.compile()
-    end.to raise_error(/Value returned from Legacy function "environment::data" has wrong type/)
+    end.to raise_error(/Value returned from deprecated API function "environment::data" has wrong type/)
   end
 
   it 'raises an error if the module data function does not return a hash' do
@@ -109,7 +109,7 @@ describe "when using function data provider" do
     module_loader.add_entry(:function, 'abc::data', f.new(compiler.topscope, module_loader), nil)
     expect do
       compiler.compile()
-    end.to raise_error(/Value returned from Legacy function "abc::data" has wrong type/)
+    end.to raise_error(/Value returned from deprecated API function "abc::data" has wrong type/)
   end
 
   def parent_fixture(dir_name)

@@ -390,7 +390,7 @@ describe "when performing lookup" do
           expect { compiler.compile }.to raise_error(Puppet::ParseError, /did not find a value for the name 'bad_data::b'/)
         end
         warnings = logs.select { |log| log.level == :warning }.map { |log| log.message }
-        expect(warnings).to include("Module 'bad_data': Legacy function \"bad_data::data\" must use keys qualified with the name of the module")
+        expect(warnings).to include("Module 'bad_data': deprecated API function \"bad_data::data\" must use keys qualified with the name of the module")
       end
 
       it 'will succeed finding prefixed keys even when a key in the function provided module data is not prefixed' do
@@ -404,7 +404,7 @@ describe "when performing lookup" do
           expect(resources).to include('module_c')
         end
         warnings = logs.select { |log| log.level == :warning }.map { |log| log.message }
-        expect(warnings).to include("Module 'bad_data': Legacy function \"bad_data::data\" must use keys qualified with the name of the module")
+        expect(warnings).to include("Module 'bad_data': deprecated API function \"bad_data::data\" must use keys qualified with the name of the module")
       end
 
       it 'will resolve global, environment, and module correctly' do
@@ -440,7 +440,7 @@ describe "when performing lookup" do
           compiler.compile
         end
         warnings = logs.select { |log| log.level == :warning }.map { |log| log.message }
-        expect(warnings).to include("Module 'bad_data': Legacy function \"bad_data::data\" must use keys qualified with the name of the module")
+        expect(warnings).to include("Module 'bad_data': deprecated API function \"bad_data::data\" must use keys qualified with the name of the module")
       end
 
       it 'a warning will be logged when key in the hiera provided module data is not prefixed' do
@@ -527,7 +527,7 @@ EOS
           end
           expect(lookup_invocation.explainer.explain).to include(<<EOS)
   Module "abc" Data Provider (lookup version 5)
-    Legacy function "abc::data"
+    deprecated API function "abc::data"
       No such key: "abc::x"
 EOS
         end
@@ -543,13 +543,13 @@ Searching for "abc::e"
     Data Binding "hiera"
       No such key: "abc::e"
     Environment Data Provider (lookup version 5)
-      Legacy function "environment::data"
+      deprecated API function "environment::data"
         Found key: "abc::e" value: {
           "k1" => "env_e1",
           "k3" => "env_e3"
         }
     Module "abc" Data Provider (lookup version 5)
-      Legacy function "abc::data"
+      deprecated API function "abc::data"
         Found key: "abc::e" value: {
           "k1" => "module_e1",
           "k2" => "module_e2"
@@ -590,7 +590,7 @@ Searching for "hieraprovider::test::not_found"
     Data Binding "hiera"
       No such key: "hieraprovider::test::not_found"
     Environment Data Provider (lookup version 5)
-      Legacy function "environment::data"
+      deprecated API function "environment::data"
         No such key: "hieraprovider::test::not_found"
     Module "hieraprovider" Data Provider (hiera version 4)
       Using configuration "#{environmentpath}/production/modules/hieraprovider/hiera.yaml"
@@ -650,7 +650,7 @@ EOS
                       :branches => [
                         {
                           :type => :data_provider,
-                          :name => 'Legacy function "environment::data"',
+                          :name => 'deprecated API function "environment::data"',
                           :key => 'abc::e',
                           :value => { 'k1' => 'env_e1', 'k3' => 'env_e3' },
                           :event => :found
@@ -664,7 +664,7 @@ EOS
                       :branches => [
                         {
                           :type => :data_provider,
-                          :name => 'Legacy function "abc::data"',
+                          :name => 'deprecated API function "abc::data"',
                           :key => 'abc::e',
                           :event => :found,
                           :value => {

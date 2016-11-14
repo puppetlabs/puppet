@@ -1,7 +1,7 @@
 require_relative 'sub_lookup'
 module Puppet::Pops
 module Lookup
-# Add support for interpolation expressions. The expressions may contain keys that uses dot-notation
+# Adds support for interpolation expressions. The expressions may contain keys that uses dot-notation
 # to further navigate into hashes and arrays
 #
 # @api public
