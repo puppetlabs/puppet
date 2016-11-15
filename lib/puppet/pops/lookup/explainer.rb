@@ -398,7 +398,7 @@ module Lookup
     end
 
     def type
-      @location.location.is_a?(Pathname) ? :path :uri
+      @location.location.is_a?(Pathname) ? :path : :uri
     end
   end
 

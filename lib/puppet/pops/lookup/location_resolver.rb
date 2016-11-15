@@ -57,7 +57,7 @@ module Lookup
     # @param declared_uris [Array<String>] paths as found in declaration. May contain interpolation expressions
     # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
     # @return [Array<ResolvedLocation>] Array of resolved paths
-    def resolve_uris(declared_uris, lookup_invocation)
+    def expand_uris(declared_uris, lookup_invocation)
       declared_uris.map do |declared_uri|
         uri = URI(interpolate(declared_uri, lookup_invocation, false))
         ResolvedLocation.new(declared_uri, uri, true)

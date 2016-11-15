@@ -753,6 +753,17 @@ EOS
       let(:environments) { Puppet::Environments::Directories.new(populated_env_dir, []) }
       let(:node) { Puppet::Node.new('test_lookup', :environment => env) }
       let(:compiler) { Puppet::Parser::Compiler.new(node) }
+      let(:defaults) {
+        {
+          'mod_a::xd' => 'value mod_a::xd (from default)',
+          'mod_a::xd_found' => 'value mod_a::xd_found (from default)',
+          'scope_xd' => 'value scope_xd (from default)'
+        }}
+      let(:overrides) {
+        {
+          'mod_a::xo' => 'value mod_a::xo (from override)',
+          'scope_xo' => 'value scope_xo (from override)'
+        }}
       let(:invocation_with_explain) { Puppet::Pops::Lookup::Invocation.new(compiler.topscope, {}, {}, true) }
       let(:explanation) { invocation_with_explain.explainer.explain }
 
@@ -770,6 +781,9 @@ EOS
       def collect_notices(code, explain = false)
         Puppet[:code] = code
         Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          scope = compiler.topscope
+          scope['scope_scalar'] = 'scope scalar value'
+          scope['scope_hash'] = { 'a' => 'scope hash a', 'b' => 'scope hash b' }
           if explain
             begin
               invocation_with_explain.lookup('dummy', nil) { compiler.compile }
@@ -963,6 +977,12 @@ EOS
                   ---
                   mod_a::a: value mod_a::a (from mod_a)
                   mod_a::b: value mod_a::b (from mod_a)
+                  mod_a::xo: value mod_a::xo (from mod_a)
+                  mod_a::xd_found: value mod_a::xd_found (from mod_a)
+                  mod_a::interpolate_xo: "-- %{lookup('mod_a::xo')} --"
+                  mod_a::interpolate_xd: "-- %{lookup('mod_a::xd')} --"
+                  mod_a::interpolate_scope_xo: "-- %{scope_xo} --"
+                  mod_a::interpolate_scope_xd: "-- %{scope_xd} --"
                   mod_a::hash_a:
                     a: value mod_a::hash_a.a (from mod_a)
                     b: value mod_a::hash_a.b (from mod_a)
@@ -974,6 +994,14 @@ EOS
                   mod_a::a_b: "-- %{lookup('mod_a::hash_a.b')} --"
                   mod_a::b_a: "-- %{lookup('mod_a::hash_b.a')} --"
                   mod_a::b_b: "-- %{lookup('mod_a::hash_b.b')} --"
+                  mod_a::interpolate_array:
+                    - "-- %{lookup('mod_a::a')} --"
+                    - "-- %{lookup('mod_a::b')} --"
+                  mod_a::interpolate_literal: "-- %{literal('hello')} --"
+                  mod_a::interpolate_scope: "-- %{scope_scalar} --"
+                  mod_a::interpolate_scope_not_found: "-- %{scope_nope} --"
+                  mod_a::interpolate_scope_dig: "-- %{scope_hash.a} --"
+                  mod_a::interpolate_scope_dig_not_found: "-- %{scope_hash.nope} --"
                   mod_a::quoted_interpolation: '-- %{lookup(''"mod_a::a.quoted.key"'')} --'
                   "mod_a::a.quoted.key": "value mod_a::a.quoted.key (from mod_a)"
                 YAML
@@ -1002,11 +1030,39 @@ EOS
             expect(lookup('mod_a::interpolated')).to eql('-- value mod_a::a (from environment) --')
           end
 
-          it 'will not merge hashes from environment and module unless strategy hash is used' do
+          it 'overrides have higher priority than found data' do
+            expect(lookup('mod_a::xo', { 'override' => overrides })).to eql('value mod_a::xo (from override)')
+          end
+
+          it 'overrides have higher priority than found data in lookup interpolations' do
+            expect(lookup('mod_a::interpolate_xo', { 'override' => overrides })).to eql('-- value mod_a::xo (from override) --')
+          end
+
+          it 'overrides have higher priority than found data in scope interpolations' do
+            expect(lookup('mod_a::interpolate_scope_xo', { 'override' => overrides })).to eql('-- value scope_xo (from override) --')
+          end
+
+          it 'defaults have lower priority than found data' do
+            expect(lookup('mod_a::xd_found', { 'default_values_hash' => defaults })).to eql('value mod_a::xd_found (from mod_a)')
+          end
+
+          it 'defaults are used when data is not found' do
+            expect(lookup('mod_a::xd', { 'default_values_hash' => defaults })).to eql('value mod_a::xd (from default)')
+          end
+
+          it 'defaults are used when data is not found in lookup interpolations' do
+            expect(lookup('mod_a::interpolate_xd', { 'default_values_hash' => defaults })).to eql('-- value mod_a::xd (from default) --')
+          end
+
+          it 'defaults are used when data is not found in scope interpolations' do
+            expect(lookup('mod_a::interpolate_scope_xd', { 'default_values_hash' => defaults })).to eql('-- value scope_xd (from default) --')
+          end
+
+          it 'merges hashes from environment and module unless strategy hash is used' do
             expect(lookup('mod_a::hash_a')).to eql({'a' => 'value mod_a::hash_a.a (from environment)'})
           end
 
-          it 'will merge hashes from environment and module when merge strategy hash is used' do
+          it 'merges hashes from environment and module when merge strategy hash is used' do
             expect(lookup('mod_a::hash_a', :merge => 'hash')).to eql(
               {'a' => 'value mod_a::hash_a.a (from environment)', 'b' => 'value mod_a::hash_a.b (from mod_a)'})
           end
@@ -1016,11 +1072,43 @@ EOS
               ['-- value mod_a::hash_a.a (from environment) --', '--  --']) # root key found in environment, no hash merge is performed
           end
 
+          it 'interpolates arrays' do
+            expect(lookup('mod_a::interpolate_array')).to eql(['-- value mod_a::a (from environment) --', '-- value mod_a::b (from mod_a) --'])
+          end
+
+          it 'can dig into arrays using subkeys' do
+            expect(lookup('mod_a::interpolate_array.1')).to eql('-- value mod_a::b (from mod_a) --')
+          end
+
+          it 'treats an out of range subkey as not found' do
+            expect(explain('mod_a::interpolate_array.2')).to match(/No such key: "2"/)
+          end
+
+          it 'interpolates a literal' do
+            expect(lookup('mod_a::interpolate_literal')).to eql('-- hello --')
+          end
+
+          it 'interpolates scalar from scope' do
+            expect(lookup('mod_a::interpolate_scope')).to eql('-- scope scalar value --')
+          end
+
+          it 'interpolates not found in scope as empty string' do
+            expect(lookup('mod_a::interpolate_scope_not_found')).to eql('--  --')
+          end
+
+          it 'interpolates dotted key from scope' do
+            expect(lookup('mod_a::interpolate_scope_dig')).to eql('-- scope hash a --')
+          end
+
+          it 'treates interpolated dotted key but not found in scope as empty string' do
+            expect(lookup('mod_a::interpolate_scope_dig_not_found')).to eql('--  --')
+          end
+
           it 'can use quoted keys in interpolation' do
             expect(lookup('mod_a::quoted_interpolation')).to eql('-- value mod_a::a.quoted.key (from mod_a) --') # root key found in environment, no hash merge is performed
           end
 
-          it 'will merge hashes from environment and module in interpolated expressions if hash merge is specified in lookup options' do
+          it 'merges hashes from environment and module in interpolated expressions if hash merge is specified in lookup options' do
             expect(lookup(['mod_a::b_a', 'mod_a::b_b'])).to eql(
               ['-- value mod_a::hash_b.a (from environment) --', '-- value mod_a::hash_b.b (from mod_a) --'])
           end
@@ -1098,19 +1186,19 @@ EOS
             expect(lookup('mod_a::interpolated')).to eql("-- %{lookup('mod_a::a')} --")
           end
 
-          it 'can resolve interpolated expressions using Context#interpolate' do
+          it 'resolves interpolated expressions using Context#interpolate' do
             expect(lookup('mod_a::really_interpolated')).to eql("-- value mod_a::a (from environment) --")
           end
 
-          it 'will merge not merge hashes from environment and module unless strategy hash is used' do
+          it 'will not merge hashes from environment and module unless strategy hash is used' do
             expect(lookup('mod_a::hash_a')).to eql({ 'a' => 'value mod_a::hash_a.a (from environment)' })
           end
 
-          it 'will merge hashes from environment and module when merge strategy hash is used' do
+          it 'merges hashes from environment and module when merge strategy hash is used' do
             expect(lookup('mod_a::hash_a', :merge => 'hash')).to eql({ 'a' => 'value mod_a::hash_a.a (from environment)', 'b' => 'value mod_a::hash_a.b (from mod_a)' })
           end
 
-          it 'recursive lookup is trapped' do
+          it 'traps recursive lookup trapped' do
             expect(explain('mod_a::recursive')).to include('Recursive lookup detected')
           end
 
@@ -1194,6 +1282,7 @@ EOS
                 hierarchy:
                   - name: "Common"
                     data_dig: mod_a::ruby_dig
+                    uri: "http://www.example.com/passed/as/option"
                     options:
                       option_a: Option value a
                       option_b:
@@ -1216,15 +1305,15 @@ EOS
             expect(lookup('mod_a::interpolated')).to eql("-- %{lookup('mod_a::a')} --")
           end
 
-          it 'can resolve interpolated expressions using Context#interpolate' do
+          it 'resolves interpolated expressions using Context#interpolate' do
             expect(lookup('mod_a::really_interpolated')).to eql("-- value mod_a::a (from environment) --")
           end
 
-          it 'will only accept Data returns from function' do
+          it 'only accepts Data returns from function' do
             expect(explain('mod_a::bad_type')).to include('Value returned from Hierarchy entry "Common" has wrong type')
           end
 
-          it 'will merge not merge hashes from environment and module unless strategy hash is used' do
+          it 'will not merge hashes from environment and module unless strategy hash is used' do
             expect(lookup('mod_a::hash_a')).to eql({'a' => 'value mod_a::hash_a.a (from environment)'})
           end
 
@@ -1232,12 +1321,16 @@ EOS
             expect(lookup('mod_a::options.option_b.x')).to eql('Option value b.x')
           end
 
+          it 'hierarchy entry "uri" is passed as location option to the function' do
+            expect(lookup('mod_a::options.uri')).to eql('http://www.example.com/passed/as/option')
+          end
+
           it 'recursive lookup is trapped' do
             expect(explain('mod_a::lookup.mod_a::lookup')).to include('Recursive lookup detected')
           end
 
           context 'with merge strategy hash' do
-            it 'will merge hashes from environment and module' do
+            it 'merges hashes from environment and module' do
               expect(lookup('mod_a::hash_a', :merge => 'hash')).to eql({'a' => 'value mod_a::hash_a.a (from environment)', 'b' => 'value mod_a::hash_a.b (from mod_a)'})
             end
 
