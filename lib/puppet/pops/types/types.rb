@@ -2114,6 +2114,10 @@ class PCallableType < PAnyType
       'block_type' => {
         KEY_TYPE => POptionalType.new(PCallableType::DEFAULT),
         KEY_VALUE => nil
+      },
+      'return_type' => {
+        KEY_TYPE => POptionalType.new(PType::DEFAULT),
+        KEY_VALUE => PAnyType::DEFAULT
       }
     )
   end
