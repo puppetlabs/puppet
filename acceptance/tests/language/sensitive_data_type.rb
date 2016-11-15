@@ -78,12 +78,12 @@ test_name 'C98120, C98077: Sensitive Data is redacted on CLI, logs, reports' do
   #  {:type => 'notify', ...
   #   :assertions => [{:refute_match => 'sekrit1'}]}
   #
-  # This is done so that when validating the syslog output, we can refute the
-  # existence of any of the sensitive info in the syslog without having to
-  # assert that redacted info is in the syslog.  The redacted info appears in
+  # This is done so that when validating the log output, we can refute the
+  # existence of any of the sensitive info in the log without having to
+  # assert that redacted info is in the log.  The redacted info appears in
   # the console output from the Puppet agent run - by virtue of including a
   # '--debug' flag on the agent command line - whereas the redacted info is not
-  # expected to be piped into the syslog.
+  # expected to be piped into the log.
 
   refutation_resources = test_resources.collect do |assertion_group|
     refutation_group = assertion_group.clone
@@ -99,27 +99,20 @@ test_name 'C98120, C98077: Sensitive Data is redacted on CLI, logs, reports' do
   step "run agent in #{tmp_environment}, run all assertions" do
     with_puppet_running_on(master,{}) do
       agents.each do |agent|
-        on(agent, puppet("agent -t --debug --trace --show_diff --server #{master.hostname} --environment #{tmp_environment}"),
+        # redirect logging to a temp location to avoid platform specific syslogs
+        logfile = agent.tmpfile("tmpdest.log")
+        # specifying a file with `--logdest` overrides printing debug output to the console,
+        # so we must also explicitly send the output to the console.
+        on(agent, puppet("agent -t --debug --trace --show_diff --server #{master.hostname} --environment #{tmp_environment} --logdest '#{logfile}' --logdest 'console'"),
            :accept_all_exit_codes => true) do |result|
           assert(result.exit_code==2,'puppet agent run failed')
           run_assertions(assertion_code, result)
         end
 
-        step "assert no redacted data in syslog" do
-          #sigh.  gee, thanks for the help, beaker!
-          syslogfile = case agent['platform']
-                         when /fedora|centos|el|redhat|scientific/
-                           '/var/log/messages'
-                         when /ubuntu|debian|cumulus/
-                           '/var/log/syslog'
-                         else
-                           logger.warn "Could not determine syslog for #{agent['platform']}, so skipping syslog validation"
-                           nil
-                       end
-          if syslogfile
-            result = on(agent, "tail -n 100 #{syslogfile}").stdout.chomp
-            run_assertions(refutation_code, result)
-          end
+        step "assert no redacted data in log" do
+          result = agent.exec(Command.new("tail -100 #{logfile}"),
+                                                    :acceptable_exit_codes => [0, 1]).stdout.chomp
+          run_assertions(refutation_code, result)
         end
 
         # don't do this before the agent log scanning, above. it will skew the results
