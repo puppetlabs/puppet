@@ -74,7 +74,7 @@ module Lookup
 
   # @api private
   def self.search_and_merge(name, lookup_invocation, merge)
-    return Puppet::DataProviders.lookup_adapter(lookup_invocation).lookup(name, lookup_invocation, merge)
+    LookupAdapter.adapt(lookup_invocation.scope.compiler).lookup(name, lookup_invocation, merge)
   end
 
   def self.assert_type(subject, type, value)
@@ -89,3 +89,5 @@ module Lookup
   private_class_method :fail_lookup
 end
 end
+
+require_relative 'lookup/lookup_adapter'

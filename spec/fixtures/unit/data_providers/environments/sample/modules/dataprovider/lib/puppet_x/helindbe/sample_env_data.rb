@@ -19,6 +19,7 @@ module PuppetX::Helindbe
         'test::param_a' => 'env data param_a is 10',
         'test::param_b' => 'env data param_b is 20',
         # demo: this overrides a parameter for a class in the dataprovider module
+        'backend::test::param_c' => 'env data param_c is 3000',
         'dataprovider::test::param_c' => 'env data param_c is 300',
       }
     end

@@ -115,35 +115,56 @@ describe 'Puppet::Pops::Lookup::Context' do
     end
 
     context 'when used in an Invocation' do
-      let(:invocation) { Invocation.new({}) }
-      let(:invocation_with_explain) { Invocation.new({}, {}, {}, true) }
+      let(:node) { Puppet::Node.new('test') }
+      let(:compiler) { Puppet::Parser::Compiler.new(node) }
+      let(:invocation) { Invocation.new(compiler.topscope) }
+      let(:invocation_with_explain) { Invocation.new(compiler.topscope, {}, {}, true) }
+
+      def compile_and_get_notices(code, scope_vars = {})
+        Puppet[:code] = code
+        scope = compiler.topscope
+        scope_vars.each_pair { |k,v| scope.setvar(k, v) }
+        node.environment.check_for_reparse
+        logs = []
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          compiler.compile
+        end
+        logs = logs.select { |log| log.level == :notice }.map { |log| log.message }
+        logs
+      end
 
       it 'will not call explain unless explanations are active' do
-        Invocation.expects(:current).returns(invocation)
-        code = <<-PUPPET.unindent
-          $ctx = Puppet::LookupContext.new('e', 'm')
-          $ctx.explain || { notice('stop calling'); 'bad' }
-        PUPPET
-        expect(eval_and_collect_notices(code)).to be_empty
+        invocation.lookup('dummy', nil) do
+          code = <<-PUPPET.unindent
+            $ctx = Puppet::LookupContext.new('e', 'm')
+            $ctx.explain || { notice('stop calling'); 'bad' }
+          PUPPET
+          expect(compile_and_get_notices(code)).to be_empty
+        end
       end
 
       it 'will call explain when explanations are active' do
-        Invocation.expects(:current).returns(invocation_with_explain)
-        invocation_with_explain.with(:global, 'test') do
+        invocation_with_explain.lookup('dummy', nil) do
           code = <<-PUPPET.unindent
             $ctx = Puppet::LookupContext.new('e', 'm')
             $ctx.explain || { notice('called'); 'good' }
           PUPPET
-          expect(eval_and_collect_notices(code)).to eql(['called'])
+          expect(compile_and_get_notices(code)).to eql(['called'])
         end
-        expect(invocation_with_explain.explainer.to_s).to eql(<<-TEXT.unindent)
-          Data Binding "test"
-            good
-        TEXT
+        expect(invocation_with_explain.explainer.explain).to eql("good\n")
+      end
+
+      it 'will call interpolate to resolve interpolation' do
+        invocation.lookup('dummy', nil) do
+          code = <<-PUPPET.unindent
+            $ctx = Puppet::LookupContext.new('e', 'm')
+            notice($ctx.interpolate('-- %{testing} --'))
+          PUPPET
+          expect(compile_and_get_notices(code, { 'testing' => 'called' })).to eql(['-- called --'])
+        end
       end
     end
   end
 end
 end
 end
-

@@ -40,7 +40,7 @@ class Puppet::Settings::EnvironmentConf
   # without interpolation.  This is a special case for the default configured
   # environment returned by the Puppet::Environments::StaticPrivate loader.
   def self.static_for(environment, environment_timeout = 0, static_catalogs = false, rich_data = false)
-    Static.new(environment, environment_timeout, static_catalogs, 'none', rich_data)
+    Static.new(environment, environment_timeout, static_catalogs, nil, rich_data)
   end
 
   attr_reader :section, :path_to_env, :global_modulepath
@@ -176,12 +176,16 @@ class Puppet::Settings::EnvironmentConf
     attr_reader :rich_data
     attr_reader :static_catalogs
 
-    def initialize(environment, environment_timeout, static_catalogs, environment_data_provider = 'none', rich_data = false)
+    def initialize(environment, environment_timeout, static_catalogs, environment_data_provider = nil, rich_data = false)
       @environment = environment
       @environment_timeout = environment_timeout
       @static_catalogs = static_catalogs
       @environment_data_provider = environment_data_provider
       @rich_data = rich_data
+    end
+
+    def path_to_env
+      nil
     end
 
     def manifest

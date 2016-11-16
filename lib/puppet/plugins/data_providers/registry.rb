@@ -1,4 +1,6 @@
+# TODO: API 5.0, remove this module
 # @api private
+# @deprecated
 module Puppet::Plugins::DataProviders
   class Registry
     def self.register_extensions(extensions)
@@ -39,45 +41,9 @@ module Puppet::Plugins::DataProviders
       end
 
       default_bindings.bind do
-        name('function')
-        in_multibind(ENV_DATA_PROVIDERS_KEY)
-        to_instance('Puppet::DataProviders::FunctionEnvDataProvider')
-      end
-
-      default_bindings.bind do
-        name('hiera')
-        in_multibind(ENV_DATA_PROVIDERS_KEY)
-        to_instance('Puppet::DataProviders::HieraEnvDataProvider')
-      end
-
-      default_bindings.bind do
         name('none')
         in_multibind(MODULE_DATA_PROVIDERS_KEY)
         to_instance(MODULE_DATA_PROVIDERS_TYPE)
-      end
-
-      default_bindings.bind do
-        name('function')
-        in_multibind(MODULE_DATA_PROVIDERS_KEY)
-        to_instance('Puppet::DataProviders::FunctionModuleDataProvider')
-      end
-
-      default_bindings.bind do
-        name('hiera')
-        in_multibind(MODULE_DATA_PROVIDERS_KEY)
-        to_instance('Puppet::DataProviders::HieraModuleDataProvider')
-      end
-
-      default_bindings.bind do
-        name('json')
-        in_multibind(PATH_BASED_DATA_PROVIDER_FACTORIES_KEY)
-        to_instance('Puppet::DataProviders::JsonDataProviderFactory')
-      end
-
-      default_bindings.bind do
-        name('yaml')
-        in_multibind(PATH_BASED_DATA_PROVIDER_FACTORIES_KEY)
-        to_instance('Puppet::DataProviders::YamlDataProviderFactory')
       end
     end
   end

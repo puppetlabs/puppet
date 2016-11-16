@@ -442,11 +442,17 @@ class PObjectType < PMetaType
         end
       end
 
-      # Add the dispatch that uses the standard #new method on the class. It's assumed that the #new
+      # Add the dispatch that uses the standard #from_asserted_args or #new method on the class. It's assumed that the
       # method performs no assertions.
       dispatcher.add_dispatch(create_type, :create, param_names, nil, EMPTY_ARRAY, EMPTY_ARRAY, false)
-      def create(*args)
-        self.class.impl_class.new(*args)
+      if impl_class.respond_to?(:from_asserted_args)
+        def create(*args)
+          self.class.impl_class.from_asserted_args(*args)
+        end
+      else
+        def create(*args)
+          self.class.impl_class.new(*args)
+        end
       end
     end
   end
