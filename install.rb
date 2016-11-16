@@ -435,6 +435,7 @@ end
 # (e.g., bin/rdoc becomes rdoc); the shebang line handles running it. Under
 # windows, we add an '.rb' extension and let file associations do their stuff.
 def install_binfile(from, op_file, target)
+  # encoding not important here
   tmp_file = Tempfile.new('puppet-binfile')
 
   if not InstallOptions.ruby.nil?
@@ -443,8 +444,8 @@ def install_binfile(from, op_file, target)
     ruby = File.join(RbConfig::CONFIG['bindir'], RbConfig::CONFIG['ruby_install_name'])
   end
 
-  File.open(from) do |ip|
-    File.open(tmp_file.path, "w") do |op|
+  File.open(from, 'r:UTF-8') do |ip|
+    File.open(tmp_file.path, "w:UTF-8") do |op|
       op.puts "#!#{ruby}" unless $operatingsystem == "windows"
       contents = ip.readlines
       contents.shift if contents[0] =~ /^#!/
@@ -467,7 +468,7 @@ def install_binfile(from, op_file, target)
       end
 
       if not installed_wrapper
-        tmp_file2 = Tempfile.new('puppet-wrapper')
+        tmp_file2 = Tempfile.new('puppet-wrapper', :encoding => Encoding::UTF_8)
         cwv = <<-EOS
 @echo off
 SETLOCAL
@@ -478,7 +479,7 @@ if exist "%~dp0environment.bat" (
 )
 ruby.exe -S -- puppet %*
 EOS
-        File.open(tmp_file2.path, "w") { |cw| cw.puts cwv }
+        File.open(tmp_file2.path, "w:UTF-8") { |cw| cw.puts cwv }
         FileUtils.install(tmp_file2.path, File.join(target, "#{op_file}.bat"), :mode => 0755, :preserve => true, :verbose => true)
 
         tmp_file2.unlink
