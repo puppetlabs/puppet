@@ -377,6 +377,7 @@ module Puppet::FileSystem
   end
 
   # Create and open a file for write only if it doesn't exist.
+  # Note: Does not currently support specifying an Encoding, use sparingly.
   #
   # @see Puppet::FileSystem::open
   #

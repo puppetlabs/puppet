@@ -115,4 +115,17 @@ describe Puppet::Util::Lockfile do
     @lock.lock(data)
     expect(@lock.lock_data).to eq(data)
   end
+
+  it "should return UTF-8 lock data" do
+    # different UTF-8 widths
+    # 1-byte A
+    # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
+    # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
+    # 4-byte ܎ - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
+    mixed_utf8 = "A\u06FF\u16A0\u{2070E}"  # Aۿᚠ܎
+
+    @lock.lock(mixed_utf8)
+    # TODO: bytes match, but the strings encodings are now different
+    expect(@lock.lock_data.bytes).to eq(mixed_utf8.bytes)
+  end
 end

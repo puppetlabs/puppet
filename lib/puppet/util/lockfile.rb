@@ -24,8 +24,14 @@ class Puppet::Util::Lockfile
   # @return [boolean] true if lock is successfully acquired, false otherwise.
   def lock(lock_data = nil)
     begin
+      # NOTE: exclusive_create cannot have an encoding specified
       Puppet::FileSystem.exclusive_create(@file_path, nil) do |fd|
-        fd.print(lock_data)
+        # typically this data is a PID or some PSON (which is BINARY)
+        if lock_data.is_a?(String) && !lock_data.nil?
+          fd.print(lock_data.dup.force_encoding(Encoding::BINARY))
+        else
+          fd.print(lock_data)
+        end
       end
       true
     rescue Errno::EEXIST
@@ -51,7 +57,8 @@ class Puppet::Util::Lockfile
   #  was locked.
   # @return [String] the data object.
   def lock_data
-    return File.read(@file_path) if file_locked?
+    # TODO: this was previously returning data in Encoding.default_external - should we convert?
+    return Puppet::FileSystem.read(@file_path, :encoding => Encoding::BINARY) if file_locked?
   end
 
   # Private, internal utility method for encapsulating the logic about
