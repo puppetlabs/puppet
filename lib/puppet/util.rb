@@ -450,6 +450,7 @@ module Util
 
     begin
       file     = Puppet::FileSystem.pathname(file)
+      # encoding for Uniquefile is not important here because the caller writes to it as it sees fit
       tempfile = Puppet::FileSystem::Uniquefile.new(Puppet::FileSystem.basename_string(file), Puppet::FileSystem.dir_string(file))
 
       # Set properties of the temporary file before we write the content, because
