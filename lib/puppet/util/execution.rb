@@ -184,9 +184,9 @@ module Puppet::Util::Execution
     null_file = Puppet.features.microsoft_windows? ? 'NUL' : '/dev/null'
 
     begin
-      stdin = File.open(options[:stdinfile] || null_file, 'r')
-      stdout = options[:squelch] ? File.open(null_file, 'w') : Puppet::FileSystem::Uniquefile.new('puppet')
-      stderr = options[:combine] ? stdout : File.open(null_file, 'w')
+      stdin = Puppet::FileSystem.open(options[:stdinfile] || null_file, nil, 'r')
+      stdout = options[:squelch] ? Puppet::FileSystem.open(null_file, nil, 'w') : Puppet::FileSystem::Uniquefile.new('puppet')
+      stderr = options[:combine] ? stdout : Puppet::FileSystem.open(null_file, nil, 'w')
 
       exec_args = [command, options, stdin, stdout, stderr]
 
