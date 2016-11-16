@@ -216,7 +216,9 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
 
   def open_security_passwd
     # helper method for tests
-    File.open("/etc/security/passwd", 'r')
+    # AIX reference indicates this file is ASCII
+    # https://www.ibm.com/support/knowledgecenter/en/ssw_aix_72/com.ibm.aix.files/passwd_security.htm
+    Puppet::FileSystem.open("/etc/security/passwd", nil, "r:ASCII")
   end
 
   #--------------------------------
@@ -255,7 +257,10 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     user = @resource[:name]
 
     # Puppet execute does not support strings as input, only files.
-    tmpfile = Tempfile.new('puppet_#{user}_pw')
+    # The password is expected to be in an encrypted format given -e is specified:
+    # https://www.ibm.com/support/knowledgecenter/ssw_aix_71/com.ibm.aix.cmds1/chpasswd.htm
+    # /etc/security/passwd is specified as an ASCII file per the AIX documentation
+    tmpfile = Tempfile.new("puppet_#{user}_pw", :encoding => Encoding::ASCII)
     tmpfile << "#{user}:#{value}\n"
     tmpfile.close()
 
