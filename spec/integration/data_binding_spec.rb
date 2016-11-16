@@ -143,7 +143,7 @@ describe "Data binding" do
   def configure_hiera_for_one_tier(data)
     hiera_config_file = tmpfile("hiera.yaml")
 
-    File.open(hiera_config_file, 'w') do |f|
+    File.open(hiera_config_file, 'w:UTF-8') do |f|
       f.write("---
         :yaml:
           :datadir: #{dir}
@@ -154,7 +154,7 @@ describe "Data binding" do
     end
 
     data.each do | file, contents |
-      File.open(File.join(dir, "#{file}.yaml"), 'w') do |f|
+      File.open(File.join(dir, "#{file}.yaml"), 'w:UTF-8') do |f|
         f.write(YAML.dump(contents))
       end
     end
@@ -165,7 +165,7 @@ describe "Data binding" do
   def configure_hiera_for_two_tier(data)
     hiera_config_file = tmpfile("hiera.yaml")
 
-    File.open(hiera_config_file, 'w') do |f|
+    File.open(hiera_config_file, 'w:UTF-8') do |f|
       f.write("---
         :yaml:
           :datadir: #{dir}
@@ -176,7 +176,7 @@ describe "Data binding" do
     end
 
     data.each do | file, contents |
-      File.open(File.join(dir, "#{file}.yaml"), 'w') do |f|
+      File.open(File.join(dir, "#{file}.yaml"), 'w:UTF-8') do |f|
         f.write(YAML.dump(contents))
       end
     end
@@ -188,7 +188,7 @@ describe "Data binding" do
     module_dir = File.join(dir, module_name, 'manifests')
     FileUtils.mkdir_p(module_dir)
 
-    File.open(File.join(module_dir, name), 'w') do |f|
+    File.open(File.join(module_dir, name), 'w:UTF-8') do |f|
       f.write(manifest)
     end
   end
