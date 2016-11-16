@@ -123,7 +123,8 @@ class WindowsDaemon < Win32::Daemon
   def log(msg, level)
     if LEVELS.index(level) >= @loglevel
       if (@LOG_TO_FILE)
-        File.open(LOG_FILE, 'a') { |f| f.puts("#{Time.now} Puppet (#{level}): #{msg}") }
+        # without this change its possible that we get Encoding errors trying to write UTF-8 messages in current codepage
+        File.open(LOG_FILE, 'a:UTF-8') { |f| f.puts("#{Time.now} Puppet (#{level}): #{msg}") }
       end
 
       case level
