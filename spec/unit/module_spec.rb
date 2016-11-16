@@ -730,7 +730,7 @@ describe Puppet::Module do
     it "should properly parse utf-8 contents" do
       rune_utf8 = "\u16A0\u16C7\u16BB" # ᚠᛇᚻ
       metadata_json = tmpfile('metadata.json')
-      File.open(metadata_json, 'w') do |file|
+      File.open(metadata_json, 'w:UTF-8') do |file|
         file.puts <<-EOF
   {
     "license" : "GPL2",
