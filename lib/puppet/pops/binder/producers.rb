@@ -722,7 +722,7 @@ module Producers
       end
 
       if uniq || flatten || conflict_resolution.to_s == 'append'
-        etype = binding.type.element_type
+        etype = binding.type.value_type
         unless etype.class == Types::PDataType || etype.is_a?(Types::PArrayType)
           detail = []
           detail << ":uniq" if uniq
@@ -818,10 +818,10 @@ module Producers
         raise ArgumentError, "Entry contributing to multibind hash with id '#{binding.id}' must have a name."
       end
 
-      unless tc.instance?(binding.type.element_type, value)
+      unless tc.instance?(binding.type.value_type, value)
         raise ArgumentError, ["Type Error: value contribution to #{binding.name}['#{key}'] ",
           "is incompatible, ",
-          type_error_detail(binding.type.element_type, value)].join()
+          type_error_detail(binding.type.value_type, value)].join()
       end
     end
   end

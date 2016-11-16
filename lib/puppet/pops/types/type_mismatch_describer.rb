@@ -816,7 +816,7 @@ module Types
     def describe_PHashType(expected, actual, path)
       descriptions = []
       key_type = expected.key_type || PAnyType::DEFAULT
-      value_type = expected.element_type || PAnyType::DEFAULT
+      value_type = expected.value_type || PAnyType::DEFAULT
       if actual.is_a?(PStructType)
         elements = actual.elements
         expected_size = expected.size_type || PCollectionType::DEFAULT_SIZE

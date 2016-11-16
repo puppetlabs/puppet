@@ -186,6 +186,30 @@ module Serialization
         expect(val2).to eql(val)
       end
 
+      it 'Collection' do
+        val = Types::TypeFactory.collection(Types::TypeFactory.range(0, 20))
+        write(val)
+        val2 = read
+        expect(val2).to be_a(Types::PCollectionType)
+        expect(val2).to eql(val)
+      end
+
+      it 'Array' do
+        val = Types::TypeFactory.array_of(Types::TypeFactory.integer, Types::TypeFactory.range(0, 20))
+        write(val)
+        val2 = read
+        expect(val2).to be_a(Types::PArrayType)
+        expect(val2).to eql(val)
+      end
+
+      it 'Hash' do
+        val = Types::TypeFactory.hash_kv(Types::TypeFactory.string, Types::TypeFactory.integer, Types::TypeFactory.range(0, 20))
+        write(val)
+        val2 = read
+        expect(val2).to be_a(Types::PHashType)
+        expect(val2).to eql(val)
+      end
+
       it 'Variant' do
         val = Types::TypeFactory.variant(Types::TypeFactory.string, Types::TypeFactory.range(1, :default))
         write(val)

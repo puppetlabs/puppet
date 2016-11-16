@@ -348,7 +348,7 @@ describe 'The type calculator' do
         expect(et.class).to eq(PArrayType)
         et = et.element_type
         expect(et.class).to eq(PHashType)
-        et = et.element_type
+        et = et.value_type
         expect(et.class).to eq(PStringType)
       end
 
@@ -357,7 +357,7 @@ describe 'The type calculator' do
         expect(et.class).to eq(PArrayType)
         et = et.element_type
         expect(et.class).to eq(PHashType)
-        et = et.element_type
+        et = et.value_type
         expect(et.class).to eq(PScalarType)
       end
     end
@@ -379,7 +379,7 @@ describe 'The type calculator' do
       end
 
       it 'with fixnum values translates to PHashType[key, PIntegerType]' do
-        expect(calculator.infer({:first => 1, :second => 2}).element_type.class).to eq(PIntegerType)
+        expect(calculator.infer({:first => 1, :second => 2}).value_type.class).to eq(PIntegerType)
       end
 
       it 'when empty infers a type that answers true to is_the_empty_hash?' do
@@ -1936,7 +1936,7 @@ describe 'The type calculator' do
       t = calculator.type(Hash)
       expect(t.class).to eq(PHashType)
       expect(t.key_type.class).to eq(PScalarType)
-      expect(t.element_type.class).to eq(PDataType)
+      expect(t.value_type.class).to eq(PDataType)
     end
   end
 
@@ -2079,12 +2079,12 @@ describe 'The type calculator' do
     it 'a generic result is created by generalize given an instance specific result for a Hash' do
       generic = calculator.infer({'a' =>1,'b' => 2})
       expect(generic.key_type.values.sort).to eq(['a', 'b'])
-      expect(generic.element_type.from).to eq(1)
-      expect(generic.element_type.to).to eq(2)
+      expect(generic.value_type.from).to eq(1)
+      expect(generic.value_type.to).to eq(2)
       generic = generic.generalize
       expect(generic.key_type.values).to eq([])
-      expect(generic.element_type.from).to eq(nil)
-      expect(generic.element_type.to).to eq(nil)
+      expect(generic.value_type.from).to eq(nil)
+      expect(generic.value_type.to).to eq(nil)
     end
 
     it 'ensures that Struct key types are not generalized' do

@@ -143,13 +143,13 @@ class Locator
     # Create a locator based on a content string, and a boolean indicating if ruby version support multi-byte strings
     # or not.
     #
-    def initialize(string, file, index = nil)
+    def initialize(string, file, line_index = nil)
       @string = string.freeze
       @file = file.freeze
       @prev_offset = nil
       @prev_line = nil
-      @line_index = index
-      compute_line_index if index.nil?
+      @line_index = line_index
+      compute_line_index if line_index.nil?
     end
 
     # Returns the position on line (first position on a line is 1)

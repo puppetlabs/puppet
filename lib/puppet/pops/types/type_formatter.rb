@@ -326,7 +326,7 @@ class TypeFormatter
       append_array('Hash') { append_strings([0, 0]) }
     else
       append_array('Hash', t == PHashType::DATA) do
-        append_strings([t.key_type, t.element_type], true)
+        append_strings([t.key_type, t.value_type], true)
         append_elements(range_array_part(t.size_type), true)
         chomp_list
       end
