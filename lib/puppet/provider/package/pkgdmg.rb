@@ -62,7 +62,7 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
   def self.installpkg(source, name, orig_source)
     installer "-pkg", source, "-target", "/"
     # Non-zero exit status will throw an exception.
-    File.open("/var/db/.puppet_pkgdmg_installed_#{name}", "w") do |t|
+    Puppet::FileSystem.open("/var/db/.puppet_pkgdmg_installed_#{name}", nil, "w:UTF-8") do |t|
       t.print "name: '#{name}'\n"
       t.print "source: '#{orig_source}'\n"
     end

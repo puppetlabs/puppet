@@ -44,7 +44,7 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
   def self.installapp(source, name, orig_source)
     appname = File.basename(source);
     ditto "--rsrc", source, "/Applications/#{appname}"
-    File.open("/var/db/.puppet_appdmg_installed_#{name}", "w") do |t|
+    Puppet::FileSystem.open("/var/db/.puppet_appdmg_installed_#{name}", nil, "w:UTF-8") do |t|
       t.print "name: '#{name}'\n"
       t.print "source: '#{orig_source}'\n"
     end
