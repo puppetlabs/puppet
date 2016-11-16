@@ -1,0 +1,12 @@
+HOSTS:
+  debian-609-x64:
+    roles:
+      - master
+    platform: debian-6-amd64
+    box: puppetlabs/debian-6.0.9-64-nocm
+    box_url: https://vagrantcloud.com/puppetlabs/boxes/debian-6.0.9-64-nocm
+    hypervisor: vagrant
+
+CONFIG:
+  log_level: verbose
+  type: foss
