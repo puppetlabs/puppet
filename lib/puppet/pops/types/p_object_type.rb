@@ -851,8 +851,8 @@ class PObjectType < PMetaType
   def find_equality_definer_of(attr)
     type = self
     while !type.nil? do
-      p = type.parent
-      return type if p.nil?
+      p = type.resolved_parent
+      return type unless p.is_a?(PObjectType)
       return type unless p.equality_attributes.include?(attr.name)
       type = p
     end

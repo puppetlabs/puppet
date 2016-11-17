@@ -763,6 +763,28 @@ describe 'The Object Type' do
         /attribute MySecondObject\[a\] attempts to override final attribute MyObject\[a\]/)
     end
 
+    it 'can inherit from an aliased type' do
+      code = <<-CODE
+      type MyObject = Object[{ name => 'MyFirstObject', attributes => { a => Integer }}]
+      type MyObjectAlias = MyObject
+      type MySecondObject = Object[{ parent => MyObjectAlias, attributes => { b => String }}]
+      notice(MySecondObject < MyObjectAlias)
+      notice(MySecondObject < MyObject)
+      CODE
+      expect(eval_and_collect_notices(code)).to eql(['true', 'true'])
+    end
+
+    it 'detects equality duplication when inherited from an aliased type' do
+      code = <<-CODE
+      type MyObject = Object[{ name => 'MyFirstObject', attributes => { a => Integer }}]
+      type MyObjectAlias = MyObject
+      type MySecondObject = Object[{ parent => MyObjectAlias, attributes => { b => String }, equality => a}]
+      notice(MySecondObject < MyObject)
+      CODE
+      expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error,
+        /MySecondObject equality is referencing attribute MyObject\[a\] which is included in equality of MyObject/)
+    end
+
     it 'raises an error when object when circular inheritance is detected' do
       code = <<-CODE
       type MyFirstObject = Object[{
