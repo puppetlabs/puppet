@@ -28,7 +28,7 @@ describe 'the binary_file function' do
       with_file_content('one') do |one|
         compile_to_catalog("notify { binary_file('#{one}/nope'):}")
       end
-    end.to raise_error(/The given file '.*' does not exist/)
+    end.to raise_error(/The given file '.+\/nope' does not exist/)
   end
 
   it 'reads an existing file in a module' do
