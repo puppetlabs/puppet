@@ -1,10 +1,10 @@
 module Puppet::Pops
 module Types
   class PAbstractTimeDataType < PAbstractRangeType
-    # @param [AbstractTime] min lower bound for this type. Nil or :default means unbounded
-    # @param [AbstractTime] max upper bound for this type. Nil or :default means unbounded
-    def initialize(min = nil, max = nil)
-      super(convert_arg(min, true), convert_arg(max, false))
+    # @param from [AbstractTime] lower bound for this type. Nil or :default means unbounded
+    # @param to [AbstractTime] upper bound for this type. Nil or :default means unbounded
+    def initialize(from = nil, to = nil)
+      super(convert_arg(from, true), convert_arg(to, false))
     end
 
     def convert_arg(arg, min)

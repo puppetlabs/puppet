@@ -389,8 +389,8 @@ class TypeCalculator
     # when both are hashes, return a hash with common key- and element type
     if t1.is_a?(PHashType) && t2.is_a?(PHashType)
       key_type = common_type(t1.key_type, t2.key_type)
-      element_type = common_type(t1.element_type, t2.element_type)
-      return PHashType.new(key_type, element_type)
+      value_type = common_type(t1.value_type, t2.value_type)
+      return PHashType.new(key_type, value_type)
     end
 
     # when both are host-classes, reduce to PHostClass[] (since one was not assignable to the other)

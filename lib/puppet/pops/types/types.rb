@@ -1153,56 +1153,34 @@ end
 class PCollectionType < PAnyType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
-      'element_type' => {
-        KEY_TYPE => POptionalType.new(PType::DEFAULT),
+      'size_type' => {
+        KEY_TYPE => POptionalType.new(PType.new(PIntegerType::DEFAULT)),
         KEY_VALUE => nil
       }
     )
   end
 
-  attr_reader :element_type, :size_type
+  attr_reader :size_type
 
-  def initialize(element_type, size_type = nil)
+  def initialize(size_type)
     @size_type = size_type
-    if !size_type.nil? && size_type.from == 0 && size_type.to == 0
-      @element_type = PUnitType::DEFAULT
-    else
-      @element_type = element_type
-    end
   end
 
   def accept(visitor, guard)
     super
     @size_type.accept(visitor, guard) unless @size_type.nil?
-    @element_type.accept(visitor, guard) unless @element_type.nil?
   end
 
   def generalize
-    if @element_type.nil?
-      DEFAULT
-    else
-      ge_type = @element_type.generalize
-      @size_type.nil? && @element_type.equal?(ge_type) ? self : self.class.new(ge_type, nil)
-    end
+    DEFAULT
   end
 
   def normalize(guard = nil)
-    if @element_type.nil?
-      DEFAULT
-    else
-      ne_type = @element_type.normalize(guard)
-      @element_type.equal?(ne_type) ? self : self.class.new(ne_type, @size_type)
-    end
+    DEFAULT
   end
 
   def instance?(o, guard = nil)
     assignable?(TypeCalculator.infer(o), guard)
-  end
-
-  def resolve(type_parser, loader)
-    relement_type = @element_type
-    relement_type = relement_type.resolve(type_parser, loader) unless relement_type.nil?
-    relement_type.equal?(@element_type) ? self : self.class.new(relement_type, @size_type)
   end
 
   # Returns an array with from (min) size to (max) size
@@ -1216,19 +1194,15 @@ class PCollectionType < PAnyType
   end
 
   def hash
-    @element_type.hash ^ @size_type.hash
+    @size_type.hash
   end
 
   def iterable?(guard = nil)
     true
   end
 
-  def iterable_type(guard = nil)
-    @element_type.nil? ? PIterableType::DEFAULT : PIterableType.new(@element_type)
-  end
-
   def eql?(o)
-    self.class == o.class && @element_type == o.element_type && @size_type == o.size_type
+    self.class == o.class && @size_type == o.size_type
   end
 
 
@@ -1266,7 +1240,7 @@ end
 class PIterableType < PTypeWithContainedType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
-      'element_type' => {
+      'type' => {
         KEY_TYPE => POptionalType.new(PType::DEFAULT),
         KEY_VALUE => nil
       }
@@ -1324,7 +1298,7 @@ end
 class PIteratorType < PTypeWithContainedType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
-      'element_type' => {
+      'type' => {
         KEY_TYPE => POptionalType.new(PType::DEFAULT),
         KEY_VALUE => nil
       }
@@ -1841,7 +1815,7 @@ class PStructType < PAnyType
           true
         else
           required += 1
-          if e.value_type.assignable?(o.element_type, guard)
+          if e.value_type.assignable?(o.value_type, guard)
             # Hash must have something that is assignable. We don't care about the name or size of the key though
             # because we have no instance of a hash to compare against.
             key_type.generalize.assignable?(o.key_type)
@@ -2212,11 +2186,27 @@ class PArrayType < PCollectionType
 
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'CollectionType',
-      'size_type' => {
-        KEY_TYPE => POptionalType.new(PType.new(PIntegerType::DEFAULT)),
+      'element_type' => {
+        KEY_TYPE => POptionalType.new(PType::DEFAULT),
         KEY_VALUE => nil
       }
     )
+  end
+
+  attr_reader :element_type
+
+  def initialize(element_type, size_type = nil)
+    super(size_type)
+    if !size_type.nil? && size_type.from == 0 && size_type.to == 0
+      @element_type = PUnitType::DEFAULT
+    else
+      @element_type = element_type
+    end
+  end
+
+  def accept(visitor, guard)
+    super
+    @element_type.accept(visitor, guard) unless @element_type.nil?
   end
 
   # @api private
@@ -2230,17 +2220,37 @@ class PArrayType < PCollectionType
   def generalize
     if self == DATA
       self
+    elsif @element_type.nil?
+      DEFAULT
     else
-      super
+      ge_type = @element_type.generalize
+      @size_type.nil? && @element_type.equal?(ge_type) ? self : self.class.new(ge_type, nil)
     end
+  end
+
+  def eql?(o)
+    super && @element_type == o.element_type
+  end
+
+  def hash
+    super ^ @element_type.hash
   end
 
   def normalize(guard = nil)
     if self == DATA
       self
+    elsif @element_type.nil?
+      DEFAULT
     else
-      super
+      ne_type = @element_type.normalize(guard)
+      @element_type.equal?(ne_type) ? self : self.class.new(ne_type, @size_type)
     end
+  end
+
+  def resolve(type_parser, loader)
+    relement_type = @element_type
+    relement_type = relement_type.resolve(type_parser, loader) unless relement_type.nil?
+    relement_type.equal?(@element_type) ? self : self.class.new(relement_type, @size_type)
   end
 
   def instance?(o, guard = nil)
@@ -2249,6 +2259,10 @@ class PArrayType < PCollectionType
     return false unless element_t.nil? || o.all? {|element| element_t.instance?(element, guard) }
     size_t = size_type
     size_t.nil? || size_t.instance?(o.size, guard)
+  end
+
+  def iterable_type(guard = nil)
+    @element_type.nil? ? PIterableType::DEFAULT : PIterableType.new(@element_type)
   end
 
   # Returns a new function that produces an Array
@@ -2335,33 +2349,38 @@ class PHashType < PCollectionType
         KEY_TYPE => POptionalType.new(PType::DEFAULT),
         KEY_VALUE => nil
       },
-      'element_type' => {
+      'value_type' => {
         KEY_TYPE => POptionalType.new(PType::DEFAULT),
         KEY_VALUE => nil,
-        KEY_OVERRIDE => true
-      },
-      'size_type' => {
-        KEY_TYPE => POptionalType.new(PType.new(PIntegerType::DEFAULT)),
-        KEY_VALUE => nil
       }
     )
   end
 
-  attr_accessor :key_type
-  alias value_type element_type
+  attr_accessor :key_type, :value_type
 
   def initialize(key_type, value_type, size_type = nil)
-    super(value_type, size_type)
+    super(size_type)
     if !size_type.nil? && size_type.from == 0 && size_type.to == 0
       @key_type = PUnitType::DEFAULT
+      @value_type = PUnitType::DEFAULT
     else
       @key_type = key_type
+      @value_type = value_type
     end
   end
 
   def accept(visitor, guard)
     super
     @key_type.accept(visitor, guard) unless @key_type.nil?
+    @value_type.accept(visitor, guard) unless @value_type.nil?
+  end
+
+  def element_type
+    if Puppet[:strict] != :off
+      Puppet.warn_once(:deprecation, 'Puppet::Pops::Types::PHashType#element_type',
+        'Puppet::Pops::Types::PHashType#element_type is deprecated, use #value_type instead')
+    end
+    @value_type
   end
 
   def generalize
@@ -2370,9 +2389,9 @@ class PHashType < PCollectionType
     else
       key_t = @key_type
       key_t = key_t.generalize unless key_t.nil?
-      value_t = @element_type
+      value_t = @value_type
       value_t = value_t.generalize unless value_t.nil?
-      @size_type.nil? && @key_type.equal?(key_t) && @element_type.equal?(value_t) ? self : PHashType.new(key_t, value_t, nil)
+      @size_type.nil? && @key_type.equal?(key_t) && @value_type.equal?(value_t) ? self : PHashType.new(key_t, value_t, nil)
     end
   end
 
@@ -2382,22 +2401,22 @@ class PHashType < PCollectionType
     else
       key_t = @key_type
       key_t = key_t.normalize(guard) unless key_t.nil?
-      value_t = @element_type
+      value_t = @value_type
       value_t = value_t.normalize(guard) unless value_t.nil?
-      @size_type.nil? && @key_type.equal?(key_t) && @element_type.equal?(value_t) ? self : PHashType.new(key_t, value_t, nil)
+      @size_type.nil? && @key_type.equal?(key_t) && @value_type.equal?(value_t) ? self : PHashType.new(key_t, value_t, nil)
     end
   end
 
   def hash
-    super ^ @key_type.hash
+    super ^ @key_type.hash ^ @value_type.hash
   end
 
   def instance?(o, guard = nil)
     return false unless o.is_a?(Hash)
     key_t = key_type
-    element_t = element_type
+    value_t = value_type
     if (key_t.nil? || o.keys.all? {|key| key_t.instance?(key, guard) }) &&
-        (element_t.nil? || o.values.all? {|value| element_t.instance?(value, guard) })
+        (value_t.nil? || o.values.all? {|value| value_t.instance?(value, guard) })
       size_t = size_type
       size_t.nil? || size_t.instance?(o.size, guard)
     else
@@ -2413,12 +2432,12 @@ class PHashType < PCollectionType
     if self == DEFAULT || self == EMPTY
       PIterableType.new(DEFAULT_KEY_PAIR_TUPLE)
     else
-      PIterableType.new(PTupleType.new([@key_type, @element_type], KEY_PAIR_TUPLE_SIZE))
+      PIterableType.new(PTupleType.new([@key_type, @value_type], KEY_PAIR_TUPLE_SIZE))
     end
   end
 
   def eql?(o)
-    super && @key_type == o.key_type
+    super && @key_type == o.key_type && @value_type == o.value_type
   end
 
   def is_the_empty_hash?
@@ -2428,9 +2447,9 @@ class PHashType < PCollectionType
   def resolve(type_parser, loader)
     rkey_type = @key_type
     rkey_type = rkey_type.resolve(type_parser, loader) unless rkey_type.nil?
-    rvalue_type = @element_type
+    rvalue_type = @value_type
     rvalue_type = rvalue_type.resolve(type_parser, loader) unless rvalue_type.nil?
-    rkey_type.equal?(@key_type) && rvalue_type.equal?(@element_type) ? self : self.class.new(rkey_type, rvalue_type, @size_type)
+    rkey_type.equal?(@key_type) && rvalue_type.equal?(@value_type) ? self : self.class.new(rkey_type, rvalue_type, @size_type)
   end
 
   # Returns a new function that produces a  Hash
@@ -2495,7 +2514,7 @@ class PHashType < PCollectionType
       when PHashType
         size_s = size_type
         return true if (size_s.nil? || size_s.from == 0) && o.is_the_empty_hash?
-        return false unless (key_type.nil? || key_type.assignable?(o.key_type, guard)) && (element_type.nil? || element_type.assignable?(o.element_type, guard))
+        return false unless (key_type.nil? || key_type.assignable?(o.key_type, guard)) && (value_type.nil? || value_type.assignable?(o.value_type, guard))
         super
       when PStructType
         # hash must accept String as key type
@@ -2503,7 +2522,7 @@ class PHashType < PCollectionType
         # hash must accept the size of the struct
         o_elements = o.elements
         (size_type || DEFAULT_SIZE).instance?(o_elements.size, guard) &&
-            o_elements.all? {|e| (key_type.nil? || key_type.instance?(e.name, guard)) && (element_type.nil? || element_type.assignable?(e.value_type, guard)) }
+            o_elements.all? {|e| (key_type.nil? || key_type.instance?(e.name, guard)) && (value_type.nil? || value_type.assignable?(e.value_type, guard)) }
       else
         false
     end
@@ -2883,7 +2902,7 @@ end
 class POptionalType < PTypeWithContainedType
 
   def self.register_ptype(loader, ir)
-    create_ptype(loader, ir, 'CatalogEntryType',
+    create_ptype(loader, ir, 'AnyType',
       'type' => {
         KEY_TYPE => POptionalType.new(PType::DEFAULT),
         KEY_VALUE => nil

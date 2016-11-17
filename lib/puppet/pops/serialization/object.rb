@@ -11,7 +11,7 @@ class ObjectReader
 
   def read(impl_class, value_count, deserializer)
     type = impl_class._ptype
-    (names, types, required_count) = type.parameter_info
+    (names, types, required_count) = type.parameter_info(impl_class)
     max = names.size
     unless value_count >= required_count && value_count <= max
       raise Serialization::SerializationError, "Feature count mismatch for #{impl_class.name}. Expected #{min} - #{max}, actual #{value_count}"
@@ -43,7 +43,7 @@ class ObjectWriter
 
   def write(type, value, serializer)
     impl_class = value.class
-    (names, types, required_count) = type.parameter_info(true)
+    (names, types, required_count) = type.parameter_info(impl_class, true)
     args = names.map { |name| value.send(name) }
 
     # Pop optional arguments that are nil

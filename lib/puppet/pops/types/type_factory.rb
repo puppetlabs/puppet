@@ -307,7 +307,7 @@ module TypeFactory
   # @api public
   #
   def self.collection(size_type = nil)
-    size_type.nil? ? PCollectionType::DEFAULT : PCollectionType.new(nil, size_type)
+    size_type.nil? ? PCollectionType::DEFAULT : PCollectionType.new(size_type)
   end
 
   # Produces the Data type
