@@ -499,7 +499,7 @@ class PObjectType < PMetaType
     param_types = non_opt_types + opt_types
     param_count = param_names.size
 
-    init = impl_class.instance_method(:initialize)
+    init = impl_class.respond_to?(:from_asserted_args) ? impl_class.method(:from_asserted_args) : impl_class.instance_method(:initialize)
     init_non_opt_count = 0
     init_param_names = init.parameters.map do |p|
       init_non_opt_count += 1 if :req == p[0]
