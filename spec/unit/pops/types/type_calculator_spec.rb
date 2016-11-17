@@ -326,7 +326,7 @@ describe 'The type calculator' do
       end
 
       it 'with arrays of string values translates to PArrayType[PArrayType[PStringType]]' do
-        et = calculator.infer([['first' 'array'], ['second','array']])
+        et = calculator.infer([['first', 'array'], ['second','array']])
         expect(et.class).to eq(PArrayType)
         et = et.element_type
         expect(et.class).to eq(PArrayType)
@@ -335,7 +335,7 @@ describe 'The type calculator' do
       end
 
       it 'with array of string values and array of fixnums translates to PArrayType[PArrayType[PScalarType]]' do
-        et = calculator.infer([['first' 'array'], [1,2]])
+        et = calculator.infer([['first', 'array'], [1,2]])
         expect(et.class).to eq(PArrayType)
         et = et.element_type
         expect(et.class).to eq(PArrayType)

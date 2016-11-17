@@ -2014,7 +2014,7 @@ class PTupleType < PAnyType
       return false unless size_s.assignable?(size_o, guard)
       unless s_types.empty?
         o_types = o.types
-        return false if o_types.empty?
+        return size_s.numeric_from == 0 if o_types.empty?
         o_types.size.times do |index|
           return false unless (s_types[index] || s_types[-1]).assignable?(o_types[index], guard)
         end
@@ -3089,7 +3089,7 @@ class PTypeAliasType < PAnyType
     end
 
     def visit(type, _)
-      unless type.is_a?(PTypeAliasType) || type.is_a?(PVariantType) || type.is_a?(PTypeReferenceType)
+      unless type.is_a?(PTypeAliasType) || type.is_a?(PVariantType)
         @other_type_detected = true
       end
     end
@@ -3242,7 +3242,7 @@ class PTypeAliasType < PAnyType
       real_types = resolved_types.select do |type|
         next false if type == self
         real_type_asserter = AssertOtherTypeAcceptor.new
-        accept(real_type_asserter, RecursionGuard.new)
+        type.accept(real_type_asserter, RecursionGuard.new)
         real_type_asserter.other_type_detected?
       end
       if real_types.size != resolved_types.size
