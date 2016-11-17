@@ -10,16 +10,10 @@ Puppet::Functions.create_function(:binary_file, Puppet::Functions::InternalFunct
   end
 
   def binary_file(scope, unresolved_path)
-    path = nil
-    found = Puppet::Parser::Files.find_file(unresolved_path, scope.compiler.environment)
-    if found && Puppet::FileSystem.exist?(found)
-      path = found
+    path = Puppet::Parser::Files.find_file(unresolved_path, scope.compiler.environment)
+    unless path && Puppet::FileSystem.exist?(path)
+      raise Puppet::ParseError, "binary_file(): The given file '#{unresolved_path}' does not exist"
     end
-
-    if path
-      Puppet::Pops::Types::PBinaryType::Binary.from_binary_string(Puppet::FileSystem.binread(path))
-    else
-      raise Puppet::ParseError, "binary_file(): The given file '#{path}' does not exist"
-    end
+    Puppet::Pops::Types::PBinaryType::Binary.from_binary_string(Puppet::FileSystem.binread(path))
   end
 end
