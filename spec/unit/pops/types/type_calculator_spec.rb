@@ -18,12 +18,12 @@ describe 'The type calculator' do
     TypeFactory.regexp(pattern)
   end
 
-  def string_t(*strings)
-    TypeFactory.string(nil, *strings)
+  def string_t(string = nil)
+    TypeFactory.string(string)
   end
 
-  def constrained_string_t(size_type, *strings)
-    TypeFactory.string(size_type, *strings)
+  def constrained_string_t(size_type)
+    TypeFactory.string(size_type)
   end
 
   def callable_t(*params)
@@ -141,7 +141,7 @@ describe 'The type calculator' do
     it 'inferred string type knows the string value' do
       t = calculator.infer('foo')
       expect(t.class).to eq(PStringType)
-      expect(t.values).to eq(['foo'])
+      expect(t.value).to eq('foo')
     end
 
     it 'boolean true translates to PBooleanType' do
@@ -287,9 +287,9 @@ describe 'The type calculator' do
         expect(t.to).to eq(42)
       end
 
-      it 'Compound string values are computed' do
+      it 'Compound string values are converted to enums' do
         t = calculator.infer(['a','b', 'c']).element_type
-        expect(t.class).to eq(PStringType)
+        expect(t.class).to eq(PEnumType)
         expect(t.values).to eq(['a', 'b', 'c'])
       end
 
@@ -331,7 +331,7 @@ describe 'The type calculator' do
         et = et.element_type
         expect(et.class).to eq(PArrayType)
         et = et.element_type
-        expect(et.class).to eq(PStringType)
+        expect(et.class).to eq(PEnumType)
       end
 
       it 'with array of string values and array of fixnums translates to PArrayType[PArrayType[PScalarType]]' do
@@ -343,13 +343,13 @@ describe 'The type calculator' do
         expect(et.class).to eq(PScalarType)
       end
 
-      it 'with hashes of string values translates to PArrayType[PHashType[PStringType]]' do
+      it 'with hashes of string values translates to PArrayType[PHashType[PEnumType]]' do
         et = calculator.infer([{:first => 'first', :second => 'second' }, {:first => 'first', :second => 'second' }])
         expect(et.class).to eq(PArrayType)
         et = et.element_type
         expect(et.class).to eq(PHashType)
         et = et.value_type
-        expect(et.class).to eq(PStringType)
+        expect(et.class).to eq(PEnumType)
       end
 
       it 'with hash of string values and hash of fixnums translates to PArrayType[PHashType[PScalarType]]' do
@@ -374,8 +374,8 @@ describe 'The type calculator' do
         expect(k.runtime_type_name).to eq('Symbol')
       end
 
-      it 'with string keys translates to PHashType[PStringType, value]' do
-        expect(calculator.infer({'first' => 1, 'second' => 2}).key_type.class).to eq(PStringType)
+      it 'with string keys translates to PHashType[PEnumType, value]' do
+        expect(calculator.infer({'first' => 1, 'second' => 2}).key_type.class).to eq(PEnumType)
       end
 
       it 'with fixnum values translates to PHashType[key, PIntegerType]' do
@@ -435,8 +435,8 @@ describe 'The type calculator' do
       expect(t.patterns[0].regexp.match('abc')[1]).to eq('b')
     end
 
-    it 'constructs a PStringType with multiple strings' do
-      t = string_t('a', 'b', 'c', 'abc')
+    it 'constructs a PEnumType with multiple strings' do
+      t = enum_t('a', 'b', 'c', 'abc')
       expect(t.values).to eq(['a', 'b', 'c', 'abc'].sort)
     end
   end
@@ -482,7 +482,7 @@ describe 'The type calculator' do
         t1 = string_t('abc')
         t2 = string_t('xyz')
         common_t = calculator.common_type(t1,t2)
-        expect(common_t.class).to eq(PStringType)
+        expect(common_t.class).to eq(PEnumType)
         expect(common_t.values).to eq(['abc', 'xyz'])
       end
 
@@ -503,11 +503,11 @@ describe 'The type calculator' do
       end
 
       it 'computes values to be empty if the one has empty values' do
-        t1 = constrained_string_t(range_t(3,6), 'apa')
+        t1 = string_t('apa')
         t2 = constrained_string_t(range_t(2,4))
         common_t = calculator.common_type(t1,t2)
         expect(common_t.class).to eq(PStringType)
-        expect(common_t.values).to be_empty
+        expect(common_t.value).to be_nil
       end
     end
 
@@ -1154,7 +1154,7 @@ describe 'The type calculator' do
 
       it 'should accept multiple strings if they all match any patterns' do
         p_t = pattern_t('X', 'Y', 'abc')
-        p_s = string_t('Xa', 'aY', 'abc')
+        p_s = enum_t('Xa', 'aY', 'abc')
         expect(calculator.assignable?(p_t, p_s)).to eq(true)
       end
 
@@ -1166,7 +1166,7 @@ describe 'The type calculator' do
 
       it 'should reject multiple strings if not all match any patterns' do
         p_t = pattern_t('abc', 'ab', 'c', 'q')
-        p_s = string_t('X', 'Y', 'Z')
+        p_s = enum_t('X', 'Y', 'Z')
         expect(calculator.assignable?(p_t, p_s)).to eq(false)
       end
 
@@ -1661,9 +1661,8 @@ describe 'The type calculator' do
     end
 
     it 'should consider string values' do
-      string = string_t('a', 'b')
+      string = string_t('a')
       expect(calculator.instance?(string, 'a')).to eq(true)
-      expect(calculator.instance?(string, 'b')).to eq(true)
       expect(calculator.instance?(string, 'c')).to eq(false)
     end
 
@@ -2066,14 +2065,14 @@ describe 'The type calculator' do
     end
 
     it 'a generic inference is produced using infer_generic' do
-      expect(calculator.infer_generic(['a','b']).element_type.values).to eq([])
+      expect(calculator.infer_generic(['a','b']).element_type).to eql(PStringType::DEFAULT)
     end
 
     it 'a generic result is created by generalize given an instance specific result for an Array' do
       generic = calculator.infer(['a','b'])
       expect(generic.element_type.values).to eq(['a', 'b'])
       generic = generic.generalize
-      expect(generic.element_type.values).to eq([])
+      expect(generic.element_type).to eql(PStringType::DEFAULT)
     end
 
     it 'a generic result is created by generalize given an instance specific result for a Hash' do
@@ -2082,7 +2081,7 @@ describe 'The type calculator' do
       expect(generic.value_type.from).to eq(1)
       expect(generic.value_type.to).to eq(2)
       generic = generic.generalize
-      expect(generic.key_type.values).to eq([])
+      expect(generic.key_type).to eql(PStringType::DEFAULT)
       expect(generic.value_type.from).to eq(nil)
       expect(generic.value_type.to).to eq(nil)
     end

@@ -119,8 +119,8 @@ end
       expect(s.string(f.string)).to eq('String')
     end
 
-    it "should yield 'String' for PStringType with multiple values" do
-      expect(s.string(f.string(nil, 'a', 'b', 'c'))).to eq('String')
+    it "should yield 'String' for PStringType with value" do
+      expect(s.string(f.string('a'))).to eq('String')
     end
 
     it "should yield 'String' and from/to for PStringType" do

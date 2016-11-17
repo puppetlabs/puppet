@@ -545,11 +545,11 @@ class Puppet::Resource::Type
   def create_params_struct
     arg_types = argument_types
     type_factory = Puppet::Pops::Types::TypeFactory
-    members = { type_factory.optional(type_factory.string(nil, NAME)) =>  type_factory.any }
+    members = { type_factory.optional(type_factory.string(NAME)) =>  type_factory.any }
 
     if application?
       resource_type = type_factory.type_type(type_factory.resource)
-      members[type_factory.optional(type_factory.string(nil, NODES))] = type_factory.hash_of(type_factory.variant(
+      members[type_factory.optional(type_factory.string(NODES))] = type_factory.hash_of(type_factory.variant(
           resource_type, type_factory.array_of(resource_type)), type_factory.type_type(type_factory.resource('node')))
     end
 
@@ -559,7 +559,7 @@ class Puppet::Resource::Type
     end
 
     arguments.each_pair do |name, default|
-      key_type = type_factory.string(nil, name.to_s)
+      key_type = type_factory.string(name.to_s)
       key_type = type_factory.optional(key_type) unless default.nil?
 
       arg_type = arg_types[name]
