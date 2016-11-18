@@ -703,18 +703,11 @@ class PEnumType < PScalarType
 
   def generalize
     # General form of an Enum is a String
-    PStringType::DEFAULT
-  end
-
-  def normalize(guard = nil)
-    # General form of an Enum is a String
-    case @values.size
-    when 0
+    if @values.empty?
       PStringType::DEFAULT
-    when 1
-      PStringType.new(@values[0])
     else
-      self
+      range = @values.map(&:size).minmax
+      PStringType.new(PIntegerType.new(range.min, range.max))
     end
   end
 
@@ -748,7 +741,7 @@ class PEnumType < PScalarType
     end
     case o
       when PStringType
-        # if the set of strings are all found in the set of enums
+        # if the contained string is found in the set of enums
         v = o.value
         !v.nil? && svalues.any? { |e| e == v }
       when PEnumType

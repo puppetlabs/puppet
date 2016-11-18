@@ -2065,23 +2065,23 @@ describe 'The type calculator' do
     end
 
     it 'a generic inference is produced using infer_generic' do
-      expect(calculator.infer_generic(['a','b']).element_type).to eql(PStringType::DEFAULT)
+      expect(calculator.infer_generic(['a','b']).element_type).to eql(string_t(range_t(1,1)))
     end
 
     it 'a generic result is created by generalize given an instance specific result for an Array' do
       generic = calculator.infer(['a','b'])
-      expect(generic.element_type.values).to eq(['a', 'b'])
+      expect(generic.element_type.values).to eq(['a','b'])
       generic = generic.generalize
-      expect(generic.element_type).to eql(PStringType::DEFAULT)
+      expect(generic.element_type).to eql(string_t(range_t(1,1)))
     end
 
     it 'a generic result is created by generalize given an instance specific result for a Hash' do
-      generic = calculator.infer({'a' =>1,'b' => 2})
-      expect(generic.key_type.values.sort).to eq(['a', 'b'])
+      generic = calculator.infer({'a' =>1,'bcd' => 2})
+      expect(generic.key_type.values.sort).to eq(['a', 'bcd'])
       expect(generic.value_type.from).to eq(1)
       expect(generic.value_type.to).to eq(2)
       generic = generic.generalize
-      expect(generic.key_type).to eql(PStringType::DEFAULT)
+      expect(generic.key_type.size_type).to eq(range_t(1,3))
       expect(generic.value_type.from).to eq(nil)
       expect(generic.value_type.to).to eq(nil)
     end
