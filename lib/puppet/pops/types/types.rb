@@ -701,6 +701,16 @@ class PEnumType < PScalarType
     block_given? ? r.each(&block) : r
   end
 
+  def generalize
+    # General form of an Enum is a String
+    if @values.empty?
+      PStringType::DEFAULT
+    else
+      range = @values.map(&:size).minmax
+      PStringType.new(PIntegerType.new(range.min, range.max))
+    end
+  end
+
   def iterable?(guard = nil)
     true
   end
@@ -731,8 +741,9 @@ class PEnumType < PScalarType
     end
     case o
       when PStringType
-        # if the set of strings are all found in the set of enums
-        !o.values.empty? && o.values.all? { |s| svalues.any? { |e| e == s }}
+        # if the contained string is found in the set of enums
+        v = o.value
+        !v.nil? && svalues.any? { |e| e == v }
       when PEnumType
         !o.values.empty? && o.values.all? { |s| svalues.any? {|e| e == s }}
       else
@@ -1336,27 +1347,27 @@ end
 class PStringType < PScalarType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'ScalarType',
-      'size_type' => {
-        KEY_TYPE => POptionalType.new(PType.new(PIntegerType::DEFAULT)),
-        KEY_VALUE => nil
-      },
-      'values' => {
-        KEY_TYPE => PArrayType.new(PStringType::DEFAULT),
-        KEY_VALUE => EMPTY_ARRAY
-      }
-    )
+      'size_type_or_value' => {
+        KEY_TYPE => POptionalType.new(PVariantType.new([PStringType::DEFAULT, PType.new(PIntegerType::DEFAULT)])),
+      KEY_VALUE => nil
+    })
   end
 
-  attr_reader :size_type, :values
+  attr_reader :size_type_or_value
 
-  def initialize(size_type, values = EMPTY_ARRAY)
-    @size_type = size_type
-    @values = values.sort.freeze
+  def initialize(size_type_or_value, deprecated_multi_args = EMPTY_ARRAY)
+    unless deprecated_multi_args.empty?
+      if Puppet[:strict] != :off
+        Puppet.warn_once(:deprecatation, "PStringType#initialize_multi_args", "Passing more than one argument to PStringType#initialize is deprecated")
+      end
+      size_type_or_value = deprecated_multi_args[0]
+    end
+    @size_type_or_value = size_type_or_value
   end
 
   def accept(visitor, guard)
     super
-    @size_type.accept(visitor, guard) unless @size_type.nil?
+    @size_type_or_value.accept(visitor, guard) if @size_type_or_value.is_a?(PIntegerType)
   end
 
   def generalize
@@ -1364,7 +1375,7 @@ class PStringType < PScalarType
   end
 
   def hash
-    @size_type.hash ^ @values.hash
+    @size_type_or_value.hash
   end
 
   def iterable?(guard = nil)
@@ -1376,15 +1387,51 @@ class PStringType < PScalarType
   end
 
   def eql?(o)
-    self.class == o.class && @size_type == o.size_type && @values == o.values
+    self.class == o.class && @size_type_or_value == o.size_type_or_value
   end
 
   def instance?(o, guard = nil)
     # true if size compliant
-    if o.is_a?(String) && (@size_type.nil? || @size_type.instance?(o.size, guard))
-      @values.empty? || @values.include?(o)
+    if o.is_a?(String)
+      if @size_type_or_value.is_a?(PIntegerType)
+        @size_type_or_value.instance?(o.size, guard)
+      else
+        @size_type_or_value.nil? ? true : o == value
+      end
     else
       false
+    end
+  end
+
+  def value
+    @size_type_or_value.is_a?(PIntegerType) ? nil : @size_type_or_value
+  end
+
+  # @deprecated
+  # @api private
+  def values
+    if Puppet[:strict] != :off
+      Puppet.warn_once(:deprecatation, "PStringType#values", "Method PStringType#values is deprecated. Use #value instead")
+    end
+    @value.is_a?(String) ? [@value] : EMPTY_ARRAY
+  end
+
+  def size_type
+    @size_type_or_value.is_a?(PIntegerType) ? @size_type_or_value : nil
+  end
+
+  def size_type
+    @size_type_or_value.is_a?(PIntegerType) ? @size_type_or_value : nil
+  end
+
+  def derived_size_type
+    if @size_type_or_value.is_a?(PIntegerType)
+      @size_type_or_value
+    elsif @size_type_or_value.is_a?(String)
+      sz = @size_type_or_value.size
+      PIntegerType.new(sz, sz)
+    else
+      PCollectionType::DEFAULT_SIZE
     end
   end
 
@@ -1424,44 +1471,48 @@ class PStringType < PScalarType
 
   # @api private
   def _assignable?(o, guard)
-    if values.empty?
+    if @size_type_or_value.is_a?(PIntegerType)
       # A general string is assignable by any other string or pattern restricted string
       # if the string has a size constraint it does not match since there is no reasonable way
       # to compute the min/max length a pattern will match. For enum, it is possible to test that
       # each enumerator value is within range
       case o
-        when PStringType
-          # true if size compliant
-          (@size_type || PCollectionType::DEFAULT_SIZE).assignable?(
-            o.size_type || PCollectionType::DEFAULT_SIZE, guard)
+      when PStringType
+        @size_type_or_value.assignable?(o.derived_size_type, guard)
 
-        when PPatternType
-          # true if size constraint is at least 0 to +Infinity (which is the same as the default)
-          @size_type.nil? || @size_type.assignable?(PCollectionType::DEFAULT_SIZE, guard)
-
-        when PEnumType
-          if o.values.empty?
-            # enum represents all enums, and thus all strings, a sized constrained string can thus not
-            # be assigned any enum (unless it is max size).
-            @size_type.nil? || @size_type.assignable?(PCollectionType::DEFAULT_SIZE, guard)
-          else
-            # true if all enum values are within range
-            orange = o.values.map(&:size).minmax
-            srange = (@size_type || PCollectionType::DEFAULT_SIZE).range
-            # If o min and max are within the range of t
-            srange[0] <= orange[0] && srange[1] >= orange[1]
-          end
+      when PEnumType
+        if o.values.empty?
+          # enum represents all enums, and thus all strings, a sized constrained string can thus not
+          # be assigned any enum (unless it is max size).
+          @size_type_or_value.assignable?(PCollectionType::DEFAULT_SIZE, guard)
         else
-          # no other type matches string
-          false
+          # true if all enum values are within range
+          orange = o.values.map(&:size).minmax
+          srange = @size_type_or_value.range
+          # If o min and max are within the range of t
+          srange[0] <= orange[0] && srange[1] >= orange[1]
+        end
+
+      when PPatternType
+        # true if size constraint is at least 0 to +Infinity (which is the same as the default)
+        @size_type_or_value.assignable?(PCollectionType::DEFAULT_SIZE, guard)
+      else
+        # no other type matches string
+        false
       end
-    elsif o.is_a?(PStringType)
-      # A specific string acts as a set of strings - must have exactly the same strings
-      # In this case, size does not matter since the definition is very precise anyway
-      values == o.values
     else
-      # All others are false, since no other type describes the same set of specific strings
-      false
+      case o
+      when PStringType
+        # Must match exactly when value is a string
+        @size_type_or_value.nil? || @size_type_or_value == o.size_type_or_value
+      when PEnumType
+        @size_type_or_value.nil? ? true : o.values.size == 1 && @size_type_or_value == o.values[0]
+      when PPatternType
+        @size_type_or_value.nil?
+      else
+        # All others are false, since no other type describes the same set of specific strings
+        false
+      end
     end
   end
 end
@@ -1548,16 +1599,28 @@ class PPatternType < PScalarType
   def _assignable?(o, guard)
     return true if self == o
     case o
-    when PStringType, PEnumType
+    when PStringType
+      v = o.value
+      if v.nil?
+        # Strings cannot all match a pattern, but if there is no pattern it is ok
+        # (There should really always be a pattern, but better safe than sorry).
+        @patterns.empty?
+      else
+        # the string in String type must match one of the patterns in Pattern type,
+        # or Pattern represents all Patterns == all Strings
+        regexps = @patterns.map { |p| p.regexp }
+        regexps.empty? || regexps.any? { |re| re.match(v) }
+      end
+    when PEnumType
       if o.values.empty?
-        # Strings / Enums (unknown which ones) cannot all match a pattern, but if there is no pattern it is ok
+        # Enums (unknown which ones) cannot all match a pattern, but if there is no pattern it is ok
         # (There should really always be a pattern, but better safe than sorry).
         @patterns.empty?
       else
         # all strings in String/Enum type must match one of the patterns in Pattern type,
         # or Pattern represents all Patterns == all Strings
         regexps = @patterns.map { |p| p.regexp }
-        regexps.empty? || o.values.all? { |v| regexps.any? {|re| re.match(v) } }
+        regexps.empty? || o.values.all? { |s| regexps.any? {|re| re.match(s) } }
       end
     when PPatternType
       @patterns.empty?
@@ -1642,7 +1705,7 @@ class PStructElement < TypedModelObject
   def name
     k = key_type
     k = k.optional_type if k.is_a?(POptionalType)
-    k.values[0]
+    k.value
   end
 
   def initialize(key_type, value_type)
@@ -2719,11 +2782,11 @@ class PVariantType < PAnyType
   # @api private
   def merge_enums(array)
     if array.size > 1
-      parts = array.partition {|t| t.is_a?(PEnumType) || t.is_a?(PStringType) && !t.values.empty? }
+      parts = array.partition {|t| t.is_a?(PEnumType) && !t.values.empty? || t.is_a?(PStringType) && !t.value.nil? }
       enums = parts[0]
       if enums.size > 1
         others = parts[1]
-        others <<  PEnumType.new(enums.map { |enum| enum.values }.flatten.uniq)
+        others <<  PEnumType.new(enums.map { |enum| enum.is_a?(PStringType) ? enum.value : enum.values }.flatten.uniq)
         array = others
       end
     end

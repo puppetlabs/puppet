@@ -171,9 +171,8 @@ class TypeFormatter
     range = range_array_part(t.size_type)
     append_array('String', range.empty?) do
       if @debug
-        append_elements(range, true)
-        append_strings(t.values, true)
-        chomp_list
+        append_elements(range, !t.value.nil?)
+        append_string(t.value) unless t.value.nil?
       else
         append_elements(range)
       end
@@ -356,8 +355,8 @@ class TypeFormatter
   def string_PNotUndefType(t)
     contained_type = t.type
     append_array('NotUndef', contained_type.nil? || contained_type.class == PAnyType) do
-      if contained_type.is_a?(PStringType) && contained_type.values.size == 1
-        append_string(contained_type.values[0])
+      if contained_type.is_a?(PStringType) && !contained_type.value.nil?
+        append_string(contained_type.value)
       else
         append_string(contained_type)
       end
@@ -427,8 +426,8 @@ class TypeFormatter
   def string_POptionalType(t)
     optional_type = t.optional_type
     append_array('Optional', optional_type.nil?) do
-      if optional_type.is_a?(PStringType) && optional_type.values.size == 1
-        append_string(optional_type.values[0])
+      if optional_type.is_a?(PStringType) && !optional_type.value.nil?
+        append_string(optional_type.value)
       else
         append_string(optional_type)
       end

@@ -87,7 +87,7 @@ describe 'the type mismatch describer' do
       check_port({ 34 => 'some service'})
     CODE
     expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
-      /parameter 'ports' expects a PortMap = Hash\[UnprivilegedPort = Integer\[1024, 65537\], String\] value, got Hash\[Integer\[34, 34\], String\[12, 12\]\]/))
+      /parameter 'ports' expects a PortMap = Hash\[UnprivilegedPort = Integer\[1024, 65537\], String\] value, got Hash\[Integer\[34, 34\], String\]/))
   end
 
   it 'will not include the aliased type more than once when reporting a mismatch that involves an alias that is self recursive' do
@@ -98,7 +98,7 @@ describe 'the type mismatch describer' do
       check_tree({ 'x' => {'y' => {32 => 'n'}}})
     CODE
     expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
-      /parameter 'tree' entry 'x' entry 'y' expects a Tree = Hash\[String, Tree\] value, got Hash\[Integer\[32, 32\], String\[1, 1\]\]/))
+      /parameter 'tree' entry 'x' entry 'y' expects a Tree = Hash\[String, Tree\] value, got Hash\[Integer\[32, 32\], String\]/))
   end
 
   it 'will use type normalization' do

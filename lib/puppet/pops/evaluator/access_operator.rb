@@ -284,7 +284,7 @@ class AccessOperator
       type = keys[0]
       unless type.is_a?(Types::PAnyType)
         if type.is_a?(String)
-          type = Types::TypeFactory.string(nil, type)
+          type = Types::TypeFactory.string(type)
         else
           fail(Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Optional-Type', :actual => type.class})
         end
@@ -335,7 +335,7 @@ class AccessOperator
       type = keys[0]
       case type
       when String
-        type = Types::TypeFactory.string(nil, type)
+        type = Types::TypeFactory.string(type)
       when Types::PAnyType
         type = nil if type.class == Types::PAnyType
       else

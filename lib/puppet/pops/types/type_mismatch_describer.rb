@@ -463,7 +463,7 @@ module Types
 
     def actual_string
       a = actual
-      a.is_a?(PStringType) && a.values.size == 1 ? "'#{a.values[0]}'" : a.simple_name
+      a.is_a?(PStringType) && !a.value.nil? ? "'#{a.value}'" : a.simple_name
     end
   end
 

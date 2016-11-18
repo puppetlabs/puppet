@@ -414,19 +414,29 @@ class TypeCalculator
       return PFloatType.new([t1.numeric_from, t2.numeric_from].min, [t1.numeric_to, t2.numeric_to].max)
     end
 
-    if t1.is_a?(PStringType) && t2.is_a?(PStringType)
-      common_size_type = common_type(t1.size_type, t2.size_type) unless t1.size_type.nil? || t2.size_type.nil?
-      common_strings = t1.values.empty? || t2.values.empty? ? [] : t1.values | t2.values
-      return PStringType.new(common_size_type, common_strings)
+    if t1.is_a?(PStringType) && (t2.is_a?(PStringType) || t2.is_a?(PEnumType))
+      if(t2.is_a?(PEnumType))
+        return t1.value.nil? ? PEnumType::DEFAULT : PEnumType.new(t2.values | [t1.value])
+      end
+
+      if t1.size_type.nil? || t2.size_type.nil?
+        return t1.value.nil? || t2.value.nil? ? PStringType::DEFAULT : PEnumType.new([t1.value, t2.value])
+      end
+
+      return PStringType.new(common_type(t1.size_type, t2.size_type))
     end
 
     if t1.is_a?(PPatternType) && t2.is_a?(PPatternType)
       return PPatternType.new(t1.patterns | t2.patterns)
     end
 
-    if t1.is_a?(PEnumType) && t2.is_a?(PEnumType)
+    if t1.is_a?(PEnumType) && (t2.is_a?(PStringType) || t2.is_a?(PEnumType))
       # The common type is one that complies with either set
-      return PEnumType.new(t1.values | t2.values)
+      if t2.is_a?(PEnumType)
+        return PEnumType.new(t1.values | t2.values)
+      end
+
+      return t2.value.nil? ? PEnumType::DEFAULT : PEnumType.new(t1.values | [t2.value])
     end
 
     if t1.is_a?(PVariantType) && t2.is_a?(PVariantType)
@@ -581,7 +591,7 @@ class TypeCalculator
 
   # @api private
   def infer_String(o)
-    PStringType.new(size_as_type(o), [o])
+    PStringType.new(o)
   end
 
   # @api private
@@ -735,7 +745,7 @@ class TypeCalculator
     if o.empty?
       PHashType::EMPTY
     elsif o.keys.all? {|k| PStringType::NON_EMPTY.instance?(k) }
-      PStructType.new(o.each_pair.map { |k,v| PStructElement.new(PStringType.new(size_as_type(k), [k]), infer_set(v)) })
+      PStructType.new(o.each_pair.map { |k,v| PStructElement.new(PStringType.new(k), infer_set(v)) })
     else
       ktype = PVariantType.maybe_create(o.keys.map {|k| infer_set(k) })
       etype = PVariantType.maybe_create(o.values.map {|e| infer_set(e) })

@@ -533,7 +533,7 @@ describe 'the new function' do
     { []            => 'Notify[Array[Unit], []]',
       [true]        => 'Notify[Array[Boolean], [true]]',
       {'a'=>true, 'b' => false}   => 'Notify[Array[Array[Scalar]], [[a, true], [b, false]]]',
-      'abc'         => 'Notify[Array[String], [a, b, c]]',
+      'abc'         => 'Notify[Array[String[1, 1]], [a, b, c]]',
       3             => 'Notify[Array[Integer], [0, 1, 2]]',
     }.each do |input, result|
       it "produces #{result} when given the value #{input.inspect} and wrap is not given" do
@@ -591,7 +591,7 @@ describe 'the new function' do
   end
 
   context 'when invoked on Tuple' do
-    { 'abc'         => 'Notify[Array[String], [a, b, c]]',
+    { 'abc'         => 'Notify[Array[String[1, 1]], [a, b, c]]',
       3             => 'Notify[Array[Integer], [0, 1, 2]]',
     }.each do |input, result|
       it "produces #{result} when given the value #{input.inspect} and wrap is not given" do
@@ -617,7 +617,7 @@ describe 'the new function' do
       {'a'=>true}   => 'Notify[Hash[String, Boolean], {a => true}]',
       [1,2,3,4]     => 'Notify[Hash[Integer, Integer], {1 => 2, 3 => 4}]',
       [[1,2],[3,4]] => 'Notify[Hash[Integer, Integer], {1 => 2, 3 => 4}]',
-      'abcd'        => 'Notify[Hash[String, String], {a => b, c => d}]',
+      'abcd'        => 'Notify[Hash[String[1, 1], String[1, 1]], {a => b, c => d}]',
       4             => 'Notify[Hash[Integer, Integer], {0 => 1, 2 => 3}]',
 
     }.each do |input, result|
