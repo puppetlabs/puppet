@@ -20,7 +20,7 @@ module Lookup
   # @return [Object] The found value
   #
   def self.lookup(name, value_type, default_value, has_default, merge, lookup_invocation)
-    value_type = Types::PDataType::DEFAULT if value_type.nil?
+    value_type = DataProvider.value_type if value_type.nil?
     names = name.is_a?(Array) ? name : [name]
 
     # find first name that yields a non-nil result and wrap it in a two element array

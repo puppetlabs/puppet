@@ -778,7 +778,7 @@ EOS
         end
       end
 
-      def collect_notices(code, explain = false)
+      def collect_notices(code, explain = false, &block)
         Puppet[:code] = code
         Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
           scope = compiler.topscope
@@ -786,12 +786,22 @@ EOS
           scope['scope_hash'] = { 'a' => 'scope hash a', 'b' => 'scope hash b' }
           if explain
             begin
-              invocation_with_explain.lookup('dummy', nil) { compiler.compile }
+              invocation_with_explain.lookup('dummy', nil) do
+                if block_given?
+                  compiler.compile { |catalog| block.call(compiler.topscope); catalog }
+                else
+                  compiler.compile
+                end
+              end
             rescue Puppet::DataBinding::LookupError => e
               invocation_with_explain.report_text { e.message }
             end
           else
-            compiler.compile
+            if block_given?
+              compiler.compile { |catalog| block.call(compiler.topscope); catalog }
+            else
+              compiler.compile
+            end
           end
         end
         nil
@@ -1146,7 +1156,13 @@ EOS
                             mod_a::a_b => "-- %{lookup('mod_a::hash_a.b')} --",
                             mod_a::b_a => "-- %{lookup('mod_a::hash_b.a')} --",
                             mod_a::b_b => "-- %{lookup('mod_a::hash_b.b')} --",
-                            'mod_a::a.quoted.key' => 'value mod_a::a.quoted.key (from mod_a)'
+                            'mod_a::a.quoted.key' => 'value mod_a::a.quoted.key (from mod_a)',
+                            mod_a::sensitive => Sensitive('reduct me please'),
+                            mod_a::type => Object[{name => 'FindMe', 'attributes' => {'x' => String}}],
+                            mod_a::version => SemVer('3.4.1'),
+                            mod_a::version_range => SemVerRange('>=3.4.1'),
+                            mod_a::timestamp => Timestamp("1994-03-25T19:30:00"),
+                            mod_a::timespan => Timespan("3-10:00:00")
                           })
                         }
                         if !$context.cache_has_key($key) {
@@ -1216,6 +1232,24 @@ EOS
             expect(explanation).to match(/returning value for mod_a::b/m)
             expect(explanation).not_to match(/returning value for mod_a::b.*returning value for mod_a::b/m)
           end
+
+          context 'and calling function via API' do
+            let(:lookup_func) do
+              Puppet.lookup(:loaders).puppet_system_loader.load(:function, 'lookup')
+            end
+
+            it 'finds and delivers rich data' do
+              collect_notices("notice('success')") do |scope|
+                expect(lookup_func.call(scope, 'mod_a::sensitive')).to be_a(Puppet::Pops::Types::PSensitiveType::Sensitive)
+                expect(lookup_func.call(scope, 'mod_a::type')).to be_a(Puppet::Pops::Types::PObjectType)
+                expect(lookup_func.call(scope, 'mod_a::version')).to eql(Semantic::Version.parse('3.4.1'))
+                expect(lookup_func.call(scope, 'mod_a::version_range')).to eql(Semantic::VersionRange.parse('>=3.4.1'))
+                expect(lookup_func.call(scope, 'mod_a::timestamp')).to eql(Puppet::Pops::Time::Timestamp.parse('1994-03-25T19:30:00'))
+                expect(lookup_func.call(scope, 'mod_a::timespan')).to eql(Puppet::Pops::Time::Timespan.parse('3-10:00:00'))
+              end
+              expect(notices).to eql(['success'])
+            end
+          end
         end
 
         context 'using a data_dig that is a ruby function' do
@@ -1260,7 +1294,8 @@ EOS
                                 'mod_a::a_b' => "-- %{lookup('mod_a::hash_a.b')} --",
                                 'mod_a::b_a' => "-- %{lookup('mod_a::hash_b.a')} --",
                                 'mod_a::b_b' => "-- %{lookup('mod_a::hash_b.b')} --",
-                                'mod_a::bad_type' => :oops
+                                'mod_a::bad_type' => :oops,
+                                'mod_a::bad_type_in_hash' => { 'a' => :oops },
                               }
                               end
                             context.not_found unless hash.include?(root_key)
@@ -1309,8 +1344,12 @@ EOS
             expect(lookup('mod_a::really_interpolated')).to eql("-- value mod_a::a (from environment) --")
           end
 
-          it 'only accepts Data returns from function' do
+          it 'does not accept return of runtime type from function' do
             expect(explain('mod_a::bad_type')).to include('Value returned from Hierarchy entry "Common" has wrong type')
+          end
+
+          it 'does not accept return of runtime type embedded in hash from function' do
+            expect(explain('mod_a::bad_type_in_hash')).to include('Value returned from Hierarchy entry "Common" has wrong type')
           end
 
           it 'will not merge hashes from environment and module unless strategy hash is used' do
