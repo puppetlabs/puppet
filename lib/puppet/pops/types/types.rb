@@ -550,7 +550,7 @@ class PUndefType < PAnyType
   end
 
   def instance?(o, guard = nil)
-    o.nil? || o == :undef
+    o.nil? || :undef == o
   end
 
   # @api private

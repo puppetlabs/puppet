@@ -2,20 +2,38 @@ module Puppet::Pops
 module Lookup
 # @api private
 module DataProvider
-  # The Pcore type for all keys and subkeys in a data hash.
-  TYPE_DATA_KEY = Types::PVariantType.new([
-    Types::PStringType::NON_EMPTY,
-    Types::PBooleanType::DEFAULT,
-    Types::PNumericType::DEFAULT
-  ])
+  def self.key_type
+    ensure_types_initialized
+    @key_type
+  end
 
-  # The Pcore type for all values and sub-values in a data hash.
-  TYPE_DATA_VALUE = Types::PVariantType.new([
-    Types::PScalarType::DEFAULT,
-    Types::PUndefType::DEFAULT,
-    Types::PHashType::DEFAULT,
-    Types::PArrayType::DEFAULT
-  ])
+  def self.value_type
+    ensure_types_initialized
+    @value_type
+  end
+
+  def self.ensure_types_initialized
+    if @key_type.nil?
+      (@key_type, @value_type) = Pcore::register_aliases(
+        # The Pcore type for all keys and subkeys in a data hash.
+        'Puppet::LookupKey' => 'Variant[String,Numeric]',
+
+        # The Pcore type for all values and sub-values in a data hash. The
+        # type is self-recursive to enforce the same constraint on values contained
+        # in arrays and hashes
+        'Puppet::LookupValue' => <<-PUPPET
+          Variant[
+            Scalar,
+            Undef,
+            Sensitive,
+            Type,
+            Hash[Puppet::LookupKey, Puppet::LookupValue],
+            Array[Puppet::LookupValue]
+          ]
+        PUPPET
+      )
+    end
+  end
 
   # Performs a lookup with an endless recursion check.
   #
@@ -64,7 +82,7 @@ module DataProvider
   end
 
   def validate_data_value(data_provider, value, where = '')
-    Types::TypeAsserter.assert_instance_of(nil, TYPE_DATA_VALUE, value) { "Value #{where}returned from #{data_provider.name}" }
+    Types::TypeAsserter.assert_instance_of(nil, DataProvider.value_type, value) { "Value #{where}returned from #{data_provider.name}" }
     case value
     when Hash
       value.each_pair { |k, v| validate_data_entry(data_provider, k, v) }
@@ -75,7 +93,7 @@ module DataProvider
   end
 
   def validate_data_entry(data_provider, key, value)
-    Types::TypeAsserter.assert_instance_of(nil, TYPE_DATA_KEY, key) { "Key in hash returned from #{data_provider.name}" }
+    Types::TypeAsserter.assert_instance_of(nil, DataProvider.key_type, key) { "Key in hash returned from #{data_provider.name}" }
     validate_data_value(data_provider, value, 'in hash ')
     nil
   end
