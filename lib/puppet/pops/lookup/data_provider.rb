@@ -16,7 +16,7 @@ module DataProvider
     if @key_type.nil?
       (@key_type, @value_type) = Pcore::register_aliases(
         # The Pcore type for all keys and subkeys in a data hash.
-        'Puppet::LookupKey' => 'Variant[String,Boolean,Numeric]',
+        'Puppet::LookupKey' => 'Variant[String,Numeric]',
 
         # The Pcore type for all values and sub-values in a data hash. The
         # type is self-recursive to enforce the same constraint on values contained
