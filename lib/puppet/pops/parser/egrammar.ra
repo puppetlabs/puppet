@@ -849,7 +849,9 @@ keyword
   | FUNCTION
   | PRIVATE
   | APPLICATION
+  | CONSUMES
   | PRODUCES
+  | SITE
 
 nil
   : { result = nil}

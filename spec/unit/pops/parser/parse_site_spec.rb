@@ -42,6 +42,10 @@ describe "egrammar parsing of site expression" do
       it "allows the keyword '#{keyword}' as a value in a hash" do
         expect(dump(parse("$a = {'x'=>#{keyword}}"))).to(eq("(= $a ({} ('x' '#{keyword}')))"))
       end
+
+      it "allows the keyword '#{keyword}' as an attribute name" do
+        expect(dump(parse("foo { 'x': #{keyword} => 'value' } "))).to eql("(resource foo\n  ('x'\n    (#{keyword} => 'value')))")
+      end
     end
   end
 end
