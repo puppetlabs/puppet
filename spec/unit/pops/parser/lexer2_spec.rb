@@ -523,6 +523,13 @@ describe 'Lexer2' do
       expect(tokens_scanned_from(code)).to match_tokens2([:STRING, "x\u{1f452}y"])
     end
 
+    it 'can escape the unicode escape' do
+      code = <<-"CODE"
+      "x\\\\u{1f452}y"
+      CODE
+      expect(tokens_scanned_from(code)).to match_tokens2([:STRING, "x\\u{1f452}y"])
+    end
+
     it 'produces byte offsets that counts each byte in a comment' do
       code = <<-"CODE"
       # \u{0400}\na
