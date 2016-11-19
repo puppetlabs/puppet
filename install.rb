@@ -316,9 +316,9 @@ def prepare_installation
     localedir = InstallOptions.localedir
   else
     if $operatingsystem == "windows"
-      localedir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "share", "puppet", "locale")
+      localedir = File.join(Dir::PROGRAM_FILES, "Puppet Labs", "Puppet", "puppet", "share", "locale")
     else
-      localedir = "/opt/puppetlabs/puppet/share/puppet/locale"
+      localedir = "/opt/puppetlabs/puppet/share/locale"
     end
   end
 
