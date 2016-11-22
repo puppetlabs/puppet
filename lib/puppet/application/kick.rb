@@ -10,6 +10,7 @@ class Puppet::Application::Kick < Puppet::Application
   option("--ping","-P")
   option("--test")
   option("--ignoreschedules")
+  option("--splay","-s")
 
   option("--host HOST") do |arg|
     @hosts << arg
@@ -25,6 +26,10 @@ class Puppet::Application::Kick < Puppet::Application
 
   option("--no-fqdn", "-n") do |arg|
     options[:fqdn] = false
+  end
+
+  option("--environment ENV", "-e") do |arg|
+    options[:environment] = arg
   end
 
   option("--parallel PARALLEL", "-p") do |arg|
@@ -50,8 +55,9 @@ Trigger a puppet agent run on a set of hosts.
 USAGE
 -----
 puppet kick [-a|--all] [-c|--class <class>] [-d|--debug] [-f|--foreground]
-  [-h|--help] [--host <host>] [--no-fqdn] [--ignoreschedules]
-  [-t|--tag <tag>] [--test] [-p|--ping] <host> [<host> [...]]
+  [-h|--help] [--host <host>] [--no-fqdn] [--ignoreschedules] [-s|--splay]
+  [-t|--tag <tag>] [--test] [-p|--ping] [-e|--environment] <env>
+  <host> [<host> [...]]
 
 
 DESCRIPTION
@@ -160,6 +166,12 @@ with '--genconfig'.
   Do an ICMP echo against the target host. Skip hosts that don't respond
   to ping.
 
+* --splay:
+  Allow the Puppet agent to use it's splay value and delay the Puppet run.
+
+* --environment:
+  Specify the environment name the Puppet agent should use during it's run.
+
 
 EXAMPLE
 -------
@@ -249,34 +261,45 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     require 'puppet/run'
     Puppet::Run.indirection.terminus_class = :rest
-    port = Puppet[:puppetport]
-    url = ["https://#{host}:#{port}", "production", "run", host].join('/')
+    port = Puppet[:puppetport] || 8139
+    environment = options[:environment] || Puppet[:environment] || 'production'
 
-    print "Triggering #{host}\n"
+    url = ["https://#{host}:#{port}", environment, 'run', host].join('/')
+
+    puts "Triggering: #{host} with environment: #{environment}"
     begin
       run_options = {
         :tags => @tags,
         :background => ! options[:foreground],
-        :ignoreschedules => options[:ignoreschedules]
+        :ignoreschedules => options[:ignoreschedules],
+        :splay => options[:splay],
       }
       run = Puppet::Run.indirection.save(Puppet::Run.new( run_options ), url)
-      puts "Getting status"
-      result = run.status
-      puts "status is #{result}"
+
+      puts 'Getting status'
+      if run.respond_to? :status
+        result = run.status
+      else
+        result = 'error'
+      end
+      puts "Status is: #{result}"
     rescue => detail
-      Puppet.log_exception(detail, "Host #{host} failed: #{detail}\n")
+      Puppet.log_exception(detail, "Host: #{host} failed: #{detail}\n")
       exit(2)
     end
 
     case result
-    when "success";
-      exit(0)
-    when "running"
-      $stderr.puts "Host #{host} is already running"
-      exit(3)
-    else
-      $stderr.puts "Host #{host} returned unknown answer '#{result}'"
-      exit(12)
+      when 'success'
+        exit(0)
+      when 'running'
+        $stderr.puts "Host: #{host} is already running"
+        exit(3)
+      when 'error'
+        $stderr.puts "Could not run puppet on host: #{host}"
+        exit(1)
+      else
+        $stderr.puts "Host: #{host} returned unknown answer: '#{result}'"
+        exit(12)
     end
   end
 
@@ -299,6 +322,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     options[:fqdn] = true
     options[:ignoreschedules] = false
     options[:foreground] = false
+    options[:splay] = false
   end
 
   def setup
