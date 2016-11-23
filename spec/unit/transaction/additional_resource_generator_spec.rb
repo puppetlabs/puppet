@@ -182,6 +182,17 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
         'Generator[thing]', 'Whit[completed_thing]')
     end
 
+    it "should tag the sentinel with the tags of the resource" do
+      graph = relationships_after_eval_generating(<<-MANIFEST, 'Generator[thing]')
+        generator { thing:
+          code => 'notify { hello: }',
+          tag  => 'foo',
+        }
+      MANIFEST
+      whit = find_vertex(graph, :whit, "completed_thing")
+      expect(whit.tags).to be_superset(['thing', 'foo', 'generator'].to_set)
+    end
+
     it "should contain the generated resources in the same container as the generator" do
       catalog = compile_to_ral(<<-MANIFEST)
         class container {
