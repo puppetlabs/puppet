@@ -25,7 +25,7 @@ class Puppet::Run
       options.delete(:background)
     end
 
-    valid_options = [:tags, :ignoreschedules, :pluginsync]
+    valid_options = [:tags, :ignoreschedules, :pluginsync, :splay]
     options.each do |key, value|
       raise ArgumentError, "Run does not accept #{key}" unless valid_options.include?(key)
     end
