@@ -420,11 +420,10 @@ deprecated and has been replaced by 'always_retry_plugins'."
       :type    => :terminus,
       :default => "hiera",
       :desc    =>
-        "This setting has been deprecated in favor of using lookup. It will be removed in major release of puppet.
-
-         This setting controls which data binding terminus to use for global automatic data binding (across all environments).
-         Typical (deprecated) usage is to use the default value 'hiera'. After having configured lookup per environment, this
-         setting should be changed to an empty string (or nil) as that will turn off global data binding.",
+        "This setting has been deprecated. Use of any value other than 'hiera' should instead be configured
+         in a version 5 hiera.yaml. Until this setting is removed, it controls which data binding terminus
+         to use for global automatic data binding (across all environments). By default this value is 'hiera'.
+         A value of 'none' turns off the global binding.",
       :call_hook => :on_initialize_and_write,
       :hook => proc do |value|
         if Puppet[:strict] != :off
