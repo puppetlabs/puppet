@@ -235,6 +235,19 @@ describe "Puppet defaults" do
     it "should be set to hiera by default" do
       expect(Puppet.settings[:data_binding_terminus]).to eq(:hiera)
     end
+
+    it "to be neither 'hiera' nor 'none', a deprecation warning is logged" do
+      expect(@logs).to eql([])
+      Puppet[:data_binding_terminus] = 'magic'
+      expect(@logs[0].to_s).to match(/Setting 'data_binding_terminus' is deprecated/)
+    end
+
+    it "to not log a warning if set to 'none' or 'hiera'" do
+      expect(@logs).to eql([])
+      Puppet[:data_binding_terminus] = 'none'
+      Puppet[:data_binding_terminus] = 'hiera'
+      expect(@logs).to eql([])
+    end
   end
 
   describe "agent_catalog_run_lockfile" do
