@@ -296,4 +296,14 @@ describe Puppet::Network::HTTP::Connection do
       expect(request['authorization']).to match(/^Basic/)
     end.returns(httpok)
   end
+
+  it "sets HTTP User-Agent header" do
+    puppet_ua = "Puppet/#{Puppet.version} Ruby/#{RUBY_VERSION}-p#{RUBY_PATCHLEVEL} (#{RUBY_PLATFORM})"
+
+    Net::HTTP.any_instance.expects(:request).with do |request|
+      expect(request['User-Agent']).to eq(puppet_ua)
+    end.returns(httpok)
+
+    subject.get('/path')
+  end
 end
