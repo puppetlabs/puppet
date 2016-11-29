@@ -169,7 +169,7 @@ class TypeFormatter
   # @api private
   def string_PStringType(t)
     range = range_array_part(t.size_type)
-    append_array('String', range.empty?) do
+    append_array('String', range.empty? && !(@debug && !t.value.nil?)) do
       if @debug
         append_elements(range, !t.value.nil?)
         append_string(t.value) unless t.value.nil?
@@ -413,7 +413,7 @@ class TypeFormatter
     if @expanded
       append_object_hash(t.i12n_hash(@type_set.nil? || !@type_set.defines_type?(t)))
     else
-      @bld << (@type_set ? @type_set.name_for(t) : t.label)
+      @bld << (@type_set ? @type_set.name_for(t, t.label) : t.label)
     end
   end
 
@@ -451,7 +451,7 @@ class TypeFormatter
       if expand && @type_set.defines_type?(t)
         append_string(t.resolved_type)
       else
-        @bld << @type_set.name_for(t)
+        @bld << @type_set.name_for(t, t.name)
       end
     end
   end
