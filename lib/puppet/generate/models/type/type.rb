@@ -24,6 +24,9 @@ module Puppet
           # Gets the isomorphic member attribute of the type
           attr_reader :isomorphic
 
+          # Gets the capability member attribute of the type
+          attr_reader :capability
+
           # Initializes a type model.
           # @param type [Puppet::Type] The Puppet type to model.
           # @return [void]
@@ -45,6 +48,7 @@ module Puppet
               ]
             end]
             @isomorphic = type.isomorphic?
+            @capability = type.is_capability?
           end
 
           def render(template)

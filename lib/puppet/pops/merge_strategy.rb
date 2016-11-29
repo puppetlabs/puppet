@@ -96,6 +96,12 @@ module Puppet::Pops
         assert_type('The second element of the merge', value_t, e2))
     end
 
+    # TODO: API 5.0 Remove this method
+    # @deprecated
+    def merge_lookup(lookup_variants)
+      lookup(lookup_variants, Lookup::Invocation.current)
+    end
+
     # Merges the result of yielding the given _lookup_variants_ to a given block.
     #
     # @param lookup_variants [Array] The variants to pass as second argument to the given block
@@ -105,22 +111,40 @@ module Puppet::Pops
     # @yieldreturn [Object] the value to merge with other values
     # @throws :no_such_key if the lookup was unsuccessful
     #
-    def merge_lookup(lookup_variants)
-      result = lookup_variants.reduce(NOT_FOUND) do |memo, lookup_variant|
-        not_found = true
-        value = catch(:no_such_key) do
-          v = yield(lookup_variant)
-          not_found = false
-          v
-        end
-        if not_found
-          memo
-        else
-          memo.equal?(NOT_FOUND) ? convert_value(value) : merge(memo, value)
+    # Merges the result of yielding the given _lookup_variants_ to a given block.
+    #
+    # @param lookup_variants [Array] The variants to pass as second argument to the given block
+    # @return [Object] the merged value.
+    # @yield [} ]
+    # @yieldparam variant [Object] each variant given in the _lookup_variants_ array.
+    # @yieldreturn [Object] the value to merge with other values
+    # @throws :no_such_key if the lookup was unsuccessful
+    #
+    def lookup(lookup_variants, lookup_invocation)
+      case lookup_variants.size
+      when 0
+        throw :no_such_key
+      when 1
+        yield(lookup_variants[0])
+      else
+        lookup_invocation.with(:merge, self) do
+          result = lookup_variants.reduce(NOT_FOUND) do |memo, lookup_variant|
+            not_found = true
+            value = catch(:no_such_key) do
+              v = yield(lookup_variant)
+              not_found = false
+              v
+            end
+            if not_found
+              memo
+            else
+              memo.equal?(NOT_FOUND) ? convert_value(value) : merge(memo, value)
+            end
+          end
+          throw :no_such_key if result == NOT_FOUND
+          lookup_invocation.report_result(result)
         end
       end
-      throw :no_such_key if result == NOT_FOUND
-      result
     end
 
     # Converts a single value to the type expected when merging two elements
@@ -182,10 +206,10 @@ module Puppet::Pops
     # @return [Object] the merged value
     # @throws :no_such_key unless the lookup was successful
     #
-    def merge_lookup(lookup_variants)
-      lookup_variants.each do |lookup_variant|
-        catch(:no_such_key) { return yield(lookup_variant) }
-      end
+    def lookup(lookup_variants, _)
+      # First found does not continue when a root key was found and a subkey wasn't since that would
+      # simulate a hash merge
+      lookup_variants.each { |lookup_variant| catch(:no_such_key) { return yield(lookup_variant) } }
       throw :no_such_key
     end
 
@@ -309,8 +333,20 @@ module Puppet::Pops
     def checked_merge(e1, e2)
       dm_options = { :preserve_unmergeables => false }
       options.each_pair { |k,v| dm_options[k.to_sym] = v unless k == 'strategy' }
-      # e2 (the destination) is dup'ed to avoid that the passed in object mutates
-      DeepMerge.deep_merge!(e1, e2.dup, dm_options)
+      # e2 (the destination) is deep cloned to avoid that the passed in object mutates
+      DeepMerge.deep_merge!(e1, deep_clone(e2), dm_options)
+    end
+
+    def deep_clone(value)
+      if value.is_a?(Hash)
+        result = value.clone
+        value.each{ |k, v| result[k] = deep_clone(v) }
+        result
+      elsif value.is_a?(Array)
+        value.map{ |v| deep_clone(v) }
+      else
+        value
+      end
     end
 
     protected

@@ -218,6 +218,17 @@ class Puppet::Node::Environment
     errors
   end
 
+  # Checks if this environment permits use of rich data types in the catalog
+  # @return [Boolean] `true` if rich data is permitted.
+  # @api private
+  def rich_data?
+    if @rich_data.nil?
+      environment_conf = Puppet.lookup(:environments).get_conf(name)
+      @rich_data = (environment_conf.nil? ? Puppet[:rich_data] : environment_conf.rich_data)
+    end
+    @rich_data
+  end
+
   # Return an environment-specific Puppet setting.
   #
   # @api public

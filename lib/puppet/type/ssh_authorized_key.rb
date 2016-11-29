@@ -2,18 +2,20 @@ module Puppet
   Type.newtype(:ssh_authorized_key) do
     @doc = "Manages SSH authorized keys. Currently only type 2 keys are supported.
 
-      In their native habitat, SSH keys usually appear as a single long line. This
-      resource type requires you to split that line into several attributes. Thus, a
-      key that appears in your `~/.ssh/id_rsa.pub` file like this...
+      In their native habitat, SSH keys usually appear as a single long line, in
+      the format `<TYPE> <KEY> <NAME/COMMENT>`. This resource type requires you
+      to split that line into several attributes. Thus, a key that appears in
+      your `~/.ssh/id_rsa.pub` file like this...
 
-          ssh-rsa AAAAB3Nza[...]qXfdaQ== nick@magpie.puppetlabs.lan
+          ssh-rsa AAAAB3Nza[...]qXfdaQ== nick@magpie.example.com
 
       ...would translate to the following resource:
 
-          ssh_authorized_key { 'nick@magpie.puppetlabs.lan':
-            user => 'nick',
-            type => 'ssh-rsa',
-            key  => 'AAAAB3Nza[...]qXfdaQ== nick@magpie.puppetlabs.lan',
+          ssh_authorized_key { 'nick@magpie.example.com':
+            ensure => present,
+            user   => 'nick',
+            type   => 'ssh-rsa',
+            key    => 'AAAAB3Nza[...]qXfdaQ==',
           }
 
       To ensure that only the currently approved keys are present, you can purge
@@ -36,8 +38,12 @@ module Puppet
     ensurable
 
     newparam(:name) do
-      desc "The SSH key comment. This attribute is currently used as a
-        system-wide primary key and therefore has to be unique."
+      desc "The SSH key comment. This can be anything, and doesn't need to match
+        the original comment from the `.pub` file.
+
+        Due to internal limitations, this must be unique across all user accounts;
+        if you want to specify one key for multiple users, you must use a different
+        comment for each instance."
 
       isnamevar
 
@@ -145,7 +151,7 @@ module Puppet
     end
 
     # regular expression suitable for use by a ParsedFile based provider
-    REGEX = /^(?:(.+) )?(ssh-dss|ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521) ([^ ]+) ?(.*)$/
+    REGEX = /^(?:(.+)\s+)?(ssh-dss|ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521)\s+([^ ]+)\s*(.*)$/
     def self.keyline_regex
       REGEX
     end

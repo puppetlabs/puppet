@@ -8,7 +8,7 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
   let (:system_bytes) { [1, 1, 0, 0, 0, 0, 0, 5, 18, 0, 0, 0] }
   let (:null_sid_bytes) { bytes = [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }
   let (:administrator_bytes) { [1, 2, 0, 0, 0, 0, 0, 5, 32, 0, 0, 0, 32, 2, 0, 0] }
-  let (:computer_sid) { Puppet::Util::Windows::SID.name_to_sid_object(Socket.gethostname) }
+  let (:computer_sid) { Puppet::Util::Windows::SID.name_to_sid_object(Puppet::Util::Windows::ADSI.computer_name) }
   # BUILTIN is localized on German Windows, but not French
   # looking this up like this dilutes the values of the tests as we're comparing two mechanisms
   # for returning the same values, rather than to a known good
@@ -64,7 +64,7 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
       # otherwise running in AppVeyor there is no Administrator and a the current local user can be used
       skip if (running_as_system && !user_exists)
 
-      hostname = Socket.gethostname
+      hostname = Puppet::Util::Windows::ADSI.computer_name
 
       principal = Puppet::Util::Windows::SID::Principal.lookup_account_name("#{hostname}\\#{username}")
       expect(principal.account).to match(/^#{Regexp.quote(username)}$/i)

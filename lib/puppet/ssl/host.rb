@@ -227,7 +227,29 @@ ERROR_STRING
   # Generate all necessary parts of our ssl host.
   def generate
     generate_key unless key
-    generate_certificate_request unless certificate_request
+    # ask indirector to find any existing requests and download them
+    existing_request = certificate_request
+
+    # if CSR downloaded from master, but the local keypair was just generated and
+    # does not match the public key in the CSR, fail hard
+    if !existing_request.nil? &&
+      (key.content.public_key.to_s != existing_request.content.public_key.to_s)
+
+      raise Puppet::Error, <<ERROR_STRING
+The CSR retrieved from the master does not match the agent's public key.
+CSR fingerprint: #{existing_request.fingerprint}
+CSR public key: #{existing_request.content.public_key.to_text}
+Agent public key: #{key.content.public_key.to_text}
+To fix this, remove the CSR from both the master and the agent and then start a puppet run, which will automatically regenerate a CSR.
+On the master:
+  puppet cert clean #{Puppet[:certname]}
+On the agent:
+  1a. On most platforms: find #{Puppet[:ssldir]} -name #{Puppet[:certname]}.pem -delete
+  1b. On Windows: del "#{Puppet[:certdir].gsub('/', '\\')}\\#{Puppet[:certname]}.pem" /f
+  2. puppet agent -t
+ERROR_STRING
+    end
+    generate_certificate_request unless existing_request
 
     # If we can get a CA instance, then we're a valid CA, and we
     # should use it to sign our request; else, just try to read

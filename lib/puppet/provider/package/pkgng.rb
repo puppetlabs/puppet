@@ -56,13 +56,13 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
 
       return packages
     rescue Puppet::ExecutionFailure
-      nil
+      return []
     end
   end
 
   def self.prefetch(resources)
     packages = instances
-    resources.keys.each do |name|
+    resources.each_key do |name|
       if provider = packages.find{|p| p.name == name or p.origin == name }
         resources[name].provider = provider
       end

@@ -36,6 +36,10 @@ describe Puppet::Util::Tagging do
     expect { tagger.tag("bad tag") }.to raise_error(Puppet::ParseError)
   end
 
+  it "should fail on tags containing newline characters" do
+    expect { tagger.tag("bad\ntag") }.to raise_error(Puppet::ParseError)
+  end
+
   it "should allow alpha tags" do
     expect { tagger.tag("good_tag") }.not_to raise_error
   end

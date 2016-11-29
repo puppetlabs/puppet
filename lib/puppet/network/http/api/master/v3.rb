@@ -16,7 +16,7 @@ class Puppet::Network::HTTP::API::Master::V3
   end)
 
   ENVIRONMENT = Puppet::Network::HTTP::Route.
-      path(%r{/environment/[^/]+$}).get(AUTHZ.wrap do
+      path(%r{^/environment/[^/]+$}).get(AUTHZ.wrap do
     Environment.new
   end)
 

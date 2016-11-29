@@ -118,6 +118,7 @@ class EvaluatorImpl
       fail(Issues::RUNTIME_ERROR, target, {:detail => e.message}, e.original || e)
 
     rescue StopIteration => e
+      # Ensure these are not rescued as StandardError
       raise e
 
     rescue StandardError => e
@@ -410,7 +411,20 @@ class EvaluatorImpl
       begin
         if operator == :'%' && (left.is_a?(Float) || right.is_a?(Float))
           # Deny users the fun of seeing severe rounding errors and confusing results
-          fail(Issues::OPERATOR_NOT_APPLICABLE, left_o, {:operator => operator, :left_value => left})
+          fail(Issues::OPERATOR_NOT_APPLICABLE, left_o, {:operator => operator, :left_value => left}) if left.is_a?(Float)
+          fail(Issues::OPERATOR_NOT_APPLICABLE_WHEN, left_o, {:operator => operator, :left_value => left, :right_value => right})
+        end
+        if right.is_a?(Time::TimeData) && !left.is_a?(Time::TimeData)
+          if operator == :'+' || operator == :'*' && right.is_a?(Time::Timespan)
+            # Switch places. Let the TimeData do the arithmetic
+            x = left
+            left = right
+            right = x
+          elsif operator == :'-' && right.is_a?(Time::Timespan)
+            left = Time::Timespan.new((left * Time::NSECS_PER_SEC).to_i)
+          else
+            fail(Issues::OPERATOR_NOT_APPLICABLE_WHEN, left_o, {:operator => operator, :left_value => left, :right_value => right})
+          end
         end
         result = left.send(operator, right)
       rescue NoMethodError => e
@@ -694,7 +708,16 @@ class EvaluatorImpl
   end
 
   def eval_Program(o, scope)
-    evaluate(o.body, scope)
+    begin
+      file = o.locator.file
+      line = 0
+      # Add stack frame for "top scope" logic. See Puppet::Pops::PuppetStack
+      return Puppet::Pops::PuppetStack.stack(file, line, self, 'evaluate', [o.body, scope])
+      #evaluate(o.body, scope)
+    rescue Puppet::Pops::Evaluator::PuppetStopIteration => ex
+      # breaking out of a file level program is not allowed
+      raise Puppet::ParseError.new("break() from context where this is illegal", ex.file, ex.line)
+    end
   end
 
   # Produces Array[PAnyType], an array of resource references

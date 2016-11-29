@@ -34,6 +34,13 @@ describe 'Timestamp type' do
         expect(eval_and_collect_notices(code)).to eq(%w(true true))
       end
 
+      it 'using just one parameter is the same as using that parameter twice' do
+        code = <<-CODE
+            notice(Timestamp['2015-03-01'] == Timestamp['2015-03-01', '2015-03-01'])
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(%w(true))
+      end
+
       it 'orders parameterized types based on range inclusion' do
         code = <<-CODE
             notice(Timestamp['2015-03-01', '2015-09-30'] < Timestamp['2015-02-01', '2015-10-30'])
@@ -50,7 +57,7 @@ describe 'Timestamp type' do
             notice($o)
             notice(type($o))
         CODE
-        expect(eval_and_collect_notices(code)).to eq(['2015-03-01T00:00:00.000 UTC', "Timestamp['2015-03-01T00:00:00.000 UTC', '2015-03-01T00:00:00.000 UTC']"])
+        expect(eval_and_collect_notices(code)).to eq(['2015-03-01T00:00:00.000 UTC', "Timestamp['2015-03-01T00:00:00.000 UTC']"])
       end
 
       it 'can be created from a string and format' do
@@ -59,6 +66,39 @@ describe 'Timestamp type' do
             notice($o)
         CODE
         expect(eval_and_collect_notices(code)).to eq(['2016-08-28T00:00:00.000 UTC'])
+      end
+
+      it 'can be created from a string, format, and a timezone' do
+        code = <<-CODE
+            $o = Timestamp('Sunday, 28 August, 2016', '%A, %d %B, %Y', 'EST')
+            notice($o)
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(['2016-08-28T05:00:00.000 UTC'])
+      end
+
+      it 'can be not be created from a string, format with timezone designator, and a timezone' do
+        code = <<-CODE
+            $o = Timestamp('Sunday, 28 August, 2016 UTC', '%A, %d %B, %Y %z', 'EST')
+            notice($o)
+        CODE
+        expect { eval_and_collect_notices(code) }.to raise_error(
+          /Using a Timezone designator in format specification is mutually exclusive to providing an explicit timezone argument/)
+      end
+
+      it 'can be created from a hash with string and format' do
+        code = <<-CODE
+            $o = Timestamp({ string => 'Sunday, 28 August, 2016', format => '%A, %d %B, %Y' })
+            notice($o)
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(['2016-08-28T00:00:00.000 UTC'])
+      end
+
+      it 'can be created from a hash with string, format, and a timezone' do
+        code = <<-CODE
+            $o = Timestamp({ string => 'Sunday, 28 August, 2016', format => '%A, %d %B, %Y', timezone => 'EST' })
+            notice($o)
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(['2016-08-28T05:00:00.000 UTC'])
       end
 
       it 'can be created from a string and array of formats' do
@@ -74,6 +114,21 @@ describe 'Timestamp type' do
         CODE
         expect(eval_and_collect_notices(code)).to eq(
           ['2016-08-28T12:15:00.000 UTC', '2016-07-24T01:20:00.000 UTC', '2016-06-21T18:23:15.000 UTC'])
+      end
+
+      it 'can be created from a string, array of formats, and a timezone' do
+        code = <<-CODE
+            $fmts = [
+              '%A, %d %B, %Y at %r',
+              '%b %d, %Y, %l:%M %P',
+              '%y-%m-%d %H:%M:%S'
+            ]
+            notice(Timestamp('Sunday, 28 August, 2016 at 12:15:00 PM', $fmts, 'CET'))
+            notice(Timestamp('Jul 24, 2016, 1:20 am', $fmts, 'CET'))
+            notice(Timestamp('16-06-21 18:23:15', $fmts, 'CET'))
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(
+          ['2016-08-28T11:15:00.000 UTC', '2016-07-24T00:20:00.000 UTC', '2016-06-21T17:23:15.000 UTC'])
       end
 
       it 'can be created from a integer that represents seconds since epoch' do
@@ -165,7 +220,7 @@ describe 'Timestamp type' do
         expect(eval_and_collect_notices(code)).to eq(%w(false false true true false false true true))
       end
 
-      it 'is not equal to integer that represents seconds since epoch' do
+      it 'is equal to integer that represents seconds since epoch' do
         code = <<-CODE
             $o1 = Timestamp('2015-06-01T00:00:00 UTC')
             $o2 = 1433116800
@@ -173,10 +228,10 @@ describe 'Timestamp type' do
             notice($o1 != $o2)
             notice(Integer($o1) == $o2)
         CODE
-        expect(eval_and_collect_notices(code)).to eq(%w(false true true))
+        expect(eval_and_collect_notices(code)).to eq(%w(true false true))
       end
 
-      it 'integer that represents seconds is not equal to it' do
+      it 'integer that represents seconds is equal to it' do
         code = <<-CODE
             $o1 = 1433116800
             $o2 = Timestamp('2015-06-01T00:00:00 UTC')
@@ -184,7 +239,7 @@ describe 'Timestamp type' do
             notice($o1 != $o2)
             notice($o1 == Integer($o2))
         CODE
-        expect(eval_and_collect_notices(code)).to eq(%w(false true true))
+        expect(eval_and_collect_notices(code)).to eq(%w(true false true))
       end
 
       it 'can be compared to float that represents seconds with fraction since epoch' do
@@ -221,7 +276,7 @@ describe 'Timestamp type' do
         expect(eval_and_collect_notices(code)).to eq(%w(false false true true false false true true))
       end
 
-      it 'is not equal to float that represents seconds with fraction since epoch' do
+      it 'is equal to float that represents seconds with fraction since epoch' do
         code = <<-CODE
             $o1 = Timestamp('2015-06-01T00:00:00.123456789 UTC')
             $o2 = 1433116800.123456789
@@ -229,10 +284,10 @@ describe 'Timestamp type' do
             notice($o1 != $o2)
             notice(Float($o1) == $o2)
         CODE
-        expect(eval_and_collect_notices(code)).to eq(%w(false true true))
+        expect(eval_and_collect_notices(code)).to eq(%w(true false true))
       end
 
-      it 'float that represents seconds with fraction is not equal to it' do
+      it 'float that represents seconds with fraction is equal to it' do
         code = <<-CODE
             $o1 = 1433116800.123456789
             $o2 = Timestamp('2015-06-01T00:00:00.123456789 UTC')
@@ -240,7 +295,14 @@ describe 'Timestamp type' do
             notice($o1 != $o2)
             notice($o1 == Float($o2))
         CODE
-        expect(eval_and_collect_notices(code)).to eq(%w(false true true))
+        expect(eval_and_collect_notices(code)).to eq(%w(true false true))
+      end
+
+      it 'it cannot be compared to a Timespan' do
+        code = <<-CODE
+            notice(Timestamp() > Timespan(3))
+        CODE
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Timestamps are only comparable to Timestamps, Integers, and Floats/)
       end
     end
   end

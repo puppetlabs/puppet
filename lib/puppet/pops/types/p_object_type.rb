@@ -201,17 +201,23 @@ class PObjectType < PMetaType
       @dispatch ||= create_dispatch(receiver)
 
       args_type = TypeCalculator.infer_set(block_given? ? args + [block] : args)
-      unless @dispatch.type.callable?(args_type)
-        raise ArgumentError, TypeMismatchDescriber.describe_signatures(label, [@dispatch], args_type)
-      end
-      @dispatch.invoke(receiver, scope, args, &block)
+      found = @dispatch.find { |d| d.type.callable?(args_type) }
+      raise ArgumentError, TypeMismatchDescriber.describe_signatures(label, @dispatch, args_type) if found.nil?
+      found.invoke(receiver, scope, args, &block)
     end
 
     # @api private
     def create_dispatch(instance)
       # TODO: Assumes Ruby implementation for now
-      Functions::Dispatch.new(callable_type, name, [],
-        callable_type.block_type.nil? ? nil : 'block', nil, nil, false)
+      if(callable_type.is_a?(PVariantType))
+        callable_type.types.map do |ct|
+          Functions::Dispatch.new(ct, name, [],
+            ct.block_type.nil? ? nil : 'block', nil, nil, false)
+        end
+      else
+        [Functions::Dispatch.new(callable_type, name, [],
+          callable_type.block_type.nil? ? nil : 'block', nil, nil, false)]
+      end
     end
 
     # @api private
@@ -352,14 +358,14 @@ class PObjectType < PMetaType
   #   @param i12n_hash [Hash{String=>Object}] The hash describing the Object features
   #
   # @api private
-  def initialize(name_or_i12n_hash, i12n_hash_expression = nil)
+  def initialize(i12n_hash, i12n_hash_expression = nil)
     @attributes = EMPTY_HASH
     @functions = EMPTY_HASH
 
-    if name_or_i12n_hash.is_a?(Hash)
-      initialize_from_hash(name_or_i12n_hash)
+    if i12n_hash.is_a?(Hash)
+      initialize_from_hash(i12n_hash)
     else
-      @name = TypeAsserter.assert_instance_of('object name', TYPE_OBJECT_NAME, name_or_i12n_hash)
+      @name = TypeAsserter.assert_instance_of('object name', TYPE_OBJECT_NAME, i12n_hash)
       @i12n_hash_expression = i12n_hash_expression
     end
   end
@@ -405,7 +411,7 @@ class PObjectType < PMetaType
     impl_class = implementation_class
     class_name = impl_class.name || "Anonymous Ruby class for #{name}"
 
-    (param_names, param_types, required_param_count) = parameter_info
+    (param_names, param_types, required_param_count) = parameter_info(impl_class)
 
     # Create the callable with a size that reflects the required and optional parameters
     param_types << required_param_count
@@ -436,11 +442,17 @@ class PObjectType < PMetaType
         end
       end
 
-      # Add the dispatch that uses the standard #new method on the class. It's assumed that the #new
+      # Add the dispatch that uses the standard #from_asserted_args or #new method on the class. It's assumed that the
       # method performs no assertions.
       dispatcher.add_dispatch(create_type, :create, param_names, nil, EMPTY_ARRAY, EMPTY_ARRAY, false)
-      def create(*args)
-        self.class.impl_class.new(*args)
+      if impl_class.respond_to?(:from_asserted_args)
+        def create(*args)
+          self.class.impl_class.from_asserted_args(*args)
+        end
+      else
+        def create(*args)
+          self.class.impl_class.new(*args)
+        end
       end
     end
   end
@@ -468,7 +480,7 @@ class PObjectType < PMetaType
 
   # @api private
   # @return [(Array<String>, Array<PAnyType>, Integer)] array of parameter names, array of parameter types, and a count reflecting the required number of parameters
-  def parameter_info(attr_readers = false)
+  def parameter_info(impl_class, attr_readers = false)
     # Create a types and a names array where optional entries ends up last
     opt_types = []
     opt_names = []
@@ -485,6 +497,35 @@ class PObjectType < PMetaType
     end
     param_names = non_opt_names + opt_names
     param_types = non_opt_types + opt_types
+    param_count = param_names.size
+
+    init = impl_class.respond_to?(:from_asserted_args) ? impl_class.method(:from_asserted_args) : impl_class.instance_method(:initialize)
+    init_non_opt_count = 0
+    init_param_names = init.parameters.map do |p|
+      init_non_opt_count += 1 if :req == p[0]
+      p[1].to_s
+    end
+
+    if init_param_names != param_names
+      if init_param_names.size < param_count || init_non_opt_count > param_count
+        raise Serialization::SerializationError, "Initializer for class #{impl_class.name} does not match the attributes of #{name}"
+      end
+      init_param_names = init_param_names[0, param_count] if init_param_names.size > param_count
+      unless init_param_names == param_names
+        # Reorder needed to match initialize method arguments
+        new_param_types = []
+        init_param_names.each do |ip|
+          index = param_names.index(ip)
+          if index.nil?
+            raise Serialization::SerializationError,
+              "Initializer for class #{impl_class.name} parameter '#{ip}' does not match any of the the attributes of type #{name}"
+          end
+          new_param_types << param_types[index]
+        end
+        param_names = init_param_names
+        param_types = new_param_types
+      end
+    end
 
     [param_names, param_types, non_opt_types.size]
   end
@@ -810,8 +851,8 @@ class PObjectType < PMetaType
   def find_equality_definer_of(attr)
     type = self
     while !type.nil? do
-      p = type.parent
-      return type if p.nil?
+      p = type.resolved_parent
+      return type unless p.is_a?(PObjectType)
       return type unless p.equality_attributes.include?(attr.name)
       type = p
     end

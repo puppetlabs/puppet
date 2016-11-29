@@ -134,6 +134,9 @@ class TypeFormatter
   def string_PNumericType(_) ; @bld << 'Numeric' ; end
 
   # @api private
+  def string_PBinaryType(_)  ; @bld << 'Binary' ; end
+
+  # @api private
   def string_PIntegerType(t)
     append_array('Integer', t.unbounded?) { append_elements(range_array_part(t)) }
   end
@@ -168,9 +171,8 @@ class TypeFormatter
     range = range_array_part(t.size_type)
     append_array('String', range.empty?) do
       if @debug
-        append_elements(range, true)
-        append_strings(t.values, true)
-        chomp_list
+        append_elements(range, !t.value.nil?)
+        append_string(t.value) unless t.value.nil?
       else
         append_elements(range)
       end
@@ -203,7 +205,7 @@ class TypeFormatter
     max = t.to
     append_array('Timestamp', min.nil? && max.nil?) do
       min.nil? ? append_default : append_string(min)
-      unless max.nil?
+      unless max.nil? || max == min
         @bld << COMMA_SEP
         append_string(max)
       end
@@ -216,7 +218,7 @@ class TypeFormatter
     max = t.to
     append_array('Timespan', min.nil? && max.nil?) do
       min.nil? ? append_default : append_string(min)
-      unless max.nil?
+      unless max.nil? || max == min
         @bld << COMMA_SEP
         append_string(max)
       end
@@ -323,7 +325,7 @@ class TypeFormatter
       append_array('Hash') { append_strings([0, 0]) }
     else
       append_array('Hash', t == PHashType::DATA) do
-        append_strings([t.key_type, t.element_type], true)
+        append_strings([t.key_type, t.value_type], true)
         append_elements(range_array_part(t.size_type), true)
         chomp_list
       end
@@ -353,8 +355,8 @@ class TypeFormatter
   def string_PNotUndefType(t)
     contained_type = t.type
     append_array('NotUndef', contained_type.nil? || contained_type.class == PAnyType) do
-      if contained_type.is_a?(PStringType) && contained_type.values.size == 1
-        append_string(contained_type.values[0])
+      if contained_type.is_a?(PStringType) && !contained_type.value.nil?
+        append_string(contained_type.value)
       else
         append_string(contained_type)
       end
@@ -424,8 +426,8 @@ class TypeFormatter
   def string_POptionalType(t)
     optional_type = t.optional_type
     append_array('Optional', optional_type.nil?) do
-      if optional_type.is_a?(PStringType) && optional_type.values.size == 1
-        append_string(optional_type.values[0])
+      if optional_type.is_a?(PStringType) && !optional_type.value.nil?
+        append_string(optional_type.value)
       else
         append_string(optional_type)
       end
@@ -505,12 +507,10 @@ class TypeFormatter
   def string_VersionRange(t) ; @bld << "'#{t}'"  ; end
 
   # @api private
-  def string_Timestamp(t)    ; @bld << "'#{t}'"  ; end
+  def string_Timespan(t)    ; @bld << "'#{t}'"  ; end
 
   # @api private
-  def string_Timespan(o)
-    append_hash(o.to_hash, proc { |k| @bld << symbolic_key(k) })
-  end
+  def string_Timestamp(t)    ; @bld << "'#{t}'"  ; end
 
   # Debugging to_s to reduce the amount of output
   def to_s

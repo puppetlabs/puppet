@@ -173,7 +173,7 @@ describe 'The type factory' do
       ht = TypeFactory.hash_of_data
       expect(ht.class()).to eq(PHashType)
       expect(ht.key_type.class).to eq(PScalarType)
-      expect(ht.element_type.class).to eq(PDataType)
+      expect(ht.value_type.class).to eq(PDataType)
     end
 
     it 'ruby(1) returns PRuntimeType[ruby, \'Fixnum\']' do
@@ -211,7 +211,7 @@ describe 'The type factory' do
       expect(t.size_type.from).to eq(0)
       expect(t.size_type.to).to eq(0)
       expect(t.key_type).to eq(Puppet::Pops::Types::PUnitType::DEFAULT)
-      expect(t.element_type).to eq(Puppet::Pops::Types::PUnitType::DEFAULT)
+      expect(t.value_type).to eq(Puppet::Pops::Types::PUnitType::DEFAULT)
     end
 
     context 'callable types' do

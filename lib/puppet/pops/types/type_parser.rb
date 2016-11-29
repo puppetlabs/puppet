@@ -37,6 +37,12 @@ class TypeParser
     interpret(model.current.body, context)
   end
 
+  # @api private
+  def parse_literal(string, context = nil)
+    model = @parser.parse_string(string)
+    interpret_any(model.current.body, context)
+  end
+
   # @param ast [Puppet::Pops::Model::PopsObject] the ast to interpret
   # @param context [Puppet::Parser::Scope,Loader::Loader, nil] scope or loader to use when loading type aliases
   # @return [PAnyType] a specialization of the PAnyType representing the type.
@@ -134,12 +140,13 @@ class TypeParser
   # @api private
   def self.type_map
     @type_map ||= {
-       'integer'       => TypeFactory.integer,
-       'float'         => TypeFactory.float,
+        'integer'      => TypeFactory.integer,
+        'float'        => TypeFactory.float,
         'numeric'      => TypeFactory.numeric,
         'iterable'     => TypeFactory.iterable,
         'iterator'     => TypeFactory.iterator,
         'string'       => TypeFactory.string,
+        'binary'       => TypeFactory.binary,
         'sensitive'    => TypeFactory.sensitive,
         'enum'         => TypeFactory.enum,
         'boolean'      => TypeFactory.boolean,
@@ -167,7 +174,7 @@ class TypeParser
         'typealias'    => TypeFactory.type_alias,
         'typereference' => TypeFactory.type_reference,
         'typeset'      => TypeFactory.type_set,
-      # A generic callable as opposed to one that does not accept arguments
+         # A generic callable as opposed to one that does not accept arguments
         'callable'     => TypeFactory.all_callables,
         'semver'       => TypeFactory.sem_ver,
         'semverrange'  => TypeFactory.sem_ver_range,

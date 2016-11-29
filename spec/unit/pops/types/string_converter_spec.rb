@@ -5,6 +5,7 @@ describe 'The string converter' do
   let(:converter) { Puppet::Pops::Types::StringConverter.singleton }
   let(:factory) { Puppet::Pops::Types::TypeFactory }
   let(:format) { Puppet::Pops::Types::StringConverter::Format }
+  let(:binary) { Puppet::Pops::Types::PBinaryType::Binary }
 
   describe 'helper Format' do
     it 'parses a single character like "%d" as a format' do
@@ -900,6 +901,94 @@ describe 'The string converter' do
       string_formats = { Puppet::Pops::Types::PRegexpType::DEFAULT => "%k"}
       converter.convert(/.*/, string_formats)
       end.to raise_error(/Illegal format 'k' specified for value of Regexp type - expected one of the characters 'rsp'/)
+    end
+  end
+
+  context 'when converting binary' do
+    let(:sample) { binary.from_binary_string('binary') }
+
+    it 'the binary is converted to strict base64 string unquoted by default (same as %B)' do
+      expect(converter.convert(sample, :default)).to eq("YmluYXJ5")
+    end
+
+    it 'the binary is converted using %p by default when contained in an array' do
+      expect(converter.convert([sample], :default)).to eq("[Binary(\"YmluYXJ5\")]")
+    end
+
+    it '%B formats in base64 strict mode (same as default)' do
+      string_formats = { Puppet::Pops::Types::PBinaryType::DEFAULT => '%B'}
+      expect(converter.convert(sample, string_formats)).to eq("YmluYXJ5")
+    end
+
+    it '%b formats in base64 relaxed mode, and adds newline' do
+      string_formats = { Puppet::Pops::Types::PBinaryType::DEFAULT => '%b'}
+      expect(converter.convert(sample, string_formats)).to eq("YmluYXJ5\n")
+    end
+
+    it '%u formats in base64 urlsafe mode' do
+      string_formats = { Puppet::Pops::Types::PBinaryType::DEFAULT => '%u'}
+      expect(converter.convert(binary.from_base64("++//"), string_formats)).to eq("--__")
+    end
+
+    it '%p formats with type name' do
+      string_formats = { Puppet::Pops::Types::PBinaryType::DEFAULT => '%p'}
+      expect(converter.convert(sample, string_formats)).to eq("Binary(\"YmluYXJ5\")")
+    end
+
+    it '%#s formats as quoted string with escaped non printable bytes' do
+      string_formats = { Puppet::Pops::Types::PBinaryType::DEFAULT => '%#s'}
+      expect(converter.convert(binary.from_base64("apa="), string_formats)).to eq("\"j\\x96\"")
+    end
+
+    it '%s formats as unquoted string with valid UTF-8 chars' do
+      string_formats = { Puppet::Pops::Types::PBinaryType::DEFAULT => '%s'}
+      # womans hat emoji is E318, a three byte UTF-8 char EE 8C 98
+      expect(converter.convert(binary.from_binary_string("\xEE\x8C\x98"), string_formats)).to eq("\uE318")
+    end
+
+    it '%s errors if given non UTF-8 bytes' do
+      string_formats = { Puppet::Pops::Types::PBinaryType::DEFAULT => '%s'}
+      expect {
+        converter.convert(binary.from_base64("apa="), string_formats)
+      }.to raise_error(Encoding::UndefinedConversionError)
+    end
+
+    { "%s"    => 'binary',
+      "%#s"   => '"binary"',
+      "%8s"   => '  binary',
+      "%.2s"  => 'bi',
+      "%-8s"  => 'binary  ',
+      "%p"    => 'Binary("YmluYXJ5")',
+      "%10p"  => 'Binary("  YmluYXJ5")',
+      "%-10p" => 'Binary("YmluYXJ5  ")',
+      "%.2p"  => 'Binary("Ym")',
+      "%b"    => "YmluYXJ5\n",
+      "%11b"  => "  YmluYXJ5\n",
+      "%-11b" => "YmluYXJ5\n  ",
+      "%.2b"  => "Ym",
+      "%B"    => "YmluYXJ5",
+      "%11B"  => "   YmluYXJ5",
+      "%-11B" => "YmluYXJ5   ",
+      "%.2B"  => "Ym",
+      "%u"    => "YmluYXJ5",
+      "%11u"  => "   YmluYXJ5",
+      "%-11u" => "YmluYXJ5   ",
+      "%.2u"  => "Ym",
+      "%t"    => 'Binary',
+      "%#t"   => '"Binary"',
+      "%8t"   => '  Binary',
+      "%-8t"  => 'Binary  ',
+      "%.3t"  => 'Bin',
+      "%T"    => 'BINARY',
+      "%#T"   => '"BINARY"',
+      "%8T"   => '  BINARY',
+      "%-8T"  => 'BINARY  ',
+      "%.3T"  => 'BIN',
+    }.each do |fmt, result |
+      it "the format #{fmt} produces #{result}" do
+        string_formats = { Puppet::Pops::Types::PBinaryType::DEFAULT => fmt}
+        expect(converter.convert(sample, string_formats)).to eq(result)
+      end
     end
   end
 

@@ -153,6 +153,25 @@ describe Puppet::Parser::Compiler do
     end
   end
 
+  context 'when working with $settings name space' do
+    include PuppetSpec::Compiler
+    it 'makes $settings::strict available as string' do
+      node = Puppet::Node.new("testing")
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+          notify { 'test': message => $settings::strict == 'warning' }
+      MANIFEST
+      expect(catalog).to have_resource("Notify[test]").with_parameter(:message, true)
+    end
+
+    it 'can return boolean settings as Boolean' do
+      node = Puppet::Node.new("testing")
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+          notify { 'test': message => $settings::storeconfigs == false }
+      MANIFEST
+      expect(catalog).to have_resource("Notify[test]").with_parameter(:message, true)
+    end
+  end
+
   context 'when working with $server_facts' do
     include PuppetSpec::Compiler
     context 'and have opted in to trusted_server_facts' do
@@ -205,6 +224,15 @@ describe Puppet::Parser::Compiler do
             $server_facts = 'changed'
             notify { 'test': message => $server_facts == 'changed' }
         MANIFEST
+
+        expect(catalog).to have_resource("Notify[test]").with_parameter(:message, true)
+      end
+      it 'should warn about assignment to $server_facts' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+            $server_facts = 'changed'
+            notify { 'test': message => $server_facts == 'changed' }
+        MANIFEST
+        expect(@logs).to have_matching_log(/Assignment to \$server_facts is deprecated/)
 
         expect(catalog).to have_resource("Notify[test]").with_parameter(:message, true)
       end

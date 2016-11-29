@@ -386,7 +386,7 @@ describe 'Puppet Type System' do
       type Bar = Fee
       notice(0 =~ Bar)
       CODE
-      expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Type alias 'Foo' cannot be resolved to a real type/)
+      expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Type alias 'Bar' cannot be resolved to a real type/)
     end
 
     it 'will not allow an alias chain that contains nothing but aliases and variants' do
@@ -396,7 +396,7 @@ describe 'Puppet Type System' do
       type Bar = Variant[Fee,Foo]
       notice(0 =~ Bar)
       CODE
-      expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Type alias 'Foo' cannot be resolved to a real type/)
+      expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Type alias 'Bar' cannot be resolved to a real type/)
     end
 
     it 'will not allow an alias to directly reference itself' do
@@ -440,7 +440,7 @@ describe 'Puppet Type System' do
       type Foo = Variant[Foo,String,Integer]
       assert_type(Foo, /x/)
       CODE
-      expect { eval_and_collect_notices(code) }.to raise_error(/expected a value of type String or Integer, got Regexp/)
+      expect { eval_and_collect_notices(code) }.to raise_error(/expects a value of type String or Integer, got Regexp/)
     end
 
     it 'will handle a scalar correctly in combinations of nested aliased variants' do

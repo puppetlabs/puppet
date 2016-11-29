@@ -32,6 +32,15 @@ module Puppet::FileSystem
 
   # Opens the given path with given mode, and options and optionally yields it to the given block.
   #
+  # @param path [String, Pathname] the path to the file to operate on
+  # @param mode [Integer] The mode to apply to the file if it is created
+  # @param options [String] Extra file operation mode information to use
+  #   This is the standard mechanism Ruby uses in the IO class, and therefore
+  #   encoding may be specified explicitly as fmode : encoding or fmode : "BOM|UTF-*"
+  #   for example, a:ASCII or w+:UTF-8
+  # @yield The file handle, in the mode given by options, else read-write mode
+  # @return [Void]
+  #
   # @api public
   #
   def self.open(path, mode, options, &block)
@@ -98,10 +107,13 @@ module Puppet::FileSystem
   #
   # @param path [Pathname] the path to the file to operate on
   # @param mode [Integer] The mode to apply to the file if it is created
-  # @param options [Integer] Extra file operation mode information to use
-  #   (defaults to read-only mode)
+  # @param options [String] Extra file operation mode information to use
+  #   (defaults to read-only mode 'r')
+  #   This is the standard mechanism Ruby uses in the IO class, and therefore
+  #   encoding may be specified explicitly as fmode : encoding or fmode : "BOM|UTF-*"
+  #   for example, a:ASCII or w+:UTF-8
   # @param timeout [Integer] Number of seconds to wait for the lock (defaults to 300)
-  # @yield The file handle, in read-write mode
+  # @yield The file handle, in the mode given by options, else read-write mode
   # @return [Void]
   # @raise [Timeout::Error] If the timeout is exceeded while waiting to acquire the lock
   #

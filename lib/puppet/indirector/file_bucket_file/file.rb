@@ -115,7 +115,11 @@ module Puppet::FileBucketFile
     # @param files_original_path [String]
     #
     def matches(paths_file, files_original_path)
-      Puppet::FileSystem.open(paths_file, 0640, 'a+') do |f|
+      # Puppet will have already written the paths_file in the systems encoding
+      # given its possible that request.options[:bucket_path] or Puppet[:bucketdir]
+      # contained characters in an encoding that are not represented the
+      # same way when the bytes are decoded as UTF-8, continue using system encoding
+      Puppet::FileSystem.open(paths_file, 0640, 'a+:external') do |f|
         path_match(f, files_original_path)
       end
     end
@@ -138,7 +142,11 @@ module Puppet::FileBucketFile
           Puppet::FileSystem.dir_mkpath(paths_file)
         end
 
-        Puppet::FileSystem.exclusive_open(paths_file, 0640, 'a+') do |f|
+        # Puppet will have already written the paths_file in the systems encoding
+        # given its possible that request.options[:bucket_path] or Puppet[:bucketdir]
+        # contained characters in an encoding that are not represented the
+        # same way when the bytes are decoded as UTF-8, continue using system encoding
+        Puppet::FileSystem.exclusive_open(paths_file, 0640, 'a+:external') do |f|
           if Puppet::FileSystem.exist?(contents_file)
             verify_identical_file!(contents_file, bucket_file)
             Puppet::FileSystem.touch(contents_file)

@@ -6,9 +6,9 @@ module Puppet::Pops
 module Types
 describe 'Timespan type' do
   it 'is normalized in a Variant' do
-    t = TypeFactory.variant(TypeFactory.timespan('10:00', '15:00'), TypeFactory.timespan('14:00', '17:00')).normalize
+    t = TypeFactory.variant(TypeFactory.timespan('10:00:00', '15:00:00'), TypeFactory.timespan('14:00:00', '17:00:00')).normalize
     expect(t).to be_a(PTimespanType)
-    expect(t).to eql(TypeFactory.timespan('10:00', '17:00'))
+    expect(t).to eql(TypeFactory.timespan('10:00:00', '17:00:00'))
   end
 
   context 'when used in Puppet expressions' do
@@ -33,6 +33,13 @@ describe 'Timespan type' do
         expect(eval_and_collect_notices(code)).to eq(%w(true true))
       end
 
+      it 'using just one parameter is the same as using that parameter twice' do
+        code = <<-CODE
+            notice(Timespan['01:00:00'] == Timespan['01:00:00', '01:00:00'])
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(%w(true))
+      end
+
       it 'orders parameterized types based on range inclusion' do
         code = <<-CODE
             notice(Timespan['01:00:00', '13:00:00'] < Timespan['00:00:00', '14:00:00'])
@@ -49,7 +56,7 @@ describe 'Timespan type' do
             notice($o)
             notice(type($o))
         CODE
-        expect(eval_and_collect_notices(code)).to eq(['3-11:00:00', 'Timespan[{days => 3, hours => 11}, {days => 3, hours => 11}]'])
+        expect(eval_and_collect_notices(code)).to eq(%w(3-11:00:00.0 Timespan['3-11:00:00.0']))
       end
 
       it 'can be created from a string and format' do
@@ -57,7 +64,15 @@ describe 'Timespan type' do
             $o = Timespan('1d11h23m', '%Dd%Hh%Mm')
             notice($o)
         CODE
-        expect(eval_and_collect_notices(code)).to eq(%w(1-11:23:00))
+        expect(eval_and_collect_notices(code)).to eq(%w(1-11:23:00.0))
+      end
+
+      it 'can be created from a hash with string and format' do
+        code = <<-CODE
+            $o = Timespan({string => '1d11h23m', format => '%Dd%Hh%Mm'})
+            notice($o)
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(%w(1-11:23:00.0))
       end
 
       it 'can be created from a string and array of formats' do
@@ -75,7 +90,7 @@ describe 'Timespan type' do
             notice(Timespan('13s', $fmts))
         CODE
         expect(eval_and_collect_notices(code)).to eq(
-          %w(1-11:23:13 0-11:23:13 1-11:23:00 1-11:00:00 0-11:23:00 0-00:23:13 1-00:00:00 0-11:00:00 0-00:23:00 0-00:00:13))
+          %w(1-11:23:13.0 0-11:23:13.0 1-11:23:00.0 1-11:00:00.0 0-11:23:00.0 0-00:23:13.0 1-00:00:00.0 0-11:00:00.0 0-00:23:00.0 0-00:00:13.0))
       end
 
       it 'can be created from a integer that represents seconds since epoch' do
@@ -101,7 +116,7 @@ describe 'Timespan type' do
             $o = Timespan('3-11:12:13')
             notice(assert_type(Timespan['3-00:00:00', '4-00:00:00'], $o))
         CODE
-        expect(eval_and_collect_notices(code)).to eq(['3-11:12:13'])
+        expect(eval_and_collect_notices(code)).to eq(['3-11:12:13.0'])
       end
 
       it 'does not match an inappropriate parameterized type' do
@@ -167,7 +182,7 @@ describe 'Timespan type' do
         expect(eval_and_collect_notices(code)).to eq(%w(false false true true false false true true))
       end
 
-      it 'is not equal to integer that represents seconds' do
+      it 'is equal to integer that represents seconds' do
         code = <<-CODE
             $o1 = Timespan('02', '%S')
             $o2 = 2
@@ -175,10 +190,10 @@ describe 'Timespan type' do
             notice($o1 != $o2)
             notice(Integer($o1) == $o2)
         CODE
-        expect(eval_and_collect_notices(code)).to eq(%w(false true true))
+        expect(eval_and_collect_notices(code)).to eq(%w(true false true))
       end
 
-      it 'integer that represents seconds is not equal to it' do
+      it 'integer that represents seconds is equal to it' do
         code = <<-CODE
             $o1 = 2
             $o2 = Timespan('02', '%S')
@@ -186,7 +201,7 @@ describe 'Timespan type' do
             notice($o1 != $o2)
             notice($o1 == Integer($o2))
         CODE
-        expect(eval_and_collect_notices(code)).to eq(%w(false true true))
+        expect(eval_and_collect_notices(code)).to eq(%w(true false true))
       end
 
       it 'can be compared to float that represents seconds with fraction' do
@@ -223,7 +238,7 @@ describe 'Timespan type' do
         expect(eval_and_collect_notices(code)).to eq(%w(false false true true false false true true))
       end
 
-      it 'is not equal to float that represents seconds with fraction' do
+      it 'is equal to float that represents seconds with fraction' do
         code = <<-CODE
             $o1 = Timespan('02.123456789', '%S.%N')
             $o2 = 2.123456789
@@ -231,10 +246,10 @@ describe 'Timespan type' do
             notice($o1 != $o2)
             notice(Float($o1) == $o2)
         CODE
-        expect(eval_and_collect_notices(code)).to eq(%w(false true true))
+        expect(eval_and_collect_notices(code)).to eq(%w(true false true))
       end
 
-      it 'float that represents seconds with fraction is not equal to it' do
+      it 'float that represents seconds with fraction is equal to it' do
         code = <<-CODE
             $o1 = 2.123456789
             $o2 = Timespan('02.123456789', '%S.%N')
@@ -242,7 +257,14 @@ describe 'Timespan type' do
             notice($o1 != $o2)
             notice($o1 == Float($o2))
         CODE
-        expect(eval_and_collect_notices(code)).to eq(%w(false true true))
+        expect(eval_and_collect_notices(code)).to eq(%w(true false true))
+      end
+
+      it 'it cannot be compared to a Timestamp' do
+        code = <<-CODE
+            notice(Timespan(3) < Timestamp())
+        CODE
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Timespans are only comparable to Timespans, Integers, and Floats/)
       end
     end
   end

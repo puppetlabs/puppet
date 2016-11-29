@@ -1,28 +1,37 @@
 require 'puppet/pops/lookup/interpolation'
 
+# TODO: API 5.0, remove this module
+# @api private
+# @deprecated
 module Puppet::Plugins::DataProviders
+  # @deprecated
   module DataProvider
+    include Puppet::Pops::Lookup::DataProvider
     include Puppet::Pops::Lookup::Interpolation
 
-    # Performs a lookup with an endless recursion check.
-    #
-    # @param key [String] The key to lookup
-    # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
-    # @param merge [String|Hash<String,Object>|nil] Merge strategy or hash with strategy and options
-    #
-    # @api public
-    def lookup(name, lookup_invocation, merge)
-      lookup_invocation.check(name) { unchecked_lookup(name, lookup_invocation, merge) }
+    def key_lookup(key, lookup_invocation, merge)
+      lookup(key.to_s, lookup_invocation, merge)
+    end
+
+    def unchecked_key_lookup(key, lookup_invocation, merge)
+      unchecked_lookup(key.to_s, lookup_invocation, merge)
+    end
+
+    # @deprecated
+    def lookup(key, lookup_invocation, merge)
+      lookup_invocation.check(key) { unchecked_lookup(key, lookup_invocation, merge) }
     end
 
     # Performs a lookup with the assumption that a recursive check has been made.
     #
     # @param key [String] The key to lookup
     # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
-    # @param merge [String|Hash<String,Object>|nil] Merge strategy or hash with strategy and options
-    #
-    # @api public
+    # @param merge [String|Hash{String => Object}] Merge strategy or hash with strategy and options
     def unchecked_lookup(key, lookup_invocation, merge)
+      unless Puppet[:strict] == :off
+        Puppet.warn_once(:deprecation, 'DataProvider#unchecked_lookup',
+          'DataProvider#unchecked_lookup is deprecated and will be removed in the next major version of Puppet')
+      end
       segments = split_key(key)
       root_key = segments.shift
       lookup_invocation.with(:data_provider, self) do
@@ -44,8 +53,7 @@ module Puppet::Plugins::DataProviders
     # @param value [Object] The value to perform post processing on
     # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
     # @return [Object] The result of post processing the value.
-    #
-    # @api public
+    # @deprecated
     def post_process(value, lookup_invocation)
       interpolate(value, lookup_invocation, true)
     end
@@ -61,12 +69,15 @@ module Puppet::Plugins::DataProviders
     # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
     # @param merge [String|Hash<String,Object>|nil] Merge strategy or hash with strategy and options
     # @return [Hash] The data hash for the given _key_
-    #
-    # @api public
+    # @deprecated
     def data(data_key, lookup_invocation)
+      unless Puppet[:strict] == :off
+        Puppet.warn_once(:deprecation, 'DataProvider#data',
+          'DataProvider#data is deprecated and will be removed in the next major version of Puppet')
+      end
       compiler = lookup_invocation.scope.compiler
       adapter = Puppet::DataProviders::DataAdapter.get(compiler) || Puppet::DataProviders::DataAdapter.adapt(compiler)
-      adapter.data[data_key] ||= validate_data(initialize_data(data_key, lookup_invocation), data_key)
+      adapter.data[data_key] ||= validate_data(initialize_data(data_key, lookup_invocation))
     end
     protected :data
 
@@ -74,9 +85,12 @@ module Puppet::Plugins::DataProviders
     #
     # @param key [String] The key to lookup
     # @return [String,nil] The data key or nil if not applicable
-    #
-    # @api public
+    # @deprecated
     def data_key(key, lookup_invocation)
+      unless Puppet[:strict] == :off
+        Puppet.warn_once(:deprecation, 'DataProvider#data_key',
+          'DataProvider#data_key is deprecated and will be removed in the next major version of Puppet')
+      end
       nil
     end
 
@@ -85,9 +99,12 @@ module Puppet::Plugins::DataProviders
     # @param data_key [String] The data key such as the name of a module or the constant 'environment'
     # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
     # @return [Hash] The hash of values
-    #
-    # @api public
+    # @deprecated
     def initialize_data(data_key, lookup_invocation)
+      unless Puppet[:strict] == :off
+        Puppet.warn_once(:deprecation, 'DataProvider#initialize_data',
+          'DataProvider#initialize_data is deprecated and will be removed in the next major version of Puppet')
+      end
       {}
     end
     protected :initialize_data
@@ -97,22 +114,38 @@ module Puppet::Plugins::DataProviders
       cname[cname.rindex(':')+1..-1]
     end
 
+    # @deprecated
     def validate_data(data, data_key)
       data
     end
   end
 
+  # TODO: API 5.0 Remove this class
+  # @deprecated
+  # @api private
   class ModuleDataProvider
-    LOOKUP_OPTIONS = Puppet::Pops::Lookup::LOOKUP_OPTIONS
+    LOOKUP_OPTIONS = 'lookup_options'.freeze
     include DataProvider
+
+    attr_reader :module_name
+
+    def initialize(module_name = nil)
+      unless Puppet[:strict] == :off
+        Puppet.warn_once(:deprecation, 'Plugins::DataProviders::ModuleDataProvider',
+          'Plugins::DataProviders::ModuleDataProvider is deprecated and will be removed in the next major version of Puppet')
+      end
+      @module_name = module_name || Puppet::Pops::Lookup::Invocation.current.module_name
+    end
 
     # Retrieve the first segment of the qualified name _key_. This method will throw
     # :no_such_key unless the segment can be extracted.
     #
     # @param key [String] The key
     # @return [String] The first segment of the given key
+    # @api private
+    # @deprecated
     def data_key(key, lookup_invocation)
-      return lookup_invocation.module_name if key == LOOKUP_OPTIONS
+      return module_name if key == LOOKUP_OPTIONS
       qual_index = key.index('::')
       throw :no_such_key if qual_index.nil?
       key[0..qual_index-1]
@@ -142,9 +175,21 @@ module Puppet::Plugins::DataProviders
     end
   end
 
+  # TODO: API 5.0 Remove this class
+  # @deprecated
+  # @api private
   class EnvironmentDataProvider
     include DataProvider
 
+    def initialize
+      unless Puppet[:strict] == :off
+        Puppet.warn_once(:deprecation, 'Plugins::DataProviders::EnvironmentDataProvider',
+          'Plugins::DataProviders::EnvironmentDataProvider is deprecated and will be removed in the next major version of Puppet')
+      end
+    end
+
+    # @api private
+    # @deprecated
     def data_key(key, lookup_invocation)
       'environment'
     end
@@ -153,13 +198,14 @@ module Puppet::Plugins::DataProviders
   # Class that keeps track of the original path (as it appears in the declaration, before interpolation),
   # the fully resolved path, and whether or the resolved path exists.
   #
-  # @api public
+  # @api private
+  # @deprecated
   class ResolvedPath
     attr_reader :original_path, :path
 
     # @param original_path [String] path as found in declaration. May contain interpolation expressions
     # @param path [Pathname] the expanded absolute path
-    # @api public
+    # @deprecated
     def initialize(original_path, path)
       @original_path = original_path
       @path = path
@@ -167,11 +213,12 @@ module Puppet::Plugins::DataProviders
     end
 
     # @return [Boolean] cached info if the path exists or not
-    # @api public
+    # @deprecated
     def exists?
       @exists = @path.exist? if @exists.nil?
       @exists
     end
+    alias exist? exists?
   end
 
   # A data provider that is initialized with a set of _paths_. When performing lookup, each
@@ -179,7 +226,8 @@ module Puppet::Plugins::DataProviders
   # will be merged according to a given (optional) merge strategy.
   #
   # @abstract
-  # @api public
+  # @api private
+  # @deprecated
   class PathBasedDataProvider
     include DataProvider
 
@@ -188,9 +236,12 @@ module Puppet::Plugins::DataProviders
     # @param name [String] The name of the data provider
     # @param paths [Array<ResolvedPath>] Paths used by this provider
     # @param parent_data_provider [DataProvider] The data provider that is the container of this data provider
-    #
-    # @api public
+    # @deprecated
     def initialize(name, paths, parent_data_provider = nil)
+      unless Puppet[:strict] == :off
+        Puppet.warn_once(:deprecation, 'PathBasedDataProvider',
+          'PathBasedDataProvider is deprecated and will be removed in the next major version of Puppet')
+      end
       @name = name
       @paths = paths
       @parent_data_provider = parent_data_provider
@@ -208,8 +259,7 @@ module Puppet::Plugins::DataProviders
     # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
     # @param merge [String|Hash<String,Object>|nil] Merge strategy or hash with strategy and options
     # @return [Hash] The data hash for the given _key_
-    #
-    # @api public
+    # @deprecated
     def load_data(path, data_key, lookup_invocation)
       compiler = lookup_invocation.scope.compiler
       adapter = Puppet::DataProviders::DataAdapter.get(compiler) || Puppet::DataProviders::DataAdapter.adapt(compiler)
@@ -217,6 +267,7 @@ module Puppet::Plugins::DataProviders
     end
     protected :data
 
+    # @deprecated
     def validate_data(data, module_name)
       @parent_data_provider.nil? ? data : @parent_data_provider.validate_data(data, module_name)
     end
@@ -227,8 +278,7 @@ module Puppet::Plugins::DataProviders
     # @param key [String] The key to lookup
     # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
     # @param merge [Puppet::Pops::MergeStrategy,String,Hash<String,Object>,nil] Merge strategy or hash with strategy and options
-    #
-    # @api public
+    # @deprecated
     def unchecked_lookup(key, lookup_invocation, merge)
       segments = split_key(key)
       root_key = segments.shift
@@ -238,7 +288,7 @@ module Puppet::Plugins::DataProviders
         merge_strategy = Puppet::Pops::MergeStrategy.strategy(merge)
         lookup_invocation.with(:merge, merge_strategy) do
           merged_result = merge_strategy.merge_lookup(@paths) do |path|
-            lookup_invocation.with(:path, path) do
+            lookup_invocation.with(:location, path) do
               if path.exists?
                 hash = load_data(path.path, module_name, lookup_invocation)
                 value = hash[root_key]
@@ -250,7 +300,7 @@ module Puppet::Plugins::DataProviders
                   throw :no_such_key
                 end
               else
-                lookup_invocation.report_path_not_found
+                lookup_invocation.report_location_not_found
                 throw :no_such_key
               end
             end
@@ -261,19 +311,28 @@ module Puppet::Plugins::DataProviders
     end
   end
 
+  # TODO: API 5.0 Remove this class
   # Factory for creating path based data providers
   #
   # @abstract
-  # @api public
+  # @api private
+  # @deprecated
   class PathBasedDataProviderFactory
+    # @deprecated
+    def initialize
+      unless Puppet[:strict] == :off
+        Puppet.warn_once(:deprecation, 'PathBasedDataProviderFactory',
+        'PathBasedDataProviderFactory is deprecated and will be removed in the next major version of Puppet')
+      end
+    end
+
     # Create a path based data provider with the given _name_ and _paths_
     #
     # @param name [String] the name of the created provider (for logging and debugging)
     # @param paths [Array<String>] array of resolved paths
     # @param parent_data_provider [DataProvider] The data provider that is the container of this data provider
     # @return [DataProvider] The created data provider
-    #
-    # @api public
+    # @deprecated
     def create(name, paths, parent_data_provider)
       raise NotImplementedError, "Subclass of PathBasedDataProviderFactory must implement 'create' method"
     end
@@ -289,8 +348,7 @@ module Puppet::Plugins::DataProviders
     # @param paths [Array<String>] paths that have been preprocessed (interpolations resolved)
     # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
     # @return [Array<ResolvedPath>] Array of resolved paths
-    #
-    # @api public
+    # @deprecated
     def resolve_paths(datadir, declared_paths, paths, lookup_invocation)
       []
     end
@@ -298,36 +356,48 @@ module Puppet::Plugins::DataProviders
     # Returns the data provider factory version.
     #
     # return [Integer] the version of this data provider factory
-    # @api public
     def version
       2
     end
   end
 
+  # TODO: API 5.0 Remove this class
   # Factory for creating file based data providers. This is an extension of the path based
   # factory where it is required that each resolved path appoints an existing file in the local
   # file system.
   #
   # @abstract
-  # @api public
+  # @api private
+  # @deprecated
   class FileBasedDataProviderFactory < PathBasedDataProviderFactory
+    # @deprecated
+    def initialize
+      unless Puppet[:strict] == :off
+        Puppet.warn_once(:deprecation, 'FileBasedDataProviderFactory',
+          'FileBasedDataProviderFactory is deprecated and will be removed in the next major version of Puppet')
+      end
+    end
+
     # @param datadir [Pathname] The base when creating absolute paths
     # @param declared_paths [Array<String>] paths as found in declaration. May contain interpolation expressions
     # @param paths [Array<String>] paths that have been preprocessed (interpolations resolved)
     # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
-    # @return [Array<ResolvedPath>] Array of resolved paths
+    # @return [Array<Puppet::DataProviders::ResolvedLocation>] Array of resolved paths
+    # @deprecated
     def resolve_paths(datadir, declared_paths, paths, lookup_invocation)
       resolved_paths = []
       unless paths.nil? || datadir.nil?
         ext = path_extension
         paths.each_with_index do |path, idx|
           path = path + ext unless path.end_with?(ext)
-          resolved_paths << ResolvedPath.new(declared_paths[idx], datadir + path)
+          path = datadir + path
+          resolved_paths << Puppet::Pops::Lookup::ResolvedLocation.new(declared_paths[idx], path, path.exist?)
         end
       end
       resolved_paths
     end
 
+    # @deprecated
     def path_extension
       raise NotImplementedError, "Subclass of FileBasedProviderFactory must implement 'path_extension' method"
     end

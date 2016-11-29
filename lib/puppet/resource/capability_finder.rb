@@ -26,7 +26,12 @@ module Puppet::Resource::CapabilityFinder
       raise Puppet::DevError, 'PuppetDB is not available'
     end
 
-    resources = search(environment, nil, cap)
+    resources = search(nil, nil, cap)
+
+    if resources.size > 1
+      Puppet.debug "Found multiple resources when looking up capability #{cap}, filtering by environment #{environment}"
+      resources = resources.select { |r| r['tags'].any? { |t| t == "producer:#{environment}" } }
+    end
 
     if resources.size > 1 && code_id
       Puppet.debug "Found multiple resources when looking up capability #{cap}, filtering by code id #{code_id}"
@@ -41,6 +46,7 @@ module Puppet::Resource::CapabilityFinder
     end
 
     if resource_hash = resources.first
+      resource_hash['type'] = cap.resource_type
       instantiate_resource(resource_hash)
     else
       Puppet.debug "Could not find capability resource #{cap} in PuppetDB"
@@ -53,8 +59,13 @@ module Puppet::Resource::CapabilityFinder
       'and',
       ['=', 'type', cap.type.capitalize],
       ['=', 'title', cap.title.to_s],
-      ['=', 'tag', "producer:#{environment}"]
     ]
+
+    if environment.nil?
+      query_terms << ['~', 'tag', "^producer:"]
+    else
+      query_terms << ['=', 'tag', "producer:#{environment}"]
+    end
 
     unless code_id.nil?
       query_terms << ['in', 'certname',
@@ -101,13 +112,8 @@ module Puppet::Resource::CapabilityFinder
   private
 
   def self.instantiate_resource(resource_hash)
-    resource = Puppet::Resource.new(resource_hash['type'],
-                                    resource_hash['title'])
-    real_type = Puppet::Type.type(resource.type)
-    if real_type.nil?
-      fail Puppet::ParseError,
-        "Could not find resource type #{resource.type} returned from PuppetDB"
-    end
+    real_type = resource_hash['type']
+    resource = Puppet::Resource.new(real_type, resource_hash['title'])
     real_type.parameters.each do |param|
       param = param.to_s
       next if param == 'name'

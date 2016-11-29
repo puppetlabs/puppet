@@ -865,7 +865,10 @@ class Factory
     'err'     => true,
 
     'fail'    => true,
-    'import'  => true  # discontinued, but transform it to make it call error reporting function
+    'import'  => true,  # discontinued, but transform it to make it call error reporting function
+    'break'   => true,
+    'next'    => true,
+    'return'  => true
   }
   # Returns true if the given name is a "statement keyword" (require, include, contain,
   # error, notice, info, debug
@@ -1146,4 +1149,3 @@ class Factory
 end
 end
 end
-

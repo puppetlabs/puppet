@@ -176,9 +176,6 @@ module Adaptable
       adapter
     end
 
-    DOUBLE_COLON = '::'
-    USCORE = '_'
-
     # Returns a suitable instance variable name given a class name.
     # The returned string is the fully qualified name of a class with '::' replaced by '_' since
     # '::' is not allowed in an instance variable name.

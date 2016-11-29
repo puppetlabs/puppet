@@ -1,10 +1,10 @@
 module Puppet::Pops
 module Types
-  class PAbstractTimeDataType < PNumericType
-    # @param [AbstractTime] min lower bound for this type. Nil or :default means unbounded
-    # @param [AbstractTime] max upper bound for this type. Nil or :default means unbounded
-    def initialize(min = nil, max = nil)
-      super(convert_arg(min, true), convert_arg(max, false))
+  class PAbstractTimeDataType < PAbstractRangeType
+    # @param from [AbstractTime] lower bound for this type. Nil or :default means unbounded
+    # @param to [AbstractTime] upper bound for this type. Nil or :default means unbounded
+    def initialize(from = nil, to = nil)
+      super(convert_arg(from, true), convert_arg(to, false))
     end
 
     def convert_arg(arg, min)
@@ -50,7 +50,10 @@ module Types
 
   class PTimespanType < PAbstractTimeDataType
     def self.register_ptype(loader, ir)
-      create_ptype(loader, ir, 'NumericType')
+      create_ptype(loader, ir, 'ScalarType',
+        'from' => { KEY_TYPE => PTimespanType::DEFAULT, KEY_VALUE => :default },
+        'to' => { KEY_TYPE => PTimespanType::DEFAULT, KEY_VALUE => :default }
+      )
     end
 
     def self.new_function(_, loader)
@@ -73,9 +76,9 @@ module Types
           param          'Integer', :hours
           param          'Integer', :minutes
           param          'Integer', :seconds
-          optional_param 'Integer', :milli_seconds
-          optional_param 'Integer', :micro_seconds
-          optional_param 'Integer', :nano_seconds
+          optional_param 'Integer', :milliseconds
+          optional_param 'Integer', :microseconds
+          optional_param 'Integer', :nanoseconds
         end
 
         dispatch :from_string_hash do
@@ -95,9 +98,9 @@ module Types
               Optional[hours] => Integer,
               Optional[minutes] => Integer,
               Optional[seconds] => Integer,
-              Optional[milli_seconds] => Integer,
-              Optional[micro_seconds] => Integer,
-              Optional[nano_seconds] => Integer
+              Optional[milliseconds] => Integer,
+              Optional[microseconds] => Integer,
+              Optional[nanoseconds] => Integer
             }]
           TYPE
         end
@@ -110,8 +113,8 @@ module Types
           Time::Timespan.parse(string, format)
         end
 
-        def from_fields(days, hours, minutes, seconds, milli_seconds = 0, micro_seconds = 0, nano_seconds = 0)
-          Time::Timespan.from_fields(days, hours, minutes, seconds, milli_seconds, micro_seconds, nano_seconds)
+        def from_fields(days, hours, minutes, seconds, milliseconds = 0, microseconds = 0, nanoseconds = 0)
+          Time::Timespan.from_fields(days, hours, minutes, seconds, milliseconds, microseconds, nanoseconds)
         end
 
         def from_string_hash(args_hash)

@@ -41,7 +41,7 @@ An indirector has five methods, which are mapped into HTTP verbs for the REST in
 * `find(key)` - get a single value (mapped to GET or POST with a singular endpoint)
 * `search(key)` - get a list of matching values (mapped to GET with a plural endpoint)
 * `head(key)` - return true if the key exists (mapped to HEAD)
-* `destroy(key)` - remove the key van value (mapped to DELETE)
+* `destroy(key)` - remove the key and value (mapped to DELETE)
 * `save(instance)` - write the instance to the store, using the instance's name as the key (mapped to PUT)
 
 These methods are available via the `indirection` class method on the indirected classes.  For example:

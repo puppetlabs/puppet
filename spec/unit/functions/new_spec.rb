@@ -28,7 +28,7 @@ describe 'the new function' do
       $x = Integer.new(undef)
       notify { "one${x}word": }
     MANIFEST
-    )}.to raise_error(Puppet::Error, /expected an Integer value, got Undef/)
+    )}.to raise_error(Puppet::Error, /expects an Integer value, got Undef/)
   end
 
   it 'errors if converted value is not assignable to the type' do
@@ -36,7 +36,7 @@ describe 'the new function' do
       $x = Integer[1,5].new('42')
       notify { "one${x}word": }
     MANIFEST
-    )}.to raise_error(Puppet::Error, /expected an Integer\[1, 5\] value, got Integer\[42, 42\]/)
+    )}.to raise_error(Puppet::Error, /expects an Integer\[1, 5\] value, got Integer\[42, 42\]/)
   end
 
   context 'when invoked on NotUndef' do
@@ -88,6 +88,34 @@ describe 'the new function' do
         notify { "${type($x, generalized)}, $x": }
       MANIFEST
       )).to have_resource('Notify[Integer, 1]')
+    end
+
+    it "produces an absolute value when third argument is 'true'" do
+      expect(eval_and_collect_notices(<<-MANIFEST
+        notice(Integer.new(-42, 10, true))
+      MANIFEST
+      )).to eql(['42'])
+    end
+
+    it "does not produce an absolute value when third argument is 'false'" do
+      expect(eval_and_collect_notices(<<-MANIFEST
+        notice(Integer.new(-42, 10, false))
+      MANIFEST
+      )).to eql(['-42'])
+    end
+
+    it "produces an absolute value from hash {from => val, abs => true}" do
+      expect(eval_and_collect_notices(<<-MANIFEST
+        notice(Integer.new({from => -42, abs => true}))
+      MANIFEST
+      )).to eql(['42'])
+    end
+
+    it "does not produce an absolute value from hash {from => val, abs => false}" do
+      expect(eval_and_collect_notices(<<-MANIFEST
+        notice(Integer.new({from => -42, abs => false}))
+      MANIFEST
+      )).to eql(['-42'])
     end
 
     context 'when prefixed by a sign' do
@@ -362,6 +390,34 @@ describe 'the new function' do
       MANIFEST
       )).to have_resource('Notify[Integer, 42]')
     end
+
+    it "produces an absolute value when second argument is 'true'" do
+      expect(eval_and_collect_notices(<<-MANIFEST
+        notice(Numeric.new(-42.3, true))
+      MANIFEST
+      )).to eql(['42.3'])
+    end
+
+    it "does not produce an absolute value when second argument is 'false'" do
+      expect(eval_and_collect_notices(<<-MANIFEST
+        notice(Numeric.new(-42.3, false))
+      MANIFEST
+      )).to eql(['-42.3'])
+    end
+
+    it "produces an absolute value from hash {from => val, abs => true}" do
+      expect(eval_and_collect_notices(<<-MANIFEST
+        notice(Numeric.new({from => -42.3, abs => true}))
+      MANIFEST
+      )).to eql(['42.3'])
+    end
+
+    it "does not produce an absolute value from hash {from => val, abs => false}" do
+      expect(eval_and_collect_notices(<<-MANIFEST
+        notice(Numeric.new({from => -42.3, abs => false}))
+      MANIFEST
+      )).to eql(['-42.3'])
+    end
   end
 
   context 'when invoked on Float' do
@@ -396,6 +452,34 @@ describe 'the new function' do
         notify { "${type($x, generalized)}, $x": }
       MANIFEST
       )).to have_resource('Notify[Float, 42.0]')
+    end
+
+    it "produces an absolute value when second argument is 'true'" do
+      expect(eval_and_collect_notices(<<-MANIFEST
+        notice(Float.new(-42.3, true))
+      MANIFEST
+      )).to eql(['42.3'])
+    end
+
+    it "does not produce an absolute value when second argument is 'false'" do
+      expect(eval_and_collect_notices(<<-MANIFEST
+        notice(Float.new(-42.3, false))
+      MANIFEST
+      )).to eql(['-42.3'])
+    end
+
+    it "produces an absolute value from hash {from => val, abs => true}" do
+      expect(eval_and_collect_notices(<<-MANIFEST
+        notice(Float.new({from => -42.3, abs => true}))
+      MANIFEST
+      )).to eql(['42.3'])
+    end
+
+    it "does not produce an absolute value from hash {from => val, abs => false}" do
+      expect(eval_and_collect_notices(<<-MANIFEST
+        notice(Float.new({from => -42.3, abs => false}))
+      MANIFEST
+      )).to eql(['-42.3'])
     end
   end
 
@@ -441,7 +525,7 @@ describe 'the new function' do
       expect{compile_to_catalog(<<-"MANIFEST"
         $x = Boolean.new(undef)
       MANIFEST
-      )}.to raise_error(Puppet::Error, /expected a Boolean value, got Undef/)
+      )}.to raise_error(Puppet::Error, /expects a Boolean value, got Undef/)
     end
   end
 
@@ -449,7 +533,7 @@ describe 'the new function' do
     { []            => 'Notify[Array[Unit], []]',
       [true]        => 'Notify[Array[Boolean], [true]]',
       {'a'=>true, 'b' => false}   => 'Notify[Array[Array[Scalar]], [[a, true], [b, false]]]',
-      'abc'         => 'Notify[Array[String], [a, b, c]]',
+      'abc'         => 'Notify[Array[String[1, 1]], [a, b, c]]',
       3             => 'Notify[Array[Integer], [0, 1, 2]]',
     }.each do |input, result|
       it "produces #{result} when given the value #{input.inspect} and wrap is not given" do
@@ -488,10 +572,26 @@ describe 'the new function' do
         )).to have_resource(result)
       end
     end
+
+    it 'produces an array of byte integer values when given a Binary' do
+      expect(compile_to_catalog(<<-MANIFEST
+        $x = Array.new(Binary('ABC', '%s'))
+        notify { "${type($x, generalized)}, $x": }
+      MANIFEST
+      )).to have_resource('Notify[Array[Integer], [65, 66, 67]]')
+    end
+
+    it 'wraps a binary when given extra argument true' do
+      expect(compile_to_catalog(<<-MANIFEST
+        $x = Array[Any].new(Binary('ABC', '%s'), true)
+        notify { "${type($x, generalized)}, $x": }
+      MANIFEST
+      )).to have_resource('Notify[Array[Binary], [QUJD]]')
+    end
   end
 
   context 'when invoked on Tuple' do
-    { 'abc'         => 'Notify[Array[String], [a, b, c]]',
+    { 'abc'         => 'Notify[Array[String[1, 1]], [a, b, c]]',
       3             => 'Notify[Array[Integer], [0, 1, 2]]',
     }.each do |input, result|
       it "produces #{result} when given the value #{input.inspect} and wrap is not given" do
@@ -507,7 +607,7 @@ describe 'the new function' do
       expect{compile_to_catalog(<<-"MANIFEST"
         $x = Tuple[Integer,6].new(3)
       MANIFEST
-      )}.to raise_error(Puppet::Error, /expected size to be at least 6, got 3/)
+      )}.to raise_error(Puppet::Error, /expects size to be at least 6, got 3/)
     end
   end
 
@@ -517,7 +617,7 @@ describe 'the new function' do
       {'a'=>true}   => 'Notify[Hash[String, Boolean], {a => true}]',
       [1,2,3,4]     => 'Notify[Hash[Integer, Integer], {1 => 2, 3 => 4}]',
       [[1,2],[3,4]] => 'Notify[Hash[Integer, Integer], {1 => 2, 3 => 4}]',
-      'abcd'        => 'Notify[Hash[String, String], {a => b, c => d}]',
+      'abcd'        => 'Notify[Hash[String[1, 1], String[1, 1]], {a => b, c => d}]',
       4             => 'Notify[Hash[Integer, Integer], {0 => 1, 2 => 3}]',
 
     }.each do |input, result|
@@ -558,7 +658,7 @@ describe 'the new function' do
       expect{compile_to_catalog(<<-"MANIFEST"
         $x = Struct[{a => Integer[2]}].new({a => 0})
       MANIFEST
-      )}.to raise_error(Puppet::Error, /entry 'a' expected an Integer\[2, default\]/)
+      )}.to raise_error(Puppet::Error, /entry 'a' expects an Integer\[2, default\]/)
     end
   end
 

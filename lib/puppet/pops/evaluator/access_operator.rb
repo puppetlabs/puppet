@@ -30,6 +30,10 @@ class AccessOperator
     fail(Issues::OPERATOR_NOT_APPLICABLE, @semantic.left_expr, :operator=>'[]', :left_value => o)
   end
 
+  def access_Binary(o, scope, keys)
+    Puppet::Pops::Types::PBinaryType::Binary.from_binary_string(access_String(o.binary_buffer, scope, keys))
+  end
+
   def access_String(o, scope, keys)
     keys.flatten!
     result = case keys.size
@@ -280,7 +284,7 @@ class AccessOperator
       type = keys[0]
       unless type.is_a?(Types::PAnyType)
         if type.is_a?(String)
-          type = Types::TypeFactory.string(nil, type)
+          type = Types::TypeFactory.string(type)
         else
           fail(Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Optional-Type', :actual => type.class})
         end
@@ -331,7 +335,7 @@ class AccessOperator
       type = keys[0]
       case type
       when String
-        type = Types::TypeFactory.string(nil, type)
+        type = Types::TypeFactory.string(type)
       when Types::PAnyType
         type = nil if type.class == Types::PAnyType
       else
@@ -456,7 +460,7 @@ class AccessOperator
       fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic,
         {:base_type => 'Collection-Type', :min => 1, :max => 2, :actual => keys.size})
     end
-    Types::PCollectionType.new(nil, size_t)
+    Types::PCollectionType.new(size_t)
   end
 
   # An Array can create a new Array type. It is not possible to create a collection of Array types.

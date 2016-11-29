@@ -4,6 +4,7 @@ module Puppet::Pops
 module Pcore
   TYPE_URI_RX = Types::TypeFactory.regexp(URI.regexp)
   TYPE_URI = Types::TypeFactory.pattern(TYPE_URI_RX)
+  TYPE_URI_ALIAS = Types::PTypeAliasType.new('Pcore::URI', nil, TYPE_URI)
   TYPE_SIMPLE_TYPE_NAME = Types::TypeFactory.pattern(/\A[A-Z]\w*\z/)
   TYPE_QUALIFIED_REFERENCE = Types::TypeFactory.pattern(/\A[A-Z][\w]*(?:::[A-Z][\w]*)*\z/)
 
@@ -18,7 +19,7 @@ module Pcore
 
   def self.init(loader, ir)
     add_alias('Pcore::URI_RX', TYPE_URI_RX, loader)
-    add_alias('Pcore::URI', TYPE_URI, loader)
+    add_type(TYPE_URI_ALIAS, loader)
     add_alias('Pcore::SimpleTypeName', TYPE_SIMPLE_TYPE_NAME, loader)
     add_alias('Pcore::TypeName', TYPE_QUALIFIED_REFERENCE, loader)
     add_alias('Pcore::QRef', TYPE_QUALIFIED_REFERENCE, loader)
@@ -34,6 +35,7 @@ module Pcore
     add_type(Types::PTypeSetType.new(ast_ts_i12n), loader)
 
     Resource.register_ptypes(loader, ir)
+    Lookup::Context.register_ptype(loader, ir);
   end
 
   # Create and register a new `Object` type in the Puppet Type System and map it to an implementation class
@@ -81,6 +83,8 @@ module Pcore
     aliases.each do |name, type_string|
       add_type(Types::PTypeAliasType.new(name, Types::TypeFactory.type_reference(type_string), nil), loader, name_authority)
     end
+    parser = Types::TypeParser.singleton
+    aliases.each_key.map { |name| loader.load(:type, name.downcase).resolve(parser, loader) }
   end
 end
 end

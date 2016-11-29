@@ -1,5 +1,4 @@
 test_name "Zone: ticket #4840 - verify that the given manifest works."
-skip_test "This test is blocked by PUP-6245"
 confine :to, :platform => 'solaris'
 
 require 'puppet/acceptance/solaris_util'
@@ -16,14 +15,14 @@ agents.each do |agent|
   #-----------------------------------
   # Make sure that the zone is absent.
   apply_manifest_on(agent,%[
-    zfs { "tstpool/tstfs":
+    zfs { "rpool/tstfs":
       mountpoint => "/ztstpool/mnt",
       ensure => present,
     }
     file { "/ztstpool/mnt":
       ensure => directory,
       mode => "0700",
-      require => Zfs["tstpool/tstfs"],
+      require => Zfs["rpool/tstfs"],
     }
     zone { tstzone:
       autoboot => true,

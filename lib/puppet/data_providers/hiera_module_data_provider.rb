@@ -2,6 +2,9 @@
 require_relative 'hiera_support'
 
 module Puppet::DataProviders
+  # TODO: API 5.0, remove this class
+  # @api private
+  # @deprecated
   class HieraModuleDataProvider < Puppet::Plugins::DataProviders::ModuleDataProvider
     include HieraSupport
 
@@ -13,6 +16,10 @@ module Puppet::DataProviders
     # @raise [Puppet::DataBinder::LookupError] if the given module is can not be found
     #
     def provider_root(module_name, scope)
+      unless Puppet[:strict] == :off
+        Puppet.warn_once(:deprecation, 'Puppet::DataProviders::HieraModuleDataProvider',
+        'Puppet::DataProviders::HieraModuleDataProvider is deprecated and will be removed in the next major version of Puppet')
+      end
       env = scope.environment
       mod = env.modules.find { |m| m.name == module_name }
       raise Puppet::DataBinder::LookupError, "Environment '#{env.name}', cannot find module '#{module_name}'" unless mod

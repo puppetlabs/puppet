@@ -419,7 +419,20 @@ deprecated and has been replaced by 'always_retry_plugins'."
     :data_binding_terminus => {
       :type    => :terminus,
       :default => "hiera",
-      :desc    => "Where to retrieve information about data.",
+      :desc    =>
+        "This setting has been deprecated. Use of any value other than 'hiera' should instead be configured
+         in a version 5 hiera.yaml. Until this setting is removed, it controls which data binding terminus
+         to use for global automatic data binding (across all environments). By default this value is 'hiera'.
+         A value of 'none' turns off the global binding.",
+      :call_hook => :on_initialize_and_write,
+      :hook => proc do |value|
+        if Puppet[:strict] != :off
+          s_val = value.to_s # because sometimes the value is a symbol
+          unless s_val == 'hiera' || s_val == 'none' || value == '' || value.nil?
+            Puppet.deprecation_warning "Setting 'data_binding_terminus' is deprecated. Convert custom terminus to hiera 5 API."
+          end
+        end
+      end
     },
     :hiera_config => {
       :default => lambda do
@@ -517,6 +530,10 @@ deprecated and has been replaced by 'always_retry_plugins'."
       read after the elapsed interval then the connection will be closed. The default value is unlimited.
       #{AS_DURATION}",
     },
+    :http_user_agent => {
+      :default => "Puppet/#{Puppet.version} Ruby/#{RUBY_VERSION}-p#{RUBY_PATCHLEVEL} (#{RUBY_PLATFORM})",
+      :desc    => "The HTTP User-Agent string to send when making network requests."
+    },
     :filetimeout => {
       :default    => "15s",
       :type       => :duration,
@@ -556,13 +573,17 @@ deprecated and has been replaced by 'always_retry_plugins'."
       inconsistent catalogs."
     },
     :environment_data_provider => {
-      :default    => "none",
       :desc       => "The name of a registered environment data provider used when obtaining environment
       specific data. The three built in and registered providers are 'none' (no data), 'function' (data
       obtained by calling the function 'environment::data()') and 'hiera' (data obtained using a data
       provider configured using a hiera.yaml file in root of the environment).
       Other environment data providers may be registered in modules on the module path. For such
-      custom data providers see the respective module documentation."
+      custom data providers see the respective module documentation. This setting is deprecated.",
+      :hook => proc { |value|
+        unless value.nil? || Puppet[:strict] == :off
+          Puppet.deprecation_warning "Setting 'environment_data_provider' is deprecated."
+        end
+      }
     },
     :prerun_command => {
       :default    => "",
@@ -1715,7 +1736,7 @@ EOT
     },
 
     :pluginsignore => {
-        :default  => ".svn CVS .git",
+        :default  => ".svn CVS .git .hg",
         :desc     => "What files to ignore when pulling down plugins.",
     }
   )
@@ -1926,4 +1947,23 @@ EOT
           generate manifest documentation.",
     }
   )
+
+  define_settings(
+    :main,
+    :rich_data => {
+      :default  => false,
+      :type     => :boolean,
+      :hook    => proc do |value|
+        envs = Puppet.lookup(:environments) { nil }
+        envs.clear_all unless envs.nil?
+      end,
+      :desc     => <<-'EOT'
+        Enables having extended data in the catalog by adding the key `ext_parameters` to serialized
+        resources. When enabled, resource containing values of the data types `Binary`, `Regexp`,
+        `SemVer`, `SemVerRange`, `Timespan` and `Timestamp`, as well as instances of types derived
+        from `Object` retain their data type and are serialized using Pcore in `ext_parameters`.
+      EOT
+    }
+  )
+
 end

@@ -65,6 +65,11 @@ describe provider_class do
       expect(nmap.properties[:version]).to eq(nmap.properties[:latest])
     end
 
+    it "should return an empty array when pkg calls raise an exception" do
+      provider_class.stubs(:get_query).raises(Puppet::ExecutionFailure, 'An error occurred.')
+      expect(provider_class.instances).to eq([])
+    end
+
     describe "version" do
       it "should retrieve the correct version of the current package" do
         zsh = provider_class.instances.find {|i| i.properties[:origin] == 'shells/zsh' }
@@ -108,6 +113,13 @@ describe provider_class do
         arg.should include('FreeBSD')
       end
       resource.provider.install
+    end
+  end
+
+  context "#prefetch" do
+    it "should fail gracefully when " do
+      provider_class.stubs(:instances).returns([])
+      expect{ provider_class.prefetch({}) }.to_not raise_error
     end
   end
 

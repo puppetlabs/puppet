@@ -185,6 +185,11 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
   end
 
   # @api private
+  # @param option [String] Extra file operation mode information to use
+  #   (defaults to read-only mode 'r')
+  #   This is the standard mechanism Ruby uses in the IO class, and therefore
+  #   encoding may be explicitly like fmode : encoding or fmode : "BOM|UTF-*"
+  #   for example, a:ASCII or w+:UTF-8
   def exclusive_open(option = 'r', &block)
     controlled_access do |mode|
       Puppet::FileSystem.exclusive_open(file(), mode, option, &block)
@@ -192,6 +197,11 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
   end
 
   # @api private
+  # @param option [String] Extra file operation mode information to use
+  #   (defaults to read-only mode 'r')
+  #   This is the standard mechanism Ruby uses in the IO class, and therefore
+  #   encoding may be explicitly like fmode : encoding or fmode : "BOM|UTF-*"
+  #   for example, a:ASCII or w+:UTF-8
   def open(option = 'r', &block)
     controlled_access do |mode|
       Puppet::FileSystem.open(file, mode, option, &block)

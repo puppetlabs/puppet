@@ -22,7 +22,7 @@ describe "the Puppet::Pops::Serialization when using #{packer_module.name}" do
     count.nil? ? @deserializer.read : Array.new(count) { @deserializer.read }
   end
 
-  context 'can write and read a Scalar' do
+  context 'can write and read a' do
     it 'String' do
       val = 'the value'
       write(val)
@@ -87,6 +87,15 @@ describe "the Puppet::Pops::Serialization when using #{packer_module.name}" do
       expect(val2).to eql(val)
     end
 
+    it 'Sensitive' do
+      sval = 'the sensitive value'
+      val = Types::PSensitiveType::Sensitive.new(sval)
+      write(val)
+      val2 = read
+      expect(val2).to be_a(Types::PSensitiveType::Sensitive)
+      expect(val2.unwrap).to eql(sval)
+    end
+
     it 'Timespan' do
       val = Time::Timespan.from_fields(false, 3, 12, 40, 31, 123)
       write(val)
@@ -117,6 +126,24 @@ describe "the Puppet::Pops::Serialization when using #{packer_module.name}" do
       val2 = read
       expect(val2).to be_a(Semantic::VersionRange)
       expect(val2).to eql(val)
+    end
+
+    it 'Binary' do
+      val = Types::PBinaryType::Binary.from_base64('w5ZzdGVuIG1lZCByw7ZzdGVuCg==')
+      write(val)
+      val2 = read
+      expect(val2).to be_a(Types::PBinaryType::Binary)
+      expect(val2).to eql(val)
+    end
+
+    it 'Sensitive with rich data' do
+      sval = Time::Timestamp.now
+      val = Types::PSensitiveType::Sensitive.new(sval)
+      write(val)
+      val2 = read
+      expect(val2).to be_a(Types::PSensitiveType::Sensitive)
+      expect(val2.unwrap).to be_a(Time::Timestamp)
+      expect(val2.unwrap).to eql(sval)
     end
   end
 

@@ -5,6 +5,13 @@ require 'puppet/util/platform'
 describe "Puppet::FileSystem" do
   include PuppetSpec::Files
 
+  # different UTF-8 widths
+  # 1-byte A
+  # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
+  # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
+  # 4-byte 𠜎 - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
+  let (:mixed_utf8) { "A\u06FF\u16A0\u{2070E}" } # Aۿᚠ𠜎
+
   def with_file_content(content)
     path = tmpfile('file-system')
     file = File.new(path, 'wb')
@@ -15,6 +22,70 @@ describe "Puppet::FileSystem" do
 
   ensure
     file.close
+  end
+
+  context "#open" do
+    it "uses a default mode of 100644, the same as File.open, when specifying a nil mode" do
+      file = tmpfile('file_to_update')
+      expect(Puppet::FileSystem.exist?(file)).to be_falsey
+
+      Puppet::FileSystem.open(file, nil, 'a') { |fh| fh.write('') }
+
+      # default mode of 0644 is applied
+      expect(File.stat(file).mode.to_s(8)).to eq('100644')
+
+      default_file = tmpfile('file_to_update2')
+      expect(Puppet::FileSystem.exist?(default_file)).to be_falsey
+
+      File.open(default_file, 'a') { |fh| fh.write('') }
+
+      # which matches the behavior of File.open
+      expect(File.stat(file).mode).to eq(File.stat(default_file).mode)
+    end
+
+    it "can accept an octal mode integer" do
+      file = tmpfile('file_to_update')
+      # NOTE: 777 here returns 755, but due to Ruby?
+      Puppet::FileSystem.open(file, 0444, 'a') { |fh| fh.write('') }
+
+      expect(File.stat(file).mode.to_s(8)).to eq('100444')
+    end
+
+    it "cannot accept a mode string" do
+      file = tmpfile('file_to_update')
+      expect {
+        Puppet::FileSystem.open(file, "444", 'a') { |fh| fh.write('') }
+      }.to raise_error(TypeError)
+    end
+
+    it "opens, creates ands allows updating of a new file, using by default, the external system encoding" do
+      begin
+        original_encoding = Encoding.default_external
+
+        # this must be set through Ruby API and cannot be mocked - it sets internal state used by File.open
+        # pick a bizarre encoding unlikely to be used in any real tests
+        Encoding.default_external = Encoding::CP737
+
+        file = tmpfile('file_to_update')
+
+        # test writing a UTF-8 string when Default external encoding is something different
+        Puppet::FileSystem.open(file, 0660, 'w') do |fh|
+          # note Ruby behavior which has no external_encoding, but implicitly uses Encoding.default_external
+          expect(fh.external_encoding).to be_nil
+          # write a UTF-8 string to this file
+          fh.write(mixed_utf8)
+        end
+
+        # prove that Ruby implicitly converts read strings back to Encoding.default_external
+        # and that it did that in the previous write
+        written = Puppet::FileSystem.read(file)
+        expect(written.encoding).to eq(Encoding.default_external)
+        expect(written).to eq(mixed_utf8.force_encoding(Encoding.default_external))
+      ensure
+        # carefully roll back to the previous
+        Encoding.default_external = original_encoding
+      end
+    end
   end
 
   context "#exclusive_open" do
@@ -31,14 +102,33 @@ describe "Puppet::FileSystem" do
       expect(Puppet::FileSystem.read(file)).to eq("updated the contents")
     end
 
-    it "opens, creates ands allows updating of a new file" do
-      file = tmpfile("file_to_update")
+    it "opens, creates ands allows updating of a new file, using by default, the external system encoding" do
+      begin
+        original_encoding = Encoding.default_external
 
-      Puppet::FileSystem.exclusive_open(file, 0660, 'w') do |fh|
-        fh.write("updated new file")
+        # this must be set through Ruby API and cannot be mocked - it sets internal state used by File.open
+        # pick a bizarre encoding unlikely to be used in any real tests
+        Encoding.default_external = Encoding::CP737
+
+        file = tmpfile('file_to_update')
+
+        # test writing a UTF-8 string when Default external encoding is something different
+        Puppet::FileSystem.exclusive_open(file, 0660, 'w') do |fh|
+          # note Ruby behavior which has no external_encoding, but implicitly uses Encoding.default_external
+          expect(fh.external_encoding).to be_nil
+          # write a UTF-8 string to this file
+          fh.write(mixed_utf8)
+        end
+
+        # prove that Ruby implicitly converts read strings back to Encoding.default_external
+        # and that it did that in the previous write
+        written = Puppet::FileSystem.read(file)
+        expect(written.encoding).to eq(Encoding.default_external)
+        expect(written).to eq(mixed_utf8.force_encoding(Encoding.default_external))
+      ensure
+        # carefully roll back to the previous
+        Encoding.default_external = original_encoding
       end
-
-      expect(Puppet::FileSystem.read(file)).to eq("updated new file")
     end
 
     it "excludes other processes from updating at the same time", :unless => Puppet::Util::Platform.windows? do
@@ -131,6 +221,17 @@ describe "Puppet::FileSystem" do
       with_file_content("file content \r\nsecond line \n") do |file|
         expect(Puppet::FileSystem.read_preserve_line_endings(file)).to eq("file content \r\nsecond line \n")
       end
+    end
+  end
+
+  context "read without an encoding specified" do
+    it "returns strings as Encoding.default_external" do
+      temp_file = file_containing('test.txt', 'hello world')
+
+      contents = Puppet::FileSystem.read(temp_file)
+
+      expect(contents.encoding).to eq(Encoding.default_external)
+      expect(contents).to eq('hello world')
     end
   end
 

@@ -75,11 +75,20 @@ module TypeFactory
     @type_calculator.string(t)
   end
 
-  # Produces the String type, optionally with specific string values
+  # Produces the String type based on nothing, a string value that becomes an exact match constraint, or a parameterized
+  # Integer type that constraints the size.
+  #
   # @api public
   #
-  def self.string(size_type = nil, *values)
-    PStringType.new(size_type, values)
+  def self.string(size_type_or_value = nil, *deprecated_second_argument)
+    if deprecated_second_argument.empty?
+      size_type_or_value.nil? ? PStringType::DEFAULT : PStringType.new(size_type_or_value)
+    else
+      if Puppet[:strict] != :off
+        Puppet.warn_once(:deprecatation, "TypeFactory#string_multi_args", "Passing more than one argument to TypeFactory#string is deprecated")
+      end
+      deprecated_second_argument.size == 1 ? PStringType.new(deprecated_second_argument[0]) : PEnumType.new(*deprecated_second_argument)
+    end
   end
 
   # Produces the Optional type, i.e. a short hand for Variant[T, Undef]
@@ -92,7 +101,7 @@ module TypeFactory
   # @api public
   #
   def self.optional(optional_type = nil)
-    POptionalType.new(type_of(optional_type.is_a?(String) ? string(nil, optional_type) : type_of(optional_type)))
+    POptionalType.new(type_of(optional_type.is_a?(String) ? string(optional_type) : type_of(optional_type)))
   end
 
   # Produces the Enum type, optionally with specific string values
@@ -129,7 +138,7 @@ module TypeFactory
       # TODO: Should have stricter name rule
       if key_type.is_a?(String)
         raise ArgumentError, 'Struct element key cannot be an empty String' if key_type.empty?
-        key_type = string(nil, key_type)
+        key_type = string(key_type)
         # Must make key optional if the value can be Undef
         key_type = optional(key_type) if tc.assignable?(value_type, PUndefType::DEFAULT)
       else
@@ -141,12 +150,14 @@ module TypeFactory
           s = key_type
         when POptionalType
           s = key_type.optional_type
-        when PStringType, PEnumType
+        when PStringType
           s = key_type
+        when PEnumType
+          s = key_type.values.size == 1 ? PStringType.new(key_type.values[0]) : nil
         else
           raise ArgumentError, "Illegal Struct member key type. Expected NotUndef, Optional, String, or Enum. Got: #{key_type.class.name}"
         end
-        unless (s.is_a?(PStringType) || s.is_a?(PEnumType)) && s.values.size == 1 && !s.values[0].empty?
+        unless s.is_a?(PStringType) && !s.value.nil?
           raise ArgumentError, "Unable to extract a non-empty literal string from Struct member key type #{tc.string(key_type)}"
         end
       end
@@ -169,11 +180,25 @@ module TypeFactory
   end
 
   def self.timestamp(*args)
-    args.empty? ? PTimestampType::DEFAULT : PTimestampType.new(*args)
+    case args.size
+    when 0
+      PTimestampType::DEFAULT
+    when 1
+      PTimestampType.new(args[0], args[0])
+    else
+      PTimestampType.new(*args)
+    end
   end
 
   def self.timespan(*args)
-    args.empty? ? PTimespanType::DEFAULT : PTimespanType.new(*args)
+    case args.size
+    when 0
+      PTimespanType::DEFAULT
+    when 1
+      PTimespanType.new(args[0], args[0])
+    else
+      PTimespanType.new(*args)
+    end
   end
 
   def self.tuple(types = [], size_type = nil)
@@ -293,7 +318,7 @@ module TypeFactory
   # @api public
   #
   def self.collection(size_type = nil)
-    size_type.nil? ? PCollectionType::DEFAULT : PCollectionType.new(nil, size_type)
+    size_type.nil? ? PCollectionType::DEFAULT : PCollectionType.new(size_type)
   end
 
   # Produces the Data type
@@ -313,6 +338,12 @@ module TypeFactory
   # @api public
   def self.default
     PDefaultType::DEFAULT
+  end
+
+  # Creates an instance of the Binary type
+  # @api public
+  def self.binary
+    PBinaryType::DEFAULT
   end
 
   # Produces an instance of the abstract type PCatalogEntryType
@@ -415,7 +446,7 @@ module TypeFactory
   # @api public
   #
   def self.not_undef(inst_type = nil)
-    inst_type = string(nil, inst_type) if inst_type.is_a?(String)
+    inst_type = string(inst_type) if inst_type.is_a?(String)
     PNotUndefType.new(inst_type)
   end
 

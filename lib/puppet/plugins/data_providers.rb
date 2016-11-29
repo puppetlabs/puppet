@@ -1,5 +1,8 @@
 module Puppet::Plugins; end
 
+# TODO: API 5.0, remove this module
+# @api private
+# @deprecated
 module Puppet::Plugins::DataProviders
 
   # The lookup **key** for the multibind containing data provider name per module

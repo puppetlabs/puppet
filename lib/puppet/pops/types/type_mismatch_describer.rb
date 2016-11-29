@@ -1,5 +1,6 @@
 module Puppet::Pops
 module Types
+  # @api private
   class TypePathElement
     attr_reader :key
 
@@ -20,30 +21,46 @@ module Types
     end
    end
 
+  # @api private
   class SubjectPathElement < TypePathElement
     def to_s
       key
     end
   end
 
+  # @api private
   class EntryValuePathElement < TypePathElement
     def to_s
       "entry '#{key}'"
     end
   end
 
+  # @api private
   class EntryKeyPathElement < TypePathElement
     def to_s
       "key of entry '#{key}'"
     end
   end
 
+  # @api private
   class ParameterPathElement < TypePathElement
     def to_s
       "parameter '#{key}'"
     end
   end
 
+  # @api private
+  class ReturnTypeElement < TypePathElement
+    def initialize(name = 'return')
+      super(name)
+    end
+
+    def to_s
+      key
+    end
+  end
+
+  # @api private
   class BlockPathElement < ParameterPathElement
     def initialize(name = 'block')
       super(name)
@@ -54,18 +71,21 @@ module Types
     end
   end
 
+  # @api private
   class ArrayPathElement < TypePathElement
     def to_s
       "index #{key}"
     end
   end
 
+  # @api private
   class VariantPathElement < TypePathElement
     def to_s
       "variant #{key}"
     end
   end
 
+  # @api private
   class SignaturePathElement < VariantPathElement
     def to_s
       "#{key+1}."
@@ -77,6 +97,8 @@ module Types
   # All method names prefixed with "it_" to avoid conflict with Mocha expectations. Adding a method
   # named 'expects' just doesn't work.
   #
+  # @deprecated Will be removed in Puppet 5
+  # @api private
   module TenseVariants
     def it_expects(tense)
       case tense
@@ -115,8 +137,8 @@ module Types
     end
   end
 
+  # @api private
   class Mismatch
-    include TenseVariants
     attr_reader :path
 
     def initialize(path)
@@ -127,7 +149,7 @@ module Types
       @canonical_path ||= @path.reject { |e| e.is_a?(VariantPathElement) }
     end
 
-    def message(variant, position, tense = :present)
+    def message(variant, position)
       "#{variant}unknown mismatch#{position}"
     end
 
@@ -161,10 +183,10 @@ module Types
     end
 
     def to_s
-      format(:present)
+      format
     end
 
-    def format(tense)
+    def format
       p = @path
       variant = ''
       position = ''
@@ -176,11 +198,12 @@ module Types
         end
         position = " #{p.join(' ')}" unless p.empty?
       end
-      message(variant, position, tense)
+      message(variant, position)
     end
   end
 
   # @abstract
+  # @api private
   class KeyMismatch < Mismatch
     attr_reader :key
 
@@ -198,42 +221,49 @@ module Types
     end
   end
 
+  # @api private
   class MissingKey < KeyMismatch
-    def message(variant, position, tense = :present)
-      "#{variant}#{position} #{it_expects(tense)} a value for key '#{key}'"
+    def message(variant, position)
+      "#{variant}#{position} expects a value for key '#{key}'"
     end
   end
 
+  # @api private
   class MissingParameter < KeyMismatch
-    def message(variant, position, tense = :present)
-      "#{variant}#{position} #{it_expects(tense)} a value for parameter '#{key}'"
+    def message(variant, position)
+      "#{variant}#{position} expects a value for parameter '#{key}'"
     end
   end
 
+  # @api private
   class ExtraneousKey < KeyMismatch
-    def message(variant, position, tense = :present)
+    def message(variant, position)
       "#{variant}#{position} unrecognized key '#{@key}'"
     end
   end
 
+  # @api private
   class InvalidParameter < ExtraneousKey
-    def message(variant, position, tense = :present)
-      "#{variant}#{position} #{it_has_no(tense)} parameter named '#{@key}'"
+    def message(variant, position)
+      "#{variant}#{position} has no parameter named '#{@key}'"
     end
   end
 
+  # @api private
   class UnexpectedBlock < Mismatch
-    def message(variant, position, tense = :present)
-      "#{variant}#{position} #{it_does_not_expect(tense)} a block"
+    def message(variant, position)
+      "#{variant}#{position} does not expect a block"
     end
   end
 
+  # @api private
   class MissingRequiredBlock < Mismatch
-    def message(variant, position, tense = :present)
-      "#{variant}#{position} #{it_expects(tense)} a block"
+    def message(variant, position)
+      "#{variant}#{position} expects a block"
     end
   end
 
+  # @api private
   class UnresolvedTypeReference < Mismatch
     attr_reader :unresolved
 
@@ -250,11 +280,12 @@ module Types
       @unresolved.hash
     end
 
-    def message(variant, position, tense = :present)
-      "#{variant}#{position} #{it_references(tense)} an unresolved type '#{@unresolved}'"
+    def message(variant, position)
+      "#{variant}#{position} references an unresolved type '#{@unresolved}'"
     end
   end
 
+  # @api private
   class ExpectedActualMismatch < Mismatch
     attr_reader :expected, :actual
 
@@ -279,6 +310,7 @@ module Types
     end
   end
 
+  # @api private
   class TypeMismatch < ExpectedActualMismatch
     include LabelProvider
 
@@ -287,7 +319,7 @@ module Types
       self.class.new(path, [expected, o.expected].flatten.uniq, actual)
     end
 
-    def message(variant, position, tense = :present)
+    def message(variant, position)
       e = expected
       a = actual
       multi = false
@@ -297,8 +329,7 @@ module Types
           a = detailed_actual_to_s(e, a)
           e = e.map { |t| t.to_alias_expanded_s }
         else
-          sns = e.map { |t| t.simple_name }.uniq
-          e = e.map { |t| s = t.simple_name; sns.count {|x| x == s } == 1 ? s : t.to_s }.uniq
+          e = e.map { |t| t.simple_name }.uniq
           a = a.simple_name
         end
         case e.size
@@ -321,9 +352,9 @@ module Types
         end
       end
       if multi
-        "#{variant}#{position} #{it_expects(tense)} a value of type #{e}, got #{label(a)}"
+        "#{variant}#{position} expects a value of type #{e}, got #{label(a)}"
       else
-        "#{variant}#{position} #{it_expects(tense)} #{a_an(e)} value, got #{label(a)}"
+        "#{variant}#{position} expects #{a_an(e)} value, got #{label(a)}"
       end
     end
 
@@ -424,17 +455,19 @@ module Types
     end
   end
 
+  # @api private
   class PatternMismatch < TypeMismatch
-    def message(variant, position, tense = :present)
-      "#{variant}#{position} #{it_expects(tense)} a match for #{expected.to_alias_expanded_s}, got #{actual_string}"
+    def message(variant, position)
+      "#{variant}#{position} expects a match for #{expected.to_alias_expanded_s}, got #{actual_string}"
     end
 
     def actual_string
       a = actual
-      a.is_a?(PStringType) && a.values.size == 1 ? "'#{a.values[0]}'" : a.simple_name
+      a.is_a?(PStringType) && !a.value.nil? ? "'#{a.value}'" : a.simple_name
     end
   end
 
+  # @api private
   class SizeMismatch < ExpectedActualMismatch
     def from
       @expected.from || 0
@@ -450,8 +483,8 @@ module Types
       self.class.new(path, range, @actual)
     end
 
-    def message(variant, position, tense = :present)
-      "#{variant}#{position} #{it_expects(tense)} size to be #{range_to_s(expected, '0')}, got #{range_to_s(actual, '0')}"
+    def message(variant, position)
+      "#{variant}#{position} expects size to be #{range_to_s(expected, '0')}, got #{range_to_s(actual, '0')}"
     end
 
     def range_to_s(range, zero_string)
@@ -469,22 +502,22 @@ module Types
     end
   end
 
+  # @api private
   class CountMismatch < SizeMismatch
     def initialize(path, expected, actual)
       super(path, expected, actual)
     end
 
-    def message(variant, position, tense = :present)
+    def message(variant, position)
       min = expected.from || 0
       max = expected.to || Float::INFINITY
       suffix = min == 1 && (max == 1 || max == Float::INFINITY) || min == 0 && max == 1 ? '' : 's'
-      "#{variant}#{position} #{it_expects(tense)} #{range_to_s(expected, 'no')} argument#{suffix}, got #{range_to_s(actual, 'none')}"
+      "#{variant}#{position} expects #{range_to_s(expected, 'no')} argument#{suffix}, got #{range_to_s(actual, 'none')}"
     end
   end
 
+  # @api private
   class TypeMismatchDescriber
-    include TenseVariants
-
     def self.validate_parameters(subject, params_struct, given_hash, missing_ok = false)
       singleton.validate_parameters(subject, params_struct, given_hash, missing_ok)
     end
@@ -501,6 +534,10 @@ module Types
       @singleton ||= new
     end
 
+    def tense_deprecated
+      Puppet.warn_once(:deprecation, 'typemismatch#tense', "Passing a 'tense' argument to the TypeMismatchDescriber is deprecated and ignored. Everything is now reported using present tense")
+    end
+
     # Validates that all entries in the give_hash exists in the given param_struct, that their type conforms
     # with the corresponding param_struct element and that all required values are provided.
     #
@@ -508,16 +545,17 @@ module Types
     # @param params_struct [PStructType] Struct to use for validation
     # @param given_hash [Hash<String,Object>] the parameters to validate
     # @param missing_ok [Boolean] Do not generate errors on missing parameters
-    # @param tense [Symbol] the symbol :present or :past
+    # @param tense [Symbol] deprecated and ignored
     #
-    def validate_parameters(subject, params_struct, given_hash, missing_ok = false, tense = :present)
+    def validate_parameters(subject, params_struct, given_hash, missing_ok = false, tense = :ignored)
+      tense_deprecated unless tense == :ignored
       errors = describe_struct_signature(params_struct, given_hash, missing_ok).flatten
       case errors.size
       when 0
       when 1
-        raise Puppet::ParseError.new("#{subject}:#{errors[0].format(tense)}")
+        raise Puppet::ParseError.new("#{subject}:#{errors[0].format}")
       else
-        errors_str = errors.map { |error| error.format(tense) }.join("\n ")
+        errors_str = errors.map { |error| error.format }.join("\n ")
         raise Puppet::ParseError.new("#{subject}:\n #{errors_str}")
       end
     end
@@ -527,17 +565,18 @@ module Types
     # @param name [String] name of mismatch
     # @param expected [PAnyType] expected type
     # @param actual [PAnyType] actual type
-    # @param tense [Symbol] the symbol :present or :past
+    # @param tense [Symbol] deprecated and ignored
     #
-    def describe_mismatch(name, expected, actual, tense = :past)
+    def describe_mismatch(name, expected, actual, tense = :ignored)
+      tense_deprecated unless tense == :ignored
       errors = describe(expected, actual, [SubjectPathElement.new(name)])
       case errors.size
       when 0
         ''
       when 1
-        errors[0].format(tense).strip
+        errors[0].format.strip
       else
-        errors.map { |error| error.format(tense) }.join("\n ")
+        errors.map { |error| error.format }.join("\n ")
       end
     end
 
@@ -545,17 +584,18 @@ module Types
     # @param param_name [String] parameter name
     # @param param_type [PAnyType] parameter type
     # @param value [Object] value to be validated against the given type
-    # @param tense [Symbol] the symbol :present or :past
+    # @param tense [Symbol] deprecated and ignored
     #
-    def validate_default_parameter(subject, param_name, param_type, value, tense = :present)
+    def validate_default_parameter(subject, param_name, param_type, value, tense = :ignored)
+      tense_deprecated unless tense == :ignored
       unless param_type.instance?(value)
         errors = describe(param_type, TypeCalculator.singleton.infer_set(value).generalize, [ParameterPathElement.new(param_name)])
         case errors.size
         when 0
         when 1
-          raise Puppet::ParseError.new("#{subject}:#{errors[0].format(tense)}")
+          raise Puppet::ParseError.new("#{subject}:#{errors[0].format}")
         else
-          errors_str = errors.map { |error| error.format(tense) }.join("\n ")
+          errors_str = errors.map { |error| error.format }.join("\n ")
           raise Puppet::ParseError.new("#{subject}:\n #{errors_str}")
         end
       end
@@ -578,7 +618,7 @@ module Types
         value = param_hash[name]
         value_type = elem.value_type
         if param_hash.include?(name)
-          result << describe(value_type, TypeCalculator.singleton.infer_set(value).generalize, [ParameterPathElement.new(name)]) unless value_type.instance?(value)
+          result << describe(value_type, TypeCalculator.singleton.infer_set(value), [ParameterPathElement.new(name)]) unless value_type.instance?(value)
         else
           result << MissingParameter.new(nil, name) unless elem.key_type.assignable?(PUndefType::DEFAULT) unless missing_ok
         end
@@ -586,7 +626,8 @@ module Types
       result
     end
 
-    def describe_signatures(closure, signatures, args_tuple, tense = :present)
+    def describe_signatures(closure, signatures, args_tuple, tense = :ignored)
+      tense_deprecated unless tense == :ignored
       error_arrays = []
       signatures.each_with_index do |signature, index|
         error_arrays << describe_signature_arguments(signature, args_tuple, [SignaturePathElement.new(index)])
@@ -612,17 +653,17 @@ module Types
       label = closure == 'lambda' ? 'block' : "'#{closure}'"
       errors = merge_descriptions(0, CountMismatch, error_arrays)
       if errors.size == 1
-        "#{label}#{errors[0].format(tense)}"
+        "#{label}#{errors[0].format}"
       else
         if signatures.size == 1
           sig = signatures[0]
-          result = ["#{label} #{it_expects(tense)} (#{signature_string(sig)})"]
-          result.concat(error_arrays[0].map { |e| "  rejected:#{e.chop_path(0).format(tense)}" })
+          result = ["#{label} expects (#{signature_string(sig)})"]
+          result.concat(error_arrays[0].map { |e| "  rejected:#{e.chop_path(0).format}" })
         else
-          result = ["#{label} #{it_expects(tense)} one of:"]
+          result = ["#{label} expects one of:"]
           signatures.each_with_index do |sg, index|
             result << "  (#{signature_string(sg)})"
-            result.concat(error_arrays[index].map { |e| "    rejected:#{e.chop_path(0).format(tense)}" })
+            result.concat(error_arrays[index].map { |e| "    rejected:#{e.chop_path(0).format}" })
           end
         end
         result.join("\n")
@@ -774,7 +815,7 @@ module Types
     def describe_PHashType(expected, actual, path)
       descriptions = []
       key_type = expected.key_type || PAnyType::DEFAULT
-      value_type = expected.element_type || PAnyType::DEFAULT
+      value_type = expected.value_type || PAnyType::DEFAULT
       if actual.is_a?(PStructType)
         elements = actual.elements
         expected_size = expected.size_type || PCollectionType::DEFAULT_SIZE
@@ -840,7 +881,7 @@ module Types
     end
 
     def describe_tuple(expected, actual, path, size_mismatch_class)
-      return if expected == actual || expected.types.empty? && (actual.is_a?(PArrayType))
+      return EMPTY_ARRAY if expected == actual || expected.types.empty? && (actual.is_a?(PArrayType))
       expected_size = expected.size_type || TypeFactory.range(*expected.size_range)
 
       if actual.is_a?(PTupleType)
@@ -850,10 +891,11 @@ module Types
         if expected_size.assignable?(actual_size)
           etypes = expected.types
           descriptions = []
-          actual.types.each_with_index do |atype, index|
-            adx = index >= etypes.size ? etypes.size - 1 : index
-            etype = etypes[adx]
-            descriptions.concat(describe(etypes[adx], atype, path + [ArrayPathElement.new(adx)]))
+          unless etypes.empty?
+            actual.types.each_with_index do |atype, index|
+              adx = index >= etypes.size ? etypes.size - 1 : index
+              descriptions.concat(describe(etypes[adx], atype, path + [ArrayPathElement.new(adx)]))
+            end
           end
           descriptions
         else
@@ -888,21 +930,27 @@ module Types
     def describe_PCallableType(expected, actual, path)
       if actual.is_a?(PCallableType)
         # nil param_types means, any other Callable is assignable
-        if expected.param_types.nil?
+        if expected.param_types.nil? && expected.return_type.nil?
           EMPTY_ARRAY
         else
           # NOTE: these tests are made in reverse as it is calling the callable that is constrained
           # (it's lower bound), not its upper bound
           param_errors = describe_argument_tuple(expected.param_types, actual.param_types, path)
           if param_errors.empty?
-            # names are ignored, they are just information
-            # Blocks must be compatible
-            this_block_t = expected.block_type || PUndefType::DEFAULT
-            that_block_t = actual.block_type || PUndefType::DEFAULT
-            if that_block_t.assignable?(this_block_t)
-              EMPTY_ARRAY
+            this_return_t = expected.return_type || PAnyType::DEFAULT
+            that_return_t = actual.return_type || PAnyType::DEFAULT
+            unless this_return_t.assignable?(that_return_t)
+              [TypeMismatch.new(path + [ReturnTypeElement.new], this_return_t, that_return_t)]
             else
-              [TypeMismatch.new(path + BlockPathElement.new, this_block_t, that_block_t)]
+              # names are ignored, they are just information
+              # Blocks must be compatible
+              this_block_t = expected.block_type || PUndefType::DEFAULT
+              that_block_t = actual.block_type || PUndefType::DEFAULT
+              if that_block_t.assignable?(this_block_t)
+                EMPTY_ARRAY
+              else
+                [TypeMismatch.new(path + [BlockPathElement.new], this_block_t, that_block_t)]
+              end
             end
           else
             param_errors

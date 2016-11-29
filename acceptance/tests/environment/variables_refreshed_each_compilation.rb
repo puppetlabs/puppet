@@ -47,10 +47,10 @@ extend Puppet::Acceptance::EnvironmentUtils
           assert_equal(2, result.exit_code, 'wrong exit_code')
           assert_match(/Notice: #{local_uptime_pattern}/, result.stdout, 'first uptime was not as expected')
           assert_match(/"seconds"=>\d+,/, result.stdout, 'first module uptime was not as expected')
-          uptime = result.stdout.match(/Notice: #{local_uptime_pattern}/)[0]
-          module_uptime = result.stdout.match(/"seconds"=>(\d+),/)[0]
+          uptime = Integer(result.stdout.match(/Notice: #{local_uptime_pattern}/)[1])
+          module_uptime = Integer(result.stdout.match(/"seconds"=>(\d+),/)[1])
         end
-        if agent.platform =~ /solaris/
+        if agent.platform =~ /solaris|aix/
           sleep 61  # See FACT-1497;
         else
           sleep 1
@@ -60,8 +60,8 @@ extend Puppet::Acceptance::EnvironmentUtils
           assert_equal(2, result.exit_code, 'wrong exit_code')
           assert_match(/Notice: #{local_uptime_pattern}/, result.stdout, 'second uptime was not as expected')
           assert_match(/"seconds"=>\d+,/, result.stdout, 'second module uptime was not as expected')
-          uptime2 = result.stdout.match(/Notice: #{local_uptime_pattern}/)[0]
-          module_uptime2 = result.stdout.match(/"seconds"=>(\d+),/)[0]
+          uptime2 = Integer(result.stdout.match(/Notice: #{local_uptime_pattern}/)[1])
+          module_uptime2 = Integer(result.stdout.match(/"seconds"=>(\d+),/)[1])
           assert(uptime2 > uptime, 'uptime did not change')
           assert(module_uptime2 > module_uptime, 'module based uptime did not change')
         end

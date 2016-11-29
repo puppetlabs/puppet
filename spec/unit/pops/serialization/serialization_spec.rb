@@ -37,7 +37,7 @@ module Serialization
     parser.parse_string(string, '/home/tester/experiments/manifests/init.pp').current
   end
 
-  context 'can write and read a Scalar' do
+  context 'can write and read a' do
     it 'String' do
       val = 'the value'
       write(val)
@@ -94,6 +94,15 @@ module Serialization
       expect(val2).to eql(val)
     end
 
+    it 'Sensitive' do
+      sval = 'the sensitive value'
+      val = Types::PSensitiveType::Sensitive.new(sval)
+      write(val)
+      val2 = read
+      expect(val2).to be_a(Types::PSensitiveType::Sensitive)
+      expect(val2.unwrap).to eql(sval)
+    end
+
     it 'Timespan' do
       val = Time::Timespan.from_fields(false, 3, 12, 40, 31, 123)
       write(val)
@@ -127,6 +136,24 @@ module Serialization
       expect(val2).to be_a(Semantic::VersionRange)
       expect(val2).to eql(val)
     end
+
+    it 'Binary' do
+      val = Types::PBinaryType::Binary.from_base64('w5ZzdGVuIG1lZCByw7ZzdGVuCg==')
+      write(val)
+      val2 = read
+      expect(val2).to be_a(Types::PBinaryType::Binary)
+      expect(val2).to eql(val)
+    end
+
+    it 'Sensitive with rich data' do
+      sval = Time::Timestamp.now
+      val = Types::PSensitiveType::Sensitive.new(sval)
+      write(val)
+      val2 = read
+      expect(val2).to be_a(Types::PSensitiveType::Sensitive)
+      expect(val2.unwrap).to be_a(Time::Timestamp)
+      expect(val2.unwrap).to eql(sval)
+    end
   end
 
   context 'can write and read' do
@@ -159,6 +186,30 @@ module Serialization
         expect(val2).to eql(val)
       end
 
+      it 'Collection' do
+        val = Types::TypeFactory.collection(Types::TypeFactory.range(0, 20))
+        write(val)
+        val2 = read
+        expect(val2).to be_a(Types::PCollectionType)
+        expect(val2).to eql(val)
+      end
+
+      it 'Array' do
+        val = Types::TypeFactory.array_of(Types::TypeFactory.integer, Types::TypeFactory.range(0, 20))
+        write(val)
+        val2 = read
+        expect(val2).to be_a(Types::PArrayType)
+        expect(val2).to eql(val)
+      end
+
+      it 'Hash' do
+        val = Types::TypeFactory.hash_kv(Types::TypeFactory.string, Types::TypeFactory.integer, Types::TypeFactory.range(0, 20))
+        write(val)
+        val2 = read
+        expect(val2).to be_a(Types::PHashType)
+        expect(val2).to eql(val)
+      end
+
       it 'Variant' do
         val = Types::TypeFactory.variant(Types::TypeFactory.string, Types::TypeFactory.range(1, :default))
         write(val)
@@ -174,6 +225,34 @@ module Serialization
         expect(val2).to be_a(Types::PObjectType)
         expect(val2).to eql(val)
       end
+    end
+
+    it 'Array of rich data' do
+      # Sensitive omitted because it doesn't respond to ==
+      val = [
+        Time::Timespan.from_fields(false, 3, 12, 40, 31, 123),
+        Time::Timestamp.now,
+        Semantic::Version.parse('1.2.3-alpha2'),
+        Semantic::VersionRange.parse('>=1.2.3-alpha2 <1.2.4'),
+        Types::PBinaryType::Binary.from_base64('w5ZzdGVuIG1lZCByw7ZzdGVuCg==')
+      ]
+      write(val)
+      val2 = read
+      expect(val2).to eql(val)
+    end
+
+    it 'Hash of rich data' do
+      # Sensitive omitted because it doesn't respond to ==
+      val = {
+        'duration' => Time::Timespan.from_fields(false, 3, 12, 40, 31, 123),
+        'time' => Time::Timestamp.now,
+        'version' => Semantic::Version.parse('1.2.3-alpha2'),
+        'range' => Semantic::VersionRange.parse('>=1.2.3-alpha2 <1.2.4'),
+        'binary' => Types::PBinaryType::Binary.from_base64('w5ZzdGVuIG1lZCByw7ZzdGVuCg==')
+      }
+      write(val)
+      val2 = read
+      expect(val2).to eql(val)
     end
 
     context 'an AST model' do

@@ -77,7 +77,7 @@ class Puppet::Parser::Resource < Puppet::Resource
       elsif resource_type.nil?
         self.fail "Cannot find definition #{type}"
       else
-        finish(false) # Call finish but do not validate
+        finish_evaluation() # do not finish completely (as that destroys Sensitive data)
         resource_type.evaluate_code(self)
       end
     end
@@ -94,8 +94,18 @@ class Puppet::Parser::Resource < Puppet::Resource
     end
   end
 
-  # Do any finishing work on this object, called before evaluation or
-  # before storage/translation. The method does nothing the second time
+  # Finish the evaluation by assigning defaults and scope tags
+  # @api private
+  #
+  def finish_evaluation
+    return if @evaluation_finished
+    add_defaults
+    add_scope_tags
+    @evaluation_finished = true
+  end
+
+  # Do any finishing work on this object, called before
+  # storage/translation. The method does nothing the second time
   # it is called on the same resource.
   #
   # @param do_validate [Boolean] true if validation should be performed
@@ -104,8 +114,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   def finish(do_validate = true)
     return if finished?
     @finished = true
-    add_defaults
-    add_scope_tags
+    finish_evaluation
     replace_sensitive_data
     validate if do_validate
   end
@@ -167,6 +176,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   # the resource tags with its value.
   def set_parameter(param, value = nil)
     if ! param.is_a?(Puppet::Parser::Resource::Param)
+      param = param.name if param.is_a?(Puppet::Pops::Resource::Param)
       param = Puppet::Parser::Resource::Param.new(
         :name => param, :value => value, :source => self.source
       )
@@ -182,13 +192,13 @@ class Puppet::Parser::Resource < Puppet::Resource
   def to_hash
     @parameters.reduce({}) do |result, (_, param)|
       value = param.value
-      value = (value == :undef) ? nil : value
+      value = (:undef == value) ? nil : value
 
       unless value.nil?
         case param.name
         when :before, :subscribe, :notify, :require
           if value.is_a?(Array)
-            value = value.flatten.reject {|v| v.nil? || v == :undef }
+            value = value.flatten.reject {|v| v.nil? || :undef == v }
           end
           result[param.name] = value
         else
@@ -235,7 +245,9 @@ class Puppet::Parser::Resource < Puppet::Resource
       raise Puppet::Error, "Invalid consume in #{self.ref}: #{ref} is not a resource" unless ref.is_a?(Puppet::Resource)
 
       # Resolve references
-      cap = catalog.resource(ref.type, ref.title)
+      t = ref.type
+      t = Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_resource_type(scope, t) unless t == 'class' || t == 'node'
+      cap = catalog.resource(t, ref.title)
       if cap.nil?
         raise "Resource #{ref} could not be found; it might not have been produced yet"
       end

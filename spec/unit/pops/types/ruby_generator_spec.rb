@@ -81,14 +81,14 @@ describe 'Puppet Ruby Generator' do
         it 'will perform type assertion of the arguments' do
           expect { first.create('Bob Builder', '52') }.to(
             raise_error(TypeAssertionError,
-              'MyModule::FirstGenerated[age] had wrong type, expected an Integer value, got String')
+              'MyModule::FirstGenerated[age] has wrong type, expects an Integer value, got String')
           )
         end
 
         it 'will not accept nil as given value for an optional parameter that does not accept nil' do
           expect { first.create('Bob Builder', nil) }.to(
             raise_error(TypeAssertionError,
-              'MyModule::FirstGenerated[age] had wrong type, expected an Integer value, got Undef')
+              'MyModule::FirstGenerated[age] has wrong type, expects an Integer value, got Undef')
           )
         end
 
@@ -128,7 +128,7 @@ describe 'Puppet Ruby Generator' do
         it 'does not accept an initializer where optional values are nil and type does not accept nil' do
           expect { first.from_hash('name' => 'Bob Builder', 'age' => nil) }.to(
             raise_error(TypeAssertionError,
-              "MyModule::FirstGenerated initializer had wrong type, entry 'age' expected an Integer value, got Undef")
+              "MyModule::FirstGenerated initializer has wrong type, entry 'age' expects an Integer value, got Undef")
           )
         end
       end
@@ -205,14 +205,14 @@ describe 'Puppet Ruby Generator' do
         it 'will perform type assertion of the arguments' do
           expect { PuppetSpec::RubyGenerator::FirstGenerated.create('Bob Builder', '52') }.to(
             raise_error(TypeAssertionError,
-              'MyModule::FirstGenerated[age] had wrong type, expected an Integer value, got String')
+              'MyModule::FirstGenerated[age] has wrong type, expects an Integer value, got String')
           )
         end
 
         it 'will not accept nil as given value for an optional parameter that does not accept nil' do
           expect { PuppetSpec::RubyGenerator::FirstGenerated.create('Bob Builder', nil) }.to(
             raise_error(TypeAssertionError,
-              'MyModule::FirstGenerated[age] had wrong type, expected an Integer value, got Undef')
+              'MyModule::FirstGenerated[age] has wrong type, expects an Integer value, got Undef')
           )
         end
 
@@ -252,7 +252,7 @@ describe 'Puppet Ruby Generator' do
         it 'does not accept an initializer where optional values are nil and type does not accept nil' do
           expect { PuppetSpec::RubyGenerator::FirstGenerated.from_hash('name' => 'Bob Builder', 'age' => nil) }.to(
             raise_error(TypeAssertionError,
-              "MyModule::FirstGenerated initializer had wrong type, entry 'age' expected an Integer value, got Undef")
+              "MyModule::FirstGenerated initializer has wrong type, entry 'age' expects an Integer value, got Undef")
           )
         end
       end
@@ -389,14 +389,14 @@ describe 'Puppet Ruby Generator' do
         it 'will perform type assertion of the arguments' do
           expect { first.create('Bob Builder', '52') }.to(
             raise_error(TypeAssertionError,
-              'MyModule::FirstGenerated[age] had wrong type, expected an Integer value, got String')
+              'MyModule::FirstGenerated[age] has wrong type, expects an Integer value, got String')
           )
         end
 
         it 'will not accept nil as given value for an optional parameter that does not accept nil' do
           expect { first.create('Bob Builder', nil) }.to(
             raise_error(TypeAssertionError,
-              'MyModule::FirstGenerated[age] had wrong type, expected an Integer value, got Undef')
+              'MyModule::FirstGenerated[age] has wrong type, expects an Integer value, got Undef')
           )
         end
 
@@ -436,7 +436,7 @@ describe 'Puppet Ruby Generator' do
         it 'does not accept an initializer where optional values are nil and type does not accept nil' do
           expect { first.from_hash('name' => 'Bob Builder', 'age' => nil) }.to(
             raise_error(TypeAssertionError,
-              "MyModule::FirstGenerated initializer had wrong type, entry 'age' expected an Integer value, got Undef")
+              "MyModule::FirstGenerated initializer has wrong type, entry 'age' expects an Integer value, got Undef")
           )
         end
       end
@@ -519,14 +519,14 @@ describe 'Puppet Ruby Generator' do
         it 'will perform type assertion of the arguments' do
           expect { PuppetSpec::RubyGenerator::My::FirstGenerated.create('Bob Builder', '52') }.to(
             raise_error(TypeAssertionError,
-              'MyModule::FirstGenerated[age] had wrong type, expected an Integer value, got String')
+              'MyModule::FirstGenerated[age] has wrong type, expects an Integer value, got String')
           )
         end
 
         it 'will not accept nil as given value for an optional parameter that does not accept nil' do
           expect { PuppetSpec::RubyGenerator::My::FirstGenerated.create('Bob Builder', nil) }.to(
             raise_error(TypeAssertionError,
-              'MyModule::FirstGenerated[age] had wrong type, expected an Integer value, got Undef')
+              'MyModule::FirstGenerated[age] has wrong type, expects an Integer value, got Undef')
           )
         end
 
@@ -566,7 +566,7 @@ describe 'Puppet Ruby Generator' do
         it 'does not accept an initializer where optional values are nil and type does not accept nil' do
           expect { PuppetSpec::RubyGenerator::My::FirstGenerated.from_hash('name' => 'Bob Builder', 'age' => nil) }.to(
             raise_error(TypeAssertionError,
-              "MyModule::FirstGenerated initializer had wrong type, entry 'age' expected an Integer value, got Undef")
+              "MyModule::FirstGenerated initializer has wrong type, entry 'age' expects an Integer value, got Undef")
           )
         end
       end

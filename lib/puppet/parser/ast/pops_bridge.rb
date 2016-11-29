@@ -61,6 +61,19 @@ class Puppet::Parser::AST::PopsBridge
     end
   end
 
+  class ExpressionSupportingReturn < Expression
+    def initialize args
+      super
+    end
+
+    def evaluate(scope)
+      return catch(:return) do
+        return catch(:next) do
+          return super(scope)
+        end
+      end
+    end
+  end
   # Bridges the top level "Program" produced by the pops parser.
   # Its main purpose is to give one point where all definitions are instantiated (actually defined since the
   # Puppet 3x terminology is somewhat misleading - the definitions are instantiated, but instances of the created types
@@ -174,26 +187,26 @@ class Puppet::Parser::AST::PopsBridge
     end
 
     # Produces a hash with data for Definition and HostClass
-    def args_from_definition(o, modname)
+    def args_from_definition(o, modname, expr_class = Expression)
       args = {
        :arguments => o.parameters.collect {|p| instantiate_Parameter(p) },
        :argument_types => create_type_map(o),
        :module_name => modname
       }
       unless is_nop?(o.body)
-        args[:code] = Expression.new(:value => o.body)
+        args[:code] = expr_class.new(:value => o.body)
       end
       @ast_transformer.merge_location(args, o)
     end
 
     def instantiate_HostClassDefinition(o, modname)
-      args = args_from_definition(o, modname)
+      args = args_from_definition(o, modname, ExpressionSupportingReturn)
       args[:parent] = absolute_reference(o.parent_class)
       Puppet::Resource::Type.new(:hostclass, o.name, @context.merge(args))
     end
 
     def instantiate_ResourceTypeDefinition(o, modname)
-      instance = Puppet::Resource::Type.new(:definition, o.name, @context.merge(args_from_definition(o, modname)))
+      instance = Puppet::Resource::Type.new(:definition, o.name, @context.merge(args_from_definition(o, modname, ExpressionSupportingReturn)))
       Puppet::Pops::Loaders.register_runtime3_type(instance.name, Puppet::Pops::Adapters::SourcePosAdapter.adapt(o).to_uri)
       instance
     end

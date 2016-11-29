@@ -224,6 +224,13 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
       expect(provider.enabled?).to eq(:false)
     end
 
+    it "should return :false if the service is indirect" do
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      provider.expects(:execute).with(['/bin/systemctl','is-enabled','sshd.service'], :failonfail => false).returns "indirect\n"
+      $CHILD_STATUS.stubs(:exitstatus).returns(0)
+      expect(provider.enabled?).to eq(:false)
+    end
+
     it "should return :false if the service is masked and the resource is attempting to be disabled" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :enable => false))
       provider.expects(:execute).with(['/bin/systemctl','is-enabled','sshd.service'], :failonfail => false).returns "masked\n"

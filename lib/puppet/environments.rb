@@ -41,7 +41,10 @@ module Puppet::Environments
 
     def clear_all
       root = Puppet.lookup(:root_environment) { nil }
-      root.instance_variable_set(:@static_catalogs, nil) unless root.nil?
+      unless root.nil?
+        root.instance_variable_set(:@static_catalogs, nil)
+        root.instance_variable_set(:@rich_data, nil)
+      end
     end
   end
 
@@ -112,7 +115,7 @@ module Puppet::Environments
     def get_conf(name)
       env = get(name)
       if env
-        Puppet::Settings::EnvironmentConf.static_for(env, 0, Puppet[:static_catalogs])
+        Puppet::Settings::EnvironmentConf.static_for(env, 0, Puppet[:static_catalogs], Puppet[:rich_data])
       else
         nil
       end

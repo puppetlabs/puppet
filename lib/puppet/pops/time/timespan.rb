@@ -14,9 +14,9 @@ module Time
   KEY_HOURS = 'hours'.freeze
   KEY_MINUTES = 'minutes'.freeze
   KEY_SECONDS = 'seconds'.freeze
-  KEY_MILLI_SECONDS = 'milli_seconds'.freeze
-  KEY_MICRO_SECONDS = 'micro_seconds'.freeze
-  KEY_NANO_SECONDS = 'nano_seconds'.freeze
+  KEY_MILLISECONDS = 'milliseconds'.freeze
+  KEY_MICROSECONDS = 'microseconds'.freeze
+  KEY_NANOSECONDS = 'nanoseconds'.freeze
 
   # TimeData is a Numeric that stores its value internally as nano-seconds but will be considered to be seconds and fractions of
   # seconds when used in arithmetic or comparison with other Numeric types.
@@ -26,16 +26,8 @@ module Time
 
     attr_reader :nsecs
 
-    def initialize(nano_seconds)
-      @nsecs = nano_seconds
-    end
-
-    def eql?(o)
-      o.class == self.class && @nsecs.eql?(o.nsecs)
-    end
-
-    def ==(o)
-      eql?(o)
+    def initialize(nanoseconds)
+      @nsecs = nanoseconds
     end
 
     def <=>(o)
@@ -83,8 +75,8 @@ module Time
   end
 
   class Timespan < TimeData
-    def self.from_fields(negative, days, hours, minutes, seconds, milli_seconds = 0, micro_seconds = 0, nano_seconds = 0)
-      ns = (((((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000 + milli_seconds) * 1000 + micro_seconds) * 1000 + nano_seconds
+    def self.from_fields(negative, days, hours, minutes, seconds, milliseconds = 0, microseconds = 0, nanoseconds = 0)
+      ns = (((((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000 + milliseconds) * 1000 + microseconds) * 1000 + nanoseconds
       new(negative ? -ns : ns)
     end
 
@@ -103,9 +95,9 @@ module Time
         hash[KEY_HOURS] || 0,
         hash[KEY_MINUTES] || 0,
         hash[KEY_SECONDS] || 0,
-        hash[KEY_MILLI_SECONDS] || 0,
-        hash[KEY_MICRO_SECONDS] || 0,
-        hash[KEY_NANO_SECONDS] || 0)
+        hash[KEY_MILLISECONDS] || 0,
+        hash[KEY_MICROSECONDS] || 0,
+        hash[KEY_NANOSECONDS] || 0)
     end
 
     def self.parse(str, format = Format::DEFAULTS)
@@ -174,7 +166,7 @@ module Time
       when Float
         to_f.divmod(o)
       else
-        raise ArgumentError, "Can not do modulus on a Timestamp using a #{a_an(o)}"
+        raise ArgumentError, "Can not do modulus on a Timespan using a #{a_an(o)}"
       end
     end
 
@@ -223,13 +215,13 @@ module Time
     end
 
     # @return [Integer] a positive integer, 0 - 999 denoting milliseconds of second
-    def milli_seconds
-      total_milli_seconds % 1000
+    def milliseconds
+      total_milliseconds % 1000
     end
 
     # @return [Integer] a positive integer, 0 - 999.999.999 denoting nanoseconds of second
-    def nano_seconds
-      total_nano_seconds % NSECS_PER_SEC
+    def nanoseconds
+      total_nanoseconds % NSECS_PER_SEC
     end
 
     # Formats this timestamp into a string according to the given `format`
@@ -253,21 +245,21 @@ module Time
 
     def to_hash(compact = false)
       result = {}
-      n = nano_seconds
+      n = nanoseconds
       if compact
         s = total_seconds
         result[KEY_SECONDS] = negative? ? -s : s
-        result[KEY_NANO_SECONDS] = negative? ? -n : n unless n == 0
+        result[KEY_NANOSECONDS] = negative? ? -n : n unless n == 0
       else
         add_unless_zero(result, KEY_DAYS, days)
         add_unless_zero(result, KEY_HOURS, hours)
         add_unless_zero(result, KEY_MINUTES, minutes)
         add_unless_zero(result, KEY_SECONDS, seconds)
         unless n == 0
-          add_unless_zero(result, KEY_NANO_SECONDS, n % 1000)
+          add_unless_zero(result, KEY_NANOSECONDS, n % 1000)
           n /= 1000
-          add_unless_zero(result, KEY_MICRO_SECONDS, n % 1000)
-          add_unless_zero(result, KEY_MILLI_SECONDS, n /= 1000)
+          add_unless_zero(result, KEY_MICROSECONDS, n % 1000)
+          add_unless_zero(result, KEY_MILLISECONDS, n /= 1000)
         end
         result[KEY_NEGATIVE] = true if negative?
       end
@@ -281,36 +273,36 @@ module Time
 
     # @api private
     def total_days
-      total_nano_seconds / NSECS_PER_DAY
+      total_nanoseconds / NSECS_PER_DAY
     end
 
     # @api private
     def total_hours
-      total_nano_seconds / NSECS_PER_HOUR
+      total_nanoseconds / NSECS_PER_HOUR
     end
 
     # @api private
     def total_minutes
-      total_nano_seconds / NSECS_PER_MIN
+      total_nanoseconds / NSECS_PER_MIN
     end
 
     # @api private
     def total_seconds
-      total_nano_seconds / NSECS_PER_SEC
+      total_nanoseconds / NSECS_PER_SEC
     end
 
     # @api private
-    def total_milli_seconds
-      total_nano_seconds / NSECS_PER_MSEC
+    def total_milliseconds
+      total_nanoseconds / NSECS_PER_MSEC
     end
 
     # @api private
-    def total_micro_seconds
-      total_nano_seconds / NSECS_PER_USEC
+    def total_microseconds
+      total_nanoseconds / NSECS_PER_USEC
     end
 
     # @api private
-    def total_nano_seconds
+    def total_nanoseconds
       @nsecs.abs
     end
 
@@ -351,7 +343,7 @@ module Time
           @literal.concat(codepoint)
         end
 
-        def multiplier
+        def nanoseconds
           0
         end
       end
@@ -359,16 +351,21 @@ module Time
       class ValueSegment < Segment
         def initialize(padchar, width, default_width)
           @use_total = false
-          @format = case padchar
+          @padchar = padchar
+          @width = width
+          @default_width = default_width
+          @format = create_format
+        end
+
+        def create_format
+          case @padchar
           when nil
             '%d'
           when ' '
-            "%#{width || default_width}d"
+            "%#{@width || @default_width}d"
           else
-            "%#{padchar}#{width || default_width}d"
+            "%#{@padchar}#{@width || @default_width}d"
           end
-          @width = width
-          @default_width = default_width
         end
 
         def append_regexp(bld)
@@ -377,9 +374,9 @@ module Time
             when nil
               bld << (use_total? ? '([0-9]+)' : "([0-9]{1,#{@default_width}})")
             when '0'
-              bld << (use_total? ? '([0-9]+)' : "([0-9]{#{@default_width}})")
+              bld << (use_total? ? '([0-9]+)' : "([0-9]{1,#{@default_width}})")
             else
-              bld << (use_total? ? '\s*([0-9]+)' : "([0-9\\s]{#{@default_width}})")
+              bld << (use_total? ? '\s*([0-9]+)' : "([0-9\\s]{1,#{@default_width}})")
             end
           else
             case @padchar
@@ -391,6 +388,14 @@ module Time
               bld << "([0-9\\s]{#{@width}})"
             end
           end
+        end
+
+        def nanoseconds(group)
+          group.to_i * multiplier
+        end
+
+        def multiplier
+          0
         end
 
         def set_use_total
@@ -462,7 +467,34 @@ module Time
         end
       end
 
-      class MilliSecondSegment < ValueSegment
+      # Class that assumes that leading zeroes are significant and that trailing zeroes are not and left justifies when formatting.
+      # Applicable after a decimal point, and hence to the %L and %N formats.
+      class FragmentSegment < ValueSegment
+        def nanoseconds(group)
+          # Using %L or %N to parse a string only makes sense when they are considered to be fractions. Using them
+          # as a total quantity would introduce ambiguities.
+          raise ArgumentError, 'Format specifiers %L and %N denotes fractions and must be used together with a specifier of higher magnitude' if use_total?
+          n = group.to_i
+          p = 9 - group.length
+          p <= 0 ? n : n * 10 ** p
+        end
+
+        def create_format
+          if @padchar.nil?
+            '%d'
+          else
+            "%-#{@width || @default_width}d"
+          end
+        end
+
+        def append_value(bld, n)
+          # Strip trailing zeroes when default format is used
+          n = n.to_s.sub(/\A([0-9]+?)0*\z/, '\1').to_i unless use_total? || @padchar == '0'
+          super(bld, n)
+        end
+      end
+
+      class MilliSecondSegment < FragmentSegment
         def initialize(padchar, width)
           super(padchar, width, 3)
         end
@@ -472,17 +504,17 @@ module Time
         end
 
         def append_to(bld, ts)
-          append_value(bld, use_total? ? ts.total_milli_seconds : ts.milli_seconds)
+          append_value(bld, use_total? ? ts.total_milliseconds : ts.milliseconds)
         end
       end
 
-      class NanoSecondSegment < ValueSegment
+      class NanoSecondSegment < FragmentSegment
         def initialize(padchar, width)
           super(padchar, width, 9)
         end
 
         def multiplier
-          width = @widht || @default_width
+          width = @width || @default_width
           if width < 9
             10 ** (9 - width)
           else
@@ -491,8 +523,8 @@ module Time
         end
 
         def append_to(bld, ts)
-          ns = ts.total_nano_seconds
-          width = @widht || @default_width
+          ns = ts.total_nanoseconds
+          width = @width || @default_width
           if width < 9
             # Truncate digits to the right, i.e. let %6N reflect microseconds
             ns /= 10 ** (9 - width)
@@ -518,15 +550,15 @@ module Time
       def parse(timespan)
         md = regexp.match(timespan)
         raise ArgumentError, "Unable to parse '#{timespan}' using format '#{@format}'" if md.nil?
-        nano_seconds = 0
+        nanoseconds = 0
         md.captures.each_with_index do |group, index|
           segment = @segments[index]
           next if segment.is_a?(LiteralSegment)
           group.lstrip!
           raise ArgumentError, "Unable to parse '#{timespan}' using format '#{@format}'" unless group =~ /\A[0-9]+\z/
-          nano_seconds += group.to_i * segment.multiplier
+          nanoseconds += segment.nanoseconds(group)
         end
-        Timespan.new(timespan.start_with?('-') ? -nano_seconds : nano_seconds)
+        Timespan.new(timespan.start_with?('-') ? -nanoseconds : nanoseconds)
       end
 
       def to_s
@@ -679,7 +711,7 @@ module Time
     end
 
     class Format
-      DEFAULTS = ['%D-%H:%M:%S', '%D-%H:%M', '%H:%M:%S', '%H:%M'].map { |str| FormatParser.singleton.parse_format(str) }
+      DEFAULTS = ['%D-%H:%M:%S.%-N', '%H:%M:%S.%-N', '%M:%S.%-N', '%S.%-N', '%D-%H:%M:%S', '%H:%M:%S', '%D-%H:%M', '%S'].map { |str| FormatParser.singleton.parse_format(str) }
     end
   end
 end

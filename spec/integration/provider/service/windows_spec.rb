@@ -26,11 +26,12 @@ describe Puppet::Type.type(:service).provider(:windows), '(integration)',
 
   context 'should return valid values when querying a service that does exist' do
     let(:service) do
+      # This service should be ubiquitous across all supported Windows platforms
       Puppet::Type.type(:service).new(:name => 'lmhosts')
     end
 
-    it "with a valid boolean when asked if enabled" do
-      expect([:true, :false]).to include(service.provider.enabled?)
+    it "with a valid enabled? value when asked if enabled" do
+      expect([:true, :false, :manual]).to include(service.provider.enabled?)
     end
 
     it "with a valid status when asked about status" do

@@ -1,5 +1,8 @@
 require_relative 'hiera_config'
 
+# TODO: API 5.0, remove this module
+# @api private
+# @deprecated
 module Puppet::DataProviders::HieraSupport
   def config_path
     @hiera_config.nil? ? 'not yet configured' : @hiera_config.config_path
@@ -15,9 +18,11 @@ module Puppet::DataProviders::HieraSupport
   # @param key [String] The key to lookup
   # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
   # @param merge [Puppet::Pops::MergeStrategy,String,Hash<String,Object>,nil] Merge strategy or hash with strategy and options
-  #
-  # @api public
   def unchecked_lookup(key, lookup_invocation, merge)
+    unless Puppet[:strict] == :off
+      Puppet.warn_once(:deprecation, 'Puppet::DataProviders::HieraSupport',
+      'Puppet::DataProviders::HieraSupport is deprecated and will be removed in the next major version of Puppet')
+    end
     lookup_invocation.with(:data_provider, self) do
       merge_strategy = Puppet::Pops::MergeStrategy.strategy(merge)
       lookup_invocation.with(:merge, merge_strategy) do

@@ -42,18 +42,21 @@ class Puppet::Pops::Functions::Function
   # @api public
   def call(scope, *args, &block)
     begin
-      self.class.dispatcher.dispatch(self, scope, args, &block)
+      result = catch(:return) do
+        return self.class.dispatcher.dispatch(self, scope, args, &block)
+      end
+      return result.value
     rescue Puppet::Pops::Evaluator::Next => jumper
       begin
         throw :next, jumper.value
       rescue Puppet::Parser::Scope::UNCAUGHT_THROW_EXCEPTION => uncaught
-        raise ArgumentError, "Use of 'next()' from context where this is illegal"
+        raise Puppet::ParseError.new("next() from context where this is illegal", jumper.file, jumper.line)
       end
     rescue Puppet::Pops::Evaluator::Return => jumper
       begin
-        throw :return, jumper.value
+        throw :return, jumper
       rescue Puppet::Parser::Scope::UNCAUGHT_THROW_EXCEPTION => uncaught
-        raise ArgumentError, "Use of 'return()' from context where this is illegal"
+        raise Puppet::ParseError.new("return() from context where this is illegal", jumper.file, jumper.line)
       end
     end
   end
@@ -123,7 +126,7 @@ class Puppet::Pops::Functions::Function
     # Call via 3x API
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
     # NOTE: Passing an empty string last converts nil/:undef to empty string
-    result = scope.send(func_3x, Puppet::Pops::Evaluator::Runtime3Converter.map_args(args, loader_scope, ''), &block)
+    result = scope.send(func_3x, Puppet::Pops::Evaluator::Runtime3FunctionArgumentConverter.map_args(args, loader_scope, ''), &block)
 
     # Prevent non r-value functions from leaking their result (they are not written to care about this)
     Puppet::Parser::Functions.rvalue?(function_name) ? result : nil
