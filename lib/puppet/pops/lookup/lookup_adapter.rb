@@ -63,6 +63,13 @@ class LookupAdapter < DataAdapter
 
   def lookup_global(key, lookup_invocation, merge_strategy)
     terminus = Puppet[:data_binding_terminus]
+
+    # If global lookup is disabled, immediately report as not found
+    if terminus == 'none' || terminus.nil? || terminus == ''
+      lookup_invocation.report_not_found(name)
+      throw :no_such_key
+    end
+
     lookup_invocation.with(:global, terminus) do
       catch(:no_such_key) do
         return lookup_invocation.report_found(key, Puppet::DataBinding.indirection.find(key.root_key,
