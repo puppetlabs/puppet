@@ -530,11 +530,6 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
       run_in_catalog(resource)
     end
 
-    it "should detect out of sync options" do
-      resource.provider.property_hash[:live_options] = "foo";
-      expect(resource.parameters[:options].insync?('soft')).to eq(false);
-    end
-
     it "should umount before flushing changes to disk" do
       syncorder = sequence('syncorder')
 
