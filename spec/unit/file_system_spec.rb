@@ -25,14 +25,18 @@ describe "Puppet::FileSystem" do
   end
 
   context "#open" do
-    it "uses a default mode of 100644, the same as File.open, when specifying a nil mode" do
+    it "uses the same default mode as File.open, when specifying a nil mode (umask used on non-Windows)" do
       file = tmpfile('file_to_update')
       expect(Puppet::FileSystem.exist?(file)).to be_falsey
 
       Puppet::FileSystem.open(file, nil, 'a') { |fh| fh.write('') }
 
-      # default mode of 0644 is applied
-      expect(File.stat(file).mode.to_s(8)).to eq('100644')
+      expected_perms = Puppet::Util::Platform.windows? ?
+        # default Windows mode based on temp file storage
+        '2000700' :
+        # default mode is applied. 100 == 'regular file'
+        '100' + (666 - File.umask.to_s(8).to_i).to_s
+      expect(Puppet::FileSystem.stat(file).mode.to_s(8)).to eq(expected_perms)
 
       default_file = tmpfile('file_to_update2')
       expect(Puppet::FileSystem.exist?(default_file)).to be_falsey
@@ -40,7 +44,7 @@ describe "Puppet::FileSystem" do
       File.open(default_file, 'a') { |fh| fh.write('') }
 
       # which matches the behavior of File.open
-      expect(File.stat(file).mode).to eq(File.stat(default_file).mode)
+      expect(Puppet::FileSystem.stat(file).mode).to eq(Puppet::FileSystem.stat(default_file).mode)
     end
 
     it "can accept an octal mode integer" do
@@ -48,6 +52,17 @@ describe "Puppet::FileSystem" do
       # NOTE: 777 here returns 755, but due to Ruby?
       Puppet::FileSystem.open(file, 0444, 'a') { |fh| fh.write('') }
 
+      # Behavior may change in the future on Windows, to *actually* change perms
+      # but for now, setting a mode doesn't touch them
+      expected_perms = Puppet::Util::Platform.windows? ? '2000700' : '100444'
+      expect(Puppet::FileSystem.stat(file).mode.to_s(8)).to eq(expected_perms)
+
+      # On Windows, 0444 happens to round-trip properly (most octals *do not*)
+      # Setting a mode controls file attribute setting (like archive, read-only, etc)
+      # For Ruby on Windows, the leading 4 sets the read-only file attribute
+      # The GetFileInformationByHandle API returns an attributes value that is
+      # a bitmask of Windows File Attribute Constants at
+      # https://msdn.microsoft.com/en-us/library/windows/desktop/gg258117(v=vs.85).aspx
       expect(File.stat(file).mode.to_s(8)).to eq('100444')
     end
 
