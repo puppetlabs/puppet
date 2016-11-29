@@ -17,7 +17,7 @@ describe Puppet::Type.type(:package).provider(:aptrpm) do
     end
 
     def rpm_args
-      ['-q', 'faff', '--nosignature', '--nodigest', '--qf', "%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\\n"]
+      ['-q', 'faff', '--nosignature', '--nodigest', '--qf', "'%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\\n'"]
     end
 
     def rpm(args = rpm_args)
