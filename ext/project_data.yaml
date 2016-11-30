@@ -21,7 +21,7 @@ gem_runtime_dependencies:
   hiera: ['>= 2.0', '< 4']
   json_pure: '~> 1.8'
   semantic_puppet: ['>= 0.1.3', '< 2']
-  gettext-setup: '~> 0.6'
+  gettext-setup: '~> 0.8'
 gem_rdoc_options:
   - --title
   - "Puppet - Configuration Management"

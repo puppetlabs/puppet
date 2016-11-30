@@ -55,7 +55,7 @@ module Puppet
     end
 
     if locale_path
-      GettextSetup.initialize(locale_path)
+      GettextSetup.initialize(locale_path, :file_format => :mo)
       FastGettext.locale = GettextSetup.negotiate_locale(Locale.current.language)
     end
 
