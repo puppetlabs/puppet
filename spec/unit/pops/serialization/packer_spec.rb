@@ -113,18 +113,18 @@ describe "the Puppet::Pops::Serialization when using #{packer_module.name}" do
     end
 
     it 'Version' do
-      val = SemanticPuppet::Version.parse('1.2.3-alpha2')
+      val = Semantic::Version.parse('1.2.3-alpha2')
       write(val)
       val2 = read
-      expect(val2).to be_a(SemanticPuppet::Version)
+      expect(val2).to be_a(Semantic::Version)
       expect(val2).to eql(val)
     end
 
     it 'VersionRange' do
-      val = SemanticPuppet::VersionRange.parse('>=1.2.3-alpha2 <1.2.4')
+      val = Semantic::VersionRange.parse('>=1.2.3-alpha2 <1.2.4')
       write(val)
       val2 = read
-      expect(val2).to be_a(SemanticPuppet::VersionRange)
+      expect(val2).to be_a(Semantic::VersionRange)
       expect(val2).to eql(val)
     end
 

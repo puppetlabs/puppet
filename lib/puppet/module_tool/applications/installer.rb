@@ -34,19 +34,19 @@ module Puppet::ModuleTool
           release = local_tarball_source.release
           @name = release.name
           options[:version] = release.version.to_s
-          SemanticPuppet::Dependency.add_source(local_tarball_source)
+          Semantic::Dependency.add_source(local_tarball_source)
 
           # If we're operating on a local tarball and ignoring dependencies, we
           # don't need to search any additional sources.  This will cut down on
           # unnecessary network traffic.
           unless @ignore_dependencies
-            SemanticPuppet::Dependency.add_source(installed_modules_source)
-            SemanticPuppet::Dependency.add_source(module_repository)
+            Semantic::Dependency.add_source(installed_modules_source)
+            Semantic::Dependency.add_source(module_repository)
           end
 
         else
-          SemanticPuppet::Dependency.add_source(installed_modules_source) unless forced?
-          SemanticPuppet::Dependency.add_source(module_repository)
+          Semantic::Dependency.add_source(installed_modules_source) unless forced?
+          Semantic::Dependency.add_source(module_repository)
         end
       end
 
@@ -59,7 +59,7 @@ module Puppet::ModuleTool
         begin
           if installed_module = installed_modules[name]
             unless forced?
-              if SemanticPuppet::VersionRange.parse(version).include? installed_module.version
+              if Semantic::VersionRange.parse(version).include? installed_module.version
                 results[:result] = :noop
                 results[:version] = installed_module.version
                 return results
@@ -103,7 +103,7 @@ module Puppet::ModuleTool
               # locking it to upgrades within the same major version.
               installed_range = ">=#{version} #{version.major}.x"
               graph.add_constraint('installed', mod, installed_range) do |node|
-                SemanticPuppet::VersionRange.parse(installed_range).include? node.version
+                Semantic::VersionRange.parse(installed_range).include? node.version
               end
 
               release.mod.dependencies.each do |dep|
@@ -111,7 +111,7 @@ module Puppet::ModuleTool
 
                 range = dep['version_requirement']
                 graph.add_constraint("#{mod} constraint", dep_name, range) do |node|
-                  SemanticPuppet::VersionRange.parse(range).include? node.version
+                  Semantic::VersionRange.parse(range).include? node.version
                 end
               end
             end
@@ -125,8 +125,8 @@ module Puppet::ModuleTool
 
           begin
             Puppet.info "Resolving dependencies ..."
-            releases = SemanticPuppet::Dependency.resolve(graph)
-          rescue SemanticPuppet::Dependency::UnsatisfiableGraph
+            releases = Semantic::Dependency.resolve(graph)
+          rescue Semantic::Dependency::UnsatisfiableGraph
             raise NoVersionsSatisfyError, results.merge(:requested_name => name)
           end
 
@@ -205,15 +205,15 @@ module Puppet::ModuleTool
       end
 
       def build_single_module_graph(name, version)
-        range = SemanticPuppet::VersionRange.parse(version)
-        graph = SemanticPuppet::Dependency::Graph.new(name => range)
-        releases = SemanticPuppet::Dependency.fetch_releases(name)
+        range = Semantic::VersionRange.parse(version)
+        graph = Semantic::Dependency::Graph.new(name => range)
+        releases = Semantic::Dependency.fetch_releases(name)
         releases.each { |release| release.dependencies.clear }
         graph << releases
       end
 
       def build_dependency_graph(name, version)
-        SemanticPuppet::Dependency.query(name => version)
+        Semantic::Dependency.query(name => version)
       end
 
       def build_install_graph(release, installed, graphed = [])

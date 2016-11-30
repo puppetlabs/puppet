@@ -82,7 +82,7 @@ describe 'The type factory' do
     end
 
     it 'sem_ver(r1, r2) returns constrained PSemVerType' do
-      expect(TypeFactory.sem_ver('1.x', '3.x').ranges).to include(SemanticPuppet::VersionRange.parse('1.x'), SemanticPuppet::VersionRange.parse('3.x'))
+      expect(TypeFactory.sem_ver('1.x', '3.x').ranges).to include(Semantic::VersionRange.parse('1.x'), Semantic::VersionRange.parse('3.x'))
     end
 
     it 'sem_ver_range() returns PSemVerRangeType' do

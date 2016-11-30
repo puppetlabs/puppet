@@ -31,7 +31,7 @@ module PuppetSpec
         if options.nil?
           expect(release).to be_nil
         else
-          from = options.keys.find { |k| k.nil? || k.is_a?(SemanticPuppet::Version) }
+          from = options.keys.find { |k| k.nil? || k.is_a?(Semantic::Version) }
           to   = options.delete(from)
 
           if to or from
@@ -49,7 +49,7 @@ module PuppetSpec
       end
 
       def v(str)
-        SemanticPuppet::Version.parse(str)
+        Semantic::Version.parse(str)
       end
     end
   end
