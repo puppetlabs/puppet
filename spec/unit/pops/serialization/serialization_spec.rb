@@ -121,19 +121,19 @@ module Serialization
 
     it 'Version' do
       # It does succeed on rare occasions, so we need to repeat
-      val = SemanticPuppet::Version.parse('1.2.3-alpha2')
+      val = Semantic::Version.parse('1.2.3-alpha2')
       write(val)
       val2 = read
-      expect(val2).to be_a(SemanticPuppet::Version)
+      expect(val2).to be_a(Semantic::Version)
       expect(val2).to eql(val)
     end
 
     it 'VersionRange' do
       # It does succeed on rare occasions, so we need to repeat
-      val = SemanticPuppet::VersionRange.parse('>=1.2.3-alpha2 <1.2.4')
+      val = Semantic::VersionRange.parse('>=1.2.3-alpha2 <1.2.4')
       write(val)
       val2 = read
-      expect(val2).to be_a(SemanticPuppet::VersionRange)
+      expect(val2).to be_a(Semantic::VersionRange)
       expect(val2).to eql(val)
     end
 
@@ -232,8 +232,8 @@ module Serialization
       val = [
         Time::Timespan.from_fields(false, 3, 12, 40, 31, 123),
         Time::Timestamp.now,
-        SemanticPuppet::Version.parse('1.2.3-alpha2'),
-        SemanticPuppet::VersionRange.parse('>=1.2.3-alpha2 <1.2.4'),
+        Semantic::Version.parse('1.2.3-alpha2'),
+        Semantic::VersionRange.parse('>=1.2.3-alpha2 <1.2.4'),
         Types::PBinaryType::Binary.from_base64('w5ZzdGVuIG1lZCByw7ZzdGVuCg==')
       ]
       write(val)
@@ -246,8 +246,8 @@ module Serialization
       val = {
         'duration' => Time::Timespan.from_fields(false, 3, 12, 40, 31, 123),
         'time' => Time::Timestamp.now,
-        'version' => SemanticPuppet::Version.parse('1.2.3-alpha2'),
-        'range' => SemanticPuppet::VersionRange.parse('>=1.2.3-alpha2 <1.2.4'),
+        'version' => Semantic::Version.parse('1.2.3-alpha2'),
+        'range' => Semantic::VersionRange.parse('>=1.2.3-alpha2 <1.2.4'),
         'binary' => Types::PBinaryType::Binary.from_base64('w5ZzdGVuIG1lZCByw7ZzdGVuCg==')
       }
       write(val)

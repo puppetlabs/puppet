@@ -170,11 +170,11 @@ class AbstractWriter
       build_payload { |ep| nsecs = o.nsecs; ep.write(nsecs / 1000000000); ep.write(nsecs % 1000000000) }
     end
 
-    register_type(Extension::VERSION, SemanticPuppet::Version) do |o|
+    register_type(Extension::VERSION, Semantic::Version) do |o|
       build_payload { |ep| ep.write(o.to_s) }
     end
 
-    register_type(Extension::VERSION_RANGE, SemanticPuppet::VersionRange) do |o|
+    register_type(Extension::VERSION_RANGE, Semantic::VersionRange) do |o|
       build_payload { |ep| ep.write(o.to_s) }
     end
 
