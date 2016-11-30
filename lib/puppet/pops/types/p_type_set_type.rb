@@ -216,27 +216,18 @@ class PTypeSetType < PMetaType
   # @return [String] the name by which the type is referenced within this type set
   #
   # @api private
-  def name_for(t)
+  def name_for(t, default_name)
     key = @types.key(t)
     if key.nil?
       qname = t.name
       if @references.empty?
-        qname
+        default_name
       else
-        segments = qname.split(TypeFormatter::NAME_SEGMENT_SEPARATOR)
-        first = segments[0]
-        type_set = @references[first]
-        if type_set.nil?
-          qname
-        else
-          if segments.size == 1
-            qname
-          else
-            sub_name = type_set.name_for(t)
-            sub_name = "#{first}::#{sub_name}" unless sub_name == qname
-            sub_name
-          end
+        @references.each_pair do |ref_key, ref|
+          ref_name = ref.type_set.name_for(t, nil)
+          return "#{ref_key}::#{ref_name}" unless ref_name.nil?
         end
+        default_name
       end
     else
       key

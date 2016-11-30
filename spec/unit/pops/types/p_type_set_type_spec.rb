@@ -419,6 +419,35 @@ module Puppet::Pops
           OBJECT
         end
       end
+
+      it '#name_for method reports the name of deeply nested type correctly' do
+        tv = parse_type_set('Vehicles', <<-OBJECT)
+            version => '1.0.0',
+            pcore_version => '1.0.0',
+            types => { Car => Object[{}] }
+        OBJECT
+        tt = parse_type_set('Transports', <<-OBJECT)
+            version => '1.0.0',
+            pcore_version => '1.0.0',
+            references => {
+              Vecs => {
+                name => 'Vehicles',
+                version_range => '1.x'
+              }
+            }
+        OBJECT
+        ts = parse_type_set('TheSet', <<-OBJECT)
+            version => '1.0.0',
+            pcore_version => '1.0.0',
+            references => {
+              T => {
+                name => 'Transports',
+                version_range => '1.x'
+              }
+            }
+        OBJECT
+        expect(ts.name_for(tv['Car'], nil)).to eql('T::Vecs::Car')
+      end
     end
   end
 end

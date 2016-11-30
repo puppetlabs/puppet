@@ -123,6 +123,10 @@ end
       expect(s.string(f.string('a'))).to eq('String')
     end
 
+    it "should yield 'String['a']' for PStringType with value if printed with debug_string" do
+      expect(s.debug_string(f.string('a'))).to eq("String['a']")
+    end
+
     it "should yield 'String' and from/to for PStringType" do
       expect(s.string(f.string(f.range(1,1)))).to eq('String[1, 1]')
       expect(s.string(f.string(f.range(1,2)))).to eq('String[1, 2]')
