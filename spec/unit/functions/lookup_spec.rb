@@ -1242,8 +1242,8 @@ EOS
               collect_notices("notice('success')") do |scope|
                 expect(lookup_func.call(scope, 'mod_a::sensitive')).to be_a(Puppet::Pops::Types::PSensitiveType::Sensitive)
                 expect(lookup_func.call(scope, 'mod_a::type')).to be_a(Puppet::Pops::Types::PObjectType)
-                expect(lookup_func.call(scope, 'mod_a::version')).to eql(Semantic::Version.parse('3.4.1'))
-                expect(lookup_func.call(scope, 'mod_a::version_range')).to eql(Semantic::VersionRange.parse('>=3.4.1'))
+                expect(lookup_func.call(scope, 'mod_a::version')).to eql(SemanticPuppet::Version.parse('3.4.1'))
+                expect(lookup_func.call(scope, 'mod_a::version_range')).to eql(SemanticPuppet::VersionRange.parse('>=3.4.1'))
                 expect(lookup_func.call(scope, 'mod_a::timestamp')).to eql(Puppet::Pops::Time::Timestamp.parse('1994-03-25T19:30:00'))
                 expect(lookup_func.call(scope, 'mod_a::timespan')).to eql(Puppet::Pops::Time::Timespan.parse('3-10:00:00'))
               end

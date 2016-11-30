@@ -21,8 +21,8 @@ module Puppet::ModuleTool
         @ignore_changes      = forced? || options[:ignore_changes]
         @ignore_dependencies = forced? || options[:ignore_dependencies]
 
-        Semantic::Dependency.add_source(installed_modules_source)
-        Semantic::Dependency.add_source(module_repository)
+        SemanticPuppet::Dependency.add_source(installed_modules_source)
+        SemanticPuppet::Dependency.add_source(module_repository)
       end
 
       def run
@@ -48,7 +48,7 @@ module Puppet::ModuleTool
 
           installed_release = installed_modules[name]
 
-          # `priority` is an attribute of a `Semantic::Dependency::Source`,
+          # `priority` is an attribute of a `SemanticPuppet::Dependency::Source`,
           # which is delegated through `ModuleRelease` instances for the sake of
           # comparison (sorting). By default, the `InstalledModules` source has
           # a priority of 10 (making it the most preferable source, so that
@@ -66,7 +66,7 @@ module Puppet::ModuleTool
           end
 
           mod = installed_release.mod
-          results[:installed_version] = Semantic::Version.parse(mod.version)
+          results[:installed_version] = SemanticPuppet::Version.parse(mod.version)
           dir = Pathname.new(mod.modulepath)
 
           vstring = mod.version ? "v#{mod.version}" : '???'
@@ -90,7 +90,7 @@ module Puppet::ModuleTool
           if available_versions.empty?
             raise NoCandidateReleasesError, results.merge(:module_name => name, :source => module_repository.host)
           elsif results[:requested_version] != :latest
-            requested = Semantic::VersionRange.parse(results[:requested_version])
+            requested = SemanticPuppet::VersionRange.parse(results[:requested_version])
             unless available_versions.any? {|m| requested.include? m.version}
               raise NoCandidateReleasesError, results.merge(:module_name => name, :source => module_repository.host)
             end
@@ -119,7 +119,7 @@ module Puppet::ModuleTool
               # module, locking it to upgrades within the same major version.
               installed_range = ">=#{version} #{version.major}.x"
               graph.add_constraint('installed', installed_module, installed_range) do |node|
-                Semantic::VersionRange.parse(installed_range).include? node.version
+                SemanticPuppet::VersionRange.parse(installed_range).include? node.version
               end
 
               release.mod.dependencies.each do |dep|
@@ -127,7 +127,7 @@ module Puppet::ModuleTool
 
                 range = dep['version_requirement']
                 graph.add_constraint("#{installed_module} constraint", dep_name, range) do |node|
-                  Semantic::VersionRange.parse(range).include? node.version
+                  SemanticPuppet::VersionRange.parse(range).include? node.version
                 end
               end
             end
@@ -135,8 +135,8 @@ module Puppet::ModuleTool
 
           begin
             Puppet.info "Resolving dependencies ..."
-            releases = Semantic::Dependency.resolve(graph)
-          rescue Semantic::Dependency::UnsatisfiableGraph
+            releases = SemanticPuppet::Dependency.resolve(graph)
+          rescue SemanticPuppet::Dependency::UnsatisfiableGraph
             raise NoVersionsSatisfyError, results.merge(:requested_name => name)
           end
 
@@ -227,15 +227,15 @@ module Puppet::ModuleTool
       end
 
       def build_single_module_graph(name, version)
-        range = Semantic::VersionRange.parse(version)
-        graph = Semantic::Dependency::Graph.new(name => range)
-        releases = Semantic::Dependency.fetch_releases(name)
+        range = SemanticPuppet::VersionRange.parse(version)
+        graph = SemanticPuppet::Dependency::Graph.new(name => range)
+        releases = SemanticPuppet::Dependency.fetch_releases(name)
         releases.each { |release| release.dependencies.clear }
         graph << releases
       end
 
       def build_dependency_graph(name, version)
-        Semantic::Dependency.query(name => version)
+        SemanticPuppet::Dependency.query(name => version)
       end
 
       def build_install_graph(release, installed, graphed = [])

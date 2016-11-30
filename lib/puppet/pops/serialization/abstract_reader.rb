@@ -146,11 +146,11 @@ class AbstractReader
     end
 
     register_type(Extension::VERSION) do |data|
-      read_payload(data) { |ep| Semantic::Version.parse(ep.read) }
+      read_payload(data) { |ep| SemanticPuppet::Version.parse(ep.read) }
     end
 
     register_type(Extension::VERSION_RANGE) do |data|
-      read_payload(data) { |ep| Semantic::VersionRange.parse(ep.read) }
+      read_payload(data) { |ep| SemanticPuppet::VersionRange.parse(ep.read) }
     end
 
     register_type(Extension::SENSITIVE) do |data|
