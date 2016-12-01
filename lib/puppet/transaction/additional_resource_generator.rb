@@ -79,6 +79,13 @@ class Puppet::Transaction::AdditionalResourceGenerator
 
   def contain_generated_resources_in(resource, made)
     sentinel = Puppet::Type.type(:whit).new(:name => "completed_#{resource.title}", :catalog => resource.catalog)
+    # Tag the completed whit with all of the tags of the generating resource
+    # except the type name to allow event propogation to succeed beyond the whit
+    # "boundary" when filtering resources with tags. We include auto-generated
+    # tags such as the type name to support implicit filtering as well as
+    # explicit. Note that resource#tags returns a duplicate of the resource's
+    # tags.
+    sentinel.tag(*resource.tags)
     priority = @prioritizer.generate_priority_contained_in(resource, sentinel)
     @relationship_graph.add_vertex(sentinel, priority)
 

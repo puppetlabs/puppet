@@ -266,6 +266,80 @@ describe Puppet::Transaction do
     expect(Puppet::FileSystem.exist?(newfile)).to be_truthy
   end
 
+  # Ensure when resources have been generated with eval_generate that event
+  # propagation still works when filtering with tags
+  context "when filtering with tags" do
+    context "when resources are dependent on dynamically generated resources" do
+      it "should trigger (only) appropriately tagged dependent resources" do
+        source = dir_containing('sourcedir', {'foo' => 'bar'})
+        target = tmpdir('targetdir')
+        file1 = tmpfile("file1")
+        file2 = tmpfile("file2")
+
+        file = Puppet::Type.type(:file).new(
+          :path    => target,
+          :source  => source,
+          :ensure  => :present,
+          :recurse => true,
+          :tag     => "foo_tag",
+        )
+
+        exec1 = Puppet::Type.type(:exec).new(
+          :path        => ENV["PATH"],
+          :command     => touch(file1),
+          :refreshonly => true,
+          :subscribe   => file,
+          :tag         => "foo_tag",
+        )
+
+        exec2 = Puppet::Type.type(:exec).new(
+          :path        => ENV["PATH"],
+          :command     => touch(file2),
+          :refreshonly => true,
+          :subscribe   => file,
+        )
+
+        Puppet[:tags] = "foo_tag"
+        catalog = mk_catalog(file, exec1, exec2)
+        catalog.apply
+        expect(Puppet::FileSystem.exist?(file1)).to be_truthy
+        expect(Puppet::FileSystem.exist?(file2)).to be_falsey
+      end
+
+      it "should trigger implicitly tagged dependent resources, ie via type name" do
+        file1 = tmpfile("file1")
+        file2 = tmpfile("file2")
+
+        exec1 = Puppet::Type.type(:exec).new(
+          :name        => "exec1",
+          :path        => ENV["PATH"],
+          :command     => touch(file1),
+        )
+
+        exec1.stubs(:eval_generate).returns(
+          [ (Puppet::Type.type(:notify).new :name => "eval1_notify")]
+        )
+
+        exec2 = Puppet::Type.type(:exec).new(
+          :name        => "exec2",
+          :path        => ENV["PATH"],
+          :command     => touch(file2),
+          :refreshonly => true,
+          :subscribe   => exec1,
+        )
+        exec2.stubs(:eval_generate).returns(
+          [ (Puppet::Type.type(:notify).new :name => "eval2_notify")]
+        )
+
+        Puppet[:tags] = "exec"
+        catalog = mk_catalog(exec1, exec2)
+        catalog.apply
+        expect(Puppet::FileSystem.exist?(file1)).to be_truthy
+        expect(Puppet::FileSystem.exist?(file2)).to be_truthy
+      end
+    end
+  end
+
   describe "skipping resources" do
     let(:fname) { tmpfile("exec") }
 
