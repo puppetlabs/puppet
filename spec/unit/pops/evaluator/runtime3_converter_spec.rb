@@ -26,27 +26,27 @@ describe 'when converting to 3.x' do
   end
 
   it 'does not convert a SemVer instance to string' do
-    v = Semantic::Version.parse('1.0.0')
+    v = SemanticPuppet::Version.parse('1.0.0')
     expect(converter.convert(v, {}, nil)).to equal(v)
   end
 
   it 'converts the symbol :undef to the undef value' do
-    v = Semantic::Version.parse('1.0.0')
+    v = SemanticPuppet::Version.parse('1.0.0')
     expect(converter.convert(:undef, {}, 'undef value')).to eql('undef value')
   end
 
   it 'converts the nil to the undef value' do
-    v = Semantic::Version.parse('1.0.0')
+    v = SemanticPuppet::Version.parse('1.0.0')
     expect(converter.convert(nil, {}, 'undef value')).to eql('undef value')
   end
 
   it 'does not convert a symbol nested in an array' do
-    v = Semantic::Version.parse('1.0.0')
+    v = SemanticPuppet::Version.parse('1.0.0')
     expect(converter.convert({'foo' => :undef}, {}, 'undef value')).to eql({'foo' => :undef})
   end
 
   it 'converts nil to :undef when nested in an array' do
-    v = Semantic::Version.parse('1.0.0')
+    v = SemanticPuppet::Version.parse('1.0.0')
     expect(converter.convert({'foo' => nil}, {}, 'undef value')).to eql({'foo' => :undef})
   end
 
@@ -56,12 +56,12 @@ describe 'when converting to 3.x' do
   end
 
   it 'does not convert a Version instance to string' do
-    v = Semantic::Version.parse('1.0.0')
+    v = SemanticPuppet::Version.parse('1.0.0')
     expect(converter.convert(v, {}, nil)).to equal(v)
   end
 
   it 'does not convert a VersionRange instance to string' do
-    v = Semantic::VersionRange.parse('>=1.0.0')
+    v = SemanticPuppet::VersionRange.parse('>=1.0.0')
     expect(converter.convert(v, {}, nil)).to equal(v)
   end
 
@@ -95,13 +95,13 @@ describe 'when converting to 3.x' do
     end
 
     it 'converts a Version instance to string' do
-      c = converter.convert(Semantic::Version.parse('1.0.0'), {}, nil)
+      c = converter.convert(SemanticPuppet::Version.parse('1.0.0'), {}, nil)
       expect(c).to be_a(String)
       expect(c).to eql('1.0.0')
     end
 
     it 'converts a VersionRange instance to string' do
-      c = converter.convert(Semantic::VersionRange.parse('>=1.0.0'), {}, nil)
+      c = converter.convert(SemanticPuppet::VersionRange.parse('>=1.0.0'), {}, nil)
       expect(c).to be_a(String)
       expect(c).to eql('>=1.0.0')
     end
