@@ -22,6 +22,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   defaultfor :osfamily => :redhat, :operatingsystemmajrelease => "7"
   defaultfor :osfamily => :redhat, :operatingsystem => :fedora
   defaultfor :osfamily => :suse
+  defaultfor :osfamily => :coreos
   defaultfor :operatingsystem => :debian, :operatingsystemmajrelease => "8"
   defaultfor :operatingsystem => :ubuntu, :operatingsystemmajrelease => ["15.04","15.10","16.04","16.10"]
   defaultfor :operatingsystem => :cumuluslinux, :operatingsystemmajrelease => ["3"]
