@@ -30,6 +30,8 @@ gem "rake", "10.1.1", :require => false
 # Hiera has an unbound dependency on json_pure
 # json_pure 2.0.2+ officially requires Ruby >= 2.0, but should have specified that in 2.0
 gem 'json_pure', '~> 1.8', :require => false
+# i18n support (gettext-setup and dependencies)
+gem 'gettext-setup', '~> 0.6', :require => false
 
 group(:development, :test) do
   gem "rspec", "~> 3.1", :require => false

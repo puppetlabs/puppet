@@ -19,6 +19,20 @@ require 'puppet/external/pson/common'
 require 'puppet/external/pson/version'
 require 'puppet/external/pson/pure'
 
+## It would be really nice to use Puppet.features here, but we have to
+## do gettext setup before all of that machinery is loaded. Instead,
+## we will use a simple boolean to handle gettext availability in this
+## file, and drop in a "stub" translation function here.
+begin
+  require 'gettext-setup'
+  GETTEXT_AVAILABLE=true
+rescue LoadError
+  def _(msg)
+    msg
+  end
+  GETTEXT_AVAILABLE=false
+end
+
 #------------------------------------------------------------
 # the top-level module
 #
@@ -36,6 +50,29 @@ module Puppet
   require 'puppet/environments'
 
   class << self
+    if GETTEXT_AVAILABLE
+      # TODO: Handle the rubygems case?
+      local_locale_path = File.absolute_path('../locales', File.dirname(__FILE__))
+      posix_system_locale_path = File.absolute_path('../../../share/puppet/locale', File.dirname(__FILE__))
+      win32_system_locale_path = File.absolute_path('../../../../../puppet/share/puppet/locale', File.dirname(__FILE__))
+
+      if File.exist?(local_locale_path)
+        locale_path = local_locale_path
+      elsif File.exist?(win32_system_locale_path)
+        locale_path = win32_system_locale_path
+      elsif File.exist?(posix_system_locale_path)
+        locale_path = posix_system_locale_path
+      else
+        # We couldn't load our locale data. Possibly we're loaded as a rubygem or something?
+        locale_path = nil
+      end
+
+      if locale_path
+        GettextSetup.initialize(locale_path)
+        FastGettext.locale = GettextSetup.negotiate_locale(ENV["LANG"])
+      end
+    end
+
     include Puppet::Util
     attr_reader :features
   end
