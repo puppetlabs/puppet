@@ -108,9 +108,13 @@ def do_man(man, strip = 'man/')
     FileUtils.makedirs(om, {:mode => 0755, :verbose => true})
     FileUtils.chmod(0755, om)
     FileUtils.install(mf, omf, {:mode => 0644, :preserve => true, :verbose => true})
-    gzip = %x{which gzip}
-    gzip.chomp!
-    %x{#{gzip} -f #{omf}}
+    # Solaris does not support gzipped man pages. When called with
+    # --no-check-prereqs/without facter the default gzip behavior still applies
+    unless $operatingsystem == "Solaris"
+      gzip = %x{which gzip}
+      gzip.chomp!
+      %x{#{gzip} -f #{omf}}
+    end
   end
 end
 
