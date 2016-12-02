@@ -38,10 +38,13 @@ module Puppet
   require 'puppet/environments'
 
   class << self
-    # TODO: (PUP-6958) Handle the rubygems case
+    # e.g. ~/code/puppet/locales
     local_locale_path = File.absolute_path('../locales', File.dirname(__FILE__))
+    # e.g. /opt/puppetlabs/puppet/share/locale
     posix_system_locale_path = File.absolute_path('../../../share/locale', File.dirname(__FILE__))
+    # e.g. C:\Program Files\Puppet Labs\Puppet\puppet\share\locale
     win32_system_locale_path = File.absolute_path('../../../../../puppet/share/locale', File.dirname(__FILE__))
+    # TODO: (PUP-6958) Handle the rubygems case
 
     if File.exist?(local_locale_path)
       locale_path = local_locale_path
