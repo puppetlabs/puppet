@@ -526,7 +526,7 @@ EOS
           rescue Puppet::Error
           end
           expect(lookup_invocation.explainer.explain).to include(<<EOS)
-  Module "abc" Data Provider (lookup version 5)
+  Module "abc" Data Provider (hiera version 5)
     deprecated API function "abc::data"
       No such key: "abc::x"
 EOS
@@ -542,13 +542,13 @@ Searching for "abc::e"
   Merge strategy deep
     Data Binding "hiera"
       No such key: "abc::e"
-    Environment Data Provider (lookup version 5)
+    Environment Data Provider (hiera version 5)
       deprecated API function "environment::data"
         Found key: "abc::e" value: {
           "k1" => "env_e1",
           "k3" => "env_e3"
         }
-    Module "abc" Data Provider (lookup version 5)
+    Module "abc" Data Provider (hiera version 5)
       deprecated API function "abc::data"
         Found key: "abc::e" value: {
           "k1" => "module_e1",
@@ -589,7 +589,7 @@ Searching for "hieraprovider::test::not_found"
   Merge strategy deep
     Data Binding "hiera"
       No such key: "hieraprovider::test::not_found"
-    Environment Data Provider (lookup version 5)
+    Environment Data Provider (hiera version 5)
       deprecated API function "environment::data"
         No such key: "hieraprovider::test::not_found"
     Module "hieraprovider" Data Provider (hiera version 4)
@@ -646,7 +646,7 @@ EOS
                     },
                     {
                       :type => :data_provider,
-                      :name => 'Environment Data Provider (lookup version 5)',
+                      :name => 'Environment Data Provider (hiera version 5)',
                       :branches => [
                         {
                           :type => :data_provider,
@@ -659,7 +659,7 @@ EOS
                     },
                     {
                       :type => :data_provider,
-                      :name => 'Module "abc" Data Provider (lookup version 5)',
+                      :name => 'Module "abc" Data Provider (hiera version 5)',
                       :module => 'abc',
                       :branches => [
                         {
@@ -720,7 +720,7 @@ EOS
         {
           env_name => {
             'modules' => {},
-            'lookup.yaml' => <<-YAML.unindent,
+            'hiera.yaml' => <<-YAML.unindent,
             ---
             version: 5
             hierarchy:
@@ -859,7 +859,7 @@ EOS
 
           it 'finds data in the environment and reports deprecation warning for environment.conf' do
             expect(lookup('a')).to eql('value a')
-            expect(warnings).to include(/Defining environment_data_provider='hiera' in environment.conf is deprecated. A 'lookup.yaml' file should be used instead/)
+            expect(warnings).to include(/Defining environment_data_provider='hiera' in environment.conf is deprecated. A 'hiera.yaml' file should be used instead/)
           end
 
           context 'and a hiera.yaml file' do
@@ -878,8 +878,8 @@ EOS
 
             it 'finds data in the environment and reports deprecation warnings for both environment.conf and hiera.yaml' do
               expect(lookup('a')).to eql('value a')
-              expect(warnings).to include(/Defining environment_data_provider='hiera' in environment.conf is deprecated. A 'lookup.yaml' file should be used instead/)
-              expect(warnings).to include(/Use of 'hiera.yaml' is deprecated. A 'lookup.yaml' should be used instead/)
+              expect(warnings).to include(/Defining environment_data_provider='hiera' in environment.conf is deprecated/)
+              expect(warnings).to include(/Use of 'hiera.yaml' version 4 is deprecated. It should be converted to version 5/)
             end
           end
         end
@@ -901,7 +901,7 @@ EOS
 
         it 'finds data in the environment and reports deprecation warning for environment.conf' do
           expect(lookup('a')).to eql('value a')
-          expect(warnings).to include(/Defining environment_data_provider='function' in environment.conf is deprecated. A 'lookup.yaml' file should be used instead/)
+          expect(warnings).to include(/Defining environment_data_provider='function' in environment.conf is deprecated. A 'hiera.yaml' file should be used instead/)
           expect(warnings).to include(/Using of legacy data provider function 'environment::data'. Please convert to a 'data_hash' function/)
         end
       end
@@ -932,7 +932,7 @@ EOS
             expect { lookup('mod_a::b') }.to raise_error(Puppet::DataBinding::LookupError, /did not find a value for the name 'mod_a::b'/)
           end
 
-          context "but an metadata.json with 'module_data_provider=hiera'" do
+          context "but a metadata.json with 'module_data_provider=hiera'" do
             let(:mod_a_files_1) { DeepMerge.deep_merge!(mod_a_files, 'mod_a' => { 'metadata.json' => <<-JSON.unindent }) }
                 {
                     "name": "example/mod_a",
@@ -952,7 +952,7 @@ EOS
 
             it 'finds data in the module and reports deprecation warning for metadata.json' do
               expect(lookup('mod_a::b')).to eql('value mod_a::b (from mod_a)')
-              expect(warnings).to include(/Defining "data_provider": "hiera" in metadata.json is deprecated. A 'lookup.yaml' file should be used instead/)
+              expect(warnings).to include(/Defining "data_provider": "hiera" in metadata.json is deprecated. A 'hiera.yaml' file should be used instead/)
             end
 
             context 'and a hiera.yaml file' do
@@ -971,8 +971,8 @@ EOS
 
               it 'finds data in the module and reports deprecation warnings for both metadata.json and hiera.yaml' do
                 expect(lookup('mod_a::b')).to eql('value mod_a::b (from mod_a)')
-                expect(warnings).to include(/Defining "data_provider": "hiera" in metadata.json is deprecated. A 'lookup.yaml' file should be used instead/)
-                expect(warnings).to include(/Use of 'hiera.yaml' is deprecated. A 'lookup.yaml' should be used instead/)
+                expect(warnings).to include(/Defining "data_provider": "hiera" in metadata.json is deprecated/)
+                expect(warnings).to include(/Use of 'hiera.yaml' version 4 is deprecated. It should be converted to version 5/)
               end
             end
           end
@@ -1016,7 +1016,7 @@ EOS
                   "mod_a::a.quoted.key": "value mod_a::a.quoted.key (from mod_a)"
                 YAML
                 },
-                'lookup.yaml' => <<-YAML.unindent,
+                'hiera.yaml' => <<-YAML.unindent,
                 ---
                 version: 5
                 hierarchy:
@@ -1175,7 +1175,7 @@ EOS
                   }
                 PUPPET
                 },
-                'lookup.yaml' => <<-YAML.unindent,
+                'hiera.yaml' => <<-YAML.unindent,
                 ---
                 version: 5
                 hierarchy:
@@ -1311,7 +1311,7 @@ EOS
                     }
                   }
                 },
-                'lookup.yaml' => <<-YAML.unindent,
+                'hiera.yaml' => <<-YAML.unindent,
                 ---
                 version: 5
                 hierarchy:

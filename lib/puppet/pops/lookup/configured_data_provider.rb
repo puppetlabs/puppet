@@ -1,4 +1,4 @@
-require_relative 'lookup_config'
+require_relative 'hiera_config'
 require_relative 'data_provider'
 require 'puppet/data_providers/hiera_config'
 
@@ -8,9 +8,13 @@ module Lookup
 class ConfiguredDataProvider
   include DataProvider
 
-  # @param config [LookupConfig,nil] the configuration
+  # @param config [HieraConfig,nil] the configuration
   def initialize(config = nil)
     @config = config
+  end
+
+  def config(lookup_invocation)
+    @config ||= HieraConfig.create(provider_root(lookup_invocation))
   end
 
   # @return [Pathname] the path to the configuration
@@ -59,18 +63,7 @@ class ConfiguredDataProvider
   private
 
   def data_providers(lookup_invocation)
-    if @config.nil?
-      config_path = provider_root(lookup_invocation)
-      # TODO: API 5.0, remove use of deprecated HieraConfig
-      if LookupConfig.config_exist?(config_path)
-        @config = LookupConfig.new(config_path)
-      elsif Puppet::DataProviders::HieraConfig.config_exist?(config_path)
-        @config = Puppet::DataProviders::HieraConfig.new(config_path)
-      else
-        @config = LookupConfig.new(config_path)
-      end
-    end
-    @data_providers ||= @config.create_configured_data_providers(lookup_invocation, self)
+    @data_providers ||= config(lookup_invocation).create_configured_data_providers(lookup_invocation, self)
   end
 end
 end

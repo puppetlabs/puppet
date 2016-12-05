@@ -206,15 +206,15 @@ class Puppet::Module
     @metadata_file = File.join(path, "metadata.json")
   end
 
-  def lookup_conf_file
-    unless defined?(@lookup_conf_file)
-       @lookup_conf_file = path.nil? ? nil : File.join(path, Puppet::Pops::Lookup::LookupConfig::CONFIG_FILE_NAME)
+  def hiera_conf_file
+    unless defined?(@hiera_conf_file)
+       @hiera_conf_file = path.nil? ? nil : File.join(path, Puppet::Pops::Lookup::HieraConfig::CONFIG_FILE_NAME)
     end
-    @lookup_conf_file
+    @hiera_conf_file
   end
 
-  def has_lookup_conf?
-    lookup_conf_file.nil? ? false : Puppet::FileSystem.exist?(lookup_conf_file)
+  def has_hiera_conf?
+    hiera_conf_file.nil? ? false : Puppet::FileSystem.exist?(hiera_conf_file)
   end
 
   def modulepath
