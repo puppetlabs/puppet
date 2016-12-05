@@ -83,6 +83,15 @@ class Invocation
     end
   end
 
+  # This method is overridden by the special Invocation used while resolving interpolations in a
+  # Hiera configuration file (hiera.yaml) where it's used for collecting and remembering the current
+  # values that the configuration was based on
+  #
+  # @api private
+  def remember_scope_lookup(key, value)
+    # Does nothing by default
+  end
+
   # The qualifier_type can be one of:
   # :global - qualifier is the data binding terminus name
   # :data_provider - qualifier a DataProvider instance

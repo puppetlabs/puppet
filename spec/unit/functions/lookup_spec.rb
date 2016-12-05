@@ -749,10 +749,12 @@ EOS
       let(:logs) { [] }
       let(:notices) { logs.select { |log| log.level == :notice }.map { |log| log.message } }
       let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
+      let(:debugs) { logs.select { |log| log.level == :debug }.map { |log| log.message } }
       let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(populated_env_dir, env_name, 'modules')]) }
       let(:environments) { Puppet::Environments::Directories.new(populated_env_dir, []) }
       let(:node) { Puppet::Node.new('test_lookup', :environment => env) }
       let(:compiler) { Puppet::Parser::Compiler.new(node) }
+      let(:lookup_func) { Puppet.lookup(:loaders).puppet_system_loader.load(:function, 'lookup') }
       let(:defaults) {
         {
           'mod_a::xd' => 'value mod_a::xd (from default)',
@@ -883,26 +885,63 @@ EOS
             end
           end
         end
+
+        context "but an environment.conf with 'environment_data_provider=function'" do
+          let(:environment_files) do
+            {
+              env_name => {
+                'environment.conf' => "environment_data_provider=function\n",
+                'functions' => { 'data.pp' => <<-PUPPET.unindent }
+                      function environment::data() {
+                        { 'a' => 'value a' }
+                      }
+                PUPPET
+              }
+            }
+          end
+
+          it 'finds data in the environment and reports deprecation warning for environment.conf' do
+            expect(lookup('a')).to eql('value a')
+            expect(warnings).to include(/Defining environment_data_provider='function' in environment.conf is deprecated. A 'hiera.yaml' file should be used instead/)
+            expect(warnings).to include(/Using of legacy data provider function 'environment::data'. Please convert to a 'data_hash' function/)
+          end
+        end
       end
 
-      context "but an environment.conf with 'environment_data_provider=function'" do
+      context 'that has interpolated paths configured' do
         let(:environment_files) do
           {
             env_name => {
-              'environment.conf' => "environment_data_provider=function\n",
-              'functions' => { 'data.pp' => <<-PUPPET.unindent }
-                    function environment::data() {
-                      { 'a' => 'value a' }
-                    }
-              PUPPET
+              'hiera.yaml' => <<-YAML.unindent,
+                ---
+                version: 5
+                hierarchy:
+                  - name: "Varying"
+                    data_hash: yaml_data
+                    path: "x%{::var}.yaml"
+                YAML
+              'modules' => {},
+              'data' => {
+                'x.yaml' => <<-YAML.unindent,
+                  y: value y from x
+                YAML
+                'x_d.yaml' => <<-YAML.unindent
+                  y: value y from x_d
+                YAML
+              }
             }
           }
         end
 
-        it 'finds data in the environment and reports deprecation warning for environment.conf' do
-          expect(lookup('a')).to eql('value a')
-          expect(warnings).to include(/Defining environment_data_provider='function' in environment.conf is deprecated. A 'hiera.yaml' file should be used instead/)
-          expect(warnings).to include(/Using of legacy data provider function 'environment::data'. Please convert to a 'data_hash' function/)
+        it 'reloads the configuration if interpolated values change' do
+          Puppet[:log_level] = 'debug'
+          collect_notices("notice('success')") do |scope|
+            expect(lookup_func.call(scope, 'y')).to eql('value y from x')
+            scope['var'] = '_d'
+            expect(lookup_func.call(scope, 'y')).to eql('value y from x_d')
+          end
+          expect(notices).to eql(['success'])
+          expect(debugs.any? { |m| m =~ /Hiera configuration recreated due to change of scope variables used in interpolation expressions/ }).to be_truthy
         end
       end
 
@@ -1234,10 +1273,6 @@ EOS
           end
 
           context 'and calling function via API' do
-            let(:lookup_func) do
-              Puppet.lookup(:loaders).puppet_system_loader.load(:function, 'lookup')
-            end
-
             it 'finds and delivers rich data' do
               collect_notices("notice('success')") do |scope|
                 expect(lookup_func.call(scope, 'mod_a::sensitive')).to be_a(Puppet::Pops::Types::PSensitiveType::Sensitive)
