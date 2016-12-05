@@ -223,7 +223,7 @@ describe "when using a hiera data provider" do
 Searching for "lookup_options"
   Data Binding "hiera"
     No such key: "lookup_options"
-  Environment Data Provider (lookup version 5)
+  Environment Data Provider (hiera configuration version 5)
     Hierarchy entry "Common"
       Path "#{environmentpath}/hiera_misc/data/common.yaml"
         Original path: "common.yaml"
@@ -232,7 +232,7 @@ Searching for "lookup_options"
             "merge" => "deep"
           }
         }
-  Module "one" Data Provider (lookup version 5)
+  Module "one" Data Provider (hiera configuration version 5)
     Hierarchy entry "Common"
       Path "#{environmentpath}/hiera_misc/modules/one/data/common.yaml"
         Original path: "common.yaml"
@@ -267,7 +267,7 @@ Searching for "one::loptsm_test::hash"
   Merge strategy deep
     Data Binding "hiera"
       No such key: "one::loptsm_test::hash"
-    Environment Data Provider (lookup version 5)
+    Environment Data Provider (hiera configuration version 5)
       Hierarchy entry "Common"
         Path "#{environmentpath}/hiera_misc/data/common.yaml"
           Original path: "common.yaml"
@@ -279,7 +279,7 @@ Searching for "one::loptsm_test::hash"
               "mb" => "MB"
             }
           }
-    Module "one" Data Provider (lookup version 5)
+    Module "one" Data Provider (hiera configuration version 5)
       Hierarchy entry "Common"
         Path "#{environmentpath}/hiera_misc/modules/one/data/common.yaml"
           Original path: "common.yaml"
@@ -313,7 +313,7 @@ EOS
 Merge strategy hash
   Data Binding "hiera"
     No such key: "lookup_options"
-  Environment Data Provider (lookup version 5)
+  Environment Data Provider (hiera configuration version 5)
     Hierarchy entry "Common"
       Path "#{environmentpath}/hiera_misc/data/common.yaml"
         Original path: "common.yaml"
@@ -322,7 +322,7 @@ Merge strategy hash
             "merge" => "deep"
           }
         }
-  Module "one" Data Provider (lookup version 5)
+  Module "one" Data Provider (hiera configuration version 5)
     Hierarchy entry "Common"
       Path "#{environmentpath}/hiera_misc/modules/one/data/common.yaml"
         Original path: "common.yaml"

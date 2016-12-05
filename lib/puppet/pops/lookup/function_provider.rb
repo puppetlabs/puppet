@@ -48,9 +48,9 @@ class FunctionProvider
     when nil
       @options
     when Pathname
-      @options.merge(LookupConfig::KEY_PATH => location.to_s)
+      @options.merge(HieraConfig::KEY_PATH => location.to_s)
     when URI
-      @options.merge(LookupConfig::KEY_URI => location.to_s)
+      @options.merge(HieraConfig::KEY_URI => location.to_s)
     else
       @options
     end
@@ -74,7 +74,7 @@ class FunctionProvider
     te = loader.load_typed(typed_name)
     if te.nil? || te.value.nil?
       raise Puppet::DataBinding::LookupError,
-        "#{@options[LookupConfig::KEY_NAME]}: Unable to find '#{self.class::TAG}' function named '#{function_name}'"
+        "#{@options[HieraConfig::KEY_NAME]}: Unable to find '#{self.class::TAG}' function named '#{function_name}'"
     end
     te.value
   end

@@ -13,7 +13,7 @@ describe 'lookup' do
       {
         env_name => {
           'modules' => {},
-          'lookup.yaml' => <<-YAML.unindent,
+          'hiera.yaml' => <<-YAML.unindent,
             ---
             version: 5
             hierarchy:
@@ -122,7 +122,7 @@ describe 'lookup' do
                 'mod_a::a.quoted.key': 'value mod_a::a.quoted.key (from mod_a)'
                 YAML
             },
-            'lookup.yaml' => <<-YAML.unindent,
+            'hiera.yaml' => <<-YAML.unindent,
               ---
               version: 5
               hierarchy:

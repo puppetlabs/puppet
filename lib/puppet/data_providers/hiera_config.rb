@@ -65,13 +65,13 @@ module Puppet::DataProviders
     # @param config_root [Pathname] Absolute path to the configuration root
     # @api public
     def initialize(config_root)
+      unless Puppet[:strict] == :off
+        Puppet.warn_once(:deprecation, 'Puppet::DataProviders::HieraConfig',
+          "Use of class Puppet::DataProviders::HieraConfig' is deprecated. Puppet::Pops::Lookup::HieraConfig should be used instead", config_path.to_s)
+      end
       @config_root = config_root
       @config_path = config_root + 'hiera.yaml'
       if @config_path.exist?
-        unless Puppet[:strict] == :off
-          Puppet.warn_once(:deprecation, 'hiera.yaml',
-            "Use of 'hiera.yaml' is deprecated. A '#{Puppet::Pops::Lookup::LookupConfig::CONFIG_FILE_NAME}' should be used instead", config_path.to_s)
-        end
         @config = validate_config(HieraConfig.symkeys_to_string(YAML.load_file(@config_path)))
         @config['hierarchy'] ||= DEFAULT_CONFIG['hierarchy']
         @config['datadir'] ||= DEFAULT_CONFIG['datadir']
