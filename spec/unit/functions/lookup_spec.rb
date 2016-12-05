@@ -526,7 +526,7 @@ EOS
           rescue Puppet::Error
           end
           expect(lookup_invocation.explainer.explain).to include(<<EOS)
-  Module "abc" Data Provider (hiera version 5)
+  Module "abc" Data Provider (hiera configuration version 5)
     deprecated API function "abc::data"
       No such key: "abc::x"
 EOS
@@ -542,13 +542,13 @@ Searching for "abc::e"
   Merge strategy deep
     Data Binding "hiera"
       No such key: "abc::e"
-    Environment Data Provider (hiera version 5)
+    Environment Data Provider (hiera configuration version 5)
       deprecated API function "environment::data"
         Found key: "abc::e" value: {
           "k1" => "env_e1",
           "k3" => "env_e3"
         }
-    Module "abc" Data Provider (hiera version 5)
+    Module "abc" Data Provider (hiera configuration version 5)
       deprecated API function "abc::data"
         Found key: "abc::e" value: {
           "k1" => "module_e1",
@@ -589,10 +589,10 @@ Searching for "hieraprovider::test::not_found"
   Merge strategy deep
     Data Binding "hiera"
       No such key: "hieraprovider::test::not_found"
-    Environment Data Provider (hiera version 5)
+    Environment Data Provider (hiera configuration version 5)
       deprecated API function "environment::data"
         No such key: "hieraprovider::test::not_found"
-    Module "hieraprovider" Data Provider (hiera version 4)
+    Module "hieraprovider" Data Provider (hiera configuration version 4)
       Using configuration "#{environmentpath}/production/modules/hieraprovider/hiera.yaml"
       Hierarchy entry "two paths"
         Merge strategy deep
@@ -646,7 +646,7 @@ EOS
                     },
                     {
                       :type => :data_provider,
-                      :name => 'Environment Data Provider (hiera version 5)',
+                      :name => 'Environment Data Provider (hiera configuration version 5)',
                       :branches => [
                         {
                           :type => :data_provider,
@@ -659,7 +659,7 @@ EOS
                     },
                     {
                       :type => :data_provider,
-                      :name => 'Module "abc" Data Provider (hiera version 5)',
+                      :name => 'Module "abc" Data Provider (hiera configuration version 5)',
                       :module => 'abc',
                       :branches => [
                         {

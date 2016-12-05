@@ -136,7 +136,7 @@ class HieraConfig
   end
 
   def name
-    "hiera version #{version}"
+    "hiera configuration version #{version}"
   end
 
   private
@@ -208,7 +208,6 @@ class HieraConfigV4 < HieraConfig
         create_data_provider(name, parent_data_provider, KEY_DATA_HASH, "#{provider_name}_data", {},
           resolve_paths(datadir, original_paths, lookup_invocation, ".#{provider_name}"))
       else
-        # TODO: Remove support for injected provider factories
         factory_create_data_provider(lookup_invocation, name, parent_data_provider, provider_name, datadir, original_paths)
       end
     end
@@ -367,7 +366,7 @@ class HieraConfigV5 < HieraConfig
       # OK
     else
       raise Puppet::DataBinding::LookupError,
-        "#{@config_path}: Only one of #{combine_strings(FUNCTION_KEYS)} can defined in defaults"
+        "#{@config_path}: Only one of #{combine_strings(FUNCTION_KEYS)} can be defined in defaults"
     end
   end
 
