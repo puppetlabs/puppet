@@ -714,7 +714,7 @@ Puppet::Type.newtype(:file) do
   #
   # @param  [Symbol] should The file type replacing the current content.
   # @return [Boolean] True if the file was removed, else False
-  # @raises [fail???] If the current file isn't one of %w{file link directory} and can't be removed.
+  # @raises [fail???] If the current file cannot be backed up or cannot be removed.
   def remove_existing(should)
     wanted_type = should.to_s
     current_type = read_current_type
@@ -723,8 +723,12 @@ Puppet::Type.newtype(:file) do
       return false
     end
 
-    if can_backup?(current_type)
-      backup_existing
+    if self[:backup]
+      if can_backup?(current_type)
+        backup_existing
+      else
+        self.fail "Could not back up file of type #{current_type}"
+      end
     end
 
     if wanted_type != "link" and current_type == wanted_type
@@ -734,10 +738,11 @@ Puppet::Type.newtype(:file) do
     case current_type
     when "directory"
       return remove_directory(wanted_type)
-    when "link", "file"
+    when "link", "file", "fifo", "socket"
       return remove_file(current_type, wanted_type)
     else
-      self.fail "Could not back up files of type #{current_type}"
+      # Including: “blockSpecial”, “characterSpecial”, “unknown”
+      self.fail "Could not remove file of type #{current_type}"
     end
   end
 
@@ -932,14 +937,17 @@ Puppet::Type.newtype(:file) do
     end
   end
 
-  # @return [Boolean] If the current file can be backed up and needs to be backed up.
+  # @return [Boolean] If the current file should be backed up and can be backed up.
   def can_backup?(type)
-    if type == "directory" and not force?
-      # (#18110) Directories cannot be removed without :force, so it doesn't
-      # make sense to back them up.
-      false
-    else
+    if type == "directory" and force?
+      # (#18110) Directories cannot be removed without :force, 
+      # so it doesn't make sense to back them up unless removing with :force.
       true
+    elsif type == "file" or type == "link"
+      true
+    else
+      # Including: “blockSpecial”, “characterSpecial”, "fifo", "socket", “unknown”
+      false
     end
   end
 
