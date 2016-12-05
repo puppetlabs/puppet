@@ -77,7 +77,7 @@ class Benchmarker
         end
         memo
       end
-      map_of_allocations.sort_by {|k, v| v}.reverse.each {|k,v| puts "#{v} #{k}" }
+      map_of_allocations.sort_by {|k, v| v}.reverse_each {|k,v| puts "#{v} #{k}" }
       # Dump the heap for further analysis
       GC.start
       ObjectSpace.dump_all(output: File.open('heap.json','w'))

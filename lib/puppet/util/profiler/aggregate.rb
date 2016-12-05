@@ -42,7 +42,7 @@ class Puppet::Util::Profiler::Aggregate < Puppet::Util::Profiler::WallClock
   end
 
   def print_metrics(metrics_hash, prefix)
-    metrics_hash.sort_by {|k,v| v.time }.reverse.each do |k,v|
+    metrics_hash.sort_by {|k,v| v.time }.reverse_each do |k,v|
       @logger.call("#{prefix}#{k}: #{v.time} s (#{v.count} calls)")
       print_metrics(metrics_hash[k], "#{prefix}#{k} -> ")
     end
