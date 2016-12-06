@@ -32,6 +32,18 @@ describe 'Puppet::Pops::Lookup::Interpolation' do
     end
   end
 
+  context 'when interpolating boolean scope values' do
+    let(:scope) { { 'yes' => true, 'no' => false } }
+
+    it 'produces the string true' do
+      expect(interpolator.interpolate('should yield %{yes}', lookup_invocation, true)).to eq('should yield true')
+    end
+
+    it 'produces the string false' do
+      expect(interpolator.interpolate('should yield %{no}', lookup_invocation, true)).to eq('should yield false')
+    end
+  end
+
   context 'when there are empty interpolations %{} in data' do
 
     let(:empty_interpolation) { 'clown%{}shoe' }
