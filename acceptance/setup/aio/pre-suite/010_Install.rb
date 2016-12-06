@@ -9,6 +9,13 @@ step "Install puppet-agent..." do
   opts = {
     :puppet_collection    => 'PC1',
     :puppet_agent_sha     => ENV['SHA'],
+    # SUITE_VERSION is necessary for Beaker to build a package download
+    # url which is built upon a `git describe` for a SHA.
+    # Beaker currently cannot find or calculate this value based on
+    # the SHA, and thus it must be passed at invocation time.
+    # The one exception is when SHA is a tag like `1.8.0` and
+    # SUITE_VERSION will be equivalent.
+    # RE-8333 may make this unnecessary in the future
     :puppet_agent_version => ENV['SUITE_VERSION'] || ENV['SHA']
   }
   agents.each do |agent|

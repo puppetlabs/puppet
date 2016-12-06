@@ -60,7 +60,7 @@ module Interpolation
           # break gsub and return value immediately if this was an alias substitution. The value might be something other than a String
           return value if is_alias
         end
-        value || ''
+        value.nil? ? '' : value
       end
     end
   end
