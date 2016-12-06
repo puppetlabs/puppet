@@ -68,28 +68,35 @@ You will also need QA credentials to vsphere in a ~/.fog file.  These credential
 
 ### Packages
 
-In order to run the tests on hosts provisioned from packages produced by Delivery, you will need to reference a Puppet commit sha that has been packaged using Delivery's pl:jenkins:uber_build task.  This is the snippet used by 'Puppet Packaging' Jenkins jobs:
+In order to run the tests on hosts provisioned from packages produced by Delivery, you will need to reference a Puppet commit sha that has been packaged using Delivery's Vanagon based packaging jobs.
 
-```sh
-# EXAMPLE - DO NOT RUN THIS
-rake --trace package:implode
-rake --trace package:bootstrap
-rake --trace pl:jenkins:uber_build
-```
+Typically if you are investigating a failure, you will have a SHA from a failed jenkins run which should correspond to a successful pipeline run, and you should not need to run the pipeline manually.
 
-The above Rake tasks were run from the root of a Puppet checkout.  They are quoted just for reference.  Typically if you are investigating a failure, you will have a SHA from a failed jenkins run which should correspond to a successful pipeline run, and you should not need to run the pipeline manually.
+A finished pipeline will have repository information available at http://builds.puppetlabs.lan/puppet-agent/  So you can also browse this list and select a recent sha which has repo_configs/ available.
 
-A finished pipeline will have repository information available at http://builds.puppetlabs.lan/puppet/  So you can also browse this list and select a recent sha which has repo_configs/ available.
-
-The ci:test:packages task depends on having a local installation of `wget`. When executing the ci:test:packages task, you must set the SHA, and also set CONFIG to point to a valid Beaker hosts_file.  Configurations used in the Jenkins jobs are available under config/nodes
-
-```sh
-bundle exec rake ci:test:packages SHA=abcdef CONFIG=config/nodes/rhel.yaml
-```
+The ci:test:aio task depends on having a local installation of `wget`. When executing the `ci:test:aio` task, you must set the `SHA` and the `SUITE_VERSION` to identify a puppet-agent package version to test.
 
 Optionally you may set the TEST (TEST=a/test.rb,and/another/test.rb), and may pass additional OPTIONS to beaker (OPTIONS='--opt foo').
 
-You may also edit a ./local_options.rb hash which will override config/ options, and in turn be overriden by commandline options set in the environment variables CONFIG, TEST and OPTIONS.  This file is a ruby file containing a Ruby hash with configuration expected by Beaker.  See Beaker source, and examples in config/.
+To select host types to test, use the `TEST_TARGET` value that [beaker-hostgenerator](https://github.com/puppetlabs/beaker-hostgenerator) understands. For instance, such an invocation may look like:
+
+```sh
+bundle exec rake ci:test:aio TEST_TARGET='windows2012r2-64a' SHA='75a9199bb09061204117a0d169bf9558d9a86cc1' SUITE_VERSION='1.8.1.2.g75a9199'
+```
+
+To instead supply a Beaker node configuration file, start by having beaker-hostgenerator produce a file like
+
+```sh
+bundle exec beaker-hostgenerator centos6-64mdca-windows2012r2-64a > custom-hosts.yaml
+```
+
+With the `custom-hosts.yaml` file created, this can now be supplied to the test invocation by using the `BEAKER_HOSTS` environment variable instead of using `TEST_TARGET`:
+
+```sh
+bundle exec rake ci:test:aio BEAKER_HOSTS=custom-hosts.yaml SHA='75a9199bb09061204117a0d169bf9558d9a86cc1' SUITE_VERSION='1.8.1.2.g75a9199'
+```
+
+You may also edit a ./local_options.rb hash which will override config/ options, and in turn be overriden by commandline options set in the environment variables BEAKER_HOSTS, TEST and OPTIONS.  This file is a ruby file containing a Ruby hash with configuration expected by Beaker.  See Beaker source, and examples in config/.
 
 ### Git
 
