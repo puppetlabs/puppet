@@ -15,26 +15,6 @@ module Puppet
 
   AS_DURATION = %q{This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y).}
 
-  # This is defined first so that the facter implementation is replaced before other setting defaults are evaluated.
-  define_settings(:main,
-    :cfacter => {
-        :default => false,
-        :type    => :boolean,
-        :desc    => 'Whether to enable a pre-Facter 3.0 release of native Facter (distributed as
-          the "cfacter" package). This is not necessary if Facter 3.0 or later is installed.
-          This setting is deprecated, as Facter 3 is now the default in puppet-agent.',
-        :hook    => proc do |value|
-          return unless value
-          raise ArgumentError, 'facter has already evaluated facts.' if Facter.instance_variable_get(:@collection)
-          raise ArgumentError, 'cfacter version 0.2.0 or later is not installed.' unless Puppet.features.cfacter?
-          CFacter.initialize
-
-          # Setup Facter's logging again now that native facter is initialized
-          Puppet::Util::Logging.setup_facter_logging!
-        end
-    }
-  )
-
   define_settings(:main,
     :confdir  => {
         :default  => nil,
