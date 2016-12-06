@@ -5,6 +5,21 @@ require_relative 'location_resolver'
 
 module Puppet::Pops
 module Lookup
+
+# @api private
+class ScopeLookupCollectingInvocation < Invocation
+  attr_reader :scope_interpolations
+
+  def initialize(scope)
+    super(scope)
+    @scope_interpolations = {}
+  end
+
+  def remember_scope_lookup(key, value)
+    @scope_interpolations[key] = value
+  end
+end
+
 # @api private
 class HieraConfig
   include LocationResolver
@@ -116,13 +131,32 @@ class HieraConfig
     @config_path = config_path
     @loaded_config = loaded_config
     @config = validate_config(self.class.symkeys_to_string(@loaded_config))
+    @data_providers = nil
   end
 
-  # Creates the data providers for this config
+  # Returns the data providers for this config
   #
   # @param lookup_invocation [Invocation] Invocation data containing scope, overrides, and defaults
   # @param parent_data_provider [DataProvider] The data provider that loaded this configuration
-  # @return [Array<DataProvider>] the created providers
+  # @return [Array<DataProvider>] the data providers
+  def configured_data_providers(lookup_invocation, parent_data_provider)
+    scope = lookup_invocation.scope
+    unless @data_providers && scope_interpolations_stable?(scope)
+      if @data_providers
+        lookup_invocation.report_text { 'Hiera configuration recreated due to change of scope variables used in interpolation expressions' }
+      end
+      slc_invocation = ScopeLookupCollectingInvocation.new(scope)
+      @data_providers = create_configured_data_providers(slc_invocation, parent_data_provider)
+      @scope_interpolations = slc_invocation.scope_interpolations
+    end
+    @data_providers
+  end
+
+  def scope_interpolations_stable?(scope)
+    @scope_interpolations.each_pair.all? { |key, value| scope[key] == value }
+  end
+
+  # @api private
   def create_configured_data_providers(lookup_invocation, parent_data_provider)
     self.class.not_implemented(self, 'create_configured_data_providers')
   end

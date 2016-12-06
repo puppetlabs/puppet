@@ -94,6 +94,7 @@ module Interpolation
           catch(:no_such_key) { found = sub_lookup(key, lookup_invocation, segments, value) }
           value = found;
         end
+        lookup_invocation.remember_scope_lookup(key, value)
         value
       end
 
