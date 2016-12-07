@@ -145,6 +145,34 @@ There also may be scenarios where you want to specify the host(s) to release. E.
     HOST_NAMES=lvwwr9tdplg351u bundle exec rake ci:release_hosts
     HOST_NAMES=lvwwr9tdplg351u,ylrqjh5l6xvym4t bundle exec rake ci:release_hosts
 
+### Running tagged tests
+
+Tests runs can be segmented by tags defined in the tests themselves. These
+tags have been standardized into the following.
+
+* `risk:high`
+* `risk:medium`
+* `risk:low`
+
+For CI runs at Puppet, these are used to adjust the cadence of test execution.
+They get run in the following pattern in order to provide timely feedback.
+
+* Per commit: risk:high + untagged tests
+* Nightly:    risk:high + risk:medium + untagged tests
+* Weekly:     risk:high + risk:medium + risk:low + untagged tests
+
+Individual tests are tagged in accordance with the frequency at which the test
+should be run to balance its value and its cost. Tests without tags are
+are not filtered by the Beaker tag facility an will therefore always be run.
+
+These tags can be utilized by modifying the `local_options.rb` file with the
+`tag` option, or using the `OPTIONS` environment variable when running the
+desired Rake task as in the following example.
+
+```
+OPTIONS="--tag='risk:high,risk:medium'" TEST_TARGET='debian8-64a' SHA=#{test-commit-sha} be rake ci:test:aio
+```
+
 
 Running Tests on Vagrant Boxen
 ------------------------------
