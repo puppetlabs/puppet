@@ -19,12 +19,12 @@ agents.each do |agent|
   apply_manifest_on(agent, 'service {tstapp : ensure=>running, manifest=>"%s"}' % manifest) do
     assert_match( /defined 'ensure' as 'running'/, result.stdout, "err: #{agent}")
   end
-  
+
   step "SMF: verify with svcs that the service is online"
   on agent, "svcs -l application/tstapp" do
     assert_match( /state\s+online/, result.stdout, "err: #{agent}")
   end
-  
+
   step "SMF: ensure it is idempotent - ie not created again"
   apply_manifest_on(agent, 'service {tstapp : ensure=>running, manifest=>"%s"}' % manifest, :catch_changes => true)
 
