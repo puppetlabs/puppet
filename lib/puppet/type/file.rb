@@ -714,7 +714,7 @@ Puppet::Type.newtype(:file) do
   #
   # @param  [Symbol] should The file type replacing the current content.
   # @return [Boolean] True if the file was removed, else False
-  # @raises [fail???] If the current file cannot be backed up or cannot be removed.
+  # @raises [fail???] If the file could not be backed up or could not be removed.
   def remove_existing(should)
     wanted_type = should.to_s
     current_type = read_current_type
@@ -727,7 +727,7 @@ Puppet::Type.newtype(:file) do
       if can_backup?(current_type)
         backup_existing
       else
-        self.fail "Could not back up file of type #{current_type}"
+        self.fail "Could not back up file of type #{current_type}; will not remove"
       end
     end
 
@@ -940,7 +940,7 @@ Puppet::Type.newtype(:file) do
   # @return [Boolean] If the current file should be backed up and can be backed up.
   def can_backup?(type)
     if type == "directory" and force?
-      # (#18110) Directories cannot be removed without :force, 
+      # (#18110) Directories cannot be removed without :force,
       # so it doesn't make sense to back them up unless removing with :force.
       true
     elsif type == "file" or type == "link"
@@ -951,7 +951,7 @@ Puppet::Type.newtype(:file) do
     end
   end
 
-  # @return [Boolean] True if the directory was removed
+  # @return [Boolean] if the directory was removed (which is always true currently)
   # @api private
   def remove_directory(wanted_type)
     if force?
@@ -984,7 +984,7 @@ Puppet::Type.newtype(:file) do
   # @return [void]
   def backup_existing
     unless perform_backup
-      raise Puppet::Error, "Could not back up; will not replace"
+      raise Puppet::Error, "Could not back up; will not remove"
     end
   end
 
