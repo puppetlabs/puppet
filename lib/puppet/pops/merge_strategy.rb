@@ -25,8 +25,12 @@ module Puppet::Pops
     #
     def self.strategy(merge)
       return merge if merge.is_a?(MergeStrategy)
-      merge = :first if merge.nil?
-      Types::TypeAsserter.assert_instance_of("MergeStrategy 'merge' parameter", merge_t, merge)
+      if merge.nil?
+        merge = :default
+      else
+        Types::TypeAsserter.assert_instance_of("MergeStrategy 'merge' parameter", merge_t, merge)
+      end
+
       if merge.is_a?(Hash)
         merge_strategy = merge['strategy']
         if merge_strategy.nil?
@@ -47,7 +51,7 @@ module Puppet::Pops
     # @return [Array<Symbol>] List of strategy keys
     #
     def self.strategy_keys
-      strategies.keys
+      strategies.keys - [:default, :reverse_deep]
     end
 
     # Adds a new merge strategy to the map of strategies known to this class
@@ -173,7 +177,7 @@ module Puppet::Pops
     # @return [Types::PStructType] the puppet type
     #
     def options_t
-      @options_t ||=Types::TypeParser.singleton.parse("Struct[{strategy=>Optional[Pattern[#{self.class.key}]]}]")
+      @options_t ||=Types::TypeParser.singleton.parse("Struct[{strategy=>Optional[Pattern[/#{self.class.key}/]]}]")
     end
 
     # Returns the type used to validate the options hash
@@ -217,6 +221,15 @@ module Puppet::Pops
 
     def value_t
       @value_t ||= Types::PAnyType::DEFAULT
+    end
+
+    MergeStrategy.add_strategy(self)
+  end
+
+  # Same as {FirstFoundStrategy} but used when no strategy has been explicitly given
+  class DefaultMergeStrategy < FirstFoundStrategy
+    def self.key
+      :default
     end
 
     MergeStrategy.add_strategy(self)
@@ -367,6 +380,20 @@ module Puppet::Pops
 
     def value_t
       @value_t ||= Types::TypeParser.singleton.parse('Variant[Array[Data],Hash[String,Data]]')
+    end
+
+    MergeStrategy.add_strategy(self)
+  end
+
+  # Same as {DeepMergeStrategy} but the with reverse priority of merged elements.
+  # (needed for backward compatibility with Hiera v3)
+  class ReverseDeepMergeStrategy < MergeStrategy
+    def self.key
+      :reverse_deep
+    end
+
+    def checked_merge(e1, e2)
+      super(e2, e1)
     end
 
     MergeStrategy.add_strategy(self)

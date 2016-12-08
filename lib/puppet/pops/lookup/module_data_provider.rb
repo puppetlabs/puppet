@@ -36,6 +36,11 @@ class ModuleDataProvider < ConfiguredDataProvider
 
   protected
 
+  def assert_config_version(config)
+    raise Puppet::DataBinder::LookupError, "#{config.name}: cannot be used in a module" unless config.version > 3
+    config
+  end
+
   # Return the root of the module with the name equal to the configured module name
   #
   # @param lookup_invocation [Invocation] The current lookup invocation

@@ -221,7 +221,7 @@ describe "when using a hiera data provider" do
         value = Puppet::Pops::Lookup.lookup('one::loptsm_test::hash', nil, nil, nil, nil, lookup_invocation)
         expect(lookup_invocation.explainer.explain).to eq(<<EOS)
 Searching for "lookup_options"
-  Data Binding "hiera"
+  Global Data Provider (hiera configuration version 5)
     No such key: "lookup_options"
   Environment Data Provider (hiera configuration version 5)
     Hierarchy entry "Common"
@@ -265,7 +265,7 @@ Searching for "lookup_options"
 Using merge options from "lookup_options" hash
 Searching for "one::loptsm_test::hash"
   Merge strategy deep
-    Data Binding "hiera"
+    Global Data Provider (hiera configuration version 5)
       No such key: "one::loptsm_test::hash"
     Environment Data Provider (hiera configuration version 5)
       Hierarchy entry "Common"
@@ -311,7 +311,7 @@ EOS
         value = Puppet::Pops::Lookup.lookup('one::loptsm_test::hash', nil, nil, nil, nil, lookup_invocation)
         expect(lookup_invocation.explainer.explain).to eq(<<EOS)
 Merge strategy hash
-  Data Binding "hiera"
+  Global Data Provider (hiera configuration version 5)
     No such key: "lookup_options"
   Environment Data Provider (hiera configuration version 5)
     Hierarchy entry "Common"

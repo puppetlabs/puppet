@@ -96,8 +96,7 @@ describe "when performing lookup" do
       end
 
       it 'can lookup value provided in global scope' do
-        Hiera.any_instance.expects(:lookup).with('lookup_options', any_parameters).at_most_once.throws(:no_such_key)
-        Hiera.any_instance.expects(:lookup).with('abc::a', any_parameters).returns('global_a')
+        Puppet.settings[:hiera_config] = File.join(my_fixture_dir, 'hiera.yaml')
         resources = assemble_and_compile('${r}', "'abc::a'")
         expect(resources).to include('global_a')
       end
@@ -128,8 +127,7 @@ describe "when performing lookup" do
       end
 
       it "can 'hash' merge values provided by global, environment, and module" do
-        Hiera.any_instance.expects(:lookup).with('lookup_options', any_parameters).at_most_once.throws(:no_such_key)
-        Hiera.any_instance.expects(:lookup).with('abc::e', any_parameters).returns({ 'k1' => 'global_e1' })
+        Puppet.settings[:hiera_config] = File.join(my_fixture_dir, 'hiera.yaml')
         resources = assemble_and_compile('${r[k1]}_${r[k2]}_${r[k3]}', "'abc::e'", 'Hash[String,String]', "'hash'")
         expect(resources).to include('global_e1_module_e2_env_e3')
       end
@@ -194,36 +192,31 @@ describe "when performing lookup" do
       end
 
       it 'can lookup and deep merge deep values provided by global, environment, and module' do
-        Hiera.any_instance.expects(:lookup).with('lookup_options', any_parameters).at_most_once.throws(:no_such_key)
-        Hiera.any_instance.expects(:lookup).with('abc::f', any_parameters).returns({ 'k1' => { 's1' => 'global_f11' }, 'k2' => { 's3' => 'global_f23' } })
+        Puppet.settings[:hiera_config] = File.join(my_fixture_dir, 'hiera.yaml')
         resources = assemble_and_compile('${r[k1][s1]}_${r[k1][s2]}_${r[k1][s3]}_${r[k2][s1]}_${r[k2][s2]}_${r[k2][s3]}', "'abc::f'", 'Hash[String,Hash[String,String]]', "'deep'")
         expect(resources).to include('global_f11_env_f12_module_f13_env_f21_module_f22_global_f23')
       end
 
       it 'will propagate resolution_type :array to Hiera when merge == \'unique\'' do
-        Hiera.any_instance.expects(:lookup).with('lookup_options', any_parameters).at_most_once.throws(:no_such_key)
-        Hiera.any_instance.expects(:lookup).with('abc::c', anything, anything, anything, :array).returns(['global_c'])
+        Puppet.settings[:hiera_config] = File.join(my_fixture_dir, 'hiera.yaml')
         resources = assemble_and_compile('${r[0]}_${r[1]}_${r[2]}', "'abc::c'", 'Array[String]', "'unique'")
         expect(resources).to include('global_c_env_c_module_c')
       end
 
       it 'will propagate a Hash resolution_type with :behavior => :native to Hiera when merge == \'hash\'' do
-        Hiera.any_instance.expects(:lookup).with('lookup_options', any_parameters).at_most_once.throws(:no_such_key)
-        Hiera.any_instance.expects(:lookup).with('abc::e', anything, anything, anything, { :behavior => :native }).returns({ 'k1' => 'global_e1' })
+        Puppet.settings[:hiera_config] = File.join(my_fixture_dir, 'hiera.yaml')
         resources = assemble_and_compile('${r[k1]}_${r[k2]}_${r[k3]}', "'abc::e'", 'Hash[String,String]', "{strategy => 'hash'}")
         expect(resources).to include('global_e1_module_e2_env_e3')
       end
 
       it 'will propagate a Hash resolution_type with :behavior => :deeper to Hiera when merge == \'deep\'' do
-        Hiera.any_instance.expects(:lookup).with('lookup_options', any_parameters).at_most_once.throws(:no_such_key)
-        Hiera.any_instance.expects(:lookup).with('abc::f', anything, anything, anything, { :behavior => :deeper }).returns({ 'k1' => { 's1' => 'global_f11' }, 'k2' => { 's3' => 'global_f23' } })
+        Puppet.settings[:hiera_config] = File.join(my_fixture_dir, 'hiera.yaml')
         resources = assemble_and_compile('${r[k1][s1]}_${r[k1][s2]}_${r[k1][s3]}_${r[k2][s1]}_${r[k2][s2]}_${r[k2][s3]}', "'abc::f'", 'Hash[String,Hash[String,String]]', "'deep'")
         expect(resources).to include('global_f11_env_f12_module_f13_env_f21_module_f22_global_f23')
       end
 
       it 'will propagate a Hash resolution_type with symbolic deep merge options to Hiera' do
-        Hiera.any_instance.expects(:lookup).with('lookup_options', any_parameters).at_most_once.throws(:no_such_key)
-        Hiera.any_instance.expects(:lookup).with('abc::f', anything, anything, anything, { :behavior => :deeper, :knockout_prefix => '--' }).returns({ 'k1' => { 's1' => 'global_f11' }, 'k2' => { 's3' => 'global_f23' } })
+        Puppet.settings[:hiera_config] = File.join(my_fixture_dir, 'hiera.yaml')
         resources = assemble_and_compile('${r[k1][s1]}_${r[k1][s2]}_${r[k1][s3]}_${r[k2][s1]}_${r[k2][s2]}_${r[k2][s3]}', "'abc::f'", 'Hash[String,Hash[String,String]]', "{ 'strategy' => 'deep', 'knockout_prefix' => '--' }")
         expect(resources).to include('global_f11_env_f12_module_f13_env_f21_module_f22_global_f23')
       end
@@ -408,8 +401,7 @@ describe "when performing lookup" do
       end
 
       it 'will resolve global, environment, and module correctly' do
-        Hiera.any_instance.expects(:lookup).with('lookup_options', any_parameters).at_most_once.throws(:no_such_key)
-        Hiera.any_instance.expects(:lookup).with('bca::e', any_parameters).returns({ 'k1' => 'global_e1' })
+        Puppet.settings[:hiera_config] = File.join(my_fixture_dir, 'hiera.yaml')
         resources = compile_and_get_notifications(<<-END.gsub(/^ {8}/, '')
         include bca
         $r = lookup(bca::e, Hash[String,String], hash)
@@ -420,8 +412,7 @@ describe "when performing lookup" do
       end
 
       it 'will resolve global and environment correctly when module has no provider' do
-        Hiera.any_instance.expects(:lookup).with('lookup_options', any_parameters).at_most_once.throws(:no_such_key)
-        Hiera.any_instance.expects(:lookup).with('no_provider::e', any_parameters).returns({ 'k1' => 'global_e1' })
+        Puppet.settings[:hiera_config] = File.join(my_fixture_dir, 'hiera.yaml')
         resources = compile_and_get_notifications(<<-END.gsub(/^ {8}/, '')
         include no_provider
         $r = lookup(no_provider::e, Hash[String,String], hash)
@@ -540,7 +531,7 @@ EOS
           expect(lookup_invocation.explainer.explain).to eq(<<EOS)
 Searching for "abc::e"
   Merge strategy deep
-    Data Binding "hiera"
+    Global Data Provider (hiera configuration version 5)
       No such key: "abc::e"
     Environment Data Provider (hiera configuration version 5)
       deprecated API function "environment::data"
@@ -565,7 +556,6 @@ EOS
 
       it 'will explain deep merge results with options' do
         assemble_and_compile('${r}', "'abc::a'") do |scope|
-          Hiera.any_instance.expects(:lookup).with(any_parameters).returns({ 'k1' => 'global_g1' })
           lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
           Puppet::Pops::Lookup.lookup('abc::e', Puppet::Pops::Types::TypeParser.singleton.parse('Hash[String,String]'), nil, false, { 'strategy' => 'deep', 'merge_hash_arrays' => true }, lookup_invocation)
           expect(lookup_invocation.explainer.explain).to include(<<EOS)
@@ -587,7 +577,7 @@ EOS
           expect(lookup_invocation.explainer.explain).to eq(<<EOS)
 Searching for "hieraprovider::test::not_found"
   Merge strategy deep
-    Data Binding "hiera"
+    Global Data Provider (hiera configuration version 5)
       No such key: "hieraprovider::test::not_found"
     Environment Data Provider (hiera configuration version 5)
       deprecated API function "environment::data"
@@ -641,8 +631,8 @@ EOS
                     {
                       :key => 'abc::e',
                       :event => :not_found,
-                      :type => :global,
-                      :name => :hiera
+                      :type => :data_provider,
+                      :name => 'Global Data Provider (hiera configuration version 5)'
                     },
                     {
                       :type => :data_provider,
@@ -737,11 +727,19 @@ EOS
                 a: value mod_a::hash_a.a (from environment)
               mod_a::hash_b:
                 a: value mod_a::hash_b.a (from environment)
+              hash_b:
+                hash_ba:
+                  bab: value hash_b.hash_ba.bab (from environment)
+              hash_c:
+                hash_ca:
+                  caa: value hash_c.hash_ca.caa (from environment)
               lookup_options:
                 mod_a::hash_b:
                   merge: hash
-          YAML
-          }
+                hash_c:
+                  merge: hash
+              YAML
+            }
           }
         }
       end
@@ -942,6 +940,97 @@ EOS
           end
           expect(notices).to eql(['success'])
           expect(debugs.any? { |m| m =~ /Hiera configuration recreated due to change of scope variables used in interpolation expressions/ }).to be_truthy
+        end
+      end
+
+      context 'and a global Hiera v3 configuration' do
+        let(:code_dir) { tmpdir('code') }
+        let(:code_dir_files) do
+          {
+            'hiera.yaml' => <<-YAML.unindent,
+              ---
+              :backends:
+                - yaml
+                - json
+              :yaml:
+                :datadir: #{code_dir}/hieradata
+              :json:
+                :datadir: #{code_dir}/hieradata
+              :hierarchy:
+                - common
+              :merge_behavior: deeper
+              YAML
+            'hieradata' => {
+              'common.yaml' =>  <<-YAML.unindent,
+                a: value a (from global)
+                hash_b:
+                  hash_ba:
+                    bab: value hash_b.hash_ba.bab (from global)
+                hash_c:
+                  hash_ca:
+                    cab: value hash_c.hash_ca.cab (from global)
+                YAML
+              'common.json' =>  <<-JSON.unindent,
+                {
+                  "hash_b": {
+                    "hash_ba": {
+                      "bac": "value hash_b::hash_ba.bac (from global json)"
+                    }
+                  },
+                  "hash_c": {
+                    "hash_ca": {
+                      "cac": "value hash_c::hash_ca.cac (from global json)"
+                    }
+                  }
+                }
+                JSON
+            }
+          }
+        end
+
+        let(:populated_code_dir) do
+          dir_contained_in(code_dir, code_dir_files)
+          code_dir
+        end
+
+        before(:each) do
+          # Need to set here since spec_helper defines these settings in its "before each"
+          Puppet.settings[:codedir] = populated_code_dir
+          Puppet.settings[:hiera_config] = File.join(code_dir, 'hiera.yaml')
+        end
+
+        around(:each) do |example|
+          Puppet.override(:environments => environments, :current_environment => env) do
+            example.run
+          end
+        end
+
+        it 'finds data in the environment and reports deprecation warnings for both environment.conf and hiera.yaml' do
+          expect(lookup('a')).to eql('value a (from global)')
+          expect(warnings).to include(/Use of 'hiera.yaml' version 3 is deprecated. It should be converted to version 5/)
+        end
+
+        it 'explain contains output from global layer' do
+          explanation = explain('a')
+          expect(explanation).to include('Global Data Provider (hiera configuration version 3)')
+          expect(explanation).to include('Hierarchy entry "yaml"')
+          expect(explanation).to include('Hierarchy entry "json"')
+          expect(explanation).to include('Found key: "a" value: "value a (from global)"')
+        end
+
+        it 'uses the merge behavior specified in global hiera.yaml to merge only global backends' do
+          expect(lookup('hash_b')).to eql(
+            { 'hash_ba' => { 'bab' => 'value hash_b.hash_ba.bab (from global)', 'bac' => 'value hash_b::hash_ba.bac (from global json)' } })
+        end
+
+        it 'uses the merge from lookup options to merge all layers and override merge_behavior specified in global hiera.yaml' do
+          expect(lookup('hash_c')).to eql(
+            { 'hash_ca' => { 'cab' => 'value hash_c.hash_ca.cab (from global)' } })
+        end
+
+        it 'uses the explicitly given merge to override lookup options and to merge all layers' do
+          expect(lookup('hash_c', 'merge' => 'deep')).to eql(
+            { 'hash_ca' => { 'caa' => 'value hash_c.hash_ca.caa (from environment)', 'cab' => 'value hash_c.hash_ca.cab (from global)', 'cac' => 'value hash_c::hash_ca.cac (from global json)'} })
         end
       end
 

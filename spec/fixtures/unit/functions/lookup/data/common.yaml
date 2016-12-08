@@ -1,0 +1,19 @@
+---
+abc::a: global_a
+abc::c:
+  - global_c
+
+abc::e:
+  k1: global_e1
+
+abc::f:
+  k1:
+    s1: global_f11
+  k2:
+    s3: global_f23
+
+bca::e:
+  k1: global_e1
+
+no_provider::e:
+  k1: global_e1
