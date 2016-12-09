@@ -294,11 +294,17 @@ def get_test_sample
             'tests/resource/service/puppet_mcollective_service_management.rb'
           ]
 
-  # Add any tests modified within the last two weeks to the list
-  # Note that we use diff-filter to only include (A)dded or (M)odified
-  # files, carefully omitting (D)eleted files since, well, they're gone now.
-  modified = `git log --diff-filter=AM --name-only --pretty="format:" --since 2.weeks ./tests`
-  tests += modified.split("\n").reject { |s| s.empty? }.collect { |s| s.sub('acceptance/', '')}
+  # Add any tests modified within the last two weeks to the list, excluding
+  # deleted ones. We can't rely on --diff-filter, because an acceptance
+  # test may be modified and then deleted in the same time range.
+  modified = `git log --name-only --pretty="format:" --since 2.weeks ./tests`
+  tests += modified.split("\n").reject do |s|
+    s.empty?
+  end.collect do |s|
+    s.sub('acceptance/', '')
+  end.find_all do |s|
+    File.exist?(s)
+  end
 
   tests.uniq
 end

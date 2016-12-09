@@ -63,7 +63,7 @@ class ConfiguredDataProvider
   private
 
   def data_providers(lookup_invocation)
-    @data_providers ||= config(lookup_invocation).create_configured_data_providers(lookup_invocation, self)
+    config(lookup_invocation).configured_data_providers(lookup_invocation, self)
   end
 end
 end

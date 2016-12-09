@@ -52,17 +52,7 @@ class DataHashFunctionProvider < FunctionProvider
   end
 
   def lookup_key(lookup_invocation, location, root_key)
-    value = if @verbatim
-      data_value(lookup_invocation, location, root_key)
-    else
-      if @resolved.nil?
-        @resolved = { root_key => data_value(lookup_invocation, location, root_key) }
-      else
-        @resolved[root_key] = data_value(lookup_invocation, location, root_key) unless @resolved.include?(root_key)
-      end
-      @resolved[root_key]
-    end
-    lookup_invocation.report_found(root_key, value)
+    lookup_invocation.report_found(root_key, data_value(lookup_invocation, location, root_key))
   end
 
   def data_value(lookup_invocation, location, root_key)
