@@ -893,26 +893,31 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should fail if it can't backup the file" do
+      # Default: file[:backup] = true
       file.stubs(:stat).returns stub('stat', :ftype => 'file')
       file.stubs(:perform_backup).returns false
 
-      expect { file.remove_existing(:file) }.to raise_error(Puppet::Error, /Could not back up; will not replace/)
+      expect { file.remove_existing(:file) }.to raise_error(Puppet::Error, /Could not back up; will not remove/)
     end
 
     describe "backing up directories" do
-      it "should not backup directories if force is false" do
+      it "should not backup directories if backup is true and force is false" do
+        # Default: file[:backup] = true
         file[:force] = false
         file.stubs(:stat).returns stub('stat', :ftype => 'directory')
+
         file.expects(:perform_backup).never
-        expect(file.remove_existing(:file)).to eq(false)
+
+        expect { file.remove_existing(:file) }.to raise_error(Puppet::Error, /Could not back up file of type directory; will not remove/)
       end
 
-      it "should backup directories if force is true" do
+      it "should backup directories if backup is true and force is true" do
+        # Default: file[:backup] = true
         file[:force] = true
-        FileUtils.expects(:rmtree).with(file[:path])
-
         file.stubs(:stat).returns stub('stat', :ftype => 'directory')
-        file.expects(:perform_backup).once.returns(true)
+
+        FileUtils.expects(:rmtree).with(file[:path])
+        file.expects(:perform_backup).returns(true)
 
         expect(file.remove_existing(:file)).to eq(true)
       end
@@ -924,18 +929,20 @@ describe Puppet::Type.type(:file) do
       expect(file.remove_existing(:file)).to eq(false)
     end
 
-    it "should not remove directories and should not invalidate the stat unless force is set" do
+    it "should not remove directories and should not invalidate the stat unless force is true" do
+      file[:force] = false
       # Actually call stat to set @needs_stat to nil
       file.stat
       file.stubs(:stat).returns stub('stat', :ftype => 'directory')
 
-      file.remove_existing(:file)
-
+      file.expects(:remove_directory).never
+      expect { file.remove_existing(:file) }.to raise_error(Puppet::Error, /Could not back up file of type directory; will not remove/)
+      #expect(file.instance_variable_get(:@needs_stat)).to eq(nil)
       expect(file.instance_variable_get(:@stat)).to eq(nil)
-      expect(@logs).to be_any {|log| log.level == :notice and log.message =~ /Not removing directory; use 'force' to override/}
     end
 
-    it "should remove a directory if force is set" do
+    it "should remove a directory if backup is true and force is true" do
+      # Default: file[:backup] = true
       file[:force] = true
       file.stubs(:stat).returns stub('stat', :ftype => 'directory')
 
@@ -966,10 +973,10 @@ describe Puppet::Type.type(:file) do
       expect(Puppet::FileSystem.exist?(file[:path])).to eq(false)
     end
 
-    it "should fail if the file is not a file, link, or directory" do
-      file.stubs(:stat).returns stub('stat', :ftype => 'socket')
+    it "should fail if the file is not a directory, link, file, fifo, socket, or is unknown" do
+      file.stubs(:stat).returns stub('stat', :ftype => 'blockSpecial')
 
-      expect { file.remove_existing(:file) }.to raise_error(Puppet::Error, /Could not back up files of type socket/)
+      expect { file.remove_existing(:file) }.to raise_error(Puppet::Error, /Could not back up file of type blockSpecial; will not remove/)
     end
 
     it "should invalidate the existing stat of the file" do
