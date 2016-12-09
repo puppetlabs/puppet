@@ -258,6 +258,7 @@ describe "The lookup function" do
             :backends:
               - yaml
               - json
+              - custom
             :yaml:
               :datadir: #{code_dir}/hieradata
             :json:
@@ -266,6 +267,26 @@ describe "The lookup function" do
               - common
             :merge_behavior: deeper
             YAML
+          'ruby_stuff' => {
+            'hiera' => {
+              'backend' => {
+                'custom_backend.rb' => <<-RUBY.unindent
+                  class Hiera::Backend::Custom_backend
+                    def lookup(key, scope, order_override, resolution_type, context)
+                      case key
+                      when 'hash_c'
+                        { 'hash_ca' => { 'cad' => 'value hash_c.hash_ca.cad (from global custom)' }}
+                      when 'datasources'
+                        Hiera::Backend.datasources(scope, order_override) { |source| source }
+                      else
+                        throw :no_such_key
+                      end
+                    end
+                  end
+                RUBY
+              }
+            }
+          },
           'hieradata' => {
             'common.yaml' =>  <<-YAML.unindent,
               a: value a (from global)
@@ -280,12 +301,12 @@ describe "The lookup function" do
               {
                 "hash_b": {
                   "hash_ba": {
-                    "bac": "value hash_b::hash_ba.bac (from global json)"
+                    "bac": "value hash_b.hash_ba.bac (from global json)"
                   }
                 },
                 "hash_c": {
                   "hash_ca": {
-                    "cac": "value hash_c::hash_ca.cac (from global json)"
+                    "cac": "value hash_c.hash_ca.cac (from global json)"
                   }
                 }
               }
@@ -306,8 +327,15 @@ describe "The lookup function" do
       end
 
       around(:each) do |example|
-        Puppet.override(:environments => environments, :current_environment => env) do
-          example.run
+        # Faking the load path to enable 'require' to load from 'ruby_stuff'. It removes the need for a static fixture
+        # for the custom backend
+        $LOAD_PATH.unshift(File.join(populated_code_dir, 'ruby_stuff'))
+        begin
+          Puppet.override(:environments => environments, :current_environment => env) do
+            example.run
+          end
+        ensure
+          $LOAD_PATH.shift
         end
       end
 
@@ -326,7 +354,7 @@ describe "The lookup function" do
 
       it 'uses the merge behavior specified in global hiera.yaml to merge only global backends' do
         expect(lookup('hash_b')).to eql(
-          { 'hash_ba' => { 'bab' => 'value hash_b.hash_ba.bab (from global)', 'bac' => 'value hash_b::hash_ba.bac (from global json)' } })
+          { 'hash_ba' => { 'bab' => 'value hash_b.hash_ba.bab (from global)', 'bac' => 'value hash_b.hash_ba.bac (from global json)' } })
       end
 
       it 'uses the merge from lookup options to merge all layers and override merge_behavior specified in global hiera.yaml' do
@@ -336,7 +364,19 @@ describe "The lookup function" do
 
       it 'uses the explicitly given merge to override lookup options and to merge all layers' do
         expect(lookup('hash_c', 'merge' => 'deep')).to eql(
-          { 'hash_ca' => { 'caa' => 'value hash_c.hash_ca.caa (from environment)', 'cab' => 'value hash_c.hash_ca.cab (from global)', 'cac' => 'value hash_c::hash_ca.cac (from global json)'} })
+          {
+            'hash_ca' =>
+            {
+              'caa' => 'value hash_c.hash_ca.caa (from environment)',
+              'cab' => 'value hash_c.hash_ca.cab (from global)',
+              'cac' => 'value hash_c.hash_ca.cac (from global json)',
+              'cad' => 'value hash_c.hash_ca.cad (from global custom)'
+            }
+          })
+      end
+
+      it 'backend data sources are propagated to custom backend' do
+        expect(lookup('datasources')).to eql(['common'])
       end
     end
 

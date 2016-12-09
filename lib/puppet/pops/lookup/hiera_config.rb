@@ -42,6 +42,7 @@ class HieraConfig
   KEY_DATA_HASH = DataHashFunctionProvider::TAG
   KEY_LOOKUP_KEY = LookupKeyFunctionProvider::TAG
   KEY_DATA_DIG = DataDigFunctionProvider::TAG
+  KEY_V3_BACKEND = V3BackendFunctionProvider::TAG
   KEY_V4_DATA_HASH = V4DataHashFunctionProvider::TAG
 
   FUNCTION_KEYS = [KEY_DATA_HASH, KEY_LOOKUP_KEY, KEY_DATA_DIG]
@@ -51,6 +52,7 @@ class HieraConfig
     KEY_DATA_HASH => DataHashFunctionProvider,
     KEY_DATA_DIG => DataDigFunctionProvider,
     KEY_LOOKUP_KEY => LookupKeyFunctionProvider,
+    KEY_V3_BACKEND => V3BackendFunctionProvider,
     KEY_V4_DATA_HASH => V4DataHashFunctionProvider
   }
 
@@ -219,22 +221,26 @@ class HieraConfigV3 < HieraConfig
         lookup_invocation.explainer)
     end
 
-    default_datadir = @config[KEY_DATADIR]
+    default_datadir = File.join(Puppet.settings[:codedir], 'environments', '%{::environment}', 'hieradata')
     data_providers = {}
 
     [@config[KEY_BACKENDS]].flatten.each do |backend|
       raise Puppet::DataBinding::LookupError, "#{@config_path}: Backend '#{backend}' defined more than once" if data_providers.include?(backend)
       original_paths = @config[KEY_HIERARCHY]
-      backend_config = @config[backend]
+      backend_config = @config[backend] || EMPTY_HASH
       datadir = @config_root + interpolate(backend_config[KEY_DATADIR] || default_datadir, lookup_invocation, false)
       paths = resolve_paths(datadir, original_paths, @config_path.nil?, lookup_invocation, ".#{backend}")
       data_providers[backend] = case backend
       when 'json', 'yaml'
         create_data_provider(backend, parent_data_provider, KEY_DATA_HASH, "#{backend}_data", EMPTY_HASH, paths)
       else
-        # Use a data_hash function that delegates to a legacy hiera backend
+        # Custom backend. Hiera v3 must be installed and it must be made aware of the loaded config
+        require 'hiera/config'
         Hiera::Config.instance_variable_set(:@config, @loaded_config)
-        create_data_provider(backend, parent_data_provider, KEY_DATA_HASH, "hiera_v3_data", EMPTY_HASH, paths)
+
+        # Use a special lookup_key that delegates to the backend
+        paths = nil if paths.empty?
+        create_data_provider(backend, parent_data_provider, KEY_V3_BACKEND, "hiera_v3_data", EMPTY_HASH, paths)
       end
     end
     data_providers.values
@@ -253,9 +259,6 @@ class HieraConfigV3 < HieraConfig
     config[KEY_DEEP_MERGE_OPTIONS] ||= {}
 
     backends = [ config[KEY_BACKENDS] ].flatten
-    if backends.include?('yaml') && !config.has_key?('yaml')
-      config['yaml'] = { KEY_DATADIR =>  File.join(Puppet.settings[:codedir], 'environments', '%{::environment}', 'hieradata') }
-    end
 
     # Create the final struct used for validation (backends are included as keys to arbitrary configs in the form of a hash)
     tf = Types::TypeFactory
@@ -287,12 +290,12 @@ class HieraConfigV3 < HieraConfig
       MergeStrategy.strategy(:unique)
     when 'deep', 'deeper'
       merge = { 'strategy' => key == 'deep' ? 'reverse_deep' : 'deep' }
-      (@config[KEY_DEEP_MERGE_OPTIONS] || EMPTY_HASH).each_pair do |key, value|
-        case key
+      (@config[KEY_DEEP_MERGE_OPTIONS] || EMPTY_HASH).each_pair do |opt_key, value|
+        case opt_key
         when 'knockout_prefix', 'merge_debug', 'merge_hash_arrays', 'sort_merge_arrays'
-          merge[key] = value
+          merge[opt_key] = value
         else
-          Puppet.warning("#{@config_path}: merge_option '#{key}' is not recognized. Option is ignored")
+          Puppet.warning("#{@config_path}: merge_option '#{opt_key}' is not recognized. Option is ignored")
         end
       end
       MergeStrategy.strategy(merge)
