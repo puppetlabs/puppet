@@ -351,13 +351,39 @@ describe Puppet::Type.type(:user) do
       @user = described_class.new(:name => 'foo', :comment => @value)
     end
 
-    it "should be converted to ASCII_8BIT for ruby 1.9 / 2.0", :if => RUBY_VERSION < "2.1.0" && String.method_defined?(:encode) do
-      expect(@user[:comment].encoding).to eq(Encoding::ASCII_8BIT)
-      expect(@user[:comment]).to eq(@value.force_encoding(Encoding::ASCII_8BIT))
-    end
+    describe "#insync" do
+      it "should delegate to the provider's #comments_insync? method if defined" do
+        # useradd subclasses nameservice and thus inherits #comments_insync?
+        user = described_class.new(:name => 'foo', :comment => @value, :provider => :useradd)
+        comment_property = user.properties.find {|p| p.name == :comment}
+        user.provider.expects(:comments_insync?)
+        comment_property.insync?('bar')
+      end
 
-    it "must not be converted for ruby >= 2.1", :if => RUBY_VERSION >= "2.1.0" do
-      expect(@user[:comment].encoding).to eq(Encoding::UTF_8)
+      describe "#change_to_s" do
+        let(:is) { "\u2603" }
+        let(:should) { "\u06FF" }
+        let(:comment_property) { @user.properties.find { |p| p.name == :comment } }
+        context "given is and should strings with incompatible encoding" do
+          it "should return a formatted string" do
+            is.force_encoding(Encoding::ASCII_8BIT)
+            should.force_encoding(Encoding::UTF_8)
+            expect(Encoding.compatible?(is, should)).to be_falsey
+            # append Regexp with 'n' to set encoding to ASCII_8BIT
+            expect(comment_property.change_to_s(is,should)).to match(/changed '\xE2\x98\x83' to '\xDB\xBF'/n)
+          end
+        end
+
+        context "given is and should strings with compatible encoding" do
+          it "should return a formatted string" do
+            is.force_encoding(Encoding::UTF_8)
+            should.force_encoding(Encoding::UTF_8)
+            expect(Encoding.compatible?(is, should)).to be_truthy
+            # append Regexp with 'u' to set encoding to UTF_8
+            expect(comment_property.change_to_s(is,should)).to match(/changed '\u2603' to '\u06FF'/u)
+          end
+        end
+      end
     end
   end
 

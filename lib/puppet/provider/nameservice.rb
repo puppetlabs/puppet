@@ -288,5 +288,20 @@ class Puppet::Provider::NameService < Puppet::Provider
       raise Puppet::Error, "Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}", detail.backtrace
     end
   end
+
+  # From overriding Puppet::Property#insync? Ruby Etc::getpwnam < 2.1.0 always
+  # returns a struct with binary encoded string values, and >= 2.1.0 will return
+  # binary encoded strings for values incompatible with current locale charset,
+  # or Encoding.default_external if compatible. Compare a "should" value with
+  # encoding of "current" value, to avoid unnecessary property syncs and
+  # comparison of strings with different encodings. (PUP-6777)
+  #
+  # return basic string comparison after re-encoding (same as
+  # Puppet::Property#property_matches)
+  def comments_insync?(current, should)
+    # we're only doing comparison here so don't mutate the string
+    desired = should[0].to_s.dup
+    current == desired.force_encoding(current.encoding)
+  end
 end
 
