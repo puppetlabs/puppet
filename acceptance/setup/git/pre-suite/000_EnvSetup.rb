@@ -133,6 +133,10 @@ hosts.each do |host|
   case host['platform']
   when /solaris/
     step "#{host} Install json from rubygems"
-    on host, 'gem install json_pure'
+    on host, 'gem install json_pure --no-ri --no-rdoc'
+  when /windows/
+    on host, 'cmd /c gem install bundler --no-ri --no-rdoc'
+  else
+    on host, 'gem install bundler --no-ri --no-rdoc'
   end
 end

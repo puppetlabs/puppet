@@ -29,13 +29,11 @@ extend Beaker::DSL::InstallUtils
         on host, "ln -s #{source_dir} #{checkout_dir}"
         on host, "cd #{checkout_dir} && if [ -f install.rb ]; then ruby ./install.rb ; else true; fi"
       else
-        install_from_git_on host, SourcePath, repository
-      end
-
-      if index == 1
-        versions[repository[:name]] = find_git_repo_versions(host,
-                                                             SourcePath,
-                                                             repository)
+        create_remote_file(host, '/tmp/Gemfile', <<END)
+source ENV['GEM_SOURCE'] || 'https://rubygems.org'
+gem '#{repository[:name]}', :git => '#{repository[:path]}', :ref => '#{ENV['SHA']}'
+END
+        on host, "cd /tmp && bundle install --system --binstubs /usr/bin --standalone"
       end
     end
   end
