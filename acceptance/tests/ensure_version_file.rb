@@ -6,7 +6,7 @@ extend Puppet::Acceptance::TempFileUtils
 
 test_name 'PA-466: Ensure version file is created on agent' do
 
-  skip_test 'requires version file which is created by AIO' if [:gem, :git].include?(@options[:type])
+  skip_test 'requires version file which is created by AIO' if @options[:type] != 'aio'
 
   step "test for existence of version file" do
     agents.each do |agent|

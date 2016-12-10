@@ -54,4 +54,12 @@ extend Beaker::DSL::InstallUtils
       end
     end
   end
+
+  step "Hosts: create environments directory like AIO does" do
+    hosts.each do |host|
+      on host, "mkdir -p /etc/puppetlabs/code/environments/production/manifests"
+      on host, "mkdir -p /etc/puppetlabs/code/environments/production/modules"
+      on host, "chmod -R 755 /etc/puppetlabs/code"
+    end
+  end
 end
