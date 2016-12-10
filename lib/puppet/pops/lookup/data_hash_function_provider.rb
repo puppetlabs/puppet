@@ -15,7 +15,7 @@ class DataHashFunctionProvider < FunctionProvider
 
   def initialize(name, parent_data_provider, function_name, options, locations)
     super
-    @verbatim = !!options[OPTION_KEY_VERBATIM]
+    @verbatim = !(options.empty? || !options.delete(OPTION_KEY_VERBATIM))
   end
 
   # Performs a lookup with the assumption that a recursive check has been made.
