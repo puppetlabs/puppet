@@ -1159,7 +1159,10 @@ Generated on #{Time.now}.
         catalog.add_resource(
           Puppet::Resource.new(:file,
                                configured_environment_path,
-                               :parameters => { :ensure => 'directory' })
+                               :parameters => { :ensure => 'directory',
+                                                :owner => self[:user],
+                                                :group => self[:group],
+                                                :mode => "0750" })
         )
       end
     end
