@@ -127,6 +127,12 @@ describe Puppet::Transaction::Report do
     expect(report.metrics['time'].values.any? {|metric| metric.first =~ /whit/i}).to be_falsey
   end
 
+  it "should be able to set resource inventory" do
+    report = Puppet::Transaction::Report.new("apply")
+    report.add_resource_inventory("some resource_inventory")
+    expect(report.resource_inventory).to eq("some resource_inventory")
+  end
+
   describe "when accepting logs" do
     before do
       @report = Puppet::Transaction::Report.new("apply")

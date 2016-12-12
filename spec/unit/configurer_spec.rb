@@ -422,6 +422,34 @@ describe Puppet::Configurer do
         @agent.run
       end
     end
+
+    describe "when gathering the package inventory" do
+      before do
+        @report = Puppet::Transaction::Report.new("apply")
+        @resource = Puppet::Resource.new("package", "mock_package", {:parameters => {:param1 => "value1"}})
+      end
+
+      it "should add the list of installed packages to the report if pe_enable_resource_inventory is true" do
+        Puppet[:pe_enable_resource_inventory] = true
+        Puppet::Resource.indirection.expects(:search).with("package", {}).returns([@resource])
+        @agent.run({:report => @report})
+        expect(@report.resource_inventory).to eq({:package => [{:title => "mock_package",
+                                                                :param1 => "value1"}]})
+      end
+
+      it "should not add the package inventory when pe_enable_resource_inventory is false" do
+        Puppet[:pe_enable_resource_inventory] = false
+        Puppet::Resource.indirection.expects(:search).with("package", {}).never
+        @agent.run({:report => @report})
+        expect(@report.resource_inventory).to eq({})
+      end
+
+      it "should not add the package inventory by default" do
+        Puppet::Resource.indirection.expects(:search).with("package", {}).never
+        @agent.run({:report => @report})
+        expect(@report.resource_inventory).to eq({})
+      end
+    end
   end
 
   describe "when initialized with a transaction_uuid" do

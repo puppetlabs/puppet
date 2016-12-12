@@ -132,6 +132,10 @@ class Puppet::Transaction::Report
   #
   attr_accessor :resources_failed_to_generate
 
+  # Resource inventory
+  #   @return  [Symbol => [Hash{Symbol => String}]] Resource type to an array of resource parameters
+  attr_reader :resource_inventory
+
   def self.from_data_hash(data)
     obj = self.allocate
     obj.initialize_from_hash(data)
@@ -146,6 +150,11 @@ class Puppet::Transaction::Report
   def <<(msg)
     @logs << msg
     self
+  end
+
+  # @api private
+  def add_resource_inventory(resource_inventory)
+    @resource_inventory = resource_inventory
   end
 
   # @api private
@@ -227,6 +236,7 @@ class Puppet::Transaction::Report
     @noop = Puppet[:noop]
     @noop_pending = false
     @corrective_change = false
+    @resource_inventory = {}
   end
 
   # @api private
@@ -242,6 +252,7 @@ class Puppet::Transaction::Report
     @host = data['host']
     @time = data['time']
     @corrective_change = data['corrective_change']
+    @resource_inventory = data['resource_inventory']
 
     if master_used = data['master_used']
       @master_used = master_used
@@ -305,6 +316,7 @@ class Puppet::Transaction::Report
       'metrics' => @metrics,
       'resource_statuses' => @resource_statuses,
       'corrective_change' => @corrective_change,
+      'resource_inventory' => @resource_inventory,
     }
   end
 

@@ -165,6 +165,18 @@
         "corrective_change": {
             "description": "True if a change or noop event in this report was caused by an unexpected change to the system between Puppet runs.",
             "type":        "boolean"
+        },
+
+        "resource_inventory": {
+            "description": "Object with one property per resource-type collected for inventory.",
+            "type": "object",
+            "patternProperties": {
+                ".*": {
+                    "type": "object",
+                    "$ref": "#/definitions/inventory"
+                }
+            },
+            "additionalProperties": false
         }
     },
 
@@ -647,6 +659,30 @@
             ],
 
             "additionalProperties": false
+        },
+        "inventory": {
+            "description": "An inventory entry for a resource-type in a report.",
+            "type": "object",
+            "patternProperties": {
+                ".*": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "$ref": "#/definitions/inventory_item"
+                    }
+                }
+            },
+            "additionalProperties": false
+        },
+        "inventory_item": {
+            "description": "An inventory item for a resource inventory entry.",
+            "type": "object",
+            "properties": {
+                "title": {
+                    "type": "string"
+                }
+            },
+            "required": ["title"]
         }
     }
 }
