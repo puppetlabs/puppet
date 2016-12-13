@@ -29,8 +29,8 @@ extend Beaker::DSL::InstallUtils
         on host, "ln -s #{source_dir} #{checkout_dir}"
         on host, "cd #{checkout_dir} && if [ -f install.rb ]; then ruby ./install.rb ; else true; fi"
       else
-        create_remote_file(host, '/tmp/Gemfile', <<END)
-source ENV['GEM_SOURCE'] || 'https://rubygems.org'
+        create_remote_file(host, "#{puppet_dir}/Gemfile", <<END)
+source '#{ENV["GEM_SOURCE"] || "https://rubygems.org"}'
 gem '#{repository[:name]}', :git => '#{repository[:path]}', :ref => '#{ENV['SHA']}'
 END
         on host, "cd /tmp && bundle install --system --binstubs /usr/bin --standalone"
