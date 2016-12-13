@@ -29,11 +29,21 @@ extend Beaker::DSL::InstallUtils
         on host, "ln -s #{source_dir} #{checkout_dir}"
         on host, "cd #{checkout_dir} && if [ -f install.rb ]; then ruby ./install.rb ; else true; fi"
       else
+        puppet_dir = host.tmpdir('puppet')
+        on(host, "chmod 755 #{puppet_dir}")
+
         create_remote_file(host, "#{puppet_dir}/Gemfile", <<END)
 source '#{ENV["GEM_SOURCE"] || "https://rubygems.org"}'
 gem '#{repository[:name]}', :git => '#{repository[:path]}', :ref => '#{ENV['SHA']}'
 END
-        on host, "cd /tmp && bundle install --system --binstubs /usr/bin --standalone"
+        case host['platform']
+        when /windows/
+          raise ArgumentError, "Windows is not yet supported"
+        when /solaris/
+          on host, "cd #{puppet_dir} && bundle install --system --binstubs #{host['puppetbindir']} --standalone  --shebang #{host['puppetbindir']}/ruby"
+        else
+          on host, "cd #{puppet_dir} && bundle install --system --binstubs #{host['puppetbindir']} --standalone"
+        end
       end
     end
   end
