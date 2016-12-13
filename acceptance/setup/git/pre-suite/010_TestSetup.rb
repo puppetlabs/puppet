@@ -55,9 +55,10 @@ END
 
   step "Hosts: create environments directory like AIO does" do
     hosts.each do |host|
-      on host, "mkdir -p /etc/puppetlabs/code/environments/production/manifests"
-      on host, "mkdir -p /etc/puppetlabs/code/environments/production/modules"
-      on host, "chmod -R 755 /etc/puppetlabs/code"
+      codedir = host.puppet['codedir']
+      on host, "mkdir -p #{codedir}/environments/production/manifests"
+      on host, "mkdir -p #{codedir}/environments/production/modules"
+      on host, "chmod -R 755 #{codedir}"
     end
   end
 end
