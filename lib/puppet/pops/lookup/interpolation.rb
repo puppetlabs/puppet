@@ -50,12 +50,12 @@ module Interpolation
         value = nil
         unless EMPTY_INTERPOLATIONS[expr]
           method_key, key = get_method_and_data(expr, allow_methods)
-          is_alias = method_key == 'alias'
+          is_alias = method_key == :alias
 
           # Alias is only permitted if the entire string is equal to the interpolate expression
           raise Puppet::DataBinding::LookupError, "'alias' interpolation is only permitted if the expression is equal to the entire string" if is_alias && subject != match
           value = interpolate_method(method_key).call(key, lookup_invocation, subject)
-          value = lookup_invocation.check(key) { interpolate(value, lookup_invocation, allow_methods) }
+          value = lookup_invocation.check(method_key == :scope ? "scope:#{key}" : key) { interpolate(value, lookup_invocation, allow_methods) }
 
           # break gsub and return value immediately if this was an alias substitution. The value might be something other than a String
           return value if is_alias
@@ -99,11 +99,11 @@ module Interpolation
       end
 
       {
-        'lookup' => global_lookup,
-        'hiera' => global_lookup, # this is just an alias for 'lookup'
-        'alias' => global_lookup, # same as 'lookup' but expression must be entire string and result is not subject to string substitution
-        'scope' => scope_lookup,
-        'literal' => lambda { |key, _, _| key }
+        :lookup => global_lookup,
+        :hiera => global_lookup, # this is just an alias for 'lookup'
+        :alias => global_lookup, # same as 'lookup' but expression must be entire string and result is not subject to string substitution
+        :scope => scope_lookup,
+        :literal => lambda { |key, _, _| key }
       }.freeze
     end
     interpolate_method = @@interpolate_methods[method_key]
@@ -114,10 +114,10 @@ module Interpolation
   def get_method_and_data(data, allow_methods)
     if match = data.match(/^(\w+)\((?:["]([^"]+)["]|[']([^']+)['])\)$/)
       raise Puppet::DataBinding::LookupError, 'Interpolation using method syntax is not allowed in this context' unless allow_methods
-      key = match[1]
+      key = match[1].to_sym
       data = match[2] || match[3] # double or single qouted
     else
-      key = 'scope'
+      key = :scope
     end
     [key, data]
   end

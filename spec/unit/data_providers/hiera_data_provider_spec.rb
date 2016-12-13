@@ -35,6 +35,7 @@ describe "when using a hiera data provider" do
     Puppet[:code] = code if code
     node = Puppet::Node.new("testnode", :facts => facts, :environment => environment)
     compiler = Puppet::Parser::Compiler.new(node)
+    compiler.topscope['domain'] = 'example.com'
     block_given? ? compiler.compile { |catalog| yield(compiler); catalog } : compiler.compile
   end
 
@@ -170,7 +171,12 @@ describe "when using a hiera data provider" do
   it 'traps endless interpolate recursion' do
     expect do
       compile_and_get_notifications('hiera_misc', '$r1 = "%{r2}" $r2 = "%{r1}" notify{lookup(recursive):}')
-    end.to raise_error(Puppet::DataBinding::RecursiveLookupError, /detected in \[recursive, r1, r2\]/)
+    end.to raise_error(Puppet::DataBinding::RecursiveLookupError, /detected in \[recursive, scope:r1, scope:r2\]/)
+  end
+
+  it 'does not consider use of same key in the lookup and scope namespaces as recursion' do
+    resources = compile_and_get_notifications('hiera_misc', 'notify{lookup(domain):}')
+    expect(resources).to include('-- example.com --')
   end
 
   it 'traps bad alias declarations' do
