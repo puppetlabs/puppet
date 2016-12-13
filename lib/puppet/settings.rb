@@ -1156,8 +1156,7 @@ Generated on #{Time.now}.
     if configured_environment == "production" && envdir && Puppet::FileSystem.exist?(envdir)
       configured_environment_path = File.join(envdir, configured_environment)
       if !Puppet::FileSystem.symlink?(configured_environment_path)
-        eid = Process::UID.eid
-        if eid == 0 or eid == Etc.getpwnam(self[:user]).uid
+        if @service_user_available and @service_group_available
           catalog.add_resource(
             Puppet::Resource.new(:file,
                                  configured_environment_path,
