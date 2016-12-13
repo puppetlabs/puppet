@@ -41,6 +41,13 @@ class Puppet::Provider::Exec < Puppet::Provider
                 warning "Overriding environment setting '#{env_name}' with '#{value}'"
               end
               environment[env_name] = value
+            elsif setting =~ /^(\w+)=$/
+              env_name = $1
+              warning "Environment Setting #{env_name} set to `#{env_name}=`, if this is unexpected check the variable has been assigned in the string"
+              if environment.include?(env_name) || environment.include?(env_name.to_sym)
+                warning "Overriding environment setting '#{env_name}' with '#{value}'"
+              end
+              environment[env_name] = value
             else
               warning "Cannot understand environment setting #{setting.inspect}"
             end

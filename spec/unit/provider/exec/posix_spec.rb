@@ -106,6 +106,17 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
       expect { provider.run(%Q["#{command}"]) }.to raise_error(ArgumentError, "Could not find command '#{command}'")
     end
 
+    it "should allow setting environment settings to an empty value" do
+      provider.resource[:environment] = ['WHATEVER=']
+      command = make_exe
+
+      Puppet::Util::Execution.expects(:execute).with(command, instance_of(Hash)).returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+
+      provider.run(command)
+
+      expect(@logs.map {|l| "#{l.level}: #{l.message}" }).to eq(["warning: Environment Setting WHATEVER set to `WHATEVER=`, if this is unexpected check the variable has been assigned in the string"])
+    end
+
     it "should warn if you're overriding something in environment" do
       provider.resource[:environment] = ['WHATEVER=/something/else', 'WHATEVER=/foo']
       command = make_exe
