@@ -43,15 +43,19 @@ module Lookup
     # @param datadir [Pathname] The base when creating absolute paths
     # @param declared_paths [Array<String>] paths as found in declaration. May contain interpolation expressions
     # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] The current lookup invocation
+    # @param is_default_config [Boolean] `true` if this is the default config and non-existent paths should be excluded
     # @param extension [String] Required extension such as '.yaml' or '.json'. Use only if paths without extension can be expected
     # @return [Array<ResolvedLocation>] Array of resolved paths
-    def resolve_paths(datadir, declared_paths, lookup_invocation, extension = nil)
-      declared_paths.map do |declared_path|
+    def resolve_paths(datadir, declared_paths, lookup_invocation, is_default_config, extension = nil)
+      result = []
+      declared_paths.each do |declared_path|
         path = interpolate(declared_path, lookup_invocation, false)
         path += extension unless extension.nil? || path.end_with?(extension)
         path = datadir + path
-        ResolvedLocation.new(declared_path, path, path.exist?)
+        path_exists = path.exist?
+        result << ResolvedLocation.new(declared_path, path, path_exists) unless is_default_config && !path_exists
       end
+      result
     end
 
     # @param declared_uris [Array<String>] paths as found in declaration. May contain interpolation expressions

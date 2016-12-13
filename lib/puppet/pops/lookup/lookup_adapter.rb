@@ -70,6 +70,12 @@ class LookupAdapter < DataAdapter
       throw :no_such_key
     end
 
+    if(terminus.to_s == 'hiera')
+      provider = global_provider(lookup_invocation)
+      throw :no_such_key if provider.nil?
+      return provider.key_lookup(key, lookup_invocation, merge_strategy)
+    end
+
     lookup_invocation.with(:global, terminus) do
       catch(:no_such_key) do
         return lookup_invocation.report_found(key, Puppet::DataBinding.indirection.find(key.root_key,
@@ -191,6 +197,11 @@ class LookupAdapter < DataAdapter
       end
     end
     @env_lookup_options
+  end
+
+  def global_provider(lookup_invocation)
+    @global_provider = GlobalDataProvider.new unless instance_variable_defined?(:@global_provider)
+    @global_provider
   end
 
   def env_provider(lookup_invocation)
@@ -351,5 +362,6 @@ end
 end
 
 require_relative 'invocation'
+require_relative 'global_data_provider'
 require_relative 'environment_data_provider'
 require_relative 'module_data_provider'

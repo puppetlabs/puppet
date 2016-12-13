@@ -2355,18 +2355,18 @@ with_puppet_running_on master, @master_opts, @coderoot do
   rxg = on(master, puppet('lookup', '--explain', 'global_key'))
   result = rxg.stdout
   assert_match(
-    /Data Binding \"hiera\"\s*Found key.*global-hiera/,
+    /Global Data Provider.*\s*Using.*\s*Hier.*\s*Path.*\s*Orig.*\s*Found key.*global-hiera/,
     result,
-    "global_key explained failed, expected /Found key: \"global_key\" value: \"Data Binding \"hiera\"\s*Found key.*global-hiera/"
+    "global_key explained failed, expected /Global Data Provider.*\s*Using.*\s*Hier.*\s*Path.*\s*Orig.*\s*Found key.*global-hiera/"
   )
  
   step "environment env1 environment_key explained"
   rxe1 = on(master, puppet('lookup', '--explain', '--environment env1', 'environment_key'))
   result = rxe1.stdout
   assert_match(
-    /Data Binding \"hiera\"\s*No such key/,
+    /Global Data Provider.*\s*Using.*\s*Hier.*\s*Path.*\s*Orig.*\s*No such key/,
     result,
-    "environment env1 enviroment_key lookup failed, expected /Data Binding \"hiera\"\s*No such key/"
+    "environment env1 enviroment_key lookup failed, expected /Global Data Provider.*\s*Using.*\s*Hier.*\s*Path.*\s*Orig.*\s*No such key/"
   )
   assert_match(
     /common.*\s*.*env-env1 hiera/,
@@ -2378,9 +2378,9 @@ with_puppet_running_on master, @master_opts, @coderoot do
   rxe2 = on(master, puppet('lookup', '--explain', '--environment env2', 'environment_key'))
   result = rxe2.stdout
   assert_match(
-    /Data Binding \"hiera\"\s*No such key/,
+    /Global Data Provider.*\s*Using.*\s*Hier.*\s*Path.*\s*Orig.*\s*No such key/,
     result,
-    "environment env2 enviroment_key lookup failed, expected /Data Binding \"hiera\"\s*No such key/"
+    "environment env2 enviroment_key lookup failed, expected /Global Data Provider.*\s*Using.*\s*Hier.*\s*Path.*\s*Orig.*\s*No such key/"
   )
   assert_match(
     /deprecated API function.*\s*.*env-env2-ruby-function/,
@@ -2392,9 +2392,9 @@ with_puppet_running_on master, @master_opts, @coderoot do
   rxe3 = on(master, puppet('lookup', '--explain', '--environment env3', 'environment_key'))
   result = rxe3.stdout
   assert_match(
-    /Data Binding \"hiera\"\s*No such key/,
+    /Global Data Provider.*\s*Using.*\s*Hier.*\s*Path.*\s*Orig.*\s*No such key/,
     result,
-    "environment env3 enviroment_key lookup failed, expected /Data Binding \"hiera\"\s*No such key/"
+    "environment env3 enviroment_key lookup failed, expected /Global Data Provider.*\s*Using.*\s*Hier.*\s*Path.*\s*Orig.*\s*No such key/"
   )
   assert_match(
     /deprecated API function.*\s*.*env-env3-puppet-function/,
@@ -2406,16 +2406,16 @@ with_puppet_running_on master, @master_opts, @coderoot do
   rxe4 = on(master, puppet('lookup', '--explain', '--environment env4', 'environment_key'))
   result = rxe4.stdout
   assert_match(
-    /Data Binding\s*\"hiera\"\s*No such key.*environment_key.*\s.*did not find a value.*/,
+    /Global Data Provider.*\s*Using.*\s*Hier.*\s*Path.*\s*Orig.*\s*No such key.*environment_key/,
     result,
-    "environment env4 environment_key lookup failed expected /Data Binding\s*\"hiera\"\s*No such key.*environment_key.*\s.*did not find a value.*/"
+    "environment env4 environment_key lookup failed expected /Global Data Provider.*\s*Using.*\s*Hier.*\s*Path.*\s*Orig.*\s*No such key.*environment_key.*\s.*did not find a value.*/"
   )
 
   step "environment env1 mod4::module_key explained"
   rxe1m4 = on(master, puppet('lookup', '--explain', '--environment env1', 'mod4::module_key'))
   result = rxe1m4.stdout
   assert_match(
-    /Binding.*hiera\"\s*No such key.*\s*Env.*\s*.*env1\/hiera.yaml\"\s*Hier.*common\"\s*Path.*\s*Orig.*\s*No such key.*\s*Module data provider.*not found\s*.*did not find a value.*/,
+    /Global Data Provider.*\s*Using.*\s*Hier.*\s*Path.*\s*Orig.*\s*No such key.*\s*Env.*\s*.*env1\/hiera.yaml\"\s*Hier.*common\"\s*Path.*\s*Orig.*\s*No such key.*\s*Module data provider.*not found\s*.*did not find a value.*/,
     result,
     "environment env1 mod4::module_key lookup explained failed."
   )
@@ -2424,7 +2424,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
   rxe2m3 = on(master, puppet('lookup', '--explain', '--environment env2', 'mod3::module_key'))
   result = rxe2m3.stdout
   assert_match(
-    /Binding.*hiera\"\s*No such key.*\s*Env.*\s*deprecated API function.*\s*No such key.*\s*Module.*Data Provider.*\s*deprecated API function.*\s*Found key.*module-env2-mod3-puppet-function/,
+    /Global Data Provider.*\s*Using.*\s*Hier.*\s*Path.*\s*Orig.*\s*No such key.*\s*Env.*\s*deprecated API function.*\s*No such key.*\s*Module.*Data Provider.*\s*deprecated API function.*\s*Found key.*module-env2-mod3-puppet-function/,
     result,
     "environment env2 mod3::module_key lookup failed."
   )
@@ -2433,7 +2433,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
   rxe3m2 = on(master, puppet('lookup', '--explain', '--environment env3', 'mod2::module_key'))
   result = rxe3m2.stdout
   assert_match(
-    /Binding.*hiera\"\s*No such key.*\s*Env.*\s*deprecated API function.*\s*No such key.*\s*Module.*Data Provider.*\s*deprecated API function.*\s*Found key.*module-env3-mod2-ruby-function/,
+    /Global Data Provider.*\s*Using.*\s*Hier.*\s*Path.*\s*Orig.*\s*No such key.*\s*Env.*\s*deprecated API function.*\s*No such key.*\s*Module.*Data Provider.*\s*deprecated API function.*\s*Found key.*module-env3-mod2-ruby-function/,
     result,
     "environment env3 mod2::module_key lookup failed."
   )
@@ -2442,7 +2442,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
   rxe4m1 = on(master, puppet('lookup', '--explain', '--environment env4', 'mod1::module_key'))
   result = rxe4m1.stdout
   assert_match(
-    /Binding.*hiera"\s*No such key.*\s*Module.*Data Provider.*\s*Using.*\s*Hier.*common\"\s*Path.*\s*Orig.*\s*Found key.*module-env4-mod1-hiera/,
+    /Global Data Provider.*\s*Using.*\s*Hier.*\s*Path.*\s*Orig.*\s*No such key.*\s*Module.*Data Provider.*\s*Using.*\s*Hier.*common\"\s*Path.*\s*Orig.*\s*Found key.*module-env4-mod1-hiera/,
     result,
     "environment env4 mod1::module_key lookup failed."
   )

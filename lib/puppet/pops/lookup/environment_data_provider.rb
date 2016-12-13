@@ -10,6 +10,11 @@ class EnvironmentDataProvider < ConfiguredDataProvider
 
   protected
 
+  def assert_config_version(config)
+    raise Puppet::DataBinder::LookupError, "#{config.name}: cannot be used in an environment" unless config.version > 3
+    config
+  end
+
   # Return the root of the environment
   #
   # @param lookup_invocation [Invocation] The current lookup invocation

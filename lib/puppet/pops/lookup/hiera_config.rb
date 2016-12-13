@@ -42,6 +42,7 @@ class HieraConfig
   KEY_DATA_HASH = DataHashFunctionProvider::TAG
   KEY_LOOKUP_KEY = LookupKeyFunctionProvider::TAG
   KEY_DATA_DIG = DataDigFunctionProvider::TAG
+  KEY_V3_BACKEND = V3BackendFunctionProvider::TAG
   KEY_V4_DATA_HASH = V4DataHashFunctionProvider::TAG
 
   FUNCTION_KEYS = [KEY_DATA_HASH, KEY_LOOKUP_KEY, KEY_DATA_DIG]
@@ -51,6 +52,7 @@ class HieraConfig
     KEY_DATA_HASH => DataHashFunctionProvider,
     KEY_DATA_DIG => DataDigFunctionProvider,
     KEY_LOOKUP_KEY => LookupKeyFunctionProvider,
+    KEY_V3_BACKEND => V3BackendFunctionProvider,
     KEY_V4_DATA_HASH => V4DataHashFunctionProvider
   }
 
@@ -91,14 +93,14 @@ class HieraConfig
   # Creates a new HieraConfig from the given _config_root_. This is where the 'hiera.yaml' is expected to be found
   # and is also the base location used when resolving relative paths.
   #
-  # @param config_root [Pathname] Absolute path to the configuration root
+  # @param config_path [Pathname] Absolute path to the configuration file
   # @return [LookupConfiguration] the configuration
-  def self.create(config_root)
-    if config_root.is_a?(Hash)
+  def self.create(config_path)
+    if config_path.is_a?(Hash)
       config_path = nil
-      loaded_config = config_root
+      loaded_config = config_path
     else
-      config_path = config_root + CONFIG_FILE_NAME
+      config_root = config_path.parent
       if config_path.exist?
         loaded_config = YAML.load_file(config_path)
       else
@@ -114,6 +116,8 @@ class HieraConfig
       HieraConfigV5.new(config_root, config_path, loaded_config)
     when 4
       HieraConfigV4.new(config_root, config_path, loaded_config)
+    when 3
+      HieraConfigV3.new(config_root, config_path, loaded_config)
     else
       raise Puppet::DataBinding::LookupError, "#{@config_path}: This runtime does not support #{CONFIG_FILE_NAME} version '#{version}'"
     end
@@ -185,6 +189,121 @@ class HieraConfig
 end
 
 # @api private
+class HieraConfigV3 < HieraConfig
+  KEY_BACKENDS = 'backends'.freeze
+  KEY_LOGGER = 'logger'.freeze
+  KEY_MERGE_BEHAVIOR = 'merge_behavior'.freeze
+  KEY_DEEP_MERGE_OPTIONS = 'deep_merge_options'.freeze
+
+  def self.config_type
+    return @@CONFIG_TYPE if class_variable_defined?(:@@CONFIG_TYPE)
+    tf = Types::TypeFactory
+    nes_t = Types::PStringType::NON_EMPTY
+
+    # This is a hash, not a type. Contained backends are added prior to validation
+    @@CONFIG_TYPE = {
+      tf.optional(KEY_VERSION) => tf.range(3,3),
+      tf.optional(KEY_BACKENDS) => tf.variant(nes_t, tf.array_of(nes_t)),
+      tf.optional(KEY_LOGGER) => nes_t,
+      tf.optional(KEY_MERGE_BEHAVIOR) => tf.enum('deep', 'deeper', 'native'),
+      tf.optional(KEY_DEEP_MERGE_OPTIONS) => tf.hash_kv(nes_t, tf.variant(tf.string, tf.boolean)),
+      tf.optional(KEY_HIERARCHY) => tf.variant(nes_t, tf.array_of(nes_t))
+    }
+  end
+
+  def create_configured_data_providers(lookup_invocation, parent_data_provider)
+    scope = lookup_invocation.scope
+    unless scope.is_a?(Hiera::Scope)
+      lookup_invocation = Invocation.new(
+        Hiera::Scope.new(scope),
+        lookup_invocation.override_values,
+        lookup_invocation.default_values,
+        lookup_invocation.explainer)
+    end
+
+    default_datadir = File.join(Puppet.settings[:codedir], 'environments', '%{::environment}', 'hieradata')
+    data_providers = {}
+
+    [@config[KEY_BACKENDS]].flatten.each do |backend|
+      raise Puppet::DataBinding::LookupError, "#{@config_path}: Backend '#{backend}' defined more than once" if data_providers.include?(backend)
+      original_paths = @config[KEY_HIERARCHY]
+      backend_config = @config[backend] || EMPTY_HASH
+      datadir = @config_root + interpolate(backend_config[KEY_DATADIR] || default_datadir, lookup_invocation, false)
+      paths = resolve_paths(datadir, original_paths, @config_path.nil?, lookup_invocation, ".#{backend}")
+      data_providers[backend] = case backend
+      when 'json', 'yaml'
+        create_data_provider(backend, parent_data_provider, KEY_DATA_HASH, "#{backend}_data", EMPTY_HASH, paths)
+      else
+        # Custom backend. Hiera v3 must be installed and it must be made aware of the loaded config
+        require 'hiera/config'
+        Hiera::Config.instance_variable_set(:@config, @loaded_config)
+
+        # Use a special lookup_key that delegates to the backend
+        paths = nil if paths.empty?
+        create_data_provider(backend, parent_data_provider, KEY_V3_BACKEND, "hiera_v3_data", EMPTY_HASH, paths)
+      end
+    end
+    data_providers.values
+  end
+
+  def validate_config(config)
+    unless Puppet[:strict] == :off
+      Puppet.warn_once(:deprecation, 'hiera.yaml',
+        "#{@config_path}: Use of 'hiera.yaml' version 3 is deprecated. It should be converted to version 5", config_path.to_s)
+    end
+    config[KEY_VERSION] ||= 3
+    config[KEY_BACKENDS] ||= 'yaml'
+    config[KEY_HIERARCHY] ||= %w(nodes/%{::trusted.certname} common)
+    config[KEY_LOGGER] ||= 'console'
+    config[KEY_MERGE_BEHAVIOR] ||= 'native'
+    config[KEY_DEEP_MERGE_OPTIONS] ||= {}
+
+    backends = [ config[KEY_BACKENDS] ].flatten
+
+    # Create the final struct used for validation (backends are included as keys to arbitrary configs in the form of a hash)
+    tf = Types::TypeFactory
+    backend_elements = {}
+    backends.each { |backend| backend_elements[tf.optional(backend)] = tf.hash_kv(Types::PStringType::NON_EMPTY, tf.any) }
+    v3_struct = tf.struct(self.class.config_type.merge(backend_elements))
+
+    Types::TypeAsserter.assert_instance_of(["The Lookup Configuration at '%s'", @config_path], v3_struct, config)
+  end
+
+  def merge_strategy
+    @merge_strategy ||= create_merge_strategy
+  end
+
+  def version
+    3
+  end
+
+  private
+
+  def create_merge_strategy
+    key = @config[KEY_MERGE_BEHAVIOR]
+    case key
+    when nil
+      MergeStrategy.strategy(nil)
+    when 'native'
+      MergeStrategy.strategy(:first)
+    when 'array'
+      MergeStrategy.strategy(:unique)
+    when 'deep', 'deeper'
+      merge = { 'strategy' => key == 'deep' ? 'reverse_deep' : 'deep' }
+      (@config[KEY_DEEP_MERGE_OPTIONS] || EMPTY_HASH).each_pair do |opt_key, value|
+        case opt_key
+        when 'knockout_prefix', 'merge_debug', 'merge_hash_arrays', 'sort_merge_arrays'
+          merge[opt_key] = value
+        else
+          Puppet.warning("#{@config_path}: merge_option '#{opt_key}' is not recognized. Option is ignored")
+        end
+      end
+      MergeStrategy.strategy(merge)
+    end
+  end
+end
+
+# @api private
 class HieraConfigV4 < HieraConfig
   require 'puppet/plugins/data_providers'
 
@@ -240,7 +359,7 @@ class HieraConfigV4 < HieraConfig
       data_providers[name] = case provider_name
       when 'json', 'yaml'
         create_data_provider(name, parent_data_provider, KEY_DATA_HASH, "#{provider_name}_data", {},
-          resolve_paths(datadir, original_paths, lookup_invocation, ".#{provider_name}"))
+          resolve_paths(datadir, original_paths, lookup_invocation, @config_path.nil?, ".#{provider_name}"))
       else
         factory_create_data_provider(lookup_invocation, name, parent_data_provider, provider_name, datadir, original_paths)
       end
@@ -326,9 +445,9 @@ class HieraConfigV5 < HieraConfig
       location_key = LOCATION_KEYS.find { |key| he.include?(key) }
       locations = case location_key
       when KEY_PATHS
-        resolve_paths(entry_datadir, he[location_key], lookup_invocation)
+        resolve_paths(entry_datadir, he[location_key], lookup_invocation, @config_path.nil?)
       when KEY_PATH
-        resolve_paths(entry_datadir, [he[location_key]], lookup_invocation)
+        resolve_paths(entry_datadir, [he[location_key]], lookup_invocation, @config_path.nil?)
       when KEY_GLOBS
         expand_globs(entry_datadir, he[location_key], lookup_invocation)
       when KEY_GLOB
@@ -340,6 +459,7 @@ class HieraConfigV5 < HieraConfig
       else
         nil
       end
+      next if @config_path.nil? && !locations.nil? && locations.empty? # Default config and no existing paths found
       options = he[KEY_OPTIONS]
       options = options.nil? ? EMPTY_HASH : interpolate(options, lookup_invocation, false)
       data_providers[name] = create_data_provider(name, parent_data_provider, function_kind, function_name, options, locations)

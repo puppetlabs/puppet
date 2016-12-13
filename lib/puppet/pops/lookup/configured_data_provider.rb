@@ -10,11 +10,11 @@ class ConfiguredDataProvider
 
   # @param config [HieraConfig,nil] the configuration
   def initialize(config = nil)
-    @config = config
+    @config = config.nil? ? nil : assert_config_version(config)
   end
 
   def config(lookup_invocation)
-    @config ||= HieraConfig.create(provider_root(lookup_invocation))
+    @config ||= assert_config_version(HieraConfig.create(configuration_path(lookup_invocation)))
   end
 
   # @return [Pathname] the path to the configuration
@@ -42,6 +42,11 @@ class ConfiguredDataProvider
   def unchecked_key_lookup(key, lookup_invocation, merge)
     lookup_invocation.with(:data_provider, self) do
       merge_strategy = MergeStrategy.strategy(merge)
+      dps = data_providers(lookup_invocation)
+      if dps.empty?
+        lookup_invocation.report_not_found(key)
+        throw :no_such_key
+      end
       merge_strategy.lookup(data_providers(lookup_invocation), lookup_invocation) do |data_provider|
         data_provider.unchecked_key_lookup(key, lookup_invocation, merge_strategy)
       end
@@ -49,6 +54,15 @@ class ConfiguredDataProvider
   end
 
   protected
+
+  # Assert that the given config version is accepted by this data provider.
+  #
+  # @param config [HieraConfig] the configuration to check
+  # @return [HieraConfig] the argument
+  # @raise [Puppet::DataBinder::LookupError] if the configuration version is unacceptable
+  def assert_config_version(config)
+    config
+  end
 
   # Return the root of the configured entity
   #
@@ -58,6 +72,10 @@ class ConfiguredDataProvider
   #
   def provider_root(lookup_invocation)
     raise NotImplementedError, "#{self.class.name} must implement method '#provider_root'"
+  end
+
+  def configuration_path(lookup_invocation)
+    provider_root(lookup_invocation) + HieraConfig::CONFIG_FILE_NAME
   end
 
   private
