@@ -11,7 +11,7 @@ class EnvironmentDataProvider < ConfiguredDataProvider
   protected
 
   def assert_config_version(config)
-    raise Puppet::DataBinder::LookupError, "#{config.name}: cannot be used in an environment" unless config.version > 3
+    raise Puppet::DataBinding::LookupError, "#{config.name} cannot be used in an environment" unless config.version > 3
     config
   end
 

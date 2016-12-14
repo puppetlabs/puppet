@@ -249,6 +249,51 @@ describe "The lookup function" do
       end
     end
 
+    context 'and a global Hiera v4 configuration' do
+      let(:code_dir) { tmpdir('code') }
+      let(:code_dir_files) do
+        {
+          'hiera.yaml' => <<-YAML.unindent,
+            ---
+            version: 4
+        YAML
+        }
+      end
+
+      let(:populated_code_dir) do
+        dir_contained_in(code_dir, code_dir_files)
+        code_dir
+      end
+
+      before(:each) do
+        # Need to set here since spec_helper defines these settings in its "before each"
+        Puppet.settings[:codedir] = populated_code_dir
+        Puppet.settings[:hiera_config] = File.join(code_dir, 'hiera.yaml')
+      end
+
+      it 'raises an error' do
+        expect { lookup('a') }.to raise_error(Puppet::Error, /hiera configuration version 4 cannot be used in the global layer/)
+      end
+    end
+
+    context 'and an environment Hiera v3 configuration' do
+      let(:environment_files) do
+        {
+          env_name => {
+            'hiera.yaml' => <<-YAML.unindent,
+              ---
+              :backends: yaml
+          YAML
+          }
+        }
+      end
+
+      it 'raises an error' do
+        expect { lookup('a') }.to raise_error(Puppet::Error, /hiera configuration version 3 cannot be used in an environment/)
+      end
+    end
+
+
     context 'and a global Hiera v3 configuration' do
       let(:code_dir) { tmpdir('code') }
       let(:code_dir_files) do
@@ -404,6 +449,23 @@ describe "The lookup function" do
 
         it 'does not find data in the module' do
           expect { lookup('mod_a::b') }.to raise_error(Puppet::DataBinding::LookupError, /did not find a value for the name 'mod_a::b'/)
+        end
+
+        context 'with a Hiera v3 configuration' do
+          let(:mod_a_files) do
+            {
+              'mod_a' => {
+                'hiera.yaml' => <<-YAML.unindent
+                  ---
+                  :backends: yaml
+                  YAML
+              }
+            }
+          end
+
+          it 'raises an error' do
+            expect { lookup('mod_a::a') }.to raise_error(Puppet::Error, /hiera configuration version 3 cannot be used in a module/)
+          end
         end
 
         context "but a metadata.json with 'module_data_provider=hiera'" do
