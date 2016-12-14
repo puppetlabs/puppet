@@ -2,9 +2,10 @@ require 'puppet/acceptance/environment_utils'
 test_name 'C97760: Bignum in reduce() should not cause exception' do
   extend Puppet::Acceptance::EnvironmentUtils
 
+  skip_test "This test needs to be reworked to not rely on merge, see PUP-6994"
+
   app_type = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type)
-  on(master, "chmod -R 666 #{File.join(environmentpath,tmp_environment)}")
 
   step 'On master, create site.pp with bignum' do
     site_manifest = File.join(environmentpath, tmp_environment, 'manifests', 'site.pp')
@@ -17,19 +18,19 @@ node default {
       "admin_auth_keys"=>{
           "keyname1"=>{
               "key"=>"ABCDEF",
-              "options"=>["from=\"10.0.0.0/8\""]
+              "options"=>["from=\\"10.0.0.0/8\\""]
           },
           "keyname2"=>{
               "key"=>"ABCDEF",
           },
           "keyname3"=>{
               "key"=>"ABCDEF",
-              "options"=>["from=\"10.0.0.0/8\""],
+              "options"=>["from=\\"10.0.0.0/8\\""],
               "type"=>"ssh-xxx"
           },
           "keyname4"=>{
               "key"=>"ABCDEF",
-              "options"=>["from=\"10.0.0.0/8\""]
+              "options"=>["from=\\"10.0.0.0/8\\""]
           }
       },
       "admin_user"=>"ertxa",
@@ -53,6 +54,7 @@ node default {
   fail($data_reduced)
 }
 SITEPP
+    on(master, "chmod 644 #{site_manifest}")
   end
 
   with_puppet_running_on(master, {}) do

@@ -1,4 +1,7 @@
 test_name "Environment control of static catalogs"
+
+skip_test 'requires puppetserver to test static catalogs' if @options[:type] != 'aio'
+
 require 'json'
 
 @testroot = master.tmpdir(File.basename(__FILE__, '/*'))
