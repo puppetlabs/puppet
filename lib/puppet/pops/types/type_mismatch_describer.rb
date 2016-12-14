@@ -721,8 +721,10 @@ module Types
         arg_count.times do |index|
           adx = index >= etypes.size ? etypes.size - 1 : index
           etype = etypes[adx]
-          descriptions = describe(etype, atypes[index], path + [ParameterPathElement.new(enames[adx])])
-          return descriptions unless descriptions.empty?
+          unless etype.assignable?(atypes[index])
+            descriptions = describe(etype, atypes[index], path + [ParameterPathElement.new(enames[adx])])
+            return descriptions unless descriptions.empty?
+          end
         end
         EMPTY_ARRAY
       else

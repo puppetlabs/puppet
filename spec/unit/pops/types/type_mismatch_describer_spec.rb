@@ -130,6 +130,17 @@ describe 'the type mismatch describer' do
       /parameter 'arg' expects a match for Enum\['a', 'b'\], got Sensitive/))
   end
 
+  it "reports errors on the first failing parameter when that parameter is not the first in order" do
+    code = <<-CODE
+      type Abc = Enum['a', 'b', 'c']
+      type Cde = Enum['c', 'd', 'e']
+      function two_params(Abc $a, Cde $b) {}
+      two_params('a', 'x')
+    CODE
+    expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
+      /parameter 'b' expects a match for Cde = Enum\['c', 'd', 'e'\], got 'x'/))
+  end
+
   it "will not generalize a string that doesn't match an enum in a define call" do
     code = <<-CODE
       define check_enums(Enum[a,b] $arg) {}
