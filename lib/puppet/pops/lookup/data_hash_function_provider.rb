@@ -10,14 +10,6 @@ class DataHashFunctionProvider < FunctionProvider
 
   TAG = 'data_hash'.freeze
 
-  OPTION_KEY_VERBATIM = 'verbatim'.freeze
-  OPTION_KEY_PRUNE = 'prune'.freeze
-
-  def initialize(name, parent_data_provider, function_name, options, locations)
-    super
-    @verbatim = !(options.empty? || !options.delete(OPTION_KEY_VERBATIM))
-  end
-
   # Performs a lookup with the assumption that a recursive check has been made.
   #
   # @param key [LookupKey] The key to lookup
@@ -62,7 +54,7 @@ class DataHashFunctionProvider < FunctionProvider
       lookup_invocation.report_not_found(root_key)
       throw :no_such_key
     end
-    @verbatim ? value : interpolate(value, lookup_invocation, true)
+    interpolate(value, lookup_invocation, true)
   end
 
   def data_hash(lookup_invocation, location)

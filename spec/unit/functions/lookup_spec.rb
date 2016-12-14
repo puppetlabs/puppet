@@ -519,10 +519,6 @@ describe "The lookup function" do
           {
             'mod_a' => {
               'data' => {
-                'verbatim.yaml' => <<-YAML.unindent,
-                ---
-                mod_a::vbt: "verbatim %{scope_xo} --"
-                YAML
                 'common.yaml' => <<-YAML.unindent
                 ---
                 mod_a::a: value mod_a::a (from mod_a)
@@ -563,11 +559,6 @@ describe "The lookup function" do
                 - name: "Common"
                   data_hash: yaml_data
                   path: "common.yaml"
-                - name: "Verbatim"
-                  data_hash: yaml_data
-                  path: "verbatim.yaml"
-                  options:
-                    verbatim: true
             YAML
             }
           }
@@ -641,10 +632,6 @@ describe "The lookup function" do
 
         it 'interpolates a literal' do
           expect(lookup('mod_a::interpolate_literal')).to eql('-- hello --')
-        end
-
-        it 'does not interpolate when options { "verbatim" => true }' do
-          expect(lookup('mod_a::vbt')).to eql('verbatim %{scope_xo} --')
         end
 
         it 'interpolates scalar from scope' do
