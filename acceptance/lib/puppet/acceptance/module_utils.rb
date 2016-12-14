@@ -219,7 +219,7 @@ module Puppet
         end
       end
 
-      LS_REGEX = %r[(.)(...)(...)(...).?\s+\d+\s+(\w+)\s+(\w+).*(\S+)$]
+      LS_REGEX = %r[(.)(...)(...)(...).?[[:space:]]+\d+[[:space:]]+([[:word:]]+)[[:space:]]+([[:word:]]+).*[[:space:]]+([[:graph:]]+)$]
 
       def parse_ls(line)
         match = line.match(LS_REGEX)
