@@ -59,7 +59,7 @@ class ConfiguredDataProvider
   #
   # @param config [HieraConfig] the configuration to check
   # @return [HieraConfig] the argument
-  # @raise [Puppet::DataBinder::LookupError] if the configuration version is unacceptable
+  # @raise [Puppet::DataBinding::LookupError] if the configuration version is unacceptable
   def assert_config_version(config)
     config
   end
@@ -68,7 +68,7 @@ class ConfiguredDataProvider
   #
   # @param lookup_invocation [Invocation] The current lookup invocation
   # @return [Pathname] Path to root of the module
-  # @raise [Puppet::DataBinder::LookupError] if the given module is can not be found
+  # @raise [Puppet::DataBinding::LookupError] if the given module is can not be found
   #
   def provider_root(lookup_invocation)
     raise NotImplementedError, "#{self.class.name} must implement method '#provider_root'"
