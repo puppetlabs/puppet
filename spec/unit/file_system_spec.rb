@@ -24,6 +24,12 @@ describe "Puppet::FileSystem" do
     file.close
   end
 
+  SYSTEM_SID_BYTES = [1, 1, 0, 0, 0, 0, 0, 5, 18, 0, 0, 0]
+
+  def is_current_user_system?
+    SYSTEM_SID_BYTES == Puppet::Util::Windows::ADSI::User.current_user_sid.sid_bytes
+  end
+
   context "#open" do
     it "uses the same default mode as File.open, when specifying a nil mode (umask used on non-Windows)" do
       file = tmpfile('file_to_update')
@@ -32,11 +38,16 @@ describe "Puppet::FileSystem" do
       Puppet::FileSystem.open(file, nil, 'a') { |fh| fh.write('') }
 
       expected_perms = Puppet::Util::Platform.windows? ?
-        # default Windows mode based on temp file storage
-        '2000700' :
+        # default Windows mode based on temp file storage for SYSTEM user or regular user
+        # for Jenkins or other services running as SYSTEM writing to c:\windows\temp
+        # the permissions will typically be SYSTEM(F) / Administrators(F) which is 770
+        # but sometimes there are extra users like IIS_IUSRS granted rights which adds the "extra ace" 2
+        # for local Administrators writing to their own temp folders under c:\users\USER
+        # they will have (F) for themselves, and Users will not have a permission, hence 700
+        (is_current_user_system? ? ['770', '2000770'] : '2000700') :
         # default mode is applied. 100 == 'regular file'
         '100' + (666 - File.umask.to_s(8).to_i).to_s
-      expect(Puppet::FileSystem.stat(file).mode.to_s(8)).to eq(expected_perms)
+      expect([expected_perms].flatten).to include(Puppet::FileSystem.stat(file).mode.to_s(8))
 
       default_file = tmpfile('file_to_update2')
       expect(Puppet::FileSystem.exist?(default_file)).to be_falsey
@@ -54,8 +65,10 @@ describe "Puppet::FileSystem" do
 
       # Behavior may change in the future on Windows, to *actually* change perms
       # but for now, setting a mode doesn't touch them
-      expected_perms = Puppet::Util::Platform.windows? ? '2000700' : '100444'
-      expect(Puppet::FileSystem.stat(file).mode.to_s(8)).to eq(expected_perms)
+      expected_perms = Puppet::Util::Platform.windows? ?
+        (is_current_user_system? ? ['770', '2000770'] : '2000700') :
+        '100444'
+      expect([expected_perms].flatten).to include(Puppet::FileSystem.stat(file).mode.to_s(8))
 
       # On Windows, 0444 happens to round-trip properly (most octals *do not*)
       # Setting a mode controls file attribute setting (like archive, read-only, etc)
