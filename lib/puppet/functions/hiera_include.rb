@@ -80,7 +80,7 @@ Puppet::Functions.create_function(:hiera_include, Hiera::PuppetFunction) do
   init_dispatch
 
   def merge_type
-    :array
+    :unique
   end
 
   def post_lookup(scope, key, value)

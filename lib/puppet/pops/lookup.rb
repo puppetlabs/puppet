@@ -74,7 +74,7 @@ module Lookup
 
   # @api private
   def self.search_and_merge(name, lookup_invocation, merge)
-    LookupAdapter.adapt(lookup_invocation.scope.compiler).lookup(name, lookup_invocation, merge)
+    lookup_invocation.lookup_adapter.lookup(name, lookup_invocation, merge)
   end
 
   def self.assert_type(subject, type, value)

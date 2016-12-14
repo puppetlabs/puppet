@@ -36,6 +36,8 @@ class Invocation
       explainer = DebugExplainer.new(explainer) if Puppet[:debug] && !explainer.is_a?(DebugExplainer)
     else
       @name_stack = parent_invocation.name_stack
+      @global_only = parent_invocation.global_only?
+      @hiera_v3_location_overrides = parent_invocation.hiera_v3_location_overrides
       explainer = explainer == false ? nil : parent_invocation.explainer
     end
     @explainer = explainer
@@ -81,6 +83,10 @@ class Invocation
       @explainer = debug_explainer.wrapped_explainer
       debug_explainer.emit_debug_info(preamble)
     end
+  end
+
+  def lookup_adapter
+    LookupAdapter.adapt(scope.compiler)
   end
 
   # This method is overridden by the special Invocation used while resolving interpolations in a
@@ -170,6 +176,21 @@ class Invocation
     unless @explainer.nil?
       @explainer.accept_text(block.call)
     end
+  end
+
+  def global_only?
+    instance_variable_defined?(:@global_only) ? @global_only : false
+  end
+
+  # Overrides passed from hiera_xxx functions down to V3DataHashFunctionProvider
+  # @api private
+  def set_hiera_v3_function_info(overrides, global_only)
+    @hiera_v3_location_overrides = [overrides].flatten unless overrides.nil?
+    @global_only = global_only
+  end
+
+  def hiera_v3_location_overrides
+    instance_variable_defined?(:@hiera_v3_location_overrides) ? @hiera_v3_location_overrides : EMPTY_ARRAY
   end
 
   protected

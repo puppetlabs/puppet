@@ -58,7 +58,7 @@ class V3BackendFunctionProvider < LookupKeyFunctionProvider
 
   def lookup_key(key, lookup_invocation, location, merge)
     @backend ||= instantiate_backend(lookup_invocation)
-    @backend.lookup(key, lookup_invocation.scope, nil, convert_merge(merge), context = {:recurse_guard => nil})
+    @backend.lookup(key, lookup_invocation.scope, lookup_invocation.hiera_v3_location_overrides, convert_merge(merge), context = {:recurse_guard => nil})
   end
 
   private
