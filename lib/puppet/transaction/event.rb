@@ -82,7 +82,7 @@ class Puppet::Transaction::Event
   end
 
   def status=(value)
-    raise ArgumentError, "Event status can only be #{EVENT_STATUSES.join(', ')}" unless EVENT_STATUSES.include?(value)
+    raise ArgumentError, _("Event status can only be #{EVENT_STATUSES.join(', ')}") unless EVENT_STATUSES.include?(value)
     @status = value
   end
 

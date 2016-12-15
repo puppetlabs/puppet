@@ -22,7 +22,7 @@ class Puppet::Transaction::AdditionalResourceGenerator
       generated = resource.generate
     rescue => detail
       @resources_failed_to_generate = true
-      resource.log_exception(detail, "Failed to generate additional resources using 'generate': #{detail}")
+      resource.log_exception(detail, _("Failed to generate additional resources using 'generate': #{detail}"))
     end
     return unless generated
     generated = [generated] unless generated.is_a?(Array)
@@ -51,13 +51,13 @@ class Puppet::Transaction::AdditionalResourceGenerator
 
   def eval_generate(resource)
     return false unless resource.respond_to?(:eval_generate)
-    raise Puppet::DevError,"Depthfirst resources are not supported by eval_generate" if resource.depthfirst?
+    raise Puppet::DevError, "Depthfirst resources are not supported by eval_generate" if resource.depthfirst?
     begin
       generated = replace_duplicates_with_catalog_resources(resource.eval_generate)
       return false if generated.empty?
     rescue => detail
       @resources_failed_to_generate = true
-      resource.log_exception(detail, "Failed to generate additional resources using 'eval_generate': #{detail}")
+      resource.log_exception(detail, _("Failed to generate additional resources using 'eval_generate': #{detail}"))
       return false
     end
     add_resources(generated, resource)
