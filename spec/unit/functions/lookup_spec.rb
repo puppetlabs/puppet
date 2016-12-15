@@ -380,6 +380,7 @@ describe "The lookup function" do
             example.run
           end
         ensure
+          Hiera::Backend.send(:remove_const, :Custom_backend) if Hiera::Backend.const_defined?(:Custom_backend)
           $LOAD_PATH.shift
         end
       end

@@ -43,37 +43,29 @@ class Hiera::PuppetFunction < Puppet::Functions::InternalFunction
   end
 
   def hiera_no_default(scope, key)
-    post_lookup(scope, key, lookup(scope, key, nil, nil))
+    post_lookup(scope, key, lookup(scope, key, nil, false, nil))
   end
 
   def hiera_with_default(scope, key, default, override = nil)
-    undefined = (@@undefined_value ||= Object.new)
-    result = lookup(scope, key, undefined, override)
-    post_lookup(scope, key, result.equal?(undefined) ? default : result)
+    post_lookup(scope, key, lookup(scope, key, default, true, override))
   end
 
   def hiera_block1(scope, key, &default_block)
-    common(scope, key, nil, default_block)
+    post_lookup(scope, key, lookup(scope, key, nil, false, nil, &default_block))
   end
 
   def hiera_block2(scope, key, override, &default_block)
-    common(scope, key, override, default_block)
+    post_lookup(scope, key, lookup(scope, key, nil, false, override, &default_block))
   end
 
-  def common(scope, key, override, default_block)
-    undefined = (@@undefined_value ||= Object.new)
-    result = lookup(scope, key, undefined, override)
-    post_lookup(scope, key, result.equal?(undefined) ? default_block.call(key) : result)
-  end
-
-  private :common
-
-  def lookup(scope, key, default, override)
-    HieraPuppet.lookup(key, default, scope, override, merge_type)
+  def lookup(scope, key, default, has_default, override, &default_block)
+    lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {})
+    lookup_invocation.set_hiera_v3_function_info(override, !lookup_invocation.lookup_adapter.has_environment_data_provider?(lookup_invocation))
+    Puppet::Pops::Lookup.lookup(key, nil, default, has_default, merge_type, lookup_invocation, &default_block)
   end
 
   def merge_type
-    :priority
+    :first
   end
 
   def post_lookup(scope, key, result)

@@ -67,6 +67,33 @@ class DataHashFunctionProvider < FunctionProvider
   end
 end
 
+# @api private
+class V3DataHashFunctionProvider < DataHashFunctionProvider
+  TAG = 'v3_data_hash'.freeze
+
+  def initialize(name, parent_data_provider, function_name, options, locations)
+    @datadir = options.delete(HieraConfig::KEY_DATADIR)
+    super
+  end
+
+  def unchecked_key_lookup(key, lookup_invocation, merge)
+    extra_paths = lookup_invocation.hiera_v3_location_overrides
+    if extra_paths.nil? || extra_paths.empty?
+      super
+    else
+      # Extra paths provided. Must be resolved and placed in front of known paths
+      paths = parent_data_provider.config(lookup_invocation).resolve_paths(@datadir, extra_paths, false, lookup_invocation, ".#{@name}")
+      all_locations = paths + locations
+      root_key = key.root_key
+      lookup_invocation.with(:data_provider, self) do
+        MergeStrategy.strategy(merge).lookup(all_locations, lookup_invocation) do |location|
+          invoke_with_location(lookup_invocation, location, root_key)
+        end
+      end
+    end
+  end
+end
+
 # TODO: API 5.0, remove this class
 # @api private
 class V4DataHashFunctionProvider < DataHashFunctionProvider

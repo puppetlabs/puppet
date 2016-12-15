@@ -42,6 +42,7 @@ class HieraConfig
   KEY_DATA_HASH = DataHashFunctionProvider::TAG
   KEY_LOOKUP_KEY = LookupKeyFunctionProvider::TAG
   KEY_DATA_DIG = DataDigFunctionProvider::TAG
+  KEY_V3_DATA_HASH = V3DataHashFunctionProvider::TAG
   KEY_V3_BACKEND = V3BackendFunctionProvider::TAG
   KEY_V4_DATA_HASH = V4DataHashFunctionProvider::TAG
 
@@ -52,6 +53,7 @@ class HieraConfig
     KEY_DATA_HASH => DataHashFunctionProvider,
     KEY_DATA_DIG => DataDigFunctionProvider,
     KEY_LOOKUP_KEY => LookupKeyFunctionProvider,
+    KEY_V3_DATA_HASH => V3DataHashFunctionProvider,
     KEY_V3_BACKEND => V3BackendFunctionProvider,
     KEY_V4_DATA_HASH => V4DataHashFunctionProvider
   }
@@ -232,7 +234,7 @@ class HieraConfigV3 < HieraConfig
       paths = resolve_paths(datadir, original_paths, @config_path.nil?, lookup_invocation, ".#{backend}")
       data_providers[backend] = case backend
       when 'json', 'yaml'
-        create_data_provider(backend, parent_data_provider, KEY_DATA_HASH, "#{backend}_data", EMPTY_HASH, paths)
+        create_data_provider(backend, parent_data_provider, KEY_V3_DATA_HASH, "#{backend}_data", { KEY_DATADIR => datadir }, paths)
       else
         # Custom backend. Hiera v3 must be installed and it must be made aware of the loaded config
         require 'hiera/config'
@@ -240,7 +242,7 @@ class HieraConfigV3 < HieraConfig
 
         # Use a special lookup_key that delegates to the backend
         paths = nil if paths.empty?
-        create_data_provider(backend, parent_data_provider, KEY_V3_BACKEND, "hiera_v3_data", EMPTY_HASH, paths)
+        create_data_provider(backend, parent_data_provider, KEY_V3_BACKEND, "hiera_v3_data", { KEY_DATADIR => datadir }, paths)
       end
     end
     data_providers.values

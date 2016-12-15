@@ -145,14 +145,25 @@ class LookupAdapter < DataAdapter
     options.nil? ? nil : options[key.root_key]
   end
 
+  # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] the lookup invocation
+  # @return [Boolean] `true` if an environment data provider version 5 is configured
+  def has_environment_data_provider?(lookup_invocation)
+    ep = env_provider(lookup_invocation)
+    ep.nil? ? false : ep.config(lookup_invocation).version >= 5
+  end
+
   private
 
   PROVIDER_STACK = [:lookup_global, :lookup_in_environment, :lookup_in_module].freeze
 
   def do_lookup(key, lookup_invocation, merge)
-    merge_strategy = Puppet::Pops::MergeStrategy.strategy(merge)
-    key.dig(lookup_invocation,
-      merge_strategy.lookup(PROVIDER_STACK, lookup_invocation) { |m| send(m, key, lookup_invocation, merge_strategy) })
+    if lookup_invocation.global_only?
+      key.dig(lookup_invocation, lookup_global(key, lookup_invocation, merge))
+    else
+      merge_strategy = Puppet::Pops::MergeStrategy.strategy(merge)
+      key.dig(lookup_invocation,
+        merge_strategy.lookup(PROVIDER_STACK, lookup_invocation) { |m| send(m, key, lookup_invocation, merge_strategy) })
+    end
   end
 
   GLOBAL_ENV_MERGE = 'Global and Environment'.freeze
@@ -163,37 +174,49 @@ class LookupAdapter < DataAdapter
     meta_invocation = Invocation.new(lookup_invocation.scope)
     meta_invocation.lookup(LookupKey::LOOKUP_OPTIONS, lookup_invocation.module_name) do
       meta_invocation.with(:meta, LOOKUP_OPTIONS) do
-        opts = env_lookup_options(meta_invocation, merge_strategy)
-        catch(:no_such_key) do
-          module_opts = lookup_in_module(LookupKey::LOOKUP_OPTIONS, meta_invocation, merge_strategy)
-          opts = if opts.nil?
-            module_opts
-          else
-            env_name =
-            merge_strategy.lookup([GLOBAL_ENV_MERGE, "Module #{lookup_invocation.module_name}"], meta_invocation) do |n|
-              meta_invocation.with(:scope, n) { meta_invocation.report_found(LOOKUP_OPTIONS,  n == GLOBAL_ENV_MERGE ? opts : module_opts) }
+        if meta_invocation.global_only?
+          global_lookup_options(meta_invocation, merge_strategy)
+        else
+          opts = env_lookup_options(meta_invocation, merge_strategy)
+          catch(:no_such_key) do
+            module_opts = lookup_in_module(LookupKey::LOOKUP_OPTIONS, meta_invocation, merge_strategy)
+            opts = if opts.nil?
+              module_opts
+            else
+              env_name =
+              merge_strategy.lookup([GLOBAL_ENV_MERGE, "Module #{lookup_invocation.module_name}"], meta_invocation) do |n|
+                meta_invocation.with(:scope, n) { meta_invocation.report_found(LOOKUP_OPTIONS,  n == GLOBAL_ENV_MERGE ? opts : module_opts) }
+              end
             end
           end
+          opts
         end
-        opts
       end
     end
+  end
+
+  # Retrieve and cache the global lookup options
+  def global_lookup_options(lookup_invocation, merge_strategy)
+    if !instance_variable_defined?(:@global_lookup_options)
+      @global_lookup_options = nil
+      catch(:no_such_key) { @global_lookup_options = lookup_global(LookupKey::LOOKUP_OPTIONS, lookup_invocation, merge_strategy) }
+    end
+    @global_lookup_options
   end
 
   # Retrieve and cache lookup options specific to the environment of the compiler that this adapter is attached to (i.e. a merge
   # of global and environment lookup options).
   def env_lookup_options(lookup_invocation, merge_strategy)
     if !instance_variable_defined?(:@env_lookup_options)
-      @global_lookup_options = nil
-      catch(:no_such_key) { @global_lookup_options = lookup_global(LookupKey::LOOKUP_OPTIONS, lookup_invocation, merge_strategy) }
+      global_options = global_lookup_options(lookup_invocation, merge_strategy)
       @env_only_lookup_options = nil
       catch(:no_such_key) { @env_only_lookup_options = lookup_in_environment(LookupKey::LOOKUP_OPTIONS, lookup_invocation, merge_strategy) }
-      if @global_lookup_options.nil?
+      if global_options.nil?
         @env_lookup_options = @env_only_lookup_options
       elsif @env_only_lookup_options.nil?
-        @env_lookup_options = @global_lookup_options
+        @env_lookup_options = global_options
       else
-        @env_lookup_options = merge_strategy.merge(@global_lookup_options, @env_only_lookup_options)
+        @env_lookup_options = merge_strategy.merge(global_options, @env_only_lookup_options)
       end
     end
     @env_lookup_options
