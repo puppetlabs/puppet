@@ -104,6 +104,8 @@ describe 'when calling' do
     }
   end
 
+  let(:logs) { [] }
+  let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
   let(:env_dir) { File.join(global_dir, 'environments') }
   let(:env) { Puppet::Node::Environment.create(:test, [File.join(env_dir, 'test', 'modules')]) }
   let(:environments) { Puppet::Environments::Directories.new(env_dir, []) }
@@ -134,10 +136,12 @@ describe 'when calling' do
   def with_scope(code = 'undef')
     result = nil
     Puppet[:code] = 'undef'
-    compiler.topscope['environment'] = 'test'
-    compiler.compile do |catalog|
-      result = yield(compiler.topscope)
-      catalog
+    Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+      compiler.topscope['environment'] = 'test'
+      compiler.compile do |catalog|
+        result = yield(compiler.topscope)
+        catalog
+      end
     end
     result
   end
@@ -202,6 +206,11 @@ describe 'when calling' do
       end
     end
 
+    it 'should log deprecation errors' do
+      func('a')
+      expect(warnings).to include(/The function 'hiera' is deprecated in favor of using 'lookup'. See https:/)
+    end
+
     context 'with environment with configured data provider' do
       let(:env_config) {
         {
@@ -244,6 +253,11 @@ describe 'when calling' do
       expect { func('badkey') }.to raise_error(Puppet::DataBinding::LookupError, /did not find a value for the name 'badkey'/)
     end
 
+    it 'should log deprecation errors' do
+      func('fbb')
+      expect(warnings).to include(/The function 'hiera_array' is deprecated in favor of using 'lookup'/)
+    end
+
     it 'should use the array resolution_type' do
       expect(func('fbb', {'fbb' => 'foo_result'})).to eql(%w[mod::foo mod::bar mod::baz])
     end
@@ -268,6 +282,11 @@ describe 'when calling' do
       expect(func('b', {'b' => 'foo_result'})).to eql({ 'b1' => 'first b1', 'b2' => 'first b2', 'b3' => 'second b3'})
     end
 
+    it 'should log deprecation errors' do
+      func('b')
+      expect(warnings).to include(/The function 'hiera_hash' is deprecated in favor of using 'lookup'. See https:/)
+    end
+
     it 'should use default block' do
       expect(func('foo') { |k| {'key' => k} }).to eql({'key' => 'foo'})
     end
@@ -286,6 +305,11 @@ describe 'when calling' do
 
     it 'should use the array resolution_type to include classes' do
       expect(func('fbb').map { |c| c.class_name }).to eql(%w[mod::foo mod::bar mod::baz])
+    end
+
+    it 'should log deprecation errors' do
+      func('fbb')
+      expect(warnings).to include(/The function 'hiera_include' is deprecated in favor of using 'lookup'. See https:/)
     end
 
     it 'should not raise an error if the resulting hiera lookup returns an empty array' do
