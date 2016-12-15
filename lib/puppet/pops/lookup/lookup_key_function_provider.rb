@@ -21,13 +21,8 @@ class LookupKeyFunctionProvider < FunctionProvider
           lookup_invocation.report_found(key.root_key, validate_data_value(self, value))
         else
           lookup_invocation.with(:location, location) do
-            if location.exist?
-              value = lookup_key(key.root_key, lookup_invocation, location.location, merge)
-              lookup_invocation.report_found(key.root_key, validate_data_value(self, value))
-            else
-              lookup_invocation.report_location_not_found
-              throw :no_such_key
-            end
+            value = lookup_key(key.root_key, lookup_invocation, location.location, merge)
+            lookup_invocation.report_found(key.root_key, validate_data_value(self, value))
           end
         end
       end
@@ -41,6 +36,10 @@ class LookupKeyFunctionProvider < FunctionProvider
   private
 
   def lookup_key(key, lookup_invocation, location, merge)
+    unless location.nil? || location.exists?
+      lookup_invocation.report_location_not_found
+      throw :no_such_key
+    end
     ctx = function_context(lookup_invocation, location)
     ctx.data_hash ||= {}
     catch(:no_such_key) do

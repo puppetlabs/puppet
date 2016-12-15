@@ -88,6 +88,7 @@ describe "The lookup function" do
       Puppet[:code] = code
       Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
         scope = compiler.topscope
+        scope['domain'] = 'example.com'
         scope['scope_scalar'] = 'scope scalar value'
         scope['scope_hash'] = { 'a' => 'scope hash a', 'b' => 'scope hash b' }
         if explain
@@ -310,6 +311,7 @@ describe "The lookup function" do
               :datadir: #{code_dir}/hieradata
             :hierarchy:
               - common
+              - "%{domain}"
             :merge_behavior: deeper
             YAML
           'ruby_stuff' => {
@@ -341,6 +343,9 @@ describe "The lookup function" do
               hash_c:
                 hash_ca:
                   cab: value hash_c.hash_ca.cab (from global)
+              YAML
+            'example.com.yaml' =>  <<-YAML.unindent,
+              x: value x (from global example.com.yaml)
               YAML
             'common.json' =>  <<-JSON.unindent,
               {
@@ -421,8 +426,12 @@ describe "The lookup function" do
           })
       end
 
+      it 'paths are interpolated' do
+        expect(lookup('x')).to eql('value x (from global example.com.yaml)')
+      end
+
       it 'backend data sources are propagated to custom backend' do
-        expect(lookup('datasources')).to eql(['common'])
+        expect(lookup('datasources')).to eql(['common', 'example.com'])
       end
     end
 
