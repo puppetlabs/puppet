@@ -1,7 +1,7 @@
 require 'puppet/version'
 
 if RUBY_VERSION < "1.9.3"
-  raise LoadError, "Puppet #{Puppet.version} requires ruby 1.9.3 or greater."
+  raise LoadError, _("Puppet #{Puppet.version} requires ruby 1.9.3 or greater.")
 end
 
 Puppet::OLDEST_RECOMMENDED_RUBY_VERSION = '2.1.0'
@@ -164,7 +164,7 @@ module Puppet
   # Now that settings are loaded we have the code loaded to be able to issue
   # deprecation warnings. Warn if we're on a deprecated ruby version.
   if RUBY_VERSION < Puppet::OLDEST_RECOMMENDED_RUBY_VERSION
-    Puppet.deprecation_warning("Support for ruby version #{RUBY_VERSION} is deprecated and will be removed in a future release. See https://docs.puppet.com/puppet/latest/system_requirements.html#ruby for a list of supported ruby versions.")
+    Puppet.deprecation_warning(_("Support for ruby version #{RUBY_VERSION} is deprecated and will be removed in a future release. See https://docs.puppet.com/puppet/latest/system_requirements.html#ruby for a list of supported ruby versions."))
   end
 
   # Initialize puppet's settings. This is intended only for use by external tools that are not
@@ -211,7 +211,7 @@ module Puppet
   # code was deprecated in 2008, but this is still in heavy use.  I suppose
   # this can count as a soft deprecation for the next dev. --daniel 2011-04-12
   def self.newtype(name, options = {}, &block)
-    Puppet.deprecation_warning("Creating #{name} via Puppet.newtype is deprecated and will be removed in a future release. Use Puppet::Type.newtype instead.")
+    Puppet.deprecation_warning(_("Creating #{name} via Puppet.newtype is deprecated and will be removed in a future release. Use Puppet::Type.newtype instead."))
     Puppet::Type.newtype(name, options, &block)
   end
 
@@ -230,7 +230,7 @@ module Puppet
     basemodulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
 
     if environmentpath.nil? || environmentpath.empty?
-      raise(Puppet::Error, "The environmentpath setting cannot be empty or nil.")
+      raise(Puppet::Error, _("The environmentpath setting cannot be empty or nil."))
     else
       loaders = Puppet::Environments::Directories.from_path(environmentpath, basemodulepath)
       # in case the configured environment (used for the default sometimes)
