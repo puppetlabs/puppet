@@ -82,7 +82,7 @@ class V3DataHashFunctionProvider < DataHashFunctionProvider
       super
     else
       # Extra paths provided. Must be resolved and placed in front of known paths
-      paths = parent_data_provider.config(lookup_invocation).resolve_paths(@datadir, extra_paths, false, lookup_invocation, ".#{@name}")
+      paths = parent_data_provider.config(lookup_invocation).resolve_paths(@datadir, extra_paths, lookup_invocation, false, ".#{@name}")
       all_locations = paths + locations
       root_key = key.root_key
       lookup_invocation.with(:data_provider, self) do

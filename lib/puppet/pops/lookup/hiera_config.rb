@@ -231,7 +231,7 @@ class HieraConfigV3 < HieraConfig
       original_paths = @config[KEY_HIERARCHY]
       backend_config = @config[backend] || EMPTY_HASH
       datadir = @config_root + interpolate(backend_config[KEY_DATADIR] || default_datadir, lookup_invocation, false)
-      paths = resolve_paths(datadir, original_paths, @config_path.nil?, lookup_invocation, ".#{backend}")
+      paths = resolve_paths(datadir, original_paths, lookup_invocation, @config_path.nil?, ".#{backend}")
       data_providers[backend] = case backend
       when 'json', 'yaml'
         create_data_provider(backend, parent_data_provider, KEY_V3_DATA_HASH, "#{backend}_data", { KEY_DATADIR => datadir }, paths)
