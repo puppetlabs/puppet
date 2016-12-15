@@ -1,7 +1,7 @@
 require 'puppet/version'
 
 if RUBY_VERSION < "1.9.3"
-  raise LoadError, "Puppet #{Puppet.version} requires ruby 1.9.3 or greater."
+  raise LoadError, _("Puppet #{Puppet.version} requires ruby #{RUBY_VERSION} or greater.")
 end
 
 Puppet::OLDEST_RECOMMENDED_RUBY_VERSION = '2.1.0'
@@ -185,7 +185,7 @@ module Puppet
     Puppet.settings.initialize_global_settings(args)
     run_mode = Puppet::Util::RunMode[run_mode]
     Puppet.settings.initialize_app_defaults(Puppet::Settings.app_defaults_for_run_mode(run_mode))
-    Puppet.push_context(Puppet.base_context(Puppet.settings), "Initial context after settings initialization")
+    Puppet.push_context(Puppet.base_context(Puppet.settings), _("Initial context after settings initialization"))
     Puppet::Parser::Functions.reset
   end
   private_class_method :do_initialize_settings_for_run_mode
@@ -211,7 +211,7 @@ module Puppet
   # code was deprecated in 2008, but this is still in heavy use.  I suppose
   # this can count as a soft deprecation for the next dev. --daniel 2011-04-12
   def self.newtype(name, options = {}, &block)
-    Puppet.deprecation_warning("Creating #{name} via Puppet.newtype is deprecated and will be removed in a future release. Use Puppet::Type.newtype instead.")
+    Puppet.deprecation_warning(_("Creating #{name} via Puppet.newtype is deprecated and will be removed in a future release. Use Puppet::Type.newtype instead."))
     Puppet::Type.newtype(name, options, &block)
   end
 
@@ -230,7 +230,7 @@ module Puppet
     basemodulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
 
     if environmentpath.nil? || environmentpath.empty?
-      raise(Puppet::Error, "The environmentpath setting cannot be empty or nil.")
+      raise(Puppet::Error, _("The environmentpath setting cannot be empty or nil."))
     else
       loaders = Puppet::Environments::Directories.from_path(environmentpath, basemodulepath)
       # in case the configured environment (used for the default sometimes)
