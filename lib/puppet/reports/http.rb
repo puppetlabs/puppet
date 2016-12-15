@@ -25,7 +25,7 @@ Puppet::Reports.register_report(:http) do
     conn = Puppet::Network::HttpPool.http_instance(url.host, url.port, use_ssl)
     response = conn.post(url.path, self.to_yaml, headers, options)
     unless response.kind_of?(Net::HTTPSuccess)
-      Puppet.err "Unable to submit report to #{Puppet[:reporturl].to_s} [#{response.code}] #{response.msg}"
+      Puppet.err _("Unable to submit report to #{Puppet[:reporturl].to_s} [#{response.code}] #{response.msg}")
     end
   end
 end
