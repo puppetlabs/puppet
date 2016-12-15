@@ -205,7 +205,7 @@ def prepare_installation
     opts.on('--bindir[=OPTIONAL]', 'Installation directory for binaries', 'overrides RbConfig::CONFIG["bindir"]') do |bindir|
       InstallOptions.bindir = bindir
     end
-    opts.on('--localedir[=OPTIONAL]', 'Installation directory for locale information', 'Default /opt/puppetlabs/puppet/share/puppet/locale') do |localedir|
+    opts.on('--localedir[=OPTIONAL]', 'Installation directory for locale information', 'Default /opt/puppetlabs/puppet/share/locale') do |localedir|
       InstallOptions.localedir = localedir
     end
     opts.on('--ruby[=OPTIONAL]', 'Ruby interpreter to use with installation', 'overrides ruby used to call install.rb') do |ruby|
