@@ -21,7 +21,6 @@ class FunctionContext
 
   def cache(key, value)
     @cache[key] = value
-    nil
   end
 
   def cache_all(hash)
@@ -83,7 +82,7 @@ class Context
         'not_found' => tf.callable([0, 0], tf.undef),
         'explain' => tf.callable([0, 0, tf.callable(0,0)], tf.undef),
         'interpolate' => tf.callable(1, 1),
-        'cache' => tf.callable([tf.scalar, tf.any], tf.undef),
+        'cache' => tf.callable([tf.scalar, tf.any], tf.any),
         'cache_all' => tf.callable([tf.hash_kv(tf.scalar, tf.any)], tf.undef),
         'cache_has_key' => tf.callable([tf.scalar], tf.boolean),
         'cached_value' => tf.callable([tf.scalar], tf.any),
