@@ -37,6 +37,14 @@ describe 'Puppet::Pops::Lookup::Context' do
       expect(eval_and_collect_notices(code)[0]).to eql('ze_value')
     end
 
+    it 'the cache method returns the value that is cached' do
+      code = <<-PUPPET.unindent
+        $ctx = Puppet::LookupContext.new('e', 'm')
+        notice($ctx.cache('ze_key', 'ze_value'))
+      PUPPET
+      expect(eval_and_collect_notices(code)[0]).to eql('ze_value')
+    end
+
     it 'can store and retrieve a hash using the cache' do
       code = <<-PUPPET.unindent
         $ctx = Puppet::LookupContext.new('e', 'm')
