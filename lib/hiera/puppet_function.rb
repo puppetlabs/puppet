@@ -59,6 +59,10 @@ class Hiera::PuppetFunction < Puppet::Functions::InternalFunction
   end
 
   def lookup(scope, key, default, has_default, override, &default_block)
+    unless Puppet[:strict] == :off
+      Puppet.warn_once(:deprecation, self.class.name,
+        "The function '#{self.class.name}' is deprecated in favor of using 'lookup'. See https://docs.puppet.com/puppet/#{Puppet.version}/reference/deprecated_language.html")
+    end
     lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {})
     lookup_invocation.set_hiera_v3_function_info(override, !lookup_invocation.lookup_adapter.has_environment_data_provider?(lookup_invocation))
     Puppet::Pops::Lookup.lookup(key, nil, default, has_default, merge_type, lookup_invocation, &default_block)
