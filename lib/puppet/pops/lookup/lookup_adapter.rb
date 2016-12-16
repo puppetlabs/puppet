@@ -12,6 +12,8 @@ class LookupAdapter < DataAdapter
 
   LOOKUP_OPTIONS_PREFIX = LOOKUP_OPTIONS + '.'
   LOOKUP_OPTIONS_PREFIX.freeze
+  LOOKUP_OPTIONS_PATTERN_START = '^'.freeze
+
   HASH = 'hash'.freeze
   MERGE = 'merge'.freeze
 
@@ -137,12 +139,19 @@ class LookupAdapter < DataAdapter
     # Retrieve the options for the module. We use nil as a key in case we have no module
     if !@lookup_options.include?(module_name)
       options = retrieve_lookup_options(module_name, lookup_invocation, MergeStrategy.strategy(HASH))
-      raise Puppet::DataBinding::LookupError.new("value of #{LOOKUP_OPTIONS} must be a hash") unless options.nil? || options.is_a?(Hash)
       @lookup_options[module_name] = options
     else
       options = @lookup_options[module_name]
     end
-    options.nil? ? nil : options[key.root_key]
+    return nil if options.nil?
+
+    rk = key.root_key
+    key_opts = options[0][rk]
+    return key_opts unless key_opts.nil?
+
+    patterns = options[1]
+    patterns.each_pair { |pattern, value| return value if pattern =~ rk } unless patterns.nil?
+    nil
   end
 
   # @param lookup_invocation [Puppet::Pops::Lookup::Invocation] the lookup invocation
@@ -155,6 +164,38 @@ class LookupAdapter < DataAdapter
   private
 
   PROVIDER_STACK = [:lookup_global, :lookup_in_environment, :lookup_in_module].freeze
+
+  def validate_lookup_options(options, module_name)
+    raise Puppet::DataBinding::LookupError.new("value of #{LOOKUP_OPTIONS} must be a hash") unless options.is_a?(Hash) unless options.nil?
+    return options if module_name.nil?
+
+    pfx = "#{module_name}::"
+    options.each_pair do |key, value|
+      if key.start_with?(LOOKUP_OPTIONS_PATTERN_START)
+        unless key[1..pfx.length] == pfx
+          raise Puppet::DataBinding::LookupError.new("all #{LOOKUP_OPTIONS} patterns must match a key starting with module name '#{module_name}'")
+        end
+      else
+        unless key.start_with?(pfx)
+          raise Puppet::DataBinding::LookupError.new("all #{LOOKUP_OPTIONS} keys must start with module name '#{module_name}'")
+        end
+      end
+    end
+  end
+
+  def compile_patterns(options)
+    return nil if options.nil?
+    key_options = {}
+    pattern_options = {}
+    options.each_pair do |key, value|
+      if key.start_with?(LOOKUP_OPTIONS_PATTERN_START)
+        pattern_options[Regexp.compile(key)] = value
+      else
+        key_options[key] = value
+      end
+    end
+    [key_options.empty? ? nil : key_options, pattern_options.empty? ? nil : pattern_options]
+  end
 
   def do_lookup(key, lookup_invocation, merge)
     if lookup_invocation.global_only?
@@ -179,17 +220,16 @@ class LookupAdapter < DataAdapter
         else
           opts = env_lookup_options(meta_invocation, merge_strategy)
           catch(:no_such_key) do
-            module_opts = lookup_in_module(LookupKey::LOOKUP_OPTIONS, meta_invocation, merge_strategy)
+            module_opts = validate_lookup_options(lookup_in_module(LookupKey::LOOKUP_OPTIONS, meta_invocation, merge_strategy), module_name)
             opts = if opts.nil?
               module_opts
             else
-              env_name =
               merge_strategy.lookup([GLOBAL_ENV_MERGE, "Module #{lookup_invocation.module_name}"], meta_invocation) do |n|
                 meta_invocation.with(:scope, n) { meta_invocation.report_found(LOOKUP_OPTIONS,  n == GLOBAL_ENV_MERGE ? opts : module_opts) }
               end
             end
           end
-          opts
+          compile_patterns(opts)
         end
       end
     end
@@ -199,7 +239,7 @@ class LookupAdapter < DataAdapter
   def global_lookup_options(lookup_invocation, merge_strategy)
     if !instance_variable_defined?(:@global_lookup_options)
       @global_lookup_options = nil
-      catch(:no_such_key) { @global_lookup_options = lookup_global(LookupKey::LOOKUP_OPTIONS, lookup_invocation, merge_strategy) }
+      catch(:no_such_key) { @global_lookup_options = validate_lookup_options(lookup_global(LookupKey::LOOKUP_OPTIONS, lookup_invocation, merge_strategy), nil) }
     end
     @global_lookup_options
   end
@@ -210,7 +250,7 @@ class LookupAdapter < DataAdapter
     if !instance_variable_defined?(:@env_lookup_options)
       global_options = global_lookup_options(lookup_invocation, merge_strategy)
       @env_only_lookup_options = nil
-      catch(:no_such_key) { @env_only_lookup_options = lookup_in_environment(LookupKey::LOOKUP_OPTIONS, lookup_invocation, merge_strategy) }
+      catch(:no_such_key) { @env_only_lookup_options = validate_lookup_options(lookup_in_environment(LookupKey::LOOKUP_OPTIONS, lookup_invocation, merge_strategy), nil) }
       if global_options.nil?
         @env_lookup_options = @env_only_lookup_options
       elsif @env_only_lookup_options.nil?

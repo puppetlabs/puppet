@@ -250,6 +250,73 @@ describe "The lookup function" do
       end
     end
 
+    context 'with lookup_options configured using patterns' do
+      let(:environment_files) do
+        {
+          env_name => {
+            'hiera.yaml' => <<-YAML.unindent,
+              ---
+              version: 5
+              hierarchy:
+                - name: X
+                  paths:
+                  - first.yaml
+                  - second.yaml
+              YAML
+            'data' => {
+              'first.yaml' => <<-YAML.unindent,
+                a:
+                  aa:
+                    aaa: a.aa.aaa
+                b:
+                  ba:
+                    baa: b.ba.baa
+                  bb:
+                    bba: b.bb.bba
+                c:
+                  ca:
+                    caa: c.ca.caa
+                lookup_options:
+                  b:
+                    merge: hash
+                  '^[^b]':
+                     merge: deep
+                  '^c':
+                     merge: first
+                  '^b':
+                     merge: first
+                YAML
+              'second.yaml' => <<-YAML.unindent,
+                a:
+                  aa:
+                    aab: a.aa.aab
+                b:
+                  ba:
+                    bab: b.ba.bab
+                  bb:
+                    bbb: b.bb.bbb
+                c:
+                  ca:
+                    cab: c.ca.cab
+                YAML
+            }
+          }
+        }
+      end
+
+      it 'finds lookup_options that matches a pattern' do
+        expect(lookup('a')).to eql({'aa' => { 'aaa' => 'a.aa.aaa', 'aab' => 'a.aa.aab' }})
+      end
+
+      it 'gives a direct key match higher priority than a matching pattern' do
+        expect(lookup('b')).to eql({'ba' => { 'baa' => 'b.ba.baa' }, 'bb' => { 'bba'=>'b.bb.bba' }})
+      end
+
+      it 'uses the first matching pattern' do
+        expect(lookup('c')).to eql({'ca' => { 'caa' => 'c.ca.caa', 'cab' => 'c.ca.cab' }})
+      end
+    end
+
     context 'and a global Hiera v4 configuration' do
       let(:code_dir) { tmpdir('code') }
       let(:code_dir_files) do
