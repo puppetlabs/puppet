@@ -23,9 +23,9 @@ class Symbol
     if (other.class != Symbol)
       case Puppet[:strict]
       when :warning
-        Puppet.warn_once('deprecation', 'symbol_comparison', 'Comparing Symbols to non-Symbol values is deprecated')
+        Puppet.warn_once('deprecation', 'symbol_comparison', _('Comparing Symbols to non-Symbol values is deprecated'))
       when :error
-        raise ArgumentError.new("Comparing Symbols to non-Symbol values is no longer allowed")
+        raise ArgumentError.new(_("Comparing Symbols to non-Symbol values is no longer allowed"))
       end
     end
     self.to_s <=> other.to_s
@@ -41,7 +41,7 @@ class Object
   # that can cause rspec to fork bomb
   # and other strange things like that.
   def daemonize
-    raise NotImplementedError, "Kernel.daemonize is too dangerous, please don't try to use it."
+    raise NotImplementedError, _("Kernel.daemonize is too dangerous, please don't try to use it.")
   end
 end
 

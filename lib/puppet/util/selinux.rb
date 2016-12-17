@@ -63,7 +63,7 @@ module Puppet::Util::SELinux
       return nil
     end
     unless context =~ /^([^\s:]+):([^\s:]+):([^\s:]+)(?::([\sa-zA-Z0-9:,._-]+))?$/
-      raise Puppet::Error, "Invalid context to parse: #{context}"
+      raise Puppet::Error, _("Invalid context to parse: #{context}")
     end
     ret = {
       :seluser => $1,
@@ -91,7 +91,7 @@ module Puppet::Util::SELinux
         # We can't set partial context components when no context exists
         # unless/until we can find a way to make Puppet call this method
         # once for all selinux file label attributes.
-        Puppet.warning "Can't set SELinux context on file unless the file already has some kind of context"
+        Puppet.warning _("Can't set SELinux context on file unless the file already has some kind of context")
         return nil
       end
       context = context.split(':')
@@ -105,7 +105,7 @@ module Puppet::Util::SELinux
         when :selrange
           context[3] = value
         else
-          raise ArgumentError, "set_selinux_context component must be one of :seluser, :selrole, :seltype, or :selrange"
+          raise ArgumentError, _("set_selinux_context component must be one of :seluser, :selrole, :seltype, or :selrange")
       end
       context = context.join(':')
     else
@@ -116,7 +116,7 @@ module Puppet::Util::SELinux
     if retval == 0
       return true
     else
-      Puppet.warning "Failed to set SELinux context #{context} on #{file}"
+      Puppet.warning _("Failed to set SELinux context #{context} on #{file}")
       return false
     end
   end

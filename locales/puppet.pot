@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 4.8.2-338-g562b302\n"
+"Project-Id-Version: Puppet automation framework 4.8.1-172-g28dbee9\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-01-25 09:32-0800\n"
-"PO-Revision-Date: 2017-01-25 09:32-0800\n"
+"POT-Creation-Date: 2016-12-16 16:09-0800\n"
+"PO-Revision-Date: 2016-12-16 16:09-0800\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -18,6 +18,128 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+msgid "Puppet 4.8.2 requires ruby 2.3.1 or greater."
+msgstr ""
+
+#. private helper method to provide the implementation details of initializing for a run mode,
+#. but allowing us to control where the deprecation warning is issued
+msgid "Initial context after settings initialization"
+msgstr ""
+
+#. Create a new type.  Just proxy to the Type class.  The mirroring query
+#. code was deprecated in 2008, but this is still in heavy use.  I suppose
+#. this can count as a soft deprecation for the next dev. --daniel 2011-04-12
+msgid "\"Creating #{name} via Puppet.newtype is deprecated and will be removed in a future release. Use Puppet::Type.newtype instead.\""
+msgstr ""
+
+#. The bindings used for initialization of puppet
+#.
+#. @param settings [Puppet::Settings,Hash<Symbol,String>] either a Puppet::Settings instance
+#. or a Hash of settings key/value pairs.
+#. @api private
+msgid "The environmentpath setting cannot be empty or nil."
+msgstr ""
+
+#. Provide more helpful strings to the logging that the Agent does
+msgid "Puppet configuration client"
+msgstr ""
+
+#. Initialize and load storage
+msgid "\"Removing corrupt state file #{Puppet[:statefile]}: #{detail}\""
+msgstr ""
+
+msgid "\"Cannot remove #{Puppet[:statefile]}: #{detail}\""
+msgstr ""
+
+#. Get the remote catalog, yo.  Returns nil if no catalog can be found.
+msgid "\"Using cached catalog from environment '#{result.environment}'\""
+msgstr ""
+
+msgid "Not using cache on failed catalog"
+msgstr ""
+
+#. don't use use cached catalog if it doesn't match server specified environment
+msgid "\"Not using cached catalog because its environment '#{result.environment}' does not match '#{@environment}'\""
+msgstr ""
+
+#. retrieve_catalog returns json catalog
+msgid "Could not retrieve catalog; skipping run"
+msgstr ""
+
+#. Retrieve (optionally) and apply a catalog. If a catalog is passed in
+#. the options, then apply that one, otherwise retrieve it.
+msgid "Applied catalog"
+msgstr ""
+
+#. When we are passed a catalog, that means we're in apply
+#. mode. We shouldn't try to do any failover in that case.
+msgid "Could not select a functional puppet master"
+msgstr ""
+
+#. If a cached catalog is explicitly requested, attempt to retrieve it. Skip the node request,
+#. don't pluginsync and switch to the catalog's environment if we successfully retrieve it.
+msgid "\"Local environment: '#{@environment}' doesn't match the environment of the cached catalog '#{catalog.environment}', switching agent to '#{catalog.environment}'.\""
+msgstr ""
+
+#. If we have deserialized a node from a rest call, we want to set
+#. an environment instance as a simple 'remote' environment reference.
+msgid "\"Local environment: '#{@environment}' doesn't match server specified node environment '#{node.environment}', switching agent to '#{node.environment}'.\""
+msgstr ""
+
+msgid "Using configured environment ''"
+msgstr ""
+
+msgid "Unable to fetch my node definition, but the agent run will continue:"
+msgstr ""
+
+msgid "Local node environment for configurer transaction"
+msgstr ""
+
+msgid "\"Not using catalog because its environment '#{catalog.environment}' does not match agent specified environment '#{@environment}' and strict_environment_mode is set\""
+msgstr ""
+
+#. Here we set the local environment based on what we get from the
+#. catalog. Since a change in environment means a change in facts, and
+#. facts may be used to determine which catalog we get, we need to
+#. rerun the process if the environment is changed.
+msgid "\"Catalog environment didn't stabilize after #{tries} fetches, aborting run\""
+msgstr ""
+
+msgid "\"Local environment: '#{@environment}' doesn't match server specified environment '#{catalog.environment}', restarting agent run with environment '#{catalog.environment}'\""
+msgstr ""
+
+msgid "\"Failed to apply catalog: #{detail}\""
+msgstr ""
+
+#. Nothing to see here
+msgid "\"Could not send report: #{detail}\""
+msgstr ""
+
+msgid "\"Could not save last run local report: #{detail}\""
+msgstr ""
+
+msgid "\"Could not run command from #{setting}: #{detail}\""
+msgstr ""
+
+msgid "\"Could not retrieve catalog from cache: #{detail}\""
+msgstr ""
+
+msgid "\"Could not retrieve catalog from remote server: #{detail}\""
+msgstr ""
+
+#. Evaluate our download, returning the list of changed values.
+msgid "\"Retrieving #{name}\""
+msgstr ""
+
+msgid "\"Could not retrieve #{name}: #{detail}\""
+msgstr ""
+
+#. This works because puppet agent configures Facts to use 'facter' for
+#. finding facts and the 'rest' terminus for caching them.  Thus, we'll
+#. compile them and then "cache" them on the server.
+msgid "\"Could not retrieve local facts: #{detail}\""
+msgstr ""
 
 msgid "Apache 2 license; see COPYING"
 msgstr ""
@@ -76,4 +198,329 @@ msgid " (Deprecated)"
 msgstr ""
 
 msgid "! Subcommand unavailable due to error. Check error logs."
+msgstr ""
+
+msgid "\"Unable to submit report to #{Puppet[:reporturl].to_s} [#{response.code}] #{response.msg}\""
+msgstr ""
+
+#. Invoke the pre_run_check hook in every resource in the catalog.
+#. This should (only) be called by Transaction#evaluate before applying
+#. the catalog.
+#.
+#. @see Puppet::Transaction#evaluate
+#. @see Puppet::Type#pre_run_check
+#. @raise [Puppet::Error] If any pre-run checks failed.
+#. @return [void]
+msgid "Some pre-run checks failed"
+msgstr ""
+
+#. This method does all the actual work of running a transaction.  It
+#. collects all of the changes, executes them, and responds to any
+#. necessary events.
+msgid "\"Applying configuration version '#{catalog.version}'\""
+msgstr ""
+
+#. We don't automatically assign unsuitable providers, so if there
+#. is one, it must have been selected by the user.
+msgid "\"Provider #{resource.provider.class.name} is not functional on this host\""
+msgstr ""
+
+#. Just once per type. No need to punish the user.
+msgid "\"Could not find a suitable provider for #{type}\""
+msgstr ""
+
+msgid "\"post_resource_eval failed for provider #{provider}\""
+msgstr ""
+
+#. Generate the relationship graph, set up our generator to use it
+#. for eval_generate, then kick off our traversal.
+msgid "Somehow left a component in the relationship graph"
+msgstr ""
+
+msgid "Starting to evaluate the resource"
+msgstr ""
+
+msgid "Evaluated in %0.2f seconds"
+msgstr ""
+
+#. Apply all changes for a resource
+msgid "\"Could not evaluate: #{detail}\""
+msgstr ""
+
+#. See above. --daniel 2011-06-06
+msgid "\"Dependency #{dep} has failures: #{resource_status(dep).failed}\""
+msgstr ""
+
+#. Prefetch any providers that support it, yo.  We don't support prefetching
+#. types, just providers.
+msgid "\"Could not prefetch #{type_name} provider '#{provider_class.name}': #{detail}\""
+msgstr ""
+
+#. When we introduced the :whit into the graph, to reduce the combinatorial
+#. explosion of edges, we also ended up reporting failures for containers
+#. like class and stage.  This is undesirable; while just skipping the
+#. output isn't perfect, it is RC-safe. --daniel 2011-06-07
+msgid "Skipping because of failed dependencies"
+msgstr ""
+
+#. [boolean] true if any resource has attempted and failed to generate resources
+msgid "\"Failed to generate additional resources using 'generate': #{detail}\""
+msgstr ""
+
+#. This is reversed because PUP-1963 changed how generated
+#. resources were added to the catalog. It exists for backwards
+#. compatibility only, and can probably be removed in Puppet 5
+#.
+#. Previously, resources were given sequential priorities in the
+#. relationship graph. Post-1963, resources are added to the
+#. catalog one by one adjacent to the parent resource. This
+#. causes an implicit reversal of their application order from
+#. the old code. The reverse makes it all work like it did.
+msgid "Depthfirst resources are not supported by eval_generate"
+msgstr ""
+
+msgid "\"Failed to generate additional resources using 'eval_generate': #{detail}\""
+msgstr ""
+
+#. A simple struct for storing what happens on the system.
+msgid "\"Event status can only be #{EVENT_STATUSES.join(', ')}\""
+msgstr ""
+
+#. Collect the targets of any subscriptions to those events.  We pass
+#. the parent resource in so it will override the source in the events,
+#. since eval_generated children can't have direct relationships.
+msgid "\"Unscheduling all events on #{target}\""
+msgstr ""
+
+msgid "\"Unscheduling #{callback} on #{target}\""
+msgstr ""
+
+#. The message that a resource is refreshing the completed-whit for its own class
+#. is extremely counter-intuitive. Basically everything else is easy to understand,
+#. if you suppress the whit-lookingness of the whit resources
+msgid "\"Scheduling #{callback} of #{target}\""
+msgstr ""
+
+#. Processes callbacks for a given resource.
+#.
+#. @param resource [Puppet::Type] The resource receiving the callback.
+#. @param callback [Symbol] The name of the callback method that will be invoked.
+#. @param events [Array<Puppet::Transaction::Event>] A list of events
+#. associated with this callback and resource.
+#. @return [true, false] Whether the callback was successfully run.
+msgid "\"Triggered '#{callback}' from #{events.length} events\""
+msgstr ""
+
+msgid "\"Failed to call #{callback}: #{detail}\""
+msgstr ""
+
+msgid "\"Would have triggered '#{callback}' from #{events.length} events\""
+msgstr ""
+
+#. Load data from the persistence store on disk.
+msgid "\"Transaction store file #{filename} is not a file, ignoring\""
+msgstr ""
+
+msgid "Loaded transaction store file"
+msgstr ""
+
+msgid "\"Transaction store file #{filename} is corrupt (#{detail}); replacing\""
+msgstr ""
+
+msgid "\"Unable to rename corrupt transaction store file: #{detail}\""
+msgstr ""
+
+msgid "\"Could not rename corrupt transaction store file #{filename}; remove manually\""
+msgstr ""
+
+msgid "\"Transaction store file #{filename} is valid YAML but not returning a hash. Check the file for corruption, or remove it before continuing.\""
+msgstr ""
+
+#. We use 'checked' here instead of 'synced' because otherwise we'll
+#. end up checking most resources most times, because they will generally
+#. have been synced a long time ago (e.g., a file only gets updated
+#. once a month on the server and its schedule is daily; the last sync time
+#. will have been a month ago, so we'd end up checking every run).
+msgid "Cannot schedule without a schedule-containing catalog"
+msgstr ""
+
+msgid "\"Could not find schedule #{name}\""
+msgstr ""
+
+#. Execution will continue on StandardErrors, just store the event
+#. Execution will halt on Exceptions, they get raised to the application
+msgid "\"change from %s to %s failed: #{detail}\""
+msgstr ""
+
+#. The event we've been provided might have been redacted so we need to use the state stored within
+#. the resource application context to see if an event was actually generated.
+msgid "audit change: previously recorded value %s has been changed to %s"
+msgstr ""
+
+msgid " (previously recorded value was %s)"
+msgstr ""
+
+msgid "\"current_value %s, should be %s (noop)#{audit_message}\""
+msgstr ""
+
+msgid "\"changed %s to %s#{audit_message}\""
+msgstr ""
+
+msgid "\"#{param.change_to_s(current_value, param.should)}#{audit_message}\""
+msgstr ""
+
+msgid "audit change: newly-recorded value %s"
+msgstr ""
+
+#. if we made it this far we are in sync
+msgid ""
+"Manage zpools. Create and delete zpools. The provider WILL NOT SYNC, only report differences.\n"
+"\n"
+"      Supports vdevs with mirrors, raidz, logs and spares."
+msgstr ""
+
+msgid "The disk(s) for this pool. Can be an array or a space separated string."
+msgstr ""
+
+msgid ""
+"List of all the devices to mirror for this pool. Each mirror should be a\n"
+"      space separated string:\n"
+"\n"
+"          mirror => [\"disk1 disk2\", \"disk3 disk4\"],\n"
+"\n"
+"      "
+msgstr ""
+
+msgid "mirror names must be provided as string separated, not a comma-separated list"
+msgstr ""
+
+msgid ""
+"List of all the devices to raid for this pool. Should be an array of\n"
+"      space separated strings:\n"
+"\n"
+"          raidz => [\"disk1 disk2\", \"disk3 disk4\"],\n"
+"\n"
+"      "
+msgstr ""
+
+msgid "raid names must be provided as string separated, not a comma-separated list"
+msgstr ""
+
+msgid "Spare disk(s) for this pool."
+msgstr ""
+
+msgid "Log disks for this pool. This type does not currently support mirroring of log disks."
+msgstr ""
+
+msgid "The name for this pool."
+msgstr ""
+
+msgid "Determines parity when using the `raidz` parameter."
+msgstr ""
+
+msgid "\"You cannot specify #{has_should.join(\" and \")} on this type (only one)\""
+msgstr ""
+
+#. @param mode [Symbol] Which operating system mode to use e.g. :posix or :windows.  Use nil to autodetect
+#. @return [Hash] A hashtable of all environment variables
+#. @api private
+msgid "\"Unable to retrieve the environment for mode #{mode}\""
+msgstr ""
+
+#. Removes all environment variables
+#. @param mode [Symbol] Which operating system mode to use e.g. :posix or :windows.  Use nil to autodetect
+#. @api private
+msgid "\"Unable to clear the environment for mode #{mode}\""
+msgstr ""
+
+#. @param name [String] The name of the environment variable to set
+#. @param value [String] The value to set the variable to.  nil deletes the environment variable
+#. @param mode [Symbol] Which operating system mode to use e.g. :posix or :windows.  Use nil to autodetect
+#. @api private
+msgid "\"Unable to set the environment variable #{name} for mode #{mode}\""
+msgstr ""
+
+#. @param name [Hash] Environment variables to merge into the existing environment.  nil values will remove the variable
+#. @param mode [Symbol] Which operating system mode to use e.g. :posix or :windows.  Use nil to autodetect
+#. @api private
+msgid "\"Unable to merge given values into the current environment for mode #{mode}\""
+msgstr ""
+
+#. Change the process to a different user
+msgid "\"could not change to group #{group.inspect}: #{detail}\""
+msgstr ""
+
+msgid "\"could not change to group #{group.inspect}\""
+msgstr ""
+
+#. Don't exit on failed group changes, since it's
+#. not fatal
+#. exit(74)
+msgid "\"Could not change to user #{user}: #{detail}\""
+msgstr ""
+
+#. Create instance methods for each of the log levels.  This allows
+#. the messages to be a little richer.  Most classes will be calling this
+#. method.
+msgid "Failed to provide level to :benchmark"
+msgstr ""
+
+msgid "\"Benchmarked object does not respond to #{level}\""
+msgstr ""
+
+#. Translator note: forms the end of a string indicating how long a
+#. given operation took
+msgid " in %0.2f seconds"
+msgstr ""
+
+#. if we get here they have a tilde in their PATH.  We'll issue a single warning about this and then
+#. ignore this path element and carry on with our lives.
+msgid "\"PATH contains a ~ character, and HOME is not set; ignoring PATH element '#{dir}'.\""
+msgstr ""
+
+#. ...otherwise, we just skip the non-existent entry, and do nothing.
+msgid "\"Couldn't expand PATH containing a ~ character; ignoring PATH element '#{dir}'.\""
+msgstr ""
+
+#. Ruby only sets File::ALT_SEPARATOR on Windows and the Ruby standard
+#. library uses that to test what platform it's on.  Normally in Puppet we
+#. would use Puppet.features.microsoft_windows?, but this method needs to
+#. be called during the initialization of features so it can't depend on
+#. that.
+msgid "\"unknown platform #{platform} in absolute_path\""
+msgstr ""
+
+#. Convert a path to a file URI
+msgid "\"Failed to convert '#{path}' to URI: #{detail}\""
+msgstr ""
+
+#. Replace a file, securely.  This takes a block, and passes it the file
+#. handle of a file open for writing.  Write the replacement content inside
+#. the block and it will safely replace the target file.
+#.
+#. This method will make no changes to the target file until the content is
+#. successfully written and the block returns without raising an error.
+#.
+#. As far as possible the state of the existing file, such as mode, is
+#. preserved.  This works hard to avoid loss of any metadata, but will result
+#. in an inode change for the file.
+#.
+#. Arguments: `filename`, `default_mode`
+#.
+#. The filename is the file we are going to replace.
+#.
+#. The default_mode is the mode to use when the target file doesn't already
+#. exist; if the file is present we copy the existing mode/owner/group values
+#. across. The default_mode can be expressed as an octal integer, a numeric string (ie '0664')
+#. or a symbolic file mode.
+msgid "replace_file requires a block"
+msgstr ""
+
+msgid "\"replace_file default_mode: #{default_mode} is invalid\""
+msgstr ""
+
+#. # NOTE: when debugging spec failures, these two lines can be very useful
+#. puts err.inspect
+#. puts Puppet::Util.pretty_backtrace(err.backtrace)
+msgid "\"Could not #{message}: #{err}\""
 msgstr ""

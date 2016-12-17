@@ -34,14 +34,14 @@ module SymbolicFileMode
 
   def symbolic_mode_to_int(modification, to_mode = 0, is_a_directory = false)
     if modification.nil? or modification == '' then
-      raise Puppet::Error, "An empty mode string is illegal"
+      raise Puppet::Error, _("An empty mode string is illegal")
     end
     if modification =~ /^[0-7]+$/ then return modification.to_i(8) end
     if modification =~ /^\d+$/ then
-      raise Puppet::Error, "Numeric modes must be in octal, not decimal!"
+      raise Puppet::Error, _("Numeric modes must be in octal, not decimal!")
     end
 
-    fail "non-numeric current mode (#{to_mode.inspect})" unless to_mode.is_a?(Numeric)
+    fail _("non-numeric current mode (#{to_mode.inspect})") unless to_mode.is_a?(Numeric)
 
     original_mode = {
       's' => (to_mode & 07000) >> 9,
@@ -61,7 +61,7 @@ module SymbolicFileMode
     modification.split(/\s*,\s*/).each do |part|
       begin
         _, to, dsl = /^([ugoa]*)([-+=].*)$/.match(part).to_a
-        if dsl.nil? then raise Puppet::Error, 'Missing action' end
+        if dsl.nil? then raise Puppet::Error, _('Missing action') end
         to = "a" unless to and to.length > 0
 
         # We want a snapshot of the mode before we start messing with it to
@@ -76,7 +76,7 @@ module SymbolicFileMode
 
           action = '!'
           actions = {
-            '!' => lambda {|_,_| raise Puppet::Error, 'Missing operation (-, =, or +)' },
+            '!' => lambda {|_,_| raise Puppet::Error, _('Missing operation (-, =, or +)') },
             '=' => lambda {|m,v| m | v },
             '+' => lambda {|m,v| m | v },
             '-' => lambda {|m,v| m & ~v },
@@ -98,7 +98,7 @@ module SymbolicFileMode
             when 'X' then
               # Only meaningful in combination with "set" actions.
               if action != '+' then
-                raise Puppet::Error, "X only works with the '+' operator"
+                raise Puppet::Error, _("X only works with the '+' operator")
               end
 
               # As per the BSD manual page, set if this is a directory, or if
@@ -109,11 +109,11 @@ module SymbolicFileMode
               end
 
             when /[st]/ then
-              bit = SymbolicSpecialToBit[op][who] or fail "internal error"
+              bit = SymbolicSpecialToBit[op][who] or fail _("internal error")
               final_mode['s'] = actions[action].call(final_mode['s'], bit)
 
             else
-              raise Puppet::Error, 'Unknown operation'
+              raise Puppet::Error, _('Unknown operation')
             end
           end
 
@@ -128,7 +128,7 @@ module SymbolicFileMode
           rest = ''
         end
 
-        raise Puppet::Error, "#{e}#{rest} in symbolic mode #{modification.inspect}", e.backtrace
+        raise Puppet::Error, _("#{e}#{rest} in symbolic mode #{modification.inspect}"), e.backtrace
       end
     end
 

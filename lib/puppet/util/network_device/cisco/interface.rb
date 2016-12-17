@@ -87,7 +87,7 @@ class Puppet::Util::NetworkDevice::Cisco::Interface
       if out =~ /^%/mo or out =~ /^Command rejected:/mo
         # strip off the command just sent
         error = out.sub(command,'')
-        Puppet.err "Error while executing '#{command}', device returned: #{error}"
+        Puppet.err _("Error while executing '#{command}', device returned: #{error}")
       end
     end
   end
