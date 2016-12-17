@@ -63,7 +63,7 @@ module Puppet
       #
       # @return [void]
       def execute
-        Puppet::Util.exit_on_fail("initialize global default settings") do
+        Puppet::Util.exit_on_fail(_("initialize global default settings")) do
           Puppet.initialize_settings(args)
         end
 
@@ -159,10 +159,10 @@ module Puppet
             puts Puppet.version
           elsif @command_line.subcommand_name.nil? && args.count > 0
             # If the subcommand is truly nil and there is an arg, it's an option; print out the invalid option message
-            puts colorize(:hred, "Error: Could not parse application options: invalid option: #{args[0]}")
+            puts colorize(:hred, _("Error: Could not parse application options: invalid option: #{args[0]}"))
             exit 1
           else
-            puts "See 'puppet help' for help on available puppet subcommands"
+            puts _("See 'puppet help' for help on available puppet subcommands")
           end
         end
       end
@@ -175,7 +175,7 @@ module Puppet
         end
 
         def run
-          puts colorize(:hred, "Error: Unknown Puppet subcommand '#{@subcommand_name}'")
+          puts colorize(:hred, _("Error: Unknown Puppet subcommand '#{@subcommand_name}'"))
           super
           exit 1
         end

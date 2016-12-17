@@ -21,7 +21,7 @@ module Puppet::Util::Windows::Process
     exit_status = -1
     FFI::MemoryPointer.new(:dword, 1) do |exit_status_ptr|
       if GetExitCodeProcess(handle, exit_status_ptr) == FFI::WIN32_FALSE
-        raise Puppet::Util::Windows::Error.new("Failed to get child process exit code")
+        raise Puppet::Util::Windows::Error.new(_("Failed to get child process exit code"))
       end
       exit_status = exit_status_ptr.read_dword
 
@@ -214,7 +214,7 @@ module Puppet::Util::Windows::Process
       result = GetVersionExW(os_version_ptr)
 
       if result == FFI::WIN32_FALSE
-        raise Puppet::Util::Windows::Error.new("GetVersionEx failed")
+        raise Puppet::Util::Windows::Error.new(_("GetVersionEx failed"))
       end
 
       ver = os_version[:dwMajorVersion]
@@ -251,17 +251,17 @@ module Puppet::Util::Windows::Process
   module_function :get_environment_strings
 
   def set_environment_variable(name, val)
-    raise Puppet::Util::Windows::Error('environment variable name must not be nil or empty') if ! name || name.empty?
+    raise Puppet::Util::Windows::Error(_('environment variable name must not be nil or empty')) if ! name || name.empty?
 
     FFI::MemoryPointer.from_string_to_wide_string(name) do |name_ptr|
       if (val.nil?)
         if SetEnvironmentVariableW(name_ptr, FFI::MemoryPointer::NULL) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new("Failed to remove environment variable: #{name}")
+          raise Puppet::Util::Windows::Error.new(_("Failed to remove environment variable: #{name}"))
         end
       else
         FFI::MemoryPointer.from_string_to_wide_string(val) do |val_ptr|
           if SetEnvironmentVariableW(name_ptr, val_ptr) == FFI::WIN32_FALSE
-            raise Puppet::Util::Windows::Error.new("Failed to set environment variable: #{name}")
+            raise Puppet::Util::Windows::Error.new(_("Failed to set environment variable: #{name}"))
           end
         end
       end

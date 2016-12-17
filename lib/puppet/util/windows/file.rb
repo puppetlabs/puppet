@@ -151,7 +151,7 @@ module Puppet::Util::Windows::File
 
   def set_attributes(path, flags)
     success = SetFileAttributesW(wide_string(path), flags) != FFI::WIN32_FALSE
-    raise Puppet::Util::Windows::Error.new("Failed to set file attributes") if !success
+    raise Puppet::Util::Windows::Error.new(_("Failed to set file attributes")) if !success
 
     success
   end
@@ -186,7 +186,7 @@ module Puppet::Util::Windows::File
 
   def self.device_io_control(handle, io_control_code, in_buffer = nil, out_buffer = nil)
     if out_buffer.nil?
-      raise Puppet::Util::Windows::Error.new("out_buffer is required")
+      raise Puppet::Util::Windows::Error.new(_("out_buffer is required"))
     end
 
     FFI::MemoryPointer.new(:dword, 1) do |bytes_returned_ptr|
@@ -267,7 +267,7 @@ module Puppet::Util::Windows::File
       buffer_size = GetLongPathNameW(path_ptr, FFI::Pointer::NULL, 0)
       FFI::MemoryPointer.new(:wchar, buffer_size) do |converted_ptr|
         if GetLongPathNameW(path_ptr, converted_ptr, buffer_size) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new("Failed to call GetLongPathName")
+          raise Puppet::Util::Windows::Error.new(_("Failed to call GetLongPathName"))
         end
 
         converted = converted_ptr.read_wide_string(buffer_size - 1)

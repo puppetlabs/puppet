@@ -43,14 +43,14 @@ module Puppet::Util::FileParsing
     def fields=(fields)
       @fields = fields.collect do |field|
         r = field.intern
-        raise ArgumentError.new("Cannot have fields named #{r}") if INVALID_FIELDS.include?(r)
+        raise ArgumentError.new(_("Cannot have fields named #{r}")) if INVALID_FIELDS.include?(r)
         r
       end
     end
 
     def initialize(type, options = {}, &block)
       @type = type.intern
-      raise ArgumentError, "Invalid record type #{@type}" unless [:record, :text].include?(@type)
+      raise ArgumentError, _("Invalid record type #{@type}") unless [:record, :text].include?(@type)
 
       set_options(options)
 
@@ -86,7 +86,7 @@ module Puppet::Util::FileParsing
           if self.optional.include?(field)
             self.absent
           else
-            raise ArgumentError, "Field '#{field}' is required"
+            raise ArgumentError, _("Field '#{field}' is required")
           end
         else
           details[field].to_s
@@ -227,7 +227,7 @@ module Puppet::Util::FileParsing
       if val = parse_line(line)
         val
       else
-        error = Puppet::ResourceError.new("Could not parse line #{line.inspect}")
+        error = Puppet::ResourceError.new(_("Could not parse line #{line.inspect}"))
         error.line = count
         raise error
       end
@@ -270,7 +270,7 @@ module Puppet::Util::FileParsing
   #   the regex will be removed.
   # * <tt>:separator</tt>: The record separator.  Defaults to /\s+/.
   def record_line(name, options, &block)
-    raise ArgumentError, "Must include a list of fields" unless options.include?(:fields)
+    raise ArgumentError, _("Must include a list of fields") unless options.include?(:fields)
 
     record = FileRecord.new(:record, options, &block)
     record.name = name.intern
@@ -285,7 +285,7 @@ module Puppet::Util::FileParsing
 
   # Define a new type of text record.
   def text_line(name, options, &block)
-    raise ArgumentError, "You must provide a :match regex for text lines" unless options.include?(:match)
+    raise ArgumentError, _("You must provide a :match regex for text lines") unless options.include?(:match)
 
     record = FileRecord.new(:text, options, &block)
     record.name = name.intern
@@ -305,7 +305,7 @@ module Puppet::Util::FileParsing
   # Convert our parsed record into a text record.
   def to_line(details)
     unless record = record_type(details[:record_type])
-      raise ArgumentError, "Invalid record type #{details[:record_type].inspect}"
+      raise ArgumentError, _("Invalid record type #{details[:record_type].inspect}")
     end
 
     if record.respond_to?(:pre_gen)
@@ -361,7 +361,7 @@ module Puppet::Util::FileParsing
     @record_types ||= {}
     @record_order ||= []
 
-    raise ArgumentError, "Line type #{record.name} is already defined" if @record_types.include?(record.name)
+    raise ArgumentError, _("Line type #{record.name} is already defined") if @record_types.include?(record.name)
 
     @record_types[record.name] = record
     @record_order << record

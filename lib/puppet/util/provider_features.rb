@@ -69,7 +69,7 @@ module Puppet::Util::ProviderFeatures
       @features[obj.name] = obj
     rescue ArgumentError => detail
       error = ArgumentError.new(
-        "Could not create feature #{name}: #{detail}"
+        _("Could not create feature #{name}: #{detail}")
       )
       error.set_backtrace(detail.backtrace)
       raise error

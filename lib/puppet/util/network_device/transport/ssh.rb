@@ -13,7 +13,7 @@ class Puppet::Util::NetworkDevice::Transport::Ssh < Puppet::Util::NetworkDevice:
     super()
     @verbose = verbose
     unless Puppet.features.ssh?
-      raise 'Connecting with ssh to a network device requires the \'net/ssh\' ruby library'
+      raise _('Connecting with ssh to a network device requires the \'net/ssh\' ruby library')
     end
   end
 
@@ -33,21 +33,21 @@ class Puppet::Util::NetworkDevice::Transport::Ssh < Puppet::Util::NetworkDevice:
       Puppet.debug("connecting to #{host} as #{user}")
       @ssh = Net::SSH.start(host, user, :port => port, :password => password, :timeout => timeout)
     rescue TimeoutError
-      raise TimeoutError, "timed out while opening an ssh connection to the host", $!.backtrace
+      raise TimeoutError, _("timed out while opening an ssh connection to the host"), $!.backtrace
     rescue Net::SSH::AuthenticationFailed
-      raise Puppet::Error, "SSH authentication failure connecting to #{host} as #{user}", $!.backtrace
+      raise Puppet::Error, _("SSH authentication failure connecting to #{host} as #{user}"), $!.backtrace
     rescue Net::SSH::Exception
-      raise Puppet::Error, "SSH connection failure to #{host}", $!.backtrace
+      raise Puppet::Error, _("SSH connection failure to #{host}"), $!.backtrace
     end
 
     @buf = ""
     @eof = false
     @channel = nil
     @ssh.open_channel do |channel|
-      channel.request_pty { |ch,success| raise "failed to open pty" unless success }
+      channel.request_pty { |ch,success| raise _("failed to open pty") unless success }
 
       channel.send_channel_request("shell") do |ch, success|
-        raise "failed to open ssh shell channel" unless success
+        raise _("failed to open ssh shell channel") unless success
 
         ch.on_data { |_,data| @buf << data }
         ch.on_extended_data { |_,type,data|  @buf << data if type == 1 }

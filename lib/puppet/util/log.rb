@@ -209,7 +209,7 @@ class Puppet::Util::Log
 
   # Reopen all of our logs.
   def Log.reopen
-    Puppet.notice "Reopening log files"
+    Puppet.notice _("Reopening log files")
     types = @destinations.keys
     @destinations.each { |type, dest|
       dest.close if dest.respond_to?(:close)
@@ -382,19 +382,19 @@ class Puppet::Util::Log
     # Issue based messages do not have details in the message. It
     # must be appended here
     unless issue_code.nil?
-      msg = "Could not parse for environment #{environment}: #{msg}" unless environment.nil?
+      msg = _("Could not parse for environment #{environment}: #{msg}") unless environment.nil?
       if file && line && pos
-        msg = "#{msg} at #{file}:#{line}:#{pos}"
+        msg = _("#{msg} at #{file}:#{line}:#{pos}")
       elsif file and line
-        msg = "#{msg}  at #{file}:#{line}"
+        msg = _("#{msg}  at #{file}:#{line}")
       elsif line && pos
-        msg = "#{msg}  at line #{line}:#{pos}"
+        msg = _("#{msg}  at line #{line}:#{pos}")
       elsif line
-        msg = "#{msg}  at line #{line}"
+        msg = _("#{msg}  at line #{line}")
       elsif file
-        msg = "#{msg}  in #{file}"
+        msg = _("#{msg}  in #{file}")
       end
-      msg = "#{msg} on node #{node}" unless node.nil?
+      msg = _("#{msg} on node #{node}") unless node.nil?
       if @backtrace.is_a?(Array)
         msg += "\n"
         msg += @backtrace.join("\n")

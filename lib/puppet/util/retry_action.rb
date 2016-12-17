@@ -28,10 +28,10 @@ module Puppet::Util::RetryAction
       yield
     rescue *retry_exceptions => e
       if failures >= retries
-        raise RetryException::RetriesExceeded, "#{retries} exceeded", e.backtrace
+        raise RetryException::RetriesExceeded, _("#{retries} exceeded"), e.backtrace
       end
 
-      Puppet.info("Caught exception #{e.class}:#{e} retrying")
+      Puppet.info(_("Caught exception #{e.class}:#{e} retrying"))
 
       failures += 1
 
