@@ -251,6 +251,37 @@ describe "The lookup function" do
     end
 
     context 'with lookup_options configured using patterns' do
+      let(:mod_common) {
+        <<-YAML.unindent
+          mod::hash_a:
+            aa:
+              aaa: aaa (from module)
+            ab:
+              aba: aba (from module)
+          mod::hash_b:
+            ba:
+              baa: baa (from module)
+            bb:
+              bba: bba (from module)
+          lookup_options:
+            '^mod::ha.*_a':
+              merge: deep
+            '^mod::ha.*_b':
+              merge: deep
+        YAML
+      }
+
+      let(:mod_base) do
+        {
+          'hiera.yaml' => <<-YAML.unindent,
+            version: 5
+            YAML
+          'data' => {
+            'common.yaml' => mod_common
+          }
+        }
+      end
+
       let(:environment_files) do
         {
           env_name => {
@@ -276,15 +307,28 @@ describe "The lookup function" do
                 c:
                   ca:
                     caa: c.ca.caa
+                mod::hash_a:
+                  aa:
+                    aab: aab (from environment)
+                  ab:
+                    aba: aba (from environment)
+                    abb: abb (from environment)
+                mod::hash_b:
+                  ba:
+                    bab: bab (from environment)
+                  bc:
+                    bca: bca (from environment)
                 lookup_options:
                   b:
                     merge: hash
-                  '^[^b]':
+                  '^[^b]$':
                      merge: deep
                   '^c':
                      merge: first
                   '^b':
                      merge: first
+                  '^mod::ha.*_b':
+                    merge: hash
                 YAML
               'second.yaml' => <<-YAML.unindent,
                 a:
@@ -299,6 +343,9 @@ describe "The lookup function" do
                   ca:
                     cab: c.ca.cab
                 YAML
+            },
+            'modules' => {
+              'mod' => mod_base
             }
           }
         }
@@ -314,6 +361,52 @@ describe "The lookup function" do
 
       it 'uses the first matching pattern' do
         expect(lookup('c')).to eql({'ca' => { 'caa' => 'c.ca.caa', 'cab' => 'c.ca.cab' }})
+      end
+
+      it 'uses lookup_option found by pattern from module' do
+        expect(lookup('mod::hash_a')).to eql({
+          'aa' => {
+            'aaa' => 'aaa (from module)',
+            'aab' => 'aab (from environment)'
+          },
+          'ab' => {
+            'aba' => 'aba (from environment)',
+            'abb' => 'abb (from environment)'
+          }
+        })
+      end
+
+      it 'merges lookup_options found by pattern in environment and module (environment wins)' do
+        expect(lookup('mod::hash_b')).to eql({
+          'ba' => {
+            'bab' => 'bab (from environment)'
+          },
+          'bb' => {
+            'bba' => 'bba (from module)'
+          },
+          'bc' => {
+            'bca' => 'bca (from environment)'
+          }
+        })
+      end
+
+      context 'and patterns in module are not limited to module keys' do
+        let(:mod_common) {
+          <<-YAML.unindent
+          mod::hash_a:
+            aa:
+              aaa: aaa (from module)
+            ab:
+              aba: aba (from module)
+          lookup_options:
+            '^.*_a':
+              merge: deep
+          YAML
+        }
+
+        it 'fails with error' do
+          expect { lookup('mod::a') }.to raise_error(Puppet::DataBinding::LookupError, /all lookup_options patterns must match a key starting with module name/)
+        end
       end
     end
 
