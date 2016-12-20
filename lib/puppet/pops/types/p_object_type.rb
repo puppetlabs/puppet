@@ -862,7 +862,7 @@ class PObjectType < PMetaType
   def guarded_recursion(guard, dflt)
     if @self_recursion
       guard ||= RecursionGuard.new
-      (guard.add_this(self) & RecursionGuard::SELF_RECURSION_IN_THIS) == 0 ? yield(guard) : dflt
+      guard.with_this(self) { |state| (state & RecursionGuard::SELF_RECURSION_IN_THIS) == 0 ? yield(guard) : dflt }
     else
       yield(guard)
     end

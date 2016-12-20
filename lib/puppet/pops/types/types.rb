@@ -3099,9 +3099,10 @@ class PTypeAliasType < PAnyType
   def assignable?(o, guard = nil)
     if @self_recursion
       guard ||= RecursionGuard.new
-      return true if guard.add_this(self) == RecursionGuard::SELF_RECURSION_IN_BOTH
+      guard.with_this(self) { |state| state == RecursionGuard::SELF_RECURSION_IN_BOTH ? true : super(o, guard) }
+    else
+      super(o, guard)
     end
-    super(o, guard)
   end
 
   # Returns the resolved type. The type must have been resolved by a call prior to calls to this
@@ -3265,10 +3266,12 @@ class PTypeAliasType < PAnyType
   def really_instance?(o, guard = nil)
     if @self_recursion
       guard ||= RecursionGuard.new
-      guard.add_that(o)
-      return 0 if guard.add_this(self) == RecursionGuard::SELF_RECURSION_IN_BOTH
+      guard.with_that(o) do
+        guard.with_this(self) { |state| state == RecursionGuard::SELF_RECURSION_IN_BOTH ? 0 : resolved_type.really_instance?(o, guard) }
+      end
+    else
+      resolved_type.really_instance?(o, guard)
     end
-    resolved_type.really_instance?(o, guard)
   end
 
   # @return `nil` to prevent serialization of the type_expr used when first initializing this instance
@@ -3292,7 +3295,7 @@ class PTypeAliasType < PAnyType
   def guarded_recursion(guard, dflt)
     if @self_recursion
       guard ||= RecursionGuard.new
-      (guard.add_this(self) & RecursionGuard::SELF_RECURSION_IN_THIS) == 0 ? yield(guard) : dflt
+      guard.with_this(self) { |state| (state & RecursionGuard::SELF_RECURSION_IN_THIS) == 0 ? yield(guard) : dflt }
     else
       yield(guard)
     end

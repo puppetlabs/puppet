@@ -47,6 +47,10 @@ describe 'when calling' do
                 class_path: "-- %{calling_class_path} --"
                 module: "-- %{calling_module} --"
                 mod_name: "-- %{module_name} --"
+                database_user:
+                  name: postgres
+                  uid: 500
+                  gid: 500
                 b:
                   b1: first b1
                   b2: first b2
@@ -280,6 +284,10 @@ describe 'when calling' do
 
     it 'should use the hash resolution_type' do
       expect(func('b', {'b' => 'foo_result'})).to eql({ 'b1' => 'first b1', 'b2' => 'first b2', 'b3' => 'second b3'})
+    end
+
+    it 'should lookup and return a hash' do
+      expect(func('database_user')).to eql({ 'name' => 'postgres', 'uid' => 500, 'gid' => 500})
     end
 
     it 'should log deprecation errors' do
