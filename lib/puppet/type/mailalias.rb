@@ -36,7 +36,7 @@ module Puppet
 
       validate do |value|
 	unless Puppet::Util.absolute_path?(value)
-	  fail Puppet::Error, "File paths must be fully qualified, not '#{value}'"
+	  fail Puppet::Error, _("File paths must be fully qualified, not '#{value}'")
 	end
       end
     end
@@ -55,7 +55,7 @@ module Puppet
 
     validate do
       if self[:recipient] && self[:file]
-	self.fail "You cannot specify both a recipient and a file"
+	self.fail _("You cannot specify both a recipient and a file")
       end
     end
   end

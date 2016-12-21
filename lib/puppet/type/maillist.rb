@@ -11,7 +11,7 @@ module Puppet
       end
 
       def change_to_s(current_value, newvalue)
-        return "Purged #{resource}" if newvalue == :purged
+        return _("Purged #{resource}") if newvalue == :purged
         super
       end
 
