@@ -245,6 +245,10 @@ class Puppet::Application::FaceBase < Puppet::Application
       end
     end
 
+    if @face.deprecated?
+      Puppet.deprecation_warning("'puppet #{@face.name}' is deprecated and will be removed in a future release")
+    end
+
     result = @face.send(@action.name, *arguments)
     puts render(result, arguments) unless result.nil?
     status = true
