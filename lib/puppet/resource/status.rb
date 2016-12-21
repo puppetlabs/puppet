@@ -140,7 +140,7 @@ module Puppet
       end
 
       def failed_because(detail)
-        @real_resource.log_exception(detail, "Could not evaluate: #{detail}")
+        @real_resource.log_exception(detail, _("Could not evaluate: #{detail}"))
         failed = true
         # There's a contract (implicit unfortunately) that a status of failed
         # will always be accompanied by an event with some explanatory power.  This
