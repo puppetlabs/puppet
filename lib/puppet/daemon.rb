@@ -65,9 +65,9 @@ class Puppet::Daemon
       Puppet::Util::Log.reopen
       Puppet.debug("Finished closing streams for daemon mode")
     rescue => detail
-      Puppet.err "Could not start #{Puppet.run_mode.name}: #{detail}"
+      Puppet.err _("Could not start #{Puppet.run_mode.name}: #{detail}")
       Puppet::Util::replace_file("/tmp/daemonout", 0644) do |f|
-        f.puts "Could not start #{Puppet.run_mode.name}: #{detail}"
+        f.puts _("Could not start #{Puppet.run_mode.name}: #{detail}")
       end
       exit(12)
     end
@@ -81,7 +81,7 @@ class Puppet::Daemon
   def reexec
     raise Puppet::DevError, "Cannot reexec unless ARGV arguments are set" unless argv
     command = $0 + " " + argv.join(" ")
-    Puppet.notice "Restarting with '#{command}'"
+    Puppet.notice _("Restarting with '#{command}'")
     stop(:exit => false)
     exec(command)
   end
@@ -90,7 +90,7 @@ class Puppet::Daemon
     return unless agent
     agent.run({:splay => false})
   rescue Puppet::LockError
-    Puppet.notice "Not triggering already-running agent"
+    Puppet.notice _("Not triggering already-running agent")
   end
 
   def restart
@@ -107,7 +107,7 @@ class Puppet::Daemon
   def set_signal_traps
     [:INT, :TERM].each do |signal|
       Signal.trap(signal) do
-        Puppet.notice "Caught #{signal}; exiting"
+        Puppet.notice _("Caught #{signal}; exiting")
         stop
       end
     end
@@ -117,7 +117,7 @@ class Puppet::Daemon
       signals = {:HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs }
       signals.each do |signal, method|
         Signal.trap(signal) do
-          Puppet.notice "Caught #{signal}; storing #{method}"
+          Puppet.notice _("Caught #{signal}; storing #{method}")
           @signals << method
         end
       end
@@ -156,7 +156,7 @@ class Puppet::Daemon
   # Create a pidfile for our daemon, so we can be stopped and others
   # don't try to start.
   def create_pidfile
-    raise "Could not create PID file: #{@pidfile.file_path}" unless @pidfile.lock
+    raise _("Could not create PID file: #{@pidfile.file_path}") unless @pidfile.lock
   end
 
   # Remove the pid file for our daemon.
@@ -182,7 +182,7 @@ class Puppet::Daemon
 
     signal_loop = Puppet::Scheduler.create_job(SIGNAL_CHECK_INTERVAL) do
       while method = @signals.shift
-        Puppet.notice "Processing #{method}"
+        Puppet.notice _("Processing #{method}")
         send(method)
       end
     end

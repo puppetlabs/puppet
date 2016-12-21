@@ -24,7 +24,7 @@ class Puppet::Node
   ENVIRONMENT = 'environment'.freeze
 
   def initialize_from_hash(data)
-    @name       = data['name']       || (raise ArgumentError, "No name provided in serialized data")
+    @name       = data['name']       || (raise ArgumentError, _("No name provided in serialized data"))
     @classes    = data['classes']    || []
     @parameters = data['parameters'] || {}
     @environment_name = data['environment']
@@ -86,7 +86,7 @@ class Puppet::Node
   end
 
   def initialize(name, options = {})
-    raise ArgumentError, "Node names cannot be nil" unless name
+    raise ArgumentError, _("Node names cannot be nil") unless name
     @name = name
 
     if classes = options[:classes]
@@ -119,7 +119,7 @@ class Puppet::Node
       merge(@facts.values)
     end
   rescue => detail
-    error = Puppet::Error.new("Could not retrieve facts for #{name}: #{detail}")
+    error = Puppet::Error.new(_("Could not retrieve facts for #{name}: #{detail}"))
     error.set_backtrace(detail.backtrace)
     raise error
   end
@@ -128,7 +128,7 @@ class Puppet::Node
   def merge(params)
     params.each do |name, value|
       if @parameters.include?(name)
-        Puppet::Util::Warnings.warnonce("The node parameter '#{name}' for node '#{@name}' was already set to '#{@parameters[name]}'. It could not be set to '#{value}'")
+        Puppet::Util::Warnings.warnonce(_("The node parameter '#{name}' for node '#{@name}' was already set to '#{@parameters[name]}'. It could not be set to '#{value}'"))
       else
         @parameters[name] = value
       end
@@ -159,7 +159,7 @@ class Puppet::Node
       if parameters["hostname"] and parameters["domain"]
         fqdn = parameters["hostname"] + "." + parameters["domain"]
       else
-        Puppet.warning "Host is missing hostname and/or domain: #{name}"
+        Puppet.warning _("Host is missing hostname and/or domain: #{name}")
       end
     end
 
@@ -191,7 +191,7 @@ class Puppet::Node
   # Ensures the data is frozen
   #
   def trusted_data=(data)
-    Puppet.warning("Trusted node data modified for node #{name}") unless @trusted_data.nil?
+    Puppet.warning(_("Trusted node data modified for node #{name}")) unless @trusted_data.nil?
     @trusted_data = data.freeze
   end
 end

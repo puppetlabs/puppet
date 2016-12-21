@@ -17,7 +17,7 @@ module Puppet
     # @return [void]
     # @api private
     def self.push_application_context(run_mode)
-      Puppet.push_context(Puppet.base_context(Puppet.settings), "Update for application settings (#{run_mode})")
+      Puppet.push_context(Puppet.base_context(Puppet.settings), _("Update for application settings (#{run_mode})"))
       # This use of configured environment is correct, this is used to establish
       # the defaults for an application that does not override, or where an override
       # has not been made from the command line.
@@ -32,7 +32,7 @@ module Puppet
 
       # Setup a new context using the app's configuration
       Puppet.push_context({:current_environment => configured_environment},
-                          "Update current environment from application's configuration")
+                          _("Update current environment from application's configuration"))
     end
 
     # Reads the routes YAML settings from the file specified by Puppet[:route_file]

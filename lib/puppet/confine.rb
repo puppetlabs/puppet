@@ -13,7 +13,7 @@ class Puppet::Confine
 
   def self.inherited(klass)
     name = klass.to_s.split("::").pop.downcase.to_sym
-    raise "Test #{name} is already defined" if @tests.include?(name)
+    raise _("Test #{name} is already defined") if @tests.include?(name)
 
     klass.name = name
 
@@ -26,7 +26,7 @@ class Puppet::Confine
         require "puppet/confine/#{name}"
       rescue LoadError => detail
         unless detail.to_s =~ /No such file|cannot load such file/i
-          warn "Could not load confine test '#{name}': #{detail}"
+          warn _("Could not load confine test '#{name}': #{detail}")
         end
         # Could not find file
       end

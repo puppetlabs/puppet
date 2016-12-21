@@ -22,7 +22,7 @@ module Puppet::Indirector
       Puppet::Indirector::Terminus.terminus_class(indirection_name, terminus_name || cache_name)
 
       indirection = Puppet::Indirector::Indirection.instance(indirection_name)
-      raise "Indirection #{indirection_name} does not exist" unless indirection
+      raise _("Indirection #{indirection_name} does not exist") unless indirection
 
       indirection.terminus_class = terminus_name if terminus_name
       indirection.cache_class = cache_name if cache_name
@@ -35,7 +35,7 @@ module Puppet::Indirector
   # evaluated at parse time, which is before the user has had a chance
   # to override it.
   def indirects(indirection, options = {})
-    raise(ArgumentError, "Already handling indirection for #{@indirection.name}; cannot also handle #{indirection}") if @indirection
+    raise(ArgumentError, _("Already handling indirection for #{@indirection.name}; cannot also handle #{indirection}")) if @indirection
     # populate this class with the various new methods
     extend ClassMethods
     include Puppet::Indirector::Envelope

@@ -23,7 +23,7 @@ module Puppet::Coercion
     when false, :false, 'false', :no, 'no'
       false
     else
-      fail('expected a boolean value')
+      fail(_('expected a boolean value'))
     end
   end
 
