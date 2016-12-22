@@ -26,6 +26,10 @@ describe 'when calling' do
           'backend' => {
             'custom_backend.rb' => <<-RUBY.unindent
                     class Hiera::Backend::Custom_backend
+                      def initialize(cache = nil)
+                        Hiera.debug('Custom_backend starting')
+                      end
+      
                       def lookup(key, scope, order_override, resolution_type, context)
                         case key
                         when 'datasources'

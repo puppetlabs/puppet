@@ -236,8 +236,13 @@ class HieraConfigV3 < HieraConfig
       when 'json', 'yaml'
         create_data_provider(backend, parent_data_provider, KEY_V3_DATA_HASH, "#{backend}_data", { KEY_DATADIR => datadir }, paths)
       else
-        # Custom backend. Hiera v3 must be installed and it must be made aware of the loaded config
-        require 'hiera/config'
+        # Custom backend. Hiera v3 must be installed, it's logger configured, and it must be made aware of the loaded config
+        require 'hiera'
+        if @config.include?(KEY_LOGGER)
+          Hiera.logger = @config[KEY_LOGGER].to_s
+        else
+          Hiera.logger = 'console'
+        end
         Hiera::Config.instance_variable_set(:@config, @loaded_config)
 
         # Use a special lookup_key that delegates to the backend
