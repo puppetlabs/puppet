@@ -241,7 +241,7 @@ class HieraConfigV3 < HieraConfig
         if @config.include?(KEY_LOGGER)
           Hiera.logger = @config[KEY_LOGGER].to_s
         else
-          Hiera.logger = 'console'
+          Hiera.logger = 'puppet'
         end
         Hiera::Config.instance_variable_set(:@config, @loaded_config)
 
@@ -261,7 +261,6 @@ class HieraConfigV3 < HieraConfig
     config[KEY_VERSION] ||= 3
     config[KEY_BACKENDS] ||= 'yaml'
     config[KEY_HIERARCHY] ||= %w(nodes/%{::trusted.certname} common)
-    config[KEY_LOGGER] ||= 'console'
     config[KEY_MERGE_BEHAVIOR] ||= 'native'
     config[KEY_DEEP_MERGE_OPTIONS] ||= {}
 
