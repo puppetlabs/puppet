@@ -37,4 +37,5 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency(%q<facter>, [">= 2.0.1", "< 4"])
   s.add_runtime_dependency(%q<hiera>, [">= 2.0", "< 4"])
   s.add_runtime_dependency(%q<semantic_puppet>, ['>= 0.1.3', '< 2'])
+  s.add_runtime_dependency(%q<gettext-setup>, [">= 0.10", "< 1"])
 end

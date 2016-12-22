@@ -45,8 +45,8 @@ describe "Puppet::FileSystem" do
         # for local Administrators writing to their own temp folders under c:\users\USER
         # they will have (F) for themselves, and Users will not have a permission, hence 700
         (is_current_user_system? ? ['770', '2000770'] : '2000700') :
-        # default mode is applied. 100 == 'regular file'
-        '100' + (666 - File.umask.to_s(8).to_i).to_s
+        # or for *nix determine expected mode via bitwise AND complement of umask
+        (0100000 | 0666 & ~File.umask).to_s(8)
       expect([expected_perms].flatten).to include(Puppet::FileSystem.stat(file).mode.to_s(8))
 
       default_file = tmpfile('file_to_update2')

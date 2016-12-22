@@ -171,10 +171,23 @@ module Puppet
 
     newproperty(:comment) do
       desc "A description of the user.  Generally the user's full name."
-      if RUBY_VERSION < "2.1.0"
-        munge do |v|
-          v.respond_to?(:force_encoding) ? v.force_encoding(Encoding::ASCII_8BIT) : v
+      def insync?(is)
+        # nameservice provider requires special attention to encoding
+        # Overrides Puppet::Property#insync?
+        if !@should.empty? && provider.respond_to?(:comments_insync?)
+          return provider.comments_insync?(is, @should)
         end
+        super(is)
+      end
+
+      # In the case that our comments have incompatible encodings, set external
+      # encoding to support concatenation for display.
+      # overrides Puppet::Property#change_to_s
+      def change_to_s(currentvalue, newvalue)
+        if newvalue.respond_to?(:force_encoding) && !Encoding.compatible?(currentvalue, newvalue)
+          return super(currentvalue, newvalue.dup.force_encoding(currentvalue.encoding))
+        end
+        super(currentvalue, newvalue)
       end
     end
 

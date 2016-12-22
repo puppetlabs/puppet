@@ -439,8 +439,14 @@ class TypeFormatter
     expand = @expanded
     if expand && t.self_recursion?
       @guard ||= RecursionGuard.new
-      expand = (@guard.add_this(t) & RecursionGuard::SELF_RECURSION_IN_THIS) == 0
+      @guard.with_this(t) { |state| format_type_alias_type(t, (state & RecursionGuard::SELF_RECURSION_IN_THIS) == 0) }
+    else
+      format_type_alias_type(t, expand)
     end
+  end
+
+  # @api private
+  def format_type_alias_type(t, expand)
     if @type_set.nil?
       @bld << t.name
       if expand

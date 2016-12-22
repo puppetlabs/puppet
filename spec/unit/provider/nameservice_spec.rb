@@ -301,4 +301,46 @@ describe Puppet::Provider::NameService do
     end
   end
 
+  describe "comments_insync?" do
+    # comments_insync? overrides Puppet::Property#insync? and will act on an
+    # array containing a should value (the expected value of Puppet::Property
+    # @should)
+    context "given strings with compatible encodings" do
+      it "should return false if the is-value and should-value are not equal" do
+        is_value = "foo"
+        should_value = ["bar"]
+        expect(provider.comments_insync?(is_value, should_value)).to be_falsey
+      end
+
+      it "should return true if the is-value and should-value are equal" do
+        is_value = "foo"
+        should_value = ["foo"]
+        expect(provider.comments_insync?(is_value, should_value)).to be_truthy
+      end
+    end
+
+    context "given strings with incompatible encodings" do
+      let(:snowman_iso) { "\u2603".force_encoding(Encoding::ISO_8859_1) }
+      let(:snowman_utf8) { "\u2603".force_encoding(Encoding::UTF_8) }
+      let(:snowman_binary) { "\u2603".force_encoding(Encoding::ASCII_8BIT) }
+      let(:arabic_heh_utf8) { "\u06FF".force_encoding(Encoding::UTF_8) }
+
+      it "should be able to compare unequal strings and return false" do
+        expect(Encoding.compatible?(snowman_iso, arabic_heh_utf8)).to be_falsey
+        expect(provider.comments_insync?(snowman_iso, [arabic_heh_utf8])).to be_falsey
+      end
+
+      it "should be able to compare equal strings and return true" do
+        expect(Encoding.compatible?(snowman_binary, snowman_utf8)).to be_falsey
+        expect(provider.comments_insync?(snowman_binary, [snowman_utf8])).to be_truthy
+      end
+
+      it "should not manipulate the actual encoding of either string" do
+        expect(Encoding.compatible?(snowman_binary, snowman_utf8)).to be_falsey
+        provider.comments_insync?(snowman_binary, [snowman_utf8])
+        expect(snowman_binary.encoding).to eq(Encoding::ASCII_8BIT)
+        expect(snowman_utf8.encoding).to eq(Encoding::UTF_8)
+      end
+    end
+  end
 end

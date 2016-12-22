@@ -24,14 +24,54 @@ class RecursionGuard
   # @param instance [Object] the instance to check
   # @return [Integer] the resulting state
   def recursive_this?(instance)
-    this_map[instance.object_id] == true
+    instance_variable_defined?(:@recursive_this_map) && @recursive_this_map.has_key?(instance.object_id)
   end
 
   # Checks if recursion was detected for the given argument in the 'that' context
   # @param instance [Object] the instance to check
   # @return [Integer] the resulting state
   def recursive_that?(instance)
-    that_map[instance.object_id] == true
+    instance_variable_defined?(:@recursive_that_map) && @recursive_that_map.has_key?(instance.object_id)
+  end
+
+  # Add the given argument as 'this' invoke the given block with the resulting state
+  # @param instance [Object] the instance to add
+  # @return [Object] the result of yielding
+  def with_this(instance)
+    if (@state & SELF_RECURSION_IN_THIS) == 0
+      tc = this_count
+      @state = @state | SELF_RECURSION_IN_THIS if this_put(instance)
+      if tc < this_count
+        # recursive state detected
+        result = yield(@state)
+
+        # pop state
+        @state &= ~SELF_RECURSION_IN_THIS
+        @this_map.delete(instance.object_id)
+        return result
+      end
+    end
+    yield(@state)
+  end
+
+  # Add the given argument as 'that' invoke the given block with the resulting state
+  # @param instance [Object] the instance to add
+  # @return [Object] the result of yielding
+  def with_that(instance)
+    if (@state & SELF_RECURSION_IN_THAT) == 0
+      tc = that_count
+      @state = @state | SELF_RECURSION_IN_THAT if that_put(instance)
+      if tc < that_count
+        # recursive state detected
+        result = yield(@state)
+
+        # pop state
+        @state &= ~SELF_RECURSION_IN_THAT
+        @that_map.delete(instance.object_id)
+        return result
+      end
+    end
+    yield(@state)
   end
 
   # Add the given argument as 'this' and return the resulting state
@@ -39,7 +79,7 @@ class RecursionGuard
   # @return [Integer] the resulting state
   def add_this(instance)
     if (@state & SELF_RECURSION_IN_THIS) == 0
-      @state = @state | SELF_RECURSION_IN_THIS if map_put(this_map, instance)
+      @state = @state | SELF_RECURSION_IN_THIS if this_put(instance)
     end
     @state
   end
@@ -49,43 +89,47 @@ class RecursionGuard
   # @return [Integer] the resulting state
   def add_that(instance)
     if (@state & SELF_RECURSION_IN_THAT) == 0
-      @state = @state | SELF_RECURSION_IN_THAT if map_put(that_map, instance)
+      @state = @state | SELF_RECURSION_IN_THAT if that_put(instance)
     end
     @state
   end
 
   # @return the number of objects added to the `this` map
   def this_count
-    this_map.size
+    instance_variable_defined?(:@this_map) ? @this_map.size : 0
   end
 
   # @return the number of objects added to the `that` map
   def that_count
-    that_map.size
+    instance_variable_defined?(:@that_map) ? @that_map.size : 0
   end
 
   private
 
-  def map_put(map, o)
+  def this_put(o)
     id = o.object_id
-    case map[id]
-    when true
-      true # Recursion already detected
-    when false
-      map[id] = true
-      true # Recursion occured. This was the second time this entry was added
+    @this_map ||= {}
+    if @this_map.has_key?(id)
+      @recursive_this_map ||= {}
+      @recursive_this_map[id] = true
+      true
     else
-      map[id] = false
-      false # First time add. No recursion
+      @this_map[id] = true
+      false
     end
   end
 
-  def this_map
-    @this_map ||= {}
-  end
-
-  def that_map
+  def that_put(o)
+    id = o.object_id
     @that_map ||= {}
+    if @that_map.has_key?(id)
+      @recursive_that_map ||= {}
+      @recursive_that_map[id] = true
+      true
+    else
+      @that_map[id] = true
+      false
+    end
   end
 end
 end
