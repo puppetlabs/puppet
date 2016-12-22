@@ -182,14 +182,51 @@ describe Puppet::Util do
     end
 
     # but in 2.3, the behavior is correct when external codepage is 65001 / UTF-8
-    it "works around Ruby bug 8822 (which fails to preserve UTF-8 properly when accessing ENV) (Ruby >= 2.3.x) ",
-      :if => ((match = RUBY_VERSION.match(/^2\.(\d+)\./)) && match.captures[0].to_i >= 3 && Puppet.features.microsoft_windows?) do
+    it "works around Ruby bug 8822 (which preserves UTF-8 properly when accessing ENV) (Ruby >= 2.3.x, external encoding is UTF8) ",
+      :if => ((match = RUBY_VERSION.match(/^2\.(\d+)\./)) && match.captures[0].to_i >= 3 && Encoding.default_external.name == "UTF-8" && Puppet.features.microsoft_windows?) do
+
+      withenv_utf8 do |utf_8_key, utf_8_value, codepage_key|
+        # Ruby 2.3 fixes access by the original UTF-8 key, and behaves differently than 2.1
+        # keying by local codepage will work only when the UTF-8 can be converted to local codepage
+        # As both are UTF8 this will succeed
+        expect(ENV.key?(codepage_key)).to eq(true)
+        expect(ENV.key?(utf_8_key)).to eq(true)
+
+        # Ruby's ENV.keys has slightly different behavior than ENV.key?(key), and 2.3 differs from 2.1
+        # (codepage_key / utf_8_key have same bytes for the sake of searching)
+        found = ENV.keys.find { |k| k.bytes == codepage_key.bytes }
+
+        # the keys collection in 2.3 will have the correct bytes as the external codepage is UTF8
+        expect(found.encoding).to eq(Encoding::UTF_8)
+
+        # meaning we can use include? to find it in both UTF-8 or codepage encoding
+        expect(ENV.keys.include?(codepage_key)).to eq(true)
+        expect(ENV.keys.include?(utf_8_key)).to eq(true)
+
+        # similarly the value stored at the real key is in current codepage but is also UTF8
+        env_value = ENV[utf_8_key]
+        expect(env_value).to eq(utf_8_value)
+        expect(env_value.encoding).to eq(Encoding::UTF_8)
+      end
+    end
+
+    # but in 2.3, the behavior is mostly correct when external codepage is 65001 / UTF-8
+    it "works around Ruby bug 8822 (which fails to preserve UTF-8 properly when accessing ENV) (Ruby >= 2.3.x, external encoding is not 65001/UTF8) ",
+      :if => ((match = RUBY_VERSION.match(/^2\.(\d+)\./)) && match.captures[0].to_i >= 3 && Encoding.default_external.name != "UTF-8" && Puppet.features.microsoft_windows?) do
 
       withenv_utf8 do |utf_8_key, utf_8_value, codepage_key|
         # Ruby 2.3 fixes access by the original UTF-8 key, and behaves differently than 2.1
         # keying by local codepage will work only when the UTF-8 can be converted to local codepage
         # the key selected for this test contains characters unavailable to a local codepage, hence doesn't work
-        expect(ENV.key?(codepage_key)).to eq(false)
+
+        if Encoding::default_external == Encoding.find("CP932")          
+          # On Japanese Windows (Code Page 932) this test resolves as true.
+          # Refer to PUP-7019 for more information
+          expect(ENV.key?(codepage_key)).to eq(true)
+        else
+          # the key selected for this test contains characters unavailable to a local codepage, hence doesn't work
+          expect(ENV.key?(codepage_key)).to eq(false)
+        end
         expect(ENV.key?(utf_8_key)).to eq(true)
 
         # Ruby's ENV.keys has slightly different behavior than ENV.key?(key), and 2.3 differs from 2.1
