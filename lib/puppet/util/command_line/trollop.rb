@@ -146,7 +146,7 @@ class Parser
   ## value, you must specify +:type+ as well.
 
   def opt name, desc="", opts={}
-    raise ArgumentError, _("you already have an argument named '#{name}'") if @specs.member? name
+    raise ArgumentError, "you already have an argument named '#{name}'" if @specs.member? name
 
     ## fill in :type
     opts[:type] = # normalize
@@ -194,7 +194,7 @@ class Parser
       when Date; :date
       when Array
         if opts[:default].empty?
-          raise ArgumentError, _("multiple argument type cannot be deduced from an empty array for '#{opts[:default][0].class.name}'")
+          raise ArgumentError, "multiple argument type cannot be deduced from an empty array for '#{opts[:default][0].class.name}'"
         end
         case opts[:default][0]    # the first element determines the types
         when Integer; :ints
@@ -203,14 +203,14 @@ class Parser
         when IO; :ios
         when Date; :dates
         else
-          raise ArgumentError, _("unsupported multiple argument type '#{opts[:default][0].class.name}'")
+          raise ArgumentError, "unsupported multiple argument type '#{opts[:default][0].class.name}'"
         end
       when nil; nil
       else
-        raise ArgumentError, _("unsupported argument type '#{opts[:default].class.name}'")
+        raise ArgumentError, "unsupported argument type '#{opts[:default].class.name}'"
       end
 
-    raise ArgumentError, _(":type specification and default type don't match (default type is #{type_from_default})") if opts[:type] && type_from_default && opts[:type] != type_from_default
+    raise ArgumentError, ":type specification and default type don't match (default type is #{type_from_default})" if opts[:type] && type_from_default && opts[:type] != type_from_default
 
     opts[:type] = opts[:type] || type_from_default || :flag
 
@@ -225,7 +225,7 @@ class Parser
       else
         raise ArgumentError, "invalid long option name #{opts[:long].inspect}"
       end
-    raise ArgumentError, _("long option name #{opts[:long].inspect} is already taken; please specify a (different) :long") if @long[opts[:long]]
+    raise ArgumentError, "long option name #{opts[:long].inspect} is already taken; please specify a (different) :long" if @long[opts[:long]]
 
     ## fill in :short
     opts[:short] = opts[:short].to_s if opts[:short] unless opts[:short] == :none
@@ -236,8 +236,8 @@ class Parser
     end
 
     if opts[:short]
-      raise ArgumentError, _("short option name #{opts[:short].inspect} is already taken; please specify a (different) :short") if @short[opts[:short]]
-      raise ArgumentError, _("a short option name can't be a number or a dash") if opts[:short] =~ INVALID_SHORT_ARG_REGEX
+      raise ArgumentError, "short option name #{opts[:short].inspect} is already taken; please specify a (different) :short" if @short[opts[:short]]
+      raise ArgumentError, "a short option name can't be a number or a dash" if opts[:short] =~ INVALID_SHORT_ARG_REGEX
     end
 
     ## fill in :default for flags
@@ -270,13 +270,13 @@ class Parser
   ## undirected (i.e., mutual) dependencies. Directed dependencies are
   ## better modeled with Trollop::die.
   def depends *syms
-    syms.each { |sym| raise ArgumentError, _("unknown option '#{sym}'") unless @specs[sym] }
+    syms.each { |sym| raise ArgumentError, "unknown option '#{sym}'" unless @specs[sym] }
     @constraints << [:depends, syms]
   end
 
   ## Marks two (or more!) options as conflicting.
   def conflicts *syms
-    syms.each { |sym| raise ArgumentError, _("unknown option '#{sym}'") unless @specs[sym] }
+    syms.each { |sym| raise ArgumentError, "unknown option '#{sym}'" unless @specs[sym] }
     @constraints << [:conflicts, syms]
   end
 
@@ -812,7 +812,7 @@ def die arg, msg=nil
   if @last_parser
     @last_parser.die arg, msg
   else
-    raise ArgumentError, _("Trollop::die can only be called after Trollop::options")
+    raise ArgumentError, "Trollop::die can only be called after Trollop::options"
   end
 end
 

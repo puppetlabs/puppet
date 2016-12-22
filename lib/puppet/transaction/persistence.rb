@@ -52,7 +52,7 @@ class Puppet::Transaction::Persistence
     end
 
     result = nil
-    Puppet::Util.benchmark(:debug, _("Loaded transaction store file")) do
+    Puppet::Util.benchmark(:debug, "Loaded transaction store file") do
       begin
         result = Puppet::Util::Yaml.load_file(filename, false, true)
       rescue Puppet::Util::Yaml::YamlLoadError => detail

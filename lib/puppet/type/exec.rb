@@ -174,7 +174,7 @@ module Puppet
         any output is logged at the `err` log level."
 
       validate do |command|
-        raise ArgumentError, _("Command must be a String, got value of class #{command.class}") unless command.is_a? String
+        raise ArgumentError, "Command must be a String, got value of class #{command.class}" unless command.is_a? String
       end
     end
 

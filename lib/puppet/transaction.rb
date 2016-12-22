@@ -141,7 +141,7 @@ class Puppet::Transaction
         begin
           provider.post_resource_eval
         rescue => detail
-          Puppet.log_exception(detail, _("post_resource_eval failed for provider #{provider}"))
+          Puppet.log_exception(detail, "post_resource_eval failed for provider #{provider}")
         end
       end
 

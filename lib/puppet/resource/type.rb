@@ -235,12 +235,12 @@ class Puppet::Resource::Type
 
   # Add code from a new instance to our code.
   def merge(other)
-    fail _("#{name} is not a class; cannot add code to it") unless type == :hostclass
-    fail _("#{other.name} is not a class; cannot add code from it") unless other.type == :hostclass
-    fail _("Cannot have code outside of a class/node/define because 'freeze_main' is enabled") if name == "" and Puppet.settings[:freeze_main]
+    fail "#{name} is not a class; cannot add code to it" unless type == :hostclass
+    fail "#{other.name} is not a class; cannot add code from it" unless other.type == :hostclass
+    fail "Cannot have code outside of a class/node/define because 'freeze_main' is enabled" if name == "" and Puppet.settings[:freeze_main]
 
     if parent and other.parent and parent != other.parent
-      fail _("Cannot merge classes with different parent classes (#{name} => #{parent} vs. #{other.name} => #{other.parent})")
+      fail "Cannot merge classes with different parent classes (#{name} => #{parent} vs. #{other.name} => #{other.parent})"
     end
 
     # We know they're either equal or only one is set, so keep whichever parent is specified.
@@ -398,7 +398,7 @@ class Puppet::Resource::Type
       param = parameters[sym_name]
       next unless param.nil? || param.value.nil?
       catch(:no_such_key) do
-        bound_value = Puppet::Pops::Lookup.search_and_merge(_("#{name}::#{param_name}"), Puppet::Pops::Lookup::Invocation.new(scope), nil)
+        bound_value = Puppet::Pops::Lookup.search_and_merge("#{name}::#{param_name}", Puppet::Pops::Lookup::Invocation.new(scope), nil)
         # Assign bound value but don't let an undef trump a default expression
         resource[sym_name] = bound_value unless bound_value.nil? && !default.nil?
       end

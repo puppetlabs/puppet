@@ -148,19 +148,19 @@ class Puppet::Util::FileType
 
     # Read the file.
     def read
-      Puppet.info _("Reading #{@path} from RAM")
+      Puppet.info _("Reading #{self.path} from RAM")
       @@tabs[@path]
     end
 
     # Remove the file.
     def remove
-      Puppet.info _("Removing #{@path} from RAM")
+      Puppet.info _("Removing #{self.path} from RAM")
       @@tabs[@path] = ""
     end
 
     # Overwrite the file.
     def write(text)
-      Puppet.info _("Writing #{@path} to RAM")
+      Puppet.info _("Writing #{self.path} to RAM")
       @@tabs[@path] = text
     end
   end
@@ -230,7 +230,7 @@ class Puppet::Util::FileType
       when /can't open your crontab/
         return ""
       when /you are not authorized to use cron/
-        raise FileReadError, _("User #{@path} not authorized to use cron"), detail.backtrace
+        raise FileReadError, _("User #{self.path} not authorized to use cron"), detail.backtrace
       else
         raise FileReadError, _("Could not read crontab for #{@path}: #{detail}"), detail.backtrace
       end

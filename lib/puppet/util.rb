@@ -222,7 +222,7 @@ module Util
       seconds = Benchmark.realtime {
         yield
       }
-      # Translator note: forms the end of a string indicating how long a
+      #TRANSLATORS forms the end of a string indicating how long a
       # given operation took
       object.send(level, msg + (_(" in %0.2f seconds") % seconds))
       return seconds
@@ -257,7 +257,7 @@ module Util
             # ignore this path element and carry on with our lives.
             Puppet::Util::Warnings.warnonce(_("PATH contains a ~ character, and HOME is not set; ignoring PATH element '#{dir}'."))
           elsif e.to_s =~ /doesn't exist|can't find user/
-            # ...otherwise, we just skip the non-existent entry, and do nothing.
+            # otherwise, we just skip the non-existent entry, and do nothing.
             Puppet::Util::Warnings.warnonce(_("Couldn't expand PATH containing a ~ character; ignoring PATH element '#{dir}'."))
           else
             raise

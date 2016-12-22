@@ -44,7 +44,7 @@ module Puppet
           elsif args.length == 4
             long, short, desc, type = args
           else
-            raise ArgumentError, _("this method only takes 3 or 4 arguments. Given: #{args.inspect}")
+            raise ArgumentError, "this method only takes 3 or 4 arguments. Given: #{args.inspect}"
           end
 
           options = {

@@ -203,7 +203,7 @@ class Puppet::Interface
   # @return [void]
   # @api private
   def __invoke_decorations(type, action, passed_args = [], passed_options = {})
-    [:before, :after].member?(type) or fail _("unknown decoration type #{type}")
+    [:before, :after].member?(type) or fail "unknown decoration type #{type}"
 
     # Collect the decoration methods matching our pass.
     methods = action.options.select do |name|

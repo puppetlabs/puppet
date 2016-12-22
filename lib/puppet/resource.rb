@@ -511,7 +511,7 @@ class Puppet::Resource
     return [] unless resource_type and resource_type.respond_to?(:arguments)
 
     unless is_a?(Puppet::Parser::Resource)
-      fail Puppet::DevError, _("Cannot evaluate default parameters for #{self} - not a parser resource")
+      fail Puppet::DevError, "Cannot evaluate default parameters for #{self} - not a parser resource"
     end
 
     missing_arguments.collect do |param, default|
@@ -519,7 +519,7 @@ class Puppet::Resource
       if rtype.type == :hostclass
         using_bound_value = false
         catch(:no_such_key) do
-          bound_value = Puppet::Pops::Lookup.search_and_merge(_("#{rtype.name}::#{param}"), Puppet::Pops::Lookup::Invocation.new(scope), nil)
+          bound_value = Puppet::Pops::Lookup.search_and_merge("#{rtype.name}::#{param}", Puppet::Pops::Lookup::Invocation.new(scope), nil)
           # Assign bound value but don't let an undef trump a default expression
           unless bound_value.nil? && !default.nil?
             self[param.to_sym] = bound_value

@@ -237,7 +237,7 @@ class Puppet::Transaction::ResourceHarness
     if param.sensitive
       event.message = param.format(_("changed %s to %s#{audit_message}"), param.is_to_s(current_value), param.should_to_s(param.should))
     else
-      event.message = _("#{param.change_to_s(current_value, param.should)}#{audit_message}")
+      event.message = "#{param.change_to_s(current_value, param.should)}#{audit_message}"
     end
     event.status = "success"
   end

@@ -80,6 +80,7 @@ module Puppet::Util::Backups
 
   def backup_file_with_filebucket(f)
     sum = self.bucket.backup(f)
+    #TRANSLATORS stored #{f} to the filebucket, along with its checksum
     self.info _("Filebucketed #{f} to #{self.bucket.name} with sum #{sum}")
     return sum
     end
