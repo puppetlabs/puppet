@@ -9,6 +9,9 @@
 # Where applicable, we should be able to do this in different locales
 test_name 'PUP-6777 Manage users with UTF-8 comments' do
 
+  # PUP-7049 / ARISTA-42 - user provider bug on Arista
+  confine :except, :platform => /^eos-/
+
   user0 = "foo#{rand(99999).to_i}"
   user1 = "bar#{rand(99999).to_i}"
   user2 = "baz#{rand(99999).to_i}"
