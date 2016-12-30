@@ -16,7 +16,7 @@ test_name 'PUP-6777 Manage users with UTF-8 comments' do
   user1 = "bar#{rand(99999).to_i}"
   user2 = "baz#{rand(99999).to_i}"
   user3 = "qux#{rand(99999).to_i}"
-  user4 = "quux#{rand(99999).to_i}"
+  user4 = "ris#{rand(99999).to_i}"
   osx_agents = agents.select { |a| a[:platform] =~ /osx/ } || []
   windows_agents = agents.select { |a| a[:platform] =~ /windows/ } || []
 
