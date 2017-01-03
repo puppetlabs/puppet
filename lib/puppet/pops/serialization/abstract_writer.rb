@@ -134,8 +134,12 @@ class AbstractWriter
       build_payload { |ep| ep.write(o.size) }
     end
 
-    register_type(Extension::OBJECT_START, Extension::ObjectStart) do |o|
+    register_type(Extension::PCORE_OBJECT_START, Extension::PcoreObjectStart) do |o|
       build_payload { |ep| write_tpl_qname(ep, o.type_name); ep.write(o.attribute_count) }
+    end
+
+    register_type(Extension::OBJECT_START, Extension::ObjectStart) do |o|
+      build_payload { |ep| ep.write(o.attribute_count) }
     end
 
     # 0x20 - 0x2f reserved for special extension objects

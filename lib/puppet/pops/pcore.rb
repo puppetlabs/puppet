@@ -17,25 +17,31 @@ module Pcore
 
   RUNTIME_NAME_AUTHORITY = 'http://puppet.com/2016.1/runtime'
 
-  def self.init(loader, ir)
+  def self.init(loader, ir, for_agent)
     add_alias('Pcore::URI_RX', TYPE_URI_RX, loader)
     add_type(TYPE_URI_ALIAS, loader)
     add_alias('Pcore::SimpleTypeName', TYPE_SIMPLE_TYPE_NAME, loader)
     add_alias('Pcore::TypeName', TYPE_QUALIFIED_REFERENCE, loader)
     add_alias('Pcore::QRef', TYPE_QUALIFIED_REFERENCE, loader)
+    begin
     Types::TypedModelObject.register_ptypes(loader, ir)
+    rescue Exception => e
+      puts e.message
+    end
 
     ir.register_implementation_namespace('Pcore', 'Puppet::Pops::Pcore', loader)
-    ir.register_implementation_namespace('Puppet::AST', 'Puppet::Pops::Model', loader)
-    ast_type_set = Serialization::RGen::TypeGenerator.new.generate_type_set('Puppet::AST', Puppet::Pops::Model, loader)
+    unless for_agent
+      ir.register_implementation_namespace('Puppet::AST', 'Puppet::Pops::Model', loader)
+      ast_type_set = Serialization::RGen::TypeGenerator.new.generate_type_set('Puppet::AST', Puppet::Pops::Model, loader)
 
-    # Extend the Puppet::AST type set with the Locator (it's not an RGen class, but nevertheless, used in the model)
-    ast_ts_i12n = ast_type_set.i12n_hash
-    ast_ts_i12n['types'] = ast_ts_i12n['types'].merge('Locator' => Parser::Locator::Locator19.register_ptype(loader, ir))
-    add_type(Types::PTypeSetType.new(ast_ts_i12n), loader)
+      # Extend the Puppet::AST type set with the Locator (it's not an RGen class, but nevertheless, used in the model)
+      ast_ts_i12n = ast_type_set.i12n_hash
+      ast_ts_i12n['types'] = ast_ts_i12n['types'].merge('Locator' => Parser::Locator::Locator19.register_ptype(loader, ir))
+      add_type(Types::PTypeSetType.new(ast_ts_i12n), loader)
 
-    Resource.register_ptypes(loader, ir)
-    Lookup::Context.register_ptype(loader, ir);
+      Resource.register_ptypes(loader, ir)
+      Lookup::Context.register_ptype(loader, ir);
+    end
   end
 
   # Create and register a new `Object` type in the Puppet Type System and map it to an implementation class

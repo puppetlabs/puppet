@@ -12,7 +12,8 @@ module Extension
   # 0x10 - 0x1F are reserved for structural extensions
   ARRAY_START = 0x10
   MAP_START = 0x11
-  OBJECT_START = 0x12
+  PCORE_OBJECT_START = 0x12
+  OBJECT_START = 0x13
 
   # 0x20 - 0x2f reserved for special extension objects
   DEFAULT = 0x20
@@ -32,7 +33,7 @@ module Extension
   # Marker module indicating whether or not an instance is tabulated or not
   module NotTabulated; end
 
-  # Marker module for objects that starts a sequence, i.e. ArrayStart, MapStart, and ObjectStart
+  # Marker module for objects that starts a sequence, i.e. ArrayStart, MapStart, and PcoreObjectStart
   module SequenceStart; end
 
   # The class that triggers the use of the DEFAULT extension. It doesn't have any payload
@@ -83,9 +84,9 @@ module Extension
     end
   end
 
-  # The class that triggers the use of the OBJECT_START extension. The payload is the name of the object type and the
-  # number of attributes in the instance.
-  class ObjectStart
+  # The class that triggers the use of the PCORE_OBJECT_START extension. The payload is the name of the object type
+  # and the number of attributes in the instance.
+  class PcoreObjectStart
     include SequenceStart
     attr_reader :type_name, :attribute_count
     def initialize(type_name, attribute_count)
@@ -98,7 +99,28 @@ module Extension
     end
 
     def eql?(o)
-      o.is_a?(ObjectStart) && o.type_name == @type_name && o.attribute_count == @attribute_count
+      o.is_a?(PcoreObjectStart) && o.type_name == @type_name && o.attribute_count == @attribute_count
+    end
+    alias == eql?
+
+    def sequence_size
+      @attribute_count
+    end
+  end
+
+  class ObjectStart
+    include SequenceStart
+    attr_reader :attribute_count
+    def initialize(attribute_count)
+      @attribute_count = attribute_count
+    end
+
+    def hash
+      attribute_count.hash
+    end
+
+    def eql?(o)
+      o.is_a?(ObjectStart) && o.attribute_count == @attribute_count
     end
     alias == eql?
 

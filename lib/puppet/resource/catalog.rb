@@ -426,8 +426,10 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     if resources = data['resources']
       # TODO: The deserializer needs a loader in order to deserialize types defined using the puppet language.
       json_deserializer = nil
-      if Puppet[:rich_data] || result.environment_instance && result.environment_instance.rich_data?
-        json_deserializer = Puppet::Pops::Serialization::Deserializer.new(Puppet::Pops::Serialization::JSON::Reader.new([]), nil)
+      if resources.any? { |res| res.has_key?('ext_parameters') }
+        json_deserializer = Puppet::Pops::Serialization::Deserializer.new(
+            Puppet::Pops::Serialization::JSON::Reader.new([]),
+            Puppet::Pops::Loaders.catalog_loader)
       end
       result.add_resource(*resources.collect do |res|
         Puppet::Resource.from_data_hash(res, json_deserializer)
