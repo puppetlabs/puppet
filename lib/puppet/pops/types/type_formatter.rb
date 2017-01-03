@@ -42,17 +42,24 @@ class TypeFormatter
   #
   # @api public
   def indented_string(t, indent = 0, indent_width = 2)
+    @bld = ''
+    append_indented_string(t, indent, indent_width)
+    @bld
+  end
+
+  # @api private
+  def append_indented_string(t, indent = 0, indent_width = 2, skip_initial_indent = false)
+    save_indent = @indent
+    save_indent_width = @indent_width
     @indent = indent
     @indent_width = indent_width
     begin
-      @bld = ''
-      (@indent * @indent_width).times { @bld << ' ' }
+      (@indent * @indent_width).times { @bld << ' ' } unless skip_initial_indent
       append_string(t)
       @bld << "\n"
-      @bld
     ensure
-      @indent = nil
-      @indent_width = nil
+      @indent = save_indent
+      @indent_width = save_indent_width
     end
   end
 
@@ -294,6 +301,14 @@ class TypeFormatter
   def string_PCollectionType(t)
     range = range_array_part(t.size_type)
     append_array('Collection', range.empty? ) { append_elements(range) }
+  end
+
+  def string_PuppetObject(t)
+    @bld << t._ptype.name << '('
+    append_indented_string(t.i12n_hash, @indent || 0, @indent_width || 2, true)
+    @bld.chomp!
+    @bld << ')'
+    newline if @indent
   end
 
   # @api private

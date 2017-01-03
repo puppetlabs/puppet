@@ -210,6 +210,16 @@ class RubyGenerator < TypeFormatter
     init_params.each { |a| bld << '    @' << a.name << ' = ' << a.name << "\n" if a.container.equal?(obj) }
     bld << "  end\n\n"
 
+    bld << "  def i12n_hash\n    result = "
+    bld << (obj.parent.nil? ? '{}' : 'super')
+    bld << "\n"
+    init_params.each { |a| bld << "    result['" << a.name << "'] = @" << a.name << "\n" if a.container.equal?(obj) }
+    bld << "    result\n  end\n\n"
+
+    bld << "  def to_s\n"
+    bld << "    " << namespace_relative(segments, TypeFormatter.name) << ".string(self)\n"
+    bld << "  end\n\n"
+
     # Output attr_readers
     others.each do |a|
       next unless a.container.equal?(obj)
