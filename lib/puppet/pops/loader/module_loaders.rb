@@ -21,6 +21,8 @@ module Loader
 # @api private
 #
 module ModuleLoaders
+  ENVIRONMENT = 'environment'.freeze
+
   def self.system_loader_from(parent_loader, loaders)
     # Puppet system may be installed in a fixed location via RPM, installed as a Gem, via source etc.
     # The only way to find this across the different ways puppet can be installed is
@@ -35,6 +37,15 @@ module ModuleLoaders
                                                        'puppet_system',
                                                         [:func_4x]   # only load ruby functions from "puppet"
                                                        )
+  end
+
+  def self.environment_loader_from(parent_loader, loaders, env_path)
+    ModuleLoaders::FileBased.new(parent_loader,
+      loaders,
+      ENVIRONMENT,
+      File.join(env_path, 'lib'),
+      ENVIRONMENT
+    )
   end
 
   def self.module_loader_from(parent_loader, loaders, module_name, module_path)
@@ -107,7 +118,6 @@ module ModuleLoaders
       return nil unless typed_name.name_authority == Pcore::RUNTIME_NAME_AUTHORITY
 
       # Assume it is a global name, and that all parts of the name should be used when looking up
-      name_part_index = 0
       name_parts = typed_name.name_parts
 
       # Certain types and names can be disqualified up front
@@ -119,10 +129,6 @@ module ModuleLoaders
         # ok since such a "module" cannot have namespaced content).
         #
         return nil unless name_parts[0] == module_name
-
-        # Skip the first part of the name when computing the path since the path already contains the name of the
-        # module
-        name_part_index = 1
       else
         # The name is in the global name space.
 
@@ -144,7 +150,7 @@ module ModuleLoaders
       # Find the file to instantiate, and instantiate the entity if file is found
       origin = nil
       if (smart_path = smart_paths.effective_paths(typed_name.type).find do |sp|
-          origin = sp.effective_path(typed_name, name_part_index)
+          origin = sp.effective_path(typed_name, global? ? 0 : 1)
           existing_path(origin)
         end)
         value = smart_path.instantiator.create(self, typed_name, origin, get_contents(origin))
@@ -200,12 +206,20 @@ module ModuleLoaders
       raise NotImplementedError.new
     end
 
+    # Answers the question if this loader represents a global component (true for resource type loader and environment loader)
+    #
+    # @return [Boolean] `true` if this loader represents a global component
+    #
+    def global?
+      module_name.nil? || module_name == ENVIRONMENT
+    end
+
     # Produces the private loader for the module. If this module is not already resolved, this will trigger resolution
     #
     def private_loader
       # The system loader has a nil module_name and it does not have a private_loader as there are no functions
       # that can only by called by puppet runtime - if so, it acts as the private loader directly.
-      @private_loader ||= (module_name.nil? || module_name == 'environment' ? self : @loaders.private_loader_for_module(module_name))
+      @private_loader ||= (global? ? self : @loaders.private_loader_for_module(module_name))
     end
   end
 

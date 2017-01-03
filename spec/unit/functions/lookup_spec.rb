@@ -196,11 +196,13 @@ describe "The lookup function" do
           {
             env_name => {
               'environment.conf' => "environment_data_provider=function\n",
-              'functions' => { 'data.pp' => <<-PUPPET.unindent }
+              'functions' => {
+                'environment' => { 'data.pp' => <<-PUPPET.unindent }
                     function environment::data() {
                       { 'a' => 'value a' }
                     }
-              PUPPET
+                    PUPPET
+              }
             }
           }
         end

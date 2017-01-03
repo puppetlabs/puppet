@@ -37,6 +37,7 @@ file {
   '#{@coderoot}/environments/production':;
   '#{@coderoot}/environments/production/data':;
   '#{@coderoot}/environments/production/functions':;
+  '#{@coderoot}/environments/production/functions/environment':;
   '#{@coderoot}/environments/production/lib':;
   '#{@coderoot}/environments/production/lib/puppet':;
   '#{@coderoot}/environments/production/lib/puppet/functions':;
@@ -88,6 +89,7 @@ file {
   '#{@coderoot}/environments/env1':;
   '#{@coderoot}/environments/env1/data':;
   '#{@coderoot}/environments/env1/functions':;
+  '#{@coderoot}/environments/env1/functions/environment':;
   '#{@coderoot}/environments/env1/lib':;
   '#{@coderoot}/environments/env1/lib/puppet':;
   '#{@coderoot}/environments/env1/lib/puppet/functions':;
@@ -140,6 +142,7 @@ file {
   '#{@coderoot}/environments/env2':;
   '#{@coderoot}/environments/env2/data':;
   '#{@coderoot}/environments/env2/functions':;
+  '#{@coderoot}/environments/env2/functions/environment':;
   '#{@coderoot}/environments/env2/lib':;
   '#{@coderoot}/environments/env2/lib/puppet':;
   '#{@coderoot}/environments/env2/lib/puppet/functions':;
@@ -192,6 +195,7 @@ file {
   '#{@coderoot}/environments/env3':;
   '#{@coderoot}/environments/env3/data':;
   '#{@coderoot}/environments/env3/functions':;
+  '#{@coderoot}/environments/env3/functions/environment':;
   '#{@coderoot}/environments/env3/not-lib':;
   '#{@coderoot}/environments/env3/not-lib/puppet':;
   '#{@coderoot}/environments/env3/not-lib/puppet/functions':;
@@ -244,6 +248,7 @@ file {
   '#{@coderoot}/environments/env4':;
   '#{@coderoot}/environments/env4/data':;
   '#{@coderoot}/environments/env4/functions':;
+  '#{@coderoot}/environments/env4/functions/environment':;
   '#{@coderoot}/environments/env4/lib':;
   '#{@coderoot}/environments/env4/lib/puppet':;
   '#{@coderoot}/environments/env4/lib/puppet/functions':;
@@ -523,7 +528,7 @@ end
 }
 
 # Environment puppet function data provider
-file { '#{@coderoot}/environments/production/functions/data.pp':
+file { '#{@coderoot}/environments/production/functions/environment/data.pp':
   ensure => file,
   mode => "0755",
   content => 'function environment::data() {
@@ -535,7 +540,7 @@ file { '#{@coderoot}/environments/production/functions/data.pp':
 ',
 }
 
-file { '#{@coderoot}/environments/env1/functions/data.pp':
+file { '#{@coderoot}/environments/env1/functions/environment/data.pp':
   ensure => file,
   mode => "0755",
   content => 'function environment::data() {
@@ -547,7 +552,7 @@ file { '#{@coderoot}/environments/env1/functions/data.pp':
 ',
 }
 
-file { '#{@coderoot}/environments/env2/functions/data.pp':
+file { '#{@coderoot}/environments/env2/functions/environment/data.pp':
   ensure => file,
   mode => "0755",
   content => 'function environment::data() {
@@ -559,7 +564,7 @@ file { '#{@coderoot}/environments/env2/functions/data.pp':
 ',
 }
 
-file { '#{@coderoot}/environments/env3/functions/data.pp':
+file { '#{@coderoot}/environments/env3/functions/environment/data.pp':
   ensure => file,
   mode => "0755",
   content => 'function environment::data() {
@@ -571,7 +576,7 @@ file { '#{@coderoot}/environments/env3/functions/data.pp':
 ',
 }
 
-file { '#{@coderoot}/environments/env4/functions/data.pp':
+file { '#{@coderoot}/environments/env4/functions/environment/data.pp':
   ensure => file,
   mode => "0755",
   content => 'function environment::data() {

@@ -241,7 +241,7 @@ class Loaders
       loader = add_loader_by_name(Loader::SimpleEnvironmentLoader.new(@runtime3_type_loader, loader_name))
     else
       # View the environment as a module to allow loading from it - this module is always called 'environment'
-      loader = Loader::ModuleLoaders.module_loader_from(@runtime3_type_loader, self, 'environment', env_path)
+      loader = Loader::ModuleLoaders.environment_loader_from(@runtime3_type_loader, self, env_path)
     end
 
     # An environment has a module path even if it has a null loader
