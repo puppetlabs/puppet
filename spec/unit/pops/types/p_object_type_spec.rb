@@ -9,8 +9,14 @@ describe 'The Object Type' do
 
   let(:parser) { TypeParser.singleton }
   let(:pp_parser) { Parser::EvaluatingParser.new }
-  let(:loader) { Loader::BaseLoader.new(nil, 'type_parser_unit_test_loader') }
+  let(:loader) { Loaders.find_loader(nil) }
   let(:factory) { TypeFactory }
+
+  around(:each) do |example|
+    Puppet.override(:loaders => Loaders.new(Puppet::Node::Environment.create(:testing, []))) do
+      example.run
+    end
+  end
 
   def type_object_t(name, body_string)
     object = PObjectType.new(name, pp_parser.parse_string("{#{body_string}}").current.body)
@@ -707,6 +713,32 @@ describe 'The Object Type' do
       notice(Spec::MySecondObject(42, 'Meaning of life'))
       CODE
       expect(eval_and_collect_notices(code)).to eql(["Spec::MySecondObject({\n  'a' => 42,\n  'b' => 'Meaning of life'\n})"])
+    end
+  end
+
+  context 'when used from Ruby' do
+    it 'can create an instance without scope using positional arguments' do
+      parse_object('MyObject', <<-OBJECT)
+        attributes => {
+          a => { type => Integer }
+        }
+      OBJECT
+
+      t = Puppet::Pops::Types::TypeParser.singleton.parse('MyObject', Puppet::Pops::Loaders.find_loader(nil))
+      instance = t.create(32)
+      expect(instance.a).to eql(32)
+    end
+
+    it 'can create an instance without scope using initialization hash' do
+      parse_object('MyObject', <<-OBJECT)
+        attributes => {
+          a => { type => Integer }
+        }
+      OBJECT
+
+      t = Puppet::Pops::Types::TypeParser.singleton.parse('MyObject', Puppet::Pops::Loaders.find_loader(nil))
+      instance = t.from_hash('a' => 32)
+      expect(instance.a).to eql(32)
     end
   end
 

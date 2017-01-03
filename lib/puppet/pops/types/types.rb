@@ -292,6 +292,10 @@ class PAnyType < TypedModelObject
     simple_name
   end
 
+  def create(*args)
+    Loaders.find_loader(nil).load(:function, 'new').call({}, self, *args)
+  end
+
   def new_function(loader)
     self.class.new_function(self, loader)
   end

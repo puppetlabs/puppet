@@ -572,6 +572,29 @@ describe 'Puppet Type System' do
     end
   end
 
+  context 'instantiation via ruby create function' do
+    around(:each) do |example|
+      Puppet.override(:loaders => Loaders.new(Puppet::Node::Environment.create(:testing, []))) do
+        example.run
+      end
+    end
+
+    it 'is supported by Integer' do
+      int = tf.integer.create('32')
+      expect(int).to eq(32)
+    end
+
+    it 'is supported by Optional[Integer]' do
+      int = tf.optional(tf.integer).create('32')
+      expect(int).to eq(32)
+    end
+
+    it 'is not supported by Any, Scalar, Collection' do
+      [tf.any, tf.scalar, tf.collection ].each do |t|
+        expect { t.create }.to raise_error(ArgumentError, /Creation of new instance of type '#{t.to_s}' is not supported/)
+      end
+    end
+  end
 end
 end
 end
