@@ -287,7 +287,7 @@ describe Puppet::SSL::CertificateRequest do
         exts = {"thats.no.moon" => "death star"}
         expect do
           request.generate(key, :extension_requests => exts)
-        end.to raise_error Puppet::Error, /Cannot create CSR with extension request thats\.no\.moon: first num too large/
+        end.to raise_error Puppet::Error, /Cannot create CSR with extension request thats\.no\.moon.*: first num too large/
       end
     end
 
