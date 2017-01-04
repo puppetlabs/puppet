@@ -52,7 +52,15 @@ class ObjectWriter
       args.pop
     end
 
-    serializer.start_object(type.name, args.size)
+    if type.name.start_with?('Pcore::')
+      serializer.push_written(value)
+      serializer.start_object(type.name, args.size)
+    else
+      serializer.start_pcore_object(args.size + 1)
+      serializer.write(type)
+      serializer.push_written(value)
+    end
+
     args.each { |arg| serializer.write(arg) }
   end
 

@@ -61,7 +61,19 @@ module Serialization
     # @param [Integer] attr_count the number of attributes in the object
     # @api private
     def start_object(type_ref, attr_count)
-      @writer.write(Extension::ObjectStart.new(type_ref, attr_count))
+      @writer.write(Extension::PcoreObjectStart.new(type_ref, attr_count))
+    end
+
+    # Write the start of a complex pcore object
+    # @param [String] type_ref the name of the type
+    # @param [Integer] attr_count the number of attributes in the object
+    # @api private
+    def start_pcore_object(attr_count)
+      @writer.write(Extension::ObjectStart.new(attr_count))
+    end
+
+    def push_written(value)
+      @written[value.object_id] = @written.size
     end
 
     # First time write of a tabulated object. This means that the object is written and then remembered. Subsequent writes
@@ -69,17 +81,20 @@ module Serialization
     # @param [Object] value the value to write
     # @api private
     def write_tabulated_first_time(value)
-      @written[value.object_id] = @written.size
       case value
       when Symbol, Regexp, SemanticPuppet::Version, SemanticPuppet::VersionRange, Time::Timestamp, Time::Timespan, Types::PSensitiveType::Sensitive, Types::PBinaryType::Binary
+        push_written(value)
         @writer.write(value)
       when Array
+        push_written(value)
         start_array(value.size)
         value.each { |elem| write(elem) }
       when Hash
+        push_written(value)
         start_map(value.size)
         value.each_pair { |key, val| write(key); write(val) }
       when Types::PTypeReferenceType
+        push_written(value)
         @writer.write(value)
       when Types::PuppetObject
         value._ptype.write(value, self)

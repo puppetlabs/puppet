@@ -105,8 +105,12 @@ class AbstractReader
       read_payload(data) { |ep| Extension::MapStart.new(ep.read) }
     end
 
+    register_type(Extension::PCORE_OBJECT_START) do |data|
+      read_payload(data) { |ep| type_name = read_tpl_qname(ep); Extension::PcoreObjectStart.new(type_name, ep.read) }
+    end
+
     register_type(Extension::OBJECT_START) do |data|
-      read_payload(data) { |ep| type_name = read_tpl_qname(ep); Extension::ObjectStart.new(type_name, ep.read) }
+      read_payload(data) { |ep| Extension::ObjectStart.new(ep.read) }
     end
 
     register_type(Extension::DEFAULT) do |data|

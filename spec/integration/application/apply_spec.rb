@@ -134,6 +134,92 @@ end
     end
   end
 
+  context 'from environment with pcore object types' do
+    include PuppetSpec::Compiler
+
+    let!(:envdir) { Puppet[:environmentpath] }
+    let(:env_name) { 'spec' }
+    let(:dir_structure) {
+      {
+        'environment.conf' => <<-CONF,
+          rich_data = true
+        CONF
+        'modules' => {
+          'mod' => {
+            'types' => {
+              'streetaddress.pp' => <<-PUPPET,
+                type Mod::StreetAddress = Object[{
+                  attributes => {
+                    'street' => String,
+                    'zipcode' => String,
+                    'city' => String,
+                  } 
+                }]
+              PUPPET
+              'address.pp' => <<-PUPPET,
+                type Mod::Address = Object[{
+                  parent => Mod::StreetAddress,
+                  attributes => {
+                    'state' => String
+                  } 
+                }]
+              PUPPET
+              'contact.pp' => <<-PUPPET,
+                type Mod::Contact = Object[{
+                  attributes => {
+                    'address' => Mod::Address,
+                    'email' => String
+                  }
+                }]
+              PUPPET
+            },
+            'manifests' => {
+              'init.pp' => <<-PUPPET,
+                define mod::person(Mod::Contact $contact) {
+                  notify { $title: }
+                  notify { $contact.address.street: }
+                  notify { $contact.address.zipcode: }
+                  notify { $contact.address.city: }
+                  notify { $contact.address.state: }
+                }
+
+                class mod {
+                  mod::person { 'Test Person':
+                    contact => Mod::Contact(
+                      Mod::Address('The Street 23', '12345', 'Some City', 'A State'),
+                      'test@example.com')
+                  }
+                }
+              PUPPET
+            }
+          }
+        }
+      }
+    }
+
+    let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(envdir, env_name, 'modules')]) }
+    let(:node) { Puppet::Node.new('test', :environment => env) }
+
+    before(:each) do
+      dir_contained_in(envdir, env_name => dir_structure)
+      PuppetSpec::Files.record_tmp(File.join(envdir, env_name))
+    end
+
+    it 'can compile the catalog' do
+      compile_to_catalog('include mod', node)
+    end
+
+    it 'can apply the catalog' do
+      catalog = compile_to_catalog('include mod', node)
+
+      Puppet[:environment] = env_name
+      apply = Puppet::Application[:apply]
+      apply.options[:catalog] = file_containing('manifest', catalog.to_pson)
+      expect { apply.run_command; exit(0) }.to exit_with(0)
+      expect(@logs.map(&:to_s)).to include('The Street 23')
+    end
+  end
+
   it "applies a given file even when a directory environment is specified" do
     manifest = file_containing("manifest.pp", "notice('it was applied')")
 

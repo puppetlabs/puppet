@@ -850,10 +850,15 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to pson"
         Puppet[:rich_data] = true
       end
 
+      after(:each) do
+        Puppet[:rich_data] = false
+      end
+
+
       let(:catalog_w_regexp)  { compile_to_catalog("notify {'foo': message => /[a-z]+/ }") }
 
       it 'should generate ext_parameters for parameter values that are not Data' do
-        expect(catalog_w_regexp.to_json).to include('"ext_parameters":{"message":[48,"[a-z]+"]}')
+        expect(catalog_w_regexp.to_json).to include('"ext_parameters":{"message":[[48,"[a-z]+"]]}')
       end
 
       it 'should validate ext_parameters against the schema' do
