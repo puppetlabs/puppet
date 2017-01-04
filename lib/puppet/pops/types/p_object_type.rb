@@ -655,6 +655,14 @@ class PObjectType < PMetaType
     @i12n_type ||= create_i12n_type
   end
 
+  def create(*args)
+    implementation_class.create(*args)
+  end
+
+  def from_hash(hash)
+    implementation_class.from_hash(hash)
+  end
+
   # Creates the type that a initialization hash used for creating instances of this type must conform to.
   #
   # @return [PStructType] the initialization hash type
