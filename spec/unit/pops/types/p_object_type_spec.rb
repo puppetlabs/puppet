@@ -699,6 +699,17 @@ describe 'The Object Type' do
     end
   end
 
+  context 'when stringifying created instances' do
+    it 'outputs a Puppet constructor using the initializer hash' do
+      code = <<-CODE
+      type Spec::MyObject = Object[{attributes => { a => Integer }}]
+      type Spec::MySecondObject = Object[{parent => Spec::MyObject, attributes => { b => String }}]
+      notice(Spec::MySecondObject(42, 'Meaning of life'))
+      CODE
+      expect(eval_and_collect_notices(code)).to eql(["Spec::MySecondObject({\n  'a' => 42,\n  'b' => 'Meaning of life'\n})"])
+    end
+  end
+
   context 'when used in Puppet expressions' do
     it 'two anonymous empty objects are equal' do
       code = <<-CODE
