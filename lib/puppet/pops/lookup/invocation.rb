@@ -4,7 +4,7 @@ module Puppet::Pops
 module Lookup
 # @api private
 class Invocation
-  attr_reader :scope, :override_values, :default_values, :explainer, :module_name, :top_key
+  attr_reader :scope, :override_values, :default_values, :explainer, :module_name, :top_key, :adapter_class
 
   def self.current
     @current
@@ -22,7 +22,7 @@ class Invocation
   # @param override_values [Hash<String,Object>|nil] A map to use as override. Values found here are returned immediately (no merge)
   # @param default_values [Hash<String,Object>] A map to use as the last resort (but before default)
   # @param explainer [boolean,Explanainer] An boolean true to use the default explanation acceptor or an explainer instance that will receive information about the lookup
-  def initialize(scope, override_values = EMPTY_HASH, default_values = EMPTY_HASH, explainer = nil)
+  def initialize(scope, override_values = EMPTY_HASH, default_values = EMPTY_HASH, explainer = nil, adapter_class = LookupAdapter)
     @scope = scope
     @override_values = override_values
     @default_values = default_values
@@ -30,14 +30,17 @@ class Invocation
     parent_invocation = self.class.current
     if parent_invocation.nil?
       @name_stack = []
+      @adapter_class = adapter_class
       unless explainer.is_a?(Explainer)
         explainer = explainer == true ? Explainer.new : nil
       end
       explainer = DebugExplainer.new(explainer) if Puppet[:debug] && !explainer.is_a?(DebugExplainer)
     else
       @name_stack = parent_invocation.name_stack
-      @global_only = parent_invocation.global_only?
-      @hiera_v3_location_overrides = parent_invocation.hiera_v3_location_overrides
+      @adapter_class = parent_invocation.adapter_class
+      set_global_only if parent_invocation.global_only?
+      povr = parent_invocation.hiera_v3_location_overrides
+      set_hiera_v3_location_overrides(povr) unless povr.empty?
       explainer = explainer == false ? nil : parent_invocation.explainer
     end
     @explainer = explainer
@@ -86,7 +89,7 @@ class Invocation
   end
 
   def lookup_adapter
-    LookupAdapter.adapt(scope.compiler)
+    @adapter_class.adapt(scope.compiler)
   end
 
   # This method is overridden by the special Invocation used while resolving interpolations in a
@@ -179,14 +182,24 @@ class Invocation
   end
 
   def global_only?
-    instance_variable_defined?(:@global_only) ? @global_only : false
+    lookup_adapter.global_only? || (instance_variable_defined?(:@global_only) ? @global_only : false)
+  end
+
+  # Instructs the lookup framework to only perform lookups in the global layer
+  # @return [Invocation] self
+  def set_global_only
+    @global_only = true
+    self
+  end
+
+  # @return [Pathname] the full path of the hiera.yaml config file
+  def global_hiera_config_path
+    lookup_adapter.global_hiera_config_path
   end
 
   # Overrides passed from hiera_xxx functions down to V3DataHashFunctionProvider
-  # @api private
-  def set_hiera_v3_function_info(overrides, global_only)
+  def set_hiera_v3_location_overrides(overrides)
     @hiera_v3_location_overrides = [overrides].flatten unless overrides.nil?
-    @global_only = global_only
   end
 
   def hiera_v3_location_overrides
