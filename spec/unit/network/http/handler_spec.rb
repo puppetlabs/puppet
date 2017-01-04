@@ -94,10 +94,6 @@ describe Puppet::Network::HTTP::Handler do
       expect(res[:content_type_header]).to eq("application/json")
       expect(res_body["issue_kind"]).to eq(Puppet::Network::HTTP::Issues::RUNTIME_ERROR.to_s)
       expect(res_body["message"]).to eq("Server Error: the sky is falling!")
-
-      # Stactraces may contain sensitive information, returning them to API
-      # consumers is not a best practice. See
-      # https://tickets.puppetlabs.com/browse/PUP-6659
       expect(res_body["stacktrace"]).to be_nil
       expect(res[:status]).to eq(500)
     end
