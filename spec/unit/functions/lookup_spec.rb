@@ -513,9 +513,12 @@ describe "The lookup function" do
           - yaml
           - json
           - custom
+          - hocon
         :yaml:
           :datadir: #{code_dir}/hieradata
         :json:
+          :datadir: #{code_dir}/hieradata
+        :hocon:
           :datadir: #{code_dir}/hieradata
         :hierarchy:
           - common
@@ -574,6 +577,10 @@ describe "The lookup function" do
                 }
               }
               JSON
+            'common.conf' =>  <<-HOCON.unindent,
+              // The 'xs' is a value used for testing
+              xs = { subkey = value xs.subkey (from global hocon) }
+              HOCON
           }
         }
       end
@@ -640,6 +647,14 @@ describe "The lookup function" do
 
       it 'backend data sources are propagated to custom backend' do
         expect(lookup('datasources')).to eql(['common', 'example.com'])
+      end
+
+      it 'delegates configured hocon backend to hocon_data function' do
+        expect(explain('xs')).to match(/Hierarchy entry "hocon"\n.*\n.*\n.*"common"\n\s*Found key: "xs"/m)
+      end
+
+      it 'can dig down into subkeys provided by hocon_data function' do
+        expect(lookup('xs.subkey')).to eql('value xs.subkey (from global hocon)')
       end
 
       context 'using relative datadir paths' do

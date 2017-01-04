@@ -238,10 +238,13 @@ class HieraConfigV3 < HieraConfig
       original_paths = @config[KEY_HIERARCHY]
       backend_config = @config[backend] || EMPTY_HASH
       datadir = Pathname(interpolate(backend_config[KEY_DATADIR] || default_datadir, lookup_invocation, false))
-      paths = resolve_paths(datadir, original_paths, lookup_invocation, @config_path.nil?, ".#{backend}")
-      data_providers[backend] = case backend
-      when 'json', 'yaml'
+      ext = backend == 'hocon' ? '.conf' : ".#{backend}"
+      paths = resolve_paths(datadir, original_paths, lookup_invocation, @config_path.nil?, ext)
+      data_providers[backend] = case
+      when backend == 'json', backend == 'yaml'
         create_data_provider(backend, parent_data_provider, KEY_V3_DATA_HASH, "#{backend}_data", { KEY_DATADIR => datadir }, paths)
+      when backend == 'hocon' && Puppet.features.hocon?
+        create_data_provider(backend, parent_data_provider, KEY_V3_DATA_HASH, 'hocon_data', { KEY_DATADIR => datadir }, paths)
       else
         # Custom backend. Hiera v3 must be installed, it's logger configured, and it must be made aware of the loaded config
         require 'hiera'
@@ -375,10 +378,13 @@ class HieraConfigV4 < HieraConfig
       original_paths = he[KEY_PATHS] || [he[KEY_PATH] || name]
       datadir = @config_root + (he[KEY_DATADIR] || default_datadir)
       provider_name = he[KEY_BACKEND]
-      data_providers[name] = case provider_name
-      when 'json', 'yaml'
+      data_providers[name] = case
+      when provider_name == 'json', provider_name == 'yaml'
         create_data_provider(name, parent_data_provider, KEY_DATA_HASH, "#{provider_name}_data", {},
           resolve_paths(datadir, original_paths, lookup_invocation, @config_path.nil?, ".#{provider_name}"))
+      when provider_name == 'hocon' &&  Puppet.features.hocon?
+        create_data_provider(name, parent_data_provider, KEY_DATA_HASH, 'hocon_data', {},
+          resolve_paths(datadir, original_paths, lookup_invocation, @config_path.nil?, '.conf'))
       else
         factory_create_data_provider(lookup_invocation, name, parent_data_provider, provider_name, datadir, original_paths)
       end
