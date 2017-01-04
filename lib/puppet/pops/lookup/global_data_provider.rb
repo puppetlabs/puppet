@@ -42,7 +42,7 @@ class GlobalDataProvider < ConfiguredDataProvider
   end
 
   def configuration_path(lookup_invocation)
-    Pathname.new(Puppet.settings[:hiera_config])
+    lookup_invocation.global_hiera_config_path
   end
 end
 end

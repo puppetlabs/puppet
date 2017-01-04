@@ -161,6 +161,29 @@ class LookupAdapter < DataAdapter
     ep.nil? ? false : ep.config(lookup_invocation).version >= 5
   end
 
+  # @return [Pathname] the full path of the hiera.yaml config file
+  def global_hiera_config_path
+    @global_hiera_config_path ||= Pathname.new(Puppet.settings[:hiera_config])
+  end
+
+  # @param path [String] the absolute path name of the global hiera.yaml file.
+  # @return [LookupAdapter] self
+  def set_global_hiera_config_path(path)
+    @global_hiera_config_path = Pathname.new(path)
+    self
+  end
+
+  def global_only?
+    instance_variable_defined?(:@global_only) ? @global_only : false
+  end
+
+  # Instructs the lookup framework to only perform lookups in the global layer
+  # @return [LookupAdapter] self
+  def set_global_only
+    @global_only = true
+    self
+  end
+
   private
 
   PROVIDER_STACK = [:lookup_global, :lookup_in_environment, :lookup_in_module].freeze
