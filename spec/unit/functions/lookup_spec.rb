@@ -495,7 +495,7 @@ describe "The lookup function" do
         expect(lookup('x')).to eql('value x (from environment)')
       end
 
-      context 'obtained using /dev/null' do
+      context 'obtained using /dev/null', :unless => Puppet.features.microsoft_windows? do
         let(:code_dir_files) { {} }
 
         it 'uses a Hiera version 3 defaults' do

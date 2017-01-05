@@ -108,7 +108,10 @@ class HieraConfig
 
         # For backward compatibility, we must treat an empty file, or a yaml that doesn't
         # produce a Hash as Hiera version 3 default.
-        loaded_config = HieraConfigV3::DEFAULT_CONFIG_HASH unless loaded_config.is_a?(Hash)
+        unless loaded_config.is_a?(Hash)
+          Puppet.warning("#{config_path}: File exists but does not contain a valid YAML hash. Falling back to Hiera version 3 default config")
+          loaded_config = HieraConfigV3::DEFAULT_CONFIG_HASH
+        end
       else
         config_path = nil
         loaded_config = HieraConfigV5::DEFAULT_CONFIG_HASH
