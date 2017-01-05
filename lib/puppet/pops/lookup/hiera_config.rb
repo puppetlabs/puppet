@@ -105,6 +105,10 @@ class HieraConfig
       config_root = config_path.parent
       if config_path.exist?
         loaded_config = YAML.load_file(config_path)
+
+        # For backward compatibility, we must treat an empty file, or a yaml that doesn't
+        # produce a Hash as Hiera version 3 default.
+        loaded_config = HieraConfigV3::DEFAULT_CONFIG_HASH unless loaded_config.is_a?(Hash)
       else
         config_path = nil
         loaded_config = HieraConfigV5::DEFAULT_CONFIG_HASH
@@ -253,15 +257,21 @@ class HieraConfigV3 < HieraConfig
     data_providers.values
   end
 
+  DEFAULT_CONFIG_HASH =  {
+    KEY_BACKENDS => %w(yaml),
+    KEY_HIERARCHY => %w(nodes/%{::trusted.certname} common),
+    KEY_MERGE_BEHAVIOR => 'native'
+  }
+
   def validate_config(config)
     unless Puppet[:strict] == :off
       Puppet.warn_once(:deprecation, 'hiera.yaml',
         "#{@config_path}: Use of 'hiera.yaml' version 3 is deprecated. It should be converted to version 5", config_path.to_s)
     end
     config[KEY_VERSION] ||= 3
-    config[KEY_BACKENDS] ||= 'yaml'
-    config[KEY_HIERARCHY] ||= %w(nodes/%{::trusted.certname} common)
-    config[KEY_MERGE_BEHAVIOR] ||= 'native'
+    config[KEY_BACKENDS] ||= DEFAULT_CONFIG_HASH[KEY_BACKENDS]
+    config[KEY_HIERARCHY] ||= DEFAULT_CONFIG_HASH[KEY_HIERARCHY]
+    config[KEY_MERGE_BEHAVIOR] ||= DEFAULT_CONFIG_HASH[KEY_MERGE_BEHAVIOR]
     config[KEY_DEEP_MERGE_OPTIONS] ||= {}
 
     backends = [ config[KEY_BACKENDS] ].flatten
