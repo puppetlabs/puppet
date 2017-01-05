@@ -13,7 +13,7 @@
             "type": "string"
         },
         "stacktrace": {
-            "description": "For 5xx responses only, a ruby stacktrace to where an error occurred.",
+            "description": "**Deprecated**. For 5xx responses only, a message containing a deprecation warning. This property will be removed in a future release of Puppet.",
             "type": "array",
             "items": { "type": "string" }
         }
