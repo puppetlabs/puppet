@@ -11,7 +11,8 @@ describe "The lookup function" do
 
   context 'with an environment' do
     let(:env_name) { 'spec' }
-    let(:env_dir) { tmpdir('environments') }
+    let(:code_dir_files) { {} }
+    let(:code_dir) { tmpdir('code') }
     let(:environment_files) do
       {
         env_name => {
@@ -73,21 +74,36 @@ describe "The lookup function" do
     let(:invocation_with_explain) { Puppet::Pops::Lookup::Invocation.new(compiler.topscope, {}, {}, true) }
     let(:explanation) { invocation_with_explain.explainer.explain }
 
+    let(:populated_code_dir) do
+      dir_contained_in(code_dir, code_dir_files)
+      code_dir
+    end
+
+    let(:env_dir) do
+      d = File.join(populated_code_dir, 'environments')
+      Dir.mkdir(d)
+      d
+    end
+
     let(:populated_env_dir) do
       dir_contained_in(env_dir, environment_files)
       env_dir
     end
 
-    around(:each) do |example|
-      Puppet.override(:environments => environments, :current_environment => env) do
-        example.run
-      end
+    before(:each) do
+      Puppet.settings[:codedir] = code_dir
+      Puppet.push_context(:environments => environments, :current_environment => env)
+    end
+
+    after(:each) do
+      Puppet.pop_context
     end
 
     def collect_notices(code, explain = false, &block)
       Puppet[:code] = code
       Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
         scope = compiler.topscope
+        scope['environment'] = env_name
         scope['domain'] = 'example.com'
         scope['scope_scalar'] = 'scope scalar value'
         scope['scope_hash'] = { 'a' => 'scope hash a', 'b' => 'scope hash b' }
@@ -413,7 +429,6 @@ describe "The lookup function" do
     end
 
     context 'and a global Hiera v4 configuration' do
-      let(:code_dir) { tmpdir('code') }
       let(:code_dir_files) do
         {
           'hiera.yaml' => <<-YAML.unindent,
@@ -421,11 +436,6 @@ describe "The lookup function" do
             version: 4
         YAML
         }
-      end
-
-      let(:populated_code_dir) do
-        dir_contained_in(code_dir, code_dir_files)
-        code_dir
       end
 
       before(:each) do
@@ -456,9 +466,46 @@ describe "The lookup function" do
       end
     end
 
+    context 'and a global empty Hiera configuration' do
+      let(:hiera_yaml_path) { File.join(code_dir, 'hiera.yaml') }
+      let(:code_dir_files) do
+        {
+          'hiera.yaml' => '',
+        }
+      end
+
+      let(:environment_files) do
+        {
+          env_name => {
+            'hieradata' => {
+              'common.yaml' =>  <<-YAML.unindent,
+                x: value x (from environment)
+                YAML
+            }
+          }
+        }
+      end
+
+      before(:each) do
+        # Need to set here since spec_helper defines these settings in its "before each"
+        Puppet.settings[:hiera_config] = hiera_yaml_path
+      end
+
+      it 'uses a Hiera version 3 defaults' do
+        expect(lookup('x')).to eql('value x (from environment)')
+      end
+
+      context 'obtained using /dev/null', :unless => Puppet.features.microsoft_windows? do
+        let(:code_dir_files) { {} }
+
+        it 'uses a Hiera version 3 defaults' do
+          Puppet[:hiera_config] = '/dev/null'
+          expect(lookup('x')).to eql('value x (from environment)')
+        end
+      end
+    end
 
     context 'and a global Hiera v3 configuration' do
-      let(:code_dir) { tmpdir('code') }
       let(:hiera_yaml) do
         <<-YAML.unindent
         ---
@@ -531,11 +578,6 @@ describe "The lookup function" do
         }
       end
 
-      let(:populated_code_dir) do
-        dir_contained_in(code_dir, code_dir_files)
-        code_dir
-      end
-
       before(:each) do
         # Need to set here since spec_helper defines these settings in its "before each"
         Puppet.settings[:codedir] = populated_code_dir
@@ -545,7 +587,7 @@ describe "The lookup function" do
       around(:each) do |example|
         # Faking the load path to enable 'require' to load from 'ruby_stuff'. It removes the need for a static fixture
         # for the custom backend
-        $LOAD_PATH.unshift(File.join(populated_code_dir, 'ruby_stuff'))
+        $LOAD_PATH.unshift(File.join(code_dir, 'ruby_stuff'))
         begin
           Puppet.override(:environments => environments, :current_environment => env) do
             example.run
