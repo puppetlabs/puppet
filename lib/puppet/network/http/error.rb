@@ -63,7 +63,7 @@ module Puppet::Network::HTTP::Error
     end
 
     def to_json
-      JSON({:message => message, :issue_kind => @issue_kind})
+      JSON({:message => message, :issue_kind => @issue_kind, :stacktrace => self.backtrace})
     end
   end
 end

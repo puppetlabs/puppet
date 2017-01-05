@@ -94,7 +94,8 @@ describe Puppet::Network::HTTP::Handler do
       expect(res[:content_type_header]).to eq("application/json")
       expect(res_body["issue_kind"]).to eq(Puppet::Network::HTTP::Issues::RUNTIME_ERROR.to_s)
       expect(res_body["message"]).to eq("Server Error: the sky is falling!")
-      expect(res_body["stacktrace"]).to be_nil
+      expect(res_body["stacktrace"].is_a?(Array) && !res_body["stacktrace"].empty?).to be_truthy
+      expect(res_body["stacktrace"]).to match_array(['a.rb', 'b.rb'])
       expect(res[:status]).to eq(500)
     end
 
