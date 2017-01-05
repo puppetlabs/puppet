@@ -230,7 +230,7 @@ class HieraConfigV3 < HieraConfig
       raise Puppet::DataBinding::LookupError, "#{@config_path}: Backend '#{backend}' defined more than once" if data_providers.include?(backend)
       original_paths = @config[KEY_HIERARCHY]
       backend_config = @config[backend] || EMPTY_HASH
-      datadir = @config_root + interpolate(backend_config[KEY_DATADIR] || default_datadir, lookup_invocation, false)
+      datadir = Pathname(interpolate(backend_config[KEY_DATADIR] || default_datadir, lookup_invocation, false))
       paths = resolve_paths(datadir, original_paths, lookup_invocation, @config_path.nil?, ".#{backend}")
       data_providers[backend] = case backend
       when 'json', 'yaml'

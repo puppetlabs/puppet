@@ -459,23 +459,27 @@ describe "The lookup function" do
 
     context 'and a global Hiera v3 configuration' do
       let(:code_dir) { tmpdir('code') }
+      let(:hiera_yaml) do
+        <<-YAML.unindent
+        ---
+        :backends:
+          - yaml
+          - json
+          - custom
+        :yaml:
+          :datadir: #{code_dir}/hieradata
+        :json:
+          :datadir: #{code_dir}/hieradata
+        :hierarchy:
+          - common
+          - "%{domain}"
+        :merge_behavior: deeper
+        YAML
+      end
+
       let(:code_dir_files) do
         {
-          'hiera.yaml' => <<-YAML.unindent,
-            ---
-            :backends:
-              - yaml
-              - json
-              - custom
-            :yaml:
-              :datadir: #{code_dir}/hieradata
-            :json:
-              :datadir: #{code_dir}/hieradata
-            :hierarchy:
-              - common
-              - "%{domain}"
-            :merge_behavior: deeper
-            YAML
+          'hiera.yaml' => hiera_yaml,
           'ruby_stuff' => {
             'hiera' => {
               'backend' => {
@@ -594,6 +598,47 @@ describe "The lookup function" do
 
       it 'backend data sources are propagated to custom backend' do
         expect(lookup('datasources')).to eql(['common', 'example.com'])
+      end
+
+      context 'using relative datadir paths' do
+        let(:hiera_yaml) do
+          <<-YAML.unindent
+        ---
+        :backends:
+          - yaml
+        :yaml:
+          :datadir: relative_data
+        :hierarchy:
+          - common
+          YAML
+        end
+
+        let(:populated_code_dir) do
+          dir_contained_in(code_dir, code_dir_files.merge({
+            'fake_cwd' => {
+              'relative_data' => {
+                'common.yaml' => <<-YAML.unindent
+                  a: value a (from fake_cwd/relative_data/common.yaml)
+                YAML
+              }
+            }
+          }))
+          code_dir
+        end
+
+        around(:each) do |example|
+          cwd = Dir.pwd
+          Dir.chdir(File.join(code_dir, 'fake_cwd'))
+          begin
+            example.run
+          ensure
+            Dir.chdir(cwd)
+          end
+        end
+
+        it 'finds data from data file beneath relative datadir' do
+          expect(lookup('a')).to eql('value a (from fake_cwd/relative_data/common.yaml)')
+        end
       end
     end
 
