@@ -68,7 +68,7 @@ module Puppet::Network::HTTP::Handler
     new_response.respond_with(e.status, "application/json", e.to_json)
   rescue StandardError => e
     http_e = Puppet::Network::HTTP::Error::HTTPServerError.new(e)
-    log_msg = [http_e.message, *http_e.backtrace].join("\n")
+    log_msg = [http_e.message, *e.backtrace].join("\n")
     Puppet.err(log_msg)
     new_response.respond_with(http_e.status, "application/json", http_e.to_json)
   ensure

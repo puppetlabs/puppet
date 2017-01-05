@@ -76,7 +76,8 @@ describe Puppet::Network::HTTP::Handler do
 
     it "returns a structured error response when the server encounters an internal error" do
       error = StandardError.new("the sky is falling!")
-      error.set_backtrace(['a.rb', 'b.rb'])
+      original_stacktrace = ['a.rb', 'b.rb']
+      error.set_backtrace(original_stacktrace)
 
       handler = PuppetSpec::Handler.new(
         Puppet::Network::HTTP::Route.path(/.*/).get(lambda { |_, _| raise error}))
@@ -95,7 +96,8 @@ describe Puppet::Network::HTTP::Handler do
       expect(res_body["issue_kind"]).to eq(Puppet::Network::HTTP::Issues::RUNTIME_ERROR.to_s)
       expect(res_body["message"]).to eq("Server Error: the sky is falling!")
       expect(res_body["stacktrace"].is_a?(Array) && !res_body["stacktrace"].empty?).to be_truthy
-      expect(res_body["stacktrace"]).to match_array(['a.rb', 'b.rb'])
+      expect(res_body["stacktrace"][0]).to match(/The 'stacktrace' property is deprecated/)
+      expect(res_body["stacktrace"] & original_stacktrace).to be_empty
       expect(res[:status]).to eq(500)
     end
 
