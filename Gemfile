@@ -62,6 +62,7 @@ group(:development, :test) do
   gem 'addressable', '< 2.5.0'
   gem 'webmock', '~> 1.24'
   gem 'vcr', '~> 2.9'
+  gem "hocon", :require => false
 end
 
 group(:development) do
