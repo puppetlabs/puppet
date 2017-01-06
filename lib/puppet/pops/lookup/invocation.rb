@@ -50,11 +50,7 @@ module Puppet::Pops::Lookup
     end
 
     def emit_debug_info(preamble)
-      debug_explainer = @explainer
-      if debug_explainer.is_a?(DebugExplainer)
-        @explainer = debug_explainer.wrapped_explainer
-        debug_explainer.emit_debug_info(preamble)
-      end
+      @explainer.emit_debug_info(preamble) if @explainer.is_a?(DebugExplainer)
     end
 
     # The qualifier_type can be one of:
