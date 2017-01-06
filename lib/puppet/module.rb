@@ -320,8 +320,8 @@ class Puppet::Module
 
       if version_string
         begin
-          required_version_semver_range = SemVer[version_string]
-          actual_version_semver = SemVer.new(dep_mod.version)
+          required_version_semver_range = SemanticPuppet::VersionRange.parse(version_string)
+          actual_version_semver = SemanticPuppet::Version.parse(dep_mod.version)
         rescue ArgumentError
           error_details[:reason] = :non_semantic_version
           unmet_dependencies << error_details
