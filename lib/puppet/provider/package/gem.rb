@@ -15,49 +15,11 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
 
   has_feature :versionable, :install_options, :uninstall_options
 
-  def self.which_windows_gemcmd(bin)
-    # On Windows, the puppet ruby bin dir is prepended to the system PATH.
-    # This custom which() method skips that path. Refer to util.rb for the standard method.
-    # (Use puppet_gem to manage gems needed by the ruby provided in the puppet-agent package.)
-    exts = Puppet::Util.get_env('PATHEXT')
-    exts = exts ? exts.split(File::PATH_SEPARATOR) : %w[.COM .EXE .BAT .CMD]
-    puppet_ruby_bin_dir = File.join(Puppet::Util.get_env('RUBY_DIR'),'bin')
-    puppet_ruby_bin_dir.gsub!(File::SEPARATOR,File::ALT_SEPARATOR)
-    Puppet::Util.get_env('PATH').split(File::PATH_SEPARATOR).each do |dir|
-      if dir == puppet_ruby_bin_dir
-        # Skip this path if it is the puppet ruby bin dir.
-        next
-      end
-      begin
-        dest = File.expand_path(File.join(dir, bin))
-      rescue ArgumentError => e
-        # If the user's PATH contains a literal tilde (~) character and HOME is not set, we may get an ArgumentError here.
-        # Let's check to see if that is the case; if not, re-raise whatever error was thrown.
-        if e.to_s =~ /HOME/ and (Puppet::Util.get_env('HOME').nil? || Puppet::Util.get_env('HOME') == "")
-          # If we get here, then they have a tilde in their PATH.
-          # We'll issue a single warning about this, and then ignore this path element and carry on with our lives.
-          Puppet::Util::Warnings.warnonce("PATH contains a ~ character, and HOME is not set; ignoring PATH element '#{dir}'.")
-        elsif e.to_s =~ /doesn't exist|can't find user/
-          # Otherwise, we just skip the non-existent entry, and do nothing.
-          Puppet::Util::Warnings.warnonce("Couldn't expand PATH containing a ~ character; ignoring PATH element '#{dir}'.")
-        else
-          raise
-        end
-      else
-        if File.extname(dest).empty?
-          exts.each do |ext|
-            dest_ext = File.expand_path(dest + ext)
-            return dest_ext if FileTest.file? dest_ext and FileTest.executable? dest_ext
-          end
-        end
-        return dest if FileTest.file? dest and FileTest.executable? dest
-      end
-    end
-    return nil
-  end
-
   if Puppet.features.microsoft_windows?
-    commands :gemcmd => self.which_windows_gemcmd("gem")
+    # Puppet on Windows prepends its paths to PATH.
+    # One of those paths includes Puppet's vendored ruby and its gem command.
+    # Use a which method that does not traverse those paths.
+    commands :gemcmd => which_without_puppet_paths("gem")
   else
     commands :gemcmd => "gem"
   end
