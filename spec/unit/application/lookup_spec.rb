@@ -188,6 +188,25 @@ Merge strategy first
       expect(logs.any? { |log| log.level == :debug }).to be_falsey
     end
 
+    it '--debug using multiple interpolation functions produces output to the logger' do
+      lookup.options[:node] = node
+      lookup.command_line.stubs(:args).returns(['ab'])
+      Puppet.debug = true
+      logs = []
+      begin
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          expect { lookup.run_command }.to output(<<-VALUE.unindent).to_stdout
+            --- This is A and This is B
+            ...
+          VALUE
+        end
+      rescue SystemExit => e
+        expect(e.status).to eq(0)
+      end
+      logs = logs.select { |log| log.level == :debug }.map { |log| log.message }
+      expect(logs).to include(/Found key: "ab" value: "This is A and This is B"/)
+    end
+
     it '--explain produces human readable text by default and --debug produces the same output to debug logger' do
       lookup.options[:node] = node
       lookup.options[:explain] = true
