@@ -57,7 +57,7 @@ module Puppet::ModuleTool
               :path    => mod.modulepath,
             }
             if @options[:version] && mod.version
-              next unless SemVer[@options[:version]].include?(SemVer.new(mod.version))
+              next unless SemanticPuppet::VersionRange.parse(@options[:version]).include?(SemanticPuppet::Version.parse(mod.version))
             end
             @installed << mod
           elsif mod_name =~ /#{@name}/

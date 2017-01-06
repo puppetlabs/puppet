@@ -320,9 +320,8 @@ class Puppet::Module
 
       if version_string
         begin
-          # Suppress deprecation warnings from SemVer in 4.9. In 5.0, this will be SemanticPuppet instead
-          required_version_semver_range = SemVer[version_string, true]
-          actual_version_semver = SemVer.new(dep_mod.version, true)
+          required_version_semver_range = SemanticPuppet::VersionRange.parse(version_string)
+          actual_version_semver = SemanticPuppet::Version.parse(dep_mod.version)
         rescue ArgumentError
           error_details[:reason] = :non_semantic_version
           unmet_dependencies << error_details
