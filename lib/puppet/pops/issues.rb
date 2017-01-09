@@ -619,6 +619,10 @@ module Issues
     "The key '#{key}' is declared more than once"
   end
 
+  DUPLICATE_DEFAULT = issue :DUPLICATE_DEFAULT, :container do
+    "This #{label.label(container)} already has a 'default' entry - this is a duplicate"
+  end
+
   RESERVED_PARAMETER = hard_issue :RESERVED_PARAMETER, :container, :param_name do
     "The parameter $#{param_name} redefines a built in parameter in #{label.the(container)}"
   end
