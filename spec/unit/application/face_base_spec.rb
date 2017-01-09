@@ -267,6 +267,22 @@ describe Puppet::Application::FaceBase do
       app.expects(:render).with(app.arguments.length + 1, ["myname", "myarg"])
       expect { app.main }.to exit_with(0)
     end
+
+    it "should issue a deprecation warning if the face is deprecated" do
+      # since app is shared across examples, stub to avoid affecting shared context
+      app.face.stubs(:deprecated?).returns(true)
+      app.face.expects(:foo).with(*app.arguments)
+      Puppet.expects(:deprecation_warning).with(regexp_matches(/'puppet basetest' is deprecated/))
+      expect { app.main }.to exit_with(0)
+    end
+
+    it "should not issue a deprecation warning if the face is not deprecated" do
+      Puppet.expects(:deprecation_warning).never
+      # since app is shared across examples, stub to avoid affecting shared context
+      app.face.stubs(:deprecated?).returns(false)
+      app.face.expects(:foo).with(*app.arguments)
+      expect { app.main }.to exit_with(0)
+    end
   end
 
   describe "error reporting" do

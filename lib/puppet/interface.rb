@@ -180,6 +180,15 @@ class Puppet::Interface
     "Puppet::Face[#{name.inspect}, #{version.inspect}]"
   end
 
+  # @return [void]
+  def deprecate
+    @deprecated = true
+  end
+
+  # @return [Boolean]
+  def deprecated?
+    @deprecated
+  end
   ########################################################################
   # Action decoration, whee!  You are not expected to care about this code,
   # which exists to support face building and construction.  I marked these
