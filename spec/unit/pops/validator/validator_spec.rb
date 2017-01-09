@@ -50,7 +50,7 @@ describe "validating 4x" do
   end
 
   context 'with the default settings for --strict' do
-    it 'produces a warning for duplicate keyes in a literal hash' do
+    it 'produces a warning for duplicate keys in a literal hash' do
       acceptor = validate(parse('{ a => 1, a => 2 }'))
       expect(acceptor.warning_count).to eql(1)
       expect(acceptor.error_count).to eql(0)
@@ -60,7 +60,7 @@ describe "validating 4x" do
 
   context 'with --strict set to warning' do
     before(:each) { Puppet[:strict] = :warning }
-    it 'produces a warning for duplicate keyes in a literal hash' do
+    it 'produces a warning for duplicate keys in a literal hash' do
       acceptor = validate(parse('{ a => 1, a => 2 }'))
       expect(acceptor.warning_count).to eql(1)
       expect(acceptor.error_count).to eql(0)
@@ -70,7 +70,7 @@ describe "validating 4x" do
 
   context 'with --strict set to error' do
     before(:each) { Puppet[:strict] = :error }
-    it 'produces an error for duplicate keyes in a literal hash' do
+    it 'produces an error for duplicate keys in a literal hash' do
       acceptor = validate(parse('{ a => 1, a => 2 }'))
       expect(acceptor.warning_count).to eql(0)
       expect(acceptor.error_count).to eql(1)
@@ -80,7 +80,7 @@ describe "validating 4x" do
 
   context 'with --strict set to off' do
     before(:each) { Puppet[:strict] = :off }
-    it 'does not produce an error or warning for duplicate keyes in a literal hash' do
+    it 'does not produce an error or warning for duplicate keys in a literal hash' do
       acceptor = validate(parse('{ a => 1, a => 2 }'))
       expect(acceptor.warning_count).to eql(0)
       expect(acceptor.error_count).to eql(0)
