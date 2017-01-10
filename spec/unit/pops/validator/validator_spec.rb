@@ -56,20 +56,6 @@ describe "validating 4x" do
       expect(acceptor.error_count).to eql(0)
       expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_KEY)
     end
-
-    it 'produces a warning for duplicate default in a case expression' do
-      acceptor = validate(parse('case 1 { default: {1} default : {2} }'))
-      expect(acceptor.warning_count).to eql(1)
-      expect(acceptor.error_count).to eql(0)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_DEFAULT)
-    end
-
-    it 'produces a warning for duplicate default in a selector expression' do
-      acceptor = validate(parse(' 1 ? { default => 1, default => 2 }'))
-      expect(acceptor.warning_count).to eql(1)
-      expect(acceptor.error_count).to eql(0)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_DEFAULT)
-    end
   end
 
   context 'with --strict set to warning' do
@@ -79,20 +65,6 @@ describe "validating 4x" do
       expect(acceptor.warning_count).to eql(1)
       expect(acceptor.error_count).to eql(0)
       expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_KEY)
-    end
-
-    it 'produces a warning for duplicate default in a case expression' do
-      acceptor = validate(parse('case 1 { default: {1} default : {2} }'))
-      expect(acceptor.warning_count).to eql(1)
-      expect(acceptor.error_count).to eql(0)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_DEFAULT)
-    end
-
-    it 'produces a warning for duplicate default in a selector expression' do
-      acceptor = validate(parse(' 1 ? { default => 1, default => 2 }'))
-      expect(acceptor.warning_count).to eql(1)
-      expect(acceptor.error_count).to eql(0)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_DEFAULT)
     end
   end
 
@@ -104,20 +76,6 @@ describe "validating 4x" do
       expect(acceptor.error_count).to eql(1)
       expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_KEY)
     end
-
-    it 'produces an error for duplicate default in a case expression' do
-      acceptor = validate(parse('case 1 { default: {1} default : {2} }'))
-      expect(acceptor.warning_count).to eql(0)
-      expect(acceptor.error_count).to eql(1)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_DEFAULT)
-    end
-
-    it 'produces an error for duplicate default in a selector expression' do
-      acceptor = validate(parse(' 1 ? { default => 1, default => 2 }'))
-      expect(acceptor.warning_count).to eql(0)
-      expect(acceptor.error_count).to eql(1)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_DEFAULT)
-    end
   end
 
   context 'with --strict set to off' do
@@ -128,19 +86,25 @@ describe "validating 4x" do
       expect(acceptor.error_count).to eql(0)
       expect(acceptor).to_not have_issue(Puppet::Pops::Issues::DUPLICATE_KEY)
     end
+  end
 
-    it 'does not produce an error for duplicate default in a case expression' do
-      acceptor = validate(parse('case 1 { default: {1} default : {2} }'))
-      expect(acceptor.warning_count).to eql(0)
-      expect(acceptor.error_count).to eql(0)
-      expect(acceptor).to_not have_issue(Puppet::Pops::Issues::DUPLICATE_DEFAULT)
-    end
+  [:off, :warning, :error].each do |level|
+    context "with --strict set to #{level}" do
+      before(:each) { Puppet[:strict] = level }
 
-    it 'does not produce an error for duplicate default in a selector expression' do
-      acceptor = validate(parse(' 1 ? { default => 1, default => 2 }'))
-      expect(acceptor.warning_count).to eql(0)
-      expect(acceptor.error_count).to eql(0)
-      expect(acceptor).to_not have_issue(Puppet::Pops::Issues::DUPLICATE_DEFAULT)
+      it 'produces an error for duplicate default in a case expression' do
+        acceptor = validate(parse('case 1 { default: {1} default : {2} }'))
+        expect(acceptor.warning_count).to eql(0)
+        expect(acceptor.error_count).to eql(1)
+        expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_DEFAULT)
+      end
+
+      it 'prouces an error for duplicate default in a selector expression' do
+        acceptor = validate(parse(' 1 ? { default => 1, default => 2 }'))
+        expect(acceptor.warning_count).to eql(0)
+        expect(acceptor.error_count).to eql(1)
+        expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_DEFAULT)
+      end
     end
   end
 
