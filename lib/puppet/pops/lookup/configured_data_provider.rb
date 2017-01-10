@@ -1,6 +1,5 @@
 require_relative 'hiera_config'
 require_relative 'data_provider'
-require 'puppet/data_providers/hiera_config'
 
 module Puppet::Pops
 module Lookup

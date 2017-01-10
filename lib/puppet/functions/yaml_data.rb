@@ -11,7 +11,7 @@ Puppet::Functions.create_function(:yaml_data) do
   def yaml_data(options, context)
     begin
       data = YAML.load_file(options['path'])
-      Puppet::DataProviders::HieraConfig.symkeys_to_string(data.nil? ? {} : data)
+      Puppet::Pops::Lookup::HieraConfig.symkeys_to_string(data.nil? ? {} : data)
     rescue YAML::SyntaxError => ex
       # Psych errors includes the absolute path to the file, so no need to add that
       # to the message
