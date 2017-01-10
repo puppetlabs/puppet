@@ -2,6 +2,8 @@ require 'puppet/util/monkey_patches'
 
 # We need to subclass Numeric to force range comparisons not to try to iterate over SemVer
 # and instead use numeric comparisons (eg >, <, >=, <=)
+# @api private
+# @deprecated
 class SemVer < Numeric
   include Comparable
 
@@ -20,17 +22,17 @@ class SemVer < Numeric
     vstring =~ /-/ ? vstring : vstring + '-'
   end
 
-  def self.[](range)
+  def self.[](range, suppress_deprecation_warning = false)
     range.gsub(/([><=])\s+/, '\1').split(/\b\s+(?!-)/).map do |r|
       case r
       when SemVer::VERSION
-        SemVer.new(pre(r)) .. SemVer.new(r)
+        SemVer.new(pre(r), suppress_deprecation_warning) .. SemVer.new(r, suppress_deprecation_warning)
       when SemVer::SIMPLE_RANGE
         r += ".0" unless SemVer.valid?(r.gsub(/x/i, '0'))
-        SemVer.new(r.gsub(/x/i, '0'))...SemVer.new(r.gsub(/(\d+)\.x/i) { "#{$1.to_i + 1}.0" } + '-')
+        SemVer.new(r.gsub(/x/i, '0'))...SemVer.new(r.gsub(/(\d+)\.x/i) { "#{$1.to_i + 1}.0" } + '-', suppress_deprecation_warning)
       when /\s+-\s+/
         a, b = r.split(/\s+-\s+/)
-        SemVer.new(pre(a)) .. SemVer.new(b)
+        SemVer.new(pre(a)) .. SemVer.new(b, suppress_deprecation_warning)
       when /^~/
         ver = r.sub(/~/, '').split('.').map(&:to_i)
         start = (ver + [0] * (3 - ver.length)).join('.')
@@ -39,13 +41,13 @@ class SemVer < Numeric
         ver[-1] = ver.last + 1
 
         finish = (ver + [0] * (3 - ver.length)).join('.')
-        SemVer.new(pre(start)) ... SemVer.new(pre(finish))
+        SemVer.new(pre(start), suppress_deprecation_warning) ... SemVer.new(pre(finish), suppress_deprecation_warning)
       when /^>=/
         ver = r.sub(/^>=/, '')
-        SemVer.new(pre(ver)) .. SemVer::MAX
+        SemVer.new(pre(ver), suppress_deprecation_warning) .. SemVer::MAX
       when /^<=/
         ver = r.sub(/^<=/, '')
-        SemVer::MIN .. SemVer.new(ver)
+        SemVer::MIN .. SemVer.new(ver, suppress_deprecation_warning)
       when /^>/
         if r =~ /-/
           ver = [r[1..-1]]
@@ -53,10 +55,10 @@ class SemVer < Numeric
           ver = r.sub(/^>/, '').split('.').map(&:to_i)
           ver[2] = ver.last + 1
         end
-        SemVer.new(ver.join('.') + '-') .. SemVer::MAX
+        SemVer.new(ver.join('.') + '-', suppress_deprecation_warning) .. SemVer::MAX
       when /^</
         ver = r.sub(/^</, '')
-        SemVer::MIN ... SemVer.new(pre(ver))
+        SemVer::MIN ... SemVer.new(pre(ver), suppress_deprecation_warning)
       else
         (1..1)
       end
@@ -65,7 +67,12 @@ class SemVer < Numeric
 
   attr_reader :major, :minor, :tiny, :special
 
-  def initialize(ver)
+  def initialize(ver, suppress_deprecation_warning = false)
+    unless suppress_deprecation_warning || Puppet[:strict] == :off
+      Puppet.warn_once(:deprecation, 'Puppet::SemVer',
+        "Use of class Puppet::SemVer is deprecated. SemanticPuppet::Version or SemanticPuppet::VersionRange should be used instead")
+    end
+
     unless SemVer.valid?(ver)
       raise ArgumentError.new("Invalid version string '#{ver}'!")
     end
@@ -130,10 +137,10 @@ class SemVer < Numeric
   end
   alias :to_s :inspect
 
-  MIN = SemVer.new('0.0.0-')
+  MIN = SemVer.new('0.0.0-', true)
   MIN.instance_variable_set(:@vstring, 'vMIN')
 
-  MAX = SemVer.new('8.0.0')
+  MAX = SemVer.new('8.0.0', true)
   MAX.instance_variable_set(:@major, Float::INFINITY) # => Infinity
   MAX.instance_variable_set(:@vstring, 'vMAX')
 end

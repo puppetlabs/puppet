@@ -212,6 +212,20 @@ describe SemVer do
       expect(version.tiny).to    eq(5)
       expect(version.special).to eq('-beta6')
     end
+
+    it 'should not log a deprecation warning when strict == off' do
+      Puppet[:strict] = :off
+      SemVer.new('1.2.3')
+      expect(@logs).to be_empty
+    end
+
+    it 'should log a deprecation warning unless strict == off' do
+      (Puppet.settings.setting(:strict).values - [:off]).each do |setting|
+        Puppet[:strict] = setting
+        SemVer.new('1.2.3')
+        expect(@logs.map(&:message)).to include(/Use of class Puppet::SemVer is deprecated. SemanticPuppet::Version or SemanticPuppet::VersionRange should be used instead/)
+      end
+    end
   end
 
   describe '#matched_by?' do
