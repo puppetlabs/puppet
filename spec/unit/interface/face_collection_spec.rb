@@ -47,7 +47,7 @@ describe Puppet::Interface::FaceCollection do
 
   describe "::[]" do
     before :each do
-      subject.instance_variable_get("@faces")[:foo][SemVer.new('0.0.1')] = 10
+      subject.instance_variable_get("@faces")[:foo][SemanticPuppet::Version.parse('0.0.1')] = 10
     end
 
     it "should return the face with the given name" do
@@ -66,13 +66,13 @@ describe Puppet::Interface::FaceCollection do
     end
 
     it "should return true if the face specified is registered" do
-      subject.instance_variable_get("@faces")[:foo][SemVer.new('0.0.1')] = 10
+      subject.instance_variable_get("@faces")[:foo][SemanticPuppet::Version.parse('0.0.1')] = 10
       expect(subject["foo", '0.0.1']).to eq(10)
     end
 
     it "should attempt to require the face if it is not registered" do
       subject.expects(:require).with do |file|
-        subject.instance_variable_get("@faces")[:bar][SemVer.new('0.0.1')] = true
+        subject.instance_variable_get("@faces")[:bar][SemanticPuppet::Version.parse('0.0.1')] = true
         file == 'puppet/face/bar'
       end
       expect(subject["bar", '0.0.1']).to be_truthy
@@ -130,14 +130,14 @@ describe Puppet::Interface::FaceCollection do
         get_action_for_face(:huzzah, :obsolete, :current)
 
       expect(action).to be_an_instance_of Puppet::Interface::Action
-      expect(action.face.version).to eq(SemVer.new('1.0.0'))
+      expect(action.face.version).to eq(SemanticPuppet::Version.parse('1.0.0'))
     end
 
     it "should load the full older version of a face" do
       action = Puppet::Face::FaceCollection.
         get_action_for_face(:huzzah, :obsolete, :current)
 
-      expect(action.face.version).to eq(SemVer.new('1.0.0'))
+      expect(action.face.version).to eq(SemanticPuppet::Version.parse('1.0.0'))
       expect(action.face).to be_action :obsolete_in_core
     end
 
@@ -145,11 +145,11 @@ describe Puppet::Interface::FaceCollection do
       action = Puppet::Face::FaceCollection.
         get_action_for_face(:huzzah, :obsolete, :current)
 
-      expect(action.face.version).to eq(SemVer.new('1.0.0'))
+      expect(action.face.version).to eq(SemanticPuppet::Version.parse('1.0.0'))
       expect(action.face).to be_action :obsolete_in_core
 
       current = Puppet::Face[:huzzah, :current]
-      expect(current.version).to eq(SemVer.new('2.0.1'))
+      expect(current.version).to eq(SemanticPuppet::Version.parse('2.0.1'))
       expect(current).not_to be_action :obsolete_in_core
       expect(current).not_to be_action :obsolete
     end

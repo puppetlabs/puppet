@@ -188,7 +188,7 @@ module Puppet::ModuleTool
 
     # Validates that the version string can be parsed as per SemVer.
     def validate_version(version)
-      return if SemVer.valid?(version)
+      return if SemanticPuppet::Version.valid?(version)
 
       err = "version string cannot be parsed as a valid Semantic Version"
       raise ArgumentError, "Invalid 'version' field in metadata.json: #{err}"

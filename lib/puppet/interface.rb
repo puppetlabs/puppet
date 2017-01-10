@@ -138,7 +138,7 @@ class Puppet::Interface
   attr_reader :name
 
   # The version of the face
-  # @return [SemVer]
+  # @return [SemanticPuppet::Version]
   attr_reader :version
 
   # The autoloader instance for the face
@@ -149,12 +149,12 @@ class Puppet::Interface
 
   # @api private
   def initialize(name, version, &block)
-    unless SemVer.valid?(version)
+    unless SemanticPuppet::Version.valid?(version)
       raise ArgumentError, "Cannot create face #{name.inspect} with invalid version number '#{version}'!"
     end
 
     @name    = Puppet::Interface::FaceCollection.underscorize(name)
-    @version = SemVer.new(version)
+    @version = SemanticPuppet::Version.parse(version)
 
     # The few bits of documentation we actually demand.  The default license
     # is a favour to our end users; if you happen to get that in a core face

@@ -258,7 +258,7 @@ module Puppet::ModuleTool
           @remote = { "#{@module_name}@#{@version}" => { } }
           @versions = {
             @module_name => [
-              { :vstring => @version, :semver => SemVer.new(@version) }
+              { :vstring => @version, :semver => SemanticPuppet::Version.parse(@version) }
             ]
           }
         else
