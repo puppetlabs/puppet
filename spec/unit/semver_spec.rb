@@ -220,8 +220,11 @@ describe SemVer do
     end
 
     it 'should log a deprecation warning unless strict == off' do
-      SemVer.new('1.2.3')
-      expect(@logs.map(&:message)).to include(/Use of class Puppet::SemVer is deprecated. SemanticPuppet::Version or SemanticPuppet::VersionRange should be used instead/)
+      (Puppet.settings.setting(:strict).values - [:off]).each do |setting|
+        Puppet[:strict] = setting
+        SemVer.new('1.2.3')
+        expect(@logs.map(&:message)).to include(/Use of class Puppet::SemVer is deprecated. SemanticPuppet::Version or SemanticPuppet::VersionRange should be used instead/)
+      end
     end
   end
 
