@@ -189,7 +189,7 @@ class Puppet::SSL::CertificateAuthority
   #
   # @return [Array<String>]
   def list(name='*')
-    list_certificates(name).collect { |c| c.name }
+    Puppet::SSL::Certificate.indirection.search(name).collect { |c| c.name }
   end
 
   # Return all the certificate objects as found by the indirector
@@ -205,7 +205,10 @@ class Puppet::SSL::CertificateAuthority
   # @param name [Array<string>] filter to cerificate names
   #
   # @return [Array<Puppet::SSL::Certificate>]
+  #
+  # @deprecated Use Puppet::SSL::CertificateAuthority#list or Puppet Server Certificate status API
   def list_certificates(name='*')
+    Puppet.deprecation_warning("Puppet::SSL::CertificateAuthority#list_certificates is deprecated. Please use Puppet::SSL::CertificateAuthority#list or the certificate status API to query certificate information. See https://docs.puppet.com/puppet/latest/http_api/http_certificate_status.html")
     Puppet::SSL::Certificate.indirection.search(name)
   end
 

@@ -795,6 +795,12 @@ describe Puppet::SSL::CertificateAuthority do
       expect(@ca.list_certificates).to eq([cert1, cert2])
     end
 
+    it "should print a deprecation when using #list_certificates" do
+      Puppet::SSL::Certificate.indirection.stubs(:search).with("*").returns [:foo, :bar]
+      Puppet.expects(:deprecation_warning).with(regexp_matches(/list_certificates is deprecated/))
+      @ca.list_certificates
+    end
+
     describe "and printing certificates" do
       it "should return nil if the certificate cannot be found" do
         Puppet::SSL::Certificate.indirection.expects(:find).with("myhost").returns nil
