@@ -64,7 +64,7 @@ describe 'The lookup function' do
     # Initialize loaders based on the environmentpath. It does not work to
     # just set the setting environmentpath for some reason - this achieves the same:
     # - first a loader is created, loading directory environments from the fixture (there is
-    # one environment, 'sample', which will be loaded since the node references this
+    # one environment, 'production', which will be loaded since the node references this
     # environment by name).
     # - secondly, the created env loader is set as 'environments' in the puppet context.
     #
@@ -87,11 +87,6 @@ describe 'The lookup function' do
 
     it "can lookup value provided by the module that has 'function' data_provider entry in metadata.json" do
       resources = compile_and_get_notifications("$args = ['meta::b']\ninclude meta\nnotify { $meta::result: }\n")
-      expect(resources).to include('module_b')
-    end
-
-    it "can lookup value provided by the module that has 'sample' data_provider entry in metadata.json" do
-      resources = compile_and_get_notifications("$args = ['metawcp::b']\ninclude metawcp\nnotify { $metawcp::result: }\n")
       expect(resources).to include('module_b')
     end
 

@@ -327,10 +327,6 @@ end
 
 # @api private
 class HieraConfigV4 < HieraConfig
-  require 'puppet/plugins/data_providers'
-
-  include Puppet::Plugins::DataProviders
-
   KEY_BACKEND = 'backend'.freeze
 
   def self.config_type
@@ -351,23 +347,6 @@ class HieraConfigV4 < HieraConfig
     })
   end
 
-  def factory_create_data_provider(lookup_invocation, name, parent_data_provider, provider_name, datadir, original_paths)
-    service_type = Registry.hash_of_path_based_data_provider_factories
-    provider_factory = Puppet.lookup(:injector).lookup(nil, service_type, PATH_BASED_DATA_PROVIDER_FACTORIES_KEY)[provider_name]
-    raise Puppet::DataBinding::LookupError, "#{@config_path}: No data provider is registered for backend '#{provider_name}' " unless provider_factory
-
-    paths = original_paths.map { |path| interpolate(path, lookup_invocation, false) }
-    paths = provider_factory.resolve_paths(datadir, original_paths, paths, lookup_invocation)
-
-    provider_factory_version = provider_factory.respond_to?(:version) ? provider_factory.version : 1
-    if provider_factory_version == 1
-      # Version 1 is not aware of the parent provider
-      provider_factory.create(name, paths)
-    else
-      provider_factory.create(name, paths, parent_data_provider)
-    end
-  end
-
   def create_configured_data_providers(lookup_invocation, parent_data_provider)
     default_datadir = @config[KEY_DATADIR]
     data_providers = {}
@@ -386,7 +365,7 @@ class HieraConfigV4 < HieraConfig
         create_data_provider(name, parent_data_provider, KEY_DATA_HASH, 'hocon_data', {},
           resolve_paths(datadir, original_paths, lookup_invocation, @config_path.nil?, '.conf'))
       else
-        factory_create_data_provider(lookup_invocation, name, parent_data_provider, provider_name, datadir, original_paths)
+        raise Puppet::DataBinding::LookupError, "#{@config_path}: No data provider is registered for backend '#{provider_name}' "
       end
     end
     data_providers.values
