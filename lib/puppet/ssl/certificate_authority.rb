@@ -420,6 +420,11 @@ class Puppet::SSL::CertificateAuthority
   #   of the X509 Store
   #
   # @return [OpenSSL::X509::Store]
+  #
+  # @deprecated Strictly speaking, #x509_store is marked API private, so we
+  #   don't need to publicly deprecate it. But it marked as deprecated here to
+  #   avoid the exceedingly small chance that someone comes in and uses it from
+  #   within this class before it is removed.
   def x509_store(options = {})
     if (options[:cache])
       return @x509store unless @x509store.nil?
@@ -486,7 +491,7 @@ class Puppet::SSL::CertificateAuthority
     unless cert = Puppet::SSL::Certificate.indirection.find(name)
       raise ArgumentError, "Could not find a certificate for #{name}"
     end
-    store = x509_store
+    store = create_x509_store
 
     raise CertificateVerificationError.new(store.error), store.error_string unless store.verify(cert.content)
   end
