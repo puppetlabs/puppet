@@ -174,70 +174,31 @@ describe Puppet::Parser::Compiler do
 
   context 'when working with $server_facts' do
     include PuppetSpec::Compiler
-    context 'and have opted in to trusted_server_facts' do
-      before :each do
-        Puppet[:trusted_server_facts] = true
-      end
 
-      it 'should make $trusted available' do
-        node = Puppet::Node.new("testing")
-        node.add_server_facts({ "server_fact" => "foo" })
+    it '$trusted is available' do
+      node = Puppet::Node.new("testing")
+      node.add_server_facts({ "server_fact" => "foo" })
 
-        catalog = compile_to_catalog(<<-MANIFEST, node)
-            notify { 'test': message => $server_facts[server_fact] }
-        MANIFEST
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+          notify { 'test': message => $server_facts[server_fact] }
+      MANIFEST
 
-        expect(catalog).to have_resource("Notify[test]").with_parameter(:message, "foo")
-      end
-
-      it 'should not allow assignment to $server_facts' do
-        node = Puppet::Node.new("testing")
-        node.add_server_facts({ "server_fact" => "foo" })
-
-        expect do
-          compile_to_catalog(<<-MANIFEST, node)
-              $server_facts = 'changed'
-              notify { 'test': message => $server_facts == 'changed' }
-          MANIFEST
-        end.to raise_error(Puppet::PreformattedError, /Attempt to assign to a reserved variable name: '\$server_facts'.*/)
-      end
+      expect(catalog).to have_resource("Notify[test]").with_parameter(:message, "foo")
     end
 
-    context 'and have not opted in to hashed_node_data' do
-      before :each do
-        Puppet[:trusted_server_facts] = false
-      end
+    it 'does not allow assignment to $server_facts' do
+      node = Puppet::Node.new("testing")
+      node.add_server_facts({ "server_fact" => "foo" })
 
-      it 'should not make $server_facts available' do
-        node = Puppet::Node.new("testing")
-        node.add_server_facts({ "server_fact" => "foo" })
-
-        catalog = compile_to_catalog(<<-MANIFEST, node)
-            notify { 'test': message => ($server_facts == undef) }
-        MANIFEST
-
-        expect(catalog).to have_resource("Notify[test]").with_parameter(:message, true)
-      end
-
-      it 'should allow assignment to $server_facts' do
-        catalog = compile_to_catalog(<<-MANIFEST)
+      expect do
+        compile_to_catalog(<<-MANIFEST, node)
             $server_facts = 'changed'
             notify { 'test': message => $server_facts == 'changed' }
         MANIFEST
-
-        expect(catalog).to have_resource("Notify[test]").with_parameter(:message, true)
-      end
-      it 'should warn about assignment to $server_facts' do
-        catalog = compile_to_catalog(<<-MANIFEST)
-            $server_facts = 'changed'
-            notify { 'test': message => $server_facts == 'changed' }
-        MANIFEST
-        expect(@logs).to have_matching_log(/Assignment to \$server_facts is deprecated/)
-
-        expect(catalog).to have_resource("Notify[test]").with_parameter(:message, true)
-      end
+      end.to raise_error(Puppet::PreformattedError, /Attempt to assign to a reserved variable name: '\$server_facts'.*/)
     end
   end
+
   describe "the compiler when using 4.x language constructs" do
     include PuppetSpec::Compiler
 
