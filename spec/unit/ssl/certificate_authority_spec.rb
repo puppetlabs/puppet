@@ -933,7 +933,7 @@ describe Puppet::SSL::CertificateAuthority do
           expect(@ca.certificate_is_alive?(@cert)).to be_truthy
         end
 
-        it "should used a cached instance of the x509 store" do
+        it "should use a cached instance of the x509 store" do
           OpenSSL::X509::Store.stubs(:new).returns(@store).once
 
           @cert.expects(:content).returns "mycert"
@@ -941,6 +941,11 @@ describe Puppet::SSL::CertificateAuthority do
           @store.expects(:verify).with("mycert").returns true
 
           @ca.certificate_is_alive?(@cert)
+          @ca.certificate_is_alive?(@cert)
+        end
+
+        it "should be deprecated" do
+          Puppet.expects(:deprecation_warning).with(regexp_matches(/certificate_is_alive\? is deprecated/))
           @ca.certificate_is_alive?(@cert)
         end
       end

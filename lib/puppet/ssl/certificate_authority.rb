@@ -472,7 +472,10 @@ class Puppet::SSL::CertificateAuthority
   # @param cert [Puppet::SSL::Certificate] the certificate to check validity of
   #
   # @return [Boolean] true if signed, false if unsigned or revoked
+  #
+  # @deprecated use Puppet::SSL::CertificateAuthority#verify or Puppet Server certificate status API
   def certificate_is_alive?(cert)
+    Puppet.deprecation_warning("Puppet::SSL::CertificateAuthority#certificate_is_alive? is deprecated. Please use Puppet::SSL::CertificateAuthority#verify or the certificate status API to query certificate information. See https://docs.puppet.com/puppet/latest/http_api/http_certificate_status.html")
     x509_store(:cache => true).verify(cert.content)
   end
 
