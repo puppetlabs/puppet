@@ -1,8 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet'
-require 'puppet/data_providers/hiera_config'
-require 'puppet/data_providers/hiera_interpolate'
 
 module Puppet::Pops
 describe 'Puppet::Pops::Lookup::Interpolation' do
