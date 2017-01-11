@@ -604,14 +604,11 @@ deprecated and has been replaced by 'always_retry_plugins'."
           class, or definition other than in the site manifest.",
     },
     :trusted_server_facts => {
-      :default => false,
+      :default => true,
       :type    => :boolean,
-      :desc    => "When enabled, Puppet creates a protected top-scope variable called $server_facts.
-        This variable name can't be re-used in any local scope, and can't be overridden
-        by agent-provided facts.
-
-        The $server_facts variable is a hash, containing server-provided information
-        like the current node's environment and the version of Puppet running on the server.",
+      :deprecated => :completely,
+      :desc    => "The 'trusted_server_facts' setting is deprecated and has no effect as the
+        feature this enabled is now always on. The setting will be removed in a future version of puppet.",
     },
     :preview_outputdir => {
       :default => '$vardir/preview',

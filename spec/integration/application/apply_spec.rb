@@ -234,9 +234,8 @@ end
     expect(@logs.map(&:to_s)).to include('it was applied')
   end
 
-  it "adds environment to the $server_facts variable if trusted_server_facts is true" do
+  it "adds environment to the $server_facts variable" do
     manifest = file_containing("manifest.pp", "notice(\"$server_facts\")")
-    Puppet[:trusted_server_facts] = true
 
     puppet = Puppet::Application[:apply]
     puppet.stubs(:command_line).returns(stub('command_line', :args => [manifest]))
