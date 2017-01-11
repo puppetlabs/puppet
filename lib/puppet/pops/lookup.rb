@@ -20,7 +20,6 @@ module Lookup
   # @return [Object] The found value
   #
   def self.lookup(name, value_type, default_value, has_default, merge, lookup_invocation)
-    value_type = DataProvider.value_type if value_type.nil?
     names = name.is_a?(Array) ? name : [name]
 
     # find first name that yields a non-nil result and wrap it in a two element array
@@ -78,7 +77,7 @@ module Lookup
   end
 
   def self.assert_type(subject, type, value)
-    Types::TypeAsserter.assert_instance_of(subject, type, value)
+    type ? Types::TypeAsserter.assert_instance_of(subject, type, value) : value
   end
   private_class_method :assert_type
 

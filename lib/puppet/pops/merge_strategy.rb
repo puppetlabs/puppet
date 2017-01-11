@@ -6,12 +6,6 @@ module Puppet::Pops
   class MergeStrategy
     NOT_FOUND = Object.new.freeze
 
-    # The type used for validation of the _merge_ argument
-    def self.merge_t
-      @@merge_t ||=  Types::TypeParser.singleton.parse("Variant[String[1],Runtime[ruby,'Symbol'],Hash[Variant[String[1],Runtime[ruby,'Symbol']],Scalar,1]]")
-    end
-    private_class_method :merge_t
-
     def self.strategies
       @@strategies ||= {}
     end
@@ -24,26 +18,23 @@ module Puppet::Pops
     # @return [MergeStrategy] The matching merge strategy
     #
     def self.strategy(merge)
+      return DefaultMergeStrategy::INSTANCE unless merge
       return merge if merge.is_a?(MergeStrategy)
-      if merge.nil?
-        merge = :default
-      else
-        Types::TypeAsserter.assert_instance_of("MergeStrategy 'merge' parameter", merge_t, merge)
-      end
 
       if merge.is_a?(Hash)
         merge_strategy = merge['strategy']
         if merge_strategy.nil?
           raise ArgumentError, "The hash given as 'merge' must contain the name of a strategy in string form for the key 'strategy'"
         end
-        merge_options  = merge
+        merge_options  = merge.size == 1 ? EMPTY_HASH : merge
       else
         merge_strategy = merge
-        merge_options  = {}
+        merge_options = EMPTY_HASH
       end
-      strategy = strategies[merge_strategy.to_sym]
-      raise ArgumentError, "Unknown merge strategy: '#{merge_strategy}'" if strategy.nil?
-      strategy.new(merge_options)
+      merge_strategy = merge_strategy.to_sym if merge_strategy.is_a?(String)
+      strategy_class = strategies[merge_strategy]
+      raise ArgumentError, "Unknown merge strategy: '#{merge_strategy}'" if strategy_class.nil?
+      merge_options == EMPTY_HASH ? strategy_class::INSTANCE : strategy_class.new(merge_options)
     end
 
     # Returns the list of merge strategy keys known to this class
@@ -83,7 +74,7 @@ module Puppet::Pops
     # Create a new instance of this strategy configured with the given _options_
     # @param merge_options [Hash<String,Object>] Merge options
     def initialize(options)
-      assert_type('The merge options', options_t, options)
+      assert_type('The merge options', self.class.options_t, options) unless options.empty?
       @options = options
     end
 
@@ -176,8 +167,8 @@ module Puppet::Pops
     #
     # @return [Types::PStructType] the puppet type
     #
-    def options_t
-      @options_t ||=Types::TypeParser.singleton.parse("Struct[{strategy=>Optional[Pattern[/#{self.class.key}/]]}]")
+    def self.options_t
+      @options_t ||=Types::TypeParser.singleton.parse("Struct[{strategy=>Optional[Pattern[/#{key}/]]}]")
     end
 
     # Returns the type used to validate the options hash
@@ -200,6 +191,8 @@ module Puppet::Pops
   # Simple strategy that returns the first value found. It never merges any values.
   #
   class FirstFoundStrategy < MergeStrategy
+    INSTANCE = self.new(EMPTY_HASH)
+
     def self.key
       :first
     end
@@ -228,6 +221,8 @@ module Puppet::Pops
 
   # Same as {FirstFoundStrategy} but used when no strategy has been explicitly given
   class DefaultMergeStrategy < FirstFoundStrategy
+    INSTANCE = self.new(EMPTY_HASH)
+
     def self.key
       :default
     end
@@ -239,6 +234,8 @@ module Puppet::Pops
   # will be those of e1
   #
   class HashMergeStrategy < MergeStrategy
+    INSTANCE = self.new(EMPTY_HASH)
+
     def self.key
       :hash
     end
@@ -267,6 +264,8 @@ module Puppet::Pops
   # first contributor of elements and e2 the second.
   #
   class UniqueMergeStrategy < MergeStrategy
+    INSTANCE = self.new(EMPTY_HASH)
+
     def self.key
       :unique
     end
@@ -339,6 +338,8 @@ module Puppet::Pops
   #   Results: {:x => [{:y => 1, :z => 2}]}
   #
   class DeepMergeStrategy < MergeStrategy
+    INSTANCE = self.new(EMPTY_HASH)
+
     def self.key
       :deep
     end
@@ -368,9 +369,9 @@ module Puppet::Pops
     # the setting of that option to false
     #
     # @return [Types::PAnyType] the puppet type used when validating the options hash
-    def options_t
+    def self.options_t
       @options_t ||= Types::TypeParser.singleton.parse('Struct[{'\
-          "strategy=>Optional[Pattern[#{self.class.key}]],"\
+          "strategy=>Optional[Pattern[#{key}]],"\
           'knockout_prefix=>Optional[String],'\
           'merge_debug=>Optional[Boolean],'\
           'merge_hash_arrays=>Optional[Boolean],'\
@@ -388,6 +389,8 @@ module Puppet::Pops
   # Same as {DeepMergeStrategy} but the with reverse priority of merged elements.
   # (needed for backward compatibility with Hiera v3)
   class ReverseDeepMergeStrategy < MergeStrategy
+    INSTANCE = self.new(EMPTY_HASH)
+
     def self.key
       :reverse_deep
     end

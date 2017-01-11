@@ -1,0 +1,2 @@
+Benchmark scenario: Many lookups using a global Hiera 3 configuration
+Benchmark target: hiera lookup.
