@@ -77,15 +77,16 @@ module Interpolation
             lookup_invocation.report_found_in_overrides(root_key, ovr[root_key])
           else
             scope = lookup_invocation.scope
-            if scope.include?(root_key)
-              lookup_invocation.report_found(root_key, scope[root_key])
-            else
+            val = scope[root_key]
+            if val.nil? && !nil_in_scope?(scope, root_key)
               defaults = lookup_invocation.default_values
               if defaults.include?(root_key)
                 lookup_invocation.report_found_in_defaults(root_key, defaults[root_key])
               else
                 nil
               end
+            else
+              lookup_invocation.report_found(root_key, val)
             end
           end
         end
@@ -109,6 +110,15 @@ module Interpolation
     interpolate_method = @@interpolate_methods[method_key]
     raise Puppet::DataBinding::LookupError, "Unknown interpolation method '#{method_key}'" unless interpolate_method
     interpolate_method
+  end
+
+  # Because the semanitcs of Puppet::Parser::Scope#include? differs from Hash#include?
+  def nil_in_scope?(scope, key)
+    if scope.is_a?(Hash)
+      scope.include?(key)
+    else
+      scope.exist?(key)
+    end
   end
 
   def get_method_and_data(data, allow_methods)

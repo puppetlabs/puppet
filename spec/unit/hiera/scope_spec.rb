@@ -74,14 +74,14 @@ describe Hiera::Scope do
     end
   end
 
-  describe "#include?" do
+  describe "#exist?" do
     it "should correctly report missing data" do
       real["nil_value"] = nil
       real["blank_value"] = ""
 
-      expect(scope.include?("nil_value")).to eq(true)
-      expect(scope.include?("blank_value")).to eq(true)
-      expect(scope.include?("missing_value")).to eq(false)
+      expect(scope.exist?("nil_value")).to eq(true)
+      expect(scope.exist?("blank_value")).to eq(true)
+      expect(scope.exist?("missing_value")).to eq(false)
     end
 
     it "should always return true for calling_class and calling_module" do

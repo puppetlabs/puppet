@@ -85,7 +85,7 @@ class Invocation
   end
 
   def lookup_adapter
-    @adapter_class.adapt(scope.compiler)
+    @adapter ||= @adapter_class.adapt(scope.compiler)
   end
 
   # This method is overridden by the special Invocation used while resolving interpolations in a

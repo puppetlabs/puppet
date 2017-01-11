@@ -1,6 +1,8 @@
 module Puppet::Pops
 module Lookup
 module SubLookup
+  SPECIAL = /['"\.]/
+
   # Split key into segments. A segment may be a quoted string (both single and double quotes can
   # be used) and the segment separator is the '.' character. Whitespace will be trimmed off on
   # both sides of each segment. Whitespace within quotes are not trimmed.
@@ -15,6 +17,7 @@ module SubLookup
   #
   # @api public
   def split_key(key)
+    return [key] if key.match(SPECIAL).nil?
     segments = key.split(/(\s*"[^"]+"\s*|\s*'[^']+'\s*|[^'".]+)/)
     if segments.empty?
       # Only happens if the original key was an empty string
