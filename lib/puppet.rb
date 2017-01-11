@@ -4,6 +4,8 @@ if RUBY_VERSION < "1.9.3"
   raise LoadError, "Puppet #{Puppet.version} requires ruby 1.9.3 or greater."
 end
 
+Puppet::OLDEST_RECOMMENDED_RUBY_VERSION = '2.1.0'
+
 # see the bottom of the file for further inclusions
 # Also see the new Vendor support - towards the end
 #
@@ -140,6 +142,12 @@ module Puppet
 
   # Load all of the settings.
   require 'puppet/defaults'
+
+  # Now that settings are loaded we have the code loaded to be able to issue
+  # deprecation warnings. Warn if we're on a deprecated ruby version.
+  if RUBY_VERSION < Puppet::OLDEST_RECOMMENDED_RUBY_VERSION
+    Puppet.deprecation_warning("Support for ruby version #{RUBY_VERSION} is deprecated and will be removed in a future release. See https://docs.puppet.com/puppet/latest/system_requirements.html#ruby for a list of supported ruby versions.")
+  end
 
   # Initialize puppet's settings. This is intended only for use by external tools that are not
   #  built off of the Faces API or the Puppet::Util::Application class. It may also be used
