@@ -1,0 +1,2 @@
+Benchmark scenario: Lookups that uses raw Hiera 3 (the legacy implementation)
+Benchmark target: legacy hiera lookup.
