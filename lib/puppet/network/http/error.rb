@@ -59,11 +59,11 @@ module Puppet::Network::HTTP::Error
 
     def initialize(original_error, issue_kind = Issues::RUNTIME_ERROR)
       super("Server Error: " + original_error.message, CODE, issue_kind)
-      @backtrace = original_error.backtrace
+      @backtrace = ["Warning: The 'stacktrace' property is deprecated and will be removed in a future version of Puppet. For security reasons, stacktraces are not returned with Puppet HTTP Error responses."]
     end
 
     def to_json
-      JSON({:message => message, :issue_kind => @issue_kind})
+      JSON({:message => message, :issue_kind => @issue_kind, :stacktrace => self.backtrace})
     end
   end
 end
