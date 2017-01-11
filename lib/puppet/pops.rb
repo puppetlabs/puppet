@@ -147,4 +147,3 @@ module Puppet
   require 'puppet/functions'
   require 'puppet/loaders'
 end
-require 'puppet/plugins/data_providers'
