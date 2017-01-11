@@ -23,7 +23,7 @@ class Benchmarker
       scope['confdir'] = 'test'
       @size.times do
         100.times do |index|
-          invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, true)
+          invocation = Puppet::Pops::Lookup::Invocation.new(scope)
           Puppet::Pops::Lookup.lookup("x#{index}", nil, nil, true, nil, invocation)
         end
       end
