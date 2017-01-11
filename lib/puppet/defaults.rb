@@ -1036,11 +1036,6 @@ EOT
       :desc       => "The default TTL for new certificates.
       #{AS_DURATION}"
     },
-    :req_bits => {
-      :default    => 4096,
-      :desc       => "This setting has no effect and will be removed in a future Puppet version.",
-      :deprecated => :completely,
-    },
     :keylength => {
       :default    => 4096,
       :desc       => "The bit length of keys.",
