@@ -1,6 +1,6 @@
 test_name 'C99044 lookup should allow rich data as values' do
-  require 'puppet/acceptance/puppet_type_test_tools.rb'
-  extend Puppet::Acceptance::PuppetTypeTestTools
+  require 'puppet/acceptance/environment_utils.rb'
+  extend Puppet::Acceptance::EnvironmentUtils
 
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type)
