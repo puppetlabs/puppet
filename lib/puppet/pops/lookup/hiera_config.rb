@@ -166,7 +166,7 @@ class HieraConfig
   end
 
   def scope_interpolations_stable?(scope)
-    @scope_interpolations.each_pair.all? { |key, value| scope[key] == value }
+    @scope_interpolations.all? { |key, value| scope[key].eql?(value) }
   end
 
   # @api private
