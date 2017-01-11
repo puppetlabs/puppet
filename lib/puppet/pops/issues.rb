@@ -619,7 +619,7 @@ module Issues
     "The key '#{key}' is declared more than once"
   end
 
-  DUPLICATE_DEFAULT = issue :DUPLICATE_DEFAULT, :container do
+  DUPLICATE_DEFAULT = hard_issue :DUPLICATE_DEFAULT, :container do
     "This #{label.label(container)} already has a 'default' entry - this is a duplicate"
   end
 
