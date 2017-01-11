@@ -505,7 +505,7 @@ describe "The lookup function" do
       end
     end
 
-    context 'and a global Hiera v3 configuration' do
+    context 'and a global configuration' do
       let(:hiera_yaml) do
         <<-YAML.unindent
         ---
@@ -546,7 +546,7 @@ describe "The lookup function" do
                       end
                     end
                   end
-                RUBY
+                  RUBY
               }
             }
           },
@@ -605,96 +605,163 @@ describe "The lookup function" do
         end
       end
 
-      it 'finds data in the environment and reports deprecation warnings for both environment.conf and hiera.yaml' do
-        expect(lookup('a')).to eql('value a (from global)')
-        expect(warnings).to include(/Use of 'hiera.yaml' version 3 is deprecated. It should be converted to version 5/)
-      end
+      context 'version 3' do
+        it 'finds data in the environment and reports deprecation warnings for both environment.conf and hiera.yaml' do
+          expect(lookup('a')).to eql('value a (from global)')
+          expect(warnings).to include(/Use of 'hiera.yaml' version 3 is deprecated. It should be converted to version 5/)
+        end
 
-      it 'explain contains output from global layer' do
-        explanation = explain('a')
-        expect(explanation).to include('Global Data Provider (hiera configuration version 3)')
-        expect(explanation).to include('Hierarchy entry "yaml"')
-        expect(explanation).to include('Hierarchy entry "json"')
-        expect(explanation).to include('Found key: "a" value: "value a (from global)"')
-      end
+        it 'explain contains output from global layer' do
+          explanation = explain('a')
+          expect(explanation).to include('Global Data Provider (hiera configuration version 3)')
+          expect(explanation).to include('Hierarchy entry "yaml"')
+          expect(explanation).to include('Hierarchy entry "json"')
+          expect(explanation).to include('Found key: "a" value: "value a (from global)"')
+        end
 
-      it 'uses the merge behavior specified in global hiera.yaml to merge only global backends' do
-        expect(lookup('hash_b')).to eql(
-          { 'hash_ba' => { 'bab' => 'value hash_b.hash_ba.bab (from global)', 'bac' => 'value hash_b.hash_ba.bac (from global json)' } })
-      end
+        it 'uses the merge behavior specified in global hiera.yaml to merge only global backends' do
+          expect(lookup('hash_b')).to eql(
+            { 'hash_ba' => { 'bab' => 'value hash_b.hash_ba.bab (from global)', 'bac' => 'value hash_b.hash_ba.bac (from global json)' } })
+        end
 
-      it 'uses the merge from lookup options to merge all layers and override merge_behavior specified in global hiera.yaml' do
-        expect(lookup('hash_c')).to eql(
-          { 'hash_ca' => { 'cab' => 'value hash_c.hash_ca.cab (from global)' } })
-      end
+        it 'uses the merge from lookup options to merge all layers and override merge_behavior specified in global hiera.yaml' do
+          expect(lookup('hash_c')).to eql(
+            { 'hash_ca' => { 'cab' => 'value hash_c.hash_ca.cab (from global)' } })
+        end
 
-      it 'uses the explicitly given merge to override lookup options and to merge all layers' do
-        expect(lookup('hash_c', 'merge' => 'deep')).to eql(
-          {
-            'hash_ca' =>
+        it 'uses the explicitly given merge to override lookup options and to merge all layers' do
+          expect(lookup('hash_c', 'merge' => 'deep')).to eql(
             {
-              'caa' => 'value hash_c.hash_ca.caa (from environment)',
-              'cab' => 'value hash_c.hash_ca.cab (from global)',
-              'cac' => 'value hash_c.hash_ca.cac (from global json)',
-              'cad' => 'value hash_c.hash_ca.cad (from global custom)'
-            }
-          })
-      end
-
-      it 'paths are interpolated' do
-        expect(lookup('x')).to eql('value x (from global example.com.yaml)')
-      end
-
-      it 'backend data sources are propagated to custom backend' do
-        expect(lookup('datasources')).to eql(['common', 'example.com'])
-      end
-
-      it 'delegates configured hocon backend to hocon_data function' do
-        expect(explain('xs')).to match(/Hierarchy entry "hocon"\n.*\n.*\n.*"common"\n\s*Found key: "xs"/m)
-      end
-
-      it 'can dig down into subkeys provided by hocon_data function' do
-        expect(lookup('xs.subkey')).to eql('value xs.subkey (from global hocon)')
-      end
-
-      context 'using relative datadir paths' do
-        let(:hiera_yaml) do
-          <<-YAML.unindent
-        ---
-        :backends:
-          - yaml
-        :yaml:
-          :datadir: relative_data
-        :hierarchy:
-          - common
-          YAML
-        end
-
-        let(:populated_code_dir) do
-          dir_contained_in(code_dir, code_dir_files.merge({
-            'fake_cwd' => {
-              'relative_data' => {
-                'common.yaml' => <<-YAML.unindent
-                  a: value a (from fake_cwd/relative_data/common.yaml)
-                YAML
+              'hash_ca' =>
+              {
+                'caa' => 'value hash_c.hash_ca.caa (from environment)',
+                'cab' => 'value hash_c.hash_ca.cab (from global)',
+                'cac' => 'value hash_c.hash_ca.cac (from global json)',
+                'cad' => 'value hash_c.hash_ca.cad (from global custom)'
               }
-            }
-          }))
-          code_dir
+            })
         end
 
-        around(:each) do |example|
-          cwd = Dir.pwd
-          Dir.chdir(File.join(code_dir, 'fake_cwd'))
-          begin
-            example.run
-          ensure
-            Dir.chdir(cwd)
+        it 'paths are interpolated' do
+          expect(lookup('x')).to eql('value x (from global example.com.yaml)')
+        end
+
+        it 'backend data sources are propagated to custom backend' do
+          expect(lookup('datasources')).to eql(['common', 'example.com'])
+        end
+
+        it 'delegates configured hocon backend to hocon_data function' do
+          expect(explain('xs')).to match(/Hierarchy entry "hocon"\n.*\n.*\n.*"common"\n\s*Found key: "xs"/m)
+        end
+
+        it 'can dig down into subkeys provided by hocon_data function' do
+          expect(lookup('xs.subkey')).to eql('value xs.subkey (from global hocon)')
+        end
+
+        context 'using relative datadir paths' do
+          let(:hiera_yaml) do
+            <<-YAML.unindent
+          ---
+          :backends:
+            - yaml
+          :yaml:
+            :datadir: relative_data
+          :hierarchy:
+            - common
+            YAML
+          end
+
+          let(:populated_code_dir) do
+            dir_contained_in(code_dir, code_dir_files.merge({
+              'fake_cwd' => {
+                'relative_data' => {
+                  'common.yaml' => <<-YAML.unindent
+                    a: value a (from fake_cwd/relative_data/common.yaml)
+                  YAML
+                }
+              }
+            }))
+            code_dir
+          end
+
+          around(:each) do |example|
+            cwd = Dir.pwd
+            Dir.chdir(File.join(code_dir, 'fake_cwd'))
+            begin
+              example.run
+            ensure
+              Dir.chdir(cwd)
+            end
+          end
+
+          it 'finds data from data file beneath relative datadir' do
+            expect(lookup('a')).to eql('value a (from fake_cwd/relative_data/common.yaml)')
           end
         end
+      end
 
-        it 'finds data from data file beneath relative datadir' do
-          expect(lookup('a')).to eql('value a (from fake_cwd/relative_data/common.yaml)')
+      context 'version 5' do
+        let(:hiera_yaml) do
+          <<-YAML.unindent
+          ---
+          version: 5
+          defaults:
+            datadir: hieradata
+
+          hierarchy:
+            - name: Yaml
+              data_hash: yaml_data
+              paths:
+                - common.yaml
+                - "%{domain}.yaml"
+            - name: Json
+              data_hash: json_data
+              paths:
+                - common.json
+                - "%{domain}.json"
+            - name: Hocon
+              data_hash: hocon_data
+              paths:
+                - common.conf
+                - "%{domain}.conf"
+            - name: Custom
+              hiera3_backend: custom
+              paths:
+                - common.custom
+                - "%{domain}.custom"
+              YAML
+        end
+
+        it 'finds data in the environment and reports no deprecation warnings' do
+          expect(lookup('a')).to eql('value a (from global)')
+          expect(warnings).to be_empty
+        end
+
+        it 'explain contains output from global layer' do
+          explanation = explain('a')
+          expect(explanation).to include('Global Data Provider (hiera configuration version 5)')
+          expect(explanation).to include('Hierarchy entry "Yaml"')
+          expect(explanation).to include('Hierarchy entry "Json"')
+          expect(explanation).to include('Hierarchy entry "Hocon"')
+          expect(explanation).to include('Hierarchy entry "Custom"')
+          expect(explanation).to include('Found key: "a" value: "value a (from global)"')
+        end
+
+        it 'uses the explicitly given merge to override lookup options and to merge all layers' do
+          expect(lookup('hash_c', 'merge' => 'deep')).to eql(
+            {
+              'hash_ca' =>
+                {
+                  'caa' => 'value hash_c.hash_ca.caa (from environment)',
+                  'cab' => 'value hash_c.hash_ca.cab (from global)',
+                  'cac' => 'value hash_c.hash_ca.cac (from global json)',
+                  'cad' => 'value hash_c.hash_ca.cad (from global custom)'
+                }
+            })
+        end
+
+        it 'backend data sources are propagated to custom backend' do
+          expect(lookup('datasources')).to eql(['common', 'example.com'])
         end
       end
     end

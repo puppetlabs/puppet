@@ -31,6 +31,7 @@ class HieraConfig
   KEY_VERSION = 'version'.freeze
   KEY_DATADIR = 'datadir'.freeze
   KEY_HIERARCHY = 'hierarchy'.freeze
+  KEY_LOGGER = 'logger'.freeze
   KEY_OPTIONS = 'options'.freeze
   KEY_PATH = 'path'.freeze
   KEY_PATHS = 'paths'.freeze
@@ -45,8 +46,9 @@ class HieraConfig
   KEY_V3_DATA_HASH = V3DataHashFunctionProvider::TAG
   KEY_V3_BACKEND = V3BackendFunctionProvider::TAG
   KEY_V4_DATA_HASH = V4DataHashFunctionProvider::TAG
+  KEY_BACKEND = 'backend'.freeze
 
-  FUNCTION_KEYS = [KEY_DATA_HASH, KEY_LOOKUP_KEY, KEY_DATA_DIG]
+  FUNCTION_KEYS = [KEY_DATA_HASH, KEY_LOOKUP_KEY, KEY_DATA_DIG, KEY_V3_BACKEND]
   ALL_FUNCTION_KEYS = FUNCTION_KEYS + [KEY_V4_DATA_HASH]
   LOCATION_KEYS = [KEY_PATH, KEY_PATHS, KEY_GLOB, KEY_GLOBS, KEY_URI, KEY_URIS]
   FUNCTION_PROVIDERS = {
@@ -186,6 +188,21 @@ class HieraConfig
     "hiera configuration version #{version}"
   end
 
+  def create_hiera3_backend_provider(name, backend, parent_data_provider, datadir, paths, hiera3_config)
+    # Custom backend. Hiera v3 must be installed, it's logger configured, and it must be made aware of the loaded config
+    require 'hiera'
+    if @config.include?(KEY_LOGGER)
+      Hiera.logger = @config[KEY_LOGGER].to_s
+    else
+      Hiera.logger = 'puppet'
+    end
+    Hiera::Config.instance_variable_set(:@config, hiera3_config)
+
+    # Use a special lookup_key that delegates to the backend
+    paths = nil if paths.empty?
+    create_data_provider(name, parent_data_provider, KEY_V3_BACKEND, 'hiera_v3_data', { KEY_DATADIR => datadir, KEY_BACKEND => backend }, paths)
+  end
+
   private
 
   def create_data_provider(name, parent_data_provider, function_kind, function_name, options, locations)
@@ -200,7 +217,6 @@ end
 # @api private
 class HieraConfigV3 < HieraConfig
   KEY_BACKENDS = 'backends'.freeze
-  KEY_LOGGER = 'logger'.freeze
   KEY_MERGE_BEHAVIOR = 'merge_behavior'.freeze
   KEY_DEEP_MERGE_OPTIONS = 'deep_merge_options'.freeze
 
@@ -246,18 +262,7 @@ class HieraConfigV3 < HieraConfig
       when backend == 'hocon' && Puppet.features.hocon?
         create_data_provider(backend, parent_data_provider, KEY_V3_DATA_HASH, 'hocon_data', { KEY_DATADIR => datadir }, paths)
       else
-        # Custom backend. Hiera v3 must be installed, it's logger configured, and it must be made aware of the loaded config
-        require 'hiera'
-        if @config.include?(KEY_LOGGER)
-          Hiera.logger = @config[KEY_LOGGER].to_s
-        else
-          Hiera.logger = 'puppet'
-        end
-        Hiera::Config.instance_variable_set(:@config, @loaded_config)
-
-        # Use a special lookup_key that delegates to the backend
-        paths = nil if paths.empty?
-        create_data_provider(backend, parent_data_provider, KEY_V3_BACKEND, "hiera_v3_data", { KEY_DATADIR => datadir }, paths)
+        create_hiera3_backend_provider(backend, backend, parent_data_provider, datadir, paths, @loaded_config)
       end
     end
     data_providers.values
@@ -330,8 +335,6 @@ class HieraConfigV4 < HieraConfig
   require 'puppet/plugins/data_providers'
 
   include Puppet::Plugins::DataProviders
-
-  KEY_BACKEND = 'backend'.freeze
 
   def self.config_type
     return @@CONFIG_TYPE if class_variable_defined?(:@@CONFIG_TYPE)
@@ -435,6 +438,7 @@ class HieraConfigV5 < HieraConfig
           tf.optional(KEY_OPTIONS) => tf.hash_kv(option_name_t, tf.data),
           tf.optional(KEY_DATA_HASH) => nes_t,
           tf.optional(KEY_LOOKUP_KEY) => nes_t,
+          tf.optional(KEY_V3_BACKEND) => nes_t,
           tf.optional(KEY_V4_DATA_HASH) => nes_t,
           tf.optional(KEY_DATA_DIG) => nes_t,
           tf.optional(KEY_PATH) => nes_t,
@@ -487,7 +491,29 @@ class HieraConfigV5 < HieraConfig
       next if @config_path.nil? && !locations.nil? && locations.empty? # Default config and no existing paths found
       options = he[KEY_OPTIONS]
       options = options.nil? ? EMPTY_HASH : interpolate(options, lookup_invocation, false)
-      data_providers[name] = create_data_provider(name, parent_data_provider, function_kind, function_name, options, locations)
+      if(function_kind == KEY_V3_BACKEND)
+        unless parent_data_provider.is_a?(GlobalDataProvider)
+          # hiera3_backend is not allowed in environments and modules
+          raise Puppet::DataBinding::LookupError, "#{@config_path}: '#{KEY_V3_BACKEND}' is only allowed in the global layer"
+        end
+
+        if function_name == 'json' || function_name == 'yaml' || function_name == 'hocon' &&  Puppet.features.hocon?
+          # Disallow use of backends that have corresponding "data_hash" functions in version 5
+          raise Puppet::DataBinding::LookupError, "#{@config_path}: Use \"#{KEY_DATA_HASH}: #{function_name}_data\" instead of \"#{KEY_V3_BACKEND}: #{function_name}\""
+        end
+        data_providers[name] = create_hiera3_backend_provider(name, function_name, parent_data_provider, entry_datadir, locations, {
+          :hierarchy =>
+            locations.nil? ? [] : locations.map do |loc|
+              path = loc.original_location
+              path.end_with?(".#{function_name}") ? path[0..-(function_name.length + 2)] : path
+            end,
+          function_name.to_sym => { :datadir => entry_datadir },
+          :backends => [ function_name ],
+          :logger => 'puppet'
+        })
+      else
+        data_providers[name] = create_data_provider(name, parent_data_provider, function_kind, function_name, options, locations)
+      end
     end
     data_providers.values
   end
