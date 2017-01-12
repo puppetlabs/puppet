@@ -39,13 +39,10 @@ include mod
       end
 
       step "apply manifest on agent #{agent.hostname} and assert notify output" do
-        create_test_file(agent, "manifest.pp", <<-MANIFEST)
-        MANIFEST
-      end
-
-      apply_manifest_on(agent, manifest) do |result|
-        assert(result.exit_code == 0, "agent didn't exit properly: (#{result.exit_code})")
-        assert_match(/A foo/, result.stdout, 'agent didn\'t notify correctly')
+        apply_manifest_on(agent, manifest) do |result|
+          assert(result.exit_code == 0, "agent didn't exit properly: (#{result.exit_code})")
+          assert_match(/A foo/, result.stdout, 'agent didn\'t notify correctly')
+        end
       end
     end
   end
