@@ -316,15 +316,9 @@ class HieraConfigV3 < HieraConfig
     when 'array'
       MergeStrategy.strategy(:unique)
     when 'deep', 'deeper'
-      merge = { 'strategy' => key == 'deep' ? 'reverse_deep' : 'deep' }
-      (@config[KEY_DEEP_MERGE_OPTIONS] || EMPTY_HASH).each_pair do |opt_key, value|
-        case opt_key
-        when 'knockout_prefix', 'merge_debug', 'merge_hash_arrays', 'sort_merge_arrays'
-          merge[opt_key] = value
-        else
-          Puppet.warning("#{@config_path}: merge_option '#{opt_key}' is not recognized. Option is ignored")
-        end
-      end
+      merge = { 'strategy' => key == 'deep' ? 'reverse_deep' : 'unconstrained_deep' }
+      dm_options = @config[KEY_DEEP_MERGE_OPTIONS]
+      merge.merge!(dm_options) if dm_options
       MergeStrategy.strategy(merge)
     end
   end

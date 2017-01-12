@@ -658,6 +658,46 @@ describe "The lookup function" do
           expect(lookup('xs.subkey')).to eql('value xs.subkey (from global hocon)')
         end
 
+        context 'using deep_merge_options supported by deep_merge gem but not supported by Puppet' do
+
+          let(:hiera_yaml) do
+            <<-YAML.unindent
+              ---
+              :backends:
+                - yaml
+              :yaml:
+                :datadir: #{code_dir}/hieradata
+              :hierarchy:
+                - other
+                - common
+              :merge_behavior: deeper
+              :deep_merge_options:
+                :unpack_arrays: ','
+              YAML
+          end
+
+          let(:code_dir_files) do
+            {
+              'hiera.yaml' => hiera_yaml,
+              'hieradata' => {
+                'common.yaml' => <<-YAML.unindent,
+                  a:
+                    - x1,x2
+                  YAML
+                'other.yaml' => <<-YAML.unindent,
+                  a:
+                    - x3
+                    - x4
+                  YAML
+              }
+            }
+          end
+
+          it 'honors option :unpack_arrays: (unsupported by puppet)' do
+            expect(lookup('a')).to eql(%w(x1 x2 x3 x4))
+          end
+        end
+
         context 'using relative datadir paths' do
           let(:hiera_yaml) do
             <<-YAML.unindent
