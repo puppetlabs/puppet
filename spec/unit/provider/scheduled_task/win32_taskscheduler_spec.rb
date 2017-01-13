@@ -1954,6 +1954,20 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       end
     end
 
+    def delete_task_with_retry(task, name, attempts = 3)
+      failed = false
+
+      attempts.times do
+        begin
+          task.delete(name) if Win32::TaskScheduler.new.exists?(name)
+        rescue Puppet::Util::Windows::Error
+          failed = true
+        end
+
+        if failed then sleep 1 else break end
+      end
+    end
+
     describe '#exists?' do
       it 'works with Unicode task names' do
         task_name = name + "\u16A0\u16C7\u16BB" # ᚠᛇᚻ
@@ -1965,7 +1979,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           expect(Puppet::FileSystem.exist?("C:\\Windows\\Tasks\\#{task_name}.job")).to be_truthy
           expect(task.exists?(task_name)).to be_truthy
         ensure
-          task.delete(task_name) if Win32::TaskScheduler.new.exists?(task_name)
+          delete_task_with_retry(task, task_name)
         end
       end
 
@@ -1978,7 +1992,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
 
           expect(task.exists?(task_name.downcase)).to be_truthy
         ensure
-          task.delete(task_name) if Win32::TaskScheduler.new.exists?(task_name)
+          delete_task_with_retry(task, task_name)
         end
       end
     end
@@ -2014,7 +2028,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           expect(task.comment).to eq(comment)
           expect(task.creator).to eq(creator)
         ensure
-          task.delete(name) if Win32::TaskScheduler.new.exists?(name)
+          delete_task_with_retry(task, name)
         end
       end
 
@@ -2038,7 +2052,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           # the most appropriate additional validation here would be to confirm settings with schtasks.exe
           # but that test can live inside a system-level acceptance test
         ensure
-          task.delete(name) if Win32::TaskScheduler.new.exists?(name)
+          delete_task_with_retry(task, name)
         end
       end
     end
