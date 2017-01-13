@@ -15,12 +15,12 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
   def self.extended(mod)
     unless command(:pkgget) != "pkg-get"
       raise Puppet::Error,
-        "The pkg-get command is missing; blastwave packaging unavailable"
+        _("The pkg-get command is missing; blastwave packaging unavailable")
     end
 
     unless Puppet::FileSystem.exist?("/var/pkg-get/admin")
-      Puppet.notice "It is highly recommended you create '/var/pkg-get/admin'."
-      Puppet.notice "See /var/pkg-get/admin-fullauto"
+      Puppet.notice _("It is highly recommended you create '/var/pkg-get/admin'.")
+      Puppet.notice _("See /var/pkg-get/admin-fullauto")
     end
   end
 
@@ -77,7 +77,7 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
 
       return hash
     else
-      Puppet.warning "Cannot match #{line}"
+      Puppet.warning _("Cannot match #{line}")
       return nil
     end
   end

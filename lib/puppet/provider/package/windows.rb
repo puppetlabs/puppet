@@ -90,17 +90,17 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
     when self.class::ERROR_SUCCESS
       # yeah
     when self.class::ERROR_SUCCESS_REBOOT_INITIATED
-      warning("The package #{operation}ed successfully and the system is rebooting now.")
+      warning(_("The package #{operation}ed successfully and the system is rebooting now."))
     when self.class::ERROR_SUCCESS_REBOOT_REQUIRED
-      warning("The package #{operation}ed successfully, but the system must be rebooted.")
+      warning(_("The package #{operation}ed successfully, but the system must be rebooted."))
     else
-      raise Puppet::Util::Windows::Error.new("Failed to #{operation}", hr)
+      raise Puppet::Util::Windows::Error.new(_("Failed to #{operation}"), hr)
     end
   end
 
   # This only gets called if there is a value to validate, but not if it's absent
   def validate_source(value)
-    fail("The source parameter cannot be empty when using the Windows provider.") if value.empty?
+    fail(_("The source parameter cannot be empty when using the Windows provider.")) if value.empty?
   end
 
   def install_options
