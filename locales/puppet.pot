@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 4.8.1-179-gda8e14f\n"
+"Project-Id-Version: Puppet automation framework 4.8.1-339-g804805c\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-01-10 15:03-0800\n"
-"PO-Revision-Date: 2017-01-10 15:03-0800\n"
+"POT-Creation-Date: 2017-01-17 15:25-0800\n"
+"PO-Revision-Date: 2017-01-17 15:25-0800\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -316,9 +316,6 @@ msgstr ""
 msgid "\"Could not find Puppet Face #{name.to_s}\""
 msgstr ""
 
-msgid "\"Cannot create face #{name.inspect} with invalid version number '#{version}'!\""
-msgstr ""
-
 msgid "All Rights Reserved"
 msgstr ""
 
@@ -353,6 +350,532 @@ msgid "\"Host is missing hostname and/or domain: #{name}\""
 msgstr ""
 
 msgid "\"Trusted node data modified for node #{name}\""
+msgstr ""
+
+msgid "\"Method not defined #{@resource.class.name} #{@resource.name}: Base AixObject provider doesn't implement lscmd\""
+msgstr ""
+
+msgid "\"Method not defined #{@resource.class.name} #{@resource.name}: Base AixObject provider doesn't implement addcmd\""
+msgstr ""
+
+msgid "\"Method not defined #{@resource.class.name} #{@resource.name}: Base AixObject provider doesn't implement modifycmd\""
+msgstr ""
+
+msgid "\"Method not defined #{@resource.class.name} #{@resource.name}: Base AixObject provider doesn't implement deletecmd\""
+msgstr ""
+
+msgid "Empty key in string 'i'?"
+msgstr ""
+
+msgid "already exists"
+msgstr ""
+
+msgid "\"Could not create #{@resource.class.name} #{@resource.name}: #{detail}\""
+msgstr ""
+
+msgid "already absent"
+msgstr ""
+
+msgid "\"Could not delete #{@resource.class.name} #{@resource.name}: #{detail}\""
+msgstr ""
+
+msgid "\"Trying to update parameter '#{param}' to '#{value}' for a resource that does not exists #{@resource.class.name} #{@resource.name}: #{detail}\""
+msgstr ""
+
+msgid "\"Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}\""
+msgstr ""
+
+msgid "\"Unknown command #{cmd}\""
+msgstr ""
+
+msgid "unmatched ["
+msgstr ""
+
+msgid "\"missing path argument #{narg} for #{cmd}\""
+msgstr ""
+
+msgid "\"missing string argument #{narg} for #{cmd}\""
+msgstr ""
+
+msgid "\"invalid comparator for command #{cmd}\""
+msgstr ""
+
+msgid "\"Invalid command: #{cmd_array.join(\" \")}\""
+msgstr ""
+
+msgid "\"Error trying to get path '#{path}'\""
+msgstr ""
+
+msgid "\"Invalid array in command: #{cmd_array.join(\" \")}\""
+msgstr ""
+
+msgid "\"Error trying to match path '#{path}'\""
+msgstr ""
+
+msgid "Loading failed for one or more files, see debug for /augeas//error output"
+msgstr ""
+
+msgid "\"Error sending command '#{command}' with params #{cmd_array[1..-1].inspect}/#{e.message}\""
+msgstr ""
+
+msgid "Saving failed, see debug"
+msgstr ""
+
+msgid "Save failed, see debug"
+msgstr ""
+
+msgid "\"invalid command #{cmd_array.join[\" \"]}\""
+msgstr ""
+
+msgid "\"Error sending command '#{command}' with params #{cmd_array.inspect}\""
+msgstr ""
+
+msgid "\"command '#{command}' not supported in installed version of ruby-augeas\""
+msgstr ""
+
+msgid "\"Invalid value '#{where}' for where param\""
+msgstr ""
+
+msgid "\"Command '#{command}' is not supported\""
+msgstr ""
+
+msgid "\"Error sending command '#{command}' with params #{cmd_array.inspect}/#{e.message}\""
+msgstr ""
+
+msgid "Command  is missing"
+msgstr ""
+
+msgid "Line got parsed as a crontab entry but cannot be handled. Please file a bug with the contents of your crontab"
+msgstr ""
+
+msgid "no command specified, cannot create"
+msgstr ""
+
+msgid "\"Working directory '#{dir}' does not exist\""
+msgstr ""
+
+msgid "\"Overriding environment setting '#{env_name}' with '#{value}'\""
+msgstr ""
+
+msgid "\"Cannot understand environment setting #{setting.inspect}\""
+msgstr ""
+
+msgid "\"'#{command}' is not qualified and no path was specified. Please qualify the command or specify a path.\""
+msgstr ""
+
+msgid "\"Could not find command '#{exe}'\""
+msgstr ""
+
+msgid "\"'#{exe}' is a #{File.ftype(exe)}, not a file\""
+msgstr ""
+
+msgid "\"'#{exe}' is not executable\""
+msgstr ""
+
+msgid "\"Apparently using negative UID (#{currentvalue}) on a platform that does not consistently handle them\""
+msgstr ""
+
+msgid "\"Failed to set owner to '#{should}': #{detail}\""
+msgstr ""
+
+msgid "\"Apparently using negative GID (#{currentvalue}) on a platform that does not consistently handle them\""
+msgstr ""
+
+msgid "\"Failed to set group to '#{should}': #{detail}\""
+msgstr ""
+
+msgid "\"failed to set mode #{mode} on #{resource[:path]}: #{detail.message}\""
+msgstr ""
+
+msgid "Can only manage owner, group, and mode on filesystems that support Windows ACLs, such as NTFS"
+msgstr ""
+
+msgid "\"Attributes must be a list of pairs key=value on #{@resource.class.name}[#{@resource.name}]\""
+msgstr ""
+
+msgid "GID must be an integer"
+msgstr ""
+
+msgid "\"GID #{@resource.should(:gid).to_s} already exists, use allowdupe to force group creation\""
+msgstr ""
+
+msgid "\"#{n} is a required attribute for hosts\""
+msgstr ""
+
+msgid "\"Cannot parse: #{AuthDB}\""
+msgstr ""
+
+msgid "Must specify auth_type when destroying."
+msgstr ""
+
+msgid "flush requested for unknown type."
+msgstr ""
+
+msgid "\"Error saving #{AuthDB}: #{e}\""
+msgstr ""
+
+msgid "\"Cannot save right to #{tmp.path}: #{e}\""
+msgstr ""
+
+msgid "\"Error writing to: #{AuthDB}\""
+msgstr ""
+
+msgid "\"Cannot find #{resource_name} in auth db\""
+msgstr ""
+
+msgid "\"#{resource[:name]} is unknown type.\""
+msgstr ""
+
+msgid "auth_type required for new resources."
+msgstr ""
+
+msgid "Mailman lists require an administrator email address"
+msgstr ""
+
+msgid "Mailman lists require an administrator password"
+msgstr ""
+
+msgid "\"Could not parse ds_type from resource name '#{name}'.  Specify with ds_type parameter.\""
+msgstr ""
+
+msgid "\"Could not parse ds_name from resource name '#{name}'.  Specify with ds_name parameter.\""
+msgstr ""
+
+#. TRANSLATORS refers to remounting a file system
+msgid "Remounting"
+msgstr ""
+
+msgid "\"Prefetch: Mount[#{result[:name]}]: Field 'device' is missing\""
+msgstr ""
+
+msgid "\"Prefetch: Mount[#{result[:name]}]: Field 'fstype' is missing\""
+msgstr ""
+
+msgid "\"Mount[#{result[:name]}]: Field 'device' must be in the format of <absolute path> or <host>:<absolute path>\""
+msgstr ""
+
+msgid "\"Mount[#{result[:name]}]: Field 'device' is required\""
+msgstr ""
+
+msgid "\"Mount[#{record[:name]}]: Field 'options' is required\""
+msgstr ""
+
+msgid "\"Mount[#{record[:name]}]: Field 'fstype' is required\""
+msgstr ""
+
+msgid "\"Could not understand line #{line} from mount output\""
+msgstr ""
+
+msgid "\"Could not parse configuration for #{resource_type.name}: #{detail}\""
+msgstr ""
+
+msgid "\"Invalid value #{value}: #{@checks[name][:error]}\""
+msgstr ""
+
+msgid "\"Could not get #{@resource_type.name} list from DirectoryService\""
+msgstr ""
+
+msgid "Could not get report.  command execution failed."
+msgstr ""
+
+msgid "OS X 10.7 requires a Salted SHA512 hash password of 136 characters.            Please check your password and try again."
+msgstr ""
+
+msgid "\"Invalid id_type #{id_type}. Only 'uid' and 'gid' supported\""
+msgstr ""
+
+msgid "\"Could not set GeneratedUID for #{@resource.class.name} #{@resource.name}: #{detail}\""
+msgstr ""
+
+msgid "\"Could not remove #{member} from group: #{@resource.name}, #{detail}\""
+msgstr ""
+
+msgid "\"Could not add #{new_member} to group: #{@resource.name}, #{detail}\""
+msgstr ""
+
+msgid "\"Could not perform network device prefetch: #{detail}\""
+msgstr ""
+
+msgid "The aix provider can only be used by root"
+msgstr ""
+
+msgid "\"Failed to uninstall package '#{@resource[:name]}'\""
+msgstr ""
+
+msgid "A directory is required which will be used to find packages"
+msgstr ""
+
+msgid "aix package provider is unable to downgrade packages"
+msgstr ""
+
+msgid "\"Could not list installed Packages: #{detail}\""
+msgstr ""
+
+msgid "Mac OS X PKG DMGs must specify a package source."
+msgstr ""
+
+msgid "Mac OS X PKG DMGs must specify a package name."
+msgstr ""
+
+msgid "Mac OS X packages must specify a package source"
+msgstr ""
+
+msgid "/etc/apt/sources.list contains a cdrom source; not installing.  Use 'allowcdrom' to override this failure."
+msgstr ""
+
+msgid "Could not find latest version"
+msgstr ""
+
+msgid "\"Preseeding #{response} to debconf-set-selections\""
+msgstr ""
+
+msgid "No responsefile specified or non existent, not preseeding anything"
+msgstr ""
+
+msgid "\"Could not find package #{self.name}\""
+msgstr ""
+
+msgid "\"Could not match version '#{version}'\""
+msgstr ""
+
+msgid "Could not match string"
+msgstr ""
+
+msgid "The pkg-get command is missing; blastwave packaging unavailable"
+msgstr ""
+
+msgid "It is highly recommended you create '/var/pkg-get/admin'."
+msgstr ""
+
+msgid "See /var/pkg-get/admin-fullauto"
+msgstr ""
+
+msgid "\"Cannot match #{line}\""
+msgstr ""
+
+msgid "You cannot install dpkg packages without a source"
+msgstr ""
+
+msgid "\"source doesn't contain named package, but #{matches[0]}\""
+msgstr ""
+
+msgid "\"source is defined but does not have trailing slash, ignoring #{@resource[:source]}\""
+msgstr ""
+
+msgid "\"Could not list gems: #{detail}\""
+msgstr ""
+
+msgid "\"Could not match #{desc}\""
+msgstr ""
+
+msgid "\"Invalid source '#{uri}': #{detail}\""
+msgstr ""
+
+msgid "puppet:// URLs are not supported as gem sources"
+msgstr ""
+
+msgid "\"Could not install: #{output.chomp}\""
+msgstr ""
+
+msgid "\"Could not uninstall: #{output.chomp}\""
+msgstr ""
+
+msgid "source must be provided to install HP-UX packages"
+msgstr ""
+
+msgid "\"Unrecognized AIX package type identifier: '#{pkg_type}'\""
+msgstr ""
+
+msgid "An LPP source location is required in 'source'"
+msgstr ""
+
+#. TRANSLATORS Full message: "Unable to find package #{pkg} with version #{version} on lpp_source #{source}"
+msgid "\"Unable to find package '#{pkg}' \""
+msgstr ""
+
+#. TRANSLATORS Full message: "Unable to find package #{pkg} with version #{version} on lpp_source #{source}"
+msgid "\"with version '#{version}' \""
+msgstr ""
+
+msgid "NIM package provider is unable to downgrade packages"
+msgstr ""
+
+msgid "\"Unable to parse output from nimclient showres: line does not match expected package header format:\\n'#{line}'\""
+msgstr ""
+
+msgid "\"Unable to parse output from nimclient showres: package string does not match expected installp package string format:\\n'#{package_string}'\""
+msgstr ""
+
+msgid "\"Unable to parse output from nimclient showres: package string does not match expected rpm package string format:\\n'#{package_string}'\""
+msgstr ""
+
+msgid "\"Unable to parse output from nimclient showres: line does not match expected package line format:\\n'#{line}'\""
+msgstr ""
+
+msgid "\"Unrecognized package type specifier: '#{package_type_flag}' in package line:\\n'#{line}'\""
+msgstr ""
+
+msgid "\"Failed to match line #{line}\""
+msgstr ""
+
+msgid "No valid installpath found in /etc/pkg.conf and no source was set"
+msgstr ""
+
+msgid "You must specify a package source or configure an installpath in /etc/pkg.conf"
+msgstr ""
+
+msgid "\"#{version} is not available for this package\""
+msgstr ""
+
+msgid "Failed to match line %s"
+msgstr ""
+
+msgid "\"Could not find package '#{@resource[:name]}'\""
+msgstr ""
+
+msgid "\"Failed to match line '#{line}'\""
+msgstr ""
+
+msgid "Error getting installed packages"
+msgstr ""
+
+msgid "\"#{resource_name} is a group, but allow_virtual is false.\""
+msgstr ""
+
+msgid "\"Refusing to uninstall package group #{resource_name}, because allow_virtual is false.\""
+msgstr ""
+
+msgid "\"Invalid source '#{source}': #{detail}\""
+msgstr ""
+
+msgid "puppet:// URL is not supported by pacman"
+msgstr ""
+
+msgid "\"Source #{source} is not supported by pacman\""
+msgstr ""
+
+msgid "\"Refusing to install package group #{resource_name}, because allow_virtual is false.\""
+msgstr ""
+
+msgid "Unknown format %s: %s[%s]"
+msgstr ""
+
+msgid "Unknown format %s: %s"
+msgstr ""
+
+msgid "Unknown line format %s: %s"
+msgstr ""
+
+msgid "\"Unable to unfreeze #{r[:out]}\""
+msgstr ""
+
+msgid "\"Implicit version #{should} has #{n} possible matches\""
+msgstr ""
+
+msgid "\"Selecting version '#{p[:ensure]}' for implicit '#{should}'\""
+msgstr ""
+
+msgid "\"Unable to update #{r[:out]}\""
+msgstr ""
+
+msgid "Mac OS X PKG DMGs must specify a source string ending in .dmg or flat .pkg file"
+msgstr ""
+
+msgid "\"No disk entities returned by mount at #{dmg.path}\""
+msgstr ""
+
+msgid "\"declared as absent but unavailable #{@resource.file}:#{resource.line}\""
+msgstr ""
+
+msgid "No candidate to be installed"
+msgstr ""
+
+msgid "It is highly recommended you create '/var/opt/csw/pkgutil/admin'."
+msgstr ""
+
+msgid "See /var/opt/csw/pkgutil"
+msgstr ""
+
+msgid "It is highly recommended that you set 'wgetopts=-nv' in your pkgutil.conf."
+msgstr ""
+
+msgid "Cannot match %s"
+msgstr ""
+
+msgid "Package not in pkgutil catalog: %s"
+msgstr ""
+
+msgid "\"No package found with the specified name [#{not_found_value}]\""
+msgstr ""
+
+msgid "\"More than one package with the specified name [#{search_value}], please use the category parameter to disambiguate\""
+msgstr ""
+
+msgid "\"Could not find package #{@resource[:name]}\""
+msgstr ""
+
+msgid "\"Could not match package info '#{pkgstuff}'\""
+msgstr ""
+
+msgid "\"Could not match version info '#{info}'\""
+msgstr ""
+
+msgid "\"Unexpected output from portversion: #{output}\""
+msgstr ""
+
+msgid "\"portversion.latest() - fatal error with portversion: #{output}\""
+msgstr ""
+
+msgid "Failed to list packages"
+msgstr ""
+
+msgid "RPMs must specify a package source"
+msgstr ""
+
+msgid "\"Unable to get information about package #{@resource[:name]} because of: #{errmsg}\""
+msgstr ""
+
+#. TRANSLATORS Sun refers to the company name, do not translate
+msgid "Sun packages must specify a package source"
+msgstr ""
+
+msgid "\"Package #{self.name} was not present after trying to install it\""
+msgstr ""
+
+msgid "\"The package #{operation}ed successfully and the system is rebooting now.\""
+msgstr ""
+
+msgid "\"The package #{operation}ed successfully, but the system must be rebooted.\""
+msgstr ""
+
+msgid "\"Failed to #{operation}\""
+msgstr ""
+
+msgid "The source parameter cannot be empty when using the Windows provider."
+msgstr ""
+
+msgid "The source parameter is required when using the Windows provider."
+msgstr ""
+
+msgid "\"The source does not exist: '#{resource[:source]}'\""
+msgstr ""
+
+msgid "\"Don't know how to install '#{resource[:source]}'\""
+msgstr ""
+
+msgid "The yum provider can only be used as root"
+msgstr ""
+
+msgid "\"Could not check for updates, '#{command(:cmd)} check-update' exited with #{output.exitstatus}\""
+msgstr ""
+
+msgid "\"Could not find package #{wanted}\""
+msgstr ""
+
+msgid "\"Failed to update to version #{should}, got version #{is[:ensure]} instead\""
+msgstr ""
+
+msgid "\"Could not prefetch #{self.resource_type.name} provider '#{self.name}' target '#{target}': #{detail}. Treating as empty\""
 msgstr ""
 
 msgid "\"Unable to submit report to #{Puppet[:reporturl].to_s} [#{response.code}] #{response.msg}\""

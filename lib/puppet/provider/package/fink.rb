@@ -47,7 +47,7 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
     if output =~ /Candidate:\s+(\S+)\s/
       return $1
     else
-      self.err "Could not find latest version"
+      self.err _("Could not find latest version")
       return nil
     end
   end
@@ -57,11 +57,11 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
   #
   def run_preseed
     if response = @resource[:responsefile] and Puppet::FileSystem.exist?(response)
-      self.info("Preseeding #{response} to debconf-set-selections")
+      self.info(_("Preseeding #{response} to debconf-set-selections"))
 
       preseed response
     else
-      self.info "No responsefile specified or non existent, not preseeding anything"
+      self.info _("No responsefile specified or non existent, not preseeding anything")
     end
   end
 

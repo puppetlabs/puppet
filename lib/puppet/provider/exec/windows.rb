@@ -37,9 +37,9 @@ Puppet::Type.type(:exec).provide :windows, :parent => Puppet::Provider::Exec do
 
     if absolute_path?(exe)
       if !Puppet::FileSystem.exist?(exe)
-        raise ArgumentError, "Could not find command '#{exe}'"
+        raise ArgumentError, _("Could not find command '#{exe}'")
       elsif !File.file?(exe)
-        raise ArgumentError, "'#{exe}' is a #{File.ftype(exe)}, not a file"
+        raise ArgumentError, _("'#{exe}' is a #{File.ftype(exe)}, not a file")
       end
       return
     end
@@ -50,6 +50,6 @@ Puppet::Type.type(:exec).provide :windows, :parent => Puppet::Provider::Exec do
       end
     end
 
-    raise ArgumentError, "Could not find command '#{exe}'"
+    raise ArgumentError, _("Could not find command '#{exe}'")
   end
 end

@@ -98,7 +98,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       begin
         dscl_output = execute(get_exec_preamble("-list"))
       rescue Puppet::ExecutionFailure
-        fail("Could not get #{@resource_type.name} list from DirectoryService")
+        fail(_("Could not get #{@resource_type.name} list from DirectoryService"))
       end
       dscl_output.split("\n")
     end
@@ -157,7 +157,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     begin
       dscl_output = execute(dscl_vector)
     rescue Puppet::ExecutionFailure
-      fail("Could not get report.  command execution failed.")
+      fail(_("Could not get report.  command execution failed."))
     end
 
     dscl_plist = self.parse_dscl_plist_data(dscl_output)
@@ -196,8 +196,8 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     # zeroes. If someone attempts to use a password hash that worked with
     # a previous version of OS X, we will fail early and warn them.
     if password_hash.length != 136
-      fail("OS X 10.7 requires a Salted SHA512 hash password of 136 characters. \
-           Please check your password and try again.")
+      fail(_("OS X 10.7 requires a Salted SHA512 hash password of 136 characters. \
+           Please check your password and try again."))
     end
 
     plist_file = "#{users_plist_dir}/#{resource_name}.plist"
@@ -284,7 +284,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     elsif id_type == 'gid'
       dscl_args << '/Groups' << 'gid'
     else
-      fail("Invalid id_type #{id_type}. Only 'uid' and 'gid' supported")
+      fail(_("Invalid id_type #{id_type}. Only 'uid' and 'gid' supported"))
     end
     dscl_out = dscl(dscl_args)
     # We're ok with throwing away negative uids here.
@@ -333,7 +333,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       guid = guid_plist["dsAttrTypeStandard:#{ns_to_ds_attribute_map[:guid]}"][0]
       self.class.set_password(@resource.name, guid, passphrase)
     rescue Puppet::ExecutionFailure => detail
-      fail("Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}")
+      fail(_("Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}"))
     end
   end
 
@@ -362,7 +362,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       begin
         execute(exec_arg_vector)
       rescue Puppet::ExecutionFailure => detail
-        fail("Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}")
+        fail(_("Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}"))
       end
     end
   end
@@ -389,7 +389,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     begin
       execute(exec_arg_vector)
     rescue Puppet::ExecutionFailure => detail
-      fail("Could not set GeneratedUID for #{@resource.class.name} #{@resource.name}: #{detail}")
+      fail(_("Could not set GeneratedUID for #{@resource.class.name} #{@resource.name}: #{detail}"))
     end
 
     if value = @resource.should(:password) and value != ""
@@ -417,7 +417,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
           begin
             execute(exec_arg_vector)
           rescue Puppet::ExecutionFailure => detail
-            fail("Could not create #{@resource.class.name} #{@resource.name}: #{detail}")
+            fail(_("Could not create #{@resource.class.name} #{@resource.name}: #{detail}"))
           end
         end
       end
@@ -437,7 +437,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
           begin
             execute(cmd)
           rescue Puppet::ExecutionFailure => detail
-            fail("Could not remove #{member} from group: #{@resource.name}, #{detail}")
+            fail(_("Could not remove #{member} from group: #{@resource.name}, #{detail}"))
           end
         end
       end
@@ -451,7 +451,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
         begin
           execute(cmd)
         rescue Puppet::ExecutionFailure => detail
-          fail("Could not add #{new_member} to group: #{@resource.name}, #{detail}")
+          fail(_("Could not add #{new_member} to group: #{@resource.name}, #{detail}"))
         end
       end
     end

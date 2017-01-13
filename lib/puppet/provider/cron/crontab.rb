@@ -48,7 +48,7 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
           end
         end
       else
-        raise Puppet::Error, "Line got parsed as a crontab entry but cannot be handled. Please file a bug with the contents of your crontab"
+        raise Puppet::Error, _("Line got parsed as a crontab entry but cannot be handled. Please file a bug with the contents of your crontab")
       end
       record
     end
@@ -93,7 +93,7 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
     if resource.should(:command) then
       super
     else
-      resource.err "no command specified, cannot create"
+      resource.err _("no command specified, cannot create")
     end
   end
 

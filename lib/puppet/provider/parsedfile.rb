@@ -265,7 +265,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
       target_records = retrieve(target)
     rescue Puppet::Util::FileType::FileReadError => detail
       puts detail.backtrace if Puppet[:trace]
-      Puppet.err "Could not prefetch #{self.resource_type.name} provider '#{self.name}' target '#{target}': #{detail}. Treating as empty"
+      Puppet.err _("Could not prefetch #{self.resource_type.name} provider '#{self.name}' target '#{target}': #{detail}. Treating as empty")
       target_records = []
     end
 
