@@ -512,6 +512,10 @@ describe Puppet::Util::Execution do
         Puppet::Util::Execution.expects(:debug).with("Executing with uid=100 gid=mygroup: 'echo hello'")
         Puppet::Util::Execution.execute('echo hello', {:uid => 100, :gid => 'mygroup'})
       end
+      it 'should redact commands in debug output when passed sensitive option' do
+        Puppet::Util::Execution.expects(:debug).with("Executing: '[redacted]'")
+        Puppet::Util::Execution.execute('echo hello', {:sensitive => true})
+      end
     end
 
     describe "after execution" do
@@ -585,6 +589,14 @@ describe Puppet::Util::Execution do
         expect {
           subject.execute('fail command', :failonfail => true)
         }.to raise_error(Puppet::ExecutionFailure, /Execution of 'fail command' returned 1/)
+      end
+
+      it "should raise an error with redacted sensitive command if failonfail is true and the child failed" do
+        stub_process_wait(1)
+
+        expect {
+          subject.execute('fail command', :failonfail => true, :sensitive => true)
+        }.to raise_error(Puppet::ExecutionFailure, /Execution of '\[redacted]' returned 1/)
       end
 
       it "should not raise an error if failonfail is false and the child failed" do

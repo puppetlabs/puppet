@@ -67,7 +67,12 @@ describe Puppet::Type.type(:exec) do
 
       it "should report a failure" do
         expect { exec_tester('false', 1).refresh }.
-          to raise_error(Puppet::Error, /^false returned 1 instead of/)
+          to raise_error(Puppet::Error, /^'false' returned 1 instead of/)
+      end
+
+      it "should redact sensitive commands on failure" do
+        expect { exec_tester('false', 1, :sensitive_parameters => [:command]).refresh }.
+            to raise_error(Puppet::Error, /^\[command redacted\] returned 1 instead of/)
       end
 
       it "should not report a failure if the exit status is specified in a returns array" do
@@ -76,7 +81,12 @@ describe Puppet::Type.type(:exec) do
 
       it "should report a failure if the exit status is not specified in a returns array" do
         expect { exec_tester('false', 1, :returns => [0, 100]).refresh }.
-          to raise_error(Puppet::Error, /^false returned 1 instead of/)
+          to raise_error(Puppet::Error, /^'false' returned 1 instead of/)
+      end
+
+      it "should report redact sensitive commands if the exit status is not specified in a returns array" do
+        expect { exec_tester('false', 1, :returns => [0, 100], :sensitive_parameters => [:command]).refresh }.
+            to raise_error(Puppet::Error, /^\[command redacted\] returned 1 instead of/)
       end
 
       it "should log the output on success" do
@@ -106,7 +116,19 @@ describe Puppet::Type.type(:exec) do
       it "should log the output on failure" do
         output = "output1\noutput2\n"
         expect { exec_tester('false', 1, :output => output, :logoutput => :on_failure).refresh }.
-          to raise_error(Puppet::Error, /^false returned 1 instead of/)
+          to raise_error(Puppet::Error, /^'false' returned 1 instead of/)
+
+        output.split("\n").each do |line|
+          log = @logs.shift
+          expect(log.level).to eq(:err)
+          expect(log.message).to eq(line)
+        end
+      end
+
+      it "should redact the command on failure" do
+        output = "output1\noutput2\n"
+        expect { exec_tester('false', 1, :output => output, :logoutput => :on_failure, :sensitive_parameters => [:command]).refresh }.
+            to raise_error(Puppet::Error, /^\[command redacted\] returned 1 instead of/)
 
         output.split("\n").each do |line|
           log = @logs.shift
@@ -121,7 +143,22 @@ describe Puppet::Type.type(:exec) do
         expect {
           exec_tester('false', 1, :output => output, :returns => [0, 100],
                :logoutput => :on_failure).refresh
-        }.to raise_error(Puppet::Error, /^false returned 1 instead of/)
+        }.to raise_error(Puppet::Error, /^'false' returned 1 instead of/)
+
+        output.split("\n").each do |line|
+          log = @logs.shift
+          expect(log.level).to eq(:err)
+          expect(log.message).to eq(line)
+        end
+      end
+
+      it "should redact the command on failure when returns is specified as an array" do
+        output = "output1\noutput2\n"
+
+        expect {
+          exec_tester('false', 1, :output => output, :returns => [0, 100],
+                      :logoutput => :on_failure, :sensitive_parameters => [:command]).refresh
+        }.to raise_error(Puppet::Error, /^\[command redacted\] returned 1 instead of/)
 
         output.split("\n").each do |line|
           log = @logs.shift
