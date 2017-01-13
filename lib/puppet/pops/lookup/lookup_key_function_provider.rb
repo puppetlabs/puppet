@@ -36,7 +36,7 @@ class LookupKeyFunctionProvider < FunctionProvider
   private
 
   def lookup_key(key, lookup_invocation, location, merge)
-    unless location.nil? || location.exists?
+    unless location.nil? || location.exist?
       lookup_invocation.report_location_not_found
       throw :no_such_key
     end

@@ -1041,6 +1041,43 @@ describe "The lookup function" do
         end
       end
 
+      context 'using a lookup_key that uses a path' do
+        let(:mod_a_files) do
+          {
+            'mod_a' => {
+              'functions' => {
+                'pp_lookup_key.pp' => <<-PUPPET.unindent
+                  function mod_a::pp_lookup_key($key, $options, $context) {
+                    if !$context.cache_has_key(undef) {
+                      $context.cache_all(yaml_data($options, $context))
+                      $context.cache(undef, true)
+                    }
+                    if $context.cache_has_key($key) { $context.cached_value($key) } else { $context.not_found }
+                  }
+                  PUPPET
+              },
+              'hiera.yaml' => <<-YAML.unindent,
+                ---
+                version: 5
+                hierarchy:
+                  - name: "Common"
+                    lookup_key: mod_a::pp_lookup_key
+                    path: common.yaml
+                YAML
+              'data' => {
+                'common.yaml' => <<-YAML.unindent
+                  mod_a::b: value mod_a::b (from mod_a)
+                  YAML
+              }
+            }
+          }
+        end
+
+        it 'finds data in the module' do
+          expect(lookup('mod_a::b')).to eql('value mod_a::b (from mod_a)')
+        end
+      end
+
       context 'using a lookup_key that is a puppet function' do
         let(:mod_a_files) do
           {
