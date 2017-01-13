@@ -13,40 +13,49 @@ describe "The lookup function" do
     let(:env_name) { 'spec' }
     let(:code_dir_files) { {} }
     let(:code_dir) { tmpdir('code') }
+    let(:env_modules) { {} }
+    let(:env_hiera_yaml) do
+      <<-YAML.unindent
+        ---
+        version: 5
+        hierarchy:
+          - name: "Common"
+            data_hash: yaml_data
+            path: "common.yaml"
+        YAML
+    end
+
+    let(:env_data) do
+      {
+        'common.yaml' => <<-YAML.unindent
+          ---
+          a: value a
+          mod_a::a: value mod_a::a (from environment)
+          mod_a::hash_a:
+            a: value mod_a::hash_a.a (from environment)
+          mod_a::hash_b:
+            a: value mod_a::hash_b.a (from environment)
+          hash_b:
+            hash_ba:
+              bab: value hash_b.hash_ba.bab (from environment)
+          hash_c:
+            hash_ca:
+              caa: value hash_c.hash_ca.caa (from environment)
+          lookup_options:
+            mod_a::hash_b:
+              merge: hash
+            hash_c:
+              merge: hash
+          YAML
+        }
+    end
+
     let(:environment_files) do
       {
         env_name => {
-          'modules' => {},
-          'hiera.yaml' => <<-YAML.unindent,
-          ---
-          version: 5
-          hierarchy:
-            - name: "Common"
-              data_hash: yaml_data
-              path: "common.yaml"
-        YAML
-        'data' => {
-          'common.yaml' => <<-YAML.unindent
-            ---
-            a: value a
-            mod_a::a: value mod_a::a (from environment)
-            mod_a::hash_a:
-              a: value mod_a::hash_a.a (from environment)
-            mod_a::hash_b:
-              a: value mod_a::hash_b.a (from environment)
-            hash_b:
-              hash_ba:
-                bab: value hash_b.hash_ba.bab (from environment)
-            hash_c:
-              hash_ca:
-                caa: value hash_c.hash_ca.caa (from environment)
-            lookup_options:
-              mod_a::hash_b:
-                merge: hash
-              hash_c:
-                merge: hash
-            YAML
-          }
+          'modules' => env_modules,
+          'hiera.yaml' => env_hiera_yaml,
+          'data' => env_data
         }
       }
     end
@@ -155,13 +164,7 @@ describe "The lookup function" do
       let(:environment_files) do
         {
           env_name => {
-            'modules' => {},
-            'data' => {
-              'common.yaml' => <<-YAML.unindent
-              ---
-              a: value a
-            YAML
-            }
+            'data' => env_data
           }
         }
       end
@@ -171,13 +174,13 @@ describe "The lookup function" do
       end
 
       context "but an environment.conf with 'environment_data_provider=hiera'" do
-        let(:environment_files_1) do
-          DeepMerge.deep_merge!(environment_files, 'environment.conf' => "environment_data_provider=hiera\n")
-        end
-
-        let(:populated_env_dir) do
-          dir_contained_in(env_dir, DeepMerge.deep_merge!(environment_files, env_name => environment_files_1))
-          env_dir
+        let(:environment_files) do
+          {
+            env_name => {
+              'environment.conf' => "environment_data_provider=hiera\n",
+              'data' => env_data
+            }
+          }
         end
 
         it 'finds data in the environment and reports deprecation warning for environment.conf' do
@@ -186,17 +189,24 @@ describe "The lookup function" do
         end
 
         context 'and a hiera.yaml file' do
-          let(:environment_files_2) { DeepMerge.deep_merge!(environment_files_1,'hiera.yaml' => <<-YAML.unindent) }
-            ---
-            version: 4
-            hierarchy:
-              - name: common
-                backend: yaml
-            YAML
+          let(:env_hiera_yaml) do
+            <<-YAML.unindent
+              ---
+              version: 4
+              hierarchy:
+                - name: common
+                  backend: yaml
+              YAML
+          end
 
-          let(:populated_env_dir) do
-            dir_contained_in(env_dir, DeepMerge.deep_merge!(environment_files, env_name => environment_files_2))
-            env_dir
+          let(:environment_files) do
+            {
+              env_name => {
+                'hiera.yaml' => env_hiera_yaml,
+                'environment.conf' => "environment_data_provider=hiera\n",
+                'data' => env_data
+              }
+            }
           end
 
           it 'finds data in the environment and reports deprecation warnings for both environment.conf and hiera.yaml' do
@@ -232,18 +242,21 @@ describe "The lookup function" do
     end
 
     context 'that has interpolated paths configured' do
+      let(:env_hiera_yaml) do
+        <<-YAML.unindent
+          ---
+          version: 5
+          hierarchy:
+            - name: "Varying"
+              data_hash: yaml_data
+              path: "x%{::var}.yaml"
+          YAML
+      end
+
       let(:environment_files) do
         {
           env_name => {
-            'hiera.yaml' => <<-YAML.unindent,
-              ---
-              version: 5
-              hierarchy:
-                - name: "Varying"
-                  data_hash: yaml_data
-                  path: "x%{::var}.yaml"
-              YAML
-            'modules' => {},
+            'hiera.yaml' => env_hiera_yaml,
             'data' => {
               'x.yaml' => <<-YAML.unindent,
                 y: value y from x
@@ -300,20 +313,27 @@ describe "The lookup function" do
         }
       end
 
-      let(:environment_files) do
+      let(:env_modules) do
         {
-          env_name => {
-            'hiera.yaml' => <<-YAML.unindent,
-              ---
-              version: 5
-              hierarchy:
-                - name: X
-                  paths:
-                  - first.yaml
-                  - second.yaml
-              YAML
-            'data' => {
-              'first.yaml' => <<-YAML.unindent,
+          'mod' => mod_base
+        }
+      end
+
+      let(:env_hiera_yaml) do
+        <<-YAML.unindent
+          ---
+          version: 5
+          hierarchy:
+            - name: X
+              paths:
+              - first.yaml
+              - second.yaml
+          YAML
+      end
+
+      let(:env_data) do
+        {
+          'first.yaml' => <<-YAML.unindent,
                 a:
                   aa:
                     aaa: a.aa.aaa
@@ -347,8 +367,8 @@ describe "The lookup function" do
                      merge: first
                   '^mod::ha.*_b':
                     merge: hash
-                YAML
-              'second.yaml' => <<-YAML.unindent,
+        YAML
+        'second.yaml' => <<-YAML.unindent,
                 a:
                   aa:
                     aab: a.aa.aab
@@ -360,12 +380,7 @@ describe "The lookup function" do
                 c:
                   ca:
                     cab: c.ca.cab
-                YAML
-            },
-            'modules' => {
-              'mod' => mod_base
-            }
-          }
+        YAML
         }
       end
 
@@ -450,15 +465,11 @@ describe "The lookup function" do
     end
 
     context 'and an environment Hiera v3 configuration' do
-      let(:environment_files) do
-        {
-          env_name => {
-            'hiera.yaml' => <<-YAML.unindent,
-              ---
-              :backends: yaml
+      let(:env_hiera_yaml) do
+        <<-YAML.unindent
+          ---
+          :backends: yaml
           YAML
-          }
-        }
       end
 
       it 'raises an error' do
@@ -772,7 +783,7 @@ describe "The lookup function" do
               YAML
         end
 
-        it 'finds data in the environment and reports no deprecation warnings' do
+        it 'finds global data and reports no deprecation warnings' do
           expect(lookup('a')).to eql('value a (from global)')
           expect(warnings).to be_empty
         end
