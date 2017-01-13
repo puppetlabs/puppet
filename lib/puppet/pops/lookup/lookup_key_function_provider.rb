@@ -36,7 +36,7 @@ class LookupKeyFunctionProvider < FunctionProvider
   private
 
   def lookup_key(key, lookup_invocation, location, merge)
-    unless location.nil? || location.exists?
+    unless location.nil? || location.exist?
       lookup_invocation.report_location_not_found
       throw :no_such_key
     end
@@ -53,7 +53,7 @@ class LookupKeyFunctionProvider < FunctionProvider
 end
 
 class V3BackendFunctionProvider < LookupKeyFunctionProvider
-  TAG = 'v3_backend'.freeze
+  TAG = 'hiera3_backend'.freeze
 
   def lookup_key(key, lookup_invocation, location, merge)
     @backend ||= instantiate_backend(lookup_invocation)
@@ -63,16 +63,17 @@ class V3BackendFunctionProvider < LookupKeyFunctionProvider
   private
 
   def instantiate_backend(lookup_invocation)
+    backend_name = options[HieraConfig::KEY_BACKEND]
     begin
       require 'hiera/backend'
-      require "hiera/backend/#{@name.downcase}_backend"
-      backend = Hiera::Backend.const_get("#{@name.capitalize}_backend").new
+      require "hiera/backend/#{backend_name.downcase}_backend"
+      backend = Hiera::Backend.const_get("#{backend_name.capitalize}_backend").new
       return backend.method(:lookup).arity == 4 ? Hiera::Backend::Backend1xWrapper.new(backend) : backend
     rescue LoadError => e
-      lookup_invocation.report_text { "Unable to load backend '#{@name}': #{e.message}" }
+      lookup_invocation.report_text { "Unable to load backend '#{backend_name}': #{e.message}" }
       throw :no_such_key
     rescue NameError => e
-      lookup_invocation.report_text { "Unable to instantiate backend '#{@name}': #{e.message}" }
+      lookup_invocation.report_text { "Unable to instantiate backend '#{backend_name}': #{e.message}" }
       throw :no_such_key
     end
   end
@@ -84,7 +85,7 @@ class V3BackendFunctionProvider < LookupKeyFunctionProvider
   def convert_merge(merge)
     case merge
     when nil
-    when 'first'
+    when 'first', 'default'
       # Nil is OK. Defaults to Hiera :priority
       nil
     when Puppet::Pops::MergeStrategy

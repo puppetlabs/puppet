@@ -16,15 +16,14 @@ class FunctionProvider
     @function_name = function_name
     @options = options
     @locations = locations || [nil]
+    @contexts = {}
   end
 
   # @return [FunctionContext] the function context associated with this provider
   def function_context(lookup_invocation, location)
     scope = lookup_invocation.scope
     compiler = scope.compiler
-    adapter = DataAdapter.get(compiler) || DataAdapter.adapt(compiler)
-    key = location.nil? ? object_id : "#{object_id}:#{location}"
-    adapter[key] ||= FunctionContext.new(compiler.environment.name, module_name, function(scope))
+    @contexts[location] ||= FunctionContext.new(compiler.environment.name, module_name, function(scope))
   end
 
   def module_name

@@ -42,7 +42,7 @@ module Puppet::Pops
     # @return [Array<Symbol>] List of strategy keys
     #
     def self.strategy_keys
-      strategies.keys - [:default, :reverse_deep]
+      strategies.keys - [:default, :unconstrained_deep, :reverse_deep]
     end
 
     # Adds a new merge strategy to the map of strategies known to this class
@@ -386,9 +386,24 @@ module Puppet::Pops
     MergeStrategy.add_strategy(self)
   end
 
-  # Same as {DeepMergeStrategy} but the with reverse priority of merged elements.
+  # Same as {DeepMergeStrategy} but without constraint on valid merge options
   # (needed for backward compatibility with Hiera v3)
-  class ReverseDeepMergeStrategy < MergeStrategy
+  class UnconstrainedDeepMergeStrategy < DeepMergeStrategy
+    def self.key
+      :unconstrained_deep
+    end
+
+    # @return [Types::PAnyType] the puppet type used when validating the options hash
+    def self.options_t
+      @options_t ||= Types::TypeParser.singleton.parse('Hash[String[1],Any]')
+    end
+
+    MergeStrategy.add_strategy(self)
+  end
+
+  # Same as {UnconstrainedDeepMergeStrategy} but with reverse priority of merged elements.
+  # (needed for backward compatibility with Hiera v3)
+  class ReverseDeepMergeStrategy < UnconstrainedDeepMergeStrategy
     INSTANCE = self.new(EMPTY_HASH)
 
     def self.key

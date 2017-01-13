@@ -1,16 +1,14 @@
-test_name 'C99044 lookup should allow rich data as values' do
+test_name 'C99044: lookup should allow rich data as values' do
   require 'puppet/acceptance/environment_utils.rb'
   extend Puppet::Acceptance::EnvironmentUtils
 
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type)
   fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"
-  tmp_environment2 = mk_tmp_environment_with_teardown(master, app_type)
-  fq_tmp_environmentpath2  = "#{environmentpath}/#{tmp_environment2}"
 
   sensitive_value_rb = 'foot, no mouth'
   sensitive_value_pp = 'toe, no step'
-
+  sensitive_value_pp2 = 'toe, no module'
 
   step "create ruby lookup function in #{tmp_environment}" do
     on(master, "mkdir -p #{fq_tmp_environmentpath}/lib/puppet/functions/environment")
@@ -20,6 +18,10 @@ version: 5
 hierarchy:
   - name: Test
     data_hash: rich_data_test
+  - name: Test2
+    data_hash: some_mod::rich_data_test2
+  - name: Test3
+    data_hash: rich_data_test3
   HIERA
     create_remote_file(master, "#{fq_tmp_environmentpath}/lib/puppet/functions/rich_data_test.rb", <<-FUNC)
 Puppet::Functions.create_function(:rich_data_test) do
@@ -31,34 +33,39 @@ Puppet::Functions.create_function(:rich_data_test) do
   end
 end
     FUNC
-    create_sitepp(master, tmp_environment, <<-SITE)
-      notify { "${unwrap(lookup('environment_key'))}": }
-    SITE
-    on(master, "chmod -R a+rw #{fq_tmp_environmentpath}")
   end
 
-  step "create puppet lookup function in #{tmp_environment2}" do
-    on(master, "mkdir -p #{fq_tmp_environmentpath2}/functions #{fq_tmp_environmentpath2}/modules/some_mod/functions")
-    create_remote_file(master, "#{fq_tmp_environmentpath2}/hiera.yaml", <<-HIERA)
----
-version: 5
-hierarchy:
-  - name: Test
-    data_hash: some_mod::rich_data_test
-  HIERA
-    create_remote_file(master, "#{fq_tmp_environmentpath2}/modules/some_mod/functions/rich_data_test.pp", <<-FUNC)
-function some_mod::rich_data_test($options, $context) {
+  step "create puppet language lookup function in #{tmp_environment} module" do
+    on(master, "mkdir -p #{fq_tmp_environmentpath}/modules/some_mod/functions")
+    create_remote_file(master, "#{fq_tmp_environmentpath}/modules/some_mod/functions/rich_data_test2.pp", <<-FUNC)
+function some_mod::rich_data_test2($options, $context) {
   {
-    "environment_key" => Sensitive('#{sensitive_value_pp}'),
+    "environment_key2" => Sensitive('#{sensitive_value_pp}'),
   }
 }
     FUNC
-    create_sitepp(master, tmp_environment2, <<-SITE)
-      notify { "${unwrap(lookup('environment_key'))}": }
-    SITE
-    on(master, "chmod -R a+rw #{fq_tmp_environmentpath2}")
+    on(master, "chmod -R a+rw #{fq_tmp_environmentpath}")
   end
-  #TODO: put the functions in modules as well
+
+  step "C99571: create puppet language lookup function in #{tmp_environment}" do
+    on(master, "mkdir -p #{fq_tmp_environmentpath}/functions")
+    create_remote_file(master, "#{fq_tmp_environmentpath}/functions/rich_data_test3.pp", <<-FUNC)
+function rich_data_test3($options, $context) {
+  {
+    "environment_key3" => Sensitive('#{sensitive_value_pp2}'),
+  }
+}
+    FUNC
+    on(master, "chmod -R a+rw #{fq_tmp_environmentpath}")
+  end
+
+  step "create site.pp which calls lookup on our keys" do
+    create_sitepp(master, tmp_environment, <<-SITE)
+      notify { "${unwrap(lookup('environment_key'))}": }
+      notify { "${unwrap(lookup('environment_key2'))}": }
+      notify { "${unwrap(lookup('environment_key3'))}": }
+    SITE
+  end
 
   step 'assert lookups using lookup subcommand' do
     on(master, puppet('lookup', "--environment #{tmp_environment}", 'environment_key'), :accept_all_exit_codes => true) do |result|
@@ -66,9 +73,14 @@ function some_mod::rich_data_test($options, $context) {
       assert_match(sensitive_value_rb, result.stdout,
                    "lookup subcommand using ruby function didn't find correct key")
     end
-    on(master, puppet('lookup', "--environment #{tmp_environment2}", 'environment_key'), :accept_all_exit_codes => true) do |result|
-      assert(result.exit_code == 0, "lookup subcommand using puppet function didn't exit properly: (#{result.exit_code})")
+    on(master, puppet('lookup', "--environment #{tmp_environment}", 'environment_key2'), :accept_all_exit_codes => true) do |result|
+      assert(result.exit_code == 0, "lookup subcommand using puppet function in module didn't exit properly: (#{result.exit_code})")
       assert_match(sensitive_value_pp, result.stdout,
+                   "lookup subcommand using puppet function in module didn't find correct key")
+    end
+    on(master, puppet('lookup', "--environment #{tmp_environment}", 'environment_key3'), :accept_all_exit_codes => true) do |result|
+      assert(result.exit_code == 0, "lookup subcommand using puppet function didn't exit properly: (#{result.exit_code})")
+      assert_match(sensitive_value_pp2, result.stdout,
                    "lookup subcommand using puppet function didn't find correct key")
     end
   end
@@ -81,13 +93,9 @@ function some_mod::rich_data_test($options, $context) {
           assert(result.exit_code == 2, "agent lookup using ruby function didn't exit properly: (#{result.exit_code})")
           assert_match(sensitive_value_rb, result.stdout,
                        "agent lookup using ruby function didn't find correct key")
-        end
-      end
-      step "agent lookup in puppet function" do
-        on(agent, puppet('agent', "-t  --server #{master.hostname} --environment #{tmp_environment2}"),
-           :accept_all_exit_codes => true) do |result|
-          assert(result.exit_code == 2, "agent lookup using puppet function didn't exit properly: (#{result.exit_code})")
           assert_match(sensitive_value_pp, result.stdout,
+                       "agent lookup using puppet function in module didn't find correct key")
+          assert_match(sensitive_value_pp2, result.stdout,
                        "agent lookup using puppet function didn't find correct key")
         end
       end

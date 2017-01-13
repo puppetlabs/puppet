@@ -1,9 +1,12 @@
 class Hiera
   class Scope
-    CALLING_CLASS = "calling_class"
-    CALLING_CLASS_PATH = "calling_class_path"
-    CALLING_MODULE = "calling_module"
-    MODULE_NAME = "module_name"
+    CALLING_CLASS = 'calling_class'.freeze
+    CALLING_CLASS_PATH = 'calling_class_path'.freeze
+    CALLING_MODULE = 'calling_module'.freeze
+    MODULE_NAME = 'module_name'.freeze
+
+    CALLING_KEYS = [CALLING_CLASS, CALLING_CLASS_PATH, CALLING_MODULE].freeze
+    EMPTY_STRING = ''.freeze
 
     attr_reader :real
 
@@ -21,20 +24,15 @@ class Hiera
       else
         ans = @real.lookupvar(key)
       end
+      ans == EMPTY_STRING ? nil : ans
+    end
 
-      if ans.nil? or ans == ""
-        nil
-      else
-        ans
-      end
+    def exist?(key)
+      CALLING_KEYS.include?(key) || @real.exist?(key)
     end
 
     def include?(key)
-      if [CALLING_CLASS, CALLING_CLASS_PATH, CALLING_MODULE].include? key
-        true
-      else
-        @real.exist?(key)
-      end
+      CALLING_KEYS.include?(key) || @real.include?(key)
     end
 
     def catalog
