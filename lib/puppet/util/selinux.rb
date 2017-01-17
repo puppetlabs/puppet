@@ -137,6 +137,42 @@ module Puppet::Util::SELinux
     nil
   end
 
+  ##
+  # selinux_category_to_label is an internal method that converts all
+  # selinux categories to their internal representation, avoiding
+  # potential issues when mcstransd is not functional.
+  #
+  # It is not marked private because it is needed by File's
+  # selcontext.rb, but it is not intended for use outside of Puppet's
+  # code.
+  #
+  # @param category [String] An selinux category, such as "s0" or "SystemLow"
+  #
+  # @return [String] the numeric category name, such as "s0"
+  def selinux_category_to_label(category)
+    # We don't cache this, but there's already a ton of duplicate work
+    # in the selinux handling code.
+
+    path = Selinux.selinux_translations_path
+    begin
+      File.open(path).each do |line|
+        line.strip!
+        next if line.empty?
+        next if line[0] == "#" # skip comments
+        line.gsub!(/[[:space:]]+/m, '')
+        mapping = line.split("=", 2)
+        if category == mapping[1]
+          return mapping[0]
+        end
+      end
+    rescue SystemCallError => ex
+      log_exception(ex)
+      raise Puppet::Error, _("Could not open SELinux category translation file %{path}.") % { context: context }
+    end
+
+    category
+  end
+
   ########################################################################
   # Internal helper methods from here on in, kids.  Don't fiddle.
   private
