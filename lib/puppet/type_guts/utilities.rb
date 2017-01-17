@@ -1,8 +1,9 @@
+# -*- coding: utf-8 -*-
+
 # this file contains a couple of utility functions that didn't fit anywhere else, and seem reasonably benign.
 
 module Puppet
   class Type
-    include Enumerable
 
     # Returns a string representation of the resource's containment path in
     # the catalog.
@@ -179,6 +180,5 @@ module Puppet
     def to_s
       self.ref
     end
-
   end
 end

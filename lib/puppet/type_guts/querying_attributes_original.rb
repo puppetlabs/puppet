@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # Types: all, metaparam, param, property
 # Queries: list, class, ?, doc, each, by_name
 # Results: [name*], Class, is X?, docstring, yield obj, obj
@@ -163,7 +165,6 @@ module Puppet
     def eachparameter
       parameters_with_value.each { |parameter| yield parameter }
     end
-
 
     # Returns the value of this object's parameter given by name
     # @param name [String] the name of the parameter

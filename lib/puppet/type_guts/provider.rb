@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # All of the provider plumbing for the resource types.
 
 module Puppet
@@ -313,6 +315,16 @@ module Puppet
         sources << provider.source
         provider
       end.compact
+    end
+
+    # Flushes the provider if supported by the provider, else no action.
+    # This is called by the transaction.
+    # @todo What does Flushing the provider mean? Why is it interesting to know that this is
+    #   called by the transaction? (It is not explained anywhere what a transaction is).
+    #
+    # @return [???, nil] WHAT DOES IT RETURN? GUESS IS VOID
+    def flush
+      self.provider.flush if self.provider and self.provider.respond_to?(:flush)
     end
   end
 end

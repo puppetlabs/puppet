@@ -1,6 +1,7 @@
+# -*- coding: utf-8 -*-
+
 module Puppet
   class Type
-
     # Allow declaring that a type is actually a capability
     class << self
       attr_accessor :is_capability
@@ -19,6 +20,5 @@ module Puppet
     def self.application?
       false
     end
-
   end
 end

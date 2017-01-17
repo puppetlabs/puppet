@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 module Puppet
   class Type
     newmetaparam(:noop) do

@@ -1,6 +1,16 @@
+# -*- coding: utf-8 -*-
+
 # Code related to creating resource type attributes.
 
 module Puppet
+  # @comment Types (which map to resources in the languages) are entirely composed of
+  #   attribute value pairs.  Generally, Puppet calls any of these things an
+  #   'attribute', but these attributes always take one of three specific
+  #   forms:  parameters, metaparams, or properties.
+
+  # @comment In naming methods, I have tried to consistently name the method so
+  #   that it is clear whether it operates on all attributes (thus has 'attr' in
+  #   the method name, or whether it operates on a specific type of attributes.
   class Type
     class << self
       include Puppet::Util::ClassGen
@@ -259,5 +269,21 @@ module Puppet
       false
     end
 
+    # Removes an attribute from the object; useful in testing or in cleanup
+    # when an error has been encountered
+    # @todo Don't know what the attr is (name or Property/Parameter?). Guessing it is a String name...
+    # @todo Is it possible to delete a meta-parameter?
+    # @todo What does delete mean? Is it deleted from the type or is its value state 'is'/'should' deleted?
+    # @param attr [String] the attribute to delete from this object. WHAT IS THE TYPE?
+    # @raise [Puppet::DecError] when an attempt is made to delete an attribute that does not exists.
+    #
+    def delete(attr)
+      attr = attr.intern
+      if @parameters.has_key?(attr)
+        @parameters.delete(attr)
+      else
+        raise Puppet::DevError.new("Undefined attribute '#{attr}' in #{self}")
+      end
+    end
   end
 end

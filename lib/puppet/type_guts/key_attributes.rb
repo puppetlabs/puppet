@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 module Puppet
   class Type
     # @return [Symbol, Boolean] Returns the name of the namevar if there is only one or false otherwise.

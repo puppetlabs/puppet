@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 module Puppet
   class Type
     # Adds a block producing a single name (or list of names) of the given
