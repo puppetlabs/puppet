@@ -784,7 +784,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       it "[n] gets class parameter [n]" do
         source = "class wonka($produces='chocolate'){ }
            include wonka
-           Class[wonka][produces]"
+           Class[wonka]['produces']"
 
         # This is more complicated since it needs to run like 3.x and do an import_ast
         adapted_parser = Puppet::Parser::E4ParserAdapter.new

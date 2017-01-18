@@ -229,30 +229,6 @@ describe "validating 4x" do
     end
   end
 
-  context 'for future reserved words' do
-    ['application', 'produces', 'consumes'].each do |word|
-      it "produces an issue for the word '#{word}'" do
-        source = "$a = #{word}"
-        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::FUTURE_RESERVED_WORD)
-      end
-
-      it 'produces a warning issue when used as a class name' do
-        source = "class #{word} {}"
-        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::FUTURE_RESERVED_WORD)
-      end
-
-      it 'produces no warning or error when used as a parameter name' do
-        source = "define foo($#{word}) { notice $#{word} }"
-        expect(validate(parse(source)).diagnostics.empty?).to eq(true)
-      end
-
-      it 'produces no warning or error when used as an attribute name' do
-        source = "foo { bar: #{word} => ok }"
-        expect(validate(parse(source)).diagnostics.empty?).to eq(true)
-      end
-    end
-  end
-
   context 'for reserved type names' do
     [# type/Type, is a reserved name but results in syntax error because it is a keyword in lower case form
     'any',
