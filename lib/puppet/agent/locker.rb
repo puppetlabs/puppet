@@ -23,13 +23,13 @@ module Puppet::Agent::Locker
         lockfile.unlock
       end
     else
-      fail Puppet::LockError, 'Failed to acquire lock'
+      fail Puppet::LockError, _('Failed to acquire lock')
     end
   end
 
   # @deprecated
   def running?
-    Puppet.deprecation_warning <<-ENDHEREDOC
+    Puppet.deprecation_warning _(<<-ENDHEREDOC)
 Puppet::Agent::Locker.running? is deprecated as it is inherently unsafe.
 The only safe way to know if the lock is locked is to try lock and perform some
 action and then handle the LockError that may result.
