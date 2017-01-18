@@ -31,7 +31,7 @@ Puppet::Type.newtype(:scheduled_task) do
     desc "The full path to the application to run, without any arguments."
 
     validate do |value|
-      raise Puppet::Error.new('Must be specified using an absolute path.') unless absolute_path?(value)
+      raise Puppet::Error.new(_('Must be specified using an absolute path.')) unless absolute_path?(value)
     end
     munge do |value|
       # windows converts slashes to backslashes, so the *is* value
@@ -45,7 +45,7 @@ Puppet::Type.newtype(:scheduled_task) do
     desc "The full path of the directory in which to start the command."
 
     validate do |value|
-      raise Puppet::Error.new('Must be specified using an absolute path.') unless absolute_path?(value)
+      raise Puppet::Error.new(_('Must be specified using an absolute path.')) unless absolute_path?(value)
     end
   end
 

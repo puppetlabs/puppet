@@ -13,8 +13,7 @@ Puppet::Type.newtype(:tidy) do
 
     This resource type works by generating a file resource for every file
     that should be deleted and then letting that resource perform the
-    actual deletion.
-    "
+    actual deletion."
 
   # Tidy names are not isomorphic with the objects.
   @isomorphic = false
@@ -45,7 +44,7 @@ Puppet::Type.newtype(:tidy) do
       when Integer, Fixnum, Bignum; value
       when /^\d+$/; Integer(value)
       else
-        raise ArgumentError, "Invalid recurse value #{value.inspect}"
+        raise ArgumentError, _("Invalid recurse value #{value.inspect}")
       end
     end
   end
@@ -82,7 +81,7 @@ Puppet::Type.newtype(:tidy) do
 
     # Make sure we convert to an array.
     munge do |value|
-      fail "Tidy can't use matches with recurse 0, false, or undef" if "#{@resource[:recurse]}" =~ /^(0|false|)$/
+      fail _("Tidy can't use matches with recurse 0, false, or undef") if "#{@resource[:recurse]}" =~ /^(0|false|)$/
       [value].flatten
     end
 
@@ -121,7 +120,7 @@ Puppet::Type.newtype(:tidy) do
       if num = AgeConvertors[unit]
         return num * multi
       else
-        self.fail "Invalid age unit '#{unit}'"
+        self.fail _("Invalid age unit '#{unit}'")
       end
     end
 
@@ -140,7 +139,8 @@ Puppet::Type.newtype(:tidy) do
         multi = Integer($1)
         unit = :d
       else
-        self.fail "Invalid tidy age #{age}"
+        #TRANSLATORS tidy is the name of a program and should not be translated
+        self.fail _("Invalid tidy age #{age}")
       end
 
       convert(unit, multi)
@@ -161,7 +161,7 @@ Puppet::Type.newtype(:tidy) do
         num.times do result *= 1024 end
         return result
       else
-        self.fail "Invalid size unit '#{unit}'"
+        self.fail _("Invalid size unit '#{unit}'")
       end
     end
 
@@ -178,7 +178,8 @@ Puppet::Type.newtype(:tidy) do
         multi = Integer($1)
         unit = :k
       else
-        self.fail "Invalid tidy size #{age}"
+        #TRANSLATORS tidy is the name of a program and should not be translated
+        self.fail _("Invalid tidy size #{age}")
       end
 
       convert(unit, multi)
@@ -258,7 +259,7 @@ Puppet::Type.newtype(:tidy) do
     end
     found_files = files.find_all { |path| tidy?(path) }.collect { |path| mkfile(path) }
     result = found_files.each { |file| debug "Tidying #{file.ref}" }.sort { |a,b| b[:path] <=> a[:path] }
-    notice "Tidying #{found_files.size} files"
+    notice _("Tidying #{found_files.size} files")
 
     # No need to worry about relationships if we don't have rmdirs; there won't be
     # any directories.
@@ -322,10 +323,10 @@ Puppet::Type.newtype(:tidy) do
     begin
       Puppet::FileSystem.lstat(path)
     rescue Errno::ENOENT => error
-      info "File does not exist"
+      info _("File does not exist")
       return nil
     rescue Errno::EACCES => error
-      warning "Could not stat; permission denied"
+      warning _("Could not stat; permission denied")
       return nil
     end
   end

@@ -99,7 +99,7 @@ end
       warned = false
       while provider.processing?
         next if warned
-        info "Waiting for zone to finish processing"
+        info _("Waiting for zone to finish processing")
         warned = true
         sleep 1
       end
@@ -196,7 +196,7 @@ end
       Puppet to move a zone. Consequently this is a readonly property."
 
     validate do |value|
-      raise ArgumentError, "The zone base must be fully qualified" unless value =~ /^\//
+      raise ArgumentError, _("The zone base must be fully qualified") unless value =~ /^\//
     end
 
     munge do |value|
@@ -233,7 +233,7 @@ end
 
     validate do |value|
       unless value !~ /^\//
-        raise ArgumentError, "Datasets must be the name of a zfs filesystem"
+        raise ArgumentError, _("Datasets must be the name of a zfs filesystem")
       end
     end
   end
@@ -254,7 +254,7 @@ end
 
     validate do |value|
       unless value =~ /^\//
-        raise ArgumentError, "Inherited filesystems must be fully qualified"
+        raise ArgumentError, _("Inherited filesystems must be fully qualified")
       end
     end
   end
@@ -327,15 +327,15 @@ end
   def validate_ip(ip, name)
     IPAddr.new(ip) if ip
   rescue ArgumentError
-    self.fail Puppet::Error, "'#{ip}' is an invalid #{name}", $!
+    self.fail Puppet::Error, _("'#{ip}' is an invalid #{name}"), $!
   end
 
   def validate_exclusive(interface, address, router)
     return if !interface.nil? and address.nil?
-    self.fail "only interface may be specified when using exclusive IP stack: #{interface}:#{address}"
+    self.fail _("only interface may be specified when using exclusive IP stack: #{interface}:#{address}")
   end
   def validate_shared(interface, address, router)
-    self.fail "ip must contain interface name and ip address separated by a \":\"" if interface.nil? or address.nil?
+    self.fail _("ip must contain interface name and ip address separated by a \":\"") if interface.nil? or address.nil?
     [address, router].each do |ip|
       validate_ip(address, "IP address") unless ip.nil?
     end

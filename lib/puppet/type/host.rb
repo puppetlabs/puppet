@@ -29,7 +29,7 @@ module Puppet
 
       validate do |value|
         return true if ((valid_v4?(value) || valid_v6?(value)) && (valid_newline?(value)))
-        raise Puppet::Error, "Invalid IP address #{value.inspect}"
+        raise Puppet::Error, _("Invalid IP address #{value.inspect}")
       end
     end
 
@@ -48,8 +48,8 @@ module Puppet
 
       validate do |value|
         # This regex already includes newline check.
-        raise Puppet::Error, "Host aliases cannot include whitespace" if value =~ /\s/
-        raise Puppet::Error, "Host aliases cannot be an empty string. Use an empty array to delete all host_aliases " if value =~ /^\s*$/
+        raise Puppet::Error, _("Host aliases cannot include whitespace") if value =~ /\s/
+        raise Puppet::Error, _("Host aliases cannot be an empty string. Use an empty array to delete all host_aliases ") if value =~ /^\s*$/
       end
 
     end
@@ -57,7 +57,7 @@ module Puppet
     newproperty(:comment) do
       desc "A comment that will be attached to the line with a # character."
       validate do |value|
-        raise Puppet::Error, "Comment cannot include newline" if (value =~ /\n/ || value =~ /\r/)
+        raise Puppet::Error, _("Comment cannot include newline") if (value =~ /\n/ || value =~ /\r/)
       end
     end
 
@@ -81,10 +81,10 @@ module Puppet
       validate do |value|
         value.split('.').each do |hostpart|
           unless hostpart =~ /^([\d\w]+|[\d\w][\d\w\-]+[\d\w])$/
-            raise Puppet::Error, "Invalid host name"
+            raise Puppet::Error, _("Invalid host name")
           end
         end
-        raise Puppet::Error, "Hostname cannot include newline" if (value =~ /\n/ || value =~ /\r/)
+        raise Puppet::Error, _("Hostname cannot include newline") if (value =~ /\n/ || value =~ /\r/)
       end
     end
 
