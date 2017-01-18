@@ -150,7 +150,7 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   def preinit
     Signal.trap(:INT) do
-      $stderr.puts "Canceling startup"
+      $stderr.puts _("Canceling startup")
       exit(0)
     end
 
@@ -169,12 +169,12 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
   def compile
     begin
       unless catalog = Puppet::Resource::Catalog.indirection.find(options[:node])
-        raise "Could not compile catalog for #{options[:node]}"
+        raise _("Could not compile catalog for #{options[:node]}")
       end
 
       puts PSON::pretty_generate(catalog.to_resource, :allow_nan => true, :max_nesting => false)
     rescue => detail
-      Puppet.log_exception(detail, "Failed to compile catalog for node #{options[:node]}: #{detail}")
+      Puppet.log_exception(detail, _("Failed to compile catalog for node #{options[:node]}: #{detail}"))
       exit(30)
     end
     exit(0)
@@ -194,20 +194,20 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
         begin
           Puppet::Util.chuser
         rescue => detail
-          Puppet.log_exception(detail, "Could not change user to #{Puppet[:user]}: #{detail}")
+          Puppet.log_exception(detail, _("Could not change user to #{Puppet[:user]}: #{detail}"))
           exit(39)
         end
       else
-        Puppet.err("Could not change user to #{Puppet[:user]}. User does not exist and is required to continue.")
+        Puppet.err(_("Could not change user to #{Puppet[:user]}. User does not exist and is required to continue."))
         exit(74)
       end
     end
 
     if options[:rack]
-      Puppet.deprecation_warning("The Rack Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppetlabs.com/deprecate-rack-webrick-servers for more information.")
+      Puppet.deprecation_warning(_("The Rack Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppetlabs.com/deprecate-rack-webrick-servers for more information."))
       start_rack_master
     else
-      Puppet.deprecation_warning("The WEBrick Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppetlabs.com/deprecate-rack-webrick-servers for more information.")
+      Puppet.deprecation_warning(_("The WEBrick Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppetlabs.com/deprecate-rack-webrick-servers for more information."))
       start_webrick_master
     end
   end
@@ -267,7 +267,7 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def setup
-    raise Puppet::Error.new("Puppet master is not supported on Microsoft Windows") if Puppet.features.microsoft_windows?
+    raise Puppet::Error.new(_("Puppet master is not supported on Microsoft Windows")) if Puppet.features.microsoft_windows?
 
     setup_logs
 
@@ -316,6 +316,6 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def announce_start_of_master
-    Puppet.notice "Starting Puppet master version #{Puppet.version}"
+    Puppet.notice _("Starting Puppet master version #{Puppet.version}")
   end
 end
