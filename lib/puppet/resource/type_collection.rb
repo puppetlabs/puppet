@@ -73,18 +73,13 @@ class Puppet::Resource::TypeCollection
     instance
   end
 
+  # @api private
   def handle_hostclass_merge(instance)
+    # Only main class (named '') can be merged (for purpose of merging top-scopes).
+    return instance unless instance.name == ''
     if instance.type == :hostclass && (other = @hostclasses[instance.name]) && other.type == :hostclass
-      unless instance.name == ''
-        case Puppet[:strict]
-        when :warning
-          Puppet.warning("Class '#{instance.name}' is already defined#{other.error_context}; cannot redefine at #{instance.file}:#{instance.line}") 
-        when :error
-          # returning means a merge (with throw) is not performed, that will then trigger a duplication check with error.
-          return instance
-        end
-      end
       other.merge(instance)
+      # throw is used to signal merge - avoids dupe checks and adding it to hostclasses
       throw :merged, other
     end
   end
