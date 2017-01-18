@@ -82,15 +82,11 @@ describe 'the static loader' do
   end
 
   context 'provides access to app-management specific resource types built into puppet' do
-    before(:each) { Puppet[:app_management] = true }
-    after(:each) { Puppet[:app_management] = false }
 
     let(:loader) { loader = Puppet::Pops::Loader::StaticLoader.new() }
 
-    %w{Node}.each do |name|
-      it "such that #{name} is avaiable" do
-        expect(loader.load(:type, name.downcase)).to be_the_type(resource_type(name))
-      end
+    it "such that Node is available" do
+      expect(loader.load(:type, 'node')).to be_the_type(resource_type('Node'))
     end
   end
 
