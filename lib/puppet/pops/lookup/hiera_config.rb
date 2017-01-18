@@ -44,6 +44,7 @@ class HieraConfig
   KEY_LOOKUP_KEY = LookupKeyFunctionProvider::TAG
   KEY_DATA_DIG = DataDigFunctionProvider::TAG
   KEY_V3_DATA_HASH = V3DataHashFunctionProvider::TAG
+  KEY_V3_LOOKUP_KEY = V3LookupKeyFunctionProvider::TAG
   KEY_V3_BACKEND = V3BackendFunctionProvider::TAG
   KEY_V4_DATA_HASH = V4DataHashFunctionProvider::TAG
   KEY_BACKEND = 'backend'.freeze
@@ -57,6 +58,7 @@ class HieraConfig
     KEY_LOOKUP_KEY => LookupKeyFunctionProvider,
     KEY_V3_DATA_HASH => V3DataHashFunctionProvider,
     KEY_V3_BACKEND => V3BackendFunctionProvider,
+    KEY_V3_LOOKUP_KEY => V3LookupKeyFunctionProvider,
     KEY_V4_DATA_HASH => V4DataHashFunctionProvider
   }
 
@@ -251,7 +253,7 @@ class HieraConfigV3 < HieraConfig
 
     [@config[KEY_BACKENDS]].flatten.each do |backend|
       raise Puppet::DataBinding::LookupError, "#{@config_path}: Backend '#{backend}' defined more than once" if data_providers.include?(backend)
-      original_paths = @config[KEY_HIERARCHY]
+      original_paths = [@config[KEY_HIERARCHY]].flatten
       backend_config = @config[backend] || EMPTY_HASH
       datadir = Pathname(interpolate(backend_config[KEY_DATADIR] || default_datadir, lookup_invocation, false))
       ext = backend == 'hocon' ? '.conf' : ".#{backend}"
@@ -261,6 +263,8 @@ class HieraConfigV3 < HieraConfig
         create_data_provider(backend, parent_data_provider, KEY_V3_DATA_HASH, "#{backend}_data", { KEY_DATADIR => datadir }, paths)
       when backend == 'hocon' && Puppet.features.hocon?
         create_data_provider(backend, parent_data_provider, KEY_V3_DATA_HASH, 'hocon_data', { KEY_DATADIR => datadir }, paths)
+      when backend == 'eyaml' && Puppet.features.hiera_eyaml?
+        create_data_provider(backend, parent_data_provider, KEY_V3_LOOKUP_KEY, 'eyaml_lookup_key', backend_config.merge(KEY_DATADIR => datadir), paths)
       else
         create_hiera3_backend_provider(backend, backend, parent_data_provider, datadir, paths, @loaded_config)
       end
