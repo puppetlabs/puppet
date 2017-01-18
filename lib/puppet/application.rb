@@ -228,7 +228,7 @@ class Application
       begin
         require @loader.expand(application_name.to_s.downcase)
       rescue LoadError => e
-        Puppet.log_and_raise(e, "Unable to find application '#{application_name}'. #{e}")
+        Puppet.log_and_raise(e, _("Unable to find application '#{application_name}'. #{e}"))
       end
 
       class_name = Puppet::Util::ConstantInflector.file2constant(application_name.to_s)
@@ -249,7 +249,7 @@ class Application
       ################################################################
 
       if clazz.nil?
-        raise Puppet::Error.new("Unable to load application class '#{class_name}' from file 'puppet/application/#{application_name}.rb'")
+        raise Puppet::Error.new(_("Unable to load application class '#{class_name}' from file 'puppet/application/#{application_name}.rb'"))
       end
 
       return clazz
@@ -339,7 +339,7 @@ class Application
     # I don't really like the names of these lifecycle phases.  It would be nice to change them to some more meaningful
     # names, and make deprecated aliases.  --cprice 2012-03-16
 
-    exit_on_fail("get application-specific default settings") do
+    exit_on_fail(_("get application-specific default settings")) do
       initialize_app_defaults
     end
 
@@ -359,7 +359,7 @@ class Application
   end
 
   def main
-    raise NotImplementedError, "No valid command or main"
+    raise NotImplementedError, _("No valid command or main")
   end
 
   def run_command
@@ -472,7 +472,7 @@ class Application
   end
 
   def help
-    "No help available for puppet #{name}"
+    _("No help available for puppet #{name}")
   end
 end
 end

@@ -5,7 +5,7 @@ require 'puppet/parser/compiler'
 
 class Puppet::Application::Lookup < Puppet::Application
 
-  RUN_HELP = "Run 'puppet lookup --help' for more details".freeze
+  RUN_HELP = _("Run 'puppet lookup --help' for more details").freeze
   DEEP_MERGE_OPTIONS = '--knock-out-prefix, --sort-merged-arrays, and --merge-hash-arrays'.freeze
 
   run_mode :master
@@ -57,7 +57,7 @@ class Puppet::Application::Lookup < Puppet::Application
     if %w{.yaml .yml .json}.include?(arg.match(/\.[^.]*$/)[0])
       options[:fact_file] = arg
     else
-      raise "The --fact file only accepts yaml and json files.\n#{RUN_HELP}"
+      raise _("The --fact file only accepts yaml and json files.\n#{RUN_HELP}")
     end
   end
 
@@ -266,7 +266,7 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
     #end
 
     if (options[:sort_merge_arrays] || options[:merge_hash_arrays] || options[:prefix]) && options[:merge] != 'deep'
-      raise "The options #{DEEP_MERGE_OPTIONS} are only available with '--merge deep'\n#{RUN_HELP}"
+      raise _("The options #{DEEP_MERGE_OPTIONS} are only available with '--merge deep'\n#{RUN_HELP}")
     end
 
     use_default_value = !options[:default_value].nil?
@@ -277,7 +277,7 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
       strategies = Puppet::Pops::MergeStrategy.strategy_keys
       unless strategies.include?(merge.to_sym)
         strategies = strategies.map {|k| "'#{k}'"}
-        raise "The --merge option only accepts #{strategies[0...-1].join(', ')}, or #{strategies.last}\n#{RUN_HELP}"
+        raise _("The --merge option only accepts #{strategies[0...-1].join(', ')}, or #{strategies.last}\n#{RUN_HELP}")
       end
 
       if merge == 'deep'
@@ -302,7 +302,7 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
         # Explain lookup_options for lookup of an unqualified value.
         keys = Puppet::Pops::Lookup::GLOBAL
       else
-        raise 'No keys were given to lookup.'
+        raise _('No keys were given to lookup.')
       end
     end
     explain = explain_data || explain_options
@@ -310,7 +310,7 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
     # Format defaults to text (:s) when producing an explanation and :yaml when producing the value
     format = options[:render_as] || (explain ? :s : :yaml)
     renderer = Puppet::Network::FormatHandler.format(format == :json ? :pson : format)
-    raise "Unknown rendering format '#{format}'" if renderer.nil?
+    raise _("Unknown rendering format '#{format}'") if renderer.nil?
 
 
     generate_scope do |scope|
@@ -353,7 +353,7 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
       end
 
       unless given_facts.instance_of?(Hash)
-        raise "Incorrect formatted data in #{fact_file} given via the --facts flag"
+        raise _("Incorrect formatted data in #{fact_file} given via the --facts flag")
       end
 
       node.parameters = original_facts.merge(given_facts)

@@ -25,7 +25,7 @@ class Puppet::Application::Doc < Puppet::Application
     if Puppet::Util::Reference.method_defined?(method)
       options[:format] = method
     else
-      raise "Invalid output format #{arg}"
+      raise _("Invalid output format #{arg}")
     end
   end
 
@@ -34,7 +34,7 @@ class Puppet::Application::Doc < Puppet::Application
     if Puppet::Util::Reference.modes.include?(arg) or arg.intern==:rdoc
       options[:mode] = arg.intern
     else
-      raise "Invalid output mode #{arg}"
+      raise _("Invalid output mode #{arg}")
     end
   end
 
@@ -127,7 +127,7 @@ HELP
       files << ::File.dirname(env.manifest) if env.manifest != Puppet::Node::Environment::NO_MANIFEST
     end
     files += command_line.args
-    Puppet.info "scanning: #{files.inspect}"
+    Puppet.info _("scanning: #{files.inspect}")
 
     Puppet.settings[:document_all] = options[:all] || false
     begin
@@ -139,7 +139,7 @@ HELP
         Puppet::Util::RDoc.rdoc(options[:outputdir], files, options[:charset])
       end
     rescue => detail
-      Puppet.log_exception(detail, "Could not generate documentation: #{detail}")
+      Puppet.log_exception(detail, _("Could not generate documentation: #{detail}"))
       exit_code = 1
     end
     exit exit_code
@@ -151,13 +151,13 @@ HELP
     exit_code = 0
     require 'puppet/util/reference'
     options[:references].sort { |a,b| a.to_s <=> b.to_s }.each do |name|
-      raise "Could not find reference #{name}" unless section = Puppet::Util::Reference.reference(name)
+      raise _("Could not find reference #{name}") unless section = Puppet::Util::Reference.reference(name)
 
       begin
         # Add the per-section text, but with no ToC
         text += section.send(options[:format], with_contents)
       rescue => detail
-        Puppet.log_exception(detail, "Could not generate reference #{name}: #{detail}")
+        Puppet.log_exception(detail, _("Could not generate reference #{name}: #{detail}"))
         exit_code = 1
         next
       end
