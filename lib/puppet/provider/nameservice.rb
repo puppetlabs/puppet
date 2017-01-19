@@ -249,9 +249,9 @@ class Puppet::Provider::NameService < Puppet::Provider
     # Now iterate across all of the groups, adding each one our
     # user is a member of
     while group = Etc.getgrent
-      members = group.mem
+      members = group.mem.map { |member| member.force_encoding(Encoding::UTF_8) }
 
-      groups << group.name if members.include? user
+      groups << group.name.force_encoding(Encoding::UTF_8) if members.include? user
     end
 
     # We have to close the file, so each listing is a separate
