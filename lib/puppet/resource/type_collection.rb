@@ -2,6 +2,7 @@ require 'puppet/parser/type_loader'
 require 'puppet/util/file_watcher'
 require 'puppet/util/warnings'
 
+# @api private
 class Puppet::Resource::TypeCollection
   attr_reader :environment
   attr_accessor :parse_failed
@@ -49,6 +50,7 @@ class Puppet::Resource::TypeCollection
     }.inspect
   end
 
+  # @api private
   def <<(thing)
     add(thing)
     self
@@ -73,7 +75,6 @@ class Puppet::Resource::TypeCollection
     instance
   end
 
-  # @api private
   def handle_hostclass_merge(instance)
     # Only main class (named '') can be merged (for purpose of merging top-scopes).
     return instance unless instance.name == ''
@@ -90,7 +91,6 @@ class Puppet::Resource::TypeCollection
   # settings where always merged rather than being defined from scratch for many testing scenarios
   # not having a complete side effect free setup for compilation.
   # 
-  # @api private
   def replace_settings(instance)
     @hostclasses['settings'] = instance
   end
