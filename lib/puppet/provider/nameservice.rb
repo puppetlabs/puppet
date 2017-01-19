@@ -55,7 +55,7 @@ class Puppet::Provider::NameService < Puppet::Provider
       Etc.send("set#{section()}ent")
       begin
         while ent = Etc.send("get#{section()}ent")
-          names << ent.name
+          names << ent.name.force_encoding(Encoding::UTF_8)
           yield ent.name if block_given?
         end
       ensure
