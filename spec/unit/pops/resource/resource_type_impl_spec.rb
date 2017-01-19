@@ -93,13 +93,11 @@ describe "Puppet::Pops::Resource" do
     let(:env) { Puppet::Node::Environment.create(:'spec', [File.join(env_dir, 'spec', 'modules')]) }
     let(:node) { Puppet::Node.new('test', :environment => env) }
     around(:each) do |example|
-      Puppet[:app_management] = true
       Puppet[:environment] = env_name
       Puppet.override(:environments => environments, :current_environment => env) do
         example.run
       end
       Puppet::Type.rmtype(:capability)
-      Puppet[:app_management] = false
     end
 
     it 'does not load the Ruby resource' do

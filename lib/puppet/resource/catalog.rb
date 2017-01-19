@@ -360,16 +360,18 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       # an instance has to be created in order to construct the unique key used when
       # searching for aliases, or when app_management is active and nothing is found in
       # which case it is needed by the CapabilityFinder.
+# PUP-4947
       res = nil
-      app_mgnt = Puppet[:app_management]
-      if app_mgnt || !@aliases.empty?
-        res = Puppet::Resource.new(type, title, { :environment => @environment_instance })
+#      app_mgnt = Puppet[:app_management]
+#      if app_mgnt || !@aliases.empty?
+      res = Puppet::Resource.new(type, title, { :environment => @environment_instance })
 
         # No need to build the uniqueness key unless there are aliases
-        result = @resource_table[[type_name, res.uniqueness_key].flatten] unless @aliases.empty?
-      end
+      result = @resource_table[[type_name, res.uniqueness_key].flatten] unless @aliases.empty?
+# PUP-4947
+#      end
 
-      if result.nil? && app_mgnt
+      if result.nil? # && app_mgnt
         resource_type = res.resource_type
         if resource_type && resource_type.is_capability?
           # @todo lutter 2015-03-10: this assumes that it is legal to just

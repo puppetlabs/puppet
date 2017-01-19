@@ -143,6 +143,7 @@ class StaticLoader < Loader
       Nagios_serviceextinfo
       Nagios_servicegroup
       Nagios_timeperiod
+      Node
       Notify
       Package
       Resources
@@ -164,10 +165,6 @@ class StaticLoader < Loader
       Zone
       Zpool
     }.each { |name| create_resource_type_reference(name) }
-
-    if Puppet[:app_management]
-      create_resource_type_reference('Node')
-    end
   end
 
   def create_resource_type_reference(name)
