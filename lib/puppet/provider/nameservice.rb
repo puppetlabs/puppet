@@ -266,7 +266,11 @@ class Puppet::Provider::NameService < Puppet::Provider
     hash = {}
     self.class.resource_type.validproperties.each do |param|
       method = posixmethod(param)
-      hash[param] = info.send(posixmethod(param)) if info.respond_to? method
+      if info.respond_to?(method)
+        value = info.send(posixmethod(param))
+        value.force_encoding(Encoding::UTF_8) if value.respond_to?(:force_encoding)
+        hash[param] = value
+      end
     end
 
     hash
