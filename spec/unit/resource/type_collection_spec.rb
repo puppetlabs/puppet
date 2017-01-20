@@ -51,14 +51,14 @@ describe Puppet::Resource::TypeCollection do
     expect(@code.hostclass("foo")).to equal(klass)
   end
 
-  it "merge together hostclasses of the same name" do
+  it "errors if an attempt is made to merge hostclasses of the same name" do
     klass1 = Puppet::Resource::Type.new(:hostclass, "foo", :doc => "first")
     klass2 = Puppet::Resource::Type.new(:hostclass, "foo", :doc => "second")
 
-    @code.add(klass1)
-    @code.add(klass2)
-
-    expect(@code.hostclass("foo").doc).to eq("firstsecond")
+    expect {
+      @code.add(klass1)
+      @code.add(klass2)
+    }.to raise_error(/.*is already defined; cannot redefine/)
   end
 
   it "should store definitions as definitions" do

@@ -852,7 +852,8 @@ class Puppet::Parser::Compiler
 
   def create_settings_scope
     settings_type = Puppet::Resource::Type.new :hostclass, "settings"
-    environment.known_resource_types.add(settings_type)
+    # use replace instead of add to avoid duplication check and illegal merge (PUP-5954)
+    environment.known_resource_types.replace_settings(settings_type)
 
     settings_resource = Puppet::Parser::Resource.new("class", "settings", :scope => @topscope)
 
