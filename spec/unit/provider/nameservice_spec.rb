@@ -60,6 +60,14 @@ describe Puppet::Provider::NameService do
     resource
   end
 
+  let(:snowman_iso)     { "\u2603".force_encoding(Encoding::ISO_8859_1) }
+  let(:snowman_utf8)    { "\u2603".force_encoding(Encoding::UTF_8) }
+  let(:snowman_binary)  { "\u2603".force_encoding(Encoding::ASCII_8BIT) }
+  let(:arabic_heh_iso)  { "\u06FF".force_encoding(Encoding::ISO_8859_1) }
+  let(:arabic_heh_utf8) { "\u06FF".force_encoding(Encoding::UTF_8) }
+  let(:runic_fehu_iso)  { "\u16A0".force_encoding(Encoding::ISO_8859_1) }
+  let(:runic_fehu_utf8)  { "\u16A0".force_encoding(Encoding::UTF_8) }
+
   describe "#options" do
     it "should add options for a valid property" do
       described_class.options :foo, :key1 => 'val1', :key2 => 'val2'
@@ -146,6 +154,22 @@ describe Puppet::Provider::NameService do
       described_class.listbyname {|x| yield_results << x }
       expect(yield_results).to eq(%w{root foo})
     end
+
+    it "should return correct strings in UTF-8 even if system returns non-UTF-8 strings" do
+      described_class.resource_type = Puppet::Type.type(:user)
+      # Simulate Etc.getpwent values returned by a system in ISO_8859_1
+      users =
+        [
+          Struct::Passwd.new(snowman_iso, 'x', 0, 0),
+          Struct::Passwd.new(arabic_heh_iso, 'x', 1000, 2000),
+          nil
+        ]
+      Etc.stubs(:getpwent).returns(*users)
+      results = described_class.listbyname
+      expect(results[0]).to eq(snowman_utf8)
+      expect(results[1]).to eq(arabic_heh_utf8)
+      expect(results.all? { |name| name.encoding == Encoding::UTF_8 }).to be_truthy
+    end
   end
 
   describe "instances" do
@@ -201,18 +225,56 @@ describe Puppet::Provider::NameService do
   end
 
   describe "info2hash" do
+    before(:each) do
+      provider.stubs(:posixmethod).with(:foo).returns(:foo)
+      provider.stubs(:posixmethod).with(:bar).returns(:bar)
+      provider.stubs(:posixmethod).with(:ensure).returns :ensure
+    end
+
     it "should return a hash with all properties" do
       # we have to have an implementation of posixmethod which has to
       # convert a propertyname (e.g. comment) into a fieldname of our
-      # Struct (e.g. gecos). I do not want to test posixmethod here so
-      # let's fake an implementation which does not do any translation. We
-      # expect two method invocations because info2hash calls the method
-      # twice if the Struct responds to the propertyname (our fake Struct
-      # provides values for :foo and :bar) TODO: Fix that
-      provider.expects(:posixmethod).with(:foo).returns(:foo).twice
-      provider.expects(:posixmethod).with(:bar).returns(:bar).twice
-      provider.expects(:posixmethod).with(:ensure).returns :ensure
+      # Struct (e.g. gecos).
+      #require 'pry';binding.pry
       expect(provider.info2hash(fakeetcobject)).to eq({ :foo => 'fooval', :bar => 'barval' })
+    end
+
+    it "should return strings in UTF-8 even if system returns non-UTF-8 strings" do
+      iso_etc_struct = fakestruct.new(snowman_iso, runic_fehu_iso)
+      expect(provider.info2hash(iso_etc_struct)).to eq({ :foo => snowman_utf8, :bar => runic_fehu_utf8})
+    end
+  end
+
+  describe "groups" do
+    # The #groups method iterates over the group structs returned by
+    # Etc.getgrent, and checks if the membership attribute of each group struct
+    # contains the username. It assembles a comma-separated string of groups
+    # whose membership contains the username. Here we ensure that we can check
+    # membership if Etc.getgrent returns values in non-UTF8 encodings
+    it "can determine membership even if Etc group list is not UTF-8" do
+      described_class.resource_type = Puppet::Type.type(:user)
+      user = Puppet::Type.type(:user).new(
+        :name => snowman_utf8,
+        :managehome => :false,
+        :system => :false,
+        :provider => :useradd,
+      )
+      nameservice_instance = described_class.new(user)
+
+      # Simulate UTF-8 values returned by Etc.getgrent with system in Encoding::ISO_8859_1 encoding
+      utf_8_groups_with_iso_strings =
+        [
+          Struct::Group.new(arabic_heh_iso, 'x', 0, [snowman_iso]),
+          Struct::Group.new(runic_fehu_iso, 'x', 1, [snowman_iso]),
+          Struct::Group.new("root".force_encoding(Encoding::ISO_8859_1), 'x', 2, []),
+          nil
+        ]
+      Etc.expects(:setgrent)
+      Etc.expects(:endgrent)
+      Etc.stubs(:getgrent).returns(*utf_8_groups_with_iso_strings)
+
+      # All that to make sure we get this string back
+      expect(nameservice_instance.groups).to eq("\u06FF,\u16A0")
     end
   end
 
@@ -320,11 +382,6 @@ describe Puppet::Provider::NameService do
     end
 
     context "given strings with incompatible encodings" do
-      let(:snowman_iso) { "\u2603".force_encoding(Encoding::ISO_8859_1) }
-      let(:snowman_utf8) { "\u2603".force_encoding(Encoding::UTF_8) }
-      let(:snowman_binary) { "\u2603".force_encoding(Encoding::ASCII_8BIT) }
-      let(:arabic_heh_utf8) { "\u06FF".force_encoding(Encoding::UTF_8) }
-
       it "should be able to compare unequal strings and return false" do
         expect(Encoding.compatible?(snowman_iso, arabic_heh_utf8)).to be_falsey
         expect(provider.comments_insync?(snowman_iso, [arabic_heh_utf8])).to be_falsey
