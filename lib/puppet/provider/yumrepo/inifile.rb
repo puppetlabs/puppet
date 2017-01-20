@@ -4,7 +4,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   desc <<-EOD
     Manage yum repo configurations by parsing yum INI configuration files.
 
-    ## Fetching instances
+    ### Fetching instances
 
     When fetching repo instances, directory entries in '/etc/yum/repos.d',
     '/etc/yum.repos.d', and the directory optionally specified by the reposdir
@@ -12,7 +12,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     will be ignored. In addition, all sections in '/etc/yum.conf' aside from
     'main' will be created as sections.
 
-    ## Storing instances
+    ### Storing instances
 
     When creating a new repository, a new section will be added in the first
     yum repo directory that exists. The custom directory specified by the
