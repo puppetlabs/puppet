@@ -1,4 +1,4 @@
-tag 'risk:medium'
+tag 'risk:high'
 test_name "Test behavior of default environment"
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils

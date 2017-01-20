@@ -1,4 +1,4 @@
-tag 'risk:medium'
+tag 'risk:high'
 test_name "Puppet and Mcollective services should be manageable with Puppet"
 
 confine :except, :platform => 'windows' # See MCO-727

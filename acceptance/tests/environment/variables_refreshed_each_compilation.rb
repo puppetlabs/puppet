@@ -1,4 +1,4 @@
-tag 'risk:medium'
+tag 'risk:high'
 test_name 'C98115 compilation should get new values in variables on each compilation' do
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils

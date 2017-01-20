@@ -1,4 +1,4 @@
-tag 'risk:medium'
+tag 'risk:high'
 test_name 'C98120, C98077: Sensitive Data is redacted on CLI, logs, reports' do
   require 'puppet/acceptance/puppet_type_test_tools.rb'
   extend Puppet::Acceptance::PuppetTypeTestTools

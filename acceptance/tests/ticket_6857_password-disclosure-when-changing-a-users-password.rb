@@ -1,4 +1,4 @@
-tag 'risk:medium'
+tag 'risk:high'
 test_name "#6857: redact password hashes when applying in noop mode"
 
 require 'puppet/acceptance/common_utils'

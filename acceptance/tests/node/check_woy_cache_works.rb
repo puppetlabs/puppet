@@ -3,7 +3,7 @@ require 'puppet/acceptance/temp_file_utils'
 require 'yaml'
 extend Puppet::Acceptance::TempFileUtils
 
-tag 'risk:medium'
+tag 'risk:high'
 test_name "ticket #16753 node data should be cached in yaml to allow it to be queried"
 
 node_name = "woy_node_#{SecureRandom.hex}"
