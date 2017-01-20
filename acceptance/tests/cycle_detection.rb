@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "cycle detection and reporting"
 
 step "check we report a simple cycle"

@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Content Attribute"
 
 agents.each do |agent|

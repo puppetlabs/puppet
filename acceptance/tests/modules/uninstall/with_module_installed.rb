@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "puppet module uninstall (with module installed)"
 
 teardown do

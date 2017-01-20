@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "should delete an entry for an SSH authorized key"
 
 confine :except, :platform => ['windows']

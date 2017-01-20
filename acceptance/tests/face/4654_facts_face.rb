@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Puppet facts face should resolve custom and external facts"
 
 #

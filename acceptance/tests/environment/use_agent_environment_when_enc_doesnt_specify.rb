@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Agent should use agent environment if there is an enc that does not specify the environment"
 require 'puppet/acceptance/classifier_utils'
 extend Puppet::Acceptance::ClassifierUtils

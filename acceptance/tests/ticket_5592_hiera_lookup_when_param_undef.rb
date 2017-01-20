@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'Ensure hiera lookup occurs if class param is undef' do
 
   agents.each do |agent|

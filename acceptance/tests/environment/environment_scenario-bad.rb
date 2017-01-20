@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'Test behavior of directory environments when environmentpath is set to a non-existent directory'
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils

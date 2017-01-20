@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'Use a directory environment from environmentpath with an environment.conf'
 require 'puppet/acceptance/classifier_utils'
 extend Puppet::Acceptance::ClassifierUtils

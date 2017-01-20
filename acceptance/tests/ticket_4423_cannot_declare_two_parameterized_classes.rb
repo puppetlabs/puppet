@@ -6,6 +6,7 @@
 #
 # Make sure two parameterized classes are able to be declared.
 
+tag 'risk:medium'
 test_name "#4423: cannot declare two parameterized classes"
 
 class1 = %q{

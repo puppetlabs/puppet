@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "The report specifies which master was contacted during failover" do
   master_reportdir = create_tmpdir_for_user(master, 'report_dir')
   master_port = 8140

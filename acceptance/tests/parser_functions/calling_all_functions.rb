@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'Calling all functions.. test in progress!'
 
 # create single manifest calling all functions

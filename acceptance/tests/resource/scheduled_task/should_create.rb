@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "should create a scheduled task"
 
 name = "pl#{rand(999999).to_i}"

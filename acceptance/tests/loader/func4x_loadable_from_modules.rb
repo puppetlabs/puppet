@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Exercise a module with 4x function and 4x system function"
 
 # Purpose:

@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'ensure ruby compiler optimization is >= 2'
 
 tag 'risk:medium'

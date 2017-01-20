@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Bug #7165: Don't refresh service immediately after starting it"
 
 confine :except, :platform => 'windows'

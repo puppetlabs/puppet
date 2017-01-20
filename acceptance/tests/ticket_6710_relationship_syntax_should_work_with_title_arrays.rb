@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "#6710: Relationship syntax should work with title arrays"
 
 # Jeff McCune <jeff@puppetlabs.com>

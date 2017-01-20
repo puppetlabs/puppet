@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "ZPool: configuration"
 confine :to, :platform => 'solaris'
 

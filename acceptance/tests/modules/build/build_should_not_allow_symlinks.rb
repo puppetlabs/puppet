@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "puppet module build should verify there are no symlinks in module"
 
 confine :except, :platform => 'windows'

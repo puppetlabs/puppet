@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "providers should be useable in the same run they become suitable"
 
 agents.each do |agent|

@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "should modify an entry in filesystem table"
 
 confine :except, :platform => ['windows']

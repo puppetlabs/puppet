@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "should create a group"
 confine :except, :platform => /^cisco_/ # See PUP-5828
 

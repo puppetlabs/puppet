@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "puppet module build should not result in changed files"
 
 modauthor = 'foo'

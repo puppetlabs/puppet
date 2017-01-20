@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "puppet module install (with no dependencies)"
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils

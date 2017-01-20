@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Cron: should allow changing parameters after creation"
 confine :except, :platform => 'windows'
 confine :except, :platform => /^eos-/ # See PUP-5500

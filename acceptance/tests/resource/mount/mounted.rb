@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "mounted should create an entry in filesystem table and mount it"
 
 confine :except, :platform => ['windows']

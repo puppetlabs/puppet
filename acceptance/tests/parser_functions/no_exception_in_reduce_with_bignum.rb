@@ -1,4 +1,5 @@
 require 'puppet/acceptance/environment_utils'
+tag 'risk:medium'
 test_name 'C97760: Bignum in reduce() should not cause exception' do
   extend Puppet::Acceptance::EnvironmentUtils
 

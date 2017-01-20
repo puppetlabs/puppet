@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'AIX Service Provider Testing'
 
 confine :to, :platform =>  'aix'

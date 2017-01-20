@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "puppet module uninstall (with multiple modules installed)"
 
 if master.is_pe?

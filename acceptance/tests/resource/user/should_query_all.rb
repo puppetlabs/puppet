@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "should query all users"
 confine :except, :platform => /^cisco_/ # See PUP-5828
 

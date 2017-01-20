@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "tests that user resource will not add users that already exist."
 confine :except, :platform => /^eos-/ # See ARISTA-37
 confine :except, :platform => /^cisco_/ # See PUP-5828

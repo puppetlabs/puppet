@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Test for an environment that does not exist"
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils

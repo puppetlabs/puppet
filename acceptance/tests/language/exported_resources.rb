@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "C94788: exported resources using a yaml terminus for storeconfigs" do
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils

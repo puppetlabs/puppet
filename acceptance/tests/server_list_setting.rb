@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Priority of server_list setting over server setting" do
   master_port = 8140
 

@@ -5,6 +5,7 @@
 # NL: Facter should return OS version instead of kernel version for OEL
 # test script only applicable to OEL, provided based on ticked info, not verified.
 
+tag 'risk:medium'
 test_name "#4289: facter should recognize OEL operatingsystemrelease"
 
 # REVISIT: We don't actually have support for this yet - we need a "not

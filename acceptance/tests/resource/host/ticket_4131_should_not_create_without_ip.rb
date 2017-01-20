@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "#4131: should not create host without IP attribute"
 
 agents.each do |agent|

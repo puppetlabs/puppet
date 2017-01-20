@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "should not run command creates"
 
 agents.each do |agent|

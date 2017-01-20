@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "#4655: Allow setting the default stage for parameterized classes"
 
 agents.each do |agent|

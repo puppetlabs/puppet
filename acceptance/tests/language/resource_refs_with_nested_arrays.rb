@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "#7681: Allow using array variables in resource references"
 
 agents.each do |agent|

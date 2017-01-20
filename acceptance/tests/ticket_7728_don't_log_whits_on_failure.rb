@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "#7728: Don't log whits on resource failure"
 
 manifest = %Q{

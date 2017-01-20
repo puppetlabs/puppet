@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'puppet module changes (on an invalid module install path)'
 
 step 'Setup'

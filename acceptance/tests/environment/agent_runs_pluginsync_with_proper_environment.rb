@@ -2,6 +2,7 @@
 # time where the node retrieved facts for itself and the catalog retrieved
 # facts puppet could pluginsync with the incorrect environment. For more
 # details see PUP-3591.
+tag 'risk:medium'
 test_name "Agent should pluginsync with the environment the agent resolves to"
 
 testdir = create_tmpdir_for_user master, 'environment_resolve'

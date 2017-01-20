@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "should not create host if it exists"
 
 agents.each do |agent|

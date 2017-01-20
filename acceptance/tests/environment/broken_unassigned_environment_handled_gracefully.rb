@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'PUP-3755 Test an un-assigned broken environment'
 
 step 'setup environments'

@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "generate a helpful error message when hostname doesn't match server certificate"
 
 skip_test( 'Changing certnames of the master will break PE/Passenger installations' ) if master.is_using_passenger?

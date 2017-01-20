@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "should create symlink"
 
 def message

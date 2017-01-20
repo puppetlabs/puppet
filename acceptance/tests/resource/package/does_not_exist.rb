@@ -1,4 +1,5 @@
 # Redmine (#22529)
+tag 'risk:medium'
 test_name "Puppet returns only resource package declaration when querying an uninstalled package" do
 
   resource_declaration_regex = %r@package \{ 'not-installed-on-this-host':

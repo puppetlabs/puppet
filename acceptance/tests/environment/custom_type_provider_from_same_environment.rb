@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'C59122: ensure provider from same env as custom type' do
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils

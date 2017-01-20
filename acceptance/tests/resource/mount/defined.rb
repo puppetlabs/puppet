@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "defined should create an entry in filesystem table"
 
 confine :except, :platform => ['windows']

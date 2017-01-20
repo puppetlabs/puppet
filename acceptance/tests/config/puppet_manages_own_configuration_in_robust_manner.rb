@@ -3,6 +3,7 @@
 # not put the "puppet" user or group on the system. They run the puppet master,
 # which fails because of the missing user and then correct their actions. They
 # expect that after correcting their actions, puppet will work correctly.
+tag 'risk:medium'
 test_name "Puppet manages its own configuration in a robust manner"
 
 skip_test "JVM Puppet cannot change its user while running. PUP-6246" if @options[:is_puppetserver]

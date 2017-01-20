@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "verify that we can modify the gid"
 confine :except, :platform => 'windows'
 confine :except, :platform => /aix/ # PUP-5358

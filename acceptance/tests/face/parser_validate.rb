@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'parser validate' do
   require 'puppet/acceptance/environment_utils'
   extend Puppet::Acceptance::EnvironmentUtils

@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "test the yum package provider"
 
 confine :to, {:platform => /(?:centos|el-|fedora)/}, agents

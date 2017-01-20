@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "should be able to find an existing filesystem table entry"
 
 confine :except, :platform => ['windows']

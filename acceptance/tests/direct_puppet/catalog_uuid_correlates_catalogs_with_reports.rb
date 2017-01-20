@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "PUP-5872: catalog_uuid correlates catalogs with reports" do
   master_reportdir = create_tmpdir_for_user(master, 'reportdir')
 

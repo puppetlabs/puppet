@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "fallback to the cached catalog"
 
 step "run agents once to cache the catalog" do

@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'MCollective service exits on windows agent'
 
 tag 'risk:medium'

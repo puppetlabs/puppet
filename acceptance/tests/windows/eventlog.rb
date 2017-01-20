@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Write to Windows eventlog"
 
 confine :to, :platform => 'windows'

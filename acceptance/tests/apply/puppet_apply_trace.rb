@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'puppet apply --trace should provide a stack trace'
 
 agents.each do |agent|

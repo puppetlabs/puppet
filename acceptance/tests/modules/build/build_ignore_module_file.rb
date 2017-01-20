@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'PUP-3981 - C63215 - Build Module Should Ignore Module File'
 
 #Init

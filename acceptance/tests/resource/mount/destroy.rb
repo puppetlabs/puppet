@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "should delete an entry in filesystem table and unmount it"
 
 confine :except, :platform => ['windows']

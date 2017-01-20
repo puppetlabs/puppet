@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "puppet module upgrade (with constraints on it)"
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils

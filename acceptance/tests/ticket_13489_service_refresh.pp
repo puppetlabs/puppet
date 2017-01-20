@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "#13489: refresh service"
 
 confine :to, :platform => 'windows'

@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Puppet Lookup Command"
 # doc:
 # https://docs.puppetlabs.com/puppet/latest/reference/lookup_quick_module.html

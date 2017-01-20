@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "hash reassignment should fail"
 manifest = %q{
 $my_hash = {'one' => '1', 'two' => '2' }

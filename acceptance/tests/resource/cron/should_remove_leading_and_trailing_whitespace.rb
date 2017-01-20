@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "(#656) leading and trailing whitespace in cron entries should should be stripped"
 confine :except, :platform => 'windows'
 confine :except, :platform => /^eos-/ # See PUP-5500

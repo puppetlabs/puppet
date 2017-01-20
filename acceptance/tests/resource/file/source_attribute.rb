@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "The source attribute"
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils

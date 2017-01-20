@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "C97172: static catalogs support utf8" do
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils

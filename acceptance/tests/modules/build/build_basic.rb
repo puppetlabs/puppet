@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'CODEMGMT-69 - Build a Module Using "metadata.json" Only'
 
 #Init

@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'Upstart Testing'
 
 # only run these on ubuntu vms

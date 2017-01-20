@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "should create empty file for 'present'"
 
 agents.each do |agent|

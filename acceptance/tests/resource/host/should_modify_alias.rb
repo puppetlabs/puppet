@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "should be able to modify a host alias"
 
 agents.each do |agent|

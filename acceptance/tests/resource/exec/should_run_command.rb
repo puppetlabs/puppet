@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "tests that puppet correctly runs an exec."
 # original author: Dan Bode  --daniel 2010-12-23
 

@@ -1,5 +1,6 @@
 # ensure installs and code honor new puppet-agent path spec:
 # https://github.com/puppetlabs/puppet-specifications/blob/master/file_paths.md
+tag 'risk:medium'
 test_name 'PUP-4033: Ensure aio path spec is honored'
 
 require 'puppet/acceptance/common_utils'

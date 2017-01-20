@@ -1,5 +1,6 @@
 # encoding: UTF-8
 
+tag 'risk:medium'
 test_name "puppet module install (with modulepath)"
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils

@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "puppet apply should show a notice"
 
 agents.each do |host|

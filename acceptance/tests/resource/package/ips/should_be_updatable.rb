@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Package:IPS test for updatable (update, latest)"
 confine :to, :platform => 'solaris-11'
 

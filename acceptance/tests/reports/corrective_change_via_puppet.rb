@@ -2,6 +2,7 @@ require 'yaml'
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils
 
+tag 'risk:medium'
 test_name "C98094 - a resource changed via Puppet manifest will not be reported as a corrective change" do
 
   test_file_name = File.basename(__FILE__, '.*')

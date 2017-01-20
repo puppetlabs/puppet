@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Zone:IP ip-type and ip configuration"
 confine :to, :platform => 'solaris'
 require 'puppet/acceptance/solaris_util'

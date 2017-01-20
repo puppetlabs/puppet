@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "should delete an email alias"
 
 confine :except, :platform => 'windows'

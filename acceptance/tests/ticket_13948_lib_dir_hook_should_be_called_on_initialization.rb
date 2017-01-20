@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "the $libdir setting hook is called on startup"
 
 require 'puppet/acceptance/temp_file_utils'

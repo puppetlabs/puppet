@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "should be able to remove a host record"
 
 agents.each do |agent|

@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'PUP-2630 ensure $server_facts is set and warning is issued if any value is overwritten by an agent'
 
 step 'ensure :trusted_server_facts is false by default'

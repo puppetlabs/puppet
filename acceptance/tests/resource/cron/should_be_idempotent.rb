@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Cron: check idempotency"
 confine :except, :platform => 'windows'
 confine :except, :platform => /^eos-/ # See PUP-5500

@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "aix package provider should work correctly"
 
 confine :to, :platform => /aix/

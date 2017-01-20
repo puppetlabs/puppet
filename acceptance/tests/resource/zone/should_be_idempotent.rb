@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Zone: should be idempotent"
 
 confine :to, :platform => 'solaris'

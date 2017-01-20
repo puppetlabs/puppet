@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'PUP-6586 Ensure puppet does not continually reset password for disabled user' do
 
   confine :to, :platform => 'windows'

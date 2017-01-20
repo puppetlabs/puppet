@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "#6928: Puppet --parseonly should return deprication message"
 
 # Create good and bad formatted manifests

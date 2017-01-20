@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "verifies that puppet resource creates a user and assigns the correct group"
 confine :except, :platform => 'windows'
 confine :except, :platform => /^eos-/ # See ARISTA-37
