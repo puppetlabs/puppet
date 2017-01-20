@@ -2,9 +2,9 @@
 
 require 'spec_helper'
 require 'puppet/provider/nameservice'
-require 'etc'
+require 'etc' # Ruby etc module is not defined on Windows
 
-describe Puppet::Provider::NameService do
+describe Puppet::Provider::NameService, :if => !Puppet.features.microsoft_windows? do
 
   before :each do
     described_class.initvars
