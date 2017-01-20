@@ -97,6 +97,16 @@ describe "The lookup function" do
 
     after(:each) do
       Puppet.pop_context
+      if Object.const_defined?(:Hiera)
+        Hiera.send(:remove_instance_variable, :@config) if Hiera.instance_variable_defined?(:@config)
+        Hiera.send(:remove_instance_variable, :@logger) if Hiera.instance_variable_defined?(:@logger)
+        if Hiera.const_defined?(:Config)
+          Hiera::Config.send(:remove_instance_variable, :@config) if Hiera::Config.instance_variable_defined?(:@config)
+        end
+        if Hiera.const_defined?(:Backend)
+          Hiera::Backend.clear!
+        end
+      end
     end
 
     def collect_notices(code, explain = false, &block)
@@ -533,7 +543,7 @@ describe "The lookup function" do
           'ruby_stuff' => {
             'hiera' => {
               'backend' => {
-                'custom_backend.rb' => <<-RUBY.unindent
+                'custom_backend.rb' => <<-RUBY.unindent,
                   class Hiera::Backend::Custom_backend
                     def lookup(key, scope, order_override, resolution_type, context)
                       case key
@@ -544,6 +554,15 @@ describe "The lookup function" do
                       else
                         throw :no_such_key
                       end
+                    end
+                  end
+                  RUBY
+                'other_backend.rb' => <<-RUBY.unindent,
+                  class Hiera::Backend::Other_backend
+                    def lookup(key, scope, order_override, resolution_type, context)
+                      value = Hiera::Config[:other][key.to_sym]
+                      throw :no_such_key if value.nil?
+                      value
                     end
                   end
                   RUBY
@@ -601,6 +620,7 @@ describe "The lookup function" do
           end
         ensure
           Hiera::Backend.send(:remove_const, :Custom_backend) if Hiera::Backend.const_defined?(:Custom_backend)
+          Hiera::Backend.send(:remove_const, :Other_backend) if Hiera::Backend.const_defined?(:Other_backend)
           $LOAD_PATH.shift
         end
       end
@@ -769,6 +789,13 @@ describe "The lookup function" do
               paths:
                 - common.custom
                 - "%{domain}.custom"
+            - name: Other
+              hiera3_backend: other
+              options:
+                other_option: value of other_option
+              paths:
+                - common.other
+                - "%{domain}.other"
               YAML
         end
 
@@ -802,6 +829,22 @@ describe "The lookup function" do
 
         it 'backend data sources are propagated to custom backend' do
           expect(lookup('datasources')).to eql(['common', 'example.com'])
+        end
+
+        it 'backend specific options are propagated to custom backend' do
+          expect(lookup('other_option')).to eql('value of other_option')
+        end
+
+        it 'multiple hiera3_backend declarations can be used and are merged into the generated config' do
+          expect(lookup(['datasources', 'other_option'])).to eql([['common', 'example.com'], 'value of other_option'])
+          expect(Hiera::Config.instance_variable_get(:@config)).to eql(
+            {
+              :backends => ['custom', 'other'],
+              :hierarchy => ['common', '%{domain}'],
+              :custom => { :datadir => "#{code_dir}/hieradata" },
+              :other => { :other_option => 'value of other_option', :datadir=>"#{code_dir}/hieradata" },
+              :logger => 'puppet'
+            })
         end
 
         it 'provides a sensible error message when the hocon library is not loaded' do

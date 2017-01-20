@@ -191,10 +191,21 @@ class HieraConfig
   def create_hiera3_backend_provider(name, backend, parent_data_provider, datadir, paths, hiera3_config)
     # Custom backend. Hiera v3 must be installed, it's logger configured, and it must be made aware of the loaded config
     require 'hiera'
-    if @config.include?(KEY_LOGGER)
-      Hiera.logger = @config[KEY_LOGGER].to_s
+    if Hiera::Config.instance_variable_defined?(:@config) && (current_config = Hiera::Config.instance_variable_get(:@config)).is_a?(Hash)
+      current_config.each_pair do |key, val|
+        case key
+        when :hierarchy, :backends
+          hiera3_config[key] = ([val] + [hiera3_config[key]]).flatten.uniq
+        else
+          hiera3_config[key] = val
+        end
+      end
     else
-      Hiera.logger = 'puppet'
+      if hiera3_config.include?(KEY_LOGGER)
+        Hiera.logger = hiera3_config[KEY_LOGGER].to_s
+      else
+        Hiera.logger = 'puppet'
+      end
     end
     Hiera::Config.instance_variable_set(:@config, hiera3_config)
 
@@ -495,13 +506,15 @@ class HieraConfigV5 < HieraConfig
           # Disallow use of backends that have corresponding "data_hash" functions in version 5
           raise Puppet::DataBinding::LookupError, "#{@config_path}: Use \"#{KEY_DATA_HASH}: #{function_name}_data\" instead of \"#{KEY_V3_BACKEND}: #{function_name}\""
         end
+        v3options = { :datadir => entry_datadir.to_s }
+        options.each_pair { |k, v| v3options[k.to_sym] = v }
         data_providers[name] = create_hiera3_backend_provider(name, function_name, parent_data_provider, entry_datadir, locations, {
           :hierarchy =>
             locations.nil? ? [] : locations.map do |loc|
               path = loc.original_location
               path.end_with?(".#{function_name}") ? path[0..-(function_name.length + 2)] : path
             end,
-          function_name.to_sym => { :datadir => entry_datadir },
+          function_name.to_sym => v3options,
           :backends => [ function_name ],
           :logger => 'puppet'
         })
