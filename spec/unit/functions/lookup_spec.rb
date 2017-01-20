@@ -803,6 +803,14 @@ describe "The lookup function" do
         it 'backend data sources are propagated to custom backend' do
           expect(lookup('datasources')).to eql(['common', 'example.com'])
         end
+
+        it 'provides a sensible error message when the hocon library is not loaded' do
+          Puppet.features.stubs(:hocon?).returns(false)
+
+          expect { lookup('a') }.to raise_error do |e|
+            expect(e.message).to match(/Lookup using Hocon data_hash function is not supported without hocon library/)
+          end
+        end
       end
     end
 
