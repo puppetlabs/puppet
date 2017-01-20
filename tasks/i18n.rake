@@ -17,4 +17,9 @@ namespace :gettext do
   task :generate_po, [:language] => :load_gettext_tasks do |t, args|
     Rake::Task["gettext:po"].invoke(args[:language])
   end
+
+  desc "Update POT file if strings have changed"
+  task :update_pot => :load_gettext_tasks do
+    Rake::Task["gettext:update_pot"].invoke
+  end
 end
