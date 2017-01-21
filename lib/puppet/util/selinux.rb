@@ -62,16 +62,22 @@ module Puppet::Util::SELinux
     if context.nil? or context == "unlabeled"
       return nil
     end
-    unless context =~ /^([^\s:]+):([^\s:]+):([^\s:]+)(?::([\sa-zA-Z0-9:,._-]+))?$/
+    components = /^([^\s:]+):([^\s:]+):([^\s:]+)(?::([\sa-zA-Z0-9:,._-]+))?$/.match(context)
+    unless components
       raise Puppet::Error, _("Invalid context to parse: %{context}") % { context: context }
     end
-    ret = {
-      :seluser => $1,
-      :selrole => $2,
-      :seltype => $3,
-      :selrange => $4,
-    }
-    ret[component]
+    case component
+    when :seluser
+      components[1]
+    when :selrole
+      components[2]
+    when :seltype
+      components[3]
+    when :selrange
+      components[4]
+    else
+      raise Puppet::Error, _("Invalid SELinux parameter type")
+    end
   end
 
   # This updates the actual SELinux label on the file.  You can update
