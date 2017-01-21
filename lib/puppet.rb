@@ -20,8 +20,20 @@ require 'puppet/util/run_mode'
 require 'puppet/external/pson/common'
 require 'puppet/external/pson/version'
 require 'puppet/external/pson/pure'
-require 'gettext-setup'
-require 'locale'
+
+# When running within puppetserver, the gettext-setup gem might not be available, so
+# we need to skip initializing i18n functionality and stub out methods normally
+# supplied by gettext-setup. Can be removed in Puppet 5. See PUP-7116.
+begin
+  require 'gettext-setup'
+  require 'locale'
+  Puppet::GETTEXT_AVAILABLE = true
+rescue LoadError
+  def _(msg)
+    msg
+  end
+  Puppet::GETTEXT_AVAILABLE = false
+end
 
 #------------------------------------------------------------
 # the top-level module
@@ -40,27 +52,34 @@ module Puppet
   require 'puppet/environments'
 
   class << self
-    # e.g. ~/code/puppet/locales. Also when running as a gem.
-    local_locale_path = File.absolute_path('../locales', File.dirname(__FILE__))
-    # e.g. /opt/puppetlabs/puppet/share/locale
-    posix_system_locale_path = File.absolute_path('../../../share/locale', File.dirname(__FILE__))
-    # e.g. C:\Program Files\Puppet Labs\Puppet\puppet\share\locale
-    win32_system_locale_path = File.absolute_path('../../../../../puppet/share/locale', File.dirname(__FILE__))
+    if Puppet::GETTEXT_AVAILABLE
+      # e.g. ~/code/puppet/locales. Also when running as a gem.
+      local_locale_path = File.absolute_path('../locales', File.dirname(__FILE__))
+      # e.g. /opt/puppetlabs/puppet/share/locale
+      posix_system_locale_path = File.absolute_path('../../../share/locale', File.dirname(__FILE__))
+      # e.g. C:\Program Files\Puppet Labs\Puppet\puppet\share\locale
+      win32_system_locale_path = File.absolute_path('../../../../../puppet/share/locale', File.dirname(__FILE__))
 
-    if File.exist?(local_locale_path)
-      locale_path = local_locale_path
-    elsif File.exist?(win32_system_locale_path)
-      locale_path = win32_system_locale_path
-    elsif File.exist?(posix_system_locale_path)
-      locale_path = posix_system_locale_path
-    else
-      # We couldn't load our locale data.
-      locale_path = nil
-    end
+      if File.exist?(local_locale_path)
+        locale_path = local_locale_path
+      elsif File.exist?(win32_system_locale_path)
+        locale_path = win32_system_locale_path
+      elsif File.exist?(posix_system_locale_path)
+        locale_path = posix_system_locale_path
+      else
+        # We couldn't load our locale data.
+        locale_path = nil
+      end
 
-    if locale_path
-      GettextSetup.initialize(locale_path, :file_format => :mo)
-      FastGettext.locale = GettextSetup.negotiate_locale(Locale.current.language)
+      if locale_path
+        if Gem.loaded_specs['gettext-setup'].version < Gem::Version.new('0.8')
+          # Will load translations from PO files only
+          GettextSetup.initialize(locale_path)
+        else
+          GettextSetup.initialize(locale_path, :file_format => :mo)
+        end
+        FastGettext.locale = GettextSetup.negotiate_locale(Locale.current.language)
+      end
     end
 
     include Puppet::Util

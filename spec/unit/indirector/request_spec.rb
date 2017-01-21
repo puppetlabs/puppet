@@ -140,6 +140,15 @@ describe Puppet::Indirector::Request do
         expect(Puppet::Indirector::Request.new(:ind, :method, "http://host/stuff with spaces", nil).key).to eq("stuff with spaces")
       end
 
+      it "should set the request key to the unescaped path from the URI, in UTF-8 encoding" do
+        path = "\u4e07"
+        uri = "http://host/#{path}"
+        request = Puppet::Indirector::Request.new(:ind, :method, uri, nil)
+
+        expect(request.key).to eq(path)
+        expect(request.key.encoding).to eq(Encoding::UTF_8)
+      end
+
       it "should set the :uri attribute to the full URI" do
         expect(Puppet::Indirector::Request.new(:ind, :method, "http:///a/path/stu ff", nil).uri).to eq('http:///a/path/stu ff')
       end

@@ -14,6 +14,7 @@ module Extension
   MAP_START = 0x11
   PCORE_OBJECT_START = 0x12
   OBJECT_START = 0x13
+  SENSITIVE_START = 0x14
 
   # 0x20 - 0x2f reserved for special extension objects
   DEFAULT = 0x20
@@ -27,8 +28,8 @@ module Extension
   TIMESPAN = 0x34
   VERSION = 0x35
   VERSION_RANGE = 0x36
-  SENSITIVE = 0x37
-  BINARY = 0x38
+  BINARY = 0x37
+  BASE64 = 0x38
 
   # Marker module indicating whether or not an instance is tabulated or not
   module NotTabulated; end
@@ -82,6 +83,12 @@ module Extension
     def sequence_size
       @size
     end
+  end
+
+  # The class that triggers the use of the SENSITIVE_START extension. It has no payload
+  class SensitiveStart
+    include NotTabulated
+    INSTANCE = SensitiveStart.new
   end
 
   # The class that triggers the use of the PCORE_OBJECT_START extension. The payload is the name of the object type
