@@ -134,7 +134,7 @@ ensure the issue has been resolved.
 * [Bug tracker (Jira)](https://tickets.puppetlabs.com)
 * [Contributor License Agreement](http://links.puppet.com/cla)
 * [General GitHub documentation](https://help.github.com/)
-* [GitHub pull request documentation](https://help.github.com/send-pull-requests/)
+* [GitHub pull request documentation](https://help.github.com/articles/creating-a-pull-request/)
 * #puppet-dev IRC channel on freenode.org ([Archive](https://botbot.me/freenode/puppet-dev/))
 * [puppet-dev mailing list](https://groups.google.com/forum/#!forum/puppet-dev)
 * [Community PR Triage notes](https://github.com/puppet-community/community-triage/tree/master/core/notes)
