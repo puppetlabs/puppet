@@ -8,7 +8,7 @@ test_name 'C99629: hiera v5 can use v3 config and data' do
   tmp_environment2 = mk_tmp_environment_with_teardown(master, app_type)
   fq_tmp_environmentpath2  = "#{environmentpath}/#{tmp_environment2}"
 
-  step "create hiera v3 global config" do
+  step "create hiera v3 global config and data" do
     confdir = master.puppet('master')['confdir']
     codedir = master.puppet('master')['codedir']
 
@@ -24,6 +24,7 @@ test_name 'C99629: hiera v5 can use v3 config and data' do
 :backends:
   - "yaml"
   - "json"
+  - "hocon"
 :hierarchy:
   - "somesuch"
   - "common"
@@ -41,11 +42,17 @@ environment_key3: "env value3"
   "environment_key2" : "env value2"
 }
       JSON
+      step "C99628: add hocon backend and data" do
+        create_remote_file(master, "#{fq_tmp_environmentpath}/hieradata/somesuch.conf", <<-HOCON)
+environment_key4 = "hocon value",
+        HOCON
+      end
 
       create_sitepp(master, tmp_environment, <<-SITE)
 notify { "${lookup('environment_key1')}": }
 notify { "${lookup('environment_key2')}": }
 notify { "${lookup('environment_key3')}": }
+notify { "${lookup('environment_key4')}": }
       SITE
 
       on(master, "chmod -R 775 #{fq_tmp_environmentpath}")
@@ -56,7 +63,7 @@ notify { "${lookup('environment_key3')}": }
   step 'assert lookups using lookup subcommand' do
     step 'assert lookup --explain using lookup subcommand' do
       on(master, puppet('lookup', "--environment #{tmp_environment}", 'environment_key1 --explain'), :accept_all_exit_codes => true) do |result|
-        assert(result.exit_code == 0, "lookup subcommand didn't exit properly: (#{result.exit_code})")
+        assert(result.exit_code == 0, "1: lookup subcommand didn't exit properly: (#{result.exit_code})")
         assert_match(/env value1/, result.stdout,
                      "1: lookup subcommand didn't find correct key")
         assert_match(/hiera configuration version 3/, result.stdout,
@@ -68,14 +75,19 @@ notify { "${lookup('environment_key3')}": }
       end
     end
     on(master, puppet('lookup', "--environment #{tmp_environment}", 'environment_key2'), :accept_all_exit_codes => true) do |result|
-      assert(result.exit_code == 0, "lookup subcommand didn't exit properly: (#{result.exit_code})")
+      assert(result.exit_code == 0, "2: lookup subcommand didn't exit properly: (#{result.exit_code})")
       assert_match(/env value2/, result.stdout,
                    "2: lookup subcommand didn't find correct key")
     end
     on(master, puppet('lookup', "--environment #{tmp_environment}", 'environment_key3'), :accept_all_exit_codes => true) do |result|
-      assert(result.exit_code == 0, "lookup subcommand didn't exit properly: (#{result.exit_code})")
+      assert(result.exit_code == 0, "3: lookup subcommand didn't exit properly: (#{result.exit_code})")
       assert_match(/env value3/, result.stdout,
                    "3: lookup subcommand didn't find correct key")
+    end
+    on(master, puppet('lookup', "--environment #{tmp_environment}", 'environment_key4'), :accept_all_exit_codes => true) do |result|
+      assert(result.exit_code == 0, "4: lookup subcommand didn't exit properly: (#{result.exit_code})")
+      assert_match(/hocon value/, result.stdout,
+                   "4: lookup subcommand didn't find correct key")
     end
   end
 
@@ -91,6 +103,8 @@ notify { "${lookup('environment_key3')}": }
                        "2: agent lookup didn't find correct key")
           assert_match(/env value3/, result.stdout,
                        "3: agent lookup didn't find correct key")
+          assert_match(/hocon value/, result.stdout,
+                       "4: agent lookup didn't find correct key")
         end
       end
     end
