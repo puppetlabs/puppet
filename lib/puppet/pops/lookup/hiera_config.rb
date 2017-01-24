@@ -525,6 +525,8 @@ class HieraConfigV5 < HieraConfig
     data_providers.values
   end
 
+  RESERVED_OPTION_KEYS = ['path', 'uri'].freeze
+
   DEFAULT_CONFIG_HASH = {
     KEY_VERSION => 5,
     KEY_DEFAULTS => {
@@ -567,6 +569,15 @@ class HieraConfigV5 < HieraConfig
       if LOCATION_KEYS.count { |key| he.include?(key) } > 1
         raise Puppet::DataBinding::LookupError,
           "#{@config_path}: Only one of #{combine_strings(LOCATION_KEYS)} can be defined in hierarchy '#{name}'"
+      end
+
+      options = he[KEY_OPTIONS]
+      unless options.nil?
+        RESERVED_OPTION_KEYS.each do |key|
+          if options.include?(key)
+            raise Puppet::DataBinding::LookupError, "#{@config_path}: Option key '#{key}' used in hierarchy '#{name}' is reserved by Puppet"
+          end
+        end
       end
     end
     config
