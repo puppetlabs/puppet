@@ -2,14 +2,14 @@ require 'puppet/indirector/face'
 
 Puppet::Indirector::Face.define(:report, '0.0.1') do
   copyright "Puppet Labs", 2011
-  license   "Apache 2 license; see COPYING"
+  license   _("Apache 2 license; see COPYING")
 
-  summary "Create, display, and submit reports."
+  summary _("Create, display, and submit reports.")
 
   save = get_action(:save)
-  save.summary "API only: submit a report."
-  save.arguments "<report>"
-  save.returns "Nothing."
+  save.summary _("API only: submit a report.")
+  save.arguments _("<report>")
+  save.returns _("Nothing.")
   save.examples <<-'EOT'
     From the implementation of `puppet report submit` (API example):
 
@@ -23,13 +23,13 @@ Puppet::Indirector::Face.define(:report, '0.0.1') do
   EOT
 
   action(:submit) do
-    summary "API only: submit a report with error handling."
+    summary _("API only: submit a report with error handling.")
     description <<-'EOT'
       API only: Submits a report to the puppet master. This action is
       essentially a shortcut and wrapper for the `save` action with the `rest`
       terminus, and provides additional details in the event of a failure.
     EOT
-    arguments "<report>"
+    arguments _("<report>")
     examples <<-'EOT'
       API example:
 
@@ -42,9 +42,9 @@ Puppet::Indirector::Face.define(:report, '0.0.1') do
       begin
         Puppet::Transaction::Report.indirection.terminus_class = :rest
         Puppet::Face[:report, "0.0.1"].save(report)
-        Puppet.notice "Uploaded report for #{report.name}"
+        Puppet.notice _("Uploaded report for #{report.name}")
       rescue => detail
-        Puppet.log_exception(detail, "Could not send report: #{detail}")
+        Puppet.log_exception(detail, _("Could not send report: #{detail}"))
       end
     end
   end

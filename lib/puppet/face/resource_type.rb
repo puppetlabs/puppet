@@ -2,9 +2,9 @@ require 'puppet/indirector/face'
 
 Puppet::Indirector::Face.define(:resource_type, '0.0.1') do
   copyright "Puppet Labs", 2011
-  license   "Apache 2 license; see COPYING"
+  license   _("Apache 2 license; see COPYING")
 
-  summary "View classes, defined resource types, and nodes from all manifests."
+  summary _("View classes, defined resource types, and nodes from all manifests.")
   description <<-'EOT'
     This subcommand reads information about the resource collections (classes,
     nodes, and defined types) available in Puppet's site manifest and
@@ -32,9 +32,9 @@ Puppet::Indirector::Face.define(:resource_type, '0.0.1') do
   deactivate_action(:destroy)
 
   find = get_action(:find)
-  find.summary "Retrieve info about a resource collection."
-  find.arguments "<collection_name>"
-  find.returns <<-'EOT'
+  find.summary _("Retrieve info about a resource collection.")
+  find.arguments _("<collection_name>")
+  find.returns _(<<-'EOT')
     A hash of info about the requested resource collection. When used from the
     Ruby API: returns a Puppet::Resource::Type object.
 
@@ -62,9 +62,9 @@ Puppet::Indirector::Face.define(:resource_type, '0.0.1') do
   end
 
   search = get_action(:search)
-  search.summary "Search for collections matching a regular expression."
-  search.arguments "<regular_expression>"
-  search.returns <<-'EOT'
+  search.summary _("Search for collections matching a regular expression.")
+  search.arguments _("<regular_expression>")
+  search.returns _(<<-'EOT')
     An array of hashes of resource collection info. When used from the Ruby API:
     returns an array of Puppet::Resource::Type objects.
 
