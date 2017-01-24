@@ -5,14 +5,14 @@ require 'puppet/file_system'
 
 Puppet::Face.define(:epp, '0.0.1') do
   copyright "Puppet Labs", 2014
-  license   "Apache 2 license; see COPYING"
+  license   _("Apache 2 license; see COPYING")
 
-  summary "Interact directly with the EPP template parser/renderer."
+  summary _("Interact directly with the EPP template parser/renderer.")
 
   action(:validate) do
-    summary "Validate the syntax of one or more EPP templates."
-    arguments "[<template>] [<template> ...]"
-    returns "Nothing, or encountered syntax errors."
+    summary _("Validate the syntax of one or more EPP templates.")
+    arguments _("[<template>] [<template> ...]")
+    returns _("Nothing, or encountered syntax errors.")
     description <<-'EOT'
       This action validates EPP syntax without producing any output.
 
@@ -31,7 +31,7 @@ Puppet::Face.define(:epp, '0.0.1') do
     EOT
 
     option("--[no-]continue_on_error") do
-      summary "Whether or not to continue after errors are reported for a template."
+      summary _("Whether or not to continue after errors are reported for a template.")
     end
 
     examples <<-'EOT'
@@ -75,7 +75,7 @@ Puppet::Face.define(:epp, '0.0.1') do
         else
           # This is not an error since a validate of all files in an empty
           # directory should not be treated as a failed validation.
-          Puppet.notice "No template specified. No action taken"
+          Puppet.notice _("No template specified. No action taken")
         end
       end
 
@@ -92,19 +92,19 @@ Puppet::Face.define(:epp, '0.0.1') do
         end
       end
       if !missing_files.empty?
-        raise Puppet::Error, "One or more file(s) specified did not exist:\n" + missing_files.map { |f| "   #{f}" }.join("\n")
+        raise Puppet::Error, _("One or more file(s) specified did not exist:\n") + missing_files.map { |f| _("   #{f}") }.join("\n")
       else
         # Exit with 1 if there were errors
-        raise Puppet::Error, "Errors while validating epp" unless status
+        raise Puppet::Error, _("Errors while validating epp") unless status
       end
     end
   end
 
 
   action (:dump) do
-    summary "Outputs a dump of the internal template parse tree for debugging"
+    summary _("Outputs a dump of the internal template parse tree for debugging")
     arguments "-e <source> | [<templates> ...] "
-    returns "A dump of the resulting AST model unless there are syntax or validation errors."
+    returns _("A dump of the resulting AST model unless there are syntax or validation errors.")
     description <<-'EOT'
       The dump action parses and validates the EPP syntax and dumps the resulting AST model
       in a human readable (but not necessarily an easy to understand) format.
@@ -127,17 +127,17 @@ Puppet::Face.define(:epp, '0.0.1') do
       This command ignores the --render-as setting/option.
     EOT
 
-    option("--e <source>") do
+    option("--e " + _("<source>")) do
       default_to { nil }
-      summary "Dump one epp source expression given on the command line."
+      summary _("Dump one epp source expression given on the command line.")
     end
 
     option("--[no-]validate") do
-      summary "Whether or not to validate the parsed result, if no-validate only syntax errors are reported."
+      summary _("Whether or not to validate the parsed result, if no-validate only syntax errors are reported.")
     end
 
     option("--[no-]header") do
-      summary "Whether or not to show a file name header between files."
+      summary _("Whether or not to show a file name header between files.")
     end
 
     when_invoked do |*args|
@@ -161,7 +161,7 @@ Puppet::Face.define(:epp, '0.0.1') do
         if ! STDIN.tty?
           buffer.print dump_parse(STDIN.read, 'stdin', options, false)
         else
-          raise Puppet::Error, "No input to parse given on command line or stdin"
+          raise Puppet::Error, _("No input to parse given on command line or stdin")
         end
       else
         templates, missing_files = args.reduce([[],[]]) do |memo, file|
@@ -180,7 +180,7 @@ Puppet::Face.define(:epp, '0.0.1') do
         end
 
         if !missing_files.empty?
-          raise Puppet::Error, "One or more file(s) specified did not exist:\n" + missing_files.collect { |f| "   #{f}" }.join("\n")
+          raise Puppet::Error, _("One or more file(s) specified did not exist:\n") + missing_files.collect { |f| "   #{f}" }.join("\n")
         end
       end
       buffer.string
@@ -188,9 +188,9 @@ Puppet::Face.define(:epp, '0.0.1') do
   end
 
   action (:render) do
-    summary "Renders an epp template as text"
+    summary _("Renders an epp template as text")
     arguments "-e <source> | [<templates> ...] "
-    returns "A rendered result of one or more given templates."
+    returns _("A rendered result of one or more given templates.")
     description <<-'EOT'
       This action renders one or more EPP templates.
 
@@ -286,29 +286,29 @@ Puppet::Face.define(:epp, '0.0.1') do
           $ puppet epp render -e '<% $facts[osfamily] %>' --facts data.yaml
     EOT
 
-    option("--node <node_name>") do
-      summary "The name of the node for which facts are obtained. Defaults to facts for the local node."
+    option("--node " + _("<node_name>")) do
+      summary _("The name of the node for which facts are obtained. Defaults to facts for the local node.")
     end
 
-    option "--e <source>" do
+    option("--e " + _("<source>")) do
       default_to { nil }
-      summary "Render one inline epp template given on the command line."
+      summary _("Render one inline epp template given on the command line.")
     end
 
-    option("--values <values_hash>") do
-      summary "A Hash in Puppet DSL form given as arguments to the template being rendered."
+    option("--values " + _("<values_hash>")) do
+      summary _("A Hash in Puppet DSL form given as arguments to the template being rendered.")
     end
 
-    option("--values_file <pp_or_yaml_file>") do
-      summary "A .pp or .yaml file that is processed to produce a hash of values for the template."
+    option("--values_file " + _("<pp_or_yaml_file>")) do
+      summary _("A .pp or .yaml file that is processed to produce a hash of values for the template.")
     end
 
-    option("--facts <facts_file>") do
-      summary "A .yaml or .json file containing a hash of facts made available in $facts and $trusted"
+    option("--facts " + _("<facts_file>")) do
+      summary _("A .yaml or .json file containing a hash of facts made available in $facts and $trusted")
     end
 
     option("--[no-]header") do
-      summary "Whether or not to show a file name header between rendered results."
+      summary _("Whether or not to show a file name header between rendered results.")
     end
 
     when_invoked do |*args|
@@ -328,7 +328,7 @@ Puppet::Face.define(:epp, '0.0.1') do
         if ! STDIN.tty?
           buffer.print render_inline(STDIN.read, compiler, options)
         else
-          raise Puppet::Error, "No input to process given on command line or stdin"
+          raise Puppet::Error, _("No input to process given on command line or stdin")
         end
       else
         show_filename = args.count > 1
@@ -342,7 +342,7 @@ Puppet::Face.define(:epp, '0.0.1') do
           end
         end
       end
-      raise Puppet::Error, "error while rendering epp" unless status
+      raise Puppet::Error, _("error while rendering epp") unless status
       buffer.string
     end
   end
@@ -381,13 +381,13 @@ Puppet::Face.define(:epp, '0.0.1') do
           evaluating_parser = Puppet::Pops::Parser::EvaluatingParser.new
           template_values = evaluating_parser.evaluate_file(compiler.topscope, values_file)
         else
-          Puppet.err("Only .yaml or .pp can be used as a --values_file")
+          Puppet.err(_("Only .yaml or .pp can be used as a --values_file"))
         end
       rescue => e
-        Puppet.err("Could not load --values_file #{e.message}")
+        Puppet.err(_("Could not load --values_file #{e.message}"))
       end
       if !(template_values.nil? || template_values.is_a?(Hash))
-        Puppet.err("--values_file option must evaluate to a Hash or undef/nil, got: '#{template_values.class}'")
+        Puppet.err(_("--values_file option must evaluate to a Hash or undef/nil, got: '#{template_values.class}'"))
       end
     end
 
@@ -400,7 +400,7 @@ Puppet::Face.define(:epp, '0.0.1') do
       when Hash
         template_values.nil? ? result : template_values.merge(result)
       else
-        Puppet.err("--values option must evaluate to a Hash or undef, got: '#{result.class}'")
+        Puppet.err(_("--values option must evaluate to a Hash or undef, got: '#{result.class}'"))
       end
     else
       template_values
@@ -486,7 +486,7 @@ Puppet::Face.define(:epp, '0.0.1') do
       end
 
       unless given_facts.instance_of?(Hash)
-        raise "Incorrect formatted data in #{fact_file} given via the --facts flag"
+        raise _("Incorrect formatted data in #{fact_file} given via the --facts flag")
       end
       # It is difficult to add to or modify the set of facts once the node is created
       # as changes does not show up in parameters. Rather than manually patching up

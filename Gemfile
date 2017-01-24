@@ -33,8 +33,8 @@ gem "rake", "10.1.1", :require => false
 # json_pure 2.0.2+ officially requires Ruby >= 2.0, but should have specified that in 2.0
 gem 'json_pure', '~> 1.8', :require => false
 # i18n support (gettext-setup and dependencies)
-gem 'gettext-setup', :git => 'https://github.com/magisus/gettext-setup-gem.git', :branch => 'diff-task', :require => false
-# gem 'gettext-setup', '>= 0.8', '< 1.0', :require => false
+# gem 'gettext-setup', :git => 'https://github.com/magisus/gettext-setup-gem.git', :branch => 'diff-task', :require => false
+gem 'gettext-setup', '>= 0.8', '< 1.0', :require => false
 gem 'locale', '~> 2.1', :require => false
 
 group(:development, :test) do
