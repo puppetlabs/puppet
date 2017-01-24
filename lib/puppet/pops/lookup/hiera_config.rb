@@ -210,7 +210,7 @@ class HieraConfig
     Hiera::Config.instance_variable_set(:@config, hiera3_config)
 
     # Use a special lookup_key that delegates to the backend
-    paths = nil if paths.empty?
+    paths = nil if !paths.nil? && paths.empty?
     create_data_provider(name, parent_data_provider, KEY_V3_BACKEND, 'hiera_v3_data', { KEY_DATADIR => datadir, KEY_BACKEND => backend }, paths)
   end
 

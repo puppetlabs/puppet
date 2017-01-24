@@ -897,6 +897,23 @@ describe "The lookup function" do
           end
         end
       end
+
+      context 'with a hiera3_backend that has no paths' do
+        let(:hiera_yaml) do
+          <<-YAML.unindent
+          ---
+          version: 5
+          hierarchy:
+            - name: Custom
+              hiera3_backend: custom
+          YAML
+        end
+
+        it 'calls the backend' do
+          expect(lookup('hash_c')).to eql(
+            { 'hash_ca' => { 'cad' => 'value hash_c.hash_ca.cad (from global custom)' }})
+        end
+      end
     end
 
     context 'and a module' do
