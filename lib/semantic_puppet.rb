@@ -8,7 +8,7 @@ end
 
 module SemanticPuppet
   if defined?(GettextSetup)
-    GettextSetup.initialize(File.absolute_path('../locales', File.dirname(__FILE__)))
+    GettextSetup.initialize(File.absolute_path('semantic_puppet/locales', File.dirname(__FILE__)))
   end
 
   autoload :Version, 'semantic_puppet/version'
