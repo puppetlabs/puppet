@@ -8,36 +8,35 @@ test_name 'C99572: v4 hieradata with v5 configs' do
 
   confdir = master.puppet('master')['confdir']
 
-  # TODO: hiera v5 global config not yet enabled
-  #teardown do
-    #step "remove global hiera.yaml" do
-      #on(master, "rm #{confdir}/hiera.yaml")
-    #end
-  #end
+  teardown do
+    step "remove global hiera.yaml" do
+      on(master, "rm #{confdir}/hiera.yaml")
+    end
+  end
 
-  #step "create global hiera.yaml and data" do
-    #create_remote_file(master, "#{confdir}/hiera.yaml", <<-HIERA)
-#---
-#version: 5
-#hierarchy:
-  #- name: "%{environment}"
-    #data_hash: yaml_data
-    #path: "%{environment}.yaml"
-  #- name: common
-    #data_hash: yaml_data
-    #path: "common.yaml"
-  #HIERA
-    #create_remote_file(master, "#{confdir}/#{tmp_environment}.yaml", <<-YAML)
-#---
-#environment_key: environment_key-global_env_file
-#global_key: global_key-global_env_file
-    #YAML
-    #create_remote_file(master, "#{confdir}/common.yaml", <<-YAML)
-#---
-#environment_key: environment_key-global_common_file
-#global_key: global_key-global_common_file
-    #YAML
-  #end
+  step "create global hiera.yaml and data" do
+    create_remote_file(master, "#{confdir}/hiera.yaml", <<-HIERA)
+---
+version: 5
+hierarchy:
+  - name: "%{environment}"
+    data_hash: yaml_data
+    path: "%{environment}.yaml"
+  - name: common
+    data_hash: yaml_data
+    path: "common.yaml"
+    HIERA
+    create_remote_file(master, "#{confdir}/#{tmp_environment}.yaml", <<-YAML)
+---
+environment_key: environment_key-global_env_file
+global_key: global_key-global_env_file
+    YAML
+    create_remote_file(master, "#{confdir}/common.yaml", <<-YAML)
+---
+environment_key: environment_key-global_common_file
+global_key: global_key-global_common_file
+    YAML
+  end
 
   step "create environment hiera.yaml and data" do
     on(master, "mkdir -p #{fq_tmp_environmentpath}/data")
