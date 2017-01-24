@@ -21,7 +21,7 @@ Puppet::Face.define(:help, '0.0.1') do
       $ puppet help
     EOT
 
-    option "--version" + _("VERSION") do
+    option "--version " + _("VERSION") do
       summary _("The version of the subcommand for which to show help.")
     end
 
