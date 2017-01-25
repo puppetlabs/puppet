@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Pluginsync'ed custom facts should be resolvable during application runs"
 
 #

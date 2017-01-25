@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'C98346: Binary data type' do
   require 'puppet/acceptance/puppet_type_test_tools.rb'
   extend Puppet::Acceptance::PuppetTypeTestTools

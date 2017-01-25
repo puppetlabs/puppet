@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "#12572: Don't print a diff for last_run_summary when show_diff is on"
 
 agents.each do |host|

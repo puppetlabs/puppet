@@ -1,3 +1,4 @@
+tag 'risk:high'
 test_name 'Puppet executes functions written in the Puppet language'
 
 teardown do

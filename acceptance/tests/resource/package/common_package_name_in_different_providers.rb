@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "ticket 1073: common package name in two different providers should be allowed"
 
 confine :to, {:platform => /(?:centos|el-|fedora)/}, agents

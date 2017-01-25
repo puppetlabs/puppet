@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "should be able to find an existing SSH authorized key"
 
 skip_test("This test is blocked by PUP-1605")

@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "#4123: should list all running services on Redhat/CentOS"
 confine :to, :platform => /(el|centos|oracle|redhat|scientific)-5/
 

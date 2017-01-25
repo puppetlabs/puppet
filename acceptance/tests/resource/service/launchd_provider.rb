@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'Mac OS X launchd Provider Testing'
 
 confine :to, {:platform => /osx/}, agents

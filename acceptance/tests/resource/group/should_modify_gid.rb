@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "should modify gid of existing group"
 confine :except, :platform => 'windows'
 confine :except, :platform => /^cisco_/ # See PUP-5828

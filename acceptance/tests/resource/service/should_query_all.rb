@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "should query all services"
 
 agents.each do |agent|

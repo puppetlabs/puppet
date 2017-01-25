@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "puppet module build (agent)"
 
 agents.each do |agent|

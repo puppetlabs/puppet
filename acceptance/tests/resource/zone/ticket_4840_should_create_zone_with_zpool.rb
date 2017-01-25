@@ -1,3 +1,4 @@
+tag 'risk:low'
 test_name "Zone: ticket #4840 - verify that the given manifest works."
 confine :to, :platform => 'solaris'
 

@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "should not destroy a group that doesn't exist"
 confine :except, :platform => /^cisco_/ # See PUP-5828
 

@@ -3,6 +3,7 @@
 # AffectedVersion: 2.6.0-2.6.5
 # FixedVersion:
 
+tag 'risk:medium'
 test_name "#6418: file recursion and audit"
 
 agents.each do |agent|

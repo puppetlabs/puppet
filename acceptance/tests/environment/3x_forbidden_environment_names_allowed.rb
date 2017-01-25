@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'PUP-4413 3x forbidden environment names should be allowed in 4x'
 
 step 'setup environments'

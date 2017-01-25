@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "should remove directory, but force required"
 
 agents.each do |agent|

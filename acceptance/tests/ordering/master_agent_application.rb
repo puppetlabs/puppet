@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Puppet applies resources without dependencies in file order over the network"
 
 testdir = master.tmpdir('application_order')

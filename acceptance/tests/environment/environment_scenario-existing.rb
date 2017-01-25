@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Test a specific, existing directory environment configuration"
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils

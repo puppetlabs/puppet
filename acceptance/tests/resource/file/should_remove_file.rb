@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "should remove file"
 
 agents.each do |agent|

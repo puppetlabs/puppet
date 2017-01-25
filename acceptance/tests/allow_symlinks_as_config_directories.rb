@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Should allow symlinks to directories as configuration directories"
 confine :except, :platform => 'windows'
 

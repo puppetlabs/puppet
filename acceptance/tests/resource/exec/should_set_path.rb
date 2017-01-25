@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "the path statement should work to locate commands"
 
 agents.each do |agent|

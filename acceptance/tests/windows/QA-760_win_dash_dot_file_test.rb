@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "QA-760 - Windows Files Containing '-' and '.'"
 
 tag 'risk:medium'

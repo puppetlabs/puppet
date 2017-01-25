@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "#4059: ralsh can change settings"
 
 agents.each do |agent|

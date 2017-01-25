@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "#4233: resource with a newline"
 
 # 2010-07-22 Jeff McCune <jeff@puppetlabs.com>

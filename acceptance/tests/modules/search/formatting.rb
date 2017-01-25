@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'puppet module search output should be well structured'
 
 step 'Setup'

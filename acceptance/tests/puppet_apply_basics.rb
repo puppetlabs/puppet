@@ -2,6 +2,7 @@
 #
 # Unified into a single file because they are literally one-line tests!
 
+tag 'risk:high'
 test_name "Trivial puppet tests"
 
 step "check that puppet apply displays notices"

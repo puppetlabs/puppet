@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'puppet module search should handle multiple search terms sensibly'
 
 #step 'Setup'

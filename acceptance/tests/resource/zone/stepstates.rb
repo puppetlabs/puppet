@@ -1,3 +1,4 @@
+tag 'risk:low'
 test_name "Zone:statemachine single states"
 confine :to, :platform => 'solaris'
 require 'puppet/acceptance/solaris_util'

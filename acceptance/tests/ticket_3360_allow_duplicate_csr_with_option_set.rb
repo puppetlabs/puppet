@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "#3360: Allow duplicate CSR when allow_duplicate_certs is on"
 
 agent_hostnames = agents.map {|a| a.to_s}

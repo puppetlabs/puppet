@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'C14943: Class inheritance works correctly' do
 
   agents.each do |agent|

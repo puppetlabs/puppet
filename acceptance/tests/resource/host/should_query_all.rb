@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "should query all hosts from hosts file"
 
 content = %q{127.0.0.1 test1 test1.local

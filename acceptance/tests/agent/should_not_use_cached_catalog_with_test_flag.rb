@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name '--test flag should override use_cached_catalog'
 
 with_puppet_running_on master, {} do

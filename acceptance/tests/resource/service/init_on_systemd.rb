@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'SysV on default Systemd Service Provider Validation' do
 
   confine :to, :platform => /el-|centos|fedora/ do |h|

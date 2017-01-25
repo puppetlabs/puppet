@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "the pluginsync functionality should sync feature definitions"
 
 #

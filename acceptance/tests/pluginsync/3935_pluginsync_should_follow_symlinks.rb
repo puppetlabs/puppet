@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "pluginsync should not error when modulepath is a symlink and no modules have plugin directories"
 
 step "Create a modulepath directory which is a symlink and includes a module without facts.d or lib directories"

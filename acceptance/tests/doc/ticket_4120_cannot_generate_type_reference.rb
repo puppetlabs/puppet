@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "verify we can print the function reference"
 confine :except, :platform => /^eos-/
 

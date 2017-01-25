@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Package:IPS versionable"
 confine :to, :platform => 'solaris-11'
 

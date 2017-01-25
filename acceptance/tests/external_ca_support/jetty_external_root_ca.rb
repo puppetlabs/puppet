@@ -15,6 +15,7 @@ skip_test "Test only supported on Jetty" unless @options[:is_puppetserver]
 #  - Revocation disabled on the agent `certificate_revocation = false`
 #  - CA disabled on the master `ca = false`
 #
+tag 'risk:medium'
 test_name "Puppet agent and master work when both configured with externally issued certificates from independent intermediate CAs"
 
 step "Copy certificates and configuration files to the master..."

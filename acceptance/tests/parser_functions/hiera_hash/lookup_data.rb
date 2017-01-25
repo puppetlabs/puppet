@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Lookup data using the hiera_hash parser function"
 
 testdir = master.tmpdir('hiera')

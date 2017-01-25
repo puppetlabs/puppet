@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "#7139: Puppet resource file fails on path with leading '/'"
 
 agents.each do |agent|

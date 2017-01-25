@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "file resource: symbolic modes"
 confine :except, :platform => /^eos-/ # See ARISTA-37
 confine :except, :platform => /^solaris-10/

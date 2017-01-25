@@ -1,5 +1,6 @@
 require 'yaml'
 
+tag 'risk:medium'
 test_name "C98092 - a new resource should not be reported as a corrective change" do
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils

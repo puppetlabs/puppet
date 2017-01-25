@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "host should create"
 
 agents.each do |agent|

@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'ensure production environment created by master if missing'
 
 testdir = create_tmpdir_for_user master, 'prod-env-created'

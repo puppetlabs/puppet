@@ -1,3 +1,4 @@
+tag 'risk:low'
 test_name "Zone: dataset configuration"
 
 confine :to, :platform => 'solaris'

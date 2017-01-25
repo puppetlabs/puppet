@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "file resource: set default modes"
 
 def regexp_mode(mode)

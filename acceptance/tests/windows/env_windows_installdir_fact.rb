@@ -1,6 +1,7 @@
 # (PA-466) The env_windows_installdir fact is set as an environment variable
 # fact via environment.bat on Windows systems. Test to ensure it is both
 # present and accurate.
+tag 'risk:medium'
 test_name 'PA-466: Ensure env_windows_installdir fact is present and correct' do
 
   confine :to, :platform => 'windows'

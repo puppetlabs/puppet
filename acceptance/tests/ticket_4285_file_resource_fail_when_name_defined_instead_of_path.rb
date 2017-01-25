@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Bug #4285: ArgumentError: Cannot alias File[mytitle] to [nil]"
 
 agents.each do |host|

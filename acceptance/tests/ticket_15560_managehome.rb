@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "#15560: Manage home directories"
 
 confine :to, :platform => 'windows'

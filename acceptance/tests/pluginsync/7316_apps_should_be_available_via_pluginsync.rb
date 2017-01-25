@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "the pluginsync functionality should sync app definitions, and they should be runnable afterwards"
 
 #

@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "#8740: should not enumerate root directory"
 confine :except, :platform => 'windows'
 

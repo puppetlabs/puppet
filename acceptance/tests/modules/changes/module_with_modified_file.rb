@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'puppet module changes (on a module with a modified file)'
 
 step 'Setup'

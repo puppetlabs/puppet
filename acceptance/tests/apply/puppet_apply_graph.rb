@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'puppet apply should generate a graph'
 
 agents.each do |agent|

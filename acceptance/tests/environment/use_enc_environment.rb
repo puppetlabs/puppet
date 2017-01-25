@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Agent should use environment given by ENC"
 require 'puppet/acceptance/classifier_utils.rb'
 extend Puppet::Acceptance::ClassifierUtils

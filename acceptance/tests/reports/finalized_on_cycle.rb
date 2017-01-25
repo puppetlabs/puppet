@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Reports are finalized on resource cycles"
 # PUP-4548: Skip Windows until PUP-4547 can be resolved.
 confine :except, :platform => 'windows'

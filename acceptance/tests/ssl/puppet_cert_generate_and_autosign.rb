@@ -1,6 +1,7 @@
 require 'puppet/acceptance/common_utils'
 extend Puppet::Acceptance::CAUtils
 
+tag 'risk:high'
 test_name "Puppet cert generate behavior (#6112)" do
 
   # This acceptance test documents the behavior of `puppet cert generate` calls

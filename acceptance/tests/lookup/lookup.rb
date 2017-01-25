@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Lookup data using the agnostic lookup function"
 # pre-docs:
 # https://puppet-on-the-edge.blogspot.com/2015/01/puppet-40-data-in-modules-and.html

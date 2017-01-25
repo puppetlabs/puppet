@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "resources declared in classes are not applied without include"
 manifest = %q{ class x { notify { 'test': message => 'never invoked' } } }
 apply_manifest_on(agents, manifest) do

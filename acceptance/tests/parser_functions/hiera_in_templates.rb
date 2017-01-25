@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Calling Hiera function from inside templates"
 
 @module_name = "hieratest"

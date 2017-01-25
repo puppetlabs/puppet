@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'C98162 - Validate `next` immediately returns from a block of code' do
   agents.each do |agent|
 

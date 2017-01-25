@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'Test `puppet help` workflow'
 
 tag 'risk:medium'

@@ -1,3 +1,4 @@
+tag 'risk:high'
 test_name "puppet module install (agent)"
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils

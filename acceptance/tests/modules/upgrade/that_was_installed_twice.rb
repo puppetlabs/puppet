@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "puppet module upgrade (that was installed twice)"
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils

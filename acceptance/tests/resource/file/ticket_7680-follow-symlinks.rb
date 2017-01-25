@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "#7680: 'links => follow' should use the file source content"
 
 agents.each do |agent|

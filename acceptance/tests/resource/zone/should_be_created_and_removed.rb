@@ -1,3 +1,4 @@
+tag 'risk:low'
 test_name "Zone: should be created and removed"
 
 confine :to, :platform => 'solaris'

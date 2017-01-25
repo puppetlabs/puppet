@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "puppet apply should create a file and report an MD5"
 
 agents.each do |agent|

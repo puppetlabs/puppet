@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "puppet module list (with no installed modules)"
 
 

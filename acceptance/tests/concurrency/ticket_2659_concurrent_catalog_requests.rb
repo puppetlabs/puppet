@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "concurrent catalog requests (PUP-2659)"
 
 # we're only testing the effects of loading a master with concurrent requests

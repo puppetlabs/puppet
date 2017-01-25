@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "resources declared in a class can be applied with include"
 manifest = %q{
 class x {

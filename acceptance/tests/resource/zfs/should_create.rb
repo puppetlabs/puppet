@@ -1,3 +1,4 @@
+tag 'risk:low'
 test_name "ZFS: should create"
 confine :to, :platform => 'solaris'
 

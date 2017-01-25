@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "#9862: puppet runs without service user or group present"
 
 # puppet doesn't try to manage ownership on windows.

@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "puppet should match existing job"
 confine :except, :platform => 'windows'
 confine :except, :platform => /^eos-/ # See PUP-5500

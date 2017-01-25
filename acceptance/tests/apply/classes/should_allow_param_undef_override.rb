@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "should allow overriding a parameter to undef in inheritence"
 
 agents.each do |agent|

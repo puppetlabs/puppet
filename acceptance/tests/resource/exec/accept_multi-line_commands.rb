@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "Be able to execute multi-line commands (#9996)"
 confine :except, :platform => 'windows'
 

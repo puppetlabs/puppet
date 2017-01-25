@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name 'C98162 - Validate `break` terminates execution in a block of code' do
   agents.each do |agent|
 

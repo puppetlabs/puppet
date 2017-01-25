@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "#7101: template compile"
 
 agents.each do |agent|

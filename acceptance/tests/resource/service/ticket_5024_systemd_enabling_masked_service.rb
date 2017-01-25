@@ -1,6 +1,7 @@
 require 'puppet/acceptance/service_utils'
 extend Puppet::Acceptance::ServiceUtils
 
+tag 'risk:high'
 test_name 'Systemd masked services are unmasked before attempting to start'
 
 skip_test "requires AIO install to require 'puppet'" if @options[:type] != 'aio'

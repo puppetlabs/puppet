@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "should delete a user"
 confine :except, :platform => /^eos-/ # See ARISTA-37
 confine :except, :platform => /^cisco_/ # See PUP-5828

@@ -1,3 +1,4 @@
+tag 'risk:medium'
 test_name "test that we can query and find a scheduled task that exists."
 
 name = "pl#{rand(999999).to_i}"
