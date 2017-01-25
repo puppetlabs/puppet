@@ -622,6 +622,7 @@ Puppet::Type.type(:user).provide :directoryservice do
 
   # This is a simple wrapper method for writing values to a file.
   def write_to_file(filename, value)
+    Puppet.deprecation_warning("Puppet::Type.type(:user).provider(:directoryservice).write_to_file is deprecated and will be removed in Puppet 5.")
     begin
       File.open(filename, 'w') { |f| f.write(value)}
     rescue Errno::EACCES => detail

@@ -166,7 +166,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     require 'tempfile'
     # Prefer the current directory, which is more likely to be secure
     # and, in the case of interactive use, accessible to the user.
-    tmpfile = Tempfile.new('x2puppet', Dir.pwd)
+    tmpfile = Tempfile.new('x2puppet', Dir.pwd, :encoding => Encoding::UTF_8)
     begin
       # sync write, so nothing buffers before we invoke the editor.
       tmpfile.sync = true

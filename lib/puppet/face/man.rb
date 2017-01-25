@@ -76,11 +76,13 @@ Puppet::Face.define(:man, '0.0.1') do
         if pager then ENV['PAGER'] = pager end
 
         args  = "--man --manual='Puppet Manual' --organization='Puppet Labs, LLC'"
-        IO.popen("#{ronn} #{args}", 'w') do |fh| fh.write text end
+        # manual pages could contain UTF-8 text
+        IO.popen("#{ronn} #{args}", 'w:UTF-8') do |fh| fh.write text end
 
         ''                      # suppress local output, neh?
       elsif pager then
-        IO.popen(pager, 'w') do |fh| fh.write text end
+        # manual pages could contain UTF-8 text
+        IO.popen(pager, 'w:UTF-8') do |fh| fh.write text end
         ''
       else
         text
