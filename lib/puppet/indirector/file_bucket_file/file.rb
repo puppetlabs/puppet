@@ -25,11 +25,11 @@ module Puppet::FileBucketFile
       if Puppet::FileSystem.exist?(contents_file) && matches(paths_file, files_original_path)
         if request.options[:diff_with]
           other_contents_file = path_for(request.options[:bucket_path], request.options[:diff_with], 'contents')
-          raise "could not find diff_with #{request.options[:diff_with]}" unless Puppet::FileSystem.exist?(other_contents_file)
-          raise "Unable to diff on this platform" unless Puppet[:diff] != ""
+          raise _("could not find diff_with #{request.options[:diff_with]}") unless Puppet::FileSystem.exist?(other_contents_file)
+          raise _("Unable to diff on this platform") unless Puppet[:diff] != ""
           return diff(Puppet::FileSystem.path_string(contents_file), Puppet::FileSystem.path_string(other_contents_file))
         else
-          Puppet.info "FileBucket read #{checksum}"
+          Puppet.info _("FileBucket read #{checksum}")
           model.new(Puppet::FileSystem.binread(contents_file))
         end
       else
@@ -39,7 +39,7 @@ module Puppet::FileBucketFile
 
     def list(request)
       if request.remote?
-        raise Puppet::Error, "Listing remote file buckets is not allowed"
+        raise Puppet::Error, _("Listing remote file buckets is not allowed")
       end
 
       fromdate = request.options[:fromdate] || "0:0:0 1-1-1970"
@@ -47,12 +47,12 @@ module Puppet::FileBucketFile
       begin
         to = Time.parse(todate)
       rescue ArgumentError
-        raise Puppet::Error, "Error while parsing 'todate'"
+        raise Puppet::Error, _("Error while parsing 'todate'")
       end
       begin
         from = Time.parse(fromdate)
       rescue ArgumentError
-        raise Puppet::Error, "Error while parsing 'fromdate'"
+        raise Puppet::Error, _("Error while parsing 'fromdate'")
       end
       # Setting hash's default value to [], needed by the following loop
       bucket = Hash.new {[]}
@@ -193,9 +193,9 @@ module Puppet::FileBucketFile
       if path == '' # Treat "md5/<checksum>/" like "md5/<checksum>"
         path = nil
       end
-      raise ArgumentError, "Unsupported checksum type #{checksum_type.inspect}" if checksum_type != Puppet[:digest_algorithm]
+      raise ArgumentError, _("Unsupported checksum type #{checksum_type.inspect}") if checksum_type != Puppet[:digest_algorithm]
       expected = method(checksum_type + "_hex_length").call
-      raise "Invalid checksum #{checksum.inspect}" if checksum !~ /^[0-9a-f]{#{expected}}$/
+      raise _("Invalid checksum #{checksum.inspect}") if checksum !~ /^[0-9a-f]{#{expected}}$/
       [checksum, path]
     end
 

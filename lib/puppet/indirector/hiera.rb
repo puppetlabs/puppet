@@ -4,7 +4,7 @@ require 'hiera/scope'
 class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
   def initialize(*args)
     if ! Puppet.features.hiera?
-      raise "Hiera terminus not supported without hiera library"
+      raise _("Hiera terminus not supported without hiera library")
     end
     super
   end
@@ -63,7 +63,7 @@ class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
         convert_merge(strategy)
       end
     else
-      raise Puppet::DataBinding::LookupError, "Unrecognized value for request 'merge' parameter: '#{merge}'"
+      raise Puppet::DataBinding::LookupError, _("Unrecognized value for request 'merge' parameter: '#{merge}'")
     end
   end
 
@@ -74,7 +74,7 @@ class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
     if Puppet::FileSystem.exist?(hiera_config)
       config = Hiera::Config.load(hiera_config)
     else
-      Puppet.warning "Config file #{hiera_config} not found, using Hiera defaults"
+      Puppet.warning _("Config file #{hiera_config} not found, using Hiera defaults")
     end
 
     config[:logger] = 'puppet'

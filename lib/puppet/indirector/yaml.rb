@@ -11,13 +11,13 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
     begin
       return fix(Puppet::Util::Yaml.load_file(file))
     rescue Puppet::Util::Yaml::YamlLoadError => detail
-      raise Puppet::Error, "Could not parse YAML data for #{indirection.name} #{request.key}: #{detail}", detail.backtrace
+      raise Puppet::Error, _("Could not parse YAML data for #{indirection.name} #{request.key}: #{detail}"), detail.backtrace
     end
   end
 
   # Convert our object to YAML and store it to the disk.
   def save(request)
-    raise ArgumentError.new("You can only save objects that respond to :name") unless request.instance.respond_to?(:name)
+    raise ArgumentError.new(_("You can only save objects that respond to :name")) unless request.instance.respond_to?(:name)
 
     file = path(request.key)
 
@@ -29,15 +29,15 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
     begin
       Puppet::Util::Yaml.dump(request.instance, file)
     rescue TypeError => detail
-      Puppet.err "Could not save #{self.name} #{request.key}: #{detail}"
+      Puppet.err _("Could not save #{self.name} #{request.key}: #{detail}")
     end
   end
 
   # Return the path to a given node's file.
   def path(name,ext='.yaml')
     if name =~ Puppet::Indirector::BadNameRegexp then
-      Puppet.crit("directory traversal detected in #{self.class}: #{name.inspect}")
-      raise ArgumentError, "invalid key"
+      Puppet.crit(_("directory traversal detected in #{self.class}: #{name.inspect}"))
+      raise ArgumentError, _("invalid key")
     end
 
     base = Puppet.run_mode.master? ? Puppet[:yamldir] : Puppet[:clientyamldir]

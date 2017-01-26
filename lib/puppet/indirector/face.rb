@@ -1,8 +1,8 @@
 require 'puppet/face'
 
 class Puppet::Indirector::Face < Puppet::Face
-  option "--terminus TERMINUS" do
-    summary "The indirector terminus to use."
+  option "--terminus _" + _("TERMINUS") do
+    summary _("The indirector terminus to use.")
     description <<-EOT
       Indirector faces expose indirected subsystems of Puppet. These
       subsystems are each able to retrieve and alter a specific type of data
@@ -46,7 +46,7 @@ class Puppet::Indirector::Face < Puppet::Face
         result = indirection.__send__(method, key, options)
       end
     rescue => detail
-      message = "Could not call '#{method}' on '#{indirection_name}': #{detail}"
+      message = _("Could not call '#{method}' on '#{indirection_name}': #{detail}")
       Puppet.log_exception(detail, message)
       raise RuntimeError, message, detail.backtrace
     end
@@ -54,8 +54,8 @@ class Puppet::Indirector::Face < Puppet::Face
     return result
   end
 
-  option "--extra HASH" do
-    summary "Extra arguments to pass to the indirection request"
+  option "--extra " + _("HASH") do
+    summary _("Extra arguments to pass to the indirection request")
     description <<-EOT
       A terminus can take additional arguments to refine the operation, which
       are passed as an arbitrary hash to the back-end.  Anything passed as
@@ -65,14 +65,14 @@ class Puppet::Indirector::Face < Puppet::Face
   end
 
   action :destroy do
-    summary "Delete an object."
-    arguments "<key>"
+    summary _("Delete an object.")
+    arguments _("<key>")
     when_invoked {|key, options| call_indirection_method :destroy, key, options[:extra] }
   end
 
   action :find do
-    summary "Retrieve an object by name."
-    arguments "[<key>]"
+    summary _("Retrieve an object by name.")
+    arguments _("[<key>]")
     when_invoked do |*args|
       # Default the key to Puppet[:certname] if none is supplied
       if args.length == 1
@@ -86,8 +86,8 @@ class Puppet::Indirector::Face < Puppet::Face
   end
 
   action :save do
-    summary "API only: create or overwrite an object."
-    arguments "<key>"
+    summary _("API only: create or overwrite an object.")
+    arguments _("<key>")
     description <<-EOT
       API only: create or overwrite an object. As the Faces framework does not
       currently accept data from STDIN, save actions cannot currently be invoked
@@ -97,14 +97,14 @@ class Puppet::Indirector::Face < Puppet::Face
   end
 
   action :search do
-    summary "Search for an object or retrieve multiple objects."
-    arguments "<query>"
+    summary _("Search for an object or retrieve multiple objects.")
+    arguments _("<query>")
     when_invoked {|key, options| call_indirection_method :search, key, options[:extra] }
   end
 
   # Print the configuration for the current terminus class
   action :info do
-    summary "Print the default terminus class for this face."
+    summary _("Print the default terminus class for this face.")
     description <<-EOT
       Prints the default terminus class for this subcommand. Note that different
       run modes may have different default termini; when in doubt, specify the
@@ -113,9 +113,9 @@ class Puppet::Indirector::Face < Puppet::Face
 
     when_invoked do |options|
       if t = indirection.terminus_class
-        "Run mode '#{Puppet.run_mode.name}': #{t}"
+        _("Run mode '#{Puppet.run_mode.name}': #{t}")
       else
-        "No default terminus class for run mode '#{Puppet.run_mode.name}'"
+        _("No default terminus class for run mode '#{Puppet.run_mode.name}'")
       end
     end
   end
@@ -137,7 +137,7 @@ class Puppet::Indirector::Face < Puppet::Face
   def indirection
     unless @indirection
       @indirection = Puppet::Indirector::Indirection.instance(indirection_name)
-      @indirection or raise "Could not find terminus for #{indirection_name}"
+      @indirection or raise _("Could not find terminus for #{indirection_name}")
     end
     @indirection
   end
@@ -146,7 +146,7 @@ class Puppet::Indirector::Face < Puppet::Face
     begin
       indirection.terminus_class = from
     rescue => detail
-      msg = "Could not set '#{indirection.name}' terminus to '#{from}' (#{detail}); valid terminus types are #{self.class.terminus_classes(indirection.name).join(", ") }"
+      msg = _("Could not set '#{indirection.name}' terminus to '#{from}' (#{detail}); valid terminus types are #{self.class.terminus_classes(indirection.name).join(", ") }")
       raise detail, msg, detail.backtrace
     end
   end
