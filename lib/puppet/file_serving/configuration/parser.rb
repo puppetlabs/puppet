@@ -7,8 +7,8 @@ class Puppet::FileServing::Configuration::Parser
 
   # Parse our configuration file.
   def parse
-    raise("File server configuration #{@file} does not exist") unless Puppet::FileSystem.exist?(@file)
-    raise("Cannot read file server configuration #{@file}") unless FileTest.readable?(@file)
+    raise(_("File server configuration #{@file} does not exist")) unless Puppet::FileSystem.exist?(@file)
+    raise(_("Cannot read file server configuration #{@file}")) unless FileTest.readable?(@file)
 
     @mounts = {}
     @count = 0
@@ -28,7 +28,7 @@ class Puppet::FileServing::Configuration::Parser
           var = $1
           value = $2
           value.strip!
-          raise(ArgumentError, "Fileserver configuration file does not use '=' as a separator") if value =~ /^=/
+          raise(ArgumentError, _("Fileserver configuration file does not use '=' as a separator")) if value =~ /^=/
           case var
           when "path"
             path(mount, value)
@@ -37,10 +37,10 @@ class Puppet::FileServing::Configuration::Parser
           when "deny"
             deny(mount, value)
           else
-            raise ArgumentError.new("Invalid argument '#{var}' in #{@file.filename}, line #{@count}")
+            raise ArgumentError.new(_("Invalid argument '#{var}' in #{@file.filename}, line #{@count}"))
           end
         else
-          raise ArgumentError.new("Invalid line '#{line.chomp}' at #{@file.filename}, line #{@count}")
+          raise ArgumentError.new(_("Invalid line '#{line.chomp}' at #{@file.filename}, line #{@count}"))
         end
       }
     }
@@ -64,10 +64,10 @@ class Puppet::FileServing::Configuration::Parser
   def allow(mount, value)
     value.split(/\s*,\s*/).each { |val|
       begin
-        mount.info "allowing #{val} access"
+        mount.info _("allowing #{val} access")
         mount.allow(val)
       rescue Puppet::AuthStoreError => detail
-        raise ArgumentError.new("#{detail.to_s} in #{@file}, line #{@count}")
+        raise ArgumentError.new(_("#{detail.to_s} in #{@file}, line #{@count}"))
       end
     }
   end
@@ -76,17 +76,17 @@ class Puppet::FileServing::Configuration::Parser
   def deny(mount, value)
     value.split(/\s*,\s*/).each { |val|
       begin
-        mount.info "denying #{val} access"
+        mount.info _("denying #{val} access")
         mount.deny(val)
       rescue Puppet::AuthStoreError => detail
-        raise ArgumentError.new("#{detail.to_s} in #{@file}, line #{@count}")
+        raise ArgumentError.new(_("#{detail.to_s} in #{@file}, line #{@count}"))
       end
     }
   end
 
   # Create a new mount.
   def newmount(name)
-    raise ArgumentError.new("#{@mounts[name]} is already mounted at #{name} in #{@file}, line #{@count}") if @mounts.include?(name)
+    raise ArgumentError.new(_("#{@mounts[name]} is already mounted at #{name} in #{@file}, line #{@count}")) if @mounts.include?(name)
     case name
     when "modules"
       mount = Mount::Modules.new(name)
@@ -105,11 +105,11 @@ class Puppet::FileServing::Configuration::Parser
       begin
         mount.path = value
       rescue ArgumentError => detail
-        Puppet.log_exception(detail, "Removing mount \"#{mount.name}\": #{detail}")
+        Puppet.log_exception(detail, _("Removing mount \"#{mount.name}\": #{detail}"))
         @mounts.delete(mount.name)
       end
     else
-      Puppet.warning "The '#{mount.name}' module can not have a path. Ignoring attempt to set it"
+      Puppet.warning _("The '#{mount.name}' module can not have a path. Ignoring attempt to set it")
     end
   end
 

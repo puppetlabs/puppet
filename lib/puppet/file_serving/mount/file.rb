@@ -15,7 +15,7 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
   def complete_path(relative_path, node)
     full_path = path(node)
 
-    raise ArgumentError.new("Mounts without paths are not usable") unless full_path
+    raise ArgumentError.new(_("Mounts without paths are not usable")) unless full_path
 
     # If there's no relative path name, then we're serving the mount itself.
     return full_path unless relative_path
@@ -23,7 +23,7 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
     file = ::File.join(full_path, relative_path)
 
     if !(Puppet::FileSystem.exist?(file) or Puppet::FileSystem.symlink?(file))
-      Puppet.info("File does not exist or is not accessible: #{file}")
+      Puppet.info(_("File does not exist or is not accessible: #{file}"))
       return nil
     end
 
@@ -52,8 +52,8 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
       # Mark that we're expandable.
       @expandable = true
     else
-      raise ArgumentError, "#{path} does not exist or is not a directory" unless FileTest.directory?(path)
-      raise ArgumentError, "#{path} is not readable" unless FileTest.readable?(path)
+      raise ArgumentError, _("#{path} does not exist or is not a directory") unless FileTest.directory?(path)
+      raise ArgumentError, _("#{path} is not readable") unless FileTest.readable?(path)
       @expandable = false
     end
     @path = path
@@ -67,7 +67,7 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
   # Verify our configuration is valid.  This should really check to
   # make sure at least someone will be allowed, but, eh.
   def validate
-    raise ArgumentError.new("Mounts without paths are not usable") if @path.nil?
+    raise ArgumentError.new(_("Mounts without paths are not usable")) if @path.nil?
   end
 
   private
@@ -89,7 +89,7 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
     if node
       map = clientmap(node)
     else
-      Puppet.notice "No client; expanding '#{path}' with local host"
+      Puppet.notice _("No client; expanding '#{path}' with local host")
       # Else, use the local information
       map = localmap
     end
