@@ -2,7 +2,7 @@
 #
 Puppet::Functions.create_function(:hocon_data) do
   unless Puppet.features.hocon?
-    raise Puppet::DataBinding::LookupError, 'Lookup using Hocon data_hash function is not supported without hocon library'
+    raise Puppet::DataBinding::LookupError, _('Lookup using Hocon data_hash function is not supported without hocon library')
   end
 
   require 'hocon'
