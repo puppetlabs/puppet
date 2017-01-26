@@ -15,7 +15,7 @@ Puppet::Functions.create_function(:yaml_data) do
     rescue YAML::SyntaxError => ex
       # Psych errors includes the absolute path to the file, so no need to add that
       # to the message
-      raise Puppet::DataBinding::LookupError, "Unable to parse #{ex.message}"
+      raise Puppet::DataBinding::LookupError, _("Unable to parse #{ex.message}")
     end
   end
 end

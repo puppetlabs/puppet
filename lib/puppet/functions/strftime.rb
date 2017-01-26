@@ -29,7 +29,7 @@ Puppet::Functions.create_function(:strftime) do
 
   def legacy_strftime(format, timezone = nil)
     Puppet.warn_once('deprecation', 'legacy#strftime',
-      'The argument signature (String format, [String timezone]) is deprecated for #strfime. See #strftime documentation and Timespan type for more info')
+      _('The argument signature (String format, [String timezone]) is deprecated for #strfime. See #strftime documentation and Timespan type for more info'))
     Puppet::Pops::Time::Timestamp.format_time(format, Time.now.utc, timezone)
   end
 end
