@@ -12,7 +12,7 @@ class Puppet::Indirector::CertificateStatus::File < Puppet::Indirector::Code
     on the CA."
 
   def ca
-    raise ArgumentError, "This process is not configured as a certificate authority" unless Puppet::SSL::CertificateAuthority.ca?
+    raise ArgumentError, _("This process is not configured as a certificate authority") unless Puppet::SSL::CertificateAuthority.ca?
     Puppet::SSL::CertificateAuthority.new
   end
 
@@ -24,25 +24,25 @@ class Puppet::Indirector::CertificateStatus::File < Puppet::Indirector::Code
       Puppet::SSL::Key,
     ].collect do |part|
       if part.indirection.destroy(request.key)
-        deleted << "#{part}"
+        deleted << _("#{part}")
       end
     end
 
-    return "Nothing was deleted" if deleted.empty?
-    "Deleted for #{request.key}: #{deleted.join(", ")}"
+    return _("Nothing was deleted") if deleted.empty?
+    _("Deleted for #{request.key}: #{deleted.join(", ")}")
   end
 
   def save(request)
     if request.instance.desired_state == "signed"
       certificate_request = Puppet::SSL::CertificateRequest.indirection.find(request.key)
-      raise Puppet::Error, "Cannot sign for host #{request.key} without a certificate request" unless certificate_request
+      raise Puppet::Error, _("Cannot sign for host #{request.key} without a certificate request") unless certificate_request
       ca.sign(request.key)
     elsif request.instance.desired_state == "revoked"
       certificate = Puppet::SSL::Certificate.indirection.find(request.key)
-      raise Puppet::Error, "Cannot revoke host #{request.key} because has it doesn't have a signed certificate" unless certificate
+      raise Puppet::Error, _("Cannot revoke host #{request.key} because has it doesn't have a signed certificate") unless certificate
       ca.revoke(request.key)
     else
-      raise Puppet::Error, "State #{request.instance.desired_state} invalid; Must specify desired state of 'signed' or 'revoked' for host #{request.key}"
+      raise Puppet::Error, _("State #{request.instance.desired_state} invalid; Must specify desired state of 'signed' or 'revoked' for host #{request.key}")
     end
 
   end

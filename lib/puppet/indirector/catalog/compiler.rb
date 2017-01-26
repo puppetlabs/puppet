@@ -17,10 +17,10 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   def extract_facts_from_request(request)
     return unless text_facts = request.options[:facts]
     unless format = request.options[:facts_format]
-      raise ArgumentError, "Facts but no fact format provided for #{request.key}"
+      raise ArgumentError, _("Facts but no fact format provided for #{request.key}")
     end
 
-    Puppet::Util::Profiler.profile("Found facts", [:compiler, :find_facts]) do
+    Puppet::Util::Profiler.profile(_("Found facts"), [:compiler, :find_facts]) do
       # If the facts were encoded as yaml, then the param reconstitution system
       # in Network::HTTP::Handler will automagically deserialize the value.
       if text_facts.is_a?(Puppet::Node::Facts)
@@ -31,7 +31,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       end
 
       unless facts.name == request.key
-        raise Puppet::Error, "Catalog for #{request.key.inspect} was requested with fact definition for the wrong node (#{facts.name.inspect})."
+        raise Puppet::Error, _("Catalog for #{request.key.inspect} was requested with fact definition for the wrong node (#{facts.name.inspect}).")
       end
 
       options = {
@@ -66,7 +66,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   end
 
   def initialize
-    Puppet::Util::Profiler.profile("Setup server facts for compiling", [:compiler, :init_server_facts]) do
+    Puppet::Util::Profiler.profile(_("Setup server facts for compiling"), [:compiler, :init_server_facts]) do
       set_server_facts
     end
   end
@@ -114,11 +114,11 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   def inlineable?(resource, sources)
     case
       when resource[:ensure] == 'absent'
-        return Puppet::Util::Profiler.profile("Not inlining absent resource", [:compiler, :static_compile_inlining, :skipped_file_metadata, :absent]) { false }
+        return Puppet::Util::Profiler.profile(_("Not inlining absent resource"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :absent]) { false }
       when sources.empty?
-        return Puppet::Util::Profiler.profile("Not inlining resource without sources", [:compiler, :static_compile_inlining, :skipped_file_metadata, :no_sources]) { false }
+        return Puppet::Util::Profiler.profile(_("Not inlining resource without sources"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :no_sources]) { false }
       when (not (sources.all? {|source| source =~ /^puppet:/}))
-        return Puppet::Util::Profiler.profile("Not inlining unsupported source scheme", [:compiler, :static_compile_inlining, :skipped_file_metadata, :unsupported_scheme]) { false }
+        return Puppet::Util::Profiler.profile(_("Not inlining unsupported source scheme"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :unsupported_scheme]) { false }
       else
         return true
     end
@@ -138,12 +138,12 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   # Helper method to log file resources that could not be inlined because they
   # fall outside of an environment.
   def log_file_outside_environment
-    Puppet::Util::Profiler.profile("Not inlining file outside environment", [:compiler, :static_compile_inlining, :skipped_file_metadata, :file_outside_environment]) { true }
+    Puppet::Util::Profiler.profile(_("Not inlining file outside environment"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :file_outside_environment]) { true }
   end
 
   # Helper method to log file resources that were successfully inlined.
   def log_metadata_inlining
-    Puppet::Util::Profiler.profile("Inlining file metadata", [:compiler, :static_compile_inlining, :inlined_file_metadata]) { true }
+    Puppet::Util::Profiler.profile(_("Inlining file metadata"), [:compiler, :static_compile_inlining, :inlined_file_metadata]) { true }
   end
 
   # Inline file metadata for static catalogs
@@ -230,7 +230,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
           end
         end
 
-        raise "Could not get metadata for #{resource[:source]}" unless metadata
+        raise _("Could not get metadata for #{resource[:source]}") unless metadata
 
         if inlineable_metadata?(metadata, metadata.source,  environment_path)
           metadata.content_uri = get_content_uri(metadata, metadata.source, environment_path)
@@ -251,12 +251,12 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     if node.environment && node.environment.static_catalogs? && options[:static_catalog] && options[:code_id]
       # Check for errors before compiling the catalog
       checksum_type = common_checksum_type(options[:checksum_type])
-      raise Puppet::Error, "Unable to find a common checksum type between agent '#{options[:checksum_type]}' and master '#{known_checksum_types}'." unless checksum_type
+      raise Puppet::Error, _("Unable to find a common checksum type between agent '#{options[:checksum_type]}' and master '#{known_checksum_types}'.") unless checksum_type
     end
 
-    str = "Compiled %s for " % [checksum_type ? 'static catalog' : 'catalog']
+    str = _("Compiled %s for ") % [checksum_type ? _('static catalog') : _('catalog')]
     str += node.name
-    str += " in environment #{node.environment}" if node.environment
+    str += _(" in environment #{node.environment}") if node.environment
     config = nil
 
     benchmark(:notice, str) do
@@ -272,8 +272,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         end
 
         if checksum_type && config.is_a?(model)
-          str = "Inlined resource metadata into static catalog for #{node.name}"
-          str += " in environment #{node.environment}" if node.environment
+          str = _("Inlined resource metadata into static catalog for #{node.name}")
+          str += _(" in environment #{node.environment}") if node.environment
           benchmark(:notice, str) do
             Puppet::Util::Profiler.profile(str, [:compiler, :static_compile_postprocessing, node.environment, node.name]) do
               inline_metadata(config, checksum_type)
@@ -289,14 +289,14 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
   # Turn our host name into a node object.
   def find_node(name, environment, transaction_uuid, configured_environment)
-    Puppet::Util::Profiler.profile("Found node information", [:compiler, :find_node]) do
+    Puppet::Util::Profiler.profile(_("Found node information"), [:compiler, :find_node]) do
       node = nil
       begin
         node = Puppet::Node.indirection.find(name, :environment => environment,
                                              :transaction_uuid => transaction_uuid,
                                              :configured_environment => configured_environment)
       rescue => detail
-        message = "Failed when searching for node #{name}: #{detail}"
+        message = _("Failed when searching for node #{name}: #{detail}")
         Puppet.log_exception(detail, message)
         raise Puppet::Error, message, detail.backtrace
       end
@@ -315,7 +315,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   def node_from_request(request)
     if node = request.options[:use_node]
       if request.remote?
-        raise Puppet::Error, "Invalid option use_node for a remote request"
+        raise Puppet::Error, _("Invalid option use_node for a remote request")
       else
         return node
       end
@@ -333,7 +333,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       return node
     end
 
-    raise ArgumentError, "Could not find node '#{name}'; cannot compile"
+    raise ArgumentError, _("Could not find node '#{name}'; cannot compile")
   end
 
   # Initialize our server fact hash; we add these to each client, and they
@@ -351,7 +351,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       if value = Facter.value(fact)
         @server_facts[var] = value
       else
-        Puppet.warning "Could not retrieve fact #{fact}"
+        Puppet.warning _("Could not retrieve fact #{fact}")
       end
     end
 

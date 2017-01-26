@@ -13,7 +13,7 @@ CA to prevent clients getting confusing 'success' behaviour."
   [:find, :head, :search, :save, :destroy].each do |name|
     define_method(name) do |request|
       if request.remote?
-        raise Puppet::Error, "this master is not a CA"
+        raise Puppet::Error, _("this master is not a CA")
       else
         @file.send(name, request)
       end
