@@ -195,7 +195,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
 
     def validate_checksum(file, checksum)
       if Digest::MD5.file(file.path).hexdigest != checksum
-        raise RuntimeError, "Downloaded release for #{name} did not match expected checksum"
+        raise RuntimeError, _("Downloaded release for #{name} did not match expected checksum")
       end
     end
 
@@ -203,7 +203,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
       begin
         Puppet::ModuleTool::Applications::Unpacker.unpack(file.path, destination)
       rescue Puppet::ExecutionFailure => e
-        raise RuntimeError, "Could not extract contents of module archive: #{e.message}"
+        raise RuntimeError, _("Could not extract contents of module archive: #{e.message}")
       end
     end
   end
@@ -216,7 +216,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
       begin
         ModuleRelease.new(self, release)
       rescue ArgumentError => e
-        Puppet.warning "Cannot consider release #{metadata['name']}-#{metadata['version']}: #{e}"
+        Puppet.warning _("Cannot consider release #{metadata['name']}-#{metadata['version']}: #{e}")
         false
       end
     end
