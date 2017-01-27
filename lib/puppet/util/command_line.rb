@@ -69,7 +69,12 @@ module Puppet
 
         setpriority(Puppet[:priority])
 
-        find_subcommand.run
+        begin
+          find_subcommand.run
+        rescue
+          Log.force_flushqueue
+          raise
+        end
       end
 
       # @api private
