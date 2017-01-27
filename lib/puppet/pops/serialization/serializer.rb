@@ -109,7 +109,7 @@ module Serialization
       else
         impl_class = value.class
         type = Loaders.implementation_registry.type_for_module(impl_class)
-        raise SerializationError, "No Puppet Type found for #{impl_class.name}" unless type.is_a?(Types::PObjectType)
+        raise SerializationError, _("No Puppet Type found for #{impl_class.name}") unless type.is_a?(Types::PObjectType)
         type.write(value, self)
       end
     end

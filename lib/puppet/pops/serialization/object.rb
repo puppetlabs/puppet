@@ -14,7 +14,7 @@ class ObjectReader
     (names, types, required_count) = type.parameter_info(impl_class)
     max = names.size
     unless value_count >= required_count && value_count <= max
-      raise Serialization::SerializationError, "Feature count mismatch for #{impl_class.name}. Expected #{required_count} - #{max}, actual #{value_count}"
+      raise Serialization::SerializationError, _("Feature count mismatch for #{impl_class.name}. Expected #{required_count} - #{max}, actual #{value_count}")
     end
     # Deserializer must know about this instance before we read its attributes
     val = deserializer.remember(impl_class.allocate)
@@ -25,7 +25,7 @@ class ObjectReader
         Types::TypeAsserter.assert_instance_of(nil, ptype, arg) { "#{type.name}[#{names[index]}]" } unless arg == :default
       else
         attr = type[names[index]]
-        raise Serialization::SerializationError, "Missing default value for #{type.name}[#{names[index]}]" unless attr.value?
+        raise Serialization::SerializationError, _("Missing default value for #{type.name}[#{names[index]}]") unless attr.value?
         args << attr.value
       end
     end

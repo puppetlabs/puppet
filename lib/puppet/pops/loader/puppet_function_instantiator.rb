@@ -22,24 +22,24 @@ class PuppetFunctionInstantiator
     # Only one function is allowed (and no other definitions)
     case result.definitions.size
     when 0
-      raise ArgumentError, "The code loaded from #{source_ref} does not define the function '#{typed_name.name}' - it is empty."
+      raise ArgumentError, _("The code loaded from #{source_ref} does not define the function '#{typed_name.name}' - it is empty.")
     when 1
       # ok
     else
-      raise ArgumentError, "The code loaded from #{source_ref} must contain only the function '#{typed_name.name}' - it has additional definitions."
+      raise ArgumentError, _("The code loaded from #{source_ref} must contain only the function '#{typed_name.name}' - it has additional definitions.")
     end
     the_function_definition = result.definitions[0]
 
     unless the_function_definition.is_a?(Model::FunctionDefinition)
-      raise ArgumentError, "The code loaded from #{source_ref} does not define the function '#{typed_name.name}' - no function found."
+      raise ArgumentError, _("The code loaded from #{source_ref} does not define the function '#{typed_name.name}' - no function found.")
     end
     unless the_function_definition.name == typed_name.name
       expected = typed_name.name
       actual = the_function_definition.name
-      raise ArgumentError, "The code loaded from #{source_ref} produced function with the wrong name, expected #{expected}, actual #{actual}"
+      raise ArgumentError, _("The code loaded from #{source_ref} produced function with the wrong name, expected #{expected}, actual #{actual}")
     end
     unless result.body == the_function_definition
-      raise ArgumentError, "The code loaded from #{source_ref} contains additional logic - can only contain the function #{typed_name.name}"
+      raise ArgumentError, _("The code loaded from #{source_ref} contains additional logic - can only contain the function #{typed_name.name}")
     end
 
     # Adapt the function definition with loader - this is used from logic contained in it body to find the

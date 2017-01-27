@@ -82,7 +82,7 @@ class HieraConfig
   def self.v4_function_config(config_root, function_name, owner)
     unless Puppet[:strict] == :off
       Puppet.warn_once(:deprecation, 'legacy_provider_function',
-        "Using of legacy data provider function '#{function_name}'. Please convert to a 'data_hash' function")
+        _("Using of legacy data provider function '#{function_name}'. Please convert to a 'data_hash' function"))
     end
     HieraConfigV5.new(config_root, nil,
       {
@@ -195,7 +195,7 @@ class HieraConfig
   def configured_data_providers(lookup_invocation, parent_data_provider, use_default_hierarchy = false)
     unless @data_providers && scope_interpolations_stable?(lookup_invocation)
       if @data_providers
-        lookup_invocation.report_text { 'Hiera configuration recreated due to change of scope variables used in interpolation expressions' }
+        lookup_invocation.report_text { _('Hiera configuration recreated due to change of scope variables used in interpolation expressions') }
       end
       slc_invocation = ScopeLookupCollectingInvocation.new(lookup_invocation.scope)
       begin
@@ -422,7 +422,7 @@ class HieraConfigV3 < HieraConfig
   def validate_config(config, owner)
     unless Puppet[:strict] == :off
       Puppet.warn_once(:deprecation, 'hiera.yaml',
-        "#{@config_path}: Use of 'hiera.yaml' version 3 is deprecated. It should be converted to version 5", config_path.to_s)
+        _("#{@config_path}: Use of 'hiera.yaml' version 3 is deprecated. It should be converted to version 5"), config_path.to_s)
     end
     config[KEY_VERSION] ||= 3
     config[KEY_BACKENDS] ||= DEFAULT_CONFIG_HASH[KEY_BACKENDS]
@@ -522,7 +522,7 @@ class HieraConfigV4 < HieraConfig
   def validate_config(config, owner)
     unless Puppet[:strict] == :off
       Puppet.warn_once(:deprecation, 'hiera.yaml',
-        "#{@config_path}: Use of 'hiera.yaml' version 4 is deprecated. It should be converted to version 5", config_path.to_s)
+        _("#{@config_path}: Use of 'hiera.yaml' version 4 is deprecated. It should be converted to version 5"), config_path.to_s)
     end
     config[KEY_DATADIR] ||= 'data'
     config[KEY_HIERARCHY] ||= [{ KEY_NAME => 'common', KEY_BACKEND => 'yaml' }]
@@ -583,7 +583,7 @@ class HieraConfigV5 < HieraConfig
 
   def create_configured_data_providers(lookup_invocation, parent_data_provider, use_default_hierarchy)
     defaults = @config[KEY_DEFAULTS] || EMPTY_HASH
-    datadir = defaults[KEY_DATADIR] || 'data'
+    datadir = defaults[KEY_DATADIR] || _('data')
 
     # Hashes enumerate their values in the order that the corresponding keys were inserted so it's safe to use
     # a hash for the data_providers.

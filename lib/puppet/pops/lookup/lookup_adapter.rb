@@ -90,7 +90,7 @@ class LookupAdapter < DataAdapter
     end
   rescue Puppet::DataBinding::LookupError => detail
     raise detail unless detail.issue_code.nil?
-    error = Puppet::Error.new("Lookup of key '#{lookup_invocation.top_key}' failed: #{detail.message}")
+    error = Puppet::Error.new(_("Lookup of key '#{lookup_invocation.top_key}' failed: #{detail.message}"))
     error.set_backtrace(detail.backtrace)
     raise error
   end
@@ -236,18 +236,18 @@ class LookupAdapter < DataAdapter
   PROVIDER_STACK = [:lookup_global, :lookup_in_environment, :lookup_in_module].freeze
 
   def validate_lookup_options(options, module_name)
-    raise Puppet::DataBinding::LookupError.new("value of #{LOOKUP_OPTIONS} must be a hash") unless options.is_a?(Hash) unless options.nil?
+    raise Puppet::DataBinding::LookupError.new(_("value of #{LOOKUP_OPTIONS} must be a hash")) unless options.is_a?(Hash) unless options.nil?
     return options if module_name.nil?
 
     pfx = "#{module_name}::"
     options.each_pair do |key, value|
       if key.start_with?(LOOKUP_OPTIONS_PATTERN_START)
         unless key[1..pfx.length] == pfx
-          raise Puppet::DataBinding::LookupError.new("all #{LOOKUP_OPTIONS} patterns must match a key starting with module name '#{module_name}'")
+          raise Puppet::DataBinding::LookupError.new(_("all #{LOOKUP_OPTIONS} patterns must match a key starting with module name '#{module_name}'"))
         end
       else
         unless key.start_with?(pfx)
-          raise Puppet::DataBinding::LookupError.new("all #{LOOKUP_OPTIONS} keys must start with module name '#{module_name}'")
+          raise Puppet::DataBinding::LookupError.new(_("all #{LOOKUP_OPTIONS} keys must start with module name '#{module_name}'"))
         end
       end
     end
@@ -368,7 +368,7 @@ class LookupAdapter < DataAdapter
       elsif mp_config.version >= 5
         unless provider_name.nil? || Puppet[:strict] == :off
           Puppet.warn_once(:deprecation, "metadata.json#data_provider-#{module_name}",
-            "Defining \"data_provider\": \"#{provider_name}\" in metadata.json is deprecated. It is ignored since a '#{HieraConfig::CONFIG_FILE_NAME}' with version >= 5 is present", mod.metadata_file)
+            _("Defining \"data_provider\": \"#{provider_name}\" in metadata.json is deprecated. It is ignored since a '#{HieraConfig::CONFIG_FILE_NAME}' with version >= 5 is present"), mod.metadata_file)
         end
         provider_name = nil
       end
@@ -378,8 +378,8 @@ class LookupAdapter < DataAdapter
       mp
     else
       unless Puppet[:strict] == :off
-        msg = "Defining \"data_provider\": \"#{provider_name}\" in metadata.json is deprecated"
-        msg += ". A '#{HieraConfig::CONFIG_FILE_NAME}' file should be used instead" if mp.nil?
+        msg = _("Defining \"data_provider\": \"#{provider_name}\" in metadata.json is deprecated")
+        msg += _(". A '#{HieraConfig::CONFIG_FILE_NAME}' file should be used instead") if mp.nil?
         Puppet.warn_once(:deprecation, "metadata.json#data_provider-#{module_name}", msg, mod.metadata_file)
       end
 
@@ -393,7 +393,7 @@ class LookupAdapter < DataAdapter
         mp.config = HieraConfig.v4_function_config(Pathname(mod.path), "#{module_name}::data", mp)
         mp
       else
-        raise Puppet::Error.new("Environment '#{environment.name}', cannot find module_data_provider '#{provider_name}'")
+        raise Puppet::Error.new(_("Environment '#{environment.name}', cannot find module_data_provider '#{provider_name}'"))
       end
     end
   end
@@ -417,11 +417,11 @@ class LookupAdapter < DataAdapter
       elsif ep_config.version >= 5
         unless provider_name.nil? || Puppet[:strict] == :off
           Puppet.warn_once(:deprecation, 'environment.conf#data_provider',
-            "Defining environment_data_provider='#{provider_name}' in environment.conf is deprecated", env_path + 'environment.conf')
+            _("Defining environment_data_provider='#{provider_name}' in environment.conf is deprecated"), env_path + _('environment.conf'))
 
           unless provider_name == 'hiera'
             Puppet.warn_once(:deprecation, 'environment.conf#data_provider_overridden',
-              "The environment_data_provider='#{provider_name}' setting is ignored since '#{config_path}' version >= 5", env_path + 'environment.conf')
+              _("The environment_data_provider='#{provider_name}' setting is ignored since '#{config_path}' version >= 5"), env_path + _('environment.conf'))
           end
         end
         provider_name = nil
@@ -432,8 +432,8 @@ class LookupAdapter < DataAdapter
       ep
     else
       unless Puppet[:strict] == :off
-        msg = "Defining environment_data_provider='#{provider_name}' in environment.conf is deprecated"
-        msg += ". A '#{HieraConfig::CONFIG_FILE_NAME}' file should be used instead" if ep.nil?
+        msg = _("Defining environment_data_provider='#{provider_name}' in environment.conf is deprecated")
+        msg += _(". A '#{HieraConfig::CONFIG_FILE_NAME}' file should be used instead") if ep.nil?
         Puppet.warn_once(:deprecation, 'environment.conf#data_provider', msg, env_path + 'environment.conf')
       end
 
@@ -448,7 +448,7 @@ class LookupAdapter < DataAdapter
         ep.config = HieraConfigV5.v4_function_config(env_path, 'environment::data', ep)
         ep
       else
-        raise Puppet::Error.new("Environment '#{environment.name}', cannot find environment_data_provider '#{provider_name}'")
+        raise Puppet::Error.new(_("Environment '#{environment.name}', cannot find environment_data_provider '#{provider_name}'"))
       end
     end
   end

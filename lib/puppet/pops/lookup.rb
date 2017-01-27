@@ -84,8 +84,8 @@ module Lookup
   private_class_method :assert_type
 
   def self.fail_lookup(names)
-    name_part = names.size == 1 ? "the name '#{names[0]}'" : 'any of the names [' + names.map { |n| "'#{n}'" }.join(', ') + ']'
-    raise Puppet::DataBinding::LookupError, "Function lookup() did not find a value for #{name_part}"
+    name_part = names.size == 1 ? _("the name '#{names[0]}'") : _('any of the names [') + names.map { |n| "'#{n}'" }.join(', ') + ']'
+    raise Puppet::DataBinding::LookupError, _("Function lookup() did not find a value for #{name_part}")
   end
   private_class_method :fail_lookup
 end

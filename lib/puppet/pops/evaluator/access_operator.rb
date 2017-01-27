@@ -268,7 +268,7 @@ class AccessOperator
     expected = expected_classes.map {|c| label_provider.label(c) }.join(' or ')
     fail(Issues::BAD_TYPE_SPECIALIZATION, @semantic.keys[key_index], {
       :type => type,
-      :message => "Cannot use #{bad_key_type_name(actual)} where #{expected} is expected"
+      :message => _("Cannot use #{bad_key_type_name(actual)} where #{expected} is expected")
     })
   end
 
