@@ -69,7 +69,7 @@ DOC
     # is where the extensions are stored."
     @extensions_tag ||= 3
 
-    @exts_seq ||= OpenSSL::ASN1.decode(content.to_der).value[0].find do |data|
+    @exts_seq ||= OpenSSL::ASN1.decode(content.to_der).value[0].value.find do |data|
       (data.tag == @extensions_tag) && (data.tag_class == :CONTEXT_SPECIFIC)
     end.value[0]
   end
