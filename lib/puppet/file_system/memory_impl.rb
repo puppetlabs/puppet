@@ -19,6 +19,10 @@ class Puppet::FileSystem::MemoryImpl
     path.file?
   end
 
+  def readable?(path)
+    path.readable?
+  end
+
   def executable?(path)
     path.executable?
   end
@@ -59,6 +63,36 @@ class Puppet::FileSystem::MemoryImpl
     else
       return handle
     end
+  end
+
+  class MemoryStat
+    def initialize(path)
+      @path = path
+    end
+
+    def directory?
+      @path.directory?
+    end
+
+    def file?
+      @path.directory?
+    end
+
+    def executable?
+      @path.executable?
+    end
+
+    def readable?
+      true
+    end
+
+    def writable?
+      @path.executable?
+    end
+  end
+
+  def stat(path)
+    find(path.path).nil? ? nil : MemoryStat.new(path)
   end
 
   def assert_path(path)

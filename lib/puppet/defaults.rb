@@ -93,7 +93,8 @@ module Puppet
 
         * `deprecations` --- disables deprecation warnings.
         * `undefined_variables` --- disables warnings about non existing variables.
-        * `undefined_resources` --- disables warnings about non existing resources.",
+        * `undefined_resources` --- disables warnings about non existing resources.
+        * `permission_deined` --- disables warnings about directories with access problems.",
       :hook      => proc do |value|
         values = munge(value)
         valid   = %w[deprecations undefined_variables undefined_resources]
