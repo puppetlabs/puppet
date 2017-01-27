@@ -11,7 +11,7 @@ Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :
           hash[:client_cert],
           hash[:body])
     else
-      raise ArgumentError, "Unknown arguments: #{unknown.collect(&:inspect).join(', ')}"
+      raise ArgumentError, _("Unknown arguments: #{unknown.collect(&:inspect).join(', ')}")
     end
   end
 
@@ -24,14 +24,14 @@ Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :
       header.gsub!(/\s*;.*$/,'') # strip any charset
       format = Puppet::Network::FormatHandler.mime(header)
       if format.nil?
-        raise "Client sent a mime-type (#{header}) that doesn't correspond to a format we support"
+        raise _("Client sent a mime-type (#{header}) that doesn't correspond to a format we support")
       else
         assert_supported_format(format)
         return format.name.to_s if format.suitable?
       end
     end
 
-    raise "No Content-Type header was received, it isn't possible to unserialize the request"
+    raise _("No Content-Type header was received, it isn't possible to unserialize the request")
   end
 
   def response_formatter_for(supported_formats, accepted_formats = headers['accept'])
@@ -40,7 +40,7 @@ Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :
       supported_formats)
 
       if formatter.nil?
-        raise Puppet::Network::HTTP::Error::HTTPNotAcceptableError.new("No supported formats are acceptable (Accept: #{accepted_formats})", Puppet::Network::HTTP::Issues::UNSUPPORTED_FORMAT)
+        raise Puppet::Network::HTTP::Error::HTTPNotAcceptableError.new(_("No supported formats are acceptable (Accept: #{accepted_formats})"), Puppet::Network::HTTP::Issues::UNSUPPORTED_FORMAT)
       end
 
       assert_supported_format(formatter)
@@ -50,7 +50,7 @@ Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :
 
   def assert_supported_format(format)
     if format.name == :yaml || format.name == :b64_zlib_yaml
-      raise Puppet::Error, "YAML in network requests is not supported. See http://links.puppetlabs.com/deprecate_yaml_on_network"
+      raise Puppet::Error, _("YAML in network requests is not supported. See http://links.puppetlabs.com/deprecate_yaml_on_network")
     end
   end
 end
