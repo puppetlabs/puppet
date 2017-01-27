@@ -157,5 +157,12 @@ describe 'when converting to 3.x' do
       expect(f.class).to be(Float)
     end
 
+    it 'errors when Integer is out of range in a structure' do
+      structure = {'key' => [{ 'key' => [0x7fffffffffffffff + 1]}]}
+      expect do
+        converter.convert(structure, {}, nil)
+        end.to raise_error(/Use of a Ruby Integer outside of Puppet Integer max range, got/)
+    end
+
   end
 end
