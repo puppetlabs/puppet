@@ -23,7 +23,7 @@ describe Puppet::Face[:man, :current] do
       app = klass.new(Puppet::Util::CommandLine.new('puppet', ['man', name]))
 
       expect do
-        IO.stubs(:popen).with(pager, anything).yields($stdout)
+        IO.stubs(:popen).with(pager, 'w:UTF-8').yields($stdout)
 
         expect { app.run }.to exit_with(0)
       end.to_not have_printed(/undefined method `gsub'/)

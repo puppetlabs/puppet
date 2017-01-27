@@ -67,7 +67,8 @@ describe Puppet::Resource::Catalog, "when compiling" do
     Puppet[:classfile] = File.expand_path("/class/file")
 
     fh = mock 'filehandle'
-    File.expects(:open).with(Puppet[:classfile], "w").yields fh
+    classfile = Puppet.settings.setting(:classfile)
+    Puppet::FileSystem.expects(:open).with(classfile.value, classfile.mode.to_i(8), "w:UTF-8").yields fh
 
     fh.expects(:puts).with "foo\nbar"
 
@@ -719,7 +720,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should only write when it is a host catalog" do
-      File.expects(:open).with(@file).never
+      Puppet::FileSystem.expects(:open).with(@file, 0640, "w:UTF-8").never
       @catalog.host_config = false
       Puppet[:graph] = true
       @catalog.write_graph(@name)

@@ -70,13 +70,21 @@ describe "Puppet::FileSystem" do
         '100444'
       expect([expected_perms].flatten).to include(Puppet::FileSystem.stat(file).mode.to_s(8))
 
-      # On Windows, 0444 happens to round-trip properly (most octals *do not*)
-      # Setting a mode controls file attribute setting (like archive, read-only, etc)
-      # For Ruby on Windows, the leading 4 sets the read-only file attribute
-      # The GetFileInformationByHandle API returns an attributes value that is
-      # a bitmask of Windows File Attribute Constants at
-      # https://msdn.microsoft.com/en-us/library/windows/desktop/gg258117(v=vs.85).aspx
-      expect(File.stat(file).mode.to_s(8)).to eq('100444')
+      expected_ruby_mode = Puppet::Util::Platform.windows? ?
+        # The Windows behavior has been changed to ignore the mode specified by open
+        # given it's unlikely a caller expects Windows file attributes to be set
+        # therefore mode is explicitly not managed (until PUP-6959 is fixed)
+        #
+        # In default Ruby on Windows a mode controls file attribute setting
+        # (like archive, read-only, etc)
+        # The GetFileInformationByHandle API returns an attributes value that is
+        # a bitmask of Windows File Attribute Constants at
+        # https://msdn.microsoft.com/en-us/library/windows/desktop/gg258117(v=vs.85).aspx
+        '100644' :
+        # On other platforms, the mode should be what was set by octal 0444
+        '100444'
+
+      expect(File.stat(file).mode.to_s(8)).to eq(expected_ruby_mode)
     end
 
     it "cannot accept a mode string" do

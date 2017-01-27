@@ -60,7 +60,7 @@ describe Puppet::Util::Yaml do
   end
 
   def write_file(name, contents)
-    File.open(name, "w") do |fh|
+    File.open(name, "w:UTF-8") do |fh|
       fh.write(contents)
     end
   end

@@ -225,7 +225,7 @@ module Generators
         'style_url'  => style_url('', @options.css),
       }
 
-      File.open(filename, "w") do |f|
+      Puppet::FileSystem.open(filename, nil, "w:UTF-8") do |f|
         template.write_html_on(f, values)
       end
     end
@@ -301,7 +301,7 @@ module Generators
       values["plugins"] = res4 if res4.size>0
       values["nodes"] = res5 if res5.size>0
 
-      File.open(filename, "w") do |f|
+      Puppet::FileSystem.open(filename, nil, "w:UTF-8") do |f|
         template.write_html_on(f, values)
       end
     end

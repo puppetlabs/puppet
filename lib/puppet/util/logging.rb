@@ -224,7 +224,8 @@ module Logging
     # find the same offender, and we'd end up logging it again.
     $logged_deprecation_warnings ||= {}
 
-    File.open(deprecations_file, "a") do |f|
+    # Deprecation messages are UTF-8 as they are produced by Ruby
+    Puppet::FileSystem.open(deprecations_file, nil, "a:UTF-8") do |f|
       if ($deprecation_warnings) then
         $deprecation_warnings.each do |offender, message|
           if (! $logged_deprecation_warnings.has_key?(offender)) then

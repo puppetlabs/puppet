@@ -18,11 +18,11 @@ describe "default manifests" do
         manifestsdir = File.join(testingdir, "manifests")
         FileUtils.mkdir_p(manifestsdir)
 
-        File.open(File.join(manifestsdir, "site.pp"), "w") do |f|
+        File.open(File.join(manifestsdir, "site.pp"), "w", :encoding => Encoding::UTF_8) do |f|
           f.puts("notify { 'ManifestFromRelativeDefault': }")
         end
 
-        File.open(File.join(confdir, "puppet.conf"), "w") do |f|
+        File.open(File.join(confdir, "puppet.conf"), "w", :encoding => Encoding::UTF_8) do |f|
           f.puts("environmentpath=#{environmentpath}")
         end
 
@@ -43,14 +43,14 @@ describe "default manifests" do
         manifestsdir = File.expand_path("manifests", confdir)
         FileUtils.mkdir_p(manifestsdir)
 
-        File.open(File.join(confdir, "puppet.conf"), "w") do |f|
+        File.open(File.join(confdir, "puppet.conf"), "w", :encoding => Encoding::UTF_8) do |f|
           f.puts(<<-EOF)
   environmentpath=#{environmentpath}
   default_manifest=#{manifestsdir}
           EOF
         end
 
-        File.open(File.join(manifestsdir, "site.pp"), "w") do |f|
+        File.open(File.join(manifestsdir, "site.pp"), "w", :encoding => Encoding::UTF_8) do |f|
           f.puts("notify { 'ManifestFromAbsoluteDefaultManifest': }")
         end
 
@@ -61,7 +61,7 @@ describe "default manifests" do
 
       it "reads manifest from directory environment manifest when environment.conf manifest set" do
         default_manifestsdir = File.expand_path("manifests", confdir)
-        File.open(File.join(confdir, "puppet.conf"), "w") do |f|
+        File.open(File.join(confdir, "puppet.conf"), "w", :encoding => Encoding::UTF_8) do |f|
           f.puts(<<-EOF)
   environmentpath=#{environmentpath}
   default_manifest=#{default_manifestsdir}
@@ -71,11 +71,11 @@ describe "default manifests" do
         manifestsdir = File.join(testingdir, "special_manifests")
         FileUtils.mkdir_p(manifestsdir)
 
-        File.open(File.join(manifestsdir, "site.pp"), "w") do |f|
+        File.open(File.join(manifestsdir, "site.pp"), "w", :encoding => Encoding::UTF_8) do |f|
           f.puts("notify { 'ManifestFromEnvironmentConfManifest': }")
         end
 
-        File.open(File.join(testingdir, "environment.conf"), "w") do |f|
+        File.open(File.join(testingdir, "environment.conf"), "w", :encoding => Encoding::UTF_8) do |f|
           f.puts("manifest=./special_manifests")
         end
 
@@ -89,21 +89,21 @@ describe "default manifests" do
         default_manifestsdir = File.expand_path("manifests", confdir)
         FileUtils.mkdir_p(default_manifestsdir)
 
-        File.open(File.join(confdir, "puppet.conf"), "w") do |f|
+        File.open(File.join(confdir, "puppet.conf"), "w", :encoding => Encoding::UTF_8) do |f|
           f.puts(<<-EOF)
   environmentpath=#{environmentpath}
   default_manifest=#{default_manifestsdir}
           EOF
         end
 
-        File.open(File.join(default_manifestsdir, "site.pp"), "w") do |f|
+        File.open(File.join(default_manifestsdir, "site.pp"), "w", :encoding => Encoding::UTF_8) do |f|
           f.puts("notify { 'ManifestFromAbsoluteDefaultManifest': }")
         end
 
         implicit_manifestsdir = File.join(testingdir, "manifests")
         FileUtils.mkdir_p(implicit_manifestsdir)
 
-        File.open(File.join(implicit_manifestsdir, "site.pp"), "w") do |f|
+        File.open(File.join(implicit_manifestsdir, "site.pp"), "w", :encoding => Encoding::UTF_8) do |f|
           f.puts("notify { 'ManifestFromImplicitRelativeEnvironmentManifestDirectory': }")
         end
 
@@ -125,7 +125,7 @@ describe "default manifests" do
       before(:each) do
         FileUtils.mkdir_p(manifestsdir)
 
-        File.open(File.join(confdir, "puppet.conf"), "w") do |f|
+        File.open(File.join(confdir, "puppet.conf"), "w", :encoding => Encoding::UTF_8) do |f|
           f.puts(<<-EOF)
   environmentpath=#{environmentpath}
   default_manifest=#{manifestsdir}
@@ -133,7 +133,7 @@ describe "default manifests" do
           EOF
         end
 
-        File.open(File.join(manifestsdir, "site.pp"), "w") do |f|
+        File.open(File.join(manifestsdir, "site.pp"), "w", :encoding => Encoding::UTF_8) do |f|
           f.puts("notify { 'ManifestFromAbsoluteDefaultManifest': }")
         end
       end
@@ -145,7 +145,7 @@ describe "default manifests" do
       end
 
       it "refuses to compile if environment.conf specifies a different manifest" do
-        File.open(File.join(testingdir, "environment.conf"), "w") do |f|
+        File.open(File.join(testingdir, "environment.conf"), "w", :encoding => Encoding::UTF_8) do |f|
           f.puts("manifest=./special_manifests")
         end
 
@@ -155,7 +155,7 @@ describe "default manifests" do
       end
 
       it "reads manifest from default_manifest setting when environment.conf has manifest set if setting equals default_manifest setting" do
-        File.open(File.join(testingdir, "environment.conf"), "w") do |f|
+        File.open(File.join(testingdir, "environment.conf"), "w", :encoding => Encoding::UTF_8) do |f|
           f.puts("manifest=#{manifestsdir}")
         end
 
@@ -165,7 +165,7 @@ describe "default manifests" do
       end
 
       it "logs errors if environment.conf specifies a different manifest" do
-        File.open(File.join(testingdir, "environment.conf"), "w") do |f|
+        File.open(File.join(testingdir, "environment.conf"), "w", :encoding => Encoding::UTF_8) do |f|
           f.puts("manifest=./special_manifests")
         end
 
@@ -177,7 +177,7 @@ describe "default manifests" do
       end
 
       it "raises an error if default_manifest is not absolute" do
-        File.open(File.join(confdir, "puppet.conf"), "w") do |f|
+        File.open(File.join(confdir, "puppet.conf"), "w", :encoding => Encoding::UTF_8) do |f|
           f.puts(<<-EOF)
   environmentpath=#{environmentpath}
   default_manifest=./relative

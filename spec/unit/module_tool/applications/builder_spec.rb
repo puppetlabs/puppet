@@ -358,6 +358,13 @@ symlinkfile
   end
 
   context 'with metadata.json' do
+    # different UTF-8 widths
+    # 1-byte A
+    # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
+    # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
+    # 4-byte 𠜎 - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
+    MIXED_UTF8 = "A\u06FF\u16A0\u{2070E}" # Aۿᚠ𠜎
+
     before :each do
       File.open(File.join(path, 'metadata.json'), 'w') do |f|
         f.puts({
@@ -366,7 +373,7 @@ symlinkfile
           "source" => "https://github.com/testing/#{module_name}",
           "author" => "testing",
           "license" => "Apache License Version 2.0",
-          "summary" => "Puppet testing module",
+          "summary" => "#{MIXED_UTF8}",
           "description" => "This module can be used for basic testing",
           "project_page" => "https://github.com/testing/#{module_name}"
         }.to_json)
@@ -392,6 +399,14 @@ symlinkfile
       expect {
         builder.run
       }.to raise_error Puppet::ModuleTool::Errors::ModuleToolError, /symlinks/i
+    end
+
+    it "writes UTF-8 metdata correctly" do
+      # file is written initially in before block, then by builders write_json method
+      builder.run
+      metadata_path = File.join(path, 'metadata.json')
+      summary = JSON.parse(Puppet::FileSystem.read(metadata_path, :encoding => Encoding::UTF_8))["summary"]
+      expect(summary).to eq(MIXED_UTF8)
     end
   end
 

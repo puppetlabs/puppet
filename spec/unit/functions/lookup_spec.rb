@@ -291,6 +291,48 @@ describe "The lookup function" do
       end
     end
 
+    context 'that uses reserved option' do
+      let(:environment_files) do
+        {
+          env_name => {
+            'hiera.yaml' => <<-YAML.unindent,
+              ---
+              version: 5
+              hierarchy:
+                - name: "Illegal"
+                  options:
+                    #{opt_spec}
+                  data_hash: yaml_data
+              YAML
+            'data' => {
+              'foo.yaml' => "a: The value a\n"
+            }
+          }
+        }
+      end
+
+      context 'path' do
+        let(:opt_spec) { 'path: data/foo.yaml' }
+
+        it 'fails and reports the reserved option key' do
+          expect { lookup('a') }.to raise_error do |e|
+            expect(e.message).to match(/Option key 'path' used in hierarchy 'Illegal' is reserved by Puppet/)
+          end
+        end
+      end
+
+      context 'uri' do
+        let(:opt_spec) { 'uri: file:///data/foo.yaml' }
+
+        it 'fails and reports the reserved option key' do
+          expect { lookup('a') }.to raise_error do |e|
+            expect(e.message).to match(/Option key 'uri' used in hierarchy 'Illegal' is reserved by Puppet/)
+          end
+        end
+      end
+    end
+
+
     context 'with lookup_options configured using patterns' do
       let(:mod_common) {
         <<-YAML.unindent
@@ -864,6 +906,23 @@ describe "The lookup function" do
           expect { lookup('a') }.to raise_error do |e|
             expect(e.message).to match(/Lookup using Hocon data_hash function is not supported without hocon library/)
           end
+        end
+      end
+
+      context 'with a hiera3_backend that has no paths' do
+        let(:hiera_yaml) do
+          <<-YAML.unindent
+          ---
+          version: 5
+          hierarchy:
+            - name: Custom
+              hiera3_backend: custom
+          YAML
+        end
+
+        it 'calls the backend' do
+          expect(lookup('hash_c')).to eql(
+            { 'hash_ca' => { 'cad' => 'value hash_c.hash_ca.cad (from global custom)' }})
         end
       end
     end

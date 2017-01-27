@@ -236,7 +236,7 @@ module Puppet::ModuleTool::Generate
         content = block[path.read, binding]
 
         target = path.parent + path.basename(".#{type}")
-        target.open('w') { |f| f.write(content) }
+        target.open('w:UTF-8') { |f| f.write(content) }
         path.unlink
       end
     end
