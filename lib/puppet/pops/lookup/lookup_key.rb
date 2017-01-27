@@ -9,7 +9,7 @@ class LookupKey
   attr_reader :module_name, :root_key, :segments
 
   def initialize(key)
-    segments = split_key(key) { |problem| Puppet::DataBinding::LookupError.new("#{problem} in key: '#{key}'") }
+    segments = split_key(key) { |problem| Puppet::DataBinding::LookupError.new(_("#{problem} in key: '#{key}'")) }
     root_key = segments.shift.freeze
     qual_index = root_key.index(DOUBLE_COLON)
 

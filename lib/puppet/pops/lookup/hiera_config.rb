@@ -65,7 +65,7 @@ class HieraConfig
   def self.v4_function_config(config_root, function_name)
     unless Puppet[:strict] == :off
       Puppet.warn_once(:deprecation, 'legacy_provider_function',
-        "Using of legacy data provider function '#{function_name}'. Please convert to a 'data_hash' function")
+        _("Using of legacy data provider function '#{function_name}'. Please convert to a 'data_hash' function"))
     end
     HieraConfigV5.new(config_root, nil,
       {
@@ -113,7 +113,7 @@ class HieraConfig
         # For backward compatibility, we must treat an empty file, or a yaml that doesn't
         # produce a Hash as Hiera version 3 default.
         unless loaded_config.is_a?(Hash)
-          Puppet.warning("#{config_path}: File exists but does not contain a valid YAML hash. Falling back to Hiera version 3 default config")
+          Puppet.warning(_("#{config_path}: File exists but does not contain a valid YAML hash. Falling back to Hiera version 3 default config"))
           loaded_config = HieraConfigV3::DEFAULT_CONFIG_HASH
         end
       else
@@ -132,7 +132,7 @@ class HieraConfig
     when 3
       HieraConfigV3.new(config_root, config_path, loaded_config)
     else
-      raise Puppet::DataBinding::LookupError, "#{@config_path}: This runtime does not support #{CONFIG_FILE_NAME} version '#{version}'"
+      raise Puppet::DataBinding::LookupError, _("#{@config_path}: This runtime does not support #{CONFIG_FILE_NAME} version '#{version}'")
     end
   end
 
@@ -160,7 +160,7 @@ class HieraConfig
     scope = lookup_invocation.scope
     unless @data_providers && scope_interpolations_stable?(scope)
       if @data_providers
-        lookup_invocation.report_text { 'Hiera configuration recreated due to change of scope variables used in interpolation expressions' }
+        lookup_invocation.report_text { _('Hiera configuration recreated due to change of scope variables used in interpolation expressions') }
       end
       slc_invocation = ScopeLookupCollectingInvocation.new(scope)
       @data_providers = create_configured_data_providers(slc_invocation, parent_data_provider)
@@ -292,7 +292,7 @@ class HieraConfigV3 < HieraConfig
   def validate_config(config)
     unless Puppet[:strict] == :off
       Puppet.warn_once(:deprecation, 'hiera.yaml',
-        "#{@config_path}: Use of 'hiera.yaml' version 3 is deprecated. It should be converted to version 5", config_path.to_s)
+        _("#{@config_path}: Use of 'hiera.yaml' version 3 is deprecated. It should be converted to version 5"), config_path.to_s)
     end
     config[KEY_VERSION] ||= 3
     config[KEY_BACKENDS] ||= DEFAULT_CONFIG_HASH[KEY_BACKENDS]
@@ -365,7 +365,7 @@ class HieraConfigV4 < HieraConfig
 
     @config[KEY_HIERARCHY].each do |he|
       name = he[KEY_NAME]
-      raise Puppet::DataBinding::LookupError, "#{@config_path}: Name '#{name}' defined more than once" if data_providers.include?(name)
+      raise Puppet::DataBinding::LookupError, _("#{@config_path}: Name '#{name}' defined more than once") if data_providers.include?(name)
       original_paths = he[KEY_PATHS] || [he[KEY_PATH] || name]
       datadir = @config_root + (he[KEY_DATADIR] || default_datadir)
       provider_name = he[KEY_BACKEND]
@@ -386,7 +386,7 @@ class HieraConfigV4 < HieraConfig
   def validate_config(config)
     unless Puppet[:strict] == :off
       Puppet.warn_once(:deprecation, 'hiera.yaml',
-        "#{@config_path}: Use of 'hiera.yaml' version 4 is deprecated. It should be converted to version 5", config_path.to_s)
+        _("#{@config_path}: Use of 'hiera.yaml' version 4 is deprecated. It should be converted to version 5"), config_path.to_s)
     end
     config[KEY_DATADIR] ||= 'data'
     config[KEY_HIERARCHY] ||= [{ KEY_NAME => 'common', KEY_BACKEND => 'yaml' }]
@@ -442,14 +442,14 @@ class HieraConfigV5 < HieraConfig
 
   def create_configured_data_providers(lookup_invocation, parent_data_provider)
     defaults = @config[KEY_DEFAULTS] || EMPTY_HASH
-    datadir = defaults[KEY_DATADIR] || 'data'
+    datadir = defaults[KEY_DATADIR] || _('data')
 
     # Hashes enumerate their values in the order that the corresponding keys were inserted so it's safe to use
     # a hash for the data_providers.
     data_providers = {}
     @config[KEY_HIERARCHY].each do |he|
       name = he[KEY_NAME]
-      raise Puppet::DataBinding::LookupError, "#{@config_path}: Name '#{name}' defined more than once" if data_providers.include?(name)
+      raise Puppet::DataBinding::LookupError, _("#{@config_path}: Name '#{name}' defined more than once") if data_providers.include?(name)
       function_kind = ALL_FUNCTION_KEYS.find { |key| he.include?(key) }
       if function_kind.nil?
         function_kind = FUNCTION_KEYS.find { |key| defaults.include?(key) }
@@ -482,12 +482,12 @@ class HieraConfigV5 < HieraConfig
       if(function_kind == KEY_V3_BACKEND)
         unless parent_data_provider.is_a?(GlobalDataProvider)
           # hiera3_backend is not allowed in environments and modules
-          raise Puppet::DataBinding::LookupError, "#{@config_path}: '#{KEY_V3_BACKEND}' is only allowed in the global layer"
+          raise Puppet::DataBinding::LookupError, _("#{@config_path}: '#{KEY_V3_BACKEND}' is only allowed in the global layer")
         end
 
-        if function_name == 'json' || function_name == 'yaml' || function_name == 'hocon' &&  Puppet.features.hocon?
+        if function_name == _('json') || function_name == _('yaml') || function_name == _('hocon') &&  Puppet.features.hocon?
           # Disallow use of backends that have corresponding "data_hash" functions in version 5
-          raise Puppet::DataBinding::LookupError, "#{@config_path}: Use \"#{KEY_DATA_HASH}: #{function_name}_data\" instead of \"#{KEY_V3_BACKEND}: #{function_name}\""
+          raise Puppet::DataBinding::LookupError, _("#{@config_path}: Use \"#{KEY_DATA_HASH}: #{function_name}_data\" instead of \"#{KEY_V3_BACKEND}: #{function_name}\"")
         end
         v3options = { :datadir => entry_datadir.to_s }
         options.each_pair { |k, v| v3options[k.to_sym] = v }
@@ -537,28 +537,28 @@ class HieraConfigV5 < HieraConfig
       when 0
         if defaults.nil? || FUNCTION_KEYS.count { |key| defaults.include?(key) } == 0
           raise Puppet::DataBinding::LookupError,
-            "#{@config_path}: One of #{combine_strings(FUNCTION_KEYS)} must defined in hierarchy '#{name}'"
+            _("#{@config_path}: One of #{combine_strings(FUNCTION_KEYS)} must defined in hierarchy '#{name}'")
         end
       when 1
         # OK
       when 0
         raise Puppet::DataBinding::LookupError,
-          "#{@config_path}: One of #{combine_strings(FUNCTION_KEYS)} must defined in hierarchy '#{name}'"
+          _("#{@config_path}: One of #{combine_strings(FUNCTION_KEYS)} must defined in hierarchy '#{name}'")
       else
         raise Puppet::DataBinding::LookupError,
-          "#{@config_path}: Only one of #{combine_strings(FUNCTION_KEYS)} can be defined in hierarchy '#{name}'"
+          _("#{@config_path}: Only one of #{combine_strings(FUNCTION_KEYS)} can be defined in hierarchy '#{name}'")
       end
 
       if LOCATION_KEYS.count { |key| he.include?(key) } > 1
         raise Puppet::DataBinding::LookupError,
-          "#{@config_path}: Only one of #{combine_strings(LOCATION_KEYS)} can be defined in hierarchy '#{name}'"
+          _("#{@config_path}: Only one of #{combine_strings(LOCATION_KEYS)} can be defined in hierarchy '#{name}'")
       end
 
       options = he[KEY_OPTIONS]
       unless options.nil?
         RESERVED_OPTION_KEYS.each do |key|
           if options.include?(key)
-            raise Puppet::DataBinding::LookupError, "#{@config_path}: Option key '#{key}' used in hierarchy '#{name}' is reserved by Puppet"
+            raise Puppet::DataBinding::LookupError, _("#{@config_path}: Option key '#{key}' used in hierarchy '#{name}' is reserved by Puppet")
           end
         end
       end
@@ -572,7 +572,7 @@ class HieraConfigV5 < HieraConfig
       # OK
     else
       raise Puppet::DataBinding::LookupError,
-        "#{@config_path}: Only one of #{combine_strings(FUNCTION_KEYS)} can be defined in defaults"
+        _("#{@config_path}: Only one of #{combine_strings(FUNCTION_KEYS)} can be defined in defaults")
     end
   end
 

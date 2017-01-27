@@ -58,14 +58,14 @@ module Puppet::Pops::Binder::Config
             @config_file = expanded_config_file
           end
         else
-          raise ArgumentError, "No Puppet settings 'confdir', or it is not a String"
+          raise ArgumentError, _("No Puppet settings 'confdir', or it is not a String")
         end
       when String
         unless Puppet::FileSystem.exist?(@config_file)
-          raise ArgumentError, "Cannot find the given binder configuration file '#{@config_file}'"
+          raise ArgumentError, _("Cannot find the given binder configuration file '#{@config_file}'")
         end
       else
-        raise ArgumentError, "The setting binder_config is expected to be a String, got: #{@config_file.class.name}."
+        raise ArgumentError, _("The setting binder_config is expected to be a String, got: #{@config_file.class.name}.")
       end
       unless @config_file.is_a?(String) && Puppet::FileSystem.exist?(@config_file)
         @config_file = nil # use defaults

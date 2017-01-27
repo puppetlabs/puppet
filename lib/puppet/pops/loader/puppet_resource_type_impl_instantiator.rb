@@ -31,7 +31,7 @@ class PuppetResourceTypeImplInstantiator
     end
     statements = statements.reject { |s| s.is_a?(Model::Nop) }
     if statements.empty?
-      raise ArgumentError, "The code loaded from #{source_ref} does not create the resource type '#{typed_name.name}' - it is empty"
+      raise ArgumentError, _("The code loaded from #{source_ref} does not create the resource type '#{typed_name.name}' - it is empty")
     end
 
     rname = Resource::ResourceTypeImpl._ptype.name
@@ -42,16 +42,16 @@ class PuppetResourceTypeImplInstantiator
           functor_expr.left_expr.is_a?(Model::QualifiedReference) &&
           functor_expr.left_expr.cased_value == rname &&
           functor_expr.right_expr.is_a?(Model::QualifiedName) &&
-          functor_expr.right_expr.value == 'new'
+          functor_expr.right_expr.value == _('new')
       else
         false
       end
     end
-      raise ArgumentError, "The code loaded from #{source_ref} does not create the resource type '#{typed_name.name}' - no call to #{rname}.new found."
+      raise ArgumentError, _("The code loaded from #{source_ref} does not create the resource type '#{typed_name.name}' - no call to #{rname}.new found.")
     end
 
     unless statements.size == 1
-      raise ArgumentError, "The code loaded from #{source_ref} must contain only the creation of resource type '#{typed_name.name}' - it has additional logic."
+      raise ArgumentError, _("The code loaded from #{source_ref} must contain only the creation of resource type '#{typed_name.name}' - it has additional logic.")
     end
 
     closure_scope = Puppet.lookup(:global_scope) { {} }
@@ -59,13 +59,13 @@ class PuppetResourceTypeImplInstantiator
 
     unless resource_type_impl.is_a?(Puppet::Pops::Resource::ResourceTypeImpl)
       got = resource_type.class
-      raise ArgumentError, "The code loaded from #{source_ref} does not define the resource type '#{typed_name.name}' - got '#{got}'."
+      raise ArgumentError, _("The code loaded from #{source_ref} does not define the resource type '#{typed_name.name}' - got '#{got}'.")
     end
 
     unless resource_type_impl.name == typed_name.name
       expected = typed_name.name
       actual = resource_type_impl.name
-      raise ArgumentError, "The code loaded from #{source_ref} produced resource type with the wrong name, expected '#{expected}', actual '#{actual}'"
+      raise ArgumentError, _("The code loaded from #{source_ref} produced resource type with the wrong name, expected '#{expected}', actual '#{actual}'")
     end
 
     # Adapt the resource type definition with loader - this is used from logic contained in it body to find the

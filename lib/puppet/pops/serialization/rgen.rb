@@ -19,7 +19,7 @@ module RGen
 
     def read(impl_class, value_count, deserializer)
       features = features(impl_class)
-      raise SerializationError, "Feature count mismatch for #{impl_class}" unless value_count == features.size
+      raise SerializationError, _("Feature count mismatch for #{impl_class}") unless value_count == features.size
       # Deserializer must know about this instance before we read its attributes
       obj = deserializer.remember(impl_class.new)
       features.each { |feature| obj.setGeneric(feature.name, deserializer.read) }
@@ -113,7 +113,7 @@ module RGen
       when 1
         result['parent'] = Types::PTypeReferenceType.new(supers[0].name)
       else
-        raise SerializationError, "Multiple inheritance is not supported. #{e_class.name} has #{supers.size} super types"
+        raise SerializationError, _("Multiple inheritance is not supported. #{e_class.name} has #{supers.size} super types")
       end
       result
     end

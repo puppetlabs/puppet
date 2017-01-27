@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 4.8.1-339-g804805c\n"
+"Project-Id-Version: Puppet automation framework 4.8.2-401-g7f78dad\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-01-17 15:25-0800\n"
-"PO-Revision-Date: 2017-01-17 15:25-0800\n"
+"POT-Creation-Date: 2017-01-30 11:45-0800\n"
+"PO-Revision-Date: 2017-01-30 11:45-0800\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-msgid "Puppet 4.8.2 requires ruby 2.3.1 or greater."
+msgid "Puppet 4.9.0 requires ruby 2.3.1 or greater."
 msgstr ""
 
 msgid "Initial context after settings initialization"
@@ -47,6 +47,21 @@ msgid "puppet agent: applying configuration"
 msgstr ""
 
 msgid "\"Could not create instance of #{client_class}: #{detail}\""
+msgstr ""
+
+msgid "Enabling Puppet."
+msgstr ""
+
+msgid "Disabling Puppet."
+msgstr ""
+
+msgid "Failed to acquire lock"
+msgstr ""
+
+msgid ""
+"Puppet::Agent::Locker.running? is deprecated as it is inherently unsafe.\n"
+"The only safe way to know if the lock is locked is to try lock and perform some\n"
+"action and then handle the LockError that may result.\n"
 msgstr ""
 
 msgid "\"Unable to find application '#{application_name}'. #{e}\""
@@ -80,6 +95,198 @@ msgid "No valid command or main"
 msgstr ""
 
 msgid "\"No help available for puppet #{name}\""
+msgstr ""
+
+msgid "Cancelling startup"
+msgstr ""
+
+msgid "Fingerprint asked but no certificate nor certificate request have yet been issued"
+msgstr ""
+
+msgid "\"Could not get fingerprint for digest '#{options[:digest]}'\""
+msgstr ""
+
+msgid "Starting Puppet client version 4.9.0"
+msgstr ""
+
+msgid "The puppet agent command does not take parameters"
+msgstr ""
+
+msgid "\"Could not find file #{manifest}\""
+msgstr ""
+
+msgid "\"Only one file can be applied per run.  Skipping #{command_line.args.join(', ')}\""
+msgstr ""
+
+msgid "\"Could not find facts for #{Puppet[:node_name_value]}\""
+msgstr ""
+
+msgid "\"Could not find node #{Puppet[:node_name_value]}\""
+msgstr ""
+
+msgid "For puppet apply"
+msgstr ""
+
+msgid "\"#{file} is not readable\""
+msgstr ""
+
+msgid "Exiting"
+msgstr ""
+
+msgid "\"Could not deserialize catalog from pson: #{detail}\""
+msgstr ""
+
+msgid "You must specify the hosts to apply to; valid values are an array or the symbol :all"
+msgstr ""
+
+msgid "\"No device found in #{Puppet[:deviceconfig]}\""
+msgstr ""
+
+msgid "\"starting applying configuration to #{device.name} at #{scheme}#{device_url.host}#{port}#{device_url.path}\""
+msgstr ""
+
+msgid "\"Invalid output format #{arg}\""
+msgstr ""
+
+msgid "\"Invalid output mode #{arg}\""
+msgstr ""
+
+msgid "\"scanning: #{files.inspect}\""
+msgstr ""
+
+msgid "\"Could not generate documentation: #{detail}\""
+msgstr ""
+
+msgid "\"Could not find reference #{name}\""
+msgstr ""
+
+msgid "\"Could not generate reference #{name}: #{detail}\""
+msgstr ""
+
+msgid "\"I don't know how to render '#{format}'\""
+msgstr ""
+
+msgid "Cancelling Face"
+msgstr ""
+
+msgid "\"'#{face}' has no #{action} action.  See `puppet help #{face}`.\""
+msgstr ""
+
+msgid "\"#{face} does not respond to action #{arguments.first}\""
+msgstr ""
+
+msgid "s"
+msgstr ""
+
+msgid "\"puppet #{@face.name} #{@action.name} takes #{arity-1} argument#{s}, but you gave #{count-1}\""
+msgstr ""
+
+msgid "\"'puppet #{@face.name}' is deprecated and will be removed in a future release\""
+msgstr ""
+
+msgid "\"Try 'puppet help #{@face.name} #{@action.name}' for usage\""
+msgstr ""
+
+msgid "You must specify a file to back up"
+msgstr ""
+
+msgid "\"#{file}: no such file\""
+msgstr ""
+
+msgid "\"#{file}: cannot read file\""
+msgstr ""
+
+msgid "Need exactly two arguments: filebucket diff <file_a> <file_b>"
+msgstr ""
+
+msgid "\"Comparing #{checksum_a} #{checksum_b} #{file_a} #{file_b}\""
+msgstr ""
+
+msgid "Cancelling"
+msgstr ""
+
+msgid "Inspect requires reporting to be enabled. Set report=true in puppet.conf to enable reporting."
+msgstr ""
+
+msgid "Finished inspection"
+msgstr ""
+
+msgid "\"Could not find catalog for #{Puppet[:certname]}\""
+msgstr ""
+
+msgid "\"Could not inspect #{ral_resource}; skipping: #{detail}\""
+msgstr ""
+
+msgid "\"failed to inspect #{name}\""
+msgstr ""
+
+msgid "\"inspected value is #{audited_resource[name].inspect}\""
+msgstr ""
+
+msgid "\"Could not send report: #{detail}\""
+msgstr ""
+
+msgid "Run 'puppet lookup --help' for more details"
+msgstr ""
+
+msgid "\"The --fact file only accepts yaml and json files.\\n#{RUN_HELP}\""
+msgstr ""
+
+msgid "\"The options #{DEEP_MERGE_OPTIONS} are only available with '--merge deep'\\n#{RUN_HELP}\""
+msgstr ""
+
+msgid "\"The --merge option only accepts #{strategies[0...-1].join(', ')}, or #{strategies.last}\\n#{RUN_HELP}\""
+msgstr ""
+
+msgid "No keys were given to lookup."
+msgstr ""
+
+msgid "\"Unknown rendering format '#{format}'\""
+msgstr ""
+
+msgid "\"Incorrect formatted data in #{fact_file} given via the --facts flag\""
+msgstr ""
+
+msgid "Canceling startup"
+msgstr ""
+
+msgid "\"Could not compile catalog for #{options[:node]}\""
+msgstr ""
+
+msgid "\"Failed to compile catalog for node #{options[:node]}: #{detail}\""
+msgstr ""
+
+msgid "\"Could not change user to #{Puppet[:user]}: #{detail}\""
+msgstr ""
+
+msgid "\"Could not change user to #{Puppet[:user]}. User does not exist and is required to continue.\""
+msgstr ""
+
+msgid "The Rack Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppetlabs.com/deprecate-rack-webrick-servers for more information."
+msgstr ""
+
+msgid "The WEBrick Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppetlabs.com/deprecate-rack-webrick-servers for more information."
+msgstr ""
+
+msgid "Puppet master is not supported on Microsoft Windows"
+msgstr ""
+
+msgid "Starting Puppet master version 4.9.0"
+msgstr ""
+
+msgid "Editing with Yaml output is not supported"
+msgstr ""
+
+msgid "You must specify the type to display"
+msgstr ""
+
+msgid "\"Could not find type #{type}\""
+msgstr ""
+
+msgid "\"Invalid parameter setting #{setting}\""
+msgstr ""
+
+msgid "Listing all file instances is not supported.  Please specify a file or directory, e.g. puppet resource file /etc"
 msgstr ""
 
 msgid "\"Update for application settings (#{run_mode})\""
@@ -145,9 +352,6 @@ msgstr ""
 msgid "\"Failed to apply catalog: #{detail}\""
 msgstr ""
 
-msgid "\"Could not send report: #{detail}\""
-msgstr ""
-
 msgid "\"Could not save last run local report: #{detail}\""
 msgstr ""
 
@@ -173,6 +377,9 @@ msgid "\"Test #{name} is already defined\""
 msgstr ""
 
 msgid "\"Could not load confine test '#{name}': #{detail}\""
+msgstr ""
+
+msgid "TrustedInformation expected a certificate, but none was given."
 msgstr ""
 
 msgid "\"Could not start #{Puppet.run_mode.name}: #{detail}\""
@@ -203,6 +410,51 @@ msgid "The method Puppet::DataProviders.lookup_in_module is deprecated and will 
 msgstr ""
 
 msgid "The method Puppet::DataProviders.lookup_adapter is deprecated and will be removed in the next major release of Puppet."
+msgstr ""
+
+msgid "Puppet::DataProviders::DataAdapter is deprecated and will be removed in the next major version of Puppet"
+msgstr ""
+
+msgid "\"#{data_key}::data\""
+msgstr ""
+
+msgid "\"Called #{name}\""
+msgstr ""
+
+msgid "Puppet::DataProviders::DataFunctionSupport is deprecated and will be removed in the next major version of Puppet"
+msgstr ""
+
+msgid "Puppet::DataProviders::FunctionEnvDataProvider is deprecated and will be removed in the next major version of Puppet"
+msgstr ""
+
+msgid "Puppet::DataProviders::FunctionModuleDataProvider is deprecated and will be removed in the next major version of Puppet"
+msgstr ""
+
+msgid "Use of class Puppet::DataProviders::HieraConfig' is deprecated. Puppet::Pops::Lookup::HieraConfig should be used instead"
+msgstr ""
+
+msgid "Puppet::DataProviders::HieraEnvDataProvider is deprecated and will be removed in the next major version of Puppet"
+msgstr ""
+
+msgid "Puppet::DataProviders::HieraInterpolate#qualified_lookup is deprecated, use Puppet::Pops::Lookup::SubLookup#sub_lookup"
+msgstr ""
+
+msgid "Puppet::DataProviders::HieraModuleDataProvider is deprecated and will be removed in the next major version of Puppet"
+msgstr ""
+
+msgid "Puppet::DataProviders::HieraSupport is deprecated and will be removed in the next major version of Puppet"
+msgstr ""
+
+msgid "Puppet::DataProviders::JsonDataProviderFactory is deprecated and will be removed in the next major version of Puppet"
+msgstr ""
+
+msgid "Puppet::DataProviders::JsonDataProvider is deprecated and will be removed in the next major version of Puppet"
+msgstr ""
+
+msgid "Puppet::DataProviders::YamlDataProviderFactory is deprecated and will be removed in the next major version of Puppet"
+msgstr ""
+
+msgid "Puppet::DataProviders::YamlDataProvider is deprecated and will be removed in the next major version of Puppet"
 msgstr ""
 
 msgid "\"Could not find a directory environment named '#{environment_name}' anywhere in the path: #{environmentpath}. Does the directory exist?\""
@@ -236,6 +488,338 @@ msgid "\"#{msg} on node #{node}\""
 msgstr ""
 
 msgid "Apache 2 license; see COPYING"
+msgstr ""
+
+msgid "Local Puppet Certificate Authority management."
+msgstr ""
+
+msgid ""
+"    This provides local management of the Puppet Certificate Authority.\n"
+"\n"
+"    You can use this subcommand to sign outstanding certificate requests, list\n"
+"    and manage local certificates, and inspect the state of the CA.\n"
+msgstr ""
+
+msgid "List certificates and/or certificate requests."
+msgstr ""
+
+msgid ""
+"      This will list the current certificates and certificate signing requests\n"
+"      in the Puppet CA.  You will also get the fingerprint, and any certificate\n"
+"      verification failure reported.\n"
+msgstr ""
+
+msgid "Include all certificates and requests."
+msgstr ""
+
+msgid "Include pending certificate signing requests."
+msgstr ""
+
+msgid "Include signed certificates."
+msgstr ""
+
+msgid "ALGORITHM"
+msgstr ""
+
+msgid "The hash algorithm to use when displaying the fingerprint"
+msgstr ""
+
+msgid "PATTERN"
+msgstr ""
+
+msgid "Only list if the subject matches PATTERN."
+msgstr ""
+
+msgid ""
+"        Only include certificates or requests where subject matches PATTERN.\n"
+"\n"
+"        PATTERN is interpreted as a regular expression, allowing complex\n"
+"        filtering of the content.\n"
+msgstr ""
+
+msgid "Not a CA"
+msgstr ""
+
+msgid "Unable to fetch the CA"
+msgstr ""
+
+msgid "Destroy named certificate or pending certificate request."
+msgstr ""
+
+msgid "Add certificate to certificate revocation list."
+msgstr ""
+
+msgid "Nothing was revoked"
+msgstr ""
+
+msgid "Generate a certificate for a named client."
+msgstr ""
+
+msgid "NAMES"
+msgstr ""
+
+msgid "Additional DNS names to add to the certificate request"
+msgstr ""
+
+msgid "\"#{host} already has a certificate request; use sign instead\""
+msgstr ""
+
+msgid "\"#{host} already has a certificate\""
+msgstr ""
+
+msgid "Sign an outstanding certificate request."
+msgstr ""
+
+msgid "Whether or not to accept DNS alt names in the certificate request"
+msgstr ""
+
+msgid "Print the full-text version of a host's certificate."
+msgstr ""
+
+msgid "Print the DIGEST (defaults to the signing algorithm) fingerprint of a host's certificate."
+msgstr ""
+
+msgid "\"Could not verify #{value[:host]}: #{value[:error]}\""
+msgstr ""
+
+msgid "Retrieve a catalog and filter it for resources of a given type."
+msgstr ""
+
+msgid "<host> <resource_type>"
+msgstr ""
+
+msgid ""
+"      A list of resource references (\"Type[title]\"). When used from the API,\n"
+"      returns an array of Puppet::Resource objects excised from a catalog.\n"
+msgstr ""
+
+msgid "no matching resources found"
+msgstr ""
+
+msgid "Provide access to the CA for certificate management."
+msgstr ""
+
+msgid "LOCATION"
+msgstr ""
+
+msgid "Which certificate authority to use (local or remote)."
+msgstr ""
+
+msgid "Valid values for ca-location are 'remote', 'local', 'only'."
+msgstr ""
+
+msgid "Generate a new certificate signing request."
+msgstr ""
+
+msgid "<host>"
+msgstr ""
+
+msgid "Can't specify both --dns_alt_names and --dns-alt-names"
+msgstr ""
+
+msgid "List all certificate signing requests."
+msgstr ""
+
+msgid "Sign a certificate signing request for HOST."
+msgstr ""
+
+msgid "--allow-dns-alt-names may not be specified with a remote CA"
+msgstr ""
+
+msgid "This process is not configured as a certificate authority"
+msgstr ""
+
+msgid "Retrieve a certificate."
+msgstr ""
+
+msgid "Delete a certificate."
+msgstr ""
+
+msgid "Interact with Puppet's settings."
+msgstr ""
+
+msgid "SECTION_NAME"
+msgstr ""
+
+msgid "The section of the configuration file to interact with."
+msgstr ""
+
+msgid "Examine Puppet's current settings."
+msgstr ""
+
+msgid "(all | <setting> [<setting> ...]"
+msgstr ""
+
+msgid "New environment loaders generated from the requested section."
+msgstr ""
+
+msgid "Set Puppet's settings."
+msgstr ""
+
+msgid "[setting_name] [setting_value]"
+msgstr ""
+
+msgid "Interact directly with the EPP template parser/renderer."
+msgstr ""
+
+msgid "Validate the syntax of one or more EPP templates."
+msgstr ""
+
+msgid "[<template>] [<template> ...]"
+msgstr ""
+
+msgid "Nothing, or encountered syntax errors."
+msgstr ""
+
+msgid "Whether or not to continue after errors are reported for a template."
+msgstr ""
+
+msgid "No template specified. No action taken"
+msgstr ""
+
+msgid "\"   #{f}\""
+msgstr ""
+
+msgid ""
+"One or more file(s) specified did not exist:\n"
+msgstr ""
+
+msgid "Errors while validating epp"
+msgstr ""
+
+msgid "Outputs a dump of the internal template parse tree for debugging"
+msgstr ""
+
+msgid "A dump of the resulting AST model unless there are syntax or validation errors."
+msgstr ""
+
+msgid "<source>"
+msgstr ""
+
+msgid "Dump one epp source expression given on the command line."
+msgstr ""
+
+msgid "Whether or not to validate the parsed result, if no-validate only syntax errors are reported."
+msgstr ""
+
+msgid "Whether or not to show a file name header between files."
+msgstr ""
+
+msgid "No input to parse given on command line or stdin"
+msgstr ""
+
+msgid "Renders an epp template as text"
+msgstr ""
+
+msgid "A rendered result of one or more given templates."
+msgstr ""
+
+msgid "<node_name>"
+msgstr ""
+
+msgid "The name of the node for which facts are obtained. Defaults to facts for the local node."
+msgstr ""
+
+msgid "Render one inline epp template given on the command line."
+msgstr ""
+
+msgid "<values_hash>"
+msgstr ""
+
+msgid "A Hash in Puppet DSL form given as arguments to the template being rendered."
+msgstr ""
+
+msgid "<pp_or_yaml_file>"
+msgstr ""
+
+msgid "A .pp or .yaml file that is processed to produce a hash of values for the template."
+msgstr ""
+
+msgid "<facts_file>"
+msgstr ""
+
+msgid "A .yaml or .json file containing a hash of facts made available in $facts and $trusted"
+msgstr ""
+
+msgid "Whether or not to show a file name header between rendered results."
+msgstr ""
+
+msgid "No input to process given on command line or stdin"
+msgstr ""
+
+msgid "error while rendering epp"
+msgstr ""
+
+msgid "Only .yaml or .pp can be used as a --values_file"
+msgstr ""
+
+msgid "\"Could not load --values_file #{e.message}\""
+msgstr ""
+
+msgid "\"--values_file option must evaluate to a Hash or undef/nil, got: '#{template_values.class}'\""
+msgstr ""
+
+msgid "\"--values option must evaluate to a Hash or undef, got: '#{result.class}'\""
+msgstr ""
+
+msgid "Retrieve and store facts."
+msgstr ""
+
+msgid "Retrieve a node's facts."
+msgstr ""
+
+msgid "[<node_certname>]"
+msgstr ""
+
+msgid "Retrieve and store files in a filebucket"
+msgstr ""
+
+msgid "Retrieve a file from the filebucket."
+msgstr ""
+
+msgid "Download a file into the local filebucket."
+msgstr ""
+
+msgid "Nothing."
+msgstr ""
+
+msgid "\"Could not find metadata for #{sum}\""
+msgstr ""
+
+msgid "\"Content for '#{sum}' already exists\""
+msgstr ""
+
+msgid "\"Could not download content for '#{sum}'\""
+msgstr ""
+
+msgid "\"Saved #{sum} to filebucket\""
+msgstr ""
+
+msgid "Store a file in the local filebucket."
+msgstr ""
+
+msgid "<file>"
+msgstr ""
+
+msgid "Generates Puppet code from Ruby definitions."
+msgstr ""
+
+msgid "Generates Puppet code for custom types"
+msgstr ""
+
+msgid "<format>"
+msgstr ""
+
+msgid "The generation output format to use. Supported formats: pcore."
+msgstr ""
+
+msgid "\"'#{options[:format]}' is not a supported format for type generation.\""
+msgstr ""
+
+msgid "Forces the generation of output files (skips up-to-date checks)."
+msgstr ""
+
+msgid "\"The output directory '#{outputdir}' exists and is not a directory\""
 msgstr ""
 
 msgid "Display Puppet help."
@@ -295,6 +879,613 @@ msgstr ""
 msgid "! Subcommand unavailable due to error. Check error logs."
 msgstr ""
 
+msgid "Create, save, and remove certificate keys."
+msgstr ""
+
+msgid "Display Puppet manual pages."
+msgstr ""
+
+msgid "Display the manual page for a Puppet subcommand."
+msgstr ""
+
+msgid "<subcommand>"
+msgstr ""
+
+msgid ""
+"      The man data, in Markdown format, suitable for consumption by Ronn.\n"
+"\n"
+"      RENDERING ISSUES: To skip fancy formatting and output the raw Markdown\n"
+"      text (e.g. for use in a pipeline), call this action with '--render-as s'.\n"
+msgstr ""
+
+msgid "Creates, installs and searches for modules on the Puppet Forge."
+msgstr ""
+
+msgid "Build a module release package."
+msgstr ""
+
+msgid "Pathname object representing the path to the release archive."
+msgstr ""
+
+msgid "[<path>]"
+msgstr ""
+
+msgid "puppet module build only accepts 0 or 1 arguments"
+msgstr ""
+
+msgid "\"Unable to find metadata.json in module root #{pwd} or parent directories. See <https://docs.puppetlabs.com/puppet/latest/reference/modules_publishing.html> for required file format.\""
+msgstr ""
+
+msgid "\"Unable to find metadata.json in module root #{module_path} or parent directories. See <https://docs.puppetlabs.com/puppet/latest/reference/modules_publishing.html> for required file format.\""
+msgstr ""
+
+msgid "Module built: "
+msgstr ""
+
+msgid "Show modified files of an installed module."
+msgstr ""
+
+msgid "Array of strings representing paths of modified files."
+msgstr ""
+
+msgid "<path>"
+msgstr ""
+
+msgid "\"Could not find a valid module at #{path.inspect}\""
+msgstr ""
+
+msgid "No modified files"
+msgstr ""
+
+msgid "\"#{return_value.size} files modified\""
+msgstr ""
+
+msgid "Generate boilerplate for a new module."
+msgstr ""
+
+msgid "Array of Pathname objects representing paths of generated files."
+msgstr ""
+
+msgid "Bypass the interactive metadata interview"
+msgstr ""
+
+msgid "<name>"
+msgstr ""
+
+msgid "This format is not supported by this action."
+msgstr ""
+
+msgid "\"Could not generate directory #{name.inspect}, you must specify a dash-separated username and module name.\""
+msgstr ""
+
+msgid "\"Finished; module generated in #{path}.\""
+msgstr ""
+
+msgid ""
+"We need to create a metadata.json file for this module.  Please answer the\n"
+"    following questions; if the question is not applicable to this module, feel free\n"
+"    to leave it blank."
+msgstr ""
+
+msgid "Puppet uses Semantic Versioning (semver.org) to version modules."
+msgstr ""
+
+msgid "\"What version is this module?  [#{metadata.version}]\""
+msgstr ""
+
+msgid "We're sorry, we could not parse that as a Semantic Version."
+msgstr ""
+
+msgid "\"Who wrote this module?  [#{metadata.author}]\""
+msgstr ""
+
+msgid "\"What license does this module code fall under?  [#{metadata.license}]\""
+msgstr ""
+
+msgid "How would you describe this module in a single sentence?"
+msgstr ""
+
+msgid "Where is this module's source code repository?"
+msgstr ""
+
+msgid "\"Where can others go to learn more about this module?#{ metadata.project_page && \"  [#{metadata.project_page}]\" }\""
+msgstr ""
+
+msgid "\"Where can others go to file issues about this module?#{ metadata.issues_url && \"  [#{metadata.issues_url}]\" }\""
+msgstr ""
+
+msgid "About to generate this metadata; continue? [n/Y]"
+msgstr ""
+
+msgid "Aborting..."
+msgstr ""
+
+msgid " already exists."
+msgstr ""
+
+msgid "\"Generating module at #{dest}...\""
+msgstr ""
+
+msgid "Populating templates..."
+msgstr ""
+
+msgid "Install a module from the Puppet Forge or a release archive."
+msgstr ""
+
+msgid "Pathname object representing the path to the installed module."
+msgstr ""
+
+msgid "Force overwrite of existing module, if any. (Implies --ignore-dependencies.)"
+msgstr ""
+
+msgid "The directory into which modules are installed."
+msgstr ""
+
+msgid "Do not attempt to install dependencies. (Implied by --force.)"
+msgstr ""
+
+msgid "Module version to install."
+msgstr ""
+
+msgid "\"Preparing to install into #{options[:target_dir]} ...\""
+msgstr ""
+
+msgid "\"Module #{name} #{return_value[:version]} is already installed.\""
+msgstr ""
+
+msgid "List installed modules"
+msgstr ""
+
+msgid "hash of paths to module objects"
+msgstr ""
+
+msgid "Whether to show dependencies as a tree view"
+msgstr ""
+
+msgid " (no modules installed)"
+msgstr ""
+
+msgid "Non semantic version dependency"
+msgstr ""
+
+msgid "Missing dependency"
+msgstr ""
+
+msgid "Module '%s' (v%s) fails to meet some dependencies:"
+msgstr ""
+
+msgid "\" requires '#{dep_name}' (#{version_constraint})\""
+msgstr ""
+
+msgid "invalid"
+msgstr ""
+
+msgid "Search the Puppet Forge for a module."
+msgstr ""
+
+msgid "Array of module metadata hashes"
+msgstr ""
+
+msgid "<search_term>"
+msgstr ""
+
+msgid "\"No results found for '#{term}'.\""
+msgstr ""
+
+msgid "Uninstall a puppet module."
+msgstr ""
+
+msgid "Hash of module objects representing uninstalled modules and related errors."
+msgstr ""
+
+msgid "Force uninstall of an installed module."
+msgstr ""
+
+msgid "Ignore any local changes made. (Implied by --force.)"
+msgstr ""
+
+msgid "The version of the module to uninstall"
+msgstr ""
+
+msgid "\"Preparing to uninstall '#{name}'\""
+msgstr ""
+
+msgid "\"Removed '#{return_value[:module_name]}' #{module_version} from #{mod.modulepath}\""
+msgstr ""
+
+msgid "Upgrade a puppet module."
+msgstr ""
+
+msgid "Force upgrade of an installed module. (Implies --ignore-dependencies.)"
+msgstr ""
+
+msgid "Ignore and overwrite any local changes made. (Implied by --force.)"
+msgstr ""
+
+msgid "The version of the module to upgrade to."
+msgstr ""
+
+msgid "\"Preparing to upgrade '#{name}' ...\""
+msgstr ""
+
+msgid "View and manage node definitions."
+msgstr ""
+
+msgid "Retrieve a node object."
+msgstr ""
+
+msgid ""
+"    A hash containing the node's `classes`, `environment`, `expiration`, `name`,\n"
+"    `parameters` (its facts, combined with any ENC-set parameters), and `time`.\n"
+"    When used from the Ruby API: a Puppet::Node object.\n"
+"\n"
+"    RENDERING ISSUES: Rendering as string and json are currently broken;\n"
+"    node objects can only be rendered as yaml.\n"
+msgstr ""
+
+msgid "Clean up signed certs, cached facts, node objects, and reports for a node stored by the puppetmaster"
+msgstr ""
+
+msgid "<host1> [<host2> ...]"
+msgstr ""
+
+msgid "At least one node should be passed"
+msgstr ""
+
+msgid "\"#{node} certificates removed from ca\""
+msgstr ""
+
+msgid "\"Not managing #{node} certs as this host is not a CA\""
+msgstr ""
+
+msgid "\"#{node}'s facts removed\""
+msgstr ""
+
+msgid "\"#{node}'s cached node removed\""
+msgstr ""
+
+msgid "\"#{node}'s reports removed\""
+msgstr ""
+
+msgid "Interact directly with the parser."
+msgstr ""
+
+msgid "Validate the syntax of one or more Puppet manifests."
+msgstr ""
+
+msgid "[<manifest>] [<manifest> ...]"
+msgstr ""
+
+msgid "Nothing, or the first syntax error encountered."
+msgstr ""
+
+msgid "\"No manifest specified. Validating the default manifest #{manifest}\""
+msgstr ""
+
+msgid "\"One or more file(s) specified did not exist:\\n#{missing_files.collect {|f| \" \" * 3 + f + \"\\n\"}}\""
+msgstr ""
+
+msgid "Outputs a dump of the internal parse tree for debugging"
+msgstr ""
+
+msgid "<source>| [<manifest> ...] "
+msgstr ""
+
+msgid "dump one source expression given on the command line."
+msgstr ""
+
+msgid "Whether or not to validate the parsed result, if no-validate only syntax errors are reported"
+msgstr ""
+
+msgid "For puppet parser validate"
+msgstr ""
+
+msgid "Interact with the Puppet plugin system."
+msgstr ""
+
+msgid "Download plugins from the puppet master."
+msgstr ""
+
+msgid ""
+"      A list of the files downloaded, or a confirmation that no files were\n"
+"      downloaded. When used from the Ruby API, this action returns an array of\n"
+"      the files downloaded, which will be empty if none were retrieved.\n"
+msgstr ""
+
+msgid "No plugins downloaded."
+msgstr ""
+
+msgid "\"Downloaded these plugins: #{value.join(', ')}\""
+msgstr ""
+
+msgid "Create, display, and submit reports."
+msgstr ""
+
+msgid "API only: submit a report."
+msgstr ""
+
+msgid "<report>"
+msgstr ""
+
+msgid "API only: submit a report with error handling."
+msgstr ""
+
+msgid "\"Uploaded report for #{report.name}\""
+msgstr ""
+
+msgid "API only: interact directly with resources via the RAL."
+msgstr ""
+
+msgid "API only: get all resources of a single type."
+msgstr ""
+
+msgid "<resource_type>"
+msgstr ""
+
+msgid "An array of Puppet::Resource objects."
+msgstr ""
+
+msgid "API only: get a single resource."
+msgstr ""
+
+msgid "<type>/<title>"
+msgstr ""
+
+msgid "A Puppet::Resource object."
+msgstr ""
+
+msgid "API only: create a new resource."
+msgstr ""
+
+msgid "<resource_object>"
+msgstr ""
+
+msgid "The same resource object passed as an argument."
+msgstr ""
+
+msgid "View classes, defined resource types, and nodes from all manifests."
+msgstr ""
+
+msgid "Retrieve info about a resource collection."
+msgstr ""
+
+msgid "<collection_name>"
+msgstr ""
+
+msgid ""
+"    A hash of info about the requested resource collection. When used from the\n"
+"    Ruby API: returns a Puppet::Resource::Type object.\n"
+"\n"
+"    RENDERING ISSUES: yaml and string output for this indirection are currently\n"
+"    unusable; use json instead.\n"
+msgstr ""
+
+msgid "Search for collections matching a regular expression."
+msgstr ""
+
+msgid "<regular_expression>"
+msgstr ""
+
+msgid ""
+"    An array of hashes of resource collection info. When used from the Ruby API:\n"
+"    returns an array of Puppet::Resource::Type objects.\n"
+"\n"
+"    RENDERING ISSUES: yaml and string output for this indirection are currently\n"
+"    unusable; use json instead.\n"
+msgstr ""
+
+msgid "View puppet server status."
+msgstr ""
+
+msgid "Check status of puppet master server."
+msgstr ""
+
+msgid ""
+"    A \"true\" response or a low-level connection error. When used from the Ruby\n"
+"    API: returns a Puppet::Status object.\n"
+msgstr ""
+
+msgid "\"Cannot run on Microsoft Windows without the win32-process, win32-dir and win32-service gems: #{err}\""
+msgstr ""
+
+msgid "Cannot determine basic system flavour"
+msgstr ""
+
+msgid "The cfacter setting is deprecated. You can use Facter 3 and higher without this setting."
+msgstr ""
+
+msgid "\"File #{file} does not exist\""
+msgstr ""
+
+msgid "\"Could not back up #{file}: #{detail}\""
+msgstr ""
+
+msgid "Diff is not supported on this platform"
+msgstr ""
+
+msgid "Please provide a file or checksum do diff with"
+msgstr ""
+
+msgid "Failed to diff files"
+msgstr ""
+
+msgid "File not found"
+msgstr ""
+
+msgid "\"Could not find file with checksum #{sum}\""
+msgstr ""
+
+msgid "Listing remote file buckets is not allowed"
+msgstr ""
+
+msgid "\"contents must be a String or Pathname, got a #{contents.class}\""
+msgstr ""
+
+msgid "\"Unknown option(s): #{options.keys.join(', ')}\""
+msgstr ""
+
+msgid "Computing checksum on string"
+msgstr ""
+
+msgid "Computing checksum on file "
+msgstr ""
+
+msgid "Paths must be fully qualified"
+msgstr ""
+
+msgid "Relative paths must not be fully qualified"
+msgstr ""
+
+msgid "\"Cannot find file: Invalid mount '#{mount_name}'\""
+msgstr ""
+
+msgid "\"Cannot find file: Invalid relative path '#{path}'\""
+msgstr ""
+
+msgid "\"Error parsing fileserver configuration: #{detail}; using old configuration\""
+msgstr ""
+
+msgid "File server configuration  does not exist"
+msgstr ""
+
+msgid "Cannot read file server configuration "
+msgstr ""
+
+msgid "Fileserver configuration file does not use '=' as a separator"
+msgstr ""
+
+msgid "\"Invalid argument '#{var}' in #{@file.filename}, line #{@count}\""
+msgstr ""
+
+msgid "\"Invalid line '#{line.chomp}' at #{@file.filename}, line #{@count}\""
+msgstr ""
+
+msgid "\"allowing #{val} access\""
+msgstr ""
+
+msgid "\"#{detail.to_s} in #{@file}, line #{@count}\""
+msgstr ""
+
+msgid "\"denying #{val} access\""
+msgstr ""
+
+msgid "\"#{@mounts[name]} is already mounted at #{name} in #{@file}, line #{@count}\""
+msgstr ""
+
+msgid "\"Removing mount \\\"#{mount.name}\\\": #{detail}\""
+msgstr ""
+
+msgid "\"The '#{mount.name}' module can not have a path. Ignoring attempt to set it\""
+msgstr ""
+
+msgid "Cannot read the contents of links unless following links"
+msgstr ""
+
+msgid "symlink"
+msgstr ""
+
+msgid "\"Fileset paths must be fully qualified: #{path}\""
+msgstr ""
+
+msgid "Fileset paths must exist"
+msgstr ""
+
+msgid "Fileset recurse parameter must not be a number anymore, please use recurselimit"
+msgstr ""
+
+msgid "\"Invalid :links value '#{links}'\""
+msgstr ""
+
+msgid "\"Invalid option '#{option}'\""
+msgstr ""
+
+msgid "\"Unsupported checksum type #{type}\""
+msgstr ""
+
+msgid "\"Unsupported source_permission #{source_permissions}\""
+msgstr ""
+
+msgid "\"Could not understand URI #{path}: #{detail}\""
+msgstr ""
+
+msgid "\"Cannot use opaque URLs '#{path}'\""
+msgstr ""
+
+msgid "Must use URLs of type puppet as content URI"
+msgstr ""
+
+msgid "\"Unsupported Windows source permissions option #{source_permissions}\""
+msgstr ""
+
+msgid "\"Cannot manage files of type #{stat.ftype}\""
+msgstr ""
+
+msgid "\"Invalid mount name format '#{name}'\""
+msgstr ""
+
+msgid "Mounts without paths are not usable"
+msgstr ""
+
+msgid "\"File does not exist or is not accessible: #{file}\""
+msgstr ""
+
+msgid "\"#{path} does not exist or is not a directory\""
+msgstr ""
+
+msgid "\"#{path} is not readable\""
+msgstr ""
+
+msgid "\"No client; expanding '#{path}' with local host\""
+msgstr ""
+
+msgid "No module specified"
+msgstr ""
+
+msgid "\"URI protocol '#{request.protocol}' is not currently supported for file serving\""
+msgstr ""
+
+msgid "\"FileSystem implementation expected Pathname, got: '#{path.class}'\""
+msgstr ""
+
+msgid "Timeout waiting for exclusive lock on "
+msgstr ""
+
+msgid "\"Unable to find registered object for #{path.inspect}\""
+msgstr ""
+
+msgid "PathPatterns cannot be created with directory traversals."
+msgstr ""
+
+msgid "A PathPattern cannot be a Windows current drive relative path."
+msgstr ""
+
+msgid "PathPatterns cannot be created with a zero byte."
+msgstr ""
+
+msgid "A relative PathPattern cannot be prefixed with a drive."
+msgstr ""
+
+msgid "A relative PathPattern cannot be an absolute path."
+msgstr ""
+
+msgid "An absolute PathPattern cannot be a relative path."
+msgstr ""
+
+msgid "\"unexpected prefix_suffix: #{prefix_suffix.inspect}\""
+msgstr ""
+
+msgid "\"cannot generate temporary name using `#{basename}' under `#{tmpdir}'\""
+msgstr ""
+
+msgid "\"#{dest} already exists and the :force option was not specified\""
+msgstr ""
+
+msgid "This version of Windows does not support symlinks.  Windows Vista / 2008 or higher is required."
+msgstr ""
+
+msgid "The current user does not have the necessary permission to manage symlinks."
+msgstr ""
+
 msgid "\"Downloaded release for #{name} did not match expected checksum\""
 msgstr ""
 
@@ -304,10 +1495,540 @@ msgstr ""
 msgid "\"Cannot consider release #{metadata['name']}-#{metadata['version']}: #{e}\""
 msgstr ""
 
+msgid "Unable to verify the SSL certificate at "
+msgstr ""
+
+msgid ""
+"Could not connect via HTTPS to #{@uri}\n"
+"  Unable to verify the SSL certificate\n"
+"    The certificate may not be signed by a valid CA\n"
+"    The CA bundle included with OpenSSL may not be valid or up to date\n"
+msgstr ""
+
+msgid "Unable to connect to the server at . Detail: ."
+msgstr ""
+
+msgid ""
+"Could not connect to #{@uri}\n"
+"  There was a network communications problem\n"
+"    The error we caught said '#{@detail}'\n"
+"    Check your network connection and try again\n"
+msgstr ""
+
+msgid "\"#{response.code} #{response.message.strip}\""
+msgstr ""
+
+msgid "Request to Puppet Forge failed. Detail: "
+msgstr ""
+
+msgid ""
+"Request to Puppet Forge failed.\n"
+"  The server being queried was #{@uri}\n"
+"  The HTTP response we received was '#{@response}'\n"
+msgstr ""
+
+msgid ""
+"\n"
+"  The message we received said ''"
+msgstr ""
+
+msgid "\"binary_file(): The given file '#{unresolved_path}' does not exist\""
+msgstr ""
+
+msgid "The given resource type is a reference to all kind of types"
+msgstr ""
+
+msgid "The given class type is a reference to all classes"
+msgstr ""
+
+msgid "\"Invalid argument of type '#{val.class}' to 'defined'\""
+msgstr ""
+
+msgid "\"The given data does not contain a Collection at #{walked_path}, got '#{d.class}'\""
+msgstr ""
+
+msgid "\"Could not find data item #{key}\""
+msgstr ""
+
+msgid "Lookup using Hocon data_hash function is not supported without hocon library"
+msgstr ""
+
+msgid "\"Unable to parse (#{path}): #{ex.message}\""
+msgstr ""
+
+msgid "\"match() expects pattern of T, where T is String, Regexp, Regexp[r], Pattern[p], or Array[T]. Got #{obj.class}\""
+msgstr ""
+
+msgid "Given Regexp Type has no regular expression"
+msgstr ""
+
+msgid "\"Could not find class #{klass}\""
+msgstr ""
+
+msgid "slice(): block must define at least one parameter. Block has 0."
+msgstr ""
+
+msgid "slice(): block must define one parameter, or "
+msgstr ""
+
+msgid "\"the same number of parameters as the given size of the slice (#{slice_size}). Block has #{serving_size}; \""
+msgstr ""
+
+msgid "The argument signature (String format, [String timezone]) is deprecated for #strfime. See #strftime documentation and Timespan type for more info"
+msgstr ""
+
+msgid "\"Unable to parse #{ex.message}\""
+msgstr ""
+
+msgid "\"unsupported format '#{format}'.\""
+msgstr ""
+
+msgid "unsupported format ''."
+msgstr ""
+
+msgid "\"Removed output '#{files_to_remove}' for non existing inputs\""
+msgstr ""
+
+msgid "No custom types were found."
+msgstr ""
+
+msgid "\"template was not found at '#{key}'.\""
+msgstr ""
+
+msgid "Generating Puppet resource types."
+msgstr ""
+
+msgid "\"Failed to load custom type '#{type_name}' from '#{input}': #{e.message}\""
+msgstr ""
+
+msgid "\"Custom type '#{type_name}' was not defined in '#{input}'.\""
+msgstr ""
+
+msgid "\"Generating '#{effective_output_path}' using '#{input.format}' format.\""
+msgstr ""
+
+msgid "\"Failed to generate '#{effective_output_path}': #{e.message}\""
+msgstr ""
+
+msgid "No files were generated because all inputs were up-to-date."
+msgstr ""
+
+msgid "\"Got an event from invalid vertex #{source.ref}\""
+msgstr ""
+
+msgid "\"#{frame[:step]} is an unknown step\""
+msgstr ""
+
+msgid "negative or zero max_paths"
+msgstr ""
+
+msgid "\"Found #{n} dependency cycle#{s}:\\n\""
+msgstr ""
+
+msgid "\"Cycle graph written to #{filename}.\""
+msgstr ""
+
+msgid "Try the '--graph' option and opening the "
+msgstr ""
+
+msgid "resulting '.dot' file in OmniGraffle or GraphViz"
+msgstr ""
+
 msgid "\"Indirection #{indirection_name} does not exist\""
 msgstr ""
 
 msgid "\"Already handling indirection for #{@indirection.name}; cannot also handle #{indirection}\""
+msgstr ""
+
+msgid "\"Facts but no fact format provided for #{request.key}\""
+msgstr ""
+
+msgid "Found facts"
+msgstr ""
+
+msgid "\"Catalog for #{request.key.inspect} was requested with fact definition for the wrong node (#{facts.name.inspect}).\""
+msgstr ""
+
+msgid "Setup server facts for compiling"
+msgstr ""
+
+msgid "Not inlining absent resource"
+msgstr ""
+
+msgid "Not inlining resource without sources"
+msgstr ""
+
+msgid "Not inlining unsupported source scheme"
+msgstr ""
+
+msgid "Not inlining file outside environment"
+msgstr ""
+
+msgid "Inlining file metadata"
+msgstr ""
+
+msgid "\"Could not get metadata for #{resource[:source]}\""
+msgstr ""
+
+msgid "\"Unable to find a common checksum type between agent '#{options[:checksum_type]}' and master '#{known_checksum_types}'.\""
+msgstr ""
+
+msgid "Compiled %s for "
+msgstr ""
+
+msgid "static catalog"
+msgstr ""
+
+msgid "catalog"
+msgstr ""
+
+msgid "\" in environment #{node.environment}\""
+msgstr ""
+
+msgid "\"Inlined resource metadata into static catalog for #{node.name}\""
+msgstr ""
+
+msgid "Found node information"
+msgstr ""
+
+msgid "\"Failed when searching for node #{name}: #{detail}\""
+msgstr ""
+
+msgid "Invalid option use_node for a remote request"
+msgstr ""
+
+msgid "\"Could not find node '#{name}'; cannot compile\""
+msgstr ""
+
+msgid "\"Could not retrieve fact #{fact}\""
+msgstr ""
+
+msgid "Did not get catalog back"
+msgstr ""
+
+msgid "\"Metadata for #{resource} in catalog for '#{request.key}' added from '#{old_source}'\""
+msgstr ""
+
+msgid "\"Content for '#{resource[:source]}' already exists\""
+msgstr ""
+
+msgid "\"Storing content for source '#{resource[:source]}'\""
+msgstr ""
+
+msgid "this master is not a CA"
+msgstr ""
+
+msgid "\"#{request.key} already has a #{host.state} certificate; new certificate will overwrite it\""
+msgstr ""
+
+msgid "\"#{request.key} already has a #{host.state} certificate; ignoring certificate request\""
+msgstr ""
+
+msgid "\"#{request.key} has a waiting certificate request\""
+msgstr ""
+
+msgid "\"#{part}\""
+msgstr ""
+
+msgid "Nothing was deleted"
+msgstr ""
+
+msgid "\"Deleted for #{request.key}: #{deleted.join(\", \")}\""
+msgstr ""
+
+msgid "\"Cannot sign for host #{request.key} without a certificate request\""
+msgstr ""
+
+msgid "\"Cannot revoke host #{request.key} because has it doesn't have a signed certificate\""
+msgstr ""
+
+msgid "\"State #{request.instance.desired_state} invalid; Must specify desired state of 'signed' or 'revoked' for host #{request.key}\""
+msgstr ""
+
+msgid "You must set the exec parameter to a fully qualified command"
+msgstr ""
+
+msgid "\"Failed to find #{name} via exec: #{detail}\""
+msgstr ""
+
+msgid "TERMINUS"
+msgstr ""
+
+msgid "The indirector terminus to use."
+msgstr ""
+
+msgid "\"Could not call '#{method}' on '#{indirection_name}': #{detail}\""
+msgstr ""
+
+msgid "HASH"
+msgstr ""
+
+msgid "Extra arguments to pass to the indirection request"
+msgstr ""
+
+msgid "Delete an object."
+msgstr ""
+
+msgid "<key>"
+msgstr ""
+
+msgid "Retrieve an object by name."
+msgstr ""
+
+msgid "[<key>]"
+msgstr ""
+
+msgid "API only: create or overwrite an object."
+msgstr ""
+
+msgid "Search for an object or retrieve multiple objects."
+msgstr ""
+
+msgid "<query>"
+msgstr ""
+
+msgid "Print the default terminus class for this face."
+msgstr ""
+
+msgid "\"Run mode '#{Puppet.run_mode.name}': #{t}\""
+msgstr ""
+
+msgid "\"No default terminus class for run mode '#{Puppet.run_mode.name}'\""
+msgstr ""
+
+msgid "\"Could not find terminus for #{indirection_name}\""
+msgstr ""
+
+msgid "\"Could not set '#{indirection.name}' terminus to '#{from}' (#{detail}); valid terminus types are #{self.class.terminus_classes(indirection.name).join(\", \") }\""
+msgstr ""
+
+msgid "\"could not find diff_with #{request.options[:diff_with]}\""
+msgstr ""
+
+msgid "Unable to diff on this platform"
+msgstr ""
+
+msgid "\"FileBucket read #{checksum}\""
+msgstr ""
+
+msgid "Error while parsing 'todate'"
+msgstr ""
+
+msgid "Error while parsing 'fromdate'"
+msgstr ""
+
+msgid "\"Unsupported checksum type #{checksum_type.inspect}\""
+msgstr ""
+
+msgid "\"Invalid checksum #{checksum.inspect}\""
+msgstr ""
+
+msgid "\"FileBucket got a duplicate file #{bucket_file.checksum}\""
+msgstr ""
+
+msgid "\"Got passed new contents for sum #{bucket_file.checksum}\""
+msgstr ""
+
+msgid "cannot lookup multiple files"
+msgstr ""
+
+msgid "\"Could not find filesystem info for file '#{request.key}' in environment #{request.environment}\""
+msgstr ""
+
+msgid "Hiera terminus not supported without hiera library"
+msgstr ""
+
+msgid "\"Unrecognized value for request 'merge' parameter: '#{merge}'\""
+msgstr ""
+
+msgid "\"Config file #{hiera_config} not found, using Hiera defaults\""
+msgstr ""
+
+msgid "Indirection TTL must be an integer"
+msgstr ""
+
+msgid "\"Expiring the #{self.name} cache of #{instance.name}\""
+msgstr ""
+
+msgid "\"Caching #{self.name} for #{request.key}\""
+msgstr ""
+
+msgid "\"Filtered result for #{self.name} #{request.key}\""
+msgstr ""
+
+msgid "\"Not using expired #{self.name} for #{request.key} from cache; expired at #{cached.expiration}\""
+msgstr ""
+
+msgid "\"Cached #{self.name} for #{request.key} failed: #{detail}\""
+msgstr ""
+
+msgid "\"Could not determine appropriate terminus for #{request.description}\""
+msgstr ""
+
+msgid "\"Could not find terminus #{terminus_class} for indirection #{self.name}\""
+msgstr ""
+
+msgid "\"Could not save #{self.name} #{request.key}: #{detail}\""
+msgstr ""
+
+msgid "\"Could not destroy #{self.name} #{request.key}: #{detail}\""
+msgstr ""
+
+msgid "\"directory traversal detected in #{self.class}: #{name.inspect}\""
+msgstr ""
+
+msgid "invalid key"
+msgstr ""
+
+msgid "\"Could not read JSON data for #{indirection.name} #{key}: #{detail}\""
+msgstr ""
+
+msgid "\"Could not parse JSON data for #{indirection.name} #{key}: #{detail}\""
+msgstr ""
+
+msgid "\"Could not remove #{request.key} public key: #{detail}\""
+msgstr ""
+
+msgid "\"Could not write #{request.key}: #{detail}\""
+msgstr ""
+
+msgid "You must pass a block to ldapsearch"
+msgstr ""
+
+msgid "Retrying LDAP connection"
+msgstr ""
+
+msgid "LDAP Search failed"
+msgstr ""
+
+msgid "Could not set up LDAP Connection: Missing ruby/ldap libraries"
+msgstr ""
+
+msgid "\"Could not connect to LDAP: #{detail}\""
+msgstr ""
+
+msgid "\"Could not find #{request.key} to destroy\""
+msgstr ""
+
+msgid "MessagePack terminus not supported without msgpack library"
+msgstr ""
+
+msgid "\"Could not read MessagePack data for #{indirection.name} #{key}: #{detail}\""
+msgstr ""
+
+msgid "\"Could not parse MessagePack data for #{indirection.name} #{key}: #{detail}\""
+msgstr ""
+
+msgid "You must set the 'external_nodes' parameter to use the external node terminus"
+msgstr ""
+
+msgid "none"
+msgstr ""
+
+msgid "\"key is a #{data[0].class}, not a string or symbol\""
+msgstr ""
+
+msgid "\"Could not load external node results for #{name}: #{detail}\""
+msgstr ""
+
+msgid "\"Could not find parent node '#{parent}'\""
+msgstr ""
+
+msgid "\"Found loop in LDAP node parents; #{parent} appears twice\""
+msgstr ""
+
+msgid "\"Node entry #{entry.dn} specifies more than one parent: #{values.inspect}\""
+msgstr ""
+
+msgid "\"Report #{name} failed: #{detail}\""
+msgstr ""
+
+msgid "\"No report named '#{name}'\""
+msgstr ""
+
+msgid "\"Could not find indirection '#{indirection_name}'\""
+msgstr ""
+
+msgid "\"HTTP REST queries cannot handle values of type '#{value.class}'\""
+msgstr ""
+
+msgid "\"Error connecting to #{srv_server}:#{srv_port}: #{e.message}\""
+msgstr ""
+
+msgid "\"Could not understand URL #{key}: #{detail}\""
+msgstr ""
+
+msgid "\"Could not find type #{type_name(request)}\""
+msgstr ""
+
+msgid "Resource instance does not match request key"
+msgstr ""
+
+#. TRANSLATORS the kinds in quotes should not be translated
+msgid "\"Unrecognized kind filter: '#{request.options[:kind]}', expected one of 'class', 'defined_type', 'application', or 'node'.\""
+msgstr ""
+
+msgid "\"Invalid regex '#{request.key}': #{detail}\""
+msgstr ""
+
+msgid "The resource_type endpoint is deprecated in favor of the environment_classes endpoint. See https://docs.puppet.com/puppetserver/latest/puppet-api/v3/environment_classes.html"
+msgstr ""
+
+msgid "\"Find #{elide(uri_with_query_string, 100)} resulted in 404 with the message: #{body}\""
+msgstr ""
+
+msgid "DELETE does not accept options"
+msgstr ""
+
+msgid "PUT does not accept options"
+msgstr ""
+
+msgid "\"Error #{response.code} on SERVER: #{returned_message}\""
+msgstr ""
+
+msgid "No content type in http response; cannot parse"
+msgstr ""
+
+msgid "\"Removing file #{model} #{request.key} at '#{path}'\""
+msgstr ""
+
+msgid "\"Could not remove #{request.key}: #{detail}\""
+msgstr ""
+
+msgid "\"Cannot save #{request.key}; parent directory #{dir} does not exist\""
+msgstr ""
+
+msgid "\"Cannot save #{request.key}; parent directory #{dir} is not writable\""
+msgstr ""
+
+msgid "Tried to fix SSL files to a file containing uppercase"
+msgstr ""
+
+msgid "\"Automatic downcasing and renaming of ssl files is deprecated; please request the file using its correct case: #{full_file}\""
+msgstr ""
+
+msgid "\"Could not write #{path} to #{setting}: #{detail}\""
+msgstr ""
+
+msgid "\"Could not find indirection instance #{name} for #{self.name}\""
+msgstr ""
+
+msgid "\"Instance name #{request.instance.name.inspect} does not match requested key #{request.key.inspect}\""
+msgstr ""
+
+msgid "\"Invalid instance type #{request.instance.class.inspect}, expected #{model.inspect}\""
+msgstr ""
+
+msgid "\"Could not parse YAML data for #{indirection.name} #{request.key}: #{detail}\""
+msgstr ""
+
+msgid "You can only save objects that respond to :name"
+msgstr ""
+
+msgid "Given argument must be a Hash"
+msgstr ""
+
+msgid "\"The file #{f} does not exist\""
 msgstr ""
 
 msgid "\"Could not find version #{version} of #{name}\""
@@ -334,6 +2055,603 @@ msgstr ""
 msgid "\"Not a valid full name: #{full_module_name}\""
 msgstr ""
 
+msgid "Could not determine module path"
+msgstr ""
+
+msgid "Unable to find metadata.json in module root at  See https://docs.puppet.com/puppet/latest/reference/modules_publishing.html for required file format."
+msgstr ""
+
+msgid "\"Could not parse JSON #{metadata_path}\""
+msgstr ""
+
+msgid "A Modulefile was found in the root directory of the module. This file will be ignored and can safely be removed."
+msgstr ""
+
+msgid "Could not parse filename to obtain the username, module name and version.  ()"
+msgstr ""
+
+msgid "\"Invalid version format: #{version} (Semantic Versions are acceptable: http://semver.org)\""
+msgstr ""
+
+msgid "Building  for release"
+msgstr ""
+
+msgid "\"Symlinks in modules are unsupported. Please investigate symlink #{s.relative_path_from mpath} -> #{s.realpath.relative_path_from mpath}.\""
+msgstr ""
+
+msgid "Found symlinks. Symlinks in modules are not allowed, please remove them."
+msgstr ""
+
+msgid "A 'checksums' field was found in metadata.json. This field will be ignored and can safely be removed."
+msgstr ""
+
+msgid "No file containing checksums found."
+msgstr ""
+
+msgid "\"Downloading from #{module_repository.host} ...\""
+msgstr ""
+
+msgid "Resolving dependencies ..."
+msgstr ""
+
+msgid "Preparing to install ..."
+msgstr ""
+
+msgid "Installing -- do not interrupt ..."
+msgstr ""
+
+msgid "\"Searching #{@forge.host} ...\""
+msgstr ""
+
+msgid "\"Symlinks in modules are unsupported. Please investigate symlink #{s.relative_path_from tmpdirpath}->#{Puppet::FileSystem.readlink(s)}.\""
+msgstr ""
+
+msgid "No valid metadata.json found!"
+msgstr ""
+
+msgid "\"Found '#{name}' (#{colorize(:cyan, vstring)}) in #{dir} ...\""
+msgstr ""
+
+msgid "Preparing to upgrade ..."
+msgstr ""
+
+msgid "Upgrading -- do not interrupt ..."
+msgstr ""
+
+msgid "\"Could not find/load type: #{name}\""
+msgstr ""
+
+msgid "'' () requested; '' () already installed"
+msgstr ""
+
+msgid "Could not install module '' ()"
+msgstr ""
+
+msgid "  Module '' () is already installed"
+msgstr ""
+
+msgid "    Installed module has had changes made locally"
+msgstr ""
+
+msgid "    Use `puppet module upgrade` to install a different version"
+msgstr ""
+
+msgid "    Use `puppet module install --force` to re-install only this module"
+msgstr ""
+
+msgid "Could not install ''; no releases are available from "
+msgstr ""
+
+msgid "Could not install ''"
+msgstr ""
+
+msgid "  No releases are available from "
+msgstr ""
+
+msgid "    Does '' have at least one published release?"
+msgstr ""
+
+msgid "'' () requested; Path  is not a directory."
+msgstr ""
+
+msgid ""
+"Could not install module '#{@requested_module}' (#{@requested_version})\n"
+"  Path '#{@directory}' exists but is not a directory.\n"
+"  A potential solution is to rename the path and then\n"
+"  mkdir -p '#{@directory}'\n"
+msgstr ""
+
+msgid "'' () requested; Permission is denied to create ."
+msgstr ""
+
+msgid ""
+"Could not install module '#{@requested_module}' (#{@requested_version})\n"
+"  Permission is denied when trying to create directory '#{@directory}'.\n"
+"  A potential solution is to check the ownership and permissions of\n"
+"  parent directories.\n"
+msgstr ""
+
+msgid "Attempt to install file with an invalid path into nil under nil"
+msgstr ""
+
+msgid ""
+"Could not install package with an invalid path.\n"
+"  Package attempted to install file into\n"
+"  #{@entry_path.inspect} under #{@directory.inspect}.\n"
+msgstr ""
+
+msgid "\"Could not #{@action} '#{@requested_name}' (#{vstring}); no version satisfies all dependencies\""
+msgstr ""
+
+msgid "\"Could not #{@action} module '#{@requested_name}' (#{vstring})\""
+msgstr ""
+
+msgid "  No version of '' can satisfy all dependencies"
+msgstr ""
+
+msgid "    Use `puppet module  --ignore-dependencies` to  only this module"
+msgstr ""
+
+msgid "Could not  ''; no releases are available from "
+msgstr ""
+
+msgid "Could not  ''; no releases matching '' are available from "
+msgstr ""
+
+msgid "\"Could not #{@action} '#{@module_name}' (#{vstring})\""
+msgstr ""
+
+msgid "  No releases matching '' are available from "
+msgstr ""
+
+msgid "'' () requested; installation conflict"
+msgstr ""
+
+msgid "\"  Dependency '#{@dependency[:name]}' (#{v(@dependency[:version])}) would overwrite #{@directory}\""
+msgstr ""
+
+msgid "  Installation would overwrite "
+msgstr ""
+
+msgid "\"    Currently, '#{@metadata[\"name\"]}' (#{v(@metadata[\"version\"])}) is installed to that directory\""
+msgstr ""
+
+msgid "    Use `puppet module install --ignore-dependencies` to install only this module"
+msgstr ""
+
+msgid "    Use `puppet module install --force` to install this module anyway"
+msgstr ""
+
+msgid "\"'#{@requested_module}' (#{v(@requested_version)}) requested; Invalid dependency cycle\""
+msgstr ""
+
+msgid "\"You specified '#{@source.first[:name]}' (#{v(@requested_version)})\""
+msgstr ""
+
+#. TRANSLATORS Second half of "You specified a module..."
+msgid "\"which depends on '#{m[:name]}' (#{v(m[:version])})\""
+msgstr ""
+
+msgid "\"Could not install module '#{@requested_module}' (#{v(@requested_version)})\""
+msgstr ""
+
+msgid "  No version of '' will satisfy dependencies"
+msgstr ""
+
+msgid "    \"    #{s}\""
+msgstr ""
+
+msgid "Could not  ''; module is not installed"
+msgstr ""
+
+msgid "Could not  module ''"
+msgstr ""
+
+msgid "  Module '' is not installed"
+msgstr ""
+
+msgid "\"    You may have meant `puppet module #{@action} #{suggestion}`\""
+msgstr ""
+
+msgid "    Use `puppet module install` to install this module"
+msgstr ""
+
+msgid "Could not  ''; module appears in multiple places in the module path"
+msgstr ""
+
+msgid "  Module '' appears multiple places in the module path"
+msgstr ""
+
+msgid "\"    '#{@module_name}' (#{v(mod.version)}) was found in #{mod.modulepath}\""
+msgstr ""
+
+msgid "    Use the `--modulepath` option to limit the search to specific directories"
+msgstr ""
+
+msgid "Could not  ''; module has had changes made locally"
+msgstr ""
+
+msgid "\"Could not #{@action} module '#{@module_name}' (#{vstring})\""
+msgstr ""
+
+msgid "  Installed module has had changes made locally"
+msgstr ""
+
+msgid "    Use `puppet module  --ignore-changes` to  this module anyway"
+msgstr ""
+
+msgid "\"Could not #{@action} '#{@name}'; #{@error.message}\""
+msgstr ""
+
+msgid "  Failure trying to parse metadata"
+msgstr ""
+
+msgid "\"    Original message was: #{@error.message}\""
+msgstr ""
+
+msgid "Could not uninstall ''; no installed version matches"
+msgstr ""
+
+msgid "\"Could not uninstall module '#{@module_name}' (#{v(@version)})\""
+msgstr ""
+
+msgid "\"  No installed version of '#{@module_name}' matches (#{v(@version)})\""
+msgstr ""
+
+msgid "\"    '#{mod[:name]}' (#{v(mod[:version])}) is installed in #{mod[:path]}\""
+msgstr ""
+
+msgid "Could not uninstall ''; installed modules still depend upon it"
+msgstr ""
+
+msgid "Could not uninstall module ''"
+msgstr ""
+
+msgid "\" (#{v(@requested_version)})\""
+msgstr ""
+
+msgid "\"  Other installed modules have dependencies on '#{@module_name}' (#{v(@installed_version)})\""
+msgstr ""
+
+msgid "\"    '#{mod['name']}' (#{v(mod['version'])}) requires '#{@module_name}' (#{v(mod['version_requirement'])})\""
+msgstr ""
+
+msgid "    Use `puppet module uninstall --force` to uninstall this module anyway"
+msgstr ""
+
+msgid "Could not upgrade ''; more recent versions not found"
+msgstr ""
+
+msgid "\"Could not upgrade module '#{@module_name}' (#{vstring})\""
+msgstr ""
+
+msgid "\"  The installed version is already the latest version matching #{vstring}\""
+msgstr ""
+
+msgid "\"  There are #{@newer_versions.length} newer versions\""
+msgstr ""
+
+msgid "    No combination of dependency upgrades would satisfy all dependencies"
+msgstr ""
+
+msgid "    Dependencies will not be automatically upgraded across major versions"
+msgstr ""
+
+msgid "    Upgrading one or more of these modules may permit the upgrade to succeed:"
+msgstr ""
+
+msgid "    Use `puppet module upgrade --force` to upgrade only this module"
+msgstr ""
+
+msgid "\"Could not #{@action} '#{@module_name}' (#{vstring}); downgrades are not allowed\""
+msgstr ""
+
+msgid "  Downgrading is not allowed."
+msgstr ""
+
+msgid "Created target directory "
+msgstr ""
+
+msgid "\"#{mod.name} (#{mod.path}) has an invalid version number (#{mod.version}). The version has been set to 0.0.0. If you are the maintainer for this module, please update the metadata.json with a valid Semantic Version (http://semver.org).\""
+msgstr ""
+
+msgid "\"Dependency conflict for #{full_module_name}: Dependency #{name} was given conflicting version requirements #{version_requirement} and #{dup.version_requirement}. Verify that there are no duplicates in the metadata.json.\""
+msgstr ""
+
+msgid "the field must be a namespaced module name"
+msgstr ""
+
+msgid "the module name contains non-alphanumeric (or underscore) characters"
+msgstr ""
+
+msgid "the module name must begin with a letter"
+msgstr ""
+
+msgid "the namespace contains non-alphanumeric characters"
+msgstr ""
+
+msgid "\"Invalid 'name' field in metadata.json: #{err}\""
+msgstr ""
+
+msgid "version string cannot be parsed as a valid Semantic Version"
+msgstr ""
+
+msgid "\"Invalid 'version' field in metadata.json: #{err}\""
+msgstr ""
+
+msgid "must begin with a letter"
+msgstr ""
+
+msgid "contains non-alphanumeric characters"
+msgstr ""
+
+msgid "must be a string"
+msgstr ""
+
+msgid "\"field 'data_provider' #{err}\""
+msgstr ""
+
+msgid "\"Invalid 'version_range' field in metadata.json: #{e}\""
+msgstr ""
+
+msgid "\"Downloading from #{forge.uri} ...\""
+msgstr ""
+
+msgid "\"Could not download module: #{e.message}\""
+msgstr ""
+
+msgid "No suitable tar implementation found"
+msgstr ""
+
+msgid "\"Missing or invalid 'path' before right directive at line #{count} of #{@file}\""
+msgstr ""
+
+msgid "\"Invalid line #{count}: #{line}\""
+msgstr ""
+
+msgid "allow"
+msgstr ""
+
+msgid "allowing %s access"
+msgstr ""
+
+msgid "deny"
+msgstr ""
+
+msgid "denying %s access"
+msgstr ""
+
+msgid "allow_ip"
+msgstr ""
+
+msgid "allowing IP %s access"
+msgstr ""
+
+msgid "deny_ip"
+msgstr ""
+
+msgid "denying IP %s access"
+msgstr ""
+
+msgid "method"
+msgstr ""
+
+msgid "allowing 'method' %s"
+msgstr ""
+
+msgid "environment"
+msgstr ""
+
+msgid "adding environment %s"
+msgstr ""
+
+msgid "adding authentication %s"
+msgstr ""
+
+msgid "\"Invalid argument '#{var}' at line #{count}\""
+msgstr ""
+
+msgid "\"#{detail} at line #{count} of #{@file}\""
+msgstr ""
+
+msgid "\"Inserting default '#{acl[:acl]}' (auth #{acl[:authenticated]}) ACL\""
+msgstr ""
+
+msgid "\"Denying access: #{authorization_failure_exception}\""
+msgstr ""
+
+msgid "\"defaulting to no access for #{name}\""
+msgstr ""
+
+msgid "\"Invalid IP pattern #{value}\""
+msgstr ""
+
+msgid "\"Could not intern from #{format}: #{err}\""
+msgstr ""
+
+msgid "\"Could not intern_multiple from #{format}: #{err}\""
+msgstr ""
+
+msgid "\"Could not render_multiple to #{format}: #{err}\""
+msgstr ""
+
+msgid "\"Could not render to #{format}: #{err}\""
+msgstr ""
+
+msgid "\"Could not mime to #{format}: #{err}\""
+msgstr ""
+
+msgid "Serialized YAML did not contain a collection of instances when calling intern_multiple"
+msgstr ""
+
+msgid "\"Serialized YAML did not contain a valid instance of #{klass}\""
+msgstr ""
+
+msgid "\"No handler for #{indirection.name}\""
+msgstr ""
+
+msgid "\"The indirection name must be purely alphanumeric, not '#{indirection_name}'\""
+msgstr ""
+
+msgid "\"Indirection '#{indirection_name}' does not match url prefix '#{url_prefix}'\""
+msgstr ""
+
+msgid "An environment parameter must be specified"
+msgstr ""
+
+msgid "\"The environment must be purely alphanumeric, not '#{environment}'\""
+msgstr ""
+
+msgid "\"Could not find environment '#{environment}'\""
+msgstr ""
+
+msgid "\"No request key specified in #{uri}\""
+msgstr ""
+
+msgid "\"Could not find #{indirection.name} #{key}\""
+msgstr ""
+
+msgid "\"Rendered result in #{format}\""
+msgstr ""
+
+msgid "Sent response"
+msgstr ""
+
+msgid "\"Could not find instances in #{indirection.name} with '#{key}'\""
+msgstr ""
+
+msgid "Missing required Accept header"
+msgstr ""
+
+msgid "\"No support for http method #{http_method}\""
+msgstr ""
+
+msgid "\"No support for plurality #{plurality(indirection)} for #{http_method} operations\""
+msgstr ""
+
+msgid "\"#{env_name} is not a known environment\""
+msgstr ""
+
+msgid "\"Application #{app} maps component #{comp} to multiple nodes\""
+msgstr ""
+
+msgid "\"Component #{comp} is not mapped to any node\""
+msgstr ""
+
+msgid "\"Unknown content encoding - #{response['content-encoding']}\""
+msgstr ""
+
+msgid "\"Unrecognized option(s): #{unknown_options.map(&:inspect).sort.join(', ')}\""
+msgstr ""
+
+msgid "Too many HTTP redirections for :"
+msgstr ""
+
+msgid "certificate verify failed"
+msgstr ""
+
+msgid "\"one of #{valid_certnames.join(', ')}\""
+msgstr ""
+
+msgid "\"Server hostname '#{site.host}' did not match server certificate; expected #{msg}\""
+msgstr ""
+
+msgid "Not Acceptable: "
+msgstr ""
+
+msgid "Not Found: "
+msgstr ""
+
+msgid "Not Authorized: "
+msgstr ""
+
+msgid "Bad Request: "
+msgstr ""
+
+msgid "Method Not Allowed: "
+msgstr ""
+
+msgid "Server Error: "
+msgstr ""
+
+msgid "\"Given multiple routes with identical path regexes: #{dupes.map{ |rgx| rgx.inspect }.join(', ')}\""
+msgstr ""
+
+msgid "\"Processed request #{request_method} #{request_path}\""
+msgstr ""
+
+msgid "\"No route for #{new_request.method} #{new_request.path}\""
+msgstr ""
+
+msgid "\"Could not resolve #{result[:ip]}: #{detail}\""
+msgstr ""
+
+msgid "\"Failed to close connection for #{site}: #{detail}\""
+msgstr ""
+
+msgid "Internal Server Error: \"%s\""
+msgstr ""
+
+msgid "Puppet Server (Rack): Internal Server Error: Unhandled Exception: \"%s\""
+msgstr ""
+
+msgid "\"Unknown arguments: #{unknown.collect(&:inspect).join(', ')}\""
+msgstr ""
+
+msgid "\"Client sent a mime-type (#{header}) that doesn't correspond to a format we support\""
+msgstr ""
+
+msgid "No Content-Type header was received, it isn't possible to unserialize the request"
+msgstr ""
+
+msgid "\"No supported formats are acceptable (Accept: #{accepted_formats})\""
+msgstr ""
+
+msgid "YAML in network requests is not supported. See http://links.puppetlabs.com/deprecate_yaml_on_network"
+msgstr ""
+
+msgid "WEBrick server is already listening"
+msgstr ""
+
+msgid "Client did not send data within %.1f seconds of connecting"
+msgstr ""
+
+msgid "WEBrick server is not listening"
+msgstr ""
+
+msgid "\"Could not retrieve certificate for #{host.name} and not running on a valid certificate authority\""
+msgstr ""
+
+msgid "Could not find CA certificate"
+msgstr ""
+
+msgid "server is required"
+msgstr ""
+
+msgid "\"Forbidden request: #{msg}\""
+msgstr ""
+
+msgid "\"Unknown right type '#{name}'\""
+msgstr ""
+
+msgid "\"'#{m}' is not an allowed value for method directive\""
+msgstr ""
+
+msgid "\"'#{m}' is already in the '#{name}' ACL\""
+msgstr ""
+
+msgid "\"'#{env}' is already in the '#{name}' ACL\""
+msgstr ""
+
+msgid "\"'#{name}' incorrect authenticated value: #{authentication}\""
+msgstr ""
+
+msgid "Cannot listen -- already listening."
+msgstr ""
+
+msgid "Cannot unlisten -- not currently listening."
+msgstr ""
+
 msgid "No name provided in serialized data"
 msgstr ""
 
@@ -350,6 +2668,1224 @@ msgid "\"Host is missing hostname and/or domain: #{name}\""
 msgstr ""
 
 msgid "\"Trusted node data modified for node #{name}\""
+msgstr ""
+
+msgid "\"The 'disable_per_environment_manifest' setting is true, and the '#{name}' environment has an environment.conf manifest that conflicts with the 'default_manifest' setting.\""
+msgstr ""
+
+msgid "\"Could not parse for environment #{self}: #{detail}\""
+msgstr ""
+
+msgid "Expected either a string or hash of options"
+msgstr ""
+
+msgid "\"#{name} only accepts a single path, not an array of paths\""
+msgstr ""
+
+msgid "\"#{name} must be a fully qualified path\""
+msgstr ""
+
+msgid "Property option :call is deprecated and no longer used. Please remove it."
+msgstr ""
+
+msgid "\"Invalid value #{value.inspect}. \""
+msgstr ""
+
+msgid "\"Valid values are #{values.join(\", \")}. \""
+msgstr ""
+
+msgid "\"Valid values match #{regexes.join(\", \")}.\""
+msgstr ""
+
+msgid "Instantiating Resource with type checked parameters - scope is missing, skipping type checking."
+msgstr ""
+
+msgid "Use of Puppet::Parser::AST::Resource is deprecated and not fully functional"
+msgstr ""
+
+msgid "Use of Puppet::Parser::AST::ResourceInstance is deprecated"
+msgstr ""
+
+msgid "Use of Puppet::Parser::AST::ResourceParam is deprecated and not fully functional"
+msgstr ""
+
+msgid "\"#{detail} on node #{node.name}\""
+msgstr ""
+
+msgid "\"Check #{resource}\""
+msgstr ""
+
+msgid "\"Only classes can set 'stage'; normal resources like #{resource} cannot change run stage\""
+msgstr ""
+
+msgid "\"Application instances like '#{resource}' can only be contained within a Site\""
+msgstr ""
+
+msgid "\"For compiling #{node.name}\""
+msgstr ""
+
+msgid "Compile: Set node parameters"
+msgstr ""
+
+msgid "Compile: Created settings scope"
+msgstr ""
+
+msgid "Compile: Evaluated capability mappings"
+msgstr ""
+
+msgid "Compile: Evaluated main"
+msgstr ""
+
+msgid "Compile: Evaluated site"
+msgstr ""
+
+msgid "Compile: Evaluated AST node"
+msgstr ""
+
+msgid "Compile: Evaluated node classes"
+msgstr ""
+
+msgid "Compile: Evaluated application instances"
+msgstr ""
+
+msgid "Compile: Evaluated site capability mappings"
+msgstr ""
+
+msgid "Compile: Evaluated generators"
+msgstr ""
+
+msgid "Compile: Validate Catalog pre-finish"
+msgstr ""
+
+msgid "Compile: Finished catalog"
+msgstr ""
+
+msgid "Compile: Prune"
+msgstr ""
+
+msgid "Compile: Validate Catalog final"
+msgstr ""
+
+msgid "\"Invalid node mapping in #{app.ref}: Mapping must be a hash\""
+msgstr ""
+
+msgid "Node"
+msgstr ""
+
+msgid "\"Invalid node mapping in #{app.ref}: Key #{k} is not a Node\""
+msgstr ""
+
+msgid "\"Invalid node mapping in #{app.ref}: Value #{res} is not a resource\""
+msgstr ""
+
+msgid "\"Application #{app.ref} maps component #{res} to multiple nodes\""
+msgstr ""
+
+msgid "\"Could not find class #{name} for #{node.name}\""
+msgstr ""
+
+msgid "\"Could not find node statement with name 'default' or '#{node.names.join(\", \")}'\""
+msgstr ""
+
+msgid "Evaluated collections"
+msgstr ""
+
+msgid "Evaluated definitions"
+msgstr ""
+
+msgid "\"Iterated (#{count + 1}) on generators\""
+msgstr ""
+
+msgid "Somehow looped more than 1000 times while evaluating host catalog"
+msgstr ""
+
+msgid "\"Could not find resource(s) #{remaining.join(', ')} for overriding\""
+msgstr ""
+
+msgid "\"Failed to realize virtual resources #{remaining.join(', ')}\""
+msgstr ""
+
+msgid "Couldn't find main"
+msgstr ""
+
+msgid "For initializing compiler"
+msgstr ""
+
+msgid "\"Capability '#{cap}' referenced by '#{param.name}' is never exported\""
+msgstr ""
+
+msgid "\"'#{value}' is exported by both '#{hash[title_key]}' and '#{resource}'\""
+msgstr ""
+
+msgid "\"'#{param.name}' is not a valid relationship to a capability\""
+msgstr ""
+
+msgid "\"Could not find resource '#{r.to_s}' in parameter '#{param.name.to_s}'\""
+msgstr ""
+
+msgid "\"Only application components can appear inside a site - #{r} is not allowed\""
+msgstr ""
+
+msgid "\"#{detail} in environment #{env.name}\""
+msgstr ""
+
+msgid "\"For compiling environment catalog #{environment.name}\""
+msgstr ""
+
+msgid "Env Compile: Created settings scope"
+msgstr ""
+
+msgid "Env Compile: Evaluated main"
+msgstr ""
+
+msgid "Env Compile: Evaluated site"
+msgstr ""
+
+msgid "Env Compile: Evaluated application instances"
+msgstr ""
+
+msgid "Env Compile: Prune"
+msgstr ""
+
+msgid "Env Compile: Validate Catalog pre-finish"
+msgstr ""
+
+msgid "Env Compile: Finished catalog"
+msgstr ""
+
+msgid "Env Compile: Validate Catalog final"
+msgstr ""
+
+msgid "Environment Compiler: Could not find a site definition to evaluate"
+msgstr ""
+
+msgid "\"Evaluated application #{resource}\""
+msgstr ""
+
+msgid "\"Overwriting previous definition for function #{name}\""
+msgstr ""
+
+msgid "\"#{name}(): Wrong number of arguments given (#{args[0].size} for #{arity})\""
+msgstr ""
+
+msgid "\"#{name}(): Wrong number of arguments given (#{args[0].size} for minimum #{(arity+1).abs})\""
+msgstr ""
+
+msgid "custom functions must be called with a single array that contains the arguments. For example, function_example([1]) instead of function_example(1)"
+msgstr ""
+
+msgid "\"#{name}() can only be called using the 4.x function API. See Scope#call_function\""
+msgstr ""
+
+msgid "Calling function_contain via the Scope class is deprecated. Use Scope#call_function instead"
+msgstr ""
+
+msgid "\"create_resources(): wrong number of arguments (#{args.length}; must be 2 or 3)\""
+msgstr ""
+
+msgid "create_resources(): second argument must be a hash"
+msgstr ""
+
+msgid "create_resources(): third argument, if provided, must be a hash"
+msgstr ""
+
+msgid "\"Could not find any files from #{vals.join(\", \")}\""
+msgstr ""
+
+msgid "Generators must be fully qualified"
+msgstr ""
+
+msgid "Generators can only contain alphanumerics, file separators, and dashes"
+msgstr ""
+
+msgid "Can not use generators with '..' in them."
+msgstr ""
+
+msgid "\"Failed to execute generator #{args[0]}: #{detail}\""
+msgstr ""
+
+msgid "Calling function_include via the Scope class is deprecated. Use Scope#call_function instead"
+msgstr ""
+
+msgid "\"Failed to parse inline template: #{detail}\""
+msgstr ""
+
+msgid "Calling function_require via the Scope class is deprecated. Use Scope#call_function instead"
+msgstr ""
+
+msgid "\"Invalid relationship type #{type}\""
+msgstr ""
+
+msgid "source shouldn't be an array"
+msgstr ""
+
+msgid "target shouldn't be an array"
+msgstr ""
+
+msgid "\"Could not find resource '#{source}' for relationship on '#{target}'\""
+msgstr ""
+
+msgid "\"Could not find resource '#{target}' for relationship from '#{source}'\""
+msgstr ""
+
+msgid "\"Could not find stage #{self[:stage] || :main} specified by #{self}\""
+msgstr ""
+
+msgid "Evaluated resource #<GetText::RubyLexX:0x007f9f5a8e8040>"
+msgstr ""
+
+msgid "Resources require a hash as last argument"
+msgstr ""
+
+msgid "Resources require a scope"
+msgstr ""
+
+msgid "Only subclasses can override parameters"
+msgstr ""
+
+msgid "\"Invalid consume in #{self.ref}: #{ref} is not a resource\""
+msgstr ""
+
+msgid "\"Resource #{ref} could not be found; it might not have been produced yet\""
+msgstr ""
+
+msgid "\"Invalid consume in #{ref}: #{cap} is not a capability resource\""
+msgstr ""
+
+msgid "\"Resource #{self} tries to consume #{cns} but no 'consumes' mapping exists for #{self.resource_type} and #{cns.type}\""
+msgstr ""
+
+msgid "\"Attempt to reassign attribute '#{name}' in '#{self}' caused by multiple consumed mappings to the same attribute\""
+msgstr ""
+
+msgid "\"Duplicate parameter '#{param.name}' for on #{self}\""
+msgstr ""
+
+msgid "\"Numerical variables cannot be changed. Attempt to set $#{name}\""
+msgstr ""
+
+msgid "\"Numerical variables cannot be deleted: Attempt to delete: $#{name}\""
+msgstr ""
+
+msgid "\"#{@callee_name}: expects a value for parameter $#{to}\""
+msgstr ""
+
+msgid "\"#{@callee_name}: default expression for $#{from} tries to illegally access not yet evaluated $#{to}\""
+msgstr ""
+
+msgid "\"Attempt to assign variable #{name} when evaluating parameters\""
+msgstr ""
+
+msgid "\"Scope variable name #{name.inspect} is a #{name.class}, not a string\""
+msgstr ""
+
+msgid "\"Variable: #{name}\""
+msgstr ""
+
+msgid "\"Undefined variable '#{name}'; #{reason}\""
+msgstr ""
+
+msgid "\"class #{classname} could not be found\""
+msgstr ""
+
+msgid "\"class #{classname} has not been evaluated\""
+msgstr ""
+
+msgid "\"Default already defined for #{type} { #{param.name} }; cannot redefine\""
+msgstr ""
+
+msgid "\"Cannot assign to a numeric match result variable '$#{name}'\""
+msgstr ""
+
+msgid "\"Attempt to assign to a reserved variable name: '#{name}'\""
+msgstr ""
+
+msgid "\"Cannot append, variable '$#{name}' is defined in this scope\""
+msgstr ""
+
+msgid "\"Cannot reassign variable '$#{name}'\""
+msgstr ""
+
+msgid "\"Unsupported data type: '#{object.class}'\""
+msgstr ""
+
+msgid "Trying to append to a hash with something which is not a hash is unsupported"
+msgstr ""
+
+msgid "Method Parser::Scope#unset_ephemeral_var() is deprecated"
+msgstr ""
+
+msgid "\"Invalid regex match data. Got a #{match.class}\""
+msgstr ""
+
+msgid "Cannot use an unspecific Class[] Type"
+msgstr ""
+
+msgid "Cannot use an unspecific Resource[] where a Resource['class', name] is expected"
+msgstr ""
+
+msgid "\"Cannot use a Resource[#{type_name}] where a Resource['class', name] is expected\""
+msgstr ""
+
+msgid "Cannot use an unspecific Resource['class'] where a Resource['class', name] is expected"
+msgstr ""
+
+msgid "\"Bound template variables for #{template_source}\""
+msgstr ""
+
+msgid "\"Interpolated template #{template_source}\""
+msgstr ""
+
+msgid "\"No file(s) found for import of '#{pattern}'\""
+msgstr ""
+
+msgid "DataProvider#unchecked_lookup is deprecated and will be removed in the next major version of Puppet"
+msgstr ""
+
+msgid "DataProvider#data is deprecated and will be removed in the next major version of Puppet"
+msgstr ""
+
+msgid "DataProvider#data_key is deprecated and will be removed in the next major version of Puppet"
+msgstr ""
+
+msgid "DataProvider#initialize_data is deprecated and will be removed in the next major version of Puppet"
+msgstr ""
+
+msgid "Plugins::DataProviders::ModuleDataProvider is deprecated and will be removed in the next major version of Puppet"
+msgstr ""
+
+msgid "must use keys qualified with the name of the module"
+msgstr ""
+
+msgid "\"must use keys of type String, got #{k.class.name}\""
+msgstr ""
+
+msgid "\"Module data for module '#{module_name}' #{msg}\""
+msgstr ""
+
+msgid "Plugins::DataProviders::EnvironmentDataProvider is deprecated and will be removed in the next major version of Puppet"
+msgstr ""
+
+msgid "PathBasedDataProvider is deprecated and will be removed in the next major version of Puppet"
+msgstr ""
+
+msgid "PathBasedDataProviderFactory is deprecated and will be removed in the next major version of Puppet"
+msgstr ""
+
+msgid "FileBasedDataProviderFactory is deprecated and will be removed in the next major version of Puppet"
+msgstr ""
+
+msgid "No Puppet settings 'confdir', or it is not a String"
+msgstr ""
+
+msgid "Cannot find the given binder configuration file ''"
+msgstr ""
+
+msgid "The setting binder_config is expected to be a String, got: NilClass."
+msgstr ""
+
+msgid "\"Cannot use #{bad_key_type_name(actual)} where #{expected} is expected\""
+msgstr ""
+
+msgid "Upper cased class-name in a Class[<class-name>] is deprecated, class-name should be a lowercase string"
+msgstr ""
+
+msgid "Cannot transform a number to a tag"
+msgstr ""
+
+msgid "\"Cannot transform object of class #{o.class}\""
+msgstr ""
+
+msgid "\"A duplicate resource was found while collecting exported resources, with the type and title #{item.ref}\""
+msgstr ""
+
+msgid "A String is not comparable to a non String"
+msgstr ""
+
+msgid "A Numeric is not comparable to non Numeric"
+msgstr ""
+
+msgid "Symbol not comparable to non Symbol"
+msgstr ""
+
+msgid "Timespans are only comparable to Timespans, Integers, and Floats"
+msgstr ""
+
+msgid "Timestamps are only comparable to Timestamps, Integers, and Floats"
+msgstr ""
+
+msgid "Versions not comparable to non Versions"
+msgstr ""
+
+msgid "Only Strings, Numbers, Timespans, Timestamps, and Versions are comparable"
+msgstr ""
+
+msgid "\"Could not find template '#{file}'\""
+msgstr ""
+
+msgid "Can only append Array or Hash to a Hash"
+msgstr ""
+
+msgid "Can only append to an Array or a Hash."
+msgstr ""
+
+msgid "Can only delete from an Array or Hash."
+msgstr ""
+
+msgid "Use of an Iterator is not supported here"
+msgstr ""
+
+msgid "\"Error while reporting issue: #{issue_code}. #{e.message}\""
+msgstr ""
+
+msgid "Label provider key :label must be set to produce the text of the message!"
+msgstr ""
+
+msgid "Label provider key :semantic must be set to produce the text of the message!"
+msgstr ""
+
+msgid "\"#{label.a_an_uc(semantic)} may not have a name containing a hyphen. The name '#{name}' is not legal\""
+msgstr ""
+
+msgid "\"A variable name may not contain a hyphen. The name '#{name}' is not legal\""
+msgstr ""
+
+msgid "Classes, definitions, and nodes may only appear at toplevel or inside other classes"
+msgstr ""
+
+msgid "\"#{label.a_an_uc(semantic)} may only appear at toplevel\""
+msgstr ""
+
+msgid "\"Illegal attempt to assign to '#{name}'. Cannot assign to variables in other namespaces\""
+msgstr ""
+
+msgid "\"Illegal attempt to assign to '#{label.a_an(semantic)}'. Not an assignable reference\""
+msgstr ""
+
+msgid "\"Cannot reassign built in (or already assigned) variable '$#{name}'\""
+msgstr ""
+
+msgid "\"Attempt to assign to a reserved variable name: '$#{name}'\""
+msgstr ""
+
+msgid "\"Illegal attempt to assign to the numeric match result variable '$#{varname}'. Numeric variables are not assignable\""
+msgstr ""
+
+msgid "Assignment not allowed here"
+msgstr ""
+
+msgid "\"The numeric parameter name '$#{name}' cannot be used (clashes with numeric match result variables)\""
+msgstr ""
+
+msgid "Illegal attempt to assign via [index/key]. Not an assignable reference"
+msgstr ""
+
+msgid "\"Illegal attempt to assign to #{label.a_an(semantic)} via [index/key]. Not an assignable reference\""
+msgstr ""
+
+msgid "\"Mismatched number of assignable entries and values, expected #{expected}, got #{actual}\""
+msgstr ""
+
+msgid "\"No value for required key '#{key}' in assignment to variables from hash\""
+msgstr ""
+
+msgid "\"No value for required variable '$#{name}' in assignment to variables from class reference\""
+msgstr ""
+
+msgid "\"The operator '#{operator}' is no longer supported. See http://links.puppetlabs.com/remove-plus-equals\""
+msgstr ""
+
+msgid "\"The operator '#{operator}' is not supported.\""
+msgstr ""
+
+msgid "\"The operator '#{operator}' in #{label.a_an(semantic)} is not supported.\""
+msgstr ""
+
+msgid "\"Operator '#{operator}' is not applicable to #{label.a_an(left_value)}.\""
+msgstr ""
+
+msgid "\"Operator '#{operator}' is not applicable to #{label.a_an(left_value)} when right side is #{label.a_an(right_value)}.\""
+msgstr ""
+
+msgid "\"Comparison of: #{label(left_value)} #{operator} #{label(right_value)}, is not possible. Caused by '#{detail}'.\""
+msgstr ""
+
+msgid "\"Can not convert right match operand to a regular expression. Caused by '#{detail}'.\""
+msgstr ""
+
+msgid "\"Left match operand must result in a String value. Got #{label.a_an(left_value)}.\""
+msgstr ""
+
+msgid "\"Invalid use of expression. #{label.a_an_uc(semantic)} does not produce a value\""
+msgstr ""
+
+msgid "\"Illegal +> operation on attribute #{name}. This operator can not be used in #{label.a_an(parent)}\""
+msgstr ""
+
+msgid "\"Illegal name. The given name '#{name}' does not conform to the naming rule /^((::)?[a-z_]\\w*)(::[a-z]\\\\w*)*$/\""
+msgstr ""
+
+msgid "\"Illegal type mapping. Expected a Type on the left side, got #{label.a_an_uc(semantic)}\""
+msgstr ""
+
+msgid "\"Illegal type mapping. Expected a Tuple[Regexp,String] on the left side, got #{label.a_an_uc(semantic)}\""
+msgstr ""
+
+msgid "\"Illegal parameter name. The given name '#{name}' does not conform to the naming rule /^[a-z_]\\\\w*$/\""
+msgstr ""
+
+msgid "\"Illegal variable name, The given name '#{name}' does not conform to the naming rule /^((::)?[a-z]\\\\w*)*((::)?[a-z_]\\\\w*)$/\""
+msgstr ""
+
+msgid "\"Illegal numeric variable name, The given name '#{name}' must be a decimal value if it starts with a digit 0-9\""
+msgstr ""
+
+msgid "\"Illegal type reference. The given name '#{name}' does not conform to the naming rule\""
+msgstr ""
+
+msgid "You cannot collect exported resources without storeconfigs being set; the collection will be ignored"
+msgstr ""
+
+msgid "You cannot collect exported resources without storeconfigs being set; the export is ignored"
+msgstr ""
+
+msgid "\"The hostname '#{hostname}' contains illegal characters (only letters, digits, '_', '-', and '.' are allowed)\""
+msgstr ""
+
+msgid "An interpolated expression is not allowed in a hostname of a node"
+msgstr ""
+
+msgid "\"Illegal expression. #{label.a_an_uc(semantic)} is unacceptable as #{feature} in #{label.a_an(container)}\""
+msgstr ""
+
+msgid "\"Illegal variable expression. #{label.a_an_uc(semantic)} did not produce a variable name (String or Numeric).\""
+msgstr ""
+
+msgid "\"Illegal query expression. #{label.a_an_uc(semantic)} cannot be used in a query\""
+msgstr ""
+
+msgid "Resource Defaults are not virtualizable"
+msgstr ""
+
+msgid "\"Attempt to use unsupported range in #{label.a_an(semantic)}, #{count} values given for max 1\""
+msgstr ""
+
+msgid "\"Expressions of type #{label.a_an(semantic)} are not supported in this version of Puppet\""
+msgstr ""
+
+msgid "\"Illegal relationship operand, can not form a relationship with #{label.a_an(operand)}. A Catalog type is required.\""
+msgstr ""
+
+msgid "\"Illegal relationship operand, can not form a relationship with something of type #{type}. A Catalog type is required.\""
+msgstr ""
+
+msgid "\"String supports [] with one or two arguments. Got #{actual}\""
+msgstr ""
+
+msgid "\"String-Type [] requires all arguments to be integers (or default). Got #{actual}\""
+msgstr ""
+
+msgid "\"Array supports [] with one or two arguments. Got #{actual}\""
+msgstr ""
+
+msgid "\"Hash supports [] with one or more arguments. Got #{actual}\""
+msgstr ""
+
+msgid "\"Integer-Type supports [] with one or two arguments (from, to). Got #{actual}\""
+msgstr ""
+
+msgid "\"Integer-Type [] requires all arguments to be integers (or default). Got #{actual}\""
+msgstr ""
+
+msgid "\"A Type's size constraint arguments must be a single Integer type, or 1-2 integers (or default). Got #{label.a_an(actual)}\""
+msgstr ""
+
+msgid "\"Float-Type supports [] with one or two arguments (from, to). Got #{actual}\""
+msgstr ""
+
+msgid "\"Float-Type [] requires all arguments to be floats, or integers (or default). Got #{actual}\""
+msgstr ""
+
+msgid "\"one of #{expected_classes.join(', ')} are\""
+msgstr ""
+
+msgid "\"#{expected_classes[0]} is\""
+msgstr ""
+
+msgid "\"#{label.a_an_uc(left_value)}[] cannot use #{actual} where #{expected_text} expected\""
+msgstr ""
+
+msgid "\"#{label.article(actual_type)} #{actual_type}\""
+msgstr ""
+
+msgid "\"A substring operation does not accept #{actual_type_text} as a character index. Expected an Integer\""
+msgstr ""
+
+msgid "\"#{base_type}[] argument must be a Type or a String. Got #{actual}\""
+msgstr ""
+
+msgid "\"#{base_type}[] arguments must be types. Got #{actual}\""
+msgstr ""
+
+msgid "\"#{base_type_label}[] accepts #{min} or more arguments. Got #{actual}\""
+msgstr ""
+
+msgid "\"#{base_type_label}[] accepts #{min} to #{max} arguments. Got #{actual}\""
+msgstr ""
+
+msgid "\"#{base_type_label}[] accepts #{min} #{label.plural_s(min, 'argument')}. Got #{actual}\""
+msgstr ""
+
+msgid "\"Error creating type specialization of #{label.a_an(type)}, #{message}\""
+msgstr ""
+
+msgid "\"Cannot specialize an already specialized #{kind} type\""
+msgstr ""
+
+msgid "\"First argument to Resource[] must be a resource type or a String. Got #{actual}.\""
+msgstr ""
+
+msgid "Arguments to Resource[] are all empty/undefined"
+msgstr ""
+
+msgid "\"Illegal Class name in class reference. #{label.a_an_uc(name)} cannot be used where a String is expected\""
+msgstr ""
+
+msgid "\"Unacceptable name. The name '#{name}' is unacceptable as the name of #{label.a_an(semantic)}\""
+msgstr ""
+
+msgid "\"Parameter $#{param_name} is not last, and has 'captures rest'\""
+msgstr ""
+
+msgid "\"Parameter $#{param_name} has 'captures rest' - not supported in #{label.a_an(container)}\""
+msgstr ""
+
+msgid "\"Parameter $#{param_name} is required but appears after optional parameters\""
+msgstr ""
+
+msgid "\"Parameter $#{param_name} is required but no value was given\""
+msgstr ""
+
+msgid "\"The value '#{value}' cannot be converted to Numeric.\""
+msgstr ""
+
+msgid "\"Unknown function: '#{name}'.\""
+msgstr ""
+
+msgid "\"Unknown variable: '#{name}'.\""
+msgstr ""
+
+msgid "\"Error while evaluating #{label.a_an(semantic)}, #{detail}\""
+msgstr ""
+
+msgid "\"Resource type not found: #{type_name}\""
+msgstr ""
+
+msgid "\"Illegal Resource Type expression, expected result to be a type name, or untitled Resource, got #{actual}\""
+msgstr ""
+
+msgid "\"The title '#{title}' has already been used in this resource expression\""
+msgstr ""
+
+msgid "\"The attribute '#{attribute}' has already been set\""
+msgstr ""
+
+msgid "Missing title. The title expression resulted in undef"
+msgstr ""
+
+msgid "\"Missing title at index #{index}. The title expression resulted in an undef title\""
+msgstr ""
+
+msgid "\"Illegal title type at index #{index}. Expected String, got #{actual}\""
+msgstr ""
+
+msgid "\"Empty string title at #{index}. Title strings must have a length greater than zero.\""
+msgstr ""
+
+msgid "\"Resource not found: #{type_name}['#{title}']\""
+msgstr ""
+
+msgid "\"The resource #{type_name.capitalize}['#{title}'] does not have a parameter called '#{param_name}'\""
+msgstr ""
+
+msgid "Division by 0"
+msgstr ""
+
+msgid "\"The result of the #{operator} expression is Infinity\""
+msgstr ""
+
+msgid "\"Heredoc syntax specification has empty segment between '+' : '#{syntax}'\""
+msgstr ""
+
+msgid "Ambiguous EPP parameter expression. Probably missing '<%-' before parameters to remove leading whitespace"
+msgstr ""
+
+msgid "Use of 'import' has been discontinued in favor of a manifest directory. See http://links.puppetlabs.com/puppet-import-deprecation"
+msgstr ""
+
+msgid "\"This #{label.label(semantic)} has no effect. A value was produced and then forgotten (one or more preceding expressions may have the wrong form)\""
+msgstr ""
+
+msgid "\"This expression is invalid. Did you try declaring a '#{name}' resource without a title?\""
+msgstr ""
+
+msgid "\"This #{label.label(semantic)} has no effect. #{label.a_an_uc(container)} can not end with a value-producing expression without other effect\""
+msgstr ""
+
+msgid "\"Use of reserved word: #{word}, must be quoted if intended to be a String value\""
+msgstr ""
+
+msgid "\"Use of future reserved word: '#{word}'\""
+msgstr ""
+
+msgid "\"The name: '#{name}' is already defined by Puppet and can not be used as the name of #{label.a_an(semantic)}.\""
+msgstr ""
+
+msgid "\"No matching entry for selector parameter with value '#{param_value}'\""
+msgstr ""
+
+msgid "Node inheritance is not supported in Puppet >= 4.0.0. See http://links.puppetlabs.com/puppet-node-inheritance-deprecation"
+msgstr ""
+
+msgid "\"Resource Override can only operate on resources, got: #{label.label(actual)}\""
+msgstr ""
+
+msgid "\"The parameter '#{param_name}' is declared more than once in the parameter list\""
+msgstr ""
+
+msgid "\"The key '#{key}' is declared more than once\""
+msgstr ""
+
+msgid "\"This #{label.label(container)} already has a 'default' entry - this is a duplicate\""
+msgstr ""
+
+msgid "\"The parameter $#{param_name} redefines a built in parameter in #{label.the(container)}\""
+msgstr ""
+
+msgid "\"Expected value of type #{expected}, got #{actual}\""
+msgstr ""
+
+msgid "Unfolding of attributes from Hash can only be used once per resource body"
+msgstr ""
+
+msgid "\"This #{label.label(semantic)} appears in a context where catalog related expressions are not allowed\""
+msgstr ""
+
+msgid "\"Syntax error at #{where}\""
+msgstr ""
+
+msgid "Illegal class reference"
+msgstr ""
+
+msgid "Illegal fully qualified class reference"
+msgstr ""
+
+msgid "Illegal fully qualified name"
+msgstr ""
+
+msgid "Illegal name or bare word"
+msgstr ""
+
+msgid "\"Illegal number '#{value}'\""
+msgstr ""
+
+msgid "Unicode escape '\\u' was not followed by 4 hex digits or 1-6 hex digits in {} or was > 10ffff"
+msgstr ""
+
+msgid "\"Not a valid hex number #{value}\""
+msgstr ""
+
+msgid "\"Not a valid octal number #{value}\""
+msgstr ""
+
+msgid "\"Not a valid decimal number #{value}\""
+msgstr ""
+
+msgid "Internal Error: No string or file given to lexer to process."
+msgstr ""
+
+msgid "\"Unrecognized escape sequence '\\\\#{ch}'\""
+msgstr ""
+
+msgid "\"Unclosed quote after #{after} followed by '#{followed_by}'\""
+msgstr ""
+
+msgid "Unclosed multiline comment"
+msgstr ""
+
+msgid "\"Internal error: #{error}\""
+msgstr ""
+
+msgid "Unbalanced epp tag, reached <eof> without closing tag."
+msgstr ""
+
+msgid "Reaching end after opening <%# without seeing %>"
+msgstr ""
+
+msgid "Unbalanced embedded expression - opening <% and reaching end of input"
+msgstr ""
+
+msgid "\"Unclosed parenthesis after '@(' followed by '#{followed_by}'\""
+msgstr ""
+
+msgid "Heredoc without end-tagged line"
+msgstr ""
+
+msgid "\"Invalid heredoc escape char. Only t, r, n, s,  u, L, $ allowed. Got '#{actual}'\""
+msgstr ""
+
+msgid "Invalid syntax in heredoc expected @(endtag[:syntax][/escapes])"
+msgstr ""
+
+msgid "Heredoc without any following lines of text"
+msgstr ""
+
+msgid "\"An escape char for @() may only appear once. Got '#{escapes.join(', ')}'\""
+msgstr ""
+
+msgid "\"Illegal #{format_name} Byte Order mark at beginning of input: #{bytes} - remove these from the puppet source\""
+msgstr ""
+
+msgid "Set at unknown location"
+msgstr ""
+
+msgid "\"Originally set #{origin_label(entry.origin)}.\""
+msgstr ""
+
+msgid "\"Attempt to redefine entity '#{entry.typed_name}'. #{origin_info}\""
+msgstr ""
+
+msgid "\"Gem not found #{uri}\""
+msgstr ""
+
+msgid "\"Gem not found '#{gem_name}'\""
+msgstr ""
+
+msgid "\"The code loaded from #{source_ref} does not define the function '#{typed_name.name}' - it is empty.\""
+msgstr ""
+
+msgid "\"The code loaded from #{source_ref} must contain only the function '#{typed_name.name}' - it has additional definitions.\""
+msgstr ""
+
+msgid "\"The code loaded from #{source_ref} does not define the function '#{typed_name.name}' - no function found.\""
+msgstr ""
+
+msgid "\"The code loaded from #{source_ref} produced function with the wrong name, expected #{expected}, actual #{actual}\""
+msgstr ""
+
+msgid "\"The code loaded from #{source_ref} contains additional logic - can only contain the function #{typed_name.name}\""
+msgstr ""
+
+msgid "\"The code loaded from #{source_ref} does not create the resource type '#{typed_name.name}' - it is empty\""
+msgstr ""
+
+msgid "new"
+msgstr ""
+
+msgid "\"The code loaded from #{source_ref} does not create the resource type '#{typed_name.name}' - no call to #{rname}.new found.\""
+msgstr ""
+
+msgid "\"The code loaded from #{source_ref} must contain only the creation of resource type '#{typed_name.name}' - it has additional logic.\""
+msgstr ""
+
+msgid "\"The code loaded from #{source_ref} does not define the resource type '#{typed_name.name}' - got '#{got}'.\""
+msgstr ""
+
+msgid "\"The code loaded from #{source_ref} produced resource type with the wrong name, expected '#{expected}', actual '#{actual}'\""
+msgstr ""
+
+msgid "\"The code loaded from #{source_ref} does not seem to be a Puppet 4x API function - no create_function call.\""
+msgstr ""
+
+msgid "\"The code loaded from #{source_ref} did not produce a Function class when evaluated. Got '#{created.class}'\""
+msgstr ""
+
+msgid "\"The code loaded from #{source_ref} produced mis-matched name, expected '#{typed_name.name}', got #{created.name}\""
+msgstr ""
+
+msgid "\"The code loaded from #{source_ref} does not define the type '#{name}' - it is empty.\""
+msgstr ""
+
+msgid "\"The code loaded from #{source_ref} must contain only the type '#{name}' - it has additional definitions.\""
+msgstr ""
+
+msgid "\"The code loaded from #{source_ref} does not define the type '#{name}' - no type alias or type definition found.\""
+msgstr ""
+
+msgid "\"The code loaded from #{source_ref} produced type with the wrong name, expected '#{name}', actual '#{actual_name}'\""
+msgstr ""
+
+msgid "\"The code loaded from #{source_ref} contains additional logic - can only contain the type '#{name}'\""
+msgstr ""
+
+msgid "Attempt to redefine already initialized loaders for environment"
+msgstr ""
+
+msgid "\"Unable to find loader named '#{loader_name}'\""
+msgstr ""
+
+msgid "\"the name '#{names[0]}'\""
+msgstr ""
+
+msgid "any of the names ["
+msgstr ""
+
+msgid "\"Function lookup() did not find a value for #{name_part}\""
+msgstr ""
+
+msgid "\"#{config.name} cannot be used in an environment\""
+msgstr ""
+
+msgid "Invalid key \""
+msgstr ""
+
+msgid "Using merge options from \""
+msgstr ""
+
+msgid ""
+"\" hash\n"
+msgstr ""
+
+msgid ""
+"Module \"\" not found\n"
+msgstr ""
+
+msgid ""
+"Module data provider for module \"\" not found\n"
+msgstr ""
+
+msgid "Interpolation on \""
+msgstr ""
+
+msgid "Merge strategy "
+msgstr ""
+
+msgid "Options: "
+msgstr ""
+
+msgid "Merged result: "
+msgstr ""
+
+msgid "Data Binding \""
+msgstr ""
+
+msgid "Using configuration \""
+msgstr ""
+
+msgid "\"#{config.name} cannot be used in the global layer\""
+msgstr ""
+
+msgid "\"Using of legacy data provider function '#{function_name}'. Please convert to a 'data_hash' function\""
+msgstr ""
+
+msgid "\"#{config_path}: File exists but does not contain a valid YAML hash. Falling back to Hiera version 3 default config\""
+msgstr ""
+
+msgid "\"#{@config_path}: This runtime does not support #{CONFIG_FILE_NAME} version '#{version}'\""
+msgstr ""
+
+msgid "Hiera configuration recreated due to change of scope variables used in interpolation expressions"
+msgstr ""
+
+msgid ": Use of 'hiera.yaml' version 3 is deprecated. It should be converted to version 5"
+msgstr ""
+
+msgid "\"#{@config_path}: No data provider is registered for backend '#{provider_name}' \""
+msgstr ""
+
+msgid "\"#{@config_path}: Name '#{name}' defined more than once\""
+msgstr ""
+
+msgid ": Use of 'hiera.yaml' version 4 is deprecated. It should be converted to version 5"
+msgstr ""
+
+msgid "data"
+msgstr ""
+
+msgid "\"#{@config_path}: '#{KEY_V3_BACKEND}' is only allowed in the global layer\""
+msgstr ""
+
+msgid "json"
+msgstr ""
+
+msgid "yaml"
+msgstr ""
+
+msgid "hocon"
+msgstr ""
+
+msgid "\"#{@config_path}: Use \\\"#{KEY_DATA_HASH}: #{function_name}_data\\\" instead of \\\"#{KEY_V3_BACKEND}: #{function_name}\\\"\""
+msgstr ""
+
+msgid "\"#{@config_path}: One of #{combine_strings(FUNCTION_KEYS)} must defined in hierarchy '#{name}'\""
+msgstr ""
+
+msgid "\"#{@config_path}: Only one of #{combine_strings(FUNCTION_KEYS)} can be defined in hierarchy '#{name}'\""
+msgstr ""
+
+msgid "\"#{@config_path}: Only one of #{combine_strings(LOCATION_KEYS)} can be defined in hierarchy '#{name}'\""
+msgstr ""
+
+msgid "\"#{@config_path}: Option key '#{key}' used in hierarchy '#{name}' is reserved by Puppet\""
+msgstr ""
+
+msgid "\"#{@config_path}: Only one of #{combine_strings(FUNCTION_KEYS)} can be defined in defaults\""
+msgstr ""
+
+msgid "Interpolation using method syntax is not allowed in this context"
+msgstr ""
+
+msgid "\"Recursive lookup detected in [#{@name_stack.join(', ')}]\""
+msgstr ""
+
+msgid "\"Lookup of key '#{lookup_invocation.top_key}' failed: #{detail.message}\""
+msgstr ""
+
+msgid "\"value of #{LOOKUP_OPTIONS} must be a hash\""
+msgstr ""
+
+msgid "\"all #{LOOKUP_OPTIONS} patterns must match a key starting with module name '#{module_name}'\""
+msgstr ""
+
+msgid "\"all #{LOOKUP_OPTIONS} keys must start with module name '#{module_name}'\""
+msgstr ""
+
+msgid "\"Defining data_provider '#{provider_name}' as a Puppet::Binding is deprecated. The binding is ignored since a '#{HieraConfig::CONFIG_FILE_NAME}' with version >= 5 is present\""
+msgstr ""
+
+msgid "\"Defining \\\"data_provider\\\": \\\"#{provider_name}\\\" in metadata.json is deprecated. It is ignored since a '#{HieraConfig::CONFIG_FILE_NAME}' with version >= 5 is present\""
+msgstr ""
+
+msgid "environment.conf"
+msgstr ""
+
+msgid "\"Defining environment_data_provider='#{provider_name}' in environment.conf is deprecated\""
+msgstr ""
+
+msgid "\"The environment_data_provider='#{provider_name}' setting is ignored since '#{config_path}' version >= 5\""
+msgstr ""
+
+msgid "\"#{problem} in key: '#{key}'\""
+msgstr ""
+
+msgid "\"Unable to load backend '#{backend_name}': #{e.message}\""
+msgstr ""
+
+msgid "\"Unable to instantiate backend '#{backend_name}': #{e.message}\""
+msgstr ""
+
+msgid "\"#{config.name} cannot be used in a module\""
+msgstr ""
+
+msgid "\"Environment '#{env.name}', cannot find module '#{module_name}'\""
+msgstr ""
+
+msgid "\"Data Provider type mismatch: Got #{value.class.name} when Array was expected to access value using '#{segment}' from key '#{key}'\""
+msgstr ""
+
+msgid "\"Data Provider type mismatch: Got #{value.class.name} when a hash-like object was expected to access value using '#{segment}' from key '#{key}'\""
+msgstr ""
+
+msgid "\"Error while transforming to Puppet 3 AST: #{e.message}\""
+msgstr ""
+
+msgid "Not a valid expression in a collection query: "
+msgstr ""
+
+msgid "Illegal expression - unacceptable as a node name"
+msgstr ""
+
+msgid "\"Unacceptable transform - found an Object without a rule: #{o.class}\""
+msgstr ""
+
+msgid "\"attempt to pass argument list to the function '#{e.name_expr.value}' which cannot be called without parentheses\""
+msgstr ""
+
+msgid "illegal comma separated argument list"
+msgstr ""
+
+msgid "Integer out of bounds"
+msgstr ""
+
+msgid "\"No implementation mapping found for Puppet Type #{type_name}\""
+msgstr ""
+
+msgid "\"Unable to serialize a #{obj.class.name}\""
+msgstr ""
+
+msgid "\"JSON stream is not an array. It is a #{io.class.name}\""
+msgstr ""
+
+msgid "Unexpected end of input"
+msgstr ""
+
+msgid "\"Invalid input. #{ext_no} is not a valid extension number\""
+msgstr ""
+
+msgid "\"Feature count mismatch for #{impl_class.name}. Expected #{required_count} - #{max}, actual #{value_count}\""
+msgstr ""
+
+msgid "\"Missing default value for #{type.name}[#{names[index]}]\""
+msgstr ""
+
+msgid "\"Feature count mismatch for #{impl_class}\""
+msgstr ""
+
+msgid "\"Multiple inheritance is not supported. #{e_class.name} has #{supers.size} super types\""
+msgstr ""
+
+msgid "\"No Puppet Type found for #{impl_class.name}\""
+msgstr ""
+
+msgid "\"Unable to parse '#{str}' using any of the formats #{format.join(', ')}\""
+msgstr ""
+
+msgid "\"#{a_an_uc(o)} cannot be added to a Timespan\""
+msgstr ""
+
+msgid "\"#{a_an_uc(o)} cannot be subtracted from a Timespan\""
+msgstr ""
+
+msgid "\"A Timestamp cannot be multiplied by #{a_an(o)}\""
+msgstr ""
+
+msgid "\"Can not do modulus on a Timespan using a #{a_an(o)}\""
+msgstr ""
+
+msgid "\"A Timespan cannot be divided by #{a_an(o)}\""
+msgstr ""
+
+msgid "Format specifiers %L and %N denotes fractions and must be used together with a specifier of higher magnitude"
+msgstr ""
+
+msgid "\"Unable to parse '#{timespan}' using format '#{@format}'\""
+msgstr ""
+
+msgid "\"Bad format specifier '#{format[start,position-start]}' in '#{format}', at position #{position}\""
+msgstr ""
+
+msgid "Format must be a String"
+msgstr ""
+
+msgid "\"Illegal timezone '#{timezone}'\""
+msgstr ""
+
+msgid "\"Unable to parse '#{str}' using format '#{format}'\""
+msgstr ""
+
+msgid "Using a Timezone designator in format specification is mutually exclusive to providing an explicit timezone argument"
+msgstr ""
+
+msgid "\"#{a_an_uc(o)} cannot be added to a Timestamp\""
+msgstr ""
+
+msgid "\"#{a_an_uc(o)} cannot be subtracted from a Timestamp\""
+msgstr ""
+
+msgid "Enumeration.enumerator is deprecated. Use Iterable.on instead"
+msgstr ""
+
+msgid "\"The given string in encoding '#{enc}' is invalid. Cannot create a Binary UTF-8 representation\""
 msgstr ""
 
 msgid "\"Method not defined #{@resource.class.name} #{@resource.name}: Base AixObject provider doesn't implement lscmd\""
@@ -1079,7 +4615,22 @@ msgstr ""
 msgid "audit change: newly-recorded value %s"
 msgstr ""
 
+msgid "You must specify both the lens and incl parameters, or neither."
+msgstr ""
+
 msgid "executed successfully"
+msgstr ""
+
+msgid "\"#{value} is not a valid #{self.class.name}\""
+msgstr ""
+
+msgid "\"Invalid special schedule #{value.inspect}\""
+msgstr ""
+
+msgid "\"Invalid environment setting #{value.inspect}\""
+msgstr ""
+
+msgid "\"#{self.ref} cannot specify both a special schedule and a value for #{field}\""
 msgstr ""
 
 msgid "Command exceeded timeout"
@@ -1116,6 +4667,351 @@ msgid "try_sleep cannot be a negative number"
 msgstr ""
 
 msgid "\"Check #{value.inspect} exceeded timeout\""
+msgstr ""
+
+msgid "\"File paths must be fully qualified, not '#{value}'\""
+msgstr ""
+
+msgid "\"Invalid backup type #{value.inspect}\""
+msgstr ""
+
+msgid "\"Invalid recurse value #{value.inspect}\""
+msgstr ""
+
+msgid "\"Invalid recurselimit value #{value.inspect}\""
+msgstr ""
+
+msgid "\"You cannot specify more than one of #{CREATORS.collect { |p| p.to_s}.join(\", \")}\""
+msgstr ""
+
+msgid "You cannot specify a remote recursion without a source"
+msgstr ""
+
+msgid "You cannot specify source when using checksum 'none'"
+msgstr ""
+
+msgid "\"You cannot specify content when using checksum '#{checksum_type}'\""
+msgstr ""
+
+msgid "Possible error: recurselimit is set but not recurse, no recursion will happen"
+msgstr ""
+
+msgid "\"Checksum value '#{self[:checksum_value]}' is not a valid checksum type #{self[:checksum]}\""
+msgstr ""
+
+msgid "Checksum value is ignored unless content or source are specified"
+msgstr ""
+
+msgid "Can not find filebucket for backups without a catalog"
+msgstr ""
+
+msgid "\"Could not find filebucket #{backup} specified in backup\""
+msgstr ""
+
+msgid "\"Could not back up files of type #{current_type}\""
+msgstr ""
+
+msgid "Copying owner/mode/group from the source file on Windows is not supported; use source_permissions => ignore."
+msgstr ""
+
+msgid "Could not stat; permission denied"
+msgstr ""
+
+msgid "a property should have been provided if write_temporary_file? returned true"
+msgstr ""
+
+msgid "Not removing directory; use 'force' to override"
+msgstr ""
+
+#. TRANSLATORS refers to a file which could not be backed up
+msgid "Could not back up; will not replace"
+msgstr ""
+
+msgid "\"File written to disk did not match checksum; discarding changes (#{content_checksum} vs #{newsum})\""
+msgstr ""
+
+msgid "You can only have one filebucket path"
+msgstr ""
+
+msgid "Filebucket paths must be absolute"
+msgstr ""
+
+msgid "\"Could not create #{type} filebucket: #{detail}\""
+msgstr ""
+
+msgid "\"Invalid GID #{gid}\""
+msgstr ""
+
+msgid "Attributes value pairs must be separated by an ="
+msgstr ""
+
+msgid "\"Invalid IP address #{value.inspect}\""
+msgstr ""
+
+msgid "Host aliases cannot include whitespace"
+msgstr ""
+
+msgid "Host aliases cannot be an empty string. Use an empty array to delete all host_aliases "
+msgstr ""
+
+msgid "Comment cannot include newline"
+msgstr ""
+
+msgid "Invalid host name"
+msgstr ""
+
+msgid "Hostname cannot include newline"
+msgstr ""
+
+msgid "Invalid interface ip address"
+msgstr ""
+
+msgid "File paths must be fully qualified."
+msgstr ""
+
+msgid "munge_boolean only takes booleans"
+msgstr ""
+
+msgid "munge_integer only takes integers"
+msgstr ""
+
+msgid "You cannot specify both a recipient and a file"
+msgstr ""
+
+msgid "\"Purged #{resource}\""
+msgstr ""
+
+msgid "\"Unexpected change from #{current_value} to unmounted}\""
+msgstr ""
+
+msgid "\"device must not contain whitespace: #{value}\""
+msgstr ""
+
+msgid "\"blockdevice must not contain whitespace: #{value}\""
+msgstr ""
+
+msgid "\"fstype must not contain whitespace: #{value}\""
+msgstr ""
+
+msgid "fstype must not be an empty string"
+msgstr ""
+
+msgid "\"options must not contain whitespace: #{value}\""
+msgstr ""
+
+msgid "options must not be an empty string"
+msgstr ""
+
+msgid "\"name must not contain whitespace: #{value}\""
+msgstr ""
+
+msgid "\"Could not update: #{detail}\""
+msgstr ""
+
+msgid "\"Could not get latest version: #{detail}\""
+msgstr ""
+
+msgid "\"Name must be a String not #{value.class}\""
+msgstr ""
+
+msgid "\"Could not find resource type '#{name}'\""
+msgstr ""
+
+msgid "\"Purging resources of type #{@resource[:name]} is not supported, since they cannot be queried from the system\""
+msgstr ""
+
+msgid "Purging is only supported on types that accept 'ensure'"
+msgstr ""
+
+msgid "\"Invalid value #{value.inspect}\""
+msgstr ""
+
+msgid "\"Invalid value #{v.inspect}.\""
+msgstr ""
+
+msgid "\"The 'ensure' attribute on #{self[:name]} resources does not accept 'absent' as a value\""
+msgstr ""
+
+msgid "\"Invalid range value '#{value}'\""
+msgstr ""
+
+msgid "\"Invalid range #{value}\""
+msgstr ""
+
+msgid "\"Invalid hour '#{n}'\""
+msgstr ""
+
+msgid "\"Invalid minute '#{n}'\""
+msgstr ""
+
+msgid "\"Incorrectly converted time: #{time}: #{time.hour} vs #{range[0]}\""
+msgstr ""
+
+msgid "Assuming upper limit should be that time the next day"
+msgstr ""
+
+msgid "Repeat must be a number"
+msgstr ""
+
+msgid "\"Repeat must be 1 unless periodmatch is 'distance', not '#{@resource[:periodmatch]}'\""
+msgstr ""
+
+msgid "%s is not a valid day of the week"
+msgstr ""
+
+msgid "Must be specified using an absolute path."
+msgstr ""
+
+msgid "Setting enable to manual is only supported on Microsoft Windows."
+msgstr ""
+
+msgid "\"Key must not contain whitespace: #{value}\""
+msgstr ""
+
+msgid "\"Option #{value} is not valid. A single option must either be of the form 'option' or 'option=\\\"value\\\". Multiple options must be provided as an array\""
+msgstr ""
+
+msgid "Attribute 'user' or 'target' is mandatory"
+msgstr ""
+
+msgid "Aliases cannot include whitespace"
+msgstr ""
+
+msgid "Aliases must be provided as an array, not a comma-separated list"
+msgstr ""
+
+msgid "Resourcename cannot include whitespaces"
+msgstr ""
+
+msgid "No comma in resourcename allowed. If you want to specify aliases use the host_aliases property"
+msgstr ""
+
+msgid "Tidy can't use matches with recurse 0, false, or undef"
+msgstr ""
+
+msgid "\"Invalid age unit '#{unit}'\""
+msgstr ""
+
+#. TRANSLATORS tidy is the name of a program and should not be translated
+msgid "\"Invalid tidy age #{age}\""
+msgstr ""
+
+msgid "\"Invalid size unit '#{unit}'\""
+msgstr ""
+
+#. TRANSLATORS tidy is the name of a program and should not be translated
+msgid "\"Invalid tidy size #{age}\""
+msgstr ""
+
+msgid "\"Tidying #{found_files.size} files\""
+msgstr ""
+
+msgid "File does not exist"
+msgstr ""
+
+msgid "\"Could not find group(s) #{@should.join(\",\")}\""
+msgstr ""
+
+msgid "Passwords cannot include ':'"
+msgstr ""
+
+msgid "created password"
+msgstr ""
+
+msgid "changed password"
+msgstr ""
+
+msgid "[old password hash redacted]"
+msgstr ""
+
+msgid "[new password hash redacted]"
+msgstr ""
+
+msgid "Password minimum age must be provided as a number."
+msgstr ""
+
+msgid "Password maximum age must be provided as a number."
+msgstr ""
+
+msgid "Group names must be provided, not GID numbers."
+msgstr ""
+
+msgid "Group names must be provided as an array, not a comma-separated list."
+msgstr ""
+
+msgid "Group names must not be empty. If you want to specify \"no groups\" pass an empty array"
+msgstr ""
+
+msgid "\"User provider #{provider.class.name} can not manage home directories\""
+msgstr ""
+
+msgid "Expiry dates must be YYYY-MM-DD or the string \"absent\""
+msgstr ""
+
+msgid "Role names must be provided, not numbers"
+msgstr ""
+
+msgid "Role names must be provided as an array, not a comma-separated list"
+msgstr ""
+
+msgid "Auth names must be provided, not numbers"
+msgstr ""
+
+msgid "Auth names must be provided as an array, not a comma-separated list"
+msgstr ""
+
+msgid "Profile names must be provided, not numbers"
+msgstr ""
+
+msgid "Profile names must be provided as an array, not a comma-separated list"
+msgstr ""
+
+msgid "Key/value pairs must be separated by an ="
+msgstr ""
+
+msgid "\"Each entry for purge_ssh_keys must be a string, not a #{entry.class}\""
+msgstr ""
+
+msgid "\"Paths to keyfiles must be absolute, not #{entry}\""
+msgstr ""
+
+msgid "\"purge_ssh_keys must be true, false, or an array of file names, not #{value.inspect}\""
+msgstr ""
+
+msgid "purge_ssh_keys can only be true for users with a defined home directory"
+msgstr ""
+
+msgid "\"purge_ssh_keys value '#{value}' meta character ~ or %h only allowed for users with a defined home directory\""
+msgstr ""
+
+msgid "Class name must be provided."
+msgstr ""
+
+msgid "Must be a valid URL"
+msgstr ""
+
+msgid "Must be within range 1-99"
+msgstr ""
+
+msgid "Waiting for zone to finish processing"
+msgstr ""
+
+msgid "The zone base must be fully qualified"
+msgstr ""
+
+msgid "Datasets must be the name of a zfs filesystem"
+msgstr ""
+
+msgid "Inherited filesystems must be fully qualified"
+msgstr ""
+
+msgid "\"'#{ip}' is an invalid #{name}\""
+msgstr ""
+
+msgid "\"only interface may be specified when using exclusive IP stack: #{interface}:#{address}\""
+msgstr ""
+
+msgid "ip must contain interface name and ip address separated by a \":\""
 msgstr ""
 
 msgid "mirror names must be provided as string separated, not a comma-separated list"
@@ -1367,12 +5263,6 @@ msgstr ""
 msgid "Unable to read lockfile data from : not in PSON"
 msgstr ""
 
-msgid "Could not set up LDAP Connection: Missing ruby/ldap libraries"
-msgstr ""
-
-msgid "\"Could not connect to LDAP: #{detail}\""
-msgstr ""
-
 msgid "\"Removing #{dn(name)} from ldap\""
 msgstr ""
 
@@ -1513,9 +5403,6 @@ msgstr ""
 msgid "\"Duplicate device found at line #{count}, already found at #{device.line}\""
 msgstr ""
 
-msgid "\"Invalid line #{count}: #{line}\""
-msgstr ""
-
 msgid "Configuration error: Cannot read ; cannot serve"
 msgstr ""
 
@@ -1523,9 +5410,6 @@ msgid "Configuration error: '' does not exit; cannot serve"
 msgstr ""
 
 msgid "\"#{value} is an invalid url\""
-msgstr ""
-
-msgid "\"Invalid argument '#{var}' at line #{count}\""
 msgstr ""
 
 msgid "Connecting with ssh to a network device requires the 'net/ssh' ruby library"
@@ -1912,4 +5796,22 @@ msgid "\"Failed to load user profile #{user.inspect}\""
 msgstr ""
 
 msgid "\"Failed to unload user profile #{user.inspect}\""
+msgstr ""
+
+msgid "Unable to parse '%{version}' as a semantic version identifier"
+msgstr ""
+
+msgid "'%{version}' MUST NOT include build identifiers"
+msgstr ""
+
+msgid "%{subject} MUST NOT be empty"
+msgstr ""
+
+msgid "%{subject} MUST use only ASCII alphanumerics and hyphens"
+msgstr ""
+
+msgid "%{subject} MUST NOT contain leading zeroes"
+msgstr ""
+
+msgid "Unparsable version range: %{range}"
 msgstr ""

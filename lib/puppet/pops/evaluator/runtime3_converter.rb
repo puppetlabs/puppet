@@ -83,7 +83,7 @@ class Runtime3Converter
   end
 
   def convert_Iterator(o, scope, undef_value)
-    raise Puppet::Error, 'Use of an Iterator is not supported here'
+    raise Puppet::Error, _('Use of an Iterator is not supported here')
   end
 
   def convert_Symbol(o, scope, undef_value)

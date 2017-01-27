@@ -37,7 +37,7 @@ class ModuleDataProvider < ConfiguredDataProvider
   protected
 
   def assert_config_version(config)
-    raise Puppet::DataBinding::LookupError, "#{config.name} cannot be used in a module" unless config.version > 3
+    raise Puppet::DataBinding::LookupError, _("#{config.name} cannot be used in a module") unless config.version > 3
     config
   end
 
@@ -50,7 +50,7 @@ class ModuleDataProvider < ConfiguredDataProvider
   def provider_root(lookup_invocation)
     env = lookup_invocation.scope.environment
     mod = env.module(module_name)
-    raise Puppet::DataBinding::LookupError, "Environment '#{env.name}', cannot find module '#{module_name}'" unless mod
+    raise Puppet::DataBinding::LookupError, _("Environment '#{env.name}', cannot find module '#{module_name}'") unless mod
     Pathname.new(mod.path)
   end
 end
