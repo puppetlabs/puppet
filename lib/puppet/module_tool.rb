@@ -34,7 +34,7 @@ module Puppet
       if matcher = full_module_name.match(FULL_MODULE_NAME_PATTERN)
         return matcher.captures
       else
-        raise ArgumentError, "Not a valid full name: #{full_module_name}"
+        raise ArgumentError, _("Not a valid full name: #{full_module_name}")
       end
     end
 

@@ -70,7 +70,7 @@ module Puppet::ModuleTool
           dir = Pathname.new(mod.modulepath)
 
           vstring = mod.version ? "v#{mod.version}" : '???'
-          Puppet.notice "Found '#{name}' (#{colorize(:cyan, vstring)}) in #{dir} ..."
+          Puppet.notice _("Found '#{name}' (#{colorize(:cyan, vstring)}) in #{dir} ...")
           unless @ignore_changes
             changes = Checksummer.run(mod.path) rescue []
             if mod.has_metadata? && !changes.empty?
@@ -96,7 +96,7 @@ module Puppet::ModuleTool
             end
           end
 
-          Puppet.notice "Downloading from #{module_repository.host} ..."
+          Puppet.notice _("Downloading from #{module_repository.host} ...")
           if @ignore_dependencies
             graph = build_single_module_graph(name, version)
           else
@@ -134,7 +134,7 @@ module Puppet::ModuleTool
           end
 
           begin
-            Puppet.info "Resolving dependencies ..."
+            Puppet.info _("Resolving dependencies ...")
             releases = SemanticPuppet::Dependency.resolve(graph)
           rescue SemanticPuppet::Dependency::UnsatisfiableGraph
             raise NoVersionsSatisfyError, results.merge(:requested_name => name)
@@ -181,10 +181,10 @@ module Puppet::ModuleTool
             end
           end
 
-          Puppet.info "Preparing to upgrade ..."
+          Puppet.info _("Preparing to upgrade ...")
           releases.each { |release| release.prepare }
 
-          Puppet.notice 'Upgrading -- do not interrupt ...'
+          Puppet.notice _('Upgrading -- do not interrupt ...')
           releases.each do |release|
             if installed = installed_modules[release.name]
               release.install(Pathname.new(installed.mod.modulepath))
