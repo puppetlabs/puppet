@@ -11,19 +11,19 @@ module Puppet::Network::FormatSupport
     def convert_from(format, data)
       get_format(format).intern(self, data)
     rescue => err
-      raise Puppet::Network::FormatHandler::FormatError, "Could not intern from #{format}: #{err}", err.backtrace
+      raise Puppet::Network::FormatHandler::FormatError, _("Could not intern from #{format}: #{err}"), err.backtrace
     end
 
     def convert_from_multiple(format, data)
       get_format(format).intern_multiple(self, data)
     rescue => err
-      raise Puppet::Network::FormatHandler::FormatError, "Could not intern_multiple from #{format}: #{err}", err.backtrace
+      raise Puppet::Network::FormatHandler::FormatError, _("Could not intern_multiple from #{format}: #{err}"), err.backtrace
     end
 
     def render_multiple(format, instances)
       get_format(format).render_multiple(instances)
     rescue => err
-      raise Puppet::Network::FormatHandler::FormatError, "Could not render_multiple to #{format}: #{err}", err.backtrace
+      raise Puppet::Network::FormatHandler::FormatError, _("Could not render_multiple to #{format}: #{err}"), err.backtrace
     end
 
     def default_format
@@ -101,7 +101,7 @@ module Puppet::Network::FormatSupport
 
     self.class.get_format(format).render(self)
   rescue => err
-    raise Puppet::Network::FormatHandler::FormatError, "Could not render to #{format}: #{err}", err.backtrace
+    raise Puppet::Network::FormatHandler::FormatError, _("Could not render to #{format}: #{err}"), err.backtrace
   end
 
   def mime(format = nil)
@@ -109,7 +109,7 @@ module Puppet::Network::FormatSupport
 
     self.class.get_format(format).mime
   rescue => err
-    raise Puppet::Network::FormatHandler::FormatError, "Could not mime to #{format}: #{err}", err.backtrace
+    raise Puppet::Network::FormatHandler::FormatError, _("Could not mime to #{format}: #{err}"), err.backtrace
   end
 
   def support_format?(name)

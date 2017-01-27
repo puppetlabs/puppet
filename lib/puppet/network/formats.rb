@@ -30,7 +30,7 @@ Puppet::Network::FormatHandler.create_serialized_formats(:yaml) do
   def intern_multiple(klass, text)
     data = YAML.load(text)
     unless data.respond_to?(:collect)
-      raise Puppet::Network::FormatHandler::FormatError, "Serialized YAML did not contain a collection of instances when calling intern_multiple"
+      raise Puppet::Network::FormatHandler::FormatError, _("Serialized YAML did not contain a collection of instances when calling intern_multiple")
     end
 
     data.collect do |datum|
@@ -42,7 +42,7 @@ Puppet::Network::FormatHandler.create_serialized_formats(:yaml) do
     return data if data.is_a?(klass)
 
     unless data.is_a? Hash
-      raise Puppet::Network::FormatHandler::FormatError, "Serialized YAML did not contain a valid instance of #{klass}"
+      raise Puppet::Network::FormatHandler::FormatError, _("Serialized YAML did not contain a valid instance of #{klass}")
     end
 
     klass.from_data_hash(data)

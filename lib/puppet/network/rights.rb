@@ -55,7 +55,7 @@ class Rights
     # case will return an error to the outside world
     msg = "#{name} [#{args[:method]}]"
 
-    AuthorizationError.new("Forbidden request: #{msg}")
+    AuthorizationError.new(_("Forbidden request: #{msg}"))
   end
 
   def initialize
@@ -123,7 +123,7 @@ class Rights
         @name = name.gsub(/^~\s+/,'')
         @key = Regexp.new(@name)
       else
-        raise ArgumentError, "Unknown right type '#{name}'"
+        raise ArgumentError, _("Unknown right type '#{name}'")
       end
 
       super()
@@ -165,21 +165,21 @@ class Rights
     def restrict_method(m)
       m = m.intern if m.is_a?(String)
 
-      raise ArgumentError, "'#{m}' is not an allowed value for method directive" unless ALL.include?(m)
+      raise ArgumentError, _("'#{m}' is not an allowed value for method directive") unless ALL.include?(m)
 
       # if we were allowing all methods, then starts from scratch
       if @methods === ALL
         @methods = []
       end
 
-      raise ArgumentError, "'#{m}' is already in the '#{name}' ACL" if @methods.include?(m)
+      raise ArgumentError, _("'#{m}' is already in the '#{name}' ACL") if @methods.include?(m)
 
       @methods << m
     end
 
     def restrict_environment(environment)
       env = Puppet.lookup(:environments).get(environment)
-      raise ArgumentError, "'#{env}' is already in the '#{name}' ACL" if @environment.include?(env)
+      raise ArgumentError, _("'#{env}' is already in the '#{name}' ACL") if @environment.include?(env)
 
       @environment << env
     end
@@ -191,7 +191,7 @@ class Rights
       when "no", "off", "false", false, "all" ,"any", :all, :any
         authentication = false
       else
-        raise ArgumentError, "'#{name}' incorrect authenticated value: #{authentication}"
+        raise ArgumentError, _("'#{name}' incorrect authenticated value: #{authentication}")
       end
       @authentication = authentication
     end
