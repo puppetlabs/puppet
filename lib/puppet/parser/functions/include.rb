@@ -28,6 +28,6 @@ the future parser's resource and relationship expressions.
 - Since 4.0.0 support for class and resource type values, absolute names
 - Since 4.7.0 returns an Array[Type[Class]] of all included classes 
 ") do |classes|
-  Puppet.warn_once(:deprecation, '3xfunction#include', "Calling function_include via the Scope class is deprecated. Use Scope#call_function instead")
   call_function('include', classes)
+  Puppet.warn_once(:deprecation, '3xfunction#include', _("Calling function_include via the Scope class is deprecated. Use Scope#call_function instead"))
 end

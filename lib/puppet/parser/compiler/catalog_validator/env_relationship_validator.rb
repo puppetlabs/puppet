@@ -14,7 +14,7 @@ class Puppet::Parser::Compiler
         end
       end
       assumed_exports.each_pair do |key, (param, cap)|
-        raise CatalogValidationError.new("Capability '#{cap}' referenced by '#{param.name}' is never exported", param.file, param.line) unless exported.include?(key)
+        raise CatalogValidationError.new(_("Capability '#{cap}' referenced by '#{param.name}' is never exported"), param.file, param.line) unless exported.include?(key)
       end
       nil
     end
@@ -53,7 +53,7 @@ class Puppet::Parser::Compiler
         unless rt.nil? || !rt.is_capability?
           title_key = catalog.title_key_for_ref(value.ref)
           if hash.include?(title_key)
-            raise CatalogValidationError.new("'#{value}' is exported by both '#{hash[title_key]}' and '#{resource}'", param.file, param.line)
+            raise CatalogValidationError.new(_("'#{value}' is exported by both '#{hash[title_key]}' and '#{resource}'"), param.file, param.line)
           else
             hash[title_key] = resource
           end

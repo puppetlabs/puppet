@@ -9,7 +9,7 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
       node.environment = env
       new(node, :code_id => code_id).compile
     rescue => detail
-      message = "#{detail} in environment #{env.name}"
+      message = _("#{detail} in environment #{env.name}")
       Puppet.log_exception(detail, message)
       raise Puppet::Error, message, detail.backtrace
     end
@@ -56,28 +56,28 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
   def compile
     add_function_overrides
     begin
-      Puppet.override(@context_overrides, "For compiling environment catalog #{environment.name}") do
+      Puppet.override(@context_overrides, _("For compiling environment catalog #{environment.name}")) do
         @catalog.environment_instance = environment
 
-        Puppet::Util::Profiler.profile("Env Compile: Created settings scope", [:compiler, :create_settings_scope]) { create_settings_scope }
+        Puppet::Util::Profiler.profile(_("Env Compile: Created settings scope"), [:compiler, :create_settings_scope]) { create_settings_scope }
 
-        Puppet::Util::Profiler.profile("Env Compile: Evaluated main", [:compiler, :evaluate_main]) { evaluate_main }
+        Puppet::Util::Profiler.profile(_("Env Compile: Evaluated main"), [:compiler, :evaluate_main]) { evaluate_main }
 
-        Puppet::Util::Profiler.profile("Env Compile: Evaluated site", [:compiler, :evaluate_site]) { evaluate_site }
+        Puppet::Util::Profiler.profile(_("Env Compile: Evaluated site"), [:compiler, :evaluate_site]) { evaluate_site }
 
-        Puppet::Util::Profiler.profile("Env Compile: Evaluated application instances", [:compiler, :evaluate_applications]) { evaluate_applications }
+        Puppet::Util::Profiler.profile(_("Env Compile: Evaluated application instances"), [:compiler, :evaluate_applications]) { evaluate_applications }
 
-        Puppet::Util::Profiler.profile("Env Compile: Prune", [:compiler, :prune_catalog]) { prune_catalog }
+        Puppet::Util::Profiler.profile(_("Env Compile: Prune"), [:compiler, :prune_catalog]) { prune_catalog }
 
-        Puppet::Util::Profiler.profile("Env Compile: Validate Catalog pre-finish", [:compiler, :validate_pre_finish]) do
+        Puppet::Util::Profiler.profile(_("Env Compile: Validate Catalog pre-finish"), [:compiler, :validate_pre_finish]) do
           validate_catalog(CatalogValidator::PRE_FINISH)
         end
 
-        Puppet::Util::Profiler.profile("Env Compile: Finished catalog", [:compiler, :finish_catalog]) { finish }
+        Puppet::Util::Profiler.profile(_("Env Compile: Finished catalog"), [:compiler, :finish_catalog]) { finish }
 
         fail_on_unevaluated
 
-        Puppet::Util::Profiler.profile("Env Compile: Validate Catalog final", [:compiler, :validate_final]) do
+        Puppet::Util::Profiler.profile(_("Env Compile: Validate Catalog final"), [:compiler, :validate_final]) do
           validate_catalog(CatalogValidator::FINAL)
         end
 
@@ -131,7 +131,7 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
     @catalog.add_resource(resource)
 
     if !resource.class? && resource[:stage]
-      raise ArgumentError, "Only classes can set 'stage'; normal resources like #{resource} cannot change run stage"
+      raise ArgumentError, _("Only classes can set 'stage'; normal resources like #{resource} cannot change run stage")
     end
 
     # Stages should not be inside of classes.  They are always a
@@ -153,13 +153,13 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
   end
 
   def on_empty_site
-    Puppet.warning("Environment Compiler: Could not find a site definition to evaluate")
+    Puppet.warning(_("Environment Compiler: Could not find a site definition to evaluate"))
   end
 
   def evaluate_applications
     exceptwrap do
       resources.select { |resource| type = resource.resource_type; type.is_a?(Puppet::Resource::Type) && type.application? }.each do |resource|
-        Puppet::Util::Profiler.profile("Evaluated application #{resource}", [:compiler, :evaluate_resource, resource]) do
+        Puppet::Util::Profiler.profile(_("Evaluated application #{resource}"), [:compiler, :evaluate_resource, resource]) do
           resource.evaluate
         end
       end

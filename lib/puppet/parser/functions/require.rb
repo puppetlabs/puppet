@@ -35,6 +35,6 @@ resource and relationship expressions.
 - Since 4.0.0 Class and Resource types, absolute names
 - Since 4.7.0 Returns an Array[Type[Class]] with references to the required classes
 ") do |classes|
-  Puppet.warn_once(:deprecation, '3xfunction#require', "Calling function_require via the Scope class is deprecated. Use Scope#call_function instead")
   call_function('require', classes)
+  Puppet.warn_once(:deprecation, '3xfunction#require', _("Calling function_require via the Scope class is deprecated. Use Scope#call_function instead"))
 end
