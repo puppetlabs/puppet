@@ -68,7 +68,7 @@ module Puppet::ModuleTool
       validate_version_range(version_requirement) if version_requirement
 
       if dup = @data['dependencies'].find { |d| d.full_module_name == name && d.version_requirement != version_requirement }
-        raise ArgumentError, "Dependency conflict for #{full_module_name}: Dependency #{name} was given conflicting version requirements #{version_requirement} and #{dup.version_requirement}. Verify that there are no duplicates in the metadata.json."
+        raise ArgumentError, _("Dependency conflict for #{full_module_name}: Dependency #{name} was given conflicting version requirements #{version_requirement} and #{dup.version_requirement}. Verify that there are no duplicates in the metadata.json.")
       end
 
       dep = Dependency.new(name, version_requirement, repository)
@@ -174,24 +174,24 @@ module Puppet::ModuleTool
 
       err = case modname
       when nil, '', :namespace_missing
-        "the field must be a namespaced module name"
+        _("the field must be a namespaced module name")
       when /[^a-z0-9_]/i
-        "the module name contains non-alphanumeric (or underscore) characters"
+        _("the module name contains non-alphanumeric (or underscore) characters")
       when /^[^a-z]/i
-        "the module name must begin with a letter"
+        _("the module name must begin with a letter")
       else
-        "the namespace contains non-alphanumeric characters"
+        _("the namespace contains non-alphanumeric characters")
       end
 
-      raise ArgumentError, "Invalid 'name' field in metadata.json: #{err}"
+      raise ArgumentError, _("Invalid 'name' field in metadata.json: #{err}")
     end
 
     # Validates that the version string can be parsed as per SemVer.
     def validate_version(version)
       return if SemanticPuppet::Version.valid?(version)
 
-      err = "version string cannot be parsed as a valid Semantic Version"
-      raise ArgumentError, "Invalid 'version' field in metadata.json: #{err}"
+      err = _("version string cannot be parsed as a valid Semantic Version")
+      raise ArgumentError, _("Invalid 'version' field in metadata.json: #{err}")
     end
 
     # Validates that the given _value_ is a symbolic name that starts with a letter
@@ -203,19 +203,19 @@ module Puppet::ModuleTool
       err = nil
       if value.is_a?(String)
         unless value =~ /^[a-zA-Z][a-zA-Z0-9_]*$/
-          err = value =~ /^[a-zA-Z]/ ? 'contains non-alphanumeric characters' : 'must begin with a letter'
+          err = value =~ /^[a-zA-Z]/ ? _('contains non-alphanumeric characters') : _('must begin with a letter')
         end
       else
-        err = 'must be a string'
+        err = _('must be a string')
       end
-      raise ArgumentError, "field 'data_provider' #{err}" if err
+      raise ArgumentError, _("field 'data_provider' #{err}") if err
     end
 
     # Validates that the version range can be parsed by Semantic.
     def validate_version_range(version_range)
       SemanticPuppet::VersionRange.parse(version_range)
     rescue ArgumentError => e
-      raise ArgumentError, "Invalid 'version_range' field in metadata.json: #{e}"
+      raise ArgumentError, _("Invalid 'version_range' field in metadata.json: #{e}")
     end
   end
 end

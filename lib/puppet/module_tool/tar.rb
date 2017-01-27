@@ -11,7 +11,7 @@ module Puppet::ModuleTool::Tar
     elsif Puppet.features.minitar? && Puppet.features.zlib?
       Mini.new
     else
-      raise RuntimeError, 'No suitable tar implementation found'
+      raise RuntimeError, _('No suitable tar implementation found')
     end
   end
 end
