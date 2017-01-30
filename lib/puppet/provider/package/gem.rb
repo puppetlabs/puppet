@@ -130,7 +130,8 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
 
     command += install_options if resource[:install_options]
 
-    output = execute(command)
+    # run the gem install command. See PUP-5645 for why we want the HOME env to stay
+    output = execute(command, {:custom_environment => {'HOME' => ENV['HOME']}})
     # Apparently some stupid gem versions don't exit non-0 on failure
     self.fail "Could not install: #{output.chomp}" if output.include?("ERROR")
   end
