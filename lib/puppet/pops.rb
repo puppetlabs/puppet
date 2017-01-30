@@ -10,7 +10,7 @@ module Puppet
   #
   # @api public
   module Pops
-     EMPTY_HASH = {}.freeze
+    EMPTY_HASH = {}.freeze
     EMPTY_ARRAY = [].freeze
     EMPTY_STRING = ''.freeze
 
