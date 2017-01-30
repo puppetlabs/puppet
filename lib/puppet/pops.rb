@@ -14,6 +14,9 @@ module Puppet
     EMPTY_ARRAY = [].freeze
     EMPTY_STRING = ''.freeze
 
+    MAX_INTEGER =  0x7fffffffffffffff
+    MIN_INTEGER = -0x8000000000000000
+
     DOUBLE_COLON = '::'.freeze
     USCORE = '_'.freeze
 
