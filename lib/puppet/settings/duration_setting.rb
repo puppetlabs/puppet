@@ -26,7 +26,7 @@ class Puppet::Settings::DurationSetting < Puppet::Settings::BaseSetting
     when (value.is_a?(String) and value =~ FORMAT)
       $1.to_i * UNITMAP[$2 || 's']
     else
-      raise Puppet::Settings::ValidationError, "Invalid duration format '#{value.inspect}' for parameter: #{@name}"
+      raise Puppet::Settings::ValidationError, _("Invalid duration format '#{value.inspect}' for parameter: #{@name}")
     end
   end
 end

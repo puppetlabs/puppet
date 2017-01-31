@@ -11,7 +11,7 @@ class Puppet::Settings::SymbolicEnumSetting < Puppet::Settings::BaseSetting
       sym
     else
       raise Puppet::Settings::ValidationError,
-        "Invalid value '#{value}' for parameter #{@name}. Allowed values are '#{values.join("', '")}'"
+        _("Invalid value '#{value}' for parameter #{@name}. Allowed values are '#{values.join("', '")}'")
     end
   end
 end

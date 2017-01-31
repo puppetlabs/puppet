@@ -11,7 +11,7 @@ class Puppet::Settings::ArraySetting < Puppet::Settings::BaseSetting
     when Array
       value
     else
-      raise ArgumentError, "Expected an Array or String, got a #{value.class}"
+      raise ArgumentError, _("Expected an Array or String, got a #{value.class}")
     end
   end
 end
