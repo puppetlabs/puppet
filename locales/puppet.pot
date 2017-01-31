@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 4.8.2-401-g7f78dad\n"
+"Project-Id-Version: Puppet automation framework 4.8.2-451-g9fe142e\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-01-30 11:45-0800\n"
-"PO-Revision-Date: 2017-01-30 11:45-0800\n"
+"POT-Creation-Date: 2017-01-31 11:14-0800\n"
+"PO-Revision-Date: 2017-01-31 11:14-0800\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -403,60 +403,6 @@ msgstr ""
 msgid "\"Processing #{method}\""
 msgstr ""
 
-msgid "The method Puppet::DataProviders.lookup_in_environment is deprecated and will be removed in the next major release of Puppet."
-msgstr ""
-
-msgid "The method Puppet::DataProviders.lookup_in_module is deprecated and will be removed in the next major release of Puppet."
-msgstr ""
-
-msgid "The method Puppet::DataProviders.lookup_adapter is deprecated and will be removed in the next major release of Puppet."
-msgstr ""
-
-msgid "Puppet::DataProviders::DataAdapter is deprecated and will be removed in the next major version of Puppet"
-msgstr ""
-
-msgid "\"#{data_key}::data\""
-msgstr ""
-
-msgid "\"Called #{name}\""
-msgstr ""
-
-msgid "Puppet::DataProviders::DataFunctionSupport is deprecated and will be removed in the next major version of Puppet"
-msgstr ""
-
-msgid "Puppet::DataProviders::FunctionEnvDataProvider is deprecated and will be removed in the next major version of Puppet"
-msgstr ""
-
-msgid "Puppet::DataProviders::FunctionModuleDataProvider is deprecated and will be removed in the next major version of Puppet"
-msgstr ""
-
-msgid "Use of class Puppet::DataProviders::HieraConfig' is deprecated. Puppet::Pops::Lookup::HieraConfig should be used instead"
-msgstr ""
-
-msgid "Puppet::DataProviders::HieraEnvDataProvider is deprecated and will be removed in the next major version of Puppet"
-msgstr ""
-
-msgid "Puppet::DataProviders::HieraInterpolate#qualified_lookup is deprecated, use Puppet::Pops::Lookup::SubLookup#sub_lookup"
-msgstr ""
-
-msgid "Puppet::DataProviders::HieraModuleDataProvider is deprecated and will be removed in the next major version of Puppet"
-msgstr ""
-
-msgid "Puppet::DataProviders::HieraSupport is deprecated and will be removed in the next major version of Puppet"
-msgstr ""
-
-msgid "Puppet::DataProviders::JsonDataProviderFactory is deprecated and will be removed in the next major version of Puppet"
-msgstr ""
-
-msgid "Puppet::DataProviders::JsonDataProvider is deprecated and will be removed in the next major version of Puppet"
-msgstr ""
-
-msgid "Puppet::DataProviders::YamlDataProviderFactory is deprecated and will be removed in the next major version of Puppet"
-msgstr ""
-
-msgid "Puppet::DataProviders::YamlDataProvider is deprecated and will be removed in the next major version of Puppet"
-msgstr ""
-
 msgid "\"Could not find a directory environment named '#{environment_name}' anywhere in the path: #{environmentpath}. Does the directory exist?\""
 msgstr ""
 
@@ -677,11 +623,11 @@ msgstr ""
 msgid "No template specified. No action taken"
 msgstr ""
 
-msgid "\"   #{f}\""
-msgstr ""
-
 msgid ""
 "One or more file(s) specified did not exist:\n"
+msgstr ""
+
+msgid "\"   #{f}\""
 msgstr ""
 
 msgid "Errors while validating epp"
@@ -1289,9 +1235,6 @@ msgid "\"Cannot run on Microsoft Windows without the win32-process, win32-dir an
 msgstr ""
 
 msgid "Cannot determine basic system flavour"
-msgstr ""
-
-msgid "The cfacter setting is deprecated. You can use Facter 3 and higher without this setting."
 msgstr ""
 
 msgid "\"File #{file} does not exist\""
@@ -2304,10 +2247,10 @@ msgstr ""
 msgid "Could not uninstall ''; installed modules still depend upon it"
 msgstr ""
 
-msgid "Could not uninstall module ''"
+msgid "\" (#{v(@requested_version)})\""
 msgstr ""
 
-msgid "\" (#{v(@requested_version)})\""
+msgid "Could not uninstall module ''"
 msgstr ""
 
 msgid "\"  Other installed modules have dependencies on '#{@module_name}' (#{v(@installed_version)})\""
@@ -2379,10 +2322,10 @@ msgstr ""
 msgid "\"Invalid 'version' field in metadata.json: #{err}\""
 msgstr ""
 
-msgid "must begin with a letter"
+msgid "contains non-alphanumeric characters"
 msgstr ""
 
-msgid "contains non-alphanumeric characters"
+msgid "must begin with a letter"
 msgstr ""
 
 msgid "must be a string"
@@ -2769,10 +2712,10 @@ msgstr ""
 msgid "\"Invalid node mapping in #{app.ref}: Mapping must be a hash\""
 msgstr ""
 
-msgid "Node"
+msgid "\"Invalid node mapping in #{app.ref}: Key #{k} is not a Node\""
 msgstr ""
 
-msgid "\"Invalid node mapping in #{app.ref}: Key #{k} is not a Node\""
+msgid "Node"
 msgstr ""
 
 msgid "\"Invalid node mapping in #{app.ref}: Value #{res} is not a resource\""
@@ -2865,6 +2808,9 @@ msgstr ""
 msgid "\"Overwriting previous definition for function #{name}\""
 msgstr ""
 
+msgid "\"Called #{name}\""
+msgstr ""
+
 msgid "\"#{name}(): Wrong number of arguments given (#{args[0].size} for #{arity})\""
 msgstr ""
 
@@ -2931,7 +2877,7 @@ msgstr ""
 msgid "\"Could not find stage #{self[:stage] || :main} specified by #{self}\""
 msgstr ""
 
-msgid "Evaluated resource #<GetText::RubyLexX:0x007f9f5a8e8040>"
+msgid "Evaluated resource #<GetText::RubyLexX:0x007fb37b130e30>"
 msgstr ""
 
 msgid "Resources require a hash as last argument"
@@ -3037,42 +2983,6 @@ msgid "\"Interpolated template #{template_source}\""
 msgstr ""
 
 msgid "\"No file(s) found for import of '#{pattern}'\""
-msgstr ""
-
-msgid "DataProvider#unchecked_lookup is deprecated and will be removed in the next major version of Puppet"
-msgstr ""
-
-msgid "DataProvider#data is deprecated and will be removed in the next major version of Puppet"
-msgstr ""
-
-msgid "DataProvider#data_key is deprecated and will be removed in the next major version of Puppet"
-msgstr ""
-
-msgid "DataProvider#initialize_data is deprecated and will be removed in the next major version of Puppet"
-msgstr ""
-
-msgid "Plugins::DataProviders::ModuleDataProvider is deprecated and will be removed in the next major version of Puppet"
-msgstr ""
-
-msgid "must use keys qualified with the name of the module"
-msgstr ""
-
-msgid "\"must use keys of type String, got #{k.class.name}\""
-msgstr ""
-
-msgid "\"Module data for module '#{module_name}' #{msg}\""
-msgstr ""
-
-msgid "Plugins::DataProviders::EnvironmentDataProvider is deprecated and will be removed in the next major version of Puppet"
-msgstr ""
-
-msgid "PathBasedDataProvider is deprecated and will be removed in the next major version of Puppet"
-msgstr ""
-
-msgid "PathBasedDataProviderFactory is deprecated and will be removed in the next major version of Puppet"
-msgstr ""
-
-msgid "FileBasedDataProviderFactory is deprecated and will be removed in the next major version of Puppet"
 msgstr ""
 
 msgid "No Puppet settings 'confdir', or it is not a String"
@@ -3690,9 +3600,6 @@ msgstr ""
 msgid ": Use of 'hiera.yaml' version 3 is deprecated. It should be converted to version 5"
 msgstr ""
 
-msgid "\"#{@config_path}: No data provider is registered for backend '#{provider_name}' \""
-msgstr ""
-
 msgid "\"#{@config_path}: Name '#{name}' defined more than once\""
 msgstr ""
 
@@ -3748,9 +3655,6 @@ msgid "\"all #{LOOKUP_OPTIONS} patterns must match a key starting with module na
 msgstr ""
 
 msgid "\"all #{LOOKUP_OPTIONS} keys must start with module name '#{module_name}'\""
-msgstr ""
-
-msgid "\"Defining data_provider '#{provider_name}' as a Puppet::Binding is deprecated. The binding is ignored since a '#{HieraConfig::CONFIG_FILE_NAME}' with version >= 5 is present\""
 msgstr ""
 
 msgid "\"Defining \\\"data_provider\\\": \\\"#{provider_name}\\\" in metadata.json is deprecated. It is ignored since a '#{HieraConfig::CONFIG_FILE_NAME}' with version >= 5 is present\""
@@ -3886,6 +3790,18 @@ msgid "Enumeration.enumerator is deprecated. Use Iterable.on instead"
 msgstr ""
 
 msgid "\"The given string in encoding '#{enc}' is invalid. Cannot create a Binary UTF-8 representation\""
+msgstr ""
+
+msgid "created"
+msgstr ""
+
+msgid "removed"
+msgstr ""
+
+msgid "\"#{self.name} changed '#{self.is_to_s(currentvalue)}' to '#{self.should_to_s(newvalue)}'\""
+msgstr ""
+
+msgid "absent"
 msgstr ""
 
 msgid "\"Method not defined #{@resource.class.name} #{@resource.name}: Base AixObject provider doesn't implement lscmd\""
@@ -4414,6 +4330,36 @@ msgstr ""
 msgid "\"Could not prefetch #{self.resource_type.name} provider '#{self.name}' target '#{target}': #{detail}. Treating as empty\""
 msgstr ""
 
+msgid "\"Could not build docs for indirector #{name.inspect}, terminus #{terminus_name.inspect}: could not locate terminus.\""
+msgstr ""
+
+msgid "\"incorrect metaparams: #{detail}\""
+msgstr ""
+
+msgid "\"  - Missing files #{values.join(\", \")}\\n\""
+msgstr ""
+
+msgid "\"  - Setting #{name} (currently #{Puppet.settings.value(name).inspect}) not in list #{facts.join(\", \")}\\n\""
+msgstr ""
+
+msgid "\"  - Fact #{name} (currently #{Facter.value(name).inspect}) not in list #{facts.join(\", \")}\\n\""
+msgstr ""
+
+msgid "\"  - Got #{values} true tests that should have been false\\n\""
+msgstr ""
+
+msgid "\"  - Got #{values} false tests that should have been true\\n\""
+msgstr ""
+
+msgid "\"  - Missing features #{values.collect { |f| f.to_s }.join(\",\")}\\n\""
+msgstr ""
+
+msgid "\"Could not retrieve property #{sname} on type #{type.name}\""
+msgstr ""
+
+msgid "\"No docs for #{type}[#{sname}]\""
+msgstr ""
+
 msgid "\"Unable to submit report to #{Puppet[:reporturl].to_s} [#{response.code}] #{response.msg}\""
 msgstr ""
 
@@ -4486,9 +4432,6 @@ msgstr ""
 msgid "\"Application '#{instance.name}' is already defined#{dupe.error_context}; cannot be redefined as a class\""
 msgstr ""
 
-msgid "\"Class '#{instance.name}' is already defined#{other.error_context}; cannot redefine at #{instance.file}:#{instance.line}\""
-msgstr ""
-
 msgid "\"Node '#{instance.name}' is already defined#{dupe.error_context}; cannot redefine\""
 msgstr ""
 
@@ -4517,6 +4460,338 @@ msgid "\"Execution of config_version command `#{environment.config_version}` fai
 msgstr ""
 
 msgid "\"Not attempting to load #{type} #{fqname} as this object was missing during a prior compilation\""
+msgstr ""
+
+msgid "\"Expected an Array or String, got a #{value.class}\""
+msgstr ""
+
+msgid "\"Invalid autosign value #{value}: must be 'true'/'false' or an absolute path\""
+msgstr ""
+
+msgid "\"Invalid value '#{value.inspect}' for boolean parameter: #{@name}\""
+msgstr ""
+
+msgid "\"Could not match line #{line.text}\""
+msgstr ""
+
+msgid "\"Illegal section '#{section.name}' in config file #{file} at line #{section.line_number}. The only valid puppet.conf sections are: [#{allowed_section_names.join(\", \")}]. Please use the directory environments feature to specify environments. (See https://docs.puppet.com/puppet/latest/reference/environments.html)\""
+msgstr ""
+
+msgid "\"Invalid duration format '#{value.inspect}' for parameter: #{@name}\""
+msgstr ""
+
+msgid "\"Invalid value '#{value}' for parameter #{@name}. Allowed values are '#{values.join(\"', '\")}'\""
+msgstr ""
+
+msgid "\"Invalid sections in environment.conf at '#{path_to_conf_file}'. Environment conf may not have sections. The following sections are being ignored: '#{(section_keys - [:main]).join(',')}'\""
+msgstr ""
+
+msgid "\"Invalid settings in environment.conf at '#{path_to_conf_file}'. The following unknown setting(s) are being ignored: #{extraneous_settings.join(', ')}\""
+msgstr ""
+
+msgid "\"Settings parameter '#{name}' is undefined\""
+msgstr ""
+
+msgid "\"The #{parameter} parameter for the setting '#{name}' must be either 'root' or 'service', not '#{value}'\""
+msgstr ""
+
+msgid "\"Invalid priority format '#{value.inspect}' for parameter: #{@name}\""
+msgstr ""
+
+msgid "\"Expected an Array of String, got a #{value.class}\""
+msgstr ""
+
+msgid "\"Invalid terminus setting: #{value}\""
+msgstr ""
+
+msgid "\"Invalid negative 'time to live' #{value.inspect} - did you mean 'unlimited'?\""
+msgstr ""
+
+msgid "\"Invalid 'time to live' format '#{value.inspect}' for parameter: #{param_name}\""
+msgstr ""
+
+msgid "\"Certname #{name.inspect} must not contain unprintable or non-ASCII characters\""
+msgstr ""
+
+msgid "\"Unknown signature algorithm '#{ln}'\""
+msgstr ""
+
+msgid "\"Autosigning #{csr.name}\""
+msgstr ""
+
+msgid "\"A Certificate already exists for #{name}\""
+msgstr ""
+
+msgid "\"Could not write CA password: #{detail}\""
+msgstr ""
+
+msgid "Puppet::SSL::CertificateAuthority#list_certificates is deprecated. Please use Puppet::SSL::CertificateAuthority#list or the certificate status API to query certificate information. See https://docs.puppet.com/puppet/latest/http_api/http_certificate_status.html"
+msgstr ""
+
+msgid "Cannot revoke certificates when the CRL is disabled"
+msgstr ""
+
+msgid "\"Could not find a serial number for #{name}\""
+msgstr ""
+
+msgid "\"Could not find certificate request for #{hostname}\""
+msgstr ""
+
+msgid "CSR had an unknown failure checking internal signing policies, will not sign!"
+msgstr ""
+
+msgid "\"Signed certificate request for #{hostname}\""
+msgstr ""
+
+msgid "\"CSR has request extensions that are not permitted: #{names}\""
+msgstr ""
+
+msgid "\"CSR subject common name #{cn.inspect} does not match expected certname #{hostname.inspect}\""
+msgstr ""
+
+msgid "\"CSR #{hostname.inspect} subject contains unprintable or non-ASCII characters\""
+msgstr ""
+
+msgid "\"CSR subject contains a wildcard, which is not allowed: #{csr.content.subject.to_s}\""
+msgstr ""
+
+msgid "CSR contains a public key that does not correspond to the signing key"
+msgstr ""
+
+msgid "\"CSR '#{csr.name}' contains authorization extensions (#{ext_names.join(', ')}), which are disallowed by default. Use `puppet cert --allow-authorization-extensions sign #{csr.name}` to sign this request.\""
+msgstr ""
+
+msgid "\"CSR '#{csr.name}' contains subject alternative names (#{csr.subject_alt_names.join(', ')}), which are disallowed. Use `puppet cert --allow-dns-alt-names sign #{csr.name}` to sign this request.\""
+msgstr ""
+
+msgid "\"CSR '#{csr.name}' contains a subjectAltName outside the DNS label space: #{csr.subject_alt_names.join(', ')}.  To continue, this CSR needs to be cleaned.\""
+msgstr ""
+
+msgid "\"CSR '#{csr.name}' subjectAltName contains a wildcard, which is not allowed: #{csr.subject_alt_names.join(', ')}  To continue, this CSR needs to be cleaned.\""
+msgstr ""
+
+msgid "Puppet::SSL::CertificateAuthority#certificate_is_alive? is deprecated. Please use Puppet::SSL::CertificateAuthority#verify or the certificate status API to query certificate information. See https://docs.puppet.com/puppet/latest/http_api/http_certificate_status.html"
+msgstr ""
+
+msgid "\"Could not find a certificate for #{name}\""
+msgstr ""
+
+msgid "\"Could not find a certificate or csr for #{name}\""
+msgstr ""
+
+msgid "\"You must provide hosts or --all when using #{method}\""
+msgstr ""
+
+msgid "all signed"
+msgstr ""
+
+msgid "\"Refusing to #{method} #{subject_text} certs, provide an explicit list of certs to #{method}\""
+msgstr ""
+
+msgid "It makes no sense to generate all hosts; you must specify a list"
+msgstr ""
+
+msgid "\"Could not find certificate for #{host}\""
+msgstr ""
+
+msgid "No waiting certificate requests to sign"
+msgstr ""
+
+msgid "\"Could not find CSR for: #{host.inspect}.\""
+msgstr ""
+
+msgid "\"Signing Certificate Request for:\\n#{host_string}\""
+msgstr ""
+
+msgid "Sign Certificate Request? [y/N] "
+msgstr ""
+
+msgid "NOT Signing Certificate Request"
+msgstr ""
+
+msgid "Assuming YES from `-y' or `--assume-yes' flag"
+msgstr ""
+
+msgid "\"Subjects must be an array or :all; not #{value}\""
+msgstr ""
+
+msgid "\"#{cert_type.to_s} is an invalid certificate type!\""
+msgstr ""
+
+msgid "Certificate TTL must be an integer"
+msgstr ""
+
+msgid "\"Creating a new SSL certificate request for #{name}\""
+msgstr ""
+
+msgid "\"CSR sign verification failed; you need to clean the certificate request for #{name} on the server\""
+msgstr ""
+
+msgid "\"Certificate Request fingerprint (#{digest.name}): #{digest.to_hex}\""
+msgstr ""
+
+msgid "CSR needs content to extract fields"
+msgstr ""
+
+msgid "\"In #{attribute.oid}, expected extension record #{index} to have two or three items, but found #{ext_values.length}\""
+msgstr ""
+
+msgid "\"Cannot specify CSR attribute #{oid}: conflicts with internally used CSR attribute\""
+msgstr ""
+
+msgid "\"Cannot create CSR with attribute #{oid}: #{e.message}\""
+msgstr ""
+
+msgid "\"Cannot specify CSR extension request #{oid}: conflicts with internally used extension request\""
+msgstr ""
+
+msgid "\"Cannot create CSR with extension request #{oid}: #{e.message}\""
+msgstr ""
+
+msgid "\"In #{attribute.oid}, expected Set but found #{attribute.value.class}\""
+msgstr ""
+
+msgid "\"In #{attribute.oid}, expected Set[Array] but found #{attribute.value.value.class}\""
+msgstr ""
+
+msgid "\"In #{attribute.oid}, expected Set[Array] with one value but found #{attribute.value.value.size} elements\""
+msgstr ""
+
+msgid "\"In #{attribute.oid}, expected Set[Array[Sequence[...]]], but found #{extension.class}\""
+msgstr ""
+
+msgid "\"In #{attribute.oid}, expected Set[Array[Sequence[Array[...]]]], but found #{extension.value.class}\""
+msgstr ""
+
+msgid "\"csr_attributes file loading from #{path}\""
+msgstr ""
+
+msgid "invalid CSR attributes, expected instance of Hash, received instance of Fixnum"
+msgstr ""
+
+msgid "\"unexpected attributes #{hash.keys.inspect} in #{@path.inspect}\""
+msgstr ""
+
+msgid "Creating a new certificate revocation list"
+msgstr ""
+
+msgid "crl"
+msgstr ""
+
+msgid "\"Revoked certificate with serial #{serial}\""
+msgstr ""
+
+msgid "\"CA Mode can only be one of: #{modes}\""
+msgstr ""
+
+msgid "No certificate to validate."
+msgstr ""
+
+msgid "\"No private key with which to validate certificate with fingerprint: #{certificate.fingerprint}\""
+msgstr ""
+
+msgid ""
+"The certificate retrieved from the master does not match the agent's private key.\n"
+"Certificate fingerprint: #{certificate.fingerprint}\n"
+"To fix this, remove the certificate from both the master and the agent and then start a puppet run, which will automatically regenerate a certificate.\n"
+"On the master:\n"
+"  puppet cert clean #{Puppet[:certname]}\n"
+"On the agent:\n"
+"  1a. On most platforms: find #{Puppet[:ssldir]} -name #{Puppet[:certname]}.pem -delete\n"
+"  1b. On Windows: del \"#{Puppet[:certdir].gsub('/', '\\\\')}\\\\#{Puppet[:certname]}.pem\" /f\n"
+"  2. puppet agent -t\n"
+msgstr ""
+
+msgid ""
+"The CSR retrieved from the master does not match the agent's public key.\n"
+"CSR fingerprint: #{existing_request.fingerprint}\n"
+"CSR public key: #{existing_request.content.public_key.to_text}\n"
+"Agent public key: #{key.content.public_key.to_text}\n"
+"To fix this, remove the CSR from both the master and the agent and then start a puppet run, which will automatically regenerate a CSR.\n"
+"On the master:\n"
+"  puppet cert clean #{Puppet[:certname]}\n"
+"On the agent:\n"
+"  1a. On most platforms: find #{Puppet[:ssldir]} -name #{Puppet[:certname]}.pem -delete\n"
+"  1b. On Windows: del \"#{Puppet[:certdir].gsub('/', '\\\\')}\\\\#{Puppet[:certname]}.pem\" /f\n"
+"  2. puppet agent -t\n"
+msgstr ""
+
+msgid "\"Could not request certificate: #{detail.message}\""
+msgstr ""
+
+msgid "Exiting; failed to retrieve certificate and waitforcert is disabled"
+msgstr ""
+
+msgid "Exiting; no certificate found and waitforcert is disabled"
+msgstr ""
+
+msgid "Did not receive certificate"
+msgstr ""
+
+msgid "Rebuilding inventory file"
+msgstr ""
+
+msgid "\"Creating a new SSL key for #{name}\""
+msgstr ""
+
+msgid "\"Error loading ssl custom OIDs mapping file from '#{custom_oid_file}': #{err}\""
+msgstr ""
+
+msgid "\"Error loading ssl custom OIDs mapping file from '#{custom_oid_file}': no such index '#{map_key}'\""
+msgstr ""
+
+msgid "\"Error loading ssl custom OIDs mapping file from '#{custom_oid_file}': data under index '#{map_key}' must be a Hash\""
+msgstr ""
+
+msgid "\"Error loading ssl custom OIDs mapping file from '#{custom_oid_file}': incomplete definition of oid '#{oid}'\""
+msgstr ""
+
+msgid "\"Error registering ssl custom OIDs mapping from file '#{custom_oid_file}': #{err}\""
+msgstr ""
+
+msgid "\"OpenSSL error #{error}\""
+msgstr ""
+
+msgid "The server presented a SSL certificate chain which does not include a "
+msgstr ""
+
+msgid "CA listed in the ssl_client_ca_auth file.  "
+msgstr ""
+
+msgid "\"Authorized Issuers: #{authz_ca_certs.collect {|c| c.subject}.join(', ')}  \""
+msgstr ""
+
+msgid "\"Peer Chain: #{descending_cert_chain.collect {|c| c.subject}.join(' => ')}\""
+msgstr ""
+
+msgid "Base64 syntax checker: the text to check must be a String."
+msgstr ""
+
+msgid "Base64 syntax checker: the syntax identifier must be a String, e.g. json, data+json"
+msgstr ""
+
+msgid "\"Base64 syntax checker: invalid Acceptor, got: '#{acceptor.class.name}'.\""
+msgstr ""
+
+msgid "padding is not correct"
+msgstr ""
+
+msgid "contains letters outside strict base 64 range (or whitespace)"
+msgstr ""
+
+msgid "\"Base64 syntax checker: Cannot parse invalid Base64 string - #{msg2}\""
+msgstr ""
+
+msgid "Json syntax checker: the text to check must be a String."
+msgstr ""
+
+msgid "Json syntax checker: the syntax identifier must be a String, e.g. json, data+json"
+msgstr ""
+
+msgid "\"Json syntax checker: invalid Acceptor, got: '#{acceptor.class.name}'.\""
+msgstr ""
+
+msgid "\"JSON syntax checker: Cannot parse invalid JSON string. \\\"#{e.message().slice(0,100).gsub(/\\r?\\n/, \"\\\\n\")}\\\"\""
 msgstr ""
 
 msgid "Some pre-run checks failed"
