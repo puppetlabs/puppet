@@ -82,7 +82,7 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
       end
     else
       error = store_context.error || 0
-      error_string = store_context.error_string || "OpenSSL error #{error}"
+      error_string = store_context.error_string || _("OpenSSL error #{error}")
 
       case error
       when OpenSSL::X509::V_ERR_CRL_NOT_YET_VALID
@@ -140,10 +140,10 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
     authz_ca_certs = ssl_configuration.ca_auth_certificates
 
     if not has_authz_peer_cert(descending_cert_chain, authz_ca_certs)
-      msg = "The server presented a SSL certificate chain which does not include a " <<
-        "CA listed in the ssl_client_ca_auth file.  "
-      msg << "Authorized Issuers: #{authz_ca_certs.collect {|c| c.subject}.join(', ')}  " <<
-        "Peer Chain: #{descending_cert_chain.collect {|c| c.subject}.join(' => ')}"
+      msg = _("The server presented a SSL certificate chain which does not include a ") <<
+        _("CA listed in the ssl_client_ca_auth file.  ")
+      msg << _("Authorized Issuers: #{authz_ca_certs.collect {|c| c.subject}.join(', ')}  ") <<
+        _("Peer Chain: #{descending_cert_chain.collect {|c| c.subject}.join(' => ')}")
       @verify_errors << msg
       false
     else
