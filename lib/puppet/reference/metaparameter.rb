@@ -27,7 +27,7 @@ etc.), prevent Puppet from making changes (`noop`), and change logging verbosity
       str << "\n\n"
     }
   rescue => detail
-    Puppet.log_exception(detail, "incorrect metaparams: #{detail}")
+    Puppet.log_exception(detail, _("incorrect metaparams: #{detail}"))
     exit(1)
   end
 
