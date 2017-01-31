@@ -204,7 +204,7 @@ DOC
     end
 
     x509_attributes.map do |attr|
-      {"oid" => attr.oid, "value" => attr.value.first.value}
+      {"oid" => attr.oid, "value" => attr.value.value.first.value}
     end
   end
 
