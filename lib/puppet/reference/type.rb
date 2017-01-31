@@ -77,11 +77,11 @@ Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource types a
     }.each { |sname|
       property = type.propertybyname(sname)
 
-      raise "Could not retrieve property #{sname} on type #{type.name}" unless property
+      raise _("Could not retrieve property #{sname} on type #{type.name}") unless property
 
       doc = nil
       unless doc = property.doc
-        $stderr.puts "No docs for #{type}[#{sname}]"
+        $stderr.puts _("No docs for #{type}[#{sname}]")
         next
       end
       doc = doc.dup
