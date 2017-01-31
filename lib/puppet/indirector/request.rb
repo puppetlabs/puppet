@@ -16,6 +16,8 @@ class Puppet::Indirector::Request
 
   attr_reader :indirection_name
 
+  @@srv_records_cache = Hash.new
+
   # trusted_information is specifically left out because we can't serialize it
   # and keep it "trusted"
   OPTION_ATTRIBUTES = [:ip, :node, :authenticated, :ignore_terminus, :ignore_cache, :instance, :environment]
@@ -185,13 +187,33 @@ class Puppet::Indirector::Request
     return yield(self) if !self.server.nil?
 
     if Puppet.settings[:use_srv_records]
+      Puppet.debug "use_srv_records: Start"
+
+      begin
+        if @@srv_records_cache.has_key? srv_service
+          self.server = @@srv_records_cache[srv_service][:server]
+          self.port = @@srv_records_cache[srv_service][:port]
+          Puppet.debug "use_srv_records: Use cached records: Connect to #{self.server}:#{self.port}"
+          return yield(self)
+        else
+          Puppet.debug "use_srv_records: No cached records found"
+        end
+      rescue SystemCallError => e
+        @@srv_records_cache.delete(srv_service) if @@srv_records_cache.has_key? srv_service
+        Puppet.debug "use_srv_records: Connection to cached #{self.server}:#{self.port} service failed. Go query dns now."
+      end
+
       Puppet::Network::Resolver.each_srv_record(Puppet.settings[:srv_domain], srv_service) do |srv_server, srv_port|
         begin
           self.server = srv_server
           self.port   = srv_port
+          @@srv_records_cache[srv_service] = { :server => srv_server, :port => srv_port }
+          Puppet.debug "use_srv_records: Cached #{srv_server}:#{srv_port} for #{srv_service} service"
           return yield(self)
         rescue SystemCallError => e
-          Puppet.warning "Error connecting to #{srv_server}:#{srv_port}: #{e.message}"
+          @@srv_records_cache.delete(srv_service) if @@srv_records_cache.has_key? srv_service
+          Puppet.debug "use_srv_records: Ensured cache #{srv_server}:#{srv_port} for #{srv_service} service does not exist"
+          Puppet.warning "use_srv_records: Error connecting to #{srv_server}:#{srv_port}: #{e.message}"
         end
       end
     end
