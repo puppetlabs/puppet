@@ -1,6 +1,12 @@
 test_name 'utf-8 characters in function parameters' do
-  confine :except, :platform => [ 'windows', 'ubuntu-16']   # PUP-6983
-  utf8chars = "€‰ㄘ万竹ÜÖ"
+  confine :except, :platform => [
+    'windows',      # PUP-6983
+    'eos-4',        # PUP-7146
+    'cumulus',      # PUP-7147
+    'cisco',        # PUP-7150
+  ]
+  # utf8chars = "€‰ㄘ万竹ÜÖ"
+  utf8chars = "\u20ac\u2030\u3118\u4e07\u7af9\u00dc\u00d6"
   master_lookup_test_dir = master.tmpdir("lookup_test_dir")
   master_opts = {
     'main' => {
@@ -14,6 +20,7 @@ test_name 'utf-8 characters in function parameters' do
         result = on(
           agent,
           puppet("apply", "-e" "'alert(\"alert #{utf8chars}\")'"),
+          :environment => {:LANG => "en_UTF-8"}
         )
         assert_match(
           /#{utf8chars}/,
@@ -26,16 +33,20 @@ test_name 'utf-8 characters in function parameters' do
         on(
           agent,
           puppet(
-            "apply",
-            "-e",
-            "'notice(assert_type(String, \"#{utf8chars}\"))'"
+            "apply", "-e", "'notice(assert_type(String, \"#{utf8chars}\"))'"
           ),
-          :acceptable_exit_codes => [0]
+          {
+            :environment => {:LANG => "en_UTF-8"},
+            :acceptable_exit_codes => [0],
+          }
         )
         on(
           agent,
           puppet("apply", "-e 'notice(assert_type(Float, \"#{utf8chars}\"))'"),
-          :acceptable_exit_codes => [1]
+          {
+            :environment => {:LANG => "en_UTF-8"},
+            :acceptable_exit_codes => [1],
+          }
         )
       end
     
@@ -45,7 +56,11 @@ test_name 'utf-8 characters in function parameters' do
           [$f] = [filter($a) |$p| {$p =~ /#{utf8chars}/}];
           notice(\"f = $f\")
         '"
-        result = on(agent, puppet("apply", "-e", puppet_cmd))
+        result = on(
+          agent,
+          puppet("apply", "-e", puppet_cmd),
+          :environment => {:LANG => "en_US.UTF-8"}
+        )
         assert_match(/#{utf8chars}/, result.stdout, "filter() failed.")
       end
     
@@ -161,17 +176,20 @@ file { "#{agent_lookup_test_dir}/hiera_data/common.yaml" :
 }
 
 LOOKUP_MANIFEST
-
-      apply_manifest_on(agent, lookup_manifest)
+      apply_manifest_on(
+        agent, lookup_manifest, :environment => {:LANG => "en_US.UTF-8"}
+      )
       result = on(
         agent,
-        puppet("config", "print hiera_config")
+        puppet("config", "print hiera_config"),
+        :environment => {:LANG => "en_US.UTF-8"}
       )
       orig_hiera_config = result.stdout.chomp
 
       result = on(
         agent,
-        puppet("config", "print environmentpath")
+        puppet("config", "print environmentpath"),
+        :environment => {:LANG => "en_US.UTF-8"}
       )
       orig_environmentpath = result.stdout.chomp
 
@@ -180,33 +198,39 @@ LOOKUP_MANIFEST
         puppet(
           "config",
           "set hiera_config #{agent_lookup_test_dir}/hiera.yaml"
-        )
+        ),
+        :environment => {:LANG => "en_US.UTF-8"}
       )
       on(
         agent,
         puppet(
-          "config",
-          "set environmentpath #{agent_lookup_test_dir}/environments"
-        )
+          "config", "set environmentpath #{agent_lookup_test_dir}/environments"
+        ),
+        :environment => {:LANG => "en_US.UTF-8"}
       )
 
       step 'hiera' do
         result = on(
           agent,
-          puppet("apply", "-e", "'notice(hiera(\"#{array_key}\"))'")
+          puppet("apply", "-e", "'notice(hiera(\"#{array_key}\"))'"),
+          :environment => {:LANG => "en_US.UTF-8"}
         )
         assert_match(/#{array_val_2}/, result.stdout, "hiera array lookup")
   
         result = on(
           agent,
-          puppet("apply", "-e", "'notice(hiera(\"#{scalar_key}\"))'")
+          puppet("apply", "-e", "'notice(hiera(\"#{scalar_key}\"))'"),
+          :environment => {:LANG => "en_US.UTF-8"}
         )
         assert_match(/#{scalar_val}/, result.stdout, "hiera scalar lookup")
   
         result = on(
           agent,
           puppet("apply", "-e", "'notice(hiera(\"#{non_key}\"))'"),
-          :acceptable_exit_codes => (0..255)
+          {
+            :acceptable_exit_codes => (0..255),
+            :environment => {:LANG => "en_US.UTF-8"}
+          }
         )
         assert_match(
           /did not find a value for the name '#{non_key}'/,
@@ -218,7 +242,8 @@ LOOKUP_MANIFEST
       step 'lookup' do
         result = on(
           agent,
-          puppet("apply", "-e", "'notice(lookup(\"#{env_key}\"))'")
+          puppet("apply", "-e", "'notice(lookup(\"#{env_key}\"))'"),
+          :environment => {:LANG => "en_US.UTF-8"}
         )
         assert_match(
           /#{env_val}/,
@@ -228,7 +253,8 @@ LOOKUP_MANIFEST
   
         result = on(
           agent,
-          puppet("apply", "-e", "'notice(lookup(\"#{mod_key}\"))'")
+          puppet("apply", "-e", "'notice(lookup(\"#{mod_key}\"))'"),
+          :environment => {:LANG => "en_US.UTF-8"}
         )
         assert_match(
           /#{mod_val}/,
@@ -238,11 +264,13 @@ LOOKUP_MANIFEST
   
         on(
           agent,
-          puppet("config", "set hiera_config #{orig_hiera_config}")
+          puppet("config", "set hiera_config #{orig_hiera_config}"),
+          :environment => {:LANG => "en_US.UTF-8"}
         )
         on(
           agent,
-          puppet("config", "set environmentpath #{orig_environmentpath}")
+          puppet("config", "set environmentpath #{orig_environmentpath}"),
+          :environment => {:LANG => "en_US.UTF-8"}
         )
       end
       
@@ -266,7 +294,11 @@ LOOKUP_MANIFEST
           [$dig_result] = [dig($v, a, b, 1, y)];
           notice($dig_result)
         '"
-        result = on(agent, puppet("apply", "-e", puppet_cmd))
+        result = on(
+          agent,
+          puppet("apply", "-e", puppet_cmd),
+          :environment => {:LANG => "en_US.UTF-8"}
+        )
         assert_match(
           /dig_result = #{utf8chars}/,
           result.stdout,
@@ -286,7 +318,11 @@ LOOKUP_MANIFEST
           [$found] = [match($vec, /#{utf8chars}/)];
           notice($found)
         '"
-        result = on(agent, puppet("apply", "-e", puppet_cmd))
+        result = on(
+          agent,
+          puppet("apply", "-e", puppet_cmd),
+          :environment => {:LANG => "en_US.UTF-8"}
+        )
         assert_match(
           /[[€‰ㄘ万竹ÜÖ], [€‰ㄘ万竹ÜÖ], , ]/,
           result.stdout,
