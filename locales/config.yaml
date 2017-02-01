@@ -26,4 +26,4 @@ gettext:
     - 'lib/puppet/pops/types/type_formatter.rb'
     # The semantic_puppet gem is temporarily vendored (PUP-7114), and it
     # handles its own translation.
-    - 'lib/semantic_puppet/**/*.rb'
+    - 'lib/puppet/vendor/**/*.rb'
