@@ -129,5 +129,40 @@ describe 'when converting to 3.x' do
       v = Puppet::Pops::Types::PSensitiveType::Sensitive.new("don't reveal this")
       expect(converter.convert(v, {}, nil)).to equal(v)
     end
+
+    it 'errors if an Integer is too big' do
+      too_big = 0x7fffffffffffffff + 1
+      expect do
+        converter.convert(too_big, {}, nil)
+        end.to raise_error(/Use of a Ruby Integer outside of Puppet Integer max range, got/)
+    end
+
+    it 'errors if an Integer is too small' do
+      too_small = -0x8000000000000000-1
+      expect do
+        converter.convert(too_small, {}, nil)
+      end.to raise_error(/Use of a Ruby Integer outside of Puppet Integer min range, got/)
+    end
+
+    it 'errors if a BigDecimal is out of range for Float' do
+      big_dec = BigDecimal("123456789123456789.1415")
+      expect do
+        converter.convert(big_dec, {}, nil)
+      end.to raise_error(/Use of a Ruby BigDecimal value outside Puppet Float range, got/)
+    end
+
+    it 'BigDecimal values in Float range are converted' do
+      big_dec = BigDecimal("3.1415")
+      f = converter.convert(big_dec, {}, nil)
+      expect(f.class).to be(Float)
+    end
+
+    it 'errors when Integer is out of range in a structure' do
+      structure = {'key' => [{ 'key' => [0x7fffffffffffffff + 1]}]}
+      expect do
+        converter.convert(structure, {}, nil)
+        end.to raise_error(/Use of a Ruby Integer outside of Puppet Integer max range, got/)
+    end
+
   end
 end

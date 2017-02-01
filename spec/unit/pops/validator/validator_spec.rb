@@ -515,6 +515,16 @@ describe "validating 4x" do
     end
   end
 
+  context 'literal values' do
+    it 'rejects a literal integer outside of max signed 64 bit range' do
+      expect(validate(parse("0x8000000000000000"))).to have_issue(Puppet::Pops::Issues::NUMERIC_OVERFLOW)
+    end
+
+    it 'rejects a literal integer outside of min signed 64 bit range' do
+      expect(validate(parse("-0x8000000000000001"))).to have_issue(Puppet::Pops::Issues::NUMERIC_OVERFLOW)
+    end
+  end
+
   def parse(source)
     Puppet::Pops::Parser::Parser.new().parse_string(source)
   end

@@ -967,7 +967,7 @@ class Factory
     x
   end
 
-  def build_Fixnum(o)
+  def build_Integer(o)
     x = LiteralInteger.new
     x.value = o;
     x
