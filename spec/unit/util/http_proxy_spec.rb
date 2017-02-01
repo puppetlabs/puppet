@@ -3,6 +3,10 @@ require 'spec_helper'
 require 'puppet/util/http_proxy'
 
 describe Puppet::Util::HttpProxy do
+  before(:all) do
+    ENV['http_proxy'] = nil
+    ENV['HTTP_PROXY'] = nil
+  end
 
   host, port, user, password = 'some.host', 1234, 'user1', 'pAssw0rd'
 

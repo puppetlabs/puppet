@@ -6,6 +6,11 @@ require 'puppet/forge/cache'
 require 'puppet/forge/errors'
 
 describe Puppet::Forge::Repository do
+  before(:all) do
+    # any local http proxy will break these tests
+    ENV['http_proxy'] = nil
+    ENV['HTTP_PROXY'] = nil
+  end
   let(:agent) { "Test/1.0" }
   let(:repository) { Puppet::Forge::Repository.new('http://fake.com', agent) }
   let(:ssl_repository) { Puppet::Forge::Repository.new('https://fake.com', agent) }
