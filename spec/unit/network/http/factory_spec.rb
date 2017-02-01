@@ -4,6 +4,10 @@ require 'puppet/network/http'
 require 'puppet/util/http_proxy'
 
 describe Puppet::Network::HTTP::Factory do
+  before(:all) do
+    ENV['http_proxy'] = nil
+    ENV['HTTP_PROXY'] = nil
+  end
   before :each do
     Puppet::SSL::Key.indirection.terminus_class = :memory
     Puppet::SSL::CertificateRequest.indirection.terminus_class = :memory
