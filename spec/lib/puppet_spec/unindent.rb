@@ -1,5 +1,5 @@
 class String
-  def unindent
-    gsub(/^#{scan(/^\s*/).min_by{ |l| l.length }}/, '')
+  def unindent(left_padding = '')
+    gsub(/^#{scan(/^\s*/).min_by{ |l| l.length }}/, left_padding)
   end
 end

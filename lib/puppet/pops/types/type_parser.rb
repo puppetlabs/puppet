@@ -37,6 +37,12 @@ class TypeParser
     interpret(model.current.body, context)
   end
 
+  # @api private
+  def parse_literal(string, context = nil)
+    model = @parser.parse_string(string)
+    interpret_any(model.current.body, context)
+  end
+
   # @param ast [Puppet::Pops::Model::PopsObject] the ast to interpret
   # @param context [Puppet::Parser::Scope,Loader::Loader, nil] scope or loader to use when loading type aliases
   # @return [PAnyType] a specialization of the PAnyType representing the type.

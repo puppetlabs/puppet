@@ -51,4 +51,6 @@ Puppet::Indirector::Face.define(:certificate_request, '0.0.1') do
 
   get_action(:save).summary "API only: submit a certificate signing request."
   get_action(:save).arguments "<x509_CSR>"
+
+  deprecate
 end

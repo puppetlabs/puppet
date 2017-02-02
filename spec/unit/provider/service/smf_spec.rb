@@ -18,6 +18,8 @@ describe provider_class, :if => Puppet.features.posix? do
 
     FileTest.stubs(:file?).with('/usr/sbin/svcadm').returns true
     FileTest.stubs(:executable?).with('/usr/sbin/svcadm').returns true
+    FileTest.stubs(:file?).with('/usr/sbin/svccfg').returns true
+    FileTest.stubs(:executable?).with('/usr/sbin/svccfg').returns true
     FileTest.stubs(:file?).with('/usr/bin/svcs').returns true
     FileTest.stubs(:executable?).with('/usr/bin/svcs').returns true
     Facter.stubs(:value).with(:operatingsystem).returns('Solaris')
@@ -74,9 +76,9 @@ describe provider_class, :if => Puppet.features.posix? do
       @provider.expects(:svcs).with('-H', '-o', 'state,nstate', "/system/myservice").returns("online\t-")
       @provider.status
     end
-    it "should return stopped if svcs can't find the service" do
+    it "should return absent if svcs can't find the service" do
       @provider.stubs(:svcs).raises(Puppet::ExecutionFailure.new("no svc found"))
-      expect(@provider.status).to eq(:stopped)
+      expect(@provider.status).to eq(:absent)
     end
     it "should return running if online in svcs output" do
       @provider.stubs(:svcs).returns("online\t-")
@@ -107,14 +109,14 @@ describe provider_class, :if => Puppet.features.posix? do
   describe "when starting" do
     it "should enable the service if it is not enabled" do
       @provider.expects(:status).returns :stopped
-      @provider.expects(:texecute).with(:start, ['/usr/sbin/svcadm', :enable, '-s', '/system/myservice'], true)
+      @provider.expects(:texecute).with(:start, ['/usr/sbin/svcadm', :enable, '-rs', '/system/myservice'], true)
       @provider.expects(:wait).with('online')
       @provider.start
     end
 
     it "should always execute external command 'svcadm enable /system/myservice'" do
       @provider.expects(:status).returns :running
-      @provider.expects(:texecute).with(:start, ['/usr/sbin/svcadm', :enable, '-s', '/system/myservice'], true)
+      @provider.expects(:texecute).with(:start, ['/usr/sbin/svcadm', :enable, '-rs', '/system/myservice'], true)
       @provider.expects(:wait).with('online')
       @provider.start
     end
@@ -135,7 +137,7 @@ describe provider_class, :if => Puppet.features.posix? do
 
     it "should error if timeout occurs while starting the service" do
       @provider.expects(:status).returns :stopped
-      @provider.expects(:texecute).with(:start, ["/usr/sbin/svcadm", :enable, "-s", "/system/myservice"], true)
+      @provider.expects(:texecute).with(:start, ["/usr/sbin/svcadm", :enable, '-rs', "/system/myservice"], true)
       Timeout.expects(:timeout).with(60).raises(Timeout::Error)
       expect { @provider.start }.to raise_error Puppet::Error, ('Timed out waiting for /system/myservice to transition states')
     end
@@ -150,7 +152,7 @@ describe provider_class, :if => Puppet.features.posix? do
 
     it "should import the manifest if service is missing" do
       @provider.expects(:svccfg).with(:import, "/tmp/myservice.xml")
-      @provider.expects(:texecute).with(:start, ["/usr/sbin/svcadm", :enable, "-s", "/system/myservice"], true)
+      @provider.expects(:texecute).with(:start, ["/usr/sbin/svcadm", :enable, '-rs', "/system/myservice"], true)
       @provider.expects(:wait).with('online')
       @provider.expects(:svcs).with('-H', '-o', 'state,nstate', "/system/myservice").returns("online\t-")
       @provider.start
@@ -164,13 +166,13 @@ describe provider_class, :if => Puppet.features.posix? do
 
   describe "when stopping" do
     it "should execute external command 'svcadm disable /system/myservice'" do
-      @provider.expects(:texecute).with(:stop, ["/usr/sbin/svcadm", :disable, "-s", "/system/myservice"], true)
+      @provider.expects(:texecute).with(:stop, ["/usr/sbin/svcadm", :disable, '-s', "/system/myservice"], true)
       @provider.expects(:wait).with('offline', 'disabled', 'uninitialized')
       @provider.stop
     end
 
     it "should error if timeout occurs while stopping the service" do
-      @provider.expects(:texecute).with(:stop, ["/usr/sbin/svcadm", :disable, "-s", "/system/myservice"], true)
+      @provider.expects(:texecute).with(:stop, ["/usr/sbin/svcadm", :disable, '-s', "/system/myservice"], true)
       Timeout.expects(:timeout).with(60).raises(Timeout::Error)
       expect { @provider.stop }.to raise_error Puppet::Error, ('Timed out waiting for /system/myservice to transition states')
     end
@@ -179,7 +181,7 @@ describe provider_class, :if => Puppet.features.posix? do
   describe "when restarting" do
 
     it "should error if timeout occurs while restarting the service" do
-      @provider.expects(:texecute).with(:restart, ["/usr/sbin/svcadm", :restart, "-s", "/system/myservice"], true)
+      @provider.expects(:texecute).with(:restart, ["/usr/sbin/svcadm", :restart, '-s', "/system/myservice"], true)
       Timeout.expects(:timeout).with(60).raises(Timeout::Error)
       expect { @provider.restart }.to raise_error Puppet::Error, ('Timed out waiting for /system/myservice to transition states')
     end
@@ -196,7 +198,7 @@ describe provider_class, :if => Puppet.features.posix? do
     context 'with :operatingsystemrelease == 11.2' do
       it "should call 'svcadm restart -s /system/myservice'" do
         Facter.stubs(:value).with(:operatingsystemrelease).returns '11.2'
-        @provider.expects(:texecute).with(:restart, ["/usr/sbin/svcadm", :restart, "-s", "/system/myservice"], true)
+        @provider.expects(:texecute).with(:restart, ["/usr/sbin/svcadm", :restart, '-s', "/system/myservice"], true)
         @provider.expects(:wait).with('online')
         @provider.restart
       end
@@ -205,7 +207,7 @@ describe provider_class, :if => Puppet.features.posix? do
     context 'with :operatingsystemrelease > 11.2' do
       it "should call 'svcadm restart -s /system/myservice'" do
         Facter.stubs(:value).with(:operatingsystemrelease).returns '11.3'
-        @provider.expects(:texecute).with(:restart, ["/usr/sbin/svcadm", :restart, "-s", "/system/myservice"], true)
+        @provider.expects(:texecute).with(:restart, ["/usr/sbin/svcadm", :restart, '-s', "/system/myservice"], true)
         @provider.expects(:wait).with('online')
         @provider.restart
       end

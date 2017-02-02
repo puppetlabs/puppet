@@ -3,6 +3,8 @@ extend Puppet::Acceptance::ServiceUtils
 
 test_name 'Systemd masked services are unmasked before attempting to start'
 
+skip_test "requires AIO install to require 'puppet'" if @options[:type] != 'aio'
+
 # This test in intended to ensure that a service which was previously marked
 # as masked and then set to enabled will first be unmasked.
 confine :to, {}, agents.select { |agent| supports_systemd?(agent) }

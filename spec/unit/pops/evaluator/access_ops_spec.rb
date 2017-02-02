@@ -492,13 +492,13 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
     it 'produces a NotUndef instance with String type when given a literal String' do
       type_expr = fqr('NotUndef')[literal('hey')]
       tf = Puppet::Pops::Types::TypeFactory
-      expect(evaluate(type_expr)).to be_the_type(tf.not_undef(tf.string(nil, 'hey')))
+      expect(evaluate(type_expr)).to be_the_type(tf.not_undef(tf.string('hey')))
     end
 
     it 'Produces Optional instance with String type when using a String argument' do
       type_expr = fqr('Optional')[literal('hey')]
       tf = Puppet::Pops::Types::TypeFactory
-      expect(evaluate(type_expr)).to be_the_type(tf.optional(tf.string(nil, 'hey')))
+      expect(evaluate(type_expr)).to be_the_type(tf.optional(tf.string('hey')))
     end
 
     # Type Type

@@ -329,8 +329,7 @@ module Types
           a = detailed_actual_to_s(e, a)
           e = e.map { |t| t.to_alias_expanded_s }
         else
-          sns = e.map { |t| t.simple_name }.uniq
-          e = e.map { |t| s = t.simple_name; sns.count {|x| x == s } == 1 ? s : t.to_s }.uniq
+          e = e.map { |t| t.simple_name }.uniq
           a = a.simple_name
         end
         case e.size
@@ -464,7 +463,7 @@ module Types
 
     def actual_string
       a = actual
-      a.is_a?(PStringType) && a.values.size == 1 ? "'#{a.values[0]}'" : a.simple_name
+      a.is_a?(PStringType) && !a.value.nil? ? "'#{a.value}'" : a.simple_name
     end
   end
 
@@ -722,8 +721,10 @@ module Types
         arg_count.times do |index|
           adx = index >= etypes.size ? etypes.size - 1 : index
           etype = etypes[adx]
-          descriptions = describe(etype, atypes[index], path + [ParameterPathElement.new(enames[adx])])
-          return descriptions unless descriptions.empty?
+          unless etype.assignable?(atypes[index])
+            descriptions = describe(etype, atypes[index], path + [ParameterPathElement.new(enames[adx])])
+            return descriptions unless descriptions.empty?
+          end
         end
         EMPTY_ARRAY
       else
@@ -816,7 +817,7 @@ module Types
     def describe_PHashType(expected, actual, path)
       descriptions = []
       key_type = expected.key_type || PAnyType::DEFAULT
-      value_type = expected.element_type || PAnyType::DEFAULT
+      value_type = expected.value_type || PAnyType::DEFAULT
       if actual.is_a?(PStructType)
         elements = actual.elements
         expected_size = expected.size_type || PCollectionType::DEFAULT_SIZE

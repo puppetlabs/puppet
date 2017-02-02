@@ -149,12 +149,15 @@ class Puppet::Interface
 
   # @api private
   def initialize(name, version, &block)
-    unless SemVer.valid?(version)
+    unless SemanticPuppet::Version.valid?(version)
       raise ArgumentError, "Cannot create face #{name.inspect} with invalid version number '#{version}'!"
     end
 
     @name    = Puppet::Interface::FaceCollection.underscorize(name)
-    @version = SemVer.new(version)
+
+    # SemVer is deprecated but in 4.x we must use it here (the attr_reader is public api). The
+    # extra boolean argument suppresses the deprecation warning.
+    @version = SemVer.new(version, true)
 
     # The few bits of documentation we actually demand.  The default license
     # is a favour to our end users; if you happen to get that in a core face
@@ -180,6 +183,15 @@ class Puppet::Interface
     "Puppet::Face[#{name.inspect}, #{version.inspect}]"
   end
 
+  # @return [void]
+  def deprecate
+    @deprecated = true
+  end
+
+  # @return [Boolean]
+  def deprecated?
+    @deprecated
+  end
   ########################################################################
   # Action decoration, whee!  You are not expected to care about this code,
   # which exists to support face building and construction.  I marked these

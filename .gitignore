@@ -28,3 +28,4 @@ acceptance/.bundle
 # emacs backup files
 *~
 /*.samples
+coverage/

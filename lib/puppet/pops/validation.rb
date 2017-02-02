@@ -273,7 +273,7 @@ module Validation
   #
   class DiagnosticFormatter
     def format diagnostic
-      "#{loc(diagnostic)} #{format_severity(diagnostic)}#{format_message(diagnostic)}"
+      "#{format_location(diagnostic)} #{format_severity(diagnostic)}#{format_message(diagnostic)}"
     end
 
     def format_message diagnostic

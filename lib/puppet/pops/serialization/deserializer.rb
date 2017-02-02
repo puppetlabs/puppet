@@ -8,7 +8,7 @@ module Serialization
   class Deserializer
     # Provides access to the reader.
     # @api private
-    attr_reader :reader
+    attr_reader :reader, :loader
 
     # @param [AbstractReader] reader the reader used when reading primitive objects from a stream
     # @param [Loader::Loader] loader the loader used when resolving names of types
@@ -38,12 +38,25 @@ module Serialization
         result = remember({})
         val.size.times { key = read; result[key] = read }
         result
-      when Extension::ObjectStart
+      when Extension::SensitiveStart
+        Types::PSensitiveType::Sensitive.new(read)
+      when Extension::PcoreObjectStart
         type_name = val.type_name
         type = Types::TypeParser.singleton.parse(type_name, @loader)
         raise SerializationError, "No implementation mapping found for Puppet Type #{type_name}" if type.is_a?(Types::PTypeReferenceType)
-        type.read(val.attribute_count, self)
-      when Numeric, String, true, false, nil, Time
+        result = type.read(val.attribute_count, self)
+        if result.is_a?(Types::PObjectType)
+          existing_type = loader.load(:type, result.name)
+
+          # Add result to the loader unless it is the exact same instance as the existing_type. The add
+          # will succeed when the existing_type is nil.
+          loader.add_entry(:type, result.name, result, nil) unless result.equal?(existing_type)
+        end
+        result
+      when Extension::ObjectStart
+        type = read
+        type.read(val.attribute_count - 1, self)
+      when Numeric, String, true, false, nil
         val
       else
         remember(val)

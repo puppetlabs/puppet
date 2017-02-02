@@ -426,8 +426,10 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     if resources = data['resources']
       # TODO: The deserializer needs a loader in order to deserialize types defined using the puppet language.
       json_deserializer = nil
-      if Puppet[:rich_data] || result.environment_instance && result.environment_instance.rich_data?
-        json_deserializer = Puppet::Pops::Serialization::Deserializer.new(Puppet::Pops::Serialization::JSON::Reader.new([]), nil)
+      if resources.any? { |res| res.has_key?('ext_parameters') }
+        json_deserializer = Puppet::Pops::Serialization::Deserializer.new(
+            Puppet::Pops::Serialization::JSON::Reader.new([]),
+            Puppet::Pops::Loaders.catalog_loader)
       end
       result.add_resource(*resources.collect do |res|
         Puppet::Resource.from_data_hash(res, json_deserializer)
@@ -536,7 +538,10 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
   # Store the classes in the classfile.
   def write_class_file
-    ::File.open(Puppet[:classfile], "w") do |f|
+    # classfile paths may contain UTF-8
+    # https://docs.puppet.com/puppet/latest/reference/configuration.html#classfile
+    classfile = Puppet.settings.setting(:classfile)
+    Puppet::FileSystem.open(classfile.value, classfile.mode.to_i(8), "w:UTF-8") do |f|
       f.puts classes.join("\n")
     end
   rescue => detail
@@ -545,7 +550,10 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
   # Store the list of resources we manage
   def write_resource_file
-    ::File.open(Puppet[:resourcefile], "w") do |f|
+    # resourcefile contains resources that may be UTF-8 names
+    # https://docs.puppet.com/puppet/latest/reference/configuration.html#resourcefile
+    resourcefile = Puppet.settings.setting(:resourcefile)
+    Puppet::FileSystem.open(resourcefile.value, resourcefile.mode.to_i(8), "w:UTF-8") do |f|
       to_print = resources.map do |resource|
         next unless resource.managed?
         if resource.name_var

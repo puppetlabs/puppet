@@ -108,9 +108,24 @@ def do_man(man, strip = 'man/')
     FileUtils.makedirs(om, {:mode => 0755, :verbose => true})
     FileUtils.chmod(0755, om)
     FileUtils.install(mf, omf, {:mode => 0644, :preserve => true, :verbose => true})
-    gzip = %x{which gzip}
-    gzip.chomp!
-    %x{#{gzip} -f #{omf}}
+    # Solaris does not support gzipped man pages. When called with
+    # --no-check-prereqs/without facter the default gzip behavior still applies
+    unless $operatingsystem == "Solaris"
+      gzip = %x{which gzip}
+      gzip.chomp!
+      %x{#{gzip} -f #{omf}}
+    end
+  end
+end
+
+def do_locales(locale, strip = 'locales/')
+  locale.each do |lf|
+    next if File.directory? lf
+    olf = File.join(InstallOptions.locale_dir, lf.sub(/^#{strip}/, ''))
+    op = File.dirname(olf)
+    FileUtils.makedirs(op, {:mode => 0755, :verbose => true})
+    FileUtils.chmod(0755, op)
+    FileUtils.install(lf, olf, {:mode => 0644, :preserve => true, :verbose => true})
   end
 end
 
@@ -190,6 +205,9 @@ def prepare_installation
     opts.on('--bindir[=OPTIONAL]', 'Installation directory for binaries', 'overrides RbConfig::CONFIG["bindir"]') do |bindir|
       InstallOptions.bindir = bindir
     end
+    opts.on('--localedir[=OPTIONAL]', 'Installation directory for locale information', 'Default /opt/puppetlabs/puppet/share/locale') do |localedir|
+      InstallOptions.localedir = localedir
+    end
     opts.on('--ruby[=OPTIONAL]', 'Ruby interpreter to use with installation', 'overrides ruby used to call install.rb') do |ruby|
       InstallOptions.ruby = ruby
     end
@@ -242,15 +260,19 @@ def prepare_installation
     $operatingsystem = Facter.value :operatingsystem
   end
 
-  if not InstallOptions.configdir.nil?
-    configdir = InstallOptions.configdir
-  elsif $operatingsystem == "windows"
+  if $operatingsystem == "windows"
     begin
+      # populates constants used to specify default Windows directories
       require 'win32/dir'
     rescue LoadError => e
       puts "Cannot run on Microsoft Windows without the win32-process, win32-dir & win32-service gems: #{e}"
       exit -1
     end
+  end
+
+  if not InstallOptions.configdir.nil?
+    configdir = InstallOptions.configdir
+  elsif $operatingsystem == "windows"
     configdir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc")
   else
     configdir = "/etc/puppetlabs/puppet"
@@ -294,6 +316,16 @@ def prepare_installation
     bindir = RbConfig::CONFIG['bindir']
   end
 
+  if not InstallOptions.localedir.nil?
+    localedir = InstallOptions.localedir
+  else
+    if $operatingsystem == "windows"
+      localedir = File.join(Dir::PROGRAM_FILES, "Puppet Labs", "Puppet", "puppet", "share", "locale")
+    else
+      localedir = "/opt/puppetlabs/puppet/share/locale"
+    end
+  end
+
   if not InstallOptions.sitelibdir.nil?
     sitelibdir = InstallOptions.sitelibdir
   else
@@ -331,6 +363,7 @@ def prepare_installation
   rundir = join(destdir, rundir)
   logdir = join(destdir, logdir)
   bindir = join(destdir, bindir)
+  localedir = join(destdir, localedir)
   mandir = join(destdir, mandir)
   sitelibdir = join(destdir, sitelibdir)
 
@@ -342,6 +375,7 @@ def prepare_installation
   FileUtils.makedirs(vardir)
   FileUtils.makedirs(rundir)
   FileUtils.makedirs(logdir)
+  FileUtils.makedirs(localedir)
 
   InstallOptions.site_dir = sitelibdir
   InstallOptions.codedir = codedir
@@ -352,6 +386,7 @@ def prepare_installation
   InstallOptions.var_dir = vardir
   InstallOptions.run_dir = rundir
   InstallOptions.log_dir = logdir
+  InstallOptions.locale_dir = localedir
 end
 
 ##
@@ -464,6 +499,7 @@ FileUtils.cd File.dirname(__FILE__) do
   ri    = glob(%w{bin/*.rb lib/**/*.rb}).reject { |e| e=~ /\.(bat|cmd)$/ }
   man   = glob(%w{man/man[0-9]/*})
   libs  = glob(%w{lib/**/*})
+  locales = glob(%w{locales/**/*})
 
   prepare_installation
 
@@ -477,5 +513,6 @@ FileUtils.cd File.dirname(__FILE__) do
   do_bins(bins, InstallOptions.bin_dir)
   do_bins(windows_bins, InstallOptions.bin_dir, 'ext/windows/') if $operatingsystem == "windows" && InstallOptions.batch_files
   do_libs(libs)
+  do_locales(locales)
   do_man(man) unless $operatingsystem == "windows"
 end

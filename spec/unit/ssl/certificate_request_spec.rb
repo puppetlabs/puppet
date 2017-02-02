@@ -92,14 +92,13 @@ describe Puppet::SSL::CertificateRequest do
 
     it "should set the subject to [CN, name]" do
       request.generate(key)
-      # OpenSSL::X509::Name only implements equality as `eql?`
-      expect(request.content.subject).to eql OpenSSL::X509::Name.new([['CN', key.name]])
+      expect(request.content.subject).to eq OpenSSL::X509::Name.new([['CN', key.name]])
     end
 
     it "should set the CN to the :ca_name setting when the CSR is for a CA" do
       Puppet[:ca_name] = "mycertname"
       request = described_class.new(Puppet::SSL::CA_NAME).generate(key)
-      expect(request.subject).to eql OpenSSL::X509::Name.new([['CN', Puppet[:ca_name]]])
+      expect(request.subject).to eq OpenSSL::X509::Name.new([['CN', Puppet[:ca_name]]])
     end
 
     it "should set the version to 0" do

@@ -116,7 +116,8 @@ Puppet::Type.type(:mcx).provide :mcxcontent, :parent => Puppet::Provider do
       dscl 'localhost', '-mcxdelete', ds_path
     end
 
-    tmp = Tempfile.new('puppet_mcx')
+    # val being passed in is resource[:content] which should be UTF-8
+    tmp = Tempfile.new('puppet_mcx', :encoding => Encoding::UTF_8)
     begin
       tmp << val
       tmp.flush

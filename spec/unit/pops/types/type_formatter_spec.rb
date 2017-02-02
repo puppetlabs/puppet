@@ -75,7 +75,7 @@ end
       expect(s.string(f.type_type)).to eq('Type')
     end
 
-    it "should yield 'Object' for PAnyType" do
+    it "should yield 'Any' for PAnyType" do
       expect(s.string(f.any)).to eq('Any')
     end
 
@@ -119,8 +119,12 @@ end
       expect(s.string(f.string)).to eq('String')
     end
 
-    it "should yield 'String' for PStringType with multiple values" do
-      expect(s.string(f.string(nil, 'a', 'b', 'c'))).to eq('String')
+    it "should yield 'String' for PStringType with value" do
+      expect(s.string(f.string('a'))).to eq('String')
+    end
+
+    it "should yield 'String['a']' for PStringType with value if printed with debug_string" do
+      expect(s.debug_string(f.string('a'))).to eq("String['a']")
     end
 
     it "should yield 'String' and from/to for PStringType" do

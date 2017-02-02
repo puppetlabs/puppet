@@ -75,6 +75,20 @@ hiera_include('classes') | $key | {"Key \'${key}\' not found" }
 # "Key 'classes' not found".
 ~~~
 
+`hiera_include` is deprecated in favor of using a combination of `include`and `lookup` and will be
+removed in 6.0.0. See  https://docs.puppet.com/puppet/#{Puppet.version}/reference/deprecated_language.html.
+Replace the calls as follows:
+
+| from  | to |
+| ----  | ---|
+| hiera_include($key) | include(lookup($key, { 'merge' => 'unique' })) |
+| hiera_include($key, $default) | include(lookup($key, { 'default_value' => $default, 'merge' => 'unique' })) |
+| hiera_include($key, $default, $level) | override level not supported |
+
+Note that calls using the 'override level' option are not directly supported by 'lookup' and the produced
+result must be post processed to get exactly the same result, for example using simple hash/array `+` or
+with calls to stdlib's `deep_merge` function depending on kind of hiera call and setting of merge in hiera.yaml.
+
 See [the documentation](http://links.puppetlabs.com/hierainclude) for more information
 and a more detailed example of how `hiera_include` uses array merge lookups to classify
 nodes.

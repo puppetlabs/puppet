@@ -6,12 +6,6 @@ module Puppet::Pops
   class MergeStrategy
     NOT_FOUND = Object.new.freeze
 
-    # The type used for validation of the _merge_ argument
-    def self.merge_t
-      @@merge_t ||=  Types::TypeParser.singleton.parse("Variant[String[1],Runtime[ruby,'Symbol'],Hash[Variant[String[1],Runtime[ruby,'Symbol']],Scalar,1]]")
-    end
-    private_class_method :merge_t
-
     def self.strategies
       @@strategies ||= {}
     end
@@ -24,22 +18,23 @@ module Puppet::Pops
     # @return [MergeStrategy] The matching merge strategy
     #
     def self.strategy(merge)
+      return DefaultMergeStrategy::INSTANCE unless merge
       return merge if merge.is_a?(MergeStrategy)
-      merge = :first if merge.nil?
-      Types::TypeAsserter.assert_instance_of("MergeStrategy 'merge' parameter", merge_t, merge)
+
       if merge.is_a?(Hash)
         merge_strategy = merge['strategy']
         if merge_strategy.nil?
           raise ArgumentError, "The hash given as 'merge' must contain the name of a strategy in string form for the key 'strategy'"
         end
-        merge_options  = merge
+        merge_options  = merge.size == 1 ? EMPTY_HASH : merge
       else
         merge_strategy = merge
-        merge_options  = {}
+        merge_options = EMPTY_HASH
       end
-      strategy = strategies[merge_strategy.to_sym]
-      raise ArgumentError, "Unknown merge strategy: '#{merge_strategy}'" if strategy.nil?
-      strategy.new(merge_options)
+      merge_strategy = merge_strategy.to_sym if merge_strategy.is_a?(String)
+      strategy_class = strategies[merge_strategy]
+      raise ArgumentError, "Unknown merge strategy: '#{merge_strategy}'" if strategy_class.nil?
+      merge_options == EMPTY_HASH ? strategy_class::INSTANCE : strategy_class.new(merge_options)
     end
 
     # Returns the list of merge strategy keys known to this class
@@ -47,7 +42,7 @@ module Puppet::Pops
     # @return [Array<Symbol>] List of strategy keys
     #
     def self.strategy_keys
-      strategies.keys
+      strategies.keys - [:default, :unconstrained_deep, :reverse_deep]
     end
 
     # Adds a new merge strategy to the map of strategies known to this class
@@ -79,7 +74,7 @@ module Puppet::Pops
     # Create a new instance of this strategy configured with the given _options_
     # @param merge_options [Hash<String,Object>] Merge options
     def initialize(options)
-      assert_type('The merge options', options_t, options)
+      assert_type('The merge options', self.class.options_t, options) unless options.empty?
       @options = options
     end
 
@@ -96,6 +91,12 @@ module Puppet::Pops
         assert_type('The second element of the merge', value_t, e2))
     end
 
+    # TODO: API 5.0 Remove this method
+    # @deprecated
+    def merge_lookup(lookup_variants)
+      lookup(lookup_variants, Lookup::Invocation.current)
+    end
+
     # Merges the result of yielding the given _lookup_variants_ to a given block.
     #
     # @param lookup_variants [Array] The variants to pass as second argument to the given block
@@ -105,22 +106,40 @@ module Puppet::Pops
     # @yieldreturn [Object] the value to merge with other values
     # @throws :no_such_key if the lookup was unsuccessful
     #
-    def merge_lookup(lookup_variants)
-      result = lookup_variants.reduce(NOT_FOUND) do |memo, lookup_variant|
-        not_found = true
-        value = catch(:no_such_key) do
-          v = yield(lookup_variant)
-          not_found = false
-          v
-        end
-        if not_found
-          memo
-        else
-          memo.equal?(NOT_FOUND) ? convert_value(value) : merge(memo, value)
+    # Merges the result of yielding the given _lookup_variants_ to a given block.
+    #
+    # @param lookup_variants [Array] The variants to pass as second argument to the given block
+    # @return [Object] the merged value.
+    # @yield [} ]
+    # @yieldparam variant [Object] each variant given in the _lookup_variants_ array.
+    # @yieldreturn [Object] the value to merge with other values
+    # @throws :no_such_key if the lookup was unsuccessful
+    #
+    def lookup(lookup_variants, lookup_invocation)
+      case lookup_variants.size
+      when 0
+        throw :no_such_key
+      when 1
+        yield(lookup_variants[0])
+      else
+        lookup_invocation.with(:merge, self) do
+          result = lookup_variants.reduce(NOT_FOUND) do |memo, lookup_variant|
+            not_found = true
+            value = catch(:no_such_key) do
+              v = yield(lookup_variant)
+              not_found = false
+              v
+            end
+            if not_found
+              memo
+            else
+              memo.equal?(NOT_FOUND) ? convert_value(value) : merge(memo, value)
+            end
+          end
+          throw :no_such_key if result == NOT_FOUND
+          lookup_invocation.report_result(result)
         end
       end
-      throw :no_such_key if result == NOT_FOUND
-      result
     end
 
     # Converts a single value to the type expected when merging two elements
@@ -148,8 +167,8 @@ module Puppet::Pops
     #
     # @return [Types::PStructType] the puppet type
     #
-    def options_t
-      @options_t ||=Types::TypeParser.singleton.parse("Struct[{strategy=>Optional[Pattern[#{self.class.key}]]}]")
+    def self.options_t
+      @options_t ||=Types::TypeParser.singleton.parse("Struct[{strategy=>Optional[Pattern[/#{key}/]]}]")
     end
 
     # Returns the type used to validate the options hash
@@ -172,6 +191,8 @@ module Puppet::Pops
   # Simple strategy that returns the first value found. It never merges any values.
   #
   class FirstFoundStrategy < MergeStrategy
+    INSTANCE = self.new(EMPTY_HASH)
+
     def self.key
       :first
     end
@@ -182,10 +203,10 @@ module Puppet::Pops
     # @return [Object] the merged value
     # @throws :no_such_key unless the lookup was successful
     #
-    def merge_lookup(lookup_variants)
-      lookup_variants.each do |lookup_variant|
-        catch(:no_such_key) { return yield(lookup_variant) }
-      end
+    def lookup(lookup_variants, _)
+      # First found does not continue when a root key was found and a subkey wasn't since that would
+      # simulate a hash merge
+      lookup_variants.each { |lookup_variant| catch(:no_such_key) { return yield(lookup_variant) } }
       throw :no_such_key
     end
 
@@ -198,10 +219,23 @@ module Puppet::Pops
     MergeStrategy.add_strategy(self)
   end
 
+  # Same as {FirstFoundStrategy} but used when no strategy has been explicitly given
+  class DefaultMergeStrategy < FirstFoundStrategy
+    INSTANCE = self.new(EMPTY_HASH)
+
+    def self.key
+      :default
+    end
+
+    MergeStrategy.add_strategy(self)
+  end
+
   # Produces a new hash by merging hash e1 with hash e2 in such a way that the values of duplicate keys
   # will be those of e1
   #
   class HashMergeStrategy < MergeStrategy
+    INSTANCE = self.new(EMPTY_HASH)
+
     def self.key
       :hash
     end
@@ -230,6 +264,8 @@ module Puppet::Pops
   # first contributor of elements and e2 the second.
   #
   class UniqueMergeStrategy < MergeStrategy
+    INSTANCE = self.new(EMPTY_HASH)
+
     def self.key
       :unique
     end
@@ -302,6 +338,8 @@ module Puppet::Pops
   #   Results: {:x => [{:y => 1, :z => 2}]}
   #
   class DeepMergeStrategy < MergeStrategy
+    INSTANCE = self.new(EMPTY_HASH)
+
     def self.key
       :deep
     end
@@ -309,8 +347,20 @@ module Puppet::Pops
     def checked_merge(e1, e2)
       dm_options = { :preserve_unmergeables => false }
       options.each_pair { |k,v| dm_options[k.to_sym] = v unless k == 'strategy' }
-      # e2 (the destination) is dup'ed to avoid that the passed in object mutates
-      DeepMerge.deep_merge!(e1, e2.dup, dm_options)
+      # e2 (the destination) is deep cloned to avoid that the passed in object mutates
+      DeepMerge.deep_merge!(e1, deep_clone(e2), dm_options)
+    end
+
+    def deep_clone(value)
+      if value.is_a?(Hash)
+        result = value.clone
+        value.each{ |k, v| result[k] = deep_clone(v) }
+        result
+      elsif value.is_a?(Array)
+        value.map{ |v| deep_clone(v) }
+      else
+        value
+      end
     end
 
     protected
@@ -319,9 +369,9 @@ module Puppet::Pops
     # the setting of that option to false
     #
     # @return [Types::PAnyType] the puppet type used when validating the options hash
-    def options_t
+    def self.options_t
       @options_t ||= Types::TypeParser.singleton.parse('Struct[{'\
-          "strategy=>Optional[Pattern[#{self.class.key}]],"\
+          "strategy=>Optional[Pattern[#{key}]],"\
           'knockout_prefix=>Optional[String],'\
           'merge_debug=>Optional[Boolean],'\
           'merge_hash_arrays=>Optional[Boolean],'\
@@ -331,6 +381,37 @@ module Puppet::Pops
 
     def value_t
       @value_t ||= Types::TypeParser.singleton.parse('Variant[Array[Data],Hash[String,Data]]')
+    end
+
+    MergeStrategy.add_strategy(self)
+  end
+
+  # Same as {DeepMergeStrategy} but without constraint on valid merge options
+  # (needed for backward compatibility with Hiera v3)
+  class UnconstrainedDeepMergeStrategy < DeepMergeStrategy
+    def self.key
+      :unconstrained_deep
+    end
+
+    # @return [Types::PAnyType] the puppet type used when validating the options hash
+    def self.options_t
+      @options_t ||= Types::TypeParser.singleton.parse('Hash[String[1],Any]')
+    end
+
+    MergeStrategy.add_strategy(self)
+  end
+
+  # Same as {UnconstrainedDeepMergeStrategy} but with reverse priority of merged elements.
+  # (needed for backward compatibility with Hiera v3)
+  class ReverseDeepMergeStrategy < UnconstrainedDeepMergeStrategy
+    INSTANCE = self.new(EMPTY_HASH)
+
+    def self.key
+      :reverse_deep
+    end
+
+    def checked_merge(e1, e2)
+      super(e2, e1)
     end
 
     MergeStrategy.add_strategy(self)

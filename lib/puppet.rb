@@ -4,6 +4,8 @@ if RUBY_VERSION < "1.9.3"
   raise LoadError, "Puppet #{Puppet.version} requires ruby 1.9.3 or greater."
 end
 
+Puppet::OLDEST_RECOMMENDED_RUBY_VERSION = '2.1.0'
+
 # see the bottom of the file for further inclusions
 # Also see the new Vendor support - towards the end
 #
@@ -18,6 +20,20 @@ require 'puppet/util/run_mode'
 require 'puppet/external/pson/common'
 require 'puppet/external/pson/version'
 require 'puppet/external/pson/pure'
+
+# When running within puppetserver, the gettext-setup gem might not be available, so
+# we need to skip initializing i18n functionality and stub out methods normally
+# supplied by gettext-setup. Can be removed in Puppet 5. See PUP-7116.
+begin
+  require 'gettext-setup'
+  require 'locale'
+  Puppet::GETTEXT_AVAILABLE = true
+rescue LoadError
+  def _(msg)
+    msg
+  end
+  Puppet::GETTEXT_AVAILABLE = false
+end
 
 #------------------------------------------------------------
 # the top-level module
@@ -36,6 +52,36 @@ module Puppet
   require 'puppet/environments'
 
   class << self
+    if Puppet::GETTEXT_AVAILABLE
+      # e.g. ~/code/puppet/locales. Also when running as a gem.
+      local_locale_path = File.absolute_path('../locales', File.dirname(__FILE__))
+      # e.g. /opt/puppetlabs/puppet/share/locale
+      posix_system_locale_path = File.absolute_path('../../../share/locale', File.dirname(__FILE__))
+      # e.g. C:\Program Files\Puppet Labs\Puppet\puppet\share\locale
+      win32_system_locale_path = File.absolute_path('../../../../../puppet/share/locale', File.dirname(__FILE__))
+
+      if File.exist?(local_locale_path)
+        locale_path = local_locale_path
+      elsif File.exist?(win32_system_locale_path)
+        locale_path = win32_system_locale_path
+      elsif File.exist?(posix_system_locale_path)
+        locale_path = posix_system_locale_path
+      else
+        # We couldn't load our locale data.
+        locale_path = nil
+      end
+
+      if locale_path
+        if Gem.loaded_specs['gettext-setup'].version < Gem::Version.new('0.8')
+          # Will load translations from PO files only
+          GettextSetup.initialize(locale_path)
+        else
+          GettextSetup.initialize(locale_path, :file_format => :mo)
+        end
+        FastGettext.locale = GettextSetup.negotiate_locale(Locale.current.language)
+      end
+    end
+
     include Puppet::Util
     attr_reader :features
   end
@@ -114,6 +160,12 @@ module Puppet
 
   # Load all of the settings.
   require 'puppet/defaults'
+
+  # Now that settings are loaded we have the code loaded to be able to issue
+  # deprecation warnings. Warn if we're on a deprecated ruby version.
+  if RUBY_VERSION < Puppet::OLDEST_RECOMMENDED_RUBY_VERSION
+    Puppet.deprecation_warning("Support for ruby version #{RUBY_VERSION} is deprecated and will be removed in a future release. See https://docs.puppet.com/puppet/latest/system_requirements.html#ruby for a list of supported ruby versions.")
+  end
 
   # Initialize puppet's settings. This is intended only for use by external tools that are not
   #  built off of the Faces API or the Puppet::Util::Application class. It may also be used

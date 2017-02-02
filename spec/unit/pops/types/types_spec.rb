@@ -386,7 +386,7 @@ describe 'Puppet Type System' do
       type Bar = Fee
       notice(0 =~ Bar)
       CODE
-      expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Type alias 'Foo' cannot be resolved to a real type/)
+      expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Type alias 'Bar' cannot be resolved to a real type/)
     end
 
     it 'will not allow an alias chain that contains nothing but aliases and variants' do
@@ -396,7 +396,7 @@ describe 'Puppet Type System' do
       type Bar = Variant[Fee,Foo]
       notice(0 =~ Bar)
       CODE
-      expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Type alias 'Foo' cannot be resolved to a real type/)
+      expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Type alias 'Bar' cannot be resolved to a real type/)
     end
 
     it 'will not allow an alias to directly reference itself' do
@@ -572,6 +572,29 @@ describe 'Puppet Type System' do
     end
   end
 
+  context 'instantiation via ruby create function' do
+    around(:each) do |example|
+      Puppet.override(:loaders => Loaders.new(Puppet::Node::Environment.create(:testing, []))) do
+        example.run
+      end
+    end
+
+    it 'is supported by Integer' do
+      int = tf.integer.create('32')
+      expect(int).to eq(32)
+    end
+
+    it 'is supported by Optional[Integer]' do
+      int = tf.optional(tf.integer).create('32')
+      expect(int).to eq(32)
+    end
+
+    it 'is not supported by Any, Scalar, Collection' do
+      [tf.any, tf.scalar, tf.collection ].each do |t|
+        expect { t.create }.to raise_error(ArgumentError, /Creation of new instance of type '#{t.to_s}' is not supported/)
+      end
+    end
+  end
 end
 end
 end

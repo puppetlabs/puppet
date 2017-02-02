@@ -9,8 +9,14 @@ describe 'The Object Type' do
 
   let(:parser) { TypeParser.singleton }
   let(:pp_parser) { Parser::EvaluatingParser.new }
-  let(:loader) { Loader::BaseLoader.new(nil, 'type_parser_unit_test_loader') }
+  let(:loader) { Loaders.find_loader(nil) }
   let(:factory) { TypeFactory }
+
+  around(:each) do |example|
+    Puppet.override(:loaders => Loaders.new(Puppet::Node::Environment.create(:testing, []))) do
+      example.run
+    end
+  end
 
   def type_object_t(name, body_string)
     object = PObjectType.new(name, pp_parser.parse_string("{#{body_string}}").current.body)
@@ -148,7 +154,7 @@ describe 'The Object Type' do
   end
 
   context 'when dealing with functions' do
-    it 'raises an error when the function type is a Type[Callable]' do
+    it 'raises an error unless the function type is a Type[Callable]' do
       obj = <<-OBJECT
         functions => {
           a => String
@@ -207,7 +213,7 @@ describe 'The Object Type' do
         'function MyDerivedObject[a] attempts to override attribute MyObject[a]')
     end
 
-    it 'raises an error when the an function overrides an attribute' do
+    it 'raises an error when the a function overrides an attribute' do
       parent = <<-OBJECT
         functions => {
           a => Callable
@@ -699,6 +705,43 @@ describe 'The Object Type' do
     end
   end
 
+  context 'when stringifying created instances' do
+    it 'outputs a Puppet constructor using the initializer hash' do
+      code = <<-CODE
+      type Spec::MyObject = Object[{attributes => { a => Integer }}]
+      type Spec::MySecondObject = Object[{parent => Spec::MyObject, attributes => { b => String }}]
+      notice(Spec::MySecondObject(42, 'Meaning of life'))
+      CODE
+      expect(eval_and_collect_notices(code)).to eql(["Spec::MySecondObject({\n  'a' => 42,\n  'b' => 'Meaning of life'\n})"])
+    end
+  end
+
+  context 'when used from Ruby' do
+    it 'can create an instance without scope using positional arguments' do
+      parse_object('MyObject', <<-OBJECT)
+        attributes => {
+          a => { type => Integer }
+        }
+      OBJECT
+
+      t = Puppet::Pops::Types::TypeParser.singleton.parse('MyObject', Puppet::Pops::Loaders.find_loader(nil))
+      instance = t.create(32)
+      expect(instance.a).to eql(32)
+    end
+
+    it 'can create an instance without scope using initialization hash' do
+      parse_object('MyObject', <<-OBJECT)
+        attributes => {
+          a => { type => Integer }
+        }
+      OBJECT
+
+      t = Puppet::Pops::Types::TypeParser.singleton.parse('MyObject', Puppet::Pops::Loaders.find_loader(nil))
+      instance = t.from_hash('a' => 32)
+      expect(instance.a).to eql(32)
+    end
+  end
+
   context 'when used in Puppet expressions' do
     it 'two anonymous empty objects are equal' do
       code = <<-CODE
@@ -761,6 +804,28 @@ describe 'The Object Type' do
       CODE
       expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error,
         /attribute MySecondObject\[a\] attempts to override final attribute MyObject\[a\]/)
+    end
+
+    it 'can inherit from an aliased type' do
+      code = <<-CODE
+      type MyObject = Object[{ name => 'MyFirstObject', attributes => { a => Integer }}]
+      type MyObjectAlias = MyObject
+      type MySecondObject = Object[{ parent => MyObjectAlias, attributes => { b => String }}]
+      notice(MySecondObject < MyObjectAlias)
+      notice(MySecondObject < MyObject)
+      CODE
+      expect(eval_and_collect_notices(code)).to eql(['true', 'true'])
+    end
+
+    it 'detects equality duplication when inherited from an aliased type' do
+      code = <<-CODE
+      type MyObject = Object[{ name => 'MyFirstObject', attributes => { a => Integer }}]
+      type MyObjectAlias = MyObject
+      type MySecondObject = Object[{ parent => MyObjectAlias, attributes => { b => String }, equality => a}]
+      notice(MySecondObject < MyObject)
+      CODE
+      expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error,
+        /MySecondObject equality is referencing attribute MyObject\[a\] which is included in equality of MyObject/)
     end
 
     it 'raises an error when object when circular inheritance is detected' do

@@ -254,4 +254,6 @@ Puppet::Face.define(:ca, '0.1.0') do
       end
     end
   end
+
+  deprecate
 end

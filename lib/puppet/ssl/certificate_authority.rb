@@ -189,7 +189,7 @@ class Puppet::SSL::CertificateAuthority
   #
   # @return [Array<String>]
   def list(name='*')
-    list_certificates(name).collect { |c| c.name }
+    Puppet::SSL::Certificate.indirection.search(name).collect { |c| c.name }
   end
 
   # Return all the certificate objects as found by the indirector
@@ -205,7 +205,10 @@ class Puppet::SSL::CertificateAuthority
   # @param name [Array<string>] filter to cerificate names
   #
   # @return [Array<Puppet::SSL::Certificate>]
+  #
+  # @deprecated Use Puppet::SSL::CertificateAuthority#list or Puppet Server Certificate status API
   def list_certificates(name='*')
+    Puppet.deprecation_warning("Puppet::SSL::CertificateAuthority#list_certificates is deprecated. Please use Puppet::SSL::CertificateAuthority#list or the certificate status API to query certificate information. See https://docs.puppet.com/puppet/latest/http_api/http_certificate_status.html")
     Puppet::SSL::Certificate.indirection.search(name)
   end
 
@@ -417,6 +420,11 @@ class Puppet::SSL::CertificateAuthority
   #   of the X509 Store
   #
   # @return [OpenSSL::X509::Store]
+  #
+  # @deprecated Strictly speaking, #x509_store is marked API private, so we
+  #   don't need to publicly deprecate it. But it marked as deprecated here to
+  #   avoid the exceedingly small chance that someone comes in and uses it from
+  #   within this class before it is removed.
   def x509_store(options = {})
     if (options[:cache])
       return @x509store unless @x509store.nil?
@@ -464,7 +472,10 @@ class Puppet::SSL::CertificateAuthority
   # @param cert [Puppet::SSL::Certificate] the certificate to check validity of
   #
   # @return [Boolean] true if signed, false if unsigned or revoked
+  #
+  # @deprecated use Puppet::SSL::CertificateAuthority#verify or Puppet Server certificate status API
   def certificate_is_alive?(cert)
+    Puppet.deprecation_warning("Puppet::SSL::CertificateAuthority#certificate_is_alive? is deprecated. Please use Puppet::SSL::CertificateAuthority#verify or the certificate status API to query certificate information. See https://docs.puppet.com/puppet/latest/http_api/http_certificate_status.html")
     x509_store(:cache => true).verify(cert.content)
   end
 
@@ -483,7 +494,7 @@ class Puppet::SSL::CertificateAuthority
     unless cert = Puppet::SSL::Certificate.indirection.find(name)
       raise ArgumentError, "Could not find a certificate for #{name}"
     end
-    store = x509_store
+    store = create_x509_store
 
     raise CertificateVerificationError.new(store.error), store.error_string unless store.verify(cert.content)
   end

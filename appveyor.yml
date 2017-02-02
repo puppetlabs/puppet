@@ -2,15 +2,47 @@ version: 4.1.0.{build}
 clone_depth: 10
 install:
 build: off
+matrix:
+  fast_finish: true
 
+# Ruby versions under test
+platform:
+  - Ruby23-x64
+  - Ruby21-x64
+
+# Note that locales are mainly code page changes and are not the FULL set of localization
+#  changes that happen when you install French/Germam/Japanese etc. Windows
 environment:
   matrix:
-  - RUBY_VER: 23-x64
-  - RUBY_VER: 21-x64
+  - LOCALE: en-US
+  - LOCALE: ja-JP
+
+before_test:
+  # Semicolons are required below.  This renders as a single line powershell command in AppVeyor
+  - ps: >-
+      [string]$testLocale = [Environment]::GetEnvironmentVariable("LOCALE","Process");
+      $currentLocale = (Get-WinSystemLocale).Name;
+      if ($testLocale -ne '') {
+        if ($testLocale -ne $currentLocale) {
+          Write-Output "Setting Locale to $testLocale ...";
+          Set-WinSystemLocale ($testLocale);
+          Write-Output "Restarting worker in 5 seconds...";
+          Start-Sleep -Seconds 5
+          Restart-Computer -Force -Confirm:$false;
+        } else {
+          Write-Output "Locale is already set to $currentLocale";
+        };
+      } else {
+        Write-Output "LOCALE environment variable not set";
+      };
 
 test_script:
+  # The sleep is needed to allow the Appveyor tracing to start correctly after a reboot (locale change)
+  - ps: Start-Sleep -Seconds 5
   - SET
-  - SET PATH=C:\Ruby%RUBY_VER%\bin;%PATH%
+  - chcp
+  - ps: Get-WinSystemLocale
+  - SET PATH=C:\%PLATFORM%\bin;%PATH%
   - SET LOG_SPEC_ORDER=true
   - bundle install --jobs 4 --retry 2 --without development extra
   - type Gemfile.lock

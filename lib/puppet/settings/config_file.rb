@@ -25,7 +25,8 @@ class Puppet::Settings::ConfigFile
       allowed_section_names << 'main' unless allowed_section_names.include?('main')
     end
 
-    ini = Puppet::Settings::IniFile.parse(StringIO.new(text))
+    # in Ruby 1.9.3 strings are not UTF-8 by default, so ensure text is treated properly
+    ini = Puppet::Settings::IniFile.parse(StringIO.new(text).set_encoding(Encoding::UTF_8))
     unique_sections_in(ini, file, allowed_section_names).each do |section_name|
       section = Section.new(section_name.to_sym)
       result.with_section(section)

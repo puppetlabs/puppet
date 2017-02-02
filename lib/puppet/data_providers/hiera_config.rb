@@ -1,11 +1,13 @@
-require 'pathname'
-require 'puppet/pops/lookup/interpolation'
+require 'puppet/plugins/data_providers'
 
+# @api private
 module Puppet::DataProviders
+  # TODO: API 5.0, remove this class
   # @api private
+  # @deprecated
   class HieraConfig
     include Puppet::Plugins::DataProviders
-    include Puppet::Pops::Lookup::Interpolation
+    include Puppet::Pops::Lookup::LocationResolver
 
     DEFAULT_CONFIG = {
       'version' => 4,
@@ -33,6 +35,11 @@ module Puppet::DataProviders
       end
     end
 
+    def self.config_exist?(config_root)
+      config_path = config_root + 'hiera.yaml'
+      config_path.exist?
+    end
+
     def self.create_config_type
       hierarchy_elem_type_base = 'Struct[{'\
         'backend=>String[1],'\
@@ -58,6 +65,10 @@ module Puppet::DataProviders
     # @param config_root [Pathname] Absolute path to the configuration root
     # @api public
     def initialize(config_root)
+      unless Puppet[:strict] == :off
+        Puppet.warn_once(:deprecation, 'Puppet::DataProviders::HieraConfig',
+          "Use of class Puppet::DataProviders::HieraConfig' is deprecated. Puppet::Pops::Lookup::HieraConfig should be used instead", config_path.to_s)
+      end
       @config_root = config_root
       @config_path = config_root + 'hiera.yaml'
       if @config_path.exist?
@@ -92,7 +103,7 @@ module Puppet::DataProviders
       data_providers = {}
       @config['hierarchy'].each do |he|
         name = he['name']
-        raise Puppet::DataBinding::LookupError, "#{path}: Name '#{name}' defined more than once" if data_providers.include?(name)
+        raise Puppet::DataBinding::LookupError, "#{@config_path}: Name '#{name}' defined more than once" if data_providers.include?(name)
         original_paths = he['paths']
         if original_paths.nil?
           single_path = he['path']
@@ -100,15 +111,25 @@ module Puppet::DataProviders
           original_paths = [single_path]
         end
         paths = original_paths.map { |path| interpolate(path, lookup_invocation, false)}
-        provider_name = he['backend']
-        provider_factory = injector.lookup(nil, service_type, PATH_BASED_DATA_PROVIDER_FACTORIES_KEY)[provider_name]
-        raise Puppet::DataBinding::LookupError, "#{@config_path}: No data provider is registered for backend '#{provider_name}' " unless provider_factory
-
         datadir = @config_root + (he['datadir'] || default_datadir)
-        data_providers[name] = create_data_provider(parent_data_provider, provider_factory, name,
-          provider_factory.resolve_paths(datadir, original_paths, paths, lookup_invocation))
+        provider_name = he['backend']
+        data_providers[name] = case provider_name
+        when 'json', 'yaml'
+          Puppet::Pops::Lookup::DataHashFunctionProvider.new(name, parent_data_provider, "#{provider_name}_data", {},
+            resolve_paths(datadir, original_paths, lookup_invocation, ".#{provider_name}"))
+        else
+          # TODO: Remove support for injected provider factories
+          paths = original_paths.map { |path| interpolate(path, lookup_invocation, false)}
+          provider_factory = injector.lookup(nil, service_type, PATH_BASED_DATA_PROVIDER_FACTORIES_KEY)[provider_name]
+          raise Puppet::DataBinding::LookupError, "#{@config_path}: No data provider is registered for backend '#{provider_name}' " unless provider_factory
+          create_data_provider(parent_data_provider, provider_factory, name, provider_factory.resolve_paths(datadir, original_paths, paths, lookup_invocation))
+        end
       end
       data_providers.values
+    end
+
+    def name
+      "hiera version #{version}"
     end
 
     def create_data_provider(parent_data_provider, provider_factory, name, resolved_paths)

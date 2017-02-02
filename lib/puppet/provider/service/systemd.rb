@@ -22,6 +22,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   defaultfor :osfamily => :redhat, :operatingsystemmajrelease => "7"
   defaultfor :osfamily => :redhat, :operatingsystem => :fedora
   defaultfor :osfamily => :suse
+  defaultfor :osfamily => :coreos
   defaultfor :operatingsystem => :debian, :operatingsystemmajrelease => "8"
   defaultfor :operatingsystem => :ubuntu, :operatingsystemmajrelease => ["15.04","15.10","16.04","16.10"]
   defaultfor :operatingsystem => :cumuluslinux, :operatingsystemmajrelease => ["3"]
@@ -29,7 +30,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   def self.instances
     i = []
     output = systemctl('list-unit-files', '--type', 'service', '--full', '--all',  '--no-pager')
-    output.scan(/^(\S+)\s+(disabled|enabled|masked)\s*$/i).each do |m|
+    output.scan(/^(\S+)\s+(disabled|enabled|masked|indirect)\s*$/i).each do |m|
       i << new(:name => m[0])
     end
     return i
@@ -82,6 +83,9 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     # We only return :mask if we're trying to mask the service. This prevents
     # flapping when simply trying to disable a masked service.
     return :mask if (@resource[:enable] == :mask) && (output == 'masked')
+
+    # The indirect state indicates that the unit is not enabled.
+    return :false if output == 'indirect'
     return :true if (code == 0)
     if (output.empty?) && (code > 0) && (Facter.value(:osfamily).downcase == 'debian')
       ret = debian_enabled?

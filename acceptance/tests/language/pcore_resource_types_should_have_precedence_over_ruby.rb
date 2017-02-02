@@ -68,6 +68,8 @@ MANIFEST
 
     teardown do
       restore_puppet_conf_from_backup( master, backup_file )
+      # See PUP-6995
+      on(master, "rm -f #{master.puppet('master')['yamldir']}/node/*.yaml")
     end
     #}}}
 

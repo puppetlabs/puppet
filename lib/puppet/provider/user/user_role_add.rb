@@ -12,6 +12,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
   options :home, :flag => "-d", :method => :dir
   options :comment, :method => :gecos
   options :groups, :flag => "-G"
+  options :shell, :flag => "-s"
   options :roles, :flag => "-R"
   options :auths, :flag => "-A"
   options :profiles, :flag => "-P"
@@ -26,7 +27,21 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
     value !~ /\s/
   end
 
+  def shell=(value)
+    check_valid_shell
+    set("shell", value)
+  end
+
   has_features :manages_homedir, :allows_duplicates, :manages_solaris_rbac, :manages_passwords, :manages_password_age, :manages_shell
+
+  def check_valid_shell
+    unless File.exists?(@resource.should(:shell))
+      raise(Puppet::Error, "Shell #{@resource.should(:shell)} must exist")
+    end
+    unless File.executable?(@resource.should(:shell).to_s)
+      raise(Puppet::Error, "Shell #{@resource.should(:shell)} must be executable")
+    end
+  end
 
   #must override this to hand the keyvalue pairs
   def add_properties

@@ -10,11 +10,14 @@ module Puppet
   #
   # @api public
   module Pops
-    EMPTY_HASH = {}.freeze
+     EMPTY_HASH = {}.freeze
     EMPTY_ARRAY = [].freeze
     EMPTY_STRING = ''.freeze
 
-    require 'semantic'
+    DOUBLE_COLON = '::'.freeze
+    USCORE = '_'.freeze
+
+    require 'semantic_puppet'
 
     require 'puppet/pops/patterns'
     require 'puppet/pops/utils'
@@ -33,12 +36,6 @@ module Puppet
     require 'puppet/pops/label_provider'
     require 'puppet/pops/validation'
     require 'puppet/pops/issue_reporter'
-    require 'puppet/pops/lookup'
-    require 'puppet/pops/lookup/interpolation'
-    require 'puppet/pops/lookup/invocation'
-    require 'puppet/pops/lookup/sub_lookup'
-    require 'puppet/pops/lookup/explainer'
-
     require 'puppet/pops/model/model'
 
     require 'puppet/pops/time/timespan'
@@ -47,7 +44,7 @@ module Puppet
     # (the Types module initializes itself)
     require 'puppet/pops/types/types'
     require 'puppet/pops/types/string_converter'
-    require 'puppet/pops/lookup/context'
+    require 'puppet/pops/lookup'
 
     require 'puppet/pops/merge_strategy'
 

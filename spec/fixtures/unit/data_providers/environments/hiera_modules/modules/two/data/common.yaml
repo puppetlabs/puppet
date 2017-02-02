@@ -1,4 +1,4 @@
 ---
 lookup_options:
-  roles::devco::packages:
+  two::arg:
     merge: unique

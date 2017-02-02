@@ -1,10 +1,10 @@
 module Puppet::Pops
 module Types
   class PAbstractTimeDataType < PAbstractRangeType
-    # @param [AbstractTime] min lower bound for this type. Nil or :default means unbounded
-    # @param [AbstractTime] max upper bound for this type. Nil or :default means unbounded
-    def initialize(min = nil, max = nil)
-      super(convert_arg(min, true), convert_arg(max, false))
+    # @param from [AbstractTime] lower bound for this type. Nil or :default means unbounded
+    # @param to [AbstractTime] upper bound for this type. Nil or :default means unbounded
+    def initialize(from = nil, to = nil)
+      super(convert_arg(from, true), convert_arg(to, false))
     end
 
     def convert_arg(arg, min)
@@ -51,8 +51,8 @@ module Types
   class PTimespanType < PAbstractTimeDataType
     def self.register_ptype(loader, ir)
       create_ptype(loader, ir, 'ScalarType',
-        'from' => { KEY_TYPE => PTimespanType::DEFAULT, KEY_VALUE => :default },
-        'to' => { KEY_TYPE => PTimespanType::DEFAULT, KEY_VALUE => :default }
+        'from' => { KEY_TYPE => POptionalType.new(PTimespanType::DEFAULT), KEY_VALUE => nil },
+        'to' => { KEY_TYPE => POptionalType.new(PTimespanType::DEFAULT), KEY_VALUE => nil }
       )
     end
 

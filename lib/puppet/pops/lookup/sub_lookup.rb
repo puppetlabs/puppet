@@ -1,6 +1,8 @@
 module Puppet::Pops
 module Lookup
 module SubLookup
+  SPECIAL = /['"\.]/
+
   # Split key into segments. A segment may be a quoted string (both single and double quotes can
   # be used) and the segment separator is the '.' character. Whitespace will be trimmed off on
   # both sides of each segment. Whitespace within quotes are not trimmed.
@@ -15,10 +17,11 @@ module SubLookup
   #
   # @api public
   def split_key(key)
+    return [key] if key.match(SPECIAL).nil?
     segments = key.split(/(\s*"[^"]+"\s*|\s*'[^']+'\s*|[^'".]+)/)
     if segments.empty?
       # Only happens if the original key was an empty string
-      ''
+      raise yield('Syntax error')
     elsif segments.shift == ''
       count = segments.size
       raise yield('Syntax error') unless count > 0
@@ -40,13 +43,14 @@ module SubLookup
   # implements the '#[]' method.
   #
   # @param key [String] the original key (only used for error messages)
-  # @param lookup_invocation [Invocation] The current lookup invocation
+  # @param context [Context] The current lookup context
   # @param segments [Array<String>] the segments to use for lookup
   # @param value [Object] the value to access using the segments
   # @return [Object] the value obtained when accessing the value
   #
   # @api public
-  def sub_lookup(key, lookup_invocation, segments, value)
+  def sub_lookup(key, context, segments, value)
+    lookup_invocation = context.is_a?(Invocation) ? context : context.invocation
     lookup_invocation.with(:sub_lookup, segments) do
       segments.each do |segment|
         lookup_invocation.with(:segment, segment) do
@@ -54,7 +58,7 @@ module SubLookup
             lookup_invocation.report_not_found(segment)
             throw :no_such_key
           end
-          if segment =~ /^[0-9]+$/
+          if segment.is_a?(Integer) || segment =~ /^[0-9]+$/
             segment = segment.to_i
             unless value.instance_of?(Array)
               raise Puppet::DataBinding::LookupError,

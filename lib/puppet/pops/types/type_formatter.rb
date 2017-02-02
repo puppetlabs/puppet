@@ -42,17 +42,24 @@ class TypeFormatter
   #
   # @api public
   def indented_string(t, indent = 0, indent_width = 2)
+    @bld = ''
+    append_indented_string(t, indent, indent_width)
+    @bld
+  end
+
+  # @api private
+  def append_indented_string(t, indent = 0, indent_width = 2, skip_initial_indent = false)
+    save_indent = @indent
+    save_indent_width = @indent_width
     @indent = indent
     @indent_width = indent_width
     begin
-      @bld = ''
-      (@indent * @indent_width).times { @bld << ' ' }
+      (@indent * @indent_width).times { @bld << ' ' } unless skip_initial_indent
       append_string(t)
       @bld << "\n"
-      @bld
     ensure
-      @indent = nil
-      @indent_width = nil
+      @indent = save_indent
+      @indent_width = save_indent_width
     end
   end
 
@@ -169,11 +176,10 @@ class TypeFormatter
   # @api private
   def string_PStringType(t)
     range = range_array_part(t.size_type)
-    append_array('String', range.empty?) do
+    append_array('String', range.empty? && !(@debug && !t.value.nil?)) do
       if @debug
-        append_elements(range, true)
-        append_strings(t.values, true)
-        chomp_list
+        append_elements(range, !t.value.nil?)
+        append_string(t.value) unless t.value.nil?
       else
         append_elements(range)
       end
@@ -297,6 +303,14 @@ class TypeFormatter
     append_array('Collection', range.empty? ) { append_elements(range) }
   end
 
+  def string_PuppetObject(t)
+    @bld << t._ptype.name << '('
+    append_indented_string(t.i12n_hash, @indent || 0, @indent_width || 2, true)
+    @bld.chomp!
+    @bld << ')'
+    newline if @indent
+  end
+
   # @api private
   def string_PUnitType(_)
     @bld << 'Unit'
@@ -326,7 +340,7 @@ class TypeFormatter
       append_array('Hash') { append_strings([0, 0]) }
     else
       append_array('Hash', t == PHashType::DATA) do
-        append_strings([t.key_type, t.element_type], true)
+        append_strings([t.key_type, t.value_type], true)
         append_elements(range_array_part(t.size_type), true)
         chomp_list
       end
@@ -356,8 +370,8 @@ class TypeFormatter
   def string_PNotUndefType(t)
     contained_type = t.type
     append_array('NotUndef', contained_type.nil? || contained_type.class == PAnyType) do
-      if contained_type.is_a?(PStringType) && contained_type.values.size == 1
-        append_string(contained_type.values[0])
+      if contained_type.is_a?(PStringType) && !contained_type.value.nil?
+        append_string(contained_type.value)
       else
         append_string(contained_type)
       end
@@ -414,7 +428,7 @@ class TypeFormatter
     if @expanded
       append_object_hash(t.i12n_hash(@type_set.nil? || !@type_set.defines_type?(t)))
     else
-      @bld << (@type_set ? @type_set.name_for(t) : t.label)
+      @bld << (@type_set ? @type_set.name_for(t, t.label) : t.label)
     end
   end
 
@@ -427,8 +441,8 @@ class TypeFormatter
   def string_POptionalType(t)
     optional_type = t.optional_type
     append_array('Optional', optional_type.nil?) do
-      if optional_type.is_a?(PStringType) && optional_type.values.size == 1
-        append_string(optional_type.values[0])
+      if optional_type.is_a?(PStringType) && !optional_type.value.nil?
+        append_string(optional_type.value)
       else
         append_string(optional_type)
       end
@@ -440,8 +454,14 @@ class TypeFormatter
     expand = @expanded
     if expand && t.self_recursion?
       @guard ||= RecursionGuard.new
-      expand = (@guard.add_this(t) & RecursionGuard::SELF_RECURSION_IN_THIS) == 0
+      @guard.with_this(t) { |state| format_type_alias_type(t, (state & RecursionGuard::SELF_RECURSION_IN_THIS) == 0) }
+    else
+      format_type_alias_type(t, expand)
     end
+  end
+
+  # @api private
+  def format_type_alias_type(t, expand)
     if @type_set.nil?
       @bld << t.name
       if expand
@@ -452,7 +472,7 @@ class TypeFormatter
       if expand && @type_set.defines_type?(t)
         append_string(t.resolved_type)
       else
-        @bld << @type_set.name_for(t)
+        @bld << @type_set.name_for(t, t.name)
       end
     end
   end

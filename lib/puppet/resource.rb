@@ -1,7 +1,6 @@
 require 'puppet'
 require 'puppet/util/tagging'
 require 'puppet/parameter'
-require 'puppet/data_providers'
 
 # The simplest resource class.  Eventually it will function as the
 # base class for all resource-like behaviour.
@@ -45,7 +44,7 @@ class Puppet::Resource
       raise Puppet::Error, 'Unable to deserialize non-Data type parameters unless a deserializer is provided' unless json_deserializer
       reader = json_deserializer.reader
       ext_params.each do |param, value|
-        reader.re_initialize([value])
+        reader.re_initialize(value)
         resource[param] = json_deserializer.read
       end
     end
@@ -104,7 +103,7 @@ class Puppet::Resource
         writer.clear_io
         json_serializer.write(ext_params[key])
         writer.finish
-        ext_params[key] = writer.to_a[0]
+        ext_params[key] = writer.to_a
       end
       data['ext_parameters'] = ext_params
     end

@@ -45,4 +45,6 @@ Puppet::Indirector::Face.define(:status, '0.0.1') do
 
     $ puppet status find --terminus rest
   EOT
+  
+  deprecate
 end

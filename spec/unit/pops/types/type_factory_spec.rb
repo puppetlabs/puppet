@@ -82,7 +82,7 @@ describe 'The type factory' do
     end
 
     it 'sem_ver(r1, r2) returns constrained PSemVerType' do
-      expect(TypeFactory.sem_ver('1.x', '3.x').ranges).to include(Semantic::VersionRange.parse('1.x'), Semantic::VersionRange.parse('3.x'))
+      expect(TypeFactory.sem_ver('1.x', '3.x').ranges).to include(SemanticPuppet::VersionRange.parse('1.x'), SemanticPuppet::VersionRange.parse('3.x'))
     end
 
     it 'sem_ver_range() returns PSemVerRangeType' do
@@ -173,7 +173,7 @@ describe 'The type factory' do
       ht = TypeFactory.hash_of_data
       expect(ht.class()).to eq(PHashType)
       expect(ht.key_type.class).to eq(PScalarType)
-      expect(ht.element_type.class).to eq(PDataType)
+      expect(ht.value_type.class).to eq(PDataType)
     end
 
     it 'ruby(1) returns PRuntimeType[ruby, \'Fixnum\']' do
@@ -211,7 +211,7 @@ describe 'The type factory' do
       expect(t.size_type.from).to eq(0)
       expect(t.size_type.to).to eq(0)
       expect(t.key_type).to eq(Puppet::Pops::Types::PUnitType::DEFAULT)
-      expect(t.element_type).to eq(Puppet::Pops::Types::PUnitType::DEFAULT)
+      expect(t.value_type).to eq(Puppet::Pops::Types::PUnitType::DEFAULT)
     end
 
     context 'callable types' do

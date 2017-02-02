@@ -67,7 +67,8 @@ describe Puppet::Resource::Catalog, "when compiling" do
     Puppet[:classfile] = File.expand_path("/class/file")
 
     fh = mock 'filehandle'
-    File.expects(:open).with(Puppet[:classfile], "w").yields fh
+    classfile = Puppet.settings.setting(:classfile)
+    Puppet::FileSystem.expects(:open).with(classfile.value, classfile.mode.to_i(8), "w:UTF-8").yields fh
 
     fh.expects(:puts).with "foo\nbar"
 
@@ -719,7 +720,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should only write when it is a host catalog" do
-      File.expects(:open).with(@file).never
+      Puppet::FileSystem.expects(:open).with(@file, 0640, "w:UTF-8").never
       @catalog.host_config = false
       Puppet[:graph] = true
       @catalog.write_graph(@name)
@@ -850,10 +851,15 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to pson"
         Puppet[:rich_data] = true
       end
 
+      after(:each) do
+        Puppet[:rich_data] = false
+      end
+
+
       let(:catalog_w_regexp)  { compile_to_catalog("notify {'foo': message => /[a-z]+/ }") }
 
       it 'should generate ext_parameters for parameter values that are not Data' do
-        expect(catalog_w_regexp.to_json).to include('"ext_parameters":{"message":[48,"[a-z]+"]}')
+        expect(catalog_w_regexp.to_json).to include('"ext_parameters":{"message":[[48,"[a-z]+"]]}')
       end
 
       it 'should validate ext_parameters against the schema' do
@@ -871,16 +877,16 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to pson"
         catalog = compile_to_catalog("notify {'foo': message => SemVer('1.0.0') }")
         catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog.to_json))
         message = catalog2.resource('notify', 'foo')['message']
-        expect(message).to be_a(Semantic::Version)
-        expect(message).to eql(Semantic::Version.parse('1.0.0'))
+        expect(message).to be_a(SemanticPuppet::Version)
+        expect(message).to eql(SemanticPuppet::Version.parse('1.0.0'))
       end
 
       it 'should read and convert ext_parameters containing VersionRange from json' do
         catalog = compile_to_catalog("notify {'foo': message => SemVerRange('>=1.0.0') }")
         catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog.to_json))
         message = catalog2.resource('notify', 'foo')['message']
-        expect(message).to be_a(Semantic::VersionRange)
-        expect(message).to eql(Semantic::VersionRange.parse('>=1.0.0'))
+        expect(message).to be_a(SemanticPuppet::VersionRange)
+        expect(message).to eql(SemanticPuppet::VersionRange.parse('>=1.0.0'))
       end
 
       it 'should read and convert ext_parameters containing Timespan from json' do
@@ -904,7 +910,7 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to pson"
         catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog.to_json))
         message = catalog2.resource('notify', 'foo')['message']
         expect(message).to be_a(Hash)
-        expect(message['version']).to eql(Semantic::Version.parse('1.0.0'))
+        expect(message['version']).to eql(SemanticPuppet::Version.parse('1.0.0'))
         expect(message['time']).to eql(Puppet::Pops::Time::Timestamp.parse('2016-09-15T08:32:16.123 UTC'))
       end
 
@@ -913,7 +919,7 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to pson"
         catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog.to_json))
         message = catalog2.resource('notify', 'foo')['message']
         expect(message).to be_a(Array)
-        expect(message[0]).to eql(Semantic::Version.parse('1.0.0'))
+        expect(message[0]).to eql(SemanticPuppet::Version.parse('1.0.0'))
         expect(message[1]).to eql(Puppet::Pops::Time::Timestamp.parse('2016-09-15T08:32:16.123 UTC'))
       end
     end

@@ -1,0 +1,79 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2017 Puppet, Inc.
+# This file is distributed under the same license as the Puppet automation framework package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2017.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Puppet automation framework 4.8.2-338-g562b302\n"
+"\n"
+"Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
+"POT-Creation-Date: 2017-01-25 09:32-0800\n"
+"PO-Revision-Date: 2017-01-25 09:32-0800\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+msgid "Apache 2 license; see COPYING"
+msgstr ""
+
+msgid "Display Puppet help."
+msgstr ""
+
+msgid "Display help about Puppet subcommands and their actions."
+msgstr ""
+
+msgid "[<subcommand>] [<action>]"
+msgstr ""
+
+msgid "Short help text for the specified subcommand or action."
+msgstr ""
+
+msgid ""
+"      Get help for an action:\n"
+"\n"
+"      $ puppet help\n"
+msgstr ""
+
+msgid "--version VERSION"
+msgstr ""
+
+msgid "The version of the subcommand for which to show help."
+msgstr ""
+
+msgid "Puppet help only takes two (optional) arguments: a subcommand and an action"
+msgstr ""
+
+msgid "Version only makes sense when a Faces subcommand is given"
+msgstr ""
+
+msgid "Legacy subcommands don't take actions"
+msgstr ""
+
+msgid ""
+"Could not load help for the application #{applicationname}.\n"
+"Please check the error logs for more information.\n"
+"\n"
+"Detail: \"#{detail.message}\"\n"
+msgstr ""
+
+msgid ""
+"Could not load help for the face #{facename}.\n"
+"Please check the error logs for more information.\n"
+"\n"
+"Detail: \"#{detail.message}\"\n"
+msgstr ""
+
+msgid "\"Unable to load action #{actionname} from #{face}\""
+msgstr ""
+
+msgid " (Deprecated)"
+msgstr ""
+
+msgid "! Subcommand unavailable due to error. Check error logs."
+msgstr ""

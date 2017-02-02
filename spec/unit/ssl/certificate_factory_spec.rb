@@ -32,12 +32,12 @@ describe Puppet::SSL::CertificateFactory do
 
     it "should set the certificate's subject to the CSR's subject" do
       cert = subject.build(:server, csr, issuer, serial)
-      expect(cert.subject).to eql x509_name
+      expect(cert.subject).to eq x509_name
     end
 
     it "should set the certificate's issuer to the Issuer's subject" do
       cert = subject.build(:server, csr, issuer, serial)
-      expect(cert.issuer).to eql issuer.subject
+      expect(cert.issuer).to eq issuer.subject
     end
 
     it "should set the certificate's public key to the CSR's public key" do

@@ -206,6 +206,17 @@ class Puppet::Module
     @metadata_file = File.join(path, "metadata.json")
   end
 
+  def hiera_conf_file
+    unless defined?(@hiera_conf_file)
+       @hiera_conf_file = path.nil? ? nil : File.join(path, Puppet::Pops::Lookup::HieraConfig::CONFIG_FILE_NAME)
+    end
+    @hiera_conf_file
+  end
+
+  def has_hiera_conf?
+    hiera_conf_file.nil? ? false : Puppet::FileSystem.exist?(hiera_conf_file)
+  end
+
   def modulepath
     File.dirname(path) if path
   end
@@ -309,8 +320,9 @@ class Puppet::Module
 
       if version_string
         begin
-          required_version_semver_range = SemVer[version_string]
-          actual_version_semver = SemVer.new(dep_mod.version)
+          # Suppress deprecation warnings from SemVer in 4.9. In 5.0, this will be SemanticPuppet instead
+          required_version_semver_range = SemVer[version_string, true]
+          actual_version_semver = SemVer.new(dep_mod.version, true)
         rescue ArgumentError
           error_details[:reason] = :non_semantic_version
           unmet_dependencies << error_details

@@ -4,6 +4,18 @@ require 'puppet/pops/lookup'
 
 describe Puppet::Application::Lookup do
 
+  def run_lookup(lookup)
+    capture = StringIO.new
+    saved_stdout = $stdout
+    begin
+      $stdout = capture
+      expect { lookup.run_command }.to exit_with(0)
+    ensure
+      $stdout = saved_stdout
+    end
+    capture.string.strip
+  end
+
   context "when running with incorrect command line options" do
     let (:lookup) { Puppet::Application[:lookup] }
 
@@ -51,7 +63,7 @@ describe Puppet::Application::Lookup do
 
       (Puppet::Pops::Lookup).expects(:lookup).with(['atton', 'kreia'], nil, nil, false, expected_merge, anything).returns('rand')
 
-      expect { lookup.run_command }.to output("rand\n").to_stdout
+      expect(run_lookup(lookup)).to eql("rand")
     end
 
     %w(first unique hash deep).each do |opt|
@@ -62,7 +74,7 @@ describe Puppet::Application::Lookup do
         lookup.command_line.stubs(:args).returns(['atton', 'kreia'])
         lookup.stubs(:generate_scope).yields('scope')
         Puppet::Pops::Lookup.stubs(:lookup).returns('rand')
-        expect { lookup.run_command }.to output("--- rand\n...\n").to_stdout
+        expect(run_lookup(lookup)).to eql("--- rand\n...")
       end
     end
 
@@ -73,7 +85,7 @@ describe Puppet::Application::Lookup do
 
       Puppet::Pops::Lookup.stubs(:lookup).returns('rand')
 
-      expect { lookup.run_command }.to output("--- rand\n...\n").to_stdout
+      expect(run_lookup(lookup)).to eql("--- rand\n...")
     end
   end
 
@@ -88,69 +100,161 @@ describe Puppet::Application::Lookup do
 
     let(:node) { Puppet::Node.new("testnode", :facts => facts, :environment => 'production') }
 
-    let(:expected_json_hash) { {
-      'type' => 'merge',
-      'merge' => 'first',
-      'event' => 'result',
-      'value' => 'This is A',
-      'branches' => [
-      { 'key' => 'a',
-        'event' => 'not_found',
-        'type' => 'global',
-        'name' => 'hiera'
-      },
+    let(:expected_json_hash) {
       {
-        'type' => 'data_provider',
-        'name' => 'Hiera Data Provider, version 4',
-        'configuration_path' => "#{environmentpath}/production/hiera.yaml",
-        'branches' => [
-        {
-          'name' => 'common',
-          'type' => 'data_provider',
-          'branches' => [
-          {
-            'key' => 'a',
-            'value' => 'This is A',
-            'event' => 'found',
-            'type' => 'path',
-            'original_path' => 'common',
-            'path' => "#{environmentpath}/production/data/common.yaml",
-          }]
-        }]
-      }]
-    } }
-
-    let(:expected_yaml_hash) { {
-      :type => :merge,
-      :merge => :first,
-      :event => :result,
-      :value => 'This is A',
-      :branches => [
-        { :key => 'a',
-          :event => :not_found,
-          :type => :global,
-          :name => :hiera
-        },
-        {
-          :type => :data_provider,
-          :name => 'Hiera Data Provider, version 4',
-          :configuration_path => "#{environmentpath}/production/hiera.yaml",
-          :branches => [
+        'branches' =>
+          [
             {
-              :type => :data_provider,
-              :name => 'common',
-              :branches => [
+              'branches'=>
+                [
+                  {
+                    'key'=>'lookup_options',
+                    'event'=>'not_found',
+                    'type'=>'data_provider',
+                    'name'=>'Global Data Provider (hiera configuration version 5)'
+                  },
+                  {
+                    'branches'=>
+                      [
+                        {
+                          'branches'=>
+                            [
+                              {
+                                'key' => 'lookup_options',
+                                'value' => {'a'=>'first'},
+                                'event'=>'found',
+                                'type'=>'path',
+                                'original_path'=>'common.yaml',
+                                'path'=>"#{environmentpath}/production/data/common.yaml"
+                              }
+                            ],
+                          'type'=>'data_provider',
+                          'name'=>'Hierarchy entry "Common"'
+                        }
+                      ],
+                    'type'=>'data_provider',
+                    'name'=>'Environment Data Provider (hiera configuration version 5)'
+                  }
+                ],
+              'key'=>'lookup_options',
+              'type'=>'root'
+            },
+            {
+              'branches'=>
+                [
+                  {
+                    'key'=>'a',
+                    'event'=>'not_found',
+                    'type'=>'data_provider',
+                    'name'=>'Global Data Provider (hiera configuration version 5)'
+                  },
+                  {
+                    'branches'=>
+                      [
+                        {
+                          'branches'=>
+                            [
+                              {
+                                'key'=>'a',
+                                'value'=>'This is A',
+                                'event'=>'found',
+                                'type'=>'path',
+                                'original_path'=>'common.yaml',
+                                'path'=>"#{environmentpath}/production/data/common.yaml"
+                              }
+                            ],
+                          'type'=>'data_provider',
+                          'name'=>'Hierarchy entry "Common"'
+                        }
+                      ],
+                    'type'=>'data_provider',
+                    'name'=>'Environment Data Provider (hiera configuration version 5)'
+                  }
+                ],
+              'key'=>'a',
+              'type'=>'root'
+            }
+          ]
+      }
+    }
+
+    let(:expected_yaml_hash) {
+      {
+      :branches =>
+        [
+          {
+            :branches=>
+              [
                 {
-                  :key => 'a',
-                  :value => 'This is A',
-                  :event => :found,
-                  :type => :path,
-                  :original_path => 'common',
-                  :path => "#{environmentpath}/production/data/common.yaml",
-                }]
-            }]
-        }]
-    } }
+                  :key=>'lookup_options',
+                  :event=>:not_found,
+                  :type=>:data_provider,
+                  :name=>'Global Data Provider (hiera configuration version 5)'
+                },
+                {
+                  :branches=>
+                    [
+                      {
+                        :branches=>
+                          [
+                            {
+                              :key => 'lookup_options',
+                              :value => {'a'=>'first'},
+                              :event=>:found,
+                              :type=>:path,
+                              :original_path=>'common.yaml',
+                              :path=>"#{environmentpath}/production/data/common.yaml"
+                            }
+                          ],
+                        :type=>:data_provider,
+                        :name=>'Hierarchy entry "Common"'
+                      }
+                  ],
+                  :type=>:data_provider,
+                  :name=>'Environment Data Provider (hiera configuration version 5)'
+                }
+              ],
+            :key=>'lookup_options',
+            :type=>:root
+          },
+          {
+            :branches=>
+              [
+                {
+                  :key=>'a',
+                  :event=>:not_found,
+                  :type=>:data_provider,
+                  :name=>'Global Data Provider (hiera configuration version 5)'
+                },
+                {
+                  :branches=>
+                    [
+                      {
+                        :branches=>
+                        [
+                          {
+                            :key=>'a',
+                            :value=>'This is A',
+                            :event=>:found,
+                            :type=>:path,
+                            :original_path=>'common.yaml',
+                            :path=>"#{environmentpath}/production/data/common.yaml"
+                          }
+                        ],
+                        :type=>:data_provider,
+                        :name=>'Hierarchy entry "Common"'
+                      }
+                    ],
+                  :type=>:data_provider,
+                  :name=>'Environment Data Provider (hiera configuration version 5)'
+                }
+              ],
+            :key=>'a',
+            :type=>:root
+          }
+        ]
+      }
+    }
 
     around(:each) do |example|
       # Initialize settings to get a full compile as close as possible to a real
@@ -167,23 +271,27 @@ describe Puppet::Application::Lookup do
       lookup.options[:explain] = true
       lookup.command_line.stubs(:args).returns(['a'])
       logs = []
-      begin
-        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
-          expect { lookup.run_command }.to output(<<-EXPLANATION).to_stdout
-Merge strategy first
-  Data Binding "hiera"
-    No such key: "a"
-  Data Provider "Hiera Data Provider, version 4"
-    ConfigurationPath "#{environmentpath}/production/hiera.yaml"
-    Data Provider "common"
+      Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+        expect(run_lookup(lookup)).to eql(<<-EXPLANATION.chomp)
+Searching for "lookup_options"
+  Global Data Provider (hiera configuration version 5)
+    No such key: "lookup_options"
+  Environment Data Provider (hiera configuration version 5)
+    Hierarchy entry "Common"
       Path "#{environmentpath}/production/data/common.yaml"
-        Original path: "common"
+        Original path: "common.yaml"
+        Found key: "lookup_options" value: {
+          "a" => "first"
+        }
+Searching for "a"
+  Global Data Provider (hiera configuration version 5)
+    No such key: "a"
+  Environment Data Provider (hiera configuration version 5)
+    Hierarchy entry "Common"
+      Path "#{environmentpath}/production/data/common.yaml"
+        Original path: "common.yaml"
         Found key: "a" value: "This is A"
-  Merged result: "This is A"
         EXPLANATION
-          end
-      rescue SystemExit => e
-        expect(e.status).to eq(0)
       end
       expect(logs.any? { |log| log.level == :debug }).to be_falsey
     end
@@ -213,63 +321,70 @@ Merge strategy first
       lookup.command_line.stubs(:args).returns(['a'])
       Puppet.debug = true
       logs = []
-      begin
-        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
-          expect { lookup.run_command }.to output(<<-EXPLANATION).to_stdout
-Merge strategy first
-  Data Binding "hiera"
-    No such key: "a"
-  Data Provider "Hiera Data Provider, version 4"
-    ConfigurationPath "#{environmentpath}/production/hiera.yaml"
-    Data Provider "common"
+      Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+        expect(run_lookup(lookup)).to eql(<<-EXPLANATION.chomp)
+Searching for "lookup_options"
+  Global Data Provider (hiera configuration version 5)
+    No such key: "lookup_options"
+  Environment Data Provider (hiera configuration version 5)
+    Hierarchy entry "Common"
       Path "#{environmentpath}/production/data/common.yaml"
-        Original path: "common"
+        Original path: "common.yaml"
+        Found key: "lookup_options" value: {
+          "a" => "first"
+        }
+Searching for "a"
+  Global Data Provider (hiera configuration version 5)
+    No such key: "a"
+  Environment Data Provider (hiera configuration version 5)
+    Hierarchy entry "Common"
+      Path "#{environmentpath}/production/data/common.yaml"
+        Original path: "common.yaml"
         Found key: "a" value: "This is A"
-  Merged result: "This is A"
-          EXPLANATION
-        end
-      rescue SystemExit => e
-        expect(e.status).to eq(0)
+        EXPLANATION
       end
       logs = logs.select { |log| log.level == :debug }.map { |log| log.message }
       expect(logs).to include(<<-EXPLANATION.chomp)
 Lookup of 'a'
-  Merge strategy first
-    Data Binding "hiera"
-      No such key: "a"
-    Data Provider "Hiera Data Provider, version 4"
-      ConfigurationPath "#{environmentpath}/production/hiera.yaml"
-      Data Provider "common"
+  Searching for "lookup_options"
+    Global Data Provider (hiera configuration version 5)
+      No such key: "lookup_options"
+    Environment Data Provider (hiera configuration version 5)
+      Hierarchy entry "Common"
         Path "#{environmentpath}/production/data/common.yaml"
-          Original path: "common"
+          Original path: "common.yaml"
+          Found key: "lookup_options" value: {
+            "a" => "first"
+          }
+  Searching for "a"
+    Global Data Provider (hiera configuration version 5)
+      No such key: "a"
+    Environment Data Provider (hiera configuration version 5)
+      Hierarchy entry "Common"
+        Path "#{environmentpath}/production/data/common.yaml"
+          Original path: "common.yaml"
           Found key: "a" value: "This is A"
-    Merged result: "This is A"
       EXPLANATION
     end
 
     it '--explain-options produces human readable text of a hash merge' do
       lookup.options[:node] = node
       lookup.options[:explain_options] = true
-      begin
-        expect { lookup.run_command }.to output(<<-EXPLANATION).to_stdout
+      expect(run_lookup(lookup)).to eql(<<-EXPLANATION.chomp)
 Merge strategy hash
-  Data Binding "hiera"
+  Global Data Provider (hiera configuration version 5)
     No such key: "lookup_options"
-  Data Provider "Hiera Data Provider, version 4"
-    ConfigurationPath "#{environmentpath}/production/hiera.yaml"
-    Data Provider "common"
+  Environment Data Provider (hiera configuration version 5)
+    Hierarchy entry "Common"
       Path "#{environmentpath}/production/data/common.yaml"
-        Original path: "common"
+        Original path: "common.yaml"
         Found key: "lookup_options" value: {
           "a" => "first"
         }
   Merged result: {
     "a" => "first"
   }
-        EXPLANATION
-      rescue SystemExit => e
-        expect(e.status).to eq(0)
-      end
+      EXPLANATION
     end
 
     it '--explain-options produces human readable text of a hash merge and --debug produces the same output to debug logger' do
@@ -277,17 +392,15 @@ Merge strategy hash
       lookup.options[:explain_options] = true
       Puppet.debug = true
       logs = []
-      begin
-        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
-          expect { lookup.run_command }.to output(<<-EXPLANATION).to_stdout
+      Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+        expect(run_lookup(lookup)).to eql(<<-EXPLANATION.chomp)
 Merge strategy hash
-  Data Binding "hiera"
+  Global Data Provider (hiera configuration version 5)
     No such key: "lookup_options"
-  Data Provider "Hiera Data Provider, version 4"
-    ConfigurationPath "#{environmentpath}/production/hiera.yaml"
-    Data Provider "common"
+  Environment Data Provider (hiera configuration version 5)
+    Hierarchy entry "Common"
       Path "#{environmentpath}/production/data/common.yaml"
-        Original path: "common"
+        Original path: "common.yaml"
         Found key: "lookup_options" value: {
           "a" => "first"
         }
@@ -295,28 +408,24 @@ Merge strategy hash
     "a" => "first"
   }
           EXPLANATION
-        end
-      rescue SystemExit => e
-        expect(e.status).to eq(0)
-      end
       logs = logs.select { |log| log.level == :debug }.map { |log| log.message }
       expect(logs).to include(<<-EXPLANATION.chomp)
 Lookup of '__global__'
   Merge strategy hash
-    Data Binding "hiera"
+    Global Data Provider (hiera configuration version 5)
       No such key: "lookup_options"
-    Data Provider "Hiera Data Provider, version 4"
-      ConfigurationPath "#{environmentpath}/production/hiera.yaml"
-      Data Provider "common"
+    Environment Data Provider (hiera configuration version 5)
+      Hierarchy entry "Common"
         Path "#{environmentpath}/production/data/common.yaml"
-          Original path: "common"
+          Original path: "common.yaml"
           Found key: "lookup_options" value: {
             "a" => "first"
           }
     Merged result: {
       "a" => "first"
     }
-      EXPLANATION
+        EXPLANATION
+      end
     end
 
     it '--explain produces human readable text of a hash merge when using both --explain and --explain-options' do
@@ -324,38 +433,26 @@ Lookup of '__global__'
       lookup.options[:explain] = true
       lookup.options[:explain_options] = true
       lookup.command_line.stubs(:args).returns(['a'])
-      begin
-        expect { lookup.run_command }.to output(<<-EXPLANATION).to_stdout
+      expect(run_lookup(lookup)).to eql(<<-EXPLANATION.chomp)
 Searching for "lookup_options"
-  Merge strategy hash
-    Data Binding "hiera"
-      No such key: "lookup_options"
-    Data Provider "Hiera Data Provider, version 4"
-      ConfigurationPath "#{environmentpath}/production/hiera.yaml"
-      Data Provider "common"
-        Path "#{environmentpath}/production/data/common.yaml"
-          Original path: "common"
-          Found key: "lookup_options" value: {
-            "a" => "first"
-          }
-    Merged result: {
-      "a" => "first"
-    }
+  Global Data Provider (hiera configuration version 5)
+    No such key: "lookup_options"
+  Environment Data Provider (hiera configuration version 5)
+    Hierarchy entry "Common"
+      Path "#{environmentpath}/production/data/common.yaml"
+        Original path: "common.yaml"
+        Found key: "lookup_options" value: {
+          "a" => "first"
+        }
 Searching for "a"
-  Merge strategy first
-    Data Binding "hiera"
-      No such key: "a"
-    Data Provider "Hiera Data Provider, version 4"
-      ConfigurationPath "#{environmentpath}/production/hiera.yaml"
-      Data Provider "common"
-        Path "#{environmentpath}/production/data/common.yaml"
-          Original path: "common"
-          Found key: "a" value: "This is A"
-    Merged result: "This is A"
-        EXPLANATION
-      rescue SystemExit => e
-        expect(e.status).to eq(0)
-      end
+  Global Data Provider (hiera configuration version 5)
+    No such key: "a"
+  Environment Data Provider (hiera configuration version 5)
+    Hierarchy entry "Common"
+      Path "#{environmentpath}/production/data/common.yaml"
+        Original path: "common.yaml"
+        Found key: "a" value: "This is A"
+      EXPLANATION
     end
 
     it 'can produce a yaml explanation' do
@@ -363,17 +460,7 @@ Searching for "a"
       lookup.options[:explain] = true
       lookup.options[:render_as] = :yaml
       lookup.command_line.stubs(:args).returns(['a'])
-      save_stdout = $stdout
-      output = nil
-      begin
-        $stdout = StringIO.new
-        lookup.run_command
-        output = $stdout.string
-      rescue SystemExit => e
-        expect(e.status).to eq(0)
-      ensure
-        $stdout = save_stdout
-      end
+      output = run_lookup(lookup)
       expect(YAML.load(output)).to eq(expected_yaml_hash)
     end
 
@@ -382,17 +469,7 @@ Searching for "a"
       lookup.options[:explain] = true
       lookup.options[:render_as] = :json
       lookup.command_line.stubs(:args).returns(['a'])
-      save_stdout = $stdout
-      output = nil
-      begin
-        $stdout = StringIO.new
-        lookup.run_command
-        output = $stdout.string
-      rescue SystemExit => e
-        expect(e.status).to eq(0)
-      ensure
-        $stdout = save_stdout
-      end
+      output = run_lookup(lookup)
       expect(JSON.parse(output)).to eq(expected_json_hash)
     end
 
@@ -400,17 +477,7 @@ Searching for "a"
       lookup.options[:node] = node
       lookup.options[:render_as] = :json
       lookup.command_line.stubs(:args).returns(['d.one.two.three'])
-      save_stdout = $stdout
-      output = nil
-      begin
-        $stdout = StringIO.new
-        lookup.run_command
-        output = $stdout.string
-      rescue SystemExit => e
-        expect(e.status).to eq(0)
-      ensure
-        $stdout = save_stdout
-      end
+      output = run_lookup(lookup)
       expect(JSON.parse("[#{output}]")).to eq(['the value'])
     end
 
@@ -418,17 +485,7 @@ Searching for "a"
       lookup.options[:node] = node
       lookup.options[:render_as] = :json
       lookup.command_line.stubs(:args).returns(['"e.one.two.three"'])
-      save_stdout = $stdout
-      output = nil
-      begin
-        $stdout = StringIO.new
-        lookup.run_command
-        output = $stdout.string
-      rescue SystemExit => e
-        expect(e.status).to eq(0)
-      ensure
-        $stdout = save_stdout
-      end
+      output = run_lookup(lookup)
       expect(JSON.parse("[#{output}]")).to eq(['the value'])
     end
 
@@ -436,17 +493,7 @@ Searching for "a"
       lookup.options[:node] = node
       lookup.options[:render_as] = :json
       lookup.command_line.stubs(:args).returns(['"f.one"."two.three".1'])
-      save_stdout = $stdout
-      output = nil
-      begin
-        $stdout = StringIO.new
-        lookup.run_command
-        output = $stdout.string
-      rescue SystemExit => e
-        expect(e.status).to eq(0)
-      ensure
-        $stdout = save_stdout
-      end
+      output = run_lookup(lookup)
       expect(JSON.parse("[#{output}]")).to eq(['second value'])
     end
 
@@ -454,18 +501,14 @@ Searching for "a"
       it "is unaffected by global variables unless '--compile' is used" do
         lookup.options[:node] = node
         lookup.command_line.stubs(:args).returns(['c'])
-        expect { lookup.run_command }.to output("--- This is\n...\n").to_stdout
+        expect(run_lookup(lookup)).to eql("--- This is\n...")
       end
 
       it "is affected by global variables when '--compile' is used" do
         lookup.options[:node] = node
         lookup.options[:compile] = true
         lookup.command_line.stubs(:args).returns(['c'])
-        begin
-          expect { lookup.run_command }.to output("--- This is C from site.pp\n...\n").to_stdout
-        rescue SystemExit => e
-          expect(e.status).to eq(0)
-        end
+        expect(run_lookup(lookup)).to eql("--- This is C from site.pp\n...")
       end
     end
 
@@ -475,22 +518,14 @@ Searching for "a"
       it "works OK in the absense of '--compile'" do
         lookup.options[:node] = node
         lookup.command_line.stubs(:args).returns(['c'])
-        begin
-          expect { lookup.run_command }.to output("--- This is C from data.pp\n...\n").to_stdout
-        rescue SystemExit => e
-          expect(e.status).to eq(0)
-        end
+        expect(run_lookup(lookup)).to eql("--- This is C from data.pp\n...")
       end
 
       it "global scope is affected by global variables when '--compile' is used" do
         lookup.options[:node] = node
         lookup.options[:compile] = true
         lookup.command_line.stubs(:args).returns(['c'])
-        begin
-          expect { lookup.run_command }.to output("--- This is C from site.pp\n...\n").to_stdout
-        rescue SystemExit => e
-          expect(e.status).to eq(0)
-        end
+        expect(run_lookup(lookup)).to eql("--- This is C from site.pp\n...")
       end
     end
   end

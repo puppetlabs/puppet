@@ -195,10 +195,9 @@ module Puppet::Util::Windows::ADSI
     end
 
     def [](attribute)
-      value = native_user.Get(attribute)
-      # Rubys WIN32OLE errantly converts UTF-16 values to Encoding.default_external
-      return value.encode(Encoding::UTF_8) if value.is_a?(String)
-      value
+      # Setting WIN32OLE.codepage in the microsoft_windows feature ensures
+      # values are returned as UTF-8
+      native_user.Get(attribute)
     end
 
     def []=(attribute, value)
@@ -248,8 +247,9 @@ module Puppet::Util::Windows::ADSI
       # https://msdn.microsoft.com/en-us/library/aa746342.aspx
       # WIN32OLE objects aren't enumerable, so no map
       groups = []
-      # Rubys WIN32OLE errantly converts UTF-16 values to Encoding.default_external
-      native_user.Groups.each {|g| groups << g.Name.encode(Encoding::UTF_8)} rescue nil
+      # Setting WIN32OLE.codepage in the microsoft_windows feature ensures
+      # values are returned as UTF-8
+      native_user.Groups.each {|g| groups << g.Name} rescue nil
       groups
     end
 
@@ -372,8 +372,9 @@ module Puppet::Util::Windows::ADSI
 
       users = []
       wql.each do |u|
-        # Rubys WIN32OLE errantly converts UTF-16 values to Encoding.default_external
-        users << new(u.name.encode(Encoding::UTF_8))
+        # Setting WIN32OLE.codepage in the microsoft_windows feature ensures
+        # values are returned as UTF-8
+        users << new(u.name)
       end
 
       users.each(&block)
@@ -465,8 +466,9 @@ module Puppet::Util::Windows::ADSI
     def members
       # WIN32OLE objects aren't enumerable, so no map
       members = []
-      # Rubys WIN32OLE errantly converts UTF-16 values to Encoding.default_external
-      native_group.Members.each {|m| members << m.Name.encode(Encoding::UTF_8)}
+      # Setting WIN32OLE.codepage in the microsoft_windows feature ensures
+      # values are returned as UTF-8
+      native_group.Members.each {|m| members << m.Name}
       members
     end
 
@@ -535,8 +537,9 @@ module Puppet::Util::Windows::ADSI
 
       groups = []
       wql.each do |g|
-        # Rubys WIN32OLE errantly converts UTF-16 values to Encoding.default_external
-        groups << new(g.name.encode(Encoding::UTF_8))
+        # Setting WIN32OLE.codepage in the microsoft_windows feature ensures
+        # values are returned as UTF-8
+        groups << new(g.name)
       end
 
       groups.each(&block)

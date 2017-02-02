@@ -25,6 +25,28 @@ describe Puppet::Type.type(:package).provider(:pkg) do
 
   it_should_respond_to :install, :uninstall, :update, :query, :latest
 
+  context 'default' do
+    [ 10 ].each do |ver|
+      it "should not be the default provider on Solaris #{ver}" do
+        Facter.stubs(:value).with(:osfamily).returns(:Solaris)
+        Facter.stubs(:value).with(:kernelrelease).returns("5.#{ver}")
+        Facter.stubs(:value).with(:operatingsystem).returns(:Solaris)
+        Facter.stubs(:value).with(:operatingsystemmajrelease).returns("#{ver}")
+        expect(described_class).to_not be_default
+      end
+    end
+
+    [ 11, 12 ].each do |ver|
+      it "should be the default provider on Solaris #{ver}" do
+        Facter.stubs(:value).with(:osfamily).returns(:Solaris)
+        Facter.stubs(:value).with(:kernelrelease).returns("5.#{ver}")
+        Facter.stubs(:value).with(:operatingsystem).returns(:Solaris)
+        Facter.stubs(:value).with(:operatingsystemmajrelease).returns("#{ver}")
+        expect(described_class).to be_default
+      end
+    end
+  end
+
   it "should be versionable" do
     expect(described_class).to be_versionable
   end

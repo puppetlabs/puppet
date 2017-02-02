@@ -147,8 +147,7 @@ class Puppet::Forge
     def user_agent
       @user_agent ||= [
         @agent,
-        "Puppet/#{Puppet.version}",
-        "Ruby/#{RUBY_VERSION}-p#{RUBY_PATCHLEVEL} (#{RUBY_PLATFORM})",
+        Puppet[:http_user_agent]
       ].join(' ').freeze
     end
   end

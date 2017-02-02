@@ -4,6 +4,7 @@ module Puppet::Pops
 module Pcore
   TYPE_URI_RX = Types::TypeFactory.regexp(URI.regexp)
   TYPE_URI = Types::TypeFactory.pattern(TYPE_URI_RX)
+  TYPE_URI_ALIAS = Types::PTypeAliasType.new('Pcore::URI', nil, TYPE_URI)
   TYPE_SIMPLE_TYPE_NAME = Types::TypeFactory.pattern(/\A[A-Z]\w*\z/)
   TYPE_QUALIFIED_REFERENCE = Types::TypeFactory.pattern(/\A[A-Z][\w]*(?:::[A-Z][\w]*)*\z/)
 
@@ -11,30 +12,36 @@ module Pcore
   KEY_PCORE_VERSION = 'pcore_version'.freeze
 
   PCORE_URI = 'http://puppet.com/2016.1/pcore'
-  PCORE_VERSION = Semantic::Version.new(1,0,0)
-  PARSABLE_PCORE_VERSIONS = Semantic::VersionRange.parse('1.x')
+  PCORE_VERSION = SemanticPuppet::Version.new(1,0,0)
+  PARSABLE_PCORE_VERSIONS = SemanticPuppet::VersionRange.parse('1.x')
 
   RUNTIME_NAME_AUTHORITY = 'http://puppet.com/2016.1/runtime'
 
-  def self.init(loader, ir)
+  def self.init(loader, ir, for_agent)
     add_alias('Pcore::URI_RX', TYPE_URI_RX, loader)
-    add_alias('Pcore::URI', TYPE_URI, loader)
+    add_type(TYPE_URI_ALIAS, loader)
     add_alias('Pcore::SimpleTypeName', TYPE_SIMPLE_TYPE_NAME, loader)
     add_alias('Pcore::TypeName', TYPE_QUALIFIED_REFERENCE, loader)
     add_alias('Pcore::QRef', TYPE_QUALIFIED_REFERENCE, loader)
+    begin
     Types::TypedModelObject.register_ptypes(loader, ir)
+    rescue Exception => e
+      puts e.message
+    end
 
     ir.register_implementation_namespace('Pcore', 'Puppet::Pops::Pcore', loader)
-    ir.register_implementation_namespace('Puppet::AST', 'Puppet::Pops::Model', loader)
-    ast_type_set = Serialization::RGen::TypeGenerator.new.generate_type_set('Puppet::AST', Puppet::Pops::Model, loader)
+    unless for_agent
+      ir.register_implementation_namespace('Puppet::AST', 'Puppet::Pops::Model', loader)
+      ast_type_set = Serialization::RGen::TypeGenerator.new.generate_type_set('Puppet::AST', Puppet::Pops::Model, loader)
 
-    # Extend the Puppet::AST type set with the Locator (it's not an RGen class, but nevertheless, used in the model)
-    ast_ts_i12n = ast_type_set.i12n_hash
-    ast_ts_i12n['types'] = ast_ts_i12n['types'].merge('Locator' => Parser::Locator::Locator19.register_ptype(loader, ir))
-    add_type(Types::PTypeSetType.new(ast_ts_i12n), loader)
+      # Extend the Puppet::AST type set with the Locator (it's not an RGen class, but nevertheless, used in the model)
+      ast_ts_i12n = ast_type_set.i12n_hash
+      ast_ts_i12n['types'] = ast_ts_i12n['types'].merge('Locator' => Parser::Locator::Locator19.register_ptype(loader, ir))
+      add_type(Types::PTypeSetType.new(ast_ts_i12n), loader)
 
-    Resource.register_ptypes(loader, ir)
-    Lookup::Context.register_ptype(loader, ir);
+      Resource.register_ptypes(loader, ir)
+      Lookup::Context.register_ptype(loader, ir);
+    end
   end
 
   # Create and register a new `Object` type in the Puppet Type System and map it to an implementation class
@@ -82,6 +89,8 @@ module Pcore
     aliases.each do |name, type_string|
       add_type(Types::PTypeAliasType.new(name, Types::TypeFactory.type_reference(type_string), nil), loader, name_authority)
     end
+    parser = Types::TypeParser.singleton
+    aliases.each_key.map { |name| loader.load(:type, name.downcase).resolve(parser, loader) }
   end
 end
 end

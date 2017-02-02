@@ -20,7 +20,6 @@ module Lookup
   # @return [Object] The found value
   #
   def self.lookup(name, value_type, default_value, has_default, merge, lookup_invocation)
-    value_type = Types::PDataType::DEFAULT if value_type.nil?
     names = name.is_a?(Array) ? name : [name]
 
     # find first name that yields a non-nil result and wrap it in a two element array
@@ -74,11 +73,11 @@ module Lookup
 
   # @api private
   def self.search_and_merge(name, lookup_invocation, merge)
-    return Puppet::DataProviders.lookup_adapter(lookup_invocation).lookup(name, lookup_invocation, merge)
+    lookup_invocation.lookup_adapter.lookup(name, lookup_invocation, merge)
   end
 
   def self.assert_type(subject, type, value)
-    Types::TypeAsserter.assert_instance_of(subject, type, value)
+    type ? Types::TypeAsserter.assert_instance_of(subject, type, value) : value
   end
   private_class_method :assert_type
 
@@ -89,3 +88,5 @@ module Lookup
   private_class_method :fail_lookup
 end
 end
+
+require_relative 'lookup/lookup_adapter'

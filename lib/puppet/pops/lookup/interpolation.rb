@@ -1,23 +1,28 @@
 require_relative 'sub_lookup'
-
-# Add support for Hiera-like interpolation expressions. The expressions may contain keys that uses dot-notation
-# to further navigate into hashes and arrays
-#
 module Puppet::Pops
 module Lookup
+# Adds support for interpolation expressions. The expressions may contain keys that uses dot-notation
+# to further navigate into hashes and arrays
+#
+# @api public
 module Interpolation
   include SubLookup
 
-  def interpolate(subject, lookup_invocation, allow_methods)
-    case subject
+  # @param value [Object] The value to interpolate
+  # @param context [Context] The current lookup context
+  # @param allow_methods [Boolean] `true` if interpolation expression that contains lookup methods are allowed
+  # @return [Object] the result of resolving all interpolations in the given value
+  # @api public
+  def interpolate(value, context, allow_methods)
+    case value
     when String
-      subject.index('%{').nil? ? subject : interpolate_string(subject, lookup_invocation, allow_methods)
+      value.index('%{').nil? ? value : interpolate_string(value, context, allow_methods)
     when Array
-      subject.map { |element| interpolate(element, lookup_invocation, allow_methods) }
+      value.map { |element| interpolate(element, context, allow_methods) }
     when Hash
-      Hash[subject.map { |k, v| [k, interpolate(v, lookup_invocation, allow_methods)] }]
+      Hash[value.map { |k, v| [k, interpolate(v, context, allow_methods)] }]
     else
-      subject
+      value
     end
   end
 
@@ -35,7 +40,8 @@ module Interpolation
   # Matches a key that is quoted using a matching pair of either single or double quotes.
   QUOTED_KEY = /^(?:"([^"]+)"|'([^']+)')$/
 
-  def interpolate_string(subject, lookup_invocation, allow_methods)
+  def interpolate_string(subject, context, allow_methods)
+    lookup_invocation = context.is_a?(Invocation) ? context : context.invocation
     lookup_invocation.with(:interpolate, subject) do
       subject.gsub(/%\{([^\}]*)\}/) do |match|
         expr = $1
@@ -44,16 +50,12 @@ module Interpolation
         value = nil
         unless EMPTY_INTERPOLATIONS[expr]
           method_key, key = get_method_and_data(expr, allow_methods)
-          is_alias = method_key == 'alias'
+          is_alias = method_key == :alias
 
           # Alias is only permitted if the entire string is equal to the interpolate expression
           raise Puppet::DataBinding::LookupError, "'alias' interpolation is only permitted if the expression is equal to the entire string" if is_alias && subject != match
-
-          segments = split_key(key) { |problem| Puppet::DataBinding::LookupError.new("#{problem} in string: #{subject}") }
-          root_key = segments.shift
-          value = interpolate_method(method_key).call(root_key, lookup_invocation)
-          value = sub_lookup(key, lookup_invocation, segments, value) unless segments.empty?
-          value = lookup_invocation.check(key) { interpolate(value, lookup_invocation, allow_methods) }
+          value = interpolate_method(method_key).call(key, lookup_invocation, subject)
+          value = lookup_invocation.check(method_key == :scope ? "scope:#{key}" : key) { interpolate(value, lookup_invocation, allow_methods) }
 
           # break gsub and return value immediately if this was an alias substitution. The value might be something other than a String
           return value if is_alias
@@ -65,34 +67,44 @@ module Interpolation
 
   def interpolate_method(method_key)
     @@interpolate_methods ||= begin
-      global_lookup = lambda { |key, lookup_invocation| Lookup.lookup(key, nil, '', true, nil, lookup_invocation) }
-      scope_lookup = lambda do |key, lookup_invocation|
-        lookup_invocation.with(:scope, nil) do
+      global_lookup = lambda { |key, lookup_invocation, _| Lookup.lookup(key, nil, '', true, nil, lookup_invocation) }
+      scope_lookup = lambda do |key, lookup_invocation, subject|
+        segments = split_key(key) { |problem| Puppet::DataBinding::LookupError.new("#{problem} in string: #{subject}") }
+        root_key = segments.shift
+        value = lookup_invocation.with(:scope, 'Global Scope') do
           ovr = lookup_invocation.override_values
-          if ovr.include?(key)
-            lookup_invocation.report_found_in_overrides(key, ovr[key])
+          if ovr.include?(root_key)
+            lookup_invocation.report_found_in_overrides(root_key, ovr[root_key])
           else
             scope = lookup_invocation.scope
-            if scope.include?(key)
-              lookup_invocation.report_found(key, scope[key])
-            else
+            val = scope[root_key]
+            if val.nil? && !nil_in_scope?(scope, root_key)
               defaults = lookup_invocation.default_values
-              if defaults.include?(key)
-                lookup_invocation.report_found_in_defaults(key, defaults[key])
+              if defaults.include?(root_key)
+                lookup_invocation.report_found_in_defaults(root_key, defaults[root_key])
               else
                 nil
               end
+            else
+              lookup_invocation.report_found(root_key, val)
             end
           end
         end
+        unless segments.empty?
+          found = '';
+          catch(:no_such_key) { found = sub_lookup(key, lookup_invocation, segments, value) }
+          value = found;
+        end
+        lookup_invocation.remember_scope_lookup(key, value)
+        value
       end
 
       {
-        'lookup' => global_lookup,
-        'hiera' => global_lookup, # this is just an alias for 'lookup'
-        'alias' => global_lookup, # same as 'lookup' but expression must be entire string and result is not subject to string substitution
-        'scope' => scope_lookup,
-        'literal' => lambda { |key, _| key }
+        :lookup => global_lookup,
+        :hiera => global_lookup, # this is just an alias for 'lookup'
+        :alias => global_lookup, # same as 'lookup' but expression must be entire string and result is not subject to string substitution
+        :scope => scope_lookup,
+        :literal => lambda { |key, _, _| key }
       }.freeze
     end
     interpolate_method = @@interpolate_methods[method_key]
@@ -100,13 +112,22 @@ module Interpolation
     interpolate_method
   end
 
+  # Because the semanitcs of Puppet::Parser::Scope#include? differs from Hash#include?
+  def nil_in_scope?(scope, key)
+    if scope.is_a?(Hash)
+      scope.include?(key)
+    else
+      scope.exist?(key)
+    end
+  end
+
   def get_method_and_data(data, allow_methods)
     if match = data.match(/^(\w+)\((?:["]([^"]+)["]|[']([^']+)['])\)$/)
       raise Puppet::DataBinding::LookupError, 'Interpolation using method syntax is not allowed in this context' unless allow_methods
-      key = match[1]
+      key = match[1].to_sym
       data = match[2] || match[3] # double or single qouted
     else
-      key = 'scope'
+      key = :scope
     end
     [key, data]
   end

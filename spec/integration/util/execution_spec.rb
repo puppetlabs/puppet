@@ -17,6 +17,14 @@ describe Puppet::Util::Execution do
     end
   end
 
+  describe "#execute (non-Windows)", :if => !Puppet.features.microsoft_windows? do
+    it "should execute basic shell command" do
+      result = Puppet::Util::Execution.execute("ls /tmp", :failonfail => true)
+      expect(result.exitstatus).to eq(0)
+      expect(result.to_s).to_not be_nil
+    end
+  end
+
   describe "#execute (Windows)", :if => Puppet.features.microsoft_windows? do
     let(:utf8text) do
       # Japanese Lorem Ipsum snippet

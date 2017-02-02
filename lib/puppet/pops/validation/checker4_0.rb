@@ -295,8 +295,12 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   def check_CaseExpression(o)
     rvalue(o.test)
-    # There should only be one LiteralDefault case option value
-    # TODO: Implement this check
+    # There can only be one LiteralDefault case option value
+    defaults = o.options.values.select {|v| v.is_a?(Model::LiteralDefault) }
+    unless defaults.size <= 1
+      # Flag the second default as 'unreachable'
+      acceptor.accept(Issues::DUPLICATE_DEFAULT, defaults[1], :container => o)
+    end
   end
 
   def check_CaseOption(o)
@@ -659,6 +663,12 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   def check_SelectorExpression(o)
     rvalue(o.left_expr)
+    # There can only be one LiteralDefault case option value
+    defaults = o.selectors.select {|v| v.matching_expr.is_a?(Model::LiteralDefault) }
+    unless defaults.size <= 1
+      # Flag the second default as 'unreachable'
+      acceptor.accept(Issues::DUPLICATE_DEFAULT, defaults[1].matching_expr, :container => o)
+    end
   end
 
   def check_SelectorEntry(o)

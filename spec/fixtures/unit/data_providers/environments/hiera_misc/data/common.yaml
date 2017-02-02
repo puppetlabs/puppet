@@ -44,3 +44,5 @@ recursive: '%{r1}'
 km_qualified: "Value from qualified interpolation OS = %{os.name}"
 
 km_multi: "cluster/%{literal('%')}{::cluster}/%{literal('%')}{role}"
+
+domain: "-- %{domain} --"

@@ -87,7 +87,7 @@ describe 'the type mismatch describer' do
       check_port({ 34 => 'some service'})
     CODE
     expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
-      /parameter 'ports' expects a PortMap = Hash\[UnprivilegedPort = Integer\[1024, 65537\], String\] value, got Hash\[Integer\[34, 34\], String\[12, 12\]\]/))
+      /parameter 'ports' expects a PortMap = Hash\[UnprivilegedPort = Integer\[1024, 65537\], String\] value, got Hash\[Integer\[34, 34\], String\]/))
   end
 
   it 'will not include the aliased type more than once when reporting a mismatch that involves an alias that is self recursive' do
@@ -98,7 +98,7 @@ describe 'the type mismatch describer' do
       check_tree({ 'x' => {'y' => {32 => 'n'}}})
     CODE
     expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
-      /parameter 'tree' entry 'x' entry 'y' expects a Tree = Hash\[String, Tree\] value, got Hash\[Integer\[32, 32\], String\[1, 1\]\]/))
+      /parameter 'tree' entry 'x' entry 'y' expects a Tree = Hash\[String, Tree\] value, got Hash\[Integer\[32, 32\], String\]/))
   end
 
   it 'will use type normalization' do
@@ -128,6 +128,17 @@ describe 'the type mismatch describer' do
     CODE
     expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
       /parameter 'arg' expects a match for Enum\['a', 'b'\], got Sensitive/))
+  end
+
+  it "reports errors on the first failing parameter when that parameter is not the first in order" do
+    code = <<-CODE
+      type Abc = Enum['a', 'b', 'c']
+      type Cde = Enum['c', 'd', 'e']
+      function two_params(Abc $a, Cde $b) {}
+      two_params('a', 'x')
+    CODE
+    expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
+      /parameter 'b' expects a match for Cde = Enum\['c', 'd', 'e'\], got 'x'/))
   end
 
   it "will not generalize a string that doesn't match an enum in a define call" do

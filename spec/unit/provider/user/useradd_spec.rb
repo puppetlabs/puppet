@@ -438,6 +438,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
     end
 
     it "should raise an error if the shell is not executable" do
+      FileTest.stubs(:executable?).with('LICENSE').returns false
       resource[:shell] = 'LICENSE'
       expect { provider.check_valid_shell }.to raise_error(Puppet::Error, /Shell LICENSE must be executable/)
     end

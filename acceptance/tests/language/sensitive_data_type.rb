@@ -1,6 +1,6 @@
 test_name 'C98120, C98077: Sensitive Data is redacted on CLI, logs, reports' do
-require 'puppet/acceptance/puppet_type_test_tools.rb'
-extend Puppet::Acceptance::PuppetTypeTestTools
+  require 'puppet/acceptance/puppet_type_test_tools.rb'
+  extend Puppet::Acceptance::PuppetTypeTestTools
 
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type)

@@ -197,6 +197,8 @@ module Puppet::Network::HTTP
     end
 
     def apply_options_to(request, options)
+      request["User-Agent"] = Puppet[:http_user_agent]
+
       if options[:basic_auth]
         request.basic_auth(options[:basic_auth][:user], options[:basic_auth][:password])
       end

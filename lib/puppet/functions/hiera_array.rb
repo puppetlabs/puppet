@@ -69,6 +69,6 @@ Puppet::Functions.create_function(:hiera_array, Hiera::PuppetFunction) do
   init_dispatch
 
   def merge_type
-    :array
+    :unique
   end
 end

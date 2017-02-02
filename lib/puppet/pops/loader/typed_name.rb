@@ -4,8 +4,6 @@ module Loader
 #
 # @api public
 class TypedName
-  DOUBLE_COLON = '::'.freeze
-
   attr_reader :hash
   attr_reader :type
   attr_reader :name_authority

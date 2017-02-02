@@ -21,7 +21,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     described_class.new(:name => 'sshd.service')
   end
 
-  osfamily = [ 'archlinux' ]
+  osfamily = [ 'archlinux', 'coreos' ]
 
   osfamily.each do |osfamily|
     it "should be the default provider on #{osfamily}" do
@@ -221,6 +221,13 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:execute).with(['/bin/systemctl','is-enabled','sshd.service'], :failonfail => false).returns "disabled\n"
       $CHILD_STATUS.stubs(:exitstatus).returns(1)
+      expect(provider.enabled?).to eq(:false)
+    end
+
+    it "should return :false if the service is indirect" do
+      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      provider.expects(:execute).with(['/bin/systemctl','is-enabled','sshd.service'], :failonfail => false).returns "indirect\n"
+      $CHILD_STATUS.stubs(:exitstatus).returns(0)
       expect(provider.enabled?).to eq(:false)
     end
 

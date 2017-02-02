@@ -23,6 +23,7 @@ class Puppet::Parser::Scope
 
   # Variables that always exist with nil value even if not set
   BUILT_IN_VARS = ['module_name'.freeze, 'caller_module_name'.freeze].freeze
+  EMPTY_HASH = {}.freeze
 
   Puppet::Util.logmethods(self)
 
@@ -83,11 +84,8 @@ class Puppet::Parser::Scope
     end
 
     def [](name)
-      if @symbols.include?(name)
-        @symbols[name]
-      else
-        super
-      end
+      val = @symbols[name]
+      val.nil? && !@symbols.include?(val) ? super : val
     end
 
     def is_local_scope?
@@ -486,28 +484,24 @@ class Puppet::Parser::Scope
   # @return Object the value of the variable, or nil if it's not found
   #
   # @api public
-  def lookupvar(name, options = {})
+  def lookupvar(name, options = EMPTY_HASH)
     unless name.is_a? String
       raise Puppet::ParseError, "Scope variable name #{name.inspect} is a #{name.class}, not a string"
     end
 
-    table = @ephemeral.last
-
     if name =~ /^(.*)::(.+)$/
-      class_name = $1
-      variable_name = $2
-      lookup_qualified_variable(class_name, variable_name, options)
+      return lookup_qualified_variable($1, $2, options)
+    end
 
-    # TODO: optimize with an assoc instead, this searches through scopes twice for a hit
-    elsif table.include?(name)
-      table[name]
+    table = @ephemeral.last
+    val = table[name]
+    return val unless val.nil? && !table.include?(name)
+
+    next_scope = inherited_scope || enclosing_scope
+    if next_scope
+      next_scope.lookupvar(name, options)
     else
-      next_scope = inherited_scope || enclosing_scope
-      if next_scope
-        next_scope.lookupvar(name, options)
-      else
-        variable_not_found(name)
-      end
+      variable_not_found(name)
     end
   end
 

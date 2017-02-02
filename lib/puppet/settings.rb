@@ -636,7 +636,7 @@ class Puppet::Settings
     # because multiple sections could set the same value
     # and I'm too lazy to only set the metadata once.
     if @configuration_file
-      searchpath(nil, preferred_run_mode).reverse.each do |source|
+      searchpath(nil, preferred_run_mode).reverse_each do |source|
         if source.type == :section && section = @configuration_file.sections[source.name]
           apply_metadata_from_section(section)
         end

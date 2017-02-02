@@ -1,9 +1,16 @@
+# TODO: API 5.0, remove this module
 # @api private
+# @deprecated
 module Puppet::DataProviders::DataFunctionSupport
   def initialize_data(data_key, lookup_invocation)
     name = "#{data_key}::data"
     scope = lookup_invocation.scope
     Puppet::Util::Profiler.profile("Called #{name}", [ :functions, name ]) do
+      unless Puppet[:strict] == :off
+        Puppet.warn_once(:deprecation, 'Puppet::DataProviders::DataFunctionSupport',
+        'Puppet::DataProviders::DataFunctionSupport is deprecated and will be removed in the next major version of Puppet')
+      end
+
       loader = loader(data_key, scope)
       if loader && func = loader.load(:function, name)
         # function found, call without arguments, must return a Hash
