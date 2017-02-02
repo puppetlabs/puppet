@@ -319,6 +319,77 @@ describe "The lookup function" do
       end
     end
 
+    context 'with yaml data file' do
+      let(:environment_files) do
+        {
+          env_name => {
+            'hiera.yaml' => <<-YAML.unindent,
+              ---
+              version: 5
+              YAML
+            'data' => {
+              'common.yaml' => common_yaml
+            }
+          }
+        }
+      end
+
+      context 'that is empty' do
+        let(:common_yaml) { '' }
+
+        it 'fails with a "did not find"' do
+          expect { lookup('a') }.to raise_error do |e|
+            expect(e.message).to match(/did not find a value for the name 'a'/)
+          end
+        end
+
+        it 'logs a warning that the file does not contain a hash' do
+          expect { lookup('a') }.to raise_error
+          expect(warnings).to include(/spec\/data\/common.yaml: file does not contain a valid yaml hash/)
+        end
+      end
+
+      context 'that contains illegal yaml' do
+        let(:common_yaml) { "@!#%**&:\n" }
+
+        it 'fails lookup and that the key is not found' do
+          expect { lookup('a') }.to raise_error do |e|
+            expect(e.message).to match(/Unable to parse/)
+          end
+        end
+      end
+
+      context 'that contains a legal yaml that is not a hash' do
+        let(:common_yaml) { "- A list\n- of things" }
+
+        it 'fails with a "did not find"' do
+          expect { lookup('a') }.to raise_error do |e|
+            expect(e.message).to match(/did not find a value for the name 'a'/)
+          end
+        end
+
+        it 'logs a warning that the file does not contain a hash' do
+          expect { lookup('a') }.to raise_error
+          expect(warnings).to include(/spec\/data\/common.yaml: file does not contain a valid yaml hash/)
+        end
+      end
+
+      context 'that contains a legal yaml hash with illegal types' do
+        let(:common_yaml) do
+          <<-YAML.unindent
+          ---
+          a: !ruby/object:Puppet::Graph::Key
+              value: x
+          YAML
+        end
+
+        it 'fails lookup and reports a type mismatch' do
+          expect { lookup('a') }.to raise_error do |e|
+            expect(e.message).to match(/wrong type, expects a value of type Scalar, Sensitive, Type, Hash, or Array, got Runtime/)
+          end
+        end
+      end
+    end
 
     context 'with lookup_options configured using patterns' do
       let(:mod_common) {

@@ -74,7 +74,7 @@ class Invocation
     rescue Puppet::DataBinding::LookupError
       raise
     rescue Puppet::Error => detail
-      raise Puppet::DataBinding::LookupError.new(detail.message, detail)
+      raise Puppet::DataBinding::LookupError.new(detail.message, nil, nil, nil, detail)
     ensure
       @name_stack.pop
     end
