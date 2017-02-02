@@ -2,6 +2,7 @@ require 'puppet/parser/type_loader'
 require 'puppet/util/file_watcher'
 require 'puppet/util/warnings'
 
+# @api private
 class Puppet::Resource::TypeCollection
   attr_reader :environment
   attr_accessor :parse_failed
@@ -49,6 +50,7 @@ class Puppet::Resource::TypeCollection
     }.inspect
   end
 
+  # @api private
   def <<(thing)
     add(thing)
     self
@@ -74,19 +76,23 @@ class Puppet::Resource::TypeCollection
   end
 
   def handle_hostclass_merge(instance)
+    # Only main class (named '') can be merged (for purpose of merging top-scopes).
+    return instance unless instance.name == ''
     if instance.type == :hostclass && (other = @hostclasses[instance.name]) && other.type == :hostclass
-      unless instance.name == ''
-        case Puppet[:strict]
-        when :warning
-          Puppet.warning("Class '#{instance.name}' is already defined#{other.error_context}; cannot redefine at #{instance.file}:#{instance.line}") 
-        when :error
-          # returning means a merge (with throw) is not performed, that will then trigger a duplication check with error.
-          return instance
-        end
-      end
       other.merge(instance)
+      # throw is used to signal merge - avoids dupe checks and adding it to hostclasses
       throw :merged, other
     end
+  end
+
+  # Replaces the known settings with a new instance (that must be named 'settings').
+  # This is primarily needed for testing purposes. Also see PUP-5954 as it makes 
+  # it illegal to merge classes other than the '' (main) class. Prior to this change
+  # settings where always merged rather than being defined from scratch for many testing scenarios
+  # not having a complete side effect free setup for compilation.
+  # 
+  def replace_settings(instance)
+    @hostclasses['settings'] = instance
   end
 
   def hostclass(name)

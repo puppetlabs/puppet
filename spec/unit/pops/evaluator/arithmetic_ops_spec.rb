@@ -28,6 +28,59 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       it "8 << -1 == 4"   do; expect(evaluate(literal(8) << literal(-1))).to eq(4); end
     end
 
+    # 64 bit signed integer max and min
+    MAX_INTEGER =  0x7fffffffffffffff
+    MIN_INTEGER = -0x8000000000000000
+
+    context "on integer values that cause 64 bit overflow" do
+      it "MAX + 1 => error" do
+        expect{
+          evaluate(literal(MAX_INTEGER) + literal(1))
+        }.to raise_error(/resulted in a value outside of Puppet Integer max range/)
+      end
+
+      it "MAX - -1 => error" do
+        expect{
+          evaluate(literal(MAX_INTEGER) - literal(-1))
+        }.to raise_error(/resulted in a value outside of Puppet Integer max range/)
+      end
+
+      it "MAX * 2 => error" do
+        expect{
+          evaluate(literal(MAX_INTEGER) * literal(2))
+        }.to raise_error(/resulted in a value outside of Puppet Integer max range/)
+      end
+
+      it "(MAX+1)*2 / 2 => error" do
+        expect{
+          evaluate(literal((MAX_INTEGER+1)*2) / literal(2))
+        }.to raise_error(/resulted in a value outside of Puppet Integer max range/)
+      end
+
+      it "MAX << 1 => error" do
+        expect{
+          evaluate(literal(MAX_INTEGER) << literal(1))
+        }.to raise_error(/resulted in a value outside of Puppet Integer max range/)
+      end
+
+      it "((MAX+1)*2)  << 1 => error" do
+        expect{
+          evaluate(literal((MAX_INTEGER+1)*2) >> literal(1))
+        }.to raise_error(/resulted in a value outside of Puppet Integer max range/)
+      end
+
+      it "MIN - 1 => error" do
+        expect{
+          evaluate(literal(MIN_INTEGER) - literal(1))
+        }.to raise_error(/resulted in a value outside of Puppet Integer min range/)
+      end
+
+      it "does not error on the border values" do
+          expect(evaluate(literal(MAX_INTEGER) + literal(MIN_INTEGER))).to eq(MAX_INTEGER+MIN_INTEGER)
+      end
+
+    end
+
     context "on Floats" do
       it "2.2 + 2.2  ==  4.4"   do; expect(evaluate(literal(2.2) + literal(2.2))).to eq(4.4)  ; end
       it "7.7 - 3.3  ==  4.4"   do; expect(evaluate(literal(7.7) - literal(3.3))).to eq(4.4)  ; end

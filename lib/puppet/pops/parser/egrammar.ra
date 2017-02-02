@@ -22,7 +22,6 @@ token RENDER_STRING RENDER_EXPR EPP_START EPP_END EPP_END_TRIM
 token FUNCTION
 token TYPE
 token PRIVATE ATTR
-token APPLICATION_R CONSUMES_R PRODUCES_R SITE_R
 token APPLICATION PRODUCES CONSUMES SITE
 token LOW
 
@@ -475,10 +474,6 @@ attribute_operations
   attribute_name
     : NAME
     | keyword
-    | APPLICATION_R
-    | CONSUMES_R
-    | PRODUCES_R
-    | SITE_R
 
   # In this version, illegal combinations are validated instead of producing syntax errors
   # (Can give nicer error message "+> is not applicable to...")
@@ -652,10 +647,6 @@ classname
   : NAME
   | WORD
   | CLASSREF
-  | APPLICATION_R
-  | CONSUMES_R
-  | PRODUCES_R
-  | SITE_R
   | CLASS { error val[0], "'class' is not a valid classname" }
 
 # Produces Array<Model::Parameter>
@@ -723,10 +714,6 @@ variable
 reserved_word
   : PRIVATE   { result = Factory.RESERVED(val[0][:value]) ; loc result, val[0] }
   | ATTR      { result = Factory.RESERVED(val[0][:value]) ; loc result, val[0] }
-  | APPLICATION_R { result = Factory.RESERVED(val[0][:value], true) ; loc result, val[0] }
-  | CONSUMES_R    { result = Factory.RESERVED(val[0][:value], true) ; loc result, val[0] }
-  | PRODUCES_R    { result = Factory.RESERVED(val[0][:value], true) ; loc result, val[0] }
-  | SITE_R        { result = Factory.RESERVED(val[0][:value], true) ; loc result, val[0] }
 
 #---LITERALS (dynamic and static)
 #

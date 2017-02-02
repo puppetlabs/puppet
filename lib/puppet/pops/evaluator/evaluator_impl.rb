@@ -432,8 +432,15 @@ class EvaluatorImpl
       rescue ZeroDivisionError => e
         fail(Issues::DIV_BY_ZERO, right_o)
       end
-      if result == Float::INFINITY || result == -Float::INFINITY
-        fail(Issues::RESULT_IS_INFINITY, left_o, {:operator => operator})
+      case result
+      when Float
+        if result == Float::INFINITY || result == -Float::INFINITY
+          fail(Issues::RESULT_IS_INFINITY, left_o, {:operator => operator})
+        end
+      when Integer
+        if result < MIN_INTEGER || result > MAX_INTEGER
+          fail(Issues::NUMERIC_OVERFLOW, left_o.eContainer, {:value => result})
+        end
       end
       result
     end

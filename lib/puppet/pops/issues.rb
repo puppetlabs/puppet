@@ -619,7 +619,7 @@ module Issues
     "The key '#{key}' is declared more than once"
   end
 
-  DUPLICATE_DEFAULT = issue :DUPLICATE_DEFAULT, :container do
+  DUPLICATE_DEFAULT = hard_issue :DUPLICATE_DEFAULT, :container do
     "This #{label.label(container)} already has a 'default' entry - this is a duplicate"
   end
 
@@ -738,5 +738,11 @@ module Issues
   ILLEGAL_BOM = hard_issue :ILLEGAL_BOM, :format_name, :bytes do
     "Illegal #{format_name} Byte Order mark at beginning of input: #{bytes} - remove these from the puppet source"
   end
+
+  NUMERIC_OVERFLOW = hard_issue :NUMERIC_OVERFLOW, :value do
+    range_end = value > 0 ? 'max' : 'min'
+    "#{label.a_an_uc(semantic)} resulted in a value outside of Puppet Integer #{range_end} range, got '#{"%#+x" % value}'"
+  end
+
 end
 end

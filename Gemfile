@@ -64,6 +64,7 @@ group(:development, :test) do
   gem 'webmock', '~> 1.24'
   gem 'vcr', '~> 2.9'
   gem "hocon", :require => false
+  gem "hiera-eyaml", :require => false
 end
 
 group(:development) do

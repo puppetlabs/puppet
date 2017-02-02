@@ -94,38 +94,13 @@ describe 'Lexer2' do
     "private"  => :PRIVATE,
     "type"     => :TYPE,
     "attr"     => :ATTR,
+    "application"  => :APPLICATION,
+    "consumes"     => :CONSUMES,
+    "produces"     => :PRODUCES,
+    "site"         => :SITE,
   }.each do |string, name|
     it "should lex a keyword from '#{string}'" do
       expect(tokens_scanned_from(string)).to match_tokens2(name)
-    end
-  end
-
-  context 'when app_management is off (by default)' do
-    {
-      "application"  => :APPLICATION_R,
-      "consumes"     => :CONSUMES_R,
-      "produces"     => :PRODUCES_R,
-      "site"         => :SITE_R,
-    }.each do |string, name|
-      it "should lex a (future reserved) keyword from '#{string}'" do
-        expect(tokens_scanned_from(string)).to match_tokens2(name)
-      end
-    end
-  end
-
-  context 'when app_managment is (turned) on' do
-    before(:each) { Puppet[:app_management] = true }
-    after(:each) { Puppet[:app_management] = false }
-
-    {
-      "application"  => :APPLICATION,
-      "consumes"     => :CONSUMES,
-      "produces"     => :PRODUCES,
-      "site"         => :SITE,
-    }.each do |string, name|
-      it "should lex a keyword from '#{string}'" do
-        expect(tokens_scanned_from(string)).to match_tokens2(name)
-      end
     end
   end
 

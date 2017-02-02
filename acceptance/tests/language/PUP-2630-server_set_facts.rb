@@ -1,55 +1,12 @@
-test_name 'PUP-2630 ensure $server_facts is set and warning is issued if any value is overwritten by an agent'
+test_name 'PUP-2630, PUP-6112 ensure $server_facts is set and warning is issued if any value is overwritten by an agent'
 
-step 'ensure :trusted_server_facts is false by default'
+step 'ensure :trusted_server_facts is true by default'
 on(master, puppet('master', '--configprint trusted_server_facts')) do |result|
-  assert_match('false', result.stdout,
-               'trusted_server_facts setting should be false by default')
+  assert_match('true', result.stdout,
+               'trusted_server_facts setting should be true by default')
 end
 
-step 'ensure $server_facts does not exist by default'
-testdir = master.tmpdir(File.basename(__FILE__, ".*"))
-
-test_manifest = <<MANIFEST
-File {
-  ensure => directory,
-  mode => "0750",
-  owner => #{master.puppet['user']},
-  group => #{master.puppet['group']},
-}
-file {
-  '#{testdir}':;
-  '#{testdir}/environments':;
-  '#{testdir}/environments/production':;
-  '#{testdir}/environments/production/modules':;
-  '#{testdir}/environments/production/manifests':;
-}
-
-file { '#{testdir}/environments/production/manifests/site.pp':
-  ensure  => file,
-  content => 'notify{"abc$server_facts":}
-  ',
-}
-MANIFEST
-
-apply_manifest_on(master, test_manifest)
-
-master_opts = {
-  'main' => {
-    'environmentpath' => "#{testdir}/environments",
-  }
-}
-with_puppet_running_on(master, master_opts) do
-  agents.each do |agent|
-    on(agent, puppet("agent -t --server #{master}"),
-       :acceptable_exit_codes => 2) do |result|
-      assert_match(/as 'abc'/, result.stdout,
-                   "#{agent}: $server_facts should be empty prior to opt-in" )
-    end
-  end
-end
-
-step 'ensure $server_facts DO exist after the user opts-in'
-master_opts['main']['trusted_server_facts'] = true
+step 'ensure $server_facts exist'
 with_puppet_running_on(master, master_opts) do
   agents.each do |agent|
     on(agent, puppet("agent -t --server #{master}"),

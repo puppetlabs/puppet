@@ -60,13 +60,7 @@ module Runtime3Support
     # TODO: Improve the messy implementation in Scope.
     #
     if name == "server_facts"
-      if Puppet[:trusted_server_facts] || Puppet[:strict] == :error
-        fail(Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, {:name => name} )
-      elsif Puppet[:strict] == :warning
-        file, line = extract_file_line(o)
-        msg = "Assignment to $server_facts is deprecated"
-        Puppet.warn_once(:deprecation, msg, msg, file, line)
-      end
+      fail(Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, {:name => name} )
     end
 
     if scope.bound?(name)

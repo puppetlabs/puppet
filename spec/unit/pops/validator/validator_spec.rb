@@ -56,20 +56,6 @@ describe "validating 4x" do
       expect(acceptor.error_count).to eql(0)
       expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_KEY)
     end
-
-    it 'produces a warning for duplicate default in a case expression' do
-      acceptor = validate(parse('case 1 { default: {1} default : {2} }'))
-      expect(acceptor.warning_count).to eql(1)
-      expect(acceptor.error_count).to eql(0)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_DEFAULT)
-    end
-
-    it 'produces a warning for duplicate default in a selector expression' do
-      acceptor = validate(parse(' 1 ? { default => 1, default => 2 }'))
-      expect(acceptor.warning_count).to eql(1)
-      expect(acceptor.error_count).to eql(0)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_DEFAULT)
-    end
   end
 
   context 'with --strict set to warning' do
@@ -79,20 +65,6 @@ describe "validating 4x" do
       expect(acceptor.warning_count).to eql(1)
       expect(acceptor.error_count).to eql(0)
       expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_KEY)
-    end
-
-    it 'produces a warning for duplicate default in a case expression' do
-      acceptor = validate(parse('case 1 { default: {1} default : {2} }'))
-      expect(acceptor.warning_count).to eql(1)
-      expect(acceptor.error_count).to eql(0)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_DEFAULT)
-    end
-
-    it 'produces a warning for duplicate default in a selector expression' do
-      acceptor = validate(parse(' 1 ? { default => 1, default => 2 }'))
-      expect(acceptor.warning_count).to eql(1)
-      expect(acceptor.error_count).to eql(0)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_DEFAULT)
     end
   end
 
@@ -104,7 +76,19 @@ describe "validating 4x" do
       expect(acceptor.error_count).to eql(1)
       expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_KEY)
     end
+  end
 
+  context 'with --strict set to off' do
+    before(:each) { Puppet[:strict] = :off }
+    it 'does not produce an error or warning for duplicate keys in a literal hash' do
+      acceptor = validate(parse('{ a => 1, a => 2 }'))
+      expect(acceptor.warning_count).to eql(0)
+      expect(acceptor.error_count).to eql(0)
+      expect(acceptor).to_not have_issue(Puppet::Pops::Issues::DUPLICATE_KEY)
+    end
+  end
+
+  context 'irrespective of --strict' do
     it 'produces an error for duplicate default in a case expression' do
       acceptor = validate(parse('case 1 { default: {1} default : {2} }'))
       expect(acceptor.warning_count).to eql(0)
@@ -117,30 +101,6 @@ describe "validating 4x" do
       expect(acceptor.warning_count).to eql(0)
       expect(acceptor.error_count).to eql(1)
       expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_DEFAULT)
-    end
-  end
-
-  context 'with --strict set to off' do
-    before(:each) { Puppet[:strict] = :off }
-    it 'does not produce an error or warning for duplicate keys in a literal hash' do
-      acceptor = validate(parse('{ a => 1, a => 2 }'))
-      expect(acceptor.warning_count).to eql(0)
-      expect(acceptor.error_count).to eql(0)
-      expect(acceptor).to_not have_issue(Puppet::Pops::Issues::DUPLICATE_KEY)
-    end
-
-    it 'does not produce an error for duplicate default in a case expression' do
-      acceptor = validate(parse('case 1 { default: {1} default : {2} }'))
-      expect(acceptor.warning_count).to eql(0)
-      expect(acceptor.error_count).to eql(0)
-      expect(acceptor).to_not have_issue(Puppet::Pops::Issues::DUPLICATE_DEFAULT)
-    end
-
-    it 'does not produce an error for duplicate default in a selector expression' do
-      acceptor = validate(parse(' 1 ? { default => 1, default => 2 }'))
-      expect(acceptor.warning_count).to eql(0)
-      expect(acceptor.error_count).to eql(0)
-      expect(acceptor).to_not have_issue(Puppet::Pops::Issues::DUPLICATE_DEFAULT)
     end
   end
 
@@ -265,30 +225,6 @@ describe "validating 4x" do
       it "produces an error for the word '#{word}'" do
         source = "$a = #{word}"
         expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::RESERVED_WORD)
-      end
-    end
-  end
-
-  context 'for future reserved words' do
-    ['application', 'produces', 'consumes'].each do |word|
-      it "produces an issue for the word '#{word}'" do
-        source = "$a = #{word}"
-        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::FUTURE_RESERVED_WORD)
-      end
-
-      it 'produces a warning issue when used as a class name' do
-        source = "class #{word} {}"
-        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::FUTURE_RESERVED_WORD)
-      end
-
-      it 'produces no warning or error when used as a parameter name' do
-        source = "define foo($#{word}) { notice $#{word} }"
-        expect(validate(parse(source)).diagnostics.empty?).to eq(true)
-      end
-
-      it 'produces no warning or error when used as an attribute name' do
-        source = "foo { bar: #{word} => ok }"
-        expect(validate(parse(source)).diagnostics.empty?).to eq(true)
       end
     end
   end
@@ -563,9 +499,6 @@ describe "validating 4x" do
   end
 
   context "capability annotations" do
-    before(:each) { Puppet[:app_management] = true }
-    after(:each) { Puppet[:app_management] = false }
-
     ['produces', 'consumes'].each do |word|
       it "rejects illegal resource types in #{word} clauses" do
         expect(validate(parse("foo produces Bar {}"))).to have_issue(Puppet::Pops::Issues::ILLEGAL_CLASSREF)
@@ -579,6 +512,16 @@ describe "validating 4x" do
       it "rejects illegal capability types in #{word} clauses" do
         expect(validate(parse("Foo produces bar {}"))).to have_issue(Puppet::Pops::Issues::ILLEGAL_CLASSREF)
       end
+    end
+  end
+
+  context 'literal values' do
+    it 'rejects a literal integer outside of max signed 64 bit range' do
+      expect(validate(parse("0x8000000000000000"))).to have_issue(Puppet::Pops::Issues::NUMERIC_OVERFLOW)
+    end
+
+    it 'rejects a literal integer outside of min signed 64 bit range' do
+      expect(validate(parse("-0x8000000000000001"))).to have_issue(Puppet::Pops::Issues::NUMERIC_OVERFLOW)
     end
   end
 

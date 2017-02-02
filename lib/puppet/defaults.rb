@@ -15,26 +15,6 @@ module Puppet
 
   AS_DURATION = %q{This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y).}
 
-  # This is defined first so that the facter implementation is replaced before other setting defaults are evaluated.
-  define_settings(:main,
-    :cfacter => {
-        :default => false,
-        :type    => :boolean,
-        :desc    => 'Whether to enable a pre-Facter 3.0 release of native Facter (distributed as
-          the "cfacter" package). This is not necessary if Facter 3.0 or later is installed.
-          This setting is deprecated, as Facter 3 is now the default in puppet-agent.',
-        :hook    => proc do |value|
-          return unless value
-          raise ArgumentError, 'facter has already evaluated facts.' if Facter.instance_variable_get(:@collection)
-          raise ArgumentError, 'cfacter version 0.2.0 or later is not installed.' unless Puppet.features.cfacter?
-          CFacter.initialize
-
-          # Setup Facter's logging again now that native facter is initialized
-          Puppet::Util::Logging.setup_facter_logging!
-        end
-    }
-  )
-
   define_settings(:main,
     :confdir  => {
         :default  => nil,
@@ -604,14 +584,11 @@ deprecated and has been replaced by 'always_retry_plugins'."
           class, or definition other than in the site manifest.",
     },
     :trusted_server_facts => {
-      :default => false,
+      :default => true,
       :type    => :boolean,
-      :desc    => "When enabled, Puppet creates a protected top-scope variable called $server_facts.
-        This variable name can't be re-used in any local scope, and can't be overridden
-        by agent-provided facts.
-
-        The $server_facts variable is a hash, containing server-provided information
-        like the current node's environment and the version of Puppet running on the server.",
+      :deprecated => :completely,
+      :desc    => "The 'trusted_server_facts' setting is deprecated and has no effect as the
+        feature this enabled is now always on. The setting will be removed in a future version of puppet.",
     },
     :preview_outputdir => {
       :default => '$vardir/preview',
@@ -624,14 +601,12 @@ deprecated and has been replaced by 'always_retry_plugins'."
   )
 
   define_settings(:main,
+      # Whether the application management feature is on or off - now deprecated and always on.
       :app_management => {
           :default  => false,
           :type     => :boolean,
-          :desc     => "Whether the application management feature is on or off. You must restart Puppet Server after changing this setting.",
-          :hook     => proc do |value|
-            # Statically loaded resource types differ depending on setting
-            Puppet::Pops::Loaders.clear
-          end
+          :desc       => "This setting has no effect and will be removed in a future Puppet version.",
+          :deprecated => :completely,
       }
   )
 
@@ -1038,11 +1013,6 @@ EOT
       :type       => :duration,
       :desc       => "The default TTL for new certificates.
       #{AS_DURATION}"
-    },
-    :req_bits => {
-      :default    => 4096,
-      :desc       => "This setting has no effect and will be removed in a future Puppet version.",
-      :deprecated => :completely,
     },
     :keylength => {
       :default    => 4096,

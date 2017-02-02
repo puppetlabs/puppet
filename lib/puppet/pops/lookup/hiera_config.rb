@@ -44,6 +44,7 @@ class HieraConfig
   KEY_LOOKUP_KEY = LookupKeyFunctionProvider::TAG
   KEY_DATA_DIG = DataDigFunctionProvider::TAG
   KEY_V3_DATA_HASH = V3DataHashFunctionProvider::TAG
+  KEY_V3_LOOKUP_KEY = V3LookupKeyFunctionProvider::TAG
   KEY_V3_BACKEND = V3BackendFunctionProvider::TAG
   KEY_V4_DATA_HASH = V4DataHashFunctionProvider::TAG
   KEY_BACKEND = 'backend'.freeze
@@ -57,6 +58,7 @@ class HieraConfig
     KEY_LOOKUP_KEY => LookupKeyFunctionProvider,
     KEY_V3_DATA_HASH => V3DataHashFunctionProvider,
     KEY_V3_BACKEND => V3BackendFunctionProvider,
+    KEY_V3_LOOKUP_KEY => V3LookupKeyFunctionProvider,
     KEY_V4_DATA_HASH => V4DataHashFunctionProvider
   }
 
@@ -262,7 +264,7 @@ class HieraConfigV3 < HieraConfig
 
     [@config[KEY_BACKENDS]].flatten.each do |backend|
       raise Puppet::DataBinding::LookupError, "#{@config_path}: Backend '#{backend}' defined more than once" if data_providers.include?(backend)
-      original_paths = @config[KEY_HIERARCHY]
+      original_paths = [@config[KEY_HIERARCHY]].flatten
       backend_config = @config[backend] || EMPTY_HASH
       datadir = Pathname(interpolate(backend_config[KEY_DATADIR] || default_datadir, lookup_invocation, false))
       ext = backend == 'hocon' ? '.conf' : ".#{backend}"
@@ -272,6 +274,8 @@ class HieraConfigV3 < HieraConfig
         create_data_provider(backend, parent_data_provider, KEY_V3_DATA_HASH, "#{backend}_data", { KEY_DATADIR => datadir }, paths)
       when backend == 'hocon' && Puppet.features.hocon?
         create_data_provider(backend, parent_data_provider, KEY_V3_DATA_HASH, 'hocon_data', { KEY_DATADIR => datadir }, paths)
+      when backend == 'eyaml' && Puppet.features.hiera_eyaml?
+        create_data_provider(backend, parent_data_provider, KEY_V3_LOOKUP_KEY, 'eyaml_lookup_key', backend_config.merge(KEY_DATADIR => datadir), paths)
       else
         create_hiera3_backend_provider(backend, backend, parent_data_provider, datadir, paths, @loaded_config)
       end
@@ -337,10 +341,6 @@ end
 
 # @api private
 class HieraConfigV4 < HieraConfig
-  require 'puppet/plugins/data_providers'
-
-  include Puppet::Plugins::DataProviders
-
   def self.config_type
     return @@CONFIG_TYPE if class_variable_defined?(:@@CONFIG_TYPE)
     tf = Types::TypeFactory
@@ -357,23 +357,6 @@ class HieraConfigV4 < HieraConfig
         tf.optional(KEY_PATHS) => tf.array_of(nes_t)
       ))
     })
-  end
-
-  def factory_create_data_provider(lookup_invocation, name, parent_data_provider, provider_name, datadir, original_paths)
-    service_type = Registry.hash_of_path_based_data_provider_factories
-    provider_factory = Puppet.lookup(:injector).lookup(nil, service_type, PATH_BASED_DATA_PROVIDER_FACTORIES_KEY)[provider_name]
-    raise Puppet::DataBinding::LookupError, "#{@config_path}: No data provider is registered for backend '#{provider_name}' " unless provider_factory
-
-    paths = original_paths.map { |path| interpolate(path, lookup_invocation, false) }
-    paths = provider_factory.resolve_paths(datadir, original_paths, paths, lookup_invocation)
-
-    provider_factory_version = provider_factory.respond_to?(:version) ? provider_factory.version : 1
-    if provider_factory_version == 1
-      # Version 1 is not aware of the parent provider
-      provider_factory.create(name, paths)
-    else
-      provider_factory.create(name, paths, parent_data_provider)
-    end
   end
 
   def create_configured_data_providers(lookup_invocation, parent_data_provider)
@@ -394,7 +377,7 @@ class HieraConfigV4 < HieraConfig
         create_data_provider(name, parent_data_provider, KEY_DATA_HASH, 'hocon_data', {},
           resolve_paths(datadir, original_paths, lookup_invocation, @config_path.nil?, '.conf'))
       else
-        factory_create_data_provider(lookup_invocation, name, parent_data_provider, provider_name, datadir, original_paths)
+        raise Puppet::DataBinding::LookupError, "#{@config_path}: No data provider is registered for backend '#{provider_name}' "
       end
     end
     data_providers.values

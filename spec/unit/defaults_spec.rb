@@ -42,36 +42,6 @@ describe "Defaults" do
     end
   end
 
-  describe 'cfacter' do
-
-    before :each do
-      Facter.reset
-    end
-
-    it 'should default to false' do
-      expect(Puppet.settings[:cfacter]).to be_falsey
-    end
-
-    it 'should raise an error if cfacter is not installed' do
-      Puppet.features.stubs(:cfacter?).returns false
-      expect { Puppet.settings[:cfacter] = true }.to raise_exception ArgumentError, 'cfacter version 0.2.0 or later is not installed.'
-    end
-
-    it 'should raise an error if facter has already evaluated facts' do
-      Facter[:facterversion]
-      Puppet.features.stubs(:cfacter?).returns true
-      expect { Puppet.settings[:cfacter] = true }.to raise_exception ArgumentError, 'facter has already evaluated facts.'
-    end
-
-    it 'should initialize cfacter when set to true' do
-      Puppet.features.stubs(:cfacter?).returns true
-      CFacter = mock
-      CFacter.stubs(:initialize)
-      Puppet.settings[:cfacter] = true
-    end
-
-  end
-
   describe 'strict' do
     it 'should accept the valid value :off' do
       expect {Puppet.settings[:strict] = 'off'}.to_not raise_exception

@@ -844,9 +844,7 @@ class Puppet::Parser::Compiler
     catalog.server_version = node.parameters["serverversion"]
     @topscope.set_trusted(node.trusted_data)
 
-    if Puppet[:trusted_server_facts]
-      @topscope.set_server_facts(node.server_facts)
-    end
+    @topscope.set_server_facts(node.server_facts)
 
     facts_hash = node.facts.nil? ? {} : node.facts.values
     @topscope.set_facts(facts_hash)
@@ -854,7 +852,8 @@ class Puppet::Parser::Compiler
 
   def create_settings_scope
     settings_type = Puppet::Resource::Type.new :hostclass, "settings"
-    environment.known_resource_types.add(settings_type)
+    # use replace instead of add to avoid duplication check and illegal merge (PUP-5954)
+    environment.known_resource_types.replace_settings(settings_type)
 
     settings_resource = Puppet::Parser::Resource.new("class", "settings", :scope => @topscope)
 

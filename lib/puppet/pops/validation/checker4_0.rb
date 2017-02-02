@@ -532,6 +532,13 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     o.values.each {|v| rvalue(v) }
   end
 
+  def check_LiteralInteger(o)
+    v = o.value
+    if v < MIN_INTEGER || v > MAX_INTEGER
+      acceptor.accept(Issues::NUMERIC_OVERFLOW, o, {:value => v})
+    end
+  end
+
   def check_LiteralHash(o)
     # the keys of a literal hash may be non-literal expressions. They cannot be checked.
     unique = Set.new
