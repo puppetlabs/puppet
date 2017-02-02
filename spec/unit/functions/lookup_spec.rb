@@ -579,13 +579,39 @@ describe "The lookup function" do
             'hiera.yaml' => <<-YAML.unindent,
               ---
               :backends: yaml
-          YAML
+              :yaml:
+                :datadir:  #{env_dir}/#{env_name}/hieradata
+              YAML
+            'hieradata' => {
+              'common.yaml' => <<-YAML.unindent,
+                g: Value g
+                YAML
+            }
           }
         }
       end
 
-      it 'raises an error' do
-        expect { lookup('a') }.to raise_error(Puppet::Error, /hiera configuration version 3 cannot be used in an environment/)
+      it 'will raise an error if --strict is set to error' do
+        Puppet[:strict] = :error
+        expect { lookup('g') }.to raise_error(Puppet::Error, /hiera configuration version 3 cannot be used in an environment/)
+      end
+
+      it 'will log a warning and ignore the file if --strict is set to warning' do
+        Puppet[:strict] = :warning
+        expect { lookup('g') }.to raise_error(Puppet::Error, /did not find a value for the name 'g'/)
+      end
+
+      it 'will not log a warning and ignore the file if --strict is set to off' do
+        Puppet[:strict] = :off
+        expect { lookup('g') }.to raise_error(Puppet::Error, /did not find a value for the name 'g'/)
+        expect(warnings).to include(/hiera.yaml version 3 found at the environment root was ignored/)
+      end
+
+      it 'will use the configuration if appointed by global setting but still warn when encountered by environment data provider' do
+        Puppet[:strict] = :warning
+        Puppet.settings[:hiera_config] = File.join(env_dir, env_name, 'hiera.yaml')
+        expect(lookup('g')).to eql('Value g')
+        expect(warnings).to include(/hiera.yaml version 3 found at the environment root was ignored/)
       end
     end
 

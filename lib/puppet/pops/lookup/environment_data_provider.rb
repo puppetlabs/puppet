@@ -11,8 +11,16 @@ class EnvironmentDataProvider < ConfiguredDataProvider
   protected
 
   def assert_config_version(config)
-    raise Puppet::DataBinding::LookupError, "#{config.name} cannot be used in an environment" unless config.version > 3
-    config
+    if config.version > 3
+      config
+    else
+      if Puppet[:strict] == :error
+        raise Puppet::DataBinding::LookupError, "#{config.name} cannot be used in an environment"
+      else
+        Puppet.warn_once(:hiera_v3_at_env_root, config.config_path, 'hiera.yaml version 3 found at the environment root was ignored')
+      end
+      nil
+    end
   end
 
   # Return the root of the environment

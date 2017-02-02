@@ -318,7 +318,10 @@ class LookupAdapter < DataAdapter
     if mod.has_hiera_conf?
       mp = ModuleDataProvider.new(module_name)
       # A version 5 hiera.yaml trumps a data provider setting or binding in the module
-      if mp.config(lookup_invocation).version >= 5
+      mp_config = mp.config(lookup_invocation)
+      if mp_config.nil?
+        mp = nil
+      elsif mp_config.version >= 5
         unless provider_name.nil? || Puppet[:strict] == :off
           if binding
             Puppet.warn_once(:deprecation, "ModuleBinding#data_provider-#{module_name}",
@@ -388,7 +391,10 @@ class LookupAdapter < DataAdapter
     if config_path.exist?
       ep = EnvironmentDataProvider.new
       # A version 5 hiera.yaml trumps any data provider setting in the environment.conf
-      if ep.config(lookup_invocation).version >= 5
+      ep_config = ep.config(lookup_invocation)
+      if ep_config.nil?
+        ep = nil
+      elsif ep_config.version >= 5
         unless provider_name.nil? || Puppet[:strict] == :off
           Puppet.warn_once(:deprecation, 'environment.conf#data_provider',
             "Defining environment_data_provider='#{provider_name}' in environment.conf is deprecated", env_path + 'environment.conf')
