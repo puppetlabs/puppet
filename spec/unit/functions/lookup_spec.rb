@@ -13,6 +13,7 @@ describe "The lookup function" do
     let(:env_name) { 'spec' }
     let(:code_dir_files) { {} }
     let(:code_dir) { tmpdir('code') }
+    let(:ruby_dir) { tmpdir('ruby') }
     let(:environment_files) do
       {
         env_name => {
@@ -51,6 +52,40 @@ describe "The lookup function" do
       }
     end
 
+    let(:ruby_dir_files) do
+      {
+        'hiera' => {
+          'backend' => {
+            'custom_backend.rb' => <<-RUBY.unindent,
+              class Hiera::Backend::Custom_backend
+                def lookup(key, scope, order_override, resolution_type, context)
+                  case key
+                  when 'hash_c'
+                    { 'hash_ca' => { 'cad' => 'value hash_c.hash_ca.cad (from global custom)' }}
+                  when 'h'
+                    [ 'x5,x6' ]
+                  when 'datasources'
+                    Hiera::Backend.datasources(scope, order_override) { |source| source }
+                  else
+                    throw :no_such_key
+                  end
+                end
+              end
+              RUBY
+            'other_backend.rb' => <<-RUBY.unindent,
+              class Hiera::Backend::Other_backend
+                def lookup(key, scope, order_override, resolution_type, context)
+                  value = Hiera::Config[:other][key.to_sym]
+                  throw :no_such_key if value.nil?
+                  value
+                end
+              end
+              RUBY
+          }
+        }
+      }
+    end
+
     let(:logs) { [] }
     let(:notices) { logs.select { |log| log.level == :notice }.map { |log| log.message } }
     let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
@@ -77,6 +112,11 @@ describe "The lookup function" do
     let(:populated_code_dir) do
       dir_contained_in(code_dir, code_dir_files)
       code_dir
+    end
+
+    let(:populated_ruby_dir) do
+      dir_contained_in(ruby_dir, ruby_dir_files)
+      ruby_dir
     end
 
     let(:env_dir) do
@@ -721,35 +761,6 @@ describe "The lookup function" do
       let(:code_dir_files) do
         {
           'hiera.yaml' => hiera_yaml,
-          'ruby_stuff' => {
-            'hiera' => {
-              'backend' => {
-                'custom_backend.rb' => <<-RUBY.unindent,
-                  class Hiera::Backend::Custom_backend
-                    def lookup(key, scope, order_override, resolution_type, context)
-                      case key
-                      when 'hash_c'
-                        { 'hash_ca' => { 'cad' => 'value hash_c.hash_ca.cad (from global custom)' }}
-                      when 'datasources'
-                        Hiera::Backend.datasources(scope, order_override) { |source| source }
-                      else
-                        throw :no_such_key
-                      end
-                    end
-                  end
-                  RUBY
-                'other_backend.rb' => <<-RUBY.unindent,
-                  class Hiera::Backend::Other_backend
-                    def lookup(key, scope, order_override, resolution_type, context)
-                      value = Hiera::Config[:other][key.to_sym]
-                      throw :no_such_key if value.nil?
-                      value
-                    end
-                  end
-                  RUBY
-              }
-            }
-          },
           'hieradata' => {
             'common.yaml' =>  <<-YAML.unindent,
               a: value a (from global)
@@ -794,7 +805,7 @@ describe "The lookup function" do
       around(:each) do |example|
         # Faking the load path to enable 'require' to load from 'ruby_stuff'. It removes the need for a static fixture
         # for the custom backend
-        $LOAD_PATH.unshift(File.join(code_dir, 'ruby_stuff'))
+        $LOAD_PATH.unshift(populated_ruby_dir)
         begin
           Puppet.override(:environments => environments, :current_environment => env) do
             example.run
@@ -882,11 +893,11 @@ describe "The lookup function" do
               'hiera.yaml' => hiera_yaml,
               'hieradata' => {
                 'common.yaml' => <<-YAML.unindent,
-                  a:
+                  h:
                     - x1,x2
                   YAML
                 'other.yaml' => <<-YAML.unindent,
-                  a:
+                  h:
                     - x3
                     - x4
                   YAML
@@ -895,7 +906,40 @@ describe "The lookup function" do
           end
 
           it 'honors option :unpack_arrays: (unsupported by puppet)' do
-            expect(lookup('a')).to eql(%w(x1 x2 x3 x4))
+            expect(lookup('h')).to eql(%w(x1 x2 x3 x4))
+          end
+
+          context 'together with a custom backend' do
+            let(:hiera_yaml) do
+              <<-YAML.unindent
+                ---
+                :backends:
+                  - custom
+                  - yaml
+                :yaml:
+                  :datadir: #{code_dir}/hieradata
+                :hierarchy:
+                  - other
+                  - common
+                :merge_behavior: #{merge_behavior}
+                :deep_merge_options:
+                  :unpack_arrays: ','
+                YAML
+            end
+
+            context "using 'deeper'" do
+              let(:merge_behavior) { 'deeper' }
+              it 'honors option :unpack_arrays: (unsupported by puppet)' do
+                expect(lookup('h')).to eql(%w(x1 x2 x3 x4 x5 x6))
+              end
+            end
+
+            context "using 'deep'" do
+              let(:merge_behavior) { 'deep' }
+              it 'honors option :unpack_arrays: (unsupported by puppet)' do
+                expect(lookup('h')).to eql(%w(x5 x6 x3 x4 x1 x2))
+              end
+            end
           end
         end
 

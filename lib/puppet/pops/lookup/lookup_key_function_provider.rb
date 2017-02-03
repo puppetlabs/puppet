@@ -97,13 +97,17 @@ class V3BackendFunctionProvider < LookupKeyFunctionProvider
       # Equivalent to Hiera :hash with default :native merge behavior. A Hash must be passed here
       # to override possible Hiera deep merge config settings.
       { :behavior => :native }
-    when 'deep'
+    when 'deep', 'unconstrained_deep'
       # Equivalent to Hiera :hash with :deeper merge behavior.
       { :behavior => :deeper }
+    when 'reverse_deep'
+      # Equivalent to Hiera :hash with :deep merge behavior.
+      { :behavior => :deep }
     when Hash
       strategy = merge['strategy']
-      if strategy == 'deep'
-        result = { :behavior => :deeper }
+      case strategy
+      when 'deep', 'unconstrained_deep', 'reverse_deep'
+        result = { :behavior => strategy == 'reverse_deep' ? :deep : :deeper }
         # Remaining entries must have symbolic keys
         merge.each_pair { |k,v| result[k.to_sym] = v unless k == 'strategy' }
         result
