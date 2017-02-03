@@ -334,6 +334,48 @@ describe "The lookup function" do
         }
       end
 
+      context 'that contains hash values with interpolated keys' do
+        let(:common_yaml) do
+          <<-YAML.unindent
+          ---
+          a:
+              "%{key}": "the %{value}"
+          b:  "Detail in %{lookup('a.a_key')}"
+          YAML
+        end
+
+        it 'interpolates both key and value"' do
+          Puppet[:log_level] = 'debug'
+          collect_notices("notice('success')") do |scope|
+            expect(lookup_func.call(scope, 'a')).to eql({'' => 'the '})
+            scope['key'] = 'a_key'
+            scope['value'] = 'interpolated value'
+            expect(lookup_func.call(scope, 'a')).to eql({'a_key' => 'the interpolated value'})
+          end
+          expect(notices).to eql(['success'])
+        end
+
+        it 'navigates to a value behind an interpolated key"' do
+          Puppet[:log_level] = 'debug'
+          collect_notices("notice('success')") do |scope|
+            scope['key'] = 'a_key'
+            scope['value'] = 'interpolated value'
+            expect(lookup_func.call(scope, 'a.a_key')).to eql('the interpolated value')
+          end
+          expect(notices).to eql(['success'])
+        end
+
+        it 'navigates to a value behind an interpolated key using an interpolated value"' do
+          Puppet[:log_level] = 'debug'
+          collect_notices("notice('success')") do |scope|
+            scope['key'] = 'a_key'
+            scope['value'] = 'interpolated value'
+            expect(lookup_func.call(scope, 'b')).to eql('Detail in the interpolated value')
+          end
+          expect(notices).to eql(['success'])
+        end
+      end
+
       context 'that is empty' do
         let(:common_yaml) { '' }
 
@@ -344,7 +386,7 @@ describe "The lookup function" do
         end
 
         it 'logs a warning that the file does not contain a hash' do
-          expect { lookup('a') }.to raise_error
+          expect { lookup('a') }.to raise_error(Puppet::DataBinding::LookupError)
           expect(warnings).to include(/spec\/data\/common.yaml: file does not contain a valid yaml hash/)
         end
       end
@@ -369,7 +411,7 @@ describe "The lookup function" do
         end
 
         it 'logs a warning that the file does not contain a hash' do
-          expect { lookup('a') }.to raise_error
+          expect { lookup('a') }.to raise_error(Puppet::DataBinding::LookupError)
           expect(warnings).to include(/spec\/data\/common.yaml: file does not contain a valid yaml hash/)
         end
       end

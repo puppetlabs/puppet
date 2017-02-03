@@ -20,7 +20,9 @@ module Interpolation
     when Array
       value.map { |element| interpolate(element, context, allow_methods) }
     when Hash
-      Hash[value.map { |k, v| [k, interpolate(v, context, allow_methods)] }]
+      result = {}
+      value.each_pair { |k, v| result[interpolate(k, context, allow_methods)] = interpolate(v, context, allow_methods) }
+      result
     else
       value
     end
