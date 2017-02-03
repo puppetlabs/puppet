@@ -93,7 +93,7 @@ class Invocation
   # values that the configuration was based on
   #
   # @api private
-  def remember_scope_lookup(key, value)
+  def remember_scope_lookup(*lookup_result)
     # Does nothing by default
   end
 
