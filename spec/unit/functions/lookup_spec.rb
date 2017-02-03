@@ -811,8 +811,10 @@ describe "The lookup function" do
             example.run
           end
         ensure
-          Hiera::Backend.send(:remove_const, :Custom_backend) if Hiera::Backend.const_defined?(:Custom_backend)
-          Hiera::Backend.send(:remove_const, :Other_backend) if Hiera::Backend.const_defined?(:Other_backend)
+          if Kernel.const_defined?(:Hiera) && Hiera.const_defined?(:Backend)
+            Hiera::Backend.send(:remove_const, :Custom_backend) if Hiera::Backend.const_defined?(:Custom_backend)
+            Hiera::Backend.send(:remove_const, :Other_backend) if Hiera::Backend.const_defined?(:Other_backend)
+          end
           $LOAD_PATH.shift
         end
       end
@@ -895,11 +897,19 @@ describe "The lookup function" do
                 'common.yaml' => <<-YAML.unindent,
                   h:
                     - x1,x2
+                  str: a string
+                  mixed:
+                    x: hx
+                    y: hy
                   YAML
                 'other.yaml' => <<-YAML.unindent,
                   h:
                     - x3
                     - x4
+                  str: another string
+                  mixed:
+                    - h1
+                    - h2
                   YAML
               }
             }
@@ -907,6 +917,14 @@ describe "The lookup function" do
 
           it 'honors option :unpack_arrays: (unsupported by puppet)' do
             expect(lookup('h')).to eql(%w(x1 x2 x3 x4))
+          end
+
+          it 'will treat merge of strings as a unique (first found)' do
+            expect(lookup('str')).to eql('another string')
+          end
+
+          it 'will treat merge of array and hash as a unique (first found)' do
+            expect(lookup('mixed')).to eql(%w(h1 h2))
           end
 
           context 'together with a custom backend' do
