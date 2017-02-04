@@ -29,7 +29,9 @@ describe "The lookup function" do
         'data' => {
           'common.yaml' => <<-YAML.unindent
             ---
-            a: value a
+            a: value a (from environment)
+            c:
+              c_b: value c_b (from environment)
             mod_a::a: value mod_a::a (from environment)
             mod_a::hash_a:
               a: value mod_a::hash_a.a (from environment)
@@ -198,7 +200,7 @@ describe "The lookup function" do
     end
 
     it 'finds data in the environment' do
-      expect(lookup('a')).to eql('value a')
+      expect(lookup('a')).to eql('value a (from environment)')
     end
 
     context 'that has no lookup configured' do
@@ -876,6 +878,150 @@ describe "The lookup function" do
 
         it 'can dig down into subkeys provided by hocon_data function' do
           expect(lookup('xs.subkey')).to eql('value xs.subkey (from global hocon)')
+        end
+
+        context 'using an eyaml backend' do
+          let(:private_key_name) { 'private_key.pkcs7.pem' }
+          let(:public_key_name) { 'public_key.pkcs7.pem' }
+
+          let(:private_key) do
+            <<-PKCS7.unindent
+              -----BEGIN RSA PRIVATE KEY-----
+              MIIEogIBAAKCAQEAwHB3GvImq59em4LV9DMfP0Zjs21eW3Jd5I9fuY0jLJhIkH6f
+              CR7tyOpYV6xUj+TF8giq9WLxZI7sourMJMWjEWhVjgUr5lqp1RLv4lwfDv3Wk4XC
+              2LUuqj1IAErUXKeRz8i3lUSZW1Pf4CaMpnIiPdWbz6f0KkaJSFi9bqexONBx4fKQ
+              NlgZwm2/aYjjrYng788I0QhWDKUqsQOi5mZKlHNRsDlk7J3Afhsx/jTLrCX/G8+2
+              tPtLsHyRN39kluM5vYHbKXDsCG/a88Z2yUE2+r4Clp0FUKffiEDBPm0/H0sQ4Q1o
+              EfQFDQRKaIkhpsm0nOnLYTy3/xJc5uqDNkLiawIDAQABAoIBAE98pNXOe8ab93oI
+              mtNZYmjCbGAqprTjEoFb71A3SfYbmK2Gf65GxjUdBwx/tBYTiuekSOk+yzKcDoZk
+              sZnmwKpqDByzaiSmAkxunANFxdZtZvpcX9UfUX0j/t+QCROUa5gF8j6HrUiZ5nkx
+              sxr1PcuItekaGLJ1nDLz5JsWTQ+H4M+GXQw7/t96x8v8g9el4exTiAHGk6Fv16kD
+              017T02M9qTTmV3Ab/enDIBmKVD42Ta36K/wc4l1aoUQNiRbIGVh96Cgd1CFXLF3x
+              CsaNbYT4SmRXaYqoj6MKq+QFEGxadFmJy48NoSd4joirIn2lUjHxJebw3lLbNLDR
+              uvQnQ2ECgYEA/nD94wEMr6078uMv6nKxPpNGq7fihwSKf0G/PQDqrRmjUCewuW+k
+              /iXMe1Y/y0PjFeNlSbUsUvKQ5xF7F/1AnpuPHIrn3cjGVLb71W+zen1m8SnhsW/f
+              7dPgtcb4SCvfhmLgoov+P34YcNfGi6qgPUu6319IqoB3BIi7PvfEomkCgYEAwZ4+
+              V0bMjFdDn2hnYzjTNcF2aUQ1jPvtuETizGwyCbbMLl9522lrjC2DrH41vvqX35ct
+              CBJkhQFbtHM8Gnmozv0vxhI2jP+u14mzfePZsaXuYrEgWRj+BCsYUHodXryxnEWj
+              yVrTNskab1B5jFm2SCJDmKcycBOYpRBLCMx6W7MCgYBA99z7/6KboOIzzKrJdGup
+              jLV410UyMIikoccQ7pD9jhRTPS80yjsY4dHqlEVJw5XSWvPb9DTTITi6p44EvBep
+              6BKMuTMnQELUEr0O7KypVCfa4FTOl8BX28f+4kU3OGykxc6R8qkC0VGwTohV1UWB
+              ITsgGhZV4uOA9uDI3T8KMQKBgEnQY2HwmuDSD/TA39GDA3qV8+ez2lqSXRGIKZLX
+              mMf9SaBQQ+uzKA4799wWDbVuYeIbB07xfCL83pJP8FUDlqi6+7Celu9wNp7zX1ua
+              Nw8z/ErhzjxJe+Xo7A8aTwIkG+5A2m1UU/up9YsEeiJYvVaIwY58B42U2vfq20BS
+              fD9jAoGAX2MscBzIsmN+U9R0ptL4SXcPiVnOl8mqvQWr1B4OLgxX7ghht5Fs956W
+              bHipxOWMFCPJA/AhNB8q1DvYiD1viZbIALSCJVUkzs4AEFIjiPsCBKxerl7jF6Xp
+              1WYSaCmfvoCVEpFNt8cKp4Gq+zEBYAV4Q6TkcD2lDtEW49MuN8A=
+              -----END RSA PRIVATE KEY-----
+              PKCS7
+          end
+
+          let(:public_key) do
+            <<-PKCS7.unindent
+              -----BEGIN CERTIFICATE-----
+              MIIC2TCCAcGgAwIBAgIBATANBgkqhkiG9w0BAQUFADAAMCAXDTE3MDExMzA5MTY1
+              MloYDzIwNjcwMTAxMDkxNjUyWjAAMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+              CgKCAQEAwHB3GvImq59em4LV9DMfP0Zjs21eW3Jd5I9fuY0jLJhIkH6fCR7tyOpY
+              V6xUj+TF8giq9WLxZI7sourMJMWjEWhVjgUr5lqp1RLv4lwfDv3Wk4XC2LUuqj1I
+              AErUXKeRz8i3lUSZW1Pf4CaMpnIiPdWbz6f0KkaJSFi9bqexONBx4fKQNlgZwm2/
+              aYjjrYng788I0QhWDKUqsQOi5mZKlHNRsDlk7J3Afhsx/jTLrCX/G8+2tPtLsHyR
+              N39kluM5vYHbKXDsCG/a88Z2yUE2+r4Clp0FUKffiEDBPm0/H0sQ4Q1oEfQFDQRK
+              aIkhpsm0nOnLYTy3/xJc5uqDNkLiawIDAQABo1wwWjAPBgNVHRMBAf8EBTADAQH/
+              MB0GA1UdDgQWBBSejWrVnw7QaBjNFCHMNFi+doSOcTAoBgNVHSMEITAfgBSejWrV
+              nw7QaBjNFCHMNFi+doSOcaEEpAIwAIIBATANBgkqhkiG9w0BAQUFAAOCAQEAAe85
+              BQ1ydAHFqo0ib38VRPOwf5xPHGbYGhvQi4/sU6aTuR7pxaOJPYz05jLhS+utEmy1
+              sknBq60G67yhQE7IHcfwrl1arirG2WmKGvAbjeYL2K1UiU0pVD3D+Klkv/pK6jIQ
+              eOJRGb3qNUn0Sq9EoYIOXiGXQ641F0bZZ0+5H92kT1lmnF5oLfCb84ImD9T3snH6
+              pIr5RKRx/0YmJIcv3WdpoPT903rOJiRIEgIj/hDk9QZTBpm222Ul5yQQ5pBywpSp
+              xh0bmJKAQWhQm7QlybKfyaQmg5ot1jEzWAvD2I5FjHQxmAlchjb6RreaRhExj+JE
+              5O117dMBdzDBjcNMOA==
+              -----END CERTIFICATE-----
+              PKCS7
+          end
+
+          let(:keys_dir) do
+            keys = tmpdir('keys')
+            dir_contained_in(keys, {
+              private_key_name => private_key,
+              public_key_name => public_key
+            })
+            keys
+          end
+
+          let(:private_key_path) { File.join(keys_dir, private_key_name) }
+          let(:public_key_path) { File.join(keys_dir, public_key_name) }
+          let(:hiera_yaml) do
+            <<-YAML.unindent
+            :backends:
+              - eyaml
+              - yaml
+            :eyaml:
+              :datadir: #{code_dir}/hieradata
+              :pkcs7_private_key: #{private_key_path}
+              :pkcs7_public_key: #{public_key_path}
+            :yaml:
+              :datadir: #{code_dir}/hieradata
+            :hierarchy:
+              - common
+           YAML
+          end
+
+          let(:data_files) do
+            {
+              'common.yaml' => <<-YAML.unindent,
+                b: value 'b' (from global)
+                c:
+                  c_a: value c_a (from global)
+                YAML
+              'common.eyaml' => <<-YAML.unindent
+                a: >
+                  ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQEw
+                  DQYJKoZIhvcNAQEBBQAEggEAH457bsfL8kYw9O50roE3dcE21nCnmPnQ2XSX
+                  LYRJ2C78LarbfFonKz0gvDW7tyhsLWASFCFaiU8T1QPBd2b3hoQK8E4B2Ual
+                  xga/K7r9y3OSgRomTm9tpTltC6re0Ubh3Dy71H61obwxEdNVTqjPe95+m2b8
+                  6zWZVnzZzXXsTG1S17yJn1zaB/LXHbWNy4KyLLKCGAml+Gfl6ZMjmaplTmUA
+                  QIC5rI8abzbPP3TDMmbLOGNkrmLqI+3uS8tSueTMoJmWaMF6c+H/cA7oRxmV
+                  QCeEUVXjyFvCHcmbA+keS/RK9XF+vc07/XS4XkYSPs/I5hLQji1y9bkkGAs0
+                  tehxQjBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBDHpA6Fcl/R16aIYcow
+                  oiO4gDAvfFH6jLUwXkcYtagnwdmhkd9TQJtxNWcIwMpvmk036MqIoGwwhQdg
+                  gV4beiCFtLU=]
+                a_ref: "A reference to %{hiera('a')}"
+                b_ref: "A reference to %{hiera('b')}"
+                c_ref: "%{alias('c')}"
+                YAML
+            }
+          end
+
+          let(:code_dir_files) do
+            {
+              'hiera.yaml' => hiera_yaml,
+              'hieradata' => data_files
+            }
+          end
+
+          before(:each) do
+            Puppet.settings[:hiera_config] = File.join(code_dir, 'hiera.yaml')
+          end
+
+          it 'finds data in the global layer' do
+            expect(lookup('a')).to eql("Encrypted value 'a' (from global)")
+          end
+
+          it 'can use a hiera interpolation' do
+            expect(lookup('a_ref')).to eql("A reference to Encrypted value 'a' (from global)")
+          end
+
+          it 'can use a hiera interpolation that refers back to yaml' do
+            expect(lookup('b_ref')).to eql("A reference to value 'b' (from global)")
+          end
+
+          it 'can use a hiera interpolation that refers back to yaml, but only in global layer' do
+            expect(lookup(['c', 'c_ref'], 'merge' => 'deep')).to eql([{'c_a' => 'value c_a (from global)', 'c_b' => 'value c_b (from environment)'}, { 'c_a' => 'value c_a (from global)' }])
+          end
+
+          it 'delegates configured eyaml backend to eyaml_lookup_key function' do
+            expect(explain('a')).to match(/Hierarchy entry "eyaml"\n.*\n.*\n.*"common"\n\s*Found key: "a"/m)
+          end
         end
 
         context 'using deep_merge_options supported by deep_merge gem but not supported by Puppet' do

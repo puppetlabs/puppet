@@ -215,6 +215,30 @@ class HieraConfig
         Hiera.logger = 'puppet'
       end
     end
+
+    unless Hiera::Interpolate.const_defined?(:PATCHED_BY_HIERA_5)
+      # Replace the class methods 'hiera_interpolate' and 'alias_interpolate' with a method that wires back and performs global
+      # lookups using the lookup framework. This is necessary since the classic Hiera is made aware only of custom backends.
+      class << Hiera::Interpolate
+        hiera_interpolate = Proc.new do |data, key, scope, extra_data, context|
+          override = context[:order_override]
+          invocation = Puppet::Pops::Lookup::Invocation.current
+          unless override.nil? && invocation.global_only?
+            invocation = Puppet::Pops::Lookup::Invocation.new(scope)
+            invocation.set_global_only
+            invocation.set_hiera_v3_location_overrides(override) unless override.nil?
+          end
+          Puppet::Pops::Lookup::LookupAdapter.adapt(scope.compiler).lookup(key, invocation, nil)
+        end
+
+        send(:remove_method, :hiera_interpolate)
+        send(:remove_method, :alias_interpolate)
+        send(:define_method, :hiera_interpolate, hiera_interpolate)
+        send(:define_method, :alias_interpolate, hiera_interpolate)
+      end
+      Hiera::Interpolate.send(:const_set, :PATCHED_BY_HIERA_5, true)
+    end
+
     Hiera::Config.instance_variable_set(:@config, hiera3_config)
 
     # Use a special lookup_key that delegates to the backend
