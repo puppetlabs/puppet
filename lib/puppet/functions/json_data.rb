@@ -12,7 +12,7 @@ Puppet::Functions.create_function(:json_data) do
       JSON.parse(Puppet::FileSystem.read(path, :encoding => 'utf-8'))
     rescue JSON::ParserError => ex
       # Filename not included in message, so we add it here.
-      raise Puppet::DataBinding::LookupError, "Unable to parse (#{path}): #{ex.message}"
+      raise Puppet::DataBinding::LookupError, _("Unable to parse (#{path}): #{ex.message}")
     end
   end
 end

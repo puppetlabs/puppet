@@ -29,7 +29,7 @@ class GlobalDataProvider < ConfiguredDataProvider
   protected
 
   def assert_config_version(config)
-    raise Puppet::DataBinding::LookupError, "#{config.name} cannot be used in the global layer" if config.version == 4
+    raise Puppet::DataBinding::LookupError, _("#{config.name} cannot be used in the global layer") if config.version == 4
     config
   end
 

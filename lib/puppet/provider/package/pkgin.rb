@@ -40,10 +40,10 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
 
     if packages.empty?
       if @resource[:ensure] == :absent
-        notice "declared as absent but unavailable #{@resource.file}:#{resource.line}"
+        notice _("declared as absent but unavailable #{@resource.file}:#{resource.line}")
         return false
       else
-        @resource.fail "No candidate to be installed"
+        @resource.fail _("No candidate to be installed")
       end
     end
 

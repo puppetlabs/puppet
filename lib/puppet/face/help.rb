@@ -12,6 +12,7 @@ Puppet::Face.define(:help, '0.0.1') do
 
   action(:help) do
     summary _("Display help about Puppet subcommands and their actions.")
+    #TRANSLATORS parts of a help command
     arguments _("[<subcommand>] [<action>]")
     returns _("Short help text for the specified subcommand or action.")
     examples _(<<-'EOT')
@@ -20,7 +21,7 @@ Puppet::Face.define(:help, '0.0.1') do
       $ puppet help
     EOT
 
-    option _("--version VERSION") do
+    option "--version " + _("VERSION") do
       summary _("The version of the subcommand for which to show help.")
     end
 

@@ -35,7 +35,7 @@ class Puppet::Application::FaceBase < Puppet::Application
     else
       @render_as = Puppet::Network::FormatHandler.format(format)
     end
-    @render_as or raise ArgumentError, "I don't know how to render '#{format}'"
+    @render_as or raise ArgumentError, _("I don't know how to render '#{format}'")
   end
 
   def render(result, args_and_options)
@@ -57,7 +57,7 @@ class Puppet::Application::FaceBase < Puppet::Application
   def preinit
     super
     Signal.trap(:INT) do
-      $stderr.puts "Cancelling Face"
+      $stderr.puts _("Cancelling Face")
       exit(0)
     end
   end
@@ -129,7 +129,7 @@ class Puppet::Application::FaceBase < Puppet::Application
 
         face   = @face.name
         action = action_name.nil? ? 'default' : "'#{action_name}'"
-        msg = "'#{face}' has no #{action} action.  See `puppet help #{face}`."
+        msg = _("'#{face}' has no #{action} action.  See `puppet help #{face}`.")
 
         Puppet.err(msg)
         Puppet::Util::Log.force_flushqueue()
@@ -207,7 +207,7 @@ class Puppet::Application::FaceBase < Puppet::Application
     # Call the method associated with the provided action (e.g., 'find').
     unless @action
       puts Puppet::Face[:help, :current].help(@face.name)
-      raise "#{face} does not respond to action #{arguments.first}"
+      raise _("#{face} does not respond to action #{arguments.first}")
     end
 
     # We need to do arity checking here because this is generic code
@@ -240,13 +240,13 @@ class Puppet::Application::FaceBase < Puppet::Application
     # --daniel 2011-04-27
     if (arity = @action.positional_arg_count) > 0
       unless (count = arguments.length) == arity then
-        s = arity == 2 ? '' : 's'
-        raise ArgumentError, "puppet #{@face.name} #{@action.name} takes #{arity-1} argument#{s}, but you gave #{count-1}"
+        s = arity == 2 ? '' : _('s')
+        raise ArgumentError, _("puppet #{@face.name} #{@action.name} takes #{arity-1} argument#{s}, but you gave #{count-1}")
       end
     end
 
     if @face.deprecated?
-      Puppet.deprecation_warning("'puppet #{@face.name}' is deprecated and will be removed in a future release")
+      Puppet.deprecation_warning(_("'puppet #{@face.name}' is deprecated and will be removed in a future release"))
     end
 
     result = @face.send(@action.name, *arguments)
@@ -265,7 +265,7 @@ class Puppet::Application::FaceBase < Puppet::Application
 
   rescue => detail
     Puppet.log_exception(detail)
-    Puppet.err "Try 'puppet help #{@face.name} #{@action.name}' for usage"
+    Puppet.err _("Try 'puppet help #{@face.name} #{@action.name}' for usage")
 
   ensure
     exit status

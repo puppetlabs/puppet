@@ -268,7 +268,7 @@ class AccessOperator
     expected = expected_classes.map {|c| label_provider.label(c) }.join(' or ')
     fail(Issues::BAD_TYPE_SPECIALIZATION, @semantic.keys[key_index], {
       :type => type,
-      :message => "Cannot use #{bad_key_type_name(actual)} where #{expected} is expected"
+      :message => _("Cannot use #{bad_key_type_name(actual)} where #{expected} is expected")
     })
   end
 
@@ -692,7 +692,7 @@ class AccessOperator
   # @api private
   def strict_check(name, index)
     if Puppet[:strict] != :off
-      msg = 'Upper cased class-name in a Class[<class-name>] is deprecated, class-name should be a lowercase string'
+      msg = _('Upper cased class-name in a Class[<class-name>] is deprecated, class-name should be a lowercase string')
       case Puppet[:strict]
       when :error
         fail(Issues::ILLEGAL_HOSTCLASS_NAME, @semantic.keys[index], {:name => name})

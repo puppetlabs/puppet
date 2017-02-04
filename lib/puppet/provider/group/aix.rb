@@ -98,7 +98,7 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
   def get_arguments(key, value, mapping, objectinfo)
     # In the case of attributes, return a list of key=value
     if key == :attributes
-      raise Puppet::Error, "Attributes must be a list of pairs key=value on #{@resource.class.name}[#{@resource.name}]" \
+      raise Puppet::Error, _("Attributes must be a list of pairs key=value on #{@resource.class.name}[#{@resource.name}]") \
         unless value and value.is_a? Hash
       return value.select { |k,v| true }.map { |pair| pair.join("=") }
     end
@@ -127,7 +127,7 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
       begin
         execute(cmd)
       rescue Puppet::ExecutionFailure  => detail
-        raise Puppet::Error, "Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}", detail.backtrace
+        raise Puppet::Error, _("Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}"), detail.backtrace
       end
     end
   end

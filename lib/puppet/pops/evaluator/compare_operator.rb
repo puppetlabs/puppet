@@ -47,7 +47,7 @@ class CompareOperator
 
   def cmp_String(a, b)
     return a.casecmp(b) if b.is_a?(String)
-    raise ArgumentError.new("A String is not comparable to a non String")
+    raise ArgumentError.new(_("A String is not comparable to a non String"))
   end
 
   # Equality is case independent.
@@ -60,7 +60,7 @@ class CompareOperator
     if b.is_a?(Numeric)
       a <=> b
     else
-      raise ArgumentError.new("A Numeric is not comparable to non Numeric")
+      raise ArgumentError.new(_("A Numeric is not comparable to non Numeric"))
     end
   end
 
@@ -88,27 +88,27 @@ class CompareOperator
     if b.is_a?(Symbol)
       a <=> b
     else
-      raise ArgumentError.new("Symbol not comparable to non Symbol")
+      raise ArgumentError.new(_("Symbol not comparable to non Symbol"))
     end
   end
 
   def cmp_Timespan(a, b)
-    raise ArgumentError.new('Timespans are only comparable to Timespans, Integers, and Floats') unless b.is_a?(Time::Timespan) ||  b.is_a?(Integer) || b.is_a?(Float)
+    raise ArgumentError.new(_('Timespans are only comparable to Timespans, Integers, and Floats')) unless b.is_a?(Time::Timespan) ||  b.is_a?(Integer) || b.is_a?(Float)
     a <=> b
   end
 
   def cmp_Timestamp(a, b)
-    raise ArgumentError.new('Timestamps are only comparable to Timestamps, Integers, and Floats') unless b.is_a?(Time::Timestamp) ||  b.is_a?(Integer) || b.is_a?(Float)
+    raise ArgumentError.new(_('Timestamps are only comparable to Timestamps, Integers, and Floats')) unless b.is_a?(Time::Timestamp) ||  b.is_a?(Integer) || b.is_a?(Float)
     a <=> b
   end
 
   def cmp_Version(a, b)
-    raise ArgumentError.new('Versions not comparable to non Versions') unless b.is_a?(SemanticPuppet::Version)
+    raise ArgumentError.new(_('Versions not comparable to non Versions')) unless b.is_a?(SemanticPuppet::Version)
     a <=> b
   end
 
   def cmp_Object(a, b)
-    raise ArgumentError.new('Only Strings, Numbers, Timespans, Timestamps, and Versions are comparable')
+    raise ArgumentError.new(_('Only Strings, Numbers, Timespans, Timestamps, and Versions are comparable'))
   end
 
 

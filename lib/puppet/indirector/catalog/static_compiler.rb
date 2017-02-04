@@ -38,7 +38,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
   def find(request)
     return nil unless catalog = super
 
-    raise "Did not get catalog back" unless catalog.is_a?(model)
+    raise _("Did not get catalog back") unless catalog.is_a?(model)
 
     catalog.resources.find_all { |res| res.type == "File" }.each do |resource|
       next if resource[:ensure] == 'absent'
@@ -77,7 +77,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
     newsource = file[:source][0].sub("puppet:///", "")
     file[:source][0] = newsource
 
-    raise "Could not get metadata for #{resource[:source]}" unless metadata = file.parameter(:source).metadata
+    raise _("Could not get metadata for #{resource[:source]}") unless metadata = file.parameter(:source).metadata
 
     replace_metadata(request, resource, metadata)
   end
@@ -109,7 +109,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
     end
 
     old_source = resource.delete(:source)
-    Puppet.info "Metadata for #{resource} in catalog for '#{request.key}' added from '#{old_source}'"
+    Puppet.info _("Metadata for #{resource} in catalog for '#{request.key}' added from '#{old_source}'")
   end
 
   # Generate children resources for a recursive file and add them to the catalog.
@@ -221,9 +221,9 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
     sum = @summer.sumdata(resource[:content])
 
     if Puppet::FileBucket::File.indirection.find("#{type}/#{sum}")
-      Puppet.info "Content for '#{resource[:source]}' already exists"
+      Puppet.info _("Content for '#{resource[:source]}' already exists")
     else
-      Puppet.info "Storing content for source '#{resource[:source]}'"
+      Puppet.info _("Storing content for source '#{resource[:source]}'")
       content = Puppet::FileServing::Content.indirection.find(resource[:source], {:environment => request.environment})
       file = Puppet::FileBucket::File.new(content.content)
       Puppet::FileBucket::File.indirection.save(file)

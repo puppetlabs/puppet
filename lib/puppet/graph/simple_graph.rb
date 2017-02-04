@@ -61,7 +61,7 @@ class Puppet::Graph::SimpleGraph
     source = base || event.resource
 
     unless vertex?(source)
-      Puppet.warning "Got an event from invalid vertex #{source.ref}"
+      Puppet.warning _("Got an event from invalid vertex #{source.ref}")
       return []
     end
     # Get all of the edges that this vertex should forward events
@@ -146,7 +146,7 @@ class Puppet::Graph::SimpleGraph
         frame[:step] = :children
 
       else
-        fail "#{frame[:step]} is an unknown step"
+        fail _("#{frame[:step]} is an unknown step")
       end
     end
   end
@@ -193,7 +193,7 @@ class Puppet::Graph::SimpleGraph
   # through the graph first, which are more likely to be interesting to the
   # user.  I think; it would be interesting to verify that. --daniel 2011-01-23
   def paths_in_cycle(cycle, max_paths = 1)
-    raise ArgumentError, "negative or zero max_paths" if max_paths < 1
+    raise ArgumentError, _("negative or zero max_paths") if max_paths < 1
 
     # Calculate our filtered outbound vertex lists...
     adj = {}
@@ -225,7 +225,7 @@ class Puppet::Graph::SimpleGraph
     return if n == 0
     s = n == 1 ? '' : 's'
 
-    message = "Found #{n} dependency cycle#{s}:\n"
+    message = _("Found #{n} dependency cycle#{s}:\n")
     cycles.each do |cycle|
       paths = paths_in_cycle(cycle)
       message += paths.map{ |path| '(' + path.join(" => ") + ')'}.join("\n") + "\n"
@@ -233,10 +233,10 @@ class Puppet::Graph::SimpleGraph
 
     if Puppet[:graph] then
       filename = write_cycles_to_graph(cycles)
-      message += "Cycle graph written to #{filename}."
+      message += _("Cycle graph written to #{filename}.")
     else
-      message += "Try the '--graph' option and opening the "
-      message += "resulting '.dot' file in OmniGraffle or GraphViz"
+      message += _("Try the '--graph' option and opening the ")
+      message += _("resulting '.dot' file in OmniGraffle or GraphViz")
     end
 
     raise Puppet::Error, message

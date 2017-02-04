@@ -4,7 +4,7 @@ module Puppet::Environments
   class EnvironmentNotFound < Puppet::Error
     def initialize(environment_name, original = nil)
       environmentpath = Puppet[:environmentpath]
-      super("Could not find a directory environment named '#{environment_name}' anywhere in the path: #{environmentpath}. Does the directory exist?", original)
+      super(_("Could not find a directory environment named '#{environment_name}' anywhere in the path: #{environmentpath}. Does the directory exist?"), original)
     end
   end
 

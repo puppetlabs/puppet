@@ -37,7 +37,7 @@ class Puppet::FileBucket::Dipper
   # Backs up a file to the file bucket
   def backup(file)
     file_handle = Puppet::FileSystem.pathname(file)
-    raise(ArgumentError, "File #{file} does not exist") unless Puppet::FileSystem.exist?(file_handle)
+    raise(ArgumentError, _("File #{file} does not exist")) unless Puppet::FileSystem.exist?(file_handle)
     begin
       file_bucket_file = Puppet::FileBucket::File.new(file_handle, :bucket_path => @local_path)
       files_original_path = absolutize_path(file)
@@ -52,7 +52,7 @@ class Puppet::FileBucket::Dipper
 
       return file_bucket_file.checksum_data
     rescue => detail
-      message = "Could not back up #{file}: #{detail}"
+      message = _("Could not back up #{file}: #{detail}")
       Puppet.log_exception(detail, message)
       raise Puppet::Error, message, detail.backtrace
     end
@@ -60,7 +60,7 @@ class Puppet::FileBucket::Dipper
 
   # Diffs two filebucket files identified by their sums
   def diff(checksum_a, checksum_b, file_a, file_b)
-    raise RuntimeError, "Diff is not supported on this platform" if Puppet[:diff] == ""
+    raise RuntimeError, _("Diff is not supported on this platform") if Puppet[:diff] == ""
     if checksum_a
       source_path = "#{@rest_path}#{@checksum_type}/#{checksum_a}"
       if checksum_b
@@ -78,7 +78,7 @@ class Puppet::FileBucket::Dipper
           tmp_file.unlink
         end
       else
-        raise Puppet::Error, "Please provide a file or checksum do diff with"
+        raise Puppet::Error, _("Please provide a file or checksum do diff with")
       end
     elsif file_a
       if checksum_b
@@ -94,7 +94,7 @@ class Puppet::FileBucket::Dipper
         file_diff = Puppet::Util::Diff.diff(file_a, file_b)
       end
     end
-    raise Puppet::Error, "Failed to diff files" unless file_diff
+    raise Puppet::Error, _("Failed to diff files") unless file_diff
     file_diff.to_s
   end
 
@@ -108,7 +108,7 @@ class Puppet::FileBucket::Dipper
     source_path = "#{@rest_path}#{@checksum_type}/#{sum}"
     file_bucket_file = Puppet::FileBucket::File.indirection.find(source_path, :bucket_path => @local_path)
 
-    raise Puppet::Error, "File not found" unless file_bucket_file
+    raise Puppet::Error, _("File not found") unless file_bucket_file
     file_bucket_file
   end
 
@@ -142,7 +142,7 @@ class Puppet::FileBucket::Dipper
         }
         ::File.chmod(changed, file) if changed
       else
-        Puppet.err "Could not find file with checksum #{sum}"
+        Puppet.err _("Could not find file with checksum #{sum}")
         return nil
       end
       return newsum
@@ -153,7 +153,7 @@ class Puppet::FileBucket::Dipper
 
   # List Filebucket content.
   def list(fromdate, todate)
-    raise Puppet::Error, "Listing remote file buckets is not allowed" unless local?
+    raise Puppet::Error, _("Listing remote file buckets is not allowed") unless local?
 
     source_path = "#{@rest_path}#{@checksum_type}/"
     file_bucket_list = Puppet::FileBucket::File.indirection.find(
@@ -162,7 +162,7 @@ class Puppet::FileBucket::Dipper
       :list_all => true,
       :fromdate => fromdate,
       :todate => todate)
-    raise Puppet::Error, "File not found" unless file_bucket_list
+    raise Puppet::Error, _("File not found") unless file_bucket_list
     file_bucket_list.to_s
   end
 

@@ -102,10 +102,10 @@ class V3BackendFunctionProvider < LookupKeyFunctionProvider
       backend = Hiera::Backend.const_get("#{backend_name.capitalize}_backend").new
       return backend.method(:lookup).arity == 4 ? Hiera::Backend::Backend1xWrapper.new(backend) : backend
     rescue LoadError => e
-      lookup_invocation.report_text { "Unable to load backend '#{backend_name}': #{e.message}" }
+      lookup_invocation.report_text { _("Unable to load backend '#{backend_name}': #{e.message}") }
       throw :no_such_key
     rescue NameError => e
-      lookup_invocation.report_text { "Unable to instantiate backend '#{backend_name}': #{e.message}" }
+      lookup_invocation.report_text { _("Unable to instantiate backend '#{backend_name}': #{e.message}") }
       throw :no_such_key
     end
   end

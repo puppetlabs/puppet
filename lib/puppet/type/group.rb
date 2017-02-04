@@ -66,7 +66,7 @@ module Puppet
           if gid =~ /^[-0-9]+$/
             gid = Integer(gid)
           else
-            self.fail "Invalid GID #{gid}"
+            self.fail _("Invalid GID #{gid}")
           end
         when Symbol
           unless gid == :absent
@@ -157,7 +157,7 @@ module Puppet
       end
 
       validate do |value|
-        raise ArgumentError, "Attributes value pairs must be separated by an =" unless value.include?("=")
+        raise ArgumentError, _("Attributes value pairs must be separated by an =") unless value.include?("=")
       end
     end
 

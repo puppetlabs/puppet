@@ -22,7 +22,7 @@ class Puppet::Provider::NetworkDevice < Puppet::Provider
     end
   rescue => detail
     # Preserving behavior introduced in #6907
-    Puppet.log_exception(detail, "Could not perform network device prefetch: #{detail}")
+    Puppet.log_exception(detail, _("Could not perform network device prefetch: #{detail}"))
   end
 
   def exists?

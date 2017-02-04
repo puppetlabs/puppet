@@ -1176,11 +1176,11 @@ class EvaluatorImpl
           Hash[*y]
         end
       else
-        raise ArgumentError.new("Can only append Array or Hash to a Hash")
+        raise ArgumentError.new(_("Can only append Array or Hash to a Hash"))
       end
       x.merge y # new hash with overwrite
     else
-      raise ArgumentError.new("Can only append to an Array or a Hash.")
+      raise ArgumentError.new(_("Can only append to an Array or a Hash."))
     end
   end
 
@@ -1210,7 +1210,7 @@ class EvaluatorImpl
       end
       y.each {|e| result.delete(e) }
     else
-      raise ArgumentError.new("Can only delete from an Array or Hash.")
+      raise ArgumentError.new(_("Can only delete from an Array or Hash."))
     end
     result
   end

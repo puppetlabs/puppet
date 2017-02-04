@@ -31,15 +31,20 @@ module Puppet
       msg = super
       @file = nil if (@file.is_a?(String) && @file.empty?)
       if @file and @line and @pos
-        "#{msg} at #{@file}:#{@line}:#{@pos}"
+        #TRANSLATORS error message with line and file location
+        _("#{msg} at #{@file}:#{@line}:#{@pos}")
       elsif @file and @line
-        "#{msg} at #{@file}:#{@line}"
+        #TRANSLATORS error message with line and file location
+        _("#{msg} at #{@file}:#{@line}")
       elsif @line and @pos
-          "#{msg} at line #{@line}:#{@pos}"
+        #TRANSLATORS error message with line location
+          _("#{msg} at line #{@line}:#{@pos}")
       elsif @line
-        "#{msg} at line #{@line}"
+        #TRANSLATORS error message with line location
+        _("#{msg} at line #{@line}")
       elsif @file
-        "#{msg} in #{@file}"
+        #TRANSLATORS error message with file location
+        _("#{msg} in #{@file}")
       else
         msg
       end
@@ -74,8 +79,9 @@ module Puppet
 
     def to_s
       msg = super
-      msg = "Could not parse for environment #{environment}: #{msg}" if environment
-      msg = "#{msg} on node #{node}" if node
+      msg = _("Could not parse for environment #{environment}: #{msg}") if environment
+      #TRANSLATORS error message with origin node
+      msg = _("#{msg} on node #{node}") if node
       msg
     end
   end

@@ -8,19 +8,19 @@ class Puppet::Provider::AixObject < Puppet::Provider
 
   # The real provider must implement these functions.
   def lscmd( _value = @resource[:name] )
-    raise Puppet::Error, "Method not defined #{@resource.class.name} #{@resource.name}: Base AixObject provider doesn't implement lscmd"
+    raise Puppet::Error, _("Method not defined #{@resource.class.name} #{@resource.name}: Base AixObject provider doesn't implement lscmd")
   end
 
   def addcmd( _extra_attrs = [] )
-    raise Puppet::Error, "Method not defined #{@resource.class.name} #{@resource.name}: Base AixObject provider doesn't implement addcmd"
+    raise Puppet::Error, _("Method not defined #{@resource.class.name} #{@resource.name}: Base AixObject provider doesn't implement addcmd")
   end
 
   def modifycmd( _attributes_hash = {} )
-    raise Puppet::Error, "Method not defined #{@resource.class.name} #{@resource.name}: Base AixObject provider doesn't implement modifycmd"
+    raise Puppet::Error, _("Method not defined #{@resource.class.name} #{@resource.name}: Base AixObject provider doesn't implement modifycmd")
   end
 
   def deletecmd
-    raise Puppet::Error, "Method not defined #{@resource.class.name} #{@resource.name}: Base AixObject provider doesn't implement deletecmd"
+    raise Puppet::Error, _("Method not defined #{@resource.class.name} #{@resource.name}: Base AixObject provider doesn't implement deletecmd")
   end
 
   # Valid attributes to be managed by this provider.
@@ -166,7 +166,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
         (key_str, val) = i.split('=')
         # Check the key
         if key_str.nil? or key_str.empty?
-          info "Empty key in string 'i'?"
+          info _("Empty key in string 'i'?")
           continue
         end
         key_str.strip!
@@ -309,7 +309,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
   # Create a new instance of the resource
   def create
     if exists?
-      info "already exists"
+      info _("already exists")
       # The object already exists
       return nil
     end
@@ -317,14 +317,14 @@ class Puppet::Provider::AixObject < Puppet::Provider
     begin
       execute(self.addcmd)
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not create #{@resource.class.name} #{@resource.name}: #{detail}", detail.backtrace
+      raise Puppet::Error, _("Could not create #{@resource.class.name} #{@resource.name}: #{detail}"), detail.backtrace
     end
   end
 
   # Delete this instance of the resource
   def delete
     unless exists?
-      info "already absent"
+      info _("already absent")
       # the object already doesn't exist
       return nil
     end
@@ -332,7 +332,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
     begin
       execute(self.deletecmd)
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not delete #{@resource.class.name} #{@resource.name}: #{detail}", detail.backtrace
+      raise Puppet::Error, _("Could not delete #{@resource.class.name} #{@resource.name}: #{detail}"), detail.backtrace
     end
   end
 
@@ -365,7 +365,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
 
     if getinfo().nil?
       # This is weird...
-      raise Puppet::Error, "Trying to update parameter '#{param}' to '#{value}' for a resource that does not exists #{@resource.class.name} #{@resource.name}: #{detail}"
+      raise Puppet::Error, _("Trying to update parameter '#{param}' to '#{value}' for a resource that does not exists #{@resource.class.name} #{@resource.name}: #{detail}")
     end
     if value == getinfo()[param.to_sym]
       return
@@ -376,7 +376,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
       begin
         execute(cmd)
       rescue Puppet::ExecutionFailure  => detail
-        raise Puppet::Error, "Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}", detail.backtrace
+        raise Puppet::Error, _("Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}"), detail.backtrace
       end
     end
 

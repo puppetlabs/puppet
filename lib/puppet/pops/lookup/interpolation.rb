@@ -123,7 +123,7 @@ module Interpolation
 
   def get_method_and_data(data, allow_methods)
     if match = data.match(/^(\w+)\((?:["]([^"]+)["]|[']([^']+)['])\)$/)
-      raise Puppet::DataBinding::LookupError, 'Interpolation using method syntax is not allowed in this context' unless allow_methods
+      raise Puppet::DataBinding::LookupError, _('Interpolation using method syntax is not allowed in this context') unless allow_methods
       key = match[1].to_sym
       data = match[2] || match[3] # double or single qouted
     else

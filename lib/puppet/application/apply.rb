@@ -187,8 +187,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       Puppet[:code] = options[:code] || STDIN.read
     else
       manifest = command_line.args.shift
-      raise "Could not find file #{manifest}" unless Puppet::FileSystem.exist?(manifest)
-      Puppet.warning("Only one file can be applied per run.  Skipping #{command_line.args.join(', ')}") if command_line.args.size > 0
+      raise _("Could not find file #{manifest}") unless Puppet::FileSystem.exist?(manifest)
+      Puppet.warning(_("Only one file can be applied per run.  Skipping #{command_line.args.join(', ')}")) if command_line.args.size > 0
     end
 
     # splay if needed
@@ -197,7 +197,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     unless Puppet[:node_name_fact].empty?
       # Collect our facts.
       unless facts = Puppet::Node::Facts.indirection.find(Puppet[:node_name_value])
-        raise "Could not find facts for #{Puppet[:node_name_value]}"
+        raise _("Could not find facts for #{Puppet[:node_name_value]}")
       end
 
       Puppet[:node_name_value] = facts.values[Puppet[:node_name_fact]]
@@ -206,7 +206,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     # Find our Node
     unless node = Puppet::Node.indirection.find(Puppet[:node_name_value])
-      raise "Could not find node #{Puppet[:node_name_value]}"
+      raise _("Could not find node #{Puppet[:node_name_value]}")
     end
 
     configured_environment = node.environment || Puppet.lookup(:current_environment)
@@ -222,7 +222,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     # the :manifest setting of the apply_environment.
     node.environment = apply_environment
 
-    Puppet.override({:current_environment => apply_environment}, "For puppet apply") do
+    Puppet.override({:current_environment => apply_environment}, _("For puppet apply")) do
       # Merge in the facts.
       node.merge(facts.values) if facts
 
@@ -234,7 +234,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
         file = Puppet[:classfile]
         if Puppet::FileSystem.exist?(file)
           unless FileTest.readable?(file)
-            $stderr.puts "#{file} is not readable"
+            $stderr.puts _("#{file} is not readable")
             exit(63)
           end
           node.classes = Puppet::FileSystem.read(file, :encoding => 'utf-8').split(/[\s\n]+/)
@@ -307,7 +307,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     Puppet::Util::Log.newdestination(:console) unless options[:setdest]
 
     Signal.trap(:INT) do
-      $stderr.puts "Exiting"
+      $stderr.puts _("Exiting")
       exit(1)
     end
 
@@ -337,7 +337,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       catalog = Puppet::Resource::Catalog.convert_from(Puppet::Resource::Catalog.default_format,text)
       catalog = Puppet::Resource::Catalog.pson_create(catalog) unless catalog.is_a?(Puppet::Resource::Catalog)
     rescue => detail
-      raise Puppet::Error, "Could not deserialize catalog from pson: #{detail}", detail.backtrace
+      raise Puppet::Error, _("Could not deserialize catalog from pson: #{detail}"), detail.backtrace
     end
 
     catalog.to_ral

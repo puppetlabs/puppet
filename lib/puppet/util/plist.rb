@@ -45,7 +45,7 @@ module Puppet::Util::Plist
                                                   {:failonfail => true, :combine => true})
           return parse_plist(plist)
         rescue Puppet::ExecutionFailure => detail
-          Puppet.warning("Cannot read file #{file_path}; Puppet is skipping it.\n" + "Details: #{detail}")
+          Puppet.warning(_("Cannot read file #{file_path}; Puppet is skipping it.\n") + _("Details: #{detail}"))
         end
       end
       return nil
@@ -126,7 +126,7 @@ module Puppet::Util::Plist
       elsif format.to_sym == :binary
         plist_format = CFPropertyList::List::FORMAT_BINARY
       else
-        raise FormatError.new "Unknown plist format #{format}"
+        raise FormatError.new _("Unknown plist format #{format}")
       end
     end
 
@@ -138,7 +138,7 @@ module Puppet::Util::Plist
         plist_to_save.value = CFPropertyList.guess(plist)
         plist_to_save.save(file_path, to_format(format), :formatted => true)
       rescue IOError => e
-        Puppet.err("Unable to write the file #{file_path}. #{e.inspect}")
+        Puppet.err(_("Unable to write the file #{file_path}. #{e.inspect}"))
       end
     end
 

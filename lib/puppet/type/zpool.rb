@@ -49,7 +49,7 @@ module Puppet
       "
 
       validate do |value|
-        raise ArgumentError, "mirror names must be provided as string separated, not a comma-separated list" if value.include?(",")
+        raise ArgumentError, _("mirror names must be provided as string separated, not a comma-separated list") if value.include?(",")
       end
     end
 
@@ -62,7 +62,7 @@ module Puppet
       "
 
       validate do |value|
-        raise ArgumentError, "raid names must be provided as string separated, not a comma-separated list" if value.include?(",")
+        raise ArgumentError, _("raid names must be provided as string separated, not a comma-separated list") if value.include?(",")
       end
     end
 
@@ -85,7 +85,7 @@ module Puppet
 
     validate do
       has_should = [:disk, :mirror, :raidz].select { |prop| self.should(prop) }
-      self.fail "You cannot specify #{has_should.join(" and ")} on this type (only one)" if has_should.length > 1
+      self.fail _("You cannot specify #{has_should.join(" and ")} on this type (only one)") if has_should.length > 1
     end
   end
 end

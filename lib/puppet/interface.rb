@@ -95,9 +95,9 @@ class Puppet::Interface
       unless face = Puppet::Interface::FaceCollection[name, version]
         # REVISIT (#18042) no sense in rechecking if version == :current -- josh
         if Puppet::Interface::FaceCollection[name, :current]
-          raise Puppet::Error, "Could not find version #{version} of #{name}"
+          raise Puppet::Error, _("Could not find version #{version} of #{name}")
         else
-          raise Puppet::Error, "Could not find Puppet Face #{name.to_s}"
+          raise Puppet::Error, _("Could not find Puppet Face #{name.to_s}")
         end
       end
 
@@ -160,7 +160,7 @@ class Puppet::Interface
     # is a favour to our end users; if you happen to get that in a core face
     # report it as a bug, please. --daniel 2011-04-26
     @authors  = []
-    @license  = 'All Rights Reserved'
+    @license  = _('All Rights Reserved')
 
     @loader = Puppet::Util::Autoload.new(@name, "puppet/face/#{@name}")
     instance_eval(&block) if block_given?

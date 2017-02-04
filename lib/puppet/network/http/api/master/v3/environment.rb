@@ -8,7 +8,7 @@ class Puppet::Network::HTTP::API::Master::V3::Environment
     code_id = request.params[:code_id]
 
     if env.nil?
-      raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new("#{env_name} is not a known environment", Puppet::Network::HTTP::Issues::RESOURCE_NOT_FOUND)
+      raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(_("#{env_name} is not a known environment"), Puppet::Network::HTTP::Issues::RESOURCE_NOT_FOUND)
     end
 
     catalog = Puppet::Parser::EnvironmentCompiler.compile(env, code_id).to_resource
@@ -28,7 +28,7 @@ class Puppet::Network::HTTP::API::Master::V3::Environment
       app['nodes'].each do |node, comps|
         comps = [comps] unless comps.is_a?(Array)
         comps.each do |comp|
-          raise Puppet::ParseError, "Application #{app} maps component #{comp} to multiple nodes" if node_mapping.include?(comp.ref)
+          raise Puppet::ParseError, _("Application #{app} maps component #{comp} to multiple nodes") if node_mapping.include?(comp.ref)
           node_mapping[comp.ref] = node.title
         end
       end
@@ -36,7 +36,7 @@ class Puppet::Network::HTTP::API::Master::V3::Environment
       catalog.direct_dependents_of(app).each do |comp|
         mapped_node = node_mapping[comp.ref]
         if mapped_node.nil?
-          raise Puppet::ParseError, "Component #{comp} is not mapped to any node"
+          raise Puppet::ParseError, _("Component #{comp} is not mapped to any node")
         end
         app_components[comp.ref] = {
           :produces => comp.export.map(&:ref),

@@ -1,9 +1,9 @@
 # Download a specified file into the local filebucket.
 Puppet::Face.define(:file, '0.0.1') do
   action :download do |*args|
-    summary "Download a file into the local filebucket."
+    summary _("Download a file into the local filebucket.")
     arguments "( {md5}<checksum> | <puppet_url> )"
-    returns "Nothing."
+    returns _("Nothing.")
     description <<-EOT
       Downloads a file from the puppet master's filebucket and duplicates it in
       the local filebucket. This action's checksum syntax differs from `find`'s,
@@ -24,7 +24,7 @@ Puppet::Face.define(:file, '0.0.1') do
         require 'puppet/file_serving'
         require 'puppet/file_serving/content'
         unless content = Puppet::FileServing::Content.indirection.find(sum)
-          raise "Could not find metadata for #{sum}"
+          raise _("Could not find metadata for #{sum}")
         end
         pathname = Puppet::FileSystem.pathname(content.full_path())
         file = Puppet::FileBucket::File.new(pathname)
@@ -38,17 +38,17 @@ Puppet::Face.define(:file, '0.0.1') do
 
         Puppet::FileBucket::File.indirection.terminus_class = :file
         if Puppet::FileBucket::File.indirection.head(key)
-          Puppet.info "Content for '#{sum}' already exists"
+          Puppet.info _("Content for '#{sum}' already exists")
           return
         end
 
         Puppet::FileBucket::File.indirection.terminus_class = :rest
-        raise "Could not download content for '#{sum}'" unless file = Puppet::FileBucket::File.indirection.find(key)
+        raise _("Could not download content for '#{sum}'") unless file = Puppet::FileBucket::File.indirection.find(key)
       end
 
 
       Puppet::FileBucket::File.indirection.terminus_class = :file
-      Puppet.notice "Saved #{sum} to filebucket"
+      Puppet.notice _("Saved #{sum} to filebucket")
       Puppet::FileBucket::File.indirection.save file
       return nil
     end

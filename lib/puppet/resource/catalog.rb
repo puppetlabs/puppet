@@ -186,7 +186,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       return if existing == resource
       resource_declaration = " at #{resource.file}:#{resource.line}" if resource.file and resource.line
       existing_declaration = " at #{existing.file}:#{existing.line}" if existing.file and existing.line
-      msg = "Cannot alias #{ref} to #{key.inspect}#{resource_declaration}; resource #{newref.inspect} already declared#{existing_declaration}"
+      msg = _("Cannot alias #{ref} to #{key.inspect}#{resource_declaration}; resource #{newref.inspect} already declared#{existing_declaration}")
       raise ArgumentError, msg
     end
     @resource_table[newref] = resource
@@ -547,7 +547,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       f.puts classes.join("\n")
     end
   rescue => detail
-    Puppet.err "Could not create class file #{Puppet[:classfile]}: #{detail}"
+    Puppet.err _("Could not create class file #{Puppet[:classfile]}: #{detail}")
   end
 
   # Store the list of resources we manage
@@ -567,7 +567,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       f.puts to_print.join("\n")
     end
   rescue => detail
-    Puppet.err "Could not create resource file #{Puppet[:resourcefile]}: #{detail}"
+    Puppet.err _("Could not create resource file #{Puppet[:resourcefile]}: #{detail}")
   end
 
   # Produce the graph files if requested.

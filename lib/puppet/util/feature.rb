@@ -18,7 +18,7 @@ class Puppet::Util::Feature
       begin
         result = yield
       rescue StandardError,ScriptError => detail
-        warn "Failed to load feature test for #{name}: #{detail}"
+        warn _("Failed to load feature test for #{name}: #{detail}")
         result = false
       end
       @results[name] = result

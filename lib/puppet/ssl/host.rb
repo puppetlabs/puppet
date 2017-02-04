@@ -104,7 +104,7 @@ DOC
   # Specify how we expect to interact with our certificate authority.
   def self.ca_location=(mode)
     modes = CA_MODES.collect { |m, vals| m.to_s }.join(", ")
-    raise ArgumentError, "CA Mode can only be one of: #{modes}" unless CA_MODES.include?(mode)
+    raise ArgumentError, _("CA Mode can only be one of: #{modes}") unless CA_MODES.include?(mode)
 
     @ca_location = mode
 
@@ -207,10 +207,10 @@ DOC
   end
 
   def validate_certificate_with_key
-    raise Puppet::Error, "No certificate to validate." unless certificate
-    raise Puppet::Error, "No private key with which to validate certificate with fingerprint: #{certificate.fingerprint}" unless key
+    raise Puppet::Error, _("No certificate to validate.") unless certificate
+    raise Puppet::Error, _("No private key with which to validate certificate with fingerprint: #{certificate.fingerprint}") unless key
     unless certificate.content.check_private_key(key.content)
-      raise Puppet::Error, <<ERROR_STRING
+      raise Puppet::Error, _(<<ERROR_STRING)
 The certificate retrieved from the master does not match the agent's private key.
 Certificate fingerprint: #{certificate.fingerprint}
 To fix this, remove the certificate from both the master and the agent and then start a puppet run, which will automatically regenerate a certificate.
@@ -235,7 +235,7 @@ ERROR_STRING
     if !existing_request.nil? &&
       (key.content.public_key.to_s != existing_request.content.public_key.to_s)
 
-      raise Puppet::Error, <<ERROR_STRING
+      raise Puppet::Error, _(<<ERROR_STRING)
 The CSR retrieved from the master does not match the agent's public key.
 CSR fingerprint: #{existing_request.fingerprint}
 CSR public key: #{existing_request.content.public_key.to_text}
@@ -344,9 +344,9 @@ ERROR_STRING
       generate
       return if certificate
     rescue StandardError => detail
-      Puppet.log_exception(detail, "Could not request certificate: #{detail.message}")
+      Puppet.log_exception(detail, _("Could not request certificate: #{detail.message}"))
       if time < 1
-        puts "Exiting; failed to retrieve certificate and waitforcert is disabled"
+        puts _("Exiting; failed to retrieve certificate and waitforcert is disabled")
         exit(1)
       else
         sleep(time)
@@ -355,7 +355,7 @@ ERROR_STRING
     end
 
     if time < 1
-      puts "Exiting; no certificate found and waitforcert is disabled"
+      puts _("Exiting; no certificate found and waitforcert is disabled")
       exit(1)
     end
 
@@ -363,9 +363,9 @@ ERROR_STRING
       sleep time
       begin
         break if certificate
-        Puppet.notice "Did not receive certificate"
+        Puppet.notice _("Did not receive certificate")
       rescue StandardError => detail
-        Puppet.log_exception(detail, "Could not request certificate: #{detail.message}")
+        Puppet.log_exception(detail, _("Could not request certificate: #{detail.message}"))
       end
     end
   end

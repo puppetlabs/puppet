@@ -61,7 +61,7 @@ module Puppet
             when :NONE
               options[:type] = :flag
             else
-              raise PuppetOptionError.new("Unsupported type: '#{type}'")
+              raise PuppetOptionError.new(_("Unsupported type: '#{type}'"))
           end
 
           @parser.opt long.sub("^--", "").intern, desc, options
@@ -73,7 +73,7 @@ module Puppet
           begin
             @parser.parse args_copy
           rescue Puppet::Util::CommandLine::Trollop::CommandlineError => err
-            raise PuppetOptionError.new("Error parsing arguments", err)
+            raise PuppetOptionError.new(_("Error parsing arguments"), err)
           end
         end
 

@@ -2,7 +2,7 @@
 #
 Puppet::Functions.create_function(:hocon_data) do
   unless Puppet.features.hocon?
-    raise Puppet::DataBinding::LookupError, 'Lookup using Hocon data_hash function is not supported without hocon library'
+    raise Puppet::DataBinding::LookupError, _('Lookup using Hocon data_hash function is not supported without hocon library')
   end
 
   require 'hocon'
@@ -18,7 +18,7 @@ Puppet::Functions.create_function(:hocon_data) do
     begin
       Hocon.parse(Puppet::FileSystem.read(path, :encoding => 'utf-8'))
     rescue Hocon::ConfigError => ex
-      raise Puppet::DataBinding::LookupError, "Unable to parse (#{path}): #{ex.message}"
+      raise Puppet::DataBinding::LookupError, _("Unable to parse (#{path}): #{ex.message}")
     end
   end
 end

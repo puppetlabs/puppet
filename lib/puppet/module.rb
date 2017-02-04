@@ -164,11 +164,11 @@ class Puppet::Module
 
     [:source, :author, :version, :license, :dependencies].each do |attr|
       value = data[attr.to_s]
-      raise MissingMetadata, "No #{attr} module metadata provided for #{self.name}" if value.nil?
+      raise MissingMetadata, _("No #{attr} module metadata provided for #{self.name}") if value.nil?
 
       if attr == :dependencies
         unless value.is_a?(Array)
-          raise MissingMetadata, "The value for the key dependencies in the file metadata.json of the module #{self.name} must be an array, not: '#{value}'"
+          raise MissingMetadata, _("The value for the key dependencies in the file metadata.json of the module #{self.name} must be an array, not: '#{value}'")
         end
         value.each do |dep|
           name = dep['name']
@@ -360,8 +360,7 @@ class Puppet::Module
       relative_pattern = Puppet::FileSystem::PathPattern.relative(extended)
     rescue Puppet::FileSystem::PathPattern::InvalidPattern => error
       raise Puppet::Module::InvalidFilePattern.new(
-        "The pattern \"#{pattern}\" to find manifests in the module \"#{name}\" " +
-        "is invalid and potentially unsafe.", error)
+        _("The pattern \"#{pattern}\" to find manifests in the module \"#{name}\" is invalid and potentially unsafe."), error)
     end
 
     relative_pattern.prefix_with(@absolute_path_to_manifests)
@@ -373,7 +372,7 @@ class Puppet::Module
 
   def assert_validity
     if !Puppet::Module.is_module_directory_name?(@name) && !Puppet::Module.is_module_namespaced_name?(@name)
-      raise InvalidName, "Invalid module name #{@name}; module names must be alphanumeric (plus '-'), not '#{@name}'"
+      raise InvalidName, _("Invalid module name #{@name}; module names must be alphanumeric (plus '-'), not '#{@name}'")
     end
   end
 end

@@ -64,7 +64,7 @@ class Invocation
 
   def check(name)
     if @name_stack.include?(name)
-      raise Puppet::DataBinding::RecursiveLookupError, "Recursive lookup detected in [#{@name_stack.join(', ')}]"
+      raise Puppet::DataBinding::RecursiveLookupError, _("Recursive lookup detected in [#{@name_stack.join(', ')}]")
     end
     return unless block_given?
 

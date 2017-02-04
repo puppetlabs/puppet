@@ -34,7 +34,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
   end
 
   def self.prefetch(packages)
-    raise Puppet::Error, "The aix provider can only be used by root" if Process.euid != 0
+    raise Puppet::Error, _("The aix provider can only be used by root") if Process.euid != 0
 
     return unless packages.detect { |name, package| package.should(:ensure) == :latest }
 
@@ -76,13 +76,13 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
     # installp will return an exit code of zero even if it didn't uninstall
     # anything... so let's make sure it worked.
     unless query().nil?
-      self.fail "Failed to uninstall package '#{@resource[:name]}'"
+      self.fail _("Failed to uninstall package '#{@resource[:name]}'")
     end
   end
 
   def install(useversion = true)
     unless source = @resource[:source]
-      self.fail "A directory is required which will be used to find packages"
+      self.fail _("A directory is required which will be used to find packages")
     end
 
     pkg = @resource[:name]
@@ -94,7 +94,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
     # If the package is superseded, it means we're trying to downgrade and we
     # can't do that.
     if output =~ /^#{Regexp.escape(@resource[:name])}\s+.*\s+Already superseded by.*$/
-      self.fail "aix package provider is unable to downgrade packages"
+      self.fail _("aix package provider is unable to downgrade packages")
     end
   end
 
@@ -113,7 +113,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
       if hash[:pkgname]
         return nil
       else
-        raise Puppet::Error, "Could not list installed Packages: #{detail}", detail.backtrace
+        raise Puppet::Error, _("Could not list installed Packages: #{detail}"), detail.backtrace
       end
     end
 

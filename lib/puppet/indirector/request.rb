@@ -97,7 +97,7 @@ class Puppet::Indirector::Request
   end
 
   def model
-    raise ArgumentError, "Could not find indirection '#{indirection_name}'" unless i = indirection
+    raise ArgumentError, _("Could not find indirection '#{indirection_name}'") unless i = indirection
     i.model
   end
 
@@ -136,7 +136,7 @@ class Puppet::Indirector::Request
       when true, false, String, Symbol, Fixnum, Bignum, Float
         params << [key, value]
       else
-        raise ArgumentError, "HTTP REST queries cannot handle values of type '#{value.class}'"
+        raise ArgumentError, _("HTTP REST queries cannot handle values of type '#{value.class}'")
       end
     end
   end
@@ -191,7 +191,7 @@ class Puppet::Indirector::Request
           self.port   = srv_port
           return yield(self)
         rescue SystemCallError => e
-          Puppet.warning "Error connecting to #{srv_server}:#{srv_port}: #{e.message}"
+          Puppet.warning _("Error connecting to #{srv_server}:#{srv_port}: #{e.message}")
         end
       end
     end
@@ -247,7 +247,7 @@ class Puppet::Indirector::Request
       # and the resulting string components of the URI are now ASCII
       uri = URI.parse(URI.escape(key))
     rescue => detail
-      raise ArgumentError, "Could not understand URL #{key}: #{detail}", detail.backtrace
+      raise ArgumentError, _("Could not understand URL #{key}: #{detail}"), detail.backtrace
     end
 
     # Just short-circuit these to full paths

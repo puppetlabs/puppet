@@ -123,12 +123,12 @@ class Puppet::Resource::Type
 
     resource.export.map do |ex|
       # Assert that the ref really is a resource reference
-      raise Puppet::Error, "Invalid export in #{resource.ref}: #{ex} is not a resource" unless ex.is_a?(Puppet::Resource)
-      raise Puppet::Error, "Invalid export in #{resource.ref}: #{ex} is not a capability resource" if ex.resource_type.nil? || !ex.resource_type.is_capability?
+      raise Puppet::Error, _("Invalid export in #{resource.ref}: #{ex} is not a resource") unless ex.is_a?(Puppet::Resource)
+      raise Puppet::Error, _("Invalid export in #{resource.ref}: #{ex} is not a capability resource") if ex.resource_type.nil? || !ex.resource_type.is_capability?
 
       blueprint = produces.find { |pr| pr[:capability] == ex.type }
       if blueprint.nil?
-        raise Puppet::ParseError, "Resource type #{resource.type} does not produce #{ex.type}"
+        raise Puppet::ParseError, _("Resource type #{resource.type} does not produce #{ex.type}")
       end
       t = ex.type
       t = Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_resource_type(scope, t) unless t == 'class' || t == 'node'
@@ -325,7 +325,7 @@ class Puppet::Resource::Type
   # @deprecated Not used by Puppet
   # @api private
   def assign_parameter_values(parameters, resource)
-    Puppet.deprecation_warning('The method Puppet::Resource::Type.assign_parameter_values is deprecated and will be removed in the next major release of Puppet.')
+    Puppet.deprecation_warning(_('The method Puppet::Resource::Type.assign_parameter_values is deprecated and will be removed in the next major release of Puppet.'))
 
     return unless parameters
 
@@ -341,7 +341,7 @@ class Puppet::Resource::Type
     return nil unless parent
 
     @parent_type ||= scope.environment.known_resource_types.send("find_#{type}", parent) ||
-      fail(Puppet::ParseError, "Could not find parent resource type '#{parent}' of type #{type} in #{scope.environment}")
+      fail(Puppet::ParseError, _("Could not find parent resource type '#{parent}' of type #{type} in #{scope.environment}"))
   end
 
   # Validate and set any arguments passed by the resource as variables in the scope.
@@ -532,9 +532,9 @@ class Puppet::Resource::Type
     return unless Puppet::Type.metaparamclass(param)
 
     if default
-      warnonce "#{param} is a metaparam; this value will inherit to all contained resources in the #{self.name} definition"
+      warnonce _("#{param} is a metaparam; this value will inherit to all contained resources in the #{self.name} definition")
     else
-      raise Puppet::ParseError, "#{param} is a metaparameter; please choose another parameter name in the #{self.name} definition"
+      raise Puppet::ParseError, _("#{param} is a metaparameter; please choose another parameter name in the #{self.name} definition")
     end
   end
 

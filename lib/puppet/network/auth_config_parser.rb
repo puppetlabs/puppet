@@ -28,11 +28,11 @@ class AuthConfigParser
         right = rights.newright(name, count, @file)
       when /^\s*(allow(?:_ip)?|deny(?:_ip)?|method|environment|auth(?:enticated)?)\s+(.+?)(\s*#.*)?$/
         if right.nil?
-          raise Puppet::ConfigurationError, "Missing or invalid 'path' before right directive at line #{count} of #{@file}"
+          raise Puppet::ConfigurationError, _("Missing or invalid 'path' before right directive at line #{count} of #{@file}")
         end
         parse_right_directive(right, $1, $2, count)
       else
-        raise Puppet::ConfigurationError, "Invalid line #{count}: #{line}"
+        raise Puppet::ConfigurationError, _("Invalid line #{count}: #{line}")
       end
       count += 1
     }
@@ -49,23 +49,23 @@ class AuthConfigParser
   def parse_right_directive(right, var, value, count)
     value.strip!
     case var
-    when "allow"
-      modify_right(right, :allow, value, "allowing %s access", count)
-    when "deny"
-      modify_right(right, :deny, value, "denying %s access", count)
-    when "allow_ip"
-      modify_right(right, :allow_ip, value, "allowing IP %s access", count)
-    when "deny_ip"
-      modify_right(right, :deny_ip, value, "denying IP %s access", count)
-    when "method"
-      modify_right(right, :restrict_method, value, "allowing 'method' %s", count)
-    when "environment"
-      modify_right(right, :restrict_environment, value, "adding environment %s", count)
+    when _("allow")
+      modify_right(right, :allow, value, _("allowing %s access"), count)
+    when _("deny")
+      modify_right(right, :deny, value, _("denying %s access"), count)
+    when _("allow_ip")
+      modify_right(right, :allow_ip, value, _("allowing IP %s access"), count)
+    when _("deny_ip")
+      modify_right(right, :deny_ip, value, _("denying IP %s access"), count)
+    when _("method")
+      modify_right(right, :restrict_method, value, _("allowing 'method' %s"), count)
+    when _("environment")
+      modify_right(right, :restrict_environment, value, _("adding environment %s"), count)
     when /auth(?:enticated)?/
-      modify_right(right, :restrict_authenticated, value, "adding authentication %s", count)
+      modify_right(right, :restrict_authenticated, value, _("adding authentication %s"), count)
     else
       raise Puppet::ConfigurationError,
-        "Invalid argument '#{var}' at line #{count}"
+        _("Invalid argument '#{var}' at line #{count}")
     end
   end
 
@@ -76,7 +76,7 @@ class AuthConfigParser
         right.info msg % val
         right.send(method, val)
       rescue Puppet::AuthStoreError => detail
-        raise Puppet::ConfigurationError, "#{detail} at line #{count} of #{@file}", detail.backtrace
+        raise Puppet::ConfigurationError, _("#{detail} at line #{count} of #{@file}"), detail.backtrace
       end
     end
   end

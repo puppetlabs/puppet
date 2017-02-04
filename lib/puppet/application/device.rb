@@ -19,7 +19,7 @@ class Puppet::Application::Device < Puppet::Application
   def preinit
     # Do an initial trap, so that cancels don't get a stack trace.
     Signal.trap(:INT) do
-      $stderr.puts "Cancelling startup"
+      $stderr.puts _("Cancelling startup")
       exit(0)
     end
 
@@ -170,7 +170,7 @@ Licensed under the Apache 2.0 License
     require 'puppet/util/network_device/config'
     devices = Puppet::Util::NetworkDevice::Config.devices
     if devices.empty?
-      Puppet.err "No device found in #{Puppet[:deviceconfig]}"
+      Puppet.err _("No device found in #{Puppet[:deviceconfig]}")
       exit(1)
     end
     returns = devices.collect do |devicename,device|
@@ -179,7 +179,7 @@ Licensed under the Apache 2.0 License
         # Handle nil scheme & port
         scheme = "#{device_url.scheme}://" if device_url.scheme
         port = ":#{device_url.port}" if device_url.port
-        Puppet.info "starting applying configuration to #{device.name} at #{scheme}#{device_url.host}#{port}#{device_url.path}"
+        Puppet.info _("starting applying configuration to #{device.name} at #{scheme}#{device_url.host}#{port}#{device_url.path}")
 
         # override local $vardir and $certname
         Puppet[:confdir] = ::File.join(Puppet[:devicedir], device.name)

@@ -146,7 +146,7 @@ module Puppet::Parser::Functions
     name = name.intern
     environment = options[:environment] || Puppet.lookup(:current_environment)
 
-    Puppet.warning "Overwriting previous definition for function #{name}" if get_function(name, environment)
+    Puppet.warning _("Overwriting previous definition for function #{name}") if get_function(name, environment)
 
     arity = options[:arity] || -1
     ftype = options[:type] || :statement
@@ -164,16 +164,16 @@ module Puppet::Parser::Functions
     env_module = environment_module(environment)
 
     env_module.send(:define_method, fname) do |*args|
-      Puppet::Util::Profiler.profile("Called #{name}", [:functions, name]) do
+      Puppet::Util::Profiler.profile(_("Called #{name}"), [:functions, name]) do
         if args[0].is_a? Array
           if arity >= 0 and args[0].size != arity
-            raise ArgumentError, "#{name}(): Wrong number of arguments given (#{args[0].size} for #{arity})"
+            raise ArgumentError, _("#{name}(): Wrong number of arguments given (#{args[0].size} for #{arity})")
           elsif arity < 0 and args[0].size < (arity+1).abs
-            raise ArgumentError, "#{name}(): Wrong number of arguments given (#{args[0].size} for minimum #{(arity+1).abs})"
+            raise ArgumentError, _("#{name}(): Wrong number of arguments given (#{args[0].size} for minimum #{(arity+1).abs})")
           end
           self.send(real_fname, args[0])
         else
-          raise ArgumentError, "custom functions must be called with a single array that contains the arguments. For example, function_example([1]) instead of function_example(1)"
+          raise ArgumentError, _("custom functions must be called with a single array that contains the arguments. For example, function_example([1]) instead of function_example(1)")
         end
       end
     end
@@ -272,7 +272,7 @@ module Puppet::Parser::Functions
 
   class Error
     def self.is4x(name)
-      raise Puppet::ParseError, "#{name}() can only be called using the 4.x function API. See Scope#call_function"
+      raise Puppet::ParseError, _("#{name}() can only be called using the 4.x function API. See Scope#call_function")
     end
   end
 end

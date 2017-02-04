@@ -310,8 +310,8 @@ class Parser
     required = {}
 
     if handle_help_and_version
-      opt :version, "Print version and exit" if @version unless @specs[:version] || @long["version"]
-      opt :help, "Show this message" unless @specs[:help] || @long["help"]
+      opt :version, _("Print version and exit") if @version unless @specs[:version] || @long["version"]
+      opt :help, _("Show this message") unless @specs[:help] || @long["help"]
     end
 
     @specs.each do |sym, opts|
@@ -333,16 +333,16 @@ class Parser
       when /^--([^-]\S*)$/
         @long[$1] ? @long[$1] : @long["[no-]#{$1}"]
       else
-        raise CommandlineError, "invalid argument syntax: '#{arg}'"
+        raise CommandlineError, _("invalid argument syntax: '#{arg}'")
       end
 
       unless sym
         next 0 if ignore_invalid_options
-        raise CommandlineError, "unknown argument '#{arg}'" unless sym
+        raise CommandlineError, _("unknown argument '#{arg}'") unless sym
       end
 
       if given_args.include?(sym) && !@specs[sym][:multi]
-        raise CommandlineError, "option '#{arg}' specified multiple times"
+        raise CommandlineError, _("option '#{arg}' specified multiple times")
       end
 
       given_args[sym] ||= {}
@@ -379,14 +379,14 @@ class Parser
 
       case type
       when :depends
-        syms.each { |sym| raise CommandlineError, "--#{@specs[constraint_sym][:long]} requires --#{@specs[sym][:long]}" unless given_args.include? sym }
+        syms.each { |sym| raise CommandlineError, _("--#{@specs[constraint_sym][:long]} requires --#{@specs[sym][:long]}") unless given_args.include? sym }
       when :conflicts
-        syms.each { |sym| raise CommandlineError, "--#{@specs[constraint_sym][:long]} conflicts with --#{@specs[sym][:long]}" if given_args.include?(sym) && (sym != constraint_sym) }
+        syms.each { |sym| raise CommandlineError, _("--#{@specs[constraint_sym][:long]} conflicts with --#{@specs[sym][:long]}") if given_args.include?(sym) && (sym != constraint_sym) }
       end
     end
 
     required.each do |sym, val|
-      raise CommandlineError, "option --#{@specs[sym][:long]} must be specified" unless given_args.include? sym
+      raise CommandlineError, _("option --#{@specs[sym][:long]} must be specified") unless given_args.include? sym
     end
 
     ## parse parameters
@@ -395,7 +395,7 @@ class Parser
       params = given_data[:params]
 
       opts = @specs[sym]
-      raise CommandlineError, "option '#{arg}' needs a parameter" if params.empty? && opts[:type] != :flag
+      raise CommandlineError, _("option '#{arg}' needs a parameter") if params.empty? && opts[:type] != :flag
 
       vals["#{sym}_given".intern] = true # mark argument as specified on the commandline
 
@@ -455,7 +455,7 @@ class Parser
       end
       time ? Date.new(time.year, time.month, time.day) : Date.parse(param)
     rescue ArgumentError
-      raise CommandlineError, "option '#{arg}' needs a date", $!.backtrace
+      raise CommandlineError, _("option '#{arg}' needs a date"), $!.backtrace
     end
   end
 
@@ -488,7 +488,7 @@ class Parser
 
     unless @order.size > 0 && @order.first.first == :text
       stream.puts "#@version\n" if @version
-      stream.puts "Options:"
+      stream.puts _("Options:")
     end
 
     @order.each do |what, opt|
@@ -512,9 +512,9 @@ class Parser
 
         if spec[:default]
           if spec[:desc] =~ /\.$/
-            " (Default: #{default_s})"
+            _(" (Default: #{default_s})")
           else
-            " (default: #{default_s})"
+            _(" (default: #{default_s})")
           end
         else
           ""
@@ -551,11 +551,11 @@ class Parser
   ## The per-parser version of Trollop::die (see that for documentation).
   def die arg, msg
     if msg
-      $stderr.puts "Error: argument --#{@specs[arg][:long]} #{msg}."
+      $stderr.puts _("Error: argument --#{@specs[arg][:long]} #{msg}.")
     else
-      $stderr.puts "Error: #{arg}."
+      $stderr.puts _("Error: #{arg}.")
     end
-    $stderr.puts "Try --help for help."
+    $stderr.puts _("Try --help for help.")
     exit(-1)
   end
 
@@ -634,12 +634,12 @@ private
   end
 
   def parse_integer_parameter param, arg
-    raise CommandlineError, "option '#{arg}' needs an integer" unless param =~ /^\d+$/
+    raise CommandlineError, _("option '#{arg}' needs an integer") unless param =~ /^\d+$/
     param.to_i
   end
 
   def parse_float_parameter param, arg
-    raise CommandlineError, "option '#{arg}' needs a floating-point number" unless param =~ FLOAT_RE
+    raise CommandlineError, _("option '#{arg}' needs a floating-point number") unless param =~ FLOAT_RE
     param.to_f
   end
 
@@ -651,7 +651,7 @@ private
       begin
         open param
       rescue SystemCallError => e
-        raise CommandlineError, "file or url for option '#{arg}' cannot be opened: #{e.message}", e.backtrace
+        raise CommandlineError, _("file or url for option '#{arg}' cannot be opened: #{e.message}"), e.backtrace
       end
     end
   end
@@ -778,8 +778,8 @@ def with_standard_exception_handling parser
   begin
     yield
   rescue CommandlineError => e
-    $stderr.puts "Error: #{e.message}."
-    $stderr.puts "Try --help for help."
+    $stderr.puts _("Error: #{e.message}.")
+    $stderr.puts _("Try --help for help.")
     exit(-1)
   rescue HelpNeeded
     parser.educate

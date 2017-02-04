@@ -10,7 +10,7 @@ class Puppet::Settings::EnumSetting < Puppet::Settings::BaseSetting
       value
     else
       raise Puppet::Settings::ValidationError,
-        "Invalid value '#{value}' for parameter #{@name}. Allowed values are '#{values.join("', '")}'"
+        _("Invalid value '#{value}' for parameter #{@name}. Allowed values are '#{values.join("', '")}'")
     end
   end
 end

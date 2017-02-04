@@ -52,12 +52,12 @@ Puppet::Type.type(:maillist).provide(:mailman) do
     if val = @resource[:admin]
       args << val
     else
-      raise ArgumentError, "Mailman lists require an administrator email address"
+      raise ArgumentError, _("Mailman lists require an administrator email address")
     end
     if val = @resource[:password]
       args << val
     else
-      raise ArgumentError, "Mailman lists require an administrator password"
+      raise ArgumentError, _("Mailman lists require an administrator password")
     end
     newlist(*args)
   end
