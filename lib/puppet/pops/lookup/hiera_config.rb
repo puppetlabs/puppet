@@ -12,11 +12,11 @@ class ScopeLookupCollectingInvocation < Invocation
 
   def initialize(scope)
     super(scope)
-    @scope_interpolations = {}
+    @scope_interpolations = []
   end
 
-  def remember_scope_lookup(key, value)
-    @scope_interpolations[key] = value
+  def remember_scope_lookup(*lookup_result)
+    @scope_interpolations << lookup_result
   end
 end
 
@@ -157,20 +157,28 @@ class HieraConfig
   # @param parent_data_provider [DataProvider] The data provider that loaded this configuration
   # @return [Array<DataProvider>] the data providers
   def configured_data_providers(lookup_invocation, parent_data_provider)
-    scope = lookup_invocation.scope
-    unless @data_providers && scope_interpolations_stable?(scope)
+    unless @data_providers && scope_interpolations_stable?(lookup_invocation)
       if @data_providers
         lookup_invocation.report_text { 'Hiera configuration recreated due to change of scope variables used in interpolation expressions' }
       end
-      slc_invocation = ScopeLookupCollectingInvocation.new(scope)
+      slc_invocation = ScopeLookupCollectingInvocation.new(lookup_invocation.scope)
       @data_providers = create_configured_data_providers(slc_invocation, parent_data_provider)
       @scope_interpolations = slc_invocation.scope_interpolations
     end
     @data_providers
   end
 
-  def scope_interpolations_stable?(scope)
-    @scope_interpolations.all? { |key, value| scope[key].eql?(value) }
+  def scope_interpolations_stable?(lookup_invocation)
+    scope = lookup_invocation.scope
+    @scope_interpolations.all? do |key, root_key, segments, old_value|
+      value = scope[root_key]
+      unless value.nil? || segments.empty?
+        found = '';
+        catch(:no_such_key) { found = sub_lookup(key, lookup_invocation, segments, value) }
+        value = found;
+      end
+      old_value.eql?(value)
+    end
   end
 
   # @api private
@@ -209,6 +217,30 @@ class HieraConfig
         Hiera.logger = 'puppet'
       end
     end
+
+    unless Hiera::Interpolate.const_defined?(:PATCHED_BY_HIERA_5)
+      # Replace the class methods 'hiera_interpolate' and 'alias_interpolate' with a method that wires back and performs global
+      # lookups using the lookup framework. This is necessary since the classic Hiera is made aware only of custom backends.
+      class << Hiera::Interpolate
+        hiera_interpolate = Proc.new do |data, key, scope, extra_data, context|
+          override = context[:order_override]
+          invocation = Puppet::Pops::Lookup::Invocation.current
+          unless override.nil? && invocation.global_only?
+            invocation = Puppet::Pops::Lookup::Invocation.new(scope)
+            invocation.set_global_only
+            invocation.set_hiera_v3_location_overrides(override) unless override.nil?
+          end
+          Puppet::Pops::Lookup::LookupAdapter.adapt(scope.compiler).lookup(key, invocation, nil)
+        end
+
+        send(:remove_method, :hiera_interpolate)
+        send(:remove_method, :alias_interpolate)
+        send(:define_method, :hiera_interpolate, hiera_interpolate)
+        send(:define_method, :alias_interpolate, hiera_interpolate)
+      end
+      Hiera::Interpolate.send(:const_set, :PATCHED_BY_HIERA_5, true)
+    end
+
     Hiera::Config.instance_variable_set(:@config, hiera3_config)
 
     # Use a special lookup_key that delegates to the backend

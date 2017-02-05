@@ -1,5 +1,3 @@
-require 'puppet/indirector/data_binding/hiera'
-
 require 'tmpdir'
 require 'fileutils'
 

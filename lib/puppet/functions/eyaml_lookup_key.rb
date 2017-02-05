@@ -32,7 +32,7 @@ Puppet::Functions.create_function(:eyaml_lookup_key) do
       context.cache(nil, raw_data)
     end
     context.not_found unless raw_data.include?(key)
-    context.cache(key, decrypt_value(raw_data[key]))
+    context.cache(key, decrypt_value(raw_data[key], context))
   end
 
   def load_data_hash(options)
@@ -46,23 +46,23 @@ Puppet::Functions.create_function(:eyaml_lookup_key) do
     end
   end
 
-  def decrypt_value(value)
+  def decrypt_value(value, context)
     case value
     when String
-      decrypt(value)
+      decrypt(value, context)
     when Hash
       result = {}
-      value.each_pair { |k, v| result[k] = decrypt_value(v) }
+      value.each_pair { |k, v| result[k] = decrypt_value(v, context) }
       result
     when Array
-      value.map { |v| decrypt_value(v) }
+      value.map { |v| decrypt_value(v, context) }
     else
       value
     end
   end
 
-  def decrypt(data)
-    return data unless encrypted?(data)
+  def decrypt(data, context)
+    return context.interpolate(data) unless encrypted?(data)
     tokens = Hiera::Backend::Eyaml::Parser::ParserFactory.hiera_backend_parser.parse(data)
     tokens.map(&:to_plain_text).join.chomp
   end

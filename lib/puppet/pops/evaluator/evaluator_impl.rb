@@ -309,7 +309,7 @@ class EvaluatorImpl
   # A QualifiedReference (i.e. a  capitalized qualified name such as Foo, or Foo::Bar) evaluates to a PType
   #
   def eval_QualifiedReference(o, scope)
-    type = Types::TypeParser.singleton.interpret(o, scope)
+    type = Types::TypeParser.singleton.interpret(o)
     fail(Issues::UNKNOWN_RESOURCE_TYPE, o, {:type_name => type.type_string }) if type.is_a?(Types::PTypeReferenceType)
     type
   end
@@ -480,7 +480,7 @@ class EvaluatorImpl
     keys = o.keys || []
     if left.is_a?(Types::PHostClassType)
       # Evaluate qualified references without errors no undefined types
-      keys = keys.map {|key| key.is_a?(Model::QualifiedReference) ? Types::TypeParser.singleton.interpret(key, scope) : evaluate(key, scope) }
+      keys = keys.map {|key| key.is_a?(Model::QualifiedReference) ? Types::TypeParser.singleton.interpret(key) : evaluate(key, scope) }
     else
       keys = keys.map {|key| evaluate(key, scope) }
       # Resource[File] becomes File

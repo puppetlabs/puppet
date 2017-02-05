@@ -74,7 +74,7 @@ class Invocation
     rescue Puppet::DataBinding::LookupError
       raise
     rescue Puppet::Error => detail
-      raise Puppet::DataBinding::LookupError.new(detail.message, detail)
+      raise Puppet::DataBinding::LookupError.new(detail.message, nil, nil, nil, detail)
     ensure
       @name_stack.pop
     end
@@ -93,7 +93,7 @@ class Invocation
   # values that the configuration was based on
   #
   # @api private
-  def remember_scope_lookup(key, value)
+  def remember_scope_lookup(*lookup_result)
     # Does nothing by default
   end
 

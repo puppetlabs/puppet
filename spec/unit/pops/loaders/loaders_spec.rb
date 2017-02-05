@@ -353,41 +353,136 @@ describe 'loaders' do
 
   context 'when calling' do
     let(:env) { environment_for(mix_4x_and_3x_functions) }
-    let(:scope) { Puppet::Parser::Compiler.new(Puppet::Node.new("test", :environment => env)).newscope(nil) }
-    let(:loader) { Puppet::Pops::Loaders.new(env).private_loader_for_module('user') }
+    let(:compiler) { Puppet::Parser::Compiler.new(Puppet::Node.new("test", :environment => env)) }
+    let(:scope) { compiler.topscope }
+    let(:loader) { compiler.loaders.private_loader_for_module('user') }
+
+    around(:each) do |example|
+      Puppet.override(:current_environment => scope.environment, :global_scope => scope, :loaders => compiler.loaders) do
+        example.run
+      end
+    end
 
     it 'a 3x function in dependent module can be called from a 4x function' do
-      Puppet.override({ :current_environment => scope.environment, :global_scope => scope }) do
-        function = loader.load_typed(typed_name(:function, 'user::caller')).value
-        expect(function.call(scope)).to eql("usee::callee() got 'first' - usee::callee() got 'second'")
-      end
+      function = loader.load_typed(typed_name(:function, 'user::caller')).value
+      expect(function.call(scope)).to eql("usee::callee() got 'first' - usee::callee() got 'second'")
     end
 
     it 'a 3x function in dependent module can be called from a puppet function' do
-      Puppet.override({ :current_environment => scope.environment, :global_scope => scope }) do
-        function = loader.load_typed(typed_name(:function, 'user::puppetcaller')).value
-        expect(function.call(scope)).to eql("usee::callee() got 'first' - usee::callee() got 'second'")
-      end
+      function = loader.load_typed(typed_name(:function, 'user::puppetcaller')).value
+      expect(function.call(scope)).to eql("usee::callee() got 'first' - usee::callee() got 'second'")
     end
 
     it 'a 4x function can be called from a puppet function' do
-      Puppet.override({ :current_environment => scope.environment, :global_scope => scope }) do
-        function = loader.load_typed(typed_name(:function, 'user::puppetcaller4')).value
-        expect(function.call(scope)).to eql("usee::callee() got 'first' - usee::callee() got 'second'")
-      end
+      function = loader.load_typed(typed_name(:function, 'user::puppetcaller4')).value
+      expect(function.call(scope)).to eql("usee::callee() got 'first' - usee::callee() got 'second'")
     end
+
     it 'a puppet function can be called from a 4x function' do
-      Puppet.override({ :current_environment => scope.environment, :global_scope => scope }) do
-        function = loader.load_typed(typed_name(:function, 'user::callingpuppet')).value
-        expect(function.call(scope)).to eql("Did you call to say you love me?")
-      end
+      function = loader.load_typed(typed_name(:function, 'user::callingpuppet')).value
+      expect(function.call(scope)).to eql("Did you call to say you love me?")
     end
 
     it 'a 3x function can be called with caller scope propagated from a 4x function' do
-      Puppet.override({ :current_environment => scope.environment, :global_scope => scope }) do
-        function = loader.load_typed(typed_name(:function, 'user::caller_ws')).value
-        expect(function.call(scope, 'passed in scope')).to eql("usee::callee_ws() got 'passed in scope'")
-      end
+      function = loader.load_typed(typed_name(:function, 'user::caller_ws')).value
+      expect(function.call(scope, 'passed in scope')).to eql("usee::callee_ws() got 'passed in scope'")
+    end
+  end
+
+  context 'loading types' do
+    let(:env_name) { 'testenv' }
+    let(:environments_dir) { Puppet[:environmentpath] }
+    let(:env_dir) { File.join(environments_dir, env_name) }
+    let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(populated_env_dir, 'modules')]) }
+    let(:metadata_json) {
+      <<-JSON
+      {
+        "name": "example/%1$s",
+        "version": "0.0.2",
+        "source": "git@github.com/example/example-%1$s.git",
+        "dependencies": [],
+        "author": "Bob the Builder",
+        "license": "Apache-2.0"%2$s
+      }
+      JSON
+    }
+
+    let(:env_dir_files) do
+      {
+        'modules' => {
+          'a' => {
+            'manifests' => {
+              'init.pp' => 'class a { notice(A::A) }'
+            },
+            'types' => {
+              'a.pp' => 'type A::A = Variant[B::B, String]',
+              'n.pp' => 'type A::N = C::C'
+            },
+            'metadata.json' => sprintf(metadata_json, 'a', ', "dependencies": [{ "name": "example/b" }]')
+          },
+          'b' => {
+            'types' => {
+              'b.pp' => 'type B::B = Variant[C::C, Float]',
+              'x.pp' => 'type B::X = A::A'
+            },
+            'metadata.json' => sprintf(metadata_json, 'b', ', "dependencies": [{ "name": "example/c" }]')
+          },
+          'c' => {
+            'types' => {
+              'c.pp' => 'type C::C = Integer'
+            },
+            'metadata.json' => sprintf(metadata_json, 'c', '')
+          },
+        }
+      }
+    end
+
+    let(:populated_env_dir) do
+      dir_contained_in(environments_dir, env_name => env_dir_files)
+      PuppetSpec::Files.record_tmp(env_dir)
+      env_dir
+    end
+
+    before(:each) do
+      Puppet.push_context(:loaders => Puppet::Pops::Loaders.new(env))
+    end
+
+    after(:each) do
+      Puppet.pop_context
+    end
+
+    it 'resolves types using the loader that loaded the type a -> b -> c' do
+      type = Puppet::Pops::Types::TypeParser.singleton.parse('A::A', Puppet::Pops::Loaders.find_loader('a'))
+      expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
+      expect(type.name).to eql('A::A')
+      type = type.resolved_type
+      expect(type).to be_a(Puppet::Pops::Types::PVariantType)
+      type = type.types[0]
+      expect(type.name).to eql('B::B')
+      type = type.resolved_type
+      expect(type).to be_a(Puppet::Pops::Types::PVariantType)
+      type = type.types[0]
+      expect(type.name).to eql('C::C')
+      type = type.resolved_type
+      expect(type).to be_a(Puppet::Pops::Types::PIntegerType)
+    end
+
+    it 'will not resolve implicit transitive dependencies, a -> c' do
+      type = Puppet::Pops::Types::TypeParser.singleton.parse('A::N', Puppet::Pops::Loaders.find_loader('a'))
+      expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
+      expect(type.name).to eql('A::N')
+      type = type.resolved_type
+      expect(type).to be_a(Puppet::Pops::Types::PTypeReferenceType)
+      expect(type.type_string).to eql('C::C')
+    end
+
+    it 'will not resolve reverse dependencies, b -> a' do
+      type = Puppet::Pops::Types::TypeParser.singleton.parse('B::X', Puppet::Pops::Loaders.find_loader('b'))
+      expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
+      expect(type.name).to eql('B::X')
+      type = type.resolved_type
+      expect(type).to be_a(Puppet::Pops::Types::PTypeReferenceType)
+      expect(type.type_string).to eql('A::A')
     end
   end
 

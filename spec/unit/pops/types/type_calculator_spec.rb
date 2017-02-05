@@ -1480,7 +1480,7 @@ describe 'The type calculator' do
         loader = Object.new
         loader.expects(:load).with(:type, 'tree').returns t
 
-        Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Model::QualifiedReference), scope).at_most_once.returns loader
+        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
         t.resolve(parser, scope)
         expect(calculator.assignable?(t, parser.parse('Hash[String,Variant[String,Hash[String,Variant[String,String]]]]'))).to be_truthy
@@ -1496,7 +1496,7 @@ describe 'The type calculator' do
         loader.expects(:load).with(:type, 'tree1').returns t1
         loader.expects(:load).with(:type, 'tree2').returns t2
 
-        Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Model::QualifiedReference), scope).at_least_once.returns loader
+        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
         t1.resolve(parser, scope)
         t2.resolve(parser, scope)
@@ -1504,19 +1504,16 @@ describe 'The type calculator' do
       end
 
       it 'crossing recursive aliases are assignable' do
-        scope = Object.new
-
         t1 = type_alias_t('Tree1', 'Hash[String,Variant[String,Tree2]]')
         t2 = type_alias_t('Tree2', 'Hash[String,Variant[String,Tree1]]')
         loader = Object.new
         loader.expects(:load).with(:type, 'tree1').returns t1
         loader.expects(:load).with(:type, 'tree2').returns t2
-        loader.expects(:is_a?).with(Loader::Loader).returns true
 
-        Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Model::QualifiedReference), scope).at_least_once.returns loader
+        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
-        t1.resolve(parser, scope)
-        t2.resolve(parser, scope)
+        t1.resolve(parser, loader)
+        t2.resolve(parser, loader)
         expect(calculator.assignable?(t1, t2)).to be_truthy
       end
 
@@ -1526,8 +1523,7 @@ describe 'The type calculator' do
         ta = type_alias_t('PositiveInteger', 'Integer[0,default]')
         loader = Object.new
         loader.expects(:load).with(:type, 'positiveinteger').returns ta
-        Adapters::LoaderAdapter.expects(:loader_for_model_object)
-          .with(instance_of(Model::QualifiedReference), scope).returns loader
+        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
         t1 = type_t(range_t(0, :default))
         t2 = parser.parse('Type[PositiveInteger]', scope)
@@ -1540,8 +1536,7 @@ describe 'The type calculator' do
         ta = type_alias_t('PositiveIntegerType', 'Type[Integer[0,default]]')
         loader = Object.new
         loader.expects(:load).with(:type, 'positiveintegertype').returns ta
-        Adapters::LoaderAdapter.expects(:loader_for_model_object)
-          .with(instance_of(Model::QualifiedReference), scope).returns loader
+        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
         t1 = type_t(range_t(0, :default))
         t2 = parser.parse('PositiveIntegerType', scope)
@@ -1554,8 +1549,7 @@ describe 'The type calculator' do
         ta = type_alias_t('PositiveInteger', 'Integer[0,default]')
         loader = Object.new
         loader.expects(:load).with(:type, 'positiveinteger').returns ta
-        Adapters::LoaderAdapter.expects(:loader_for_model_object)
-          .with(instance_of(Model::QualifiedReference), scope).returns loader
+        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
         t1 = type_t(type_t(range_t(0, :default)))
         t2 = parser.parse('Type[Type[PositiveInteger]]', scope)
@@ -1568,8 +1562,7 @@ describe 'The type calculator' do
         ta = type_alias_t('PositiveIntegerType', 'Type[Integer[0,default]]')
         loader = Object.new
         loader.expects(:load).with(:type, 'positiveintegertype').returns ta
-        Adapters::LoaderAdapter.expects(:loader_for_model_object)
-          .with(instance_of(Model::QualifiedReference), scope).returns loader
+        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
         t1 = type_t(type_t(range_t(0, :default)))
         t2 = parser.parse('Type[PositiveIntegerType]', scope)
@@ -1866,31 +1859,26 @@ describe 'The type calculator' do
       end
 
       it 'should consider x an instance of the aliased type that uses self recursion' do
-        scope = Object.new
-
         t = type_alias_t('Tree', 'Hash[String,Variant[String,Tree]]')
         loader = Object.new
         loader.expects(:load).with(:type, 'tree').returns t
 
-        Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Model::QualifiedReference), scope).at_most_once.returns loader
+        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
-        t.resolve(parser, scope)
+        t.resolve(parser, loader)
         expect(calculator.instance?(t, {'a'=>{'aa'=>{'aaa'=>'aaaa'}}, 'b'=>'bb'})).to be_truthy
       end
 
       it 'should consider x an instance of the aliased type that uses contains an alias that causes self recursion' do
-        scope = Object.new
-
         t1 = type_alias_t('Tree', 'Hash[String,Variant[String,OtherTree]]')
         t2 = type_alias_t('OtherTree', 'Hash[String,Tree]')
         loader = Object.new
         loader.expects(:load).with(:type, 'tree').returns t1
         loader.expects(:load).with(:type, 'othertree').returns t2
-        loader.expects(:is_a?).with(Loader::Loader).returns true
 
-        Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Model::QualifiedReference), scope).at_least_once.returns loader
+        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
-        t1.resolve(parser, scope)
+        t1.resolve(parser, loader)
         expect(calculator.instance?(t1, {'a'=>{'aa'=>{'aaa'=>'aaaa'}}, 'b'=>'bb'})).to be_truthy
       end
     end

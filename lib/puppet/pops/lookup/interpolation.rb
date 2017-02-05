@@ -20,7 +20,9 @@ module Interpolation
     when Array
       value.map { |element| interpolate(element, context, allow_methods) }
     when Hash
-      Hash[value.map { |k, v| [k, interpolate(v, context, allow_methods)] }]
+      result = {}
+      value.each_pair { |k, v| result[interpolate(k, context, allow_methods)] = interpolate(v, context, allow_methods) }
+      result
     else
       value
     end
@@ -95,7 +97,7 @@ module Interpolation
           catch(:no_such_key) { found = sub_lookup(key, lookup_invocation, segments, value) }
           value = found;
         end
-        lookup_invocation.remember_scope_lookup(key, value)
+        lookup_invocation.remember_scope_lookup(key, root_key, segments, value)
         value
       end
 
