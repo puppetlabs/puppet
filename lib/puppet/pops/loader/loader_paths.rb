@@ -110,7 +110,10 @@ module Puppet::Pops::Loader::LoaderPaths
       # Puppet name to path always skips the name-space as that is part of the generic path
       # i.e. <module>/mymodule/functions/foo.pp is the function mymodule::foo
       parts = typed_name.name_parts
-      parts = parts[start_index_in_name..-1] if parts.size > 1
+      if start_index_in_name > 0
+        return nil if start_index_in_name >= parts.size
+        parts = parts[start_index_in_name..-1]
+      end
       "#{File.join(generic_path, parts)}.pp"
     end
   end

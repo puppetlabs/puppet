@@ -262,11 +262,17 @@ describe Puppet::Resource::Type do
       wrap3x(Puppet::Pops::Model::Factory.NUMBER(number).var())
     end
 
-    before do
-      @scope = Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("foo")), :source => stub("source"))
+    before(:each) do
+      compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
+      @scope = Puppet::Parser::Scope.new(compiler, :source => stub("source"))
       @resource = Puppet::Parser::Resource.new(:foo, "bar", :scope => @scope)
       @type = Puppet::Resource::Type.new(:definition, "foo")
       @resource.environment.known_resource_types.add @type
+      Puppet.push_context(:loaders => compiler.loaders)
+    end
+
+    after(:each) do
+      Puppet.pop_context
     end
 
     ['module_name', 'name', 'title'].each do |variable|

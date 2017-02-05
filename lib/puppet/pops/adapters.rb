@@ -118,19 +118,18 @@ module Adapters
 
     # Finds the loader to use when loading originates from the source position of the given argument.
     #
-    # @param [Model::PopsObject] instance The model object
-    # @param [Puppet::Parser::Scope] scope The scope to use
-    # @param [String] file the file from where the model was parsed
-    # @return [Loader,nil] the found loader or `nil` if it could not be found
+    # @param instance [Model::PopsObject] The model object
+    # @param file [String] the file from where the model was parsed
+    # @param default_loader [Loader] the loader to return if no loader is found for the model
+    # @return [Loader] the found loader or default_loader if it could not be found
     #
-    def self.loader_for_model_object(model, scope, file = nil)
-      if scope.nil?
-        loaders = Puppet.lookup(:loaders) { nil }
-        loaders.nil? ? nil : loaders.private_environment_loader
+    def self.loader_for_model_object(model, file = nil, default_loader = nil)
+      loaders = Puppet.lookup(:loaders) { nil }
+      if loaders.nil?
+        default_loader
       else
-        loaders = scope.compiler.loaders
-        loader_name = loader_name_by_source(scope.environment, model, file)
-        loader_name.nil? ? loaders.private_environment_loader : loaders[loader_name]
+        loader_name = loader_name_by_source(loaders.environment, model, file)
+        loader_name.nil? ? default_loader || loaders.find_loader(nil) : loaders[loader_name]
       end
     end
 
