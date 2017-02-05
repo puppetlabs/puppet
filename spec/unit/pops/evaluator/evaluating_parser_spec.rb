@@ -29,6 +29,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     @scope = Puppet::Parser::Scope.new(@compiler)
     @scope.source = Puppet::Resource::Type.new(:node, 'node.example.com')
     @scope.parent = @compiler.topscope
+    Puppet.push_context(:loaders => @compiler.loaders)
+  end
+
+  after(:each) do
+    Puppet.pop_context
   end
 
   let(:environment) { Puppet::Node::Environment.create(:testing, []) }

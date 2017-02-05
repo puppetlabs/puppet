@@ -21,7 +21,9 @@ module PuppetSpec::Language
 
           compiler.send(:instance_variable_set, :@catalog, catalog)
 
-          expect(evaluator.evaluate_string(compiler.topscope, resources)).to eq(true)
+          Puppet.override(:loaders => compiler.loaders) do
+            expect(evaluator.evaluate_string(compiler.topscope, resources)).to eq(true)
+          end
         when Array
           catalog = PuppetSpec::Compiler.compile_to_catalog(manifest)
 

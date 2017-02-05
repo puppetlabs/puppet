@@ -25,9 +25,9 @@ class TypeParser
   #     parser.parse('Array[String]')
   #     parser.parse('Hash[Integer, Array[String]]')
   #
-  # @param string [String] a string with the type expressed in stringified form as produced by the 
+  # @param string [String] a string with the type expressed in stringified form as produced by the
   #   types {"#to_s} method.
-  # @param context [Puppet::Parser::Scope,Loader::Loader] scope or loader to use when loading type aliases
+  # @param context [Loader::Loader] optional loader used as no adapted loader is found
   # @return [PAnyType] a specialization of the PAnyType representing the type.
   #
   # @api public
@@ -44,11 +44,11 @@ class TypeParser
   end
 
   # @param ast [Puppet::Pops::Model::PopsObject] the ast to interpret
-  # @param context [Puppet::Parser::Scope,Loader::Loader, nil] scope or loader to use when loading type aliases
+  # @param context [Loader::Loader] optional loader used when no adapted loader is found
   # @return [PAnyType] a specialization of the PAnyType representing the type.
   #
   # @api public
-  def interpret(ast, context)
+  def interpret(ast, context = nil)
     result = @type_transformer.visit_this_1(self, ast, context)
     raise_invalid_type_specification_error(ast) unless result.is_a?(PAnyType)
     result
@@ -200,13 +200,7 @@ class TypeParser
 
   # @api private
   def loader_from_context(ast, context)
-    if context.nil?
-      nil
-    elsif context.is_a?(Puppet::Pops::Loader::Loader)
-      context
-    else
-      Puppet::Pops::Adapters::LoaderAdapter.loader_for_model_object(ast, context)
-    end
+    Adapters::LoaderAdapter.loader_for_model_object(ast, nil, context)
   end
 
   # @api private

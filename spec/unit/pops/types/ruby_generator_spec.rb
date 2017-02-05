@@ -40,16 +40,16 @@ describe 'Puppet Ruby Generator' do
 
     context 'when generating anonymous classes' do
 
-      scope = nil
+      loader = nil
 
-      let(:first_type) { parser.parse('MyModule::FirstGenerated', scope) }
-      let(:second_type) { parser.parse('MyModule::SecondGenerated', scope) }
+      let(:first_type) { parser.parse('MyModule::FirstGenerated', loader) }
+      let(:second_type) { parser.parse('MyModule::SecondGenerated', loader) }
       let(:first) { generator.create_class(first_type) }
       let(:second) { generator.create_class(second_type) }
 
       before(:each) do
-        eval_and_collect_notices(source) do |topscope, catalog|
-          scope = topscope
+        eval_and_collect_notices(source) do |topscope|
+          loader = topscope.compiler.loaders.find_loader(nil)
         end
       end
 
@@ -149,9 +149,9 @@ describe 'Puppet Ruby Generator' do
         if module_def.nil?
           first_type = nil
           second_type = nil
-          eval_and_collect_notices(source) do |scope, catalog|
-            first_type = parser.parse('MyModule::FirstGenerated', scope)
-            second_type = parser.parse('MyModule::SecondGenerated', scope)
+          eval_and_collect_notices(source) do
+            first_type = parser.parse('MyModule::FirstGenerated')
+            second_type = parser.parse('MyModule::SecondGenerated')
 
             loader = Loaders.find_loader(nil)
             Loaders.implementation_registry.register_type_mapping(
@@ -327,8 +327,8 @@ describe 'Puppet Ruby Generator' do
       let(:fourth) { generator.create_class(fourth_type) }
 
       before(:each) do
-        eval_and_collect_notices(source) do |scope, catalog|
-          typeset = parser.parse('OtherModule', scope)
+        eval_and_collect_notices(source) do
+          typeset = parser.parse('OtherModule')
         end
       end
 
@@ -457,9 +457,9 @@ describe 'Puppet Ruby Generator' do
         # environment specific settings are configured by the spec_helper in before(:each)
         if module_def.nil?
           typeset = nil
-          eval_and_collect_notices(source) do |scope, catalog|
-            typeset1 = parser.parse('MyModule', scope)
-            typeset2 = parser.parse('OtherModule', scope)
+          eval_and_collect_notices(source) do
+            typeset1 = parser.parse('MyModule')
+            typeset2 = parser.parse('OtherModule')
 
             loader = Loaders.find_loader(nil)
             Loaders.implementation_registry.register_type_mapping(
