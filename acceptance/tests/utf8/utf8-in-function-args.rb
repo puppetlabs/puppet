@@ -20,7 +20,7 @@ test_name 'utf-8 characters in function parameters' do
         result = on(
           agent,
           puppet("apply", "-e" "'alert(\"alert #{utf8chars}\")'"),
-          :environment => {:LANG => "en_UTF-8"}
+          :environment => {:LANG => "en_US.UTF-8"}
         )
         assert_match(
           /#{utf8chars}/,
@@ -36,7 +36,7 @@ test_name 'utf-8 characters in function parameters' do
             "apply", "-e", "'notice(assert_type(String, \"#{utf8chars}\"))'"
           ),
           {
-            :environment => {:LANG => "en_UTF-8"},
+            :environment => {:LANG => "en_US.UTF-8"},
             :acceptable_exit_codes => [0],
           }
         )
@@ -44,7 +44,7 @@ test_name 'utf-8 characters in function parameters' do
           agent,
           puppet("apply", "-e 'notice(assert_type(Float, \"#{utf8chars}\"))'"),
           {
-            :environment => {:LANG => "en_UTF-8"},
+            :environment => {:LANG => "en_US.UTF-8"},
             :acceptable_exit_codes => [1],
           }
         )
