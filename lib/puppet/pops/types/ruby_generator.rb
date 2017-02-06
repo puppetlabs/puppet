@@ -263,11 +263,11 @@ class RubyGenerator < TypeFormatter
       bld << "  end\n"
 
       bld << "\n  def eql?(o)\n"
-      bld << "    super.eql?(o) &&\n" unless obj.parent.nil?
+      bld << "    super &&\n" unless obj.parent.nil?
       bld << "    self.class.eql?(o.class) &&\n" if include_class
       eq_names.each { |eqn| bld << '    @' << eqn << '.eql?(o.' <<  eqn << ") &&\n" }
       bld.chomp!(" &&\n")
-      bld << "\n  end\n"
+      bld << "\n  end\n  alias == eql?\n"
     end
   end
 end
