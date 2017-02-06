@@ -129,26 +129,29 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def main
-    type, name, params = parse_args(command_line.args)
+    env = Puppet.lookup(:environments).get(Puppet[:environment])
+    Puppet.override(:current_environment => env, :loaders => Puppet::Pops::Loaders.new(env)) do
+      type, name, params = parse_args(command_line.args)
 
-    raise "Editing with Yaml output is not supported" if options[:edit] and options[:to_yaml]
+      raise "Editing with Yaml output is not supported" if options[:edit] and options[:to_yaml]
 
-    resources = find_or_save_resources(type, name, params)
+      resources = find_or_save_resources(type, name, params)
 
-    if options[:to_yaml]
-      text = resources.
-        map { |resource| resource.prune_parameters(:parameters_to_include => @extra_params).to_hierayaml }.
-        join("\n")
-      text.prepend("#{type.downcase}:\n")
-    else
-      text = resources.
-        map { |resource| resource.prune_parameters(:parameters_to_include => @extra_params).to_manifest }.
-        join("\n")
+      if options[:to_yaml]
+        text = resources.
+          map { |resource| resource.prune_parameters(:parameters_to_include => @extra_params).to_hierayaml }.
+          join("\n")
+        text.prepend("#{type.downcase}:\n")
+      else
+        text = resources.
+          map { |resource| resource.prune_parameters(:parameters_to_include => @extra_params).to_manifest }.
+          join("\n")
+      end
+
+      options[:edit] ?
+        handle_editing(text) :
+        (puts text)
     end
-
-    options[:edit] ?
-      handle_editing(text) :
-      (puts text)
   end
 
   def setup
