@@ -411,6 +411,30 @@ describe 'Puppet Ruby Generator' do
           expect(inst.age).to eql(30)
           expect(inst.another).to be_nil
         end
+
+        it 'two instances with the same attribute values are equal using #eql?' do
+          inst1 = second.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23)
+          inst2 = second.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23)
+          expect(inst1.eql?(inst2)).to be_truthy
+        end
+
+        it 'two instances with the same attribute values are equal using #==' do
+          inst1 = second.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23)
+          inst2 = second.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23)
+          expect(inst1 == inst2).to be_truthy
+        end
+
+        it 'two instances with the different attribute in super class values are different' do
+          inst1 = second.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23)
+          inst2 = second.create('Bob Engineer', '42 Cool Street', '12345', 'bob@example.com', 23)
+          expect(inst1 == inst2).to be_falsey
+        end
+
+        it 'two instances with the different attribute in sub class values are different' do
+          inst1 = second.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23)
+          inst2 = second.create('Bob Builder', '42 Cool Street', '12345', 'bob@other.com', 23)
+          expect(inst1 == inst2).to be_falsey
+        end
       end
 
       context 'the #from_hash class method' do
@@ -540,6 +564,30 @@ describe 'Puppet Ruby Generator' do
           expect(inst.what).to eql('what is this')
           expect(inst.age).to eql(30)
           expect(inst.another).to be_nil
+        end
+
+        it 'two instances with the same attribute values are equal using #eql?' do
+          inst1 = PuppetSpec::RubyGenerator::My::SecondGenerated.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23)
+          inst2 = PuppetSpec::RubyGenerator::My::SecondGenerated.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23)
+          expect(inst1.eql?(inst2)).to be_truthy
+        end
+
+        it 'two instances with the same attribute values are equal using #==' do
+          inst1 = PuppetSpec::RubyGenerator::My::SecondGenerated.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23)
+          inst2 = PuppetSpec::RubyGenerator::My::SecondGenerated.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23)
+          expect(inst1 == inst2).to be_truthy
+        end
+
+        it 'two instances with the different attribute in super class values are different' do
+          inst1 = PuppetSpec::RubyGenerator::My::SecondGenerated.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23)
+          inst2 = PuppetSpec::RubyGenerator::My::SecondGenerated.create('Bob Engineer', '42 Cool Street', '12345', 'bob@example.com', 23)
+          expect(inst1 == inst2).to be_falsey
+        end
+
+        it 'two instances with the different attribute in sub class values are different' do
+          inst1 = PuppetSpec::RubyGenerator::My::SecondGenerated.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23)
+          inst2 = PuppetSpec::RubyGenerator::My::SecondGenerated.create('Bob Builder', '42 Cool Street', '12345', 'bob@other.com', 23)
+          expect(inst1 == inst2).to be_falsey
         end
       end
 
