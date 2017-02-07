@@ -110,14 +110,6 @@ module Puppet::Pops
               /expects a value for key 'pcore_version'/)
           end
 
-          it 'version is missing' do
-            ts = <<-OBJECT
-            pcore_version => '1.0.0',
-            OBJECT
-            expect { parse_type_set('MySet', ts) }.to raise_error(TypeAssertionError,
-              /expects a value for key 'version'/)
-          end
-
           it 'the version is an invalid semantic version' do
             ts = <<-OBJECT
             version => '1.x',
