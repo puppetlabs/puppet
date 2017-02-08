@@ -140,7 +140,8 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
     end
     self.fail("No such service found")
   rescue Puppet::ExecutionFailure => detail
-    raise Puppet::Error.new("Cannot get status of #{@resource[:name]}, error was: #{detail}", detail )
+    self.debug(detail.message)
+    return :stopped
   end
 
 end
