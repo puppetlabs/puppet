@@ -1,0 +1,18 @@
+---
+HOSTS:
+  master:
+    roles:
+      - master
+    platform: el-7-x86_64
+    hypervisor: vcloud
+    template: redhat-7-x86_64
+  pe-aix-72-acceptance:
+    roles:
+      - agent
+    platform: aix-7.2-power
+    hypervisor: none
+CONFIG:
+  datastore: instance0
+  resourcepool: delivery/Quality Assurance/FOSS/Dynamic
+  folder: Delivery/Quality Assurance/FOSS/Dynamic
+  pooling_api: http://vmpooler.delivery.puppetlabs.net/
