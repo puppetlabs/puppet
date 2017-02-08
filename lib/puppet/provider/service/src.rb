@@ -138,7 +138,6 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
       Puppet.debug("Service #{@resource[:name]} is #{args[-1]}")
       return state
     end
-    self.fail("No such service found")
   rescue Puppet::ExecutionFailure => detail
     self.debug(detail.message)
     return :stopped
