@@ -108,24 +108,6 @@ class Factory
     o
   end
 
-  def build_CreateTypeExpression(o, name, super_name = nil)
-    o.name = name
-    o.super_name = super_name
-    o
-  end
-
-  def build_CreateEnumExpression(o, *args)
-    o.name = args.slice(0) if args.size == 2
-    o.values = build(args.last)
-    o
-  end
-
-  def build_CreateAttributeExpression(o, name, datatype_expr)
-    o.name = name
-    o.type = to_ops(datatype_expr)
-    o
-  end
-
   def build_HeredocExpression(o, name, expr)
     o.syntax = name
     o.text_expr = build(expr)
@@ -626,12 +608,6 @@ class Factory
   def self.WHEN(values_list, block);     new(CaseOption, values_list, block);             end
 
   def self.MAP(match, value);            new(SelectorEntry, match, value);                end
-
-  def self.TYPE(name, super_name=nil);   new(CreateTypeExpression, name, super_name);     end
-
-  def self.ATTR(name, type_expr=nil);    new(CreateAttributeExpression, name, type_expr); end
-
-  def self.ENUM(*args);                  new(CreateEnumExpression, *args);                end
 
   def self.KEY_ENTRY(key, val);          new(KeyedEntry, key, val);                       end
 
