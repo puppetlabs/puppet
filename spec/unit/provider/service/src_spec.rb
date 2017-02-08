@@ -167,6 +167,11 @@ _EOF_
       @provider.expects(:execute).with(['/usr/bin/lssrc', '-s', "myservice"]).returns sample_output
       expect(@provider.status).to eq(nil)
     end
+
+    it "should consider a non-existing service to be have a status of :stopped" do
+      @provider.expects(:execute).with(['/usr/bin/lssrc', '-s', 'myservice']).raises(Puppet::ExecutionFailure, "fail")
+      expect(@provider.status).to eq(:stopped)
+    end
   end
 
   describe "when restarting a service" do
