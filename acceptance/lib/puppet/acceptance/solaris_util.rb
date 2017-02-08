@@ -20,7 +20,7 @@ module Puppet
         lst = on(agent, "zfs list").stdout.lines.each do |l|
           case l
           when /rpool.tstzones/
-            on agent,"zfs destroy -r rpool/tstzones"
+            on agent,"zfs destroy -f -r rpool/tstzones"
           end
         end
         on agent, "rm -rf /tstzones"
@@ -156,8 +156,8 @@ trap '' HUP
     module ZFSUtils
       def clean(agent, o={})
         o = {:fs=>'tstfs', :pool=>'tstpool', :poolpath => '/ztstpool'}.merge(o)
-        on agent, "zfs destroy -r %s/%s ||:" % [o[:pool], o[:fs]]
-        on agent, "zpool destroy %s ||:" %  o[:pool]
+        on agent, "zfs destroy -f -r %s/%s ||:" % [o[:pool], o[:fs]]
+        on agent, "zpool destroy -f %s ||:" %  o[:pool]
         on agent, "rm -rf %s ||:" % o[:poolpath]
       end
 
@@ -172,7 +172,7 @@ trap '' HUP
     module ZPoolUtils
       def clean(agent, o={})
         o = {:pool=>'tstpool', :poolpath => '/ztstpool'}.merge(o)
-        on agent, "zpool destroy %s ||:" % o[:pool]
+        on agent, "zpool destroy -f %s ||:" % o[:pool]
         on agent, "rm -rf %s ||:" % o[:poolpath]
       end
 
