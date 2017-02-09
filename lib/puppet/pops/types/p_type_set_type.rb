@@ -47,7 +47,7 @@ class PTypeSetType < PMetaType
     Pcore::KEY_PCORE_VERSION => TYPE_STRING_OR_VERSION,
     TypeFactory.optional(KEY_NAME_AUTHORITY) => Pcore::TYPE_URI,
     TypeFactory.optional(KEY_NAME) => Pcore::TYPE_QUALIFIED_REFERENCE,
-    KEY_VERSION => TYPE_STRING_OR_VERSION,
+    TypeFactory.optional(KEY_VERSION) => TYPE_STRING_OR_VERSION,
     TypeFactory.optional(KEY_TYPES) => TypeFactory.hash_kv(Pcore::TYPE_SIMPLE_TYPE_NAME, PType::DEFAULT, PCollectionType::NOT_EMPTY_SIZE),
     TypeFactory.optional(KEY_REFERENCES) => TypeFactory.hash_kv(Pcore::TYPE_SIMPLE_TYPE_NAME, TYPE_TYPE_REFERENCE_I12N, PCollectionType::NOT_EMPTY_SIZE),
     TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS,
@@ -168,7 +168,7 @@ class PTypeSetType < PMetaType
     result[Pcore::KEY_PCORE_VERSION] =  @pcore_version.to_s
     result[KEY_NAME_AUTHORITY] = @name_authority unless @name_authority.nil?
     result[KEY_NAME] = @name
-    result[KEY_VERSION] = @version.to_s
+    result[KEY_VERSION] = @version.to_s unless @version.nil?
     result[KEY_TYPES] = @types unless @types.empty?
     result[KEY_REFERENCES] = Hash[@references.map { |ref_alias, ref| [ref_alias, ref.i12n_hash] }] unless @references.empty?
     result
@@ -178,11 +178,16 @@ class PTypeSetType < PMetaType
   # or a type defined in a type set that is referenced by this type set (nesting may occur to any level).
   # The name resolution is case insensitive.
   #
-  # @param qname [String] the qualified name of the type to resolve
+  # @param qname [String,Loader::TypedName] the qualified name of the type to resolve
   # @return [PAnyType,nil] the resolved type, or `nil` in case no type could be found
   #
   # @api public
   def [](qname)
+    if qname.is_a?(Loader::TypedName)
+      return nil unless qname.type == :type && qname.name_authority == @name_authority
+      qname = qname.name
+    end
+
     type = @types[qname] || @types[@dc_to_cc_map[qname.downcase]]
     if type.nil? && !@references.empty?
       segments = qname.split(TypeFormatter::NAME_SEGMENT_SEPARATOR)
