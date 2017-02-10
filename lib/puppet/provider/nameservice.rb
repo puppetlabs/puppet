@@ -52,14 +52,14 @@ class Puppet::Provider::NameService < Puppet::Provider
     # for both users and groups.
     def listbyname
       names = []
-      Etc.send("set#{section()}ent")
+      Puppet::Etc.send("set#{section()}ent")
       begin
-        while ent = Etc.send("get#{section()}ent")
+        while ent = Puppet::Etc.send("get#{section()}ent")
           names << ent.name
           yield ent.name if block_given?
         end
       ensure
-        Etc.send("end#{section()}ent")
+        Puppet::Etc.send("end#{section()}ent")
       end
 
       names
@@ -146,7 +146,7 @@ class Puppet::Provider::NameService < Puppet::Provider
       # other, more convenient enumerator for these, so we fake one with this
       # loop.  Thanks, Ruby, for your awesome abstractions. --daniel 2012-03-23
       highest = []
-      Etc.send(database) {|entry| highest << entry.send(method) }
+      Puppet::Etc.send(database) {|entry| highest << entry.send(method) }
       highest = highest.reject {|x| x > 65000 }.max
 
       @prevauto = highest || 1000
@@ -226,7 +226,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     if @objectinfo.nil? or refresh == true
       @etcmethod ||= ("get" + self.class.section.to_s + "nam").intern
       begin
-        @objectinfo = Etc.send(@etcmethod, @resource[:name])
+        @objectinfo = Puppet::Etc.send(@etcmethod, @resource[:name])
       rescue ArgumentError
         @objectinfo = nil
       end
@@ -242,13 +242,13 @@ class Puppet::Provider::NameService < Puppet::Provider
     groups = []
 
     # Reset our group list
-    Etc.setgrent
+    Puppet::Etc.setgrent
 
     user = @resource[:name]
 
     # Now iterate across all of the groups, adding each one our
     # user is a member of
-    while group = Etc.getgrent
+    while group = Puppet::Etc.getgrent
       members = group.mem
 
       groups << group.name if members.include? user
@@ -256,7 +256,7 @@ class Puppet::Provider::NameService < Puppet::Provider
 
     # We have to close the file, so each listing is a separate
     # reading of the file.
-    Etc.endgrent
+    Puppet::Etc.endgrent
 
     groups.join(",")
   end
