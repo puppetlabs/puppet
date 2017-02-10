@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 require 'puppet/provider/nameservice'
-require 'etc'
+require 'puppet/etc'
 
 describe Puppet::Provider::NameService do
 
@@ -123,26 +123,26 @@ describe Puppet::Provider::NameService do
   describe "#listbyname" do
     it "should return a list of users if resource_type is user" do
       described_class.resource_type = Puppet::Type.type(:user)
-      Etc.expects(:setpwent)
-      Etc.stubs(:getpwent).returns *users
-      Etc.expects(:endpwent)
+      Puppet::Etc.expects(:setpwent)
+      Puppet::Etc.stubs(:getpwent).returns *users
+      Puppet::Etc.expects(:endpwent)
       expect(described_class.listbyname).to eq(%w{root foo})
     end
 
     it "should return a list of groups if resource_type is group", :unless => Puppet.features.microsoft_windows? do
       described_class.resource_type = Puppet::Type.type(:group)
-      Etc.expects(:setgrent)
-      Etc.stubs(:getgrent).returns *groups
-      Etc.expects(:endgrent)
+      Puppet::Etc.expects(:setgrent)
+      Puppet::Etc.stubs(:getgrent).returns *groups
+      Puppet::Etc.expects(:endgrent)
       expect(described_class.listbyname).to eq(%w{root bin})
     end
 
     it "should yield if a block given" do
       yield_results = []
       described_class.resource_type = Puppet::Type.type(:user)
-      Etc.expects(:setpwent)
-      Etc.stubs(:getpwent).returns *users
-      Etc.expects(:endpwent)
+      Puppet::Etc.expects(:setpwent)
+      Puppet::Etc.stubs(:getpwent).returns *users
+      Puppet::Etc.expects(:endpwent)
       described_class.listbyname {|x| yield_results << x }
       expect(yield_results).to eq(%w{root foo})
     end
@@ -188,13 +188,13 @@ describe Puppet::Provider::NameService do
     end
 
     it "should return a hash if we can retrieve something" do
-      Etc.expects(:send).with(:getfoonam, 'bob').returns fakeetcobject
+      Puppet::Etc.expects(:send).with(:getfoonam, 'bob').returns fakeetcobject
       provider.expects(:info2hash).with(fakeetcobject).returns(:foo => 'fooval', :bar => 'barval')
       expect(provider.getinfo(true)).to eq({:foo => 'fooval', :bar => 'barval'})
     end
 
     it "should return nil if we cannot retrieve anything" do
-      Etc.expects(:send).with(:getfoonam, 'bob').raises(ArgumentError, "can't find bob")
+      Puppet::Etc.expects(:send).with(:getfoonam, 'bob').raises(ArgumentError, "can't find bob")
       provider.expects(:info2hash).never
       expect(provider.getinfo(true)).to be_nil
     end
