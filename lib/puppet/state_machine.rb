@@ -6,6 +6,7 @@ module Puppet
   class StateMachine
     require 'puppet/state_machine/state'
     require 'puppet/state_machine/machine_builder'
+    require 'puppet/state_machine/machine_runner'
 
     # Define, verify, and build a new state machine
     #
@@ -188,31 +189,7 @@ module Puppet
 
     # Generate a new state machine context and run this machine.
     def call
-      result = :running
-      current = start_state
-      loop do
-        result = current.action
-
-        if current.error?
-          return :errored
-        elsif current.final?
-          return :complete
-        end
-
-        event = current.event(result)
-
-        if event.nil?
-          raise Puppet::DevError, "Cannot determine transition for state #{current.name.inspect}: no event was returned"
-        end
-
-        target_name = current.transition_for(event)
-
-        if target_name.nil?
-          raise Puppet::DevError, "State #{current.name.inspect} does not define a transition for event #{event.inspect}"
-        end
-
-        current = @states[target_name]
-      end
+      Puppet::StateMachine::MachineRunner.new(self).call
     end
 
     # The event emitted on final states that have been namespaced and added to a composed machine.
