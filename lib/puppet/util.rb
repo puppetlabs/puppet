@@ -10,6 +10,7 @@ require 'puppet/util/platform'
 require 'puppet/util/symbolic_file_mode'
 require 'puppet/file_system/uniquefile'
 require 'securerandom'
+require 'puppet/util/character_encoding'
 
 module Puppet
 module Util
