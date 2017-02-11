@@ -224,6 +224,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     password_hash_file = "#{password_hash_dir}/#{guid}"
     if Puppet::FileSystem.exist?(password_hash_file) and File.file?(password_hash_file)
       raise Puppet::Error, "Could not read password hash file at #{password_hash_file}" if not File.readable?(password_hash_file)
+      # FIXME
       f = File.new(password_hash_file)
       password_hash = f.read
       f.close

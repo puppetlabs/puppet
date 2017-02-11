@@ -33,7 +33,9 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
     regex = Regexp.new(@resource[:pattern])
     ps = getps
     self.debug "Executing '#{ps}'"
-    IO.popen(ps) { |table|
+    # TODO: this is tricky - probably want Encoding.default_external
+    # except that regex should be UTF-8
+    IO.popen(ps, :encoding => Encoding.default_external) { |table|
       table.each_line { |line|
         if regex.match(line)
           self.debug "Process matched: #{line}"

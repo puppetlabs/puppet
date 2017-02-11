@@ -215,20 +215,20 @@ describe Puppet::Type.type(:user).provider(:user_role_add), :unless => Puppet.fe
     end
 
     it "should readlines of /etc/shadow" do
-      File.expects(:readlines).with("/etc/shadow").returns([])
+      File.expects(:readlines).with("/etc/shadow", :encoding => Encoding::UTF_8).returns([])
       provider.password
     end
 
     it "should reject anything that doesn't start with alpha numerics" do
       @array.expects(:reject).returns([])
-      File.stubs(:readlines).with("/etc/shadow").returns(@array)
+      File.stubs(:readlines).with("/etc/shadow", :encoding => Encoding::UTF_8).returns(@array)
       provider.password
     end
 
     it "should collect splitting on ':'" do
       @array.stubs(:reject).returns(@array)
       @array.expects(:collect).returns([])
-      File.stubs(:readlines).with("/etc/shadow").returns(@array)
+      File.stubs(:readlines).with("/etc/shadow", :encoding => Encoding::UTF_8).returns(@array)
       provider.password
     end
 
@@ -236,13 +236,13 @@ describe Puppet::Type.type(:user).provider(:user_role_add), :unless => Puppet.fe
       resource.stubs(:[]).with(:name).returns("username")
       @array.stubs(:reject).returns(@array)
       @array.stubs(:collect).returns([["username", "hashedpassword"], ["someoneelse", "theirpassword"]])
-      File.stubs(:readlines).with("/etc/shadow").returns(@array)
+      File.stubs(:readlines).with("/etc/shadow", :encoding => Encoding::UTF_8).returns(@array)
       expect(provider.password).to eq("hashedpassword")
     end
 
     it "should get the right password" do
       resource.stubs(:[]).with(:name).returns("username")
-      File.stubs(:readlines).with("/etc/shadow").returns(["#comment", "   nonsense", "  ", "username:hashedpassword:stuff:foo:bar:::", "other:pword:yay:::"])
+      File.stubs(:readlines).with("/etc/shadow", :encoding => Encoding::UTF_8).returns(["#comment", "   nonsense", "  ", "username:hashedpassword:stuff:foo:bar:::", "other:pword:yay:::"])
       expect(provider.password).to eq("hashedpassword")
     end
   end

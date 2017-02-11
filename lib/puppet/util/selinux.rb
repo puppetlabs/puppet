@@ -163,6 +163,7 @@ module Puppet::Util::SELinux
         mounts += mountfh.read_nonblock(1024) while true
       else
         # Otherwise we shell out and let cat do it for us
+        # FIXME
         mountfh = IO.popen("/bin/cat /proc/mounts")
         mounts = mountfh.read
       end

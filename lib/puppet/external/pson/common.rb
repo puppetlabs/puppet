@@ -289,6 +289,7 @@ module PSON
   # Marshal and YAML.
   def dump(obj, anIO = nil, limit = nil)
     if anIO and limit.nil?
+      # FIXME: shouldn't anIO be validated to have Encoding::BINARY given this is PSON?
       anIO = anIO.to_io if anIO.respond_to?(:to_io)
       unless anIO.respond_to?(:write)
         limit = anIO

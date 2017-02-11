@@ -28,7 +28,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
 
   def checkforcdrom
     have_cdrom = begin
-                   !!(File.read("/etc/apt/sources.list") =~ /^[^#]*cdrom:/)
+                   !!(Puppet::FileSystem.read("/etc/apt/sources.list", :encoding => Encoding.default_external) =~ /^[^#]*cdrom:/)
                  rescue
                    # This is basically pathological...
                    false

@@ -117,7 +117,7 @@ module Puppet::Util::Plist
     #
     # @api private
     def read_file_with_offset(file_path, offset)
-      IO.read(file_path, offset)
+      IO.read(file_path, offset, 0, :encoding => Encoding::BINARY)
     end
 
     def to_format(format)

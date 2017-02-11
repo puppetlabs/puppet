@@ -164,7 +164,7 @@ module Puppet
         templates = {}
         templates.default_proc = lambda { |hash, key|
           raise "template was not found at '#{key}'." unless Puppet::FileSystem.file?(key)
-          template = ERB.new(File.read(key), nil, '-')
+          template = ERB.new(Puppet::FileSystem.read(key, :encoding => Encoding::UTF_8), nil, '-')
           template.filename = key
           template
         }

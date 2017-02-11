@@ -541,6 +541,7 @@ class Puppet::SSL::CertificateAuthority
 
     def autosign_store
       auth = Puppet::Network::AuthStore.new
+      # FIXME encoding
       Puppet::FileSystem.each_line(@config) do |line|
         next if line =~ /^\s*#/
         next if line =~ /^\s*$/

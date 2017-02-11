@@ -174,7 +174,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
   #No abstraction, all esoteric knowledge of file formats, yay
   def shadow_entry
     return @shadow_entry if defined? @shadow_entry
-    @shadow_entry = File.readlines(target_file_path).
+    @shadow_entry = File.readlines(target_file_path, :encoding => Encoding.default_external).
       reject { |r| r =~ /^[^\w]/ }.
       # PUP-229: don't suppress the empty fields
       collect { |l| l.chomp.split(':', -1) }.
@@ -204,7 +204,9 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
   # concurrent `vipw -s` session will have no idea we risk data loss.
   def password=(cryptopw)
     begin
-      shadow = File.read(target_file_path)
+      # some operating systems support non-ASCII users, but hashed password is always ASCII
+      # https://serverfault.com/questions/197665/using-utf-8-in-the-etc-passwd-file-any-known-issues
+      shadow = Puppet::FileSystem.read(target_file_path, :encoding => Encoding.default_external)
 
       # Go Mifune loves the race here where we can lose data because
       # /etc/shadow changed between reading it and writing it.

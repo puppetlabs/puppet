@@ -46,7 +46,7 @@ Puppet::Face.define(:man, '0.0.1') do
       face = Puppet::Face[name.to_sym, :current]
 
       file = (Pathname(__FILE__).dirname + "help" + 'man.erb')
-      erb = ERB.new(file.read, nil, '-')
+      erb = ERB.new(file.read(:encoding => Encoding::UTF_8), nil, '-')
       erb.filename = file.to_s
 
       # Run the ERB template in our current binding, including all the local

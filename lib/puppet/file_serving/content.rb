@@ -38,6 +38,7 @@ class Puppet::FileServing::Content < Puppet::FileServing::Base
   end
 
   def to_binary
+    # FIXME
     File.new(full_path, "rb")
   end
 end

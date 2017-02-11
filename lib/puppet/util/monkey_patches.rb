@@ -58,6 +58,7 @@ class IO
     # and doesn't actually carry over the mode.  It won't work to just use
     # open, either, because that doesn't like our system modes and the default
     # open bits don't do what we need, which is awesome. --daniel 2012-03-30
+    # FIXME: encoding
     IO.open(IO::sysopen(name, mode), mode) do |f|
       # ...seek to our desired offset, then write the bytes.  Don't try to
       # seek past the start of the file, eh, because who knows what platform

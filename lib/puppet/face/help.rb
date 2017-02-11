@@ -122,7 +122,7 @@ MSG
 
   def erb(name)
     template = (Pathname(__FILE__).dirname + "help" + name)
-    erb = ERB.new(template.read, nil, '-')
+    erb = ERB.new(template.read(:encoding => Encoding::UTF_8), nil, '-')
     erb.filename = template.to_s
     return erb
   end

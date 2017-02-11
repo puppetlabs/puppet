@@ -57,7 +57,7 @@ Puppet::Type.newtype(:k5login) do
     # Return the principals
     def principals
       if Puppet::FileSystem.exist?(@resource[:name])
-        File.readlines(@resource[:name]).collect { |line| line.chomp }
+        File.readlines(@resource[:name], :encoding => Encoding.default_external).collect { |line| line.chomp }
       else
         :absent
       end

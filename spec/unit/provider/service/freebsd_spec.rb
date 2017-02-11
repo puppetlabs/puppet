@@ -80,7 +80,7 @@ OUTPUT
 
   it "should enable only the selected service" do
     Puppet::FileSystem.stubs(:exist?).with('/etc/rc.conf').returns(true)
-    File.stubs(:read).with('/etc/rc.conf').returns("openntpd_enable=\"NO\"\nntpd_enable=\"NO\"\n")
+    Puppet::FileSystem.stubs(:read).with('/etc/rc.conf', :encoding => Encoding::UTF_8).returns("openntpd_enable=\"NO\"\nntpd_enable=\"NO\"\n")
     fh = stub 'fh'
     Puppet::FileSystem.stubs(:open).with('/etc/rc.conf', nil, 'w:UTF-8').yields(fh)
     fh.expects(:<<).with("openntpd_enable=\"NO\"\nntpd_enable=\"YES\"\n")
