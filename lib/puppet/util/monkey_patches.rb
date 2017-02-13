@@ -30,10 +30,6 @@ class Symbol
     end
     self.to_s <=> other.to_s
   end
-
-  def intern
-    self
-  end unless method_defined? 'intern'
 end
 
 class Object
