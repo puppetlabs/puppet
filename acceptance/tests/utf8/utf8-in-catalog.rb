@@ -1,13 +1,26 @@
 test_name 'utf-8 characters in cached catalog' do
-  # utf8chars = "€‰ㄘ万竹ÜÖ"
+  confine :except, :platform => [
+    'windows',      # PUP-6983
+    'cumulus',      # PUP-7147
+    'cisco_ios',    # PUP-7150
+    'eos-4',        # PUP-7146
+    'aix',          # PUP-7194
+    'huawei',       # PUP-7195
+  ]
+
+  utf8chars_lit = "€‰ㄘ万竹ÜÖ"
   utf8chars = "\u20ac\u2030\u3118\u4e07\u7af9\u00dc\u00d6"
   file_content = "This is the file content. file #{utf8chars}"
-  tmpdir = master.tmpdir("code")
-  on(master, "rm -rf #{tmpdir}")
-  env_dir = "#{tmpdir}/environments"
+  codedir = master.tmpdir("code")
+  on(master, "rm -rf #{codedir}")
+  env_dir = "#{codedir}/environments"
   agents.each do |agent|
+    puts "agent name: #{agent.hostname}, platform: #{agent.platform}"
+    agent_vardir = agent.tmpdir("agent_vardir")
     agent_file = agent.tmpfile("file" + utf8chars) 
-
+    teardown do
+      on(agent, "rm -rf #{agent_vardir} #{agent_file}")
+    end
     step "Apply manifest" do
       on(
         agent,
@@ -24,10 +37,10 @@ File {
 }
 
 file {
-  '#{tmpdir}/':;
-  '#{tmpdir}/environments':;
-  '#{tmpdir}/environments/production':;
-  '#{tmpdir}/environments/production/manifests':;
+  '#{codedir}/':;
+  '#{codedir}/environments':;
+  '#{codedir}/environments/production':;
+  '#{codedir}/environments/production/manifests':;
 }
 
 file { '#{env_dir}/production/manifests/site.pp' :
@@ -65,42 +78,40 @@ PP
       }
     }
     
-    with_puppet_running_on(master, master_opts, tmpdir) do 
-      step "puppet agent -t" do
+    with_puppet_running_on(master, master_opts, codedir) do 
+      step "apply utf-8 catalog" do
         on(
           agent,
-          puppet("agent -t", "--server #{master.hostname}"),
+          puppet(
+            "agent -t --vardir #{agent_vardir} --server #{master.hostname}"
+          ),
           {
-            :acceptable_exit_codes => [0, 2],
+            :acceptable_exit_codes => [2],
             :environment => {:LANG => "en_US.UTF-8"}
           }
         )
       end
     
       step "verify cached catalog" do
-        result = on(
-          agent,
-          puppet("config print vardir"),
-          :environment => {:LANG => "en_US.UTF-8"}
-        )
         catalog_file_name =
-          "#{result.stdout.strip}/client_data/catalog/#{agent.hostname}.json"
-  
-        result = on(
+          "#{agent_vardir}/client_data/catalog/#{agent.node_name}.json"
+
+        on(
           agent,
           "cat #{catalog_file_name}",
           :environment => {:LANG => "en_US.UTF-8"}
-        )
-        assert_match(
-          /#{agent_file}/,
-          result.stdout,
-          "cached catalog does not contain expected agent file name"
-        )
-        assert_match(
-          /#{file_content}/,
-          result.stdout,
-          "cached catalog does not contain expected file content"
-        )
+        ) do
+          assert_match(
+            /#{agent_file}/,
+            stdout,
+            "cached catalog does not contain expected agent file name"
+          )
+          assert_match(
+            /#{file_content}/,
+            stdout,
+            "cached catalog does not contain expected file content"
+          )
+        end
       end
   
       step "apply cached catalog" do
@@ -111,20 +122,20 @@ PP
         )
         on(
           agent,
-          puppet("catalog apply --terminus json"),
+          puppet("catalog apply --vardir #{agent_vardir} --terminus json"),
           :environment => {:LANG => "en_US.UTF-8"}
         )
-    
-        result = on(
+        on(
           agent,
           "cat #{agent_file}",
           :environment => {:LANG => "en_US.UTF-8"}
-        )
-        assert_match(
-          /#{utf8chars}/,
-          result.stdout,
-          "result stdout did not contain"
-        )
+        ) do
+          assert_match(
+            /#{utf8chars}/,
+            stdout,
+            "result stdout did not contain \"#{utf8chars}\""
+          )
+        end
       end
     end
   end
