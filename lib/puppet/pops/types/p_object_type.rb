@@ -457,9 +457,10 @@ class PObjectType < PMetaType
   end
 
   # @api private
-  def implementation_class
-    if @implementation_class.nil?
-      impl_name = Loaders.implementation_registry.module_name_for_type(self)
+  def implementation_class(create = true)
+    if @implementation_class.nil? && create
+      ir = Loaders.implementation_registry
+      impl_name = ir.nil? ? nil : ir.module_name_for_type(self)
       if impl_name.nil?
         # Use generator to create a default implementation
         @implementation_class = RubyGenerator.new.create_class(self)
@@ -475,6 +476,12 @@ class PObjectType < PMetaType
       end
     end
     @implementation_class
+  end
+
+  # @api private
+  def implementation_class=(cls)
+    raise ArgumentError, "attempt to redefine implementation class for #{label}" unless @implementation_class.nil?
+    @implementation_class = cls
   end
 
   # @api private
