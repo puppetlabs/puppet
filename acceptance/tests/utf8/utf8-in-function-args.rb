@@ -4,7 +4,10 @@ test_name 'utf-8 characters in function parameters' do
     'eos-4',        # PUP-7146
     'cumulus',      # PUP-7147
     'cisco',        # PUP-7150
+    'aix',          # PUP-7194
+    'huawei',       # PUP-7195
   ]
+
   # utf8chars = "€‰ㄘ万竹ÜÖ"
   utf8chars = "\u20ac\u2030\u3118\u4e07\u7af9\u00dc\u00d6"
   master_lookup_test_dir = master.tmpdir("lookup_test_dir")
