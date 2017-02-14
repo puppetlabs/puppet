@@ -22,7 +22,6 @@ class PObjectType < PMetaType
   TYPE_ATTRIBUTE_KIND = TypeFactory.enum(ATTRIBUTE_KIND_CONSTANT, ATTRIBUTE_KIND_DERIVED, ATTRIBUTE_KIND_GIVEN_OR_DERIVED)
 
   TYPE_OBJECT_NAME = Pcore::TYPE_QUALIFIED_REFERENCE
-  TYPE_MEMBER_NAME = PPatternType.new([PRegexpType.new(Patterns::PARAM_NAME)])
 
   TYPE_ATTRIBUTE = TypeFactory.struct({
     KEY_TYPE => PType::DEFAULT,
@@ -32,7 +31,7 @@ class PObjectType < PMetaType
     KEY_KIND => TypeFactory.optional(TYPE_ATTRIBUTE_KIND),
     KEY_VALUE => PAnyType::DEFAULT
   })
-  TYPE_ATTRIBUTES = TypeFactory.hash_kv(TYPE_MEMBER_NAME, TypeFactory.not_undef)
+  TYPE_ATTRIBUTES = TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, TypeFactory.not_undef)
   TYPE_ATTRIBUTE_CALLABLE = TypeFactory.callable(0,0)
 
   TYPE_FUNCTION_TYPE = PType.new(PCallableType::DEFAULT)
@@ -43,9 +42,9 @@ class PObjectType < PMetaType
     KEY_FINAL => TypeFactory.optional(PBooleanType::DEFAULT),
     KEY_OVERRIDE => TypeFactory.optional(PBooleanType::DEFAULT)
   })
-  TYPE_FUNCTIONS = TypeFactory.hash_kv(TYPE_MEMBER_NAME, TypeFactory.not_undef)
+  TYPE_FUNCTIONS = TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, TypeFactory.not_undef)
 
-  TYPE_EQUALITY = TypeFactory.variant(TYPE_MEMBER_NAME, TypeFactory.array_of(TYPE_MEMBER_NAME))
+  TYPE_EQUALITY = TypeFactory.variant(Pcore::TYPE_MEMBER_NAME, TypeFactory.array_of(Pcore::TYPE_MEMBER_NAME))
 
   TYPE_CHECKS = PAnyType::DEFAULT # TBD
 
