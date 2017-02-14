@@ -24,6 +24,13 @@ module Pcore
     @type
   end
 
+  def self.annotate(instance, annotations_hash)
+    annotations_hash.each_pair do |type, i12n_hash|
+      type.implementation_class.annotate(instance) { i12n_hash }
+    end
+    instance
+  end
+
   def self.init(loader, ir, for_agent)
     add_alias('Pcore::URI_RX', TYPE_URI_RX, loader)
     add_type(TYPE_URI_ALIAS, loader)

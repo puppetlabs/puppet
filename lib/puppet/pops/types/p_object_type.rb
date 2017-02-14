@@ -25,11 +25,11 @@ class PObjectType < PMetaType
 
   TYPE_ATTRIBUTE = TypeFactory.struct({
     KEY_TYPE => PType::DEFAULT,
-    KEY_ANNOTATIONS => TypeFactory.optional(TYPE_ANNOTATIONS),
-    KEY_FINAL => TypeFactory.optional(PBooleanType::DEFAULT),
-    KEY_OVERRIDE => TypeFactory.optional(PBooleanType::DEFAULT),
-    KEY_KIND => TypeFactory.optional(TYPE_ATTRIBUTE_KIND),
-    KEY_VALUE => PAnyType::DEFAULT
+    TypeFactory.optional(KEY_FINAL) => PBooleanType::DEFAULT,
+    TypeFactory.optional(KEY_OVERRIDE) => PBooleanType::DEFAULT,
+    TypeFactory.optional(KEY_KIND) => TYPE_ATTRIBUTE_KIND,
+    KEY_VALUE => PAnyType::DEFAULT,
+    TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
   })
   TYPE_ATTRIBUTES = TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, TypeFactory.not_undef)
   TYPE_ATTRIBUTE_CALLABLE = TypeFactory.callable(0,0)
@@ -38,9 +38,9 @@ class PObjectType < PMetaType
 
   TYPE_FUNCTION = TypeFactory.struct({
     KEY_TYPE => TYPE_FUNCTION_TYPE,
-    KEY_ANNOTATIONS => TypeFactory.optional(TYPE_ANNOTATIONS),
-    KEY_FINAL => TypeFactory.optional(PBooleanType::DEFAULT),
-    KEY_OVERRIDE => TypeFactory.optional(PBooleanType::DEFAULT)
+    TypeFactory.optional(KEY_FINAL) => PBooleanType::DEFAULT,
+    TypeFactory.optional(KEY_OVERRIDE) => PBooleanType::DEFAULT,
+    TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
   })
   TYPE_FUNCTIONS = TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, TypeFactory.not_undef)
 
@@ -49,18 +49,27 @@ class PObjectType < PMetaType
   TYPE_CHECKS = PAnyType::DEFAULT # TBD
 
   TYPE_OBJECT_I12N = TypeFactory.struct({
-    KEY_NAME => TypeFactory.optional(TYPE_OBJECT_NAME),
-    KEY_PARENT => TypeFactory.optional(PType::DEFAULT),
-    KEY_ATTRIBUTES => TypeFactory.optional(TYPE_ATTRIBUTES),
-    KEY_FUNCTIONS => TypeFactory.optional(TYPE_FUNCTIONS),
-    KEY_EQUALITY => TypeFactory.optional(TYPE_EQUALITY),
-    KEY_EQUALITY_INCLUDE_TYPE => TypeFactory.optional(PBooleanType::DEFAULT),
-    KEY_CHECKS =>  TypeFactory.optional(TYPE_CHECKS),
-    KEY_ANNOTATIONS =>  TypeFactory.optional(TYPE_ANNOTATIONS)
+    TypeFactory.optional(KEY_NAME) => TYPE_OBJECT_NAME,
+    TypeFactory.optional(KEY_PARENT) => PType::DEFAULT,
+    TypeFactory.optional(KEY_ATTRIBUTES) => TYPE_ATTRIBUTES,
+    TypeFactory.optional(KEY_FUNCTIONS) => TYPE_FUNCTIONS,
+    TypeFactory.optional(KEY_EQUALITY) => TYPE_EQUALITY,
+    TypeFactory.optional(KEY_EQUALITY_INCLUDE_TYPE) => PBooleanType::DEFAULT,
+    TypeFactory.optional(KEY_CHECKS) =>  TYPE_CHECKS,
+    TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
   })
 
   def self.register_ptype(loader, ir)
-    create_ptype(loader, ir, 'AnyType', 'i12n_hash' => TYPE_OBJECT_I12N)
+    type = create_ptype(loader, ir, 'AnyType', 'i12n_hash' => TYPE_OBJECT_I12N)
+
+    # Now, when the Object type exists, add annotations with keys derived from Annotation and freeze the types.
+    annotations = TypeFactory.optional(PHashType.new(PType.new(Annotation._ptype), TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, PAnyType::DEFAULT)))
+    TYPE_ATTRIBUTE.hashed_elements[KEY_ANNOTATIONS].replace_value_type(annotations)
+    TYPE_FUNCTION.hashed_elements[KEY_ANNOTATIONS].replace_value_type(annotations)
+    TYPE_OBJECT_I12N.hashed_elements[KEY_ANNOTATIONS].replace_value_type(annotations)
+    PTypeSetType::TYPE_TYPESET_I12N.hashed_elements[KEY_ANNOTATIONS].replace_value_type(annotations)
+    PTypeSetType::TYPE_TYPE_REFERENCE_I12N.hashed_elements[KEY_ANNOTATIONS].replace_value_type(annotations)
+    type
   end
 
   # @abstract Encapsulates behavior common to {PAttribute} and {PFunction}

@@ -59,7 +59,7 @@ class TypedModelObject < Object
   end
 
   def self.register_ptypes(loader, ir)
-    types = []
+    types = [Annotation.register_ptype(loader, ir)]
     Types.constants.each do |c|
       cls = Types.const_get(c)
       next unless cls.is_a?(Class) && cls < self
@@ -1746,6 +1746,14 @@ class PStructElement < TypedModelObject
   def ==(o)
     self.class == o.class && value_type == o.value_type && key_type == o.key_type
   end
+
+  # Special boostrap method to overcome the hen and egg problem with the Object initializer that contains
+  # types that are derived from Object (such as Annotation)
+  #
+  # @api private
+  def replace_value_type(new_type)
+    @value_type = new_type
+  end
 end
 
 # @api public
@@ -3344,6 +3352,7 @@ require 'puppet/pops/pcore'
 require_relative 'annotatable'
 require_relative 'p_meta_type'
 require_relative 'p_object_type'
+require_relative 'annotation'
 require_relative 'p_runtime_type'
 require_relative 'p_sem_ver_type'
 require_relative 'p_sem_ver_range_type'
