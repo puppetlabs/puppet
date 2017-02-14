@@ -22,46 +22,54 @@ class PObjectType < PMetaType
   TYPE_ATTRIBUTE_KIND = TypeFactory.enum(ATTRIBUTE_KIND_CONSTANT, ATTRIBUTE_KIND_DERIVED, ATTRIBUTE_KIND_GIVEN_OR_DERIVED)
 
   TYPE_OBJECT_NAME = Pcore::TYPE_QUALIFIED_REFERENCE
-  TYPE_MEMBER_NAME = PPatternType.new([PRegexpType.new(Patterns::PARAM_NAME)])
 
   TYPE_ATTRIBUTE = TypeFactory.struct({
     KEY_TYPE => PType::DEFAULT,
-    KEY_ANNOTATIONS => TypeFactory.optional(TYPE_ANNOTATIONS),
-    KEY_FINAL => TypeFactory.optional(PBooleanType::DEFAULT),
-    KEY_OVERRIDE => TypeFactory.optional(PBooleanType::DEFAULT),
-    KEY_KIND => TypeFactory.optional(TYPE_ATTRIBUTE_KIND),
-    KEY_VALUE => PAnyType::DEFAULT
+    TypeFactory.optional(KEY_FINAL) => PBooleanType::DEFAULT,
+    TypeFactory.optional(KEY_OVERRIDE) => PBooleanType::DEFAULT,
+    TypeFactory.optional(KEY_KIND) => TYPE_ATTRIBUTE_KIND,
+    KEY_VALUE => PAnyType::DEFAULT,
+    TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
   })
-  TYPE_ATTRIBUTES = TypeFactory.hash_kv(TYPE_MEMBER_NAME, TypeFactory.not_undef)
+  TYPE_ATTRIBUTES = TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, TypeFactory.not_undef)
   TYPE_ATTRIBUTE_CALLABLE = TypeFactory.callable(0,0)
 
   TYPE_FUNCTION_TYPE = PType.new(PCallableType::DEFAULT)
 
   TYPE_FUNCTION = TypeFactory.struct({
     KEY_TYPE => TYPE_FUNCTION_TYPE,
-    KEY_ANNOTATIONS => TypeFactory.optional(TYPE_ANNOTATIONS),
-    KEY_FINAL => TypeFactory.optional(PBooleanType::DEFAULT),
-    KEY_OVERRIDE => TypeFactory.optional(PBooleanType::DEFAULT)
+    TypeFactory.optional(KEY_FINAL) => PBooleanType::DEFAULT,
+    TypeFactory.optional(KEY_OVERRIDE) => PBooleanType::DEFAULT,
+    TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
   })
-  TYPE_FUNCTIONS = TypeFactory.hash_kv(TYPE_MEMBER_NAME, TypeFactory.not_undef)
+  TYPE_FUNCTIONS = TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, TypeFactory.not_undef)
 
-  TYPE_EQUALITY = TypeFactory.variant(TYPE_MEMBER_NAME, TypeFactory.array_of(TYPE_MEMBER_NAME))
+  TYPE_EQUALITY = TypeFactory.variant(Pcore::TYPE_MEMBER_NAME, TypeFactory.array_of(Pcore::TYPE_MEMBER_NAME))
 
   TYPE_CHECKS = PAnyType::DEFAULT # TBD
 
   TYPE_OBJECT_I12N = TypeFactory.struct({
-    KEY_NAME => TypeFactory.optional(TYPE_OBJECT_NAME),
-    KEY_PARENT => TypeFactory.optional(PType::DEFAULT),
-    KEY_ATTRIBUTES => TypeFactory.optional(TYPE_ATTRIBUTES),
-    KEY_FUNCTIONS => TypeFactory.optional(TYPE_FUNCTIONS),
-    KEY_EQUALITY => TypeFactory.optional(TYPE_EQUALITY),
-    KEY_EQUALITY_INCLUDE_TYPE => TypeFactory.optional(PBooleanType::DEFAULT),
-    KEY_CHECKS =>  TypeFactory.optional(TYPE_CHECKS),
-    KEY_ANNOTATIONS =>  TypeFactory.optional(TYPE_ANNOTATIONS)
+    TypeFactory.optional(KEY_NAME) => TYPE_OBJECT_NAME,
+    TypeFactory.optional(KEY_PARENT) => PType::DEFAULT,
+    TypeFactory.optional(KEY_ATTRIBUTES) => TYPE_ATTRIBUTES,
+    TypeFactory.optional(KEY_FUNCTIONS) => TYPE_FUNCTIONS,
+    TypeFactory.optional(KEY_EQUALITY) => TYPE_EQUALITY,
+    TypeFactory.optional(KEY_EQUALITY_INCLUDE_TYPE) => PBooleanType::DEFAULT,
+    TypeFactory.optional(KEY_CHECKS) =>  TYPE_CHECKS,
+    TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
   })
 
   def self.register_ptype(loader, ir)
-    create_ptype(loader, ir, 'AnyType', 'i12n_hash' => TYPE_OBJECT_I12N)
+    type = create_ptype(loader, ir, 'AnyType', 'i12n_hash' => TYPE_OBJECT_I12N)
+
+    # Now, when the Object type exists, add annotations with keys derived from Annotation and freeze the types.
+    annotations = TypeFactory.optional(PHashType.new(PType.new(Annotation._ptype), TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, PAnyType::DEFAULT)))
+    TYPE_ATTRIBUTE.hashed_elements[KEY_ANNOTATIONS].replace_value_type(annotations)
+    TYPE_FUNCTION.hashed_elements[KEY_ANNOTATIONS].replace_value_type(annotations)
+    TYPE_OBJECT_I12N.hashed_elements[KEY_ANNOTATIONS].replace_value_type(annotations)
+    PTypeSetType::TYPE_TYPESET_I12N.hashed_elements[KEY_ANNOTATIONS].replace_value_type(annotations)
+    PTypeSetType::TYPE_TYPE_REFERENCE_I12N.hashed_elements[KEY_ANNOTATIONS].replace_value_type(annotations)
+    type
   end
 
   # @abstract Encapsulates behavior common to {PAttribute} and {PFunction}
@@ -458,9 +466,10 @@ class PObjectType < PMetaType
   end
 
   # @api private
-  def implementation_class
-    if @implementation_class.nil?
-      impl_name = Loaders.implementation_registry.module_name_for_type(self)
+  def implementation_class(create = true)
+    if @implementation_class.nil? && create
+      ir = Loaders.implementation_registry
+      impl_name = ir.nil? ? nil : ir.module_name_for_type(self)
       if impl_name.nil?
         # Use generator to create a default implementation
         @implementation_class = RubyGenerator.new.create_class(self)
@@ -476,6 +485,12 @@ class PObjectType < PMetaType
       end
     end
     @implementation_class
+  end
+
+  # @api private
+  def implementation_class=(cls)
+    raise ArgumentError, "attempt to redefine implementation class for #{label}" unless @implementation_class.nil?
+    @implementation_class = cls
   end
 
   # @api private

@@ -18,13 +18,17 @@ class RubyGenerator < TypeFormatter
 
   def create_class(obj)
     @dynamic_classes ||= Hash.new do |hash, key|
-      rp = key.resolved_parent
-      parent_class = rp.is_a?(PObjectType) ? create_class(rp) : Object
-      class_def = ''
-      class_body(key, EMPTY_ARRAY, class_def)
-      cls = Class.new(parent_class)
-      cls.class_eval(class_def)
-      cls.define_singleton_method(:_ptype) { return key }
+      cls = key.implementation_class(false)
+      if cls.nil?
+        rp = key.resolved_parent
+        parent_class = rp.is_a?(PObjectType) ? rp.implementation_class : Object
+        class_def = ''
+        class_body(key, EMPTY_ARRAY, class_def)
+        cls = Class.new(parent_class)
+        cls.class_eval(class_def)
+        cls.define_singleton_method(:_ptype) { return key }
+        key.implementation_class = cls
+      end
       hash[key] = cls
     end
     raise ArgumentError, "Expected a Puppet Type, got '#{obj.class.name}'" unless obj.is_a?(PAnyType)
@@ -195,14 +199,13 @@ class RubyGenerator < TypeFormatter
       bld.chomp!(', ')
       bld << ')'
       unless obj.parent.nil?
-        bld << "\n    super"
+        bld << "\n    super("
         super_args = (non_opt + opt).select { |ip| !ip.container.equal?(obj) }
         unless super_args.empty?
-          bld << '('
           super_args.each { |ip| bld << ip.name << ', ' }
           bld.chomp!(', ')
-          bld << ')'
         end
+        bld << ')'
       end
     end
     bld << "\n"

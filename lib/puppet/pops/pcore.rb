@@ -2,11 +2,14 @@ require 'uri'
 
 module Puppet::Pops
 module Pcore
+  include Types::PuppetObject
+
   TYPE_URI_RX = Types::TypeFactory.regexp(URI.regexp)
   TYPE_URI = Types::TypeFactory.pattern(TYPE_URI_RX)
   TYPE_URI_ALIAS = Types::PTypeAliasType.new('Pcore::URI', nil, TYPE_URI)
   TYPE_SIMPLE_TYPE_NAME = Types::TypeFactory.pattern(/\A[A-Z]\w*\z/)
   TYPE_QUALIFIED_REFERENCE = Types::TypeFactory.pattern(/\A[A-Z][\w]*(?:::[A-Z][\w]*)*\z/)
+  TYPE_MEMBER_NAME = Types::PPatternType.new([Types::PRegexpType.new(Patterns::PARAM_NAME)])
 
   KEY_PCORE_URI = 'pcore_uri'.freeze
   KEY_PCORE_VERSION = 'pcore_version'.freeze
@@ -17,17 +20,27 @@ module Pcore
 
   RUNTIME_NAME_AUTHORITY = 'http://puppet.com/2016.1/runtime'
 
+  def self._ptype
+    @type
+  end
+
+  def self.annotate(instance, annotations_hash)
+    annotations_hash.each_pair do |type, i12n_hash|
+      type.implementation_class.annotate(instance) { i12n_hash }
+    end
+    instance
+  end
+
   def self.init(loader, ir, for_agent)
     add_alias('Pcore::URI_RX', TYPE_URI_RX, loader)
     add_type(TYPE_URI_ALIAS, loader)
     add_alias('Pcore::SimpleTypeName', TYPE_SIMPLE_TYPE_NAME, loader)
+    add_alias('Pcore::MemberName', TYPE_MEMBER_NAME, loader)
     add_alias('Pcore::TypeName', TYPE_QUALIFIED_REFERENCE, loader)
     add_alias('Pcore::QRef', TYPE_QUALIFIED_REFERENCE, loader)
-    begin
     Types::TypedModelObject.register_ptypes(loader, ir)
-    rescue Exception => e
-      puts e.message
-    end
+
+    @type = create_object_type(loader, ir, Pcore, 'Pcore', nil)
 
     ir.register_implementation_namespace('Pcore', 'Puppet::Pops::Pcore', loader)
     unless for_agent

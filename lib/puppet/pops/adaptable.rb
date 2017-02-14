@@ -171,8 +171,7 @@ module Adaptable
     # @return [adapter] the given adapter
     #
     def self.associate_adapter(adapter, o)
-      attr_name = :"@#{instance_var_name(adapter.class.name)}"
-      o.instance_variable_set(attr_name, adapter)
+      o.instance_variable_set(self_attr_name, adapter)
       adapter
     end
 
@@ -187,13 +186,19 @@ module Adaptable
       name.split(DOUBLE_COLON).join(USCORE)
     end
 
+    # Returns the name of the class, or the name of the type if the class represents an Object type
+    # @return [String] the name of the class or type
+    def self.type_name
+      self.name
+    end
+
     # Returns a suitable instance variable name for the _name_ of this instance. The name is created by calling
     # Adapter#instance_var_name and then cached.
     # @return [String] the instance variable name for _name_
     # @api private
     #
     def self.self_attr_name
-      @attr_name_sym ||= :"@#{instance_var_name(self.name)}"
+      @attr_name_sym ||= :"@#{instance_var_name(type_name)}"
     end
   end
 end
