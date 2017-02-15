@@ -21,7 +21,18 @@ class GlobalDataProvider < ConfiguredDataProvider
           lookup_invocation.default_values,
           lookup_invocation.explainer)
       end
-      merge = config.merge_strategy if merge.is_a?(DefaultMergeStrategy)
+
+      unless config.merge_strategy.is_a?(DefaultMergeStrategy)
+        if lookup_invocation.hiera_xxx_call?
+          # Merge strategy of the hiera_xxx call should only be applied when no merge strategy is defined in the hiera config
+          merge = config.merge_strategy
+          lookup_invocation.set_hiera_v3_merge_behavior
+        elsif merge.is_a?(DefaultMergeStrategy)
+          # For all other calls, the strategy of the call overrides the strategy defined in the hiera config
+          merge = config.merge_strategy
+          lookup_invocation.set_hiera_v3_merge_behavior
+        end
+      end
     end
     super(key, lookup_invocation, merge)
   end
