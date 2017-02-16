@@ -22,7 +22,32 @@ describe 'Puppet Ruby Generator' do
           attributes => {
             name => String,
             age  => { type => Integer, value => 30 },
-            what => { type => String, value => 'what is this', kind => constant }
+            what => { type => String, value => 'what is this', kind => constant },
+            uc_name => {
+              type => String,
+              kind => derived,
+              annotations => {
+                RubyMethod => { body => '@name.upcase' }
+              }
+            },
+            other_name => {
+              type => String,
+              kind => derived
+            }
+          },
+          functions => {
+            some_other => {
+              type => Callable[1,1]
+            },
+            name_and_age => {
+              type => Callable[1,1],
+              annotations => {
+                RubyMethod => {
+                  parameters => 'joiner',
+                  body => '"\#{@name}\#{joiner}\#{@age}"'
+                }
+              }
+            },
           }
         }]
         type MyModule::SecondGenerated = Object[{
@@ -102,6 +127,21 @@ describe 'Puppet Ruby Generator' do
           expect(inst.what).to eql('what is this')
           expect(inst.age).to eql(30)
           expect(inst.another).to be_nil
+        end
+
+        it 'generates a code body for derived attribute from a RubyMethod body attribute' do
+          inst = first.create('Bob Builder', 52)
+          expect(inst.uc_name).to eq('BOB BUILDER')
+        end
+
+        it "generates a code body with 'not implemented' in the absense of a RubyMethod body attribute" do
+          inst = first.create('Bob Builder', 52)
+          expect { inst.other_name }.to raise_error(/no method is implemented for derived attribute MyModule::FirstGenerated\[other_name\]/)
+        end
+
+        it 'generates parameter list and a code body for derived function from a RubyMethod body attribute' do
+          inst = first.create('Bob Builder', 52)
+          expect(inst.name_and_age(' of age ')).to eq('Bob Builder of age 52')
         end
       end
 
