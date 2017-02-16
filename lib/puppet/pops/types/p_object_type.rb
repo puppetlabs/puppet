@@ -823,6 +823,10 @@ class PObjectType < PMetaType
     parent
   end
 
+  def simple_name
+    label.split(DOUBLE_COLON).last
+  end
+
   protected
 
   # An Object type is only assignable from another Object type. The other type
