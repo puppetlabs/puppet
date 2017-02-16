@@ -588,7 +588,11 @@ class PObjectType < PMetaType
     attr_specs = i12n_hash[KEY_ATTRIBUTES]
     unless attr_specs.nil? || attr_specs.empty?
       @attributes = Hash[attr_specs.map do |key, attr_spec|
-        attr_spec = { KEY_TYPE => TypeAsserter.assert_instance_of(nil, PType::DEFAULT, attr_spec) { "attribute #{label}[#{key}]" } } unless attr_spec.is_a?(Hash)
+        unless attr_spec.is_a?(Hash)
+          attr_type = TypeAsserter.assert_instance_of(nil, PType::DEFAULT, attr_spec) { "attribute #{label}[#{key}]" }
+          attr_spec = { KEY_TYPE => attr_type }
+          attr_spec[KEY_VALUE] = nil if attr_type.is_a?(POptionalType)
+        end
         attr = PAttribute.new(key, self, attr_spec)
         [attr.name, attr.assert_override(parent_members)]
       end].freeze

@@ -101,6 +101,17 @@ describe 'The Object Type' do
       expect(attr.value?).to be_falsey
     end
 
+    it 'attribute without defined value but optional type responds true to value?' do
+      tp = parse_object('MyObject', <<-OBJECT)
+        attributes => {
+          a => Optional[Integer]
+        }
+      OBJECT
+      attr = tp['a']
+      expect(attr.value?).to be_truthy
+      expect(attr.value).to be_nil
+    end
+
     it 'raises an error when value is requested from an attribute that has no value' do
       tp = parse_object('MyObject', <<-OBJECT)
         attributes => {
