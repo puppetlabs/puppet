@@ -560,8 +560,10 @@ class PObjectType < PMetaType
   end
 
   # @api private
-  def include_class_in_equality?
-    @equality_include_type && !(@parent.is_a?(PObjectType) && parent.include_class_in_equality?)
+  def equality_include_type?
+    return true if @equality_include_type
+    rp = resolved_parent
+    rp.is_a?(PObjectType) && rp.equality_include_type?
   end
 
   # @api private
