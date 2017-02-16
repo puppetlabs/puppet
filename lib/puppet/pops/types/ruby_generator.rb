@@ -126,8 +126,8 @@ class RubyGenerator < TypeFormatter
 
     bld << "\n"
     bld << "  def self._ptype\n"
-    bld << '    @_ptype ||= ' << namespace_relative(segments, obj.class.name) << ".new('" << obj.name << "',\n"
-    bld << TypeFormatter.new.ruby_string('ref', 3, obj.i12n_hash(false)) << "    )\n"
+    bld << '    @_ptype ||= ' << namespace_relative(segments, obj.class.name) << ".new('" << obj.name << "', "
+    bld << TypeFormatter.singleton.ruby('ref').indented(2).string(obj.i12n_hash(false)) << ")\n"
     bld << "  end\n"
 
     class_body(obj, segments, bld)
