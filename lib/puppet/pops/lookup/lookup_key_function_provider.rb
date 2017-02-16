@@ -57,7 +57,11 @@ class V3BackendFunctionProvider < LookupKeyFunctionProvider
 
   def lookup_key(key, lookup_invocation, location, merge)
     @backend ||= instantiate_backend(lookup_invocation)
-    @backend.lookup(key, lookup_invocation.scope, lookup_invocation.hiera_v3_location_overrides, convert_merge(merge), context = {:recurse_guard => nil})
+    config = parent_data_provider.config(lookup_invocation)
+
+    # Never pass hiera.yaml defined merge_behavior down to the backend. It will pick it up from the config
+    resolution_type = lookup_invocation.hiera_v3_merge_behavior? ? nil : convert_merge(merge)
+    @backend.lookup(key, lookup_invocation.scope, lookup_invocation.hiera_v3_location_overrides, resolution_type, context = {:recurse_guard => nil})
   end
 
   private

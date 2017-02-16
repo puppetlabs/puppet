@@ -8,107 +8,123 @@ describe 'when calling' do
 
   let(:global_dir) { tmpdir('global') }
   let(:env_config) { {} }
-  let(:global_files) do
+  let(:hiera_yaml) { <<-YAML.unindent }
+    ---
+    :backends:
+      - yaml
+      - custom
+    :yaml:
+      :datadir: #{global_dir}/hieradata
+    :hierarchy:
+      - first
+      - second
+    YAML
+
+  let(:ruby_stuff_files) do
     {
-      'hiera.yaml' => <<-YAML.unindent,
-        ---
-        :backends:
-          - yaml
-          - custom
-        :yaml:
-          :datadir: #{global_dir}/hieradata
-        :hierarchy:
-          - first
-          - second
-        YAML
-      'ruby_stuff' => {
-        'hiera' => {
-          'backend' => {
-            'custom_backend.rb' => <<-RUBY.unindent
-                    class Hiera::Backend::Custom_backend
-                      def initialize(cache = nil)
-                        Hiera.debug('Custom_backend starting')
-                      end
-      
-                      def lookup(key, scope, order_override, resolution_type, context)
-                        case key
-                        when 'datasources'
-                          Hiera::Backend.datasources(scope, order_override) { |source| source }
-                        else
-                          throw :no_such_key
-                        end
-                      end
-                    end
-              RUBY
-          }
+      'hiera' => {
+        'backend' => {
+          'custom_backend.rb' => <<-RUBY.unindent
+            class Hiera::Backend::Custom_backend
+              def initialize(cache = nil)
+                Hiera.debug('Custom_backend starting')
+              end
+
+              def lookup(key, scope, order_override, resolution_type, context)
+                case key
+                when 'datasources'
+                  Hiera::Backend.datasources(scope, order_override) { |source| source }
+                when 'resolution_type'
+                  "resolution_type=\#{resolution_type}"
+                else
+                  throw :no_such_key
+                end
+              end
+            end
+            RUBY
         }
-      },
-      'hieradata' => {
-        'first.yaml' => <<-YAML.unindent,
-                ---
-                a: first a
-                class_name: "-- %{calling_class} --"
-                class_path: "-- %{calling_class_path} --"
-                module: "-- %{calling_module} --"
-                mod_name: "-- %{module_name} --"
-                database_user:
-                  name: postgres
-                  uid: 500
-                  gid: 500
-                b:
-                  b1: first b1
-                  b2: first b2
-                fbb:
-                  - mod::foo
-                  - mod::bar
-                  - mod::baz
-                empty_array: []
-          YAML
-        'second.yaml' => <<-YAML.unindent,
-          ---
-          a: second a
-          b:
-            b1: second b1
-            b3: second b3
-          YAML
-        'the_override.yaml' => <<-YAML.unindent
-          ---
-          key: foo_result
-          YAML
-      },
-      'environments' => {
-        'test' => {
-          'modules' => {
-            'mod' => {
-              'manifests' => {
-                'foo.pp' => <<-PUPPET.unindent,
-                    class mod::foo {
-                      notice(hiera('class_name'))
-                      notice(hiera('class_path'))
-                      notice(hiera('module'))
-                      notice(hiera('mod_name'))
-                    }
-                  PUPPET
-                'bar.pp' => <<-PUPPET.unindent,
-                    class mod::bar {}
-                  PUPPET
-                'baz.pp' => <<-PUPPET.unindent
-                     class mod::baz {}
-                  PUPPET
+      }
+    }
+  end
+
+  let(:hieradata_files) do
+    {
+      'first.yaml' => <<-YAML.unindent,
+        ---
+        a: first a
+        class_name: "-- %{calling_class} --"
+        class_path: "-- %{calling_class_path} --"
+        module: "-- %{calling_module} --"
+        mod_name: "-- %{module_name} --"
+        database_user:
+          name: postgres
+          uid: 500
+          gid: 500
+        b:
+          b1: first b1
+          b2: first b2
+        fbb:
+          - mod::foo
+          - mod::bar
+          - mod::baz
+        empty_array: []
+        YAML
+      'second.yaml' => <<-YAML.unindent,
+        ---
+        a: second a
+        b:
+          b1: second b1
+          b3: second b3
+        YAML
+      'the_override.yaml' => <<-YAML.unindent
+        ---
+        key: foo_result
+        YAML
+    }
+  end
+
+  let(:environment_files) do
+    {
+      'test' => {
+        'modules' => {
+          'mod' => {
+            'manifests' => {
+              'foo.pp' => <<-PUPPET.unindent,
+                class mod::foo {
+                  notice(hiera('class_name'))
+                  notice(hiera('class_path'))
+                  notice(hiera('module'))
+                  notice(hiera('mod_name'))
+                }
+                PUPPET
+              'bar.pp' => <<-PUPPET.unindent,
+                class mod::bar {}
+                PUPPET
+              'baz.pp' => <<-PUPPET.unindent
+                class mod::baz {}
+                PUPPET
               },
-              'hiera.yaml' => <<-YAML.unindent,
-                ---
-                version: 5
+            'hiera.yaml' => <<-YAML.unindent,
+              ---
+              version: 5
+              YAML
+            'data' => {
+              'common.yaml' => <<-YAML.unindent
+                mod::c: mod::c (from module)
                 YAML
-              'data' => {
-                 'common.yaml' => <<-YAML.unindent
-                    mod::c: mod::c (from module)
-                  YAML
-              }
             }
           }
         }
-      }
+      }.merge(env_config)
+    }
+  end
+
+  let(:global_files) do
+    {
+      'hiera.yaml' => hiera_yaml,
+      'ruby_stuff' => ruby_stuff_files,
+      'hieradata' => hieradata_files,
+      'environments' => environment_files
     }
   end
 
@@ -129,7 +145,7 @@ describe 'when calling' do
   around(:each) do |example|
     # Faking the load path to enable 'require' to load from 'ruby_stuff'. It removes the need for a static fixture
     # for the custom backend
-    dir_contained_in(global_dir, DeepMerge.deep_merge!(global_files, { 'environments' => { 'test' => env_config } } ))
+    dir_contained_in(global_dir, global_files)
     $LOAD_PATH.unshift(File.join(global_dir, 'ruby_stuff'))
     begin
       Puppet.override(:environments => environments, :current_environment => env) do
@@ -330,6 +346,72 @@ describe 'when calling' do
 
     it 'should use default block array to include classes' do
       expect(func('foo') { |k| ['mod::bar', "mod::#{k}"] }.map { |c| c.class_name }).to eql(%w[mod::bar mod::foo])
+    end
+  end
+
+  context 'with merge_behavior declared in hiera.yaml' do
+    let(:hiera_yaml) do
+      <<-YAML.unindent
+        ---
+        :backends:
+          - yaml
+          - custom
+        :yaml:
+          :datadir: #{global_dir}/hieradata
+        :hierarchy:
+          - other
+          - common
+        :merge_behavior: deeper
+        YAML
+    end
+
+    let(:global_files) do
+      {
+        'hiera.yaml' => hiera_yaml,
+        'hieradata' => {
+          'common.yaml' => <<-YAML.unindent,
+            dm:
+              dm1:
+                dm11: value of dm11 (from common)
+                dm12: value of dm12 (from common)
+              dm2:
+                dm21: value of dm21 (from common)
+            YAML
+          'other.yaml' => <<-YAML.unindent,
+            dm:
+              dm1:
+                dm11: value of dm11 (from other)
+                dm13: value of dm13 (from other)
+              dm3:
+                dm31: value of dm31 (from other)
+            YAML
+        },
+        'ruby_stuff' => ruby_stuff_files
+      }
+    end
+
+    context 'hiera_hash' do
+      let(:the_func) { Puppet.lookup(:loaders).puppet_system_loader.load(:function, 'hiera_hash') }
+
+      it 'the imposed hash strategy does not override declared merge_behavior' do
+        expect(func('dm')).to eql({
+          'dm1' => {
+            'dm11' => 'value of dm11 (from other)',
+            'dm12' => 'value of dm12 (from common)',
+            'dm13' => 'value of dm13 (from other)'
+          },
+          'dm2' => {
+            'dm21' => 'value of dm21 (from common)'
+          },
+          'dm3' => {
+            'dm31' => 'value of dm31 (from other)'
+          }
+        })
+      end
+
+      it "the merge behavior is not propagated to a custom backend as 'resolution_type'" do
+        expect(func('resolution_type')).to eql('resolution_type=')
+      end
     end
   end
 end
