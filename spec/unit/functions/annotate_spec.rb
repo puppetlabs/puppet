@@ -124,7 +124,7 @@ describe 'the annotate function' do
         notice(MyAdapter.annotate(MyObject).value)
         notice(MyAdapter.annotate(MyObject, clear).value)
       PUPPET
-      expect { eval_and_collect_notices(code) }.to raise_error(/attempt to clear MyAdapter annotation declared on type MyObject/)
+      expect { eval_and_collect_notices(code) }.to raise_error(/attempt to clear MyAdapter annotation declared on MyObject/)
     end
 
     it 'fails attempts to redefine a declared annotation' do
@@ -138,7 +138,7 @@ describe 'the annotate function' do
         notice(MyAdapter.annotate(MyObject).value)
         notice(MyAdapter.annotate(MyObject, { 'id' => 3, 'value' => 'some other value' }).value)
       PUPPET
-      expect { eval_and_collect_notices(code) }.to raise_error(/attempt to redefine MyAdapter annotation declared on type MyObject/)
+      expect { eval_and_collect_notices(code) }.to raise_error(/attempt to redefine MyAdapter annotation declared on MyObject/)
     end
 
     it 'allows annotation that are not declared in the type' do
