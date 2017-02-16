@@ -59,7 +59,10 @@ class TypedModelObject < Object
   end
 
   def self.register_ptypes(loader, ir)
-    types = [Annotation.register_ptype(loader, ir)]
+    types = [
+      Annotation.register_ptype(loader, ir),
+      RubyMethod.register_ptype(loader, ir)
+    ]
     Types.constants.each do |c|
       cls = Types.const_get(c)
       next unless cls.is_a?(Class) && cls < self
@@ -3353,6 +3356,7 @@ require_relative 'annotatable'
 require_relative 'p_meta_type'
 require_relative 'p_object_type'
 require_relative 'annotation'
+require_relative 'ruby_method'
 require_relative 'p_runtime_type'
 require_relative 'p_sem_ver_type'
 require_relative 'p_sem_ver_range_type'

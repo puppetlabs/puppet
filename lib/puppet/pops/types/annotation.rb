@@ -27,7 +27,7 @@ module Types
     def self.annotate(o)
       adapter = get(o)
       if adapter.nil?
-        if o.is_a?(PObjectType)
+        if o.is_a?(Annotatable)
           i12n = o.annotations[_ptype]
           i12n = yield if i12n.nil? && block_given?
         else
@@ -47,10 +47,10 @@ module Types
     # @return [Annotation<self>] an annotation of the same class as the receiver of the call
     #
     def self.annotate_new(o, i12n_hash)
-      if o.is_a?(PObjectType) && o.annotations.include?(_ptype)
+      if o.is_a?(Annotatable) && o.annotations.include?(_ptype)
         # Prevent clear or redefine of annotations declared on type
         action = i12n_hash == CLEAR ? 'clear' : 'redefine'
-        raise ArgumentError, "attempt to #{action} #{type_name} annotation declared on type #{o.name}"
+        raise ArgumentError, "attempt to #{action} #{type_name} annotation declared on #{o.label}"
       end
 
       if i12n_hash == CLEAR

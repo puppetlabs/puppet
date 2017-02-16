@@ -126,8 +126,8 @@ class RubyGenerator < TypeFormatter
 
     bld << "\n"
     bld << "  def self._ptype\n"
-    bld << '    @_ptype ||= ' << namespace_relative(segments, obj.class.name) << ".new('" << obj.name << "',\n"
-    bld << TypeFormatter.new.ruby_string('ref', 3, obj.i12n_hash(false)) << "    )\n"
+    bld << '    @_ptype ||= ' << namespace_relative(segments, obj.class.name) << ".new('" << obj.name << "', "
+    bld << TypeFormatter.singleton.ruby('ref').indented(2).string(obj.i12n_hash(false)) << ")\n"
     bld << "  end\n"
 
     class_body(obj, segments, bld)
@@ -156,121 +156,259 @@ class RubyGenerator < TypeFormatter
 
     init_params = others.reject { |a| a.kind == PObjectType::ATTRIBUTE_KIND_DERIVED }
     opt, non_opt = init_params.partition { |ip| ip.value? }
+    derived_attrs, obj_attrs = others.select { |a| a.container.equal?(obj) }.partition { |ip| ip.kind == PObjectType::ATTRIBUTE_KIND_DERIVED }
 
-    # Output type safe hash constructor
-    bld << "\n  def self.from_hash(i12n)\n"
-    bld << '    from_asserted_hash(' << namespace_relative(segments, TypeAsserter.name) << '.assert_instance_of('
-    bld << "'" << obj.label << " initializer', _ptype.i12n_type, i12n))\n  end\n\n  def self.from_asserted_hash(i12n)\n    new(\n"
-    non_opt.each { |ip| bld << "      i12n['" << ip.name << "'],\n" }
-    opt.each { |ip| bld << "      i12n.fetch('" << ip.name << "') { _ptype['" << ip.name << "'].value },\n" }
-    bld.chomp!(",\n")
-    bld << ")\n  end\n"
-
-    # Output type safe constructor
-    bld << "\n  def self.create"
-    if init_params.empty?
-      bld << "\n    new"
-    else
-      bld << '('
-      non_opt.each { |ip| bld << ip.name << ', ' }
-      opt.each { |ip| bld << ip.name << ' = ' << "_ptype['#{ip.name}'].value" << ', ' }
-      bld.chomp!(', ')
-      bld << ")\n"
-      bld << '    ta = ' << namespace_relative(segments, TypeAsserter.name) << "\n"
-      bld << "    attrs = _ptype.attributes(true)\n"
-      init_params.each do |a|
-        bld << "    ta.assert_instance_of('" << a.container.name << '[' << a.name << ']'
-        bld << "', attrs['" << a.name << "'].type, " << a.name << ")\n"
-      end
-      bld << '    new('
-      non_opt.each { |a| bld << a.name << ', ' }
-      opt.each { |a| bld << a.name << ', ' }
-      bld.chomp!(', ')
-      bld << ')'
-    end
-    bld << "\n  end\n"
-
-    # Output initializer
-    bld << "\n  def initialize"
-    unless init_params.empty?
-      bld << '('
-      non_opt.each { |ip| bld << ip.name << ', ' }
-      opt.each { |ip| bld << ip.name << ' = ' << "_ptype['#{ip.name}'].value" << ', ' }
-      bld.chomp!(', ')
-      bld << ')'
-      unless obj.parent.nil?
-        bld << "\n    super("
-        super_args = (non_opt + opt).select { |ip| !ip.container.equal?(obj) }
-        unless super_args.empty?
-          super_args.each { |ip| bld << ip.name << ', ' }
-          bld.chomp!(', ')
-        end
-        bld << ')'
-      end
-    end
-    bld << "\n"
-
-    init_params.each { |a| bld << '    @' << a.name << ' = ' << a.name << "\n" if a.container.equal?(obj) }
-    bld << "  end\n\n"
-
-    bld << "  def i12n_hash\n    result = "
-    bld << (obj.parent.nil? ? '{}' : 'super')
-    bld << "\n"
-    init_params.each { |a| bld << "    result['" << a.name << "'] = @" << a.name << "\n" if a.container.equal?(obj) }
-    bld << "    result\n  end\n\n"
-
-    bld << "  def to_s\n"
-    bld << "    " << namespace_relative(segments, TypeFormatter.name) << ".string(self)\n"
-    bld << "  end\n\n"
-
-    # Output attr_readers
-    others.each do |a|
-      next unless a.container.equal?(obj)
-      if a.kind == PObjectType::ATTRIBUTE_KIND_DERIVED || a.kind == PObjectType::ATTRIBUTE_KIND_GIVEN_OR_DERIVED
-        bld << '  def ' << a.name << "\n"
-        bld << "    raise Puppet::Error, \"no method is implemented for derived attribute #{a.label}\"\n"
-        bld << "  end\n"
-      else
-        bld << '  attr_reader :' << a.name << "\n"
-      end
-    end
-
-    # Output function placeholders
-    obj.functions(false).each_value do |func|
-      bld << "\n  def " << func.name << "(*args)\n"
-      bld << "    # Placeholder for #{func.type}\n"
-      bld << "    raise Puppet::Error, \"no method is implemented for #{func.label}\"\n"
-      bld << "  end\n"
-    end
-
-    # output hash and equality
-    include_class = obj.include_class_in_equality?
+    include_type = obj.equality_include_type? && !(obj.parent.is_a?(PObjectType) && obj.parent.equality_include_type?)
     if obj.equality.nil?
-      eq_names = obj.attributes(false).values.select { |a| a.kind != PObjectType::ATTRIBUTE_KIND_CONSTANT }.map(&:name)
+      eq_names = obj_attrs.reject { |a| a.kind == PObjectType::ATTRIBUTE_KIND_CONSTANT }.map(&:name)
     else
       eq_names = obj.equality
     end
 
-    unless eq_names.empty? && !include_class
-      bld << "\n  def hash\n    "
-      bld << 'super.hash ^ ' unless obj.parent.nil?
-      if eq_names.empty?
-        bld << "self.class.hash\n"
+    unless obj.parent.is_a?(PObjectType) && obj_attrs.empty?
+      # Output type safe hash constructor
+      bld << "\n  def self.from_hash(i12n)\n"
+      bld << '    from_asserted_hash(' << namespace_relative(segments, TypeAsserter.name) << '.assert_instance_of('
+      bld << "'" << obj.label << " initializer', _ptype.i12n_type, i12n))\n  end\n\n  def self.from_asserted_hash(i12n)\n    new"
+      unless non_opt.empty? && opt.empty?
+        bld << "(\n"
+        non_opt.each { |ip| bld << "      i12n['" << ip.name << "'],\n" }
+        opt.each do |ip|
+          if ip.value.nil?
+            bld << "      i12n['" << ip.name << "'],\n"
+          else
+            bld << "      i12n.fetch('" << ip.name << "') { "
+            default_string(bld, ip)
+            bld << " },\n"
+          end
+        end
+        bld.chomp!(",\n")
+        bld << ').freeze'
+      end
+      bld << "\n  end\n"
+
+      # Output type safe constructor
+      bld << "\n  def self.create"
+      if init_params.empty?
+        bld << "\n    new"
       else
-        bld << '['
-        bld << 'self.class, ' if include_class
-        eq_names.each { |eqn| bld << '@' << eqn << ', ' }
+        bld << '('
+        non_opt.each { |ip| bld << ip.name << ', ' }
+        opt.each do |ip|
+          bld << ip.name << ' = '
+          default_string(bld, ip)
+          bld << ', '
+        end
         bld.chomp!(', ')
-        bld << "].hash\n"
+        bld << ")\n"
+        bld << '    ta = ' << namespace_relative(segments, TypeAsserter.name) << "\n"
+        bld << "    attrs = _ptype.attributes(true)\n"
+        init_params.each do |a|
+          bld << "    ta.assert_instance_of('" << a.container.name << '[' << a.name << ']'
+          bld << "', attrs['" << a.name << "'].type, " << a.name << ")\n"
+        end
+        bld << '    new('
+        non_opt.each { |a| bld << a.name << ', ' }
+        opt.each { |a| bld << a.name << ', ' }
+        bld.chomp!(', ')
+        bld << ')'
+      end
+      bld << ".freeze\n  end\n"
+
+      # Output attr_readers
+      unless obj_attrs.empty?
+        bld << "\n"
+        obj_attrs.each { |a| bld << '  attr_reader :' << a.name << "\n" }
+      end
+
+      bld << "  attr_reader :hash\n" if obj.parent.nil?
+
+      derived_attrs.each do |a|
+        bld << "\n  def " << a.name << "\n"
+        code_annotation = RubyMethod.annotate(a)
+        ruby_body = code_annotation.nil? ? nil: code_annotation.body
+        if ruby_body.nil?
+          bld << "    raise Puppet::Error, \"no method is implemented for derived #{a.label}\"\n"
+        else
+          bld << '    ' << ruby_body << "\n"
+        end
+        bld << "  end\n"
+      end
+
+      if init_params.empty?
+        bld << "\n  def initialize\n    @hash = " << obj.hash.to_s << "\n  end" if obj.parent.nil?
+      else
+        # Output initializer
+        bld << "\n  def initialize"
+        bld << '('
+        non_opt.each { |ip| bld << ip.name << ', ' }
+        opt.each do |ip|
+          bld << ip.name << ' = '
+          default_string(bld, ip)
+          bld << ', '
+        end
+        bld.chomp!(', ')
+        bld << ')'
+
+        hash_participants = init_params.select { |ip| eq_names.include?(ip.name) }
+        if obj.parent.nil?
+          bld << "\n    @hash = "
+          bld << obj.hash.to_s << "\n" if hash_participants.empty?
+        else
+          bld << "\n    super("
+          super_args = (non_opt + opt).select { |ip| !ip.container.equal?(obj) }
+          unless super_args.empty?
+            super_args.each { |ip| bld << ip.name << ', ' }
+            bld.chomp!(', ')
+          end
+          bld << ")\n"
+          bld << '    @hash = @hash ^ ' unless hash_participants.empty?
+        end
+        unless hash_participants.empty?
+          hash_participants.each { |a| bld << a.name << '.hash ^ ' if a.container.equal?(obj) }
+          bld.chomp!(' ^ ')
+          bld << "\n"
+        end
+        init_params.each { |a| bld << '    @' << a.name << ' = ' << a.name << "\n" if a.container.equal?(obj) }
+        bld << "  end\n"
+      end
+    end
+
+    if obj_attrs.empty?
+      bld << "\n  def i12n_hash\n    {}\n  end\n" unless obj.parent.is_a?(PObjectType)
+    else
+      bld << "\n  def i12n_hash\n"
+      bld << '    result = '
+      bld << (obj.parent.nil? ? '{}' : 'super')
+      bld << "\n"
+      obj_attrs.each do |a|
+        bld << "    result['" << a.name << "'] = @" << a.name
+        if a.value?
+          bld << ' unless '
+          equals_default_string(bld, a)
+        end
+        bld << "\n"
+      end
+      bld << "    result\n  end\n"
+    end
+
+    content_participants = init_params.select { |a| content_participant?(a) }
+    if content_participants.empty?
+      unless obj.parent.is_a?(PObjectType)
+        bld << "\n  def _pcontents\n  end\n"
+        bld << "\n  def _pall_contents(path)\n  end\n"
+      end
+    else
+      bld << "\n  def _pcontents\n"
+      content_participants.each do |cp|
+        if array_type?(cp.type)
+          bld << '    @' << cp.name << ".each { |value| yield(value) }\n"
+        else
+          bld << '    yield(@' << cp.name << ') unless @' << cp.name  << ".nil?\n"
+        end
+      end
+      bld << "  end\n\n  def _pall_contents(path, &block)\n    path << self\n"
+      content_participants.each do |cp|
+        if array_type?(cp.type)
+          bld << '    @' << cp.name << ".each do |value|\n"
+          bld << "      block.call(value, path)\n"
+          bld << "      value._pall_contents(path, &block)\n"
+        else
+          bld << '    unless @' << cp.name << ".nil?\n"
+          bld << '      block.call(@' << cp.name << ", path)\n"
+          bld << '      @' << cp.name << "._pall_contents(path, &block)\n"
+        end
+        bld << "    end\n"
+      end
+      bld << "    path.pop\n  end\n"
+    end
+
+    unless obj.parent.is_a?(PObjectType)
+      bld << "\n  def to_s\n"
+      bld << '    ' << namespace_relative(segments, TypeFormatter.name) << ".string(self)\n"
+      bld << "  end\n"
+    end
+
+    # Output function placeholders
+    obj.functions(false).each_value do |func|
+      code_annotation = RubyMethod.annotate(func)
+      if code_annotation
+        body = code_annotation.body
+        params = code_annotation.parameters
+        bld << "\n  def " << func.name
+        unless params.nil? || params.empty?
+          bld << '(' << params << ')'
+        end
+        bld << "\n    " << body << "\n"
+      else
+        bld << "\n  def " << func.name << "(*args)\n"
+        bld << "    # Placeholder for #{func.type}\n"
+        bld << "    raise Puppet::Error, \"no method is implemented for #{func.label}\"\n"
       end
       bld << "  end\n"
+    end
 
+    unless eq_names.empty? && !include_type
       bld << "\n  def eql?(o)\n"
       bld << "    super &&\n" unless obj.parent.nil?
-      bld << "    self.class.eql?(o.class) &&\n" if include_class
+      bld << "    o.instance_of?(self.class) &&\n" if include_type
       eq_names.each { |eqn| bld << '    @' << eqn << '.eql?(o.' <<  eqn << ") &&\n" }
       bld.chomp!(" &&\n")
       bld << "\n  end\n  alias == eql?\n"
+    end
+  end
+
+  def content_participant?(a)
+    obj_type?(a.type)
+  end
+
+  def obj_type?(t)
+    case t
+    when PObjectType
+      true
+    when POptionalType
+      obj_type?(t.optional_type)
+    when PNotUndefType
+      obj_type?(t.type)
+    when PArrayType
+      obj_type?(t.element_type)
+    when PVariantType
+      t.types.all? { |v| obj_type?(v) }
+    else
+      false
+    end
+  end
+
+  def array_type?(t)
+    case t
+    when PArrayType
+      true
+    when POptionalType
+      array_type?(t.optional_type)
+    when PNotUndefType
+      array_type?(t.type)
+    when PVariantType
+      t.types.all? { |v| array_type?(v) }
+    else
+      false
+    end
+  end
+
+  def default_string(bld, a)
+    case a.value
+    when nil, true, false, Numeric, String
+      bld << a.value.inspect
+    else
+      bld << "_ptype['" << a.name << "'].value"
+    end
+  end
+
+  def equals_default_string(bld, a)
+    case a.value
+    when nil, true, false, Numeric, String
+      bld << '@' << a.name << ' == ' << a.value.inspect
+    else
+      bld << "_ptype['" << a.name << "'].default_value?(@" << a.name << ')'
     end
   end
 end

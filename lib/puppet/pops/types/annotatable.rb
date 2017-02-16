@@ -11,7 +11,9 @@ module Annotatable
 
   # @return [{PType => PStructType}] the map of annotations
   # @api public
-  attr_reader :annotations
+  def annotations
+    @annotations.nil? ? EMPTY_HASH : @annotations
+  end
 
   # @api private
   def init_annotatable(i12n_hash)
