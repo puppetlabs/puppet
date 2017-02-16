@@ -297,6 +297,11 @@ class PObjectType < PMetaType
       hash
     end
 
+    # @return [Booelan] true if the given value equals the default value for this attribute
+    def default_value?(value)
+      @value == value
+    end
+
     # @return [Boolean] `true` if a value has been defined for this attribute.
     def value?
       @value != :undef
