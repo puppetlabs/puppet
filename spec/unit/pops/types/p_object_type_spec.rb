@@ -67,7 +67,7 @@ describe 'The Object Type' do
         }
       OBJECT
       expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError,
-        /expects a match for Enum\['constant', 'derived', 'given_or_derived'\], got 'derivd'/)
+        /expects a match for Enum\['constant', 'derived', 'given_or_derived', 'reference'\], got 'derivd'/)
     end
 
     it 'stores value in attribute' do

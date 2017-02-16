@@ -57,7 +57,8 @@ describe 'Puppet Ruby Generator' do
             zipcode => String,
             email => String,
             another => { type => Optional[MyModule::FirstGenerated], value => undef },
-            number => Integer
+            number => Integer,
+            aref => { type => Optional[MyModule::FirstGenerated], value => undef, kind => reference }
           }
         }]
       CODE
@@ -176,6 +177,14 @@ describe 'Puppet Ruby Generator' do
       context 'creates an instance' do
         it 'that the TypeCalculator infers to the Object type' do
           expect(TypeCalculator.infer(first.from_hash('name' => 'Bob Builder'))).to eq(first_type)
+        end
+
+        it "where attributes of kind 'reference' are not considered part of #_pall_contents" do
+          inst = first.from_hash('name' => 'Bob Builder')
+          wrinst = second.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23, 40, inst, inst)
+          results = []
+          wrinst._pall_contents([]) { |v| results << v }
+          expect(results).to eq([inst])
         end
       end
     end
