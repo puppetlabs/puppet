@@ -495,7 +495,7 @@ class PObjectType < PMetaType
 
   # @api private
   # @return [(Array<String>, Array<PAnyType>, Integer)] array of parameter names, array of parameter types, and a count reflecting the required number of parameters
-  def parameter_info(impl_class, attr_readers = false)
+  def parameter_info(impl_class)
     # Create a types and a names array where optional entries ends up last
     opt_types = []
     opt_names = []
@@ -503,10 +503,10 @@ class PObjectType < PMetaType
     non_opt_names = []
     i12n_type.elements.each do |se|
       if se.key_type.is_a?(POptionalType)
-        opt_names << (attr_readers ? attr_reader_name(se) : se.name)
+        opt_names << se.name
         opt_types << se.value_type
       else
-        non_opt_names << (attr_readers ? attr_reader_name(se) : se.name)
+        non_opt_names << se.name
         non_opt_types << se.value_type
       end
     end

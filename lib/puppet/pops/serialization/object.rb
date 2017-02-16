@@ -43,7 +43,7 @@ class ObjectWriter
 
   def write(type, value, serializer)
     impl_class = value.class
-    (names, types, required_count) = type.parameter_info(impl_class, true)
+    (names, types, required_count) = type.parameter_info(impl_class)
     args = names.map { |name| value.send(name) }
 
     # Pop optional arguments that are default
