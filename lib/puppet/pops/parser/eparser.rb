@@ -1831,14 +1831,14 @@ module_eval(<<'.,.,', 'egrammar.ra', 207)
 
 module_eval(<<'.,.,', 'egrammar.ra', 208)
   def _reduce_47(val, _values, result)
-     result = val[1].minus()          ; loc result, val[0] 
+     result = val[1].minus            ; loc result, val[0] 
     result
   end
 .,.,
 
 module_eval(<<'.,.,', 'egrammar.ra', 209)
   def _reduce_48(val, _values, result)
-     result = val[1].unfold()         ; loc result, val[0] 
+     result = val[1].unfold           ; loc result, val[0] 
     result
   end
 .,.,
@@ -1852,7 +1852,7 @@ module_eval(<<'.,.,', 'egrammar.ra', 210)
 
 module_eval(<<'.,.,', 'egrammar.ra', 211)
   def _reduce_50(val, _values, result)
-     result = val[0] ==  val[2]       ; loc result, val[1] 
+     result = val[0].eq  val[2]       ; loc result, val[1] 
     result
   end
 .,.,
@@ -1915,21 +1915,21 @@ module_eval(<<'.,.,', 'egrammar.ra', 219)
 
 module_eval(<<'.,.,', 'egrammar.ra', 220)
   def _reduce_59(val, _values, result)
-     result = val[1].paren()          ; loc result, val[0] 
+     result = val[1].paren            ; loc result, val[0] 
     result
   end
 .,.,
 
 module_eval(<<'.,.,', 'egrammar.ra', 221)
   def _reduce_60(val, _values, result)
-     result = val[1].paren()          ; loc result, val[0] 
+     result = val[1].paren          ; loc result, val[0] 
     result
   end
 .,.,
 
 module_eval(<<'.,.,', 'egrammar.ra', 224)
   def _reduce_61(val, _values, result)
-     result = val[0][*val[2]]         ; loc result, val[0], val[4] 
+     result = val[0].access(*val[2])         ; loc result, val[0], val[4] 
     result
   end
 .,.,
@@ -2605,7 +2605,7 @@ module_eval(<<'.,.,', 'egrammar.ra', 638)
 
 module_eval(<<'.,.,', 'egrammar.ra', 639)
   def _reduce_177(val, _values, result)
-     result = val[1][*val[3]] ; loc result, val[0], val[4] 
+     result = val[1].access(*val[3]) ; loc result, val[0], val[4] 
     result
   end
 .,.,
@@ -2719,7 +2719,7 @@ module_eval(<<'.,.,', 'egrammar.ra', 684)
 
 module_eval(<<'.,.,', 'egrammar.ra', 685)
   def _reduce_199(val, _values, result)
-     result = val[0][*val[2]] ; loc result, val[0], val[3] 
+     result = val[0].access(*val[2]) ; loc result, val[0], val[3] 
     result
   end
 .,.,

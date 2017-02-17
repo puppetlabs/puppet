@@ -14,8 +14,8 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
   context "When the evaluator performs comparisons" do
 
     context "of string values" do
-      it "'a' == 'a' == true"  do; expect(evaluate(literal('a') == literal('a'))).to eq(true)   ; end
-      it "'a' == 'b' == false" do; expect(evaluate(literal('a') == literal('b'))).to eq(false)  ; end
+      it "'a' == 'a' == true"  do; expect(evaluate(literal('a').eq(literal('a')))).to eq(true)  ; end
+      it "'a' == 'b' == false" do; expect(evaluate(literal('a').eq(literal('b')))).to eq(false) ; end
       it "'a' != 'a' == false" do; expect(evaluate(literal('a').ne(literal('a')))).to eq(false) ; end
       it "'a' != 'b' == true"  do; expect(evaluate(literal('a').ne(literal('b')))).to eq(true)  ; end
 
@@ -36,18 +36,18 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       it "'b' >= 'a' == true"  do; expect(evaluate(literal('b')  >= literal('a'))).to eq(true)  ; end
 
       context "with mixed case" do
-        it "'a' == 'A' == true"    do; expect(evaluate(literal('a') == literal('A'))).to eq(true)   ; end
+        it "'a' == 'A' == true"    do; expect(evaluate(literal('a').eq(literal('A')))).to eq(true)  ; end
         it "'a' != 'A' == false"   do; expect(evaluate(literal('a').ne(literal('A')))).to eq(false) ; end
         it "'a' >  'A' == false"   do; expect(evaluate(literal('a') > literal('A'))).to eq(false)   ; end
         it "'a' >= 'A' == true"    do; expect(evaluate(literal('a') >= literal('A'))).to eq(true)   ; end
         it "'A' <  'a' == false"   do; expect(evaluate(literal('A') < literal('a'))).to eq(false)   ; end
-        it "'A' <= 'a' == true"    do; expect(evaluate(literal('A') <= literal('a'))).to eq(true)  ; end
+        it "'A' <= 'a' == true"    do; expect(evaluate(literal('A') <= literal('a'))).to eq(true)   ; end
       end
     end
 
     context "of integer values" do
-      it "1 == 1 == true"  do; expect(evaluate(literal(1) == literal(1))).to eq(true)   ; end
-      it "1 == 2 == false" do; expect(evaluate(literal(1) == literal(2))).to eq(false)  ; end
+      it "1 == 1 == true"  do; expect(evaluate(literal(1).eq(literal(1)))).to eq(true)  ; end
+      it "1 == 2 == false" do; expect(evaluate(literal(1).eq(literal(2)))).to eq(false) ; end
       it "1 != 1 == false" do; expect(evaluate(literal(1).ne(literal(1)))).to eq(false) ; end
       it "1 != 2 == true"  do; expect(evaluate(literal(1).ne(literal(2)))).to eq(true)  ; end
 
@@ -69,13 +69,13 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     context "of mixed value types" do
-      it "1 == 1.0  == true"   do; expect(evaluate(literal(1)     == literal(1.0))).to eq(true)   ; end
+      it "1 == 1.0  == true"   do; expect(evaluate(literal(1).eq(    literal(1.0)))).to eq(true)  ; end
       it "1 < 1.1   == true"   do; expect(evaluate(literal(1)     <  literal(1.1))).to eq(true)   ; end
-      it "1.0 == 1  == true"   do; expect(evaluate(literal(1.0)   == literal(1))).to eq(true)     ; end
+      it "1.0 == 1  == true"   do; expect(evaluate(literal(1.0).eq(  literal(1)))).to eq(true)    ; end
       it "1.0 < 2   == true"   do; expect(evaluate(literal(1.0)   <  literal(2))).to eq(true)     ; end
       it "'1.0' < 'a' == true" do; expect(evaluate(literal('1.0') <  literal('a'))).to eq(true)   ; end
       it "'1.0' < ''  == true" do; expect(evaluate(literal('1.0') <  literal(''))).to eq(false)   ; end
-      it "'1.0' < ' ' == true" do; expect(evaluate(literal('1.0') <  literal(' '))).to eq(false)   ; end
+      it "'1.0' < ' ' == true" do; expect(evaluate(literal('1.0') <  literal(' '))).to eq(false)  ; end
       it "'a' > '1.0' == true" do; expect(evaluate(literal('a')   >  literal('1.0'))).to eq(true) ; end
     end
 
@@ -92,32 +92,32 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     context "of regular expressions" do
-      it "/.*/ == /.*/  == true"   do; expect(evaluate(literal(/.*/) == literal(/.*/))).to eq(true)   ; end
+      it "/.*/ == /.*/  == true"   do; expect(evaluate(literal(/.*/).eq(literal(/.*/)))).to eq(true)   ; end
       it "/.*/ != /a.*/ == true"   do; expect(evaluate(literal(/.*/).ne(literal(/a.*/)))).to eq(true) ; end
     end
 
     context "of booleans" do
-      it "true  == true  == true"    do; expect(evaluate(literal(true) == literal(true))).to eq(true)  ; end;
-      it "false == false == true"    do; expect(evaluate(literal(false) == literal(false))).to eq(true) ; end;
-      it "true == false  != true"    do; expect(evaluate(literal(true) == literal(false))).to eq(false) ; end;
-      it "false  == ''  == false"    do; expect(evaluate(literal(false) == literal(''))).to eq(false)  ; end;
-      it "undef  == ''  == false"    do; expect(evaluate(literal(:undef) == literal(''))).to eq(false)  ; end;
-      it "undef  == undef  == true"  do; expect(evaluate(literal(:undef) == literal(:undef))).to eq(true)  ; end;
-      it "nil    == undef  == true"  do; expect(evaluate(literal(nil) == literal(:undef))).to eq(true)  ; end;
+      it "true  == true  == true"    do; expect(evaluate(literal(true).eq(literal(true)))).to eq(true)  ; end;
+      it "false == false == true"    do; expect(evaluate(literal(false).eq(literal(false)))).to eq(true) ; end;
+      it "true == false  != true"    do; expect(evaluate(literal(true).eq(literal(false)))).to eq(false) ; end;
+      it "false  == ''  == false"    do; expect(evaluate(literal(false).eq(literal('')))).to eq(false)  ; end;
+      it "undef  == ''  == false"    do; expect(evaluate(literal(:undef).eq(literal('')))).to eq(false)  ; end;
+      it "undef  == undef  == true"  do; expect(evaluate(literal(:undef).eq(literal(:undef)))).to eq(true)  ; end;
+      it "nil    == undef  == true"  do; expect(evaluate(literal(nil).eq(literal(:undef)))).to eq(true)  ; end;
     end
 
     context "of collections" do
       it "[1,2,3] == [1,2,3] == true" do
-        expect(evaluate(literal([1,2,3]) == literal([1,2,3]))).to eq(true)
+        expect(evaluate(literal([1,2,3]).eq(literal([1,2,3])))).to eq(true)
         expect(evaluate(literal([1,2,3]).ne(literal([1,2,3])))).to eq(false)
-        expect(evaluate(literal([1,2,4]) == literal([1,2,3]))).to eq(false)
+        expect(evaluate(literal([1,2,4]).eq(literal([1,2,3])))).to eq(false)
         expect(evaluate(literal([1,2,4]).ne(literal([1,2,3])))).to eq(true)
       end
 
       it "{'a'=>1, 'b'=>2} == {'a'=>1, 'b'=>2} == true" do
-        expect(evaluate(literal({'a'=>1, 'b'=>2}) == literal({'a'=>1, 'b'=>2}))).to eq(true)
+        expect(evaluate(literal({'a'=>1, 'b'=>2}).eq(literal({'a'=>1, 'b'=>2})))).to eq(true)
         expect(evaluate(literal({'a'=>1, 'b'=>2}).ne(literal({'a'=>1, 'b'=>2})))).to eq(false)
-        expect(evaluate(literal({'a'=>1, 'b'=>2}) == literal({'x'=>1, 'b'=>2}))).to eq(false)
+        expect(evaluate(literal({'a'=>1, 'b'=>2}).eq(literal({'x'=>1, 'b'=>2})))).to eq(false)
         expect(evaluate(literal({'a'=>1, 'b'=>2}).ne(literal({'x'=>1, 'b'=>2})))).to eq(true)
       end
     end
@@ -175,11 +175,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     it "'a' !~ 'b.*'  == true"    do; expect(evaluate(literal('a').mne(literal("b.*")))).to eq(true)  ; end
 
     it "'a' =~ Pattern['.*'] == true"    do
-      expect(evaluate(literal('a') =~ fqr('Pattern')[literal(".*")])).to eq(true)
+      expect(evaluate(literal('a') =~ fqr('Pattern').access(literal(".*")))).to eq(true)
     end
 
     it "$a = Pattern['.*']; 'a' =~ $a  == true"    do
-      expr = block(var('a').set(fqr('Pattern')['foo']), literal('foo') =~ var('a'))
+      expr = block(var('a').set(fqr('Pattern').access('.*')), literal('foo') =~ var('a'))
       expect(evaluate(expr)).to eq(true)
     end
 
@@ -256,13 +256,13 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     it 'should find an entry with compatible type in an Array' do
-      expect(evaluate(fqr('Array')[fqr('Integer')].in(literal(['a', [1,2,3], 'b'])))).to eq(true)
-      expect(evaluate(fqr('Array')[fqr('Integer')].in(literal(['a', [1,2,'not integer'], 'b'])))).to eq(false)
+      expect(evaluate(fqr('Array').access(fqr('Integer')).in(literal(['a', [1,2,3], 'b'])))).to eq(true)
+      expect(evaluate(fqr('Array').access(fqr('Integer')).in(literal(['a', [1,2,'not integer'], 'b'])))).to eq(false)
     end
 
     it 'should find an entry with compatible type in a Hash' do
       expect(evaluate(fqr('Integer').in(literal({1 => 'a', 'a' => 'b'})))).to eq(true)
-      expect(evaluate(fqr('Integer').in(literal({'a' => 'a', 'a' => 'b'})))).to eq(false)
+      expect(evaluate(fqr('Integer').in(literal({'a' => 'a', 'b' => 'b'})))).to eq(false)
     end
   end
 end

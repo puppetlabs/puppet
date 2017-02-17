@@ -206,10 +206,10 @@ expression
   | expression MODULO       expression                 { result = val[0] %   val[2]       ; loc result, val[1] }
   | expression LSHIFT       expression                 { result = val[0] <<  val[2]       ; loc result, val[1] }
   | expression RSHIFT       expression                 { result = val[0] >>  val[2]       ; loc result, val[1] }
-  |            MINUS        expression         =UMINUS { result = val[1].minus()          ; loc result, val[0] }
-  |            TIMES        expression         =SPLAT  { result = val[1].unfold()         ; loc result, val[0] }
+  |            MINUS        expression         =UMINUS { result = val[1].minus            ; loc result, val[0] }
+  |            TIMES        expression         =SPLAT  { result = val[1].unfold           ; loc result, val[0] }
   | expression NOTEQUAL     expression                 { result = val[0].ne  val[2]       ; loc result, val[1] }
-  | expression ISEQUAL      expression                 { result = val[0] ==  val[2]       ; loc result, val[1] }
+  | expression ISEQUAL      expression                 { result = val[0].eq  val[2]       ; loc result, val[1] }
   | expression GREATERTHAN  expression                 { result = val[0] >   val[2]       ; loc result, val[1] }
   | expression GREATEREQUAL expression                 { result = val[0] >=  val[2]       ; loc result, val[1] }
   | expression LESSTHAN     expression                 { result = val[0] <   val[2]       ; loc result, val[1] }
@@ -218,11 +218,11 @@ expression
   | expression AND          expression                 { result = val[0].and val[2]       ; loc result, val[1] }
   | expression OR           expression                 { result = val[0].or  val[2]       ; loc result, val[1] }
   | expression QMARK selector_entries                  { result = val[0].select(*val[2])  ; loc result, val[0] }
-  |            LPAREN       assignment RPAREN          { result = val[1].paren()          ; loc result, val[0] }
-  |            WSLPAREN     assignment RPAREN          { result = val[1].paren()          ; loc result, val[0] }
+  |            LPAREN       assignment RPAREN          { result = val[1].paren            ; loc result, val[0] }
+  |            WSLPAREN     assignment RPAREN          { result = val[1].paren          ; loc result, val[0] }
 
 bracketed_expression
-  : expression LBRACK       expressions endcomma RBRACK =LBRACK { result = val[0][*val[2]]         ; loc result, val[0], val[4] }
+  : expression LBRACK       expressions endcomma RBRACK =LBRACK { result = val[0].access(*val[2])         ; loc result, val[0], val[4] }
 
 #---EXPRESSIONS
 #   (i.e. "argument list")
@@ -637,7 +637,7 @@ function_definition
 
 opt_return_type
   : RSHIFT type { result = val[1] ; loc result, val[0], val[1] }
-  | RSHIFT type LBRACK expressions RBRACK { result = val[1][*val[3]] ; loc result, val[0], val[4] }
+  | RSHIFT type LBRACK expressions RBRACK { result = val[1].access(*val[3]) ; loc result, val[0], val[4] }
   | nil
 
 #---NAMES AND PARAMETERS COMMON TO SEVERAL RULES
@@ -683,7 +683,7 @@ typed_parameter
 
 parameter_type
   : type { result = val[0] }
-  | type LBRACK expressions RBRACK { result = val[0][*val[2]] ; loc result, val[0], val[3] }
+  | type LBRACK expressions RBRACK { result = val[0].access(*val[2]) ; loc result, val[0], val[3] }
 
 #--TYPE ALIAS
 type_alias

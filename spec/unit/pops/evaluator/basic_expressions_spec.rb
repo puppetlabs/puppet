@@ -52,7 +52,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     it "[1,2,3] == [1,2,3] == true" do
-      expect(evaluate(literal([1,2,3]) == literal([1,2,3]))).to eq(true);
+      expect(evaluate(literal([1,2,3]).eq(literal([1,2,3])))).to eq(true);
     end
 
     it "[1,2,3] != [2,3,4] == true" do
@@ -60,7 +60,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     it "[1, 2, 3][2] == 3" do
-      expect(evaluate(literal([1,2,3])[2])).to eq(3)
+      expect(evaluate(literal([1,2,3]).access([2]))).to eq(3)
     end
   end
 
@@ -78,7 +78,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     it "{'a'=> 1, 'b'=>2} == {'a'=> 1, 'b'=>2} == true" do
-      expect(evaluate(literal({'a'=> 1, 'b'=>2}) == literal({'a'=> 1, 'b'=>2}))).to eq(true);
+      expect(evaluate(literal({'a'=> 1, 'b'=>2}).eq(literal({'a'=> 1, 'b'=>2})))).to eq(true);
     end
 
     it "{'a'=> 1, 'b'=>2} != {'x'=> 1, 'y'=>3} == true" do
@@ -86,7 +86,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     it "{'a' => 1, 'b' => 2}['b'] == 2" do
-      expect(evaluate(literal({:a => 1, :b => 2})[:b])).to eq(2)
+      expect(evaluate(literal({:a => 1, :b => 2}).access(:b))).to eq(2)
     end
   end
 

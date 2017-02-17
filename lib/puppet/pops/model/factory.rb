@@ -429,7 +429,7 @@ class Factory
 
   def var();    f_build_unary(VariableExpression, self);           end
 
-  def [](*r);   f_build_vararg(AccessExpression, model, *r);     end
+  def access(*r);   f_build_vararg(AccessExpression, model, *r);     end
 
   def dot r;    f_build_binary(NamedAccessExpression, model, r); end
 
@@ -455,7 +455,7 @@ class Factory
 
   def >= r;     f_comparison('>=', r);                          end
 
-  def == r;     f_comparison('==', r);                          end
+  def eq r;     f_comparison('==', r);                          end
 
   def ne r;     f_comparison('!=', r);                          end
 

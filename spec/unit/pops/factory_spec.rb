@@ -155,14 +155,14 @@ describe Puppet::Pops::Model::Factory do
 
   context "When processing COLLECT" do
     it "should produce a virtual query" do
-      built = VIRTUAL_QUERY(fqn('a') == literal(1)).model
+      built = VIRTUAL_QUERY(fqn('a').eq(literal(1))).model
       expect(built.class).to eq(Puppet::Pops::Model::VirtualQuery)
       expect(built.expr.class).to eq(Puppet::Pops::Model::ComparisonExpression)
       expect(built.expr.operator).to eq('==')
     end
 
     it "should produce an export query" do
-      built = EXPORTED_QUERY(fqn('a') == literal(1)).model
+      built = EXPORTED_QUERY(fqn('a').eq(literal(1))).model
       expect(built.class).to eq(Puppet::Pops::Model::ExportedQuery)
       expect(built.expr.class).to eq(Puppet::Pops::Model::ComparisonExpression)
       expect(built.expr.operator).to eq('==')
