@@ -359,7 +359,7 @@ class RubyGenerator < TypeFormatter
   end
 
   def content_participant?(a)
-    obj_type?(a.type)
+    a.kind != PObjectType::ATTRIBUTE_KIND_REFERENCE && obj_type?(a.type)
   end
 
   def obj_type?(t)

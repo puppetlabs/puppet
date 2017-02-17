@@ -19,7 +19,8 @@ class PObjectType < PMetaType
   ATTRIBUTE_KIND_CONSTANT = 'constant'.freeze
   ATTRIBUTE_KIND_DERIVED = 'derived'.freeze
   ATTRIBUTE_KIND_GIVEN_OR_DERIVED = 'given_or_derived'.freeze
-  TYPE_ATTRIBUTE_KIND = TypeFactory.enum(ATTRIBUTE_KIND_CONSTANT, ATTRIBUTE_KIND_DERIVED, ATTRIBUTE_KIND_GIVEN_OR_DERIVED)
+  ATTRIBUTE_KIND_REFERENCE = 'reference'.freeze
+  TYPE_ATTRIBUTE_KIND = TypeFactory.enum(ATTRIBUTE_KIND_CONSTANT, ATTRIBUTE_KIND_DERIVED, ATTRIBUTE_KIND_GIVEN_OR_DERIVED, ATTRIBUTE_KIND_REFERENCE)
 
   TYPE_OBJECT_NAME = Pcore::TYPE_QUALIFIED_REFERENCE
 
@@ -242,8 +243,7 @@ class PObjectType < PMetaType
   # @api public
   class PAttribute < PAnnotatedMember
 
-    # @return [String,nil] The attribute kind as defined by #TYPE_ATTRIBUTE_KIND, or `nil` to
-    #   indicate that
+    # @return [String,nil] The attribute kind as defined by #TYPE_ATTRIBUTE_KIND, or `nil`
     attr_reader :kind
 
     # @param name [String] The name of the attribute
