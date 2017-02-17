@@ -69,6 +69,17 @@ class TypeParser
     interpret_any(o.body, context)
   end
 
+  # @api private
+  def interpret_TypeAlias(o, context)
+    Loader::TypeDefinitionInstantiator.create_type(o.name, o.type_expr, Pcore::RUNTIME_NAME_AUTHORITY).resolve(self, loader_from_context(o, context))
+  end
+
+  # @api private
+  def interpret_TypeDefinition(o, context)
+    Loader::TypeDefinitionInstantiator.create_runtime_type(o)
+  end
+
+  # @api private
   def interpret_LambdaExpression(o, context)
     o
   end
@@ -76,6 +87,11 @@ class TypeParser
   # @api private
   def interpret_QualifiedName(o, context)
     o.value
+  end
+
+  # @api private
+  def interpret_QualifiedReference(o, context)
+    o.cased_value
   end
 
   # @api private
