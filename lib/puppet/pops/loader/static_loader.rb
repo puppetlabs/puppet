@@ -75,6 +75,10 @@ class StaticLoader < Loader
     load_constant(typed_name)
   end
 
+  def set_entry(typed_name, value, origin)
+    @loaded[typed_name] = Loader::NamedEntry.new(typed_name, value, origin)
+  end
+
   def find(name)
     # There is nothing to search for, everything this loader knows about is already available
     nil
@@ -88,7 +92,7 @@ class StaticLoader < Loader
     "(StaticLoader)"
   end
 
-  def loaded_entry(typed_name, _)
+  def loaded_entry(typed_name, check_dependencies = false)
     @loaded[typed_name]
   end
 
@@ -102,8 +106,7 @@ class StaticLoader < Loader
     origin_uri = URI("puppet:Puppet-Type-System/Static-Loader")
     type_map = Puppet::Pops::Types::TypeParser.type_map
     type_map.each do |name, type|
-      typed_name = TypedName.new(:type, name)
-      @loaded[ typed_name ] = NamedEntry.new(typed_name, type, origin_uri)#__FILE__)
+      set_entry(TypedName.new(:type, name), type, origin_uri)
     end
   end
 

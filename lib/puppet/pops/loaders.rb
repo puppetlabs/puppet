@@ -91,7 +91,15 @@ class Loaders
   end
 
   def register_implementations(obj_classes, name_authority)
-    loader = @private_environment_loader
+    self.class.register_implementations_with_loader(obj_classes, name_authority, loader = @private_environment_loader)
+  end
+
+  # Register implementations using the global static loader
+  def self.register_static_implementations(obj_classes)
+    register_implementations_with_loader(obj_classes, Pcore::RUNTIME_NAME_AUTHORITY, static_loader)
+  end
+
+  def self.register_implementations_with_loader(obj_classes, name_authority, loader)
     types = obj_classes.map do |obj_class|
       type = obj_class._ptype
       typed_name = Loader::TypedName.new(:type, type.name.downcase, name_authority)
