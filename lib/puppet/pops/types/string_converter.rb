@@ -51,7 +51,7 @@ class StringConverter
 
   # Format represents one format specification that is textually represented by %<flags><width>.<precision><format>
   # Format parses and makes the individual parts available when an instance is created.
-  # 
+  #
   # @api private
   #
   class Format
@@ -172,7 +172,7 @@ class StringConverter
     # Sorts format based on generality of types - most specific types before general
     #
     def self.sort_formats(format_map)
-      format_map = format_map.sort do |(a,_),(b,_)| 
+      format_map = format_map.sort do |(a,_),(b,_)|
         ab = b.assignable?(a)
         ba = a.assignable?(b)
         if a == b
@@ -219,7 +219,7 @@ class StringConverter
     end
     # Returns an array with a delimiter pair derived from the format.
     # If format does not contain a delimiter specification the given default is returned
-    # 
+    #
     # @param [Array<String>] the default delimiters
     # @returns [Array<String>] a tuple with left, right delimiters
     #
@@ -289,7 +289,7 @@ class StringConverter
   # When converting to string it is possible to use a set of built in conversion rules.
   #
   # A format is specified on the form:
-  # 
+  #
   # ´´´
   # %[Flags][Width][.Precision]Format
   # ´´´
@@ -348,9 +348,9 @@ class StringConverter
   # Defaults to `s` at top level and `p` inside array or hash.
   #
   # ### Boolean
-  # 
+  #
   # | Format    | Boolean Formats
-  # | ----      | -------------------   
+  # | ----      | -------------------
   # | t T       | 'true'/'false' or 'True'/'False' , first char if alternate form is used (i.e. 't'/'f' or 'T'/'F').
   # | y Y       | 'yes'/'no', 'Yes'/'No', 'y'/'n' or 'Y'/'N' if alternative flag # is used
   # | dxXobB    | numeric value 0/1 in accordance with the given format which must be valid integer format
@@ -379,7 +379,7 @@ class StringConverter
   # | u         | 'undef', or 'undefined' if alternative # flag is used
   #
   # ### Default (value)
-  # 
+  #
   # | Format    | Default formats
   # | ------    | ---------------
   # | d D       | 'default' or 'Default', alternative form # causes value to be quoted
@@ -420,18 +420,18 @@ class StringConverter
   #
   # | Format    | Hash/Struct Formats
   # | ------    | -------------
-  # | h         | formats with `{ }` delimiters, `,` element separator and ` => ` inner element separator unless overridden by flags 
+  # | h         | formats with `{ }` delimiters, `,` element separator and ` => ` inner element separator unless overridden by flags
   # | s         | same as h
   # | p         | same as h
   # | a         | converts the hash to an array of [k,v] tuples and formats it using array rule(s)
-  # 
+  #
   # See "Flags" `<[({\|` for formatting of delimiters, and "Additional parameters for containers; Array and Hash" for
   # more information about options.
   #
   # The alternate form flag `#` will format each hash key/value entry indented on a separate line.
   #
   # ### Type
-  # 
+  #
   # | Format    | Array/Tuple Formats
   # | ------    | -------------
   # | s        | The same as p, quoted if alternative flag # is used
@@ -439,7 +439,7 @@ class StringConverter
   #
   # ### Flags
   #
-  # | Flag     | Effect 
+  # | Flag     | Effect
   # | ------   | ------
   # | (space)  | space instead of + for numeric output (- is shown), for containers skips delimiters
   # | #        | alternate format; prefix 0x/0x, 0 (octal) and 0b/0B for binary, Floats force decimal '.'. For g/G keep trailing 0.
@@ -448,7 +448,7 @@ class StringConverter
   # | 0        | pad with 0 instead of space for widths larger than value
   # | <[({\|   | defines an enclosing pair <> [] () {} or \| \| when used with a container type
   #
-  # 
+  #
   # ### Additional parameters for containers; Array and Hash
   #
   # For containers (Array and Hash), the format is specified by a hash where the following keys can be set:
@@ -456,7 +456,7 @@ class StringConverter
   # * `'separator'` - the separator string to use between elements, should not contain padding space at the end
   # * `'separator2'` - the separator string to use between association of hash entries key/value
   # * `'string_formats'´ - a map of type to format for elements contained in the container
-  # 
+  #
   # Note that the top level format applies to Array and Hash objects contained/nested in an Array or a Hash.
   #
   # Given format mappings are merged with (default) formats and a format specified for a narrower type
@@ -538,8 +538,9 @@ class StringConverter
   end
   private :validate_container_input
 
-  def string_PRuntimeType(val_type, val, format_map)
-    case (f = get_format(val_type, format_map))
+  def string_PRuntimeType(val_type, val, format_map, _)
+    f = get_format(val_type, format_map)
+    case f.format
     when :s
       val.to_s
     when :q
@@ -550,7 +551,7 @@ class StringConverter
       converted = convert(o, PNumericType) # rest is default
       "%#{f}" % converted
     else
-      throw(:failed_conversion, [o, PStringType::DEFAULT, f])
+      raise FormatError.new('Runtime', f.format, 'sqidxof')
     end
   end
 
