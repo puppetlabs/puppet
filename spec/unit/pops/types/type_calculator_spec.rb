@@ -43,7 +43,7 @@ describe 'The type calculator' do
   end
 
   def type_alias_t(name, type_string)
-    type_expr = Parser::EvaluatingParser.new.parse_string(type_string).model
+    type_expr = Parser::EvaluatingParser.new.parse_string(type_string)
     TypeFactory.type_alias(name, type_expr)
   end
 
@@ -1820,7 +1820,7 @@ describe 'The type calculator' do
       it 'a Closure should be considered a Callable' do
         factory = Model::Factory
         params = [factory.PARAM('a')]
-        the_block = factory.LAMBDA(params,factory.literal(42), nil)
+        the_block = factory.LAMBDA(params,factory.literal(42), nil).model
         the_closure = Evaluator::Closure::Dynamic.new(:fake_evaluator, the_block, :fake_scope)
         expect(calculator.instance?(all_callables_t, the_closure)).to be_truthy
         expect(calculator.instance?(callable_t(object_t), the_closure)).to be_truthy

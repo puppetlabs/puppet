@@ -11,8 +11,8 @@ describe "validating 4x" do
   let(:acceptor) { Puppet::Pops::Validation::Acceptor.new() }
   let(:validator) { Puppet::Pops::Validation::ValidatorFactory_4_0.new().validator(acceptor) }
 
-  def validate(model)
-    validator.validate(model)
+  def validate(factory)
+    validator.validate(factory.model)
     acceptor
   end
 
@@ -526,6 +526,6 @@ describe "validating 4x" do
   end
 
   def parse(source)
-    Puppet::Pops::Parser::Parser.new().parse_string(source)
+    Puppet::Pops::Parser::Parser.new.parse_string(source)
   end
 end

@@ -21,7 +21,7 @@ class E4ParserAdapter
   def parse(string = nil)
     self.string= string if string
     parser = Pops::Parser::EvaluatingParser.singleton
-    parse_result =
+    model =
     if @use == :string
       # Parse with a source_file to set in created AST objects (it was either given, or it may be unknown
       # if caller did not set a file and the present a string.
@@ -36,7 +36,6 @@ class E4ParserAdapter
     # * a Model::Program
     # * a Model::Expression
     #
-    model = parse_result.nil? ? nil : parse_result.model
     args = {}
     Pops::Model::AstTransformer.new(@file).merge_location(args, model)
 

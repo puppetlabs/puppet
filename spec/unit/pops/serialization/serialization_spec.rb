@@ -34,7 +34,7 @@ module Serialization
   end
 
   def parse(string)
-    parser.parse_string(string, '/home/tester/experiments/manifests/init.pp').model
+    parser.parse_string(string, '/home/tester/experiments/manifests/init.pp')
   end
 
   context 'can write and read a' do

@@ -791,7 +791,7 @@ module BindingsFactory
   # @api public
   #
   def self.puppet_expression(string, source_file)
-    parser.parse_string(string, source_file).model
+    parser.parse_string(string, source_file)
   end
 
   # Parses and produces a puppet string expression from the given string.
@@ -806,7 +806,7 @@ module BindingsFactory
   # @api public
   #
   def self.puppet_string(string, source_file)
-    parser.parse_string(parser.quote(string), source_file).model
+    parser.parse_string(parser.quote(string), source_file)
   end
 end
 end

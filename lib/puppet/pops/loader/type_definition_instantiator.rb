@@ -6,7 +6,7 @@ class TypeDefinitionInstantiator
   def self.create(loader, typed_name, source_ref, pp_code_string)
     # parse and validate
     parser = Parser::EvaluatingParser.new()
-    model = parser.parse_string(pp_code_string, source_ref).model
+    model = parser.parse_string(pp_code_string, source_ref)
     # Only one type is allowed (and no other definitions)
 
     name = typed_name.name

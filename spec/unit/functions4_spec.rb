@@ -963,7 +963,7 @@ describe 'the 4x function api' do
   end
 
   def type_alias_t(name, type_string)
-    type_expr = Puppet::Pops::Parser::EvaluatingParser.new.parse_string(type_string).model
+    type_expr = Puppet::Pops::Parser::EvaluatingParser.new.parse_string(type_string)
     Puppet::Pops::Types::TypeFactory.type_alias(name, type_expr)
   end
 

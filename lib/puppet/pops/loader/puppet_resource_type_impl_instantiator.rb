@@ -18,8 +18,7 @@ class PuppetResourceTypeImplInstantiator
     parser = Parser::EvaluatingParser.new()
 
     # parse and validate
-    result = parser.parse_string(pp_code_string, source_ref)
-    model = result.model
+    model = parser.parse_string(pp_code_string, source_ref)
     statements = if model.is_a?(Model::Program)
       if model.body.is_a?(Model::BlockExpression)
         statements = model.body.statements
@@ -55,7 +54,7 @@ class PuppetResourceTypeImplInstantiator
     end
 
     closure_scope = Puppet.lookup(:global_scope) { {} }
-    resource_type_impl = parser.evaluate(closure_scope, result)
+    resource_type_impl = parser.evaluate(closure_scope, model)
 
     unless resource_type_impl.is_a?(Puppet::Pops::Resource::ResourceTypeImpl)
       got = resource_type.class

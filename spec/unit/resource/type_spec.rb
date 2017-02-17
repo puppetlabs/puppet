@@ -903,7 +903,7 @@ describe Puppet::Resource::Type do
 
     it "should set the other class's code as its code if it has none" do
       dest = Puppet::Resource::Type.new(:hostclass, "bar")
-      source = Puppet::Resource::Type.new(:hostclass, "foo", :code => code("bar"))
+      source = Puppet::Resource::Type.new(:hostclass, "foo", :code => code("bar").model)
 
       dest.merge(source)
 

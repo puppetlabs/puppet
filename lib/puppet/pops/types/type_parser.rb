@@ -39,8 +39,8 @@ class TypeParser
 
   # @api private
   def parse_literal(string, context = nil)
-    model = @parser.parse_string(string)
-    interpret_any(model.model.body, context)
+    factory = @parser.parse_string(string)
+    interpret_any(factory.model.body, context)
   end
 
   # @param ast [Puppet::Pops::Model::PopsObject] the ast to interpret
