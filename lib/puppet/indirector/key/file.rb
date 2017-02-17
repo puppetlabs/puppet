@@ -39,7 +39,8 @@ class Puppet::SSL::Key::File < Puppet::Indirector::SslFile
     super
 
     begin
-      Puppet.settings.setting(:publickeydir).open_file(public_key_path(request.key), 'w') do |f|
+      # RFC 1421 states PEM is 7-bit ASCII https://tools.ietf.org/html/rfc1421
+      Puppet.settings.setting(:publickeydir).open_file(public_key_path(request.key), 'w:ASCII') do |f|
         f.print request.instance.content.public_key.to_pem
       end
     rescue => detail

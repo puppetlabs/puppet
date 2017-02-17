@@ -9,6 +9,13 @@ describe Puppet::Face[:certificate, '0.0.1'] do
 
   let(:ca) { Puppet::SSL::CertificateAuthority.instance }
 
+  # different UTF-8 widths
+  # 1-byte A
+  # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
+  # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
+  # 4-byte ܎ - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
+  let (:mixed_utf8) { "A\u06FF\u16A0\u{2070E}" } # Aۿᚠ܎
+
   before :each do
     Puppet[:confdir] = tmpdir('conf')
     Puppet::SSL::CertificateAuthority.stubs(:ca?).returns true
@@ -84,9 +91,10 @@ describe Puppet::Face[:certificate, '0.0.1'] do
       it "should add the provided dns_alt_names if they are specified" do
         Puppet[:dns_alt_names] = 'from,the,config'
 
-        subject.generate(hostname, options.merge(:dns_alt_names => 'explicit,alt,names'))
+        subject.generate(hostname, options.merge(:dns_alt_names => "explicit,alt,#{mixed_utf8}"))
 
-        expected = %W[DNS:explicit DNS:alt DNS:names DNS:#{hostname}]
+        # CSRs will return subject_alt_names as BINARY strings
+        expected = %W[DNS:explicit DNS:alt DNS:#{mixed_utf8.force_encoding(Encoding::BINARY)} DNS:#{hostname}]
 
         expect(csr.subject_alt_names).to match_array(expected)
       end

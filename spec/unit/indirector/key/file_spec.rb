@@ -66,7 +66,7 @@ describe Puppet::SSL::Key::File do
     it "should save the public key when saving the private key" do
       fh = StringIO.new
 
-      Puppet.settings.setting(:publickeydir).expects(:open_file).with(@public_key_path, 'w').yields fh
+      Puppet.settings.setting(:publickeydir).expects(:open_file).with(@public_key_path, 'w:ASCII').yields fh
       Puppet.settings.setting(:privatekeydir).stubs(:open_file)
       @public_key.expects(:to_pem).returns "my pem"
 
