@@ -53,18 +53,4 @@ class Puppet::Provider::Package < Puppet::Provider
       end
     end.flatten
   end
-
-  # Puppet on Windows prepends its paths to PATH.
-  # Provides a which method that does not traverse those paths.
-  # @api public
-  # @param command [String] the name of the executable to find.
-  # @return [String] the absolute path to the found executable.
-  def self.which_without_puppet_paths(command)
-    raise "This method is specific to Windows" unless Puppet::Util::Platform.windows?
-    return unless command
-    path_array = Puppet::Util.get_env('PATH').split(File::PATH_SEPARATOR)
-    path_array.reject! {|p| p =~ /Puppet Labs\\Puppet/}
-    path_without_puppet_paths = path_array.join(File::PATH_SEPARATOR)
-    Puppet::Util.withenv(:PATH => path_without_puppet_paths) { which(command) }
-  end
 end
