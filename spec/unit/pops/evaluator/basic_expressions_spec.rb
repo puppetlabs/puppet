@@ -86,7 +86,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     it "{'a' => 1, 'b' => 2}['b'] == 2" do
-      expect(evaluate(literal({:a => 1, :b => 2}).access(:b))).to eq(2)
+      expect(evaluate(literal({:a => 1, :b => 2}).test_access(:b))).to eq(2)
     end
   end
 

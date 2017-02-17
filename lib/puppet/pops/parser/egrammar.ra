@@ -65,7 +65,7 @@ preclow
 rule
 # Produces [Model::Program] with a body containing what was parsed
 program
-  : statements     { result = create_program(Factory.block_or_expression(*val[0])) }
+  : statements     { result = create_program(Factory.block_or_expression(val[0])) }
   | epp_expression { result = create_program(val[0]) }
   |                { result = create_empty_program }
 
@@ -222,7 +222,7 @@ expression
   |            WSLPAREN     assignment RPAREN          { result = val[1].paren          ; loc result, val[0] }
 
 bracketed_expression
-  : expression LBRACK       expressions endcomma RBRACK =LBRACK { result = val[0].access(*val[2])         ; loc result, val[0], val[4] }
+  : expression LBRACK       expressions endcomma RBRACK =LBRACK { result = val[0].access(val[2])         ; loc result, val[0], val[4] }
 
 #---EXPRESSIONS
 #   (i.e. "argument list")
@@ -344,7 +344,7 @@ if_expression
   # Produces Model::IfExpression
   if_part
     : expression LBRACE statements RBRACE else {
-        result = Factory.IF(val[0], Factory.block_or_expression(*val[2]), val[4])
+        result = Factory.IF(val[0], Factory.block_or_expression(val[2]), val[4])
         loc(result, val[0], (val[4] ? val[4] : val[3]))
       }
     | expression LBRACE RBRACE else {
@@ -360,7 +360,7 @@ if_expression
         loc(result, val[0], val[1])
       }
     | ELSE LBRACE statements RBRACE {
-        result = Factory.block_or_expression(*val[2])
+        result = Factory.block_or_expression(val[2])
         loc result, val[0], val[3]
       }
     | ELSE LBRACE RBRACE {
@@ -371,7 +371,7 @@ if_expression
 #
 unless_expression
   : UNLESS expression LBRACE statements RBRACE unless_else {
-      result = Factory.UNLESS(val[1], Factory.block_or_expression(*val[3]), val[5])
+      result = Factory.UNLESS(val[1], Factory.block_or_expression(val[3]), val[5])
       loc result, val[0], val[4]
     }
   | UNLESS expression LBRACE RBRACE unless_else {
@@ -385,7 +385,7 @@ unless_expression
   unless_else
     : # nothing
     | ELSE LBRACE statements RBRACE {
-        result = Factory.block_or_expression(*val[2])
+        result = Factory.block_or_expression(val[2])
         loc result, val[0], val[3]
       }
     | ELSE LBRACE RBRACE {
@@ -691,7 +691,7 @@ typed_parameter
 
 parameter_type
   : type { result = val[0] }
-  | type LBRACK expressions RBRACK { result = val[0].access(*val[2]) ; loc result, val[0], val[3] }
+  | type LBRACK expressions RBRACK { result = val[0].access(val[2]) ; loc result, val[0], val[3] }
 
 #--TYPE ALIAS
 type_alias
@@ -813,7 +813,7 @@ epp_parameters_list
 epp_render_expression
   : RENDER_STRING                  { result = Factory.RENDER_STRING(val[0][:value]); loc result, val[0] }
   | RENDER_EXPR expression epp_end { result = Factory.RENDER_EXPR(val[1]); loc result, val[0], val[2] }
-  | RENDER_EXPR LBRACE statements RBRACE epp_end { result = Factory.RENDER_EXPR(Factory.block_or_expression(*val[2])); loc result, val[0], val[4] }
+  | RENDER_EXPR LBRACE statements RBRACE epp_end { result = Factory.RENDER_EXPR(Factory.block_or_expression(val[2])); loc result, val[0], val[4] }
 
 epp_end
   : EPP_END

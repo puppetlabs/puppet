@@ -508,7 +508,7 @@ class Factory
 
   def var();    f_build_unary(VariableExpression, self);        end
 
-  def access(*r); f_build_binary(AccessExpression, self, r.map { |arg| Factory.infer(arg) }); end
+  def access(r); f_build_binary(AccessExpression, self, r);     end
 
   def dot r;    f_build_binary(NamedAccessExpression, self, r); end
 
@@ -550,6 +550,11 @@ class Factory
 
   def select(*args)
     Factory.new(SelectorExpression, self, *args)
+  end
+
+  # Same as access, but with varargs and arguments that must be inferred. For testing purposes
+  def test_access(*r)
+    f_build_binary(AccessExpression, self, r.map { |arg| Factory.infer(arg) })
   end
 
   # For CaseExpression, setting the default for an already build CaseExpression
@@ -840,7 +845,7 @@ class Factory
   end
 
   # Builds a BlockExpression if args size > 1, else the single expression/value in args
-  def self.block_or_expression(*args)
+  def self.block_or_expression(args)
     args.size > 1 ? new(BlockExpression, args) : args[0]
   end
 
@@ -967,7 +972,7 @@ class Factory
     end
     a_hash = HASH(keyed_entries)
     a_hash.record_position(left[KEY_LOCATOR], lbrace_token, rbrace_token)
-    result = block_or_expression(*transform_calls([left, a_hash]))
+    result = block_or_expression(transform_calls([left, a_hash]))
     result
   end
 

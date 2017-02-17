@@ -16,13 +16,13 @@ describe Puppet::Pops::Model::Factory do
   it "construct an arithmetic expression" do
     x = Factory.literal(10) + Factory.literal(20)
     expect(x.is_a?(Factory)).to eq(true)
-    current = x.model
-    expect(current.is_a?(Model::ArithmeticExpression)).to eq(true)
-    expect(current.operator).to eq('+')
-    expect(current.left_expr.class).to eq(Model::LiteralInteger)
-    expect(current.right_expr.class).to eq(Model::LiteralInteger)
-    expect(current.left_expr.value).to eq(10)
-    expect(current.right_expr.value).to eq(20)
+    model = x.model
+    expect(model.is_a?(Model::ArithmeticExpression)).to eq(true)
+    expect(model.operator).to eq('+')
+    expect(model.left_expr.class).to eq(Model::LiteralInteger)
+    expect(model.right_expr.class).to eq(Model::LiteralInteger)
+    expect(model.left_expr.value).to eq(10)
+    expect(model.right_expr.value).to eq(20)
   end
 
   it "should be easy to compare using a model tree dumper" do

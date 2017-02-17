@@ -41,13 +41,13 @@ describe Puppet::Pops::Model::Factory do
 
   context "When calling block_or_expression" do
     it "A single expression should produce identical output" do
-      expect(block_or_expression(literal(1) + literal(2)).model.is_a?(Puppet::Pops::Model::ArithmeticExpression)).to eq(true)
+      expect(block_or_expression([literal(1) + literal(2)]).model.is_a?(Puppet::Pops::Model::ArithmeticExpression)).to eq(true)
     end
 
     it "Multiple expressions should produce a block expression" do
-      built = block_or_expression(literal(1) + literal(2), literal(2) + literal(3)).model
-      expect(built.is_a?(Puppet::Pops::Model::BlockExpression)).to eq(true)
-      expect(built.statements.size).to eq(2)
+      model = block_or_expression([literal(1) + literal(2), literal(2) + literal(3)]).model
+      expect(model.is_a?(Puppet::Pops::Model::BlockExpression)).to eq(true)
+      expect(model.statements.size).to eq(2)
     end
   end
 
@@ -144,28 +144,28 @@ describe Puppet::Pops::Model::Factory do
 
   context "When processing simple literals" do
     it "Should produce a literal boolean from a boolean" do
-      built = literal(true).model
-      expect(built.class).to eq(Puppet::Pops::Model::LiteralBoolean)
-      expect(built.value).to eq(true)
-      built = literal(false).model
-      expect(built.class).to eq(Puppet::Pops::Model::LiteralBoolean)
-      expect(built.value).to eq(false)
+      model = literal(true).model
+      expect(model.class).to eq(Puppet::Pops::Model::LiteralBoolean)
+      expect(model.value).to eq(true)
+      model = literal(false).model
+      expect(model.class).to eq(Puppet::Pops::Model::LiteralBoolean)
+      expect(model.value).to eq(false)
     end
   end
 
   context "When processing COLLECT" do
     it "should produce a virtual query" do
-      built = VIRTUAL_QUERY(fqn('a').eq(literal(1))).model
-      expect(built.class).to eq(Puppet::Pops::Model::VirtualQuery)
-      expect(built.expr.class).to eq(Puppet::Pops::Model::ComparisonExpression)
-      expect(built.expr.operator).to eq('==')
+      model = VIRTUAL_QUERY(fqn('a').eq(literal(1))).model
+      expect(model.class).to eq(Puppet::Pops::Model::VirtualQuery)
+      expect(model.expr.class).to eq(Puppet::Pops::Model::ComparisonExpression)
+      expect(model.expr.operator).to eq('==')
     end
 
     it "should produce an export query" do
-      built = EXPORTED_QUERY(fqn('a').eq(literal(1))).model
-      expect(built.class).to eq(Puppet::Pops::Model::ExportedQuery)
-      expect(built.expr.class).to eq(Puppet::Pops::Model::ComparisonExpression)
-      expect(built.expr.operator).to eq('==')
+      model = EXPORTED_QUERY(fqn('a').eq(literal(1))).model
+      expect(model.class).to eq(Puppet::Pops::Model::ExportedQuery)
+      expect(model.expr.class).to eq(Puppet::Pops::Model::ComparisonExpression)
+      expect(model.expr.operator).to eq('==')
     end
 
     it "should produce a collect expression" do
@@ -185,57 +185,57 @@ describe Puppet::Pops::Model::Factory do
 
   context "When processing concatenated string(iterpolation)" do
     it "should handle 'just a string'" do
-      built = string('blah blah').model
-      expect(built.class).to eq(Puppet::Pops::Model::ConcatenatedString)
-      built.segments.size == 1
-      expect(built.segments[0].class).to eq(Puppet::Pops::Model::LiteralString)
-      expect(built.segments[0].value).to eq("blah blah")
+      model = string('blah blah').model
+      expect(model.class).to eq(Puppet::Pops::Model::ConcatenatedString)
+      model.segments.size == 1
+      expect(model.segments[0].class).to eq(Puppet::Pops::Model::LiteralString)
+      expect(model.segments[0].value).to eq("blah blah")
     end
 
     it "should handle one expression in the middle" do
-      built = string('blah blah', TEXT(literal(1)+literal(2)), 'blah blah').model
-      expect(built.class).to eq(Puppet::Pops::Model::ConcatenatedString)
-      built.segments.size == 3
-      expect(built.segments[0].class).to eq(Puppet::Pops::Model::LiteralString)
-      expect(built.segments[0].value).to eq("blah blah")
-      expect(built.segments[1].class).to eq(Puppet::Pops::Model::TextExpression)
-      expect(built.segments[1].expr.class).to eq(Puppet::Pops::Model::ArithmeticExpression)
-      expect(built.segments[2].class).to eq(Puppet::Pops::Model::LiteralString)
-      expect(built.segments[2].value).to eq("blah blah")
+      model = string('blah blah', TEXT(literal(1)+literal(2)), 'blah blah').model
+      expect(model.class).to eq(Puppet::Pops::Model::ConcatenatedString)
+      model.segments.size == 3
+      expect(model.segments[0].class).to eq(Puppet::Pops::Model::LiteralString)
+      expect(model.segments[0].value).to eq("blah blah")
+      expect(model.segments[1].class).to eq(Puppet::Pops::Model::TextExpression)
+      expect(model.segments[1].expr.class).to eq(Puppet::Pops::Model::ArithmeticExpression)
+      expect(model.segments[2].class).to eq(Puppet::Pops::Model::LiteralString)
+      expect(model.segments[2].value).to eq("blah blah")
     end
 
     it "should handle one expression at the end" do
-      built = string('blah blah', TEXT(literal(1)+literal(2))).model
-      expect(built.class).to eq(Puppet::Pops::Model::ConcatenatedString)
-      built.segments.size == 2
-      expect(built.segments[0].class).to eq(Puppet::Pops::Model::LiteralString)
-      expect(built.segments[0].value).to eq("blah blah")
-      expect(built.segments[1].class).to eq(Puppet::Pops::Model::TextExpression)
-      expect(built.segments[1].expr.class).to eq(Puppet::Pops::Model::ArithmeticExpression)
+      model = string('blah blah', TEXT(literal(1)+literal(2))).model
+      expect(model.class).to eq(Puppet::Pops::Model::ConcatenatedString)
+      model.segments.size == 2
+      expect(model.segments[0].class).to eq(Puppet::Pops::Model::LiteralString)
+      expect(model.segments[0].value).to eq("blah blah")
+      expect(model.segments[1].class).to eq(Puppet::Pops::Model::TextExpression)
+      expect(model.segments[1].expr.class).to eq(Puppet::Pops::Model::ArithmeticExpression)
     end
 
     it "should handle only one expression" do
-      built = string(TEXT(literal(1)+literal(2))).model
-      expect(built.class).to eq(Puppet::Pops::Model::ConcatenatedString)
-      built.segments.size == 1
-      expect(built.segments[0].class).to eq(Puppet::Pops::Model::TextExpression)
-      expect(built.segments[0].expr.class).to eq(Puppet::Pops::Model::ArithmeticExpression)
+      model = string(TEXT(literal(1)+literal(2))).model
+      expect(model.class).to eq(Puppet::Pops::Model::ConcatenatedString)
+      model.segments.size == 1
+      expect(model.segments[0].class).to eq(Puppet::Pops::Model::TextExpression)
+      expect(model.segments[0].expr.class).to eq(Puppet::Pops::Model::ArithmeticExpression)
     end
 
     it "should handle several expressions" do
-      built = string(TEXT(literal(1)+literal(2)), TEXT(literal(1)+literal(2))).model
-      expect(built.class).to eq(Puppet::Pops::Model::ConcatenatedString)
-      built.segments.size == 2
-      expect(built.segments[0].class).to eq(Puppet::Pops::Model::TextExpression)
-      expect(built.segments[0].expr.class).to eq(Puppet::Pops::Model::ArithmeticExpression)
-      expect(built.segments[1].class).to eq(Puppet::Pops::Model::TextExpression)
-      expect(built.segments[1].expr.class).to eq(Puppet::Pops::Model::ArithmeticExpression)
+      model = string(TEXT(literal(1)+literal(2)), TEXT(literal(1)+literal(2))).model
+      expect(model.class).to eq(Puppet::Pops::Model::ConcatenatedString)
+      model.segments.size == 2
+      expect(model.segments[0].class).to eq(Puppet::Pops::Model::TextExpression)
+      expect(model.segments[0].expr.class).to eq(Puppet::Pops::Model::ArithmeticExpression)
+      expect(model.segments[1].class).to eq(Puppet::Pops::Model::TextExpression)
+      expect(model.segments[1].expr.class).to eq(Puppet::Pops::Model::ArithmeticExpression)
     end
 
     it "should handle no expression" do
-      built = string().model
-      expect(built.class).to eq(Puppet::Pops::Model::ConcatenatedString)
-      built.segments.size == 0
+      model = string().model
+      expect(model.class).to eq(Puppet::Pops::Model::ConcatenatedString)
+      model.segments.size == 0
     end
   end
 

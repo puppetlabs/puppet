@@ -175,11 +175,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     it "'a' !~ 'b.*'  == true"    do; expect(evaluate(literal('a').mne(literal("b.*")))).to eq(true)  ; end
 
     it "'a' =~ Pattern['.*'] == true"    do
-      expect(evaluate(literal('a') =~ fqr('Pattern').access(literal(".*")))).to eq(true)
+      expect(evaluate(literal('a') =~ fqr('Pattern').test_access(literal(".*")))).to eq(true)
     end
 
     it "$a = Pattern['.*']; 'a' =~ $a  == true"    do
-      expr = block(var('a').set(fqr('Pattern').access('.*')), literal('foo') =~ var('a'))
+      expr = block(var('a').set(fqr('Pattern').test_access('.*')), literal('foo') =~ var('a'))
       expect(evaluate(expr)).to eq(true)
     end
 
@@ -256,8 +256,8 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     it 'should find an entry with compatible type in an Array' do
-      expect(evaluate(fqr('Array').access(fqr('Integer')).in(literal(['a', [1,2,3], 'b'])))).to eq(true)
-      expect(evaluate(fqr('Array').access(fqr('Integer')).in(literal(['a', [1,2,'not integer'], 'b'])))).to eq(false)
+      expect(evaluate(fqr('Array').test_access(fqr('Integer')).in(literal(['a', [1,2,3], 'b'])))).to eq(true)
+      expect(evaluate(fqr('Array').test_access(fqr('Integer')).in(literal(['a', [1,2,'not integer'], 'b'])))).to eq(false)
     end
 
     it 'should find an entry with compatible type in a Hash' do
