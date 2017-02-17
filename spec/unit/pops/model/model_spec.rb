@@ -18,7 +18,7 @@ describe Puppet::Pops::Model::Factory do
     expect(x.is_a?(Factory)).to eq(true)
     current = x.model
     expect(current.is_a?(Model::ArithmeticExpression)).to eq(true)
-    expect(current.operator).to eq(:'+')
+    expect(current.operator).to eq('+')
     expect(current.left_expr.class).to eq(Model::LiteralInteger)
     expect(current.right_expr.class).to eq(Model::LiteralInteger)
     expect(current.left_expr.value).to eq(10)

@@ -358,7 +358,7 @@ class EvaluatorImpl
     name = lvalue(o.left_expr, scope)
     value = evaluate(o.right_expr, scope)
 
-    if o.operator == :'='
+    if o.operator == '='
       assign(name, value, o, scope)
     else
       fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
@@ -366,8 +366,8 @@ class EvaluatorImpl
     value
   end
 
-  ARITHMETIC_OPERATORS = [:'+', :'-', :'*', :'/', :'%', :'<<', :'>>']
-  COLLECTION_OPERATORS = [:'+', :'-', :'<<']
+  ARITHMETIC_OPERATORS = ['+', '-', '*', '/', '%', '<<', '>>'].freeze
+  COLLECTION_OPERATORS = ['+', '-', '<<'].freeze
 
   # Handles binary expression where lhs and rhs are array/hash or numeric and operator is +, - , *, % / << >>
   #
@@ -394,11 +394,11 @@ class EvaluatorImpl
     if (left.is_a?(Array) || left.is_a?(Hash)) && COLLECTION_OPERATORS.include?(operator)
       # Handle operation on collections
       case operator
-      when :'+'
+      when '+'
         concatenate(left, right)
-      when :'-'
+      when '-'
         delete(left, right)
-      when :'<<'
+      when '<<'
         unless left.is_a?(Array)
           fail(Issues::OPERATOR_NOT_APPLICABLE, left_o, {:operator => operator, :left_value => left})
         end
@@ -409,18 +409,18 @@ class EvaluatorImpl
       left = coerce_numeric(left, left_o, scope)
       right = coerce_numeric(right, right_o, scope)
       begin
-        if operator == :'%' && (left.is_a?(Float) || right.is_a?(Float))
+        if operator == '%' && (left.is_a?(Float) || right.is_a?(Float))
           # Deny users the fun of seeing severe rounding errors and confusing results
           fail(Issues::OPERATOR_NOT_APPLICABLE, left_o, {:operator => operator, :left_value => left}) if left.is_a?(Float)
           fail(Issues::OPERATOR_NOT_APPLICABLE_WHEN, left_o, {:operator => operator, :left_value => left, :right_value => right})
         end
         if right.is_a?(Time::TimeData) && !left.is_a?(Time::TimeData)
-          if operator == :'+' || operator == :'*' && right.is_a?(Time::Timespan)
+          if operator == '+' || operator == '*' && right.is_a?(Time::Timespan)
             # Switch places. Let the TimeData do the arithmetic
             x = left
             left = right
             right = x
-          elsif operator == :'-' && right.is_a?(Time::Timespan)
+          elsif operator == '-' && right.is_a?(Time::Timespan)
             left = Time::Timespan.new((left * Time::NSECS_PER_SEC).to_i)
           else
             fail(Issues::OPERATOR_NOT_APPLICABLE_WHEN, left_o, {:operator => operator, :left_value => left, :right_value => right})
@@ -499,22 +499,22 @@ class EvaluatorImpl
     # Left is a type
     if left.is_a?(Types::PAnyType)
       case o.operator
-      when :'=='
+      when '=='
         @@type_calculator.equals(left,right)
 
-      when :'!='
+      when '!='
         !@@type_calculator.equals(left,right)
 
-      when :'<'
+      when '<'
         # left can be assigned to right, but they are not equal
         @@type_calculator.assignable?(right, left) && ! @@type_calculator.equals(left,right)
-      when :'<='
+      when '<='
         # left can be assigned to right
         @@type_calculator.assignable?(right, left)
-      when :'>'
+      when '>'
         # right can be assigned to left, but they are not equal
         @@type_calculator.assignable?(left,right) && ! @@type_calculator.equals(left,right)
-      when :'>='
+      when '>='
         # right can be assigned to left
         @@type_calculator.assignable?(left, right)
       else
@@ -522,17 +522,17 @@ class EvaluatorImpl
       end
     else
       case o.operator
-      when :'=='
+      when '=='
         @@compare_operator.equals(left,right)
-      when :'!='
+      when '!='
         ! @@compare_operator.equals(left,right)
-      when :'<'
+      when '<'
         @@compare_operator.compare(left,right) < 0
-      when :'<='
+      when '<='
         @@compare_operator.compare(left,right) <= 0
-      when :'>'
+      when '>'
         @@compare_operator.compare(left,right) > 0
-      when :'>='
+      when '>='
         @@compare_operator.compare(left,right) >= 0
       else
         fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
@@ -574,13 +574,13 @@ class EvaluatorImpl
       # evaluate as instance? of type check
       matched = pattern.instance?(left)
       # convert match result to Boolean true, or false
-      return o.operator == :'=~' ? !!matched : !matched
+      return o.operator == '=~' ? !!matched : !matched
     end
 
     if pattern.is_a?(SemanticPuppet::VersionRange)
       # evaluate if range includes version
       matched = Types::PSemVerRangeType.include?(pattern, left)
-      return o.operator == :'=~' ? matched : !matched
+      return o.operator == '=~' ? matched : !matched
     end
 
     begin
@@ -596,7 +596,7 @@ class EvaluatorImpl
     set_match_data(matched,scope) # creates ephemeral
 
     # convert match result to Boolean true, or false
-    o.operator == :'=~' ? !!matched : !matched
+    o.operator == '=~' ? !!matched : !matched
   end
 
   # Evaluates Puppet DSL `in` expression
@@ -868,7 +868,7 @@ class EvaluatorImpl
       actual = type_calculator.generalize(type_calculator.infer(hashed_params)).to_s
       fail(Issues::TYPE_MISMATCH, o.expr, {:expected => 'Hash', :actual => actual})
     end
-    hashed_params.map { |k,v| create_resource_parameter(o, scope, k, v, :'=>') }
+    hashed_params.map { |k,v| create_resource_parameter(o, scope, k, v, '=>') }
   end
 
   # Sets default parameter values for a type, produces the type

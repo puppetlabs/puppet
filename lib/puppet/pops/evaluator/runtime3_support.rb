@@ -296,7 +296,7 @@ module Runtime3Support
       :name   => name,
       :value  => convert(value, scope, nil), # converted to 3x since 4x supports additional objects / types
       :source => scope.source, :line => line, :file => file,
-      :add    => operator == :'+>'
+      :add    => operator == '+>'
     )
   end
 

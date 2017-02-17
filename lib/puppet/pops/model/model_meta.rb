@@ -100,7 +100,7 @@ module Puppet::Pops::Model
   # An assignment expression assigns a value to the lval() of the left_expr.
   #
   class AssignmentExpression < BinaryExpression
-    has_attr 'operator', OpAssignment, :lowerBound => 1
+    has_attr 'operator', String, :lowerBound => 1
   end
 
   OpArithmetic = RGen::MetamodelBuilder::DataTypes::Enum.new(
@@ -110,7 +110,7 @@ module Puppet::Pops::Model
   # An arithmetic expression applies an arithmetic operator on left and right expressions.
   #
   class ArithmeticExpression < BinaryExpression
-    has_attr 'operator', OpArithmetic, :lowerBound => 1
+    has_attr 'operator', String, :lowerBound => 1
   end
 
   OpRelationship = RGen::MetamodelBuilder::DataTypes::Enum.new(
@@ -120,7 +120,7 @@ module Puppet::Pops::Model
   # A relationship expression associates the left and right expressions
   #
   class RelationshipExpression < BinaryExpression
-    has_attr 'operator', OpRelationship, :lowerBound => 1
+    has_attr 'operator', String, :lowerBound => 1
   end
 
   # A binary expression, that accesses the value denoted by right in left. i.e. typically
@@ -138,7 +138,7 @@ module Puppet::Pops::Model
   # A comparison expression compares left and right using a comparison operator.
   #
   class ComparisonExpression < BinaryExpression
-    has_attr 'operator', OpComparison, :lowerBound => 1
+    has_attr 'operator', String, :lowerBound => 1
   end
 
   OpMatch = RGen::MetamodelBuilder::DataTypes::Enum.new(
@@ -148,7 +148,7 @@ module Puppet::Pops::Model
   # A match expression matches left and right using a matching operator.
   #
   class MatchExpression < BinaryExpression
-    has_attr 'operator', OpMatch, :lowerBound => 1
+    has_attr 'operator', String, :lowerBound => 1
   end
 
   # An 'in' expression checks if left is 'in' right
@@ -242,7 +242,7 @@ module Puppet::Pops::Model
   #
   class AttributeOperation < AbstractAttributeOperation
     has_attr 'attribute_name', String, :lowerBound => 1
-    has_attr 'operator', OpAttribute, :lowerBound => 1
+    has_attr 'operator', String, :lowerBound => 1
     contains_one_uni 'value_expr', Expression, :lowerBound => 1
   end
 
@@ -553,7 +553,7 @@ module Puppet::Pops::Model
   #
   class AbstractResource < Expression
     abstract
-    has_attr 'form', ResourceFormEnum, :lowerBound => 1, :defaultValueLiteral => "regular"
+    has_attr 'form', String, :lowerBound => 1, :defaultValueLiteral => "regular"
     has_attr 'virtual', Boolean, :derived => true
     has_attr 'exported', Boolean, :derived => true
   end

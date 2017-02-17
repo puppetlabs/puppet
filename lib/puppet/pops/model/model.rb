@@ -98,11 +98,11 @@ module Puppet::Pops
     class AbstractResource
       module ClassModule
         def virtual_derived
-          form == :virtual || form == :exported
+          form == 'virtual' || form == 'exported'
         end
 
         def exported_derived
-          form == :exported
+          form == 'exported'
         end
       end
     end

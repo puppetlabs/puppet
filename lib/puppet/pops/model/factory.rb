@@ -433,40 +433,40 @@ class Factory
 
   def dot r;    f_build_binary(NamedAccessExpression, model, r); end
 
-  def + r;      f_arithmetic(:+, r);                                      end
+  def + r;      f_arithmetic('+', r);                           end
 
-  def - r;      f_arithmetic(:-, r);                                      end
+  def - r;      f_arithmetic('-', r);                           end
 
-  def / r;      f_arithmetic(:/, r);                                      end
+  def / r;      f_arithmetic('/', r);                           end
 
-  def * r;      f_arithmetic(:*, r);                                      end
+  def * r;      f_arithmetic('*', r);                           end
 
-  def % r;      f_arithmetic(:%, r);                                      end
+  def % r;      f_arithmetic('%', r);                           end
 
-  def << r;     f_arithmetic(:<<, r);                                     end
+  def << r;     f_arithmetic('<<', r);                          end
 
-  def >> r;     f_arithmetic(:>>, r);                                     end
+  def >> r;     f_arithmetic('>>', r);                          end
 
-  def < r;      f_comparison(:<, r);                                      end
+  def < r;      f_comparison('<', r);                           end
 
-  def <= r;     f_comparison(:<=, r);                                     end
+  def <= r;     f_comparison('<=', r);                          end
 
-  def > r;      f_comparison(:>, r);                                      end
+  def > r;      f_comparison('>', r);                           end
 
-  def >= r;     f_comparison(:>=, r);                                     end
+  def >= r;     f_comparison('>=', r);                          end
 
-  def == r;     f_comparison(:==, r);                                     end
+  def == r;     f_comparison('==', r);                          end
 
-  def ne r;     f_comparison(:'!=', r);                                   end
+  def ne r;     f_comparison('!=', r);                          end
 
-  def =~ r;     f_match(:'=~', r);                                        end
+  def =~ r;     f_match('=~', r);                               end
 
-  def mne r;    f_match(:'!~', r);                                        end
+  def mne r;    f_match('!~', r);                               end
 
   def paren();  f_build_unary(ParenthesizedExpression, model);   end
 
   def relop op, r
-    f_build_binary_op(RelationshipExpression, op.to_sym, model, r)
+    f_build_binary_op(RelationshipExpression, op, model, r)
   end
 
   def select *args
@@ -486,17 +486,17 @@ class Factory
 
   # Assignment =
   def set(r)
-    f_build_binary_op(AssignmentExpression, :'=', model, r)
+    f_build_binary_op(AssignmentExpression, '=', model, r)
   end
 
   # Assignment +=
   def plus_set(r)
-    f_build_binary_op(AssignmentExpression, :'+=', model, r)
+    f_build_binary_op(AssignmentExpression, '+=', model, r)
   end
 
   # Assignment -=
   def minus_set(r)
-    f_build_binary_op(AssignmentExpression, :'-=', model, r)
+    f_build_binary_op(AssignmentExpression, '-=', model, r)
   end
 
   def attributes(*args)
@@ -904,7 +904,7 @@ class Factory
     return nil unless attribute_ops.is_a? Array
     return nil unless left.model.is_a?(QualifiedName)
     keyed_entries = attribute_ops.map do |ao|
-      return nil if ao.operator == :'+>'
+      return nil if ao.operator == '+>'
       KEY_ENTRY(ao.attribute_name, ao.value_expr)
     end
     a_hash = HASH(keyed_entries)

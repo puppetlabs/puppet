@@ -91,17 +91,17 @@ describe Puppet::Pops::Model::Factory do
 
   context "When creating attribute operations" do
     it "Should produce an attribute operation for =>" do
-      built = ATTRIBUTE_OP("aname", :'=>', 'x').model
+      built = ATTRIBUTE_OP("aname", '=>', 'x').model
       built.is_a?(Puppet::Pops::Model::AttributeOperation)
-      expect(built.operator).to eq(:'=>')
+      expect(built.operator).to eq('=>')
       expect(built.attribute_name).to eq("aname")
       expect(built.value_expr.is_a?(Puppet::Pops::Model::LiteralString)).to eq(true)
     end
 
     it "Should produce an attribute operation for +>" do
-      built = ATTRIBUTE_OP("aname", :'+>', 'x').model
+      built = ATTRIBUTE_OP("aname", '+>', 'x').model
       built.is_a?(Puppet::Pops::Model::AttributeOperation)
-      expect(built.operator).to eq(:'+>')
+      expect(built.operator).to eq('+>')
       expect(built.attribute_name).to eq("aname")
       expect(built.value_expr.is_a?(Puppet::Pops::Model::LiteralString)).to eq(true)
     end
@@ -109,7 +109,7 @@ describe Puppet::Pops::Model::Factory do
 
   context "When processing RESOURCE" do
     it "Should create a Resource body" do
-      built = RESOURCE_BODY("title", [ATTRIBUTE_OP('aname', :'=>', 'x')]).model
+      built = RESOURCE_BODY("title", [ATTRIBUTE_OP('aname', '=>', 'x')]).model
       expect(built.is_a?(Puppet::Pops::Model::ResourceBody)).to eq(true)
       expect(built.title.is_a?(Puppet::Pops::Model::LiteralString)).to eq(true)
       expect(built.operations.size).to eq(1)
@@ -158,19 +158,19 @@ describe Puppet::Pops::Model::Factory do
       built = VIRTUAL_QUERY(fqn('a') == literal(1)).model
       expect(built.class).to eq(Puppet::Pops::Model::VirtualQuery)
       expect(built.expr.class).to eq(Puppet::Pops::Model::ComparisonExpression)
-      expect(built.expr.operator).to eq(:'==')
+      expect(built.expr.operator).to eq('==')
     end
 
     it "should produce an export query" do
       built = EXPORTED_QUERY(fqn('a') == literal(1)).model
       expect(built.class).to eq(Puppet::Pops::Model::ExportedQuery)
       expect(built.expr.class).to eq(Puppet::Pops::Model::ComparisonExpression)
-      expect(built.expr.operator).to eq(:'==')
+      expect(built.expr.operator).to eq('==')
     end
 
     it "should produce a collect expression" do
       q = VIRTUAL_QUERY(fqn('a') == literal(1))
-      built = COLLECT(literal('t'), q, [ATTRIBUTE_OP('name', :'=>', 3)]).model
+      built = COLLECT(literal('t'), q, [ATTRIBUTE_OP('name', '=>', 3)]).model
       expect(built.class).to eq(Puppet::Pops::Model::CollectExpression)
       expect(built.operations.size).to eq(1)
     end

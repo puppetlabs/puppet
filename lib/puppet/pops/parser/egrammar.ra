@@ -116,7 +116,7 @@ resource
     #---VIRTUAL
   | AT resource {
       result = val[1]
-      unless Factory.set_resource_form(result, :virtual)
+      unless Factory.set_resource_form(result, 'virtual')
         # This is equivalent to a syntax error - additional semantic restrictions apply
         error val[0], "Virtual (@) can only be applied to a Resource Expression"
       end
@@ -127,7 +127,7 @@ resource
     #---EXPORTED
   | ATAT resource {
       result = val[1]
-      unless Factory.set_resource_form(result, :exported)
+      unless Factory.set_resource_form(result, 'exported')
         # This is equivalent to a syntax error - additional semantic restrictions apply
         error val[0], "Exported (@@) can only be applied to a Resource Expression"
       end
@@ -481,11 +481,11 @@ attribute_operations
   #
   attribute_operation
     : attribute_name FARROW expression {
-        result = Factory.ATTRIBUTE_OP(val[0][:value], :'=>', val[2])
+        result = Factory.ATTRIBUTE_OP(val[0][:value], '=>', val[2])
         loc result, val[0], val[2]
       }
     | attribute_name PARROW expression {
-        result = Factory.ATTRIBUTE_OP(val[0][:value], :'+>', val[2])
+        result = Factory.ATTRIBUTE_OP(val[0][:value], '+>', val[2])
         loc result, val[0], val[2]
       }
   | TIMES FARROW expression {

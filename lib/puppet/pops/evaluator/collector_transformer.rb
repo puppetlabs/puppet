@@ -96,7 +96,7 @@ protected
     right_code = query(o.right_expr, scope)
 
     case o.operator
-    when :'=='
+    when '=='
       if left_code == "tag"
         # Ensure that to_s and downcase is done once, i.e. outside the proc block and
         # then use raw_tagged? instead of tagged?
@@ -121,7 +121,7 @@ protected
           end
         end
       end
-    when :'!='
+    when '!='
       proc do |resource|
         !@@compare_operator.equals(resource[left_code], right_code)
       end

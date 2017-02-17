@@ -160,10 +160,10 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   def check_AssignmentExpression(o)
     case o.operator
-    when :'='
+    when '='
       assign(o.left_expr)
       rvalue(o.right_expr)
-    when :'+=', :'-='
+    when '+=', '-='
       acceptor.accept(Issues::APPENDS_DELETES_NO_LONGER_SUPPORTED, o, {:operator => o.operator})
     else
       acceptor.accept(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
@@ -179,7 +179,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   # * ResourceDefaults (ILLEGAL)
   #
   def check_AttributeOperation(o)
-    if o.operator == :'+>'
+    if o.operator == '+>'
       # Append operator use is constrained
       parent = o.eContainer
       unless parent.is_a?(Model::CollectExpression) || parent.is_a?(Model::ResourceOverrideExpression)
@@ -237,7 +237,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   def check_CallNamedFunctionExpression(o)
     functor = o.functor_expr
-    if functor.is_a?(Model::QualifiedReference) || 
+    if functor.is_a?(Model::QualifiedReference) ||
       functor.is_a?(Model::AccessExpression) && functor.left_expr.is_a?(Model::QualifiedReference)
       # ok (a call to a type)
       return nil
@@ -649,13 +649,13 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def check_ResourceDefaultsExpression(o)
-    if o.form && o.form != :regular
+    if o.form != 'regular'
       acceptor.accept(Issues::NOT_VIRTUALIZEABLE, o)
     end
   end
 
   def check_ResourceOverrideExpression(o)
-    if o.form && o.form != :regular
+    if o.form != 'regular'
       acceptor.accept(Issues::NOT_VIRTUALIZEABLE, o)
     end
   end
@@ -782,7 +782,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   # Puppet AST only allows == and !=
   #
   def query_ComparisonExpression(o)
-    acceptor.accept(Issues::ILLEGAL_QUERY_EXPRESSION, o) unless [:'==', :'!='].include? o.operator
+    acceptor.accept(Issues::ILLEGAL_QUERY_EXPRESSION, o) unless ['==', '!='].include? o.operator
   end
 
   # Allows AND, OR, and checks if left/right are allowed in query.
