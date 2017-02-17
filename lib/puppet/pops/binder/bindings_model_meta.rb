@@ -25,6 +25,7 @@ module Puppet::Pops::Binder::Bindings
   # @api public
   class BindingsModelObject < RGen::MetamodelBuilder::MMBase
     abstract
+    has_attr 'file', String # temporary dummy, not used
   end
 
   # @abstract
@@ -40,7 +41,7 @@ module Puppet::Pops::Binder::Bindings
   #
   class ProducerDescriptor < BindingsModelObject
     abstract
-    contains_one_uni 'transformer', Puppet::Pops::Model::LambdaExpression
+    has_attr 'transformer', Object
   end
   # All producers are singleton producers unless wrapped in a non caching producer
   # where each lookup produces a new instance. It is an error to have a nesting level > 1
@@ -69,7 +70,7 @@ module Puppet::Pops::Binder::Bindings
   # @api public
   #
   class EvaluatingProducerDescriptor < ProducerDescriptor
-    has_one 'expression', Puppet::Pops::Model::Expression
+    has_attr 'expression', Object
   end
 
   # An InstanceProducer creates an instance of the given class
@@ -209,7 +210,7 @@ module Puppet::Pops::Binder::Bindings
   # @api public
   #
   class ContributedBindings < NamedLayer
-    contains_many_uni 'programs', Puppet::Pops::Model::Program
+    has_attr 'programs', Object
   end
 
 end
