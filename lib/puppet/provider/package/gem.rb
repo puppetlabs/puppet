@@ -16,10 +16,13 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
   has_feature :versionable, :install_options, :uninstall_options
 
   if Puppet.features.microsoft_windows?
-    # Puppet on Windows prepends its paths to PATH.
-    # One of those paths includes Puppet's vendored ruby and its gem command.
-    # Use a which method that does not traverse those paths.
-    commands :gemcmd => which_without_puppet_paths("gem")
+    # Puppet on Windows prepends its paths to PATH. One of those paths includes Puppet's vendored ruby.
+    # That results in the which() method in self.command(name) in lib/puppet/provider.rb always returning Puppet's gem command.
+    # To prevent this, call which("gem") with a PATH without Puppet's paths, and set gemcmd to the full-path result. 
+    path_array = Puppet::Util.get_env("PATH").split(File::PATH_SEPARATOR)
+    path_array.reject! {|p| p =~ /Puppet Labs\\Puppet/}
+    path_without_puppet_paths = path_array.join(File::PATH_SEPARATOR)
+    commands :gemcmd => Puppet::Util.withenv(:PATH => path_without_puppet_paths) { which("gem") }
   else
     commands :gemcmd => "gem"
   end
