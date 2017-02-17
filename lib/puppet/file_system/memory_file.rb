@@ -41,7 +41,7 @@ class Puppet::FileSystem::MemoryFile
 
   def handle
     raise Errno::ENOENT unless exist?
-    StringIO.new(@properties[:content] || '')
+    StringIO.new(@properties[:content] || '', 'r+:UTF-8')
   end
 
   def duplicate_as(other_path)

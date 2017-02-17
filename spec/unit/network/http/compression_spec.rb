@@ -90,7 +90,7 @@ describe "http compression" do
         @response.stubs(:[]).with('content-encoding').returns('gzip')
 
         io = stub 'io'
-        StringIO.expects(:new).with("mydata").returns io
+        StringIO.expects(:new).with("mydata", 'r+b').returns io
 
         reader = stub 'gzip reader'
         Zlib::GzipReader.expects(:new).with(io).returns(reader)

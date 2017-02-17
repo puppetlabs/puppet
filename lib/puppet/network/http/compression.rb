@@ -18,9 +18,10 @@ module Puppet::Network::HTTP::Compression
     # return an uncompressed body if the response has been
     # compressed
     def uncompress_body(response)
+      # TODO: is response.body already a BINARY string?
       case response['content-encoding']
       when 'gzip'
-        return Zlib::GzipReader.new(StringIO.new(response.body)).read
+        return Zlib::GzipReader.new(StringIO.new(response.body, 'r+b')).read
       when 'deflate'
         return Zlib::Inflate.new.inflate(response.body)
       when nil, 'identity'

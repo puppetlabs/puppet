@@ -95,7 +95,7 @@ class Puppet::FileBucket::File
     end
 
     def stream(&block)
-      s = StringIO.new(@contents)
+      s = StringIO.new(@contents, 'r+b')
       begin
         block.call(s)
       ensure

@@ -153,7 +153,7 @@ Puppet::Face.define(:epp, '0.0.1') do
       # Print to a buffer since the face needs to return the resulting string
       # and the face API is "all or nothing"
       #
-      buffer = StringIO.new
+      buffer = StringIO.new('', 'r+:UTF-8')
 
       if options[:e]
         buffer.print dump_parse(options[:e], 'command-line-string', options, false)
@@ -320,7 +320,7 @@ Puppet::Face.define(:epp, '0.0.1') do
       # Print to a buffer since the face needs to return the resulting string
       # and the face API is "all or nothing"
       #
-      buffer = StringIO.new
+      buffer = StringIO.new('', 'r+:UTF-8')
       status = true
       if options[:e]
         buffer.print render_inline(options[:e], compiler, options)
