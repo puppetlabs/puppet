@@ -29,7 +29,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   end
 
   def dump_Factory o
-    do_dump(o.current)
+    do_dump(o.model)
   end
 
   def dump_Application o

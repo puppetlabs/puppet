@@ -43,7 +43,7 @@ describe 'The type calculator' do
   end
 
   def type_alias_t(name, type_string)
-    type_expr = Parser::EvaluatingParser.new.parse_string(type_string).current
+    type_expr = Parser::EvaluatingParser.new.parse_string(type_string).model
     TypeFactory.type_alias(name, type_expr)
   end
 

@@ -16,7 +16,7 @@ describe Puppet::Pops::Model::Factory do
   it "construct an arithmetic expression" do
     x = Factory.literal(10) + Factory.literal(20)
     expect(x.is_a?(Factory)).to eq(true)
-    current = x.current
+    current = x.model
     expect(current.is_a?(Model::ArithmeticExpression)).to eq(true)
     expect(current.operator).to eq(:'+')
     expect(current.left_expr.class).to eq(Model::LiteralInteger)
@@ -27,11 +27,11 @@ describe Puppet::Pops::Model::Factory do
 
   it "should be easy to compare using a model tree dumper" do
     x = Factory.literal(10) + Factory.literal(20)
-    expect(Puppet::Pops::Model::ModelTreeDumper.new.dump(x.current)).to eq("(+ 10 20)")
+    expect(Puppet::Pops::Model::ModelTreeDumper.new.dump(x.model)).to eq("(+ 10 20)")
   end
 
   it "builder should apply precedence" do
     x = Factory.literal(2) * Factory.literal(10) + Factory.literal(20)
-    expect(Puppet::Pops::Model::ModelTreeDumper.new.dump(x.current)).to eq("(+ (* 2 10) 20)")
+    expect(Puppet::Pops::Model::ModelTreeDumper.new.dump(x.model)).to eq("(+ (* 2 10) 20)")
   end
 end

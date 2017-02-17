@@ -9,9 +9,7 @@
 module Puppet::Pops
 module Model
 class Factory
-  attr_accessor :current
-
-  alias_method :model, :current
+  attr_accessor :model
 
   # Shared build_visitor, since there are many instances of Factory being used
   @@build_visitor = Visitor.new(self, "build")
@@ -21,12 +19,12 @@ class Factory
   # created instance
   #
   def initialize(o, *args)
-    @current = if o.instance_of?(Class)
+    @model = if o.instance_of?(Class)
       @@build_visitor.visit_this(self, o.new, args)
     elsif o.is_a?(PopsObject)
       o
     elsif o.instance_of?(Factory)
-      o.current
+      o.model
     else
       @@build_visitor.visit_this(self, o, args)
     end
@@ -39,7 +37,7 @@ class Factory
 
   # Polymorphic interpolate
   def interpolate()
-    @@interpolation_visitor.visit_this_0(self, current)
+    @@interpolation_visitor.visit_this_0(self, model)
   end
 
   # Building of Model classes
@@ -48,7 +46,7 @@ class Factory
     o.name = n
     ps.each { |p| o.addParameters(build(p)) }
     b = f_build_body(body)
-    o.body = b.current if b
+    o.body = b.model if b
     o
   end
 
@@ -221,7 +219,7 @@ class Factory
   def build_NamedDefinition(o, name, parameters, body)
     o.parameters = parameters.map {|p| build(p) }
     b = f_build_body(body)
-    o.body = b.current if b
+    o.body = b.model if b
     o.name = name
     o
   end
@@ -229,7 +227,7 @@ class Factory
   def build_FunctionDefinition(o, name, parameters, body, return_type)
     o.parameters = parameters.map {|p| build(p) }
     b = f_build_body(body)
-    o.body = b.current if b
+    o.body = b.model if b
     o.name = name
     o.return_type = to_ops(return_type) unless return_type.nil?
     o
@@ -237,7 +235,7 @@ class Factory
 
   def build_CapabilityMapping(o, kind, component, capability, mappings)
     o.kind = kind
-    component = component.current if component.instance_of?(Factory)
+    component = component.model if component.instance_of?(Factory)
     o.component = component
     o.capability = capability
     o.mappings = mappings.map { |m| build(m) }
@@ -252,7 +250,7 @@ class Factory
     o.host_matches = hosts.map {|h| build(h) }
     o.parent = build(parent) if parent # no nop here
     b = f_build_body(body)
-    o.body = b.current if b
+    o.body = b.model if b
     o
   end
 
@@ -260,7 +258,7 @@ class Factory
   # @param body [Object] see {#f_build_body}
   def build_SiteDefinition(o, body)
     b = f_build_body(body)
-    o.body = b.current if b
+    o.body = b.model if b
     o
   end
 
@@ -353,7 +351,7 @@ class Factory
 
   def build_TypeDefinition(o, name, parent, body)
     b = f_build_body(body)
-    o.body = b.current if b
+    o.body = b.model if b
     o.parent = parent
     o.name = name
     o
@@ -403,23 +401,23 @@ class Factory
   end
 
   def f_arithmetic(op, r)
-    f_build_binary_op(ArithmeticExpression, op, current, r)
+    f_build_binary_op(ArithmeticExpression, op, model, r)
   end
 
   def f_comparison(op, r)
-    f_build_binary_op(ComparisonExpression, op, current, r)
+    f_build_binary_op(ComparisonExpression, op, model, r)
   end
 
   def f_match(op, r)
-    f_build_binary_op(MatchExpression, op, current, r)
+    f_build_binary_op(MatchExpression, op, model, r)
   end
 
   # Operator helpers
-  def in(r)     f_build_binary(InExpression, current, r);          end
+  def in(r)     f_build_binary(InExpression, model, r);          end
 
-  def or(r)     f_build_binary(OrExpression, current, r);          end
+  def or(r)     f_build_binary(OrExpression, model, r);          end
 
-  def and(r)    f_build_binary(AndExpression, current, r);         end
+  def and(r)    f_build_binary(AndExpression, model, r);         end
 
   def not();    f_build_unary(NotExpression, self);                end
 
@@ -431,9 +429,9 @@ class Factory
 
   def var();    f_build_unary(VariableExpression, self);           end
 
-  def [](*r);   f_build_vararg(AccessExpression, current, *r);     end
+  def [](*r);   f_build_vararg(AccessExpression, model, *r);     end
 
-  def dot r;    f_build_binary(NamedAccessExpression, current, r); end
+  def dot r;    f_build_binary(NamedAccessExpression, model, r); end
 
   def + r;      f_arithmetic(:+, r);                                      end
 
@@ -465,58 +463,58 @@ class Factory
 
   def mne r;    f_match(:'!~', r);                                        end
 
-  def paren();  f_build_unary(ParenthesizedExpression, current);   end
+  def paren();  f_build_unary(ParenthesizedExpression, model);   end
 
   def relop op, r
-    f_build_binary_op(RelationshipExpression, op.to_sym, current, r)
+    f_build_binary_op(RelationshipExpression, op.to_sym, model, r)
   end
 
   def select *args
-    Factory.new(build(SelectorExpression, current, *args))
+    Factory.new(build(SelectorExpression, model, *args))
   end
 
   # For CaseExpression, setting the default for an already build CaseExpression
   def default r
-    current.addOptions(Factory.WHEN(:default, r).current)
+    model.addOptions(Factory.WHEN(:default, r).model)
     self
   end
 
   def lambda=(lambda)
-    current.lambda = lambda.current
+    model.lambda = lambda.model
     self
   end
 
   # Assignment =
   def set(r)
-    f_build_binary_op(AssignmentExpression, :'=', current, r)
+    f_build_binary_op(AssignmentExpression, :'=', model, r)
   end
 
   # Assignment +=
   def plus_set(r)
-    f_build_binary_op(AssignmentExpression, :'+=', current, r)
+    f_build_binary_op(AssignmentExpression, :'+=', model, r)
   end
 
   # Assignment -=
   def minus_set(r)
-    f_build_binary_op(AssignmentExpression, :'-=', current, r)
+    f_build_binary_op(AssignmentExpression, :'-=', model, r)
   end
 
   def attributes(*args)
-    args.each {|a| current.addAttributes(build(a)) }
+    args.each {|a| model.addAttributes(build(a)) }
     self
   end
 
-  # Catch all delegation to current
+  # Catch all delegation to model
   def method_missing(meth, *args, &block)
-    if current.respond_to?(meth)
-      current.send(meth, *args, &block)
+    if model.respond_to?(meth)
+      model.send(meth, *args, &block)
     else
       super
     end
   end
 
   def respond_to?(meth, include_all=false)
-    current.respond_to?(meth, include_all) || super
+    model.respond_to?(meth, include_all) || super
   end
 
   def self.record_position(o, start_locatable, end_locateable)
@@ -524,11 +522,11 @@ class Factory
   end
 
   def offset
-    @current.offset
+    @model.offset
   end
 
   def length
-    @current.length
+    @model.length
   end
 
   # Records the position (start -> end) and computes the resulting length.
@@ -536,20 +534,20 @@ class Factory
   def record_position(start_locatable, end_locatable)
     # record information directly in the Positioned object
     start_offset = start_locatable.offset
-    @current.set_loc(start_offset, end_locatable ? end_locatable.offset - start_offset + end_locatable.length : start_locatable.length)
+    @model.set_loc(start_offset, end_locatable ? end_locatable.offset - start_offset + end_locatable.length : start_locatable.length)
     self
   end
 
   # @return [Puppet::Pops::Adapters::SourcePosAdapter] with location information
   def loc()
-    Adapters::SourcePosAdapter.adapt(current)
+    Adapters::SourcePosAdapter.adapt(model)
   end
 
   # Sets the form of the resource expression (:regular (the default), :virtual, or :exported).
   # Produces true if the expression was a resource expression, false otherwise.
   #
   def self.set_resource_form(expr, form)
-    expr = expr.current if expr.instance_of?(Factory)
+    expr = expr.model if expr.instance_of?(Factory)
     # Note: Validation handles illegal combinations
     return false unless expr.is_a?(AbstractResource)
     expr.form = form
@@ -564,7 +562,7 @@ class Factory
   # * _any other_ => ':error', all other are considered illegal
   #
   def self.resource_shape(expr)
-    expr = expr.current if expr.instance_of?(Factory)
+    expr = expr.model if expr.instance_of?(Factory)
     case expr
     when QualifiedName
       :resource
@@ -629,19 +627,19 @@ class Factory
 
   # Mark parameter as capturing the rest of arguments
   def captures_rest()
-    current.captures_rest = true
+    model.captures_rest = true
   end
 
   # Set Expression that should evaluate to the parameter's type
   def type_expr(o)
-    current.type_expr = to_ops(o)
+    model.type_expr = to_ops(o)
   end
 
   # Creates a QualifiedName representation of o, unless o already represents a QualifiedName in which
   # case it is returned.
   #
   def self.fqn(o)
-    o = o.current if o.instance_of?(Factory)
+    o = o.model if o.instance_of?(Factory)
     o = new(QualifiedName, o) unless o.is_a? QualifiedName
     o
   end
@@ -650,7 +648,7 @@ class Factory
   # case it is returned.
   #
   def self.fqr(o)
-    o = o.current if o.instance_of?(Factory)
+    o = o.model if o.instance_of?(Factory)
     o = new(QualifiedReference, o) unless o.is_a? QualifiedReference
     o
   end
@@ -812,7 +810,7 @@ class Factory
   end
 
   def self.TYPE_ASSIGNMENT(lhs, rhs)
-    if lhs.current.is_a?(AccessExpression)
+    if lhs.model.is_a?(AccessExpression)
       new(TypeMapping, lhs, rhs)
     else
       new(TypeAlias, lhs, rhs)
@@ -866,7 +864,7 @@ class Factory
   #
   def self.transform_calls(expressions)
     expressions.reduce([]) do |memo, expr|
-      expr = expr.current if expr.instance_of?(Factory)
+      expr = expr.model if expr.instance_of?(Factory)
       name = memo[-1]
       if name.is_a?(QualifiedName) && STATEMENT_CALLS[name.value]
         if expr.is_a?(Array)
@@ -904,7 +902,7 @@ class Factory
   def self.transform_resource_wo_title(left, attribute_ops, lbrace_token, rbrace_token)
     # Returning nil means accepting the given as a potential resource expression
     return nil unless attribute_ops.is_a? Array
-    return nil unless left.current.is_a?(QualifiedName)
+    return nil unless left.model.is_a?(QualifiedName)
     keyed_entries = attribute_ops.map do |ao|
       return nil if ao.operator == :'+>'
       KEY_ENTRY(ao.attribute_name, ao.value_expr)
@@ -964,13 +962,13 @@ class Factory
   def build_EppExpression(o, parameters_specified, body)
     o.parameters_specified = parameters_specified
     b = f_build_body(body)
-    o.body = b.current if b
+    o.body = b.model if b
     o
   end
 
   # If building a factory, simply unwrap the model oject contained in the factory.
   def build_Factory(o)
-    o.current
+    o.model
   end
 
   # Creates a String literal, unless the symbol is one of the special :undef, or :default
@@ -1038,7 +1036,7 @@ class Factory
   end
 
   def interpolate_Factory(o)
-    interpolate(o.current)
+    interpolate(o.model)
   end
 
   def interpolate_LiteralInteger(o)
@@ -1099,7 +1097,7 @@ class Factory
     when PopsObject
       o
     when Factory
-      o.current
+      o.model
     else
       build(o, *args)
     end
@@ -1107,7 +1105,7 @@ class Factory
 
   def self.concat(*args)
     new(args.map do |e|
-      e = e.current if e.is_a?(self)
+      e = e.model if e.is_a?(self)
       case e
       when LiteralString
         e.value

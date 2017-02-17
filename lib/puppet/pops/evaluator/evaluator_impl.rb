@@ -264,7 +264,7 @@ class EvaluatorImpl
   end
 
   def eval_Factory(o, scope)
-    evaluate(o.current, scope)
+    evaluate(o.model, scope)
   end
 
   # Evaluates any object not evaluated to something else to itself.

@@ -36,7 +36,7 @@ class E4ParserAdapter
     # * a Model::Program
     # * a Model::Expression
     #
-    model = parse_result.nil? ? nil : parse_result.current
+    model = parse_result.nil? ? nil : parse_result.model
     args = {}
     Pops::Model::AstTransformer.new(@file).merge_location(args, model)
 

@@ -34,13 +34,13 @@ class TypeParser
   #
   def parse(string, context = nil)
     model = @parser.parse_string(string)
-    interpret(model.current.body, context)
+    interpret(model.model.body, context)
   end
 
   # @api private
   def parse_literal(string, context = nil)
     model = @parser.parse_string(string)
-    interpret_any(model.current.body, context)
+    interpret_any(model.model.body, context)
   end
 
   # @param ast [Puppet::Pops::Model::PopsObject] the ast to interpret
@@ -305,7 +305,7 @@ class TypeParser
         if param_start.nil?
           type = type_str
         else
-          tps = interpret_any(@parser.parse_string(type_str[param_start..-1]).current, context)
+          tps = interpret_any(@parser.parse_string(type_str[param_start..-1]).model, context)
           raise_invalid_parameters_error(type.to_s, '1', tps.size) unless tps.size == 1
           type = type_str[0..param_start-1]
           parameters = [type] + tps

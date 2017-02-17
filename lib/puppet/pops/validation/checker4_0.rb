@@ -147,7 +147,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def check_Factory(o)
-    check(o.current)
+    check(o.model)
   end
 
   def check_AccessExpression(o)
@@ -886,7 +886,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def idem_Factory(o)
-    idem(o.current)
+    idem(o.model)
   end
 
   def idem_AccessExpression(o)

@@ -5,7 +5,7 @@ describe Puppet::Pops::Adapters::SourcePosAdapter do
 
   it "multi byte characters in a comment does not interfere with AST node text extraction" do
     parser = Puppet::Pops::Parser::Parser.new()
-    model = parser.parse_string("# \u{0400}comment\nabcdef#XXXXXXXXXX").current
+    model = parser.parse_string("# \u{0400}comment\nabcdef#XXXXXXXXXX").model
     expect(model.class).to eq(Puppet::Pops::Model::Program)
     adapter = Puppet::Pops::Adapters::SourcePosAdapter.adapt(model.body)
     expect(adapter.offset).to eq(12)
@@ -15,7 +15,7 @@ describe Puppet::Pops::Adapters::SourcePosAdapter do
 
   it "multi byte characters in a comment does not interfere with AST node text extraction" do
     parser = Puppet::Pops::Parser::Parser.new()
-    model = parser.parse_string("# \u{0400}comment\n1 + 2#XXXXXXXXXX").current
+    model = parser.parse_string("# \u{0400}comment\n1 + 2#XXXXXXXXXX").model
     expect(model.class).to eq(Puppet::Pops::Model::Program)
     adapter = Puppet::Pops::Adapters::SourcePosAdapter.adapt(model.body)
     expect(adapter.offset).to eq(14) # The '+'

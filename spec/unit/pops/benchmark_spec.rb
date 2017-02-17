@@ -51,7 +51,7 @@ $a = "interpolate ${foo} and stuff"
 
   it "transformer", :profile => true do
     parser = Puppet::Pops::Parser::Parser.new()
-    model = parser.parse_string(code).current
+    model = parser.parse_string(code).model
     transformer = Puppet::Pops::Model::AstTransformer.new()
     m = Benchmark.measure { 10000.times { transformer.transform(model) }}
     puts "Transformer: #{m}"
@@ -67,7 +67,7 @@ $a = "interpolate ${foo} and stuff"
   it "parse transform", :profile => true do
     parser = Puppet::Pops::Parser::Parser.new()
     transformer = Puppet::Pops::Model::AstTransformer.new()
-    m = Benchmark.measure { 10000.times { transformer.transform(parser.parse_string(code).current) }}
+    m = Benchmark.measure { 10000.times { transformer.transform(parser.parse_string(code).model) }}
     puts "Parse and transform: #{m}"
   end
 
@@ -85,7 +85,7 @@ $a = "interpolate ${foo} and stuff"
 
   it "marshal1", :profile => true do
     parser = Puppet::Pops::Parser::EvaluatingParser.new()
-    model = parser.parse_string(code).current
+    model = parser.parse_string(code).model
     dumped = Marshal.dump(model)
     m = Benchmark.measure { 10000.times { Marshal.load(dumped) }}
     puts "Marshal1: #{m}"
@@ -93,7 +93,7 @@ $a = "interpolate ${foo} and stuff"
 
   it "rgenjson", :profile => true do
     parser = Puppet::Pops::Parser::EvaluatingParser.new()
-    model = parser.parse_string(code).current
+    model = parser.parse_string(code).model
     dumped = json_dump(model)
     m = Benchmark.measure { 10000.times { json_load(dumped) }}
     puts "RGen Json: #{m}"

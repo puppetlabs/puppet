@@ -27,7 +27,7 @@ class Parser
   # Returns the token text of the given lexer token, or nil, if token is nil
   def token_text t
     return t if t.nil?
-    t = t.current if t.respond_to?(:current)
+    t = t.model if t.respond_to?(:model)
     return t.value if t.is_a? Model::QualifiedName
 
     # else it is a lexer token
@@ -54,7 +54,7 @@ class Parser
       except.line = semantic[:line];
       except.pos = semantic[:pos];
     else
-      semantic = semantic.current() if semantic.is_a?(Factory)
+      semantic = semantic.model if semantic.is_a?(Factory)
 
       # Adapt the model so it is possible to get location information.
       # The model may not have been added to the source tree, so give it the lexer's locator
@@ -168,7 +168,7 @@ class Parser
   end
 
   def add_definition(definition)
-    @definitions << definition.current
+    @definitions << definition.model
     definition
   end
 

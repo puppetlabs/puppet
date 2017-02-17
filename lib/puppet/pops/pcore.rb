@@ -81,7 +81,7 @@ module Pcore
   end
 
   def self.add_object_type(name, body, loader)
-    add_type(Types::PObjectType.new(name, Parser::EvaluatingParser.new.parse_string(body).current.body), loader)
+    add_type(Types::PObjectType.new(name, Parser::EvaluatingParser.new.parse_string(body).model.body), loader)
   end
 
   def self.add_alias(name, type, loader, name_authority = RUNTIME_NAME_AUTHORITY)

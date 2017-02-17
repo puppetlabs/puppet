@@ -19,7 +19,7 @@ describe 'The Object Type' do
   end
 
   def type_object_t(name, body_string)
-    object = PObjectType.new(name, pp_parser.parse_string("{#{body_string}}").current.body)
+    object = PObjectType.new(name, pp_parser.parse_string("{#{body_string}}").model.body)
     loader.set_entry(Loader::TypedName.new(:type, name.downcase), object)
     object
   end

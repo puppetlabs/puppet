@@ -243,7 +243,7 @@ describe Puppet::Resource::Type do
     let(:parser) { Puppet::Pops::Parser::Parser.new() }
 
     def wrap3x(expression)
-      Puppet::Parser::AST::PopsBridge::Expression.new(:value => expression.current)
+      Puppet::Parser::AST::PopsBridge::Expression.new(:value => expression.model)
     end
 
     def parse_expression(expr_string)

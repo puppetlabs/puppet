@@ -18,7 +18,7 @@ class ModelLabelProvider
     @@label_visitor.visit_this_0(self, o)
   end
 
-  def label_Factory o                     ; label(o.current)                    end
+  def label_Factory o                     ; label(o.model)                    end
   def label_Array o                       ; "Array"                             end
   def label_LiteralInteger o              ; "Literal Integer"                   end
   def label_LiteralFloat o                ; "Literal Float"                     end

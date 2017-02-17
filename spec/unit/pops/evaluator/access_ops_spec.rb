@@ -79,7 +79,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
   context 'The evaluator when operating on an Array' do
     it 'is tested with the correct assumptions' do
-      expect(literal([1,2,3])[1].current.is_a?(Puppet::Pops::Model::AccessExpression)).to eql(true)
+      expect(literal([1,2,3])[1].model.is_a?(Puppet::Pops::Model::AccessExpression)).to eql(true)
     end
 
     it 'can get an element using a single key index to []' do
