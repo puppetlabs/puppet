@@ -101,8 +101,18 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
 
       if source =~ /\.dmg$/i
         # If you fix this to use open-uri again, you must update the docs above. -NF
+        # TODO: dmg.path used later is the same thing as cached_source
+        # so calling File.open here doesn't make sense - fix later
+        # originally was `open` as part of 'open-uri' in https://github.com/puppetlabs/puppet/commit/c48f68c79a76b2c7de408ee2e98d2f03d468f8a2
+        # 'open-uri' was removed
+        # rewritten as 'cached_source' in https://github.com/puppetlabs/puppet/commit/ca1e36b2848dcd2357bb9944d0caaec722215104
+        # then became File.open in https://github.com/puppetlabs/puppet/commit/50e0f3d0161bc4160e36a93d15fba53302b8727b
+        # at which point the code should have been rewritten I think
         File.open(cached_source) do |dmg|
           xml_str = hdiutil "mount", "-plist", "-nobrowse", "-readonly", "-noidme", "-mountrandom", "/tmp", dmg.path
+          # TODO: test with:
+          # bundle exec puppet resource package "Silverlight.dmg" ensure=present source=/Users/Iristyle/Downloads/OSX\ Software/Silverlight.dmg
+          # require 'pry'; binding.pry
           hdiutil_info = Puppet::Util::Plist.parse_plist(xml_str)
           raise Puppet::Error.new("No disk entities returned by mount at #{dmg.path}") unless hdiutil_info.has_key?("system-entities")
           mounts = hdiutil_info["system-entities"].collect { |entity|
