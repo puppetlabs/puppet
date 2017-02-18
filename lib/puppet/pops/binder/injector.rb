@@ -528,20 +528,14 @@ module Private
       end
     end
 
-    # Should be used to get entries as it converts missing entries to NotFound entries or AssistedInject entries
+    # Should be used to get entries as it converts missing entries to NotFound entries
     #
     # @api private
     def get_entry(key)
       case entry = entries[ key ]
       when NilClass
-        # not found, is this an assisted inject?
-        if clazz = assistable_injected_class(key)
-          entry = Producers::AssistedInjectProducer.new(self, clazz)
-          entries[ key ] = entry
-        else
-          entries[ key ] = NotFound.new()
-          entry = nil
-        end
+        entries[ key ] = NotFound.new()
+        entry = nil
       when NotFound
         entry = nil
       end
@@ -557,15 +551,6 @@ module Private
       return [] unless contributions = lookup_key(scope, contributions_key)
       contributions.each { |k| result[k] = get_entry(k) }
       result.sort {|a, b| a[0] <=> b[0] }
-    end
-
-    # Produces an injectable class given a key, or nil if key does not represent an injectable class
-    # @api private
-    #
-    def assistable_injected_class(key)
-      kt = key_factory.get_type(key)
-      return nil unless kt.is_a?(Types::PRuntimeType) && kt.runtime == :ruby && !key_factory.is_named?(key)
-      type_calculator.injectable_class(kt)
     end
 
     def lookup_producer(scope, *args, &block)

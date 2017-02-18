@@ -172,29 +172,6 @@ class TypeCalculator
     @@extract_visitor ||= Visitor.new(nil, 'extract',0,0)
   end
 
-  # Answers the question 'is it possible to inject an instance of the given class'
-  # A class is injectable if it has a special *assisted inject* class method called `inject` taking
-  # an injector and a scope as argument, or if it has a zero args `initialize` method.
-  #
-  # @param klazz [Class, PRuntimeType] the class/type to check if it is injectable
-  # @return [Class, nil] the injectable Class, or nil if not injectable
-  # @api public
-  #
-  def injectable_class(klazz)
-    # Handle case when we get a PType instead of a class
-    if klazz.is_a?(PRuntimeType)
-      klazz = ClassLoader.provide(klazz)
-    end
-
-    # data types can not be injected (check again, it is not safe to assume that given RubyRuntime klazz arg was ok)
-    return false unless type(klazz).is_a?(PRuntimeType)
-    if (klazz.respond_to?(:inject) && klazz.method(:inject).arity == -4) || klazz.instance_method(:initialize).arity == 0
-      klazz
-    else
-      nil
-    end
-  end
-
   # Answers 'can an instance of type t2 be assigned to a variable of type t'.
   # Does not accept nil/undef unless the type accepts it.
   #
