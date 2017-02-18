@@ -213,9 +213,37 @@ module Puppet::Environments
     end
 
     def valid_directory?(envdir)
-      name = Puppet::FileSystem.basename_string(envdir)
-      Puppet::FileSystem.directory?(envdir) &&
-         Puppet::Node::Environment.valid_name?(name)
+      # Make an attempt to access the directory to determine if it's invalid
+      # due to permission problems or simply because it doesn't exist
+      begin
+        stat = Puppet::FileSystem.stat(envdir)
+        if stat && stat.directory?
+          if stat.readable?
+            Puppet::Node::Environment.valid_name?(Puppet::FileSystem.basename_string(envdir))
+          else
+            Puppet.warn_once(:permisson_denied, envdir, "#{envdir}: Access denied!")
+            false
+          end
+        else
+          false
+        end
+      rescue Errno::ENOENT
+        false
+      rescue Errno::EACCES
+        # Report the directory where the actual access error occurs (traverse parents)
+        prev = envdir
+        current = Puppet::FileSystem.dir_string(prev)
+        while current
+          begin
+            break if Puppet::FileSystem.stat(current).readable?
+          rescue Errno::EACCES
+          end
+          prev = current
+          current = Puppet::FileSystem.dir_string(prev)
+        end
+        Puppet.warn_once(:permisson_denied, prev, "#{prev}: Access denied!")
+        false
+      end
     end
 
     def valid_directories
