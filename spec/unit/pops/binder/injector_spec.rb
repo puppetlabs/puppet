@@ -199,50 +199,6 @@ describe 'Injector' do
       end
     end
 
-    context "and class is not bound" do
-      it "assisted inject kicks in for classes with zero args constructor" do
-        duck_type = type_factory.ruby(InjectorSpecModule::Daffy)
-        injector = injector(lbinder)
-        expect(injector.lookup(scope, duck_type).is_a?(InjectorSpecModule::Daffy)).to eq(true)
-        expect(injector.lookup_producer(scope, duck_type).produce(scope).is_a?(InjectorSpecModule::Daffy)).to eq(true)
-      end
-
-      it "assisted inject produces same instance on lookup but not on lookup producer" do
-        duck_type = type_factory.ruby(InjectorSpecModule::Daffy)
-        injector = injector(lbinder)
-        d1 = injector.lookup(scope, duck_type)
-        d2 = injector.lookup(scope, duck_type)
-        expect(d1.equal?(d2)).to eq(true)
-
-        d1 = injector.lookup_producer(scope, duck_type).produce(scope)
-        d2 = injector.lookup_producer(scope, duck_type).produce(scope)
-        expect(d1.equal?(d2)).to eq(false)
-      end
-
-      it "assisted inject kicks in for classes with a class inject method" do
-        duck_type = type_factory.ruby(InjectorSpecModule::ScroogeMcDuck)
-        injector = injector(lbinder)
-        # Do not pass any arguments, the ScroogeMcDuck :inject method should pick 1 by default
-        # This tests zero args passed
-        expect(injector.lookup(scope, duck_type).fortune).to eq(1)
-        expect(injector.lookup_producer(scope, duck_type).produce(scope).fortune).to eq(1)
-      end
-
-      it "assisted inject selects the inject method if it exists over a zero args constructor" do
-        injector = injector(lbinder)
-        duck_type = type_factory.ruby(InjectorSpecModule::AngryDuck)
-        expect(injector.lookup(scope, duck_type).is_a?(InjectorSpecModule::Donald)).to eq(true)
-        expect(injector.lookup_producer(scope, duck_type).produce(scope).is_a?(InjectorSpecModule::Donald)).to eq(true)
-      end
-
-      it "assisted inject selects the zero args constructor if injector is from a superclass" do
-        injector = injector(lbinder)
-        duck_type = type_factory.ruby(InjectorSpecModule::ArneAnka)
-        expect(injector.lookup(scope, duck_type).is_a?(InjectorSpecModule::ArneAnka)).to eq(true)
-        expect(injector.lookup_producer(scope, duck_type).produce(scope).is_a?(InjectorSpecModule::ArneAnka)).to eq(true)
-      end
-    end
-
     context "and multiple layers are in use" do
       it "a higher layer shadows anything in a lower layer" do
         bindings1 = factory.named_bindings('test1')

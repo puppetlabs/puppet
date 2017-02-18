@@ -61,8 +61,6 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
 
         Puppet::Util::Profiler.profile("Env Compile: Created settings scope", [:compiler, :create_settings_scope]) { create_settings_scope }
 
-        activate_binder
-
         Puppet::Util::Profiler.profile("Env Compile: Evaluated main", [:compiler, :evaluate_main]) { evaluate_main }
 
         Puppet::Util::Profiler.profile("Env Compile: Evaluated site", [:compiler, :evaluate_site]) { evaluate_site }
