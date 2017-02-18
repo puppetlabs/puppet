@@ -60,7 +60,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     it "[1, 2, 3][2] == 3" do
-      expect(evaluate(literal([1,2,3]).access([2]))).to eq(3)
+      expect(evaluate(literal([1,2,3]))[2]).to eq(3)
     end
   end
 

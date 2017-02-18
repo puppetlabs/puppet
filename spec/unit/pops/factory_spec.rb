@@ -53,13 +53,13 @@ describe Puppet::Pops::Model::Factory do
 
   context "When processing calls with CALL_NAMED" do
     it "Should be possible to state that r-value is required" do
-      built = CALL_NAMED("foo", true, []).model
+      built = call_named('foo', true).model
       expect(built.is_a?(Puppet::Pops::Model::CallNamedFunctionExpression)).to eq(true)
       expect(built.rval_required).to eq(true)
     end
 
     it "Should produce a call expression without arguments" do
-      built = CALL_NAMED("foo", false, []).model
+      built = call_named('foo', false).model
       expect(built.is_a?(Puppet::Pops::Model::CallNamedFunctionExpression)).to eq(true)
       expect(built.functor_expr.is_a?(Puppet::Pops::Model::QualifiedName)).to eq(true)
       expect(built.functor_expr.value).to eq("foo")
@@ -68,7 +68,7 @@ describe Puppet::Pops::Model::Factory do
     end
 
     it "Should produce a call expression with one argument" do
-      built = CALL_NAMED("foo", false, [literal(1) + literal(2)]).model
+      built = call_named('foo', false, literal(1) + literal(2)).model
       expect(built.is_a?(Puppet::Pops::Model::CallNamedFunctionExpression)).to eq(true)
       expect(built.functor_expr.is_a?(Puppet::Pops::Model::QualifiedName)).to eq(true)
       expect(built.functor_expr.value).to eq("foo")
@@ -78,7 +78,7 @@ describe Puppet::Pops::Model::Factory do
     end
 
     it "Should produce a call expression with two arguments" do
-      built = CALL_NAMED("foo", false, [literal(1) + literal(2), literal(1) + literal(2)]).model
+      built = call_named('foo', false, literal(1) + literal(2), literal(1) + literal(2)).model
       expect(built.is_a?(Puppet::Pops::Model::CallNamedFunctionExpression)).to eq(true)
       expect(built.functor_expr.is_a?(Puppet::Pops::Model::QualifiedName)).to eq(true)
       expect(built.functor_expr.value).to eq("foo")
@@ -91,7 +91,7 @@ describe Puppet::Pops::Model::Factory do
 
   context "When creating attribute operations" do
     it "Should produce an attribute operation for =>" do
-      built = ATTRIBUTE_OP("aname", '=>', 'x').model
+      built = ATTRIBUTE_OP('aname', '=>', literal('x')).model
       built.is_a?(Puppet::Pops::Model::AttributeOperation)
       expect(built.operator).to eq('=>')
       expect(built.attribute_name).to eq("aname")
@@ -99,7 +99,7 @@ describe Puppet::Pops::Model::Factory do
     end
 
     it "Should produce an attribute operation for +>" do
-      built = ATTRIBUTE_OP("aname", '+>', 'x').model
+      built = ATTRIBUTE_OP('aname', '+>', literal('x')).model
       built.is_a?(Puppet::Pops::Model::AttributeOperation)
       expect(built.operator).to eq('+>')
       expect(built.attribute_name).to eq("aname")
@@ -109,7 +109,7 @@ describe Puppet::Pops::Model::Factory do
 
   context "When processing RESOURCE" do
     it "Should create a Resource body" do
-      built = RESOURCE_BODY("title", [ATTRIBUTE_OP('aname', '=>', 'x')]).model
+      built = RESOURCE_BODY(literal('title'), [ATTRIBUTE_OP('aname', '=>', literal('x'))]).model
       expect(built.is_a?(Puppet::Pops::Model::ResourceBody)).to eq(true)
       expect(built.title.is_a?(Puppet::Pops::Model::LiteralString)).to eq(true)
       expect(built.operations.size).to eq(1)
@@ -119,22 +119,22 @@ describe Puppet::Pops::Model::Factory do
 
     it "Should create a RESOURCE without a resource body" do
       bodies = []
-      built = RESOURCE("rtype", bodies).model
+      built = RESOURCE(literal('rtype'), bodies).model
       expect(built.class).to eq(Puppet::Pops::Model::ResourceExpression)
       expect(built.bodies.size).to eq(0)
     end
 
     it "Should create a RESOURCE with 1 resource body" do
-      bodies = [] << RESOURCE_BODY('title', [])
-      built = RESOURCE("rtype", bodies).model
+      bodies = [] << RESOURCE_BODY(literal('title'), [])
+      built = RESOURCE(literal('rtype'), bodies).model
       expect(built.class).to eq(Puppet::Pops::Model::ResourceExpression)
       expect(built.bodies.size).to eq(1)
       expect(built.bodies[0].title.value).to eq('title')
     end
 
     it "Should create a RESOURCE with 2 resource bodies" do
-      bodies = [] << RESOURCE_BODY('title', []) << RESOURCE_BODY('title2', [])
-      built = RESOURCE("rtype", bodies).model
+      bodies = [] << RESOURCE_BODY(literal('title'), []) << RESOURCE_BODY(literal('title2'), [])
+      built = RESOURCE(literal('rtype'), bodies).model
       expect(built.class).to eq(Puppet::Pops::Model::ResourceExpression)
       expect(built.bodies.size).to eq(2)
       expect(built.bodies[0].title.value).to eq('title')
@@ -169,14 +169,14 @@ describe Puppet::Pops::Model::Factory do
     end
 
     it "should produce a collect expression" do
-      q = VIRTUAL_QUERY(fqn('a') == literal(1))
-      built = COLLECT(literal('t'), q, [ATTRIBUTE_OP('name', '=>', 3)]).model
+      q = VIRTUAL_QUERY(fqn('a').eq(literal(1)))
+      built = COLLECT(literal('t'), q, [ATTRIBUTE_OP('name', '=>', literal(3))]).model
       expect(built.class).to eq(Puppet::Pops::Model::CollectExpression)
       expect(built.operations.size).to eq(1)
     end
 
     it "should produce a collect expression without attribute operations" do
-      q = VIRTUAL_QUERY(fqn('a') == literal(1))
+      q = VIRTUAL_QUERY(fqn('a').eq(literal(1)))
       built = COLLECT(literal('t'), q, []).model
       expect(built.class).to eq(Puppet::Pops::Model::CollectExpression)
       expect(built.operations.size).to eq(0)
@@ -241,7 +241,7 @@ describe Puppet::Pops::Model::Factory do
 
   context "When processing UNLESS" do
     it "should create an UNLESS expression with then part" do
-      built = UNLESS(true, literal(1), nil).model
+      built = UNLESS(literal(true), literal(1), literal(nil)).model
       expect(built.class).to eq(Puppet::Pops::Model::UnlessExpression)
       expect(built.test.class).to eq(Puppet::Pops::Model::LiteralBoolean)
       expect(built.then_expr.class).to eq(Puppet::Pops::Model::LiteralInteger)
@@ -249,7 +249,7 @@ describe Puppet::Pops::Model::Factory do
     end
 
     it "should create an UNLESS expression with then and else parts" do
-      built = UNLESS(true, literal(1), literal(2)).model
+      built = UNLESS(literal(true), literal(1), literal(2)).model
       expect(built.class).to eq(Puppet::Pops::Model::UnlessExpression)
       expect(built.test.class).to eq(Puppet::Pops::Model::LiteralBoolean)
       expect(built.then_expr.class).to eq(Puppet::Pops::Model::LiteralInteger)
@@ -259,7 +259,7 @@ describe Puppet::Pops::Model::Factory do
 
   context "When processing IF" do
     it "should create an IF expression with then part" do
-      built = IF(true, literal(1), nil).model
+      built = IF(literal(true), literal(1), literal(nil)).model
       expect(built.class).to eq(Puppet::Pops::Model::IfExpression)
       expect(built.test.class).to eq(Puppet::Pops::Model::LiteralBoolean)
       expect(built.then_expr.class).to eq(Puppet::Pops::Model::LiteralInteger)
@@ -267,7 +267,7 @@ describe Puppet::Pops::Model::Factory do
     end
 
     it "should create an IF expression with then and else parts" do
-      built = IF(true, literal(1), literal(2)).model
+      built = IF(literal(true), literal(1), literal(2)).model
       expect(built.class).to eq(Puppet::Pops::Model::IfExpression)
       expect(built.test.class).to eq(Puppet::Pops::Model::LiteralBoolean)
       expect(built.then_expr.class).to eq(Puppet::Pops::Model::LiteralInteger)

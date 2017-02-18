@@ -84,19 +84,19 @@ module Puppet::Pops::Containment
     end
 
     def collect_getters(eclass, containments)
-        eclass.eStructuralFeatures.select {|r| r.is_a?(RGen::ECore::EReference) && r.containment}.each do |r|
-          n = r.name
-          containments << :"get#{n[0..0].upcase + ( n[1..-1] || "" )}"
+      eclass.eStructuralFeatures.select {|r| r.is_a?(RGen::ECore::EReference) && r.containment}.each do |r|
+        n = r.name
+        containments << :"get#{n[0..0].upcase + ( n[1..-1] || "" )}"
+      end
+      eclass.eSuperTypes.each do |t|
+        if cached = @@cache[ t.instanceClass ]
+          containments.concat(cached)
+        else
+          super_containments = []
+          collect_getters(t, super_containments)
+          @@cache[ t.instanceClass ] = super_containments
+          containments.concat(super_containments)
         end
-        eclass.eSuperTypes.each do |t|
-          if cached = @@cache[ t.instanceClass ]
-            containments.concat(cached)
-          else
-            super_containments = []
-            collect_getters(t, super_containments)
-            @@cache[ t.instanceClass ] = super_containments
-            containments.concat(super_containments)
-          end
       end
     end
 

@@ -1,4 +1,3 @@
-require 'rgen/ecore/ecore'
 require 'puppet/parser/scope'
 require 'puppet/pops/evaluator/compare_operator'
 require 'puppet/pops/evaluator/relationship_operator'
@@ -376,7 +375,7 @@ class EvaluatorImpl
     right = evaluate(o.right_expr, scope)
 
     begin
-      result = calculate(left, right, o.operator, o.left_expr, o.right_expr, scope)
+      result = calculate(left, right, o, scope)
     rescue ArgumentError => e
       fail(Issues::RUNTIME_ERROR, o, {:detail => e.message}, e)
     end
@@ -386,11 +385,13 @@ class EvaluatorImpl
 
   # Handles binary expression where lhs and rhs are array/hash or numeric and operator is +, - , *, % / << >>
   #
-  def calculate(left, right, operator, left_o, right_o, scope)
+  def calculate(left, right, bin_expr, scope)
+    operator = bin_expr.operator
     unless ARITHMETIC_OPERATORS.include?(operator)
-      fail(Issues::UNSUPPORTED_OPERATOR, left_o.eContainer, {:operator => o.operator})
+      fail(Issues::UNSUPPORTED_OPERATOR, bin_expr, {:operator => operator})
     end
 
+    left_o = bin_expr.left_expr
     if (left.is_a?(Array) || left.is_a?(Hash)) && COLLECTION_OPERATORS.include?(operator)
       # Handle operation on collections
       case operator
@@ -407,7 +408,7 @@ class EvaluatorImpl
     else
       # Handle operation on numeric
       left = coerce_numeric(left, left_o, scope)
-      right = coerce_numeric(right, right_o, scope)
+      right = coerce_numeric(right, bin_expr.right_expr, scope)
       begin
         if operator == '%' && (left.is_a?(Float) || right.is_a?(Float))
           # Deny users the fun of seeing severe rounding errors and confusing results
@@ -430,7 +431,7 @@ class EvaluatorImpl
       rescue NoMethodError => e
         fail(Issues::OPERATOR_NOT_APPLICABLE, left_o, {:operator => operator, :left_value => left})
       rescue ZeroDivisionError => e
-        fail(Issues::DIV_BY_ZERO, right_o)
+        fail(Issues::DIV_BY_ZERO, bin_expr.right_expr)
       end
       case result
       when Float
@@ -439,7 +440,7 @@ class EvaluatorImpl
         end
       when Integer
         if result < MIN_INTEGER || result > MAX_INTEGER
-          fail(Issues::NUMERIC_OVERFLOW, left_o.eContainer, {:value => result})
+          fail(Issues::NUMERIC_OVERFLOW, bin_expr, {:value => result})
         end
       end
       result

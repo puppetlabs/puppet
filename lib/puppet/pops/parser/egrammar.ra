@@ -66,8 +66,8 @@ rule
 # Produces [Model::Program] with a body containing what was parsed
 program
   : statements     { result = create_program(Factory.block_or_expression(*val[0])) }
-  | epp_expression { result = create_program(Factory.block_or_expression(*val[0])) }
-  |                { result = create_empty_program() }
+  | epp_expression { result = create_program(val[0]) }
+  |                { result = create_empty_program }
 
 # Produces a semantic model (non validated, but semantically adjusted).
 statements
@@ -498,8 +498,9 @@ attribute_operations
 #
 definition_expression
   : DEFINE classname parameter_list LBRACE opt_statements RBRACE {
-      result = add_definition(Factory.DEFINITION(classname(val[1][:value]), val[2], val[4]))
-      loc result, val[0], val[5]
+      definition = Factory.DEFINITION(classname(val[1][:value]), val[2], val[4])
+      loc(definition, val[0], val[5])
+      result = add_definition(definition)
       # New lexer does not keep track of this, this is done in validation
       if @lexer.respond_to?(:'indefine=')
         @lexer.indefine = false
@@ -509,8 +510,9 @@ definition_expression
 #---APPLICATION
 application_expression
   : APPLICATION classname parameter_list LBRACE opt_statements RBRACE {
-    result = add_definition(Factory.APPLICATION(classname(val[1][:value]), val[2], val[4]))
-    loc result, val[0], val[5]
+    definition = Factory.APPLICATION(classname(val[1][:value]), val[2], val[4])
+    loc(definition, val[0], val[5])
+    result = add_definition(definition)
   }
 
 capability_mapping
@@ -541,8 +543,9 @@ hostclass_expression
   : CLASS stacked_classname parameter_list classparent LBRACE opt_statements RBRACE {
       # Remove this class' name from the namestack as all nested classes have been parsed
       namepop
-      result = add_definition(Factory.HOSTCLASS(classname(val[1][:value]), val[2], token_text(val[3]), val[5]))
-      loc result, val[0], val[6]
+      definition = Factory.HOSTCLASS(classname(val[1][:value]), val[2], token_text(val[3]), val[5])
+      loc(definition, val[0], val[6])
+      result = add_definition(definition)
     }
 
   # Record the classname so nested classes gets a fully qualified name at parse-time
@@ -575,12 +578,14 @@ hostclass_expression
 #
 site_definition_expression
   : SITE LBRACE statements RBRACE {
-    result = add_definition(Factory.SITE(val[2]))
-    loc result, val[0], val[3]
+    definition = Factory.SITE(val[2])
+    loc(definition, val[0], val[3])
+    result = add_definition(definition)
     }
   | SITE LBRACE RBRACE {
-    result = add_definition(Factory.SITE(nil))
-    loc result, val[0], val[2]
+    definition = Factory.SITE(nil)
+    loc(definition, val[0], val[2])
+    result = add_definition(definition)
     }
 
 #---NODE
@@ -589,12 +594,14 @@ site_definition_expression
 #
 node_definition_expression
   : NODE hostnames endcomma nodeparent LBRACE statements RBRACE {
-      result = add_definition(Factory.NODE(val[1], val[3], val[5]))
-      loc result, val[0], val[6]
+      definition = Factory.NODE(val[1], val[3], val[5])
+      loc(definition, val[0], val[6])
+      result = add_definition(definition)
     }
   | NODE hostnames endcomma nodeparent LBRACE RBRACE {
-      result = add_definition(Factory.NODE(val[1], val[3], nil))
-      loc result, val[0], val[5]
+      definition = Factory.NODE(val[1], val[3], nil)
+      loc(definition, val[0], val[5])
+      result = add_definition(definition)
     }
 
   # Hostnames is not a list of names, it is a list of name matchers (including a Regexp).
@@ -631,13 +638,14 @@ node_definition_expression
 #
 function_definition
   : FUNCTION classname parameter_list opt_return_type LBRACE opt_statements RBRACE {
-      result = add_definition(Factory.FUNCTION(val[1][:value], val[2], val[5], val[3]))
-      loc result, val[0], val[6]
+      definition = Factory.FUNCTION(val[1][:value], val[2], val[5], val[3])
+      loc(definition, val[0], val[6])
+      result = add_definition(definition)
     }
 
 opt_return_type
-  : RSHIFT type { result = val[1] ; loc result, val[0], val[1] }
-  | RSHIFT type LBRACK expressions RBRACK { result = val[1].access(*val[3]) ; loc result, val[0], val[4] }
+  : RSHIFT type { result = val[1] }
+  | RSHIFT type LBRACK expressions RBRACK { result = val[1].access(val[3]) ; loc result, val[1], val[4] }
   | nil
 
 #---NAMES AND PARAMETERS COMMON TO SEVERAL RULES
@@ -676,7 +684,7 @@ regular_parameter
   | VARIABLE                   { result = Factory.PARAM(val[0][:value]); loc result, val[0] }
 
 splat_parameter
-  : TIMES regular_parameter { result = val[1]; val[1].captures_rest() }
+  : TIMES regular_parameter { result = val[1]; val[1].captures_rest }
 
 typed_parameter
   : parameter_type untyped_parameter { val[1].type_expr(val[0]) ; result = val[1] }
@@ -688,26 +696,36 @@ parameter_type
 #--TYPE ALIAS
 type_alias
   : TYPE parameter_type EQUALS expression {
-      result = add_definition(Factory.TYPE_ASSIGNMENT(val[1], val[3]))
-      loc(result, val[0], val[3])
+      definition = Factory.TYPE_ASSIGNMENT(val[1], val[3])
+      loc(definition, val[0], val[3])
+      result = add_definition(definition)
     }
 
 #--TYPE definition
 # TODO: Uses the optional_statements rule temporarily since the actual body awaits final spec on methods and attributes.
 type_definition
   : TYPE CLASSREF LBRACE optional_statements RBRACE {
-        result = add_definition(Factory.TYPE_DEFINITION(val[1][:value], nil, val[3]))
-        loc(result, val[0], val[4])
+        definition = Factory.TYPE_DEFINITION(val[1][:value], nil, val[3])
+        loc(definition, val[0], val[4])
+        result = add_definition(definition)
       }
   | TYPE CLASSREF INHERITS CLASSREF LBRACE optional_statements RBRACE {
-        result = add_definition(Factory.TYPE_DEFINITION(val[1][:value], val[3][:value], val[5]))
-        loc(result, val[0], val[6])
+        definition = Factory.TYPE_DEFINITION(val[1][:value], val[3][:value], val[5])
+        loc(definition, val[0], val[6])
+        result = add_definition(definition)
       }
 
 #--VARIABLE
 #
 variable
-  : VARIABLE { result = Factory.fqn(val[0][:value]).var ; loc result, val[0] }
+  : VARIABLE {
+     fqn = Factory.fqn(val[0][:value])
+     loc(fqn, val[0])
+     fqn['offset'] += 1
+     fqn['length'] -= 1
+     result = fqn.var
+     loc(result, val[0])
+  }
 
 #---RESERVED WORDS
 #
@@ -762,7 +780,7 @@ string
   : STRING  { result = Factory.literal(val[0][:value]) ; loc result, val[0] }
   | WORD    { result = Factory.literal(val[0][:value]) ; loc result, val[0] }
 
-dq_string       : dqpre dqrval           { result = Factory.string(val[0], *val[1]) ; loc result, val[0], val[1][-1] }
+dq_string       : dqpre dqrval           { result = Factory.STRING(val[0], *val[1]) ; loc result, val[0], val[1][-1] }
 dqpre           : DQPRE                  { result = Factory.literal(val[0][:value]); loc result, val[0] }
 dqpost          : DQPOST                 { result = Factory.literal(val[0][:value]); loc result, val[0] }
 dqmid           : DQMID                  { result = Factory.literal(val[0][:value]); loc result, val[0] }

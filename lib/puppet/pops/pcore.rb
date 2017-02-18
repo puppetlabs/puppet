@@ -43,15 +43,9 @@ module Pcore
     @type = create_object_type(loader, ir, Pcore, 'Pcore', nil)
 
     ir.register_implementation_namespace('Pcore', 'Puppet::Pops::Pcore', loader)
+    ir.register_implementation_namespace('Puppet::AST', 'Puppet::Pops::Model', loader)
+    ir.register_implementation('Puppet::AST::Locator', 'Puppet::Pops::Parser::Locator::Locator19', loader)
     unless for_agent
-      ir.register_implementation_namespace('Puppet::AST', 'Puppet::Pops::Model', loader)
-      ast_type_set = Serialization::RGen::TypeGenerator.new.generate_type_set('Puppet::AST', Puppet::Pops::Model, loader)
-
-      # Extend the Puppet::AST type set with the Locator (it's not an RGen class, but nevertheless, used in the model)
-      ast_ts_i12n = ast_type_set.i12n_hash
-      ast_ts_i12n['types'] = ast_ts_i12n['types'].merge('Locator' => Parser::Locator::Locator19.register_ptype(loader, ir))
-      add_type(Types::PTypeSetType.new(ast_ts_i12n), loader)
-
       Resource.register_ptypes(loader, ir)
       Lookup::Context.register_ptype(loader, ir);
     end
@@ -81,7 +75,7 @@ module Pcore
   end
 
   def self.add_object_type(name, body, loader)
-    add_type(Types::PObjectType.new(name, Parser::EvaluatingParser.new.parse_string(body).model.body), loader)
+    add_type(Types::PObjectType.new(name, Parser::EvaluatingParser.new.parse_string(body).body), loader)
   end
 
   def self.add_alias(name, type, loader, name_authority = RUNTIME_NAME_AUTHORITY)

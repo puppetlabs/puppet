@@ -23,16 +23,11 @@ class CollectorTransformer
 
     fail "Resource type #{type} doesn't exist" unless resource_type
 
-    adapter = Adapters::SourcePosAdapter.adapt(o)
-    line_num = adapter.line
-    position = adapter.pos
-    file_path = adapter.locator.file
-
     if !o.operations.empty?
       overrides = {
         :parameters => o.operations.map{ |x| @@evaluator.evaluate(x, scope)}.flatten,
-        :file       => file_path,
-        :line       => [line_num, position],
+        :file       => o.file,
+        :line       => [o.line, o.pos],
         :source     => scope.source,
         :scope      => scope
       }

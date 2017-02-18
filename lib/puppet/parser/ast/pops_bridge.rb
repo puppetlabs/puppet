@@ -207,7 +207,7 @@ class Puppet::Parser::AST::PopsBridge
 
     def instantiate_ResourceTypeDefinition(o, modname)
       instance = Puppet::Resource::Type.new(:definition, o.name, @context.merge(args_from_definition(o, modname, ExpressionSupportingReturn)))
-      Puppet::Pops::Loaders.register_runtime3_type(instance.name, Puppet::Pops::Adapters::SourcePosAdapter.adapt(o).to_uri)
+      Puppet::Pops::Loaders.register_runtime3_type(instance.name, o.locator.to_uri(o))
       instance
     end
 
@@ -269,7 +269,7 @@ class Puppet::Parser::AST::PopsBridge
 
       # Instantiate Function, and store it in the loader
       typed_name, f = Puppet::Pops::Loader::PuppetFunctionInstantiator.create_from_model(function_definition, loader)
-      loader.set_entry(typed_name, f, Puppet::Pops::Adapters::SourcePosAdapter.adapt(function_definition).to_uri)
+      loader.set_entry(typed_name, f, function_definition.locator.to_uri(function_definition))
 
       nil # do not want the function to inadvertently leak into 3x
     end

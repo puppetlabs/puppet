@@ -105,7 +105,6 @@ class Puppet::InfoService::ClassInformationService
 
   # Extracts the source for the expression
   def extract_value_source(value_expr)
-    position = Puppet::Pops::Adapters::SourcePosAdapter.adapt(value_expr)
-    position.extract_tree_text
+    value_expr.locator.extract_tree_text(value_expr)
   end
 end

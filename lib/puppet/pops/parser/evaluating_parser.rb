@@ -99,8 +99,8 @@ class EvaluatingParser
 
   def assert_and_report(parse_result)
     return nil unless parse_result
-    if parse_result.source_ref.nil? || parse_result.source_ref == ''
-      parse_result.source_ref = @file_source
+    if parse_result['source_ref'].nil? || parse_result['source_ref'] == ''
+      parse_result['source_ref'] = @file_source
     end
     validation_result = validate(parse_result.model)
 

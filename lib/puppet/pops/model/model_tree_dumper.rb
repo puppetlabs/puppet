@@ -29,6 +29,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   end
 
   def dump_Factory o
+    o['locator'] ||= Puppet::Pops::Parser::Locator.locator("<not from source>", nil)
     do_dump(o.model)
   end
 

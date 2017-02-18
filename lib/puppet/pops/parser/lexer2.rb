@@ -589,10 +589,10 @@ class Lexer2
   # overloading of = does not allow passing more than one argument).
   #
   def string=(string)
-    lex_string(string, '')
+    lex_string(string, nil)
   end
 
-  def lex_string(string, path='')
+  def lex_string(string, path=nil)
     initvars
     assert_not_bom(string)
     @scanner = StringScanner.new(string)

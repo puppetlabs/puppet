@@ -4,7 +4,7 @@ require 'puppet/pops'
 
 describe Puppet::Pops::Model do
   it "should be possible to create an instance of a model object" do
-    nop = Puppet::Pops::Model::Nop.new
+    nop = Puppet::Pops::Model::Nop.new(Puppet::Pops::Parser::Locator.locator('code', 'file'), 0, 0)
     expect(nop.class).to eq(Puppet::Pops::Model::Nop)
   end
 end

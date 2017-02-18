@@ -4,11 +4,6 @@ require 'puppet/pops'
 require 'puppet_spec/pops'
 require 'puppet_spec/scope'
 
-require 'rgen/environment'
-require 'rgen/metamodel_builder'
-require 'rgen/serializer/json_serializer'
-require 'rgen/instantiator/json_instantiator'
-
 describe "Benchmark", :benchmark => true do
   include PuppetSpec::Pops
   include PuppetSpec::Scope
@@ -28,25 +23,12 @@ $a = "interpolate ${foo} and stuff"
     alias write concat
   end
 
-  class MyJSonSerializer < RGen::Serializer::JsonSerializer
-    def attributeValue(value, a)
-      x = super
-      puts "#{a.eType} value: <<#{value}>> serialize: <<#{x}>>"
-      x
-    end
-  end
-
   def json_dump(model)
     output = StringWriter.new
-    ser = MyJSonSerializer.new(output)
-    ser.serialize(model)
+    ser = Puppet::Pops::Serialization::Serializer.new(Puppet::Pops::Serialization::JSON.writer.new(output))
+    ser.write(model)
+    ser.finish
     output
-  end
-
-  def json_load(string)
-    env = RGen::Environment.new
-    inst = RGen::Instantiator::JsonInstantiator.new(env, Puppet::Pops::Model)
-    inst.instantiate(string)
   end
 
   it "transformer", :profile => true do

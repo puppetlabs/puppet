@@ -20,8 +20,7 @@ module Puppet::Pops::Evaluator::ExternalSyntaxSupport
     # Call checker and give it the location information from the expression
     # (as opposed to where the heredoc tag is (somewhere on the line above)).
     acceptor = Puppet::Pops::Validation::Acceptor.new()
-    source_pos = Puppet::Pops::Utils.find_closest_positioned(reference_expr)
-    checker.check(result, syntax, acceptor, source_pos)
+    checker.check(result, syntax, acceptor, reference_expr)
 
     if acceptor.error_count > 0
       checker_message = "Invalid produced text having syntax: '#{syntax}'."

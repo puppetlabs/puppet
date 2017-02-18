@@ -521,7 +521,7 @@ class TypeParser
       end
 
       if type.nil?
-        TypeFactory.type_reference(original_text_of(qref.eContainer))
+        TypeFactory.type_reference(original_text_of(ast))
       elsif type.is_a?(PResourceType)
         raise_invalid_parameters_error(qref.cased_value, 1, parameters.size) unless parameters.size == 1
         TypeFactory.resource(type.type_name, parameters[0])
@@ -572,8 +572,7 @@ class TypeParser
   end
 
   def original_text_of(ast)
-    position = Adapters::SourcePosAdapter.adapt(ast)
-    position.extract_tree_text
+    ast.locator.extract_tree_text(ast)
   end
 end
 end

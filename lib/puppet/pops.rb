@@ -39,7 +39,6 @@ module Puppet
     require 'puppet/pops/label_provider'
     require 'puppet/pops/validation'
     require 'puppet/pops/issue_reporter'
-    require 'puppet/pops/model/model'
 
     require 'puppet/pops/time/timespan'
     require 'puppet/pops/time/timestamp'
@@ -52,6 +51,7 @@ module Puppet
     require 'puppet/pops/merge_strategy'
 
     module Model
+      require 'puppet/pops/model/ast'
       require 'puppet/pops/model/tree_dumper'
       require 'puppet/pops/model/ast_transformer'
       require 'puppet/pops/model/factory'
@@ -149,4 +149,6 @@ module Puppet
   require 'puppet/bindings'
   require 'puppet/functions'
   require 'puppet/loaders'
+
+  Puppet::Pops::Model.register_pcore_types
 end

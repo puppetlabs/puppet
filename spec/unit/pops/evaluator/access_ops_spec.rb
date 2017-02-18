@@ -24,7 +24,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
     # Note that the factory is not aware of Binary and cannot operate on a
     # literal binary. Instead, it must create a call to Binary.new() with the base64 encoded
     # string as an argument
-    CALL_NAMED(QREF("Binary"), true, [Base64.strict_encode64(s)])
+    CALL_NAMED(QREF("Binary"), true, [infer(Base64.strict_encode64(s))])
   end
 
   context 'The evaluator when operating on a String' do
@@ -79,7 +79,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
   context 'The evaluator when operating on an Array' do
     it 'is tested with the correct assumptions' do
-      expect(literal([1,2,3]).access(1).model.is_a?(Puppet::Pops::Model::AccessExpression)).to eql(true)
+      expect(literal([1,2,3]).access(1).model_class <= Puppet::Pops::Model::AccessExpression).to eql(true)
     end
 
     it 'can get an element using a single key index to []' do

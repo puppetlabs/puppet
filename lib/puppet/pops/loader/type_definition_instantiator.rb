@@ -51,7 +51,7 @@ class TypeDefinitionInstantiator
     loader.set_entry(
       typed_name,
       type,
-      Adapters::SourcePosAdapter.adapt(type_definition).to_uri)
+      type_definition.locator.to_uri(type_definition))
     type
   end
 

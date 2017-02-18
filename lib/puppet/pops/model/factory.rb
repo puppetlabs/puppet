@@ -9,107 +9,182 @@
 module Puppet::Pops
 module Model
 class Factory
-  attr_accessor :model
-
   # Shared build_visitor, since there are many instances of Factory being used
-  @@build_visitor = Visitor.new(self, "build")
-  @@interpolation_visitor = Visitor.new(self, "interpolate")
+
+  KEY_LENGTH = 'length'.freeze
+  KEY_OFFSET = 'offset'.freeze
+  KEY_LOCATOR = 'locator'.freeze
+  KEY_OPERATOR = 'operator'.freeze
+
+  KEY_VALUE = 'value'.freeze
+  KEY_KEYS = 'keys'.freeze
+  KEY_NAME = 'name'.freeze
+  KEY_BODY = 'body'.freeze
+  KEY_EXPR = 'expr'.freeze
+  KEY_LEFT_EXPR = 'left_expr'.freeze
+  KEY_RIGHT_EXPR = 'right_expr'.freeze
+  KEY_PARAMETERS = 'parameters'.freeze
+
+  BUILD_VISITOR = Visitor.new(self, 'build')
+  INFER_VISITOR = Visitor.new(self, 'infer')
+  INTERPOLATION_VISITOR = Visitor.new(self, 'interpolate')
+
+  def self.infer(o)
+    if o.instance_of?(Factory)
+      o
+    else
+      new(o)
+    end
+  end
+
+  attr_reader :model_class
+
+  def [](key)
+    @i12n[key]
+  end
+
+  def []=(key, value)
+    @i12n[key] = value
+  end
+
+  def all_factories(&block)
+    block.call(self)
+    @i12n.each_value { |value| value.all_factories(&block) if value.instance_of?(Factory) }
+  end
+
+  def model
+    if @current.nil?
+      # Assign a default Locator if it's missing. Should only happen when the factory is used by other
+      # means than from a parser (e.g. unit tests)
+      unless @i12n.include?(KEY_LOCATOR)
+        @i12n[KEY_LOCATOR] = Parser::Locator.locator('<no source>', 'no file')
+        unless @model_class <= Program
+          @i12n[KEY_OFFSET] = 0
+          @i12n[KEY_LENGTH] = 0
+        end
+      end
+      @current = create_model
+    end
+    @current
+  end
+
+  # Backward API compatibility
+  alias current model
+
+  def create_model
+    @i12n.each_pair { |key, elem| @i12n[key] = factory_to_model(elem) }
+    model_class.from_asserted_hash(@i12n)
+  end
 
   # Initialize a factory with a single object, or a class with arguments applied to build of
   # created instance
   #
   def initialize(o, *args)
-    @model = if o.instance_of?(Class)
-      @@build_visitor.visit_this(self, o.new, args)
-    elsif o.is_a?(PopsObject)
-      o
-    elsif o.instance_of?(Factory)
-      o.model
+    @i12n = {}
+    if o.instance_of?(Class)
+      @model_class = o
+      BUILD_VISITOR.visit_this_class(self, o, args)
     else
-      @@build_visitor.visit_this(self, o, args)
+      INFER_VISITOR.visit_this(self, o, EMPTY_ARRAY)
     end
-  end
-
-  # Polymorphic build
-  def build(o, *args)
-    @@build_visitor.visit_this(self, o, args)
   end
 
   # Polymorphic interpolate
   def interpolate()
-    @@interpolation_visitor.visit_this_0(self, model)
+    INTERPOLATION_VISITOR.visit_this_class(self, @model_class, EMPTY_ARRAY)
   end
 
   # Building of Model classes
 
   def build_Application(o, n, ps, body)
-    o.name = n
-    ps.each { |p| o.addParameters(build(p)) }
+    @i12n[KEY_NAME] = n
+    @i12n[KEY_PARAMETERS] = ps
     b = f_build_body(body)
-    o.body = b.model if b
-    o
+    @i12n[KEY_BODY] = b unless b.nil?
   end
 
   def build_ArithmeticExpression(o, op, a, b)
-    o.operator = op
+    @i12n[KEY_OPERATOR] = op
     build_BinaryExpression(o, a, b)
   end
 
   def build_AssignmentExpression(o, op, a, b)
-    o.operator = op
+    @i12n[KEY_OPERATOR] = op
     build_BinaryExpression(o, a, b)
   end
 
   def build_AttributeOperation(o, name, op, value)
-    o.operator = op
-    o.attribute_name = name.to_s # BOOLEAN is allowed in the grammar
-    o.value_expr = build(value)
-    o
+    @i12n[KEY_OPERATOR] = op
+    @i12n['attribute_name'] = name.to_s # BOOLEAN is allowed in the grammar
+    @i12n['value_expr'] = value
   end
 
   def build_AttributesOperation(o, value)
-    o.expr = build(value)
-    o
+    @i12n[KEY_EXPR] = value
   end
 
-  def build_AccessExpression(o, left, *keys)
-    o.left_expr = to_ops(left)
-    o.keys = keys.map {|expr| to_ops(expr) }
-    o
+  def build_AccessExpression(o, left, keys)
+    @i12n[KEY_LEFT_EXPR] = left
+    @i12n[KEY_KEYS] = keys
   end
 
   def build_BinaryExpression(o, left, right)
-    o.left_expr = to_ops(left)
-    o.right_expr = to_ops(right)
-    o
+    @i12n[KEY_LEFT_EXPR] = left
+    @i12n[KEY_RIGHT_EXPR] = right
   end
 
-  def build_BlockExpression(o, *args)
-    o.statements = args.map {|expr| to_ops(expr) }
-    o
+  def build_BlockExpression(o, args)
+    @i12n['statements'] = args
+  end
+
+  def build_EppExpression(o, parameters_specified, body)
+    @i12n['parameters_specified'] = parameters_specified
+    b = f_build_body(body)
+    @i12n[KEY_BODY] = b unless b.nil?
+  end
+
+  # @param rval_required [Boolean] if the call must produce a value
+  def build_CallExpression(o, functor, rval_required, args)
+    @i12n['functor_expr'] = functor
+    @i12n['rval_required'] = rval_required
+    @i12n['arguments'] = args
+  end
+
+  def build_CallMethodExpression(o, functor, rval_required, lambda, args)
+    build_CallExpression(o, functor, rval_required, args)
+    @i12n['lambda'] = lambda
+  end
+
+  def build_CaseExpression(o, test, args)
+    @i12n['test'] = test
+    @i12n['options'] = args
+  end
+
+  def build_CaseOption(o, value_list, then_expr)
+    value_list = [value_list] unless value_list.is_a?(Array)
+    @i12n['values'] = value_list
+    b = f_build_body(then_expr)
+    @i12n['then_expr'] = b unless b.nil?
   end
 
   def build_CollectExpression(o, type_expr, query_expr, attribute_operations)
-    o.type_expr = to_ops(type_expr)
-    o.query = build(query_expr)
-    o.operations = attribute_operations.map {|op| build(op) }
-    o
+    @i12n['type_expr'] = type_expr
+    @i12n['query'] = query_expr
+    @i12n['operations'] = attribute_operations
   end
 
   def build_ComparisonExpression(o, op, a, b)
-    o.operator = op
+    @i12n[KEY_OPERATOR] = op
     build_BinaryExpression(o, a, b)
   end
 
-  def build_ConcatenatedString(o, *args)
-    o.segments = args.map {|expr| build(expr) }
-    o
+  def build_ConcatenatedString(o, args)
+    @i12n['segments'] = args
   end
 
   def build_HeredocExpression(o, name, expr)
-    o.syntax = name
-    o.text_expr = build(expr)
-    o
+    @i12n['syntax'] = name
+    @i12n['text_expr'] = expr
   end
 
   # @param name [String] a valid classname
@@ -120,191 +195,213 @@ class Factory
   #
   def build_HostClassDefinition(o, name, parameters, parent_class_name, body)
     build_NamedDefinition(o, name, parameters, body)
-    o.parent_class = parent_class_name if parent_class_name
-    o
+    @i12n['parent_class'] = parent_class_name unless parent_class_name.nil?
   end
 
   def build_ResourceOverrideExpression(o, resources, attribute_operations)
-    o.resources = build(resources)
-    o.operations = attribute_operations.map {|ao| build(ao) }
-    o
+    @i12n['resources'] = resources
+    @i12n['operations'] = attribute_operations
   end
 
   def build_ReservedWord(o, name, future)
-    o.word = name
-    o.future = future
-    o
+    @i12n['word'] = name
+    @i12n['future'] = future
   end
 
   def build_KeyedEntry(o, k, v)
-    o.key = to_collection_entry(to_ops(k))
-    o.value = to_collection_entry(to_ops(v))
-    o
+    @i12n['key'] = k
+    @i12n[KEY_VALUE] = v
   end
 
-  def build_LiteralHash(o, *keyed_entries)
-    o.entries = keyed_entries.map {|entry| build(entry) }
-    o
+  def build_LiteralHash(o, keyed_entries)
+    @i12n['entries'] = keyed_entries
   end
 
-  def to_collection_entry(o)
-    if o.is_a?(Model::ReservedWord)
-      case o.word
-      when 'application', 'site', 'produces', 'consumes'
-        build(o.word)
-      else
-        o
-      end
-    else
-      o
-    end
-  end
-
-  def build_LiteralList(o, *values)
-    o.values = values.map {|v| to_collection_entry(build(v)) }
-    o
+  def build_LiteralList(o, values)
+    @i12n['values'] = values
   end
 
   def build_LiteralFloat(o, val)
-    o.value = val
-    o
+    @i12n[KEY_VALUE] = val
   end
 
   def build_LiteralInteger(o, val, radix)
-    o.value = val
-    o.radix = radix
-    o
+    @i12n[KEY_VALUE] = val
+    @i12n['radix'] = radix
+  end
+
+  def build_LiteralString(o, value)
+    @i12n[KEY_VALUE] = val
   end
 
   def build_IfExpression(o, t, ift, els)
-    o.test = build(t)
-    o.then_expr = build(ift)
-    o.else_expr= build(els)
-    o
+    @i12n['test'] = t
+    @i12n['then_expr'] = ift
+    @i12n['else_expr'] = els
   end
 
   def build_MatchExpression(o, op, a, b)
-    o.operator = op
+    @i12n[KEY_OPERATOR] = op
     build_BinaryExpression(o, a, b)
   end
 
-  # Builds body :) from different kinds of input
-  # @overload f_build_body(nothing)
-  #   @param nothing [nil] unchanged, produces nil
-  # @overload f_build_body(array)
-  #   @param array [Array<Expression>] turns into a BlockExpression
-  # @overload f_build_body(expr)
-  #   @param expr [Expression] produces the given expression
-  # @overload f_build_body(obj)
-  #   @param obj [Object] produces the result of calling #build with body as argument
+  # Building model equivalences of Ruby objects
+  # Allows passing regular ruby objects to the factory to produce instructions
+  # that when evaluated produce the same thing.
+
+  def infer_String(o)
+    @model_class = LiteralString
+    @i12n[KEY_VALUE] = o
+  end
+
+  def infer_NilClass(o)
+    @model_class = Nop
+  end
+
+  def infer_TrueClass(o)
+    @model_class = LiteralBoolean
+    @i12n[KEY_VALUE] = o
+  end
+
+  def infer_FalseClass(o)
+    @model_class = LiteralBoolean
+    @i12n[KEY_VALUE] = o
+  end
+
+  def infer_Integer(o)
+    @model_class = LiteralInteger
+    @i12n[KEY_VALUE] = o
+  end
+
+  def infer_Float(o)
+    @model_class = LiteralFloat
+    @i12n[KEY_VALUE] = o
+  end
+
+  def infer_Regexp(o)
+    @model_class = LiteralRegularExpression
+    @i12n['pattern'] = o.inspect
+    @i12n[KEY_VALUE] = o
+  end
+
+  # Creates a String literal, unless the symbol is one of the special :undef, or :default
+  # which instead creates a LiterlUndef, or a LiteralDefault.
+  # Supports :undef because nil creates a no-op instruction.
+  def infer_Symbol(o)
+    case o
+    when :undef
+      @model_class = LiteralUndef
+    when :default
+      @model_class = LiteralDefault
+    else
+      infer_String(o.to_s)
+    end
+  end
+
+  # Creates a LiteralList instruction from an Array, where the entries are built.
+  def infer_Array(o)
+    @model_class = LiteralList
+    @i12n['values'] = o.map { |e| Factory.infer(e) }
+  end
+
+  # Create a LiteralHash instruction from a hash, where keys and values are built
+  # The hash entries are added in sorted order based on key.to_s
+  #
+  def infer_Hash(o)
+    @model_class = LiteralHash
+    @i12n['entries'] = o.sort_by { |k,_| k.to_s }.map { |k, v| Factory.new(KeyedEntry, Factory.infer(k), Factory.infer(v)) }
+  end
+
   def f_build_body(body)
     case body
     when NilClass
       nil
     when Array
-      Factory.new(BlockExpression, *body)
+      Factory.new(BlockExpression, body)
+    when Factory
+      body
     else
-      build(body)
+      Factory.infer(body)
     end
   end
 
   def build_LambdaExpression(o, parameters, body, return_type)
-    o.parameters = parameters.map {|p| build(p) }
+    @i12n[KEY_PARAMETERS] = parameters
     b = f_build_body(body)
-    o.body = to_ops(b) if b
-    o.return_type = to_ops(return_type) unless return_type.nil?
-    o
+    @i12n[KEY_BODY] = b unless b.nil?
+    @i12n['return_type'] = return_type unless return_type.nil?
   end
 
   def build_NamedDefinition(o, name, parameters, body)
-    o.parameters = parameters.map {|p| build(p) }
+    @i12n[KEY_PARAMETERS] = parameters
     b = f_build_body(body)
-    o.body = b.model if b
-    o.name = name
-    o
+    @i12n[KEY_BODY] = b unless b.nil?
+    @i12n[KEY_NAME] = name
   end
 
   def build_FunctionDefinition(o, name, parameters, body, return_type)
-    o.parameters = parameters.map {|p| build(p) }
+    @i12n[KEY_PARAMETERS] = parameters
     b = f_build_body(body)
-    o.body = b.model if b
-    o.name = name
-    o.return_type = to_ops(return_type) unless return_type.nil?
-    o
+    @i12n[KEY_BODY] = b unless b.nil?
+    @i12n[KEY_NAME] = name
+    @i12n['return_type'] = return_type unless return_type.nil?
   end
 
   def build_CapabilityMapping(o, kind, component, capability, mappings)
-    o.kind = kind
-    component = component.model if component.instance_of?(Factory)
-    o.component = component
-    o.capability = capability
-    o.mappings = mappings.map { |m| build(m) }
-    o
+    @i12n['kind'] = kind
+    @i12n['component'] = component
+    @i12n['capability'] = capability
+    @i12n['mappings'] = mappings
   end
 
-  # @param o [NodeDefinition]
-  # @param hosts [Array<Expression>] host matches
-  # @param parent [Expression] parent node matcher
-  # @param body [Object] see {#f_build_body}
   def build_NodeDefinition(o, hosts, parent, body)
-    o.host_matches = hosts.map {|h| build(h) }
-    o.parent = build(parent) if parent # no nop here
+    @i12n['host_matches'] = hosts
+    @i12n['parent'] = parent unless parent.nil? # no nop here
     b = f_build_body(body)
-    o.body = b.model if b
-    o
+    @i12n[KEY_BODY] = b unless b.nil?
   end
 
-  # @param o [SiteDefinition]
-  # @param body [Object] see {#f_build_body}
   def build_SiteDefinition(o, body)
     b = f_build_body(body)
-    o.body = b.model if b
-    o
+    @i12n[KEY_BODY] = b unless b.nil?
   end
 
   def build_Parameter(o, name, expr)
-    o.name = name
-    o.value = build(expr) if expr # don't build a nil/nop
-    o
+    @i12n[KEY_NAME] = name
+    @i12n[KEY_VALUE] = expr
   end
 
   def build_QualifiedReference(o, name)
-    o.cased_value = name.to_s
-    o
+    @i12n['cased_value'] = name.to_s
   end
 
   def build_RelationshipExpression(o, op, a, b)
-    o.operator = op
+    @i12n[KEY_OPERATOR] = op
     build_BinaryExpression(o, a, b)
   end
 
   def build_ResourceExpression(o, type_name, bodies)
-    o.type_name = build(type_name)
-    o.bodies = bodies.map {|b| build(b) }
-    o
+    @i12n['type_name'] = type_name
+    @i12n['bodies'] = bodies
   end
 
   def build_RenderStringExpression(o, string)
-    o.value = string;
-    o
+    @i12n[KEY_VALUE] = string;
   end
 
   def build_ResourceBody(o, title_expression, attribute_operations)
-    o.title = build(title_expression)
-    o.operations = attribute_operations.map {|ao| build(ao) }
-    o
+    @i12n['title'] = title_expression
+    @i12n['operations'] = attribute_operations
   end
 
   def build_ResourceDefaultsExpression(o, type_ref, attribute_operations)
-    o.type_ref = build(type_ref)
-    o.operations = attribute_operations.map {|ao| build(ao) }
-    o
+    @i12n['type_ref'] = type_ref
+    @i12n['operations'] = attribute_operations
   end
 
   def build_SelectorExpression(o, left, *selectors)
-    o.left_expr = to_ops(left)
-    o.selectors = selectors.map {|s| build(s) }
-    o
+    @i12n[KEY_LEFT_EXPR] = left
+    @i12n['selectors'] = selectors
   end
 
   # Builds a SubLocatedExpression - this wraps the expression in a sublocation configured
@@ -313,70 +410,56 @@ class Factory
   # to what it describes.
   #
   def build_SubLocatedExpression(o, token, expression)
-    o.expr = build(expression)
-    o.offset = token.offset
-    o.length =  token.length
+    @i12n[KEY_EXPR] = expression
+    @i12n[KEY_OFFSET] = token.offset
+    @i12n[KEY_LENGTH] =  token.length
     locator = token.locator
-    o.locator = locator
-    o.leading_line_count = locator.leading_line_count
-    o.leading_line_offset = locator.leading_line_offset
+    @i12n[KEY_LOCATOR] = locator
+    @i12n['leading_line_count'] = locator.leading_line_count
+    @i12n['leading_line_offset'] = locator.leading_line_offset
     # Index is held in sublocator's parent locator - needed to be able to reconstruct
-    o.line_offsets = locator.locator.line_index
-    o
+    @i12n['line_offsets'] = locator.locator.line_index
   end
 
   def build_SelectorEntry(o, matching, value)
-    o.matching_expr = build(matching)
-    o.value_expr = build(value)
-    o
+    @i12n['matching_expr'] = matching
+    @i12n['value_expr'] = value
   end
 
   def build_QueryExpression(o, expr)
-    ops = to_ops(expr)
-    o.expr = ops unless Factory.nop? ops
-    o
+    @i12n[KEY_EXPR] = expr unless Factory.nop?(expr)
   end
 
   def build_TypeAlias(o, name, type_expr)
-    o.type_expr = to_ops(type_expr)
-    o.name = to_ops(name).cased_value
-    o
+    @i12n['type_expr'] = type_expr
+    @i12n[KEY_NAME] = name
   end
 
   def build_TypeMapping(o, lhs, rhs)
-    o.type_expr = to_ops(lhs)
-    o.mapping_expr = to_ops(rhs)
-    o
+    @i12n['type_expr'] = lhs
+    @i12n['mapping_expr'] = rhs
   end
 
   def build_TypeDefinition(o, name, parent, body)
     b = f_build_body(body)
-    o.body = b.model if b
-    o.parent = parent
-    o.name = name
-    o
+    @i12n[KEY_BODY] = b unless b.nil?
+    @i12n['parent'] = parent
+    @i12n[KEY_NAME] = name
   end
 
   def build_UnaryExpression(o, expr)
-    ops = to_ops(expr)
-    o.expr = ops unless Factory.nop? ops
-    o
+    @i12n[KEY_EXPR] = expr unless Factory.nop?(expr)
   end
 
   def build_Program(o, body, definitions, locator)
-    o.body = to_ops(body)
+    @i12n[KEY_BODY] = body
     # non containment
-    o.definitions = definitions
-    o.source_ref = locator.file
-    o.source_text = locator.string
-    o.line_offsets = locator.line_index
-    o.locator = locator
-    o
+    @i12n['definitions'] = definitions
+    @i12n[KEY_LOCATOR] = locator
   end
 
   def build_QualifiedName(o, name)
-    o.value = name.to_s
-    o
+    @i12n[KEY_VALUE] = name
   end
 
   def build_TokenValue(o)
@@ -385,53 +468,49 @@ class Factory
 
   # Factory helpers
   def f_build_unary(klazz, expr)
-    Factory.new(build(klazz, expr))
+    Factory.new(klazz, expr)
   end
 
   def f_build_binary_op(klazz, op, left, right)
-    Factory.new(build(klazz, op, left, right))
+    Factory.new(klazz, op, left, right)
   end
 
   def f_build_binary(klazz, left, right)
-    Factory.new(build(klazz, left, right))
-  end
-
-  def f_build_vararg(klazz, left, *arg)
-    Factory.new(build(klazz, left, *arg))
+    Factory.new(klazz, left, right)
   end
 
   def f_arithmetic(op, r)
-    f_build_binary_op(ArithmeticExpression, op, model, r)
+    f_build_binary_op(ArithmeticExpression, op, self, r)
   end
 
   def f_comparison(op, r)
-    f_build_binary_op(ComparisonExpression, op, model, r)
+    f_build_binary_op(ComparisonExpression, op, self, r)
   end
 
   def f_match(op, r)
-    f_build_binary_op(MatchExpression, op, model, r)
+    f_build_binary_op(MatchExpression, op, self, r)
   end
 
   # Operator helpers
-  def in(r)     f_build_binary(InExpression, model, r);          end
+  def in(r)     f_build_binary(InExpression, self, r);          end
 
-  def or(r)     f_build_binary(OrExpression, model, r);          end
+  def or(r)     f_build_binary(OrExpression, self, r);          end
 
-  def and(r)    f_build_binary(AndExpression, model, r);         end
+  def and(r)    f_build_binary(AndExpression, self, r);         end
 
-  def not();    f_build_unary(NotExpression, self);                end
+  def not();    f_build_unary(NotExpression, self);             end
 
-  def minus();  f_build_unary(UnaryMinusExpression, self);         end
+  def minus();  f_build_unary(UnaryMinusExpression, self);      end
 
-  def unfold(); f_build_unary(UnfoldExpression, self);             end
+  def unfold(); f_build_unary(UnfoldExpression, self);          end
 
-  def text();   f_build_unary(TextExpression, self);               end
+  def text();   f_build_unary(TextExpression, self);            end
 
-  def var();    f_build_unary(VariableExpression, self);           end
+  def var();    f_build_unary(VariableExpression, self);        end
 
-  def access(*r);   f_build_vararg(AccessExpression, model, *r);     end
+  def access(*r); f_build_binary(AccessExpression, self, r.map { |arg| Factory.infer(arg) }); end
 
-  def dot r;    f_build_binary(NamedAccessExpression, model, r); end
+  def dot r;    f_build_binary(NamedAccessExpression, self, r); end
 
   def + r;      f_arithmetic('+', r);                           end
 
@@ -463,94 +542,73 @@ class Factory
 
   def mne r;    f_match('!~', r);                               end
 
-  def paren();  f_build_unary(ParenthesizedExpression, model);   end
+  def paren;    f_build_unary(ParenthesizedExpression, self);   end
 
-  def relop op, r
-    f_build_binary_op(RelationshipExpression, op, model, r)
+  def relop(op, r)
+    f_build_binary_op(RelationshipExpression, op, self, r)
   end
 
-  def select *args
-    Factory.new(build(SelectorExpression, model, *args))
+  def select(*args)
+    Factory.new(SelectorExpression, self, *args)
   end
 
   # For CaseExpression, setting the default for an already build CaseExpression
-  def default r
-    model.addOptions(Factory.WHEN(:default, r).model)
+  def default(r)
+    @i12n['options'] << Factory.WHEN(Factory.infer(:default), r)
     self
   end
 
   def lambda=(lambda)
-    model.lambda = lambda.model
+    @i12n['lambda'] = lambda
     self
   end
 
   # Assignment =
   def set(r)
-    f_build_binary_op(AssignmentExpression, '=', model, r)
+    f_build_binary_op(AssignmentExpression, '=', self, r)
   end
 
   # Assignment +=
   def plus_set(r)
-    f_build_binary_op(AssignmentExpression, '+=', model, r)
+    f_build_binary_op(AssignmentExpression, '+=', self, r)
   end
 
   # Assignment -=
   def minus_set(r)
-    f_build_binary_op(AssignmentExpression, '-=', model, r)
+    f_build_binary_op(AssignmentExpression, '-=', self, r)
   end
 
   def attributes(*args)
-    args.each {|a| model.addAttributes(build(a)) }
+    @i12n['attributes'] = args
     self
   end
 
-  # Catch all delegation to model
-  def method_missing(meth, *args, &block)
-    if model.respond_to?(meth)
-      model.send(meth, *args, &block)
-    else
-      super
-    end
-  end
-
-  def respond_to?(meth, include_all=false)
-    model.respond_to?(meth, include_all) || super
-  end
-
-  def self.record_position(o, start_locatable, end_locateable)
-    new(o).record_position(start_locatable, end_locateable)
-  end
-
   def offset
-    @model.offset
+    @i12n[KEY_OFFSET]
   end
 
   def length
-    @model.length
+    @i12n[KEY_LENGTH]
   end
 
   # Records the position (start -> end) and computes the resulting length.
   #
-  def record_position(start_locatable, end_locatable)
+  def record_position(locator, start_locatable, end_locatable)
     # record information directly in the Positioned object
     start_offset = start_locatable.offset
-    @model.set_loc(start_offset, end_locatable ? end_locatable.offset - start_offset + end_locatable.length : start_locatable.length)
+    @i12n[KEY_LOCATOR] = locator
+    @i12n[KEY_OFFSET] = start_offset
+    @i12n[KEY_LENGTH] = end_locatable.nil? ? start_locatable.length : end_locatable.offset + end_locatable.length - start_offset
     self
-  end
-
-  # @return [Puppet::Pops::Adapters::SourcePosAdapter] with location information
-  def loc()
-    Adapters::SourcePosAdapter.adapt(model)
   end
 
   # Sets the form of the resource expression (:regular (the default), :virtual, or :exported).
   # Produces true if the expression was a resource expression, false otherwise.
   #
   def self.set_resource_form(expr, form)
-    expr = expr.model if expr.instance_of?(Factory)
     # Note: Validation handles illegal combinations
-    return false unless expr.is_a?(AbstractResource)
-    expr.form = form
+    return false unless expr.instance_of?(self) && expr.model_class <= AbstractResource
+    expr['form'] = form
     return true
   end
 
@@ -562,99 +620,102 @@ class Factory
   # * _any other_ => ':error', all other are considered illegal
   #
   def self.resource_shape(expr)
-    expr = expr.model if expr.instance_of?(Factory)
-    case expr
-    when QualifiedName
-      :resource
-    when QualifiedReference
-      :defaults
-    when AccessExpression
-      # if Resource[e], then it is not resource specific
-      if expr.left_expr.is_a?(QualifiedReference) && expr.left_expr.value == 'resource' && expr.keys.size == 1
-        :defaults
-      else
-        :override
-      end
-    when 'class'
+    if expr == 'class'
       :class
+    elsif expr.instance_of?(self)
+      mc = expr.model_class
+      if mc <= QualifiedName
+        :resource
+      elsif mc <= QualifiedReference
+        :defaults
+      elsif mc <= AccessExpression
+        # if Resource[e], then it is not resource specific
+        lhs = expr[KEY_LEFT_EXPR]
+        if lhs.model_class <= QualifiedReference && lhs[KEY_VALUE] == 'resource' && expr[KEY_KEYS].size == 1
+          :defaults
+        else
+          :override
+        end
+      else
+        :error
+      end
     else
       :error
     end
   end
+
   # Factory starting points
 
-  def self.literal(o);                   new(o);                                                 end
+  def self.literal(o);                   infer(o);                                       end
 
-  def self.minus(o);                     new(o).minus;                                           end
+  def self.minus(o);                     infer(o).minus;                                 end
 
-  def self.unfold(o);                    new(o).unfold;                                          end
+  def self.unfold(o);                    infer(o).unfold;                                end
 
-  def self.var(o);                       new(o).var;                                             end
+  def self.var(o);                       infer(o).var;                                   end
 
-  def self.block(*args);                 new(BlockExpression, *args);                     end
+  def self.block(*args);                 new(BlockExpression, args.map { |arg| infer(arg) }); end
 
-  def self.string(*args);                new(ConcatenatedString, *args);                  end
+  def self.string(*args);                new(ConcatenatedString, args.map { |arg| infer(arg) });           end
 
-  def self.text(o);                      new(o).text;                                            end
+  def self.text(o);                      infer(o).text;                                  end
 
-  def self.IF(test_e,then_e,else_e);     new(IfExpression, test_e, then_e, else_e);       end
+  def self.IF(test_e,then_e,else_e);     new(IfExpression, test_e, then_e, else_e);      end
 
-  def self.UNLESS(test_e,then_e,else_e); new(UnlessExpression, test_e, then_e, else_e);   end
+  def self.UNLESS(test_e,then_e,else_e); new(UnlessExpression, test_e, then_e, else_e);  end
 
-  def self.CASE(test_e,*options);        new(CaseExpression, test_e, *options);           end
+  def self.CASE(test_e,*options);        new(CaseExpression, test_e, options);           end
 
-  def self.WHEN(values_list, block);     new(CaseOption, values_list, block);             end
+  def self.WHEN(values_list, block);     new(CaseOption, values_list, block);            end
 
-  def self.MAP(match, value);            new(SelectorEntry, match, value);                end
+  def self.MAP(match, value);            new(SelectorEntry, match, value);               end
 
-  def self.KEY_ENTRY(key, val);          new(KeyedEntry, key, val);                       end
+  def self.KEY_ENTRY(key, val);          new(KeyedEntry, key, val);                      end
 
-  def self.HASH(entries);                new(LiteralHash, *entries);                      end
+  def self.HASH(entries);                new(LiteralHash, entries);                      end
 
-  def self.HEREDOC(name, expr);          new(HeredocExpression, name, expr);              end
+  def self.HEREDOC(name, expr);          new(HeredocExpression, name, expr);             end
 
-  def self.SUBLOCATE(token, expr)        new(SubLocatedExpression, token, expr);          end
+  def self.STRING(*args);                new(ConcatenatedString, args);                  end
 
-  def self.LIST(entries);                new(LiteralList, *entries);                      end
+  def self.SUBLOCATE(token, expr)        new(SubLocatedExpression, token, expr);         end
 
-  def self.PARAM(name, expr=nil);        new(Parameter, name, expr);                      end
+  def self.LIST(entries);                new(LiteralList, entries);                      end
 
-  def self.NODE(hosts, parent, body);    new(NodeDefinition, hosts, parent, body);        end
+  def self.PARAM(name, expr=nil);        new(Parameter, name, expr);                     end
 
-  def self.SITE(body);                   new(SiteDefinition, body);                       end
+  def self.NODE(hosts, parent, body);    new(NodeDefinition, hosts, parent, body);       end
+
+  def self.SITE(body);                   new(SiteDefinition, body);                      end
 
   # Parameters
 
   # Mark parameter as capturing the rest of arguments
-  def captures_rest()
-    model.captures_rest = true
+  def captures_rest
+    @i12n['captures_rest'] = true
   end
 
   # Set Expression that should evaluate to the parameter's type
   def type_expr(o)
-    model.type_expr = to_ops(o)
+    @i12n['type_expr'] = o
   end
 
   # Creates a QualifiedName representation of o, unless o already represents a QualifiedName in which
   # case it is returned.
   #
   def self.fqn(o)
-    o = o.model if o.instance_of?(Factory)
-    o = new(QualifiedName, o) unless o.is_a? QualifiedName
-    o
+    o.instance_of?(Factory) && o.model_class <= QualifiedName ? self : new(QualifiedName, o)
   end
 
   # Creates a QualifiedName representation of o, unless o already represents a QualifiedName in which
   # case it is returned.
   #
   def self.fqr(o)
-    o = o.model if o.instance_of?(Factory)
-    o = new(QualifiedReference, o) unless o.is_a? QualifiedReference
-    o
+    o.instance_of?(Factory) && o.model_class <= QualifiedReference ? self : new(QualifiedReference, o)
   end
 
   def self.TEXT(expr)
-    new(TextExpression, new(expr).interpolate)
+    new(TextExpression, infer(expr).interpolate)
   end
 
   # TODO_EPP
@@ -737,15 +798,17 @@ class Factory
     new(AttributesOperation, expr)
   end
 
+  # Same as CALL_NAMED but with inference and varargs (for testing purposes)
+  def self.call_named(name, rval_required, *argument_list)
+    new(CallNamedFunctionExpression, fqn(name), rval_required, argument_list.map { |arg| infer(arg) })
+  end
+
   def self.CALL_NAMED(name, rval_required, argument_list)
-    unless name.kind_of?(PopsObject)
-      name = Factory.fqn(name) unless name.instance_of?(Factory)
-    end
-    new(CallNamedFunctionExpression, name, rval_required, *argument_list)
+    new(CallNamedFunctionExpression, name, rval_required, argument_list)
   end
 
   def self.CALL_METHOD(functor, argument_list)
-    new(CallMethodExpression, functor, true, nil, *argument_list)
+    new(CallMethodExpression, functor, true, nil, argument_list)
   end
 
   def self.COLLECT(type_expr, query_expr, attribute_operations)
@@ -778,11 +841,7 @@ class Factory
 
   # Builds a BlockExpression if args size > 1, else the single expression/value in args
   def self.block_or_expression(*args)
-    if args.size > 1
-      new(BlockExpression, *args)
-    else
-      new(args[0])
-    end
+    args.size > 1 ? new(BlockExpression, args) : args[0]
   end
 
   def self.HOSTCLASS(name, parameters, parent, body)
@@ -810,10 +869,10 @@ class Factory
   end
 
   def self.TYPE_ASSIGNMENT(lhs, rhs)
-    if lhs.model.is_a?(AccessExpression)
+    if lhs.model_class <= AccessExpression
       new(TypeMapping, lhs, rhs)
     else
-      new(TypeAlias, lhs, rhs)
+      new(TypeAlias, lhs['cased_value'], rhs)
     end
   end
 
@@ -822,7 +881,7 @@ class Factory
   end
 
   def self.nop? o
-    o.nil? || o.is_a?(Nop)
+    o.nil? || o.instance_of?(Factory) && o.model_class <= Nop
   end
 
   STATEMENT_CALLS = {
@@ -843,12 +902,13 @@ class Factory
     'break'   => true,
     'next'    => true,
     'return'  => true
-  }
+  }.freeze
+
   # Returns true if the given name is a "statement keyword" (require, include, contain,
   # error, notice, info, debug
   #
-  def name_is_statement(name)
-    STATEMENT_CALLS[name]
+  def self.name_is_statement?(name)
+    STATEMENT_CALLS.include?(name)
   end
 
   class ArgsToNonCallError < RuntimeError
@@ -864,17 +924,16 @@ class Factory
   #
   def self.transform_calls(expressions)
     expressions.reduce([]) do |memo, expr|
-      expr = expr.model if expr.instance_of?(Factory)
       name = memo[-1]
-      if name.is_a?(QualifiedName) && STATEMENT_CALLS[name.value]
+      if name.instance_of?(Factory) && name.model_class <= QualifiedName && name_is_statement?(name[KEY_VALUE])
         if expr.is_a?(Array)
-          expr = expr.reject {|e| e.is_a?(Parser::LexerSupport::TokenValue) }
+          expr = expr.reject { |e| e.is_a?(Parser::LexerSupport::TokenValue) }
         else
           expr = [expr]
         end
-        the_call = Factory.CALL_NAMED(name, false, expr)
+        the_call = self.CALL_NAMED(name, false, expr)
         # last positioned is last arg if there are several
-        record_position(the_call, name, expr.is_a?(Array) ? expr[-1]  : expr)
+        the_call.record_position(name[KEY_LOCATOR], name, expr[-1])
         memo[-1] = the_call
         if expr.is_a?(CallNamedFunctionExpression)
           # Patch statement function call to expression style
@@ -886,15 +945,14 @@ class Factory
         raise ArgsToNonCallError.new(expr, name)
       else
         memo << expr
-        if expr.is_a?(CallNamedFunctionExpression)
+        if expr.model_class <= CallNamedFunctionExpression
           # Patch rvalue expression function call to statement style.
           # This is not really required but done to be AST model compliant
-          expr.rval_required = false
+          expr['rval_required'] = false
         end
       end
       memo
     end
-
   end
 
   # Transforms a left expression followed by an untitled resource (in the form of attribute_operations)
@@ -902,223 +960,113 @@ class Factory
   def self.transform_resource_wo_title(left, attribute_ops, lbrace_token, rbrace_token)
     # Returning nil means accepting the given as a potential resource expression
     return nil unless attribute_ops.is_a? Array
-    return nil unless left.model.is_a?(QualifiedName)
+    return nil unless left.model_class <= QualifiedName
     keyed_entries = attribute_ops.map do |ao|
-      return nil if ao.operator == '+>'
-      KEY_ENTRY(ao.attribute_name, ao.value_expr)
+      return nil if ao[KEY_OPERATOR] == '+>'
+      KEY_ENTRY(infer(ao['attribute_name']), ao['value_expr'])
     end
     a_hash = HASH(keyed_entries)
-    a_hash.record_position(lbrace_token, rbrace_token)
+    a_hash.record_position(left[KEY_LOCATOR], lbrace_token, rbrace_token)
     result = block_or_expression(*transform_calls([left, a_hash]))
     result
   end
 
-
-  # Building model equivalences of Ruby objects
-  # Allows passing regular ruby objects to the factory to produce instructions
-  # that when evaluated produce the same thing.
-
-  def build_String(o)
-    x = LiteralString.new
-    x.value = o;
-    x
+  def interpolate_Factory(c)
+    self
   end
 
-  def build_NilClass(o)
-    x = Nop.new
-    x
-  end
-
-  def build_TrueClass(o)
-    x = LiteralBoolean.new
-    x.value = o
-    x
-  end
-
-  def build_FalseClass(o)
-    x = LiteralBoolean.new
-    x.value = o
-    x
-  end
-
-  def build_Integer(o)
-    x = LiteralInteger.new
-    x.value = o;
-    x
-  end
-
-  def build_Float(o)
-    x = LiteralFloat.new
-    x.value = o;
-    x
-  end
-
-  def build_Regexp(o)
-    x = LiteralRegularExpression.new
-    x.value = o;
-    x
-  end
-
-  def build_EppExpression(o, parameters_specified, body)
-    o.parameters_specified = parameters_specified
-    b = f_build_body(body)
-    o.body = b.model if b
-    o
-  end
-
-  # If building a factory, simply unwrap the model oject contained in the factory.
-  def build_Factory(o)
-    o.model
-  end
-
-  # Creates a String literal, unless the symbol is one of the special :undef, or :default
-  # which instead creates a LiterlUndef, or a LiteralDefault.
-  # Supports :undef because nil creates a no-op instruction.
-  def build_Symbol(o)
-    case o
-    when :undef
-      LiteralUndef.new
-    when :default
-      LiteralDefault.new
-    else
-      build_String(o.to_s)
-    end
-  end
-
-  # Creates a LiteralList instruction from an Array, where the entries are built.
-  def build_Array(o)
-    x = LiteralList.new
-    o.each { |v| x.addValues(build(v)) }
-    x
-  end
-
-  # Create a LiteralHash instruction from a hash, where keys and values are built
-  # The hash entries are added in sorted order based on key.to_s
-  #
-  def build_Hash(o)
-    x = LiteralHash.new
-    (o.sort_by {|k,v| k.to_s}).each {|k,v| x.addEntries(build(KeyedEntry.new, k, v)) }
-    x
-  end
-
-  # @param rval_required [Boolean] if the call must produce a value
-  def build_CallExpression(o, functor, rval_required, *args)
-    o.functor_expr = to_ops(functor)
-    o.rval_required = rval_required
-    args.each {|x| o.addArguments(to_ops(x)) }
-    o
-  end
-
-  def build_CallMethodExpression(o, functor, rval_required, lambda, *args)
-    build_CallExpression(o, functor, rval_required, *args)
-    o.lambda = lambda
-    o
-  end
-
-  def build_CaseExpression(o, test, *args)
-    o.test = build(test)
-    args.each {|opt| o.addOptions(build(opt)) }
-    o
-  end
-
-  def build_CaseOption(o, value_list, then_expr)
-    value_list = [value_list] unless value_list.is_a? Array
-    value_list.each { |v| o.addValues(build(v)) }
-    b = f_build_body(then_expr)
-    o.then_expr = to_ops(b) if b
-    o
-  end
-
-  # Build a Class by creating an instance of it, and then calling build on the created instance
-  # with the given arguments
-  def build_Class(o, *args)
-    build(o.new(), *args)
-  end
-
-  def interpolate_Factory(o)
-    interpolate(o.model)
-  end
-
-  def interpolate_LiteralInteger(o)
+  def interpolate_LiteralInteger(c)
     # convert number to a variable
-    self.class.new(o).var
+    self.var
   end
 
-  def interpolate_Object(o)
-    o
+  def interpolate_Object(c)
+    self
   end
 
-  def interpolate_QualifiedName(o)
-    self.class.new(o).var
+  def interpolate_QualifiedName(c)
+    self.var
   end
 
   # rewrite left expression to variable if it is name, number, and recurse if it is an access expression
   # this is for interpolation support in new lexer (${NAME}, ${NAME[}}, ${NUMBER}, ${NUMBER[]} - all
   # other expressions requires variables to be preceded with $
   #
-  def interpolate_AccessExpression(o)
-    if is_interop_rewriteable?(o.left_expr)
-      o.left_expr = to_ops(self.class.new(o.left_expr).interpolate)
+  def interpolate_AccessExpression(c)
+    lhs = @i12n[KEY_LEFT_EXPR]
+    if is_interop_rewriteable?(lhs)
+      @i12n[KEY_LEFT_EXPR] = lhs.interpolate
     end
-    o
+    self
   end
 
-  def interpolate_NamedAccessExpression(o)
-    if is_interop_rewriteable?(o.left_expr)
-        o.left_expr = to_ops(self.class.new(o.left_expr).interpolate)
+  def interpolate_NamedAccessExpression(c)
+    lhs = @i12n[KEY_LEFT_EXPR]
+    if is_interop_rewriteable?(lhs)
+      @i12n[KEY_LEFT_EXPR] = lhs.interpolate
     end
-    o
+    self
   end
 
   # Rewrite method calls on the form ${x.each ...} to ${$x.each}
-  def interpolate_CallMethodExpression(o)
-    if is_interop_rewriteable?(o.functor_expr)
-      o.functor_expr = to_ops(self.class.new(o.functor_expr).interpolate)
+  def interpolate_CallMethodExpression(c)
+    functor_expr = @i12n['functor_expr']
+    if is_interop_rewriteable?(functor_expr)
+      @i12n['functor_expr'] = functor_expr.interpolate
     end
-    o
+    self
   end
 
   def is_interop_rewriteable?(o)
-    case o
-    when AccessExpression, QualifiedName,
-      NamedAccessExpression, CallMethodExpression
+    mc = o.model_class
+    if mc <= AccessExpression || mc <= QualifiedName || mc <= NamedAccessExpression || mc <= CallMethodExpression
       true
-    when LiteralInteger
+    elsif mc <= LiteralInteger
       # Only decimal integers can represent variables, else it is a number
-      o.radix == 10
+      o['radix'] == 10
     else
       false
     end
   end
 
-  # Checks if the object is already a model object, or build it
-  def to_ops(o, *args)
-    case o
-    when PopsObject
-      o
-    when Factory
-      o.model
-    else
-      build(o, *args)
-    end
-  end
-
   def self.concat(*args)
-    new(args.map do |e|
-      e = e.model if e.is_a?(self)
-      case e
-      when LiteralString
-        e.value
-      when String
-        e
+    result = ''
+    args.each do |e|
+      if e.instance_of?(Factory) && e.model_class <= LiteralString
+        result << e[KEY_VALUE]
+      elsif e.is_a?(String)
+        result << e
       else
         raise ArgumentError, "can only concatenate strings, got #{e.class}"
       end
-    end.join(''))
+    end
+    infer(result)
   end
 
   def to_s
-    ModelTreeDumper.new.dump(self)
+    "Factory for #{@model_class}"
+  end
+
+  def factory_to_model(value)
+    if value.instance_of?(Factory)
+      value.contained_current(self)
+    elsif value.instance_of?(Array)
+      value.each_with_index { |el, idx| value[idx] = el.contained_current(self) if el.instance_of?(Factory) }
+    else
+      value
+    end
+  end
+
+  def contained_current(container)
+    if @current.nil?
+      unless @i12n.include?(KEY_LOCATOR)
+        @i12n[KEY_LOCATOR] = container[KEY_LOCATOR]
+        @i12n[KEY_OFFSET] = container[KEY_OFFSET] || 0
+        @i12n[KEY_LENGTH] = 0
+      end
+      @current = create_model
+    end
+    @current
   end
 end
 end

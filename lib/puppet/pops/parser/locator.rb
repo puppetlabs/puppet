@@ -22,6 +22,10 @@ class Locator
   def string
   end
 
+  def to_s
+    "Locator for file #{file}"
+  end
+
   # Returns the position on line (first position on a line is 1)
   def pos_on_line(offset)
   end
@@ -52,10 +56,35 @@ class Locator
   def extract_text(offset, length)
   end
 
+  def extract_tree_text(ast)
+    first = ast.offset
+    last = first + ast.length
+    ast._pall_contents([]) do |m|
+      next unless m.is_a?(Model::Positioned)
+      m_offset = m.offset
+      m_last = m_offset + m.length
+      first = m_offset if m_offset < first
+      last = m_last if m_last > last
+    end
+    extract_text(first, last - first)
+  end
+
   # Returns the line index - an array of line offsets for the start position of each line, starting at 0 for
   # the first line.
   #
   def line_index()
+  end
+
+  # Produces an URI with path?line=n&pos=n. If origin is unknown the URI is string:?line=n&pos=n
+  def to_uri(ast)
+    f = file
+    if f.nil? || f.empty?
+      f = 'string:'
+    else
+      f = Puppet::Util.path_to_uri(f).to_s
+    end
+    offset = ast.offset
+    URI("#{f}?line=#{line_for_offset(offset).to_s}&pos=#{pos_on_line(offset).to_s}")
   end
 
   # A Sublocator locates a concrete locator (subspace) in a virtual space.
@@ -271,25 +300,24 @@ class Locator
   # strings are frozen).
   #
   class Locator19 < AbstractLocator
+    def self._plocation
+      loc = Puppet::Util.path_to_uri("#{__FILE__}")
+      URI("#{loc}?line=#{__LINE__.to_i - 3}")
+    end
+
     include Types::PuppetObject
 
     def self._ptype
-      @type
-    end
-
-    # The Locator is not part of the Ecore model so no ObjectType is automatically inferred. Instead the
-    # type is explicitly added here.
-    # TODO: LocatorForChars is never added. It looks like it could be removed (remnant from Ruby 1.8 compatibility?)
-    # @api private
-    def self.register_ptype(loader, ir)
-      @type = Pcore::create_object_type(loader, ir, self, 'Puppet::AST::Locator', nil,
-        'string' => Types::PStringType::DEFAULT,
-        'file' => Types::PStringType::DEFAULT,
-        'line_index' => {
-          Types::KEY_TYPE => Types::POptionalType.new(Types::PArrayType.new(Types::PIntegerType::DEFAULT)),
-          Types::KEY_VALUE => nil
+      @type ||= Types::PObjectType.new('Puppet::AST::Locator', {
+        'attributes' => {
+          'string' => Types::PStringType::DEFAULT,
+          'file' => Types::PStringType::DEFAULT,
+          'line_index' => {
+            Types::KEY_TYPE => Types::POptionalType.new(Types::PArrayType.new(Types::PIntegerType::DEFAULT)),
+            Types::KEY_VALUE => nil
+          }
         }
-      ).resolve(Types::TypeParser.singleton, loader)
+      })
     end
 
     # Returns the offset on line (first offset on a line is 0).

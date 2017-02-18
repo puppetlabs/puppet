@@ -27,11 +27,14 @@ class Parser
   # Returns the token text of the given lexer token, or nil, if token is nil
   def token_text t
     return t if t.nil?
-    t = t.model if t.respond_to?(:model)
-    return t.value if t.is_a? Model::QualifiedName
-
-    # else it is a lexer token
-    t[:value]
+    if t.is_a?(Factory) && t.model_class <= Model::QualifiedName
+      t['value']
+    elsif t.is_a?(Model::QualifiedName)
+      t.value
+    else
+      # else it is a lexer token
+      t[:value]
+    end
   end
 
   # Produces the fully qualified name, with the full (current) namespace for a given name.
@@ -54,21 +57,15 @@ class Parser
       except.line = semantic[:line];
       except.pos = semantic[:pos];
     else
-      semantic = semantic.model if semantic.is_a?(Factory)
-
-      # Adapt the model so it is possible to get location information.
-      # The model may not have been added to the source tree, so give it the lexer's locator
-      # directly instead of searching for the root Program where the locator is normally stored.
-      #
-      if semantic.is_a?(Model::Positioned)
-        adapter = Adapters::SourcePosAdapter.adapt(semantic)
-        adapter.locator = @lexer.locator
-      else
-        adapter = nil
+      locator = @lexer.locator
+      except.file = locator.file
+      if semantic.is_a?(Factory)
+        offset = semantic['offset']
+        unless offset.nil?
+          except.line = locator.line_for_offset(offset)
+          except.pos = locator.pos_on_line(offset)
+        end
       end
-      except.file = @lexer.locator.file
-      except.line = adapter.line if adapter
-      except.pos = adapter.pos if adapter
     end
     raise except
   end
@@ -81,7 +78,7 @@ class Parser
       end
     end
     @lexer.file = file
-    _parse()
+    _parse
   end
 
   def initialize()
@@ -129,7 +126,7 @@ class Parser
 
   # Parses a String of pp DSL code.
   #
-  def parse_string(code, path = '')
+  def parse_string(code, path = nil)
     @lexer.lex_string(code, path)
     _parse()
   end
@@ -138,15 +135,15 @@ class Parser
   # @return [Factory] the given factory
   # @api private
   #
-  def loc(factory, start_locateable, end_locateable = nil)
-    factory.record_position(start_locateable, end_locateable)
+  def loc(factory, start_locatable, end_locatable = nil)
+    factory.record_position(@lexer.locator, start_locatable, end_locatable)
   end
 
   # Mark the factory wrapped heredoc model object with location information
   # @return [Factory] the given factory
   # @api private
   #
-  def heredoc_loc(factory, start_locateabke, end_locateable = nil)
+  def heredoc_loc(factory, start_locatable, end_locatable = nil)
     factory.record_heredoc_position(start_locatable, end_locatable)
   end
 
@@ -194,8 +191,8 @@ class Parser
     rescue Factory::ArgsToNonCallError => e
       # e.args[1] is the first comma token in the list
       # e.name_expr is the function name expression
-      if e.name_expr.is_a?(Model::QualifiedName)
-        error(e.args[1], "attempt to pass argument list to the function '#{e.name_expr.value}' which cannot be called without parentheses")
+      if e.name_expr.is_a?(Factory) && e.name_expr.model_class <= Model::QualifiedName
+        error(e.args[1], "attempt to pass argument list to the function '#{e.name_expr['value']}' which cannot be called without parentheses")
       else
         error(e.args[1], "illegal comma separated argument list")
       end
@@ -245,7 +242,6 @@ class Parser
     @namestack = []
     @definitions = []
   end
-
 end
 end
 end
