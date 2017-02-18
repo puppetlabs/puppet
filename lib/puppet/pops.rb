@@ -32,8 +32,6 @@ module Puppet
     require 'puppet/pops/visitable'
     require 'puppet/pops/visitor'
 
-    require 'puppet/pops/containment'
-
     require 'puppet/pops/issues'
     require 'puppet/pops/semantic_error'
     require 'puppet/pops/label_provider'
