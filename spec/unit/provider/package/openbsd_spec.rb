@@ -11,7 +11,7 @@ describe provider_class do
   def expect_read_from_pkgconf(lines)
     pkgconf = stub(:readlines => lines)
     Puppet::FileSystem.expects(:exist?).with('/etc/pkg.conf').returns(true)
-    File.expects(:open).with('/etc/pkg.conf', 'rb').returns(pkgconf)
+    Puppet::FileSystem.expects(:open).with('/etc/pkg.conf', nil, 'rb').returns(pkgconf)
   end
 
   def expect_pkgadd_with_source(source)
@@ -95,7 +95,7 @@ describe provider_class do
 
     it "should fail if /etc/pkg.conf exists, but is not readable" do
       Puppet::FileSystem.expects(:exist?).with('/etc/pkg.conf').returns(true)
-      File.expects(:open).with('/etc/pkg.conf', 'rb').raises(Errno::EACCES)
+      Puppet::FileSystem.expects(:open).with('/etc/pkg.conf', nil, 'rb').raises(Errno::EACCES)
 
       expect {
         provider.install

@@ -82,7 +82,7 @@ OUTPUT
     Puppet::FileSystem.stubs(:exist?).with('/etc/rc.conf').returns(true)
     File.stubs(:read).with('/etc/rc.conf').returns("openntpd_enable=\"NO\"\nntpd_enable=\"NO\"\n")
     fh = stub 'fh'
-    File.stubs(:open).with('/etc/rc.conf', File::WRONLY).yields(fh)
+    Puppet::FileSystem.stubs(:open).with('/etc/rc.conf', nil, 'w:UTF-8').yields(fh)
     fh.expects(:<<).with("openntpd_enable=\"NO\"\nntpd_enable=\"YES\"\n")
     Puppet::FileSystem.stubs(:exist?).with('/etc/rc.conf.local').returns(false)
     Puppet::FileSystem.stubs(:exist?).with('/etc/rc.conf.d/ntpd').returns(false)

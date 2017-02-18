@@ -58,7 +58,9 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     passwd_file = "/etc/passwd"
     passwd_keys = ['account', 'password', 'uid', 'gid', 'gecos', 'directory', 'shell']
     index = passwd_keys.index(key)
-    File.open(passwd_file) do |f|
+    # most distros want usernames to be in ASCII
+    # and may cause errors if they are not, but read the file as UTF-8
+    Puppet::FileSystem.open(passwd_file, nil, 'r:UTF-8') do |f|
       f.each_line do |line|
          user = line.split(":")
          if user[index] == value

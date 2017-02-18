@@ -47,7 +47,7 @@ module Puppet::ModuleTool
         metadata_path   = File.join(@path, 'metadata.json')
 
         if File.file?(metadata_path)
-          File.open(metadata_path) do |f|
+          Puppet::FileSystem.open(metadata_path, nil, 'r:UTF-8') do |f|
             begin
               @metadata.update(JSON.load(f))
             rescue JSON::ParserError => ex

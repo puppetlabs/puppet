@@ -21,7 +21,10 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
 
     correct_wgetopts = false
     [ "/opt/csw/etc/pkgutil.conf", "/etc/opt/csw/pkgutil.conf" ].each do |confpath|
-      File.open(confpath) do |conf|
+      # http://pkgutil.wikidot.com/get-install-and-configure#toc8 doesn't specify
+      # an Encoding for pkgutil.conf - so presume the default
+      # Solaris should be defaulting to UTF-8 already
+      Puppet::FileSystem.open(confpath, nil, "r:#{Encoding.default_external.name}") do |conf|
         conf.each_line {|line| correct_wgetopts = true if line =~ /^\s*wgetopts\s*=.*(-nv|-q|--no-verbose|--quiet)/ }
       end
     end

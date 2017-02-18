@@ -159,7 +159,7 @@ module Puppet::Util::SELinux
       if File.method_defined? "read_nonblock"
         # If possible we use read_nonblock in a loop rather than read to work-
         # a linux kernel bug.  See ticket #1963 for details.
-        mountfh = File.open("/proc/mounts")
+        mountfh = Puppet::FileSystem.open("/proc/mounts", nil, 'rb')
         mounts += mountfh.read_nonblock(1024) while true
       else
         # Otherwise we shell out and let cat do it for us

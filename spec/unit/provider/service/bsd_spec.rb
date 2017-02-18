@@ -54,7 +54,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       Dir.stubs(:mkdir).with('/etc/rc.conf.d')
       fh = stub 'fh'
-      File.stubs(:open).with('/etc/rc.conf.d/sshd', File::WRONLY | File::APPEND | File::CREAT, 0644).yields(fh)
+      Puppet::FileSystem.stubs(:open).with('/etc/rc.conf.d/sshd', 0644, 'ab').yields(fh)
       fh.expects(:<<).with("sshd_enable=\"YES\"\n")
       provider.enable
     end
@@ -64,7 +64,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
       Dir.stubs(:mkdir).with('/etc/rc.conf.d')
       File.stubs(:read).with('/etc/rc.conf.d/sshd').returns("sshd_enable=\"NO\"\n")
       fh = stub 'fh'
-      File.stubs(:open).with('/etc/rc.conf.d/sshd', File::WRONLY | File::APPEND | File::CREAT, 0644).yields(fh)
+      Puppet::FileSystem.stubs(:open).with('/etc/rc.conf.d/sshd', 0644, 'ab').yields(fh)
       fh.expects(:<<).with("sshd_enable=\"YES\"\n")
       provider.enable
     end

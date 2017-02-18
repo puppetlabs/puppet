@@ -105,7 +105,7 @@ module RDoc::PuppetParserCore
     %w{README README.rdoc}.each do |rfile|
       readme = File.join(File.dirname(File.dirname(@input_file_name)), rfile)
       # module README should be UTF-8, not default system encoding
-      comment = File.open(readme,"r:UTF-8") { |f| f.read } if FileTest.readable?(readme)
+      comment = Puppet::FileSystem.open(readme, nil, "r:UTF-8") { |f| f.read } if FileTest.readable?(readme)
     end
     look_for_directives_in(container, comment) unless comment.empty?
 
@@ -149,7 +149,8 @@ module RDoc::PuppetParserCore
     comments = ""
     current_fact = nil
     parsed_facts = []
-    File.open(@input_file_name) do |of|
+    # TODO: use external encoding or UTF-8 here?
+    Puppet::FileSystem.open(@input_file_name, nil, "r:#{Encoding.default_external.name}}") do |of|
       of.each do |line|
         # fetch comments
         if line =~ /^[ \t]*# ?(.*)$/
@@ -180,7 +181,8 @@ module RDoc::PuppetParserCore
     comments = ""
     current_plugin = nil
 
-    File.open(@input_file_name) do |of|
+    # TODO: use external encoding or UTF-8 here?
+    Puppet::FileSystem.open(@input_file_name, nil, "r:#{Encoding.default_external.name}}") do |of|
       of.each do |line|
         # fetch comments
         if line =~ /^[ \t]*# ?(.*)$/

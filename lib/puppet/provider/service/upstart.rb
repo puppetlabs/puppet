@@ -348,7 +348,8 @@ private
   end
 
   def read_script_from(filename)
-    File.open(filename) do |file|
+    # TODO: upstart scripts should be UTF-8... or default encoding? ... or binary?
+    Puppet::FileSystem.open(filename, nil, 'r:UTF-8') do |file|
       file.read
     end
   end

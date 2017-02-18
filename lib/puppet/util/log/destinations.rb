@@ -89,7 +89,8 @@ Puppet::Util::Log.newdesttype :file do
       end
     end
 
-    file = File.open(path,  File::WRONLY|File::CREAT|File::APPEND)
+    # log files should always be written as UTF-8
+    file = Puppet::FileSystem.open(path, nil, 'w:UTF-8')
     file.puts('[') if need_array_start
 
     # Give ownership to the user and group puppet will run as

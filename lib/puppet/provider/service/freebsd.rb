@@ -74,7 +74,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
       if Puppet::FileSystem.exist?(filename)
         s = File.read(filename)
         if s.gsub!(/^(#{rcvar}(_enable)?)=\"?(YES|NO)\"?/, "\\1=\"#{yesno}\"")
-          File.open(filename, File::WRONLY) { |f| f << s }
+          Puppet::FileSystem.open(filename, nil, 'w:UTF-8') { |f| f << s }
           self.debug("Replaced in #{filename}")
           success = true
         end
@@ -88,20 +88,20 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
     append = "\# Added by Puppet\n#{rcvar}_enable=\"#{yesno}\"\n"
     # First, try the one-file-per-service style
     if Puppet::FileSystem.exist?(rcconf_dir)
-      File.open(rcconf_dir + "/#{service}", File::WRONLY | File::APPEND | File::CREAT, 0644) {
+      Puppet::FileSystem.open(rcconf_dir + "/#{service}", 0644, 'a:UTF-8') {
         |f| f << append
         self.debug("Appended to #{f.path}")
       }
     else
       # Else, check the local rc file first, but don't create it
       if Puppet::FileSystem.exist?(rcconf_local)
-        File.open(rcconf_local, File::WRONLY | File::APPEND) {
+        Puppet::FileSystem.open(rcconf_local, 'a:UTF-8') {
           |f| f << append
           self.debug("Appended to #{f.path}")
         }
       else
         # At last use the standard rc.conf file
-        File.open(rcconf, File::WRONLY | File::APPEND | File::CREAT, 0644) {
+        Puppet::FileSystem.open(rcconf, 0644, 'a:UTF-8') {
           |f| f << append
           self.debug("Appended to #{f.path}")
         }

@@ -34,7 +34,7 @@ Puppet::Type.type(:service).provide :bsd, :parent => :init do
   def enable
     Dir.mkdir(rcconf_dir) if not Puppet::FileSystem.exist?(rcconf_dir)
     rcfile = File.join(rcconf_dir, @resource[:name])
-    File.open(rcfile, File::WRONLY | File::APPEND | File::CREAT, 0644) { |f|
+    Puppet::FileSystem.open(rcfile, 0644, 'ab') { |f|
       f << "%s_enable=\"YES\"\n" % @resource[:name]
     }
   end

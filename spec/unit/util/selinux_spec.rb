@@ -29,7 +29,7 @@ describe Puppet::Util::SELinux do
     end
 
     it "should return nil if /proc/mounts does not exist" do
-      File.stubs(:open).with("/proc/mounts").raises("No such file or directory - /proc/mounts")
+      Puppet::FileSystem.stubs(:open).with("/proc/mounts", nil, 'rb').raises("No such file or directory - /proc/mounts")
       expect(read_mounts).to eq(nil)
     end
   end
@@ -37,7 +37,7 @@ describe Puppet::Util::SELinux do
   describe "read_mounts" do
     before :each do
       fh = stub 'fh', :close => nil
-      File.stubs(:open).with("/proc/mounts").returns fh
+      Puppet::FileSystem.stubs(:open).with("/proc/mounts", nil, 'rb').returns fh
       fh.expects(:read_nonblock).times(2).returns("rootfs / rootfs rw 0 0\n/dev/root / ext3 rw,relatime,errors=continue,user_xattr,acl,data=ordered 0 0\n/dev /dev tmpfs rw,relatime,mode=755 0 0\n/proc /proc proc rw,relatime 0 0\n/sys /sys sysfs rw,relatime 0 0\n192.168.1.1:/var/export /mnt/nfs nfs rw,relatime,vers=3,rsize=32768,wsize=32768,namlen=255,hard,nointr,proto=tcp,timeo=600,retrans=2,sec=sys,mountaddr=192.168.1.1,mountvers=3,mountproto=udp,addr=192.168.1.1 0 0\n").then.raises EOFError
     end
 
@@ -229,7 +229,7 @@ describe Puppet::Util::SELinux do
   describe "set_selinux_context" do
     before :each do
       fh = stub 'fh', :close => nil
-      File.stubs(:open).with("/proc/mounts").returns fh
+      Puppet::FileSystem.stubs(:open).with("/proc/mounts", nil, 'rb').returns fh
       fh.stubs(:read_nonblock).returns(
         "rootfs / rootfs rw 0 0\n/dev/root / ext3 rw,relatime,errors=continue,user_xattr,acl,data=ordered 0 0\n"+
         "/dev /dev tmpfs rw,relatime,mode=755 0 0\n/proc /proc proc rw,relatime 0 0\n"+

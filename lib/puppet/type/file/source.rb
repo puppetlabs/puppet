@@ -271,7 +271,7 @@ module Puppet
     end
 
     def chunk_file_from_disk
-      File.open(full_path, "rb") do |src|
+      Puppet::FileSystem.open(full_path, nil, "rb") do |src|
         while chunk = src.read(8192)
           yield chunk
         end

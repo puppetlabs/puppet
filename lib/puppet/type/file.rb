@@ -878,7 +878,7 @@ Puppet::Type.newtype(:file) do
       end
     else
       umask = mode ? 000 : 022
-      Puppet::Util.withumask(umask) { ::File.open(self[:path], 'wb', mode_int ) { |f| property.write(f) if property } }
+      Puppet::Util.withumask(umask) { Puppet::FileSystem.open(self[:path], mode_int, 'wb' ) { |f| property.write(f) if property } }
     end
 
     # make sure all of the modes are actually correct

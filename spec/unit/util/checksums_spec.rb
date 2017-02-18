@@ -41,7 +41,7 @@ describe Puppet::Util::Checksums do
     expect(@summer).to respond_to(:checksum?)
   end
 
-  %w{{md5}asdfasdf {sha1}asdfasdf {ctime}asdasdf {mtime}asdfasdf 
+  %w{{md5}asdfasdf {sha1}asdfasdf {ctime}asdasdf {mtime}asdfasdf
      {sha256}asdfasdf {sha256lite}asdfasdf}.each do |sum|
     it "should consider #{sum} to be a checksum" do
       expect(@summer).to be_checksum(sum)
@@ -82,7 +82,7 @@ describe Puppet::Util::Checksums do
         fh = mock 'filehandle'
         fh.expects(:read).with(4096).times(3).returns("firstline").then.returns("secondline").then.returns(nil)
 
-        File.expects(:open).with(file, "rb").yields(fh)
+        Puppet::FileSystem.expects(:open).with(file, nil, "rb").yields(fh)
 
         digest.expects(:<<).with "firstline"
         digest.expects(:<<).with "secondline"
@@ -123,7 +123,7 @@ describe Puppet::Util::Checksums do
         fh = mock 'filehandle'
         fh.expects(:read).with(512).returns('my content')
 
-        File.expects(:open).with(file, "rb").yields(fh)
+        Puppet::FileSystem.expects(:open).with(file, nil, "rb").yields(fh)
 
         digest.expects(:<<).with "my content"
         digest.expects(:hexdigest).returns :mydigest

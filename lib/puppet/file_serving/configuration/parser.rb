@@ -6,14 +6,14 @@ class Puppet::FileServing::Configuration::Parser
   MODULES = 'modules'
 
   # Parse our configuration file.
-  def parse
+  def parse(encoding = Encoding.default_external)
     raise("File server configuration #{@file} does not exist") unless Puppet::FileSystem.exist?(@file)
     raise("Cannot read file server configuration #{@file}") unless FileTest.readable?(@file)
 
     @mounts = {}
     @count = 0
 
-    File.open(@file) { |f|
+    Puppet::FileSystem.open(@file, nil, "r:#{encoding.name}") { |f|
       mount = nil
       f.each_line { |line|
         # Have the count increment at the top, in case we throw exceptions.

@@ -63,7 +63,7 @@ Puppet::Type.type(:user).provide :hpuxuseradd, :parent => :useradd do
       file_name="/tcb/files/auth/#{resource.name.chars.first}/#{resource.name}"
       if File.file?(file_name)
         # Found the tcb user for the specific user, now get passwd
-        File.open(file_name).each do |line|
+        Puppet::FileSystem.open(file_name, nil, "r:#{Encoding.default_external.name}}").each do |line|
           if ( line =~ /u_pwd/ )
             temp_passwd=line.split(":")[1].split("=")[1]
             ent.passwd = temp_passwd

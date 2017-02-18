@@ -31,7 +31,8 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
     group_file = "/etc/group"
     group_keys = ['group_name', 'password', 'gid', 'user_list']
     index = group_keys.index(key)
-    File.open(group_file) do |f|
+    # TODO: should this be UTF-8 given its /etc/group  .... or BINARY??
+    Puppet::FileSystem.open(group_file, nil, "r:#{Encoding.default_external.name}") do |f|
       f.each_line do |line|
          group = line.split(":")
          if group[index] == value

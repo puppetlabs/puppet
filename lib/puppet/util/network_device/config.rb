@@ -39,7 +39,8 @@ class Puppet::Util::NetworkDevice::Config
     begin
       devices = {}
       device = nil
-      File.open(@file) { |f|
+      # TODO: what is the format for this file? UTF-8 or default external?
+      Puppet::FileSystem.open(@file, nil, 'r:UTF-8') { |f|
         count = 1
         f.each { |line|
           case line

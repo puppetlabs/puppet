@@ -119,7 +119,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
   def parse_pkgconf
     unless @resource[:source]
       if Puppet::FileSystem.exist?("/etc/pkg.conf")
-        File.open("/etc/pkg.conf", "rb").readlines.each do |line|
+        Puppet::FileSystem.open("/etc/pkg.conf", nil, "rb").readlines.each do |line|
           if matchdata = line.match(/^installpath\s*=\s*(.+)\s*$/i)
             @resource[:source] = matchdata[1]
           elsif matchdata = line.match(/^installpath\s*\+=\s*(.+)\s*$/i)

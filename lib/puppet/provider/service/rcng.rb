@@ -15,7 +15,7 @@ Puppet::Type.type(:service).provide :rcng, :parent => :bsd do
   def enabled?
     rcfile = File.join(rcconf_dir, @resource[:name])
     if Puppet::FileSystem.exist?(rcfile)
-      File.open(rcfile).readlines.each do |line|
+      Puppet::FileSystem.open(rcfile, nil, "r:#{Encoding.default_external.name}").readlines.each do |line|
         # Now look for something that looks like "service=${service:=YES}" or "service=YES"
         if line.match(/^\s*#{@resource[:name]}=(?:YES|\${#{@resource[:name]}:=YES})/)
           return :true
@@ -33,7 +33,7 @@ Puppet::Type.type(:service).provide :rcng, :parent => :bsd do
     rcfile = File.join(rcconf_dir, @resource[:name])
     if Puppet::FileSystem.exist?(rcfile)
       newcontents = []
-      File.open(rcfile).readlines.each do |line|
+      Puppet::FileSystem.open(rcfile, nil, "r:#{Encoding.default_external.name}").readlines.each do |line|
         if line.match(/^\s*#{@resource[:name]}=(NO|\$\{#{@resource[:name]}:NO\})/)
           line = "#{@resource[:name]}=${#{@resource[:name]}:=YES}"
         end
