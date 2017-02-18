@@ -68,6 +68,8 @@ class Puppet::FileSystem::FileImpl
     end
   end
 
+  # FIXME encoding
+  # must add a new parameter to each_line method in a backward compatible way
   def each_line(path, &block)
     ::File.open(path) do |f|
       f.each_line do |line|
