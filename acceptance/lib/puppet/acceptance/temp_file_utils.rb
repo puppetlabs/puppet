@@ -1,6 +1,8 @@
 module Puppet
   module Acceptance
     module TempFileUtils
+      RWXR_XR_X = '0755'
+      PUPPET_CODEDIR_PERMISSIONS = RWXR_XR_X
 
       # Return the name of the root user, as appropriate for the platform.
       def root_user(host)
