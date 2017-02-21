@@ -1,0 +1,14 @@
+# == Class <%= metadata.name %>::service
+#
+# This class is meant to be called from <%= metadata.name %>.
+# It ensure the service is running.
+#
+class <%= metadata.name %>::service {
+
+  service { $::<%= metadata.name %>::service_name:
+    ensure     => running,
+    enable     => true,
+    hasstatus  => true,
+    hasrestart => true,
+  }
+}

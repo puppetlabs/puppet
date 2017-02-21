@@ -1,1 +1,33 @@
-<%= metadata.to_json %>
+{
+  "name": "<%= metadata.full_module_name %>",
+  "version": "<%= metadata.version %>",
+  "author": "<%= metadata.author %>",
+  "summary": "<%= metadata.summary %>",
+  "license": "<%= metadata.license %>",
+  "source": "<%= metadata.source %>",
+  "project_page": "<%= metadata.project_page %>",
+  "issues_url": "<%= metadata.issues_url %>",
+  "dependencies": [
+    {
+      "name": "puppetlabs-stdlib",
+      "version_requirement": ">= 1.0.0"
+    }
+  ],
+  "operatingsystem_support": [
+    {
+      "operatingsystem": "Debian",
+      "operatingsystemrelease": [
+        "6",
+        "7"
+      ]
+    },
+    {
+      "operatingsystem": "RedHat",
+      "operatingsystemrelease": [
+        "5",
+        "6",
+        "7"
+      ]
+    }
+  ]
+}

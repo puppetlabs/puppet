@@ -1,0 +1,39 @@
+---
+sudo: false
+language: ruby
+bundler_args: --without development system_tests
+before_install: rm Gemfile.lock || true
+rvm:
+  - 1.8.7
+  - 1.9.3
+  - 2.0.0
+  - 2.1.0
+script: bundle exec rake test
+env:
+  - PUPPET_GEM_VERSION="~> 2.7.0"
+  - PUPPET_GEM_VERSION="~> 3.2.0"
+  - PUPPET_GEM_VERSION="~> 3.3.0"
+  - PUPPET_GEM_VERSION="~> 3.4.0"
+  - PUPPET_GEM_VERSION="~> 3.5.0" STRICT_VARIABLES=yes
+  - PUPPET_GEM_VERSION="~> 3.6.0" STRICT_VARIABLES=yes
+  - PUPPET_GEM_VERSION="~> 3.7.0" STRICT_VARIABLES=yes
+  - PUPPET_GEM_VERSION="~> 3.8.0" STRICT_VARIABLES=yes FUTURE_PARSER=yes
+matrix:
+  exclude:
+  # Ruby 1.9.3
+  - rvm: 1.9.3
+    env: PUPPET_GEM_VERSION="~> 2.7.0"
+    
+  # Ruby 2.0.0
+  - rvm: 2.0.0
+    env: PUPPET_GEM_VERSION="~> 2.7.0"
+    
+  # Ruby 2.1.0
+  - rvm: 2.1.0
+    env: PUPPET_GEM_VERSION="~> 2.7.0"
+  - rvm: 2.1.0
+    env: PUPPET_GEM_VERSION="~> 3.2.0"
+  - rvm: 2.1.0
+    env: PUPPET_GEM_VERSION="~> 3.3.0"
+  - rvm: 2.1.0
+    env: PUPPET_GEM_VERSION="~> 3.4.0"

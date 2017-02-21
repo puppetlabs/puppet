@@ -1,18 +1,13 @@
-## MAC OS
-.DS_Store
-
-## TEXTMATE
-*.tmproj
-tmtags
-
-## EMACS
-*~
-\#*
-.\#*
-
-## VIM
-*.swp
-tags
-
-## Yard gem
+.*.sw?
+/pkg
+/spec/fixtures/manifests
+/spec/fixtures/modules
+/.rspec_system
+/.vagrant
+/.bundle
+/vendor
+/Gemfile.lock
+/junit
+/log
 .yardoc
+coverage

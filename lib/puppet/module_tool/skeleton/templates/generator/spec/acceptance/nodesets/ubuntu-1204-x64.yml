@@ -1,0 +1,13 @@
+HOSTS:
+  ubuntu-1204-x64:
+    roles:
+      - master
+    platform: ubuntu-1204-amd64
+    box: puppetlabs/ubuntu-12.04-64-nocm
+    box_url: https://vagrantcloud.com/puppetlabs/boxes/ubuntu-12.04-64-nocm
+    hypervisor: vagrant
+
+CONFIG:
+  log_level: verbose
+  color: false
+  type: foss
