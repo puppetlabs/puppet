@@ -65,6 +65,7 @@ class Hiera::PuppetFunction < Puppet::Functions::InternalFunction
     end
     lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {})
     adapter = lookup_invocation.lookup_adapter
+    lookup_invocation.set_hiera_xxx_call
     lookup_invocation.set_global_only unless adapter.global_only? || adapter.has_environment_data_provider?(lookup_invocation)
     lookup_invocation.set_hiera_v3_location_overrides(override) unless override.nil? || override.is_a?(Array) && override.empty?
     Puppet::Pops::Lookup.lookup(key, nil, default, has_default, merge_type, lookup_invocation, &default_block)

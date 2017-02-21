@@ -678,6 +678,71 @@ describe "The lookup function" do
       end
     end
 
+    context 'and an environment Hiera v5 configuration using globs' do
+      let(:env_hiera_yaml) do
+        <<-YAML.unindent
+        ---
+        version: 5
+        hierarchy:
+          - name: Globs
+            globs:
+              - "globs/*.yaml"
+              - "globs_%{domain}/*.yaml"
+        YAML
+      end
+
+      let(:env_data) do
+        {
+          'globs' => {
+            'a.yaml' => <<-YAML.unindent,
+              glob_a: value glob_a
+              YAML
+            'b.yaml' => <<-YAML.unindent
+              glob_b:
+                a: value glob_b.a
+                b: value glob_b.b
+            YAML
+          },
+          'globs_example.com' => {
+            'a.yaml' => <<-YAML.unindent,
+              glob_c: value glob_a
+              YAML
+            'b.yaml' => <<-YAML.unindent
+              glob_b:
+                c: value glob_b.c
+                d: value glob_b.d
+            YAML
+
+          }
+        }
+      end
+
+      let(:environment_files) do
+        {
+          env_name => {
+            'hiera.yaml' => env_hiera_yaml,
+            'data' => env_data
+          }
+        }
+      end
+
+      it 'finds environment data using globs' do
+        expect(lookup('glob_a')).to eql('value glob_a')
+        expect(warnings).to be_empty
+      end
+
+      it 'performs merges between interpolated and globbed paths' do
+        expect(lookup('glob_b', 'merge' => 'hash')).to eql(
+          {
+            'a' => 'value glob_b.a',
+            'b' => 'value glob_b.b',
+            'c' => 'value glob_b.c',
+            'd' => 'value glob_b.d'
+          })
+        expect(warnings).to be_empty
+      end
+    end
+
     context 'and an environment Hiera v3 configuration' do
       let(:env_hiera_yaml) do
         <<-YAML.unindent

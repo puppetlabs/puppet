@@ -356,10 +356,8 @@ class HieraConfigV3 < HieraConfig
   def create_merge_strategy
     key = @config[KEY_MERGE_BEHAVIOR]
     case key
-    when nil
+    when nil, 'native'
       MergeStrategy.strategy(nil)
-    when 'native'
-      MergeStrategy.strategy(:first)
     when 'array'
       MergeStrategy.strategy(:unique)
     when 'deep', 'deeper'
