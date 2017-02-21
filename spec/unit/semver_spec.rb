@@ -213,17 +213,244 @@ describe SemVer do
       expect(version.special).to eq('-beta6')
     end
 
-    it 'should not log a deprecation warning when strict == off' do
-      Puppet[:strict] = :off
-      SemVer.new('1.2.3')
-      expect(@logs).to be_empty
+    context 'should not log a deprecation warning when strict == off' do
+      before(:each) { Puppet[:strict] = :off }
+
+      it 'on new instance' do
+        SemVer.new('1.2.3')
+        expect(@logs).to be_empty
+      end
+
+      it 'on exact range' do
+        SemVer['1.2.3']
+        expect(@logs).to be_empty
+      end
+
+      it 'on simple range' do
+        SemVer['1.2.x']
+        expect(@logs).to be_empty
+      end
+
+      it 'on tilde range' do
+        SemVer['~1.2.0']
+        expect(@logs).to be_empty
+      end
+
+      it 'on from-to range' do
+        SemVer['1.2.0-1.3.0']
+        expect(@logs).to be_empty
+      end
+
+      it 'on >= range' do
+        SemVer['>=1.2.0']
+        expect(@logs).to be_empty
+      end
+
+      it 'on <= range' do
+        SemVer['<=1.2.0']
+        expect(@logs).to be_empty
+      end
+
+      it 'on > range' do
+        SemVer['>1.2.0']
+        expect(@logs).to be_empty
+      end
+
+      it 'on > range' do
+        SemVer['<1.2.0']
+        expect(@logs).to be_empty
+      end
     end
 
-    it 'should log a deprecation warning unless strict == off' do
-      (Puppet.settings.setting(:strict).values - [:off]).each do |setting|
-        Puppet[:strict] = setting
+    context 'should log a deprecation warning when strict == warning' do
+      before(:each) { Puppet[:strict] = :warning }
+
+      it 'on new instance' do
         SemVer.new('1.2.3')
         expect(@logs.map(&:message)).to include(/Use of class Puppet::SemVer is deprecated. SemanticPuppet::Version or SemanticPuppet::VersionRange should be used instead/)
+      end
+
+      it 'on exact range' do
+        SemVer['1.2.3']
+        expect(@logs.map(&:message)).to include(/Use of class Puppet::SemVer is deprecated. SemanticPuppet::Version or SemanticPuppet::VersionRange should be used instead/)
+      end
+
+      it 'on simple range' do
+        SemVer['1.2.x']
+        expect(@logs.map(&:message)).to include(/Use of class Puppet::SemVer is deprecated. SemanticPuppet::Version or SemanticPuppet::VersionRange should be used instead/)
+      end
+
+      it 'on tilde range' do
+        SemVer['~1.2.0']
+        expect(@logs.map(&:message)).to include(/Use of class Puppet::SemVer is deprecated. SemanticPuppet::Version or SemanticPuppet::VersionRange should be used instead/)
+      end
+
+      it 'on from-to range' do
+        SemVer['1.2.0 - 1.3.0']
+        expect(@logs.map(&:message)).to include(/Use of class Puppet::SemVer is deprecated. SemanticPuppet::Version or SemanticPuppet::VersionRange should be used instead/)
+      end
+
+      it 'on >= range' do
+        SemVer['>=1.2.0']
+        expect(@logs.map(&:message)).to include(/Use of class Puppet::SemVer is deprecated. SemanticPuppet::Version or SemanticPuppet::VersionRange should be used instead/)
+      end
+
+      it 'on <= range' do
+        SemVer['<=1.2.0']
+        expect(@logs.map(&:message)).to include(/Use of class Puppet::SemVer is deprecated. SemanticPuppet::Version or SemanticPuppet::VersionRange should be used instead/)
+      end
+
+      it 'on > range' do
+        SemVer['>1.2.0']
+        expect(@logs.map(&:message)).to include(/Use of class Puppet::SemVer is deprecated. SemanticPuppet::Version or SemanticPuppet::VersionRange should be used instead/)
+      end
+
+      it 'on > range' do
+        SemVer['<1.2.0']
+        expect(@logs.map(&:message)).to include(/Use of class Puppet::SemVer is deprecated. SemanticPuppet::Version or SemanticPuppet::VersionRange should be used instead/)
+      end
+
+      context 'unless suppressed by argument' do
+        it 'on new instance' do
+          SemVer.new('1.2.3', true)
+          expect(@logs).to be_empty
+        end
+
+        it 'on exact range' do
+          SemVer['1.2.3', true]
+          expect(@logs).to be_empty
+        end
+
+        it 'on simple range' do
+          SemVer['1.2.x', true]
+          expect(@logs).to be_empty
+        end
+
+        it 'on tilde range' do
+          SemVer['~1.2.0', true]
+          expect(@logs).to be_empty
+        end
+
+        it 'on from-to range' do
+          SemVer['1.2.0 - 1.3.0', true]
+          expect(@logs).to be_empty
+        end
+
+        it 'on >= range' do
+          SemVer['>=1.2.0', true]
+          expect(@logs).to be_empty
+        end
+
+        it 'on <= range' do
+          SemVer['<=1.2.0', true]
+          expect(@logs).to be_empty
+        end
+
+        it 'on > range' do
+          SemVer['>1.2.0', true]
+          expect(@logs).to be_empty
+        end
+
+        it 'on > range' do
+          SemVer['<1.2.0', true]
+          expect(@logs).to be_empty
+        end
+      end
+    end
+
+    context 'should log a deprecation warning when strict == error' do
+      before(:each) { Puppet[:strict] = :error }
+
+      it 'on new instance' do
+        SemVer.new('1.2.3')
+        expect(@logs.map(&:message)).to include(/Use of class Puppet::SemVer is deprecated. SemanticPuppet::Version or SemanticPuppet::VersionRange should be used instead/)
+      end
+
+      it 'on exact range' do
+        SemVer['1.2.3']
+        expect(@logs.map(&:message)).to include(/Use of class Puppet::SemVer is deprecated. SemanticPuppet::Version or SemanticPuppet::VersionRange should be used instead/)
+      end
+
+      it 'on simple range' do
+        SemVer['1.2.x']
+        expect(@logs.map(&:message)).to include(/Use of class Puppet::SemVer is deprecated. SemanticPuppet::Version or SemanticPuppet::VersionRange should be used instead/)
+      end
+
+      it 'on tilde range' do
+        SemVer['~1.2.0']
+        expect(@logs.map(&:message)).to include(/Use of class Puppet::SemVer is deprecated. SemanticPuppet::Version or SemanticPuppet::VersionRange should be used instead/)
+      end
+
+      it 'on from-to range' do
+        SemVer['1.2.0 - 1.3.0']
+        expect(@logs.map(&:message)).to include(/Use of class Puppet::SemVer is deprecated. SemanticPuppet::Version or SemanticPuppet::VersionRange should be used instead/)
+      end
+
+      it 'on >= range' do
+        SemVer['>=1.2.0']
+        expect(@logs.map(&:message)).to include(/Use of class Puppet::SemVer is deprecated. SemanticPuppet::Version or SemanticPuppet::VersionRange should be used instead/)
+      end
+
+      it 'on <= range' do
+        SemVer['<=1.2.0']
+        expect(@logs.map(&:message)).to include(/Use of class Puppet::SemVer is deprecated. SemanticPuppet::Version or SemanticPuppet::VersionRange should be used instead/)
+      end
+
+      it 'on > range' do
+        SemVer['>1.2.0']
+        expect(@logs.map(&:message)).to include(/Use of class Puppet::SemVer is deprecated. SemanticPuppet::Version or SemanticPuppet::VersionRange should be used instead/)
+      end
+
+      it 'on > range' do
+        SemVer['<1.2.0']
+        expect(@logs.map(&:message)).to include(/Use of class Puppet::SemVer is deprecated. SemanticPuppet::Version or SemanticPuppet::VersionRange should be used instead/)
+      end
+
+      context 'unless suppressed by argument' do
+        it 'on new instance' do
+          SemVer.new('1.2.3', true)
+          expect(@logs).to be_empty
+        end
+
+        it 'on exact range' do
+          SemVer['1.2.3', true]
+          expect(@logs).to be_empty
+        end
+
+        it 'on simple range' do
+          SemVer['1.2.x', true]
+          expect(@logs).to be_empty
+        end
+
+        it 'on tilde range' do
+          SemVer['~1.2.0', true]
+          expect(@logs).to be_empty
+        end
+
+        it 'on from-to range' do
+          SemVer['1.2.0 - 1.3.0', true]
+          expect(@logs).to be_empty
+        end
+
+        it 'on >= range' do
+          SemVer['>=1.2.0', true]
+          expect(@logs).to be_empty
+        end
+
+        it 'on <= range' do
+          SemVer['<=1.2.0', true]
+          expect(@logs).to be_empty
+        end
+
+        it 'on > range' do
+          SemVer['>1.2.0', true]
+          expect(@logs).to be_empty
+        end
+
+        it 'on > range' do
+          SemVer['<1.2.0', true]
+          expect(@logs).to be_empty
+        end
       end
     end
   end

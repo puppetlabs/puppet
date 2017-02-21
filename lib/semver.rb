@@ -29,10 +29,10 @@ class SemVer < Numeric
         SemVer.new(pre(r), suppress_deprecation_warning) .. SemVer.new(r, suppress_deprecation_warning)
       when SemVer::SIMPLE_RANGE
         r += ".0" unless SemVer.valid?(r.gsub(/x/i, '0'))
-        SemVer.new(r.gsub(/x/i, '0'))...SemVer.new(r.gsub(/(\d+)\.x/i) { "#{$1.to_i + 1}.0" } + '-', suppress_deprecation_warning)
+        SemVer.new(r.gsub(/x/i, '0'), suppress_deprecation_warning)...SemVer.new(r.gsub(/(\d+)\.x/i) { "#{$1.to_i + 1}.0" } + '-', suppress_deprecation_warning)
       when /\s+-\s+/
         a, b = r.split(/\s+-\s+/)
-        SemVer.new(pre(a)) .. SemVer.new(b, suppress_deprecation_warning)
+        SemVer.new(pre(a), suppress_deprecation_warning) .. SemVer.new(b, suppress_deprecation_warning)
       when /^~/
         ver = r.sub(/~/, '').split('.').map(&:to_i)
         start = (ver + [0] * (3 - ver.length)).join('.')
