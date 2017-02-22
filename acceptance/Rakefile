@@ -306,7 +306,7 @@ def get_test_sample
     File.exist?(s)
   end
 
-  tests.uniq
+  tests.uniq.sort
 end
 
 namespace :ci do
