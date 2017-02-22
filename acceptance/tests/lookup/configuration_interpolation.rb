@@ -5,19 +5,21 @@ test_name 'C99578: lookup should allow interpolation in configs and data' do
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type)
   fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"
+  master_confdir = master.puppet('master')['confdir']
+
+  step "backup hiera config file" do
+    on master, "cp #{master_confdir}/hiera.yaml #{master_confdir}/hiera.bak"
+  end
+
+  teardown do
+    on master, "mv #{master_confdir}/hiera.bak #{master_confdir}/hiera.yaml"
+  end
 
   step "create hiera configs in #{tmp_environment} and global" do
-    confdir = master.puppet('master')['confdir']
     codedir = master.puppet('master')['codedir']
 
-    teardown do
-      step "remove global hiera.yaml" do
-        on(master, "rm #{confdir}/hiera.yaml")
-      end
-    end
-
     step "create global hiera.yaml and module data" do
-      create_remote_file(master, "#{confdir}/hiera.yaml", <<-HIERA)
+      create_remote_file(master, "#{master_confdir}/hiera.yaml", <<-HIERA)
 ---
 :backends:
   - "yaml"
@@ -46,7 +48,7 @@ include some_mod
       SITE
 
       on(master, "chmod -R 775 #{fq_tmp_environmentpath}")
-      on(master, "chmod -R 775 #{confdir}")
+      on(master, "chmod -R 775 #{master_confdir}")
     end
   end
 
