@@ -864,7 +864,7 @@ class Puppet::Parser::Scope
 
   # Pop ephemeral scopes up to level and return them
   #
-  # @param level [Fixnum] a positive integer
+  # @param level [Integer] a positive integer
   # @return [Array] the removed ephemeral scopes
   # @api private
   def pop_ephemerals(level)

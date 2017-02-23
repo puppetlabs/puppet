@@ -60,7 +60,7 @@ class Puppet::Indirector::Indirection
 
   # Set the time-to-live for instances created through this indirection.
   def ttl=(value)
-    raise ArgumentError, "Indirection TTL must be an integer" unless value.is_a?(Fixnum)
+    raise ArgumentError, "Indirection TTL must be an integer" unless value.is_a?(Integer)
     @ttl = value
   end
 

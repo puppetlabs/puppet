@@ -200,7 +200,7 @@ describe 'the 4x function api' do
     it 'a function can use inexact argument mapping' do
       f = create_function_with_inexact_dispatch
       func = f.new(:closure_scope, :loader)
-      expect(func.call({}, 3,4,5)).to eql([Fixnum, Fixnum, Fixnum])
+      expect(func.call({}, 3.0,4.0,5.0)).to eql([Float, Float, Float])
       expect(func.call({}, 'Apple', 'Banana')).to eql([String, String])
     end
 
