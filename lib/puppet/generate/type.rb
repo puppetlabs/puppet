@@ -222,7 +222,7 @@ module Puppet
             effective_output_path = input.effective_output_path(outputdir)
             Puppet.notice "Generating '#{effective_output_path}' using '#{input.format}' format."
             FileUtils.mkdir_p(File.dirname(effective_output_path))
-            File.open(effective_output_path, 'w') do |file|
+            Puppet::FileSystem.open(effective_output_path, nil, 'w:UTF-8') do |file|
               file.write(result)
             end
           rescue Exception => e

@@ -133,7 +133,7 @@ class Puppet::Indirector::Request
       case value
       when nil
         params
-      when true, false, String, Symbol, Fixnum, Bignum, Float
+      when true, false, String, Symbol, Integer, Float
         params << [key, value]
       else
         raise ArgumentError, "HTTP REST queries cannot handle values of type '#{value.class}'"

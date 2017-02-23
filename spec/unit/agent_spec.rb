@@ -50,7 +50,7 @@ describe Puppet::Agent do
   end
 
   it "should include the Locker module" do
-    expect(Puppet::Agent.ancestors).to be_include(Puppet::Agent::Locker)
+    expect(Puppet::Agent.ancestors).to be_include(Puppet::Util::Locker)
   end
 
   it "should create an instance of its client class and run it when asked to run" do

@@ -56,7 +56,7 @@ class Puppet::Pops::Evaluator::PuppetProc < Proc
     end
   end
 
-  # @return [Fixnum] the arity of the block
+  # @return [Integer] the arity of the block
   # @overrides Block.arity
   # @api public
   def arity

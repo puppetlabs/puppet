@@ -136,7 +136,7 @@ describe Puppet::Network::HTTP::WEBrick do
       log = make_absolute("/master/log")
       Puppet[:masterhttplog] = log
 
-      File.expects(:open).with(log, "a+").returns @filehandle
+      File.expects(:open).with(log, "a+:UTF-8").returns @filehandle
 
       server.setup_logger
     end

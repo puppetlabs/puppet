@@ -7,12 +7,13 @@ describe provider_class do
 
   let (:packages) do
     <<-RPM_OUTPUT
-    cracklib-dicts 0 2.8.9 3.3 x86_64
+    'cracklib-dicts 0 2.8.9 3.3 x86_64
     basesystem 0 8.0 5.1.1.el5.centos noarch
     chkconfig 0 1.3.30.2 2.el5 x86_64
     myresource 0 1.2.3.4 5.el4 noarch
     mysummaryless 0 1.2.3.4 5.el4 noarch
     tomcat 1 1.2.3.4 5.el4 x86_64
+    '
     RPM_OUTPUT
   end
 

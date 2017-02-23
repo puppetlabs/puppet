@@ -56,7 +56,7 @@ class RelationshipOperator
   # A string must be a type reference in string format
   # @api private
   def transform_String(o, scope)
-    assert_catalog_type(Types::TypeParser.singleton.parse(o, scope), scope)
+    assert_catalog_type(Types::TypeParser.singleton.parse(o), scope)
   end
 
   # A qualified name is short hand for a class with this name

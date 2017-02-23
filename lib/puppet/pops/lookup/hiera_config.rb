@@ -12,11 +12,11 @@ class ScopeLookupCollectingInvocation < Invocation
 
   def initialize(scope)
     super(scope)
-    @scope_interpolations = {}
+    @scope_interpolations = []
   end
 
-  def remember_scope_lookup(key, value)
-    @scope_interpolations[key] = value
+  def remember_scope_lookup(*lookup_result)
+    @scope_interpolations << lookup_result
   end
 end
 
@@ -44,6 +44,7 @@ class HieraConfig
   KEY_LOOKUP_KEY = LookupKeyFunctionProvider::TAG
   KEY_DATA_DIG = DataDigFunctionProvider::TAG
   KEY_V3_DATA_HASH = V3DataHashFunctionProvider::TAG
+  KEY_V3_LOOKUP_KEY = V3LookupKeyFunctionProvider::TAG
   KEY_V3_BACKEND = V3BackendFunctionProvider::TAG
   KEY_V4_DATA_HASH = V4DataHashFunctionProvider::TAG
   KEY_BACKEND = 'backend'.freeze
@@ -57,6 +58,7 @@ class HieraConfig
     KEY_LOOKUP_KEY => LookupKeyFunctionProvider,
     KEY_V3_DATA_HASH => V3DataHashFunctionProvider,
     KEY_V3_BACKEND => V3BackendFunctionProvider,
+    KEY_V3_LOOKUP_KEY => V3LookupKeyFunctionProvider,
     KEY_V4_DATA_HASH => V4DataHashFunctionProvider
   }
 
@@ -155,20 +157,28 @@ class HieraConfig
   # @param parent_data_provider [DataProvider] The data provider that loaded this configuration
   # @return [Array<DataProvider>] the data providers
   def configured_data_providers(lookup_invocation, parent_data_provider)
-    scope = lookup_invocation.scope
-    unless @data_providers && scope_interpolations_stable?(scope)
+    unless @data_providers && scope_interpolations_stable?(lookup_invocation)
       if @data_providers
         lookup_invocation.report_text { 'Hiera configuration recreated due to change of scope variables used in interpolation expressions' }
       end
-      slc_invocation = ScopeLookupCollectingInvocation.new(scope)
+      slc_invocation = ScopeLookupCollectingInvocation.new(lookup_invocation.scope)
       @data_providers = create_configured_data_providers(slc_invocation, parent_data_provider)
       @scope_interpolations = slc_invocation.scope_interpolations
     end
     @data_providers
   end
 
-  def scope_interpolations_stable?(scope)
-    @scope_interpolations.all? { |key, value| scope[key].eql?(value) }
+  def scope_interpolations_stable?(lookup_invocation)
+    scope = lookup_invocation.scope
+    @scope_interpolations.all? do |key, root_key, segments, old_value|
+      value = scope[root_key]
+      unless value.nil? || segments.empty?
+        found = '';
+        catch(:no_such_key) { found = sub_lookup(key, lookup_invocation, segments, value) }
+        value = found;
+      end
+      old_value.eql?(value)
+    end
   end
 
   # @api private
@@ -207,6 +217,30 @@ class HieraConfig
         Hiera.logger = 'puppet'
       end
     end
+
+    unless Hiera::Interpolate.const_defined?(:PATCHED_BY_HIERA_5)
+      # Replace the class methods 'hiera_interpolate' and 'alias_interpolate' with a method that wires back and performs global
+      # lookups using the lookup framework. This is necessary since the classic Hiera is made aware only of custom backends.
+      class << Hiera::Interpolate
+        hiera_interpolate = Proc.new do |data, key, scope, extra_data, context|
+          override = context[:order_override]
+          invocation = Puppet::Pops::Lookup::Invocation.current
+          unless override.nil? && invocation.global_only?
+            invocation = Puppet::Pops::Lookup::Invocation.new(scope)
+            invocation.set_global_only
+            invocation.set_hiera_v3_location_overrides(override) unless override.nil?
+          end
+          Puppet::Pops::Lookup::LookupAdapter.adapt(scope.compiler).lookup(key, invocation, nil)
+        end
+
+        send(:remove_method, :hiera_interpolate)
+        send(:remove_method, :alias_interpolate)
+        send(:define_method, :hiera_interpolate, hiera_interpolate)
+        send(:define_method, :alias_interpolate, hiera_interpolate)
+      end
+      Hiera::Interpolate.send(:const_set, :PATCHED_BY_HIERA_5, true)
+    end
+
     Hiera::Config.instance_variable_set(:@config, hiera3_config)
 
     # Use a special lookup_key that delegates to the backend
@@ -262,7 +296,7 @@ class HieraConfigV3 < HieraConfig
 
     [@config[KEY_BACKENDS]].flatten.each do |backend|
       raise Puppet::DataBinding::LookupError, "#{@config_path}: Backend '#{backend}' defined more than once" if data_providers.include?(backend)
-      original_paths = @config[KEY_HIERARCHY]
+      original_paths = [@config[KEY_HIERARCHY]].flatten
       backend_config = @config[backend] || EMPTY_HASH
       datadir = Pathname(interpolate(backend_config[KEY_DATADIR] || default_datadir, lookup_invocation, false))
       ext = backend == 'hocon' ? '.conf' : ".#{backend}"
@@ -272,6 +306,8 @@ class HieraConfigV3 < HieraConfig
         create_data_provider(backend, parent_data_provider, KEY_V3_DATA_HASH, "#{backend}_data", { KEY_DATADIR => datadir }, paths)
       when backend == 'hocon' && Puppet.features.hocon?
         create_data_provider(backend, parent_data_provider, KEY_V3_DATA_HASH, 'hocon_data', { KEY_DATADIR => datadir }, paths)
+      when backend == 'eyaml' && Puppet.features.hiera_eyaml?
+        create_data_provider(backend, parent_data_provider, KEY_V3_LOOKUP_KEY, 'eyaml_lookup_key', backend_config.merge(KEY_DATADIR => datadir), paths)
       else
         create_hiera3_backend_provider(backend, backend, parent_data_provider, datadir, paths, @loaded_config)
       end
@@ -320,10 +356,8 @@ class HieraConfigV3 < HieraConfig
   def create_merge_strategy
     key = @config[KEY_MERGE_BEHAVIOR]
     case key
-    when nil
+    when nil, 'native'
       MergeStrategy.strategy(nil)
-    when 'native'
-      MergeStrategy.strategy(:first)
     when 'array'
       MergeStrategy.strategy(:unique)
     when 'deep', 'deeper'
@@ -337,10 +371,6 @@ end
 
 # @api private
 class HieraConfigV4 < HieraConfig
-  require 'puppet/plugins/data_providers'
-
-  include Puppet::Plugins::DataProviders
-
   def self.config_type
     return @@CONFIG_TYPE if class_variable_defined?(:@@CONFIG_TYPE)
     tf = Types::TypeFactory
@@ -357,23 +387,6 @@ class HieraConfigV4 < HieraConfig
         tf.optional(KEY_PATHS) => tf.array_of(nes_t)
       ))
     })
-  end
-
-  def factory_create_data_provider(lookup_invocation, name, parent_data_provider, provider_name, datadir, original_paths)
-    service_type = Registry.hash_of_path_based_data_provider_factories
-    provider_factory = Puppet.lookup(:injector).lookup(nil, service_type, PATH_BASED_DATA_PROVIDER_FACTORIES_KEY)[provider_name]
-    raise Puppet::DataBinding::LookupError, "#{@config_path}: No data provider is registered for backend '#{provider_name}' " unless provider_factory
-
-    paths = original_paths.map { |path| interpolate(path, lookup_invocation, false) }
-    paths = provider_factory.resolve_paths(datadir, original_paths, paths, lookup_invocation)
-
-    provider_factory_version = provider_factory.respond_to?(:version) ? provider_factory.version : 1
-    if provider_factory_version == 1
-      # Version 1 is not aware of the parent provider
-      provider_factory.create(name, paths)
-    else
-      provider_factory.create(name, paths, parent_data_provider)
-    end
   end
 
   def create_configured_data_providers(lookup_invocation, parent_data_provider)
@@ -394,7 +407,7 @@ class HieraConfigV4 < HieraConfig
         create_data_provider(name, parent_data_provider, KEY_DATA_HASH, 'hocon_data', {},
           resolve_paths(datadir, original_paths, lookup_invocation, @config_path.nil?, '.conf'))
       else
-        factory_create_data_provider(lookup_invocation, name, parent_data_provider, provider_name, datadir, original_paths)
+        raise Puppet::DataBinding::LookupError, "#{@config_path}: No data provider is registered for backend '#{provider_name}' "
       end
     end
     data_providers.values

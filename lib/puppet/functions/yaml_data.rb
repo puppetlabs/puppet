@@ -10,7 +10,12 @@ Puppet::Functions.create_function(:yaml_data) do
 
   def yaml_data(options, context)
     begin
-      data = YAML.load_file(options['path'])
+      path = options['path']
+      data = YAML.load_file(path)
+      unless data.is_a?(Hash)
+        Puppet.warning("#{path}: file does not contain a valid yaml hash")
+        data = {}
+      end
       Puppet::Pops::Lookup::HieraConfig.symkeys_to_string(data.nil? ? {} : data)
     rescue YAML::SyntaxError => ex
       # Psych errors includes the absolute path to the file, so no need to add that

@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 4.8.1-318-gb241bf3\n"
+"Project-Id-Version: Puppet automation framework 4.8.2-338-g562b302\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-01-12 10:24-0800\n"
-"PO-Revision-Date: 2017-01-12 10:24-0800\n"
+"POT-Creation-Date: 2017-01-25 09:32-0800\n"
+"PO-Revision-Date: 2017-01-25 09:32-0800\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -70,6 +70,9 @@ msgid ""
 msgstr ""
 
 msgid "\"Unable to load action #{actionname} from #{face}\""
+msgstr ""
+
+msgid " (Deprecated)"
 msgstr ""
 
 msgid "! Subcommand unavailable due to error. Check error logs."

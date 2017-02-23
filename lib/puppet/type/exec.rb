@@ -157,7 +157,12 @@ module Puppet
         end
 
         unless self.should.include?(@status.exitstatus.to_s)
-          self.fail("#{self.resource[:command]} returned #{@status.exitstatus} instead of one of [#{self.should.join(",")}]")
+          if @resource.parameter(:command).sensitive
+            # Don't print sensitive commands in the clear
+            self.fail("[command redacted] returned #{@status.exitstatus} instead of one of [#{self.should.join(",")}]")
+          else
+            self.fail("'#{self.resource[:command]}' returned #{@status.exitstatus} instead of one of [#{self.should.join(",")}]")
+          end
         end
 
         event
@@ -596,6 +601,16 @@ module Puppet
 
     def current_username
       Etc.getpwuid(Process.uid).name
+    end
+
+    private
+    def set_sensitive_parameters(sensitive_parameters)
+      # Respect sensitive commands
+      if sensitive_parameters.include?(:command)
+        sensitive_parameters.delete(:command)
+        parameter(:command).sensitive = true
+      end
+      super(sensitive_parameters)
     end
   end
 end

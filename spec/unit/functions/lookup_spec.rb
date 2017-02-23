@@ -13,39 +13,85 @@ describe "The lookup function" do
     let(:env_name) { 'spec' }
     let(:code_dir_files) { {} }
     let(:code_dir) { tmpdir('code') }
+    let(:ruby_dir) { tmpdir('ruby') }
+    let(:env_modules) { {} }
+    let(:env_hiera_yaml) do
+      <<-YAML.unindent
+        ---
+        version: 5
+        hierarchy:
+          - name: "Common"
+            data_hash: yaml_data
+            path: "common.yaml"
+        YAML
+    end
+
+    let(:env_data) do
+      {
+        'common.yaml' => <<-YAML.unindent
+          ---
+          a: value a (from environment)
+          c:
+            c_b: value c_b (from environment)
+          mod_a::a: value mod_a::a (from environment)
+          mod_a::hash_a:
+            a: value mod_a::hash_a.a (from environment)
+          mod_a::hash_b:
+            a: value mod_a::hash_b.a (from environment)
+          hash_b:
+            hash_ba:
+              bab: value hash_b.hash_ba.bab (from environment)
+          hash_c:
+            hash_ca:
+              caa: value hash_c.hash_ca.caa (from environment)
+          lookup_options:
+            mod_a::hash_b:
+              merge: hash
+            hash_c:
+              merge: hash
+          YAML
+        }
+    end
+
     let(:environment_files) do
       {
         env_name => {
-          'modules' => {},
-          'hiera.yaml' => <<-YAML.unindent,
-          ---
-          version: 5
-          hierarchy:
-            - name: "Common"
-              data_hash: yaml_data
-              path: "common.yaml"
-        YAML
-        'data' => {
-          'common.yaml' => <<-YAML.unindent
-            ---
-            a: value a
-            mod_a::a: value mod_a::a (from environment)
-            mod_a::hash_a:
-              a: value mod_a::hash_a.a (from environment)
-            mod_a::hash_b:
-              a: value mod_a::hash_b.a (from environment)
-            hash_b:
-              hash_ba:
-                bab: value hash_b.hash_ba.bab (from environment)
-            hash_c:
-              hash_ca:
-                caa: value hash_c.hash_ca.caa (from environment)
-            lookup_options:
-              mod_a::hash_b:
-                merge: hash
-              hash_c:
-                merge: hash
-            YAML
+          'modules' => env_modules,
+          'hiera.yaml' => env_hiera_yaml,
+          'data' => env_data
+        }
+      }
+    end
+
+    let(:ruby_dir_files) do
+      {
+        'hiera' => {
+          'backend' => {
+            'custom_backend.rb' => <<-RUBY.unindent,
+              class Hiera::Backend::Custom_backend
+                def lookup(key, scope, order_override, resolution_type, context)
+                  case key
+                  when 'hash_c'
+                    { 'hash_ca' => { 'cad' => 'value hash_c.hash_ca.cad (from global custom)' }}
+                  when 'h'
+                    [ 'x5,x6' ]
+                  when 'datasources'
+                    Hiera::Backend.datasources(scope, order_override) { |source| source }
+                  else
+                    throw :no_such_key
+                  end
+                end
+              end
+              RUBY
+            'other_backend.rb' => <<-RUBY.unindent,
+              class Hiera::Backend::Other_backend
+                def lookup(key, scope, order_override, resolution_type, context)
+                  value = Hiera::Config[:other][key.to_sym]
+                  throw :no_such_key if value.nil?
+                  value
+                end
+              end
+              RUBY
           }
         }
       }
@@ -77,6 +123,11 @@ describe "The lookup function" do
     let(:populated_code_dir) do
       dir_contained_in(code_dir, code_dir_files)
       code_dir
+    end
+
+    let(:populated_ruby_dir) do
+      dir_contained_in(ruby_dir, ruby_dir_files)
+      ruby_dir
     end
 
     let(:env_dir) do
@@ -126,7 +177,7 @@ describe "The lookup function" do
                 compiler.compile
               end
             end
-          rescue Puppet::DataBinding::LookupError => e
+          rescue RuntimeError => e
             invocation_with_explain.report_text { e.message }
           end
         else
@@ -158,20 +209,14 @@ describe "The lookup function" do
     end
 
     it 'finds data in the environment' do
-      expect(lookup('a')).to eql('value a')
+      expect(lookup('a')).to eql('value a (from environment)')
     end
 
     context 'that has no lookup configured' do
       let(:environment_files) do
         {
           env_name => {
-            'modules' => {},
-            'data' => {
-              'common.yaml' => <<-YAML.unindent
-              ---
-              a: value a
-            YAML
-            }
+            'data' => env_data
           }
         }
       end
@@ -181,36 +226,43 @@ describe "The lookup function" do
       end
 
       context "but an environment.conf with 'environment_data_provider=hiera'" do
-        let(:environment_files_1) do
-          DeepMerge.deep_merge!(environment_files, 'environment.conf' => "environment_data_provider=hiera\n")
-        end
-
-        let(:populated_env_dir) do
-          dir_contained_in(env_dir, DeepMerge.deep_merge!(environment_files, env_name => environment_files_1))
-          env_dir
+        let(:environment_files) do
+          {
+            env_name => {
+              'environment.conf' => "environment_data_provider=hiera\n",
+              'data' => env_data
+            }
+          }
         end
 
         it 'finds data in the environment and reports deprecation warning for environment.conf' do
-          expect(lookup('a')).to eql('value a')
+          expect(lookup('a')).to eql('value a (from environment)')
           expect(warnings).to include(/Defining environment_data_provider='hiera' in environment.conf is deprecated. A 'hiera.yaml' file should be used instead/)
         end
 
         context 'and a hiera.yaml file' do
-          let(:environment_files_2) { DeepMerge.deep_merge!(environment_files_1,'hiera.yaml' => <<-YAML.unindent) }
-            ---
-            version: 4
-            hierarchy:
-              - name: common
-                backend: yaml
-            YAML
+          let(:env_hiera_yaml) do
+            <<-YAML.unindent
+              ---
+              version: 4
+              hierarchy:
+                - name: common
+                  backend: yaml
+              YAML
+          end
 
-          let(:populated_env_dir) do
-            dir_contained_in(env_dir, DeepMerge.deep_merge!(environment_files, env_name => environment_files_2))
-            env_dir
+          let(:environment_files) do
+            {
+              env_name => {
+                'hiera.yaml' => env_hiera_yaml,
+                'environment.conf' => "environment_data_provider=hiera\n",
+                'data' => env_data
+              }
+            }
           end
 
           it 'finds data in the environment and reports deprecation warnings for both environment.conf and hiera.yaml' do
-            expect(lookup('a')).to eql('value a')
+            expect(lookup('a')).to eql('value a (from environment)')
             expect(warnings).to include(/Defining environment_data_provider='hiera' in environment.conf is deprecated/)
             expect(warnings).to include(/Use of 'hiera.yaml' version 4 is deprecated. It should be converted to version 5/)
           end
@@ -242,24 +294,31 @@ describe "The lookup function" do
     end
 
     context 'that has interpolated paths configured' do
+      let(:env_hiera_yaml) do
+        <<-YAML.unindent
+          ---
+          version: 5
+          hierarchy:
+            - name: "Varying"
+              data_hash: yaml_data
+              path: "x%{::var.sub}.yaml"
+          YAML
+      end
+
       let(:environment_files) do
         {
           env_name => {
-            'hiera.yaml' => <<-YAML.unindent,
-              ---
-              version: 5
-              hierarchy:
-                - name: "Varying"
-                  data_hash: yaml_data
-                  path: "x%{::var}.yaml"
-              YAML
+            'hiera.yaml' => env_hiera_yaml,
             'modules' => {},
             'data' => {
               'x.yaml' => <<-YAML.unindent,
                 y: value y from x
               YAML
-              'x_d.yaml' => <<-YAML.unindent
+              'x_d.yaml' => <<-YAML.unindent,
                 y: value y from x_d
+              YAML
+              'x_e.yaml' => <<-YAML.unindent
+                y: value y from x_e
               YAML
             }
           }
@@ -270,8 +329,11 @@ describe "The lookup function" do
         Puppet[:log_level] = 'debug'
         collect_notices("notice('success')") do |scope|
           expect(lookup_func.call(scope, 'y')).to eql('value y from x')
-          scope['var'] = '_d'
+          var = { 'sub' => '_d' }
+          scope['var'] = var
           expect(lookup_func.call(scope, 'y')).to eql('value y from x_d')
+          var['sub'] = '_e'
+          expect(lookup_func.call(scope, 'y')).to eql('value y from x_e')
         end
         expect(notices).to eql(['success'])
         expect(debugs.any? { |m| m =~ /Hiera configuration recreated due to change of scope variables used in interpolation expressions/ }).to be_truthy
@@ -319,6 +381,119 @@ describe "The lookup function" do
       end
     end
 
+    context 'with yaml data file' do
+      let(:environment_files) do
+        {
+          env_name => {
+            'hiera.yaml' => <<-YAML.unindent,
+              ---
+              version: 5
+              YAML
+            'data' => {
+              'common.yaml' => common_yaml
+            }
+          }
+        }
+      end
+
+      context 'that contains hash values with interpolated keys' do
+        let(:common_yaml) do
+          <<-YAML.unindent
+          ---
+          a:
+              "%{key}": "the %{value}"
+          b:  "Detail in %{lookup('a.a_key')}"
+          YAML
+        end
+
+        it 'interpolates both key and value"' do
+          Puppet[:log_level] = 'debug'
+          collect_notices("notice('success')") do |scope|
+            expect(lookup_func.call(scope, 'a')).to eql({'' => 'the '})
+            scope['key'] = 'a_key'
+            scope['value'] = 'interpolated value'
+            expect(lookup_func.call(scope, 'a')).to eql({'a_key' => 'the interpolated value'})
+          end
+          expect(notices).to eql(['success'])
+        end
+
+        it 'navigates to a value behind an interpolated key"' do
+          Puppet[:log_level] = 'debug'
+          collect_notices("notice('success')") do |scope|
+            scope['key'] = 'a_key'
+            scope['value'] = 'interpolated value'
+            expect(lookup_func.call(scope, 'a.a_key')).to eql('the interpolated value')
+          end
+          expect(notices).to eql(['success'])
+        end
+
+        it 'navigates to a value behind an interpolated key using an interpolated value"' do
+          Puppet[:log_level] = 'debug'
+          collect_notices("notice('success')") do |scope|
+            scope['key'] = 'a_key'
+            scope['value'] = 'interpolated value'
+            expect(lookup_func.call(scope, 'b')).to eql('Detail in the interpolated value')
+          end
+          expect(notices).to eql(['success'])
+        end
+      end
+
+      context 'that is empty' do
+        let(:common_yaml) { '' }
+
+        it 'fails with a "did not find"' do
+          expect { lookup('a') }.to raise_error do |e|
+            expect(e.message).to match(/did not find a value for the name 'a'/)
+          end
+        end
+
+        it 'logs a warning that the file does not contain a hash' do
+          expect { lookup('a') }.to raise_error(Puppet::DataBinding::LookupError)
+          expect(warnings).to include(/spec\/data\/common.yaml: file does not contain a valid yaml hash/)
+        end
+      end
+
+      context 'that contains illegal yaml' do
+        let(:common_yaml) { "@!#%**&:\n" }
+
+        it 'fails lookup and that the key is not found' do
+          expect { lookup('a') }.to raise_error do |e|
+            expect(e.message).to match(/Unable to parse/)
+          end
+        end
+      end
+
+      context 'that contains a legal yaml that is not a hash' do
+        let(:common_yaml) { "- A list\n- of things" }
+
+        it 'fails with a "did not find"' do
+          expect { lookup('a') }.to raise_error do |e|
+            expect(e.message).to match(/did not find a value for the name 'a'/)
+          end
+        end
+
+        it 'logs a warning that the file does not contain a hash' do
+          expect { lookup('a') }.to raise_error(Puppet::DataBinding::LookupError)
+          expect(warnings).to include(/spec\/data\/common.yaml: file does not contain a valid yaml hash/)
+        end
+      end
+
+      context 'that contains a legal yaml hash with illegal types' do
+        let(:common_yaml) do
+          <<-YAML.unindent
+          ---
+          a: !ruby/object:Puppet::Graph::Key
+              value: x
+          YAML
+        end
+
+        it 'fails lookup and reports a type mismatch' do
+          expect { lookup('a') }.to raise_error do |e|
+            expect(e.message).to match(/wrong type, expects a value of type Scalar, Sensitive, Type, Hash, or Array, got Runtime/)
+          end
+        end
+      end
+    end
 
     context 'with lookup_options configured using patterns' do
       let(:mod_common) {
@@ -352,20 +527,27 @@ describe "The lookup function" do
         }
       end
 
-      let(:environment_files) do
+      let(:env_modules) do
         {
-          env_name => {
-            'hiera.yaml' => <<-YAML.unindent,
-              ---
-              version: 5
-              hierarchy:
-                - name: X
-                  paths:
-                  - first.yaml
-                  - second.yaml
-              YAML
-            'data' => {
-              'first.yaml' => <<-YAML.unindent,
+          'mod' => mod_base
+        }
+      end
+
+      let(:env_hiera_yaml) do
+        <<-YAML.unindent
+          ---
+          version: 5
+          hierarchy:
+            - name: X
+              paths:
+              - first.yaml
+              - second.yaml
+          YAML
+      end
+
+      let(:env_data) do
+        {
+          'first.yaml' => <<-YAML.unindent,
                 a:
                   aa:
                     aaa: a.aa.aaa
@@ -399,8 +581,8 @@ describe "The lookup function" do
                      merge: first
                   '^mod::ha.*_b':
                     merge: hash
-                YAML
-              'second.yaml' => <<-YAML.unindent,
+        YAML
+        'second.yaml' => <<-YAML.unindent,
                 a:
                   aa:
                     aab: a.aa.aab
@@ -412,12 +594,7 @@ describe "The lookup function" do
                 c:
                   ca:
                     cab: c.ca.cab
-                YAML
-            },
-            'modules' => {
-              'mod' => mod_base
-            }
-          }
+        YAML
         }
       end
 
@@ -501,20 +678,115 @@ describe "The lookup function" do
       end
     end
 
-    context 'and an environment Hiera v3 configuration' do
-      let(:environment_files) do
+    context 'and an environment Hiera v5 configuration using globs' do
+      let(:env_hiera_yaml) do
+        <<-YAML.unindent
+        ---
+        version: 5
+        hierarchy:
+          - name: Globs
+            globs:
+              - "globs/*.yaml"
+              - "globs_%{domain}/*.yaml"
+        YAML
+      end
+
+      let(:env_data) do
         {
-          env_name => {
-            'hiera.yaml' => <<-YAML.unindent,
-              ---
-              :backends: yaml
-          YAML
+          'globs' => {
+            'a.yaml' => <<-YAML.unindent,
+              glob_a: value glob_a
+              YAML
+            'b.yaml' => <<-YAML.unindent
+              glob_b:
+                a: value glob_b.a
+                b: value glob_b.b
+            YAML
+          },
+          'globs_example.com' => {
+            'a.yaml' => <<-YAML.unindent,
+              glob_c: value glob_a
+              YAML
+            'b.yaml' => <<-YAML.unindent
+              glob_b:
+                c: value glob_b.c
+                d: value glob_b.d
+            YAML
+
           }
         }
       end
 
-      it 'raises an error' do
-        expect { lookup('a') }.to raise_error(Puppet::Error, /hiera configuration version 3 cannot be used in an environment/)
+      let(:environment_files) do
+        {
+          env_name => {
+            'hiera.yaml' => env_hiera_yaml,
+            'data' => env_data
+          }
+        }
+      end
+
+      it 'finds environment data using globs' do
+        expect(lookup('glob_a')).to eql('value glob_a')
+        expect(warnings).to be_empty
+      end
+
+      it 'performs merges between interpolated and globbed paths' do
+        expect(lookup('glob_b', 'merge' => 'hash')).to eql(
+          {
+            'a' => 'value glob_b.a',
+            'b' => 'value glob_b.b',
+            'c' => 'value glob_b.c',
+            'd' => 'value glob_b.d'
+          })
+        expect(warnings).to be_empty
+      end
+    end
+
+    context 'and an environment Hiera v3 configuration' do
+      let(:env_hiera_yaml) do
+        <<-YAML.unindent
+          ---
+          :backends: yaml
+          :yaml:
+            :datadir:  #{env_dir}/#{env_name}/hieradata
+          YAML
+      end
+
+      let(:environment_files) do
+        {
+          env_name => {
+            'hiera.yaml' => env_hiera_yaml,
+            'hieradata' => {
+              'common.yaml' => <<-YAML.unindent,
+                g: Value g
+                YAML
+            }
+          }
+        }
+      end
+
+      it 'will raise an error if --strict is set to error' do
+        Puppet[:strict] = :error
+        expect { lookup('g') }.to raise_error(Puppet::Error, /hiera configuration version 3 cannot be used in an environment/)
+      end
+
+      it 'will log a warning and ignore the file if --strict is set to warning' do
+        Puppet[:strict] = :warning
+        expect { lookup('g') }.to raise_error(Puppet::Error, /did not find a value for the name 'g'/)
+      end
+
+      it 'will not log a warning and ignore the file if --strict is set to off' do
+        Puppet[:strict] = :off
+        expect { lookup('g') }.to raise_error(Puppet::Error, /did not find a value for the name 'g'/)
+        expect(warnings).to include(/hiera.yaml version 3 found at the environment root was ignored/)
+      end
+
+      it 'will use the configuration if appointed by global setting but still warn when encountered by environment data provider' do
+        Puppet[:strict] = :warning
+        Puppet.settings[:hiera_config] = File.join(env_dir, env_name, 'hiera.yaml')
+        expect(lookup('g')).to eql('Value g')
+        expect(warnings).to include(/hiera.yaml version 3 found at the environment root was ignored/)
       end
     end
 
@@ -582,35 +854,6 @@ describe "The lookup function" do
       let(:code_dir_files) do
         {
           'hiera.yaml' => hiera_yaml,
-          'ruby_stuff' => {
-            'hiera' => {
-              'backend' => {
-                'custom_backend.rb' => <<-RUBY.unindent,
-                  class Hiera::Backend::Custom_backend
-                    def lookup(key, scope, order_override, resolution_type, context)
-                      case key
-                      when 'hash_c'
-                        { 'hash_ca' => { 'cad' => 'value hash_c.hash_ca.cad (from global custom)' }}
-                      when 'datasources'
-                        Hiera::Backend.datasources(scope, order_override) { |source| source }
-                      else
-                        throw :no_such_key
-                      end
-                    end
-                  end
-                  RUBY
-                'other_backend.rb' => <<-RUBY.unindent,
-                  class Hiera::Backend::Other_backend
-                    def lookup(key, scope, order_override, resolution_type, context)
-                      value = Hiera::Config[:other][key.to_sym]
-                      throw :no_such_key if value.nil?
-                      value
-                    end
-                  end
-                  RUBY
-              }
-            }
-          },
           'hieradata' => {
             'common.yaml' =>  <<-YAML.unindent,
               a: value a (from global)
@@ -655,14 +898,16 @@ describe "The lookup function" do
       around(:each) do |example|
         # Faking the load path to enable 'require' to load from 'ruby_stuff'. It removes the need for a static fixture
         # for the custom backend
-        $LOAD_PATH.unshift(File.join(code_dir, 'ruby_stuff'))
+        $LOAD_PATH.unshift(populated_ruby_dir)
         begin
           Puppet.override(:environments => environments, :current_environment => env) do
             example.run
           end
         ensure
-          Hiera::Backend.send(:remove_const, :Custom_backend) if Hiera::Backend.const_defined?(:Custom_backend)
-          Hiera::Backend.send(:remove_const, :Other_backend) if Hiera::Backend.const_defined?(:Other_backend)
+          if Kernel.const_defined?(:Hiera) && Hiera.const_defined?(:Backend)
+            Hiera::Backend.send(:remove_const, :Custom_backend) if Hiera::Backend.const_defined?(:Custom_backend)
+            Hiera::Backend.send(:remove_const, :Other_backend) if Hiera::Backend.const_defined?(:Other_backend)
+          end
           $LOAD_PATH.shift
         end
       end
@@ -720,6 +965,150 @@ describe "The lookup function" do
           expect(lookup('xs.subkey')).to eql('value xs.subkey (from global hocon)')
         end
 
+        context 'using an eyaml backend' do
+          let(:private_key_name) { 'private_key.pkcs7.pem' }
+          let(:public_key_name) { 'public_key.pkcs7.pem' }
+
+          let(:private_key) do
+            <<-PKCS7.unindent
+              -----BEGIN RSA PRIVATE KEY-----
+              MIIEogIBAAKCAQEAwHB3GvImq59em4LV9DMfP0Zjs21eW3Jd5I9fuY0jLJhIkH6f
+              CR7tyOpYV6xUj+TF8giq9WLxZI7sourMJMWjEWhVjgUr5lqp1RLv4lwfDv3Wk4XC
+              2LUuqj1IAErUXKeRz8i3lUSZW1Pf4CaMpnIiPdWbz6f0KkaJSFi9bqexONBx4fKQ
+              NlgZwm2/aYjjrYng788I0QhWDKUqsQOi5mZKlHNRsDlk7J3Afhsx/jTLrCX/G8+2
+              tPtLsHyRN39kluM5vYHbKXDsCG/a88Z2yUE2+r4Clp0FUKffiEDBPm0/H0sQ4Q1o
+              EfQFDQRKaIkhpsm0nOnLYTy3/xJc5uqDNkLiawIDAQABAoIBAE98pNXOe8ab93oI
+              mtNZYmjCbGAqprTjEoFb71A3SfYbmK2Gf65GxjUdBwx/tBYTiuekSOk+yzKcDoZk
+              sZnmwKpqDByzaiSmAkxunANFxdZtZvpcX9UfUX0j/t+QCROUa5gF8j6HrUiZ5nkx
+              sxr1PcuItekaGLJ1nDLz5JsWTQ+H4M+GXQw7/t96x8v8g9el4exTiAHGk6Fv16kD
+              017T02M9qTTmV3Ab/enDIBmKVD42Ta36K/wc4l1aoUQNiRbIGVh96Cgd1CFXLF3x
+              CsaNbYT4SmRXaYqoj6MKq+QFEGxadFmJy48NoSd4joirIn2lUjHxJebw3lLbNLDR
+              uvQnQ2ECgYEA/nD94wEMr6078uMv6nKxPpNGq7fihwSKf0G/PQDqrRmjUCewuW+k
+              /iXMe1Y/y0PjFeNlSbUsUvKQ5xF7F/1AnpuPHIrn3cjGVLb71W+zen1m8SnhsW/f
+              7dPgtcb4SCvfhmLgoov+P34YcNfGi6qgPUu6319IqoB3BIi7PvfEomkCgYEAwZ4+
+              V0bMjFdDn2hnYzjTNcF2aUQ1jPvtuETizGwyCbbMLl9522lrjC2DrH41vvqX35ct
+              CBJkhQFbtHM8Gnmozv0vxhI2jP+u14mzfePZsaXuYrEgWRj+BCsYUHodXryxnEWj
+              yVrTNskab1B5jFm2SCJDmKcycBOYpRBLCMx6W7MCgYBA99z7/6KboOIzzKrJdGup
+              jLV410UyMIikoccQ7pD9jhRTPS80yjsY4dHqlEVJw5XSWvPb9DTTITi6p44EvBep
+              6BKMuTMnQELUEr0O7KypVCfa4FTOl8BX28f+4kU3OGykxc6R8qkC0VGwTohV1UWB
+              ITsgGhZV4uOA9uDI3T8KMQKBgEnQY2HwmuDSD/TA39GDA3qV8+ez2lqSXRGIKZLX
+              mMf9SaBQQ+uzKA4799wWDbVuYeIbB07xfCL83pJP8FUDlqi6+7Celu9wNp7zX1ua
+              Nw8z/ErhzjxJe+Xo7A8aTwIkG+5A2m1UU/up9YsEeiJYvVaIwY58B42U2vfq20BS
+              fD9jAoGAX2MscBzIsmN+U9R0ptL4SXcPiVnOl8mqvQWr1B4OLgxX7ghht5Fs956W
+              bHipxOWMFCPJA/AhNB8q1DvYiD1viZbIALSCJVUkzs4AEFIjiPsCBKxerl7jF6Xp
+              1WYSaCmfvoCVEpFNt8cKp4Gq+zEBYAV4Q6TkcD2lDtEW49MuN8A=
+              -----END RSA PRIVATE KEY-----
+              PKCS7
+          end
+
+          let(:public_key) do
+            <<-PKCS7.unindent
+              -----BEGIN CERTIFICATE-----
+              MIIC2TCCAcGgAwIBAgIBATANBgkqhkiG9w0BAQUFADAAMCAXDTE3MDExMzA5MTY1
+              MloYDzIwNjcwMTAxMDkxNjUyWjAAMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+              CgKCAQEAwHB3GvImq59em4LV9DMfP0Zjs21eW3Jd5I9fuY0jLJhIkH6fCR7tyOpY
+              V6xUj+TF8giq9WLxZI7sourMJMWjEWhVjgUr5lqp1RLv4lwfDv3Wk4XC2LUuqj1I
+              AErUXKeRz8i3lUSZW1Pf4CaMpnIiPdWbz6f0KkaJSFi9bqexONBx4fKQNlgZwm2/
+              aYjjrYng788I0QhWDKUqsQOi5mZKlHNRsDlk7J3Afhsx/jTLrCX/G8+2tPtLsHyR
+              N39kluM5vYHbKXDsCG/a88Z2yUE2+r4Clp0FUKffiEDBPm0/H0sQ4Q1oEfQFDQRK
+              aIkhpsm0nOnLYTy3/xJc5uqDNkLiawIDAQABo1wwWjAPBgNVHRMBAf8EBTADAQH/
+              MB0GA1UdDgQWBBSejWrVnw7QaBjNFCHMNFi+doSOcTAoBgNVHSMEITAfgBSejWrV
+              nw7QaBjNFCHMNFi+doSOcaEEpAIwAIIBATANBgkqhkiG9w0BAQUFAAOCAQEAAe85
+              BQ1ydAHFqo0ib38VRPOwf5xPHGbYGhvQi4/sU6aTuR7pxaOJPYz05jLhS+utEmy1
+              sknBq60G67yhQE7IHcfwrl1arirG2WmKGvAbjeYL2K1UiU0pVD3D+Klkv/pK6jIQ
+              eOJRGb3qNUn0Sq9EoYIOXiGXQ641F0bZZ0+5H92kT1lmnF5oLfCb84ImD9T3snH6
+              pIr5RKRx/0YmJIcv3WdpoPT903rOJiRIEgIj/hDk9QZTBpm222Ul5yQQ5pBywpSp
+              xh0bmJKAQWhQm7QlybKfyaQmg5ot1jEzWAvD2I5FjHQxmAlchjb6RreaRhExj+JE
+              5O117dMBdzDBjcNMOA==
+              -----END CERTIFICATE-----
+              PKCS7
+          end
+
+          let(:keys_dir) do
+            keys = tmpdir('keys')
+            dir_contained_in(keys, {
+              private_key_name => private_key,
+              public_key_name => public_key
+            })
+            keys
+          end
+
+          let(:private_key_path) { File.join(keys_dir, private_key_name) }
+          let(:public_key_path) { File.join(keys_dir, public_key_name) }
+          let(:hiera_yaml) do
+            <<-YAML.unindent
+            :backends:
+              - eyaml
+              - yaml
+            :eyaml:
+              :datadir: #{code_dir}/hieradata
+              :pkcs7_private_key: #{private_key_path}
+              :pkcs7_public_key: #{public_key_path}
+            :yaml:
+              :datadir: #{code_dir}/hieradata
+            :hierarchy:
+              - common
+           YAML
+          end
+
+          let(:data_files) do
+            {
+              'common.yaml' => <<-YAML.unindent,
+                b: value 'b' (from global)
+                c:
+                  c_a: value c_a (from global)
+                YAML
+              'common.eyaml' => <<-YAML.unindent
+                a: >
+                  ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQEw
+                  DQYJKoZIhvcNAQEBBQAEggEAH457bsfL8kYw9O50roE3dcE21nCnmPnQ2XSX
+                  LYRJ2C78LarbfFonKz0gvDW7tyhsLWASFCFaiU8T1QPBd2b3hoQK8E4B2Ual
+                  xga/K7r9y3OSgRomTm9tpTltC6re0Ubh3Dy71H61obwxEdNVTqjPe95+m2b8
+                  6zWZVnzZzXXsTG1S17yJn1zaB/LXHbWNy4KyLLKCGAml+Gfl6ZMjmaplTmUA
+                  QIC5rI8abzbPP3TDMmbLOGNkrmLqI+3uS8tSueTMoJmWaMF6c+H/cA7oRxmV
+                  QCeEUVXjyFvCHcmbA+keS/RK9XF+vc07/XS4XkYSPs/I5hLQji1y9bkkGAs0
+                  tehxQjBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBDHpA6Fcl/R16aIYcow
+                  oiO4gDAvfFH6jLUwXkcYtagnwdmhkd9TQJtxNWcIwMpvmk036MqIoGwwhQdg
+                  gV4beiCFtLU=]
+                a_ref: "A reference to %{hiera('a')}"
+                b_ref: "A reference to %{hiera('b')}"
+                c_ref: "%{alias('c')}"
+                YAML
+            }
+          end
+
+          let(:code_dir_files) do
+            {
+              'hiera.yaml' => hiera_yaml,
+              'hieradata' => data_files
+            }
+          end
+
+          before(:each) do
+            Puppet.settings[:hiera_config] = File.join(code_dir, 'hiera.yaml')
+          end
+
+          it 'finds data in the global layer' do
+            expect(lookup('a')).to eql("Encrypted value 'a' (from global)")
+          end
+
+          it 'can use a hiera interpolation' do
+            expect(lookup('a_ref')).to eql("A reference to Encrypted value 'a' (from global)")
+          end
+
+          it 'can use a hiera interpolation that refers back to yaml' do
+            expect(lookup('b_ref')).to eql("A reference to value 'b' (from global)")
+          end
+
+          it 'can use a hiera interpolation that refers back to yaml, but only in global layer' do
+            expect(lookup(['c', 'c_ref'], 'merge' => 'deep')).to eql([{'c_a' => 'value c_a (from global)', 'c_b' => 'value c_b (from environment)'}, { 'c_a' => 'value c_a (from global)' }])
+          end
+
+          it 'delegates configured eyaml backend to eyaml_lookup_key function' do
+            expect(explain('a')).to match(/Hierarchy entry "eyaml"\n.*\n.*\n.*"common"\n\s*Found key: "a"/m)
+          end
+        end
+
         context 'using deep_merge_options supported by deep_merge gem but not supported by Puppet' do
 
           let(:hiera_yaml) do
@@ -743,20 +1132,69 @@ describe "The lookup function" do
               'hiera.yaml' => hiera_yaml,
               'hieradata' => {
                 'common.yaml' => <<-YAML.unindent,
-                  a:
+                  h:
                     - x1,x2
+                  str: a string
+                  mixed:
+                    x: hx
+                    y: hy
                   YAML
                 'other.yaml' => <<-YAML.unindent,
-                  a:
+                  h:
                     - x3
                     - x4
+                  str: another string
+                  mixed:
+                    - h1
+                    - h2
                   YAML
               }
             }
           end
 
           it 'honors option :unpack_arrays: (unsupported by puppet)' do
-            expect(lookup('a')).to eql(%w(x1 x2 x3 x4))
+            expect(lookup('h')).to eql(%w(x1 x2 x3 x4))
+          end
+
+          it 'will treat merge of strings as a unique (first found)' do
+            expect(lookup('str')).to eql('another string')
+          end
+
+          it 'will treat merge of array and hash as a unique (first found)' do
+            expect(lookup('mixed')).to eql(%w(h1 h2))
+          end
+
+          context 'together with a custom backend' do
+            let(:hiera_yaml) do
+              <<-YAML.unindent
+                ---
+                :backends:
+                  - custom
+                  - yaml
+                :yaml:
+                  :datadir: #{code_dir}/hieradata
+                :hierarchy:
+                  - other
+                  - common
+                :merge_behavior: #{merge_behavior}
+                :deep_merge_options:
+                  :unpack_arrays: ','
+                YAML
+            end
+
+            context "using 'deeper'" do
+              let(:merge_behavior) { 'deeper' }
+              it 'honors option :unpack_arrays: (unsupported by puppet)' do
+                expect(lookup('h')).to eql(%w(x1 x2 x3 x4 x5 x6))
+              end
+            end
+
+            context "using 'deep'" do
+              let(:merge_behavior) { 'deep' }
+              it 'honors option :unpack_arrays: (unsupported by puppet)' do
+                expect(lookup('h')).to eql(%w(x5 x6 x3 x4 x1 x2))
+              end
+            end
           end
         end
 
@@ -841,7 +1279,7 @@ describe "The lookup function" do
               YAML
         end
 
-        it 'finds data in the environment and reports no deprecation warnings' do
+        it 'finds global data and reports no deprecation warnings' do
           expect(lookup('a')).to eql('value a (from global)')
           expect(warnings).to be_empty
         end
@@ -1437,6 +1875,209 @@ describe "The lookup function" do
             expect(lookup(['mod_a::hash_a.a', 'mod_a::hash_a.b'], :merge => 'hash')).to eql(
               ['value mod_a::hash_a.a (from environment)', 'value mod_a::hash_a.b (from mod_a)'])
           end
+        end
+      end
+    end
+
+    context 'and an eyaml lookup_key function' do
+      let(:private_key_name) { 'private_key.pkcs7.pem' }
+      let(:public_key_name) { 'public_key.pkcs7.pem' }
+
+      let(:private_key) do
+        <<-PKCS7.unindent
+          -----BEGIN RSA PRIVATE KEY-----
+          MIIEogIBAAKCAQEAwHB3GvImq59em4LV9DMfP0Zjs21eW3Jd5I9fuY0jLJhIkH6f
+          CR7tyOpYV6xUj+TF8giq9WLxZI7sourMJMWjEWhVjgUr5lqp1RLv4lwfDv3Wk4XC
+          2LUuqj1IAErUXKeRz8i3lUSZW1Pf4CaMpnIiPdWbz6f0KkaJSFi9bqexONBx4fKQ
+          NlgZwm2/aYjjrYng788I0QhWDKUqsQOi5mZKlHNRsDlk7J3Afhsx/jTLrCX/G8+2
+          tPtLsHyRN39kluM5vYHbKXDsCG/a88Z2yUE2+r4Clp0FUKffiEDBPm0/H0sQ4Q1o
+          EfQFDQRKaIkhpsm0nOnLYTy3/xJc5uqDNkLiawIDAQABAoIBAE98pNXOe8ab93oI
+          mtNZYmjCbGAqprTjEoFb71A3SfYbmK2Gf65GxjUdBwx/tBYTiuekSOk+yzKcDoZk
+          sZnmwKpqDByzaiSmAkxunANFxdZtZvpcX9UfUX0j/t+QCROUa5gF8j6HrUiZ5nkx
+          sxr1PcuItekaGLJ1nDLz5JsWTQ+H4M+GXQw7/t96x8v8g9el4exTiAHGk6Fv16kD
+          017T02M9qTTmV3Ab/enDIBmKVD42Ta36K/wc4l1aoUQNiRbIGVh96Cgd1CFXLF3x
+          CsaNbYT4SmRXaYqoj6MKq+QFEGxadFmJy48NoSd4joirIn2lUjHxJebw3lLbNLDR
+          uvQnQ2ECgYEA/nD94wEMr6078uMv6nKxPpNGq7fihwSKf0G/PQDqrRmjUCewuW+k
+          /iXMe1Y/y0PjFeNlSbUsUvKQ5xF7F/1AnpuPHIrn3cjGVLb71W+zen1m8SnhsW/f
+          7dPgtcb4SCvfhmLgoov+P34YcNfGi6qgPUu6319IqoB3BIi7PvfEomkCgYEAwZ4+
+          V0bMjFdDn2hnYzjTNcF2aUQ1jPvtuETizGwyCbbMLl9522lrjC2DrH41vvqX35ct
+          CBJkhQFbtHM8Gnmozv0vxhI2jP+u14mzfePZsaXuYrEgWRj+BCsYUHodXryxnEWj
+          yVrTNskab1B5jFm2SCJDmKcycBOYpRBLCMx6W7MCgYBA99z7/6KboOIzzKrJdGup
+          jLV410UyMIikoccQ7pD9jhRTPS80yjsY4dHqlEVJw5XSWvPb9DTTITi6p44EvBep
+          6BKMuTMnQELUEr0O7KypVCfa4FTOl8BX28f+4kU3OGykxc6R8qkC0VGwTohV1UWB
+          ITsgGhZV4uOA9uDI3T8KMQKBgEnQY2HwmuDSD/TA39GDA3qV8+ez2lqSXRGIKZLX
+          mMf9SaBQQ+uzKA4799wWDbVuYeIbB07xfCL83pJP8FUDlqi6+7Celu9wNp7zX1ua
+          Nw8z/ErhzjxJe+Xo7A8aTwIkG+5A2m1UU/up9YsEeiJYvVaIwY58B42U2vfq20BS
+          fD9jAoGAX2MscBzIsmN+U9R0ptL4SXcPiVnOl8mqvQWr1B4OLgxX7ghht5Fs956W
+          bHipxOWMFCPJA/AhNB8q1DvYiD1viZbIALSCJVUkzs4AEFIjiPsCBKxerl7jF6Xp
+          1WYSaCmfvoCVEpFNt8cKp4Gq+zEBYAV4Q6TkcD2lDtEW49MuN8A=
+          -----END RSA PRIVATE KEY-----
+          PKCS7
+      end
+
+      let(:public_key) do
+        <<-PKCS7.unindent
+          -----BEGIN CERTIFICATE-----
+          MIIC2TCCAcGgAwIBAgIBATANBgkqhkiG9w0BAQUFADAAMCAXDTE3MDExMzA5MTY1
+          MloYDzIwNjcwMTAxMDkxNjUyWjAAMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+          CgKCAQEAwHB3GvImq59em4LV9DMfP0Zjs21eW3Jd5I9fuY0jLJhIkH6fCR7tyOpY
+          V6xUj+TF8giq9WLxZI7sourMJMWjEWhVjgUr5lqp1RLv4lwfDv3Wk4XC2LUuqj1I
+          AErUXKeRz8i3lUSZW1Pf4CaMpnIiPdWbz6f0KkaJSFi9bqexONBx4fKQNlgZwm2/
+          aYjjrYng788I0QhWDKUqsQOi5mZKlHNRsDlk7J3Afhsx/jTLrCX/G8+2tPtLsHyR
+          N39kluM5vYHbKXDsCG/a88Z2yUE2+r4Clp0FUKffiEDBPm0/H0sQ4Q1oEfQFDQRK
+          aIkhpsm0nOnLYTy3/xJc5uqDNkLiawIDAQABo1wwWjAPBgNVHRMBAf8EBTADAQH/
+          MB0GA1UdDgQWBBSejWrVnw7QaBjNFCHMNFi+doSOcTAoBgNVHSMEITAfgBSejWrV
+          nw7QaBjNFCHMNFi+doSOcaEEpAIwAIIBATANBgkqhkiG9w0BAQUFAAOCAQEAAe85
+          BQ1ydAHFqo0ib38VRPOwf5xPHGbYGhvQi4/sU6aTuR7pxaOJPYz05jLhS+utEmy1
+          sknBq60G67yhQE7IHcfwrl1arirG2WmKGvAbjeYL2K1UiU0pVD3D+Klkv/pK6jIQ
+          eOJRGb3qNUn0Sq9EoYIOXiGXQ641F0bZZ0+5H92kT1lmnF5oLfCb84ImD9T3snH6
+          pIr5RKRx/0YmJIcv3WdpoPT903rOJiRIEgIj/hDk9QZTBpm222Ul5yQQ5pBywpSp
+          xh0bmJKAQWhQm7QlybKfyaQmg5ot1jEzWAvD2I5FjHQxmAlchjb6RreaRhExj+JE
+          5O117dMBdzDBjcNMOA==
+          -----END CERTIFICATE-----
+          PKCS7
+      end
+
+      let(:keys_dir) do
+        keys = tmpdir('keys')
+        dir_contained_in(keys, {
+          private_key_name => private_key,
+          public_key_name => public_key
+        })
+        keys
+      end
+
+      let(:private_key_path) { File.join(keys_dir, private_key_name) }
+      let(:public_key_path) { File.join(keys_dir, public_key_name) }
+
+      let(:env_hiera_yaml) do
+        <<-YAML.unindent
+          version: 5
+          hierarchy:
+            - name: EYaml
+              path: common.eyaml
+              lookup_key: eyaml_lookup_key
+              options:
+                pkcs7_private_key: #{private_key_path}
+                pkcs7_public_key: #{public_key_path}
+          YAML
+      end
+
+      let(:data_files) do
+        {
+          'common.eyaml' => <<-YAML.unindent
+            a: >
+              ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQEw
+              DQYJKoZIhvcNAQEBBQAEggEAUwwNRA5ZKM87SLnjnJfzDFRQbeheSYMTOhcr
+              sgTPCGtzEAzvRBrkdIRAvDZVRfadV9OB+bJsYrhWIkU1bYiOn1m78ginh96M
+              44RuspnIZYnL9Dhs+JyC8VvB5nlvlEph2RGt+KYg9iU4JYhwZ2+8+yxB6/UK
+              H5HGKDCjBbEc8o9MbCckLsciIh11hKKgT6K0yhKB/nBxxM78nrX0BxmAHX2u
+              bejKDRa9S/0uS7Y91nvnbIkaQpZ4KteSQ+J4/lQBMlMAeE+2F9ncM8jFKnQC
+              rzzdbn1O/zwsEt5J5CRP1Sc+8hM644+IqkLs+17segxArHVGOsEqyDcHbXEK
+              9jspfzBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBCIq/L5HeJgA9XQm67j
+              JHUngDDS5s52FsuSIMin7Z/pV+XuaJGFkL80ia4bXnCWilmtM8oUa/DZuBje
+              dCILO7I8QqU=]
+            hash_a:
+              hash_aa:
+                aaa: >
+                  ENC[PKCS7,MIIBqQYJKoZIhvcNAQcDoIIBmjCCAZYCAQAxggEhMIIBHQIBADAFMAACAQEw
+                  DQYJKoZIhvcNAQEBBQAEggEAhvGXL5RxVUs9wdqJvpCyXtfCHrm2HbG/u30L
+                  n8EuRD9ravlsgIISAnd27JPtrxA+0rZq4EQRGz6OcovnH9vTg86/lVBhhPnz
+                  b83ArptGJhRvTYUJ19GZI3AYjJbhWj/Jo5NL56oQJaPBccqHxMApm/U0wlus
+                  QtASL94cLuh4toVIBQCQzD5/Bx51p2wQobm9p4WKSl1zJhDceurmoLZXqhuN
+                  JwwEBwXopJvgid3ZDPbdX8nI6vHhb/8wDq9yb5DOsrkgqDqQgwPU9sUUioQj
+                  Hr1pGyeOWnbEe99iEb2+m7TWsC0NN7OBo06mAgFNbBLjvn2k4PiCxrOOgJ8S
+                  LI5eXjBsBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBCWNS6j3m/Xvrp5RFaN
+                  ovm/gEB4oPlYJswoXuWqcEBfwZzbpy96x3b2Le/yoa72ylbPAUc5GfLENvFQ
+                  zXpTtSmQE0fixY4JMaBTke65ZRvoiOQO]
+            array_a:
+              - >
+                ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQEw
+                DQYJKoZIhvcNAQEBBQAEggEAmXZfyfU77vVCZqHpR10qhD0Jy9DpMGBgal97
+                vUO2VHX7KlCgagK0kz8/uLRIthkYzcpn8ISmw/+CIAny3jOjxOsylJiujqyu
+                hx/JEFl8bOKOg40Bd0UuBaw/qZ+CoAtOorhiIW7x6t7DpknItC6gkH/cSJ4/
+                p3MdhoARRuwj2fvuaChVsD39l2rXjgJj0OJOaDXdbuisG75VRZf5l8IH6+44
+                Q7m6W7BU69LX+ozn+W3filQoiJ5MPf8w/KXAObMSbKYIDsrZUyIWyyNUbpW0
+                MieIkHj93bX3gIEcenECLdWaEzcPa7MHgl6zevQKg4H0JVmcvKYyfHYqcrVE
+                PqizKDA8BgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBDf259KZEay1widVSFy
+                I9zGgBAICjm0x2GeqoCnHdiAA+jt]
+              - >
+                ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQEw
+                DQYJKoZIhvcNAQEBBQAEggEATVy4hHG356INFKOswAhoravh66iJljp+Vn3o
+                UVD1kyRiqY5tz3UVSptzUmzD+YssX/f73AKCjUI3HrPNL7kAxsk6fWS7nDEj
+                AuxtCqGYeBha6oYJYziSGIHfAdY3MiJUI1C9g/OQB4TTvKdrlDArPiY8THJi
+                bzLLMbVQYJ6ixSldwkdKD75vtikyamx+1LSyVBSg8maVyPvLHtLZJuT71rln
+                WON3Ious9PIbd+izbcCzaoqh5UnTfDCjOuAYliXalBxamIIwNzSV1sdR8/qf
+                t22zpYK4J8lgCBV2gKfrOWSi9MAs6JhCeOb8wNLMmAUTbc0WrFJxoCwAPX0z
+                MAjsNjA8BgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBC4v4bNE4gFlbLmVY+9
+                BtSLgBBm7U0wu6d6s9wF9Ek9IHPe]
+            YAML
+        }
+      end
+
+      let(:env_data) { data_files }
+
+      it 'finds data in the environment' do
+        expect(lookup('a')).to eql("Encrypted value 'a' (from environment)")
+      end
+
+      it 'can read encrypted values inside a hash' do
+        expect(lookup('hash_a.hash_aa.aaa')).to eql('Encrypted value hash_a.hash_aa.aaa (from environment)')
+      end
+
+      it 'can read encrypted values inside an array' do
+        expect(lookup('array_a')).to eql(['array_a[0]', 'array_a[1]'])
+      end
+
+      context 'declared in global scope as a Hiera v3 backend' do
+        let(:environment_files) { {} }
+        let(:hiera_yaml) do
+          <<-YAML.unindent
+          :backends: eyaml
+          :eyaml:
+            :datadir: #{code_dir}/hieradata
+            :pkcs7_private_key: #{private_key_path}
+            :pkcs7_public_key: #{public_key_path}
+          :hierarchy:
+            - common
+          YAML
+        end
+
+        let(:data_files) do
+          {
+            'common.eyaml' => <<-YAML.unindent
+              a: >
+                ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQEw
+                DQYJKoZIhvcNAQEBBQAEggEAH457bsfL8kYw9O50roE3dcE21nCnmPnQ2XSX
+                LYRJ2C78LarbfFonKz0gvDW7tyhsLWASFCFaiU8T1QPBd2b3hoQK8E4B2Ual
+                xga/K7r9y3OSgRomTm9tpTltC6re0Ubh3Dy71H61obwxEdNVTqjPe95+m2b8
+                6zWZVnzZzXXsTG1S17yJn1zaB/LXHbWNy4KyLLKCGAml+Gfl6ZMjmaplTmUA
+                QIC5rI8abzbPP3TDMmbLOGNkrmLqI+3uS8tSueTMoJmWaMF6c+H/cA7oRxmV
+                QCeEUVXjyFvCHcmbA+keS/RK9XF+vc07/XS4XkYSPs/I5hLQji1y9bkkGAs0
+                tehxQjBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBDHpA6Fcl/R16aIYcow
+                oiO4gDAvfFH6jLUwXkcYtagnwdmhkd9TQJtxNWcIwMpvmk036MqIoGwwhQdg
+                gV4beiCFtLU=]
+              YAML
+          }
+        end
+
+        let(:code_dir_files) do
+          {
+            'hiera.yaml' => hiera_yaml,
+            'hieradata' => data_files
+          }
+        end
+
+        before(:each) do
+          Puppet.settings[:hiera_config] = File.join(code_dir, 'hiera.yaml')
+        end
+
+        it 'finds data in the global layer' do
+          expect(lookup('a')).to eql("Encrypted value 'a' (from global)")
+        end
+
+        it 'delegates configured eyaml backend to eyaml_lookup_key function' do
+          expect(explain('a')).to match(/Hierarchy entry "eyaml"\n.*\n.*\n.*"common"\n\s*Found key: "a"/m)
         end
       end
     end

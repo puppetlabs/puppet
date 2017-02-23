@@ -6,9 +6,6 @@ require_relative 'parser_rspec_helper'
 describe "egrammar parsing of site expression" do
   include ParserRspecHelper
 
-  before(:each) { Puppet[:app_management] = true }
-  after(:each) { Puppet[:app_management] = false }
-
   context "when parsing 'site'" do
     it "an empty body is allowed" do
       prog = "site { }"

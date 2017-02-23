@@ -307,26 +307,19 @@ class LookupAdapter < DataAdapter
     return nil if mod.nil?
 
     metadata = mod.metadata
-    binding = false
     provider_name = metadata.nil? ? nil : metadata['data_provider']
-    if provider_name.nil?
-      provider_name = bound_module_provider_name(module_name)
-      binding = !provider_name.nil?
-    end
 
     mp = nil
     if mod.has_hiera_conf?
       mp = ModuleDataProvider.new(module_name)
-      # A version 5 hiera.yaml trumps a data provider setting or binding in the module
-      if mp.config(lookup_invocation).version >= 5
+      # A version 5 hiera.yaml trumps a data provider setting in the module
+      mp_config = mp.config(lookup_invocation)
+      if mp_config.nil?
+        mp = nil
+      elsif mp_config.version >= 5
         unless provider_name.nil? || Puppet[:strict] == :off
-          if binding
-            Puppet.warn_once(:deprecation, "ModuleBinding#data_provider-#{module_name}",
-              "Defining data_provider '#{provider_name}' as a Puppet::Binding is deprecated. The binding is ignored since a '#{HieraConfig::CONFIG_FILE_NAME}' with version >= 5 is present")
-          else
-            Puppet.warn_once(:deprecation, "metadata.json#data_provider-#{module_name}",
-              "Defining \"data_provider\": \"#{provider_name}\" in metadata.json is deprecated. It is ignored since a '#{HieraConfig::CONFIG_FILE_NAME}' with version >= 5 is present", mod.metadata_file)
-          end
+          Puppet.warn_once(:deprecation, "metadata.json#data_provider-#{module_name}",
+            "Defining \"data_provider\": \"#{provider_name}\" in metadata.json is deprecated. It is ignored since a '#{HieraConfig::CONFIG_FILE_NAME}' with version >= 5 is present", mod.metadata_file)
         end
         provider_name = nil
       end
@@ -336,15 +329,9 @@ class LookupAdapter < DataAdapter
       mp
     else
       unless Puppet[:strict] == :off
-        if binding
-          msg = "Defining data_provider '#{provider_name}' as a Puppet::Binding is deprecated"
-          msg += ". A '#{HieraConfig::CONFIG_FILE_NAME}' file should be used instead" if mp.nil?
-          Puppet.warn_once(:deprecation, "ModuleBinding#data_provider-#{module_name}", msg)
-        else
-          msg = "Defining \"data_provider\": \"#{provider_name}\" in metadata.json is deprecated"
-          msg += ". A '#{HieraConfig::CONFIG_FILE_NAME}' file should be used instead" if mp.nil?
-          Puppet.warn_once(:deprecation, "metadata.json#data_provider-#{module_name}", msg, mod.metadata_file)
-        end
+        msg = "Defining \"data_provider\": \"#{provider_name}\" in metadata.json is deprecated"
+        msg += ". A '#{HieraConfig::CONFIG_FILE_NAME}' file should be used instead" if mp.nil?
+        Puppet.warn_once(:deprecation, "metadata.json#data_provider-#{module_name}", msg, mod.metadata_file)
       end
 
       case provider_name
@@ -355,24 +342,9 @@ class LookupAdapter < DataAdapter
       when 'function'
         ModuleDataProvider.new(module_name, HieraConfig.v4_function_config(Pathname(mod.path), "#{module_name}::data"))
       else
-        injector = Puppet.lookup(:injector) { nil }
-        provider = injector.lookup(nil,
-          Puppet::Plugins::DataProviders::Registry.hash_of_module_data_providers,
-          Puppet::Plugins::DataProviders::MODULE_DATA_PROVIDERS_KEY)[provider_name]
-        unless provider
-          raise Puppet::Error.new("Environment '#{environment.name}', cannot find module_data_provider '#{provider_name}'")
-        end
-        # Provider is configured per module but cached using compiler life cycle so it must be cloned
-        provider.clone
+        raise Puppet::Error.new("Environment '#{environment.name}', cannot find module_data_provider '#{provider_name}'")
       end
     end
-  end
-
-  def bound_module_provider_name(module_name)
-    injector = Puppet.lookup(:injector) { nil }
-    injector.nil? ? nil : injector.lookup(nil,
-      Puppet::Plugins::DataProviders::Registry.hash_of_per_module_data_provider,
-      Puppet::Plugins::DataProviders::PER_MODULE_DATA_PROVIDER_KEY)[module_name]
   end
 
   def initialize_env_provider(lookup_invocation)
@@ -388,7 +360,10 @@ class LookupAdapter < DataAdapter
     if config_path.exist?
       ep = EnvironmentDataProvider.new
       # A version 5 hiera.yaml trumps any data provider setting in the environment.conf
-      if ep.config(lookup_invocation).version >= 5
+      ep_config = ep.config(lookup_invocation)
+      if ep_config.nil?
+        ep = nil
+      elsif ep_config.version >= 5
         unless provider_name.nil? || Puppet[:strict] == :off
           Puppet.warn_once(:deprecation, 'environment.conf#data_provider',
             "Defining environment_data_provider='#{provider_name}' in environment.conf is deprecated", env_path + 'environment.conf')
@@ -420,19 +395,7 @@ class LookupAdapter < DataAdapter
       when 'function'
         EnvironmentDataProvider.new(HieraConfigV5.v4_function_config(env_path, 'environment::data'))
       else
-         injector = Puppet.lookup(:injector) { nil }
-
-        # Support running tests without an injector being configured == using a null implementation
-        return nil unless injector
-
-        # Get the service (registry of known implementations)
-        provider = injector.lookup(nil,
-          Puppet::Plugins::DataProviders::Registry.hash_of_environment_data_providers,
-          Puppet::Plugins::DataProviders::ENV_DATA_PROVIDERS_KEY)[provider_name]
-        unless provider
-          raise Puppet::Error.new("Environment '#{environment.name}', cannot find environment_data_provider '#{provider_name}'")
-        end
-        provider
+        raise Puppet::Error.new("Environment '#{environment.name}', cannot find environment_data_provider '#{provider_name}'")
       end
     end
   end

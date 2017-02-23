@@ -6,6 +6,9 @@ class Puppet::Application::Apply < Puppet::Application
   require 'puppet/util/splayer'
   include Puppet::Util::Splayer
 
+  require 'puppet/util/locker'
+  include Puppet::Util::Locker
+
   option("--debug","-d")
   option("--execute EXECUTE","-e") do |arg|
     options[:code] = arg
@@ -164,11 +167,16 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def run_command
-    if options[:catalog]
-      apply
-    else
-      main
+    lock do
+      if options[:catalog]
+        apply
+      else
+        main
+      end
     end
+  rescue Puppet::LockError
+    Puppet.notice "Run of Puppet already in progress; skipping  (#{lockfile_path} exists)"
+    exit(1)
   end
 
   def apply
@@ -227,9 +235,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       node.merge(facts.values) if facts
 
       # Add server facts so $server_facts[environment] exists when doing a puppet apply
-      if Puppet[:trusted_server_facts]
-        node.add_server_facts({})
-      end
+      node.add_server_facts({})
 
       # Allow users to load the classes that puppet agent creates.
       if options[:loadclasses]

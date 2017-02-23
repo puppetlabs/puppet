@@ -131,11 +131,12 @@ module Puppet::ModuleTool
         # TODO: This may necessarily change the order in which the metadata.json
         # file is packaged from what was written by the user.  This is a
         # regretable, but required for now.
-        File.open(metadata_path, 'w') do |f|
+        Puppet::FileSystem.open(metadata_path, nil, 'w:UTF-8') do |f|
           f.write(metadata.to_json)
         end
 
-        File.open(File.join(build_path, 'checksums.json'), 'w') do |f|
+        # PSON.pretty_generate is a BINARY string
+        Puppet::FileSystem.open(File.join(build_path, 'checksums.json'), nil, 'wb') do |f|
           f.write(PSON.pretty_generate(Checksums.new(build_path)))
         end
       end

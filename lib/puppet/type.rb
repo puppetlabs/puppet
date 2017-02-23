@@ -1218,6 +1218,10 @@ class Type
     resource = Puppet::Resource.new(self, title)
     resource.catalog = hash.delete(:catalog)
 
+    if sensitive = hash.delete(:sensitive_parameters)
+      resource.sensitive_parameters = sensitive
+    end
+
     hash.each do |param, value|
       resource[param] = value
     end

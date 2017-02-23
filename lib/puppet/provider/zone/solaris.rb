@@ -263,7 +263,10 @@ Puppet::Type.type(:zone).provide(:solaris) do
 
       unless Puppet::FileSystem.exist?(sysidcfg)
         begin
-          File.open(sysidcfg, "w", 0600) do |f|
+          # For compatibility reasons use System encoding for this OS file
+          # the manifest string is UTF-8 so this could result in conversion errors
+          # which should propagate to users
+          Puppet::FileSystem.open(sysidcfg, 0600, "w:#{Encoding.default_external.name}") do |f|
             f.puts cfg
           end
         rescue => detail

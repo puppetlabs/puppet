@@ -153,15 +153,18 @@ module Puppet::Util::Execution
         :squelch => false,
         :override_locale => true,
         :custom_environment => {},
+        :sensitive => false,
     }
 
     options = default_options.merge(options)
 
-    if command.is_a?(Array)
+    if options[:sensitive]
+      command_str = '[redacted]'
+    elsif command.is_a?(Array)
       command = command.flatten.map(&:to_s)
-      str = command.join(" ")
+      command_str = command.join(" ")
     elsif command.is_a?(String)
-      str = command
+      command_str = command
     end
 
     user_log_s = ''
@@ -176,17 +179,17 @@ module Puppet::Util::Execution
     end
 
     if respond_to? :debug
-      debug "Executing#{user_log_s}: '#{str}'"
+      debug "Executing#{user_log_s}: '#{command_str}'"
     else
-      Puppet.debug "Executing#{user_log_s}: '#{str}'"
+      Puppet.debug "Executing#{user_log_s}: '#{command_str}'"
     end
 
     null_file = Puppet.features.microsoft_windows? ? 'NUL' : '/dev/null'
 
     begin
-      stdin = File.open(options[:stdinfile] || null_file, 'r')
-      stdout = options[:squelch] ? File.open(null_file, 'w') : Puppet::FileSystem::Uniquefile.new('puppet')
-      stderr = options[:combine] ? stdout : File.open(null_file, 'w')
+      stdin = Puppet::FileSystem.open(options[:stdinfile] || null_file, nil, 'r')
+      stdout = options[:squelch] ? Puppet::FileSystem.open(null_file, nil, 'w') : Puppet::FileSystem::Uniquefile.new('puppet')
+      stderr = options[:combine] ? stdout : Puppet::FileSystem.open(null_file, nil, 'w')
 
       exec_args = [command, options, stdin, stdout, stderr]
 
@@ -229,7 +232,7 @@ module Puppet::Util::Execution
       end
 
       if options[:failonfail] and exit_status != 0
-        raise Puppet::ExecutionFailure, "Execution of '#{str}' returned #{exit_status}: #{output.strip}"
+        raise Puppet::ExecutionFailure, "Execution of '#{command_str}' returned #{exit_status}: #{output.strip}"
       end
     ensure
       if !options[:squelch] && stdout

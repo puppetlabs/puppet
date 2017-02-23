@@ -9,6 +9,13 @@ describe Puppet::SSL::Configuration do
 
   let(:ssl_server_ca_auth) { "/path/to/certs/ssl_server_ca_auth.pem" }
 
+  # different UTF-8 widths
+  # 1-byte A
+  # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
+  # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
+  # 4-byte 𠜎 - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
+  let (:mixed_utf8) { "A\u06FF\u16A0\u{2070E}" } # Aۿᚠ𠜎
+
   it "should require the localcacert argument" do
     expect { subject }.to raise_error ArgumentError
   end
@@ -44,8 +51,7 @@ describe Puppet::SSL::Configuration do
     end
 
     it "#ca_auth_certificates returns an Array<OpenSSL::X509::Certificate>" do
-      subject.stubs(:read_file).returns(master_ca_pem + root_ca_pem)
-
+      Puppet::FileSystem.expects(:read).with(subject.ca_auth_file, :encoding => Encoding::UTF_8).returns(master_ca_pem + root_ca_pem)
       certs = subject.ca_auth_certificates
       certs.each { |cert| expect(cert).to be_a_kind_of OpenSSL::X509::Certificate }
     end
@@ -67,6 +73,7 @@ describe Puppet::SSL::Configuration do
   # certificates.  It is signed by the Root CA.
   def master_ca_pem
     @master_ca_pem ||= <<-AUTH_BUNDLE
+# Master CA #{mixed_utf8}
 -----BEGIN CERTIFICATE-----
 MIICljCCAf+gAwIBAgIBAjANBgkqhkiG9w0BAQUFADBJMRAwDgYDVQQDDAdSb290
 IENBMRowGAYDVQQLDBFTZXJ2ZXIgT3BlcmF0aW9uczEZMBcGA1UECgwQRXhhbXBs
@@ -89,6 +96,7 @@ l1k75xLLIcrlsDYo3999KOSSchH2K7bLT7TuQ2okdP6FHWmeWmudewlu
   # This is the Root CA
   def root_ca_pem
     @root_ca_pem ||= <<-LOCALCACERT
+# Root CA #{mixed_utf8}
 -----BEGIN CERTIFICATE-----
 MIICYDCCAcmgAwIBAgIJALf2Pk2HvtBzMA0GCSqGSIb3DQEBBQUAMEkxEDAOBgNV
 BAMMB1Jvb3QgQ0ExGjAYBgNVBAsMEVNlcnZlciBPcGVyYXRpb25zMRkwFwYDVQQK
@@ -111,6 +119,7 @@ rPsNU/Tx19jHC87oXlmAePLI4IaUHXrWb7CRbY9TEcPdmj1R
   # signed by the Root CA.
   def agent_ca_pem
     @agent_ca_pem ||= <<-AGENT_CA
+# Agent CA #{mixed_utf8}
 -----BEGIN CERTIFICATE-----
 MIIClTCCAf6gAwIBAgIBATANBgkqhkiG9w0BAQUFADBJMRAwDgYDVQQDDAdSb290
 IENBMRowGAYDVQQLDBFTZXJ2ZXIgT3BlcmF0aW9uczEZMBcGA1UECgwQRXhhbXBs

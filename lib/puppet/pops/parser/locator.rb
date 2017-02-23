@@ -282,7 +282,7 @@ class Locator
     # TODO: LocatorForChars is never added. It looks like it could be removed (remnant from Ruby 1.8 compatibility?)
     # @api private
     def self.register_ptype(loader, ir)
-      @type = Pcore::create_object_type(loader, ir, self, 'Puppet::AST::Locator', 'Any',
+      @type = Pcore::create_object_type(loader, ir, self, 'Puppet::AST::Locator', nil,
         'string' => Types::PStringType::DEFAULT,
         'file' => Types::PStringType::DEFAULT,
         'line_index' => {

@@ -38,6 +38,8 @@ class Invocation
     else
       @name_stack = parent_invocation.name_stack
       @adapter_class = parent_invocation.adapter_class
+      set_hiera_xxx_call if parent_invocation.hiera_xxx_call?
+      set_hiera_v3_merge_behavior if parent_invocation.hiera_v3_merge_behavior?
       set_global_only if parent_invocation.global_only?
       povr = parent_invocation.hiera_v3_location_overrides
       set_hiera_v3_location_overrides(povr) unless povr.empty?
@@ -74,7 +76,7 @@ class Invocation
     rescue Puppet::DataBinding::LookupError
       raise
     rescue Puppet::Error => detail
-      raise Puppet::DataBinding::LookupError.new(detail.message, detail)
+      raise Puppet::DataBinding::LookupError.new(detail.message, nil, nil, nil, detail)
     ensure
       @name_stack.pop
     end
@@ -93,7 +95,7 @@ class Invocation
   # values that the configuration was based on
   #
   # @api private
-  def remember_scope_lookup(key, value)
+  def remember_scope_lookup(*lookup_result)
     # Does nothing by default
   end
 
@@ -191,6 +193,24 @@ class Invocation
   # @return [Pathname] the full path of the hiera.yaml config file
   def global_hiera_config_path
     lookup_adapter.global_hiera_config_path
+  end
+
+  # @return [Boolean] `true` if the invocation stems from the hiera_xxx function family
+  def hiera_xxx_call?
+    instance_variable_defined?(:@hiera_xxx_call)
+  end
+
+  def set_hiera_xxx_call
+    @hiera_xxx_call = true
+  end
+
+  # @return [Boolean] `true` if the invocation stems from the hiera_xxx function family
+  def hiera_v3_merge_behavior?
+    instance_variable_defined?(:@hiera_v3_merge_behavior)
+  end
+
+  def set_hiera_v3_merge_behavior
+    @hiera_v3_merge_behavior = true
   end
 
   # Overrides passed from hiera_xxx functions down to V3DataHashFunctionProvider

@@ -22,7 +22,32 @@ describe 'Puppet Ruby Generator' do
           attributes => {
             name => String,
             age  => { type => Integer, value => 30 },
-            what => { type => String, value => 'what is this', kind => constant }
+            what => { type => String, value => 'what is this', kind => constant },
+            uc_name => {
+              type => String,
+              kind => derived,
+              annotations => {
+                RubyMethod => { body => '@name.upcase' }
+              }
+            },
+            other_name => {
+              type => String,
+              kind => derived
+            }
+          },
+          functions => {
+            some_other => {
+              type => Callable[1,1]
+            },
+            name_and_age => {
+              type => Callable[1,1],
+              annotations => {
+                RubyMethod => {
+                  parameters => 'joiner',
+                  body => '"\#{@name}\#{joiner}\#{@age}"'
+                }
+              }
+            },
           }
         }]
         type MyModule::SecondGenerated = Object[{
@@ -32,7 +57,8 @@ describe 'Puppet Ruby Generator' do
             zipcode => String,
             email => String,
             another => { type => Optional[MyModule::FirstGenerated], value => undef },
-            number => Integer
+            number => Integer,
+            aref => { type => Optional[MyModule::FirstGenerated], value => undef, kind => reference }
           }
         }]
       CODE
@@ -40,16 +66,16 @@ describe 'Puppet Ruby Generator' do
 
     context 'when generating anonymous classes' do
 
-      scope = nil
+      loader = nil
 
-      let(:first_type) { parser.parse('MyModule::FirstGenerated', scope) }
-      let(:second_type) { parser.parse('MyModule::SecondGenerated', scope) }
+      let(:first_type) { parser.parse('MyModule::FirstGenerated', loader) }
+      let(:second_type) { parser.parse('MyModule::SecondGenerated', loader) }
       let(:first) { generator.create_class(first_type) }
       let(:second) { generator.create_class(second_type) }
 
       before(:each) do
-        eval_and_collect_notices(source) do |topscope, catalog|
-          scope = topscope
+        eval_and_collect_notices(source) do |topscope|
+          loader = topscope.compiler.loaders.find_loader(nil)
         end
       end
 
@@ -103,6 +129,21 @@ describe 'Puppet Ruby Generator' do
           expect(inst.age).to eql(30)
           expect(inst.another).to be_nil
         end
+
+        it 'generates a code body for derived attribute from a RubyMethod body attribute' do
+          inst = first.create('Bob Builder', 52)
+          expect(inst.uc_name).to eq('BOB BUILDER')
+        end
+
+        it "generates a code body with 'not implemented' in the absense of a RubyMethod body attribute" do
+          inst = first.create('Bob Builder', 52)
+          expect { inst.other_name }.to raise_error(/no method is implemented for derived attribute MyModule::FirstGenerated\[other_name\]/)
+        end
+
+        it 'generates parameter list and a code body for derived function from a RubyMethod body attribute' do
+          inst = first.create('Bob Builder', 52)
+          expect(inst.name_and_age(' of age ')).to eq('Bob Builder of age 52')
+        end
       end
 
       context 'the #from_hash class method' do
@@ -137,6 +178,14 @@ describe 'Puppet Ruby Generator' do
         it 'that the TypeCalculator infers to the Object type' do
           expect(TypeCalculator.infer(first.from_hash('name' => 'Bob Builder'))).to eq(first_type)
         end
+
+        it "where attributes of kind 'reference' are not considered part of #_pall_contents" do
+          inst = first.from_hash('name' => 'Bob Builder')
+          wrinst = second.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23, 40, inst, inst)
+          results = []
+          wrinst._pall_contents([]) { |v| results << v }
+          expect(results).to eq([inst])
+        end
       end
     end
 
@@ -149,9 +198,9 @@ describe 'Puppet Ruby Generator' do
         if module_def.nil?
           first_type = nil
           second_type = nil
-          eval_and_collect_notices(source) do |scope, catalog|
-            first_type = parser.parse('MyModule::FirstGenerated', scope)
-            second_type = parser.parse('MyModule::SecondGenerated', scope)
+          eval_and_collect_notices(source) do
+            first_type = parser.parse('MyModule::FirstGenerated')
+            second_type = parser.parse('MyModule::SecondGenerated')
 
             loader = Loaders.find_loader(nil)
             Loaders.implementation_registry.register_type_mapping(
@@ -327,8 +376,8 @@ describe 'Puppet Ruby Generator' do
       let(:fourth) { generator.create_class(fourth_type) }
 
       before(:each) do
-        eval_and_collect_notices(source) do |scope, catalog|
-          typeset = parser.parse('OtherModule', scope)
+        eval_and_collect_notices(source) do
+          typeset = parser.parse('OtherModule')
         end
       end
 
@@ -411,6 +460,30 @@ describe 'Puppet Ruby Generator' do
           expect(inst.age).to eql(30)
           expect(inst.another).to be_nil
         end
+
+        it 'two instances with the same attribute values are equal using #eql?' do
+          inst1 = second.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23)
+          inst2 = second.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23)
+          expect(inst1.eql?(inst2)).to be_truthy
+        end
+
+        it 'two instances with the same attribute values are equal using #==' do
+          inst1 = second.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23)
+          inst2 = second.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23)
+          expect(inst1 == inst2).to be_truthy
+        end
+
+        it 'two instances with the different attribute in super class values are different' do
+          inst1 = second.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23)
+          inst2 = second.create('Bob Engineer', '42 Cool Street', '12345', 'bob@example.com', 23)
+          expect(inst1 == inst2).to be_falsey
+        end
+
+        it 'two instances with the different attribute in sub class values are different' do
+          inst1 = second.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23)
+          inst2 = second.create('Bob Builder', '42 Cool Street', '12345', 'bob@other.com', 23)
+          expect(inst1 == inst2).to be_falsey
+        end
       end
 
       context 'the #from_hash class method' do
@@ -457,9 +530,9 @@ describe 'Puppet Ruby Generator' do
         # environment specific settings are configured by the spec_helper in before(:each)
         if module_def.nil?
           typeset = nil
-          eval_and_collect_notices(source) do |scope, catalog|
-            typeset1 = parser.parse('MyModule', scope)
-            typeset2 = parser.parse('OtherModule', scope)
+          eval_and_collect_notices(source) do
+            typeset1 = parser.parse('MyModule')
+            typeset2 = parser.parse('OtherModule')
 
             loader = Loaders.find_loader(nil)
             Loaders.implementation_registry.register_type_mapping(
@@ -540,6 +613,30 @@ describe 'Puppet Ruby Generator' do
           expect(inst.what).to eql('what is this')
           expect(inst.age).to eql(30)
           expect(inst.another).to be_nil
+        end
+
+        it 'two instances with the same attribute values are equal using #eql?' do
+          inst1 = PuppetSpec::RubyGenerator::My::SecondGenerated.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23)
+          inst2 = PuppetSpec::RubyGenerator::My::SecondGenerated.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23)
+          expect(inst1.eql?(inst2)).to be_truthy
+        end
+
+        it 'two instances with the same attribute values are equal using #==' do
+          inst1 = PuppetSpec::RubyGenerator::My::SecondGenerated.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23)
+          inst2 = PuppetSpec::RubyGenerator::My::SecondGenerated.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23)
+          expect(inst1 == inst2).to be_truthy
+        end
+
+        it 'two instances with the different attribute in super class values are different' do
+          inst1 = PuppetSpec::RubyGenerator::My::SecondGenerated.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23)
+          inst2 = PuppetSpec::RubyGenerator::My::SecondGenerated.create('Bob Engineer', '42 Cool Street', '12345', 'bob@example.com', 23)
+          expect(inst1 == inst2).to be_falsey
+        end
+
+        it 'two instances with the different attribute in sub class values are different' do
+          inst1 = PuppetSpec::RubyGenerator::My::SecondGenerated.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23)
+          inst2 = PuppetSpec::RubyGenerator::My::SecondGenerated.create('Bob Builder', '42 Cool Street', '12345', 'bob@other.com', 23)
+          expect(inst1 == inst2).to be_falsey
         end
       end
 

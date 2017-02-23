@@ -380,7 +380,7 @@ module Puppet::Pops
     end
 
     def value_t
-      @value_t ||= Types::TypeParser.singleton.parse('Variant[Array[Data],Hash[String,Data]]')
+      @value_t ||= Types::PAnyType::DEFAULT
     end
 
     MergeStrategy.add_strategy(self)

@@ -18,24 +18,6 @@ module RDoc
   end
 end
 
-class Symbol
-  def <=> (other)
-    if (other.class != Symbol)
-      case Puppet[:strict]
-      when :warning
-        Puppet.warn_once('deprecation', 'symbol_comparison', 'Comparing Symbols to non-Symbol values is deprecated')
-      when :error
-        raise ArgumentError.new("Comparing Symbols to non-Symbol values is no longer allowed")
-      end
-    end
-    self.to_s <=> other.to_s
-  end
-
-  def intern
-    self
-  end unless method_defined? 'intern'
-end
-
 class Object
   # ActiveSupport 2.3.x mixes in a dangerous method
   # that can cause rspec to fork bomb

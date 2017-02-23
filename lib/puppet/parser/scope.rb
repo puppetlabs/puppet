@@ -731,7 +731,7 @@ class Puppet::Parser::Scope
     end
 
     # Check for server_facts reserved variable name if the trusted_sever_facts setting is true
-    if Puppet[:trusted_server_facts] && name == 'server_facts' && !options[:privileged]
+    if name == 'server_facts' && !options[:privileged]
       raise Puppet::ParseError, "Attempt to assign to a reserved variable name: '#{name}'"
     end
 
@@ -864,7 +864,7 @@ class Puppet::Parser::Scope
 
   # Pop ephemeral scopes up to level and return them
   #
-  # @param level [Fixnum] a positive integer
+  # @param level [Integer] a positive integer
   # @return [Array] the removed ephemeral scopes
   # @api private
   def pop_ephemerals(level)

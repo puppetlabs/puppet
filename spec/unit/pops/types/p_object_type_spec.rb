@@ -67,7 +67,7 @@ describe 'The Object Type' do
         }
       OBJECT
       expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError,
-        /expects a match for Enum\['constant', 'derived', 'given_or_derived'\], got 'derivd'/)
+        /expects a match for Enum\['constant', 'derived', 'given_or_derived', 'reference'\], got 'derivd'/)
     end
 
     it 'stores value in attribute' do
@@ -1160,6 +1160,53 @@ describe 'The Object Type' do
     it 'PCollectionType classes _ptype returns a descendant from Pcore::CollectionType' do
       coll_descendants = collection_types - [PTupleType, PStructType]
       coll_descendants.each { |tc| expect(find_parent(tc, 'Pcore::CollectionType').name).to eq('Pcore::CollectionType') }
+    end
+  end
+
+  context 'when dealing with annotations' do
+    let(:annotation) { <<-PUPPET }
+      type MyAdapter = Object[{
+        parent => Annotation,
+        attributes => {
+          id => Integer,
+          value => String[1]
+        }
+      }]
+    PUPPET
+
+    it 'the Annotation type can be used as parent' do
+      code = <<-PUPPET
+        #{annotation}
+        notice(MyAdapter < Annotation)
+      PUPPET
+      expect(eval_and_collect_notices(code)).to eql(['true'])
+    end
+
+    it 'an annotation can be added to an Object type' do
+      code = <<-PUPPET
+        #{annotation}
+        type MyObject = Object[{
+          annotations => {
+            MyAdapter => { 'id' => 2, 'value' => 'annotation value' }
+          }
+        }]
+        notice(MyObject)
+      PUPPET
+      expect(eval_and_collect_notices(code)).to eql([
+        "Object[{annotations => {MyAdapter => {'id' => 2, 'value' => 'annotation value'}}, name => 'MyObject'}]"])
+    end
+
+    it 'other types can not be used as annotations' do
+      code = <<-PUPPET
+        type NotAnAnnotation = Object[{}]
+        type MyObject = Object[{
+          annotations => {
+            NotAnAnnotation => {}
+          }
+        }]
+        notice(MyObject)
+      PUPPET
+      expect{eval_and_collect_notices(code)}.to raise_error(/entry 'annotations' expects a Hash/)
     end
   end
 end

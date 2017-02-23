@@ -360,16 +360,18 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       # an instance has to be created in order to construct the unique key used when
       # searching for aliases, or when app_management is active and nothing is found in
       # which case it is needed by the CapabilityFinder.
+# PUP-4947
       res = nil
-      app_mgnt = Puppet[:app_management]
-      if app_mgnt || !@aliases.empty?
-        res = Puppet::Resource.new(type, title, { :environment => @environment_instance })
+#      app_mgnt = Puppet[:app_management]
+#      if app_mgnt || !@aliases.empty?
+      res = Puppet::Resource.new(type, title, { :environment => @environment_instance })
 
         # No need to build the uniqueness key unless there are aliases
-        result = @resource_table[[type_name, res.uniqueness_key].flatten] unless @aliases.empty?
-      end
+      result = @resource_table[[type_name, res.uniqueness_key].flatten] unless @aliases.empty?
+# PUP-4947
+#      end
 
-      if result.nil? && app_mgnt
+      if result.nil? # && app_mgnt
         resource_type = res.resource_type
         if resource_type && resource_type.is_capability?
           # @todo lutter 2015-03-10: this assumes that it is legal to just
@@ -538,7 +540,10 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
   # Store the classes in the classfile.
   def write_class_file
-    ::File.open(Puppet[:classfile], "w") do |f|
+    # classfile paths may contain UTF-8
+    # https://docs.puppet.com/puppet/latest/reference/configuration.html#classfile
+    classfile = Puppet.settings.setting(:classfile)
+    Puppet::FileSystem.open(classfile.value, classfile.mode.to_i(8), "w:UTF-8") do |f|
       f.puts classes.join("\n")
     end
   rescue => detail
@@ -547,7 +552,10 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
   # Store the list of resources we manage
   def write_resource_file
-    ::File.open(Puppet[:resourcefile], "w") do |f|
+    # resourcefile contains resources that may be UTF-8 names
+    # https://docs.puppet.com/puppet/latest/reference/configuration.html#resourcefile
+    resourcefile = Puppet.settings.setting(:resourcefile)
+    Puppet::FileSystem.open(resourcefile.value, resourcefile.mode.to_i(8), "w:UTF-8") do |f|
       to_print = resources.map do |resource|
         next unless resource.managed?
         if resource.name_var
