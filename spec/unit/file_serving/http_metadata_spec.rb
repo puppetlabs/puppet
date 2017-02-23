@@ -61,7 +61,7 @@ describe Puppet::FileServing::HttpMetadata do
         metadata = described_class.new(http_response)
         metadata.collect
         expect( metadata.checksum_type ).to eq :mtime
-        expect( metadata.checksum ).to eq "{mtime}#{time.to_time}"
+        expect( metadata.checksum ).to eq "{mtime}#{time.to_time.utc}"
       end
     end
 
