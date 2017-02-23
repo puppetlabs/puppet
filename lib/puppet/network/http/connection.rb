@@ -30,14 +30,14 @@ module Puppet::Network::HTTP
 
     # Creates a new HTTP client connection to `host`:`port`.
     # @param host [String] the host to which this client will connect to
-    # @param port [Fixnum] the port to which this client will connect to
+    # @param port [Integer] the port to which this client will connect to
     # @param options [Hash] options influencing the properties of the created
     #   connection,
     # @option options [Boolean] :use_ssl true to connect with SSL, false
     #   otherwise, defaults to true
     # @option options [#setup_connection] :verify An object that will configure
     #   any verification to do on the connection
-    # @option options [Fixnum] :redirect_limit the number of allowed
+    # @option options [Integer] :redirect_limit the number of allowed
     #   redirections, defaults to 10 passing any other option in the options
     #   hash results in a Puppet::Error exception
     #

@@ -418,8 +418,8 @@ describe Puppet::Parser::Scope do
       expect(Puppet::Parser::Scope.number?([2])).to be_nil
     end
 
-    it "should return a Fixnum for a Fixnum" do
-      expect(Puppet::Parser::Scope.number?(2)).to be_an_instance_of(Fixnum)
+    it "should return a Integer for an Integer" do
+      expect(Puppet::Parser::Scope.number?(2)).to be_a(Integer)
     end
 
     it "should return a Float for a Float" do
