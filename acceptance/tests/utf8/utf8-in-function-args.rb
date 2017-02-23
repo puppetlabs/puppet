@@ -10,14 +10,6 @@ test_name 'utf-8 characters in function parameters' do
 
   # utf8chars = "€‰ㄘ万竹ÜÖ"
   utf8chars = "\u20ac\u2030\u3118\u4e07\u7af9\u00dc\u00d6"
-  master_lookup_test_dir = master.tmpdir("lookup_test_dir")
-  on(master, "chmod -R 777 #{master_lookup_test_dir}")
-  master_opts = {
-    'main' => {
-      'hiera_config' => "#{master_lookup_test_dir}/hiera.yaml",
-      'environmentpath' => "#{master_lookup_test_dir}/environments",
-    },
-  }
   agents.each do |agent|
     step 'alert' do
       result = on(
@@ -31,7 +23,7 @@ test_name 'utf-8 characters in function parameters' do
         "Did not find the utf8 chars."
       )
     end
-  
+
     step 'assert_type' do
       on(
         agent,
@@ -52,7 +44,7 @@ test_name 'utf-8 characters in function parameters' do
         }
       )
     end
-  
+
     step 'filter' do
       puppet_cmd = "'
         [$a] = [[\"abc\", \"#{utf8chars}\", \"100\"]];
@@ -66,11 +58,8 @@ test_name 'utf-8 characters in function parameters' do
       )
       assert_match(/#{utf8chars}/, result.stdout, "filter() failed.")
     end
-  
-    agent_lookup_test_dir =
-      (agent == master) ?
-      master_lookup_test_dir :
-      agent_lookup_test_dir = agent.tmpdir("lookup_test_dir")
+
+    agent_lookup_test_dir = agent.tmpdir("lookup_test_dir")
 
     mod_name = "lookup_module"
     mod_key = "#{mod_name}::mod_key_#{utf8chars}"
@@ -84,7 +73,7 @@ test_name 'utf-8 characters in function parameters' do
     non_key = "non_key_#{utf8chars}"
 
     step 'apply hiera/lookup manifest' do
-      # I want the banner in the output but 
+      # I want the banner in the output but
       # some results: orig_hiera_config,
       # orig_environmentpath from operations
       # here are used later, so I don't want
@@ -121,7 +110,7 @@ file { "#{agent_lookup_test_dir}/environments/production/modules/#{mod_name}/hie
 }
 
 file { "#{agent_lookup_test_dir}/environments/production/modules/#{mod_name}/data/common.yaml" :
-  ensure => "file", 
+  ensure => "file",
   mode => "0644",
   content => '---
   #{mod_key}: #{mod_val}
@@ -276,7 +265,7 @@ LOOKUP_MANIFEST
         :environment => {:LANG => "en_US.UTF-8"}
       )
     end
-    
+
     step 'dig' do
       hash_string = "{
         a => {
@@ -308,7 +297,7 @@ LOOKUP_MANIFEST
         "dig() test failed."
       )
     end
-    
+
     step 'match' do
       strings = [
         "string1_#{utf8chars}",
