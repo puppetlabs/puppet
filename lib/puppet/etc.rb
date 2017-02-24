@@ -18,10 +18,7 @@ module Puppet::Etc
     # On first call opens /etc/group and returns parse of first entry. Each subsquent call
     # returns new struct the next entry or nil if EOF. Call ::endgrent to close file.
     def getgrent
-      if group_entry = ::Etc.getgrent
-        convert_field_values_to_utf8!(group_entry)
-      end
-      group_entry
+      convert_field_values_to_utf8!(::Etc.getgrent)
     end
 
     # closes handle to /etc/group file
@@ -38,10 +35,7 @@ module Puppet::Etc
     # On first call opens /etc/passwd and returns parse of first entry. Each subsquent call
     # returns new struct for the next entry or nil if EOF. Call ::endgrent to close file.
     def getpwent
-      if user_entry = ::Etc.getpwent
-        convert_field_values_to_utf8!(user_entry)
-      end
-      user_entry
+      convert_field_values_to_utf8!(::Etc.getpwent)
     end
 
     # closes handle to /etc/passwd file
@@ -59,40 +53,28 @@ module Puppet::Etc
     # returns an Etc::Passwd struct corresponding to the entry or raises
     # ArgumentError if none
     def getpwnam(username)
-      if user_entry = ::Etc.getpwnam(username)
-        convert_field_values_to_utf8!(user_entry)
-      end
-      user_entry
+      convert_field_values_to_utf8!(::Etc.getpwnam(username))
     end
 
     # Etc::getgrnam searches /etc/group file for an entry corresponding to groupname.
     # returns an Etc::Group struct corresponding to the entry or raises
     # ArgumentError if none
     def getgrnam(groupname)
-      if group_entry = ::Etc.getgrnam(groupname)
-        convert_field_values_to_utf8!(group_entry)
-      end
-      group_entry
+      convert_field_values_to_utf8!(::Etc.getgrnam(groupname))
     end
 
     # Etc::getgrid searches /etc/group file for an entry corresponding to id.
     # returns an Etc::Group struct corresponding to the entry or raises
     # ArgumentError if none
     def getgrgid(id)
-      if group_entry = ::Etc.getgrgid(id)
-        convert_field_values_to_utf8!(group_entry)
-      end
-      group_entry
+      convert_field_values_to_utf8!(::Etc.getgrgid(id))
     end
 
     # Etc::getpwuid searches /etc/passwd file for an entry corresponding to id.
     # returns an Etc::Passwd struct corresponding to the entry or raises
     # ArgumentError if none
     def getpwuid(id)
-      if user_entry = ::Etc.getpwuid(id)
-        convert_field_values_to_utf8!(user_entry)
-      end
-      user_entry
+      convert_field_values_to_utf8!(::Etc.getpwuid(id))
     end
 
     private
@@ -111,14 +93,12 @@ module Puppet::Etc
     # @return [Etc::Passwd or Etc::Group struct] the original struct with values
     #   converted to UTF-8 if possible, or the original value intact if not
     def convert_field_values_to_utf8!(struct)
+      return nil if struct.nil?
       struct.each_with_index do |value, index|
         if value.is_a?(String)
-          begin
-            struct[index] = Puppet::Util::CharacterEncoding.convert_to_utf_8(value)
-          rescue Puppet::Error
-            # struct[index] unmodified
-          end
-        elsif value.is_a?(Array) && value.all? { |elem| elem.is_a?(String) }
+            converted = Puppet::Util::CharacterEncoding.convert_to_utf_8!(value)
+            struct[index] = converted if !converted.nil?
+        elsif value.is_a?(Array)
           struct[index] = convert_array_values_to_utf8!(value)
         end
       end
@@ -134,11 +114,8 @@ module Puppet::Etc
     #   convertible, or original, unmodified values if not.
     def convert_array_values_to_utf8!(string_array)
       string_array.map! do |elem|
-        begin
-          Puppet::Util::CharacterEncoding.convert_to_utf_8(elem)
-        rescue Puppet::Error
-          elem # individual array element unmodified
-        end
+        converted = Puppet::Util::CharacterEncoding.convert_to_utf_8!(elem)
+        converted.nil? ? elem : converted
       end
     end
   end

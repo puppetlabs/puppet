@@ -1,4 +1,4 @@
-require 'puppet/etc'
+require 'puppet'
 require 'spec_helper'
 
 # The Ruby::Etc module is largely non-functional on Windows - many methods
