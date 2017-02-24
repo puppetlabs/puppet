@@ -596,7 +596,7 @@ describe Puppet::Util::Execution do
 
         expect {
           subject.execute('fail command', :failonfail => true, :sensitive => true)
-        }.to raise_error(Puppet::ExecutionFailure, /Execution of '\[redacted]' returned 1/)
+        }.to raise_error(Puppet::ExecutionFailure, /Execution of '\[redacted\]' returned 1/)
       end
 
       it "should not raise an error if failonfail is false and the child failed" do
