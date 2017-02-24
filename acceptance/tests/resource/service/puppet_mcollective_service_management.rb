@@ -49,7 +49,13 @@ agents.each do |agent|
       assert_service_status_on_host(agent, service, {'ensure' => 'running'}) # Status should always be 'running' after starting
 
       step "Stopping the #{service} service while it is #{status}: it should be stopped"
-      set_service_initial_status(agent, service, status)
+      if service == 'puppet' and status == 'stopped' then
+        # using the beaker helper to set the initial state of puppet to
+        # prevent coliding with a puppet run in progress on the SUT (PUP-7252)
+        stop_agent_on(agent)
+      else
+        set_service_initial_status(agent, service, status)
+      end
       on(agent, puppet_resource('service', service, 'ensure=stopped'))
       assert_service_status_on_host(agent, service, {'ensure' => 'stopped'}) # Status should always be 'stopped' after stopping
     end
