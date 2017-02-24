@@ -20,7 +20,8 @@ module Puppet::Network::HTTP::Compression
     def uncompress_body(response)
       case response['content-encoding']
       when 'gzip'
-        return Zlib::GzipReader.new(StringIO.new(response.body)).read
+        # ZLib::GzipReader has an associated encoding, by default Encoding.default_external
+        return Zlib::GzipReader.new(StringIO.new(response.body), :encoding => Encoding::BINARY).read
       when 'deflate'
         return Zlib::Inflate.new.inflate(response.body)
       when nil, 'identity'
