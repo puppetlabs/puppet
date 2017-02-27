@@ -22,6 +22,16 @@ class ScopeLookupCollectingInvocation < Invocation
     @scope_interpolations.uniq! { |si| si[0] }
     @scope_interpolations
   end
+
+  # Yield invocation that remembers all but the given name
+  def with_local_memory_eluding(name)
+    save_si = @scope_interpolations
+    @scope_interpolations = []
+    result = yield
+    save_si.concat(@scope_interpolations.reject { |entry| entry[1] == name })
+    @scope_interpolations = save_si
+    result
+  end
 end
 
 # @api private
@@ -39,6 +49,7 @@ class HieraConfig
   KEY_OPTIONS = 'options'.freeze
   KEY_PATH = 'path'.freeze
   KEY_PATHS = 'paths'.freeze
+  KEY_MAPPED_PATHS = 'mapped_paths'.freeze
   KEY_GLOB = 'glob'.freeze
   KEY_GLOBS = 'globs'.freeze
   KEY_URI = 'uri'.freeze
@@ -56,7 +67,7 @@ class HieraConfig
 
   FUNCTION_KEYS = [KEY_DATA_HASH, KEY_LOOKUP_KEY, KEY_DATA_DIG, KEY_V3_BACKEND]
   ALL_FUNCTION_KEYS = FUNCTION_KEYS + [KEY_V4_DATA_HASH]
-  LOCATION_KEYS = [KEY_PATH, KEY_PATHS, KEY_GLOB, KEY_GLOBS, KEY_URI, KEY_URIS]
+  LOCATION_KEYS = [KEY_PATH, KEY_PATHS, KEY_GLOB, KEY_GLOBS, KEY_URI, KEY_URIS, KEY_MAPPED_PATHS]
   FUNCTION_PROVIDERS = {
     KEY_DATA_HASH => DataHashFunctionProvider,
     KEY_DATA_DIG => DataDigFunctionProvider,
@@ -513,6 +524,7 @@ class HieraConfigV5 < HieraConfig
           tf.optional(KEY_GLOBS) => tf.array_of(nes_t, tf.range(1, :default)),
           tf.optional(KEY_URI) => uri_t,
           tf.optional(KEY_URIS) => tf.array_of(uri_t, tf.range(1, :default)),
+          tf.optional(KEY_MAPPED_PATHS) => tf.array_of(nes_t, tf.range(3, 3)),
           tf.optional(KEY_DATADIR) => nes_t
         }))
     })
@@ -552,6 +564,8 @@ class HieraConfigV5 < HieraConfig
         expand_uris(he[location_key], lookup_invocation)
       when KEY_URI
         expand_uris([he[location_key]], lookup_invocation)
+      when KEY_MAPPED_PATHS
+        expand_mapped_paths(entry_datadir, he[location_key], lookup_invocation)
       else
         nil
       end

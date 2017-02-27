@@ -170,6 +170,7 @@ describe "The lookup function" do
         scope['environment'] = env_name
         scope['domain'] = 'example.com'
         scope_additions.each_pair { |k, v| scope[k] = v }
+        scope['mapped'] = { 'array_var' => ['a', 'b', 'c'], 'hash_var' => { 'x' => 'a', 'y' => 'b', 'z' => 'c' }, 'string_var' => 's' }
         if explain
           begin
             invocation_with_explain.lookup('dummy', nil) do
@@ -732,6 +733,18 @@ describe "The lookup function" do
           }
         }
       end
+    end
+
+    context 'and an environment Hiera v5 configuration using mapped_paths' do
+      let(:env_hiera_yaml) do
+        <<-YAML.unindent
+        ---
+        version: 5
+        hierarchy:
+          - name: Mapped Paths
+            mapped_paths: #{mapped_paths}
+        YAML
+      end
 
       let(:environment_files) do
         {
@@ -742,20 +755,108 @@ describe "The lookup function" do
         }
       end
 
-      it 'finds environment data using globs' do
-        expect(lookup('glob_a')).to eql('value glob_a')
-        expect(warnings).to be_empty
+      context 'that originates from an array' do
+        let (:mapped_paths) { '[mapped.array_var, var, "paths/%{var}.yaml"]' }
+
+        let(:env_data) do
+          {
+            'paths' => {
+              'a.yaml' => <<-YAML.unindent,
+                path_a: value path_a
+                path_h:
+                  a: value path_h.a
+                  c: value path_h.c
+                YAML
+              'b.yaml' => <<-YAML.unindent
+                path_h:
+                  b: value path_h.b
+                  d: value path_h.d
+                YAML
+            }
+          }
+        end
+
+        it 'finds environment data using mapped_paths' do
+          expect(lookup('path_a')).to eql('value path_a')
+          expect(warnings).to be_empty
+        end
+
+        it 'performs merges between mapped paths' do
+          expect(lookup('path_h', 'merge' => 'hash')).to eql(
+            {
+              'a' => 'value path_h.a',
+              'b' => 'value path_h.b',
+              'c' => 'value path_h.c',
+              'd' => 'value path_h.d'
+            })
+          expect(warnings).to be_empty
+        end
       end
 
-      it 'performs merges between interpolated and globbed paths' do
-        expect(lookup('glob_b', 'merge' => 'hash')).to eql(
+      context 'that originates from a hash' do
+        let (:mapped_paths) { '[mapped.hash_var, var, "paths/%{var.0}.%{var.1}.yaml"]' }
+
+        let(:env_data) do
           {
-            'a' => 'value glob_b.a',
-            'b' => 'value glob_b.b',
-            'c' => 'value glob_b.c',
-            'd' => 'value glob_b.d'
-          })
-        expect(warnings).to be_empty
+            'paths' => {
+              'x.a.yaml' => <<-YAML.unindent,
+                path_xa: value path_xa
+                path_m:
+                  a: value path_m.a
+                  c: value path_m.c
+                YAML
+              'y.b.yaml' => <<-YAML.unindent
+                path_m:
+                  b: value path_m.b
+                  d: value path_m.d
+                YAML
+            },
+          }
+        end
+
+        it 'finds environment data using mapped_paths' do
+          expect(lookup('path_xa')).to eql('value path_xa')
+          expect(warnings).to be_empty
+        end
+
+        it 'performs merges between mapped paths' do
+          expect(lookup('path_m', 'merge' => 'hash')).to eql(
+            {
+              'a' => 'value path_m.a',
+              'b' => 'value path_m.b',
+              'c' => 'value path_m.c',
+              'd' => 'value path_m.d'
+            })
+          expect(warnings).to be_empty
+        end
+      end
+
+      context 'that originates from a string' do
+        let (:mapped_paths) { '[mapped.string_var, var, "paths/%{var}.yaml"]' }
+
+        let(:env_data) do
+          {
+            'paths' => {
+              's.yaml' => <<-YAML.unindent,
+                path_s: value path_s
+                YAML
+            }
+          }
+        end
+
+        it 'finds environment data using mapped_paths' do
+          expect(lookup('path_s')).to eql('value path_s')
+          expect(warnings).to be_empty
+        end
+      end
+
+      context 'where the enty does not exist' do
+        let (:mapped_paths) { '[mapped.nosuch_var, var, "paths/%{var}.yaml"]' }
+
+        it 'finds environment data using mapped_paths' do
+          expect(explain('hello')).to match(/No such key: "hello"/)
+          expect(warnings).to be_empty
+        end
       end
     end
 

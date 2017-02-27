@@ -67,6 +67,28 @@ module Lookup
         ResolvedLocation.new(declared_uri, uri, true)
       end
     end
+
+    def expand_mapped_paths(datadir, mapped_path_triplet, lookup_invocation)
+      # The scope interpolation method is used directly to avoid unnecessary parsing of the string that otherwise
+      # would need to be generated
+      mapped_vars = interpolate_method(:scope).call(mapped_path_triplet[0], lookup_invocation, 'mapped_path[0]')
+
+      # No paths here unless the scope lookup returned something
+      return EMPTY_ARRAY if mapped_vars.empty?
+
+      mapped_vars = [mapped_vars] if mapped_vars.is_a?(String)
+      var_key = mapped_path_triplet[1]
+      template = mapped_path_triplet[2]
+      scope = lookup_invocation.scope
+      lookup_invocation.with_local_memory_eluding(var_key) do
+        mapped_vars.map do |var|
+          # Need to use parent lookup invocation to avoid adding 'var' to the set of variables to track for changes. The
+          # variable that 'var' stems from is added above.
+          path = scope.with_local_scope(var_key => var) {  datadir + interpolate(template, lookup_invocation, false) }
+          ResolvedLocation.new(template, path, path.exist?)
+        end
+      end
+    end
   end
 end
 end
