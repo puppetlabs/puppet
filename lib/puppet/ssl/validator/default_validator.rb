@@ -20,13 +20,7 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
   #
   # @api private
   #
-  def initialize(
-      ssl_configuration = Puppet::SSL::Configuration.new(
-                                        Puppet[:localcacert], {
-                                          :ca_auth_file  => Puppet[:ssl_client_ca_auth]
-                                        }),
-      ssl_host = Puppet.lookup(:ssl_host))
-
+  def initialize(ssl_configuration = Puppet::SSL::Configuration.default, ssl_host = Puppet.lookup(:ssl_host))
     reset!
     @ssl_configuration = ssl_configuration
     @ssl_host = ssl_host

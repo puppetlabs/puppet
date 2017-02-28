@@ -7,6 +7,20 @@ module SSL
   # * Who clients trust as distinct from who servers trust.  We should not
   #   assume one single self signed CA cert for everyone.
 class Configuration
+
+  # Construct a default configuration based on the Puppet client SSL settings.
+  # @return [Puppet::SSL::Configuration]
+  def self.default
+    new(Puppet[:localcacert], {ca_auth_file: Puppet[:ssl_client_ca_auth]})
+  end
+
+  # @param localcacert [String] The path to the local CA certificate
+  # @param options [Hash] Additional options for the current SSL configuration
+  #
+  # @option options [String, nil] :ca_auth_file The path to an optional bundle
+  #   of CA certificates that the agent should trust when performing SSL
+  #   peer verification.
+  # @return [void]
   def initialize(localcacert, options={})
     @localcacert = localcacert
     @ca_auth_file = options[:ca_auth_file]
