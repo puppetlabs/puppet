@@ -26,7 +26,7 @@ class RubyGenerator < TypeFormatter
         class_body(key, EMPTY_ARRAY, class_def)
         cls = Class.new(parent_class)
         cls.class_eval(class_def)
-        cls.define_singleton_method(:_ptype) { return key }
+        cls.define_singleton_method(:_pcore_type) { return key }
         key.implementation_class = cls
       end
       hash[key] = cls
@@ -151,13 +151,13 @@ class RubyGenerator < TypeFormatter
     end
 
     bld << "\n"
-    bld << "  def self._plocation\n"
-    bld << "    @_plocation ||= (loc = Puppet::Util.path_to_uri(\"\#{__FILE__}\"); URI(\"#\{loc}?line=#\{__LINE__.to_i - 3}\"))\n"
+    bld << "  def self._pcore_location\n"
+    bld << "    @_pcore_location ||= (loc = Puppet::Util.path_to_uri(\"\#{__FILE__}\"); URI(\"#\{loc}?line=#\{__LINE__.to_i - 3}\"))\n"
     bld << "  end\n"
 
     bld << "\n"
-    bld << "  def self._ptype\n"
-    bld << '    @_ptype ||= ' << namespace_relative(segments, obj.class.name) << ".new('" << obj.name << "', "
+    bld << "  def self._pcore_type\n"
+    bld << '    @_pcore_type ||= ' << namespace_relative(segments, obj.class.name) << ".new('" << obj.name << "', "
     bld << TypeFormatter.singleton.ruby('ref').indented(2).string(obj.i12n_hash(false)) << ")\n"
     bld << "  end\n"
 
@@ -178,7 +178,7 @@ class RubyGenerator < TypeFormatter
     constants, others = obj.attributes(true).values.partition { |a| a.kind == PObjectType::ATTRIBUTE_KIND_CONSTANT }
     constants = constants.select { |ca| ca.container.equal?(obj) }
     unless constants.empty?
-      constants.each { |ca| bld << "\n  def self." << ca.name << "\n    _ptype['" << ca.name << "'].value\n  end\n" }
+      constants.each { |ca| bld << "\n  def self." << ca.name << "\n    _pcore_type['" << ca.name << "'].value\n  end\n" }
       constants.each { |ca| bld << "\n  def " << ca.name << "\n    self.class." << ca.name << "\n  end\n" }
     end
 
@@ -197,7 +197,7 @@ class RubyGenerator < TypeFormatter
       # Output type safe hash constructor
       bld << "\n  def self.from_hash(i12n)\n"
       bld << '    from_asserted_hash(' << namespace_relative(segments, TypeAsserter.name) << '.assert_instance_of('
-      bld << "'" << obj.label << " initializer', _ptype.i12n_type, i12n))\n  end\n\n  def self.from_asserted_hash(i12n)\n    new"
+      bld << "'" << obj.label << " initializer', _pcore_type.i12n_type, i12n))\n  end\n\n  def self.from_asserted_hash(i12n)\n    new"
       unless non_opt.empty? && opt.empty?
         bld << "(\n"
         non_opt.each { |ip| bld << "      i12n['" << ip.name << "'],\n" }
@@ -230,7 +230,7 @@ class RubyGenerator < TypeFormatter
         bld.chomp!(', ')
         bld << ")\n"
         bld << '    ta = ' << namespace_relative(segments, TypeAsserter.name) << "\n"
-        bld << "    attrs = _ptype.attributes(true)\n"
+        bld << "    attrs = _pcore_type.attributes(true)\n"
         init_params.each do |a|
           bld << "    ta.assert_instance_of('" << a.container.name << '[' << a.name << ']'
           bld << "', attrs['" << a.name << "'].type, " << a.name << ")\n"
@@ -303,9 +303,9 @@ class RubyGenerator < TypeFormatter
     end
 
     if obj_attrs.empty?
-      bld << "\n  def i12n_hash\n    {}\n  end\n" unless obj.parent.is_a?(PObjectType)
+      bld << "\n  def _pcore_init_hash\n    {}\n  end\n" unless obj.parent.is_a?(PObjectType)
     else
-      bld << "\n  def i12n_hash\n"
+      bld << "\n  def _pcore_init_hash\n"
       bld << '    result = '
       bld << (obj.parent.nil? ? '{}' : 'super')
       bld << "\n"
@@ -323,11 +323,11 @@ class RubyGenerator < TypeFormatter
     content_participants = init_params.select { |a| content_participant?(a) }
     if content_participants.empty?
       unless obj.parent.is_a?(PObjectType)
-        bld << "\n  def _pcontents\n  end\n"
-        bld << "\n  def _pall_contents(path)\n  end\n"
+        bld << "\n  def _pcore_contents\n  end\n"
+        bld << "\n  def _pcore_all_contents(path)\n  end\n"
       end
     else
-      bld << "\n  def _pcontents\n"
+      bld << "\n  def _pcore_contents\n"
       content_participants.each do |cp|
         if array_type?(cp.type)
           bld << '    @' << cp.name << ".each { |value| yield(value) }\n"
@@ -335,16 +335,16 @@ class RubyGenerator < TypeFormatter
           bld << '    yield(@' << cp.name << ') unless @' << cp.name  << ".nil?\n"
         end
       end
-      bld << "  end\n\n  def _pall_contents(path, &block)\n    path << self\n"
+      bld << "  end\n\n  def _pcore_all_contents(path, &block)\n    path << self\n"
       content_participants.each do |cp|
         if array_type?(cp.type)
           bld << '    @' << cp.name << ".each do |value|\n"
           bld << "      block.call(value, path)\n"
-          bld << "      value._pall_contents(path, &block)\n"
+          bld << "      value._pcore_all_contents(path, &block)\n"
         else
           bld << '    unless @' << cp.name << ".nil?\n"
           bld << '      block.call(@' << cp.name << ", path)\n"
-          bld << '      @' << cp.name << "._pall_contents(path, &block)\n"
+          bld << '      @' << cp.name << "._pcore_all_contents(path, &block)\n"
         end
         bld << "    end\n"
       end
@@ -427,7 +427,7 @@ class RubyGenerator < TypeFormatter
     when nil, true, false, Numeric, String
       bld << a.value.inspect
     else
-      bld << "_ptype['" << a.name << "'].value"
+      bld << "_pcore_type['" << a.name << "'].value"
     end
   end
 
@@ -436,7 +436,7 @@ class RubyGenerator < TypeFormatter
     when nil, true, false, Numeric, String
       bld << '@' << a.name << ' == ' << a.value.inspect
     else
-      bld << "_ptype['" << a.name << "'].default_value?(@" << a.name << ')'
+      bld << "_pcore_type['" << a.name << "'].default_value?(@" << a.name << ')'
     end
   end
 end

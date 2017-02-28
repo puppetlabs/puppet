@@ -33,7 +33,7 @@ class PuppetResourceTypeImplInstantiator
       raise ArgumentError, "The code loaded from #{source_ref} does not create the resource type '#{typed_name.name}' - it is empty"
     end
 
-    rname = Resource::ResourceTypeImpl._ptype.name
+    rname = Resource::ResourceTypeImpl._pcore_type.name
     unless statements.find do |s|
       if s.is_a?(Model::CallMethodExpression)
         functor_expr = s.functor_expr

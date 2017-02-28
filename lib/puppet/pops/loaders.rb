@@ -101,10 +101,10 @@ class Loaders
 
   def self.register_implementations_with_loader(obj_classes, name_authority, loader)
     types = obj_classes.map do |obj_class|
-      type = obj_class._ptype
+      type = obj_class._pcore_type
       typed_name = Loader::TypedName.new(:type, type.name.downcase, name_authority)
       entry = loader.loaded_entry(typed_name)
-      loader.set_entry(typed_name, type, obj_class._plocation) if entry.nil? || entry.value.nil?
+      loader.set_entry(typed_name, type, obj_class._pcore_location) if entry.nil? || entry.value.nil?
       type
     end
     # Resolve lazy so that all types can cross reference each other

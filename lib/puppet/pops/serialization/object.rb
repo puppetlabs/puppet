@@ -10,7 +10,7 @@ class ObjectReader
   include InstanceReader
 
   def read(impl_class, value_count, deserializer)
-    type = impl_class._ptype
+    type = impl_class._pcore_type
     (names, types, required_count) = type.parameter_info(impl_class)
     max = names.size
     unless value_count >= required_count && value_count <= max

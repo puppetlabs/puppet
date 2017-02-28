@@ -4,19 +4,19 @@ module Puppet
 module Pops
 module Model
 class PopsObject
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::PopsObject', {
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::PopsObject', {
     })
   end
 
   include Types::PuppetObject
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::PopsObject initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::PopsObject initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -29,16 +29,16 @@ class PopsObject
   attr_reader :hash
 
   def initialize
-    @hash = 3678397077630468324
+    @hash = 925601229154960054
   end
-  def i12n_hash
+  def _pcore_init_hash
     {}
   end
 
-  def _pcontents
+  def _pcore_contents
   end
 
-  def _pall_contents(path)
+  def _pcore_all_contents(path)
   end
 
   def to_s
@@ -52,16 +52,16 @@ class PopsObject
 end
 
 class Positioned < PopsObject
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::Positioned', {
-      'parent' => PopsObject._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::Positioned', {
+      'parent' => PopsObject._pcore_type,
       'attributes' => {
         'locator' => {
-          'type' => Parser::Locator::Locator19._ptype,
+          'type' => Parser::Locator::Locator19._pcore_type,
           'kind' => 'reference'
         },
         'offset' => Types::PIntegerType::DEFAULT,
@@ -84,7 +84,7 @@ class Positioned < PopsObject
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::Positioned initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::Positioned initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -96,7 +96,7 @@ class Positioned < PopsObject
 
   def self.create(locator, offset, length)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -126,7 +126,7 @@ class Positioned < PopsObject
     @length = length
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['locator'] = @locator
     result['offset'] = @offset
@@ -136,46 +136,46 @@ class Positioned < PopsObject
 end
 
 class Expression < Positioned
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::Expression', {
-      'parent' => Positioned._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::Expression', {
+      'parent' => Positioned._pcore_type
     })
   end
 end
 
 class Nop < Expression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::Nop', {
-      'parent' => Expression._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::Nop', {
+      'parent' => Expression._pcore_type
     })
   end
 end
 
 class BinaryExpression < Expression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::BinaryExpression', {
-      'parent' => Expression._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::BinaryExpression', {
+      'parent' => Expression._pcore_type,
       'attributes' => {
-        'left_expr' => Expression._ptype,
-        'right_expr' => Expression._ptype
+        'left_expr' => Expression._pcore_type,
+        'right_expr' => Expression._pcore_type
       }
     })
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::BinaryExpression initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::BinaryExpression initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -189,7 +189,7 @@ class BinaryExpression < Expression
 
   def self.create(locator, offset, length, left_expr, right_expr)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -208,27 +208,27 @@ class BinaryExpression < Expression
     @right_expr = right_expr
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['left_expr'] = @left_expr
     result['right_expr'] = @right_expr
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@left_expr) unless @left_expr.nil?
     yield(@right_expr) unless @right_expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @left_expr.nil?
       block.call(@left_expr, path)
-      @left_expr._pall_contents(path, &block)
+      @left_expr._pcore_all_contents(path, &block)
     end
     unless @right_expr.nil?
       block.call(@right_expr, path)
-      @right_expr._pall_contents(path, &block)
+      @right_expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -242,21 +242,21 @@ class BinaryExpression < Expression
 end
 
 class UnaryExpression < Expression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::UnaryExpression', {
-      'parent' => Expression._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::UnaryExpression', {
+      'parent' => Expression._pcore_type,
       'attributes' => {
-        'expr' => Expression._ptype
+        'expr' => Expression._pcore_type
       }
     })
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::UnaryExpression initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::UnaryExpression initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -269,7 +269,7 @@ class UnaryExpression < Expression
 
   def self.create(locator, offset, length, expr)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -285,21 +285,21 @@ class UnaryExpression < Expression
     @expr = expr
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['expr'] = @expr
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@expr) unless @expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @expr.nil?
       block.call(@expr, path)
-      @expr._pall_contents(path, &block)
+      @expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -312,113 +312,113 @@ class UnaryExpression < Expression
 end
 
 class ParenthesizedExpression < UnaryExpression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::ParenthesizedExpression', {
-      'parent' => UnaryExpression._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ParenthesizedExpression', {
+      'parent' => UnaryExpression._pcore_type
     })
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@expr) unless @expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @expr.nil?
       block.call(@expr, path)
-      @expr._pall_contents(path, &block)
+      @expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
 end
 
 class NotExpression < UnaryExpression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::NotExpression', {
-      'parent' => UnaryExpression._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::NotExpression', {
+      'parent' => UnaryExpression._pcore_type
     })
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@expr) unless @expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @expr.nil?
       block.call(@expr, path)
-      @expr._pall_contents(path, &block)
+      @expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
 end
 
 class UnaryMinusExpression < UnaryExpression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::UnaryMinusExpression', {
-      'parent' => UnaryExpression._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::UnaryMinusExpression', {
+      'parent' => UnaryExpression._pcore_type
     })
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@expr) unless @expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @expr.nil?
       block.call(@expr, path)
-      @expr._pall_contents(path, &block)
+      @expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
 end
 
 class UnfoldExpression < UnaryExpression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::UnfoldExpression', {
-      'parent' => UnaryExpression._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::UnfoldExpression', {
+      'parent' => UnaryExpression._pcore_type
     })
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@expr) unless @expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @expr.nil?
       block.call(@expr, path)
-      @expr._pall_contents(path, &block)
+      @expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
 end
 
 class AssignmentExpression < BinaryExpression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::AssignmentExpression', {
-      'parent' => BinaryExpression._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::AssignmentExpression', {
+      'parent' => BinaryExpression._pcore_type,
       'attributes' => {
         'operator' => Types::PEnumType.new(['+=', '-=', '='])
       }
@@ -426,7 +426,7 @@ class AssignmentExpression < BinaryExpression
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::AssignmentExpression initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::AssignmentExpression initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -441,7 +441,7 @@ class AssignmentExpression < BinaryExpression
 
   def self.create(locator, offset, length, left_expr, right_expr, operator)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -459,26 +459,26 @@ class AssignmentExpression < BinaryExpression
     @operator = operator
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['operator'] = @operator
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@left_expr) unless @left_expr.nil?
     yield(@right_expr) unless @right_expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @left_expr.nil?
       block.call(@left_expr, path)
-      @left_expr._pall_contents(path, &block)
+      @left_expr._pcore_all_contents(path, &block)
     end
     unless @right_expr.nil?
       block.call(@right_expr, path)
-      @right_expr._pall_contents(path, &block)
+      @right_expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -491,13 +491,13 @@ class AssignmentExpression < BinaryExpression
 end
 
 class ArithmeticExpression < BinaryExpression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::ArithmeticExpression', {
-      'parent' => BinaryExpression._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ArithmeticExpression', {
+      'parent' => BinaryExpression._pcore_type,
       'attributes' => {
         'operator' => Types::PEnumType.new(['%', '*', '+', '-', '/', '<<', '>>'])
       }
@@ -505,7 +505,7 @@ class ArithmeticExpression < BinaryExpression
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ArithmeticExpression initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ArithmeticExpression initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -520,7 +520,7 @@ class ArithmeticExpression < BinaryExpression
 
   def self.create(locator, offset, length, left_expr, right_expr, operator)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -538,26 +538,26 @@ class ArithmeticExpression < BinaryExpression
     @operator = operator
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['operator'] = @operator
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@left_expr) unless @left_expr.nil?
     yield(@right_expr) unless @right_expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @left_expr.nil?
       block.call(@left_expr, path)
-      @left_expr._pall_contents(path, &block)
+      @left_expr._pcore_all_contents(path, &block)
     end
     unless @right_expr.nil?
       block.call(@right_expr, path)
-      @right_expr._pall_contents(path, &block)
+      @right_expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -570,13 +570,13 @@ class ArithmeticExpression < BinaryExpression
 end
 
 class RelationshipExpression < BinaryExpression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::RelationshipExpression', {
-      'parent' => BinaryExpression._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::RelationshipExpression', {
+      'parent' => BinaryExpression._pcore_type,
       'attributes' => {
         'operator' => Types::PEnumType.new(['->', '<-', '<~', '~>'])
       }
@@ -584,7 +584,7 @@ class RelationshipExpression < BinaryExpression
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::RelationshipExpression initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::RelationshipExpression initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -599,7 +599,7 @@ class RelationshipExpression < BinaryExpression
 
   def self.create(locator, offset, length, left_expr, right_expr, operator)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -617,26 +617,26 @@ class RelationshipExpression < BinaryExpression
     @operator = operator
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['operator'] = @operator
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@left_expr) unless @left_expr.nil?
     yield(@right_expr) unless @right_expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @left_expr.nil?
       block.call(@left_expr, path)
-      @left_expr._pall_contents(path, &block)
+      @left_expr._pcore_all_contents(path, &block)
     end
     unless @right_expr.nil?
       block.call(@right_expr, path)
-      @right_expr._pall_contents(path, &block)
+      @right_expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -649,17 +649,17 @@ class RelationshipExpression < BinaryExpression
 end
 
 class AccessExpression < Expression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::AccessExpression', {
-      'parent' => Expression._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::AccessExpression', {
+      'parent' => Expression._pcore_type,
       'attributes' => {
-        'left_expr' => Expression._ptype,
+        'left_expr' => Expression._pcore_type,
         'keys' => {
-          'type' => Types::PArrayType.new(Expression._ptype),
+          'type' => Types::PArrayType.new(Expression._pcore_type),
           'value' => []
         }
       }
@@ -667,7 +667,7 @@ class AccessExpression < Expression
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::AccessExpression initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::AccessExpression initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -676,12 +676,12 @@ class AccessExpression < Expression
       i12n['offset'],
       i12n['length'],
       i12n['left_expr'],
-      i12n.fetch('keys') { _ptype['keys'].value })
+      i12n.fetch('keys') { _pcore_type['keys'].value })
   end
 
-  def self.create(locator, offset, length, left_expr, keys = _ptype['keys'].value)
+  def self.create(locator, offset, length, left_expr, keys = _pcore_type['keys'].value)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -693,34 +693,34 @@ class AccessExpression < Expression
   attr_reader :left_expr
   attr_reader :keys
 
-  def initialize(locator, offset, length, left_expr, keys = _ptype['keys'].value)
+  def initialize(locator, offset, length, left_expr, keys = _pcore_type['keys'].value)
     super(locator, offset, length)
     @hash = @hash ^ left_expr.hash ^ keys.hash
     @left_expr = left_expr
     @keys = keys
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['left_expr'] = @left_expr
-    result['keys'] = @keys unless _ptype['keys'].default_value?(@keys)
+    result['keys'] = @keys unless _pcore_type['keys'].default_value?(@keys)
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@left_expr) unless @left_expr.nil?
     @keys.each { |value| yield(value) }
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @left_expr.nil?
       block.call(@left_expr, path)
-      @left_expr._pall_contents(path, &block)
+      @left_expr._pcore_all_contents(path, &block)
     end
     @keys.each do |value|
       block.call(value, path)
-      value._pall_contents(path, &block)
+      value._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -734,13 +734,13 @@ class AccessExpression < Expression
 end
 
 class ComparisonExpression < BinaryExpression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::ComparisonExpression', {
-      'parent' => BinaryExpression._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ComparisonExpression', {
+      'parent' => BinaryExpression._pcore_type,
       'attributes' => {
         'operator' => Types::PEnumType.new(['!=', '<', '<=', '==', '>', '>='])
       }
@@ -748,7 +748,7 @@ class ComparisonExpression < BinaryExpression
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ComparisonExpression initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ComparisonExpression initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -763,7 +763,7 @@ class ComparisonExpression < BinaryExpression
 
   def self.create(locator, offset, length, left_expr, right_expr, operator)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -781,26 +781,26 @@ class ComparisonExpression < BinaryExpression
     @operator = operator
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['operator'] = @operator
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@left_expr) unless @left_expr.nil?
     yield(@right_expr) unless @right_expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @left_expr.nil?
       block.call(@left_expr, path)
-      @left_expr._pall_contents(path, &block)
+      @left_expr._pcore_all_contents(path, &block)
     end
     unless @right_expr.nil?
       block.call(@right_expr, path)
-      @right_expr._pall_contents(path, &block)
+      @right_expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -813,13 +813,13 @@ class ComparisonExpression < BinaryExpression
 end
 
 class MatchExpression < BinaryExpression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::MatchExpression', {
-      'parent' => BinaryExpression._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::MatchExpression', {
+      'parent' => BinaryExpression._pcore_type,
       'attributes' => {
         'operator' => Types::PEnumType.new(['!~', '=~'])
       }
@@ -827,7 +827,7 @@ class MatchExpression < BinaryExpression
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::MatchExpression initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::MatchExpression initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -842,7 +842,7 @@ class MatchExpression < BinaryExpression
 
   def self.create(locator, offset, length, left_expr, right_expr, operator)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -860,26 +860,26 @@ class MatchExpression < BinaryExpression
     @operator = operator
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['operator'] = @operator
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@left_expr) unless @left_expr.nil?
     yield(@right_expr) unless @right_expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @left_expr.nil?
       block.call(@left_expr, path)
-      @left_expr._pall_contents(path, &block)
+      @left_expr._pcore_all_contents(path, &block)
     end
     unless @right_expr.nil?
       block.call(@right_expr, path)
-      @right_expr._pall_contents(path, &block)
+      @right_expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -892,136 +892,136 @@ class MatchExpression < BinaryExpression
 end
 
 class InExpression < BinaryExpression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::InExpression', {
-      'parent' => BinaryExpression._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::InExpression', {
+      'parent' => BinaryExpression._pcore_type
     })
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@left_expr) unless @left_expr.nil?
     yield(@right_expr) unless @right_expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @left_expr.nil?
       block.call(@left_expr, path)
-      @left_expr._pall_contents(path, &block)
+      @left_expr._pcore_all_contents(path, &block)
     end
     unless @right_expr.nil?
       block.call(@right_expr, path)
-      @right_expr._pall_contents(path, &block)
+      @right_expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
 end
 
 class BooleanExpression < BinaryExpression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::BooleanExpression', {
-      'parent' => BinaryExpression._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::BooleanExpression', {
+      'parent' => BinaryExpression._pcore_type
     })
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@left_expr) unless @left_expr.nil?
     yield(@right_expr) unless @right_expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @left_expr.nil?
       block.call(@left_expr, path)
-      @left_expr._pall_contents(path, &block)
+      @left_expr._pcore_all_contents(path, &block)
     end
     unless @right_expr.nil?
       block.call(@right_expr, path)
-      @right_expr._pall_contents(path, &block)
+      @right_expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
 end
 
 class AndExpression < BooleanExpression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::AndExpression', {
-      'parent' => BooleanExpression._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::AndExpression', {
+      'parent' => BooleanExpression._pcore_type
     })
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@left_expr) unless @left_expr.nil?
     yield(@right_expr) unless @right_expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @left_expr.nil?
       block.call(@left_expr, path)
-      @left_expr._pall_contents(path, &block)
+      @left_expr._pcore_all_contents(path, &block)
     end
     unless @right_expr.nil?
       block.call(@right_expr, path)
-      @right_expr._pall_contents(path, &block)
+      @right_expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
 end
 
 class OrExpression < BooleanExpression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::OrExpression', {
-      'parent' => BooleanExpression._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::OrExpression', {
+      'parent' => BooleanExpression._pcore_type
     })
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@left_expr) unless @left_expr.nil?
     yield(@right_expr) unless @right_expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @left_expr.nil?
       block.call(@left_expr, path)
-      @left_expr._pall_contents(path, &block)
+      @left_expr._pcore_all_contents(path, &block)
     end
     unless @right_expr.nil?
       block.call(@right_expr, path)
-      @right_expr._pall_contents(path, &block)
+      @right_expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
 end
 
 class LiteralList < Expression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::LiteralList', {
-      'parent' => Expression._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralList', {
+      'parent' => Expression._pcore_type,
       'attributes' => {
         'values' => {
-          'type' => Types::PArrayType.new(Expression._ptype),
+          'type' => Types::PArrayType.new(Expression._pcore_type),
           'value' => []
         }
       }
@@ -1029,7 +1029,7 @@ class LiteralList < Expression
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralList initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralList initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -1037,12 +1037,12 @@ class LiteralList < Expression
       i12n['locator'],
       i12n['offset'],
       i12n['length'],
-      i12n.fetch('values') { _ptype['values'].value })
+      i12n.fetch('values') { _pcore_type['values'].value })
   end
 
-  def self.create(locator, offset, length, values = _ptype['values'].value)
+  def self.create(locator, offset, length, values = _pcore_type['values'].value)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -1052,27 +1052,27 @@ class LiteralList < Expression
 
   attr_reader :values
 
-  def initialize(locator, offset, length, values = _ptype['values'].value)
+  def initialize(locator, offset, length, values = _pcore_type['values'].value)
     super(locator, offset, length)
     @hash = @hash ^ values.hash
     @values = values
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
-    result['values'] = @values unless _ptype['values'].default_value?(@values)
+    result['values'] = @values unless _pcore_type['values'].default_value?(@values)
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     @values.each { |value| yield(value) }
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     @values.each do |value|
       block.call(value, path)
-      value._pall_contents(path, &block)
+      value._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -1085,22 +1085,22 @@ class LiteralList < Expression
 end
 
 class KeyedEntry < Positioned
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::KeyedEntry', {
-      'parent' => Positioned._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::KeyedEntry', {
+      'parent' => Positioned._pcore_type,
       'attributes' => {
-        'key' => Expression._ptype,
-        'value' => Expression._ptype
+        'key' => Expression._pcore_type,
+        'value' => Expression._pcore_type
       }
     })
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::KeyedEntry initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::KeyedEntry initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -1114,7 +1114,7 @@ class KeyedEntry < Positioned
 
   def self.create(locator, offset, length, key, value)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -1133,27 +1133,27 @@ class KeyedEntry < Positioned
     @value = value
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['key'] = @key
     result['value'] = @value
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@key) unless @key.nil?
     yield(@value) unless @value.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @key.nil?
       block.call(@key, path)
-      @key._pall_contents(path, &block)
+      @key._pcore_all_contents(path, &block)
     end
     unless @value.nil?
       block.call(@value, path)
-      @value._pall_contents(path, &block)
+      @value._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -1167,16 +1167,16 @@ class KeyedEntry < Positioned
 end
 
 class LiteralHash < Expression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::LiteralHash', {
-      'parent' => Expression._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralHash', {
+      'parent' => Expression._pcore_type,
       'attributes' => {
         'entries' => {
-          'type' => Types::PArrayType.new(KeyedEntry._ptype),
+          'type' => Types::PArrayType.new(KeyedEntry._pcore_type),
           'value' => []
         }
       }
@@ -1184,7 +1184,7 @@ class LiteralHash < Expression
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralHash initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralHash initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -1192,12 +1192,12 @@ class LiteralHash < Expression
       i12n['locator'],
       i12n['offset'],
       i12n['length'],
-      i12n.fetch('entries') { _ptype['entries'].value })
+      i12n.fetch('entries') { _pcore_type['entries'].value })
   end
 
-  def self.create(locator, offset, length, entries = _ptype['entries'].value)
+  def self.create(locator, offset, length, entries = _pcore_type['entries'].value)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -1207,27 +1207,27 @@ class LiteralHash < Expression
 
   attr_reader :entries
 
-  def initialize(locator, offset, length, entries = _ptype['entries'].value)
+  def initialize(locator, offset, length, entries = _pcore_type['entries'].value)
     super(locator, offset, length)
     @hash = @hash ^ entries.hash
     @entries = entries
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
-    result['entries'] = @entries unless _ptype['entries'].default_value?(@entries)
+    result['entries'] = @entries unless _pcore_type['entries'].default_value?(@entries)
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     @entries.each { |value| yield(value) }
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     @entries.each do |value|
       block.call(value, path)
-      value._pall_contents(path, &block)
+      value._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -1240,16 +1240,16 @@ class LiteralHash < Expression
 end
 
 class BlockExpression < Expression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::BlockExpression', {
-      'parent' => Expression._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::BlockExpression', {
+      'parent' => Expression._pcore_type,
       'attributes' => {
         'statements' => {
-          'type' => Types::PArrayType.new(Expression._ptype),
+          'type' => Types::PArrayType.new(Expression._pcore_type),
           'value' => []
         }
       }
@@ -1257,7 +1257,7 @@ class BlockExpression < Expression
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::BlockExpression initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::BlockExpression initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -1265,12 +1265,12 @@ class BlockExpression < Expression
       i12n['locator'],
       i12n['offset'],
       i12n['length'],
-      i12n.fetch('statements') { _ptype['statements'].value })
+      i12n.fetch('statements') { _pcore_type['statements'].value })
   end
 
-  def self.create(locator, offset, length, statements = _ptype['statements'].value)
+  def self.create(locator, offset, length, statements = _pcore_type['statements'].value)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -1280,27 +1280,27 @@ class BlockExpression < Expression
 
   attr_reader :statements
 
-  def initialize(locator, offset, length, statements = _ptype['statements'].value)
+  def initialize(locator, offset, length, statements = _pcore_type['statements'].value)
     super(locator, offset, length)
     @hash = @hash ^ statements.hash
     @statements = statements
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
-    result['statements'] = @statements unless _ptype['statements'].default_value?(@statements)
+    result['statements'] = @statements unless _pcore_type['statements'].default_value?(@statements)
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     @statements.each { |value| yield(value) }
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     @statements.each do |value|
       block.call(value, path)
-      value._pall_contents(path, &block)
+      value._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -1313,17 +1313,17 @@ class BlockExpression < Expression
 end
 
 class CaseOption < Expression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::CaseOption', {
-      'parent' => Expression._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CaseOption', {
+      'parent' => Expression._pcore_type,
       'attributes' => {
-        'values' => Types::PArrayType.new(Expression._ptype, Types::PCollectionType::NOT_EMPTY_SIZE),
+        'values' => Types::PArrayType.new(Expression._pcore_type, Types::PCollectionType::NOT_EMPTY_SIZE),
         'then_expr' => {
-          'type' => Types::POptionalType.new(Expression._ptype),
+          'type' => Types::POptionalType.new(Expression._pcore_type),
           'value' => nil
         }
       }
@@ -1331,7 +1331,7 @@ class CaseOption < Expression
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::CaseOption initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::CaseOption initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -1345,7 +1345,7 @@ class CaseOption < Expression
 
   def self.create(locator, offset, length, values, then_expr = nil)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -1364,27 +1364,27 @@ class CaseOption < Expression
     @then_expr = then_expr
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['values'] = @values
     result['then_expr'] = @then_expr unless @then_expr == nil
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     @values.each { |value| yield(value) }
     yield(@then_expr) unless @then_expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     @values.each do |value|
       block.call(value, path)
-      value._pall_contents(path, &block)
+      value._pcore_all_contents(path, &block)
     end
     unless @then_expr.nil?
       block.call(@then_expr, path)
-      @then_expr._pall_contents(path, &block)
+      @then_expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -1398,17 +1398,17 @@ class CaseOption < Expression
 end
 
 class CaseExpression < Expression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::CaseExpression', {
-      'parent' => Expression._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CaseExpression', {
+      'parent' => Expression._pcore_type,
       'attributes' => {
-        'test' => Expression._ptype,
+        'test' => Expression._pcore_type,
         'options' => {
-          'type' => Types::PArrayType.new(CaseOption._ptype),
+          'type' => Types::PArrayType.new(CaseOption._pcore_type),
           'value' => []
         }
       }
@@ -1416,7 +1416,7 @@ class CaseExpression < Expression
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::CaseExpression initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::CaseExpression initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -1425,12 +1425,12 @@ class CaseExpression < Expression
       i12n['offset'],
       i12n['length'],
       i12n['test'],
-      i12n.fetch('options') { _ptype['options'].value })
+      i12n.fetch('options') { _pcore_type['options'].value })
   end
 
-  def self.create(locator, offset, length, test, options = _ptype['options'].value)
+  def self.create(locator, offset, length, test, options = _pcore_type['options'].value)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -1442,34 +1442,34 @@ class CaseExpression < Expression
   attr_reader :test
   attr_reader :options
 
-  def initialize(locator, offset, length, test, options = _ptype['options'].value)
+  def initialize(locator, offset, length, test, options = _pcore_type['options'].value)
     super(locator, offset, length)
     @hash = @hash ^ test.hash ^ options.hash
     @test = test
     @options = options
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['test'] = @test
-    result['options'] = @options unless _ptype['options'].default_value?(@options)
+    result['options'] = @options unless _pcore_type['options'].default_value?(@options)
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@test) unless @test.nil?
     @options.each { |value| yield(value) }
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @test.nil?
       block.call(@test, path)
-      @test._pall_contents(path, &block)
+      @test._pcore_all_contents(path, &block)
     end
     @options.each do |value|
       block.call(value, path)
-      value._pall_contents(path, &block)
+      value._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -1483,16 +1483,16 @@ class CaseExpression < Expression
 end
 
 class QueryExpression < Expression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::QueryExpression', {
-      'parent' => Expression._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::QueryExpression', {
+      'parent' => Expression._pcore_type,
       'attributes' => {
         'expr' => {
-          'type' => Types::POptionalType.new(Expression._ptype),
+          'type' => Types::POptionalType.new(Expression._pcore_type),
           'value' => nil
         }
       }
@@ -1500,7 +1500,7 @@ class QueryExpression < Expression
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::QueryExpression initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::QueryExpression initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -1513,7 +1513,7 @@ class QueryExpression < Expression
 
   def self.create(locator, offset, length, expr = nil)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -1529,21 +1529,21 @@ class QueryExpression < Expression
     @expr = expr
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['expr'] = @expr unless @expr == nil
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@expr) unless @expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @expr.nil?
       block.call(@expr, path)
-      @expr._pall_contents(path, &block)
+      @expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -1556,85 +1556,85 @@ class QueryExpression < Expression
 end
 
 class ExportedQuery < QueryExpression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::ExportedQuery', {
-      'parent' => QueryExpression._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ExportedQuery', {
+      'parent' => QueryExpression._pcore_type
     })
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@expr) unless @expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @expr.nil?
       block.call(@expr, path)
-      @expr._pall_contents(path, &block)
+      @expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
 end
 
 class VirtualQuery < QueryExpression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::VirtualQuery', {
-      'parent' => QueryExpression._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::VirtualQuery', {
+      'parent' => QueryExpression._pcore_type
     })
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@expr) unless @expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @expr.nil?
       block.call(@expr, path)
-      @expr._pall_contents(path, &block)
+      @expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
 end
 
 class AbstractAttributeOperation < Positioned
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::AbstractAttributeOperation', {
-      'parent' => Positioned._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::AbstractAttributeOperation', {
+      'parent' => Positioned._pcore_type
     })
   end
 end
 
 class AttributeOperation < AbstractAttributeOperation
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::AttributeOperation', {
-      'parent' => AbstractAttributeOperation._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::AttributeOperation', {
+      'parent' => AbstractAttributeOperation._pcore_type,
       'attributes' => {
         'attribute_name' => Types::PStringType::DEFAULT,
         'operator' => Types::PEnumType.new(['+>', '=>']),
-        'value_expr' => Expression._ptype
+        'value_expr' => Expression._pcore_type
       }
     })
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::AttributeOperation initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::AttributeOperation initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -1649,7 +1649,7 @@ class AttributeOperation < AbstractAttributeOperation
 
   def self.create(locator, offset, length, attribute_name, operator, value_expr)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -1671,7 +1671,7 @@ class AttributeOperation < AbstractAttributeOperation
     @value_expr = value_expr
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['attribute_name'] = @attribute_name
     result['operator'] = @operator
@@ -1679,15 +1679,15 @@ class AttributeOperation < AbstractAttributeOperation
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@value_expr) unless @value_expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @value_expr.nil?
       block.call(@value_expr, path)
-      @value_expr._pall_contents(path, &block)
+      @value_expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -1702,21 +1702,21 @@ class AttributeOperation < AbstractAttributeOperation
 end
 
 class AttributesOperation < AbstractAttributeOperation
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::AttributesOperation', {
-      'parent' => AbstractAttributeOperation._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::AttributesOperation', {
+      'parent' => AbstractAttributeOperation._pcore_type,
       'attributes' => {
-        'expr' => Expression._ptype
+        'expr' => Expression._pcore_type
       }
     })
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::AttributesOperation initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::AttributesOperation initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -1729,7 +1729,7 @@ class AttributesOperation < AbstractAttributeOperation
 
   def self.create(locator, offset, length, expr)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -1745,21 +1745,21 @@ class AttributesOperation < AbstractAttributeOperation
     @expr = expr
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['expr'] = @expr
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@expr) unless @expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @expr.nil?
       block.call(@expr, path)
-      @expr._pall_contents(path, &block)
+      @expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -1772,18 +1772,18 @@ class AttributesOperation < AbstractAttributeOperation
 end
 
 class CollectExpression < Expression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::CollectExpression', {
-      'parent' => Expression._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CollectExpression', {
+      'parent' => Expression._pcore_type,
       'attributes' => {
-        'type_expr' => Expression._ptype,
-        'query' => QueryExpression._ptype,
+        'type_expr' => Expression._pcore_type,
+        'query' => QueryExpression._pcore_type,
         'operations' => {
-          'type' => Types::PArrayType.new(AbstractAttributeOperation._ptype),
+          'type' => Types::PArrayType.new(AbstractAttributeOperation._pcore_type),
           'value' => []
         }
       }
@@ -1791,7 +1791,7 @@ class CollectExpression < Expression
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::CollectExpression initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::CollectExpression initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -1801,12 +1801,12 @@ class CollectExpression < Expression
       i12n['length'],
       i12n['type_expr'],
       i12n['query'],
-      i12n.fetch('operations') { _ptype['operations'].value })
+      i12n.fetch('operations') { _pcore_type['operations'].value })
   end
 
-  def self.create(locator, offset, length, type_expr, query, operations = _ptype['operations'].value)
+  def self.create(locator, offset, length, type_expr, query, operations = _pcore_type['operations'].value)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -1820,7 +1820,7 @@ class CollectExpression < Expression
   attr_reader :query
   attr_reader :operations
 
-  def initialize(locator, offset, length, type_expr, query, operations = _ptype['operations'].value)
+  def initialize(locator, offset, length, type_expr, query, operations = _pcore_type['operations'].value)
     super(locator, offset, length)
     @hash = @hash ^ type_expr.hash ^ query.hash ^ operations.hash
     @type_expr = type_expr
@@ -1828,33 +1828,33 @@ class CollectExpression < Expression
     @operations = operations
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['type_expr'] = @type_expr
     result['query'] = @query
-    result['operations'] = @operations unless _ptype['operations'].default_value?(@operations)
+    result['operations'] = @operations unless _pcore_type['operations'].default_value?(@operations)
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@type_expr) unless @type_expr.nil?
     yield(@query) unless @query.nil?
     @operations.each { |value| yield(value) }
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @type_expr.nil?
       block.call(@type_expr, path)
-      @type_expr._pall_contents(path, &block)
+      @type_expr._pcore_all_contents(path, &block)
     end
     unless @query.nil?
       block.call(@query, path)
-      @query._pall_contents(path, &block)
+      @query._pcore_all_contents(path, &block)
     end
     @operations.each do |value|
       block.call(value, path)
-      value._pall_contents(path, &block)
+      value._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -1869,21 +1869,21 @@ class CollectExpression < Expression
 end
 
 class Parameter < Positioned
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::Parameter', {
-      'parent' => Positioned._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::Parameter', {
+      'parent' => Positioned._pcore_type,
       'attributes' => {
         'name' => Types::PStringType::DEFAULT,
         'value' => {
-          'type' => Types::POptionalType.new(Expression._ptype),
+          'type' => Types::POptionalType.new(Expression._pcore_type),
           'value' => nil
         },
         'type_expr' => {
-          'type' => Types::POptionalType.new(Expression._ptype),
+          'type' => Types::POptionalType.new(Expression._pcore_type),
           'value' => nil
         },
         'captures_rest' => {
@@ -1895,7 +1895,7 @@ class Parameter < Positioned
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::Parameter initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::Parameter initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -1911,7 +1911,7 @@ class Parameter < Positioned
 
   def self.create(locator, offset, length, name, value = nil, type_expr = nil, captures_rest = nil)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -1936,7 +1936,7 @@ class Parameter < Positioned
     @captures_rest = captures_rest
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['name'] = @name
     result['value'] = @value unless @value == nil
@@ -1945,20 +1945,20 @@ class Parameter < Positioned
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@value) unless @value.nil?
     yield(@type_expr) unless @type_expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @value.nil?
       block.call(@value, path)
-      @value._pall_contents(path, &block)
+      @value._pcore_all_contents(path, &block)
     end
     unless @type_expr.nil?
       block.call(@type_expr, path)
-      @type_expr._pall_contents(path, &block)
+      @type_expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -1974,33 +1974,33 @@ class Parameter < Positioned
 end
 
 class Definition < Expression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::Definition', {
-      'parent' => Expression._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::Definition', {
+      'parent' => Expression._pcore_type
     })
   end
 end
 
 class NamedDefinition < Definition
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::NamedDefinition', {
-      'parent' => Definition._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::NamedDefinition', {
+      'parent' => Definition._pcore_type,
       'attributes' => {
         'name' => Types::PStringType::DEFAULT,
         'parameters' => {
-          'type' => Types::PArrayType.new(Parameter._ptype),
+          'type' => Types::PArrayType.new(Parameter._pcore_type),
           'value' => []
         },
         'body' => {
-          'type' => Types::POptionalType.new(Expression._ptype),
+          'type' => Types::POptionalType.new(Expression._pcore_type),
           'value' => nil
         }
       }
@@ -2008,7 +2008,7 @@ class NamedDefinition < Definition
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::NamedDefinition initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::NamedDefinition initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -2017,13 +2017,13 @@ class NamedDefinition < Definition
       i12n['offset'],
       i12n['length'],
       i12n['name'],
-      i12n.fetch('parameters') { _ptype['parameters'].value },
+      i12n.fetch('parameters') { _pcore_type['parameters'].value },
       i12n['body'])
   end
 
-  def self.create(locator, offset, length, name, parameters = _ptype['parameters'].value, body = nil)
+  def self.create(locator, offset, length, name, parameters = _pcore_type['parameters'].value, body = nil)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -2037,7 +2037,7 @@ class NamedDefinition < Definition
   attr_reader :parameters
   attr_reader :body
 
-  def initialize(locator, offset, length, name, parameters = _ptype['parameters'].value, body = nil)
+  def initialize(locator, offset, length, name, parameters = _pcore_type['parameters'].value, body = nil)
     super(locator, offset, length)
     @hash = @hash ^ name.hash ^ parameters.hash ^ body.hash
     @name = name
@@ -2045,28 +2045,28 @@ class NamedDefinition < Definition
     @body = body
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['name'] = @name
-    result['parameters'] = @parameters unless _ptype['parameters'].default_value?(@parameters)
+    result['parameters'] = @parameters unless _pcore_type['parameters'].default_value?(@parameters)
     result['body'] = @body unless @body == nil
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     @parameters.each { |value| yield(value) }
     yield(@body) unless @body.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     @parameters.each do |value|
       block.call(value, path)
-      value._pall_contents(path, &block)
+      value._pcore_all_contents(path, &block)
     end
     unless @body.nil?
       block.call(@body, path)
-      @body._pall_contents(path, &block)
+      @body._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -2081,16 +2081,16 @@ class NamedDefinition < Definition
 end
 
 class FunctionDefinition < NamedDefinition
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::FunctionDefinition', {
-      'parent' => NamedDefinition._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::FunctionDefinition', {
+      'parent' => NamedDefinition._pcore_type,
       'attributes' => {
         'return_type' => {
-          'type' => Types::POptionalType.new(Expression._ptype),
+          'type' => Types::POptionalType.new(Expression._pcore_type),
           'value' => nil
         }
       }
@@ -2098,7 +2098,7 @@ class FunctionDefinition < NamedDefinition
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::FunctionDefinition initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::FunctionDefinition initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -2107,14 +2107,14 @@ class FunctionDefinition < NamedDefinition
       i12n['offset'],
       i12n['length'],
       i12n['name'],
-      i12n.fetch('parameters') { _ptype['parameters'].value },
+      i12n.fetch('parameters') { _pcore_type['parameters'].value },
       i12n['body'],
       i12n['return_type'])
   end
 
-  def self.create(locator, offset, length, name, parameters = _ptype['parameters'].value, body = nil, return_type = nil)
+  def self.create(locator, offset, length, name, parameters = _pcore_type['parameters'].value, body = nil, return_type = nil)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -2127,37 +2127,37 @@ class FunctionDefinition < NamedDefinition
 
   attr_reader :return_type
 
-  def initialize(locator, offset, length, name, parameters = _ptype['parameters'].value, body = nil, return_type = nil)
+  def initialize(locator, offset, length, name, parameters = _pcore_type['parameters'].value, body = nil, return_type = nil)
     super(locator, offset, length, name, parameters, body)
     @hash = @hash ^ return_type.hash
     @return_type = return_type
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['return_type'] = @return_type unless @return_type == nil
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     @parameters.each { |value| yield(value) }
     yield(@body) unless @body.nil?
     yield(@return_type) unless @return_type.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     @parameters.each do |value|
       block.call(value, path)
-      value._pall_contents(path, &block)
+      value._pcore_all_contents(path, &block)
     end
     unless @body.nil?
       block.call(@body, path)
-      @body._pall_contents(path, &block)
+      @body._pcore_all_contents(path, &block)
     end
     unless @return_type.nil?
       block.call(@return_type, path)
-      @return_type._pall_contents(path, &block)
+      @return_type._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -2170,73 +2170,73 @@ class FunctionDefinition < NamedDefinition
 end
 
 class ResourceTypeDefinition < NamedDefinition
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::ResourceTypeDefinition', {
-      'parent' => NamedDefinition._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ResourceTypeDefinition', {
+      'parent' => NamedDefinition._pcore_type
     })
   end
 
-  def _pcontents
+  def _pcore_contents
     @parameters.each { |value| yield(value) }
     yield(@body) unless @body.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     @parameters.each do |value|
       block.call(value, path)
-      value._pall_contents(path, &block)
+      value._pcore_all_contents(path, &block)
     end
     unless @body.nil?
       block.call(@body, path)
-      @body._pall_contents(path, &block)
+      @body._pcore_all_contents(path, &block)
     end
     path.pop
   end
 end
 
 class Application < NamedDefinition
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::Application', {
-      'parent' => NamedDefinition._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::Application', {
+      'parent' => NamedDefinition._pcore_type
     })
   end
 
-  def _pcontents
+  def _pcore_contents
     @parameters.each { |value| yield(value) }
     yield(@body) unless @body.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     @parameters.each do |value|
       block.call(value, path)
-      value._pall_contents(path, &block)
+      value._pcore_all_contents(path, &block)
     end
     unless @body.nil?
       block.call(@body, path)
-      @body._pall_contents(path, &block)
+      @body._pcore_all_contents(path, &block)
     end
     path.pop
   end
 end
 
 class QRefDefinition < Definition
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::QRefDefinition', {
-      'parent' => Definition._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::QRefDefinition', {
+      'parent' => Definition._pcore_type,
       'attributes' => {
         'name' => Types::PStringType::DEFAULT
       }
@@ -2244,7 +2244,7 @@ class QRefDefinition < Definition
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::QRefDefinition initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::QRefDefinition initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -2257,7 +2257,7 @@ class QRefDefinition < Definition
 
   def self.create(locator, offset, length, name)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -2273,7 +2273,7 @@ class QRefDefinition < Definition
     @name = name
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['name'] = @name
     result
@@ -2287,16 +2287,16 @@ class QRefDefinition < Definition
 end
 
 class TypeAlias < QRefDefinition
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::TypeAlias', {
-      'parent' => QRefDefinition._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::TypeAlias', {
+      'parent' => QRefDefinition._pcore_type,
       'attributes' => {
         'type_expr' => {
-          'type' => Types::POptionalType.new(Expression._ptype),
+          'type' => Types::POptionalType.new(Expression._pcore_type),
           'value' => nil
         }
       }
@@ -2304,7 +2304,7 @@ class TypeAlias < QRefDefinition
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::TypeAlias initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::TypeAlias initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -2318,7 +2318,7 @@ class TypeAlias < QRefDefinition
 
   def self.create(locator, offset, length, name, type_expr = nil)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -2335,21 +2335,21 @@ class TypeAlias < QRefDefinition
     @type_expr = type_expr
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['type_expr'] = @type_expr unless @type_expr == nil
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@type_expr) unless @type_expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @type_expr.nil?
       block.call(@type_expr, path)
-      @type_expr._pall_contents(path, &block)
+      @type_expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -2362,20 +2362,20 @@ class TypeAlias < QRefDefinition
 end
 
 class TypeMapping < Definition
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::TypeMapping', {
-      'parent' => Definition._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::TypeMapping', {
+      'parent' => Definition._pcore_type,
       'attributes' => {
         'type_expr' => {
-          'type' => Types::POptionalType.new(Expression._ptype),
+          'type' => Types::POptionalType.new(Expression._pcore_type),
           'value' => nil
         },
         'mapping_expr' => {
-          'type' => Types::POptionalType.new(Expression._ptype),
+          'type' => Types::POptionalType.new(Expression._pcore_type),
           'value' => nil
         }
       }
@@ -2383,7 +2383,7 @@ class TypeMapping < Definition
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::TypeMapping initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::TypeMapping initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -2397,7 +2397,7 @@ class TypeMapping < Definition
 
   def self.create(locator, offset, length, type_expr = nil, mapping_expr = nil)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -2416,27 +2416,27 @@ class TypeMapping < Definition
     @mapping_expr = mapping_expr
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['type_expr'] = @type_expr unless @type_expr == nil
     result['mapping_expr'] = @mapping_expr unless @mapping_expr == nil
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@type_expr) unless @type_expr.nil?
     yield(@mapping_expr) unless @mapping_expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @type_expr.nil?
       block.call(@type_expr, path)
-      @type_expr._pall_contents(path, &block)
+      @type_expr._pcore_all_contents(path, &block)
     end
     unless @mapping_expr.nil?
       block.call(@mapping_expr, path)
-      @mapping_expr._pall_contents(path, &block)
+      @mapping_expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -2450,20 +2450,20 @@ class TypeMapping < Definition
 end
 
 class TypeDefinition < QRefDefinition
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::TypeDefinition', {
-      'parent' => QRefDefinition._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::TypeDefinition', {
+      'parent' => QRefDefinition._pcore_type,
       'attributes' => {
         'parent' => {
           'type' => Types::POptionalType.new(Types::PStringType::DEFAULT),
           'value' => nil
         },
         'body' => {
-          'type' => Types::POptionalType.new(Expression._ptype),
+          'type' => Types::POptionalType.new(Expression._pcore_type),
           'value' => nil
         }
       }
@@ -2471,7 +2471,7 @@ class TypeDefinition < QRefDefinition
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::TypeDefinition initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::TypeDefinition initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -2486,7 +2486,7 @@ class TypeDefinition < QRefDefinition
 
   def self.create(locator, offset, length, name, parent = nil, body = nil)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -2506,22 +2506,22 @@ class TypeDefinition < QRefDefinition
     @body = body
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['parent'] = @parent unless @parent == nil
     result['body'] = @body unless @body == nil
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@body) unless @body.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @body.nil?
       block.call(@body, path)
-      @body._pall_contents(path, &block)
+      @body._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -2535,21 +2535,21 @@ class TypeDefinition < QRefDefinition
 end
 
 class NodeDefinition < Definition
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::NodeDefinition', {
-      'parent' => Definition._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::NodeDefinition', {
+      'parent' => Definition._pcore_type,
       'attributes' => {
         'parent' => {
-          'type' => Types::POptionalType.new(Expression._ptype),
+          'type' => Types::POptionalType.new(Expression._pcore_type),
           'value' => nil
         },
-        'host_matches' => Types::PArrayType.new(Expression._ptype, Types::PCollectionType::NOT_EMPTY_SIZE),
+        'host_matches' => Types::PArrayType.new(Expression._pcore_type, Types::PCollectionType::NOT_EMPTY_SIZE),
         'body' => {
-          'type' => Types::POptionalType.new(Expression._ptype),
+          'type' => Types::POptionalType.new(Expression._pcore_type),
           'value' => nil
         }
       }
@@ -2557,7 +2557,7 @@ class NodeDefinition < Definition
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::NodeDefinition initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::NodeDefinition initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -2572,7 +2572,7 @@ class NodeDefinition < Definition
 
   def self.create(locator, offset, length, host_matches, parent = nil, body = nil)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -2594,7 +2594,7 @@ class NodeDefinition < Definition
     @body = body
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['parent'] = @parent unless @parent == nil
     result['host_matches'] = @host_matches
@@ -2602,25 +2602,25 @@ class NodeDefinition < Definition
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@parent) unless @parent.nil?
     @host_matches.each { |value| yield(value) }
     yield(@body) unless @body.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @parent.nil?
       block.call(@parent, path)
-      @parent._pall_contents(path, &block)
+      @parent._pcore_all_contents(path, &block)
     end
     @host_matches.each do |value|
       block.call(value, path)
-      value._pall_contents(path, &block)
+      value._pcore_all_contents(path, &block)
     end
     unless @body.nil?
       block.call(@body, path)
-      @body._pall_contents(path, &block)
+      @body._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -2635,16 +2635,16 @@ class NodeDefinition < Definition
 end
 
 class SiteDefinition < Definition
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::SiteDefinition', {
-      'parent' => Definition._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::SiteDefinition', {
+      'parent' => Definition._pcore_type,
       'attributes' => {
         'body' => {
-          'type' => Types::POptionalType.new(Expression._ptype),
+          'type' => Types::POptionalType.new(Expression._pcore_type),
           'value' => nil
         }
       }
@@ -2652,7 +2652,7 @@ class SiteDefinition < Definition
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::SiteDefinition initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::SiteDefinition initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -2665,7 +2665,7 @@ class SiteDefinition < Definition
 
   def self.create(locator, offset, length, body = nil)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -2681,21 +2681,21 @@ class SiteDefinition < Definition
     @body = body
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['body'] = @body unless @body == nil
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@body) unless @body.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @body.nil?
       block.call(@body, path)
-      @body._pall_contents(path, &block)
+      @body._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -2708,15 +2708,15 @@ class SiteDefinition < Definition
 end
 
 class SubLocatedExpression < Expression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::SubLocatedExpression', {
-      'parent' => Expression._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::SubLocatedExpression', {
+      'parent' => Expression._pcore_type,
       'attributes' => {
-        'expr' => Expression._ptype,
+        'expr' => Expression._pcore_type,
         'line_offsets' => {
           'type' => Types::PArrayType.new(Types::PIntegerType::DEFAULT),
           'value' => []
@@ -2734,7 +2734,7 @@ class SubLocatedExpression < Expression
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::SubLocatedExpression initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::SubLocatedExpression initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -2743,14 +2743,14 @@ class SubLocatedExpression < Expression
       i12n['offset'],
       i12n['length'],
       i12n['expr'],
-      i12n.fetch('line_offsets') { _ptype['line_offsets'].value },
+      i12n.fetch('line_offsets') { _pcore_type['line_offsets'].value },
       i12n['leading_line_count'],
       i12n['leading_line_offset'])
   end
 
-  def self.create(locator, offset, length, expr, line_offsets = _ptype['line_offsets'].value, leading_line_count = nil, leading_line_offset = nil)
+  def self.create(locator, offset, length, expr, line_offsets = _pcore_type['line_offsets'].value, leading_line_count = nil, leading_line_offset = nil)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -2766,7 +2766,7 @@ class SubLocatedExpression < Expression
   attr_reader :leading_line_count
   attr_reader :leading_line_offset
 
-  def initialize(locator, offset, length, expr, line_offsets = _ptype['line_offsets'].value, leading_line_count = nil, leading_line_offset = nil)
+  def initialize(locator, offset, length, expr, line_offsets = _pcore_type['line_offsets'].value, leading_line_count = nil, leading_line_offset = nil)
     super(locator, offset, length)
     @hash = @hash ^ expr.hash ^ line_offsets.hash ^ leading_line_count.hash ^ leading_line_offset.hash
     @expr = expr
@@ -2775,24 +2775,24 @@ class SubLocatedExpression < Expression
     @leading_line_offset = leading_line_offset
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['expr'] = @expr
-    result['line_offsets'] = @line_offsets unless _ptype['line_offsets'].default_value?(@line_offsets)
+    result['line_offsets'] = @line_offsets unless _pcore_type['line_offsets'].default_value?(@line_offsets)
     result['leading_line_count'] = @leading_line_count unless @leading_line_count == nil
     result['leading_line_offset'] = @leading_line_offset unless @leading_line_offset == nil
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@expr) unless @expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @expr.nil?
       block.call(@expr, path)
-      @expr._pall_contents(path, &block)
+      @expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -2808,25 +2808,25 @@ class SubLocatedExpression < Expression
 end
 
 class HeredocExpression < Expression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::HeredocExpression', {
-      'parent' => Expression._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::HeredocExpression', {
+      'parent' => Expression._pcore_type,
       'attributes' => {
         'syntax' => {
           'type' => Types::POptionalType.new(Types::PStringType::DEFAULT),
           'value' => nil
         },
-        'text_expr' => Expression._ptype
+        'text_expr' => Expression._pcore_type
       }
     })
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::HeredocExpression initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::HeredocExpression initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -2840,7 +2840,7 @@ class HeredocExpression < Expression
 
   def self.create(locator, offset, length, text_expr, syntax = nil)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -2859,22 +2859,22 @@ class HeredocExpression < Expression
     @text_expr = text_expr
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['syntax'] = @syntax unless @syntax == nil
     result['text_expr'] = @text_expr
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@text_expr) unless @text_expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @text_expr.nil?
       block.call(@text_expr, path)
-      @text_expr._pall_contents(path, &block)
+      @text_expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -2888,13 +2888,13 @@ class HeredocExpression < Expression
 end
 
 class HostClassDefinition < NamedDefinition
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::HostClassDefinition', {
-      'parent' => NamedDefinition._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::HostClassDefinition', {
+      'parent' => NamedDefinition._pcore_type,
       'attributes' => {
         'parent_class' => {
           'type' => Types::POptionalType.new(Types::PStringType::DEFAULT),
@@ -2905,7 +2905,7 @@ class HostClassDefinition < NamedDefinition
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::HostClassDefinition initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::HostClassDefinition initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -2914,14 +2914,14 @@ class HostClassDefinition < NamedDefinition
       i12n['offset'],
       i12n['length'],
       i12n['name'],
-      i12n.fetch('parameters') { _ptype['parameters'].value },
+      i12n.fetch('parameters') { _pcore_type['parameters'].value },
       i12n['body'],
       i12n['parent_class'])
   end
 
-  def self.create(locator, offset, length, name, parameters = _ptype['parameters'].value, body = nil, parent_class = nil)
+  def self.create(locator, offset, length, name, parameters = _pcore_type['parameters'].value, body = nil, parent_class = nil)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -2934,32 +2934,32 @@ class HostClassDefinition < NamedDefinition
 
   attr_reader :parent_class
 
-  def initialize(locator, offset, length, name, parameters = _ptype['parameters'].value, body = nil, parent_class = nil)
+  def initialize(locator, offset, length, name, parameters = _pcore_type['parameters'].value, body = nil, parent_class = nil)
     super(locator, offset, length, name, parameters, body)
     @hash = @hash ^ parent_class.hash
     @parent_class = parent_class
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['parent_class'] = @parent_class unless @parent_class == nil
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     @parameters.each { |value| yield(value) }
     yield(@body) unless @body.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     @parameters.each do |value|
       block.call(value, path)
-      value._pall_contents(path, &block)
+      value._pcore_all_contents(path, &block)
     end
     unless @body.nil?
       block.call(@body, path)
-      @body._pall_contents(path, &block)
+      @body._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -2972,24 +2972,24 @@ class HostClassDefinition < NamedDefinition
 end
 
 class LambdaExpression < Expression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::LambdaExpression', {
-      'parent' => Expression._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LambdaExpression', {
+      'parent' => Expression._pcore_type,
       'attributes' => {
         'parameters' => {
-          'type' => Types::PArrayType.new(Parameter._ptype),
+          'type' => Types::PArrayType.new(Parameter._pcore_type),
           'value' => []
         },
         'body' => {
-          'type' => Types::POptionalType.new(Expression._ptype),
+          'type' => Types::POptionalType.new(Expression._pcore_type),
           'value' => nil
         },
         'return_type' => {
-          'type' => Types::POptionalType.new(Expression._ptype),
+          'type' => Types::POptionalType.new(Expression._pcore_type),
           'value' => nil
         }
       }
@@ -2997,7 +2997,7 @@ class LambdaExpression < Expression
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LambdaExpression initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LambdaExpression initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -3005,14 +3005,14 @@ class LambdaExpression < Expression
       i12n['locator'],
       i12n['offset'],
       i12n['length'],
-      i12n.fetch('parameters') { _ptype['parameters'].value },
+      i12n.fetch('parameters') { _pcore_type['parameters'].value },
       i12n['body'],
       i12n['return_type'])
   end
 
-  def self.create(locator, offset, length, parameters = _ptype['parameters'].value, body = nil, return_type = nil)
+  def self.create(locator, offset, length, parameters = _pcore_type['parameters'].value, body = nil, return_type = nil)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -3026,7 +3026,7 @@ class LambdaExpression < Expression
   attr_reader :body
   attr_reader :return_type
 
-  def initialize(locator, offset, length, parameters = _ptype['parameters'].value, body = nil, return_type = nil)
+  def initialize(locator, offset, length, parameters = _pcore_type['parameters'].value, body = nil, return_type = nil)
     super(locator, offset, length)
     @hash = @hash ^ parameters.hash ^ body.hash ^ return_type.hash
     @parameters = parameters
@@ -3034,33 +3034,33 @@ class LambdaExpression < Expression
     @return_type = return_type
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
-    result['parameters'] = @parameters unless _ptype['parameters'].default_value?(@parameters)
+    result['parameters'] = @parameters unless _pcore_type['parameters'].default_value?(@parameters)
     result['body'] = @body unless @body == nil
     result['return_type'] = @return_type unless @return_type == nil
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     @parameters.each { |value| yield(value) }
     yield(@body) unless @body.nil?
     yield(@return_type) unless @return_type.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     @parameters.each do |value|
       block.call(value, path)
-      value._pall_contents(path, &block)
+      value._pcore_all_contents(path, &block)
     end
     unless @body.nil?
       block.call(@body, path)
-      @body._pall_contents(path, &block)
+      @body._pcore_all_contents(path, &block)
     end
     unless @return_type.nil?
       block.call(@return_type, path)
-      @return_type._pall_contents(path, &block)
+      @return_type._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -3075,21 +3075,21 @@ class LambdaExpression < Expression
 end
 
 class IfExpression < Expression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::IfExpression', {
-      'parent' => Expression._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::IfExpression', {
+      'parent' => Expression._pcore_type,
       'attributes' => {
-        'test' => Expression._ptype,
+        'test' => Expression._pcore_type,
         'then_expr' => {
-          'type' => Types::POptionalType.new(Expression._ptype),
+          'type' => Types::POptionalType.new(Expression._pcore_type),
           'value' => nil
         },
         'else_expr' => {
-          'type' => Types::POptionalType.new(Expression._ptype),
+          'type' => Types::POptionalType.new(Expression._pcore_type),
           'value' => nil
         }
       }
@@ -3097,7 +3097,7 @@ class IfExpression < Expression
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::IfExpression initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::IfExpression initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -3112,7 +3112,7 @@ class IfExpression < Expression
 
   def self.create(locator, offset, length, test, then_expr = nil, else_expr = nil)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -3134,7 +3134,7 @@ class IfExpression < Expression
     @else_expr = else_expr
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['test'] = @test
     result['then_expr'] = @then_expr unless @then_expr == nil
@@ -3142,25 +3142,25 @@ class IfExpression < Expression
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@test) unless @test.nil?
     yield(@then_expr) unless @then_expr.nil?
     yield(@else_expr) unless @else_expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @test.nil?
       block.call(@test, path)
-      @test._pall_contents(path, &block)
+      @test._pcore_all_contents(path, &block)
     end
     unless @then_expr.nil?
       block.call(@then_expr, path)
-      @then_expr._pall_contents(path, &block)
+      @then_expr._pcore_all_contents(path, &block)
     end
     unless @else_expr.nil?
       block.call(@else_expr, path)
-      @else_expr._pall_contents(path, &block)
+      @else_expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -3175,60 +3175,60 @@ class IfExpression < Expression
 end
 
 class UnlessExpression < IfExpression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::UnlessExpression', {
-      'parent' => IfExpression._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::UnlessExpression', {
+      'parent' => IfExpression._pcore_type
     })
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@test) unless @test.nil?
     yield(@then_expr) unless @then_expr.nil?
     yield(@else_expr) unless @else_expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @test.nil?
       block.call(@test, path)
-      @test._pall_contents(path, &block)
+      @test._pcore_all_contents(path, &block)
     end
     unless @then_expr.nil?
       block.call(@then_expr, path)
-      @then_expr._pall_contents(path, &block)
+      @then_expr._pcore_all_contents(path, &block)
     end
     unless @else_expr.nil?
       block.call(@else_expr, path)
-      @else_expr._pall_contents(path, &block)
+      @else_expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
 end
 
 class CallExpression < Expression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::CallExpression', {
-      'parent' => Expression._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CallExpression', {
+      'parent' => Expression._pcore_type,
       'attributes' => {
         'rval_required' => {
           'type' => Types::PBooleanType::DEFAULT,
           'value' => false
         },
-        'functor_expr' => Expression._ptype,
+        'functor_expr' => Expression._pcore_type,
         'arguments' => {
-          'type' => Types::PArrayType.new(Expression._ptype),
+          'type' => Types::PArrayType.new(Expression._pcore_type),
           'value' => []
         },
         'lambda' => {
-          'type' => Types::POptionalType.new(Expression._ptype),
+          'type' => Types::POptionalType.new(Expression._pcore_type),
           'value' => nil
         }
       }
@@ -3236,7 +3236,7 @@ class CallExpression < Expression
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::CallExpression initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::CallExpression initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -3246,13 +3246,13 @@ class CallExpression < Expression
       i12n['length'],
       i12n['functor_expr'],
       i12n.fetch('rval_required') { false },
-      i12n.fetch('arguments') { _ptype['arguments'].value },
+      i12n.fetch('arguments') { _pcore_type['arguments'].value },
       i12n['lambda'])
   end
 
-  def self.create(locator, offset, length, functor_expr, rval_required = false, arguments = _ptype['arguments'].value, lambda = nil)
+  def self.create(locator, offset, length, functor_expr, rval_required = false, arguments = _pcore_type['arguments'].value, lambda = nil)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -3268,7 +3268,7 @@ class CallExpression < Expression
   attr_reader :arguments
   attr_reader :lambda
 
-  def initialize(locator, offset, length, functor_expr, rval_required = false, arguments = _ptype['arguments'].value, lambda = nil)
+  def initialize(locator, offset, length, functor_expr, rval_required = false, arguments = _pcore_type['arguments'].value, lambda = nil)
     super(locator, offset, length)
     @hash = @hash ^ rval_required.hash ^ functor_expr.hash ^ arguments.hash ^ lambda.hash
     @rval_required = rval_required
@@ -3277,34 +3277,34 @@ class CallExpression < Expression
     @lambda = lambda
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['rval_required'] = @rval_required unless @rval_required == false
     result['functor_expr'] = @functor_expr
-    result['arguments'] = @arguments unless _ptype['arguments'].default_value?(@arguments)
+    result['arguments'] = @arguments unless _pcore_type['arguments'].default_value?(@arguments)
     result['lambda'] = @lambda unless @lambda == nil
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@functor_expr) unless @functor_expr.nil?
     @arguments.each { |value| yield(value) }
     yield(@lambda) unless @lambda.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @functor_expr.nil?
       block.call(@functor_expr, path)
-      @functor_expr._pall_contents(path, &block)
+      @functor_expr._pcore_all_contents(path, &block)
     end
     @arguments.each do |value|
       block.call(value, path)
-      value._pall_contents(path, &block)
+      value._pcore_all_contents(path, &block)
     end
     unless @lambda.nil?
       block.call(@lambda, path)
-      @lambda._pall_contents(path, &block)
+      @lambda._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -3320,142 +3320,142 @@ class CallExpression < Expression
 end
 
 class CallFunctionExpression < CallExpression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::CallFunctionExpression', {
-      'parent' => CallExpression._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CallFunctionExpression', {
+      'parent' => CallExpression._pcore_type
     })
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@functor_expr) unless @functor_expr.nil?
     @arguments.each { |value| yield(value) }
     yield(@lambda) unless @lambda.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @functor_expr.nil?
       block.call(@functor_expr, path)
-      @functor_expr._pall_contents(path, &block)
+      @functor_expr._pcore_all_contents(path, &block)
     end
     @arguments.each do |value|
       block.call(value, path)
-      value._pall_contents(path, &block)
+      value._pcore_all_contents(path, &block)
     end
     unless @lambda.nil?
       block.call(@lambda, path)
-      @lambda._pall_contents(path, &block)
+      @lambda._pcore_all_contents(path, &block)
     end
     path.pop
   end
 end
 
 class CallNamedFunctionExpression < CallExpression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::CallNamedFunctionExpression', {
-      'parent' => CallExpression._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CallNamedFunctionExpression', {
+      'parent' => CallExpression._pcore_type
     })
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@functor_expr) unless @functor_expr.nil?
     @arguments.each { |value| yield(value) }
     yield(@lambda) unless @lambda.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @functor_expr.nil?
       block.call(@functor_expr, path)
-      @functor_expr._pall_contents(path, &block)
+      @functor_expr._pcore_all_contents(path, &block)
     end
     @arguments.each do |value|
       block.call(value, path)
-      value._pall_contents(path, &block)
+      value._pcore_all_contents(path, &block)
     end
     unless @lambda.nil?
       block.call(@lambda, path)
-      @lambda._pall_contents(path, &block)
+      @lambda._pcore_all_contents(path, &block)
     end
     path.pop
   end
 end
 
 class CallMethodExpression < CallExpression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::CallMethodExpression', {
-      'parent' => CallExpression._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CallMethodExpression', {
+      'parent' => CallExpression._pcore_type
     })
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@functor_expr) unless @functor_expr.nil?
     @arguments.each { |value| yield(value) }
     yield(@lambda) unless @lambda.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @functor_expr.nil?
       block.call(@functor_expr, path)
-      @functor_expr._pall_contents(path, &block)
+      @functor_expr._pcore_all_contents(path, &block)
     end
     @arguments.each do |value|
       block.call(value, path)
-      value._pall_contents(path, &block)
+      value._pcore_all_contents(path, &block)
     end
     unless @lambda.nil?
       block.call(@lambda, path)
-      @lambda._pall_contents(path, &block)
+      @lambda._pcore_all_contents(path, &block)
     end
     path.pop
   end
 end
 
 class Literal < Expression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::Literal', {
-      'parent' => Expression._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::Literal', {
+      'parent' => Expression._pcore_type
     })
   end
 end
 
 class LiteralValue < Literal
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::LiteralValue', {
-      'parent' => Literal._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralValue', {
+      'parent' => Literal._pcore_type
     })
   end
 end
 
 class LiteralRegularExpression < LiteralValue
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::LiteralRegularExpression', {
-      'parent' => LiteralValue._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralRegularExpression', {
+      'parent' => LiteralValue._pcore_type,
       'attributes' => {
         'value' => Types::PAnyType::DEFAULT,
         'pattern' => Types::PStringType::DEFAULT
@@ -3464,7 +3464,7 @@ class LiteralRegularExpression < LiteralValue
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralRegularExpression initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralRegularExpression initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -3478,7 +3478,7 @@ class LiteralRegularExpression < LiteralValue
 
   def self.create(locator, offset, length, value, pattern)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -3497,7 +3497,7 @@ class LiteralRegularExpression < LiteralValue
     @pattern = pattern
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['value'] = @value
     result['pattern'] = @pattern
@@ -3513,13 +3513,13 @@ class LiteralRegularExpression < LiteralValue
 end
 
 class LiteralString < LiteralValue
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::LiteralString', {
-      'parent' => LiteralValue._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralString', {
+      'parent' => LiteralValue._pcore_type,
       'attributes' => {
         'value' => Types::PStringType::DEFAULT
       }
@@ -3527,7 +3527,7 @@ class LiteralString < LiteralValue
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralString initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralString initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -3540,7 +3540,7 @@ class LiteralString < LiteralValue
 
   def self.create(locator, offset, length, value)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -3556,7 +3556,7 @@ class LiteralString < LiteralValue
     @value = value
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['value'] = @value
     result
@@ -3570,25 +3570,25 @@ class LiteralString < LiteralValue
 end
 
 class LiteralNumber < LiteralValue
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::LiteralNumber', {
-      'parent' => LiteralValue._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralNumber', {
+      'parent' => LiteralValue._pcore_type
     })
   end
 end
 
 class LiteralInteger < LiteralNumber
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::LiteralInteger', {
-      'parent' => LiteralNumber._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralInteger', {
+      'parent' => LiteralNumber._pcore_type,
       'attributes' => {
         'radix' => {
           'type' => Types::PIntegerType::DEFAULT,
@@ -3600,7 +3600,7 @@ class LiteralInteger < LiteralNumber
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralInteger initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralInteger initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -3614,7 +3614,7 @@ class LiteralInteger < LiteralNumber
 
   def self.create(locator, offset, length, value, radix = 10)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -3633,7 +3633,7 @@ class LiteralInteger < LiteralNumber
     @value = value
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['radix'] = @radix unless @radix == 10
     result['value'] = @value
@@ -3649,13 +3649,13 @@ class LiteralInteger < LiteralNumber
 end
 
 class LiteralFloat < LiteralNumber
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::LiteralFloat', {
-      'parent' => LiteralNumber._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralFloat', {
+      'parent' => LiteralNumber._pcore_type,
       'attributes' => {
         'value' => Types::PFloatType::DEFAULT
       }
@@ -3663,7 +3663,7 @@ class LiteralFloat < LiteralNumber
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralFloat initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralFloat initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -3676,7 +3676,7 @@ class LiteralFloat < LiteralNumber
 
   def self.create(locator, offset, length, value)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -3692,7 +3692,7 @@ class LiteralFloat < LiteralNumber
     @value = value
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['value'] = @value
     result
@@ -3706,37 +3706,37 @@ class LiteralFloat < LiteralNumber
 end
 
 class LiteralUndef < Literal
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::LiteralUndef', {
-      'parent' => Literal._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralUndef', {
+      'parent' => Literal._pcore_type
     })
   end
 end
 
 class LiteralDefault < Literal
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::LiteralDefault', {
-      'parent' => Literal._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralDefault', {
+      'parent' => Literal._pcore_type
     })
   end
 end
 
 class LiteralBoolean < LiteralValue
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::LiteralBoolean', {
-      'parent' => LiteralValue._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralBoolean', {
+      'parent' => LiteralValue._pcore_type,
       'attributes' => {
         'value' => Types::PBooleanType::DEFAULT
       }
@@ -3744,7 +3744,7 @@ class LiteralBoolean < LiteralValue
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralBoolean initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralBoolean initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -3757,7 +3757,7 @@ class LiteralBoolean < LiteralValue
 
   def self.create(locator, offset, length, value)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -3773,7 +3773,7 @@ class LiteralBoolean < LiteralValue
     @value = value
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['value'] = @value
     result
@@ -3787,41 +3787,41 @@ class LiteralBoolean < LiteralValue
 end
 
 class TextExpression < UnaryExpression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::TextExpression', {
-      'parent' => UnaryExpression._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::TextExpression', {
+      'parent' => UnaryExpression._pcore_type
     })
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@expr) unless @expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @expr.nil?
       block.call(@expr, path)
-      @expr._pall_contents(path, &block)
+      @expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
 end
 
 class ConcatenatedString < Expression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::ConcatenatedString', {
-      'parent' => Expression._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ConcatenatedString', {
+      'parent' => Expression._pcore_type,
       'attributes' => {
         'segments' => {
-          'type' => Types::PArrayType.new(Expression._ptype),
+          'type' => Types::PArrayType.new(Expression._pcore_type),
           'value' => []
         }
       }
@@ -3829,7 +3829,7 @@ class ConcatenatedString < Expression
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ConcatenatedString initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ConcatenatedString initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -3837,12 +3837,12 @@ class ConcatenatedString < Expression
       i12n['locator'],
       i12n['offset'],
       i12n['length'],
-      i12n.fetch('segments') { _ptype['segments'].value })
+      i12n.fetch('segments') { _pcore_type['segments'].value })
   end
 
-  def self.create(locator, offset, length, segments = _ptype['segments'].value)
+  def self.create(locator, offset, length, segments = _pcore_type['segments'].value)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -3852,27 +3852,27 @@ class ConcatenatedString < Expression
 
   attr_reader :segments
 
-  def initialize(locator, offset, length, segments = _ptype['segments'].value)
+  def initialize(locator, offset, length, segments = _pcore_type['segments'].value)
     super(locator, offset, length)
     @hash = @hash ^ segments.hash
     @segments = segments
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
-    result['segments'] = @segments unless _ptype['segments'].default_value?(@segments)
+    result['segments'] = @segments unless _pcore_type['segments'].default_value?(@segments)
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     @segments.each { |value| yield(value) }
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     @segments.each do |value|
       block.call(value, path)
-      value._pall_contents(path, &block)
+      value._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -3885,13 +3885,13 @@ class ConcatenatedString < Expression
 end
 
 class QualifiedName < LiteralValue
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::QualifiedName', {
-      'parent' => LiteralValue._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::QualifiedName', {
+      'parent' => LiteralValue._pcore_type,
       'attributes' => {
         'value' => Types::PStringType::DEFAULT
       }
@@ -3899,7 +3899,7 @@ class QualifiedName < LiteralValue
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::QualifiedName initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::QualifiedName initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -3912,7 +3912,7 @@ class QualifiedName < LiteralValue
 
   def self.create(locator, offset, length, value)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -3928,7 +3928,7 @@ class QualifiedName < LiteralValue
     @value = value
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['value'] = @value
     result
@@ -3942,13 +3942,13 @@ class QualifiedName < LiteralValue
 end
 
 class ReservedWord < LiteralValue
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::ReservedWord', {
-      'parent' => LiteralValue._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ReservedWord', {
+      'parent' => LiteralValue._pcore_type,
       'attributes' => {
         'word' => Types::PStringType::DEFAULT,
         'future' => {
@@ -3960,7 +3960,7 @@ class ReservedWord < LiteralValue
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ReservedWord initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ReservedWord initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -3974,7 +3974,7 @@ class ReservedWord < LiteralValue
 
   def self.create(locator, offset, length, word, future = nil)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -3993,7 +3993,7 @@ class ReservedWord < LiteralValue
     @future = future
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['word'] = @word
     result['future'] = @future unless @future == nil
@@ -4009,13 +4009,13 @@ class ReservedWord < LiteralValue
 end
 
 class QualifiedReference < LiteralValue
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::QualifiedReference', {
-      'parent' => LiteralValue._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::QualifiedReference', {
+      'parent' => LiteralValue._pcore_type,
       'attributes' => {
         'cased_value' => Types::PStringType::DEFAULT,
         'value' => {
@@ -4027,7 +4027,7 @@ class QualifiedReference < LiteralValue
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::QualifiedReference initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::QualifiedReference initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -4040,7 +4040,7 @@ class QualifiedReference < LiteralValue
 
   def self.create(locator, offset, length, cased_value)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -4060,7 +4060,7 @@ class QualifiedReference < LiteralValue
     @cased_value = cased_value
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['cased_value'] = @cased_value
     result
@@ -4074,45 +4074,45 @@ class QualifiedReference < LiteralValue
 end
 
 class VariableExpression < UnaryExpression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::VariableExpression', {
-      'parent' => UnaryExpression._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::VariableExpression', {
+      'parent' => UnaryExpression._pcore_type
     })
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@expr) unless @expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @expr.nil?
       block.call(@expr, path)
-      @expr._pall_contents(path, &block)
+      @expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
 end
 
 class EppExpression < Expression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::EppExpression', {
-      'parent' => Expression._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::EppExpression', {
+      'parent' => Expression._pcore_type,
       'attributes' => {
         'parameters_specified' => {
           'type' => Types::POptionalType.new(Types::PBooleanType::DEFAULT),
           'value' => nil
         },
         'body' => {
-          'type' => Types::POptionalType.new(Expression._ptype),
+          'type' => Types::POptionalType.new(Expression._pcore_type),
           'value' => nil
         }
       }
@@ -4120,7 +4120,7 @@ class EppExpression < Expression
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::EppExpression initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::EppExpression initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -4134,7 +4134,7 @@ class EppExpression < Expression
 
   def self.create(locator, offset, length, parameters_specified = nil, body = nil)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -4153,22 +4153,22 @@ class EppExpression < Expression
     @body = body
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['parameters_specified'] = @parameters_specified unless @parameters_specified == nil
     result['body'] = @body unless @body == nil
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@body) unless @body.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @body.nil?
       block.call(@body, path)
-      @body._pall_contents(path, &block)
+      @body._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -4182,57 +4182,57 @@ class EppExpression < Expression
 end
 
 class RenderStringExpression < LiteralString
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::RenderStringExpression', {
-      'parent' => LiteralString._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::RenderStringExpression', {
+      'parent' => LiteralString._pcore_type
     })
   end
 end
 
 class RenderExpression < UnaryExpression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::RenderExpression', {
-      'parent' => UnaryExpression._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::RenderExpression', {
+      'parent' => UnaryExpression._pcore_type
     })
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@expr) unless @expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @expr.nil?
       block.call(@expr, path)
-      @expr._pall_contents(path, &block)
+      @expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
 end
 
 class ResourceBody < Positioned
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::ResourceBody', {
-      'parent' => Positioned._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ResourceBody', {
+      'parent' => Positioned._pcore_type,
       'attributes' => {
         'title' => {
-          'type' => Types::POptionalType.new(Expression._ptype),
+          'type' => Types::POptionalType.new(Expression._pcore_type),
           'value' => nil
         },
         'operations' => {
-          'type' => Types::PArrayType.new(AbstractAttributeOperation._ptype),
+          'type' => Types::PArrayType.new(AbstractAttributeOperation._pcore_type),
           'value' => []
         }
       }
@@ -4240,7 +4240,7 @@ class ResourceBody < Positioned
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ResourceBody initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ResourceBody initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -4249,12 +4249,12 @@ class ResourceBody < Positioned
       i12n['offset'],
       i12n['length'],
       i12n['title'],
-      i12n.fetch('operations') { _ptype['operations'].value })
+      i12n.fetch('operations') { _pcore_type['operations'].value })
   end
 
-  def self.create(locator, offset, length, title = nil, operations = _ptype['operations'].value)
+  def self.create(locator, offset, length, title = nil, operations = _pcore_type['operations'].value)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -4266,34 +4266,34 @@ class ResourceBody < Positioned
   attr_reader :title
   attr_reader :operations
 
-  def initialize(locator, offset, length, title = nil, operations = _ptype['operations'].value)
+  def initialize(locator, offset, length, title = nil, operations = _pcore_type['operations'].value)
     super(locator, offset, length)
     @hash = @hash ^ title.hash ^ operations.hash
     @title = title
     @operations = operations
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['title'] = @title unless @title == nil
-    result['operations'] = @operations unless _ptype['operations'].default_value?(@operations)
+    result['operations'] = @operations unless _pcore_type['operations'].default_value?(@operations)
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@title) unless @title.nil?
     @operations.each { |value| yield(value) }
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @title.nil?
       block.call(@title, path)
-      @title._pall_contents(path, &block)
+      @title._pcore_all_contents(path, &block)
     end
     @operations.each do |value|
       block.call(value, path)
-      value._pall_contents(path, &block)
+      value._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -4307,13 +4307,13 @@ class ResourceBody < Positioned
 end
 
 class AbstractResource < Expression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::AbstractResource', {
-      'parent' => Expression._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::AbstractResource', {
+      'parent' => Expression._pcore_type,
       'attributes' => {
         'form' => {
           'type' => Types::PEnumType.new(['exported', 'regular', 'virtual']),
@@ -4332,7 +4332,7 @@ class AbstractResource < Expression
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::AbstractResource initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::AbstractResource initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -4345,7 +4345,7 @@ class AbstractResource < Expression
 
   def self.create(locator, offset, length, form = "regular")
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -4369,7 +4369,7 @@ class AbstractResource < Expression
     @form = form
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['form'] = @form unless @form == "regular"
     result
@@ -4383,17 +4383,17 @@ class AbstractResource < Expression
 end
 
 class ResourceExpression < AbstractResource
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::ResourceExpression', {
-      'parent' => AbstractResource._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ResourceExpression', {
+      'parent' => AbstractResource._pcore_type,
       'attributes' => {
-        'type_name' => Expression._ptype,
+        'type_name' => Expression._pcore_type,
         'bodies' => {
-          'type' => Types::PArrayType.new(ResourceBody._ptype),
+          'type' => Types::PArrayType.new(ResourceBody._pcore_type),
           'value' => []
         }
       }
@@ -4401,7 +4401,7 @@ class ResourceExpression < AbstractResource
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ResourceExpression initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ResourceExpression initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -4411,12 +4411,12 @@ class ResourceExpression < AbstractResource
       i12n['length'],
       i12n['type_name'],
       i12n.fetch('form') { "regular" },
-      i12n.fetch('bodies') { _ptype['bodies'].value })
+      i12n.fetch('bodies') { _pcore_type['bodies'].value })
   end
 
-  def self.create(locator, offset, length, type_name, form = "regular", bodies = _ptype['bodies'].value)
+  def self.create(locator, offset, length, type_name, form = "regular", bodies = _pcore_type['bodies'].value)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -4429,34 +4429,34 @@ class ResourceExpression < AbstractResource
   attr_reader :type_name
   attr_reader :bodies
 
-  def initialize(locator, offset, length, type_name, form = "regular", bodies = _ptype['bodies'].value)
+  def initialize(locator, offset, length, type_name, form = "regular", bodies = _pcore_type['bodies'].value)
     super(locator, offset, length, form)
     @hash = @hash ^ type_name.hash ^ bodies.hash
     @type_name = type_name
     @bodies = bodies
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['type_name'] = @type_name
-    result['bodies'] = @bodies unless _ptype['bodies'].default_value?(@bodies)
+    result['bodies'] = @bodies unless _pcore_type['bodies'].default_value?(@bodies)
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@type_name) unless @type_name.nil?
     @bodies.each { |value| yield(value) }
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @type_name.nil?
       block.call(@type_name, path)
-      @type_name._pall_contents(path, &block)
+      @type_name._pcore_all_contents(path, &block)
     end
     @bodies.each do |value|
       block.call(value, path)
-      value._pall_contents(path, &block)
+      value._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -4470,19 +4470,19 @@ class ResourceExpression < AbstractResource
 end
 
 class CapabilityMapping < Definition
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::CapabilityMapping', {
-      'parent' => Definition._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CapabilityMapping', {
+      'parent' => Definition._pcore_type,
       'attributes' => {
         'kind' => Types::PStringType::DEFAULT,
         'capability' => Types::PStringType::DEFAULT,
-        'component' => Expression._ptype,
+        'component' => Expression._pcore_type,
         'mappings' => {
-          'type' => Types::PArrayType.new(AbstractAttributeOperation._ptype),
+          'type' => Types::PArrayType.new(AbstractAttributeOperation._pcore_type),
           'value' => []
         }
       }
@@ -4490,7 +4490,7 @@ class CapabilityMapping < Definition
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::CapabilityMapping initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::CapabilityMapping initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -4501,12 +4501,12 @@ class CapabilityMapping < Definition
       i12n['kind'],
       i12n['capability'],
       i12n['component'],
-      i12n.fetch('mappings') { _ptype['mappings'].value })
+      i12n.fetch('mappings') { _pcore_type['mappings'].value })
   end
 
-  def self.create(locator, offset, length, kind, capability, component, mappings = _ptype['mappings'].value)
+  def self.create(locator, offset, length, kind, capability, component, mappings = _pcore_type['mappings'].value)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -4522,7 +4522,7 @@ class CapabilityMapping < Definition
   attr_reader :component
   attr_reader :mappings
 
-  def initialize(locator, offset, length, kind, capability, component, mappings = _ptype['mappings'].value)
+  def initialize(locator, offset, length, kind, capability, component, mappings = _pcore_type['mappings'].value)
     super(locator, offset, length)
     @hash = @hash ^ kind.hash ^ capability.hash ^ component.hash ^ mappings.hash
     @kind = kind
@@ -4531,29 +4531,29 @@ class CapabilityMapping < Definition
     @mappings = mappings
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['kind'] = @kind
     result['capability'] = @capability
     result['component'] = @component
-    result['mappings'] = @mappings unless _ptype['mappings'].default_value?(@mappings)
+    result['mappings'] = @mappings unless _pcore_type['mappings'].default_value?(@mappings)
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@component) unless @component.nil?
     @mappings.each { |value| yield(value) }
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @component.nil?
       block.call(@component, path)
-      @component._pall_contents(path, &block)
+      @component._pcore_all_contents(path, &block)
     end
     @mappings.each do |value|
       block.call(value, path)
-      value._pall_contents(path, &block)
+      value._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -4569,20 +4569,20 @@ class CapabilityMapping < Definition
 end
 
 class ResourceDefaultsExpression < AbstractResource
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::ResourceDefaultsExpression', {
-      'parent' => AbstractResource._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ResourceDefaultsExpression', {
+      'parent' => AbstractResource._pcore_type,
       'attributes' => {
         'type_ref' => {
-          'type' => Types::POptionalType.new(Expression._ptype),
+          'type' => Types::POptionalType.new(Expression._pcore_type),
           'value' => nil
         },
         'operations' => {
-          'type' => Types::PArrayType.new(AbstractAttributeOperation._ptype),
+          'type' => Types::PArrayType.new(AbstractAttributeOperation._pcore_type),
           'value' => []
         }
       }
@@ -4590,7 +4590,7 @@ class ResourceDefaultsExpression < AbstractResource
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ResourceDefaultsExpression initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ResourceDefaultsExpression initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -4600,12 +4600,12 @@ class ResourceDefaultsExpression < AbstractResource
       i12n['length'],
       i12n.fetch('form') { "regular" },
       i12n['type_ref'],
-      i12n.fetch('operations') { _ptype['operations'].value })
+      i12n.fetch('operations') { _pcore_type['operations'].value })
   end
 
-  def self.create(locator, offset, length, form = "regular", type_ref = nil, operations = _ptype['operations'].value)
+  def self.create(locator, offset, length, form = "regular", type_ref = nil, operations = _pcore_type['operations'].value)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -4618,34 +4618,34 @@ class ResourceDefaultsExpression < AbstractResource
   attr_reader :type_ref
   attr_reader :operations
 
-  def initialize(locator, offset, length, form = "regular", type_ref = nil, operations = _ptype['operations'].value)
+  def initialize(locator, offset, length, form = "regular", type_ref = nil, operations = _pcore_type['operations'].value)
     super(locator, offset, length, form)
     @hash = @hash ^ type_ref.hash ^ operations.hash
     @type_ref = type_ref
     @operations = operations
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['type_ref'] = @type_ref unless @type_ref == nil
-    result['operations'] = @operations unless _ptype['operations'].default_value?(@operations)
+    result['operations'] = @operations unless _pcore_type['operations'].default_value?(@operations)
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@type_ref) unless @type_ref.nil?
     @operations.each { |value| yield(value) }
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @type_ref.nil?
       block.call(@type_ref, path)
-      @type_ref._pall_contents(path, &block)
+      @type_ref._pcore_all_contents(path, &block)
     end
     @operations.each do |value|
       block.call(value, path)
-      value._pall_contents(path, &block)
+      value._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -4659,17 +4659,17 @@ class ResourceDefaultsExpression < AbstractResource
 end
 
 class ResourceOverrideExpression < AbstractResource
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::ResourceOverrideExpression', {
-      'parent' => AbstractResource._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ResourceOverrideExpression', {
+      'parent' => AbstractResource._pcore_type,
       'attributes' => {
-        'resources' => Expression._ptype,
+        'resources' => Expression._pcore_type,
         'operations' => {
-          'type' => Types::PArrayType.new(AbstractAttributeOperation._ptype),
+          'type' => Types::PArrayType.new(AbstractAttributeOperation._pcore_type),
           'value' => []
         }
       }
@@ -4677,7 +4677,7 @@ class ResourceOverrideExpression < AbstractResource
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ResourceOverrideExpression initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ResourceOverrideExpression initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -4687,12 +4687,12 @@ class ResourceOverrideExpression < AbstractResource
       i12n['length'],
       i12n['resources'],
       i12n.fetch('form') { "regular" },
-      i12n.fetch('operations') { _ptype['operations'].value })
+      i12n.fetch('operations') { _pcore_type['operations'].value })
   end
 
-  def self.create(locator, offset, length, resources, form = "regular", operations = _ptype['operations'].value)
+  def self.create(locator, offset, length, resources, form = "regular", operations = _pcore_type['operations'].value)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -4705,34 +4705,34 @@ class ResourceOverrideExpression < AbstractResource
   attr_reader :resources
   attr_reader :operations
 
-  def initialize(locator, offset, length, resources, form = "regular", operations = _ptype['operations'].value)
+  def initialize(locator, offset, length, resources, form = "regular", operations = _pcore_type['operations'].value)
     super(locator, offset, length, form)
     @hash = @hash ^ resources.hash ^ operations.hash
     @resources = resources
     @operations = operations
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['resources'] = @resources
-    result['operations'] = @operations unless _ptype['operations'].default_value?(@operations)
+    result['operations'] = @operations unless _pcore_type['operations'].default_value?(@operations)
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@resources) unless @resources.nil?
     @operations.each { |value| yield(value) }
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @resources.nil?
       block.call(@resources, path)
-      @resources._pall_contents(path, &block)
+      @resources._pcore_all_contents(path, &block)
     end
     @operations.each do |value|
       block.call(value, path)
-      value._pall_contents(path, &block)
+      value._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -4746,22 +4746,22 @@ class ResourceOverrideExpression < AbstractResource
 end
 
 class SelectorEntry < Positioned
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::SelectorEntry', {
-      'parent' => Positioned._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::SelectorEntry', {
+      'parent' => Positioned._pcore_type,
       'attributes' => {
-        'matching_expr' => Expression._ptype,
-        'value_expr' => Expression._ptype
+        'matching_expr' => Expression._pcore_type,
+        'value_expr' => Expression._pcore_type
       }
     })
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::SelectorEntry initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::SelectorEntry initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -4775,7 +4775,7 @@ class SelectorEntry < Positioned
 
   def self.create(locator, offset, length, matching_expr, value_expr)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -4794,27 +4794,27 @@ class SelectorEntry < Positioned
     @value_expr = value_expr
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['matching_expr'] = @matching_expr
     result['value_expr'] = @value_expr
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@matching_expr) unless @matching_expr.nil?
     yield(@value_expr) unless @value_expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @matching_expr.nil?
       block.call(@matching_expr, path)
-      @matching_expr._pall_contents(path, &block)
+      @matching_expr._pcore_all_contents(path, &block)
     end
     unless @value_expr.nil?
       block.call(@value_expr, path)
-      @value_expr._pall_contents(path, &block)
+      @value_expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -4828,17 +4828,17 @@ class SelectorEntry < Positioned
 end
 
 class SelectorExpression < Expression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::SelectorExpression', {
-      'parent' => Expression._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::SelectorExpression', {
+      'parent' => Expression._pcore_type,
       'attributes' => {
-        'left_expr' => Expression._ptype,
+        'left_expr' => Expression._pcore_type,
         'selectors' => {
-          'type' => Types::PArrayType.new(SelectorEntry._ptype),
+          'type' => Types::PArrayType.new(SelectorEntry._pcore_type),
           'value' => []
         }
       }
@@ -4846,7 +4846,7 @@ class SelectorExpression < Expression
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::SelectorExpression initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::SelectorExpression initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
@@ -4855,12 +4855,12 @@ class SelectorExpression < Expression
       i12n['offset'],
       i12n['length'],
       i12n['left_expr'],
-      i12n.fetch('selectors') { _ptype['selectors'].value })
+      i12n.fetch('selectors') { _pcore_type['selectors'].value })
   end
 
-  def self.create(locator, offset, length, left_expr, selectors = _ptype['selectors'].value)
+  def self.create(locator, offset, length, left_expr, selectors = _pcore_type['selectors'].value)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
@@ -4872,34 +4872,34 @@ class SelectorExpression < Expression
   attr_reader :left_expr
   attr_reader :selectors
 
-  def initialize(locator, offset, length, left_expr, selectors = _ptype['selectors'].value)
+  def initialize(locator, offset, length, left_expr, selectors = _pcore_type['selectors'].value)
     super(locator, offset, length)
     @hash = @hash ^ left_expr.hash ^ selectors.hash
     @left_expr = left_expr
     @selectors = selectors
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['left_expr'] = @left_expr
-    result['selectors'] = @selectors unless _ptype['selectors'].default_value?(@selectors)
+    result['selectors'] = @selectors unless _pcore_type['selectors'].default_value?(@selectors)
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@left_expr) unless @left_expr.nil?
     @selectors.each { |value| yield(value) }
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @left_expr.nil?
       block.call(@left_expr, path)
-      @left_expr._pall_contents(path, &block)
+      @left_expr._pcore_all_contents(path, &block)
     end
     @selectors.each do |value|
       block.call(value, path)
-      value._pall_contents(path, &block)
+      value._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -4913,50 +4913,50 @@ class SelectorExpression < Expression
 end
 
 class NamedAccessExpression < BinaryExpression
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::NamedAccessExpression', {
-      'parent' => BinaryExpression._ptype
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::NamedAccessExpression', {
+      'parent' => BinaryExpression._pcore_type
     })
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@left_expr) unless @left_expr.nil?
     yield(@right_expr) unless @right_expr.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @left_expr.nil?
       block.call(@left_expr, path)
-      @left_expr._pall_contents(path, &block)
+      @left_expr._pcore_all_contents(path, &block)
     end
     unless @right_expr.nil?
       block.call(@right_expr, path)
-      @right_expr._pall_contents(path, &block)
+      @right_expr._pcore_all_contents(path, &block)
     end
     path.pop
   end
 end
 
 class Program < PopsObject
-  def self._plocation
-    @_plocation ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
+  def self._pcore_location
+    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
   end
 
-  def self._ptype
-    @_ptype ||= Types::PObjectType.new('Puppet::AST::Program', {
-      'parent' => PopsObject._ptype,
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::Program', {
+      'parent' => PopsObject._pcore_type,
       'attributes' => {
         'body' => {
-          'type' => Types::POptionalType.new(Expression._ptype),
+          'type' => Types::POptionalType.new(Expression._pcore_type),
           'value' => nil
         },
         'definitions' => {
-          'type' => Types::PArrayType.new(Definition._ptype),
+          'type' => Types::PArrayType.new(Definition._pcore_type),
           'kind' => 'reference',
           'value' => []
         },
@@ -4972,25 +4972,25 @@ class Program < PopsObject
           'type' => Types::PArrayType.new(Types::PIntegerType::DEFAULT),
           'kind' => 'derived'
         },
-        'locator' => Parser::Locator::Locator19._ptype
+        'locator' => Parser::Locator::Locator19._pcore_type
       }
     })
   end
 
   def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::Program initializer', _ptype.i12n_type, i12n))
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::Program initializer', _pcore_type.i12n_type, i12n))
   end
 
   def self.from_asserted_hash(i12n)
     new(
       i12n['locator'],
       i12n['body'],
-      i12n.fetch('definitions') { _ptype['definitions'].value })
+      i12n.fetch('definitions') { _pcore_type['definitions'].value })
   end
 
-  def self.create(locator, body = nil, definitions = _ptype['definitions'].value)
+  def self.create(locator, body = nil, definitions = _pcore_type['definitions'].value)
     ta = Types::TypeAsserter
-    attrs = _ptype.attributes(true)
+    attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Program[body]', attrs['body'].type, body)
     ta.assert_instance_of('Puppet::AST::Program[definitions]', attrs['definitions'].type, definitions)
     ta.assert_instance_of('Puppet::AST::Program[locator]', attrs['locator'].type, locator)
@@ -5013,7 +5013,7 @@ class Program < PopsObject
     @locator.line_index
   end
 
-  def initialize(locator, body = nil, definitions = _ptype['definitions'].value)
+  def initialize(locator, body = nil, definitions = _pcore_type['definitions'].value)
     super()
     @hash = @hash ^ body.hash ^ definitions.hash ^ locator.hash
     @body = body
@@ -5021,28 +5021,28 @@ class Program < PopsObject
     @locator = locator
   end
 
-  def i12n_hash
+  def _pcore_init_hash
     result = super
     result['body'] = @body unless @body == nil
-    result['definitions'] = @definitions unless _ptype['definitions'].default_value?(@definitions)
+    result['definitions'] = @definitions unless _pcore_type['definitions'].default_value?(@definitions)
     result['locator'] = @locator
     result
   end
 
-  def _pcontents
+  def _pcore_contents
     yield(@body) unless @body.nil?
     yield(@locator) unless @locator.nil?
   end
 
-  def _pall_contents(path, &block)
+  def _pcore_all_contents(path, &block)
     path << self
     unless @body.nil?
       block.call(@body, path)
-      @body._pall_contents(path, &block)
+      @body._pcore_all_contents(path, &block)
     end
     unless @locator.nil?
       block.call(@locator, path)
-      @locator._pall_contents(path, &block)
+      @locator._pcore_all_contents(path, &block)
     end
     path.pop
   end
@@ -5152,7 +5152,7 @@ def self.register_pcore_types
   # Create and register a TypeSet that corresponds to all types in the AST model
   types_map = {}
   all_types.each do |type|
-    types_map[type._ptype.simple_name] = type._ptype
+    types_map[type._pcore_type.simple_name] = type._pcore_type
   end
   type_set = Types::PTypeSetType.new({
     'name' => 'Puppet::AST',

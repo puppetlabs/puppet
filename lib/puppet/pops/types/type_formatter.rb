@@ -324,8 +324,8 @@ class TypeFormatter
   end
 
   def string_PuppetObject(t)
-    @bld << t._ptype.name << '('
-    append_indented_string(t.i12n_hash, @indent || 0, @indent_width || 2, true)
+    @bld << t._pcore_type.name << '('
+    append_indented_string(t._pcore_init_hash, @indent || 0, @indent_width || 2, true)
     @bld.chomp!
     @bld << ')'
   end

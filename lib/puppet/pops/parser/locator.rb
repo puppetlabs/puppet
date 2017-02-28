@@ -59,7 +59,7 @@ class Locator
   def extract_tree_text(ast)
     first = ast.offset
     last = first + ast.length
-    ast._pall_contents([]) do |m|
+    ast._pcore_all_contents([]) do |m|
       next unless m.is_a?(Model::Positioned)
       m_offset = m.offset
       m_last = m_offset + m.length
@@ -300,14 +300,14 @@ class Locator
   # strings are frozen).
   #
   class Locator19 < AbstractLocator
-    def self._plocation
+    def self._pcore_location
       loc = Puppet::Util.path_to_uri("#{__FILE__}")
       URI("#{loc}?line=#{__LINE__.to_i - 3}")
     end
 
     include Types::PuppetObject
 
-    def self._ptype
+    def self._pcore_type
       @type ||= Types::PObjectType.new('Puppet::AST::Locator', {
         'attributes' => {
           'string' => Types::PStringType::DEFAULT,

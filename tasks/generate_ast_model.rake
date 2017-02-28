@@ -33,13 +33,13 @@ module Puppet::Pops
           'Types::POptionalType.new(Types::PArrayType.new(Types::P\1Type::DEFAULT))')
       ruby.gsub!(/ref\("Enum(\[[^\]]+\])"\)/, 'Types::PEnumType.new(\1)')
 
-      # Replace ref() constructs with references to _ptype of the types in the module namespace
-      ruby.gsub!(/ref\('Puppet::AST::Locator'\)/, 'Parser::Locator::Locator19._ptype')
-      ruby.gsub!(/ref\('Puppet::AST::([0-9A-Za-z_]+)'\)/, '\1._ptype')
-      ruby.gsub!(/ref\('Optional\[Puppet::AST::([0-9A-Za-z_]+)\]'\)/, 'Types::POptionalType.new(\1._ptype)')
-      ruby.gsub!(/ref\('Array\[Puppet::AST::([0-9A-Za-z_]+)\]'\)/, 'Types::PArrayType.new(\1._ptype)')
+      # Replace ref() constructs with references to _pcore_type of the types in the module namespace
+      ruby.gsub!(/ref\('Puppet::AST::Locator'\)/, 'Parser::Locator::Locator19._pcore_type')
+      ruby.gsub!(/ref\('Puppet::AST::([0-9A-Za-z_]+)'\)/, '\1._pcore_type')
+      ruby.gsub!(/ref\('Optional\[Puppet::AST::([0-9A-Za-z_]+)\]'\)/, 'Types::POptionalType.new(\1._pcore_type)')
+      ruby.gsub!(/ref\('Array\[Puppet::AST::([0-9A-Za-z_]+)\]'\)/, 'Types::PArrayType.new(\1._pcore_type)')
       ruby.gsub!(/ref\('Array\[Puppet::AST::([0-9A-Za-z_]+), 1, default\]'\)/,
-          'Types::PArrayType.new(\1._ptype, Types::PCollectionType::NOT_EMPTY_SIZE)')
+          'Types::PArrayType.new(\1._pcore_type, Types::PCollectionType::NOT_EMPTY_SIZE)')
 
       # Remove the generated ref() method. It's not needed by this model
       ruby.gsub!(/  def self\.ref\(type_string\)\n.*\n  end\n\n/, '')
@@ -58,7 +58,7 @@ def self.register_pcore_types
   # Create and register a TypeSet that corresponds to all types in the AST model
   types_map = {}
   all_types.each do |type|
-    types_map[type._ptype.simple_name] = type._ptype
+    types_map[type._pcore_type.simple_name] = type._pcore_type
   end
   type_set = Types::PTypeSetType.new({
     'name' => 'Puppet::AST',

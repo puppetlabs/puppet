@@ -13,7 +13,7 @@ module Types
     end
 
     def self.from_hash(i12n)
-      from_asserted_hash(Types::TypeAsserter.assert_instance_of('RubyMethod initializer', _ptype.i12n_type, i12n))
+      from_asserted_hash(Types::TypeAsserter.assert_instance_of('RubyMethod initializer', _pcore_type.i12n_type, i12n))
     end
 
     def self.from_asserted_hash(i12n_hash)

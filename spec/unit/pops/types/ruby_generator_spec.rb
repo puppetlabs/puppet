@@ -179,11 +179,11 @@ describe 'Puppet Ruby Generator' do
           expect(TypeCalculator.infer(first.from_hash('name' => 'Bob Builder'))).to eq(first_type)
         end
 
-        it "where attributes of kind 'reference' are not considered part of #_pall_contents" do
+        it "where attributes of kind 'reference' are not considered part of #_pcore_all_contents" do
           inst = first.from_hash('name' => 'Bob Builder')
           wrinst = second.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23, 40, inst, inst)
           results = []
-          wrinst._pall_contents([]) { |v| results << v }
+          wrinst._pcore_all_contents([]) { |v| results << v }
           expect(results).to eq([inst])
         end
       end
@@ -224,16 +224,16 @@ describe 'Puppet Ruby Generator' do
         PuppetSpec.send(:remove_const, :RubyGenerator)
       end
 
-      it 'the #_ptype class method returns a resolved Type' do
-        first_type = PuppetSpec::RubyGenerator::FirstGenerated._ptype
+      it 'the #_pcore_type class method returns a resolved Type' do
+        first_type = PuppetSpec::RubyGenerator::FirstGenerated._pcore_type
         expect(first_type).to be_a(PObjectType)
-        second_type = PuppetSpec::RubyGenerator::SecondGenerated._ptype
+        second_type = PuppetSpec::RubyGenerator::SecondGenerated._pcore_type
         expect(second_type).to be_a(PObjectType)
         expect(second_type.parent).to eql(first_type)
       end
 
-      it 'the #_plocation class method returns a file URI' do
-        loc = PuppetSpec::RubyGenerator::SecondGenerated._plocation
+      it 'the #_pcore_location class method returns a file URI' do
+        loc = PuppetSpec::RubyGenerator::SecondGenerated._pcore_location
         expect(loc).to be_a(URI)
         expect(loc.to_s).to match(/^file:\/.*ruby_generator_spec.rb\?line=\d+$/)
       end
@@ -562,16 +562,16 @@ describe 'Puppet Ruby Generator' do
         PuppetSpec.send(:remove_const, :RubyGenerator)
       end
 
-      it 'the #_ptype class method returns a resolved Type' do
-        first_type = PuppetSpec::RubyGenerator::My::FirstGenerated._ptype
+      it 'the #_pcore_type class method returns a resolved Type' do
+        first_type = PuppetSpec::RubyGenerator::My::FirstGenerated._pcore_type
         expect(first_type).to be_a(PObjectType)
-        second_type = PuppetSpec::RubyGenerator::My::SecondGenerated._ptype
+        second_type = PuppetSpec::RubyGenerator::My::SecondGenerated._pcore_type
         expect(second_type).to be_a(PObjectType)
         expect(second_type.parent).to eql(first_type)
       end
 
-      it 'the #_plocation class method returns a file URI' do
-        loc = PuppetSpec::RubyGenerator::My::SecondGenerated._plocation
+      it 'the #_pcore_location class method returns a file URI' do
+        loc = PuppetSpec::RubyGenerator::My::SecondGenerated._pcore_location
         expect(loc).to be_a(URI)
         expect(loc.to_s).to match(/^file:\/.*ruby_generator_spec.rb\?line=\d+$/)
       end

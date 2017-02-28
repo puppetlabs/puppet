@@ -64,7 +64,7 @@ class PObjectType < PMetaType
     type = create_ptype(loader, ir, 'AnyType', 'i12n_hash' => TYPE_OBJECT_I12N)
 
     # Now, when the Object type exists, add annotations with keys derived from Annotation and freeze the types.
-    annotations = TypeFactory.optional(PHashType.new(PType.new(Annotation._ptype), TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, PAnyType::DEFAULT)))
+    annotations = TypeFactory.optional(PHashType.new(PType.new(Annotation._pcore_type), TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, PAnyType::DEFAULT)))
     TYPE_ATTRIBUTE.hashed_elements[KEY_ANNOTATIONS].replace_value_type(annotations)
     TYPE_FUNCTION.hashed_elements[KEY_ANNOTATIONS].replace_value_type(annotations)
     TYPE_OBJECT_I12N.hashed_elements[KEY_ANNOTATIONS].replace_value_type(annotations)

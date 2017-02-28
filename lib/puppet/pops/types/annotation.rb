@@ -11,7 +11,7 @@ module Types
       @type = Pcore::create_object_type(loader, ir, self, 'Annotation', nil, EMPTY_HASH)
     end
 
-    def self._ptype
+    def self._pcore_type
       @type
     end
 
@@ -28,12 +28,12 @@ module Types
       adapter = get(o)
       if adapter.nil?
         if o.is_a?(Annotatable)
-          i12n = o.annotations[_ptype]
+          i12n = o.annotations[_pcore_type]
           i12n = yield if i12n.nil? && block_given?
         else
           i12n = yield if block_given?
         end
-        adapter = associate_adapter(_ptype.from_hash(i12n), o) unless i12n.nil?
+        adapter = associate_adapter(_pcore_type.from_hash(i12n), o) unless i12n.nil?
       end
       adapter
     end
@@ -47,7 +47,7 @@ module Types
     # @return [Annotation<self>] an annotation of the same class as the receiver of the call
     #
     def self.annotate_new(o, i12n_hash)
-      if o.is_a?(Annotatable) && o.annotations.include?(_ptype)
+      if o.is_a?(Annotatable) && o.annotations.include?(_pcore_type)
         # Prevent clear or redefine of annotations declared on type
         action = i12n_hash == CLEAR ? 'clear' : 'redefine'
         raise ArgumentError, "attempt to #{action} #{type_name} annotation declared on #{o.label}"
@@ -56,7 +56,7 @@ module Types
       if i12n_hash == CLEAR
         clear(o)
       else
-        associate_adapter(_ptype.from_hash(i12n_hash), o)
+        associate_adapter(_pcore_type.from_hash(i12n_hash), o)
       end
     end
 
@@ -64,7 +64,7 @@ module Types
     # has no name)
     # @return [String] the name of the type
     def self.type_name
-      _ptype.name
+      _pcore_type.name
     end
   end
 end

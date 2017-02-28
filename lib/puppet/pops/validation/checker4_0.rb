@@ -42,7 +42,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     # tree iterate the model, and call check for each element
     @path = []
     check(model)
-    model._pall_contents(@path) { |element| check(element) }
+    model._pcore_all_contents(@path) { |element| check(element) }
   end
 
   def container(index = -1)
@@ -645,7 +645,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     else
       # recursively check all contents unless it's a lambda expression. A lambda may contain
       # local assignments
-      o._pcontents {|model| internal_check_illegal_assignment(model) } unless o.is_a?(Model::LambdaExpression)
+      o._pcore_contents {|model| internal_check_illegal_assignment(model) } unless o.is_a?(Model::LambdaExpression)
     end
   end
 

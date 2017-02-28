@@ -20,7 +20,7 @@ module Pcore
 
   RUNTIME_NAME_AUTHORITY = 'http://puppet.com/2016.1/runtime'
 
-  def self._ptype
+  def self._pcore_type
     @type
   end
 
