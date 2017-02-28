@@ -19,10 +19,6 @@ class Puppet::FileSystem::MemoryImpl
     path.file?
   end
 
-  def readable?(path)
-    path.readable?
-  end
-
   def executable?(path)
     path.executable?
   end
@@ -37,11 +33,6 @@ class Puppet::FileSystem::MemoryImpl
 
   def pathname(path)
     find(path) || Puppet::FileSystem::MemoryFile.a_missing_file(path)
-  end
-
-  def dir(path)
-    dirname = File.dirname(path_string(path))
-    find(dirname) || Puppet::FileSystem::MemoryFile.a_directory(dirname, [path])
   end
 
   def basename(path)
@@ -68,36 +59,6 @@ class Puppet::FileSystem::MemoryImpl
     else
       return handle
     end
-  end
-
-  class MemoryStat
-    def initialize(path)
-      @path = path
-    end
-
-    def directory?
-      @path.directory?
-    end
-
-    def file?
-      @path.directory?
-    end
-
-    def executable?
-      @path.executable?
-    end
-
-    def readable?
-      @path.readable?
-    end
-
-    def writable?
-      @path.executable?
-    end
-  end
-
-  def stat(path)
-    MemoryStat.new(path)
   end
 
   def assert_path(path)

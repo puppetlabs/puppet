@@ -116,38 +116,6 @@ describe Puppet::Environments do
         ]
       end
 
-      context 'with access permission issues' do
-        let(:directory_tree) do
-          FS::MemoryFile.a_directory(File.expand_path('envdir'), [
-            FS::MemoryFile.a_directory('an_environment', [FS::MemoryFile.a_missing_file('environment.conf')]),
-            FS::MemoryFile.an_unreadable_directory('unreadable_environment', [])
-          ])
-        end
-
-        it 'raises error if a directory on the environment path is unreadable' do
-          loader_from(:filesystem => [directory_tree],
-            :directory => directory_tree) do |loader|
-            expect  { loader.list }.to raise_error(Errno::EACCES, /^Permission denied - .*\/envdir\/unreadable_environment$/)
-          end
-        end
-      end
-
-      context 'with access permission issues on parent' do
-        let(:directory_tree) do
-          FS::MemoryFile.an_unreadable_directory(File.expand_path('envdir'), [
-            FS::MemoryFile.an_unreadable_directory('an_environment', [FS::MemoryFile.a_missing_file('environment.conf')]),
-            FS::MemoryFile.an_unreadable_directory('unreadable_environment', [])
-          ])
-        end
-
-        it 'raises error if that reports the parent directory as the culprit' do
-          loader_from(:filesystem => [directory_tree],
-            :directory => directory_tree) do |loader|
-            expect  { loader.list }.to raise_error(Errno::EACCES, /^Permission denied - .*\/envdir$/)
-          end
-        end
-      end
-
       let(:content) do
         <<-EOF
 manifest=#{manifestdir}
