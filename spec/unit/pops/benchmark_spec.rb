@@ -78,7 +78,7 @@ $a = "interpolate ${foo} and stuff"
     model = parser.parse_string(code).model
     dumped = json_dump(model)
     m = Benchmark.measure { 10000.times { json_load(dumped) }}
-    puts "RGen Json: #{m}"
+    puts "Pcore Json: #{m}"
   end
 
   it "lexer2", :profile => true do
