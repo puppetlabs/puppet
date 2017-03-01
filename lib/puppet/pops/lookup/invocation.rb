@@ -22,28 +22,33 @@ class Invocation
   # @param override_values [Hash<String,Object>|nil] A map to use as override. Values found here are returned immediately (no merge)
   # @param default_values [Hash<String,Object>] A map to use as the last resort (but before default)
   # @param explainer [boolean,Explanainer] An boolean true to use the default explanation acceptor or an explainer instance that will receive information about the lookup
-  def initialize(scope, override_values = EMPTY_HASH, default_values = EMPTY_HASH, explainer = nil, adapter_class = LookupAdapter)
+  def initialize(scope, override_values = EMPTY_HASH, default_values = EMPTY_HASH, explainer = nil, adapter_class = nil)
     @scope = scope
     @override_values = override_values
     @default_values = default_values
 
     parent_invocation = self.class.current
-    if parent_invocation.nil?
-      @name_stack = []
-      @adapter_class = adapter_class
-      unless explainer.is_a?(Explainer)
-        explainer = explainer == true ? Explainer.new : nil
-      end
-      explainer = DebugExplainer.new(explainer) if Puppet[:debug] && !explainer.is_a?(DebugExplainer)
-    else
+    if parent_invocation && (adapter_class.nil? || adapter_class == parent_invocation.adapter_class)
+      # Inherit from parent invocation (track recursion)
       @name_stack = parent_invocation.name_stack
       @adapter_class = parent_invocation.adapter_class
+
+      # Inherit Hiera 3 legacy properties
       set_hiera_xxx_call if parent_invocation.hiera_xxx_call?
       set_hiera_v3_merge_behavior if parent_invocation.hiera_v3_merge_behavior?
       set_global_only if parent_invocation.global_only?
       povr = parent_invocation.hiera_v3_location_overrides
       set_hiera_v3_location_overrides(povr) unless povr.empty?
+
+      # Inherit explainer unless a new explainer is given or disabled using false
       explainer = explainer == false ? nil : parent_invocation.explainer
+    else
+      @name_stack = []
+      @adapter_class = adapter_class.nil? ? LookupAdapter : adapter_class
+      unless explainer.is_a?(Explainer)
+        explainer = explainer == true ? Explainer.new : nil
+      end
+      explainer = DebugExplainer.new(explainer) if Puppet[:debug] && !explainer.is_a?(DebugExplainer)
     end
     @explainer = explainer
   end
