@@ -14,7 +14,11 @@ Puppet::Reports.register_report(:http) do
   def process
     url = URI.parse(Puppet[:reporturl])
     headers = { "Content-Type" => "application/x-yaml" }
-    options = {}
+    # This metric_id option is silently ignored by Puppet's http client
+    # (Puppet::Network::HTTP) but is used by Puppet Server's http client
+    # (Puppet::Server::HttpClient) to track metrics on the request made to the
+    # `reporturl` to store a report.
+    options = { :metric_id => [:puppet, :report, :http] }
     if url.user && url.password
       options[:basic_auth] = {
         :user => url.user,
