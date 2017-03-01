@@ -2031,6 +2031,20 @@ describe "The lookup function" do
 
       context 'declared in global scope as a Hiera v3 backend' do
         let(:environment_files) { {} }
+        let(:data_file_content) { <<-YAML.unindent }
+          a: >
+            ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQEw
+            DQYJKoZIhvcNAQEBBQAEggEAH457bsfL8kYw9O50roE3dcE21nCnmPnQ2XSX
+            LYRJ2C78LarbfFonKz0gvDW7tyhsLWASFCFaiU8T1QPBd2b3hoQK8E4B2Ual
+            xga/K7r9y3OSgRomTm9tpTltC6re0Ubh3Dy71H61obwxEdNVTqjPe95+m2b8
+            6zWZVnzZzXXsTG1S17yJn1zaB/LXHbWNy4KyLLKCGAml+Gfl6ZMjmaplTmUA
+            QIC5rI8abzbPP3TDMmbLOGNkrmLqI+3uS8tSueTMoJmWaMF6c+H/cA7oRxmV
+            QCeEUVXjyFvCHcmbA+keS/RK9XF+vc07/XS4XkYSPs/I5hLQji1y9bkkGAs0
+            tehxQjBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBDHpA6Fcl/R16aIYcow
+            oiO4gDAvfFH6jLUwXkcYtagnwdmhkd9TQJtxNWcIwMpvmk036MqIoGwwhQdg
+            gV4beiCFtLU=]
+          YAML
+
         let(:hiera_yaml) do
           <<-YAML.unindent
           :backends: eyaml
@@ -2045,19 +2059,7 @@ describe "The lookup function" do
 
         let(:data_files) do
           {
-            'common.eyaml' => <<-YAML.unindent
-              a: >
-                ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQEw
-                DQYJKoZIhvcNAQEBBQAEggEAH457bsfL8kYw9O50roE3dcE21nCnmPnQ2XSX
-                LYRJ2C78LarbfFonKz0gvDW7tyhsLWASFCFaiU8T1QPBd2b3hoQK8E4B2Ual
-                xga/K7r9y3OSgRomTm9tpTltC6re0Ubh3Dy71H61obwxEdNVTqjPe95+m2b8
-                6zWZVnzZzXXsTG1S17yJn1zaB/LXHbWNy4KyLLKCGAml+Gfl6ZMjmaplTmUA
-                QIC5rI8abzbPP3TDMmbLOGNkrmLqI+3uS8tSueTMoJmWaMF6c+H/cA7oRxmV
-                QCeEUVXjyFvCHcmbA+keS/RK9XF+vc07/XS4XkYSPs/I5hLQji1y9bkkGAs0
-                tehxQjBcBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBDHpA6Fcl/R16aIYcow
-                oiO4gDAvfFH6jLUwXkcYtagnwdmhkd9TQJtxNWcIwMpvmk036MqIoGwwhQdg
-                gV4beiCFtLU=]
-              YAML
+            'common.eyaml' => data_file_content
           }
         end
 
@@ -2078,6 +2080,36 @@ describe "The lookup function" do
 
         it 'delegates configured eyaml backend to eyaml_lookup_key function' do
           expect(explain('a')).to match(/Hierarchy entry "eyaml"\n.*\n.*\n.*"common"\n\s*Found key: "a"/m)
+        end
+
+        context 'with special extension declared in options' do
+          let(:environment_files) { {} }
+          let(:hiera_yaml) do
+            <<-YAML.unindent
+            :backends: eyaml
+            :eyaml:
+              :extension: xyaml
+              :datadir: #{code_dir}/hieradata
+              :pkcs7_private_key: #{private_key_path}
+              :pkcs7_public_key: #{public_key_path}
+            :hierarchy:
+              - common
+            YAML
+          end
+
+          let(:data_files) do
+            {
+              'common.xyaml' => data_file_content
+            }
+          end
+
+          it 'finds data in the global layer' do
+            expect(lookup('a')).to eql("Encrypted value 'a' (from global)")
+          end
+
+          it 'delegates configured eyaml backend to eyaml_lookup_key function' do
+            expect(explain('a')).to match(/Hierarchy entry "eyaml"\n.*\n.*\n.*"common"\n\s*Found key: "a"/m)
+          end
         end
       end
     end

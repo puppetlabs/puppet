@@ -48,6 +48,7 @@ class HieraConfig
   KEY_V3_BACKEND = V3BackendFunctionProvider::TAG
   KEY_V4_DATA_HASH = V4DataHashFunctionProvider::TAG
   KEY_BACKEND = 'backend'.freeze
+  KEY_EXTENSION = 'extension'.freeze
 
   FUNCTION_KEYS = [KEY_DATA_HASH, KEY_LOOKUP_KEY, KEY_DATA_DIG, KEY_V3_BACKEND]
   ALL_FUNCTION_KEYS = FUNCTION_KEYS + [KEY_V4_DATA_HASH]
@@ -299,7 +300,12 @@ class HieraConfigV3 < HieraConfig
       original_paths = [@config[KEY_HIERARCHY]].flatten
       backend_config = @config[backend] || EMPTY_HASH
       datadir = Pathname(interpolate(backend_config[KEY_DATADIR] || default_datadir, lookup_invocation, false))
-      ext = backend == 'hocon' ? '.conf' : ".#{backend}"
+      ext = backend_config[KEY_EXTENSION]
+      if ext.nil?
+        ext = backend == 'hocon' ? '.conf' : ".#{backend}"
+      else
+        ext = ".#{ext}"
+      end
       paths = resolve_paths(datadir, original_paths, lookup_invocation, @config_path.nil?, ext)
       data_providers[backend] = case
       when backend == 'json', backend == 'yaml'
