@@ -338,6 +338,20 @@ describe "The lookup function" do
         expect(notices).to eql(['success'])
         expect(debugs.any? { |m| m =~ /Hiera configuration recreated due to change of scope variables used in interpolation expressions/ }).to be_truthy
       end
+
+      it 'does not include the lookups performed during stability check in explain output' do
+        Puppet[:log_level] = 'debug'
+        collect_notices("notice('success')") do |scope|
+          var = { 'sub' => '_d' }
+          scope['var'] = var
+          expect(lookup_func.call(scope, 'y')).to eql('value y from x_d')
+
+          # Second call triggers the check
+          expect(lookup_func.call(scope, 'y')).to eql('value y from x_d')
+        end
+        expect(notices).to eql(['success'])
+        expect(debugs.any? { |m| m =~ /Sub key: "sub"/ }).to be_falsey
+      end
     end
 
     context 'that uses reserved option' do
