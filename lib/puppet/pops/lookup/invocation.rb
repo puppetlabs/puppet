@@ -127,6 +127,20 @@ class Invocation
     end
   end
 
+  def without_explain
+    if explainer.nil?
+      yield
+    else
+      save_explainer = @explainer
+      begin
+        @explainer = nil
+        yield
+      ensure
+        @explainer = save_explainer
+      end
+    end
+  end
+
   def only_explain_options?
     @explainer.nil? ? false : @explainer.only_explain_options?
   end

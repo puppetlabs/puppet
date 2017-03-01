@@ -171,14 +171,16 @@ class HieraConfig
 
   def scope_interpolations_stable?(lookup_invocation)
     scope = lookup_invocation.scope
-    @scope_interpolations.all? do |key, root_key, segments, old_value|
-      value = scope[root_key]
-      unless value.nil? || segments.empty?
-        found = '';
-        catch(:no_such_key) { found = sub_lookup(key, lookup_invocation, segments, value) }
-        value = found;
+    lookup_invocation.without_explain do
+      @scope_interpolations.all? do |key, root_key, segments, old_value|
+        value = scope[root_key]
+        unless value.nil? || segments.empty?
+          found = '';
+          catch(:no_such_key) { found = sub_lookup(key, lookup_invocation, segments, value) }
+          value = found;
+        end
+        old_value.eql?(value)
       end
-      old_value.eql?(value)
     end
   end
 
