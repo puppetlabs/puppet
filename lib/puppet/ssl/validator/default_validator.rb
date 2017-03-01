@@ -114,7 +114,7 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
   #
   def setup_connection(connection)
     if ssl_certificates_are_present?
-      connection.cert_store = @ssl_host.ssl_store
+      connection.cert_store = @ssl_configuration.ssl_store
       connection.ca_file = @ssl_configuration.ca_auth_file
       connection.cert = @ssl_host.certificate.content
       connection.key = @ssl_host.key.content

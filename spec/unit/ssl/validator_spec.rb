@@ -7,17 +7,16 @@ describe Puppet::SSL::Validator::DefaultValidator do
   end
 
   let(:ssl_configuration) do
-    Puppet::SSL::Configuration.new(
-      Puppet[:localcacert],
-      :ca_auth_file  => Puppet[:ssl_client_ca_auth])
+    Puppet::SSL::Configuration.default
   end
 
   let(:ssl_host) do
     stub('ssl_host',
-         :ssl_store => nil,
          :certificate => stub('cert', :content => nil),
          :key => stub('key', :content => nil))
   end
+
+  let(:ssl_store) { stub('ssl store') }
 
   subject do
     described_class.new(ssl_configuration,
@@ -28,6 +27,7 @@ describe Puppet::SSL::Validator::DefaultValidator do
     ssl_configuration.stubs(:read_file).
       with(Puppet[:localcacert]).
       returns(root_ca)
+    ssl_configuration.stubs(:ssl_store).returns(ssl_store)
   end
 
   describe '#call' do
@@ -186,7 +186,7 @@ describe Puppet::SSL::Validator::DefaultValidator do
       subject.stubs(:ssl_certificates_are_present?).returns(true)
       connection = mock('Net::HTTP')
 
-      connection.expects(:cert_store=).with(ssl_host.ssl_store)
+      connection.expects(:cert_store=).with(ssl_store)
       connection.expects(:ca_file=).with(ssl_configuration.ca_auth_file)
       connection.expects(:cert=).with(ssl_host.certificate.content)
       connection.expects(:key=).with(ssl_host.key.content)

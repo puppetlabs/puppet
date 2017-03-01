@@ -49,6 +49,28 @@ class Configuration
     @ca_auth_certificates ||= decode_cert_bundle(read_file(ca_auth_file))
   end
 
+  # Generate an SSL store configured with our trusted CA certificates, and add our CRL if
+  # certificate revocation is enabled.
+  # @param purpose [Integer]
+  # @return [OpenSSL::X509::Store]
+  def ssl_store(options = {})
+    purpose = options.fetch(:purpose, OpenSSL::X509::PURPOSE_ANY)
+    store = OpenSSL::X509::Store.new
+    store.purpose = purpose
+
+    store.add_file(ca_auth_file)
+
+    # If we're doing revocation and there's a CRL, add it to our store.
+    if Puppet.settings[:certificate_revocation]
+      if crl = Puppet::SSL::CertificateRevocationList.indirection.find(Puppet::SSL::Host::CA_NAME)
+        store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
+        store.add_crl(crl.content)
+      end
+    end
+
+    store
+  end
+
   ##
   # Decode a string of concatenated certificates
   #
