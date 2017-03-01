@@ -553,7 +553,7 @@ class Factory
   end
 
   # Same as access, but with varargs and arguments that must be inferred. For testing purposes
-  def test_access(*r)
+  def access_at(*r)
     f_build_binary(AccessExpression, self, r.map { |arg| Factory.infer(arg) })
   end
 
