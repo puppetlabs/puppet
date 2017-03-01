@@ -170,7 +170,6 @@ describe "The lookup function" do
         scope['environment'] = env_name
         scope['domain'] = 'example.com'
         scope_additions.each_pair { |k, v| scope[k] = v }
-        scope['mapped'] = { 'array_var' => ['a', 'b', 'c'], 'hash_var' => { 'x' => 'a', 'y' => 'b', 'z' => 'c' }, 'string_var' => 's' }
         if explain
           begin
             invocation_with_explain.lookup('dummy', nil) do
@@ -736,6 +735,16 @@ describe "The lookup function" do
     end
 
     context 'and an environment Hiera v5 configuration using mapped_paths' do
+      let(:scope_additions) do
+        {
+          'mapped' =>  {
+            'array_var' => ['a', 'b', 'c'],
+            'hash_var' => { 'x' => 'a', 'y' => 'b', 'z' => 'c' },
+            'string_var' => 's' },
+          'var' => 'global_var' # overridden by mapped path variable
+        }
+      end
+
       let(:env_hiera_yaml) do
         <<-YAML.unindent
         ---
@@ -743,6 +752,8 @@ describe "The lookup function" do
         hierarchy:
           - name: Mapped Paths
             mapped_paths: #{mapped_paths}
+          - name: Global Path
+            path: "%{var}.yaml"
         YAML
       end
 
@@ -767,12 +778,25 @@ describe "The lookup function" do
                   a: value path_h.a
                   c: value path_h.c
                 YAML
-              'b.yaml' => <<-YAML.unindent
+              'b.yaml' => <<-YAML.unindent,
                 path_h:
                   b: value path_h.b
                   d: value path_h.d
                 YAML
-            }
+              'd.yaml' => <<-YAML.unindent
+                path_h:
+                  b: value path_h.b (from d.yaml)
+                  d: value path_h.d (from d.yaml)
+                YAML
+            },
+            'global_var.yaml' => <<-YAML.unindent,
+              path_h:
+                e: value path_h.e
+              YAML
+            'other_var.yaml' => <<-YAML.unindent
+              path_h:
+                e: value path_h.e (from other_var.yaml)
+              YAML
           }
         end
 
@@ -781,15 +805,67 @@ describe "The lookup function" do
           expect(warnings).to be_empty
         end
 
-        it 'performs merges between mapped paths' do
+        it 'performs merges between mapped paths and global path interpolated using same key' do
           expect(lookup('path_h', 'merge' => 'hash')).to eql(
             {
               'a' => 'value path_h.a',
               'b' => 'value path_h.b',
               'c' => 'value path_h.c',
-              'd' => 'value path_h.d'
+              'd' => 'value path_h.d',
+              'e' => 'value path_h.e'
             })
           expect(warnings).to be_empty
+        end
+
+        it 'keeps track of changes in key overridden by interpolated key' do
+          Puppet[:log_level] = 'debug'
+          collect_notices("notice('success')") do |scope|
+            expect(lookup_func.call(scope, 'path_h', 'merge' => 'hash')).to eql(
+              {
+                'a' => 'value path_h.a',
+                'b' => 'value path_h.b',
+                'c' => 'value path_h.c',
+                'd' => 'value path_h.d',
+                'e' => 'value path_h.e'
+              })
+            scope.with_local_scope('var' => 'other_var') do
+              expect(lookup_func.call(scope, 'path_h', 'merge' => 'hash')).to eql(
+                {
+                  'a' => 'value path_h.a',
+                  'b' => 'value path_h.b',
+                  'c' => 'value path_h.c',
+                  'd' => 'value path_h.d',
+                  'e' => 'value path_h.e (from other_var.yaml)'
+                })
+            end
+          end
+          expect(notices).to eql(['success'])
+          expect(debugs.any? { |m| m =~ /Hiera configuration recreated due to change of scope variables used in interpolation expressions/ }).to be_truthy
+        end
+
+        it 'keeps track of changes in elements of mapped key' do
+          Puppet[:log_level] = 'debug'
+          collect_notices("notice('success')") do |scope|
+            expect(lookup_func.call(scope, 'path_h', 'merge' => 'hash')).to eql(
+              {
+                'a' => 'value path_h.a',
+                'b' => 'value path_h.b',
+                'c' => 'value path_h.c',
+                'd' => 'value path_h.d',
+                'e' => 'value path_h.e'
+              })
+            scope['mapped']['array_var'] = ['a', 'c', 'd']
+            expect(lookup_func.call(scope, 'path_h', 'merge' => 'hash')).to eql(
+              {
+                'a' => 'value path_h.a',
+                'b' => 'value path_h.b (from d.yaml)',
+                'c' => 'value path_h.c',
+                'd' => 'value path_h.d (from d.yaml)',
+                'e' => 'value path_h.e'
+              })
+          end
+          expect(notices).to eql(['success'])
+          expect(debugs.any? { |m| m =~ /Hiera configuration recreated due to change of scope variables used in interpolation expressions/ }).to be_truthy
         end
       end
 
@@ -811,6 +887,10 @@ describe "The lookup function" do
                   d: value path_m.d
                 YAML
             },
+            'global_var.yaml' => <<-YAML.unindent
+              path_m:
+                e: value path_m.e
+              YAML
           }
         end
 
@@ -825,7 +905,8 @@ describe "The lookup function" do
               'a' => 'value path_m.a',
               'b' => 'value path_m.b',
               'c' => 'value path_m.c',
-              'd' => 'value path_m.d'
+              'd' => 'value path_m.d',
+              'e' => 'value path_m.e'
             })
           expect(warnings).to be_empty
         end
@@ -1545,7 +1626,6 @@ describe "The lookup function" do
             'scope_hash' => { 'a' => 'scope hash a', 'b' => 'scope hash b' }
           }
         end
-
         let(:mod_a_files) do
           {
             'mod_a' => {
