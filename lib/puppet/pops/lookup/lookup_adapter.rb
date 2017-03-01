@@ -237,7 +237,7 @@ class LookupAdapter < DataAdapter
     meta_invocation.lookup(LookupKey::LOOKUP_OPTIONS, lookup_invocation.module_name) do
       meta_invocation.with(:meta, LOOKUP_OPTIONS) do
         if meta_invocation.global_only?
-          global_lookup_options(meta_invocation, merge_strategy)
+          compile_patterns(global_lookup_options(meta_invocation, merge_strategy))
         else
           opts = env_lookup_options(meta_invocation, merge_strategy)
           catch(:no_such_key) do
