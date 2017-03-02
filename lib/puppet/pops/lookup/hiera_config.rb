@@ -16,7 +16,8 @@ class ScopeLookupCollectingInvocation < Invocation
   end
 
   def remember_scope_lookup(*lookup_result)
-    @scope_interpolations << lookup_result
+    # Save extra checks by keeping the array unique with respect to the key (first entry)
+    @scope_interpolations << lookup_result unless @scope_interpolations.any? { |si| si[0] == lookup_result[0] }
   end
 end
 
@@ -300,8 +301,13 @@ class HieraConfigV3 < HieraConfig
     [@config[KEY_BACKENDS]].flatten.each do |backend|
       raise Puppet::DataBinding::LookupError, "#{@config_path}: Backend '#{backend}' defined more than once" if data_providers.include?(backend)
       original_paths = [@config[KEY_HIERARCHY]].flatten
-      backend_config = @config[backend] || EMPTY_HASH
-      datadir = Pathname(interpolate(backend_config[KEY_DATADIR] || default_datadir, lookup_invocation, false))
+      backend_config = @config[backend]
+      if backend_config.nil?
+        backend_config = EMPTY_HASH
+      else
+        backend_config = interpolate(backend_config, lookup_invocation, false)
+      end
+      datadir = Pathname(backend_config[KEY_DATADIR] || interpolate(default_datadir, lookup_invocation, false))
       ext = backend_config[KEY_EXTENSION]
       if ext.nil?
         ext = backend == 'hocon' ? '.conf' : ".#{backend}"

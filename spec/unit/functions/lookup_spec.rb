@@ -100,6 +100,7 @@ describe "The lookup function" do
     end
 
     let(:logs) { [] }
+    let(:scope_additions ) { {} }
     let(:notices) { logs.select { |log| log.level == :notice }.map { |log| log.message } }
     let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
     let(:debugs) { logs.select { |log| log.level == :debug }.map { |log| log.message } }
@@ -168,9 +169,7 @@ describe "The lookup function" do
         scope = compiler.topscope
         scope['environment'] = env_name
         scope['domain'] = 'example.com'
-        scope['ipl_datadir'] = 'hieradata'
-        scope['scope_scalar'] = 'scope scalar value'
-        scope['scope_hash'] = { 'a' => 'scope hash a', 'b' => 'scope hash b' }
+        scope_additions.each_pair { |k, v| scope[k] = v }
         if explain
           begin
             invocation_with_explain.lookup('dummy', nil) do
@@ -1235,6 +1234,7 @@ describe "The lookup function" do
       end
 
       context 'version 5' do
+        let(:scope_additions) { { 'ipl_datadir' => 'hieradata' } }
         let(:hiera_yaml) do
           <<-YAML.unindent
           ---
@@ -1438,6 +1438,13 @@ describe "The lookup function" do
       end
 
       context 'using a data_hash that reads a yaml file' do
+        let(:scope_additions) do
+          {
+            'scope_scalar' => 'scope scalar value',
+            'scope_hash' => { 'a' => 'scope hash a', 'b' => 'scope hash b' }
+          }
+        end
+
         let(:mod_a_files) do
           {
             'mod_a' => {
@@ -2074,6 +2081,26 @@ describe "The lookup function" do
 
         it 'delegates configured eyaml backend to eyaml_lookup_key function' do
           expect(explain('a')).to match(/Hierarchy entry "eyaml"\n.*\n.*\n.*"common"\n\s*Found key: "a"/m)
+        end
+
+        context 'using intepolated paths to the key pair' do
+          let(:scope_additions) { { 'priv_path' => private_key_path, 'pub_path' => public_key_path } }
+
+          let(:hiera_yaml) do
+            <<-YAML.unindent
+          :backends: eyaml
+          :eyaml:
+            :datadir: #{code_dir}/hieradata
+            :pkcs7_private_key: "%{priv_path}"
+            :pkcs7_public_key: "%{pub_path}"
+          :hierarchy:
+            - common
+            YAML
+          end
+
+          it 'finds data in the global layer' do
+            expect(lookup('a')).to eql("Encrypted value 'a' (from global)")
+          end
         end
 
         context 'with special extension declared in options' do
