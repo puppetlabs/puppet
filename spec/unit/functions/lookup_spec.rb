@@ -100,6 +100,7 @@ describe "The lookup function" do
     end
 
     let(:logs) { [] }
+    let(:scope_additions ) { {} }
     let(:notices) { logs.select { |log| log.level == :notice }.map { |log| log.message } }
     let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
     let(:debugs) { logs.select { |log| log.level == :debug }.map { |log| log.message } }
@@ -168,9 +169,7 @@ describe "The lookup function" do
         scope = compiler.topscope
         scope['environment'] = env_name
         scope['domain'] = 'example.com'
-        scope['ipl_datadir'] = 'hieradata'
-        scope['scope_scalar'] = 'scope scalar value'
-        scope['scope_hash'] = { 'a' => 'scope hash a', 'b' => 'scope hash b' }
+        scope_additions.each_pair { |k, v| scope[k] = v }
         if explain
           begin
             invocation_with_explain.lookup('dummy', nil) do
@@ -1235,6 +1234,7 @@ describe "The lookup function" do
       end
 
       context 'version 5' do
+        let(:scope_additions) { { 'ipl_datadir' => 'hieradata' } }
         let(:hiera_yaml) do
           <<-YAML.unindent
           ---
@@ -1438,6 +1438,13 @@ describe "The lookup function" do
       end
 
       context 'using a data_hash that reads a yaml file' do
+        let(:scope_additions) do
+          {
+            'scope_scalar' => 'scope scalar value',
+            'scope_hash' => { 'a' => 'scope hash a', 'b' => 'scope hash b' }
+          }
+        end
+
         let(:mod_a_files) do
           {
             'mod_a' => {
