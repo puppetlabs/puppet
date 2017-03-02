@@ -8,6 +8,13 @@ $LOAD_PATH.unshift File.join(dir, 'lib')
 # Don't want puppet getting the command line arguments for rake or autotest
 ARGV.clear
 
+# Stub out gettext's `_` method, which attempts to load translations.
+# Several of our mocks (mostly around file system interaction) are broken by
+# FastGettext's implementation of this method.
+def _(msg)
+  msg
+end
+
 begin
   require 'rubygems'
 rescue LoadError

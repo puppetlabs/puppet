@@ -11,8 +11,8 @@ HOSTS:
       - agent
     platform: solaris-10-sparc
     hypervisor: none
-    ip: 10.32.77.107
-    vmhostname: sol10.delivery.puppetlabs.net
+    ip: 10.32.121.124
+    vmhostname: sol10-1.delivery.puppetlabs.net
 CONFIG:
   datastore: instance0
   resourcepool: delivery/Quality Assurance/FOSS/Dynamic
