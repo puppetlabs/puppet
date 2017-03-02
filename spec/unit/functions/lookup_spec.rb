@@ -805,6 +805,14 @@ describe "The lookup function" do
           expect(warnings).to be_empty
         end
 
+        it 'includes mapped path in explain output' do
+          explanation = explain('path_h', 'merge' => 'deep')
+          ['a', 'b', 'c'].each do |var|
+            expect(explanation).to match(/^\s+Path "#{env_dir}\/spec\/data\/paths\/#{var}\.yaml"\n\s+Original path: "paths\/%\{var\}\.yaml"/)
+          end
+          expect(warnings).to be_empty
+        end
+
         it 'performs merges between mapped paths and global path interpolated using same key' do
           expect(lookup('path_h', 'merge' => 'hash')).to eql(
             {
@@ -899,6 +907,14 @@ describe "The lookup function" do
           expect(warnings).to be_empty
         end
 
+        it 'includes mapped path in explain output' do
+          explanation = explain('path_h', 'merge' => 'deep')
+          ['x\.a', 'y\.b', 'z\.c'].each do |var|
+            expect(explanation).to match(/^\s+Path "#{env_dir}\/spec\/data\/paths\/#{var}\.yaml"\n\s+Original path: "paths\/%\{var\.0\}\.%\{var\.1\}\.yaml"/)
+          end
+          expect(warnings).to be_empty
+        end
+
         it 'performs merges between mapped paths' do
           expect(lookup('path_m', 'merge' => 'hash')).to eql(
             {
@@ -923,6 +939,11 @@ describe "The lookup function" do
                 YAML
             }
           }
+        end
+
+        it 'includes mapped path in explain output' do
+          expect(explain('path_s')).to match(/^\s+Path "#{env_dir}\/spec\/data\/paths\/s\.yaml"\n\s+Original path: "paths\/%\{var\}\.yaml"/)
+          expect(warnings).to be_empty
         end
 
         it 'finds environment data using mapped_paths' do
