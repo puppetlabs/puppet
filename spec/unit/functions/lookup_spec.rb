@@ -2083,6 +2083,26 @@ describe "The lookup function" do
           expect(explain('a')).to match(/Hierarchy entry "eyaml"\n.*\n.*\n.*"common"\n\s*Found key: "a"/m)
         end
 
+        context 'using intepolated paths to the key pair' do
+          let(:scope_additions) { { 'priv_path' => private_key_path, 'pub_path' => public_key_path } }
+
+          let(:hiera_yaml) do
+            <<-YAML.unindent
+          :backends: eyaml
+          :eyaml:
+            :datadir: #{code_dir}/hieradata
+            :pkcs7_private_key: "%{priv_path}"
+            :pkcs7_public_key: "%{pub_path}"
+          :hierarchy:
+            - common
+            YAML
+          end
+
+          it 'finds data in the global layer' do
+            expect(lookup('a')).to eql("Encrypted value 'a' (from global)")
+          end
+        end
+
         context 'with special extension declared in options' do
           let(:environment_files) { {} }
           let(:hiera_yaml) do
