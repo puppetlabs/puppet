@@ -4,6 +4,20 @@ module Puppet
   module Acceptance
     module ServiceUtils
 
+      # Wait until the puppet agent is not running on the specified host.
+      # @param host [String] hostname
+      # @return None
+      def wait_until_agent_is_not_running_on (host)
+        vardir = host.puppet_configprint['vardir']
+        agent_running = true
+        while agent_running
+          agent_running = host.file_exist?("#{vardir}/state/agent_catalog_run.lock")
+          if agent_running
+            sleep 2
+          end
+        end
+      end
+
       # Return whether a host supports the systemd provider.
       # @param host [String] hostname
       # @return [Boolean] whether the systemd provider is supported.
@@ -42,6 +56,7 @@ module Puppet
         # that the exit code is either
         #   2 => something changed, or
         #   0 => no change needed
+        wait_until_agent_is_not_running_on(host)
         apply_manifest_on host, service_manifest(service, status), :acceptable_exit_codes => [0, 2] do
           assert_match(/Service\[#{service}\]\/ensure: ensure changed '\w+' to '#{status[:ensure]}'/, stdout, 'Service status change failed') if status[:ensure]
           assert_match(/Service\[#{service}\]\/enable: enable changed '\w+' to '#{status[:enable]}'/, stdout, 'Service enable change failed') if status[:enable]
@@ -56,6 +71,7 @@ module Puppet
       # @return None
       def ensure_service_idempotent_on_host(host, service, status)
         # ensure idempotency
+        wait_until_agent_is_not_running_on(host)
         apply_manifest_on host, service_manifest(service, status) do
           assert_no_match(/Service\[#{service}\]\/ensure/, stdout, 'Service status not idempotent') if status[:ensure]
           assert_no_match(/Service\[#{service}\]\/enable/, stdout, 'Service enable not idempotent') if status[:enable]
@@ -109,6 +125,7 @@ module Puppet
           }
         }
 
+        wait_until_agent_is_not_running_on(host)
         apply_manifest_on(host, refresh_manifest)
       end
     end
