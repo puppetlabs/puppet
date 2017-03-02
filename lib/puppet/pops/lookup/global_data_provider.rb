@@ -22,19 +22,24 @@ class GlobalDataProvider < ConfiguredDataProvider
           lookup_invocation.explainer)
       end
 
+      merge = MergeStrategy.strategy(merge)
       unless config.merge_strategy.is_a?(DefaultMergeStrategy)
-        if lookup_invocation.hiera_xxx_call?
-          # Merge strategy of the hiera_xxx call should only be applied when no merge strategy is defined in the hiera config
-          merge = config.merge_strategy
-          lookup_invocation.set_hiera_v3_merge_behavior
-        elsif merge.is_a?(DefaultMergeStrategy)
-          # For all other calls, the strategy of the call overrides the strategy defined in the hiera config
+        if lookup_invocation.hiera_xxx_call? && merge.is_a?(HashMergeStrategy)
+          # Merge strategy defined in the hiera config only applies when the call stems from a hiera_hash call.
           merge = config.merge_strategy
           lookup_invocation.set_hiera_v3_merge_behavior
         end
       end
+
+      value = super(key, lookup_invocation, merge)
+      if lookup_invocation.hiera_xxx_call? && (merge.is_a?(HashMergeStrategy) || merge.is_a?(DeepMergeStrategy))
+        # hiera_hash calls should error when found values are not hashes
+        Types::TypeAsserter.assert_instance_of('value', Types::PHashType::DEFAULT, value)
+      end
+      value
+    else
+      super
     end
-    super(key, lookup_invocation, merge)
   end
 
   protected

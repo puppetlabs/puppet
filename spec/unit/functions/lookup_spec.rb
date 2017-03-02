@@ -73,7 +73,9 @@ describe "The lookup function" do
                   case key
                   when 'hash_c'
                     { 'hash_ca' => { 'cad' => 'value hash_c.hash_ca.cad (from global custom)' }}
-                  when 'h'
+                  when 'hash'
+                    { 'array' => [ 'x5,x6' ] }
+                  when 'array'
                     [ 'x5,x6' ]
                   when 'datasources'
                     Hiera::Backend.datasources(scope, order_override) { |source| source }
@@ -941,12 +943,12 @@ describe "The lookup function" do
           expect(explanation).to include('Found key: "a" value: "value a (from global)"')
         end
 
-        it 'uses the merge behavior specified in global hiera.yaml to merge only global backends' do
+        it 'ignores merge behavior specified in global hiera.yaml' do
           expect(lookup('hash_b')).to eql(
-            { 'hash_ba' => { 'bab' => 'value hash_b.hash_ba.bab (from global)', 'bac' => 'value hash_b.hash_ba.bac (from global json)' } })
+            { 'hash_ba' => { 'bab' => 'value hash_b.hash_ba.bab (from global)'} })
         end
 
-        it 'uses the merge from lookup options to merge all layers and override merge_behavior specified in global hiera.yaml' do
+        it 'uses the merge from lookup options to merge all layers' do
           expect(lookup('hash_c')).to eql(
             { 'hash_ca' => { 'cab' => 'value hash_c.hash_ca.cab (from global)' } })
         end
@@ -1124,8 +1126,7 @@ describe "The lookup function" do
           end
         end
 
-        context 'using deep_merge_options supported by deep_merge gem but not supported by Puppet' do
-
+        context 'using deep_merge_options' do
           let(:hiera_yaml) do
             <<-YAML.unindent
               ---
@@ -1134,8 +1135,8 @@ describe "The lookup function" do
               :yaml:
                 :datadir: #{code_dir}/hieradata
               :hierarchy:
-                - other
                 - common
+                - other
               :merge_behavior: deeper
               :deep_merge_options:
                 :unpack_arrays: ','
@@ -1147,7 +1148,10 @@ describe "The lookup function" do
               'hiera.yaml' => hiera_yaml,
               'hieradata' => {
                 'common.yaml' => <<-YAML.unindent,
-                  h:
+                  hash:
+                    array:
+                      - x1,x2
+                  array:
                     - x1,x2
                   str: a string
                   mixed:
@@ -1155,7 +1159,11 @@ describe "The lookup function" do
                     y: hy
                   YAML
                 'other.yaml' => <<-YAML.unindent,
-                  h:
+                  hash:
+                    array:
+                      - x3
+                      - x4
+                  array:
                     - x3
                     - x4
                   str: another string
@@ -1167,49 +1175,20 @@ describe "The lookup function" do
             }
           end
 
-          it 'honors option :unpack_arrays: (unsupported by puppet)' do
-            expect(lookup('h')).to eql(%w(x1 x2 x3 x4))
+          it 'ignores configured merge_behavior when looking up arrays' do
+            expect(lookup('array')).to eql(['x1,x2'])
           end
 
-          it 'will treat merge of strings as a unique (first found)' do
-            expect(lookup('str')).to eql('another string')
+          it 'ignores configured merge_behavior when merging arrays' do
+            expect(lookup('array', 'merge' => 'unique')).to eql(['x1,x2', 'x3', 'x4'])
           end
 
-          it 'will treat merge of array and hash as a unique (first found)' do
-            expect(lookup('mixed')).to eql(%w(h1 h2))
+          it 'ignores configured merge_behavior when looking up hashes' do
+            expect(lookup('hash')).to eql({'array' => ['x1,x2']})
           end
 
-          context 'together with a custom backend' do
-            let(:hiera_yaml) do
-              <<-YAML.unindent
-                ---
-                :backends:
-                  - custom
-                  - yaml
-                :yaml:
-                  :datadir: #{code_dir}/hieradata
-                :hierarchy:
-                  - other
-                  - common
-                :merge_behavior: #{merge_behavior}
-                :deep_merge_options:
-                  :unpack_arrays: ','
-                YAML
-            end
-
-            context "using 'deeper'" do
-              let(:merge_behavior) { 'deeper' }
-              it 'honors option :unpack_arrays: (unsupported by puppet)' do
-                expect(lookup('h')).to eql(%w(x1 x2 x3 x4 x5 x6))
-              end
-            end
-
-            context "using 'deep'" do
-              let(:merge_behavior) { 'deep' }
-              it 'honors option :unpack_arrays: (unsupported by puppet)' do
-                expect(lookup('h')).to eql(%w(x5 x6 x3 x4 x1 x2))
-              end
-            end
+          it 'ignores configured merge_behavior when merging hashes' do
+            expect(lookup('hash', 'merge' => 'hash')).to eql({'array' => ['x1,x2']})
           end
         end
 
