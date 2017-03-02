@@ -35,7 +35,13 @@ describe 'when calling' do
                 when 'datasources'
                   Hiera::Backend.datasources(scope, order_override) { |source| source }
                 when 'resolution_type'
-                  "resolution_type=\#{resolution_type}"
+                  if resolution_type == :hash
+                    { key => resolution_type.to_s }
+                  elsif resolution_type == :array
+                    [ key, resolution_type.to_s ]
+                  else
+                    "resolution_type=\#{resolution_type}"
+                  end
                 else
                   throw :no_such_key
                 end
@@ -349,7 +355,9 @@ describe 'when calling' do
     end
   end
 
-  context 'with merge_behavior declared in hiera.yaml' do
+  context 'with custom backend and merge_behavior declared in hiera.yaml' do
+    let(:merge_behavior) { 'deeper' }
+
     let(:hiera_yaml) do
       <<-YAML.unindent
         ---
@@ -359,9 +367,11 @@ describe 'when calling' do
         :yaml:
           :datadir: #{global_dir}/hieradata
         :hierarchy:
-          - other
           - common
-        :merge_behavior: deeper
+          - other
+        :merge_behavior: #{merge_behavior}
+        :deep_merge_options:
+          :unpack_arrays: ','
         YAML
     end
 
@@ -370,20 +380,37 @@ describe 'when calling' do
         'hiera.yaml' => hiera_yaml,
         'hieradata' => {
           'common.yaml' => <<-YAML.unindent,
+            da:
+              - da 0
+              - da 1
             dm:
               dm1:
                 dm11: value of dm11 (from common)
                 dm12: value of dm12 (from common)
               dm2:
                 dm21: value of dm21 (from common)
+            hash:
+              array:
+                - x1,x2
+            array:
+              - x1,x2
             YAML
           'other.yaml' => <<-YAML.unindent,
+            da:
+              - da 2,da 3
             dm:
               dm1:
                 dm11: value of dm11 (from other)
                 dm13: value of dm13 (from other)
               dm3:
                 dm31: value of dm31 (from other)
+            hash:
+              array:
+                - x3
+                - x4
+            array:
+              - x3
+              - x4
             YAML
         },
         'ruby_stuff' => ruby_stuff_files
@@ -393,23 +420,65 @@ describe 'when calling' do
     context 'hiera_hash' do
       let(:the_func) { Puppet.lookup(:loaders).puppet_system_loader.load(:function, 'hiera_hash') }
 
-      it 'the imposed hash strategy does not override declared merge_behavior' do
-        expect(func('dm')).to eql({
-          'dm1' => {
-            'dm11' => 'value of dm11 (from other)',
-            'dm12' => 'value of dm12 (from common)',
-            'dm13' => 'value of dm13 (from other)'
-          },
-          'dm2' => {
-            'dm21' => 'value of dm21 (from common)'
-          },
-          'dm3' => {
-            'dm31' => 'value of dm31 (from other)'
-          }
-        })
+      context "using 'deeper'" do
+        it 'declared merge_behavior is honored' do
+          expect(func('dm')).to eql({
+            'dm1' => {
+              'dm11' => 'value of dm11 (from common)',
+              'dm12' => 'value of dm12 (from common)',
+              'dm13' => 'value of dm13 (from other)'
+            },
+            'dm2' => {
+              'dm21' => 'value of dm21 (from common)'
+            },
+            'dm3' => {
+              'dm31' => 'value of dm31 (from other)'
+            }
+          })
+        end
+
+        it "merge behavior is propagated to a custom backend as 'hash'" do
+          expect(func('resolution_type')).to eql({ 'resolution_type' => 'hash' })
+        end
+
+        it 'fails on attempts to merge an array' do
+          expect {func('da')}.to raise_error(/expects a Hash value/)
+        end
+
+        it 'honors option :unpack_arrays: (unsupported by puppet)' do
+          expect(func('hash')).to eql({'array' => %w(x3 x4 x1 x2)})
+        end
       end
 
-      it "the merge behavior is not propagated to a custom backend as 'resolution_type'" do
+      context "using 'deep'" do
+        let(:merge_behavior) { 'deep' }
+
+        it 'honors option :unpack_arrays: (unsupported by puppet)' do
+          expect(func('hash')).to eql({'array' => %w(x1 x2 x3 x4)})
+        end
+      end
+    end
+
+    context 'hiera_array' do
+      let(:the_func) { Puppet.lookup(:loaders).puppet_system_loader.load(:function, 'hiera_array') }
+
+      it 'declared merge_behavior is ignored' do
+        expect(func('da')).to eql(['da 0', 'da 1', 'da 2,da 3'])
+      end
+
+      it "merge behavior is propagated to a custom backend as 'array'" do
+        expect(func('resolution_type')).to eql(['resolution_type', 'array'])
+      end
+    end
+
+    context 'hiera' do
+      let(:the_func) { Puppet.lookup(:loaders).puppet_system_loader.load(:function, 'hiera') }
+
+      it 'declared merge_behavior is ignored' do
+        expect(func('da')).to eql(['da 0', 'da 1'])
+      end
+
+      it "no merge behavior is propagated to a custom backend" do
         expect(func('resolution_type')).to eql('resolution_type=')
       end
     end
