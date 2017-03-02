@@ -24,7 +24,25 @@ class Puppet::SSL::Validator
   # @api public
   #
   def self.default_validator()
-    Puppet::SSL::Validator::DefaultValidator.new()
+    best_validator
+  end
+
+  # Select the best available validator, determined by what SSL files we have available.
+  #
+  # Because this method falls through to no validation it is inherently insecure. Since
+  # Puppet bootstraps SSL right away there are very few cases where we should risk
+  # downgrading our security level. In the cases where this downgrading is acceptable
+  # then this can be used on a case by case basis, but otherwise use the cert_auth_validator.
+  #
+  # @api public
+  def self.best_validator
+    if Puppet::FileSystem.exist?(Puppet[:hostcert])
+      cert_auth_validator
+    elsif Puppet::FileSystem.exist?(Puppet[:localcacert])
+      unauthenticated_validator
+    else
+      no_validator
+    end
   end
 
   # Factory method for generating a validator instance that performs peer verification and
