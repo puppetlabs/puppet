@@ -279,6 +279,25 @@ module Puppet
       end
     end
 
+    newproperty(:password_warn_days, :required_features => :manages_password_age) do
+      desc "The number of days before a password is going to expire (see the maximum password age) during which the user should be warned."
+
+      munge do |value|
+        case value
+        when String
+          Integer(value)
+        else
+          value
+        end
+      end
+
+      validate do |value|
+        if value.to_s !~ /^-?\d+$/
+          raise ArgumentError, "Password warning days must be provided as a number."
+        end
+      end
+    end
+
     newproperty(:groups, :parent => Puppet::Property::List) do
       desc "The groups to which the user belongs.  The primary group should
         not be listed, and groups should be identified by name rather than by

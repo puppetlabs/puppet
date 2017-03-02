@@ -72,6 +72,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
                                 :from => :expiry_from_attr },
     {:aix_attr => :maxage,     :puppet_prop => :password_max_age},
     {:aix_attr => :minage,     :puppet_prop => :password_min_age},
+    {:aix_attr => :pwdwarntime, :puppet_prop => :password_warn_days},
     {:aix_attr => :attributes, :puppet_prop => :attributes},
     { :aix_attr => :gecos,      :puppet_prop => :comment },
   ]

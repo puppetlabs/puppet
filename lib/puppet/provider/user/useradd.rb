@@ -16,6 +16,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   options :groups, :flag => "-G"
   options :password_min_age, :flag => "-m", :method => :sp_min
   options :password_max_age, :flag => "-M", :method => :sp_max
+  options :password_warn_days, :flag => "-W", :method => :sp_warn
   options :password, :method => :sp_pwdp
   options :expiry, :method => :sp_expire,
     :munge => proc { |value|
@@ -192,7 +193,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   end
 
   def passcmd
-    age_limits = [:password_min_age, :password_max_age].select { |property| @resource.should(property) }
+    age_limits = [:password_min_age, :password_max_age, :password_warn_days].select { |property| @resource.should(property) }
     if age_limits.empty?
       nil
     else
@@ -200,7 +201,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     end
   end
 
-  [:expiry, :password_min_age, :password_max_age, :password].each do |shadow_property|
+  [:expiry, :password_min_age, :password_max_age, :password_warn_days, :password].each do |shadow_property|
     define_method(shadow_property) do
       if Puppet.features.libshadow?
         if ent = Shadow::Passwd.getspnam(@resource.name)
