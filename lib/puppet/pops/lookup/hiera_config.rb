@@ -497,6 +497,7 @@ class HieraConfigV5 < HieraConfig
       end
 
       entry_datadir = @config_root + (he[KEY_DATADIR] || datadir)
+      entry_datadir = Pathname(interpolate(entry_datadir.to_s, lookup_invocation, false))
       location_key = LOCATION_KEYS.find { |key| he.include?(key) }
       locations = case location_key
       when KEY_PATHS

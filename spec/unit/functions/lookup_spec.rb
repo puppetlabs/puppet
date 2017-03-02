@@ -166,6 +166,7 @@ describe "The lookup function" do
         scope = compiler.topscope
         scope['environment'] = env_name
         scope['domain'] = 'example.com'
+        scope['ipl_datadir'] = 'hieradata'
         scope['scope_scalar'] = 'scope scalar value'
         scope['scope_hash'] = { 'a' => 'scope hash a', 'b' => 'scope hash b' }
         if explain
@@ -1260,7 +1261,7 @@ describe "The lookup function" do
           ---
           version: 5
           defaults:
-            datadir: hieradata
+            datadir: "%{ipl_datadir}"
 
           hierarchy:
             - name: Yaml
