@@ -52,7 +52,7 @@ Puppet::Functions.create_function(:eyaml_lookup_key) do
       decrypt(value, context)
     when Hash
       result = {}
-      value.each_pair { |k, v| result[k] = decrypt_value(v, context) }
+      value.each_pair { |k, v| result[context.interpolate(k)] = decrypt_value(v, context) }
       result
     when Array
       value.map { |v| decrypt_value(v, context) }
