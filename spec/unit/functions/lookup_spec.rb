@@ -157,7 +157,7 @@ describe "The lookup function" do
         if Hiera.const_defined?(:Config)
           Hiera::Config.send(:remove_instance_variable, :@config) if Hiera::Config.instance_variable_defined?(:@config)
         end
-        if Hiera.const_defined?(:Backend)
+        if Hiera.const_defined?(:Backend) && Hiera::Backend.respond_to?(:clear!)
           Hiera::Backend.clear!
         end
       end
@@ -1964,6 +1964,7 @@ describe "The lookup function" do
           YAML
       end
 
+      let(:scope_additions) { { 'ipl_suffix' => 'aa' } }
       let(:data_files) do
         {
           'common.eyaml' => <<-YAML.unindent
@@ -1979,7 +1980,7 @@ describe "The lookup function" do
               JHUngDDS5s52FsuSIMin7Z/pV+XuaJGFkL80ia4bXnCWilmtM8oUa/DZuBje
               dCILO7I8QqU=]
             hash_a:
-              hash_aa:
+              "hash_%{ipl_suffix}":
                 aaa: >
                   ENC[PKCS7,MIIBqQYJKoZIhvcNAQcDoIIBmjCCAZYCAQAxggEhMIIBHQIBADAFMAACAQEw
                   DQYJKoZIhvcNAQEBBQAEggEAhvGXL5RxVUs9wdqJvpCyXtfCHrm2HbG/u30L
@@ -2020,6 +2021,10 @@ describe "The lookup function" do
 
       it 'finds data in the environment' do
         expect(lookup('a')).to eql("Encrypted value 'a' (from environment)")
+      end
+
+      it 'evaluates interpolated keys' do
+        expect(lookup('hash_a')).to include('hash_aa')
       end
 
       it 'can read encrypted values inside a hash' do
