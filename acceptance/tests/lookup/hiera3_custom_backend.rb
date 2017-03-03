@@ -11,10 +11,16 @@ test_name 'C99630: hiera v3 custom backend' do
   existing_loadpath = read_tk_config_string(on(master, "cat #{puppetserver_config}").stdout.strip)['jruby-puppet']['ruby-load-path'].first
   confdir = master.puppet('master')['confdir']
 
+  hiera_conf_backup = master.tmpfile('C99629-hiera-yaml')
+
+  step "backup global hiera.yaml" do
+    on(master, "cp -a #{confdir}/hiera.yaml #{hiera_conf_backup}", :acceptable_exit_codes => [0,1])
+  end
+
   teardown do
     step 'delete custom backend, restore default hiera config' do
-      on(master, "rm #{existing_loadpath}/hiera/backend/custom_backend.rb")
-      on(master, "mv /tmp/hiera.yaml #{confdir}/")
+      on(master, "rm #{existing_loadpath}/hiera/backend/custom_backend.rb", :acceptable_exit_codes => [0,1])
+      on(master, "mv #{hiera_conf_backup} #{confdir}/hiera.yaml", :acceptable_exit_codes => [0,1])
     end
   end
 
