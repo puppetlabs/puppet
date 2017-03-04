@@ -82,6 +82,9 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   def add_node_data(node)
     # Merge in our server-side facts, so they can be used during compilation.
     node.add_server_facts(@server_facts)
+    if Puppet[:merge_facts_later]
+      node.fact_merge
+    end
   end
 
   # Determine which checksum to use; if agent_checksum_type is not nil,
