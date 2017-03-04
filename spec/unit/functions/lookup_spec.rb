@@ -333,7 +333,7 @@ describe "The lookup function" do
           expect(lookup_func.call(scope, 'y')).to eql('value y from x')
           scope['var'] = { 'sub' => '_d' }
           expect(lookup_func.call(scope, 'y')).to eql('value y from x_d')
-          nested_scope = scope.compiler.new_scope
+          nested_scope = scope.compiler.newscope(scope)
           nested_scope['var'] = { 'sub' => '_e' }
           expect(lookup_func.call(nested_scope, 'y')).to eql('value y from x_e')
         end
