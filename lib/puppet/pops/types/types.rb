@@ -677,17 +677,14 @@ end
 # @api public
 #
 class PScalarType < PAnyType
-  KNOWN_SCALARS = [String, Integer, Float, TrueClass, FalseClass, Regexp, Time::Timestamp, Time::Timespan, SemanticPuppet::Version, SemanticPuppet::VersionRange]
-  KNOWN_NON_SCALARS = [Array, Hash, PAnyType, NilClass]
-
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType')
   end
 
   def instance?(o, guard = nil)
-    if KNOWN_SCALARS.any? { |scalar_class| o.is_a?(scalar_class) }
+    if o.is_a?(String) || o.is_a?(Numeric) || o.is_a?(TrueClass) || o.is_a?(FalseClass) || o.is_a?(Regexp) || o.is_a?(SemanticPuppet::VersionRange)
       true
-    elsif KNOWN_NON_SCALARS.any? { |scalar_class| o.is_a?(scalar_class) }
+    elsif o.is_a?(Array) || o.is_a?(Hash) || o.is_a?(PAnyType) || o.is_a?(NilClass)
       false
     else
       assignable?(TypeCalculator.infer(o))
