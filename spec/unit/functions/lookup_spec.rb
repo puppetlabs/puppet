@@ -303,7 +303,7 @@ describe "The lookup function" do
           hierarchy:
             - name: "Varying"
               data_hash: yaml_data
-              path: "x%{::var.sub}.yaml"
+              path: "x%{var.sub}.yaml"
           YAML
       end
 
@@ -331,11 +331,11 @@ describe "The lookup function" do
         Puppet[:log_level] = 'debug'
         collect_notices("notice('success')") do |scope|
           expect(lookup_func.call(scope, 'y')).to eql('value y from x')
-          var = { 'sub' => '_d' }
-          scope['var'] = var
+          scope['var'] = { 'sub' => '_d' }
           expect(lookup_func.call(scope, 'y')).to eql('value y from x_d')
-          var['sub'] = '_e'
-          expect(lookup_func.call(scope, 'y')).to eql('value y from x_e')
+          nested_scope = scope.compiler.new_scope
+          nested_scope['var'] = { 'sub' => '_e' }
+          expect(lookup_func.call(nested_scope, 'y')).to eql('value y from x_e')
         end
         expect(notices).to eql(['success'])
         expect(debugs.any? { |m| m =~ /Hiera configuration recreated due to change of scope variables used in interpolation expressions/ }).to be_truthy
