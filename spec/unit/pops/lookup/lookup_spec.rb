@@ -78,6 +78,40 @@ describe 'The lookup API' do
     Puppet.pop_context
   end
 
+  context 'when doing automatic parameter lookup' do
+
+    let(:mod_content) do
+      {
+        'hiera.yaml' => <<-YAML.unindent,
+          version: 5
+          YAML
+        'data' => {
+          'common.yaml' => <<-YAML.unindent
+            mod::x: mod::x (from module)
+            YAML
+        },
+        'manifests' => {
+           'init.pp' => <<-PUPPET.unindent
+             class mod($x) {
+               notify { $x: }
+             }
+             PUPPET
+        }
+      }
+    end
+    let(:logs) { [] }
+    let(:debugs) { logs.select { |log| log.level == :debug }.map { |log| log.message } }
+
+    it 'includes APL in explain output when debug is enabled' do
+      Puppet[:log_level] = 'debug'
+      Puppet[:code] = 'include mod'
+      Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+        compiler.compile
+      end
+      expect(debugs).to include(/Found key: "mod::x" value: "mod::x \(from module\)"/)
+    end
+  end
+
   context 'when doing lookup' do
     it 'finds data in global layer' do
       expect(Lookup.lookup('a', nil, nil, false, nil, invocation)).to eql('a (from global)')
