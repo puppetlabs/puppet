@@ -8,13 +8,19 @@ test_name 'C99629: hiera v5 can use v3 config and data' do
   tmp_environment2 = mk_tmp_environment_with_teardown(master, app_type)
   fq_tmp_environmentpath2  = "#{environmentpath}/#{tmp_environment2}"
 
+  hiera_conf_backup = master.tmpfile('C99629-hiera-yaml')
+
   step "create hiera v3 global config and data" do
     confdir = master.puppet('master')['confdir']
     codedir = master.puppet('master')['codedir']
 
+    step "backup global hiera.yaml" do
+      on(master, "cp -a #{confdir}/hiera.yaml #{hiera_conf_backup}", :acceptable_exit_codes => [0,1])
+    end
+
     teardown do
-      step "remove global hiera.yaml" do
-        on(master, "rm #{confdir}/hiera.yaml")
+      step "restore global hiera.yaml" do
+        on(master, "mv #{hiera_conf_backup} #{confdir}/hiera.yaml", :acceptable_exit_codes => [0,1])
       end
     end
 
@@ -109,66 +115,4 @@ notify { "${lookup('environment_key4')}": }
       end
     end
   end
-
-
-  step "create hiera v3 global config and env data with merge_behavior" do
-    confdir = master.puppet('master')['confdir']
-    codedir = master.puppet('master')['codedir']
-
-    step "create global hiera.yaml and module data" do
-      create_remote_file(master, "#{confdir}/hiera.yaml", <<-HIERA)
----
-:backends:
-  - "yaml"
-  - "json"
-:hierarchy:
-  - "somesuch"
-  - "common"
-:merge_behavior: deeper
-:deep_merge_options:
-  :merge_hash_arrays: true
-      HIERA
-
-      on(master, "mkdir -p #{fq_tmp_environmentpath2}/hieradata/")
-      create_remote_file(master, "#{fq_tmp_environmentpath2}/hieradata/somesuch.yaml", <<-YAML)
----
-environment_key4:
-  - val: 4
-      YAML
-      create_remote_file(master, "#{fq_tmp_environmentpath2}/hieradata/somesuch.json", <<-JSON)
-{
-  "environment_key4" : [{"jsonval": "4"}]
-}
-      JSON
-
-      create_sitepp(master, tmp_environment2, <<-SITE)
-notify { "${lookup('environment_key4')}": }
-      SITE
-
-      on(master, "chmod -R 775 #{fq_tmp_environmentpath2}")
-      on(master, "chmod -R 775 #{confdir}")
-    end
-  end
-
-  step 'assert lookups using lookup subcommand' do
-    on(master, puppet('lookup', "--environment #{tmp_environment2}", 'environment_key4 --explain'), :accept_all_exit_codes => true) do |result|
-      assert(result.exit_code == 0, "lookup subcommand didn't exit properly: (#{result.exit_code})")
-      assert_match(/"jsonval" => "4",\n\s+"val" => 4/m, result.stdout,
-                   "4: lookup subcommand didn't find correct key")
-    end
-  end
-
-  with_puppet_running_on(master,{}) do
-    agents.each do |agent|
-      step "agent lookup" do
-        on(agent, puppet('agent', "-t --server #{master.hostname} --environment #{tmp_environment2}"),
-           :accept_all_exit_codes => true) do |result|
-          assert(result.exit_code == 2, "agent lookup didn't exit properly: (#{result.exit_code})")
-          assert_match(/\[{jsonval => 4, val => 4}\]/, result.stdout,
-                       "4: agent lookup didn't find/merge correct key")
-        end
-      end
-    end
-  end
-
 end
