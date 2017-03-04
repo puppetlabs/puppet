@@ -7,12 +7,14 @@ test_name 'C99578: lookup should allow interpolation in configs and data' do
   fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"
   master_confdir = master.puppet('master')['confdir']
 
-  step "backup hiera config file" do
-    on master, "cp #{master_confdir}/hiera.yaml #{master_confdir}/hiera.bak"
+  hiera_conf_backup = master.tmpfile('C99578-hiera-yaml')
+
+  step "backup global hiera.yaml" do
+    on(master, "cp -a #{master_confdir}/hiera.yaml #{hiera_conf_backup}", :acceptable_exit_codes => [0,1])
   end
 
   teardown do
-    on master, "mv #{master_confdir}/hiera.bak #{master_confdir}/hiera.yaml"
+    on(master, "mv #{hiera_conf_backup} #{master_confdir}/hiera.yaml", :acceptable_exit_codes => [0,1])
   end
 
   step "create hiera configs in #{tmp_environment} and global" do

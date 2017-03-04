@@ -8,13 +8,19 @@ test_name 'C99629: hiera v5 can use v3 config and data' do
   tmp_environment2 = mk_tmp_environment_with_teardown(master, app_type)
   fq_tmp_environmentpath2  = "#{environmentpath}/#{tmp_environment2}"
 
+  hiera_conf_backup = master.tmpfile('C99629-hiera-yaml')
+
   step "create hiera v3 global config and data" do
     confdir = master.puppet('master')['confdir']
     codedir = master.puppet('master')['codedir']
 
+    step "backup global hiera.yaml" do
+      on(master, "cp -a #{confdir}/hiera.yaml #{hiera_conf_backup}", :acceptable_exit_codes => [0,1])
+    end
+
     teardown do
-      step "remove global hiera.yaml" do
-        on(master, "rm #{confdir}/hiera.yaml")
+      step "restore global hiera.yaml" do
+        on(master, "mv #{hiera_conf_backup} #{confdir}/hiera.yaml", :acceptable_exit_codes => [0,1])
       end
     end
 

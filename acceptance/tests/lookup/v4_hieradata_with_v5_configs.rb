@@ -7,10 +7,15 @@ test_name 'C99572: v4 hieradata with v5 configs' do
   fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"
 
   confdir = master.puppet('master')['confdir']
+  hiera_conf_backup = master.tmpfile('C99572-hiera-yaml')
+
+  step "backup global hiera.yaml" do
+    on(master, "cp -a #{confdir}/hiera.yaml #{hiera_conf_backup}", :acceptable_exit_codes => [0,1])
+  end
 
   teardown do
-    step "remove global hiera.yaml" do
-      on(master, "rm #{confdir}/hiera.yaml")
+    step "restore global hiera.yaml" do
+      on(master, "mv #{hiera_conf_backup} #{confdir}/hiera.yaml", :acceptable_exit_codes => [0,1])
     end
   end
 
