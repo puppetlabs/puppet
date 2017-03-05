@@ -8,16 +8,19 @@ module Lookup
 
 # @api private
 class ScopeLookupCollectingInvocation < Invocation
-  attr_reader :scope_interpolations
-
   def initialize(scope)
     super(scope)
     @scope_interpolations = []
   end
 
-  def remember_scope_lookup(*lookup_result)
+  def remember_scope_lookup(key, root_key, segments, value)
+    @scope_interpolations << [key, root_key, segments, value] unless !value.nil? && key.start_with?('::')
+  end
+
+  def scope_interpolations
     # Save extra checks by keeping the array unique with respect to the key (first entry)
-    @scope_interpolations << lookup_result unless @scope_interpolations.any? { |si| si[0] == lookup_result[0] }
+    @scope_interpolations.uniq! { |si| si[0] }
+    @scope_interpolations
   end
 end
 
@@ -171,16 +174,20 @@ class HieraConfig
   end
 
   def scope_interpolations_stable?(lookup_invocation)
-    scope = lookup_invocation.scope
-    lookup_invocation.without_explain do
-      @scope_interpolations.all? do |key, root_key, segments, old_value|
-        value = scope[root_key]
-        unless value.nil? || segments.empty?
-          found = '';
-          catch(:no_such_key) { found = sub_lookup(key, lookup_invocation, segments, value) }
-          value = found;
+    if @scope_interpolations.empty?
+      true
+    else
+      scope = lookup_invocation.scope
+      lookup_invocation.without_explain do
+        @scope_interpolations.all? do |key, root_key, segments, old_value|
+          value = scope[root_key]
+          unless value.nil? || segments.empty?
+            found = '';
+            catch(:no_such_key) { found = sub_lookup(key, lookup_invocation, segments, value) }
+            value = found;
+          end
+          old_value.eql?(value)
         end
-        old_value.eql?(value)
       end
     end
   end

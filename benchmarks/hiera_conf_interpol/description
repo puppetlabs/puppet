@@ -1,0 +1,2 @@
+Benchmark scenario: Many lookups using a Hiera configuration with many interpolations
+Benchmark target: hiera lookup.
