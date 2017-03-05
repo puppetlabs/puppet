@@ -2039,14 +2039,15 @@ class PTupleType < PAnyType
 
   def instance?(o, guard = nil)
     return false unless o.is_a?(Array)
-    # compute the tuple's min/max size, and check if that size matches
-    size_t = size_type || PIntegerType.new(*size_range)
-
-    return false unless size_t.instance?(o.size, guard)
-    o.each_with_index do |element, index|
-      return false unless (types[index] || types[-1]).instance?(element, guard)
+    if @size_type
+      return false unless @size_type.instance?(o.size, guard)
+    else
+      return false unless @types.empty? || @types.size == o.size
     end
-    true
+    index = -1
+    @types.empty? || o.all? do |element|
+      @types.fetch(index += 1) { @types.last }.instance?(element, guard)
+    end
   end
 
   def iterable?(guard = nil)
@@ -2757,10 +2758,9 @@ class PVariantType < PAnyType
   end
 
   def really_instance?(o, guard = nil)
-    @types.inject(-1) do |memo, type|
+    @types.reduce(-1) do |memo, type|
       ri = type.really_instance?(o, guard)
-      memo = ri if ri > memo
-      memo
+      ri > memo ? ri : memo
     end
   end
 
