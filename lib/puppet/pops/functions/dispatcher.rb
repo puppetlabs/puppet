@@ -28,15 +28,14 @@ class Puppet::Pops::Functions::Dispatcher
   #
   # @api private
   def dispatch(instance, calling_scope, args, &block)
-    tc = Puppet::Pops::Types::TypeCalculator.singleton
-    actual = tc.infer_set(block_given? ? args + [block] : args)
-    found = @dispatchers.find { |d| tc.callable?(d.type, actual) }
-    if found
-      catch(:next) do
-        found.invoke(instance, calling_scope, args, &block)
-      end
-    else
-      raise ArgumentError, Puppet::Pops::Types::TypeMismatchDescriber.describe_signatures(instance.class.name, @dispatchers, actual)
+    found = @dispatchers.find { |d| d.type.callable_with?(args, block) }
+    unless found
+      args_type = Puppet::Pops::Types::TypeCalculator.singleton.infer_set(block_given? ? args + [block] : args)
+      raise ArgumentError, Puppet::Pops::Types::TypeMismatchDescriber.describe_signatures(instance.class.name, @dispatchers, args_type)
+    end
+
+    catch(:next) do
+      found.invoke(instance, calling_scope, args, &block)
     end
   end
 

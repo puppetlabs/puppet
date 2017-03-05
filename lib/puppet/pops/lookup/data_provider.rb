@@ -82,14 +82,8 @@ module DataProvider
   end
 
   def validate_data_value(data_provider, value, where = '')
+    # The DataProvider.value_type is self recursive so further recursive check of collections is needed here
     Types::TypeAsserter.assert_instance_of(nil, DataProvider.value_type, value) { "Value #{where}returned from #{data_provider.name}" }
-    case value
-    when Hash
-      value.each_pair { |k, v| validate_data_entry(data_provider, k, v) }
-    when Array
-      value.each {|v| validate_data_value(data_provider, v, 'in array ') }
-    end
-    value
   end
 
   def validate_data_entry(data_provider, key, value)
