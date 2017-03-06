@@ -54,7 +54,7 @@ class DataHashFunctionProvider < FunctionProvider
       lookup_invocation.report_not_found(root_key)
       throw :no_such_key
     end
-    interpolate(value, lookup_invocation, true)
+    interpolate(parent_data_provider.validate_data_value(self, value), lookup_invocation, true)
   end
 
   def data_hash(lookup_invocation, location)
