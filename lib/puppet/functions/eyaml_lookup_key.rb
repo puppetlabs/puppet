@@ -28,21 +28,29 @@ Puppet::Functions.create_function(:eyaml_lookup_key) do
           context.explain { "Setting Eyaml option '#{k}' to '#{v}'" }
         end
       end
-      raw_data = load_data_hash(options)
+      raw_data = load_data_hash(options, context)
       context.cache(nil, raw_data)
     end
     context.not_found unless raw_data.include?(key)
     context.cache(key, decrypt_value(raw_data[key], context))
   end
 
-  def load_data_hash(options)
-    begin
-      data = YAML.load_file(options['path'])
-      Puppet::Pops::Lookup::HieraConfig.symkeys_to_string(data.is_a?(Hash) ? data : {})
-    rescue YAML::SyntaxError => ex
-      # Psych errors includes the absolute path to the file, so no need to add that
-      # to the message
-      raise Puppet::DataBinding::LookupError, "Unable to parse #{ex.message}"
+  def load_data_hash(options, context)
+    path = options['path']
+    context.cached_file_data(path) do |content|
+      begin
+        data = YAML.load(content, path)
+        if data.is_a?(Hash)
+          Puppet::Pops::Lookup::HieraConfig.symkeys_to_string(data)
+        else
+          Puppet.warning("#{path}: file does not contain a valid yaml hash")
+          {}
+        end
+      rescue YAML::SyntaxError => ex
+        # Psych errors includes the absolute path to the file, so no need to add that
+        # to the message
+        raise Puppet::DataBinding::LookupError, "Unable to parse #{ex.message}"
+      end
     end
   end
 

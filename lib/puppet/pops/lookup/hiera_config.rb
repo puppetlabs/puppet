@@ -104,22 +104,28 @@ class HieraConfig
   # Creates a new HieraConfig from the given _config_root_. This is where the 'hiera.yaml' is expected to be found
   # and is also the base location used when resolving relative paths.
   #
+  # @param lookup_invocation [Invocation] Invocation data containing scope, overrides, and defaults
   # @param config_path [Pathname] Absolute path to the configuration file
   # @return [LookupConfiguration] the configuration
-  def self.create(config_path)
+  def self.create(lookup_invocation, config_path)
     if config_path.is_a?(Hash)
       config_path = nil
       loaded_config = config_path
     else
       config_root = config_path.parent
       if config_path.exist?
-        loaded_config = YAML.load_file(config_path)
+        env_context = EnvironmentContext.adapt(lookup_invocation.scope.compiler.environment)
+        loaded_config = env_context.cached_file_data(config_path) do |content|
+          parsed = YAML.load(content, config_path)
 
-        # For backward compatibility, we must treat an empty file, or a yaml that doesn't
-        # produce a Hash as Hiera version 3 default.
-        unless loaded_config.is_a?(Hash)
-          Puppet.warning("#{config_path}: File exists but does not contain a valid YAML hash. Falling back to Hiera version 3 default config")
-          loaded_config = HieraConfigV3::DEFAULT_CONFIG_HASH
+          # For backward compatibility, we must treat an empty file, or a yaml that doesn't
+          # produce a Hash as Hiera version 3 default.
+          if parsed.is_a?(Hash)
+            parsed
+          else
+            Puppet.warning("#{config_path}: File exists but does not contain a valid YAML hash. Falling back to Hiera version 3 default config")
+            HieraConfigV3::DEFAULT_CONFIG_HASH
+          end
         end
       else
         config_path = nil

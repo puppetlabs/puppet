@@ -13,7 +13,7 @@ class ConfiguredDataProvider
   end
 
   def config(lookup_invocation)
-    @config ||= assert_config_version(HieraConfig.create(configuration_path(lookup_invocation)))
+    @config ||= assert_config_version(HieraConfig.create(lookup_invocation, configuration_path(lookup_invocation)))
   end
 
   # @return [Pathname] the path to the configuration
