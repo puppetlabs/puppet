@@ -3,9 +3,9 @@ test_name 'C99903: merge strategies' do
   extend Puppet::Acceptance::EnvironmentUtils
 
   app_type        = File.basename(__FILE__, '.*')
-  tmp_environment = mk_tmp_environment_with_teardown(master, app_type)
+  tmp_environment = mk_tmp_environment_with_teardown(master, app_type + '1')
   fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"
-  tmp_environment2 = mk_tmp_environment_with_teardown(master, app_type)
+  tmp_environment2 = mk_tmp_environment_with_teardown(master, app_type + '2')
   fq_tmp_environmentpath2  = "#{environmentpath}/#{tmp_environment2}"
 
   master_confdir = master.puppet('master')['confdir']
@@ -13,7 +13,7 @@ test_name 'C99903: merge strategies' do
 
   teardown do
     step "restore default global hiera.yaml" do
-      on(master, "mv #{hiera_conf_backup} #{master_confdir}/hiera.yaml")
+      on(master, "mv #{hiera_conf_backup} #{master_confdir}/hiera.yaml", :acceptable_exit_codes => [0,1])
     end
   end
 
@@ -36,9 +36,9 @@ test_name 'C99903: merge strategies' do
   - "%{::osfamily}"
   - "%{::kernel}"
   - "common"
-:logger: console
 :merge_behavior: deeper
 HIERA
+    on(master, "chown puppet:puppet #{master_confdir}/hiera.yaml")
 
     on(master, "mkdir -p #{fq_tmp_environmentpath}/hieradata/")
     create_remote_file(master, "#{fq_tmp_environmentpath}/hieradata/host.yaml", <<-YAML)
@@ -83,7 +83,6 @@ notify { "lookup_arrayed_hash: ${lookup ({'name' => 'arrayed_hash', 'merge' => {
     SITE
 
     on(master, "chmod -R 775 #{fq_tmp_environmentpath}")
-    on(master, "chmod -R 775 #{master_confdir}")
   end
 
   step "create another environment, hiera5 config and environment data: #{tmp_environment2}" do
