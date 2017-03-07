@@ -1066,8 +1066,12 @@ Generated on #{Time.now}.
     # cache so that we don't spread values from one env
     # to another.
     cached_env = @cache[environment || NONE]
+
+    # Avoid two lookups in cache_env unless val is nil. When it is, it's important
+    # to check if the key is included so that further processing (that will result
+    # in nil again) is avoided.
     val = cached_env[param]
-    return val if val || cached_env.include?(param)
+    return val if !val.nil? || cached_env.include?(param)
 
     # Short circuit to nil for undefined settings.
     return nil unless @config.include?(param)
