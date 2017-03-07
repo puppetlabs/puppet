@@ -748,7 +748,7 @@ class Puppet::Parser::Scope
   # to be reassigned.
   #   It's preferred that you use self[]= instead of this; only use this
   # when you need to set options.
-  def setvar(name, value, options = {})
+  def setvar(name, value, options = EMPTY_HASH)
     if name =~ /^[0-9]+$/
       raise Puppet::ParseError.new("Cannot assign to a numeric match result variable '$#{name}'") # unless options[:ephemeral]
     end
@@ -845,12 +845,12 @@ class Puppet::Parser::Scope
   #
   # @param varname [String] The variable name to which the value is assigned. Must not contain `::`
   # @param value [String] The value to assign to the given variable name.
-  # @param options [Hash] Additional options, not part of api.
+  # @param options [Hash] Additional options, not part of api and no longer used.
   #
   # @api public
   #
-  def []=(varname, value, options = EMPTY_HASH)
-    setvar(varname, value, options)
+  def []=(varname, value, _ = nil)
+    setvar(varname, value)
   end
 
   def append_value(bound_value, new_value)
