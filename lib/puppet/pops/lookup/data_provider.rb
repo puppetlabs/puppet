@@ -70,32 +70,23 @@ module DataProvider
     raise NotImplementedError, "Subclass of #{DataProvider.name} must implement 'name' method"
   end
 
-  # Asserts that _data_hash_ is a valid hash.
+  # Asserts that _data_hash_ is a hash.
   #
   # @param data_provider [DataProvider] The data provider that produced the hash
   # @param data_hash [Hash{String=>Object}] The data hash
   # @return [Hash{String=>Object}] The data hash
   def validate_data_hash(data_provider, data_hash)
     Types::TypeAsserter.assert_instance_of(nil, Types::PHashType::DEFAULT, data_hash) { "Value returned from #{data_provider.name}" }
-    data_hash.each_pair { |k, v| validate_data_entry(data_provider, k, v) }
-    data_hash
   end
 
-  def validate_data_value(data_provider, value, where = '')
-    Types::TypeAsserter.assert_instance_of(nil, DataProvider.value_type, value) { "Value #{where}returned from #{data_provider.name}" }
-    case value
-    when Hash
-      value.each_pair { |k, v| validate_data_entry(data_provider, k, v) }
-    when Array
-      value.each {|v| validate_data_value(data_provider, v, 'in array ') }
-    end
-    value
-  end
-
-  def validate_data_entry(data_provider, key, value)
-    Types::TypeAsserter.assert_instance_of(nil, DataProvider.key_type, key) { "Key in hash returned from #{data_provider.name}" }
-    validate_data_value(data_provider, value, 'in hash ')
-    nil
+  # Asserts that _data_value_ is of valid type.
+  #
+  # @param data_provider [DataProvider] The data provider that produced the hash
+  # @param data_value [Object] The data value
+  # @return [Object] The data value
+  def validate_data_value(data_provider, value)
+    # The DataProvider.value_type is self recursive so further recursive check of collections is needed here
+    Types::TypeAsserter.assert_instance_of(nil, DataProvider.value_type, value) { "Value returned from #{data_provider.name}" }
   end
 end
 end
