@@ -51,6 +51,10 @@ profiles:
           - mpm_prefork
           - php
           - ssl
+arrayed_hash:
+  - array1:
+      key1: val1
+      key2: val2
     YAML
 
     create_remote_file(master, "#{fq_tmp_environmentpath}/hieradata/profiles.yaml", <<-YAML)
@@ -64,12 +68,18 @@ profiles:
           - cgid
           - php
           - status
+arrayed_hash:
+  - array1:
+      key1: valB
+      key3: val3
 YAML
 
     create_sitepp(master, tmp_environment, <<-SITE)
 notify { "hiera_hash: ${hiera_hash ('profiles')['webserver']['apache']['httpd']['modules']}": }
 notify { "lookup1: ${lookup ('profiles')['webserver']['apache']['httpd']['modules']}": }
 notify { "lookup1b: ${lookup ({'name' => 'profiles', 'merge' => 'deep'})['webserver']['apache']['httpd']['modules']}": }
+notify { "hiera_arrayed_hash: ${hiera_array ('arrayed_hash')}": }
+notify { "lookup_arrayed_hash: ${lookup ({'name' => 'arrayed_hash', 'merge' => {'strategy' => 'deep', 'merge_hash_arrays' => true}})}": }
     SITE
 
     on(master, "chmod -R 775 #{fq_tmp_environmentpath}")
@@ -102,8 +112,8 @@ profiles:
           - ssl
 arrayed_hash:
   - array1:
-    key1: val1
-    key2: val2
+      key1: val1
+      key2: val2
 lookup_options:
   'profiles':
     merge:
@@ -123,8 +133,8 @@ profiles:
           - status
 arrayed_hash:
   - array1:
-    key1: valB
-    key3: val3
+      key1: valB
+      key3: val3
 lookup_options:
   'profiles':
     merge:
@@ -135,7 +145,7 @@ YAML
 notify { "hiera_hash: ${hiera_hash ('profiles')['webserver']['apache']['httpd']['modules']}": }
 notify { "lookup2: ${lookup ('profiles')['webserver']['apache']['httpd']['modules']}": }
 notify { "lookup2b: ${lookup ({'name' => 'profiles', 'merge' => 'first'})['webserver']['apache']['httpd']['modules']}": }
-# this doesn't look quite right, but is an artifact of deep merge combined with merge_hash_arrays and hieradata can not have arrays at top level.
+notify { "hiera_arrayed_hash: ${hiera_array ('arrayed_hash')}": }
 notify { "lookup_arrayed_hash: ${lookup ({'name' => 'arrayed_hash', 'merge' => {'strategy' => 'deep', 'merge_hash_arrays' => true}})}": }
     SITE
 
@@ -156,6 +166,10 @@ notify { "lookup_arrayed_hash: ${lookup ({'name' => 'arrayed_hash', 'merge' => {
                        "1: agent lookup didn't find correct key")
           assert_match(/lookup1b: \[auth_kerb, authnz_ldap, cgid, php, status, mpm_prefork, ssl\]/, result.stdout,
                        "1b: agent lookup didn't find correct key")
+          assert_match(/hiera_arrayed_hash: \[{array1 => {key1 => val1, key2 => val2}}, {array1 => {key1 => valB, key3 => val3}}\]/, result.stdout,
+                       "agent hiera_array 1 didn't work properly")
+          assert_match(/lookup_arrayed_hash: \[{array1 => {key1 => val1, key3 => val3, key2 => val2}}\]/, result.stdout,
+                       "agent lookup 1 deep merge with merge_hash_arrayes didn't work properly")
         end
       end
       step "agent lookups #{agent.hostname}, hiera5" do
@@ -168,6 +182,10 @@ notify { "lookup_arrayed_hash: ${lookup ({'name' => 'arrayed_hash', 'merge' => {
                        "2: agent lookup didn't find correct key")
           assert_match(/lookup2b: \[mpm_prefork, php, ssl\]/, result.stdout,
                        "2b: agent lookup didn't find correct key")
+          assert_match(/hiera_arrayed_hash: \[{array1 => {key1 => val1, key2 => val2}}, {array1 => {key1 => valB, key3 => val3}}\]/, result.stdout,
+                       "agent hiera_array 2 didn't work properly")
+          assert_match(/lookup_arrayed_hash: \[{array1 => {key1 => val1, key3 => val3, key2 => val2}}\]/, result.stdout,
+                       "agent lookup 2 deep merge with merge_hash_arrayes didn't work properly")
         end
       end
     end
