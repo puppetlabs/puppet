@@ -21,9 +21,12 @@ class FunctionProvider
 
   # @return [FunctionContext] the function context associated with this provider
   def function_context(lookup_invocation, location)
+    @contexts[location] ||= create_function_context(lookup_invocation)
+  end
+
+  def create_function_context(lookup_invocation)
     scope = lookup_invocation.scope
-    compiler = scope.compiler
-    @contexts[location] ||= FunctionContext.new(compiler.environment.name, module_name, function(scope))
+    FunctionContext.new(EnvironmentContext.adapt(scope.compiler.environment), module_name, function(scope))
   end
 
   def module_name

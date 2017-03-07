@@ -141,13 +141,22 @@ class PAnyType < TypedModelObject
     end
   end
 
-  # Returns `true` if this instance is a callable that accepts the given _args_
+  # Returns `true` if this instance is a callable that accepts the given _args_type_ type
   #
-  # @param args [PAnyType] the arguments to test
+  # @param args_type [PAnyType] the arguments to test
   # @param guard [RecursionGuard] guard against recursion. Only used by internal calls
   # @return [Boolean] `true` if this instance is a callable that accepts the given _args_
-  def callable?(args, guard = nil)
-    args.is_a?(PAnyType) && kind_of_callable? && args.callable_args?(self, guard)
+  def callable?(args_type, guard = nil)
+    args_type.is_a?(PAnyType) && kind_of_callable? && args_type.callable_args?(self, guard)
+  end
+
+  # Returns `true` if this instance is a callable that accepts the given _args_
+  #
+  # @param args [Array] the arguments to test
+  # @param block [Proc] block, or nil if not called with a block
+  # @return [Boolean] `true` if this instance is a callable that accepts the given _args_
+  def callable_with?(args,  block = nil)
+    false
   end
 
   # Returns `true` if this instance is considered valid as arguments to the given `callable`
@@ -441,8 +450,10 @@ class PType < PTypeWithContainedType
   def instance?(o, guard = nil)
     if o.is_a?(PAnyType)
       type.nil? || type.assignable?(o, guard)
+    elsif o.is_a?(Module) || o.is_a?(Puppet::Resource) || o.is_a?(Puppet::Parser::Resource)
+      @type.nil? ? true : assignable?(TypeCalculator.infer(o))
     else
-      assignable?(TypeCalculator.infer(o), guard)
+      false
     end
   end
 
@@ -674,7 +685,13 @@ class PScalarType < PAnyType
   end
 
   def instance?(o, guard = nil)
-    assignable?(TypeCalculator.infer(o), guard)
+    if o.is_a?(String) || o.is_a?(Numeric) || o.is_a?(TrueClass) || o.is_a?(FalseClass) || o.is_a?(Regexp) || o.is_a?(SemanticPuppet::VersionRange)
+      true
+    elsif o.is_a?(Array) || o.is_a?(Hash) || o.is_a?(PAnyType) || o.is_a?(NilClass)
+      false
+    else
+      assignable?(TypeCalculator.infer(o))
+    end
   end
 
   DEFAULT = PScalarType.new
@@ -735,6 +752,10 @@ class PEnumType < PScalarType
     self.class == o.class && @values == o.values
   end
 
+  def instance?(o, guard = nil)
+    o.is_a?(String) && @values.any? { |p| p == o }
+  end
+
   DEFAULT = PEnumType.new(EMPTY_ARRAY)
 
   protected
@@ -749,10 +770,9 @@ class PEnumType < PScalarType
     case o
       when PStringType
         # if the contained string is found in the set of enums
-        v = o.value
-        !v.nil? && svalues.any? { |e| e == v }
+        instance?(o.value, guard)
       when PEnumType
-        !o.values.empty? && o.values.all? { |s| svalues.any? {|e| e == s }}
+        !o.values.empty? && o.values.all? { |s| instance?(s, guard) }
       else
         false
     end
@@ -1198,7 +1218,11 @@ class PCollectionType < PAnyType
   end
 
   def instance?(o, guard = nil)
-    assignable?(TypeCalculator.infer(o), guard)
+    if o.is_a?(Array) || o.is_a?(Hash)
+      @size_type.nil? || @size_type.instance?(o.size)
+    else
+      false
+    end
   end
 
   # Returns an array with from (min) size to (max) size
@@ -1557,6 +1581,10 @@ class PRegexpType < PScalarType
     self.class == o.class && @pattern == o.pattern
   end
 
+  def instance?(o, guard=nil)
+    o.is_a?(Regexp) && (@pattern.nil? || @pattern == (o.options == 0 ? o.source : o.to_s))
+  end
+
   DEFAULT = PRegexpType.new(nil)
 
   protected
@@ -1595,6 +1623,10 @@ class PPatternType < PScalarType
 
   def eql?(o)
     self.class == o.class && @patterns.size == o.patterns.size && (@patterns - o.patterns).empty?
+  end
+
+  def instance?(o, guard = nil)
+    o.is_a?(String) && (@patterns.empty? || @patterns.any? { |p| p.regexp.match(o) })
   end
 
   DEFAULT = PPatternType.new(EMPTY_ARRAY)
@@ -2018,14 +2050,15 @@ class PTupleType < PAnyType
 
   def instance?(o, guard = nil)
     return false unless o.is_a?(Array)
-    # compute the tuple's min/max size, and check if that size matches
-    size_t = size_type || PIntegerType.new(*size_range)
-
-    return false unless size_t.instance?(o.size, guard)
-    o.each_with_index do |element, index|
-      return false unless (types[index] || types[-1]).instance?(element, guard)
+    if @size_type
+      return false unless @size_type.instance?(o.size, guard)
+    else
+      return false unless @types.empty? || @types.size == o.size
     end
-    true
+    index = -1
+    @types.empty? || o.all? do |element|
+      @types.fetch(index += 1) { @types.last }.instance?(element, guard)
+    end
   end
 
   def iterable?(guard = nil)
@@ -2185,7 +2218,22 @@ class PCallableType < PAnyType
   end
 
   def instance?(o, guard = nil)
-    assignable?(TypeCalculator.infer(o), guard)
+    (o.is_a?(Proc) || o.is_a?(Evaluator::Closure) || o.is_a?(Functions::Function)) && assignable?(TypeCalculator.infer(o), guard)
+  end
+
+  # Returns `true` if this instance is a callable that accepts the given _args_
+  #
+  # @param args [Array] the arguments to test
+  # @return [Boolean] `true` if this instance is a callable that accepts the given _args_
+  def callable_with?(args, block = nil)
+    # nil param_types and compatible return type means other Callable is assignable
+    return true if @param_types.nil?
+    return false unless @param_types.instance?(args)
+    if @block_type.nil?
+      block == nil
+    else
+      @block_type.instance?(block)
+    end
   end
 
   # @api private
@@ -2721,10 +2769,9 @@ class PVariantType < PAnyType
   end
 
   def really_instance?(o, guard = nil)
-    @types.inject(-1) do |memo, type|
+    @types.reduce(-1) do |memo, type|
       ri = type.really_instance?(o, guard)
-      memo = ri if ri > memo
-      memo
+      ri > memo ? ri : memo
     end
   end
 
