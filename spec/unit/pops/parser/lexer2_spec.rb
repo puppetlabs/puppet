@@ -387,6 +387,14 @@ describe 'Lexer2' do
     expect(tokens_scanned_from("1 / /./")).to match_tokens2(:NUMBER, :DIV, :REGEX)
   end
 
+  it "should accept newline in a regular expression" do
+    scanned = tokens_scanned_from("/\n.\n/")
+    # Note that strange formatting here is important
+    expect(scanned[0][1][:value]).to eql(/
+.
+/)
+  end
+
   context 'when lexer lexes heredoc' do
     it 'lexes tag, syntax and escapes, margin and right trim' do
       code = <<-CODE

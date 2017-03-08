@@ -155,7 +155,7 @@ class Lexer2
   PATTERN_COMMENT   = %r{#.*\r?}
   PATTERN_MLCOMMENT = %r{/\*(.*?)\*/}m
 
-  PATTERN_REGEX     = %r{/[^/\n]*/}
+  PATTERN_REGEX     = %r{/[^/]*/}
   PATTERN_REGEX_END = %r{/}
   PATTERN_REGEX_A   = %r{\A/} # for replacement to ""
   PATTERN_REGEX_Z   = %r{/\Z} # for replacement to ""
