@@ -244,6 +244,7 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
     containers.each { |x|
       admissible[x] = whit_class.new(:name => "admissible_#{x.ref}", :catalog => catalog)
       completed[x]  = whit_class.new(:name => "completed_#{x.ref}",  :catalog => catalog)
+      admissible[x].set_tags(x)
       priority = @prioritizer.priority_of(x)
       add_vertex(admissible[x], priority)
       add_vertex(completed[x], priority)
