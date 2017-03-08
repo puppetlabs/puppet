@@ -142,13 +142,24 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     'update'
   end
 
+  def makecache_fast
+    command = [command(:cmd), :makecache, :fast]
+    execute(command, :failonfail => false, :combine => false)
+  end
+
   def install
     wanted = @resource[:name]
     error_level = self.class.error_level
     update_command = self.class.update_command
     # If not allowing virtual packages, do a query to ensure a real package exists
     unless @resource.allow_virtual?
-      execute([command(:cmd), '-d', '0', '-e', error_level, '-y', install_options, :list, wanted].compact)
+      command = [command(:cmd), '-d', '0', '-e', error_level, '-y', install_options, :list, wanted].compact
+      output = execute(command, :failonfail => false, :combine => false)
+
+      if output.exitstatus != 0
+        makecache_fast
+        execute(command)
+      end
     end
 
     should = @resource.should(:ensure)
