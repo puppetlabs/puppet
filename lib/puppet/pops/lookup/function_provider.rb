@@ -46,9 +46,8 @@ class FunctionProvider
   # @param [Pathname,URI] location The location to add to the options
   # @return [Hash{String => Object}] The options hash
   def options(location = nil)
+    location = location.location unless location.nil?
     case location
-    when nil
-      @options
     when Pathname
       @options.merge(HieraConfig::KEY_PATH => location.to_s)
     when URI

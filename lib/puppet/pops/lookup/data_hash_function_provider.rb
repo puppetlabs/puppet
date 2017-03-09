@@ -34,7 +34,7 @@ class DataHashFunctionProvider < FunctionProvider
     else
       lookup_invocation.with(:location, location) do
         if location.exist?
-          lookup_key(lookup_invocation, location.location, root_key)
+          lookup_key(lookup_invocation, location, root_key)
         else
           lookup_invocation.report_location_not_found
           throw :no_such_key
