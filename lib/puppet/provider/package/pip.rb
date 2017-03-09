@@ -31,7 +31,11 @@ Puppet::Type.type(:package).provide :pip,
     packages = []
     pip_cmd = self.pip_cmd
     return [] unless pip_cmd
-    execpipe "#{pip_cmd} freeze" do |process|
+    command = [pip_cmd, 'freeze']
+    if Puppet::Util::Package.versioncmp(self.pip_version, '8.1.0') >= 0 # a >= b
+      command << '--all'
+    end
+    execpipe command do |process|
       process.collect do |line|
         next unless options = parse(line)
         packages << new(options)
