@@ -901,6 +901,19 @@ class Puppet::Parser::Scope
     find_global_scope.without_ephemeral_scopes(&block)
   end
 
+  # Execute given block with a ephemeral scope containing the given variables
+  # @api private
+  def with_local_scope(scope_variables)
+    local = LocalScope.new(@ephemeral.last)
+    scope_variables.each_pair { |k, v| local[k] = v }
+    @ephemeral.push(local)
+    begin
+      yield(self)
+    ensure
+      @ephemeral.pop
+    end
+  end
+
   # Execute given block with all ephemeral popped from the ephemeral stack
   #
   # @api private
