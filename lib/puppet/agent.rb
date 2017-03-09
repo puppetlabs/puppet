@@ -31,7 +31,7 @@ class Puppet::Agent
   # Perform a run with our client.
   def run(client_options = {})
     if disabled?
-      Puppet.notice _("Skipping run of #{client_class}; administratively disabled (Reason: '#{disable_message}');\nUse 'puppet agent --enable' to re-enable.")
+      Puppet.notice _("Skipping run of %{client_class}; administratively disabled (Reason: '%{disable_message}');\nUse 'puppet agent --enable' to re-enable.") % { client_class: client_class, disable_message: disable_message }
       return
     end
 
@@ -44,16 +44,16 @@ class Puppet::Agent
             client_args = client_options.merge(:pluginsync => Puppet::Configurer.should_pluginsync?)
             lock { client.run(client_args) }
           rescue Puppet::LockError
-            Puppet.notice _("Run of #{client_class} already in progress; skipping  (#{lockfile_path} exists)")
+            Puppet.notice _("Run of %{client_class} already in progress; skipping  (%{lockfile_path} exists)") % { client_class: client_class, lockfile_path: lockfile_path }
             return
           rescue StandardError => detail
-            Puppet.log_exception(detail, _("Could not run #{client_class}: #{detail}"))
+            Puppet.log_exception(detail, _("Could not run %{client_class}: %{detail}") % { client_class: client_class, detail: detail })
           end
         end
       end
       true
     end
-    Puppet.notice _("Shutdown/restart in progress (#{Puppet::Application.run_status.inspect}); skipping run") unless block_run
+    Puppet.notice _("Shutdown/restart in progress (%{status}); skipping run") % { status: Puppet::Application.run_status.inspect } unless block_run
     result
   end
 
@@ -92,7 +92,7 @@ class Puppet::Agent
     begin
       @client = client_class.new(Puppet::Configurer::DownloaderFactory.new, transaction_uuid)
     rescue StandardError => detail
-      Puppet.log_exception(detail, _("Could not create instance of #{client_class}: #{detail}"))
+      Puppet.log_exception(detail, _("Could not create instance of %{client_class}: %{detail}") % { client_class: client_class, detail: detail })
       return
     end
     yield @client
