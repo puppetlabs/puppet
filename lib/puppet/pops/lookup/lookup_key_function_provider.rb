@@ -28,7 +28,7 @@ class LookupKeyFunctionProvider < FunctionProvider
       lookup_invocation.report_found(root_key, validate_data_value(self, value))
     else
       lookup_invocation.with(:location, location) do
-        value = lookup_key(root_key, lookup_invocation, location.location, merge)
+        value = lookup_key(root_key, lookup_invocation, location, merge)
         lookup_invocation.report_found(root_key, validate_data_value(self, value))
       end
     end
