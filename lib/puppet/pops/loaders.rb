@@ -104,7 +104,7 @@ class Loaders
       type = obj_class._pcore_type
       typed_name = Loader::TypedName.new(:type, type.name.downcase, name_authority)
       entry = loader.loaded_entry(typed_name)
-      loader.set_entry(typed_name, type, obj_class._pcore_location) if entry.nil? || entry.value.nil?
+      loader.set_entry(typed_name, type) if entry.nil? || entry.value.nil?
       type
     end
     # Resolve lazy so that all types can cross reference each other

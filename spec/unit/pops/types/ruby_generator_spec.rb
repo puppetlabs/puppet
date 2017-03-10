@@ -232,12 +232,6 @@ describe 'Puppet Ruby Generator' do
         expect(second_type.parent).to eql(first_type)
       end
 
-      it 'the #_pcore_location class method returns a file URI' do
-        loc = PuppetSpec::RubyGenerator::SecondGenerated._pcore_location
-        expect(loc).to be_a(URI)
-        expect(loc.to_s).to match(/^file:\/.*ruby_generator_spec.rb\?line=\d+$/)
-      end
-
       context 'the #create class method' do
         it 'has an arity that reflects optional arguments' do
           expect(PuppetSpec::RubyGenerator::FirstGenerated.method(:create).arity).to eql(-2)
@@ -568,12 +562,6 @@ describe 'Puppet Ruby Generator' do
         second_type = PuppetSpec::RubyGenerator::My::SecondGenerated._pcore_type
         expect(second_type).to be_a(PObjectType)
         expect(second_type.parent).to eql(first_type)
-      end
-
-      it 'the #_pcore_location class method returns a file URI' do
-        loc = PuppetSpec::RubyGenerator::My::SecondGenerated._pcore_location
-        expect(loc).to be_a(URI)
-        expect(loc.to_s).to match(/^file:\/.*ruby_generator_spec.rb\?line=\d+$/)
       end
 
       context 'the #create class method' do

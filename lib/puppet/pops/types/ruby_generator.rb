@@ -151,11 +151,6 @@ class RubyGenerator < TypeFormatter
     end
 
     bld << "\n"
-    bld << "  def self._pcore_location\n"
-    bld << "    @_pcore_location ||= (loc = Puppet::Util.path_to_uri(\"\#{__FILE__}\"); URI(\"#\{loc}?line=#\{__LINE__.to_i - 3}\"))\n"
-    bld << "  end\n"
-
-    bld << "\n"
     bld << "  def self._pcore_type\n"
     bld << '    @_pcore_type ||= ' << namespace_relative(segments, obj.class.name) << ".new('" << obj.name << "', "
     bld << TypeFormatter.singleton.ruby('ref').indented(2).string(obj.i12n_hash(false)) << ")\n"

@@ -75,7 +75,7 @@ class StaticLoader < Loader
     load_constant(typed_name)
   end
 
-  def set_entry(typed_name, value, origin)
+  def set_entry(typed_name, value, origin = nil)
     @loaded[typed_name] = Loader::NamedEntry.new(typed_name, value, origin)
   end
 

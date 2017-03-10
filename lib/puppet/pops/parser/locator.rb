@@ -300,11 +300,6 @@ class Locator
   # strings are frozen).
   #
   class Locator19 < AbstractLocator
-    def self._pcore_location
-      loc = Puppet::Util.path_to_uri("#{__FILE__}")
-      URI("#{loc}?line=#{__LINE__.to_i - 3}")
-    end
-
     include Types::PuppetObject
 
     def self._pcore_type

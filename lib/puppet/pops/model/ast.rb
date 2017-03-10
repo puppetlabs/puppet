@@ -4,10 +4,6 @@ module Puppet
 module Pops
 module Model
 class PopsObject
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::PopsObject', {
     })
@@ -29,7 +25,7 @@ class PopsObject
   attr_reader :hash
 
   def initialize
-    @hash = 925601229154960054
+    @hash = -1052386662549381418
   end
   def _pcore_init_hash
     {}
@@ -52,10 +48,6 @@ class PopsObject
 end
 
 class Positioned < PopsObject
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::Positioned', {
       'parent' => PopsObject._pcore_type,
@@ -136,10 +128,6 @@ class Positioned < PopsObject
 end
 
 class Expression < Positioned
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::Expression', {
       'parent' => Positioned._pcore_type
@@ -148,10 +136,6 @@ class Expression < Positioned
 end
 
 class Nop < Expression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::Nop', {
       'parent' => Expression._pcore_type
@@ -160,10 +144,6 @@ class Nop < Expression
 end
 
 class BinaryExpression < Expression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::BinaryExpression', {
       'parent' => Expression._pcore_type,
@@ -242,10 +222,6 @@ class BinaryExpression < Expression
 end
 
 class UnaryExpression < Expression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::UnaryExpression', {
       'parent' => Expression._pcore_type,
@@ -312,10 +288,6 @@ class UnaryExpression < Expression
 end
 
 class ParenthesizedExpression < UnaryExpression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ParenthesizedExpression', {
       'parent' => UnaryExpression._pcore_type
@@ -337,10 +309,6 @@ class ParenthesizedExpression < UnaryExpression
 end
 
 class NotExpression < UnaryExpression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::NotExpression', {
       'parent' => UnaryExpression._pcore_type
@@ -362,10 +330,6 @@ class NotExpression < UnaryExpression
 end
 
 class UnaryMinusExpression < UnaryExpression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::UnaryMinusExpression', {
       'parent' => UnaryExpression._pcore_type
@@ -387,10 +351,6 @@ class UnaryMinusExpression < UnaryExpression
 end
 
 class UnfoldExpression < UnaryExpression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::UnfoldExpression', {
       'parent' => UnaryExpression._pcore_type
@@ -412,10 +372,6 @@ class UnfoldExpression < UnaryExpression
 end
 
 class AssignmentExpression < BinaryExpression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::AssignmentExpression', {
       'parent' => BinaryExpression._pcore_type,
@@ -491,10 +447,6 @@ class AssignmentExpression < BinaryExpression
 end
 
 class ArithmeticExpression < BinaryExpression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ArithmeticExpression', {
       'parent' => BinaryExpression._pcore_type,
@@ -570,10 +522,6 @@ class ArithmeticExpression < BinaryExpression
 end
 
 class RelationshipExpression < BinaryExpression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::RelationshipExpression', {
       'parent' => BinaryExpression._pcore_type,
@@ -649,10 +597,6 @@ class RelationshipExpression < BinaryExpression
 end
 
 class AccessExpression < Expression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::AccessExpression', {
       'parent' => Expression._pcore_type,
@@ -734,10 +678,6 @@ class AccessExpression < Expression
 end
 
 class ComparisonExpression < BinaryExpression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ComparisonExpression', {
       'parent' => BinaryExpression._pcore_type,
@@ -813,10 +753,6 @@ class ComparisonExpression < BinaryExpression
 end
 
 class MatchExpression < BinaryExpression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::MatchExpression', {
       'parent' => BinaryExpression._pcore_type,
@@ -892,10 +828,6 @@ class MatchExpression < BinaryExpression
 end
 
 class InExpression < BinaryExpression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::InExpression', {
       'parent' => BinaryExpression._pcore_type
@@ -922,10 +854,6 @@ class InExpression < BinaryExpression
 end
 
 class BooleanExpression < BinaryExpression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::BooleanExpression', {
       'parent' => BinaryExpression._pcore_type
@@ -952,10 +880,6 @@ class BooleanExpression < BinaryExpression
 end
 
 class AndExpression < BooleanExpression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::AndExpression', {
       'parent' => BooleanExpression._pcore_type
@@ -982,10 +906,6 @@ class AndExpression < BooleanExpression
 end
 
 class OrExpression < BooleanExpression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::OrExpression', {
       'parent' => BooleanExpression._pcore_type
@@ -1012,10 +932,6 @@ class OrExpression < BooleanExpression
 end
 
 class LiteralList < Expression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralList', {
       'parent' => Expression._pcore_type,
@@ -1085,10 +1001,6 @@ class LiteralList < Expression
 end
 
 class KeyedEntry < Positioned
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::KeyedEntry', {
       'parent' => Positioned._pcore_type,
@@ -1167,10 +1079,6 @@ class KeyedEntry < Positioned
 end
 
 class LiteralHash < Expression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralHash', {
       'parent' => Expression._pcore_type,
@@ -1240,10 +1148,6 @@ class LiteralHash < Expression
 end
 
 class BlockExpression < Expression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::BlockExpression', {
       'parent' => Expression._pcore_type,
@@ -1313,10 +1217,6 @@ class BlockExpression < Expression
 end
 
 class CaseOption < Expression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CaseOption', {
       'parent' => Expression._pcore_type,
@@ -1398,10 +1298,6 @@ class CaseOption < Expression
 end
 
 class CaseExpression < Expression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CaseExpression', {
       'parent' => Expression._pcore_type,
@@ -1483,10 +1379,6 @@ class CaseExpression < Expression
 end
 
 class QueryExpression < Expression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::QueryExpression', {
       'parent' => Expression._pcore_type,
@@ -1556,10 +1448,6 @@ class QueryExpression < Expression
 end
 
 class ExportedQuery < QueryExpression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ExportedQuery', {
       'parent' => QueryExpression._pcore_type
@@ -1581,10 +1469,6 @@ class ExportedQuery < QueryExpression
 end
 
 class VirtualQuery < QueryExpression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::VirtualQuery', {
       'parent' => QueryExpression._pcore_type
@@ -1606,10 +1490,6 @@ class VirtualQuery < QueryExpression
 end
 
 class AbstractAttributeOperation < Positioned
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::AbstractAttributeOperation', {
       'parent' => Positioned._pcore_type
@@ -1618,10 +1498,6 @@ class AbstractAttributeOperation < Positioned
 end
 
 class AttributeOperation < AbstractAttributeOperation
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::AttributeOperation', {
       'parent' => AbstractAttributeOperation._pcore_type,
@@ -1702,10 +1578,6 @@ class AttributeOperation < AbstractAttributeOperation
 end
 
 class AttributesOperation < AbstractAttributeOperation
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::AttributesOperation', {
       'parent' => AbstractAttributeOperation._pcore_type,
@@ -1772,10 +1644,6 @@ class AttributesOperation < AbstractAttributeOperation
 end
 
 class CollectExpression < Expression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CollectExpression', {
       'parent' => Expression._pcore_type,
@@ -1869,10 +1737,6 @@ class CollectExpression < Expression
 end
 
 class Parameter < Positioned
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::Parameter', {
       'parent' => Positioned._pcore_type,
@@ -1974,10 +1838,6 @@ class Parameter < Positioned
 end
 
 class Definition < Expression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::Definition', {
       'parent' => Expression._pcore_type
@@ -1986,10 +1846,6 @@ class Definition < Expression
 end
 
 class NamedDefinition < Definition
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::NamedDefinition', {
       'parent' => Definition._pcore_type,
@@ -2081,10 +1937,6 @@ class NamedDefinition < Definition
 end
 
 class FunctionDefinition < NamedDefinition
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::FunctionDefinition', {
       'parent' => NamedDefinition._pcore_type,
@@ -2170,10 +2022,6 @@ class FunctionDefinition < NamedDefinition
 end
 
 class ResourceTypeDefinition < NamedDefinition
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ResourceTypeDefinition', {
       'parent' => NamedDefinition._pcore_type
@@ -2200,10 +2048,6 @@ class ResourceTypeDefinition < NamedDefinition
 end
 
 class Application < NamedDefinition
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::Application', {
       'parent' => NamedDefinition._pcore_type
@@ -2230,10 +2074,6 @@ class Application < NamedDefinition
 end
 
 class QRefDefinition < Definition
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::QRefDefinition', {
       'parent' => Definition._pcore_type,
@@ -2287,10 +2127,6 @@ class QRefDefinition < Definition
 end
 
 class TypeAlias < QRefDefinition
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::TypeAlias', {
       'parent' => QRefDefinition._pcore_type,
@@ -2362,10 +2198,6 @@ class TypeAlias < QRefDefinition
 end
 
 class TypeMapping < Definition
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::TypeMapping', {
       'parent' => Definition._pcore_type,
@@ -2450,10 +2282,6 @@ class TypeMapping < Definition
 end
 
 class TypeDefinition < QRefDefinition
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::TypeDefinition', {
       'parent' => QRefDefinition._pcore_type,
@@ -2535,10 +2363,6 @@ class TypeDefinition < QRefDefinition
 end
 
 class NodeDefinition < Definition
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::NodeDefinition', {
       'parent' => Definition._pcore_type,
@@ -2635,10 +2459,6 @@ class NodeDefinition < Definition
 end
 
 class SiteDefinition < Definition
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::SiteDefinition', {
       'parent' => Definition._pcore_type,
@@ -2708,10 +2528,6 @@ class SiteDefinition < Definition
 end
 
 class SubLocatedExpression < Expression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::SubLocatedExpression', {
       'parent' => Expression._pcore_type,
@@ -2808,10 +2624,6 @@ class SubLocatedExpression < Expression
 end
 
 class HeredocExpression < Expression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::HeredocExpression', {
       'parent' => Expression._pcore_type,
@@ -2888,10 +2700,6 @@ class HeredocExpression < Expression
 end
 
 class HostClassDefinition < NamedDefinition
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::HostClassDefinition', {
       'parent' => NamedDefinition._pcore_type,
@@ -2972,10 +2780,6 @@ class HostClassDefinition < NamedDefinition
 end
 
 class LambdaExpression < Expression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LambdaExpression', {
       'parent' => Expression._pcore_type,
@@ -3075,10 +2879,6 @@ class LambdaExpression < Expression
 end
 
 class IfExpression < Expression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::IfExpression', {
       'parent' => Expression._pcore_type,
@@ -3175,10 +2975,6 @@ class IfExpression < Expression
 end
 
 class UnlessExpression < IfExpression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::UnlessExpression', {
       'parent' => IfExpression._pcore_type
@@ -3210,10 +3006,6 @@ class UnlessExpression < IfExpression
 end
 
 class CallExpression < Expression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CallExpression', {
       'parent' => Expression._pcore_type,
@@ -3320,10 +3112,6 @@ class CallExpression < Expression
 end
 
 class CallFunctionExpression < CallExpression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CallFunctionExpression', {
       'parent' => CallExpression._pcore_type
@@ -3355,10 +3143,6 @@ class CallFunctionExpression < CallExpression
 end
 
 class CallNamedFunctionExpression < CallExpression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CallNamedFunctionExpression', {
       'parent' => CallExpression._pcore_type
@@ -3390,10 +3174,6 @@ class CallNamedFunctionExpression < CallExpression
 end
 
 class CallMethodExpression < CallExpression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CallMethodExpression', {
       'parent' => CallExpression._pcore_type
@@ -3425,10 +3205,6 @@ class CallMethodExpression < CallExpression
 end
 
 class Literal < Expression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::Literal', {
       'parent' => Expression._pcore_type
@@ -3437,10 +3213,6 @@ class Literal < Expression
 end
 
 class LiteralValue < Literal
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralValue', {
       'parent' => Literal._pcore_type
@@ -3449,10 +3221,6 @@ class LiteralValue < Literal
 end
 
 class LiteralRegularExpression < LiteralValue
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralRegularExpression', {
       'parent' => LiteralValue._pcore_type,
@@ -3513,10 +3281,6 @@ class LiteralRegularExpression < LiteralValue
 end
 
 class LiteralString < LiteralValue
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralString', {
       'parent' => LiteralValue._pcore_type,
@@ -3570,10 +3334,6 @@ class LiteralString < LiteralValue
 end
 
 class LiteralNumber < LiteralValue
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralNumber', {
       'parent' => LiteralValue._pcore_type
@@ -3582,10 +3342,6 @@ class LiteralNumber < LiteralValue
 end
 
 class LiteralInteger < LiteralNumber
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralInteger', {
       'parent' => LiteralNumber._pcore_type,
@@ -3649,10 +3405,6 @@ class LiteralInteger < LiteralNumber
 end
 
 class LiteralFloat < LiteralNumber
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralFloat', {
       'parent' => LiteralNumber._pcore_type,
@@ -3706,10 +3458,6 @@ class LiteralFloat < LiteralNumber
 end
 
 class LiteralUndef < Literal
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralUndef', {
       'parent' => Literal._pcore_type
@@ -3718,10 +3466,6 @@ class LiteralUndef < Literal
 end
 
 class LiteralDefault < Literal
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralDefault', {
       'parent' => Literal._pcore_type
@@ -3730,10 +3474,6 @@ class LiteralDefault < Literal
 end
 
 class LiteralBoolean < LiteralValue
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralBoolean', {
       'parent' => LiteralValue._pcore_type,
@@ -3787,10 +3527,6 @@ class LiteralBoolean < LiteralValue
 end
 
 class TextExpression < UnaryExpression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::TextExpression', {
       'parent' => UnaryExpression._pcore_type
@@ -3812,10 +3548,6 @@ class TextExpression < UnaryExpression
 end
 
 class ConcatenatedString < Expression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ConcatenatedString', {
       'parent' => Expression._pcore_type,
@@ -3885,10 +3617,6 @@ class ConcatenatedString < Expression
 end
 
 class QualifiedName < LiteralValue
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::QualifiedName', {
       'parent' => LiteralValue._pcore_type,
@@ -3942,10 +3670,6 @@ class QualifiedName < LiteralValue
 end
 
 class ReservedWord < LiteralValue
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ReservedWord', {
       'parent' => LiteralValue._pcore_type,
@@ -4009,10 +3733,6 @@ class ReservedWord < LiteralValue
 end
 
 class QualifiedReference < LiteralValue
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::QualifiedReference', {
       'parent' => LiteralValue._pcore_type,
@@ -4074,10 +3794,6 @@ class QualifiedReference < LiteralValue
 end
 
 class VariableExpression < UnaryExpression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::VariableExpression', {
       'parent' => UnaryExpression._pcore_type
@@ -4099,10 +3815,6 @@ class VariableExpression < UnaryExpression
 end
 
 class EppExpression < Expression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::EppExpression', {
       'parent' => Expression._pcore_type,
@@ -4182,10 +3894,6 @@ class EppExpression < Expression
 end
 
 class RenderStringExpression < LiteralString
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::RenderStringExpression', {
       'parent' => LiteralString._pcore_type
@@ -4194,10 +3902,6 @@ class RenderStringExpression < LiteralString
 end
 
 class RenderExpression < UnaryExpression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::RenderExpression', {
       'parent' => UnaryExpression._pcore_type
@@ -4219,10 +3923,6 @@ class RenderExpression < UnaryExpression
 end
 
 class ResourceBody < Positioned
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ResourceBody', {
       'parent' => Positioned._pcore_type,
@@ -4307,10 +4007,6 @@ class ResourceBody < Positioned
 end
 
 class AbstractResource < Expression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::AbstractResource', {
       'parent' => Expression._pcore_type,
@@ -4383,10 +4079,6 @@ class AbstractResource < Expression
 end
 
 class ResourceExpression < AbstractResource
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ResourceExpression', {
       'parent' => AbstractResource._pcore_type,
@@ -4470,10 +4162,6 @@ class ResourceExpression < AbstractResource
 end
 
 class CapabilityMapping < Definition
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CapabilityMapping', {
       'parent' => Definition._pcore_type,
@@ -4569,10 +4257,6 @@ class CapabilityMapping < Definition
 end
 
 class ResourceDefaultsExpression < AbstractResource
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ResourceDefaultsExpression', {
       'parent' => AbstractResource._pcore_type,
@@ -4659,10 +4343,6 @@ class ResourceDefaultsExpression < AbstractResource
 end
 
 class ResourceOverrideExpression < AbstractResource
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ResourceOverrideExpression', {
       'parent' => AbstractResource._pcore_type,
@@ -4746,10 +4426,6 @@ class ResourceOverrideExpression < AbstractResource
 end
 
 class SelectorEntry < Positioned
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::SelectorEntry', {
       'parent' => Positioned._pcore_type,
@@ -4828,10 +4504,6 @@ class SelectorEntry < Positioned
 end
 
 class SelectorExpression < Expression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::SelectorExpression', {
       'parent' => Expression._pcore_type,
@@ -4913,10 +4585,6 @@ class SelectorExpression < Expression
 end
 
 class NamedAccessExpression < BinaryExpression
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::NamedAccessExpression', {
       'parent' => BinaryExpression._pcore_type
@@ -4943,10 +4611,6 @@ class NamedAccessExpression < BinaryExpression
 end
 
 class Program < PopsObject
-  def self._pcore_location
-    @_pcore_location ||= (loc = Puppet::Util.path_to_uri("#{__FILE__}"); URI("#{loc}?line=#{__LINE__.to_i - 3}"))
-  end
-
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::Program', {
       'parent' => PopsObject._pcore_type,
