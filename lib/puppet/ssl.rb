@@ -10,5 +10,6 @@ module Puppet::SSL # :nodoc:
   require 'puppet/ssl/validator'
   require 'puppet/ssl/validator/no_validator'
   require 'puppet/ssl/validator/default_validator'
+  require 'puppet/ssl/validator/cert_auth_validator'
   require 'puppet/ssl/validator/unauthenticated_validator'
 end
