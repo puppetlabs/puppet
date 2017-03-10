@@ -79,35 +79,39 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
 
   def selmodversion_file
     magic = 0xF97CFF8F
+    v = nil
 
     filename = selmod_name_to_filename
-    mod = File.new(filename, "r")
+    # Open a file handle and parse the bytes until version is found
+    Puppet::FileSystem.open(filename, nil, 'rb') do |mod|
 
-    (hdr, ver, numsec) = mod.read(12).unpack('VVV')
+      (hdr, ver, numsec) = mod.read(12).unpack('VVV')
 
-    raise Puppet::Error, "Found #{hdr} instead of magic #{magic} in #{filename}" if hdr != magic
+      raise Puppet::Error, "Found #{hdr} instead of magic #{magic} in #{filename}" if hdr != magic
 
-    raise Puppet::Error, "Unknown policy file version #{ver} in #{filename}" if ver != 1
+      raise Puppet::Error, "Unknown policy file version #{ver} in #{filename}" if ver != 1
 
-    # Read through (and throw away) the file section offsets, and also
-    # the magic header for the first section.
+      # Read through (and throw away) the file section offsets, and also
+      # the magic header for the first section.
 
-    mod.read((numsec + 1) * 4)
+      mod.read((numsec + 1) * 4)
 
-    ## Section 1 should be "SE Linux Module"
+      ## Section 1 should be "SE Linux Module"
 
-    selmod_readnext(mod)
-    selmod_readnext(mod)
+      selmod_readnext(mod)
+      selmod_readnext(mod)
 
-    # Skip past the section headers
-    mod.read(14)
+      # Skip past the section headers
+      mod.read(14)
 
-    # Module name
-    selmod_readnext(mod)
+      # Module name
+      selmod_readnext(mod)
 
-    # At last!  the version
+      # At last!  the version
 
-    v = selmod_readnext(mod)
+      v = selmod_readnext(mod)
+
+    end
 
     self.debug "file version #{v}"
     v

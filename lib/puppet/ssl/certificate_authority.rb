@@ -173,7 +173,8 @@ class Puppet::SSL::CertificateAuthority
     20.times { pass += (rand(74) + 48).chr }
 
     begin
-      Puppet.settings.setting(:capass).open('w') { |f| f.print pass }
+      # random password is limited to ASCII characters 48 ('0') through 122 ('z')
+      Puppet.settings.setting(:capass).open('w:ASCII') { |f| f.print pass }
     rescue Errno::EACCES => detail
       raise Puppet::Error, "Could not write CA password: #{detail}", detail.backtrace
     end
@@ -216,7 +217,8 @@ class Puppet::SSL::CertificateAuthority
   # file so this one is considered used.
   def next_serial
     serial = 1
-    Puppet.settings.setting(:serial).exclusive_open('a+') do |f|
+    # the serial is 4 hex digits - limited to ASCII
+    Puppet.settings.setting(:serial).exclusive_open('a+:ASCII') do |f|
       f.rewind
       serial = f.read.chomp.hex
       if serial == 0

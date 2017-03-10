@@ -167,7 +167,7 @@ describe Puppet::SSL::CertificateAuthority do
       Puppet::FileSystem.expects(:exist?).with(Puppet[:capass]).returns false
 
       fh = StringIO.new
-      Puppet.settings.setting(:capass).expects(:open).with('w').yields fh
+      Puppet.settings.setting(:capass).expects(:open).with('w:ASCII').yields fh
 
       @ca.stubs(:sign)
 
@@ -1067,7 +1067,7 @@ describe "CertificateAuthority.generate" do
   end
 
   def expect_to_write_the_ca_password
-    Puppet.settings.setting(:capass).expects(:open).with('w')
+    Puppet.settings.setting(:capass).expects(:open).with('w:ASCII')
   end
 
   def expect_ca_initialization

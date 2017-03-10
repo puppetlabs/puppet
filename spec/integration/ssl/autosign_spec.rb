@@ -4,6 +4,8 @@ describe "autosigning" do
   include PuppetSpec::Files
 
   let(:puppet_dir) { tmpdir("ca_autosigning") }
+  let(:utf8_value) { "utf8_\u06FF\u16A0\u{2070E}" }
+  let(:utf8_value_binary_string) { utf8_value.force_encoding(Encoding::BINARY) }
   let(:csr_attributes_content) do
     {
       'custom_attributes' => {
@@ -12,10 +14,16 @@ describe "autosigning" do
         '1.3.6.1.4.1.34380.2.2' => # system IPs in hex
           [ 0xC0A80001, # 192.168.0.1
             0xC0A80101 ], # 192.168.1.1
+        # different UTF-8 widths
+        # 1-byte A
+        # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
+        # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
+        # 4-byte 𠜎 - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
+        '1.2.840.113549.1.9.7' => utf8_value,
       },
       'extension_requests' => {
         'pp_uuid' => 'abcdef',
-        '1.3.6.1.4.1.34380.1.1.2' => '1234', # pp_instance_id
+        '1.3.6.1.4.1.34380.1.1.2' => utf8_value, # pp_instance_id
         '1.3.6.1.4.1.34380.1.2.1' => 'some-value', # private extension
       },
     }
@@ -107,14 +115,20 @@ describe "autosigning" do
         csr = Puppet::SSL::CertificateRequest.indirection.find(host.name)
         expect(csr.request_extensions).to have(3).items
         expect(csr.request_extensions).to include('oid' => 'pp_uuid', 'value' => 'abcdef')
-        expect(csr.request_extensions).to include('oid' => 'pp_instance_id', 'value' => '1234')
+        expect(csr.request_extensions).to include('oid' => 'pp_instance_id', 'value' => utf8_value_binary_string)
         expect(csr.request_extensions).to include('oid' => '1.3.6.1.4.1.34380.1.2.1', 'value' => 'some-value')
+      end
+
+      it "pulls custom attributes from the csr_attributes file into the certificate" do
+        csr = Puppet::SSL::CertificateRequest.indirection.find(host.name)
+        expect(csr.custom_attributes).to have(4).items
+        expect(csr.custom_attributes).to include('oid' => 'challengePassword', 'value' => utf8_value_binary_string)
       end
 
       it "copies extension requests to certificate" do
         cert = ca.sign(host.name)
         expect(cert.custom_extensions).to include('oid' => 'pp_uuid', 'value' => 'abcdef')
-        expect(cert.custom_extensions).to include('oid' => 'pp_instance_id', 'value' => '1234')
+        expect(cert.custom_extensions).to include('oid' => 'pp_instance_id', 'value' => utf8_value_binary_string)
         expect(cert.custom_extensions).to include('oid' => '1.3.6.1.4.1.34380.1.2.1', 'value' => 'some-value')
       end
 
@@ -122,6 +136,7 @@ describe "autosigning" do
         cert = ca.sign(host.name)
         cert.custom_extensions.each do |ext|
           expect(Puppet::SSL::Oids.subtree_of?('1.3.6.1.4.1.34380.2', ext['oid'])).to be_falsey
+          expect(ext['oid']).to_not eq('1.2.840.113549.1.9.7')
         end
       end
     end
