@@ -27,6 +27,14 @@ class Puppet::SSL::Validator
     Puppet::SSL::Validator::DefaultValidator.new()
   end
 
+  # Factory method for generating a validator instance that performs peer verification but
+  # does not perform cert based client authentication.
+  #
+  # @api public
+  def self.unauthenticated_validator
+    Puppet::SSL::Validator::UnauthenticatedValidator.new
+  end
+
   # Array of peer certificates
   # @return [Array<Puppet::SSL::Certificate>] peer certificates
   #
