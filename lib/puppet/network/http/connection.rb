@@ -62,9 +62,13 @@ module Puppet::Network::HTTP
     end
 
     # @!macro [new] common_options
-    #   @param options [Hash] options influencing the request made
+    #   @param options [Hash] options influencing the request made. Any
+    #   options not recognized by this class will be ignored - no error will
+    #   be thrown.
     #   @option options [Hash{Symbol => String}] :basic_auth The basic auth
-    #     :username and :password to use for the request
+    #     :username and :password to use for the request, :metric_id Ignored
+    #     by this class - used by Puppet Server only. The metric id by which
+    #     to track metrics on requests.
 
     # @param path [String]
     # @param headers [Hash{String => String}]
