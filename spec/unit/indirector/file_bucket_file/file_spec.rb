@@ -52,11 +52,42 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
                               0x2f94cc40,0x15a12deb,0xdc15f4a3,0x490786bb,
                               0x6d658673,0xa4341f7d,0x8fd75920,0xefd18d5a].pack("I" * 16)
 
-        save_bucket_file(first_contents, "/foo/bar")
+        checksum_value = save_bucket_file(first_contents, "/foo/bar")
 
+        # We expect Puppet to log an error with the path to the file
+        Puppet.expects(:err).with(regexp_matches(/Unable to verify existing FileBucket backup at '#{Puppet[:bucketdir]}.*#{checksum_value}\/contents'/))
+
+        # But the exception should not contain it
         expect do
           save_bucket_file(collision_contents, "/foo/bar")
-        end.to raise_error(Puppet::FileBucket::BucketError, /Got passed new contents/)
+        end.to raise_error(Puppet::FileBucket::BucketError, /\AExisting backup and new file have different content but same checksum, {md5}#{checksum_value}\. Verify existing backup and remove if incorrect\.\Z/)
+      end
+
+      # See PUP-1334
+      context "when the contents file exists but is corrupted and does not match the expected checksum" do
+        let(:original_contents) { "a file that will get corrupted" }
+        let(:bucket_file) { Puppet::FileBucket::File.new(original_contents) }
+        let(:contents_file) { "#{Puppet[:bucketdir]}/8/e/6/4/f/8/5/d/8e64f85dd54a412f65edabcafe44d491/contents" }
+
+        before(:each) do
+          # Ensure we're starting with a clean slate - no pre-existing backup
+          Puppet::FileSystem.unlink(contents_file) if Puppet::FileSystem.exist?(contents_file)
+          # Create initial "correct" backup
+          Puppet::FileBucket::File.indirection.save(bucket_file)
+          # Modify the contents file so that it no longer matches the SHA, simulating a corrupt backup
+          Puppet::FileSystem.unlink(contents_file) # bucket_files are read-only
+          Puppet::Util.replace_file(contents_file, 0600) { |fh| fh.puts "now with corrupted content" }
+        end
+
+        it "issues a warning that the backup will be overwritten" do
+          Puppet.expects(:warning).with(regexp_matches(/Existing backup does not match its expected sum, #{bucket_file.checksum}/))
+          Puppet::FileBucket::File.indirection.save(bucket_file)
+        end
+
+        it "overwrites the existing contents file (backup)" do
+          Puppet::FileBucket::File.indirection.save(bucket_file)
+          expect(Puppet::FileSystem.read(contents_file)).to eq(original_contents)
+        end
       end
 
       describe "when supplying a path" do
