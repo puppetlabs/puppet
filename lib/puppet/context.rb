@@ -52,7 +52,7 @@ class Puppet::Context
     elsif block
       block.call
     else
-      raise UndefinedBindingError, _("no '#{name}' in #{@table.inspect} at top of #{@stack.inspect}")
+      raise UndefinedBindingError, _("no '%{name}' in %{table} at top of %{stack}") % { name: name, table: @table.inspect, stack: @stack.inspect }
     end
   end
 
@@ -77,7 +77,7 @@ class Puppet::Context
     if @ignores.include?(name)
       @ignores.delete(name)
     else
-      raise UndefinedBindingError, _("no '#{name}' in ignores #{@ignores.inspect} at top of #{@stack.inspect}")
+      raise UndefinedBindingError, _("no '%{name}' in ignores %{ignores} at top of %{stack}") % { name: name, ignores: @ignores.inspect, stack: @stack.inspect }
     end
   end
 
@@ -90,7 +90,7 @@ class Puppet::Context
     if @rollbacks[name].nil?
       @rollbacks[name] = @stack[-1][0]
     else
-      raise DuplicateRollbackMarkError, _("Mark for '#{name}' already exists")
+      raise DuplicateRollbackMarkError, _("Mark for '%{name}' already exists") % { name: name }
     end
   end
 
@@ -104,7 +104,7 @@ class Puppet::Context
   # @api private
   def rollback(name)
     if @rollbacks[name].nil?
-      raise UnknownRollbackMarkError, _("Unknown mark '#{name}'")
+      raise UnknownRollbackMarkError, _("Unknown mark '%{name}'") % { name: name }
     end
 
     while @stack[-1][0] != @rollbacks[name]
