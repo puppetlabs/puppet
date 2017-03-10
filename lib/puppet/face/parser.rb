@@ -43,7 +43,7 @@ Puppet::Face.define(:parser, '0.0.1') do
         else
           manifest = Puppet.lookup(:current_environment).manifest
           files << manifest
-          Puppet.notice _("No manifest specified. Validating the default manifest #{manifest}")
+          Puppet.notice _("No manifest specified. Validating the default manifest %{manifest}") % { manifest: manifest }
         end
       end
       missing_files = []
@@ -55,7 +55,7 @@ Puppet::Face.define(:parser, '0.0.1') do
         end
       end
       unless missing_files.empty?
-        raise Puppet::Error, _("One or more file(s) specified did not exist:\n#{missing_files.collect {|f| " " * 3 + f + "\n"}}")
+        raise Puppet::Error, _("One or more file(s) specified did not exist:\n%{files}") % { files: missing_files.collect {|f| " " * 3 + f + "\n"} }
       end
       nil
     end

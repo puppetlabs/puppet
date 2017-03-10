@@ -118,7 +118,7 @@ Puppet::Face.define(:module, '1.0.0') do
           ]
         )
       rescue ArgumentError
-        msg = _("Could not generate directory #{name.inspect}, you must specify a dash-separated username and module name.")
+        msg = _("Could not generate directory %{name}, you must specify a dash-separated username and module name.") % { name: name.inspect }
         raise ArgumentError, msg, $!.backtrace
       end
 
@@ -126,7 +126,7 @@ Puppet::Face.define(:module, '1.0.0') do
       result = Puppet::ModuleTool::Generate.generate(metadata, options[:skip_interview])
 
       path = dest.relative_path_from(Pathname.pwd)
-      puts _("Finished; module generated in #{path}.")
+      puts _("Finished; module generated in %{path}.") % { path: path }
       result.join("\n")
     end
   end
@@ -151,7 +151,7 @@ module Puppet::ModuleTool::Generate
     begin
       puts
       puts _("Puppet uses Semantic Versioning (semver.org) to version modules.")
-      puts _("What version is this module?  [#{metadata.version}]")
+      puts _("What version is this module?  [%{version}]") % { version: metadata.version }
       metadata.update 'version' => user_input(metadata.version)
     rescue
       Puppet.err _("We're sorry, we could not parse that as a Semantic Version.")
@@ -159,11 +159,11 @@ module Puppet::ModuleTool::Generate
     end
 
     puts
-    puts _("Who wrote this module?  [#{metadata.author}]")
+    puts _("Who wrote this module?  [%{author}]") % { author: metadata.author }
     metadata.update 'author' => user_input(metadata.author)
 
     puts
-    puts _("What license does this module code fall under?  [#{metadata.license}]")
+    puts _("What license does this module code fall under?  [%{license}]") % { license: metadata.license }
     metadata.update 'license' => user_input(metadata.license)
 
     puts
@@ -175,11 +175,11 @@ module Puppet::ModuleTool::Generate
     metadata.update 'source' => user_input(metadata.source)
 
     puts
-    puts _("Where can others go to learn more about this module?#{ metadata.project_page && "  [#{metadata.project_page}]" }")
+    puts _("Where can others go to learn more about this module?%{project_page}") % { project_page: metadata.project_page && "  [#{metadata.project_page}]" }
     metadata.update 'project_page' => user_input(metadata.project_page)
 
     puts
-    puts _("Where can others go to file issues about this module?#{ metadata.issues_url && "  [#{metadata.issues_url}]" }")
+    puts _("Where can others go to file issues about this module?%{issues}") % { issues: metadata.issues_url && "  [#{metadata.issues_url}]" }
     metadata.update 'issues_url' => user_input(metadata.issues_url)
 
     puts
@@ -205,7 +205,7 @@ module Puppet::ModuleTool::Generate
   def destination(metadata)
     return @dest if defined? @dest
     @dest = Pathname.pwd + metadata.name
-    raise ArgumentError, _("#{@dest} already exists.") if @dest.exist?
+    raise ArgumentError, _("%{destination} already exists.") % { destination: @dest } if @dest.exist?
     return @dest
   end
 
@@ -213,7 +213,7 @@ module Puppet::ModuleTool::Generate
     dest = destination(metadata)
 
     puts
-    Puppet.notice _("Generating module at #{dest}...")
+    Puppet.notice _("Generating module at %{dest}...") % { dest: dest }
     FileUtils.cp_r skeleton_path, dest
 
     populate_templates(metadata, dest)

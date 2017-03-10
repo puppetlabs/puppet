@@ -121,7 +121,7 @@ Puppet::Face.define(:module, '1.0.0') do
 
     when_invoked do |name, options|
       Puppet::ModuleTool.set_option_defaults options
-      Puppet.notice _("Preparing to install into #{options[:target_dir]} ...")
+      Puppet.notice _("Preparing to install into %{dir} ...") % { dir: options[:target_dir] }
 
       install_dir = Puppet::ModuleTool::InstallDirectory.new(Pathname.new(options[:target_dir]))
       Puppet::ModuleTool::Applications::Installer.run(name, install_dir, options)
@@ -129,7 +129,7 @@ Puppet::Face.define(:module, '1.0.0') do
 
     when_rendering :console do |return_value, name, options|
       if return_value[:result] == :noop
-        Puppet.notice _("Module #{name} #{return_value[:version]} is already installed.")
+        Puppet.notice _("Module %{name} %{version} is already installed.") % { name: name, version: return_value[:version] }
         exit 0
       elsif return_value[:result] == :failure
         Puppet.err(return_value[:error][:multiline])

@@ -33,7 +33,7 @@ Puppet::Face.define(:generate, '0.1.0') do
       default_to { 'pcore' }
 
       before_action do |_, _, options|
-        raise ArgumentError, _("'#{options[:format]}' is not a supported format for type generation.") unless ['pcore'].include?(options[:format])
+        raise ArgumentError, _("'%{format}' is not a supported format for type generation.") % { format: options[:format] } unless ['pcore'].include?(options[:format])
       end
     end
 
@@ -53,7 +53,7 @@ Puppet::Face.define(:generate, '0.1.0') do
       path_to_env = environment.configuration.path_to_env
       outputdir = File.join(path_to_env, '.resource_types')
       if Puppet::FileSystem.exist?(outputdir) && !Puppet::FileSystem.directory?(outputdir)
-        raise ArgumentError, _("The output directory '#{outputdir}' exists and is not a directory")
+        raise ArgumentError, _("The output directory '%{outputdir}' exists and is not a directory") % { outputdir: outputdir }
       end
       Puppet::FileSystem::mkpath(outputdir)
 

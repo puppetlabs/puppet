@@ -31,7 +31,7 @@ Puppet::Face.define(:module, '1.0.0') do
         raise results[:error][:multiline]
       end
 
-      return _("No results found for '#{term}'.") if results[:answers].empty?
+      return _("No results found for '%{term}'.") % { term: term } if results[:answers].empty?
 
       padding = '  '
       headers = {

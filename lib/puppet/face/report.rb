@@ -42,9 +42,9 @@ Puppet::Indirector::Face.define(:report, '0.0.1') do
       begin
         Puppet::Transaction::Report.indirection.terminus_class = :rest
         Puppet::Face[:report, "0.0.1"].save(report)
-        Puppet.notice _("Uploaded report for #{report.name}")
+        Puppet.notice _("Uploaded report for %{name}") % { name: report.name }
       rescue => detail
-        Puppet.log_exception(detail, _("Could not send report: #{detail}"))
+        Puppet.log_exception(detail, _("Could not send report: %{detail}") % { detail: detail })
       end
     end
   end

@@ -24,7 +24,7 @@ Puppet::Face.define(:file, '0.0.1') do
         require 'puppet/file_serving'
         require 'puppet/file_serving/content'
         unless content = Puppet::FileServing::Content.indirection.find(sum)
-          raise _("Could not find metadata for #{sum}")
+          raise _("Could not find metadata for %{sum}") % { sum: sum }
         end
         pathname = Puppet::FileSystem.pathname(content.full_path())
         file = Puppet::FileBucket::File.new(pathname)
@@ -38,17 +38,17 @@ Puppet::Face.define(:file, '0.0.1') do
 
         Puppet::FileBucket::File.indirection.terminus_class = :file
         if Puppet::FileBucket::File.indirection.head(key)
-          Puppet.info _("Content for '#{sum}' already exists")
+          Puppet.info _("Content for '%{sum}' already exists") % { sum: sum }
           return
         end
 
         Puppet::FileBucket::File.indirection.terminus_class = :rest
-        raise _("Could not download content for '#{sum}'") unless file = Puppet::FileBucket::File.indirection.find(key)
+        raise _("Could not download content for '%{sum}'") % { sum: sum } unless file = Puppet::FileBucket::File.indirection.find(key)
       end
 
 
       Puppet::FileBucket::File.indirection.terminus_class = :file
-      Puppet.notice _("Saved #{sum} to filebucket")
+      Puppet.notice _("Saved %{sum} to filebucket") % { sum: sum }
       Puppet::FileBucket::File.indirection.save file
       return nil
     end

@@ -139,8 +139,7 @@ Puppet::Face.define(:module, '1.0.0') do
             parent_name        = dep[:parent][:name].gsub('/', '-')
             parent_version     = dep[:parent][:version]
 
-            msg = "'#{parent_name}' (#{parent_version})"
-            msg << _(" requires '#{dep_name}' (#{version_constraint})")
+            msg = _("'%{parent_name}' (%{parent_version}) requires '%{dependency_name}' (%{dependency_version})") % { parent_name: parent_name, parent_version: parent_version, dependency_name: dep_name, dependency_version: version_constraint }
             @unmet_deps[type][dep[:name]][:errors] << msg
             @unmet_deps[type][dep[:name]][:parent] = {
               :name    => dep[:parent][:name],

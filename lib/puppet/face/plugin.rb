@@ -51,7 +51,7 @@ Puppet::Face.define(:plugin, '0.0.1') do
       if value.empty? then
         _("No plugins downloaded.")
       else
-        _("Downloaded these plugins: #{value.join(', ')}")
+        _("Downloaded these plugins: %{plugins}") % { plugins: value.join(', ') }
       end
     end
   end

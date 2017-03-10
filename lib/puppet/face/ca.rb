@@ -6,7 +6,7 @@ Puppet::Face.define(:ca, '0.1.0') do
 
   summary _("Local Puppet Certificate Authority management.")
 
-  description _(<<-TEXT)
+  description <<-TEXT
     This provides local management of the Puppet Certificate Authority.
 
     You can use this subcommand to sign outstanding certificate requests, list
@@ -16,7 +16,7 @@ Puppet::Face.define(:ca, '0.1.0') do
   action :list do
     summary _("List certificates and/or certificate requests.")
 
-    description _(<<-TEXT)
+    description <<-TEXT
       This will list the current certificates and certificate signing requests
       in the Puppet CA.  You will also get the fingerprint, and any certificate
       verification failure reported.
@@ -41,7 +41,7 @@ Puppet::Face.define(:ca, '0.1.0') do
     option "--subject " + _("PATTERN") do
       summary _("Only list if the subject matches PATTERN.")
 
-      description _(<<-TEXT)
+      description <<-TEXT
         Only include certificates or requests where subject matches PATTERN.
 
         PATTERN is interpreted as a regular expression, allowing complex
@@ -50,8 +50,10 @@ Puppet::Face.define(:ca, '0.1.0') do
     end
 
     when_invoked do |options|
+      #TRANSLATORS "CA" stands for "certificate authority"
       raise _("Not a CA") unless Puppet::SSL::CertificateAuthority.ca?
       unless ca = Puppet::SSL::CertificateAuthority.instance
+        #TRANSLATORS "CA" stands for "certificate authority"
         raise _("Unable to fetch the CA")
       end
       Puppet::SSL::Host.ca_location = :only
@@ -150,13 +152,13 @@ Puppet::Face.define(:ca, '0.1.0') do
         ca.generate(host, :dns_alt_names => options[:dns_alt_names])
       rescue RuntimeError => e
         if e.to_s =~ /already has a requested certificate/
-          _("#{host} already has a certificate request; use sign instead")
+          _("%{host} already has a certificate request; use sign instead") % { host: host }
         else
           raise
         end
       rescue ArgumentError => e
         if e.to_s =~ /A Certificate already exists for /
-          _("#{host} already has a certificate")
+          _("%{host} already has a certificate") % { host: host }
         else
           raise
         end
@@ -206,14 +208,17 @@ Puppet::Face.define(:ca, '0.1.0') do
   end
 
   action :fingerprint do
+    #TRANSLATORS "DIGEST" refers to a hash algorithm
     summary _("Print the DIGEST (defaults to the signing algorithm) fingerprint of a host's certificate.")
     option "--digest " + _("ALGORITHM") do
       summary _("The hash algorithm to use when displaying the fingerprint")
     end
 
     when_invoked do |host, options|
+      #TRANSLATORS "CA" stands for "certificate authority"
       raise _("Not a CA") unless Puppet::SSL::CertificateAuthority.ca?
       unless Puppet::SSL::CertificateAuthority.instance
+        #TRANSLATORS "CA" stands for "certificate authority"
         raise _("Unable to fetch the CA")
       end
       Puppet::SSL::Host.ca_location = :only
@@ -229,8 +234,10 @@ Puppet::Face.define(:ca, '0.1.0') do
   action :verify do
     summary "Verify the named certificate against the local CA certificate."
     when_invoked do |host, options|
+      #TRANSLATORS "CA" stands for "certificate authority"
       raise _("Not a CA") unless Puppet::SSL::CertificateAuthority.ca?
       unless ca = Puppet::SSL::CertificateAuthority.instance
+        #TRANSLATORS "CA" stands for "certificate authority"
         raise _("Unable to fetch the CA")
       end
       Puppet::SSL::Host.ca_location = :only
@@ -250,7 +257,7 @@ Puppet::Face.define(:ca, '0.1.0') do
       if value[:valid]
         nil
       else
-        _("Could not verify #{value[:host]}: #{value[:error]}")
+        _("Could not verify %{host}: %{error}") % { host: value[:host], error: value[:error] }
       end
     end
   end

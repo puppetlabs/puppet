@@ -92,7 +92,7 @@ Puppet::Face.define(:epp, '0.0.1') do
         end
       end
       if !missing_files.empty?
-        raise Puppet::Error, _("One or more file(s) specified did not exist:\n") + missing_files.map { |f| _("   #{f}") }.join("\n")
+        raise Puppet::Error, _("One or more file(s) specified did not exist:\n") + missing_files.map { |f| "   #{f}" }.join("\n")
       else
         # Exit with 1 if there were errors
         raise Puppet::Error, _("Errors while validating epp") unless status
@@ -384,10 +384,10 @@ Puppet::Face.define(:epp, '0.0.1') do
           Puppet.err(_("Only .yaml or .pp can be used as a --values_file"))
         end
       rescue => e
-        Puppet.err(_("Could not load --values_file #{e.message}"))
+        Puppet.err(_("Could not load --values_file %{error}") % { error: e.message })
       end
       if !(template_values.nil? || template_values.is_a?(Hash))
-        Puppet.err(_("--values_file option must evaluate to a Hash or undef/nil, got: '#{template_values.class}'"))
+        Puppet.err(_("--values_file option must evaluate to a Hash or undef/nil, got: '%{template_class}'") % { template_class: template_values.class })
       end
     end
 
@@ -400,7 +400,7 @@ Puppet::Face.define(:epp, '0.0.1') do
       when Hash
         template_values.nil? ? result : template_values.merge(result)
       else
-        Puppet.err(_("--values option must evaluate to a Hash or undef, got: '#{result.class}'"))
+        Puppet.err(_("--values option must evaluate to a Hash or undef, got: '%{values_class}'") % { values_class: result.class })
       end
     else
       template_values
@@ -486,7 +486,7 @@ Puppet::Face.define(:epp, '0.0.1') do
       end
 
       unless given_facts.instance_of?(Hash)
-        raise _("Incorrect formatted data in #{fact_file} given via the --facts flag")
+        raise _("Incorrect formatted data in %{fact_file} given via the --facts flag") % { fact_file: fact_file }
       end
       # It is difficult to add to or modify the set of facts once the node is created
       # as changes does not show up in parameters. Rather than manually patching up
