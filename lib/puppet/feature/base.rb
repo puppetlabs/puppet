@@ -32,7 +32,8 @@ Puppet.features.add(:microsoft_windows) do
     require 'win32/service'
     true
   rescue LoadError => err
-    warn _("Cannot run on Microsoft Windows without the win32-process, win32-dir and win32-service gems: #{err}") unless Puppet.features.posix?
+    #TRANSLATORS "win32-process", "win32-dir", and "win32-service" are program names and should not be translated
+    warn _("Cannot run on Microsoft Windows without the win32-process, win32-dir and win32-service gems: %{err}") % { err: err } unless Puppet.features.posix?
   end
 end
 
