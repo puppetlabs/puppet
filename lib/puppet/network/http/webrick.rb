@@ -97,7 +97,7 @@ class Puppet::Network::HTTP::WEBrick
     # Get the cached copy.  We know it's been generated, too.
     host = Puppet::SSL::Host.localhost
 
-    raise Puppet::Error, _("Could not retrieve certificate for #{host.name} and not running on a valid certificate authority") unless host.certificate
+    raise Puppet::Error, _("Could not retrieve certificate for %{host} and not running on a valid certificate authority") % { value0: host.name } unless host.certificate
 
     results[:SSLPrivateKey] = host.key.content
     results[:SSLCertificate] = host.certificate.content

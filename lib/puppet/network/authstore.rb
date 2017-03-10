@@ -33,7 +33,7 @@ module Puppet
         return decl.result
       end
 
-      info _("defaulting to no access for #{name}")
+      info _("defaulting to no access for %{name}") % { name: name }
       false
     end
 
@@ -254,7 +254,7 @@ module Puppet
           bits = 8*segments.length
           [:inexact, bits, IPAddr.new((segments+[0,0,0])[0,4].join(".") + "/#{bits}")]
         else
-          raise AuthStoreError, _("Invalid IP pattern #{value}")
+          raise AuthStoreError, _("Invalid IP pattern %{value}") % { value: value }
         end
       end
 

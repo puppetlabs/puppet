@@ -28,11 +28,12 @@ class AuthConfigParser
         right = rights.newright(name, count, @file)
       when /^\s*(allow(?:_ip)?|deny(?:_ip)?|method|environment|auth(?:enticated)?)\s+(.+?)(\s*#.*)?$/
         if right.nil?
-          raise Puppet::ConfigurationError, _("Missing or invalid 'path' before right directive at line #{count} of #{@file}")
+          #TRANSLATORS "path" is a configuration file entry and should not be translated
+          raise Puppet::ConfigurationError, _("Missing or invalid 'path' before right directive at line %{count} of %{file}") % { count: count, file: @file }
         end
         parse_right_directive(right, $1, $2, count)
       else
-        raise Puppet::ConfigurationError, _("Invalid line #{count}: #{line}")
+        raise Puppet::ConfigurationError, _("Invalid line %{count}: %{line}") % { count: count, line: line }
       end
       count += 1
     }
@@ -65,7 +66,7 @@ class AuthConfigParser
       modify_right(right, :restrict_authenticated, value, _("adding authentication %s"), count)
     else
       raise Puppet::ConfigurationError,
-        _("Invalid argument '#{var}' at line #{count}")
+        _("Invalid argument '%{var}' at line %{count}") % { var: var, count: count }
     end
   end
 
@@ -76,7 +77,7 @@ class AuthConfigParser
         right.info msg % val
         right.send(method, val)
       rescue Puppet::AuthStoreError => detail
-        raise Puppet::ConfigurationError, _("#{detail} at line #{count} of #{@file}"), detail.backtrace
+        raise Puppet::ConfigurationError, _("%{detail} at line %{count} of %{file}") % { detail: detail, count: count, file: @file }, detail.backtrace
       end
     end
   end

@@ -8,7 +8,7 @@ class Puppet::Network::HTTP::API::Master::V3::Environment
     code_id = request.params[:code_id]
 
     if env.nil?
-      raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(_("#{env_name} is not a known environment"), Puppet::Network::HTTP::Issues::RESOURCE_NOT_FOUND)
+      raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(_("%{env_name} is not a known environment") % { env_name: env_name }, Puppet::Network::HTTP::Issues::RESOURCE_NOT_FOUND)
     end
 
     catalog = Puppet::Parser::EnvironmentCompiler.compile(env, code_id).to_resource
@@ -49,7 +49,7 @@ class Puppet::Network::HTTP::API::Master::V3::Environment
       nodes.each do |node, comps|
         comps = [comps] unless comps.is_a?(Array)
         comps.each do |comp|
-          raise Puppet::ParseError.new(_("Application #{app} assigns multiple nodes to component #{comp}"), file, line) if node_mapping.include?(comp.ref)
+          raise Puppet::ParseError.new(_("Application %{app} assigns multiple nodes to component %{comp}") % { app: app, comp: comp }, file, line) if node_mapping.include?(comp.ref)
           node_mapping[comp.ref] = node.title
         end
       end

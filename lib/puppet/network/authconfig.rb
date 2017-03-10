@@ -51,7 +51,7 @@ module Puppet
     def insert_default_acl
       self.class.default_acl.each do |acl|
         unless rights[acl[:acl]]
-          Puppet.info _("Inserting default '#{acl[:acl]}' (auth #{acl[:authenticated]}) ACL")
+          Puppet.info _("Inserting default '%{acl}' (auth %{auth}) ACL") % { acl: acl[:acl], auth: acl[:authenticated] }
           mk_acl(acl)
         end
       end
@@ -79,7 +79,7 @@ module Puppet
     # is denied.
     def check_authorization(method, path, params)
       if authorization_failure_exception = @rights.is_request_forbidden_and_why?(method, path, params)
-        Puppet.warning(_("Denying access: #{authorization_failure_exception}"))
+        Puppet.warning(_("Denying access: %{authorization_failure_exception}") % { authorization_failure_exception: authorization_failure_exception })
         raise authorization_failure_exception
       end
     end

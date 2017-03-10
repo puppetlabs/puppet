@@ -27,7 +27,7 @@ module Puppet::Network::HTTP::Compression
       when nil, 'identity'
         return response.body
       else
-        raise Net::HTTPError.new(_("Unknown content encoding - #{response['content-encoding']}"), response)
+        raise Net::HTTPError.new(_("Unknown content encoding - %{encoding}") % { encoding: response['content-encoding'] }, response)
       end
     end
 
@@ -40,7 +40,7 @@ module Puppet::Network::HTTP::Compression
       when nil, 'identity'
         uncompressor = IdentityAdapter.new
       else
-        raise Net::HTTPError.new(_("Unknown content encoding - #{response['content-encoding']}"), response)
+        raise Net::HTTPError.new(_("Unknown content encoding - %{encoding}") % { encoding: response['content-encoding'] }, response)
       end
 
       yield uncompressor
