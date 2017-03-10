@@ -181,11 +181,11 @@ class Puppet::Parameter::ValueCollection
     return if empty?
 
     unless @values.detect { |name, v| v.match?(value) }
-      str = _("Invalid value #{value.inspect}. ")
+      str = _("Invalid value %{value}. ") % { value: value.inspect }
 
-      str += _("Valid values are #{values.join(", ")}. ") unless values.empty?
+      str += _("Valid values are %{value_list}. ") % { value_list: values.join(", ") } unless values.empty?
 
-      str += _("Valid values match #{regexes.join(", ")}.") unless regexes.empty?
+      str += _("Valid values match %{pattern}.") % { pattern: regexes.join(", ") } unless regexes.empty?
 
       raise ArgumentError, str
     end

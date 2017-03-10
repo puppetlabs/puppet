@@ -119,7 +119,7 @@ class Puppet::Node
       merge(@facts.values)
     end
   rescue => detail
-    error = Puppet::Error.new(_("Could not retrieve facts for #{name}: #{detail}"))
+    error = Puppet::Error.new(_("Could not retrieve facts for %{name}: %{detail}") % { name: name, detail: detail })
     error.set_backtrace(detail.backtrace)
     raise error
   end
@@ -128,7 +128,7 @@ class Puppet::Node
   def merge(params)
     params.each do |name, value|
       if @parameters.include?(name)
-        Puppet::Util::Warnings.warnonce(_("The node parameter '#{name}' for node '#{@name}' was already set to '#{@parameters[name]}'. It could not be set to '#{value}'"))
+        Puppet::Util::Warnings.warnonce(_("The node parameter '%{param_name}' for node '%{node_name}' was already set to '%{value}'. It could not be set to '%{desired_value}'") % { param_name: name, node_name: @name, value: @parameters[name], desired_value: value })
       else
         @parameters[name] = value
       end
@@ -159,7 +159,7 @@ class Puppet::Node
       if parameters["hostname"] and parameters["domain"]
         fqdn = parameters["hostname"] + "." + parameters["domain"]
       else
-        Puppet.warning _("Host is missing hostname and/or domain: #{name}")
+        Puppet.warning _("Host is missing hostname and/or domain: %{name}") % { name: name }
       end
     end
 
@@ -191,7 +191,7 @@ class Puppet::Node
   # Ensures the data is frozen
   #
   def trusted_data=(data)
-    Puppet.warning(_("Trusted node data modified for node #{name}")) unless @trusted_data.nil?
+    Puppet.warning(_("Trusted node data modified for node %{name}") % { name: name }) unless @trusted_data.nil?
     @trusted_data = data.freeze
   end
 end
