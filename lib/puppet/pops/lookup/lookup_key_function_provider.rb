@@ -28,7 +28,7 @@ class LookupKeyFunctionProvider < FunctionProvider
       lookup_invocation.report_found(root_key, validate_data_value(self, value))
     else
       lookup_invocation.with(:location, location) do
-        value = lookup_key(root_key, lookup_invocation, location.location, merge)
+        value = lookup_key(root_key, lookup_invocation, location, merge)
         lookup_invocation.report_found(root_key, validate_data_value(self, value))
       end
     end
@@ -80,79 +80,6 @@ class V3LookupKeyFunctionProvider < LookupKeyFunctionProvider
           invoke_with_location(lookup_invocation, location, root_key, merge)
         end
       end
-    end
-  end
-end
-
-class V3BackendFunctionProvider < LookupKeyFunctionProvider
-  TAG = 'hiera3_backend'.freeze
-
-  def lookup_key(key, lookup_invocation, location, merge)
-    @backend ||= instantiate_backend(lookup_invocation)
-    config = parent_data_provider.config(lookup_invocation)
-
-    # A merge_behavior retrieved from hiera.yaml must not be converted here. Instead, passing the symbol :hash
-    # tells the V3 backend to pick it up from the config.
-    resolution_type = lookup_invocation.hiera_v3_merge_behavior? ? :hash : convert_merge(merge)
-    @backend.lookup(key, lookup_invocation.scope, lookup_invocation.hiera_v3_location_overrides, resolution_type, context = {:recurse_guard => nil})
-  end
-
-  private
-
-  def instantiate_backend(lookup_invocation)
-    backend_name = options[HieraConfig::KEY_BACKEND]
-    begin
-      require 'hiera/backend'
-      require "hiera/backend/#{backend_name.downcase}_backend"
-      backend = Hiera::Backend.const_get("#{backend_name.capitalize}_backend").new
-      return backend.method(:lookup).arity == 4 ? Hiera::Backend::Backend1xWrapper.new(backend) : backend
-    rescue LoadError => e
-      lookup_invocation.report_text { "Unable to load backend '#{backend_name}': #{e.message}" }
-      throw :no_such_key
-    rescue NameError => e
-      lookup_invocation.report_text { "Unable to instantiate backend '#{backend_name}': #{e.message}" }
-      throw :no_such_key
-    end
-  end
-
-  # Converts a lookup 'merge' parameter argument into a Hiera 'resolution_type' argument.
-  #
-  # @param merge [String,Hash,nil] The lookup 'merge' argument
-  # @return [Symbol,Hash,nil] The Hiera 'resolution_type'
-  def convert_merge(merge)
-    case merge
-    when nil
-    when 'first', 'default'
-      # Nil is OK. Defaults to Hiera :priority
-      nil
-    when Puppet::Pops::MergeStrategy
-      convert_merge(merge.configuration)
-    when 'unique'
-      # Equivalent to Hiera :array
-      :array
-    when 'hash'
-      # Equivalent to Hiera :hash with default :native merge behavior. A Hash must be passed here
-      # to override possible Hiera deep merge config settings.
-      { :behavior => :native }
-    when 'deep', 'unconstrained_deep'
-      # Equivalent to Hiera :hash with :deeper merge behavior.
-      { :behavior => :deeper }
-    when 'reverse_deep'
-      # Equivalent to Hiera :hash with :deep merge behavior.
-      { :behavior => :deep }
-    when Hash
-      strategy = merge['strategy']
-      case strategy
-      when 'deep', 'unconstrained_deep', 'reverse_deep'
-        result = { :behavior => strategy == 'reverse_deep' ? :deep : :deeper }
-        # Remaining entries must have symbolic keys
-        merge.each_pair { |k,v| result[k.to_sym] = v unless k == 'strategy' }
-        result
-      else
-        convert_merge(strategy)
-      end
-    else
-      raise Puppet::DataBinding::LookupError, "Unrecognized value for request 'merge' parameter: '#{merge}'"
     end
   end
 end
