@@ -44,7 +44,8 @@ Puppet::Type.type(:package).provide :pip,
 
     # Pip can also upgrade pip, but it's not listed in freeze so need to special case it
     # Pip list would also show pip installed version, but "pip list" doesn't exist for older versions of pip (E.G v1.0)
-    if version = self.pip_version
+    # Not needed when "pip freeze --all" is available
+    if Puppet::Util::Package.versioncmp(self.pip_version, '8.1.0') == -1 && version = self.pip_version
       packages << new({:ensure => version, :name => File.basename(pip_cmd), :provider => name})
     end
 
