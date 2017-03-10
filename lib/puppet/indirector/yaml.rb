@@ -11,7 +11,7 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
     begin
       return fix(Puppet::Util::Yaml.load_file(file))
     rescue Puppet::Util::Yaml::YamlLoadError => detail
-      raise Puppet::Error, _("Could not parse YAML data for #{indirection.name} #{request.key}: #{detail}"), detail.backtrace
+      raise Puppet::Error, _("Could not parse YAML data for %{indirection} %{request}: %{detail}") % { indirection: indirection.name, request: request.key, detail: detail }, detail.backtrace
     end
   end
 
@@ -29,14 +29,14 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
     begin
       Puppet::Util::Yaml.dump(request.instance, file)
     rescue TypeError => detail
-      Puppet.err _("Could not save #{self.name} #{request.key}: #{detail}")
+      Puppet.err _("Could not save %{indirection} %{request}: %{detail}") % { indirection: self.name, request: request.key, detail: detail }
     end
   end
 
   # Return the path to a given node's file.
   def path(name,ext='.yaml')
     if name =~ Puppet::Indirector::BadNameRegexp then
-      Puppet.crit(_("directory traversal detected in #{self.class}: #{name.inspect}"))
+      Puppet.crit(_("directory traversal detected in %{indirection}: %{name}") % { indirection: self.class, name: name.inspect })
       raise ArgumentError, _("invalid key")
     end
 

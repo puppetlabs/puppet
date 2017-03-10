@@ -46,7 +46,7 @@ class Puppet::Indirector::Face < Puppet::Face
         result = indirection.__send__(method, key, options)
       end
     rescue => detail
-      message = _("Could not call '#{method}' on '#{indirection_name}': #{detail}")
+      message = _("Could not call '%{method}' on '%{indirection}': %{detail}") % { method: method, indirection: indirection_name, detail: detail }
       Puppet.log_exception(detail, message)
       raise RuntimeError, message, detail.backtrace
     end
@@ -113,9 +113,9 @@ class Puppet::Indirector::Face < Puppet::Face
 
     when_invoked do |options|
       if t = indirection.terminus_class
-        _("Run mode '#{Puppet.run_mode.name}': #{t}")
+        _("Run mode '%{mode}': %{terminus}") % { mode: Puppet.run_mode.name, terminus: t }
       else
-        _("No default terminus class for run mode '#{Puppet.run_mode.name}'")
+        _("No default terminus class for run mode '%{mode}'") % { mode: Puppet.run_mode.name }
       end
     end
   end
@@ -137,7 +137,7 @@ class Puppet::Indirector::Face < Puppet::Face
   def indirection
     unless @indirection
       @indirection = Puppet::Indirector::Indirection.instance(indirection_name)
-      @indirection or raise _("Could not find terminus for #{indirection_name}")
+      @indirection or raise _("Could not find terminus for %{indirection}") % { indirection: indirection_name }
     end
     @indirection
   end
@@ -146,7 +146,7 @@ class Puppet::Indirector::Face < Puppet::Face
     begin
       indirection.terminus_class = from
     rescue => detail
-      msg = _("Could not set '#{indirection.name}' terminus to '#{from}' (#{detail}); valid terminus types are #{self.class.terminus_classes(indirection.name).join(", ") }")
+      msg = _("Could not set '%{indirection}' terminus to '%{from}' (%{detail}); valid terminus types are %{types}") % { indirection: indirection.name, from: from, detail: detail, types: self.class.terminus_classes(indirection.name).join(", ") }
       raise detail, msg, detail.backtrace
     end
   end

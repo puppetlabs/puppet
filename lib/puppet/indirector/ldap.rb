@@ -62,13 +62,14 @@ class Puppet::Indirector::Ldap < Puppet::Indirector::Terminus
   # Create an ldap connection.
   def connection
     unless @connection
+      #TRANSLATORS "ruby/ldap libraries" are code dependencies
       raise Puppet::Error, _("Could not set up LDAP Connection: Missing ruby/ldap libraries") unless Puppet.features.ldap?
       begin
         conn = Puppet::Util::Ldap::Connection.instance
         conn.start
         @connection = conn.connection
       rescue => detail
-        message = _("Could not connect to LDAP: #{detail}")
+        message = _("Could not connect to LDAP: %{detail}") % { detail: detail }
         Puppet.log_exception(detail, message)
         raise Puppet::Error, message, detail.backtrace
       end

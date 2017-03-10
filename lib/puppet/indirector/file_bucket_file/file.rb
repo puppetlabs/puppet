@@ -25,11 +25,11 @@ module Puppet::FileBucketFile
       if Puppet::FileSystem.exist?(contents_file) && matches(paths_file, files_original_path)
         if request.options[:diff_with]
           other_contents_file = path_for(request.options[:bucket_path], request.options[:diff_with], 'contents')
-          raise _("could not find diff_with #{request.options[:diff_with]}") unless Puppet::FileSystem.exist?(other_contents_file)
+          raise _("could not find diff_with %{diff}") % { diff: request.options[:diff_with] } unless Puppet::FileSystem.exist?(other_contents_file)
           raise _("Unable to diff on this platform") unless Puppet[:diff] != ""
           return diff(Puppet::FileSystem.path_string(contents_file), Puppet::FileSystem.path_string(other_contents_file))
         else
-          Puppet.info _("FileBucket read #{checksum}")
+          Puppet.info _("FileBucket read %{checksum}") % { checksum: checksum }
           model.new(Puppet::FileSystem.binread(contents_file))
         end
       else
@@ -193,9 +193,9 @@ module Puppet::FileBucketFile
       if path == '' # Treat "md5/<checksum>/" like "md5/<checksum>"
         path = nil
       end
-      raise ArgumentError, _("Unsupported checksum type #{checksum_type.inspect}") if checksum_type != Puppet[:digest_algorithm]
+      raise ArgumentError, _("Unsupported checksum type %{checksum_type}") % { checksum_type: checksum_type.inspect } if checksum_type != Puppet[:digest_algorithm]
       expected = method(checksum_type + "_hex_length").call
-      raise _("Invalid checksum #{checksum.inspect}") if checksum !~ /^[0-9a-f]{#{expected}}$/
+      raise _("Invalid checksum %{checksum}") % { checksum: checksum.inspect } if checksum !~ /^[0-9a-f]{#{expected}}$/
       [checksum, path]
     end
 

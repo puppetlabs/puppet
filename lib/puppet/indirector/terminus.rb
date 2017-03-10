@@ -32,7 +32,7 @@ class Puppet::Indirector::Terminus
       elsif ind = Puppet::Indirector::Indirection.instance(name)
         @indirection = ind
       else
-        raise ArgumentError, _("Could not find indirection instance #{name} for #{self.name}")
+        raise ArgumentError, _("Could not find indirection instance %{name} for %{terminus}") % { name: name, terminus: self.name }
       end
     end
 
@@ -157,13 +157,13 @@ class Puppet::Indirector::Terminus
 
   def validate_key(request)
     unless request.key == request.instance.name
-      raise Puppet::Indirector::ValidationError, _("Instance name #{request.instance.name.inspect} does not match requested key #{request.key.inspect}")
+      raise Puppet::Indirector::ValidationError, _("Instance name %{name} does not match requested key %{key}") % { name: request.instance.name.inspect, key: request.key.inspect }
     end
   end
 
   def validate_model(request)
     unless model === request.instance
-      raise Puppet::Indirector::ValidationError, _("Invalid instance type #{request.instance.class.inspect}, expected #{model.inspect}")
+      raise Puppet::Indirector::ValidationError, _("Invalid instance type %{klass}, expected %{model_type}") % { klass: request.instance.class.inspect, model_type: model.inspect }
     end
   end
 end

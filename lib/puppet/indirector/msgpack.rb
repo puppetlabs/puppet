@@ -23,14 +23,14 @@ class Puppet::Indirector::Msgpack < Puppet::Indirector::Terminus
 
     Puppet::Util.replace_file(filename, 0660) {|f| f.print to_msgpack(request.instance) }
   rescue TypeError => detail
-    Puppet.log_exception(detail, _("Could not save #{self.name} #{request.key}: #{detail}"))
+    Puppet.log_exception(detail, _("Could not save %{name} %{request}: %{detail}") % { name: self.name, request: request.key, detail: detail })
   end
 
   def destroy(request)
     Puppet::FileSystem.unlink(path(request.key))
   rescue => detail
     unless detail.is_a? Errno::ENOENT
-      raise Puppet::Error, _("Could not destroy #{self.name} #{request.key}: #{detail}"), detail.backtrace
+      raise Puppet::Error, _("Could not destroy %{name} %{request}: %{detail}") % { name: self.name, request: request.key, detail: detail }, detail.backtrace
     end
     1                           # emulate success...
   end
@@ -44,7 +44,7 @@ class Puppet::Indirector::Msgpack < Puppet::Indirector::Terminus
   # Return the path to a given node's file.
   def path(name, ext = '.msgpack')
     if name =~ Puppet::Indirector::BadNameRegexp then
-      Puppet.crit(_("directory traversal detected in #{self.class}: #{name.inspect}"))
+      Puppet.crit(_("directory traversal detected in %{indirection}: %{name}") % { indirection: self.class, name: name.inspect })
       raise ArgumentError, _("invalid key")
     end
 
@@ -62,13 +62,14 @@ class Puppet::Indirector::Msgpack < Puppet::Indirector::Terminus
     rescue Errno::ENOENT
       return nil
     rescue => detail
-      raise Puppet::Error, _("Could not read MessagePack data for #{indirection.name} #{key}: #{detail}"), detail.backtrace
+      #TRANSLATORS "MessagePack" is a program name and should not be translated
+      raise Puppet::Error, _("Could not read MessagePack data for %{indirection} %{key}: %{detail}") % { indirection: indirection.name, key: key, detail: detail }, detail.backtrace
     end
 
     begin
       return from_msgpack(msgpack)
     rescue => detail
-      raise Puppet::Error, _("Could not parse MessagePack data for #{indirection.name} #{key}: #{detail}"), detail.backtrace
+      raise Puppet::Error, _("Could not parse MessagePack data for %{indirection} %{key}: %{detail}") % { indirection: indirection.name, key: key, detail: detail }, detail.backtrace
     end
   end
 

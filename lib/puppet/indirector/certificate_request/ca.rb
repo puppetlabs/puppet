@@ -9,14 +9,14 @@ class Puppet::SSL::CertificateRequest::Ca < Puppet::Indirector::SslFile
   def save(request)
     if host = Puppet::SSL::Host.indirection.find(request.key)
       if Puppet[:allow_duplicate_certs]
-        Puppet.notice _("#{request.key} already has a #{host.state} certificate; new certificate will overwrite it")
+        Puppet.notice _("%{request} already has a %{host} certificate; new certificate will overwrite it") % { request: request.key, host: host.state }
       else
-        raise _("#{request.key} already has a #{host.state} certificate; ignoring certificate request")
+        raise _("%{request} already has a %{host} certificate; ignoring certificate request") % { request: request.key, host: host.state }
       end
     end
 
     result = super
-    Puppet.notice _("#{request.key} has a waiting certificate request")
+    Puppet.notice _("%{request} has a waiting certificate request") % { request: request.key }
     result
   end
 end

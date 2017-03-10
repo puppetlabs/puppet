@@ -36,7 +36,7 @@ class Puppet::Transaction::Report::Processor < Puppet::Indirector::Code
         newrep.extend(mod)
         newrep.process
       rescue => detail
-        Puppet.log_exception(detail, _("Report #{name} failed: #{detail}"))
+        Puppet.log_exception(detail, _("Report %{report} failed: %{detail}") % { report: name, detail: detail })
       end
     end
   end
@@ -52,7 +52,7 @@ class Puppet::Transaction::Report::Processor < Puppet::Indirector::Code
       if mod = Puppet::Reports.report(name)
         yield(mod)
       else
-        Puppet.warning _("No report named '#{name}'")
+        Puppet.warning _("No report named '%{name}'") % { name: name }
       end
     end
   end

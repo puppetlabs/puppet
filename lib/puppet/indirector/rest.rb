@@ -180,7 +180,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
       # that makes a user aware of the reason for the failure.
       #
       content_type, body = parse_response(response)
-      msg = _("Find #{elide(uri_with_query_string, 100)} resulted in 404 with the message: #{body}")
+      msg = _("Find %{uri} resulted in 404 with the message: %{body}") % { uri: elide(uri_with_query_string, 100), body: body }
       raise Puppet::Error, msg
     else
       nil
@@ -288,7 +288,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
       returned_message = uncompress_body(response)
     end
 
-    message = _("Error #{response.code} on SERVER: #{returned_message}")
+    message = _("Error %{code} on SERVER: %{returned_message}") % { code: response.code, returned_message: returned_message }
     Net::HTTPError.new(message, response)
   end
 

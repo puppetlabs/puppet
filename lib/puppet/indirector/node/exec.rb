@@ -57,13 +57,13 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
       when Symbol
         hash[data[0]] = data[1]
       else
-        raise Puppet::Error, _("key is a #{data[0].class}, not a string or symbol")
+        raise Puppet::Error, _("key is a %{klass}, not a string or symbol") % { klass: data[0].class }
       end
 
       hash
     end
 
   rescue => detail
-      raise Puppet::Error, _("Could not load external node results for #{name}: #{detail}"), detail.backtrace
+      raise Puppet::Error, _("Could not load external node results for %{name}: %{detail}") % { name: name, detail: detail }, detail.backtrace
   end
 end

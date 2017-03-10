@@ -74,7 +74,7 @@ class Puppet::Indirector::ResourceType::Parser < Puppet::Indirector::Code
             result_candidates = [krt.hostclasses.values, krt.definitions.values, krt.applications.values, krt.nodes.values]
           else
             #TRANSLATORS the kinds in quotes should not be translated
-            raise ArgumentError, _("Unrecognized kind filter: '#{request.options[:kind]}', expected one of 'class', 'defined_type', 'application', or 'node'.")
+            raise ArgumentError, _("Unrecognized kind filter: '%{filter}', expected one of 'class', 'defined_type', 'application', or 'node'.") % { filter: request.options[:kind] }
         end
 
       result = result_candidates.flatten.reject { |t| t.name == "" }
@@ -86,7 +86,7 @@ class Puppet::Indirector::ResourceType::Parser < Puppet::Indirector::Code
       begin
         regex = Regexp.new(key)
       rescue => detail
-        raise ArgumentError, _("Invalid regex '#{request.key}': #{detail}"), detail.backtrace
+        raise ArgumentError, _("Invalid regex '%{regex}': %{detail}") % { regex: request.key, detail: detail }, detail.backtrace
       end
 
       result.reject! { |t| t.name.to_s !~ regex }

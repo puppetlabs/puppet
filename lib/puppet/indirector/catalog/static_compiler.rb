@@ -77,7 +77,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
     newsource = file[:source][0].sub("puppet:///", "")
     file[:source][0] = newsource
 
-    raise _("Could not get metadata for #{resource[:source]}") unless metadata = file.parameter(:source).metadata
+    raise _("Could not get metadata for %{resource}") % { resource: resource[:source] } unless metadata = file.parameter(:source).metadata
 
     replace_metadata(request, resource, metadata)
   end
@@ -109,7 +109,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
     end
 
     old_source = resource.delete(:source)
-    Puppet.info _("Metadata for #{resource} in catalog for '#{request.key}' added from '#{old_source}'")
+    Puppet.info _("Metadata for %{resource} in catalog for '%{request}' added from '%{old_source}'") % { resource: resource, request: request.key, old_source: old_source }
   end
 
   # Generate children resources for a recursive file and add them to the catalog.
@@ -221,9 +221,9 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
     sum = @summer.sumdata(resource[:content])
 
     if Puppet::FileBucket::File.indirection.find("#{type}/#{sum}")
-      Puppet.info _("Content for '#{resource[:source]}' already exists")
+      Puppet.info _("Content for '%{resource}' already exists") % { resource: resource[:source] }
     else
-      Puppet.info _("Storing content for source '#{resource[:source]}'")
+      Puppet.info _("Storing content for source '%{resource}'") % { resource: resource[:source] }
       content = Puppet::FileServing::Content.indirection.find(resource[:source], {:environment => request.environment})
       file = Puppet::FileBucket::File.new(content.content)
       Puppet::FileBucket::File.indirection.save(file)

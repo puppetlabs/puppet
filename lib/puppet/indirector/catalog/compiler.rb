@@ -17,7 +17,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   def extract_facts_from_request(request)
     return unless text_facts = request.options[:facts]
     unless format = request.options[:facts_format]
-      raise ArgumentError, _("Facts but no fact format provided for #{request.key}")
+      raise ArgumentError, _("Facts but no fact format provided for %{request}") % { request: request.key }
     end
 
     Puppet::Util::Profiler.profile(_("Found facts"), [:compiler, :find_facts]) do
@@ -31,7 +31,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       end
 
       unless facts.name == request.key
-        raise Puppet::Error, _("Catalog for #{request.key.inspect} was requested with fact definition for the wrong node (#{facts.name.inspect}).")
+        raise Puppet::Error, _("Catalog for %{request} was requested with fact definition for the wrong node (%{fact_name}).") % { request: request.key.inspect, fact_name: facts.name.inspect }
       end
 
       options = {
@@ -230,7 +230,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
           end
         end
 
-        raise _("Could not get metadata for #{resource[:source]}") unless metadata
+        raise _("Could not get metadata for %{resource}") % { resource: resource[:source] } unless metadata
 
         if inlineable_metadata?(metadata, metadata.source,  environment_path)
           metadata.content_uri = get_content_uri(metadata, metadata.source, environment_path)
@@ -251,12 +251,12 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     if node.environment && node.environment.static_catalogs? && options[:static_catalog] && options[:code_id]
       # Check for errors before compiling the catalog
       checksum_type = common_checksum_type(options[:checksum_type])
-      raise Puppet::Error, _("Unable to find a common checksum type between agent '#{options[:checksum_type]}' and master '#{known_checksum_types}'.") unless checksum_type
+      raise Puppet::Error, _("Unable to find a common checksum type between agent '%{agent_type}' and master '%{master_type}'.") % { agent_type: options[:checksum_type], master_type: known_checksum_types } unless checksum_type
     end
 
-    str = _("Compiled %s for ") % [checksum_type ? _('static catalog') : _('catalog')]
+    str = _("Compiled %s for ") % (checksum_type ? _('static catalog') : _('catalog'))
     str += node.name
-    str += _(" in environment #{node.environment}") if node.environment
+    str += _(" in environment %{env}") % { env: node.environment } if node.environment
     config = nil
 
     benchmark(:notice, str) do
@@ -272,8 +272,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         end
 
         if checksum_type && config.is_a?(model)
-          str = _("Inlined resource metadata into static catalog for #{node.name}")
-          str += _(" in environment #{node.environment}") if node.environment
+          str = _("Inlined resource metadata into static catalog for %{node}") % { node: node.name }
+          str += _(" in environment %{env}") % { env: node.environment } if node.environment
           benchmark(:notice, str) do
             Puppet::Util::Profiler.profile(str, [:compiler, :static_compile_postprocessing, node.environment, node.name]) do
               inline_metadata(config, checksum_type)
@@ -296,7 +296,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
                                              :transaction_uuid => transaction_uuid,
                                              :configured_environment => configured_environment)
       rescue => detail
-        message = _("Failed when searching for node #{name}: #{detail}")
+        message = _("Failed when searching for node %{name}: %{detail}") % { name: name, detail: detail }
         Puppet.log_exception(detail, message)
         raise Puppet::Error, message, detail.backtrace
       end
@@ -333,7 +333,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       return node
     end
 
-    raise ArgumentError, _("Could not find node '#{name}'; cannot compile")
+    raise ArgumentError, _("Could not find node '%{name}'; cannot compile") % { name: name }
   end
 
   # Initialize our server fact hash; we add these to each client, and they
@@ -351,7 +351,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       if value = Facter.value(fact)
         @server_facts[var] = value
       else
-        Puppet.warning _("Could not retrieve fact #{fact}")
+        Puppet.warning _("Could not retrieve fact %{fact}") % { fact: fact }
       end
     end
 
