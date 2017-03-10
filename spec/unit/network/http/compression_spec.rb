@@ -86,17 +86,48 @@ describe "http compression" do
         expect(@uncompressor.uncompress_body(@response)).to eq("uncompresseddata")
       end
 
-      it "should use a GzipReader with 'gzip' content-encoding" do
-        @response.stubs(:[]).with('content-encoding').returns('gzip')
+      context "with 'gzip' content-encoding" do
+        it "should use a GzipReader" do
+          @response.stubs(:[]).with('content-encoding').returns('gzip')
 
-        io = stub 'io'
-        StringIO.expects(:new).with("mydata").returns io
+          io = stub 'io'
+          StringIO.expects(:new).with("mydata").returns io
 
-        reader = stub 'gzip reader'
-        Zlib::GzipReader.expects(:new).with(io).returns(reader)
-        reader.expects(:read).returns "uncompresseddata"
+          reader = stub 'gzip reader'
+          Zlib::GzipReader.expects(:new).with(io, :encoding => Encoding::BINARY).returns(reader)
+          reader.expects(:read).returns "uncompresseddata"
 
-        expect(@uncompressor.uncompress_body(@response)).to eq("uncompresseddata")
+          expect(@uncompressor.uncompress_body(@response)).to eq("uncompresseddata")
+        end
+
+        it "should correctly decompress PSON containing UTF-8 in Binary Encoding" do
+          # Simulate a compressed response body containing PSON containing UTF-8
+          # using different UTF-8 widths:
+
+          # \u06ff - ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
+          # \u16A0 - ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
+          # \u{2070E} - 𠜎 - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
+
+          pson = "foo\u06ff\u16A0\u{2070E}".to_pson # unicode expression eqivalent of "foo\xDB\xBF\xE1\x9A\xA0\xF0\xA0\x9C\x8E\" per above
+          writer = Zlib::GzipWriter.new(StringIO.new)
+          writer.write(pson)
+          compressed_body = writer.close.string
+
+          begin
+            default_external = Encoding.default_external
+            Encoding.default_external = Encoding::ISO_8859_1
+
+            @response.stubs(:[]).with('content-encoding').returns('gzip')
+            @response.stubs(:body).returns(compressed_body)
+
+            uncompressed = @uncompressor.uncompress_body(@response)
+            # By default Zlib::GzipReader decompresses into Encoding.default_external, and we want to ensure our result is BINARY too
+            expect(uncompressed.encoding).to eq(Encoding::BINARY)
+            expect(uncompressed).to eq("\"foo\xDB\xBF\xE1\x9A\xA0\xF0\xA0\x9C\x8E\"".force_encoding(Encoding::BINARY))
+          ensure
+            Encoding.default_external = default_external
+          end
+        end
       end
     end
 
