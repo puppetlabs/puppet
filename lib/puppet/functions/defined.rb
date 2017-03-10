@@ -153,7 +153,7 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
           #scope.environment.known_resource_types.find_hostclass(val.type.class_name)
         end
       else
-        raise ArgumentError, _("Invalid argument of type '#{val.class}' to 'defined'")
+        raise ArgumentError, _("Invalid argument of type '%{value_class}' to 'defined'") % { value_class: val.class }
       end
     end
   end

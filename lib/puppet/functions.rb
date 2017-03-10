@@ -205,7 +205,7 @@ module Puppet::Functions
   # @api public
   def self.create_loaded_function(func_name, loader, function_base = Function, &block)
     if function_base.ancestors.none? { |s| s == Puppet::Pops::Functions::Function }
-      raise ArgumentError, _("Functions must be based on Puppet::Pops::Functions::Function. Got #{function_base}")
+      raise ArgumentError, _("Functions must be based on Puppet::Pops::Functions::Function. Got %{function_base}") % { function_base: function_base }
     end
 
     func_name = func_name.to_s
@@ -265,7 +265,7 @@ module Puppet::Functions
   # @api private
   def self.default_dispatcher(the_class, func_name)
     unless the_class.method_defined?(func_name)
-      raise ArgumentError, _("Function Creation Error, cannot create a default dispatcher for function '#{func_name}', no method with this name found")
+      raise ArgumentError, _("Function Creation Error, cannot create a default dispatcher for function '%{func_name}', no method with this name found") % { func_name: func_name }
     end
     any_signature(*min_max_param(the_class.instance_method(func_name)))
   end
@@ -478,15 +478,15 @@ module Puppet::Functions
         type_string, name = type_and_name
         type = @type_parser.parse(type_string, loader)
       else
-        raise ArgumentError, _("block_param accepts max 2 arguments (type, name), got #{type_and_name.size}.")
+        raise ArgumentError, _("block_param accepts max 2 arguments (type, name), got %{size}.") % { size: type_and_name.size }
       end
 
       unless Puppet::Pops::Types::TypeCalculator.is_kind_of_callable?(type, false)
-        raise ArgumentError, _("Expected PCallableType or PVariantType thereof, got #{type.class}")
+        raise ArgumentError, _("Expected PCallableType or PVariantType thereof, got %{type_class}") % { type_class: type.class }
       end
 
       unless name.is_a?(Symbol)
-        raise ArgumentError, _("Expected block_param name to be a Symbol, got #{name.class}")
+        raise ArgumentError, _("Expected block_param name to be a Symbol, got %{name_class}") % { name_class: name.class }
       end
 
       if @block_type.nil?
@@ -514,7 +514,7 @@ module Puppet::Functions
     #
     # @api public
     def return_type(type)
-      raise ArgumentError, _("Argument to 'return_type' must be a String reference to a Puppet Data Type. Got #{type.class}") unless type.is_a?(String)
+      raise ArgumentError, _("Argument to 'return_type' must be a String reference to a Puppet Data Type. Got %{type_class}") % { type_class: type.class } unless type.is_a?(String)
       @return_type = type
     end
 
@@ -526,7 +526,7 @@ module Puppet::Functions
       raise ArgumentError, _('Parameters cannot be added after a repeated parameter') if @max == :default
 
       if name.is_a?(String)
-        raise ArgumentError, _("Parameter name argument must be a Symbol. Got #{name.class}")
+        raise ArgumentError, _("Parameter name argument must be a Symbol. Got %{name_class}") % { name_class: name.class }
       end
 
       if type.is_a?(String)
@@ -539,7 +539,7 @@ module Puppet::Functions
           @weaving << @names.size()-1
         end
       else
-        raise ArgumentError, _("Parameter 'type' must be a String reference to a Puppet Data Type. Got #{type.class}")
+        raise ArgumentError, _("Parameter 'type' must be a String reference to a Puppet Data Type. Got %{type_class}") % { type_class: type.class }
       end
     end
 
@@ -604,7 +604,7 @@ module Puppet::Functions
     def type(assignment_string)
       result = parser.parse_string("type #{assignment_string}", nil) # no file source :-(
       unless result.body.kind_of?(Puppet::Pops::Model::TypeAlias)
-        raise ArgumentError, _("Expected a type alias assignment on the form 'AliasType = T', got '#{assignment_string}'")
+        raise ArgumentError, _("Expected a type alias assignment on the form 'AliasType = T', got '%{assignment_string}'") % { assignment_string: assignment_string }
       end
       @local_types << result.body
     end

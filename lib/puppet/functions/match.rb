@@ -78,7 +78,7 @@ Puppet::Functions.create_function(:match) do
   protected
 
   def match_Object(obj, s)
-    msg = _("match() expects pattern of T, where T is String, Regexp, Regexp[r], Pattern[p], or Array[T]. Got #{obj.class}")
+    msg = _("match() expects pattern of T, where T is String, Regexp, Regexp[r], Pattern[p], or Array[T]. Got %{klass}") % { klass: obj.class }
     raise ArgumentError, msg
   end
 

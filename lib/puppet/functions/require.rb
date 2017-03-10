@@ -27,7 +27,7 @@ Puppet::Functions.create_function(:require, Puppet::Functions::InternalFunction)
     classes.each do |klass|
       # lookup the class in the scopes
       klass = (classobj = krt.find_hostclass(klass)) ? classobj.name : nil
-      raise Puppet::ParseError.new(_("Could not find class #{klass}")) unless klass
+      raise Puppet::ParseError.new(_("Could not find class %{klass}") % { klass: klass }) unless klass
       ref = Puppet::Resource.new(:class, klass)
       resource = scope.resource
       resource.set_parameter(:require, [resource[:require]].flatten.compact << ref)

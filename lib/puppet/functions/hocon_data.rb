@@ -24,7 +24,7 @@ Puppet::Functions.create_function(:hocon_data) do
       begin
         Hocon.parse(content)
       rescue Hocon::ConfigError => ex
-        raise Puppet::DataBinding::LookupError, "Unable to parse (#{path}): #{ex.message}"
+        raise Puppet::DataBinding::LookupError, _("Unable to parse (%{path}): %{message}") % { path: path, message: ex.message }
       end
     end
   end

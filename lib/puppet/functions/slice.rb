@@ -103,7 +103,7 @@ Puppet::Functions.create_function(:slice) do
     end
     unless serving_size == 1 || serving_size == slice_size
       raise ArgumentError, _("slice(): block must define one parameter, or ") +
-        _("the same number of parameters as the given size of the slice (#{slice_size}). Block has #{serving_size}; ")+
+        _("the same number of parameters as the given size of the slice (%{slice_size}). Block has %{serving_size}; ") % { slice_size: slice_size, serving_size: serving_size }+
       pblock.parameter_names.join(', ')
     end
     serving_size

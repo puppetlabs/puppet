@@ -18,7 +18,7 @@ Puppet::Functions.create_function(:json_data) do
         JSON.parse(content)
       rescue JSON::ParserError => ex
         # Filename not included in message, so we add it here.
-        raise Puppet::DataBinding::LookupError, "Unable to parse (#{path}): #{ex.message}"
+        raise Puppet::DataBinding::LookupError, "Unable to parse (%{path}): %{message}" % { path: path, message: ex.message }
       end
     end
   end
