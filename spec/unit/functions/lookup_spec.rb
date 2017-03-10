@@ -79,6 +79,8 @@ describe "The lookup function" do
                     [ 'x5,x6' ]
                   when 'datasources'
                     Hiera::Backend.datasources(scope, order_override) { |source| source }
+                  when 'dotted.key'
+                    'custom backend received request for dotted.key value'
                   else
                     throw :no_such_key
                   end
@@ -1510,6 +1512,10 @@ describe "The lookup function" do
 
         it 'backend specific options are propagated to custom backend' do
           expect(lookup('other_option')).to eql('value of other_option')
+        end
+
+        it 'dotted keys are passed down to custom backend' do
+          expect(lookup('dotted.key')).to eql('custom backend received request for dotted.key value')
         end
 
         it 'multiple hiera3_backend declarations can be used and are merged into the generated config' do
