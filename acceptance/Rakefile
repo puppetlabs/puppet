@@ -300,7 +300,7 @@ def get_test_sample
   modified = `git log --diff-filter=AM --name-only --pretty="format:" --since 2.weeks ./tests`
   tests += modified.split("\n").reject { |s| s.empty? }.collect { |s| s.sub('acceptance/', '')}
 
-  tests.uniq
+  tests.uniq.sort
 end
 
 namespace :ci do
