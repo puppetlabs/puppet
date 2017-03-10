@@ -106,7 +106,7 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
         prefix = prefix_suffix[0]
         suffix = prefix_suffix[1]
       else
-        raise ArgumentError, _("unexpected prefix_suffix: #{prefix_suffix.inspect}")
+        raise ArgumentError, _("unexpected prefix_suffix: %{value}") % { value: prefix_suffix.inspect }
     end
     t = Time.now.strftime("%Y%m%d")
     path = "#{prefix}#{t}-#{$$}-#{rand(0x100000000).to_s(36)}"
@@ -136,7 +136,7 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
       n ||= 0
       n += 1
       retry if !max_try or n < max_try
-      raise _("cannot generate temporary name using `#{basename}' under `#{tmpdir}'")
+      raise _("cannot generate temporary name using `%{basename}' under `%{tmpdir}'") % { basename: basename, tmpdir: tmpdir }
     end
     path
   end

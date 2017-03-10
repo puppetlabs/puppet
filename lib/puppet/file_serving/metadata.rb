@@ -18,13 +18,13 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
   PARAM_ORDER = [:mode, :ftype, :owner, :group]
 
   def checksum_type=(type)
-    raise(ArgumentError, _("Unsupported checksum type #{type}")) unless Puppet::Util::Checksums.respond_to?("#{type}_file")
+    raise(ArgumentError, _("Unsupported checksum type %{type}") % { type: type }) unless Puppet::Util::Checksums.respond_to?("#{type}_file")
 
     @checksum_type = type
   end
 
   def source_permissions=(source_permissions)
-    raise(ArgumentError, _("Unsupported source_permission #{source_permissions}")) unless [:use, :use_when_creating, :ignore].include?(source_permissions.intern)
+    raise(ArgumentError, _("Unsupported source_permission %{source_permissions}") % { source_permissions: source_permissions }) unless [:use, :use_when_creating, :ignore].include?(source_permissions.intern)
 
     @source_permissions = source_permissions.intern
   end
@@ -33,9 +33,9 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
     begin
       uri = URI.parse(URI.escape(path))
     rescue URI::InvalidURIError => detail
-      raise(ArgumentError, _("Could not understand URI #{path}: #{detail}"))
+      raise(ArgumentError, _("Could not understand URI %{path}: %{detail}") % { path: path, detail: detail })
     end
-    raise(ArgumentError, _("Cannot use opaque URLs '#{path}'")) unless uri.hierarchical?
+    raise(ArgumentError, _("Cannot use opaque URLs '%{path}'") % { path: path }) unless uri.hierarchical?
     raise(ArgumentError, _("Must use URLs of type puppet as content URI")) if uri.scheme != "puppet"
 
     @content_uri = path
@@ -72,7 +72,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
     def initialize(stat, path, source_permissions)
       super(stat, source_permissions)
       @path = path
-      raise(ArgumentError, _("Unsupported Windows source permissions option #{source_permissions}")) unless @source_permissions_ignore
+      raise(ArgumentError, _("Unsupported Windows source permissions option %{source_permissions}") % { source_permissions: source_permissions }) unless @source_permissions_ignore
     end
 
     { :owner => 'S-1-5-32-544',
@@ -119,7 +119,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
       @destination = Puppet::FileSystem.readlink(real_path)
       @checksum = ("{#{@checksum_type}}") + send("#{@checksum_type}_file", real_path).to_s rescue nil
     else
-      raise ArgumentError, _("Cannot manage files of type #{stat.ftype}")
+      raise ArgumentError, _("Cannot manage files of type %{file_type}") % { file_type: stat.ftype }
     end
   end
 

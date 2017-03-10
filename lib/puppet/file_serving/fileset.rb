@@ -31,7 +31,7 @@ class Puppet::FileServing::Fileset
     else
       path = path.chomp(File::SEPARATOR) unless path == File::SEPARATOR
     end
-    raise ArgumentError.new(_("Fileset paths must be fully qualified: #{path}")) unless Puppet::Util.absolute_path?(path)
+    raise ArgumentError.new(_("Fileset paths must be fully qualified: %{path}") % { path: path }) unless Puppet::Util.absolute_path?(path)
 
     @path = path
 
@@ -48,6 +48,7 @@ class Puppet::FileServing::Fileset
     end
 
     raise ArgumentError.new(_("Fileset paths must exist")) unless valid?(path)
+    #TRANSLATORS "recurse" and "recurselimit" are parameter names and should not be translated
     raise ArgumentError.new(_("Fileset recurse parameter must not be a number anymore, please use recurselimit")) if @recurse.is_a?(Integer)
   end
 
@@ -75,7 +76,8 @@ class Puppet::FileServing::Fileset
 
   def links=(links)
     links = links.to_sym
-    raise(ArgumentError, _("Invalid :links value '#{links}'")) unless [:manage, :follow].include?(links)
+    #TRANSLATORS ":links" is a parameter name and should not be translated
+    raise(ArgumentError, _("Invalid :links value '%{links}'") % { links: links }) unless [:manage, :follow].include?(links)
     @links = links
     @stat_method = @links == :manage ? :lstat : :stat
   end
@@ -88,7 +90,7 @@ class Puppet::FileServing::Fileset
       begin
         send(method, value)
       rescue NoMethodError
-        raise ArgumentError, _("Invalid option '#{option}'"), $!.backtrace
+        raise ArgumentError, _("Invalid option '%{option}'") % { option: option }, $!.backtrace
       end
     end
   end

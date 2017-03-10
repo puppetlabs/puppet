@@ -44,7 +44,7 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
     return 0 if dest_exists && dest_stat.ftype == 'directory'
 
     if dest_exists && dest_stat.ftype == 'file' && options[:force] != true
-      raise(Errno::EEXIST, _("#{dest} already exists and the :force option was not specified"))
+      raise(Errno::EEXIST, _("%{dest} already exists and the :force option was not specified") % { dest: dest })
     end
 
     if options[:noop] != true
