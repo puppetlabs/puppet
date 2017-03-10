@@ -18,7 +18,7 @@ module Puppet::ModuleTool
         create_directory
         copy_contents
         write_json
-        Puppet.notice _("Building #{@path} for release")
+        Puppet.notice _("Building %{path} for release") % { path: @path }
         pack
         relative = Pathname.new(archive_file).relative_path_from(Pathname.new(File.expand_path(Dir.pwd)))
 
@@ -114,7 +114,7 @@ module Puppet::ModuleTool
           symlinks.each do |s|
             s = Pathname.new s
             mpath = Pathname.new @path
-            Puppet.warning _("Symlinks in modules are unsupported. Please investigate symlink #{s.relative_path_from mpath} -> #{s.realpath.relative_path_from mpath}.")
+            Puppet.warning _("Symlinks in modules are unsupported. Please investigate symlink %{from} -> %{to}.") % { from: s.relative_path_from(mpath), to: s.realpath.relative_path_from(mpath) }
           end
 
           raise Puppet::ModuleTool::Errors::ModuleToolError, _("Found symlinks. Symlinks in modules are not allowed, please remove them.")

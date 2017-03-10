@@ -78,7 +78,7 @@ module Puppet::ModuleTool
           results[:install_dir] = @install_dir.target
 
           unless @local_tarball && @ignore_dependencies
-            Puppet.notice _("Downloading from #{module_repository.host} ...")
+            Puppet.notice _("Downloading from %{host} ...") % { host: module_repository.host }
           end
 
           if @ignore_dependencies

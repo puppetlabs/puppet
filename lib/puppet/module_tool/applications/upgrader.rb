@@ -70,7 +70,7 @@ module Puppet::ModuleTool
           dir = Pathname.new(mod.modulepath)
 
           vstring = mod.version ? "v#{mod.version}" : '???'
-          Puppet.notice _("Found '#{name}' (#{colorize(:cyan, vstring)}) in #{dir} ...")
+          Puppet.notice _("Found '%{name}' (%{version}) in %{dir} ...") % { name: name, version: colorize(:cyan, vstring), dir: dir }
           unless @ignore_changes
             changes = Checksummer.run(mod.path) rescue []
             if mod.has_metadata? && !changes.empty?
@@ -96,7 +96,7 @@ module Puppet::ModuleTool
             end
           end
 
-          Puppet.notice _("Downloading from #{module_repository.host} ...")
+          Puppet.notice _("Downloading from %{host} ...") % { host: module_repository.host }
           if @ignore_dependencies
             graph = build_single_module_graph(name, version)
           else

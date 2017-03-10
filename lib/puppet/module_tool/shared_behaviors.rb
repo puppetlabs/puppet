@@ -29,7 +29,7 @@ module Puppet::ModuleTool::Shared
     @urls     = {}
     @versions = Hash.new { |h,k| h[k] = [] }
 
-    Puppet.notice _("Downloading from #{forge.uri} ...")
+    Puppet.notice _("Downloading from %{uri} ...") % { uri: forge.uri }
     author, modname = Puppet::ModuleTool.username_and_modname_from(@module_name)
     info = forge.remote_dependency_info(author, modname, @options[:version])
     info.each do |pair|
@@ -151,7 +151,7 @@ module Puppet::ModuleTool::Shared
           cache_path = forge.retrieve(release[:file])
         end
       rescue OpenURI::HTTPError => e
-        raise RuntimeError, _("Could not download module: #{e.message}"), e.backtrace
+        raise RuntimeError, _("Could not download module: %{message}") % { message: e.message }, e.backtrace
       end
 
       [

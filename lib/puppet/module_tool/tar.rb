@@ -11,6 +11,7 @@ module Puppet::ModuleTool::Tar
     elsif Puppet.features.minitar? && Puppet.features.zlib?
       Mini.new
     else
+      #TRANSLATORS "tar" is a program name and should not be translated
       raise RuntimeError, _('No suitable tar implementation found')
     end
   end

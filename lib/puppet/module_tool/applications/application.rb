@@ -41,7 +41,7 @@ module Puppet::ModuleTool
         end
 
         if require_metadata && !Puppet::ModuleTool.is_module_root?(@path)
-          raise ArgumentError, _("Unable to find metadata.json in module root at #{@path} See https://docs.puppet.com/puppet/latest/reference/modules_publishing.html for required file format.")
+          raise ArgumentError, _("Unable to find metadata.json in module root at %{path} See https://docs.puppet.com/puppet/latest/reference/modules_publishing.html for required file format.") % { path: @path }
         end
 
         metadata_path   = File.join(@path, 'metadata.json')
@@ -51,7 +51,7 @@ module Puppet::ModuleTool
             begin
               @metadata.update(JSON.load(f))
             rescue JSON::ParserError => ex
-              raise ArgumentError, _("Could not parse JSON #{metadata_path}"), ex.backtrace
+              raise ArgumentError, _("Could not parse JSON %{metadata_path}") % { metadata_path: metadata_path }, ex.backtrace
             end
           end
         end
@@ -72,7 +72,7 @@ module Puppet::ModuleTool
         if match = /^((.*?)-(.*?))-(\d+\.\d+\.\d+.*?)$/.match(File.basename(filename, '.tar.gz'))
           module_name, author, shortname, version = match.captures
         else
-          raise ArgumentError, _("Could not parse filename to obtain the username, module name and version.  (#{@release_name})")
+          raise ArgumentError, _("Could not parse filename to obtain the username, module name and version.  (%{release_name})") % { release_name: @release_name }
         end
 
         unless SemanticPuppet::Version.valid?(version)
