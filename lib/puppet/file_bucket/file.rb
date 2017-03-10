@@ -28,12 +28,12 @@ class Puppet::FileBucket::File
     when Pathname
       @contents = FileContents.new(contents)
     else
-      raise ArgumentError.new(_("contents must be a String or Pathname, got a #{contents.class}"))
+      raise ArgumentError.new(_("contents must be a String or Pathname, got a %{contents_class}") % { contents_class: contents.class })
     end
 
     @bucket_path = options.delete(:bucket_path)
     @checksum_type = Puppet[:digest_algorithm].to_sym
-    raise ArgumentError.new(_("Unknown option(s): #{options.keys.join(', ')}")) unless options.empty?
+    raise ArgumentError.new(_("Unknown option(s): %{opts}") % { opts: options.keys.join(', ') }) unless options.empty?
   end
 
   # @return [Num] The size of the contents
@@ -133,7 +133,7 @@ class Puppet::FileBucket::File
     end
 
     def checksum_data(base_method)
-      Puppet.info(_("Computing checksum on file #{@path}"))
+      Puppet.info(_("Computing checksum on file %{path}") % { path: @path })
       Puppet::Util::Checksums.method(:"#{base_method}_file").call(@path)
     end
 
