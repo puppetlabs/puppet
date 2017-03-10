@@ -37,7 +37,7 @@ module Puppet
         # @return [Symbol] Returns the new format.
         def format=(format)
           format = format.to_sym
-          raise _("unsupported format '#{format}'.") unless self.class.supported_format?(format)
+          raise _("unsupported format '%{format}'.") % { format: format } unless self.class.supported_format?(format)
           @format = format
         end
 
@@ -57,7 +57,7 @@ module Puppet
             when :pcore
               "#{File.basename(@path, '.rb')}.pp"
             else
-              raise _("unsupported format '#{@format}'.")
+              raise _("unsupported format '%{format}'.") % { format: @format }
             end
         end
 
@@ -69,7 +69,7 @@ module Puppet
             when :pcore
               File.join(@base, 'pcore', 'types', output_name)
             else
-              raise _("unsupported format '#{@format}'.")
+              raise _("unsupported format '%{format}'.") % { format: @format }
             end
         end
 
@@ -153,7 +153,7 @@ module Puppet
           files_to_remove.each do |f|
             Puppet::FileSystem.unlink(File.join(outputdir, f))
           end
-          Puppet.notice(_("Removed output '#{files_to_remove}' for non existing inputs")) unless files_to_remove.empty?
+          Puppet.notice(_("Removed output '%{files_to_remove}' for non existing inputs") % { files_to_remove: files_to_remove }) unless files_to_remove.empty?
         end
 
         if inputs.empty?
@@ -163,7 +163,7 @@ module Puppet
 
         templates = {}
         templates.default_proc = lambda { |hash, key|
-          raise _("template was not found at '#{key}'.") unless Puppet::FileSystem.file?(key)
+          raise _("template was not found at '%{key}'.") % { key: key } unless Puppet::FileSystem.file?(key)
           template = ERB.new(File.read(key), nil, '-')
           template.filename = key
           template
@@ -187,7 +187,7 @@ module Puppet
             raise
           rescue Exception => e
             # Log the exception and move on to the next input
-            Puppet.log_exception(e, _("Failed to load custom type '#{type_name}' from '#{input}': #{e.message}"))
+            Puppet.log_exception(e, _("Failed to load custom type '%{type_name}' from '%{input}': %{message}") % { type_name: type_name, input: input, message: e.message })
             next
           end
 
@@ -196,7 +196,7 @@ module Puppet
 
           # Assume the type follows the naming convention
           unless type = types[type_name]
-            Puppet.err _("Custom type '#{type_name}' was not defined in '#{input}'.")
+            Puppet.err _("Custom type '%{type_name}' was not defined in '%{input}'.") % { type_name: type_name, input: input }
             next
           end
 
@@ -220,13 +220,13 @@ module Puppet
           # Write the output file
           begin
             effective_output_path = input.effective_output_path(outputdir)
-            Puppet.notice _("Generating '#{effective_output_path}' using '#{input.format}' format.")
+            Puppet.notice _("Generating '%{effective_output_path}' using '%{format}' format.") % { effective_output_path: effective_output_path, format: input.format }
             FileUtils.mkdir_p(File.dirname(effective_output_path))
             Puppet::FileSystem.open(effective_output_path, nil, 'w:UTF-8') do |file|
               file.write(result)
             end
           rescue Exception => e
-            Puppet.log_exception(e, _("Failed to generate '#{effective_output_path}': #{e.message}"))
+            Puppet.log_exception(e, _("Failed to generate '%{effective_output_path}': %{message}") % { effective_output_path: effective_output_path, message: e.message })
             # Move on to the next input
             next
           end
