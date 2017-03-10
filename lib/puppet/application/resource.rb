@@ -190,14 +190,14 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   def parse_args(args)
     type = args.shift or raise _("You must specify the type to display")
-    Puppet::Type.type(type) or raise _("Could not find type #{type}")
+    Puppet::Type.type(type) or raise _("Could not find type %{type}") % { type: type }
     name = args.shift
     params = {}
     args.each do |setting|
       if setting =~ /^(\w+)=(.+)$/
         params[$1] = $2
       else
-        raise _("Invalid parameter setting #{setting}")
+        raise _("Invalid parameter setting %{setting}") % { setting: setting }
       end
     end
 

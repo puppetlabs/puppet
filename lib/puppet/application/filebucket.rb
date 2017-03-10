@@ -170,11 +170,11 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     args.each do |file|
       unless Puppet::FileSystem.exist?(file)
-        $stderr.puts _("#{file}: no such file")
+        $stderr.puts _("%{file}: no such file") % { file: file }
         next
       end
       unless FileTest.readable?(file)
-        $stderr.puts _("#{file}: cannot read file")
+        $stderr.puts _("%{file}: cannot read file") % { file: file }
         next
       end
       md5 = @client.backup(file)
@@ -216,7 +216,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       checksum_b = right
     end
     if (checksum_a || file_a) && (checksum_b || file_b)
-      Puppet.info(_("Comparing #{checksum_a} #{checksum_b} #{file_a} #{file_b}"))
+      Puppet.info(_("Comparing %{checksum_a} %{checksum_b} %{file_a} %{file_b}") % { checksum_a: checksum_a, checksum_b: checksum_b, file_a: file_a, file_b: file_b })
       print @client.diff(checksum_a, checksum_b, file_a, file_b)
     else
       raise Puppet::Error, _("Need exactly two arguments: filebucket diff <file_a> <file_b>")

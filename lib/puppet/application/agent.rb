@@ -343,7 +343,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       return
     end
     unless digest = cert.digest(options[:digest].to_s)
-      raise ArgumentError, _("Could not get fingerprint for digest '#{options[:digest]}'")
+      raise ArgumentError, _("Could not get fingerprint for digest '%{digest}'") % { digest: options[:digest] }
     end
     puts digest.to_s
   end
@@ -367,7 +367,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def main(daemon)
-    Puppet.notice _("Starting Puppet client version #{Puppet.version}")
+    Puppet.notice _("Starting Puppet client version %{version}") % { version: Puppet.version }
     daemon.start
   end
 

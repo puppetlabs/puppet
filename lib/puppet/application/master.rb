@@ -169,12 +169,12 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
   def compile
     begin
       unless catalog = Puppet::Resource::Catalog.indirection.find(options[:node])
-        raise _("Could not compile catalog for #{options[:node]}")
+        raise _("Could not compile catalog for %{node}") % { node: options[:node] }
       end
 
       puts PSON::pretty_generate(catalog.to_resource, :allow_nan => true, :max_nesting => false)
     rescue => detail
-      Puppet.log_exception(detail, _("Failed to compile catalog for node #{options[:node]}: #{detail}"))
+      Puppet.log_exception(detail, _("Failed to compile catalog for node %{node}: %{detail}") % { node: options[:node], detail: detail })
       exit(30)
     end
     exit(0)
@@ -194,11 +194,11 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
         begin
           Puppet::Util.chuser
         rescue => detail
-          Puppet.log_exception(detail, _("Could not change user to #{Puppet[:user]}: #{detail}"))
+          Puppet.log_exception(detail, _("Could not change user to %{user}: %{detail}") % { user: Puppet[:user], detail: detail })
           exit(39)
         end
       else
-        Puppet.err(_("Could not change user to #{Puppet[:user]}. User does not exist and is required to continue."))
+        Puppet.err(_("Could not change user to %{user}. User does not exist and is required to continue.") % { user: Puppet[:user] })
         exit(74)
       end
     end
@@ -316,6 +316,6 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def announce_start_of_master
-    Puppet.notice _("Starting Puppet master version #{Puppet.version}")
+    Puppet.notice _("Starting Puppet master version %{version}") % { version: Puppet.version }
   end
 end

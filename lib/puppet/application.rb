@@ -228,7 +228,7 @@ class Application
       begin
         require @loader.expand(application_name.to_s.downcase)
       rescue LoadError => e
-        Puppet.log_and_raise(e, _("Unable to find application '#{application_name}'. #{e}"))
+        Puppet.log_and_raise(e, _("Unable to find application '%{application_name}'. %{error}") % { application_name: application_name, error: e })
       end
 
       class_name = Puppet::Util::ConstantInflector.file2constant(application_name.to_s)
@@ -249,7 +249,7 @@ class Application
       ################################################################
 
       if clazz.nil?
-        raise Puppet::Error.new(_("Unable to load application class '#{class_name}' from file 'puppet/application/#{application_name}.rb'"))
+        raise Puppet::Error.new(_("Unable to load application class '%{class_name}' from file 'puppet/application/%{application_name}.rb'") % { class_name: class_name, application_name: application_name })
       end
 
       return clazz
@@ -345,17 +345,17 @@ class Application
 
     Puppet::ApplicationSupport.push_application_context(self.class.run_mode)
 
-    exit_on_fail("initialize")                                   { preinit }
-    exit_on_fail("parse application options")                    { parse_options }
-    exit_on_fail("prepare for execution")                        { setup }
+    exit_on_fail(_("initialize"))                                   { preinit }
+    exit_on_fail(_("parse application options"))                    { parse_options }
+    exit_on_fail(_("prepare for execution"))                        { setup }
 
     if deprecated?
       Puppet.deprecation_warning(_("`puppet %{name}` is deprecated and will be removed in a future release.") % { name: name })
     end
 
-    exit_on_fail("configure routes from #{Puppet[:route_file]}") { configure_indirector_routes }
-    exit_on_fail("log runtime debug info")                       { log_runtime_environment }
-    exit_on_fail("run")                                          { run_command }
+    exit_on_fail(_("configure routes from %{route_file}") % { route_file: Puppet[:route_file] }) { configure_indirector_routes }
+    exit_on_fail(_("log runtime debug info"))                       { log_runtime_environment }
+    exit_on_fail(_("run"))                                          { run_command }
   end
 
   def main
@@ -472,7 +472,7 @@ class Application
   end
 
   def help
-    _("No help available for puppet #{name}")
+    _("No help available for puppet %{app_name}") % { app_name: name }
   end
 end
 end
