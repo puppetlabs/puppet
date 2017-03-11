@@ -11,6 +11,7 @@ Puppet::Parser::Functions::newfunction(:generate, :arity => -2, :type => :rvalue
     generators, so all shell metacharacters are passed directly to
     the generator.") do |args|
 
+      #TRANSLATORS "fully qualified" refers to a fully qualified file system path
       raise Puppet::ParseError, _("Generators must be fully qualified") unless Puppet::Util.absolute_path?(args[0])
 
       if Puppet.features.microsoft_windows?
@@ -32,6 +33,6 @@ Puppet::Parser::Functions::newfunction(:generate, :arity => -2, :type => :rvalue
       begin
         Dir.chdir(File.dirname(args[0])) { Puppet::Util::Execution.execute(args).to_str }
       rescue Puppet::ExecutionFailure => detail
-        raise Puppet::ParseError, _("Failed to execute generator #{args[0]}: #{detail}"), detail.backtrace
+        raise Puppet::ParseError, _("Failed to execute generator %{generator}: %{detail}") % { generator: args[0], detail: detail }, detail.backtrace
       end
 end

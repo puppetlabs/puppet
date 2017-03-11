@@ -9,7 +9,7 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
       node.environment = env
       new(node, :code_id => code_id).compile
     rescue => detail
-      message = _("#{detail} in environment #{env.name}")
+      message = _("%{detail} in environment %{env}") % { detail: detail, env: env.name }
       Puppet.log_exception(detail, message)
       raise Puppet::Error, message, detail.backtrace
     end
@@ -56,7 +56,7 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
   def compile
     add_function_overrides
     begin
-      Puppet.override(@context_overrides, _("For compiling environment catalog #{environment.name}")) do
+      Puppet.override(@context_overrides, _("For compiling environment catalog %{env}") % { env: environment.name }) do
         @catalog.environment_instance = environment
 
         Puppet::Util::Profiler.profile(_("Env Compile: Created settings scope"), [:compiler, :create_settings_scope]) { create_settings_scope }
@@ -131,7 +131,7 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
     @catalog.add_resource(resource)
 
     if !resource.class? && resource[:stage]
-      raise ArgumentError, _("Only classes can set 'stage'; normal resources like #{resource} cannot change run stage")
+      raise ArgumentError, _("Only classes can set 'stage'; normal resources like %{resource} cannot change run stage") % { resource: resource }
     end
 
     # Stages should not be inside of classes.  They are always a
@@ -159,7 +159,7 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
   def evaluate_applications
     exceptwrap do
       resources.select { |resource| type = resource.resource_type; type.is_a?(Puppet::Resource::Type) && type.application? }.each do |resource|
-        Puppet::Util::Profiler.profile(_("Evaluated application #{resource}"), [:compiler, :evaluate_resource, resource]) do
+        Puppet::Util::Profiler.profile(_("Evaluated application %{resource}") % { resource: resource }, [:compiler, :evaluate_resource, resource]) do
           resource.evaluate
         end
       end

@@ -146,7 +146,7 @@ module Puppet::Parser::Functions
     name = name.intern
     environment = options[:environment] || Puppet.lookup(:current_environment)
 
-    Puppet.warning _("Overwriting previous definition for function #{name}") if get_function(name, environment)
+    Puppet.warning _("Overwriting previous definition for function %{name}") % { name: name } if get_function(name, environment)
 
     arity = options[:arity] || -1
     ftype = options[:type] || :statement
@@ -164,12 +164,12 @@ module Puppet::Parser::Functions
     env_module = environment_module(environment)
 
     env_module.send(:define_method, fname) do |*args|
-      Puppet::Util::Profiler.profile(_("Called #{name}"), [:functions, name]) do
+      Puppet::Util::Profiler.profile(_("Called %{name}") % { name: name }, [:functions, name]) do
         if args[0].is_a? Array
           if arity >= 0 and args[0].size != arity
-            raise ArgumentError, _("#{name}(): Wrong number of arguments given (#{args[0].size} for #{arity})")
+            raise ArgumentError, _("%{name}(): Wrong number of arguments given (%{arg_count} for %{arity})") % { name: name, arg_count: args[0].size, arity: arity }
           elsif arity < 0 and args[0].size < (arity+1).abs
-            raise ArgumentError, _("#{name}(): Wrong number of arguments given (#{args[0].size} for minimum #{(arity+1).abs})")
+            raise ArgumentError, _("%{name}(): Wrong number of arguments given (%{arg_count} for minimum %{min_arg_count})") % { name: name, arg_count: args[0].size, min_arg_count: (arity+1).abs }
           end
           self.send(real_fname, args[0])
         else
@@ -272,7 +272,7 @@ module Puppet::Parser::Functions
 
   class Error
     def self.is4x(name)
-      raise Puppet::ParseError, _("#{name}() can only be called using the 4.x function API. See Scope#call_function")
+      raise Puppet::ParseError, _("%{name}() can only be called using the 4.x function API. See Scope#call_function") % { name: name }
     end
   end
 end

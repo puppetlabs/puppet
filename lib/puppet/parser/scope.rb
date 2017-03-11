@@ -155,12 +155,12 @@ class Puppet::Parser::Scope
 
     def []=(name, value)
       # TODO: Bad choice of exception
-      raise Puppet::ParseError, _("Numerical variables cannot be changed. Attempt to set $#{name}")
+      raise Puppet::ParseError, _("Numerical variables cannot be changed. Attempt to set $%{name}") % { name: name }
     end
 
     def delete(name)
       # TODO: Bad choice of exception
-      raise Puppet::ParseError, _("Numerical variables cannot be deleted: Attempt to delete: $#{name}")
+      raise Puppet::ParseError, _("Numerical variables cannot be deleted: Attempt to delete: $%{name}") % { name: name }
     end
 
     def add_entries_to(target = {})
@@ -214,8 +214,8 @@ class Puppet::Parser::Scope
     def parameter_reference_failure(from, to)
       # Parameters are evaluated in the order they have in the @params hash.
       keys = @params.keys
-      raise Puppet::Error, _("#{@callee_name}: expects a value for parameter $#{to}") if keys.index(to) < keys.index(from)
-      raise Puppet::Error, _("#{@callee_name}: default expression for $#{from} tries to illegally access not yet evaluated $#{to}")
+      raise Puppet::Error, _("%{callee}: expects a value for parameter $%{to}") % { callee: @callee_name, to: to } if keys.index(to) < keys.index(from)
+      raise Puppet::Error, _("%{callee}: default expression for $%{from} tries to illegally access not yet evaluated $%{to}") % { callee: @callee_name, from: from, to: to }
     end
     private :parameter_reference_failure
 
@@ -234,7 +234,7 @@ class Puppet::Parser::Scope
     end
 
     def []=(name, value)
-      raise Puppet::Error, _("Attempt to assign variable #{name} when evaluating parameters") if @read_only
+      raise Puppet::Error, _("Attempt to assign variable %{name} when evaluating parameters") % { name: name } if @read_only
       @params[name] ||= Access.new
       @params[name].value = value
     end
@@ -486,7 +486,7 @@ class Puppet::Parser::Scope
   # @api public
   def lookupvar(name, options = EMPTY_HASH)
     unless name.is_a? String
-      raise Puppet::ParseError, _("Scope variable name #{name.inspect} is a #{name.class}, not a string")
+      raise Puppet::ParseError, _("Scope variable name %{name} is a %{klass}, not a string") % { name: name.inspect, klass: name.class }
     end
 
     if name =~ /^(.*)::(.+)$/
@@ -525,10 +525,10 @@ class Puppet::Parser::Scope
       when :off
         # do nothing
       when :warning
-        Puppet.warn_once(UNDEFINED_VARIABLES_KIND, _("Variable: #{name}"),
-        _("Undefined variable '#{name}'; #{reason}") )
+        Puppet.warn_once(UNDEFINED_VARIABLES_KIND, _("Variable: %{name}") % { name: name },
+        _("Undefined variable '%{name}'; %{reason}") % { name: name, reason: reason } )
       when :error
-        raise ArgumentError, _("Undefined variable '#{name}'; #{reason}")
+        raise ArgumentError, _("Undefined variable '%{name}'; %{reason}") % { name: name, reason: reason }
       end
     end
     nil
@@ -653,8 +653,8 @@ class Puppet::Parser::Scope
   private :has_enclosing_scope?
 
   def qualified_scope(classname)
-    raise _("class #{classname} could not be found")     unless klass = find_hostclass(classname)
-    raise _("class #{classname} has not been evaluated") unless kscope = class_scope(klass)
+    raise _("class %{classname} could not be found") % { classname: classname }     unless klass = find_hostclass(classname)
+    raise _("class %{classname} has not been evaluated") % { classname: classname } unless kscope = class_scope(klass)
     kscope
   end
   private :qualified_scope
@@ -704,7 +704,7 @@ class Puppet::Parser::Scope
 
     params.each { |param|
       if table.include?(param.name)
-        raise Puppet::ParseError.new(_("Default already defined for #{type} { #{param.name} }; cannot redefine"), param.file, param.line)
+        raise Puppet::ParseError.new(_("Default already defined for %{type} { %{param} }; cannot redefine") % { type: type, param: param.name }, param.file, param.line)
       end
       table[param.name] = param
     }
@@ -750,28 +750,28 @@ class Puppet::Parser::Scope
   # when you need to set options.
   def setvar(name, value, options = EMPTY_HASH)
     if name =~ /^[0-9]+$/
-      raise Puppet::ParseError.new(_("Cannot assign to a numeric match result variable '$#{name}'")) # unless options[:ephemeral]
+      raise Puppet::ParseError.new(_("Cannot assign to a numeric match result variable '$%{name}'") % { name: name }) # unless options[:ephemeral]
     end
     unless name.is_a? String
-      raise Puppet::ParseError, _("Scope variable name #{name.inspect} is a #{name.class}, not a string")
+      raise Puppet::ParseError, _("Scope variable name %{value0} is a %{value1}, not a string") % { value0: name.inspect, value1: name.class }
     end
 
     # Check for reserved variable names
     if (name == VARNAME_TRUSTED || name == VARNAME_FACTS) && !options[:privileged]
-      raise Puppet::ParseError, _("Attempt to assign to a reserved variable name: '#{name}'")
+      raise Puppet::ParseError, _("Attempt to assign to a reserved variable name: '%{name}'") % { name: name }
     end
 
     # Check for server_facts reserved variable name if the trusted_sever_facts setting is true
     if name == VARNAME_SERVER_FACTS && !options[:privileged] && Puppet[:trusted_server_facts]
-      raise Puppet::ParseError, _("Attempt to assign to a reserved variable name: '#{name}'")
+      raise Puppet::ParseError, _("Attempt to assign to a reserved variable name: '%{name}'") % { name: name }
     end
 
     table = effective_symtable(options[:ephemeral])
     if table.bound?(name)
       if options[:append]
-        error = Puppet::ParseError.new(_("Cannot append, variable '$#{name}' is defined in this scope"))
+        error = Puppet::ParseError.new(_("Cannot append, variable '$%{name}' is defined in this scope") % { name: name })
       else
-        error = Puppet::ParseError.new(_("Cannot reassign variable '$#{name}'"))
+        error = Puppet::ParseError.new(_("Cannot reassign variable '$%{name}'") % { name: name })
       end
       error.file = options[:file] if options[:file]
       error.line = options[:line] if options[:line]
@@ -816,7 +816,7 @@ class Puppet::Parser::Scope
     when String
       object.freeze
     else
-      raise Puppet::Error, _("Unsupported data type: '#{object.class}'")
+      raise Puppet::Error, _("Unsupported data type: '%{klass}'") % { klass: object.class }
     end
     object
   end
@@ -1005,7 +1005,7 @@ class Puppet::Parser::Scope
       # (TODO: Fix that problem)
       new_ephemeral(false)
     else
-      raise(ArgumentError,_("Invalid regex match data. Got a #{match.class}")) unless match.is_a?(MatchData)
+      raise(ArgumentError,_("Invalid regex match data. Got a %{klass}") % { klass: match.class }) unless match.is_a?(MatchData)
       # Create a match ephemeral and set values from match data
       new_match_scope(match)
     end
@@ -1094,6 +1094,7 @@ class Puppet::Parser::Scope
         name.title.sub(/^([^:]{1,2})/, '::\1')
 
       when Puppet::Pops::Types::PHostClassType
+        #TRANSLATORS "Class" and "Type" are Puppet keywords and should not be translated
         raise ArgumentError, _("Cannot use an unspecific Class[] Type") unless name.class_name
         name.class_name.sub(/^([^:]{1,2})/, '::\1')
 
@@ -1120,12 +1121,15 @@ class Puppet::Parser::Scope
 
   def assert_class_and_title(type_name, title)
     if type_name.nil? || type_name == ''
+      #TRANSLATORS "Resource" is a class name and should not be translated
       raise ArgumentError, _("Cannot use an unspecific Resource[] where a Resource['class', name] is expected")
     end
     unless type_name =~ /^[Cc]lass$/
-      raise ArgumentError, _("Cannot use a Resource[#{type_name}] where a Resource['class', name] is expected")
+      #TRANSLATORS "Resource" is a class name and should not be translated
+      raise ArgumentError, _("Cannot use a Resource[%{type_name}] where a Resource['class', name] is expected") % { type_name: type_name }
     end
     if title.nil?
+      #TRANSLATORS "Resource" is a class name and should not be translated
       raise ArgumentError, _("Cannot use an unspecific Resource['class'] where a Resource['class', name] is expected")
     end
   end

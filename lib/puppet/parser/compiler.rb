@@ -36,7 +36,7 @@ class Puppet::Parser::Compiler
     Puppet.log_exception(detail)
     raise
   rescue => detail
-    message = _("#{detail} on node #{node.name}")
+    message = "#{detail} on node #{node.name}"
     Puppet.log_exception(detail, message)
     raise Puppet::Error, message, detail.backtrace
  end
@@ -79,7 +79,7 @@ class Puppet::Parser::Compiler
     if @current_app
       # We are in the process of pulling application components out that
       # apply to this node
-      Puppet.notice _("Check #{resource}")
+      Puppet.notice "Check #{resource}"
       return unless @current_components.any? do |comp|
         comp.type == resource.type && comp.title == resource.title
       end
@@ -91,7 +91,8 @@ class Puppet::Parser::Compiler
     @catalog.add_resource(resource)
 
     if not resource.class? and resource[:stage]
-      raise ArgumentError, _("Only classes can set 'stage'; normal resources like #{resource} cannot change run stage")
+      #TRANSLATORS "stage" is a keyword in Puppet and should not be translated
+      raise ArgumentError, _("Only classes can set 'stage'; normal resources like %{resource} cannot change run stage") % { resource: resource }
     end
 
     # Stages should not be inside of classes.  They are always a
@@ -117,7 +118,8 @@ class Puppet::Parser::Compiler
           return if upstream.keys.map(&:type).include?('Site')
         end
       end
-      raise ArgumentError, _("Application instances like '#{resource}' can only be contained within a Site")
+      #TRANSLATORS "Site" is a puppet keyword and should not be translated
+      raise ArgumentError, _("Application instances like '%{resource}' can only be contained within a Site") % { resource: resource }
     end
   end
 
@@ -143,7 +145,7 @@ class Puppet::Parser::Compiler
   # Compiler our catalog.  This mostly revolves around finding and evaluating classes.
   # This is the main entry into our catalog.
   def compile
-    Puppet.override( @context_overrides , _("For compiling #{node.name}")) do
+    Puppet.override( @context_overrides , _("For compiling %{node}") % { node: node.name }) do
       @catalog.environment_instance = environment
 
       # Set the client's parameters into the top scope.
@@ -153,6 +155,7 @@ class Puppet::Parser::Compiler
 
       Puppet::Util::Profiler.profile(_("Compile: Evaluated capability mappings"), [:compiler, :evaluate_capability_mappings]) { evaluate_capability_mappings }
 
+      #TRANSLATORS "main" is a function name and should not be translated
       Puppet::Util::Profiler.profile(_("Compile: Evaluated main"), [:compiler, :evaluate_main]) { evaluate_main }
 
       Puppet::Util::Profiler.profile(_("Compile: Evaluated site"), [:compiler, :evaluate_site]) { evaluate_site }
@@ -308,14 +311,14 @@ class Puppet::Parser::Compiler
     @applications.each do |app|
       components = []
       mapping = app.parameters[:nodes] ? app.parameters[:nodes].value : {}
-      raise Puppet::Error, _("Invalid node mapping in #{app.ref}: Mapping must be a hash") unless mapping.is_a?(Hash)
+      raise Puppet::Error, _("Invalid node mapping in %{app}: Mapping must be a hash") % { app: app.ref } unless mapping.is_a?(Hash)
       all_mapped = Set.new
       mapping.each do |k,v|
-        raise Puppet::Error, _("Invalid node mapping in #{app.ref}: Key #{k} is not a Node") unless k.is_a?(Puppet::Resource) && k.type == _('Node')
+        raise Puppet::Error, _("Invalid node mapping in %{app}: Key %{k} is not a Node") % { app: app.ref, k: k } unless k.is_a?(Puppet::Resource) && k.type == _('Node')
         v = [v] unless v.is_a?(Array)
         v.each do |res|
-          raise Puppet::Error, _("Invalid node mapping in #{app.ref}: Value #{res} is not a resource") unless res.is_a?(Puppet::Resource)
-          raise Puppet::Error, _("Application #{app.ref} maps component #{res} to multiple nodes") if all_mapped.add?(res.ref).nil?
+          raise Puppet::Error, _("Invalid node mapping in %{app}: Value %{res} is not a resource") % { app: app.ref, res: res } unless res.is_a?(Puppet::Resource)
+          raise Puppet::Error, _("Application %{app} maps component %{res} to multiple nodes") % { app: app.ref, res: res } if all_mapped.add?(res.ref).nil?
           components << res if k.title == node.name
         end
       end
@@ -360,7 +363,7 @@ class Puppet::Parser::Compiler
     end
 
     hostclasses = classes.collect do |name|
-      environment.known_resource_types.find_hostclass(name) or raise Puppet::Error, _("Could not find class #{name} for #{node.name}")
+      environment.known_resource_types.find_hostclass(name) or raise Puppet::Error, _("Could not find class %{name} for %{node}") % { name: name, node: node.name }
     end
 
     if class_parameters
@@ -485,7 +488,7 @@ class Puppet::Parser::Compiler
     end
 
     unless (astnode ||= krt.node("default"))
-      raise Puppet::ParseError, _("Could not find node statement with name 'default' or '#{node.names.join(", ")}'")
+      raise Puppet::ParseError, _("Could not find node statement with name 'default' or '%{names}'") % { names: node.names.join(", ") }
     end
 
     # Create a resource to model this node, and then add it to the list
@@ -550,7 +553,7 @@ class Puppet::Parser::Compiler
     loop do
       done = true
 
-      Puppet::Util::Profiler.profile(_("Iterated (#{count + 1}) on generators"), [:compiler, :iterate_on_generators]) do
+      Puppet::Util::Profiler.profile(_("Iterated (%{count}) on generators") % { count: count + 1 }, [:compiler, :iterate_on_generators]) do
         # Call collections first, then definitions.
         done = false if evaluate_collections
         done = false if evaluate_definitions
@@ -592,7 +595,7 @@ class Puppet::Parser::Compiler
     remaining = @resource_overrides.values.flatten.collect(&:ref)
 
     if !remaining.empty?
-      raise Puppet::ParseError, _("Could not find resource(s) #{remaining.join(', ')} for overriding")
+      raise Puppet::ParseError, _("Could not find resource(s) %{resources} for overriding") % { resources: remaining.join(', ') }
     end
   end
 
@@ -603,7 +606,7 @@ class Puppet::Parser::Compiler
   def fail_on_unevaluated_resource_collections
     remaining = @collections.collect(&:unresolved_resources).flatten.compact
     if !remaining.empty?
-      raise Puppet::ParseError, _("Failed to realize virtual resources #{remaining.join(', ')}")
+      raise Puppet::ParseError, _("Failed to realize virtual resources %{resources}") % { resources: remaining.join(', ') }
     end
   end
 
@@ -632,6 +635,7 @@ class Puppet::Parser::Compiler
 
   def add_resource_metaparams
     unless main = catalog.resource(:class, :main)
+      #TRANSLATORS "main" is a function name and should not be translated
       raise _("Couldn't find main")
     end
 
