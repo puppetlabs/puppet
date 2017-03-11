@@ -24,6 +24,7 @@ class Puppet::SSL::Validator
   # @api public
   #
   def self.default_validator()
+    Puppet.deprecation_warning("Puppet::SSL::Validator.default_validator is deprecated. Use Puppet::SSL::Validator.cert_auth_validator if the host has a signed cert, or Puppet::SSL::Validator.best_validator if the host certificate signing status is unknown.")
     best_validator
   end
 
