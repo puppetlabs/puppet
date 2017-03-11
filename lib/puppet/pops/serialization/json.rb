@@ -201,7 +201,7 @@ module JSON
           @io << obj.to_json
           write_delim
         else
-          raise SerializationError, _("Unable to serialize a #{obj.class.name}")
+          raise SerializationError, _("Unable to serialize a %{obj}") % { obj: obj.class.name }
         end
       else
         write_extension(ext, obj)
@@ -248,7 +248,7 @@ module JSON
 
     def re_initialize(io)
       parsed = parse_io(io)
-      raise SerializationError, _("JSON stream is not an array. It is a #{io.class.name}") unless parsed.is_a?(Array)
+      raise SerializationError, _("JSON stream is not an array. It is a %{klass}") % { klass: io.class.name } unless parsed.is_a?(Array)
       @etor_stack = [parsed.each]
     end
 
@@ -269,7 +269,7 @@ module JSON
         @etor_stack << ext_etor
         ext_no = ext_etor.next
         ext_block = @type_registry[ext_no]
-        raise SerializationError, _("Invalid input. #{ext_no} is not a valid extension number") if ext_block.nil?
+        raise SerializationError, _("Invalid input. %{ext_no} is not a valid extension number") % { ext_no: ext_no } if ext_block.nil?
         obj = ext_block.call(nil)
       end
       obj

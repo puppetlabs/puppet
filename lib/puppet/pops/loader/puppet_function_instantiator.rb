@@ -22,24 +22,24 @@ class PuppetFunctionInstantiator
     # Only one function is allowed (and no other definitions)
     case result.definitions.size
     when 0
-      raise ArgumentError, _("The code loaded from #{source_ref} does not define the function '#{typed_name.name}' - it is empty.")
+      raise ArgumentError, _("The code loaded from %{source_ref} does not define the function '%{func_name}' - it is empty.") % { source_ref: source_ref, func_name: typed_name.name }
     when 1
       # ok
     else
-      raise ArgumentError, _("The code loaded from #{source_ref} must contain only the function '#{typed_name.name}' - it has additional definitions.")
+      raise ArgumentError, _("The code loaded from %{source_ref} must contain only the function '%{type_name}' - it has additional definitions.") % { source_ref: source_ref, type_name: typed_name.name }
     end
     the_function_definition = result.definitions[0]
 
     unless the_function_definition.is_a?(Model::FunctionDefinition)
-      raise ArgumentError, _("The code loaded from #{source_ref} does not define the function '#{typed_name.name}' - no function found.")
+      raise ArgumentError, _("The code loaded from %{source_ref} does not define the function '%{type_name}' - no function found.") % { source_ref: source_ref, type_name: typed_name.name }
     end
     unless the_function_definition.name == typed_name.name
       expected = typed_name.name
       actual = the_function_definition.name
-      raise ArgumentError, _("The code loaded from #{source_ref} produced function with the wrong name, expected #{expected}, actual #{actual}")
+      raise ArgumentError, _("The code loaded from %{source_ref} produced function with the wrong name, expected %{expected}, actual %{actual}") % { source_ref: source_ref, expected: expected, actual: actual }
     end
     unless result.body == the_function_definition
-      raise ArgumentError, _("The code loaded from #{source_ref} contains additional logic - can only contain the function #{typed_name.name}")
+      raise ArgumentError, _("The code loaded from %{source} contains additional logic - can only contain the function %{name}") % { source: source_ref, name: typed_name.name }
     end
 
     # Adapt the function definition with loader - this is used from logic contained in it body to find the

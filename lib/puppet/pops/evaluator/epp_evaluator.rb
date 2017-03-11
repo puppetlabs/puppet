@@ -33,7 +33,7 @@ class Puppet::Pops::Evaluator::EppEvaluator
     scope.debug "Retrieving epp template #{file}"
     template_file = Puppet::Parser::Files.find_template(file, env_name)
     if template_file.nil? ||  !Puppet::FileSystem.exist?(template_file)
-      raise Puppet::ParseError, _("Could not find template '#{file}'")
+      raise Puppet::ParseError, _("Could not find template '%{file}'") % { file: file }
     end
 
     # Parse and validate the source

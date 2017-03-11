@@ -192,7 +192,7 @@ class Parser
       # e.args[1] is the first comma token in the list
       # e.name_expr is the function name expression
       if e.name_expr.is_a?(Factory) && e.name_expr.model_class <= Model::QualifiedName
-        error(e.args[1], _("attempt to pass argument list to the function '#{e.name_expr['value']}' which cannot be called without parentheses"))
+        error(e.args[1], _("attempt to pass argument list to the function '%{name}' which cannot be called without parentheses") % { name: e.name_expr['value'] })
       else
         error(e.args[1], _("illegal comma separated argument list"))
       end

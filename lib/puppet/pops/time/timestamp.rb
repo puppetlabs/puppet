@@ -37,7 +37,7 @@ class Timestamp < TimeData
     else
       hash = DateTime._strptime(timezone, '%z')
       offset = hash.nil? ? nil : hash[:offset]
-      raise ArgumentError, _("Illegal timezone '#{timezone}'") if offset.nil?
+      raise ArgumentError, _("Illegal timezone '%{timezone}'") % { timezone: timezone } if offset.nil?
       offset
     end
   end
@@ -78,13 +78,13 @@ class Timestamp < TimeData
         rescue ArgumentError
         end
       end
-      raise ArgumentError, _("Unable to parse '#{str}' using any of the formats #{format.join(', ')}") if parsed.nil?
+      raise ArgumentError, _("Unable to parse '%{str}' using any of the formats %{formats}") % { str: str, formats: format.join(', ') } if parsed.nil?
     else
       assert_no_tz_extractor(format) if has_timezone
       begin
         parsed = DateTime.strptime(str, format)
       rescue ArgumentError
-        raise ArgumentError, _("Unable to parse '#{str}' using format '#{format}'")
+        raise ArgumentError, _("Unable to parse '%{str}' using format '%{format}'") % { str: str, format: format }
       end
     end
     parsed_time = parsed.to_time
@@ -113,7 +113,7 @@ class Timestamp < TimeData
     when Integer, Float
       Timestamp.new(@nsecs + (o * NSECS_PER_SEC).to_i)
     else
-      raise ArgumentError, _("#{a_an_uc(o)} cannot be added to a Timestamp")
+      raise ArgumentError, _("%{klass} cannot be added to a Timestamp") % { klass: a_an_uc(o) }
     end
   end
 
@@ -128,7 +128,7 @@ class Timestamp < TimeData
       # Subtract seconds
       Timestamp.new(@nsecs - (o * NSECS_PER_SEC).to_i)
     else
-      raise ArgumentError, _("#{a_an_uc(o)} cannot be subtracted from a Timestamp")
+      raise ArgumentError, _("%{klass} cannot be subtracted from a Timestamp") % { klass: a_an_uc(o) }
     end
   end
 

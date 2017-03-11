@@ -180,7 +180,7 @@ module Lookup
     end
 
     def dump_on(io, indent, first_indent)
-      io << first_indent << _("Invalid key \"") << @key << "\"\n"
+      io << first_indent << "Invalid key \"" << @key << "\"\n"
     end
 
     def type
@@ -196,7 +196,7 @@ module Lookup
     end
 
     def dump_on(io, indent, first_indent)
-      io << first_indent << _('Using merge options from "') << merge_source << _("\" hash\n")
+      io << first_indent << 'Using merge options from "' << merge_source << "\" hash\n"
     end
 
     def to_hash
@@ -217,9 +217,9 @@ module Lookup
     def dump_on(io, indent, first_indent)
       case @event
       when :module_not_found
-        io << indent << _("Module \"#{@module_name}\" not found\n")
+        io << indent << 'Module "' << @module_name << "\" not found\n"
       when :module_provider_not_found
-        io << indent << _("Module data provider for module \"#{@module_name}\" not found\n")
+        io << indent << 'Module data provider for module "' << @module_name << "\" not found\n"
       end
     end
 
@@ -243,7 +243,7 @@ module Lookup
     end
 
     def dump_on(io, indent, first_indent)
-      io << first_indent << _('Interpolation on "') << @expression << "\"\n"
+      io << first_indent << 'Interpolation on "' << @expression << "\"\n"
       indent = increase_indent(indent)
       branches.each {|b| b.dump_on(io, indent, indent)}
     end
@@ -271,17 +271,17 @@ module Lookup
       # It's pointless to report a merge where there's only one branch
       return branches[0].dump_on(io, indent, first_indent) if branches.size == 1
 
-      io << first_indent << _('Merge strategy ') << @merge.class.key.to_s << "\n"
+      io << first_indent << 'Merge strategy ' << @merge.class.key.to_s << "\n"
       indent = increase_indent(indent)
       options = options_wo_strategy
       unless options.nil?
-        io << indent << _('Options: ')
+        io << indent << 'Options: '
         dump_value(io, indent, options)
         io << "\n"
       end
       branches.each {|b| b.dump_on(io, indent, indent)}
       if @event == :result
-        io << indent << _('Merged result: ')
+        io << indent << 'Merged result: '
         dump_value(io, indent, @value)
         io << "\n"
       end
@@ -317,7 +317,7 @@ module Lookup
     end
 
     def dump_on(io, indent, first_indent)
-      io << first_indent << _('Data Binding "') << @binding_terminus.to_s << "\"\n"
+      io << first_indent << 'Data Binding "' << @binding_terminus.to_s << "\"\n"
       indent = increase_indent(indent)
       branches.each {|b| b.dump_on(io, indent, indent)}
       dump_outcome(io, indent)
@@ -345,7 +345,7 @@ module Lookup
       indent = increase_indent(indent)
       if @provider.respond_to?(:config_path)
         path = @provider.config_path
-        io << indent << _('Using configuration "') << path.to_s << "\"\n" unless path.nil?
+        io << indent << 'Using configuration "' << path.to_s << "\"\n" unless path.nil?
       end
       branches.each {|b| b.dump_on(io, indent, indent)}
       dump_outcome(io, indent)

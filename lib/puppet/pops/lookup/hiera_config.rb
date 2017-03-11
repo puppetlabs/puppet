@@ -82,7 +82,7 @@ class HieraConfig
   def self.v4_function_config(config_root, function_name, owner)
     unless Puppet[:strict] == :off
       Puppet.warn_once(:deprecation, 'legacy_provider_function',
-        _("Using of legacy data provider function '#{function_name}'. Please convert to a 'data_hash' function"))
+        _("Using of legacy data provider function '%{function_name}'. Please convert to a 'data_hash' function") % { function_name: function_name })
     end
     HieraConfigV5.new(config_root, nil,
       {
@@ -137,7 +137,7 @@ class HieraConfig
           if parsed.is_a?(Hash)
             parsed
           else
-            Puppet.warning("#{config_path}: File exists but does not contain a valid YAML hash. Falling back to Hiera version 3 default config")
+            Puppet.warning(_("%{config_path}: File exists but does not contain a valid YAML hash. Falling back to Hiera version 3 default config") % { config_path: config_path })
             HieraConfigV3::DEFAULT_CONFIG_HASH
           end
         end
@@ -422,7 +422,7 @@ class HieraConfigV3 < HieraConfig
   def validate_config(config, owner)
     unless Puppet[:strict] == :off
       Puppet.warn_once(:deprecation, 'hiera.yaml',
-        _("#{@config_path}: Use of 'hiera.yaml' version 3 is deprecated. It should be converted to version 5"), config_path.to_s)
+        _("%{config_path}: Use of 'hiera.yaml' version 3 is deprecated. It should be converted to version 5") % { config_path: @config_path }, config_path.to_s)
     end
     config[KEY_VERSION] ||= 3
     config[KEY_BACKENDS] ||= DEFAULT_CONFIG_HASH[KEY_BACKENDS]
@@ -522,7 +522,7 @@ class HieraConfigV4 < HieraConfig
   def validate_config(config, owner)
     unless Puppet[:strict] == :off
       Puppet.warn_once(:deprecation, 'hiera.yaml',
-        _("#{@config_path}: Use of 'hiera.yaml' version 4 is deprecated. It should be converted to version 5"), config_path.to_s)
+        _("%{config_path}: Use of 'hiera.yaml' version 4 is deprecated. It should be converted to version 5") % { config_path: @config_path }, config_path.to_s)
     end
     config[KEY_DATADIR] ||= 'data'
     config[KEY_HIERARCHY] ||= [{ KEY_NAME => 'common', KEY_BACKEND => 'yaml' }]

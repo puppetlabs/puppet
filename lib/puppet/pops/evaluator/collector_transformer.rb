@@ -164,7 +164,7 @@ protected
   end
 
   def query_Object(o, scope)
-    raise ArgumentError, _("Cannot transform object of class #{o.class}")
+    raise ArgumentError, _("Cannot transform object of class %{klass}") % { klass: o.class }
   end
 
   def match_AccessExpression(o, scope)
@@ -226,7 +226,7 @@ protected
   end
 
   def match_Object(o, scope)
-    raise ArgumentError, _("Cannot transform object of class #{o.class}")
+    raise ArgumentError, _("Cannot transform object of class %{klass}") % { klass: o.class }
   end
 end
 end

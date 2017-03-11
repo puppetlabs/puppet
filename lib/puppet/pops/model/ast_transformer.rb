@@ -63,7 +63,7 @@ class Puppet::Pops::Model::AstTransformer
     rescue StandardError => e
       loc_data = {}
       merge_location(loc_data, o)
-      raise Puppet::ParseError.new(_("Error while transforming to Puppet 3 AST: #{e.message}"),
+      raise Puppet::ParseError.new(_("Error while transforming to Puppet 3 AST: %{message}") % { message: e.message },
         loc_data[:file], loc_data[:line], loc_data[:pos], e)
     end
   end
@@ -115,7 +115,7 @@ class Puppet::Pops::Model::AstTransformer
   end
 
   def transform_Object(o)
-    raise _("Unacceptable transform - found an Object without a rule: #{o.class}")
+    raise _("Unacceptable transform - found an Object without a rule: %{klass}") % { klass: o.class }
   end
 
   # Nil, nop
