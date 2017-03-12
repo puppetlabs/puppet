@@ -188,7 +188,7 @@ class HieraConfig
         @scope_interpolations.all? do |key, root_key, segments, old_value|
           value = scope[root_key]
           unless value.nil? || segments.empty?
-            found = '';
+            found = nil;
             catch(:no_such_key) { found = sub_lookup(key, lookup_invocation, segments, value) }
             value = found;
           end

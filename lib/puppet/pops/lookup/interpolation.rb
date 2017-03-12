@@ -92,8 +92,8 @@ module Interpolation
             end
           end
         end
-        unless segments.empty?
-          found = '';
+        unless value.nil? || segments.empty?
+          found = nil;
           catch(:no_such_key) { found = sub_lookup(key, lookup_invocation, segments, value) }
           value = found;
         end
