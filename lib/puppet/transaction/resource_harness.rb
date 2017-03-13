@@ -52,7 +52,7 @@ class Puppet::Transaction::ResourceHarness
     end
 
     return nil unless name = resource[:schedule]
-    resource.catalog.resource(:schedule, name) || resource.fail(_("Could not find schedule #{name}"))
+    resource.catalog.resource(:schedule, name) || resource.fail(_("Could not find schedule %{name}") % { name: name })
   end
 
   # Used mostly for scheduling and auditing at this point.
@@ -144,17 +144,17 @@ class Puppet::Transaction::ResourceHarness
 
       event = create_change_event(param, current_value, historical_value)
       event.status = "failure"
-      event.message = param.format(_("change from %s to %s failed: #{detail}"),
+      event.message = param.format(_("change from %s to %s failed: "),
                                    param.is_to_s(current_value),
-                                   param.should_to_s(param.should))
+                                   param.should_to_s(param.should)) + detail.to_s
       event
     rescue Exception => detail
       # Execution will halt on Exceptions, they get raised to the application
       event = create_change_event(param, current_value, historical_value)
       event.status = "failure"
-      event.message = param.format(_("change from %s to %s failed: #{detail}"),
+      event.message = param.format(_("change from %s to %s failed: "),
                                    param.is_to_s(current_value),
-                                   param.should_to_s(param.should))
+                                   param.should_to_s(param.should)) + detail.to_s
       raise
     ensure
       if event
@@ -226,16 +226,18 @@ class Puppet::Transaction::ResourceHarness
   end
 
   def noop(event, param, current_value, audit_message)
-    event.message = param.format(_("current_value %s, should be %s (noop)#{audit_message}"),
+    event.message = param.format(_("current_value %s, should be %s (noop)"),
                                  param.is_to_s(current_value),
-                                 param.should_to_s(param.should))
+                                 param.should_to_s(param.should)) + audit_message.to_s
     event.status = "noop"
   end
 
   def sync(event, param, current_value, audit_message)
     param.sync
     if param.sensitive
-      event.message = param.format(_("changed %s to %s#{audit_message}"), param.is_to_s(current_value), param.should_to_s(param.should))
+      event.message = param.format(_("changed %s to %s"),
+                                   param.is_to_s(current_value),
+                                   param.should_to_s(param.should)) + audit_message.to_s
     else
       event.message = "#{param.change_to_s(current_value, param.should)}#{audit_message}"
     end

@@ -22,7 +22,7 @@ class Puppet::Transaction::AdditionalResourceGenerator
       generated = resource.generate
     rescue => detail
       @resources_failed_to_generate = true
-      resource.log_exception(detail, _("Failed to generate additional resources using 'generate': #{detail}"))
+      resource.log_exception(detail, _("Failed to generate additional resources using 'generate': %{detail}") % { detail: detail })
     end
     return unless generated
     generated = [generated] unless generated.is_a?(Array)

@@ -95,7 +95,7 @@ class Puppet::Transaction
 
     persistence.load if catalog.host_config?
 
-    Puppet.info _("Applying configuration version '#{catalog.version}'") if catalog.version
+    Puppet.info _("Applying configuration version '%{version}'") % { version: catalog.version } if catalog.version
 
     continue_while = lambda { !stop_processing? }
 
@@ -118,7 +118,7 @@ class Puppet::Transaction
       # is one, it must have been selected by the user.
       return if missing_tags?(resource)
       if resource.provider
-        resource.err _("Provider #{resource.provider.class.name} is not functional on this host")
+        resource.err _("Provider %{name} is not functional on this host") % { name: resource.provider.class.name }
       else
         providerless_types << resource.type
       end
@@ -134,14 +134,14 @@ class Puppet::Transaction
     teardown = lambda do
       # Just once per type. No need to punish the user.
       providerless_types.uniq.each do |type|
-        Puppet.err _("Could not find a suitable provider for #{type}")
+        Puppet.err _("Could not find a suitable provider for %{type}") % { type: type }
       end
 
       post_evalable_providers.each do |provider|
         begin
           provider.post_resource_eval
         rescue => detail
-          Puppet.log_exception(detail, _("post_resource_eval failed for provider #{provider}"))
+          Puppet.log_exception(detail, _("post_resource_eval failed for provider %{provider}") % { provider: provider })
         end
       end
 
@@ -231,7 +231,7 @@ class Puppet::Transaction
     add_resource_status(status)
     event_manager.queue_events(ancestor || resource, status.events) unless status.failed?
   rescue => detail
-    resource.err _("Could not evaluate: #{detail}")
+    resource.err _("Could not evaluate: %{detail}") % { detail: detail }
   end
 
   # Evaluate a single resource.
@@ -261,7 +261,7 @@ class Puppet::Transaction
       # See above. --daniel 2011-06-06
       unless suppress_report then
         s.failed_dependencies.each do |dep|
-          resource.notice _("Dependency #{dep} has failures: #{resource_status(dep).failed}")
+          resource.notice _("Dependency %{dep} has failures: %{status}") % { dep: dep, status: resource_status(dep).failed }
         end
       end
     end
@@ -319,7 +319,7 @@ class Puppet::Transaction
       provider_class.prefetch(resources)
     rescue LoadError, Puppet::MissingCommand => detail
       #TRANSLATORS `prefetch` is a function name and should not be translated
-      Puppet.log_exception(detail, _("Could not prefetch #{type_name} provider '#{provider_class.name}': #{detail}"))
+      Puppet.log_exception(detail, _("Could not prefetch %{type_name} provider '%{name}': %{detail}") % { type_name: type_name, name: provider_class.name, detail: detail })
     end
     @prefetched_providers[type_name][provider_class.name] = true
   end

@@ -84,13 +84,13 @@ class Puppet::Transaction::EventManager
   def dequeue_all_events_for_resource(target)
     callbacks = @event_queues[target]
     if callbacks && !callbacks.empty?
-      target.info _("Unscheduling all events on #{target}")
+      target.info _("Unscheduling all events on %{target}") % { target: target }
       @event_queues[target] = {}
     end
   end
 
   def dequeue_events_for_resource(target, callback)
-    target.info _("Unscheduling #{callback} on #{target}")
+    target.info _("Unscheduling %{callback} on %{target}") % { callback: callback, target: target }
     @event_queues[target][callback] = [] if @event_queues[target]
   end
 
@@ -105,7 +105,7 @@ class Puppet::Transaction::EventManager
     if refreshing_c_whit
       source.debug "The container #{target} will propagate my #{callback} event"
     else
-      source.info _("Scheduling #{callback} of #{target}")
+      source.info _("Scheduling %{callback} of %{target}") % { callback: callback, target: target }
     end
 
     @event_queues[target] ||= {}
@@ -147,11 +147,11 @@ class Puppet::Transaction::EventManager
     resource.send(callback)
 
     if not resource.is_a?(Puppet::Type.type(:whit))
-      resource.notice n_("Triggered '#{callback}' from %{count} event", "Triggered '#{callback}' from %{count} events", events.length) % { :count => events.length }
+      resource.notice n_("Triggered '%{callback}' from %{count} event", "Triggered '%{callback}' from %{count} events", events.length) % { count: events.length, callback: callback }
     end
     return true
   rescue => detail
-    resource.err _("Failed to call #{callback}: #{detail}")
+    resource.err _("Failed to call %{callback}: %{detail}") % { callback: callback, detail: detail }
 
     transaction.resource_status(resource).failed_to_restart = true
     resource.log_exception(detail)
@@ -159,7 +159,7 @@ class Puppet::Transaction::EventManager
   end
 
   def process_noop_events(resource, callback, events)
-    resource.notice _("Would have triggered '#{callback}' from #{events.length} events")
+    resource.notice n_("Would have triggered '%{callback}' from %{count} event", "Would have triggered '%{callback}' from %{count} events", events.length) % { count: events.length, callback: callback }
 
     # And then add an event for it.
     queue_events(resource, [resource.event(:status => "noop", :name => :noop_restart)])
