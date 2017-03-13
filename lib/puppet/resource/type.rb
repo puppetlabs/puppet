@@ -123,12 +123,12 @@ class Puppet::Resource::Type
 
     resource.export.map do |ex|
       # Assert that the ref really is a resource reference
-      raise Puppet::Error, _("Invalid export in #{resource.ref}: #{ex} is not a resource") unless ex.is_a?(Puppet::Resource)
-      raise Puppet::Error, _("Invalid export in #{resource.ref}: #{ex} is not a capability resource") if ex.resource_type.nil? || !ex.resource_type.is_capability?
+      raise Puppet::Error, _("Invalid export in %{reference}: %{ex} is not a resource") % { reference: resource.ref, ex: ex } unless ex.is_a?(Puppet::Resource)
+      raise Puppet::Error, _("Invalid export in %{reference}: %{ex} is not a capability resource") % { reference: resource.ref, ex: ex } if ex.resource_type.nil? || !ex.resource_type.is_capability?
 
       blueprint = produces.find { |pr| pr[:capability] == ex.type }
       if blueprint.nil?
-        raise Puppet::ParseError, _("Resource type #{resource.type} does not produce #{ex.type}")
+        raise Puppet::ParseError, _("Resource type %{res_type} does not produce %{ex_type}") % { res_type: resource.type, ex_type: ex.type }
       end
       t = ex.type
       t = Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_resource_type(scope, t) unless t == 'class' || t == 'node'
@@ -235,12 +235,12 @@ class Puppet::Resource::Type
 
   # Add code from a new instance to our code.
   def merge(other)
-    fail _("#{name} is not a class; cannot add code to it") unless type == :hostclass
-    fail _("#{other.name} is not a class; cannot add code from it") unless other.type == :hostclass
+    fail _("%{name} is not a class; cannot add code to it") % { name: name } unless type == :hostclass
+    fail _("%{name} is not a class; cannot add code from it") % { name: other.name } unless other.type == :hostclass
     fail _("Cannot have code outside of a class/node/define because 'freeze_main' is enabled") if name == "" and Puppet.settings[:freeze_main]
 
     if parent and other.parent and parent != other.parent
-      fail _("Cannot merge classes with different parent classes (#{name} => #{parent} vs. #{other.name} => #{other.parent})")
+      fail _("Cannot merge classes with different parent classes (%{name} => %{parent} vs. %{other_name} => %{other_parent})") % { name: name, parent: parent, other_name: other.name, other_parent: other.parent }
     end
 
     # We know they're either equal or only one is set, so keep whichever parent is specified.
@@ -341,7 +341,7 @@ class Puppet::Resource::Type
     return nil unless parent
 
     @parent_type ||= scope.environment.known_resource_types.send("find_#{type}", parent) ||
-      fail(Puppet::ParseError, _("Could not find parent resource type '#{parent}' of type #{type} in #{scope.environment}"))
+      fail(Puppet::ParseError, _("Could not find parent resource type '%{parent}' of type %{parent_type} in %{env}") % { parent: parent, parent_type: type, env: scope.environment })
   end
 
   # Validate and set any arguments passed by the resource as variables in the scope.
@@ -398,7 +398,7 @@ class Puppet::Resource::Type
       param = parameters[sym_name]
       next unless param.nil? || param.value.nil?
       catch(:no_such_key) do
-        bound_value = Puppet::Pops::Lookup.search_and_merge(_("#{name}::#{param_name}"), Puppet::Pops::Lookup::Invocation.new(scope), nil)
+        bound_value = Puppet::Pops::Lookup.search_and_merge("#{name}::#{param_name}", Puppet::Pops::Lookup::Invocation.new(scope), nil)
         # Assign bound value but don't let an undef trump a default expression
         resource[sym_name] = bound_value unless bound_value.nil? && !default.nil?
       end
@@ -532,9 +532,9 @@ class Puppet::Resource::Type
     return unless Puppet::Type.metaparamclass(param)
 
     if default
-      warnonce _("#{param} is a metaparam; this value will inherit to all contained resources in the #{self.name} definition")
+      warnonce _("%{param} is a metaparam; this value will inherit to all contained resources in the %{name} definition") % { param: param, name: self.name }
     else
-      raise Puppet::ParseError, _("#{param} is a metaparameter; please choose another parameter name in the #{self.name} definition")
+      raise Puppet::ParseError, _("%{param} is a metaparameter; please choose another parameter name in the %{name} definition") % { param: param, name: self.name }
     end
   end
 

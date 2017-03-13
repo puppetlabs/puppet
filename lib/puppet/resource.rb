@@ -88,7 +88,7 @@ class Puppet::Resource
         if is_json_type?(value)
           params[param] = value
         elsif json_serializer.nil?
-          Puppet.warning(_("Resource '#{to_s}' contains a #{value.class.name} value. It will be converted to the String '#{value}'"))
+          Puppet.warning(_("Resource '%{resource}' contains a %{klass} value. It will be converted to the String '%{value}'") % { resource: to_s, klass: value.class.name, value: value })
           params[param] = value
         else
           ext_params[param] = value
@@ -511,7 +511,7 @@ class Puppet::Resource
     return [] unless resource_type and resource_type.respond_to?(:arguments)
 
     unless is_a?(Puppet::Parser::Resource)
-      fail Puppet::DevError, _("Cannot evaluate default parameters for #{self} - not a parser resource")
+      fail Puppet::DevError, _("Cannot evaluate default parameters for %{resource} - not a parser resource") % { resource: self }
     end
 
     missing_arguments.collect do |param, default|
@@ -519,7 +519,7 @@ class Puppet::Resource
       if rtype.type == :hostclass
         using_bound_value = false
         catch(:no_such_key) do
-          bound_value = Puppet::Pops::Lookup.search_and_merge(_("#{rtype.name}::#{param}"), Puppet::Pops::Lookup::Invocation.new(scope), nil)
+          bound_value = Puppet::Pops::Lookup.search_and_merge("#{rtype.name}::#{param}", Puppet::Pops::Lookup::Invocation.new(scope), nil)
           # Assign bound value but don't let an undef trump a default expression
           unless bound_value.nil? && !default.nil?
             self[param.to_sym] = bound_value
@@ -557,7 +557,7 @@ class Puppet::Resource
 
     resource_type.arguments.each do |param, default|
       param = param.to_sym
-      fail Puppet::ParseError, _("Must pass #{param} to #{self}") unless parameters.include?(param)
+      fail Puppet::ParseError, _("Must pass %{param} to %{resource}") % { param: param, resource: self } unless parameters.include?(param)
     end
 
     # Perform optional type checking
@@ -568,13 +568,13 @@ class Puppet::Resource
       unless Puppet::Pops::Types::TypeCalculator.instance?(t, value.value)
         inferred_type = Puppet::Pops::Types::TypeCalculator.infer_set(value.value)
         actual = inferred_type.generalize()
-        fail Puppet::ParseError, _("Expected parameter '#{name}' of '#{self}' to have type #{t.to_s}, got #{actual.to_s}")
+        fail Puppet::ParseError, _("Expected parameter '%{name}' of '%{value0}' to have type %{value1}, got %{value2}") % { name: name, value0: self, value1: t.to_s, value2: actual.to_s }
       end
     end
   end
 
   def validate_parameter(name)
-    raise Puppet::ParseError.new(_("no parameter named '#{name}'"), file, line) unless valid_parameter?(name)
+    raise Puppet::ParseError.new(_("no parameter named '%{name}'") % { name: name }, file, line) unless valid_parameter?(name)
   end
 
   def prune_parameters(options = {})
@@ -678,7 +678,7 @@ class Puppet::Resource
       # If we've gotten this far, then none of the provided title patterns
       # matched. Since there's no way to determine the title then the
       # resource should fail here.
-      raise Puppet::Error, _("No set of title patterns matched the title \"#{title}\".")
+      raise Puppet::Error, _("No set of title patterns matched the title \"%{title}\".") % { title: title }
     else
       return { :name => title.to_s }
     end
