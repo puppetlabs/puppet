@@ -30,7 +30,7 @@ class Puppet::Settings::TTLSetting < Puppet::Settings::BaseSetting
     case
     when value.is_a?(Numeric)
       if value < 0
-        raise Puppet::Settings::ValidationError, _("Invalid negative 'time to live' #{value.inspect} - did you mean 'unlimited'?")
+        raise Puppet::Settings::ValidationError, _("Invalid negative 'time to live' %{value} - did you mean 'unlimited'?") % { value: value.inspect }
       end
       value
 
@@ -40,7 +40,7 @@ class Puppet::Settings::TTLSetting < Puppet::Settings::BaseSetting
     when (value.is_a?(String) and value =~ FORMAT)
       $1.to_i * UNITMAP[$2 || 's']
     else
-      raise Puppet::Settings::ValidationError, _("Invalid 'time to live' format '#{value.inspect}' for parameter: #{param_name}")
+      raise Puppet::Settings::ValidationError, _("Invalid 'time to live' format '%{value}' for parameter: %{param_name}") % { value: value.inspect, param_name: param_name }
     end
   end
 end

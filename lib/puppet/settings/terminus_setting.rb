@@ -8,7 +8,7 @@ class Puppet::Settings::TerminusSetting < Puppet::Settings::BaseSetting
     when Symbol
       value
     else
-      raise Puppet::Settings::ValidationError, _("Invalid terminus setting: #{value}")
+      raise Puppet::Settings::ValidationError, _("Invalid terminus setting: %{value}") % { value: value }
     end
   end
 end
