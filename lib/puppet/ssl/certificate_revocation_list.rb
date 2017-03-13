@@ -46,7 +46,7 @@ DOC
   # CA, then write the CRL back to disk. The REASON must be one of the
   # OpenSSL::OCSP::REVOKED_* reasons
   def revoke(serial, cakey, reason = OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE)
-    Puppet.notice _("Revoked certificate with serial #{serial}")
+    Puppet.notice _("Revoked certificate with serial %{serial}") % { serial: serial }
     time = Time.now
 
     add_certificate_revocation_for(serial, reason, time)

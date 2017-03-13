@@ -100,22 +100,22 @@ module Puppet::SSL::Oids
       begin
         mapping = YAML.load_file(custom_oid_file)
       rescue => err
-        raise Puppet::Error, _("Error loading ssl custom OIDs mapping file from '#{custom_oid_file}': #{err}"), err.backtrace
+        raise Puppet::Error, _("Error loading ssl custom OIDs mapping file from '%{custom_oid_file}': %{err}") % { custom_oid_file: custom_oid_file, err: err }, err.backtrace
       end
 
       unless mapping.has_key?(map_key)
-        raise Puppet::Error, _("Error loading ssl custom OIDs mapping file from '#{custom_oid_file}': no such index '#{map_key}'")
+        raise Puppet::Error, _("Error loading ssl custom OIDs mapping file from '%{custom_oid_file}': no such index '%{map_key}'") % { custom_oid_file: custom_oid_file, map_key: map_key }
       end
 
       unless mapping[map_key].is_a?(Hash)
-        raise Puppet::Error, _("Error loading ssl custom OIDs mapping file from '#{custom_oid_file}': data under index '#{map_key}' must be a Hash")
+        raise Puppet::Error, _("Error loading ssl custom OIDs mapping file from '%{custom_oid_file}': data under index '%{map_key}' must be a Hash") % { custom_oid_file: custom_oid_file, map_key: map_key }
       end
 
       oid_defns = []
       mapping[map_key].keys.each do |oid|
         shortname, longname = mapping[map_key][oid].values_at("shortname","longname")
         if shortname.nil? || longname.nil?
-          raise Puppet::Error, _("Error loading ssl custom OIDs mapping file from '#{custom_oid_file}': incomplete definition of oid '#{oid}'")
+          raise Puppet::Error, _("Error loading ssl custom OIDs mapping file from '%{custom_oid_file}': incomplete definition of oid '%{oid}'") % { custom_oid_file: custom_oid_file, oid: oid }
         end
         oid_defns << [oid, shortname, longname]
       end
@@ -147,7 +147,7 @@ module Puppet::SSL::Oids
           OpenSSL::ASN1::ObjectId.register(*oid_defn)
         end
       rescue => err
-        raise ArgumentError, _("Error registering ssl custom OIDs mapping from file '#{custom_oid_file}': #{err}"), err.backtrace
+        raise ArgumentError, _("Error registering ssl custom OIDs mapping from file '%{custom_oid_file}': %{err}") % { custom_oid_file: custom_oid_file, err: err }, err.backtrace
       end
     end
   end
