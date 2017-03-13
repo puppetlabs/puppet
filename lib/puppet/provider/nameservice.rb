@@ -93,7 +93,7 @@ class Puppet::Provider::NameService < Puppet::Provider
       name = name.intern if name.is_a? String
       if @checks.include? name
         block = @checks[name][:block]
-        raise ArgumentError, _("Invalid value #{value}: #{@checks[name][:error]}") unless block.call(value)
+        raise ArgumentError, _("Invalid value %{value}: %{error}") % { value: value, error: @checks[name][:error] } unless block.call(value)
       end
     end
 
@@ -169,7 +169,7 @@ class Puppet::Provider::NameService < Puppet::Provider
         execute(cmd)
       end
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, _("Could not create #{@resource.class.name} #{@resource.name}: #{detail}"), detail.backtrace
+      raise Puppet::Error, _("Could not create %{resource} %{name}: %{detail}") % { resource: @resource.class.name, name: @resource.name, detail: detail }, detail.backtrace
     end
   end
 
@@ -183,7 +183,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     begin
       execute(self.deletecmd)
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, _("Could not delete #{@resource.class.name} #{@resource.name}: #{detail}"), detail.backtrace
+      raise Puppet::Error, _("Could not delete %{resource} %{name}: %{detail}") % { resource: @resource.class.name, name: @resource.name, detail: detail }, detail.backtrace
     end
   end
 
@@ -285,7 +285,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     begin
       execute(cmd)
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, _("Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}"), detail.backtrace
+      raise Puppet::Error, _("Could not set %{param} on %{resource}[%{name}]: %{detail}") % { param: param, resource: @resource.class.name, name: @resource.name, detail: detail }, detail.backtrace
     end
   end
 

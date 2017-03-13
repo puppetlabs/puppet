@@ -52,7 +52,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
 
     def populate_rules_rights
       auth_plist = Puppet::Util::Plist.parse_plist(AuthDB)
-      raise Puppet::Error.new(_("Cannot parse: #{AuthDB}")) if not auth_plist
+      raise Puppet::Error.new(_("Cannot parse: %{auth}") % { auth: AuthDB }) if not auth_plist
       self.rights = auth_plist["rights"].dup
       self.rules = auth_plist["rules"].dup
       self.parsed_auth_db = self.rights.dup
@@ -132,7 +132,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
         authdb["rules"].delete(resource[:name])
         Puppet::Util::Plist.write_plist_file(authdb, AuthDB)
       rescue Errno::EACCES => e
-        raise Puppet::Error.new(_("Error saving #{AuthDB}: #{e}"), e)
+        raise Puppet::Error.new(_("Error saving %{auth}: %{error}") % { auth: AuthDB, error: e }, e)
       end
     end
   end
@@ -177,7 +177,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
       cmds << :security << "authorizationdb" << "write" << name
       execute(cmds, :failonfail => false, :combine => false, :stdinfile => tmp.path.to_s)
     rescue Errno::EACCES => e
-      raise Puppet::Error.new(_("Cannot save right to #{tmp.path}: #{e}"), e)
+      raise Puppet::Error.new(_("Cannot save right to %{path}: %{error}") % { path: tmp.path, error: e }, e)
     ensure
       tmp.close
       tmp.unlink
@@ -196,7 +196,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     begin
       Puppet::Util::Plist.write_plist_file(authdb, AuthDB)
     rescue
-      raise Puppet::Error.new(_("Error writing to: #{AuthDB}"))
+      raise Puppet::Error.new(_("Error writing to: %{auth_db}") % { auth_db: AuthDB })
     end
   end
 
@@ -229,7 +229,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
 
   def retrieve_value(resource_name, attribute)
     # We set boolean values to symbols when retrieving values
-    raise Puppet::Error.new(_("Cannot find #{resource_name} in auth db")) if not self.class.parsed_auth_db.has_key?(resource_name)
+    raise Puppet::Error.new(_("Cannot find %{resource_name} in auth db") % { resource_name: resource_name }) if not self.class.parsed_auth_db.has_key?(resource_name)
 
     if PuppetToNativeAttributeMap.has_key?(attribute)
       native_attribute = PuppetToNativeAttributeMap[attribute]
@@ -284,7 +284,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
       elsif self.class.rules.has_key?(resource[:name])
         return :rule
       else
-        raise Puppet::Error.new(_("#{resource[:name]} is unknown type."))
+        raise Puppet::Error.new(_("%{resource} is unknown type.") % { resource: resource[:name] })
       end
     else
       raise Puppet::Error.new(_("auth_type required for new resources."))

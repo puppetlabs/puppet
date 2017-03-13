@@ -46,7 +46,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
             unless line =~ /Updating the pkgdb/
               # Print a warning on lines we can't match, but move
               # on, since it should be non-fatal
-              warning(_("Failed to match line #{line}"))
+              warning(_("Failed to match line %{line}") % { line: line })
             end
           end
         }
@@ -209,7 +209,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
       return master_version unless master_version == 0
       return '' if version == -1
-      raise Puppet::Error, _("#{version} is not available for this package")
+      raise Puppet::Error, _("%{version} is not available for this package") % { version: version }
     end
   rescue Puppet::ExecutionFailure
     return nil

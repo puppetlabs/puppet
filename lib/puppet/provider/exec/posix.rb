@@ -18,11 +18,11 @@ Puppet::Type.type(:exec).provide :posix, :parent => Puppet::Provider::Exec do
 
     if File.expand_path(exe) == exe
       if !Puppet::FileSystem.exist?(exe)
-        raise ArgumentError, _("Could not find command '#{exe}'")
+        raise ArgumentError, _("Could not find command '%{exe}'") % { exe: exe }
       elsif !File.file?(exe)
-        raise ArgumentError, _("'#{exe}' is a #{File.ftype(exe)}, not a file")
+        raise ArgumentError, _("'%{exe}' is a %{klass}, not a file") % { exe: exe, klass: File.ftype(exe) }
       elsif !File.executable?(exe)
-        raise ArgumentError, _("'#{exe}' is not executable")
+        raise ArgumentError, _("'%{exe}' is not executable") % { exe: exe }
       end
       return
     end
@@ -35,7 +35,7 @@ Puppet::Type.type(:exec).provide :posix, :parent => Puppet::Provider::Exec do
 
     # 'which' will only return the command if it's executable, so we can't
     # distinguish not found from not executable
-    raise ArgumentError, _("Could not find command '#{exe}'")
+    raise ArgumentError, _("Could not find command '%{exe}'") % { exe: exe }
   end
 
   def run(command, check = false)

@@ -37,7 +37,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
         map {|set| gemsplit(set) }.
         reject {|x| x.nil? }
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, _("Could not list gems: #{detail}"), detail.backtrace
+      raise Puppet::Error, _("Could not list gems: %{detail}") % { detail: detail }, detail.backtrace
     end
 
     if options[:justme]
@@ -63,7 +63,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
         :provider => name
       }
     else
-      Puppet.warning _("Could not match #{desc}") unless desc.chomp.empty?
+      Puppet.warning _("Could not match %{desc}") % { desc: desc } unless desc.chomp.empty?
       nil
     end
   end
@@ -103,7 +103,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
       begin
         uri = URI.parse(source)
       rescue => detail
-        self.fail Puppet::Error, _("Invalid source '#{uri}': #{detail}"), detail
+        self.fail Puppet::Error, _("Invalid source '%{uri}': %{detail}") % { uri: uri, detail: detail }, detail
       end
 
       case uri.scheme
@@ -132,7 +132,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
 
     output = execute(command)
     # Apparently some stupid gem versions don't exit non-0 on failure
-    self.fail _("Could not install: #{output.chomp}") if output.include?("ERROR")
+    self.fail _("Could not install: %{output}") % { output: output.chomp } if output.include?("ERROR")
   end
 
   def latest
@@ -157,7 +157,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     output = execute(command)
 
     # Apparently some stupid gem versions don't exit non-0 on failure
-    self.fail _("Could not uninstall: #{output.chomp}") if output.include?("ERROR")
+    self.fail _("Could not uninstall: %{output}") % { output: output.chomp } if output.include?("ERROR")
   end
 
   def update

@@ -80,7 +80,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     elsif output.exitstatus == 0
       self.debug "#{command(:cmd)} check-update exited with 0; no package updates available."
     else
-      self.warning _("Could not check for updates, '#{command(:cmd)} check-update' exited with #{output.exitstatus}")
+      self.warning _("Could not check for updates, '%{cmd} check-update' exited with %{status}") % { cmd: command(:cmd), status: output.exitstatus }
     end
     updates
   end
@@ -196,18 +196,18 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     output = execute(command)
 
     if output =~ /^No package #{wanted} available\.$/
-      raise Puppet::Error, _("Could not find package #{wanted}")
+      raise Puppet::Error, _("Could not find package %{wanted}") % { wanted: wanted }
     end
 
     # If a version was specified, query again to see if it is a matching version
     if should
       is = self.query
-      raise Puppet::Error, _("Could not find package #{self.name}") unless is
+      raise Puppet::Error, _("Could not find package %{name}") % { name: self.name } unless is
 
       # FIXME: Should we raise an exception even if should == :latest
       # and yum updated us to a version other than @param_hash[:ensure] ?
       vercmp_result = rpm_compareEVR(rpm_parse_evr(should), rpm_parse_evr(is[:ensure]))
-      raise Puppet::Error, _("Failed to update to version #{should}, got version #{is[:ensure]} instead") if vercmp_result != 0
+      raise Puppet::Error, _("Failed to update to version %{should}, got version %{version} instead") % { should: should, version: is[:ensure] } if vercmp_result != 0
     end
   end
 

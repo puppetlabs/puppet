@@ -76,7 +76,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
       return self.class.namemap(pkgs[0]) if errmsg.nil?
       # according to commit 41356a7 some errors do not raise an exception
       # so even though pkginfo passed, we have to check the actual output
-      raise Puppet::Error, _("Unable to get information about package #{@resource[:name]} because of: #{errmsg}")
+      raise Puppet::Error, _("Unable to get information about package %{name} because of: %{errmsg}") % { name: @resource[:name], errmsg: errmsg }
     rescue Puppet::ExecutionFailure
       return {:ensure => :absent}
     end

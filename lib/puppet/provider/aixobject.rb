@@ -317,7 +317,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
     begin
       execute(self.addcmd)
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, _("Could not create #{@resource.class.name} #{@resource.name}: #{detail}"), detail.backtrace
+      raise Puppet::Error, _("Could not create %{resource} %{name}: %{detail}") % { resource: @resource.class.name, name: @resource.name, detail: detail }, detail.backtrace
     end
   end
 
@@ -332,7 +332,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
     begin
       execute(self.deletecmd)
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, _("Could not delete #{@resource.class.name} #{@resource.name}: #{detail}"), detail.backtrace
+      raise Puppet::Error, _("Could not delete %{resource} %{name}: %{detail}") % { resource: @resource.class.name, name: @resource.name, detail: detail }, detail.backtrace
     end
   end
 
@@ -365,7 +365,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
 
     if getinfo().nil?
       # This is weird...
-      raise Puppet::Error, _("Trying to update parameter '#{param}' to '#{value}' for a resource that does not exists #{@resource.class.name} #{@resource.name}: #{detail}")
+      raise Puppet::Error, _("Trying to update parameter '%{param}' to '%{value}' for a resource that does not exists %{resource} %{name}: %{detail}") % { param: param, value: value, resource: @resource.class.name, name: @resource.name, detail: detail }
     end
     if value == getinfo()[param.to_sym]
       return
@@ -376,7 +376,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
       begin
         execute(cmd)
       rescue Puppet::ExecutionFailure  => detail
-        raise Puppet::Error, _("Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}"), detail.backtrace
+        raise Puppet::Error, _("Could not set %{param} on %{resource}[%{name}]: %{detail}") % { param: param, resource: @resource.class.name, name: @resource.name, detail: detail }, detail.backtrace
       end
     end
 

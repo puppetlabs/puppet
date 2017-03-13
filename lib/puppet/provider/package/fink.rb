@@ -57,7 +57,7 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
   #
   def run_preseed
     if response = @resource[:responsefile] and Puppet::FileSystem.exist?(response)
-      self.info(_("Preseeding #{response} to debconf-set-selections"))
+      self.info(_("Preseeding %{response} to debconf-set-selections") % { response: response })
 
       preseed response
     else

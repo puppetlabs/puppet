@@ -123,11 +123,13 @@ Puppet::Type.type(:mount).provide(
         result[:options] = [result[:options],special_options.sort].flatten.compact.join(',')
         if ! result[:device]
           result[:device] = :absent
-          Puppet.err _("Prefetch: Mount[#{result[:name]}]: Field 'device' is missing")
+          #TRANSLATORS "prefetch" is a program name and should not be translated
+          Puppet.err _("Prefetch: Mount[%{name}]: Field 'device' is missing") % { name: result[:name] }
         end
         if ! result[:fstype]
           result[:fstype] = :absent
-          Puppet.err _("Prefetch: Mount[#{result[:name]}]: Field 'fstype' is missing")
+          #TRANSLATORS "prefetch" is a program name and should not be translated
+          Puppet.err _("Prefetch: Mount[%{name}]: Field 'fstype' is missing") % { name: result[:name] }
         end
       end
       def to_line(result)
@@ -138,7 +140,7 @@ Puppet::Type.type(:mount).provide(
         elsif result[:device] and result[:device] != :absent
           if ! result[:device].match(%{^.+:/})
             # Just skip this entry; it was malformed to begin with
-            Puppet.err _("Mount[#{result[:name]}]: Field 'device' must be in the format of <absolute path> or <host>:<absolute path>")
+            Puppet.err _("Mount[%{name}]: Field 'device' must be in the format of <absolute path> or <host>:<absolute path>") % { name: result[:name] }
             return result[:line]
           end
           nodename, path = result[:device].split(":")
@@ -146,14 +148,14 @@ Puppet::Type.type(:mount).provide(
           output << "\tnodename\t= #{nodename}"
         else
           # Just skip this entry; it was malformed to begin with
-          Puppet.err _("Mount[#{result[:name]}]: Field 'device' is required")
+          Puppet.err _("Mount[%{name}]: Field 'device' is required") % { name: result[:name] }
           return result[:line]
         end
         if result[:fstype] and result[:fstype] != :absent
           output << "\tvfs\t\t= #{result[:fstype]}"
         else
           # Just skip this entry; it was malformed to begin with
-          Puppet.err _("Mount[#{result[:name]}]: Field 'device' is required")
+          Puppet.err _("Mount[%{name}]: Field 'device' is required") % { name: result[:name] }
           return result[:line]
         end
         if result[:options]
@@ -184,11 +186,11 @@ Puppet::Type.type(:mount).provide(
           if Facter.value(:kernel) == 'Linux'
             record[:options] = 'defaults'
           else
-            raise Puppet::Error, _("Mount[#{record[:name]}]: Field 'options' is required")
+            raise Puppet::Error, _("Mount[%{name}]: Field 'options' is required") % { name: record[:name] }
           end
         end
         if !record[:fstype] || record[:fstype].empty?
-          raise Puppet::Error, _("Mount[#{record[:name]}]: Field 'fstype' is required")
+          raise Puppet::Error, _("Mount[%{name}]: Field 'fstype' is required") % { name: record[:name] }
         end
         record
       end
@@ -266,7 +268,7 @@ Puppet::Type.type(:mount).provide(
       if match = regex.match(line) and name = match.captures.first
         instances << {:name => name, :mounted => :yes} # Only :name is important here
       else
-        raise Puppet::Error, _("Could not understand line #{line} from mount output")
+        raise Puppet::Error, _("Could not understand line %{line} from mount output") % { line: line }
       end
     end
     instances

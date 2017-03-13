@@ -56,7 +56,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
     # using both useradd and luseradd
     if not @resource.allowdupe? and @resource.forcelocal?
        if @resource.should(:gid) and findgroup('gid', @resource.should(:gid).to_s)
-           raise(Puppet::Error, _("GID #{@resource.should(:gid).to_s} already exists, use allowdupe to force group creation"))
+           raise(Puppet::Error, _("GID %{resource} already exists, use allowdupe to force group creation") % { resource: @resource.should(:gid).to_s })
        end
     elsif @resource.allowdupe? and not @resource.forcelocal?
        return ["-o"]

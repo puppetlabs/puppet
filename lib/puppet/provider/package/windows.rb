@@ -90,11 +90,11 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
     when self.class::ERROR_SUCCESS
       # yeah
     when self.class::ERROR_SUCCESS_REBOOT_INITIATED
-      warning(_("The package #{operation}ed successfully and the system is rebooting now."))
+      warning(_("The package %{operation}ed successfully and the system is rebooting now.") % { operation: operation })
     when self.class::ERROR_SUCCESS_REBOOT_REQUIRED
-      warning(_("The package #{operation}ed successfully, but the system must be rebooted."))
+      warning(_("The package %{operation}ed successfully, but the system must be rebooted.") % { operation: operation })
     else
-      raise Puppet::Util::Windows::Error.new(_("Failed to #{operation}"), hr)
+      raise Puppet::Util::Windows::Error.new(_("Failed to %{operation}") % { operation: operation }, hr)
     end
   end
 

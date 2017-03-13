@@ -50,7 +50,7 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm, :source => :rpm do
         if version =~ /^([^\(]+)\(/
           $1
         else
-          self.warning _("Could not match version '#{version}'")
+          self.warning _("Could not match version '%{version}'") % { version: version }
           nil
         end
       }.reject { |vers| vers.nil? }.sort { |a,b|

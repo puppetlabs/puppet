@@ -105,7 +105,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   def latest
     output = dpkg_deb "--show", @resource[:source]
     matches = /^(\S+)\t(\S+)$/.match(output).captures
-    warning _("source doesn't contain named package, but #{matches[0]}") unless matches[0].match( Regexp.escape(@resource[:name]) )
+    warning _("source doesn't contain named package, but %{name}") % { name: matches[0] } unless matches[0].match( Regexp.escape(@resource[:name]) )
     matches[1]
   end
 

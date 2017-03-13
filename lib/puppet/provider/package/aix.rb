@@ -76,7 +76,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
     # installp will return an exit code of zero even if it didn't uninstall
     # anything... so let's make sure it worked.
     unless query().nil?
-      self.fail _("Failed to uninstall package '#{@resource[:name]}'")
+      self.fail _("Failed to uninstall package '%{name}'") % { name: @resource[:name] }
     end
   end
 
@@ -113,7 +113,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
       if hash[:pkgname]
         return nil
       else
-        raise Puppet::Error, _("Could not list installed Packages: #{detail}"), detail.backtrace
+        raise Puppet::Error, _("Could not list installed Packages: %{detail}") % { detail: detail }, detail.backtrace
       end
     end
 
