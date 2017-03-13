@@ -111,7 +111,7 @@ module Puppet
         begin
           provider.update
         rescue => detail
-          self.fail Puppet::Error, _("Could not update: #{detail}"), detail
+          self.fail Puppet::Error, _("Could not update: %{detail}") % { detail: detail }, detail
         end
 
         if current == :absent
@@ -125,7 +125,7 @@ module Puppet
         begin
           provider.install
         rescue => detail
-          self.fail Puppet::Error, _("Could not update: #{detail}"), detail
+          self.fail Puppet::Error, _("Could not update: %{detail}") % { detail: detail }, detail
         end
 
         if self.retrieve == :absent
@@ -160,7 +160,7 @@ module Puppet
                 @latest = provider.latest
                 @lateststamp = Time.now.to_i
               rescue => detail
-                error = Puppet::Error.new(_("Could not get latest version: #{detail}"))
+                error = Puppet::Error.new(_("Could not get latest version: %{detail}") % { detail: detail })
                 error.set_backtrace(detail.backtrace)
                 raise error
               end
@@ -260,7 +260,7 @@ module Puppet
 
       validate do |value|
         if !value.is_a?(String)
-          raise ArgumentError, _("Name must be a String not #{value.class}")
+          raise ArgumentError, _("Name must be a String not %{klass}") % { klass: value.class }
         end
       end
     end

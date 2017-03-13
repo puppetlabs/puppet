@@ -45,7 +45,7 @@ Puppet::Type.newtype(:tidy) do
       when Integer; value
       when /^\d+$/; Integer(value)
       else
-        raise ArgumentError, _("Invalid recurse value #{value.inspect}")
+        raise ArgumentError, _("Invalid recurse value %{value}") % { value: value.inspect }
       end
     end
   end
@@ -121,7 +121,7 @@ Puppet::Type.newtype(:tidy) do
       if num = AgeConvertors[unit]
         return num * multi
       else
-        self.fail _("Invalid age unit '#{unit}'")
+        self.fail _("Invalid age unit '%{unit}'") % { unit: unit }
       end
     end
 
@@ -141,7 +141,7 @@ Puppet::Type.newtype(:tidy) do
         unit = :d
       else
         #TRANSLATORS tidy is the name of a program and should not be translated
-        self.fail _("Invalid tidy age #{age}")
+        self.fail _("Invalid tidy age %{age}") % { age: age }
       end
 
       convert(unit, multi)
@@ -162,7 +162,7 @@ Puppet::Type.newtype(:tidy) do
         num.times do result *= 1024 end
         return result
       else
-        self.fail _("Invalid size unit '#{unit}'")
+        self.fail _("Invalid size unit '%{unit}'") % { unit: unit }
       end
     end
 
@@ -180,7 +180,7 @@ Puppet::Type.newtype(:tidy) do
         unit = :k
       else
         #TRANSLATORS tidy is the name of a program and should not be translated
-        self.fail _("Invalid tidy size #{age}")
+        self.fail _("Invalid tidy size %{age}") % { age: age }
       end
 
       convert(unit, multi)
@@ -260,7 +260,8 @@ Puppet::Type.newtype(:tidy) do
     end
     found_files = files.find_all { |path| tidy?(path) }.collect { |path| mkfile(path) }
     result = found_files.each { |file| debug "Tidying #{file.ref}" }.sort { |a,b| b[:path] <=> a[:path] }
-    notice _("Tidying #{found_files.size} files")
+    #TRANSLATORS "Tidy" is a program name and should not be translated
+    notice _("Tidying %{count} files") % { count: found_files.size }
 
     # No need to worry about relationships if we don't have rmdirs; there won't be
     # any directories.
@@ -327,6 +328,7 @@ Puppet::Type.newtype(:tidy) do
       info _("File does not exist")
       return nil
     rescue Errno::EACCES => error
+      #TRANSLATORS "stat" is a program name and should not be translated
       warning _("Could not stat; permission denied")
       return nil
     end

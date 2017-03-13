@@ -159,9 +159,9 @@ module Puppet
         unless self.should.include?(@status.exitstatus.to_s)
           if @resource.parameter(:command).sensitive
             # Don't print sensitive commands in the clear
-            self.fail(_("[command redacted] returned #{@status.exitstatus} instead of one of [#{self.should.join(",")}]"))
+            self.fail(_("[command redacted] returned %{status} instead of one of [%{expected}]") % { status: @status.exitstatus, expected: self.should.join(",") })
           else
-            self.fail(_("'#{self.resource[:command]}' returned #{@status.exitstatus} instead of one of [#{self.should.join(",")}]"))
+            self.fail(_("'%{cmd}' returned %{status} instead of one of [%{expected}]") % { cmd: self.resource[:command], status: @status.exitstatus, expected: self.should.join(",") })
           end
         end
 
@@ -179,7 +179,7 @@ module Puppet
         any output is logged at the `err` log level."
 
       validate do |command|
-        raise ArgumentError, _("Command must be a String, got value of class #{command.class}") unless command.is_a? String
+        raise ArgumentError, _("Command must be a String, got value of class %{klass}") % { klass: command.class } unless command.is_a? String
       end
     end
 
@@ -261,7 +261,7 @@ module Puppet
         values = [values] unless values.is_a? Array
         values.each do |value|
           unless value =~ /\w+=/
-            raise ArgumentError, _("Invalid environment setting '#{value}'")
+            raise ArgumentError, _("Invalid environment setting '%{value}'") % { value: value }
           end
         end
       end
@@ -274,7 +274,7 @@ module Puppet
         if value =~ /^0?[0-7]{1,4}$/
           return value.to_i(8)
         else
-          raise Puppet::Error, _("The umask specification is invalid: #{value.inspect}")
+          raise Puppet::Error, _("The umask specification is invalid: %{value}") % { value: value.inspect }
         end
       end
     end
@@ -443,7 +443,7 @@ module Puppet
         begin
           output, status = provider.run(value, true)
         rescue Timeout::Error
-          err _("Check #{value.inspect} exceeded timeout")
+          err _("Check %{value} exceeded timeout") % { value: value.inspect }
           return false
         end
 
@@ -494,7 +494,7 @@ module Puppet
         begin
           output, status = provider.run(value, true)
         rescue Timeout::Error
-          err _("Check #{value.inspect} exceeded timeout")
+          err _("Check %{value} exceeded timeout") % { value: value.inspect }
           return false
         end
 

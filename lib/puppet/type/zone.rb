@@ -327,12 +327,12 @@ end
   def validate_ip(ip, name)
     IPAddr.new(ip) if ip
   rescue ArgumentError
-    self.fail Puppet::Error, _("'#{ip}' is an invalid #{name}"), $!
+    self.fail Puppet::Error, _("'%{ip}' is an invalid %{name}") % { ip: ip, name: name }, $!
   end
 
   def validate_exclusive(interface, address, router)
     return if !interface.nil? and address.nil?
-    self.fail _("only interface may be specified when using exclusive IP stack: #{interface}:#{address}")
+    self.fail _("only interface may be specified when using exclusive IP stack: %{interface}:%{address}") % { interface: interface, address: address }
   end
   def validate_shared(interface, address, router)
     self.fail _("ip must contain interface name and ip address separated by a \":\"") if interface.nil? or address.nil?

@@ -195,7 +195,7 @@ Puppet::Type.newtype(:cron) do
       if retval
         return retval.to_s
       else
-        self.fail _("#{value} is not a valid #{self.class.name}")
+        self.fail _("%{value} is not a valid %{name}") % { value: value, name: self.class.name }
       end
     end
   end
@@ -253,7 +253,7 @@ Puppet::Type.newtype(:cron) do
     end
 
     validate do |value|
-      raise ArgumentError, _("Invalid special schedule #{value.inspect}") unless specials.include?(value)
+      raise ArgumentError, _("Invalid special schedule %{value}") % { value: value.inspect } unless specials.include?(value)
     end
 
     def munge(value)
@@ -326,7 +326,7 @@ Puppet::Type.newtype(:cron) do
 
     validate do |value|
       unless value =~ /^\s*(\w+)\s*=\s*(.*)\s*$/ or value == :absent or value == "absent"
-        raise ArgumentError, _("Invalid environment setting #{value.inspect}")
+        raise ArgumentError, _("Invalid environment setting %{value}") % { value: value.inspect }
       end
     end
 
@@ -433,7 +433,7 @@ Puppet::Type.newtype(:cron) do
     [ :minute, :hour, :weekday, :monthday, :month ].each do |field|
       next unless self[field]
       next if self[field] == :absent
-      raise ArgumentError, _("#{self.ref} cannot specify both a special schedule and a value for #{field}")
+      raise ArgumentError, _("%{cron} cannot specify both a special schedule and a value for %{field}") % { cron: self.ref, field: field }
     end
   end
 

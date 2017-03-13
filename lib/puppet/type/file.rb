@@ -53,7 +53,7 @@ Puppet::Type.newtype(:file) do
 
     validate do |value|
       unless Puppet::Util.absolute_path?(value)
-        fail Puppet::Error, _("File paths must be fully qualified, not '#{value}'")
+        fail Puppet::Error, _("File paths must be fully qualified, not '%{path}'") % { path: value }
       end
     end
 
@@ -121,7 +121,7 @@ Puppet::Type.newtype(:file) do
       when String
         value
       else
-        self.fail _("Invalid backup type #{value.inspect}")
+        self.fail _("Invalid backup type %{value}") % { value: value.inspect }
       end
     end
   end
@@ -165,7 +165,7 @@ Puppet::Type.newtype(:file) do
       when :false; false
       when :remote; :remote
       else
-        self.fail _("Invalid recurse value #{value.inspect}")
+        self.fail _("Invalid recurse value %{value}") % { value: value.inspect }
       end
     end
   end
@@ -198,7 +198,7 @@ Puppet::Type.newtype(:file) do
       when Integer; value
       when /^\d+$/; Integer(value)
       else
-        self.fail _("Invalid recurselimit value #{value.inspect}")
+        self.fail _("Invalid recurselimit value %{value}") % { value: value.inspect }
       end
     end
   end
@@ -368,14 +368,14 @@ Puppet::Type.newtype(:file) do
     end
     creator_count += 1 if @parameters.include?(:source)
 
-    self.fail _("You cannot specify more than one of #{CREATORS.collect { |p| p.to_s}.join(", ")}") if creator_count > 1
+    self.fail _("You cannot specify more than one of %{creators}") % { creators: CREATORS.collect { |p| p.to_s}.join(", ") } if creator_count > 1
 
     self.fail _("You cannot specify a remote recursion without a source") if !self[:source] && self[:recurse] == :remote
 
     self.fail _("You cannot specify source when using checksum 'none'") if self[:checksum] == :none && !self[:source].nil?
 
     SOURCE_ONLY_CHECKSUMS.each do |checksum_type|
-      self.fail _("You cannot specify content when using checksum '#{checksum_type}'") if self[:checksum] == checksum_type && !self[:content].nil?
+      self.fail _("You cannot specify content when using checksum '%{checksum_type}'") % { checksum_type: checksum_type } if self[:checksum] == checksum_type && !self[:content].nil?
     end
 
     self.warning _("Possible error: recurselimit is set but not recurse, no recursion will happen") if !self[:recurse] && self[:recurselimit]
@@ -386,7 +386,7 @@ Puppet::Type.newtype(:file) do
     end
 
     if self[:checksum] && self[:checksum_value] && !send("#{self[:checksum]}?", self[:checksum_value])
-      self.fail _("Checksum value '#{self[:checksum_value]}' is not a valid checksum type #{self[:checksum]}")
+      self.fail _("Checksum value '%{value}' is not a valid checksum type %{checksum}") % { value: self[:checksum_value], checksum: self[:checksum] }
     end
 
     self.warning _("Checksum value is ignored unless content or source are specified") if self[:checksum_value] && !self[:content] && !self[:source]
@@ -431,7 +431,7 @@ Puppet::Type.newtype(:file) do
     end
 
     unless catalog and filebucket = catalog.resource(:filebucket, backup) or backup == "puppet"
-      fail _("Could not find filebucket #{backup} specified in backup")
+      fail _("Could not find filebucket %{backup} specified in backup") % { backup: backup }
     end
 
     return default_bucket unless filebucket
@@ -737,7 +737,7 @@ Puppet::Type.newtype(:file) do
     when "link", "file"
       return remove_file(current_type, wanted_type)
     else
-      self.fail _("Could not back up files of type #{current_type}")
+      self.fail _("Could not back up files of type %{current_type}") % { current_type: current_type }
     end
   end
 
@@ -989,7 +989,7 @@ Puppet::Type.newtype(:file) do
     newsum = parameter(:checksum).sum_file(path)
     return if [:absent, nil, content_checksum].include?(newsum)
 
-    self.fail _("File written to disk did not match checksum; discarding changes (#{content_checksum} vs #{newsum})")
+    self.fail _("File written to disk did not match checksum; discarding changes (%{content_checksum} vs %{newsum})") % { content_checksum: content_checksum, newsum: newsum }
   end
 
   def write_temporary_file?

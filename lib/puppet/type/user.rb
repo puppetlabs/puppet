@@ -163,7 +163,7 @@ module Puppet
           end
         end
 
-        fail _("Could not find group(s) #{@should.join(",")}") unless found
+        fail _("Could not find group(s) %{groups}") % { groups: @should.join(",") } unless found
 
         # Use the default event.
       end
@@ -375,7 +375,7 @@ module Puppet
 
       validate do |val|
         if munge(val)
-          raise ArgumentError, _("User provider #{provider.class.name} can not manage home directories") if provider and not provider.class.manages_homedir?
+          raise ArgumentError, _("User provider %{name} can not manage home directories") % { name: provider.class.name } if provider and not provider.class.manages_homedir?
         end
       end
     end
@@ -391,6 +391,8 @@ module Puppet
 
       validate do |value|
         if value.intern != :absent and value !~ /^\d{4}-\d{2}-\d{2}$/
+          #TRANSLATORS YYYY-MM-DD represents a date with a four-digit year, a two-digit month, and a two-digit day,
+          #TRANSLATORS separated by dashes.
           raise ArgumentError, _("Expiry dates must be YYYY-MM-DD or the string \"absent\"")
         end
       end
@@ -662,14 +664,14 @@ module Puppet
         if value.is_a?(Array)
           value.each do |entry|
 
-            raise ArgumentError, _("Each entry for purge_ssh_keys must be a string, not a #{entry.class}") unless entry.is_a?(String)
+            raise ArgumentError, _("Each entry for purge_ssh_keys must be a string, not a %{klass}") % { klass: entry.class } unless entry.is_a?(String)
 
             valid_home = Puppet::Util.absolute_path?(entry) || entry =~ %r{^~/|^%h/}
-            raise ArgumentError, _("Paths to keyfiles must be absolute, not #{entry}") unless valid_home
+            raise ArgumentError, _("Paths to keyfiles must be absolute, not %{entry}") % { entry: entry } unless valid_home
           end
           return
         end
-        raise ArgumentError, _("purge_ssh_keys must be true, false, or an array of file names, not #{value.inspect}")
+        raise ArgumentError, _("purge_ssh_keys must be true, false, or an array of file names, not %{value}") % { value: value.inspect }
       end
 
       munge do |value|
@@ -688,7 +690,7 @@ module Puppet
         # value is an array - munge each value
         [ value ].flatten.map do |entry|
           if entry =~ /^~|^%h/ and not home
-            raise ArgumentError, _("purge_ssh_keys value '#{value}' meta character ~ or %h only allowed for users with a defined home directory")
+            raise ArgumentError, _("purge_ssh_keys value '%{value}' meta character ~ or %{home_placeholder} only allowed for users with a defined home directory") % { value: value, home_placeholder: '%h' }
           end
           entry.gsub!(/^~\//, "#{home}/")
           entry.gsub!(/^%h\//, "#{home}/")

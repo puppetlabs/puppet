@@ -36,7 +36,7 @@ module Puppet
 
       validate do |value|
 	unless Puppet::Util.absolute_path?(value)
-	  fail Puppet::Error, _("File paths must be fully qualified, not '#{value}'")
+	  fail Puppet::Error, _("File paths must be fully qualified, not '%{value}'") % { value: value }
 	end
       end
     end

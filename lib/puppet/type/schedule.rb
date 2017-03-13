@@ -93,7 +93,7 @@ module Puppet
         values.each { |value|
           unless  value.is_a?(String) and
               value =~ /\d+(:\d+){0,2}\s*-\s*\d+(:\d+){0,2}/
-            self.fail _("Invalid range value '#{value}'")
+            self.fail _("Invalid range value '%{value}'") % { value: value }
           end
         }
       end
@@ -110,15 +110,15 @@ module Puppet
             range << val.split(":").collect { |n| n.to_i }
           }
 
-          self.fail _("Invalid range #{value}") if range.length != 2
+          self.fail _("Invalid range %{value}") % { value: value } if range.length != 2
 
           # Make sure the hours are valid
           [range[0][0], range[1][0]].each do |n|
-            raise ArgumentError, _("Invalid hour '#{n}'") if n < 0 or n > 23
+            raise ArgumentError, _("Invalid hour '%{n}'") % { n: n } if n < 0 or n > 23
           end
 
           [range[0][1], range[1][1]].each do |n|
-            raise ArgumentError, _("Invalid minute '#{n}'") if n and (n < 0 or n > 59)
+            raise ArgumentError, _("Invalid minute '%{n}'") % { n: n } if n and (n < 0 or n > 59)
           end
           ret << range
         }
@@ -152,7 +152,7 @@ module Puppet
 
             unless time.hour == range[0]
               self.devfail(
-                _("Incorrectly converted time: #{time}: #{time.hour} vs #{range[0]}")
+                _("Incorrectly converted time: %{time}: %{hour} vs %{value}") % { time: time, hour: time.hour, value: range[0] }
               )
             end
 
@@ -328,7 +328,7 @@ module Puppet
 
         if value != 1 and @resource[:periodmatch] != :distance
           raise Puppet::Error,
-            _("Repeat must be 1 unless periodmatch is 'distance', not '#{@resource[:periodmatch]}'")
+            _("Repeat must be 1 unless periodmatch is 'distance', not '%{period}'") % { period: @resource[:periodmatch] }
         end
       end
 

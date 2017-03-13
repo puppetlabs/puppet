@@ -29,7 +29,7 @@ module Puppet
 
       validate do |value|
         return true if ((valid_v4?(value) || valid_v6?(value)) && (valid_newline?(value)))
-        raise Puppet::Error, _("Invalid IP address #{value.inspect}")
+        raise Puppet::Error, _("Invalid IP address %{value}") % { value: value.inspect }
       end
     end
 
