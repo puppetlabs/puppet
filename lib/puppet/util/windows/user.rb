@@ -85,7 +85,7 @@ module Puppet::Util::Windows::User
       FFI::MemoryPointer.new(:handle, 1) do |token_pointer|
         if LogonUserW(wide_string(name), wide_string('.'), password.nil? ? FFI::Pointer::NULL : wide_string(password),
             fLOGON32_LOGON_NETWORK, fLOGON32_PROVIDER_DEFAULT, token_pointer) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new(_("Failed to logon user #{name.inspect}"))
+          raise Puppet::Util::Windows::Error.new(_("Failed to logon user %{name}") % { name: name.inspect })
         end
 
         yield token = token_pointer.read_handle
@@ -109,13 +109,13 @@ module Puppet::Util::Windows::User
 
         # Load the profile. Since it doesn't exist, it will be created
         if LoadUserProfileW(token, pi.pointer) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new(_("Failed to load user profile #{user.inspect}"))
+          raise Puppet::Util::Windows::Error.new(_("Failed to load user profile %{user}") % { user: user.inspect })
         end
 
         Puppet.debug("Loaded profile for #{user}")
 
         if UnloadUserProfile(token, pi[:hProfile]) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new(_("Failed to unload user profile #{user.inspect}"))
+          raise Puppet::Util::Windows::Error.new(_("Failed to unload user profile %{user}") % { user: user.inspect })
         end
       end
     end

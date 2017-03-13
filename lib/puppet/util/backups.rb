@@ -46,7 +46,7 @@ module Puppet::Util::Backups
     rescue => detail
       # since they said they want a backup, let's error out
       # if we couldn't make one
-      self.fail Puppet::Error, _("Could not back #{file} up: #{detail.message}"), detail
+      self.fail Puppet::Error, _("Could not back %{file} up: %{message}") % { file: file, message: detail.message }, detail
     end
   end
 
@@ -64,15 +64,15 @@ module Puppet::Util::Backups
     end
 
     if stat.ftype == "directory"
-      raise Puppet::Error, _("Will not remove directory backup #{newfile}; use a filebucket")
+      raise Puppet::Error, _("Will not remove directory backup %{newfile}; use a filebucket") % { newfile: newfile }
     end
 
-    info _("Removing old backup of type #{stat.ftype}")
+    info _("Removing old backup of type %{file_type}") % { file_type: stat.ftype }
 
     begin
       Puppet::FileSystem.unlink(newfile)
     rescue => detail
-      message = _("Could not remove old backup: #{detail}")
+      message = _("Could not remove old backup: %{detail}") % { detail: detail }
       self.log_exception(detail, message)
       self.fail Puppet::Error, message, detail
     end
@@ -80,7 +80,7 @@ module Puppet::Util::Backups
 
   def backup_file_with_filebucket(f)
     sum = self.bucket.backup(f)
-    self.info _("Filebucketed #{f} to #{self.bucket.name} with sum #{sum}")
+    self.info _("Filebucketed %{f} to %{filebucket} with sum %{sum}") % { f: f, filebucket: self.bucket.name, sum: sum }
     return sum
     end
 end

@@ -382,19 +382,19 @@ class Puppet::Util::Log
     # Issue based messages do not have details in the message. It
     # must be appended here
     unless issue_code.nil?
-      msg = _("Could not parse for environment #{environment}: #{msg}") unless environment.nil?
+      msg = _("Could not parse for environment %{env}: %{msg}") % { env: environment, msg: msg } unless environment.nil?
       if file && line && pos
-        msg = _("#{msg} at #{file}:#{line}:#{pos}")
+        msg = _("%{msg} at %{file}:%{line}:%{pos}") % { msg: msg, file: file, line: line, pos: pos }
       elsif file and line
-        msg = _("#{msg}  at #{file}:#{line}")
+        msg = _("%{msg}  at %{file}:%{line}") % { msg: msg, file: file, line: line }
       elsif line && pos
-        msg = _("#{msg}  at line #{line}:#{pos}")
+        msg = _("%{msg}  at line %{line}:%{pos}") % { msg: msg, line: line, pos: pos }
       elsif line
-        msg = _("#{msg}  at line #{line}")
+        msg = _("%{msg}  at line %{line}") % { msg: msg, line: line }
       elsif file
-        msg = _("#{msg}  in #{file}")
+        msg = _("%{msg}  in %{file}") % { msg: msg, file: file }
       end
-      msg = _("#{msg} on node #{node}") unless node.nil?
+      msg = _("%{msg} on node %{node}") % { msg: msg, node: node } unless node.nil?
       if @backtrace.is_a?(Array)
         msg += "\n"
         msg += @backtrace.join("\n")

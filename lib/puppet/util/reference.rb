@@ -32,7 +32,7 @@ class Puppet::Util::Reference
     depth = 4
     # Use the minimum depth
     sections.each do |name|
-      section = reference(name) or raise _("Could not find section #{name}")
+      section = reference(name) or raise _("Could not find section %{name}") % { name: name }
       depth = section.depth if section.depth < depth
     end
   end
@@ -90,7 +90,7 @@ class Puppet::Util::Reference
     meta_def(:generate, &block)
 
     # Now handle the defaults
-    @title ||= _("#{@name.to_s.capitalize} Reference")
+    @title ||= _("%{name} Reference") % { name: @name.to_s.capitalize }
     @page ||= @title.gsub(/\s+/, '')
     @depth ||= 2
     @header ||= ""

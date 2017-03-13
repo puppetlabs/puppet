@@ -35,9 +35,9 @@ class Puppet::Util::NetworkDevice::Transport::Ssh < Puppet::Util::NetworkDevice:
     rescue TimeoutError
       raise TimeoutError, _("timed out while opening an ssh connection to the host"), $!.backtrace
     rescue Net::SSH::AuthenticationFailed
-      raise Puppet::Error, _("SSH authentication failure connecting to #{host} as #{user}"), $!.backtrace
+      raise Puppet::Error, _("SSH authentication failure connecting to %{host} as %{user}") % { host: host, user: user }, $!.backtrace
     rescue Net::SSH::Exception
-      raise Puppet::Error, _("SSH connection failure to #{host}"), $!.backtrace
+      raise Puppet::Error, _("SSH connection failure to %{host}") % { host: host }, $!.backtrace
     end
 
     @buf = ""

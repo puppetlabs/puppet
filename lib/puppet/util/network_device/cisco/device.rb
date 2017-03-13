@@ -51,7 +51,7 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
       if out =~ /^%/mo or out =~ /^Command rejected:/mo
         # strip off the command just sent
         error = out.sub(cmd,'')
-        Puppet.err _("Error while executing '#{cmd}', device returned: #{error}")
+        Puppet.err _("Error while executing '%{cmd}', device returned: %{error}") % { cmd: cmd, error: error }
       end
     end
   end
@@ -208,7 +208,7 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
 
   def update_vlan(id, is = {}, should = {})
     if should[:ensure] == :absent
-      Puppet.info _("Removing #{id} from device vlan")
+      Puppet.info _("Removing %{id} from device vlan") % { id: id }
       execute("conf t")
       execute("no vlan #{id}")
       execute("exit")
@@ -217,7 +217,7 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
 
     # Cisco VLANs are supposed to be alphanumeric only
     if should[:description] =~ /[^\w]/
-      Puppet.err _("Invalid VLAN name '#{should[:description]}' for Cisco device.\nVLAN name must be alphanumeric, no spaces or special characters.")
+      Puppet.err _("Invalid VLAN name '%{name}' for Cisco device.\nVLAN name must be alphanumeric, no spaces or special characters.") % { name: should[:description] }
       return
     end
     
@@ -251,7 +251,7 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
         when "dynamic desirable"
           trunking[:mode] = 'dynamic desirable'
         else
-          raise _("Unknown switchport mode: #{$1} for #{interface}")
+          raise _("Unknown switchport mode: %{mode} for %{interface}") % { mode: $1, interface: interface }
         end
       when /^Administrative Trunking Encapsulation:\s+(.*)$/
         case $1
@@ -260,7 +260,7 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
         when "negotiate"
           trunking[:encapsulation] = :negotiate
         else
-          raise _("Unknown switchport encapsulation: #{$1} for #{interface}")
+          raise _("Unknown switchport encapsulation: %{value} for %{interface}") % { value: $1, interface: interface }
         end
       when /^Access Mode VLAN:\s+(.*) \((.*)\)$/
         trunking[:access_vlan] = $1 if $2 != '(Inactive)'

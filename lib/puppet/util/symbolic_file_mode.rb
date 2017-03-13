@@ -41,7 +41,7 @@ module SymbolicFileMode
       raise Puppet::Error, _("Numeric modes must be in octal, not decimal!")
     end
 
-    fail _("non-numeric current mode (#{to_mode.inspect})") unless to_mode.is_a?(Numeric)
+    fail _("non-numeric current mode (%{mode})") % { mode: to_mode.inspect } unless to_mode.is_a?(Numeric)
 
     original_mode = {
       's' => (to_mode & 07000) >> 9,
@@ -128,7 +128,7 @@ module SymbolicFileMode
           rest = ''
         end
 
-        raise Puppet::Error, _("#{e}#{rest} in symbolic mode #{modification.inspect}"), e.backtrace
+        raise Puppet::Error, _("%{error}%{rest} in symbolic mode %{modification}") % { error: e, rest: rest, modification: modification.inspect }, e.backtrace
       end
     end
 

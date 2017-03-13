@@ -256,12 +256,12 @@ module Puppet::Util::Windows::Process
     FFI::MemoryPointer.from_string_to_wide_string(name) do |name_ptr|
       if (val.nil?)
         if SetEnvironmentVariableW(name_ptr, FFI::MemoryPointer::NULL) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new(_("Failed to remove environment variable: #{name}"))
+          raise Puppet::Util::Windows::Error.new(_("Failed to remove environment variable: %{name}") % { name: name })
         end
       else
         FFI::MemoryPointer.from_string_to_wide_string(val) do |val_ptr|
           if SetEnvironmentVariableW(name_ptr, val_ptr) == FFI::WIN32_FALSE
-            raise Puppet::Util::Windows::Error.new(_("Failed to set environment variable: #{name}"))
+            raise Puppet::Util::Windows::Error.new(_("Failed to set environment variable: %{name}") % { name: name })
           end
         end
       end

@@ -70,7 +70,7 @@ class Puppet::Util::Autoload
       rescue SystemExit,NoMemoryError
         raise
       rescue Exception => detail
-        message = _("Could not autoload #{name}: #{detail}")
+        message = _("Could not autoload %{name}: %{detail}") % { name: name, detail: detail }
         Puppet.log_exception(detail, message)
         raise Puppet::Error, message, detail.backtrace
       end

@@ -155,7 +155,7 @@ module Puppet::Util::Windows
         FFI::MemoryPointer.new(:pointer, 1) do |sid_ptr_ptr|
 
           if ConvertStringSidToSidW(lpcwstr, sid_ptr_ptr) == FFI::WIN32_FALSE
-            raise Puppet::Util::Windows::Error.new(_("Failed to convert string SID: #{string_sid}"))
+            raise Puppet::Util::Windows::Error.new(_("Failed to convert string SID: %{string_sid}") % { string_sid: string_sid })
           end
 
           sid_ptr_ptr.read_win32_local_pointer do |sid_ptr|

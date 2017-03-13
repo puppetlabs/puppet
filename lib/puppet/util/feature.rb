@@ -18,7 +18,7 @@ class Puppet::Util::Feature
       begin
         result = yield
       rescue StandardError,ScriptError => detail
-        warn _("Failed to load feature test for #{name}: #{detail}")
+        warn _("Failed to load feature test for %{name}: %{detail}") % { name: name, detail: detail }
         result = false
       end
       @results[name] = result
@@ -79,7 +79,7 @@ class Puppet::Util::Feature
   private
 
   def load_library(lib, name)
-    raise ArgumentError, _("Libraries must be passed as strings not #{lib.class}") unless lib.is_a?(String)
+    raise ArgumentError, _("Libraries must be passed as strings not %{klass}") % { klass: lib.class } unless lib.is_a?(String)
 
     @rubygems ||= Puppet::Util::RubyGems::Source.new
     @rubygems.clear_paths

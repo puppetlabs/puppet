@@ -63,7 +63,7 @@ module Puppet::Util::SELinux
       return nil
     end
     unless context =~ /^([^\s:]+):([^\s:]+):([^\s:]+)(?::([\sa-zA-Z0-9:,._-]+))?$/
-      raise Puppet::Error, _("Invalid context to parse: #{context}")
+      raise Puppet::Error, _("Invalid context to parse: %{context}") % { context: context }
     end
     ret = {
       :seluser => $1,
@@ -116,7 +116,7 @@ module Puppet::Util::SELinux
     if retval == 0
       return true
     else
-      Puppet.warning _("Failed to set SELinux context #{context} on #{file}")
+      Puppet.warning _("Failed to set SELinux context %{context} on %{file}") % { context: context, file: file }
       return false
     end
   end

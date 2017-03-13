@@ -159,7 +159,7 @@ module Puppet
             puts Puppet.version
           elsif @command_line.subcommand_name.nil? && args.count > 0
             # If the subcommand is truly nil and there is an arg, it's an option; print out the invalid option message
-            puts colorize(:hred, _("Error: Could not parse application options: invalid option: #{args[0]}"))
+            puts colorize(:hred, _("Error: Could not parse application options: invalid option: %{opt}") % { opt: args[0] })
             exit 1
           else
             puts _("See 'puppet help' for help on available puppet subcommands")
@@ -175,7 +175,7 @@ module Puppet
         end
 
         def run
-          puts colorize(:hred, _("Error: Unknown Puppet subcommand '#{@subcommand_name}'"))
+          puts colorize(:hred, _("Error: Unknown Puppet subcommand '%{cmd}'") % { cmd: @subcommand_name })
           super
           exit 1
         end

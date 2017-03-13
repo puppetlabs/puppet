@@ -44,7 +44,7 @@ module Puppet
           elsif args.length == 4
             long, short, desc, type = args
           else
-            raise ArgumentError, _("this method only takes 3 or 4 arguments. Given: #{args.inspect}")
+            raise ArgumentError, _("this method only takes 3 or 4 arguments. Given: %{args}") % { value0: args.inspect }
           end
 
           options = {
@@ -61,7 +61,7 @@ module Puppet
             when :NONE
               options[:type] = :flag
             else
-              raise PuppetOptionError.new(_("Unsupported type: '#{type}'"))
+              raise PuppetOptionError.new(_("Unsupported type: '%{type}'") % { type: type })
           end
 
           @parser.opt long.sub("^--", "").intern, desc, options

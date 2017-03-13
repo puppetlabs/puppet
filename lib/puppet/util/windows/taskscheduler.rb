@@ -348,7 +348,7 @@ module Win32
           @pITask.SetAccountInformation(wide_string(""), FFI::Pointer::NULL)
         else
           if user.length > MAX_ACCOUNT_LENGTH
-            raise Error.new(_("User has exceeded maximum allowed length #{MAX_ACCOUNT_LENGTH}"))
+            raise Error.new(_("User has exceeded maximum allowed length %{max}") % { max: MAX_ACCOUNT_LENGTH })
           end
           user = wide_string(user)
           password = wide_string(password)
@@ -420,7 +420,7 @@ module Win32
 
       # the application name is written to a .job file on disk, so is subject to path limitations
       if app.length > MAX_PATH
-        raise Error.new(_("Application name has exceeded maximum allowed length #{MAX_PATH}"))
+        raise Error.new(_("Application name has exceeded maximum allowed length %{max}") % { max: MAX_PATH })
       end
       @pITask.SetApplicationName(wide_string(app))
 
@@ -456,7 +456,7 @@ module Win32
       raise TypeError unless param.is_a?(String)
 
       if param.length > MAX_PARAMETERS_LENGTH
-        raise Error.new(_("Parameters has exceeded maximum allowed length #{MAX_PARAMETERS_LENGTH}"))
+        raise Error.new(_("Parameters has exceeded maximum allowed length %{max}") % { max: MAX_PARAMETERS_LENGTH })
       end
 
       @pITask.SetParameters(wide_string(param))
@@ -491,7 +491,7 @@ module Win32
       raise TypeError unless dir.is_a?(String)
 
       if dir.length > MAX_PATH
-        raise Error.new(_("Working directory has exceeded maximum allowed length #{MAX_PATH}"))
+        raise Error.new(_("Working directory has exceeded maximum allowed length %{max}") % { max: MAX_PATH })
       end
 
       @pITask.SetWorkingDirectory(wide_string(dir))
@@ -557,7 +557,7 @@ module Win32
       # I'm working around github issue #1 here.
       enum.each{ |name|
         if name.downcase == task.downcase + '.job'
-          raise Error.new(_("task '#{task}' already exists"))
+          raise Error.new(_("task '%{task}' already exists") % { task: task })
         end
       }
 
@@ -764,7 +764,7 @@ module Win32
       raise TypeError unless comment.is_a?(String)
 
       if comment.length > MAX_COMMENT_LENGTH
-        raise Error.new(_("Comment has exceeded maximum allowed length #{MAX_COMMENT_LENGTH}"))
+        raise Error.new(_("Comment has exceeded maximum allowed length %{max}") % { max: MAX_COMMENT_LENGTH })
       end
 
       @pITask.SetComment(wide_string(comment))
@@ -796,7 +796,7 @@ module Win32
       raise TypeError unless creator.is_a?(String)
 
       if creator.length > MAX_ACCOUNT_LENGTH
-        raise Error.new(_("Creator has exceeded maximum allowed length #{MAX_ACCOUNT_LENGTH}"))
+        raise Error.new(_("Creator has exceeded maximum allowed length %{max}") % { max: MAX_ACCOUNT_LENGTH })
       end
 
 
@@ -977,7 +977,7 @@ module Win32
             when :TASK_TIME_TRIGGER_ONCE
               # Do nothing. The Type member of the TASK_TRIGGER struct is ignored.
             else
-              raise Error.new(_("Unknown trigger type #{trigger['trigger_type']}"))
+              raise Error.new(_("Unknown trigger type %{type}") % { type: trigger['trigger_type'] })
           end
 
           trigger_struct = COM::TASK_TRIGGER.new(trigger_ptr)
@@ -1044,7 +1044,7 @@ module Win32
         when :TASK_TIME_TRIGGER_ONCE
           trigger['type'] = { 'once' => nil }
         else
-          raise Error.new(_("Unknown trigger type #{task_trigger[:TriggerType]}"))
+          raise Error.new(_("Unknown trigger type %{type}") % { type: task_trigger[:TriggerType] })
       end
 
       trigger

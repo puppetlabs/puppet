@@ -21,7 +21,7 @@ module Puppet::Util::POSIX
 
     if id.is_a?(Integer)
       if id > Puppet[:maximum_uid].to_i
-        Puppet.err _("Tried to get #{field} field for silly id #{id}")
+        Puppet.err _("Tried to get %{field} field for silly id %{id}") % { field: field, id: id }
         return nil
       end
       method = methodbyid(space)
@@ -46,7 +46,7 @@ module Puppet::Util::POSIX
     if id.is_a?(Integer)
       integer = true
       if id > Puppet[:maximum_uid].to_i
-        Puppet.err _("Tried to get #{field} field for silly id #{id}")
+        Puppet.err _("Tried to get %{field} field for silly id %{id}") % { field: field, id: id }
         return nil
       end
     end

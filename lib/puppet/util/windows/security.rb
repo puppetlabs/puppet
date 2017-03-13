@@ -435,7 +435,7 @@ module Puppet::Util::Windows::Security
         ace_type = ace[:Header][:AceType]
         if ace_type != Puppet::Util::Windows::AccessControlEntry::ACCESS_ALLOWED_ACE_TYPE &&
           ace_type != Puppet::Util::Windows::AccessControlEntry::ACCESS_DENIED_ACE_TYPE
-          Puppet.warning _("Unsupported access control entry type: 0x#{ace_type.to_s(16)}")
+          Puppet.warning _("Unsupported access control entry type: 0x%{type}") % { type: ace_type.to_s(16) }
           next
         end
 
@@ -469,7 +469,7 @@ module Puppet::Util::Windows::Security
              FFI::Pointer::NULL_HANDLE) # template
 
     if handle == Puppet::Util::Windows::File::INVALID_HANDLE_VALUE
-      raise Puppet::Util::Windows::Error.new(_("Failed to open '#{path}'"))
+      raise Puppet::Util::Windows::Error.new(_("Failed to open '%{path}'") % { path: path })
     end
 
     begin

@@ -176,11 +176,11 @@ module Logging
         call_trace =
         case MM.new(file, line)
         when FILE_AND_LINE
-          _("\n   (at #{file}:#{line})")
+          _("\n   (at %{file}:%{line})") % { file: file, line: line }
         when FILE_NO_LINE
-          _("\n   (in #{file})")
+          _("\n   (in %{file})") % { file: file }
         when NO_FILE_LINE
-          _("\n   (in unknown file, line #{line})")
+          _("\n   (in unknown file, line %{line})") % { line: line }
         else
           _("\n   (file & line not available)")
         end
@@ -279,10 +279,13 @@ module Logging
       key ||= (offender = get_deprecation_offender)
       if (! $deprecation_warnings.has_key?(key)) then
         $deprecation_warnings[key] = message
+        # split out to allow translation
+        unknown = _('unknown')
         call_trace = use_caller ?
           (offender || get_deprecation_offender).join('; ') :
-          "#{file || _('unknown')}:#{line || _('unknown')}"
-        warning(_("#{message}\n   (at #{call_trace})"))
+          "#{file || unknown}:#{line || unknown}"
+        #TRANSLATORS error message with origin location
+        warning(_("%{message}\n   (at %{call_trace})") % { message: message, call_trace: call_trace })
       end
     end
   end

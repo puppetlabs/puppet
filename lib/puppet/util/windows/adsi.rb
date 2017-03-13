@@ -16,7 +16,7 @@ module Puppet::Util::Windows::ADSI
       begin
         WIN32OLE.connect(uri)
       rescue WIN32OLERuntimeError => e
-        raise Puppet::Error.new( _("ADSI connection error: #{e}"), e )
+        raise Puppet::Error.new( _("ADSI connection error: %{e}") % { e: e }, e )
       end
     end
 
@@ -153,7 +153,7 @@ module Puppet::Util::Windows::ADSI
 
       sids = names.map do |name|
         sid = Puppet::Util::Windows::SID.name_to_sid_object(name)
-        raise Puppet::Error.new( _("Could not resolve name: #{name}") ) if !sid
+        raise Puppet::Error.new( _("Could not resolve name: %{name}") % { name: name } ) if !sid
         [sid.sid, sid]
       end
 
@@ -216,7 +216,7 @@ module Puppet::Util::Windows::ADSI
           )
         end
 
-        raise Puppet::Error.new( _("User update failed: #{e}"), e )
+        raise Puppet::Error.new( _("User update failed: %{e}") % { e: e }, e )
       end
       self
     end
@@ -311,7 +311,7 @@ module Puppet::Util::Windows::ADSI
 
     def self.create(name)
       # Windows error 1379: The specified local group already exists.
-      raise Puppet::Error.new(_("Cannot create user if group '#{name}' exists.")) if Puppet::Util::Windows::ADSI::Group.exists? name
+      raise Puppet::Error.new(_("Cannot create user if group '%{name}' exists.") % { name: name }) if Puppet::Util::Windows::ADSI::Group.exists? name
       new(name, Puppet::Util::Windows::ADSI.create(name, 'user'))
     end
 
@@ -403,7 +403,7 @@ module Puppet::Util::Windows::ADSI
         # but warn if we fail
         raise e unless e.message.include?('80041010')
 
-        Puppet.warning _("Cannot delete user profile for '#{sid}' prior to Vista SP1")
+        Puppet.warning _("Cannot delete user profile for '%{sid}' prior to Vista SP1") % { sid: sid }
       end
     end
   end
@@ -446,7 +446,7 @@ module Puppet::Util::Windows::ADSI
           )
         end
 
-        raise Puppet::Error.new( _("Group update failed: #{e}"), e )
+        raise Puppet::Error.new( _("Group update failed: %{error}") % { error: e }, e )
       end
       self
     end
@@ -502,7 +502,7 @@ module Puppet::Util::Windows::ADSI
 
     def self.create(name)
       # Windows error 2224: The account already exists.
-      raise Puppet::Error.new( _("Cannot create group if user '#{name}' exists.") ) if Puppet::Util::Windows::ADSI::User.exists? name
+      raise Puppet::Error.new( _("Cannot create group if user '%{name}' exists.") % { name: name } ) if Puppet::Util::Windows::ADSI::User.exists? name
       new(name, Puppet::Util::Windows::ADSI.create(name, 'group'))
     end
 
