@@ -1,4 +1,4 @@
-test_name 'C99578: lookup should allow interpolation in configs and data' do
+test_name 'C99578: lookup should allow interpolation in hiera3 configs' do
   require 'puppet/acceptance/environment_utils.rb'
   extend Puppet::Acceptance::EnvironmentUtils
 
