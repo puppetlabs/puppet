@@ -138,9 +138,10 @@ EOS
     config_opt = "--hosts=#{config}"
   end
 
-  overriding_options = ENV['OPTIONS']
+  overriding_options = ENV['OPTIONS'].split(' ')
 
-  args = ["--options-file", options_file, config_opt, tests_opt, overriding_options].compact
+  args = ["--options-file", options_file, config_opt, tests_opt] + overriding_options
+  args = args.compact
 
   begin
     sh("beaker", *args)
