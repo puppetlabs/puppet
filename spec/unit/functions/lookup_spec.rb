@@ -305,7 +305,7 @@ describe "The lookup function" do
           hierarchy:
             - name: "Varying"
               data_hash: yaml_data
-              path: "x%{var.sub}.yaml"
+              path: "#{data_path}"
           YAML
       end
 
@@ -317,44 +317,76 @@ describe "The lookup function" do
             'data' => {
               'x.yaml' => <<-YAML.unindent,
                 y: value y from x
-              YAML
+                YAML
               'x_d.yaml' => <<-YAML.unindent,
                 y: value y from x_d
-              YAML
-              'x_e.yaml' => <<-YAML.unindent
+                YAML
+              'x_e.yaml' => <<-YAML.unindent,
                 y: value y from x_e
-              YAML
+                YAML
             }
           }
         }
       end
 
-      it 'reloads the configuration if interpolated values change' do
-        Puppet[:log_level] = 'debug'
-        collect_notices("notice('success')") do |scope|
-          expect(lookup_func.call(scope, 'y')).to eql('value y from x')
-          scope['var'] = { 'sub' => '_d' }
-          expect(lookup_func.call(scope, 'y')).to eql('value y from x_d')
-          nested_scope = scope.compiler.newscope(scope)
-          nested_scope['var'] = { 'sub' => '_e' }
-          expect(lookup_func.call(nested_scope, 'y')).to eql('value y from x_e')
+      context 'using local variable reference' do
+        let(:data_path) { 'x%{var.sub}.yaml' }
+
+        it 'reloads the configuration if interpolated values change' do
+          Puppet[:log_level] = 'debug'
+          collect_notices("notice('success')") do |scope|
+            expect(lookup_func.call(scope, 'y')).to eql('value y from x')
+            scope['var'] = { 'sub' => '_d' }
+            expect(lookup_func.call(scope, 'y')).to eql('value y from x_d')
+            nested_scope = scope.compiler.newscope(scope)
+            nested_scope['var'] = { 'sub' => '_e' }
+            expect(lookup_func.call(nested_scope, 'y')).to eql('value y from x_e')
+          end
+          expect(notices).to eql(['success'])
+          expect(debugs.any? { |m| m =~ /Hiera configuration recreated due to change of scope variables used in interpolation expressions/ }).to be_truthy
         end
-        expect(notices).to eql(['success'])
-        expect(debugs.any? { |m| m =~ /Hiera configuration recreated due to change of scope variables used in interpolation expressions/ }).to be_truthy
+
+        it 'does not include the lookups performed during stability check in explain output' do
+          Puppet[:log_level] = 'debug'
+          collect_notices("notice('success')") do |scope|
+            var = { 'sub' => '_d' }
+            scope['var'] = var
+            expect(lookup_func.call(scope, 'y')).to eql('value y from x_d')
+
+            # Second call triggers the check
+            expect(lookup_func.call(scope, 'y')).to eql('value y from x_d')
+          end
+          expect(notices).to eql(['success'])
+          expect(debugs.any? { |m| m =~ /Sub key: "sub"/ }).to be_falsey
+        end
       end
 
-      it 'does not include the lookups performed during stability check in explain output' do
-        Puppet[:log_level] = 'debug'
-        collect_notices("notice('success')") do |scope|
-          var = { 'sub' => '_d' }
-          scope['var'] = var
-          expect(lookup_func.call(scope, 'y')).to eql('value y from x_d')
+      context 'using global variable reference' do
+        let(:data_path) { 'x%{::var.sub}.yaml' }
 
-          # Second call triggers the check
-          expect(lookup_func.call(scope, 'y')).to eql('value y from x_d')
+        it 'reloads the configuration if interpolated that was previously undefined, gets defined' do
+          Puppet[:log_level] = 'debug'
+          collect_notices("notice('success')") do |scope|
+            expect(lookup_func.call(scope, 'y')).to eql('value y from x')
+            scope['var'] = { 'sub' => '_d' }
+            expect(lookup_func.call(scope, 'y')).to eql('value y from x_d')
+          end
+          expect(notices).to eql(['success'])
+          expect(debugs.any? { |m| m =~ /Hiera configuration recreated due to change of scope variables used in interpolation expressions/ }).to be_truthy
         end
-        expect(notices).to eql(['success'])
-        expect(debugs.any? { |m| m =~ /Sub key: "sub"/ }).to be_falsey
+
+        it 'does not reload the configuration if value changes locally' do
+          Puppet[:log_level] = 'debug'
+          collect_notices("notice('success')") do |scope|
+            scope['var'] = { 'sub' => '_d' }
+            expect(lookup_func.call(scope, 'y')).to eql('value y from x_d')
+            nested_scope = scope.compiler.newscope(scope)
+            nested_scope['var'] = { 'sub' => '_e' }
+            expect(lookup_func.call(nested_scope, 'y')).to eql('value y from x_d')
+          end
+          expect(notices).to eql(['success'])
+          expect(debugs.any? { |m| m =~ /Hiera configuration recreated due to change of scope variables used in interpolation expressions/ }).to be_falsey
+        end
       end
     end
 
