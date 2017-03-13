@@ -2,6 +2,9 @@ test_name "Puppet Lookup Command"
 # doc:
 # https://docs.puppetlabs.com/puppet/latest/reference/lookup_quick_module.html
 
+host = agents.find { |host| host != master }
+skip_test "No agents present that are not running on a master" if host.nil?
+
 @module_name = "puppet_lookup_command_test"
 
 ### @testroot = "/etc/puppetlabs"
@@ -11,7 +14,6 @@ test_name "Puppet Lookup Command"
 @confdir = "#{@testroot}/puppet"
 
 @mastername = on(master, facter('fqdn')).stdout.chomp
-host = agents.find { |host| host != master }
 @agentname = on(host, facter('fqdn')).stdout.chomp
 
 @master_opts = {
