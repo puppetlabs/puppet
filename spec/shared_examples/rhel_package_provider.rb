@@ -147,10 +147,28 @@ shared_examples "RHEL package provider" do |provider_class, provider_name|
         Puppet::Util::Execution.expects(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', ['-t', '-x=expackage'], :install, name])
         provider.install
       end
-      it 'allow virtual packages' do
+      it 'should allow virtual packages' do
         resource[:ensure] = :installed
         resource[:allow_virtual] = true
-        Puppet::Util::Execution.expects(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', :list, name]).never
+        Puppet::Util::Execution.expects(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', :list, name], {:failonfail => false, :combine => false}).never
+        Puppet::Util::Execution.expects(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', :install, name])
+        provider.install
+      end
+      it 'should run list if allow_virtual is false' do
+        output = stub(:exitstatus => 0)
+        resource[:ensure] = :installed
+        resource[:allow_virtual] = 'false'
+        Puppet::Util::Execution.expects(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', :list, name], {:failonfail => false, :combine => false}).returns(output)
+        Puppet::Util::Execution.expects(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', :install, name])
+        provider.install
+      end
+      it 'should run makecache fast if allow_virtual is false and list fails' do
+        output = stub(:exitstatus => 1)
+        resource[:ensure] = :installed
+        resource[:allow_virtual] = 'false'
+        Puppet::Util::Execution.expects(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', :list, name], {:failonfail => false, :combine => false}).returns(output)
+        Puppet::Util::Execution.expects(:execute).with(["/usr/bin/#{provider_name}", :makecache, :fast], {:failonfail => false, :combine => false})
+        Puppet::Util::Execution.expects(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', :list, name])
         Puppet::Util::Execution.expects(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', :install, name])
         provider.install
       end
