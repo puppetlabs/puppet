@@ -14,6 +14,7 @@ require 'puppet/util'
 require "puppet/util/rubygems"
 require "puppet/util/limits"
 require 'puppet/util/colors'
+require 'puppet/util/selinux'
 
 module Puppet
   module Util
@@ -22,6 +23,7 @@ module Puppet
     # begins.
     class CommandLine
       include Puppet::Util::Limits
+      include Puppet::Util::SELinux
 
       OPTION_OR_MANIFEST_FILE = /^-|\.pp$/
 
@@ -63,6 +65,17 @@ module Puppet
       #
       # @return [void]
       def execute
+        # Before we load configuration do SELinux domain switch. This operation does not throw
+        # any errors or exceptions when SELinux is turned off or policy does not allow this
+        # kind of transition.
+        if selinux_support? && ! ENV['NO_PUPPET_SELINUX_DTRANS']
+          if subcommand_name == 'master' then
+            set_selinux_domain(SELINUX_DOMAIN_PUPPET_MASTER)
+          elsif subcommand_name == 'ca' then
+            set_selinux_domain(SELINUX_DOMAIN_PUPPET_CA)
+          end
+        end
+
         Puppet::Util.exit_on_fail("initialize global default settings") do
           Puppet.initialize_settings(args)
         end
