@@ -10,9 +10,8 @@ test_name "Puppet Lookup Command"
 @coderoot = "#{@testroot}/code"
 @confdir = "#{@testroot}/puppet"
 
-@mastername = on(master, facter('fqdn')).stdout.chomp
-host = agents.find { |host| host != master }
-@agentname = on(host, facter('fqdn')).stdout.chomp
+@node1 = 'node1.example.org'
+@node2 = 'node2.example.org'
 
 @master_opts = {
   'main' => {
@@ -2125,8 +2124,8 @@ file { '#{@coderoot}/enc.rb' :
   content => "#!#{master['privatebindir']}/ruby
 nodename = ARGV.shift
 node2env = {
-  '#{@mastername}' => \\\"---\\\\n  environment: env2\\\\n\\\",
-  '#{@agentname}' => \\\"---\\\\n  environment: env3\\\\n\\\",
+  '#{@node1}' => \\\"---\\\\n  environment: env2\\\\n\\\",
+  '#{@node2}' => \\\"---\\\\n  environment: env3\\\\n\\\",
 }
 puts (\\\"\#{node2env[nodename]}\\\" ||'')
 ",
@@ -2522,8 +2521,8 @@ with_puppet_running_on master, @master_opts, @coderoot do
   step 'apply enc manifest'
   apply_manifest_on(master, @encmanifest, :catch_failures => true)
 
-  step "enc specified master environment environment_key"
-  r = on(master, puppet('lookup', "--node #{@mastername}", "--confdir #{@confdir}", 'environment_key'))
+  step "enc specified node1 environment environment_key"
+  r = on(master, puppet('lookup', "--node #{@node1}", "--confdir #{@confdir}", 'environment_key'))
   result = r.stdout
   assert_match(
     /env-env2-ruby-function/,
@@ -2531,8 +2530,8 @@ with_puppet_running_on master, @master_opts, @coderoot do
     "enc specified environment env2 environment_key lookup failed"
   )
 
-  step "enc specified agent environment environment_key"
-  r = on(master, puppet('lookup', "--node #{@agentname}", "--confdir #{@confdir}", 'environment_key'))
+  step "enc specified node2 environment environment_key"
+  r = on(master, puppet('lookup', "--node #{@node2}", "--confdir #{@confdir}", 'environment_key'))
   result = r.stdout
   assert_match(
     /env-env3-puppet-function/,
