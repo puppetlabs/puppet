@@ -160,6 +160,8 @@ module Puppet::Test
 
       Puppet.settings.send(:clear_everything_for_tests)
 
+      Puppet.lookup(:environments).clear_all
+
       Puppet::Util::Storage.clear
       Puppet::Util::ExecutionStub.reset
 
