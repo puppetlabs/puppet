@@ -447,14 +447,6 @@ describe Puppet::Application::Apply do
         expect { @apply.apply }.to raise_error(Puppet::Error)
       end
 
-      it "should convert plain data structures into a catalog if deserialization does not do so" do
-        @apply.options[:catalog] = temporary_catalog
-        Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'"something"').returns({:foo => "bar"})
-        catalog = Puppet::Resource::Catalog.new("testing", Puppet::Node::Environment::NONE)
-        Puppet::Resource::Catalog.expects(:pson_create).with({:foo => "bar"}).returns(catalog)
-        @apply.apply
-      end
-
       it "should convert the catalog to a RAL catalog and use a Configurer instance to apply it" do
         @apply.options[:catalog] = temporary_catalog
         catalog = Puppet::Resource::Catalog.new("testing", Puppet::Node::Environment::NONE)
