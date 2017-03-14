@@ -249,6 +249,79 @@ describe "Puppet Network Format" do
     end
   end
 
+  describe "json" do
+    let(:json) { Puppet::Network::FormatHandler.format(:json) }
+
+    it "should include a json format" do
+      expect(json).not_to be_nil
+    end
+
+    it "should have its mime type set to application/json" do
+      expect(json.mime).to eq("application/json")
+    end
+
+    it "should require the :render_method" do
+      expect(json.required_methods).to be_include(:render_method)
+    end
+
+    it "should require the :intern_method" do
+      expect(json.required_methods).to be_include(:intern_method)
+    end
+
+    it "should have a weight of 15" do
+      expect(json.weight).to eq(15)
+    end
+
+    it "should render an instance as JSON" do
+      instance = FormatsTest.new("foo")
+      expect(json.render(instance)).to eq({"string" => "foo"}.to_json)
+    end
+
+    it "should render multiple instances as a JSON array of hashes" do
+      instances = [FormatsTest.new("foo")]
+      expect(json.render_multiple(instances)).to eq([{"string" => "foo"}].to_json)
+    end
+
+    it "should intern an instance from a JSON hash" do
+      text = JSON.dump({"string" => "parsed_json"})
+      instance = json.intern(FormatsTest, text)
+      expect(instance.string).to eq("parsed_json")
+    end
+
+    it "should intern multiple instances from a JSON array of hashes" do
+      text = JSON.dump(
+        [
+          {
+            "string" => "BAR"
+          },
+          {
+            "string" => "BAZ"
+          }
+        ]
+      )
+      expect(json.intern_multiple(FormatsTest, text)).to eq([FormatsTest.new('BAR'), FormatsTest.new('BAZ')])
+    end
+
+    it "should reject wrapped data from legacy clients as they've never supported JSON" do
+      text = JSON.dump(
+        {
+          "type" => "FormatsTest",
+          "data" => {
+            "string" => "parsed_json"
+          }
+        }
+      )
+      instance = json.intern(FormatsTest, text)
+      expect(instance.string).to be_nil
+    end
+
+    it "fails intelligibly when given invalid data" do
+      expect do
+        json.intern(Puppet::Node, '')
+      end.to raise_error(JSON::ParserError, /A JSON text must at least contain two octets/)
+    end
+  end
+
   describe ":console format" do
     let(:console) { Puppet::Network::FormatHandler.format(:console) }
 
