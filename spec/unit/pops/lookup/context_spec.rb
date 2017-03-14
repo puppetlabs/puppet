@@ -221,11 +221,11 @@ describe 'Puppet::Pops::Lookup::Context' do
             Puppet::Parser::Compiler.compile(node)
 
             # Change contents!
-            File.write(data_path, "b: value b\n")
+            File.write(data_path, "a: value is now A\n")
             Puppet::Parser::Compiler.compile(node)
           end
           logs = logs.select { |log| log.level == :notice }.map { |log| log.message }
-          expect(logs).to eql(["{parsed => a: value a\n}", "{parsed => b: value b\n}"])
+          expect(logs).to eql(["{parsed => a: value a\n}", "{parsed => a: value is now A\n}"])
         end
       end
     end
