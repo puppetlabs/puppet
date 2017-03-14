@@ -110,7 +110,7 @@ class Puppet::Network::HTTP::WEBrick
     results[:SSLCACertificateFile] = ssl_configuration.ca_auth_file
     results[:SSLVerifyClient] = OpenSSL::SSL::VERIFY_PEER
 
-    results[:SSLCertificateStore] = host.ssl_store
+    results[:SSLCertificateStore] = ssl_configuration.ssl_store
 
     results
   end

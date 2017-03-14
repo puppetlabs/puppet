@@ -25,16 +25,17 @@ module Puppet::Network::HttpPool
   # @param host [String] The hostname to connect to
   # @param port [Integer] The port on the host to connect to
   # @param use_ssl [Boolean] Whether to use an SSL connection
-  # @param verify_peer [Boolean] Whether to verify the peer credentials, if possible. Verification will not take place if the CA certificate is missing.
+  # @param verify_peer [Boolean] Whether to verify the peer credentials, if possible. Connection verification will
+  #                              be performed based on the files (CA certificate, client certificate, CRL) present.
   # @return [Puppet::Network::HTTP::Connection]
   #
   # @api public
   #
   def self.http_instance(host, port, use_ssl = true, verify_peer = true)
     verifier = if verify_peer
-                 Puppet::SSL::Validator.default_validator()
+                 Puppet::SSL::Validator.best_validator
                else
-                 Puppet::SSL::Validator.no_validator()
+                 Puppet::SSL::Validator.no_validator
                end
 
     http_client_class.new(host, port,
@@ -53,7 +54,7 @@ module Puppet::Network::HttpPool
   #
   # @api public
   #
-  def self.http_ssl_instance(host, port, verifier = Puppet::SSL::Validator.default_validator())
+  def self.http_ssl_instance(host, port, verifier = Puppet::SSL::Validator.best_validator)
     http_client_class.new(host, port,
                             :use_ssl => true,
                             :verify => verifier)
