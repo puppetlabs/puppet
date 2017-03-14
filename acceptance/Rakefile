@@ -144,17 +144,24 @@ def preserved_hosts(secs_ago = ONE_DAY_IN_SECS)
 end
 
 def vmpooler_token
-  `grep --extended --only-matching 'vmpooler_token: .*' ${HOME}/.fog`.split(' ')[1]
+  fog_file_contents = YAML.load_file(File.expand_path("~/.fog"))
+  fog_file_contents[:default][:vmpooler_token] if fog_file_contents[:default].keys.include?(:vmpooler_token)
+  # this could use additional entries or anykey functionality if people put their vmpooler_token elsewhere
 end
 
 def release_hosts(hosts = nil)
+  my_vmpooler_token = vmpooler_token
   hosts.each do |h|
     hostname = h.match(/\w{15}\.delivery\.puppetlabs\.net/)[0]
     puts "Releasing '#{hostname}'"
     shh_curl = 'curl --silent --show-error'
-    token_command = "-H X-AUTH-TOKEN:#{vmpooler_token}"
+    if my_vmpooler_token
+      token_header = "-H X-AUTH-TOKEN:#{my_vmpooler_token}"
+    else
+      token_header = ''
+    end
     vcloud_url = "http://vcloud.delivery.puppetlabs.net/vm/#{hostname}"
-    puts `#{shh_curl} -X DELETE --url #{vcloud_url} #{token_command}`
+    puts `#{shh_curl} -X DELETE --url #{vcloud_url} #{token_header}`
   end
 end
 
