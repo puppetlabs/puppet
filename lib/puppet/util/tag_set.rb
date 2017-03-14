@@ -20,10 +20,6 @@ class Puppet::Util::TagSet < Set
     to_a
   end
 
-  def to_pson(*args)
-    to_data_hash.to_pson
-  end
-
   def join(*args)
     to_a.join(*args)
   end
