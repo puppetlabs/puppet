@@ -64,7 +64,7 @@ class PObjectType < PMetaType
     type = create_ptype(loader, ir, 'AnyType', 'i12n_hash' => TYPE_OBJECT_I12N)
 
     # Now, when the Object type exists, add annotations with keys derived from Annotation and freeze the types.
-    annotations = TypeFactory.optional(PHashType.new(PType.new(Annotation._ptype), TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, PAnyType::DEFAULT)))
+    annotations = TypeFactory.optional(PHashType.new(PType.new(Annotation._pcore_type), TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, PAnyType::DEFAULT)))
     TYPE_ATTRIBUTE.hashed_elements[KEY_ANNOTATIONS].replace_value_type(annotations)
     TYPE_FUNCTION.hashed_elements[KEY_ANNOTATIONS].replace_value_type(annotations)
     TYPE_OBJECT_I12N.hashed_elements[KEY_ANNOTATIONS].replace_value_type(annotations)
@@ -297,6 +297,11 @@ class PObjectType < PMetaType
       hash
     end
 
+    # @return [Booelan] true if the given value equals the default value for this attribute
+    def default_value?(value)
+      @value == value
+    end
+
     # @return [Boolean] `true` if a value has been defined for this attribute.
     def value?
       @value != :undef
@@ -495,7 +500,7 @@ class PObjectType < PMetaType
 
   # @api private
   # @return [(Array<String>, Array<PAnyType>, Integer)] array of parameter names, array of parameter types, and a count reflecting the required number of parameters
-  def parameter_info(impl_class, attr_readers = false)
+  def parameter_info(impl_class)
     # Create a types and a names array where optional entries ends up last
     opt_types = []
     opt_names = []
@@ -503,10 +508,10 @@ class PObjectType < PMetaType
     non_opt_names = []
     i12n_type.elements.each do |se|
       if se.key_type.is_a?(POptionalType)
-        opt_names << (attr_readers ? attr_reader_name(se) : se.name)
+        opt_names << se.name
         opt_types << se.value_type
       else
-        non_opt_names << (attr_readers ? attr_reader_name(se) : se.name)
+        non_opt_names << se.name
         non_opt_types << se.value_type
       end
     end
@@ -555,8 +560,10 @@ class PObjectType < PMetaType
   end
 
   # @api private
-  def include_class_in_equality?
-    @equality_include_type && !(@parent.is_a?(PObjectType) && parent.include_class_in_equality?)
+  def equality_include_type?
+    return true if @equality_include_type
+    rp = resolved_parent
+    rp.is_a?(PObjectType) && rp.equality_include_type?
   end
 
   # @api private
@@ -583,7 +590,11 @@ class PObjectType < PMetaType
     attr_specs = i12n_hash[KEY_ATTRIBUTES]
     unless attr_specs.nil? || attr_specs.empty?
       @attributes = Hash[attr_specs.map do |key, attr_spec|
-        attr_spec = { KEY_TYPE => TypeAsserter.assert_instance_of(nil, PType::DEFAULT, attr_spec) { "attribute #{label}[#{key}]" } } unless attr_spec.is_a?(Hash)
+        unless attr_spec.is_a?(Hash)
+          attr_type = TypeAsserter.assert_instance_of(nil, PType::DEFAULT, attr_spec) { "attribute #{label}[#{key}]" }
+          attr_spec = { KEY_TYPE => attr_type }
+          attr_spec[KEY_VALUE] = nil if attr_type.is_a?(POptionalType)
+        end
         attr = PAttribute.new(key, self, attr_spec)
         [attr.name, attr.assert_override(parent_members)]
       end].freeze
@@ -810,6 +821,10 @@ class PObjectType < PMetaType
       parent = parent.resolved_type
     end
     parent
+  end
+
+  def simple_name
+    label.split(DOUBLE_COLON).last
   end
 
   protected

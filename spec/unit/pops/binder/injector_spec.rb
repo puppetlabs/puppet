@@ -722,13 +722,13 @@ describe 'Injector' do
 
       it "should be possible to lookup a concatenated string" do
         scope['duck'] = 'Donald Fauntleroy Duck'
-        expr = parser.parse_string('"Hello $duck"').current()
+        expr = parser.parse_string('"Hello $duck"').model
         bindings.bind.name('the_duck').to(expr)
         expect(injector(lbinder).lookup(scope, 'the_duck')).to eq('Hello Donald Fauntleroy Duck')
       end
 
       it "should be possible to post process lookup with a puppet lambda" do
-        model = parser.parse_string('fake() |$value| {$value + 1 }').current
+        model = parser.parse_string('fake() |$value| {$value + 1 }').model
         bindings.bind.name('an_int').to(42).producer_options( :transformer => model.body.lambda)
         expect(injector(lbinder).lookup(scope, 'an_int')).to eq(43)
       end

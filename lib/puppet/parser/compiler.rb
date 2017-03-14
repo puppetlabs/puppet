@@ -467,8 +467,6 @@ class Puppet::Parser::Compiler
   # Answers if Puppet Binder should be active or not, and if it should and is not active, then it is activated.
   # @return [Boolean] true if the Puppet Binder should be activated
   def activate_binder
-    # TODO: this should be in a central place
-    Puppet::Parser::ParserFactory.assert_rgen_installed()
     @@binder_loaded ||= false
     unless @@binder_loaded
       require 'puppet/pops'

@@ -14,7 +14,7 @@ describe "Puppet::Pops::Resource" do
   let(:factory) { TypeFactory }
 
   context 'when creating resources' do
-    let!(:resource_type) { ResourceTypeImpl._ptype }
+    let!(:resource_type) { ResourceTypeImpl._pcore_type }
 
     it 'can create an instance of a ResourceType' do
       code = <<-CODE

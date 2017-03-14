@@ -50,7 +50,7 @@ class TypedModelObject < Object
   include Visitable
   include Adaptable
 
-  def self._ptype
+  def self._pcore_type
     @type
   end
 

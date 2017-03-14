@@ -21,7 +21,7 @@ describe "epp parser" do
 
   it "should parse a code string and return a program with epp" do
     parser = Puppet::Pops::Parser::EppParser.new()
-    model = parser.parse_string("Nothing to see here, move along...").current
+    model = parser.parse_string("Nothing to see here, move along...").model
     expect(model.class).to eq(Puppet::Pops::Model::Program)
     expect(model.body.class).to eq(Puppet::Pops::Model::LambdaExpression)
     expect(model.body.body.class).to eq(Puppet::Pops::Model::EppExpression)

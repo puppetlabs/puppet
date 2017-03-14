@@ -296,7 +296,7 @@ module Runtime3Support
       :name   => name,
       :value  => convert(value, scope, nil), # converted to 3x since 4x supports additional objects / types
       :source => scope.source, :line => line, :file => file,
-      :add    => operator == :'+>'
+      :add    => operator == '+>'
     )
   end
 
@@ -439,21 +439,7 @@ module Runtime3Support
   end
 
   def extract_file_line(o)
-    positioned = find_closest_with_offset(o)
-    unless positioned.nil?
-      locator = Adapters::SourcePosAdapter.find_locator(positioned)
-      return [locator.file, locator.line_for_offset(positioned.offset)] unless locator.nil?
-    end
-    [nil, -1]
-  end
-
-  def find_closest_with_offset(o)
-    if o.offset.nil?
-      c = o.eContainer
-      c.nil? ? nil : find_closest_with_offset(c)
-    else
-      o
-    end
+    o.is_a?(Model::Positioned) ? [o.file, o.line] : [nil, -1]
   end
 
   # Creates a diagnostic producer

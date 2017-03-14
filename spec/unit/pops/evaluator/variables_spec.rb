@@ -46,7 +46,7 @@ describe 'Puppet::Pops::Impl::EvaluatorImpl' do
       end
 
       it "can not change a variable value in same scope" do
-        expect { evaluate_l(block(var('a').set(10), var('a').set(20))) }.to raise_error(/Cannot reassign variable '\$a'/)
+        expect { evaluate_l(block(var('a').set(literal(10)), var('a').set(literal(20)))) }.to raise_error(/Cannot reassign variable '\$a'/)
       end
 
       context "access to numeric variables" do

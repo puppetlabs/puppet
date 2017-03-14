@@ -289,7 +289,7 @@ class PTypeSetType < PMetaType
         full_name = "#{@name}::#{type_name}".freeze
         typed_name = Loader::TypedName.new(:type, full_name.downcase, name_auth)
         type = Loader::TypeDefinitionInstantiator.create_type(full_name, value, name_auth)
-        loader.set_entry(typed_name, type, Adapters::SourcePosAdapter.adapt(value).to_uri)
+        loader.set_entry(typed_name, type, value.locator.to_uri(value))
         types[type_name] = type
       end
     end

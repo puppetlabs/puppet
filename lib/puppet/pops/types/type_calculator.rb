@@ -565,7 +565,7 @@ class TypeCalculator
   # @api private
   def infer_Object(o)
     if o.is_a?(PuppetObject)
-      o._ptype
+      o._pcore_type
     else
       name = o.class.name
       ir = Loaders.implementation_registry

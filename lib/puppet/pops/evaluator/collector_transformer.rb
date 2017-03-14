@@ -23,16 +23,11 @@ class CollectorTransformer
 
     fail "Resource type #{type} doesn't exist" unless resource_type
 
-    adapter = Adapters::SourcePosAdapter.adapt(o)
-    line_num = adapter.line
-    position = adapter.pos
-    file_path = adapter.locator.file
-
     if !o.operations.empty?
       overrides = {
         :parameters => o.operations.map{ |x| @@evaluator.evaluate(x, scope)}.flatten,
-        :file       => file_path,
-        :line       => [line_num, position],
+        :file       => o.file,
+        :line       => [o.line, o.pos],
         :source     => scope.source,
         :scope      => scope
       }
@@ -96,7 +91,7 @@ protected
     right_code = query(o.right_expr, scope)
 
     case o.operator
-    when :'=='
+    when '=='
       if left_code == "tag"
         # Ensure that to_s and downcase is done once, i.e. outside the proc block and
         # then use raw_tagged? instead of tagged?
@@ -121,7 +116,7 @@ protected
           end
         end
       end
-    when :'!='
+    when '!='
       proc do |resource|
         !@@compare_operator.equals(resource[left_code], right_code)
       end

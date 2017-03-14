@@ -103,14 +103,14 @@ class RelationshipOperator
     o
   end
 
-  RELATIONSHIP_OPERATORS = [:'->', :'~>', :'<-', :'<~']
-  REVERSE_OPERATORS      = [:'<-', :'<~']
+  RELATIONSHIP_OPERATORS = ['->', '~>', '<-', '<~'].freeze
+  REVERSE_OPERATORS      = ['<-', '<~'].freeze
   RELATION_TYPE = {
-    :'->' => :relationship,
-    :'<-' => :relationship,
-    :'~>' => :subscription,
-    :'<~' => :subscription
-  }
+    '->' => :relationship,
+    '<-' => :relationship,
+    '~>' => :subscription,
+    '<~' => :subscription
+  }.freeze
 
   # Evaluate a relationship.
   # TODO: The error reporting is not fine grained since evaluation has already taken place

@@ -512,9 +512,10 @@ module Private
         when InjectorEntry
           val = produce(scope, entry)
           return nil if val.nil?
-          unless type_calculator.instance?(entry.binding.type, val)
-            raise "Type error: incompatible type returned by producer, #{type_error_detail(entry.binding.type, val)}"
-          end
+          # Temporary turn off checks. Pcore isn't Rgen
+          # unless type_calculator.instance?(entry.binding.type, val)
+          #  raise "Type error: incompatible type returned by producer, #{type_error_detail(entry.binding.type, val)}"
+          # end
           val
         when Producers::AssistedInjectProducer
           entry.produce(scope)

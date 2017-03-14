@@ -9,36 +9,34 @@ describe Puppet::Pops::Parser::Parser do
 
   it "should parse a code string and return a model" do
     parser = Puppet::Pops::Parser::Parser.new()
-    model = parser.parse_string("$a = 10").current
+    model = parser.parse_string("$a = 10").model
     expect(model.class).to eq(Puppet::Pops::Model::Program)
     expect(model.body.class).to eq(Puppet::Pops::Model::AssignmentExpression)
   end
 
   it "should accept empty input and return a model" do
     parser = Puppet::Pops::Parser::Parser.new()
-    model = parser.parse_string("").current
+    model = parser.parse_string("").model
     expect(model.class).to eq(Puppet::Pops::Model::Program)
     expect(model.body.class).to eq(Puppet::Pops::Model::Nop)
   end
 
   it "should accept empty input containing only comments and report location at end of input" do
     parser = Puppet::Pops::Parser::Parser.new()
-    model = parser.parse_string("# comment\n").current
+    model = parser.parse_string("# comment\n").model
     expect(model.class).to eq(Puppet::Pops::Model::Program)
     expect(model.body.class).to eq(Puppet::Pops::Model::Nop)
-    adapter = Puppet::Pops::Adapters::SourcePosAdapter.adapt(model.body)
-    expect(adapter.offset).to eq(10)
-    expect(adapter.length).to eq(0)
+    expect(model.body.offset).to eq(10)
+    expect(model.body.length).to eq(0)
   end
 
   it "multi byte characters in a comment are counted as individual bytes" do
     parser = Puppet::Pops::Parser::Parser.new()
-    model = parser.parse_string("# \u{0400}comment\n").current
+    model = parser.parse_string("# \u{0400}comment\n").model
     expect(model.class).to eq(Puppet::Pops::Model::Program)
     expect(model.body.class).to eq(Puppet::Pops::Model::Nop)
-    adapter = Puppet::Pops::Adapters::SourcePosAdapter.adapt(model.body)
-    expect(adapter.offset).to eq(12)
-    expect(adapter.length).to eq(0)
+    expect(model.body.offset).to eq(12)
+    expect(model.body.length).to eq(0)
   end
 
   it "should raise an error with position information when error is raised from within parser" do

@@ -19,7 +19,7 @@ describe 'The Object Type' do
   end
 
   def type_object_t(name, body_string)
-    object = PObjectType.new(name, pp_parser.parse_string("{#{body_string}}").current.body)
+    object = PObjectType.new(name, pp_parser.parse_string("{#{body_string}}").body)
     loader.set_entry(Loader::TypedName.new(:type, name.downcase), object)
     object
   end
@@ -99,6 +99,17 @@ describe 'The Object Type' do
       OBJECT
       attr = tp['a']
       expect(attr.value?).to be_falsey
+    end
+
+    it 'attribute without defined value but optional type responds true to value?' do
+      tp = parse_object('MyObject', <<-OBJECT)
+        attributes => {
+          a => Optional[Integer]
+        }
+      OBJECT
+      attr = tp['a']
+      expect(attr.value?).to be_truthy
+      expect(attr.value).to be_nil
     end
 
     it 'raises an error when value is requested from an attribute that has no value' do
@@ -1125,7 +1136,7 @@ describe 'The Object Type' do
     include_context 'types_setup'
 
     def find_parent(tc, parent_name)
-      p = tc._ptype
+      p = tc._pcore_type
       while p.is_a?(PObjectType) && p.name != parent_name
         p = p.parent
       end
@@ -1133,31 +1144,31 @@ describe 'The Object Type' do
       p
     end
 
-    it 'the class has a _ptype method' do
+    it 'the class has a _pcore_type method' do
       all_types.each do |tc|
-        expect(tc).to respond_to(:_ptype).with(0).arguments
+        expect(tc).to respond_to(:_pcore_type).with(0).arguments
       end
     end
 
-    it 'the _ptype method returns a PObjectType instance' do
+    it 'the _pcore_type method returns a PObjectType instance' do
       all_types.each do |tc|
-        expect(tc._ptype).to be_a(PObjectType)
+        expect(tc._pcore_type).to be_a(PObjectType)
       end
     end
 
-    it 'the instance returned by _ptype is a descendant from Pcore::AnyType' do
+    it 'the instance returned by _pcore_type is a descendant from Pcore::AnyType' do
       all_types.each { |tc| expect(find_parent(tc, 'Pcore::AnyType').name).to eq('Pcore::AnyType') }
     end
 
-    it 'PScalarType classes _ptype returns a descendant from Pcore::ScalarType' do
+    it 'PScalarType classes _pcore_type returns a descendant from Pcore::ScalarType' do
       scalar_types.each { |tc| expect(find_parent(tc, 'Pcore::ScalarType').name).to eq('Pcore::ScalarType') }
     end
 
-    it 'PNumericType classes _ptype returns a descendant from Pcore::NumberType' do
+    it 'PNumericType classes _pcore_type returns a descendant from Pcore::NumberType' do
       numeric_types.each { |tc| expect(find_parent(tc, 'Pcore::NumericType').name).to eq('Pcore::NumericType') }
     end
 
-    it 'PCollectionType classes _ptype returns a descendant from Pcore::CollectionType' do
+    it 'PCollectionType classes _pcore_type returns a descendant from Pcore::CollectionType' do
       coll_descendants = collection_types - [PTupleType, PStructType]
       coll_descendants.each { |tc| expect(find_parent(tc, 'Pcore::CollectionType').name).to eq('Pcore::CollectionType') }
     end

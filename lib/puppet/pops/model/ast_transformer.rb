@@ -43,12 +43,11 @@ class Puppet::Pops::Model::AstTransformer
   def merge_location(hash, o)
     if o
       pos = {}
-      source_pos = Puppet::Pops::Utils.find_closest_positioned(o)
-      if source_pos
-        pos[:line] = source_pos.line
-        pos[:pos]  = source_pos.pos
-        pos[:file] = source_pos.locator.file
-      end
+      locator = o.locator
+      offset = o.is_a?(Model::Program) ? 0 : o.offset
+      pos[:line] = locator.line_for_offset(offset)
+      pos[:pos]  = locator.pos_on_line(offset)
+      pos[:file] = locator.file
       if nil_or_empty?(pos[:file]) && !nil_or_empty?(@source_file)
         pos[:file] = @source_file
       end
