@@ -311,13 +311,13 @@ class Application
   # handling of this.
   option("--version", "-V") do |arg|
     puts "#{Puppet.version}"
-    exit
+    exit(0)
   end
 
   # Every app responds to --help
   option("--help", "-h") do |v|
     puts help
-    exit
+    exit(0)
   end
 
   def app_defaults()
