@@ -32,7 +32,7 @@ module Puppet::Network::HTTP::Compression
     end
 
     def uncompress(response)
-      raise Net::HTTPError.new("No block passed") unless block_given?
+      raise Net::HTTPError.new("No block passed", response) unless block_given?
 
       case response['content-encoding']
       when 'gzip','deflate'
