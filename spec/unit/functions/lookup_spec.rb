@@ -595,56 +595,59 @@ describe "The lookup function" do
           YAML
       end
 
+      let(:env_lookup_options) { <<-YAML.unindent }
+        lookup_options:
+          b:
+            merge: hash
+          '^[^b]$':
+             merge: deep
+          '^c':
+             merge: first
+          '^b':
+             merge: first
+          '^mod::ha.*_b':
+            merge: hash
+        YAML
+
       let(:env_data) do
         {
-          'first.yaml' => <<-YAML.unindent,
-                a:
-                  aa:
-                    aaa: a.aa.aaa
-                b:
-                  ba:
-                    baa: b.ba.baa
-                  bb:
-                    bba: b.bb.bba
-                c:
-                  ca:
-                    caa: c.ca.caa
-                mod::hash_a:
-                  aa:
-                    aab: aab (from environment)
-                  ab:
-                    aba: aba (from environment)
-                    abb: abb (from environment)
-                mod::hash_b:
-                  ba:
-                    bab: bab (from environment)
-                  bc:
-                    bca: bca (from environment)
-                lookup_options:
-                  b:
-                    merge: hash
-                  '^[^b]$':
-                     merge: deep
-                  '^c':
-                     merge: first
-                  '^b':
-                     merge: first
-                  '^mod::ha.*_b':
-                    merge: hash
-        YAML
-        'second.yaml' => <<-YAML.unindent,
-                a:
-                  aa:
-                    aab: a.aa.aab
-                b:
-                  ba:
-                    bab: b.ba.bab
-                  bb:
-                    bbb: b.bb.bbb
-                c:
-                  ca:
-                    cab: c.ca.cab
-        YAML
+          'first.yaml' => <<-YAML.unindent + env_lookup_options,
+            a:
+              aa:
+                aaa: a.aa.aaa
+            b:
+              ba:
+                baa: b.ba.baa
+              bb:
+                bba: b.bb.bba
+            c:
+              ca:
+                caa: c.ca.caa
+            mod::hash_a:
+              aa:
+                aab: aab (from environment)
+              ab:
+                aba: aba (from environment)
+                abb: abb (from environment)
+            mod::hash_b:
+              ba:
+                bab: bab (from environment)
+              bc:
+                bca: bca (from environment)
+            YAML
+          'second.yaml' => <<-YAML.unindent,
+            a:
+              aa:
+                aab: a.aa.aab
+            b:
+              ba:
+                bab: b.ba.bab
+              bb:
+                bbb: b.bb.bbb
+            c:
+              ca:
+                cab: c.ca.cab
+            YAML
         }
       end
 
@@ -703,6 +706,25 @@ describe "The lookup function" do
 
         it 'fails with error' do
           expect { lookup('mod::a') }.to raise_error(Puppet::DataBinding::LookupError, /all lookup_options patterns must match a key starting with module name/)
+        end
+      end
+
+      context 'and there are no lookup options that do not use patterns' do
+
+        let(:env_lookup_options) { <<-YAML.unindent }
+          lookup_options:
+            '^[^b]$':
+              merge: deep
+            '^c':
+              merge: first
+            '^b':
+              merge: first
+            '^mod::ha.*_b':
+              merge: hash
+          YAML
+
+        it 'finds lookup_options that matches a pattern' do
+          expect(lookup('a')).to eql({'aa' => { 'aaa' => 'a.aa.aaa', 'aab' => 'a.aa.aab' }})
         end
       end
     end
