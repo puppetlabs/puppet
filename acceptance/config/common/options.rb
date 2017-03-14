@@ -9,8 +9,4 @@
   :add_el_extras               => true,
   :forge_host                  => 'forge-aio01-petest.puppetlabs.com',
   :'master-start-curl-retries' => 30,
-  :is_puppetserver             => true,
-  :'use-service'               => true,
-  :puppetservice               => 'puppetserver',
-  :'puppetserver-confdir'      => '/etc/puppetlabs/puppetserver/conf.d',
 }
