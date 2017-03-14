@@ -2,26 +2,28 @@
 require 'spec_helper'
 
 require 'puppet/network/formats'
+require 'puppet/network/format_support'
 
-class PsonTest
+class FormatsTest
+  include Puppet::Network::FormatSupport
+
   attr_accessor :string
   def ==(other)
     string == other.string
   end
 
   def self.from_data_hash(data)
-    new(data)
+    new(data['string'])
   end
 
   def initialize(string)
     @string = string
   end
 
-  def to_pson(*args)
+  def to_data_hash(*args)
     {
-      'type' => self.class.name,
-      'data' => @string
-    }.to_pson(*args)
+      'string' => @string
+    }
   end
 end
 
@@ -197,56 +199,53 @@ describe "Puppet Network Format" do
       expect(pson.weight).to eq(10)
     end
 
-    describe "when supported" do
-      it "should render by calling 'to_pson' on the instance" do
-        instance = PsonTest.new("foo")
-        instance.expects(:to_pson).returns "foo"
-        expect(pson.render(instance)).to eq("foo")
-      end
+    it "should render an instance as pson" do
+      instance = FormatsTest.new("foo")
+      expect(pson.render(instance)).to eq({"string" => "foo"}.to_pson)
+    end
 
-      it "should render multiple instances by calling 'to_pson' on the array" do
-        instances = [mock('instance')]
+    it "should render multiple instances as pson" do
+      instances = [FormatsTest.new("foo")]
+      expect(pson.render_multiple(instances)).to eq([{"string" => "foo"}].to_pson)
+    end
 
-        instances.expects(:to_pson).returns "foo"
+    it "should intern an instance from a pson hash" do
+      text = PSON.dump({"string" => "parsed_pson"})
+      instance = pson.intern(FormatsTest, text)
+      expect(instance.string).to eq("parsed_pson")
+    end
 
-        expect(pson.render_multiple(instances)).to eq("foo")
-      end
+    it "should intern multiple instances from a pson array" do
+      text = PSON.dump(
+        [
+          {
+            "string" => "BAR"
+          },
+          {
+            "string" => "BAZ"
+          }
+        ]
+      )
+      expect(pson.intern_multiple(FormatsTest, text)).to eq([FormatsTest.new('BAR'), FormatsTest.new('BAZ')])
+    end
 
-      it "should intern by calling 'PSON.parse' on the text and then using from_data_hash to convert the data into an instance" do
-        text = "foo"
-        PSON.expects(:parse).with("foo").returns("type" => "PsonTest", "data" => "foo")
-        PsonTest.expects(:from_data_hash).with("foo").returns "parsed_pson"
-        expect(pson.intern(PsonTest, text)).to eq("parsed_pson")
-      end
+    it "should unwrap the data from legacy clients" do
+      text = PSON.dump(
+        {
+          "type" => "FormatsTest",
+          "data" => {
+            "string" => "parsed_json"
+          }
+        }
+      )
+      instance = pson.intern(FormatsTest, text)
+      expect(instance.string).to eq("parsed_json")
+    end
 
-      it "should not render twice if 'PSON.parse' creates the appropriate instance" do
-        text = "foo"
-        instance = PsonTest.new("foo")
-        PSON.expects(:parse).with("foo").returns(instance)
-        PsonTest.expects(:from_data_hash).never
-        expect(pson.intern(PsonTest, text)).to equal(instance)
-      end
-
-      it "should intern by calling 'PSON.parse' on the text and then using from_data_hash to convert the actual into an instance if the pson has no class/data separation" do
-        text = "foo"
-        PSON.expects(:parse).with("foo").returns("foo")
-        PsonTest.expects(:from_data_hash).with("foo").returns "parsed_pson"
-        expect(pson.intern(PsonTest, text)).to eq("parsed_pson")
-      end
-
-      it "should intern multiples by parsing the text and using 'class.intern' on each resulting data structure" do
-        text = "foo"
-        PSON.expects(:parse).with("foo").returns ["bar", "baz"]
-        PsonTest.expects(:from_data_hash).with("bar").returns "BAR"
-        PsonTest.expects(:from_data_hash).with("baz").returns "BAZ"
-        expect(pson.intern_multiple(PsonTest, text)).to eq(%w{BAR BAZ})
-      end
-
-      it "fails intelligibly when given invalid data" do
-        expect do
-          pson.intern(Puppet::Node, '')
-        end.to raise_error(PSON::ParserError, /source did not contain any PSON/)
-      end
+    it "fails intelligibly when given invalid data" do
+      expect do
+        pson.intern(Puppet::Node, '')
+      end.to raise_error(PSON::ParserError, /source did not contain any PSON/)
     end
   end
 
