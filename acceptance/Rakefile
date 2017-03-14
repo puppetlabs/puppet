@@ -150,7 +150,7 @@ end
 def release_hosts(hosts = nil)
   hosts.each do |h|
     hostname = h.match(/\w{15}\.delivery\.puppetlabs\.net/)[0]
-    puts "Releaseing '#{hostname}'"
+    puts "Releasing '#{hostname}'"
     shh_curl = 'curl --silent --show-error'
     token_command = "-H X-AUTH-TOKEN:#{vmpooler_token}"
     vcloud_url = "http://vcloud.delivery.puppetlabs.net/vm/#{hostname}"
