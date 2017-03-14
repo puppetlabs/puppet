@@ -88,6 +88,7 @@ module Puppet::Network::FormatSupport
     to_data_hash.to_msgpack(*args)
   end
 
+  # @deprecated, use to_json
   def to_pson(*args)
     to_data_hash.to_pson(*args)
   end
