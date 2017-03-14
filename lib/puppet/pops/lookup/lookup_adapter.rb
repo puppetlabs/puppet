@@ -144,8 +144,11 @@ class LookupAdapter < DataAdapter
     return nil if options.nil?
 
     rk = key.root_key
-    key_opts = options[0][rk]
-    return key_opts unless key_opts.nil?
+    key_opts = options[0]
+    unless key_opts.nil?
+      key_opt = key_opts[rk]
+      return key_opt unless key_opt.nil?
+    end
 
     patterns = options[1]
     patterns.each_pair { |pattern, value| return value if pattern =~ rk } unless patterns.nil?
