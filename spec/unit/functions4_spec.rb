@@ -237,35 +237,6 @@ describe 'the 4x function api' do
     rejected: parameter 's1' expects a String value, got Integer")
     end
 
-    context 'can use injection' do
-      before :all do
-        injector = Puppet::Pops::Binder::Injector.create('test') do
-          bind.name('a_string').to('evoe')
-          bind.name('an_int').to(42)
-        end
-        Puppet.push_context({:injector => injector}, "injector for testing function API")
-      end
-
-      after :all do
-        Puppet.pop_context()
-      end
-
-      it 'attributes can be injected' do
-        f1 = create_function_with_class_injection()
-        f = f1.new(:closure_scope, :loader)
-        expect(f.test_attr2()).to eql("evoe")
-        expect(f.serial().produce(nil)).to eql(42)
-        expect(f.test_attr().class.name).to eql("FunctionAPISpecModule::TestDuck")
-      end
-
-      it 'parameters can be injected and woven with regular dispatch' do
-        f1 = create_function_with_param_injection_regular()
-        f = f1.new(:closure_scope, :loader)
-        expect(f.call(nil, 10, 20)).to eql("evoe! 10, and 20 < 42 = true")
-        expect(f.call(nil, 50, 20)).to eql("evoe! 50, and 20 < 42 = false")
-      end
-    end
-
     context 'when requesting a type' do
       it 'responds with a Callable for a single signature' do
         tf = Puppet::Pops::Types::TypeFactory
@@ -819,18 +790,6 @@ describe 'the 4x function api' do
       end
       def t1(*x)
         x
-      end
-    end
-  end
-
-  def create_function_with_class_injection
-    f = Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
-      attr_injected Puppet::Pops::Types::TypeFactory.type_of(FunctionAPISpecModule::TestDuck), :test_attr
-      attr_injected Puppet::Pops::Types::TypeFactory.string(), :test_attr2, "a_string"
-      attr_injected_producer Puppet::Pops::Types::TypeFactory.integer(), :serial, "an_int"
-
-      def test(x,y,a=1, b=1, *c)
-        x <= y ? x : y
       end
     end
   end

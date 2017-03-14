@@ -604,34 +604,6 @@ module Puppet::Functions
       InternalDispatchBuilder.new(dispatcher, Puppet::Pops::Types::TypeParser.singleton, Puppet::Pops::Types::PCallableType::DEFAULT, loader)
     end
 
-    # Defines class level injected attribute with reader method
-    #
-    # @api private
-    def self.attr_injected(type, attribute_name, injection_name = nil)
-      define_method(attribute_name) do
-        ivar = :"@#{attribute_name.to_s}"
-        unless instance_variable_defined?(ivar)
-          injector = Puppet.lookup(:injector)
-          instance_variable_set(ivar, injector.lookup(closure_scope, type, injection_name))
-        end
-        instance_variable_get(ivar)
-      end
-    end
-
-    # Defines class level injected producer attribute with reader method
-    #
-    # @api private
-    def self.attr_injected_producer(type, attribute_name, injection_name = nil)
-      define_method(attribute_name) do
-        ivar = :"@#{attribute_name.to_s}"
-        unless instance_variable_defined?(ivar)
-          injector = Puppet.lookup(:injector)
-          instance_variable_set(ivar, injector.lookup_producer(closure_scope, type, injection_name))
-        end
-        instance_variable_get(ivar)
-      end
-    end
-
     # Allows the implementation of a function to call other functions by name and pass the caller
     # scope. The callable functions are those visible to the same loader that loaded this function
     # (the calling function).

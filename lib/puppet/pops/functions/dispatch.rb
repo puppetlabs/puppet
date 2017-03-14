@@ -56,7 +56,6 @@ class Dispatch < Evaluator::CallableSignature
     if @injections.empty?
       args
     else
-      injector = nil # lazy lookup of injector Puppet.lookup(:injector)
       new_args = []
       @weaving.each do |knit|
         if knit.is_a?(Array)
@@ -66,12 +65,8 @@ class Dispatch < Evaluator::CallableSignature
             when :dispatcher_internal
               # currently only supports :scope injection
               scope
-            when :producer
-              injector ||= Puppet.lookup(:injector)
-              injector.lookup_producer(scope, injection_data[0], injection_data[2])
             else
-              injector ||= Puppet.lookup(:injector)
-              injector.lookup(scope, injection_data[0], injection_data[2])
+              raise_error ArgumentError, "Unknown injection #{injection_data[3]}"
             end
         else
           # Careful so no new nil arguments are added since they would override default

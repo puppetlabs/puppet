@@ -59,37 +59,6 @@ module Puppet
       require 'puppet/pops/model/model_label_provider'
     end
 
-    module Binder
-      module SchemeHandler
-        # the handlers are auto loaded via bindings
-      end
-      module Producers
-        require 'puppet/pops/binder/producers'
-      end
-
-      require 'puppet/pops/binder/binder'
-      require 'puppet/pops/binder/bindings_model'
-      require 'puppet/pops/binder/binder_issues'
-      require 'puppet/pops/binder/bindings_checker'
-      require 'puppet/pops/binder/bindings_factory'
-      require 'puppet/pops/binder/bindings_label_provider'
-      require 'puppet/pops/binder/bindings_validator_factory'
-      require 'puppet/pops/binder/injector_entry'
-      require 'puppet/pops/binder/key_factory'
-      require 'puppet/pops/binder/injector'
-      require 'puppet/pops/binder/bindings_composer'
-      require 'puppet/pops/binder/bindings_model_dumper'
-      require 'puppet/pops/binder/system_bindings'
-      require 'puppet/pops/binder/bindings_loader'
-
-      module Config
-        require 'puppet/pops/binder/config/binder_config'
-        require 'puppet/pops/binder/config/binder_config_checker'
-        require 'puppet/pops/binder/config/issues'
-        require 'puppet/pops/binder/config/diagnostic_producer'
-      end
-    end
-
     module Resource
       require 'puppet/pops/resource/resource_type_impl'
     end
