@@ -274,9 +274,22 @@ ERROR_STRING
   # Create/return a store that uses our SSL info to validate
   # connections.
   def ssl_store(purpose = OpenSSL::X509::PURPOSE_ANY)
-    Puppet.deprecation_warning("Puppet::SSL::Host#ssl_store is deprecated, use Puppet::SSL::Configuration#ssl_store")
-    if @ssl_store.nil?
-      @ssl_store = Puppet::SSL::Configuration.default.ssl_store(purpose: purpose)
+    unless @ssl_store
+      @ssl_store = OpenSSL::X509::Store.new
+      @ssl_store.purpose = purpose
+
+      # Use the file path here, because we don't want to cause
+      # a lookup in the middle of setting our ssl connection.
+      @ssl_store.add_file(Puppet[:localcacert])
+
+      # If we're doing revocation and there's a CRL, add it to our store.
+      if Puppet.settings[:certificate_revocation]
+        if crl = Puppet::SSL::CertificateRevocationList.indirection.find(CA_NAME)
+          @ssl_store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
+          @ssl_store.add_crl(crl.content)
+        end
+      end
+      return @ssl_store
     end
     @ssl_store
   end
