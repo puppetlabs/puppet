@@ -84,7 +84,7 @@ class Puppet::Resource
     self.to_hash.each_pair do |param, value|
       # Don't duplicate the title as the namevar
       unless param == namevar && value == title
-        value = Puppet::Resource.value_to_pson_data(value)
+        value = Puppet::Resource.value_to_json_data(value)
         if is_json_type?(value)
           params[param] = value
         elsif json_serializer.nil?
@@ -129,9 +129,9 @@ class Puppet::Resource
     end
   end
 
-  def self.value_to_pson_data(value)
+  def self.value_to_json_data(value)
     if value.is_a? Array
-      value.map{|v| value_to_pson_data(v) }
+      value.map{|v| value_to_json_data(v) }
     elsif value.is_a? Puppet::Resource
       value.to_s
     else
@@ -144,10 +144,11 @@ class Puppet::Resource
     when Hash
       x.inject({}) { |h,kv|
         k,v = kv
-        h[k] = self.class.value_to_pson_data(v)
+        h[k] = self.class.value_to_json_data(v)
         h
       }
-    else self.class.value_to_pson_data(x)
+    else
+      self.class.value_to_json_data(x)
     end
   end
 

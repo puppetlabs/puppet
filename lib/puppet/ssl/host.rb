@@ -307,7 +307,7 @@ ERROR_STRING
 
     # this is for backwards-compatibility
     # we should deprecate it and transition people to using
-    # pson[:fingerprints][:default]
+    # json[:fingerprints][:default]
     # It appears that we have no internal consumers of this api
     # --jeffweiss 30 aug 2012
     result[:fingerprint] = thing_to_use.fingerprint

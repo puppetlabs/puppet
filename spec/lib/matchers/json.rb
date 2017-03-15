@@ -5,11 +5,11 @@ module JSONMatchers
     end
 
     def format
-      @format ||= Puppet::Network::FormatHandler.format('pson')
+      @format ||= Puppet::Network::FormatHandler.format('json')
     end
 
     def json(instance)
-      PSON.parse(instance.to_pson)
+      JSON.parse(instance.to_json)
     end
 
     def attr_value(attrs, instance)
@@ -59,7 +59,7 @@ module JSONMatchers
     end
 
     def format
-      @format ||= Puppet::Network::FormatHandler.format('pson')
+      @format ||= Puppet::Network::FormatHandler.format('json')
     end
 
     def from(value)

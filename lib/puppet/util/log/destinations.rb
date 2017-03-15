@@ -136,7 +136,7 @@ Puppet::Util::Log.newdesttype :logstash_event do
 
   def handle(msg)
     message = format(msg)
-    $stdout.puts message.to_pson
+    $stdout.puts message.to_json
   end
 end
 

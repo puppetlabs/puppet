@@ -413,7 +413,7 @@ describe Puppet::Application::Apply do
       # We want this memoized, and to be able to adjust the content, so we
       # have to do it ourselves.
       def temporary_catalog(content = '"something"')
-        @tempfile = Tempfile.new('catalog.pson')
+        @tempfile = Tempfile.new('catalog.json')
         @tempfile.write(content)
         @tempfile.close
         @tempfile.path
@@ -422,7 +422,7 @@ describe Puppet::Application::Apply do
       it "should read the catalog in from disk if a file name is provided" do
         @apply.options[:catalog] = temporary_catalog
         catalog = Puppet::Resource::Catalog.new("testing", Puppet::Node::Environment::NONE)
-        Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'"something"').returns(catalog)
+        Puppet::Resource::Catalog.stubs(:convert_from).with(:json,'"something"').returns(catalog)
         @apply.apply
       end
 
@@ -430,7 +430,7 @@ describe Puppet::Application::Apply do
         @apply.options[:catalog] = "-"
         $stdin.expects(:read).returns '"something"'
         catalog = Puppet::Resource::Catalog.new("testing", Puppet::Node::Environment::NONE)
-        Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'"something"').returns(catalog)
+        Puppet::Resource::Catalog.stubs(:convert_from).with(:json,'"something"').returns(catalog)
         @apply.apply
       end
 
@@ -450,7 +450,7 @@ describe Puppet::Application::Apply do
       it "should convert the catalog to a RAL catalog and use a Configurer instance to apply it" do
         @apply.options[:catalog] = temporary_catalog
         catalog = Puppet::Resource::Catalog.new("testing", Puppet::Node::Environment::NONE)
-        Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'"something"').returns catalog
+        Puppet::Resource::Catalog.stubs(:convert_from).with(:json,'"something"').returns catalog
         catalog.expects(:to_ral).returns "mycatalog"
 
         configurer = stub 'configurer'

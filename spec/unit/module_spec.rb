@@ -688,7 +688,7 @@ describe Puppet::Module do
     end
 
   def a_module_with_metadata(data)
-    File.stubs(:read).with("/path/metadata.json", {:encoding => 'utf-8'}).returns data.to_pson
+    File.stubs(:read).with("/path/metadata.json", {:encoding => 'utf-8'}).returns data.to_json
     Puppet::Module.new("foo", "/path", mock("env"))
   end
 

@@ -336,10 +336,11 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   private
 
   def read_catalog(text)
+    format = Puppet::Resource::Catalog.default_format
     begin
-      catalog = Puppet::Resource::Catalog.convert_from(Puppet::Resource::Catalog.default_format,text)
+      catalog = Puppet::Resource::Catalog.convert_from(format, text)
     rescue => detail
-      raise Puppet::Error, "Could not deserialize catalog from pson: #{detail}", detail.backtrace
+      raise Puppet::Error, "Could not deserialize catalog from #{format}: #{detail}", detail.backtrace
     end
 
     catalog.to_ral

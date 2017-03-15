@@ -77,7 +77,7 @@ describe Puppet::Indirector::JSON do
       end
 
       it "raises a descriptive error when the file can't be read" do
-        with_content(model.new('foo').to_pson) do
+        with_content(model.new('foo').to_json) do
           # I don't like this, but there isn't a credible alternative that
           # also works on Windows, so a stub it is. At least the expectation
           # will fail if the implementation changes. Sorry to the next dev.
@@ -95,7 +95,7 @@ describe Puppet::Indirector::JSON do
       end
 
       it "should return an instance of the indirected object when valid" do
-        with_content(model.new(1).to_pson) do
+        with_content(model.new(1).to_json) do
           instance = subject.find(request)
           expect(instance).to be_an_instance_of model
           expect(instance.value).to eq(1)
@@ -161,7 +161,7 @@ describe Puppet::Indirector::JSON do
 
     def create_file(name, value = 12)
       File.open(subject.path(name, ''), 'w') do |f|
-        f.puts Puppet::IndirectorTesting.new(value).to_pson
+        f.puts Puppet::IndirectorTesting.new(value).to_json
       end
     end
 

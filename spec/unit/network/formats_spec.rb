@@ -128,7 +128,7 @@ describe "Puppet Network Format" do
       end.to raise_error(Puppet::Network::FormatHandler::FormatError, /did not contain a collection/)
     end
 
-    it "fails intelligibly instead of calling to_pson with something other than a hash when interning multiple" do
+    it "fails intelligibly instead of calling to_json with something other than a hash when interning multiple" do
       expect do
         yaml.intern_multiple(Puppet::Node, YAML.dump(["hello"]))
       end.to raise_error(Puppet::Network::FormatHandler::FormatError, /did not contain a valid instance/)

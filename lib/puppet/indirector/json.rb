@@ -67,10 +67,10 @@ class Puppet::Indirector::JSON < Puppet::Indirector::Terminus
   end
 
   def from_json(text)
-    model.convert_from('pson', text)
+    model.convert_from('json', text)
   end
 
   def to_json(object)
-    object.render('pson')
+    object.render('json')
   end
 end
