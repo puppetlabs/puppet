@@ -75,7 +75,7 @@ module Puppet::ModuleTool
           raise ArgumentError, "Could not parse filename to obtain the username, module name and version.  (#{@release_name})"
         end
 
-        unless SemanticPuppet::Version.valid?(version)
+        unless SemVer.valid?(version)
           raise ArgumentError, "Invalid version format: #{version} (Semantic Versions are acceptable: http://semver.org)"
         end
 

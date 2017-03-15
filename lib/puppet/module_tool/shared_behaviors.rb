@@ -36,7 +36,7 @@ module Puppet::ModuleTool::Shared
       mod_name, releases = pair
       mod_name = mod_name.gsub('/', '-')
       releases.each do |rel|
-        semver = SemanticPuppet::Version.parse(rel['version']) rescue SemanticPuppet::Version::MIN
+        semver = SemVer.new(rel['version'] || '0.0.0') rescue SemVer::MIN
         @versions[mod_name] << { :vstring => rel['version'], :semver => semver }
         @versions[mod_name].sort! { |a, b| a[:semver] <=> b[:semver] }
         @urls["#{mod_name}@#{rel['version']}"] = rel['file']
@@ -76,10 +76,10 @@ module Puppet::ModuleTool::Shared
       }
 
       if forced?
-        range = SemanticPuppet::VersionRange.parse(@version) rescue SemanticPuppet::VersionRange.parse('>= 0.0.0')
+        range = SemVer[@version] rescue SemVer['>= 0.0.0']
       else
         range = (@conditions[mod]).map do |r|
-          SemanticPuppet::VersionRange.parse(r[:dependency]) rescue SemanticPuppet::VersionRange.parse('>= 0.0.0')
+          SemVer[r[:dependency]] rescue SemVer['>= 0.0.0']
         end.inject(&:&)
       end
 
@@ -97,7 +97,7 @@ module Puppet::ModuleTool::Shared
       end
 
       if !(forced? || @installed[mod].empty? || source.last[:name] == :you)
-        next if range === SemanticPuppet::Version.parse(@installed[mod].first.version)
+        next if range === SemVer.new(@installed[mod].first.version)
         action = :upgrade
       elsif @installed[mod].empty?
         action = :install
