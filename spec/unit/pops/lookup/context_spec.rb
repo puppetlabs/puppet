@@ -172,10 +172,6 @@ describe 'Puppet::Pops::Lookup::Context' do
       context 'and multiple compilations' do
 
         before(:each) { Puppet.settings[:environment_timeout] = 'unlimited' }
-        after(:each) do
-          Puppet.settings[:environment_timeout] = 0
-          Puppet.lookup(:environments).clear_all
-        end
 
         it 'will reuse cached_file_data and not call block again' do
 

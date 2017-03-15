@@ -161,6 +161,8 @@ RSpec.configure do |config|
   config.after :each do
     Puppet::Test::TestHelper.after_each_test()
 
+    Puppet.lookup(:environments).clear_all
+
     # TODO: would like to move this into puppetlabs_spec_helper, but there are namespace issues at the moment.
     PuppetSpec::Files.cleanup
 
