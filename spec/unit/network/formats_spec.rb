@@ -428,7 +428,7 @@ describe "Puppet Network Format" do
       end
 
       it "should render a {String,Numeric}-keyed Hash into a table" do
-        pson = Puppet::Network::FormatHandler.format(:pson)
+        json = Puppet::Network::FormatHandler.format(:json)
         object = Object.new
         hash = { "one" => 1, "two" => [], "three" => {}, "four" => object, 5 => 5,
                  6.0 => 6 }
@@ -438,7 +438,7 @@ describe "Puppet Network Format" do
         expect(console.render(hash)).to eq <<EOT
 5      5
 6.0    6
-four   #{pson.render(object).chomp}
+four   #{json.render(object).chomp}
 one    1
 three  {}
 two    []

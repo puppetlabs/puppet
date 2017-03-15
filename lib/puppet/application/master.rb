@@ -172,7 +172,7 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
         raise _("Could not compile catalog for %{node}") % { node: options[:node] }
       end
 
-      puts PSON::pretty_generate(catalog.to_resource, :allow_nan => true, :max_nesting => false)
+      puts JSON::pretty_generate(catalog.to_resource, :allow_nan => true, :max_nesting => false)
     rescue => detail
       Puppet.log_exception(detail, _("Failed to compile catalog for node %{node}: %{detail}") % { node: options[:node], detail: detail })
       exit(30)

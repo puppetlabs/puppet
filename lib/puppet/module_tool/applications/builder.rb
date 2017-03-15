@@ -135,9 +135,8 @@ module Puppet::ModuleTool
           f.write(metadata.to_json)
         end
 
-        # PSON.pretty_generate is a BINARY string
         Puppet::FileSystem.open(File.join(build_path, 'checksums.json'), nil, 'wb') do |f|
-          f.write(PSON.pretty_generate(Checksums.new(build_path)))
+          f.write(JSON.pretty_generate(Checksums.new(build_path)))
         end
       end
 

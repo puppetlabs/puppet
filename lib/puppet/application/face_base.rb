@@ -30,11 +30,7 @@ class Puppet::Application::FaceBase < Puppet::Application
   attr_accessor :face, :action, :type, :arguments, :render_as
 
   def render_as=(format)
-    if format == :json then
-      @render_as = Puppet::Network::FormatHandler.format(:pson)
-    else
-      @render_as = Puppet::Network::FormatHandler.format(format)
-    end
+    @render_as = Puppet::Network::FormatHandler.format(format)
     @render_as or raise ArgumentError, _("I don't know how to render '%{format}'") % { format: format }
   end
 

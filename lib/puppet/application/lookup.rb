@@ -309,9 +309,8 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     # Format defaults to text (:s) when producing an explanation and :yaml when producing the value
     format = options[:render_as] || (explain ? :s : :yaml)
-    renderer = Puppet::Network::FormatHandler.format(format == :json ? :pson : format)
+    renderer = Puppet::Network::FormatHandler.format(format)
     raise _("Unknown rendering format '%{format}'") % { format: format } if renderer.nil?
-
 
     generate_scope do |scope|
       lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, explain ? Puppet::Pops::Lookup::Explainer.new(explain_options, only_explain_options) : nil)
