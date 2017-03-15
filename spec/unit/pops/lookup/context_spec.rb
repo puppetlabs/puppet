@@ -202,7 +202,7 @@ describe 'Puppet::Pops::Lookup::Context' do
           expect(logs.uniq.size).to eql(1)
         end
 
-        it 'will invalidate cache if file changes' do
+        it 'will invalidate cache if file changes size' do
           code = <<-PUPPET.unindent
             $ctx = Puppet::LookupContext.new(nil)
             $yaml_data = $ctx.cached_file_data('#{data_path}') |$content| {
@@ -216,12 +216,60 @@ describe 'Puppet::Pops::Lookup::Context' do
             Puppet[:code] = code
             Puppet::Parser::Compiler.compile(node)
 
-            # Change contents!
+            # Change content size!
             File.write(data_path, "a: value is now A\n")
             Puppet::Parser::Compiler.compile(node)
           end
           logs = logs.select { |log| log.level == :notice }.map { |log| log.message }
           expect(logs).to eql(["{parsed => a: value a\n}", "{parsed => a: value is now A\n}"])
+        end
+
+        it 'will invalidate cache if file changes mtime' do
+          code = <<-PUPPET.unindent
+            $ctx = Puppet::LookupContext.new(nil)
+            $yaml_data = $ctx.cached_file_data('#{data_path}') |$content| {
+              { 'parsed' => $content }
+            }
+            notice($yaml_data)
+          PUPPET
+
+          logs = []
+          Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+            Puppet[:code] = code
+            Puppet::Parser::Compiler.compile(node)
+
+            # Sleep so that mtime is different on next check
+            sleep(1.1)
+            # Write content with the same size
+            File.write(data_path, "a: value b\n")
+            Puppet::Parser::Compiler.compile(node)
+          end
+          logs = logs.select { |log| log.level == :notice }.map { |log| log.message }
+          expect(logs).to eql(["{parsed => a: value a\n}", "{parsed => a: value b\n}"])
+        end
+
+        it 'will invalidate cache if file changes inode' do
+          code = <<-PUPPET.unindent
+              $ctx = Puppet::LookupContext.new(nil)
+              $yaml_data = $ctx.cached_file_data('#{data_path}') |$content| {
+                { 'parsed' => $content }
+              }
+              notice($yaml_data)
+          PUPPET
+
+          logs = []
+          Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+            Puppet[:code] = code
+            Puppet::Parser::Compiler.compile(node)
+
+            # Change inode!
+            File.delete(data_path);
+            # Write content with the same size
+            File.write(data_path, "a: value b\n")
+            Puppet::Parser::Compiler.compile(node)
+          end
+          logs = logs.select { |log| log.level == :notice }.map { |log| log.message }
+          expect(logs).to eql(["{parsed => a: value a\n}", "{parsed => a: value b\n}"])
         end
       end
     end
