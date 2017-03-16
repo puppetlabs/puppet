@@ -188,6 +188,9 @@ module Puppet::Test
         $old_env.each {|k, v| Puppet::Util.set_env(k, v, mode) }
       end
 
+      # Clear all environments
+      Puppet.lookup(:environments).clear_all
+
       # Restore the load_path late, to avoid messing with stubs from the test.
       $LOAD_PATH.clear
       $old_load_path.each {|x| $LOAD_PATH << x }
