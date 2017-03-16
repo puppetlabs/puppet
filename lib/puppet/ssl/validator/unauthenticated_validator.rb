@@ -166,6 +166,6 @@ class Puppet::SSL::Validator::UnauthenticatedValidator
   end
 
   def use_crl?
-    Puppet[:certificate_revocation] && Puppet::FileSystem.exist?(Puppet[:hostcrl])
+    Puppet.lookup(:certificate_revocation) && Puppet::FileSystem.exist?(Puppet[:hostcrl])
   end
 end

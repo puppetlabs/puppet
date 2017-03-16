@@ -59,7 +59,7 @@ class Configuration
   #
   # @return [OpenSSL::X509::Store]
   def ssl_store(options = {})
-    use_crl = options.fetch(:use_crl, Puppet[:certificate_revocation])
+    use_crl = options.fetch(:use_crl, Puppet.lookup(:certificate_revocation))
     purpose = options.fetch(:purpose, OpenSSL::X509::PURPOSE_ANY)
     store = OpenSSL::X509::Store.new
     store.purpose = purpose
