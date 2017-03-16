@@ -225,6 +225,8 @@ describe 'Puppet::Pops::Lookup::Context' do
         end
 
         it 'will invalidate cache if file changes mtime' do
+          old_mtime = Puppet::FileSystem.stat(data_path).mtime
+
           code = <<-PUPPET.unindent
             $ctx = Puppet::LookupContext.new(nil)
             $yaml_data = $ctx.cached_file_data('#{data_path}') |$content| {
@@ -238,10 +240,12 @@ describe 'Puppet::Pops::Lookup::Context' do
             Puppet[:code] = code
             Puppet::Parser::Compiler.compile(node)
 
-            # Sleep so that mtime is different on next check
-            sleep(1.1)
             # Write content with the same size
             File.write(data_path, "a: value b\n")
+
+            # Ensure mtime is at least 1 second ahead
+            FileUtils.touch(data_path, :mtime => old_mtime + 1)
+
             Puppet::Parser::Compiler.compile(node)
           end
           logs = logs.select { |log| log.level == :notice }.map { |log| log.message }
