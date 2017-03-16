@@ -2230,6 +2230,7 @@ describe "The lookup function" do
       let(:data_files) do
         {
           'common.eyaml' => <<-YAML.unindent
+            # a: Encrypted value 'a' (from environment)
             a: >
               ENC[PKCS7,MIIBmQYJKoZIhvcNAQcDoIIBijCCAYYCAQAxggEhMIIBHQIBADAFMAACAQEw
               DQYJKoZIhvcNAQEBBQAEggEAUwwNRA5ZKM87SLnjnJfzDFRQbeheSYMTOhcr
@@ -2243,6 +2244,7 @@ describe "The lookup function" do
               dCILO7I8QqU=]
             hash_a:
               "hash_%{ipl_suffix}":
+                # aaa: Encrypted value hash_a.hash_aa.aaa (from environment)
                 aaa: >
                   ENC[PKCS7,MIIBqQYJKoZIhvcNAQcDoIIBmjCCAZYCAQAxggEhMIIBHQIBADAFMAACAQEw
                   DQYJKoZIhvcNAQEBBQAEggEAhvGXL5RxVUs9wdqJvpCyXtfCHrm2HbG/u30L
@@ -2255,6 +2257,7 @@ describe "The lookup function" do
                   ovm/gEB4oPlYJswoXuWqcEBfwZzbpy96x3b2Le/yoa72ylbPAUc5GfLENvFQ
                   zXpTtSmQE0fixY4JMaBTke65ZRvoiOQO]
             array_a:
+              # - "array_a[0]"
               - >
                 ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQEw
                 DQYJKoZIhvcNAQEBBQAEggEAmXZfyfU77vVCZqHpR10qhD0Jy9DpMGBgal97
@@ -2265,6 +2268,7 @@ describe "The lookup function" do
                 MieIkHj93bX3gIEcenECLdWaEzcPa7MHgl6zevQKg4H0JVmcvKYyfHYqcrVE
                 PqizKDA8BgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBDf259KZEay1widVSFy
                 I9zGgBAICjm0x2GeqoCnHdiAA+jt]
+              # - "array_a[1]"
               - >
                 ENC[PKCS7,MIIBeQYJKoZIhvcNAQcDoIIBajCCAWYCAQAxggEhMIIBHQIBADAFMAACAQEw
                 DQYJKoZIhvcNAQEBBQAEggEATVy4hHG356INFKOswAhoravh66iJljp+Vn3o
@@ -2275,6 +2279,17 @@ describe "The lookup function" do
                 t22zpYK4J8lgCBV2gKfrOWSi9MAs6JhCeOb8wNLMmAUTbc0WrFJxoCwAPX0z
                 MAjsNjA8BgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBC4v4bNE4gFlbLmVY+9
                 BtSLgBBm7U0wu6d6s9wF9Ek9IHPe]
+            # ref_a: "A resolved = '%{hiera('a')}'"
+            ref_a: >
+                ENC[PKCS7,MIIBiQYJKoZIhvcNAQcDoIIBejCCAXYCAQAxggEhMIIBHQIBADAFMAACAQEw
+                DQYJKoZIhvcNAQEBBQAEggEAFSuUp+yk+oaA7b5ekT0u360CQ9Q2sIQ/bTcM
+                jT3XLjm8HIGYPcysOEnuo8WcAxJFY5iya4yQ7Y/UhMWXaTi7Vzv/6BmyPDwz
+                +7Z2Mf0r0PvS5+ylue6aem/3bXPOmXTKTf68OCehTRXlDUs8/av9gnsDzojp
+                yiUTBZvKxhIP2n//GyoHgyATveHT0lxPVpdMycB347DtWS7IduCxx0+KiOOw
+                DXYFlYbIVxVInwgERxtsfYSr+Fu0/mkjtRsQm+dPzMQOATE9Val2gGKsV6bi
+                kdm1OM9HrwVsFj6Lma6FYmr89Bcm/1uEc8fiOMtNK3z2+nwunWBMNCGneMYD
+                C5IJejBMBgkqhkiG9w0BBwEwHQYJYIZIAWUDBAEqBBAeiZDGQyXHkZlV5ceT
+                iCxpgCDDatuVvbPEEi8rKOC7xhPHZ22zLEEV//l7C9jxq+DZcA==]
             YAML
         }
       end
@@ -2287,6 +2302,10 @@ describe "The lookup function" do
 
       it 'evaluates interpolated keys' do
         expect(lookup('hash_a')).to include('hash_aa')
+      end
+
+      it 'evaluates interpolations in encrypted values' do
+        expect(lookup('ref_a')).to eql("A resolved = 'Encrypted value 'a' (from environment)'")
       end
 
       it 'can read encrypted values inside a hash' do
