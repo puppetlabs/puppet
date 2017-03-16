@@ -27,6 +27,7 @@ describe "Puppet.version Public API" do
     it "respects the version= setter" do
       Puppet.version = '1.2.3'
       expect(Puppet.version).to eq('1.2.3')
+      expect(Puppet.minor_version).to eq('1.2')
     end
   end
 
@@ -38,10 +39,12 @@ describe "Puppet.version Public API" do
       end.returns('3.0.1-260-g9ca4e54')
 
       expect(Puppet.version).to eq('3.0.1-260-g9ca4e54')
+      expect(Puppet.minor_version).to eq('3.0')
     end
     it "respects the version= setter" do
       Puppet.version = '1.2.3'
       expect(Puppet.version).to eq('1.2.3')
+      expect(Puppet.minor_version).to eq('1.2')
     end
   end
 
@@ -50,6 +53,7 @@ describe "Puppet.version Public API" do
       Puppet.expects(:read_version_file).never
       Puppet.version = '1.2.3'
       expect(Puppet.version).to eq('1.2.3')
+      expect(Puppet.minor_version).to eq('1.2')
     end
   end
 end
