@@ -70,9 +70,11 @@ Puppet::Functions.create_function(:eyaml_lookup_key) do
   end
 
   def decrypt(data, context)
-    return context.interpolate(data) unless encrypted?(data)
-    tokens = Hiera::Backend::Eyaml::Parser::ParserFactory.hiera_backend_parser.parse(data)
-    tokens.map(&:to_plain_text).join.chomp
+    if encrypted?(data)
+      tokens = Hiera::Backend::Eyaml::Parser::ParserFactory.hiera_backend_parser.parse(data)
+      data = tokens.map(&:to_plain_text).join.chomp
+    end
+    context.interpolate(data)
   end
 
   def encrypted?(data)
