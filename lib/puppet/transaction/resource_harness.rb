@@ -283,7 +283,24 @@ class Puppet::Transaction::ResourceHarness
       # We use instance_variable_get here because we want this process to bypass any
       # munging/unmunging or validation that the property might try to do, since those
       # operations may not be correctly implemented for custom types.
-      property.instance_variable_get(:@should)
+      # require 'pry'; binding.pry if property.name == :permissions
+      should_value = property.instance_variable_get(:@should)
+      # wrapping trick to ensure Enumerable
+      [should_value].flatten.each { |i| customize_yaml_generation(i) }
+      should_value
+    end
+  end
+
+  def customize_yaml_generation(instance, to_remove = ['provider'])
+    # require 'pry'; binding.pry if instance.class.name == 'Puppet::Type::Acl::Ace'
+    if !instance.respond_to?(:encode_with) && to_remove.any? { |n| instance.instance_variable_defined?("@#{n}") }
+      singleton_class = class << instance; self; end
+      singleton_class.send(:define_method, :encode_with) do |coder|
+        names = instance_variables.map { |i| i.to_s[1..-1] } - to_remove
+        names.each do |var|
+          coder[var] = instance.instance_variable_get("@#{var}")
+        end
+      end
     end
   end
 
