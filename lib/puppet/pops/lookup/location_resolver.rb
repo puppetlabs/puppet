@@ -25,6 +25,11 @@ module Lookup
     def exist?
       @exist
     end
+
+    # @return the resolved location as a string
+    def to_s
+      @location.to_s
+    end
   end
 
   # Helper methods to resolve interpolated locations

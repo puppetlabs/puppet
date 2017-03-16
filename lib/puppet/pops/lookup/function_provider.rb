@@ -25,8 +25,7 @@ class FunctionProvider
   end
 
   def create_function_context(lookup_invocation)
-    scope = lookup_invocation.scope
-    FunctionContext.new(EnvironmentContext.adapt(scope.compiler.environment), module_name, function(scope))
+    FunctionContext.new(EnvironmentContext.adapt(lookup_invocation.scope.compiler.environment), module_name, function(lookup_invocation))
   end
 
   def module_name
@@ -35,6 +34,10 @@ class FunctionProvider
 
   def name
     "Hierarchy entry \"#{@name}\""
+  end
+
+  def full_name
+    "#{self.class::TAG} function '#{@function_name}'"
   end
 
   def to_s
@@ -59,12 +62,12 @@ class FunctionProvider
 
   private
 
-  def function(scope)
-    @function ||= load_function(scope)
+  def function(lookup_invocation)
+    @function ||= load_function(lookup_invocation)
   end
 
-  def load_function(scope)
-    loaders = scope.compiler.loaders
+  def load_function(lookup_invocation)
+    loaders = lookup_invocation.scope.compiler.loaders
     typed_name = Loader::TypedName.new(:function, @function_name)
     loader = if typed_name.qualified?
       qualifier = typed_name.name_parts[0]
@@ -74,8 +77,8 @@ class FunctionProvider
     end
     te = loader.load_typed(typed_name)
     if te.nil? || te.value.nil?
-      raise Puppet::DataBinding::LookupError,
-        "#{@options[HieraConfig::KEY_NAME]}: Unable to find '#{self.class::TAG}' function named '#{function_name}'"
+      @parent_data_provider.config(lookup_invocation).fail(Issues::HIERA_DATA_PROVIDER_FUNCTION_NOT_FOUND,
+        :function_type => self.class::TAG, :function_name => @function_name)
     end
     te.value
   end

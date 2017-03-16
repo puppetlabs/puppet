@@ -25,11 +25,11 @@ class LookupKeyFunctionProvider < FunctionProvider
   def invoke_with_location(lookup_invocation, location, root_key, merge)
     if location.nil?
       value = lookup_key(root_key, lookup_invocation, nil, merge)
-      lookup_invocation.report_found(root_key, validate_data_value(self, value))
+      lookup_invocation.report_found(root_key, value)
     else
       lookup_invocation.with(:location, location) do
         value = lookup_key(root_key, lookup_invocation, location, merge)
-        lookup_invocation.report_found(root_key, validate_data_value(self, value))
+        lookup_invocation.report_found(root_key, value)
       end
     end
   end
@@ -49,7 +49,12 @@ class LookupKeyFunctionProvider < FunctionProvider
     ctx.data_hash ||= {}
     catch(:no_such_key) do
       hash = ctx.data_hash
-      hash[key] = ctx.function.call(lookup_invocation.scope, key, options(location), Context.new(ctx, lookup_invocation)) unless hash.include?(key)
+      unless hash.include?(key)
+        hash[key] = validate_data_value(ctx.function.call(lookup_invocation.scope, key, options(location), Context.new(ctx, lookup_invocation))) do
+          msg = "Value for key '#{key}', returned from #{full_name}"
+          location.nil? ? msg : "#{msg}, when using location '#{location}',"
+        end
+      end
       return hash[key]
     end
     lookup_invocation.report_not_found(key)

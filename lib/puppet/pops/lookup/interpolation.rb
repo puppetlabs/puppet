@@ -55,7 +55,7 @@ module Interpolation
           is_alias = method_key == :alias
 
           # Alias is only permitted if the entire string is equal to the interpolate expression
-          raise Puppet::DataBinding::LookupError, "'alias' interpolation is only permitted if the expression is equal to the entire string" if is_alias && subject != match
+          fail(Issues::HIERA_INTERPOLATION_ALIAS_NOT_ENTIRE_STRING) if is_alias && subject != match
           value = interpolate_method(method_key).call(key, lookup_invocation, subject)
           value = lookup_invocation.check(method_key == :scope ? "scope:#{key}" : key) { interpolate(value, lookup_invocation, allow_methods) }
 
@@ -110,7 +110,7 @@ module Interpolation
       }.freeze
     end
     interpolate_method = @@interpolate_methods[method_key]
-    raise Puppet::DataBinding::LookupError, "Unknown interpolation method '#{method_key}'" unless interpolate_method
+    fail(Issues::HIERA_INTERPOLATION_UNKNOWN_INTERPOLATION_METHOD, :name => method_key) unless interpolate_method
     interpolate_method
   end
 
@@ -125,13 +125,18 @@ module Interpolation
 
   def get_method_and_data(data, allow_methods)
     if match = data.match(/^(\w+)\((?:["]([^"]+)["]|[']([^']+)['])\)$/)
-      raise Puppet::DataBinding::LookupError, 'Interpolation using method syntax is not allowed in this context' unless allow_methods
+      fail(Issues::HIERA_INTERPOLATION_METHOD_SYNTAX_NOT_ALLOWED) unless allow_methods
       key = match[1].to_sym
       data = match[2] || match[3] # double or single qouted
     else
       key = :scope
     end
     [key, data]
+  end
+
+  def fail(issue, args = EMPTY_HASH)
+    raise Puppet::DataBinding::LookupError.new(
+      issue.format(args), nil, nil, nil, nil, issue.issue_code)
   end
 end
 end

@@ -21,23 +21,24 @@ class ModuleDataProvider < ConfiguredDataProvider
   #
   # @param data_hash [Hash] The data hash
   # @return [Hash] The possibly pruned hash
-  def validate_data_hash(data_provider, data_hash)
+  def validate_data_hash(data_hash)
     super
     module_prefix = "#{module_name}::"
     data_hash.each_key.reduce(data_hash) do |memo, k|
       next memo if k == LOOKUP_OPTIONS || k.start_with?(module_prefix)
-      msg = 'must use keys qualified with the name of the module'
+      msg = "#{yield} must use keys qualified with the name of the module"
       memo = memo.clone if memo.equal?(data_hash)
       memo.delete(k)
-      Puppet.warning("Module '#{module_name}': #{data_provider.name} #{msg}")
+      Puppet.warning("Module '#{module_name}': #{msg}")
       memo
     end
+    data_hash
   end
 
   protected
 
   def assert_config_version(config)
-    raise Puppet::DataBinding::LookupError, "#{config.name} cannot be used in a module" unless config.version > 3
+    config.fail(Issues::HIERA_VERSION_3_NOT_GLOBAL, :where => 'module') unless config.version > 3
     config
   end
 

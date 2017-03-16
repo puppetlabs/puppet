@@ -9,207 +9,393 @@ describe "The lookup function" do
   include PuppetSpec::Compiler
   include PuppetSpec::Files
 
-  context 'with an environment' do
-    let(:env_name) { 'spec' }
-    let(:code_dir_files) { {} }
-    let(:code_dir) { tmpdir('code') }
-    let(:ruby_dir) { tmpdir('ruby') }
-    let(:env_modules) { {} }
-    let(:env_hiera_yaml) do
-      <<-YAML.unindent
-        ---
-        version: 5
-        hierarchy:
-          - name: "Common"
-            data_hash: yaml_data
-            path: "common.yaml"
-        YAML
+  let(:env_name) { 'spec' }
+  let(:code_dir_files) { {} }
+  let(:code_dir) { tmpdir('code') }
+  let(:ruby_dir) { tmpdir('ruby') }
+  let(:env_modules) { {} }
+  let(:env_hiera_yaml) do
+    <<-YAML.unindent
+      ---
+      version: 5
+      hierarchy:
+        - name: "Common"
+          data_hash: yaml_data
+          path: "common.yaml"
+      YAML
+  end
+
+  let(:env_data) { {} }
+
+  let(:environment_files) do
+    {
+      env_name => {
+        'modules' => env_modules,
+        'hiera.yaml' => env_hiera_yaml,
+        'data' => env_data
+      }
+    }
+  end
+
+  let(:ruby_dir_files) { {} }
+
+  let(:logs) { [] }
+  let(:scope_additions ) { {} }
+  let(:notices) { logs.select { |log| log.level == :notice }.map { |log| log.message } }
+  let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
+  let(:debugs) { logs.select { |log| log.level == :debug }.map { |log| log.message } }
+  let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(populated_env_dir, env_name, 'modules')]) }
+  let(:environments) { Puppet::Environments::Directories.new(populated_env_dir, []) }
+  let(:node) { Puppet::Node.new('test_lookup', :environment => env) }
+  let(:compiler) { Puppet::Parser::Compiler.new(node) }
+  let(:lookup_func) { Puppet.lookup(:loaders).puppet_system_loader.load(:function, 'lookup') }
+  let(:invocation_with_explain) { Puppet::Pops::Lookup::Invocation.new(compiler.topscope, {}, {}, true) }
+  let(:explanation) { invocation_with_explain.explainer.explain }
+
+  let(:populated_code_dir) do
+    dir_contained_in(code_dir, code_dir_files)
+    code_dir
+  end
+
+  let(:populated_ruby_dir) do
+    dir_contained_in(ruby_dir, ruby_dir_files)
+    ruby_dir
+  end
+
+  let(:env_dir) do
+    d = File.join(populated_code_dir, 'environments')
+    Dir.mkdir(d)
+    d
+  end
+
+  let(:populated_env_dir) do
+    dir_contained_in(env_dir, environment_files)
+    env_dir
+  end
+
+  before(:each) do
+    Puppet.settings[:codedir] = code_dir
+    Puppet.push_context(:environments => environments, :current_environment => env)
+  end
+
+  after(:each) do
+    Puppet.pop_context
+    if Object.const_defined?(:Hiera)
+      Hiera.send(:remove_instance_variable, :@config) if Hiera.instance_variable_defined?(:@config)
+      Hiera.send(:remove_instance_variable, :@logger) if Hiera.instance_variable_defined?(:@logger)
+      if Hiera.const_defined?(:Config)
+        Hiera::Config.send(:remove_instance_variable, :@config) if Hiera::Config.instance_variable_defined?(:@config)
+      end
+      if Hiera.const_defined?(:Backend) && Hiera::Backend.respond_to?(:clear!)
+        Hiera::Backend.clear!
+      end
+    end
+  end
+
+  def collect_notices(code, explain = false, &block)
+    Puppet[:code] = code
+    Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+      scope = compiler.topscope
+      scope['environment'] = env_name
+      scope['domain'] = 'example.com'
+      scope_additions.each_pair { |k, v| scope[k] = v }
+      if explain
+        begin
+          invocation_with_explain.lookup('dummy', nil) do
+            if block_given?
+              compiler.compile { |catalog| block.call(compiler.topscope); catalog }
+            else
+              compiler.compile
+            end
+          end
+        rescue RuntimeError => e
+          invocation_with_explain.report_text { e.message }
+        end
+      else
+        if block_given?
+          compiler.compile { |catalog| block.call(compiler.topscope); catalog }
+        else
+          compiler.compile
+        end
+      end
+    end
+    nil
+  end
+
+  def lookup(key, options = {}, explain = false)
+    nc_opts = options.empty? ? '' : ", #{Puppet::Pops::Types::TypeFormatter.string(options)}"
+    keys = key.is_a?(Array) ? key : [key]
+    collect_notices(keys.map { |k| "notice(String(lookup('#{k}'#{nc_opts}), '%p'))" }.join("\n"), explain)
+    if explain
+      explanation
+    else
+      result = notices.map { |n| Puppet::Pops::Types::TypeParser.singleton.parse_literal(n) }
+      key.is_a?(Array) ? result : result[0]
+    end
+  end
+
+  def explain(key, options = {})
+    lookup(key, options, true)[1]
+    explanation
+  end
+
+  context 'with faulty hiera.yaml configuration' do
+    context 'in global layer' do
+      let(:global_data) do
+        {
+          'common.yaml' => <<-YAML.unindent
+            a: value a (from global)
+            YAML
+        }
+      end
+
+      let(:code_dir_files) do
+        {
+          'hiera.yaml' => hiera_yaml,
+          'data' => global_data
+        }
+      end
+
+      before(:each) do
+        # Need to set here since spec_helper defines these settings in its "before each"
+        Puppet.settings[:codedir] = populated_code_dir
+        Puppet.settings[:hiera_config] = File.join(code_dir, 'hiera.yaml')
+      end
+
+      context 'using a not yet supported hiera version' do
+        let(:hiera_yaml) { <<-YAML.unindent }
+          version: 6
+          YAML
+
+        it 'fails and reports error' do
+          expect { lookup('a') }.to raise_error("This runtime does not support hiera.yaml version 6 in #{code_dir}/hiera.yaml")
+        end
+      end
+
+      context 'with multiply defined backend using hiera version 3' do
+        let(:hiera_yaml) { <<-YAML.unindent }
+          :version: 3
+          :backends:
+            - yaml
+            - json
+            - yaml
+          YAML
+
+        it 'fails and reports error' do
+          expect { lookup('a') }.to raise_error(
+            "Backend 'yaml' is defined more than once. First defined at line 3 at #{code_dir}/hiera.yaml:5")
+        end
+      end
+
+      context 'using hiera version 4' do
+        let(:hiera_yaml) { <<-YAML.unindent }
+          version: 4
+          YAML
+
+        it 'fails and reports error' do
+          expect { lookup('a') }.to raise_error(
+            "hiera.yaml version 4 cannot be used in the global layer in #{code_dir}/hiera.yaml")
+        end
+      end
+
+      context 'using hiera version 5' do
+        context 'with multiply defined hierarchy' do
+          let(:hiera_yaml) { <<-YAML.unindent }
+            version: 5
+            hierarchy:
+              - name: Common
+                path: common.yaml
+              - name: Other
+                path: other.yaml
+              - name: Common
+                path: common.yaml
+            YAML
+
+          it 'fails and reports error' do
+            expect { lookup('a') }.to raise_error(
+              "Hierarchy name 'Common' defined more than once. First defined at line 3 at #{code_dir}/hiera.yaml:7")
+          end
+        end
+
+        context 'with hiera3_backend that is provided as data_hash function' do
+          let(:hiera_yaml) { <<-YAML.unindent }
+            version: 5
+            hierarchy:
+              - name: Common
+                hiera3_backend: hocon
+                path: common.conf
+            YAML
+
+          it 'fails and reports error' do
+            expect { lookup('a') }.to raise_error(
+              "Use \"data_hash: hocon_data\" instead of \"hiera3_backend: hocon\" at #{code_dir}/hiera.yaml:4")
+          end
+        end
+
+        context 'with no data provider function defined' do
+          let(:hiera_yaml) { <<-YAML.unindent }
+            version: 5
+            defaults:
+              datadir: data
+            hierarchy:
+              - name: Common
+                path: common.txt
+            YAML
+
+          it 'fails and reports error' do
+            expect { lookup('a') }.to raise_error(
+              "One of data_hash, lookup_key, data_dig, or hiera3_backend must be defined in hierarchy 'Common' in #{code_dir}/hiera.yaml")
+          end
+        end
+
+        context 'with multiple data providers in defaults' do
+          let(:hiera_yaml) { <<-YAML.unindent }
+            version: 5
+            defaults:
+              data_hash: yaml_data
+              lookup_key: eyaml_lookup_key
+              datadir: data
+            hierarchy:
+              - name: Common
+                path: common.txt
+            YAML
+
+          it 'fails and reports error' do
+            expect { lookup('a') }.to raise_error(
+              "Only one of data_hash, lookup_key, data_dig, or hiera3_backend can be defined in defaults in #{code_dir}/hiera.yaml")
+          end
+        end
+
+        context 'with non existing data provider function' do
+          let(:hiera_yaml) { <<-YAML.unindent }
+            version: 5
+            hierarchy:
+              - name: Common
+                data_hash: nonesuch_txt_data
+                path: common.yaml
+            YAML
+
+          it 'fails and reports error' do
+            Puppet[:strict] = :error
+            expect { lookup('a') }.to raise_error(
+              "Unable to find 'data_hash' function named 'nonesuch_txt_data' in #{code_dir}/hiera.yaml")
+          end
+        end
+
+        context 'with missing variables' do
+          let(:scope_additions) { { 'fqdn' => 'test.example.com' } }
+          let(:hiera_yaml) { <<-YAML.unindent }
+            version: 5
+            hierarchy:
+              - name: Common # don't report this line %{::nonesuch}
+                path: "%{::fqdn}/%{::nonesuch}/data.yaml"
+            YAML
+
+          it 'fails and reports errors when strict == error' do
+            Puppet[:strict] = :error
+            expect { lookup('a') }.to raise_error("Undefined variable '::nonesuch' at #{code_dir}/hiera.yaml:4")
+          end
+        end
+
+        context 'using interpolation functions' do
+          let(:hiera_yaml) { <<-YAML.unindent }
+            version: 5
+            hierarchy:
+              - name: Common # don't report this line %{::nonesuch}
+                path: "%{lookup('fqdn')}/data.yaml"
+            YAML
+
+          it 'fails and reports errors when strict == error' do
+            Puppet[:strict] = :error
+            expect { lookup('a') }.to raise_error("Interpolation using method syntax is not allowed in this context in #{code_dir}/hiera.yaml")
+          end
+        end
+      end
     end
 
+    context 'in environment layer' do
+      context 'using hiera version 4' do
+        context 'with an unknown backend' do
+          let(:env_hiera_yaml) { <<-YAML.unindent }
+            version: 4
+            hierarchy:
+              - name: Common
+                backend: nonesuch
+                path: common.yaml
+            YAML
+
+          it 'fails and reports error' do
+            expect { lookup('a') }.to raise_error(
+              "No data provider is registered for backend 'nonesuch' at #{env_dir}/spec/hiera.yaml:4")
+          end
+        end
+
+        context 'with multiply defined hierarchy' do
+          let(:env_hiera_yaml) { <<-YAML.unindent }
+            version: 4
+            hierarchy:
+              - name: Common
+                backend: yaml
+                path: common.yaml
+              - name: Other
+                backend: yaml
+                path: other.yaml
+              - name: Common
+                backend: yaml
+                path: common.yaml
+            YAML
+
+          it 'fails and reports error' do
+            expect { lookup('a') }.to raise_error(
+              "Hierarchy name 'Common' defined more than once. First defined at line 3 at #{env_dir}/spec/hiera.yaml:9")
+          end
+        end
+      end
+
+      context 'using hiera version 5' do
+        context 'with a hiera3_backend declaration' do
+          let(:env_hiera_yaml) { <<-YAML.unindent }
+            version: 5
+            hierarchy:
+              - name: Common
+                hiera3_backend: something
+            YAML
+
+          it 'fails and reports error' do
+            expect { lookup('a') }.to raise_error(
+              "'hiera3_backend' is only allowed in the global layer at #{env_dir}/spec/hiera.yaml:4")
+          end
+        end
+      end
+    end
+  end
+
+  context 'with an environment' do
     let(:env_data) do
       {
         'common.yaml' => <<-YAML.unindent
-          ---
-          a: value a (from environment)
-          c:
-            c_b: value c_b (from environment)
-          mod_a::a: value mod_a::a (from environment)
-          mod_a::hash_a:
-            a: value mod_a::hash_a.a (from environment)
+        ---
+        a: value a (from environment)
+        c:
+          c_b: value c_b (from environment)
+        mod_a::a: value mod_a::a (from environment)
+        mod_a::hash_a:
+          a: value mod_a::hash_a.a (from environment)
+        mod_a::hash_b:
+          a: value mod_a::hash_b.a (from environment)
+        hash_b:
+          hash_ba:
+            bab: value hash_b.hash_ba.bab (from environment)
+        hash_c:
+          hash_ca:
+            caa: value hash_c.hash_ca.caa (from environment)
+        lookup_options:
           mod_a::hash_b:
-            a: value mod_a::hash_b.a (from environment)
-          hash_b:
-            hash_ba:
-              bab: value hash_b.hash_ba.bab (from environment)
+            merge: hash
           hash_c:
-            hash_ca:
-              caa: value hash_c.hash_ca.caa (from environment)
-          lookup_options:
-            mod_a::hash_b:
-              merge: hash
-            hash_c:
-              merge: hash
-          YAML
+            merge: hash
+      YAML
       }
-    end
-
-    let(:environment_files) do
-      {
-        env_name => {
-          'modules' => env_modules,
-          'hiera.yaml' => env_hiera_yaml,
-          'data' => env_data
-        }
-      }
-    end
-
-    let(:ruby_dir_files) do
-      {
-        'hiera' => {
-          'backend' => {
-            'custom_backend.rb' => <<-RUBY.unindent,
-              class Hiera::Backend::Custom_backend
-                def lookup(key, scope, order_override, resolution_type, context)
-                  case key
-                  when 'hash_c'
-                    { 'hash_ca' => { 'cad' => 'value hash_c.hash_ca.cad (from global custom)' }}
-                  when 'hash'
-                    { 'array' => [ 'x5,x6' ] }
-                  when 'array'
-                    [ 'x5,x6' ]
-                  when 'datasources'
-                    Hiera::Backend.datasources(scope, order_override) { |source| source }
-                  when 'dotted.key'
-                    'custom backend received request for dotted.key value'
-                  else
-                    throw :no_such_key
-                  end
-                end
-              end
-              RUBY
-            'other_backend.rb' => <<-RUBY.unindent,
-              class Hiera::Backend::Other_backend
-                def lookup(key, scope, order_override, resolution_type, context)
-                  value = Hiera::Config[:other][key.to_sym]
-                  throw :no_such_key if value.nil?
-                  value
-                end
-              end
-              RUBY
-          }
-        }
-      }
-    end
-
-    let(:logs) { [] }
-    let(:scope_additions ) { {} }
-    let(:notices) { logs.select { |log| log.level == :notice }.map { |log| log.message } }
-    let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
-    let(:debugs) { logs.select { |log| log.level == :debug }.map { |log| log.message } }
-    let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(populated_env_dir, env_name, 'modules')]) }
-    let(:environments) { Puppet::Environments::Directories.new(populated_env_dir, []) }
-    let(:node) { Puppet::Node.new('test_lookup', :environment => env) }
-    let(:compiler) { Puppet::Parser::Compiler.new(node) }
-    let(:lookup_func) { Puppet.lookup(:loaders).puppet_system_loader.load(:function, 'lookup') }
-    let(:defaults) {
-      {
-        'mod_a::xd' => 'value mod_a::xd (from default)',
-        'mod_a::xd_found' => 'value mod_a::xd_found (from default)',
-        'scope_xd' => 'value scope_xd (from default)'
-      }}
-    let(:overrides) {
-      {
-        'mod_a::xo' => 'value mod_a::xo (from override)',
-        'scope_xo' => 'value scope_xo (from override)'
-      }}
-    let(:invocation_with_explain) { Puppet::Pops::Lookup::Invocation.new(compiler.topscope, {}, {}, true) }
-    let(:explanation) { invocation_with_explain.explainer.explain }
-
-    let(:populated_code_dir) do
-      dir_contained_in(code_dir, code_dir_files)
-      code_dir
-    end
-
-    let(:populated_ruby_dir) do
-      dir_contained_in(ruby_dir, ruby_dir_files)
-      ruby_dir
-    end
-
-    let(:env_dir) do
-      d = File.join(populated_code_dir, 'environments')
-      Dir.mkdir(d)
-      d
-    end
-
-    let(:populated_env_dir) do
-      dir_contained_in(env_dir, environment_files)
-      env_dir
-    end
-
-    before(:each) do
-      Puppet.settings[:codedir] = code_dir
-      Puppet.push_context(:environments => environments, :current_environment => env)
-    end
-
-    after(:each) do
-      Puppet.pop_context
-      if Object.const_defined?(:Hiera)
-        Hiera.send(:remove_instance_variable, :@config) if Hiera.instance_variable_defined?(:@config)
-        Hiera.send(:remove_instance_variable, :@logger) if Hiera.instance_variable_defined?(:@logger)
-        if Hiera.const_defined?(:Config)
-          Hiera::Config.send(:remove_instance_variable, :@config) if Hiera::Config.instance_variable_defined?(:@config)
-        end
-        if Hiera.const_defined?(:Backend) && Hiera::Backend.respond_to?(:clear!)
-          Hiera::Backend.clear!
-        end
-      end
-    end
-
-    def collect_notices(code, explain = false, &block)
-      Puppet[:code] = code
-      Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
-        scope = compiler.topscope
-        scope['environment'] = env_name
-        scope['domain'] = 'example.com'
-        scope_additions.each_pair { |k, v| scope[k] = v }
-        if explain
-          begin
-            invocation_with_explain.lookup('dummy', nil) do
-              if block_given?
-                compiler.compile { |catalog| block.call(compiler.topscope); catalog }
-              else
-                compiler.compile
-              end
-            end
-          rescue RuntimeError => e
-            invocation_with_explain.report_text { e.message }
-          end
-        else
-          if block_given?
-            compiler.compile { |catalog| block.call(compiler.topscope); catalog }
-          else
-            compiler.compile
-          end
-        end
-      end
-      nil
-    end
-
-    def lookup(key, options = {}, explain = false)
-      nc_opts = options.empty? ? '' : ", #{Puppet::Pops::Types::TypeFormatter.string(options)}"
-      keys = key.is_a?(Array) ? key : [key]
-      collect_notices(keys.map { |k| "notice(String(lookup('#{k}'#{nc_opts}), '%p'))" }.join("\n"), explain)
-      if explain
-        explanation
-      else
-        result = notices.map { |n| Puppet::Pops::Types::TypeParser.singleton.parse_literal(n) }
-        key.is_a?(Array) ? result : result[0]
-      end
-    end
-
-    def explain(key, options = {})
-      lookup(key, options, true)[1]
-      explanation
     end
 
     it 'finds data in the environment' do
@@ -539,7 +725,31 @@ describe "The lookup function" do
 
         it 'fails lookup and reports a type mismatch' do
           expect { lookup('a') }.to raise_error do |e|
-            expect(e.message).to match(/wrong type, expects a value of type Scalar, Sensitive, Type, Hash, or Array, got Runtime/)
+            expect(e.message).to match(/key 'a'.*data_hash function 'yaml_data'.*using location.*wrong type, expects Puppet::LookupValue, got Runtime/)
+          end
+        end
+      end
+
+      context 'that contains illegal interpolations' do
+        context 'in the form of an alias that is not the entire string' do
+          let(:common_yaml) { <<-YAML.unindent }
+            a: "%{alias('x')} and then some"
+            x: value x
+            YAML
+
+          it 'fails lookup and reports a type mismatch' do
+            expect { lookup('a') }.to raise_error("'alias' interpolation is only permitted if the expression is equal to the entire string")
+          end
+        end
+
+        context 'in the form of an unknown function name' do
+          let(:common_yaml) { <<-YAML.unindent }
+            a: "%{what('x')}"
+            x: value x
+            YAML
+
+          it 'fails lookup and reports a type mismatch' do
+            expect { lookup('a') }.to raise_error("Unknown interpolation method 'what'")
           end
         end
       end
@@ -726,27 +936,6 @@ describe "The lookup function" do
         it 'finds lookup_options that matches a pattern' do
           expect(lookup('a')).to eql({'aa' => { 'aaa' => 'a.aa.aaa', 'aab' => 'a.aa.aab' }})
         end
-      end
-    end
-
-    context 'and a global Hiera v4 configuration' do
-      let(:code_dir_files) do
-        {
-          'hiera.yaml' => <<-YAML.unindent,
-            ---
-            version: 4
-        YAML
-        }
-      end
-
-      before(:each) do
-        # Need to set here since spec_helper defines these settings in its "before each"
-        Puppet.settings[:codedir] = populated_code_dir
-        Puppet.settings[:hiera_config] = File.join(code_dir, 'hiera.yaml')
-      end
-
-      it 'raises an error' do
-        expect { lookup('a') }.to raise_error(Puppet::Error, /hiera configuration version 4 cannot be used in the global layer/)
       end
     end
 
@@ -1043,7 +1232,7 @@ describe "The lookup function" do
 
       it 'will raise an error if --strict is set to error' do
         Puppet[:strict] = :error
-        expect { lookup('g') }.to raise_error(Puppet::Error, /hiera configuration version 3 cannot be used in an environment/)
+        expect { lookup('g') }.to raise_error(Puppet::Error, /hiera.yaml version 3 cannot be used in an environment/)
       end
 
       it 'will log a warning and ignore the file if --strict is set to warning' do
@@ -1160,6 +1349,44 @@ describe "The lookup function" do
               // The 'xs' is a value used for testing
               xs = { subkey = value xs.subkey (from global hocon) }
               HOCON
+          }
+        }
+      end
+
+      let(:ruby_dir_files) do
+        {
+          'hiera' => {
+            'backend' => {
+              'custom_backend.rb' => <<-RUBY.unindent,
+            class Hiera::Backend::Custom_backend
+              def lookup(key, scope, order_override, resolution_type, context)
+                case key
+                when 'hash_c'
+                  { 'hash_ca' => { 'cad' => 'value hash_c.hash_ca.cad (from global custom)' }}
+                when 'hash'
+                  { 'array' => [ 'x5,x6' ] }
+                when 'array'
+                  [ 'x5,x6' ]
+                when 'datasources'
+                  Hiera::Backend.datasources(scope, order_override) { |source| source }
+                when 'dotted.key'
+                  'custom backend received request for dotted.key value'
+                else
+                  throw :no_such_key
+                end
+              end
+            end
+            RUBY
+            'other_backend.rb' => <<-RUBY.unindent,
+            class Hiera::Backend::Other_backend
+              def lookup(key, scope, order_override, resolution_type, context)
+                value = Hiera::Config[:other][key.to_sym]
+                throw :no_such_key if value.nil?
+                value
+              end
+            end
+            RUBY
+            }
           }
         }
       end
@@ -1650,7 +1877,7 @@ describe "The lookup function" do
           end
 
           it 'raises an error' do
-            expect { lookup('mod_a::a') }.to raise_error(Puppet::Error, /hiera configuration version 3 cannot be used in a module/)
+            expect { lookup('mod_a::a') }.to raise_error(Puppet::Error, /hiera.yaml version 3 cannot be used in a module/)
           end
         end
 
@@ -1701,6 +1928,18 @@ describe "The lookup function" do
       end
 
       context 'using a data_hash that reads a yaml file' do
+        let(:defaults) {
+          {
+            'mod_a::xd' => 'value mod_a::xd (from default)',
+            'mod_a::xd_found' => 'value mod_a::xd_found (from default)',
+            'scope_xd' => 'value scope_xd (from default)'
+          }}
+        let(:overrides) {
+          {
+            'mod_a::xo' => 'value mod_a::xo (from override)',
+            'scope_xo' => 'value scope_xo (from override)'
+          }}
+
         let(:scope_additions) do
           {
             'scope_scalar' => 'scope scalar value',
@@ -2106,11 +2345,15 @@ describe "The lookup function" do
         end
 
         it 'does not accept return of runtime type from function' do
-          expect(explain('mod_a::bad_type')).to include('Value returned from Hierarchy entry "Common" has wrong type')
+          expect(explain('mod_a::bad_type')).to include(
+            "Value for key 'mod_a::bad_type', returned from data_dig function 'mod_a::ruby_dig', " +
+            "when using location 'http://www.example.com/passed/as/option', has wrong type, expects Puppet::LookupValue, got Runtime")
         end
 
         it 'does not accept return of runtime type embedded in hash from function' do
-          expect(explain('mod_a::bad_type_in_hash')).to include('Value returned from Hierarchy entry "Common" has wrong type')
+          expect(explain('mod_a::bad_type_in_hash')).to include(
+            "Value for key 'mod_a::bad_type_in_hash', returned from data_dig function 'mod_a::ruby_dig', " +
+            "when using location 'http://www.example.com/passed/as/option', has wrong type, expects Puppet::LookupValue, got Hash[String, Runtime")
         end
 
         it 'will not merge hashes from environment and module unless strategy hash is used' do
