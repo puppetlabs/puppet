@@ -19,6 +19,13 @@ Puppet::Functions.create_function(:eyaml_lookup_key) do
   def eyaml_lookup_key(key, options, context)
     return context.cached_value(key) if context.cache_has_key(key)
 
+    # Can't do this with an argument_mismatch dispatcher since there is no way to declare a struct that at least
+    # contains some keys but may contain other arbitrary keys.
+    unless options.include?('path')
+      raise ArgumentError,
+        "'eyaml_lookup_key': one of 'path', 'paths' 'glob', 'globs' or 'mapped_paths' must be declared in hiera.yaml when using this lookup_key function"
+    end
+
     # nil key is used to indicate that the cache contains the raw content of the eyaml file
     raw_data = context.cached_value(nil)
     if raw_data.nil?
