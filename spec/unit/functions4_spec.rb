@@ -253,35 +253,6 @@ describe 'the 4x function api' do
       end
     end
 
-    context 'can use injection' do
-      before :all do
-        injector = Puppet::Pops::Binder::Injector.create('test') do
-          bind.name('a_string').to('evoe')
-          bind.name('an_int').to(42)
-        end
-        Puppet.push_context({:injector => injector}, "injector for testing function API")
-      end
-
-      after :all do
-        Puppet.pop_context()
-      end
-
-      it 'attributes can be injected' do
-        f1 = create_function_with_class_injection()
-        f = f1.new(:closure_scope, :loader)
-        expect(f.test_attr2()).to eql("evoe")
-        expect(f.serial().produce(nil)).to eql(42)
-        expect(f.test_attr().class.name).to eql("FunctionAPISpecModule::TestDuck")
-      end
-
-      it 'parameters can be injected and woven with regular dispatch' do
-        f1 = create_function_with_param_injection_regular()
-        f = f1.new(:closure_scope, :loader)
-        expect(f.call(nil, 10, 20)).to eql("evoe! 10, and 20 < 42 = true")
-        expect(f.call(nil, 50, 20)).to eql("evoe! 50, and 20 < 42 = false")
-      end
-    end
-
     context 'when requesting a type' do
       it 'responds with a Callable for a single signature' do
         tf = Puppet::Pops::Types::TypeFactory
