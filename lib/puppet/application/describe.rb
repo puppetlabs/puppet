@@ -11,21 +11,21 @@ class Formatter
     work = (opts[:scrub] ? scrub(txt) : txt)
     indent = (opts[:indent] ? opts[:indent] : 0)
     textLen = @width - indent
-    patt = Regexp.new("^(.{0,#{textLen}})[ \n]")
+    patt = Regexp.new("\\A(.{0,#{textLen}}\n)")
     prefix = " " * indent
 
     res = []
 
     while work.length > textLen
       if work =~ patt
-        res << $1
+        res << $1 + prefix
         work.slice!(0, $MATCH.length)
       else
         res << work.slice!(0, textLen)
       end
     end
     res << work if work.length.nonzero?
-    prefix + res.join("\n#{prefix}")
+    prefix + res.join("")
   end
 
   def header(txt, sep = "-")
