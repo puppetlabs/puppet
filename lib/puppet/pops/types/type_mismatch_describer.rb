@@ -620,7 +620,7 @@ module Types
         if param_hash.include?(name)
           result << describe(value_type, TypeCalculator.singleton.infer_set(value), [ParameterPathElement.new(name)]) unless value_type.instance?(value)
         else
-          result << MissingParameter.new(nil, name) unless elem.key_type.assignable?(PUndefType::DEFAULT) unless missing_ok
+          result << MissingParameter.new(nil, name) unless missing_ok || elem.key_type.is_a?(POptionalType)
         end
       end
       result
