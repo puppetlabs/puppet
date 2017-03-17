@@ -1818,6 +1818,60 @@ describe "The lookup function" do
             expect(e.message).to match(/Lookup using Hocon data_hash function is not supported without hocon library/)
           end
         end
+
+        context 'with missing path declaraion' do
+          context 'and yaml_data function' do
+            let(:hiera_yaml) { <<-YAML.unindent }
+              version: 5
+              hierarchy:
+                - name: Yaml
+                  data_hash: yaml_data
+              YAML
+
+            it 'fails and reports the missing path' do
+              expect { lookup('a') }.to raise_error(/one of 'path', 'paths' 'glob', 'globs' or 'mapped_paths' must be declared in hiera.yaml when using this data_hash function/)
+            end
+          end
+
+          context 'and json_data function' do
+            let(:hiera_yaml) { <<-YAML.unindent }
+              version: 5
+              hierarchy:
+                - name: Json
+                  data_hash: json_data
+              YAML
+
+            it 'fails and reports the missing path' do
+              expect { lookup('a') }.to raise_error(/one of 'path', 'paths' 'glob', 'globs' or 'mapped_paths' must be declared in hiera.yaml when using this data_hash function/)
+            end
+          end
+
+          context 'and hocon_data function' do
+            let(:hiera_yaml) { <<-YAML.unindent }
+              version: 5
+              hierarchy:
+                - name: Hocon
+                  data_hash: hocon_data
+              YAML
+
+            it 'fails and reports the missing path' do
+              expect { lookup('a') }.to raise_error(/one of 'path', 'paths' 'glob', 'globs' or 'mapped_paths' must be declared in hiera.yaml when using this data_hash function/)
+            end
+          end
+
+          context 'and eyaml_lookup_key function' do
+            let(:hiera_yaml) { <<-YAML.unindent }
+              version: 5
+              hierarchy:
+                - name: Yaml
+                  lookup_key: eyaml_lookup_key
+              YAML
+
+            it 'fails and reports the missing path' do
+              expect { lookup('a') }.to raise_error(/one of 'path', 'paths' 'glob', 'globs' or 'mapped_paths' must be declared in hiera.yaml when using this lookup_key function/)
+            end
+          end
+        end
       end
 
       context 'with a hiera3_backend that has no paths' do
