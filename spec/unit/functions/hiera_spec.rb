@@ -66,6 +66,8 @@ describe 'when calling' do
           name: postgres
           uid: 500
           gid: 500
+          groups:
+            db: 520
         b:
           b1: first b1
           b2: first b2
@@ -74,6 +76,19 @@ describe 'when calling' do
           - mod::bar
           - mod::baz
         empty_array: []
+        nested_array:
+          first:
+            - 10
+            - 11
+          second:
+            - 21
+            - 22
+        dotted.key:
+          a: dotted.key a
+          b: dotted.key b
+        dotted.array:
+          - a
+          - b
         YAML
       'second.yaml' => <<-YAML.unindent,
         ---
@@ -193,6 +208,14 @@ describe 'when calling' do
       expect(func('a')).to eql('first a')
     end
 
+    it 'should allow lookup with quoted dotted key' do
+      expect(func("'dotted.key'")).to eql({'a' => 'dotted.key a', 'b' => 'dotted.key b'})
+    end
+
+    it 'should allow lookup with dotted key' do
+      expect(func('database_user.groups.db')).to eql(520)
+    end
+
     it 'should not find data in module' do
       expect(func('mod::c', 'default mod::c')).to eql('default mod::c')
     end
@@ -292,6 +315,14 @@ describe 'when calling' do
       expect(func('fbb', {'fbb' => 'foo_result'})).to eql(%w[mod::foo mod::bar mod::baz])
     end
 
+    it 'should allow lookup with quoted dotted key' do
+      expect(func("'dotted.array'")).to eql(['a', 'b'])
+    end
+
+    it 'should fail lookup with dotted key' do
+      expect{ func('nested_array.0.first') }.to raise_error(/Resolution type :array is illegal when accessing values using dotted keys. Offending key was 'nested_array.0.first'/)
+    end
+
     it 'should use default block' do
       expect(func('foo') { |k| ['key', k] }).to eql(%w[key foo])
     end
@@ -313,7 +344,15 @@ describe 'when calling' do
     end
 
     it 'should lookup and return a hash' do
-      expect(func('database_user')).to eql({ 'name' => 'postgres', 'uid' => 500, 'gid' => 500})
+      expect(func('database_user')).to eql({ 'name' => 'postgres', 'uid' => 500, 'gid' => 500, 'groups' => { 'db' => 520 }})
+    end
+
+    it 'should allow lookup with quoted dotted key' do
+      expect(func("'dotted.key'")).to eql({'a' => 'dotted.key a', 'b' => 'dotted.key b'})
+    end
+
+    it 'should fail lookup with dotted key' do
+      expect{ func('database_user.groups') }.to raise_error(/Resolution type :hash is illegal when accessing values using dotted keys. Offending key was 'database_user.groups'/)
     end
 
     it 'should log deprecation errors' do
