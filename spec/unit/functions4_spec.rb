@@ -237,6 +237,22 @@ describe 'the 4x function api' do
     rejected: parameter 's1' expects a String value, got Integer")
     end
 
+    context 'an argument_mismatch handler' do
+      let(:func) { create_function_with_mismatch_handler.new(:closure_scope, :loader) }
+
+      it 'is called on matching arguments' do
+        expect { func.call({}, '1') }.to raise_error(ArgumentError, "'test' It's not OK to pass a string")
+      end
+
+      it 'is not called unless arguments are matching' do
+        expect { func.call({}, '1', 3) }.to raise_error(ArgumentError, "'test' expects 1 argument, got 2")
+      end
+
+      it 'is not included in a signature mismatch description' do
+        expect { func.call({}, 2.3) }.to raise_error { |e| expect(e.message).not_to match(/String/) }
+      end
+    end
+
     context 'can use injection' do
       before :all do
         injector = Puppet::Pops::Binder::Injector.create('test') do
@@ -958,6 +974,26 @@ describe 'the 4x function api' do
       end
       def test_one_arg(x)
         x
+      end
+    end
+  end
+
+  def create_function_with_mismatch_handler
+    f = Puppet::Functions.create_function('test') do
+      dispatch :test do
+        param 'Integer', :x
+      end
+
+      argument_mismatch :on_error do
+        param 'String', :x
+      end
+
+      def test(x)
+        yield(5,x) if block_given?
+      end
+
+      def on_error(x)
+        "It's not OK to pass a string"
       end
     end
   end
