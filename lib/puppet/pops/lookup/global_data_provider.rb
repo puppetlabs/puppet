@@ -32,9 +32,17 @@ class GlobalDataProvider < ConfiguredDataProvider
       end
 
       value = super(key, lookup_invocation, merge)
-      if lookup_invocation.hiera_xxx_call? && (merge.is_a?(HashMergeStrategy) || merge.is_a?(DeepMergeStrategy))
-        # hiera_hash calls should error when found values are not hashes
-        Types::TypeAsserter.assert_instance_of('value', Types::PHashType::DEFAULT, value)
+      if lookup_invocation.hiera_xxx_call?
+        if merge.is_a?(HashMergeStrategy) || merge.is_a?(DeepMergeStrategy)
+          # hiera_hash calls should error when found values are not hashes
+          Types::TypeAsserter.assert_instance_of('value', Types::PHashType::DEFAULT, value)
+        end
+        if !key.segments.nil? && (merge.is_a?(HashMergeStrategy) || merge.is_a?(UniqueMergeStrategy))
+          strategy = merge.is_a?(HashMergeStrategy) ? 'hash' : 'array'
+
+          # Fail with old familiar message from Hiera 3
+          raise Puppet::DataBinding::LookupError, "Resolution type :#{strategy} is illegal when accessing values using dotted keys. Offending key was '#{key}'"
+        end
       end
       value
     else
