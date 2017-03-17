@@ -196,21 +196,21 @@ describe 'the type mismatch describer' do
     it 'reports a missing block as "expects a block"' do
       callable = parser.parse('Callable[String,String,Callable]')
       args_tuple = parser.parse('Tuple[String,String]')
-      dispatch = Functions::Dispatch.new(callable, 'foo', ['a','b'], 'block', nil, nil, false)
+      dispatch = Functions::Dispatch.new(callable, 'foo', ['a','b'], false, 'block')
       expect(subject.describe_signatures('function', [dispatch], args_tuple)).to eq("'function' expects a block")
     end
 
     it 'reports an unexpected block as "does not expect a block"' do
       callable = parser.parse('Callable[String,String]')
       args_tuple = parser.parse('Tuple[String,String,Callable]')
-      dispatch = Functions::Dispatch.new(callable, 'foo', ['a','b'], nil, nil, nil, false)
+      dispatch = Functions::Dispatch.new(callable, 'foo', ['a','b'])
       expect(subject.describe_signatures('function', [dispatch], args_tuple)).to eq("'function' does not expect a block")
     end
 
     it 'reports a block return type mismatch' do
       callable = parser.parse('Callable[[0,0,Callable[ [0,0],String]],Undef]')
       args_tuple = parser.parse('Tuple[Callable[[0,0],Integer]]')
-      dispatch = Functions::Dispatch.new(callable, 'foo', [], 'block', nil, nil, false)
+      dispatch = Functions::Dispatch.new(callable, 'foo', [], false, 'block')
       expect(subject.describe_signatures('function', [dispatch], args_tuple)).to eq("'function' block return expects a String value, got Integer")
     end
   end
