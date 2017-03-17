@@ -738,5 +738,81 @@ module Issues
   ILLEGAL_BOM = hard_issue :ILLEGAL_BOM, :format_name, :bytes do
     "Illegal #{format_name} Byte Order mark at beginning of input: #{bytes} - remove these from the puppet source"
   end
+
+  HIERA_UNSUPPORTED_VERSION = hard_issue :HIERA_UNSUPPORTED_VERSION, :version do
+    "This runtime does not support hiera.yaml version #{version}"
+  end
+
+  HIERA_VERSION_3_NOT_GLOBAL = hard_issue :HIERA_VERSION_3_NOT_GLOBAL, :where do
+    "hiera.yaml version 3 cannot be used in #{label.a_an(where)}"
+  end
+
+  HIERA_UNSUPPORTED_VERSION_IN_GLOBAL = hard_issue :HIERA_UNSUPPORTED_VERSION_IN_GLOBAL do
+    'hiera.yaml version 4 cannot be used in the global layer'
+  end
+
+  HIERA_UNDEFINED_VARIABLE = hard_issue :HIERA_UNDEFINED_VARIABLE, :name do
+    "Undefined variable '#{name}'"
+  end
+
+  HIERA_BACKEND_MULTIPLY_DEFINED = hard_issue :HIERA_BACKEND_MULTIPLY_DEFINED, :name, :first_line do
+    msg = "Backend '#{name}' is defined more than once"
+    fl = first_line
+    fl ? "#{msg}. First defined at line #{fl}" : msg
+  end
+
+  HIERA_NO_PROVIDER_FOR_BACKEND = hard_issue :HIERA_NO_PROVIDER_FOR_BACKEND, :name do
+    "No data provider is registered for backend '#{name}'"
+  end
+
+  HIERA_HIERARCHY_NAME_MULTIPLY_DEFINED = hard_issue :HIERA_HIERARCHY_NAME_MULTIPLY_DEFINED, :name, :first_line do
+    msg = "Hierarchy name '#{name}' defined more than once"
+    fl = first_line
+    fl ? "#{msg}. First defined at line #{fl}" : msg
+  end
+
+  HIERA_V3_BACKEND_NOT_GLOBAL = hard_issue :HIERA_V3_BACKEND_NOT_GLOBAL do
+    "'hiera3_backend' is only allowed in the global layer"
+  end
+
+  HIERA_V3_BACKEND_REPLACED_BY_DATA_HASH = hard_issue :HIERA_V3_BACKEND_REPLACED_BY_DATA_HASH, :function_name do
+    "Use \"data_hash: #{function_name}_data\" instead of \"hiera3_backend: #{function_name}\""
+  end
+
+  HIERA_MISSING_DATA_PROVIDER_FUNCTION = hard_issue :HIERA_MISSING_DATA_PROVIDER_FUNCTION, :name do
+    "One of #{label.combine_strings(Lookup::HieraConfig::FUNCTION_KEYS)} must be defined in hierarchy '#{name}'"
+  end
+
+  HIERA_MULTIPLE_DATA_PROVIDER_FUNCTIONS = hard_issue :HIERA_MULTIPLE_DATA_PROVIDER_FUNCTIONS, :name do
+    "Only one of #{label.combine_strings(Lookup::HieraConfig::FUNCTION_KEYS)} can be defined in hierarchy '#{name}'"
+  end
+
+  HIERA_MULTIPLE_DATA_PROVIDER_FUNCTIONS_IN_DEFAULT = hard_issue :HIERA_MULTIPLE_DATA_PROVIDER_FUNCTIONS_IN_DEFAULT do
+    "Only one of #{label.combine_strings(Lookup::HieraConfig::FUNCTION_KEYS)} can be defined in defaults"
+  end
+
+  HIERA_MULTIPLE_LOCATION_SPECS = hard_issue :HIERA_MULTIPLE_LOCATION_SPECS, :name do
+    "Only one of #{label.combine_strings(Lookup::HieraConfig::LOCATION_KEYS)} can be defined in hierarchy '#{name}'"
+  end
+
+  HIERA_OPTION_RESERVED_BY_PUPPET = hard_issue :HIERA_OPTION_RESERVED_BY_PUPPET, :key, :name do
+    "Option key '#{key}' used in hierarchy '#{name}' is reserved by Puppet"
+  end
+
+  HIERA_DATA_PROVIDER_FUNCTION_NOT_FOUND = hard_issue :HIERA_DATA_PROVIDER_FUNCTION_NOT_FOUND, :function_type, :function_name do
+    "Unable to find '#{function_type}' function named '#{function_name}'"
+  end
+
+  HIERA_INTERPOLATION_ALIAS_NOT_ENTIRE_STRING = hard_issue :HIERA_INTERPOLATION_ALIAS_NOT_ENTIRE_STRING do
+    "'alias' interpolation is only permitted if the expression is equal to the entire string"
+  end
+
+  HIERA_INTERPOLATION_UNKNOWN_INTERPOLATION_METHOD = hard_issue :HIERA_INTERPOLATION_UNKNOWN_INTERPOLATION_METHOD, :name do
+    "Unknown interpolation method '#{name}'"
+  end
+
+  HIERA_INTERPOLATION_METHOD_SYNTAX_NOT_ALLOWED = hard_issue :HIERA_INTERPOLATION_METHOD_SYNTAX_NOT_ALLOWED do
+    'Interpolation using method syntax is not allowed in this context'
+  end
 end
 end
