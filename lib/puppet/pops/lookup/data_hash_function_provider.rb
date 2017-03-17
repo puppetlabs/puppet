@@ -54,12 +54,19 @@ class DataHashFunctionProvider < FunctionProvider
       lookup_invocation.report_not_found(root_key)
       throw :no_such_key
     end
-    interpolate(parent_data_provider.validate_data_value(self, value), lookup_invocation, true)
+    value = parent_data_provider.validate_data_value(value) do
+      msg = "Value for key '#{root_key}', in hash returned from #{full_name}"
+      location.nil? ? msg : "#{msg}, when using location '#{location}',"
+    end
+    interpolate(value, lookup_invocation, true)
   end
 
   def data_hash(lookup_invocation, location)
     ctx = function_context(lookup_invocation, location)
-    ctx.data_hash ||= parent_data_provider.validate_data_hash(self, call_data_hash_function(ctx, lookup_invocation, location))
+    ctx.data_hash ||= parent_data_provider.validate_data_hash(call_data_hash_function(ctx, lookup_invocation, location)) do
+      msg = "Value returned from #{full_name}"
+      location.nil? ? msg : "#{msg}, when using location '#{location}',"
+    end
   end
 
   def call_data_hash_function(ctx, lookup_invocation, location)
@@ -100,7 +107,11 @@ class V4DataHashFunctionProvider < DataHashFunctionProvider
   TAG = 'v4_data_hash'.freeze
 
   def name
-    "deprecated API function \"#{function_name}\""
+    "Deprecated API function \"#{function_name}\""
+  end
+
+  def full_name
+    "deprecated API function '#{function_name}'"
   end
 
   def call_data_hash_function(ctx, lookup_invocation, location)

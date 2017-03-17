@@ -85,6 +85,7 @@ class LookupAdapter < DataAdapter
       end
     end
   rescue Puppet::DataBinding::LookupError => detail
+    raise detail unless detail.issue_code.nil?
     error = Puppet::Error.new("Lookup of key '#{lookup_invocation.top_key}' failed: #{detail.message}")
     error.set_backtrace(detail.backtrace)
     raise error
