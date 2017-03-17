@@ -42,6 +42,11 @@ describe Puppet::Application::Inspect do
       Puppet::Resource::Catalog.indirection.expects(:terminus_class=).with(:yaml)
       expect { @inspect.setup }.not_to raise_error
     end
+
+    it "should be marked as deprecated" do
+      @inspect.setup
+      expect(@inspect.deprecated?).to be true
+    end
   end
 
   describe "when executing", :uses_checksums => true do
@@ -193,8 +198,10 @@ describe Puppet::Application::Inspect do
 
           @inspect.run_command
 
-          expect(@report.logs.first).not_to eq(nil)
-          expect(@report.logs.first.message).to match(/Could not back up/)
+          # First several errors are deprecation warnings, find correct log message
+          expect(@report.logs).to be_any { |l|
+            /Could not back up/.match(l.message)
+          }
         end
       end
 
