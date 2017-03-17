@@ -46,6 +46,14 @@
 # specifies the method that should be called for that signature. When a
 # matching signature is found, the corresponding method is called.
 #
+# Special dispatches designed to create error messages for an argument mismatch
+# can be added using the keyword `argument_mismatch` instead of `dispatch`. The
+# method appointed by an `argument_mismatch` will be called with arguments
+# just like a normal `dispatch` would, but the method must produce a string.
+# The string is then used as the message in the `ArgumentError` that is raised
+# when the method returns. A block parameter can be given, but it is not
+# propagated in the method call.
+#
 # Documentation for the function should be placed as comments to the
 # implementation method(s).
 #
@@ -70,6 +78,27 @@
 #
 #     def string_min(a, b)
 #       a.downcase <= b.downcase ? a : b
+#     end
+#   end
+#
+# @example Using an argument mismatch handler
+#   Puppet::Functions.create_function('math::min') do
+#     dispatch :numeric_min do
+#       param 'Numeric', :a
+#       param 'Numeric', :b
+#     end
+#
+#     argument_mismatch :on_error do
+#       param 'Any', :a
+#       param 'Any', :b
+#     end
+#
+#     def numeric_min(a, b)
+#       a <= b ? a : b
+#     end
+#
+#     def on_error(a, b)
+#       'both arguments must be of type Numeric'
 #     end
 #   end
 #
@@ -224,7 +253,7 @@ module Puppet::Functions
       simple_name = func_name.split(/::/)[-1]
       type, names = default_dispatcher(the_class, simple_name)
       last_captures_rest = (type.size_range[1] == Float::INFINITY)
-      the_class.dispatcher.add_dispatch(type, simple_name, names, nil, nil, nil, last_captures_rest)
+      the_class.dispatcher.add(Puppet::Pops::Functions::Dispatch.new(type, simple_name, names, last_captures_rest))
     end
 
     # The function class is returned as the result of the create function method
@@ -285,7 +314,22 @@ module Puppet::Functions
     # @api public
     def self.dispatch(meth_name, &block)
       builder().instance_eval do
-        dispatch(meth_name, &block)
+        dispatch(meth_name, false, &block)
+      end
+    end
+
+    # Like `dispatch` but used for a specific type of argument mismatch. Will not be include in the list of valid
+    # parameter overloads for the function.
+    #
+    # @param meth_name [Symbol] The name of the implementation method to call
+    #   when the signature defined in the block matches the arguments to a call
+    #   to the function.
+    # @return [Void]
+    #
+    # @api public
+    def self.argument_mismatch(meth_name, &block)
+      builder().instance_eval do
+        dispatch(meth_name, true, &block)
       end
     end
 
@@ -500,7 +544,7 @@ module Puppet::Functions
     end
 
     # @api private
-    def dispatch(meth_name, &block)
+    def dispatch(meth_name, argument_mismatch_handler, &block)
       # an array of either an index into names/types, or an array with
       # injection information [type, name, injection_name] used when the call
       # is being made to weave injections into the given arguments.
@@ -514,9 +558,10 @@ module Puppet::Functions
       @block_type = nil
       @block_name = nil
       @return_type = nil
+      @argument_mismatch_hander = argument_mismatch_handler
       self.instance_eval &block
       callable_t = create_callable(@types, @block_type, @return_type, @min, @max)
-      @dispatcher.add_dispatch(callable_t, meth_name, @names, @block_name, @injections, @weaving, @max == :default)
+      @dispatcher.add(Puppet::Pops::Functions::Dispatch.new(callable_t, meth_name, @names, @max == :default, @block_name, @injections, @weaving, @argument_mismatch_hander))
     end
 
     # Handles creation of a callable type from strings specifications of puppet

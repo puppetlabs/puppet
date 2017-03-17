@@ -220,12 +220,10 @@ class PObjectType < PMetaType
       # TODO: Assumes Ruby implementation for now
       if(callable_type.is_a?(PVariantType))
         callable_type.types.map do |ct|
-          Functions::Dispatch.new(ct, name, [],
-            ct.block_type.nil? ? nil : 'block', nil, nil, false)
+          Functions::Dispatch.new(ct, name, [], false, ct.block_type.nil? ? nil : 'block')
         end
       else
-        [Functions::Dispatch.new(callable_type, name, [],
-          callable_type.block_type.nil? ? nil : 'block', nil, nil, false)]
+        [Functions::Dispatch.new(callable_type, name, [], false, callable_type.block_type.nil? ? nil : 'block')]
       end
     end
 
@@ -449,7 +447,7 @@ class PObjectType < PMetaType
       # This method should accept a hash and assume that type assertion has been made already (it is made
       # by the dispatch added here).
       if impl_class.respond_to?(:from_asserted_hash)
-        dispatcher.add_dispatch(from_hash_type, :from_hash, ['hash'], nil, EMPTY_ARRAY, EMPTY_ARRAY, false)
+        dispatcher.add(Functions::Dispatch.new(from_hash_type, :from_hash, ['hash']))
         def from_hash(hash)
           self.class.impl_class.from_asserted_hash(hash)
         end
@@ -457,7 +455,7 @@ class PObjectType < PMetaType
 
       # Add the dispatch that uses the standard #from_asserted_args or #new method on the class. It's assumed that the
       # method performs no assertions.
-      dispatcher.add_dispatch(create_type, :create, param_names, nil, EMPTY_ARRAY, EMPTY_ARRAY, false)
+      dispatcher.add(Functions::Dispatch.new(create_type, :create, param_names))
       if impl_class.respond_to?(:from_asserted_args)
         def create(*args)
           self.class.impl_class.from_asserted_args(*args)
