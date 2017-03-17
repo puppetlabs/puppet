@@ -48,11 +48,11 @@
 #
 # Special dispatches designed to create error messages for an argument mismatch
 # can be added using the keyword `argument_mismatch` instead of `dispatch`. The
-# function appointed by an `argument_mismatch` will be called with arguments
-# just like a normal `dispatch` function would, but the function must produce a
-# string. The string is then used as the message in the `ArgumentError` that is
-# raised when the function returns. A block parameter can be given, but it is not
-# propagated in the function call.
+# method appointed by an `argument_mismatch` will be called with arguments
+# just like a normal `dispatch` would, but the method must produce a string.
+# The string is then used as the message in the `ArgumentError` that is raised
+# when the method returns. A block parameter can be given, but it is not
+# propagated in the method call.
 #
 # Documentation for the function should be placed as comments to the
 # implementation method(s).
