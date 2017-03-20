@@ -10,6 +10,10 @@ class DataHashFunctionProvider < FunctionProvider
 
   TAG = 'data_hash'.freeze
 
+  def self.trusted_return_type
+    @trusted_return_type ||= Types::PHashType.new(DataProvider.key_type, DataProvider.value_type)
+  end
+
   # Performs a lookup with the assumption that a recursive check has been made.
   #
   # @param key [LookupKey] The key to lookup
@@ -54,7 +58,7 @@ class DataHashFunctionProvider < FunctionProvider
       lookup_invocation.report_not_found(root_key)
       throw :no_such_key
     end
-    value = parent_data_provider.validate_data_value(value) do
+    value = validate_data_value(value) do
       msg = "Value for key '#{root_key}', in hash returned from #{full_name}"
       location.nil? ? msg : "#{msg}, when using location '#{location}',"
     end

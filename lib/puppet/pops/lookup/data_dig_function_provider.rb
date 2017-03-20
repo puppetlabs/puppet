@@ -78,6 +78,10 @@ class V3BackendFunctionProvider < DataDigFunctionProvider
     "hiera version 3 backend '#{options[HieraConfig::KEY_BACKEND]}'"
   end
 
+  def value_is_validated?
+    false
+  end
+
   private
 
   def instantiate_backend(lookup_invocation)

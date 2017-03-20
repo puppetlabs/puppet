@@ -66,6 +66,11 @@ module DataProvider
     raise NotImplementedError, "Subclass of #{DataProvider.name} must implement 'name' method"
   end
 
+  # @returns `true` if the value provided by this instance can always be trusted, `false` otherwise
+  def value_is_validated?
+    false
+  end
+
   # Asserts that _data_hash_ is a hash. Will yield to obtain origin of value in case an error is produced
   #
   # @param data_hash [Hash{String=>Object}] The data hash
@@ -80,7 +85,7 @@ module DataProvider
   # @return [Object] The data value
   def validate_data_value(value, &block)
     # The DataProvider.value_type is self recursive so further recursive check of collections is needed here
-    unless DataProvider.value_type.instance?(value)
+    unless value_is_validated? || DataProvider.value_type.instance?(value)
       actual_type = Types::TypeCalculator.singleton.infer(value)
       raise Types::TypeAssertionError.new("#{yield} has wrong type, expects Puppet::LookupValue, got #{actual_type}", DataProvider.value_type, actual_type)
     end
