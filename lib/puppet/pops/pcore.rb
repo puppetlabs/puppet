@@ -41,6 +41,7 @@ module Pcore
 
       Resource.register_ptypes(loader, ir)
       Lookup::Context.register_ptype(loader, ir);
+      Lookup::DataProvider.register_types(loader)
     end
   end
 
@@ -81,11 +82,10 @@ module Pcore
   end
 
   def self.register_implementations(impls, name_authority = RUNTIME_NAME_AUTHORITY)
-    Loaders.loaders.register_implementations(impls, name_authority = RUNTIME_NAME_AUTHORITY)
+    Loaders.loaders.register_implementations(impls, name_authority)
   end
 
-  def self.register_aliases(aliases, name_authority = RUNTIME_NAME_AUTHORITY)
-    loader = Loaders.loaders.private_environment_loader
+  def self.register_aliases(aliases, name_authority = RUNTIME_NAME_AUTHORITY, loader = Loaders.loaders.private_environment_loader)
     aliases.each do |name, type_string|
       add_type(Types::PTypeAliasType.new(name, Types::TypeFactory.type_reference(type_string), nil), loader, name_authority)
     end
