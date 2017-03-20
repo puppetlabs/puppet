@@ -9,6 +9,8 @@ describe Puppet::Type.type(:package).provider(:pkg) do
     # Get a pid for $CHILD_STATUS to latch on to
     command = "cmd.exe /c \"exit 0\""
     Puppet::Util::Execution.execute(command, {:failonfail => false})
+  else
+    Puppet::Util::Execution.execute('exit 0', {:failonfail => false})
   end
 
   before :each do
