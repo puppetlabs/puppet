@@ -2188,7 +2188,7 @@ describe "The lookup function" do
             'mod_a' => {
               'functions' => {
                 'pp_lookup_key.pp' => <<-PUPPET.unindent
-                function mod_a::pp_lookup_key($key, $options, $context) {
+                function mod_a::pp_lookup_key(Puppet::LookupKey $key, Hash[String,String] $options, Puppet::LookupContext $context) >> Puppet::LookupValue {
                   case $key {
                     'mod_a::really_interpolated': { $context.interpolate("-- %{lookup('mod_a::a')} --") }
                     'mod_a::recursive': { lookup($key) }
