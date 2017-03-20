@@ -322,6 +322,15 @@ class Application
     @options = {}
   end
 
+  # call in setup of subclass to deprecate an application
+  def deprecate
+    @deprecated = true
+  end
+
+  def deprecated?
+    @deprecated
+  end
+
   # Execute the application.
   # @api public
   # @return [void]
@@ -339,6 +348,11 @@ class Application
     exit_on_fail("initialize")                                   { preinit }
     exit_on_fail("parse application options")                    { parse_options }
     exit_on_fail("prepare for execution")                        { setup }
+
+    if deprecated?
+      Puppet.deprecation_warning(_("`puppet %{name}` is deprecated and will be removed in a future release.") % { name: name })
+    end
+
     exit_on_fail("configure routes from #{Puppet[:route_file]}") { configure_indirector_routes }
     exit_on_fail("log runtime debug info")                       { log_runtime_environment }
     exit_on_fail("run")                                          { run_command }
