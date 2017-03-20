@@ -50,7 +50,7 @@ describe 'the dig function' do
   end
 
   it 'errors if not given a non Collection as the starting point' do
-    expect { compile_to_catalog(<<-SOURCE)}.to raise_error(/'dig' parameter 'data' expects a Collection value, got String/)
+    expect { compile_to_catalog(<<-SOURCE)}.to raise_error(/'dig' parameter 'data' expects a value of type Undef or Collection, got String/)
     "hello".dig(1, yes, 2)
     SOURCE
   end

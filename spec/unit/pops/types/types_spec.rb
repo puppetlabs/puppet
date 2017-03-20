@@ -330,13 +330,12 @@ describe 'Puppet Type System' do
       end
 
       it 'can be normalized in groups, the result is a Variant containing the resulting normalizations' do
-        expect(groups.normalize).to eq(tf.variant(
-          tf.range(8, 28),
-          tf.float_range(10.0, 28.0),
-          tf.enum('a', 'b', 'c'),
-          tf.pattern('a', 'b', 'c'),
-          tf.optional(tf.range(1,20)))
-        )
+        expect(groups.normalize).to eq(tf.optional(
+          tf.variant(
+            tf.range(1, 28),
+            tf.float_range(10.0, 28.0),
+            tf.enum('a', 'b', 'c'),
+            tf.pattern('a', 'b', 'c'))))
       end
     end
 

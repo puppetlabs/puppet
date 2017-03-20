@@ -150,6 +150,15 @@ describe 'the type mismatch describer' do
       /parameter 'arg' expects a match for Enum\['a', 'b'\], got 'c'/))
   end
 
+  it "will include Undef when describing a mismatch against a Variant where one of the types is Undef" do
+    code = <<-CODE
+      define check(Variant[Undef,String,Integer,Hash,Array] $arg) {}
+      check{ x: arg => 2.4 }
+    CODE
+    expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
+      /parameter 'arg' expects a value of type Undef, String, Integer, Hash, or Array/))
+  end
+
   it "will not disclose a Sensitive that doesn't match an enum in a define call" do
     code = <<-CODE
       define check_enums(Enum[a,b] $arg) {}
