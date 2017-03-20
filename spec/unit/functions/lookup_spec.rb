@@ -2183,55 +2183,57 @@ describe "The lookup function" do
       end
 
       context 'using a lookup_key that is a puppet function' do
+        let(:puppet_function) { <<-PUPPET.unindent }
+          function mod_a::pp_lookup_key(Puppet::LookupKey $key, Hash[String,String] $options, Puppet::LookupContext $context) >> Puppet::LookupValue {
+            case $key {
+              'mod_a::really_interpolated': { $context.interpolate("-- %{lookup('mod_a::a')} --") }
+              'mod_a::recursive': { lookup($key) }
+              default: {
+                if $context.cache_has_key(mod_a::a) {
+                  $context.explain || { 'reusing cache' }
+                } else {
+                  $context.explain || { 'initializing cache' }
+                  $context.cache_all({
+                    mod_a::a => 'value mod_a::a (from mod_a)',
+                    mod_a::b => 'value mod_a::b (from mod_a)',
+                    mod_a::c => 'value mod_a::c (from mod_a)',
+                    mod_a::hash_a => {
+                      a => 'value mod_a::hash_a.a (from mod_a)',
+                      b => 'value mod_a::hash_a.b (from mod_a)'
+                    },
+                    mod_a::hash_b => {
+                      a => 'value mod_a::hash_b.a (from mod_a)',
+                      b => 'value mod_a::hash_b.b (from mod_a)'
+                    },
+                    mod_a::interpolated => "-- %{lookup('mod_a::a')} --",
+                    mod_a::a_a => "-- %{lookup('mod_a::hash_a.a')} --",
+                    mod_a::a_b => "-- %{lookup('mod_a::hash_a.b')} --",
+                    mod_a::b_a => "-- %{lookup('mod_a::hash_b.a')} --",
+                    mod_a::b_b => "-- %{lookup('mod_a::hash_b.b')} --",
+                    'mod_a::a.quoted.key' => 'value mod_a::a.quoted.key (from mod_a)',
+                    mod_a::sensitive => Sensitive('reduct me please'),
+                    mod_a::type => Object[{name => 'FindMe', 'attributes' => {'x' => String}}],
+                    mod_a::version => SemVer('3.4.1'),
+                    mod_a::version_range => SemVerRange('>=3.4.1'),
+                    mod_a::timestamp => Timestamp("1994-03-25T19:30:00"),
+                    mod_a::timespan => Timespan("3-10:00:00")
+                  })
+                }
+                if !$context.cache_has_key($key) {
+                  $context.not_found
+                }
+                $context.explain || { "returning value for $key" }
+                $context.cached_value($key)
+              }
+            }
+          }
+        PUPPET
+
         let(:mod_a_files) do
           {
             'mod_a' => {
               'functions' => {
-                'pp_lookup_key.pp' => <<-PUPPET.unindent
-                function mod_a::pp_lookup_key(Puppet::LookupKey $key, Hash[String,String] $options, Puppet::LookupContext $context) >> Puppet::LookupValue {
-                  case $key {
-                    'mod_a::really_interpolated': { $context.interpolate("-- %{lookup('mod_a::a')} --") }
-                    'mod_a::recursive': { lookup($key) }
-                    default: {
-                      if $context.cache_has_key(mod_a::a) {
-                        $context.explain || { 'reusing cache' }
-                      } else {
-                        $context.explain || { 'initializing cache' }
-                        $context.cache_all({
-                          mod_a::a => 'value mod_a::a (from mod_a)',
-                          mod_a::b => 'value mod_a::b (from mod_a)',
-                          mod_a::c => 'value mod_a::c (from mod_a)',
-                          mod_a::hash_a => {
-                            a => 'value mod_a::hash_a.a (from mod_a)',
-                            b => 'value mod_a::hash_a.b (from mod_a)'
-                          },
-                          mod_a::hash_b => {
-                            a => 'value mod_a::hash_b.a (from mod_a)',
-                            b => 'value mod_a::hash_b.b (from mod_a)'
-                          },
-                          mod_a::interpolated => "-- %{lookup('mod_a::a')} --",
-                          mod_a::a_a => "-- %{lookup('mod_a::hash_a.a')} --",
-                          mod_a::a_b => "-- %{lookup('mod_a::hash_a.b')} --",
-                          mod_a::b_a => "-- %{lookup('mod_a::hash_b.a')} --",
-                          mod_a::b_b => "-- %{lookup('mod_a::hash_b.b')} --",
-                          'mod_a::a.quoted.key' => 'value mod_a::a.quoted.key (from mod_a)',
-                          mod_a::sensitive => Sensitive('reduct me please'),
-                          mod_a::type => Object[{name => 'FindMe', 'attributes' => {'x' => String}}],
-                          mod_a::version => SemVer('3.4.1'),
-                          mod_a::version_range => SemVerRange('>=3.4.1'),
-                          mod_a::timestamp => Timestamp("1994-03-25T19:30:00"),
-                          mod_a::timespan => Timespan("3-10:00:00")
-                        })
-                      }
-                      if !$context.cache_has_key($key) {
-                        $context.not_found
-                      }
-                      $context.explain || { "returning value for $key" }
-                      $context.cached_value($key)
-                    }
-                  }
-                }
-              PUPPET
+                'pp_lookup_key.pp' => puppet_function
               },
               'hiera.yaml' => <<-YAML.unindent,
               ---
@@ -2304,6 +2306,19 @@ describe "The lookup function" do
             expect(notices).to eql(['success'])
           end
         end
+
+        context 'with declared but incompatible return_type' do
+          let(:puppet_function) { <<-PUPPET.unindent }
+            function mod_a::pp_lookup_key(Puppet::LookupKey $key, Hash[String,String] $options, Puppet::LookupContext $context) >> Runtime['ruby','Symbol'] {
+              undef
+            }
+            PUPPET
+
+          it 'fails and reports error' do
+            expect{lookup('mod_a::a')}.to raise_error(
+              "Return type of 'lookup_key' function named 'mod_a::pp_lookup_key' is incorrect, expects a value of type Undef, Scalar, Sensitive, Type, Hash, or Array, got Runtime")
+          end
+        end
       end
 
       context 'using a data_dig that is a ruby function' do
@@ -2320,6 +2335,7 @@ describe "The lookup function" do
                           param 'Array[String[1]]', :segments
                           param 'Hash[String,Any]', :options
                           param 'Puppet::LookupContext', :context
+                          return_type 'Puppet::LookupValue'
                         end
 
                         def ruby_dig(segments, options, context)
@@ -2399,15 +2415,13 @@ describe "The lookup function" do
         end
 
         it 'does not accept return of runtime type from function' do
-          expect(explain('mod_a::bad_type')).to include(
-            "Value for key 'mod_a::bad_type', returned from data_dig function 'mod_a::ruby_dig', " +
-            "when using location 'http://www.example.com/passed/as/option', has wrong type, expects Puppet::LookupValue, got Runtime")
+          # Message is produced by the called function, not by the lookup framework
+          expect(explain('mod_a::bad_type')).to include("value returned from function 'ruby_dig' has wrong type")
         end
 
         it 'does not accept return of runtime type embedded in hash from function' do
-          expect(explain('mod_a::bad_type_in_hash')).to include(
-            "Value for key 'mod_a::bad_type_in_hash', returned from data_dig function 'mod_a::ruby_dig', " +
-            "when using location 'http://www.example.com/passed/as/option', has wrong type, expects Puppet::LookupValue, got Hash[String, Runtime")
+          # Message is produced by the called function, not by the lookup framework
+          expect(explain('mod_a::bad_type_in_hash')).to include("value returned from function 'ruby_dig' has wrong type")
         end
 
         it 'will not merge hashes from environment and module unless strategy hash is used' do
