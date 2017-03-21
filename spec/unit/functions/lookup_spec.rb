@@ -576,42 +576,71 @@ describe "The lookup function" do
       end
     end
 
-    context 'that uses reserved option' do
-      let(:environment_files) do
-        {
-          env_name => {
-            'hiera.yaml' => <<-YAML.unindent,
-              ---
-              version: 5
-              hierarchy:
-                - name: "Illegal"
-                  options:
-                    #{opt_spec}
-                  data_hash: yaml_data
-              YAML
-            'data' => {
-              'foo.yaml' => "a: The value a\n"
-            }
-          }
-        }
+    context 'that uses reserved' do
+       let(:environment_files) do
+        { env_name => { 'hiera.yaml' => hiera_yaml } }
       end
 
-      context 'path' do
-        let(:opt_spec) { 'path: data/foo.yaml' }
+      context 'option' do
+       let(:hiera_yaml) { <<-YAML.unindent }
+          version: 5
+          hierarchy:
+            - name: "Illegal"
+              options:
+                #{opt_spec}
+              data_hash: yaml_data
+          YAML
 
-        it 'fails and reports the reserved option key' do
-          expect { lookup('a') }.to raise_error do |e|
-            expect(e.message).to match(/Option key 'path' used in hierarchy 'Illegal' is reserved by Puppet/)
+        context 'path' do
+          let(:opt_spec) { 'path: data/foo.yaml' }
+
+          it 'fails and reports the reserved option key' do
+            expect { lookup('a') }.to raise_error do |e|
+              expect(e.message).to match(/Option key 'path' used in hierarchy 'Illegal' is reserved by Puppet/)
+            end
+          end
+        end
+
+        context 'uri' do
+          let(:opt_spec) { 'uri: file:///data/foo.yaml' }
+
+          it 'fails and reports the reserved option key' do
+            expect { lookup('a') }.to raise_error do |e|
+              expect(e.message).to match(/Option key 'uri' used in hierarchy 'Illegal' is reserved by Puppet/)
+            end
           end
         end
       end
 
-      context 'uri' do
-        let(:opt_spec) { 'uri: file:///data/foo.yaml' }
+      context 'default option' do
+        let(:hiera_yaml) { <<-YAML.unindent }
+          ---
+          version: 5
+          defaults:
+              options:
+                #{opt_spec}
+          hierarchy:
+            - name: "Illegal"
+              data_hash: yaml_data
+          YAML
 
-        it 'fails and reports the reserved option key' do
-          expect { lookup('a') }.to raise_error do |e|
-            expect(e.message).to match(/Option key 'uri' used in hierarchy 'Illegal' is reserved by Puppet/)
+        context 'path' do
+          let(:opt_spec) { 'path: data/foo.yaml' }
+
+          it 'fails and reports the reserved option key' do
+            expect { lookup('a') }.to raise_error do |e|
+              expect(e.message).to match(/Option key 'path' used in defaults is reserved by Puppet/)
+            end
+          end
+        end
+
+        context 'uri' do
+          let(:opt_spec) { 'uri: file:///data/foo.yaml' }
+
+          it 'fails and reports the reserved option key' do
+            expect { lookup('a') }.to raise_error do |e|
+              expect(e.message).to match(/Option key 'uri' used in defaults is reserved by Puppet/)
+            end
           end
         end
       end
@@ -2384,6 +2413,11 @@ describe "The lookup function" do
               'hiera.yaml' => <<-YAML.unindent,
               ---
               version: 5
+              defaults:
+                options:
+                  option_b:
+                    z: Default option value b.z
+
               hierarchy:
                 - name: "Common"
                   data_dig: mod_a::ruby_dig
@@ -2393,7 +2427,9 @@ describe "The lookup function" do
                     option_b:
                       x: Option value b.x
                       y: Option value b.y
-            YAML
+                - name: "Extra"
+                  data_dig: mod_a::ruby_dig
+           YAML
             }
           }
         end
@@ -2430,6 +2466,22 @@ describe "The lookup function" do
 
         it 'hierarchy entry options are passed to the function' do
           expect(lookup('mod_a::options.option_b.x')).to eql('Option value b.x')
+        end
+
+        it 'default options are passed to the function' do
+          expect(lookup('mod_a::options.option_b.z')).to eql('Default option value b.z')
+        end
+
+        it 'default options are not merged with hierarchy options' do
+          expect(lookup('mod_a::options')).to eql(
+            {
+              'option_a' => 'Option value a',
+              'option_b' => {
+                'y' => 'Option value b.y',
+                'x' => 'Option value b.x'
+              },
+              'uri' => 'http://www.example.com/passed/as/option'
+            })
         end
 
         it 'hierarchy entry "uri" is passed as location option to the function' do

@@ -567,7 +567,8 @@ class HieraConfigV5 < HieraConfig
           tf.optional(KEY_DATA_HASH) => nes_t,
           tf.optional(KEY_LOOKUP_KEY) => nes_t,
           tf.optional(KEY_DATA_DIG) => nes_t,
-          tf.optional(KEY_DATADIR) => nes_t
+          tf.optional(KEY_DATADIR) => nes_t,
+          tf.optional(KEY_OPTIONS) => tf.hash_kv(option_name_t, tf.data),
         }),
       tf.optional(KEY_HIERARCHY) => tf.array_of(tf.struct(
         {
@@ -638,7 +639,7 @@ class HieraConfigV5 < HieraConfig
         nil
       end
       next if @config_path.nil? && !locations.nil? && locations.empty? # Default config and no existing paths found
-      options = he[KEY_OPTIONS]
+      options = he[KEY_OPTIONS] || defaults[KEY_OPTIONS]
       options = options.nil? ? EMPTY_HASH : interpolate(options, lookup_invocation, false)
       if(function_kind == KEY_V3_BACKEND)
         unless parent_data_provider.is_a?(GlobalDataProvider)
@@ -725,6 +726,13 @@ class HieraConfigV5 < HieraConfig
       # OK
     else
       fail(Issues::HIERA_MULTIPLE_DATA_PROVIDER_FUNCTIONS_IN_DEFAULT)
+    end
+
+    options = defaults[KEY_OPTIONS]
+    unless options.nil?
+      RESERVED_OPTION_KEYS.each do |key|
+        fail(Issues::HIERA_DEFAULT_OPTION_RESERVED_BY_PUPPET, :key => key) if options.include?(key)
+      end
     end
   end
 
