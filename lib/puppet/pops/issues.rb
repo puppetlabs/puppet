@@ -799,6 +799,10 @@ module Issues
     "Option key '#{key}' used in hierarchy '#{name}' is reserved by Puppet"
   end
 
+  HIERA_DEFAULT_OPTION_RESERVED_BY_PUPPET = hard_issue :HIERA_DEFAULT_OPTION_RESERVED_BY_PUPPET, :key do
+    "Option key '#{key}' used in defaults is reserved by Puppet"
+  end
+
   HIERA_DATA_PROVIDER_FUNCTION_NOT_FOUND = hard_issue :HIERA_DATA_PROVIDER_FUNCTION_NOT_FOUND, :function_type, :function_name do
     "Unable to find '#{function_type}' function named '#{function_name}'"
   end
