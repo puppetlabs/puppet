@@ -1217,7 +1217,7 @@ describe 'The Object Type' do
         }]
         notice(MyObject)
       PUPPET
-      expect{eval_and_collect_notices(code)}.to raise_error(/entry 'annotations' expects a Hash/)
+      expect{eval_and_collect_notices(code)}.to raise_error(/entry 'annotations' expects a value of type Undef or Hash/)
     end
   end
 end
