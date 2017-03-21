@@ -1,0 +1,103 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2017 Puppet, Inc.
+# This file is distributed under the same license as the Puppet automation framework package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2017.
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Puppet automation framework 4.9.3-153-g6af9cba\n"
+"\n"
+"Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
+"POT-Creation-Date: 2017-02-28 19:27-0800\n"
+"PO-Revision-Date: 2017-02-28 19:27-0800\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: \n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+msgid "Apache 2 license; see COPYING"
+msgstr "[Ȧƥȧƈħḗ 2 ŀīƈḗƞşḗ; şḗḗ ƇǾƤẎĪȠƓ ς鶱ΐϰΰǅ ϱ ςǅ]"
+
+msgid "Display Puppet help."
+msgstr "[Ḓīşƥŀȧẏ Ƥŭƥƥḗŧ ħḗŀƥ. ΰϖıǋϱẛϰ ΰ靐靐ϰ]"
+
+msgid "Display help about Puppet subcommands and their actions."
+msgstr "[Ḓīşƥŀȧẏ ħḗŀƥ ȧƀǿŭŧ Ƥŭƥƥḗŧ şŭƀƈǿḿḿȧƞḓş ȧƞḓ ŧħḗīř ȧƈŧīǿƞş. ϵϑϵ衋ϰǋẛ]"
+
+msgid "[<subcommand>] [<action>]"
+msgstr "[[<subcommand>] [<action>] ΐẛǅ鶱ẛſΰΰςǋΐ]"
+
+msgid "Short help text for the specified subcommand or action."
+msgstr "[Şħǿřŧ ħḗŀƥ ŧḗẋŧ ƒǿř ŧħḗ şƥḗƈīƒīḗḓ şŭƀƈǿḿḿȧƞḓ ǿř ȧƈŧīǿƞ. ẛϑϵϐǈ ǲΰ]"
+
+msgid ""
+"      Get help for an action:\n"
+"\n"
+"      $ puppet help\n"
+msgstr ""
+"[      Ɠḗŧ ħḗŀƥ ƒǿř ȧƞ ȧƈŧīǿƞ:\n"
+"\n"
+"      $ ƥŭƥƥḗŧ ħḗŀƥ\n"
+" ı]"
+
+msgid "--version VERSION"
+msgstr "[--ṽḗřşīǿƞ ṼḖŘŞĪǾȠ ǲſẛǲϖϱ鶱ϖϱ ǋϰ]"
+
+msgid "The version of the subcommand for which to show help."
+msgstr "[Ŧħḗ ṽḗřşīǿƞ ǿƒ ŧħḗ şŭƀƈǿḿḿȧƞḓ ƒǿř ẇħīƈħ ŧǿ şħǿẇ ħḗŀƥ. ΰϵΐ 靐ΰϱ]"
+
+msgid ""
+"Puppet help only takes two (optional) arguments: a subcommand and an action"
+msgstr ""
+"[Ƥŭƥƥḗŧ ħḗŀƥ ǿƞŀẏ ŧȧķḗş ŧẇǿ (ǿƥŧīǿƞȧŀ) ȧřɠŭḿḗƞŧş: ȧ şŭƀƈǿḿḿȧƞḓ ȧƞḓ ȧƞ ȧƈŧīǿƞ"
+" ǲǈǲϰſϑ ϕſ靐ſ]"
+
+msgid "Version only makes sense when a Faces subcommand is given"
+msgstr "[Ṽḗřşīǿƞ ǿƞŀẏ ḿȧķḗş şḗƞşḗ ẇħḗƞ ȧ Ƒȧƈḗş şŭƀƈǿḿḿȧƞḓ īş ɠīṽḗƞ ϑΰǲΐ鶱ǈϑ]"
+
+msgid "Legacy subcommands don't take actions"
+msgstr "[Ŀḗɠȧƈẏ şŭƀƈǿḿḿȧƞḓş ḓǿƞ'ŧ ŧȧķḗ ȧƈŧīǿƞş ΐϖẛǈς靐 ıǋϑ]"
+
+msgid ""
+"Could not load help for the application #{applicationname}.\n"
+"Please check the error logs for more information.\n"
+"\n"
+"Detail: \"#{detail.message}\"\n"
+msgstr ""
+"[Ƈǿŭŀḓ ƞǿŧ ŀǿȧḓ ħḗŀƥ ƒǿř ŧħḗ ȧƥƥŀīƈȧŧīǿƞ #{applicationname}.\n"
+"Ƥŀḗȧşḗ ƈħḗƈķ ŧħḗ ḗřřǿř ŀǿɠş ƒǿř ḿǿřḗ īƞƒǿřḿȧŧīǿƞ.\n"
+"\n"
+"Ḓḗŧȧīŀ: \"#{ḓḗŧȧīŀ.ḿḗşşȧɠḗ}\"\n"
+" ǅϕϰϕǲ ΐϕϐ ϖǲǲϱ 靐靐ςϱ ſǲǲ]"
+
+msgid ""
+"Could not load help for the face #{facename}.\n"
+"Please check the error logs for more information.\n"
+"\n"
+"Detail: \"#{detail.message}\"\n"
+msgstr ""
+"[Ƈǿŭŀḓ ƞǿŧ ŀǿȧḓ ħḗŀƥ ƒǿř ŧħḗ ƒȧƈḗ #{facename}.\n"
+"Ƥŀḗȧşḗ ƈħḗƈķ ŧħḗ ḗřřǿř ŀǿɠş ƒǿř ḿǿřḗ īƞƒǿřḿȧŧīǿƞ.\n"
+"\n"
+"Ḓḗŧȧīŀ: \"#{ḓḗŧȧīŀ.ḿḗşşȧɠḗ}\"\n"
+" 鶱ıϖϐ靐 ſıΰ 衋ǲſϖ ſϕǈ衋 ΐ鶱]"
+
+msgid "\"Unable to load action #{actionname} from #{face}\""
+msgstr "[\"Ŭƞȧƀŀḗ ŧǿ ŀǿȧḓ ȧƈŧīǿƞ #{actionname} ƒřǿḿ #{face}\" ǋǋςϑϕϐẛ]"
+
+msgid " (Deprecated)"
+msgstr "[ (Ḓḗƥřḗƈȧŧḗḓ) ϵǅſǈǈΐǅ靐鶱ϰ]"
+
+msgid "! Subcommand unavailable due to error. Check error logs."
+msgstr "[! Şŭƀƈǿḿḿȧƞḓ ŭƞȧṽȧīŀȧƀŀḗ ḓŭḗ ŧǿ ḗřřǿř. Ƈħḗƈķ ḗřřǿř ŀǿɠş. ǈ ςẛϑϵſϰ]"
+
+msgid ""
+"\"#{detail.inspect}: #{value_to_encode.dump} is not valid UTF-8 and cannot "
+"be transcoded by Puppet.\""
+msgstr ""
+"[\"#{ḓḗŧȧīŀ.īƞşƥḗƈŧ}: #{ṽȧŀŭḗ_ŧǿ_ḗƞƈǿḓḗ.ḓŭḿƥ} īş ƞǿŧ ṽȧŀīḓ ŬŦƑ-8 ȧƞḓ ƈȧƞƞǿŧ "
+"ƀḗ ŧřȧƞşƈǿḓḗḓ ƀẏ Ƥŭƥƥḗŧ.\" 靐ſΰıϵϖ鶱ϰϵǅǈΰẛΐϖǈ]"
