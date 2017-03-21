@@ -288,7 +288,7 @@ Run a limited but representative subset of acceptance tests through Beaker and i
   $ env SHA=<full sha> bundle exec rake ci:test:quick
 EOS
 
-  task :quick => 'ci:check_env' do
+  task :quick => ['ci:check_env', 'ci:gen_hosts'] do
     ENV['TESTS'] = get_test_sample.join(",")
     beaker_test(:aio)
   end
