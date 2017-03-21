@@ -339,6 +339,7 @@ Copyright (c) 2015 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     Puppet[:code] = 'undef' unless options[:compile]
     compiler = Puppet::Parser::Compiler.new(node)
+    compiler.loaders # ensures that Pcore et.al. is initialized
     compiler.compile { |catalog| yield(compiler.topscope); catalog }
   end
 end
