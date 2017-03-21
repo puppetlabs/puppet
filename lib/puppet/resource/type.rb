@@ -549,7 +549,7 @@ class Puppet::Resource::Type
 
     if application?
       resource_type = type_factory.type_type(type_factory.resource)
-      members[type_factory.optional(type_factory.string(NODES))] = type_factory.hash_of(type_factory.variant(
+      members[type_factory.string(NODES)] = type_factory.hash_of(type_factory.variant(
           resource_type, type_factory.array_of(resource_type)), type_factory.type_type(type_factory.resource('node')))
     end
 
