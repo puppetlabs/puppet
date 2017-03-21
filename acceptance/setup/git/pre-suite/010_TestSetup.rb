@@ -32,17 +32,23 @@ extend Beaker::DSL::InstallUtils
         puppet_dir = host.tmpdir('puppet')
         on(host, "chmod 755 #{puppet_dir}")
 
-        create_remote_file(host, "#{puppet_dir}/Gemfile", <<END)
+        gemfile_contents = <<END
 source '#{ENV["GEM_SOURCE"] || "https://rubygems.org"}'
 gem '#{repository[:name]}', :git => '#{repository[:path]}', :ref => '#{ENV['SHA']}'
 END
         case host['platform']
         when /windows/
           raise ArgumentError, "Windows is not yet supported"
+        when /el-7/
+          gemfile_contents = gemfile_contents + "gem 'json'\n"
+          create_remote_file(host, "#{puppet_dir}/Gemfile", gemfile_contents)
+          on host, "cd #{puppet_dir} && bundle install --system --binstubs #{host['puppetbindir']}"
         when /solaris/
-          on host, "cd #{puppet_dir} && bundle install --system --binstubs #{host['puppetbindir']} --standalone  --shebang #{host['puppetbindir']}/ruby"
+          create_remote_file(host, "#{puppet_dir}/Gemfile", gemfile_contents)
+          on host, "cd #{puppet_dir} && bundle install --system --binstubs #{host['puppetbindir']} --shebang #{host['puppetbindir']}/ruby"
         else
-          on host, "cd #{puppet_dir} && bundle install --system --binstubs #{host['puppetbindir']} --standalone"
+          create_remote_file(host, "#{puppet_dir}/Gemfile", gemfile_contents)
+          on host, "cd #{puppet_dir} && bundle install --system --binstubs #{host['puppetbindir']}"
         end
       end
     end
