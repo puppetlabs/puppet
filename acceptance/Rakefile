@@ -242,6 +242,8 @@ def get_test_sample
     s.empty?
   end.collect do |s|
     s.sub('acceptance/', '')
+  end.select do |s|
+    s =~ /\.rb$/
   end.find_all do |s|
     File.exist?(s)
   end
