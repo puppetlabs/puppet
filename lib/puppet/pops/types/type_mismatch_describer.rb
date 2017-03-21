@@ -293,6 +293,11 @@ module Types
       super(path)
       @expected = (expected.is_a?(Array) ? PVariantType.maybe_create(expected) : expected).normalize
       @actual = actual.normalize
+      @optional = false
+    end
+
+    def set_optional
+      @optional = true
     end
 
     def ==(o)
@@ -323,8 +328,17 @@ module Types
       e = expected
       a = actual
       multi = false
-      if e.is_a?(PVariantType)
+      if @optional
+        if e.is_a?(PVariantType)
+          e = [PUndefType::DEFAULT] + e.types
+        else
+          e = [PUndefType::DEFAULT, e]
+        end
+      elsif e.is_a?(PVariantType)
         e = e.types
+      end
+
+      if e.is_a?(Array)
         if report_detailed?(e, a)
           a = detailed_actual_to_s(e, a)
           e = e.map { |t| t.to_alias_expanded_s }
@@ -764,7 +778,10 @@ module Types
     end
 
     def describe_POptionalType(expected, actual, path)
-      actual.is_a?(PUndefType) ? [] : describe(expected.optional_type, actual, path)
+      return EMPTY_ARRAY if actual.is_a?(PUndefType)
+      descriptions = describe(expected.optional_type, actual, path)
+      descriptions.each { |description| description.set_optional }
+      descriptions
     end
 
     def describe_PEnumType(expected, actual, path)
@@ -776,7 +793,7 @@ module Types
     end
 
     def describe_PTypeAliasType(expected, actual, path)
-      resolved_type = expected.resolved_type.normalize
+      resolved_type = expected.resolved_type
       describe(resolved_type, actual, path).map do |description|
         if description.is_a?(ExpectedActualMismatch) && description.expected.equal?(resolved_type)
           description.swap_expected(expected)
@@ -804,7 +821,7 @@ module Types
         expected_size = expected.size_type
         actual_size = actual.size_type || PCollectionType::DEFAULT_SIZE
         if expected_size.nil? || expected_size.assignable?(actual_size)
-          descriptions << TypeMismatch.new(path, expected, actual)
+          descriptions << TypeMismatch.new(path, expected, PArrayType.new(actual.element_type))
         else
           descriptions << SizeMismatch.new(path, expected_size, actual_size)
         end
@@ -834,7 +851,7 @@ module Types
         expected_size = expected.size_type
         actual_size = actual.size_type || PCollectionType::DEFAULT_SIZE
         if expected_size.nil? || expected_size.assignable?(actual_size)
-          descriptions << TypeMismatch.new(path, expected, actual)
+          descriptions << TypeMismatch.new(path, expected, PHashType.new(actual.key_type, actual.value_type))
         else
           descriptions << SizeMismatch.new(path, expected_size, actual_size)
         end
@@ -864,7 +881,7 @@ module Types
         actual_size = actual.size_type || PCollectionType::DEFAULT_SIZE
         expected_size = PIntegerType.new(elements.count { |e| !e.key_type.assignable?(PUndefType::DEFAULT) }, elements.size)
         if expected_size.assignable?(actual_size)
-          descriptions << TypeMismatch.new(path, expected, actual)
+          descriptions << TypeMismatch.new(path, expected, PHashType.new(actual.key_type, actual.value_type))
         else
           descriptions << SizeMismatch.new(path, expected_size, actual_size)
         end
@@ -990,6 +1007,7 @@ module Types
       if unresolved
         [UnresolvedTypeReference.new(path, unresolved)]
       else
+        expected = expected.normalize
         case expected
         when PVariantType
           describe_PVariantType(expected, actual, path)

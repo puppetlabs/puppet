@@ -13,7 +13,7 @@ module TypeAsserter
   #
   # @api public
   def self.assert_assignable(subject, expected_type, type_to_check, &block)
-    report_type_mismatch(subject, expected_type, type_to_check) unless expected_type.assignable?(type_to_check)
+    report_type_mismatch(subject, expected_type, type_to_check, 'is incorrect', &block) unless expected_type.assignable?(type_to_check)
     type_to_check
   end
 
@@ -35,11 +35,11 @@ module TypeAsserter
     value
   end
 
-  def self.report_type_mismatch(subject, expected_type, actual_type)
+  def self.report_type_mismatch(subject, expected_type, actual_type, what = 'has wrong type')
     subject = yield(subject) if block_given?
     subject = subject[0] % subject[1..-1] if subject.is_a?(Array)
     raise TypeAssertionError.new(
-      TypeMismatchDescriber.singleton.describe_mismatch("#{subject} has wrong type,", expected_type, actual_type), expected_type, actual_type)
+      TypeMismatchDescriber.singleton.describe_mismatch("#{subject} #{what},", expected_type, actual_type), expected_type, actual_type)
   end
   private_class_method :report_type_mismatch
 end
