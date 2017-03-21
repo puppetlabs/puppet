@@ -321,7 +321,9 @@ module Util
       end
     end
 
-    params[:path] = URI.escape(path)
+    # URI::Generic.build doesn't like a path encoded with CGI.escape
+    # but as long as the source "path" is UTF-8, then CGI.escape is correct
+    params[:path] = URI.escape(path.encode(Encoding::UTF_8)).force_encoding(Encoding::UTF_8)
 
     begin
       URI::Generic.build(params)
@@ -335,7 +337,9 @@ module Util
   def uri_to_path(uri)
     return unless uri.is_a?(URI)
 
-    path = URI.unescape(uri.path)
+    # CGI.unescape doesn't handle space rules properly in uri paths
+    # URI.unescape does, but returns strings in their original encoding
+    path = URI.unescape(uri.path.encode(Encoding::UTF_8))
 
     if Puppet.features.microsoft_windows? and uri.scheme == 'file'
       if uri.host

@@ -297,6 +297,14 @@ describe Puppet::Util do
   end
 
   describe "#path_to_uri" do
+    # different UTF-8 widths
+    # 1-byte A
+    # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
+    # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
+    # 4-byte ܎ - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
+    let (:mixed_utf8) { "A\u06FF\u16A0\u{2070E}" } # Aۿᚠ܎
+    let (:mixed_utf8_urlencoded) { "A%DB%BF%E1%9A%A0%F0%A0%9C%8E" }
+
     %w[. .. foo foo/bar foo/../bar].each do |path|
       it "should reject relative path: #{path}" do
         expect { Puppet::Util.path_to_uri(path) }.to raise_error(Puppet::Error)
@@ -305,6 +313,13 @@ describe Puppet::Util do
 
     it "should perform URI escaping" do
       expect(Puppet::Util.path_to_uri("/foo bar").path).to eq("/foo%20bar")
+    end
+
+    it "should perform UTF-8 URI escaping" do
+      uri = Puppet::Util.path_to_uri("/#{mixed_utf8}")
+
+      expect(uri.path.encoding).to eq(Encoding::UTF_8)
+      expect(uri.path).to eq("/#{mixed_utf8_urlencoded}")
     end
 
     describe "when using platform :posix" do
@@ -349,6 +364,13 @@ describe Puppet::Util do
   describe ".uri_to_path" do
     require 'uri'
 
+    # different UTF-8 widths
+    # 1-byte A
+    # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
+    # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
+    # 4-byte ܎ - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
+    let (:mixed_utf8) { "A\u06FF\u16A0\u{2070E}" } # Aۿᚠ܎
+
     it "should strip host component" do
       expect(Puppet::Util.uri_to_path(URI.parse('http://foo/bar'))).to eq('/bar')
     end
@@ -359,6 +381,19 @@ describe Puppet::Util do
 
     it "should return unencoded path" do
       expect(Puppet::Util.uri_to_path(URI.parse('http://foo/bar%20baz'))).to eq('/bar baz')
+    end
+
+
+    [
+      "http://foo/A%DB%BF%E1%9A%A0%F0%A0%9C%8E",
+      "http://foo/A%DB%BF%E1%9A%A0%F0%A0%9C%8E".force_encoding(Encoding::ASCII)
+    ].each do |uri_string|
+      it "should return paths as UTF-8" do
+        path = Puppet::Util.uri_to_path(URI.parse(uri_string))
+
+        expect(path).to eq("/#{mixed_utf8}")
+        expect(path.encoding).to eq(Encoding::UTF_8)
+      end
     end
 
     it "should be nil-safe" do
