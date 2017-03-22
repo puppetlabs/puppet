@@ -109,6 +109,20 @@ describe Puppet::Parser::Compiler do
 
   describe "when initializing" do
 
+    it 'should not create the settings class more than once' do
+      logs = []
+      Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+        Puppet[:code] = 'undef'
+        @compiler.compile
+
+        @compiler = Puppet::Parser::Compiler.new(@node)
+        Puppet[:code] = 'undef'
+        @compiler.compile
+      end
+      warnings = logs.select { |log| log.level == :warning }.map { |log| log.message }
+      expect(warnings).not_to include(/Class 'settings' is already defined/)
+    end
+
     it "should set its node attribute" do
       expect(@compiler.node).to equal(@node)
     end
