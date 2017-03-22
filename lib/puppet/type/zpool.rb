@@ -85,7 +85,7 @@ module Puppet
 
     validate do
       has_should = [:disk, :mirror, :raidz].select { |prop| self.should(prop) }
-      self.fail _("You cannot specify #{has_should.join(" and ")} on this type (only one)") if has_should.length > 1
+      self.fail _("You cannot specify %{multiple_props} on this type (only one)") % { multiple_props: has_should.join(" and ") } if has_should.length > 1
     end
   end
 end
