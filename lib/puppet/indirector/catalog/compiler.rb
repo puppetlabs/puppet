@@ -26,7 +26,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       if text_facts.is_a?(Puppet::Node::Facts)
         facts = text_facts
       elsif format == 'pson'
-        # We unescape here because the corresponding code in Puppet::Configurer::FactHandler escapes
+        # We unescape here because the corresponding code in Puppet::Configurer::FactHandler encodes with Puppet::Util.uri_query_encode
         facts = Puppet::Node::Facts.convert_from('pson', CGI.unescape(text_facts))
       else
         raise ArgumentError, "Unsupported facts format"
