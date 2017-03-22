@@ -16,6 +16,28 @@ class ModuleDataProvider < ConfiguredDataProvider
     'Module'
   end
 
+  # Performs a lookup using a module default hierarchy with an endless recursion check.
+  #
+  # @param key [LookupKey] The key to lookup
+  # @param lookup_invocation [Invocation] The current lookup invocation
+  # @param merge [MergeStrategy,String,Hash{String=>Object},nil] Merge strategy or hash with strategy and options
+  #
+  def key_lookup_in_default(key, lookup_invocation, merge)
+    dps = config(lookup_invocation).configured_data_providers(lookup_invocation, self, true)
+    if dps.empty?
+      lookup_invocation.report_not_found(key)
+      throw :no_such_key
+    end
+    merge_strategy = MergeStrategy.strategy(merge)
+    lookup_invocation.check(key.to_s) do
+      lookup_invocation.with(:data_provider, self) do
+        merge_strategy.lookup(dps, lookup_invocation) do |data_provider|
+          data_provider.unchecked_key_lookup(key, lookup_invocation, merge_strategy)
+        end
+      end
+    end
+  end
+
   # Asserts that all keys in the given _data_hash_ are prefixed with the configured _module_name_. Removes entries
   # that does not follow the convention and logs a warning.
   #
