@@ -197,7 +197,9 @@ HOSTS_FILE = "#{test_targets}-#{SecureRandom.uuid}.yaml"
 def hosts_file_env
   if ENV['HOSTS']
     ENV['HOSTS']
-  elseif env_config = ENV['CONFIG']
+  elsif ENV['BEAKER_HOSTS']
+    ENV['BEAKER_HOSTS']
+  elsif env_config = ENV['CONFIG']
     puts 'Warning: environment variable CONFIG deprecated. Please use HOSTS to match beaker options.'
     env_config
   end
