@@ -48,11 +48,15 @@ module Puppet::Util::Windows::File
      FILE_EXECUTE |
      SYNCHRONIZE
 
+  REPLACEFILE_WRITE_THROUGH         = 0x1
+  REPLACEFILE_IGNORE_MERGE_ERRORS   = 0x2
+  REPLACEFILE_IGNORE_ACL_ERRORS     = 0x3
+
   def replace_file(target, source)
     target_encoded = wide_string(target.to_s)
     source_encoded = wide_string(source.to_s)
 
-    flags = 0x1
+    flags = REPLACEFILE_IGNORE_MERGE_ERRORS
     backup_file = nil
     result = ReplaceFileW(
       target_encoded,
