@@ -251,6 +251,7 @@ module Puppet
         Puppet::Network::HTTP::NoCachePool.new
       },
       :ssl_host => proc { Puppet::SSL::Host.localhost },
+      :plugins => proc { Puppet::Plugins::Configuration.load_plugins }
     }
   end
 
@@ -337,4 +338,4 @@ require 'puppet/data_binding'
 require 'puppet/util/storage'
 require 'puppet/status'
 require 'puppet/file_bucket/file'
-require 'puppet/plugins'
+require 'puppet/plugins/configuration'

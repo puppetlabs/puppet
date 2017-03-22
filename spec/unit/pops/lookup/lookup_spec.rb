@@ -176,12 +176,30 @@ describe 'The lookup API' do
         {
           'hiera.yaml' => <<-YAML.unindent,
             version: 5
+            hierarchy:
+              - name: Common
+                path: common.yaml
+              - name: More
+                path: more.yaml
             YAML
           'data' => {
-            'common.yaml' => <<-YAML.unindent
+            'common.yaml' => <<-YAML.unindent,
               a: a (from other global)
               d: d (from other global)
+              mixed_adapter_hash:
+                a:
+                  ab: value a.ab (from other common global)
+                  ad: value a.ad (from other common global)
               mod::e: mod::e (from other global)
+              lookup_options:
+                mixed_adapter_hash:
+                  merge: deep
+              YAML
+            'more.yaml' => <<-YAML.unindent
+              mixed_adapter_hash:
+                a:
+                  aa: value a.aa (from other more global)
+                  ac: value a.ac (from other more global)
               YAML
           }
         }
@@ -223,6 +241,19 @@ describe 'The lookup API' do
       it 'does not find data in module layer' do
         expect(Lookup.lookup('mod::c', nil, 'not found', true, nil, other_invocation)).to eql('not found')
         expect(Lookup.lookup('mod::c', nil, 'not found', true, nil, invocation)).to eql('mod::c (from module)')
+      end
+
+      it 'resolves lookup options using the custom adapter' do
+        expect(Lookup.lookup('mixed_adapter_hash', nil, 'not found', true, nil, other_invocation)).to eql(
+          {
+            'a' => {
+              'aa' => 'value a.aa (from other more global)',
+              'ab' => 'value a.ab (from other common global)',
+              'ac' => 'value a.ac (from other more global)',
+              'ad' => 'value a.ad (from other common global)'
+            }
+          }
+        )
       end
     end
   end

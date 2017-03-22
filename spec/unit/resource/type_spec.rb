@@ -243,7 +243,7 @@ describe Puppet::Resource::Type do
     let(:parser) { Puppet::Pops::Parser::Parser.new() }
 
     def wrap3x(expression)
-      Puppet::Parser::AST::PopsBridge::Expression.new(:value => expression.current)
+      Puppet::Parser::AST::PopsBridge::Expression.new(:value => expression.model)
     end
 
     def parse_expression(expr_string)
@@ -903,7 +903,7 @@ describe Puppet::Resource::Type do
 
     it "should set the other class's code as its code if it has none" do
       dest = Puppet::Resource::Type.new(:hostclass, "bar")
-      source = Puppet::Resource::Type.new(:hostclass, "foo", :code => code("bar"))
+      source = Puppet::Resource::Type.new(:hostclass, "foo", :code => code("bar").model)
 
       dest.merge(source)
 

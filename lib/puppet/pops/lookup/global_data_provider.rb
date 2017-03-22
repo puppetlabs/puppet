@@ -1,4 +1,3 @@
-require 'hiera/scope'
 require_relative 'configured_data_provider'
 
 module Puppet::Pops
@@ -12,6 +11,7 @@ class GlobalDataProvider < ConfiguredDataProvider
   def unchecked_key_lookup(key, lookup_invocation, merge)
     config = config(lookup_invocation)
     if(config.version == 3)
+      require 'hiera/scope'
       # Hiera version 3 needs access to special scope variables
       scope = lookup_invocation.scope
       unless scope.is_a?(Hiera::Scope)
@@ -53,7 +53,7 @@ class GlobalDataProvider < ConfiguredDataProvider
   protected
 
   def assert_config_version(config)
-    raise Puppet::DataBinding::LookupError, "#{config.name} cannot be used in the global layer" if config.version == 4
+    config.fail(Issues::HIERA_UNSUPPORTED_VERSION_IN_GLOBAL) if config.version == 4
     config
   end
 

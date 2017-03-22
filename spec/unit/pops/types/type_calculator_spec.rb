@@ -43,7 +43,7 @@ describe 'The type calculator' do
   end
 
   def type_alias_t(name, type_string)
-    type_expr = Parser::EvaluatingParser.new.parse_string(type_string).current
+    type_expr = Parser::EvaluatingParser.new.parse_string(type_string)
     TypeFactory.type_alias(name, type_expr)
   end
 
@@ -1629,12 +1629,12 @@ describe 'The type calculator' do
       types_to_test.each {|t| expect(calculator.instance?(t::DEFAULT, :default)).to eq(false) }
     end
 
-    it 'should consider fixnum instanceof PIntegerType' do
+    it 'should consider integer instanceof PIntegerType' do
       expect(calculator.instance?(PIntegerType::DEFAULT, 1)).to eq(true)
     end
 
-    it 'should consider fixnum instanceof Fixnum' do
-      expect(calculator.instance?(Fixnum, 1)).to eq(true)
+    it 'should consider integer instanceof Integer' do
+      expect(calculator.instance?(Integer, 1)).to eq(true)
     end
 
     it 'should consider integer in range' do
@@ -1820,7 +1820,7 @@ describe 'The type calculator' do
       it 'a Closure should be considered a Callable' do
         factory = Model::Factory
         params = [factory.PARAM('a')]
-        the_block = factory.LAMBDA(params,factory.literal(42), nil)
+        the_block = factory.LAMBDA(params,factory.literal(42), nil).model
         the_closure = Evaluator::Closure::Dynamic.new(:fake_evaluator, the_block, :fake_scope)
         expect(calculator.instance?(all_callables_t, the_closure)).to be_truthy
         expect(calculator.instance?(callable_t(object_t), the_closure)).to be_truthy
@@ -1885,10 +1885,16 @@ describe 'The type calculator' do
   end
 
   context 'when converting a ruby class' do
-    it 'should yield \'PIntegerType\' for Integer, Fixnum, and Bignum' do
-      [Integer,Fixnum,Bignum].each do |c|
-        expect(calculator.type(c).class).to eq(PIntegerType)
-      end
+    it 'should yield \'PIntegerType\' for Fixnum' do
+      expect(calculator.type(Fixnum).class).to eq(PIntegerType)
+    end
+
+    it 'should yield \'PIntegerType\' for Bignum' do
+      expect(calculator.type(Bignum).class).to eq(PIntegerType)
+    end
+
+    it 'should yield \'PIntegerType\' for Integer' do
+      expect(calculator.type(Integer).class).to eq(PIntegerType)
     end
 
     it 'should yield \'PFloatType\' for Float' do

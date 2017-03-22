@@ -30,14 +30,14 @@ module Puppet::Network::HTTP
 
     # Creates a new HTTP client connection to `host`:`port`.
     # @param host [String] the host to which this client will connect to
-    # @param port [Fixnum] the port to which this client will connect to
+    # @param port [Integer] the port to which this client will connect to
     # @param options [Hash] options influencing the properties of the created
     #   connection,
     # @option options [Boolean] :use_ssl true to connect with SSL, false
     #   otherwise, defaults to true
     # @option options [#setup_connection] :verify An object that will configure
     #   any verification to do on the connection
-    # @option options [Fixnum] :redirect_limit the number of allowed
+    # @option options [Integer] :redirect_limit the number of allowed
     #   redirections, defaults to 10 passing any other option in the options
     #   hash results in a Puppet::Error exception
     #
@@ -62,9 +62,13 @@ module Puppet::Network::HTTP
     end
 
     # @!macro [new] common_options
-    #   @param options [Hash] options influencing the request made
+    #   @param options [Hash] options influencing the request made. Any
+    #   options not recognized by this class will be ignored - no error will
+    #   be thrown.
     #   @option options [Hash{Symbol => String}] :basic_auth The basic auth
-    #     :username and :password to use for the request
+    #     :username and :password to use for the request, :metric_id Ignored
+    #     by this class - used by Puppet Server only. The metric id by which
+    #     to track metrics on requests.
 
     # @param path [String]
     # @param headers [Hash{String => String}]

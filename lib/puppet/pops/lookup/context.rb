@@ -126,7 +126,7 @@ class Context
   include Types::PuppetObject
   extend Forwardable
 
-  def self._ptype
+  def self._pcore_type
     @type
   end
 

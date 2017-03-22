@@ -15,7 +15,7 @@ class EnvironmentDataProvider < ConfiguredDataProvider
       config
     else
       if Puppet[:strict] == :error
-        raise Puppet::DataBinding::LookupError, "#{config.name} cannot be used in an environment"
+        config.fail(Issues::HIERA_VERSION_3_NOT_GLOBAL, :where => 'environment')
       else
         Puppet.warn_once(:hiera_v3_at_env_root, config.config_path, 'hiera.yaml version 3 found at the environment root was ignored')
       end

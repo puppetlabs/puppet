@@ -64,7 +64,7 @@ describe 'The lookup function' do
     # Initialize loaders based on the environmentpath. It does not work to
     # just set the setting environmentpath for some reason - this achieves the same:
     # - first a loader is created, loading directory environments from the fixture (there is
-    # one environment, 'sample', which will be loaded since the node references this
+    # one environment, 'production', which will be loaded since the node references this
     # environment by name).
     # - secondly, the created env loader is set as 'environments' in the puppet context.
     #
@@ -87,11 +87,6 @@ describe 'The lookup function' do
 
     it "can lookup value provided by the module that has 'function' data_provider entry in metadata.json" do
       resources = compile_and_get_notifications("$args = ['meta::b']\ninclude meta\nnotify { $meta::result: }\n")
-      expect(resources).to include('module_b')
-    end
-
-    it "can lookup value provided by the module that has 'sample' data_provider entry in metadata.json" do
-      resources = compile_and_get_notifications("$args = ['metawcp::b']\ninclude metawcp\nnotify { $metawcp::result: }\n")
       expect(resources).to include('module_b')
     end
 
@@ -383,7 +378,7 @@ describe 'The lookup function' do
         expect { compiler.compile }.to raise_error(Puppet::ParseError, /did not find a value for the name 'bad_data::b'/)
       end
       warnings = logs.select { |log| log.level == :warning }.map { |log| log.message }
-      expect(warnings).to include("Module 'bad_data': deprecated API function \"bad_data::data\" must use keys qualified with the name of the module")
+      expect(warnings).to include("Module 'bad_data': Value returned from deprecated API function 'bad_data::data' must use keys qualified with the name of the module")
     end
 
     it 'will succeed finding prefixed keys even when a key in the function provided module data is not prefixed' do
@@ -397,7 +392,7 @@ describe 'The lookup function' do
         expect(resources).to include('module_c')
       end
       warnings = logs.select { |log| log.level == :warning }.map { |log| log.message }
-      expect(warnings).to include("Module 'bad_data': deprecated API function \"bad_data::data\" must use keys qualified with the name of the module")
+      expect(warnings).to include("Module 'bad_data': Value returned from deprecated API function 'bad_data::data' must use keys qualified with the name of the module")
     end
 
     it 'will resolve global, environment, and module correctly' do
@@ -429,7 +424,7 @@ describe 'The lookup function' do
         compiler.compile
       end
       warnings = logs.select { |log| log.level == :warning }.map { |log| log.message }
-      expect(warnings).to include("Module 'bad_data': deprecated API function \"bad_data::data\" must use keys qualified with the name of the module")
+      expect(warnings).to include("Module 'bad_data': Value returned from deprecated API function 'bad_data::data' must use keys qualified with the name of the module")
     end
 
     it 'a warning will be logged when key in the hiera provided module data is not prefixed' do
@@ -439,7 +434,7 @@ describe 'The lookup function' do
         compiler.compile
       end
       warnings = logs.select { |log| log.level == :warning }.map { |log| log.message }
-      expect(warnings).to include("Module 'hieraprovider': Hierarchy entry \"two paths\" must use keys qualified with the name of the module")
+      expect(warnings).to include("Module 'hieraprovider': Value returned from data_hash function 'json_data', when using location '#{environmentpath}/production/modules/hieraprovider/data/first.json', must use keys qualified with the name of the module")
     end
   end
 
@@ -514,7 +509,7 @@ describe 'The lookup function' do
         end
         expect(lookup_invocation.explainer.explain).to include(<<-EOS.unindent('  '))
           Module "abc" Data Provider (hiera configuration version 5)
-            deprecated API function "abc::data"
+            Deprecated API function "abc::data"
               No such key: "abc::x"
         EOS
       end
@@ -530,13 +525,13 @@ describe 'The lookup function' do
               Global Data Provider (hiera configuration version 5)
                 No such key: "abc::e"
               Environment Data Provider (hiera configuration version 5)
-                deprecated API function "environment::data"
+                Deprecated API function "environment::data"
                   Found key: "abc::e" value: {
                     "k1" => "env_e1",
                     "k3" => "env_e3"
                   }
               Module "abc" Data Provider (hiera configuration version 5)
-                deprecated API function "abc::data"
+                Deprecated API function "abc::data"
                   Found key: "abc::e" value: {
                     "k1" => "module_e1",
                     "k2" => "module_e2"
@@ -576,7 +571,7 @@ describe 'The lookup function' do
               Global Data Provider (hiera configuration version 5)
                 No such key: "hieraprovider::test::not_found"
               Environment Data Provider (hiera configuration version 5)
-                deprecated API function "environment::data"
+                Deprecated API function "environment::data"
                   No such key: "hieraprovider::test::not_found"
               Module "hieraprovider" Data Provider (hiera configuration version 4)
                 Using configuration "#{environmentpath}/production/modules/hieraprovider/hiera.yaml"
@@ -636,7 +631,7 @@ describe 'The lookup function' do
                     :branches => [
                       {
                         :type => :data_provider,
-                        :name => 'deprecated API function "environment::data"',
+                        :name => 'Deprecated API function "environment::data"',
                         :key => 'abc::e',
                         :value => { 'k1' => 'env_e1', 'k3' => 'env_e3' },
                         :event => :found
@@ -650,7 +645,7 @@ describe 'The lookup function' do
                     :branches => [
                       {
                         :type => :data_provider,
-                        :name => 'deprecated API function "abc::data"',
+                        :name => 'Deprecated API function "abc::data"',
                         :key => 'abc::e',
                         :event => :found,
                         :value => {

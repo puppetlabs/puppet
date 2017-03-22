@@ -97,4 +97,11 @@ class Puppet::Pops::Evaluator::CallableSignature
   def infinity?(x)
     x == Float::INFINITY
   end
+
+  # @return [Boolean] true if this signature represents an argument mismatch, false otherwise
+  #
+  # @api private
+  def argument_mismatch_handler?
+    false
+  end
 end

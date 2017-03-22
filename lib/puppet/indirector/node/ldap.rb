@@ -165,7 +165,7 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
   # Convert any values if necessary.
   def convert(value)
     case value
-    when Integer, Fixnum, Bignum; value
+    when Integer; value
     when "true"; true
     when "false"; false
     else

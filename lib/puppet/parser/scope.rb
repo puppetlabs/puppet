@@ -588,7 +588,7 @@ class Puppet::Parser::Scope
   end
 
   def is_topscope?
-    compiler and self == compiler.topscope
+    @compiler && equal?(@compiler.topscope)
   end
 
   def lookup_qualified_variable(class_name, variable_name, position)
@@ -710,14 +710,45 @@ class Puppet::Parser::Scope
     }
   end
 
-  RESERVED_VARIABLE_NAMES = ['trusted', 'facts'].freeze
+  # Merge all settings for the given _env_name_ into this scope
+  # @param env_name [Symbol] the name of the environment
+  def merge_settings(env_name)
+    settings = Puppet.settings
+    table = effective_symtable(false)
+    settings.each_key do |name|
+      next if :name == name
+      table[name.to_s] = transform_setting(settings.value_sym(name, env_name))
+    end
+    nil
+  end
+
+  def transform_setting(val)
+    if val.is_a?(String) || val.is_a?(Numeric) || true == val || false == val || nil == val
+      val
+    elsif val.is_a?(Array)
+      val.map {|entry| transform_setting(entry) }
+    elsif val.is_a?(Hash)
+      result = {}
+      val.each {|k,v| result[transform_setting(k)] = transform_setting(v) }
+      result
+    else
+      # not ideal, but required as there are settings values that are special
+      :undef == val ? nil : val.to_s
+    end
+  end
+  private :transform_setting
+
+  VARNAME_TRUSTED = 'trusted'.freeze
+  VARNAME_FACTS = 'facts'.freeze
+  VARNAME_SERVER_FACTS = 'server_facts'.freeze
+  RESERVED_VARIABLE_NAMES = [VARNAME_TRUSTED, VARNAME_FACTS].freeze
 
   # Set a variable in the current scope.  This will override settings
   # in scopes above, but will not allow variables in the current scope
   # to be reassigned.
   #   It's preferred that you use self[]= instead of this; only use this
   # when you need to set options.
-  def setvar(name, value, options = {})
+  def setvar(name, value, options = EMPTY_HASH)
     if name =~ /^[0-9]+$/
       raise Puppet::ParseError.new("Cannot assign to a numeric match result variable '$#{name}'") # unless options[:ephemeral]
     end
@@ -726,12 +757,12 @@ class Puppet::Parser::Scope
     end
 
     # Check for reserved variable names
-    if !options[:privileged] && RESERVED_VARIABLE_NAMES.include?(name)
+    if (name == VARNAME_TRUSTED || name == VARNAME_FACTS) && !options[:privileged]
       raise Puppet::ParseError, "Attempt to assign to a reserved variable name: '#{name}'"
     end
 
     # Check for server_facts reserved variable name if the trusted_sever_facts setting is true
-    if Puppet[:trusted_server_facts] && name == 'server_facts' && !options[:privileged]
+    if name == VARNAME_SERVER_FACTS && !options[:privileged] && Puppet[:trusted_server_facts]
       raise Puppet::ParseError, "Attempt to assign to a reserved variable name: '#{name}'"
     end
 
@@ -798,15 +829,13 @@ class Puppet::Parser::Scope
   #
   # @param use_ephemeral [Boolean] whether the top most ephemeral (of any kind) should be used or not
   def effective_symtable(use_ephemeral)
-    s = @ephemeral.last
-    if use_ephemeral
-      return s || @symtable
-    else
-      while s && !s.is_local_scope?()
-        s = s.parent
-      end
-      s || @symtable
+    s = @ephemeral[-1]
+    return s || @symtable if use_ephemeral
+
+    while s && !s.is_local_scope?()
+      s = s.parent
     end
+    s || @symtable
   end
 
   # Sets the variable value of the name given as an argument to the given value. The value is
@@ -816,12 +845,12 @@ class Puppet::Parser::Scope
   #
   # @param varname [String] The variable name to which the value is assigned. Must not contain `::`
   # @param value [String] The value to assign to the given variable name.
-  # @param options [Hash] Additional options, not part of api.
+  # @param options [Hash] Additional options, not part of api and no longer used.
   #
   # @api public
   #
-  def []=(varname, value, options = {})
-    setvar(varname, value, options = {})
+  def []=(varname, value, _ = nil)
+    setvar(varname, value)
   end
 
   def append_value(bound_value, new_value)
@@ -864,7 +893,7 @@ class Puppet::Parser::Scope
 
   # Pop ephemeral scopes up to level and return them
   #
-  # @param level [Fixnum] a positive integer
+  # @param level [Integer] a positive integer
   # @return [Array] the removed ephemeral scopes
   # @api private
   def pop_ephemerals(level)
@@ -899,6 +928,19 @@ class Puppet::Parser::Scope
   # @api private
   def with_global_scope(&block)
     find_global_scope.without_ephemeral_scopes(&block)
+  end
+
+  # Execute given block with a ephemeral scope containing the given variables
+  # @api private
+  def with_local_scope(scope_variables)
+    local = LocalScope.new(@ephemeral.last)
+    scope_variables.each_pair { |k, v| local[k] = v }
+    @ephemeral.push(local)
+    begin
+      yield(self)
+    ensure
+      @ephemeral.pop
+    end
   end
 
   # Execute given block with all ephemeral popped from the ephemeral stack
@@ -959,7 +1001,7 @@ class Puppet::Parser::Scope
       new_ephemeral(true)
       match.each {|k,v| setvar(k, v, :file => file, :line => line, :ephemeral => true) }
       # Must always have an inner match data scope (that starts out as transparent)
-      # In 3x slightly wasteful, since a new nested scope is created for a match 
+      # In 3x slightly wasteful, since a new nested scope is created for a match
       # (TODO: Fix that problem)
       new_ephemeral(false)
     else

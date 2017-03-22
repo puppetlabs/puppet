@@ -42,7 +42,7 @@ Puppet::Type.newtype(:tidy) do
       case newval
       when :true, :inf; true
       when :false; false
-      when Integer, Fixnum, Bignum; value
+      when Integer; value
       when /^\d+$/; Integer(value)
       else
         raise ArgumentError, "Invalid recurse value #{value.inspect}"
@@ -243,7 +243,7 @@ Puppet::Type.newtype(:tidy) do
     return [] unless stat(self[:path])
 
     case self[:recurse]
-    when Integer, Fixnum, Bignum, /^\d+$/
+    when Integer, /^\d+$/
       parameter = { :recurse => true, :recurselimit => self[:recurse] }
     when true, :true, :inf
       parameter = { :recurse => true }

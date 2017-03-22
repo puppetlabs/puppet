@@ -24,6 +24,26 @@ class TypeFormatter
     @singleton
   end
 
+  def expanded
+    tf = clone
+    tf.instance_variable_set(:@expanded, true)
+    tf
+  end
+
+  def indented(indent = 0, indent_width = 2)
+    tf = clone
+    tf.instance_variable_set(:@indent, indent)
+    tf.instance_variable_set(:@indent_width, indent_width)
+    tf
+  end
+
+  def ruby(ref_ctor)
+    tf = clone
+    tf.instance_variable_set(:@ruby, true)
+    tf.instance_variable_set(:@ref_ctor, ref_ctor)
+    tf
+  end
+
   # Produces a string representing the type
   # @api public
   #
@@ -84,9 +104,9 @@ class TypeFormatter
     if @ruby && t.is_a?(PAnyType)
       @ruby = false
       begin
-        @bld << @ref_ctor << "('"
-        @@string_visitor.visit_this_0(self, t)
-        @bld << "')"
+        @bld << @ref_ctor << '('
+        @@string_visitor.visit_this_0(self, TypeFormatter.new.string(t))
+        @bld << ')'
       ensure
         @ruby = true
       end
@@ -304,11 +324,10 @@ class TypeFormatter
   end
 
   def string_PuppetObject(t)
-    @bld << t._ptype.name << '('
-    append_indented_string(t.i12n_hash, @indent || 0, @indent_width || 2, true)
+    @bld << t._pcore_type.name << '('
+    append_indented_string(t._pcore_init_hash, @indent || 0, @indent_width || 2, true)
     @bld.chomp!
     @bld << ')'
-    newline if @indent
   end
 
   # @api private
@@ -484,7 +503,17 @@ class TypeFormatter
 
   # @api private
   def string_Array(t)
-    append_array('') { append_strings(t) }
+    append_array('') do
+      if @indent && !is_short_array?(t)
+        @indent += 1
+        t.each { |elem| newline; append_string(elem); @bld << COMMA_SEP }
+        chomp_list
+        @indent -= 1
+        newline
+      else
+        append_strings(t)
+      end
+    end
   end
 
   # @api private
@@ -568,6 +597,21 @@ class TypeFormatter
   COMMA_SEP = ', '.freeze
 
   HASH_ENTRY_OP = ' => '.freeze
+
+  def is_short_array?(t)
+    t.empty? || 100 - @indent * @indent_width > t.inject(0) do |sum, elem|
+      case elem
+      when true, false, nil, Numeric, Symbol
+        sum + elem.inspect.length()
+      when String
+        sum + 2 + elem.length
+      when Hash, Array
+        sum + (elem.empty? ? 2 : 1000)
+      else
+        sum + 1000
+      end
+    end
+  end
 
   def range_array_part(t)
     t.nil? || t.unbounded? ? EMPTY_ARRAY : [t.from.nil? ? 'default' : t.from.to_s , t.to.nil? ? 'default' : t.to.to_s ]

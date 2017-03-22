@@ -399,11 +399,6 @@ describe Puppet::Resource do
             inject_and_set_defaults(resource, scope)
           end
 
-          it "should not query the injector" do
-            compiler.injector.expects(:find).never
-            inject_and_set_defaults(resource, scope)
-          end
-
           it "should use the value provided" do
             Puppet::DataBinding.indirection.expects(:find).never
             expect(resource.set_default_parameters(scope)).to eq([])

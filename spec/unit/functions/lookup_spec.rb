@@ -9,207 +9,393 @@ describe "The lookup function" do
   include PuppetSpec::Compiler
   include PuppetSpec::Files
 
-  context 'with an environment' do
-    let(:env_name) { 'spec' }
-    let(:code_dir_files) { {} }
-    let(:code_dir) { tmpdir('code') }
-    let(:ruby_dir) { tmpdir('ruby') }
-    let(:env_modules) { {} }
-    let(:env_hiera_yaml) do
-      <<-YAML.unindent
-        ---
-        version: 5
-        hierarchy:
-          - name: "Common"
-            data_hash: yaml_data
-            path: "common.yaml"
-        YAML
+  let(:env_name) { 'spec' }
+  let(:code_dir_files) { {} }
+  let(:code_dir) { tmpdir('code') }
+  let(:ruby_dir) { tmpdir('ruby') }
+  let(:env_modules) { {} }
+  let(:env_hiera_yaml) do
+    <<-YAML.unindent
+      ---
+      version: 5
+      hierarchy:
+        - name: "Common"
+          data_hash: yaml_data
+          path: "common.yaml"
+      YAML
+  end
+
+  let(:env_data) { {} }
+
+  let(:environment_files) do
+    {
+      env_name => {
+        'modules' => env_modules,
+        'hiera.yaml' => env_hiera_yaml,
+        'data' => env_data
+      }
+    }
+  end
+
+  let(:ruby_dir_files) { {} }
+
+  let(:logs) { [] }
+  let(:scope_additions ) { {} }
+  let(:notices) { logs.select { |log| log.level == :notice }.map { |log| log.message } }
+  let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
+  let(:debugs) { logs.select { |log| log.level == :debug }.map { |log| log.message } }
+  let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(populated_env_dir, env_name, 'modules')]) }
+  let(:environments) { Puppet::Environments::Directories.new(populated_env_dir, []) }
+  let(:node) { Puppet::Node.new('test_lookup', :environment => env) }
+  let(:compiler) { Puppet::Parser::Compiler.new(node) }
+  let(:lookup_func) { Puppet.lookup(:loaders).puppet_system_loader.load(:function, 'lookup') }
+  let(:invocation_with_explain) { Puppet::Pops::Lookup::Invocation.new(compiler.topscope, {}, {}, true) }
+  let(:explanation) { invocation_with_explain.explainer.explain }
+
+  let(:populated_code_dir) do
+    dir_contained_in(code_dir, code_dir_files)
+    code_dir
+  end
+
+  let(:populated_ruby_dir) do
+    dir_contained_in(ruby_dir, ruby_dir_files)
+    ruby_dir
+  end
+
+  let(:env_dir) do
+    d = File.join(populated_code_dir, 'environments')
+    Dir.mkdir(d)
+    d
+  end
+
+  let(:populated_env_dir) do
+    dir_contained_in(env_dir, environment_files)
+    env_dir
+  end
+
+  before(:each) do
+    Puppet.settings[:codedir] = code_dir
+    Puppet.push_context(:environments => environments, :current_environment => env)
+  end
+
+  after(:each) do
+    Puppet.pop_context
+    if Object.const_defined?(:Hiera)
+      Hiera.send(:remove_instance_variable, :@config) if Hiera.instance_variable_defined?(:@config)
+      Hiera.send(:remove_instance_variable, :@logger) if Hiera.instance_variable_defined?(:@logger)
+      if Hiera.const_defined?(:Config)
+        Hiera::Config.send(:remove_instance_variable, :@config) if Hiera::Config.instance_variable_defined?(:@config)
+      end
+      if Hiera.const_defined?(:Backend) && Hiera::Backend.respond_to?(:clear!)
+        Hiera::Backend.clear!
+      end
+    end
+  end
+
+  def collect_notices(code, explain = false, &block)
+    Puppet[:code] = code
+    Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+      scope = compiler.topscope
+      scope['environment'] = env_name
+      scope['domain'] = 'example.com'
+      scope_additions.each_pair { |k, v| scope[k] = v }
+      if explain
+        begin
+          invocation_with_explain.lookup('dummy', nil) do
+            if block_given?
+              compiler.compile { |catalog| block.call(compiler.topscope); catalog }
+            else
+              compiler.compile
+            end
+          end
+        rescue RuntimeError => e
+          invocation_with_explain.report_text { e.message }
+        end
+      else
+        if block_given?
+          compiler.compile { |catalog| block.call(compiler.topscope); catalog }
+        else
+          compiler.compile
+        end
+      end
+    end
+    nil
+  end
+
+  def lookup(key, options = {}, explain = false)
+    nc_opts = options.empty? ? '' : ", #{Puppet::Pops::Types::TypeFormatter.string(options)}"
+    keys = key.is_a?(Array) ? key : [key]
+    collect_notices(keys.map { |k| "notice(String(lookup('#{k}'#{nc_opts}), '%p'))" }.join("\n"), explain)
+    if explain
+      explanation
+    else
+      result = notices.map { |n| Puppet::Pops::Types::TypeParser.singleton.parse_literal(n) }
+      key.is_a?(Array) ? result : result[0]
+    end
+  end
+
+  def explain(key, options = {})
+    lookup(key, options, true)[1]
+    explanation
+  end
+
+  context 'with faulty hiera.yaml configuration' do
+    context 'in global layer' do
+      let(:global_data) do
+        {
+          'common.yaml' => <<-YAML.unindent
+            a: value a (from global)
+            YAML
+        }
+      end
+
+      let(:code_dir_files) do
+        {
+          'hiera.yaml' => hiera_yaml,
+          'data' => global_data
+        }
+      end
+
+      before(:each) do
+        # Need to set here since spec_helper defines these settings in its "before each"
+        Puppet.settings[:codedir] = populated_code_dir
+        Puppet.settings[:hiera_config] = File.join(code_dir, 'hiera.yaml')
+      end
+
+      context 'using a not yet supported hiera version' do
+        let(:hiera_yaml) { <<-YAML.unindent }
+          version: 6
+          YAML
+
+        it 'fails and reports error' do
+          expect { lookup('a') }.to raise_error("This runtime does not support hiera.yaml version 6 in #{code_dir}/hiera.yaml")
+        end
+      end
+
+      context 'with multiply defined backend using hiera version 3' do
+        let(:hiera_yaml) { <<-YAML.unindent }
+          :version: 3
+          :backends:
+            - yaml
+            - json
+            - yaml
+          YAML
+
+        it 'fails and reports error' do
+          expect { lookup('a') }.to raise_error(
+            "Backend 'yaml' is defined more than once. First defined at line 3 at #{code_dir}/hiera.yaml:5")
+        end
+      end
+
+      context 'using hiera version 4' do
+        let(:hiera_yaml) { <<-YAML.unindent }
+          version: 4
+          YAML
+
+        it 'fails and reports error' do
+          expect { lookup('a') }.to raise_error(
+            "hiera.yaml version 4 cannot be used in the global layer in #{code_dir}/hiera.yaml")
+        end
+      end
+
+      context 'using hiera version 5' do
+        context 'with multiply defined hierarchy' do
+          let(:hiera_yaml) { <<-YAML.unindent }
+            version: 5
+            hierarchy:
+              - name: Common
+                path: common.yaml
+              - name: Other
+                path: other.yaml
+              - name: Common
+                path: common.yaml
+            YAML
+
+          it 'fails and reports error' do
+            expect { lookup('a') }.to raise_error(
+              "Hierarchy name 'Common' defined more than once. First defined at line 3 at #{code_dir}/hiera.yaml:7")
+          end
+        end
+
+        context 'with hiera3_backend that is provided as data_hash function' do
+          let(:hiera_yaml) { <<-YAML.unindent }
+            version: 5
+            hierarchy:
+              - name: Common
+                hiera3_backend: hocon
+                path: common.conf
+            YAML
+
+          it 'fails and reports error' do
+            expect { lookup('a') }.to raise_error(
+              "Use \"data_hash: hocon_data\" instead of \"hiera3_backend: hocon\" at #{code_dir}/hiera.yaml:4")
+          end
+        end
+
+        context 'with no data provider function defined' do
+          let(:hiera_yaml) { <<-YAML.unindent }
+            version: 5
+            defaults:
+              datadir: data
+            hierarchy:
+              - name: Common
+                path: common.txt
+            YAML
+
+          it 'fails and reports error' do
+            expect { lookup('a') }.to raise_error(
+              "One of data_hash, lookup_key, data_dig, or hiera3_backend must be defined in hierarchy 'Common' in #{code_dir}/hiera.yaml")
+          end
+        end
+
+        context 'with multiple data providers in defaults' do
+          let(:hiera_yaml) { <<-YAML.unindent }
+            version: 5
+            defaults:
+              data_hash: yaml_data
+              lookup_key: eyaml_lookup_key
+              datadir: data
+            hierarchy:
+              - name: Common
+                path: common.txt
+            YAML
+
+          it 'fails and reports error' do
+            expect { lookup('a') }.to raise_error(
+              "Only one of data_hash, lookup_key, data_dig, or hiera3_backend can be defined in defaults in #{code_dir}/hiera.yaml")
+          end
+        end
+
+        context 'with non existing data provider function' do
+          let(:hiera_yaml) { <<-YAML.unindent }
+            version: 5
+            hierarchy:
+              - name: Common
+                data_hash: nonesuch_txt_data
+                path: common.yaml
+            YAML
+
+          it 'fails and reports error' do
+            Puppet[:strict] = :error
+            expect { lookup('a') }.to raise_error(
+              "Unable to find 'data_hash' function named 'nonesuch_txt_data' in #{code_dir}/hiera.yaml")
+          end
+        end
+
+        context 'with missing variables' do
+          let(:scope_additions) { { 'fqdn' => 'test.example.com' } }
+          let(:hiera_yaml) { <<-YAML.unindent }
+            version: 5
+            hierarchy:
+              - name: Common # don't report this line %{::nonesuch}
+                path: "%{::fqdn}/%{::nonesuch}/data.yaml"
+            YAML
+
+          it 'fails and reports errors when strict == error' do
+            Puppet[:strict] = :error
+            expect { lookup('a') }.to raise_error("Undefined variable '::nonesuch' at #{code_dir}/hiera.yaml:4")
+          end
+        end
+
+        context 'using interpolation functions' do
+          let(:hiera_yaml) { <<-YAML.unindent }
+            version: 5
+            hierarchy:
+              - name: Common # don't report this line %{::nonesuch}
+                path: "%{lookup('fqdn')}/data.yaml"
+            YAML
+
+          it 'fails and reports errors when strict == error' do
+            Puppet[:strict] = :error
+            expect { lookup('a') }.to raise_error("Interpolation using method syntax is not allowed in this context in #{code_dir}/hiera.yaml")
+          end
+        end
+      end
     end
 
+    context 'in environment layer' do
+      context 'using hiera version 4' do
+        context 'with an unknown backend' do
+          let(:env_hiera_yaml) { <<-YAML.unindent }
+            version: 4
+            hierarchy:
+              - name: Common
+                backend: nonesuch
+                path: common.yaml
+            YAML
+
+          it 'fails and reports error' do
+            expect { lookup('a') }.to raise_error(
+              "No data provider is registered for backend 'nonesuch' at #{env_dir}/spec/hiera.yaml:4")
+          end
+        end
+
+        context 'with multiply defined hierarchy' do
+          let(:env_hiera_yaml) { <<-YAML.unindent }
+            version: 4
+            hierarchy:
+              - name: Common
+                backend: yaml
+                path: common.yaml
+              - name: Other
+                backend: yaml
+                path: other.yaml
+              - name: Common
+                backend: yaml
+                path: common.yaml
+            YAML
+
+          it 'fails and reports error' do
+            expect { lookup('a') }.to raise_error(
+              "Hierarchy name 'Common' defined more than once. First defined at line 3 at #{env_dir}/spec/hiera.yaml:9")
+          end
+        end
+      end
+
+      context 'using hiera version 5' do
+        context 'with a hiera3_backend declaration' do
+          let(:env_hiera_yaml) { <<-YAML.unindent }
+            version: 5
+            hierarchy:
+              - name: Common
+                hiera3_backend: something
+            YAML
+
+          it 'fails and reports error' do
+            expect { lookup('a') }.to raise_error(
+              "'hiera3_backend' is only allowed in the global layer at #{env_dir}/spec/hiera.yaml:4")
+          end
+        end
+      end
+    end
+  end
+
+  context 'with an environment' do
     let(:env_data) do
       {
         'common.yaml' => <<-YAML.unindent
-          ---
-          a: value a (from environment)
-          c:
-            c_b: value c_b (from environment)
-          mod_a::a: value mod_a::a (from environment)
-          mod_a::hash_a:
-            a: value mod_a::hash_a.a (from environment)
+        ---
+        a: value a (from environment)
+        c:
+          c_b: value c_b (from environment)
+        mod_a::a: value mod_a::a (from environment)
+        mod_a::hash_a:
+          a: value mod_a::hash_a.a (from environment)
+        mod_a::hash_b:
+          a: value mod_a::hash_b.a (from environment)
+        hash_b:
+          hash_ba:
+            bab: value hash_b.hash_ba.bab (from environment)
+        hash_c:
+          hash_ca:
+            caa: value hash_c.hash_ca.caa (from environment)
+        lookup_options:
           mod_a::hash_b:
-            a: value mod_a::hash_b.a (from environment)
-          hash_b:
-            hash_ba:
-              bab: value hash_b.hash_ba.bab (from environment)
+            merge: hash
           hash_c:
-            hash_ca:
-              caa: value hash_c.hash_ca.caa (from environment)
-          lookup_options:
-            mod_a::hash_b:
-              merge: hash
-            hash_c:
-              merge: hash
-          YAML
+            merge: hash
+      YAML
       }
-    end
-
-    let(:environment_files) do
-      {
-        env_name => {
-          'modules' => env_modules,
-          'hiera.yaml' => env_hiera_yaml,
-          'data' => env_data
-        }
-      }
-    end
-
-    let(:ruby_dir_files) do
-      {
-        'hiera' => {
-          'backend' => {
-            'custom_backend.rb' => <<-RUBY.unindent,
-              class Hiera::Backend::Custom_backend
-                def lookup(key, scope, order_override, resolution_type, context)
-                  case key
-                  when 'hash_c'
-                    { 'hash_ca' => { 'cad' => 'value hash_c.hash_ca.cad (from global custom)' }}
-                  when 'hash'
-                    { 'array' => [ 'x5,x6' ] }
-                  when 'array'
-                    [ 'x5,x6' ]
-                  when 'datasources'
-                    Hiera::Backend.datasources(scope, order_override) { |source| source }
-                  when 'dotted.key'
-                    'custom backend received request for dotted.key value'
-                  else
-                    throw :no_such_key
-                  end
-                end
-              end
-              RUBY
-            'other_backend.rb' => <<-RUBY.unindent,
-              class Hiera::Backend::Other_backend
-                def lookup(key, scope, order_override, resolution_type, context)
-                  value = Hiera::Config[:other][key.to_sym]
-                  throw :no_such_key if value.nil?
-                  value
-                end
-              end
-              RUBY
-          }
-        }
-      }
-    end
-
-    let(:logs) { [] }
-    let(:scope_additions ) { {} }
-    let(:notices) { logs.select { |log| log.level == :notice }.map { |log| log.message } }
-    let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
-    let(:debugs) { logs.select { |log| log.level == :debug }.map { |log| log.message } }
-    let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(populated_env_dir, env_name, 'modules')]) }
-    let(:environments) { Puppet::Environments::Directories.new(populated_env_dir, []) }
-    let(:node) { Puppet::Node.new('test_lookup', :environment => env) }
-    let(:compiler) { Puppet::Parser::Compiler.new(node) }
-    let(:lookup_func) { Puppet.lookup(:loaders).puppet_system_loader.load(:function, 'lookup') }
-    let(:defaults) {
-      {
-        'mod_a::xd' => 'value mod_a::xd (from default)',
-        'mod_a::xd_found' => 'value mod_a::xd_found (from default)',
-        'scope_xd' => 'value scope_xd (from default)'
-      }}
-    let(:overrides) {
-      {
-        'mod_a::xo' => 'value mod_a::xo (from override)',
-        'scope_xo' => 'value scope_xo (from override)'
-      }}
-    let(:invocation_with_explain) { Puppet::Pops::Lookup::Invocation.new(compiler.topscope, {}, {}, true) }
-    let(:explanation) { invocation_with_explain.explainer.explain }
-
-    let(:populated_code_dir) do
-      dir_contained_in(code_dir, code_dir_files)
-      code_dir
-    end
-
-    let(:populated_ruby_dir) do
-      dir_contained_in(ruby_dir, ruby_dir_files)
-      ruby_dir
-    end
-
-    let(:env_dir) do
-      d = File.join(populated_code_dir, 'environments')
-      Dir.mkdir(d)
-      d
-    end
-
-    let(:populated_env_dir) do
-      dir_contained_in(env_dir, environment_files)
-      env_dir
-    end
-
-    before(:each) do
-      Puppet.settings[:codedir] = code_dir
-      Puppet.push_context(:environments => environments, :current_environment => env)
-    end
-
-    after(:each) do
-      Puppet.pop_context
-      if Object.const_defined?(:Hiera)
-        Hiera.send(:remove_instance_variable, :@config) if Hiera.instance_variable_defined?(:@config)
-        Hiera.send(:remove_instance_variable, :@logger) if Hiera.instance_variable_defined?(:@logger)
-        if Hiera.const_defined?(:Config)
-          Hiera::Config.send(:remove_instance_variable, :@config) if Hiera::Config.instance_variable_defined?(:@config)
-        end
-        if Hiera.const_defined?(:Backend) && Hiera::Backend.respond_to?(:clear!)
-          Hiera::Backend.clear!
-        end
-      end
-    end
-
-    def collect_notices(code, explain = false, &block)
-      Puppet[:code] = code
-      Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
-        scope = compiler.topscope
-        scope['environment'] = env_name
-        scope['domain'] = 'example.com'
-        scope_additions.each_pair { |k, v| scope[k] = v }
-        if explain
-          begin
-            invocation_with_explain.lookup('dummy', nil) do
-              if block_given?
-                compiler.compile { |catalog| block.call(compiler.topscope); catalog }
-              else
-                compiler.compile
-              end
-            end
-          rescue RuntimeError => e
-            invocation_with_explain.report_text { e.message }
-          end
-        else
-          if block_given?
-            compiler.compile { |catalog| block.call(compiler.topscope); catalog }
-          else
-            compiler.compile
-          end
-        end
-      end
-      nil
-    end
-
-    def lookup(key, options = {}, explain = false)
-      nc_opts = options.empty? ? '' : ", #{Puppet::Pops::Types::TypeFormatter.string(options)}"
-      keys = key.is_a?(Array) ? key : [key]
-      collect_notices(keys.map { |k| "notice(String(lookup('#{k}'#{nc_opts}), '%p'))" }.join("\n"), explain)
-      if explain
-        explanation
-      else
-        result = notices.map { |n| Puppet::Pops::Types::TypeParser.singleton.parse_literal(n) }
-        key.is_a?(Array) ? result : result[0]
-      end
-    end
-
-    def explain(key, options = {})
-      lookup(key, options, true)[1]
-      explanation
     end
 
     it 'finds data in the environment' do
@@ -390,42 +576,71 @@ describe "The lookup function" do
       end
     end
 
-    context 'that uses reserved option' do
-      let(:environment_files) do
-        {
-          env_name => {
-            'hiera.yaml' => <<-YAML.unindent,
-              ---
-              version: 5
-              hierarchy:
-                - name: "Illegal"
-                  options:
-                    #{opt_spec}
-                  data_hash: yaml_data
-              YAML
-            'data' => {
-              'foo.yaml' => "a: The value a\n"
-            }
-          }
-        }
+    context 'that uses reserved' do
+       let(:environment_files) do
+        { env_name => { 'hiera.yaml' => hiera_yaml } }
       end
 
-      context 'path' do
-        let(:opt_spec) { 'path: data/foo.yaml' }
+      context 'option' do
+       let(:hiera_yaml) { <<-YAML.unindent }
+          version: 5
+          hierarchy:
+            - name: "Illegal"
+              options:
+                #{opt_spec}
+              data_hash: yaml_data
+          YAML
 
-        it 'fails and reports the reserved option key' do
-          expect { lookup('a') }.to raise_error do |e|
-            expect(e.message).to match(/Option key 'path' used in hierarchy 'Illegal' is reserved by Puppet/)
+        context 'path' do
+          let(:opt_spec) { 'path: data/foo.yaml' }
+
+          it 'fails and reports the reserved option key' do
+            expect { lookup('a') }.to raise_error do |e|
+              expect(e.message).to match(/Option key 'path' used in hierarchy 'Illegal' is reserved by Puppet/)
+            end
+          end
+        end
+
+        context 'uri' do
+          let(:opt_spec) { 'uri: file:///data/foo.yaml' }
+
+          it 'fails and reports the reserved option key' do
+            expect { lookup('a') }.to raise_error do |e|
+              expect(e.message).to match(/Option key 'uri' used in hierarchy 'Illegal' is reserved by Puppet/)
+            end
           end
         end
       end
 
-      context 'uri' do
-        let(:opt_spec) { 'uri: file:///data/foo.yaml' }
+      context 'default option' do
+        let(:hiera_yaml) { <<-YAML.unindent }
+          ---
+          version: 5
+          defaults:
+              options:
+                #{opt_spec}
+          hierarchy:
+            - name: "Illegal"
+              data_hash: yaml_data
+          YAML
 
-        it 'fails and reports the reserved option key' do
-          expect { lookup('a') }.to raise_error do |e|
-            expect(e.message).to match(/Option key 'uri' used in hierarchy 'Illegal' is reserved by Puppet/)
+        context 'path' do
+          let(:opt_spec) { 'path: data/foo.yaml' }
+
+          it 'fails and reports the reserved option key' do
+            expect { lookup('a') }.to raise_error do |e|
+              expect(e.message).to match(/Option key 'path' used in defaults is reserved by Puppet/)
+            end
+          end
+        end
+
+        context 'uri' do
+          let(:opt_spec) { 'uri: file:///data/foo.yaml' }
+
+          it 'fails and reports the reserved option key' do
+            expect { lookup('a') }.to raise_error do |e|
+              expect(e.message).to match(/Option key 'uri' used in defaults is reserved by Puppet/)
+            end
           end
         end
       end
@@ -539,7 +754,31 @@ describe "The lookup function" do
 
         it 'fails lookup and reports a type mismatch' do
           expect { lookup('a') }.to raise_error do |e|
-            expect(e.message).to match(/wrong type, expects a value of type Scalar, Sensitive, Type, Hash, or Array, got Runtime/)
+            expect(e.message).to match(/key 'a'.*data_hash function 'yaml_data'.*using location.*wrong type, expects Puppet::LookupValue, got Runtime/)
+          end
+        end
+      end
+
+      context 'that contains illegal interpolations' do
+        context 'in the form of an alias that is not the entire string' do
+          let(:common_yaml) { <<-YAML.unindent }
+            a: "%{alias('x')} and then some"
+            x: value x
+            YAML
+
+          it 'fails lookup and reports a type mismatch' do
+            expect { lookup('a') }.to raise_error("'alias' interpolation is only permitted if the expression is equal to the entire string")
+          end
+        end
+
+        context 'in the form of an unknown function name' do
+          let(:common_yaml) { <<-YAML.unindent }
+            a: "%{what('x')}"
+            x: value x
+            YAML
+
+          it 'fails lookup and reports a type mismatch' do
+            expect { lookup('a') }.to raise_error("Unknown interpolation method 'what'")
           end
         end
       end
@@ -729,27 +968,6 @@ describe "The lookup function" do
       end
     end
 
-    context 'and a global Hiera v4 configuration' do
-      let(:code_dir_files) do
-        {
-          'hiera.yaml' => <<-YAML.unindent,
-            ---
-            version: 4
-        YAML
-        }
-      end
-
-      before(:each) do
-        # Need to set here since spec_helper defines these settings in its "before each"
-        Puppet.settings[:codedir] = populated_code_dir
-        Puppet.settings[:hiera_config] = File.join(code_dir, 'hiera.yaml')
-      end
-
-      it 'raises an error' do
-        expect { lookup('a') }.to raise_error(Puppet::Error, /hiera configuration version 4 cannot be used in the global layer/)
-      end
-    end
-
     context 'and an environment Hiera v5 configuration using globs' do
       let(:env_hiera_yaml) do
         <<-YAML.unindent
@@ -788,6 +1006,30 @@ describe "The lookup function" do
           }
         }
       end
+    end
+
+    context 'and an environment Hiera v5 configuration using mapped_paths' do
+      let(:scope_additions) do
+        {
+          'mapped' =>  {
+            'array_var' => ['a', 'b', 'c'],
+            'hash_var' => { 'x' => 'a', 'y' => 'b', 'z' => 'c' },
+            'string_var' => 's' },
+          'var' => 'global_var' # overridden by mapped path variable
+        }
+      end
+
+      let(:env_hiera_yaml) do
+        <<-YAML.unindent
+        ---
+        version: 5
+        hierarchy:
+          - name: Mapped Paths
+            mapped_paths: #{mapped_paths}
+          - name: Global Path
+            path: "%{var}.yaml"
+        YAML
+      end
 
       let(:environment_files) do
         {
@@ -798,20 +1040,199 @@ describe "The lookup function" do
         }
       end
 
-      it 'finds environment data using globs' do
-        expect(lookup('glob_a')).to eql('value glob_a')
-        expect(warnings).to be_empty
+      context 'that originates from an array' do
+        let (:mapped_paths) { '[mapped.array_var, var, "paths/%{var}.yaml"]' }
+
+        let(:env_data) do
+          {
+            'paths' => {
+              'a.yaml' => <<-YAML.unindent,
+                path_a: value path_a
+                path_h:
+                  a: value path_h.a
+                  c: value path_h.c
+                YAML
+              'b.yaml' => <<-YAML.unindent,
+                path_h:
+                  b: value path_h.b
+                  d: value path_h.d
+                YAML
+              'd.yaml' => <<-YAML.unindent
+                path_h:
+                  b: value path_h.b (from d.yaml)
+                  d: value path_h.d (from d.yaml)
+                YAML
+            },
+            'global_var.yaml' => <<-YAML.unindent,
+              path_h:
+                e: value path_h.e
+              YAML
+            'other_var.yaml' => <<-YAML.unindent
+              path_h:
+                e: value path_h.e (from other_var.yaml)
+              YAML
+          }
+        end
+
+        it 'finds environment data using mapped_paths' do
+          expect(lookup('path_a')).to eql('value path_a')
+          expect(warnings).to be_empty
+        end
+
+        it 'includes mapped path in explain output' do
+          explanation = explain('path_h', 'merge' => 'deep')
+          ['a', 'b', 'c'].each do |var|
+            expect(explanation).to match(/^\s+Path "#{env_dir}\/spec\/data\/paths\/#{var}\.yaml"\n\s+Original path: "paths\/%\{var\}\.yaml"/)
+          end
+          expect(warnings).to be_empty
+        end
+
+        it 'performs merges between mapped paths and global path interpolated using same key' do
+          expect(lookup('path_h', 'merge' => 'hash')).to eql(
+            {
+              'a' => 'value path_h.a',
+              'b' => 'value path_h.b',
+              'c' => 'value path_h.c',
+              'd' => 'value path_h.d',
+              'e' => 'value path_h.e'
+            })
+          expect(warnings).to be_empty
+        end
+
+        it 'keeps track of changes in key overridden by interpolated key' do
+          Puppet[:log_level] = 'debug'
+          collect_notices("notice('success')") do |scope|
+            expect(lookup_func.call(scope, 'path_h', 'merge' => 'hash')).to eql(
+              {
+                'a' => 'value path_h.a',
+                'b' => 'value path_h.b',
+                'c' => 'value path_h.c',
+                'd' => 'value path_h.d',
+                'e' => 'value path_h.e'
+              })
+            scope.with_local_scope('var' => 'other_var') do
+              expect(lookup_func.call(scope, 'path_h', 'merge' => 'hash')).to eql(
+                {
+                  'a' => 'value path_h.a',
+                  'b' => 'value path_h.b',
+                  'c' => 'value path_h.c',
+                  'd' => 'value path_h.d',
+                  'e' => 'value path_h.e (from other_var.yaml)'
+                })
+            end
+          end
+          expect(notices).to eql(['success'])
+          expect(debugs.any? { |m| m =~ /Hiera configuration recreated due to change of scope variables used in interpolation expressions/ }).to be_truthy
+        end
+
+        it 'keeps track of changes in elements of mapped key' do
+          Puppet[:log_level] = 'debug'
+          collect_notices("notice('success')") do |scope|
+            expect(lookup_func.call(scope, 'path_h', 'merge' => 'hash')).to eql(
+              {
+                'a' => 'value path_h.a',
+                'b' => 'value path_h.b',
+                'c' => 'value path_h.c',
+                'd' => 'value path_h.d',
+                'e' => 'value path_h.e'
+              })
+            scope['mapped']['array_var'] = ['a', 'c', 'd']
+            expect(lookup_func.call(scope, 'path_h', 'merge' => 'hash')).to eql(
+              {
+                'a' => 'value path_h.a',
+                'b' => 'value path_h.b (from d.yaml)',
+                'c' => 'value path_h.c',
+                'd' => 'value path_h.d (from d.yaml)',
+                'e' => 'value path_h.e'
+              })
+          end
+          expect(notices).to eql(['success'])
+          expect(debugs.any? { |m| m =~ /Hiera configuration recreated due to change of scope variables used in interpolation expressions/ }).to be_truthy
+        end
       end
 
-      it 'performs merges between interpolated and globbed paths' do
-        expect(lookup('glob_b', 'merge' => 'hash')).to eql(
+      context 'that originates from a hash' do
+        let (:mapped_paths) { '[mapped.hash_var, var, "paths/%{var.0}.%{var.1}.yaml"]' }
+
+        let(:env_data) do
           {
-            'a' => 'value glob_b.a',
-            'b' => 'value glob_b.b',
-            'c' => 'value glob_b.c',
-            'd' => 'value glob_b.d'
-          })
-        expect(warnings).to be_empty
+            'paths' => {
+              'x.a.yaml' => <<-YAML.unindent,
+                path_xa: value path_xa
+                path_m:
+                  a: value path_m.a
+                  c: value path_m.c
+                YAML
+              'y.b.yaml' => <<-YAML.unindent
+                path_m:
+                  b: value path_m.b
+                  d: value path_m.d
+                YAML
+            },
+            'global_var.yaml' => <<-YAML.unindent
+              path_m:
+                e: value path_m.e
+              YAML
+          }
+        end
+
+        it 'finds environment data using mapped_paths' do
+          expect(lookup('path_xa')).to eql('value path_xa')
+          expect(warnings).to be_empty
+        end
+
+        it 'includes mapped path in explain output' do
+          explanation = explain('path_h', 'merge' => 'deep')
+          ['x\.a', 'y\.b', 'z\.c'].each do |var|
+            expect(explanation).to match(/^\s+Path "#{env_dir}\/spec\/data\/paths\/#{var}\.yaml"\n\s+Original path: "paths\/%\{var\.0\}\.%\{var\.1\}\.yaml"/)
+          end
+          expect(warnings).to be_empty
+        end
+
+        it 'performs merges between mapped paths' do
+          expect(lookup('path_m', 'merge' => 'hash')).to eql(
+            {
+              'a' => 'value path_m.a',
+              'b' => 'value path_m.b',
+              'c' => 'value path_m.c',
+              'd' => 'value path_m.d',
+              'e' => 'value path_m.e'
+            })
+          expect(warnings).to be_empty
+        end
+      end
+
+      context 'that originates from a string' do
+        let (:mapped_paths) { '[mapped.string_var, var, "paths/%{var}.yaml"]' }
+
+        let(:env_data) do
+          {
+            'paths' => {
+              's.yaml' => <<-YAML.unindent,
+                path_s: value path_s
+                YAML
+            }
+          }
+        end
+
+        it 'includes mapped path in explain output' do
+          expect(explain('path_s')).to match(/^\s+Path "#{env_dir}\/spec\/data\/paths\/s\.yaml"\n\s+Original path: "paths\/%\{var\}\.yaml"/)
+          expect(warnings).to be_empty
+        end
+
+        it 'finds environment data using mapped_paths' do
+          expect(lookup('path_s')).to eql('value path_s')
+          expect(warnings).to be_empty
+        end
+      end
+
+      context 'where the enty does not exist' do
+        let (:mapped_paths) { '[mapped.nosuch_var, var, "paths/%{var}.yaml"]' }
+
+        it 'finds environment data using mapped_paths' do
+          expect(explain('hello')).to match(/No such key: "hello"/)
+          expect(warnings).to be_empty
+        end
       end
     end
 
@@ -840,7 +1261,7 @@ describe "The lookup function" do
 
       it 'will raise an error if --strict is set to error' do
         Puppet[:strict] = :error
-        expect { lookup('g') }.to raise_error(Puppet::Error, /hiera configuration version 3 cannot be used in an environment/)
+        expect { lookup('g') }.to raise_error(Puppet::Error, /hiera.yaml version 3 cannot be used in an environment/)
       end
 
       it 'will log a warning and ignore the file if --strict is set to warning' do
@@ -957,6 +1378,44 @@ describe "The lookup function" do
               // The 'xs' is a value used for testing
               xs = { subkey = value xs.subkey (from global hocon) }
               HOCON
+          }
+        }
+      end
+
+      let(:ruby_dir_files) do
+        {
+          'hiera' => {
+            'backend' => {
+              'custom_backend.rb' => <<-RUBY.unindent,
+            class Hiera::Backend::Custom_backend
+              def lookup(key, scope, order_override, resolution_type, context)
+                case key
+                when 'hash_c'
+                  { 'hash_ca' => { 'cad' => 'value hash_c.hash_ca.cad (from global custom)' }}
+                when 'hash'
+                  { 'array' => [ 'x5,x6' ] }
+                when 'array'
+                  [ 'x5,x6' ]
+                when 'datasources'
+                  Hiera::Backend.datasources(scope, order_override) { |source| source }
+                when 'dotted.key'
+                  'custom backend received request for dotted.key value'
+                else
+                  throw :no_such_key
+                end
+              end
+            end
+            RUBY
+            'other_backend.rb' => <<-RUBY.unindent,
+            class Hiera::Backend::Other_backend
+              def lookup(key, scope, order_override, resolution_type, context)
+                value = Hiera::Config[:other][key.to_sym]
+                throw :no_such_key if value.nil?
+                value
+              end
+            end
+            RUBY
+            }
           }
         }
       end
@@ -1388,6 +1847,60 @@ describe "The lookup function" do
             expect(e.message).to match(/Lookup using Hocon data_hash function is not supported without hocon library/)
           end
         end
+
+        context 'with missing path declaraion' do
+          context 'and yaml_data function' do
+            let(:hiera_yaml) { <<-YAML.unindent }
+              version: 5
+              hierarchy:
+                - name: Yaml
+                  data_hash: yaml_data
+              YAML
+
+            it 'fails and reports the missing path' do
+              expect { lookup('a') }.to raise_error(/one of 'path', 'paths' 'glob', 'globs' or 'mapped_paths' must be declared in hiera.yaml when using this data_hash function/)
+            end
+          end
+
+          context 'and json_data function' do
+            let(:hiera_yaml) { <<-YAML.unindent }
+              version: 5
+              hierarchy:
+                - name: Json
+                  data_hash: json_data
+              YAML
+
+            it 'fails and reports the missing path' do
+              expect { lookup('a') }.to raise_error(/one of 'path', 'paths' 'glob', 'globs' or 'mapped_paths' must be declared in hiera.yaml when using this data_hash function/)
+            end
+          end
+
+          context 'and hocon_data function' do
+            let(:hiera_yaml) { <<-YAML.unindent }
+              version: 5
+              hierarchy:
+                - name: Hocon
+                  data_hash: hocon_data
+              YAML
+
+            it 'fails and reports the missing path' do
+              expect { lookup('a') }.to raise_error(/one of 'path', 'paths' 'glob', 'globs' or 'mapped_paths' must be declared in hiera.yaml when using this data_hash function/)
+            end
+          end
+
+          context 'and eyaml_lookup_key function' do
+            let(:hiera_yaml) { <<-YAML.unindent }
+              version: 5
+              hierarchy:
+                - name: Yaml
+                  lookup_key: eyaml_lookup_key
+              YAML
+
+            it 'fails and reports the missing path' do
+              expect { lookup('a') }.to raise_error(/one of 'path', 'paths' 'glob', 'globs' or 'mapped_paths' must be declared in hiera.yaml when using this lookup_key function/)
+            end
+          end
+        end
       end
 
       context 'with a hiera3_backend that has no paths' do
@@ -1447,7 +1960,7 @@ describe "The lookup function" do
           end
 
           it 'raises an error' do
-            expect { lookup('mod_a::a') }.to raise_error(Puppet::Error, /hiera configuration version 3 cannot be used in a module/)
+            expect { lookup('mod_a::a') }.to raise_error(Puppet::Error, /hiera.yaml version 3 cannot be used in a module/)
           end
         end
 
@@ -1498,13 +2011,24 @@ describe "The lookup function" do
       end
 
       context 'using a data_hash that reads a yaml file' do
+        let(:defaults) {
+          {
+            'mod_a::xd' => 'value mod_a::xd (from default)',
+            'mod_a::xd_found' => 'value mod_a::xd_found (from default)',
+            'scope_xd' => 'value scope_xd (from default)'
+          }}
+        let(:overrides) {
+          {
+            'mod_a::xo' => 'value mod_a::xo (from override)',
+            'scope_xo' => 'value scope_xo (from override)'
+          }}
+
         let(:scope_additions) do
           {
             'scope_scalar' => 'scope scalar value',
             'scope_hash' => { 'a' => 'scope hash a', 'b' => 'scope hash b' }
           }
         end
-
         let(:mod_a_files) do
           {
             'mod_a' => {
@@ -1688,55 +2212,57 @@ describe "The lookup function" do
       end
 
       context 'using a lookup_key that is a puppet function' do
+        let(:puppet_function) { <<-PUPPET.unindent }
+          function mod_a::pp_lookup_key(Puppet::LookupKey $key, Hash[String,String] $options, Puppet::LookupContext $context) >> Puppet::LookupValue {
+            case $key {
+              'mod_a::really_interpolated': { $context.interpolate("-- %{lookup('mod_a::a')} --") }
+              'mod_a::recursive': { lookup($key) }
+              default: {
+                if $context.cache_has_key(mod_a::a) {
+                  $context.explain || { 'reusing cache' }
+                } else {
+                  $context.explain || { 'initializing cache' }
+                  $context.cache_all({
+                    mod_a::a => 'value mod_a::a (from mod_a)',
+                    mod_a::b => 'value mod_a::b (from mod_a)',
+                    mod_a::c => 'value mod_a::c (from mod_a)',
+                    mod_a::hash_a => {
+                      a => 'value mod_a::hash_a.a (from mod_a)',
+                      b => 'value mod_a::hash_a.b (from mod_a)'
+                    },
+                    mod_a::hash_b => {
+                      a => 'value mod_a::hash_b.a (from mod_a)',
+                      b => 'value mod_a::hash_b.b (from mod_a)'
+                    },
+                    mod_a::interpolated => "-- %{lookup('mod_a::a')} --",
+                    mod_a::a_a => "-- %{lookup('mod_a::hash_a.a')} --",
+                    mod_a::a_b => "-- %{lookup('mod_a::hash_a.b')} --",
+                    mod_a::b_a => "-- %{lookup('mod_a::hash_b.a')} --",
+                    mod_a::b_b => "-- %{lookup('mod_a::hash_b.b')} --",
+                    'mod_a::a.quoted.key' => 'value mod_a::a.quoted.key (from mod_a)',
+                    mod_a::sensitive => Sensitive('reduct me please'),
+                    mod_a::type => Object[{name => 'FindMe', 'attributes' => {'x' => String}}],
+                    mod_a::version => SemVer('3.4.1'),
+                    mod_a::version_range => SemVerRange('>=3.4.1'),
+                    mod_a::timestamp => Timestamp("1994-03-25T19:30:00"),
+                    mod_a::timespan => Timespan("3-10:00:00")
+                  })
+                }
+                if !$context.cache_has_key($key) {
+                  $context.not_found
+                }
+                $context.explain || { "returning value for $key" }
+                $context.cached_value($key)
+              }
+            }
+          }
+        PUPPET
+
         let(:mod_a_files) do
           {
             'mod_a' => {
               'functions' => {
-                'pp_lookup_key.pp' => <<-PUPPET.unindent
-                function mod_a::pp_lookup_key(Puppet::LookupKey $key, Hash[String,String] $options, Puppet::LookupContext $context) >> Puppet::LookupValue {
-                  case $key {
-                    'mod_a::really_interpolated': { $context.interpolate("-- %{lookup('mod_a::a')} --") }
-                    'mod_a::recursive': { lookup($key) }
-                    default: {
-                      if $context.cache_has_key(mod_a::a) {
-                        $context.explain || { 'reusing cache' }
-                      } else {
-                        $context.explain || { 'initializing cache' }
-                        $context.cache_all({
-                          mod_a::a => 'value mod_a::a (from mod_a)',
-                          mod_a::b => 'value mod_a::b (from mod_a)',
-                          mod_a::c => 'value mod_a::c (from mod_a)',
-                          mod_a::hash_a => {
-                            a => 'value mod_a::hash_a.a (from mod_a)',
-                            b => 'value mod_a::hash_a.b (from mod_a)'
-                          },
-                          mod_a::hash_b => {
-                            a => 'value mod_a::hash_b.a (from mod_a)',
-                            b => 'value mod_a::hash_b.b (from mod_a)'
-                          },
-                          mod_a::interpolated => "-- %{lookup('mod_a::a')} --",
-                          mod_a::a_a => "-- %{lookup('mod_a::hash_a.a')} --",
-                          mod_a::a_b => "-- %{lookup('mod_a::hash_a.b')} --",
-                          mod_a::b_a => "-- %{lookup('mod_a::hash_b.a')} --",
-                          mod_a::b_b => "-- %{lookup('mod_a::hash_b.b')} --",
-                          'mod_a::a.quoted.key' => 'value mod_a::a.quoted.key (from mod_a)',
-                          mod_a::sensitive => Sensitive('reduct me please'),
-                          mod_a::type => Object[{name => 'FindMe', 'attributes' => {'x' => String}}],
-                          mod_a::version => SemVer('3.4.1'),
-                          mod_a::version_range => SemVerRange('>=3.4.1'),
-                          mod_a::timestamp => Timestamp("1994-03-25T19:30:00"),
-                          mod_a::timespan => Timespan("3-10:00:00")
-                        })
-                      }
-                      if !$context.cache_has_key($key) {
-                        $context.not_found
-                      }
-                      $context.explain || { "returning value for $key" }
-                      $context.cached_value($key)
-                    }
-                  }
-                }
-              PUPPET
+                'pp_lookup_key.pp' => puppet_function
               },
               'hiera.yaml' => <<-YAML.unindent,
               ---
@@ -1809,6 +2335,19 @@ describe "The lookup function" do
             expect(notices).to eql(['success'])
           end
         end
+
+        context 'with declared but incompatible return_type' do
+          let(:puppet_function) { <<-PUPPET.unindent }
+            function mod_a::pp_lookup_key(Puppet::LookupKey $key, Hash[String,String] $options, Puppet::LookupContext $context) >> Runtime['ruby','Symbol'] {
+              undef
+            }
+            PUPPET
+
+          it 'fails and reports error' do
+            expect{lookup('mod_a::a')}.to raise_error(
+              "Return type of 'lookup_key' function named 'mod_a::pp_lookup_key' is incorrect, expects a value of type Undef, Scalar, Sensitive, Type, Hash, or Array, got Runtime")
+          end
+        end
       end
 
       context 'using a data_dig that is a ruby function' do
@@ -1825,6 +2364,7 @@ describe "The lookup function" do
                           param 'Array[String[1]]', :segments
                           param 'Hash[String,Any]', :options
                           param 'Puppet::LookupContext', :context
+                          return_type 'Puppet::LookupValue'
                         end
 
                         def ruby_dig(segments, options, context)
@@ -1873,6 +2413,11 @@ describe "The lookup function" do
               'hiera.yaml' => <<-YAML.unindent,
               ---
               version: 5
+              defaults:
+                options:
+                  option_b:
+                    z: Default option value b.z
+
               hierarchy:
                 - name: "Common"
                   data_dig: mod_a::ruby_dig
@@ -1882,7 +2427,9 @@ describe "The lookup function" do
                     option_b:
                       x: Option value b.x
                       y: Option value b.y
-            YAML
+                - name: "Extra"
+                  data_dig: mod_a::ruby_dig
+           YAML
             }
           }
         end
@@ -1904,11 +2451,13 @@ describe "The lookup function" do
         end
 
         it 'does not accept return of runtime type from function' do
-          expect(explain('mod_a::bad_type')).to include('Value returned from Hierarchy entry "Common" has wrong type')
+          # Message is produced by the called function, not by the lookup framework
+          expect(explain('mod_a::bad_type')).to include("value returned from function 'ruby_dig' has wrong type")
         end
 
         it 'does not accept return of runtime type embedded in hash from function' do
-          expect(explain('mod_a::bad_type_in_hash')).to include('Value returned from Hierarchy entry "Common" has wrong type')
+          # Message is produced by the called function, not by the lookup framework
+          expect(explain('mod_a::bad_type_in_hash')).to include("value returned from function 'ruby_dig' has wrong type")
         end
 
         it 'will not merge hashes from environment and module unless strategy hash is used' do
@@ -1917,6 +2466,22 @@ describe "The lookup function" do
 
         it 'hierarchy entry options are passed to the function' do
           expect(lookup('mod_a::options.option_b.x')).to eql('Option value b.x')
+        end
+
+        it 'default options are passed to the function' do
+          expect(lookup('mod_a::options.option_b.z')).to eql('Default option value b.z')
+        end
+
+        it 'default options are not merged with hierarchy options' do
+          expect(lookup('mod_a::options')).to eql(
+            {
+              'option_a' => 'Option value a',
+              'option_b' => {
+                'y' => 'Option value b.y',
+                'x' => 'Option value b.x'
+              },
+              'uri' => 'http://www.example.com/passed/as/option'
+            })
         end
 
         it 'hierarchy entry "uri" is passed as location option to the function' do

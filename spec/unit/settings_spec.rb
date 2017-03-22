@@ -1308,10 +1308,9 @@ describe Puppet::Settings do
       @settings.to_catalog
     end
 
-    describe "on Microsoft Windows" do
+    describe "on Microsoft Windows", :if => Puppet.features.microsoft_windows? do
       before :each do
         Puppet.features.stubs(:root?).returns true
-        Puppet.features.stubs(:microsoft_windows?).returns true
 
         @settings.define_settings :foo,
             :mkusers => { :type => :boolean, :default => true, :desc => "e" },

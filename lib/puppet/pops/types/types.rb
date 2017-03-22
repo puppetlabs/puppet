@@ -50,7 +50,7 @@ class TypedModelObject < Object
   include Visitable
   include Adaptable
 
-  def self._ptype
+  def self._pcore_type
     @type
   end
 
@@ -59,7 +59,10 @@ class TypedModelObject < Object
   end
 
   def self.register_ptypes(loader, ir)
-    types = []
+    types = [
+      Annotation.register_ptype(loader, ir),
+      RubyMethod.register_ptype(loader, ir)
+    ]
     Types.constants.each do |c|
       cls = Types.const_get(c)
       next unless cls.is_a?(Class) && cls < self
@@ -1778,6 +1781,14 @@ class PStructElement < TypedModelObject
   def ==(o)
     self.class == o.class && value_type == o.value_type && key_type == o.key_type
   end
+
+  # Special boostrap method to overcome the hen and egg problem with the Object initializer that contains
+  # types that are derived from Object (such as Annotation)
+  #
+  # @api private
+  def replace_value_type(new_type)
+    @value_type = new_type
+  end
 end
 
 # @api public
@@ -2522,7 +2533,7 @@ class PHashType < PCollectionType
       key_t = key_t.normalize(guard) unless key_t.nil?
       value_t = @value_type
       value_t = value_t.normalize(guard) unless value_t.nil?
-      @size_type.nil? && @key_type.equal?(key_t) && @value_type.equal?(value_t) ? self : PHashType.new(key_t, value_t, nil)
+      @size_type.nil? && @key_type.equal?(key_t) && @value_type.equal?(value_t) ? self : PHashType.new(key_t, value_t, @size_type)
     end
   end
 
@@ -2668,7 +2679,7 @@ class PVariantType < PAnyType
   # @return [PAnyType] the resulting type
   # @api public
   def self.maybe_create(types)
-    types = types.uniq
+    types = flatten_variants(types).uniq
     types.size == 1 ? types[0] : new(types)
   end
 
@@ -2713,24 +2724,15 @@ class PVariantType < PAnyType
 
       if types.size == 1
         types[0]
-      elsif types.any? { |t| t.is_a?(PUndefType) }
-        # Undef entry present. Use an OptionalType with a normalized Variant of all types that are not Undef
-        POptionalType.new(PVariantType.maybe_create(types.reject { |ot| ot.is_a?(PUndefType) }).normalize(guard)).normalize(guard)
+      elsif types.any? { |t| t.is_a?(PUndefType) || t.is_a?(POptionalType) }
+        # Undef entry present. Use an OptionalType with a normalized Variant without Undefs and Optional wrappers
+        POptionalType.new(PVariantType.maybe_create(types.reject { |t| t.is_a?(PUndefType) }.map { |t| t.is_a?(POptionalType) ? t.type : t })).normalize
       else
         # Merge all variants into this one
-        types = types.map do |t|
-          if t.is_a?(PVariantType)
-            modified = true
-            t.types
-          else
-            t
-          end
-        end
-        types.flatten! if modified
+        types = PVariantType.flatten_variants(types)
         size_before_merge = types.size
 
         types = swap_not_undefs(types)
-        types = swap_optionals(types)
         types = merge_enums(types)
         types = merge_patterns(types)
         types = merge_version_ranges(types)
@@ -2746,6 +2748,20 @@ class PVariantType < PAnyType
         end
       end
     end
+  end
+
+  def self.flatten_variants(types)
+    modified = false
+    types = types.map do |t|
+      if t.is_a?(PVariantType)
+        modified = true
+        t.types
+      else
+        t
+      end
+    end
+    types.flatten! if modified
+    types
   end
 
   def hash
@@ -2804,20 +2820,6 @@ class PVariantType < PAnyType
       # A variant is assignable if o is assignable to any of its types
       types.any? { |option_t| option_t.assignable?(o, guard) }
     end
-  end
-
-  # @api private
-  def swap_optionals(array)
-    if array.size > 1
-      parts = array.partition {|t| t.is_a?(POptionalType) }
-      optionals = parts[0]
-      if optionals.size > 1
-        others = parts[1]
-        others <<  POptionalType.new(PVariantType.maybe_create(optionals.map { |optional| optional.type }).normalize)
-        array = others
-      end
-    end
-    array
   end
 
   # @api private
@@ -3391,6 +3393,8 @@ require 'puppet/pops/pcore'
 require_relative 'annotatable'
 require_relative 'p_meta_type'
 require_relative 'p_object_type'
+require_relative 'annotation'
+require_relative 'ruby_method'
 require_relative 'p_runtime_type'
 require_relative 'p_sem_ver_type'
 require_relative 'p_sem_ver_range_type'

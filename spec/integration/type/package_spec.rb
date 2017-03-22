@@ -33,6 +33,12 @@ describe Puppet::Type.type(:package), "when choosing a default package provider"
       else
         :yum
       end
+    when 'Suse'
+      if Puppet::Util::Package.versioncmp(Facter.value(:operatingsystemmajrelease), '10') >= 0
+        :zypper
+      else
+        :rug
+      end
     when 'FreeBSD'
       :ports
     when 'OpenBSD'

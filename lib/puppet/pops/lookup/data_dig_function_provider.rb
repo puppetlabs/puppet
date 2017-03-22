@@ -23,20 +23,23 @@ class DataDigFunctionProvider < FunctionProvider
 
   def invoke_with_location(lookup_invocation, location, key, merge)
     if location.nil?
-      value = data_dig(key, lookup_invocation, nil, merge)
-      lookup_invocation.report_found(key, validate_data_value(self, value))
-      key.undig(value)
+      key.undig(lookup_invocation.report_found(key, validated_data_dig(key, lookup_invocation, nil, merge)))
     else
       lookup_invocation.with(:location, location) do
-        value = data_dig(key, lookup_invocation, location, merge)
-        lookup_invocation.report_found(key, validate_data_value(self, value))
-        key.undig(value)
+        key.undig(lookup_invocation.report_found(key, validated_data_dig(key, lookup_invocation, location, merge)))
       end
     end
   end
 
   def label
     'Data Dig'
+  end
+
+  def validated_data_dig(key, lookup_invocation, location, merge)
+    validate_data_value(data_dig(key, lookup_invocation, location, merge)) do
+      msg = "Value for key '#{key}', returned from #{full_name}"
+      location.nil? ? msg : "#{msg}, when using location '#{location}',"
+    end
   end
 
   private
@@ -69,6 +72,14 @@ class V3BackendFunctionProvider < DataDigFunctionProvider
     # tells the V3 backend to pick it up from the config.
     resolution_type = lookup_invocation.hiera_v3_merge_behavior? ? :hash : convert_merge(merge)
     @backend.lookup(key.to_s, lookup_invocation.scope, lookup_invocation.hiera_v3_location_overrides, resolution_type, context = {:recurse_guard => nil})
+  end
+
+  def full_name
+    "hiera version 3 backend '#{options[HieraConfig::KEY_BACKEND]}'"
+  end
+
+  def value_is_validated?
+    false
   end
 
   private

@@ -91,56 +91,56 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
   end
 
   def restart
-      execute([command(:lssrc), "-Ss", @resource[:name]]).each_line do |line|
-        args = line.split(":")
+    execute([command(:lssrc), "-Ss", @resource[:name]]).each_line do |line|
+      args = line.split(":")
 
-        next unless args[0] == @resource[:name]
+      next unless args[0] == @resource[:name]
 
-        # Subsystems with the -K flag can get refreshed (HUPed)
-        # While subsystems with -S (signals) must be stopped/started
-        method = args[11]
-        do_refresh = case method
-          when "-K" then :true
-          when "-S" then :false
-          else self.fail("Unknown service communication method #{method}")
-        end
-
-        begin
-          if do_refresh == :true
-            execute([command(:refresh), "-s", @resource[:name]])
-          else
-            self.stop
-            self.start
-          end
-          return :true
-        rescue Puppet::ExecutionFailure => detail
-          raise Puppet::Error.new("Unable to restart service #{@resource[:name]}, error was: #{detail}", detail )
-        end
+      # Subsystems with the -K flag can get refreshed (HUPed)
+      # While subsystems with -S (signals) must be stopped/started
+      method = args[11]
+      do_refresh = case method
+        when "-K" then :true
+        when "-S" then :false
+        else self.fail("Unknown service communication method #{method}")
       end
-      self.fail("No such service found")
+
+      begin
+        if do_refresh == :true
+          execute([command(:refresh), "-s", @resource[:name]])
+        else
+          self.stop
+          self.start
+        end
+        return :true
+      rescue Puppet::ExecutionFailure => detail
+        raise Puppet::Error.new("Unable to restart service #{@resource[:name]}, error was: #{detail}", detail )
+      end
+    end
+    self.fail("No such service found")
   rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error.new("Cannot get status of #{@resource[:name]}, error was: #{detail}", detail )
+    raise Puppet::Error.new("Cannot get status of #{@resource[:name]}, error was: #{detail}", detail )
   end
 
   def status
-      execute([command(:lssrc), "-s", @resource[:name]]).each_line do |line|
-        args = line.split
+    execute([command(:lssrc), "-s", @resource[:name]]).each_line do |line|
+      args = line.split
 
-        # This is the header line
-        next unless args[0] == @resource[:name]
+      # This is the header line
+      next unless args[0] == @resource[:name]
 
-        # PID is the 3rd field, but inoperative subsystems
-        # skip this so split doesn't work right
-        state = case args[-1]
-          when "active" then :running
-          when "inoperative" then :stopped
-        end
-        Puppet.debug("Service #{@resource[:name]} is #{args[-1]}")
-        return state
+      # PID is the 3rd field, but inoperative subsystems
+      # skip this so split doesn't work right
+      state = case args[-1]
+        when "active" then :running
+        when "inoperative" then :stopped
       end
-      self.fail("No such service found")
+      Puppet.debug("Service #{@resource[:name]} is #{args[-1]}")
+      return state
+    end
   rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error.new("Cannot get status of #{@resource[:name]}, error was: #{detail}", detail )
+    self.debug(detail.message)
+    return :stopped
   end
 
 end

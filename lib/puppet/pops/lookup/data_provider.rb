@@ -66,23 +66,30 @@ module DataProvider
     raise NotImplementedError, "Subclass of #{DataProvider.name} must implement 'name' method"
   end
 
-  # Asserts that _data_hash_ is a hash.
-  #
-  # @param data_provider [DataProvider] The data provider that produced the hash
-  # @param data_hash [Hash{String=>Object}] The data hash
-  # @return [Hash{String=>Object}] The data hash
-  def validate_data_hash(data_provider, data_hash)
-    Types::TypeAsserter.assert_instance_of(nil, Types::PHashType::DEFAULT, data_hash) { "Value returned from #{data_provider.name}" }
+  # @returns `true` if the value provided by this instance can always be trusted, `false` otherwise
+  def value_is_validated?
+    false
   end
 
-  # Asserts that _data_value_ is of valid type.
+  # Asserts that _data_hash_ is a hash. Will yield to obtain origin of value in case an error is produced
+  #
+  # @param data_hash [Hash{String=>Object}] The data hash
+  # @return [Hash{String=>Object}] The data hash
+  def validate_data_hash(data_hash, &block)
+    Types::TypeAsserter.assert_instance_of(nil, Types::PHashType::DEFAULT, data_hash, &block)
+  end
+
+  # Asserts that _data_value_ is of valid type. Will yield to obtain origin of value in case an error is produced
   #
   # @param data_provider [DataProvider] The data provider that produced the hash
-  # @param data_value [Object] The data value
   # @return [Object] The data value
-  def validate_data_value(data_provider, value)
+  def validate_data_value(value, &block)
     # The DataProvider.value_type is self recursive so further recursive check of collections is needed here
-    Types::TypeAsserter.assert_instance_of(nil, DataProvider.value_type, value) { "Value returned from #{data_provider.name}" }
+    unless value_is_validated? || DataProvider.value_type.instance?(value)
+      actual_type = Types::TypeCalculator.singleton.infer(value)
+      raise Types::TypeAssertionError.new("#{yield} has wrong type, expects Puppet::LookupValue, got #{actual_type}", DataProvider.value_type, actual_type)
+    end
+    value
   end
 end
 end

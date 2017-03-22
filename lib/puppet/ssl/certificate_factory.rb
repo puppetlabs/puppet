@@ -30,7 +30,7 @@ module Puppet::SSL::CertificateFactory
     respond_to?(build_extensions) or
       raise ArgumentError, "#{cert_type.to_s} is an invalid certificate type!"
 
-    raise ArgumentError, "Certificate TTL must be an integer" unless ttl.nil? || ttl.is_a?(Fixnum)
+    raise ArgumentError, "Certificate TTL must be an integer" unless ttl.nil? || ttl.is_a?(Integer)
 
     # set up the certificate, and start building the content.
     cert = OpenSSL::X509::Certificate.new

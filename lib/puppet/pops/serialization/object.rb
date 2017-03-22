@@ -10,7 +10,7 @@ class ObjectReader
   include InstanceReader
 
   def read(impl_class, value_count, deserializer)
-    type = impl_class._ptype
+    type = impl_class._pcore_type
     (names, types, required_count) = type.parameter_info(impl_class)
     max = names.size
     unless value_count >= required_count && value_count <= max
@@ -43,12 +43,12 @@ class ObjectWriter
 
   def write(type, value, serializer)
     impl_class = value.class
-    (names, types, required_count) = type.parameter_info(impl_class, true)
+    (names, types, required_count) = type.parameter_info(impl_class)
     args = names.map { |name| value.send(name) }
 
     # Pop optional arguments that are default
     while args.size > required_count
-      break unless args.last == type[names[args.size-1]].value
+      break unless type[names[args.size-1]].default_value?(args.last)
       args.pop
     end
 

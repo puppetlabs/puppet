@@ -6,6 +6,8 @@ module Puppet
   Type.newtype(:notify) do
     @doc = "Sends an arbitrary message to the agent run-time log."
 
+    apply_to_all
+
     newproperty(:message, :idempotent => false) do
       desc "The message to be sent to the log."
       def sync

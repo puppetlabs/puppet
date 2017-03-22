@@ -22,6 +22,16 @@ class ScopeLookupCollectingInvocation < Invocation
     @scope_interpolations.uniq! { |si| si[0] }
     @scope_interpolations
   end
+
+  # Yield invocation that remembers all but the given name
+  def with_local_memory_eluding(name)
+    save_si = @scope_interpolations
+    @scope_interpolations = []
+    result = yield
+    save_si.concat(@scope_interpolations.reject { |entry| entry[1] == name })
+    @scope_interpolations = save_si
+    result
+  end
 end
 
 # @api private
@@ -39,6 +49,7 @@ class HieraConfig
   KEY_OPTIONS = 'options'.freeze
   KEY_PATH = 'path'.freeze
   KEY_PATHS = 'paths'.freeze
+  KEY_MAPPED_PATHS = 'mapped_paths'.freeze
   KEY_GLOB = 'glob'.freeze
   KEY_GLOBS = 'globs'.freeze
   KEY_URI = 'uri'.freeze
@@ -56,7 +67,7 @@ class HieraConfig
 
   FUNCTION_KEYS = [KEY_DATA_HASH, KEY_LOOKUP_KEY, KEY_DATA_DIG, KEY_V3_BACKEND]
   ALL_FUNCTION_KEYS = FUNCTION_KEYS + [KEY_V4_DATA_HASH]
-  LOCATION_KEYS = [KEY_PATH, KEY_PATHS, KEY_GLOB, KEY_GLOBS, KEY_URI, KEY_URIS]
+  LOCATION_KEYS = [KEY_PATH, KEY_PATHS, KEY_GLOB, KEY_GLOBS, KEY_URI, KEY_URIS, KEY_MAPPED_PATHS]
   FUNCTION_PROVIDERS = {
     KEY_DATA_HASH => DataHashFunctionProvider,
     KEY_DATA_DIG => DataDigFunctionProvider,
@@ -143,7 +154,9 @@ class HieraConfig
     when 3
       HieraConfigV3.new(config_root, config_path, loaded_config)
     else
-      raise Puppet::DataBinding::LookupError, "#{@config_path}: This runtime does not support #{CONFIG_FILE_NAME} version '#{version}'"
+      issue = Issues::HIERA_UNSUPPORTED_VERSION
+      raise Puppet::DataBinding::LookupError.new(
+        issue.format(:version => version),  config_path, nil, nil, nil, issue.issue_code)
     end
   end
 
@@ -162,6 +175,11 @@ class HieraConfig
     @data_providers = nil
   end
 
+  def fail(issue, args = EMPTY_HASH, line = nil)
+    raise Puppet::DataBinding::LookupError.new(
+      issue.format(args.merge(:label => self)),  @config_path, line, nil, nil, issue.issue_code)
+  end
+
   # Returns the data providers for this config
   #
   # @param lookup_invocation [Invocation] Invocation data containing scope, overrides, and defaults
@@ -173,10 +191,45 @@ class HieraConfig
         lookup_invocation.report_text { 'Hiera configuration recreated due to change of scope variables used in interpolation expressions' }
       end
       slc_invocation = ScopeLookupCollectingInvocation.new(lookup_invocation.scope)
-      @data_providers = create_configured_data_providers(slc_invocation, parent_data_provider)
+      begin
+        @data_providers = create_configured_data_providers(slc_invocation, parent_data_provider)
+      rescue StandardError => e
+        # Raise a LookupError with a RUNTIME_ERROR issue to prevent this being translated to an evaluation error triggered in the pp file
+        # where the lookup started
+        if e.message =~ /^Undefined variable '([^']+)'/
+          var = $1
+          fail(Issues::HIERA_UNDEFINED_VARIABLE, { :name => var }, find_line_matching(/%\{['"]?#{var}['"]?}/))
+        end
+        raise e
+      end
       @scope_interpolations = slc_invocation.scope_interpolations
     end
     @data_providers
+  end
+
+  # Find first line in configuration that matches regexp after given line. Comments are stripped
+  def find_line_matching(regexp, start_line = 1)
+    line_number = 0
+    File.foreach(@config_path) do |line|
+      line_number += 1
+      next if line_number < start_line
+      quote = nil
+      stripped = ''
+      line.each_codepoint do |cp|
+        if cp == 0x22 || cp == 0x27 # double or single quote
+          if quote == cp
+            quote = nil
+          elsif quote.nil?
+            quote = cp
+          end
+        elsif cp == 0x23 # unquoted hash mark
+          break
+        end
+        stripped << cp
+      end
+      return line_number if stripped =~ regexp
+    end
+    nil
   end
 
   def scope_interpolations_stable?(lookup_invocation)
@@ -312,7 +365,15 @@ class HieraConfigV3 < HieraConfig
     data_providers = {}
 
     [@config[KEY_BACKENDS]].flatten.each do |backend|
-      raise Puppet::DataBinding::LookupError, "#{@config_path}: Backend '#{backend}' defined more than once" if data_providers.include?(backend)
+      if data_providers.include?(backend)
+        first_line = find_line_matching(/[^\w]#{backend}(?:[^\w]|$)/)
+        line = find_line_matching(/[^\w]#{backend}(?:[^\w]|$)/, first_line + 1) if first_line
+        unless line
+          line = first_line
+          first_line = nil
+        end
+        fail(Issues::HIERA_BACKEND_MULTIPLY_DEFINED, { :name => backend, :first_line => first_line }, line)
+      end
       original_paths = [@config[KEY_HIERARCHY]].flatten
       backend_config = @config[backend]
       if backend_config.nil?
@@ -398,10 +459,6 @@ end
 
 # @api private
 class HieraConfigV4 < HieraConfig
-  require 'puppet/plugins/data_providers'
-
-  include Puppet::Plugins::DataProviders
-
   def self.config_type
     return @@CONFIG_TYPE if class_variable_defined?(:@@CONFIG_TYPE)
     tf = Types::TypeFactory
@@ -420,30 +477,21 @@ class HieraConfigV4 < HieraConfig
     })
   end
 
-  def factory_create_data_provider(lookup_invocation, name, parent_data_provider, provider_name, datadir, original_paths)
-    service_type = Registry.hash_of_path_based_data_provider_factories
-    provider_factory = Puppet.lookup(:injector).lookup(nil, service_type, PATH_BASED_DATA_PROVIDER_FACTORIES_KEY)[provider_name]
-    raise Puppet::DataBinding::LookupError, "#{@config_path}: No data provider is registered for backend '#{provider_name}' " unless provider_factory
-
-    paths = original_paths.map { |path| interpolate(path, lookup_invocation, false) }
-    paths = provider_factory.resolve_paths(datadir, original_paths, paths, lookup_invocation)
-
-    provider_factory_version = provider_factory.respond_to?(:version) ? provider_factory.version : 1
-    if provider_factory_version == 1
-      # Version 1 is not aware of the parent provider
-      provider_factory.create(name, paths)
-    else
-      provider_factory.create(name, paths, parent_data_provider)
-    end
-  end
-
   def create_configured_data_providers(lookup_invocation, parent_data_provider)
     default_datadir = @config[KEY_DATADIR]
     data_providers = {}
 
     @config[KEY_HIERARCHY].each do |he|
       name = he[KEY_NAME]
-      raise Puppet::DataBinding::LookupError, "#{@config_path}: Name '#{name}' defined more than once" if data_providers.include?(name)
+      if data_providers.include?(name)
+        first_line = find_line_matching(/\s+name:\s+['"]?#{name}(?:[^\w]|$)/)
+        line = find_line_matching(/\s+name:\s+['"]?#{name}(?:[^\w]|$)/, first_line + 1) if first_line
+        unless line
+          line = first_line
+          first_line = nil
+        end
+        fail(Issues::HIERA_HIERARCHY_NAME_MULTIPLY_DEFINED, { :name => name, :first_line => first_line }, line)
+      end
       original_paths = he[KEY_PATHS] || [he[KEY_PATH] || name]
       datadir = @config_root + (he[KEY_DATADIR] || default_datadir)
       provider_name = he[KEY_BACKEND]
@@ -455,7 +503,7 @@ class HieraConfigV4 < HieraConfig
         create_data_provider(name, parent_data_provider, KEY_DATA_HASH, 'hocon_data', {},
           resolve_paths(datadir, original_paths, lookup_invocation, @config_path.nil?, '.conf'))
       else
-        factory_create_data_provider(lookup_invocation, name, parent_data_provider, provider_name, datadir, original_paths)
+        fail(Issues::HIERA_NO_PROVIDER_FOR_BACKEND, { :name => provider_name }, find_line_matching(/[^\w]#{provider_name}(?:[^\w]|$)/))
       end
     end
     data_providers.values
@@ -496,7 +544,8 @@ class HieraConfigV5 < HieraConfig
           tf.optional(KEY_DATA_HASH) => nes_t,
           tf.optional(KEY_LOOKUP_KEY) => nes_t,
           tf.optional(KEY_DATA_DIG) => nes_t,
-          tf.optional(KEY_DATADIR) => nes_t
+          tf.optional(KEY_DATADIR) => nes_t,
+          tf.optional(KEY_OPTIONS) => tf.hash_kv(option_name_t, tf.data),
         }),
       tf.optional(KEY_HIERARCHY) => tf.array_of(tf.struct(
         {
@@ -513,6 +562,7 @@ class HieraConfigV5 < HieraConfig
           tf.optional(KEY_GLOBS) => tf.array_of(nes_t, tf.range(1, :default)),
           tf.optional(KEY_URI) => uri_t,
           tf.optional(KEY_URIS) => tf.array_of(uri_t, tf.range(1, :default)),
+          tf.optional(KEY_MAPPED_PATHS) => tf.array_of(nes_t, tf.range(3, 3)),
           tf.optional(KEY_DATADIR) => nes_t
         }))
     })
@@ -527,7 +577,15 @@ class HieraConfigV5 < HieraConfig
     data_providers = {}
     @config[KEY_HIERARCHY].each do |he|
       name = he[KEY_NAME]
-      raise Puppet::DataBinding::LookupError, "#{@config_path}: Name '#{name}' defined more than once" if data_providers.include?(name)
+      if data_providers.include?(name)
+        first_line = find_line_matching(/\s+name:\s+['"]?#{name}(?:[^\w]|$)/)
+        line = find_line_matching(/\s+name:\s+['"]?#{name}(?:[^\w]|$)/, first_line + 1) if first_line
+        unless line
+          line = first_line
+          first_line = nil
+        end
+        fail(Issues::HIERA_HIERARCHY_NAME_MULTIPLY_DEFINED, { :name => name, :first_line => first_line }, line)
+      end
       function_kind = ALL_FUNCTION_KEYS.find { |key| he.include?(key) }
       if function_kind.nil?
         function_kind = FUNCTION_KEYS.find { |key| defaults.include?(key) }
@@ -552,21 +610,23 @@ class HieraConfigV5 < HieraConfig
         expand_uris(he[location_key], lookup_invocation)
       when KEY_URI
         expand_uris([he[location_key]], lookup_invocation)
+      when KEY_MAPPED_PATHS
+        expand_mapped_paths(entry_datadir, he[location_key], lookup_invocation)
       else
         nil
       end
       next if @config_path.nil? && !locations.nil? && locations.empty? # Default config and no existing paths found
-      options = he[KEY_OPTIONS]
+      options = he[KEY_OPTIONS] || defaults[KEY_OPTIONS]
       options = options.nil? ? EMPTY_HASH : interpolate(options, lookup_invocation, false)
       if(function_kind == KEY_V3_BACKEND)
         unless parent_data_provider.is_a?(GlobalDataProvider)
-          # hiera3_backend is not allowed in environments and modules
-          raise Puppet::DataBinding::LookupError, "#{@config_path}: '#{KEY_V3_BACKEND}' is only allowed in the global layer"
+          fail(Issues::HIERA_V3_BACKEND_NOT_GLOBAL, EMPTY_HASH, find_line_matching(/\s+#{function_kind}:/))
         end
 
         if function_name == 'json' || function_name == 'yaml' || function_name == 'hocon' &&  Puppet.features.hocon?
           # Disallow use of backends that have corresponding "data_hash" functions in version 5
-          raise Puppet::DataBinding::LookupError, "#{@config_path}: Use \"#{KEY_DATA_HASH}: #{function_name}_data\" instead of \"#{KEY_V3_BACKEND}: #{function_name}\""
+          fail(Issues::HIERA_V3_BACKEND_REPLACED_BY_DATA_HASH, { :function_name => function_name },
+            find_line_matching(/\s+#{function_kind}:\s*['"]?#{function_name}(?:[^\w]|$)/))
         end
         v3options = { :datadir => entry_datadir.to_s }
         options.each_pair { |k, v| v3options[k.to_sym] = v }
@@ -615,30 +675,22 @@ class HieraConfigV5 < HieraConfig
       case ALL_FUNCTION_KEYS.count { |key| he.include?(key) }
       when 0
         if defaults.nil? || FUNCTION_KEYS.count { |key| defaults.include?(key) } == 0
-          raise Puppet::DataBinding::LookupError,
-            "#{@config_path}: One of #{combine_strings(FUNCTION_KEYS)} must defined in hierarchy '#{name}'"
+          fail(Issues::HIERA_MISSING_DATA_PROVIDER_FUNCTION, :name => name)
         end
       when 1
         # OK
-      when 0
-        raise Puppet::DataBinding::LookupError,
-          "#{@config_path}: One of #{combine_strings(FUNCTION_KEYS)} must defined in hierarchy '#{name}'"
       else
-        raise Puppet::DataBinding::LookupError,
-          "#{@config_path}: Only one of #{combine_strings(FUNCTION_KEYS)} can be defined in hierarchy '#{name}'"
+        fail(Issues::HIERA_MULTIPLE_DATA_PROVIDER_FUNCTIONS, :name => name)
       end
 
       if LOCATION_KEYS.count { |key| he.include?(key) } > 1
-        raise Puppet::DataBinding::LookupError,
-          "#{@config_path}: Only one of #{combine_strings(LOCATION_KEYS)} can be defined in hierarchy '#{name}'"
+        fail(Issues::HIERA_MULTIPLE_LOCATION_SPECS, :name => name)
       end
 
       options = he[KEY_OPTIONS]
       unless options.nil?
         RESERVED_OPTION_KEYS.each do |key|
-          if options.include?(key)
-            raise Puppet::DataBinding::LookupError, "#{@config_path}: Option key '#{key}' used in hierarchy '#{name}' is reserved by Puppet"
-          end
+          fail(Issues::HIERA_OPTION_RESERVED_BY_PUPPET, :key => key, :name => name) if options.include?(key)
         end
       end
     end
@@ -650,8 +702,14 @@ class HieraConfigV5 < HieraConfig
     when 0, 1
       # OK
     else
-      raise Puppet::DataBinding::LookupError,
-        "#{@config_path}: Only one of #{combine_strings(FUNCTION_KEYS)} can be defined in defaults"
+      fail(Issues::HIERA_MULTIPLE_DATA_PROVIDER_FUNCTIONS_IN_DEFAULT)
+    end
+
+    options = defaults[KEY_OPTIONS]
+    unless options.nil?
+      RESERVED_OPTION_KEYS.each do |key|
+        fail(Issues::HIERA_DEFAULT_OPTION_RESERVED_BY_PUPPET, :key => key) if options.include?(key)
+      end
     end
   end
 

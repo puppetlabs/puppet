@@ -227,9 +227,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       node.merge(facts.values) if facts
 
       # Add server facts so $server_facts[environment] exists when doing a puppet apply
-      if Puppet[:trusted_server_facts]
-        node.add_server_facts({})
-      end
+      node.add_server_facts({})
 
       # Allow users to load the classes that puppet agent creates.
       if options[:loadclasses]

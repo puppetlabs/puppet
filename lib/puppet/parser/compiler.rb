@@ -43,26 +43,10 @@ class Puppet::Parser::Compiler
 
   attr_reader :node, :facts, :collections, :catalog, :resources, :relationships, :topscope
 
-  # The injector that provides lookup services, or nil if accessed before the compiler has started compiling and
-  # bootstrapped. The injector is initialized and available before any manifests are evaluated.
-  #
-  # @return [Puppet::Pops::Binder::Injector, nil] The injector that provides lookup services for this compiler/environment
-  # @api public
-  #
-  attr_accessor :injector
-
   # Access to the configured loaders for 4x
   # @return [Puppet::Pops::Loader::Loaders] the configured loaders
   # @api private
   attr_reader :loaders
-
-  # The injector that provides lookup services during the creation of the {#injector}.
-  # @return [Puppet::Pops::Binder::Injector, nil] The injector that provides lookup services during injector creation
-  #   for this compiler/environment
-  #
-  # @api private
-  #
-  attr_accessor :boot_injector
 
   # The id of code input to the compiler.
   # @api private
@@ -167,8 +151,6 @@ class Puppet::Parser::Compiler
 
       Puppet::Util::Profiler.profile("Compile: Created settings scope", [:compiler, :create_settings_scope]) { create_settings_scope }
 
-      activate_binder
-
       Puppet::Util::Profiler.profile("Compile: Evaluated capability mappings", [:compiler, :evaluate_capability_mappings]) { evaluate_capability_mappings }
 
       Puppet::Util::Profiler.profile("Compile: Evaluated main", [:compiler, :evaluate_main]) { evaluate_main }
@@ -218,7 +200,6 @@ class Puppet::Parser::Compiler
       :current_environment => environment,
       :global_scope => @topscope,             # 4x placeholder for new global scope
       :loaders  => lambda {|| loaders() },    # 4x loaders
-      :injector => lambda {|| injector() }    # 4x API - via context instead of via compiler
     }
   end
 
@@ -437,45 +418,8 @@ class Puppet::Parser::Compiler
     @resource_overrides[resource.ref]
   end
 
-  def injector
-    create_injector if @injector.nil?
-    @injector
-  end
-
   def loaders
     @loaders ||= Puppet::Pops::Loaders.new(environment)
-  end
-
-  def boot_injector
-    create_boot_injector(nil) if @boot_injector.nil?
-    @boot_injector
-  end
-
-  # Creates the boot injector from registered system, default, and injector config.
-  # @return [Puppet::Pops::Binder::Injector] the created boot injector
-  # @api private Cannot be 'private' since it is called from the BindingsComposer.
-  #
-  def create_boot_injector(env_boot_bindings)
-    assert_binder_active()
-    pb = Puppet::Pops::Binder
-    boot_contribution = pb::SystemBindings.injector_boot_contribution(env_boot_bindings)
-    final_contribution = pb::SystemBindings.final_contribution
-    binder = pb::Binder.new(pb::BindingsFactory.layered_bindings(final_contribution, boot_contribution))
-    @boot_injector = pb::Injector.new(binder)
-  end
-
-  # Answers if Puppet Binder should be active or not, and if it should and is not active, then it is activated.
-  # @return [Boolean] true if the Puppet Binder should be activated
-  def activate_binder
-    # TODO: this should be in a central place
-    Puppet::Parser::ParserFactory.assert_rgen_installed()
-    @@binder_loaded ||= false
-    unless @@binder_loaded
-      require 'puppet/pops'
-      require 'puppet/plugins/configuration'
-      @@binder_loaded = true
-    end
-    true
   end
 
   private
@@ -844,9 +788,7 @@ class Puppet::Parser::Compiler
     catalog.server_version = node.parameters["serverversion"]
     @topscope.set_trusted(node.trusted_data)
 
-    if Puppet[:trusted_server_facts]
-      @topscope.set_server_facts(node.server_facts)
-    end
+    @topscope.set_server_facts(node.server_facts)
 
     facts_hash = node.facts.nil? ? {} : node.facts.values
     @topscope.set_facts(facts_hash)
@@ -854,7 +796,8 @@ class Puppet::Parser::Compiler
 
   def create_settings_scope
     settings_type = Puppet::Resource::Type.new :hostclass, "settings"
-    environment.known_resource_types.add(settings_type)
+    # use replace instead of add to avoid duplication check and illegal merge (PUP-5954)
+    environment.known_resource_types.replace_settings(settings_type)
 
     settings_resource = Puppet::Parser::Resource.new("class", "settings", :scope => @topscope)
 
@@ -863,36 +806,8 @@ class Puppet::Parser::Compiler
     settings_type.evaluate_code(settings_resource)
 
     scope = @topscope.class_scope(settings_type)
-
-    env = environment
-    settings_hash = {}
-    Puppet.settings.each do |name, setting|
-      next if name == :name
-      s_name = name.to_s
-      # Construct a hash (in anticipation it will be set in top scope under a name like $settings)
-      settings_hash[s_name] = transform_setting(env[name])
-      scope[s_name] = settings_hash[s_name]
-    end
+    scope.merge_settings(environment.name)
   end
-
-  def transform_setting(val)
-    case val
-    when Integer, Float, String, TrueClass, FalseClass, NilClass
-      val
-    when Symbol
-      val == :undef ? nil : val.to_s
-    when Array
-      val.map {|entry| transform_setting(entry) }
-    when Hash
-      result = {}
-      val.each {|k,v| result[transform_setting(k)] = transform_setting(v) }
-      result
-    else
-      # not ideal, but required as there are settings values that are special
-      val.to_s
-    end
-  end
-  private :transform_setting
 
   # Return an array of all of the unevaluated resources.  These will be definitions,
   # which need to get evaluated into native resources.
@@ -900,21 +815,4 @@ class Puppet::Parser::Compiler
     # The order of these is significant for speed due to short-circuiting
     resources.reject { |resource| resource.evaluated? or resource.virtual? or resource.builtin_type? }
   end
-
-  # Creates the injector from bindings found in the current environment.
-  # @return [void]
-  # @api private
-  #
-  def create_injector
-    assert_binder_active()
-    composer = Puppet::Pops::Binder::BindingsComposer.new()
-    layered_bindings = composer.compose(topscope)
-    @injector = Puppet::Pops::Binder::Injector.new(Puppet::Pops::Binder::Binder.new(layered_bindings))
-  end
-
-  def assert_binder_active
-    unless activate_binder()
-      raise Puppet::DevError, "The Puppet Binder was not activated"
-    end
-  end  # Creates a diagnostic producer
 end

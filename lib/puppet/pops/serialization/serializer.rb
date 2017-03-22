@@ -105,7 +105,7 @@ module Serialization
         push_written(value)
         @writer.write(value)
       when Types::PuppetObject
-        value._ptype.write(value, self)
+        value._pcore_type.write(value, self)
       else
         impl_class = value.class
         type = Loaders.implementation_registry.type_for_module(impl_class)
