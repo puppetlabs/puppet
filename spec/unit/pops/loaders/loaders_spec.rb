@@ -47,11 +47,11 @@ describe 'loaders' do
     let(:pp_resources) { config_dir('pp_resources') }
     let(:environments) { Puppet::Environments::Directories.new(my_fixture_dir, []) }
     let(:env) { Puppet::Node::Environment.create(:'pp_resources', [File.join(pp_resources, 'modules')]) }
-    let(:scope) { Puppet::Parser::Compiler.new(Puppet::Node.new("test", :environment => env)).newscope(nil) }
+    let(:compiler) { Puppet::Parser::Compiler.new(Puppet::Node.new("test", :environment => env)) }
     let(:loader) { Puppet::Pops::Loaders.loaders.find_loader(nil) }
     around(:each) do |example|
-      Puppet.override(:environments => environments, :current_environment => scope.environment, :global_scope => scope) do
-        Puppet.override(:loaders => Puppet::Pops::Loaders.new(env)) do
+      Puppet.override(:environments => environments) do
+        Puppet.override(:loaders => compiler.loaders) do
           example.run
         end
       end

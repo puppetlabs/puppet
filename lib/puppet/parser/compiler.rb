@@ -199,7 +199,7 @@ class Puppet::Parser::Compiler
     {
       :current_environment => environment,
       :global_scope => @topscope,             # 4x placeholder for new global scope
-      :loaders  => lambda {|| loaders() },    # 4x loaders
+      :loaders  => @loaders,                  # 4x loaders
     }
   end
 
@@ -338,7 +338,7 @@ class Puppet::Parser::Compiler
     end
   end
 
-  # Evaluates each specified class in turn. If there are any classes that 
+  # Evaluates each specified class in turn. If there are any classes that
   # can't be found, an error is raised. This method really just creates resource objects
   # that point back to the classes, and then the resources are themselves
   # evaluated later in the process.
@@ -416,10 +416,6 @@ class Puppet::Parser::Compiler
   # Return any overrides for the given resource.
   def resource_overrides(resource)
     @resource_overrides[resource.ref]
-  end
-
-  def loaders
-    @loaders ||= Puppet::Pops::Loaders.new(environment)
   end
 
   private
@@ -695,6 +691,9 @@ class Puppet::Parser::Compiler
     # MOVED HERE - SCOPE IS NEEDED (MOVE-SCOPE)
     # Create the initial scope, it is needed early
     @topscope = Puppet::Parser::Scope.new(self)
+
+    # Initialize loaders and Pcore
+    @loaders = Puppet::Pops::Loaders.new(environment)
 
     # Need to compute overrides here, and remember them, because we are about to
     # enter the magic zone of known_resource_types and initial import.
