@@ -48,6 +48,7 @@ end
 # @api public
 module Puppet
   require 'puppet/file_system'
+  require 'puppet/etc'
   require 'puppet/context'
   require 'puppet/environments'
 
