@@ -60,6 +60,7 @@ class LookupAdapter < DataAdapter
         end
         lookup_invocation.with(:data, key.to_s) do
           catch(:no_such_key) { return do_lookup(key, lookup_invocation, merge) }
+          throw :no_such_key if lookup_invocation.global_only?
           key.dig(lookup_invocation, lookup_default_in_module(key, lookup_invocation))
         end
       end
