@@ -282,6 +282,24 @@ describe "The lookup function" do
           end
         end
 
+        context 'with a declared default_hierarchy' do
+          let(:hiera_yaml) { <<-YAML.unindent }
+            version: 5
+            hierarchy:
+              - name: Common
+                path: common.yaml
+            default_hierarchy:
+              - name: Defaults
+                path: defaults.yaml
+            YAML
+
+          it 'fails and reports error' do
+            Puppet[:strict] = :error
+            expect { lookup('a') }.to raise_error(
+              "'default_hierarchy' is only allowed in the module layer at #{code_dir}/hiera.yaml:5")
+          end
+        end
+
         context 'with missing variables' do
           let(:scope_additions) { { 'fqdn' => 'test.example.com' } }
           let(:hiera_yaml) { <<-YAML.unindent }
@@ -364,6 +382,24 @@ describe "The lookup function" do
           it 'fails and reports error' do
             expect { lookup('a') }.to raise_error(
               "'hiera3_backend' is only allowed in the global layer at #{env_dir}/spec/hiera.yaml:4")
+          end
+        end
+
+        context 'with a declared default_hierarchy' do
+          let(:env_hiera_yaml) { <<-YAML.unindent }
+            version: 5
+            hierarchy:
+              - name: Common
+                path: common.yaml
+            default_hierarchy:
+              - name: Defaults
+                path: defaults.yaml
+            YAML
+
+          it 'fails and reports error' do
+            Puppet[:strict] = :error
+            expect { lookup('a') }.to raise_error(
+              "'default_hierarchy' is only allowed in the module layer at #{env_dir}/spec/hiera.yaml:5")
           end
         end
       end
@@ -2501,6 +2537,125 @@ describe "The lookup function" do
             expect(lookup(['mod_a::hash_a.a', 'mod_a::hash_a.b'], :merge => 'hash')).to eql(
               ['value mod_a::hash_a.a (from environment)', 'value mod_a::hash_a.b (from mod_a)'])
           end
+        end
+      end
+
+      context 'that has a default_hierarchy' do
+        let(:mod_a_hiera_yaml) { <<-YAML.unindent }
+          version: 5
+          hierarchy:
+            - name: "Common"
+              path: common.yaml
+            - name: "Common 2"
+              path: common2.yaml
+
+          default_hierarchy:
+            - name: "Default"
+              path: defaults.yaml
+            - name: "Default 2"
+              path: defaults2.yaml
+          YAML
+
+        let(:mod_a_common) { <<-YAML.unindent }
+          mod_a::a: value mod_a::a (from module)
+          mod_a::d:
+            a: value mod_a::d.a (from module)
+          mod_a::f:
+            a:
+              a: value mod_a::f.a.a (from module)
+          lookup_options:
+            mod_a::e:
+              merge: deep
+          YAML
+
+
+        let(:mod_a_common2) { <<-YAML.unindent }
+          mod_a::b: value mod_a::b (from module)
+          mod_a::d:
+            c: value mod_a::d.c (from module)
+          mod_a::f:
+            a:
+              b: value mod_a::f.a.b (from module)
+          YAML
+
+        let(:mod_a_defaults) { <<-YAML.unindent }
+          mod_a::a: value mod_a::a (from module defaults)
+          mod_a::b: value mod_a::b (from module defaults)
+          mod_a::c: value mod_a::c (from module defaults)
+          mod_a::d:
+            b: value mod_a::d.b (from module defaults)
+          mod_a::e:
+            a:
+              a: value mod_a::e.a.a (from module defaults)
+          mod_a::g:
+            a:
+              a: value mod_a::g.a.a (from module defaults)
+          lookup_options:
+            mod_a::d:
+              merge: hash
+            mod_a::g:
+              merge: deep
+          YAML
+
+        let(:mod_a_defaults2) { <<-YAML.unindent }
+          mod_a::e:
+            a:
+              b: value mod_a::e.a.b (from module defaults)
+          mod_a::g:
+            a:
+              b: value mod_a::g.a.b (from module defaults)
+          YAML
+
+        let(:mod_a_files) do
+          {
+            'mod_a' => {
+              'data' => {
+                'common.yaml' => mod_a_common,
+                'common2.yaml' => mod_a_common2,
+                'defaults.yaml' => mod_a_defaults,
+                'defaults2.yaml' => mod_a_defaults2
+              },
+              'hiera.yaml' => mod_a_hiera_yaml
+            }
+          }
+        end
+
+        it 'the default hierarchy does not interfere with environment hierarchy' do
+          expect(lookup('mod_a::a')).to eql('value mod_a::a (from environment)')
+        end
+
+        it 'the default hierarchy does not interfere with regular hierarchy in module' do
+          expect(lookup('mod_a::b')).to eql('value mod_a::b (from module)')
+        end
+
+        it 'the default hierarchy is consulted when no value is found elsewhere' do
+          expect(lookup('mod_a::c')).to eql('value mod_a::c (from module defaults)')
+        end
+
+        it 'the default hierarchy does not participate in a merge' do
+          expect(lookup('mod_a::d', 'merge' => 'hash')).to eql('a' => 'value mod_a::d.a (from module)', 'c' => 'value mod_a::d.c (from module)')
+        end
+
+        it 'lookup_options from regular hierarchy does not effect values found in the default hierarchy' do
+          expect(lookup('mod_a::e')).to eql('a' => { 'a' => 'value mod_a::e.a.a (from module defaults)' })
+        end
+
+        it 'lookup_options from default hierarchy affects values found in the default hierarchy' do
+          expect(lookup('mod_a::g')).to eql('a' => { 'a' => 'value mod_a::g.a.a (from module defaults)', 'b' => 'value mod_a::g.a.b (from module defaults)'})
+        end
+
+        it 'merge parameter does not override lookup_options defined in the default hierarchy' do
+          expect(lookup('mod_a::g', 'merge' => 'hash')).to eql(
+            'a' => { 'a' => 'value mod_a::g.a.a (from module defaults)', 'b' => 'value mod_a::g.a.b (from module defaults)'})
+        end
+
+        it 'lookup_options from default hierarchy does not effect values found in the regular hierarchy' do
+          expect(lookup('mod_a::d')).to eql('a' => 'value mod_a::d.a (from module)')
+        end
+
+        it 'the default hierarchy lookup is included in the explain output' do
+          explanation = explain('mod_a::c')
+          expect(explanation).to match(/Searching default_hierarchy of module "mod_a".+Original path: "defaults.yaml"/m)
         end
       end
     end

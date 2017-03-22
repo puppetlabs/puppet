@@ -775,6 +775,10 @@ module Issues
     "'hiera3_backend' is only allowed in the global layer"
   end
 
+  HIERA_DEFAULT_HIERARCHY_NOT_IN_MODULE = hard_issue :HIERA_DEFAULT_HIERARCHY_NOT_IN_MODULE do
+    "'default_hierarchy' is only allowed in the module layer"
+  end
+
   HIERA_V3_BACKEND_REPLACED_BY_DATA_HASH = hard_issue :HIERA_V3_BACKEND_REPLACED_BY_DATA_HASH, :function_name do
     "Use \"data_hash: #{function_name}_data\" instead of \"hiera3_backend: #{function_name}\""
   end

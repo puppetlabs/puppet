@@ -444,6 +444,7 @@ module Lookup
     def dump_on(io, indent, first_indent)
       io << indent << @name << "\n"
       indent = increase_indent(indent)
+      branches.each {|b| b.dump_on(io, indent, indent)}
       dump_outcome(io, indent)
     end
 
