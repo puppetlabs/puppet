@@ -1392,6 +1392,9 @@ describe "The lookup function" do
               hash_c:
                 hash_ca:
                   cab: value hash_c.hash_ca.cab (from global)
+              ipl_hiera_env: "environment value '%{hiera('mod_a::hash_a.a')}'"
+              ipl_hiera_mod: "module value '%{hiera('mod_a::abc')}'"
+              ipl_hiera_modc: "module value '%{hiera('mod_a::caller')}'"
               YAML
             'example.com.yaml' =>  <<-YAML.unindent,
               x: value x (from global example.com.yaml)
@@ -1480,7 +1483,7 @@ describe "The lookup function" do
       end
 
       context 'version 3' do
-        it 'finds data in the environment and reports deprecation warnings for both environment.conf and hiera.yaml' do
+        it 'finds data in in global layer and reports deprecation warnings for hiera.yaml' do
           expect(lookup('a')).to eql('value a (from global)')
           expect(warnings).to include(/Use of 'hiera.yaml' version 3 is deprecated. It should be converted to version 5/)
         end
@@ -1531,6 +1534,64 @@ describe "The lookup function" do
         it 'can dig down into subkeys provided by hocon_data function' do
           expect(lookup('xs.subkey')).to eql('value xs.subkey (from global hocon)')
         end
+
+        context 'with a module data provider' do
+          let(:module_files) do
+            {
+              'mod_a' => {
+                'hiera.yaml' => <<-YAML.unindent,
+                  version: 5
+                  hierarchy:
+                    - name: Common
+                      path: common.yaml
+                  YAML
+                'data' => {
+                  'common.yaml' =>  <<-YAML.unindent
+                    mod_a::abc: value mod_a::abc (from module)
+                    mod_a::caller: "calling module is %{calling_module}"
+                  YAML
+                }
+              }
+            }
+          end
+
+          let(:environment_files) do
+            {
+              env_name => {
+                'hiera.yaml' => env_hiera_yaml,
+                'data' => env_data,
+                'modules' => module_files
+              }
+            }
+          end
+
+          it "interpolation function 'hiera' finds values in environment" do
+            expect(lookup('ipl_hiera_env')).to eql("environment value 'value mod_a::hash_a.a (from environment)'")
+          end
+
+          it "interpolation function 'hiera' finds values in module" do
+            expect(lookup('ipl_hiera_mod')).to eql("module value 'value mod_a::abc (from module)'")
+          end
+
+          it "interpolation function 'hiera' finds values in module and that module does not find %{calling_module}" do
+            expect(lookup('ipl_hiera_modc')).to eql("module value 'calling module is '")
+          end
+
+          context 'but no environment data provider' do
+            let(:environment_files) do
+              {
+                env_name => {
+                  'modules' => module_files
+                }
+              }
+            end
+
+            it "interpolation function 'hiera' does not find values in a module" do
+              expect(lookup('ipl_hiera_mod')).to eql("module value ''")
+            end
+          end
+        end
+
 
         context 'using an eyaml backend' do
           let(:private_key_name) { 'private_key.pkcs7.pem' }
