@@ -1315,11 +1315,9 @@ class Type
 
     validate do |list|
       if Puppet.settings[:strict] != :off
-        dep_warning = _("The `audit` metaparameter is deprecated and will be ignored in a future release.")
+        # Only warn if `audit` metaparam came from a manifest
         if file && line
-          puppet_deprecation_warning(dep_warning, { :line => line, :file => file })
-        else
-          Puppet.deprecation_warning(dep_warning)
+          puppet_deprecation_warning(_("The `audit` metaparameter is deprecated and will be ignored in a future release."), { :line => line, :file => file })
         end
       end
       list = Array(list).collect {|p| p.to_sym}
