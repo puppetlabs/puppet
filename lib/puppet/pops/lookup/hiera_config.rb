@@ -44,6 +44,7 @@ class HieraConfig
   KEY_NAME = 'name'.freeze
   KEY_VERSION = 'version'.freeze
   KEY_DATADIR = 'datadir'.freeze
+  KEY_DEFAULT_HIERARCHY = 'default_hierarchy'.freeze
   KEY_HIERARCHY = 'hierarchy'.freeze
   KEY_LOGGER = 'logger'.freeze
   KEY_OPTIONS = 'options'.freeze
@@ -78,7 +79,7 @@ class HieraConfig
     KEY_V4_DATA_HASH => V4DataHashFunctionProvider
   }
 
-  def self.v4_function_config(config_root, function_name)
+  def self.v4_function_config(config_root, function_name, owner)
     unless Puppet[:strict] == :off
       Puppet.warn_once(:deprecation, 'legacy_provider_function',
         "Using of legacy data provider function '#{function_name}'. Please convert to a 'data_hash' function")
@@ -92,7 +93,8 @@ class HieraConfig
             KEY_V4_DATA_HASH => function_name
           }
         ]
-      }.freeze
+      }.freeze,
+      owner
     )
   end
 
@@ -117,8 +119,9 @@ class HieraConfig
   #
   # @param lookup_invocation [Invocation] Invocation data containing scope, overrides, and defaults
   # @param config_path [Pathname] Absolute path to the configuration file
+  # @param owner [ConfiguredDataProvider] The data provider that will own the created configuration
   # @return [LookupConfiguration] the configuration
-  def self.create(lookup_invocation, config_path)
+  def self.create(lookup_invocation, config_path, owner)
     if config_path.is_a?(Hash)
       config_path = nil
       loaded_config = config_path
@@ -148,11 +151,11 @@ class HieraConfig
     version = version.nil? ? 3 : version.to_i
     case version
     when 5
-      HieraConfigV5.new(config_root, config_path, loaded_config)
+      HieraConfigV5.new(config_root, config_path, loaded_config, owner)
     when 4
-      HieraConfigV4.new(config_root, config_path, loaded_config)
+      HieraConfigV4.new(config_root, config_path, loaded_config, owner)
     when 3
-      HieraConfigV3.new(config_root, config_path, loaded_config)
+      HieraConfigV3.new(config_root, config_path, loaded_config, owner)
     else
       issue = Issues::HIERA_UNSUPPORTED_VERSION
       raise Puppet::DataBinding::LookupError.new(
@@ -167,11 +170,11 @@ class HieraConfig
   #
   # @param config_path [Pathname] Absolute path to the configuration
   # @param loaded_config [Hash] the loaded configuration
-  def initialize(config_root, config_path, loaded_config)
+  def initialize(config_root, config_path, loaded_config, owner)
     @config_root = config_root
     @config_path = config_path
     @loaded_config = loaded_config
-    @config = validate_config(self.class.symkeys_to_string(@loaded_config))
+    @config = validate_config(self.class.symkeys_to_string(@loaded_config), owner)
     @data_providers = nil
   end
 
@@ -180,19 +183,26 @@ class HieraConfig
       issue.format(args.merge(:label => self)),  @config_path, line, nil, nil, issue.issue_code)
   end
 
+  def has_default_hierarchy?
+    false
+  end
+
   # Returns the data providers for this config
   #
   # @param lookup_invocation [Invocation] Invocation data containing scope, overrides, and defaults
   # @param parent_data_provider [DataProvider] The data provider that loaded this configuration
   # @return [Array<DataProvider>] the data providers
-  def configured_data_providers(lookup_invocation, parent_data_provider)
+  def configured_data_providers(lookup_invocation, parent_data_provider, use_default_hierarchy = false)
     unless @data_providers && scope_interpolations_stable?(lookup_invocation)
       if @data_providers
         lookup_invocation.report_text { 'Hiera configuration recreated due to change of scope variables used in interpolation expressions' }
       end
       slc_invocation = ScopeLookupCollectingInvocation.new(lookup_invocation.scope)
       begin
-        @data_providers = create_configured_data_providers(slc_invocation, parent_data_provider)
+        @data_providers = create_configured_data_providers(slc_invocation, parent_data_provider, false)
+        if has_default_hierarchy?
+          @default_data_providers = create_configured_data_providers(slc_invocation, parent_data_provider, true)
+        end
       rescue StandardError => e
         # Raise a LookupError with a RUNTIME_ERROR issue to prevent this being translated to an evaluation error triggered in the pp file
         # where the lookup started
@@ -204,7 +214,7 @@ class HieraConfig
       end
       @scope_interpolations = slc_invocation.scope_interpolations
     end
-    @data_providers
+    use_default_hierarchy ? @default_data_providers : @data_providers
   end
 
   # Find first line in configuration that matches regexp after given line. Comments are stripped
@@ -252,11 +262,11 @@ class HieraConfig
   end
 
   # @api private
-  def create_configured_data_providers(lookup_invocation, parent_data_provider)
+  def create_configured_data_providers(lookup_invocation, parent_data_provider, use_default_hierarchy)
     self.class.not_implemented(self, 'create_configured_data_providers')
   end
 
-  def validate_config(config)
+  def validate_config(config, owner)
     self.class.not_implemented(self, 'validate_config')
   end
 
@@ -351,7 +361,7 @@ class HieraConfigV3 < HieraConfig
     }
   end
 
-  def create_configured_data_providers(lookup_invocation, parent_data_provider)
+  def create_configured_data_providers(lookup_invocation, parent_data_provider, _)
     scope = lookup_invocation.scope
     unless scope.is_a?(Hiera::Scope)
       lookup_invocation = Invocation.new(
@@ -409,7 +419,7 @@ class HieraConfigV3 < HieraConfig
     KEY_MERGE_BEHAVIOR => 'native'
   }
 
-  def validate_config(config)
+  def validate_config(config, owner)
     unless Puppet[:strict] == :off
       Puppet.warn_once(:deprecation, 'hiera.yaml',
         "#{@config_path}: Use of 'hiera.yaml' version 3 is deprecated. It should be converted to version 5", config_path.to_s)
@@ -477,7 +487,7 @@ class HieraConfigV4 < HieraConfig
     })
   end
 
-  def create_configured_data_providers(lookup_invocation, parent_data_provider)
+  def create_configured_data_providers(lookup_invocation, parent_data_provider, _)
     default_datadir = @config[KEY_DATADIR]
     data_providers = {}
 
@@ -509,7 +519,7 @@ class HieraConfigV4 < HieraConfig
     data_providers.values
   end
 
-  def validate_config(config)
+  def validate_config(config, owner)
     unless Puppet[:strict] == :off
       Puppet.warn_once(:deprecation, 'hiera.yaml',
         "#{@config_path}: Use of 'hiera.yaml' version 4 is deprecated. It should be converted to version 5", config_path.to_s)
@@ -537,6 +547,25 @@ class HieraConfigV5 < HieraConfig
     # The option name must start with a letter and end with a letter or digit. May contain underscore and dash.
     option_name_t = tf.pattern(/\A[A-Za-z](:?[0-9A-Za-z_-]*[0-9A-Za-z])?\z/)
 
+    hierarchy_t = tf.array_of(tf.struct(
+      {
+        KEY_NAME => nes_t,
+        tf.optional(KEY_OPTIONS) => tf.hash_kv(option_name_t, tf.data),
+        tf.optional(KEY_DATA_HASH) => nes_t,
+        tf.optional(KEY_LOOKUP_KEY) => nes_t,
+        tf.optional(KEY_V3_BACKEND) => nes_t,
+        tf.optional(KEY_V4_DATA_HASH) => nes_t,
+        tf.optional(KEY_DATA_DIG) => nes_t,
+        tf.optional(KEY_PATH) => nes_t,
+        tf.optional(KEY_PATHS) => tf.array_of(nes_t, tf.range(1, :default)),
+        tf.optional(KEY_GLOB) => nes_t,
+        tf.optional(KEY_GLOBS) => tf.array_of(nes_t, tf.range(1, :default)),
+        tf.optional(KEY_URI) => uri_t,
+        tf.optional(KEY_URIS) => tf.array_of(uri_t, tf.range(1, :default)),
+        tf.optional(KEY_MAPPED_PATHS) => tf.array_of(nes_t, tf.range(3, 3)),
+        tf.optional(KEY_DATADIR) => nes_t
+      }))
+
     @@CONFIG_TYPE = tf.struct({
       KEY_VERSION => tf.range(5, 5),
       tf.optional(KEY_DEFAULTS) => tf.struct(
@@ -547,35 +576,28 @@ class HieraConfigV5 < HieraConfig
           tf.optional(KEY_DATADIR) => nes_t,
           tf.optional(KEY_OPTIONS) => tf.hash_kv(option_name_t, tf.data),
         }),
-      tf.optional(KEY_HIERARCHY) => tf.array_of(tf.struct(
-        {
-          KEY_NAME => nes_t,
-          tf.optional(KEY_OPTIONS) => tf.hash_kv(option_name_t, tf.data),
-          tf.optional(KEY_DATA_HASH) => nes_t,
-          tf.optional(KEY_LOOKUP_KEY) => nes_t,
-          tf.optional(KEY_V3_BACKEND) => nes_t,
-          tf.optional(KEY_V4_DATA_HASH) => nes_t,
-          tf.optional(KEY_DATA_DIG) => nes_t,
-          tf.optional(KEY_PATH) => nes_t,
-          tf.optional(KEY_PATHS) => tf.array_of(nes_t, tf.range(1, :default)),
-          tf.optional(KEY_GLOB) => nes_t,
-          tf.optional(KEY_GLOBS) => tf.array_of(nes_t, tf.range(1, :default)),
-          tf.optional(KEY_URI) => uri_t,
-          tf.optional(KEY_URIS) => tf.array_of(uri_t, tf.range(1, :default)),
-          tf.optional(KEY_MAPPED_PATHS) => tf.array_of(nes_t, tf.range(3, 3)),
-          tf.optional(KEY_DATADIR) => nes_t
-        }))
+      tf.optional(KEY_HIERARCHY) => hierarchy_t,
+      tf.optional(KEY_DEFAULT_HIERARCHY) => hierarchy_t
     })
   end
 
-  def create_configured_data_providers(lookup_invocation, parent_data_provider)
+  def create_configured_data_providers(lookup_invocation, parent_data_provider, use_default_hierarchy)
     defaults = @config[KEY_DEFAULTS] || EMPTY_HASH
     datadir = defaults[KEY_DATADIR] || 'data'
 
     # Hashes enumerate their values in the order that the corresponding keys were inserted so it's safe to use
     # a hash for the data_providers.
     data_providers = {}
-    @config[KEY_HIERARCHY].each do |he|
+
+    if @config.include?(KEY_DEFAULT_HIERARCHY)
+      unless parent_data_provider.is_a?(ModuleDataProvider)
+        fail(Issues::HIERA_DEFAULT_HIERARCHY_NOT_IN_MODULE, EMPTY_HASH, find_line_matching(/\s+default_hierarchy:/))
+      end
+    elsif use_default_hierarchy
+      return data_providers
+    end
+
+    @config[use_default_hierarchy ? KEY_DEFAULT_HIERARCHY : KEY_HIERARCHY].each do |he|
       name = he[KEY_NAME]
       if data_providers.include?(name)
         first_line = find_line_matching(/\s+name:\s+['"]?#{name}(?:[^\w]|$)/)
@@ -619,15 +641,6 @@ class HieraConfigV5 < HieraConfig
       options = he[KEY_OPTIONS] || defaults[KEY_OPTIONS]
       options = options.nil? ? EMPTY_HASH : interpolate(options, lookup_invocation, false)
       if(function_kind == KEY_V3_BACKEND)
-        unless parent_data_provider.is_a?(GlobalDataProvider)
-          fail(Issues::HIERA_V3_BACKEND_NOT_GLOBAL, EMPTY_HASH, find_line_matching(/\s+#{function_kind}:/))
-        end
-
-        if function_name == 'json' || function_name == 'yaml' || function_name == 'hocon' &&  Puppet.features.hocon?
-          # Disallow use of backends that have corresponding "data_hash" functions in version 5
-          fail(Issues::HIERA_V3_BACKEND_REPLACED_BY_DATA_HASH, { :function_name => function_name },
-            find_line_matching(/\s+#{function_kind}:\s*['"]?#{function_name}(?:[^\w]|$)/))
-        end
         v3options = { :datadir => entry_datadir.to_s }
         options.each_pair { |k, v| v3options[k.to_sym] = v }
         data_providers[name] = create_hiera3_backend_provider(name, function_name, parent_data_provider, entry_datadir, locations, {
@@ -647,6 +660,10 @@ class HieraConfigV5 < HieraConfig
     data_providers.values
   end
 
+  def has_default_hierarchy?
+    @config.include?(KEY_DEFAULT_HIERARCHY)
+  end
+
   RESERVED_OPTION_KEYS = ['path', 'uri'].freeze
 
   DEFAULT_CONFIG_HASH = {
@@ -663,38 +680,59 @@ class HieraConfigV5 < HieraConfig
     ]
   }.freeze
 
-  def validate_config(config)
+  def validate_config(config, owner)
     config[KEY_DEFAULTS] ||= DEFAULT_CONFIG_HASH[KEY_DEFAULTS]
     config[KEY_HIERARCHY] ||= DEFAULT_CONFIG_HASH[KEY_HIERARCHY]
 
     Types::TypeAsserter.assert_instance_of(["The Lookup Configuration at '%s'", @config_path], self.class.config_type, config)
     defaults = config[KEY_DEFAULTS]
     validate_defaults(defaults) unless defaults.nil?
-    config[KEY_HIERARCHY].each do |he|
-      name = he[KEY_NAME]
-      case ALL_FUNCTION_KEYS.count { |key| he.include?(key) }
-      when 0
-        if defaults.nil? || FUNCTION_KEYS.count { |key| defaults.include?(key) } == 0
-          fail(Issues::HIERA_MISSING_DATA_PROVIDER_FUNCTION, :name => name)
-        end
-      when 1
-        # OK
-      else
-        fail(Issues::HIERA_MULTIPLE_DATA_PROVIDER_FUNCTIONS, :name => name)
-      end
+    config[KEY_HIERARCHY].each { |he| validate_hierarchy(he, defaults, owner) }
 
-      if LOCATION_KEYS.count { |key| he.include?(key) } > 1
-        fail(Issues::HIERA_MULTIPLE_LOCATION_SPECS, :name => name)
+    if config.include?(KEY_DEFAULT_HIERARCHY)
+      unless owner.is_a?(ModuleDataProvider)
+        fail(Issues::HIERA_DEFAULT_HIERARCHY_NOT_IN_MODULE, EMPTY_HASH, find_line_matching(/(?:^|\s+)#{KEY_DEFAULT_HIERARCHY}:/))
       end
-
-      options = he[KEY_OPTIONS]
-      unless options.nil?
-        RESERVED_OPTION_KEYS.each do |key|
-          fail(Issues::HIERA_OPTION_RESERVED_BY_PUPPET, :key => key, :name => name) if options.include?(key)
-        end
-      end
+      config[KEY_DEFAULT_HIERARCHY].each { |he| validate_hierarchy(he, defaults, owner) }
     end
     config
+  end
+
+  def validate_hierarchy(he, defaults, owner)
+    name = he[KEY_NAME]
+    case ALL_FUNCTION_KEYS.count { |key| he.include?(key) }
+    when 0
+      if defaults.nil? || FUNCTION_KEYS.count { |key| defaults.include?(key) } == 0
+        fail(Issues::HIERA_MISSING_DATA_PROVIDER_FUNCTION, :name => name)
+      end
+    when 1
+      # OK
+    else
+      fail(Issues::HIERA_MULTIPLE_DATA_PROVIDER_FUNCTIONS, :name => name)
+    end
+
+    v3_backend = he[KEY_V3_BACKEND]
+    unless v3_backend.nil?
+      unless owner.is_a?(GlobalDataProvider)
+        fail(Issues::HIERA_V3_BACKEND_NOT_GLOBAL, EMPTY_HASH, find_line_matching(/\s+#{KEY_V3_BACKEND}:/))
+      end
+      if v3_backend == 'json' || v3_backend == 'yaml' || v3_backend == 'hocon' &&  Puppet.features.hocon?
+        # Disallow use of backends that have corresponding "data_hash" functions in version 5
+        fail(Issues::HIERA_V3_BACKEND_REPLACED_BY_DATA_HASH, { :function_name => v3_backend },
+          find_line_matching(/\s+#{KEY_V3_BACKEND}:\s*['"]?#{v3_backend}(?:[^\w]|$)/))
+      end
+    end
+
+    if LOCATION_KEYS.count { |key| he.include?(key) } > 1
+      fail(Issues::HIERA_MULTIPLE_LOCATION_SPECS, :name => name)
+    end
+
+    options = he[KEY_OPTIONS]
+    unless options.nil?
+      RESERVED_OPTION_KEYS.each do |key|
+        fail(Issues::HIERA_OPTION_RESERVED_BY_PUPPET, :key => key, :name => name) if options.include?(key)
+      end
+    end
   end
 
   def validate_defaults(defaults)

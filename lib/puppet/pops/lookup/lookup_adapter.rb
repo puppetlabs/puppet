@@ -58,7 +58,11 @@ class LookupAdapter < DataAdapter
           merge = lookup_merge_options(key, lookup_invocation)
           lookup_invocation.report_merge_source(LOOKUP_OPTIONS) unless merge.nil?
         end
-        lookup_invocation.with(:data, key.to_s) { do_lookup(key, lookup_invocation, merge) }
+        lookup_invocation.with(:data, key.to_s) do
+          catch(:no_such_key) { return do_lookup(key, lookup_invocation, merge) }
+          throw :no_such_key if lookup_invocation.global_only?
+          key.dig(lookup_invocation, lookup_default_in_module(key, lookup_invocation))
+        end
       end
     end
   end
@@ -115,6 +119,43 @@ class LookupAdapter < DataAdapter
     provider.key_lookup(key, lookup_invocation, merge_strategy)
   end
 
+  def lookup_default_in_module(key, lookup_invocation)
+    module_name = lookup_invocation.module_name
+
+    # Do not attempt to do a lookup in a module unless the name is qualified.
+    throw :no_such_key if module_name.nil?
+
+    provider = module_provider(lookup_invocation, module_name)
+    throw :no_such_key if provider.nil? || !provider.config(lookup_invocation).has_default_hierarchy?
+
+    lookup_invocation.with(:scope, "Searching default_hierarchy of module \"#{module_name}\"") do
+      merge_strategy = nil
+      if merge_strategy.nil?
+        @module_default_lookup_options ||= {}
+        options = @module_default_lookup_options.fetch(module_name) do |k|
+          meta_invocation = Invocation.new(lookup_invocation.scope)
+          meta_invocation.lookup(LookupKey::LOOKUP_OPTIONS, k) do
+            opts = nil
+            lookup_invocation.with(:scope, "Searching for \"#{LookupKey::LOOKUP_OPTIONS}\"") do
+              catch(:no_such_key) do
+              opts = compile_patterns(
+                validate_lookup_options(
+                  provider.key_lookup_in_default(LookupKey::LOOKUP_OPTIONS, meta_invocation, MergeStrategy.strategy(HASH)), k))
+              end
+            end
+            @module_default_lookup_options[k] = opts
+          end
+        end
+        lookup_options = extract_lookup_options_for_key(key, options)
+        merge_strategy = lookup_options[MERGE] unless lookup_options.nil?
+      end
+
+      lookup_invocation.with(:scope, "Searching for \"#{key}\"") do
+        provider.key_lookup_in_default(key, lookup_invocation, merge_strategy)
+      end
+    end
+  end
+
   # Retrieve the merge options that match the given `name`.
   #
   # @param key [LookupKey] The key for which we want merge options
@@ -142,6 +183,10 @@ class LookupAdapter < DataAdapter
     else
       options = @lookup_options[module_name]
     end
+    extract_lookup_options_for_key(key, options)
+  end
+
+  def extract_lookup_options_for_key(key, options)
     return nil if options.nil?
 
     rk = key.root_key
@@ -344,7 +389,9 @@ class LookupAdapter < DataAdapter
       when 'hiera'
         mp || ModuleDataProvider.new(module_name)
       when 'function'
-        ModuleDataProvider.new(module_name, HieraConfig.v4_function_config(Pathname(mod.path), "#{module_name}::data"))
+        mp = ModuleDataProvider.new(module_name)
+        mp.config = HieraConfig.v4_function_config(Pathname(mod.path), "#{module_name}::data", mp)
+        mp
       else
         raise Puppet::Error.new("Environment '#{environment.name}', cannot find module_data_provider '#{provider_name}'")
       end
@@ -397,7 +444,9 @@ class LookupAdapter < DataAdapter
         # Use hiera.yaml or default settings if it is missing
         ep || EnvironmentDataProvider.new
       when 'function'
-        EnvironmentDataProvider.new(HieraConfigV5.v4_function_config(env_path, 'environment::data'))
+        ep = EnvironmentDataProvider.new
+        ep.config = HieraConfigV5.v4_function_config(env_path, 'environment::data', ep)
+        ep
       else
         raise Puppet::Error.new("Environment '#{environment.name}', cannot find environment_data_provider '#{provider_name}'")
       end

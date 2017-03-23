@@ -15,11 +15,16 @@ class GlobalDataProvider < ConfiguredDataProvider
       # Hiera version 3 needs access to special scope variables
       scope = lookup_invocation.scope
       unless scope.is_a?(Hiera::Scope)
-        lookup_invocation = Invocation.new(
+        hiera_invocation = Invocation.new(
           Hiera::Scope.new(scope),
           lookup_invocation.override_values,
           lookup_invocation.default_values,
           lookup_invocation.explainer)
+
+        # Confine to global scope unless an environment data provider has been defined (same as for hiera_xxx functions)
+        adapter = lookup_invocation.lookup_adapter
+        hiera_invocation.set_global_only unless adapter.global_only? || adapter.has_environment_data_provider?(lookup_invocation)
+        lookup_invocation = hiera_invocation
       end
 
       merge = MergeStrategy.strategy(merge)

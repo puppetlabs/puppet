@@ -41,6 +41,17 @@ module DataProvider
     lookup_invocation.check(key.to_s) { unchecked_key_lookup(key, lookup_invocation, merge) }
   end
 
+  # Performs a lookup using a module default hierarchy with an endless recursion check. All providers except
+  # the `ModuleDataProvider` will throw `:no_such_key` if this method is called.
+  #
+  # @param key [LookupKey] The key to lookup
+  # @param lookup_invocation [Invocation] The current lookup invocation
+  # @param merge [MergeStrategy,String,Hash{String=>Object},nil] Merge strategy or hash with strategy and options
+  #
+  def key_lookup_in_default(key, lookup_invocation, merge)
+    throw :no_such_key
+  end
+
   def lookup(key, lookup_invocation, merge)
     lookup_invocation.check(key.to_s) { unchecked_key_lookup(key, lookup_invocation, merge) }
   end

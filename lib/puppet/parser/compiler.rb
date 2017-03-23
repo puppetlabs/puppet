@@ -793,12 +793,17 @@ class Puppet::Parser::Compiler
     @topscope.set_facts(facts_hash)
   end
 
-  def create_settings_scope
-    settings_type = Puppet::Resource::Type.new :hostclass, "settings"
-    # use replace instead of add to avoid duplication check and illegal merge (PUP-5954)
-    environment.known_resource_types.replace_settings(settings_type)
+  SETTINGS = 'settings'.freeze
 
-    settings_resource = Puppet::Parser::Resource.new("class", "settings", :scope => @topscope)
+  def create_settings_scope
+    resource_types = environment.known_resource_types
+    settings_type = resource_types.hostclass(SETTINGS)
+    if settings_type.nil?
+      settings_type = Puppet::Resource::Type.new(:hostclass, SETTINGS)
+      resource_types.add(settings_type)
+    end
+
+    settings_resource = Puppet::Parser::Resource.new('class', SETTINGS, :scope => @topscope)
 
     @catalog.add_resource(settings_resource)
 
