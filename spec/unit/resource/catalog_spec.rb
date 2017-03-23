@@ -1008,6 +1008,9 @@ describe Puppet::Resource::Catalog, "when converting to pson" do
     one = stub 'one', :to_data_hash => "one_resource", :ref => "Foo[one]"
     two = stub 'two', :to_data_hash => "two_resource", :ref => "Foo[two]"
 
+    one.expects(:'[]').with(:alias).returns nil
+    two.expects(:'[]').with(:alias).returns nil
+
     @catalog.add_resource(one)
     @catalog.add_resource(two)
 

@@ -154,7 +154,13 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   private :add_resource_to_graph
 
   def create_resource_aliases(resource)
-    # Skip creating aliases and checking collisions for non-isomorphic resources.
+    # Explicit aliases must always be processed
+    # The alias setting logic checks, and does not error if the alias is set to an already set alias
+    # for the same resource (i.e. it is ok if alias == title
+    explicit_aliases = [resource[:alias]].flatten.compact
+    explicit_aliases.each {| given_alias | self.alias(resource, given_alias) }
+
+    # Skip creating uniqueness key alias and checking collisions for non-isomorphic resources.
     return unless resource.respond_to?(:isomorphic?) and resource.isomorphic?
 
     # Add an alias if the uniqueness key is valid and not the title, which has already been checked.
@@ -506,8 +512,9 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       'resources' => resources,
       'edges'     => edges.   collect { |e| e.to_data_hash },
       'classes'   => classes,
-    }.merge(metadata_hash.empty? ? {} : {'metadata' => metadata_hash})
-     .merge(recursive_metadata_hash.empty? ? {} : {'recursive_metadata' => recursive_metadata_hash})
+    }.merge(metadata_hash.empty? ?
+      {} : {'metadata' => metadata_hash}).merge(recursive_metadata_hash.empty? ?
+        {} : {'recursive_metadata' => recursive_metadata_hash})
   end
 
   # Convert our catalog into a RAL catalog.
