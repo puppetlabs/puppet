@@ -1096,4 +1096,55 @@ describe Puppet::Parser::Compiler do
     end
   end
 
+  describe "the compiler when handling aliases" do
+    include PuppetSpec::Compiler
+
+    def extract_name(ref)
+      ref.sub(/.*\[(\w+)\]/, '\1')
+    end
+
+    def assert_created_relationships(catalog, type_name, expectations)
+      resources = catalog.resources.select { |res| res.type == type_name }
+
+      actual_relationships, actual_subscriptions = [:before, :notify].map do |relation|
+        resources.map do |res|
+          dependents = Array(res[relation])
+          dependents.map { |ref| [res.title, extract_name(ref)] }
+        end.inject(&:concat)
+      end
+
+      expect(actual_relationships).to match_array(expectations[:relationships] || [])
+      expect(actual_subscriptions).to match_array(expectations[:subscriptions] || [])
+    end
+
+    it 'allows a relationship to be formed using metaparam relationship' do
+      node = Puppet::Node.new("testnodex")
+      catalog = compile_to_catalog(<<-PP, node)
+        notify { 'actual_2':  before => 'Notify[alias_1]' }
+        notify { 'actual_1': alias => 'alias_1' }
+      PP
+      assert_created_relationships(catalog, 'Notify', { :relationships => [['actual_2', 'alias_1']] })
+    end
+
+    it 'allows a relationship to be formed using -> operator and alias' do
+      node = Puppet::Node.new("testnodex")
+      catalog = compile_to_catalog(<<-PP, node)
+        notify { 'actual_2':  }
+        notify { 'actual_1': alias => 'alias_1' }
+        Notify[actual_2] -> Notify[alias_1]
+      PP
+      assert_created_relationships(catalog, 'Notify', { :relationships => [['actual_2', 'alias_1']] })
+    end
+
+    it 'errors when an alias cannot be found when relationship is formed with -> operator' do
+      node = Puppet::Node.new("testnodex")
+      expect {
+        catalog = compile_to_catalog(<<-PP, node)
+          notify { 'actual_2':  }
+          notify { 'actual_1': alias => 'alias_1' }
+          Notify[actual_2] -> Notify[alias_2]
+        PP
+      }.to raise_error(/Could not find resource 'Notify\[alias_2\]'/)
+    end
+  end
 end
