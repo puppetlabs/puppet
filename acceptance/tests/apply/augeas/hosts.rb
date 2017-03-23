@@ -4,7 +4,10 @@ skip_test 'requires augeas which is included in AIO' if @options[:type] != 'aio'
 
 tag 'risk:medium'
 
-  confine :except, :platform => 'windows'
+  confine :except, :platform => [
+    'windows',
+    'cisco_ios',   # PUP-7380
+  ]
   confine :to, {}, hosts.select { |host| ! host[:roles].include?('master') }
 
   step "Backup the hosts file" do
