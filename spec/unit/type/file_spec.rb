@@ -1598,7 +1598,38 @@ describe Puppet::Type.type(:file) do
       catalog.apply
 
       expect(Puppet::FileSystem.exist?(path)).to be_truthy
-      expect(@logs).not_to be_any {|l| l.level != :notice }
+      expect(@logs).not_to be_any { |l|
+        # the audit metaparameter is deprecated and logs a warning
+        l.level != :notice && !(/deprecated/.match(l.message))
+      }
+    end
+
+    it "should not log a deprecation warning when `strict` logging is turned off" do
+      # with `strict` turned off
+      Puppet.settings[:strict] = :off
+
+      file[:audit]  = 'content'
+      file[:ensure] = 'present'
+      catalog.add_resource(file)
+
+      catalog.apply
+      expect(@logs).not_to be_any { |l|
+        /deprecated/.match(l.message)
+      }
+    end
+
+    it "should log a deprecation warning when `strict` is turned on" do
+      # with strict turned on
+      Puppet.settings[:strict] = :warning
+
+      file[:audit]  = 'content'
+      file[:ensure] = 'present'
+      catalog.add_resource(file)
+
+      catalog.apply
+      expect(@logs).to be_any { |l|
+        l.level == :warning && /deprecated/.match(l.message)
+      }
     end
   end
 

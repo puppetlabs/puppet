@@ -1291,7 +1291,9 @@ class Type
   end
 
   newmetaparam(:audit) do
-    desc "Marks a subset of this resource's unmanaged attributes for auditing. Accepts an
+    desc "(This metaparameter is deprecated and will be ignored in a future release.)
+
+      Marks a subset of this resource's unmanaged attributes for auditing. Accepts an
       attribute name, an array of attribute names, or `all`.
 
       Auditing a resource attribute has two effects: First, whenever a catalog
@@ -1312,6 +1314,14 @@ class Type
       and the second run will log the edit made by Puppet.)"
 
     validate do |list|
+      if Puppet.settings[:strict] != :off
+        dep_warning = _("The `audit` metaparameter is deprecated and will be ignored in a future release.")
+        if file && line
+          puppet_deprecation_warning(dep_warning, { :line => line, :file => file })
+        else
+          Puppet.deprecation_warning(dep_warning)
+        end
+      end
       list = Array(list).collect {|p| p.to_sym}
       unless list == [:all]
         list.each do |param|

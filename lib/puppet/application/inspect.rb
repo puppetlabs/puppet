@@ -19,6 +19,7 @@ puppet-inspect(8) -- Send an inspection report
 
 SYNOPSIS
 --------
+Note: this command is deprecated
 
 Prepares and submits an inspection report to the puppet master.
 
@@ -74,6 +75,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def setup
+    deprecate
+
     exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
 
     raise "Inspect requires reporting to be enabled. Set report=true in puppet.conf to enable reporting." unless Puppet[:report]
