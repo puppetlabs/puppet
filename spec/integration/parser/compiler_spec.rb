@@ -12,7 +12,7 @@ class CompilerTestResource
   end
 
   def [](attr)
-    return nil if attr == :stage
+    return nil if (attr == :stage || attr == :alias)
     :main
   end
 
@@ -420,22 +420,21 @@ describe Puppet::Parser::Compiler do
         expect(catalog).to have_resource("Notify[y]").with_parameter(:require, be_resource("Class[Experiment::Baz]"))
       end
 
-      it "should not favor local scope, (with class not included in topscope)" do
-        catalog = compile_to_catalog(<<-PP)
-          class experiment {
+      it "should not favor local name scope" do
+        expect {
+          catalog = compile_to_catalog(<<-PP)
+            class experiment {
+              class baz {
+              }
+              notify {"x" : require => Class['baz'] }
+              notify {"y" : require => Class['experiment::baz'] }
+            }
             class baz {
             }
-            notify {"x" : require => Class['baz'] }
-            notify {"y" : require => Class['experiment::baz'] }
-          }
-          class baz {
-          }
-          include experiment
-          include experiment::baz
-        PP
-
-        expect(catalog).to have_resource("Notify[x]").with_parameter(:require, be_resource("Class[Baz]"))
-        expect(catalog).to have_resource("Notify[y]").with_parameter(:require, be_resource("Class[Experiment::Baz]"))
+            include experiment
+            include experiment::baz
+          PP
+        }.to raise_error(/Could not find resource 'Class\[Baz\]' in parameter 'require'/)
       end
     end
 
@@ -504,9 +503,13 @@ describe Puppet::Parser::Compiler do
       end
     end
 
-    describe "relationships to non existing resources when strict == :error" do
+    describe "relationships to non existing resources (even with strict==off)" do
+      # At some point in the future, this test can be modified to simply ignore the strict flag,
+      # but since the current version is a change from being under control of strict, this is now
+      # explicit - the standard setting is strict == warning, here setting it to off
+      #
       before(:each) do
-        Puppet[:strict] = :error
+        Puppet[:strict] = :off
       end
 
       [ 'before',
@@ -519,47 +522,6 @@ describe Puppet::Parser::Compiler do
               notify{ x : #{meta_param} => Notify[tooth_fairy] }
             PP
           }.to raise_error(/Could not find resource 'Notify\[tooth_fairy\]' in parameter '#{meta_param}'/)
-        end
-      end
-    end
-
-    describe "relationships to non existing resources when strict == :warning" do
-      before(:each) do
-        Puppet[:strict] = :warning
-      end
-
-      [ 'before',
-        'subscribe',
-        'notify',
-        'require'].each do |meta_param|
-        it "are reported as a warning when formed via meta parameter #{meta_param}" do
-          expect { 
-            compile_to_catalog(<<-PP)
-              notify{ x : #{meta_param} => Notify[tooth_fairy] }
-            PP
-            expect(@logs).to have_matching_log(/Could not find resource 'Notify\[tooth_fairy\]' in parameter '#{meta_param}'/)
-
-          }.to_not raise_error()
-        end
-      end
-    end
-
-    describe "relationships to non existing resources when strict == :off" do
-      before(:each) do
-        Puppet[:strict] = :off
-      end
-
-      [ 'before',
-        'subscribe',
-        'notify',
-        'require'].each do |meta_param|
-        it "does not log an error for meta parameter #{meta_param}" do
-          expect { 
-            compile_to_catalog(<<-PP)
-              notify{ x : #{meta_param} => Notify[tooth_fairy] }
-            PP
-            expect(@logs).to_not have_matching_log(/Could not find resource 'Notify\[tooth_fairy\]' in parameter '#{meta_param}'/)
-          }.to_not raise_error()
         end
       end
     end
