@@ -132,16 +132,14 @@ Puppet::Network::FormatHandler.create(:console,
                                       :mime   => 'text/x-console-text',
                                       :weight => 0) do
   def json
-    @json ||= Puppet::Network::FormatHandler.format(:pson)
+    @json ||= Puppet::Network::FormatHandler.format(:json)
   end
 
   def render(datum)
-    # String to String
-    return datum if datum.is_a? String
-    return datum if datum.is_a? Numeric
+    return datum if datum.is_a?(String) || datum.is_a?(Numeric)
 
     # Simple hash to table
-    if datum.is_a? Hash and datum.keys.all? { |x| x.is_a? String or x.is_a? Numeric }
+    if datum.is_a?(Hash) && datum.keys.all? { |x| x.is_a?(String) || x.is_a?(Numeric) }
       output = ''
       column_a = datum.empty? ? 2 : datum.map{ |k,v| k.to_s.length }.max + 2
       datum.sort_by { |k,v| k.to_s } .each do |key, value|
@@ -164,7 +162,7 @@ Puppet::Network::FormatHandler.create(:console,
     end
 
     # ...or pretty-print the inspect outcome.
-    return PSON.pretty_generate(datum)
+    JSON.pretty_generate(datum, :quirks_mode => true)
   end
 
   def render_multiple(data)
