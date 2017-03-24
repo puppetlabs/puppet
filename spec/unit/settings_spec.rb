@@ -1476,8 +1476,11 @@ describe Puppet::Settings do
 
       main = stub 'main_resource', :ref => "File[/maindir]"
       main.expects(:to_manifest).returns "maindir"
+      main.expects(:'[]').with(:alias).returns nil
       second = stub 'second_resource', :ref => "File[/seconddir]"
       second.expects(:to_manifest).returns "seconddir"
+      second.expects(:'[]').with(:alias).returns nil
+
       @settings.setting(:maindir).expects(:to_resource).returns main
       @settings.setting(:seconddir).expects(:to_resource).returns second
 
