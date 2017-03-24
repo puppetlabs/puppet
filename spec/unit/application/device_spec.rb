@@ -47,6 +47,12 @@ describe Puppet::Application::Device do
 
       expect(@device.options[:waitforcert]).to be_nil
     end
+
+    it "should init target to nil" do
+      @device.preinit
+
+      expect(@device.options[:target]).to be_nil
+    end
   end
 
   describe "when handling options" do
@@ -265,12 +271,12 @@ describe Puppet::Application::Device do
     end
   end
 
-
   describe "when running" do
     before :each do
       @device.options.stubs(:[]).with(:fingerprint).returns(false)
       Puppet.stubs(:notice)
       @device.options.stubs(:[]).with(:detailed_exitcodes).returns(false)
+      @device.options.stubs(:[]).with(:target).returns(nil)
       @device.options.stubs(:[]).with(:client)
       Puppet::Util::NetworkDevice::Config.stubs(:devices).returns({})
     end
@@ -283,6 +289,32 @@ describe Puppet::Application::Device do
     it "should get the device list" do
       device_hash = stub_everything 'device hash'
       Puppet::Util::NetworkDevice::Config.expects(:devices).returns(device_hash)
+      expect { @device.main }.to exit_with 1
+    end
+
+    it "should get a single device, when a valid target parameter is passed" do
+      @device.options.stubs(:[]).with(:target).returns('device1')
+
+      device_hash = {
+        "device1" => OpenStruct.new(:name => "device1", :url => "ssh://user:pass@testhost", :provider => "cisco"),
+        "device2" => OpenStruct.new(:name => "device2", :url => "https://user:pass@testhost/some/path", :provider => "rest"),
+      }
+
+      Puppet::Util::NetworkDevice::Config.expects(:devices).returns(device_hash)
+      Puppet.expects(:info).with("starting applying configuration to device1 at ssh://testhost")
+      Puppet.expects(:info).with("starting applying configuration to device2 at https://testhost:443/some/path").never
+      expect { @device.main }.to exit_with 1
+    end
+
+    it "should exit, when an invalid target parameter is passed" do
+      @device.options.stubs(:[]).with(:target).returns('bla')
+      device_hash = {
+        "device1" => OpenStruct.new(:name => "device1", :url => "ssh://user:pass@testhost", :provider => "cisco"),
+      }
+
+      Puppet::Util::NetworkDevice::Config.expects(:devices).returns(device_hash)
+      Puppet.expects(:info).with(regexp_matches(/starting applying configuration to/)).never
+      Puppet.expects(:err).with(regexp_matches(/Target device \/ certificate 'bla' not found in .*\.conf/))
       expect { @device.main }.to exit_with 1
     end
 
@@ -413,7 +445,6 @@ describe Puppet::Application::Device do
             @configurer.expects(:run).in_sequence(seq)
             Puppet.expects(:[]=).with(setting, make_absolute("/dummy")).in_sequence(seq)
           end
-
 
           expect { @device.main }.to exit_with 1
 
