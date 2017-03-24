@@ -390,11 +390,11 @@ class Puppet::Transaction::Report
   end
 
   def self.supported_formats
-    [:pson, :yaml]
+    [:json, :pson, :yaml]
   end
 
   def self.default_format
-    :pson
+    Puppet[:preferred_serialization_format].to_sym
   end
 
   private
