@@ -259,9 +259,10 @@ describe 'when calling' do
       end
     end
 
-    it 'should log deprecation errors' do
+    it 'should log deprecation errors containing version stripped from patch number' do
       func('a')
-      expect(warnings).to include(/The function 'hiera' is deprecated in favor of using 'lookup'. See https:/)
+      expect(warnings).to include(
+        /The function 'hiera' is deprecated in favor of using 'lookup'\. See https:\/\/docs.puppet.com\/puppet\/\d+\.\d+\/reference\/deprecated_language\.html/)
     end
 
     context 'with environment with configured data provider' do

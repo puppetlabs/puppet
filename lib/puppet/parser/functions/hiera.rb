@@ -78,7 +78,7 @@ The returned value's data type depends on the types of the results. In the examp
 above, Hiera matches the 'users' key and returns it as a hash.
 
 The `hiera` function is deprecated in favor of using `lookup` and will be removed in 6.0.0.
-See  https://docs.puppet.com/puppet/#{Puppet.version}/reference/deprecated_language.html.
+See  https://docs.puppet.com/puppet/#{Puppet.major_minor_version}/reference/deprecated_language.html.
 Replace the calls as follows:
 
 | from  | to |

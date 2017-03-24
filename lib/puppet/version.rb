@@ -72,6 +72,10 @@ module Puppet
     @puppet_version = version
   end
 
+  def self.major_minor_version
+    self.version.sub(/\A(\d+\.\d+)\..*$/, '\1')
+  end
+
   ##
   # read_version_file reads the content of the "VERSION" file that lives in the
   # same directory as this source code file.

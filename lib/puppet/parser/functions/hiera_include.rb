@@ -76,7 +76,7 @@ hiera_include('classes') | $key | {"Key \'${key}\' not found" }
 ~~~
 
 `hiera_include` is deprecated in favor of using a combination of `include`and `lookup` and will be
-removed in 6.0.0. See  https://docs.puppet.com/puppet/#{Puppet.version}/reference/deprecated_language.html.
+removed in 6.0.0. See  https://docs.puppet.com/puppet/#{Puppet.major_minor_version}/reference/deprecated_language.html.
 Replace the calls as follows:
 
 | from  | to |
