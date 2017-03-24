@@ -1598,7 +1598,10 @@ describe Puppet::Type.type(:file) do
       catalog.apply
 
       expect(Puppet::FileSystem.exist?(path)).to be_truthy
-      expect(@logs).not_to be_any {|l| l.level != :notice }
+      expect(@logs).not_to be_any { |l|
+        # the audit metaparameter is deprecated and logs a warning
+        l.level != :notice
+      }
     end
   end
 
