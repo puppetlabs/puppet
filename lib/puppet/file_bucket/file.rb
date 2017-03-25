@@ -17,10 +17,6 @@ class Puppet::FileBucket::File
     [:binary]
   end
 
-  def self.default_format
-    :binary
-  end
-
   def initialize(contents, options = {})
     case contents
     when String
