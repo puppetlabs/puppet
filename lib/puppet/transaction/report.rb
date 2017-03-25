@@ -389,14 +389,6 @@ class Puppet::Transaction::Report
     super - [:@external_times, :@resources_failed_to_generate]
   end
 
-  def self.supported_formats
-    [:json, :pson, :yaml]
-  end
-
-  def self.default_format
-    Puppet[:preferred_serialization_format].to_sym
-  end
-
   private
 
   # Mark the report as corrective, if there are any resource_status marked corrective.

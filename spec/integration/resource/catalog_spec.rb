@@ -2,15 +2,6 @@
 require 'spec_helper'
 
 describe Puppet::Resource::Catalog do
-  it "should support json, pson, dot, yaml, binary" do
-    # msgpack is optional, so using include instead of eq
-    expect(Puppet::Resource::Catalog.supported_formats).to include(:json, :pson, :dot, :yaml, :binary)
-  end
-
-  it "should support pson" do
-    expect(Puppet::Resource::Catalog.supported_formats).to be_include(:pson)
-  end
-
   describe "when using the indirector" do
     before do
       # This is so the tests work w/out networking.

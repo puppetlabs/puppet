@@ -485,7 +485,8 @@ describe Puppet::Transaction::Report do
   end
 
   it "supports both json, pson and yaml" do
-    expect(Puppet::Transaction::Report.supported_formats).to eq([:json, :pson, :yaml])
+    # msgpack is optional, so using include instead of eq
+    expect(Puppet::Transaction::Report.supported_formats).to include(:json, :pson, :yaml)
   end
 
   it "can make a round trip through pson" do

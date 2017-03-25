@@ -22,9 +22,9 @@ describe Puppet::FileServing::Metadata do
     expect(Puppet::FileServing::Metadata.new(foobar)).to respond_to(:collect)
   end
 
-  it "should support json, pson, yaml, binary" do
+  it "should support json, pson, yaml" do
     # msgpack is optional, so using include instead of eq
-    expect(Puppet::FileServing::Metadata.supported_formats).to include(:json, :pson, :yaml, :binary)
+    expect(Puppet::FileServing::Metadata.supported_formats).to include(:json, :pson, :yaml)
   end
 
   it "should support deserialization" do

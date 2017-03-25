@@ -14,6 +14,11 @@ describe Puppet::Resource::Catalog, "when compiling" do
     Puppet::Util::Storage.stubs(:store)
   end
 
+  it "should support json, pson, dot, yaml" do
+    # msgpack is optional, so using include instead of eq
+    expect(Puppet::Resource::Catalog.supported_formats).to include(:json, :pson, :dot, :yaml)
+  end
+
   # audit only resources are unmanaged
   # as are resources without properties with should values
   it "should write its managed resources' types, namevars" do
