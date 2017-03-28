@@ -355,9 +355,11 @@ describe Puppet::Parser::Compiler do
         end
       end
 
-      describe 'and classname is a Resource Reference and strict == :error' do
+      describe 'and classname is a Resource Reference' do
+        # tested with strict == off since this was once conditional on strict
+        # can be removed in a later version.
         before(:each) do
-          Puppet[:strict] = :error
+          Puppet[:strict] = :off
         end
 
         it 'is reported as an error' do
@@ -366,38 +368,6 @@ describe Puppet::Parser::Compiler do
               notice Class[ToothFairy]
             PP
           }.to raise_error(/Illegal Class name in class reference. A TypeReference\['ToothFairy'\]-Type cannot be used where a String is expected/)
-        end
-      end
-
-      describe 'and classname is a Resource Reference and strict == :warning' do
-        before(:each) do
-          Puppet[:strict] = :warning
-        end
-
-        it 'is reported as a deprecation warning' do
-          expect { 
-            compile_to_catalog(<<-PP)
-              notice Class[ToothFairy]
-            PP
-            expect(@logs).to have_matching_log(/Upper cased class-name in a Class\[<class-name>\] is deprecated, class-name should be a lowercase string/)
-
-          }.to_not raise_error()
-        end
-      end
-
-      describe 'and classname is a Resource Reference and strict == :off' do
-        before(:each) do
-          Puppet[:strict] = :off
-        end
-
-        it 'is not reported' do
-          expect { 
-            compile_to_catalog(<<-PP)
-              notice Class[ToothFairy]
-            PP
-            expect(@logs).to_not have_matching_log(/Warning: Upper cased class-name in a Class\[<class-name>\] is deprecated, class-name should be a lowercase string/)
-
-          }.to_not raise_error()
         end
       end
 
