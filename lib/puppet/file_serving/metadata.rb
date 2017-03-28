@@ -38,7 +38,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
     raise(ArgumentError, "Cannot use opaque URLs '#{path}'") unless uri.hierarchical?
     raise(ArgumentError, "Must use URLs of type puppet as content URI") if uri.scheme != "puppet"
 
-    @content_uri = path
+    @content_uri = path.encode(Encoding::UTF_8)
   end
 
   class MetaStat
