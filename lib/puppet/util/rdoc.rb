@@ -41,20 +41,20 @@ module Puppet::Util::RDoc
 
   # launch an output to console manifest doc
   def manifestdoc(files)
-    raise "RDOC SUPPORT FOR MANIFEST HAS BEEN REMOVED - See PUP-3638"
+    raise _("RDOC SUPPORT FOR MANIFEST HAS BEEN REMOVED - See PUP-3638")
   end
 
   # Outputs to the console the documentation
   # of a manifest
   def output(file, ast)
-    raise "RDOC SUPPORT FOR MANIFEST HAS BEEN REMOVED - See PUP-3638"
+    raise _("RDOC SUPPORT FOR MANIFEST HAS BEEN REMOVED - See PUP-3638")
   end
 
   def output_astnode_doc(ast)
-    raise "RDOC SUPPORT FOR MANIFEST HAS BEEN REMOVED - See PUP-3638"
+    raise _("RDOC SUPPORT FOR MANIFEST HAS BEEN REMOVED - See PUP-3638")
   end
 
   def output_resource_doc(code)
-    raise "RDOC SUPPORT FOR MANIFEST HAS BEEN REMOVED - See PUP-3638"
+    raise _("RDOC SUPPORT FOR MANIFEST HAS BEEN REMOVED - See PUP-3638")
   end
 end
