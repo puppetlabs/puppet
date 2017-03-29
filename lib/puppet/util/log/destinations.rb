@@ -212,34 +212,28 @@ Puppet::Util::Log.newdesttype :array do
 end
 
 Puppet::Util::Log.newdesttype :eventlog do
+  # Leaving these in for backwards compatibility - duplicates the same in
+  # Puppet::Util::Windows::EventLog
   Puppet::Util::Log::DestEventlog::EVENTLOG_ERROR_TYPE       = 0x0001
   Puppet::Util::Log::DestEventlog::EVENTLOG_WARNING_TYPE     = 0x0002
   Puppet::Util::Log::DestEventlog::EVENTLOG_INFORMATION_TYPE = 0x0004
 
   def self.suitable?(obj)
-    Puppet.features.eventlog?
+    Puppet.features.microsoft_windows?
   end
 
   def initialize
-    @eventlog = Win32::EventLog.open("Application")
+    @eventlog = Puppet::Util::Windows::EventLog.open("Puppet")
   end
 
   def to_native(level)
-    case level
-    when :debug,:info,:notice
-      [self.class::EVENTLOG_INFORMATION_TYPE, 0x01]
-    when :warning
-      [self.class::EVENTLOG_WARNING_TYPE, 0x02]
-    when :err,:alert,:emerg,:crit
-      [self.class::EVENTLOG_ERROR_TYPE, 0x03]
-    end
+    Puppet::Util::Windows::EventLog.to_native(level)
   end
 
   def handle(msg)
     native_type, native_id = to_native(msg.level)
 
     @eventlog.report_event(
-      :source      => "Puppet",
       :event_type  => native_type,
       :event_id    => native_id,
       :data        => (msg.source and msg.source != 'Puppet' ? "#{msg.source}: " : '') + msg.to_s
