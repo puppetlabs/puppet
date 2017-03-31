@@ -101,6 +101,13 @@ Puppet::Util::Log.newdesttype :file do
       end
     end
 
+    # Give ownership to the user and group puppet will run as
+    begin
+      FileUtils.chown(Puppet[:user], Puppet[:group], path) unless Puppet::Util::Platform.windows?
+    rescue ArgumentError, Errno::EPERM
+      Puppet.err "Unable to set ownership of log file"
+    end
+
     @file = file
 
     @autoflush = Puppet[:autoflush]
