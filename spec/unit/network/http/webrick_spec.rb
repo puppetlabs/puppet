@@ -197,18 +197,17 @@ describe Puppet::Network::HTTP::WEBrick do
     let(:ssl_server_ca_auth) { make_absolute("/ca/ssl_server_auth_file") }
     let(:key) { stub 'key', :content => "mykey" }
     let(:cert) { stub 'cert', :content => "mycert" }
-    let(:host) { stub 'host', :key => key, :certificate => cert, :name => "yay" }
+    let(:host) { stub 'host', :key => key, :certificate => cert, :name => "yay", :ssl_store => "mystore" }
 
     before :each do
       Puppet::SSL::Certificate.indirection.stubs(:find).with('ca').returns cert
       Puppet::SSL::Host.stubs(:localhost).returns host
-      Puppet::SSL::Configuration.any_instance.stubs(:ssl_store).returns "mystore"
     end
 
     it "should use the key from the localhost SSL::Host instance" do
       Puppet::SSL::Host.expects(:localhost).returns host
       host.expects(:key).returns key
-      server.setup_ssl
+
       expect(server.setup_ssl[:SSLPrivateKey]).to eq("mykey")
     end
 
@@ -262,7 +261,8 @@ describe Puppet::Network::HTTP::WEBrick do
     end
 
     it "should add an x509 store" do
-      Puppet::SSL::Configuration.any_instance.expects(:ssl_store).returns "mystore"
+      host.expects(:ssl_store).returns "mystore"
+
       expect(server.setup_ssl[:SSLCertificateStore]).to eq("mystore")
     end
 

@@ -64,10 +64,9 @@ describe Puppet::Network::HttpPool do
       def setup_standard_ssl_host
         cert = stub('cert', :content => 'real_cert')
         key  = stub('key',  :content => 'real_key')
-        host = stub('host', :certificate => cert, :key => key)
+        host = stub('host', :certificate => cert, :key => key, :ssl_store => stub('store'))
 
         Puppet::SSL::Host.stubs(:localhost).returns(host)
-        Puppet::SSL::Configuration.any_instance.stubs(:ssl_store).returns(stub('store'))
       end
 
       before do

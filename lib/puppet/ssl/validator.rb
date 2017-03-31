@@ -24,42 +24,7 @@ class Puppet::SSL::Validator
   # @api public
   #
   def self.default_validator()
-    Puppet.deprecation_warning("Puppet::SSL::Validator.default_validator is deprecated. Use Puppet::SSL::Validator.cert_auth_validator if the host has a signed cert, or Puppet::SSL::Validator.best_validator if the host certificate signing status is unknown.")
-    best_validator
-  end
-
-  # Select the best available validator, determined by what SSL files we have available.
-  #
-  # Because this method falls through to no validation it is inherently insecure. Since
-  # Puppet bootstraps SSL right away there are very few cases where we should risk
-  # downgrading our security level. In the cases where this downgrading is acceptable
-  # then this can be used on a case by case basis, but otherwise use the cert_auth_validator.
-  #
-  # @api public
-  def self.best_validator
-    if Puppet::FileSystem.exist?(Puppet[:hostcert])
-      cert_auth_validator
-    elsif Puppet::FileSystem.exist?(Puppet[:localcacert])
-      unauthenticated_validator
-    else
-      no_validator
-    end
-  end
-
-  # Factory method for generating a validator instance that performs peer verification and
-  # can perform cert based client authentication.
-  #
-  # @api public
-  def self.cert_auth_validator
-    Puppet::SSL::Validator::CertAuthValidator.new
-  end
-
-  # Factory method for generating a validator instance that performs peer verification but
-  # does not perform cert based client authentication.
-  #
-  # @api public
-  def self.unauthenticated_validator
-    Puppet::SSL::Validator::UnauthenticatedValidator.new
+    Puppet::SSL::Validator::DefaultValidator.new()
   end
 
   # Array of peer certificates
