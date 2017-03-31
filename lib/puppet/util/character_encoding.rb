@@ -3,79 +3,72 @@
 module Puppet::Util::CharacterEncoding
   class << self
     # Warning! This is a destructive method - the string supplied is modified!
+    # Given a string, attempts to convert the string to UTF-8. Conversion uses
+    # encode! - the string's internal byte representation is modifed to UTF-8.
+    #
+    # This method is intended for situations where we generally trust that the
+    # string's bytes are a faithful representation of the current encoding
+    # associated with it, and can use it as a starting point for transcoding
+    # (conversion) to UTF-8.
+    #
     # @api public
-    # @param [String] string a string to transcode / force_encode to utf-8
-    # @return [String] string if already utf-8, OR
-    #   the same string with external encoding set to utf-8 if bytes are valid utf-8 OR
-    #   the same string transcoded to utf-8 OR
-    #   nil upon a failure to legitimately set external encoding or transcode string
+    # @param [String] string a string to transcode
+    # @return [nil] (string is modified in place)
     def convert_to_utf_8!(string)
-      currently_valid = string.valid_encoding?
+      original_encoding = string.encoding
 
       begin
-        if string.encoding == Encoding::UTF_8
-          if currently_valid
-            return string
+        if original_encoding == Encoding::UTF_8
+          if string.valid_encoding?
+            # String is aleady valid UTF-8 - noop
+            return nil
           else
-            # If a string is currently believed to be UTF-8, but is also not
-            # valid_encoding?, we have no recourse but to fail because we have no
-            # idea what encoding this string originally came from where it *was*
-            # valid - all we know is it's not currently valid UTF-8.
-            raise EncodingError
+            Puppet.debug(_("%{value} is already labeled as UTF-8 but this encoding is invalid. It cannot be transcoded by Puppet.") %
+              { value: string.dump })
           end
-        elsif valid_utf_8_bytes?(string)
-          # Before we try to transcode the string, check if it is valid UTF-8 as
-          # currently constitued (in its non-UTF-8 encoding), and if it is, limit
-          # ourselves to setting the external encoding of the string to UTF-8
-          # rather than actually transcoding it. We do this to handle
-          # a couple scenarios:
-
-          # The first scenario is that the string was originally valid UTF-8 but
-          # the current puppet run is not in a UTF-8 environment. In this case,
-          # the string will likely have invalid byte sequences (i.e.,
-          # string.valid_encoding? == false), and attempting to transcode will
-          # fail with Encoding::InvalidByteSequenceError, referencing the
-          # invalid byte sequence in the original, pre-transcode, string. We
-          # might have gotten here, for example, if puppet is run first in a
-          # user context with UTF-8 encoding (setting the "is" value to UTF-8)
-          # and then later run via cron without UTF-8 specified, resulting in in
-          # EN_US (ISO-8859-1) on many systems. In this scenario we're
-          # effectively best-guessing this string originated as UTF-8 and only
-          # set external encoding to UTF-8 - transcoding would have failed
-          # anyway.
-
-          # The second scenario (more rare, I expect) is that this string does
-          # NOT have invalid byte sequences (string.valid_encoding? == true),
-          # but is *ALSO valid unicode*.
-          # Our example case is "\u16A0" - "RUNIC LETTER FEHU FEOH FE"
-          # http://www.fileformat.info/info/unicode/char/16A0/index.htm
-          # 0xE1 0x9A 0xA0 / 225 154 160
-          # These bytes are valid in ISO-8859-1 but the character they represent
-          # transcodes cleanly in ruby to *different* characters in UTF-8.
-          # That's not what we want if the user intended the original string as
-          # UTF-8. We can only guess, so if the string is valid UTF-8 as
-          # currently constituted, we default to assuming the string originated
-          # in UTF-8 and do not transcode it - we only set external encoding.
-          return string.force_encoding(Encoding::UTF_8)
-        elsif currently_valid
-          # If the string is not currently valid UTF-8 but it can be transcoded
-          # (it is valid in its current encoding), we can guess this string was
-          # not originally unicode. Transcode it to UTF-8. For strings with
-          # original encodings like SHIFT_JIS, this should be the final result.
-          return string.encode!(Encoding::UTF_8)
         else
-          # If the string is neither valid UTF-8 as-is nor valid in its current
-          # encoding, fail. It requires user remediation.
-          raise EncodingError
+          # If the string comes to us as BINARY encoded, we don't know what it
+          # started as. However, to encode! we need a starting place, and our
+          # best guess is whatever the system currently is (default_external).
+          # So set external_encoding to default_external before we try to
+          # transcode to UTF-8.
+          string.force_encoding(Encoding.default_external) if original_encoding == Encoding::BINARY
+          string.encode!(Encoding::UTF_8)
         end
       rescue EncodingError => detail
+        # Ensure the string retains it original external encoding since
+        # we've failed
+        string.force_encoding(original_encoding) if original_encoding == Encoding::BINARY
         # Catch both our own self-determined failure to transcode as well as any
         # error on ruby's part, ie Encoding::UndefinedConversionError on a
         # failure to encode!.
-        Puppet.debug(_("%{error}: %{value} is not valid UTF-8 and cannot be transcoded by Puppet.") %
+        Puppet.debug(_("%{error}: %{value} cannot be transcoded by Puppet.") %
           { error: detail.inspect, value: string.dump })
-        return nil
       end
+      return nil
+    end
+
+    # Warning! This is a destructive method - the string supplied is modified!
+    # Given a string, tests if that string's bytes represent valid UTF-8, and if
+    # so sets the external encoding of the string to UTF-8. Does not modify the
+    # byte representation of the string. If the string does not represent valid
+    # UTF-8, does not set the external encoding.
+    #
+    # This method is intended for situations where we do not believe that the
+    # encoding associated with a string is an accurate reflection of its actual
+    # bytes, i.e., effectively when we believe Ruby is incorrect in its assertion
+    # of the encoding of the string.
+    #
+    # @api public
+    # @param [String] string set external encoding (re-label) to utf-8
+    # @return [nil] (string is modified in place)
+    def override_encoding_to_utf_8!(string)
+      if valid_utf_8_bytes?(string)
+        string.force_encoding(Encoding::UTF_8)
+      else
+        Puppet.debug(_("%{value} is not valid UTF-8 and result of overriding encoding would be invalid.") % { value: string.dump })
+      end
+      nil
     end
 
     private
@@ -86,10 +79,7 @@ module Puppet::Util::CharacterEncoding
     # @param [String] string a string to test
     # @return [Boolean] whether we think the string is UTF-8 or not
     def valid_utf_8_bytes?(string)
-      original_encoding = string.encoding
-      valid = string.force_encoding(Encoding::UTF_8).valid_encoding?
-      string.force_encoding(original_encoding)
-      valid
+      string.dup.force_encoding(Encoding::UTF_8).valid_encoding?
     end
   end
 end
