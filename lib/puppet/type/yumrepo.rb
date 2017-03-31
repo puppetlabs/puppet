@@ -406,4 +406,12 @@ Puppet::Type.newtype(:yumrepo) do
 
     newvalues(/^\d+$/, :absent)
   end
+
+  newproperty(:assumeyes) do
+    desc "Determines if yum prompts for confirmation of critical actions.
+      #{YUM_BOOLEAN_DOC}
+      #{ABSENT_DOC}"
+
+    newvalues(YUM_BOOLEAN, :absent)
+  end
 end
