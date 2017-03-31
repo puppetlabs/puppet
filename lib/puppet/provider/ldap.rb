@@ -94,9 +94,17 @@ class Puppet::Provider::Ldap < Puppet::Provider
       # Only use the first value if the attribute class doesn't manage
       # arrays of values.
       if paramclass.superclass == Puppet::Parameter or paramclass.array_matching == :first
-        result[param] = values[0]
+        if param.to_s == "gid"
+          result[param] = values[0].to_i
+        else
+          result[param] = values[0]
+        end
       else
-        result[param] = values
+        if param.to_s == "gid"
+          result[param] = values.to_i
+        else
+          result[param] = values
+        end
       end
       result
     end
