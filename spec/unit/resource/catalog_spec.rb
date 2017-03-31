@@ -547,7 +547,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     it "should provide a method to create additional resources that also registers the resource" do
       args = {:name => "/yay", :ensure => :file}
-      resource = stub 'file', :ref => "File[/yay]", :catalog= => @catalog, :title => "/yay", :[] => "/yay"
+      resource = stub 'file', :ref => "File[/yay]", :catalog= => @catalog, :title => "/yay", :[] => "/yay", :uniqueness_key => ['/yay']
       Puppet::Type.type(:file).expects(:new).with(args).returns(resource)
       @catalog.create_resource :file, args
       expect(@catalog.resource("File[/yay]")).to equal(resource)
@@ -1005,8 +1005,8 @@ describe Puppet::Resource::Catalog, "when converting to pson" do
   end
 
   it "should convert its resources to a PSON-encoded array and store it as the 'resources' data" do
-    one = stub 'one', :to_data_hash => "one_resource", :ref => "Foo[one]"
-    two = stub 'two', :to_data_hash => "two_resource", :ref => "Foo[two]"
+    one = stub 'one', :to_data_hash => "one_resource", :ref => "Foo[one]", :uniqueness_key => ['one']
+    two = stub 'two', :to_data_hash => "two_resource", :ref => "Foo[two]", :uniqueness_key => ['two']
 
     one.expects(:'[]').with(:alias).returns nil
     two.expects(:'[]').with(:alias).returns nil

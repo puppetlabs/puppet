@@ -400,10 +400,8 @@ test { one: hostname => "ahost", export => Cap[two] }
         ensure => directory
       }
 
-      if !defined(File["${same_dir}"]) {
-        file { $same_dir:
-          ensure => directory
-        }
+      file { $same_dir:
+        ensure => directory
       }
     PUPPET
 
