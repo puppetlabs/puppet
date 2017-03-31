@@ -18,6 +18,26 @@ describe provider_class do
     @provider.close_augeas
   end
 
+  describe "when Augeas[:force] is set" do
+    # Ticket: 14105
+    it "should never close augeas object" do
+
+      @new_provider = provider_class.new(@resource)
+      @augeas = stub("augeas")
+      @new_provider.aug = @augeas
+
+      @new_provider.stubs(:get_augeas_version).returns("0.10.0")
+
+      @resource[:context] = "/files/etc/hosts"
+      @resource[:changes] = "set foo bar"
+      @resource[:force] = true
+      
+      @new_provider.need_to_run?.should == true
+      @augeas.expects(:close).never()
+    end
+  end
+
+
   describe "command parsing" do
     it "should break apart a single line into three tokens and clean up the context" do
       @resource[:context] = "/context"
@@ -601,7 +621,7 @@ describe provider_class do
       end
     end
   end
-
+    
   describe "augeas execution integration" do
     before do
       @augeas = stub("augeas", :load)
