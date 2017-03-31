@@ -56,6 +56,14 @@ describe "Puppet.version Public API" do
       expect(Puppet.minor_version).to eq('1.2')
     end
   end
+
+  context "Using version setter" do
+    it "does not read VERSION file if using set version" do
+      Puppet.expects(:read_version_file).never
+      Puppet.version = '1.2.3'
+      expect(Puppet.version).to eq('1.2.3')
+    end
+  end
 end
 
 
