@@ -22,7 +22,14 @@ DOC
   # Knows how to create keys with our system defaults.
   def generate
     Puppet.info "Creating a new SSL key for #{name}"
-    @content = OpenSSL::PKey::RSA.new(Puppet[:keylength].to_i)
+    keylength = Puppet[:keylength].to_i
+    if Facter.value('fips_enabled') == 'true'
+      if keylength > 2048
+        Puppet.info "Forcing keylength to 2048 due to FIPS being enabled."
+        keylength = 2048
+      end
+    end
+    @content = OpenSSL::PKey::RSA.new(keylength)
   end
 
   def initialize(name)

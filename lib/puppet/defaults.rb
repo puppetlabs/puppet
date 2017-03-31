@@ -1015,8 +1015,9 @@ EOT
       #{AS_DURATION}"
     },
     :keylength => {
-      :default    => 4096,
-      :desc       => "The bit length of keys.",
+      :default    => Facter.value('fips_enabled') == 'true' ? 2048 : 4096,
+      :desc       => "The bit length of keys. In FIPS mode, this must not be set
+        above 2048 until the standard changes.",
     },
     :cert_inventory => {
       :default => "$cadir/inventory.txt",
