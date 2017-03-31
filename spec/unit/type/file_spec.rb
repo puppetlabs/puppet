@@ -40,6 +40,10 @@ describe Puppet::Type.type(:file) do
         expect(file[:path]).to eq("/")
       end
 
+      it "should not accept a nil file path" do
+        expect { file[:path] = @foo }.to raise_error(/Got nil/)
+      end
+
       it "should accept and collapse a double-slash at the start of the path" do
         file[:path] = "//tmp/xxx"
         expect(file[:path]).to eq('/tmp/xxx')
@@ -70,6 +74,10 @@ describe Puppet::Type.type(:file) do
       it "should leave a drive letter with a slash alone" do
         file[:path] = "X:/"
         expect(file[:path]).to eq("X:/")
+      end
+
+      it "should not accept a nil file path" do
+        expect { file[:path] = @foo }.to raise_error(/Got nil/)
       end
 
       it "should not accept a drive letter without a slash" do
