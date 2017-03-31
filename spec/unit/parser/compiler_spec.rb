@@ -19,10 +19,6 @@ class CompilerTestResource
     "#{type.to_s.capitalize}[#{title}]"
   end
 
-  def uniqueness_key
-    [@title]
-  end
-
   def evaluated?
     @evaluated
   end
