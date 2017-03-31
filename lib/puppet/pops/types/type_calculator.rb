@@ -115,17 +115,6 @@ class TypeCalculator
     singleton.callable?(callable, args)
   end
 
-  # Produces a String representation of the given type.
-  # @param t [PAnyType] the type to produce a string form
-  # @return [String] the type in string form
-  #
-  # @api public
-  #
-  def self.string(t)
-    Puppet.deprecation_warning('TypeCalculator.string is deprecated. Use TypeFormatter')
-    TypeFormatter.string(t)
-  end
-
   # @api public
   def self.infer(o)
     singleton.infer(o)
@@ -139,18 +128,6 @@ class TypeCalculator
   # @api public
   def self.infer_set(o)
     singleton.infer_set(o)
-  end
-
-  # @api public
-  def self.debug_string(t)
-    Puppet.deprecation_warning('TypeCalculator.debug_string is deprecated. Use TypeFormatter')
-    TypeFormatter.debug_string(t)
-  end
-
-  # @api public
-  def self.enumerable(t)
-    Puppet.deprecation_warning('TypeCalculator.enumerable is deprecated. Use iterable')
-    singleton.iterable(t)
   end
 
   # @api public
@@ -485,23 +462,6 @@ class TypeCalculator
     end
     result
   end
-
-  # Produces a string representing the type
-  # @api public
-  #
-  def string(t)
-    Puppet.deprecation_warning('TypeCalculator.string is deprecated. Use TypeFormatter')
-    TypeFormatter.singleton.string(t)
-  end
-
-  # Produces a debug string representing the type (possibly with more information that the regular string format)
-  # @api public
-  #
-  def debug_string(t)
-    Puppet.deprecation_warning('TypeCalculator.debug_string is deprecated. Use TypeFormatter')
-    TypeFormatter.singleton.debug_string(t)
-  end
-
 
   # Reduces an enumerable of types to a single common type.
   # @api public
