@@ -6,6 +6,6 @@ class Puppet::Transaction::Report::Yaml < Puppet::Indirector::Yaml
 
   # Force report to be saved there
   def path(name,ext='.yaml')
-    Puppet[:lastrunreport]
+    Puppet[:lastrunreport].split(File::PATH_SEPARATOR)
   end
 end

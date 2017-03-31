@@ -22,7 +22,7 @@ describe Puppet::Transaction::Report::Yaml do
     expect(Puppet::Transaction::Report::Yaml.name).to eq(:yaml)
   end
 
-  it "should unconditionally save/load from the --lastrunreport setting" do
-    expect(subject.path(:me)).to eq(Puppet[:lastrunreport])
+  it "should unconditionally save to the --lastrunreport setting" do
+    expect(subject.path(:me)).to eq(Puppet[:lastrunreport].split(File::PATH_SEPARATOR))
   end
 end
