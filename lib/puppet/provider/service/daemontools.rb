@@ -179,8 +179,8 @@ rescue Puppet::ExecutionFailure
     self.stop
   end
 
-  def restart
-    svc "-t", self.service
+  def restartcmd
+    [svc "-t", self.service]
   end
 
   def start
