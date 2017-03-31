@@ -238,7 +238,7 @@ class Puppet::Provider
       @path = path
       @optional = false
       @confiner = confiner
-      @custom_environment = {}
+      @custom_environment = ENV.to_hash
     end
 
     def is_optional
