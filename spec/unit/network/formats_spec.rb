@@ -104,6 +104,13 @@ describe "Puppet Network Format" do
       expect { yaml.intern(String, YAML.dump(:foo))}.to raise_error(Puppet::Network::FormatHandler::FormatError)
     end
 
+    it "should skip data_to_hash if data is already an instance of the specified class" do
+      # The rest terminus for the report indirected type relies on this behavior
+      data = YAML.dump([1, 2])
+      instance = yaml.intern(Array, data)
+      expect(instance).to eq([1, 2])
+    end
+
     it "should load from yaml when deserializing an array" do
       text = YAML.dump(["foo"])
       expect(yaml.intern_multiple(String, text)).to eq(["foo"])
@@ -215,6 +222,13 @@ describe "Puppet Network Format" do
       expect(instance.string).to eq("parsed_pson")
     end
 
+    it "should skip data_to_hash if data is already an instance of the specified class" do
+      # The rest terminus for the report indirected type relies on this behavior
+      data = PSON.dump([1, 2])
+      instance = pson.intern(Array, data)
+      expect(instance).to eq([1, 2])
+    end
+
     it "should intern multiple instances from a pson array" do
       text = PSON.dump(
         [
@@ -286,6 +300,13 @@ describe "Puppet Network Format" do
       text = JSON.dump({"string" => "parsed_json"})
       instance = json.intern(FormatsTest, text)
       expect(instance.string).to eq("parsed_json")
+    end
+
+    it "should skip data_to_hash if data is already an instance of the specified class" do
+      # The rest terminus for the report indirected type relies on this behavior
+      data = JSON.dump([1, 2])
+      instance = json.intern(Array, data)
+      expect(instance).to eq([1, 2])
     end
 
     it "should intern multiple instances from a JSON array of hashes" do

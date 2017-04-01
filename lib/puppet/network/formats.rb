@@ -132,6 +132,7 @@ Puppet::Network::FormatHandler.create_serialized_formats(:json, :mime => 'applic
   # Unlike PSON, we do not need to unwrap the data envelope, because legacy 3.x agents
   # have never supported JSON
   def data_to_instance(klass, data)
+    return data if data.is_a?(klass)
     klass.from_data_hash(data)
   end
 end
