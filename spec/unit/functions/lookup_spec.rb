@@ -438,6 +438,30 @@ describe "The lookup function" do
       expect(lookup('a')).to eql('value a (from environment)')
     end
 
+    context 'with log-level debug' do
+      before(:each) { Puppet[:log_level] = 'debug' }
+
+      it 'does not report a regular lookup as APL' do
+        expect(lookup('a')).to eql('value a (from environment)')
+        expect(debugs.count { |dbg| dbg =~ /\A\s*Automatic Parameter Lookup of/ }).to eql(0)
+      end
+
+      it 'reports regular lookup as lookup' do
+        expect(lookup('a')).to eql('value a (from environment)')
+        expect(debugs.count { |dbg| dbg =~ /\A\s*Lookup of/ }).to eql(1)
+      end
+
+      it 'does not report APL as lookup' do
+        collect_notices("class mod_a($a) { notice($a) }; include mod_a")
+        expect(debugs.count { |dbg| dbg =~ /\A\s*Lookup of/ }).to eql(0)
+      end
+
+      it 'reports APL as APL' do
+        collect_notices("class mod_a($a) { notice($a) }; include mod_a")
+        expect(debugs.count { |dbg| dbg =~ /\A\s*Automatic Parameter Lookup of/ }).to eql(1)
+      end
+    end
+
     context 'that has no lookup configured' do
       let(:environment_files) do
         {
