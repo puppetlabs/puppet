@@ -10,6 +10,15 @@ class Invocation
     @current
   end
 
+  # Creates a new instance with same settings as this instance but with a new given scope
+  # and yields with that scope.
+  #
+  # @param scope [Puppet::Parser::Scope] The new scope
+  # @return [Invocation] the new instance
+  def with_scope(scope)
+    yield(Invocation.new(scope, override_values, default_values, explainer))
+  end
+
   # Creates a context object for a lookup invocation. The object contains the current scope, overrides, and default
   # values and may optionally contain an {ExplanationAcceptor} instance that will receive book-keeping information
   # about the progress of the lookup.
@@ -53,9 +62,10 @@ class Invocation
     @explainer = explainer
   end
 
-  def lookup(key, module_name)
+  def lookup(key, module_name = nil)
+    key = LookupKey.new(key) unless key.is_a?(LookupKey)
     @top_key = key
-    @module_name = module_name
+    @module_name = module_name.nil? ? key.module_name : module_name
     save_current = self.class.current
     if save_current.equal?(self)
       yield
