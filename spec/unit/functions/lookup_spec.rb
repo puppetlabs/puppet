@@ -2107,6 +2107,53 @@ describe "The lookup function" do
         end
       end
 
+      context 'using deep merge and module values that aliases environment values' do
+        let(:mod_a_files) do
+          {
+            'mod_a' => {
+              'data' => {
+                'common.yaml' => <<-YAML.unindent,
+                  ---
+                  mod_a::hash:
+                    b: value b (from module)
+                  lookup_options:
+                    mod_a::hash:
+                      merge: deep
+                  YAML
+              },
+              'hiera.yaml' => <<-YAML.unindent,
+                ---
+                version: 5
+                hierarchy:
+                  - name: "Common"
+                    path: "common.yaml"
+                  - name: "Other"
+                    path: "other.yaml"
+                YAML
+            }
+          }
+        end
+        let(:env_data) do
+          {
+            'common.yaml' => <<-YAML.unindent
+              a: value a (from environment)
+              mod_a::hash:
+                a: value mod_a::hash.a (from environment)
+                c: '%{alias("a")}'
+              YAML
+          }
+        end
+
+        it 'continues with module lookup after alias is resolved in environment' do
+          expect(lookup('mod_a::hash')).to eql(
+            {
+              'a' => 'value mod_a::hash.a (from environment)',
+              'b' => 'value b (from module)',
+              'c' => 'value a (from environment)'
+            })
+        end
+      end
+
       context 'using a data_hash that reads a yaml file' do
         let(:defaults) {
           {

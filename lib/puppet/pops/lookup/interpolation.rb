@@ -70,15 +70,14 @@ module Interpolation
   def interpolate_method(method_key)
     @@interpolate_methods ||= begin
       global_lookup = lambda do |key, lookup_invocation, _|
-        if lookup_invocation.scope.is_a?(Hiera::Scope) && !lookup_invocation.global_only?
+        scope = lookup_invocation.scope
+        if scope.is_a?(Hiera::Scope) && !lookup_invocation.global_only?
           # "unwrap" the Hiera::Scope
-          lookup_invocation = Invocation.new(
-            lookup_invocation.scope.real,
-            lookup_invocation.override_values,
-            lookup_invocation.default_values,
-            lookup_invocation.explainer)
+          scope = scope.real
         end
-        Lookup.lookup(key, nil, '', true, nil, lookup_invocation)
+        lookup_invocation.with_scope(scope) do |sub_invocation|
+          sub_invocation.lookup(key) {  Lookup.lookup(key, nil, '', true, nil, sub_invocation) }
+        end
       end
       scope_lookup = lambda do |key, lookup_invocation, subject|
         segments = split_key(key) { |problem| Puppet::DataBinding::LookupError.new("#{problem} in string: #{subject}") }
