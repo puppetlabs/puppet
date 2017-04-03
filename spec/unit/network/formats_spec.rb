@@ -339,7 +339,7 @@ describe "Puppet Network Format" do
     it "fails intelligibly when given invalid data" do
       expect do
         json.intern(Puppet::Node, '')
-      end.to raise_error(JSON::ParserError, /A JSON text must at least contain two octets/)
+      end.to raise_error(JSON::ParserError, /A JSON text must at least contain two octets|unexpected token at ''/)
     end
   end
 
