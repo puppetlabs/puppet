@@ -14,12 +14,12 @@ describe Puppet::FileServing::Metadata do
     expect(Puppet::FileServing::Metadata.indirection.name).to eq(:file_metadata)
   end
 
-  it "should default to json" do
-    expect(Puppet::FileServing::Metadata.default_format).to eq(:json)
-  end
-
   it "should have a method that triggers attribute collection" do
     expect(Puppet::FileServing::Metadata.new(foobar)).to respond_to(:collect)
+  end
+
+  it "should default to json" do
+    expect(Puppet::FileServing::Metadata.default_format).to eq(:json)
   end
 
   it "should support json, pson, yaml" do
