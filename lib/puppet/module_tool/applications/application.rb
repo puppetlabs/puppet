@@ -1,5 +1,4 @@
 require 'net/http'
-require 'semver'
 require 'json'
 require 'puppet/util/colors'
 

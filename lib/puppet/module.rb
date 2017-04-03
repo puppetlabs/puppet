@@ -1,5 +1,4 @@
 require 'puppet/util/logging'
-require 'semver'
 require 'json'
 
 # Support for modules
