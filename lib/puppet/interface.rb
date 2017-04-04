@@ -1,7 +1,6 @@
 require 'puppet'
 require 'puppet/util/autoload'
 require 'prettyprint'
-require 'semver'
 
 # @api public
 class Puppet::Interface
