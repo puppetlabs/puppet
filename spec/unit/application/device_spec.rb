@@ -360,6 +360,14 @@ describe Puppet::Application::Device do
         expect { @device.main }.to exit_with 0
       end
 
+      it "should make the Puppet::Pops::Loaaders available" do
+        @configurer.expects(:run).with(:network_device => true, :pluginsync => true) do
+          fail('Loaders not available') unless Puppet.lookup(:loaders) { nil }.is_a?(Puppet::Pops::Loaders)
+          true
+        end.at_least_once.returns(6,2)
+        expect { @device.main }.to exit_with 0
+      end
+
       it "exits 2 when --detailed-exitcodes and successful runs" do
         @device.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
         @configurer.stubs(:run).returns(0,2)
