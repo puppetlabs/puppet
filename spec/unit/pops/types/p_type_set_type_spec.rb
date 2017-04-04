@@ -293,10 +293,10 @@ module Puppet::Pops
                 ts = <<-OBJECT
                   pcore_version => '1.0.0',
                   version => '1.0.0',
-                  references => { Ref => { name => 'Cars', version_range => 'X' } }
+                  references => { Ref => { name => 'Cars', version_range => 'N' } }
                 OBJECT
                 expect { parse_type_set('MySet', ts) }.to raise_error(ArgumentError,
-                  /Unparsable version range: "X"/)
+                  /Unparsable version range: "N"/)
               end
 
               it 'has an alias that is not a SimpleName' do
