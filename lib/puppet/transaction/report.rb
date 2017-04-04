@@ -389,6 +389,10 @@ class Puppet::Transaction::Report
     super - [:@external_times, :@resources_failed_to_generate]
   end
 
+  def self.default_format
+    :pson
+  end
+
   private
 
   # Mark the report as corrective, if there are any resource_status marked corrective.

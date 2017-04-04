@@ -481,6 +481,8 @@ describe Puppet::Transaction::Report do
   end
 
   it "defaults to serializing to json" do
+    pending("PUP-7259 sending reports in JSON not yet supported")
+
     expect(Puppet::Transaction::Report.default_format).to eq(:json)
   end
 
