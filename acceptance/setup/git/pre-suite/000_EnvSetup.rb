@@ -112,7 +112,8 @@ hosts.each do |host|
 
     step "#{host} Install ruby from git using revision #{revision}"
     # TODO remove this step once we are installing puppet from msi packages
-    install_from_git_on(host, "/opt/puppet-git-repos",
+    win_path = on(host, 'cygpath -m /opt/puppet-git-repos').stdout.chomp
+    install_from_git_on(host, win_path,
                      :name => 'puppet-win32-ruby',
                      :path => build_git_url('puppet-win32-ruby'),
                      :rev  => revision)
