@@ -1,4 +1,12 @@
 source ENV['GEM_SOURCE'] || "https://rubygems.org"
+# default for Bundler 2.0 - see issues:
+# https://github.com/bundler/bundler/issues/5339
+# https://github.com/bundler/bundler/issues/5536
+# without this variable set, Bundler issues a message like:
+# Unable to use the platform-specific (universal-darwin) version of facter (2.4.6) because it has different dependencies
+#  from the  version. To use the platform-specific version of the gem, run `bundle config specific_platform true` and
+#  install again.
+ENV['BUNDLE_SPECIFIC_PLATFORM'] = 'true' unless ENV.has_key?('BUNDLE_SPECIFIC_PLATFORM')
 
 def location_for(place, fake_version = nil)
   if place =~ /^(git[:@][^#]*)#(.*)/
