@@ -166,51 +166,55 @@ Licensed under the Apache 2.0 License
     confdir = Puppet[:confdir]
     certname = Puppet[:certname]
 
-    # find device list
-    require 'puppet/util/network_device/config'
-    devices = Puppet::Util::NetworkDevice::Config.devices
-    if devices.empty?
-      Puppet.err "No device found in #{Puppet[:deviceconfig]}"
-      exit(1)
-    end
-    returns = devices.collect do |devicename,device|
-      begin
-        device_url = URI.parse(device.url)
-        # Handle nil scheme & port
-        scheme = "#{device_url.scheme}://" if device_url.scheme
-        port = ":#{device_url.port}" if device_url.port
-        Puppet.info "starting applying configuration to #{device.name} at #{scheme}#{device_url.host}#{port}#{device_url.path}"
+    env = Puppet.lookup(:environments).get(Puppet[:environment])
+    returns = Puppet.override(:current_environment => env, :loaders => Puppet::Pops::Loaders.new(env)) do
+      # find device list
+      require 'puppet/util/network_device/config'
+      devices = Puppet::Util::NetworkDevice::Config.devices
+      if devices.empty?
+        Puppet.err "No device found in #{Puppet[:deviceconfig]}"
+        exit(1)
+      end
+      devices.collect do |devicename,device|
+        begin
+          device_url = URI.parse(device.url)
+          # Handle nil scheme & port
+          scheme = "#{device_url.scheme}://" if device_url.scheme
+          port = ":#{device_url.port}" if device_url.port
+          Puppet.info "starting applying configuration to #{device.name} at #{scheme}#{device_url.host}#{port}#{device_url.path}"
 
-        # override local $vardir and $certname
-        Puppet[:confdir] = ::File.join(Puppet[:devicedir], device.name)
-        Puppet[:vardir] = ::File.join(Puppet[:devicedir], device.name)
-        Puppet[:certname] = device.name
+          # override local $vardir and $certname
+          Puppet[:confdir] = ::File.join(Puppet[:devicedir], device.name)
+          Puppet[:vardir] = ::File.join(Puppet[:devicedir], device.name)
+          Puppet[:certname] = device.name
 
-        # this will reload and recompute default settings and create the devices sub vardir, or we hope so :-)
-        Puppet.settings.use :main, :agent, :ssl
+          # this will reload and recompute default settings and create the devices sub vardir, or we hope so :-)
+          Puppet.settings.use :main, :agent, :ssl
 
-        # this init the device singleton, so that the facts terminus
-        # and the various network_device provider can use it
-        Puppet::Util::NetworkDevice.init(device)
+          # this init the device singleton, so that the facts terminus
+          # and the various network_device provider can use it
+          Puppet::Util::NetworkDevice.init(device)
 
-        # ask for a ssl cert if needed, but at least
-        # setup the ssl system for this device.
-        setup_host
+          # ask for a ssl cert if needed, but at least
+          # setup the ssl system for this device.
+          setup_host
 
-        require 'puppet/configurer'
-        configurer = Puppet::Configurer.new
-        configurer.run(:network_device => true, :pluginsync => Puppet::Configurer.should_pluginsync?)
-      rescue => detail
-        Puppet.log_exception(detail)
-        # If we rescued an error, then we return 1 as the exit code
-        1
-      ensure
-        Puppet[:vardir] = vardir
-        Puppet[:confdir] = confdir
-        Puppet[:certname] = certname
-        Puppet::SSL::Host.reset
+          require 'puppet/configurer'
+          configurer = Puppet::Configurer.new
+          configurer.run(:network_device => true, :pluginsync => Puppet::Configurer.should_pluginsync?)
+        rescue => detail
+          Puppet.log_exception(detail)
+          # If we rescued an error, then we return 1 as the exit code
+          1
+        ensure
+          Puppet[:vardir] = vardir
+          Puppet[:confdir] = confdir
+          Puppet[:certname] = certname
+          Puppet::SSL::Host.reset
+        end
       end
     end
+
     if ! returns or returns.compact.empty?
       exit(1)
     elsif options[:detailed_exitcodes]

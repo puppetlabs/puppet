@@ -279,6 +279,15 @@ describe Puppet::Application::Apply do
         expect { @apply.main }.to exit_with 0
       end
 
+      it 'should make the Puppet::Pops::Loaders available when applying the compiled catalog' do
+        Puppet::Resource::Catalog.indirection.expects(:find).returns(@catalog)
+        @apply.expects(:apply_catalog).with(@catalog) do
+          fail('Loaders not found') unless Puppet.lookup(:loaders) { nil }.is_a?(Puppet::Pops::Loaders)
+          true
+        end.returns(0)
+        expect { @apply.main }.to exit_with 0
+      end
+
       it "should transform the catalog to ral" do
 
         @catalog.expects(:to_ral).returns(@catalog)
@@ -458,6 +467,20 @@ describe Puppet::Application::Apply do
           with(:catalog => "mycatalog", :pluginsync => false)
 
         @apply.apply
+      end
+
+      it 'should make the Puppet::Pops::Loaders available when applying a catalog' do
+        @apply.options[:catalog] = temporary_catalog
+        catalog = Puppet::Resource::Catalog.new("testing", Puppet::Node::Environment::NONE)
+        @apply.expects(:read_catalog).with('something') do
+          fail('Loaders not found') unless Puppet.lookup(:loaders) { nil }.is_a?(Puppet::Pops::Loaders)
+          true
+        end.returns(catalog)
+        @apply.expects(:apply_catalog).with(catalog) do
+          fail('Loaders not found') unless Puppet.lookup(:loaders) { nil }.is_a?(Puppet::Pops::Loaders)
+          true
+        end
+        expect { @apply.apply }.not_to raise_error
       end
     end
   end
