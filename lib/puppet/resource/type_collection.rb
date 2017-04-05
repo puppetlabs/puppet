@@ -67,9 +67,9 @@ class Puppet::Resource::TypeCollection
 
   def add_hostclass(instance)
     handle_hostclass_merge(instance)
-    dupe_check(instance, @hostclasses) { |dupe| "Class '#{instance.name}' is already defined#{dupe.error_context}; cannot redefine" }
-    dupe_check(instance, @definitions) { |dupe| "Definition '#{instance.name}' is already defined#{dupe.error_context}; cannot be redefined as a class" }
-    dupe_check(instance, @applications) { |dupe| "Application '#{instance.name}' is already defined#{dupe.error_context}; cannot be redefined as a class" }
+    dupe_check(instance, @hostclasses) { |dupe| _("Class '%{klass}' is already defined%{error}; cannot redefine") % { klass: instance.name, error: dupe.error_context } }
+    dupe_check(instance, @definitions) { |dupe| _("Definition '%{klass}' is already defined%{error}; cannot be redefined as a class") % { klass: instance.name, error: dupe.error_context } }
+    dupe_check(instance, @applications) { |dupe| _("Application '%{klass}' is already defined%{error}; cannot be redefined as a class") % { klass: instance.name, error: dupe.error_context } }
 
     @hostclasses[instance.name] = instance
     instance
@@ -100,7 +100,7 @@ class Puppet::Resource::TypeCollection
   end
 
   def add_node(instance)
-    dupe_check(instance, @nodes) { |dupe| "Node '#{instance.name}' is already defined#{dupe.error_context}; cannot redefine" }
+    dupe_check(instance, @nodes) { |dupe| _("Node '%{name}' is already defined%{error}; cannot redefine") % { name: instance.name, error: dupe.error_context } }
 
     @node_list << instance
     @nodes[instance.name] = instance
@@ -108,7 +108,7 @@ class Puppet::Resource::TypeCollection
   end
 
   def add_site(instance)
-    dupe_check_singleton(instance, @sites) { |dupe| "Site is already defined#{dupe.error_context}; cannot redefine" }
+    dupe_check_singleton(instance, @sites) { |dupe| _("Site is already defined%{error}; cannot redefine") % { error: dupe.error_context } }
     @sites << instance
     instance
   end
@@ -144,14 +144,14 @@ class Puppet::Resource::TypeCollection
   end
 
   def add_definition(instance)
-    dupe_check(instance, @hostclasses) { |dupe| "'#{instance.name}' is already defined#{dupe.error_context} as a class; cannot redefine as a definition" }
-    dupe_check(instance, @definitions) { |dupe| "Definition '#{instance.name}' is already defined#{dupe.error_context}; cannot be redefined" }
-    dupe_check(instance, @applications) { |dupe| "'#{instance.name}' is already defined#{dupe.error_context} as an application; cannot be redefined" }
+    dupe_check(instance, @hostclasses) { |dupe| _("'%{name}' is already defined%{error} as a class; cannot redefine as a definition") % { name: instance.name, error: dupe.error_context } }
+    dupe_check(instance, @definitions) { |dupe| _("Definition '%{name}' is already defined%{error}; cannot be redefined") % { name: instance.name, error: dupe.error_context } }
+    dupe_check(instance, @applications) { |dupe| _("'%{name}' is already defined%{error} as an application; cannot be redefined") % { name: instance.name, error: dupe.error_context } }
     @definitions[instance.name] = instance
   end
 
   def add_capability_mapping(instance)
-    dupe_check(instance, @capability_mappings) { |dupe| "'#{instance.name}' is already defined#{dupe.error_context} as a class; cannot redefine as a mapping" }
+    dupe_check(instance, @capability_mappings) { |dupe| _("'%{name}' is already defined%{error} as a class; cannot redefine as a mapping") % { name: instance.name, error: dupe.error_context } }
     @capability_mappings[instance.name] = instance
   end
 
@@ -160,9 +160,9 @@ class Puppet::Resource::TypeCollection
   end
 
   def add_application(instance)
-    dupe_check(instance, @hostclasses) { |dupe| "'#{instance.name}' is already defined#{dupe.error_context} as a class; cannot redefine as an application" }
-    dupe_check(instance, @definitions) { |dupe| "'#{instance.name}' is already defined#{dupe.error_context} as a definition; cannot redefine as an application" }
-    dupe_check(instance, @applications) { |dupe| "'#{instance.name}' is already defined#{dupe.error_context} as an application; cannot be redefined" }
+    dupe_check(instance, @hostclasses) { |dupe| _("'%{name}' is already defined%{error} as a class; cannot redefine as an application") % { name: instance.name, error: dupe.error_context } }
+    dupe_check(instance, @definitions) { |dupe| _("'%{name}' is already defined%{error} as a definition; cannot redefine as an application") % { name: instance.name, error: dupe.error_context } }
+    dupe_check(instance, @applications) { |dupe| _("'%{name}' is already defined%{error} as an application; cannot be redefined") % { name: instance.name, error: dupe.error_context } }
     @applications[instance.name] = instance
   end
 
@@ -214,7 +214,7 @@ class Puppet::Resource::TypeCollection
 
     @version
   rescue Puppet::ExecutionFailure => e
-    raise Puppet::ParseError, "Execution of config_version command `#{environment.config_version}` failed: #{e.message}", e.backtrace
+    raise Puppet::ParseError, _("Execution of config_version command `%{cmd}` failed: %{message}") % { cmd: environment.config_version, message: e.message }, e.backtrace
   end
 
   private
@@ -234,7 +234,7 @@ class Puppet::Resource::TypeCollection
         # as this is a time consuming operation. Warn the user.
         # Check first if debugging is on since the call to debug_once is expensive
         if Puppet[:debug]
-          debug_once "Not attempting to load #{type} #{fqname} as this object was missing during a prior compilation"
+          debug_once _("Not attempting to load %{type} %{fqname} as this object was missing during a prior compilation") % { type: type, fqname: fqname }
         end
       else
         result = loader.try_load_fqname(type, fqname)
