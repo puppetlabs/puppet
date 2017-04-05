@@ -875,19 +875,19 @@ describe 'The string converter' do
   end
 
   context 'when converting regexp' do
-    it 'the default string representation is /regexp/' do
-      expect(converter.convert(/.*/, :default)).to eq('/.*/')
+    it 'the default string representation is "regexp"' do
+      expect(converter.convert(/.*/, :default)).to eq('.*')
     end
 
-    { "%s"   => '/.*/',
-      "%6s"  => '  /.*/',
-      "%.2s" => '/.',
-      "%-6s" => '/.*/  ',
+    { "%s"   => '.*',
+      "%6s"  => '    .*',
+      "%.1s" => '.',
+      "%-6s" => '.*    ',
       "%p"   => '/.*/',
       "%6p"  => '  /.*/',
       "%-6p" => '/.*/  ',
       "%.2p" => '/.',
-      "%#s"  => '".*"',
+      "%#s"  => "'.*'",
       "%#p"  => '/.*/',
     }.each do |fmt, result |
       it "the format #{fmt} produces #{result}" do

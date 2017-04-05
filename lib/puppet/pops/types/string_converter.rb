@@ -840,9 +840,9 @@ class StringConverter
     when :p
       Kernel.format(f.orig_fmt, val)
     when :s
-      str_regexp = val.inspect
-      str_regexp = f.alt? ? "\"#{str_regexp[1..-2]}\"" : str_regexp
-      Kernel.format(f.orig_fmt, str_regexp)
+      str_regexp = val.options == 0 ? val.source : val.to_s
+      str_regexp = puppet_quote(str_regexp) if f.alt?
+      f.orig_fmt == '%s' ? str_regexp : Kernel.format(f.orig_fmt, str_regexp)
     else
       raise FormatError.new('Regexp', f.format, 'rsp')
     end

@@ -635,7 +635,7 @@ Defaults to `s` at top level and `p` inside array or hash.
 
 | Format    | Regexp Formats
 | ----      | --------------
-| s         | Delimiters `/ /`, alternate flag `#` replaces `/` delimiters with quotes.
+| s         | No delimiters, quoted if alternative flag `#` is used.
 | p         | Delimiters `/ /`.
 
 ### Undef to String
