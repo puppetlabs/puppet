@@ -844,7 +844,7 @@ class StringConverter
       str_regexp = puppet_quote(str_regexp) if f.alt?
       f.orig_fmt == '%s' ? str_regexp : Kernel.format(f.orig_fmt, str_regexp)
     else
-      raise FormatError.new('Regexp', f.format, 'rsp')
+      raise FormatError.new('Regexp', f.format, 'sp')
     end
   end
 

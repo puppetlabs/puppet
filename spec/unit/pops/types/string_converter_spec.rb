@@ -900,7 +900,7 @@ describe 'The string converter' do
       expect do
       string_formats = { Puppet::Pops::Types::PRegexpType::DEFAULT => "%k"}
       converter.convert(/.*/, string_formats)
-      end.to raise_error(/Illegal format 'k' specified for value of Regexp type - expected one of the characters 'rsp'/)
+      end.to raise_error(/Illegal format 'k' specified for value of Regexp type - expected one of the characters 'sp'/)
     end
   end
 
