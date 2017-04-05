@@ -82,6 +82,9 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     tag(*classes)
   end
 
+  # Returns [typename, title] when given a String with "Type[title]". 
+  # Returns [nil, nil] if '[' ']' not detected.
+  #
   def title_key_for_ref( ref )
     s = ref.index('[')
     e = ref.rindex(']')
@@ -367,18 +370,13 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       # an instance has to be created in order to construct the unique key used when
       # searching for aliases, or when app_management is active and nothing is found in
       # which case it is needed by the CapabilityFinder.
-# PUP-4947
-      res = nil
-#      app_mgnt = Puppet[:app_management]
-#      if app_mgnt || !@aliases.empty?
       res = Puppet::Resource.new(type, title, { :environment => @environment_instance })
 
-        # No need to build the uniqueness key unless there are aliases
-      result = @resource_table[[type_name, res.uniqueness_key].flatten] unless @aliases.empty?
-# PUP-4947
-#      end
+      # Must check with uniqueness key because of aliases or if resource transforms title in title
+      # to attribute mappings.
+      result = @resource_table[[type_name, res.uniqueness_key].flatten]
 
-      if result.nil? # && app_mgnt
+      if result.nil?
         resource_type = res.resource_type
         if resource_type && resource_type.is_capability?
           # @todo lutter 2015-03-10: this assumes that it is legal to just

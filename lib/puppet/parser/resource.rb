@@ -190,7 +190,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   alias []= set_parameter
 
   def to_hash
-    @parameters.reduce({}) do |result, (_, param)|
+    parse_title.merge(@parameters.reduce({}) do |result, (_, param)|
       value = param.value
       value = (:undef == value) ? nil : value
 
@@ -206,7 +206,7 @@ class Puppet::Parser::Resource < Puppet::Resource
         end
       end
       result
-    end
+    end)
   end
 
   # Convert this resource to a RAL resource.

@@ -414,7 +414,9 @@ class Puppet::Resource
     @environment = environment
   end
 
-  # Produce a simple hash of our parameters.
+  # Produces a hash of attribute to value mappings where the title parsed into its components
+  # acts as the default values overridden by any parameter values explicitly given as parameters.
+  #
   def to_hash
     parse_title.merge parameters
   end
@@ -650,6 +652,11 @@ class Puppet::Resource
     end
   end
 
+  # Produces a hash with { :key => part_of_title } for each entry in title_patterns
+  # for the resource type. A typical result for a title of 'example' is {:name => 'example'}.
+  # A resource type with a complex title to attribute mapping returns one entry in the hash
+  # per part.
+  #
   def parse_title
     h = {}
     type = resource_type

@@ -648,6 +648,25 @@ describe Puppet::Parser::Compiler do
       end
     end
 
+    context "when dealing with resources (e.g. File) that modifies its name from title" do
+      [['', ''],
+       ['', '/'],
+       ['/', ''],
+       ['/', '/']].each do |t, r|
+        it "a circular reference can be compiled with endings: title='#{t}' and ref='#{r}'" do
+          expect {
+            node = Puppet::Node.new("testing")
+            compile_to_catalog(<<-"MANIFEST", node)
+            file { '/tmp/bazinga.txt#{t}':
+              content => 'henrik testing',
+              require => File['/tmp/bazinga.txt#{r}']
+            }
+          MANIFEST
+          }.not_to raise_error
+        end
+      end
+    end
+
     context 'when working with the trusted data hash' do
       context 'and have opted in to hashed_node_data' do
         it 'should make $trusted available' do
