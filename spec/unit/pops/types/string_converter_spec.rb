@@ -888,11 +888,23 @@ describe 'The string converter' do
       "%-6p" => '/.*/  ',
       "%.2p" => '/.',
       "%#s"  => "'.*'",
-      "%#p"  => '/.*/',
+      "%#p"  => '/.*/'
     }.each do |fmt, result |
       it "the format #{fmt} produces #{result}" do
         string_formats = { Puppet::Pops::Types::PRegexpType::DEFAULT => fmt}
         expect(converter.convert(/.*/, string_formats)).to eq(result)
+      end
+    end
+
+    context 'that contains flags' do
+      it 'the format %s produces \'(?m-ix:[a-z]\s*)\' for expression /[a-z]\s*/m' do
+        string_formats = { Puppet::Pops::Types::PRegexpType::DEFAULT => '%s'}
+        expect(converter.convert(/[a-z]\s*/m, string_formats)).to eq('(?m-ix:[a-z]\s*)')
+      end
+
+      it 'the format %p produces \'/(?m-ix:[a-z]\s*)/\' for expression /[a-z]\s*/m' do
+        string_formats = { Puppet::Pops::Types::PRegexpType::DEFAULT => '%p'}
+        expect(converter.convert(/[a-z]\s*/m, string_formats)).to eq('/(?m-ix:[a-z]\s*)/')
       end
     end
 
