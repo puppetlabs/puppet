@@ -558,6 +558,12 @@ describe 'Puppet Type System' do
       expect(func_class).to be_a(Class)
       expect(func_class.superclass).to be(Puppet::Functions::Function)
     end
+
+    it 'Regexp' do
+      func_class = tf.regexp.new_function(loader)
+      expect(func_class).to be_a(Class)
+      expect(func_class.superclass).to be(Puppet::Functions::Function)
+    end
   end
 
   context 'instantiation via new_function is not supported by' do
@@ -581,6 +587,11 @@ describe 'Puppet Type System' do
     it 'is supported by Integer' do
       int = tf.integer.create('32')
       expect(int).to eq(32)
+    end
+
+    it 'is supported by Regexp' do
+      rx = tf.regexp.create('[a-z]+')
+      expect(rx).to eq(/[a-z]+/)
     end
 
     it 'is supported by Optional[Integer]' do

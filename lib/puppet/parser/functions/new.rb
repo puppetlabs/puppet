@@ -775,6 +775,19 @@ Accepts a single value as argument:
 Conversion to a `Struct` works exactly as conversion to a `Hash`, only that the constructed hash is
 asserted against the given struct type.
 
+Conversion to a Regexp
+---
+A `String` can be converted into a `Regexp`
+
+**Example**: Converting a String into a Regexp
+```puppet
+$s = '[a-z]+\.com'
+$r = Regexp($s)
+if('foo.com' =~ $r) {
+  ...
+}
+```
+
 Creating a SemVer
 ---
 

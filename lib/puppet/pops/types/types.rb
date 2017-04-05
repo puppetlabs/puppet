@@ -1555,6 +1555,22 @@ class PRegexpType < PScalarType
         KEY_VALUE => nil
       })
   end
+
+
+  # Returns a new function that produces a Regexp instance
+  #
+  def self.new_function(_, loader)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_float, loader) do
+      dispatch :from_string do
+        param 'String', :pattern
+      end
+
+      def from_string(pattern)
+        Regexp.new(pattern)
+      end
+    end
+  end
+
   attr_reader :pattern
 
   def initialize(pattern)
