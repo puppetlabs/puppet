@@ -34,6 +34,8 @@ gem 'json_pure', '~> 1.8', :require => false
 # i18n support (gettext-setup and dependencies)
 gem 'gettext-setup', '>= 0.10', '< 1.0', :require => false
 gem 'locale', '~> 2.1', :require => false
+# net-ssh is a runtime dependency of Puppet::Util::NetworkDevice::Transport::Ssh
+gem "net-ssh", '~> 2.1', :require => false
 
 group(:development, :test) do
   gem "rake", "10.1.1", :require => false
@@ -75,7 +77,6 @@ end
 
 group(:extra) do
   gem "rack", "~> 1.4", :require => false
-  gem "net-ssh", '~> 2.1', :require => false
   gem "puppetlabs_spec_helper", :require => false
   gem "msgpack", :require => false
 end
