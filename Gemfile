@@ -28,7 +28,6 @@ gem "facter", *location_for(ENV['FACTER_LOCATION'] || ['> 2.0', '< 4'])
 gem "hiera", *location_for(ENV['HIERA_LOCATION'] || ['>= 2.0', '< 4'])
 # PUP-7115 - return to a gem dependency in Puppet 5
 # gem "semantic_puppet", *location_for(ENV['SEMANTIC_PUPPET_LOCATION'] || ['>= 0.1.3', '< 2'])
-gem "rake", "10.1.1", :require => false
 # Hiera has an unbound dependency on json_pure
 # json_pure 2.0.2+ officially requires Ruby >= 2.0, but should have specified that in 2.0
 gem 'json_pure', '~> 1.8', :require => false
@@ -37,6 +36,7 @@ gem 'gettext-setup', '>= 0.10', '< 1.0', :require => false
 gem 'locale', '~> 2.1', :require => false
 
 group(:development, :test) do
+  gem "rake", "10.1.1", :require => false
   gem "rspec", "~> 3.1", :require => false
   gem "rspec-its", "~> 1.1", :require => false
   gem "rspec-collection_matchers", "~> 1.1", :require => false
