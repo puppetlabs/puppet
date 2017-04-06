@@ -1,6 +1,6 @@
 language: ruby
 sudo: false
-bundler_args: --without development
+bundler_args: --without development extra
 script:
   - "bundle exec rake $CHECK"
 notifications:
