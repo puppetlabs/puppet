@@ -1,8 +1,6 @@
 language: ruby
 sudo: false
-before_install:
-  - gem install bundler -v 1.10
-bundler_args: --without development
+bundler_args: --without development extra
 script:
   - "bundle exec rake $CHECK"
 notifications:
