@@ -77,7 +77,6 @@ group(:extra) do
   gem "rack", "~> 1.4", :require => false
   gem "net-ssh", '~> 2.1', :require => false
   gem "puppetlabs_spec_helper", :require => false
-  gem "tzinfo", :require => false
   gem "msgpack", :require => false
 end
 
