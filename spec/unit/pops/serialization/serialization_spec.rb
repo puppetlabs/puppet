@@ -13,6 +13,8 @@ module Serialization
   let(:loader) { loaders.find_loader(nil) }
   let(:reader_class) { packer_module::Reader }
   let(:writer_class) { packer_module::Writer }
+  let(:serializer) { Serializer.new(writer_class.new(io)) }
+  let(:deserializer) { Deserializer.new(reader_class.new(io), loaders.find_loader(nil)) }
 
   around :each do |example|
      Puppet.override(:loaders => loaders, :current_environment => env) do
@@ -22,14 +24,12 @@ module Serialization
 
   def write(*values)
     io.reopen
-    serializer = Serializer.new(writer_class.new(io))
     values.each { |val| serializer.write(val) }
     serializer.finish
     io.rewind
   end
 
   def read
-    deserializer = Deserializer.new(reader_class.new(io), loaders.find_loader(nil))
     deserializer.read
   end
 
@@ -159,8 +159,8 @@ module Serialization
   context 'can write and read' do
     include_context 'types_setup'
 
-    it 'all default types' do
-      all_types.each do |t|
+    all_types.each do |t|
+      it "the default for type #{t.name}" do
         val = t::DEFAULT
         write(val)
         val2 = read
@@ -282,6 +282,32 @@ module Serialization
         expr2 = read
         expect(dumper.dump(expr)).to eq(dumper.dump(expr2))
       end
+    end
+  end
+
+  context 'deserializing an instance whose Object type was serialized by reference' do
+    let(:serializer) { Serializer.new(writer_class.new(io), :type_by_reference => true) }
+    let(:type) do
+      Types::PObjectType.new({
+        'name' => 'MyType',
+        'attributes' => {
+          'x' => Types::PIntegerType::DEFAULT
+        }
+      })
+    end
+
+    it 'fails when deserializer is unaware of the referenced type' do
+      write(type.create(32))
+
+      # Should fail since no loader knows about 'MyType'
+      expect{ read }.to raise_error(Puppet::Error, 'No implementation mapping found for Puppet Type MyType')
+    end
+
+    it 'succeeds when deserializer is aware of the referenced type' do
+      obj = type.create(32)
+      write(obj)
+      loaders.find_loader(nil).expects(:load).with(:type, 'mytype').returns(type)
+      expect(read).to eql(obj)
     end
   end
 
