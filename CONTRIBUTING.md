@@ -77,7 +77,7 @@ for the translators.
 When adding user-facing strings to your work, follow these guidelines:
 * Use full sentences. Strings built up out of concatenated bits are hard to translate.
 * Use string formatting instead of interpolation.
-    Ex. `_("Creating new user %{name}.) % { name: user.name }`
+    Ex. `_('Creating new user %{name}.') % { name: user.name }`
 * Use `n_()` for pluralization. (see gettext gem docs linked above for details)
 
 It is the responsibility of contributors and code reviewers to ensure that all
