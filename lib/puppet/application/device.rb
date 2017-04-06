@@ -30,6 +30,7 @@ class Puppet::Application::Device < Puppet::Application
       :debug => false,
       :centrallogs => false,
       :setdest => false,
+      :target => nil,
     }.each do |opt,val|
       options[opt] = val
     end
@@ -57,6 +58,10 @@ class Puppet::Application::Device < Puppet::Application
     @args[:Port] = arg
   end
 
+  option("--target DEVICE", "-t") do |arg|
+    options[:target] = arg.to_s
+  end
+
     def help
       <<-'HELP'
 
@@ -75,6 +80,7 @@ USAGE
   puppet device [-d|--debug] [--detailed-exitcodes] [-V|--version]
                 [-h|--help] [-l|--logdest syslog|<file>|console]
                 [-v|--verbose] [-w|--waitforcert <seconds>]
+                [-t|--target <device>]
 
 
 DESCRIPTION
@@ -133,6 +139,10 @@ parameter, so you can specify '--server <servername>' as an argument.
   appending nature of logging. It must be appended manually to make the content
   valid JSON.
 
+* --target:
+  Target a specific device/certificate in the device.conf. Doing so will perform a
+  device run against only that device/certificate.
+
 * --verbose:
   Turn on verbose reporting.
 
@@ -170,10 +180,17 @@ Licensed under the Apache 2.0 License
     returns = Puppet.override(:current_environment => env, :loaders => Puppet::Pops::Loaders.new(env)) do
       # find device list
       require 'puppet/util/network_device/config'
-      devices = Puppet::Util::NetworkDevice::Config.devices
+      devices = Puppet::Util::NetworkDevice::Config.devices.dup
+      if options[:target]
+        devices.select! { |key, value| key == options[:target] }
+      end
       if devices.empty?
-        Puppet.err "No device found in #{Puppet[:deviceconfig]}"
-        exit(1)
+        if options[:target]
+          Puppet.err _("Target device / certificate '%{target}' not found in %{config}") % { target: options[:target], config: Puppet[:deviceconfig] }
+        else
+          Puppet.err _("No device found in %{config}") % { config: Puppet[:deviceconfig] }
+          exit(1)
+        end
       end
       devices.collect do |devicename,device|
         begin
@@ -181,7 +198,7 @@ Licensed under the Apache 2.0 License
           # Handle nil scheme & port
           scheme = "#{device_url.scheme}://" if device_url.scheme
           port = ":#{device_url.port}" if device_url.port
-          Puppet.info "starting applying configuration to #{device.name} at #{scheme}#{device_url.host}#{port}#{device_url.path}"
+          Puppet.info _("starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
 
           # override local $vardir and $certname
           Puppet[:confdir] = ::File.join(Puppet[:devicedir], device.name)
