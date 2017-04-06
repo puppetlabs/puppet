@@ -78,7 +78,7 @@ class Puppet::Resource
     else
       strict = Puppet[:strict]
       unless strict == :off
-        msg = "Unable to deserialize non-Data value for parameter #{resource.name}.#{param} unless rich data is enabled"
+        msg = _('Unable to deserialize non-Data value for parameter %{param} unless rich data is enabled') % { :param => "#{resource.name}.#{param}" }
         raise Puppet::Error, msg if strict == :error
         Puppet.warn(msg)
       end
@@ -124,7 +124,7 @@ class Puppet::Resource
         pcore_type = tc.infer(value)
 
         # Don't allow unknown runtime types to leak into the catalog
-        raise Puppet::Error, "No Puppet Type found for #{value.class.name}" if pcore_type.is_a?(Puppet::Pops::Types::PRuntimeType)
+        raise Puppet::Error, _('No Puppet Type found for %{type_name}') % { :type_name => value.class.name } if pcore_type.is_a?(Puppet::Pops::Types::PRuntimeType)
 
         if value.is_a?(Hash) || value.is_a?(Array) || value.is_a?(Puppet::Pops::Types::PuppetObject)
           # Non scalars and Objects are serialized into an array using Pcore
