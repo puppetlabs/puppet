@@ -875,20 +875,20 @@ describe 'The string converter' do
   end
 
   context 'when converting regexp' do
-    it 'the default string representation is /regexp/' do
-      expect(converter.convert(/.*/, :default)).to eq('/.*/')
+    it 'the default string representation is "regexp"' do
+      expect(converter.convert(/.*/, :default)).to eq('.*')
     end
 
-    { "%s"   => '/.*/',
-      "%6s"  => '  /.*/',
-      "%.2s" => '/.',
-      "%-6s" => '/.*/  ',
+    { "%s"   => '.*',
+      "%6s"  => '    .*',
+      "%.1s" => '.',
+      "%-6s" => '.*    ',
       "%p"   => '/.*/',
       "%6p"  => '  /.*/',
       "%-6p" => '/.*/  ',
       "%.2p" => '/.',
-      "%#s"  => '".*"',
-      "%#p"  => '/.*/',
+      "%#s"  => "'.*'",
+      "%#p"  => '/.*/'
     }.each do |fmt, result |
       it "the format #{fmt} produces #{result}" do
         string_formats = { Puppet::Pops::Types::PRegexpType::DEFAULT => fmt}
@@ -896,11 +896,23 @@ describe 'The string converter' do
       end
     end
 
+    context 'that contains flags' do
+      it 'the format %s produces \'(?m-ix:[a-z]\s*)\' for expression /[a-z]\s*/m' do
+        string_formats = { Puppet::Pops::Types::PRegexpType::DEFAULT => '%s'}
+        expect(converter.convert(/[a-z]\s*/m, string_formats)).to eq('(?m-ix:[a-z]\s*)')
+      end
+
+      it 'the format %p produces \'/(?m-ix:[a-z]\s*)/\' for expression /[a-z]\s*/m' do
+        string_formats = { Puppet::Pops::Types::PRegexpType::DEFAULT => '%p'}
+        expect(converter.convert(/[a-z]\s*/m, string_formats)).to eq('/(?m-ix:[a-z]\s*)/')
+      end
+    end
+
     it 'errors when format is not recognized' do
       expect do
       string_formats = { Puppet::Pops::Types::PRegexpType::DEFAULT => "%k"}
       converter.convert(/.*/, string_formats)
-      end.to raise_error(/Illegal format 'k' specified for value of Regexp type - expected one of the characters 'rsp'/)
+      end.to raise_error(/Illegal format 'k' specified for value of Regexp type - expected one of the characters 'sp'/)
     end
   end
 
