@@ -234,8 +234,8 @@ describe 'The type calculator' do
         t = calculator.infer_set(v)
         expect(t.class).to eq(PSemVerType)
         expect(t.ranges.size).to eq(1)
-        expect(t.ranges[0].min).to eq(v)
-        expect(t.ranges[0].max).to eq(v)
+        expect(t.ranges[0].begin).to eq(v)
+        expect(t.ranges[0].end).to eq(v)
       end
     end
 

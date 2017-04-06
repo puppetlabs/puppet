@@ -289,13 +289,17 @@ class LookupAdapter < DataAdapter
           compile_patterns(global_lookup_options(meta_invocation, merge_strategy))
         else
           opts = env_lookup_options(meta_invocation, merge_strategy)
-          catch(:no_such_key) do
-            module_opts = validate_lookup_options(lookup_in_module(LookupKey::LOOKUP_OPTIONS, meta_invocation, merge_strategy), module_name)
-            opts = if opts.nil?
-              module_opts
-            else
-              merge_strategy.lookup([GLOBAL_ENV_MERGE, "Module #{lookup_invocation.module_name}"], meta_invocation) do |n|
-                meta_invocation.with(:scope, n) { meta_invocation.report_found(LOOKUP_OPTIONS,  n == GLOBAL_ENV_MERGE ? opts : module_opts) }
+          unless module_name.nil?
+            # Store environment options at key nil. This removes the need for an additional lookup for keys that are not prefixed.
+            @lookup_options[nil] = compile_patterns(opts) unless @lookup_options.include?(nil)
+            catch(:no_such_key) do
+              module_opts = validate_lookup_options(lookup_in_module(LookupKey::LOOKUP_OPTIONS, meta_invocation, merge_strategy), module_name)
+              opts = if opts.nil?
+                module_opts
+              else
+                merge_strategy.lookup([GLOBAL_ENV_MERGE, "Module #{lookup_invocation.module_name}"], meta_invocation) do |n|
+                  meta_invocation.with(:scope, n) { meta_invocation.report_found(LOOKUP_OPTIONS,  n == GLOBAL_ENV_MERGE ? opts : module_opts) }
+                end
               end
             end
           end

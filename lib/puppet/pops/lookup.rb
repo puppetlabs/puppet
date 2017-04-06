@@ -28,7 +28,7 @@ module Lookup
     override_values = lookup_invocation.override_values
     result_with_name = names.reduce([nil, not_found]) do |memo, key|
       value = override_values.include?(key) ? assert_type(["Value found for key '%s' in override hash", key], value_type, override_values[key]) : not_found
-      catch(:no_such_key) { value = search_and_merge(key, lookup_invocation, merge) } if value.equal?(not_found)
+      catch(:no_such_key) { value = search_and_merge(key, lookup_invocation, merge, false) } if value.equal?(not_found)
       break [key, assert_type('Found value', value_type, value)] unless value.equal?(not_found)
       memo
     end
@@ -72,9 +72,9 @@ module Lookup
   end
 
   # @api private
-  def self.search_and_merge(name, lookup_invocation, merge)
+  def self.search_and_merge(name, lookup_invocation, merge, apl = true)
     answer = lookup_invocation.lookup_adapter.lookup(name, lookup_invocation, merge)
-    lookup_invocation.emit_debug_info("Automatic Parameter Lookup of '#{name}") if Puppet[:debug]
+    lookup_invocation.emit_debug_info("Automatic Parameter Lookup of '#{name}'") if apl && Puppet[:debug]
     answer
   end
 

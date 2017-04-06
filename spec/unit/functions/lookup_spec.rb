@@ -438,6 +438,30 @@ describe "The lookup function" do
       expect(lookup('a')).to eql('value a (from environment)')
     end
 
+    context 'with log-level debug' do
+      before(:each) { Puppet[:log_level] = 'debug' }
+
+      it 'does not report a regular lookup as APL' do
+        expect(lookup('a')).to eql('value a (from environment)')
+        expect(debugs.count { |dbg| dbg =~ /\A\s*Automatic Parameter Lookup of/ }).to eql(0)
+      end
+
+      it 'reports regular lookup as lookup' do
+        expect(lookup('a')).to eql('value a (from environment)')
+        expect(debugs.count { |dbg| dbg =~ /\A\s*Lookup of/ }).to eql(1)
+      end
+
+      it 'does not report APL as lookup' do
+        collect_notices("class mod_a($a) { notice($a) }; include mod_a")
+        expect(debugs.count { |dbg| dbg =~ /\A\s*Lookup of/ }).to eql(0)
+      end
+
+      it 'reports APL as APL' do
+        collect_notices("class mod_a($a) { notice($a) }; include mod_a")
+        expect(debugs.count { |dbg| dbg =~ /\A\s*Automatic Parameter Lookup of/ }).to eql(1)
+      end
+    end
+
     context 'that has no lookup configured' do
       let(:environment_files) do
         {
@@ -2104,6 +2128,53 @@ describe "The lookup function" do
               expect(warnings).to include(/Use of 'hiera.yaml' version 4 is deprecated. It should be converted to version 5/)
             end
           end
+        end
+      end
+
+      context 'using deep merge and module values that aliases environment values' do
+        let(:mod_a_files) do
+          {
+            'mod_a' => {
+              'data' => {
+                'common.yaml' => <<-YAML.unindent,
+                  ---
+                  mod_a::hash:
+                    b: value b (from module)
+                  lookup_options:
+                    mod_a::hash:
+                      merge: deep
+                  YAML
+              },
+              'hiera.yaml' => <<-YAML.unindent,
+                ---
+                version: 5
+                hierarchy:
+                  - name: "Common"
+                    path: "common.yaml"
+                  - name: "Other"
+                    path: "other.yaml"
+                YAML
+            }
+          }
+        end
+        let(:env_data) do
+          {
+            'common.yaml' => <<-YAML.unindent
+              a: value a (from environment)
+              mod_a::hash:
+                a: value mod_a::hash.a (from environment)
+                c: '%{alias("a")}'
+              YAML
+          }
+        end
+
+        it 'continues with module lookup after alias is resolved in environment' do
+          expect(lookup('mod_a::hash')).to eql(
+            {
+              'a' => 'value mod_a::hash.a (from environment)',
+              'b' => 'value b (from module)',
+              'c' => 'value a (from environment)'
+            })
         end
       end
 

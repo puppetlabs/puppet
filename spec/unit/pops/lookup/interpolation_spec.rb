@@ -16,7 +16,7 @@ describe 'Puppet::Pops::Lookup::Interpolation' do
       root_key = segments.shift
       found = data[root_key]
       found = sub_lookup(key, lookup_invocation, segments, found) unless segments.empty?
-      Lookup.expects(:lookup).with(key, nil, '', true, nil, lookup_invocation).returns(found)
+      Lookup.expects(:lookup).with(key, nil, '', true, nil, is_a(Lookup::Invocation)).returns(found)
     end
   end
 
