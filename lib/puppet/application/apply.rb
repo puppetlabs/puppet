@@ -340,7 +340,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     begin
       catalog = Puppet::Resource::Catalog.convert_from(format, text)
     rescue => detail
-      raise Puppet::Error, "Could not deserialize catalog from #{format}: #{detail}", detail.backtrace
+      raise Puppet::Error, _("Could not deserialize catalog from %{format}: %{detail}") % { format: format, detail: detail }, detail.backtrace
     end
 
     catalog.to_ral
