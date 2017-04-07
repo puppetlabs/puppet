@@ -95,7 +95,7 @@ class Puppet::Module
   FILETYPES.each do |type, location|
     # A boolean method to let external callers determine if
     # we have files of a given type.
-    define_method(type +'?') do
+    define_method(type + '?') do
       type_subpath = subpath(location)
       unless Puppet::FileSystem.exist?(type_subpath)
         Puppet.debug("No #{type} found in subpath '#{type_subpath}' " +
