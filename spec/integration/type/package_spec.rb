@@ -44,7 +44,7 @@ describe Puppet::Type.type(:package), "when choosing a default package provider"
     when 'OpenBSD'
       :openbsd
     when 'DragonFly'
-      :pkgin
+      :pkgng
     when 'OpenWrt'
       :opkg
     end
