@@ -35,9 +35,7 @@ module Puppet::Network::FormatSupport
     end
 
     def supported_formats
-      result = format_handler.formats.reject do |f|
-        f == :binary
-      end.collect do |f|
+      result = format_handler.formats.collect do |f|
         format_handler.format(f)
       end.find_all do |f|
         f.supported?(self)

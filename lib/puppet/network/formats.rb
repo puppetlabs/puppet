@@ -65,24 +65,10 @@ end
 
 Puppet::Network::FormatHandler.create(:s, :mime => "text/plain", :extension => "txt")
 
-Puppet::Network::FormatHandler.create(:binary, :mime => "application/octet-stream", :weight => 1) do
-  def intern_multiple(klass, text)
-    raise NotImplementedError
-  end
-
-  def render_multiple(instances)
-    raise NotImplementedError
-  end
-
-  # LAK:NOTE The format system isn't currently flexible enough to handle
-  # what I need to support raw formats just for individual instances (rather
-  # than both individual and collections), but we don't yet have enough data
-  # to make a "correct" design.
-  #   So, we hack it so it works for singular but fail if someone tries it
-  # on plurals.
-  def supported?(klass)
-    true
-  end
+# By default, to_binary is called to render and from_binary called to intern. Note unlike
+# text-based formats (json, yaml, etc), we don't use to_data_hash for binary.
+Puppet::Network::FormatHandler.create(:binary, :mime => "application/octet-stream", :weight => 1,
+                                      :required_methods => [:render_method, :intern_method]) do
 end
 
 # PSON is deprecated

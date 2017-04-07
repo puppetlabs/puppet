@@ -25,6 +25,14 @@ class FormatsTest
       'string' => @string
     }
   end
+
+  def to_binary
+    string
+  end
+
+  def self.from_binary(data)
+    self.new(data)
+  end
 end
 
 describe "Puppet Network Format" do
@@ -166,16 +174,30 @@ describe "Puppet Network Format" do
       expect(binary.mime).to eq("application/octet-stream")
     end
 
-    it "should always be supported" do
-      expect(binary).to be_supported(String)
+    it "should not be supported by default" do
+      expect(binary).to_not be_supported(String)
+    end
+
+    it "should render an instance as binary" do
+      instance = FormatsTest.new("foo")
+      expect(binary.render(instance)).to eq("foo")
+    end
+
+    it "should intern an instance from a JSON hash" do
+      instance = binary.intern(FormatsTest, "foo")
+      expect(instance.string).to eq("foo")
     end
 
     it "should fail if its multiple_render method is used" do
-      expect { binary.render_multiple("foo") }.to raise_error(NotImplementedError)
+      expect {
+        binary.render_multiple("foo")
+      }.to raise_error(NotImplementedError, /can not render multiple instances to application\/octet-stream/)
     end
 
     it "should fail if its multiple_intern method is used" do
-      expect { binary.intern_multiple(String, "foo") }.to raise_error(NotImplementedError)
+      expect {
+        binary.intern_multiple(String, "foo")
+      }.to raise_error(NotImplementedError, /can not intern multiple instances from application\/octet-stream/)
     end
 
     it "should have a weight of 1" do
