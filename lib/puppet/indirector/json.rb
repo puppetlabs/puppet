@@ -4,8 +4,7 @@ require 'puppet/util'
 # The base class for JSON indirection terminus implementations.
 #
 # This should generally be preferred to the YAML base for any future
-# implementations, since it is ~ three times faster despite being pure Ruby
-# rather than a C implementation.
+# implementations, since it is faster and can load untrusted data safely.
 class Puppet::Indirector::JSON < Puppet::Indirector::Terminus
   def find(request)
     load_json_from_file(path(request.key), request.key)
