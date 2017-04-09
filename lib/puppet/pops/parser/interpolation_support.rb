@@ -40,7 +40,7 @@ module Puppet::Pops::Parser::InterpolationSupport
         if varname = scn.scan(PATTERN_VARIABLE)
           # The $ is counted towards the variable
           enqueue_completed([:DQPRE, text, after-before-1], before)
-          enqueue_completed([:VARIABLE, varname, scn.pos - after + 1], after -1)
+          enqueue_completed([:VARIABLE, varname, scn.pos - after + 1], after - 1)
           break
         else
           # false $ variable start
@@ -81,7 +81,7 @@ module Puppet::Pops::Parser::InterpolationSupport
         if varname = scn.scan(PATTERN_VARIABLE)
           # The $ is counted towards the variable
           enqueue_completed([:DQMID, text, after-before-1], before)
-          enqueue_completed([:VARIABLE, varname, scn.pos - after +1], after -1)
+          enqueue_completed([:VARIABLE, varname, scn.pos - after + 1], after - 1)
           break
         else
           # false $ variable start
@@ -125,7 +125,7 @@ module Puppet::Pops::Parser::InterpolationSupport
         if varname = scn.scan(PATTERN_VARIABLE)
           # The $ is counted towards the variable
           enqueue_completed([:DQPRE, text, after-before-1], before)
-          enqueue_completed([:VARIABLE, varname, scn.pos - after + 1], after -1)
+          enqueue_completed([:VARIABLE, varname, scn.pos - after + 1], after - 1)
           break
         else
           # false $ variable start
@@ -165,7 +165,7 @@ module Puppet::Pops::Parser::InterpolationSupport
         if varname = scn.scan(PATTERN_VARIABLE)
           # The $ is counted towards the variable
           enqueue_completed([:DQMID, text, after-before-1], before)
-          enqueue_completed([:VARIABLE, varname, scn.pos - after +1], after -1)
+          enqueue_completed([:VARIABLE, varname, scn.pos - after + 1], after - 1)
           break
         else
           # false $ variable start
