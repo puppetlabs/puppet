@@ -1,5 +1,5 @@
 {
-  :type                        => 'foss',
+  :type                        => :git,
   :install                     => [
     'puppet',
   ],
