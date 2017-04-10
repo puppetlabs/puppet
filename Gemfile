@@ -58,6 +58,9 @@ group(:development, :test) do
 
   gem "rubocop", "~> 0.39.0", :platforms => [:ruby]
 
+  # pin rainbow gem as 2.2.1 requires rubygems 2.6.9+ and (donotwant)
+  gem "rainbow", "< 2.2.1", :platforms => [:ruby]
+
   gem 'rdoc', "~> 4.1", :platforms => [:ruby]
 
   # webmock requires addressable as as of 2.5.0 addressable started
