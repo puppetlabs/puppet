@@ -11,10 +11,109 @@ end
 
 node_names.uniq!
 
-step "Setup auth.conf" do
-  authfile = "#{testdir}/auth.conf"
-  authconf = node_names.map do |node_name|
-    <<-MANIFEST
+if @options[:is_puppetserver]
+  step "Ensure legacy auth.conf is disabled for test" do
+    modify_tk_config(master, options['puppetserver-config'], {'jruby-puppet' => {'use-legacy-auth-conf' => false}})
+  end
+
+  teardown do
+    modify_tk_config(master, options['puppetserver-config'], {'jruby-puppet' => {'use-legacy-auth-conf' => true}})
+  end
+
+  step "Backup the tk auth.conf file" do
+    on master, 'cp /etc/puppetlabs/puppetserver/conf.d/auth.conf /etc/puppetlabs/puppetserver/conf.d/auth.bak'
+  end
+
+  teardown do
+    # restore the original tk auth.conf file
+    on master, 'cp /etc/puppetlabs/puppetserver/conf.d/auth.bak /etc/puppetlabs/puppetserver/conf.d/auth.conf'
+  end
+
+  step "Setup tk-auth rules" do
+    tka_header = <<-HEADER
+authorization: {
+    version: 1
+    rules: [
+        {
+            match-request: {
+                path: "/puppet/v3/file"
+                type: path
+            }
+            allow: "*"
+            sort-order: 500
+            name: "puppetlabs file"
+        },
+    HEADER
+
+    tka_node_rules = node_names.map do |node_name|
+      <<-NODE_RULES
+        {
+            # Allow nodes to retrieve their own catalog
+            match-request: {
+                path: "/puppet/v3/catalog/#{node_name}"
+                type: path
+                method: [get, post]
+            }
+            allow: "*"
+            sort-order: 500
+            name: "puppetlabs catalog"
+        },
+        {
+            # Allow nodes to retrieve only their own node definition
+            match-request: {
+                path: "/puppet/v3/node/#{node_name}"
+                type: path
+                method: get
+            }
+            allow: "*"
+            sort-order: 500
+            name: "puppetlabs node"
+        },
+        {
+            # Allow nodes to store only their own reports
+            match-request: {
+                path: "/puppet/v3/report/#{node_name}"
+                type: path
+                method: put
+            }
+            allow: "*"
+            sort-order: 500
+            name: "puppetlabs report"
+        },
+      NODE_RULES
+    end
+
+    tka_footer = <<-FOOTER
+        {
+          # Deny everything else. This ACL is not strictly
+          # necessary, but illustrates the default policy
+          match-request: {
+            path: "/"
+            type: path
+          }
+          deny: "*"
+          sort-order: 999
+          name: "puppetlabs deny all"
+        }
+    ]
+}
+    FOOTER
+
+    tk_auth = [tka_header, tka_node_rules, tka_footer].flatten.join("\n")
+
+    apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
+      file { '/etc/puppetlabs/puppetserver/conf.d/auth.conf':
+        ensure => file,
+        mode => '0644',
+        content => '#{tk_auth}',
+      }
+    MANIFEST
+  end
+else
+  step "Setup legacy auth.conf rules" do
+    authfile = "#{testdir}/auth.conf"
+    authconf = node_names.map do |node_name|
+      <<-AUTHCONF
 path /puppet/v3/catalog/#{node_name}
 auth yes
 allow *
@@ -26,16 +125,17 @@ allow *
 path /puppet/v3/report/#{node_name}
 auth yes
 allow *
-    MANIFEST
-  end.join("\n")
+      AUTHCONF
+    end.join("\n")
 
-  apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
-  file { '#{authfile}':
-    ensure => file,
-    mode => '0644',
-    content => '#{authconf}',
-  }
-  MANIFEST
+    apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
+    file { '#{authfile}':
+      ensure => file,
+      mode => '0644',
+      content => '#{authconf}',
+    }
+    MANIFEST
+  end
 end
 
 step "Setup site.pp for node name based classification" do
