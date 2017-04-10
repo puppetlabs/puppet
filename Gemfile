@@ -57,6 +57,8 @@ group(:development, :test) do
   gem "json-schema", "2.1.1", :require => false, :platforms => [:ruby, :jruby]
 
   gem "rubocop", "~> 0.39.0", :platforms => [:ruby]
+  # pin rainbow gem as 2.2.1 requires rubygems 2.6.9+ and (donotwant)
+  gem "rainbow", "< 2.2.1", :platforms => [:ruby]
 
   gem 'rdoc', "~> 4.1", :platforms => [:ruby]
 
