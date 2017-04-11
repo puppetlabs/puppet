@@ -49,8 +49,14 @@ Gem::Specification.new do |s|
 
   # loads platform specific gems like ffi, win32 platform gems
   # as additional runtime dependencies
+  gem_deps_path = File.join(File.dirname(__FILE__), 'ext', 'project_data.yaml')
+
+  # inside of a Vanagon produced package, project_data.yaml does not exist
+  next unless File.exist?(gem_deps_path)
+
+  # so only load these dependencies from a git clone / bundle install workflow
   require 'yaml'
-  data = YAML.load_file(File.join(File.dirname(__FILE__), 'ext', 'project_data.yaml'))
+  data = YAML.load_file(gem_deps_path)
   bundle_platforms = data['bundle_platforms']
   x64_platform = Gem::Platform.local.cpu == 'x64'
   data['gem_platform_dependencies'].each_pair do |gem_platform, info|
