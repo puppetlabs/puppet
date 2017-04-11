@@ -48,7 +48,6 @@ authorization: {
     tka_node_rules = node_names.map do |node_name|
       <<-NODE_RULES
         {
-            # Allow nodes to retrieve their own catalog
             match-request: {
                 path: "/puppet/v3/catalog/#{node_name}"
                 type: path
@@ -59,7 +58,6 @@ authorization: {
             name: "puppetlabs catalog"
         },
         {
-            # Allow nodes to retrieve only their own node definition
             match-request: {
                 path: "/puppet/v3/node/#{node_name}"
                 type: path
@@ -70,7 +68,6 @@ authorization: {
             name: "puppetlabs node"
         },
         {
-            # Allow nodes to store only their own reports
             match-request: {
                 path: "/puppet/v3/report/#{node_name}"
                 type: path
@@ -85,8 +82,6 @@ authorization: {
 
     tka_footer = <<-FOOTER
         {
-          # Deny everything else. This ACL is not strictly
-          # necessary, but illustrates the default policy
           match-request: {
             path: "/"
             type: path
