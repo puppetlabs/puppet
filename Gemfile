@@ -15,7 +15,6 @@ end
 # C Ruby (MRI) or Rubinius, but NOT Windows
 platforms :ruby do
   gem 'pry', :group => :development
-  gem 'yard', :group => :development
   gem 'redcarpet', '~> 2.0', :group => :development
   gem "racc", "1.4.9", :group => :development
 
@@ -57,6 +56,7 @@ group(:development, :test) do
   gem "rubocop", "~> 0.39.0", :platforms => [:ruby]
 
   gem 'rdoc', "~> 4.1", :platforms => [:ruby]
+  gem 'yard'
 
   # webmock requires addressable as as of 2.5.0 addressable started
   # requiring the public_suffix gem which requires Ruby 2
