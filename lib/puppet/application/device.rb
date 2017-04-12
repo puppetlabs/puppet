@@ -77,10 +77,10 @@ Currently must be run out periodically, using cron or something similar.
 
 USAGE
 -----
-  puppet device [-d|--debug] [--detailed-exitcodes] [-V|--version]
+  puppet device [-d|--debug] [--detailed-exitcodes] [--deviceconfig <file>]
                 [-h|--help] [-l|--logdest syslog|<file>|console]
                 [-v|--verbose] [-w|--waitforcert <seconds>]
-                [-t|--target <device>]
+                [-t|--target <device>] [-V|--version]
 
 
 DESCRIPTION
@@ -125,6 +125,10 @@ parameter, so you can specify '--server <servername>' as an argument.
   '2' means at least one device had resource changes, and an exit code of '4'
   means at least one device had resource failures. Exit codes of '3', '5', '6',
   or '7' means that a bitwise combination of the preceding exit codes happened.
+
+* --deviceconfig:
+  Path to the device config file for puppet device.
+  Default: $confdir/device.conf
 
 * --help:
   Print this help message
