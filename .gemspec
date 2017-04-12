@@ -38,5 +38,47 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency(%q<hiera>, [">= 2.0", "< 4"])
   # PUP-7115 - return to a gem dependency in Puppet 5
   # s.add_runtime_dependency(%q<semantic_puppet>, ['>= 0.1.3', '< 2'])
+  # i18n support (gettext-setup and dependencies)
   s.add_runtime_dependency(%q<gettext-setup>, [">= 0.10", "< 1"])
+  s.add_runtime_dependency(%q<locale>, "~> 2.1")
+  # Hiera has an unbound dependency on json_pure
+  # json_pure 2.0.2+ officially requires Ruby >= 2.0, but should have specified that in 2.0
+  s.add_runtime_dependency(%q<json_pure>, "~> 1.8")
+  # net-ssh is a runtime dependency of Puppet::Util::NetworkDevice::Transport::Ssh
+  s.add_runtime_dependency(%q<net-ssh>, "~> 2.1")
+
+  # loads platform specific gems like ffi, win32 platform gems
+  # as additional runtime dependencies
+  gem_deps_path = File.join(File.dirname(__FILE__), 'ext', 'project_data.yaml')
+
+  # inside of a Vanagon produced package, project_data.yaml does not exist
+  next unless File.exist?(gem_deps_path)
+
+  # so only load these dependencies from a git clone / bundle install workflow
+  require 'yaml'
+  data = YAML.load_file(gem_deps_path)
+  bundle_platforms = data['bundle_platforms']
+  x64_platform = Gem::Platform.local.cpu == 'x64'
+  data['gem_platform_dependencies'].each_pair do |gem_platform, info|
+    next if gem_platform == 'x86-mingw32' && x64_platform
+    next if gem_platform == 'x64-mingw32' && !x64_platform
+    if bundle_deps = info['gem_runtime_dependencies']
+      bundle_platform = bundle_platforms[gem_platform] or raise "Missing bundle_platform"
+      if bundle_platform == "all"
+        bundle_deps.each_pair do |name, version|
+          s.add_runtime_dependency(name, version)
+        end
+      else
+        # important to use .to_s and not .os for the sake of Windows
+        # .cpu  => x64
+        # .os   => mingw32
+        # .to_s => x64-mingw32
+        if Gem::Platform.local.to_s == gem_platform
+          bundle_deps.each_pair do |name, version|
+            s.add_runtime_dependency(name, version)
+          end
+        end
+      end
+    end
+  end
 end
