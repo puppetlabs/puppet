@@ -19,7 +19,7 @@ group = puppet_group master
 on master, "chown #{user}:#{group} #{temp_yamldir}"
 
 if @options[:is_puppetserver]
-  step "Ensure legacy auth.conf is disabled for test" do
+  step "Prepare for custom tk-auth rules" do
     on master, 'cp /etc/puppetlabs/puppetserver/conf.d/auth.conf /etc/puppetlabs/puppetserver/conf.d/auth.bak'
     modify_tk_config(master, options['puppetserver-config'], {'jruby-puppet' => {'use-legacy-auth-conf' => false}})
   end

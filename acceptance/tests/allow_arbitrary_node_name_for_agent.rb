@@ -4,21 +4,14 @@ success_message = "node_name_value setting was correctly used as the node name"
 testdir = master.tmpdir('nodenamevalue')
 
 if @options[:is_puppetserver]
-  step "Ensure legacy auth.conf is disabled for test" do
+  step "Prepare for custom tk-auth rules" do
+    on master, 'cp /etc/puppetlabs/puppetserver/conf.d/auth.conf /etc/puppetlabs/puppetserver/conf.d/auth.bak'
     modify_tk_config(master, options['puppetserver-config'], {'jruby-puppet' => {'use-legacy-auth-conf' => false}})
   end
 
   teardown do
-    modify_tk_config(master, options['puppetserver-config'], {'jruby-puppet' => {'use-legacy-auth-conf' => true}})
-  end
-
-  step "Backup the tk auth.conf file" do
-    on master, 'cp /etc/puppetlabs/puppetserver/conf.d/auth.conf /etc/puppetlabs/puppetserver/conf.d/auth.bak'
-  end
-
-  teardown do
-    # restore the original tk auth.conf file
     on master, 'cp /etc/puppetlabs/puppetserver/conf.d/auth.bak /etc/puppetlabs/puppetserver/conf.d/auth.conf'
+    modify_tk_config(master, options['puppetserver-config'], {'jruby-puppet' => {'use-legacy-auth-conf' => true}})
   end
 
   step "Setup tk-auth rules" do
