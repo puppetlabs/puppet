@@ -19,7 +19,7 @@ class Puppet::Application::Device < Puppet::Application
   def preinit
     # Do an initial trap, so that cancels don't get a stack trace.
     Signal.trap(:INT) do
-      $stderr.puts "Cancelling startup"
+      $stderr.puts _("Cancelling startup")
       exit(0)
     end
 

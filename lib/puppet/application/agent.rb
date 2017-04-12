@@ -21,7 +21,7 @@ class Puppet::Application::Agent < Puppet::Application
   def preinit
     # Do an initial trap, so that cancels don't get a stack trace.
     Signal.trap(:INT) do
-      $stderr.puts "Cancelling startup"
+      $stderr.puts _("Cancelling startup")
       exit(0)
     end
 
@@ -338,12 +338,12 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   def fingerprint
     host = Puppet::SSL::Host.new
     unless cert = host.certificate || host.certificate_request
-      $stderr.puts "Fingerprint asked but no certificate nor certificate request have yet been issued"
+      $stderr.puts _("Fingerprint asked but no certificate nor certificate request have yet been issued")
       exit(1)
       return
     end
     unless digest = cert.digest(options[:digest].to_s)
-      raise ArgumentError, "Could not get fingerprint for digest '#{options[:digest]}'"
+      raise ArgumentError, _("Could not get fingerprint for digest '%{digest}'") % { digest: options[:digest] }
     end
     puts digest.to_s
   end
@@ -367,7 +367,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def main(daemon)
-    Puppet.notice "Starting Puppet client version #{Puppet.version}"
+    Puppet.notice _("Starting Puppet client version %{version}") % { version: Puppet.version }
     daemon.start
   end
 
@@ -384,7 +384,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def setup
-    raise ArgumentError, "The puppet agent command does not take parameters" unless command_line.args.empty?
+    raise ArgumentError, _("The puppet agent command does not take parameters") unless command_line.args.empty?
 
     setup_test if options[:test]
 

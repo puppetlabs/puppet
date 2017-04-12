@@ -79,7 +79,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
 
-    raise "Inspect requires reporting to be enabled. Set report=true in puppet.conf to enable reporting." unless Puppet[:report]
+    raise _("Inspect requires reporting to be enabled. Set report=true in puppet.conf to enable reporting.") unless Puppet[:report]
 
     @report = Puppet::Transaction::Report.new("inspect")
 
@@ -87,7 +87,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     Puppet::Util::Log.newdestination(:console) unless options[:setdest]
 
     Signal.trap(:INT) do
-      $stderr.puts "Exiting"
+      $stderr.puts _("Exiting")
       exit(1)
     end
 
@@ -103,11 +103,11 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def run_command
-    benchmark(:notice, "Finished inspection") do
+    benchmark(:notice, _("Finished inspection")) do
       retrieval_starttime = Time.now
 
       unless catalog = Puppet::Resource::Catalog.indirection.find(Puppet[:certname])
-        raise "Could not find catalog for #{Puppet[:certname]}"
+        raise _("Could not find catalog for %{certname}") % { certname: Puppet[:certname] }
       end
 
       @report.configuration_version = catalog.version
@@ -129,13 +129,13 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
         begin
           audited_resource = ral_resource.to_resource
         rescue StandardError => detail
-          ral_resource.log_exception(detail, "Could not inspect #{ral_resource}; skipping: #{detail}")
+          ral_resource.log_exception(detail, _("Could not inspect %{ral_resource}; skipping: %{detail}") % { ral_resource: ral_resource, detail: detail })
           audited_attributes.each do |name|
             event = ral_resource.event(
                                        :property => name,
                                        :status   => "failure",
                                        :audited  => true,
-                                       :message  => "failed to inspect #{name}"
+                                       :message  => _("failed to inspect %{name}") % { name: name }
                                        )
             status.add_event(event)
           end
@@ -149,7 +149,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
                                          :property       => name,
                                          :status         => "audit",
                                          :audited        => true,
-                                         :message        => "inspected value is #{audited_resource[name].inspect}"
+                                         :message        => _("inspected value is %{resource}") % { resource: audited_resource[name].inspect }
                                          )
               status.add_event(event)
             end
@@ -175,7 +175,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       begin
         Puppet::Transaction::Report.indirection.save(@report)
       rescue => detail
-        Puppet.log_exception(detail, "Could not send report: #{detail}")
+        Puppet.log_exception(detail, _("Could not send report: %{detail}") % { detail: detail })
       end
     end
   end
