@@ -58,6 +58,6 @@ class Puppet::Resource::Ral < Puppet::Indirector::Code
   end
 
   def type( request )
-    Puppet::Type.type(type_name(request)) or raise Puppet::Error, "Could not find type #{type_name(request)}"
+    Puppet::Type.type(type_name(request)) or raise Puppet::Error, _("Could not find type %{request_type}") % { request_type: type_name(request) }
   end
 end
