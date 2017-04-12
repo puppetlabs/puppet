@@ -3,9 +3,93 @@ test_name "node_name_value should be used as the node name for puppet agent"
 success_message = "node_name_value setting was correctly used as the node name"
 testdir = master.tmpdir('nodenamevalue')
 
-step "setup auth.conf rules" do
-  authfile = "#{testdir}/auth.conf"
-  authconf = <<-AUTHCONF
+if @options[:is_puppetserver]
+  step "Ensure legacy auth.conf is disabled for test" do
+    modify_tk_config(master, options['puppetserver-config'], {'jruby-puppet' => {'use-legacy-auth-conf' => false}})
+  end
+
+  teardown do
+    modify_tk_config(master, options['puppetserver-config'], {'jruby-puppet' => {'use-legacy-auth-conf' => true}})
+  end
+
+  step "Backup the tk auth.conf file" do
+    on master, 'cp /etc/puppetlabs/puppetserver/conf.d/auth.conf /etc/puppetlabs/puppetserver/conf.d/auth.bak'
+  end
+
+  teardown do
+    # restore the original tk auth.conf file
+    on master, 'cp /etc/puppetlabs/puppetserver/conf.d/auth.bak /etc/puppetlabs/puppetserver/conf.d/auth.conf'
+  end
+
+  step "Setup tk-auth rules" do
+    tk_auth = <<-TK_AUTH
+authorization: {
+    version: 1
+    rules: [
+        {
+            match-request: {
+                path: "/puppet/v3/file"
+                type: path
+            }
+            allow: "*"
+            sort-order: 500
+            name: "puppetlabs file"
+        },
+        {
+            match-request: {
+                path: "/puppet/v3/catalog/specified_node_name"
+                type: path
+                method: [get, post]
+            }
+            allow: "*"
+            sort-order: 500
+            name: "puppetlabs catalog"
+        },
+        {
+            match-request: {
+                path: "/puppet/v3/node/specified_node_name"
+                type: path
+                method: get
+            }
+            allow: "*"
+            sort-order: 500
+            name: "puppetlabs node"
+        },
+        {
+            match-request: {
+                path: "/puppet/v3/report/specified_node_name"
+                type: path
+                method: put
+            }
+            allow: "*"
+            sort-order: 500
+            name: "puppetlabs report"
+        },
+        {
+          match-request: {
+            path: "/"
+            type: path
+          }
+          deny: "*"
+          sort-order: 999
+          name: "puppetlabs deny all"
+        }
+    ]
+}
+    TK_AUTH
+
+    apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
+      file { '/etc/puppetlabs/puppetserver/conf.d/auth.conf':
+        ensure => file,
+        mode => '0644',
+        content => '#{tk_auth}',
+      }
+    MANIFEST
+  end
+else
+  step "setup auth.conf rules" do
+    authfile = "#{testdir}/auth.conf"
+    authconf = <<-AUTHCONF
 path /puppet/v3/catalog/specified_node_name
 auth yes
 allow *
@@ -17,15 +101,16 @@ allow *
 path /puppet/v3/report/specified_node_name
 auth yes
 allow *
-  AUTHCONF
+    AUTHCONF
 
-  apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
-    file { '#{authfile}':
-      ensure => file,
-      mode => '0644',
-      content => '#{authconf}',
-    }
-  MANIFEST
+    apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
+      file { '#{authfile}':
+        ensure => file,
+        mode => '0644',
+        content => '#{authconf}',
+      }
+    MANIFEST
+  end
 end
 
 step "Setup site.pp for node name based classification" do
