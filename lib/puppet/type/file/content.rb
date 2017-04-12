@@ -22,7 +22,7 @@ module Puppet
       With very small files, you can construct content strings directly in
       the manifest...
 
-          define resolve(nameserver1, nameserver2, domain, search) {
+          define resolve($nameserver1, $nameserver2, $domain, $search) {
               $str = "search ${search}
                   domain ${domain}
                   nameserver ${nameserver1}

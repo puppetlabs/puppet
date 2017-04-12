@@ -37,17 +37,17 @@ module Puppet::Util::Windows::User
         size_pointer.write_uint32(SECURITY_MAX_SID_SIZE)
 
         if CreateWellKnownSid(:WinBuiltinAdministratorsSid, FFI::Pointer::NULL, sid_pointer, size_pointer) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new("Failed to create administrators SID")
+          raise Puppet::Util::Windows::Error.new(_("Failed to create administrators SID"))
         end
       end
 
       if IsValidSid(sid_pointer) == FFI::WIN32_FALSE
-        raise Puppet::Util::Windows::Error.new("Invalid SID")
+        raise Puppet::Util::Windows::Error.new(_("Invalid SID"))
       end
 
       FFI::MemoryPointer.new(:win32_bool, 1) do |ismember_pointer|
         if CheckTokenMembership(FFI::Pointer::NULL_HANDLE, sid_pointer, ismember_pointer) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new("Failed to check membership")
+          raise Puppet::Util::Windows::Error.new(_("Failed to check membership"))
         end
 
         # Is administrators SID enabled in calling thread's access token?
@@ -85,7 +85,7 @@ module Puppet::Util::Windows::User
       FFI::MemoryPointer.new(:handle, 1) do |token_pointer|
         if LogonUserW(wide_string(name), wide_string('.'), password.nil? ? FFI::Pointer::NULL : wide_string(password),
             fLOGON32_LOGON_NETWORK, fLOGON32_PROVIDER_DEFAULT, token_pointer) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new("Failed to logon user #{name.inspect}")
+          raise Puppet::Util::Windows::Error.new(_("Failed to logon user %{name}") % { name: name.inspect })
         end
 
         yield token = token_pointer.read_handle
@@ -109,13 +109,13 @@ module Puppet::Util::Windows::User
 
         # Load the profile. Since it doesn't exist, it will be created
         if LoadUserProfileW(token, pi.pointer) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new("Failed to load user profile #{user.inspect}")
+          raise Puppet::Util::Windows::Error.new(_("Failed to load user profile %{user}") % { user: user.inspect })
         end
 
         Puppet.debug("Loaded profile for #{user}")
 
         if UnloadUserProfile(token, pi[:hProfile]) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new("Failed to unload user profile #{user.inspect}")
+          raise Puppet::Util::Windows::Error.new(_("Failed to unload user profile %{user}") % { user: user.inspect })
         end
       end
     end

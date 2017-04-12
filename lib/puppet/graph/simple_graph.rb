@@ -258,7 +258,8 @@ class Puppet::Graph::SimpleGraph
     graph << '}'
 
     filename = File.join(Puppet[:graphdir], "cycles.dot")
-    File.open(filename, "w") { |f| f.puts graph }
+    # DOT files are assumed to be UTF-8 by default - http://www.graphviz.org/doc/info/lang.html
+    File.open(filename, "w:UTF-8") { |f| f.puts graph }
     return filename
   end
 
@@ -463,7 +464,8 @@ class Puppet::Graph::SimpleGraph
     return unless Puppet[:graph]
 
     file = File.join(Puppet[:graphdir], "#{name}.dot")
-    File.open(file, "w") { |f|
+    # DOT files are assumed to be UTF-8 by default - http://www.graphviz.org/doc/info/lang.html
+    File.open(file, "w:UTF-8") { |f|
       f.puts to_dot("name" => name.to_s.capitalize)
     }
   end

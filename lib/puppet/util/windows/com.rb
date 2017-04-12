@@ -14,7 +14,7 @@ module Puppet::Util::Windows::COM
   module_function :SUCCEEDED, :FAILED
 
   def raise_if_hresult_failed(name, *args)
-    failed = FAILED(result = send(name, *args)) and raise "#{name} failed (hresult #{format('%#08x', result)})."
+    failed = FAILED(result = send(name, *args)) and raise _("%{name} failed (hresult %{result}).") % { name: name, result: format('%#08x', result) }
 
     result
   ensure
@@ -139,7 +139,7 @@ module Puppet::Util::Windows::COM
         self::VTBL.members.each do |name|
           define_method(name) do |*args|
             if Puppet::Util::Windows::COM.FAILED(result = @vtbl[name].call(self, *args))
-              raise Puppet::Util::Windows::Error.new("Failed to call #{self}::#{name} with HRESULT: #{result}.", result)
+              raise Puppet::Util::Windows::Error.new(_("Failed to call %{klass}::%{name} with HRESULT: %{result}.") % { klass: self, name: name, result: result }, result)
             end
             result
           end
@@ -166,7 +166,7 @@ module Puppet::Util::Windows::COM
           FFI::MemoryPointer.new(:pointer) do |ppv|
             hr = Puppet::Util::Windows::COM.CoCreateInstance(self.class::CLSID, FFI::Pointer::NULL, @opts[:clsctx], self.class::IID, ppv)
             if Puppet::Util::Windows::COM.FAILED(hr)
-              raise "CoCreateInstance failed (#{self.class})."
+              raise _("CoCreateInstance failed (%{klass}).") % { klass: self.class }
             end
 
             self.pointer = ppv.read_pointer
@@ -180,7 +180,7 @@ module Puppet::Util::Windows::COM
         self::VTBL.members.each do |name|
           define_method(name) do |*args|
             if Puppet::Util::Windows::COM.FAILED(result = @vtbl[name].call(self, *args))
-              raise Puppet::Util::Windows::Error.new("Failed to call #{self}::#{name} with HRESULT: #{result}.", result)
+              raise Puppet::Util::Windows::Error.new(_("Failed to call %{klass}::%{name} with HRESULT: %{result}.") % { klass: self, name: name, result: result }, result)
             end
             result
           end

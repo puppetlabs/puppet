@@ -392,7 +392,7 @@ module Puppet
         end
 
         # WARNING: this won't work with filesync (symlinked environments are not supported)
-        on host, "ln -sf #{tmpdir} #{File.join(environmentpath,tmp_environment)}"
+        on host, "mkdir -p #{environmentpath}; ln -sf #{tmpdir} #{File.join(environmentpath,tmp_environment)}"
         return tmp_environment
       end
       module_function :mk_tmp_environment_with_teardown

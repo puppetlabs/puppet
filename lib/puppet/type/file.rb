@@ -195,7 +195,7 @@ Puppet::Type.newtype(:file) do
     munge do |value|
       newval = super(value)
       case newval
-      when Integer, Fixnum, Bignum; value
+      when Integer; value
       when /^\d+$/; Integer(value)
       else
         self.fail "Invalid recurselimit value #{value.inspect}"

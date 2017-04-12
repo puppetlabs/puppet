@@ -28,27 +28,20 @@ class Puppet::Pops::Functions::Dispatcher
   #
   # @api private
   def dispatch(instance, calling_scope, args, &block)
-    tc = Puppet::Pops::Types::TypeCalculator.singleton
-    actual = tc.infer_set(block_given? ? args + [block] : args)
-    found = @dispatchers.find { |d| tc.callable?(d.type, actual) }
-    if found
-      catch(:next) do
-        found.invoke(instance, calling_scope, args, &block)
-      end
-    else
-      raise ArgumentError, Puppet::Pops::Types::TypeMismatchDescriber.describe_signatures(instance.class.name, @dispatchers, actual)
+    found = @dispatchers.find { |d| d.type.callable_with?(args, block) }
+    unless found
+      args_type = Puppet::Pops::Types::TypeCalculator.singleton.infer_set(block_given? ? args + [block] : args)
+      raise ArgumentError, Puppet::Pops::Types::TypeMismatchDescriber.describe_signatures(instance.class.name, signatures, args_type)
     end
-  end
 
-  # Adds a regular dispatch for one method name
-  #
-  # @param type [Puppet::Pops::Types::PArrayType, Puppet::Pops::Types::PTupleType] - type describing signature
-  # @param method_name [String] - the name of the method that will be called when type matches given arguments
-  # @param names [Array<String>] - array with names matching the number of parameters specified by type (or empty array)
-  #
-  # @api private
-  def add_dispatch(type, method_name, param_names, block_name, injections, weaving, last_captures)
-    add(Puppet::Pops::Functions::Dispatch.new(type, method_name, param_names, block_name, injections, weaving, last_captures))
+    if found.argument_mismatch_handler?
+      msg = found.invoke(instance, calling_scope, args)
+      raise ArgumentError, "'#{instance.class.name}' #{msg}"
+    end
+
+    catch(:next) do
+      found.invoke(instance, calling_scope, args, &block)
+    end
   end
 
   # Adds a dispatch directly to the set of dispatchers.
@@ -73,6 +66,6 @@ class Puppet::Pops::Functions::Dispatcher
 
   # @api private
   def signatures
-    @dispatchers
+    @dispatchers.reject { |dispatcher| dispatcher.argument_mismatch_handler? }
   end
 end

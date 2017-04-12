@@ -56,7 +56,7 @@ class RelationshipOperator
   # A string must be a type reference in string format
   # @api private
   def transform_String(o, scope)
-    assert_catalog_type(Types::TypeParser.singleton.parse(o, scope), scope)
+    assert_catalog_type(Types::TypeParser.singleton.parse(o), scope)
   end
 
   # A qualified name is short hand for a class with this name
@@ -103,14 +103,14 @@ class RelationshipOperator
     o
   end
 
-  RELATIONSHIP_OPERATORS = [:'->', :'~>', :'<-', :'<~']
-  REVERSE_OPERATORS      = [:'<-', :'<~']
+  RELATIONSHIP_OPERATORS = ['->', '~>', '<-', '<~'].freeze
+  REVERSE_OPERATORS      = ['<-', '<~'].freeze
   RELATION_TYPE = {
-    :'->' => :relationship,
-    :'<-' => :relationship,
-    :'~>' => :subscription,
-    :'<~' => :subscription
-  }
+    '->' => :relationship,
+    '<-' => :relationship,
+    '~>' => :subscription,
+    '<~' => :subscription
+  }.freeze
 
   # Evaluate a relationship.
   # TODO: The error reporting is not fine grained since evaluation has already taken place

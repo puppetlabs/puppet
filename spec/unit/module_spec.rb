@@ -170,7 +170,6 @@ describe Puppet::Module do
 
     it "should list modules that are missing" do
       metadata_file = "#{@modpath}/needy/metadata.json"
-      Puppet::FileSystem.expects(:exist?).with(metadata_file).returns true
       mod = PuppetSpec::Modules.create(
         'needy',
         @modpath,
@@ -196,7 +195,6 @@ describe Puppet::Module do
 
     it "should list modules that are missing and have invalid names" do
       metadata_file = "#{@modpath}/needy/metadata.json"
-      Puppet::FileSystem.expects(:exist?).with(metadata_file).returns true
       mod = PuppetSpec::Modules.create(
         'needy',
         @modpath,
@@ -305,7 +303,6 @@ describe Puppet::Module do
       env = Puppet::Node::Environment.create(:testing, [@modpath])
 
       metadata_file = "#{@modpath}/foobar/metadata.json"
-      Puppet::FileSystem.expects(:exist?).with(metadata_file).times(3).returns true
       mod = PuppetSpec::Modules.create(
         'foobar',
         @modpath,
@@ -364,10 +361,6 @@ describe Puppet::Module do
     it "should only list unmet dependencies" do
       env = Puppet::Node::Environment.create(:testing, [@modpath])
 
-      [name, 'satisfied'].each do |mod_name|
-        metadata_file = "#{@modpath}/#{mod_name}/metadata.json"
-        Puppet::FileSystem.expects(:exist?).with(metadata_file).twice.returns true
-      end
       mod = PuppetSpec::Modules.create(
         name,
         @modpath,
@@ -588,60 +581,70 @@ end
 
 describe Puppet::Module do
   include PuppetSpec::Files
-  before do
-    @modpath = tmpdir('modpath')
-    @module = PuppetSpec::Modules.create('mymod', @modpath)
+
+  let!(:modpath) do
+    path = tmpdir('modpath')
+    PuppetSpec::Modules.create('mymod', path)
+    path
   end
 
+  let!(:mymodpath) { File.join(modpath, 'mymod') }
+
+  let!(:mymod_metadata) { File.join(mymodpath, 'metadata.json') }
+
+  let(:mymod) { Puppet::Module.new('mymod', mymodpath, nil) }
+
   it "should use 'License' in its current path as its metadata file" do
-    expect(@module.license_file).to eq("#{@modpath}/mymod/License")
+    expect(mymod.license_file).to eq("#{modpath}/mymod/License")
   end
 
   it "should cache the license file" do
-    @module.expects(:path).once.returns nil
-    @module.license_file
-    @module.license_file
+    mymod.expects(:path).once.returns nil
+    mymod.license_file
+    mymod.license_file
   end
 
   it "should use 'metadata.json' in its current path as its metadata file" do
-    expect(@module.metadata_file).to eq("#{@modpath}/mymod/metadata.json")
+    expect(mymod_metadata).to eq("#{modpath}/mymod/metadata.json")
   end
 
-  it "should have metadata if it has a metadata file and its data is not empty" do
-    Puppet::FileSystem.expects(:exist?).with(@module.metadata_file).returns true
-    File.stubs(:read).with(@module.metadata_file, {:encoding => 'utf-8'}).returns "{\"foo\" : \"bar\"}"
+  it "should not have metadata if it has a metadata file and its data is valid but empty json hash" do
+    File.stubs(:read).with(mymod_metadata, {:encoding => 'utf-8'}).returns "{}"
 
-    expect(@module).to be_has_metadata
+    expect(mymod).not_to be_has_metadata
   end
 
-  it "should not have metadata if has a metadata file and its data is empty" do
-    Puppet::FileSystem.expects(:exist?).with(@module.metadata_file).returns true
-    File.stubs(:read).with(@module.metadata_file, {:encoding => 'utf-8'}).returns "This is some invalid json.\n"
-    expect(@module).not_to be_has_metadata
+  it "should not have metadata if it has a metadata file and its data is empty" do
+    File.stubs(:read).with(mymod_metadata, {:encoding => 'utf-8'}).returns ""
+
+    expect(mymod).not_to be_has_metadata
+  end
+
+  it "should not have metadata if has a metadata file and its data is invalid" do
+    File.stubs(:read).with(mymod_metadata, {:encoding => 'utf-8'}).returns "This is some invalid json.\n"
+    expect(mymod).not_to be_has_metadata
   end
 
   it "should know if it is missing a metadata file" do
-    Puppet::FileSystem.expects(:exist?).with(@module.metadata_file).returns false
+    File.stubs(:read).with(mymod_metadata, {:encoding => 'utf-8'}).raises(Errno::ENOENT)
 
-    expect(@module).not_to be_has_metadata
+    expect(mymod).not_to be_has_metadata
   end
 
   it "should be able to parse its metadata file" do
-    expect(@module).to respond_to(:load_metadata)
+    expect(mymod).to respond_to(:load_metadata)
   end
 
   it "should parse its metadata file on initialization if it is present" do
-    Puppet::Module.any_instance.expects(:has_metadata?).returns true
     Puppet::Module.any_instance.expects(:load_metadata)
 
     Puppet::Module.new("yay", "/path", mock("env"))
   end
 
   it "should tolerate failure to parse" do
-    Puppet::FileSystem.expects(:exist?).with(@module.metadata_file).returns true
-    File.stubs(:read).with(@module.metadata_file, {:encoding => 'utf-8'}).returns(my_fixture('trailing-comma.json'))
+    File.stubs(:read).with(mymod_metadata, {:encoding => 'utf-8'}).returns(my_fixture('trailing-comma.json'))
 
-    expect(@module.has_metadata?).to be_falsey
+    expect(mymod.has_metadata?).to be_falsey
   end
 
   describe 'when --strict is warning' do
@@ -650,10 +653,9 @@ describe Puppet::Module do
     end
 
     it "should warn about a failure to parse" do
-      Puppet::FileSystem.expects(:exist?).with(@module.metadata_file).returns true
-      File.stubs(:read).with(@module.metadata_file, {:encoding => 'utf-8'}).returns(my_fixture('trailing-comma.json'))
+      File.stubs(:read).with(mymod_metadata, {:encoding => 'utf-8'}).returns(my_fixture('trailing-comma.json'))
 
-      expect(@module.has_metadata?).to be_falsey
+      expect(mymod.has_metadata?).to be_falsey
       expect(@logs).to have_matching_log(/mymod has an invalid and unparsable metadata\.json file/)
     end
   end
@@ -664,10 +666,9 @@ describe Puppet::Module do
       end
 
       it "should warn about a failure to parse" do
-        Puppet::FileSystem.expects(:exist?).with(@module.metadata_file).returns true
-        File.stubs(:read).with(@module.metadata_file, {:encoding => 'utf-8'}).returns(my_fixture('trailing-comma.json'))
+        File.stubs(:read).with(mymod_metadata, {:encoding => 'utf-8'}).returns(my_fixture('trailing-comma.json'))
 
-        expect(@module.has_metadata?).to be_falsey
+        expect(mymod.has_metadata?).to be_falsey
         expect(@logs).to have_matching_log(/mymod has an invalid and unparsable metadata\.json file.*/)
       end
     end
@@ -678,47 +679,39 @@ describe Puppet::Module do
       end
 
       it "should fail on a failure to parse" do
-        Puppet::FileSystem.expects(:exist?).with(@module.metadata_file).returns true
-        File.stubs(:read).with(@module.metadata_file, {:encoding => 'utf-8'}).returns(my_fixture('trailing-comma.json'))
+        File.stubs(:read).with(mymod_metadata, {:encoding => 'utf-8'}).returns(my_fixture('trailing-comma.json'))
 
         expect do
-        expect(@module.has_metadata?).to be_falsey
+        expect(mymod.has_metadata?).to be_falsey
         end.to raise_error(/mymod has an invalid and unparsable metadata\.json file/)
       end
     end
 
   def a_module_with_metadata(data)
-    text = data.to_pson
-
-    mod = Puppet::Module.new("foo", "/path", mock("env"))
-    mod.stubs(:metadata_file).returns "/my/file"
-    File.stubs(:read).with("/my/file", {:encoding => 'utf-8'}).returns text
-    mod
+    File.stubs(:read).with("/path/metadata.json", {:encoding => 'utf-8'}).returns data.to_pson
+    Puppet::Module.new("foo", "/path", mock("env"))
   end
 
   describe "when loading the metadata file" do
-    before do
-      @data = {
+    let(:data) do
+      {
         :license       => "GPL2",
         :author        => "luke",
         :version       => "1.0",
         :source        => "http://foo/",
         :dependencies  => []
       }
-      @module = a_module_with_metadata(@data)
     end
 
     %w{source author version license}.each do |attr|
       it "should set #{attr} if present in the metadata file" do
-        @module.load_metadata
-        expect(@module.send(attr)).to eq(@data[attr.to_sym])
+        mod = a_module_with_metadata(data)
+        expect(mod.send(attr)).to eq(data[attr.to_sym])
       end
 
       it "should fail if #{attr} is not present in the metadata file" do
-        @data.delete(attr.to_sym)
-        @text = @data.to_pson
-        File.stubs(:read).with("/my/file", {:encoding => 'utf-8'}).returns @text
-        expect { @module.load_metadata }.to raise_error(
+        data.delete(attr.to_sym)
+        expect { a_module_with_metadata(data) }.to raise_error(
           Puppet::Module::MissingMetadata,
           "No #{attr} module metadata provided for foo"
         )
@@ -730,7 +723,7 @@ describe Puppet::Module do
     it "should properly parse utf-8 contents" do
       rune_utf8 = "\u16A0\u16C7\u16BB" # ᚠᛇᚻ
       metadata_json = tmpfile('metadata.json')
-      File.open(metadata_json, 'w') do |file|
+      File.open(metadata_json, 'w:UTF-8') do |file|
         file.puts <<-EOF
   {
     "license" : "GPL2",
@@ -742,8 +735,8 @@ describe Puppet::Module do
         EOF
       end
 
+      Puppet::Module.any_instance.stubs(:metadata_file).returns metadata_json
       mod = Puppet::Module.new('foo', '/path', mock('env'))
-      mod.stubs(:metadata_file).returns metadata_json
 
       mod.load_metadata
       expect(mod.author).to eq(rune_utf8)
@@ -773,17 +766,17 @@ describe Puppet::Module do
   end
 
   it "should know what other modules require it" do
-    env = Puppet::Node::Environment.create(:testing, [@modpath])
+    env = Puppet::Node::Environment.create(:testing, [modpath])
 
     dependable = PuppetSpec::Modules.create(
       'dependable',
-      @modpath,
+      modpath,
       :metadata => {:author => 'puppetlabs'},
       :environment => env
     )
     PuppetSpec::Modules.create(
       'needy',
-      @modpath,
+      modpath,
       :metadata => {
         :author => 'beggar',
         :dependencies => [{
@@ -795,7 +788,7 @@ describe Puppet::Module do
     )
     PuppetSpec::Modules.create(
       'wantit',
-      @modpath,
+      modpath,
       :metadata => {
         :author => 'spoiled',
         :dependencies => [{

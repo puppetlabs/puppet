@@ -20,7 +20,7 @@ Puppet::Face.define(:help, '0.0.1') do
       $ puppet help
     EOT
 
-    option _("--version VERSION") do
+    option "--version " + _("VERSION") do
       summary _("The version of the subcommand for which to show help.")
     end
 
@@ -146,7 +146,9 @@ MSG
       if (is_face_app?(appname))
         begin
           face = Puppet::Face[appname, :current]
-          result << [appname, face.summary]
+          # Add deprecation message to summary if the face is deprecated
+          summary = face.deprecated? ? face.summary + _(" (Deprecated)") : face.summary
+          result << [appname, summary]
         rescue StandardError, LoadError
           result << [ "! #{appname}", _("! Subcommand unavailable due to error. Check error logs.") ]
         end

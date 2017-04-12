@@ -35,6 +35,8 @@ describe 'loaders' do
   let(:dependent_modules_with_metadata) { config_dir('dependent_modules_with_metadata') }
   let(:no_modules) { config_dir('no_modules') }
   let(:user_metadata_path) { File.join(dependent_modules_with_metadata, 'modules/user/metadata.json') }
+  let(:usee_metadata_path) { File.join(dependent_modules_with_metadata, 'modules/usee/metadata.json') }
+  let(:usee2_metadata_path) { File.join(dependent_modules_with_metadata, 'modules/usee2/metadata.json') }
 
   let(:empty_test_env) { environment_for() }
 
@@ -45,11 +47,11 @@ describe 'loaders' do
     let(:pp_resources) { config_dir('pp_resources') }
     let(:environments) { Puppet::Environments::Directories.new(my_fixture_dir, []) }
     let(:env) { Puppet::Node::Environment.create(:'pp_resources', [File.join(pp_resources, 'modules')]) }
-    let(:scope) { Puppet::Parser::Compiler.new(Puppet::Node.new("test", :environment => env)).newscope(nil) }
+    let(:compiler) { Puppet::Parser::Compiler.new(Puppet::Node.new("test", :environment => env)) }
     let(:loader) { Puppet::Pops::Loaders.loaders.find_loader(nil) }
     around(:each) do |example|
-      Puppet.override(:environments => environments, :current_environment => scope.environment, :global_scope => scope) do
-        Puppet.override(:loaders => Puppet::Pops::Loaders.new(env)) do
+      Puppet.override(:environments => environments) do
+        Puppet.override(:loaders => compiler.loaders) do
           example.run
         end
       end
@@ -145,6 +147,8 @@ describe 'loaders' do
 
     it 'loader allows loading a function more than once' do
       File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns ''
+      File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+      File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
 
       env = environment_for(File.join(dependent_modules_with_metadata, 'modules'))
       loaders = Puppet::Pops::Loaders.new(env)
@@ -204,6 +208,8 @@ describe 'loaders' do
 
     it 'all dependent modules are visible' do
       File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'}, { 'name' => 'test-usee2'} ]).to_pson
+      File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+      File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
       loaders = Puppet::Pops::Loaders.new(env)
 
       moduleb_loader = loaders.private_loader_for_module('user')
@@ -221,6 +227,8 @@ describe 'loaders' do
         case_number = from_idx * 3 + called_idx + 1
         it "can call #{desc[:called]} from #{desc[:from]} when dependency is present in metadata.json" do
           File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
+          File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+          File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
           Puppet[:code] = "$case_number = #{case_number}\ninclude ::user"
           catalog = compiler.compile
           resource = catalog.resource('Notify', "case_#{case_number}")
@@ -239,6 +247,8 @@ describe 'loaders' do
 
         it "can not call #{desc[:called]} from #{desc[:from]} if dependency is missing in existing metadata.json" do
           File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => []).to_pson
+          File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+          File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
           Puppet[:code] = "$case_number = #{case_number}\ninclude ::user"
           expect { catalog = compiler.compile }.to raise_error(Puppet::Error, /Unknown function/)
         end
@@ -247,6 +257,8 @@ describe 'loaders' do
 
     it "a type can reference an autoloaded type alias from another module when dependency is present in metadata.json" do
       File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
+      File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+      File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
         assert_type(Usee::Zero, 0)
         notice(ok)
@@ -263,6 +275,8 @@ describe 'loaders' do
 
     it "a type can reference a type alias from another module when other module has it declared in init.pp" do
       File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
+      File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+      File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
         include 'usee'
         assert_type(Usee::One, 1)
@@ -272,6 +286,8 @@ describe 'loaders' do
 
     it "an autoloaded type can reference an autoloaded type alias from another module when dependency is present in metadata.json" do
       File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
+      File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+      File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
         assert_type(User::WithUseeZero, [0])
         notice(ok)
@@ -280,6 +296,8 @@ describe 'loaders' do
 
     it "an autoloaded type can reference an autoloaded type alias from another module when other module has it declared in init.pp" do
       File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
+      File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+      File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
         include 'usee'
         assert_type(User::WithUseeOne, [1])
@@ -335,41 +353,204 @@ describe 'loaders' do
 
   context 'when calling' do
     let(:env) { environment_for(mix_4x_and_3x_functions) }
-    let(:scope) { Puppet::Parser::Compiler.new(Puppet::Node.new("test", :environment => env)).newscope(nil) }
-    let(:loader) { Puppet::Pops::Loaders.new(env).private_loader_for_module('user') }
+    let(:compiler) { Puppet::Parser::Compiler.new(Puppet::Node.new("test", :environment => env)) }
+    let(:scope) { compiler.topscope }
+    let(:loader) { compiler.loaders.private_loader_for_module('user') }
+
+    around(:each) do |example|
+      Puppet.override(:current_environment => scope.environment, :global_scope => scope, :loaders => compiler.loaders) do
+        example.run
+      end
+    end
 
     it 'a 3x function in dependent module can be called from a 4x function' do
-      Puppet.override({ :current_environment => scope.environment, :global_scope => scope }) do
-        function = loader.load_typed(typed_name(:function, 'user::caller')).value
-        expect(function.call(scope)).to eql("usee::callee() got 'first' - usee::callee() got 'second'")
-      end
+      function = loader.load_typed(typed_name(:function, 'user::caller')).value
+      expect(function.call(scope)).to eql("usee::callee() got 'first' - usee::callee() got 'second'")
     end
 
     it 'a 3x function in dependent module can be called from a puppet function' do
-      Puppet.override({ :current_environment => scope.environment, :global_scope => scope }) do
-        function = loader.load_typed(typed_name(:function, 'user::puppetcaller')).value
-        expect(function.call(scope)).to eql("usee::callee() got 'first' - usee::callee() got 'second'")
-      end
+      function = loader.load_typed(typed_name(:function, 'user::puppetcaller')).value
+      expect(function.call(scope)).to eql("usee::callee() got 'first' - usee::callee() got 'second'")
     end
 
     it 'a 4x function can be called from a puppet function' do
-      Puppet.override({ :current_environment => scope.environment, :global_scope => scope }) do
-        function = loader.load_typed(typed_name(:function, 'user::puppetcaller4')).value
-        expect(function.call(scope)).to eql("usee::callee() got 'first' - usee::callee() got 'second'")
-      end
+      function = loader.load_typed(typed_name(:function, 'user::puppetcaller4')).value
+      expect(function.call(scope)).to eql("usee::callee() got 'first' - usee::callee() got 'second'")
     end
+
     it 'a puppet function can be called from a 4x function' do
-      Puppet.override({ :current_environment => scope.environment, :global_scope => scope }) do
-        function = loader.load_typed(typed_name(:function, 'user::callingpuppet')).value
-        expect(function.call(scope)).to eql("Did you call to say you love me?")
-      end
+      function = loader.load_typed(typed_name(:function, 'user::callingpuppet')).value
+      expect(function.call(scope)).to eql("Did you call to say you love me?")
     end
 
     it 'a 3x function can be called with caller scope propagated from a 4x function' do
-      Puppet.override({ :current_environment => scope.environment, :global_scope => scope }) do
-        function = loader.load_typed(typed_name(:function, 'user::caller_ws')).value
-        expect(function.call(scope, 'passed in scope')).to eql("usee::callee_ws() got 'passed in scope'")
-      end
+      function = loader.load_typed(typed_name(:function, 'user::caller_ws')).value
+      expect(function.call(scope, 'passed in scope')).to eql("usee::callee_ws() got 'passed in scope'")
+    end
+  end
+
+  context 'loading types' do
+    let(:env_name) { 'testenv' }
+    let(:environments_dir) { Puppet[:environmentpath] }
+    let(:env_dir) { File.join(environments_dir, env_name) }
+    let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(populated_env_dir, 'modules')]) }
+    let(:metadata_json) {
+      <<-JSON
+      {
+        "name": "example/%1$s",
+        "version": "0.0.2",
+        "source": "git@github.com/example/example-%1$s.git",
+        "dependencies": [],
+        "author": "Bob the Builder",
+        "license": "Apache-2.0"%2$s
+      }
+      JSON
+    }
+
+    let(:env_dir_files) do
+      {
+        'types' => {
+          'c.pp' => 'type C = Integer'
+        },
+        'modules' => {
+          'a' => {
+            'manifests' => {
+              'init.pp' => 'class a { notice(A::A) }'
+            },
+            'types' => {
+              'a.pp' => 'type A::A = Variant[B::B, String]',
+              'n.pp' => 'type A::N = C::C'
+            },
+            'metadata.json' => sprintf(metadata_json, 'a', ', "dependencies": [{ "name": "example/b" }]')
+          },
+          'b' => {
+            'types' => {
+              'b.pp' => 'type B::B = Variant[C::C, Float]',
+              'x.pp' => 'type B::X = A::A'
+            },
+            'metadata.json' => sprintf(metadata_json, 'b', ', "dependencies": [{ "name": "example/c" }]')
+          },
+          'c' => {
+            'types' => {
+              'init_typeset.pp' => <<-PUPPET.unindent,
+                type C = TypeSet[{
+                  pcore_version => '1.0.0',
+                  types => {
+                    C => Integer,
+                    D => Float
+                  }
+                }]
+                PUPPET
+              'd.pp' => <<-PUPPET.unindent,
+                type C::D = TypeSet[{
+                  pcore_version => '1.0.0',
+                  types => {
+                    X => String,
+                    Y => Float
+                  }
+                }]
+                PUPPET
+              'd' => {
+                'y.pp' => 'type C::D::Y = Integer'
+              }
+            },
+            'metadata.json' => sprintf(metadata_json, 'c', '')
+          },
+        }
+      }
+    end
+
+    let(:populated_env_dir) do
+      dir_contained_in(environments_dir, env_name => env_dir_files)
+      PuppetSpec::Files.record_tmp(env_dir)
+      env_dir
+    end
+
+    before(:each) do
+      Puppet.push_context(:loaders => Puppet::Pops::Loaders.new(env))
+    end
+
+    after(:each) do
+      Puppet.pop_context
+    end
+
+    it 'resolves types using the loader that loaded the type a -> b -> c' do
+      type = Puppet::Pops::Types::TypeParser.singleton.parse('A::A', Puppet::Pops::Loaders.find_loader('a'))
+      expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
+      expect(type.name).to eql('A::A')
+      type = type.resolved_type
+      expect(type).to be_a(Puppet::Pops::Types::PVariantType)
+      type = type.types[0]
+      expect(type.name).to eql('B::B')
+      type = type.resolved_type
+      expect(type).to be_a(Puppet::Pops::Types::PVariantType)
+      type = type.types[0]
+      expect(type.name).to eql('C::C')
+      type = type.resolved_type
+      expect(type).to be_a(Puppet::Pops::Types::PIntegerType)
+    end
+
+    it 'will not resolve implicit transitive dependencies, a -> c' do
+      type = Puppet::Pops::Types::TypeParser.singleton.parse('A::N', Puppet::Pops::Loaders.find_loader('a'))
+      expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
+      expect(type.name).to eql('A::N')
+      type = type.resolved_type
+      expect(type).to be_a(Puppet::Pops::Types::PTypeReferenceType)
+      expect(type.type_string).to eql('C::C')
+    end
+
+    it 'will not resolve reverse dependencies, b -> a' do
+      type = Puppet::Pops::Types::TypeParser.singleton.parse('B::X', Puppet::Pops::Loaders.find_loader('b'))
+      expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
+      expect(type.name).to eql('B::X')
+      type = type.resolved_type
+      expect(type).to be_a(Puppet::Pops::Types::PTypeReferenceType)
+      expect(type.type_string).to eql('A::A')
+    end
+
+    it 'does not resolve init_typeset when more qualified type is found in typeset' do
+      type = Puppet::Pops::Types::TypeParser.singleton.parse('C::D::X', Puppet::Pops::Loaders.find_loader('c'))
+      expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
+      expect(type.resolved_type).to be_a(Puppet::Pops::Types::PStringType)
+    end
+
+    it 'defined TypeSet type shadows type defined inside of TypeSet' do
+      type = Puppet::Pops::Types::TypeParser.singleton.parse('C::D', Puppet::Pops::Loaders.find_loader('c'))
+      expect(type).to be_a(Puppet::Pops::Types::PTypeSetType)
+    end
+
+    it 'parent name search does not traverse parent loaders' do
+      type = Puppet::Pops::Types::TypeParser.singleton.parse('C::C', Puppet::Pops::Loaders.find_loader('c'))
+      expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
+      expect(type.resolved_type).to be_a(Puppet::Pops::Types::PIntegerType)
+    end
+
+    it 'global type defined in environment trumps modules init_typeset type' do
+      type = Puppet::Pops::Types::TypeParser.singleton.parse('C', Puppet::Pops::Loaders.find_loader('c'))
+      expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
+      expect(type.resolved_type).to be_a(Puppet::Pops::Types::PIntegerType)
+    end
+
+    it 'hit on qualified name trumps hit on typeset using parent name + traversal' do
+      type = Puppet::Pops::Types::TypeParser.singleton.parse('C::D::Y', Puppet::Pops::Loaders.find_loader('c'))
+      expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
+      expect(type.resolved_type).to be_a(Puppet::Pops::Types::PIntegerType)
+    end
+
+    it 'hit on qualified name and subsequent hit in typeset when searching for other name causes collision' do
+      l = Puppet::Pops::Loaders.find_loader('c')
+      p = Puppet::Pops::Types::TypeParser.singleton
+      p.parse('C::D::Y', l)
+      expect { p.parse('C::D::X', l) }.to raise_error(/Attempt to redefine entity 'http:\/\/puppet.com\/2016.1\/runtime\/type\/c::d::y'/)
+    end
+
+    it 'hit in typeset using parent name and subsequent search that would cause hit on fqn does not cause collision (fqn already loaded from typeset)' do
+      l = Puppet::Pops::Loaders.find_loader('c')
+      p = Puppet::Pops::Types::TypeParser.singleton
+      p.parse('C::D::X', l)
+      type = p.parse('C::D::Y', l)
+      expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
+      expect(type.resolved_type).to be_a(Puppet::Pops::Types::PFloatType)
     end
   end
 

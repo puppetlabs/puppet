@@ -12,4 +12,5 @@ Puppet::Indirector::Face.define(:key, '0.0.1') do
     subcommand directly.
   EOT
 
+  deprecate
 end

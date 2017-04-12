@@ -8,107 +8,144 @@ describe 'when calling' do
 
   let(:global_dir) { tmpdir('global') }
   let(:env_config) { {} }
-  let(:global_files) do
+  let(:hiera_yaml) { <<-YAML.unindent }
+    ---
+    :backends:
+      - yaml
+      - custom
+    :yaml:
+      :datadir: #{global_dir}/hieradata
+    :hierarchy:
+      - first
+      - second
+    YAML
+
+  let(:ruby_stuff_files) do
     {
-      'hiera.yaml' => <<-YAML.unindent,
-        ---
-        :backends:
-          - yaml
-          - custom
-        :yaml:
-          :datadir: #{global_dir}/hieradata
-        :hierarchy:
-          - first
-          - second
-        YAML
-      'ruby_stuff' => {
-        'hiera' => {
-          'backend' => {
-            'custom_backend.rb' => <<-RUBY.unindent
-                    class Hiera::Backend::Custom_backend
-                      def initialize(cache = nil)
-                        Hiera.debug('Custom_backend starting')
-                      end
-      
-                      def lookup(key, scope, order_override, resolution_type, context)
-                        case key
-                        when 'datasources'
-                          Hiera::Backend.datasources(scope, order_override) { |source| source }
-                        else
-                          throw :no_such_key
-                        end
-                      end
-                    end
-              RUBY
-          }
+      'hiera' => {
+        'backend' => {
+          'custom_backend.rb' => <<-RUBY.unindent
+            class Hiera::Backend::Custom_backend
+              def initialize(cache = nil)
+                Hiera.debug('Custom_backend starting')
+              end
+
+              def lookup(key, scope, order_override, resolution_type, context)
+                case key
+                when 'datasources'
+                  Hiera::Backend.datasources(scope, order_override) { |source| source }
+                when 'resolution_type'
+                  if resolution_type == :hash
+                    { key => resolution_type.to_s }
+                  elsif resolution_type == :array
+                    [ key, resolution_type.to_s ]
+                  else
+                    "resolution_type=\#{resolution_type}"
+                  end
+                else
+                  throw :no_such_key
+                end
+              end
+            end
+            RUBY
         }
-      },
-      'hieradata' => {
-        'first.yaml' => <<-YAML.unindent,
-                ---
-                a: first a
-                class_name: "-- %{calling_class} --"
-                class_path: "-- %{calling_class_path} --"
-                module: "-- %{calling_module} --"
-                mod_name: "-- %{module_name} --"
-                database_user:
-                  name: postgres
-                  uid: 500
-                  gid: 500
-                b:
-                  b1: first b1
-                  b2: first b2
-                fbb:
-                  - mod::foo
-                  - mod::bar
-                  - mod::baz
-                empty_array: []
-          YAML
-        'second.yaml' => <<-YAML.unindent,
-          ---
-          a: second a
-          b:
-            b1: second b1
-            b3: second b3
-          YAML
-        'the_override.yaml' => <<-YAML.unindent
-          ---
-          key: foo_result
-          YAML
-      },
-      'environments' => {
-        'test' => {
-          'modules' => {
-            'mod' => {
-              'manifests' => {
-                'foo.pp' => <<-PUPPET.unindent,
-                    class mod::foo {
-                      notice(hiera('class_name'))
-                      notice(hiera('class_path'))
-                      notice(hiera('module'))
-                      notice(hiera('mod_name'))
-                    }
-                  PUPPET
-                'bar.pp' => <<-PUPPET.unindent,
-                    class mod::bar {}
-                  PUPPET
-                'baz.pp' => <<-PUPPET.unindent
-                     class mod::baz {}
-                  PUPPET
+      }
+    }
+  end
+
+  let(:hieradata_files) do
+    {
+      'first.yaml' => <<-YAML.unindent,
+        ---
+        a: first a
+        class_name: "-- %{calling_class} --"
+        class_path: "-- %{calling_class_path} --"
+        module: "-- %{calling_module} --"
+        mod_name: "-- %{module_name} --"
+        database_user:
+          name: postgres
+          uid: 500
+          gid: 500
+          groups:
+            db: 520
+        b:
+          b1: first b1
+          b2: first b2
+        fbb:
+          - mod::foo
+          - mod::bar
+          - mod::baz
+        empty_array: []
+        nested_array:
+          first:
+            - 10
+            - 11
+          second:
+            - 21
+            - 22
+        dotted.key:
+          a: dotted.key a
+          b: dotted.key b
+        dotted.array:
+          - a
+          - b
+        YAML
+      'second.yaml' => <<-YAML.unindent,
+        ---
+        a: second a
+        b:
+          b1: second b1
+          b3: second b3
+        YAML
+      'the_override.yaml' => <<-YAML.unindent
+        ---
+        key: foo_result
+        YAML
+    }
+  end
+
+  let(:environment_files) do
+    {
+      'test' => {
+        'modules' => {
+          'mod' => {
+            'manifests' => {
+              'foo.pp' => <<-PUPPET.unindent,
+                class mod::foo {
+                  notice(hiera('class_name'))
+                  notice(hiera('class_path'))
+                  notice(hiera('module'))
+                  notice(hiera('mod_name'))
+                }
+                PUPPET
+              'bar.pp' => <<-PUPPET.unindent,
+                class mod::bar {}
+                PUPPET
+              'baz.pp' => <<-PUPPET.unindent
+                class mod::baz {}
+                PUPPET
               },
-              'hiera.yaml' => <<-YAML.unindent,
-                ---
-                version: 5
+            'hiera.yaml' => <<-YAML.unindent,
+              ---
+              version: 5
+              YAML
+            'data' => {
+              'common.yaml' => <<-YAML.unindent
+                mod::c: mod::c (from module)
                 YAML
-              'data' => {
-                 'common.yaml' => <<-YAML.unindent
-                    mod::c: mod::c (from module)
-                  YAML
-              }
             }
           }
         }
-      }
+      }.merge(env_config)
+    }
+  end
+
+  let(:global_files) do
+    {
+      'hiera.yaml' => hiera_yaml,
+      'ruby_stuff' => ruby_stuff_files,
+      'hieradata' => hieradata_files,
+      'environments' => environment_files
     }
   end
 
@@ -129,7 +166,7 @@ describe 'when calling' do
   around(:each) do |example|
     # Faking the load path to enable 'require' to load from 'ruby_stuff'. It removes the need for a static fixture
     # for the custom backend
-    dir_contained_in(global_dir, DeepMerge.deep_merge!(global_files, { 'environments' => { 'test' => env_config } } ))
+    dir_contained_in(global_dir, global_files)
     $LOAD_PATH.unshift(File.join(global_dir, 'ruby_stuff'))
     begin
       Puppet.override(:environments => environments, :current_environment => env) do
@@ -169,6 +206,14 @@ describe 'when calling' do
 
     it 'should use the "first" merge strategy' do
       expect(func('a')).to eql('first a')
+    end
+
+    it 'should allow lookup with quoted dotted key' do
+      expect(func("'dotted.key'")).to eql({'a' => 'dotted.key a', 'b' => 'dotted.key b'})
+    end
+
+    it 'should allow lookup with dotted key' do
+      expect(func('database_user.groups.db')).to eql(520)
     end
 
     it 'should not find data in module' do
@@ -270,6 +315,14 @@ describe 'when calling' do
       expect(func('fbb', {'fbb' => 'foo_result'})).to eql(%w[mod::foo mod::bar mod::baz])
     end
 
+    it 'should allow lookup with quoted dotted key' do
+      expect(func("'dotted.array'")).to eql(['a', 'b'])
+    end
+
+    it 'should fail lookup with dotted key' do
+      expect{ func('nested_array.0.first') }.to raise_error(/Resolution type :array is illegal when accessing values using dotted keys. Offending key was 'nested_array.0.first'/)
+    end
+
     it 'should use default block' do
       expect(func('foo') { |k| ['key', k] }).to eql(%w[key foo])
     end
@@ -291,7 +344,15 @@ describe 'when calling' do
     end
 
     it 'should lookup and return a hash' do
-      expect(func('database_user')).to eql({ 'name' => 'postgres', 'uid' => 500, 'gid' => 500})
+      expect(func('database_user')).to eql({ 'name' => 'postgres', 'uid' => 500, 'gid' => 500, 'groups' => { 'db' => 520 }})
+    end
+
+    it 'should allow lookup with quoted dotted key' do
+      expect(func("'dotted.key'")).to eql({'a' => 'dotted.key a', 'b' => 'dotted.key b'})
+    end
+
+    it 'should fail lookup with dotted key' do
+      expect{ func('database_user.groups') }.to raise_error(/Resolution type :hash is illegal when accessing values using dotted keys. Offending key was 'database_user.groups'/)
     end
 
     it 'should log deprecation errors' do
@@ -330,6 +391,135 @@ describe 'when calling' do
 
     it 'should use default block array to include classes' do
       expect(func('foo') { |k| ['mod::bar', "mod::#{k}"] }.map { |c| c.class_name }).to eql(%w[mod::bar mod::foo])
+    end
+  end
+
+  context 'with custom backend and merge_behavior declared in hiera.yaml' do
+    let(:merge_behavior) { 'deeper' }
+
+    let(:hiera_yaml) do
+      <<-YAML.unindent
+        ---
+        :backends:
+          - yaml
+          - custom
+        :yaml:
+          :datadir: #{global_dir}/hieradata
+        :hierarchy:
+          - common
+          - other
+        :merge_behavior: #{merge_behavior}
+        :deep_merge_options:
+          :unpack_arrays: ','
+        YAML
+    end
+
+    let(:global_files) do
+      {
+        'hiera.yaml' => hiera_yaml,
+        'hieradata' => {
+          'common.yaml' => <<-YAML.unindent,
+            da:
+              - da 0
+              - da 1
+            dm:
+              dm1:
+                dm11: value of dm11 (from common)
+                dm12: value of dm12 (from common)
+              dm2:
+                dm21: value of dm21 (from common)
+            hash:
+              array:
+                - x1,x2
+            array:
+              - x1,x2
+            YAML
+          'other.yaml' => <<-YAML.unindent,
+            da:
+              - da 2,da 3
+            dm:
+              dm1:
+                dm11: value of dm11 (from other)
+                dm13: value of dm13 (from other)
+              dm3:
+                dm31: value of dm31 (from other)
+            hash:
+              array:
+                - x3
+                - x4
+            array:
+              - x3
+              - x4
+            YAML
+        },
+        'ruby_stuff' => ruby_stuff_files
+      }
+    end
+
+    context 'hiera_hash' do
+      let(:the_func) { Puppet.lookup(:loaders).puppet_system_loader.load(:function, 'hiera_hash') }
+
+      context "using 'deeper'" do
+        it 'declared merge_behavior is honored' do
+          expect(func('dm')).to eql({
+            'dm1' => {
+              'dm11' => 'value of dm11 (from common)',
+              'dm12' => 'value of dm12 (from common)',
+              'dm13' => 'value of dm13 (from other)'
+            },
+            'dm2' => {
+              'dm21' => 'value of dm21 (from common)'
+            },
+            'dm3' => {
+              'dm31' => 'value of dm31 (from other)'
+            }
+          })
+        end
+
+        it "merge behavior is propagated to a custom backend as 'hash'" do
+          expect(func('resolution_type')).to eql({ 'resolution_type' => 'hash' })
+        end
+
+        it 'fails on attempts to merge an array' do
+          expect {func('da')}.to raise_error(/expects a Hash value/)
+        end
+
+        it 'honors option :unpack_arrays: (unsupported by puppet)' do
+          expect(func('hash')).to eql({'array' => %w(x3 x4 x1 x2)})
+        end
+      end
+
+      context "using 'deep'" do
+        let(:merge_behavior) { 'deep' }
+
+        it 'honors option :unpack_arrays: (unsupported by puppet)' do
+          expect(func('hash')).to eql({'array' => %w(x1 x2 x3 x4)})
+        end
+      end
+    end
+
+    context 'hiera_array' do
+      let(:the_func) { Puppet.lookup(:loaders).puppet_system_loader.load(:function, 'hiera_array') }
+
+      it 'declared merge_behavior is ignored' do
+        expect(func('da')).to eql(['da 0', 'da 1', 'da 2,da 3'])
+      end
+
+      it "merge behavior is propagated to a custom backend as 'array'" do
+        expect(func('resolution_type')).to eql(['resolution_type', 'array'])
+      end
+    end
+
+    context 'hiera' do
+      let(:the_func) { Puppet.lookup(:loaders).puppet_system_loader.load(:function, 'hiera') }
+
+      it 'declared merge_behavior is ignored' do
+        expect(func('da')).to eql(['da 0', 'da 1'])
+      end
+
+      it "no merge behavior is propagated to a custom backend" do
+        expect(func('resolution_type')).to eql('resolution_type=')
+      end
     end
   end
 end

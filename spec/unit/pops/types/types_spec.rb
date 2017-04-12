@@ -330,13 +330,12 @@ describe 'Puppet Type System' do
       end
 
       it 'can be normalized in groups, the result is a Variant containing the resulting normalizations' do
-        expect(groups.normalize).to eq(tf.variant(
-          tf.range(8, 28),
-          tf.float_range(10.0, 28.0),
-          tf.enum('a', 'b', 'c'),
-          tf.pattern('a', 'b', 'c'),
-          tf.optional(tf.range(1,20)))
-        )
+        expect(groups.normalize).to eq(tf.optional(
+          tf.variant(
+            tf.range(1, 28),
+            tf.float_range(10.0, 28.0),
+            tf.enum('a', 'b', 'c'),
+            tf.pattern('a', 'b', 'c'))))
       end
     end
 
@@ -559,6 +558,12 @@ describe 'Puppet Type System' do
       expect(func_class).to be_a(Class)
       expect(func_class.superclass).to be(Puppet::Functions::Function)
     end
+
+    it 'Regexp' do
+      func_class = tf.regexp.new_function(loader)
+      expect(func_class).to be_a(Class)
+      expect(func_class.superclass).to be(Puppet::Functions::Function)
+    end
   end
 
   context 'instantiation via new_function is not supported by' do
@@ -572,6 +577,34 @@ describe 'Puppet Type System' do
     end
   end
 
+  context 'instantiation via ruby create function' do
+    around(:each) do |example|
+      Puppet.override(:loaders => Loaders.new(Puppet::Node::Environment.create(:testing, []))) do
+        example.run
+      end
+    end
+
+    it 'is supported by Integer' do
+      int = tf.integer.create('32')
+      expect(int).to eq(32)
+    end
+
+    it 'is supported by Regexp' do
+      rx = tf.regexp.create('[a-z]+')
+      expect(rx).to eq(/[a-z]+/)
+    end
+
+    it 'is supported by Optional[Integer]' do
+      int = tf.optional(tf.integer).create('32')
+      expect(int).to eq(32)
+    end
+
+    it 'is not supported by Any, Scalar, Collection' do
+      [tf.any, tf.scalar, tf.collection ].each do |t|
+        expect { t.create }.to raise_error(ArgumentError, /Creation of new instance of type '#{t.to_s}' is not supported/)
+      end
+    end
+  end
 end
 end
 end

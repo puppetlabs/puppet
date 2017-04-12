@@ -10,6 +10,10 @@ class DataHashFunctionProvider < FunctionProvider
 
   TAG = 'data_hash'.freeze
 
+  def self.trusted_return_type
+    @trusted_return_type ||= Types::PHashType.new(DataProvider.key_type, DataProvider.value_type)
+  end
+
   # Performs a lookup with the assumption that a recursive check has been made.
   #
   # @param key [LookupKey] The key to lookup
@@ -34,7 +38,7 @@ class DataHashFunctionProvider < FunctionProvider
     else
       lookup_invocation.with(:location, location) do
         if location.exist?
-          lookup_key(lookup_invocation, location.location, root_key)
+          lookup_key(lookup_invocation, location, root_key)
         else
           lookup_invocation.report_location_not_found
           throw :no_such_key
@@ -54,12 +58,19 @@ class DataHashFunctionProvider < FunctionProvider
       lookup_invocation.report_not_found(root_key)
       throw :no_such_key
     end
+    value = validate_data_value(value) do
+      msg = "Value for key '#{root_key}', in hash returned from #{full_name}"
+      location.nil? ? msg : "#{msg}, when using location '#{location}',"
+    end
     interpolate(value, lookup_invocation, true)
   end
 
   def data_hash(lookup_invocation, location)
     ctx = function_context(lookup_invocation, location)
-    ctx.data_hash ||= parent_data_provider.validate_data_hash(self, call_data_hash_function(ctx, lookup_invocation, location))
+    ctx.data_hash ||= parent_data_provider.validate_data_hash(call_data_hash_function(ctx, lookup_invocation, location)) do
+      msg = "Value returned from #{full_name}"
+      location.nil? ? msg : "#{msg}, when using location '#{location}',"
+    end
   end
 
   def call_data_hash_function(ctx, lookup_invocation, location)
@@ -100,7 +111,11 @@ class V4DataHashFunctionProvider < DataHashFunctionProvider
   TAG = 'v4_data_hash'.freeze
 
   def name
-    "deprecated API function \"#{function_name}\""
+    "Deprecated API function \"#{function_name}\""
+  end
+
+  def full_name
+    "deprecated API function '#{function_name}'"
   end
 
   def call_data_hash_function(ctx, lookup_invocation, location)

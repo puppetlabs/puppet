@@ -1,6 +1,5 @@
 require_relative 'hiera_config'
 require_relative 'data_provider'
-require 'puppet/data_providers/hiera_config'
 
 module Puppet::Pops
 module Lookup
@@ -14,7 +13,13 @@ class ConfiguredDataProvider
   end
 
   def config(lookup_invocation)
-    @config ||= assert_config_version(HieraConfig.create(configuration_path(lookup_invocation)))
+    @config ||= assert_config_version(HieraConfig.create(lookup_invocation, configuration_path(lookup_invocation), self))
+  end
+
+  # Needed to assign generated version 4 config
+  # @deprecated
+  def config=(config)
+    @config = config
   end
 
   # @return [Pathname] the path to the configuration
@@ -47,7 +52,7 @@ class ConfiguredDataProvider
         lookup_invocation.report_not_found(key)
         throw :no_such_key
       end
-      merge_strategy.lookup(data_providers(lookup_invocation), lookup_invocation) do |data_provider|
+      merge_strategy.lookup(dps, lookup_invocation) do |data_provider|
         data_provider.unchecked_key_lookup(key, lookup_invocation, merge_strategy)
       end
     end

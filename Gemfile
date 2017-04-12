@@ -13,7 +13,6 @@ end
 # C Ruby (MRI) or Rubinius, but NOT Windows
 platforms :ruby do
   gem 'pry', :group => :development
-  gem 'yard', :group => :development
   gem 'redcarpet', '~> 2.0', :group => :development
   gem "racc", "1.4.9", :group => :development
 
@@ -26,16 +25,19 @@ end
 gem "puppet", :path => File.dirname(__FILE__), :require => false
 gem "facter", *location_for(ENV['FACTER_LOCATION'] || ['> 2.0', '< 4'])
 gem "hiera", *location_for(ENV['HIERA_LOCATION'] || ['>= 2.0', '< 4'])
-gem "semantic_puppet", *location_for(ENV['SEMANTIC_PUPPET_LOCATION'] || ['>= 0.1.3', '< 2'])
-gem "rake", "10.1.1", :require => false
+# PUP-7115 - return to a gem dependency in Puppet 5
+# gem "semantic_puppet", *location_for(ENV['SEMANTIC_PUPPET_LOCATION'] || ['>= 0.1.3', '< 2'])
 # Hiera has an unbound dependency on json_pure
 # json_pure 2.0.2+ officially requires Ruby >= 2.0, but should have specified that in 2.0
 gem 'json_pure', '~> 1.8', :require => false
 # i18n support (gettext-setup and dependencies)
 gem 'gettext-setup', '>= 0.10', '< 1.0', :require => false
 gem 'locale', '~> 2.1', :require => false
+# net-ssh is a runtime dependency of Puppet::Util::NetworkDevice::Transport::Ssh
+gem "net-ssh", '~> 2.1', :require => false
 
 group(:development, :test) do
+  gem "rake", "10.1.1", :require => false
   gem "rspec", "~> 3.1", :require => false
   gem "rspec-its", "~> 1.1", :require => false
   gem "rspec-collection_matchers", "~> 1.1", :require => false
@@ -54,14 +56,19 @@ group(:development, :test) do
   gem "json-schema", "2.1.1", :require => false, :platforms => [:ruby, :jruby]
 
   gem "rubocop", "~> 0.39.0", :platforms => [:ruby]
+  # pin rainbow gem as 2.2.1 requires rubygems 2.6.9+ and (donotwant)
+  gem "rainbow", "< 2.2.1", :platforms => [:ruby]
 
   gem 'rdoc', "~> 4.1", :platforms => [:ruby]
+  gem 'yard'
 
   # webmock requires addressable as as of 2.5.0 addressable started
   # requiring the public_suffix gem which requires Ruby 2
   gem 'addressable', '< 2.5.0'
   gem 'webmock', '~> 1.24'
   gem 'vcr', '~> 2.9'
+  gem "hocon", :require => false
+  gem "hiera-eyaml", :require => false
 end
 
 group(:development) do
@@ -72,9 +79,7 @@ end
 
 group(:extra) do
   gem "rack", "~> 1.4", :require => false
-  gem "net-ssh", '~> 2.1', :require => false
   gem "puppetlabs_spec_helper", :require => false
-  gem "tzinfo", :require => false
   gem "msgpack", :require => false
 end
 

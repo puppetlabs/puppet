@@ -444,6 +444,7 @@ module Lookup
     def dump_on(io, indent, first_indent)
       io << indent << @name << "\n"
       indent = increase_indent(indent)
+      branches.each {|b| b.dump_on(io, indent, indent)}
       dump_outcome(io, indent)
     end
 
@@ -578,10 +579,14 @@ module Lookup
       end
     end
 
+    def dump_on(io, indent, first_indent)
+      @current.equal?(self) ? super : @current.dump_on(io, indent, first_indent)
+    end
+
     def emit_debug_info(preamble)
       io = ''
       io << preamble << "\n"
-      @current.dump_on(io, '  ', '  ')
+      dump_on(io, '  ', '  ')
       Puppet.debug(io.chomp!)
     end
   end

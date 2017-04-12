@@ -67,7 +67,8 @@ describe Puppet::Resource::Catalog, "when compiling" do
     Puppet[:classfile] = File.expand_path("/class/file")
 
     fh = mock 'filehandle'
-    File.expects(:open).with(Puppet[:classfile], "w").yields fh
+    classfile = Puppet.settings.setting(:classfile)
+    Puppet::FileSystem.expects(:open).with(classfile.value, classfile.mode.to_i(8), "w:UTF-8").yields fh
 
     fh.expects(:puts).with "foo\nbar"
 
@@ -719,7 +720,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should only write when it is a host catalog" do
-      File.expects(:open).with(@file).never
+      Puppet::FileSystem.expects(:open).with(@file, 0640, "w:UTF-8").never
       @catalog.host_config = false
       Puppet[:graph] = true
       @catalog.write_graph(@name)
@@ -850,10 +851,15 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to pson"
         Puppet[:rich_data] = true
       end
 
+      after(:each) do
+        Puppet[:rich_data] = false
+      end
+
+
       let(:catalog_w_regexp)  { compile_to_catalog("notify {'foo': message => /[a-z]+/ }") }
 
       it 'should generate ext_parameters for parameter values that are not Data' do
-        expect(catalog_w_regexp.to_json).to include('"ext_parameters":{"message":[48,"[a-z]+"]}')
+        expect(catalog_w_regexp.to_json).to include('"ext_parameters":{"message":[[48,"[a-z]+"]]}')
       end
 
       it 'should validate ext_parameters against the schema' do
@@ -1001,6 +1007,9 @@ describe Puppet::Resource::Catalog, "when converting to pson" do
   it "should convert its resources to a PSON-encoded array and store it as the 'resources' data" do
     one = stub 'one', :to_data_hash => "one_resource", :ref => "Foo[one]"
     two = stub 'two', :to_data_hash => "two_resource", :ref => "Foo[two]"
+
+    one.expects(:'[]').with(:alias).returns nil
+    two.expects(:'[]').with(:alias).returns nil
 
     @catalog.add_resource(one)
     @catalog.add_resource(two)

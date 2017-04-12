@@ -1,8 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet'
-require 'puppet/data_providers/hiera_config'
-require 'puppet/data_providers/hiera_interpolate'
 
 module Puppet::Pops
 describe 'Puppet::Pops::Lookup::Interpolation' do
@@ -18,7 +16,7 @@ describe 'Puppet::Pops::Lookup::Interpolation' do
       root_key = segments.shift
       found = data[root_key]
       found = sub_lookup(key, lookup_invocation, segments, found) unless segments.empty?
-      Lookup.expects(:lookup).with(key, nil, '', true, nil, lookup_invocation).returns(found)
+      Lookup.expects(:lookup).with(key, nil, '', true, nil, is_a(Lookup::Invocation)).returns(found)
     end
   end
 

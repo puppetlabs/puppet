@@ -28,7 +28,7 @@ module Serialization
     # @api public
     def write(value)
       case value
-      when Integer, Float, String, true, false, nil, Time
+      when Integer, Float, String, true, false, nil
         @writer.write(value)
       when :default
         @writer.write(Extension::Default::INSTANCE)
@@ -37,7 +37,7 @@ module Serialization
         if index.nil?
           write_tabulated_first_time(value)
         else
-          @writer.write(Extension::Tabulation.new(index)) unless index.nil?
+          @writer.write(Extension::Tabulation.new(index))
         end
       end
     end
@@ -56,12 +56,29 @@ module Serialization
       @writer.write(Extension::MapStart.new(size))
     end
 
-    # Write the start of a complex object
+    # Write the start of a complex pcore object
     # @param [String] type_ref the name of the type
     # @param [Integer] attr_count the number of attributes in the object
     # @api private
-    def start_object(type_ref, attr_count)
-      @writer.write(Extension::ObjectStart.new(type_ref, attr_count))
+    def start_pcore_object(type_ref, attr_count)
+      @writer.write(Extension::PcoreObjectStart.new(type_ref, attr_count))
+    end
+
+    # Write the start of a complex object
+    # @param [Integer] attr_count the number of attributes in the object
+    # @api private
+    def start_object(attr_count)
+      @writer.write(Extension::ObjectStart.new(attr_count))
+    end
+
+    def push_written(value)
+      @written[value.object_id] = @written.size
+    end
+
+    # Write the start of a sensitive object
+    # @api private
+    def start_sensitive
+      @writer.write(Extension::SensitiveStart::INSTANCE)
     end
 
     # First time write of a tabulated object. This means that the object is written and then remembered. Subsequent writes
@@ -69,20 +86,26 @@ module Serialization
     # @param [Object] value the value to write
     # @api private
     def write_tabulated_first_time(value)
-      @written[value.object_id] = @written.size
       case value
-      when Symbol, Regexp, SemanticPuppet::Version, SemanticPuppet::VersionRange, Time::Timestamp, Time::Timespan, Types::PSensitiveType::Sensitive, Types::PBinaryType::Binary
+      when Symbol, Regexp, SemanticPuppet::Version, SemanticPuppet::VersionRange, Time::Timestamp, Time::Timespan, Types::PBinaryType::Binary
+        push_written(value)
         @writer.write(value)
       when Array
+        push_written(value)
         start_array(value.size)
         value.each { |elem| write(elem) }
       when Hash
+        push_written(value)
         start_map(value.size)
         value.each_pair { |key, val| write(key); write(val) }
+      when Types::PSensitiveType::Sensitive
+        start_sensitive
+        write(value.unwrap)
       when Types::PTypeReferenceType
+        push_written(value)
         @writer.write(value)
       when Types::PuppetObject
-        value._ptype.write(value, self)
+        value._pcore_type.write(value, self)
       else
         impl_class = value.class
         type = Loaders.implementation_registry.type_for_module(impl_class)

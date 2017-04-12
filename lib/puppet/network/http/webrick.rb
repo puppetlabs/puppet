@@ -73,7 +73,8 @@ class Puppet::Network::HTTP::WEBrick
     file = Puppet[:masterhttplog]
 
     # open the log manually to prevent file descriptor leak
-    file_io = ::File.open(file, "a+")
+    # webrick logged strings may contain UTF-8
+    file_io = ::File.open(file, "a+:UTF-8")
     file_io.sync = true
     if defined?(Fcntl::FD_CLOEXEC)
       file_io.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)

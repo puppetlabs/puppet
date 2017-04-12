@@ -1,4 +1,7 @@
 <%# encoding: UTF-8%>
+<% if face.deprecated? -%>
+<%= "Warning: 'puppet #{face.name}' is deprecated and will be removed in a future release." %>
+<% end %>
 <% if face.synopsis -%>
 USAGE: <%= face.synopsis %>
 

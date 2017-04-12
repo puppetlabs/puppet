@@ -112,6 +112,8 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
 
   def create_model(name, path)
     result = model.new(name)
+    # calls Puppet::SSL::Base#read for subclasses of Puppet::SSL::Base
+    # with the exception of any overrides, like Puppet::SSL::Key
     result.read(path)
     result
   end
@@ -158,13 +160,32 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
   # Yield a filehandle set up appropriately, either with our settings doing
   # the work or opening a filehandle manually.
   def write(name, path)
+    # All types serialized to disk contain only ASCII content:
+    # * SSL::Key may be a .export(OpenSSL::Cipher::DES.new(:EDE3, :CBC), pass) or .to_pem
+    # * All other classes are translated to strings by calling .to_pem
+
+    # Serialization of:
+    # Puppet::SSL::Certificate by Puppet::SSL::Certificate::Ca, Puppet::SSL::Certificate::File
+    # -----BEGIN CERTIFICATE-----
+    # Puppet::SSL::Key by Puppet::SSL::Key::Ca, Puppet::SSL::Key::File
+    # -----BEGIN RSA PRIVATE KEY-----
     if ca?(name) and ca_location
-      Puppet.settings.setting(self.class.ca_setting).open('w') { |f| yield f }
+      Puppet.settings.setting(self.class.ca_setting).open('w:ASCII') { |f| yield f }
+    # Serialization of:
+    # Puppet::SSL::CertificateRevocationList by Puppet::SSL::CertificateRevocationList::Ca, Puppet::SSL::CertificateRevocationList::File
+    # -----BEGIN X509 CRL-----
     elsif file_location
-      Puppet.settings.setting(self.class.file_setting).open('w') { |f| yield f }
+      Puppet.settings.setting(self.class.file_setting).open('w:ASCII') { |f| yield f }
+    # Serialization of:
+    # Puppet::SSL::Certificate by Puppet::SSL::Certificate::Ca, Puppet::SSL::Certificate::File
+    # -----BEGIN CERTIFICATE-----
+    # Puppet::SSL::CertificateRequest by Puppet::SSL::CertificateRequest::Ca, Puppet::SSL::CertificateRequest::File
+    # -----BEGIN CERTIFICATE REQUEST-----
+    # Puppet::SSL::Key by Puppet::SSL::Key::Ca, Puppet::SSL::Key::File
+    # -----BEGIN RSA PRIVATE KEY-----
     elsif setting = self.class.directory_setting
       begin
-        Puppet.settings.setting(setting).open_file(path, 'w') { |f| yield f }
+        Puppet.settings.setting(setting).open_file(path, 'w:ASCII') { |f| yield f }
       rescue => detail
         raise Puppet::Error, "Could not write #{path} to #{setting}: #{detail}", detail.backtrace
       end

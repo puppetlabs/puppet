@@ -6,6 +6,11 @@ require 'puppet/forge/cache'
 require 'puppet/forge/errors'
 
 describe Puppet::Forge::Repository do
+  before(:all) do
+    # any local http proxy will break these tests
+    ENV['http_proxy'] = nil
+    ENV['HTTP_PROXY'] = nil
+  end
   let(:agent) { "Test/1.0" }
   let(:repository) { Puppet::Forge::Repository.new('http://fake.com', agent) }
   let(:ssl_repository) { Puppet::Forge::Repository.new('https://fake.com', agent) }
@@ -41,6 +46,28 @@ describe Puppet::Forge::Repository do
       end
 
       expect(repository.make_http_request("the_path")).to eq(result)
+    end
+
+    it "merges forge URI and path specified" do
+      result = "#{Object.new}"
+
+      performs_an_http_request result do |http|
+        http.expects(:request).with(responds_with(:path, "/test/the_path/"))
+      end
+
+      repository = Puppet::Forge::Repository.new('http://fake.com/test', agent)
+      expect(repository.make_http_request("/the_path/")).to eq(result)
+    end
+
+    it "handles trailing slashes when merging URI and path" do
+      result = "#{Object.new}"
+
+      performs_an_http_request result do |http|
+        http.expects(:request).with(responds_with(:path, "/test/the_path"))
+      end
+
+      repository = Puppet::Forge::Repository.new('http://fake.com/test/', agent)
+      expect(repository.make_http_request("/the_path")).to eq(result)
     end
 
     it 'returns the result object from a request with ssl' do

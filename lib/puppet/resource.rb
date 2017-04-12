@@ -1,7 +1,6 @@
 require 'puppet'
 require 'puppet/util/tagging'
 require 'puppet/parameter'
-require 'puppet/data_providers'
 
 # The simplest resource class.  Eventually it will function as the
 # base class for all resource-like behaviour.
@@ -42,10 +41,10 @@ class Puppet::Resource
     end
 
     if ext_params = data['ext_parameters']
-      raise Puppet::Error, 'Unable to deserialize non-Data type parameters unless a deserializer is provided' unless json_deserializer
+      raise Puppet::Error, _('Unable to deserialize non-Data type parameters unless a deserializer is provided') unless json_deserializer
       reader = json_deserializer.reader
       ext_params.each do |param, value|
-        reader.re_initialize([value])
+        reader.re_initialize(value)
         resource[param] = json_deserializer.read
       end
     end
@@ -89,7 +88,7 @@ class Puppet::Resource
         if is_json_type?(value)
           params[param] = value
         elsif json_serializer.nil?
-          Puppet.warning("Resource '#{to_s}' contains a #{value.class.name} value. It will be converted to the String '#{value}'")
+          Puppet.warning(_("Resource '%{resource}' contains a %{klass} value. It will be converted to the String '%{value}'") % { resource: to_s, klass: value.class.name, value: value })
           params[param] = value
         else
           ext_params[param] = value
@@ -104,7 +103,7 @@ class Puppet::Resource
         writer.clear_io
         json_serializer.write(ext_params[key])
         writer.finish
-        ext_params[key] = writer.to_a[0]
+        ext_params[key] = writer.to_a
       end
       data['ext_parameters'] = ext_params
     end
@@ -415,7 +414,9 @@ class Puppet::Resource
     @environment = environment
   end
 
-  # Produce a simple hash of our parameters.
+  # Produces a hash of attribute to value mappings where the title parsed into its components
+  # acts as the default values overridden by any parameter values explicitly given as parameters.
+  #
   def to_hash
     parse_title.merge parameters
   end
@@ -507,12 +508,12 @@ class Puppet::Resource
   # @deprecated Not used by Puppet
   # @api private
   def set_default_parameters(scope)
-    Puppet.deprecation_warning('The method Puppet::Resource.set_default_parameters is deprecated and will be removed in the next major release of Puppet.')
+    Puppet.deprecation_warning(_('The method Puppet::Resource.set_default_parameters is deprecated and will be removed in the next major release of Puppet.'))
 
     return [] unless resource_type and resource_type.respond_to?(:arguments)
 
     unless is_a?(Puppet::Parser::Resource)
-      fail Puppet::DevError, "Cannot evaluate default parameters for #{self} - not a parser resource"
+      fail Puppet::DevError, _("Cannot evaluate default parameters for %{resource} - not a parser resource") % { resource: self }
     end
 
     missing_arguments.collect do |param, default|
@@ -552,13 +553,13 @@ class Puppet::Resource
   # @deprecated Not used by Puppet
   # @api private
   def validate_complete
-    Puppet.deprecation_warning('The method Puppet::Resource.validate_complete is deprecated and will be removed in the next major release of Puppet.')
+    Puppet.deprecation_warning(_('The method Puppet::Resource.validate_complete is deprecated and will be removed in the next major release of Puppet.'))
 
     return unless resource_type and resource_type.respond_to?(:arguments)
 
     resource_type.arguments.each do |param, default|
       param = param.to_sym
-      fail Puppet::ParseError, "Must pass #{param} to #{self}" unless parameters.include?(param)
+      fail Puppet::ParseError, _("Must pass %{param} to %{resource}") % { param: param, resource: self } unless parameters.include?(param)
     end
 
     # Perform optional type checking
@@ -569,13 +570,13 @@ class Puppet::Resource
       unless Puppet::Pops::Types::TypeCalculator.instance?(t, value.value)
         inferred_type = Puppet::Pops::Types::TypeCalculator.infer_set(value.value)
         actual = inferred_type.generalize()
-        fail Puppet::ParseError, "Expected parameter '#{name}' of '#{self}' to have type #{t.to_s}, got #{actual.to_s}"
+        fail Puppet::ParseError, _("Expected parameter '%{name}' of '%{value0}' to have type %{value1}, got %{value2}") % { name: name, value0: self, value1: t.to_s, value2: actual.to_s }
       end
     end
   end
 
   def validate_parameter(name)
-    raise Puppet::ParseError.new("no parameter named '#{name}'", file, line) unless valid_parameter?(name)
+    raise Puppet::ParseError.new(_("no parameter named '%{name}'") % { name: name }, file, line) unless valid_parameter?(name)
   end
 
   def prune_parameters(options = {})
@@ -651,6 +652,11 @@ class Puppet::Resource
     end
   end
 
+  # Produces a hash with { :key => part_of_title } for each entry in title_patterns
+  # for the resource type. A typical result for a title of 'example' is {:name => 'example'}.
+  # A resource type with a complex title to attribute mapping returns one entry in the hash
+  # per part.
+  #
   def parse_title
     h = {}
     type = resource_type
@@ -679,7 +685,7 @@ class Puppet::Resource
       # If we've gotten this far, then none of the provided title patterns
       # matched. Since there's no way to determine the title then the
       # resource should fail here.
-      raise Puppet::Error, "No set of title patterns matched the title \"#{title}\"."
+      raise Puppet::Error, _("No set of title patterns matched the title \"%{title}\".") % { title: title }
     else
       return { :name => title.to_s }
     end

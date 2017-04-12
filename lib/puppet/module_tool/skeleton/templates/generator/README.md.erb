@@ -61,10 +61,16 @@ examples and code samples for doing things with your module.
 
 ## Reference
 
-Here, include a complete list of your module's classes, types, providers,
-facts, along with the parameters for each. Users refer to this section (thus
-the name "Reference") to find specific details; most users don't read it per
-se.
+Users need a complete list of your module's classes, types, defined types providers, facts, and functions, along with the parameters for each. You can provide this list either via Puppet Strings code comments or as a complete list in this Reference section.
+
+* If you are using Puppet Strings code comments, this Reference section should include Strings information so that your users know how to access your documentation.
+
+* If you are not using Puppet Strings, include a list of all of your classes, defined types, and so on, along with their parameters. Each element in this listing should include:
+
+  * The data type, if applicable.
+  * A description of what the element does.
+  * Valid values, if the data type doesn't make it obvious.
+  * Default value, if any.
 
 ## Limitations
 

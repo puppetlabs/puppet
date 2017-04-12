@@ -1,8 +1,10 @@
 require 'puppet/version'
 
-if RUBY_VERSION < "1.9.3"
-  raise LoadError, "Puppet #{Puppet.version} requires ruby 1.9.3 or greater."
+if Gem::Version.new(RUBY_VERSION) < Gem::Version.new("1.9.3")
+  raise LoadError, _("Puppet %{version} requires ruby 1.9.3 or greater.") % { version: Puppet.version }
 end
+
+Puppet::OLDEST_RECOMMENDED_RUBY_VERSION = '2.1.0'
 
 # see the bottom of the file for further inclusions
 # Also see the new Vendor support - towards the end
@@ -18,8 +20,20 @@ require 'puppet/util/run_mode'
 require 'puppet/external/pson/common'
 require 'puppet/external/pson/version'
 require 'puppet/external/pson/pure'
-require 'gettext-setup'
-require 'locale'
+
+# When running within puppetserver, the gettext-setup gem might not be available, so
+# we need to skip initializing i18n functionality and stub out methods normally
+# supplied by gettext-setup. Can be removed in Puppet 5. See PUP-7116.
+begin
+  require 'gettext-setup'
+  require 'locale'
+  Puppet::GETTEXT_AVAILABLE = true
+rescue LoadError
+  def _(msg)
+    msg
+  end
+  Puppet::GETTEXT_AVAILABLE = false
+end
 
 #------------------------------------------------------------
 # the top-level module
@@ -34,32 +48,39 @@ require 'locale'
 # @api public
 module Puppet
   require 'puppet/file_system'
+  require 'puppet/etc'
   require 'puppet/context'
   require 'puppet/environments'
 
   class << self
-    # e.g. ~/code/puppet/locales
-    local_locale_path = File.absolute_path('../locales', File.dirname(__FILE__))
-    # e.g. /opt/puppetlabs/puppet/share/locale
-    posix_system_locale_path = File.absolute_path('../../../share/locale', File.dirname(__FILE__))
-    # e.g. C:\Program Files\Puppet Labs\Puppet\puppet\share\locale
-    win32_system_locale_path = File.absolute_path('../../../../../puppet/share/locale', File.dirname(__FILE__))
-    # TODO: (PUP-6958) Handle the rubygems case
+    if Puppet::GETTEXT_AVAILABLE
+      # e.g. ~/code/puppet/locales. Also when running as a gem.
+      local_locale_path = File.absolute_path('../locales', File.dirname(__FILE__))
+      # e.g. /opt/puppetlabs/puppet/share/locale
+      posix_system_locale_path = File.absolute_path('../../../share/locale', File.dirname(__FILE__))
+      # e.g. C:\Program Files\Puppet Labs\Puppet\puppet\share\locale
+      win32_system_locale_path = File.absolute_path('../../../../../puppet/share/locale', File.dirname(__FILE__))
 
-    if File.exist?(local_locale_path)
-      locale_path = local_locale_path
-    elsif File.exist?(win32_system_locale_path)
-      locale_path = win32_system_locale_path
-    elsif File.exist?(posix_system_locale_path)
-      locale_path = posix_system_locale_path
-    else
-      # We couldn't load our locale data. Possibly we're loaded as a rubygem or something?
-      locale_path = nil
-    end
+      if File.exist?(local_locale_path)
+        locale_path = local_locale_path
+      elsif File.exist?(win32_system_locale_path)
+        locale_path = win32_system_locale_path
+      elsif File.exist?(posix_system_locale_path)
+        locale_path = posix_system_locale_path
+      else
+        # We couldn't load our locale data.
+        locale_path = nil
+      end
 
-    if locale_path
-      GettextSetup.initialize(locale_path, :file_format => :mo)
-      FastGettext.locale = GettextSetup.negotiate_locale(Locale.current.language)
+      if locale_path
+        if Gem.loaded_specs['gettext-setup'].version < Gem::Version.new('0.8')
+          # Will load translations from PO files only
+          GettextSetup.initialize(locale_path)
+        else
+          GettextSetup.initialize(locale_path, :file_format => :mo)
+        end
+        FastGettext.locale = GettextSetup.negotiate_locale(Locale.current.language)
+      end
     end
 
     include Puppet::Util
@@ -141,6 +162,12 @@ module Puppet
   # Load all of the settings.
   require 'puppet/defaults'
 
+  # Now that settings are loaded we have the code loaded to be able to issue
+  # deprecation warnings. Warn if we're on a deprecated ruby version.
+  if Gem::Version.new(RUBY_VERSION) < Gem::Version.new(Puppet::OLDEST_RECOMMENDED_RUBY_VERSION)
+    Puppet.deprecation_warning(_("Support for ruby version %{version} is deprecated and will be removed in a future release. See https://docs.puppet.com/puppet/latest/system_requirements.html#ruby for a list of supported ruby versions.") % { version: RUBY_VERSION })
+  end
+
   # Initialize puppet's settings. This is intended only for use by external tools that are not
   #  built off of the Faces API or the Puppet::Util::Application class. It may also be used
   #  to initialize state so that a Face may be used programatically, rather than as a stand-alone
@@ -185,7 +212,7 @@ module Puppet
   # code was deprecated in 2008, but this is still in heavy use.  I suppose
   # this can count as a soft deprecation for the next dev. --daniel 2011-04-12
   def self.newtype(name, options = {}, &block)
-    Puppet.deprecation_warning("Creating #{name} via Puppet.newtype is deprecated and will be removed in a future release. Use Puppet::Type.newtype instead.")
+    Puppet.deprecation_warning(_("Creating %{name} via Puppet.newtype is deprecated and will be removed in a future release. Use Puppet::Type.newtype instead.") % { name: name })
     Puppet::Type.newtype(name, options, &block)
   end
 
@@ -204,7 +231,7 @@ module Puppet
     basemodulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
 
     if environmentpath.nil? || environmentpath.empty?
-      raise(Puppet::Error, "The environmentpath setting cannot be empty or nil.")
+      raise(Puppet::Error, _("The environmentpath setting cannot be empty or nil."))
     else
       loaders = Puppet::Environments::Directories.from_path(environmentpath, basemodulepath)
       # in case the configured environment (used for the default sometimes)
@@ -225,6 +252,7 @@ module Puppet
         Puppet::Network::HTTP::NoCachePool.new
       },
       :ssl_host => proc { Puppet::SSL::Host.localhost },
+      :plugins => proc { Puppet::Plugins::Configuration.load_plugins }
     }
   end
 
@@ -311,4 +339,4 @@ require 'puppet/data_binding'
 require 'puppet/util/storage'
 require 'puppet/status'
 require 'puppet/file_bucket/file'
-require 'puppet/plugins'
+require 'puppet/plugins/configuration'

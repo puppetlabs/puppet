@@ -18,7 +18,7 @@ Puppet::Util::Log.newdesttype :syslog do
     begin
       facility = Syslog.const_get("LOG_#{str.upcase}")
     rescue NameError
-      raise Puppet::Error, "Invalid syslog facility #{str}", $!.backtrace
+      raise Puppet::Error, _("Invalid syslog facility %{str}") % { str: str }, $!.backtrace
     end
 
     @syslog = Syslog.open(name, options, facility)
@@ -72,7 +72,7 @@ Puppet::Util::Log.newdesttype :file do
     # specified a "special" destination.
     unless Puppet::FileSystem.exist?(Puppet::FileSystem.dir(path))
       FileUtils.mkdir_p(File.dirname(path), :mode => 0755)
-      Puppet.info "Creating log directory #{File.dirname(path)}"
+      Puppet.info _("Creating log directory %{dir}") % { dir: File.dirname(path) }
     end
 
     # create the log file, if it doesn't already exist
@@ -97,7 +97,7 @@ Puppet::Util::Log.newdesttype :file do
       begin
         FileUtils.chown(Puppet[:user], Puppet[:group], path)
       rescue ArgumentError, Errno::EPERM
-        Puppet.err "Unable to set ownership to #{Puppet[:user]}:#{Puppet[:group]} for log file: #{path}"
+        Puppet.err _("Unable to set ownership to %{user}:%{group} for log file: %{path}") % { user: Puppet[:user], group: Puppet[:group], path: path }
       end
     end
 

@@ -1,3 +1,4 @@
+require 'hiera/scope'
 require_relative 'sub_lookup'
 module Puppet::Pops
 module Lookup
@@ -20,7 +21,9 @@ module Interpolation
     when Array
       value.map { |element| interpolate(element, context, allow_methods) }
     when Hash
-      Hash[value.map { |k, v| [k, interpolate(v, context, allow_methods)] }]
+      result = {}
+      value.each_pair { |k, v| result[interpolate(k, context, allow_methods)] = interpolate(v, context, allow_methods) }
+      result
     else
       value
     end
@@ -53,7 +56,7 @@ module Interpolation
           is_alias = method_key == :alias
 
           # Alias is only permitted if the entire string is equal to the interpolate expression
-          raise Puppet::DataBinding::LookupError, "'alias' interpolation is only permitted if the expression is equal to the entire string" if is_alias && subject != match
+          fail(Issues::HIERA_INTERPOLATION_ALIAS_NOT_ENTIRE_STRING) if is_alias && subject != match
           value = interpolate_method(method_key).call(key, lookup_invocation, subject)
           value = lookup_invocation.check(method_key == :scope ? "scope:#{key}" : key) { interpolate(value, lookup_invocation, allow_methods) }
 
@@ -67,7 +70,16 @@ module Interpolation
 
   def interpolate_method(method_key)
     @@interpolate_methods ||= begin
-      global_lookup = lambda { |key, lookup_invocation, _| Lookup.lookup(key, nil, '', true, nil, lookup_invocation) }
+      global_lookup = lambda do |key, lookup_invocation, _|
+        scope = lookup_invocation.scope
+        if scope.is_a?(Hiera::Scope) && !lookup_invocation.global_only?
+          # "unwrap" the Hiera::Scope
+          scope = scope.real
+        end
+        lookup_invocation.with_scope(scope) do |sub_invocation|
+          sub_invocation.lookup(key) {  Lookup.lookup(key, nil, '', true, nil, sub_invocation) }
+        end
+      end
       scope_lookup = lambda do |key, lookup_invocation, subject|
         segments = split_key(key) { |problem| Puppet::DataBinding::LookupError.new("#{problem} in string: #{subject}") }
         root_key = segments.shift
@@ -77,24 +89,25 @@ module Interpolation
             lookup_invocation.report_found_in_overrides(root_key, ovr[root_key])
           else
             scope = lookup_invocation.scope
-            if scope.include?(root_key)
-              lookup_invocation.report_found(root_key, scope[root_key])
-            else
+            val = scope[root_key]
+            if val.nil? && !nil_in_scope?(scope, root_key)
               defaults = lookup_invocation.default_values
               if defaults.include?(root_key)
                 lookup_invocation.report_found_in_defaults(root_key, defaults[root_key])
               else
                 nil
               end
+            else
+              lookup_invocation.report_found(root_key, val)
             end
           end
         end
-        unless segments.empty?
-          found = '';
+        unless value.nil? || segments.empty?
+          found = nil;
           catch(:no_such_key) { found = sub_lookup(key, lookup_invocation, segments, value) }
           value = found;
         end
-        lookup_invocation.remember_scope_lookup(key, value)
+        lookup_invocation.remember_scope_lookup(key, root_key, segments, value)
         value
       end
 
@@ -107,19 +120,33 @@ module Interpolation
       }.freeze
     end
     interpolate_method = @@interpolate_methods[method_key]
-    raise Puppet::DataBinding::LookupError, "Unknown interpolation method '#{method_key}'" unless interpolate_method
+    fail(Issues::HIERA_INTERPOLATION_UNKNOWN_INTERPOLATION_METHOD, :name => method_key) unless interpolate_method
     interpolate_method
+  end
+
+  # Because the semanitcs of Puppet::Parser::Scope#include? differs from Hash#include?
+  def nil_in_scope?(scope, key)
+    if scope.is_a?(Hash)
+      scope.include?(key)
+    else
+      scope.exist?(key)
+    end
   end
 
   def get_method_and_data(data, allow_methods)
     if match = data.match(/^(\w+)\((?:["]([^"]+)["]|[']([^']+)['])\)$/)
-      raise Puppet::DataBinding::LookupError, 'Interpolation using method syntax is not allowed in this context' unless allow_methods
+      fail(Issues::HIERA_INTERPOLATION_METHOD_SYNTAX_NOT_ALLOWED) unless allow_methods
       key = match[1].to_sym
       data = match[2] || match[3] # double or single qouted
     else
       key = :scope
     end
     [key, data]
+  end
+
+  def fail(issue, args = EMPTY_HASH)
+    raise Puppet::DataBinding::LookupError.new(
+      issue.format(args), nil, nil, nil, nil, issue.issue_code)
   end
 end
 end

@@ -1,16 +1,16 @@
 # SOME DESCRIPTIVE TITLE.
-# Copyright (C) 2016 Puppet, Inc.
+# Copyright (C) 2017 Puppet, Inc.
 # This file is distributed under the same license as the Puppet automation framework package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2017.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 4.8.1-137-gad255be\n"
+"Project-Id-Version: Puppet automation framework 4.10.0-382-gc6424ba\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2016-12-12 16:37-0800\n"
-"PO-Revision-Date: 2016-12-12 16:37-0800\n"
+"POT-Creation-Date: 2017-04-07 17:14-0700\n"
+"PO-Revision-Date: 2017-04-07 17:14-0700\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -19,45 +19,243 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
+#: ../lib/puppet.rb:4
+msgid "Puppet %{version} requires ruby 1.9.3 or greater."
+msgstr ""
+
+#: ../lib/puppet.rb:168
+msgid "Support for ruby version %{version} is deprecated and will be removed in a future release. See https://docs.puppet.com/puppet/latest/system_requirements.html#ruby for a list of supported ruby versions."
+msgstr ""
+
+#: ../lib/puppet.rb:215
+msgid "Creating %{name} via Puppet.newtype is deprecated and will be removed in a future release. Use Puppet::Type.newtype instead."
+msgstr ""
+
+#: ../lib/puppet.rb:234
+msgid "The environmentpath setting cannot be empty or nil."
+msgstr ""
+
+#: ../lib/puppet/agent.rb:34
+msgid ""
+"Skipping run of %{client_class}; administratively disabled (Reason: '%{disable_message}');\n"
+"Use 'puppet agent --enable' to re-enable."
+msgstr ""
+
+#: ../lib/puppet/agent.rb:47
+msgid "Run of %{client_class} already in progress; skipping  (%{lockfile_path} exists)"
+msgstr ""
+
+#: ../lib/puppet/agent.rb:50
+msgid "Could not run %{client_class}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/agent.rb:56
+msgid "Shutdown/restart in progress (%{status}); skipping run"
+msgstr ""
+
+#: ../lib/puppet/agent.rb:68
+msgid "puppet agent: applying configuration"
+msgstr ""
+
+#: ../lib/puppet/agent.rb:95
+msgid "Could not create instance of %{client_class}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/agent/disabler.rb:19
+msgid "Enabling Puppet."
+msgstr ""
+
+#: ../lib/puppet/agent/disabler.rb:26
+msgid "Disabling Puppet."
+msgstr ""
+
+#: ../lib/puppet/agent/locker.rb:26
+msgid "Failed to acquire lock"
+msgstr ""
+
+#: ../lib/puppet/agent/locker.rb:32
+msgid ""
+"Puppet::Agent::Locker.running? is deprecated as it is inherently unsafe.\n"
+"The only safe way to know if the lock is locked is to try lock and perform some\n"
+"action and then handle the LockError that may result.\n"
+msgstr ""
+
+#: ../lib/puppet/application.rb:353
+msgid "`puppet %{name}` is deprecated and will be removed in a future release."
+msgstr ""
+
+#: ../lib/puppet/application/device.rb:189
+msgid "Target device / certificate '%{target}' not found in %{config}"
+msgstr ""
+
+#: ../lib/puppet/application/device.rb:191
+msgid "No device found in %{config}"
+msgstr ""
+
+#: ../lib/puppet/application/device.rb:201
+msgid "starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:22
+msgid "Puppet configuration client"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:50
+msgid "Removing corrupt state file %{file}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:55
+msgid "Cannot remove %{file}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:76
+msgid "Using cached catalog from environment '%{environment}'"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:82
+msgid "Not using cache on failed catalog"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:91
+msgid "Not using cached catalog because its environment '%{catalog_env}' does not match '%{local_env}'"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:96 ../lib/puppet/configurer.rb:157
+msgid "Using cached catalog from environment '%{catalog_env}'"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:150
+msgid "Could not retrieve catalog; skipping run"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:170
+msgid "Applied catalog"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:209
+msgid "Could not select a functional puppet master"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:240
+msgid "Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'."
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:280
+msgid "Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'."
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:285
+msgid "Using configured environment '%{env}'"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:289
+msgid "Unable to fetch my node definition, but the agent run will continue:"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:314
+msgid "Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:325
+msgid "Catalog environment didn't stabilize after %{tries} fetches, aborting run"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:327
+msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:346
+msgid "Failed to apply catalog: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:393
+msgid "Could not send report: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:402
+msgid "Could not save last run local report: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:414
+msgid "Could not run command from %{setting}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:427
+msgid "Could not retrieve catalog from cache: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:439
+msgid "Could not retrieve catalog from remote server: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/configurer/downloader.rb:9
+msgid "Retrieving %{name}"
+msgstr ""
+
+#: ../lib/puppet/configurer/downloader.rb:20
+msgid "Could not retrieve %{name}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/configurer/fact_handler.rb:24
+msgid "Could not retrieve local facts: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/defaults.rb:1668
+msgid "Setting 'archive_files' is deprecated. It will be removed in a future release along with the `inspect` command."
+msgstr ""
+
+#: ../lib/puppet/defaults.rb:1677
+msgid "Setting 'archive_file_server' is deprecated. It will be removed in a future release along with the `inspect` command."
+msgstr ""
+
+#: ../lib/puppet/face/help.rb:9
 msgid "Apache 2 license; see COPYING"
 msgstr ""
 
+#: ../lib/puppet/face/help.rb:11
 msgid "Display Puppet help."
 msgstr ""
 
+#: ../lib/puppet/face/help.rb:14
 msgid "Display help about Puppet subcommands and their actions."
 msgstr ""
 
+#: ../lib/puppet/face/help.rb:15
 msgid "[<subcommand>] [<action>]"
 msgstr ""
 
+#: ../lib/puppet/face/help.rb:16
 msgid "Short help text for the specified subcommand or action."
 msgstr ""
 
+#: ../lib/puppet/face/help.rb:17
 msgid ""
 "      Get help for an action:\n"
 "\n"
 "      $ puppet help\n"
 msgstr ""
 
-msgid "--version VERSION"
+#: ../lib/puppet/face/help.rb:23
+msgid "VERSION"
 msgstr ""
 
+#: ../lib/puppet/face/help.rb:24
 msgid "The version of the subcommand for which to show help."
 msgstr ""
 
-#. Check our invocation, because we want varargs and can't do defaults
-#. yet.  REVISIT: when we do option defaults, and positional options, we
-#. should rewrite this to use those. --daniel 2011-04-04
+#: ../lib/puppet/face/help.rb:50
 msgid "Puppet help only takes two (optional) arguments: a subcommand and an action"
 msgstr ""
 
+#: ../lib/puppet/face/help.rb:59
 msgid "Version only makes sense when a Faces subcommand is given"
 msgstr ""
 
+#: ../lib/puppet/face/help.rb:69
 msgid "Legacy subcommands don't take actions"
 msgstr ""
 
+#: ../lib/puppet/face/help.rb:81
 msgid ""
 "Could not load help for the application #{applicationname}.\n"
 "Please check the error logs for more information.\n"
@@ -65,6 +263,7 @@ msgid ""
 "Detail: \"#{detail.message}\"\n"
 msgstr ""
 
+#: ../lib/puppet/face/help.rb:94
 msgid ""
 "Could not load help for the face #{facename}.\n"
 "Please check the error logs for more information.\n"
@@ -72,17 +271,1606 @@ msgid ""
 "Detail: \"#{detail.message}\"\n"
 msgstr ""
 
+#: ../lib/puppet/face/help.rb:108
 msgid "\"Unable to load action #{actionname} from #{face}\""
 msgstr ""
 
-#. Return a list of all applications (both legacy and Face applications), along with a summary
-#. of their functionality.
-#. @return [Array] An Array of Arrays.  The outer array contains one entry per application; each
-#. element in the outer array is a pair whose first element is a String containing the application
-#. name, and whose second element is a String containing the summary for that application.
-#. Now we find the line with our summary, extract it, and return it.  This
-#. depends on the implementation coincidence of how our pages are
-#. formatted.  If we can't match the pattern we expect we return the empty
-#. string to ensure we don't blow up in the summary. --daniel 2011-04-11
+#: ../lib/puppet/face/help.rb:150
+msgid " (Deprecated)"
+msgstr ""
+
+#: ../lib/puppet/face/help.rb:153 ../lib/puppet/face/help.rb:174
 msgid "! Subcommand unavailable due to error. Check error logs."
+msgstr ""
+
+#: ../lib/puppet/file_bucket/dipper.rb:40
+msgid "File %{file} does not exist"
+msgstr ""
+
+#: ../lib/puppet/file_bucket/dipper.rb:55
+msgid "Could not back up %{file}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/file_bucket/dipper.rb:63
+msgid "Diff is not supported on this platform"
+msgstr ""
+
+#: ../lib/puppet/file_bucket/dipper.rb:81
+msgid "Please provide a file or checksum do diff with"
+msgstr ""
+
+#: ../lib/puppet/file_bucket/dipper.rb:97
+msgid "Failed to diff files"
+msgstr ""
+
+#: ../lib/puppet/file_bucket/dipper.rb:111 ../lib/puppet/file_bucket/dipper.rb:165
+msgid "File not found"
+msgstr ""
+
+#: ../lib/puppet/file_bucket/dipper.rb:145
+msgid "Could not find file with checksum %{sum}"
+msgstr ""
+
+#: ../lib/puppet/file_bucket/dipper.rb:156
+msgid "Listing remote file buckets is not allowed"
+msgstr ""
+
+#: ../lib/puppet/file_bucket/file.rb:31
+msgid "contents must be a String or Pathname, got a %{contents_class}"
+msgstr ""
+
+#: ../lib/puppet/file_bucket/file.rb:36
+msgid "Unknown option(s): %{opts}"
+msgstr ""
+
+#: ../lib/puppet/file_bucket/file.rb:111
+msgid "Computing checksum on string"
+msgstr ""
+
+#: ../lib/puppet/file_bucket/file.rb:136
+msgid "Computing checksum on file %{path}"
+msgstr ""
+
+#: ../lib/puppet/forge.rb:198
+msgid "Downloaded release for %{name} did not match expected checksum"
+msgstr ""
+
+#: ../lib/puppet/forge.rb:206
+msgid "Could not extract contents of module archive: %{message}"
+msgstr ""
+
+#: ../lib/puppet/forge.rb:219
+msgid "Cannot consider release %{name}-%{version}: %{error}"
+msgstr ""
+
+#: ../lib/puppet/forge/errors.rb:28
+msgid "Unable to verify the SSL certificate at %{uri}"
+msgstr ""
+
+#: ../lib/puppet/forge/errors.rb:35
+msgid ""
+"Could not connect via HTTPS to %{uri}\n"
+"  Unable to verify the SSL certificate\n"
+"    The certificate may not be signed by a valid CA\n"
+"    The CA bundle included with OpenSSL may not be valid or up to date\n"
+msgstr ""
+
+#: ../lib/puppet/forge/errors.rb:54
+msgid "Unable to connect to the server at %{uri}. Detail: %{detail}."
+msgstr ""
+
+#: ../lib/puppet/forge/errors.rb:62
+msgid ""
+"Could not connect to %{uri}\n"
+"  There was a network communications problem\n"
+"    The error we caught said '%{detail}'\n"
+"    Check your network connection and try again\n"
+msgstr ""
+
+#: ../lib/puppet/forge/errors.rb:92
+msgid "Request to Puppet Forge failed. Detail: "
+msgstr ""
+
+#: ../lib/puppet/forge/errors.rb:102
+msgid ""
+"Request to Puppet Forge failed.\n"
+"  The server being queried was %{uri}\n"
+"  The HTTP response we received was '%{response}'\n"
+msgstr ""
+
+#: ../lib/puppet/forge/errors.rb:107
+msgid ""
+"\n"
+"  The message we received said '%{message}'"
+msgstr ""
+
+#: ../lib/puppet/generate/type.rb:40 ../lib/puppet/generate/type.rb:60 ../lib/puppet/generate/type.rb:72
+msgid "unsupported format '%{format}'."
+msgstr ""
+
+#: ../lib/puppet/generate/type.rb:156
+msgid "Removed output '%{files_to_remove}' for non existing inputs"
+msgstr ""
+
+#: ../lib/puppet/generate/type.rb:160
+msgid "No custom types were found."
+msgstr ""
+
+#: ../lib/puppet/generate/type.rb:166
+msgid "template was not found at '%{key}'."
+msgstr ""
+
+#: ../lib/puppet/generate/type.rb:173
+msgid "Generating Puppet resource types."
+msgstr ""
+
+#: ../lib/puppet/generate/type.rb:190
+msgid "Failed to load custom type '%{type_name}' from '%{input}': %{message}"
+msgstr ""
+
+#: ../lib/puppet/generate/type.rb:199
+msgid "Custom type '%{type_name}' was not defined in '%{input}'."
+msgstr ""
+
+#: ../lib/puppet/generate/type.rb:223
+msgid "Generating '%{effective_output_path}' using '%{format}' format."
+msgstr ""
+
+#: ../lib/puppet/generate/type.rb:229
+msgid "Failed to generate '%{effective_output_path}': %{message}"
+msgstr ""
+
+#: ../lib/puppet/generate/type.rb:235
+msgid "No files were generated because all inputs were up-to-date."
+msgstr ""
+
+#: ../lib/puppet/indirector/file_bucket_file/file.rb:169
+msgid "Unable to verify existing FileBucket backup at '%{path}'."
+msgstr ""
+
+#: ../lib/puppet/indirector/file_bucket_file/file.rb:170
+msgid "Existing backup and new file have different content but same checksum, %{value}. Verify existing backup and remove if incorrect."
+msgstr ""
+
+#: ../lib/puppet/indirector/file_bucket_file/file.rb:176
+msgid "Existing backup does not match its expected sum, %{sum}. Overwriting corrupted backup."
+msgstr ""
+
+#: ../lib/puppet/info_service/class_information_service.rb:18
+msgid "Given argument must be a Hash"
+msgstr ""
+
+#: ../lib/puppet/info_service/class_information_service.rb:55
+msgid "The file %{f} does not exist"
+msgstr ""
+
+#: ../lib/puppet/node.rb:27
+msgid "No name provided in serialized data"
+msgstr ""
+
+#: ../lib/puppet/node.rb:89
+msgid "Node names cannot be nil"
+msgstr ""
+
+#: ../lib/puppet/node.rb:122
+msgid "Could not retrieve facts for %{name}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/node.rb:131
+msgid "The node parameter '%{param_name}' for node '%{node_name}' was already set to '%{value}'. It could not be set to '%{desired_value}'"
+msgstr ""
+
+#: ../lib/puppet/node.rb:162
+msgid "Host is missing hostname and/or domain: %{name}"
+msgstr ""
+
+#: ../lib/puppet/node.rb:194
+msgid "Trusted node data modified for node %{name}"
+msgstr ""
+
+#: ../lib/puppet/node/environment.rb:216
+msgid "The 'disable_per_environment_manifest' setting is true, and the '%{env_name}' environment has an environment.conf manifest that conflicts with the 'default_manifest' setting."
+msgstr ""
+
+#: ../lib/puppet/node/environment.rb:533
+msgid "Could not parse for environment %{env}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/parameter/package_options.rb:22
+msgid "Expected either a string or hash of options"
+msgstr ""
+
+#: ../lib/puppet/parameter/path.rb:27 ../lib/puppet/parameter/path.rb:53
+msgid "%{name} only accepts a single path, not an array of paths"
+msgstr ""
+
+#: ../lib/puppet/parameter/path.rb:30
+msgid "%{name} must be a fully qualified path"
+msgstr ""
+
+#: ../lib/puppet/parameter/value_collection.rb:136
+msgid "Property option :call is deprecated and no longer used. Please remove it."
+msgstr ""
+
+#: ../lib/puppet/parameter/value_collection.rb:184
+msgid "Invalid value %{value}. "
+msgstr ""
+
+#: ../lib/puppet/parameter/value_collection.rb:186
+msgid "Valid values are %{value_list}. "
+msgstr ""
+
+#: ../lib/puppet/parameter/value_collection.rb:188
+msgid "Valid values match %{pattern}."
+msgstr ""
+
+#: ../lib/puppet/reports/http.rb:32
+msgid "Unable to submit report to %{url} [%{code}] %{message}"
+msgstr ""
+
+#: ../lib/puppet/resource.rb:44
+msgid "Unable to deserialize non-Data type parameters unless a deserializer is provided"
+msgstr ""
+
+#: ../lib/puppet/resource.rb:91
+msgid "Resource '%{resource}' contains a %{klass} value. It will be converted to the String '%{value}'"
+msgstr ""
+
+#: ../lib/puppet/resource.rb:511
+msgid "The method Puppet::Resource.set_default_parameters is deprecated and will be removed in the next major release of Puppet."
+msgstr ""
+
+#: ../lib/puppet/resource.rb:516
+msgid "Cannot evaluate default parameters for %{resource} - not a parser resource"
+msgstr ""
+
+#: ../lib/puppet/resource.rb:556
+msgid "The method Puppet::Resource.validate_complete is deprecated and will be removed in the next major release of Puppet."
+msgstr ""
+
+#: ../lib/puppet/resource.rb:562
+msgid "Must pass %{param} to %{resource}"
+msgstr ""
+
+#: ../lib/puppet/resource.rb:573
+msgid "Expected parameter '%{name}' of '%{value0}' to have type %{value1}, got %{value2}"
+msgstr ""
+
+#: ../lib/puppet/resource.rb:579
+msgid "no parameter named '%{name}'"
+msgstr ""
+
+#: ../lib/puppet/resource.rb:688
+msgid "No set of title patterns matched the title \"%{title}\"."
+msgstr ""
+
+#: ../lib/puppet/resource/capability_finder.rb:77
+msgid "Looking up capability %{cap} in PuppetDB: %{query_terms}"
+msgstr ""
+
+#. TRANSLATORS "resource" here is a Puppet type and should not be translated
+#: ../lib/puppet/resource/catalog.rb:199
+msgid "Cannot alias %{ref} to %{key}%{resource_declaration}; resource %{newref} already declared%{existing_declaration}"
+msgstr ""
+
+#: ../lib/puppet/resource/catalog.rb:556
+msgid "Could not create class file %{file}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/resource/catalog.rb:576
+msgid "Could not create resource file %{file}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/resource/status.rb:143 ../lib/puppet/transaction.rb:234
+msgid "Could not evaluate: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/resource/type.rb:126
+msgid "Invalid export in %{reference}: %{ex} is not a resource"
+msgstr ""
+
+#: ../lib/puppet/resource/type.rb:127
+msgid "Invalid export in %{reference}: %{ex} is not a capability resource"
+msgstr ""
+
+#: ../lib/puppet/resource/type.rb:131
+msgid "Resource type %{res_type} does not produce %{ex_type}"
+msgstr ""
+
+#: ../lib/puppet/resource/type.rb:238
+msgid "%{name} is not a class; cannot add code to it"
+msgstr ""
+
+#: ../lib/puppet/resource/type.rb:239
+msgid "%{name} is not a class; cannot add code from it"
+msgstr ""
+
+#: ../lib/puppet/resource/type.rb:240
+msgid "Cannot have code outside of a class/node/define because 'freeze_main' is enabled"
+msgstr ""
+
+#: ../lib/puppet/resource/type.rb:243
+msgid "Cannot merge classes with different parent classes (%{name} => %{parent} vs. %{other_name} => %{other_parent})"
+msgstr ""
+
+#: ../lib/puppet/resource/type.rb:328
+msgid "The method Puppet::Resource::Type.assign_parameter_values is deprecated and will be removed in the next major release of Puppet."
+msgstr ""
+
+#: ../lib/puppet/resource/type.rb:344
+msgid "Could not find parent resource type '%{parent}' of type %{parent_type} in %{env}"
+msgstr ""
+
+#: ../lib/puppet/resource/type.rb:535
+msgid "%{param} is a metaparam; this value will inherit to all contained resources in the %{name} definition"
+msgstr ""
+
+#: ../lib/puppet/resource/type.rb:537
+msgid "%{param} is a metaparameter; please choose another parameter name in the %{name} definition"
+msgstr ""
+
+#: ../lib/puppet/resource/type_collection.rb:70
+msgid "Class '%{klass}' is already defined%{error}; cannot redefine"
+msgstr ""
+
+#: ../lib/puppet/resource/type_collection.rb:71
+msgid "Definition '%{klass}' is already defined%{error}; cannot be redefined as a class"
+msgstr ""
+
+#: ../lib/puppet/resource/type_collection.rb:72
+msgid "Application '%{klass}' is already defined%{error}; cannot be redefined as a class"
+msgstr ""
+
+#: ../lib/puppet/resource/type_collection.rb:103
+msgid "Node '%{name}' is already defined%{error}; cannot redefine"
+msgstr ""
+
+#: ../lib/puppet/resource/type_collection.rb:111
+msgid "Site is already defined%{error}; cannot redefine"
+msgstr ""
+
+#: ../lib/puppet/resource/type_collection.rb:147
+msgid "'%{name}' is already defined%{error} as a class; cannot redefine as a definition"
+msgstr ""
+
+#: ../lib/puppet/resource/type_collection.rb:148
+msgid "Definition '%{name}' is already defined%{error}; cannot be redefined"
+msgstr ""
+
+#: ../lib/puppet/resource/type_collection.rb:149 ../lib/puppet/resource/type_collection.rb:165
+msgid "'%{name}' is already defined%{error} as an application; cannot be redefined"
+msgstr ""
+
+#: ../lib/puppet/resource/type_collection.rb:154
+msgid "'%{name}' is already defined%{error} as a class; cannot redefine as a mapping"
+msgstr ""
+
+#: ../lib/puppet/resource/type_collection.rb:163
+msgid "'%{name}' is already defined%{error} as a class; cannot redefine as an application"
+msgstr ""
+
+#: ../lib/puppet/resource/type_collection.rb:164
+msgid "'%{name}' is already defined%{error} as a definition; cannot redefine as an application"
+msgstr ""
+
+#: ../lib/puppet/resource/type_collection.rb:217
+msgid "Execution of config_version command `%{cmd}` failed: %{message}"
+msgstr ""
+
+#: ../lib/puppet/resource/type_collection.rb:237
+msgid "Not attempting to load %{type} %{fqname} as this object was missing during a prior compilation"
+msgstr ""
+
+#: ../lib/puppet/transaction.rb:82
+msgid "Some pre-run checks failed"
+msgstr ""
+
+#: ../lib/puppet/transaction.rb:98
+msgid "Applying configuration version '%{version}'"
+msgstr ""
+
+#: ../lib/puppet/transaction.rb:121
+msgid "Provider %{name} is not functional on this host"
+msgstr ""
+
+#: ../lib/puppet/transaction.rb:137
+msgid "Could not find a suitable provider for %{type}"
+msgstr ""
+
+#: ../lib/puppet/transaction.rb:144
+msgid "post_resource_eval failed for provider %{provider}"
+msgstr ""
+
+#: ../lib/puppet/transaction.rb:160
+msgid "Somehow left a component in the relationship graph"
+msgstr ""
+
+#: ../lib/puppet/transaction.rb:162
+msgid "Starting to evaluate the resource"
+msgstr ""
+
+#: ../lib/puppet/transaction.rb:164
+msgid "Evaluated in %0.2f seconds"
+msgstr ""
+
+#: ../lib/puppet/transaction.rb:264
+msgid "Dependency %{dep} has failures: %{status}"
+msgstr ""
+
+#. TRANSLATORS `prefetch` is a function name and should not be translated
+#: ../lib/puppet/transaction.rb:322
+msgid "Could not prefetch %{type_name} provider '%{name}': %{detail}"
+msgstr ""
+
+#: ../lib/puppet/transaction.rb:350
+msgid "Skipping because of failed dependencies"
+msgstr ""
+
+#: ../lib/puppet/transaction/additional_resource_generator.rb:25
+msgid "Failed to generate additional resources using 'generate': %{detail}"
+msgstr ""
+
+#: ../lib/puppet/transaction/additional_resource_generator.rb:54
+msgid "Depthfirst resources are not supported by eval_generate"
+msgstr ""
+
+#. TRANSLATORS eval_generate is a method name and should be left untranslated
+#: ../lib/puppet/transaction/additional_resource_generator.rb:61
+msgid "Failed to generate additional resources using 'eval_generate': %{detail}"
+msgstr ""
+
+#: ../lib/puppet/transaction/event.rb:85
+msgid "Event status can only be %{statuses}"
+msgstr ""
+
+#: ../lib/puppet/transaction/event_manager.rb:87
+msgid "Unscheduling all events on %{target}"
+msgstr ""
+
+#: ../lib/puppet/transaction/event_manager.rb:93
+msgid "Unscheduling %{callback} on %{target}"
+msgstr ""
+
+#: ../lib/puppet/transaction/event_manager.rb:108
+msgid "Scheduling %{callback} of %{target}"
+msgstr ""
+
+#: ../lib/puppet/transaction/event_manager.rb:150
+msgid "Triggered '%{callback}' from %{count} event"
+msgid_plural "Triggered '%{callback}' from %{count} events"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ../lib/puppet/transaction/event_manager.rb:154
+msgid "Failed to call %{callback}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/transaction/event_manager.rb:162
+msgid "Would have triggered '%{callback}' from %{count} event"
+msgid_plural "Would have triggered '%{callback}' from %{count} events"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ../lib/puppet/transaction/persistence.rb:50
+msgid "Transaction store file %{filename} is not a file, ignoring"
+msgstr ""
+
+#: ../lib/puppet/transaction/persistence.rb:55
+msgid "Loaded transaction store file"
+msgstr ""
+
+#: ../lib/puppet/transaction/persistence.rb:59
+msgid "Transaction store file %{filename} is corrupt (%{detail}); replacing"
+msgstr ""
+
+#: ../lib/puppet/transaction/persistence.rb:64
+msgid "Unable to rename corrupt transaction store file: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/transaction/persistence.rb:65
+msgid "Could not rename corrupt transaction store file %{filename}; remove manually"
+msgstr ""
+
+#: ../lib/puppet/transaction/persistence.rb:73
+msgid "Transaction store file %{filename} is valid YAML but not returning a hash. Check the file for corruption, or remove it before continuing."
+msgstr ""
+
+#: ../lib/puppet/transaction/resource_harness.rb:50
+msgid "Cannot schedule without a schedule-containing catalog"
+msgstr ""
+
+#: ../lib/puppet/transaction/resource_harness.rb:55
+msgid "Could not find schedule %{name}"
+msgstr ""
+
+#: ../lib/puppet/transaction/resource_harness.rb:147 ../lib/puppet/transaction/resource_harness.rb:155
+msgid "change from %s to %s failed: "
+msgstr ""
+
+#: ../lib/puppet/transaction/resource_harness.rb:212
+msgid "audit change: previously recorded value %s has been changed to %s"
+msgstr ""
+
+#: ../lib/puppet/transaction/resource_harness.rb:222
+msgid " (previously recorded value was %s)"
+msgstr ""
+
+#: ../lib/puppet/transaction/resource_harness.rb:229
+msgid "current_value %s, should be %s (noop)"
+msgstr ""
+
+#: ../lib/puppet/transaction/resource_harness.rb:238
+msgid "changed %s to %s"
+msgstr ""
+
+#: ../lib/puppet/transaction/resource_harness.rb:261
+msgid "audit change: newly-recorded value %s"
+msgstr ""
+
+#: ../lib/puppet/type.rb:1324
+msgid "The `audit` metaparameter is deprecated and will be ignored in a future release."
+msgstr ""
+
+#: ../lib/puppet/type/zpool.rb:52
+msgid "mirror names must be provided as string separated, not a comma-separated list"
+msgstr ""
+
+#: ../lib/puppet/type/zpool.rb:65
+msgid "raid names must be provided as string separated, not a comma-separated list"
+msgstr ""
+
+#: ../lib/puppet/type/zpool.rb:88
+msgid "You cannot specify %{multiple_props} on this type (only one)"
+msgstr ""
+
+#: ../lib/puppet/util.rb:65
+msgid "Unable to retrieve the environment for mode %{mode}"
+msgstr ""
+
+#: ../lib/puppet/util.rb:82
+msgid "Unable to clear the environment for mode %{mode}"
+msgstr ""
+
+#: ../lib/puppet/util.rb:98
+msgid "Unable to set the environment variable %{name} for mode %{mode}"
+msgstr ""
+
+#: ../lib/puppet/util.rb:115
+msgid "Unable to merge given values into the current environment for mode %{mode}"
+msgstr ""
+
+#: ../lib/puppet/util.rb:156
+msgid "could not change to group %{group}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/util.rb:157
+msgid "could not change to group %{group}"
+msgstr ""
+
+#: ../lib/puppet/util.rb:169
+msgid "Could not change to user %{user}: %{detail}"
+msgstr ""
+
+#. TRANSLATORS forms the end of a string indicating how long a
+#. given operation took
+#: ../lib/puppet/util.rb:228
+msgid " in %0.2f seconds"
+msgstr ""
+
+#. TRANSLATORS PATH and HOME are environment variables and should not be translated
+#: ../lib/puppet/util.rb:260
+msgid "PATH contains a ~ character, and HOME is not set; ignoring PATH element '%{dir}'."
+msgstr ""
+
+#. TRANSLATORS PATH is an environment variable and should not be translated
+#: ../lib/puppet/util.rb:264
+msgid "Couldn't expand PATH containing a ~ character; ignoring PATH element '%{dir}'."
+msgstr ""
+
+#: ../lib/puppet/util.rb:333
+msgid "Failed to convert '%{path}' to URI: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/util.rb:558
+msgid "Could not %{message}: %{err}"
+msgstr ""
+
+#: ../lib/puppet/util/autoload.rb:73
+msgid "Could not autoload %{name}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/util/autoload.rb:187
+msgid "Autoload paths cannot be fully qualified"
+msgstr ""
+
+#: ../lib/puppet/util/backups.rb:26
+msgid "Recursively backing up to filebucket"
+msgstr ""
+
+#: ../lib/puppet/util/backups.rb:49
+msgid "Could not back %{file} up: %{message}"
+msgstr ""
+
+#: ../lib/puppet/util/backups.rb:67
+msgid "Will not remove directory backup %{newfile}; use a filebucket"
+msgstr ""
+
+#: ../lib/puppet/util/backups.rb:70
+msgid "Removing old backup of type %{file_type}"
+msgstr ""
+
+#: ../lib/puppet/util/backups.rb:75
+msgid "Could not remove old backup: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/util/backups.rb:83
+msgid "Filebucketed %{f} to %{filebucket} with sum %{sum}"
+msgstr ""
+
+#: ../lib/puppet/util/character_encoding.rb:75
+msgid "%{error}: %{value} is not valid UTF-8 and cannot be transcoded by Puppet."
+msgstr ""
+
+#: ../lib/puppet/util/classgen.rb:160
+msgid "Redefining %{name} in %{klass}"
+msgstr ""
+
+#: ../lib/puppet/util/classgen.rb:164
+msgid "Class %{const} is already defined in %{klass}"
+msgstr ""
+
+#: ../lib/puppet/util/classgen.rb:209 ../lib/puppet/util/classgen.rb:221
+msgid "Already a generated class named %{klassname}"
+msgstr ""
+
+#: ../lib/puppet/util/command_line.rb:66
+msgid "initialize global default settings"
+msgstr ""
+
+#: ../lib/puppet/util/command_line.rb:162
+msgid "Error: Could not parse application options: invalid option: %{opt}"
+msgstr ""
+
+#: ../lib/puppet/util/command_line.rb:165
+msgid "See 'puppet help' for help on available puppet subcommands"
+msgstr ""
+
+#: ../lib/puppet/util/command_line.rb:178
+msgid "Error: Unknown Puppet subcommand '%{cmd}'"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/puppet_option_parser.rb:47
+msgid "this method only takes 3 or 4 arguments. Given: %{args}"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/puppet_option_parser.rb:64
+msgid "Unsupported type: '%{type}'"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/puppet_option_parser.rb:76
+msgid "Error parsing arguments"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:149
+msgid "you already have an argument named '%{name}'"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:197
+msgid "multiple argument type cannot be deduced from an empty array for '%{value0}'"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:206
+msgid "unsupported multiple argument type '%{value0}'"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:210
+msgid "unsupported argument type '%{value0}'"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:213
+msgid ":type specification and default type don't match (default type is %{type_from_default})"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:228
+msgid "long option name %{value0} is already taken; please specify a (different) :long"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:239
+msgid "short option name %{value0} is already taken; please specify a (different) :short"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:240
+msgid "a short option name can't be a number or a dash"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:273 ../lib/puppet/util/command_line/trollop.rb:279
+msgid "unknown option '%{sym}'"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:313
+msgid "Print version and exit"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:314
+msgid "Show this message"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:336
+msgid "invalid argument syntax: '%{arg}'"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:341
+msgid "unknown argument '%{arg}'"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:345
+msgid "option '%{arg}' specified multiple times"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:382
+msgid "--%{value0} requires --%{value1}"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:384
+msgid "--%{value0} conflicts with --%{value1}"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:389
+msgid "option --%{opt} must be specified"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:398
+msgid "option '%{arg}' needs a parameter"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:458
+msgid "option '%{arg}' needs a date"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:491
+msgid "Options:"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:515
+msgid " (Default: %{default_s})"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:517
+msgid " (default: %{default_s})"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:554
+msgid "Error: argument --%{value0} %{msg}."
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:556
+msgid "Error: %{arg}."
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:558 ../lib/puppet/util/command_line/trollop.rb:782
+msgid "Try --help for help."
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:637
+msgid "option '%{arg}' needs an integer"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:642
+msgid "option '%{arg}' needs a floating-point number"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:654
+msgid "file or url for option '%{arg}' cannot be opened: %{value0}"
+msgstr ""
+
+#: ../lib/puppet/util/command_line/trollop.rb:781
+msgid "Error: %{value0}."
+msgstr ""
+
+#: ../lib/puppet/util/diff.rb:28
+msgid "Cannot provide diff without the diff/lcs Ruby library"
+msgstr ""
+
+#: ../lib/puppet/util/errors.rb:40
+msgid " at %{file}:%{line}"
+msgstr ""
+
+#: ../lib/puppet/util/errors.rb:42
+msgid " at line %{line}"
+msgstr ""
+
+#: ../lib/puppet/util/errors.rb:44
+msgid " in %{file}"
+msgstr ""
+
+#: ../lib/puppet/util/errors.rb:68
+msgid "%{klass} failed with error %{error_type}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/util/execution.rb:231
+msgid "Could not get output"
+msgstr ""
+
+#: ../lib/puppet/util/execution.rb:235
+msgid "Execution of '%{str}' returned %{exit_status}: %{output}"
+msgstr ""
+
+#: ../lib/puppet/util/execution.rb:304
+msgid "Could not execute posix command: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/util/execution.rb:352
+msgid "Waiting for output; will sleep %{time_to_sleep} seconds"
+msgstr ""
+
+#: ../lib/puppet/util/feature.rb:21
+msgid "Failed to load feature test for %{name}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/util/feature.rb:82
+msgid "Libraries must be passed as strings not %{klass}"
+msgstr ""
+
+#: ../lib/puppet/util/fileparsing.rb:46
+msgid "Cannot have fields named %{name}"
+msgstr ""
+
+#: ../lib/puppet/util/fileparsing.rb:53 ../lib/puppet/util/fileparsing.rb:308
+msgid "Invalid record type %{record_type}"
+msgstr ""
+
+#: ../lib/puppet/util/fileparsing.rb:89
+msgid "Field '%{field}' is required"
+msgstr ""
+
+#: ../lib/puppet/util/fileparsing.rb:230
+msgid "Could not parse line %{line}"
+msgstr ""
+
+#: ../lib/puppet/util/fileparsing.rb:273
+msgid "Must include a list of fields"
+msgstr ""
+
+#: ../lib/puppet/util/fileparsing.rb:288
+msgid "You must provide a :match regex for text lines"
+msgstr ""
+
+#: ../lib/puppet/util/fileparsing.rb:364
+msgid "Line type %{name} is already defined"
+msgstr ""
+
+#: ../lib/puppet/util/filetype.rb:48
+msgid "%{klass} could not read %{path}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/util/filetype.rb:64
+msgid "%{klass} could not write %{path}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/util/filetype.rb:82
+msgid "Path is nil"
+msgstr ""
+
+#: ../lib/puppet/util/filetype.rb:151
+msgid "Reading %{path} from RAM"
+msgstr ""
+
+#: ../lib/puppet/util/filetype.rb:157
+msgid "Removing %{path} from RAM"
+msgstr ""
+
+#: ../lib/puppet/util/filetype.rb:163
+msgid "Writing %{path} to RAM"
+msgstr ""
+
+#: ../lib/puppet/util/filetype.rb:178
+msgid "Could not retrieve user %{user}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/util/filetype.rb:233 ../lib/puppet/util/filetype.rb:276
+msgid "User %{path} not authorized to use cron"
+msgstr ""
+
+#: ../lib/puppet/util/filetype.rb:235 ../lib/puppet/util/filetype.rb:278
+msgid "Could not read crontab for %{path}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/util/filetype.rb:243 ../lib/puppet/util/filetype.rb:286
+msgid "Could not remove crontab for %{path}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/util/filetype.rb:258 ../lib/puppet/util/filetype.rb:302
+msgid "Could not write crontab for %{path}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/util/http_proxy.rb:195
+msgid "Too many HTTP redirections for %{uri}"
+msgstr ""
+
+#: ../lib/puppet/util/inifile.rb:139
+msgid "Cannot read nonexistent file %{file}"
+msgstr ""
+
+#: ../lib/puppet/util/inifile.rb:186
+msgid "Property with key %{key} outside of a section"
+msgstr ""
+
+#: ../lib/puppet/util/inifile.rb:192
+msgid "Can't parse line '%{line}'"
+msgstr ""
+
+#: ../lib/puppet/util/inifile.rb:241
+msgid "Section %{name} is already defined, cannot redefine"
+msgstr ""
+
+#: ../lib/puppet/util/instance_loader.rb:71
+msgid "Loaded %{type} file for %{name} but %{type} was not defined"
+msgstr ""
+
+#: ../lib/puppet/util/json_lockfile.rb:40
+msgid "Unable to read lockfile data from %{path}: not in PSON"
+msgstr ""
+
+#: ../lib/puppet/util/ldap/connection.rb:38
+msgid "Could not set up LDAP Connection: Missing ruby/ldap libraries"
+msgstr ""
+
+#: ../lib/puppet/util/ldap/connection.rb:69
+msgid "Could not connect to LDAP: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/util/ldap/manager.rb:216
+msgid "Removing %{name} from ldap"
+msgstr ""
+
+#: ../lib/puppet/util/ldap/manager.rb:223
+msgid "Creating %{name} in ldap"
+msgstr ""
+
+#: ../lib/puppet/util/limits.rb:10
+msgid "Failed to set process priority to '%{priority}'"
+msgstr ""
+
+#: ../lib/puppet/util/log.rb:212
+msgid "Reopening log files"
+msgstr ""
+
+#: ../lib/puppet/util/log.rb:385
+msgid "Could not parse for environment %{env}: %{msg}"
+msgstr ""
+
+#: ../lib/puppet/util/log.rb:387
+msgid "%{msg} at %{file}:%{line}:%{pos}"
+msgstr ""
+
+#: ../lib/puppet/util/log.rb:389
+msgid "%{msg}  at %{file}:%{line}"
+msgstr ""
+
+#: ../lib/puppet/util/log.rb:391
+msgid "%{msg}  at line %{line}:%{pos}"
+msgstr ""
+
+#: ../lib/puppet/util/log.rb:393
+msgid "%{msg}  at line %{line}"
+msgstr ""
+
+#: ../lib/puppet/util/log.rb:395
+msgid "%{msg}  in %{file}"
+msgstr ""
+
+#: ../lib/puppet/util/log.rb:397
+msgid "%{msg} on node %{node}"
+msgstr ""
+
+#: ../lib/puppet/util/log/destinations.rb:21
+msgid "Invalid syslog facility %{str}"
+msgstr ""
+
+#: ../lib/puppet/util/log/destinations.rb:75
+msgid "Creating log directory %{dir}"
+msgstr ""
+
+#: ../lib/puppet/util/log/destinations.rb:100
+msgid "Unable to set ownership to %{user}:%{group} for log file: %{path}"
+msgstr ""
+
+#: ../lib/puppet/util/logging.rb:83 ../lib/puppet/util/logging.rb:106
+msgid "Wrapped exception:"
+msgstr ""
+
+#: ../lib/puppet/util/logging.rb:179
+msgid ""
+"\n"
+"   (at %{file}:%{line})"
+msgstr ""
+
+#: ../lib/puppet/util/logging.rb:181
+msgid ""
+"\n"
+"   (in %{file})"
+msgstr ""
+
+#: ../lib/puppet/util/logging.rb:183
+msgid ""
+"\n"
+"   (in unknown file, line %{line})"
+msgstr ""
+
+#: ../lib/puppet/util/logging.rb:185
+msgid ""
+"\n"
+"   (file & line not available)"
+msgstr ""
+
+#: ../lib/puppet/util/logging.rb:283
+msgid "unknown"
+msgstr ""
+
+#. TRANSLATORS error message with origin location
+#: ../lib/puppet/util/logging.rb:288
+msgid ""
+"%{message}\n"
+"   (at %{call_trace})"
+msgstr ""
+
+#: ../lib/puppet/util/network_device.rb:10
+msgid "Can't load %{provider} for %{device}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/util/network_device/cisco/device.rb:54
+msgid "Error while executing '%{cmd}', device returned: %{error}"
+msgstr ""
+
+#: ../lib/puppet/util/network_device/cisco/device.rb:70
+msgid "Can't issue \"enable\" to enter privileged, no enable password set"
+msgstr ""
+
+#: ../lib/puppet/util/network_device/cisco/device.rb:199
+msgid "invalid sh vlan summary output"
+msgstr ""
+
+#: ../lib/puppet/util/network_device/cisco/device.rb:211
+msgid "Removing %{id} from device vlan"
+msgstr ""
+
+#: ../lib/puppet/util/network_device/cisco/device.rb:220
+msgid ""
+"Invalid VLAN name '%{name}' for Cisco device.\n"
+"VLAN name must be alphanumeric, no spaces or special characters."
+msgstr ""
+
+#: ../lib/puppet/util/network_device/cisco/device.rb:254
+msgid "Unknown switchport mode: %{mode} for %{interface}"
+msgstr ""
+
+#: ../lib/puppet/util/network_device/cisco/device.rb:263
+msgid "Unknown switchport encapsulation: %{value} for %{interface}"
+msgstr ""
+
+#: ../lib/puppet/util/network_device/cisco/interface.rb:90
+msgid "Error while executing '%{command}', device returned: %{error}"
+msgstr ""
+
+#: ../lib/puppet/util/network_device/config.rb:55
+msgid "Duplicate device found at line %{count}, already found at %{line}"
+msgstr ""
+
+#: ../lib/puppet/util/network_device/config.rb:65
+msgid "Invalid line %{count}: %{line}"
+msgstr ""
+
+#: ../lib/puppet/util/network_device/config.rb:71
+msgid "Configuration error: Cannot read %{file}; cannot serve"
+msgstr ""
+
+#: ../lib/puppet/util/network_device/config.rb:74
+msgid "Configuration error: '%{file}' does not exit; cannot serve"
+msgstr ""
+
+#: ../lib/puppet/util/network_device/config.rb:88
+msgid "%{value} is an invalid url"
+msgstr ""
+
+#: ../lib/puppet/util/network_device/config.rb:94
+msgid "Invalid argument '%{var}' at line %{count}"
+msgstr ""
+
+#: ../lib/puppet/util/network_device/transport/ssh.rb:16
+msgid "Connecting with ssh to a network device requires the 'net/ssh' ruby library"
+msgstr ""
+
+#: ../lib/puppet/util/network_device/transport/ssh.rb:36
+msgid "timed out while opening an ssh connection to the host"
+msgstr ""
+
+#: ../lib/puppet/util/network_device/transport/ssh.rb:38
+msgid "SSH authentication failure connecting to %{host} as %{user}"
+msgstr ""
+
+#: ../lib/puppet/util/network_device/transport/ssh.rb:40
+msgid "SSH connection failure to %{host}"
+msgstr ""
+
+#: ../lib/puppet/util/network_device/transport/ssh.rb:47
+msgid "failed to open pty"
+msgstr ""
+
+#: ../lib/puppet/util/network_device/transport/ssh.rb:50
+msgid "failed to open ssh shell channel"
+msgstr ""
+
+#: ../lib/puppet/util/plist.rb:48
+msgid ""
+"Cannot read file %{file_path}; Puppet is skipping it.\n"
+msgstr ""
+
+#: ../lib/puppet/util/plist.rb:48
+msgid "Details: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/util/plist.rb:141
+msgid "Unable to write the file %{file_path}. %{error}"
+msgstr ""
+
+#: ../lib/puppet/util/posix.rb:24 ../lib/puppet/util/posix.rb:49
+msgid "Tried to get %{field} field for silly id %{id}"
+msgstr ""
+
+#: ../lib/puppet/util/posix.rb:77 ../lib/puppet/util/posix.rb:87 ../lib/puppet/util/posix.rb:97
+msgid "Can only handle users and groups"
+msgstr ""
+
+#: ../lib/puppet/util/profiler/wall_clock.rb:15
+msgid "took %{context} seconds"
+msgstr ""
+
+#: ../lib/puppet/util/provider_features.rb:72
+msgid "Could not create feature %{name}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/util/rdoc.rb:44 ../lib/puppet/util/rdoc.rb:50 ../lib/puppet/util/rdoc.rb:54 ../lib/puppet/util/rdoc.rb:58
+msgid "RDOC SUPPORT FOR MANIFEST HAS BEEN REMOVED - See PUP-3638"
+msgstr ""
+
+#. TRANSLATORS message accompanied by date of generation
+#: ../lib/puppet/util/reference.rb:17
+msgid "This page autogenerated on "
+msgstr ""
+
+#: ../lib/puppet/util/reference.rb:35
+msgid "Could not find section %{name}"
+msgstr ""
+
+#: ../lib/puppet/util/reference.rb:41
+msgid "creating pdf"
+msgstr ""
+
+#: ../lib/puppet/util/reference.rb:43
+msgid "Could not find rst2latex"
+msgstr ""
+
+#: ../lib/puppet/util/reference.rb:53
+msgid "rst2latex failed"
+msgstr ""
+
+#: ../lib/puppet/util/reference.rb:93
+msgid "%{name} Reference"
+msgstr ""
+
+#. TRANSLATORS message accompanied by date of generation
+#: ../lib/puppet/util/reference.rb:116
+msgid ""
+"\n"
+"\n"
+"**This page is autogenerated; any changes will get overwritten** *(last generated on "
+msgstr ""
+
+#: ../lib/puppet/util/resource_template.rb:47
+msgid "Template %{file} does not exist"
+msgstr ""
+
+#: ../lib/puppet/util/retry_action.rb:31
+msgid "%{retries} exceeded"
+msgstr ""
+
+#: ../lib/puppet/util/retry_action.rb:34
+msgid "Caught exception %{klass}:%{error} retrying"
+msgstr ""
+
+#: ../lib/puppet/util/selinux.rb:66
+msgid "Invalid context to parse: %{context}"
+msgstr ""
+
+#: ../lib/puppet/util/selinux.rb:94
+msgid "Can't set SELinux context on file unless the file already has some kind of context"
+msgstr ""
+
+#: ../lib/puppet/util/selinux.rb:108
+msgid "set_selinux_context component must be one of :seluser, :selrole, :seltype, or :selrange"
+msgstr ""
+
+#: ../lib/puppet/util/selinux.rb:119
+msgid "Failed to set SELinux context %{context} on %{file}"
+msgstr ""
+
+#: ../lib/puppet/util/splayer.rb:14
+msgid "Sleeping for %{time} seconds (splay is enabled)"
+msgstr ""
+
+#: ../lib/puppet/util/storage.rb:53
+msgid "Checksumfile %{filename} is not a file, ignoring"
+msgstr ""
+
+#: ../lib/puppet/util/storage.rb:60
+msgid "Checksumfile %{filename} is corrupt (%{detail}); replacing"
+msgstr ""
+
+#: ../lib/puppet/util/storage.rb:65
+msgid "Could not rename corrupt %{filename}; remove manually"
+msgstr ""
+
+#: ../lib/puppet/util/storage.rb:71
+msgid "State got corrupted"
+msgstr ""
+
+#: ../lib/puppet/util/storage.rb:83
+msgid "Creating state file %{file}"
+msgstr ""
+
+#: ../lib/puppet/util/suidmanager.rb:102
+msgid "No such group %{group}"
+msgstr ""
+
+#: ../lib/puppet/util/suidmanager.rb:118
+msgid "No such user %{user}"
+msgstr ""
+
+#: ../lib/puppet/util/suidmanager.rb:145
+msgid "Invalid id type %{type}"
+msgstr ""
+
+#: ../lib/puppet/util/suidmanager.rb:148
+msgid "Invalid %{klass}: %{id}"
+msgstr ""
+
+#: ../lib/puppet/util/symbolic_file_mode.rb:37
+msgid "An empty mode string is illegal"
+msgstr ""
+
+#: ../lib/puppet/util/symbolic_file_mode.rb:41
+msgid "Numeric modes must be in octal, not decimal!"
+msgstr ""
+
+#: ../lib/puppet/util/symbolic_file_mode.rb:44
+msgid "non-numeric current mode (%{mode})"
+msgstr ""
+
+#: ../lib/puppet/util/symbolic_file_mode.rb:64
+msgid "Missing action"
+msgstr ""
+
+#: ../lib/puppet/util/symbolic_file_mode.rb:79
+msgid "Missing operation (-, =, or +)"
+msgstr ""
+
+#: ../lib/puppet/util/symbolic_file_mode.rb:101
+msgid "X only works with the '+' operator"
+msgstr ""
+
+#: ../lib/puppet/util/symbolic_file_mode.rb:112
+msgid "internal error"
+msgstr ""
+
+#: ../lib/puppet/util/symbolic_file_mode.rb:116
+msgid "Unknown operation"
+msgstr ""
+
+#: ../lib/puppet/util/symbolic_file_mode.rb:131
+msgid "%{error}%{rest} in symbolic mode %{modification}"
+msgstr ""
+
+#: ../lib/puppet/util/tagging.rb:27
+msgid "Invalid tag '%{name}'"
+msgstr ""
+
+#: ../lib/puppet/util/windows/adsi.rb:19
+msgid "ADSI connection error: %{e}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/adsi.rb:42
+msgid "Failed to get computer name"
+msgstr ""
+
+#: ../lib/puppet/util/windows/adsi.rb:80
+msgid "Must use a valid SID::Principal"
+msgstr ""
+
+#: ../lib/puppet/util/windows/adsi.rb:132
+msgid "Value must be in DOMAIN\\user style syntax"
+msgstr ""
+
+#: ../lib/puppet/util/windows/adsi.rb:156
+msgid "Could not resolve name: %{name}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/adsi.rb:214
+msgid "Puppet is not able to create/delete domain users with the user resource."
+msgstr ""
+
+#: ../lib/puppet/util/windows/adsi.rb:219
+msgid "User update failed: %{e}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/adsi.rb:314
+msgid "Cannot create user if group '%{name}' exists."
+msgstr ""
+
+#: ../lib/puppet/util/windows/adsi.rb:328
+msgid "Failed to get user name"
+msgstr ""
+
+#: ../lib/puppet/util/windows/adsi.rb:406
+msgid "Cannot delete user profile for '%{sid}' prior to Vista SP1"
+msgstr ""
+
+#: ../lib/puppet/util/windows/adsi.rb:444
+msgid "Puppet is not able to create/delete domain groups with the group resource."
+msgstr ""
+
+#: ../lib/puppet/util/windows/adsi.rb:449
+msgid "Group update failed: %{error}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/adsi.rb:505
+msgid "Cannot create group if user '%{name}' exists."
+msgstr ""
+
+#: ../lib/puppet/util/windows/api_types.rb:68
+msgid "Unable to read wide strings with %{null_terminator} terminal nulls"
+msgstr ""
+
+#: ../lib/puppet/util/windows/api_types.rb:196
+msgid "Bad GUID format."
+msgstr ""
+
+#: ../lib/puppet/util/windows/com.rb:17
+msgid "%{name} failed (hresult %{result})."
+msgstr ""
+
+#: ../lib/puppet/util/windows/com.rb:142 ../lib/puppet/util/windows/com.rb:183
+msgid "Failed to call %{klass}::%{name} with HRESULT: %{result}."
+msgstr ""
+
+#: ../lib/puppet/util/windows/com.rb:169
+msgid "CoCreateInstance failed (%{klass})."
+msgstr ""
+
+#: ../lib/puppet/util/windows/error.rb:42
+msgid "FormatMessageW could not format code %{code}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/error.rb:48
+msgid "FormatMessageW failed to allocate buffer for code %{code}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/file.rb:158
+msgid "Failed to set file attributes"
+msgstr ""
+
+#: ../lib/puppet/util/windows/file.rb:193
+msgid "out_buffer is required"
+msgstr ""
+
+#: ../lib/puppet/util/windows/file.rb:274
+msgid "Failed to call GetLongPathName"
+msgstr ""
+
+#: ../lib/puppet/util/windows/principal.rb:67 ../lib/puppet/util/windows/principal.rb:74
+msgid "Failed to call LookupAccountNameW"
+msgstr ""
+
+#. TRANSLATORS `lookup_account_sid` is a variable name and should not be translated
+#: ../lib/puppet/util/windows/principal.rb:97
+msgid "Byte array for lookup_account_sid must not be nil and must be at least 1 byte long"
+msgstr ""
+
+#: ../lib/puppet/util/windows/principal.rb:119 ../lib/puppet/util/windows/principal.rb:126
+msgid "Failed to call LookupAccountSidW"
+msgstr ""
+
+#: ../lib/puppet/util/windows/process.rb:24
+msgid "Failed to get child process exit code"
+msgstr ""
+
+#: ../lib/puppet/util/windows/process.rb:217
+msgid "GetVersionEx failed"
+msgstr ""
+
+#: ../lib/puppet/util/windows/process.rb:254
+msgid "environment variable name must not be nil or empty"
+msgstr ""
+
+#: ../lib/puppet/util/windows/process.rb:259
+msgid "Failed to remove environment variable: %{name}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/process.rb:264
+msgid "Failed to set environment variable: %{name}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/registry.rb:21
+msgid "Invalid registry key '%{name}'"
+msgstr ""
+
+#: ../lib/puppet/util/windows/registry.rb:31
+msgid "Failed to open registry key '%{key}\\%{path}'"
+msgstr ""
+
+#: ../lib/puppet/util/windows/registry.rb:106
+msgid "Failed to enumerate %{key} registry keys at index %{index}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/registry.rb:137
+msgid "Failed to enumerate %{key} registry values at index %{index}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/registry.rb:167
+msgid "Failed to query registry %{key} for sizes"
+msgstr ""
+
+#: ../lib/puppet/util/windows/registry.rb:203
+msgid "Type mismatch (expect %{rtype} but %{type} present)"
+msgstr ""
+
+#: ../lib/puppet/util/windows/registry.rb:225
+msgid "Type %{type} is not supported."
+msgstr ""
+
+#: ../lib/puppet/util/windows/registry.rb:230
+msgid "A value in the registry key %{parent_key_name}%{key} is corrupt or invalid"
+msgstr ""
+
+#: ../lib/puppet/util/windows/registry.rb:250
+msgid "Failed to read registry value %{value} at %{key}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/registry.rb:268
+msgid "Failed to delete registry value %{name} at %{key}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/registry.rb:283
+msgid "Failed to delete registry key %{name} at %{key}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/root_certs.rb:47
+msgid "Failed to import root certificate: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/security.rb:173
+msgid "Failed to get volume information"
+msgstr ""
+
+#: ../lib/puppet/util/windows/security.rb:383 ../lib/puppet/util/windows/security.rb:400 ../lib/puppet/util/windows/sid.rb:127 ../lib/puppet/util/windows/sid.rb:189 ../lib/puppet/util/windows/user.rb:45
+msgid "Invalid SID"
+msgstr ""
+
+#: ../lib/puppet/util/windows/security.rb:387 ../lib/puppet/util/windows/security.rb:404
+msgid "Failed to add access control entry"
+msgstr ""
+
+#: ../lib/puppet/util/windows/security.rb:415 ../lib/puppet/util/windows/security.rb:597
+msgid "Invalid DACL"
+msgstr ""
+
+#: ../lib/puppet/util/windows/security.rb:438
+msgid "Unsupported access control entry type: 0x%{type}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/security.rb:472
+msgid "Failed to open '%{path}'"
+msgstr ""
+
+#: ../lib/puppet/util/windows/security.rb:519
+msgid "Failed to adjust process privileges"
+msgstr ""
+
+#: ../lib/puppet/util/windows/security.rb:549
+msgid "Failed to get security information"
+msgstr ""
+
+#: ../lib/puppet/util/windows/security.rb:560
+msgid "Failed to get security descriptor control"
+msgstr ""
+
+#: ../lib/puppet/util/windows/security.rb:593
+msgid "Failed to initialize ACL"
+msgstr ""
+
+#: ../lib/puppet/util/windows/security.rb:632
+msgid "Failed to set security information"
+msgstr ""
+
+#: ../lib/puppet/util/windows/sid.rb:93
+msgid "Octet string must be an array of bytes"
+msgstr ""
+
+#: ../lib/puppet/util/windows/sid.rb:133
+msgid "Failed to convert binary SID"
+msgstr ""
+
+#: ../lib/puppet/util/windows/sid.rb:138
+msgid "ConvertSidToStringSidW failed to allocate buffer for sid"
+msgstr ""
+
+#: ../lib/puppet/util/windows/sid.rb:158
+msgid "Failed to convert string SID: %{string_sid}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/taskscheduler.rb:213 ../lib/puppet/util/windows/taskscheduler.rb:246 ../lib/puppet/util/windows/taskscheduler.rb:262 ../lib/puppet/util/windows/taskscheduler.rb:314 ../lib/puppet/util/windows/taskscheduler.rb:341 ../lib/puppet/util/windows/taskscheduler.rb:373 ../lib/puppet/util/windows/taskscheduler.rb:398 ../lib/puppet/util/windows/taskscheduler.rb:417 ../lib/puppet/util/windows/taskscheduler.rb:433 ../lib/puppet/util/windows/taskscheduler.rb:454 ../lib/puppet/util/windows/taskscheduler.rb:470 ../lib/puppet/util/windows/taskscheduler.rb:489 ../lib/puppet/util/windows/taskscheduler.rb:507 ../lib/puppet/util/windows/taskscheduler.rb:540 ../lib/puppet/util/windows/taskscheduler.rb:555 ../lib/puppet/util/windows/taskscheduler.rb:596 ../lib/puppet/util/windows/taskscheduler.rb:612 ../lib/puppet/util/windows/taskscheduler.rb:623 ../lib/puppet/util/windows/taskscheduler.rb:641 ../lib/puppet/util/windows/taskscheduler.rb:661 ../lib/puppet/util/windows/taskscheduler.rb:689
+msgid "No current task scheduler. ITaskScheduler is NULL."
+msgstr ""
+
+#: ../lib/puppet/util/windows/taskscheduler.rb:273 ../lib/puppet/util/windows/taskscheduler.rb:285 ../lib/puppet/util/windows/taskscheduler.rb:306 ../lib/puppet/util/windows/taskscheduler.rb:342 ../lib/puppet/util/windows/taskscheduler.rb:374 ../lib/puppet/util/windows/taskscheduler.rb:399 ../lib/puppet/util/windows/taskscheduler.rb:418 ../lib/puppet/util/windows/taskscheduler.rb:434 ../lib/puppet/util/windows/taskscheduler.rb:455 ../lib/puppet/util/windows/taskscheduler.rb:471 ../lib/puppet/util/windows/taskscheduler.rb:490 ../lib/puppet/util/windows/taskscheduler.rb:508 ../lib/puppet/util/windows/taskscheduler.rb:541 ../lib/puppet/util/windows/taskscheduler.rb:597 ../lib/puppet/util/windows/taskscheduler.rb:613 ../lib/puppet/util/windows/taskscheduler.rb:624 ../lib/puppet/util/windows/taskscheduler.rb:642 ../lib/puppet/util/windows/taskscheduler.rb:662 ../lib/puppet/util/windows/taskscheduler.rb:674 ../lib/puppet/util/windows/taskscheduler.rb:690 ../lib/puppet/util/windows/taskscheduler.rb:700 ../lib/puppet/util/windows/taskscheduler.rb:726 ../lib/puppet/util/windows/taskscheduler.rb:745 ../lib/puppet/util/windows/taskscheduler.rb:763 ../lib/puppet/util/windows/taskscheduler.rb:777 ../lib/puppet/util/windows/taskscheduler.rb:795 ../lib/puppet/util/windows/taskscheduler.rb:810 ../lib/puppet/util/windows/taskscheduler.rb:826 ../lib/puppet/util/windows/taskscheduler.rb:846 ../lib/puppet/util/windows/taskscheduler.rb:862
+msgid "No currently active task. ITask is NULL."
+msgstr ""
+
+#: ../lib/puppet/util/windows/taskscheduler.rb:286
+msgid "Account information must be set on the current task to save it properly."
+msgstr ""
+
+#: ../lib/puppet/util/windows/taskscheduler.rb:351
+msgid "User has exceeded maximum allowed length %{max}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/taskscheduler.rb:363
+msgid "job created, but password was invalid"
+msgstr ""
+
+#: ../lib/puppet/util/windows/taskscheduler.rb:423
+msgid "Application name has exceeded maximum allowed length %{max}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/taskscheduler.rb:459
+msgid "Parameters has exceeded maximum allowed length %{max}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/taskscheduler.rb:494
+msgid "Working directory has exceeded maximum allowed length %{max}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/taskscheduler.rb:560
+msgid "task '%{task}' already exists"
+msgstr ""
+
+#: ../lib/puppet/util/windows/taskscheduler.rb:767
+msgid "Comment has exceeded maximum allowed length %{max}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/taskscheduler.rb:799
+msgid "Creator has exceeded maximum allowed length %{max}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/taskscheduler.rb:980 ../lib/puppet/util/windows/taskscheduler.rb:1047
+msgid "Unknown trigger type %{type}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/user.rb:40
+msgid "Failed to create administrators SID"
+msgstr ""
+
+#: ../lib/puppet/util/windows/user.rb:50
+msgid "Failed to check membership"
+msgstr ""
+
+#: ../lib/puppet/util/windows/user.rb:88
+msgid "Failed to logon user %{name}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/user.rb:112
+msgid "Failed to load user profile %{user}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/user.rb:118
+msgid "Failed to unload user profile %{user}"
 msgstr ""

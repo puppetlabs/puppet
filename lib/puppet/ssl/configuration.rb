@@ -50,7 +50,10 @@ class Configuration
 
   # read_file makes testing easier.
   def read_file(path)
-    File.read(path)
+    # https://www.ietf.org/rfc/rfc2459.txt defines the x509 V3 certificate format
+    # CA bundles are concatenated X509 certificates, but may also include
+    # comments, which could have UTF-8 characters
+    Puppet::FileSystem.read(path, :encoding => Encoding::UTF_8)
   end
   private :read_file
 end

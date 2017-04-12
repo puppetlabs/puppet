@@ -24,7 +24,7 @@ module Puppet::Util::Tagging
           end
         else
           @tags.delete(name)
-          fail(Puppet::ParseError, "Invalid tag '#{name}'")
+          fail(Puppet::ParseError, _("Invalid tag '%{name}'") % { name: name })
         end
       end
     end

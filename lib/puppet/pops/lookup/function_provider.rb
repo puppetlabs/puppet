@@ -10,21 +10,31 @@ class FunctionProvider
 
   attr_reader :parent_data_provider, :function_name, :locations
 
+  # Returns the type that all the return type of all functions must be assignable to.
+  # For `lookup_key` and `data_dig`, that will be the `Puppet::LookupValue` type. For
+  # `data_hash` it will be a Hash[Puppet::LookupKey,Puppet::LookupValue]`
+  #
+  # @return [Type] the trusted return type
+  def self.trusted_return_type
+    DataProvider.value_type
+  end
+
   def initialize(name, parent_data_provider, function_name, options, locations)
     @name = name
     @parent_data_provider = parent_data_provider
     @function_name = function_name
     @options = options
     @locations = locations || [nil]
+    @contexts = {}
   end
 
   # @return [FunctionContext] the function context associated with this provider
   def function_context(lookup_invocation, location)
-    scope = lookup_invocation.scope
-    compiler = scope.compiler
-    adapter = DataAdapter.get(compiler) || DataAdapter.adapt(compiler)
-    key = location.nil? ? object_id : "#{object_id}:#{location}"
-    adapter[key] ||= FunctionContext.new(compiler.environment.name, module_name, function(scope))
+    @contexts[location] ||= create_function_context(lookup_invocation)
+  end
+
+  def create_function_context(lookup_invocation)
+    FunctionContext.new(EnvironmentContext.adapt(lookup_invocation.scope.compiler.environment), module_name, function(lookup_invocation))
   end
 
   def module_name
@@ -33,6 +43,10 @@ class FunctionProvider
 
   def name
     "Hierarchy entry \"#{@name}\""
+  end
+
+  def full_name
+    "#{self.class::TAG} function '#{@function_name}'"
   end
 
   def to_s
@@ -44,9 +58,8 @@ class FunctionProvider
   # @param [Pathname,URI] location The location to add to the options
   # @return [Hash{String => Object}] The options hash
   def options(location = nil)
+    location = location.location unless location.nil?
     case location
-    when nil
-      @options
     when Pathname
       @options.merge(HieraConfig::KEY_PATH => location.to_s)
     when URI
@@ -56,14 +69,18 @@ class FunctionProvider
     end
   end
 
-  private
-
-  def function(scope)
-    @function ||= load_function(scope)
+  def value_is_validated?
+    @value_is_validated
   end
 
-  def load_function(scope)
-    loaders = scope.compiler.loaders
+  private
+
+  def function(lookup_invocation)
+    @function ||= load_function(lookup_invocation)
+  end
+
+  def load_function(lookup_invocation)
+    loaders = lookup_invocation.scope.compiler.loaders
     typed_name = Loader::TypedName.new(:function, @function_name)
     loader = if typed_name.qualified?
       qualifier = typed_name.name_parts[0]
@@ -73,10 +90,20 @@ class FunctionProvider
     end
     te = loader.load_typed(typed_name)
     if te.nil? || te.value.nil?
-      raise Puppet::DataBinding::LookupError,
-        "#{@options[HieraConfig::KEY_NAME]}: Unable to find '#{self.class::TAG}' function named '#{function_name}'"
+      @parent_data_provider.config(lookup_invocation).fail(Issues::HIERA_DATA_PROVIDER_FUNCTION_NOT_FOUND,
+        :function_type => self.class::TAG, :function_name => @function_name)
     end
-    te.value
+    func = te.value
+    @value_is_validated = func.class.dispatcher.dispatchers.all? do |dispatcher|
+      rt = dispatcher.type.return_type
+      if rt.nil?
+        false
+      else
+        Types::TypeAsserter.assert_assignable(nil, self.class.trusted_return_type, rt) { "Return type of '#{self.class::TAG}' function named '#{function_name}'" }
+        true
+      end
+    end
+    func
   end
 end
 end

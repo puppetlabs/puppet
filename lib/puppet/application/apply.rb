@@ -177,8 +177,11 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     else
       text = Puppet::FileSystem.read(options[:catalog], :encoding => 'utf-8')
     end
-    catalog = read_catalog(text)
-    apply_catalog(catalog)
+    env = Puppet.lookup(:environments).get(Puppet[:environment])
+    Puppet.override(:current_environment => env, :loaders => Puppet::Pops::Loaders.new(env)) do
+      catalog = read_catalog(text)
+      apply_catalog(catalog)
+    end
   end
 
   def main
@@ -227,9 +230,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       node.merge(facts.values) if facts
 
       # Add server facts so $server_facts[environment] exists when doing a puppet apply
-      if Puppet[:trusted_server_facts]
-        node.add_server_facts({})
-      end
+      node.add_server_facts({})
 
       # Allow users to load the classes that puppet agent creates.
       if options[:loadclasses]
@@ -271,7 +272,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
           catalog.write_resource_file
         end
 
-        exit_status = apply_catalog(catalog)
+        exit_status = Puppet.override(:loaders => Puppet::Pops::Loaders.new(apply_environment)) { apply_catalog(catalog) }
 
         if not exit_status
           exit(1)

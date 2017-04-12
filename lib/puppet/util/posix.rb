@@ -21,7 +21,7 @@ module Puppet::Util::POSIX
 
     if id.is_a?(Integer)
       if id > Puppet[:maximum_uid].to_i
-        Puppet.err "Tried to get #{field} field for silly id #{id}"
+        Puppet.err _("Tried to get %{field} field for silly id %{id}") % { field: field, id: id }
         return nil
       end
       method = methodbyid(space)
@@ -46,7 +46,7 @@ module Puppet::Util::POSIX
     if id.is_a?(Integer)
       integer = true
       if id > Puppet[:maximum_uid].to_i
-        Puppet.err "Tried to get #{field} field for silly id #{id}"
+        Puppet.err _("Tried to get %{field} field for silly id %{id}") % { field: field, id: id }
         return nil
       end
     end
@@ -74,7 +74,7 @@ module Puppet::Util::POSIX
     when :gr, :group; return :gid
     when :pw, :user, :passwd; return :uid
     else
-      raise ArgumentError.new("Can only handle users and groups")
+      raise ArgumentError.new(_("Can only handle users and groups"))
     end
   end
 
@@ -84,7 +84,7 @@ module Puppet::Util::POSIX
     when :gr, :group; return :getgrgid
     when :pw, :user, :passwd; return :getpwuid
     else
-      raise ArgumentError.new("Can only handle users and groups")
+      raise ArgumentError.new(_("Can only handle users and groups"))
     end
   end
 
@@ -94,7 +94,7 @@ module Puppet::Util::POSIX
     when :gr, :group; return :getgrnam
     when :pw, :user, :passwd; return :getpwnam
     else
-      raise ArgumentError.new("Can only handle users and groups")
+      raise ArgumentError.new(_("Can only handle users and groups"))
     end
   end
 

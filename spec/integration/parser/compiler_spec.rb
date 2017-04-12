@@ -12,7 +12,7 @@ class CompilerTestResource
   end
 
   def [](attr)
-    return nil if attr == :stage
+    return nil if (attr == :stage || attr == :alias)
     :main
   end
 
@@ -174,70 +174,31 @@ describe Puppet::Parser::Compiler do
 
   context 'when working with $server_facts' do
     include PuppetSpec::Compiler
-    context 'and have opted in to trusted_server_facts' do
-      before :each do
-        Puppet[:trusted_server_facts] = true
-      end
 
-      it 'should make $trusted available' do
-        node = Puppet::Node.new("testing")
-        node.add_server_facts({ "server_fact" => "foo" })
+    it '$trusted is available' do
+      node = Puppet::Node.new("testing")
+      node.add_server_facts({ "server_fact" => "foo" })
 
-        catalog = compile_to_catalog(<<-MANIFEST, node)
-            notify { 'test': message => $server_facts[server_fact] }
-        MANIFEST
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+          notify { 'test': message => $server_facts[server_fact] }
+      MANIFEST
 
-        expect(catalog).to have_resource("Notify[test]").with_parameter(:message, "foo")
-      end
-
-      it 'should not allow assignment to $server_facts' do
-        node = Puppet::Node.new("testing")
-        node.add_server_facts({ "server_fact" => "foo" })
-
-        expect do
-          compile_to_catalog(<<-MANIFEST, node)
-              $server_facts = 'changed'
-              notify { 'test': message => $server_facts == 'changed' }
-          MANIFEST
-        end.to raise_error(Puppet::PreformattedError, /Attempt to assign to a reserved variable name: '\$server_facts'.*/)
-      end
+      expect(catalog).to have_resource("Notify[test]").with_parameter(:message, "foo")
     end
 
-    context 'and have not opted in to hashed_node_data' do
-      before :each do
-        Puppet[:trusted_server_facts] = false
-      end
+    it 'does not allow assignment to $server_facts' do
+      node = Puppet::Node.new("testing")
+      node.add_server_facts({ "server_fact" => "foo" })
 
-      it 'should not make $server_facts available' do
-        node = Puppet::Node.new("testing")
-        node.add_server_facts({ "server_fact" => "foo" })
-
-        catalog = compile_to_catalog(<<-MANIFEST, node)
-            notify { 'test': message => ($server_facts == undef) }
-        MANIFEST
-
-        expect(catalog).to have_resource("Notify[test]").with_parameter(:message, true)
-      end
-
-      it 'should allow assignment to $server_facts' do
-        catalog = compile_to_catalog(<<-MANIFEST)
+      expect do
+        compile_to_catalog(<<-MANIFEST, node)
             $server_facts = 'changed'
             notify { 'test': message => $server_facts == 'changed' }
         MANIFEST
-
-        expect(catalog).to have_resource("Notify[test]").with_parameter(:message, true)
-      end
-      it 'should warn about assignment to $server_facts' do
-        catalog = compile_to_catalog(<<-MANIFEST)
-            $server_facts = 'changed'
-            notify { 'test': message => $server_facts == 'changed' }
-        MANIFEST
-        expect(@logs).to have_matching_log(/Assignment to \$server_facts is deprecated/)
-
-        expect(catalog).to have_resource("Notify[test]").with_parameter(:message, true)
-      end
+      end.to raise_error(Puppet::PreformattedError, /Attempt to assign to a reserved variable name: '\$server_facts'.*/)
     end
   end
+
   describe "the compiler when using 4.x language constructs" do
     include PuppetSpec::Compiler
 
@@ -394,9 +355,11 @@ describe Puppet::Parser::Compiler do
         end
       end
 
-      describe 'and classname is a Resource Reference and strict == :error' do
+      describe 'and classname is a Resource Reference' do
+        # tested with strict == off since this was once conditional on strict
+        # can be removed in a later version.
         before(:each) do
-          Puppet[:strict] = :error
+          Puppet[:strict] = :off
         end
 
         it 'is reported as an error' do
@@ -405,38 +368,6 @@ describe Puppet::Parser::Compiler do
               notice Class[ToothFairy]
             PP
           }.to raise_error(/Illegal Class name in class reference. A TypeReference\['ToothFairy'\]-Type cannot be used where a String is expected/)
-        end
-      end
-
-      describe 'and classname is a Resource Reference and strict == :warning' do
-        before(:each) do
-          Puppet[:strict] = :warning
-        end
-
-        it 'is reported as a deprecation warning' do
-          expect { 
-            compile_to_catalog(<<-PP)
-              notice Class[ToothFairy]
-            PP
-            expect(@logs).to have_matching_log(/Upper cased class-name in a Class\[<class-name>\] is deprecated, class-name should be a lowercase string/)
-
-          }.to_not raise_error()
-        end
-      end
-
-      describe 'and classname is a Resource Reference and strict == :off' do
-        before(:each) do
-          Puppet[:strict] = :off
-        end
-
-        it 'is not reported' do
-          expect { 
-            compile_to_catalog(<<-PP)
-              notice Class[ToothFairy]
-            PP
-            expect(@logs).to_not have_matching_log(/Warning: Upper cased class-name in a Class\[<class-name>\] is deprecated, class-name should be a lowercase string/)
-
-          }.to_not raise_error()
         end
       end
 
@@ -459,22 +390,21 @@ describe Puppet::Parser::Compiler do
         expect(catalog).to have_resource("Notify[y]").with_parameter(:require, be_resource("Class[Experiment::Baz]"))
       end
 
-      it "should not favor local scope, (with class not included in topscope)" do
-        catalog = compile_to_catalog(<<-PP)
-          class experiment {
+      it "should not favor local name scope" do
+        expect {
+          catalog = compile_to_catalog(<<-PP)
+            class experiment {
+              class baz {
+              }
+              notify {"x" : require => Class['baz'] }
+              notify {"y" : require => Class['experiment::baz'] }
+            }
             class baz {
             }
-            notify {"x" : require => Class['baz'] }
-            notify {"y" : require => Class['experiment::baz'] }
-          }
-          class baz {
-          }
-          include experiment
-          include experiment::baz
-        PP
-
-        expect(catalog).to have_resource("Notify[x]").with_parameter(:require, be_resource("Class[Baz]"))
-        expect(catalog).to have_resource("Notify[y]").with_parameter(:require, be_resource("Class[Experiment::Baz]"))
+            include experiment
+            include experiment::baz
+          PP
+        }.to raise_error(/Could not find resource 'Class\[Baz\]' in parameter 'require'/)
       end
     end
 
@@ -543,9 +473,13 @@ describe Puppet::Parser::Compiler do
       end
     end
 
-    describe "relationships to non existing resources when strict == :error" do
+    describe "relationships to non existing resources (even with strict==off)" do
+      # At some point in the future, this test can be modified to simply ignore the strict flag,
+      # but since the current version is a change from being under control of strict, this is now
+      # explicit - the standard setting is strict == warning, here setting it to off
+      #
       before(:each) do
-        Puppet[:strict] = :error
+        Puppet[:strict] = :off
       end
 
       [ 'before',
@@ -558,47 +492,6 @@ describe Puppet::Parser::Compiler do
               notify{ x : #{meta_param} => Notify[tooth_fairy] }
             PP
           }.to raise_error(/Could not find resource 'Notify\[tooth_fairy\]' in parameter '#{meta_param}'/)
-        end
-      end
-    end
-
-    describe "relationships to non existing resources when strict == :warning" do
-      before(:each) do
-        Puppet[:strict] = :warning
-      end
-
-      [ 'before',
-        'subscribe',
-        'notify',
-        'require'].each do |meta_param|
-        it "are reported as a warning when formed via meta parameter #{meta_param}" do
-          expect { 
-            compile_to_catalog(<<-PP)
-              notify{ x : #{meta_param} => Notify[tooth_fairy] }
-            PP
-            expect(@logs).to have_matching_log(/Could not find resource 'Notify\[tooth_fairy\]' in parameter '#{meta_param}'/)
-
-          }.to_not raise_error()
-        end
-      end
-    end
-
-    describe "relationships to non existing resources when strict == :off" do
-      before(:each) do
-        Puppet[:strict] = :off
-      end
-
-      [ 'before',
-        'subscribe',
-        'notify',
-        'require'].each do |meta_param|
-        it "does not log an error for meta parameter #{meta_param}" do
-          expect { 
-            compile_to_catalog(<<-PP)
-              notify{ x : #{meta_param} => Notify[tooth_fairy] }
-            PP
-            expect(@logs).to_not have_matching_log(/Could not find resource 'Notify\[tooth_fairy\]' in parameter '#{meta_param}'/)
-          }.to_not raise_error()
         end
       end
     end
@@ -752,6 +645,25 @@ describe Puppet::Parser::Compiler do
         MANIFEST
 
         expect(catalog).to have_resource("Notify[test]").with_parameter(:message, "yes true")
+      end
+    end
+
+    context "when dealing with resources (e.g. File) that modifies its name from title" do
+      [['', ''],
+       ['', '/'],
+       ['/', ''],
+       ['/', '/']].each do |t, r|
+        it "a circular reference can be compiled with endings: title='#{t}' and ref='#{r}'" do
+          expect {
+            node = Puppet::Node.new("testing")
+            compile_to_catalog(<<-"MANIFEST", node)
+            file { '/tmp/bazinga.txt#{t}':
+              content => 'henrik testing',
+              require => File['/tmp/bazinga.txt#{r}']
+            }
+          MANIFEST
+          }.not_to raise_error
+        end
       end
     end
 
@@ -1135,4 +1047,55 @@ describe Puppet::Parser::Compiler do
     end
   end
 
+  describe "the compiler when handling aliases" do
+    include PuppetSpec::Compiler
+
+    def extract_name(ref)
+      ref.sub(/.*\[(\w+)\]/, '\1')
+    end
+
+    def assert_created_relationships(catalog, type_name, expectations)
+      resources = catalog.resources.select { |res| res.type == type_name }
+
+      actual_relationships, actual_subscriptions = [:before, :notify].map do |relation|
+        resources.map do |res|
+          dependents = Array(res[relation])
+          dependents.map { |ref| [res.title, extract_name(ref)] }
+        end.inject(&:concat)
+      end
+
+      expect(actual_relationships).to match_array(expectations[:relationships] || [])
+      expect(actual_subscriptions).to match_array(expectations[:subscriptions] || [])
+    end
+
+    it 'allows a relationship to be formed using metaparam relationship' do
+      node = Puppet::Node.new("testnodex")
+      catalog = compile_to_catalog(<<-PP, node)
+        notify { 'actual_2':  before => 'Notify[alias_1]' }
+        notify { 'actual_1': alias => 'alias_1' }
+      PP
+      assert_created_relationships(catalog, 'Notify', { :relationships => [['actual_2', 'alias_1']] })
+    end
+
+    it 'allows a relationship to be formed using -> operator and alias' do
+      node = Puppet::Node.new("testnodex")
+      catalog = compile_to_catalog(<<-PP, node)
+        notify { 'actual_2':  }
+        notify { 'actual_1': alias => 'alias_1' }
+        Notify[actual_2] -> Notify[alias_1]
+      PP
+      assert_created_relationships(catalog, 'Notify', { :relationships => [['actual_2', 'alias_1']] })
+    end
+
+    it 'errors when an alias cannot be found when relationship is formed with -> operator' do
+      node = Puppet::Node.new("testnodex")
+      expect {
+        catalog = compile_to_catalog(<<-PP, node)
+          notify { 'actual_2':  }
+          notify { 'actual_1': alias => 'alias_1' }
+          Notify[actual_2] -> Notify[alias_2]
+        PP
+      }.to raise_error(/Could not find resource 'Notify\[alias_2\]'/)
+    end
+  end
 end

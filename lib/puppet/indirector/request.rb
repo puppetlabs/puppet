@@ -133,7 +133,7 @@ class Puppet::Indirector::Request
       case value
       when nil
         params
-      when true, false, String, Symbol, Fixnum, Bignum, Float
+      when true, false, String, Symbol, Integer, Float
         params << [key, value]
       else
         raise ArgumentError, "HTTP REST queries cannot handle values of type '#{value.class}'"
@@ -243,6 +243,8 @@ class Puppet::Indirector::Request
   def set_uri_key(key)
     @uri = key
     begin
+      # calling URI.escape for UTF-8 characters will % escape them
+      # and the resulting string components of the URI are now ASCII
       uri = URI.parse(URI.escape(key))
     rescue => detail
       raise ArgumentError, "Could not understand URL #{key}: #{detail}", detail.backtrace
@@ -272,6 +274,8 @@ class Puppet::Indirector::Request
       @protocol = uri.scheme
     end
 
-    @key = URI.unescape(uri.path.sub(/^\//, ''))
+    # The unescaped bytes are correct but in ASCII and must be treated
+    # as UTF-8 for the sake of performing string comparisons later
+    @key = URI.unescape(uri.path.sub(/^\//, '')).force_encoding(Encoding::UTF_8)
   end
 end

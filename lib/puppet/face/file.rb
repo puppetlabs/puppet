@@ -44,4 +44,7 @@ Puppet::Indirector::Face.define(:file, '0.0.1') do
   deactivate_action(:destroy)
 
   set_indirection_name :file_bucket_file
+
+  # The file face is deprecated
+  deprecate
 end

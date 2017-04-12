@@ -213,7 +213,7 @@ class Puppet::Node::Environment
   def validation_errors
     errors = []
     if conflicting_manifest_settings?
-      errors << "The 'disable_per_environment_manifest' setting is true, and the '#{name}' environment has an environment.conf manifest that conflicts with the 'default_manifest' setting."
+      errors << _("The 'disable_per_environment_manifest' setting is true, and the '%{env_name}' environment has an environment.conf manifest that conflicts with the 'default_manifest' setting.") % { env_name: name }
     end
     errors
   end
@@ -530,7 +530,7 @@ class Puppet::Node::Environment
   rescue => detail
     @known_resource_types.parse_failed = true
 
-    msg = "Could not parse for environment #{self}: #{detail}"
+    msg = _("Could not parse for environment %{env}: %{detail}") % { env: self, detail: detail }
     error = Puppet::Error.new(msg)
     error.set_backtrace(detail.backtrace)
     raise error

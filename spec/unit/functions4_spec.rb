@@ -200,7 +200,7 @@ describe 'the 4x function api' do
     it 'a function can use inexact argument mapping' do
       f = create_function_with_inexact_dispatch
       func = f.new(:closure_scope, :loader)
-      expect(func.call({}, 3,4,5)).to eql([Fixnum, Fixnum, Fixnum])
+      expect(func.call({}, 3.0,4.0,5.0)).to eql([Float, Float, Float])
       expect(func.call({}, 'Apple', 'Banana')).to eql([String, String])
     end
 
@@ -237,32 +237,19 @@ describe 'the 4x function api' do
     rejected: parameter 's1' expects a String value, got Integer")
     end
 
-    context 'can use injection' do
-      before :all do
-        injector = Puppet::Pops::Binder::Injector.create('test') do
-          bind.name('a_string').to('evoe')
-          bind.name('an_int').to(42)
-        end
-        Puppet.push_context({:injector => injector}, "injector for testing function API")
+    context 'an argument_mismatch handler' do
+      let(:func) { create_function_with_mismatch_handler.new(:closure_scope, :loader) }
+
+      it 'is called on matching arguments' do
+        expect { func.call({}, '1') }.to raise_error(ArgumentError, "'test' It's not OK to pass a string")
       end
 
-      after :all do
-        Puppet.pop_context()
+      it 'is not called unless arguments are matching' do
+        expect { func.call({}, '1', 3) }.to raise_error(ArgumentError, "'test' expects 1 argument, got 2")
       end
 
-      it 'attributes can be injected' do
-        f1 = create_function_with_class_injection()
-        f = f1.new(:closure_scope, :loader)
-        expect(f.test_attr2()).to eql("evoe")
-        expect(f.serial().produce(nil)).to eql(42)
-        expect(f.test_attr().class.name).to eql("FunctionAPISpecModule::TestDuck")
-      end
-
-      it 'parameters can be injected and woven with regular dispatch' do
-        f1 = create_function_with_param_injection_regular()
-        f = f1.new(:closure_scope, :loader)
-        expect(f.call(nil, 10, 20)).to eql("evoe! 10, and 20 < 42 = true")
-        expect(f.call(nil, 50, 20)).to eql("evoe! 50, and 20 < 42 = false")
+      it 'is not included in a signature mismatch description' do
+        expect { func.call({}, 2.3) }.to raise_error { |e| expect(e.message).not_to match(/String/) }
       end
     end
 
@@ -474,7 +461,7 @@ describe 'the 4x function api' do
         # evaluate a puppet call
         source = "testing::test(10) |$x| { $x+1 }"
         program = parser.parse_string(source, __FILE__)
-        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).returns(the_loader)
+        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns(the_loader)
         expect(parser.evaluate(scope, program)).to eql(11)
       end
     end
@@ -823,18 +810,6 @@ describe 'the 4x function api' do
     end
   end
 
-  def create_function_with_class_injection
-    f = Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
-      attr_injected Puppet::Pops::Types::TypeFactory.type_of(FunctionAPISpecModule::TestDuck), :test_attr
-      attr_injected Puppet::Pops::Types::TypeFactory.string(), :test_attr2, "a_string"
-      attr_injected_producer Puppet::Pops::Types::TypeFactory.integer(), :serial, "an_int"
-
-      def test(x,y,a=1, b=1, *c)
-        x <= y ? x : y
-      end
-    end
-  end
-
   def create_function_with_param_injection_regular
     f = Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
       attr_injected Puppet::Pops::Types::TypeFactory.type_of(FunctionAPISpecModule::TestDuck), :test_attr
@@ -962,8 +937,28 @@ describe 'the 4x function api' do
     end
   end
 
+  def create_function_with_mismatch_handler
+    f = Puppet::Functions.create_function('test') do
+      dispatch :test do
+        param 'Integer', :x
+      end
+
+      argument_mismatch :on_error do
+        param 'String', :x
+      end
+
+      def test(x)
+        yield(5,x) if block_given?
+      end
+
+      def on_error(x)
+        "It's not OK to pass a string"
+      end
+    end
+  end
+
   def type_alias_t(name, type_string)
-    type_expr = Puppet::Pops::Parser::EvaluatingParser.new.parse_string(type_string).current
+    type_expr = Puppet::Pops::Parser::EvaluatingParser.new.parse_string(type_string)
     Puppet::Pops::Types::TypeFactory.type_alias(name, type_expr)
   end
 

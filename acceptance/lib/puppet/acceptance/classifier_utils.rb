@@ -170,7 +170,8 @@ module Puppet
           Puppet::Acceptance::ClassifierUtils.tmpdirs << cert_dir
 
           @ca_cert_file = File.join(cert_dir, "cacert.pem")
-          File.open(@ca_cert_file, "w") do |f|
+          # RFC 1421 states PEM is 7-bit ASCII https://tools.ietf.org/html/rfc1421
+          File.open(@ca_cert_file, "w:ASCII") do |f|
             f.write(ca_cert)
           end
         end

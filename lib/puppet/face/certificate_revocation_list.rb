@@ -51,4 +51,6 @@ Puppet::Indirector::Face.define(:certificate_revocation_list, '0.0.1') do
 
   deactivate_action(:search)
   deactivate_action(:save)
+
+  deprecate
 end

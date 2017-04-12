@@ -1,5 +1,3 @@
-require 'puppet/indirector/data_binding/hiera'
-
 require 'tmpdir'
 require 'fileutils'
 
@@ -146,8 +144,6 @@ module Puppet::Test
       Puppet::Util::Profiler.clear
 
       Puppet.clear_deprecation_warnings
-
-      Puppet::DataBinding::Hiera.instance_variable_set("@hiera", nil)
     end
 
     # Call this method once per test, after execution of each individual test.
@@ -191,6 +187,9 @@ module Puppet::Test
         Puppet::Util.clear_environment(mode)
         $old_env.each {|k, v| Puppet::Util.set_env(k, v, mode) }
       end
+
+      # Clear all environments
+      Puppet.lookup(:environments).clear_all
 
       # Restore the load_path late, to avoid messing with stubs from the test.
       $LOAD_PATH.clear

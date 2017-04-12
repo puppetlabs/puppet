@@ -16,5 +16,7 @@ f.one:
     - second value
     - third value
 
+ab: "%{hiera('a')} and %{hiera('b')}"
+
 lookup_options:
   a: first

@@ -10,9 +10,8 @@ test_name "Puppet Lookup Command"
 @coderoot = "#{@testroot}/code"
 @confdir = "#{@testroot}/puppet"
 
-@mastername = on(master, facter('fqdn')).stdout.chomp
-host = agents.find { |host| host != master }
-@agentname = on(host, facter('fqdn')).stdout.chomp
+@node1 = 'node1.example.org'
+@node2 = 'node2.example.org'
 
 @master_opts = {
   'main' => {
@@ -37,6 +36,7 @@ file {
   '#{@coderoot}/environments/production':;
   '#{@coderoot}/environments/production/data':;
   '#{@coderoot}/environments/production/functions':;
+  '#{@coderoot}/environments/production/functions/environment':;
   '#{@coderoot}/environments/production/lib':;
   '#{@coderoot}/environments/production/lib/puppet':;
   '#{@coderoot}/environments/production/lib/puppet/functions':;
@@ -88,6 +88,7 @@ file {
   '#{@coderoot}/environments/env1':;
   '#{@coderoot}/environments/env1/data':;
   '#{@coderoot}/environments/env1/functions':;
+  '#{@coderoot}/environments/env1/functions/environment':;
   '#{@coderoot}/environments/env1/lib':;
   '#{@coderoot}/environments/env1/lib/puppet':;
   '#{@coderoot}/environments/env1/lib/puppet/functions':;
@@ -140,6 +141,7 @@ file {
   '#{@coderoot}/environments/env2':;
   '#{@coderoot}/environments/env2/data':;
   '#{@coderoot}/environments/env2/functions':;
+  '#{@coderoot}/environments/env2/functions/environment':;
   '#{@coderoot}/environments/env2/lib':;
   '#{@coderoot}/environments/env2/lib/puppet':;
   '#{@coderoot}/environments/env2/lib/puppet/functions':;
@@ -192,6 +194,7 @@ file {
   '#{@coderoot}/environments/env3':;
   '#{@coderoot}/environments/env3/data':;
   '#{@coderoot}/environments/env3/functions':;
+  '#{@coderoot}/environments/env3/functions/environment':;
   '#{@coderoot}/environments/env3/not-lib':;
   '#{@coderoot}/environments/env3/not-lib/puppet':;
   '#{@coderoot}/environments/env3/not-lib/puppet/functions':;
@@ -244,6 +247,7 @@ file {
   '#{@coderoot}/environments/env4':;
   '#{@coderoot}/environments/env4/data':;
   '#{@coderoot}/environments/env4/functions':;
+  '#{@coderoot}/environments/env4/functions/environment':;
   '#{@coderoot}/environments/env4/lib':;
   '#{@coderoot}/environments/env4/lib/puppet':;
   '#{@coderoot}/environments/env4/lib/puppet/functions':;
@@ -523,7 +527,7 @@ end
 }
 
 # Environment puppet function data provider
-file { '#{@coderoot}/environments/production/functions/data.pp':
+file { '#{@coderoot}/environments/production/functions/environment/data.pp':
   ensure => file,
   mode => "0755",
   content => 'function environment::data() {
@@ -535,7 +539,7 @@ file { '#{@coderoot}/environments/production/functions/data.pp':
 ',
 }
 
-file { '#{@coderoot}/environments/env1/functions/data.pp':
+file { '#{@coderoot}/environments/env1/functions/environment/data.pp':
   ensure => file,
   mode => "0755",
   content => 'function environment::data() {
@@ -547,7 +551,7 @@ file { '#{@coderoot}/environments/env1/functions/data.pp':
 ',
 }
 
-file { '#{@coderoot}/environments/env2/functions/data.pp':
+file { '#{@coderoot}/environments/env2/functions/environment/data.pp':
   ensure => file,
   mode => "0755",
   content => 'function environment::data() {
@@ -559,7 +563,7 @@ file { '#{@coderoot}/environments/env2/functions/data.pp':
 ',
 }
 
-file { '#{@coderoot}/environments/env3/functions/data.pp':
+file { '#{@coderoot}/environments/env3/functions/environment/data.pp':
   ensure => file,
   mode => "0755",
   content => 'function environment::data() {
@@ -571,7 +575,7 @@ file { '#{@coderoot}/environments/env3/functions/data.pp':
 ',
 }
 
-file { '#{@coderoot}/environments/env4/functions/data.pp':
+file { '#{@coderoot}/environments/env4/functions/environment/data.pp':
   ensure => file,
   mode => "0755",
   content => 'function environment::data() {
@@ -2125,8 +2129,8 @@ file { '#{@coderoot}/enc.rb' :
   content => "#!#{master['privatebindir']}/ruby
 nodename = ARGV.shift
 node2env = {
-  '#{@mastername}' => \\\"---\\\\n  environment: env2\\\\n\\\",
-  '#{@agentname}' => \\\"---\\\\n  environment: env3\\\\n\\\",
+  '#{@node1}' => \\\"---\\\\n  environment: env2\\\\n\\\",
+  '#{@node2}' => \\\"---\\\\n  environment: env3\\\\n\\\",
 }
 puts (\\\"\#{node2env[nodename]}\\\" ||'')
 ",
@@ -2196,10 +2200,10 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "env3 environment_key lookup failed, expected 'env-env2-ruby-function data() provided value'"
   )
- 
+
   step "environment_key from environment env4"
   re4 = on(master, puppet('lookup', '--environment env4', 'environment_key'), :acceptable_exit_codes => [1])
- 
+
   step "production mod1 module_key"
   repm1 = on(master, puppet('lookup', 'mod1::module_key'))
   result = repm1.stdout
@@ -2208,7 +2212,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "production mod1 module_key lookup failed, expected 'module-production-mod1-hiera'"
   )
- 
+
   step "production mod2 module_key"
   repm2 = on(master, puppet('lookup', 'mod2::module_key'))
   result = repm2.stdout
@@ -2217,7 +2221,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "production mod2 module_key lookup failed, expected 'module-production-mod2-ruby-function'"
   )
- 
+
   step "production mod3 module_key"
   repm3 = on(master, puppet('lookup', 'mod3::module_key'))
   result = repm3.stdout
@@ -2226,10 +2230,10 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "production mod3 module_key lookup failed, expected 'module-production-mod3-puppet-function'"
   )
- 
+
   step "production mod4 module_key"
   repm4 = on(master, puppet('lookup', 'mod4::module_key'), :acceptable_exit_codes => [1])
- 
+
   step "env1 mod1 module_key"
   re1m1 = on(master, puppet('lookup', '--environment env1', 'mod1::module_key'))
   result = re1m1.stdout
@@ -2238,7 +2242,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "env1 mod1 module_key lookup failed, expected 'module-env1-mod1-hiera'"
   )
- 
+
   step "env1 mod2 module_key"
   re1m2 = on(master, puppet('lookup', '--environment env1', 'mod2::module_key'))
   result = re1m2.stdout
@@ -2247,7 +2251,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "env1 mod2 module_key lookup failed, expected 'module-env1-mod2-ruby-function'"
   )
-  
+
   step "env1 mod3 module_key"
   re1m3 = on(master, puppet('lookup', '--environment env1', 'mod3::module_key'))
   result = re1m3.stdout
@@ -2256,10 +2260,10 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "env1 mod3 module_key lookup failed, expected 'module-env1-mod3-puppet-function'"
   )
- 
+
   step "env1 mod4 module_key"
   re1m4 = on(master, puppet('lookup', '--environment env1', 'mod4::module_key'), :acceptable_exit_codes => [1])
- 
+
   step "env2 mod1 module_key"
   re2m1 = on(master, puppet('lookup', '--environment env2', 'mod1::module_key'))
   result = re2m1.stdout
@@ -2286,10 +2290,10 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "env2 mod3 module_key lookup failed, expected 'module-env2-mod3-puppet-function'"
   )
- 
+
   step "env2 mod4 module_key"
   re2m4 = on(master, puppet('lookup', '--environment env2', 'mod4::module_key'), :acceptable_exit_codes => [1])
- 
+
   step "env3 mod1 module_key"
   re3m1 = on(master, puppet('lookup', '--environment env3', 'mod1::module_key'))
   result = re3m1.stdout
@@ -2298,7 +2302,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "env3 mod1 module_key lookup failed, expected 'module-env3-mod1-hiera'"
   )
- 
+
   step "env3 mod2 module_key"
   re3m2 = on(master, puppet('lookup', '--environment env3', 'mod2::module_key'))
   result = re3m2.stdout
@@ -2307,7 +2311,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "env3 mod2 module_key lookup failed, expected 'module-env3-mod2-ruby-function'"
   )
- 
+
   step "env3 mod3 module_key"
   re3m3 = on(master, puppet('lookup', '--environment env3', 'mod3::module_key'))
   result = re3m3.stdout
@@ -2316,7 +2320,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "env3 mod3 module_key lookup failed, expected 'module-env3-mod3-puppet-function'"
   )
- 
+
   step "env3 mod4 module_key"
 #   re3m4 = on(master, puppet('lookup', '--environment env3', 'mod4::module_key'), :acceptable_exit_codes => [1])
 
@@ -2328,7 +2332,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "env4 mod2 environent_key lookup failed, expected 'module-env4-hiera'"
   )
- 
+
 
   step "env4 mod2 module_key"
   re4m2 = on(master, puppet('lookup', '--environment env4', 'mod2::module_key'))
@@ -2338,7 +2342,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "env4 mod2 environent_key lookup failed, expected 'module-env4-mod2-ruby-function'"
   )
- 
+
   step "env4 mod3 module_key"
   re4m3 = on(master, puppet('lookup', '--environment env4', 'mod3::module_key'))
   result = re4m3.stdout
@@ -2347,7 +2351,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "env4 mod3 module_key lookup failed, expected 'module-env4-mod3-puppet-function'"
   )
- 
+
   step "env4 mod4 module_key"
   re4m4 = on(master, puppet('lookup', '--environment env4', 'mod4::module_key'), :acceptable_exit_codes => [1])
 
@@ -2359,7 +2363,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "global_key explained failed, expected /Global Data Provider.*\s*Using.*\s*Hier.*\s*Path.*\s*Orig.*\s*Found key.*global-hiera/"
   )
- 
+
   step "environment env1 environment_key explained"
   rxe1 = on(master, puppet('lookup', '--explain', '--environment env1', 'environment_key'))
   result = rxe1.stdout
@@ -2383,9 +2387,9 @@ with_puppet_running_on master, @master_opts, @coderoot do
     "environment env2 enviroment_key lookup failed, expected /Global Data Provider.*\s*Using.*\s*Hier.*\s*Path.*\s*Orig.*\s*No such key/"
   )
   assert_match(
-    /deprecated API function.*\s*.*env-env2-ruby-function/,
+    /eprecated API function.*\s*.*env-env2-ruby-function/,
     result,
-    "environment env2 enviroment_key lookup failed, expected /deprecated API function.*\s*.*env-env2-ruby-function/"
+    "environment env2 enviroment_key lookup failed, expected /eprecated API function.*\s*.*env-env2-ruby-function/"
   )
 
   step "environment env3 environment_key explained"
@@ -2397,9 +2401,9 @@ with_puppet_running_on master, @master_opts, @coderoot do
     "environment env3 enviroment_key lookup failed, expected /Global Data Provider.*\s*Using.*\s*Hier.*\s*Path.*\s*Orig.*\s*No such key/"
   )
   assert_match(
-    /deprecated API function.*\s*.*env-env3-puppet-function/,
+    /eprecated API function.*\s*.*env-env3-puppet-function/,
     result,
-    "environment env3 enviroment_key lookup failed, expected /deprecated API function.*\s*.*env-env3-puppet-function/"
+    "environment env3 enviroment_key lookup failed, expected /eprecated API function.*\s*.*env-env3-puppet-function/"
   )
 
   step "environment env4 environment_key explained"
@@ -2424,18 +2428,38 @@ with_puppet_running_on master, @master_opts, @coderoot do
   rxe2m3 = on(master, puppet('lookup', '--explain', '--environment env2', 'mod3::module_key'))
   result = rxe2m3.stdout
   assert_match(
-    /Global Data Provider.*\s*Using.*\s*Hier.*\s*Path.*\s*Orig.*\s*No such key.*\s*Env.*\s*deprecated API function.*\s*No such key.*\s*Module.*Data Provider.*\s*deprecated API function.*\s*Found key.*module-env2-mod3-puppet-function/,
+    /Global Data Provider.*Using configuration.*Hierarchy entry.*Path.*No such key/m,
     result,
-    "environment env2 mod3::module_key lookup failed."
+    "global env2 mod3::module_key lookup --explain had correct output"
+  )
+  assert_match(
+    /Environment Data Provider.*Deprecated.*No such key/m,
+    result,
+    "environment env2 mod3::module_key lookup --explain had correct output"
+  )
+  assert_match(
+    /Module.*Data Provider.*Deprecated API function "mod3::data".*Found key.*module-env2-mod3-puppet-function provided value/m,
+    result,
+    "module env2 mod3::module_key lookup --explain had correct output"
   )
 
   step "environment env3 mod2::module_key explained"
   rxe3m2 = on(master, puppet('lookup', '--explain', '--environment env3', 'mod2::module_key'))
   result = rxe3m2.stdout
   assert_match(
-    /Global Data Provider.*\s*Using.*\s*Hier.*\s*Path.*\s*Orig.*\s*No such key.*\s*Env.*\s*deprecated API function.*\s*No such key.*\s*Module.*Data Provider.*\s*deprecated API function.*\s*Found key.*module-env3-mod2-ruby-function/,
+    /Global Data Provider.*Using configuration.*Hierarchy entry.*Path.*No such key/m,
     result,
-    "environment env3 mod2::module_key lookup failed."
+    "global env2 mod3::module_key lookup --explain had correct output"
+  )
+  assert_match(
+    /Environment Data Provider.*Deprecated.*No such key/m,
+    result,
+    "environment env2 mod3::module_key lookup --explain had correct output"
+  )
+  assert_match(
+    /Module.*Data Provider.*Deprecated API function "mod2::data".*Found key.*module-env3-mod2-ruby-function provided value/m,
+    result,
+    "module env2 mod3::module_key lookup --explain had correct output"
   )
 
   step "environment env4 mod1::module_key explained"
@@ -2522,8 +2546,8 @@ with_puppet_running_on master, @master_opts, @coderoot do
   step 'apply enc manifest'
   apply_manifest_on(master, @encmanifest, :catch_failures => true)
 
-  step "enc specified master environment environment_key"
-  r = on(master, puppet('lookup', "--node #{@mastername}", "--confdir #{@confdir}", 'environment_key'))
+  step "enc specified node1 environment environment_key"
+  r = on(master, puppet('lookup', "--node #{@node1}", "--confdir #{@confdir}", 'environment_key'))
   result = r.stdout
   assert_match(
     /env-env2-ruby-function/,
@@ -2531,8 +2555,8 @@ with_puppet_running_on master, @master_opts, @coderoot do
     "enc specified environment env2 environment_key lookup failed"
   )
 
-  step "enc specified agent environment environment_key"
-  r = on(master, puppet('lookup', "--node #{@agentname}", "--confdir #{@confdir}", 'environment_key'))
+  step "enc specified node2 environment environment_key"
+  r = on(master, puppet('lookup', "--node #{@node2}", "--confdir #{@confdir}", 'environment_key'))
   result = r.stdout
   assert_match(
     /env-env3-puppet-function/,

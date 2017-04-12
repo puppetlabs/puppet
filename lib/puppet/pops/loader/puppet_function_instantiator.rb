@@ -20,7 +20,7 @@ class PuppetFunctionInstantiator
     # parse and validate
     result = parser.parse_string(pp_code_string, source_ref)
     # Only one function is allowed (and no other definitions)
-    case result.model.definitions.size
+    case result.definitions.size
     when 0
       raise ArgumentError, "The code loaded from #{source_ref} does not define the function '#{typed_name.name}' - it is empty."
     when 1
@@ -28,7 +28,7 @@ class PuppetFunctionInstantiator
     else
       raise ArgumentError, "The code loaded from #{source_ref} must contain only the function '#{typed_name.name}' - it has additional definitions."
     end
-    the_function_definition = result.model.definitions[0]
+    the_function_definition = result.definitions[0]
 
     unless the_function_definition.is_a?(Model::FunctionDefinition)
       raise ArgumentError, "The code loaded from #{source_ref} does not define the function '#{typed_name.name}' - no function found."
@@ -38,7 +38,7 @@ class PuppetFunctionInstantiator
       actual = the_function_definition.name
       raise ArgumentError, "The code loaded from #{source_ref} produced function with the wrong name, expected #{expected}, actual #{actual}"
     end
-    unless result.model().body == the_function_definition
+    unless result.body == the_function_definition
       raise ArgumentError, "The code loaded from #{source_ref} contains additional logic - can only contain the function #{typed_name.name}"
     end
 

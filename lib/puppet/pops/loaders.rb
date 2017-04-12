@@ -16,20 +16,22 @@ class Loaders
   attr_reader :public_environment_loader
   attr_reader :private_environment_loader
   attr_reader :implementation_registry
+  attr_reader :environment
 
-  def self.new(environment)
+  def self.new(environment, for_agent = false)
     obj = environment.loaders
     if obj.nil?
       obj = self.allocate
-      obj.send(:initialize, environment)
+      obj.send(:initialize, environment, for_agent)
     end
     obj
   end
 
-  def initialize(environment)
+  def initialize(environment, for_agent)
     # Protect against environment havoc
     raise ArgumentError.new("Attempt to redefine already initialized loaders for environment") unless environment.loaders.nil?
     environment.loaders = self
+    @environment = environment
     @loaders_by_name = {}
 
     add_loader_by_name(self.class.static_loader)
@@ -47,12 +49,16 @@ class Loaders
     #    concept of environment the same way as when running as a master (except when doing apply).
     #    The creation mechanisms should probably differ between the two.
     #
-    @private_environment_loader = create_environment_loader(environment)
+    @private_environment_loader = if for_agent
+      add_loader_by_name(Loader::SimpleEnvironmentLoader.new(@puppet_system_loader, 'agent environment'))
+    else
+      create_environment_loader(environment)
+    end
 
     # 3. The implementation registry maintains mappings between Puppet types and Runtime types for
     #    the current environment
     @implementation_registry = Types::ImplementationRegistry.new(@private_environment_loader)
-    Pcore.init(@puppet_system_loader, @implementation_registry)
+    Pcore.init(@puppet_system_loader, @implementation_registry, for_agent)
 
     # 4. module loaders are set up from the create_environment_loader, they register themselves
   end
@@ -85,12 +91,20 @@ class Loaders
   end
 
   def register_implementations(obj_classes, name_authority)
-    loader = @private_environment_loader
+    self.class.register_implementations_with_loader(obj_classes, name_authority, loader = @private_environment_loader)
+  end
+
+  # Register implementations using the global static loader
+  def self.register_static_implementations(obj_classes)
+    register_implementations_with_loader(obj_classes, Pcore::RUNTIME_NAME_AUTHORITY, static_loader)
+  end
+
+  def self.register_implementations_with_loader(obj_classes, name_authority, loader)
     types = obj_classes.map do |obj_class|
-      type = obj_class._ptype
+      type = obj_class._pcore_type
       typed_name = Loader::TypedName.new(:type, type.name.downcase, name_authority)
       entry = loader.loaded_entry(typed_name)
-      loader.set_entry(typed_name, type, obj_class._plocation) if entry.nil? || entry.value.nil?
+      loader.set_entry(typed_name, type) if entry.nil? || entry.value.nil?
       type
     end
     # Resolve lazy so that all types can cross reference each other
@@ -106,13 +120,28 @@ class Loaders
   # @api private
   def self.register_runtime3_type(name, origin)
     loaders = Puppet.lookup(:loaders) { nil }
-    unless loaders.nil?
-      name = name.to_s
-      caps_name = Types::TypeFormatter.singleton.capitalize_segments(name)
-      typed_name = Loader::TypedName.new(:type, name.downcase)
-      loaders.runtime3_type_loader.set_entry(typed_name, Types::PResourceType.new(caps_name), origin)
-    end
+    return nil if loaders.nil?
+
+    rt3_loader = loaders.runtime3_type_loader
+    return nil if rt3_loader.nil?
+
+    name = name.to_s
+    caps_name = Types::TypeFormatter.singleton.capitalize_segments(name)
+    typed_name = Loader::TypedName.new(:type, name.downcase)
+    rt3_loader.set_entry(typed_name, Types::PResourceType.new(caps_name), origin)
     nil
+  end
+
+  # Finds a loader to use when deserializing a catalog and then subsequenlty use user
+  # defined types found in that catalog.
+  #
+  def self.catalog_loader
+    loaders = Puppet.lookup(:loaders) { nil }
+    if loaders.nil?
+      loaders = Loaders.new(Puppet.lookup(:current_environment), true)
+      Puppet.push_context(:loaders => loaders)
+    end
+    loaders.find_loader(nil)
   end
 
   # Finds the `Loaders` instance by looking up the :loaders in the global Puppet context
@@ -241,7 +270,7 @@ class Loaders
       loader = add_loader_by_name(Loader::SimpleEnvironmentLoader.new(@runtime3_type_loader, loader_name))
     else
       # View the environment as a module to allow loading from it - this module is always called 'environment'
-      loader = Loader::ModuleLoaders.module_loader_from(@runtime3_type_loader, self, 'environment', env_path)
+      loader = Loader::ModuleLoaders.environment_loader_from(@runtime3_type_loader, self, env_path)
     end
 
     # An environment has a module path even if it has a null loader

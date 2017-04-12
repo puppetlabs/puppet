@@ -6,13 +6,24 @@ Puppet::Functions.create_function(:json_data) do
     param 'Puppet::LookupContext', :context
   end
 
+  argument_mismatch :missing_path do
+    param 'Hash', :options
+    param 'Puppet::LookupContext', :context
+  end
+
   def json_data(options, context)
     path = options['path']
-    begin
-      JSON.parse(Puppet::FileSystem.read(path, :encoding => 'utf-8'))
-    rescue JSON::ParserError => ex
-      # Filename not included in message, so we add it here.
-      raise Puppet::DataBinding::LookupError, "Unable to parse (#{path}): #{ex.message}"
+    context.cached_file_data(path) do |content|
+      begin
+        JSON.parse(content)
+      rescue JSON::ParserError => ex
+        # Filename not included in message, so we add it here.
+        raise Puppet::DataBinding::LookupError, "Unable to parse (#{path}): #{ex.message}"
+      end
     end
+  end
+
+  def missing_path(options, context)
+    "one of 'path', 'paths' 'glob', 'globs' or 'mapped_paths' must be declared in hiera.yaml when using this data_hash function"
   end
 end

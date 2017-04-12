@@ -66,7 +66,7 @@ $allusers = hiera_array('users') | $key | { "Key \'${key}\' not found" }
 value is a hash, Puppet raises a type mismatch error.
 
 `hiera_array` is deprecated in favor of using `lookup` and will be removed in 6.0.0.
-See  https://docs.puppet.com/puppet/#{Puppet.version}/reference/deprecated_language.html.
+See  https://docs.puppet.com/puppet/#{Puppet.minor_version}/reference/deprecated_language.html.
 Replace the calls as follows:
 
 | from  | to |

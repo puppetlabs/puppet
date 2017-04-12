@@ -210,7 +210,7 @@ module Win32
     # Returns an array of scheduled task names.
     #
     def enum
-      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
+      raise Error.new(_('No current task scheduler. ITaskScheduler is NULL.')) if @pITS.nil?
       array = []
 
       @pITS.UseInstance(COM::EnumWorkItems, :Enum) do |pIEnum|
@@ -243,7 +243,7 @@ module Win32
     # Activate the specified task.
     #
     def activate(task)
-      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
+      raise Error.new(_('No current task scheduler. ITaskScheduler is NULL.')) if @pITS.nil?
       raise TypeError unless task.is_a?(String)
 
       FFI::MemoryPointer.new(:pointer) do |ptr|
@@ -259,7 +259,7 @@ module Win32
     # Delete the specified task name.
     #
     def delete(task)
-      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
+      raise Error.new(_('No current task scheduler. ITaskScheduler is NULL.')) if @pITS.nil?
       raise TypeError unless task.is_a?(String)
 
       @pITS.Delete(wide_string(task))
@@ -270,7 +270,7 @@ module Win32
     # Execute the current task.
     #
     def run
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
 
       @pITask.Run
     end
@@ -282,8 +282,8 @@ module Win32
     # file instead. A '.job' extension is recommended but not enforced.
     #
     def save(file = nil)
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
-      raise Error.new('Account information must be set on the current task to save it properly.') if !@account_information_set
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
+      raise Error.new(_('Account information must be set on the current task to save it properly.')) if !@account_information_set
 
       reset = true
 
@@ -303,7 +303,7 @@ module Win32
     # Terminate the current task.
     #
     def terminate
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
 
       @pITask.Terminate
     end
@@ -311,7 +311,7 @@ module Win32
     # Set the host on which the various TaskScheduler methods will execute.
     #
     def machine=(host)
-      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
+      raise Error.new(_('No current task scheduler. ITaskScheduler is NULL.')) if @pITS.nil?
       raise TypeError unless host.is_a?(String)
 
       @pITS.SetTargetComputer(wide_string(host))
@@ -338,8 +338,8 @@ module Win32
     # properly registered and visible through the MMC snap-in / schtasks.exe
     #
     def set_account_information(user, password)
-      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No current task scheduler. ITaskScheduler is NULL.')) if @pITS.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
 
       bool = false
 
@@ -348,7 +348,7 @@ module Win32
           @pITask.SetAccountInformation(wide_string(""), FFI::Pointer::NULL)
         else
           if user.length > MAX_ACCOUNT_LENGTH
-            raise Error.new("User has exceeded maximum allowed length #{MAX_ACCOUNT_LENGTH}")
+            raise Error.new(_("User has exceeded maximum allowed length %{max}") % { max: MAX_ACCOUNT_LENGTH })
           end
           user = wide_string(user)
           password = wide_string(password)
@@ -360,7 +360,7 @@ module Win32
       rescue Puppet::Util::Windows::Error => e
         raise e unless e.code == SCHED_E_ACCOUNT_INFORMATION_NOT_SET
 
-        warn 'job created, but password was invalid'
+        warn _('job created, but password was invalid')
       end
 
       bool
@@ -370,8 +370,8 @@ module Win32
     # been associated with the task.
     #
     def account_information
-      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No current task scheduler. ITaskScheduler is NULL.')) if @pITS.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
 
       # default under certain failures
       user = nil
@@ -395,8 +395,8 @@ module Win32
     # Returns the name of the application associated with the task.
     #
     def application_name
-      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No current task scheduler. ITaskScheduler is NULL.')) if @pITS.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
 
       app = nil
 
@@ -414,13 +414,13 @@ module Win32
     # Sets the application name associated with the task.
     #
     def application_name=(app)
-      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No current task scheduler. ITaskScheduler is NULL.')) if @pITS.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
       raise TypeError unless app.is_a?(String)
 
       # the application name is written to a .job file on disk, so is subject to path limitations
       if app.length > MAX_PATH
-        raise Error.new("Application name has exceeded maximum allowed length #{MAX_PATH}")
+        raise Error.new(_("Application name has exceeded maximum allowed length %{max}") % { max: MAX_PATH })
       end
       @pITask.SetApplicationName(wide_string(app))
 
@@ -430,8 +430,8 @@ module Win32
     # Returns the command line parameters for the task.
     #
     def parameters
-      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No current task scheduler. ITaskScheduler is NULL.')) if @pITS.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
 
       param = nil
 
@@ -451,12 +451,12 @@ module Win32
     # line parameters set it to an empty string.
     #
     def parameters=(param)
-      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No current task scheduler. ITaskScheduler is NULL.')) if @pITS.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
       raise TypeError unless param.is_a?(String)
 
       if param.length > MAX_PARAMETERS_LENGTH
-        raise Error.new("Parameters has exceeded maximum allowed length #{MAX_PARAMETERS_LENGTH}")
+        raise Error.new(_("Parameters has exceeded maximum allowed length %{max}") % { max: MAX_PARAMETERS_LENGTH })
       end
 
       @pITask.SetParameters(wide_string(param))
@@ -467,8 +467,8 @@ module Win32
     # Returns the working directory for the task.
     #
     def working_directory
-      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No current task scheduler. ITaskScheduler is NULL.')) if @pITS.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
 
       dir = nil
 
@@ -486,12 +486,12 @@ module Win32
     # Sets the working directory for the task.
     #
     def working_directory=(dir)
-      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No current task scheduler. ITaskScheduler is NULL.')) if @pITS.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
       raise TypeError unless dir.is_a?(String)
 
       if dir.length > MAX_PATH
-        raise Error.new("Working directory has exceeded maximum allowed length #{MAX_PATH}")
+        raise Error.new(_("Working directory has exceeded maximum allowed length %{max}") % { max: MAX_PATH })
       end
 
       @pITask.SetWorkingDirectory(wide_string(dir))
@@ -504,8 +504,8 @@ module Win32
     # and 'unknown'.
     #
     def priority
-      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No current task scheduler. ITaskScheduler is NULL.')) if @pITS.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
 
       priority_name = ''
 
@@ -537,8 +537,8 @@ module Win32
     # priority constant value.
     #
     def priority=(priority)
-      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No current task scheduler. ITaskScheduler is NULL.')) if @pITS.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
       raise TypeError unless priority.is_a?(Numeric)
 
       @pITask.SetPriority(priority)
@@ -552,12 +552,12 @@ module Win32
     #
     def new_work_item(task, trigger)
       raise TypeError unless trigger.is_a?(Hash)
-      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
+      raise Error.new(_('No current task scheduler. ITaskScheduler is NULL.')) if @pITS.nil?
 
       # I'm working around github issue #1 here.
       enum.each{ |name|
         if name.downcase == task.downcase + '.job'
-          raise Error.new("task '#{task}' already exists")
+          raise Error.new(_("task '%{task}' already exists") % { task: task })
         end
       }
 
@@ -593,8 +593,8 @@ module Win32
     # Returns the number of triggers associated with the active task.
     #
     def trigger_count
-      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No current task scheduler. ITaskScheduler is NULL.')) if @pITS.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
 
       count = 0
 
@@ -609,8 +609,8 @@ module Win32
     # Deletes the trigger at the specified index.
     #
     def delete_trigger(index)
-      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No current task scheduler. ITaskScheduler is NULL.')) if @pITS.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
 
       @pITask.DeleteTrigger(index)
       index
@@ -620,8 +620,8 @@ module Win32
     # current task.
     #
     def trigger(index)
-      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No current task scheduler. ITaskScheduler is NULL.')) if @pITS.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
 
       trigger = {}
 
@@ -638,8 +638,8 @@ module Win32
     # Sets the trigger for the currently active task.
     #
     def trigger=(trigger)
-      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No current task scheduler. ITaskScheduler is NULL.')) if @pITS.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
       raise TypeError unless trigger.is_a?(Hash)
 
       FFI::MemoryPointer.new(:word, 1) do |trigger_index_ptr|
@@ -658,8 +658,8 @@ module Win32
     # Adds a trigger at the specified index.
     #
     def add_trigger(index, trigger)
-      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No current task scheduler. ITaskScheduler is NULL.')) if @pITS.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
       raise TypeError unless trigger.is_a?(Hash)
 
       @pITask.UseInstance(COM::TaskTrigger, :GetTrigger, index) do |pITaskTrigger|
@@ -671,7 +671,7 @@ module Win32
     # must OR the return value to determine the flags yourself.
     #
     def flags
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
 
       flags = 0
 
@@ -686,8 +686,8 @@ module Win32
     # Sets an OR'd value of flags that modify the behavior of the work item.
     #
     def flags=(flags)
-      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No current task scheduler. ITaskScheduler is NULL.')) if @pITS.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
 
       @pITask.SetFlags(flags)
       flags
@@ -697,7 +697,7 @@ module Win32
     # 'ready', 'running', 'not scheduled' or 'unknown'.
     #
     def status
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
 
       st = nil
 
@@ -723,7 +723,7 @@ module Win32
     # Returns the exit code from the last scheduled run.
     #
     def exit_code
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
 
       status = 0
 
@@ -742,7 +742,7 @@ module Win32
     # Returns the comment associated with the task, if any.
     #
     def comment
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
 
       comment = nil
 
@@ -760,11 +760,11 @@ module Win32
     # Sets the comment for the task.
     #
     def comment=(comment)
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
       raise TypeError unless comment.is_a?(String)
 
       if comment.length > MAX_COMMENT_LENGTH
-        raise Error.new("Comment has exceeded maximum allowed length #{MAX_COMMENT_LENGTH}")
+        raise Error.new(_("Comment has exceeded maximum allowed length %{max}") % { max: MAX_COMMENT_LENGTH })
       end
 
       @pITask.SetComment(wide_string(comment))
@@ -774,7 +774,7 @@ module Win32
     # Returns the name of the user who created the task.
     #
     def creator
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
 
       creator = nil
 
@@ -792,11 +792,11 @@ module Win32
     # Sets the creator for the task.
     #
     def creator=(creator)
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
       raise TypeError unless creator.is_a?(String)
 
       if creator.length > MAX_ACCOUNT_LENGTH
-        raise Error.new("Creator has exceeded maximum allowed length #{MAX_ACCOUNT_LENGTH}")
+        raise Error.new(_("Creator has exceeded maximum allowed length %{max}") % { max: MAX_ACCOUNT_LENGTH })
       end
 
 
@@ -807,7 +807,7 @@ module Win32
     # Returns a Time object that indicates the next time the task will run.
     #
     def next_run_time
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
 
       time = nil
 
@@ -823,7 +823,7 @@ module Win32
     # nil if the task has never run.
     #
     def most_recent_run_time
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
 
       time = nil
 
@@ -843,7 +843,7 @@ module Win32
     # will run before terminating.
     #
     def max_run_time
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
 
       max_run_time = nil
 
@@ -859,7 +859,7 @@ module Win32
     # before terminating. Returns the value you specified if successful.
     #
     def max_run_time=(max_run_time)
-      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
+      raise Error.new(_('No currently active task. ITask is NULL.')) if @pITask.nil?
       raise TypeError unless max_run_time.is_a?(Numeric)
 
       @pITask.SetMaxRunTime(max_run_time)
@@ -977,7 +977,7 @@ module Win32
             when :TASK_TIME_TRIGGER_ONCE
               # Do nothing. The Type member of the TASK_TRIGGER struct is ignored.
             else
-              raise Error.new("Unknown trigger type #{trigger['trigger_type']}")
+              raise Error.new(_("Unknown trigger type %{type}") % { type: trigger['trigger_type'] })
           end
 
           trigger_struct = COM::TASK_TRIGGER.new(trigger_ptr)
@@ -1044,7 +1044,7 @@ module Win32
         when :TASK_TIME_TRIGGER_ONCE
           trigger['type'] = { 'once' => nil }
         else
-          raise Error.new("Unknown trigger type #{task_trigger[:TriggerType]}")
+          raise Error.new(_("Unknown trigger type %{type}") % { type: task_trigger[:TriggerType] })
       end
 
       trigger

@@ -21,15 +21,24 @@ class Dispatch < Evaluator::CallableSignature
   # @api public
   attr_reader :block_name
 
+  # @param type [Puppet::Pops::Types::PArrayType, Puppet::Pops::Types::PTupleType] - type describing signature
+  # @param method_name [String] the name of the method that will be called when type matches given arguments
+  # @param param_names [Array<String>] names matching the number of parameters specified by type (or empty array)
+  # @param block_name [String,nil] name of block parameter, no nil
+  # @param injections [Array<Array>] injection data for weaved parameters
+  # @param weaving [Array<Integer,Array>] weaving knits
+  # @param last_captures [Boolean] true if last parameter is captures rest
+  # @param argument_mismatch_handler [Boolean] true if this is a dispatch for an argument mismatch
   # @api private
-  def initialize(type, method_name, param_names, block_name, injections, weaving, last_captures)
+  def initialize(type, method_name, param_names, last_captures = false, block_name = nil, injections = EMPTY_ARRAY, weaving = EMPTY_ARRAY, argument_mismatch_handler = false)
     @type = type
     @method_name = method_name
-    @param_names = param_names || []
-    @block_name = block_name
-    @injections = injections || []
-    @weaving = weaving
+    @param_names = param_names
     @last_captures = last_captures
+    @block_name = block_name
+    @injections = injections
+    @weaving = weaving
+    @argument_mismatch_handler = argument_mismatch_handler
   end
 
   # @api private
@@ -39,7 +48,11 @@ class Dispatch < Evaluator::CallableSignature
 
   # @api private
   def last_captures_rest?
-    !! @last_captures
+    @last_captures
+  end
+
+  def argument_mismatch_handler?
+    @argument_mismatch_handler
   end
 
   # @api private
@@ -56,7 +69,6 @@ class Dispatch < Evaluator::CallableSignature
     if @injections.empty?
       args
     else
-      injector = nil # lazy lookup of injector Puppet.lookup(:injector)
       new_args = []
       @weaving.each do |knit|
         if knit.is_a?(Array)
@@ -66,12 +78,8 @@ class Dispatch < Evaluator::CallableSignature
             when :dispatcher_internal
               # currently only supports :scope injection
               scope
-            when :producer
-              injector ||= Puppet.lookup(:injector)
-              injector.lookup_producer(scope, injection_data[0], injection_data[2])
             else
-              injector ||= Puppet.lookup(:injector)
-              injector.lookup(scope, injection_data[0], injection_data[2])
+              raise_error ArgumentError, "Unknown injection #{injection_data[3]}"
             end
         else
           # Careful so no new nil arguments are added since they would override default

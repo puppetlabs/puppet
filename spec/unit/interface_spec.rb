@@ -132,6 +132,33 @@ describe Puppet::Interface do
     end
   end
 
+  context "when deprecating a face" do
+    let(:face) { subject.new(:foo, '0.0.1') }
+    describe "#deprecate" do
+      it "should respond to #deprecate" do
+        expect(subject.new(:foo, '0.0.1')).to respond_to(:deprecate)
+      end
+
+      it "should set the deprecated value to true" do
+        expect(face.deprecated?).to be_falsey
+        face.deprecate
+        expect(face.deprecated?).to be_truthy
+      end
+    end
+
+    describe "#deprecated?" do
+      it "should return a nil (falsey) value by default" do
+        expect(face.deprecated?).to be_falsey
+      end
+
+      it "should return true if the face has been deprecated" do
+        expect(face.deprecated?).to be_falsey
+        face.deprecate
+        expect(face.deprecated?).to be_truthy
+      end
+    end
+  end
+
   describe "with face-level display_global_options" do
     it "should not return any action level display_global_options" do
       face = subject.new(:with_display_global_options, '0.0.1') do

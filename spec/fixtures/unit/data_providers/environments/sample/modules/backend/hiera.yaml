@@ -1,5 +1,0 @@
----
-:version: 4
-:hierarchy:
-  - :name: "Other"
-    :backend: special

@@ -30,6 +30,7 @@ class Puppet::Application::Device < Puppet::Application
       :debug => false,
       :centrallogs => false,
       :setdest => false,
+      :target => nil,
     }.each do |opt,val|
       options[opt] = val
     end
@@ -57,6 +58,10 @@ class Puppet::Application::Device < Puppet::Application
     @args[:Port] = arg
   end
 
+  option("--target DEVICE", "-t") do |arg|
+    options[:target] = arg.to_s
+  end
+
     def help
       <<-'HELP'
 
@@ -72,9 +77,10 @@ Currently must be run out periodically, using cron or something similar.
 
 USAGE
 -----
-  puppet device [-d|--debug] [--detailed-exitcodes] [-V|--version]
+  puppet device [-d|--debug] [--detailed-exitcodes] [--deviceconfig <file>]
                 [-h|--help] [-l|--logdest syslog|<file>|console]
                 [-v|--verbose] [-w|--waitforcert <seconds>]
+                [-t|--target <device>] [-V|--version]
 
 
 DESCRIPTION
@@ -120,6 +126,10 @@ parameter, so you can specify '--server <servername>' as an argument.
   means at least one device had resource failures. Exit codes of '3', '5', '6',
   or '7' means that a bitwise combination of the preceding exit codes happened.
 
+* --deviceconfig:
+  Path to the device config file for puppet device.
+  Default: $confdir/device.conf
+
 * --help:
   Print this help message
 
@@ -132,6 +142,10 @@ parameter, so you can specify '--server <servername>' as an argument.
   log file will not have an ending ']' automatically written to it due to the
   appending nature of logging. It must be appended manually to make the content
   valid JSON.
+
+* --target:
+  Target a specific device/certificate in the device.conf. Doing so will perform a
+  device run against only that device/certificate.
 
 * --verbose:
   Turn on verbose reporting.
@@ -166,51 +180,62 @@ Licensed under the Apache 2.0 License
     confdir = Puppet[:confdir]
     certname = Puppet[:certname]
 
-    # find device list
-    require 'puppet/util/network_device/config'
-    devices = Puppet::Util::NetworkDevice::Config.devices
-    if devices.empty?
-      Puppet.err "No device found in #{Puppet[:deviceconfig]}"
-      exit(1)
-    end
-    returns = devices.collect do |devicename,device|
-      begin
-        device_url = URI.parse(device.url)
-        # Handle nil scheme & port
-        scheme = "#{device_url.scheme}://" if device_url.scheme
-        port = ":#{device_url.port}" if device_url.port
-        Puppet.info "starting applying configuration to #{device.name} at #{scheme}#{device_url.host}#{port}#{device_url.path}"
+    env = Puppet.lookup(:environments).get(Puppet[:environment])
+    returns = Puppet.override(:current_environment => env, :loaders => Puppet::Pops::Loaders.new(env)) do
+      # find device list
+      require 'puppet/util/network_device/config'
+      devices = Puppet::Util::NetworkDevice::Config.devices.dup
+      if options[:target]
+        devices.select! { |key, value| key == options[:target] }
+      end
+      if devices.empty?
+        if options[:target]
+          Puppet.err _("Target device / certificate '%{target}' not found in %{config}") % { target: options[:target], config: Puppet[:deviceconfig] }
+        else
+          Puppet.err _("No device found in %{config}") % { config: Puppet[:deviceconfig] }
+          exit(1)
+        end
+      end
+      devices.collect do |devicename,device|
+        begin
+          device_url = URI.parse(device.url)
+          # Handle nil scheme & port
+          scheme = "#{device_url.scheme}://" if device_url.scheme
+          port = ":#{device_url.port}" if device_url.port
+          Puppet.info _("starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
 
-        # override local $vardir and $certname
-        Puppet[:confdir] = ::File.join(Puppet[:devicedir], device.name)
-        Puppet[:vardir] = ::File.join(Puppet[:devicedir], device.name)
-        Puppet[:certname] = device.name
+          # override local $vardir and $certname
+          Puppet[:confdir] = ::File.join(Puppet[:devicedir], device.name)
+          Puppet[:vardir] = ::File.join(Puppet[:devicedir], device.name)
+          Puppet[:certname] = device.name
 
-        # this will reload and recompute default settings and create the devices sub vardir, or we hope so :-)
-        Puppet.settings.use :main, :agent, :ssl
+          # this will reload and recompute default settings and create the devices sub vardir, or we hope so :-)
+          Puppet.settings.use :main, :agent, :ssl
 
-        # this init the device singleton, so that the facts terminus
-        # and the various network_device provider can use it
-        Puppet::Util::NetworkDevice.init(device)
+          # this init the device singleton, so that the facts terminus
+          # and the various network_device provider can use it
+          Puppet::Util::NetworkDevice.init(device)
 
-        # ask for a ssl cert if needed, but at least
-        # setup the ssl system for this device.
-        setup_host
+          # ask for a ssl cert if needed, but at least
+          # setup the ssl system for this device.
+          setup_host
 
-        require 'puppet/configurer'
-        configurer = Puppet::Configurer.new
-        configurer.run(:network_device => true, :pluginsync => Puppet::Configurer.should_pluginsync?)
-      rescue => detail
-        Puppet.log_exception(detail)
-        # If we rescued an error, then we return 1 as the exit code
-        1
-      ensure
-        Puppet[:vardir] = vardir
-        Puppet[:confdir] = confdir
-        Puppet[:certname] = certname
-        Puppet::SSL::Host.reset
+          require 'puppet/configurer'
+          configurer = Puppet::Configurer.new
+          configurer.run(:network_device => true, :pluginsync => Puppet::Configurer.should_pluginsync?)
+        rescue => detail
+          Puppet.log_exception(detail)
+          # If we rescued an error, then we return 1 as the exit code
+          1
+        ensure
+          Puppet[:vardir] = vardir
+          Puppet[:confdir] = confdir
+          Puppet[:certname] = certname
+          Puppet::SSL::Host.reset
+        end
       end
     end
+
     if ! returns or returns.compact.empty?
       exit(1)
     elsif options[:detailed_exitcodes]
