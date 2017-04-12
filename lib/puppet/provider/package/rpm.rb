@@ -88,7 +88,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
         }
       }
     rescue Puppet::ExecutionFailure
-      raise Puppet::Error, "Failed to list packages", $!.backtrace
+      raise Puppet::Error, _("Failed to list packages"), $!.backtrace
     end
 
     packages
@@ -128,7 +128,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
   # Here we just retrieve the version from the file specified in the source.
   def latest
     unless source = @resource[:source]
-      @resource.fail "RPMs must specify a package source"
+      @resource.fail _("RPMs must specify a package source")
     end
 
     cmd = [command(:rpm), "-q", "--qf", "'#{self.class::NEVRA_FORMAT}'", "-p", source]
@@ -138,7 +138,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
 
   def install
     unless source = @resource[:source]
-      @resource.fail "RPMs must specify a package source"
+      @resource.fail _("RPMs must specify a package source")
     end
 
     version =  @property_hash[:ensure]
