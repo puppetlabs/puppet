@@ -13,8 +13,8 @@ describe Puppet::FileBucket::File, :uses_checksums => true do
     expect(Puppet::FileBucket::File.default_format).to eq(:binary)
   end
 
-  it "accepts binary" do
-    expect(Puppet::FileBucket::File.supported_formats).to include(:binary)
+  it "only accepts binary" do
+    expect(Puppet::FileBucket::File.supported_formats).to eq([:binary])
   end
 
   describe "making round trips through network formats" do

@@ -1480,7 +1480,7 @@ EOT
       :desc       => "The port to use for the certificate authority.",
     },
     :preferred_serialization_format => {
-      :default    => "pson",
+      :default    => "json",
       :desc       => "The preferred means of serializing
       ruby instances for passing over the wire.  This won't guarantee that all
       instances will be serialized using this method, since not all classes

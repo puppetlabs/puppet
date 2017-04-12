@@ -17,10 +17,6 @@ class Puppet::FileBucket::File
     [:binary]
   end
 
-  def self.default_format
-    :binary
-  end
-
   def initialize(contents, options = {})
     case contents
     when String
@@ -76,15 +72,6 @@ class Puppet::FileBucket::File
 
   def self.from_binary(contents)
     self.new(contents)
-  end
-
-  def to_data_hash
-    # Note that this serializes the entire data to a string and places it in a hash.
-    { "contents" => contents.to_binary }
-  end
-
-  def self.from_data_hash(data)
-    self.new(data["contents"])
   end
 
   private

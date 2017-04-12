@@ -161,7 +161,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
 
   # Execute our destroy.
   def do_destroy(indirection, key, params, request, response)
-    formatter = accepted_response_formatter_or_pson_for(indirection.model, request)
+    formatter = accepted_response_formatter_or_json_for(indirection.model, request)
 
     result = indirection.destroy(key, params)
 
@@ -170,7 +170,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
 
   # Execute our save.
   def do_save(indirection, key, params, request, response)
-    formatter = accepted_response_formatter_or_pson_for(indirection.model, request)
+    formatter = accepted_response_formatter_or_json_for(indirection.model, request)
     sent_object = read_body_into_model(indirection.model, request)
 
     result = indirection.save(sent_object, key)
@@ -183,8 +183,8 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     request.response_formatter_for(model_class.supported_formats, accepted_formats)
   end
 
-  def accepted_response_formatter_or_pson_for(model_class, request)
-    accepted_formats = request.headers['accept'] || "text/pson"
+  def accepted_response_formatter_or_json_for(model_class, request)
+    accepted_formats = request.headers['accept'] || "application/json"
     request.response_formatter_for(model_class.supported_formats, accepted_formats)
   end
 

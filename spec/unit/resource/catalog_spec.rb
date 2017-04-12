@@ -14,6 +14,11 @@ describe Puppet::Resource::Catalog, "when compiling" do
     Puppet::Util::Storage.stubs(:store)
   end
 
+  it "should support json, pson, dot, yaml" do
+    # msgpack is optional, so using include instead of eq
+    expect(Puppet::Resource::Catalog.supported_formats).to include(:json, :pson, :dot, :yaml)
+  end
+
   # audit only resources are unmanaged
   # as are resources without properties with should values
   it "should write its managed resources' types, namevars" do
@@ -790,43 +795,43 @@ describe Puppet::Resource::Catalog, "when compiling" do
   end
 end
 
-describe Puppet::Resource::Catalog, "when converting a resource catalog to pson" do
+describe Puppet::Resource::Catalog, "when converting a resource catalog to json" do
   include JSONMatchers
   include PuppetSpec::Compiler
 
   it "should validate an empty catalog against the schema" do
     empty_catalog = compile_to_catalog("")
-    expect(empty_catalog.to_pson).to validate_against('api/schemas/catalog.json')
+    expect(empty_catalog.to_json).to validate_against('api/schemas/catalog.json')
   end
 
   it "should validate a noop catalog against the schema" do
     noop_catalog = compile_to_catalog("create_resources('file', {})")
-    expect(noop_catalog.to_pson).to validate_against('api/schemas/catalog.json')
+    expect(noop_catalog.to_json).to validate_against('api/schemas/catalog.json')
   end
 
   it "should validate a single resource catalog against the schema" do
     catalog = compile_to_catalog("create_resources('file', {'/etc/foo'=>{'ensure'=>'present'}})")
-    expect(catalog.to_pson).to validate_against('api/schemas/catalog.json')
+    expect(catalog.to_json).to validate_against('api/schemas/catalog.json')
   end
 
   it "should validate a virtual resource catalog against the schema" do
     catalog = compile_to_catalog("create_resources('@file', {'/etc/foo'=>{'ensure'=>'present'}})\nrealize(File['/etc/foo'])")
-    expect(catalog.to_pson).to validate_against('api/schemas/catalog.json')
+    expect(catalog.to_json).to validate_against('api/schemas/catalog.json')
   end
 
   it "should validate a single exported resource catalog against the schema" do
     catalog = compile_to_catalog("create_resources('@@file', {'/etc/foo'=>{'ensure'=>'present'}})")
-    expect(catalog.to_pson).to validate_against('api/schemas/catalog.json')
+    expect(catalog.to_json).to validate_against('api/schemas/catalog.json')
   end
 
   it "should validate a single sensitive parameter resource catalog against the schema" do
     catalog = compile_to_catalog("create_resources('file', {'/etc/foo'=>{'ensure'=>'present','content'=>Sensitive('hunter2')}})")
-    expect(catalog.to_pson).to validate_against('api/schemas/catalog.json')
+    expect(catalog.to_json).to validate_against('api/schemas/catalog.json')
   end
 
   it "should validate a two resource catalog against the schema" do
     catalog = compile_to_catalog("create_resources('notify', {'foo'=>{'message'=>'one'}, 'bar'=>{'message'=>'two'}})")
-    expect(catalog.to_pson).to validate_against('api/schemas/catalog.json')
+    expect(catalog.to_json).to validate_against('api/schemas/catalog.json')
   end
 
   it "should validate a two parameter class catalog against the schema" do
@@ -842,7 +847,7 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to pson"
         two => 'world',
       }
     MANIFEST
-    expect(catalog.to_pson).to validate_against('api/schemas/catalog.json')
+    expect(catalog.to_json).to validate_against('api/schemas/catalog.json')
   end
 
   context 'when dealing with parameters that have non-Data values' do
@@ -978,7 +983,7 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to pson"
   end
 end
 
-describe Puppet::Resource::Catalog, "when converting to pson" do
+describe Puppet::Resource::Catalog, "when converting to json" do
   before do
     @catalog = Puppet::Resource::Catalog.new("myhost")
   end
@@ -991,20 +996,20 @@ describe Puppet::Resource::Catalog, "when converting to pson" do
   }.each do |param, value|
     it "emits a #{param} equal to #{value.inspect}" do
       @catalog.send(param.to_s + "=", value)
-      pson = PSON.parse(@catalog.to_pson)
+      json = JSON.parse(@catalog.to_json)
 
-      expect(pson[param.to_s]).to eq(@catalog.send(param))
+      expect(json[param.to_s]).to eq(@catalog.send(param))
     end
   end
 
   it "emits an array of classes" do
     @catalog.add_class('foo')
-    pson = PSON.parse(@catalog.to_pson)
+    json = JSON.parse(@catalog.to_json)
 
-    expect(pson['classes']).to eq(['foo'])
+    expect(json['classes']).to eq(['foo'])
   end
 
-  it "should convert its resources to a PSON-encoded array and store it as the 'resources' data" do
+  it "should convert its resources to a JSON-encoded array and store it as the 'resources' data" do
     one = stub 'one', :to_data_hash => "one_resource", :ref => "Foo[one]"
     two = stub 'two', :to_data_hash => "two_resource", :ref => "Foo[two]"
 
@@ -1015,11 +1020,11 @@ describe Puppet::Resource::Catalog, "when converting to pson" do
     @catalog.add_resource(two)
 
     # TODO this should really guarantee sort order
-    expect(PSON.parse(@catalog.to_pson,:create_additions => false)['resources'].sort).to eq(["one_resource", "two_resource"].sort)
+    expect(JSON.parse(@catalog.to_json,:create_additions => false)['resources'].sort).to eq(["one_resource", "two_resource"].sort)
 
   end
 
-  it "should convert its edges to a PSON-encoded array and store it as the 'edges' data" do
+  it "should convert its edges to a JSON-encoded array and store it as the 'edges' data" do
     one   = stub 'one',   :to_data_hash => "one_resource",   :ref => 'Foo[one]'
     two   = stub 'two',   :to_data_hash => "two_resource",   :ref => 'Foo[two]'
     three = stub 'three', :to_data_hash => "three_resource", :ref => 'Foo[three]'
@@ -1027,14 +1032,14 @@ describe Puppet::Resource::Catalog, "when converting to pson" do
     @catalog.add_edge(one, two)
     @catalog.add_edge(two, three)
 
-    @catalog.edges_between(one, two  )[0].expects(:to_data_hash).returns "one_two_pson"
-    @catalog.edges_between(two, three)[0].expects(:to_data_hash).returns "two_three_pson"
+    @catalog.edges_between(one, two  )[0].expects(:to_data_hash).returns "one_two_json"
+    @catalog.edges_between(two, three)[0].expects(:to_data_hash).returns "two_three_json"
 
-    expect(PSON.parse(@catalog.to_pson,:create_additions => false)['edges'].sort).to eq(%w{one_two_pson two_three_pson}.sort)
+    expect(JSON.parse(@catalog.to_json,:create_additions => false)['edges'].sort).to eq(%w{one_two_json two_three_json}.sort)
   end
 end
 
-describe Puppet::Resource::Catalog, "when converting from pson" do
+describe Puppet::Resource::Catalog, "when converting from json" do
   before do
     @data = {
       'name' => "myhost"
@@ -1055,7 +1060,7 @@ describe Puppet::Resource::Catalog, "when converting from pson" do
                           Puppet::Resource.new(:file, "/bar").to_data_hash]
 
 
-    catalog = Puppet::Resource::Catalog.from_data_hash PSON.parse @data.to_pson
+    catalog = Puppet::Resource::Catalog.from_data_hash JSON.parse @data.to_json
 
     expect(catalog.name).to eq('myhost')
     expect(catalog.version).to eq(@data['version'])
@@ -1074,7 +1079,7 @@ describe Puppet::Resource::Catalog, "when converting from pson" do
   end
 
   it "defaults the catalog_format to 0" do
-    catalog = Puppet::Resource::Catalog.from_data_hash PSON.parse @data.to_pson
+    catalog = Puppet::Resource::Catalog.from_data_hash JSON.parse @data.to_json
     expect(catalog.catalog_format).to eq(0)
   end
 
@@ -1082,13 +1087,13 @@ describe Puppet::Resource::Catalog, "when converting from pson" do
     @data['edges'] = [Puppet::Relationship.new("File[/missing]", "File[/bar]").to_data_hash]
     @data['resources'] = [Puppet::Resource.new(:file, "/bar").to_data_hash]
 
-    expect { Puppet::Resource::Catalog.from_data_hash PSON.parse @data.to_pson }.to raise_error(ArgumentError, /Could not find relationship source/)
+    expect { Puppet::Resource::Catalog.from_data_hash JSON.parse @data.to_json }.to raise_error(ArgumentError, /Could not find relationship source/)
   end
 
   it "should fail if the target resource cannot be found" do
     @data['edges'] = [Puppet::Relationship.new("File[/bar]", "File[/missing]").to_data_hash]
     @data['resources'] = [Puppet::Resource.new(:file, "/bar").to_data_hash]
 
-    expect { Puppet::Resource::Catalog.from_data_hash PSON.parse @data.to_pson }.to raise_error(ArgumentError, /Could not find relationship target/)
+    expect { Puppet::Resource::Catalog.from_data_hash JSON.parse @data.to_json }.to raise_error(ArgumentError, /Could not find relationship target/)
   end
 end

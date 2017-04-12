@@ -23,10 +23,6 @@ class Puppet::Util::Metric
     }
   end
 
-  def to_pson(*args)
-    to_data_hash.to_pson(*args)
-  end
-
   # Return a specific value
   def [](name)
     if value = @values.find { |v| v[0] == name }

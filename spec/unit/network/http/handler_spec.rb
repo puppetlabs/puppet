@@ -18,8 +18,8 @@ describe Puppet::Network::HTTP::Handler do
 
   def a_request(method = "HEAD", path = "/production/#{indirection.name}/unknown")
     {
-      :accept_header => "pson",
-      :content_type_header => "text/pson",
+      :accept_header => "application/json",
+      :content_type_header => "application/json",
       :method => method,
       :path => path,
       :params => {},
@@ -147,18 +147,17 @@ describe Puppet::Network::HTTP::Handler do
 
     # PUP-3272
     # This used to be for YAML, and doing a to_yaml on an array.
-    # The result with to_pson is something different, the result is a string
+    # The result with to_json is something different, the result is a string
     # Which seems correct. Looks like this was some kind of nesting option "yaml inside yaml" ?
     # Removing the test
-#    it "should deserialize PSON parameters" do
-#      params = {'my_param' => [1,2,3].to_pson}
+#    it "should deserialize JSON parameters" do
+#      params = {'my_param' => [1,2,3].to_json}
 #
 #      decoded_params = handler.send(:decode_params, params)
 #
 #      decoded_params.should == {:my_param => [1,2,3]}
 #    end
   end
-
 
   describe "when resolving node" do
     it "should use a look-up from the ip address" do

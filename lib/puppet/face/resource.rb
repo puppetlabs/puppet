@@ -29,7 +29,7 @@ Puppet::Indirector::Face.define(:resource, '0.0.1') do
   find.examples <<-'EOT'
     Print information about a user on this system (API example):
 
-        puts Puppet::Face[:resource, '0.0.1'].find("user/luke").to_pson
+        puts Puppet::Face[:resource, '0.0.1'].find("user/luke").to_json
   EOT
 
   save = get_action(:save)

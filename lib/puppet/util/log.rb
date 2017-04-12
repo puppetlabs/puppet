@@ -340,10 +340,6 @@ class Puppet::Util::Log
     hash
   end
 
-  def to_pson(*args)
-    to_data_hash.to_pson(*args)
-  end
-
   def message=(msg)
     raise ArgumentError, "Puppet::Util::Log requires a message" unless msg
     @message = msg.to_s
