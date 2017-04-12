@@ -41,9 +41,6 @@ Gem::Specification.new do |s|
   # i18n support (gettext-setup and dependencies)
   s.add_runtime_dependency(%q<gettext-setup>, [">= 0.10", "< 1"])
   s.add_runtime_dependency(%q<locale>, "~> 2.1")
-  # Hiera has an unbound dependency on json_pure
-  # json_pure 2.0.2+ officially requires Ruby >= 2.0, but should have specified that in 2.0
-  s.add_runtime_dependency(%q<json_pure>, "~> 1.8")
   # net-ssh is a runtime dependency of Puppet::Util::NetworkDevice::Transport::Ssh
   s.add_runtime_dependency(%q<net-ssh>, "~> 2.1")
 
