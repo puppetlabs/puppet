@@ -14,7 +14,7 @@ Puppet::Functions.create_function(:dig) do
     args.reduce(data) do | d, k |
       return nil if d.nil? || k.nil?
       if !(d.is_a?(Array) || d.is_a?(Hash))
-        raise ArgumentError, "The given data does not contain a Collection at #{walked_path}, got '#{d.class}'"
+        raise ArgumentError, _("The given data does not contain a Collection at %{walked_path}, got '%{klass}'") % { walked_path: walked_path, klass: d.class }
       end
       walked_path << k
       d[k]
