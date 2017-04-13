@@ -83,7 +83,7 @@ module Puppet::ModuleTool
       begin
         Puppet::ModuleTool::Applications::Unpacker.unpack(file, destination)
       rescue Puppet::ExecutionFailure => e
-        raise RuntimeError, "Could not extract contents of module archive: #{e.message}"
+        raise RuntimeError, _("Could not extract contents of module archive: %{message}") % { message: e.message }
       end
     end
   end
