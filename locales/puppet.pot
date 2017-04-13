@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 4.10.0-432-gdb6e248\n"
+"Project-Id-Version: Puppet automation framework 4.10.0-435-g313c616\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-04-12 16:01-0700\n"
-"PO-Revision-Date: 2017-04-12 16:01-0700\n"
+"POT-Creation-Date: 2017-04-12 17:50-0700\n"
+"PO-Revision-Date: 2017-04-12 17:50-0700\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -817,6 +817,545 @@ msgstr ""
 
 #: ../lib/puppet/type.rb:1324
 msgid "The `audit` metaparameter is deprecated and will be ignored in a future release."
+msgstr ""
+
+#: ../lib/puppet/type/augeas.rb:167
+msgid "You must specify both the lens and incl parameters, or neither."
+msgstr ""
+
+#: ../lib/puppet/type/augeas.rb:191 ../lib/puppet/type/exec.rb:104
+msgid "executed successfully"
+msgstr ""
+
+#: ../lib/puppet/type/cron.rb:198
+msgid "%{value} is not a valid %{name}"
+msgstr ""
+
+#: ../lib/puppet/type/cron.rb:256
+msgid "Invalid special schedule %{value}"
+msgstr ""
+
+#: ../lib/puppet/type/cron.rb:329
+msgid "Invalid environment setting %{value}"
+msgstr ""
+
+#: ../lib/puppet/type/cron.rb:436
+msgid "%{cron} cannot specify both a special schedule and a value for %{field}"
+msgstr ""
+
+#: ../lib/puppet/type/exec.rb:138
+msgid "Command exceeded timeout"
+msgstr ""
+
+#: ../lib/puppet/type/exec.rb:162
+msgid "[command redacted] returned %{status} instead of one of [%{expected}]"
+msgstr ""
+
+#: ../lib/puppet/type/exec.rb:164
+msgid "'%{cmd}' returned %{status} instead of one of [%{expected}]"
+msgstr ""
+
+#: ../lib/puppet/type/exec.rb:182
+msgid "Command must be a String, got value of class %{klass}"
+msgstr ""
+
+#: ../lib/puppet/type/exec.rb:211
+msgid "Unable to execute commands as other users on Windows"
+msgstr ""
+
+#: ../lib/puppet/type/exec.rb:213
+msgid "Only root can execute commands as other users"
+msgstr ""
+
+#: ../lib/puppet/type/exec.rb:264
+msgid "Invalid environment setting '%{value}'"
+msgstr ""
+
+#: ../lib/puppet/type/exec.rb:277
+msgid "The umask specification is invalid: %{value}"
+msgstr ""
+
+#: ../lib/puppet/type/exec.rb:293
+msgid "The timeout must be a number."
+msgstr ""
+
+#: ../lib/puppet/type/exec.rb:311
+msgid "Tries must be an integer"
+msgstr ""
+
+#: ../lib/puppet/type/exec.rb:315
+msgid "Tries must be an integer >= 1"
+msgstr ""
+
+#: ../lib/puppet/type/exec.rb:328
+msgid "try_sleep must be a number"
+msgstr ""
+
+#: ../lib/puppet/type/exec.rb:332
+msgid "try_sleep cannot be a negative number"
+msgstr ""
+
+#: ../lib/puppet/type/exec.rb:446 ../lib/puppet/type/exec.rb:497
+msgid "Check %{value} exceeded timeout"
+msgstr ""
+
+#: ../lib/puppet/type/file.rb:56
+msgid "File paths must be fully qualified, not '%{path}'"
+msgstr ""
+
+#: ../lib/puppet/type/file.rb:124
+msgid "Invalid backup type %{value}"
+msgstr ""
+
+#: ../lib/puppet/type/file.rb:168 ../lib/puppet/type/tidy.rb:48
+msgid "Invalid recurse value %{value}"
+msgstr ""
+
+#: ../lib/puppet/type/file.rb:201
+msgid "Invalid recurselimit value %{value}"
+msgstr ""
+
+#: ../lib/puppet/type/file.rb:371
+msgid "You cannot specify more than one of %{creators}"
+msgstr ""
+
+#: ../lib/puppet/type/file.rb:373
+msgid "You cannot specify a remote recursion without a source"
+msgstr ""
+
+#: ../lib/puppet/type/file.rb:375
+msgid "You cannot specify source when using checksum 'none'"
+msgstr ""
+
+#: ../lib/puppet/type/file.rb:378
+msgid "You cannot specify content when using checksum '%{checksum_type}'"
+msgstr ""
+
+#: ../lib/puppet/type/file.rb:381
+msgid "Possible error: recurselimit is set but not recurse, no recursion will happen"
+msgstr ""
+
+#: ../lib/puppet/type/file.rb:389
+msgid "Checksum value '%{value}' is not a valid checksum type %{checksum}"
+msgstr ""
+
+#: ../lib/puppet/type/file.rb:392
+msgid "Checksum value is ignored unless content or source are specified"
+msgstr ""
+
+#: ../lib/puppet/type/file.rb:430
+msgid "Can not find filebucket for backups without a catalog"
+msgstr ""
+
+#: ../lib/puppet/type/file.rb:434
+msgid "Could not find filebucket %{backup} specified in backup"
+msgstr ""
+
+#: ../lib/puppet/type/file.rb:740
+msgid "Could not back up files of type %{current_type}"
+msgstr ""
+
+#: ../lib/puppet/type/file.rb:750
+msgid "Copying owner/mode/group from the source file on Windows is not supported; use source_permissions => ignore."
+msgstr ""
+
+#. TRANSLATORS "stat" is a program name and should not be translated
+#: ../lib/puppet/type/file.rb:831 ../lib/puppet/type/tidy.rb:332
+msgid "Could not stat; permission denied"
+msgstr ""
+
+#: ../lib/puppet/type/file.rb:953
+msgid "Not removing directory; use 'force' to override"
+msgstr ""
+
+#. TRANSLATORS refers to a file which could not be backed up
+#: ../lib/puppet/type/file.rb:978
+msgid "Could not back up; will not replace"
+msgstr ""
+
+#: ../lib/puppet/type/file.rb:992
+msgid "File written to disk did not match checksum; discarding changes (%{content_checksum} vs %{newsum})"
+msgstr ""
+
+#: ../lib/puppet/type/filebucket.rb:74
+msgid "You can only have one filebucket path"
+msgstr ""
+
+#: ../lib/puppet/type/filebucket.rb:78
+msgid "Filebucket paths must be absolute"
+msgstr ""
+
+#: ../lib/puppet/type/filebucket.rb:114
+msgid "Could not create %{type} filebucket: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/type/group.rb:69
+msgid "Invalid GID %{gid}"
+msgstr ""
+
+#: ../lib/puppet/type/group.rb:163 ../lib/puppet/type/user.rb:594
+msgid "Attributes value pairs must be separated by an ="
+msgstr ""
+
+#: ../lib/puppet/type/host.rb:32
+msgid "Invalid IP address %{value}"
+msgstr ""
+
+#: ../lib/puppet/type/host.rb:51
+msgid "Host aliases cannot include whitespace"
+msgstr ""
+
+#: ../lib/puppet/type/host.rb:52
+msgid "Host aliases cannot be an empty string. Use an empty array to delete all host_aliases "
+msgstr ""
+
+#: ../lib/puppet/type/host.rb:60
+msgid "Comment cannot include newline"
+msgstr ""
+
+#: ../lib/puppet/type/host.rb:84
+msgid "Invalid host name"
+msgstr ""
+
+#: ../lib/puppet/type/host.rb:87
+msgid "Hostname cannot include newline"
+msgstr ""
+
+#: ../lib/puppet/type/interface.rb:97
+msgid "Invalid interface ip address"
+msgstr ""
+
+#: ../lib/puppet/type/k5login.rb:23
+msgid "File paths must be fully qualified."
+msgstr ""
+
+#: ../lib/puppet/type/macauthorization.rb:34
+msgid "munge_integer only takes integers"
+msgstr ""
+
+#: ../lib/puppet/type/mailalias.rb:39
+msgid "File paths must be fully qualified, not '%{value}'"
+msgstr ""
+
+#: ../lib/puppet/type/mailalias.rb:58
+msgid "You cannot specify both a recipient and a file"
+msgstr ""
+
+#: ../lib/puppet/type/maillist.rb:14
+msgid "Purged %{resource}"
+msgstr ""
+
+#: ../lib/puppet/type/mount.rb:68
+msgid "Unexpected change from %{current} to unmounted}"
+msgstr ""
+
+#: ../lib/puppet/type/mount.rb:134
+msgid "device must not contain whitespace: %{value}"
+msgstr ""
+
+#: ../lib/puppet/type/mount.rb:160
+msgid "blockdevice must not contain whitespace: %{value}"
+msgstr ""
+
+#: ../lib/puppet/type/mount.rb:169
+msgid "fstype must not contain whitespace: %{value}"
+msgstr ""
+
+#: ../lib/puppet/type/mount.rb:170
+msgid "fstype must not be an empty string"
+msgstr ""
+
+#: ../lib/puppet/type/mount.rb:180
+msgid "options must not contain whitespace: %{value}"
+msgstr ""
+
+#: ../lib/puppet/type/mount.rb:181
+msgid "options must not be an empty string"
+msgstr ""
+
+#: ../lib/puppet/type/mount.rb:246
+msgid "name must not contain whitespace: %{value}"
+msgstr ""
+
+#: ../lib/puppet/type/package.rb:114 ../lib/puppet/type/package.rb:128
+msgid "Could not update: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/type/package.rb:163
+msgid "Could not get latest version: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/type/package.rb:263
+msgid "Name must be a String not %{klass}"
+msgstr ""
+
+#: ../lib/puppet/type/resources.rb:15
+msgid "Could not find resource type '%{name}'"
+msgstr ""
+
+#: ../lib/puppet/type/resources.rb:33
+msgid "Purging resources of type %{res_type} is not supported, since they cannot be queried from the system"
+msgstr ""
+
+#: ../lib/puppet/type/resources.rb:35
+msgid "Purging is only supported on types that accept 'ensure'"
+msgstr ""
+
+#: ../lib/puppet/type/resources.rb:57
+msgid "Invalid value %{value}"
+msgstr ""
+
+#: ../lib/puppet/type/resources.rb:84
+msgid "Invalid value %{value}."
+msgstr ""
+
+#: ../lib/puppet/type/resources.rb:103
+msgid "The 'ensure' attribute on %{name} resources does not accept 'absent' as a value"
+msgstr ""
+
+#: ../lib/puppet/type/schedule.rb:96
+msgid "Invalid range value '%{value}'"
+msgstr ""
+
+#: ../lib/puppet/type/schedule.rb:113
+msgid "Invalid range %{value}"
+msgstr ""
+
+#: ../lib/puppet/type/schedule.rb:117
+msgid "Invalid hour '%{n}'"
+msgstr ""
+
+#: ../lib/puppet/type/schedule.rb:121
+msgid "Invalid minute '%{n}'"
+msgstr ""
+
+#: ../lib/puppet/type/schedule.rb:155
+msgid "Incorrectly converted time: %{time}: %{hour} vs %{value}"
+msgstr ""
+
+#: ../lib/puppet/type/schedule.rb:164
+msgid "Assuming upper limit should be that time the next day"
+msgstr ""
+
+#: ../lib/puppet/type/schedule.rb:322
+msgid "Repeat must be a number"
+msgstr ""
+
+#: ../lib/puppet/type/schedule.rb:331
+msgid "Repeat must be 1 unless periodmatch is 'distance', not '%{period}'"
+msgstr ""
+
+#: ../lib/puppet/type/schedule.rb:374
+msgid "%s is not a valid day of the week"
+msgstr ""
+
+#: ../lib/puppet/type/scheduled_task.rb:34 ../lib/puppet/type/scheduled_task.rb:48
+msgid "Must be specified using an absolute path."
+msgstr ""
+
+#: ../lib/puppet/type/service.rb:89
+msgid "Setting enable to manual is only supported on Microsoft Windows."
+msgstr ""
+
+#: ../lib/puppet/type/ssh_authorized_key.rb:74
+msgid "Key must not contain whitespace: %{value}"
+msgstr ""
+
+#: ../lib/puppet/type/ssh_authorized_key.rb:133
+msgid "Option %{value} is not valid. A single option must either be of the form 'option' or 'option=\"value\". Multiple options must be provided as an array"
+msgstr ""
+
+#: ../lib/puppet/type/ssh_authorized_key.rb:150
+msgid "Attribute 'user' or 'target' is mandatory"
+msgstr ""
+
+#: ../lib/puppet/type/sshkey.rb:44
+msgid "Aliases cannot include whitespace"
+msgstr ""
+
+#: ../lib/puppet/type/sshkey.rb:47
+msgid "Aliases must be provided as an array, not a comma-separated list"
+msgstr ""
+
+#: ../lib/puppet/type/sshkey.rb:58
+msgid "Resourcename cannot include whitespaces"
+msgstr ""
+
+#: ../lib/puppet/type/sshkey.rb:59
+msgid "No comma in resourcename allowed. If you want to specify aliases use the host_aliases property"
+msgstr ""
+
+#: ../lib/puppet/type/tidy.rb:85
+msgid "Tidy can't use matches with recurse 0, false, or undef"
+msgstr ""
+
+#: ../lib/puppet/type/tidy.rb:124
+msgid "Invalid age unit '%{unit}'"
+msgstr ""
+
+#. TRANSLATORS tidy is the name of a program and should not be translated
+#: ../lib/puppet/type/tidy.rb:144
+msgid "Invalid tidy age %{age}"
+msgstr ""
+
+#: ../lib/puppet/type/tidy.rb:165
+msgid "Invalid size unit '%{unit}'"
+msgstr ""
+
+#. TRANSLATORS tidy is the name of a program and should not be translated
+#: ../lib/puppet/type/tidy.rb:183
+msgid "Invalid tidy size %{age}"
+msgstr ""
+
+#. TRANSLATORS "Tidy" is a program name and should not be translated
+#: ../lib/puppet/type/tidy.rb:264
+msgid "Tidying %{count} files"
+msgstr ""
+
+#: ../lib/puppet/type/tidy.rb:328
+msgid "File does not exist"
+msgstr ""
+
+#: ../lib/puppet/type/user.rb:166
+msgid "Could not find group(s) %{groups}"
+msgstr ""
+
+#: ../lib/puppet/type/user.rb:224
+msgid "Passwords cannot include ':'"
+msgstr ""
+
+#: ../lib/puppet/type/user.rb:229
+msgid "created password"
+msgstr ""
+
+#: ../lib/puppet/type/user.rb:231
+msgid "changed password"
+msgstr ""
+
+#: ../lib/puppet/type/user.rb:236
+msgid "[old password hash redacted]"
+msgstr ""
+
+#: ../lib/puppet/type/user.rb:239
+msgid "[new password hash redacted]"
+msgstr ""
+
+#: ../lib/puppet/type/user.rb:258
+msgid "Password minimum age must be provided as a number."
+msgstr ""
+
+#: ../lib/puppet/type/user.rb:277
+msgid "Password maximum age must be provided as a number."
+msgstr ""
+
+#: ../lib/puppet/type/user.rb:289
+msgid "Group names must be provided, not GID numbers."
+msgstr ""
+
+#: ../lib/puppet/type/user.rb:291
+msgid "Group names must be provided as an array, not a comma-separated list."
+msgstr ""
+
+#: ../lib/puppet/type/user.rb:292
+msgid "Group names must not be empty. If you want to specify \"no groups\" pass an empty array"
+msgstr ""
+
+#: ../lib/puppet/type/user.rb:378
+msgid "User provider %{name} can not manage home directories"
+msgstr ""
+
+#. TRANSLATORS YYYY-MM-DD represents a date with a four-digit year, a two-digit month, and a two-digit day,
+#. TRANSLATORS separated by dashes.
+#: ../lib/puppet/type/user.rb:396
+msgid "Expiry dates must be YYYY-MM-DD or the string \"absent\""
+msgstr ""
+
+#: ../lib/puppet/type/user.rb:473
+msgid "Role names must be provided, not numbers"
+msgstr ""
+
+#: ../lib/puppet/type/user.rb:475
+msgid "Role names must be provided as an array, not a comma-separated list"
+msgstr ""
+
+#: ../lib/puppet/type/user.rb:510
+msgid "Auth names must be provided, not numbers"
+msgstr ""
+
+#: ../lib/puppet/type/user.rb:512
+msgid "Auth names must be provided as an array, not a comma-separated list"
+msgstr ""
+
+#: ../lib/puppet/type/user.rb:536
+msgid "Profile names must be provided, not numbers"
+msgstr ""
+
+#: ../lib/puppet/type/user.rb:538
+msgid "Profile names must be provided as an array, not a comma-separated list"
+msgstr ""
+
+#: ../lib/puppet/type/user.rb:560
+msgid "Key/value pairs must be separated by an ="
+msgstr ""
+
+#: ../lib/puppet/type/user.rb:667
+msgid "Each entry for purge_ssh_keys must be a string, not a %{klass}"
+msgstr ""
+
+#: ../lib/puppet/type/user.rb:670
+msgid "Paths to keyfiles must be absolute, not %{entry}"
+msgstr ""
+
+#: ../lib/puppet/type/user.rb:674
+msgid "purge_ssh_keys must be true, false, or an array of file names, not %{value}"
+msgstr ""
+
+#: ../lib/puppet/type/user.rb:686
+msgid "purge_ssh_keys can only be true for users with a defined home directory"
+msgstr ""
+
+#: ../lib/puppet/type/user.rb:693
+msgid "purge_ssh_keys value '%{value}' meta character ~ or %{home_placeholder} only allowed for users with a defined home directory"
+msgstr ""
+
+#: ../lib/puppet/type/user.rb:707
+msgid "Class name must be provided."
+msgstr ""
+
+#: ../lib/puppet/type/yumrepo.rb:65 ../lib/puppet/type/yumrepo.rb:82 ../lib/puppet/type/yumrepo.rb:129 ../lib/puppet/type/yumrepo.rb:153 ../lib/puppet/type/yumrepo.rb:175 ../lib/puppet/type/yumrepo.rb:303 ../lib/puppet/type/yumrepo.rb:369
+msgid "Must be a valid URL"
+msgstr ""
+
+#: ../lib/puppet/type/yumrepo.rb:261
+msgid "Must be within range 1-99"
+msgstr ""
+
+#: ../lib/puppet/type/zone.rb:102
+msgid "Waiting for zone to finish processing"
+msgstr ""
+
+#: ../lib/puppet/type/zone.rb:199
+msgid "The zone base must be fully qualified"
+msgstr ""
+
+#: ../lib/puppet/type/zone.rb:236
+msgid "Datasets must be the name of a zfs filesystem"
+msgstr ""
+
+#: ../lib/puppet/type/zone.rb:257
+msgid "Inherited filesystems must be fully qualified"
+msgstr ""
+
+#: ../lib/puppet/type/zone.rb:330
+msgid "'%{ip}' is an invalid %{name}"
+msgstr ""
+
+#: ../lib/puppet/type/zone.rb:335
+msgid "only interface may be specified when using exclusive IP stack: %{interface}:%{address}"
+msgstr ""
+
+#: ../lib/puppet/type/zone.rb:338
+msgid "ip must contain interface name and ip address separated by a \":\""
 msgstr ""
 
 #: ../lib/puppet/type/zpool.rb:52
