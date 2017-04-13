@@ -1,9 +1,9 @@
 # Store a specified file in our filebucket.
 Puppet::Face.define(:file, '0.0.1') do
   action :store do |*args|
-    summary "Store a file in the local filebucket."
-    arguments "<file>"
-    returns "Nothing."
+    summary _("Store a file in the local filebucket.")
+    arguments _("<file>")
+    returns _("Nothing.")
     examples <<-EOT
       Store a file:
 

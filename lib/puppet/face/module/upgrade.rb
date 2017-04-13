@@ -2,7 +2,7 @@
 
 Puppet::Face.define(:module, '1.0.0') do
   action(:upgrade) do
-    summary "Upgrade a puppet module."
+    summary _("Upgrade a puppet module.")
     description <<-EOT
       Upgrades a puppet module.
     EOT
@@ -29,10 +29,10 @@ Puppet::Face.define(:module, '1.0.0') do
       └── puppetlabs-apache (v1.0.0 -> v2.4.0)
     EOT
 
-    arguments "<name>"
+    arguments _("<name>")
 
     option "--force", "-f" do
-      summary "Force upgrade of an installed module. (Implies --ignore-dependencies.)"
+      summary _("Force upgrade of an installed module. (Implies --ignore-dependencies.)")
       description <<-EOT
         Force the upgrade of an installed module even if there are local
         changes or the possibility of causing broken dependencies.
@@ -41,21 +41,21 @@ Puppet::Face.define(:module, '1.0.0') do
     end
 
     option "--ignore-dependencies" do
-      summary "Do not attempt to install dependencies. (Implied by --force.)"
+      summary _("Do not attempt to install dependencies. (Implied by --force.)")
       description <<-EOT
         Do not attempt to install dependencies. Implied by --force.
       EOT
     end
 
     option "--ignore-changes", "-c" do
-      summary "Ignore and overwrite any local changes made. (Implied by --force.)"
+      summary _("Ignore and overwrite any local changes made. (Implied by --force.)")
       description <<-EOT
         Upgrade an installed module even if there are local changes to it.  (Implied by --force.)
       EOT
     end
 
     option "--version=" do
-      summary "The version of the module to upgrade to."
+      summary _("The version of the module to upgrade to.")
       description <<-EOT
         The version of the module to upgrade to.
       EOT
@@ -63,7 +63,7 @@ Puppet::Face.define(:module, '1.0.0') do
 
     when_invoked do |name, options|
       name = name.gsub('/', '-')
-      Puppet.notice "Preparing to upgrade '#{name}' ..."
+      Puppet.notice _("Preparing to upgrade '%{name}' ...") % { name: name }
       Puppet::ModuleTool.set_option_defaults options
       Puppet::ModuleTool::Applications::Upgrader.new(name, options).run
     end

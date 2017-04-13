@@ -6,9 +6,9 @@ Puppet::Face.define(:module, '1.0.0') do
   extend Puppet::Util::Colors
 
   copyright "Puppet Labs", 2012
-  license   "Apache 2 license; see COPYING"
+  license   _("Apache 2 license; see COPYING")
 
-  summary "Creates, installs and searches for modules on the Puppet Forge."
+  summary _("Creates, installs and searches for modules on the Puppet Forge.")
   description <<-EOT
     This subcommand can find, install, and manage modules from the Puppet Forge,
     a repository of user-contributed Puppet code. It can also generate empty

@@ -2,9 +2,9 @@ require 'puppet/face'
 
 Puppet::Face.define(:ca, '0.1.0') do
   copyright "Puppet Labs", 2011
-  license   "Apache 2 license; see COPYING"
+  license   _("Apache 2 license; see COPYING")
 
-  summary "Local Puppet Certificate Authority management."
+  summary _("Local Puppet Certificate Authority management.")
 
   description <<-TEXT
     This provides local management of the Puppet Certificate Authority.
@@ -14,7 +14,7 @@ Puppet::Face.define(:ca, '0.1.0') do
   TEXT
 
   action :list do
-    summary "List certificates and/or certificate requests."
+    summary _("List certificates and/or certificate requests.")
 
     description <<-TEXT
       This will list the current certificates and certificate signing requests
@@ -23,23 +23,23 @@ Puppet::Face.define(:ca, '0.1.0') do
     TEXT
 
     option "--[no-]all" do
-      summary "Include all certificates and requests."
+      summary _("Include all certificates and requests.")
     end
 
     option "--[no-]pending" do
-      summary "Include pending certificate signing requests."
+      summary _("Include pending certificate signing requests.")
     end
 
     option "--[no-]signed" do
-      summary "Include signed certificates."
+      summary _("Include signed certificates.")
     end
 
-    option "--digest ALGORITHM" do
-      summary "The hash algorithm to use when displaying the fingerprint"
+    option "--digest " + _("ALGORITHM") do
+      summary _("The hash algorithm to use when displaying the fingerprint")
     end
 
-    option "--subject PATTERN" do
-      summary "Only list if the subject matches PATTERN."
+    option "--subject " + _("PATTERN") do
+      summary _("Only list if the subject matches PATTERN.")
 
       description <<-TEXT
         Only include certificates or requests where subject matches PATTERN.
@@ -50,9 +50,11 @@ Puppet::Face.define(:ca, '0.1.0') do
     end
 
     when_invoked do |options|
-      raise "Not a CA" unless Puppet::SSL::CertificateAuthority.ca?
+      #TRANSLATORS "CA" stands for "certificate authority"
+      raise _("Not a CA") unless Puppet::SSL::CertificateAuthority.ca?
       unless ca = Puppet::SSL::CertificateAuthority.instance
-        raise "Unable to fetch the CA"
+        #TRANSLATORS "CA" stands for "certificate authority"
+        raise _("Unable to fetch the CA")
       end
       Puppet::SSL::Host.ca_location = :only
 
@@ -77,7 +79,7 @@ Puppet::Face.define(:ca, '0.1.0') do
 
     when_rendering :console do |hosts, options|
       unless ca = Puppet::SSL::CertificateAuthority.instance
-        raise "Unable to fetch the CA"
+        raise _("Unable to fetch the CA")
       end
 
       length = hosts.map{|x| x.name.length }.max.to_i + 1
@@ -99,11 +101,11 @@ Puppet::Face.define(:ca, '0.1.0') do
   end
 
   action :destroy do
-    summary "Destroy named certificate or pending certificate request."
+    summary _("Destroy named certificate or pending certificate request.")
     when_invoked do |host, options|
-      raise "Not a CA" unless Puppet::SSL::CertificateAuthority.ca?
+      raise _("Not a CA") unless Puppet::SSL::CertificateAuthority.ca?
       unless ca = Puppet::SSL::CertificateAuthority.instance
-        raise "Unable to fetch the CA"
+        raise _("Unable to fetch the CA")
       end
       Puppet::SSL::Host.ca_location = :local
 
@@ -112,11 +114,11 @@ Puppet::Face.define(:ca, '0.1.0') do
   end
 
   action :revoke do
-    summary "Add certificate to certificate revocation list."
+    summary _("Add certificate to certificate revocation list.")
     when_invoked do |host, options|
-      raise "Not a CA" unless Puppet::SSL::CertificateAuthority.ca?
+      raise _("Not a CA") unless Puppet::SSL::CertificateAuthority.ca?
       unless ca = Puppet::SSL::CertificateAuthority.instance
-        raise "Unable to fetch the CA"
+        raise _("Unable to fetch the CA")
       end
       Puppet::SSL::Host.ca_location = :only
 
@@ -127,22 +129,22 @@ Puppet::Face.define(:ca, '0.1.0') do
         # destroy action.  The underlying tools could be nicer for that sort
         # of thing; they have fairly inconsistent reporting of failures.
         raise unless e.to_s =~ /Could not find a serial number for /
-        "Nothing was revoked"
+        _("Nothing was revoked")
       end
     end
   end
 
   action :generate do
-    summary "Generate a certificate for a named client."
-    option "--dns-alt-names NAMES" do
-      summary "Additional DNS names to add to the certificate request"
+    summary _("Generate a certificate for a named client.")
+    option "--dns-alt-names " + _("NAMES") do
+      summary _("Additional DNS names to add to the certificate request")
       description Puppet.settings.setting(:dns_alt_names).desc
     end
 
     when_invoked do |host, options|
-      raise "Not a CA" unless Puppet::SSL::CertificateAuthority.ca?
+      raise _("Not a CA") unless Puppet::SSL::CertificateAuthority.ca?
       unless ca = Puppet::SSL::CertificateAuthority.instance
-        raise "Unable to fetch the CA"
+        raise _("Unable to fetch the CA")
       end
       Puppet::SSL::Host.ca_location = :local
 
@@ -150,13 +152,13 @@ Puppet::Face.define(:ca, '0.1.0') do
         ca.generate(host, :dns_alt_names => options[:dns_alt_names])
       rescue RuntimeError => e
         if e.to_s =~ /already has a requested certificate/
-          "#{host} already has a certificate request; use sign instead"
+          _("%{host} already has a certificate request; use sign instead") % { host: host }
         else
           raise
         end
       rescue ArgumentError => e
         if e.to_s =~ /A Certificate already exists for /
-          "#{host} already has a certificate"
+          _("%{host} already has a certificate") % { host: host }
         else
           raise
         end
@@ -165,15 +167,15 @@ Puppet::Face.define(:ca, '0.1.0') do
   end
 
   action :sign do
-    summary "Sign an outstanding certificate request."
+    summary _("Sign an outstanding certificate request.")
     option("--[no-]allow-dns-alt-names") do
-      summary "Whether or not to accept DNS alt names in the certificate request"
+      summary _("Whether or not to accept DNS alt names in the certificate request")
     end
 
     when_invoked do |host, options|
-      raise "Not a CA" unless Puppet::SSL::CertificateAuthority.ca?
+      raise _("Not a CA") unless Puppet::SSL::CertificateAuthority.ca?
       unless ca = Puppet::SSL::CertificateAuthority.instance
-        raise "Unable to fetch the CA"
+        raise _("Unable to fetch the CA")
       end
       Puppet::SSL::Host.ca_location = :only
 
@@ -193,11 +195,11 @@ Puppet::Face.define(:ca, '0.1.0') do
   end
 
   action :print do
-    summary "Print the full-text version of a host's certificate."
+    summary _("Print the full-text version of a host's certificate.")
     when_invoked do |host, options|
-      raise "Not a CA" unless Puppet::SSL::CertificateAuthority.ca?
+      raise _("Not a CA") unless Puppet::SSL::CertificateAuthority.ca?
       unless ca = Puppet::SSL::CertificateAuthority.instance
-        raise "Unable to fetch the CA"
+        raise _("Unable to fetch the CA")
       end
       Puppet::SSL::Host.ca_location = :only
 
@@ -206,15 +208,18 @@ Puppet::Face.define(:ca, '0.1.0') do
   end
 
   action :fingerprint do
-    summary "Print the DIGEST (defaults to the signing algorithm) fingerprint of a host's certificate."
-    option "--digest ALGORITHM" do
-      summary "The hash algorithm to use when displaying the fingerprint"
+    #TRANSLATORS "DIGEST" refers to a hash algorithm
+    summary _("Print the DIGEST (defaults to the signing algorithm) fingerprint of a host's certificate.")
+    option "--digest " + _("ALGORITHM") do
+      summary _("The hash algorithm to use when displaying the fingerprint")
     end
 
     when_invoked do |host, options|
-      raise "Not a CA" unless Puppet::SSL::CertificateAuthority.ca?
+      #TRANSLATORS "CA" stands for "certificate authority"
+      raise _("Not a CA") unless Puppet::SSL::CertificateAuthority.ca?
       unless Puppet::SSL::CertificateAuthority.instance
-        raise "Unable to fetch the CA"
+        #TRANSLATORS "CA" stands for "certificate authority"
+        raise _("Unable to fetch the CA")
       end
       Puppet::SSL::Host.ca_location = :only
 
@@ -229,9 +234,11 @@ Puppet::Face.define(:ca, '0.1.0') do
   action :verify do
     summary "Verify the named certificate against the local CA certificate."
     when_invoked do |host, options|
-      raise "Not a CA" unless Puppet::SSL::CertificateAuthority.ca?
+      #TRANSLATORS "CA" stands for "certificate authority"
+      raise _("Not a CA") unless Puppet::SSL::CertificateAuthority.ca?
       unless ca = Puppet::SSL::CertificateAuthority.instance
-        raise "Unable to fetch the CA"
+        #TRANSLATORS "CA" stands for "certificate authority"
+        raise _("Unable to fetch the CA")
       end
       Puppet::SSL::Host.ca_location = :only
 
@@ -250,7 +257,7 @@ Puppet::Face.define(:ca, '0.1.0') do
       if value[:valid]
         nil
       else
-        "Could not verify #{value[:host]}: #{value[:error]}"
+        _("Could not verify %{host}: %{error}") % { host: value[:host], error: value[:error] }
       end
     end
   end
