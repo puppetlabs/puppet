@@ -20,7 +20,7 @@ module Puppet::Network::HTTP::Handler
     routes.each { |r| dupes[r.path_matcher] = (dupes[r.path_matcher] || 0) + 1 }
     dupes = dupes.collect { |pm, count| pm if count > 1 }.compact
     if dupes.count > 0
-      raise ArgumentError, "Given multiple routes with identical path regexes: #{dupes.map{ |rgx| rgx.inspect }.join(', ')}"
+      raise ArgumentError, _("Given multiple routes with identical path regexes: %{regexes}") % { regexes: dupes.map{ |rgx| rgx.inspect }.join(', ') }
     end
 
     @routes = routes
@@ -55,11 +55,11 @@ module Puppet::Network::HTTP::Handler
 
     profiler = configure_profiler(request_headers, request_params)
 
-    Puppet::Util::Profiler.profile("Processed request #{request_method} #{request_path}", [:http, request_method, request_path]) do
+    Puppet::Util::Profiler.profile(_("Processed request %{request_method} %{request_path}") % { request_method: request_method, request_path: request_path }, [:http, request_method, request_path]) do
       if route = @routes.find { |r| r.matches?(new_request) }
         route.process(new_request, new_response)
       else
-        raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new("No route for #{new_request.method} #{new_request.path}", HANDLER_NOT_FOUND)
+        raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(_("No route for %{request} %{path}") % { request: new_request.method, path: new_request.path }, HANDLER_NOT_FOUND)
       end
     end
 
@@ -94,7 +94,7 @@ module Puppet::Network::HTTP::Handler
     begin
       return Resolv.getname(result[:ip])
     rescue => detail
-      Puppet.err "Could not resolve #{result[:ip]}: #{detail}"
+      Puppet.err _("Could not resolve %{ip}: %{detail}") % { ip: result[:ip], detail: detail }
     end
     result[:ip]
   end

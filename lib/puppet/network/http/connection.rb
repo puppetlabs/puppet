@@ -51,7 +51,7 @@ module Puppet::Network::HTTP
       @port = port
 
       unknown_options = options.keys - OPTION_DEFAULTS.keys
-      raise Puppet::Error, "Unrecognized option(s): #{unknown_options.map(&:inspect).sort.join(', ')}" unless unknown_options.empty?
+      raise Puppet::Error, _("Unrecognized option(s): %{opts}") % { opts: unknown_options.map(&:inspect).sort.join(', ') } unless unknown_options.empty?
 
       options = OPTION_DEFAULTS.merge(options)
       @use_ssl = options[:use_ssl]
@@ -197,7 +197,7 @@ module Puppet::Network::HTTP
         # and try again...
       end
 
-      raise RedirectionLimitExceededException, "Too many HTTP redirections for #{@host}:#{@port}"
+      raise RedirectionLimitExceededException, _("Too many HTTP redirections for %{host}:%{port}") % { host: @host, port: @port }
     end
 
     def apply_options_to(request, options)
@@ -219,7 +219,7 @@ module Puppet::Network::HTTP
       end
       response
     rescue OpenSSL::SSL::SSLError => error
-      if error.message.include? "certificate verify failed"
+      if error.message.include? _("certificate verify failed")
         msg = error.message
         msg << ": [" + @verify.verify_errors.join('; ') + "]"
         raise Puppet::Error, msg, error.backtrace
@@ -227,8 +227,8 @@ module Puppet::Network::HTTP
         leaf_ssl_cert = @verify.peer_certs.last
 
         valid_certnames = [leaf_ssl_cert.name, *leaf_ssl_cert.subject_alt_names].uniq
-        msg = valid_certnames.length > 1 ? "one of #{valid_certnames.join(', ')}" : valid_certnames.first
-        msg = "Server hostname '#{site.host}' did not match server certificate; expected #{msg}"
+        msg = valid_certnames.length > 1 ? _("one of %{certnames}") % { certnames: valid_certnames.join(', ') } : valid_certnames.first
+        msg = _("Server hostname '%{host}' did not match server certificate; expected %{msg}") % { host: site.host, msg: msg }
 
         raise Puppet::Error, msg, error.backtrace
       else
