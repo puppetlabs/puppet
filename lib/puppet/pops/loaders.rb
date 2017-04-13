@@ -29,7 +29,7 @@ class Loaders
 
   def initialize(environment, for_agent)
     # Protect against environment havoc
-    raise ArgumentError.new("Attempt to redefine already initialized loaders for environment") unless environment.loaders.nil?
+    raise ArgumentError.new(_("Attempt to redefine already initialized loaders for environment")) unless environment.loaders.nil?
     environment.loaders = self
     @environment = environment
     @loaders_by_name = {}
@@ -165,7 +165,7 @@ class Loaders
     if loader.nil?
       # Unable to find the module private loader. Try resolving the module
       loader = private_loader_for_module(loader_name[0..-9]) if loader_name.end_with?(' private')
-      raise Puppet::ParseError, "Unable to find loader named '#{loader_name}'" if loader.nil?
+      raise Puppet::ParseError, _("Unable to find loader named '%{loader_name}'") % { loader_name: loader_name } if loader.nil?
     end
     loader
   end

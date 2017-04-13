@@ -56,7 +56,7 @@ class AbstractWriter
     case value
     when Integer
       # not tabulated, but integers larger than 64-bit cannot be allowed.
-      raise SerializationError, 'Integer out of bounds' if value > MAX_INTEGER || value < MIN_INTEGER
+      raise SerializationError, _('Integer out of bounds') if value > MAX_INTEGER || value < MIN_INTEGER
     when Numeric, Symbol, Extension::NotTabulated, true, false, nil
       # not tabulated
     else
