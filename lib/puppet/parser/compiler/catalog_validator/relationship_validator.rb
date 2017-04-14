@@ -23,21 +23,17 @@ class Puppet::Parser::Compiler
       if has_capability?(param.value)
         unless CAPABILITY_ACCEPTED_METAPARAMS[param.name]
           raise CatalogValidationError.new(
-            "'#{param.name}' is not a valid relationship to a capability", 
+            _("'%{param}' is not a valid relationship to a capability") % { param: param.name },
               param.file, param.line)
         end
-      elsif Puppet[:strict] != :off
-        # all other relationships requires the referenced resource to exist when mode is strict
+      else
+        # all other relationships requires the referenced resource to exist
         refs = param.value.is_a?(Array) ? param.value.flatten : [param.value]
         refs.each do |r|
           next if r.nil? || r == :undef
           unless catalog.resource(r.to_s)
-            msg = "Could not find resource '#{r.to_s}' in parameter '#{param.name.to_s}'"
-            if Puppet[:strict] == :error
-              raise CatalogValidationError.new(msg, param.file, param.line)
-            else
-              Puppet.warn_once(:undefined_resources, r.to_s, msg, param.file, param.line)
-            end
+            msg = _("Could not find resource '%{res}' in parameter '%{param}'") % { res: r.to_s, param: param.name.to_s }
+            raise CatalogValidationError.new(msg, param.file, param.line)
           end
         end
       end

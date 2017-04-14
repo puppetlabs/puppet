@@ -29,6 +29,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     @scope = Puppet::Parser::Scope.new(@compiler)
     @scope.source = Puppet::Resource::Type.new(:node, 'node.example.com')
     @scope.parent = @compiler.topscope
+    Puppet.push_context(:loaders => @compiler.loaders)
+  end
+
+  after(:each) do
+    Puppet.pop_context
   end
 
   let(:environment) { Puppet::Node::Environment.create(:testing, []) }
@@ -738,11 +743,14 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       end
     end
 
+    # Integer for >= 2.4.0, otherwise Fixnum
+    int_class_name = 0.class.name
+
     # Errors when wrong number/type of keys are used
     {
-      "Array[0]"                    => 'Array-Type[] arguments must be types. Got Fixnum',
-      "Hash[0]"                     => 'Hash-Type[] arguments must be types. Got Fixnum',
-      "Hash[Integer, 0]"            => 'Hash-Type[] arguments must be types. Got Fixnum',
+      "Array[0]"                    => "Array-Type[] arguments must be types. Got #{int_class_name}",
+      "Hash[0]"                     => "Hash-Type[] arguments must be types. Got #{int_class_name}",
+      "Hash[Integer, 0]"            => "Hash-Type[] arguments must be types. Got #{int_class_name}",
       "Array[Integer,1,2,3]"        => 'Array-Type[] accepts 1 to 3 arguments. Got 4',
       "Array[Integer,String]"       => "A Type's size constraint arguments must be a single Integer type, or 1-2 integers (or default). Got a String-Type",
       "Hash[Integer,String, 1,2,3]" => 'Hash-Type[] accepts 2 to 4 arguments. Got 5',
@@ -750,7 +758,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "'abc'[1.0]"                  => "A substring operation does not accept a Float as a character index. Expected an Integer",
       "'abc'[1, x]"                 => "A substring operation does not accept a String as a character index. Expected an Integer",
       "'abc'[1,2,3]"                => "String supports [] with one or two arguments. Got 3",
-      "NotUndef[0]"                 => 'NotUndef-Type[] argument must be a Type or a String. Got Fixnum',
+      "NotUndef[0]"                 => "NotUndef-Type[] argument must be a Type or a String. Got #{int_class_name}",
       "NotUndef[a,b]"               => 'NotUndef-Type[] accepts 0 to 1 arguments. Got 2',
       "Resource[0]"                 => 'First argument to Resource[] must be a resource type or a String. Got Integer',
       "Resource[a, 0]"              => 'Error creating type specialization of a Resource-Type, Cannot use Integer where a resource title String is expected',
@@ -784,7 +792,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       it "[n] gets class parameter [n]" do
         source = "class wonka($produces='chocolate'){ }
            include wonka
-           Class[wonka][produces]"
+           Class[wonka]['produces']"
 
         # This is more complicated since it needs to run like 3.x and do an import_ast
         adapted_parser = Puppet::Parser::E4ParserAdapter.new

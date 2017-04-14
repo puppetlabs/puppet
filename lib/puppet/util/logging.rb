@@ -80,7 +80,7 @@ module Logging
     if exception.respond_to?(:original)
       original =  exception.original
       unless original.nil?
-        arr << 'Wrapped exception:'
+        arr << _('Wrapped exception:')
         arr << original.message
         build_exception_trace(arr, original, trace)
       end
@@ -103,7 +103,7 @@ module Logging
       arr << Puppet::Util.pretty_backtrace(exception.backtrace)
     end
     if exception.respond_to?(:original) and exception.original
-      arr << "Wrapped exception:"
+      arr << _("Wrapped exception:")
       arr << format_exception(exception.original, :default, trace)
     end
     arr.flatten.join("\n")
@@ -176,13 +176,13 @@ module Logging
         call_trace =
         case MM.new(file, line)
         when FILE_AND_LINE
-          "\n   (at #{file}:#{line})"
+          _("\n   (at %{file}:%{line})") % { file: file, line: line }
         when FILE_NO_LINE
-          "\n   (in #{file})"
+          _("\n   (in %{file})") % { file: file }
         when NO_FILE_LINE
-          "\n   (in unknown file, line #{line})"
+          _("\n   (in unknown file, line %{line})") % { line: line }
         else
-          "\n   (file & line not available)"
+          _("\n   (file & line not available)")
         end
         warning("#{message}#{call_trace}")
       end
@@ -224,7 +224,8 @@ module Logging
     # find the same offender, and we'd end up logging it again.
     $logged_deprecation_warnings ||= {}
 
-    File.open(deprecations_file, "a") do |f|
+    # Deprecation messages are UTF-8 as they are produced by Ruby
+    Puppet::FileSystem.open(deprecations_file, nil, "a:UTF-8") do |f|
       if ($deprecation_warnings) then
         $deprecation_warnings.each do |offender, message|
           if (! $logged_deprecation_warnings.has_key?(offender)) then
@@ -278,10 +279,13 @@ module Logging
       key ||= (offender = get_deprecation_offender)
       if (! $deprecation_warnings.has_key?(key)) then
         $deprecation_warnings[key] = message
+        # split out to allow translation
+        unknown = _('unknown')
         call_trace = use_caller ?
           (offender || get_deprecation_offender).join('; ') :
-          "#{file || 'unknown'}:#{line || 'unknown'}"
-        warning("#{message}\n   (at #{call_trace})")
+          "#{file || unknown}:#{line || unknown}"
+        #TRANSLATORS error message with origin location
+        warning(_("%{message}\n   (at %{call_trace})") % { message: message, call_trace: call_trace })
       end
     end
   end

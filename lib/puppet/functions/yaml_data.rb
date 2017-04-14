@@ -8,14 +8,31 @@ Puppet::Functions.create_function(:yaml_data) do
     param 'Puppet::LookupContext', :context
   end
 
+  argument_mismatch :missing_path do
+    param 'Hash', :options
+    param 'Puppet::LookupContext', :context
+  end
+
   def yaml_data(options, context)
-    begin
-      data = YAML.load_file(options['path'])
-      Puppet::DataProviders::HieraConfig.symkeys_to_string(data.nil? ? {} : data)
-    rescue YAML::SyntaxError => ex
-      # Psych errors includes the absolute path to the file, so no need to add that
-      # to the message
-      raise Puppet::DataBinding::LookupError, "Unable to parse #{ex.message}"
+    path = options['path']
+    context.cached_file_data(path) do |content|
+      begin
+        data = YAML.load(content, path)
+        if data.is_a?(Hash)
+          Puppet::Pops::Lookup::HieraConfig.symkeys_to_string(data)
+        else
+          Puppet.warning("#{path}: file does not contain a valid yaml hash")
+          {}
+        end
+      rescue YAML::SyntaxError => ex
+        # Psych errors includes the absolute path to the file, so no need to add that
+        # to the message
+        raise Puppet::DataBinding::LookupError, "Unable to parse #{ex.message}"
+      end
     end
+  end
+
+  def missing_path(options, context)
+    "one of 'path', 'paths' 'glob', 'globs' or 'mapped_paths' must be declared in hiera.yaml when using this data_hash function"
   end
 end

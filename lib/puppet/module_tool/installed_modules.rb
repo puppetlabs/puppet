@@ -61,7 +61,7 @@ module Puppet::ModuleTool
         begin
           version = SemanticPuppet::Version.parse(mod.version)
         rescue SemanticPuppet::Version::ValidationFailure => e
-          Puppet.warning "#{mod.name} (#{mod.path}) has an invalid version number (#{mod.version}). The version has been set to 0.0.0. If you are the maintainer for this module, please update the metadata.json with a valid Semantic Version (http://semver.org)."
+          Puppet.warning _("%{module_name} (%{path}) has an invalid version number (%{version}). The version has been set to 0.0.0. If you are the maintainer for this module, please update the metadata.json with a valid Semantic Version (http://semver.org).") % { module_name: mod.name, path: mod.path, version: mod.version }
           version = SemanticPuppet::Version.parse("0.0.0")
         end
         release = "#{name}@#{version}"

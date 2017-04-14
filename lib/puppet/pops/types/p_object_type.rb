@@ -19,49 +19,58 @@ class PObjectType < PMetaType
   ATTRIBUTE_KIND_CONSTANT = 'constant'.freeze
   ATTRIBUTE_KIND_DERIVED = 'derived'.freeze
   ATTRIBUTE_KIND_GIVEN_OR_DERIVED = 'given_or_derived'.freeze
-  TYPE_ATTRIBUTE_KIND = TypeFactory.enum(ATTRIBUTE_KIND_CONSTANT, ATTRIBUTE_KIND_DERIVED, ATTRIBUTE_KIND_GIVEN_OR_DERIVED)
+  ATTRIBUTE_KIND_REFERENCE = 'reference'.freeze
+  TYPE_ATTRIBUTE_KIND = TypeFactory.enum(ATTRIBUTE_KIND_CONSTANT, ATTRIBUTE_KIND_DERIVED, ATTRIBUTE_KIND_GIVEN_OR_DERIVED, ATTRIBUTE_KIND_REFERENCE)
 
   TYPE_OBJECT_NAME = Pcore::TYPE_QUALIFIED_REFERENCE
-  TYPE_MEMBER_NAME = PPatternType.new([PRegexpType.new(Patterns::PARAM_NAME)])
 
   TYPE_ATTRIBUTE = TypeFactory.struct({
     KEY_TYPE => PType::DEFAULT,
-    KEY_ANNOTATIONS => TypeFactory.optional(TYPE_ANNOTATIONS),
-    KEY_FINAL => TypeFactory.optional(PBooleanType::DEFAULT),
-    KEY_OVERRIDE => TypeFactory.optional(PBooleanType::DEFAULT),
-    KEY_KIND => TypeFactory.optional(TYPE_ATTRIBUTE_KIND),
-    KEY_VALUE => PAnyType::DEFAULT
+    TypeFactory.optional(KEY_FINAL) => PBooleanType::DEFAULT,
+    TypeFactory.optional(KEY_OVERRIDE) => PBooleanType::DEFAULT,
+    TypeFactory.optional(KEY_KIND) => TYPE_ATTRIBUTE_KIND,
+    KEY_VALUE => PAnyType::DEFAULT,
+    TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
   })
-  TYPE_ATTRIBUTES = TypeFactory.hash_kv(TYPE_MEMBER_NAME, TypeFactory.not_undef)
+  TYPE_ATTRIBUTES = TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, TypeFactory.not_undef)
   TYPE_ATTRIBUTE_CALLABLE = TypeFactory.callable(0,0)
 
   TYPE_FUNCTION_TYPE = PType.new(PCallableType::DEFAULT)
 
   TYPE_FUNCTION = TypeFactory.struct({
     KEY_TYPE => TYPE_FUNCTION_TYPE,
-    KEY_ANNOTATIONS => TypeFactory.optional(TYPE_ANNOTATIONS),
-    KEY_FINAL => TypeFactory.optional(PBooleanType::DEFAULT),
-    KEY_OVERRIDE => TypeFactory.optional(PBooleanType::DEFAULT)
+    TypeFactory.optional(KEY_FINAL) => PBooleanType::DEFAULT,
+    TypeFactory.optional(KEY_OVERRIDE) => PBooleanType::DEFAULT,
+    TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
   })
-  TYPE_FUNCTIONS = TypeFactory.hash_kv(TYPE_MEMBER_NAME, TypeFactory.not_undef)
+  TYPE_FUNCTIONS = TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, TypeFactory.not_undef)
 
-  TYPE_EQUALITY = TypeFactory.variant(TYPE_MEMBER_NAME, TypeFactory.array_of(TYPE_MEMBER_NAME))
+  TYPE_EQUALITY = TypeFactory.variant(Pcore::TYPE_MEMBER_NAME, TypeFactory.array_of(Pcore::TYPE_MEMBER_NAME))
 
   TYPE_CHECKS = PAnyType::DEFAULT # TBD
 
   TYPE_OBJECT_I12N = TypeFactory.struct({
-    KEY_NAME => TypeFactory.optional(TYPE_OBJECT_NAME),
-    KEY_PARENT => TypeFactory.optional(PType::DEFAULT),
-    KEY_ATTRIBUTES => TypeFactory.optional(TYPE_ATTRIBUTES),
-    KEY_FUNCTIONS => TypeFactory.optional(TYPE_FUNCTIONS),
-    KEY_EQUALITY => TypeFactory.optional(TYPE_EQUALITY),
-    KEY_EQUALITY_INCLUDE_TYPE => TypeFactory.optional(PBooleanType::DEFAULT),
-    KEY_CHECKS =>  TypeFactory.optional(TYPE_CHECKS),
-    KEY_ANNOTATIONS =>  TypeFactory.optional(TYPE_ANNOTATIONS)
+    TypeFactory.optional(KEY_NAME) => TYPE_OBJECT_NAME,
+    TypeFactory.optional(KEY_PARENT) => PType::DEFAULT,
+    TypeFactory.optional(KEY_ATTRIBUTES) => TYPE_ATTRIBUTES,
+    TypeFactory.optional(KEY_FUNCTIONS) => TYPE_FUNCTIONS,
+    TypeFactory.optional(KEY_EQUALITY) => TYPE_EQUALITY,
+    TypeFactory.optional(KEY_EQUALITY_INCLUDE_TYPE) => PBooleanType::DEFAULT,
+    TypeFactory.optional(KEY_CHECKS) =>  TYPE_CHECKS,
+    TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
   })
 
   def self.register_ptype(loader, ir)
-    create_ptype(loader, ir, 'AnyType', 'i12n_hash' => TYPE_OBJECT_I12N)
+    type = create_ptype(loader, ir, 'AnyType', 'i12n_hash' => TYPE_OBJECT_I12N)
+
+    # Now, when the Object type exists, add annotations with keys derived from Annotation and freeze the types.
+    annotations = TypeFactory.optional(PHashType.new(PType.new(Annotation._pcore_type), TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, PAnyType::DEFAULT)))
+    TYPE_ATTRIBUTE.hashed_elements[KEY_ANNOTATIONS].replace_value_type(annotations)
+    TYPE_FUNCTION.hashed_elements[KEY_ANNOTATIONS].replace_value_type(annotations)
+    TYPE_OBJECT_I12N.hashed_elements[KEY_ANNOTATIONS].replace_value_type(annotations)
+    PTypeSetType::TYPE_TYPESET_I12N.hashed_elements[KEY_ANNOTATIONS].replace_value_type(annotations)
+    PTypeSetType::TYPE_TYPE_REFERENCE_I12N.hashed_elements[KEY_ANNOTATIONS].replace_value_type(annotations)
+    type
   end
 
   # @abstract Encapsulates behavior common to {PAttribute} and {PFunction}
@@ -211,12 +220,10 @@ class PObjectType < PMetaType
       # TODO: Assumes Ruby implementation for now
       if(callable_type.is_a?(PVariantType))
         callable_type.types.map do |ct|
-          Functions::Dispatch.new(ct, name, [],
-            ct.block_type.nil? ? nil : 'block', nil, nil, false)
+          Functions::Dispatch.new(ct, name, [], false, ct.block_type.nil? ? nil : 'block')
         end
       else
-        [Functions::Dispatch.new(callable_type, name, [],
-          callable_type.block_type.nil? ? nil : 'block', nil, nil, false)]
+        [Functions::Dispatch.new(callable_type, name, [], false, callable_type.block_type.nil? ? nil : 'block')]
       end
     end
 
@@ -234,8 +241,7 @@ class PObjectType < PMetaType
   # @api public
   class PAttribute < PAnnotatedMember
 
-    # @return [String,nil] The attribute kind as defined by #TYPE_ATTRIBUTE_KIND, or `nil` to
-    #   indicate that
+    # @return [String,nil] The attribute kind as defined by #TYPE_ATTRIBUTE_KIND, or `nil`
     attr_reader :kind
 
     # @param name [String] The name of the attribute
@@ -287,6 +293,11 @@ class PObjectType < PMetaType
       end
       hash[KEY_VALUE] = @value unless @value == :undef
       hash
+    end
+
+    # @return [Booelan] true if the given value equals the default value for this attribute
+    def default_value?(value)
+      @value == value
     end
 
     # @return [Boolean] `true` if a value has been defined for this attribute.
@@ -436,7 +447,7 @@ class PObjectType < PMetaType
       # This method should accept a hash and assume that type assertion has been made already (it is made
       # by the dispatch added here).
       if impl_class.respond_to?(:from_asserted_hash)
-        dispatcher.add_dispatch(from_hash_type, :from_hash, ['hash'], nil, EMPTY_ARRAY, EMPTY_ARRAY, false)
+        dispatcher.add(Functions::Dispatch.new(from_hash_type, :from_hash, ['hash']))
         def from_hash(hash)
           self.class.impl_class.from_asserted_hash(hash)
         end
@@ -444,7 +455,7 @@ class PObjectType < PMetaType
 
       # Add the dispatch that uses the standard #from_asserted_args or #new method on the class. It's assumed that the
       # method performs no assertions.
-      dispatcher.add_dispatch(create_type, :create, param_names, nil, EMPTY_ARRAY, EMPTY_ARRAY, false)
+      dispatcher.add(Functions::Dispatch.new(create_type, :create, param_names))
       if impl_class.respond_to?(:from_asserted_args)
         def create(*args)
           self.class.impl_class.from_asserted_args(*args)
@@ -458,9 +469,10 @@ class PObjectType < PMetaType
   end
 
   # @api private
-  def implementation_class
-    if @implementation_class.nil?
-      impl_name = Loaders.implementation_registry.module_name_for_type(self)
+  def implementation_class(create = true)
+    if @implementation_class.nil? && create
+      ir = Loaders.implementation_registry
+      impl_name = ir.nil? ? nil : ir.module_name_for_type(self)
       if impl_name.nil?
         # Use generator to create a default implementation
         @implementation_class = RubyGenerator.new.create_class(self)
@@ -479,8 +491,14 @@ class PObjectType < PMetaType
   end
 
   # @api private
+  def implementation_class=(cls)
+    raise ArgumentError, "attempt to redefine implementation class for #{label}" unless @implementation_class.nil?
+    @implementation_class = cls
+  end
+
+  # @api private
   # @return [(Array<String>, Array<PAnyType>, Integer)] array of parameter names, array of parameter types, and a count reflecting the required number of parameters
-  def parameter_info(impl_class, attr_readers = false)
+  def parameter_info(impl_class)
     # Create a types and a names array where optional entries ends up last
     opt_types = []
     opt_names = []
@@ -488,10 +506,10 @@ class PObjectType < PMetaType
     non_opt_names = []
     i12n_type.elements.each do |se|
       if se.key_type.is_a?(POptionalType)
-        opt_names << (attr_readers ? attr_reader_name(se) : se.name)
+        opt_names << se.name
         opt_types << se.value_type
       else
-        non_opt_names << (attr_readers ? attr_reader_name(se) : se.name)
+        non_opt_names << se.name
         non_opt_types << se.value_type
       end
     end
@@ -540,8 +558,10 @@ class PObjectType < PMetaType
   end
 
   # @api private
-  def include_class_in_equality?
-    @equality_include_type && !(@parent.is_a?(PObjectType) && parent.include_class_in_equality?)
+  def equality_include_type?
+    return true if @equality_include_type
+    rp = resolved_parent
+    rp.is_a?(PObjectType) && rp.equality_include_type?
   end
 
   # @api private
@@ -568,7 +588,11 @@ class PObjectType < PMetaType
     attr_specs = i12n_hash[KEY_ATTRIBUTES]
     unless attr_specs.nil? || attr_specs.empty?
       @attributes = Hash[attr_specs.map do |key, attr_spec|
-        attr_spec = { KEY_TYPE => TypeAsserter.assert_instance_of(nil, PType::DEFAULT, attr_spec) { "attribute #{label}[#{key}]" } } unless attr_spec.is_a?(Hash)
+        unless attr_spec.is_a?(Hash)
+          attr_type = TypeAsserter.assert_instance_of(nil, PType::DEFAULT, attr_spec) { "attribute #{label}[#{key}]" }
+          attr_spec = { KEY_TYPE => attr_type }
+          attr_spec[KEY_VALUE] = nil if attr_type.is_a?(POptionalType)
+        end
         attr = PAttribute.new(key, self, attr_spec)
         [attr.name, attr.assert_override(parent_members)]
       end].freeze
@@ -653,6 +677,14 @@ class PObjectType < PMetaType
   # @api public
   def i12n_type
     @i12n_type ||= create_i12n_type
+  end
+
+  def create(*args)
+    implementation_class.create(*args)
+  end
+
+  def from_hash(hash)
+    implementation_class.from_hash(hash)
   end
 
   # Creates the type that a initialization hash used for creating instances of this type must conform to.
@@ -789,6 +821,10 @@ class PObjectType < PMetaType
     parent
   end
 
+  def simple_name
+    label.split(DOUBLE_COLON).last
+  end
+
   protected
 
   # An Object type is only assignable from another Object type. The other type
@@ -862,7 +898,7 @@ class PObjectType < PMetaType
   def guarded_recursion(guard, dflt)
     if @self_recursion
       guard ||= RecursionGuard.new
-      (guard.add_this(self) & RecursionGuard::SELF_RECURSION_IN_THIS) == 0 ? yield(guard) : dflt
+      guard.with_this(self) { |state| (state & RecursionGuard::SELF_RECURSION_IN_THIS) == 0 ? yield(guard) : dflt }
     else
       yield(guard)
     end

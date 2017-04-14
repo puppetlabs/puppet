@@ -158,7 +158,7 @@ describe TypeParser do
     let(:loader) { Object.new }
 
     before :each do
-      Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Model::QualifiedReference), scope).at_most_once.returns loader
+      Adapters::LoaderAdapter.expects(:loader_for_model_object).returns loader
     end
 
     it 'interprets anything that is not found by the loader to be a type reference' do
@@ -194,9 +194,6 @@ describe TypeParser do
 
   context 'with loader context' do
     let(:loader) { Puppet::Pops::Loader::BaseLoader.new(nil, "type_parser_unit_test_loader") }
-    before :each do
-      Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).never
-    end
 
     it 'interprets anything that is not found by the loader to be a type reference' do
       loader.expects(:load).with(:type, 'nonesuch').returns nil

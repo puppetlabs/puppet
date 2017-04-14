@@ -41,7 +41,7 @@ module PuppetSpec::Network
     Puppet::Network::HTTP::Request.from_hash({
       :headers => {
         'accept' => request[:accept_header],
-        'content-type' => "text/pson"
+        'content-type' => "application/json"
       },
       :method => "HEAD",
       :path => "#{master_url_prefix}/#{data.class.indirection.name}/#{data.value}",
@@ -53,12 +53,12 @@ module PuppetSpec::Network
     Puppet::Network::HTTP::Request.from_hash({
       :headers => {
         'accept' => request[:accept_header],
-        'content-type' => request[:content_type_header] || "text/pson"
+        'content-type' => request[:content_type_header] || "application/json"
       },
       :method => "PUT",
       :path => "#{master_url_prefix}/#{data.class.indirection.name}/#{data.value}",
       :params => params,
-      :body => request[:body].nil? ? data.render("pson") : request[:body]
+      :body => request[:body].nil? ? data.render("json") : request[:body]
     })
   end
 
@@ -66,7 +66,7 @@ module PuppetSpec::Network
     Puppet::Network::HTTP::Request.from_hash({
       :headers => {
         'accept' => request[:accept_header],
-        'content-type' => "text/pson"
+        'content-type' => "application/json"
       },
       :method => "DELETE",
       :path => "#{master_url_prefix}/#{data.class.indirection.name}/#{data.value}",
@@ -79,7 +79,7 @@ module PuppetSpec::Network
     Puppet::Network::HTTP::Request.from_hash({
       :headers => {
         'accept' => request[:accept_header],
-        'content-type' => "text/pson"
+        'content-type' => "application/json"
       },
       :method => "GET",
       :path => "#{master_url_prefix}/#{data.class.indirection.name}/#{data.value}",
@@ -92,7 +92,7 @@ module PuppetSpec::Network
     Puppet::Network::HTTP::Request.from_hash({
       :headers => {
         'accept' => request[:accept_header],
-        'content-type' => "text/pson"
+        'content-type' => "application/json"
       },
       :method => "GET",
       :path => "#{master_url_prefix}/#{data.class.indirection.name}s/#{data.name}",

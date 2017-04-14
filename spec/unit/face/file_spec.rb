@@ -7,4 +7,8 @@ describe Puppet::Face[:file, '0.0.1'] do
     it { is_expected.to be_action action }
     it { is_expected.to respond_to action }
   end
+
+  it "should be deprecated" do
+    expect(subject.deprecated?).to be_truthy
+  end
 end

@@ -8,7 +8,10 @@ class Puppet::SSL::Inventory
   # Add a certificate to our inventory.
   def add(cert)
     cert = cert.content if cert.is_a?(Puppet::SSL::Certificate)
-    Puppet.settings.setting(:cert_inventory).open("a") do |f|
+    # RFC 5280 says the cert subject may contain UTF8 - https://www.ietf.org/rfc/rfc5280.txt
+    # Note however that Puppet generated SSL files must only contain ASCII characters
+    # based on the validate_certname method of Puppet::SSL::Base
+    Puppet.settings.setting(:cert_inventory).open('a:UTF-8') do |f|
       f.print format(cert)
     end
   end
@@ -26,9 +29,10 @@ class Puppet::SSL::Inventory
   # Rebuild the inventory from scratch.  This should happen if
   # the file is entirely missing or if it's somehow corrupted.
   def rebuild
-    Puppet.notice "Rebuilding inventory file"
+    Puppet.notice _("Rebuilding inventory file")
 
-    Puppet.settings.setting(:cert_inventory).open('w') do |f|
+    # RFC 5280 says the cert subject may contain UTF8 - https://www.ietf.org/rfc/rfc5280.txt
+    Puppet.settings.setting(:cert_inventory).open('w:UTF-8') do |f|
       Puppet::SSL::Certificate.indirection.search("*").each do |cert|
         f.print format(cert.content)
       end
@@ -40,7 +44,10 @@ class Puppet::SSL::Inventory
   def serials(name)
     return [] unless Puppet::FileSystem.exist?(@path)
 
-    File.readlines(@path).collect do |line|
+    # RFC 5280 says the cert subject may contain UTF8 - https://www.ietf.org/rfc/rfc5280.txt
+    # Note however that Puppet generated SSL files must only contain ASCII characters
+    # based on the validate_certname method of Puppet::SSL::Base
+    File.readlines(@path, :encoding => Encoding::UTF_8).collect do |line|
       /^(\S+).+\/CN=#{name}$/.match(line)
     end.compact.map { |m| Integer(m[1]) }
   end

@@ -66,7 +66,7 @@ module Puppet
           if gid =~ /^[-0-9]+$/
             gid = Integer(gid)
           else
-            self.fail "Invalid GID #{gid}"
+            self.fail _("Invalid GID %{gid}") % { gid: gid }
           end
         when Symbol
           unless gid == :absent
@@ -79,10 +79,9 @@ module Puppet
     end
 
     newproperty(:members, :array_matching => :all, :required_features => :manages_members) do
-      desc "The members of the group. For directory services where group
-      membership is stored in the group objects, not the users. Use
-      with auth_membership to determine whether the specified members
-      are inclusive or the minimum."
+      desc "The members of the group. For platforms or directory services where group
+        membership is stored in the group objects, not the users. This parameter's
+        behavior can be configured with `auth_membership`."
 
       def change_to_s(currentvalue, newvalue)
         currentvalue = currentvalue.join(",") if currentvalue != :absent
@@ -118,9 +117,12 @@ module Puppet
     end
 
     newparam(:auth_membership, :boolean => true, :parent => Puppet::Parameter::Boolean) do
-      desc "Whether the provider is authoritative for group membership. This
-        must be set to true to allow setting the group to no members with
-        `members => [],`."
+      desc "Configures the behavior of the `members` parameter.
+
+        * `false` (default) --- The provided list of group members is partial,
+          and Puppet **ignores** any members that aren't listed there.
+        * `true` --- The provided list of of group members is comprehensive, and
+          Puppet **purges** any members that aren't listed there."
       defaultto false
     end
 
@@ -146,7 +148,8 @@ module Puppet
     end
 
     newproperty(:attributes, :parent => Puppet::Property::KeyValue, :required_features => :manages_aix_lam) do
-      desc "Specify group AIX attributes in an array of `key=value` pairs."
+      desc "Specify group AIX attributes, as an array of `'key=value'` strings. This
+        parameter's behavior can be configured with `attribute_membership`."
 
       def membership
         :attribute_membership
@@ -157,14 +160,17 @@ module Puppet
       end
 
       validate do |value|
-        raise ArgumentError, "Attributes value pairs must be separated by an =" unless value.include?("=")
+        raise ArgumentError, _("Attributes value pairs must be separated by an =") unless value.include?("=")
       end
     end
 
     newparam(:attribute_membership) do
-      desc "Whether specified attribute value pairs should be treated as the only attributes
-        of the user or whether they should merely
-        be treated as the minimum list."
+      desc "AIX only. Configures the behavior of the `attributes` parameter.
+
+        * `minimum` (default) --- The provided list of attributes is partial, and Puppet
+          **ignores** any attributes that aren't listed there.
+        * `inclusive` --- The provided list of attributes is comprehensive, and
+          Puppet **purges** any attributes that aren't listed there."
 
       newvalues(:inclusive, :minimum)
 

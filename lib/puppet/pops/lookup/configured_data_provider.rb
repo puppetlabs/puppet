@@ -1,6 +1,5 @@
 require_relative 'hiera_config'
 require_relative 'data_provider'
-require 'puppet/data_providers/hiera_config'
 
 module Puppet::Pops
 module Lookup
@@ -10,11 +9,17 @@ class ConfiguredDataProvider
 
   # @param config [HieraConfig,nil] the configuration
   def initialize(config = nil)
-    @config = config
+    @config = config.nil? ? nil : assert_config_version(config)
   end
 
   def config(lookup_invocation)
-    @config ||= HieraConfig.create(provider_root(lookup_invocation))
+    @config ||= assert_config_version(HieraConfig.create(lookup_invocation, configuration_path(lookup_invocation), self))
+  end
+
+  # Needed to assign generated version 4 config
+  # @deprecated
+  def config=(config)
+    @config = config
   end
 
   # @return [Pathname] the path to the configuration
@@ -42,7 +47,12 @@ class ConfiguredDataProvider
   def unchecked_key_lookup(key, lookup_invocation, merge)
     lookup_invocation.with(:data_provider, self) do
       merge_strategy = MergeStrategy.strategy(merge)
-      merge_strategy.lookup(data_providers(lookup_invocation), lookup_invocation) do |data_provider|
+      dps = data_providers(lookup_invocation)
+      if dps.empty?
+        lookup_invocation.report_not_found(key)
+        throw :no_such_key
+      end
+      merge_strategy.lookup(dps, lookup_invocation) do |data_provider|
         data_provider.unchecked_key_lookup(key, lookup_invocation, merge_strategy)
       end
     end
@@ -50,20 +60,33 @@ class ConfiguredDataProvider
 
   protected
 
+  # Assert that the given config version is accepted by this data provider.
+  #
+  # @param config [HieraConfig] the configuration to check
+  # @return [HieraConfig] the argument
+  # @raise [Puppet::DataBinding::LookupError] if the configuration version is unacceptable
+  def assert_config_version(config)
+    config
+  end
+
   # Return the root of the configured entity
   #
   # @param lookup_invocation [Invocation] The current lookup invocation
   # @return [Pathname] Path to root of the module
-  # @raise [Puppet::DataBinder::LookupError] if the given module is can not be found
+  # @raise [Puppet::DataBinding::LookupError] if the given module is can not be found
   #
   def provider_root(lookup_invocation)
     raise NotImplementedError, "#{self.class.name} must implement method '#provider_root'"
   end
 
+  def configuration_path(lookup_invocation)
+    provider_root(lookup_invocation) + HieraConfig::CONFIG_FILE_NAME
+  end
+
   private
 
   def data_providers(lookup_invocation)
-    @data_providers ||= config(lookup_invocation).create_configured_data_providers(lookup_invocation, self)
+    config(lookup_invocation).configured_data_providers(lookup_invocation, self)
   end
 end
 end

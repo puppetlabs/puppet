@@ -2,9 +2,9 @@ require 'puppet/indirector/face'
 
 Puppet::Indirector::Face.define(:file, '0.0.1') do
   copyright "Puppet Labs", 2011
-  license   "Apache 2 license; see COPYING"
+  license   _("Apache 2 license; see COPYING")
 
-  summary "Retrieve and store files in a filebucket"
+  summary _("Retrieve and store files in a filebucket")
   description <<-'EOT'
     This subcommand interacts with objects stored in a local or remote
     filebucket. File objects are accessed by their MD5 sum; see the
@@ -23,7 +23,7 @@ Puppet::Indirector::Face.define(:file, '0.0.1') do
   EOT
 
   file = get_action(:find)
-  file.summary "Retrieve a file from the filebucket."
+  file.summary _("Retrieve a file from the filebucket.")
   file.arguments "md5/<md5sum>"
   file.returns <<-'EOT'
     The file object with the specified checksum.
@@ -44,4 +44,7 @@ Puppet::Indirector::Face.define(:file, '0.0.1') do
   deactivate_action(:destroy)
 
   set_indirection_name :file_bucket_file
+
+  # The file face is deprecated
+  deprecate
 end

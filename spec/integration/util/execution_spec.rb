@@ -17,6 +17,14 @@ describe Puppet::Util::Execution do
     end
   end
 
+  describe "#execute (non-Windows)", :if => !Puppet.features.microsoft_windows? do
+    it "should execute basic shell command" do
+      result = Puppet::Util::Execution.execute("ls /tmp", :failonfail => true)
+      expect(result.exitstatus).to eq(0)
+      expect(result.to_s).to_not be_nil
+    end
+  end
+
   describe "#execute (Windows)", :if => Puppet.features.microsoft_windows? do
     let(:utf8text) do
       # Japanese Lorem Ipsum snippet
@@ -27,7 +35,7 @@ describe Puppet::Util::Execution do
                         131, 170, 227, 131, 134].pack('c*').force_encoding(Encoding::UTF_8)
     end
     let(:temputf8filename) do
-      script_containing(utf8text, :windows => "@ECHO OFF\nECHO #{utf8text}\nEXIT 100")
+      script_containing(utf8text, :windows => "@ECHO OFF\r\nECHO #{utf8text}\r\nEXIT 100")
     end
 
     it "should execute with non-english characters in command line" do

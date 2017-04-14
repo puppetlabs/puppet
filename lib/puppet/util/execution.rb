@@ -153,15 +153,18 @@ module Puppet::Util::Execution
         :squelch => false,
         :override_locale => true,
         :custom_environment => {},
+        :sensitive => false,
     }
 
     options = default_options.merge(options)
 
-    if command.is_a?(Array)
+    if options[:sensitive]
+      command_str = '[redacted]'
+    elsif command.is_a?(Array)
       command = command.flatten.map(&:to_s)
-      str = command.join(" ")
+      command_str = command.join(" ")
     elsif command.is_a?(String)
-      str = command
+      command_str = command
     end
 
     user_log_s = ''
@@ -176,17 +179,17 @@ module Puppet::Util::Execution
     end
 
     if respond_to? :debug
-      debug "Executing#{user_log_s}: '#{str}'"
+      debug "Executing#{user_log_s}: '#{command_str}'"
     else
-      Puppet.debug "Executing#{user_log_s}: '#{str}'"
+      Puppet.debug "Executing#{user_log_s}: '#{command_str}'"
     end
 
     null_file = Puppet.features.microsoft_windows? ? 'NUL' : '/dev/null'
 
     begin
-      stdin = File.open(options[:stdinfile] || null_file, 'r')
-      stdout = options[:squelch] ? File.open(null_file, 'w') : Puppet::FileSystem::Uniquefile.new('puppet')
-      stderr = options[:combine] ? stdout : File.open(null_file, 'w')
+      stdin = Puppet::FileSystem.open(options[:stdinfile] || null_file, nil, 'r')
+      stdout = options[:squelch] ? Puppet::FileSystem.open(null_file, nil, 'w') : Puppet::FileSystem::Uniquefile.new('puppet')
+      stderr = options[:combine] ? stdout : Puppet::FileSystem.open(null_file, nil, 'w')
 
       exec_args = [command, options, stdin, stdout, stderr]
 
@@ -225,11 +228,11 @@ module Puppet::Util::Execution
       # read output in if required
       unless options[:squelch]
         output = wait_for_output(stdout)
-        Puppet.warning "Could not get output" unless output
+        Puppet.warning _("Could not get output") unless output
       end
 
       if options[:failonfail] and exit_status != 0
-        raise Puppet::ExecutionFailure, "Execution of '#{str}' returned #{exit_status}: #{output.strip}"
+        raise Puppet::ExecutionFailure, _("Execution of '%{str}' returned %{exit_status}: %{output}") % { str: command_str, exit_status: exit_status, output: output.strip }
       end
     ensure
       if !options[:squelch] && stdout
@@ -298,7 +301,7 @@ module Puppet::Util::Execution
           Kernel.exec(*command)
         end
       rescue => detail
-        Puppet.log_exception(detail, "Could not execute posix command: #{detail}")
+        Puppet.log_exception(detail, _("Could not execute posix command: %{detail}") % { detail: detail })
         exit!(1)
       end
     end
@@ -346,7 +349,7 @@ module Puppet::Util::Execution
         end
       else
         time_to_sleep = try / 2.0
-        Puppet.warning "Waiting for output; will sleep #{time_to_sleep} seconds"
+        Puppet.warning _("Waiting for output; will sleep %{time_to_sleep} seconds") % { time_to_sleep: time_to_sleep }
         sleep(time_to_sleep)
       end
     end

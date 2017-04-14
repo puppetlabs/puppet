@@ -3,6 +3,14 @@ require 'puppet/util/windows'
 
 class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
 
+  def open(path, mode, options, &block)
+    # PUP-6959 mode is explicitly ignored until it can be implemented
+    # Ruby on Windows uses mode for setting file attributes like read-only and
+    # archived, not for setting permissions like POSIX
+    raise TypeError.new('mode must be specified as an Integer') if mode && !mode.is_a?(Numeric)
+    ::File.open(path, options, nil, &block)
+  end
+
   def expand_path(path, dir_string = nil)
     # ensure `nil` values behave like underlying File.expand_path
     string_path = ::File.expand_path(path.nil? ? nil : path_string(path), dir_string)
@@ -36,7 +44,7 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
     return 0 if dest_exists && dest_stat.ftype == 'directory'
 
     if dest_exists && dest_stat.ftype == 'file' && options[:force] != true
-      raise(Errno::EEXIST, "#{dest} already exists and the :force option was not specified")
+      raise(Errno::EEXIST, _("%{dest} already exists and the :force option was not specified") % { dest: dest })
     end
 
     if options[:noop] != true
@@ -110,12 +118,12 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
 
   def raise_if_symlinks_unsupported
     if ! Puppet.features.manages_symlinks?
-      msg = "This version of Windows does not support symlinks.  Windows Vista / 2008 or higher is required."
+      msg = _("This version of Windows does not support symlinks.  Windows Vista / 2008 or higher is required.")
       raise Puppet::Util::Windows::Error.new(msg)
     end
 
     if ! Puppet::Util::Windows::Process.process_privilege_symlink?
-      Puppet.warning "The current user does not have the necessary permission to manage symlinks."
+      Puppet.warning _("The current user does not have the necessary permission to manage symlinks.")
     end
   end
 

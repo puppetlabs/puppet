@@ -116,7 +116,8 @@ Puppet::Type.type(:mcx).provide :mcxcontent, :parent => Puppet::Provider do
       dscl 'localhost', '-mcxdelete', ds_path
     end
 
-    tmp = Tempfile.new('puppet_mcx')
+    # val being passed in is resource[:content] which should be UTF-8
+    tmp = Tempfile.new('puppet_mcx', :encoding => Encoding::UTF_8)
     begin
       tmp << val
       tmp.flush
@@ -133,13 +134,13 @@ Puppet::Type.type(:mcx).provide :mcxcontent, :parent => Puppet::Provider do
     ds_type = name.split('/')[1]
     unless ds_type
       raise MCXContentProviderException,
-      "Could not parse ds_type from resource name '#{name}'.  Specify with ds_type parameter."
+      _("Could not parse ds_type from resource name '%{name}'.  Specify with ds_type parameter.") % { name: name }
     end
     # De-pluralize and downcase.
     ds_type = ds_type.chop.downcase.to_sym
     unless TypeMap.key? ds_type
       raise MCXContentProviderException,
-      "Could not parse ds_type from resource name '#{name}'.  Specify with ds_type parameter."
+      _("Could not parse ds_type from resource name '%{name}'.  Specify with ds_type parameter.") % { name: name }
     end
     ds_type
   end
@@ -149,7 +150,7 @@ Puppet::Type.type(:mcx).provide :mcxcontent, :parent => Puppet::Provider do
     ds_name = name.split('/')[2]
     unless ds_name
       raise MCXContentProviderException,
-      "Could not parse ds_name from resource name '#{name}'.  Specify with ds_name parameter."
+      _("Could not parse ds_name from resource name '%{name}'.  Specify with ds_name parameter.") % { name: name }
     end
     ds_name
   end

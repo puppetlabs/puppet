@@ -176,11 +176,11 @@ describe 'The type factory' do
       expect(ht.value_type.class).to eq(PDataType)
     end
 
-    it 'ruby(1) returns PRuntimeType[ruby, \'Fixnum\']' do
+    it 'ruby(1) returns PRuntimeType[ruby, \'Integer\']' do
       ht = TypeFactory.ruby(1)
       expect(ht.class()).to eq(PRuntimeType)
       expect(ht.runtime).to eq(:ruby)
-      expect(ht.runtime_type_name).to eq('Fixnum')
+      expect(ht.runtime_type_name).to eq(1.class.name)
     end
 
     it 'a size constrained collection can be created from array' do

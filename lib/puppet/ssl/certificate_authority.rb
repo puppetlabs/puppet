@@ -66,7 +66,7 @@ class Puppet::SSL::CertificateAuthority
   # @api private
   def autosign(csr)
     if autosign?(csr)
-      Puppet.info "Autosigning #{csr.name}"
+      Puppet.info _("Autosigning %{csr}") % { csr: csr.name }
       sign(csr.name)
     end
   end
@@ -118,7 +118,7 @@ class Puppet::SSL::CertificateAuthority
   # Generates a new certificate.
   # @return Puppet::SSL::Certificate
   def generate(name, options = {})
-    raise ArgumentError, "A Certificate already exists for #{name}" if Puppet::SSL::Certificate.indirection.find(name)
+    raise ArgumentError, _("A Certificate already exists for %{name}") % { name: name } if Puppet::SSL::Certificate.indirection.find(name)
 
     # Pass on any requested subjectAltName field.
     san = options[:dns_alt_names]
@@ -173,9 +173,10 @@ class Puppet::SSL::CertificateAuthority
     20.times { pass += (rand(74) + 48).chr }
 
     begin
-      Puppet.settings.setting(:capass).open('w') { |f| f.print pass }
+      # random password is limited to ASCII characters 48 ('0') through 122 ('z')
+      Puppet.settings.setting(:capass).open('w:ASCII') { |f| f.print pass }
     rescue Errno::EACCES => detail
-      raise Puppet::Error, "Could not write CA password: #{detail}", detail.backtrace
+      raise Puppet::Error, _("Could not write CA password: %{detail}") % { detail: detail }, detail.backtrace
     end
 
     @password = pass
@@ -189,7 +190,7 @@ class Puppet::SSL::CertificateAuthority
   #
   # @return [Array<String>]
   def list(name='*')
-    list_certificates(name).collect { |c| c.name }
+    Puppet::SSL::Certificate.indirection.search(name).collect { |c| c.name }
   end
 
   # Return all the certificate objects as found by the indirector
@@ -205,7 +206,10 @@ class Puppet::SSL::CertificateAuthority
   # @param name [Array<string>] filter to cerificate names
   #
   # @return [Array<Puppet::SSL::Certificate>]
+  #
+  # @deprecated Use Puppet::SSL::CertificateAuthority#list or Puppet Server Certificate status API
   def list_certificates(name='*')
+    Puppet.deprecation_warning(_("Puppet::SSL::CertificateAuthority#list_certificates is deprecated. Please use Puppet::SSL::CertificateAuthority#list or the certificate status API to query certificate information. See https://docs.puppet.com/puppet/latest/http_api/http_certificate_status.html"))
     Puppet::SSL::Certificate.indirection.search(name)
   end
 
@@ -213,7 +217,8 @@ class Puppet::SSL::CertificateAuthority
   # file so this one is considered used.
   def next_serial
     serial = 1
-    Puppet.settings.setting(:serial).exclusive_open('a+') do |f|
+    # the serial is 4 hex digits - limited to ASCII
+    Puppet.settings.setting(:serial).exclusive_open('a+:ASCII') do |f|
       f.rewind
       serial = f.read.chomp.hex
       if serial == 0
@@ -242,7 +247,7 @@ class Puppet::SSL::CertificateAuthority
 
   # Revoke a given certificate.
   def revoke(name)
-    raise ArgumentError, "Cannot revoke certificates when the CRL is disabled" unless crl
+    raise ArgumentError, _("Cannot revoke certificates when the CRL is disabled") unless crl
 
     cert = Puppet::SSL::Certificate.indirection.find(name)
 
@@ -255,7 +260,7 @@ class Puppet::SSL::CertificateAuthority
               end
 
     if serials.empty?
-      raise ArgumentError, "Could not find a serial number for #{name}"
+      raise ArgumentError, _("Could not find a serial number for %{name}") % { name: name }
     end
 
     serials.each do |s|
@@ -289,7 +294,7 @@ class Puppet::SSL::CertificateAuthority
       issuer = csr.content
     else
       unless csr = Puppet::SSL::CertificateRequest.indirection.find(hostname)
-        raise ArgumentError, "Could not find certificate request for #{hostname}"
+        raise ArgumentError, _("Could not find certificate request for %{hostname}") % { hostname: hostname }
       end
 
       cert_type = :server
@@ -298,7 +303,7 @@ class Puppet::SSL::CertificateAuthority
       # Make sure that the CSR conforms to our internal signing policies.
       # This will raise if the CSR doesn't conform, but just in case...
       check_internal_signing_policies(hostname, csr, options) or
-        raise CertificateSigningError.new(hostname), "CSR had an unknown failure checking internal signing policies, will not sign!"
+        raise CertificateSigningError.new(hostname), _("CSR had an unknown failure checking internal signing policies, will not sign!")
     end
 
     cert = Puppet::SSL::Certificate.new(hostname)
@@ -308,7 +313,7 @@ class Puppet::SSL::CertificateAuthority
     signer = Puppet::SSL::CertificateSigner.new
     signer.sign(cert.content, host.key.content)
 
-    Puppet.notice "Signed certificate request for #{hostname}"
+    Puppet.notice _("Signed certificate request for %{hostname}") % { hostname: hostname }
 
     # Add the cert to the inventory before we save it, since
     # otherwise we could end up with it being duplicated, if
@@ -341,17 +346,17 @@ class Puppet::SSL::CertificateAuthority
 
     if unknown_req and not unknown_req.empty?
       names = unknown_req.map {|x| x["oid"] }.sort.uniq.join(", ")
-      raise CertificateSigningError.new(hostname), "CSR has request extensions that are not permitted: #{names}"
+      raise CertificateSigningError.new(hostname), _("CSR has request extensions that are not permitted: %{names}") % { names: names }
     end
 
     # Do not sign misleading CSRs
     cn = csr.content.subject.to_a.assoc("CN")[1]
     if hostname != cn
-      raise CertificateSigningError.new(hostname), "CSR subject common name #{cn.inspect} does not match expected certname #{hostname.inspect}"
+      raise CertificateSigningError.new(hostname), _("CSR subject common name %{name} does not match expected certname %{expected}") % { name: cn.inspect, expected: hostname.inspect }
     end
 
     if hostname !~ Puppet::SSL::Base::VALID_CERTNAME
-      raise CertificateSigningError.new(hostname), "CSR #{hostname.inspect} subject contains unprintable or non-ASCII characters"
+      raise CertificateSigningError.new(hostname), _("CSR %{hostname} subject contains unprintable or non-ASCII characters") % { hostname: hostname.inspect }
     end
 
     # Wildcards: we don't allow 'em at any point.
@@ -360,11 +365,11 @@ class Puppet::SSL::CertificateAuthority
     # to scrobble through the content of the CSR subject field to make sure it
     # is what we expect where we expect it.
     if csr.content.subject.to_s.include? '*'
-      raise CertificateSigningError.new(hostname), "CSR subject contains a wildcard, which is not allowed: #{csr.content.subject.to_s}"
+      raise CertificateSigningError.new(hostname), _("CSR subject contains a wildcard, which is not allowed: %{subject}") % { subject: csr.content.subject.to_s }
     end
 
     unless csr.content.verify(csr.content.public_key)
-      raise CertificateSigningError.new(hostname), "CSR contains a public key that does not correspond to the signing key"
+      raise CertificateSigningError.new(hostname), _("CSR contains a public key that does not correspond to the signing key")
     end
 
     auth_extensions = csr.request_extensions.select do |extension|
@@ -376,25 +381,25 @@ class Puppet::SSL::CertificateAuthority
         extension['oid']
       end
 
-      raise CertificateSigningError.new(hostname), "CSR '#{csr.name}' contains authorization extensions (#{ext_names.join(', ')}), which are disallowed by default. Use `puppet cert --allow-authorization-extensions sign #{csr.name}` to sign this request."
+      raise CertificateSigningError.new(hostname), _("CSR '%{csr}' contains authorization extensions (%{extensions}), which are disallowed by default. Use `puppet cert --allow-authorization-extensions sign %{csr}` to sign this request.") % { csr: csr.name, extensions: ext_names.join(', ') }
     end
 
     unless csr.subject_alt_names.empty?
       # If you alt names are allowed, they are required. Otherwise they are
       # disallowed. Self-signed certs are implicitly trusted, however.
       unless options[:allow_dns_alt_names]
-        raise CertificateSigningError.new(hostname), "CSR '#{csr.name}' contains subject alternative names (#{csr.subject_alt_names.join(', ')}), which are disallowed. Use `puppet cert --allow-dns-alt-names sign #{csr.name}` to sign this request."
+        raise CertificateSigningError.new(hostname), _("CSR '%{csr}' contains subject alternative names (%{alt_names}), which are disallowed. Use `puppet cert --allow-dns-alt-names sign %{csr}` to sign this request.") % { csr: csr.name, alt_names: csr.subject_alt_names.join(', ') }
       end
 
       # If subjectAltNames are present, validate that they are only for DNS
       # labels, not any other kind.
       unless csr.subject_alt_names.all? {|x| x =~ /^DNS:/ }
-        raise CertificateSigningError.new(hostname), "CSR '#{csr.name}' contains a subjectAltName outside the DNS label space: #{csr.subject_alt_names.join(', ')}.  To continue, this CSR needs to be cleaned."
+        raise CertificateSigningError.new(hostname), _("CSR '%{csr}' contains a subjectAltName outside the DNS label space: %{alt_names}.  To continue, this CSR needs to be cleaned.") % { csr: csr.name, alt_names: csr.subject_alt_names.join(', ') }
       end
 
       # Check for wildcards in the subjectAltName fields too.
       if csr.subject_alt_names.any? {|x| x.include? '*' }
-        raise CertificateSigningError.new(hostname), "CSR '#{csr.name}' subjectAltName contains a wildcard, which is not allowed: #{csr.subject_alt_names.join(', ')}  To continue, this CSR needs to be cleaned."
+        raise CertificateSigningError.new(hostname), _("CSR '%{csr}' subjectAltName contains a wildcard, which is not allowed: %{alt_names}  To continue, this CSR needs to be cleaned.") % { csr: csr.name, alt_names: csr.subject_alt_names.join(', ') }
       end
     end
 
@@ -417,6 +422,11 @@ class Puppet::SSL::CertificateAuthority
   #   of the X509 Store
   #
   # @return [OpenSSL::X509::Store]
+  #
+  # @deprecated Strictly speaking, #x509_store is marked API private, so we
+  #   don't need to publicly deprecate it. But it marked as deprecated here to
+  #   avoid the exceedingly small chance that someone comes in and uses it from
+  #   within this class before it is removed.
   def x509_store(options = {})
     if (options[:cache])
       return @x509store unless @x509store.nil?
@@ -464,7 +474,10 @@ class Puppet::SSL::CertificateAuthority
   # @param cert [Puppet::SSL::Certificate] the certificate to check validity of
   #
   # @return [Boolean] true if signed, false if unsigned or revoked
+  #
+  # @deprecated use Puppet::SSL::CertificateAuthority#verify or Puppet Server certificate status API
   def certificate_is_alive?(cert)
+    Puppet.deprecation_warning(_("Puppet::SSL::CertificateAuthority#certificate_is_alive? is deprecated. Please use Puppet::SSL::CertificateAuthority#verify or the certificate status API to query certificate information. See https://docs.puppet.com/puppet/latest/http_api/http_certificate_status.html"))
     x509_store(:cache => true).verify(cert.content)
   end
 
@@ -481,16 +494,16 @@ class Puppet::SSL::CertificateAuthority
   # @return [Boolean] true if signed, there are no cases where false is returned
   def verify(name)
     unless cert = Puppet::SSL::Certificate.indirection.find(name)
-      raise ArgumentError, "Could not find a certificate for #{name}"
+      raise ArgumentError, _("Could not find a certificate for %{name}") % { name: name }
     end
-    store = x509_store
+    store = create_x509_store
 
     raise CertificateVerificationError.new(store.error), store.error_string unless store.verify(cert.content)
   end
 
   def fingerprint(name, md = :SHA256)
     unless cert = Puppet::SSL::Certificate.indirection.find(name) || Puppet::SSL::CertificateRequest.indirection.find(name)
-      raise ArgumentError, "Could not find a certificate or csr for #{name}"
+      raise ArgumentError, _("Could not find a certificate or csr for %{name}") % { name: name }
     end
     cert.fingerprint(md)
   end

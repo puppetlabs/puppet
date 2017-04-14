@@ -54,8 +54,8 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
 
   def path(name)
     if name =~ Puppet::Indirector::BadNameRegexp then
-      Puppet.crit("directory traversal detected in #{self.class}: #{name.inspect}")
-      raise ArgumentError, "invalid key"
+      Puppet.crit(_("directory traversal detected in %{indirection}: %{name}") % { indirection: self.class, name: name.inspect })
+      raise ArgumentError, _("invalid key")
     end
 
     if ca?(name) and ca_location
@@ -72,11 +72,11 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
     path = Puppet::FileSystem.pathname(path(request.key))
     return false unless Puppet::FileSystem.exist?(path)
 
-    Puppet.notice "Removing file #{model} #{request.key} at '#{path}'"
+    Puppet.notice _("Removing file %{model} %{request} at '%{path}'") % { model: model, request: request.key, path: path }
     begin
       Puppet::FileSystem.unlink(path)
     rescue => detail
-      raise Puppet::Error, "Could not remove #{request.key}: #{detail}", detail.backtrace
+      raise Puppet::Error, _("Could not remove %{request}: %{detail}") % { request: request.key, detail: detail }, detail.backtrace
     end
   end
 
@@ -92,8 +92,8 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
     path = path(request.key)
     dir = File.dirname(path)
 
-    raise Puppet::Error.new("Cannot save #{request.key}; parent directory #{dir} does not exist") unless FileTest.directory?(dir)
-    raise Puppet::Error.new("Cannot save #{request.key}; parent directory #{dir} is not writable") unless FileTest.writable?(dir)
+    raise Puppet::Error.new(_("Cannot save %{request}; parent directory %{dir} does not exist") % { request: request.key, dir: dir }) unless FileTest.directory?(dir)
+    raise Puppet::Error.new(_("Cannot save %{request}; parent directory %{dir} is not writable") % { request: request.key, dir: dir }) unless FileTest.writable?(dir)
 
     write(request.key, path) { |f| f.print request.instance.to_s }
   end
@@ -112,6 +112,8 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
 
   def create_model(name, path)
     result = model.new(name)
+    # calls Puppet::SSL::Base#read for subclasses of Puppet::SSL::Base
+    # with the exception of any overrides, like Puppet::SSL::Key
     result.read(path)
     result
   end
@@ -140,7 +142,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
     dir, short = File.split(file)
     return nil unless Puppet::FileSystem.exist?(dir)
 
-    raise ArgumentError, "Tried to fix SSL files to a file containing uppercase" unless short.downcase == short
+    raise ArgumentError, _("Tried to fix SSL files to a file containing uppercase") unless short.downcase == short
     real_file = Dir.entries(dir).reject { |f| f =~ /^\./ }.find do |other|
       other.downcase == short
     end
@@ -149,7 +151,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
 
     full_file = File.join(dir, real_file)
 
-    Puppet.deprecation_warning "Automatic downcasing and renaming of ssl files is deprecated; please request the file using its correct case: #{full_file}"
+    Puppet.deprecation_warning _("Automatic downcasing and renaming of ssl files is deprecated; please request the file using its correct case: %{full_file}") % { full_file: full_file }
     File.rename(full_file, file)
 
     file
@@ -158,15 +160,34 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
   # Yield a filehandle set up appropriately, either with our settings doing
   # the work or opening a filehandle manually.
   def write(name, path)
+    # All types serialized to disk contain only ASCII content:
+    # * SSL::Key may be a .export(OpenSSL::Cipher::DES.new(:EDE3, :CBC), pass) or .to_pem
+    # * All other classes are translated to strings by calling .to_pem
+
+    # Serialization of:
+    # Puppet::SSL::Certificate by Puppet::SSL::Certificate::Ca, Puppet::SSL::Certificate::File
+    # -----BEGIN CERTIFICATE-----
+    # Puppet::SSL::Key by Puppet::SSL::Key::Ca, Puppet::SSL::Key::File
+    # -----BEGIN RSA PRIVATE KEY-----
     if ca?(name) and ca_location
-      Puppet.settings.setting(self.class.ca_setting).open('w') { |f| yield f }
+      Puppet.settings.setting(self.class.ca_setting).open('w:ASCII') { |f| yield f }
+    # Serialization of:
+    # Puppet::SSL::CertificateRevocationList by Puppet::SSL::CertificateRevocationList::Ca, Puppet::SSL::CertificateRevocationList::File
+    # -----BEGIN X509 CRL-----
     elsif file_location
-      Puppet.settings.setting(self.class.file_setting).open('w') { |f| yield f }
+      Puppet.settings.setting(self.class.file_setting).open('w:ASCII') { |f| yield f }
+    # Serialization of:
+    # Puppet::SSL::Certificate by Puppet::SSL::Certificate::Ca, Puppet::SSL::Certificate::File
+    # -----BEGIN CERTIFICATE-----
+    # Puppet::SSL::CertificateRequest by Puppet::SSL::CertificateRequest::Ca, Puppet::SSL::CertificateRequest::File
+    # -----BEGIN CERTIFICATE REQUEST-----
+    # Puppet::SSL::Key by Puppet::SSL::Key::Ca, Puppet::SSL::Key::File
+    # -----BEGIN RSA PRIVATE KEY-----
     elsif setting = self.class.directory_setting
       begin
-        Puppet.settings.setting(setting).open_file(path, 'w') { |f| yield f }
+        Puppet.settings.setting(setting).open_file(path, 'w:ASCII') { |f| yield f }
       rescue => detail
-        raise Puppet::Error, "Could not write #{path} to #{setting}: #{detail}", detail.backtrace
+        raise Puppet::Error, _("Could not write %{path} to %{setting}: %{detail}") % { path: path, setting: setting, detail: detail }, detail.backtrace
       end
     else
       raise Puppet::DevError, "You must provide a setting to determine where the files are stored"

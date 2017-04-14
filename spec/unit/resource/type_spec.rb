@@ -43,7 +43,7 @@ describe Puppet::Resource::Type do
     end
 
     def double_convert
-      Puppet::Resource::Type.from_data_hash(PSON.parse(@type.to_pson))
+      Puppet::Resource::Type.from_data_hash(JSON.parse(@type.to_json))
     end
 
     it "should include the name and type" do
@@ -52,7 +52,7 @@ describe Puppet::Resource::Type do
     end
 
     it "should validate with only name and kind" do
-      expect(@type.to_pson).to validate_against('api/schemas/resource_type.json')
+      expect(@type.to_json).to validate_against('api/schemas/resource_type.json')
     end
 
     it "should validate with all fields set" do
@@ -62,7 +62,7 @@ describe Puppet::Resource::Type do
       @type.file = "/etc/manifests/thing.pp"
       @type.parent = "one::two"
 
-      expect(@type.to_pson).to validate_against('api/schemas/resource_type.json')
+      expect(@type.to_json).to validate_against('api/schemas/resource_type.json')
     end
 
     it "should include any arguments" do
@@ -72,7 +72,7 @@ describe Puppet::Resource::Type do
     end
 
     it "should not include arguments if none are present" do
-      expect(@type.to_pson["arguments"]).to be_nil
+      expect(@type.to_json["arguments"]).to be_nil
     end
 
     [:line, :doc, :file, :parent].each do |attr|
@@ -82,13 +82,13 @@ describe Puppet::Resource::Type do
       end
 
       it "should not include #{attr} when not set" do
-        expect(@type.to_pson[attr.to_s]).to be_nil
+        expect(@type.to_json[attr.to_s]).to be_nil
       end
     end
 
     it "should not include docs if they are empty" do
       @type.doc = ""
-      expect(@type.to_pson["doc"]).to be_nil
+      expect(@type.to_json["doc"]).to be_nil
     end
   end
 
@@ -243,7 +243,7 @@ describe Puppet::Resource::Type do
     let(:parser) { Puppet::Pops::Parser::Parser.new() }
 
     def wrap3x(expression)
-      Puppet::Parser::AST::PopsBridge::Expression.new(:value => expression.current)
+      Puppet::Parser::AST::PopsBridge::Expression.new(:value => expression.model)
     end
 
     def parse_expression(expr_string)
@@ -262,11 +262,17 @@ describe Puppet::Resource::Type do
       wrap3x(Puppet::Pops::Model::Factory.NUMBER(number).var())
     end
 
-    before do
-      @scope = Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("foo")), :source => stub("source"))
+    before(:each) do
+      compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
+      @scope = Puppet::Parser::Scope.new(compiler, :source => stub("source"))
       @resource = Puppet::Parser::Resource.new(:foo, "bar", :scope => @scope)
       @type = Puppet::Resource::Type.new(:definition, "foo")
       @resource.environment.known_resource_types.add @type
+      Puppet.push_context(:loaders => compiler.loaders)
+    end
+
+    after(:each) do
+      Puppet.pop_context
     end
 
     ['module_name', 'name', 'title'].each do |variable|
@@ -897,7 +903,7 @@ describe Puppet::Resource::Type do
 
     it "should set the other class's code as its code if it has none" do
       dest = Puppet::Resource::Type.new(:hostclass, "bar")
-      source = Puppet::Resource::Type.new(:hostclass, "foo", :code => code("bar"))
+      source = Puppet::Resource::Type.new(:hostclass, "foo", :code => code("bar").model)
 
       dest.merge(source)
 

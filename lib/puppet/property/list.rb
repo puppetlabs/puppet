@@ -14,7 +14,7 @@ module Puppet
 
       def is_to_s(currentvalue)
         if currentvalue == :absent
-          return "absent"
+          return _("absent")
         else
           return currentvalue.join(delimiter)
         end

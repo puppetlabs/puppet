@@ -115,17 +115,6 @@ class TypeCalculator
     singleton.callable?(callable, args)
   end
 
-  # Produces a String representation of the given type.
-  # @param t [PAnyType] the type to produce a string form
-  # @return [String] the type in string form
-  #
-  # @api public
-  #
-  def self.string(t)
-    Puppet.deprecation_warning('TypeCalculator.string is deprecated. Use TypeFormatter')
-    TypeFormatter.string(t)
-  end
-
   # @api public
   def self.infer(o)
     singleton.infer(o)
@@ -139,18 +128,6 @@ class TypeCalculator
   # @api public
   def self.infer_set(o)
     singleton.infer_set(o)
-  end
-
-  # @api public
-  def self.debug_string(t)
-    Puppet.deprecation_warning('TypeCalculator.debug_string is deprecated. Use TypeFormatter')
-    TypeFormatter.debug_string(t)
-  end
-
-  # @api public
-  def self.enumerable(t)
-    Puppet.deprecation_warning('TypeCalculator.enumerable is deprecated. Use iterable')
-    singleton.iterable(t)
   end
 
   # @api public
@@ -170,29 +147,6 @@ class TypeCalculator
   def initialize
     @@infer_visitor ||= Visitor.new(nil, 'infer',0,0)
     @@extract_visitor ||= Visitor.new(nil, 'extract',0,0)
-  end
-
-  # Answers the question 'is it possible to inject an instance of the given class'
-  # A class is injectable if it has a special *assisted inject* class method called `inject` taking
-  # an injector and a scope as argument, or if it has a zero args `initialize` method.
-  #
-  # @param klazz [Class, PRuntimeType] the class/type to check if it is injectable
-  # @return [Class, nil] the injectable Class, or nil if not injectable
-  # @api public
-  #
-  def injectable_class(klazz)
-    # Handle case when we get a PType instead of a class
-    if klazz.is_a?(PRuntimeType)
-      klazz = ClassLoader.provide(klazz)
-    end
-
-    # data types can not be injected (check again, it is not safe to assume that given RubyRuntime klazz arg was ok)
-    return false unless type(klazz).is_a?(PRuntimeType)
-    if (klazz.respond_to?(:inject) && klazz.method(:inject).arity == -4) || klazz.instance_method(:initialize).arity == 0
-      klazz
-    else
-      nil
-    end
   end
 
   # Answers 'can an instance of type t2 be assigned to a variable of type t'.
@@ -509,23 +463,6 @@ class TypeCalculator
     result
   end
 
-  # Produces a string representing the type
-  # @api public
-  #
-  def string(t)
-    Puppet.deprecation_warning('TypeCalculator.string is deprecated. Use TypeFormatter')
-    TypeFormatter.singleton.string(t)
-  end
-
-  # Produces a debug string representing the type (possibly with more information that the regular string format)
-  # @api public
-  #
-  def debug_string(t)
-    Puppet.deprecation_warning('TypeCalculator.debug_string is deprecated. Use TypeFormatter')
-    TypeFormatter.singleton.debug_string(t)
-  end
-
-
   # Reduces an enumerable of types to a single common type.
   # @api public
   #
@@ -565,7 +502,7 @@ class TypeCalculator
   # @api private
   def infer_Object(o)
     if o.is_a?(PuppetObject)
-      o._ptype
+      o._pcore_type
     else
       name = o.class.name
       ir = Loaders.implementation_registry

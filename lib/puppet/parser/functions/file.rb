@@ -28,6 +28,6 @@ Puppet::Parser::Functions::newfunction(
     if path
       Puppet::FileSystem.read_preserve_line_endings(path)
     else
-      raise Puppet::ParseError, "Could not find any files from #{vals.join(", ")}"
+      raise Puppet::ParseError, _("Could not find any files from %{values}") % { values: vals.join(", ") }
     end
 end

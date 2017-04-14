@@ -73,9 +73,8 @@ class Puppet::Indirector::ResourceType::Parser < Puppet::Indirector::Code
           when nil
             result_candidates = [krt.hostclasses.values, krt.definitions.values, krt.applications.values, krt.nodes.values]
           else
-            raise ArgumentError, "Unrecognized kind filter: " +
-                      "'#{request.options[:kind]}', expected one " +
-                      " of 'class', 'defined_type', 'application', or 'node'."
+            #TRANSLATORS the kinds in quotes should not be translated
+            raise ArgumentError, _("Unrecognized kind filter: '%{filter}', expected one of 'class', 'defined_type', 'application', or 'node'.") % { filter: request.options[:kind] }
         end
 
       result = result_candidates.flatten.reject { |t| t.name == "" }
@@ -87,7 +86,7 @@ class Puppet::Indirector::ResourceType::Parser < Puppet::Indirector::Code
       begin
         regex = Regexp.new(key)
       rescue => detail
-        raise ArgumentError, "Invalid regex '#{request.key}': #{detail}", detail.backtrace
+        raise ArgumentError, _("Invalid regex '%{regex}': %{detail}") % { regex: request.key, detail: detail }, detail.backtrace
       end
 
       result.reject! { |t| t.name.to_s !~ regex }
@@ -102,7 +101,7 @@ class Puppet::Indirector::ResourceType::Parser < Puppet::Indirector::Code
   end
 
   def allow_remote_requests?
-    Puppet.deprecation_warning("The resource_type endpoint is deprecated in favor of the environment_classes endpoint. See https://docs.puppet.com/puppetserver/latest/puppet-api/v3/environment_classes.html")
+    Puppet.deprecation_warning(_("The resource_type endpoint is deprecated in favor of the environment_classes endpoint. See https://docs.puppet.com/puppetserver/latest/puppet-api/v3/environment_classes.html"))
     super
   end
 end

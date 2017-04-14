@@ -1,0 +1,29 @@
+---
+# This is the project-specific configuration file for setting up
+# fast_gettext for your project.
+gettext:
+  # This is used for the name of the .pot and .po files; they will be
+  # called <project_name>.pot
+  project_name: 'puppet'
+  # This is used in comments in the .pot and .po files to indicate what
+  # project the files belong to and should be a little more descriptive than
+  # <project_name>
+  package_name: Puppet automation framework
+  # The locale that the default messages in the .pot file are in
+  default_locale: en
+  # The address for sending bug reports.
+  bugs_address: https://tickets.puppetlabs.com
+  # The holder of the copyright.
+  copyright_holder: Puppet, Inc.
+  # Patterns for +Dir.glob+ used to find all files that might contain
+  # translatable content, relative to the project root directory
+  source_files:
+    - 'lib/**/*.rb'
+  # Patterns for +Dir.glob+ used to find all files contained in
+  # `source_files` that should be ignored when searching for translatable
+  # content, relative to the project root directory
+  exclude_files:
+    - 'lib/puppet/pops/types/type_formatter.rb'
+    # The semantic_puppet gem is temporarily vendored (PUP-7114), and it
+    # handles its own translation.
+    - 'lib/puppet/vendor/**/*.rb'

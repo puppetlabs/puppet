@@ -30,7 +30,7 @@ Puppet::Type.type(:host).provide(:parsed,:parent => Puppet::Provider::ParsedFile
     },
     :to_line  => proc { |hash|
       [:ip, :name].each do |n|
-        raise ArgumentError, "#{n} is a required attribute for hosts" unless hash[n] and hash[n] != :absent
+        raise ArgumentError, _("%{attr} is a required attribute for hosts") % { attr: n } unless hash[n] and hash[n] != :absent
       end
       str = "#{hash[:ip]}\t#{hash[:name]}"
       if hash.include? :host_aliases and !hash[:host_aliases].nil? and hash[:host_aliases] != :absent

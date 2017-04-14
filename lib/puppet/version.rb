@@ -5,9 +5,8 @@
 # The version can be set programmatically because we want to allow the
 # Raketasks and such to set the version based on the output of `git describe`
 
-
 module Puppet
-  PUPPETVERSION = '4.8.2'
+  PUPPETVERSION = '5.0.0'
 
   ##
   # version is a public API method intended to always provide a fast and
@@ -66,6 +65,11 @@ module Puppet
       @puppet_version = version
     end
     @puppet_version ||= PUPPETVERSION
+  end
+
+  # @return [String] containing the puppet version to minor specificity, e.g. "3.0"
+  def self.minor_version
+    self.version.split('.')[0..1].join('.')
   end
 
   def self.version=(version)

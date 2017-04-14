@@ -129,7 +129,7 @@ describe Puppet::Util::Windows::Registry do
 
       let (:hklm) { Win32::Registry::HKEY_LOCAL_MACHINE }
       let (:puppet_key) { "SOFTWARE\\Puppet Labs"}
-      let (:subkey_name) { "PuppetRegistryTest" }
+      let (:subkey_name) { "PuppetRegistryTest#{SecureRandom.uuid}" }
       let (:guid) { SecureRandom.uuid }
       let (:regsam) { Puppet::Util::Windows::Registry::KEY32 }
 
@@ -187,7 +187,7 @@ describe Puppet::Util::Windows::Registry do
     context "when reading values" do
       let (:hklm) { Win32::Registry::HKEY_LOCAL_MACHINE }
       let (:puppet_key) { "SOFTWARE\\Puppet Labs"}
-      let (:subkey_name) { "PuppetRegistryTest" }
+      let (:subkey_name) { "PuppetRegistryTest#{SecureRandom.uuid}" }
       let (:value_name) { SecureRandom.uuid }
 
       after(:each) do
@@ -228,7 +228,7 @@ describe Puppet::Util::Windows::Registry do
     context "when reading corrupt values" do
       let (:hklm) { Win32::Registry::HKEY_LOCAL_MACHINE }
       let (:puppet_key) { "SOFTWARE\\Puppet Labs"}
-      let (:subkey_name) { "PuppetRegistryTest" }
+      let (:subkey_name) { "PuppetRegistryTest#{SecureRandom.uuid}" }
       let (:value_name) { SecureRandom.uuid }
 
       before(:each) do

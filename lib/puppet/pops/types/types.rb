@@ -50,7 +50,7 @@ class TypedModelObject < Object
   include Visitable
   include Adaptable
 
-  def self._ptype
+  def self._pcore_type
     @type
   end
 
@@ -59,7 +59,10 @@ class TypedModelObject < Object
   end
 
   def self.register_ptypes(loader, ir)
-    types = []
+    types = [
+      Annotation.register_ptype(loader, ir),
+      RubyMethod.register_ptype(loader, ir)
+    ]
     Types.constants.each do |c|
       cls = Types.const_get(c)
       next unless cls.is_a?(Class) && cls < self
@@ -138,13 +141,22 @@ class PAnyType < TypedModelObject
     end
   end
 
-  # Returns `true` if this instance is a callable that accepts the given _args_
+  # Returns `true` if this instance is a callable that accepts the given _args_type_ type
   #
-  # @param args [PAnyType] the arguments to test
+  # @param args_type [PAnyType] the arguments to test
   # @param guard [RecursionGuard] guard against recursion. Only used by internal calls
   # @return [Boolean] `true` if this instance is a callable that accepts the given _args_
-  def callable?(args, guard = nil)
-    args.is_a?(PAnyType) && kind_of_callable? && args.callable_args?(self, guard)
+  def callable?(args_type, guard = nil)
+    args_type.is_a?(PAnyType) && kind_of_callable? && args_type.callable_args?(self, guard)
+  end
+
+  # Returns `true` if this instance is a callable that accepts the given _args_
+  #
+  # @param args [Array] the arguments to test
+  # @param block [Proc] block, or nil if not called with a block
+  # @return [Boolean] `true` if this instance is a callable that accepts the given _args_
+  def callable_with?(args,  block = nil)
+    false
   end
 
   # Returns `true` if this instance is considered valid as arguments to the given `callable`
@@ -292,6 +304,10 @@ class PAnyType < TypedModelObject
     simple_name
   end
 
+  def create(*args)
+    Loaders.find_loader(nil).load(:function, 'new').call({}, self, *args)
+  end
+
   def new_function(loader)
     self.class.new_function(self, loader)
   end
@@ -434,8 +450,10 @@ class PType < PTypeWithContainedType
   def instance?(o, guard = nil)
     if o.is_a?(PAnyType)
       type.nil? || type.assignable?(o, guard)
+    elsif o.is_a?(Module) || o.is_a?(Puppet::Resource) || o.is_a?(Puppet::Parser::Resource)
+      @type.nil? ? true : assignable?(TypeCalculator.infer(o))
     else
-      assignable?(TypeCalculator.infer(o), guard)
+      false
     end
   end
 
@@ -667,7 +685,13 @@ class PScalarType < PAnyType
   end
 
   def instance?(o, guard = nil)
-    assignable?(TypeCalculator.infer(o), guard)
+    if o.is_a?(String) || o.is_a?(Numeric) || o.is_a?(TrueClass) || o.is_a?(FalseClass) || o.is_a?(Regexp) || o.is_a?(SemanticPuppet::VersionRange)
+      true
+    elsif o.is_a?(Array) || o.is_a?(Hash) || o.is_a?(PAnyType) || o.is_a?(NilClass)
+      false
+    else
+      assignable?(TypeCalculator.infer(o))
+    end
   end
 
   DEFAULT = PScalarType.new
@@ -728,6 +752,10 @@ class PEnumType < PScalarType
     self.class == o.class && @values == o.values
   end
 
+  def instance?(o, guard = nil)
+    o.is_a?(String) && @values.any? { |p| p == o }
+  end
+
   DEFAULT = PEnumType.new(EMPTY_ARRAY)
 
   protected
@@ -742,10 +770,9 @@ class PEnumType < PScalarType
     case o
       when PStringType
         # if the contained string is found in the set of enums
-        v = o.value
-        !v.nil? && svalues.any? { |e| e == v }
+        instance?(o.value, guard)
       when PEnumType
-        !o.values.empty? && o.values.all? { |s| svalues.any? {|e| e == s }}
+        !o.values.empty? && o.values.all? { |s| instance?(s, guard) }
       else
         false
     end
@@ -818,8 +845,8 @@ end
 class PNumericType < PAbstractRangeType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'ScalarType',
-      'from' => { KEY_TYPE => PNumericType::DEFAULT, KEY_VALUE => :default },
-      'to' => { KEY_TYPE => PNumericType::DEFAULT, KEY_VALUE => :default }
+      'from' => { KEY_TYPE => POptionalType.new(PNumericType::DEFAULT), KEY_VALUE => nil },
+      'to' => { KEY_TYPE => POptionalType.new(PNumericType::DEFAULT), KEY_VALUE => nil }
     )
   end
 
@@ -1191,7 +1218,11 @@ class PCollectionType < PAnyType
   end
 
   def instance?(o, guard = nil)
-    assignable?(TypeCalculator.infer(o), guard)
+    if o.is_a?(Array) || o.is_a?(Hash)
+      @size_type.nil? || @size_type.instance?(o.size)
+    else
+      false
+    end
   end
 
   # Returns an array with from (min) size to (max) size
@@ -1527,6 +1558,22 @@ class PRegexpType < PScalarType
         KEY_VALUE => nil
       })
   end
+
+
+  # Returns a new function that produces a Regexp instance
+  #
+  def self.new_function(_, loader)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_float, loader) do
+      dispatch :from_string do
+        param 'String', :pattern
+      end
+
+      def from_string(pattern)
+        Regexp.new(pattern)
+      end
+    end
+  end
+
   attr_reader :pattern
 
   def initialize(pattern)
@@ -1548,6 +1595,10 @@ class PRegexpType < PScalarType
 
   def eql?(o)
     self.class == o.class && @pattern == o.pattern
+  end
+
+  def instance?(o, guard=nil)
+    o.is_a?(Regexp) && (@pattern.nil? || @pattern == (o.options == 0 ? o.source : o.to_s))
   end
 
   DEFAULT = PRegexpType.new(nil)
@@ -1588,6 +1639,10 @@ class PPatternType < PScalarType
 
   def eql?(o)
     self.class == o.class && @patterns.size == o.patterns.size && (@patterns - o.patterns).empty?
+  end
+
+  def instance?(o, guard = nil)
+    o.is_a?(String) && (@patterns.empty? || @patterns.any? { |p| p.regexp.match(o) })
   end
 
   DEFAULT = PPatternType.new(EMPTY_ARRAY)
@@ -1741,6 +1796,14 @@ class PStructElement < TypedModelObject
 
   def ==(o)
     self.class == o.class && value_type == o.value_type && key_type == o.key_type
+  end
+
+  # Special boostrap method to overcome the hen and egg problem with the Object initializer that contains
+  # types that are derived from Object (such as Annotation)
+  #
+  # @api private
+  def replace_value_type(new_type)
+    @value_type = new_type
   end
 end
 
@@ -2003,14 +2066,15 @@ class PTupleType < PAnyType
 
   def instance?(o, guard = nil)
     return false unless o.is_a?(Array)
-    # compute the tuple's min/max size, and check if that size matches
-    size_t = size_type || PIntegerType.new(*size_range)
-
-    return false unless size_t.instance?(o.size, guard)
-    o.each_with_index do |element, index|
-      return false unless (types[index] || types[-1]).instance?(element, guard)
+    if @size_type
+      return false unless @size_type.instance?(o.size, guard)
+    else
+      return false unless @types.empty? || @types.size == o.size
     end
-    true
+    index = -1
+    @types.empty? || o.all? do |element|
+      @types.fetch(index += 1) { @types.last }.instance?(element, guard)
+    end
   end
 
   def iterable?(guard = nil)
@@ -2110,6 +2174,10 @@ class PCallableType < PAnyType
       'block_type' => {
         KEY_TYPE => POptionalType.new(PCallableType::DEFAULT),
         KEY_VALUE => nil
+      },
+      'return_type' => {
+        KEY_TYPE => POptionalType.new(PType::DEFAULT),
+        KEY_VALUE => PAnyType::DEFAULT
       }
     )
   end
@@ -2166,7 +2234,22 @@ class PCallableType < PAnyType
   end
 
   def instance?(o, guard = nil)
-    assignable?(TypeCalculator.infer(o), guard)
+    (o.is_a?(Proc) || o.is_a?(Evaluator::Closure) || o.is_a?(Functions::Function)) && assignable?(TypeCalculator.infer(o), guard)
+  end
+
+  # Returns `true` if this instance is a callable that accepts the given _args_
+  #
+  # @param args [Array] the arguments to test
+  # @return [Boolean] `true` if this instance is a callable that accepts the given _args_
+  def callable_with?(args, block = nil)
+    # nil param_types and compatible return type means other Callable is assignable
+    return true if @param_types.nil?
+    return false unless @param_types.instance?(args)
+    if @block_type.nil?
+      block == nil
+    else
+      @block_type.instance?(block)
+    end
   end
 
   # @api private
@@ -2466,7 +2549,7 @@ class PHashType < PCollectionType
       key_t = key_t.normalize(guard) unless key_t.nil?
       value_t = @value_type
       value_t = value_t.normalize(guard) unless value_t.nil?
-      @size_type.nil? && @key_type.equal?(key_t) && @value_type.equal?(value_t) ? self : PHashType.new(key_t, value_t, nil)
+      @size_type.nil? && @key_type.equal?(key_t) && @value_type.equal?(value_t) ? self : PHashType.new(key_t, value_t, @size_type)
     end
   end
 
@@ -2612,7 +2695,7 @@ class PVariantType < PAnyType
   # @return [PAnyType] the resulting type
   # @api public
   def self.maybe_create(types)
-    types = types.uniq
+    types = flatten_variants(types).uniq
     types.size == 1 ? types[0] : new(types)
   end
 
@@ -2657,24 +2740,15 @@ class PVariantType < PAnyType
 
       if types.size == 1
         types[0]
-      elsif types.any? { |t| t.is_a?(PUndefType) }
-        # Undef entry present. Use an OptionalType with a normalized Variant of all types that are not Undef
-        POptionalType.new(PVariantType.maybe_create(types.reject { |ot| ot.is_a?(PUndefType) }).normalize(guard)).normalize(guard)
+      elsif types.any? { |t| t.is_a?(PUndefType) || t.is_a?(POptionalType) }
+        # Undef entry present. Use an OptionalType with a normalized Variant without Undefs and Optional wrappers
+        POptionalType.new(PVariantType.maybe_create(types.reject { |t| t.is_a?(PUndefType) }.map { |t| t.is_a?(POptionalType) ? t.type : t })).normalize
       else
         # Merge all variants into this one
-        types = types.map do |t|
-          if t.is_a?(PVariantType)
-            modified = true
-            t.types
-          else
-            t
-          end
-        end
-        types.flatten! if modified
+        types = PVariantType.flatten_variants(types)
         size_before_merge = types.size
 
         types = swap_not_undefs(types)
-        types = swap_optionals(types)
         types = merge_enums(types)
         types = merge_patterns(types)
         types = merge_version_ranges(types)
@@ -2692,6 +2766,20 @@ class PVariantType < PAnyType
     end
   end
 
+  def self.flatten_variants(types)
+    modified = false
+    types = types.map do |t|
+      if t.is_a?(PVariantType)
+        modified = true
+        t.types
+      else
+        t
+      end
+    end
+    types.flatten! if modified
+    types
+  end
+
   def hash
     @types.hash
   end
@@ -2702,10 +2790,9 @@ class PVariantType < PAnyType
   end
 
   def really_instance?(o, guard = nil)
-    @types.inject(-1) do |memo, type|
+    @types.reduce(-1) do |memo, type|
       ri = type.really_instance?(o, guard)
-      memo = ri if ri > memo
-      memo
+      ri > memo ? ri : memo
     end
   end
 
@@ -2749,20 +2836,6 @@ class PVariantType < PAnyType
       # A variant is assignable if o is assignable to any of its types
       types.any? { |option_t| option_t.assignable?(o, guard) }
     end
-  end
-
-  # @api private
-  def swap_optionals(array)
-    if array.size > 1
-      parts = array.partition {|t| t.is_a?(POptionalType) }
-      optionals = parts[0]
-      if optionals.size > 1
-        others = parts[1]
-        others <<  POptionalType.new(PVariantType.maybe_create(optionals.map { |optional| optional.type }).normalize)
-        array = others
-      end
-    end
-    array
   end
 
   # @api private
@@ -3099,9 +3172,10 @@ class PTypeAliasType < PAnyType
   def assignable?(o, guard = nil)
     if @self_recursion
       guard ||= RecursionGuard.new
-      return true if guard.add_this(self) == RecursionGuard::SELF_RECURSION_IN_BOTH
+      guard.with_this(self) { |state| state == RecursionGuard::SELF_RECURSION_IN_BOTH ? true : super(o, guard) }
+    else
+      super(o, guard)
     end
-    super(o, guard)
   end
 
   # Returns the resolved type. The type must have been resolved by a call prior to calls to this
@@ -3265,10 +3339,12 @@ class PTypeAliasType < PAnyType
   def really_instance?(o, guard = nil)
     if @self_recursion
       guard ||= RecursionGuard.new
-      guard.add_that(o)
-      return 0 if guard.add_this(self) == RecursionGuard::SELF_RECURSION_IN_BOTH
+      guard.with_that(o) do
+        guard.with_this(self) { |state| state == RecursionGuard::SELF_RECURSION_IN_BOTH ? 0 : resolved_type.really_instance?(o, guard) }
+      end
+    else
+      resolved_type.really_instance?(o, guard)
     end
-    resolved_type.really_instance?(o, guard)
   end
 
   # @return `nil` to prevent serialization of the type_expr used when first initializing this instance
@@ -3292,7 +3368,7 @@ class PTypeAliasType < PAnyType
   def guarded_recursion(guard, dflt)
     if @self_recursion
       guard ||= RecursionGuard.new
-      (guard.add_this(self) & RecursionGuard::SELF_RECURSION_IN_THIS) == 0 ? yield(guard) : dflt
+      guard.with_this(self) { |state| (state & RecursionGuard::SELF_RECURSION_IN_THIS) == 0 ? yield(guard) : dflt }
     else
       yield(guard)
     end
@@ -3333,6 +3409,8 @@ require 'puppet/pops/pcore'
 require_relative 'annotatable'
 require_relative 'p_meta_type'
 require_relative 'p_object_type'
+require_relative 'annotation'
+require_relative 'ruby_method'
 require_relative 'p_runtime_type'
 require_relative 'p_sem_ver_type'
 require_relative 'p_sem_ver_range_type'

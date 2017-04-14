@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 require 'puppet/provider/nameservice'
-require 'etc'
+require 'puppet/etc'
 
 describe Puppet::Provider::NameService do
 
@@ -123,26 +123,26 @@ describe Puppet::Provider::NameService do
   describe "#listbyname" do
     it "should return a list of users if resource_type is user" do
       described_class.resource_type = Puppet::Type.type(:user)
-      Etc.expects(:setpwent)
-      Etc.stubs(:getpwent).returns *users
-      Etc.expects(:endpwent)
+      Puppet::Etc.expects(:setpwent)
+      Puppet::Etc.stubs(:getpwent).returns *users
+      Puppet::Etc.expects(:endpwent)
       expect(described_class.listbyname).to eq(%w{root foo})
     end
 
     it "should return a list of groups if resource_type is group", :unless => Puppet.features.microsoft_windows? do
       described_class.resource_type = Puppet::Type.type(:group)
-      Etc.expects(:setgrent)
-      Etc.stubs(:getgrent).returns *groups
-      Etc.expects(:endgrent)
+      Puppet::Etc.expects(:setgrent)
+      Puppet::Etc.stubs(:getgrent).returns *groups
+      Puppet::Etc.expects(:endgrent)
       expect(described_class.listbyname).to eq(%w{root bin})
     end
 
     it "should yield if a block given" do
       yield_results = []
       described_class.resource_type = Puppet::Type.type(:user)
-      Etc.expects(:setpwent)
-      Etc.stubs(:getpwent).returns *users
-      Etc.expects(:endpwent)
+      Puppet::Etc.expects(:setpwent)
+      Puppet::Etc.stubs(:getpwent).returns *users
+      Puppet::Etc.expects(:endpwent)
       described_class.listbyname {|x| yield_results << x }
       expect(yield_results).to eq(%w{root foo})
     end
@@ -188,13 +188,13 @@ describe Puppet::Provider::NameService do
     end
 
     it "should return a hash if we can retrieve something" do
-      Etc.expects(:send).with(:getfoonam, 'bob').returns fakeetcobject
+      Puppet::Etc.expects(:send).with(:getfoonam, 'bob').returns fakeetcobject
       provider.expects(:info2hash).with(fakeetcobject).returns(:foo => 'fooval', :bar => 'barval')
       expect(provider.getinfo(true)).to eq({:foo => 'fooval', :bar => 'barval'})
     end
 
     it "should return nil if we cannot retrieve anything" do
-      Etc.expects(:send).with(:getfoonam, 'bob').raises(ArgumentError, "can't find bob")
+      Puppet::Etc.expects(:send).with(:getfoonam, 'bob').raises(ArgumentError, "can't find bob")
       provider.expects(:info2hash).never
       expect(provider.getinfo(true)).to be_nil
     end
@@ -301,4 +301,46 @@ describe Puppet::Provider::NameService do
     end
   end
 
+  describe "comments_insync?" do
+    # comments_insync? overrides Puppet::Property#insync? and will act on an
+    # array containing a should value (the expected value of Puppet::Property
+    # @should)
+    context "given strings with compatible encodings" do
+      it "should return false if the is-value and should-value are not equal" do
+        is_value = "foo"
+        should_value = ["bar"]
+        expect(provider.comments_insync?(is_value, should_value)).to be_falsey
+      end
+
+      it "should return true if the is-value and should-value are equal" do
+        is_value = "foo"
+        should_value = ["foo"]
+        expect(provider.comments_insync?(is_value, should_value)).to be_truthy
+      end
+    end
+
+    context "given strings with incompatible encodings" do
+      let(:snowman_iso) { "\u2603".force_encoding(Encoding::ISO_8859_1) }
+      let(:snowman_utf8) { "\u2603".force_encoding(Encoding::UTF_8) }
+      let(:snowman_binary) { "\u2603".force_encoding(Encoding::ASCII_8BIT) }
+      let(:arabic_heh_utf8) { "\u06FF".force_encoding(Encoding::UTF_8) }
+
+      it "should be able to compare unequal strings and return false" do
+        expect(Encoding.compatible?(snowman_iso, arabic_heh_utf8)).to be_falsey
+        expect(provider.comments_insync?(snowman_iso, [arabic_heh_utf8])).to be_falsey
+      end
+
+      it "should be able to compare equal strings and return true" do
+        expect(Encoding.compatible?(snowman_binary, snowman_utf8)).to be_falsey
+        expect(provider.comments_insync?(snowman_binary, [snowman_utf8])).to be_truthy
+      end
+
+      it "should not manipulate the actual encoding of either string" do
+        expect(Encoding.compatible?(snowman_binary, snowman_utf8)).to be_falsey
+        provider.comments_insync?(snowman_binary, [snowman_utf8])
+        expect(snowman_binary.encoding).to eq(Encoding::ASCII_8BIT)
+        expect(snowman_utf8.encoding).to eq(Encoding::UTF_8)
+      end
+    end
+  end
 end

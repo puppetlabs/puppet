@@ -97,7 +97,7 @@ class Puppet::Indirector::Request
   end
 
   def model
-    raise ArgumentError, "Could not find indirection '#{indirection_name}'" unless i = indirection
+    raise ArgumentError, _("Could not find indirection '%{indirection}'") % { indirection: indirection_name } unless i = indirection
     i.model
   end
 
@@ -133,10 +133,10 @@ class Puppet::Indirector::Request
       case value
       when nil
         params
-      when true, false, String, Symbol, Fixnum, Bignum, Float
+      when true, false, String, Symbol, Integer, Float
         params << [key, value]
       else
-        raise ArgumentError, "HTTP REST queries cannot handle values of type '#{value.class}'"
+        raise ArgumentError, _("HTTP REST queries cannot handle values of type '%{klass}'") % { klass: value.class }
       end
     end
   end
@@ -191,7 +191,7 @@ class Puppet::Indirector::Request
           self.port   = srv_port
           return yield(self)
         rescue SystemCallError => e
-          Puppet.warning "Error connecting to #{srv_server}:#{srv_port}: #{e.message}"
+          Puppet.warning _("Error connecting to %{srv_server}:%{srv_port}: %{message}") % { srv_server: srv_server, srv_port: srv_port, message: e.message }
         end
       end
     end
@@ -243,9 +243,11 @@ class Puppet::Indirector::Request
   def set_uri_key(key)
     @uri = key
     begin
+      # calling URI.escape for UTF-8 characters will % escape them
+      # and the resulting string components of the URI are now ASCII
       uri = URI.parse(URI.escape(key))
     rescue => detail
-      raise ArgumentError, "Could not understand URL #{key}: #{detail}", detail.backtrace
+      raise ArgumentError, _("Could not understand URL %{key}: %{detail}") % { key: key, detail: detail }, detail.backtrace
     end
 
     # Just short-circuit these to full paths
@@ -272,6 +274,8 @@ class Puppet::Indirector::Request
       @protocol = uri.scheme
     end
 
-    @key = URI.unescape(uri.path.sub(/^\//, ''))
+    # The unescaped bytes are correct but in ASCII and must be treated
+    # as UTF-8 for the sake of performing string comparisons later
+    @key = URI.unescape(uri.path.sub(/^\//, '')).force_encoding(Encoding::UTF_8)
   end
 end

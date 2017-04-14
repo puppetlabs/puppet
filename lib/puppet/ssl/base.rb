@@ -29,7 +29,7 @@ class Puppet::SSL::Base
   end
 
   def self.validate_certname(name)
-    raise "Certname #{name.inspect} must not contain unprintable or non-ASCII characters" unless name =~ VALID_CERTNAME
+    raise _("Certname %{name} must not contain unprintable or non-ASCII characters") % { name: name.inspect } unless name =~ VALID_CERTNAME
   end
 
   attr_accessor :name, :content
@@ -81,7 +81,20 @@ class Puppet::SSL::Base
 
   # Read content from disk appropriately.
   def read(path)
-    @content = wrapped_class.new(File.read(path))
+    # applies to Puppet::SSL::Certificate, Puppet::SSL::CertificateRequest, Puppet::SSL::CertificateRevocationList
+    # Puppet::SSL::Key uses this, but also provides its own override
+    # nothing derives from Puppet::SSL::Certificate, but it is called by a number of other SSL Indirectors:
+    # Puppet::SSL::Certificate::DisabledCa (:find, :save, :destroy)
+    # Puppet::Indirector::CertificateStatus::File (.indirection.find)
+    # Puppet::Network::HTTP::WEBrick (.indirection.find)
+    # Puppet::Network::HTTP::RackREST (.from_instance)
+    # Puppet::Network::HTTP::WEBrickREST (.from_instance)
+    # Puppet::SSL::CertificateAuthority (.new, .indirection.find, .indirection.save)
+    # Puppet::SSL::Host (.indirection.find)
+    # Puppet::SSL::Inventory (.indirection.search, implements its own add / rebuild / serials with encoding UTF8)
+    # Puppet::SSL::CertificateAuthority::Interface (.indirection.find)
+    # Puppet::SSL::Validator::DefaultValidator (.from_instance) / Puppet::SSL::Validator::NoValidator does nothing
+    @content = wrapped_class.new(Puppet::FileSystem.read(path, :encoding => Encoding::ASCII))
   end
 
   # Convert our thing to pem.
@@ -128,7 +141,7 @@ class Puppet::SSL::Base
     if match = digest_re.match(ln)
       match[0].downcase
     else
-      raise Puppet::Error, "Unknown signature algorithm '#{ln}'"
+      raise Puppet::Error, _("Unknown signature algorithm '%{ln}'") % { ln: ln }
     end
   end
 

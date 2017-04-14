@@ -61,7 +61,7 @@ class Puppet::Graph::SimpleGraph
     source = base || event.resource
 
     unless vertex?(source)
-      Puppet.warning "Got an event from invalid vertex #{source.ref}"
+      Puppet.warning _("Got an event from invalid vertex %{source}") % { source: source.ref }
       return []
     end
     # Get all of the edges that this vertex should forward events
@@ -193,7 +193,8 @@ class Puppet::Graph::SimpleGraph
   # through the graph first, which are more likely to be interesting to the
   # user.  I think; it would be interesting to verify that. --daniel 2011-01-23
   def paths_in_cycle(cycle, max_paths = 1)
-    raise ArgumentError, "negative or zero max_paths" if max_paths < 1
+    #TRANSLATORS "negative or zero" refers to the count of paths
+    raise ArgumentError, _("negative or zero max_paths") if max_paths < 1
 
     # Calculate our filtered outbound vertex lists...
     adj = {}
@@ -225,7 +226,7 @@ class Puppet::Graph::SimpleGraph
     return if n == 0
     s = n == 1 ? '' : 's'
 
-    message = "Found #{n} dependency cycle#{s}:\n"
+    message = n_("Found %{num} dependency cycle:\n", "Found %{num} dependency cycles:\n", n) % { num: n }
     cycles.each do |cycle|
       paths = paths_in_cycle(cycle)
       message += paths.map{ |path| '(' + path.join(" => ") + ')'}.join("\n") + "\n"
@@ -233,10 +234,11 @@ class Puppet::Graph::SimpleGraph
 
     if Puppet[:graph] then
       filename = write_cycles_to_graph(cycles)
-      message += "Cycle graph written to #{filename}."
+      message += _("Cycle graph written to %{filename}.") % { filename: filename }
     else
-      message += "Try the '--graph' option and opening the "
-      message += "resulting '.dot' file in OmniGraffle or GraphViz"
+      #TRANSLATORS "graph" refers to a command line option and should not be translated
+      #TRANSLATORS OmniGraffle and GraphViz and program names and should not be translated
+      message += _("Try the '--graph' option and opening the resulting '.dot' file in OmniGraffle or GraphViz")
     end
 
     raise Puppet::Error, message
@@ -258,7 +260,8 @@ class Puppet::Graph::SimpleGraph
     graph << '}'
 
     filename = File.join(Puppet[:graphdir], "cycles.dot")
-    File.open(filename, "w") { |f| f.puts graph }
+    # DOT files are assumed to be UTF-8 by default - http://www.graphviz.org/doc/info/lang.html
+    File.open(filename, "w:UTF-8") { |f| f.puts graph }
     return filename
   end
 
@@ -463,7 +466,8 @@ class Puppet::Graph::SimpleGraph
     return unless Puppet[:graph]
 
     file = File.join(Puppet[:graphdir], "#{name}.dot")
-    File.open(file, "w") { |f|
+    # DOT files are assumed to be UTF-8 by default - http://www.graphviz.org/doc/info/lang.html
+    File.open(file, "w:UTF-8") { |f|
       f.puts to_dot("name" => name.to_s.capitalize)
     }
   end

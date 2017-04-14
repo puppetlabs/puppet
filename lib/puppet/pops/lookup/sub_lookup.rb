@@ -1,6 +1,8 @@
 module Puppet::Pops
 module Lookup
 module SubLookup
+  SPECIAL = /['"\.]/
+
   # Split key into segments. A segment may be a quoted string (both single and double quotes can
   # be used) and the segment separator is the '.' character. Whitespace will be trimmed off on
   # both sides of each segment. Whitespace within quotes are not trimmed.
@@ -15,6 +17,7 @@ module SubLookup
   #
   # @api public
   def split_key(key)
+    return [key] if key.match(SPECIAL).nil?
     segments = key.split(/(\s*"[^"]+"\s*|\s*'[^']+'\s*|[^'".]+)/)
     if segments.empty?
       # Only happens if the original key was an empty string
@@ -59,7 +62,7 @@ module SubLookup
             segment = segment.to_i
             unless value.instance_of?(Array)
               raise Puppet::DataBinding::LookupError,
-                "Data Provider type mismatch: Got #{value.class.name} when Array was expected to access value using '#{segment}' from key '#{key}'"
+                _("Data Provider type mismatch: Got %{klass} when Array was expected to access value using '%{segment}' from key '%{key}'") % { klass: value.class.name, segment: segment, key: key }
             end
             unless segment < value.size
               lookup_invocation.report_not_found(segment)
@@ -68,7 +71,7 @@ module SubLookup
           else
             unless value.respond_to?(:'[]') && !(value.instance_of?(Array) || value.instance_of?(String))
               raise Puppet::DataBinding::LookupError,
-                "Data Provider type mismatch: Got #{value.class.name} when a hash-like object was expected to access value using '#{segment}' from key '#{key}'"
+                _("Data Provider type mismatch: Got %{klass} when a hash-like object was expected to access value using '%{segment}' from key '%{key}'") % { klass: value.class.name, segment: segment, key: key }
             end
             unless value.include?(segment)
               lookup_invocation.report_not_found(segment)

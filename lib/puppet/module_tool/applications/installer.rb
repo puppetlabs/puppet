@@ -78,7 +78,7 @@ module Puppet::ModuleTool
           results[:install_dir] = @install_dir.target
 
           unless @local_tarball && @ignore_dependencies
-            Puppet.notice "Downloading from #{module_repository.host} ..."
+            Puppet.notice _("Downloading from %{host} ...") % { host: module_repository.host }
           end
 
           if @ignore_dependencies
@@ -124,7 +124,7 @@ module Puppet::ModuleTool
           end
 
           begin
-            Puppet.info "Resolving dependencies ..."
+            Puppet.info _("Resolving dependencies ...")
             releases = SemanticPuppet::Dependency.resolve(graph)
           rescue SemanticPuppet::Dependency::UnsatisfiableGraph
             raise NoVersionsSatisfyError, results.merge(:requested_name => name)
@@ -153,10 +153,10 @@ module Puppet::ModuleTool
             end
           end
 
-          Puppet.info "Preparing to install ..."
+          Puppet.info _("Preparing to install ...")
           releases.each { |release| release.prepare }
 
-          Puppet.notice 'Installing -- do not interrupt ...'
+          Puppet.notice _('Installing -- do not interrupt ...')
           releases.each do |release|
             installed = installed_modules[release.name]
             if forced? || installed.nil?
@@ -258,7 +258,7 @@ module Puppet::ModuleTool
           @remote = { "#{@module_name}@#{@version}" => { } }
           @versions = {
             @module_name => [
-              { :vstring => @version, :semver => SemVer.new(@version) }
+              { :vstring => @version, :semver => SemanticPuppet::Version.parse(@version) }
             ]
           }
         else

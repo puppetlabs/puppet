@@ -52,14 +52,14 @@ class Puppet::Provider::NameService < Puppet::Provider
     # for both users and groups.
     def listbyname
       names = []
-      Etc.send("set#{section()}ent")
+      Puppet::Etc.send("set#{section()}ent")
       begin
-        while ent = Etc.send("get#{section()}ent")
+        while ent = Puppet::Etc.send("get#{section()}ent")
           names << ent.name
           yield ent.name if block_given?
         end
       ensure
-        Etc.send("end#{section()}ent")
+        Puppet::Etc.send("end#{section()}ent")
       end
 
       names
@@ -93,7 +93,7 @@ class Puppet::Provider::NameService < Puppet::Provider
       name = name.intern if name.is_a? String
       if @checks.include? name
         block = @checks[name][:block]
-        raise ArgumentError, "Invalid value #{value}: #{@checks[name][:error]}" unless block.call(value)
+        raise ArgumentError, _("Invalid value %{value}: %{error}") % { value: value, error: @checks[name][:error] } unless block.call(value)
       end
     end
 
@@ -146,7 +146,7 @@ class Puppet::Provider::NameService < Puppet::Provider
       # other, more convenient enumerator for these, so we fake one with this
       # loop.  Thanks, Ruby, for your awesome abstractions. --daniel 2012-03-23
       highest = []
-      Etc.send(database) {|entry| highest << entry.send(method) }
+      Puppet::Etc.send(database) {|entry| highest << entry.send(method) }
       highest = highest.reject {|x| x > 65000 }.max
 
       @prevauto = highest || 1000
@@ -158,7 +158,7 @@ class Puppet::Provider::NameService < Puppet::Provider
 
   def create
     if exists?
-      info "already exists"
+      info _("already exists")
       # The object already exists
       return nil
     end
@@ -169,13 +169,13 @@ class Puppet::Provider::NameService < Puppet::Provider
         execute(cmd)
       end
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not create #{@resource.class.name} #{@resource.name}: #{detail}", detail.backtrace
+      raise Puppet::Error, _("Could not create %{resource} %{name}: %{detail}") % { resource: @resource.class.name, name: @resource.name, detail: detail }, detail.backtrace
     end
   end
 
   def delete
     unless exists?
-      info "already absent"
+      info _("already absent")
       # the object already doesn't exist
       return nil
     end
@@ -183,7 +183,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     begin
       execute(self.deletecmd)
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not delete #{@resource.class.name} #{@resource.name}: #{detail}", detail.backtrace
+      raise Puppet::Error, _("Could not delete %{resource} %{name}: %{detail}") % { resource: @resource.class.name, name: @resource.name, detail: detail }, detail.backtrace
     end
   end
 
@@ -226,7 +226,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     if @objectinfo.nil? or refresh == true
       @etcmethod ||= ("get" + self.class.section.to_s + "nam").intern
       begin
-        @objectinfo = Etc.send(@etcmethod, @resource[:name])
+        @objectinfo = Puppet::Etc.send(@etcmethod, @resource[:name])
       rescue ArgumentError
         @objectinfo = nil
       end
@@ -242,13 +242,13 @@ class Puppet::Provider::NameService < Puppet::Provider
     groups = []
 
     # Reset our group list
-    Etc.setgrent
+    Puppet::Etc.setgrent
 
     user = @resource[:name]
 
     # Now iterate across all of the groups, adding each one our
     # user is a member of
-    while group = Etc.getgrent
+    while group = Puppet::Etc.getgrent
       members = group.mem
 
       groups << group.name if members.include? user
@@ -256,7 +256,7 @@ class Puppet::Provider::NameService < Puppet::Provider
 
     # We have to close the file, so each listing is a separate
     # reading of the file.
-    Etc.endgrent
+    Puppet::Etc.endgrent
 
     groups.join(",")
   end
@@ -285,8 +285,23 @@ class Puppet::Provider::NameService < Puppet::Provider
     begin
       execute(cmd)
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}", detail.backtrace
+      raise Puppet::Error, _("Could not set %{param} on %{resource}[%{name}]: %{detail}") % { param: param, resource: @resource.class.name, name: @resource.name, detail: detail }, detail.backtrace
     end
+  end
+
+  # From overriding Puppet::Property#insync? Ruby Etc::getpwnam < 2.1.0 always
+  # returns a struct with binary encoded string values, and >= 2.1.0 will return
+  # binary encoded strings for values incompatible with current locale charset,
+  # or Encoding.default_external if compatible. Compare a "should" value with
+  # encoding of "current" value, to avoid unnecessary property syncs and
+  # comparison of strings with different encodings. (PUP-6777)
+  #
+  # return basic string comparison after re-encoding (same as
+  # Puppet::Property#property_matches)
+  def comments_insync?(current, should)
+    # we're only doing comparison here so don't mutate the string
+    desired = should[0].to_s.dup
+    current == desired.force_encoding(current.encoding)
   end
 end
 

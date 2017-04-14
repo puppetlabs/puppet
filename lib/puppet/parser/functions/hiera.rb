@@ -77,6 +77,20 @@ $users = hiera('users') | $key | { "Key \'${key}\' not found" }
 The returned value's data type depends on the types of the results. In the example
 above, Hiera matches the 'users' key and returns it as a hash.
 
+The `hiera` function is deprecated in favor of using `lookup` and will be removed in 6.0.0.
+See  https://docs.puppet.com/puppet/#{Puppet.minor_version}/reference/deprecated_language.html.
+Replace the calls as follows:
+
+| from  | to |
+| ----  | ---|
+| hiera($key) | lookup($key) |
+| hiera($key, $default) | lookup($key, { 'default_value' => $default }) |
+| hiera($key, $default, $level) | override level not supported |
+
+Note that calls using the 'override level' option are not directly supported by 'lookup' and the produced
+result must be post processed to get exactly the same result, for example using simple hash/array `+` or
+with calls to stdlib's `deep_merge` function depending on kind of hiera call and setting of merge in hiera.yaml.
+
 See
 [the documentation](https://docs.puppetlabs.com/hiera/latest/puppet.html#hiera-lookup-functions)
 for more information about Hiera lookup functions.

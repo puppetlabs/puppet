@@ -8,7 +8,7 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
 
   def command
     command = Puppet[:external_nodes]
-    raise ArgumentError, "You must set the 'external_nodes' parameter to use the external node terminus" unless command != "none"
+    raise ArgumentError, _("You must set the 'external_nodes' parameter to use the external node terminus") unless command != _("none")
     command.split
   end
 
@@ -57,13 +57,13 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
       when Symbol
         hash[data[0]] = data[1]
       else
-        raise Puppet::Error, "key is a #{data[0].class}, not a string or symbol"
+        raise Puppet::Error, _("key is a %{klass}, not a string or symbol") % { klass: data[0].class }
       end
 
       hash
     end
 
   rescue => detail
-      raise Puppet::Error, "Could not load external node results for #{name}: #{detail}", detail.backtrace
+      raise Puppet::Error, _("Could not load external node results for %{name}: %{detail}") % { name: name, detail: detail }, detail.backtrace
   end
 end

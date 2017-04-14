@@ -163,7 +163,7 @@ module Puppet
           end
         end
 
-        fail "Could not find group(s) #{@should.join(",")}" unless found
+        fail _("Could not find group(s) %{groups}") % { groups: @should.join(",") } unless found
 
         # Use the default event.
       end
@@ -171,10 +171,23 @@ module Puppet
 
     newproperty(:comment) do
       desc "A description of the user.  Generally the user's full name."
-      if RUBY_VERSION < "2.1.0"
-        munge do |v|
-          v.respond_to?(:force_encoding) ? v.force_encoding(Encoding::ASCII_8BIT) : v
+      def insync?(is)
+        # nameservice provider requires special attention to encoding
+        # Overrides Puppet::Property#insync?
+        if !@should.empty? && provider.respond_to?(:comments_insync?)
+          return provider.comments_insync?(is, @should)
         end
+        super(is)
+      end
+
+      # In the case that our comments have incompatible encodings, set external
+      # encoding to support concatenation for display.
+      # overrides Puppet::Property#change_to_s
+      def change_to_s(currentvalue, newvalue)
+        if newvalue.respond_to?(:force_encoding) && !Encoding.compatible?(currentvalue, newvalue)
+          return super(currentvalue, newvalue.dup.force_encoding(currentvalue.encoding))
+        end
+        super(currentvalue, newvalue)
       end
     end
 
@@ -208,22 +221,22 @@ module Puppet
         accidental variable interpolation.}
 
       validate do |value|
-        raise ArgumentError, "Passwords cannot include ':'" if value.is_a?(String) and value.include?(":")
+        raise ArgumentError, _("Passwords cannot include ':'") if value.is_a?(String) and value.include?(":")
       end
 
       def change_to_s(currentvalue, newvalue)
         if currentvalue == :absent
-          return "created password"
+          return _("created password")
         else
-          return "changed password"
+          return _("changed password")
         end
       end
 
       def is_to_s( currentvalue )
-        return '[old password hash redacted]'
+        return _('[old password hash redacted]')
       end
       def should_to_s( newvalue )
-        return '[new password hash redacted]'
+        return _('[new password hash redacted]')
       end
 
     end
@@ -242,7 +255,7 @@ module Puppet
 
       validate do |value|
         if value.to_s !~ /^-?\d+$/
-          raise ArgumentError, "Password minimum age must be provided as a number."
+          raise ArgumentError, _("Password minimum age must be provided as a number.")
         end
       end
     end
@@ -261,7 +274,7 @@ module Puppet
 
       validate do |value|
         if value.to_s !~ /^-?\d+$/
-          raise ArgumentError, "Password maximum age must be provided as a number."
+          raise ArgumentError, _("Password maximum age must be provided as a number.")
         end
       end
     end
@@ -273,10 +286,10 @@ module Puppet
 
       validate do |value|
         if value =~ /^\d+$/
-          raise ArgumentError, "Group names must be provided, not GID numbers."
+          raise ArgumentError, _("Group names must be provided, not GID numbers.")
         end
-        raise ArgumentError, "Group names must be provided as an array, not a comma-separated list." if value.include?(",")
-        raise ArgumentError, "Group names must not be empty. If you want to specify \"no groups\" pass an empty array" if value.empty?
+        raise ArgumentError, _("Group names must be provided as an array, not a comma-separated list.") if value.include?(",")
+        raise ArgumentError, _("Group names must not be empty. If you want to specify \"no groups\" pass an empty array") if value.empty?
       end
 
       def change_to_s(currentvalue, newvalue)
@@ -362,7 +375,7 @@ module Puppet
 
       validate do |val|
         if munge(val)
-          raise ArgumentError, "User provider #{provider.class.name} can not manage home directories" if provider and not provider.class.manages_homedir?
+          raise ArgumentError, _("User provider %{name} can not manage home directories") % { name: provider.class.name } if provider and not provider.class.manages_homedir?
         end
       end
     end
@@ -378,7 +391,9 @@ module Puppet
 
       validate do |value|
         if value.intern != :absent and value !~ /^\d{4}-\d{2}-\d{2}$/
-          raise ArgumentError, "Expiry dates must be YYYY-MM-DD or the string \"absent\""
+          #TRANSLATORS YYYY-MM-DD represents a date with a four-digit year, a two-digit month, and a two-digit day,
+          #TRANSLATORS separated by dashes.
+          raise ArgumentError, _("Expiry dates must be YYYY-MM-DD or the string \"absent\"")
         end
       end
     end
@@ -455,9 +470,9 @@ module Puppet
 
       validate do |value|
         if value =~ /^\d+$/
-          raise ArgumentError, "Role names must be provided, not numbers"
+          raise ArgumentError, _("Role names must be provided, not numbers")
         end
-        raise ArgumentError, "Role names must be provided as an array, not a comma-separated list" if value.include?(",")
+        raise ArgumentError, _("Role names must be provided as an array, not a comma-separated list") if value.include?(",")
       end
     end
 
@@ -492,9 +507,9 @@ module Puppet
 
       validate do |value|
         if value =~ /^\d+$/
-          raise ArgumentError, "Auth names must be provided, not numbers"
+          raise ArgumentError, _("Auth names must be provided, not numbers")
         end
-        raise ArgumentError, "Auth names must be provided as an array, not a comma-separated list" if value.include?(",")
+        raise ArgumentError, _("Auth names must be provided as an array, not a comma-separated list") if value.include?(",")
       end
     end
 
@@ -518,9 +533,9 @@ module Puppet
 
       validate do |value|
         if value =~ /^\d+$/
-          raise ArgumentError, "Profile names must be provided, not numbers"
+          raise ArgumentError, _("Profile names must be provided, not numbers")
         end
-        raise ArgumentError, "Profile names must be provided as an array, not a comma-separated list" if value.include?(",")
+        raise ArgumentError, _("Profile names must be provided as an array, not a comma-separated list") if value.include?(",")
       end
     end
 
@@ -542,7 +557,7 @@ module Puppet
       end
 
       validate do |value|
-        raise ArgumentError, "Key/value pairs must be separated by an =" unless value.include?("=")
+        raise ArgumentError, _("Key/value pairs must be separated by an =") unless value.include?("=")
       end
     end
 
@@ -576,7 +591,7 @@ module Puppet
       end
 
       validate do |value|
-        raise ArgumentError, "Attributes value pairs must be separated by an =" unless value.include?("=")
+        raise ArgumentError, _("Attributes value pairs must be separated by an =") unless value.include?("=")
       end
     end
 
@@ -649,14 +664,14 @@ module Puppet
         if value.is_a?(Array)
           value.each do |entry|
 
-            raise ArgumentError, "Each entry for purge_ssh_keys must be a string, not a #{entry.class}" unless entry.is_a?(String)
+            raise ArgumentError, _("Each entry for purge_ssh_keys must be a string, not a %{klass}") % { klass: entry.class } unless entry.is_a?(String)
 
             valid_home = Puppet::Util.absolute_path?(entry) || entry =~ %r{^~/|^%h/}
-            raise ArgumentError, "Paths to keyfiles must be absolute, not #{entry}" unless valid_home
+            raise ArgumentError, _("Paths to keyfiles must be absolute, not %{entry}") % { entry: entry } unless valid_home
           end
           return
         end
-        raise ArgumentError, "purge_ssh_keys must be true, false, or an array of file names, not #{value.inspect}"
+        raise ArgumentError, _("purge_ssh_keys must be true, false, or an array of file names, not %{value}") % { value: value.inspect }
       end
 
       munge do |value|
@@ -668,14 +683,14 @@ module Puppet
         return [] if value == :false
         home = resource[:home]
         if value == :true and not home
-          raise ArgumentError, "purge_ssh_keys can only be true for users with a defined home directory"
+          raise ArgumentError, _("purge_ssh_keys can only be true for users with a defined home directory")
         end
 
         return [ "#{home}/.ssh/authorized_keys" ] if value == :true
         # value is an array - munge each value
         [ value ].flatten.map do |entry|
           if entry =~ /^~|^%h/ and not home
-            raise ArgumentError, "purge_ssh_keys value '#{value}' meta character ~ or %h only allowed for users with a defined home directory"
+            raise ArgumentError, _("purge_ssh_keys value '%{value}' meta character ~ or %{home_placeholder} only allowed for users with a defined home directory") % { value: value, home_placeholder: '%h' }
           end
           entry.gsub!(/^~\//, "#{home}/")
           entry.gsub!(/^%h\//, "#{home}/")
@@ -689,7 +704,7 @@ module Puppet
 
       validate do |value|
         if value =~ /^\d+$/
-          raise ArgumentError, "Class name must be provided."
+          raise ArgumentError, _("Class name must be provided.")
         end
       end
     end
@@ -726,7 +741,9 @@ module Puppet
     def unknown_keys_in_file(keyfile)
       names = []
       name_index = 0
-      File.new(keyfile).each do |line|
+      # RFC 4716 specifies UTF-8 allowed in public key files per https://www.ietf.org/rfc/rfc4716.txt
+      # the authorized_keys file may contain UTF-8 comments
+      Puppet::FileSystem.open(keyfile, nil, 'r:UTF-8').each do |line|
         next unless line =~ Puppet::Type.type(:ssh_authorized_key).keyline_regex
         # the name is stored in the 4th capture of the regex
         name = $4

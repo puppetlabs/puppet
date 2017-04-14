@@ -480,18 +480,29 @@ describe Puppet::Transaction::Report do
     end
   end
 
-  it "defaults to serializing to pson" do
-    expect(Puppet::Transaction::Report.default_format).to eq(:pson)
+  it "defaults to serializing to json" do
+    pending("PUP-7259 sending reports in JSON not yet supported")
+
+    expect(Puppet::Transaction::Report.default_format).to eq(:json)
   end
 
-  it "supports both yaml and pson" do
-    expect(Puppet::Transaction::Report.supported_formats).to eq([:pson, :yaml])
+  it "supports both json, pson and yaml" do
+    # msgpack is optional, so using include instead of eq
+    expect(Puppet::Transaction::Report.supported_formats).to include(:json, :pson, :yaml)
   end
 
   it "can make a round trip through pson" do
     report = generate_report
 
     tripped = Puppet::Transaction::Report.convert_from(:pson, report.render)
+
+    expect_equivalent_reports(tripped, report)
+  end
+
+  it "can make a round trip through json" do
+    report = generate_report
+
+    tripped = Puppet::Transaction::Report.convert_from(:json, report.render)
 
     expect_equivalent_reports(tripped, report)
   end

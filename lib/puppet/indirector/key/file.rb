@@ -30,7 +30,7 @@ class Puppet::SSL::Key::File < Puppet::Indirector::SslFile
     begin
       Puppet::FileSystem.unlink(key_path)
     rescue => detail
-      raise Puppet::Error, "Could not remove #{request.key} public key: #{detail}", detail.backtrace
+      raise Puppet::Error, _("Could not remove %{request} public key: %{detail}") % { request: request.key, detail: detail }, detail.backtrace
     end
   end
 
@@ -39,11 +39,12 @@ class Puppet::SSL::Key::File < Puppet::Indirector::SslFile
     super
 
     begin
-      Puppet.settings.setting(:publickeydir).open_file(public_key_path(request.key), 'w') do |f|
+      # RFC 1421 states PEM is 7-bit ASCII https://tools.ietf.org/html/rfc1421
+      Puppet.settings.setting(:publickeydir).open_file(public_key_path(request.key), 'w:ASCII') do |f|
         f.print request.instance.content.public_key.to_pem
       end
     rescue => detail
-      raise Puppet::Error, "Could not write #{request.key}: #{detail}", detail.backtrace
+      raise Puppet::Error, _("Could not write %{request}: %{detail}") % { request: request.key, detail: detail }, detail.backtrace
     end
   end
 end

@@ -71,11 +71,11 @@ module Puppet
 
       validate do |value|
         if value.is_a? Array
-          raise ArgumentError, "You can only have one filebucket path"
+          raise ArgumentError, _("You can only have one filebucket path")
         end
 
         if value.is_a? String and not Puppet::Util.absolute_path?(value)
-          raise ArgumentError, "Filebucket paths must be absolute"
+          raise ArgumentError, _("Filebucket paths must be absolute")
         end
 
         true
@@ -111,7 +111,7 @@ module Puppet
       begin
         @bucket = Puppet::FileBucket::Dipper.new(args)
       rescue => detail
-        message = "Could not create #{type} filebucket: #{detail}"
+        message = _("Could not create %{type} filebucket: %{detail}") % { type: type, detail: detail }
         self.log_exception(detail, message)
         self.fail(message)
       end

@@ -10,9 +10,12 @@ module Puppet
   #
   # @api public
   module Pops
-     EMPTY_HASH = {}.freeze
+    EMPTY_HASH = {}.freeze
     EMPTY_ARRAY = [].freeze
     EMPTY_STRING = ''.freeze
+
+    MAX_INTEGER =  0x7fffffffffffffff
+    MIN_INTEGER = -0x8000000000000000
 
     DOUBLE_COLON = '::'.freeze
     USCORE = '_'.freeze
@@ -29,14 +32,11 @@ module Puppet
     require 'puppet/pops/visitable'
     require 'puppet/pops/visitor'
 
-    require 'puppet/pops/containment'
-
     require 'puppet/pops/issues'
     require 'puppet/pops/semantic_error'
     require 'puppet/pops/label_provider'
     require 'puppet/pops/validation'
     require 'puppet/pops/issue_reporter'
-    require 'puppet/pops/model/model'
 
     require 'puppet/pops/time/timespan'
     require 'puppet/pops/time/timestamp'
@@ -49,42 +49,12 @@ module Puppet
     require 'puppet/pops/merge_strategy'
 
     module Model
+      require 'puppet/pops/model/ast'
       require 'puppet/pops/model/tree_dumper'
       require 'puppet/pops/model/ast_transformer'
       require 'puppet/pops/model/factory'
       require 'puppet/pops/model/model_tree_dumper'
       require 'puppet/pops/model/model_label_provider'
-    end
-
-    module Binder
-      module SchemeHandler
-        # the handlers are auto loaded via bindings
-      end
-      module Producers
-        require 'puppet/pops/binder/producers'
-      end
-
-      require 'puppet/pops/binder/binder'
-      require 'puppet/pops/binder/bindings_model'
-      require 'puppet/pops/binder/binder_issues'
-      require 'puppet/pops/binder/bindings_checker'
-      require 'puppet/pops/binder/bindings_factory'
-      require 'puppet/pops/binder/bindings_label_provider'
-      require 'puppet/pops/binder/bindings_validator_factory'
-      require 'puppet/pops/binder/injector_entry'
-      require 'puppet/pops/binder/key_factory'
-      require 'puppet/pops/binder/injector'
-      require 'puppet/pops/binder/bindings_composer'
-      require 'puppet/pops/binder/bindings_model_dumper'
-      require 'puppet/pops/binder/system_bindings'
-      require 'puppet/pops/binder/bindings_loader'
-
-      module Config
-        require 'puppet/pops/binder/config/binder_config'
-        require 'puppet/pops/binder/config/binder_config_checker'
-        require 'puppet/pops/binder/config/issues'
-        require 'puppet/pops/binder/config/diagnostic_producer'
-      end
     end
 
     module Resource
@@ -146,5 +116,6 @@ module Puppet
   require 'puppet/bindings'
   require 'puppet/functions'
   require 'puppet/loaders'
+
+  Puppet::Pops::Model.register_pcore_types
 end
-require 'puppet/plugins/data_providers'

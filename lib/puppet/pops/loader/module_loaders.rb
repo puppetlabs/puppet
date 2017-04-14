@@ -21,6 +21,8 @@ module Loader
 # @api private
 #
 module ModuleLoaders
+  ENVIRONMENT = 'environment'.freeze
+
   def self.system_loader_from(parent_loader, loaders)
     # Puppet system may be installed in a fixed location via RPM, installed as a Gem, via source etc.
     # The only way to find this across the different ways puppet can be installed is
@@ -35,6 +37,15 @@ module ModuleLoaders
                                                        'puppet_system',
                                                         [:func_4x]   # only load ruby functions from "puppet"
                                                        )
+  end
+
+  def self.environment_loader_from(parent_loader, loaders, env_path)
+    ModuleLoaders::FileBased.new(parent_loader,
+      loaders,
+      ENVIRONMENT,
+      File.join(env_path, 'lib'),
+      ENVIRONMENT
+    )
   end
 
   def self.module_loader_from(parent_loader, loaders, module_name, module_path)
@@ -107,7 +118,6 @@ module ModuleLoaders
       return nil unless typed_name.name_authority == Pcore::RUNTIME_NAME_AUTHORITY
 
       # Assume it is a global name, and that all parts of the name should be used when looking up
-      name_part_index = 0
       name_parts = typed_name.name_parts
 
       # Certain types and names can be disqualified up front
@@ -119,10 +129,6 @@ module ModuleLoaders
         # ok since such a "module" cannot have namespaced content).
         #
         return nil unless name_parts[0] == module_name
-
-        # Skip the first part of the name when computing the path since the path already contains the name of the
-        # module
-        name_part_index = 1
       else
         # The name is in the global name space.
 
@@ -132,6 +138,21 @@ module ModuleLoaders
         when :resource_type
         when :resource_type_pp
         when :type
+          if !global?
+            # Global name can only be the module typeset
+            return nil unless name_parts[0] == module_name
+
+            origin, smart_path = find_existing_path(init_typeset_name)
+            return nil unless smart_path
+
+            value = smart_path.instantiator.create(self, typed_name, origin, get_contents(origin))
+            if value.is_a?(Types::PTypeSetType)
+              # cache the entry and return it
+              return set_entry(typed_name, value, origin)
+            end
+
+            raise ArgumentError,"The code loaded from #{origin} does not define the TypeSet '#{module_name.capitalize}'"
+          end
         else
           # anything else cannot possibly be in this module
           # TODO: should not be allowed anyway... may have to revisit this decision
@@ -142,17 +163,31 @@ module ModuleLoaders
       # Get the paths that actually exist in this module (they are lazily processed once and cached).
       # The result is an array (that may be empty).
       # Find the file to instantiate, and instantiate the entity if file is found
-      origin = nil
-      if (smart_path = smart_paths.effective_paths(typed_name.type).find do |sp|
-          origin = sp.effective_path(typed_name, name_part_index)
-          existing_path(origin)
-        end)
+      origin, smart_path = find_existing_path(typed_name)
+      if smart_path
         value = smart_path.instantiator.create(self, typed_name, origin, get_contents(origin))
         # cache the entry and return it
-        set_entry(typed_name, value, origin)
-      else
-        nil
+        return set_entry(typed_name, value, origin)
       end
+
+      return nil unless typed_name.type == :type && typed_name.qualified?
+
+      # Search for TypeSet using parent name
+      ts_name = typed_name.parent
+      while ts_name
+        # Do not traverse parents here. This search must be confined to this loader
+        tse = get_entry(ts_name)
+        tse = find(ts_name) if tse.nil? || tse.value.nil?
+        if tse && (ts = tse.value).is_a?(Types::PTypeSetType)
+          # The TypeSet might be unresolved at this point. If so, it must be resolved using
+          # this loader. That in turn, adds all contained types to this loader.
+          ts.resolve(Types::TypeParser.singleton, self)
+          te = get_entry(typed_name)
+          return te unless te.nil?
+        end
+        ts_name = ts_name.parent
+      end
+      nil
     end
 
     # Abstract method that subclasses override that checks if it is meaningful to search using a generic smart path.
@@ -200,12 +235,42 @@ module ModuleLoaders
       raise NotImplementedError.new
     end
 
+    # Answers the question if this loader represents a global component (true for resource type loader and environment loader)
+    #
+    # @return [Boolean] `true` if this loader represents a global component
+    #
+    def global?
+      module_name.nil? || module_name == ENVIRONMENT
+    end
+
     # Produces the private loader for the module. If this module is not already resolved, this will trigger resolution
     #
     def private_loader
       # The system loader has a nil module_name and it does not have a private_loader as there are no functions
       # that can only by called by puppet runtime - if so, it acts as the private loader directly.
-      @private_loader ||= (module_name.nil? || module_name == 'environment' ? self : @loaders.private_loader_for_module(module_name))
+      @private_loader ||= (global? ? self : @loaders.private_loader_for_module(module_name))
+    end
+
+    private
+
+    # @return [TypedName] the fake typed name that maps to the init_typeset path for this module
+    def init_typeset_name
+      @init_typeset_name ||= TypedName.new(:type, "#{module_name}::init_typeset")
+    end
+
+    # Find an existing path for the given `typed_name`. Return `nil` if no such path is found
+    # @param typed_name [TypedName] the `typed_name` to find a path for
+    # @return [Array,nil] `nil`or a two element array an effective path `String` and the `SmartPath` that produced the effective path.
+    def find_existing_path(typed_name)
+      is_global = global?
+      smart_paths.effective_paths(typed_name.type).each do |sp|
+        origin = sp.effective_path(typed_name, is_global ? 0 : 1)
+        unless origin.nil?
+          existing = existing_path(origin)
+          return [origin, sp] unless existing.nil?
+        end
+      end
+      nil
     end
   end
 

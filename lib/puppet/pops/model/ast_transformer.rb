@@ -43,12 +43,11 @@ class Puppet::Pops::Model::AstTransformer
   def merge_location(hash, o)
     if o
       pos = {}
-      source_pos = Puppet::Pops::Utils.find_closest_positioned(o)
-      if source_pos
-        pos[:line] = source_pos.line
-        pos[:pos]  = source_pos.pos
-        pos[:file] = source_pos.locator.file
-      end
+      locator = o.locator
+      offset = o.is_a?(Model::Program) ? 0 : o.offset
+      pos[:line] = locator.line_for_offset(offset)
+      pos[:pos]  = locator.pos_on_line(offset)
+      pos[:file] = locator.file
       if nil_or_empty?(pos[:file]) && !nil_or_empty?(@source_file)
         pos[:file] = @source_file
       end
@@ -64,7 +63,7 @@ class Puppet::Pops::Model::AstTransformer
     rescue StandardError => e
       loc_data = {}
       merge_location(loc_data, o)
-      raise Puppet::ParseError.new("Error while transforming to Puppet 3 AST: #{e.message}", 
+      raise Puppet::ParseError.new(_("Error while transforming to Puppet 3 AST: %{message}") % { message: e.message },
         loc_data[:file], loc_data[:line], loc_data[:pos], e)
     end
   end
@@ -83,7 +82,7 @@ class Puppet::Pops::Model::AstTransformer
   # Ensures transformation fails if a 3.1 non supported object is encountered in a query expression
   #
   def query_Object(o)
-    raise "Not a valid expression in a collection query: "+o.class.name
+    raise _("Not a valid expression in a collection query: ")+o.class.name
   end
 
   # Transforms Array of host matching expressions into a (Ruby) array of AST::HostName
@@ -112,11 +111,11 @@ class Puppet::Pops::Model::AstTransformer
   end
 
   def hostname_Object(o)
-    raise "Illegal expression - unacceptable as a node name"
+    raise _("Illegal expression - unacceptable as a node name")
   end
 
   def transform_Object(o)
-    raise "Unacceptable transform - found an Object without a rule: #{o.class}"
+    raise _("Unacceptable transform - found an Object without a rule: %{klass}") % { klass: o.class }
   end
 
   # Nil, nop

@@ -43,7 +43,7 @@ describe 'The type calculator' do
   end
 
   def type_alias_t(name, type_string)
-    type_expr = Parser::EvaluatingParser.new.parse_string(type_string).current
+    type_expr = Parser::EvaluatingParser.new.parse_string(type_string)
     TypeFactory.type_alias(name, type_expr)
   end
 
@@ -234,8 +234,8 @@ describe 'The type calculator' do
         t = calculator.infer_set(v)
         expect(t.class).to eq(PSemVerType)
         expect(t.ranges.size).to eq(1)
-        expect(t.ranges[0].min).to eq(v)
-        expect(t.ranges[0].max).to eq(v)
+        expect(t.ranges[0].begin).to eq(v)
+        expect(t.ranges[0].end).to eq(v)
       end
     end
 
@@ -1480,7 +1480,7 @@ describe 'The type calculator' do
         loader = Object.new
         loader.expects(:load).with(:type, 'tree').returns t
 
-        Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Model::QualifiedReference), scope).at_most_once.returns loader
+        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
         t.resolve(parser, scope)
         expect(calculator.assignable?(t, parser.parse('Hash[String,Variant[String,Hash[String,Variant[String,String]]]]'))).to be_truthy
@@ -1496,7 +1496,7 @@ describe 'The type calculator' do
         loader.expects(:load).with(:type, 'tree1').returns t1
         loader.expects(:load).with(:type, 'tree2').returns t2
 
-        Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Model::QualifiedReference), scope).at_least_once.returns loader
+        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
         t1.resolve(parser, scope)
         t2.resolve(parser, scope)
@@ -1504,19 +1504,16 @@ describe 'The type calculator' do
       end
 
       it 'crossing recursive aliases are assignable' do
-        scope = Object.new
-
         t1 = type_alias_t('Tree1', 'Hash[String,Variant[String,Tree2]]')
         t2 = type_alias_t('Tree2', 'Hash[String,Variant[String,Tree1]]')
         loader = Object.new
         loader.expects(:load).with(:type, 'tree1').returns t1
         loader.expects(:load).with(:type, 'tree2').returns t2
-        loader.expects(:is_a?).with(Loader::Loader).returns true
 
-        Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Model::QualifiedReference), scope).at_least_once.returns loader
+        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
-        t1.resolve(parser, scope)
-        t2.resolve(parser, scope)
+        t1.resolve(parser, loader)
+        t2.resolve(parser, loader)
         expect(calculator.assignable?(t1, t2)).to be_truthy
       end
 
@@ -1526,8 +1523,7 @@ describe 'The type calculator' do
         ta = type_alias_t('PositiveInteger', 'Integer[0,default]')
         loader = Object.new
         loader.expects(:load).with(:type, 'positiveinteger').returns ta
-        Adapters::LoaderAdapter.expects(:loader_for_model_object)
-          .with(instance_of(Model::QualifiedReference), scope).returns loader
+        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
         t1 = type_t(range_t(0, :default))
         t2 = parser.parse('Type[PositiveInteger]', scope)
@@ -1540,8 +1536,7 @@ describe 'The type calculator' do
         ta = type_alias_t('PositiveIntegerType', 'Type[Integer[0,default]]')
         loader = Object.new
         loader.expects(:load).with(:type, 'positiveintegertype').returns ta
-        Adapters::LoaderAdapter.expects(:loader_for_model_object)
-          .with(instance_of(Model::QualifiedReference), scope).returns loader
+        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
         t1 = type_t(range_t(0, :default))
         t2 = parser.parse('PositiveIntegerType', scope)
@@ -1554,8 +1549,7 @@ describe 'The type calculator' do
         ta = type_alias_t('PositiveInteger', 'Integer[0,default]')
         loader = Object.new
         loader.expects(:load).with(:type, 'positiveinteger').returns ta
-        Adapters::LoaderAdapter.expects(:loader_for_model_object)
-          .with(instance_of(Model::QualifiedReference), scope).returns loader
+        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
         t1 = type_t(type_t(range_t(0, :default)))
         t2 = parser.parse('Type[Type[PositiveInteger]]', scope)
@@ -1568,8 +1562,7 @@ describe 'The type calculator' do
         ta = type_alias_t('PositiveIntegerType', 'Type[Integer[0,default]]')
         loader = Object.new
         loader.expects(:load).with(:type, 'positiveintegertype').returns ta
-        Adapters::LoaderAdapter.expects(:loader_for_model_object)
-          .with(instance_of(Model::QualifiedReference), scope).returns loader
+        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
         t1 = type_t(type_t(range_t(0, :default)))
         t2 = parser.parse('Type[PositiveIntegerType]', scope)
@@ -1636,12 +1629,12 @@ describe 'The type calculator' do
       types_to_test.each {|t| expect(calculator.instance?(t::DEFAULT, :default)).to eq(false) }
     end
 
-    it 'should consider fixnum instanceof PIntegerType' do
+    it 'should consider integer instanceof PIntegerType' do
       expect(calculator.instance?(PIntegerType::DEFAULT, 1)).to eq(true)
     end
 
-    it 'should consider fixnum instanceof Fixnum' do
-      expect(calculator.instance?(Fixnum, 1)).to eq(true)
+    it 'should consider integer instanceof Integer' do
+      expect(calculator.instance?(Integer, 1)).to eq(true)
     end
 
     it 'should consider integer in range' do
@@ -1827,7 +1820,7 @@ describe 'The type calculator' do
       it 'a Closure should be considered a Callable' do
         factory = Model::Factory
         params = [factory.PARAM('a')]
-        the_block = factory.LAMBDA(params,factory.literal(42), nil)
+        the_block = factory.LAMBDA(params,factory.literal(42), nil).model
         the_closure = Evaluator::Closure::Dynamic.new(:fake_evaluator, the_block, :fake_scope)
         expect(calculator.instance?(all_callables_t, the_closure)).to be_truthy
         expect(calculator.instance?(callable_t(object_t), the_closure)).to be_truthy
@@ -1866,41 +1859,42 @@ describe 'The type calculator' do
       end
 
       it 'should consider x an instance of the aliased type that uses self recursion' do
-        scope = Object.new
-
         t = type_alias_t('Tree', 'Hash[String,Variant[String,Tree]]')
         loader = Object.new
         loader.expects(:load).with(:type, 'tree').returns t
 
-        Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Model::QualifiedReference), scope).at_most_once.returns loader
+        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
-        t.resolve(parser, scope)
+        t.resolve(parser, loader)
         expect(calculator.instance?(t, {'a'=>{'aa'=>{'aaa'=>'aaaa'}}, 'b'=>'bb'})).to be_truthy
       end
 
       it 'should consider x an instance of the aliased type that uses contains an alias that causes self recursion' do
-        scope = Object.new
-
         t1 = type_alias_t('Tree', 'Hash[String,Variant[String,OtherTree]]')
         t2 = type_alias_t('OtherTree', 'Hash[String,Tree]')
         loader = Object.new
         loader.expects(:load).with(:type, 'tree').returns t1
         loader.expects(:load).with(:type, 'othertree').returns t2
-        loader.expects(:is_a?).with(Loader::Loader).returns true
 
-        Adapters::LoaderAdapter.expects(:loader_for_model_object).with(instance_of(Model::QualifiedReference), scope).at_least_once.returns loader
+        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
-        t1.resolve(parser, scope)
+        t1.resolve(parser, loader)
         expect(calculator.instance?(t1, {'a'=>{'aa'=>{'aaa'=>'aaaa'}}, 'b'=>'bb'})).to be_truthy
       end
     end
   end
 
   context 'when converting a ruby class' do
-    it 'should yield \'PIntegerType\' for Integer, Fixnum, and Bignum' do
-      [Integer,Fixnum,Bignum].each do |c|
-        expect(calculator.type(c).class).to eq(PIntegerType)
-      end
+    it 'should yield \'PIntegerType\' for Fixnum' do
+      expect(calculator.type(Fixnum).class).to eq(PIntegerType)
+    end
+
+    it 'should yield \'PIntegerType\' for Bignum' do
+      expect(calculator.type(Bignum).class).to eq(PIntegerType)
+    end
+
+    it 'should yield \'PIntegerType\' for Integer' do
+      expect(calculator.type(Integer).class).to eq(PIntegerType)
     end
 
     it 'should yield \'PFloatType\' for Float' do

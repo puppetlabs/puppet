@@ -25,30 +25,30 @@ class TypeParser
   #     parser.parse('Array[String]')
   #     parser.parse('Hash[Integer, Array[String]]')
   #
-  # @param string [String] a string with the type expressed in stringified form as produced by the 
+  # @param string [String] a string with the type expressed in stringified form as produced by the
   #   types {"#to_s} method.
-  # @param context [Puppet::Parser::Scope,Loader::Loader] scope or loader to use when loading type aliases
+  # @param context [Loader::Loader] optional loader used as no adapted loader is found
   # @return [PAnyType] a specialization of the PAnyType representing the type.
   #
   # @api public
   #
   def parse(string, context = nil)
     model = @parser.parse_string(string)
-    interpret(model.current.body, context)
+    interpret(model.model.body, context)
   end
 
   # @api private
   def parse_literal(string, context = nil)
-    model = @parser.parse_string(string)
-    interpret_any(model.current.body, context)
+    factory = @parser.parse_string(string)
+    interpret_any(factory.model.body, context)
   end
 
   # @param ast [Puppet::Pops::Model::PopsObject] the ast to interpret
-  # @param context [Puppet::Parser::Scope,Loader::Loader, nil] scope or loader to use when loading type aliases
+  # @param context [Loader::Loader] optional loader used when no adapted loader is found
   # @return [PAnyType] a specialization of the PAnyType representing the type.
   #
   # @api public
-  def interpret(ast, context)
+  def interpret(ast, context = nil)
     result = @type_transformer.visit_this_1(self, ast, context)
     raise_invalid_type_specification_error(ast) unless result.is_a?(PAnyType)
     result
@@ -69,6 +69,17 @@ class TypeParser
     interpret_any(o.body, context)
   end
 
+  # @api private
+  def interpret_TypeAlias(o, context)
+    Loader::TypeDefinitionInstantiator.create_type(o.name, o.type_expr, Pcore::RUNTIME_NAME_AUTHORITY).resolve(self, loader_from_context(o, context))
+  end
+
+  # @api private
+  def interpret_TypeDefinition(o, context)
+    Loader::TypeDefinitionInstantiator.create_runtime_type(o)
+  end
+
+  # @api private
   def interpret_LambdaExpression(o, context)
     o
   end
@@ -76,6 +87,11 @@ class TypeParser
   # @api private
   def interpret_QualifiedName(o, context)
     o.value
+  end
+
+  # @api private
+  def interpret_QualifiedReference(o, context)
+    o.cased_value
   end
 
   # @api private
@@ -200,13 +216,7 @@ class TypeParser
 
   # @api private
   def loader_from_context(ast, context)
-    if context.nil?
-      nil
-    elsif context.is_a?(Puppet::Pops::Loader::Loader)
-      context
-    else
-      Puppet::Pops::Adapters::LoaderAdapter.loader_for_model_object(ast, context)
-    end
+    Adapters::LoaderAdapter.loader_for_model_object(ast, nil, context)
   end
 
   # @api private
@@ -311,7 +321,7 @@ class TypeParser
         if param_start.nil?
           type = type_str
         else
-          tps = interpret_any(@parser.parse_string(type_str[param_start..-1]).current, context)
+          tps = interpret_any(@parser.parse_string(type_str[param_start..-1]).model, context)
           raise_invalid_parameters_error(type.to_s, '1', tps.size) unless tps.size == 1
           type = type_str[0..param_start-1]
           parameters = [type] + tps
@@ -511,7 +521,7 @@ class TypeParser
       end
 
       if type.nil?
-        TypeFactory.type_reference(original_text_of(qref.eContainer))
+        TypeFactory.type_reference(original_text_of(ast))
       elsif type.is_a?(PResourceType)
         raise_invalid_parameters_error(qref.cased_value, 1, parameters.size) unless parameters.size == 1
         TypeFactory.resource(type.type_name, parameters[0])
@@ -562,8 +572,7 @@ class TypeParser
   end
 
   def original_text_of(ast)
-    position = Adapters::SourcePosAdapter.adapt(ast)
-    position.extract_tree_text
+    ast.locator.extract_tree_text(ast)
   end
 end
 end

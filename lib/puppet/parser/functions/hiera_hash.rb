@@ -75,6 +75,20 @@ $allusers = hiera_hash('users') | $key | { "Key \'${key}\' not found" }
 `hiera_hash` expects that all values returned will be hashes. If any of the values
 found in the data sources are strings or arrays, Puppet raises a type mismatch error.
 
+`hiera_hash` is deprecated in favor of using `lookup` and will be removed in 6.0.0.
+See  https://docs.puppet.com/puppet/#{Puppet.minor_version}/reference/deprecated_language.html.
+Replace the calls as follows:
+
+| from  | to |
+| ----  | ---|
+| hiera_hash($key) | lookup($key, { 'merge' => 'hash' }) |
+| hiera_hash($key, $default) | lookup($key, { 'default_value' => $default, 'merge' => 'hash' }) |
+| hiera_hash($key, $default, $level) | override level not supported |
+
+Note that calls using the 'override level' option are not directly supported by 'lookup' and the produced
+result must be post processed to get exactly the same result, for example using simple hash/array `+` or
+with calls to stdlib's `deep_merge` function depending on kind of hiera call and setting of merge in hiera.yaml.
+
 See
 [the documentation](https://docs.puppetlabs.com/hiera/latest/puppet.html#hiera-lookup-functions)
 for more information about Hiera lookup functions.

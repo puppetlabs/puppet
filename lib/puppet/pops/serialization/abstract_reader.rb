@@ -105,8 +105,12 @@ class AbstractReader
       read_payload(data) { |ep| Extension::MapStart.new(ep.read) }
     end
 
+    register_type(Extension::PCORE_OBJECT_START) do |data|
+      read_payload(data) { |ep| type_name = read_tpl_qname(ep); Extension::PcoreObjectStart.new(type_name, ep.read) }
+    end
+
     register_type(Extension::OBJECT_START) do |data|
-      read_payload(data) { |ep| type_name = read_tpl_qname(ep); Extension::ObjectStart.new(type_name, ep.read) }
+      read_payload(data) { |ep| Extension::ObjectStart.new(ep.read) }
     end
 
     register_type(Extension::DEFAULT) do |data|
@@ -117,12 +121,16 @@ class AbstractReader
       read_payload(data) { |ep| Extension::Comment.new(ep.read) }
     end
 
+    register_type(Extension::SENSITIVE_START) do |data|
+      read_payload(data) { |ep| Extension::SensitiveStart::INSTANCE }
+    end
+
     register_type(Extension::REGEXP) do |data|
       read_payload(data) { |ep| Regexp.new(ep.read) }
     end
 
     register_type(Extension::TYPE_REFERENCE) do |data|
-      read_payload(data) { |ep| Types::PTypeReferenceType.new(read_tpl_qname(ep)) }
+      read_payload(data) { |ep| Types::PTypeReferenceType.new(ep.read) }
     end
 
     register_type(Extension::SYMBOL) do |data|
@@ -153,12 +161,14 @@ class AbstractReader
       read_payload(data) { |ep| SemanticPuppet::VersionRange.parse(ep.read) }
     end
 
-    register_type(Extension::SENSITIVE) do |data|
-      read_payload(data) { |ep| Types::PSensitiveType::Sensitive.new(ep.read) }
+    register_type(Extension::BASE64) do |data|
+      read_payload(data) { |ep| Types::PBinaryType::Binary.from_base64_strict(ep.read) }
     end
 
     register_type(Extension::BINARY) do |data|
-      read_payload(data) { |ep| Types::PBinaryType::Binary.from_base64_strict(ep.read) }
+      # The Ruby MessagePack implementation have special treatment for "ASCII-8BIT" strings. They
+      # are written as binary data.
+      read_payload(data) { |ep| Types::PBinaryType::Binary.new(ep.read) }
     end
   end
 end

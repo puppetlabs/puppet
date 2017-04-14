@@ -44,6 +44,8 @@ class Puppet::Settings
   # The acceptable sections of the puppet.conf configuration file.
   ALLOWED_SECTION_NAMES = ['main', 'master', 'agent', 'user'].freeze
 
+  NONE = 'none'.freeze
+
   # This method is intended for puppet internal use only; it is a convenience method that
   # returns reasonable application default settings values for a given run_mode.
   def self.app_defaults_for_run_mode(run_mode)
@@ -384,12 +386,12 @@ class Puppet::Settings
     end
   end
 
-  def_delegator :@config, :each
+  def_delegators :@config, :each, :each_pair, :each_key
 
   # Iterate over each section name.
   def eachsection
     yielded = []
-    @config.each do |name, object|
+    @config.each_value do |object|
       section = object.section
       unless yielded.include? section
         yield section
@@ -549,7 +551,7 @@ class Puppet::Settings
     if @config[:environment]
       env = self.value(:environment).to_sym
     else
-      env = "none"
+      env = NONE
     end
 
     # Call any hooks we should be calling.
@@ -1046,26 +1048,37 @@ Generated on #{Time.now}.
   #
   # @raise [InterpolationError]
   def value(param, environment = nil, bypass_interpolation = false)
-    param = param.to_sym
     environment &&= environment.to_sym
+    value_sym(param.to_sym, environment, bypass_interpolation)
+  end
 
-    setting = @config[param]
-
-    # Short circuit to nil for undefined settings.
-    return nil if setting.nil?
-
+  # Find the correct value using symbols and our search path.
+  #
+  # @param param [Symbol] The value to look up
+  # @param environment [Symbol] The environment to check for the value
+  # @param bypass_interpolation [true, false] Whether to skip interpolation
+  #
+  # @return [Object] The looked up value
+  #
+  # @raise [InterpolationError]
+  def value_sym(param, environment = nil, bypass_interpolation = false)
     # Check the cache first.  It needs to be a per-environment
     # cache so that we don't spread values from one env
     # to another.
-    if @cache[environment||"none"].has_key?(param)
-      return @cache[environment||"none"][param]
-    elsif bypass_interpolation
-      val = values(environment, self.preferred_run_mode).lookup(param)
-    else
-      val = values(environment, self.preferred_run_mode).interpolate(param)
-    end
+    cached_env = @cache[environment || NONE]
 
-    @cache[environment||"none"][param] = val
+    # Avoid two lookups in cache_env unless val is nil. When it is, it's important
+    # to check if the key is included so that further processing (that will result
+    # in nil again) is avoided.
+    val = cached_env[param]
+    return val if !val.nil? || cached_env.include?(param)
+
+    # Short circuit to nil for undefined settings.
+    return nil unless @config.include?(param)
+
+    vals = values(environment, preferred_run_mode)
+    val = bypass_interpolation ? vals.lookup(param) : vals.interpolate(param)
+    cached_env[param] = val
     val
   end
 

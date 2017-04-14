@@ -1,8 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet'
-require 'puppet/data_providers/hiera_config'
-require 'puppet/data_providers/hiera_interpolate'
 
 module Puppet::Pops
 describe 'Puppet::Pops::Lookup::Interpolation' do
@@ -18,7 +16,7 @@ describe 'Puppet::Pops::Lookup::Interpolation' do
       root_key = segments.shift
       found = data[root_key]
       found = sub_lookup(key, lookup_invocation, segments, found) unless segments.empty?
-      Lookup.expects(:lookup).with(key, nil, '', true, nil, lookup_invocation).returns(found)
+      Lookup.expects(:lookup).with(key, nil, '', true, nil, is_a(Lookup::Invocation)).returns(found)
     end
   end
 
@@ -36,6 +34,18 @@ describe 'Puppet::Pops::Lookup::Interpolation' do
     it 'produces a nested hash with arrays from nested aliases with hashes and arrays' do
       expect_lookup('aaa', 'bbb', 'ccc')
       expect(interpolator.interpolate(nested_hash, lookup_invocation, true)).to eq('a' => {'aa' => {'b' => {'bb' => ['text']}}})
+    end
+  end
+
+  context 'when interpolating boolean scope values' do
+    let(:scope) { { 'yes' => true, 'no' => false } }
+
+    it 'produces the string true' do
+      expect(interpolator.interpolate('should yield %{yes}', lookup_invocation, true)).to eq('should yield true')
+    end
+
+    it 'produces the string false' do
+      expect(interpolator.interpolate('should yield %{no}', lookup_invocation, true)).to eq('should yield false')
     end
   end
 

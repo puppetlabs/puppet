@@ -115,29 +115,5 @@ module Utils
   def self.relativize_name name
     is_absolute?(name) ? name[2..-1] : name
   end
-
-  # Finds an existing adapter for o or for one of its containers, or nil, if none of the containers
-  # was adapted with the given adapter.
-  # This method can only be used with objects that respond to `:eContainer`.
-  # with true.
-  #
-  # @see #find_closest_positioned
-  #
-  def self.find_adapter(o, adapter)
-    return nil if o.nil? || (o.is_a?(Array) && o.empty?)
-    a = adapter.get(o)
-    return a if a
-    return find_adapter(o.eContainer, adapter)
-  end
-
-  # Finds the closest positioned Model::Positioned object, or object decorated with
-  # a SourcePosAdapter, and returns
-  # a SourcePosAdapter for the first found, or nil if not found.
-  #
-  def self.find_closest_positioned(o)
-    return nil if o.nil? || o.is_a?(Model::Program) || (o.is_a?(Array) && o.empty?)
-    return find_adapter(o, Adapters::SourcePosAdapter) unless o.is_a?(Model::Positioned)
-    o.offset.nil? ? find_closest_positioned(o.eContainer) : Adapters::SourcePosAdapter.adapt(o)
-  end
 end
 end

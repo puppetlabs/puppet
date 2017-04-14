@@ -2,6 +2,7 @@ require 'spec_helper'
 require 'puppet_spec/files'
 require 'puppet/pops'
 require 'puppet/loaders'
+require 'puppet_spec/compiler'
 
 describe 'FileBased module loader' do
   include PuppetSpec::Files
@@ -91,5 +92,65 @@ describe 'FileBased module loader' do
 
   def typed_name(type, name)
     Puppet::Pops::Loader::TypedName.new(type, name)
+  end
+
+  context 'module function and class using a module type alias' do
+    include PuppetSpec::Compiler
+
+    let(:modules) do
+      {
+        'mod' => {
+          'functions' => {
+            'afunc.pp' => <<-PUPPET.unindent
+              function mod::afunc(Mod::Analias $v) {
+                notice($v)
+              }
+          PUPPET
+          },
+          'types' => {
+            'analias.pp' => <<-PUPPET.unindent
+               type Mod::Analias = Enum[a,b]
+               PUPPET
+          },
+          'manifests' => {
+            'init.pp' => <<-PUPPET.unindent
+              class mod(Mod::Analias $v) {
+                notify { $v: }
+              }
+              PUPPET
+          }
+        }
+      }
+    end
+
+    let(:testing_env) do
+      {
+        'testing' => {
+          'modules' => modules
+        }
+      }
+    end
+
+    let(:environments_dir) { Puppet[:environmentpath] }
+
+    let(:testing_env_dir) do
+      dir_contained_in(environments_dir, testing_env)
+      env_dir = File.join(environments_dir, 'testing')
+      PuppetSpec::Files.record_tmp(env_dir)
+      env_dir
+    end
+
+    let(:env) { Puppet::Node::Environment.create(:testing, [File.join(testing_env_dir, 'modules')]) }
+    let(:node) { Puppet::Node.new('test', :environment => env) }
+
+    # The call to mod:afunc will load the function, and as a consequence, make an attempt to load
+    # the parameter type Mod::Analias. That load in turn, will trigger the Runtime3TypeLoader which
+    # will load the manifests in Mod. The init.pp manifest also references the Mod::Analias parameter
+    # which results in a recursive call to the same loader. This test asserts that this recursive
+    # call is handled OK.
+    # See PUP-7391 for more info.
+    it 'should handle a recursive load' do
+      expect(eval_and_collect_notices("mod::afunc('b')", node)).to eql(['b'])
+    end
   end
 end

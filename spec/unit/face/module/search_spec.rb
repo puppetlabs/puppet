@@ -171,7 +171,7 @@ describe "puppet module search" do
       end
     end
 
-    it "should accept the --module-repository option" do
+    it "should accept the --module_repository option" do
       forge = mock("Puppet::Forge")
       searcher = mock("Searcher")
       options[:module_repository] = "http://forge.example.com"

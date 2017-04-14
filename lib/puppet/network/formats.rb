@@ -1,4 +1,5 @@
 require 'puppet/network/format_handler'
+require 'json'
 
 Puppet::Network::FormatHandler.create_serialized_formats(:msgpack, :weight => 20, :mime => "application/x-msgpack", :required_methods => [:render_method, :intern_method], :intern_method => :from_data_hash) do
 
@@ -30,7 +31,7 @@ Puppet::Network::FormatHandler.create_serialized_formats(:yaml) do
   def intern_multiple(klass, text)
     data = YAML.load(text)
     unless data.respond_to?(:collect)
-      raise Puppet::Network::FormatHandler::FormatError, "Serialized YAML did not contain a collection of instances when calling intern_multiple"
+      raise Puppet::Network::FormatHandler::FormatError, _("Serialized YAML did not contain a collection of instances when calling intern_multiple")
     end
 
     data.collect do |datum|
@@ -42,7 +43,7 @@ Puppet::Network::FormatHandler.create_serialized_formats(:yaml) do
     return data if data.is_a?(klass)
 
     unless data.is_a? Hash
-      raise Puppet::Network::FormatHandler::FormatError, "Serialized YAML did not contain a valid instance of #{klass}"
+      raise Puppet::Network::FormatHandler::FormatError, _("Serialized YAML did not contain a valid instance of %{klass}") % { klass: klass }
     end
 
     klass.from_data_hash(data)
@@ -64,26 +65,13 @@ end
 
 Puppet::Network::FormatHandler.create(:s, :mime => "text/plain", :extension => "txt")
 
-Puppet::Network::FormatHandler.create(:binary, :mime => "application/octet-stream", :weight => 1) do
-  def intern_multiple(klass, text)
-    raise NotImplementedError
-  end
-
-  def render_multiple(instances)
-    raise NotImplementedError
-  end
-
-  # LAK:NOTE The format system isn't currently flexible enough to handle
-  # what I need to support raw formats just for individual instances (rather
-  # than both individual and collections), but we don't yet have enough data
-  # to make a "correct" design.
-  #   So, we hack it so it works for singular but fail if someone tries it
-  # on plurals.
-  def supported?(klass)
-    true
-  end
+# By default, to_binary is called to render and from_binary called to intern. Note unlike
+# text-based formats (json, yaml, etc), we don't use to_data_hash for binary.
+Puppet::Network::FormatHandler.create(:binary, :mime => "application/octet-stream", :weight => 1,
+                                      :required_methods => [:render_method, :intern_method]) do
 end
 
+# PSON is deprecated
 Puppet::Network::FormatHandler.create_serialized_formats(:pson, :weight => 10, :required_methods => [:render_method, :intern_method], :intern_method => :from_data_hash) do
   def intern(klass, text)
     data_to_instance(klass, PSON.parse(text))
@@ -106,6 +94,31 @@ Puppet::Network::FormatHandler.create_serialized_formats(:pson, :weight => 10, :
     if data.is_a?(Hash) and d = data['data']
       data = d
     end
+    return data if data.is_a?(klass)
+    klass.from_data_hash(data)
+  end
+end
+
+Puppet::Network::FormatHandler.create_serialized_formats(:json, :mime => 'application/json', :weight => 15, :required_methods => [:render_method, :intern_method], :intern_method => :from_data_hash) do
+  def intern(klass, text)
+    data_to_instance(klass, JSON.parse(text))
+  end
+
+  def intern_multiple(klass, text)
+    JSON.parse(text).collect do |data|
+      data_to_instance(klass, data)
+    end
+  end
+
+  # JSON monkey-patches Array, so this works.
+  # https://github.com/ruby/ruby/blob/ruby_1_9_3/ext/json/generator/generator.c#L1416
+  def render_multiple(instances)
+    instances.to_json
+  end
+
+  # Unlike PSON, we do not need to unwrap the data envelope, because legacy 3.x agents
+  # have never supported JSON
+  def data_to_instance(klass, data)
     return data if data.is_a?(klass)
     klass.from_data_hash(data)
   end

@@ -1,10 +1,9 @@
 {
-  :install => [
-    'facter#2.x',
-    'hiera#1.3.4',
+  :type                        => 'foss',
+  :install                     => [
     'puppet',
   ],
-  :pre_suite => [
+  :pre_suite                   => [
     'setup/common/pre-suite/000-delete-puppet-when-none.rb',
     'setup/git/pre-suite/000_EnvSetup.rb',
     'setup/git/pre-suite/010_TestSetup.rb',
@@ -15,4 +14,4 @@
     'setup/git/pre-suite/060_InstallModules.rb',
     'setup/git/pre-suite/070_InstallCACerts.rb',
   ],
-}
+}.merge(eval File.read('config/common/options.rb'))

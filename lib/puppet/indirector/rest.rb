@@ -180,7 +180,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
       # that makes a user aware of the reason for the failure.
       #
       content_type, body = parse_response(response)
-      msg = "Find #{elide(uri_with_query_string, 100)} resulted in 404 with the message: #{body}"
+      msg = _("Find %{uri} resulted in 404 with the message: %{body}") % { uri: elide(uri_with_query_string, 100), body: body }
       raise Puppet::Error, msg
     else
       nil
@@ -213,7 +213,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def destroy(request)
-    raise ArgumentError, "DELETE does not accept options" unless request.options.empty?
+    raise ArgumentError, _("DELETE does not accept options") unless request.options.empty?
 
     response = do_request(request) do |req|
       http_delete(req, IndirectedRoutes.request_to_uri(req), headers)
@@ -228,7 +228,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def save(request)
-    raise ArgumentError, "PUT does not accept options" unless request.options.empty?
+    raise ArgumentError, _("PUT does not accept options") unless request.options.empty?
 
     response = do_request(request) do |req|
       http_put(req, IndirectedRoutes.request_to_uri(req), req.instance.render, headers.merge({ "Content-Type" => req.instance.mime }))
@@ -288,7 +288,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
       returned_message = uncompress_body(response)
     end
 
-    message = "Error #{response.code} on SERVER: #{returned_message}"
+    message = _("Error %{code} on SERVER: %{returned_message}") % { code: response.code, returned_message: returned_message }
     Net::HTTPError.new(message, response)
   end
 
@@ -300,7 +300,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
       [ response['content-type'].gsub(/\s*;.*$/,''),
         body = uncompress_body(response) ]
     else
-      raise "No content type in http response; cannot parse"
+      raise _("No content type in http response; cannot parse")
     end
   end
 

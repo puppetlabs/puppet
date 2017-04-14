@@ -4,6 +4,7 @@ extend Puppet::Acceptance::EnvironmentUtils
 
   # user resource doesn't have a provider on arista
   skip_test if agents.any? {|agent| agent['platform'] =~ /^eos/ } # see PUP-5404, ARISTA-42
+  skip_test 'requires puppetserver to service restart' if @options[:type] != 'aio'
 
   app_type = File.basename(__FILE__, '.*')
   tmp_environment   = mk_tmp_environment_with_teardown(master, app_type)

@@ -10,13 +10,13 @@ describe "apply" do
   end
 
   describe "when applying provided catalogs" do
-    it "can apply catalogs provided in a file in pson" do
-      file_to_create = tmpfile("pson_catalog")
+    it "can apply catalogs provided in a file in json" do
+      file_to_create = tmpfile("json_catalog")
       catalog = Puppet::Resource::Catalog.new('mine', Puppet.lookup(:environments).get(Puppet[:environment]))
       resource = Puppet::Resource.new(:file, file_to_create, :parameters => {:content => "my stuff"})
       catalog.add_resource resource
 
-      manifest = file_containing("manifest", catalog.to_pson)
+      manifest = file_containing("manifest", catalog.to_json)
 
       puppet = Puppet::Application[:apply]
       puppet.options[:catalog] = manifest
@@ -94,7 +94,7 @@ end
       it 'does not load the pcore type' do
         catalog = compile_to_catalog('applytest { "applytest was here":}', node)
         apply = Puppet::Application[:apply]
-        apply.options[:catalog] = file_containing('manifest', catalog.to_pson)
+        apply.options[:catalog] = file_containing('manifest', catalog.to_json)
 
         Puppet[:environmentpath] = envdir
         Puppet::Pops::Loader::Runtime3TypeLoader.any_instance.expects(:find).never
@@ -134,6 +134,92 @@ end
     end
   end
 
+  context 'from environment with pcore object types' do
+    include PuppetSpec::Compiler
+
+    let!(:envdir) { Puppet[:environmentpath] }
+    let(:env_name) { 'spec' }
+    let(:dir_structure) {
+      {
+        'environment.conf' => <<-CONF,
+          rich_data = true
+        CONF
+        'modules' => {
+          'mod' => {
+            'types' => {
+              'streetaddress.pp' => <<-PUPPET,
+                type Mod::StreetAddress = Object[{
+                  attributes => {
+                    'street' => String,
+                    'zipcode' => String,
+                    'city' => String,
+                  } 
+                }]
+              PUPPET
+              'address.pp' => <<-PUPPET,
+                type Mod::Address = Object[{
+                  parent => Mod::StreetAddress,
+                  attributes => {
+                    'state' => String
+                  } 
+                }]
+              PUPPET
+              'contact.pp' => <<-PUPPET,
+                type Mod::Contact = Object[{
+                  attributes => {
+                    'address' => Mod::Address,
+                    'email' => String
+                  }
+                }]
+              PUPPET
+            },
+            'manifests' => {
+              'init.pp' => <<-PUPPET,
+                define mod::person(Mod::Contact $contact) {
+                  notify { $title: }
+                  notify { $contact.address.street: }
+                  notify { $contact.address.zipcode: }
+                  notify { $contact.address.city: }
+                  notify { $contact.address.state: }
+                }
+
+                class mod {
+                  mod::person { 'Test Person':
+                    contact => Mod::Contact(
+                      Mod::Address('The Street 23', '12345', 'Some City', 'A State'),
+                      'test@example.com')
+                  }
+                }
+              PUPPET
+            }
+          }
+        }
+      }
+    }
+
+    let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(envdir, env_name, 'modules')]) }
+    let(:node) { Puppet::Node.new('test', :environment => env) }
+
+    before(:each) do
+      dir_contained_in(envdir, env_name => dir_structure)
+      PuppetSpec::Files.record_tmp(File.join(envdir, env_name))
+    end
+
+    it 'can compile the catalog' do
+      compile_to_catalog('include mod', node)
+    end
+
+    it 'can apply the catalog' do
+      catalog = compile_to_catalog('include mod', node)
+
+      Puppet[:environment] = env_name
+      apply = Puppet::Application[:apply]
+      apply.options[:catalog] = file_containing('manifest', catalog.to_json)
+      expect { apply.run_command; exit(0) }.to exit_with(0)
+      expect(@logs.map(&:to_s)).to include('The Street 23')
+    end
+  end
+
   it "applies a given file even when a directory environment is specified" do
     manifest = file_containing("manifest.pp", "notice('it was applied')")
 
@@ -148,9 +234,8 @@ end
     expect(@logs.map(&:to_s)).to include('it was applied')
   end
 
-  it "adds environment to the $server_facts variable if trusted_server_facts is true" do
+  it "adds environment to the $server_facts variable" do
     manifest = file_containing("manifest.pp", "notice(\"$server_facts\")")
-    Puppet[:trusted_server_facts] = true
 
     puppet = Puppet::Application[:apply]
     puppet.stubs(:command_line).returns(stub('command_line', :args => [manifest]))
@@ -374,7 +459,7 @@ class amod::bad_type {
       it 'will notify a string that is the result of Regexp#inspect (from Runtime3xConverter)' do
         catalog = compile_to_catalog(execute, node)
         apply = Puppet::Application[:apply]
-        apply.options[:catalog] = file_containing('manifest', catalog.to_pson)
+        apply.options[:catalog] = file_containing('manifest', catalog.to_json)
         apply.expects(:apply_catalog).with do |catalog|
           catalog.resource(:notify, 'rx')['message'].is_a?(String)
           catalog.resource(:notify, 'bin')['message'].is_a?(String)
@@ -389,7 +474,7 @@ class amod::bad_type {
       it 'will notify a string that is the result of to_s on uknown data types' do
         logs = []
         json = Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
-           compile_to_catalog('include amod::bad_type', node).to_pson
+           compile_to_catalog('include amod::bad_type', node).to_json
         end
         logs = logs.select { |log| log.level == :warning }.map { |log| log.message }
         expect(logs.empty?).to be_falsey
@@ -410,7 +495,7 @@ class amod::bad_type {
       it 'will notify a regexp using Regexp#to_s' do
         catalog = compile_to_catalog(execute, node)
         apply = Puppet::Application[:apply]
-        apply.options[:catalog] = file_containing('manifest', catalog.to_pson)
+        apply.options[:catalog] = file_containing('manifest', catalog.to_json)
         apply.expects(:apply_catalog).with do |catalog|
           catalog.resource(:notify, 'rx')['message'].is_a?(Regexp)
           catalog.resource(:notify, 'bin')['message'].is_a?(Puppet::Pops::Types::PBinaryType::Binary)
@@ -424,7 +509,7 @@ class amod::bad_type {
 
       it 'will raise an error on uknown data types' do
         catalog = compile_to_catalog('include amod::bad_type', node)
-        expect { catalog.to_pson }.to raise_error(/No Puppet Type found for Time/)
+        expect { catalog.to_json }.to raise_error(/No Puppet Type found for Time/)
       end
     end
 

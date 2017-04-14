@@ -109,8 +109,8 @@ class BaseLoader < Loader
   private
 
   def fail_redefine(entry)
-    origin_info = entry.origin ? "Originally set #{origin_label(entry.origin)}." : "Set at unknown location"
-    raise ArgumentError, "Attempt to redefine entity '#{entry.typed_name}'. #{origin_info}"
+    origin_info = entry.origin ? _("Originally set %{original}.") % { original: origin_label(entry.origin) } : _("Set at unknown location")
+    raise ArgumentError, _("Attempt to redefine entity '%{name}'. %{origin_info}") % { name: entry.typed_name, origin_info: origin_info }
   end
 
   # TODO: Should not really be here?? - TODO: A Label provider ? semantics for the URI?
@@ -136,13 +136,21 @@ class BaseLoader < Loader
   # 4. give up
   #
   def internal_load(typed_name)
-    # avoid calling get_entry, by looking it up
+    # avoid calling get_entry by looking it up
     te = @named_values[typed_name]
-    te = parent.load_typed(typed_name) if te.nil? || te.value.nil?
-    te = find(typed_name) if te.nil? || te.value.nil?
-    te
-  end
+    return te unless te.nil? || te.value.nil?
 
+    te = parent.load_typed(typed_name)
+    return te unless te.nil? || te.value.nil?
+
+    # Under some circumstances, the call to the parent loader will have resulted in files being
+    # parsed that in turn contained references to the requested entity and hence, caused a
+    # recursive call into this loader. This means that the entry might be present now, so a new
+    # check must be made.
+    te = @named_values[typed_name]
+    te.nil? || te.value.nil? ? find(typed_name) : te
+  end
 end
 end
 end
+

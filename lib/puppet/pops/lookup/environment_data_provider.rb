@@ -10,6 +10,19 @@ class EnvironmentDataProvider < ConfiguredDataProvider
 
   protected
 
+  def assert_config_version(config)
+    if config.version > 3
+      config
+    else
+      if Puppet[:strict] == :error
+        config.fail(Issues::HIERA_VERSION_3_NOT_GLOBAL, :where => 'environment')
+      else
+        Puppet.warn_once(:hiera_v3_at_env_root, config.config_path, _('hiera.yaml version 3 found at the environment root was ignored'))
+      end
+      nil
+    end
+  end
+
   # Return the root of the environment
   #
   # @param lookup_invocation [Invocation] The current lookup invocation

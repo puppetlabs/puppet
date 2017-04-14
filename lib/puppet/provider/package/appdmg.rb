@@ -44,7 +44,7 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
   def self.installapp(source, name, orig_source)
     appname = File.basename(source);
     ditto "--rsrc", source, "/Applications/#{appname}"
-    File.open("/var/db/.puppet_appdmg_installed_#{name}", "w") do |t|
+    Puppet::FileSystem.open("/var/db/.puppet_appdmg_installed_#{name}", nil, "w:UTF-8") do |t|
       t.print "name: '#{name}'\n"
       t.print "source: '#{orig_source}'\n"
     end
@@ -100,10 +100,10 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
   def install
     source = nil
     unless source = @resource[:source]
-      self.fail "Mac OS X PKG DMGs must specify a package source."
+      self.fail _("Mac OS X PKG DMGs must specify a package source.")
     end
     unless name = @resource[:name]
-      self.fail "Mac OS X PKG DMGs must specify a package name."
+      self.fail _("Mac OS X PKG DMGs must specify a package name.")
     end
     self.class.installpkgdmg(source,name)
   end

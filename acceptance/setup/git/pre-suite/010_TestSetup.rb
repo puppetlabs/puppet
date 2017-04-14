@@ -29,13 +29,27 @@ extend Beaker::DSL::InstallUtils
         on host, "ln -s #{source_dir} #{checkout_dir}"
         on host, "cd #{checkout_dir} && if [ -f install.rb ]; then ruby ./install.rb ; else true; fi"
       else
-        install_from_git_on host, SourcePath, repository
-      end
+        puppet_dir = host.tmpdir('puppet')
+        on(host, "chmod 755 #{puppet_dir}")
 
-      if index == 1
-        versions[repository[:name]] = find_git_repo_versions(host,
-                                                             SourcePath,
-                                                             repository)
+        gemfile_contents = <<END
+source '#{ENV["GEM_SOURCE"] || "https://rubygems.org"}'
+gem '#{repository[:name]}', :git => '#{repository[:path]}', :ref => '#{ENV['SHA']}'
+END
+        case host['platform']
+        when /windows/
+          raise ArgumentError, "Windows is not yet supported"
+        when /el-7/
+          gemfile_contents = gemfile_contents + "gem 'json'\n"
+          create_remote_file(host, "#{puppet_dir}/Gemfile", gemfile_contents)
+          on host, "cd #{puppet_dir} && bundle install --system --binstubs #{host['puppetbindir']}"
+        when /solaris/
+          create_remote_file(host, "#{puppet_dir}/Gemfile", gemfile_contents)
+          on host, "cd #{puppet_dir} && bundle install --system --binstubs #{host['puppetbindir']} --shebang #{host['puppetbindir']}/ruby"
+        else
+          create_remote_file(host, "#{puppet_dir}/Gemfile", gemfile_contents)
+          on host, "cd #{puppet_dir} && bundle install --system --binstubs #{host['puppetbindir']}"
+        end
       end
     end
   end
@@ -52,6 +66,15 @@ extend Beaker::DSL::InstallUtils
       else
         on host, "touch '#{puppetconf}'"
       end
+    end
+  end
+
+  step "Hosts: create environments directory like AIO does" do
+    hosts.each do |host|
+      codedir = host.puppet['codedir']
+      on host, "mkdir -p #{codedir}/environments/production/manifests"
+      on host, "mkdir -p #{codedir}/environments/production/modules"
+      on host, "chmod -R 755 #{codedir}"
     end
   end
 end

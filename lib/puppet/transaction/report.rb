@@ -389,10 +389,6 @@ class Puppet::Transaction::Report
     super - [:@external_times, :@resources_failed_to_generate]
   end
 
-  def self.supported_formats
-    [:pson, :yaml]
-  end
-
   def self.default_format
     :pson
   end

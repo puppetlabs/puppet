@@ -10,6 +10,7 @@ require 'puppet/util/platform'
 require 'puppet/util/symbolic_file_mode'
 require 'puppet/file_system/uniquefile'
 require 'securerandom'
+require 'puppet/util/character_encoding'
 
 module Puppet
 module Util
@@ -61,7 +62,7 @@ module Util
       when :windows
         Puppet::Util::Windows::Process.get_environment_strings
       else
-        raise "Unable to retrieve the environment for mode #{mode}"
+        raise _("Unable to retrieve the environment for mode %{mode}") % { mode: mode }
     end
   end
   module_function :get_environment
@@ -78,7 +79,7 @@ module Util
           Puppet::Util::Windows::Process.set_environment_variable(key, nil)
         end
       else
-        raise "Unable to clear the environment for mode #{mode}"
+        raise _("Unable to clear the environment for mode %{mode}") % { mode: mode }
     end
   end
   module_function :clear_environment
@@ -94,7 +95,7 @@ module Util
       when :windows
         Puppet::Util::Windows::Process.set_environment_variable(name,value)
       else
-        raise "Unable to set the environment variable #{name} for mode #{mode}"
+        raise _("Unable to set the environment variable %{name} for mode %{mode}") % { name: name, mode: mode }
     end
   end
   module_function :set_env
@@ -111,7 +112,7 @@ module Util
           Puppet::Util::Windows::Process.set_environment_variable(name.to_s, val)
         end
       else
-        raise "Unable to merge given values into the current environment for mode #{mode}"
+        raise _("Unable to merge given values into the current environment for mode %{mode}") % { mode: mode }
     end
   end
   module_function :merge_environment
@@ -152,8 +153,8 @@ module Util
       begin
         Puppet::Util::SUIDManager.change_group(group, true)
       rescue => detail
-        Puppet.warning "could not change to group #{group.inspect}: #{detail}"
-        $stderr.puts "could not change to group #{group.inspect}"
+        Puppet.warning _("could not change to group %{group}: %{detail}") % { group: group.inspect, detail: detail }
+        $stderr.puts _("could not change to group %{group}") % { group: group.inspect }
 
         # Don't exit on failed group changes, since it's
         # not fatal
@@ -165,7 +166,7 @@ module Util
       begin
         Puppet::Util::SUIDManager.change_user(user, true)
       rescue => detail
-        $stderr.puts "Could not change to user #{user}: #{detail}"
+        $stderr.puts _("Could not change to user %{user}: %{detail}") % { user: user, detail: detail }
         exit(74)
       end
     end
@@ -222,7 +223,9 @@ module Util
       seconds = Benchmark.realtime {
         yield
       }
-      object.send(level, msg + (" in %0.2f seconds" % seconds))
+      #TRANSLATORS forms the end of a string indicating how long a
+      # given operation took
+      object.send(level, msg + (_(" in %0.2f seconds") % seconds))
       return seconds
     else
       yield
@@ -253,10 +256,12 @@ module Util
           if e.to_s =~ /HOME/ and (Puppet::Util.get_env('HOME').nil? || Puppet::Util.get_env('HOME') == "")
             # if we get here they have a tilde in their PATH.  We'll issue a single warning about this and then
             # ignore this path element and carry on with our lives.
-            Puppet::Util::Warnings.warnonce("PATH contains a ~ character, and HOME is not set; ignoring PATH element '#{dir}'.")
+            #TRANSLATORS PATH and HOME are environment variables and should not be translated
+            Puppet::Util::Warnings.warnonce(_("PATH contains a ~ character, and HOME is not set; ignoring PATH element '%{dir}'.") % { dir: dir })
           elsif e.to_s =~ /doesn't exist|can't find user/
             # ...otherwise, we just skip the non-existent entry, and do nothing.
-            Puppet::Util::Warnings.warnonce("Couldn't expand PATH containing a ~ character; ignoring PATH element '#{dir}'.")
+            #TRANSLATORS PATH is an environment variable and should not be translated
+            Puppet::Util::Warnings.warnonce(_("Couldn't expand PATH containing a ~ character; ignoring PATH element '%{dir}'.") % { dir: dir })
           else
             raise
           end
@@ -325,7 +330,7 @@ module Util
     begin
       URI::Generic.build(params)
     rescue => detail
-      raise Puppet::Error, "Failed to convert '#{path}' to URI: #{detail}", detail.backtrace
+      raise Puppet::Error, _("Failed to convert '%{path}' to URI: %{detail}") % { path: path, detail: detail }, detail.backtrace
     end
   end
   module_function :path_to_uri
@@ -550,7 +555,7 @@ module Util
     ## NOTE: when debugging spec failures, these two lines can be very useful
     #puts err.inspect
     #puts Puppet::Util.pretty_backtrace(err.backtrace)
-    Puppet.log_exception(err, "Could not #{message}: #{err}")
+    Puppet.log_exception(err, _("Could not %{message}: %{err}") % { message: message, err: err })
     Puppet::Util::Log.force_flushqueue()
     exit(code)
   end

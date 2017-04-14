@@ -21,13 +21,13 @@ class Puppet::Network::HTTP::WEBrick
 
     @server.mount('/', Puppet::Network::HTTP::WEBrickREST)
 
-    raise "WEBrick server is already listening" if @listening
+    raise _("WEBrick server is already listening") if @listening
     @listening = true
     @thread = Thread.new do
       @server.start do |sock|
         timeout = 10.0
         if ! IO.select([sock],nil,nil,timeout)
-          raise "Client did not send data within %.1f seconds of connecting" % timeout
+          raise _("Client did not send data within %.1f seconds of connecting") % timeout
         end
         sock.accept
         @server.run(sock)
@@ -37,7 +37,7 @@ class Puppet::Network::HTTP::WEBrick
   end
 
   def unlisten
-    raise "WEBrick server is not listening" unless @listening
+    raise _("WEBrick server is not listening") unless @listening
     @server.shutdown
     wait_for_shutdown
     @server = nil
@@ -73,7 +73,8 @@ class Puppet::Network::HTTP::WEBrick
     file = Puppet[:masterhttplog]
 
     # open the log manually to prevent file descriptor leak
-    file_io = ::File.open(file, "a+")
+    # webrick logged strings may contain UTF-8
+    file_io = ::File.open(file, "a+:UTF-8")
     file_io.sync = true
     if defined?(Fcntl::FD_CLOEXEC)
       file_io.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
@@ -96,7 +97,7 @@ class Puppet::Network::HTTP::WEBrick
     # Get the cached copy.  We know it's been generated, too.
     host = Puppet::SSL::Host.localhost
 
-    raise Puppet::Error, "Could not retrieve certificate for #{host.name} and not running on a valid certificate authority" unless host.certificate
+    raise Puppet::Error, _("Could not retrieve certificate for %{host} and not running on a valid certificate authority") % { value0: host.name } unless host.certificate
 
     results[:SSLPrivateKey] = host.key.content
     results[:SSLCertificate] = host.certificate.content
@@ -104,7 +105,7 @@ class Puppet::Network::HTTP::WEBrick
     results[:SSLEnable] = true
     results[:SSLOptions] = OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3
 
-    raise Puppet::Error, "Could not find CA certificate" unless Puppet::SSL::Certificate.indirection.find(Puppet::SSL::CA_NAME)
+    raise Puppet::Error, _("Could not find CA certificate") unless Puppet::SSL::Certificate.indirection.find(Puppet::SSL::CA_NAME)
 
     results[:SSLCACertificateFile] = ssl_configuration.ca_auth_file
     results[:SSLVerifyClient] = OpenSSL::SSL::VERIFY_PEER

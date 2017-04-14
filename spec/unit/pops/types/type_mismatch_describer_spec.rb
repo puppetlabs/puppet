@@ -130,6 +130,17 @@ describe 'the type mismatch describer' do
       /parameter 'arg' expects a match for Enum\['a', 'b'\], got Sensitive/))
   end
 
+  it "reports errors on the first failing parameter when that parameter is not the first in order" do
+    code = <<-CODE
+      type Abc = Enum['a', 'b', 'c']
+      type Cde = Enum['c', 'd', 'e']
+      function two_params(Abc $a, Cde $b) {}
+      two_params('a', 'x')
+    CODE
+    expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
+      /parameter 'b' expects a match for Cde = Enum\['c', 'd', 'e'\], got 'x'/))
+  end
+
   it "will not generalize a string that doesn't match an enum in a define call" do
     code = <<-CODE
       define check_enums(Enum[a,b] $arg) {}
@@ -137,6 +148,15 @@ describe 'the type mismatch describer' do
     CODE
     expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
       /parameter 'arg' expects a match for Enum\['a', 'b'\], got 'c'/))
+  end
+
+  it "will include Undef when describing a mismatch against a Variant where one of the types is Undef" do
+    code = <<-CODE
+      define check(Variant[Undef,String,Integer,Hash,Array] $arg) {}
+      check{ x: arg => 2.4 }
+    CODE
+    expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
+      /parameter 'arg' expects a value of type Undef, String, Integer, Hash, or Array/))
   end
 
   it "will not disclose a Sensitive that doesn't match an enum in a define call" do
@@ -185,21 +205,21 @@ describe 'the type mismatch describer' do
     it 'reports a missing block as "expects a block"' do
       callable = parser.parse('Callable[String,String,Callable]')
       args_tuple = parser.parse('Tuple[String,String]')
-      dispatch = Functions::Dispatch.new(callable, 'foo', ['a','b'], 'block', nil, nil, false)
+      dispatch = Functions::Dispatch.new(callable, 'foo', ['a','b'], false, 'block')
       expect(subject.describe_signatures('function', [dispatch], args_tuple)).to eq("'function' expects a block")
     end
 
     it 'reports an unexpected block as "does not expect a block"' do
       callable = parser.parse('Callable[String,String]')
       args_tuple = parser.parse('Tuple[String,String,Callable]')
-      dispatch = Functions::Dispatch.new(callable, 'foo', ['a','b'], nil, nil, nil, false)
+      dispatch = Functions::Dispatch.new(callable, 'foo', ['a','b'])
       expect(subject.describe_signatures('function', [dispatch], args_tuple)).to eq("'function' does not expect a block")
     end
 
     it 'reports a block return type mismatch' do
       callable = parser.parse('Callable[[0,0,Callable[ [0,0],String]],Undef]')
       args_tuple = parser.parse('Tuple[Callable[[0,0],Integer]]')
-      dispatch = Functions::Dispatch.new(callable, 'foo', [], 'block', nil, nil, false)
+      dispatch = Functions::Dispatch.new(callable, 'foo', [], false, 'block')
       expect(subject.describe_signatures('function', [dispatch], args_tuple)).to eq("'function' block return expects a String value, got Integer")
     end
   end

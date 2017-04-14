@@ -4,12 +4,12 @@ require 'puppet/generate/type'
 # Create the Generate face
 Puppet::Face.define(:generate, '0.1.0') do
   copyright 'Puppet Inc.', 2016
-  license   'Apache 2 license; see COPYING'
+  license   _('Apache 2 license; see COPYING')
 
-  summary 'Generates Puppet code from Ruby definitions.'
+  summary _('Generates Puppet code from Ruby definitions.')
 
   action(:types) do
-    summary 'Generates Puppet code for custom types'
+    summary _('Generates Puppet code for custom types')
 
     description <<-'EOT'
       Generates definitions for custom resource types using Puppet code.
@@ -28,17 +28,17 @@ Puppet::Face.define(:generate, '0.1.0') do
           $ puppet generate types --environment development
     EOT
 
-    option '--format <format>' do
-      summary 'The generation output format to use. Supported formats: pcore.'
+    option '--format ' + _('<format>') do
+      summary _('The generation output format to use. Supported formats: pcore.')
       default_to { 'pcore' }
 
       before_action do |_, _, options|
-        raise ArgumentError, "'#{options[:format]}' is not a supported format for type generation." unless ['pcore'].include?(options[:format])
+        raise ArgumentError, _("'%{format}' is not a supported format for type generation.") % { format: options[:format] } unless ['pcore'].include?(options[:format])
       end
     end
 
     option '--force' do
-      summary 'Forces the generation of output files (skips up-to-date checks).'
+      summary _('Forces the generation of output files (skips up-to-date checks).')
       default_to { false }
     end
 
@@ -53,7 +53,7 @@ Puppet::Face.define(:generate, '0.1.0') do
       path_to_env = environment.configuration.path_to_env
       outputdir = File.join(path_to_env, '.resource_types')
       if Puppet::FileSystem.exist?(outputdir) && !Puppet::FileSystem.directory?(outputdir)
-        raise ArgumentError, "The output directory '#{outputdir}' exists and is not a directory"
+        raise ArgumentError, _("The output directory '%{outputdir}' exists and is not a directory") % { outputdir: outputdir }
       end
       Puppet::FileSystem::mkpath(outputdir)
 

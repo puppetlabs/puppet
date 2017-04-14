@@ -98,7 +98,7 @@ class Puppet::Parser::TypeLoader
   end
 
   def raise_no_files_found(pattern)
-    raise TypeLoaderError, "No file(s) found for import of '#{pattern}'"
+    raise TypeLoaderError, _("No file(s) found for import of '%{pattern}'") % { pattern: pattern }
   end
 
   def load_files(modname, files)

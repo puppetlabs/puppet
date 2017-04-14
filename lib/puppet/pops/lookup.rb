@@ -20,7 +20,6 @@ module Lookup
   # @return [Object] The found value
   #
   def self.lookup(name, value_type, default_value, has_default, merge, lookup_invocation)
-    value_type = DataProvider.value_type if value_type.nil?
     names = name.is_a?(Array) ? name : [name]
 
     # find first name that yields a non-nil result and wrap it in a two element array
@@ -29,7 +28,7 @@ module Lookup
     override_values = lookup_invocation.override_values
     result_with_name = names.reduce([nil, not_found]) do |memo, key|
       value = override_values.include?(key) ? assert_type(["Value found for key '%s' in override hash", key], value_type, override_values[key]) : not_found
-      catch(:no_such_key) { value = search_and_merge(key, lookup_invocation, merge) } if value.equal?(not_found)
+      catch(:no_such_key) { value = search_and_merge(key, lookup_invocation, merge, false) } if value.equal?(not_found)
       break [key, assert_type('Found value', value_type, value)] unless value.equal?(not_found)
       memo
     end
@@ -73,18 +72,19 @@ module Lookup
   end
 
   # @api private
-  def self.search_and_merge(name, lookup_invocation, merge)
-    LookupAdapter.adapt(lookup_invocation.scope.compiler).lookup(name, lookup_invocation, merge)
+  def self.search_and_merge(name, lookup_invocation, merge, apl = true)
+    answer = lookup_invocation.lookup_adapter.lookup(name, lookup_invocation, merge)
+    lookup_invocation.emit_debug_info("Automatic Parameter Lookup of '#{name}'") if apl && Puppet[:debug]
+    answer
   end
 
   def self.assert_type(subject, type, value)
-    Types::TypeAsserter.assert_instance_of(subject, type, value)
+    type ? Types::TypeAsserter.assert_instance_of(subject, type, value) : value
   end
   private_class_method :assert_type
 
   def self.fail_lookup(names)
-    name_part = names.size == 1 ? "the name '#{names[0]}'" : 'any of the names [' + names.map { |n| "'#{n}'" }.join(', ') + ']'
-    raise Puppet::DataBinding::LookupError, "Function lookup() did not find a value for #{name_part}"
+    raise Puppet::DataBinding::LookupError, n_("Function lookup() did not find a value for the name '%{name}'" % { name: names[0] }, "Function lookup() did not find a value for any of the names [%{name_list}]" % { name_list: names.map { |n| "'#{n}'" }.join(', ') }, names.size)
   end
   private_class_method :fail_lookup
 end
