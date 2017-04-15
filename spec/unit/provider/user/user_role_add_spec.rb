@@ -312,6 +312,23 @@ fakevalish:seriously:15315:0:99999:7:::
 after:seriously:15315:0:99999:7:::
 EOT
     end
+
+    it "should update the lastchg field" do
+      Date.expects(:today).returns Date.new(2013,5,12) # 15837 days after 1970-01-01
+      write_fixture <<FIXTURE
+before:seriously:15315:0:99999:7:::
+fakeval:seriously:15629:0:99999:7:::
+fakevalish:seriously:15315:0:99999:7:::
+after:seriously:15315:0:99999:7:::
+FIXTURE
+      provider.password = "totally"
+      File.read(path).should == <<EOT
+before:seriously:15315:0:99999:7:::
+fakeval:totally:15837:0:99999:7:::
+fakevalish:seriously:15315:0:99999:7:::
+after:seriously:15315:0:99999:7:::
+EOT
+    end
   end
 
   describe "#shadow_entry" do
