@@ -1419,6 +1419,11 @@ EOT
       :default    => false,
       :type       => :boolean,
       :desc       => "Whether the server will search for SRV records in DNS for the current domain.",
+      :hook => proc do |value|
+        if value.true? and Puppet[:server] != "puppet"
+          raise "Cannot specify both the server and use_srv_records"
+        end
+      end
     },
     :srv_domain => {
       :default    => lambda { Puppet::Settings.domain_fact },
