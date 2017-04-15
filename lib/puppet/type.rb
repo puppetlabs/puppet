@@ -2264,10 +2264,10 @@ end
 
     @parameters ||= []
 
-    @validproperties = {}
+    @validproperties = superclass.instance_variable_get(:@validproperties) || {}
     @properties = []
     @parameters = []
-    @paramhash = {}
+    @paramhash = superclass.instance_variable_get(:@paramhash) || {}
 
     @paramdoc = Hash.new { |hash,key|
       key = key.intern if key.is_a?(String)
