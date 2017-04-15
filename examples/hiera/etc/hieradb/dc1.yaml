@@ -4,3 +4,8 @@ ntpservers:
   - ntp2.dc1.example.com
 classes:
   - users::dc1
+resources:
+  git::repo:
+    puppet-modules:
+      destination: /etc/puppet/modules
+      location: 'git.mycompany.com:puppet-modules'

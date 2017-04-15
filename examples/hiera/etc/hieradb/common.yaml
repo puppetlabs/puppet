@@ -1,3 +1,8 @@
 classes:
   - users::common
   - ntp::config
+resources:
+  backups::file:
+    logs:
+      path: /var/log
+      retain: 30
