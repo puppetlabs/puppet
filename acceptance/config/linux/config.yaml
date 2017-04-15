@@ -1,0 +1,14 @@
+HOSTS:
+  master:
+    roles:
+      - master
+      - agent
+    platform: el-6-i386
+    ip: 192.168.40.12
+  agent1:
+    roles:
+      - agent
+    platform: ubuntu-12.04-i386
+    ip: 192.168.40.10
+CONFIG:
+  filecount: 12
