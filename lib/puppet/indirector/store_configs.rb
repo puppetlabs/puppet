@@ -25,6 +25,6 @@ class Puppet::Indirector::StoreConfigs < Puppet::Indirector::Terminus
   end
 
   def destroy(request)
-    target.save request
+    target.destroy request
   end
 end
