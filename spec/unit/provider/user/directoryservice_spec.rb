@@ -781,6 +781,16 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
       provider.expects(:dscl).with('.', '-list', '/Users', 'uid').returns("kathee 312\ngary 11\ntanny 33\njohn 9\nzach 5")
       expect(provider.next_system_id(30)).to eq(34)
     end
+
+    it 'should return the next available UID number that is not in the list obtained from dscl and is greater than the default value when not passed an argument' do
+      provider.expects(:dscl).with('.', '-list', '/Users', 'uid').returns("kathee 312\ngary 11\ntanny 33\njohn 9\nzach 5")
+      provider.next_system_id.should == 501
+    end
+
+    it 'should return the next available UID number that is not in the list obtained from dscl and is greater than the default value when not passed an argument and there are ids above the minimum one' do
+      provider.expects(:dscl).with('.', '-list', '/Users', 'uid').returns("kathee 312\ngary 11\ntanny 33\njohn 9\nzach 5\nfoo 503")
+      provider.next_system_id.should == 504
+    end
   end
 
   describe '#get_salted_sha512' do
