@@ -295,7 +295,9 @@ Puppet::Type.newtype(:file) do
   end
 
   newparam(:validate_cmd) do
-    desc "A command for validating the file's syntax before replacing it. If
+    desc "Note: This is limited to Puppet > 3.5
+
+      A command for validating the file's syntax before replacing it. If
       Puppet would need to rewrite a file due to new `source` or `content`, it
       will check the new content's validity first. If validation fails, the file
       resource will fail.
@@ -320,7 +322,9 @@ Puppet::Type.newtype(:file) do
   end
 
   newparam(:validate_replacement) do
-    desc "The replacement string in a `validate_cmd` that will be replaced
+    desc "Note: This is limited to Puppet > 3.5
+
+      The replacement string in a `validate_cmd` that will be replaced
       with an input file name. Defaults to: `%`"
 
     defaultto '%'
