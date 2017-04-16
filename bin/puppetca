@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+#
+# This starter is used for SELinux initial domain transition
+#
+require 'puppet/application/cert'
+Puppet::Application[:cert].run
