@@ -4,7 +4,7 @@ require 'puppet/util/methodhelper'
 class Puppet::Util::Ldap::Connection
   include Puppet::Util::MethodHelper
 
-  attr_accessor :host, :port, :user, :password, :reset, :ssl
+  attr_accessor :host, :port, :user, :password, :reset, :ssl, :crtdir
 
   attr_reader :connection
 
@@ -18,8 +18,11 @@ class Puppet::Util::Ldap::Connection
           false
         end
 
+    crtdir = Puppet[:ldapcrtdir]
+    
     options = {}
     options[:ssl] = ssl
+    options[:crtdir] = crtdir
     if user = Puppet.settings[:ldapuser] and user != ""
       options[:user] = user
       if pass = Puppet.settings[:ldappassword] and pass != ""
@@ -44,7 +47,7 @@ class Puppet::Util::Ldap::Connection
 
   # Create a per-connection unique name.
   def name
-    [host, port, user, password, ssl].collect { |p| p.to_s }.join("/")
+    [host, port, user, password, ssl, crtdir].collect { |p| p.to_s }.join("/")
   end
 
   # Should we reset the connection?
@@ -56,9 +59,17 @@ class Puppet::Util::Ldap::Connection
   def start
       case ssl
       when :tls
+      if crtdir
+        @connection = LDAP::SSLConn.new(host, port, true, crtdir);
+      else
         @connection = LDAP::SSLConn.new(host, port, true)
+      end
       when true
+      if crtdir
+        @connection = LDAP::SSLConn.new(host, port, true, crtdir);
+      else
         @connection = LDAP::SSLConn.new(host, port)
+      end
       else
         @connection = LDAP::Conn.new(host, port)
       end
