@@ -137,7 +137,7 @@ Puppet::Type.newtype(:resources) do
   # Make sure we don't purge users with specific uids
   def user_check(resource)
     return true unless self[:name] == "user"
-    return true unless self[:unless_system_user]
+    return true unless self[:unless_system_user] || self[:unless_uid]
     resource[:audit] = :uid
     current_values = resource.retrieve_resource
     current_uid = current_values[resource.property(:uid)]
@@ -146,7 +146,11 @@ Puppet::Type.newtype(:resources) do
     return false if system_users.include?(resource[:name])
     return false if unless_uids && unless_uids.include?(current_uid)
 
-    current_uid > self[:unless_system_user]
+    if self[:unless_system_user] 
+      current_uid > self[:unless_system_user]
+    else
+      true
+    end
   end
 
   def system_users
