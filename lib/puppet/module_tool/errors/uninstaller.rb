@@ -33,7 +33,11 @@ module Puppet::ModuleTool::Errors
 
     def multiline
       message = []
-      message << (_("Could not uninstall module '%{module_name}'") % { module_name: @module_name } << (@requested_version ? "  (#v(@requested_version)})" : ''))
+      if @requested_version
+        message << _("Could not uninstall module '%{module_name}' (v%{requested_version})") % { module_name: @module_name, requested_version: @requested_version }
+      else
+        message << _("Could not uninstall module '%{module_name}'") % { module_name: @module_name }
+      end
       message << _("  Other installed modules have dependencies on '%{module_name}' (%{version})") % { module_name: @module_name, version: v(@installed_version) }
       message += @required_by.map do |mod|
         _("    '%{module_name}' (%{version}) requires '%{module_dep}' (%{dep_version})") % { module_name: mod['name'], version: v(mod['version']), module_dep: @module_name, dep_version: v(mod['version_requirement']) }
