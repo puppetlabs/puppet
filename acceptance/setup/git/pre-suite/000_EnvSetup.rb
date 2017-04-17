@@ -132,8 +132,7 @@ configure_gem_mirror(hosts)
 hosts.each do |host|
   case host['platform']
   when /solaris/
-    step "#{host} Install json from rubygems"
-    on host, 'gem install json_pure --no-ri --no-rdoc --version 1.8.3' # json_pure 2.0 requires ruby 2
+    step "#{host} Install bundler from rubygems"
     on host, 'gem install bundler --no-ri --no-rdoc'
     on host, "ln -sf /opt/csw/bin/bundle #{host['puppetbindir']}/bundle"
   when /windows/

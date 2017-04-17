@@ -308,6 +308,14 @@ describe "Puppet Network Format" do
       expect(json.weight).to eq(15)
     end
 
+    it "should use a native parser implementation" do
+      expect(JSON.parser.name).to eq("JSON::Ext::Parser")
+    end
+
+    it "should use a native generator implementation" do
+      expect(JSON.generator.name).to eq("JSON::Ext::Generator")
+    end
+
     it "should render an instance as JSON" do
       instance = FormatsTest.new("foo")
       expect(json.render(instance)).to eq({"string" => "foo"}.to_json)
