@@ -70,7 +70,7 @@ end
 
 group(:development) do
   if RUBY_PLATFORM != 'java'
-    gem 'ruby-prof', :require => false
+    gem 'ruby-prof', '>= 0.16.0', :require => false
   end
 end
 
