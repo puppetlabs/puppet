@@ -84,7 +84,10 @@ module Lookup
   private_class_method :assert_type
 
   def self.fail_lookup(names)
-    raise Puppet::DataBinding::LookupError, n_("Function lookup() did not find a value for the name '%{name}'" % { name: names[0] }, "Function lookup() did not find a value for any of the names [%{name_list}]" % { name_list: names.map { |n| "'#{n}'" }.join(', ') }, names.size)
+    raise Puppet::DataBinding::LookupError,
+          n_("Function lookup() did not find a value for the name '%{name}'",
+             "Function lookup() did not find a value for any of the names [%{name_list}]", names.size
+            ) % { name: names[0], name_list: names.map { |n| "'#{n}'" }.join(', ') }
   end
   private_class_method :fail_lookup
 end
