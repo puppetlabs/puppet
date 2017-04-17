@@ -2,6 +2,7 @@ require 'puppet'
 
 class Benchmarker
   def initialize(target, size)
+    @size = size
     @direction = ENV['SER_DIRECTION'] == 'generate' ? :generate : :parse
     @format = ENV['SER_FORMAT'] == 'pson' ? :pson : :json
 
@@ -20,7 +21,7 @@ class Benchmarker
   end
 
   def run(args=nil)
-    0.upto(ENV['ITERATIONS'].to_i) do |i|
+    0.upto(@size) do |i|
       # This parses a catalog from JSON data, which is a combination of parsing
       # the data into a JSON hash, and the parsing the hash into a Catalog. It's
       # interesting to see just how slow that latter process is:
