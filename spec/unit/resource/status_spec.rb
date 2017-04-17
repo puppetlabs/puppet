@@ -142,6 +142,18 @@ describe Puppet::Resource::Status do
     end
   end
 
+  describe "When converting to hash" do
+    it "should be convertible again" do
+      @status.file = "/foo.rb"
+      @status.line = 27
+      @status.evaluation_time = 2.7
+      @status.tags = %w{one two}
+      @status << Puppet::Transaction::Event.new(:status => 'success')
+      @new_status = Puppet::Resource::Status.from_data_hash(@status.to_data_hash)
+      expect(@new_status.title).to eq(@status.title)
+    end
+  end
+
   it "should round trip through pson" do
     @status.file = "/foo.rb"
     @status.line = 27
