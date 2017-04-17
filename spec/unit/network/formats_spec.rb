@@ -444,22 +444,6 @@ three  {}
 two    []
 EOT
       end
-
-      it "should render a hash nicely with a multi-line value" do
-        pending "Moving to PSON rather than PP makes this unsupportable."
-        hash = {
-          "number" => { "1" => '1' * 40, "2" => '2' * 40, '3' => '3' * 40 },
-          "text"   => { "a" => 'a' * 40, 'b' => 'b' * 40, 'c' => 'c' * 40 }
-        }
-        expect(console.render(hash)).to eq <<EOT
-number  {"1"=>"1111111111111111111111111111111111111111",
-         "2"=>"2222222222222222222222222222222222222222",
-         "3"=>"3333333333333333333333333333333333333333"}
-text    {"a"=>"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-         "b"=>"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-         "c"=>"cccccccccccccccccccccccccccccccccccccccc"}
-EOT
-      end
     end
 
     context "when rendering face-related objects" do
