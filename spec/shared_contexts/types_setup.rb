@@ -1,7 +1,7 @@
 shared_context 'types_setup' do
 
   # Do not include the special type Unit in this list
-  def all_types
+  def self.all_types
     [ Puppet::Pops::Types::PAnyType,
       Puppet::Pops::Types::PUndefType,
       Puppet::Pops::Types::PNotUndefType,
@@ -40,8 +40,11 @@ shared_context 'types_setup' do
       Puppet::Pops::Types::PBinaryType,
     ]
   end
+  def all_types
+    self.class.all_types
+  end
 
-  def scalar_types
+  def self.scalar_types
     # PVariantType is also scalar, if its types are all Scalar
     [
       Puppet::Pops::Types::PScalarType,
@@ -59,8 +62,11 @@ shared_context 'types_setup' do
       Puppet::Pops::Types::PTimestampType,
     ]
   end
+  def scalar_types
+    self.class.scalar_types
+  end
 
-  def numeric_types
+  def self.numeric_types
     # PVariantType is also numeric, if its types are all numeric
     [
       Puppet::Pops::Types::PNumericType,
@@ -68,8 +74,11 @@ shared_context 'types_setup' do
       Puppet::Pops::Types::PFloatType,
     ]
   end
+  def numeric_types
+    self.class.numeric_types
+  end
 
-  def string_types
+  def self.string_types
     # PVariantType is also string type, if its types are all compatible
     [
       Puppet::Pops::Types::PStringType,
@@ -77,8 +86,11 @@ shared_context 'types_setup' do
       Puppet::Pops::Types::PEnumType,
     ]
   end
+  def string_types
+    self.class.string_types
+  end
 
-  def collection_types
+  def self.collection_types
     # PVariantType is also string type, if its types are all compatible
     [
       Puppet::Pops::Types::PCollectionType,
@@ -88,16 +100,22 @@ shared_context 'types_setup' do
       Puppet::Pops::Types::PTupleType,
     ]
   end
+  def collection_types
+    self.class.collection_types
+  end
 
-  def data_compatible_types
+  def self.data_compatible_types
     result = scalar_types
     result << Puppet::Pops::Types::PDataType
-    result << array_t(types::PDataType::DEFAULT)
-    result << types::TypeFactory.hash_of_data
+    result << Puppet::Pops::Types::PArrayType::DATA
+    result << Puppet::Pops::Types::PHashType::DATA
     result << Puppet::Pops::Types::PUndefType
-    result << not_undef_t(types::PDataType.new)
-    result << constrained_tuple_t(range_t(0, nil), types::PDataType::DEFAULT)
+    result << Puppet::Pops::Types::PNotUndefType.new(Puppet::Pops::Types::PDataType::DEFAULT)
+    result << Puppet::Pops::Types::PTupleType.new([Puppet::Pops::Types::PDataType::DEFAULT], Puppet::Pops::Types::PIntegerType.new(0, nil))
     result
+  end
+  def data_compatible_types
+    self.class.data_compatible_types
   end
 
   def type_from_class(c)
