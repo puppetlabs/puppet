@@ -10,11 +10,14 @@ module Serialization
     # @api private
     attr_reader :writer
 
-    # @param [AbstractWriter] writer the writer that is used for writing primitive values
+    # @param writer [AbstractWriter] the writer that is used for writing primitive values
+    # @param options [{String, Object}] serialization options
+    # @option options [Boolean] :type_by_reference `true` if Object types are serialized by name only.
     # @api public
-    def initialize(writer)
+    def initialize(writer, options = EMPTY_HASH)
       @written = {}
       @writer = writer
+      @options = options
     end
 
     # Tell the underlying writer to finish
@@ -79,6 +82,10 @@ module Serialization
     # @api private
     def start_sensitive
       @writer.write(Extension::SensitiveStart::INSTANCE)
+    end
+
+    def type_by_reference?
+      @options[:type_by_reference] == true
     end
 
     # First time write of a tabulated object. This means that the object is written and then remembered. Subsequent writes

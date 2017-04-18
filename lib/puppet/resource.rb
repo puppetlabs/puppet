@@ -30,22 +30,19 @@ class Puppet::Resource
   TYPE_NODE  = 'Node'.freeze
   TYPE_SITE  = 'Site'.freeze
 
-  def self.from_data_hash(data, json_deserializer = nil)
+  PCORE_TYPE_KEY = '__pcore_type__'.freeze
+  VALUE_KEY = 'value'.freeze
+
+  def self.from_data_hash(data, rich_data_enabled = false)
     raise ArgumentError, "No resource type provided in serialized data" unless type = data['type']
     raise ArgumentError, "No resource title provided in serialized data" unless title = data['title']
 
     resource = new(type, title)
 
     if params = data['parameters']
-      params.each { |param, value| resource[param] = value }
-    end
-
-    if ext_params = data['ext_parameters']
-      raise Puppet::Error, _('Unable to deserialize non-Data type parameters unless a deserializer is provided') unless json_deserializer
-      reader = json_deserializer.reader
-      ext_params.each do |param, value|
-        reader.re_initialize(value)
-        resource[param] = json_deserializer.read
+      params.each do |param, value|
+        value = convert_rich_data_hash(value, rich_data_enabled) if value.is_a?(Hash) && value.include?(PCORE_TYPE_KEY)
+        resource[param] = value
       end
     end
 
@@ -66,11 +63,35 @@ class Puppet::Resource
     resource
   end
 
+  def self.convert_rich_data_hash(rich_data_hash, rich_data_enabled)
+    if rich_data_enabled
+      value = rich_data_hash[VALUE_KEY]
+      if value.is_a?(Array)
+        json_deserializer ||= Puppet::Pops::Serialization::Deserializer.new(Puppet::Pops::Serialization::JSON::Reader.new([]), nil)
+        reader = json_deserializer.reader
+        reader.re_initialize(value)
+        json_deserializer.read
+      else
+        pcore_type =  Puppet::Pops::Types::TypeParser.singleton.parse(rich_data_hash[PCORE_TYPE_KEY])
+        pcore_type.create(value)
+      end
+    else
+      strict = Puppet[:strict]
+      unless strict == :off
+        msg = _('Unable to deserialize non-Data value for parameter %{param} unless rich data is enabled') % { :param => "#{resource.name}.#{param}" }
+        raise Puppet::Error, msg if strict == :error
+        Puppet.warn(msg)
+      end
+      rich_data_hash
+    end
+  end
+  private_class_method :convert_rich_data_hash
+
   def inspect
     "#{@type}[#{@title}]#{to_hash.inspect}"
   end
 
-  def to_data_hash(json_serializer = nil)
+  def to_data_hash(rich_data_enabled = false)
     data = ([:type, :title, :tags] + ATTRIBUTES).inject({}) do |hash, param|
       next hash unless value = self.send(param)
       hash[param.to_s] = value
@@ -87,7 +108,7 @@ class Puppet::Resource
         value = Puppet::Resource.value_to_json_data(value)
         if is_json_type?(value)
           params[param] = value
-        elsif json_serializer.nil?
+        elsif !rich_data_enabled
           Puppet.warning(_("Resource '%{resource}' contains a %{klass} value. It will be converted to the String '%{value}'") % { resource: to_s, klass: value.class.name, value: value })
           params[param] = value
         else
@@ -96,18 +117,35 @@ class Puppet::Resource
       end
     end
 
-    data['parameters'] = params unless params.empty?
     unless ext_params.empty?
-      writer = json_serializer.writer
-      ext_params.each_key do |key|
-        writer.clear_io
-        json_serializer.write(ext_params[key])
-        writer.finish
-        ext_params[key] = writer.to_a
+      tc = Puppet::Pops::Types::TypeCalculator.singleton
+      sc = Puppet::Pops::Types::StringConverter.singleton
+      ext_params.each_pair do |key, value|
+        pcore_type = tc.infer(value)
+
+        # Don't allow unknown runtime types to leak into the catalog
+        raise Puppet::Error, _('No Puppet Type found for %{type_name}') % { :type_name => value.class.name } if pcore_type.is_a?(Puppet::Pops::Types::PRuntimeType)
+
+        if value.is_a?(Hash) || value.is_a?(Array) || value.is_a?(Puppet::Pops::Types::PuppetObject)
+          # Non scalars and Objects are serialized into an array using Pcore
+          json_serializer ||= Puppet::Pops::Serialization::Serializer.new(Puppet::Pops::Serialization::JSON::Writer.new(''), :type_by_reference => true)
+          writer = json_serializer.writer
+          writer.clear_io
+          json_serializer.write(value)
+          writer.finish
+          value = writer.to_a
+        else
+          # Scalar values are stored using their default string representation
+          value = sc.convert(value)
+        end
+        params[key] = {
+          PCORE_TYPE_KEY => pcore_type.name,
+          VALUE_KEY => value
+        }
       end
-      data['ext_parameters'] = ext_params
     end
 
+    data['parameters'] = params unless params.empty?
     data["sensitive_parameters"] = sensitive_parameters unless sensitive_parameters.empty?
 
     data

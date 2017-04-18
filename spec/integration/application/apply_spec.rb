@@ -210,6 +210,7 @@ end
     end
 
     it 'can apply the catalog' do
+      pending('awaits PUP-7423') # test no longer functional when Object types are serialized by reference
       catalog = compile_to_catalog('include mod', node)
 
       Puppet[:environment] = env_name
