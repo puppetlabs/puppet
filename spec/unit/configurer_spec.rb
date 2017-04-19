@@ -165,7 +165,9 @@ describe Puppet::Configurer do
     it "should log a failure and do nothing if no catalog can be retrieved" do
       @agent.expects(:retrieve_catalog).returns nil
 
-      Puppet.expects(:err).with "Could not retrieve catalog; skipping run"
+      Puppet::Util::Log.expects(:create).with(
+        has_entries(:message => "Could not retrieve catalog; skipping run", :level => :err))
+      Puppet::Util::Log.expects(:create).with(has_entry(:level => :info)).at_least_once
 
       @agent.run
     end
@@ -493,7 +495,9 @@ describe Puppet::Configurer do
 
       Puppet::Transaction::Report.indirection.expects(:save).raises("whatever")
 
-      Puppet.expects(:err)
+      Puppet::Util::Log.expects(:create).with(
+        has_entries(:level => :err))
+
       expect { @configurer.send_report(@report) }.not_to raise_error
     end
   end
@@ -532,7 +536,9 @@ describe Puppet::Configurer do
 
       Puppet::Util.expects(:replace_file).yields(fh)
 
-      Puppet.expects(:err)
+      Puppet::Util::Log.expects(:create).with(
+        has_entries(:level => :err))
+
       expect { @configurer.save_last_run_summary(@report) }.to_not raise_error
     end
 
@@ -551,7 +557,11 @@ describe Puppet::Configurer do
 
     it "should report invalid last run file permissions" do
       Puppet.settings.setting(:lastrunfile).expects(:mode).returns('892')
-      Puppet.expects(:err).with(regexp_matches(/Could not save last run local report.*892 is invalid/))
+      Puppet::Util::Log.expects(:create).with do |value|
+        value[:level] == :err and
+          value[:message] =~ /Could not save last run local report.*892 is invalid/
+      end
+
       @configurer.save_last_run_summary(@report)
     end
   end

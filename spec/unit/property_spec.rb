@@ -546,8 +546,9 @@ describe Puppet::Property do
   end
 
   describe "#insync_values?" do
-    it "should log an exception when insync? throws one" do
+    it "should log an exception at non-error level when insync? throws one" do
       property.expects(:insync?).raises ArgumentError
+      Puppet::Util::Log.expects(:create).with(Not(has_entry(:level => :err)))
       expect(property.insync_values?("foo","bar")).to be nil
     end
   end

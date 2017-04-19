@@ -73,7 +73,10 @@ describe Puppet::Transaction::Persistence do
       it "should initialize with a clear internal state if the file does not contain valid YAML" do
         write_state_file('{ invalid')
 
-        Puppet.expects(:err).with(regexp_matches(/Transaction store file .* is corrupt/))
+        Puppet::Util::Log.expects(:create).with do |value|
+          value[:level] == :warning and
+            value[:message] =~ /Transaction store file .* is corrupt/
+        end
 
         persistence = Puppet::Transaction::Persistence.new
         persistence.load
@@ -84,7 +87,10 @@ describe Puppet::Transaction::Persistence do
       it "should initialize with a clear internal state if the file does not contain a hash of data" do
         write_state_file("not_a_hash")
 
-        Puppet.expects(:err).with(regexp_matches(/Transaction store file .* is valid YAML but not returning a hash/))
+        Puppet::Util::Log.expects(:create).with do |value|
+          value[:level] == :err and
+            value[:message] =~ /Transaction store file .* is valid YAML but not returning a hash/
+        end
 
         persistence = Puppet::Transaction::Persistence.new
         persistence.load
@@ -97,8 +103,14 @@ describe Puppet::Transaction::Persistence do
 
         File.expects(:rename).raises(SystemCallError)
 
-        Puppet.expects(:err).with(regexp_matches(/Transaction store file .* is corrupt/))
-        Puppet.expects(:err).with(regexp_matches(/Unable to rename/))
+        Puppet::Util::Log.expects(:create).with do |value|
+          value[:level] == :warning and
+            value[:message] =~ /Transaction store file .* is corrupt/
+        end
+        Puppet::Util::Log.expects(:create).with do |value|
+          value[:level] == :err and
+            value[:message] =~ /Unable to rename/
+        end
 
         persistence = Puppet::Transaction::Persistence.new
         expect { persistence.load }.to raise_error(Puppet::Error, /Could not rename/)
@@ -109,7 +121,10 @@ describe Puppet::Transaction::Persistence do
 
         File.expects(:rename).at_least_once
 
-        Puppet.expects(:err).with(regexp_matches(/Transaction store file .* is corrupt/))
+        Puppet::Util::Log.expects(:create).with do |value|
+          value[:level] == :warning and
+            value[:message] =~ /Transaction store file .* is corrupt/
+        end
 
         persistence = Puppet::Transaction::Persistence.new
         persistence.load

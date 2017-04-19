@@ -127,7 +127,7 @@ describe Puppet::Agent do
 
     it "should not fail if a client class instance cannot be created" do
       AgentTestClient.expects(:new).raises "eh"
-      Puppet.expects(:err)
+      Puppet::Util::Log.expects(:create).with(has_entry(:level => :err))
       @agent.run
     end
 
@@ -135,7 +135,7 @@ describe Puppet::Agent do
       client = AgentTestClient.new
       AgentTestClient.expects(:new).returns client
       client.expects(:run).raises "eh"
-      Puppet.expects(:err)
+      Puppet::Util::Log.expects(:create).with(has_entry(:level => :err))
       @agent.run
     end
 
