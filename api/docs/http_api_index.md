@@ -89,7 +89,6 @@ to manage the configuration of a node.
 These services are not directly used by Puppet agent, but may be used by other
 tools.
 
-* [Resource Type](./http_resource_type.md)
 * [Status](./http_status.md)
 
 ### Environment Endpoints
