@@ -118,7 +118,11 @@ protected
       end
     when '!='
       proc do |resource|
-        !@@compare_operator.equals(resource[left_code], right_code)
+        if (tmp = resource[left_code]).is_a?(Array)
+          !@@compare_operator.include?(tmp, right_code, scope)
+        else
+          !@@compare_operator.equals(tmp, right_code)
+        end
       end
     end
   end
