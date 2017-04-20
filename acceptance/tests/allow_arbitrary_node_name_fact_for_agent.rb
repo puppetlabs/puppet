@@ -48,7 +48,7 @@ authorization: {
             }
             allow: "*"
             sort-order: 500
-            name: "puppetlabs catalog"
+            name: "puppetlabs catalog #{node_name}"
         },
         {
             match-request: {
@@ -58,7 +58,7 @@ authorization: {
             }
             allow: "*"
             sort-order: 500
-            name: "puppetlabs node"
+            name: "puppetlabs node #{node_name}"
         },
         {
             match-request: {
@@ -68,7 +68,7 @@ authorization: {
             }
             allow: "*"
             sort-order: 500
-            name: "puppetlabs report"
+            name: "puppetlabs report #{node_name}"
         },
       NODE_RULES
     end
