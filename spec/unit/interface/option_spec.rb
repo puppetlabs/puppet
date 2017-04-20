@@ -15,6 +15,11 @@ describe Puppet::Interface::Option do
       end
     end
 
+    it "should allow an uppercase short form" do
+      option = Puppet::Interface::Option.new(face, "-F json", "--format json")
+      expect(option.name).to eq(:format)
+    end
+
     [:foo, 12, nil, {}, []].each do |input|
       it "should fail sensible when given #{input.inspect}" do
         expect {
