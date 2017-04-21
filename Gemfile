@@ -31,7 +31,7 @@ gem "hiera", *location_for(ENV['HIERA_LOCATION'] || ['>= 3.2.1', '< 4'])
 gem 'gettext-setup', '>= 0.10', '< 1.0', :require => false
 gem 'locale', '~> 2.1', :require => false
 # net-ssh is a runtime dependency of Puppet::Util::NetworkDevice::Transport::Ssh
-gem "net-ssh", '~> 2.1', :require => false
+gem "net-ssh", '>= 3.0', '< 5', :require => false
 
 group(:development, :test) do
   gem "rake", "10.1.1", :require => false
