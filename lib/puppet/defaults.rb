@@ -1393,6 +1393,11 @@ EOT
         apply. You can see man pages by running `puppet <SUBCOMMAND> --help`,
         or read them online at https://docs.puppetlabs.com/puppet/latest/reference/man/."
     },
+    :pe_enable_resource_inventory => {
+      :default => false,
+      :type => :boolean,
+      :desc => "Enables resource inventory gathering on the puppet agent"
+    },
     :server => {
       :default => "puppet",
       :desc => "The puppet master server to which the puppet agent should connect.",

@@ -226,6 +226,23 @@ class Puppet::Configurer
     end
   end
 
+  def gather_resource_inventory(resource_types)
+    resource_inventory = {}
+
+    resource_types.each do |resource_type|
+      resources = Puppet::Resource.indirection.search(resource_type, {})
+      resource_inventory[resource_type.to_sym] = resources.map do |resource|
+        resource_details = {:title => resource.title}
+        resource.keys.each do |k|
+          resource_details[k] = resource[k]
+        end
+        resource_details
+      end
+    end
+
+    return resource_inventory
+  end
+
   def run_internal(options)
     report = options[:report]
 
@@ -341,6 +358,10 @@ class Puppet::Configurer
       options[:report].catalog_uuid = catalog.catalog_uuid
       options[:report].cached_catalog_status = @cached_catalog_status
       apply_catalog(catalog, options)
+      if Puppet[:pe_enable_resource_inventory]
+        Puppet.info "Gathering resource inventory"
+        report.add_resource_inventory(gather_resource_inventory(["package"]))
+      end
       report.exit_status
     rescue => detail
       Puppet.log_exception(detail, _("Failed to apply catalog: %{detail}") % { detail: detail })
