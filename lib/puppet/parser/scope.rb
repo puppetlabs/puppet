@@ -85,7 +85,7 @@ class Puppet::Parser::Scope
 
     def [](name)
       val = @symbols[name]
-      val.nil? && !@symbols.include?(val) ? super : val
+      val.nil? && !@symbols.include?(name) ? super : val
     end
 
     def is_local_scope?

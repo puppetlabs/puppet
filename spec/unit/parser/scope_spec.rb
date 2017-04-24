@@ -578,6 +578,14 @@ describe Puppet::Parser::Scope do
       @scope.unset_ephemeral_var
       expect(@scope["apple"]).to eq(nil)
     end
+
+    it 'should store an undef in local scope and let it override parent scope' do
+      @scope['cloaked'] = 'Cloak me please'
+      @scope.new_ephemeral(true)
+      @scope['cloaked'] = nil
+      expect(@scope['cloaked']).to eq(nil)
+    end
+
     it "should be created from a hash" do
       @scope.ephemeral_from({ "apple" => :fruit, "strawberry" => :berry})
       expect(@scope["apple"]).to eq(:fruit)
