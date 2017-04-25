@@ -544,23 +544,10 @@ class StringConverter
     when :s
       val.to_s
     when :q
-      val.to_s.inspect
-    when :puppet
-      puppet_safe(val.to_s)
-    when :i, :d, :x, :o, :f, :puppet
-      converted = convert(o, PNumericType) # rest is default
-      "%#{f}" % converted
+      val.inspect
     else
-      raise FormatError.new('Runtime', f.format, 'sqidxof')
+      raise FormatError.new('Runtime', f.format, 'sq')
     end
-  end
-
-  # Given an unsafe string make it safe for puppet
-  def puppet_safe(str)
-    str = str.inspect # all specials are now quoted
-    # all $ variables must be quoted
-    str.gsub!("\$", "\\\$")
-    str
   end
 
   # Basically string_PAnyType converts the value to a String and then formats it according
