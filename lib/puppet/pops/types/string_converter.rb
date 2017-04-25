@@ -840,7 +840,7 @@ class StringConverter
     case f.format
     when :p
       str_regexp = '/'
-      str_regexp << (val.options == 0 ? val.source : val.to_s) << '/'
+      str_regexp << (val.options == 0 ? val.source : val.to_s).gsub(/\//, '\/') << '/'
       f.orig_fmt == '%p' ? str_regexp : Kernel.format(f.orig_fmt.gsub('p', 's'), str_regexp)
     when :s
       str_regexp = val.options == 0 ? val.source : val.to_s
