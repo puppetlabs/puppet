@@ -839,8 +839,9 @@ class StringConverter
     f = get_format(val_type, format_map)
     case f.format
     when :p
-      str_regexp = '/'
-      str_regexp << (val.options == 0 ? val.source : val.to_s).gsub(/\//, '\/') << '/'
+      rx_s = val.options == 0 ? val.source : val.to_s
+      rx_s = rx_s.gsub(/\//, '\/') unless Gem::Version.new(RUBY_VERSION) < Gem::Version.new('2.0.0')
+      str_regexp = "/#{rx_s}/"
       f.orig_fmt == '%p' ? str_regexp : Kernel.format(f.orig_fmt.gsub('p', 's'), str_regexp)
     when :s
       str_regexp = val.options == 0 ? val.source : val.to_s
