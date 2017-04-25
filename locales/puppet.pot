@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 4.10.0-553-g88621c5\n"
+"Project-Id-Version: Puppet automation framework 4.10.0-555-g1376e9e\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-04-25 10:57-0700\n"
-"PO-Revision-Date: 2017-04-25 10:57-0700\n"
+"POT-Creation-Date: 2017-04-25 12:32-0700\n"
+"PO-Revision-Date: 2017-04-25 12:32-0700\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -2025,7 +2025,7 @@ msgstr ""
 msgid "Inlining file metadata"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:233 ../lib/puppet/indirector/catalog/static_compiler.rb:80
+#: ../lib/puppet/indirector/catalog/compiler.rb:233
 msgid "Could not get metadata for %{resource}"
 msgstr ""
 
@@ -2071,22 +2071,6 @@ msgstr ""
 
 #: ../lib/puppet/indirector/catalog/compiler.rb:354
 msgid "Could not retrieve fact %{fact}"
-msgstr ""
-
-#: ../lib/puppet/indirector/catalog/static_compiler.rb:41
-msgid "Did not get catalog back"
-msgstr ""
-
-#: ../lib/puppet/indirector/catalog/static_compiler.rb:112
-msgid "Metadata for %{resource} in catalog for '%{request}' added from '%{old_source}'"
-msgstr ""
-
-#: ../lib/puppet/indirector/catalog/static_compiler.rb:224
-msgid "Content for '%{resource}' already exists"
-msgstr ""
-
-#: ../lib/puppet/indirector/catalog/static_compiler.rb:226
-msgid "Storing content for source '%{resource}'"
 msgstr ""
 
 #: ../lib/puppet/indirector/certificate/disabled_ca.rb:16 ../lib/puppet/indirector/certificate_request/disabled_ca.rb:16 ../lib/puppet/indirector/certificate_revocation_list/disabled_ca.rb:16 ../lib/puppet/indirector/key/disabled_ca.rb:16
@@ -6510,15 +6494,15 @@ msgstr ""
 msgid "File written to disk did not match checksum; discarding changes (%{content_checksum} vs %{newsum})"
 msgstr ""
 
-#: ../lib/puppet/type/filebucket.rb:74
+#: ../lib/puppet/type/filebucket.rb:69
 msgid "You can only have one filebucket path"
 msgstr ""
 
-#: ../lib/puppet/type/filebucket.rb:78
+#: ../lib/puppet/type/filebucket.rb:73
 msgid "Filebucket paths must be absolute"
 msgstr ""
 
-#: ../lib/puppet/type/filebucket.rb:114
+#: ../lib/puppet/type/filebucket.rb:109
 msgid "Could not create %{type} filebucket: %{detail}"
 msgstr ""
 
