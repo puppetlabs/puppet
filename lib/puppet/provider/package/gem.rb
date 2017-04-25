@@ -171,4 +171,16 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
   def uninstall_options
     join_options(resource[:uninstall_options])
   end
+
+  def execute(*args)
+    self.class.execute(*args)
+  end
+
+  def self.execute(*args)
+    if Puppet.features.bundled_environment?
+      Bundler.with_clean_env { super(*args) }
+    else
+      super(*args)
+    end
+  end
 end

@@ -39,10 +39,18 @@ Puppet::Type.type(:exec).provide :posix, :parent => Puppet::Provider::Exec do
   end
 
   def run(command, check = false)
-    if resource[:umask]
-      Puppet::Util::withumask(resource[:umask]) { super(command, check) }
+    run = lambda do
+      if resource[:umask]
+        Puppet::Util::withumask(resource[:umask]) { super(command, check) }
+      else
+        super(command, check)
+      end
+    end
+
+    if Puppet.features.bundled_environment?
+      Bundler.with_clean_env { run.call }
     else
-      super(command, check)
+      run.call
     end
   end
 end
