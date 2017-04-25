@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 4.10.0-545-g6989159\n"
+"Project-Id-Version: Puppet automation framework 4.10.0-553-g88621c5\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-04-24 08:41-0700\n"
-"PO-Revision-Date: 2017-04-24 08:41-0700\n"
+"POT-Creation-Date: 2017-04-25 10:57-0700\n"
+"PO-Revision-Date: 2017-04-25 10:57-0700\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -525,7 +525,7 @@ msgstr ""
 msgid "Setting 'archive_file_server' is deprecated. It will be removed in a future release along with the `inspect` command."
 msgstr ""
 
-#: ../lib/puppet/face/ca.rb:5 ../lib/puppet/face/certificate.rb:6 ../lib/puppet/face/config.rb:6 ../lib/puppet/face/epp.rb:8 ../lib/puppet/face/facts.rb:6 ../lib/puppet/face/file.rb:5 ../lib/puppet/face/generate.rb:7 ../lib/puppet/face/help.rb:9 ../lib/puppet/face/key.rb:5 ../lib/puppet/face/man.rb:8 ../lib/puppet/face/module.rb:9 ../lib/puppet/face/node.rb:4 ../lib/puppet/face/parser.rb:6 ../lib/puppet/face/plugin.rb:7 ../lib/puppet/face/report.rb:5 ../lib/puppet/face/resource.rb:5 ../lib/puppet/face/status.rb:5
+#: ../lib/puppet/face/ca.rb:5 ../lib/puppet/face/certificate.rb:6 ../lib/puppet/face/config.rb:6 ../lib/puppet/face/epp.rb:8 ../lib/puppet/face/facts.rb:6 ../lib/puppet/face/generate.rb:7 ../lib/puppet/face/help.rb:9 ../lib/puppet/face/key.rb:5 ../lib/puppet/face/man.rb:8 ../lib/puppet/face/module.rb:9 ../lib/puppet/face/node.rb:4 ../lib/puppet/face/parser.rb:6 ../lib/puppet/face/plugin.rb:7 ../lib/puppet/face/report.rb:5 ../lib/puppet/face/resource.rb:5 ../lib/puppet/face/status.rb:5
 msgid "Apache 2 license; see COPYING"
 msgstr ""
 
@@ -877,46 +877,6 @@ msgstr ""
 
 #: ../lib/puppet/face/facts.rb:17
 msgid "[<node_certname>]"
-msgstr ""
-
-#: ../lib/puppet/face/file.rb:7
-msgid "Retrieve and store files in a filebucket"
-msgstr ""
-
-#: ../lib/puppet/face/file.rb:26
-msgid "Retrieve a file from the filebucket."
-msgstr ""
-
-#: ../lib/puppet/face/file/download.rb:4
-msgid "Download a file into the local filebucket."
-msgstr ""
-
-#: ../lib/puppet/face/file/download.rb:6 ../lib/puppet/face/file/store.rb:6 ../lib/puppet/face/report.rb:12
-msgid "Nothing."
-msgstr ""
-
-#: ../lib/puppet/face/file/download.rb:27
-msgid "Could not find metadata for %{sum}"
-msgstr ""
-
-#: ../lib/puppet/face/file/download.rb:41
-msgid "Content for '%{sum}' already exists"
-msgstr ""
-
-#: ../lib/puppet/face/file/download.rb:46
-msgid "Could not download content for '%{sum}'"
-msgstr ""
-
-#: ../lib/puppet/face/file/download.rb:51
-msgid "Saved %{sum} to filebucket"
-msgstr ""
-
-#: ../lib/puppet/face/file/store.rb:4
-msgid "Store a file in the local filebucket."
-msgstr ""
-
-#: ../lib/puppet/face/file/store.rb:5
-msgid "<file>"
 msgstr ""
 
 #: ../lib/puppet/face/generate.rb:9
@@ -1450,6 +1410,10 @@ msgstr ""
 
 #: ../lib/puppet/face/report.rb:11 ../lib/puppet/face/report.rb:32
 msgid "<report>"
+msgstr ""
+
+#: ../lib/puppet/face/report.rb:12
+msgid "Nothing."
 msgstr ""
 
 #: ../lib/puppet/face/report.rb:26
