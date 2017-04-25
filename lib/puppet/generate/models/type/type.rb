@@ -37,14 +37,15 @@ module Puppet
             @parameters = type.parameters.map do |name|
               Property.new(type.paramclass(name))
             end
+            sc = Puppet::Pops::Types::StringConverter.singleton
             @title_patterns = Hash[type.title_patterns.map do |mapping|
               [
-                "/#{mapping[0].source.gsub(/\//, '\/')}/",
-                mapping[1].map { |names|
+                sc.convert(mapping[0], '%p'),
+                sc.convert(mapping[1].map do |names|
                   next if names.empty?
-                  raise Puppet::Error, 'title patterns that use procs are not supported.' if names.size != 1
-                  Puppet::Pops::Types::StringConverter.convert(names[0].to_s, '%p')
-                }
+                  raise Puppet::Error, _('title patterns that use procs are not supported.') unless names.size == 1
+                  names[0].to_s
+                end, '%p')
               ]
             end]
             @isomorphic = type.isomorphic?
