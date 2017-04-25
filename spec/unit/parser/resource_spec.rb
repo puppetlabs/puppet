@@ -262,20 +262,14 @@ describe Puppet::Parser::Resource do
     end
   end
 
-  describe "when finishing" do
+  describe 'when evaluating resource defaults' do
     before do
       @resource = Puppet::Parser::Resource.new("file", "whatever", :scope => @scope, :source => @source)
     end
 
-    it "should do nothing if it has already been finished" do
-      @resource.finish
-      @resource.expects(:add_defaults).never
-      @resource.finish
-    end
-
     it "should add all defaults available from the scope" do
       @resource.scope.expects(:lookupdefaults).with(@resource.type).returns(:owner => param(:owner, "default", @resource.source))
-      @resource.finish
+      @resource.add_defaults
 
       expect(@resource[:owner]).to eq("default")
     end
@@ -283,7 +277,7 @@ describe Puppet::Parser::Resource do
     it "should not replace existing parameters with defaults" do
       @resource.set_parameter :owner, "oldvalue"
       @resource.scope.expects(:lookupdefaults).with(@resource.type).returns(:owner => :replaced)
-      @resource.finish
+      @resource.add_defaults
 
       expect(@resource[:owner]).to eq("oldvalue")
     end
@@ -294,9 +288,28 @@ describe Puppet::Parser::Resource do
       other.value = "other"
       newparam.expects(:dup).returns(other)
       @resource.scope.expects(:lookupdefaults).with(@resource.type).returns(:owner => newparam)
-      @resource.finish
+      @resource.add_defaults
 
       expect(@resource[:owner]).to eq("other")
+    end
+
+    it "should tag with value of default parameter named 'tag'" do
+      @resource.scope.expects(:lookupdefaults).with(@resource.type).returns(:tag => param(:tag, 'the_tag', @resource.source))
+      @resource.add_defaults
+
+      expect(@resource.tags).to include('the_tag')
+    end
+  end
+
+  describe "when finishing" do
+    before do
+      @resource = Puppet::Parser::Resource.new("file", "whatever", :scope => @scope, :source => @source)
+    end
+
+    it "should do nothing if it has already been finished" do
+      @resource.finish
+      @resource.expects(:add_scope_tags).never
+      @resource.finish
     end
 
     it "converts parameters with Sensitive values to unwrapped values and metadata" do
