@@ -31,13 +31,6 @@ class Puppet::Parser::Relationship
   end
 
   def mk_relationship(source, target, catalog)
-    # There was once an assumption that this could be an array. These raise
-    # assertions are here as a sanity check for 4.0 and can be removed after
-    # a release or two
-    #TRANSLATORS "source" is a keyword and should not be translated
-    raise ArgumentError, _("source shouldn't be an array") if source.is_a?(Array)
-    #TRANSLATORS "target" is a keyword and should not be translated
-    raise ArgumentError, _("target shouldn't be an array") if target.is_a?(Array)
     source = source.to_s
     target = target.to_s
 
