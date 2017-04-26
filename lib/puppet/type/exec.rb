@@ -241,10 +241,14 @@ module Puppet
     end
 
     newparam(:refresh) do
-      desc "How to refresh this command.  By default, the exec is just
-        called again when it receives an event from another resource,
-        but this parameter allows you to define a different command
-        for refreshing."
+      desc "An alternate command to run when the `exec` receives a refresh event
+        from another resource. By default, Puppet runs the main command again.
+        For more details, see the notes about refresh behavior above, in the
+        description for this resource type.
+
+        Note that this alternate command runs with the same `provider`, `path`,
+        `user`, and `group` as the main command. If the `path` isn't set, you
+        must fully qualify the command's name."
 
       validate do |command|
         provider.validatecmd(command)
@@ -406,8 +410,10 @@ module Puppet
 
     newcheck(:unless) do
       desc <<-'EOT'
-        If this parameter is set, then this `exec` will run unless
-        the command has an exit code of 0.  For example:
+        A test command that checks the state of the target system and restricts
+        when the `exec` can run. If present, Puppet runs this test command
+        first, then runs the main command unless the test has an exit code of 0
+        (success). For example:
 
             exec { '/bin/echo root >> /usr/lib/cron/cron.allow':
               path   => '/usr/bin:/usr/sbin:/bin',
@@ -417,17 +423,16 @@ module Puppet
         This would add `root` to the cron.allow file (on Solaris) unless
         `grep` determines it's already there.
 
-        Note that this command follows the same rules as the main command,
-        such as which user and group it's run as.
-        This also means it must be fully qualified if the path is not set.
-        It also uses the same provider as the main command, so any behavior
-        that differs by provider will match.
+        Note that this test command runs with the same `provider`, `path`,
+        `user`, and `group` as the main command. If the `path` isn't set, you
+        must fully qualify the command's name.
 
-        Also note that unless can take an array as its value, e.g.:
+        This parameter can also take an array of commands. For example:
 
             unless => ['test -f /tmp/file1', 'test -f /tmp/file2'],
 
-        This will only run the exec if _all_ conditions in the array return false.
+        This `exec` would only run if every command in the array has a
+        non-zero exit code.
       EOT
 
       validate do |cmds|
@@ -457,28 +462,29 @@ module Puppet
 
     newcheck(:onlyif) do
       desc <<-'EOT'
-        If this parameter is set, then this `exec` will only run if
-        the command has an exit code of 0.  For example:
+        A test command that checks the state of the target system and restricts
+        when the `exec` can run. If present, Puppet runs this test command
+        first, and only runs the main command if the test has an exit code of 0
+        (success). For example:
 
             exec { 'logrotate':
-              path   => '/usr/bin:/usr/sbin:/bin',
-              onlyif => 'test `du /var/log/messages | cut -f1` -gt 100000',
+              path     => '/usr/bin:/usr/sbin:/bin',
+              provider => shell,
+              onlyif   => 'test `du /var/log/messages | cut -f1` -gt 100000',
             }
 
-        This would run `logrotate` only if that test returned true.
+        This would run `logrotate` only if that test returns true.
 
-        Note that this command follows the same rules as the main command,
-        such as which user and group it's run as.
-        This also means it must be fully qualified if the path is not set.
+        Note that this test command runs with the same `provider`, `path`,
+        `user`, and `group` as the main command. If the `path` isn't set, you
+        must fully qualify the command's name.
 
-        It also uses the same provider as the main command, so any behavior
-        that differs by provider will match.
-
-        Also note that onlyif can take an array as its value, e.g.:
+        This parameter can also take an array of commands. For example:
 
             onlyif => ['test -f /tmp/file1', 'test -f /tmp/file2'],
 
-        This will only run the exec if _all_ conditions in the array return true.
+        This `exec` would only run if every command in the array has an
+        exit code of 0 (success).
       EOT
 
       validate do |cmds|
