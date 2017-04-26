@@ -57,6 +57,17 @@ describe 'when pcore described resources types are in use' do
               end
             end;end
             EOF
+            'test3.rb' => <<-RUBY,
+              Puppet::Type.newtype(:test3) do
+                newproperty(:message)
+                newparam(:a) { isnamevar }
+                newparam(:b) { isnamevar }
+                newparam(:c) { isnamevar }
+                def self.title_patterns
+                  [ [ /^((.+)\\/(.*))$/,  [[:a], [:b], [:c]]] ]
+                end
+              end
+            RUBY
             'cap.rb' => <<-EOF
             module Puppet
             Type.newtype(:cap, :is_capability => true) do
@@ -112,12 +123,16 @@ describe 'when pcore described resources types are in use' do
         test2 { 'b':
           message => 'b works'
         }
+        test3 { 'x/y':
+          message => 'x/y works'
+        }
         cap { 'c':
           message => 'c works'
         }
       MANIFEST
       expect(catalog.resource(:test1, "a")['message']).to eq('a works')
       expect(catalog.resource(:test2, "b")['message']).to eq('b works')
+      expect(catalog.resource(:test3, "x/y")['message']).to eq('x/y works')
       expect(catalog.resource(:cap, "c")['message']).to eq('c works')
     end
 

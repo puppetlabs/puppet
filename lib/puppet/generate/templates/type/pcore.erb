@@ -34,7 +34,7 @@ Puppet::Resource::ResourceType3.new(
   ],
   {
 <%- title_patterns.each_with_index do |mapping, index| -%>
-    <%= mapping[0] %> => [<%= mapping[1].join(', ')%>]<%= "," if index + 1 < title_patterns.size %>
+    <%= mapping[0] %> => <%= mapping[1] %><%= "," if index + 1 < title_patterns.size %>
 <%- end -%>
   },
   <%= isomorphic -%>,

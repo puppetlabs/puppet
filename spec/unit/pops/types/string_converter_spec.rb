@@ -906,6 +906,11 @@ describe 'The string converter' do
         string_formats = { Puppet::Pops::Types::PRegexpType::DEFAULT => '%p'}
         expect(converter.convert(/[a-z]\s*/m, string_formats)).to eq('/(?m-ix:[a-z]\s*)/')
       end
+
+      it 'the format %p produces \'/foo\/bar/\' for expression /foo\/bar/' do
+        string_formats = { Puppet::Pops::Types::PRegexpType::DEFAULT => '%p'}
+        expect(converter.convert(/foo\/bar/, string_formats)).to eq('/foo\/bar/')
+      end
     end
 
     it 'errors when format is not recognized' do
