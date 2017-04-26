@@ -345,7 +345,7 @@ class TypeFormatter
     if t.has_empty_range?
       append_array('Array') { append_strings([0, 0]) }
     else
-      append_array('Array', t == PArrayType::DATA) do
+      append_array('Array', t == PArrayType::DEFAULT) do
         append_strings([t.element_type], true)
         append_elements(range_array_part(t.size_type), true)
         chomp_list
@@ -358,7 +358,7 @@ class TypeFormatter
     if t.has_empty_range?
       append_array('Hash') { append_strings([0, 0]) }
     else
-      append_array('Hash', t == PHashType::DATA) do
+      append_array('Hash', t == PHashType::DEFAULT) do
         append_strings([t.key_type, t.value_type], true)
         append_elements(range_array_part(t.size_type), true)
         chomp_list

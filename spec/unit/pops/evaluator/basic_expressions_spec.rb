@@ -31,7 +31,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     it 'should evaluator types to types' do
-      array_type = Puppet::Pops::Types::PArrayType::DATA
+      array_type = Puppet::Pops::Types::PArrayType::DEFAULT
       expect(evaluate(fqr('Array'))).to eq(array_type)
     end
   end

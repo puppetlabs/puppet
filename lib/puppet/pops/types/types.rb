@@ -2333,7 +2333,7 @@ class PArrayType < PCollectionType
     create_ptype(loader, ir, 'CollectionType',
       'element_type' => {
         KEY_TYPE => POptionalType.new(PType::DEFAULT),
-        KEY_VALUE => nil
+        KEY_VALUE => PAnyType::DEFAULT
       }
     )
   end
@@ -2345,13 +2345,13 @@ class PArrayType < PCollectionType
     if !size_type.nil? && size_type.from == 0 && size_type.to == 0
       @element_type = PUnitType::DEFAULT
     else
-      @element_type = element_type
+      @element_type = element_type.nil? ? PAnyType::DEFAULT : element_type
     end
   end
 
   def accept(visitor, guard)
     super
-    @element_type.accept(visitor, guard) unless @element_type.nil?
+    @element_type.accept(visitor, guard)
   end
 
   # @api private
@@ -2365,7 +2365,7 @@ class PArrayType < PCollectionType
   def generalize
     if self == DATA
       self
-    elsif @element_type.nil?
+    elsif PAnyType::DEFAULT.eql?(@element_type)
       DEFAULT
     else
       ge_type = @element_type.generalize
@@ -2384,7 +2384,7 @@ class PArrayType < PCollectionType
   def normalize(guard = nil)
     if self == DATA
       self
-    elsif @element_type.nil?
+    elsif PAnyType::DEFAULT.eql?(@element_type)
       DEFAULT
     else
       ne_type = @element_type.normalize(guard)
@@ -2393,21 +2393,19 @@ class PArrayType < PCollectionType
   end
 
   def resolve(type_parser, loader)
-    relement_type = @element_type
-    relement_type = relement_type.resolve(type_parser, loader) unless relement_type.nil?
+    relement_type = @element_type.resolve(type_parser, loader)
     relement_type.equal?(@element_type) ? self : self.class.new(relement_type, @size_type)
   end
 
   def instance?(o, guard = nil)
     return false unless o.is_a?(Array)
-    element_t = element_type
-    return false unless element_t.nil? || o.all? {|element| element_t.instance?(element, guard) }
+    return false unless o.all? {|element| @element_type.instance?(element, guard) }
     size_t = size_type
     size_t.nil? || size_t.instance?(o.size, guard)
   end
 
   def iterable_type(guard = nil)
-    @element_type.nil? ? PIterableType::DEFAULT : PIterableType.new(@element_type)
+    PAnyType::DEFAULT.eql?(@element_type) ? PIterableType::DEFAULT : PIterableType.new(@element_type)
   end
 
   # Returns a new function that produces an Array
@@ -2462,12 +2460,7 @@ class PArrayType < PCollectionType
   # Array is assignable if o is an Array and o's element type is assignable, or if o is a Tuple
   # @api private
   def _assignable?(o, guard)
-    s_entry = element_type
     if o.is_a?(PTupleType)
-      # If s_entry is nil, this Array type has no opinion on element types. Therefore any
-      # tuple can be assigned.
-      return true if s_entry.nil?
-
       o_types = o.types
       size_s = size_type || DEFAULT_SIZE
       size_o = o.size_type
@@ -2475,9 +2468,9 @@ class PArrayType < PCollectionType
         type_count = o_types.size
         size_o = PIntegerType.new(type_count, type_count)
       end
-      size_s.assignable?(size_o) && o_types.all? { |ot| s_entry.assignable?(ot, guard) }
+      size_s.assignable?(size_o) && o_types.all? { |ot| @element_type.assignable?(ot, guard) }
     elsif o.is_a?(PArrayType)
-      super && (s_entry.nil? || s_entry.assignable?(o.element_type, guard))
+      super && @element_type.assignable?(o.element_type, guard)
     else
       false
     end
@@ -2492,11 +2485,11 @@ class PHashType < PCollectionType
     create_ptype(loader, ir, 'CollectionType',
       'key_type' => {
         KEY_TYPE => POptionalType.new(PType::DEFAULT),
-        KEY_VALUE => nil
+        KEY_VALUE => PAnyType::DEFAULT
       },
       'value_type' => {
         KEY_TYPE => POptionalType.new(PType::DEFAULT),
-        KEY_VALUE => nil,
+        KEY_VALUE => PAnyType::DEFAULT
       }
     )
   end
@@ -2509,15 +2502,15 @@ class PHashType < PCollectionType
       @key_type = PUnitType::DEFAULT
       @value_type = PUnitType::DEFAULT
     else
-      @key_type = key_type
-      @value_type = value_type
+      @key_type = key_type.nil? ? PAnyType::DEFAULT : key_type
+      @value_type = value_type.nil? ? PAnyType::DEFAULT : value_type
     end
   end
 
   def accept(visitor, guard)
     super
-    @key_type.accept(visitor, guard) unless @key_type.nil?
-    @value_type.accept(visitor, guard) unless @value_type.nil?
+    @key_type.accept(visitor, guard)
+    @value_type.accept(visitor, guard)
   end
 
   def element_type
@@ -2533,9 +2526,9 @@ class PHashType < PCollectionType
       self
     else
       key_t = @key_type
-      key_t = key_t.generalize unless key_t.nil?
+      key_t = key_t.generalize
       value_t = @value_type
-      value_t = value_t.generalize unless value_t.nil?
+      value_t = value_t.generalize
       @size_type.nil? && @key_type.equal?(key_t) && @value_type.equal?(value_t) ? self : PHashType.new(key_t, value_t, nil)
     end
   end
@@ -2544,10 +2537,8 @@ class PHashType < PCollectionType
     if self == DEFAULT || self == DATA || self == EMPTY
       self
     else
-      key_t = @key_type
-      key_t = key_t.normalize(guard) unless key_t.nil?
-      value_t = @value_type
-      value_t = value_t.normalize(guard) unless value_t.nil?
+      key_t = @key_type.normalize(guard)
+      value_t = @value_type.normalize(guard)
       @size_type.nil? && @key_type.equal?(key_t) && @value_type.equal?(value_t) ? self : PHashType.new(key_t, value_t, @size_type)
     end
   end
@@ -2558,10 +2549,7 @@ class PHashType < PCollectionType
 
   def instance?(o, guard = nil)
     return false unless o.is_a?(Hash)
-    key_t = key_type
-    value_t = value_type
-    if (key_t.nil? || o.keys.all? {|key| key_t.instance?(key, guard) }) &&
-        (value_t.nil? || o.values.all? {|value| value_t.instance?(value, guard) })
+    if o.keys.all? {|key| @key_type.instance?(key, guard) } && o.values.all? {|value| @value_type.instance?(value, guard) }
       size_t = size_type
       size_t.nil? || size_t.instance?(o.size, guard)
     else
@@ -2590,10 +2578,8 @@ class PHashType < PCollectionType
   end
 
   def resolve(type_parser, loader)
-    rkey_type = @key_type
-    rkey_type = rkey_type.resolve(type_parser, loader) unless rkey_type.nil?
-    rvalue_type = @value_type
-    rvalue_type = rvalue_type.resolve(type_parser, loader) unless rvalue_type.nil?
+    rkey_type = @key_type.resolve(type_parser, loader)
+    rvalue_type = @value_type.resolve(type_parser, loader)
     rkey_type.equal?(@key_type) && rvalue_type.equal?(@value_type) ? self : self.class.new(rkey_type, rvalue_type, @size_type)
   end
 
@@ -2656,20 +2642,20 @@ class PHashType < PCollectionType
   # @api private
   def _assignable?(o, guard)
     case o
-      when PHashType
-        size_s = size_type
-        return true if (size_s.nil? || size_s.from == 0) && o.is_the_empty_hash?
-        return false unless (key_type.nil? || key_type.assignable?(o.key_type, guard)) && (value_type.nil? || value_type.assignable?(o.value_type, guard))
-        super
-      when PStructType
-        # hash must accept String as key type
-        # hash must accept all value types
-        # hash must accept the size of the struct
-        o_elements = o.elements
-        (size_type || DEFAULT_SIZE).instance?(o_elements.size, guard) &&
-            o_elements.all? {|e| (key_type.nil? || key_type.instance?(e.name, guard)) && (value_type.nil? || value_type.assignable?(e.value_type, guard)) }
-      else
-        false
+    when PHashType
+      size_s = size_type
+      return true if (size_s.nil? || size_s.from == 0) && o.is_the_empty_hash?
+      return false unless @key_type.assignable?(o.key_type, guard) && @value_type.assignable?(o.value_type, guard)
+      super
+    when PStructType
+      # hash must accept String as key type
+      # hash must accept all value types
+      # hash must accept the size of the struct
+      o_elements = o.elements
+      (size_type || DEFAULT_SIZE).instance?(o_elements.size, guard) &&
+          o_elements.all? {|e| @key_type.instance?(e.name, guard) && @value_type.assignable?(e.value_type, guard) }
+    else
+      false
     end
   end
 end

@@ -169,7 +169,7 @@ describe 'The type factory' do
       expect(at.element_type.class).to eq(PDataType)
     end
 
-    it 'hash_of_data returns PHashType[PScalarType,PDataType]' do
+    it 'hash_of_data returns PHashType[PStringType,PDataType]' do
       ht = TypeFactory.hash_of_data
       expect(ht.class()).to eq(PHashType)
       expect(ht.key_type.class).to eq(PScalarType)

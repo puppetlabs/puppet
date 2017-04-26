@@ -214,11 +214,11 @@ class TypeCalculator
     when c == Class
       type = PType::DEFAULT
     when c == Array
-      # Assume array of data values
-      type = PArrayType::DATA
+      # Assume array of any
+      type = PArrayType::DEFAULT
     when c == Hash
-      # Assume hash with scalar keys and data values
-      type = PHashType::DATA
+      # Assume hash of any
+      type = PHashType::DEFAULT
    else
       type = PRuntimeType.new(:ruby, c.name)
     end

@@ -1095,8 +1095,8 @@ describe 'The type calculator' do
         String     => PStringType::DEFAULT,
         Regexp     => PRegexpType::DEFAULT,
         Regexp     => PRegexpType::DEFAULT,
-        Array      => TypeFactory.array_of_data,
-        Hash       => TypeFactory.hash_of_data
+        Array      => TypeFactory.array_of_any,
+        Hash       => TypeFactory.hash_of_any
       }.each do |ruby_type, puppet_type |
           expect(ruby_type).to be_assignable_to(puppet_type)
       end
@@ -1919,17 +1919,17 @@ describe 'The type calculator' do
       expect(calculator.type(Regexp).class).to eq(PRegexpType)
     end
 
-    it 'should yield \'PArrayType[PDataType]\' for Array' do
+    it 'should yield \'PArrayType[PAnyType]\' for Array' do
       t = calculator.type(Array)
       expect(t.class).to eq(PArrayType)
-      expect(t.element_type.class).to eq(PDataType)
+      expect(t.element_type.class).to eq(PAnyType)
     end
 
-    it 'should yield \'PHashType[PScalarType,PDataType]\' for Hash' do
+    it 'should yield \'PHashType[PAnyType,PAnyType]\' for Hash' do
       t = calculator.type(Hash)
       expect(t.class).to eq(PHashType)
-      expect(t.key_type.class).to eq(PScalarType)
-      expect(t.value_type.class).to eq(PDataType)
+      expect(t.key_type.class).to eq(PAnyType)
+      expect(t.value_type.class).to eq(PAnyType)
     end
   end
 
@@ -1971,8 +1971,8 @@ describe 'The type calculator' do
       expect(calculator.infer(PRegexpType::DEFAULT    ).to_s).to eq('Type[Regexp]')
       expect(calculator.infer(PBooleanType::DEFAULT   ).to_s).to eq('Type[Boolean]')
       expect(calculator.infer(PCollectionType::DEFAULT).to_s).to eq('Type[Collection]')
-      expect(calculator.infer(PArrayType::DEFAULT     ).to_s).to eq('Type[Array[?]]')
-      expect(calculator.infer(PHashType::DEFAULT      ).to_s).to eq('Type[Hash[?, ?]]')
+      expect(calculator.infer(PArrayType::DEFAULT     ).to_s).to eq('Type[Array]')
+      expect(calculator.infer(PHashType::DEFAULT      ).to_s).to eq('Type[Hash]')
       expect(calculator.infer(PIterableType::DEFAULT  ).to_s).to eq('Type[Iterable]')
       expect(calculator.infer(PRuntimeType::DEFAULT   ).to_s).to eq('Type[Runtime[?, ?]]')
       expect(calculator.infer(PHostClassType::DEFAULT ).to_s).to eq('Type[Class]')
@@ -2210,18 +2210,16 @@ describe 'The type calculator' do
   end
 
   matcher :be_assignable_to do |type|
-    calc = TypeCalculator.singleton
-
     match do |actual|
-      calc.assignable?(type, actual)
+      type.is_a?(PAnyType) && type.assignable?(actual)
     end
 
     failure_message do |actual|
-      "#{calc.string(actual)} should be assignable to #{calc.string(type)}"
+      "#{TypeFormatter.string(actual)} should be assignable to #{TypeFormatter.string(type)}"
     end
 
     failure_message_when_negated do |actual|
-      "#{calc.string(actual)} is assignable to #{calc.string(type)} when it should not"
+      "#{TypeFormatter.string(actual)} is assignable to #{TypeFormatter.string(type)} when it should not"
     end
   end
 end

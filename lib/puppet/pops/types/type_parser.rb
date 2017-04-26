@@ -169,16 +169,16 @@ class TypeParser
         'pattern'      => TypeFactory.pattern,
         'regexp'       => TypeFactory.regexp,
         'data'         => TypeFactory.data,
-        'array'        => TypeFactory.array_of_data,
-        'hash'         => TypeFactory.hash_of_data,
+        'array'        => TypeFactory.array_of_any,
+        'hash'         => TypeFactory.hash_of_any,
         'class'        => TypeFactory.host_class,
         'resource'     => TypeFactory.resource,
         'collection'   => TypeFactory.collection,
         'scalar'       => TypeFactory.scalar,
         'catalogentry' => TypeFactory.catalog_entry,
         'undef'        => TypeFactory.undef,
-        'notundef'     => TypeFactory.not_undef(),
-        'default'      => TypeFactory.default(),
+        'notundef'     => TypeFactory.not_undef,
+        'default'      => TypeFactory.default,
         'any'          => TypeFactory.any,
         'variant'      => TypeFactory.variant,
         'optional'     => TypeFactory.optional,
@@ -196,7 +196,7 @@ class TypeParser
         'semverrange'  => TypeFactory.sem_ver_range,
         'timestamp'    => TypeFactory.timestamp,
         'timespan'     => TypeFactory.timespan
-    }
+    }.freeze
   end
 
   # @api private

@@ -422,6 +422,13 @@ module TypeFactory
     PHashType.new(key_type, value_type, size_type)
   end
 
+  # Produces a type for Array[Any]
+  # @api public
+  #
+  def self.array_of_any
+    PArrayType::DEFAULT
+  end
+
   # Produces a type for Array[Data]
   # @api public
   #
@@ -429,7 +436,14 @@ module TypeFactory
     PArrayType::DATA
   end
 
-  # Produces a type for Hash[Scalar, Data]
+  # Produces a type for Hash[Any,Any]
+  # @api public
+  #
+  def self.hash_of_any
+    PHashType::DEFAULT
+  end
+
+  # Produces a type for Hash[String,Data]
   # @api public
   #
   def self.hash_of_data

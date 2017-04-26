@@ -56,7 +56,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "banana::split" => 'banana::split',
       "false"         => false,
       "true"          => true,
-      "Array"         => types.array_of_data(),
+      "Array"         => types.array_of_any,
       "/.*/"          => /.*/
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
@@ -323,7 +323,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
                     'Array', 'Hash', 'CatalogEntry', 'Resource', 'Class', 'Undef', 'File' ],
 
       # Note, Data > Collection is false (so not included)
-      'Data'    => ['Scalar', 'Numeric', 'Integer', 'Float', 'Boolean', 'String', 'Pattern', 'Array', 'Hash',],
+      'Data'    => ['Scalar', 'Numeric', 'Integer', 'Float', 'Boolean', 'String', 'Pattern', 'Array[Data]', 'Hash[String,Data]',],
       'Scalar' => ['Numeric', 'Integer', 'Float', 'Boolean', 'String', 'Pattern'],
       'Numeric' => ['Integer', 'Float'],
       'CatalogEntry' => ['Class', 'Resource', 'File'],
