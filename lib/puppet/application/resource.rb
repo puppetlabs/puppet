@@ -138,14 +138,16 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       resources = find_or_save_resources(type, name, params)
 
       if options[:to_yaml]
-        text = resources.
-          map { |resource| resource.prune_parameters(:parameters_to_include => @extra_params).to_hierayaml }.
-          join("\n")
+        text = resources.map do |resource|
+          r = resource.prune_parameters(:parameters_to_include => @extra_params).to_hierayaml
+          r.encoding == Encoding.default_external? ? r : r.force_encoding(Encoding.default_external).scrub!
+        end.join("\n")
         text.prepend("#{type.downcase}:\n")
       else
-        text = resources.
-          map { |resource| resource.prune_parameters(:parameters_to_include => @extra_params).to_manifest }.
-          join("\n")
+        text = resources.map do |resource|
+          r = resource.prune_parameters(:parameters_to_include => @extra_params).to_manifest
+          r.encoding == Encoding.default_external ? r : r.force_encoding(Encoding.default_external).scrub!
+         end.join("\n")
       end
 
       options[:edit] ?

@@ -25,9 +25,12 @@ class Puppet::Provider::NameService < Puppet::Provider
     def instances
       objects = []
       listbyname do |name|
-        objects << new(:name => name, :ensure => :present)
+        canonical_name = name.dup
+        if !name.valid_encoding?
+          name.scrub!
+        end
+        objects << new(:name => name, :ensure => :present, :canonical_name => canonical_name)
       end
-
       objects
     end
 
@@ -108,6 +111,10 @@ class Puppet::Provider::NameService < Puppet::Provider
       @ops[property.name] || ("-#{property.name}")
     end
   end
+
+  # original byte representation from disk of this instance, before replacing
+  # invalid characters in UTF-8
+  attr_accessor :canonical_name
 
   # Autogenerate a value.  Mostly used for uid/gid, but also used heavily
   # with DirectoryServices, because DirectoryServices is stupid.
@@ -226,7 +233,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     if @objectinfo.nil? or refresh == true
       @etcmethod ||= ("get" + self.class.section.to_s + "nam").intern
       begin
-        @objectinfo = Puppet::Etc.send(@etcmethod, @resource[:name])
+        @objectinfo = Puppet::Etc.send(@etcmethod, canonical_name)
       rescue ArgumentError
         @objectinfo = nil
       end
@@ -276,6 +283,13 @@ class Puppet::Provider::NameService < Puppet::Provider
     super
     @custom_environment = {}
     @objectinfo = nil
+    if resource.is_a?(Hash) && !resource[:canonical_name].nil?
+      # we're instantiating from a hash, ie self.instances
+      @canonical_name = resource[:canonical_name]
+    else
+      # we're instantiating from a resource
+      @canonical_name = resource[:name]
+    end
   end
 
   def set(param, value)
