@@ -19,17 +19,12 @@ Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :
     self.class.new(headers, params, method, path, routing_path.sub(prefix, ''), client_cert, body)
   end
 
-  def format
+  def formatter
     if header = headers['content-type']
       header.gsub!(/\s*;.*$/,'') # strip any charset
       format = Puppet::Network::FormatHandler.mime(header)
-      if format.nil?
-        #TRANSLATORS "mime-type" is a keyword and should not be translated
-        raise _("Client sent a mime-type (%{header}) that doesn't correspond to a format we support") % { header: header }
-      else
-        assert_supported_format(format)
-        return format.name.to_s if format.suitable?
-      end
+
+      return valid_network_format?(format) ? format : nil
     end
 
     raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
@@ -37,23 +32,29 @@ Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :
       Puppet::Network::HTTP::Issues::MISSING_HEADER_FIELD)
   end
 
+  def format
+    f = formatter
+    f ? f.name.to_s : nil
+  end
+
   def response_formatter_for(supported_formats, accepted_formats = headers['accept'])
     formatter = Puppet::Network::FormatHandler.most_suitable_format_for(
       accepted_formats.split(/\s*,\s*/),
       supported_formats)
 
-      if formatter.nil?
-        raise Puppet::Network::HTTP::Error::HTTPNotAcceptableError.new(_("No supported formats are acceptable (Accept: %{accepted_formats})") % { accepted_formats: accepted_formats }, Puppet::Network::HTTP::Issues::UNSUPPORTED_FORMAT)
-      end
+    # we are only passed supported_formats that are suitable
+    # and whose klass implements the required_methods
+    return formatter if valid_network_format?(formatter)
 
-      assert_supported_format(formatter)
-
-      formatter
+    raise Puppet::Network::HTTP::Error::HTTPNotAcceptableError.new(
+      _("No supported formats are acceptable (Accept: %{accepted_formats})") % { accepted_formats: accepted_formats },
+      Puppet::Network::HTTP::Issues::UNSUPPORTED_FORMAT)
   end
 
-  def assert_supported_format(format)
-    if format.name == :yaml || format.name == :b64_zlib_yaml
-      raise Puppet::Error, _("YAML in network requests is not supported. See http://links.puppetlabs.com/deprecate_yaml_on_network")
-    end
+  private
+
+  def valid_network_format?(format)
+    # YAML in network requests is not supported. See http://links.puppetlabs.com/deprecate_yaml_on_network
+    format != nil && format.name != :yaml && format.name != :b64_zlib_yaml
   end
 end

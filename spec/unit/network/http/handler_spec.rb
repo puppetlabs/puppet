@@ -145,6 +145,12 @@ describe Puppet::Network::HTTP::Handler do
       expect(request.format).to eq("s")
     end
 
+    it "should return the formatter instance" do
+      request = Puppet::Network::HTTP::Request.new({ 'content-type' => "text/plain; charset=UTF-8" },
+                                                   {}, 'GET', '/', nil)
+      expect(request.formatter.name).to eq(:s)
+    end
+
     # PUP-3272
     # This used to be for YAML, and doing a to_yaml on an array.
     # The result with to_json is something different, the result is a string

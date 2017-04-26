@@ -432,41 +432,41 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       }.to raise_error(bad_request_error, /The request body is invalid: Could not intern from json/)
     end
 
-    it "responds with a runtime error when submitted content is unsafe yaml" do
+    it "responds with unsupported media type error when submitted content is unsafe yaml" do
       data = Puppet::IndirectorTesting.new("my data")
       request = a_request_that_submits(data, :content_type_header => 'yaml')
 
       expect {
         handler.call(request, response)
-      }.to raise_error(RuntimeError, /Client sent a mime-type \(yaml\) that doesn't correspond to a format we support/)
+      }.to raise_error(unsupported_media_type_error, /Client sent a mime-type \(yaml\) that doesn't correspond to a format we support/)
     end
 
-    it "responds with a runtime error when submitted content is unsafe b64_zlib_yaml" do
+    it "responds with unsupported media type error when submitted content is unsafe b64_zlib_yaml" do
       data = Puppet::IndirectorTesting.new("my data")
       request = a_request_that_submits(data, :content_type_header => 'b64_zlib_yaml')
 
       expect {
         handler.call(request, response)
-      }.to raise_error(RuntimeError, /Client sent a mime-type \(b64_zlib_yaml\) that doesn't correspond to a format we support/)
+      }.to raise_error(unsupported_media_type_error, /Client sent a mime-type \(b64_zlib_yaml\) that doesn't correspond to a format we support/)
     end
 
-    it "responds with a runtime error when submitted content is unknown" do
+    it "responds with unsupported media type error when submitted content is unknown" do
       data = Puppet::IndirectorTesting.new("my data")
       request = a_request_that_submits(data, :content_type_header => 'application/ogg')
 
       expect {
         handler.call(request, response)
-      }.to raise_error(RuntimeError, /Client sent a mime-type \(application\/ogg\) that doesn't correspond to a format we support/)
+      }.to raise_error(unsupported_media_type_error, /Client sent a mime-type \(application\/ogg\) that doesn't correspond to a format we support/)
     end
 
-    it "responds with a runtime error when submitted content is known, but not supported by the model" do
+    it "responds with unsupported media type error when submitted content is known, but not supported by the model" do
       data = Puppet::IndirectorTesting.new("my data")
       request = a_request_that_submits(data, :content_type_header => 's')
       expect(data).to_not be_support_format('s')
 
       expect {
         handler.call(request, response)
-      }.to raise_error(RuntimeError, /Client sent a mime-type \(s\) that doesn't correspond to a format we support/)
+      }.to raise_error(unsupported_media_type_error, /Client sent a mime-type \(s\) that doesn't correspond to a format we support/)
     end
 
     it "responds with json when no Accept header is given" do

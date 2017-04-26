@@ -190,14 +190,21 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
 
   def read_body_into_model(model_class, request)
     data = request.body.to_s
+    formatter = request.formatter
 
-    format = request.format
-    begin
-      model_class.convert_from(format, data)
-    rescue => e
-      raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
-        _("The request body is invalid: %{message}") % { message: e.message })
+    if formatter && formatter.supported?(model_class)
+      begin
+        return model_class.convert_from(formatter.name.to_s, data)
+      rescue => e
+        raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
+          _("The request body is invalid: %{message}") % { message: e.message })
+      end
     end
+
+    #TRANSLATORS "mime-type" is a keyword and should not be translated
+    raise Puppet::Network::HTTP::Error::HTTPUnsupportedMediaTypeError.new(
+      _("Client sent a mime-type (%{header}) that doesn't correspond to a format we support") % { header: request.headers['content-type'] },
+      Puppet::Network::HTTP::Issues::UNSUPPORTED_MEDIA_TYPE)
   end
 
   def indirection_method(http_method, indirection)
