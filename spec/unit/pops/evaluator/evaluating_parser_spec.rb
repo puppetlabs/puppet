@@ -1250,6 +1250,15 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       parser.evaluate_string(scope, source, __FILE__)
       expect(scope.compiler).to have_relationship(['File', 'b', '~>', 'File', 'a'])
     end
+
+    it 'should cross the gap created by an intermediate empty set' do
+      source = "[File[a], File[aa]] -> [] ~> [File[b], File[bb]]"
+      parser.evaluate_string(scope, source, __FILE__)
+      expect(scope.compiler).to have_relationship(['File', 'a',  '~>', 'File', 'b'])
+      expect(scope.compiler).to have_relationship(['File', 'aa', '~>', 'File', 'b'])
+      expect(scope.compiler).to have_relationship(['File', 'a',  '~>', 'File', 'bb'])
+      expect(scope.compiler).to have_relationship(['File', 'aa', '~>', 'File', 'bb'])
+    end
   end
 
   context "When evaluating heredoc" do

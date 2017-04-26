@@ -151,8 +151,10 @@ class RelationshipOperator
       # Add the relationships to the catalog
       source.each {|s| target.each {|t| add_relationship(s, t, RELATION_TYPE[relationship_expression.operator], scope) }}
 
-      # Produce the transformed source RHS (if this is a chain, this does not need to be done again)
-      real.slice(1)
+      # The result is the transformed source RHS unless it is empty, in which case the transformed LHS is returned.
+      # This closes the gap created by an empty set of references in a chain of relationship
+      # such that X -> [ ] -> Y results in  X -> Y.
+      result = real[1].empty? ? real[0] : real[1]
     rescue NotCatalogTypeError => e
       fail(Issues::NOT_CATALOG_TYPE, relationship_expression, {:type => @type_calculator.string(e.type)})
     rescue IllegalRelationshipOperandError => e
