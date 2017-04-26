@@ -9,23 +9,12 @@ end
 
 step "Agent parses a JSON catalog" do
   agents.each do |agent|
-    # Is it there?
+    # Is it there and can we read it?
     json_catalog = File.join(agent.puppet['client_datadir'], 'catalog',
                              "#{agent.puppet['certname']}.json")
-    on(agent, "[[ -f #{json_catalog} ]]", {:acceptable_exit_codes => [0]})
+    on(agent, "[[ -r #{json_catalog} ]]", {:acceptable_exit_codes => [0]})
 
-    # Can we read it?
-    rc = on(agent, "cat #{json_catalog}", {:acceptable_exit_codes => [0]})
-
-    # Can we parse it
-    begin
-      json_content = JSON.parse(rc.stdout)
-    rescue => e
-      fail_test "Catalog data not in JSON-formatted catalog.\n" +
-                "JSON parser threw the following exception:\n#{e.message}\n"
-    end
-
-    # Can the agent parse it
-    on(agent, puppet("catalog find --terminus json --server #{master}"))
+    # Can the agent parse it as JSON?
+    on(agent, puppet("catalog find --terminus json --server #{master} > /dev/null"))
   end
 end
