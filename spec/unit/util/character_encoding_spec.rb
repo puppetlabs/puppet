@@ -105,34 +105,4 @@ describe Puppet::Util::CharacterEncoding do
       end
     end
   end
-
-  describe "::override_encoding_to_utf_8!" do
-    context "given a string with bytes that represent valid UTF-8" do
-      it "should set the external encoding of the string to UTF-8" do
-        # ☃ - unicode snowman
-        # \u2603 - \xe2 \x98 \x83 - 226 152 131
-        snowman = [226, 152, 131].pack('C*')
-        Puppet::Util::CharacterEncoding.override_encoding_to_utf_8!(snowman)
-        expect(snowman).to eq("\u2603")
-        expect(snowman.encoding).to eq(Encoding::UTF_8)
-      end
-    end
-
-    context "given a string with bytes that do not represent valid UTF-8" do
-      # Ø - Latin capital letter O with stroke
-      # In ISO-8859-1: \xd8 - 216
-      # Invalid in UTF-8 without transcoding
-      let(:oslash) { [216].pack('C*').force_encoding(Encoding::ISO_8859_1) }
-      let(:foo) { 'foo' }
-      it "should issue a debug message" do
-        Puppet.expects(:debug).with(regexp_matches(/not valid UTF-8/))
-        Puppet::Util::CharacterEncoding.override_encoding_to_utf_8!(oslash)
-      end
-
-      it "should not modify the string" do
-        Puppet::Util::CharacterEncoding.override_encoding_to_utf_8!(oslash)
-        expect(oslash).to eq([216].pack('C*').force_encoding(Encoding::ISO_8859_1))
-      end
-    end
-  end
 end
