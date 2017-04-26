@@ -413,6 +413,25 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       expect(saved.name).to eq(data.name)
     end
 
+    it "responds with bad request when content-type is missing" do
+      data = Puppet::IndirectorTesting.new("my data")
+      request = a_request_that_submits(data)
+      request.headers.delete('content-type')
+
+      expect {
+        handler.call(request, response)
+      }.to raise_error(bad_request_error, /No Content-Type header was received, it isn't possible to unserialize the request/)
+    end
+
+    it "responds with bad request when failing to parse the body" do
+      data = Puppet::IndirectorTesting.new("my data")
+      request = a_request_that_submits(data, :content_type_header => 'application/json', :body => "this is invalid json content")
+
+      expect {
+        handler.call(request, response)
+      }.to raise_error(bad_request_error, /The request body is invalid: Could not intern from json/)
+    end
+
     it "responds with json when no Accept header is given" do
       data = Puppet::IndirectorTesting.new("my data")
       request = a_request_that_submits(data, :accept_header => nil)

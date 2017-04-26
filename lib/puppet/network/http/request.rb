@@ -32,7 +32,9 @@ Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :
       end
     end
 
-    raise _("No Content-Type header was received, it isn't possible to unserialize the request")
+    raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
+      _("No Content-Type header was received, it isn't possible to unserialize the request"),
+      Puppet::Network::HTTP::Issues::MISSING_HEADER_FIELD)
   end
 
   def response_formatter_for(supported_formats, accepted_formats = headers['accept'])

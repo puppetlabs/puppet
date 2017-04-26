@@ -192,7 +192,12 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     data = request.body.to_s
 
     format = request.format
-    model_class.convert_from(format, data)
+    begin
+      model_class.convert_from(format, data)
+    rescue => e
+      raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
+        _("The request body is invalid: %{message}") % { message: e.message })
+    end
   end
 
   def indirection_method(http_method, indirection)
