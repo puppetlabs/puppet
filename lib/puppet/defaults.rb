@@ -387,7 +387,29 @@ deprecated and has been replaced by 'always_retry_plugins'."
     :node_terminus => {
       :type       => :terminus,
       :default    => "plain",
-      :desc       => "Where to find information about nodes.",
+      :desc       => <<-'EOT',
+        Which node data plugin to use when compiling node catalogs.
+
+        When Puppet compiles a catalog, it combines two primary sources of info: the main manifest,
+        and a node data plugin (often called a "node terminus," for historical reasons). Node data
+        plugins provide three things for a given node name:
+
+        1. A list of classes to add to that node's catalog (and, optionally, values for their
+           parameters).
+        2. Which Puppet environment the node should use.
+        3. A list of additional top-scope variables to set.
+
+        The three main node data plugins are:
+
+        * `plain` --- Returns no data, so that the main manifest controls all node configuration.
+        * `exec` --- Uses an
+          [external node classifier (ENC)](https://docs.puppet.com/puppet/latest/nodes_external.html),
+          configured by the `external_nodes` setting. This lets you pull a list of Puppet classes
+          from any external system, using a small glue script to perform the request and format the
+          result as YAML.
+        * `classifier` (formerly `console`) --- Specific to Puppet Enterprise. Uses the PE console
+          for node data."
+      EOT
     },
     :node_cache_terminus => {
       :type       => :terminus,
@@ -1772,14 +1794,24 @@ EOT
     :main,
     :external_nodes => {
         :default  => "none",
-        :desc     => "An external command that can produce node information.  The command's output
-          must be a YAML dump of a hash, and that hash must have a `classes` key and/or
-          a `parameters` key, where `classes` is an array or hash and
-          `parameters` is a hash.  For unknown nodes, the command should
-          exit with a non-zero exit code.
+        :desc     => "The external node classifier (ENC) script to use for node data.
+          Puppet combines this data with the main manifest to produce node catalogs.
 
-          This command makes it straightforward to store your node mapping
-          information in other data sources like databases.",
+          To enable this setting, set the `node_terminus` setting to `exec`.
+
+          This setting's value must be the path to an executable command that
+          can produce node information. The command must:
+
+          * Take the name of a node as a command-line argument.
+          * Return a YAML hash with up to three keys:
+            * `classes` --- A list of classes, as an array or hash.
+            * `environment` --- A string.
+            * `parameters` --- A list of top-scope variables to set, as a hash.
+          * For unknown nodes, exit with a non-zero exit code.
+
+          Generally, an ENC script makes requests to an external data source.
+
+          For more info, see [the ENC documentation](https://docs.puppet.com/puppet/latest/nodes_external.html).",
     }
     )
 
@@ -1938,10 +1970,10 @@ EOT
         envs.clear_all unless envs.nil?
       end,
       :desc     => <<-'EOT'
-        Enables having extended data in the catalog by adding the key `ext_parameters` to serialized
-        resources. When enabled, resource containing values of the data types `Binary`, `Regexp`,
+        Enables having extended data in the catalog by storing them as a hash with the special key
+        `__pcore_type__`. When enabled, resource containing values of the data types `Binary`, `Regexp`,
         `SemVer`, `SemVerRange`, `Timespan` and `Timestamp`, as well as instances of types derived
-        from `Object` retain their data type and are serialized using Pcore in `ext_parameters`.
+        from `Object` retain their data type.
       EOT
     }
   )

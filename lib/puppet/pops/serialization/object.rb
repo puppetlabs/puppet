@@ -52,7 +52,7 @@ class ObjectWriter
       args.pop
     end
 
-    if type.name.start_with?('Pcore::')
+    if type.name.start_with?('Pcore::') || serializer.type_by_reference?
       serializer.push_written(value)
       serializer.start_pcore_object(type.name, args.size)
     else

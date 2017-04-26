@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 4.10.0-509-g550ce1f\n"
+"Project-Id-Version: Puppet automation framework 4.10.0-555-g1376e9e\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-04-16 23:24-0700\n"
-"PO-Revision-Date: 2017-04-16 23:24-0700\n"
+"POT-Creation-Date: 2017-04-25 12:32-0700\n"
+"PO-Revision-Date: 2017-04-25 12:32-0700\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -221,33 +221,33 @@ msgstr ""
 msgid "Could not generate reference %{name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/application/face_base.rb:38
+#: ../lib/puppet/application/face_base.rb:34
 msgid "I don't know how to render '%{format}'"
 msgstr ""
 
-#: ../lib/puppet/application/face_base.rb:60
+#: ../lib/puppet/application/face_base.rb:56
 msgid "Cancelling Face"
 msgstr ""
 
-#: ../lib/puppet/application/face_base.rb:132
+#: ../lib/puppet/application/face_base.rb:128
 msgid "'%{face}' has no %{action} action.  See `puppet help %{face}`."
 msgstr ""
 
-#: ../lib/puppet/application/face_base.rb:210
+#: ../lib/puppet/application/face_base.rb:206
 msgid "%{face} does not respond to action %{arg}"
 msgstr ""
 
-#: ../lib/puppet/application/face_base.rb:243
+#: ../lib/puppet/application/face_base.rb:239
 msgid "puppet %{face} %{action} takes %{arg_count} argument, but you gave %{given_count}"
 msgid_plural "puppet %{face} %{action} takes %{arg_count} arguments, but you gave %{given_count}"
 msgstr[0] ""
 msgstr[1] ""
 
-#: ../lib/puppet/application/face_base.rb:248
+#: ../lib/puppet/application/face_base.rb:244
 msgid "'puppet %{face}' is deprecated and will be removed in a future release"
 msgstr ""
 
-#: ../lib/puppet/application/face_base.rb:267
+#: ../lib/puppet/application/face_base.rb:263
 msgid "Try 'puppet help %{face} %{action}' for usage"
 msgstr ""
 
@@ -333,7 +333,7 @@ msgstr ""
 msgid "Unknown rendering format '%{format}'"
 msgstr ""
 
-#: ../lib/puppet/application/lookup.rb:356 ../lib/puppet/face/epp.rb:489
+#: ../lib/puppet/application/lookup.rb:355 ../lib/puppet/face/epp.rb:489
 msgid "Incorrect formatted data in %{fact_file} given via the --facts flag"
 msgstr ""
 
@@ -517,15 +517,15 @@ msgstr ""
 msgid "TrustedInformation expected a certificate, but none was given."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1668
+#: ../lib/puppet/defaults.rb:1690
 msgid "Setting 'archive_files' is deprecated. It will be removed in a future release along with the `inspect` command."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1677
+#: ../lib/puppet/defaults.rb:1699
 msgid "Setting 'archive_file_server' is deprecated. It will be removed in a future release along with the `inspect` command."
 msgstr ""
 
-#: ../lib/puppet/face/ca.rb:5 ../lib/puppet/face/certificate.rb:6 ../lib/puppet/face/config.rb:6 ../lib/puppet/face/epp.rb:8 ../lib/puppet/face/facts.rb:6 ../lib/puppet/face/file.rb:5 ../lib/puppet/face/generate.rb:7 ../lib/puppet/face/help.rb:9 ../lib/puppet/face/key.rb:5 ../lib/puppet/face/man.rb:8 ../lib/puppet/face/module.rb:9 ../lib/puppet/face/node.rb:4 ../lib/puppet/face/parser.rb:6 ../lib/puppet/face/plugin.rb:7 ../lib/puppet/face/report.rb:5 ../lib/puppet/face/resource.rb:5 ../lib/puppet/face/resource_type.rb:5 ../lib/puppet/face/status.rb:5
+#: ../lib/puppet/face/ca.rb:5 ../lib/puppet/face/certificate.rb:6 ../lib/puppet/face/config.rb:6 ../lib/puppet/face/epp.rb:8 ../lib/puppet/face/facts.rb:6 ../lib/puppet/face/generate.rb:7 ../lib/puppet/face/help.rb:9 ../lib/puppet/face/key.rb:5 ../lib/puppet/face/man.rb:8 ../lib/puppet/face/module.rb:9 ../lib/puppet/face/node.rb:4 ../lib/puppet/face/parser.rb:6 ../lib/puppet/face/plugin.rb:7 ../lib/puppet/face/report.rb:5 ../lib/puppet/face/resource.rb:5 ../lib/puppet/face/status.rb:5
 msgid "Apache 2 license; see COPYING"
 msgstr ""
 
@@ -877,46 +877,6 @@ msgstr ""
 
 #: ../lib/puppet/face/facts.rb:17
 msgid "[<node_certname>]"
-msgstr ""
-
-#: ../lib/puppet/face/file.rb:7
-msgid "Retrieve and store files in a filebucket"
-msgstr ""
-
-#: ../lib/puppet/face/file.rb:26
-msgid "Retrieve a file from the filebucket."
-msgstr ""
-
-#: ../lib/puppet/face/file/download.rb:4
-msgid "Download a file into the local filebucket."
-msgstr ""
-
-#: ../lib/puppet/face/file/download.rb:6 ../lib/puppet/face/file/store.rb:6 ../lib/puppet/face/report.rb:12
-msgid "Nothing."
-msgstr ""
-
-#: ../lib/puppet/face/file/download.rb:27
-msgid "Could not find metadata for %{sum}"
-msgstr ""
-
-#: ../lib/puppet/face/file/download.rb:41
-msgid "Content for '%{sum}' already exists"
-msgstr ""
-
-#: ../lib/puppet/face/file/download.rb:46
-msgid "Could not download content for '%{sum}'"
-msgstr ""
-
-#: ../lib/puppet/face/file/download.rb:51
-msgid "Saved %{sum} to filebucket"
-msgstr ""
-
-#: ../lib/puppet/face/file/store.rb:4
-msgid "Store a file in the local filebucket."
-msgstr ""
-
-#: ../lib/puppet/face/file/store.rb:5
-msgid "<file>"
 msgstr ""
 
 #: ../lib/puppet/face/generate.rb:9
@@ -1452,6 +1412,10 @@ msgstr ""
 msgid "<report>"
 msgstr ""
 
+#: ../lib/puppet/face/report.rb:12
+msgid "Nothing."
+msgstr ""
+
 #: ../lib/puppet/face/report.rb:26
 msgid "API only: submit a report with error handling."
 msgstr ""
@@ -1498,44 +1462,6 @@ msgstr ""
 
 #: ../lib/puppet/face/resource.rb:41
 msgid "The same resource object passed as an argument."
-msgstr ""
-
-#: ../lib/puppet/face/resource_type.rb:7
-msgid "View classes, defined resource types, and nodes from all manifests."
-msgstr ""
-
-#: ../lib/puppet/face/resource_type.rb:35
-msgid "Retrieve info about a resource collection."
-msgstr ""
-
-#: ../lib/puppet/face/resource_type.rb:36
-msgid "<collection_name>"
-msgstr ""
-
-#: ../lib/puppet/face/resource_type.rb:37
-msgid ""
-"    A hash of info about the requested resource collection. When used from the\n"
-"    Ruby API: returns a Puppet::Resource::Type object.\n"
-"\n"
-"    RENDERING ISSUES: yaml and string output for this indirection are currently\n"
-"    unusable; use json instead.\n"
-msgstr ""
-
-#: ../lib/puppet/face/resource_type.rb:65
-msgid "Search for collections matching a regular expression."
-msgstr ""
-
-#: ../lib/puppet/face/resource_type.rb:66
-msgid "<regular_expression>"
-msgstr ""
-
-#: ../lib/puppet/face/resource_type.rb:67
-msgid ""
-"    An array of hashes of resource collection info. When used from the Ruby API:\n"
-"    returns an array of Puppet::Resource::Type objects.\n"
-"\n"
-"    RENDERING ISSUES: yaml and string output for this indirection are currently\n"
-"    unusable; use json instead.\n"
 msgstr ""
 
 #: ../lib/puppet/face/status.rb:7
@@ -2099,7 +2025,7 @@ msgstr ""
 msgid "Inlining file metadata"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:233 ../lib/puppet/indirector/catalog/static_compiler.rb:80
+#: ../lib/puppet/indirector/catalog/compiler.rb:233
 msgid "Could not get metadata for %{resource}"
 msgstr ""
 
@@ -2145,22 +2071,6 @@ msgstr ""
 
 #: ../lib/puppet/indirector/catalog/compiler.rb:354
 msgid "Could not retrieve fact %{fact}"
-msgstr ""
-
-#: ../lib/puppet/indirector/catalog/static_compiler.rb:41
-msgid "Did not get catalog back"
-msgstr ""
-
-#: ../lib/puppet/indirector/catalog/static_compiler.rb:112
-msgid "Metadata for %{resource} in catalog for '%{request}' added from '%{old_source}'"
-msgstr ""
-
-#: ../lib/puppet/indirector/catalog/static_compiler.rb:224
-msgid "Content for '%{resource}' already exists"
-msgstr ""
-
-#: ../lib/puppet/indirector/catalog/static_compiler.rb:226
-msgid "Storing content for source '%{resource}'"
 msgstr ""
 
 #: ../lib/puppet/indirector/certificate/disabled_ca.rb:16 ../lib/puppet/indirector/certificate_request/disabled_ca.rb:16 ../lib/puppet/indirector/certificate_revocation_list/disabled_ca.rb:16 ../lib/puppet/indirector/key/disabled_ca.rb:16
@@ -2510,19 +2420,6 @@ msgstr ""
 
 #: ../lib/puppet/indirector/resource/validator.rb:5
 msgid "Resource instance does not match request key"
-msgstr ""
-
-#. TRANSLATORS the kinds in quotes should not be translated
-#: ../lib/puppet/indirector/resource_type/parser.rb:77
-msgid "Unrecognized kind filter: '%{filter}', expected one of 'class', 'defined_type', 'application', or 'node'."
-msgstr ""
-
-#: ../lib/puppet/indirector/resource_type/parser.rb:89
-msgid "Invalid regex '%{regex}': %{detail}"
-msgstr ""
-
-#: ../lib/puppet/indirector/resource_type/parser.rb:104
-msgid "The resource_type endpoint is deprecated in favor of the environment_classes endpoint. See https://docs.puppet.com/puppetserver/latest/puppet-api/v3/environment_classes.html"
 msgstr ""
 
 #: ../lib/puppet/indirector/rest.rb:183
@@ -4883,7 +4780,7 @@ msgstr ""
 msgid "Missing default value for %{type_name}[%{name}]"
 msgstr ""
 
-#: ../lib/puppet/pops/serialization/serializer.rb:112
+#: ../lib/puppet/pops/serialization/serializer.rb:119
 msgid "No Puppet Type found for %{klass}"
 msgstr ""
 
@@ -5714,39 +5611,43 @@ msgstr ""
 msgid "Unable to submit report to %{url} [%{code}] %{message}"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:44
-msgid "Unable to deserialize non-Data type parameters unless a deserializer is provided"
+#: ../lib/puppet/resource.rb:81
+msgid "Unable to deserialize non-Data value for parameter %{param} unless rich data is enabled"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:91
+#: ../lib/puppet/resource.rb:112
 msgid "Resource '%{resource}' contains a %{klass} value. It will be converted to the String '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:512
+#: ../lib/puppet/resource.rb:127
+msgid "No Puppet Type found for %{type_name}"
+msgstr ""
+
+#: ../lib/puppet/resource.rb:550
 msgid "The method Puppet::Resource.set_default_parameters is deprecated and will be removed in the next major release of Puppet."
 msgstr ""
 
-#: ../lib/puppet/resource.rb:517
+#: ../lib/puppet/resource.rb:555
 msgid "Cannot evaluate default parameters for %{resource} - not a parser resource"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:557
+#: ../lib/puppet/resource.rb:595
 msgid "The method Puppet::Resource.validate_complete is deprecated and will be removed in the next major release of Puppet."
 msgstr ""
 
-#: ../lib/puppet/resource.rb:563
+#: ../lib/puppet/resource.rb:601
 msgid "Must pass %{param} to %{resource}"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:574
+#: ../lib/puppet/resource.rb:612
 msgid "Expected parameter '%{name}' of '%{value0}' to have type %{value1}, got %{value2}"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:580
+#: ../lib/puppet/resource.rb:618
 msgid "no parameter named '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:689
+#: ../lib/puppet/resource.rb:727
 msgid "No set of title patterns matched the title \"%{title}\"."
 msgstr ""
 
@@ -5759,11 +5660,11 @@ msgstr ""
 msgid "Cannot alias %{ref} to %{key}%{resource_declaration}; resource %{newref} already declared%{existing_declaration}"
 msgstr ""
 
-#: ../lib/puppet/resource/catalog.rb:556
+#: ../lib/puppet/resource/catalog.rb:549
 msgid "Could not create class file %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/resource/catalog.rb:576
+#: ../lib/puppet/resource/catalog.rb:569
 msgid "Could not create resource file %{file}: %{detail}"
 msgstr ""
 
@@ -5771,47 +5672,47 @@ msgstr ""
 msgid "Could not evaluate: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:126
+#: ../lib/puppet/resource/type.rb:78
 msgid "Invalid export in %{reference}: %{ex} is not a resource"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:127
+#: ../lib/puppet/resource/type.rb:79
 msgid "Invalid export in %{reference}: %{ex} is not a capability resource"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:131
+#: ../lib/puppet/resource/type.rb:83
 msgid "Resource type %{res_type} does not produce %{ex_type}"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:238
+#: ../lib/puppet/resource/type.rb:190
 msgid "%{name} is not a class; cannot add code to it"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:239
+#: ../lib/puppet/resource/type.rb:191
 msgid "%{name} is not a class; cannot add code from it"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:240
+#: ../lib/puppet/resource/type.rb:192
 msgid "Cannot have code outside of a class/node/define because 'freeze_main' is enabled"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:243
+#: ../lib/puppet/resource/type.rb:195
 msgid "Cannot merge classes with different parent classes (%{name} => %{parent} vs. %{other_name} => %{other_parent})"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:328
+#: ../lib/puppet/resource/type.rb:280
 msgid "The method Puppet::Resource::Type.assign_parameter_values is deprecated and will be removed in the next major release of Puppet."
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:344
+#: ../lib/puppet/resource/type.rb:296
 msgid "Could not find parent resource type '%{parent}' of type %{parent_type} in %{env}"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:535
+#: ../lib/puppet/resource/type.rb:487
 msgid "%{param} is a metaparam; this value will inherit to all contained resources in the %{name} definition"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:537
+#: ../lib/puppet/resource/type.rb:489
 msgid "%{param} is a metaparameter; please choose another parameter name in the %{name} definition"
 msgstr ""
 
@@ -6593,15 +6494,15 @@ msgstr ""
 msgid "File written to disk did not match checksum; discarding changes (%{content_checksum} vs %{newsum})"
 msgstr ""
 
-#: ../lib/puppet/type/filebucket.rb:74
+#: ../lib/puppet/type/filebucket.rb:69
 msgid "You can only have one filebucket path"
 msgstr ""
 
-#: ../lib/puppet/type/filebucket.rb:78
+#: ../lib/puppet/type/filebucket.rb:73
 msgid "Filebucket paths must be absolute"
 msgstr ""
 
-#: ../lib/puppet/type/filebucket.rb:114
+#: ../lib/puppet/type/filebucket.rb:109
 msgid "Could not create %{type} filebucket: %{detail}"
 msgstr ""
 

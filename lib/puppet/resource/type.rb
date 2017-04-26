@@ -5,11 +5,6 @@ require 'puppet/parser/ast/leaf'
 
 # Puppet::Resource::Type represents nodes, classes and defined types.
 #
-# It has a standard format for external consumption, usable from the
-# resource_type indirection via rest and the resource_type face. See the
-# {file:api_docs/http_resource_type.md#Schema resource type schema
-# description}.
-#
 # @api public
 class Puppet::Resource::Type
   Puppet::ResourceType = self
@@ -62,49 +57,6 @@ class Puppet::Resource::Type
 
   RESOURCE_KINDS.each do |t|
     define_method("#{t}?") { self.type == t }
-  end
-
-  require 'puppet/indirector'
-  extend Puppet::Indirector
-  indirects :resource_type, :terminus_class => :parser
-
-  def self.from_data_hash(data)
-    name = data.delete(NAME) or raise ArgumentError, 'Resource Type names must be specified'
-    kind = data.delete(KIND) || 'definition'
-
-    unless type = RESOURCE_EXTERNAL_NAMES_TO_KINDS[kind]
-      raise ArgumentError, "Unsupported resource kind '#{kind}'"
-    end
-
-    data = data.inject({}) { |result, ary| result[ary[0].intern] = ary[1]; result }
-
-    # External documentation uses "parameters" but the internal name
-    # is "arguments"
-    data[:arguments] = data.delete(:parameters)
-
-    new(type, name, data)
-  end
-
-  def to_data_hash
-    data = [:doc, :line, :file, :parent].inject({}) do |hash, param|
-      next hash unless (value = self.send(param)) and (value != "")
-      hash[param.to_s] = value
-      hash
-    end
-
-    # External documentation uses "parameters" but the internal name
-    # is "arguments"
-    # Dump any arguments as source
-    data[PARAMETERS] = Hash[arguments.map do |k,v|
-                                [k, v.respond_to?(:source_text) ? v.source_text : v]
-                              end]
-    data[NAME] = name
-
-    unless RESOURCE_KINDS_TO_EXTERNAL_NAMES.has_key?(type)
-      raise ArgumentError, "Unsupported resource kind '#{type}'"
-    end
-    data[KIND] = RESOURCE_KINDS_TO_EXTERNAL_NAMES[type]
-    data
   end
 
   # Are we a child of the passed class?  Do a recursive search up our

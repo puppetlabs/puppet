@@ -31,57 +31,6 @@ describe Symbol do
   end
 end
 
-describe IO do
-  include PuppetSpec::Files
-
-  let(:file) { tmpfile('io-binary') }
-  let(:content) { "\x01\x02\x03\x04" }
-
-  describe "::binwrite" do
-    it "should write in binary mode" do
-      expect(IO.binwrite(file, content)).to eq(content.length)
-      File.open(file, 'rb') {|f| expect(f.read).to eq(content) }
-    end
-
-    (0..10).each do |offset|
-      it "should write correctly using an offset of #{offset}" do
-        expect(IO.binwrite(file, content, offset)).to eq(content.length)
-        File.open(file, 'rb') {|f| expect(f.read).to eq(("\x00" * offset) + content) }
-      end
-    end
-
-    context "truncation" do
-      let :input do "welcome to paradise, population ... YOU!" end
-      before :each do IO.binwrite(file, input) end
-
-      it "should truncate if no offset is given" do
-        expect(IO.binwrite(file, "boo")).to eq(3)
-        expect(File.read(file)).to eq("boo")
-      end
-
-      (0..10).each do |offset|
-        it "should not truncate if an offset of #{offset} is given" do
-          expect = input.dup
-          expect[offset, 3] = "BAM"
-
-          expect(IO.binwrite(file, "BAM", offset)).to eq(3)
-          expect(File.read(file)).to eq(expect)
-        end
-      end
-
-      it "should pad with NULL bytes if writing past EOF without truncate" do
-        expect = input + ("\x00" * 4) + "BAM"
-        expect(IO.binwrite(file, "BAM", input.length + 4)).to eq(3)
-        expect(File.read(file)).to eq(expect)
-      end
-    end
-
-    it "should raise an error if the directory containing the file doesn't exist" do
-      expect { IO.binwrite('/path/does/not/exist', 'foo') }.to raise_error(Errno::ENOENT)
-    end
-  end
-end
-
 describe Range do
   def do_test( range, other, expected )
     result = range.intersection(other)
