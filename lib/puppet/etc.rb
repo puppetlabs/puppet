@@ -114,7 +114,7 @@ module Puppet::Etc
       return nil if struct.nil?
       struct.each_with_index do |value, index|
         if value.is_a?(String)
-          Puppet::Util::CharacterEncoding.override_encoding_to_utf_8!(value) if value.encoding != Encoding::UTF_8
+          value.force_encoding(Encoding::UTF_8)
         elsif value.is_a?(Array)
           override_array_values_to_utf8!(value)
         end
@@ -131,7 +131,7 @@ module Puppet::Etc
     #   they would be valid in UTF-8 or original, unmodified values if not.
     def override_array_values_to_utf8!(string_array)
       string_array.each do |elem|
-        Puppet::Util::CharacterEncoding.override_encoding_to_utf_8!(elem)
+        elem.force_encoding(Encoding::UTF_8)
       end
     end
   end

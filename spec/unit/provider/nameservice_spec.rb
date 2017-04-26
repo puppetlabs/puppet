@@ -129,6 +129,27 @@ describe Puppet::Provider::NameService do
       expect(described_class.listbyname).to eq(%w{root foo})
     end
 
+    it "should return original bytes sequences intact in UTF-8 strings, even when the byte sequneces do not represent valid UTF-8" do
+      utf_8_jose = "Jos\u00E9"
+      valid_latin1_jose = utf_8_jose.encode(Encoding::ISO_8859_1)
+      invalid_utf_8_jose = valid_latin1_jose.dup.force_encoding(Encoding::UTF_8)
+
+      mixed_users = [
+        Struct::Passwd.new('root', 'x', 0, 0),
+        Struct::Passwd.new('foo', 'x', 1000, 2000),
+        Struct::Passwd.new(utf_8_jose, utf_8_jose, 1001, 2000), # UTF-8 character
+        Struct::Passwd.new(valid_latin1_jose, valid_latin1_jose, 1002, 2000),
+        nil
+      ]
+      described_class.resource_type = Puppet::Type.type(:user)
+      ::Etc.expects(:setpwent)
+      ::Etc.stubs(:getpwent).returns *mixed_users
+      ::Etc.expects(:endpwent)
+
+      expect(invalid_utf_8_jose).to_not be_valid_encoding
+      expect(described_class.listbyname).to eq(['root', 'foo', utf_8_jose, invalid_utf_8_jose])
+    end
+
     it "should return a list of groups if resource_type is group", :unless => Puppet.features.microsoft_windows? do
       described_class.resource_type = Puppet::Type.type(:group)
       Puppet::Etc.expects(:setgrent)
