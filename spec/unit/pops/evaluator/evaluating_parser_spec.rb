@@ -323,7 +323,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
                     'Array', 'Hash', 'CatalogEntry', 'Resource', 'Class', 'Undef', 'File' ],
 
       # Note, Data > Collection is false (so not included)
-      'Data'    => ['Scalar', 'Numeric', 'Integer', 'Float', 'Boolean', 'String', 'Pattern', 'Array[Data]', 'Hash[String,Data]',],
+      'Data'    => ['ScalarData', 'Numeric', 'Integer', 'Float', 'Boolean', 'String', 'Pattern', 'Array[Data]', 'Hash[String,Data]',],
       'Scalar' => ['Numeric', 'Integer', 'Float', 'Boolean', 'String', 'Pattern'],
       'Numeric' => ['Integer', 'Float'],
       'CatalogEntry' => ['Class', 'Resource', 'File'],

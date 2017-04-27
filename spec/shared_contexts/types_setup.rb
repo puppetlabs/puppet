@@ -7,6 +7,7 @@ shared_context 'types_setup' do
       Puppet::Pops::Types::PNotUndefType,
       Puppet::Pops::Types::PDataType,
       Puppet::Pops::Types::PScalarType,
+      Puppet::Pops::Types::PScalarDataType,
       Puppet::Pops::Types::PStringType,
       Puppet::Pops::Types::PNumericType,
       Puppet::Pops::Types::PIntegerType,
@@ -44,10 +45,28 @@ shared_context 'types_setup' do
     self.class.all_types
   end
 
+  def self.scalar_data_types
+    # PVariantType is also scalar data, if its types are all ScalarData
+    [
+      Puppet::Pops::Types::PScalarDataType,
+      Puppet::Pops::Types::PStringType,
+      Puppet::Pops::Types::PNumericType,
+      Puppet::Pops::Types::PIntegerType,
+      Puppet::Pops::Types::PFloatType,
+      Puppet::Pops::Types::PBooleanType,
+      Puppet::Pops::Types::PEnumType,
+    ]
+  end
+  def scalar_data_types
+    self.class.scalar_data_types
+  end
+
+
   def self.scalar_types
     # PVariantType is also scalar, if its types are all Scalar
     [
       Puppet::Pops::Types::PScalarType,
+      Puppet::Pops::Types::PScalarDataType,
       Puppet::Pops::Types::PStringType,
       Puppet::Pops::Types::PNumericType,
       Puppet::Pops::Types::PIntegerType,
@@ -105,7 +124,7 @@ shared_context 'types_setup' do
   end
 
   def self.data_compatible_types
-    result = scalar_types
+    result = scalar_data_types
     result << Puppet::Pops::Types::PDataType
     result << Puppet::Pops::Types::PArrayType::DATA
     result << Puppet::Pops::Types::PHashType::DATA

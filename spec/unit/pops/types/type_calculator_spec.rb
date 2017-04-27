@@ -297,16 +297,16 @@ describe 'The type calculator' do
         expect(calculator.infer([1,2.0]).element_type.class).to eq(PNumericType)
       end
 
-      it 'with fixnum and string values translates to PArrayType[PScalarType]' do
-        expect(calculator.infer([1,'two']).element_type.class).to eq(PScalarType)
+      it 'with fixnum and string values translates to PArrayType[PScalarDataType]' do
+        expect(calculator.infer([1,'two']).element_type.class).to eq(PScalarDataType)
       end
 
-      it 'with float and string values translates to PArrayType[PScalarType]' do
-        expect(calculator.infer([1.0,'two']).element_type.class).to eq(PScalarType)
+      it 'with float and string values translates to PArrayType[PScalarDataType]' do
+        expect(calculator.infer([1.0,'two']).element_type.class).to eq(PScalarDataType)
       end
 
-      it 'with fixnum, float, and string values translates to PArrayType[PScalarType]' do
-        expect(calculator.infer([1, 2.0,'two']).element_type.class).to eq(PScalarType)
+      it 'with fixnum, float, and string values translates to PArrayType[PScalarDataType]' do
+        expect(calculator.infer([1, 2.0,'two']).element_type.class).to eq(PScalarDataType)
       end
 
       it 'with fixnum and regexp values translates to PArrayType[PScalarType]' do
@@ -334,13 +334,13 @@ describe 'The type calculator' do
         expect(et.class).to eq(PEnumType)
       end
 
-      it 'with array of string values and array of fixnums translates to PArrayType[PArrayType[PScalarType]]' do
+      it 'with array of string values and array of fixnums translates to PArrayType[PArrayType[PScalarDataType]]' do
         et = calculator.infer([['first', 'array'], [1,2]])
         expect(et.class).to eq(PArrayType)
         et = et.element_type
         expect(et.class).to eq(PArrayType)
         et = et.element_type
-        expect(et.class).to eq(PScalarType)
+        expect(et.class).to eq(PScalarDataType)
       end
 
       it 'with hashes of string values translates to PArrayType[PHashType[PEnumType]]' do
@@ -352,13 +352,13 @@ describe 'The type calculator' do
         expect(et.class).to eq(PEnumType)
       end
 
-      it 'with hash of string values and hash of fixnums translates to PArrayType[PHashType[PScalarType]]' do
+      it 'with hash of string values and hash of fixnums translates to PArrayType[PHashType[PScalarDataType]]' do
         et = calculator.infer([{:first => 'first', :second => 'second' }, {:first => 1, :second => 2 }])
         expect(et.class).to eq(PArrayType)
         et = et.element_type
         expect(et.class).to eq(PHashType)
         et = et.value_type
-        expect(et.class).to eq(PScalarType)
+        expect(et.class).to eq(PScalarDataType)
       end
     end
 
@@ -549,6 +549,38 @@ describe 'The type calculator' do
       common_t = calculator.common_type(v_a, v_b)
       expect(common_t.class).to eq(PVariantType)
       expect(Set.new(common_t.types)).to  eq(Set.new([a_t1, a_t2]))
+    end
+
+    context 'commonality of scalar data types' do
+      it 'Numeric and String == ScalarData' do
+        expect(calculator.common_type(PNumericType::DEFAULT, PStringType::DEFAULT).class).to eq(PScalarDataType)
+      end
+
+      it 'Numeric and Boolean == ScalarData' do
+        expect(calculator.common_type(PNumericType::DEFAULT, PBooleanType::DEFAULT).class).to eq(PScalarDataType)
+      end
+
+      it 'String and Boolean == ScalarData' do
+        expect(calculator.common_type(PStringType::DEFAULT, PBooleanType::DEFAULT).class).to eq(PScalarDataType)
+      end
+    end
+
+    context 'commonality of scalar types' do
+      it 'Regexp and Integer == Scalar' do
+        expect(calculator.common_type(PRegexpType::DEFAULT, PScalarDataType::DEFAULT).class).to eq(PScalarType)
+      end
+
+      it 'Regexp and SemVer == ScalarData' do
+        expect(calculator.common_type(PRegexpType::DEFAULT, PSemVerType::DEFAULT).class).to eq(PScalarType)
+      end
+
+      it 'Timestamp and Timespan == ScalarData' do
+        expect(calculator.common_type(PTimestampType::DEFAULT, PTimespanType::DEFAULT).class).to eq(PScalarType)
+      end
+
+      it 'Timestamp and Boolean == ScalarData' do
+        expect(calculator.common_type(PTimestampType::DEFAULT, PBooleanType::DEFAULT).class).to eq(PScalarType)
+      end
     end
 
     context 'of callables' do
@@ -809,6 +841,7 @@ describe 'The type calculator' do
           PNotUndefType,
           PDataType,
           PScalarType,
+          PScalarDataType,
           ] - numeric_types
         t = PNumericType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
@@ -1939,6 +1972,7 @@ describe 'The type calculator' do
       expect(calculator.infer(PUndefType::DEFAULT     ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(PDataType::DEFAULT      ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(PScalarType::DEFAULT    ).is_a?(ptype)).to eq(true)
+      expect(calculator.infer(PScalarDataType::DEFAULT).is_a?(ptype)).to eq(true)
       expect(calculator.infer(PStringType::DEFAULT    ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(PNumericType::DEFAULT   ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(PIntegerType::DEFAULT   ).is_a?(ptype)).to eq(true)
@@ -1964,6 +1998,7 @@ describe 'The type calculator' do
       expect(calculator.infer(PUndefType::DEFAULT     ).to_s).to eq('Type[Undef]')
       expect(calculator.infer(PDataType::DEFAULT      ).to_s).to eq('Type[Data]')
       expect(calculator.infer(PScalarType::DEFAULT    ).to_s).to eq('Type[Scalar]')
+      expect(calculator.infer(PScalarDataType::DEFAULT).to_s).to eq('Type[ScalarData]')
       expect(calculator.infer(PStringType::DEFAULT    ).to_s).to eq('Type[String]')
       expect(calculator.infer(PNumericType::DEFAULT   ).to_s).to eq('Type[Numeric]')
       expect(calculator.infer(PIntegerType::DEFAULT   ).to_s).to eq('Type[Integer]')
@@ -1993,7 +2028,7 @@ describe 'The type calculator' do
       int_t    = PIntegerType::DEFAULT
       string_t = PStringType::DEFAULT
       expect(calculator.infer([int_t]).to_s).to eq('Array[Type[Integer], 1, 1]')
-      expect(calculator.infer([int_t, string_t]).to_s).to eq('Array[Type[Scalar], 2, 2]')
+      expect(calculator.infer([int_t, string_t]).to_s).to eq('Array[Type[ScalarData], 2, 2]')
     end
 
     it 'should infer PType as the type of ruby classes' do
@@ -2096,7 +2131,7 @@ describe 'The type calculator' do
 
     it "does not reduce by combining types when using infer_set" do
       element_type = calculator.infer(['a','b',1,2]).element_type
-      expect(element_type.class).to eq(PScalarType)
+      expect(element_type.class).to eq(PScalarDataType)
       inferred_type = calculator.infer_set(['a','b',1,2])
       expect(inferred_type.class).to eq(PTupleType)
       element_types = inferred_type.types

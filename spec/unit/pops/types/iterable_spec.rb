@@ -72,6 +72,7 @@ describe 'The iterable support' do
       PResourceType::DEFAULT,
       PRuntimeType::DEFAULT,
       PScalarType::DEFAULT,
+      PScalarDataType::DEFAULT,
       PType::DEFAULT,
       PUndefType::DEFAULT
     ]

@@ -175,6 +175,7 @@ class TypeParser
         'resource'     => TypeFactory.resource,
         'collection'   => TypeFactory.collection,
         'scalar'       => TypeFactory.scalar,
+        'scalardata'   => TypeFactory.scalar_data,
         'catalogentry' => TypeFactory.catalog_entry,
         'undef'        => TypeFactory.undef,
         'notundef'     => TypeFactory.not_undef,

@@ -172,7 +172,7 @@ describe 'The type factory' do
     it 'hash_of_data returns PHashType[PStringType,PDataType]' do
       ht = TypeFactory.hash_of_data
       expect(ht.class()).to eq(PHashType)
-      expect(ht.key_type.class).to eq(PScalarType)
+      expect(ht.key_type.class).to eq(PStringType)
       expect(ht.value_type.class).to eq(PDataType)
     end
 

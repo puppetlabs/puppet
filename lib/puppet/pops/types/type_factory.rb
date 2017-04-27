@@ -252,11 +252,18 @@ module TypeFactory
     PPatternType.new(patterns)
   end
 
-  # Produces the Literal type
+  # Produces the Scalar type
   # @api public
   #
   def self.scalar
     PScalarType::DEFAULT
+  end
+
+  # Produces the ScalarData type
+  # @api public
+  #
+  def self.scalar_data
+    PScalarDataType::DEFAULT
   end
 
   # Produces a CallableType matching all callables

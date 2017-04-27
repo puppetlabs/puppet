@@ -675,7 +675,7 @@ class PDataType < PAnyType
   end
 end
 
-# Type that is PDataType compatible, but is not a PCollectionType.
+# Type that is a Scalar
 # @api public
 #
 class PScalarType < PAnyType
@@ -703,12 +703,34 @@ class PScalarType < PAnyType
   end
 end
 
+# Like Scalar but limited to Json Data.
+# @api public
+#
+class PScalarDataType < PScalarType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'ScalarType')
+  end
+
+  def instance?(o, guard = nil)
+    return o.is_a?(String) || o.is_a?(Integer) || o.is_a?(Float) || o.is_a?(TrueClass) || o.is_a?(FalseClass)
+  end
+
+  DEFAULT = PScalarDataType.new
+
+  protected
+
+  # @api private
+  def _assignable?(o, guard)
+    o.is_a?(PScalarDataType)
+  end
+end
+
 # A string type describing the set of strings having one of the given values
 # @api public
 #
-class PEnumType < PScalarType
+class PEnumType < PScalarDataType
   def self.register_ptype(loader, ir)
-    create_ptype(loader, ir, 'ScalarType', 'values' => PArrayType.new(PStringType::NON_EMPTY))
+    create_ptype(loader, ir, 'ScalarDataType', 'values' => PArrayType.new(PStringType::NON_EMPTY))
   end
 
   attr_reader :values
@@ -778,72 +800,11 @@ class PEnumType < PScalarType
   end
 end
 
-# Abstract class that encapsulates behavior common to PNumericType and PAbstractTimeDataType
-# @api public
-class PAbstractRangeType < PScalarType
-  def initialize(from, to = Float::INFINITY)
-    from = -Float::INFINITY if from.nil? || from == :default
-    to = Float::INFINITY if to.nil? || to == :default
-    raise ArgumentError, "'from' must be less or equal to 'to'. Got (#{from}, #{to}" if from.is_a?(Numeric) && to.is_a?(Numeric) && from > to
-    @from = from
-    @to = to
-  end
-
-  # Checks if this numeric range intersects with another
-  #
-  # @param o [PNumericType] the range to compare with
-  # @return [Boolean] `true` if this range intersects with the other range
-  # @api public
-  def intersect?(o)
-    self.class == o.class && !(@to < o.numeric_from || o.numeric_to < @from)
-  end
-
-  # Returns the lower bound of the numeric range or `nil` if no lower bound is set.
-  # @return [Float,Integer]
-  def from
-    @from == -Float::INFINITY ? nil : @from
-  end
-
-  # Returns the upper bound of the numeric range or `nil` if no upper bound is set.
-  # @return [Float,Integer]
-  def to
-    @to == Float::INFINITY ? nil : @to
-  end
-
-  # Same as #from but will return `-Float::Infinity` instead of `nil` if no lower bound is set.
-  # @return [Float,Integer]
-  def numeric_from
-    @from
-  end
-
-  # Same as #to but will return `Float::Infinity` instead of `nil` if no lower bound is set.
-  # @return [Float,Integer]
-  def numeric_to
-    @to
-  end
-
-  def hash
-    @from.hash ^ @to.hash
-  end
-
-  def eql?(o)
-    self.class == o.class && @from == o.numeric_from && @to == o.numeric_to
-  end
-
-  def instance?(o, guard = nil)
-    o.is_a?(Numeric) && o >= @from && o <= @to
-  end
-
-  def unbounded?
-    @from == -Float::INFINITY && @to == Float::INFINITY
-  end
-end
-
 # @api public
 #
-class PNumericType < PAbstractRangeType
+class PNumericType < PScalarDataType
   def self.register_ptype(loader, ir)
-    create_ptype(loader, ir, 'ScalarType',
+    create_ptype(loader, ir, 'ScalarDataType',
       'from' => { KEY_TYPE => POptionalType.new(PNumericType::DEFAULT), KEY_VALUE => nil },
       'to' => { KEY_TYPE => POptionalType.new(PNumericType::DEFAULT), KEY_VALUE => nil }
     )
@@ -906,6 +867,63 @@ class PNumericType < PAbstractRangeType
         end
       end
     end
+  end
+
+  def initialize(from, to = Float::INFINITY)
+    from = -Float::INFINITY if from.nil? || from == :default
+    to = Float::INFINITY if to.nil? || to == :default
+    raise ArgumentError, "'from' must be less or equal to 'to'. Got (#{from}, #{to}" if from > to
+    @from = from
+    @to = to
+  end
+
+  # Checks if this numeric range intersects with another
+  #
+  # @param o [PNumericType] the range to compare with
+  # @return [Boolean] `true` if this range intersects with the other range
+  # @api public
+  def intersect?(o)
+    self.class == o.class && !(@to < o.numeric_from || o.numeric_to < @from)
+  end
+
+  # Returns the lower bound of the numeric range or `nil` if no lower bound is set.
+  # @return [Float,Integer]
+  def from
+    @from == -Float::INFINITY ? nil : @from
+  end
+
+  # Returns the upper bound of the numeric range or `nil` if no upper bound is set.
+  # @return [Float,Integer]
+  def to
+    @to == Float::INFINITY ? nil : @to
+  end
+
+  # Same as #from but will return `-Float::Infinity` instead of `nil` if no lower bound is set.
+  # @return [Float,Integer]
+  def numeric_from
+    @from
+  end
+
+  # Same as #to but will return `Float::Infinity` instead of `nil` if no lower bound is set.
+  # @return [Float,Integer]
+  def numeric_to
+    @to
+  end
+
+  def hash
+    @from.hash ^ @to.hash
+  end
+
+  def eql?(o)
+    self.class == o.class && @from == o.numeric_from && @to == o.numeric_to
+  end
+
+  def instance?(o, guard = nil)
+    o.is_a?(Numeric) && o >= @from && o <= @to
+  end
+
+  def unbounded?
+    @from == -Float::INFINITY && @to == Float::INFINITY
   end
 
   protected
@@ -1374,9 +1392,9 @@ end
 
 # @api public
 #
-class PStringType < PScalarType
+class PStringType < PScalarDataType
   def self.register_ptype(loader, ir)
-    create_ptype(loader, ir, 'ScalarType',
+    create_ptype(loader, ir, 'ScalarDataType',
       'size_type_or_value' => {
         KEY_TYPE => POptionalType.new(PVariantType.new([PStringType::DEFAULT, PType.new(PIntegerType::DEFAULT)])),
       KEY_VALUE => nil
@@ -1616,9 +1634,9 @@ end
 #
 # @api public
 #
-class PPatternType < PScalarType
+class PPatternType < PScalarDataType
   def self.register_ptype(loader, ir)
-    create_ptype(loader, ir, 'ScalarType', 'patterns' => PArrayType.new(PRegexpType::DEFAULT))
+    create_ptype(loader, ir, 'ScalarDataType', 'patterns' => PArrayType.new(PRegexpType::DEFAULT))
   end
 
   attr_reader :patterns
@@ -1686,9 +1704,9 @@ end
 
 # @api public
 #
-class PBooleanType < PScalarType
+class PBooleanType < PScalarDataType
   def self.register_ptype(loader, ir)
-    create_ptype(loader, ir, 'ScalarType')
+    create_ptype(loader, ir, 'ScalarDataType')
   end
 
   def instance?(o, guard = nil)
@@ -2633,7 +2651,7 @@ class PHashType < PCollectionType
   DEFAULT = PHashType.new(nil, nil)
   KEY_PAIR_TUPLE_SIZE = PIntegerType.new(2,2)
   DEFAULT_KEY_PAIR_TUPLE = PTupleType.new([PUnitType::DEFAULT, PUnitType::DEFAULT], KEY_PAIR_TUPLE_SIZE)
-  DATA = PHashType.new(PScalarType::DEFAULT, PDataType::DEFAULT, DEFAULT_SIZE)
+  DATA = PHashType.new(PStringType::DEFAULT, PDataType::DEFAULT, DEFAULT_SIZE)
   EMPTY = PHashType.new(PUnitType::DEFAULT, PUnitType::DEFAULT, PIntegerType.new(0, 0))
 
   protected
@@ -2795,7 +2813,7 @@ class PVariantType < PAnyType
   end
 
   # Variant compatible with the Data type.
-  DATA = PVariantType.new([PHashType::DATA, PArrayType::DATA, PScalarType::DEFAULT, PUndefType::DEFAULT, PTupleType::DATA])
+  DATA = PVariantType.new([PHashType::DATA, PArrayType::DATA, PScalarDataType::DEFAULT, PUndefType::DEFAULT, PTupleType::DATA])
 
   DEFAULT = PVariantType.new(EMPTY_ARRAY)
 

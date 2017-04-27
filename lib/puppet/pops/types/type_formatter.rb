@@ -155,6 +155,9 @@ class TypeFormatter
   def string_PScalarType(_)  ; @bld << 'Scalar'  ; end
 
   # @api private
+  def string_PScalarDataType(_)  ; @bld << 'ScalarData'  ; end
+
+  # @api private
   def string_PDataType(_)    ; @bld << 'Data'    ; end
 
   # @api private

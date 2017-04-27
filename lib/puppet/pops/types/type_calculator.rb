@@ -415,6 +415,10 @@ class TypeCalculator
       return PNumericType::DEFAULT
     end
 
+    if common_scalar_data?(t1, t2)
+      return PScalarDataType::DEFAULT
+    end
+
     if common_scalar?(t1, t2)
       return PScalarType::DEFAULT
     end
@@ -758,6 +762,10 @@ class TypeCalculator
 
   def common_data?(t1, t2)
     PDataType::DEFAULT.assignable?(t1) && PDataType::DEFAULT.assignable?(t2)
+  end
+
+  def common_scalar_data?(t1, t2)
+    PScalarDataType::DEFAULT.assignable?(t1) && PScalarDataType::DEFAULT.assignable?(t2)
   end
 
   def common_scalar?(t1, t2)
