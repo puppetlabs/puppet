@@ -5,7 +5,6 @@ shared_context 'types_setup' do
     [ Puppet::Pops::Types::PAnyType,
       Puppet::Pops::Types::PUndefType,
       Puppet::Pops::Types::PNotUndefType,
-      Puppet::Pops::Types::PDataType,
       Puppet::Pops::Types::PScalarType,
       Puppet::Pops::Types::PScalarDataType,
       Puppet::Pops::Types::PStringType,
@@ -125,19 +124,21 @@ shared_context 'types_setup' do
 
   def self.data_compatible_types
     result = scalar_data_types
-    result << Puppet::Pops::Types::PDataType
-    result << Puppet::Pops::Types::PArrayType::DATA
-    result << Puppet::Pops::Types::PHashType::DATA
+    result << Puppet::Pops::Types::PArrayType.new(Puppet::Pops::Types::PScalarDataType::DEFAULT)
+    result << Puppet::Pops::Types::PHashType.new(Puppet::Pops::Types::PStringType::DEFAULT, Puppet::Pops::Types::PScalarDataType::DEFAULT)
     result << Puppet::Pops::Types::PUndefType
-    result << Puppet::Pops::Types::PNotUndefType.new(Puppet::Pops::Types::PDataType::DEFAULT)
-    result << Puppet::Pops::Types::PTupleType.new([Puppet::Pops::Types::PDataType::DEFAULT], Puppet::Pops::Types::PIntegerType.new(0, nil))
+    result << Puppet::Pops::Types::PNotUndefType.new(Puppet::Pops::Types::PScalarDataType::DEFAULT)
+    result << Puppet::Pops::Types::PTupleType.new([Puppet::Pops::Types::PScalarDataType::DEFAULT])
     result
   end
   def data_compatible_types
     self.class.data_compatible_types
   end
 
-  def type_from_class(c)
+  def self.type_from_class(c)
     c.is_a?(Class) ? c::DEFAULT : c
+  end
+  def type_from_class(c)
+    self.class.type_from_class(c)
   end
 end

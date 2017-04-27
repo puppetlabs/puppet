@@ -168,7 +168,6 @@ class TypeParser
         'boolean'      => TypeFactory.boolean,
         'pattern'      => TypeFactory.pattern,
         'regexp'       => TypeFactory.regexp,
-        'data'         => TypeFactory.data,
         'array'        => TypeFactory.array_of_any,
         'hash'         => TypeFactory.hash_of_any,
         'class'        => TypeFactory.host_class,

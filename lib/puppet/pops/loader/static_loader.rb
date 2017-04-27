@@ -61,11 +61,16 @@ class StaticLoader < Loader
 
   BUILTIN_TYPE_NAMES_LC = Set.new(BUILTIN_TYPE_NAMES.map { |n| n.downcase }).freeze
 
+  BUILTIN_ALIASES = {
+    'Data' => 'Variant[ScalarData,Undef,Hash[String,Data],Array[Data]]'
+  }.freeze
+
   attr_reader :loaded
   def initialize
     @loaded = {}
     create_built_in_types()
     create_resource_type_references()
+    register_aliases
   end
 
   def load_typed(typed_name)
@@ -119,10 +124,19 @@ class StaticLoader < Loader
     BUILTIN_TYPE_NAMES.each { |name| create_resource_type_reference(name) }
   end
 
+  def add_type(name, type)
+    set_entry(TypedName.new(:type, name.downcase), type)
+    type
+  end
+
   def create_resource_type_reference(name)
-    typed_name = TypedName.new(:type, name.downcase)
-    type = Puppet::Pops::Types::TypeFactory.resource(name)
-    @loaded[ typed_name ] = NamedEntry.new(typed_name, type, __FILE__)
+    add_type(name, Types::TypeFactory.resource(name))
+  end
+
+  def register_aliases
+    aliases = BUILTIN_ALIASES.map { |name, string| add_type(name, Types::PTypeAliasType.new(name, Types::TypeFactory.type_reference(string), nil)) }
+    parser = Types::TypeParser.singleton
+    aliases.each { |type| type.resolve(parser, self) }
   end
 end
 end

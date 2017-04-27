@@ -62,7 +62,7 @@ module Adapters
     def self.loader_for_model_object(model, file = nil, default_loader = nil)
       loaders = Puppet.lookup(:loaders) { nil }
       if loaders.nil?
-        default_loader
+        default_loader || Loaders.static_loader
       else
         loader_name = loader_name_by_source(loaders.environment, model, file)
         loader_name.nil? ? default_loader || loaders.find_loader(nil) : loaders[loader_name]

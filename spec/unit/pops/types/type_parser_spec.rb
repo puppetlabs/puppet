@@ -223,11 +223,11 @@ describe TypeParser do
 
   context 'without a scope' do
     it "interprets anything that is not a built in type to be a type reference" do
-      expect(parser.parse('File')).to eq(types.type_reference('File'))
+      expect(parser.parse('TestType')).to eq(types.type_reference('TestType'))
     end
 
     it "interprets anything that is not a built in type with parameterers to be type reference with parameters" do
-      expect(parser.parse("File['/tmp/foo']")).to eq(types.type_reference("File['/tmp/foo']"))
+      expect(parser.parse("TestType['/tmp/foo']")).to eq(types.type_reference("TestType['/tmp/foo']"))
     end
   end
 

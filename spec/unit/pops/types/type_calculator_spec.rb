@@ -760,28 +760,21 @@ describe 'The type calculator' do
     end
 
     context 'for Data, such that' do
-      it 'all scalars + array and hash are assignable to Data' do
-        t = PDataType::DEFAULT
-        data_compatible_types.each { |t2|
-          expect(type_from_class(t2)).to be_assignable_to(t)
-        }
-      end
-
-      it 'a scalar, hash, or array is assignable to Data' do
-        t = PDataType::DEFAULT
-        data_compatible_types.each { |t2| expect(type_from_class(t2)).to be_assignable_to(t) }
+      let(:data) { TypeFactory.data }
+      data_compatible_types.map { |t2| type_from_class(t2) }.each do |tc|
+        it "#{tc.name} is assignable to Data" do
+          expect(tc).to be_assignable_to(data)
+        end
       end
 
       it 'Data is not assignable to any of its subtypes' do
-        t = PDataType::DEFAULT
-        types_to_test = data_compatible_types- [PDataType]
-        types_to_test.each {|t2| expect(t).not_to be_assignable_to(type_from_class(t2)) }
+        types_to_test = data_compatible_types
+        types_to_test.each {|t2| expect(data).not_to be_assignable_to(type_from_class(t2)) }
       end
 
       it 'Data is not assignable to any disjunct type' do
-        tested_types = all_types - [PAnyType, POptionalType, PDataType] - scalar_types
-        t = PDataType::DEFAULT
-        tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
+        tested_types = all_types - [PAnyType, POptionalType] - scalar_types
+        tested_types.each {|t2| expect(data).not_to be_assignable_to(t2::DEFAULT) }
       end
     end
 
@@ -816,7 +809,7 @@ describe 'The type calculator' do
       end
 
       it 'Scalar is not assignable to any disjunct type' do
-        tested_types = all_types - [PAnyType, POptionalType, PNotUndefType, PDataType] - scalar_types
+        tested_types = all_types - [PAnyType, POptionalType, PNotUndefType] - scalar_types
         t = PScalarType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
       end
@@ -839,7 +832,6 @@ describe 'The type calculator' do
           PAnyType,
           POptionalType,
           PNotUndefType,
-          PDataType,
           PScalarType,
           PScalarDataType,
           ] - numeric_types
@@ -887,8 +879,7 @@ describe 'The type calculator' do
           PAnyType,
           POptionalType,
           PNotUndefType,
-          PIterableType,
-          PDataType] - collection_types
+          PIterableType] - collection_types
         t = PArrayType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
       end
@@ -926,8 +917,7 @@ describe 'The type calculator' do
           PAnyType,
           POptionalType,
           PNotUndefType,
-          PIterableType,
-          PDataType] - collection_types
+          PIterableType] - collection_types
         t = PHashType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
       end
@@ -998,8 +988,7 @@ describe 'The type calculator' do
           PAnyType,
           POptionalType,
           PNotUndefType,
-          PIterableType,
-          PDataType] - collection_types
+          PIterableType] - collection_types
         t = PTupleType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
       end
@@ -1020,8 +1009,7 @@ describe 'The type calculator' do
           PAnyType,
           POptionalType,
           PNotUndefType,
-          PIterableType,
-          PDataType] - collection_types
+          PIterableType] - collection_types
         t = PStructType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
       end
@@ -1639,7 +1627,6 @@ describe 'The type calculator' do
       types_to_test = all_types - [
         PAnyType,
         PUndefType,
-        PDataType,
         POptionalType,
         ]
 
@@ -1970,7 +1957,6 @@ describe 'The type calculator' do
     it 'should infer PType as the type of all other types' do
       ptype = PType
       expect(calculator.infer(PUndefType::DEFAULT     ).is_a?(ptype)).to eq(true)
-      expect(calculator.infer(PDataType::DEFAULT      ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(PScalarType::DEFAULT    ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(PScalarDataType::DEFAULT).is_a?(ptype)).to eq(true)
       expect(calculator.infer(PStringType::DEFAULT    ).is_a?(ptype)).to eq(true)
@@ -1996,7 +1982,6 @@ describe 'The type calculator' do
 
     it 'should infer PType as the type of all other types' do
       expect(calculator.infer(PUndefType::DEFAULT     ).to_s).to eq('Type[Undef]')
-      expect(calculator.infer(PDataType::DEFAULT      ).to_s).to eq('Type[Data]')
       expect(calculator.infer(PScalarType::DEFAULT    ).to_s).to eq('Type[Scalar]')
       expect(calculator.infer(PScalarDataType::DEFAULT).to_s).to eq('Type[ScalarData]')
       expect(calculator.infer(PStringType::DEFAULT    ).to_s).to eq('Type[String]')

@@ -32,11 +32,8 @@ EMPTY_STRING = Puppet::Pops::EMPTY_STRING
 
 # The Types model is a model of Puppet Language types.
 #
-# The exact relationship between types is not visible in this model wrt. the PDataType which is an abstraction
-# of Scalar, Array[Data], and Hash[Scalar, Data] nested to any depth. This means it is not possible to
-# infer the type by simply looking at the inheritance hierarchy. The {TypeCalculator} should
-# be used to answer questions about types. The {TypeFactory} should be used to create an instance
-# of a type whenever one is needed.
+# The {TypeCalculator} should be used to answer questions about types. The {TypeFactory} or {TypeParser} should be used
+# to create an instance of a type whenever one is needed.
 #
 # The implementation of the Types model contains methods that are required for the type objects to behave as
 # expected when comparing them and using them as keys in hashes. (No other logic is, or should be included directly in
@@ -636,42 +633,6 @@ class PDefaultType < PAnyType
   # @api private
   def _assignable?(o, guard)
     o.is_a?(PDefaultType)
-  end
-end
-
-# A flexible data type, being assignable to its subtypes as well as PArrayType and PHashType with element type assignable to PDataType.
-#
-# @api public
-#
-class PDataType < PAnyType
-  def self.register_ptype(loader, ir)
-    create_ptype(loader, ir, 'AnyType')
-  end
-
-  def eql?(o)
-    self.class == o.class || o == PVariantType::DATA
-  end
-
-  def instance?(o, guard = nil)
-    PVariantType::DATA.instance?(o, guard)
-  end
-
-  DEFAULT = PDataType.new
-
-  protected
-
-  # Data is assignable by other Data and by Array[Data] and Hash[Scalar, Data]
-  # @api private
-  def _assignable?(o, guard)
-    # We cannot put the NotUndefType[Data] in the @data_variant_t since that causes an endless recursion
-    case o
-    when Types::PDataType
-      true
-    when Types::PNotUndefType
-      assignable?(o.type || PUndefType::DEFAULT, guard)
-    else
-      PVariantType::DATA.assignable?(o, guard)
-    end
   end
 end
 
@@ -2141,7 +2102,6 @@ class PTupleType < PAnyType
     PArrayType.new_function(self, loader)
   end
 
-  DATA = PTupleType.new([PDataType::DEFAULT], PCollectionType::DEFAULT_SIZE)
   DEFAULT = PTupleType.new(EMPTY_ARRAY)
 
   protected
@@ -2381,9 +2341,7 @@ class PArrayType < PCollectionType
   end
 
   def generalize
-    if self == DATA
-      self
-    elsif PAnyType::DEFAULT.eql?(@element_type)
+    if PAnyType::DEFAULT.eql?(@element_type)
       DEFAULT
     else
       ge_type = @element_type.generalize
@@ -2400,9 +2358,7 @@ class PArrayType < PCollectionType
   end
 
   def normalize(guard = nil)
-    if self == DATA
-      self
-    elsif PAnyType::DEFAULT.eql?(@element_type)
+    if PAnyType::DEFAULT.eql?(@element_type)
       DEFAULT
     else
       ne_type = @element_type.normalize(guard)
@@ -2469,7 +2425,6 @@ class PArrayType < PCollectionType
     end
   end
 
-  DATA = PArrayType.new(PDataType::DEFAULT, DEFAULT_SIZE)
   DEFAULT = PArrayType.new(nil)
   EMPTY = PArrayType.new(PUnitType::DEFAULT, ZERO_SIZE)
 
@@ -2540,7 +2495,7 @@ class PHashType < PCollectionType
   end
 
   def generalize
-    if self == DEFAULT || self == DATA || self == EMPTY
+    if self == DEFAULT || self == EMPTY
       self
     else
       key_t = @key_type
@@ -2552,7 +2507,7 @@ class PHashType < PCollectionType
   end
 
   def normalize(guard = nil)
-    if self == DEFAULT || self == DATA || self == EMPTY
+    if self == DEFAULT || self == EMPTY
       self
     else
       key_t = @key_type.normalize(guard)
@@ -2651,7 +2606,6 @@ class PHashType < PCollectionType
   DEFAULT = PHashType.new(nil, nil)
   KEY_PAIR_TUPLE_SIZE = PIntegerType.new(2,2)
   DEFAULT_KEY_PAIR_TUPLE = PTupleType.new([PUnitType::DEFAULT, PUnitType::DEFAULT], KEY_PAIR_TUPLE_SIZE)
-  DATA = PHashType.new(PStringType::DEFAULT, PDataType::DEFAULT, DEFAULT_SIZE)
   EMPTY = PHashType.new(PUnitType::DEFAULT, PUnitType::DEFAULT, PIntegerType.new(0, 0))
 
   protected
@@ -2721,7 +2675,7 @@ class PVariantType < PAnyType
   end
 
   def generalize
-    if self == DEFAULT || self == DATA
+    if self == DEFAULT
       self
     else
       alter_type_array(@types, :generalize) { |altered| PVariantType.maybe_create(altered) }
@@ -2729,7 +2683,7 @@ class PVariantType < PAnyType
   end
 
   def normalize(guard = nil)
-    if self == DEFAULT || self == DATA || @types.empty?
+    if self == DEFAULT || @types.empty?
       self
     else
       # Normalize all contained types
@@ -2808,12 +2762,8 @@ class PVariantType < PAnyType
   end
 
   def eql?(o)
-    o = DATA if o.is_a?(PDataType)
     self.class == o.class && @types.size == o.types.size && (@types - o.types).empty?
   end
-
-  # Variant compatible with the Data type.
-  DATA = PVariantType.new([PHashType::DATA, PArrayType::DATA, PScalarDataType::DEFAULT, PUndefType::DEFAULT, PTupleType::DATA])
 
   DEFAULT = PVariantType.new(EMPTY_ARRAY)
 
@@ -2821,14 +2771,11 @@ class PVariantType < PAnyType
 
   # @api private
   def _assignable?(o, guard)
-    # Data is a specific variant
-    o = DATA if o.is_a?(PDataType)
     if o.is_a?(PVariantType)
       # A variant is assignable if all of its options are assignable to one of this type's options
       return true if self == o
       o.types.all? do |other|
         # if the other is a Variant, all of its options, but be assignable to one of this type's options
-        other = other.is_a?(PDataType) ? DATA : other
         if other.is_a?(PVariantType)
           assignable?(other, guard)
         else

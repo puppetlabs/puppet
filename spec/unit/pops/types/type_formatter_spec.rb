@@ -99,7 +99,7 @@ FORMATTED
       expect(s.string(f.boolean)).to eq('Boolean')
     end
 
-    it "should yield 'Data' for PDataType" do
+    it "should yield 'Data' for the Data type" do
       expect(s.string(f.data)).to eq('Data')
     end
 

@@ -424,7 +424,7 @@ class TypeCalculator
     end
 
     if common_data?(t1,t2)
-      return PDataType::DEFAULT
+      return TypeFactory.data
     end
 
     # Meta types Type[Integer] + Type[String] => Type[Data]
@@ -761,7 +761,8 @@ class TypeCalculator
   private
 
   def common_data?(t1, t2)
-    PDataType::DEFAULT.assignable?(t1) && PDataType::DEFAULT.assignable?(t2)
+    d = TypeFactory.data
+    d.assignable?(t1) && d.assignable?(t2)
   end
 
   def common_scalar_data?(t1, t2)

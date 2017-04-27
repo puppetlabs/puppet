@@ -332,7 +332,7 @@ module TypeFactory
   # @api public
   #
   def self.data
-    PDataType::DEFAULT
+    @data_t ||= TypeParser.singleton.parse('Data', Loaders.static_loader)
   end
 
   # Creates an instance of the Undef type
@@ -440,7 +440,7 @@ module TypeFactory
   # @api public
   #
   def self.array_of_data
-    PArrayType::DATA
+    @array_of_data_t = PArrayType.new(data)
   end
 
   # Produces a type for Hash[Any,Any]
@@ -454,7 +454,7 @@ module TypeFactory
   # @api public
   #
   def self.hash_of_data
-    PHashType::DATA
+    @hash_of_data_t = PHashType.new(string, data)
   end
 
   # Produces a type for NotUndef[T]
