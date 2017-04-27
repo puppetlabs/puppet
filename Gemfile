@@ -29,7 +29,6 @@ gem "hiera", *location_for(ENV['HIERA_LOCATION'] || ['>= 3.2.1', '< 4'])
 # gem "semantic_puppet", *location_for(ENV['SEMANTIC_PUPPET_LOCATION'] || ['>= 0.1.3', '< 2'])
 # i18n support (gettext-setup and dependencies)
 gem 'gettext-setup', '>= 0.10', '< 1.0', :require => false
-gem 'locale', '~> 2.1', :require => false
 
 group(:development, :test) do
   gem "rake", "10.1.1", :require => false

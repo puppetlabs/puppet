@@ -27,7 +27,6 @@ require 'puppet/external/pson/pure'
 # supplied by gettext-setup. Can be removed in Puppet 5. See PUP-7116.
 begin
   require 'gettext-setup'
-  require 'locale'
   Puppet::GETTEXT_AVAILABLE = true
 rescue LoadError
   def _(msg)
@@ -80,7 +79,7 @@ module Puppet
         else
           GettextSetup.initialize(locale_path, :file_format => :mo)
         end
-        FastGettext.locale = GettextSetup.negotiate_locale(Locale.current.language)
+        GettextSetup.negotiate_locale!(GettextSetup.candidate_locales)
       end
     end
 
