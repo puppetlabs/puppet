@@ -36,6 +36,7 @@ class StaticLoader < Loader
       Nagios_serviceextinfo
       Nagios_servicegroup
       Nagios_timeperiod
+      Node
       Notify
       Package
       Resources
@@ -115,59 +116,7 @@ class StaticLoader < Loader
     # We are also not interested in their definition only that they exist.
     # These types are in all environments.
     #
-    %w{
-      Auegas
-      Component
-      Computer
-      Cron
-      Exec
-      File
-      Filebucket
-      Group
-      Host
-      Interface
-      K5login
-      Macauthorization
-      Mailalias
-      Maillist
-      Mcx
-      Mount
-      Nagios_command
-      Nagios_contact
-      Nagios_contactgroup
-      Nagios_host
-      Nagios_hostdependency
-      Nagios_hostescalation
-      Nagios_hostgroup
-      Nagios_hostextinfo
-      Nagios_service
-      Nagios_servicedependency
-      Nagios_serviceescalation
-      Nagios_serviceextinfo
-      Nagios_servicegroup
-      Nagios_timeperiod
-      Node
-      Notify
-      Package
-      Resources
-      Router
-      Schedule
-      Scheduled_task
-      Selboolean
-      Selmodule
-      Service
-      Ssh_authorized_key
-      Sshkey
-      Stage
-      Tidy
-      User
-      Vlan
-      Whit
-      Yumrepo
-      Zfs
-      Zone
-      Zpool
-    }.each { |name| create_resource_type_reference(name) }
+    BUILTIN_TYPE_NAMES.each { |name| create_resource_type_reference(name) }
   end
 
   def create_resource_type_reference(name)
