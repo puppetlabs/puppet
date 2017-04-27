@@ -86,8 +86,8 @@ class Puppet::Util::Feature
 
     begin
       require lib
-    rescue ScriptError
-      Puppet.debug "Failed to load library '#{lib}' for feature '#{name}'"
+    rescue ScriptError => detail
+      Puppet.debug _("Failed to load library '%{lib}' for feature '%{name}': %{detail}") % { lib: lib, name: name, detail: detail }
       return false
     end
     true
