@@ -483,7 +483,7 @@ class TypeFormatter
   def format_type_alias_type(t, expand)
     if @type_set.nil?
       @bld << t.name
-      if expand
+      if expand && !Loader::StaticLoader::BUILTIN_ALIASES.include?(t.name)
         @bld << ' = '
         append_string(t.resolved_type)
       end
