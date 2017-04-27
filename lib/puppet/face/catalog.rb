@@ -64,7 +64,7 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
       catalog = Puppet::Face[:catalog, "0.0.1"].find(Puppet[:certname]) or raise "Could not find catalog for #{Puppet[:certname]}"
       catalog = catalog.to_ral
 
-      report = Puppet::Transaction::Report.new("apply")
+      report = Puppet::Transaction::Report.new
       report.configuration_version = catalog.version
       report.environment = Puppet[:environment]
 

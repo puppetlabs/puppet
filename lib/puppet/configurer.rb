@@ -186,7 +186,7 @@ class Puppet::Configurer
     # environment and transaction_uuid very early, this is to ensure
     # they are sent regardless of any catalog compilation failures or
     # exceptions.
-    options[:report] ||= Puppet::Transaction::Report.new("apply", nil, @environment, @transaction_uuid, @job_id)
+    options[:report] ||= Puppet::Transaction::Report.new(nil, @environment, @transaction_uuid, @job_id)
     report = options[:report]
     init_storage
 

@@ -13,7 +13,6 @@
         "configuration_version",
         "report_format",
         "puppet_version",
-        "kind",
         "status",
         "noop",
         "noop_pending",
@@ -135,14 +134,6 @@
             "type":        "string"
         },
 
-        "kind": {
-            "description": "Report kind, enumerator with one of the values:\n\n* `inspect`, if this report came from a puppet inspect run.\n* `apply`, if this report came from a puppet apply or puppet agent run",
-            "enum": [
-                "inspect",
-                "apply"
-            ]
-        },
-
         "status": {
             "description": "Report status, enumerator with one of the values:\n\n* `failed`, if run failed\n* `changed`, if something changed\n* `unchanged`, if nothing changed from the previous run\n",
             "enum": [
@@ -255,7 +246,7 @@
                 },
 
                 "values": {
-                    "description": "The metric values in the 'time' category contains one entry per resource type in the catalog for\nwhich there is at least one resource and the values named:\n\n* `config_retrieval`\n* `total`\n* `inspect` (only present if the report is of `inspect`-kind)\n",
+                    "description": "The metric values in the 'time' category contains one entry per resource type in the catalog for\nwhich there is at least one resource and the values named:\n\n* `config_retrieval`\n* `total`\n\n",
                     "type":        "array",
                     "items": {
                         "description": "Each entry in `values` is an array with 3 slots for `name`, `label` and `value`",
@@ -480,7 +471,7 @@
                 },
 
                 "evaluation_time": {
-                    "description": "The amount of time, in seconds, taken to evaluate the resource. Not present in reports of `inspect` kind.",
+                    "description": "The amount of time, in seconds, taken to evaluate the resource.",
                     "oneOf":       [
                         {"type": "number"},
                         {"type": "null"}
@@ -488,12 +479,12 @@
                 },
 
                 "change_count": {
-                    "description": "The number of properties which changed. Always 0 in reports of `inspect` kind.",
+                    "description": "The number of properties which changed.",
                     "type":        "integer"
                 },
 
                 "out_of_sync_count": {
-                    "description": "The number of properties which were out of sync. Always 0 in reports of `inspect` kind.",
+                    "description": "The number of properties which were out of sync.",
                     "type":        "integer"
                 },
 
@@ -588,7 +579,7 @@
                 },
 
                 "desired_value": {
-                    "description": "the value specified in the manifest. Absent in reports of `inspect` kind.",
+                    "description": "the value specified in the manifest.",
                     "oneOf": [
                         { "type": "string" },
                         { "type": "array" },
@@ -613,7 +604,7 @@
                 },
 
                 "name": {
-                    "description": "The name of the event. Absent in reports of `inspect` kind.",
+                    "description": "The name of the event.",
                     "type":        "string"
                 },
 
