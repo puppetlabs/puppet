@@ -739,10 +739,6 @@ class PObjectType < PMetaType
     @parent.nil? ? false : @parent.kind_of_callable?(optional, guard)
   end
 
-  def instance?(o, guard = nil)
-    assignable?(TypeCalculator.infer(o), guard)
-  end
-
   def iterable?(guard = nil)
     @parent.nil? ? false : @parent.iterable?(guard)
   end
