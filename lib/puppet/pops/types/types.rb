@@ -645,7 +645,7 @@ class PScalarType < PAnyType
   end
 
   def instance?(o, guard = nil)
-    if o.is_a?(String) || o.is_a?(Numeric) || o.is_a?(TrueClass) || o.is_a?(FalseClass) || o.is_a?(Regexp) || o.is_a?(SemanticPuppet::VersionRange)
+    if o.is_a?(String) || o.is_a?(Numeric) || o.is_a?(TrueClass) || o.is_a?(FalseClass) || o.is_a?(Regexp)
       true
     elsif o.is_a?(Array) || o.is_a?(Hash) || o.is_a?(PAnyType) || o.is_a?(NilClass)
       false

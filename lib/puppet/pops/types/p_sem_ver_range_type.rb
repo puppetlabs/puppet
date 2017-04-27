@@ -4,9 +4,9 @@ module Types
 # An unparameterized type that represents all VersionRange instances
 #
 # @api public
-class PSemVerRangeType < PScalarType
+class PSemVerRangeType < PAnyType
   def self.register_ptype(loader, ir)
-    create_ptype(loader, ir, 'ScalarType')
+    create_ptype(loader, ir, 'AnyType')
   end
 
   # Check if a version is included in a version range. The version can be a string or
