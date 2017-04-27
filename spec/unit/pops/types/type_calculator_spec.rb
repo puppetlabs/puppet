@@ -293,11 +293,11 @@ describe 'The type calculator' do
         expect(t.values).to eq(['a', 'b', 'c'])
       end
 
-      it 'with fixnum and float values translates to PArrayType[PNumericType]' do
+      it 'with integer and float values translates to PArrayType[PNumericType]' do
         expect(calculator.infer([1,2.0]).element_type.class).to eq(PNumericType)
       end
 
-      it 'with fixnum and string values translates to PArrayType[PScalarDataType]' do
+      it 'with integer and string values translates to PArrayType[PScalarDataType]' do
         expect(calculator.infer([1,'two']).element_type.class).to eq(PScalarDataType)
       end
 
@@ -305,11 +305,11 @@ describe 'The type calculator' do
         expect(calculator.infer([1.0,'two']).element_type.class).to eq(PScalarDataType)
       end
 
-      it 'with fixnum, float, and string values translates to PArrayType[PScalarDataType]' do
+      it 'with integer, float, and string values translates to PArrayType[PScalarDataType]' do
         expect(calculator.infer([1, 2.0,'two']).element_type.class).to eq(PScalarDataType)
       end
 
-      it 'with fixnum and regexp values translates to PArrayType[PScalarType]' do
+      it 'with integer and regexp values translates to PArrayType[PScalarType]' do
         expect(calculator.infer([1, /two/]).element_type.class).to eq(PScalarType)
       end
 
@@ -321,8 +321,24 @@ describe 'The type calculator' do
         expect(calculator.infer(['one', :two]).element_type.class).to eq(PAnyType)
       end
 
-      it 'with fixnum and nil values translates to PArrayType[PIntegerType]' do
+      it 'with integer and nil values translates to PArrayType[PIntegerType]' do
         expect(calculator.infer([1, nil]).element_type.class).to eq(PIntegerType)
+      end
+
+      it 'with integer value, and array of string values, translates to Array[Data]' do
+        expect(calculator.infer([1, ['two']]).element_type.name).to eq('Data')
+      end
+
+      it 'with integer value, and hash of string => string values, translates to Array[Data]' do
+        expect(calculator.infer([1, {'two' => 'three'} ]).element_type.name).to eq('Data')
+      end
+
+      it 'with integer value, and hash of integer => string values, translates to Array[RichData]' do
+        expect(calculator.infer([1, {2 => 'three'} ]).element_type.name).to eq('RichData')
+      end
+
+      it 'with integer, regexp, and binary values translates to Array[RichData]' do
+        expect(calculator.infer([1, /two/, PBinaryType::Binary.from_string('three')]).element_type.name).to eq('RichData')
       end
 
       it 'with arrays of string values translates to PArrayType[PArrayType[PStringType]]' do

@@ -62,14 +62,20 @@ class StaticLoader < Loader
   BUILTIN_TYPE_NAMES_LC = Set.new(BUILTIN_TYPE_NAMES.map { |n| n.downcase }).freeze
 
   BUILTIN_ALIASES = {
-    'Data' => 'Variant[ScalarData,Undef,Hash[String,Data],Array[Data]]'
+    'Data' => 'Variant[ScalarData,Undef,Hash[String,Data],Array[Data]]',
+    'RichDataKey' => 'Variant[String,Numeric]',
+    'RichData' => 'Variant[Scalar,SemVerRange,Binary,Sensitive,Type,TypeSet,Undef,Hash[RichDataKey,RichData],Array[RichData]]',
+
+    # Backward compatible aliases.
+    'Puppet::LookupKey' => 'RichDataKey',
+    'Puppet::LookupValue' => 'RichData'
   }.freeze
 
   attr_reader :loaded
   def initialize
     @loaded = {}
-    create_built_in_types()
-    create_resource_type_references()
+    create_built_in_types
+    create_resource_type_references
     register_aliases
   end
 

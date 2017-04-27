@@ -432,6 +432,10 @@ class TypeCalculator
       return PType.new(common_type(t1.type, t2.type))
     end
 
+    if common_rich_data?(t1,t2)
+      return TypeFactory.rich_data
+    end
+
     # If both are Runtime types
     if t1.is_a?(PRuntimeType) && t2.is_a?(PRuntimeType)
       if t1.runtime == t2.runtime && t1.runtime_type_name == t2.runtime_type_name
@@ -759,6 +763,11 @@ class TypeCalculator
   end
 
   private
+
+  def common_rich_data?(t1, t2)
+    d = TypeFactory.rich_data
+    d.assignable?(t1) && d.assignable?(t2)
+  end
 
   def common_data?(t1, t2)
     d = TypeFactory.data
