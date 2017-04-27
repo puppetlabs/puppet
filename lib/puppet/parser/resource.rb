@@ -99,7 +99,6 @@ class Puppet::Parser::Resource < Puppet::Resource
   #
   def finish_evaluation
     return if @evaluation_finished
-    add_defaults
     add_scope_tags
     @evaluation_finished = true
   end
@@ -299,18 +298,21 @@ class Puppet::Parser::Resource < Puppet::Resource
     nil
   end
 
-  private
-
   # Add default values from our definition.
+  # @api private
   def add_defaults
     scope.lookupdefaults(self.type).each do |name, param|
       unless @parameters.include?(name)
         self.debug "Adding default for #{name}"
 
-        @parameters[name] = param.dup
+        param = param.dup
+        @parameters[name] = param
+        tag(*param.value) if param.name == :tag
       end
     end
   end
+
+  private
 
   def add_scope_tags
     scope_resource = scope.resource
