@@ -44,7 +44,6 @@ EMPTY_STRING = Puppet::Pops::EMPTY_STRING
 #
 # @api public
 #
-# TODO: See PUP-2978 for possible performance optimization
 class TypedModelObject < Object
   include PuppetObject
   include Visitable
