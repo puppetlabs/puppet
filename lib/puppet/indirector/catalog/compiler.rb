@@ -25,9 +25,11 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       # in Network::HTTP::Handler will automagically deserialize the value.
       if text_facts.is_a?(Puppet::Node::Facts)
         facts = text_facts
-      else
+      elsif format == 'pson'
         # We unescape here because the corresponding code in Puppet::Configurer::FactHandler escapes
-        facts = Puppet::Node::Facts.convert_from(format, CGI.unescape(text_facts))
+        facts = Puppet::Node::Facts.convert_from('pson', CGI.unescape(text_facts))
+      else
+        raise ArgumentError, "Unsupported facts format"
       end
 
       unless facts.name == request.key
