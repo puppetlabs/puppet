@@ -33,6 +33,14 @@ rescue LoadError
   def _(msg)
     msg
   end
+
+  def n_(*args, &block)
+    # assume two string args (singular and plural English form) and the count
+    # to pluralize on
+    plural = args[2] == 1 ? args[0] : args[1]
+    # if a block is passed, prefer that over the string selection above
+    block ? block.call : plural
+  end
   Puppet::GETTEXT_AVAILABLE = false
 end
 
