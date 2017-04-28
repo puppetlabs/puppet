@@ -36,6 +36,7 @@ class StaticLoader < Loader
       Nagios_serviceextinfo
       Nagios_servicegroup
       Nagios_timeperiod
+      Node
       Notify
       Package
       Resources
@@ -60,11 +61,22 @@ class StaticLoader < Loader
 
   BUILTIN_TYPE_NAMES_LC = Set.new(BUILTIN_TYPE_NAMES.map { |n| n.downcase }).freeze
 
+  BUILTIN_ALIASES = {
+    'Data' => 'Variant[ScalarData,Undef,Hash[String,Data],Array[Data]]',
+    'RichDataKey' => 'Variant[String,Numeric]',
+    'RichData' => 'Variant[Scalar,SemVerRange,Binary,Sensitive,Type,TypeSet,Undef,Hash[RichDataKey,RichData],Array[RichData]]',
+
+    # Backward compatible aliases.
+    'Puppet::LookupKey' => 'RichDataKey',
+    'Puppet::LookupValue' => 'RichData'
+  }.freeze
+
   attr_reader :loaded
   def initialize
     @loaded = {}
-    create_built_in_types()
-    create_resource_type_references()
+    create_built_in_types
+    create_resource_type_references
+    register_aliases
   end
 
   def load_typed(typed_name)
@@ -115,65 +127,22 @@ class StaticLoader < Loader
     # We are also not interested in their definition only that they exist.
     # These types are in all environments.
     #
-    %w{
-      Auegas
-      Component
-      Computer
-      Cron
-      Exec
-      File
-      Filebucket
-      Group
-      Host
-      Interface
-      K5login
-      Macauthorization
-      Mailalias
-      Maillist
-      Mcx
-      Mount
-      Nagios_command
-      Nagios_contact
-      Nagios_contactgroup
-      Nagios_host
-      Nagios_hostdependency
-      Nagios_hostescalation
-      Nagios_hostgroup
-      Nagios_hostextinfo
-      Nagios_service
-      Nagios_servicedependency
-      Nagios_serviceescalation
-      Nagios_serviceextinfo
-      Nagios_servicegroup
-      Nagios_timeperiod
-      Node
-      Notify
-      Package
-      Resources
-      Router
-      Schedule
-      Scheduled_task
-      Selboolean
-      Selmodule
-      Service
-      Ssh_authorized_key
-      Sshkey
-      Stage
-      Tidy
-      User
-      Vlan
-      Whit
-      Yumrepo
-      Zfs
-      Zone
-      Zpool
-    }.each { |name| create_resource_type_reference(name) }
+    BUILTIN_TYPE_NAMES.each { |name| create_resource_type_reference(name) }
+  end
+
+  def add_type(name, type)
+    set_entry(TypedName.new(:type, name.downcase), type)
+    type
   end
 
   def create_resource_type_reference(name)
-    typed_name = TypedName.new(:type, name.downcase)
-    type = Puppet::Pops::Types::TypeFactory.resource(name)
-    @loaded[ typed_name ] = NamedEntry.new(typed_name, type, __FILE__)
+    add_type(name, Types::TypeFactory.resource(name))
+  end
+
+  def register_aliases
+    aliases = BUILTIN_ALIASES.map { |name, string| add_type(name, Types::PTypeAliasType.new(name, Types::TypeFactory.type_reference(string), nil)) }
+    parser = Types::TypeParser.singleton
+    aliases.each { |type| type.resolve(parser, self) }
   end
 end
 end

@@ -214,11 +214,11 @@ class TypeCalculator
     when c == Class
       type = PType::DEFAULT
     when c == Array
-      # Assume array of data values
-      type = PArrayType::DATA
+      # Assume array of any
+      type = PArrayType::DEFAULT
     when c == Hash
-      # Assume hash with scalar keys and data values
-      type = PHashType::DATA
+      # Assume hash of any
+      type = PHashType::DEFAULT
    else
       type = PRuntimeType.new(:ruby, c.name)
     end
@@ -415,17 +415,25 @@ class TypeCalculator
       return PNumericType::DEFAULT
     end
 
+    if common_scalar_data?(t1, t2)
+      return PScalarDataType::DEFAULT
+    end
+
     if common_scalar?(t1, t2)
       return PScalarType::DEFAULT
     end
 
     if common_data?(t1,t2)
-      return PDataType::DEFAULT
+      return TypeFactory.data
     end
 
     # Meta types Type[Integer] + Type[String] => Type[Data]
     if t1.is_a?(PType) && t2.is_a?(PType)
       return PType.new(common_type(t1.type, t2.type))
+    end
+
+    if common_rich_data?(t1,t2)
+      return TypeFactory.rich_data
     end
 
     # If both are Runtime types
@@ -756,8 +764,18 @@ class TypeCalculator
 
   private
 
+  def common_rich_data?(t1, t2)
+    d = TypeFactory.rich_data
+    d.assignable?(t1) && d.assignable?(t2)
+  end
+
   def common_data?(t1, t2)
-    PDataType::DEFAULT.assignable?(t1) && PDataType::DEFAULT.assignable?(t2)
+    d = TypeFactory.data
+    d.assignable?(t1) && d.assignable?(t2)
+  end
+
+  def common_scalar_data?(t1, t2)
+    PScalarDataType::DEFAULT.assignable?(t1) && PScalarDataType::DEFAULT.assignable?(t2)
   end
 
   def common_scalar?(t1, t2)

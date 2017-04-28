@@ -252,11 +252,18 @@ module TypeFactory
     PPatternType.new(patterns)
   end
 
-  # Produces the Literal type
+  # Produces the Scalar type
   # @api public
   #
   def self.scalar
     PScalarType::DEFAULT
+  end
+
+  # Produces the ScalarData type
+  # @api public
+  #
+  def self.scalar_data
+    PScalarDataType::DEFAULT
   end
 
   # Produces a CallableType matching all callables
@@ -325,7 +332,14 @@ module TypeFactory
   # @api public
   #
   def self.data
-    PDataType::DEFAULT
+    @data_t ||= TypeParser.singleton.parse('Data', Loaders.static_loader)
+  end
+
+  # Produces the RichData type
+  # @api public
+  #
+  def self.rich_data
+    @rich_data_t ||= TypeParser.singleton.parse('RichData', Loaders.static_loader)
   end
 
   # Creates an instance of the Undef type
@@ -422,18 +436,32 @@ module TypeFactory
     PHashType.new(key_type, value_type, size_type)
   end
 
+  # Produces a type for Array[Any]
+  # @api public
+  #
+  def self.array_of_any
+    PArrayType::DEFAULT
+  end
+
   # Produces a type for Array[Data]
   # @api public
   #
   def self.array_of_data
-    PArrayType::DATA
+    @array_of_data_t = PArrayType.new(data)
   end
 
-  # Produces a type for Hash[Scalar, Data]
+  # Produces a type for Hash[Any,Any]
+  # @api public
+  #
+  def self.hash_of_any
+    PHashType::DEFAULT
+  end
+
+  # Produces a type for Hash[String,Data]
   # @api public
   #
   def self.hash_of_data
-    PHashType::DATA
+    @hash_of_data_t = PHashType.new(string, data)
   end
 
   # Produces a type for NotUndef[T]

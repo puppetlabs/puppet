@@ -19,6 +19,10 @@ class PMetaType < PAnyType
     super
   end
 
+  def instance?(o, guard = nil)
+    assignable?(TypeCalculator.infer(o), guard)
+  end
+
   # Called from the TypeParser once it has found a type using the Loader. The TypeParser will
   # interpret the contained expression and the resolved type is remembered. This method also
   # checks and remembers if the resolve type contains self recursion.

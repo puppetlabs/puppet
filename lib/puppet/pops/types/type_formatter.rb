@@ -155,7 +155,7 @@ class TypeFormatter
   def string_PScalarType(_)  ; @bld << 'Scalar'  ; end
 
   # @api private
-  def string_PDataType(_)    ; @bld << 'Data'    ; end
+  def string_PScalarDataType(_)  ; @bld << 'ScalarData'  ; end
 
   # @api private
   def string_PNumericType(_) ; @bld << 'Numeric' ; end
@@ -345,7 +345,7 @@ class TypeFormatter
     if t.has_empty_range?
       append_array('Array') { append_strings([0, 0]) }
     else
-      append_array('Array', t == PArrayType::DATA) do
+      append_array('Array', t == PArrayType::DEFAULT) do
         append_strings([t.element_type], true)
         append_elements(range_array_part(t.size_type), true)
         chomp_list
@@ -358,7 +358,7 @@ class TypeFormatter
     if t.has_empty_range?
       append_array('Hash') { append_strings([0, 0]) }
     else
-      append_array('Hash', t == PHashType::DATA) do
+      append_array('Hash', t == PHashType::DEFAULT) do
         append_strings([t.key_type, t.value_type], true)
         append_elements(range_array_part(t.size_type), true)
         chomp_list
@@ -483,7 +483,7 @@ class TypeFormatter
   def format_type_alias_type(t, expand)
     if @type_set.nil?
       @bld << t.name
-      if expand
+      if expand && !Loader::StaticLoader::BUILTIN_ALIASES.include?(t.name)
         @bld << ' = '
         append_string(t.resolved_type)
       end

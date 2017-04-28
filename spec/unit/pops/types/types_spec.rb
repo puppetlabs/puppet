@@ -439,7 +439,7 @@ describe 'Puppet Type System' do
       type Foo = Variant[Foo,String,Integer]
       assert_type(Foo, /x/)
       CODE
-      expect { eval_and_collect_notices(code) }.to raise_error(/expects a value of type String or Integer, got Regexp/)
+      expect { eval_and_collect_notices(code) }.to raise_error(/expects a Foo = Variant\[String, Integer\] value, got Regexp/)
     end
 
     it 'will handle a scalar correctly in combinations of nested aliased variants' do

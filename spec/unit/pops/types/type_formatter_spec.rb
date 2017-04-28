@@ -99,7 +99,7 @@ FORMATTED
       expect(s.string(f.boolean)).to eq('Boolean')
     end
 
-    it "should yield 'Data' for PDataType" do
+    it "should yield 'Data' for the Data type" do
       expect(s.string(f.data)).to eq('Data')
     end
 
@@ -150,8 +150,8 @@ FORMATTED
       expect(s.string(f.array_of(f.integer))).to eq('Array[Integer]')
     end
 
-    it "should yield 'Array' for PArrayType::DATA" do
-      expect(s.string(f.array_of_data)).to eq('Array')
+    it "should yield 'Array' for PArrayType::DEFAULT" do
+      expect(s.string(f.array_of_any)).to eq('Array')
     end
 
     it "should yield 'Array[0, 0]' for an empty array" do
@@ -260,8 +260,8 @@ FORMATTED
       expect(s.string(f.hash_of(f.string, f.string, f.range(2, :default)))).to eq('Hash[String, String, 2, default]')
     end
 
-    it "should yield 'Hash' for PHashType::DATA" do
-      expect(s.string(f.hash_of_data)).to eq('Hash')
+    it "should yield 'Hash' for PHashType::DEFAULT" do
+      expect(s.string(f.hash_of_any)).to eq('Hash')
     end
 
     it "should yield 'Class' for a PHostClassType" do
