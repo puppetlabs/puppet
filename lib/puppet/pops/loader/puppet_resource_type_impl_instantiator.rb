@@ -50,7 +50,7 @@ class PuppetResourceTypeImplInstantiator
     end
 
     unless statements.size == 1
-      raise ArgumentError, _("The code loaded from %{source_ref} must contain only the creation of resource type '%{typen_name}' - it has additional logic.") % { source_ref: source_ref, type_name: typed_name.name }
+      raise ArgumentError, _("The code loaded from %{source_ref} must contain only the creation of resource type '%{type_name}' - it has additional logic.") % { source_ref: source_ref, type_name: typed_name.name }
     end
 
     closure_scope = Puppet.lookup(:global_scope) { {} }
