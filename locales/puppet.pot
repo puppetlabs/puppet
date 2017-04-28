@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 4.10.0-569-gfb03782\n"
+"Project-Id-Version: Puppet automation framework 4.10.0-588-gec49bd7\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-04-27 12:54-0700\n"
-"PO-Revision-Date: 2017-04-27 12:54-0700\n"
+"POT-Creation-Date: 2017-04-28 16:28-0700\n"
+"PO-Revision-Date: 2017-04-28 16:28-0700\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -23,15 +23,15 @@ msgstr ""
 msgid "Puppet %{version} requires ruby 1.9.3 or greater."
 msgstr ""
 
-#: ../lib/puppet.rb:169
+#: ../lib/puppet.rb:177
 msgid "Support for ruby version %{version} is deprecated and will be removed in a future release. See https://docs.puppet.com/puppet/latest/system_requirements.html#ruby for a list of supported ruby versions."
 msgstr ""
 
-#: ../lib/puppet.rb:216
+#: ../lib/puppet.rb:224
 msgid "Creating %{name} via Puppet.newtype is deprecated and will be removed in a future release. Use Puppet::Type.newtype instead."
 msgstr ""
 
-#: ../lib/puppet.rb:235
+#: ../lib/puppet.rb:243
 msgid "The environmentpath setting cannot be empty or nil."
 msgstr ""
 
@@ -4583,7 +4583,7 @@ msgid "The code loaded from %{source_ref} does not create the resource type '%{t
 msgstr ""
 
 #: ../lib/puppet/pops/loader/puppet_resource_type_impl_instantiator.rb:53
-msgid "The code loaded from %{source_ref} must contain only the creation of resource type '%{typen_name}' - it has additional logic."
+msgid "The code loaded from %{source_ref} must contain only the creation of resource type '%{type_name}' - it has additional logic."
 msgstr ""
 
 #: ../lib/puppet/pops/loader/puppet_resource_type_impl_instantiator.rb:61
@@ -6340,7 +6340,7 @@ msgstr ""
 msgid "audit change: newly-recorded value %s"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1324
+#: ../lib/puppet/type.rb:1318
 msgid "The `audit` metaparameter is deprecated and will be ignored in a future release."
 msgstr ""
 
