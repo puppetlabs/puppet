@@ -85,6 +85,8 @@ class Puppet::Parser::Compiler
       end
     end
 
+    # A resource added as the result of evaluating a definition must have its defaults set
+    resource.add_defaults if @evaluating_generators
     @resources << resource
 
     # Note that this will fail if the resource is not unique.
@@ -552,22 +554,27 @@ class Puppet::Parser::Compiler
   # be defined resources.
   def evaluate_generators
     count = 0
-    loop do
-      done = true
+    @evaluating_generators = true
+    begin
+      loop do
+        done = true
 
-      Puppet::Util::Profiler.profile(_("Iterated (%{count}) on generators") % { count: count + 1 }, [:compiler, :iterate_on_generators]) do
-        # Call collections first, then definitions.
-        done = false if evaluate_collections
-        done = false if evaluate_definitions
+        Puppet::Util::Profiler.profile(_("Iterated (%{count}) on generators") % { count: count + 1 }, [:compiler, :iterate_on_generators]) do
+          # Call collections first, then definitions.
+          done = false if evaluate_collections
+          done = false if evaluate_definitions
+        end
+
+        break if done
+
+        count += 1
+
+        if count > 1000
+          raise Puppet::ParseError, _("Somehow looped more than 1000 times while evaluating host catalog")
+        end
       end
-
-      break if done
-
-      count += 1
-
-      if count > 1000
-        raise Puppet::ParseError, _("Somehow looped more than 1000 times while evaluating host catalog")
-      end
+    ensure
+      @evaluating_generators = false
     end
   end
 
