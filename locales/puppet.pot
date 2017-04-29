@@ -978,6 +978,10 @@ msgstr ""
 msgid "! Subcommand unavailable due to error. Check error logs."
 msgstr ""
 
+#: ../lib/puppet/generate/models/type/type.rb:46
+msgid "title patterns that use procs are not supported."
+msgstr ""
+
 #: ../lib/puppet/face/key.rb:7
 msgid "Create, save, and remove certificate keys."
 msgstr ""
