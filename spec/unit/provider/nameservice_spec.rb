@@ -3,6 +3,7 @@
 require 'spec_helper'
 require 'puppet/provider/nameservice'
 require 'puppet/etc'
+require 'puppet_spec/character_encoding'
 
 describe Puppet::Provider::NameService do
 
@@ -59,6 +60,36 @@ describe Puppet::Provider::NameService do
     resource.provider = provider
     resource
   end
+
+  # These values simulate what Ruby Etc would return from a host with the "same"
+  # user represented in different encodings on disk.
+  let(:utf_8_jose) { "Jos\u00E9"}
+  let(:utf_8_labeled_as_latin_1_jose) { utf_8_jose.dup.force_encoding(Encoding::ISO_8859_1) }
+  let(:valid_latin1_jose) { utf_8_jose.encode(Encoding::ISO_8859_1)}
+  let(:invalid_utf_8_jose) { valid_latin1_jose.dup.force_encoding(Encoding::UTF_8) }
+  let(:escaped_utf_8_jose) { "Jos\uFFFD".force_encoding(Encoding::UTF_8) }
+
+  let(:utf_8_mixed_users) {
+    [
+      Struct::Passwd.new('root', 'x', 0, 0),
+      Struct::Passwd.new('foo', 'x', 1000, 2000),
+      Struct::Passwd.new(utf_8_jose, utf_8_jose, 1001, 2000), # UTF-8 character
+      # In a UTF-8 environment, ruby will return strings labeled as UTF-8 even if they're not valid in UTF-8
+      Struct::Passwd.new(invalid_utf_8_jose, invalid_utf_8_jose, 1002, 2000),
+      nil
+    ]
+  }
+
+  let(:latin_1_mixed_users) {
+    [
+      # In a LATIN-1 environment, ruby will return *all* strings labeled as LATIN-1
+      Struct::Passwd.new('root'.force_encoding(Encoding::ISO_8859_1), 'x', 0, 0),
+      Struct::Passwd.new('foo'.force_encoding(Encoding::ISO_8859_1), 'x', 1000, 2000),
+      Struct::Passwd.new(utf_8_labeled_as_latin_1_jose, utf_8_labeled_as_latin_1_jose, 1002, 2000),
+      Struct::Passwd.new(valid_latin1_jose, valid_latin1_jose, 1001, 2000), # UTF-8 character
+      nil
+    ]
+  }
 
   describe "#options" do
     it "should add options for a valid property" do
@@ -121,12 +152,41 @@ describe Puppet::Provider::NameService do
   end
 
   describe "#listbyname" do
+    it "should be deprecated" do
+      Puppet.expects(:deprecation_warning).with(regexp_matches(/listbyname is deprecated/))
+      described_class.listbyname
+    end
+
     it "should return a list of users if resource_type is user" do
       described_class.resource_type = Puppet::Type.type(:user)
       Puppet::Etc.expects(:setpwent)
       Puppet::Etc.stubs(:getpwent).returns *users
       Puppet::Etc.expects(:endpwent)
       expect(described_class.listbyname).to eq(%w{root foo})
+    end
+
+    context "encoding handling" do
+      described_class.resource_type = Puppet::Type.type(:user)
+
+      # These two tests simulate an environment where there are two users with
+      # the same name on disk, but each name is stored on disk in a different
+      # encoding
+      it "should return names with invalid byte sequences replaced with '?'" do
+        Etc.stubs(:getpwent).returns *utf_8_mixed_users
+        expect(invalid_utf_8_jose).to_not be_valid_encoding
+        result = PuppetSpec::CharacterEncoding.with_external_encoding(Encoding::UTF_8) do
+          described_class.listbyname
+        end
+        expect(result).to eq(['root', 'foo', utf_8_jose, escaped_utf_8_jose])
+      end
+
+      it "should return names in their original encoding/bytes if they would not be valid UTF-8" do
+        Etc.stubs(:getpwent).returns *latin_1_mixed_users
+        result = PuppetSpec::CharacterEncoding.with_external_encoding(Encoding::ISO_8859_1) do
+          described_class.listbyname
+        end
+        expect(result).to eq(['root'.force_encoding(Encoding::UTF_8), 'foo'.force_encoding(Encoding::UTF_8), utf_8_jose, valid_latin1_jose])
+      end
     end
 
     it "should return a list of groups if resource_type is group", :unless => Puppet.features.microsoft_windows? do
@@ -149,9 +209,44 @@ describe Puppet::Provider::NameService do
   end
 
   describe "instances" do
-    it "should return a list of objects based on listbyname" do
-      described_class.expects(:listbyname).multiple_yields 'root', 'foo', 'nobody'
-      expect(described_class.instances.map(&:name)).to eq(%w{root foo nobody})
+    it "should return a list of objects in UTF-8 with any invalid characters replaced with '?'" do
+      # These two tests simulate an environment where there are two users with
+      # the same name on disk, but each name is stored on disk in a different
+      # encoding
+      Etc.stubs(:getpwent).returns(*utf_8_mixed_users)
+      result = PuppetSpec::CharacterEncoding.with_external_encoding(Encoding::UTF_8) do
+        described_class.instances
+      end
+      expect(result.map(&:name)).to eq(
+        [
+          'root'.force_encoding(Encoding::UTF_8), # started as UTF-8 on disk, returned unaltered as UTF-8
+          'foo'.force_encoding(Encoding::UTF_8), # started as UTF-8 on disk, returned unaltered as UTF-8
+          utf_8_jose, # started as UTF-8 on disk, returned unaltered as UTF-8
+          escaped_utf_8_jose # started as LATIN-1 on disk, but Etc returned as UTF-8 and we escaped invalid chars
+        ]
+      )
+    end
+
+    it "should have object names in their original encoding/bytes if they would not be valid UTF-8" do
+      Etc.stubs(:getpwent).returns(*latin_1_mixed_users)
+      result = PuppetSpec::CharacterEncoding.with_external_encoding(Encoding::ISO_8859_1) do
+        described_class.instances
+      end
+      expect(result.map(&:name)).to eq(
+        [
+          'root'.force_encoding(Encoding::UTF_8), # started as LATIN-1 on disk, we overrode to UTF-8
+          'foo'.force_encoding(Encoding::UTF_8), # started as LATIN-1 on disk, we overrode to UTF-8
+          utf_8_jose, # started as UTF-8 on disk, returned by Etc as LATIN-1, and we overrode to UTF-8
+          valid_latin1_jose # started as LATIN-1 on disk, returned by Etc as valid LATIN-1, and we leave as LATIN-1
+        ]
+      )
+    end
+
+    it "should pass the Puppet::Etc :canonical_name Struct member to the constructor" do
+      users = [ Struct::Passwd.new(invalid_utf_8_jose, invalid_utf_8_jose, 1002, 2000), nil ]
+      Etc.stubs(:getpwent).returns(*users)
+      described_class.expects(:new).with(:name => escaped_utf_8_jose, :canonical_name => invalid_utf_8_jose, :ensure => :present)
+      described_class.instances
     end
   end
 
@@ -197,6 +292,21 @@ describe Puppet::Provider::NameService do
       Puppet::Etc.expects(:send).with(:getfoonam, 'bob').raises(ArgumentError, "can't find bob")
       provider.expects(:info2hash).never
       expect(provider.getinfo(true)).to be_nil
+    end
+
+    # Nameservice instances track the original resource name on disk, before
+    # overriding to UTF-8, in @canonical_name for querying that state on disk
+    # again if needed
+    it "should use the instance's @canonical_name to query the system" do
+      provider_instance = described_class.new(:name => 'foo', :canonical_name => 'original_foo', :ensure => :present)
+      Puppet::Etc.expects(:send).with(:getfoonam, 'original_foo')
+      provider_instance.getinfo(true)
+    end
+
+    it "should use the instance's name instead of canonical_name if not supplied during instantiation" do
+      provider_instance = described_class.new(:name => 'foo', :ensure => :present)
+      Puppet::Etc.expects(:send).with(:getfoonam, 'foo')
+      provider_instance.getinfo(true)
     end
   end
 

@@ -33,10 +33,6 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
   # Set up example Etc Group structs with values representative of what we would
   # get back in these encodings
 
-  # For each struct we build, we duplicate the strings because our methods under
-  # test are destructive, and we want to ensure when we're comparing to
-  # "original" values they really are original. Otherwise the modified :let
-  # values above obscure our veracity.
   let(:utf_8_group_struct) do
     group = Etc::Group.new
     # In a UTF-8 environment, these values will come back as UTF-8, even if
@@ -49,7 +45,7 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
     group.name = euc_kr_as_utf_8
     # group passwd field is valid UTF-8
     group.passwd = mixed_utf_8
-    duplicate_struct_values(group)
+    group
   end
 
   let(:euc_kr_group_struct) do
@@ -62,7 +58,7 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
     group.mem = [euc_kr, root.force_encoding(Encoding::EUC_KR), mixed_utf_8_as_euc_kr]
     group.name = euc_kr
     group.passwd = mixed_utf_8_as_euc_kr
-    duplicate_struct_values(group)
+    group
   end
 
   let(:ascii_group_struct) do
@@ -74,7 +70,7 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
     group.mem = [euc_kr_as_binary, root.force_encoding(Encoding::ASCII), mixed_utf_8_as_binary]
     group.name = euc_kr_as_binary
     group.passwd = mixed_utf_8_as_binary
-    duplicate_struct_values(group)
+    group
   end
 
   let(:utf_8_user_struct) do
@@ -83,40 +79,36 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
     user.name = euc_kr_as_utf_8
     # group passwd field is valid UTF-8
     user.passwd = mixed_utf_8
-    duplicate_struct_values(user)
+    user
   end
 
   let(:euc_kr_user_struct) do
     user = Etc::Passwd.new
     user.name = euc_kr
     user.passwd = mixed_utf_8_as_euc_kr
-    duplicate_struct_values(user)
+    user
   end
 
   let(:ascii_user_struct) do
     user = Etc::Passwd.new
     user.name = euc_kr_as_binary
     user.passwd = mixed_utf_8_as_binary
-    duplicate_struct_values(user)
-  end
-
-  # Simple helper method that returns a copy of the passed struct with all
-  # values inside set to copies of themselves. Essentially an Etc::Struct deep
-  # copy.
-  def duplicate_struct_values(struct)
-    dup = struct.dup
-    struct.each_with_index do |value, index|
-      next if value.nil?
-      if value.is_a?(String)
-        dup[index] = value.dup
-      else
-        dup[index] = value.map! { |elem| elem.dup }
-      end
-    end
-    dup
+    user
   end
 
   shared_examples "methods that return an overridden group struct from Etc" do |params|
+
+    it "should return a new Struct object with corresponding canonical_ members" do
+      group = Etc::Group.new
+      Etc.expects(subject).with(*params).returns(group)
+      puppet_group = Puppet::Etc.send(subject, *params)
+
+      expect(puppet_group.members).to include(*group.members)
+      expect(puppet_group.members).to include(*group.members.map { |mem| "canonical_#{mem}".to_sym })
+      # Confirm we haven't just added the new members to the original struct object, ie this is really a new struct
+      expect(group.members.any? { |elem| elem.match(/^canonical_/) }).to be_falsey
+    end
+
     context "when Encoding.default_external is UTF-8" do
       before do
         Etc.expects(subject).with(*params).returns(utf_8_group_struct)
@@ -133,16 +125,24 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
         expect(overridden.mem[1]).to eq(root)
       end
 
-      it "should leave the invalid UTF-8 values in arrays unmodified"do
-        expect(overridden.mem[2]).to eq(euc_kr_as_utf_8)
+      it "should replace invalid characters with replacement characters in invalid UTF-8 values in arrays" do
+        expect(overridden.mem[2]).to eq("\uFFFD\uFFFD")
+      end
+
+      it "should keep an unmodified version of the invalid UTF-8 values in arrays in the corresponding canonical_ member" do
+        expect(overridden.canonical_mem[2]).to eq(euc_kr_as_utf_8)
       end
 
       it "should leave the valid UTF-8 values unmodified" do
         expect(overridden.passwd).to eq(mixed_utf_8)
       end
 
-      it "should leave the invalid UTF-8 values unmodified" do
-        expect(overridden.name).to eq(euc_kr_as_utf_8)
+      it "should replace invalid characters with '?' characters in invalid UTF-8 values" do
+        expect(overridden.name).to eq("\uFFFD\uFFFD")
+      end
+
+      it "should keep an unmodified version of the invalid UTF-8 values in the corresponding canonical_ member" do
+        expect(overridden.canonical_name).to eq(euc_kr_as_utf_8)
       end
     end
 
@@ -162,7 +162,7 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
         expect(overridden.mem[1]).to eq(root)
       end
 
-      it "should leave EUC_KR-labeled values that would not be valid UTF-8 in arrays unmodified" do
+      it "should leave valid EUC_KR-labeled values that would not be valid UTF-8 in arrays unmodified" do
         expect(overridden.mem[0]).to eq(euc_kr)
       end
 
@@ -170,7 +170,7 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
         expect(overridden.passwd).to eq(mixed_utf_8)
       end
 
-      it "should leave EUC_KR-labeled values that would not be valid UTF-8 unmodified" do
+      it "should leave valid EUC_KR-labeled values that would not be valid UTF-8 unmodified" do
         expect(overridden.name).to eq(euc_kr)
       end
     end
@@ -206,6 +206,18 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
   end
 
   shared_examples "methods that return an overridden user struct from Etc" do |params|
+
+    it "should return a new Struct object with corresponding canonical_ members" do
+      user = Etc::Passwd.new
+      Etc.expects(subject).with(*params).returns(user)
+      puppet_user = Puppet::Etc.send(subject, *params)
+
+      expect(puppet_user.members).to include(*user.members)
+      expect(puppet_user.members).to include(*user.members.map { |mem| "canonical_#{mem}".to_sym })
+      # Confirm we haven't just added the new members to the original struct object, ie this is really a new struct
+      expect(user.members.any? { |elem| elem.match(/^canonical_/)}).to be_falsey
+    end
+
     context "when Encoding.default_external is UTF-8" do
       before do
         Etc.expects(subject).with(*params).returns(utf_8_user_struct)
@@ -221,8 +233,12 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
         expect(overridden.passwd).to eq(mixed_utf_8)
       end
 
-      it "should leave the invalid UTF-8 values unmodified" do
-        expect(overridden.name).to eq(euc_kr_as_utf_8)
+      it "should replace invalid characters with unicode replacement characters in invalid UTF-8 values" do
+        expect(overridden.name).to eq("\uFFFD\uFFFD")
+      end
+
+      it "should keep an unmodified version of the invalid UTF-8 values in the corresponding canonical_ member" do
+        expect(overridden.canonical_name).to eq(euc_kr_as_utf_8)
       end
     end
 

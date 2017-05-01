@@ -11,6 +11,7 @@ end
   describe provider_class do
     before do
       @resource = stub("resource")
+      @resource.stubs(:[]).with(:name)
       @provider = provider_class.new(@resource)
     end
 
@@ -143,6 +144,7 @@ describe '(#4855) directoryservice group resource failure' do
 
   before :each do
     @resource = stub("resource")
+    @resource.stubs(:[]).with(:name)
     @provider = provider_class.new(@resource)
   end
 
