@@ -2,6 +2,7 @@
 require 'spec_helper'
 
 require 'puppet/application/resource'
+require 'puppet_spec/character_encoding'
 
 describe Puppet::Application::Resource do
   include PuppetSpec::Files
@@ -50,7 +51,7 @@ describe Puppet::Application::Resource do
       # provider is a parameter that should always be available
       @resource_app.extra_params = [ :provider ]
 
-      expect { @resource_app.main }.to have_printed /provider\s+=>/
+      expect { @resource_app.main }.to have_printed(/provider\s+=>/)
     end
   end
 
@@ -88,6 +89,7 @@ describe Puppet::Application::Resource do
 
       @res = stub_everything "resource"
       @res.stubs(:prune_parameters).returns(@res)
+      @res.stubs(:to_manifest).returns("resource")
       @report = stub_everything "report"
 
       @resource_app.stubs(:puts)
@@ -126,6 +128,25 @@ describe Puppet::Application::Resource do
       Puppet::Resource.expects(:new).with('type', 'name', :parameters => {'param' => 'temp'}).returns(@res)
 
       @resource_app.main
+    end
+  end
+
+  describe "when printing output" do
+    it "should ensure all values to be printed are in the external encoding" do
+      resources = [
+        Puppet::Type.type(:user).new(:name => "\u2603".force_encoding(Encoding::UTF_8)).to_resource,
+        Puppet::Type.type(:user).new(:name => "Jos\xE9".force_encoding(Encoding::ISO_8859_1)).to_resource
+      ]
+      Puppet::Resource.indirection.expects(:search).with('user/', {}).returns(resources)
+      @resource_app.command_line.stubs(:args).returns(['user'])
+
+      # All of our output should be in external encoding
+      @resource_app.expects(:puts).with { |args| expect(args.encoding).to eq(Encoding::ISO_8859_1) }
+
+      # This would raise an error if we weren't handling it
+      PuppetSpec::CharacterEncoding.with_external_encoding(Encoding::ISO_8859_1) do
+        expect { @resource_app.main }.not_to raise_error
+      end
     end
   end
 
