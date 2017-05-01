@@ -387,6 +387,34 @@ describe 'Lexer2' do
     expect(tokens_scanned_from("1 / /./")).to match_tokens2(:NUMBER, :DIV, :REGEX)
   end
 
+  it 'should lex regexp with escaped slash' do
+    scanned = tokens_scanned_from('/\//')
+    expect(scanned).to match_tokens2(:REGEX)
+    expect(scanned[0][1][:value]).to eql(Regexp.new('/'))
+  end
+
+  it 'should lex regexp with escaped backslash' do
+    scanned = tokens_scanned_from('/\\\\/')
+    expect(scanned).to match_tokens2(:REGEX)
+    expect(scanned[0][1][:value]).to eql(Regexp.new('\\\\'))
+  end
+
+  it 'should lex regexp with escaped backslash followed escaped slash ' do
+    scanned = tokens_scanned_from('/\\\\\\//')
+    expect(scanned).to match_tokens2(:REGEX)
+    expect(scanned[0][1][:value]).to eql(Regexp.new('\\\\/'))
+  end
+
+  it 'should lex regexp with escaped slash followed escaped backslash ' do
+    scanned = tokens_scanned_from('/\\/\\\\/')
+    expect(scanned).to match_tokens2(:REGEX)
+    expect(scanned[0][1][:value]).to eql(Regexp.new('/\\\\'))
+  end
+
+  it 'should not lex regexp with escaped ending slash' do
+    expect(tokens_scanned_from('/\\/')).to match_tokens2(:DIV, :OTHER, :DIV)
+  end
+
   it "should accept newline in a regular expression" do
     scanned = tokens_scanned_from("/\n.\n/")
     # Note that strange formatting here is important
