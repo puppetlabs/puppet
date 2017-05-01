@@ -16,7 +16,7 @@ require 'puppet/util/character_encoding'
 # ruby will label a string containing a four-byte characters such as "\u{2070E}"
 # as EUC_KR even though EUC_KR is a two-byte width encoding.
 #
-# On Ruby 2.0.0 and earlier, Etc will always return string values in BINARY,
+# On Ruby 2.0.x and earlier, Etc will always return string values in BINARY,
 # ignoring encoding altogether.
 #
 # For Puppet we specifically want UTF-8 as our input from the Etc module - which
@@ -25,12 +25,21 @@ require 'puppet/util/character_encoding'
 # disk as UTF-8. Etc is defined for Windows but the majority calls to it return
 # nil and Puppet does not use it.
 #
+# That being said, we have cause to retain the original, pre-override string
+# values. `puppet resource user`
+# (Puppet::Resource::User.indirection.search('User', {})) uses self.instances to
+# query for user(s) and then iterates over the results of that query again to
+# obtain state for each user. If we've overridden the original user name and not
+# retained the original, we've lost the ability to query the system for it
+# later. Hence the Puppet::Etc::Passwd and Puppet::Etc::Group structs.
+#
 # We only use Etc for retrieving existing property values from the system. For
 # setting property values, providers leverage system tools (i.e., `useradd`)
 #
 # @api private
 module Puppet::Etc
   class << self
+
     # Etc::getgrent returns an Etc::Group struct object
     # On first call opens /etc/group and returns parse of first entry. Each subsquent call
     # returns new struct the next entry or nil if EOF. Call ::endgrent to close file.
@@ -95,44 +104,52 @@ module Puppet::Etc
     end
 
     private
+
+    # @api private
+    # Defines Puppet::Etc::Passwd struct class. Contains all of the original
+    # member fields of Etc::Passwd, and additional "canonical_" versions of
+    # these fields as well. API compatible with Etc::Passwd. Because Struct.new
+    # defines a new Class object, we memozie to avoid superfluous extra Class
+    # instantiations.
+    def puppet_etc_passwd_class
+      @password_class ||= Struct.new(*Etc::Passwd.members, *Etc::Passwd.members.map { |member| "canonical_#{member}".to_sym })
+    end
+
+    # @api private
+    # Defines Puppet::Etc::Group struct class. Contains all of the original
+    # member fields of Etc::Group, and additional "canonical_" versions of these
+    # fields as well. API compatible with Etc::Group. Because Struct.new
+    # defines a new Class object, we memoize to avoid superfluous extra Class
+    # instantiations.
+    def puppet_etc_group_class
+      @group_class ||= Struct.new(*Etc::Group.members, *Etc::Group.members.map { |member| "canonical_#{member}".to_sym })
+    end
+
     # Utility method for overriding the String values of a struct returned by
     # the Etc module to UTF-8. Structs returned by the ruby Etc module contain
     # members with fields of type String, Integer, or Array of Strings, so we
     # handle these types. Otherwise ignore fields.
     #
-    # NOTE: If a string cannot be overidden to UTF-8 because it would be invalid
-    # in that encoding, this leaves the original string intact and unmodified in
-    # the Struct.
-    #
-    # Warning! This is a destructive method - the struct passed is modified!
-    #
     # @api private
     # @param [Etc::Passwd or Etc::Group struct]
-    # @return [Etc::Passwd or Etc::Group struct] the original struct with values
-    #   overidden to UTF-8 if possible, or the original value intact if not
+    # @return [Puppet::Etc::Passwd or Puppet::Etc::Group struct] a new struct
+    #   object with the original struct values overidden to UTF-8, if valid. For
+    #   invalid values originating in UTF-8, invalid characters are replaced with
+    #   '?'. For each member the struct also contains a corresponding
+    #   :canonical_<member name> struct member.
     def override_field_values_to_utf8(struct)
       return nil if struct.nil?
-      struct.each_with_index do |value, index|
+      new_struct = struct.is_a?(Etc::Passwd) ? puppet_etc_passwd_class.new : puppet_etc_group_class.new
+      struct.each_pair do |member, value|
         if value.is_a?(String)
-          struct[index] = Puppet::Util::CharacterEncoding.override_encoding_to_utf_8(value)
+          new_struct["canonical_#{member}".to_sym] = value.dup
+          new_struct[member] = Puppet::Util::CharacterEncoding.scrub(Puppet::Util::CharacterEncoding.override_encoding_to_utf_8(value))
         elsif value.is_a?(Array)
-          struct[index] = override_array_values_to_utf8(value)
+          new_struct["canonical_#{member}".to_sym] = value.inject([]) { |acc, elem| acc << elem.dup }
+          new_struct[member] = value.inject([]) { |acc, elem| acc << Puppet::Util::CharacterEncoding.scrub(Puppet::Util::CharacterEncoding.override_encoding_to_utf_8(elem)) }
         end
       end
-    end
-
-    # Helper method for ::override_field_values_to_utf8
-    #
-    # Warning! This is a destructive method - the array passed is modified!
-    #
-    # @api private
-    # @param [Array] object containing String values to override to UTF-8
-    # @return [Array] original Array with String values overidden to UTF-8 if
-    #   they would be valid in UTF-8 or original, unmodified values if not.
-    def override_array_values_to_utf8(string_array)
-      string_array.map do |elem|
-        Puppet::Util::CharacterEncoding.override_encoding_to_utf_8(elem)
-      end
+      new_struct
     end
   end
 end
