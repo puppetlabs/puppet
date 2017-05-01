@@ -260,6 +260,29 @@ describe Puppet::Parser::Resource do
 
       expect(@compiler.catalog).to be_edge(main, resource)
     end
+
+    it 'should assign default value to generated resource' do
+      Puppet[:code] = <<-PUPPET
+        define one($var) {
+          notify { "${var} says hello": }
+        }
+        
+        define two($x = $title) {
+          One {
+            var => $x
+          }
+          one { a: }
+          one { b: var => 'bill'}
+        }
+        two { 'bob': }
+      PUPPET
+
+      catalog = Puppet::Parser::Compiler.compile(Puppet::Node.new 'anyone')
+      edges = catalog.edges.map {|e| [e.source.ref, e.target.ref]}
+
+      expect(edges).to include(['One[a]', 'Notify[bob says hello]'])
+      expect(edges).to include(['One[b]', 'Notify[bill says hello]'])
+    end
   end
 
   describe 'when evaluating resource defaults' do
