@@ -11,6 +11,16 @@ module Adapters
     attr_accessor :documentation
   end
 
+  # An  empty alternative adapter is used when there is the need to
+  # attach a value to be used if the original is empty. This is used
+  # when a lazy evaluation takes place, and the decision how to handle an
+  # empty case must be delayed.
+  #
+  class EmptyAlternativeAdapter < Adaptable::Adapter
+    # @return [Object] The alternative value associated with an object
+    attr_accessor :empty_alternative
+  end
+
   # This class is for backward compatibility only. It's not really an adapter but it is
   # needed for the puppetlabs-strings gem
   # @deprecated

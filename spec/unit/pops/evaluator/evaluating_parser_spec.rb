@@ -1251,7 +1251,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       expect(scope.compiler).to have_relationship(['File', 'b', '~>', 'File', 'a'])
     end
 
-    it 'should cross the gap created by an intermediate empty set' do
+    it 'should close the gap created by an intermediate empty set' do
       source = "[File[a], File[aa]] -> [] ~> [File[b], File[bb]]"
       parser.evaluate_string(scope, source, __FILE__)
       expect(scope.compiler).to have_relationship(['File', 'a',  '~>', 'File', 'b'])
