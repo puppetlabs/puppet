@@ -72,5 +72,28 @@ module Puppet::Util::CharacterEncoding
         return string_copy.force_encoding(original_encoding)
       end
     end
+
+    REPLACEMENT_CHAR_MAP = {
+      Encoding::UTF_8 => "\uFFFD",
+      Encoding::UTF_16LE => "\xFD\xFF".force_encoding(Encoding::UTF_16LE),
+    }
+
+    # Given a string, return a copy of that string with any invalid byte
+    # sequences in its current encoding replaced with "?". We use "?" to make
+    # sure our output is consistent across ruby versions and encodings, and
+    # because calling scrub on a non-UTF8 string with the unicode replacement
+    # character "\uFFFD" results in an Encoding::CompatibilityError.
+    # @param string a string to remove invalid byte sequences from
+    # @return a copy of string invalid byte sequences replaced by "?" character
+    # @note does not modify encoding, but new string will have different bytes
+    #   from original. Only needed for ruby 1.9.3 support.
+    def scrub(string)
+      if string.respond_to?(:scrub)
+        string.scrub
+      else
+        replacement_character = REPLACEMENT_CHAR_MAP[string.encoding] || '?'
+        string.chars.map { |c| c.valid_encoding? ? c : replacement_character }.join
+      end
+    end
   end
 end
