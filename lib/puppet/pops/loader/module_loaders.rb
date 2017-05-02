@@ -21,8 +21,6 @@ module Loader
 # @api private
 #
 module ModuleLoaders
-  ENVIRONMENT = 'environment'.freeze
-
   def self.system_loader_from(parent_loader, loaders)
     # Puppet system may be installed in a fixed location via RPM, installed as a Gem, via source etc.
     # The only way to find this across the different ways puppet can be installed is

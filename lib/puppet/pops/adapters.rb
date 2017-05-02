@@ -145,8 +145,10 @@ module Adapters
     #
     # The method returns `nil` when no module could be found.
     #
-    # @param scope
-    # @param instance
+    # @param environment [Puppet::Node::Environment] the current environment
+    # @param instance [Model::PopsObject] the AST for the code
+    # @param file [String] the path to the file for the code or `nil`
+    # @return [String] the name of the loader associated with the source
     # @api private
     def self.loader_name_by_source(environment, instance, file)
       file = find_file(instance) if file.nil?
