@@ -171,14 +171,8 @@ class Loaders
   # @api private
   def find_loader(module_name)
     if module_name.nil? || EMPTY_STRING == module_name
-      # TODO : Later when fdefinition can be private, a decision is needed regarding what that means.
-      #        A private environment loader could be used for logic outside of modules, then only that logic
-      #        would see the definition.
-      #
-      # Use the private loader, this definition may see the environment's dependencies (currently, all modules)
-      loader = private_environment_loader()
-      raise Puppet::ParseError, 'Internal Error: did not find public loader' if loader.nil?
-      loader
+      # Use the public environment loader
+      public_environment_loader
     else
       # TODO : Later check if definition is private, and then add it to private_loader_for_module
       #
