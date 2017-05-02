@@ -510,8 +510,8 @@ describe Puppet::Parser::Compiler do
             mode => '0755',
           }
         MANIFEST
-        catalog = compile_to_catalog(base_manifest + relationship_code)
 
+        catalog = compile_to_catalog(base_manifest + relationship_code)
         resources = catalog.resources.select { |res| res.type == 'File' }
 
         actual_relationships, actual_subscriptions = [:before, :notify].map do |relation|
@@ -613,6 +613,34 @@ describe Puppet::Parser::Compiler do
         assert_creates_relationships("File[a] -> File[b] ~> File[c] <- File[d] <~ File[e]",
           :relationships => [['a', 'b'], ['d', 'c']],
           :subscriptions => [['b', 'c'], ['e', 'd']])
+      end
+
+      it 'should close the gap created by an intermediate empty set produced by collection' do
+        source = "file { [aa, bb]: } [File[a], File[aa]] -> Notify<| tag == 'na' |> ~> [File[b], File[bb]]"
+        assert_creates_relationships(source,
+          :relationships => [ ],
+          :subscriptions => [['a', 'b'],['aa', 'b'],['a', 'bb'], ['aa', 'bb']])
+      end
+
+      it 'should close the gap created by empty set followed by empty collection' do
+        source = "file { [aa, bb]: } [File[a], File[aa]] -> [] -> Notify<| tag == 'na' |> ~> [File[b], File[bb]]"
+        assert_creates_relationships(source,
+          :relationships => [ ],
+          :subscriptions => [['a', 'b'],['aa', 'b'],['a', 'bb'], ['aa', 'bb']])
+      end
+
+      it 'should close the gap created by empty collection surrounded by empty sets' do
+        source = "file { [aa, bb]: } [File[a], File[aa]] -> [] -> Notify<| tag == 'na' |> -> [] ~> [File[b], File[bb]]"
+        assert_creates_relationships(source,
+          :relationships => [ ],
+          :subscriptions => [['a', 'b'],['aa', 'b'],['a', 'bb'], ['aa', 'bb']])
+      end
+
+      it 'should close the gap created by several intermediate empty sets produced by collection' do
+        source = "file { [aa, bb]: } [File[a], File[aa]] -> Notify<| tag == 'na' |> -> Notify<| tag == 'na' |> ~> [File[b], File[bb]]"
+        assert_creates_relationships(source,
+          :relationships => [ ],
+          :subscriptions => [['a', 'b'],['aa', 'b'],['a', 'bb'], ['aa', 'bb']])
       end
     end
 
