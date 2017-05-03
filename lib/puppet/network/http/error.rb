@@ -52,6 +52,13 @@ module Puppet::Network::HTTP::Error
     end
   end
 
+  class HTTPUnsupportedMediaTypeError < HTTPError
+    CODE = 415
+    def initialize(message, issue_kind = Issues::RUNTIME_ERROR)
+      super(_("Unsupported Media Type: ") + message, CODE, issue_kind)
+    end
+  end
+
   class HTTPServerError < HTTPError
     CODE = 500
 
