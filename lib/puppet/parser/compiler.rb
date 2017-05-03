@@ -169,8 +169,6 @@ class Puppet::Parser::Compiler
       # New capability mappings may have been defined when the site was evaluated
       Puppet::Util::Profiler.profile(_("Compile: Evaluated site capability mappings"), [:compiler, :evaluate_capability_mappings]) { evaluate_capability_mappings }
 
-      Puppet::Util::Profiler.profile(_("Compile: Evaluated resource defaults"), [:compiler, :evaluate_resource_defaults]) { evaluate_resource_defaults }
-
       Puppet::Util::Profiler.profile(_("Compile: Evaluated generators"), [:compiler, :evaluate_generators]) { evaluate_generators }
 
       Puppet::Util::Profiler.profile(_("Compile: Validate Catalog pre-finish"), [:compiler, :validate_pre_finish]) do
@@ -610,10 +608,6 @@ class Puppet::Parser::Compiler
     if !remaining.empty?
       raise Puppet::ParseError, _("Failed to realize virtual resources %{resources}") % { resources: remaining.join(', ') }
     end
-  end
-
-  def evaluate_resource_defaults
-    resources.each { |resource| resource.add_defaults }
   end
 
   # Make sure all of our resources and such have done any last work
