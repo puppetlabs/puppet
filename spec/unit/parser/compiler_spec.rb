@@ -53,9 +53,6 @@ class CompilerTestResource
   def resource_type
     self.class
   end
-
-  def add_defaults
-  end
 end
 
 describe Puppet::Parser::Compiler do

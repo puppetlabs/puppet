@@ -67,8 +67,6 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
 
         Puppet::Util::Profiler.profile(_("Env Compile: Evaluated application instances"), [:compiler, :evaluate_applications]) { evaluate_applications }
 
-        Puppet::Util::Profiler.profile(_("Env Compile: Evaluated resource defaults"), [:compiler, :evaluate_resource_defaults]) { evaluate_resource_defaults }
-
         Puppet::Util::Profiler.profile(_("Env Compile: Prune"), [:compiler, :prune_catalog]) { prune_catalog }
 
         Puppet::Util::Profiler.profile(_("Env Compile: Validate Catalog pre-finish"), [:compiler, :validate_pre_finish]) do
@@ -129,8 +127,6 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
   end
 
   def add_resource(scope, resource)
-    # A resource added as the result of evaluating a generator (collector or definition) must have its defaults set
-    resource.add_defaults if @evaluating_generators
     @resources << resource
     @catalog.add_resource(resource)
 
