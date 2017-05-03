@@ -350,13 +350,14 @@ module Runtime3Support
       end
       t = Runtime3ResourceSupport.find_resource_type(scope, r.type_name)
       resource = Puppet::Parser::Resource.new(
-        t, r.title,
-        :parameters => evaluated_parameters,
-        :file => file,
-        :line => line,
-        # WTF is this? Which source is this? The file? The name of the context ?
-        :source => scope.source,
-        :scope => scope
+        t, r.title, {
+          :parameters => evaluated_parameters,
+          :file => file,
+          :line => line,
+          # WTF is this? Which source is this? The file? The name of the context ?
+          :source => scope.source,
+          :scope => scope
+        }, false # defaults should not override
       )
 
       scope.compiler.add_override(resource)

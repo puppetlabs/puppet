@@ -51,6 +51,7 @@ describe Puppet::Parser::Resource do
   it "should get its environment from its scope" do
     scope = stub 'scope', :source => stub("source"), :namespaces => nil
     scope.expects(:environment).returns("foo").at_least_once
+    scope.expects(:lookupdefaults).returns({})
     expect(Puppet::Parser::Resource.new("file", "whatever", :scope => scope).environment).to eq("foo")
   end
 
@@ -283,6 +284,70 @@ describe Puppet::Parser::Resource do
       expect(edges).to include(['One[a]', 'Notify[bob says hello]'])
       expect(edges).to include(['One[b]', 'Notify[bill says hello]'])
     end
+
+    it 'should override default values with new defaults' do
+      Puppet[:code] = <<-PUPPET.unindent
+        class foo {
+          File {
+            ensure => file,
+            mode   => '644',
+            owner  => 'root',
+            group  => 'root',
+          }
+        
+          file { '/tmp/foo':
+            ensure  => directory
+          }
+        
+          File['/tmp/foo'] { mode => '0755' }
+        }
+        include foo
+        PUPPET
+
+      catalog = Puppet::Parser::Compiler.compile(Puppet::Node.new 'anyone')
+      file = catalog.resource('File[/tmp/foo]')
+      expect(file).to be_a(Puppet::Resource)
+      expect(file['mode']).to eql('0755')
+    end
+  end
+
+  describe 'when evaluating resource defaults' do
+    let(:resource) { Puppet::Parser::Resource.new('file', 'whatever', :scope => @scope, :source => @source) }
+
+    it 'should add all defaults available from the scope' do
+      @scope.expects(:lookupdefaults).with('File').returns(:owner => param(:owner, 'default', @source))
+
+      expect(resource[:owner]).to eq('default')
+    end
+
+    it 'should not replace existing parameters with defaults' do
+      @scope.expects(:lookupdefaults).with('File').returns(:owner => param(:owner, 'replaced', @source))
+      r = Puppet::Parser::Resource.new('file', 'whatever', :scope => @scope, :source => @source, :parameters => [ param(:owner, 'oldvalue', @source) ])
+      expect(r[:owner]).to eq('oldvalue')
+    end
+
+    it 'should override defaults with new parameters' do
+      @scope.expects(:lookupdefaults).with('File').returns(:owner => param(:owner, 'replaced', @source))
+
+      resource.set_parameter(:owner, 'newvalue')
+      expect(resource[:owner]).to eq('newvalue')
+    end
+
+    it 'should add a copy of each default, rather than the actual default parameter instance' do
+      newparam = param(:owner, 'default', @source)
+      other = newparam.dup
+      other.value = "other"
+      newparam.expects(:dup).returns(other)
+      @scope.expects(:lookupdefaults).with('File').returns(:owner => newparam)
+
+      expect(resource[:owner]).to eq('other')
+    end
+
+    it "should tag with value of default parameter named 'tag'" do
+      @scope.expects(:lookupdefaults).with('File').returns(:tag => param(:tag, 'the_tag', @source))
+
+      expect(resource.tags).to include('the_tag')
+    end
   end
 
   describe "when finishing" do
@@ -292,34 +357,8 @@ describe Puppet::Parser::Resource do
 
     it "should do nothing if it has already been finished" do
       @resource.finish
-      @resource.expects(:add_defaults).never
+      @resource.expects(:add_scope_tags).never
       @resource.finish
-    end
-
-    it "should add all defaults available from the scope" do
-      @resource.scope.expects(:lookupdefaults).with(@resource.type).returns(:owner => param(:owner, "default", @resource.source))
-      @resource.finish
-
-      expect(@resource[:owner]).to eq("default")
-    end
-
-    it "should not replace existing parameters with defaults" do
-      @resource.set_parameter :owner, "oldvalue"
-      @resource.scope.expects(:lookupdefaults).with(@resource.type).returns(:owner => :replaced)
-      @resource.finish
-
-      expect(@resource[:owner]).to eq("oldvalue")
-    end
-
-    it "should add a copy of each default, rather than the actual default parameter instance" do
-      newparam = param(:owner, "default", @resource.source)
-      other = newparam.dup
-      other.value = "other"
-      newparam.expects(:dup).returns(other)
-      @resource.scope.expects(:lookupdefaults).with(@resource.type).returns(:owner => newparam)
-      @resource.finish
-
-      expect(@resource[:owner]).to eq("other")
     end
 
     it "converts parameters with Sensitive values to unwrapped values and metadata" do

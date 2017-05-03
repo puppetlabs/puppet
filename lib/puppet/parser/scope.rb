@@ -460,6 +460,17 @@ class Puppet::Parser::Scope
     values
   end
 
+  # Check if the given value is a known default for the given type
+  #
+  def is_default?(type, key, value)
+    defaults_for_type = @defaults[type]
+    unless defaults_for_type.nil?
+      default_param = defaults_for_type[key]
+      return true if !default_param.nil? && value == default_param.value
+    end
+    !parent.nil? && parent.is_default?(type, key, value)
+  end
+
   # Look up a defined type.
   def lookuptype(name)
     # This happens a lot, avoid making a call to make a call

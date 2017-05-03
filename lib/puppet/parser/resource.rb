@@ -99,7 +99,6 @@ class Puppet::Parser::Resource < Puppet::Resource
   #
   def finish_evaluation
     return if @evaluation_finished
-    add_defaults
     add_scope_tags
     @evaluation_finished = true
   end
@@ -124,12 +123,24 @@ class Puppet::Parser::Resource < Puppet::Resource
     @finished
   end
 
-  def initialize(type, title, attributes)
+  def initialize(type, title, attributes, with_defaults = true)
     raise ArgumentError, _('Resources require a hash as last argument') unless attributes.is_a? Hash
     raise ArgumentError, _('Resources require a scope') unless attributes[:scope]
-    super
+    super(type, title, attributes)
 
     @source ||= scope.source
+
+    if with_defaults
+      scope.lookupdefaults(self.type).each_pair do |name, param|
+        unless @parameters.include?(name)
+          self.debug "Adding default for #{name}"
+
+          param = param.dup
+          @parameters[name] = param
+          tag(*param.value) if param.name == :tag
+        end
+      end
+    end
   end
 
   # Is this resource modeling an isomorphic resource type?
@@ -301,17 +312,6 @@ class Puppet::Parser::Resource < Puppet::Resource
 
   private
 
-  # Add default values from our definition.
-  def add_defaults
-    scope.lookupdefaults(self.type).each do |name, param|
-      unless @parameters.include?(name)
-        self.debug "Adding default for #{name}"
-
-        @parameters[name] = param.dup
-      end
-    end
-  end
-
   def add_scope_tags
     scope_resource = scope.resource
     unless scope_resource.nil? || scope_resource.equal?(self)
@@ -335,7 +335,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     (set_parameter(param) and return) unless current = @parameters[param.name]
 
     # The parameter is already set.  Fail if they're not allowed to override it.
-    unless param.source.child_of?(current.source)
+    unless param.source.child_of?(current.source) || param.source.equal?(current.source) && scope.is_default?(type, param.name, current.value)
       msg = "Parameter '#{param.name}' is already set on #{self}"
       msg += " by #{current.source}" if current.source.to_s != ""
       if current.file or current.line
