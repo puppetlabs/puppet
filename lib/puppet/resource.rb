@@ -168,10 +168,15 @@ class Puppet::Resource
   end
 
   def self.value_to_pson_data(value)
-    if value.is_a? Array
+    case value
+    when Array
       value.map{|v| value_to_pson_data(v) }
-    elsif value.is_a? Puppet::Resource
+    when Hash
+      Hash[ value.map {|k, v| [value_to_pson_data(k), value_to_pson_data(v)] } ]
+    when Puppet::Resource
       value.to_s
+    when :undef
+      nil
     else
       value
     end
