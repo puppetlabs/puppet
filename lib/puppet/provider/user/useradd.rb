@@ -96,7 +96,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   has_features :manages_homedir, :allows_duplicates, :manages_expiry
   has_features :system_users unless %w{HP-UX Solaris}.include? Facter.value(:operatingsystem)
 
-  has_features :manages_passwords, :manages_password_age if Puppet.features.libshadow?
+  has_features :manages_passwords, :manages_password_age
   has_features :manages_shell
 
   def check_allow_dup
@@ -207,6 +207,8 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
           method = self.class.option(shadow_property, :method)
           return unmunge(shadow_property, ent.send(method))
         end
+      else
+        self.fail Puppet::Error, "'#{shadow_property}' is set but libshadow is not available"
       end
       :absent
     end

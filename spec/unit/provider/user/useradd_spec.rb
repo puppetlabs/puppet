@@ -349,10 +349,10 @@ describe Puppet::Type.type(:user).provider(:useradd) do
         resource # just to link the resource to the provider
       end
 
-      it "should return absent if libshadow feature is not present" do
+      it "should raise exception if libshadow feature is not present" do
         Puppet.features.stubs(:libshadow?).returns false
         # Shadow::Passwd.expects(:getspnam).never # if we really don't have libshadow we dont have Shadow::Passwd either
-        expect(provider.send(property)).to eq(:absent)
+        expect { provider.send(property) }.to raise_error(Puppet::Error, "'#{property}' is set but libshadow is not available")
       end
 
       it "should return absent if user cannot be found", :if => Puppet.features.libshadow? do
@@ -372,9 +372,9 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       resource # just to link the resource to the provider
     end
 
-    it "should return absent if libshadow feature is not present" do
+    it "should raise exception if libshadow feature is not present" do
       Puppet.features.stubs(:libshadow?).returns false
-      expect(provider.expiry).to eq(:absent)
+      expect { provider.expiry }.to raise_error(Puppet::Error, /libshadow is not available/)
     end
 
     it "should return absent if user cannot be found", :if => Puppet.features.libshadow? do
