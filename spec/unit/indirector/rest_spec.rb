@@ -17,8 +17,7 @@ shared_examples_for "a REST terminus method" do |terminus_method|
       let(:body) do
         JSON.generate({
           :issue_kind => 'server-error',
-          :message    => message,
-          :stacktrace => ['worst/stack/trace/ever.rb:4']
+          :message    => message
         })
       end
       let(:response) { mock_response(code, body, 'application/json') }
