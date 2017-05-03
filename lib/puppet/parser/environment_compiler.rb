@@ -129,8 +129,6 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
   end
 
   def add_resource(scope, resource)
-    # A resource added as the result of evaluating a generator (collector or definition) must have its defaults set
-    resource.add_defaults if @evaluating_generators
     @resources << resource
     @catalog.add_resource(resource)
 
