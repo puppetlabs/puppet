@@ -25,9 +25,12 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       # in Network::HTTP::Handler will automagically deserialize the value.
       if text_facts.is_a?(Puppet::Node::Facts)
         facts = text_facts
-      else
+      elsif format == 'pson'
         # We unescape here because the corresponding code in Puppet::Configurer::FactHandler escapes
+        # PSON is deprecated, but continue to accept from older agents
         facts = Puppet::Node::Facts.convert_from(format, CGI.unescape(text_facts))
+      else
+        facts = Puppet::Node::Facts.convert_from('json', text_facts)
       end
 
       unless facts.name == request.key
