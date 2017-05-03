@@ -285,7 +285,7 @@ describe Puppet::Parser::Resource do
       expect(edges).to include(['One[b]', 'Notify[bill says hello]'])
     end
 
-    it 'should override default values with new defaults' do
+    it 'should override default value with new value' do
       Puppet[:code] = <<-PUPPET.unindent
         class foo {
           File {
