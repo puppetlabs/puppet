@@ -171,7 +171,9 @@ class Puppet::Resource
     if value.is_a?(Array)
       value.map{|v| value_to_pson_data(v) }
     elsif value.is_a?(Hash)
-      Hash[ value.map {|k, v| [value_to_pson_data(k), value_to_pson_data(v)] } ]
+      result = {}
+      value.each_pair { |k, v| result[value_to_pson_data(k)] = value_to_pson_data(v) }
+      result
     elsif value.is_a?(Puppet::Resource)
       value.to_s
     elsif value == :undef
