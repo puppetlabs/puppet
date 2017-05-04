@@ -9,11 +9,9 @@ class Puppet::Network::Format
   attr_accessor :intern_method, :render_method, :intern_multiple_method, :render_multiple_method, :weight, :required_methods, :extension
 
   def init_attribute(name, default)
-    if value = @options[name]
-      @options.delete(name)
-    else
-      value = default
-    end
+    value = @options.delete(name)
+    value = default if value.nil?
+
     self.send(name.to_s + "=", value)
   end
 
