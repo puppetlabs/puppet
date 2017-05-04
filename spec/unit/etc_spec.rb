@@ -33,10 +33,6 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
   # Set up example Etc Group structs with values representative of what we would
   # get back in these encodings
 
-  # For each struct we build, we duplicate the strings because our methods under
-  # test are destructive, and we want to ensure when we're comparing to
-  # "original" values they really are original. Otherwise the modified :let
-  # values above obscure our veracity.
   let(:utf_8_group_struct) do
     group = Etc::Group.new
     # In a UTF-8 environment, these values will come back as UTF-8, even if
@@ -44,12 +40,12 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
     # valid or invalid UTF-8 strings.
 
     # Group member contains a mix of valid and invalid UTF-8-labeled strings
-    group.mem = [mixed_utf_8, root.force_encoding(Encoding::UTF_8), euc_kr_as_utf_8]
+    group.mem = [mixed_utf_8, root.dup.force_encoding(Encoding::UTF_8), euc_kr_as_utf_8]
     # group name contains same EUC_KR bytes labeled as UTF-8
     group.name = euc_kr_as_utf_8
     # group passwd field is valid UTF-8
     group.passwd = mixed_utf_8
-    duplicate_struct_values(group)
+    group
   end
 
   let(:euc_kr_group_struct) do
@@ -59,10 +55,10 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
     # are invalid in UTF-8, we expect the string to be kept intact, unmodified,
     # as we can't transcode it.
     group = Etc::Group.new
-    group.mem = [euc_kr, root.force_encoding(Encoding::EUC_KR), mixed_utf_8_as_euc_kr]
+    group.mem = [euc_kr, root.dup.force_encoding(Encoding::EUC_KR), mixed_utf_8_as_euc_kr]
     group.name = euc_kr
     group.passwd = mixed_utf_8_as_euc_kr
-    duplicate_struct_values(group)
+    group
   end
 
   let(:ascii_group_struct) do
@@ -71,10 +67,10 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
     # point will be returned as BINARY. In either case we override the encoding
     # to UTF-8 if that would be valid.
     group = Etc::Group.new
-    group.mem = [euc_kr_as_binary, root.force_encoding(Encoding::ASCII), mixed_utf_8_as_binary]
+    group.mem = [euc_kr_as_binary, root.dup.force_encoding(Encoding::ASCII), mixed_utf_8_as_binary]
     group.name = euc_kr_as_binary
     group.passwd = mixed_utf_8_as_binary
-    duplicate_struct_values(group)
+    group
   end
 
   let(:utf_8_user_struct) do
@@ -83,37 +79,21 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
     user.name = euc_kr_as_utf_8
     # group passwd field is valid UTF-8
     user.passwd = mixed_utf_8
-    duplicate_struct_values(user)
+    user
   end
 
   let(:euc_kr_user_struct) do
     user = Etc::Passwd.new
     user.name = euc_kr
     user.passwd = mixed_utf_8_as_euc_kr
-    duplicate_struct_values(user)
+    user
   end
 
   let(:ascii_user_struct) do
     user = Etc::Passwd.new
     user.name = euc_kr_as_binary
     user.passwd = mixed_utf_8_as_binary
-    duplicate_struct_values(user)
-  end
-
-  # Simple helper method that returns a copy of the passed struct with all
-  # values inside set to copies of themselves. Essentially an Etc::Struct deep
-  # copy.
-  def duplicate_struct_values(struct)
-    dup = struct.dup
-    struct.each_with_index do |value, index|
-      next if value.nil?
-      if value.is_a?(String)
-        dup[index] = value.dup
-      else
-        dup[index] = value.map! { |elem| elem.dup }
-      end
-    end
-    dup
+    user
   end
 
   shared_examples "methods that return an overridden group struct from Etc" do |params|
@@ -191,7 +171,7 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
       end
 
       it "should set the encoding to UTF-8 on binary values in arrays that would be valid UTF-8" do
-        expect(overridden.mem[1]).to eq(root.force_encoding(Encoding::UTF_8))
+        expect(overridden.mem[1]).to eq(root.dup.force_encoding(Encoding::UTF_8))
         expect(overridden.mem[2]).to eq(mixed_utf_8)
       end
 

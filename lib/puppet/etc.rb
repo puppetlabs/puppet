@@ -35,7 +35,7 @@ module Puppet::Etc
     # On first call opens /etc/group and returns parse of first entry. Each subsquent call
     # returns new struct the next entry or nil if EOF. Call ::endgrent to close file.
     def getgrent
-      override_field_values_to_utf8!(::Etc.getgrent)
+      override_field_values_to_utf8(::Etc.getgrent)
     end
 
     # closes handle to /etc/group file
@@ -52,7 +52,7 @@ module Puppet::Etc
     # On first call opens /etc/passwd and returns parse of first entry. Each subsquent call
     # returns new struct for the next entry or nil if EOF. Call ::endgrent to close file.
     def getpwent
-      override_field_values_to_utf8!(::Etc.getpwent)
+      override_field_values_to_utf8(::Etc.getpwent)
     end
 
     # closes handle to /etc/passwd file
@@ -70,28 +70,28 @@ module Puppet::Etc
     # returns an Etc::Passwd struct corresponding to the entry or raises
     # ArgumentError if none
     def getpwnam(username)
-      override_field_values_to_utf8!(::Etc.getpwnam(username))
+      override_field_values_to_utf8(::Etc.getpwnam(username))
     end
 
     # Etc::getgrnam searches /etc/group file for an entry corresponding to groupname.
     # returns an Etc::Group struct corresponding to the entry or raises
     # ArgumentError if none
     def getgrnam(groupname)
-      override_field_values_to_utf8!(::Etc.getgrnam(groupname))
+      override_field_values_to_utf8(::Etc.getgrnam(groupname))
     end
 
     # Etc::getgrid searches /etc/group file for an entry corresponding to id.
     # returns an Etc::Group struct corresponding to the entry or raises
     # ArgumentError if none
     def getgrgid(id)
-      override_field_values_to_utf8!(::Etc.getgrgid(id))
+      override_field_values_to_utf8(::Etc.getgrgid(id))
     end
 
     # Etc::getpwuid searches /etc/passwd file for an entry corresponding to id.
     # returns an Etc::Passwd struct corresponding to the entry or raises
     # ArgumentError if none
     def getpwuid(id)
-      override_field_values_to_utf8!(::Etc.getpwuid(id))
+      override_field_values_to_utf8(::Etc.getpwuid(id))
     end
 
     private
@@ -110,18 +110,18 @@ module Puppet::Etc
     # @param [Etc::Passwd or Etc::Group struct]
     # @return [Etc::Passwd or Etc::Group struct] the original struct with values
     #   overidden to UTF-8 if possible, or the original value intact if not
-    def override_field_values_to_utf8!(struct)
+    def override_field_values_to_utf8(struct)
       return nil if struct.nil?
       struct.each_with_index do |value, index|
         if value.is_a?(String)
-          Puppet::Util::CharacterEncoding.override_encoding_to_utf_8!(value) if value.encoding != Encoding::UTF_8
+          struct[index] = Puppet::Util::CharacterEncoding.override_encoding_to_utf_8(value)
         elsif value.is_a?(Array)
-          override_array_values_to_utf8!(value)
+          struct[index] = override_array_values_to_utf8(value)
         end
       end
     end
 
-    # Helper method for ::override_field_values_to_utf8!
+    # Helper method for ::override_field_values_to_utf8
     #
     # Warning! This is a destructive method - the array passed is modified!
     #
@@ -129,9 +129,9 @@ module Puppet::Etc
     # @param [Array] object containing String values to override to UTF-8
     # @return [Array] original Array with String values overidden to UTF-8 if
     #   they would be valid in UTF-8 or original, unmodified values if not.
-    def override_array_values_to_utf8!(string_array)
-      string_array.each do |elem|
-        Puppet::Util::CharacterEncoding.override_encoding_to_utf_8!(elem)
+    def override_array_values_to_utf8(string_array)
+      string_array.map do |elem|
+        Puppet::Util::CharacterEncoding.override_encoding_to_utf_8(elem)
       end
     end
   end
