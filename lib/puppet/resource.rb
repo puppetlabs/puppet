@@ -176,7 +176,7 @@ class Puppet::Resource
       result
     elsif value.is_a?(Puppet::Resource)
       value.to_s
-    elsif value == :undef
+    elsif value.is_a?(Symbol) && value == :undef
       nil
     else
       value
