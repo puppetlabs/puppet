@@ -44,17 +44,35 @@ describe 'Puppet::Pops::Lookup::Interpolation' do
   context 'when interpolating nested data' do
     let(:nested_hash) { {'a' => {'aa' => "%{alias('aaa')}"}} }
 
+    let(:scope) {
+      {
+        'ds1' => 'a',
+        'ds2' => 'b'
+      }
+    }
+
     let(:data) {
       {
         'aaa' => {'b' => {'bb' => "%{alias('bbb')}"}},
         'bbb' => ["%{alias('ccc')}"],
-        'ccc' => 'text'
+        'ccc' => 'text',
+        'ddd' => "%{literal('%')}{ds1}_%{literal('%')}{ds2}",
       }
     }
 
     it 'produces a nested hash with arrays from nested aliases with hashes and arrays' do
       expect_lookup('aaa', 'bbb', 'ccc')
       expect(interpolator.interpolate(nested_hash, lookup_invocation, true)).to eq('a' => {'aa' => {'b' => {'bb' => ['text']}}})
+    end
+
+    it "'%{lookup('key')} will interpolate the returned value'" do
+      expect_lookup('ddd')
+      expect(interpolator.interpolate("%{lookup('ddd')}", lookup_invocation, true)).to eq('a_b')
+    end
+
+    it "'%{alias('key')} will not interpolate the returned value'" do
+      expect_lookup('ddd')
+      expect(interpolator.interpolate("%{alias('ddd')}", lookup_invocation, true)).to eq('%{ds1}_%{ds2}')
     end
   end
 
