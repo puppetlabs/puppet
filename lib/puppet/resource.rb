@@ -184,15 +184,7 @@ class Puppet::Resource
   end
 
   def yaml_property_munge(x)
-    case x
-    when Hash
-      x.inject({}) { |h,kv|
-        k,v = kv
-        h[k] = self.class.value_to_pson_data(v)
-        h
-      }
-    else self.class.value_to_pson_data(x)
-    end
+    self.value.to_pson_data(x)
   end
 
   YAML_ATTRIBUTES = [:@file, :@line, :@exported, :@type, :@title, :@tags, :@parameters]
