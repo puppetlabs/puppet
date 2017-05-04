@@ -27,24 +27,6 @@ class Object
   end
 end
 
-class Range
-  def intersection(other)
-    raise ArgumentError, 'value must be a Range' unless other.kind_of?(Range)
-    return unless other === self.first || self === other.first
-
-    start = [self.first, other.first].max
-    if self.exclude_end? && self.last <= other.last
-      start ... self.last
-    elsif other.exclude_end? && self.last >= other.last
-      start ... other.last
-    else
-      start .. [ self.last, other.last ].min
-    end
-  end unless method_defined? :intersection
-
-  alias_method :&, :intersection unless method_defined? :&
-end
-
 # (#19151) Reject all SSLv2 ciphers and handshakes
 require 'openssl'
 class OpenSSL::SSL::SSLContext
