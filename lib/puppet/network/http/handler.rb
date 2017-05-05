@@ -36,6 +36,10 @@ module Puppet::Network::HTTP::Handler
     raise NotImplementedError
   end
 
+  # The mime type is always passed to the `set_content_type` method, so
+  # it is no longer necessary to retrieve the Format's mime type.
+  #
+  # @deprecated
   def format_to_mime(format)
     format.is_a?(Puppet::Network::Format) ? format.mime : format
   end
