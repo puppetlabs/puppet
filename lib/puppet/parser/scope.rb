@@ -602,23 +602,23 @@ class Puppet::Parser::Scope
     @compiler && equal?(@compiler.topscope)
   end
 
-  def lookup_qualified_variable(class_name, variable_name, position)
+  def lookup_qualified_variable(class_name, variable_name, options)
     begin
       if lookup_as_local_name?(class_name, variable_name)
         if is_topscope?
           # This is the case where $::x is looked up from within the topscope itself, or from a local scope
           # parented at the top scope. In this case, the lookup must ignore local and ephemeral scopes.
           #
-          handle_not_found(class_name, variable_name, position) unless @symtable.include?(variable_name)
+          handle_not_found(class_name, variable_name, options) unless @symtable.include?(variable_name)
           @symtable[variable_name]
         else
-          lookupvar(variable_name)
+          lookupvar(variable_name, options)
         end
       else
-        qualified_scope(class_name).lookupvar(variable_name, position)
+        qualified_scope(class_name).lookupvar(variable_name, options)
       end
     rescue RuntimeError => e
-      handle_not_found(class_name, variable_name, position, e.message)
+      handle_not_found(class_name, variable_name, options, e.message)
     end
   end
 
