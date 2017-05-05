@@ -56,7 +56,7 @@ module Puppet::Network::HTTP::Compression
     # This adapters knows how to uncompress both 'zlib' stream (the deflate algorithm from Content-Encoding)
     # and GZip streams.
     class ZlibAdapter
-      def initialize
+      def initialize(uncompressor = Zlib::Inflate.new(15 + 32))
         # Create an inflater that knows to parse GZip streams and zlib streams.
         # This uses a property of the C Zlib library, documented as follow:
         #   windowBits can also be greater than 15 for optional gzip decoding. Add
@@ -64,7 +64,7 @@ module Puppet::Network::HTTP::Compression
         #   detection, or add 16 to decode only the gzip format (the zlib format will
         #   return a Z_DATA_ERROR).  If a gzip stream is being decoded, strm->adler is
         #   a crc32 instead of an adler32.
-        @uncompressor = Zlib::Inflate.new(15 + 32)
+        @uncompressor = uncompressor
         @first = true
       end
 
