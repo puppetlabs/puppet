@@ -1,20 +1,32 @@
 #! /usr/bin/env ruby
 
 require 'spec_helper'
+require 'puppet_spec/files'
 require 'puppet_spec/handler'
 require 'puppet/network/http'
 
 describe Puppet::Network::HTTP::Response do
+  include PuppetSpec::Files
+
   let(:handler) { PuppetSpec::Handler.new }
   let(:response) { {} }
   let(:subject) { described_class.new(handler, response) }
   let(:body_utf8) { JSON.dump({ "foo" => "bar"}).encode('UTF-8') }
   let(:body_shift_jis) { [130, 174].pack('C*').force_encoding(Encoding::Shift_JIS) }
 
-  it "passes the status code and body to the handler" do
-    handler.expects(:set_response).with(response, body_utf8, 200)
+  context "when passed a respose body" do
+    it "passes the status code and body to the handler" do
+      handler.expects(:set_response).with(response, body_utf8, 200)
 
-    subject.respond_with(200, 'application/json', body_utf8)
+      subject.respond_with(200, 'application/json', body_utf8)
+    end
+
+    it "accepts a File body" do
+      file = tmpfile('response_spec')
+      handler.expects(:set_response).with(response, file, 200)
+
+      subject.respond_with(200, 'application/octet-stream', file)
+    end
   end
 
   context "when passed a content type" do

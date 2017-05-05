@@ -9,13 +9,15 @@ class Puppet::Network::HTTP::Response
     mime = format.mime
     charset = format.charset
 
-    if charset && body.is_a?(String)
-      # REMIND: not all charsets are valid ruby encodings, e.g. ISO-2022-KR
-      encoding = Encoding.find(charset)
+    if charset
+      if body.is_a?(String)
+        # REMIND: not all charsets are valid ruby encodings, e.g. ISO-2022-KR
+        encoding = Encoding.find(charset)
 
-      if body.encoding != encoding
-        # REMIND this can raise if body contains invalid UTF-8
-        body.encode!(encoding)
+        if body.encoding != encoding
+          # REMIND this can raise if body contains invalid UTF-8
+          body.encode!(encoding)
+        end
       end
 
       mime += "; charset=#{charset}"
