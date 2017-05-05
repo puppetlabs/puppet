@@ -364,6 +364,19 @@ describe Puppet::Type.type(:user).provider(:useradd) do
         Shadow::Passwd.expects(:getspnam).with('myuser').returns shadow_entry
         expect(provider.send(property)).to eq(expected_value)
       end
+
+      # nameservice provider instances are initialized with a @canonical_name
+      # instance variable to track the original name of the instance on disk
+      # before converting it to UTF-8 if appropriate. When re-querying the
+      # system for attributes of this user such as password info, we need to
+      # supply the pre-UTF8-converted value.
+      it "should query using the canonical_name attribute of the user", :if => Puppet.features.libshadow? do
+        canonical_name = [253, 241].pack('C*').force_encoding(Encoding::EUC_KR)
+        provider = described_class.new(:name => '??', :canonical_name => canonical_name)
+
+        Shadow::Passwd.expects(:getspnam).with(canonical_name).returns shadow_entry
+        provider.password
+      end
     end
   end
 
