@@ -612,7 +612,7 @@ class Puppet::Parser::Scope
           handle_not_found(class_name, variable_name, position) unless @symtable.include?(variable_name)
           @symtable[variable_name]
         else
-          self[variable_name]
+          lookupvar(variable_name)
         end
       else
         qualified_scope(class_name).lookupvar(variable_name, position)
