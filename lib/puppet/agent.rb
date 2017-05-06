@@ -1,5 +1,6 @@
 require 'puppet/application'
 require 'puppet/error'
+require 'puppet/util/at_fork'
 
 # A general class for triggering a run of another
 # class.
@@ -64,16 +65,26 @@ class Puppet::Agent
   def run_in_fork(forking = true)
     return yield unless forking or Puppet.features.windows?
 
-    child_pid = Kernel.fork do
-      $0 = _("puppet agent: applying configuration")
-      begin
-        exit(yield)
-      rescue SystemExit
-        exit(-1)
-      rescue NoMemoryError
-        exit(-2)
+    atForkHandler = Puppet::Util::AtFork.get_handler
+
+    atForkHandler.prepare
+
+    begin
+      child_pid = Kernel.fork do
+        atForkHandler.child
+        $0 = _("puppet agent: applying configuration")
+        begin
+          exit(yield)
+        rescue SystemExit
+          exit(-1)
+        rescue NoMemoryError
+          exit(-2)
+        end
       end
+    ensure
+      atForkHandler.parent
     end
+
     exit_code = Process.waitpid2(child_pid)
     case exit_code[1].exitstatus
     when -1
