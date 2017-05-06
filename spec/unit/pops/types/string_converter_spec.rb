@@ -874,6 +874,22 @@ describe 'The string converter' do
     end
   end
 
+  context 'when converting a runtime type' do
+    [ :sym, (1..3), Time.now ].each do |value|
+      it "the default string representation for #{value} is #to_s" do
+        expect(converter.convert(value, :default)).to eq(value.to_s)
+      end
+
+      it "the '%q' string representation for #{value} is #inspect" do
+        expect(converter.convert(value, '%q')).to eq(value.inspect)
+      end
+    end
+
+    it 'an unknown format raises an error' do
+      expect { converter.convert(:sym, '%b') }.to raise_error("Illegal format 'b' specified for value of Runtime type - expected one of the characters 'sq'")
+    end
+  end
+
   context 'when converting regexp' do
     it 'the default string representation is "regexp"' do
       expect(converter.convert(/.*/, :default)).to eq('.*')
