@@ -31,7 +31,6 @@ class Puppet::Parser::Scope
   attr_accessor :source, :resource
   attr_accessor :compiler
   attr_accessor :parent
-  attr_reader :namespaces
 
   # Hash of hashes of default values per type name
   attr_reader :defaults
@@ -379,12 +378,6 @@ class Puppet::Parser::Scope
       raise Puppet::DevError, "you must pass a compiler instance to a new scope object"
     end
 
-    if n = options.delete(:namespace)
-      @namespaces = [n.freeze].freeze
-    else
-      @namespaces = ["".freeze].freeze
-    end
-
     set_options(options)
 
     extend_with_functions_module
@@ -699,10 +692,6 @@ class Puppet::Parser::Scope
     # add all local scopes
     @ephemeral.last.add_entries_to(target)
     target
-  end
-
-  def namespaces
-    @namespaces
   end
 
   # Create a new scope and set these options.
