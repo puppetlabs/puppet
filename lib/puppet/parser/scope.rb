@@ -560,7 +560,7 @@ class Puppet::Parser::Scope
   # @see #[]=
   # @api public
   #
-  def [](varname, options={})
+  def [](varname, options = EMPTY_HASH)
     lookupvar(varname, options)
   end
 
