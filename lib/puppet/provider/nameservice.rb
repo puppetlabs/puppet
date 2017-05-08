@@ -24,10 +24,12 @@ class Puppet::Provider::NameService < Puppet::Provider
 
     def instances
       objects = []
-      listbyname do |name|
-        objects << new(:name => name, :ensure => :present)
+      Puppet::Etc.send("set#{section}ent")
+      begin
+        while ent = Puppet::Etc.send("get#{section}ent")
+          objects << new(:name => ent.name, :canonical_name => ent.canonical_name, :ensure => :present)
+        end
       end
-
       objects
     end
 
@@ -51,6 +53,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     # List everything out by name.  Abstracted a bit so that it works
     # for both users and groups.
     def listbyname
+      Puppet.deprecation_warning(_("listbyname is deprecated and will be removed in a future release of Puppet. Please use `self.instances` to obtain a list of users."))
       names = []
       Puppet::Etc.send("set#{section()}ent")
       begin
@@ -226,7 +229,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     if @objectinfo.nil? or refresh == true
       @etcmethod ||= ("get" + self.class.section.to_s + "nam").intern
       begin
-        @objectinfo = Puppet::Etc.send(@etcmethod, @resource[:name])
+        @objectinfo = Puppet::Etc.send(@etcmethod, @canonical_name)
       rescue ArgumentError
         @objectinfo = nil
       end
@@ -276,6 +279,11 @@ class Puppet::Provider::NameService < Puppet::Provider
     super
     @custom_environment = {}
     @objectinfo = nil
+    if resource.is_a?(Hash) && !resource[:canonical_name].nil?
+      @canonical_name = resource[:canonical_name]
+    else
+      @canonical_name = resource[:name]
+    end
   end
 
   def set(param, value)

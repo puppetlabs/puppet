@@ -203,7 +203,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   [:expiry, :password_min_age, :password_max_age, :password].each do |shadow_property|
     define_method(shadow_property) do
       if Puppet.features.libshadow?
-        if ent = Shadow::Passwd.getspnam(@resource.name)
+        if ent = Shadow::Passwd.getspnam(@canonical_name)
           method = self.class.option(shadow_property, :method)
           return unmunge(shadow_property, ent.send(method))
         end
