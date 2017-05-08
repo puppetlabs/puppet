@@ -147,6 +147,9 @@ module Puppet::Etc
         elsif value.is_a?(Array)
           new_struct["canonical_#{member}".to_sym] = value.inject([]) { |acc, elem| acc << elem.dup }
           new_struct[member] = value.inject([]) { |acc, elem| acc << Puppet::Util::CharacterEncoding.scrub(Puppet::Util::CharacterEncoding.override_encoding_to_utf_8(elem)) }
+        else
+          new_struct["canonical_#{member}".to_sym] = value
+          new_struct[member] = value
         end
       end
       new_struct
