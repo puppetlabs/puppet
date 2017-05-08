@@ -500,15 +500,28 @@ class Puppet::Parser::Scope
       raise Puppet::ParseError, _("Scope variable name %{name} is a %{klass}, not a string") % { name: name.inspect, klass: name.class }
     end
 
-    if name =~ /^(.*)::(.+)$/
-      return lookup_qualified_variable($1, $2, options)
+    # if already determined that it is a leaf name that is being looked up
+    # there is no need to again try to split it
+    unless options[:fqn_leaf]
+      if name =~ /^(.*)::(.+)$/
+        return lookup_qualified_variable($1, $2, options)
+      end
     end
 
+    # This is questionable for a fqn_leaf name access as it accesses a local nested scope
+    # when the access was a fully qualified and thus external request, but this is probably
+    # needed for the sake of bakwards compatibility of logic inside x::y tries to get $x::y::z instead
+    # of just $z.
+    #
     table = @ephemeral.last
     val = table[name]
     return val unless val.nil? && !table.include?(name)
 
-    next_scope = inherited_scope || enclosing_scope
+    # Do not search up the enclosing scope chain with the request is a
+    # fqn_leaf request, we are already in the right scope. An inherited scope
+    # must be searched though.
+    #
+    next_scope = inherited_scope || (options[:fqn_leaf] ? nil : enclosing_scope)
     if next_scope
       next_scope.lookupvar(name, options)
     else
@@ -615,7 +628,7 @@ class Puppet::Parser::Scope
           lookupvar(variable_name, options)
         end
       else
-        qualified_scope(class_name).lookupvar(variable_name, options)
+        qualified_scope(class_name).lookupvar(variable_name, options.merge({ :fqn_leaf => true }))
       end
     rescue RuntimeError => e
       handle_not_found(class_name, variable_name, options, e.message)
