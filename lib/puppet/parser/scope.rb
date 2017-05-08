@@ -764,22 +764,14 @@ class Puppet::Parser::Scope
 
     table = effective_symtable(options[:ephemeral])
     if table.bound?(name)
-      if options[:append]
-        error = Puppet::ParseError.new(_("Cannot append, variable '$%{name}' is defined in this scope") % { name: name })
-      else
-        error = Puppet::ParseError.new(_("Cannot reassign variable '$%{name}'") % { name: name })
-      end
+      error = Puppet::ParseError.new(_("Cannot reassign variable '$%{name}'") % { name: name })
       error.file = options[:file] if options[:file]
       error.line = options[:line] if options[:line]
       raise error
     end
 
-    if options[:append]
-      # produced result (value) is the resulting appended value, note: the table[]= does not return the value
-      table[name] = (value = append_value(undef_as('', self[name]), value))
-    else
-      table[name] = value
-    end
+    table[name] = value
+
     # Assign the qualified name in the environment
     # Note that Settings scope has a source set to Boolean true.
     #
@@ -862,22 +854,6 @@ class Puppet::Parser::Scope
   def []=(varname, value, _ = nil)
     setvar(varname, value)
   end
-
-  def append_value(bound_value, new_value)
-    require 'byebug'; debugger
-    case new_value
-    when Array
-      bound_value + new_value
-    when Hash
-      bound_value.merge(new_value)
-    else
-      if bound_value.is_a?(Hash)
-        raise ArgumentError, _("Trying to append to a hash with something which is not a hash is unsupported")
-      end
-      bound_value + new_value
-    end
-  end
-  private :append_value
 
   # Return the tags associated with this scope.
   def_delegator :resource, :tags

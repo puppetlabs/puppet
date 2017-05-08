@@ -367,52 +367,6 @@ describe Puppet::Parser::Scope do
     end
   end
 
-  describe "when variables are set with append=true" do
-    it "should raise error if the variable is already defined in this scope" do
-      @scope.setvar("var", "1", :append => false)
-      expect {
-        @scope.setvar("var", "1", :append => true)
-      }.to raise_error(
-        Puppet::ParseError,
-        "Cannot append, variable '$var' is defined in this scope"
-      )
-    end
-
-    it "should lookup current variable value" do
-      @scope.expects(:[]).with("var").returns("2")
-      @scope.setvar("var", "1", :append => true)
-    end
-
-    it "should store the concatenated string '42'" do
-      @topscope.setvar("var", "4", :append => false)
-      @scope.setvar("var", "2", :append => true)
-      expect(@scope["var"]).to eq("42")
-    end
-
-    it "should store the concatenated array [4,2]" do
-      @topscope.setvar("var", [4], :append => false)
-      @scope.setvar("var", [2], :append => true)
-      expect(@scope["var"]).to eq([4,2])
-    end
-
-    it "should store the merged hash {a => b, c => d}" do
-      @topscope.setvar("var", {"a" => "b"}, :append => false)
-      @scope.setvar("var", {"c" => "d"}, :append => true)
-      expect(@scope["var"]).to eq({"a" => "b", "c" => "d"})
-    end
-
-    it "should raise an error when appending a hash with something other than another hash" do
-      @topscope.setvar("var", {"a" => "b"}, :append => false)
-
-      expect {
-        @scope.setvar("var", "not a hash", :append => true)
-      }.to raise_error(
-        ArgumentError,
-        "Trying to append to a hash with something which is not a hash is unsupported"
-      )
-    end
-  end
-
   describe "when calling number?" do
     it "should return nil if called with anything not a number" do
       expect(Puppet::Parser::Scope.number?([2])).to be_nil
