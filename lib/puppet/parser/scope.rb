@@ -385,7 +385,6 @@ class Puppet::Parser::Scope
       @namespaces = ["".freeze].freeze
     end
 
-    raise Puppet::DevError, "compiler passed in options" if options.include? :compiler
     set_options(options)
 
     extend_with_functions_module
