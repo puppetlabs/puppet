@@ -371,7 +371,7 @@ class Puppet::Parser::Scope
   def_delegator :compiler, :findresource
 
   # Initialize our new scope.  Defaults to having no parent.
-  def initialize(compiler, options = {})
+  def initialize(compiler, options = EMPTY_HASH)
     if compiler.is_a? Puppet::Parser::Compiler
       self.compiler = compiler
     else
@@ -797,6 +797,19 @@ class Puppet::Parser::Scope
       table[name] = (value = append_value(undef_as('', self[name]), value))
     else
       table[name] = value
+    end
+    # Assign the qualified name in the environment
+    # Note that Settings scope sets source to Boolean true.
+    #
+    # require 'byebug'; debugger if name == "fooo"
+    if source = self.source.is_a?(Puppet::Resource) && self.source.type == :hostclass
+      sourcename = source.name
+      if sourcename == ''
+        # do not store leading '::' for topscope names
+        environment.qualified_variables[name] = value
+      else
+        environment.qualified_variables["#{sourcename}::#{name}"] = value
+      end
     end
     value
   end
