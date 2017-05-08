@@ -678,8 +678,7 @@ class Puppet::Parser::Scope
   end
 
   def parent_module_name
-    return nil unless @parent
-    return nil unless @parent.source
+    return nil unless @parent && @parent.source
     @parent.source.module_name
   end
 
