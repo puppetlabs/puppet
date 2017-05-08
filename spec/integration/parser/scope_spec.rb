@@ -274,41 +274,45 @@ describe "Two step scoping for variables" do
       end
     end
 
-    it "does not resolve a qualified name against top scope" do
-      expect_the_message_not_to_be("from topscope") do <<-MANIFEST
-            class c {
-              notify { 'something': message => "$a::b" }
-            }
-            class parent {
-              $not_b = 'from parent'
-            }
-            class a inherits parent { }
+    ['a:.b', '::a::b'].each do |ref|
+      it "does not resolve a qualified name on the form #{ref} against top scope" do
+        expect_the_message_not_to_be("from topscope") do <<-"MANIFEST"
+              class c {
+                notify { 'something': message => "$#{ref}" }
+              }
+              class parent {
+                $not_b = 'from parent'
+              }
+              class a inherits parent { }
 
-            $b = "from topscope"
-            node default {
-              include a
-              include c
-            }
-        MANIFEST
+              $b = "from topscope"
+              node default {
+                include a
+                include c
+              }
+          MANIFEST
+        end
       end
     end
 
-    it "does not resolve a qualified name against node scope" do
-      expect_the_message_not_to_be("from node") do <<-MANIFEST
-            class c {
-              notify { 'something': message => "$a::b" }
-            }
-            class parent {
-              $not_b = 'from parent'
-            }
-            class a inherits parent { }
+    ['a:.b', '::a::b'].each do |ref|
+      it "does not resolve a qualified name on the form #{ref} against node scope" do
+        expect_the_message_not_to_be("from node") do <<-MANIFEST
+              class c {
+                notify { 'something': message => "$a::b" }
+              }
+              class parent {
+                $not_b = 'from parent'
+              }
+              class a inherits parent { }
 
-            node default {
-              $b = "from node"
-              include a
-              include c
-            }
-        MANIFEST
+              node default {
+                $b = "from node"
+                include a
+                include c
+              }
+          MANIFEST
+        end
       end
     end
 
