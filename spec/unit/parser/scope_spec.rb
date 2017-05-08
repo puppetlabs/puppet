@@ -247,9 +247,9 @@ describe Puppet::Parser::Scope do
         @scope.class_scope(klass)
       end
 
-      it "should be able to look up explicitly fully qualified variables from main" do
+      it "should be able to look up explicitly fully qualified variables from compiler's top scope" do
         Puppet.expects(:deprecation_warning).never
-        other_scope = create_class_scope("")
+        other_scope = @scope.compiler.topscope
 
         other_scope["othervar"] = "otherval"
 

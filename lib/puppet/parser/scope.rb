@@ -488,35 +488,25 @@ class Puppet::Parser::Scope
   # @return Object the value of the variable, or nil if it's not found
   #
   # @api public
-  def lookupvar(name, options = EMPTY_HASH, fqn_leaf = false)
+  def lookupvar(name, options = EMPTY_HASH)
     unless name.is_a? String
       raise Puppet::ParseError, _("Scope variable name %{name} is a %{klass}, not a string") % { name: name.inspect, klass: name.class }
     end
 
-    # if already determined that it is a leaf name that is being looked up
-    # there is no need to again try to split it
-    unless fqn_leaf
-      if name =~ /^(.*)::(.+)$/
-        return lookup_qualified_variable($1, $2, options)
-      end
+    # If name has '::' in it, it is resolved as a qualified variable
+    unless (idx = name.index('::')).nil?
+      # Always drop leading '::' if present as that is how the values are keyed.
+      return lookup_qualified_variable(idx == 0 ? name[2..-1] : name, options)
     end
 
-    # This is questionable for a fqn_leaf name access as it accesses a local nested scope
-    # when the access was a fully qualified and thus external request, but this is probably
-    # needed for the sake of bakwards compatibility of logic inside x::y tries to get $x::y::z instead
-    # of just $z.
-    #
+    # At this point, search is for a non qualified (simple) name
     table = @ephemeral.last
     val = table[name]
     return val unless val.nil? && !table.include?(name)
 
-    # Do not search up the enclosing scope chain with the request is a
-    # fqn_leaf request, we are already in the right scope. An inherited scope
-    # must be searched though.
-    #
-    next_scope = inherited_scope || (fqn_leaf ? nil : enclosing_scope)
+    next_scope = inherited_scope || enclosing_scope
     if next_scope
-      next_scope.lookupvar(name, options, fqn_leaf)
+      next_scope.lookupvar(name, options)
     else
       variable_not_found(name)
     end
@@ -565,12 +555,11 @@ class Puppet::Parser::Scope
     lookupvar(varname, options)
   end
 
-  # The scope of the inherited thing of this scope's resource. This could
-  # either be a node that was inherited or the class.
+  # The class scope of the inherited thing of this scope's resource.
   #
   # @return [Puppet::Parser::Scope] The scope or nil if there is not an inherited scope
   def inherited_scope
-    if has_inherited_class?
+    if resource && resource.type == TYPENAME_CLASS && !resource.resource_type.parent.nil?
       qualified_scope(resource.resource_type.parent)
     else
       nil
@@ -586,7 +575,7 @@ class Puppet::Parser::Scope
   # @return [Puppet::Parser::Scope] The scope or nil if there is no enclosing scope
   def enclosing_scope
     if has_enclosing_scope?
-      if parent.is_topscope? or parent.is_nodescope?
+      if parent.is_topscope? || parent.is_nodescope?
         parent
       else
         parent.enclosing_scope
@@ -597,36 +586,43 @@ class Puppet::Parser::Scope
   end
 
   def is_classscope?
-    resource and resource.type == "Class"
+    resource && resource.type == TYPENAME_CLASS
   end
 
   def is_nodescope?
-    resource and resource.type == "Node"
+    resource && resource.type == TYPENAME_NODE
   end
 
   def is_topscope?
     @compiler && equal?(@compiler.topscope)
   end
 
-  def lookup_qualified_variable(class_name, variable_name, options)
-    begin
-      if lookup_as_local_name?(class_name, variable_name)
-        if is_topscope?
-          # This is the case where $::x is looked up from within the topscope itself, or from a local scope
-          # parented at the top scope. In this case, the lookup must ignore local and ephemeral scopes.
-          #
-          handle_not_found(class_name, variable_name, options) unless @symtable.include?(variable_name)
-          @symtable[variable_name]
-        else
-          lookupvar(variable_name, options)
+  # @api private
+  def lookup_qualified_variable(fqn, options)
+    table = compiler.qualified_variables
+    val = table[fqn]
+    found = !val.nil? || table.include?(fqn)
+    return val if found
+
+    # not found - search inherited scope for class
+    leaf_index = fqn.rindex('::')
+    unless leaf_index.nil?
+      leaf_name = fqn[ (leaf_index+2)..-1 ]
+      class_name = fqn[ 0, leaf_index ]
+      begin
+        qs = qualified_scope(class_name)
+        unless qs.nil?
+          iscope = qs.inherited_scope
+          return lookup_qualified_variable("#{iscope.source.name}::#{leaf_name}", options) unless iscope.nil?
         end
-      else
-        # lookup with qualified name resolution set to true (fq_leaf)
-        qualified_scope(class_name).lookupvar(variable_name, options, true)
+      rescue RuntimeError => e
+        # because a failure to find the class, or inherited should be reported against given name
+        return handle_not_found(class_name, leaf_name, options, e.message)
       end
-    rescue RuntimeError => e
-      handle_not_found(class_name, variable_name, options, e.message)
     end
+    # will report all names as '::fqn' even if looked up with just 'fqn'
+    # fqn is known to not have leading '::'
+    return handle_not_found('', fqn, options)
   end
 
   def handle_not_found(class_name, variable_name, position, reason = nil)
@@ -645,28 +641,8 @@ class Puppet::Parser::Scope
     variable_not_found("#{class_name}::#{variable_name}", reason)
   end
 
-  # Handles the special case of looking up fully qualified variable in not yet evaluated top scope
-  # This is ok if the lookup request originated in topscope (this happens when evaluating
-  # bindings; using the top scope to provide the values for facts.
-  # @param class_name [String] the classname part of a variable name, may be special ""
-  # @param variable_name [String] the variable name without the absolute leading '::'
-  # @return [Boolean] true if the given variable name should be looked up directly in this scope
-  #
-  def lookup_as_local_name?(class_name, variable_name)
-    # not a local if name has more than one segment
-    return nil if variable_name =~ /::/
-    # partial only if the class for "" cannot be found
-    return nil unless class_name == "" && klass = find_hostclass(class_name) && class_scope(klass).nil?
-    is_topscope?
-  end
-
-  def has_inherited_class?
-    is_classscope? and resource.resource_type.parent
-  end
-  private :has_inherited_class?
-
   def has_enclosing_scope?
-    not parent.nil?
+    ! parent.nil?
   end
   private :has_enclosing_scope?
 
@@ -729,9 +705,14 @@ class Puppet::Parser::Scope
   def merge_settings(env_name)
     settings = Puppet.settings
     table = effective_symtable(false)
+    global_table = compiler.qualified_variables
     settings.each_key do |name|
       next if :name == name
-      table[name.to_s] = transform_setting(settings.value_sym(name, env_name))
+      key = name.to_s
+      value = transform_setting(settings.value_sym(name, env_name))
+      table[key] = value
+      # also write the fqn into global table for direct lookup
+      global_table["settings::#{key}"] = value
     end
     nil
   end
@@ -756,6 +737,8 @@ class Puppet::Parser::Scope
   VARNAME_FACTS = 'facts'.freeze
   VARNAME_SERVER_FACTS = 'server_facts'.freeze
   RESERVED_VARIABLE_NAMES = [VARNAME_TRUSTED, VARNAME_FACTS].freeze
+  TYPENAME_CLASS = 'Class'.freeze
+  TYPENAME_NODE = 'Node'.freeze
 
   # Set a variable in the current scope.  This will override settings
   # in scopes above, but will not allow variables in the current scope
@@ -799,16 +782,17 @@ class Puppet::Parser::Scope
       table[name] = value
     end
     # Assign the qualified name in the environment
-    # Note that Settings scope sets source to Boolean true.
+    # Note that Settings scope has a source set to Boolean true.
     #
-    # require 'byebug'; debugger if name == "fooo"
-    if source = self.source.is_a?(Puppet::Resource) && self.source.type == :hostclass
-      sourcename = source.name
-      if sourcename == ''
-        # do not store leading '::' for topscope names
-        environment.qualified_variables[name] = value
-      else
-        environment.qualified_variables["#{sourcename}::#{name}"] = value
+    # Only meaningful to set a fqn globally if table to assign to is the top of the scope's ephemeral stack
+    if @symtable.__id__ == table.__id__
+      if is_topscope?
+        # the scope name is '::'
+        compiler.qualified_variables[name] = value
+      elsif source.is_a?(Puppet::Resource::Type) && source.type == :hostclass
+        # the name is the name of the class
+        sourcename = source.name
+        compiler.qualified_variables["#{sourcename}::#{name}"] = value
       end
     end
     value
@@ -881,6 +865,7 @@ class Puppet::Parser::Scope
   end
 
   def append_value(bound_value, new_value)
+    require 'byebug'; debugger
     case new_value
     when Array
       bound_value + new_value

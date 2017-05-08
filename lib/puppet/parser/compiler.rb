@@ -42,6 +42,7 @@ class Puppet::Parser::Compiler
  end
 
   attr_reader :node, :facts, :collections, :catalog, :resources, :relationships, :topscope
+  attr_reader :qualified_variables
 
   # Access to the configured loaders for 4x
   # @return [Puppet::Pops::Loader::Loaders] the configured loaders
@@ -405,6 +406,8 @@ class Puppet::Parser::Compiler
     set_options(options)
     initvars
     add_catalog_validators
+    # Resolutions of fully qualified variable names
+    @qualified_variables = {}
   end
 
   # Create a new scope, with either a specified parent scope or
