@@ -483,18 +483,19 @@ class Puppet::Parser::Scope
   # manifest.
   #
   # @param [String] name the variable name to lookup
-  #
+  # @param [Hash] hash of options, only internal code should give this
+  # @param [Boolean] if resolution is of the leaf of a qualified name - only internal code should give this
   # @return Object the value of the variable, or nil if it's not found
   #
   # @api public
-  def lookupvar(name, options = EMPTY_HASH)
+  def lookupvar(name, options = EMPTY_HASH, fqn_leaf = false)
     unless name.is_a? String
       raise Puppet::ParseError, _("Scope variable name %{name} is a %{klass}, not a string") % { name: name.inspect, klass: name.class }
     end
 
     # if already determined that it is a leaf name that is being looked up
     # there is no need to again try to split it
-    unless options[:fqn_leaf]
+    unless fqn_leaf
       if name =~ /^(.*)::(.+)$/
         return lookup_qualified_variable($1, $2, options)
       end
@@ -513,9 +514,9 @@ class Puppet::Parser::Scope
     # fqn_leaf request, we are already in the right scope. An inherited scope
     # must be searched though.
     #
-    next_scope = inherited_scope || (options[:fqn_leaf] ? nil : enclosing_scope)
+    next_scope = inherited_scope || (fqn_leaf ? nil : enclosing_scope)
     if next_scope
-      next_scope.lookupvar(name, options)
+      next_scope.lookupvar(name, options, fqn_leaf)
     else
       variable_not_found(name)
     end
@@ -620,7 +621,8 @@ class Puppet::Parser::Scope
           lookupvar(variable_name, options)
         end
       else
-        qualified_scope(class_name).lookupvar(variable_name, options.merge({ :fqn_leaf => true }))
+        # lookup with qualified name resolution set to true (fq_leaf)
+        qualified_scope(class_name).lookupvar(variable_name, options, true)
       end
     rescue RuntimeError => e
       handle_not_found(class_name, variable_name, options, e.message)
