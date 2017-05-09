@@ -60,17 +60,25 @@ END
           # a workaround in interactive SSH is to add aliases to local session / .bashrc:
           #   on host, "echo \"alias puppet='C:/\\cygwin64/\\bin/\\puppet.bat'\" >> ~/.bashrc"
           # note that this WILL NOT impact Beaker runs though
+          puppet_bundler_install_dir = on(host, "cd #{puppet_dir} && cmd.exe /c bundle show puppet").stdout.chomp
         when /el-7/
           gemfile_contents = gemfile_contents + "gem 'json'\n"
           create_remote_file(host, "#{puppet_dir}/Gemfile", gemfile_contents)
           on host, "cd #{puppet_dir} && bundle install --system --binstubs #{host['puppetbindir']}"
+          puppet_bundler_install_dir = on(host, "cd #{puppet_dir} && bundle show puppet").stdout.chomp
         when /solaris/
           create_remote_file(host, "#{puppet_dir}/Gemfile", gemfile_contents)
           on host, "cd #{puppet_dir} && bundle install --system --binstubs #{host['puppetbindir']} --shebang #{host['puppetbindir']}/ruby"
+          puppet_bundler_install_dir = on(host, "cd #{puppet_dir} && bundle show puppet").stdout.chomp
         else
           create_remote_file(host, "#{puppet_dir}/Gemfile", gemfile_contents)
           on host, "cd #{puppet_dir} && bundle install --system --binstubs #{host['puppetbindir']}"
+          puppet_bundler_install_dir = on(host, "cd #{puppet_dir} && bundle show puppet").stdout.chomp
         end
+
+        # install.rb should also be called from the Puppet gem install dir
+        # this is required for the puppetres.dll event log dll on Windows
+        on host, "cd #{puppet_bundler_install_dir} && if [ -f install.rb ]; then ruby ./install.rb ; else true; fi"
       end
     end
   end
