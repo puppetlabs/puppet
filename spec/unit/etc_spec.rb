@@ -45,6 +45,7 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
     group.name = euc_kr_as_utf_8
     # group passwd field is valid UTF-8
     group.passwd = mixed_utf_8
+    group.gid = 12345
     group
   end
 
@@ -58,6 +59,7 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
     group.mem = [euc_kr, root.dup.force_encoding(Encoding::EUC_KR), mixed_utf_8_as_euc_kr]
     group.name = euc_kr
     group.passwd = mixed_utf_8_as_euc_kr
+    group.gid = 12345
     group
   end
 
@@ -70,6 +72,7 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
     group.mem = [euc_kr_as_binary, root.dup.force_encoding(Encoding::ASCII), mixed_utf_8_as_binary]
     group.name = euc_kr_as_binary
     group.passwd = mixed_utf_8_as_binary
+    group.gid = 12345
     group
   end
 
@@ -79,6 +82,7 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
     user.name = euc_kr_as_utf_8
     # group passwd field is valid UTF-8
     user.passwd = mixed_utf_8
+    user.uid = 12345
     user
   end
 
@@ -86,6 +90,7 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
     user = Etc::Passwd.new
     user.name = euc_kr
     user.passwd = mixed_utf_8_as_euc_kr
+    user.uid = 12345
     user
   end
 
@@ -93,6 +98,7 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
     user = Etc::Passwd.new
     user.name = euc_kr_as_binary
     user.passwd = mixed_utf_8_as_binary
+    user.uid = 12345
     user
   end
 
@@ -105,6 +111,7 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
 
       expect(puppet_group.members).to include(*group.members)
       expect(puppet_group.members).to include(*group.members.map { |mem| "canonical_#{mem}".to_sym })
+
       # Confirm we haven't just added the new members to the original struct object, ie this is really a new struct
       expect(group.members.any? { |elem| elem.match(/^canonical_/) }).to be_falsey
     end
@@ -144,6 +151,19 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
       it "should keep an unmodified version of the invalid UTF-8 values in the corresponding canonical_ member" do
         expect(overridden.canonical_name).to eq(euc_kr_as_utf_8)
       end
+
+      it "should copy all values to the new struct object" do
+        # Confirm we've actually copied all the values to the canonical_members
+        utf_8_group_struct.each_pair do |member, value|
+          expect(overridden["canonical_#{member}"]).to eq(value)
+
+          # Confirm we've reassigned all non-string and array values
+          if !value.is_a?(String) && !value.is_a?(Array)
+            expect(overridden[member]).to eq(value)
+            expect(overridden[member].object_id).to eq(value.object_id)
+          end
+        end
+      end
     end
 
     context "when Encoding.default_external is EUC_KR (i.e., neither UTF-8 nor POSIX)" do
@@ -173,6 +193,19 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
       it "should leave valid EUC_KR-labeled values that would not be valid UTF-8 unmodified" do
         expect(overridden.name).to eq(euc_kr)
       end
+
+      it "should copy all values to the new struct object" do
+        # Confirm we've actually copied all the values to the canonical_members
+        euc_kr_group_struct.each_pair do |member, value|
+          expect(overridden["canonical_#{member}"]).to eq(value)
+
+          # Confirm we've reassigned all non-string and array values
+          if !value.is_a?(String) && !value.is_a?(Array)
+            expect(overridden[member]).to eq(value)
+            expect(overridden[member].object_id).to eq(value.object_id)
+          end
+        end
+      end
     end
 
     context "when Encoding.default_external is POSIX (ASCII-7bit)" do
@@ -201,6 +234,19 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
 
       it "should set the encoding to UTF-8 on binary values that would be valid UTF-8" do
         expect(overridden.passwd).to eq(mixed_utf_8)
+      end
+
+      it "should copy all values to the new struct object" do
+        # Confirm we've actually copied all the values to the canonical_members
+        ascii_group_struct.each_pair do |member, value|
+          expect(overridden["canonical_#{member}"]).to eq(value)
+
+          # Confirm we've reassigned all non-string and array values
+          if !value.is_a?(String) && !value.is_a?(Array)
+            expect(overridden[member]).to eq(value)
+            expect(overridden[member].object_id).to eq(value.object_id)
+          end
+        end
       end
     end
   end
@@ -240,6 +286,19 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
       it "should keep an unmodified version of the invalid UTF-8 values in the corresponding canonical_ member" do
         expect(overridden.canonical_name).to eq(euc_kr_as_utf_8)
       end
+
+      it "should copy all values to the new struct object" do
+        # Confirm we've actually copied all the values to the canonical_members
+        utf_8_user_struct.each_pair do |member, value|
+          expect(overridden["canonical_#{member}"]).to eq(value)
+
+          # Confirm we've reassigned all non-string and array values
+          if !value.is_a?(String) && !value.is_a?(Array)
+            expect(overridden[member]).to eq(value)
+            expect(overridden[member].object_id).to eq(value.object_id)
+          end
+        end
+      end
     end
 
     context "when Encoding.default_external is EUC_KR (i.e., neither UTF-8 nor POSIX)" do
@@ -260,6 +319,19 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
       it "should leave invalid EUC_KR-labeled values unmodified" do
         expect(overridden.name).to eq(euc_kr)
       end
+
+      it "should copy all values to the new struct object" do
+        # Confirm we've actually copied all the values to the canonical_members
+        euc_kr_user_struct.each_pair do |member, value|
+          expect(overridden["canonical_#{member}"]).to eq(value)
+
+          # Confirm we've reassigned all non-string and array values
+          if !value.is_a?(String) && !value.is_a?(Array)
+            expect(overridden[member]).to eq(value)
+            expect(overridden[member].object_id).to eq(value.object_id)
+          end
+        end
+      end
     end
 
     context "when Encoding.default_external is POSIX (ASCII-7bit)" do
@@ -279,6 +351,19 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
 
       it "should set the encoding to UTF-8 on binary values that would be valid UTF-8" do
         expect(overridden.passwd).to eq(mixed_utf_8)
+      end
+
+      it "should copy all values to the new struct object" do
+        # Confirm we've actually copied all the values to the canonical_members
+        ascii_user_struct.each_pair do |member, value|
+          expect(overridden["canonical_#{member}"]).to eq(value)
+
+          # Confirm we've reassigned all non-string and array values
+          if !value.is_a?(String) && !value.is_a?(Array)
+            expect(overridden[member]).to eq(value)
+            expect(overridden[member].object_id).to eq(value.object_id)
+          end
+        end
       end
     end
   end
