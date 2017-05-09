@@ -199,6 +199,17 @@ describe Puppet::Configurer do
       @agent.run
     end
 
+    it "should create report with passed transaction_uuid and job_id" do
+      @agent = Puppet::Configurer.new(Puppet::Configurer::DownloaderFactory.new, "test_tuuid", "test_jid")
+      @agent.stubs(:init_storage)
+
+      report = Puppet::Transaction::Report.new('apply', nil, "test", "aaaa")
+      Puppet::Transaction::Report.expects(:new).with(anything, anything, anything, 'test_tuuid', 'test_jid').returns(report)
+      @agent.expects(:send_report).with(report)
+
+      @agent.run
+    end
+
     it "should send the report" do
       report = Puppet::Transaction::Report.new("apply", nil, "test", "aaaa")
       Puppet::Transaction::Report.expects(:new).returns(report)
@@ -372,6 +383,12 @@ describe Puppet::Configurer do
     it "sends the transaction uuid in a catalog request" do
       @agent.instance_variable_set(:@transaction_uuid, 'aaa')
       Puppet::Resource::Catalog.indirection.expects(:find).with(anything, has_entries(:transaction_uuid => 'aaa'))
+      @agent.run
+    end
+
+    it "sends the transaction uuid in a catalog request" do
+      @agent.instance_variable_set(:@job_id, 'aaa')
+      Puppet::Resource::Catalog.indirection.expects(:find).with(anything, has_entries(:job_id => 'aaa'))
       @agent.run
     end
 

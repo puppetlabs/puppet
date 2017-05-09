@@ -47,10 +47,12 @@ be `true`.
 - `checksum_type`: a dot-separated list of checksum types supported by the agent, for use in file resources of a static
 catalog. The order signifies preference, highest first.
 
-An optional parameter can be provided to the POST or GET to notify a node classifier that the client requested a specific
-environment, which might differ from what the client believes is its current environment:
+Optional parameters that may be provided to the POST or GET:
 
-- `configured_environment`: the environment configured on the client.
+- `configured_environment`: the environment configured on the client. May be
+  provided to notify an ENC that the client requested a specific environment
+  which might differ from what the client believes is its current environment.
+- `job_id`: which orchestration job triggered this catalog request.
 
 ### Example Response
 
