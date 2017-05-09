@@ -29,7 +29,7 @@ class Puppet::Parser::Scope
 
   include Puppet::Util::Errors
   attr_accessor :source, :resource
-  attr_accessor :compiler
+  attr_reader :compiler
   attr_accessor :parent
 
   # Hash of hashes of default values per type name
@@ -38,7 +38,6 @@ class Puppet::Parser::Scope
   # Add some alias methods that forward to the compiler, since we reference
   # them frequently enough to justify the extra method call.
   def_delegators :compiler, :catalog, :environment
-
 
   # Abstract base class for LocalScope and MatchScope
   #
@@ -373,7 +372,7 @@ class Puppet::Parser::Scope
   # Initialize our new scope.  Defaults to having no parent.
   def initialize(compiler, options = EMPTY_HASH)
     if compiler.is_a? Puppet::Parser::Compiler
-      self.compiler = compiler
+      @compiler = compiler
     else
       raise Puppet::DevError, "you must pass a compiler instance to a new scope object"
     end
@@ -574,15 +573,13 @@ class Puppet::Parser::Scope
   #
   # @return [Puppet::Parser::Scope] The scope or nil if there is no enclosing scope
   def enclosing_scope
-    if has_enclosing_scope?
+     if has_enclosing_scope?
       if parent.is_topscope? || parent.is_nodescope?
         parent
       else
         parent.enclosing_scope
       end
-    else
-      nil
-    end
+     end
   end
 
   def is_classscope?
@@ -594,15 +591,14 @@ class Puppet::Parser::Scope
   end
 
   def is_topscope?
-    @compiler && equal?(@compiler.topscope)
+    equal?(@compiler.topscope)
   end
 
   # @api private
   def lookup_qualified_variable(fqn, options)
-    table = compiler.qualified_variables
+    table = @compiler.qualified_variables
     val = table[fqn]
-    found = !val.nil? || table.include?(fqn)
-    return val if found
+    return val if !val.nil? || table.include?(fqn)
 
     # not found - search inherited scope for class
     leaf_index = fqn.rindex('::')
@@ -620,8 +616,7 @@ class Puppet::Parser::Scope
         return handle_not_found(class_name, leaf_name, options, e.message)
       end
     end
-    # will report all names as '::fqn' even if looked up with just 'fqn'
-    # fqn is known to not have leading '::'
+    # report with leading '::' by using empty class_name
     return handle_not_found('', fqn, options)
   end
 
@@ -776,7 +771,7 @@ class Puppet::Parser::Scope
     # Note that Settings scope has a source set to Boolean true.
     #
     # Only meaningful to set a fqn globally if table to assign to is the top of the scope's ephemeral stack
-    if @symtable.__id__ == table.__id__
+    if @symtable.equal?(table)
       if is_topscope?
         # the scope name is '::'
         compiler.qualified_variables[name] = value
