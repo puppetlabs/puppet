@@ -18,6 +18,46 @@ describe Puppet::Util::Log do
     expect(message).to eq("foo")
   end
 
+  context "given a message with invalid encoding" do
+    let(:logs) { [] }
+    let(:invalid_message) { "\xFD\xFBfoo".force_encoding(Encoding::Shift_JIS) }
+
+    before do
+      Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(logs))
+      Puppet::Util::Log.new(:level => :notice, :message => invalid_message)
+    end
+
+    it "does not raise an error" do
+      expect { Puppet::Util::Log.new(:level => :notice, :message => invalid_message) }.not_to raise_error
+    end
+
+    it "includes a backtrace in the log" do
+      expect(logs.last.message).to match(/Backtrace:\n.*in `initialize'/ )
+    end
+
+    it "warns that message included invalid encoding" do
+      expect(logs.last.message).to match(/Received a log message with invalid encoding/)
+    end
+
+    it "includes the 'dump' of the invalid message" do
+      expect(logs.last.message).to match(/\"\\xFD\\xFBfoo\"/)
+    end
+  end
+
+  it "converts a given non-UTF-8 message to UTF-8" do
+    logs = []
+    Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(logs))
+
+    # HIRAGANA LETTER SO
+    # In Windows_31J: \x82 \xbb - 130 187
+    # In Unicode: \u305d - \xe3 \x81 \x9d - 227 129 157
+    win_31j_msg = [130, 187].pack('C*').force_encoding(Encoding::Windows_31J)
+    utf_8_msg = "\u305d"
+
+    Puppet::Util::Log.new(:level => :notice, :message => win_31j_msg, :source => 'Puppet')
+    expect(logs.last.message).to eq(utf_8_msg)
+  end
+
   describe ".setup_default" do
     it "should default to :syslog" do
       Puppet.features.stubs(:syslog?).returns(true)
@@ -251,20 +291,20 @@ describe Puppet::Util::Log do
 
   describe Puppet::Util::Log::DestEventlog, :if => Puppet.features.eventlog? do
     before :each do
-      Win32::EventLog.stubs(:open).returns(stub 'mylog')
-      Win32::EventLog.stubs(:report_event)
-      Win32::EventLog.stubs(:close)
+      Puppet::Util::Windows::EventLog.stubs(:open).returns(stub 'mylog')
+      Puppet::Util::Windows::EventLog.stubs(:report_event)
+      Puppet::Util::Windows::EventLog.stubs(:close)
       Puppet.features.stubs(:eventlog?).returns(true)
     end
 
-    it "should restrict its suitability" do
-      Puppet.features.expects(:eventlog?).returns(false)
+    it "should restrict its suitability to Windows" do
+      Puppet.features.expects(:microsoft_windows?).returns(false)
 
       expect(Puppet::Util::Log::DestEventlog.suitable?('whatever')).to eq(false)
     end
 
-    it "should open the 'Application' event log" do
-      Win32::EventLog.expects(:open).with('Application')
+    it "should open the 'Puppet' event log" do
+      Puppet::Util::Windows::EventLog.expects(:open).with('Puppet')
 
       Puppet::Util::Log.newdestination(:eventlog)
     end
@@ -272,7 +312,7 @@ describe Puppet::Util::Log do
     it "should close the event log" do
       log = stub('myeventlog')
       log.expects(:close)
-      Win32::EventLog.expects(:open).returns(log)
+      Puppet::Util::Windows::EventLog.expects(:open).returns(log)
 
       Puppet::Util::Log.newdestination(:eventlog)
       Puppet::Util::Log.close(:eventlog)

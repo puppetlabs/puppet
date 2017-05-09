@@ -170,6 +170,17 @@ class Puppet::Util::Log
   def Log.newmessage(msg)
     return if @levels.index(msg.level) < @loglevel
 
+    if msg.message.valid_encoding?
+      message = Puppet::Util::CharacterEncoding.convert_to_utf_8(msg.message)
+    else
+      message = _("Received a log message with invalid encoding:")
+      message << Puppet::Util::CharacterEncoding.convert_to_utf_8(msg.message.dump) << "\n"
+      # We only select the last 10 callers in the stack to avoid being spammy
+      message << _("Backtrace:") << "\n" << caller[0..10].join("\n")
+    end
+
+    msg.message = message
+
     queuemessage(msg) if @destinations.length == 0
 
     @destinations.each do |name, dest|
