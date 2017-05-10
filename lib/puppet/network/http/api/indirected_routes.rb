@@ -179,20 +179,18 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
   end
 
   def accepted_response_formatter_for(model_class, request)
-    accepted_formats = request.headers['accept'] or raise Puppet::Network::HTTP::Error::HTTPNotAcceptableError.new(_("Missing required Accept header"), Puppet::Network::HTTP::Issues::MISSING_HEADER_FIELD)
-    request.response_formatter_for(model_class.supported_formats, accepted_formats)
+    request.response_formatter_for(model_class.supported_formats)
   end
 
   def accepted_response_formatter_or_json_for(model_class, request)
-    accepted_formats = request.headers['accept'] || "application/json"
-    request.response_formatter_for(model_class.supported_formats, accepted_formats)
+    request.response_formatter_for(model_class.supported_formats, "application/json")
   end
 
   def read_body_into_model(model_class, request)
     data = request.body.to_s
     formatter = request.formatter
 
-    if formatter && formatter.supported?(model_class)
+    if formatter.supported?(model_class)
       begin
         return model_class.convert_from(formatter.name.to_s, data)
       rescue => e

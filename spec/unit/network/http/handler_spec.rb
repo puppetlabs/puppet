@@ -142,12 +142,6 @@ describe Puppet::Network::HTTP::Handler do
     it "should still find the correct format if content type contains charset information" do
       request = Puppet::Network::HTTP::Request.new({ 'content-type' => "text/plain; charset=UTF-8" },
                                                    {}, 'GET', '/', nil)
-      expect(request.format).to eq("s")
-    end
-
-    it "should return the formatter instance" do
-      request = Puppet::Network::HTTP::Request.new({ 'content-type' => "text/plain; charset=UTF-8" },
-                                                   {}, 'GET', '/', nil)
       expect(request.formatter.name).to eq(:s)
     end
 
