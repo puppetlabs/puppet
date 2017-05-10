@@ -91,6 +91,7 @@ Version table:
       provider.expects(:run_preseed)
 
       provider.stubs(:aptget)
+      provider.expects(:aptmark).with('manual', name)
       provider.install
     end
 
@@ -98,12 +99,14 @@ Version table:
       provider.expects(:checkforcdrom)
 
       provider.stubs(:aptget)
+      provider.expects(:aptmark).with('manual', name)
       provider.install
     end
 
     it "should use 'apt-get install' with the package name if no version is asked for" do
       resource[:ensure] = :installed
       provider.expects(:aptget).with { |*command| command[-1] == name and command[-2] == :install }
+      provider.expects(:aptmark).with('manual', name)
 
       provider.install
     end
@@ -111,6 +114,7 @@ Version table:
     it "should specify the package version if one is asked for" do
       resource[:ensure] = '1.0'
       provider.expects(:aptget).with { |*command| command[-1] == "#{name}=1.0" }
+      provider.expects(:aptmark).with('manual', name)
 
       provider.install
     end
@@ -118,18 +122,21 @@ Version table:
     it "should use --force-yes if a package version is specified" do
       resource[:ensure] = '1.0'
       provider.expects(:aptget).with { |*command| command.include?("--force-yes") }
+      provider.expects(:aptmark).with('manual', name)
 
       provider.install
     end
 
     it "should do a quiet install" do
       provider.expects(:aptget).with { |*command| command.include?("-q") }
+      provider.expects(:aptmark).with('manual', name)
 
       provider.install
     end
 
     it "should default to 'yes' for all questions" do
       provider.expects(:aptget).with { |*command| command.include?("-y") }
+      provider.expects(:aptmark).with('manual', name)
 
       provider.install
     end
@@ -137,6 +144,7 @@ Version table:
     it "should keep config files if asked" do
       resource[:configfiles] = :keep
       provider.expects(:aptget).with { |*command| command.include?("DPkg::Options::=--force-confold") }
+      provider.expects(:aptmark).with('manual', name)
 
       provider.install
     end
@@ -144,6 +152,7 @@ Version table:
     it "should replace config files if asked" do
       resource[:configfiles] = :replace
       provider.expects(:aptget).with { |*command| command.include?("DPkg::Options::=--force-confnew") }
+      provider.expects(:aptmark).with('manual', name)
 
       provider.install
     end
@@ -151,6 +160,7 @@ Version table:
     it 'should support string install options' do
       resource[:install_options] = ['--foo', '--bar']
       provider.expects(:aptget).with('-q', '-y', '-o', 'DPkg::Options::=--force-confold', '--foo', '--bar', :install, name)
+      provider.expects(:aptmark).with('manual', name)
 
       provider.install
     end
@@ -158,6 +168,7 @@ Version table:
     it 'should support hash install options' do
       resource[:install_options] = ['--foo', { '--bar' => 'baz', '--baz' => 'foo' }]
       provider.expects(:aptget).with('-q', '-y', '-o', 'DPkg::Options::=--force-confold', '--foo', '--bar=baz', '--baz=foo', :install, name)
+      provider.expects(:aptmark).with('manual', name)
 
       provider.install
     end

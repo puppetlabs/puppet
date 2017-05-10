@@ -12,6 +12,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
 
   commands :aptget => "/usr/bin/apt-get"
   commands :aptcache => "/usr/bin/apt-cache"
+  commands :aptmark => "/usr/bin/apt-mark"
   commands :preseed => "/usr/bin/debconf-set-selections"
 
   defaultfor :osfamily => :debian
@@ -71,6 +72,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     cmd << :install << str
 
     aptget(*cmd)
+    aptmark('manual', @resource[:name]) # ensure this package never gets autoremoved
   end
 
   # What's the latest package version available?

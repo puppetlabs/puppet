@@ -34,6 +34,7 @@ describe Puppet::Type.type(:package).provider(:aptitude) do
     pkg.provider.expects(:aptitude).
       with('-y', '-o', 'DPkg::Options::=--force-confold', :install, 'faff').
       returns(0)
+    pkg.provider.expects(:aptmark).with('manual', 'faff')
 
     pkg.provider.install
   end
