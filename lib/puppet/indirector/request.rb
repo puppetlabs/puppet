@@ -29,16 +29,25 @@ class Puppet::Indirector::Request
   def environment
     # If environment has not been set directly, we should use the application's
     # current environment
-    @environment ||= Puppet.lookup(:current_environment)
+    @environment ||= if @environment_name
+                         Puppet.lookup(:environments).get!(@environment_name)
+                     else
+                         Puppet.lookup(:current_environment)
+                     end
   end
 
   def environment=(env)
-    @environment =
     if env.is_a?(Puppet::Node::Environment)
-      env
+      @environment = env
+      @environment_name = nil
     else
-      Puppet.lookup(:environments).get!(env)
+      @environment = nil
+      @environment_name = env
     end
+  end
+
+  def environment_name
+    @environment_name || self.environment.name
   end
 
   def escaped_key
