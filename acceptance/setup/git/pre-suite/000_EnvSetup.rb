@@ -12,6 +12,7 @@ PACKAGES = {
     'git',
     'ruby',
     'rubygem-json',
+    'rubygem-io-console'
   ],
   :debian => [
     ['git', 'git-core'],

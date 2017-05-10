@@ -3,6 +3,7 @@ module Puppet
     module RpmUtils
       # Utilities for creating a basic rpm package and using it in tests
       @@defaults = {:repo => '/tmp/rpmrepo', :pkg => 'mypkg', :publisher => 'tstpub.lan', :version => '1.0'}
+      @@setup_packages = {}
 
       def rpm_provider(agent)
         has_dnf = on(agent, 'which dnf', :acceptable_exit_codes => [0,1]).exit_code
@@ -15,10 +16,11 @@ module Puppet
 
       def setup(agent)
         cmd = rpm_provider(agent)
-        required_packages = ['createrepo', 'rpm-build']
+        required_packages = ['createrepo', 'curl', 'rpm-build']
         required_packages.each do |pkg|
-          unless ((on agent, "#{cmd} list installed #{pkg}", :acceptable_exit_codes => (0..255)).exit_code == 0) then
-            on agent, "#{cmd} install -y #{pkg}"
+          unless @@setup_packages.has_key?(pkg) && ((on agent, "#{cmd} list installed #{pkg}", :acceptable_exit_codes => (0..255)).exit_code == 0) then
+            on agent, "#{cmd} install -y #{pkg} --best"
+            @@setup_packages[pkg] = true
           end
         end
       end
