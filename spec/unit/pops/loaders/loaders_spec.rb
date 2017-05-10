@@ -88,7 +88,7 @@ describe 'loaders' do
     loaders = Puppet::Pops::Loaders.new(empty_test_env)
 
     expect(loaders.public_environment_loader()).to be_a(Puppet::Pops::Loader::SimpleEnvironmentLoader)
-    expect(loaders.public_environment_loader().to_s).to eql("(SimpleEnvironmentLoader 'environment:*test*')")
+    expect(loaders.public_environment_loader().to_s).to eql("(SimpleEnvironmentLoader 'environment')")
     expect(loaders.private_environment_loader()).to be_a(Puppet::Pops::Loader::DependencyLoader)
     expect(loaders.private_environment_loader().to_s).to eql("(DependencyLoader 'environment private' [])")
   end
@@ -389,53 +389,13 @@ describe 'loaders' do
     end
   end
 
-  context 'loading types' do
+  context 'loading' do
     let(:env_name) { 'testenv' }
     let(:environments_dir) { Puppet[:environmentpath] }
     let(:env_dir) { File.join(environments_dir, env_name) }
     let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(populated_env_dir, 'modules')]) }
-    let(:metadata_json) {
-      <<-JSON
-      {
-        "name": "example/%1$s",
-        "version": "0.0.2",
-        "source": "git@github.com/example/example-%1$s.git",
-        "dependencies": [],
-        "author": "Bob the Builder",
-        "license": "Apache-2.0"%2$s
-      }
-      JSON
-    }
-
-    let(:env_dir_files) do
-      {
-        'modules' => {
-          'a' => {
-            'manifests' => {
-              'init.pp' => 'class a { notice(A::A) }'
-            },
-            'types' => {
-              'a.pp' => 'type A::A = Variant[B::B, String]',
-              'n.pp' => 'type A::N = C::C'
-            },
-            'metadata.json' => sprintf(metadata_json, 'a', ', "dependencies": [{ "name": "example/b" }]')
-          },
-          'b' => {
-            'types' => {
-              'b.pp' => 'type B::B = Variant[C::C, Float]',
-              'x.pp' => 'type B::X = A::A'
-            },
-            'metadata.json' => sprintf(metadata_json, 'b', ', "dependencies": [{ "name": "example/c" }]')
-          },
-          'c' => {
-            'types' => {
-              'c.pp' => 'type C::C = Integer'
-            },
-            'metadata.json' => sprintf(metadata_json, 'c', '')
-          },
-        }
-      }
-    end
+    let(:node) { Puppet::Node.new("test", :environment => env) }
+    let(:env_dir_files) {}
 
     let(:populated_env_dir) do
       dir_contained_in(environments_dir, env_name => env_dir_files)
@@ -443,46 +403,138 @@ describe 'loaders' do
       env_dir
     end
 
-    before(:each) do
-      Puppet.push_context(:loaders => Puppet::Pops::Loaders.new(env))
+    context 'non autoloaded types and functions' do
+      let(:env_dir_files) {
+        {
+          'modules' => {
+            'tstf' => {
+              'manifests' => {
+                'init.pp' => <<-PUPPET.unindent
+                  class tstf {
+                    notice(testfunc())
+                  }
+                  PUPPET
+              }
+            },
+            'tstt' => {
+              'manifests' => {
+                'init.pp' => <<-PUPPET.unindent
+                  class tstt {
+                    notice(assert_type(GlobalType, 23))
+                  }
+                  PUPPET
+              }
+            }
+          }
+        }
+      }
+
+      it 'finds the function from a module' do
+        expect(eval_and_collect_notices(<<-PUPPET.unindent, node)).to eq(['hello from testfunc'])
+          function testfunc() {
+            'hello from testfunc'
+          }
+          include 'tstf'
+          PUPPET
+      end
+
+      it 'finds the type from a module' do
+        expect(eval_and_collect_notices(<<-PUPPET.unindent, node)).to eq(['23'])
+          type GlobalType = Integer
+          include 'tstt'
+          PUPPET
+      end
     end
 
-    after(:each) do
-      Puppet.pop_context
-    end
+    context 'types' do
+      let(:env_name) { 'testenv' }
+      let(:environments_dir) { Puppet[:environmentpath] }
+      let(:env_dir) { File.join(environments_dir, env_name) }
+      let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(populated_env_dir, 'modules')]) }
+      let(:metadata_json) {
+        <<-JSON
+        {
+          "name": "example/%1$s",
+          "version": "0.0.2",
+          "source": "git@github.com/example/example-%1$s.git",
+          "dependencies": [],
+          "author": "Bob the Builder",
+          "license": "Apache-2.0"%2$s
+        }
+        JSON
+      }
 
-    it 'resolves types using the loader that loaded the type a -> b -> c' do
-      type = Puppet::Pops::Types::TypeParser.singleton.parse('A::A', Puppet::Pops::Loaders.find_loader('a'))
-      expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
-      expect(type.name).to eql('A::A')
-      type = type.resolved_type
-      expect(type).to be_a(Puppet::Pops::Types::PVariantType)
-      type = type.types[0]
-      expect(type.name).to eql('B::B')
-      type = type.resolved_type
-      expect(type).to be_a(Puppet::Pops::Types::PVariantType)
-      type = type.types[0]
-      expect(type.name).to eql('C::C')
-      type = type.resolved_type
-      expect(type).to be_a(Puppet::Pops::Types::PIntegerType)
-    end
+      let(:env_dir_files) do
+        {
+          'modules' => {
+            'a' => {
+              'manifests' => {
+                'init.pp' => 'class a { notice(A::A) }'
+              },
+              'types' => {
+                'a.pp' => 'type A::A = Variant[B::B, String]',
+                'n.pp' => 'type A::N = C::C'
+              },
+              'metadata.json' => sprintf(metadata_json, 'a', ', "dependencies": [{ "name": "example/b" }]')
+            },
+            'b' => {
+              'types' => {
+                'b.pp' => 'type B::B = Variant[C::C, Float]',
+                'x.pp' => 'type B::X = A::A'
+              },
+              'metadata.json' => sprintf(metadata_json, 'b', ', "dependencies": [{ "name": "example/c" }]')
+            },
+            'c' => {
+              'types' => {
+                'c.pp' => 'type C::C = Integer'
+              },
+              'metadata.json' => sprintf(metadata_json, 'c', '')
+            },
+          }
+        }
+      end
 
-    it 'will not resolve implicit transitive dependencies, a -> c' do
-      type = Puppet::Pops::Types::TypeParser.singleton.parse('A::N', Puppet::Pops::Loaders.find_loader('a'))
-      expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
-      expect(type.name).to eql('A::N')
-      type = type.resolved_type
-      expect(type).to be_a(Puppet::Pops::Types::PTypeReferenceType)
-      expect(type.type_string).to eql('C::C')
-    end
+      before(:each) do
+        Puppet.push_context(:loaders => Puppet::Pops::Loaders.new(env))
+      end
 
-    it 'will not resolve reverse dependencies, b -> a' do
-      type = Puppet::Pops::Types::TypeParser.singleton.parse('B::X', Puppet::Pops::Loaders.find_loader('b'))
-      expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
-      expect(type.name).to eql('B::X')
-      type = type.resolved_type
-      expect(type).to be_a(Puppet::Pops::Types::PTypeReferenceType)
-      expect(type.type_string).to eql('A::A')
+      after(:each) do
+        Puppet.pop_context
+      end
+
+      it 'resolves types using the loader that loaded the type a -> b -> c' do
+        type = Puppet::Pops::Types::TypeParser.singleton.parse('A::A', Puppet::Pops::Loaders.find_loader('a'))
+        expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
+        expect(type.name).to eql('A::A')
+        type = type.resolved_type
+        expect(type).to be_a(Puppet::Pops::Types::PVariantType)
+        type = type.types[0]
+        expect(type.name).to eql('B::B')
+        type = type.resolved_type
+        expect(type).to be_a(Puppet::Pops::Types::PVariantType)
+        type = type.types[0]
+        expect(type.name).to eql('C::C')
+        type = type.resolved_type
+        expect(type).to be_a(Puppet::Pops::Types::PIntegerType)
+      end
+
+      it 'will not resolve implicit transitive dependencies, a -> c' do
+        type = Puppet::Pops::Types::TypeParser.singleton.parse('A::N', Puppet::Pops::Loaders.find_loader('a'))
+        expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
+        expect(type.name).to eql('A::N')
+        type = type.resolved_type
+        expect(type).to be_a(Puppet::Pops::Types::PTypeReferenceType)
+        expect(type.type_string).to eql('C::C')
+      end
+
+      it 'will not resolve reverse dependencies, b -> a' do
+        type = Puppet::Pops::Types::TypeParser.singleton.parse('B::X', Puppet::Pops::Loaders.find_loader('b'))
+        expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
+        expect(type.name).to eql('B::X')
+        type = type.resolved_type
+        expect(type).to be_a(Puppet::Pops::Types::PTypeReferenceType)
+        expect(type.type_string).to eql('A::A')
+      end
     end
   end
 

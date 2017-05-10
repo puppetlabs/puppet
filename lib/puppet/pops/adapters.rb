@@ -129,7 +129,11 @@ module Adapters
         default_loader
       else
         loader_name = loader_name_by_source(loaders.environment, model, file)
-        loader_name.nil? ? default_loader || loaders.find_loader(nil) : loaders[loader_name]
+        if loader_name.nil?
+          default_loader || loaders[Loader::ENVIRONMENT_PRIVATE]
+        else
+          loaders[loader_name]
+        end
       end
     end
 
@@ -145,12 +149,14 @@ module Adapters
     #
     # The method returns `nil` when no module could be found.
     #
-    # @param scope
-    # @param instance
+    # @param environment [Puppet::Node::Environment] the current environment
+    # @param instance [Model::PopsObject] the AST for the code
+    # @param file [String] the path to the file for the code or `nil`
+    # @return [String] the name of the loader associated with the source
     # @api private
     def self.loader_name_by_source(environment, instance, file)
       file = find_file(instance) if file.nil?
-      return nil if file.nil?
+      return nil if file.nil? || EMPTY_STRING == file
       pn_adapter = PathsAndNameCacheAdapter.adapt(environment) do |a|
         a.paths ||= environment.modulepath.map { |p| Pathname.new(p) }
         a.cache ||= {}
