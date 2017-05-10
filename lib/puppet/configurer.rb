@@ -388,6 +388,7 @@ class Puppet::Configurer
   def send_report(report)
     puts report.summary if Puppet[:summarize]
     save_last_run_summary(report)
+    save_last_run_report(report)
     Puppet::Transaction::Report.indirection.save(report, nil, :environment => Puppet::Node::Environment.remote(@environment)) if Puppet[:report]
   rescue => detail
     Puppet.log_exception(detail, _("Could not send report: %{detail}") % { detail: detail })
@@ -400,6 +401,15 @@ class Puppet::Configurer
     end
   rescue => detail
     Puppet.log_exception(detail, _("Could not save last run local report: %{detail}") % { detail: detail })
+  end
+
+  def save_last_run_report(report)
+    mode = Puppet.settings.setting(:lastrunreport).mode
+    Puppet::Util.replace_file(Puppet[:lastrunreport], mode) do |fh|
+      fh.print YAML.dump(report)
+    end
+  rescue => detail
+    Puppet.log_exception(detail, "Could not save last run local report: #{detail}")
   end
 
   private

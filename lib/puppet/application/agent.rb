@@ -401,8 +401,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     Puppet.settings.use :main, :agent, :ssl
 
     Puppet::Transaction::Report.indirection.terminus_class = :rest
-    # we want the last report to be persisted locally
-    Puppet::Transaction::Report.indirection.cache_class = :yaml
 
     if Puppet[:noop]
       Puppet::Resource::Catalog.indirection.cache_class = nil
