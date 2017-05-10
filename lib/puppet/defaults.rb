@@ -1787,6 +1787,11 @@ EOT
         :default  => false,
         :type     => :boolean,
         :desc     => "Whether to print a transaction summary.",
+    },
+    :show_changes => {
+        :default  => false,
+        :type     => :boolean,
+        :desc     => "Whether to print the transaction changes.",
     }
   )
 
