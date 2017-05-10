@@ -187,18 +187,31 @@ module Puppet::Util::Execution
     null_file = Puppet.features.microsoft_windows? ? 'NUL' : '/dev/null'
 
     begin
+      # We close stdin/stdout/stderr immediately after execution as there no longer needed.
+      # In most cases they could be closed later, but when stdout is the writer pipe we
+      # must close it or we'll never reach eof on the reader.
+      reader, writer = IO.pipe unless options[:squelch]
       stdin = Puppet::FileSystem.open(options[:stdinfile] || null_file, nil, 'r')
-      stdout = options[:squelch] ? Puppet::FileSystem.open(null_file, nil, 'w') : Puppet::FileSystem::Uniquefile.new('puppet')
+      stdout = options[:squelch] ? Puppet::FileSystem.open(null_file, nil, 'w') : writer
       stderr = options[:combine] ? stdout : Puppet::FileSystem.open(null_file, nil, 'w')
 
       exec_args = [command, options, stdin, stdout, stderr]
+      output = ''
 
       if execution_stub = Puppet::Util::ExecutionStub.current_value
-        return execution_stub.call(*exec_args)
+        child_pid = execution_stub.call(*exec_args)
+        [stdin, stdout, stderr].each {|io| io.close rescue nil}
+        return child_pid
       elsif Puppet.features.posix?
         child_pid = nil
         begin
           child_pid = execute_posix(*exec_args)
+          [stdin, stdout, stderr].each {|io| io.close rescue nil}
+          unless options[:squelch]
+            while !reader.eof?
+              output << reader.read
+            end
+          end
           exit_status = Process.waitpid2(child_pid).last.exitstatus
           child_pid = nil
         rescue Timeout::Error => e
@@ -216,6 +229,12 @@ module Puppet::Util::Execution
       elsif Puppet.features.microsoft_windows?
         process_info = execute_windows(*exec_args)
         begin
+          [stdin, stdout, stderr].each {|io| io.close rescue nil}
+          unless options[:squelch]
+            while !reader.eof?
+              output << reader.read
+            end
+          end
           exit_status = Puppet::Util::Windows::Process.wait_process(process_info.process_handle)
         ensure
           FFI::WIN32.CloseHandle(process_info.process_handle)
@@ -223,21 +242,15 @@ module Puppet::Util::Execution
         end
       end
 
-      [stdin, stdout, stderr].each {|io| io.close rescue nil}
-
-      # read output in if required
-      unless options[:squelch]
-        output = wait_for_output(stdout)
-        Puppet.warning _("Could not get output") unless output
-      end
-
       if options[:failonfail] and exit_status != 0
         raise Puppet::ExecutionFailure, _("Execution of '%{str}' returned %{exit_status}: %{output}") % { str: command_str, exit_status: exit_status, output: output.strip }
       end
     ensure
-      if !options[:squelch] && stdout
-        # if we opened a temp file for stdout, we need to clean it up.
-        stdout.close!
+      # Make sure all handles are closed in case an exception was thrown attempting to execute.
+      [stdin, stdout, stderr].each {|io| io.close rescue nil}
+      if !options[:squelch] && reader
+        # if we opened a pipe, we need to clean it up.
+        reader.close
       end
     end
 
@@ -325,35 +338,4 @@ module Puppet::Util::Execution
     end
   end
   private_class_method :execute_windows
-
-
-  # This is private method.
-  # @comment see call to private_class_method after method definition
-  # @api private
-  #
-  def self.wait_for_output(stdout)
-    # Make sure the file's actually been written.  This is basically a race
-    # condition, and is probably a horrible way to handle it, but, well, oh
-    # well.
-    # (If this method were treated as private / inaccessible from outside of this file, we shouldn't have to worry
-    #  about a race condition because all of the places that we call this from are preceded by a call to "waitpid2",
-    #  meaning that the processes responsible for writing the file have completed before we get here.)
-    2.times do |try|
-      if Puppet::FileSystem.exist?(stdout.path)
-        stdout.open
-        begin
-          return stdout.read
-        ensure
-          stdout.close
-          stdout.unlink
-        end
-      else
-        time_to_sleep = try / 2.0
-        Puppet.warning _("Waiting for output; will sleep %{time_to_sleep} seconds") % { time_to_sleep: time_to_sleep }
-        sleep(time_to_sleep)
-      end
-    end
-    nil
-  end
-  private_class_method :wait_for_output
 end
