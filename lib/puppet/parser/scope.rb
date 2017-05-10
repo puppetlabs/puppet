@@ -372,8 +372,9 @@ class Puppet::Parser::Scope
     end
   end
 
-  # This just delegates directly.
-  def_delegator :compiler, :findresource
+  def findresource(type, title = nil)
+    @compiler.catalog.resource(type, title)
+  end
 
   # Initialize our new scope.  Defaults to having no parent.
   def initialize(compiler, options = EMPTY_HASH)
