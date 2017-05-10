@@ -5,6 +5,7 @@ require 'forwardable'
 
 require 'puppet/parser'
 require 'puppet/parser/templatewrapper'
+require 'puppet/parser/resource'
 
 require 'puppet/util/methodhelper'
 
@@ -16,10 +17,6 @@ require 'puppet/util/methodhelper'
 class Puppet::Parser::Scope
   extend Forwardable
   include Puppet::Util::MethodHelper
-
-  require 'puppet/parser/resource'
-
-  AST = Puppet::Parser::AST
 
   # Variables that always exist with nil value even if not set
   BUILT_IN_VARS = ['module_name'.freeze, 'caller_module_name'.freeze].freeze
