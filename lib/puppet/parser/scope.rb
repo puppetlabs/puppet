@@ -1014,33 +1014,10 @@ class Puppet::Parser::Scope
     end
   end
 
-  # Called from two places:
-  # runtime3support when creating resources
-  # ast::resource - used by create resources ?
+  # To be removed when enough time has passed after puppet 5.0.0
   # @api private
   def resolve_type_and_titles(type, titles)
     raise Puppet::DevError, "Scope#resolve_type_and_title() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
-
-#    Puppet.deprecation_warning('Scope#resolve_type_and_titles is deprecated.')
-#
-#    raise ArgumentError, "titles must be an array" unless titles.is_a?(Array)
-#
-#    case type.downcase
-#    when "class"
-#      # resolve the titles
-#      titles = titles.collect do |a_title|
-#        hostclass = find_hostclass(a_title)
-#        hostclass ?  hostclass.name : a_title
-#      end
-#    when "node"
-#      # no-op
-#    else
-#      # resolve the type
-#      resource_type = find_resource_type(type)
-#      type = resource_type.name if resource_type
-#    end
-#
-#    return [type, titles]
   end
 
   # Transforms references to classes to the form suitable for
