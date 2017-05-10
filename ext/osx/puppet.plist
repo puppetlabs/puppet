@@ -8,7 +8,7 @@
                 <string>en_US.UTF-8</string>
         </dict>
         <key>Label</key>
-        <string>puppet</string>
+        <string>com.puppetlabs.puppet</string>
         <key>KeepAlive</key>
         <true/>
         <key>ProgramArguments</key>
