@@ -49,6 +49,11 @@ Puppet::Type.newtype(:component) do
     reference.to_s
   end
 
+  # This allows us to grab the defined type 'type' for optional use in other custom type's autorelation methods
+  def title_class
+    reference.type
+  end
+
   # We want our title to just be the whole reference, rather than @title.
   def title
     ref
