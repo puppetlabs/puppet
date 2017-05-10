@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 4.10.0-636-ge584668\n"
+"Project-Id-Version: Puppet automation framework 4.10.0-645-gd973bde\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-05-08 12:23-0700\n"
-"PO-Revision-Date: 2017-05-08 12:23-0700\n"
+"POT-Creation-Date: 2017-05-09 17:21-0700\n"
+"PO-Revision-Date: 2017-05-09 17:21-0700\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -3142,15 +3142,11 @@ msgstr ""
 msgid "Too many HTTP redirections for %{host}:%{port}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:222
-msgid "certificate verify failed"
-msgstr ""
-
-#: ../lib/puppet/network/http/connection.rb:230
+#: ../lib/puppet/network/http/connection.rb:227
 msgid "one of %{certnames}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:231
+#: ../lib/puppet/network/http/connection.rb:228
 msgid "Server hostname '%{host}' did not match server certificate; expected %{msg}"
 msgstr ""
 
@@ -7297,35 +7293,43 @@ msgstr ""
 msgid "Failed to set process priority to '%{priority}'"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:212
+#: ../lib/puppet/util/log.rb:176
+msgid "Received a log message with invalid encoding:"
+msgstr ""
+
+#: ../lib/puppet/util/log.rb:179
+msgid "Backtrace:"
+msgstr ""
+
+#: ../lib/puppet/util/log.rb:223
 msgid "Reopening log files"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:381
+#: ../lib/puppet/util/log.rb:392
 msgid "Could not parse for environment %{env}: %{msg}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:383
+#: ../lib/puppet/util/log.rb:394
 msgid "%{msg} at %{file}:%{line}:%{pos}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:385
+#: ../lib/puppet/util/log.rb:396
 msgid "%{msg}  at %{file}:%{line}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:387
+#: ../lib/puppet/util/log.rb:398
 msgid "%{msg}  at line %{line}:%{pos}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:389
+#: ../lib/puppet/util/log.rb:400
 msgid "%{msg}  at line %{line}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:391
+#: ../lib/puppet/util/log.rb:402
 msgid "%{msg}  in %{file}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:393
+#: ../lib/puppet/util/log.rb:404
 msgid "%{msg} on node %{node}"
 msgstr ""
 
