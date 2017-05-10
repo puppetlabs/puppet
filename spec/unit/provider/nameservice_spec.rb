@@ -21,10 +21,11 @@ describe Puppet::Provider::NameService do
     ]
   end
 
-  # These are values getgrent might give you
+  # These are values getgrent might give you, bin is duplicated intentionally
   let :groups do
     [
       Struct::Group.new('root', 'x', 0, %w{root}),
+      Struct::Group.new('bin', 'x', 1, %w{root bin daemon}),
       Struct::Group.new('bin', 'x', 1, %w{root bin daemon}),
       nil
     ]
@@ -189,7 +190,7 @@ describe Puppet::Provider::NameService do
       end
     end
 
-    it "should return a list of groups if resource_type is group", :unless => Puppet.features.microsoft_windows? do
+    it "should return a list of groups, with no duplicates, if resource_type is group", :unless => Puppet.features.microsoft_windows? do
       described_class.resource_type = Puppet::Type.type(:group)
       Puppet::Etc.expects(:setgrent)
       Puppet::Etc.stubs(:getgrent).returns *groups
