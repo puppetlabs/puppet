@@ -866,19 +866,6 @@ class Puppet::Parser::Scope
 
   # Pop ephemeral scopes up to level and return them
   #
-  # @deprecated use #pop_epehemeral
-  # @api private
-  def unset_ephemeral_var(level=:all)
-    Puppet.deprecation_warning(_('Method Parser::Scope#unset_ephemeral_var() is deprecated'))
-    if level == :all
-      @ephemeral = [ MatchScope.new(@symtable, nil)]
-    else
-      @ephemeral.pop(@ephemeral.size - level)
-    end
-  end
-
-  # Pop ephemeral scopes up to level and return them
-  #
   # @param level [Integer] a positive integer
   # @return [Array] the removed ephemeral scopes
   # @api private

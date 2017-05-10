@@ -431,29 +431,8 @@ describe Puppet::Parser::Scope do
 
   describe "when using ephemeral variables" do
     it "should store the variable value" do
-#      @scope.setvar("1", :value, :ephemeral => true)
       @scope.set_match_data({1 => :value})
       expect(@scope["1"]).to eq(:value)
-    end
-
-    it "should remove the variable value when unset_ephemeral_var(:all) is called" do
-#      @scope.setvar("1", :value, :ephemeral => true)
-      @scope.set_match_data({1 => :value})
-      @scope.stubs(:parent).returns(nil)
-
-      @scope.unset_ephemeral_var(:all)
-
-      expect(@scope["1"]).to be_nil
-    end
-
-    it "should not remove classic variables when unset_ephemeral_var(:all) is called" do
-      @scope['myvar'] = :value1
-      @scope.set_match_data({1 => :value2})
-      @scope.stubs(:parent).returns(nil)
-
-      @scope.unset_ephemeral_var(:all)
-
-      expect(@scope["myvar"]).to eq(:value1)
     end
 
     it "should raise an error when setting numerical variable" do
@@ -477,8 +456,6 @@ describe Puppet::Parser::Scope do
       end
 
       it "should not check presence of an ephemeral variable across multiple levels" do
-        # This test was testing that scope actuallys screwed up - making values from earlier matches show as if they
-        # where true for latest match - insanity !
         @scope.new_ephemeral
         @scope.set_match_data({1 => :value1})
         @scope.new_ephemeral
@@ -523,14 +500,6 @@ describe Puppet::Parser::Scope do
       @scope.new_ephemeral true
       @scope.setvar("apple", :fruit)
       expect(@scope["apple"]).to eq(:fruit)
-    end
-
-    it "should remove all local scope variables on unset" do
-      @scope.new_ephemeral true
-      @scope.setvar("apple", :fruit)
-      expect(@scope["apple"]).to eq(:fruit)
-      @scope.unset_ephemeral_var
-      expect(@scope["apple"]).to eq(nil)
     end
 
     it 'should store an undef in local scope and let it override parent scope' do
