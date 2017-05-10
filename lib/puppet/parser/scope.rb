@@ -35,9 +35,15 @@ class Puppet::Parser::Scope
   # Hash of hashes of default values per type name
   attr_reader :defaults
 
-  # Add some alias methods that forward to the compiler, since we reference
-  # them frequently enough to justify the extra method call.
-  def_delegators :compiler, :catalog, :environment
+  # Alias for `compiler.environment`
+  def environment
+    @compiler.environment
+  end
+
+  # Alias for `compiler.catalog`
+  def catalog
+    @compiler.catalog
+  end
 
   # Abstract base class for LocalScope and MatchScope
   #
