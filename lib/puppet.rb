@@ -82,7 +82,7 @@ module Puppet
       end
 
       if locale_path
-        if Gem.loaded_specs['gettext-setup'].version < Gem::Version.new('0.8')
+        if GettextSetup.method(:initialize).parameters.count == 1
           # Will load translations from PO files only
           GettextSetup.initialize(locale_path)
         else
