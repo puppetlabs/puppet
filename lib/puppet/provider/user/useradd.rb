@@ -9,7 +9,11 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     install Ruby's shadow password library (often known as `ruby-libshadow`)
     if you wish to manage user passwords."
 
+  # These commands have special names for use with the base ObjectAdd provider
   commands :add => "useradd", :delete => "userdel", :modify => "usermod", :password => "chage"
+
+  # This is used in our local implementation and has no special name
+  commands :gpasswd => "gpasswd"
 
   options :home, :flag => "-d", :method => :dir
   options :comment, :method => :gecos
@@ -89,8 +93,34 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     value.is_a? Integer
   end
 
-  verify :groups, "Groups must be comma-separated" do |value|
-    value !~ /\s/
+  def groups=(value)
+    prop = @resource.parameters[:groups]
+    changes = []
+    failures = []
+
+    prop.should_but_isnt.each do |group|
+      failures << group if group =~ /\s/
+      changes << { :name => group, :action => '--add' }
+    end
+
+    prop.is_but_shouldnt.each do |group|
+      failures << group if group =~ /\s/
+      changes << { :name => group, :action => '--delete' }
+    end
+
+    raise ArgumentError, "Cannot change group membership when group contains a space: #{failures.join(',')}" unless failures.empty?
+
+    changes.each do |group|
+      cmd = [ command(:gpasswd),
+              group[:name],
+              group[:action],
+              @resource[:name] ]
+      begin
+        execute(cmd)
+      rescue Puppet::ExecutionFailure => detail
+        raise Puppet::Error, "Could not set groups on #{@resource.class.name}[#{@resource.name}]: #{detail}", detail.backtrace
+      end
+    end
   end
 
   has_features :manages_homedir, :allows_duplicates, :manages_expiry
@@ -216,13 +246,16 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     if @resource[:shell]
       check_valid_shell
     end
-     super
-     if @resource.forcelocal? and self.groups?
-       set(:groups, @resource[:groups])
-     end
-     if @resource.forcelocal? and @resource[:expiry]
-       set(:expiry, @resource[:expiry])
-     end
+
+    super
+
+    if @resource.forcelocal? and self.groups?
+      self.groups = @resource[:groups]
+    end
+
+    if @resource.forcelocal? and @resource[:expiry]
+      self.expiry = @resource[:expiry]
+    end
   end
 
   def groups?
