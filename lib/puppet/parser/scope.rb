@@ -857,9 +857,6 @@ class Puppet::Parser::Scope
     setvar(varname, value)
   end
 
-  # Return the tags associated with this scope.
-  def_delegator :resource, :tags
-
   # Used mainly for logging
   def to_s
     "Scope(#{@resource})"
