@@ -31,7 +31,16 @@ describe 'the break function' do
           function please_break() {
             [1,2,3].each |$x| { if $x == 3 { break() } notify { "$x": } }
           }
-          notify { String(please_break()): }
+          please_break()
+        CODE
+    end
+
+    it 'breaks iteration as if at end of input in a reverse_each' do
+      expect(compile_to_catalog(<<-CODE)).to have_resource('Notify[2]')
+          function please_break() {
+            [1,2,3].reverse_each |$x| { if $x == 1 { break() } notify { "$x": } }
+          }
+          please_break()
         CODE
     end
 
