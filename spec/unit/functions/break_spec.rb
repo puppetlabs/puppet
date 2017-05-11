@@ -8,10 +8,19 @@ describe 'the break function' do
   include Matchers::Resource
 
   context  do
-    it 'breaks iteration as if at end of input' do
+    it 'breaks iteration as if at end of input in a map' do
       expect(compile_to_catalog(<<-CODE)).to have_resource('Notify[[1, 2]]')
           function please_break() {
             [1,2,3].map |$x| { if $x == 3 { break() } $x }
+          }
+          notify { String(please_break()): }
+        CODE
+    end
+
+    it 'breaks iteration as if at end of input in a reduce' do
+      expect(compile_to_catalog(<<-CODE)).to have_resource('Notify[6]')
+          function please_break() {
+            [1,2,3,4].reduce |$memo, $x| { if $x == 4 { break() } $memo + $x }
           }
           notify { String(please_break()): }
         CODE
