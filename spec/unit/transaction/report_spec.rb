@@ -40,6 +40,14 @@ describe Puppet::Transaction::Report do
     expect(Puppet::Transaction::Report.new("inspect", "some configuration version", "some environment", "some transaction uuid").transaction_uuid).to eq("some transaction uuid")
   end
 
+  it "should take a 'transaction_uuid' as an argument" do
+    expect(Puppet::Transaction::Report.new("inspect", "some configuration version", "some environment", "some transaction uuid").transaction_uuid).to eq("some transaction uuid")
+  end
+
+  it "should take a 'job_id' as an argument" do
+    expect(Puppet::Transaction::Report.new('inspect', 'cv', 'env', 'tid', 'some job id').job_id).to eq('some job id')
+  end
+
   it "should be able to set configuration_version" do
     report = Puppet::Transaction::Report.new("inspect")
     report.configuration_version = "some version"
@@ -50,6 +58,12 @@ describe Puppet::Transaction::Report do
     report = Puppet::Transaction::Report.new("inspect")
     report.transaction_uuid = "some transaction uuid"
     expect(report.transaction_uuid).to eq("some transaction uuid")
+  end
+
+  it "should be able to set job_id" do
+    report = Puppet::Transaction::Report.new("inspect")
+    report.job_id = "some job id"
+    expect(report.job_id).to eq("some job id")
   end
 
   it "should be able to set code_id" do
@@ -532,6 +546,7 @@ describe Puppet::Transaction::Report do
     expect(tripped.time.to_i).to eq(report.time.to_i)
     expect(tripped.configuration_version).to eq(report.configuration_version)
     expect(tripped.transaction_uuid).to eq(report.transaction_uuid)
+    expect(tripped.job_id).to eq(report.job_id)
     expect(tripped.code_id).to eq(report.code_id)
     expect(tripped.catalog_uuid).to eq(report.catalog_uuid)
     expect(tripped.cached_catalog_status).to eq(report.cached_catalog_status)

@@ -56,12 +56,13 @@ class Puppet::Configurer
     end
   end
 
-  def initialize(factory = Puppet::Configurer::DownloaderFactory.new, transaction_uuid = nil)
+  def initialize(factory = Puppet::Configurer::DownloaderFactory.new, transaction_uuid = nil, job_id = nil)
     @running = false
     @splayed = false
     @cached_catalog_status = 'not_used'
     @environment = Puppet[:environment]
     @transaction_uuid = transaction_uuid || SecureRandom.uuid
+    @job_id = job_id
     @static_catalog = true
     @checksum_type = Puppet[:supported_checksum_types]
     @handler = Puppet::Configurer::PluginHandler.new(factory)
@@ -133,6 +134,7 @@ class Puppet::Configurer
     # set report host name now that we have the fact
     options[:report].host = Puppet[:node_name_value]
     query_options[:transaction_uuid] = @transaction_uuid
+    query_options[:job_id] = @job_id
     query_options[:static_catalog] = @static_catalog
 
     # Query params don't enforce ordered evaluation, so munge this list into a
@@ -184,7 +186,7 @@ class Puppet::Configurer
     # environment and transaction_uuid very early, this is to ensure
     # they are sent regardless of any catalog compilation failures or
     # exceptions.
-    options[:report] ||= Puppet::Transaction::Report.new("apply", nil, @environment, @transaction_uuid)
+    options[:report] ||= Puppet::Transaction::Report.new("apply", nil, @environment, @transaction_uuid, @job_id)
     report = options[:report]
     init_storage
 

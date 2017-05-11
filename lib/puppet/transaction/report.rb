@@ -51,6 +51,9 @@ class Puppet::Transaction::Report
   # The id of the code input to the compiler.
   attr_accessor :code_id
 
+  # The id of the job responsible for this run.
+  attr_accessor :job_id
+
   # A master generated catalog uuid, useful for connecting a single catalog to multiple reports.
   attr_accessor :catalog_uuid
 
@@ -206,7 +209,7 @@ class Puppet::Transaction::Report
   end
 
   # @api private
-  def initialize(kind, configuration_version=nil, environment=nil, transaction_uuid=nil)
+  def initialize(kind, configuration_version=nil, environment=nil, transaction_uuid=nil, job_id=nil)
     @metrics = {}
     @logs = []
     @resource_statuses = {}
@@ -214,11 +217,12 @@ class Puppet::Transaction::Report
     @host = Puppet[:node_name_value]
     @time = Time.now
     @kind = kind
-    @report_format = 6
+    @report_format = 7
     @puppet_version = Puppet.version
     @configuration_version = configuration_version
     @transaction_uuid = transaction_uuid
     @code_id = nil
+    @job_id = job_id
     @catalog_uuid = nil
     @cached_catalog_status = nil
     @master_used = nil
@@ -249,6 +253,10 @@ class Puppet::Transaction::Report
 
     if catalog_uuid = data['catalog_uuid']
       @catalog_uuid = catalog_uuid
+    end
+
+    if job_id = data['job_id']
+      @job_id = job_id
     end
 
     if code_id = data['code_id']
@@ -292,6 +300,7 @@ class Puppet::Transaction::Report
       'transaction_uuid' => @transaction_uuid,
       'catalog_uuid' => @catalog_uuid,
       'code_id' => @code_id,
+      'job_id' => @job_id,
       'cached_catalog_status' => @cached_catalog_status,
       'report_format' => @report_format,
       'puppet_version' => @puppet_version,
