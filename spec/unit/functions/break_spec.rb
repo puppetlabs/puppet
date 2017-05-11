@@ -25,6 +25,16 @@ describe 'the break function' do
           notify { String(please_break()): }
         CODE
     end
+
+    it 'breaks iteration as if at end of input in an each' do
+      expect(compile_to_catalog(<<-CODE)).to_not have_resource('Notify[3]')
+          function please_break() {
+            [1,2,3].each |$x| { if $x == 3 { break() } notify { "$x": } }
+          }
+          notify { String(please_break()): }
+        CODE
+    end
+
   end
 
   it 'does not provide early exit from a class' do
