@@ -21,6 +21,10 @@
 #
 module Puppet::Pops
 module Loader
+
+ENVIRONMENT = 'environment'.freeze
+ENVIRONMENT_PRIVATE = 'environment private'.freeze
+
 class Loader
   attr_reader :loader_name
 

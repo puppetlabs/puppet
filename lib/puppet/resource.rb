@@ -168,26 +168,23 @@ class Puppet::Resource
   end
 
   def self.value_to_json_data(value)
-    if value.is_a? Array
+    if value.is_a?(Array)
       value.map{|v| value_to_json_data(v) }
-    elsif value.is_a? Puppet::Resource
+    elsif value.is_a?(Hash)
+      result = {}
+      value.each_pair { |k, v| result[value_to_json_data(k)] = value_to_json_data(v) }
+      result
+    elsif value.is_a?(Puppet::Resource)
       value.to_s
+    elsif value.is_a?(Symbol) && value == :undef
+      nil
     else
       value
     end
   end
 
   def yaml_property_munge(x)
-    case x
-    when Hash
-      x.inject({}) { |h,kv|
-        k,v = kv
-        h[k] = self.class.value_to_json_data(v)
-        h
-      }
-    else
-      self.class.value_to_json_data(x)
-    end
+    self.value.to_json_data(x)
   end
 
   YAML_ATTRIBUTES = [:@file, :@line, :@exported, :@type, :@title, :@tags, :@parameters]

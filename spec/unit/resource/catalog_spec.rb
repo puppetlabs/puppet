@@ -977,6 +977,27 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to json"
         expect(message).to be_a(String)
         expect(message).to eql('2016-09-15T08:32:16.123 UTC')
       end
+
+      it 'should convert param containing array with :undef entries' do
+        catalog = compile_to_catalog("notify {'foo': message => [ 10, undef, 20 ] }")
+        catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog.to_json))
+        message = catalog2.resource('notify', 'foo')['message']
+        expect(message).to be_a(Array)
+        expect(message[0]).to eql(10)
+        expect(message[1]).to eql(nil)
+        expect(message[2]).to eql(20)
+      end
+
+      it 'should convert param containing hash with :undef entries' do
+        catalog = compile_to_catalog("notify {'foo': message => {a => undef, b => 10}}")
+        catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog.to_json))
+        message = catalog2.resource('notify', 'foo')['message']
+        expect(message).to be_a(Hash)
+        expect(message.has_key?('a')).to eql(true)
+        expect(message['a']).to eql(nil)
+        expect(message['b']).to eql(10)
+      end
+
     end
 
   end

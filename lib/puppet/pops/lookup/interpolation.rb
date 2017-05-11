@@ -58,10 +58,11 @@ module Interpolation
           # Alias is only permitted if the entire string is equal to the interpolate expression
           fail(Issues::HIERA_INTERPOLATION_ALIAS_NOT_ENTIRE_STRING) if is_alias && subject != match
           value = interpolate_method(method_key).call(key, lookup_invocation, subject)
-          value = lookup_invocation.check(method_key == :scope ? "scope:#{key}" : key) { interpolate(value, lookup_invocation, allow_methods) }
 
           # break gsub and return value immediately if this was an alias substitution. The value might be something other than a String
           return value if is_alias
+
+          value = lookup_invocation.check(method_key == :scope ? "scope:#{key}" : key) { interpolate(value, lookup_invocation, allow_methods) }
         end
         value.nil? ? '' : value
       end

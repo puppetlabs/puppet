@@ -178,15 +178,9 @@ class Loaders
   # @raise [Puppet::ParseError] if no loader can be found
   # @api private
   def find_loader(module_name)
-    if module_name.nil? || module_name == ''
-      # TODO : Later when fdefinition can be private, a decision is needed regarding what that means.
-      #        A private environment loader could be used for logic outside of modules, then only that logic
-      #        would see the definition.
-      #
-      # Use the private loader, this definition may see the environment's dependencies (currently, all modules)
-      loader = private_environment_loader()
-      raise Puppet::ParseError, 'Internal Error: did not find public loader' if loader.nil?
-      loader
+    if module_name.nil? || EMPTY_STRING == module_name
+      # Use the public environment loader
+      public_environment_loader
     else
       # TODO : Later check if definition is private, and then add it to private_loader_for_module
       #
@@ -256,8 +250,6 @@ class Loaders
     # available modules. (3x is everyone sees everything).
     # Puppet binder currently reads confdir/bindings - that is bad, it should be using the new environment support.
 
-    # The environment is not a namespace, so give it a nil "module_name"
-    loader_name = "environment:#{environment.name}"
     # env_conf is setup from the environment_dir value passed into Puppet::Environments::Directories.new
     env_conf = Puppet.lookup(:environments).get_conf(environment.name)
     env_path = env_conf.nil? || !env_conf.is_a?(Puppet::Settings::EnvironmentConf) ? nil : env_conf.path_to_env
@@ -267,7 +259,7 @@ class Loaders
 
     if env_path.nil?
       # Not a real directory environment, cannot work as a module TODO: Drop when legacy env are dropped?
-      loader = add_loader_by_name(Loader::SimpleEnvironmentLoader.new(@runtime3_type_loader, loader_name))
+      loader = add_loader_by_name(Loader::SimpleEnvironmentLoader.new(@runtime3_type_loader, Loader::ENVIRONMENT))
     else
       # View the environment as a module to allow loading from it - this module is always called 'environment'
       loader = Loader::ModuleLoaders.environment_loader_from(@runtime3_type_loader, self, env_path)
@@ -281,7 +273,7 @@ class Loaders
     # Code in the environment gets to see all modules (since there is no metadata for the environment)
     # but since this is not given to the module loaders, they can not load global code (since they can not
     # have prior knowledge about this
-    loader = add_loader_by_name(Loader::DependencyLoader.new(loader, 'environment private', @module_resolver.all_module_loaders()))
+    loader = add_loader_by_name(Loader::DependencyLoader.new(loader, Loader::ENVIRONMENT_PRIVATE, @module_resolver.all_module_loaders()))
 
     # The module loader gets the private loader via a lazy operation to look up the module's private loader.
     # This does not work for an environment since it is not resolved the same way.

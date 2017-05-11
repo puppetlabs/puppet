@@ -6,34 +6,73 @@ module Puppet::Pops
 describe 'Puppet::Pops::Lookup::Interpolation' do
   include Lookup::SubLookup
 
+  class InterpolationTestAdapter < Lookup::LookupAdapter
+    include Lookup::SubLookup
+
+    def initialize(data, interpolator)
+      @data = data
+      @interpolator = interpolator
+    end
+
+    def track(name)
+    end
+
+    def lookup(name, lookup_invocation, merge)
+      track(name)
+      segments = split_key(name)
+      root_key = segments.shift
+      found = @data[root_key]
+      found = sub_lookup(name, lookup_invocation, segments, found) unless segments.empty?
+      @interpolator.interpolate(found, lookup_invocation, true)
+    end
+  end
+
   let(:interpolator) { Class.new { include Lookup::Interpolation }.new }
   let(:scope) { {} }
+  let(:data) { {} }
+  let(:adapter) { InterpolationTestAdapter.new(data, interpolator) }
   let(:lookup_invocation) { Lookup::Invocation.new(scope, {}, {}, nil) }
 
+  before(:each) do
+    Lookup::Invocation.any_instance.stubs(:lookup_adapter).returns(adapter)
+  end
+
   def expect_lookup(*keys)
-    keys.each do |key|
-      segments = split_key(key)
-      root_key = segments.shift
-      found = data[root_key]
-      found = sub_lookup(key, lookup_invocation, segments, found) unless segments.empty?
-      Lookup.expects(:lookup).with(key, nil, '', true, nil, is_a(Lookup::Invocation)).returns(found)
-    end
+    keys.each { |key| adapter.expects(:track).with(key) }
   end
 
   context 'when interpolating nested data' do
     let(:nested_hash) { {'a' => {'aa' => "%{alias('aaa')}"}} }
 
+    let(:scope) {
+      {
+        'ds1' => 'a',
+        'ds2' => 'b'
+      }
+    }
+
     let(:data) {
       {
         'aaa' => {'b' => {'bb' => "%{alias('bbb')}"}},
         'bbb' => ["%{alias('ccc')}"],
-        'ccc' => 'text'
+        'ccc' => 'text',
+        'ddd' => "%{literal('%')}{ds1}_%{literal('%')}{ds2}",
       }
     }
 
     it 'produces a nested hash with arrays from nested aliases with hashes and arrays' do
       expect_lookup('aaa', 'bbb', 'ccc')
       expect(interpolator.interpolate(nested_hash, lookup_invocation, true)).to eq('a' => {'aa' => {'b' => {'bb' => ['text']}}})
+    end
+
+    it "'%{lookup('key')} will interpolate the returned value'" do
+      expect_lookup('ddd')
+      expect(interpolator.interpolate("%{lookup('ddd')}", lookup_invocation, true)).to eq('a_b')
+    end
+
+    it "'%{alias('key')} will not interpolate the returned value'" do
+      expect_lookup('ddd')
+      expect(interpolator.interpolate("%{alias('ddd')}", lookup_invocation, true)).to eq('%{ds1}_%{ds2}')
     end
   end
 
@@ -242,7 +281,8 @@ describe 'Puppet::Pops::Lookup::Interpolation' do
     end
 
     it 'should not find a subkey that is matched within a string' do
-      expect{ expect_lookup('key.subkey') }.to raise_error(/Got String when a hash-like object was expected to access value using 'subkey' from key 'key.subkey'/)
+      expect{ interpolator.interpolate("%{lookup('key.subkey')}", lookup_invocation, true) }.to raise_error(
+        /Got String when a hash-like object was expected to access value using 'subkey' from key 'key.subkey'/)
     end
   end
 
