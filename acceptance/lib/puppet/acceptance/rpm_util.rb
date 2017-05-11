@@ -15,13 +15,23 @@ module Puppet
       end
 
       def setup(agent)
+        @@setup_packages[agent] ||= {}
         cmd = rpm_provider(agent)
         required_packages = ['createrepo', 'curl', 'rpm-build']
         required_packages.each do |pkg|
-          unless @@setup_packages.has_key?(pkg) && ((on agent, "#{cmd} list installed #{pkg}", :acceptable_exit_codes => (0..255)).exit_code == 0) then
-            on agent, "#{cmd} install -y #{pkg} --best"
-            @@setup_packages[pkg] = true
+          pkg_installed = (on agent, "#{cmd} list installed #{pkg}", :acceptable_exit_codes => (0..255)).exit_code == 0
+          # package not present, so perform a new install
+          if !pkg_installed
+            on agent, "#{cmd} install -y #{pkg}"
+          # package is present, but has not yet attempted an upgrade
+          # note that this may influence YUM cache behavior
+          elsif !@@setup_packages[agent].has_key?(pkg)
+            # first pass, always attempt an upgrade to latest version
+            # fixes Fedora 25 curl compat with python-pycurl for instance
+            on agent, "#{cmd} upgrade -y #{pkg}"
           end
+
+          @@setup_packages[agent][pkg] = true
         end
       end
 
