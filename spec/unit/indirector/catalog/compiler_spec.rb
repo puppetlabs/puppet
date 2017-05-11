@@ -255,10 +255,10 @@ describe Puppet::Resource::Catalog::Compiler do
       @facts = Puppet::Node::Facts.new('hostname', "fact" => "value", "architecture" => "i386")
     end
 
-    def a_legacy_request_that_contains(facts)
+    def a_legacy_request_that_contains(facts, format = :pson)
       request = Puppet::Indirector::Request.new(:catalog, :find, "hostname", nil)
-      request.options[:facts_format] = "pson"
-      request.options[:facts] = CGI.escape(facts.render(:pson))
+      request.options[:facts_format] = format.to_s
+      request.options[:facts] = CGI.escape(facts.render(format))
       request
     end
 
@@ -284,19 +284,6 @@ describe Puppet::Resource::Catalog::Compiler do
       expect(facts.timestamp).to eq(time)
     end
 
-    it "should convert the facts into a fact instance and save it" do
-      request = a_request_that_contains(@facts)
-
-      options = {
-        :environment => request.environment,
-        :transaction_uuid => request.options[:transaction_uuid],
-      }
-
-      Puppet::Node::Facts.indirection.expects(:save).with(equals(@facts), nil, options)
-
-      @compiler.extract_facts_from_request(request)
-    end
-
     it "accepts PSON facts from older agents" do
       request = a_legacy_request_that_contains(@facts)
 
@@ -309,6 +296,34 @@ describe Puppet::Resource::Catalog::Compiler do
 
       @compiler.extract_facts_from_request(request)
     end
+
+    it "rejects YAML facts" do
+      request = a_legacy_request_that_contains(@facts, :yaml)
+
+      options = {
+        :environment => request.environment,
+        :transaction_uuid => request.options[:transaction_uuid],
+      }
+
+      expect {
+        @compiler.extract_facts_from_request(request)
+      }.to raise_error(ArgumentError, /Unsupported facts format/)
+    end
+
+    it "rejects unknown fact formats" do
+      request = a_request_that_contains(@facts)
+      request.options[:facts_format] = 'unknown-format'
+
+      options = {
+        :environment => request.environment,
+        :transaction_uuid => request.options[:transaction_uuid],
+      }
+
+      expect {
+        @compiler.extract_facts_from_request(request)
+      }.to raise_error(ArgumentError, /Unsupported facts format/)
+    end
+
   end
 
   describe "when finding nodes" do
