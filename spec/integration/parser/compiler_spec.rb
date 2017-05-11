@@ -170,6 +170,15 @@ describe Puppet::Parser::Compiler do
       MANIFEST
       expect(catalog).to have_resource("Notify[test]").with_parameter(:message, true)
     end
+
+    it 'makes all server settings available as $settings::all_local hash' do
+      node = Puppet::Node.new("testing")
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+          notify { 'test': message => $settings::all_local['strict'] == 'warning' }
+      MANIFEST
+      expect(catalog).to have_resource("Notify[test]").with_parameter(:message, true)
+    end
+
   end
 
   context 'when working with $server_facts' do
