@@ -1,8 +1,11 @@
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils
 
+
 test_name 'Ensure a file resource can have a UTF-8 source attribute, content, and path when served via a module' do
+
   skip_test 'requires a master for serving module content' if master.nil?
+  tag 'broken:images'
 
   tmp_environment = mk_tmp_environment_with_teardown(master, File.basename(__FILE__, '.*'))
   agent_tmp_dirs = {}
@@ -79,4 +82,3 @@ test_name 'Ensure a file resource can have a UTF-8 source attribute, content, an
     end
   end
 end
-
