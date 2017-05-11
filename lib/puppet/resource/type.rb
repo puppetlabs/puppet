@@ -117,7 +117,7 @@ class Puppet::Resource::Type
     static_parent = evaluate_parent_type(resource)
     scope = static_parent || resource.scope
 
-    scope = scope.newscope(:namespace => namespace, :source => self, :resource => resource) unless resource.title == :main
+    scope = scope.newscope(:source => self, :resource => resource) unless resource.title == :main
     scope.compiler.add_class(name) unless definition?
 
     set_resource_parameters(resource, scope)

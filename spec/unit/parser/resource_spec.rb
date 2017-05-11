@@ -49,7 +49,7 @@ describe Puppet::Parser::Resource do
   end
 
   it "should get its environment from its scope" do
-    scope = stub 'scope', :source => stub("source"), :namespaces => nil
+    scope = stub 'scope', :source => stub("source")
     scope.expects(:environment).returns("foo").at_least_once
     scope.expects(:lookupdefaults).returns({})
     expect(Puppet::Parser::Resource.new("file", "whatever", :scope => scope).environment).to eq("foo")

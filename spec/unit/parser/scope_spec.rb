@@ -247,9 +247,9 @@ describe Puppet::Parser::Scope do
         @scope.class_scope(klass)
       end
 
-      it "should be able to look up explicitly fully qualified variables from main" do
+      it "should be able to look up explicitly fully qualified variables from compiler's top scope" do
         Puppet.expects(:deprecation_warning).never
-        other_scope = create_class_scope("")
+        other_scope = @scope.compiler.topscope
 
         other_scope["othervar"] = "otherval"
 
@@ -367,52 +367,6 @@ describe Puppet::Parser::Scope do
     end
   end
 
-  describe "when variables are set with append=true" do
-    it "should raise error if the variable is already defined in this scope" do
-      @scope.setvar("var", "1", :append => false)
-      expect {
-        @scope.setvar("var", "1", :append => true)
-      }.to raise_error(
-        Puppet::ParseError,
-        "Cannot append, variable '$var' is defined in this scope"
-      )
-    end
-
-    it "should lookup current variable value" do
-      @scope.expects(:[]).with("var").returns("2")
-      @scope.setvar("var", "1", :append => true)
-    end
-
-    it "should store the concatenated string '42'" do
-      @topscope.setvar("var", "4", :append => false)
-      @scope.setvar("var", "2", :append => true)
-      expect(@scope["var"]).to eq("42")
-    end
-
-    it "should store the concatenated array [4,2]" do
-      @topscope.setvar("var", [4], :append => false)
-      @scope.setvar("var", [2], :append => true)
-      expect(@scope["var"]).to eq([4,2])
-    end
-
-    it "should store the merged hash {a => b, c => d}" do
-      @topscope.setvar("var", {"a" => "b"}, :append => false)
-      @scope.setvar("var", {"c" => "d"}, :append => true)
-      expect(@scope["var"]).to eq({"a" => "b", "c" => "d"})
-    end
-
-    it "should raise an error when appending a hash with something other than another hash" do
-      @topscope.setvar("var", {"a" => "b"}, :append => false)
-
-      expect {
-        @scope.setvar("var", "not a hash", :append => true)
-      }.to raise_error(
-        ArgumentError,
-        "Trying to append to a hash with something which is not a hash is unsupported"
-      )
-    end
-  end
-
   describe "when calling number?" do
     it "should return nil if called with anything not a number" do
       expect(Puppet::Parser::Scope.number?([2])).to be_nil
@@ -477,29 +431,8 @@ describe Puppet::Parser::Scope do
 
   describe "when using ephemeral variables" do
     it "should store the variable value" do
-#      @scope.setvar("1", :value, :ephemeral => true)
       @scope.set_match_data({1 => :value})
       expect(@scope["1"]).to eq(:value)
-    end
-
-    it "should remove the variable value when unset_ephemeral_var(:all) is called" do
-#      @scope.setvar("1", :value, :ephemeral => true)
-      @scope.set_match_data({1 => :value})
-      @scope.stubs(:parent).returns(nil)
-
-      @scope.unset_ephemeral_var(:all)
-
-      expect(@scope["1"]).to be_nil
-    end
-
-    it "should not remove classic variables when unset_ephemeral_var(:all) is called" do
-      @scope['myvar'] = :value1
-      @scope.set_match_data({1 => :value2})
-      @scope.stubs(:parent).returns(nil)
-
-      @scope.unset_ephemeral_var(:all)
-
-      expect(@scope["myvar"]).to eq(:value1)
     end
 
     it "should raise an error when setting numerical variable" do
@@ -523,8 +456,6 @@ describe Puppet::Parser::Scope do
       end
 
       it "should not check presence of an ephemeral variable across multiple levels" do
-        # This test was testing that scope actuallys screwed up - making values from earlier matches show as if they
-        # where true for latest match - insanity !
         @scope.new_ephemeral
         @scope.set_match_data({1 => :value1})
         @scope.new_ephemeral
@@ -569,14 +500,6 @@ describe Puppet::Parser::Scope do
       @scope.new_ephemeral true
       @scope.setvar("apple", :fruit)
       expect(@scope["apple"]).to eq(:fruit)
-    end
-
-    it "should remove all local scope variables on unset" do
-      @scope.new_ephemeral true
-      @scope.setvar("apple", :fruit)
-      expect(@scope["apple"]).to eq(:fruit)
-      @scope.unset_ephemeral_var
-      expect(@scope["apple"]).to eq(nil)
     end
 
     it 'should store an undef in local scope and let it override parent scope' do

@@ -26,7 +26,7 @@ module EvaluatorRspecHelper
     Puppet.override(:loaders => compiler.loaders) do
       result = evaluator.evaluate(in_top_scope.model, top_scope)
       if in_named_scope
-        other_scope = Puppet::Parser::Scope.new(compiler, :namespace => scopename)
+        other_scope = Puppet::Parser::Scope.new(compiler)
         result = evaluator.evaluate(in_named_scope.model, other_scope)
       end
       if in_top_scope_again

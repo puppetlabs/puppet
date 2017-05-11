@@ -522,7 +522,7 @@ describe Puppet::Resource::Type do
       @type.stubs(:code).returns code
 
       subscope = stub 'subscope', :compiler => @compiler
-      @scope.expects(:newscope).with(:source => @type, :namespace => '', :resource => @resource).returns subscope
+      @scope.expects(:newscope).with(:source => @type, :resource => @resource).returns subscope
 
       elevel = 876
       subscope.expects(:with_guarded_scope).yields
@@ -548,7 +548,7 @@ describe Puppet::Resource::Type do
 
     it "should set all of its parameters in a subscope" do
       subscope = stub 'subscope', :compiler => @compiler
-      @scope.expects(:newscope).with(:source => @type, :namespace => 'foo', :resource => @resource).returns subscope
+      @scope.expects(:newscope).with(:source => @type, :resource => @resource).returns subscope
       @type.expects(:set_resource_parameters).with(@resource, subscope)
 
       @type.evaluate_code(@resource)
