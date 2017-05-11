@@ -704,14 +704,18 @@ class Puppet::Parser::Scope
     settings = Puppet.settings
     table = effective_symtable(false)
     global_table = compiler.qualified_variables
+    all_local = {}
     settings.each_key do |name|
       next if :name == name
       key = name.to_s
       value = transform_setting(settings.value_sym(name, env_name))
       table[key] = value
+      all_local[key] = value
       # also write the fqn into global table for direct lookup
       global_table["settings::#{key}"] = value
     end
+    # set the 'all_local' - a hash of all settings
+    global_table["settings::all_local"] = all_local
     nil
   end
 
