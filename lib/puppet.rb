@@ -28,6 +28,26 @@ require 'puppet/external/pson/pure'
 begin
   require 'gettext-setup'
   require 'locale'
+
+  # e.g. ~/code/puppet/locales. Also when running as a gem.
+  local_locale_path = File.absolute_path('../locales', File.dirname(__FILE__))
+  # e.g. /opt/puppetlabs/puppet/share/locale
+  posix_system_locale_path = File.absolute_path('../../../share/locale', File.dirname(__FILE__))
+  # e.g. C:\Program Files\Puppet Labs\Puppet\puppet\share\locale
+  win32_system_locale_path = File.absolute_path('../../../../../puppet/share/locale', File.dirname(__FILE__))
+
+  if File.exist?(local_locale_path)
+    locale_path = local_locale_path
+  elsif File.exist?(win32_system_locale_path)
+    locale_path = win32_system_locale_path
+  elsif File.exist?(posix_system_locale_path)
+    locale_path = posix_system_locale_path
+  else
+    # We couldn't load our locale data.
+    raise LoadError, "could not find locale data, skipping Gettext initialization"
+  end
+
+  Puppet::LOCALE_PATH = locale_path
   Puppet::GETTEXT_AVAILABLE = true
 rescue LoadError
   def _(msg)
@@ -41,8 +61,12 @@ rescue LoadError
     # if a block is passed, prefer that over the string selection above
     block ? block.call : plural
   end
+
+  Puppet::LOCALE_PATH = nil
   Puppet::GETTEXT_AVAILABLE = false
 end
+
+
 
 #------------------------------------------------------------
 # the top-level module
@@ -62,34 +86,14 @@ module Puppet
   require 'puppet/environments'
 
   class << self
-    if Puppet::GETTEXT_AVAILABLE
-      # e.g. ~/code/puppet/locales. Also when running as a gem.
-      local_locale_path = File.absolute_path('../locales', File.dirname(__FILE__))
-      # e.g. /opt/puppetlabs/puppet/share/locale
-      posix_system_locale_path = File.absolute_path('../../../share/locale', File.dirname(__FILE__))
-      # e.g. C:\Program Files\Puppet Labs\Puppet\puppet\share\locale
-      win32_system_locale_path = File.absolute_path('../../../../../puppet/share/locale', File.dirname(__FILE__))
-
-      if File.exist?(local_locale_path)
-        locale_path = local_locale_path
-      elsif File.exist?(win32_system_locale_path)
-        locale_path = win32_system_locale_path
-      elsif File.exist?(posix_system_locale_path)
-        locale_path = posix_system_locale_path
+    if Puppet::GETTEXT_AVAILABLE && Puppet::LOCALE_PATH
+      if GettextSetup.method(:initialize).parameters.count == 1
+        # Will load translations from PO files only
+        GettextSetup.initialize(Puppet::LOCALE_PATH)
       else
-        # We couldn't load our locale data.
-        locale_path = nil
+        GettextSetup.initialize(Puppet::LOCALE_PATH, :file_format => :mo)
       end
-
-      if locale_path
-        if GettextSetup.method(:initialize).parameters.count == 1
-          # Will load translations from PO files only
-          GettextSetup.initialize(locale_path)
-        else
-          GettextSetup.initialize(locale_path, :file_format => :mo)
-        end
-        FastGettext.locale = GettextSetup.negotiate_locale(Locale.current.language)
-      end
+      FastGettext.locale = GettextSetup.negotiate_locale(Locale.current.language)
     end
 
     include Puppet::Util
