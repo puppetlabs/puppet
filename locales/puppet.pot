@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 4.10.1-680-g114c6d7\n"
+"Project-Id-Version: Puppet automation framework 4.10.1-682-g1d4bcda\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-05-12 14:31-0700\n"
-"PO-Revision-Date: 2017-05-12 14:31-0700\n"
+"POT-Creation-Date: 2017-05-12 23:33+0000\n"
+"PO-Revision-Date: 2017-05-12 23:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -7146,12 +7146,20 @@ msgstr ""
 msgid "%{klass} failed with error %{error_type}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/execution.rb:246
+#: ../lib/puppet/util/execution.rb:231
+msgid "Could not get output"
+msgstr ""
+
+#: ../lib/puppet/util/execution.rb:235
 msgid "Execution of '%{str}' returned %{exit_status}: %{output}"
 msgstr ""
 
-#: ../lib/puppet/util/execution.rb:317
+#: ../lib/puppet/util/execution.rb:304
 msgid "Could not execute posix command: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/util/execution.rb:352
+msgid "Waiting for output; will sleep %{time_to_sleep} seconds"
 msgstr ""
 
 #: ../lib/puppet/util/feature.rb:21
