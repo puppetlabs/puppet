@@ -69,28 +69,51 @@ describe Puppet::Configurer::FactHandler do
     end
   end
 
-  it "should serialize and CGI escape the fact values for uploading" do
-    facts = Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name')
-    Puppet::Node::Facts.indirection.save(facts)
-    text = CGI.escape(facthandler.find_facts.render(:pson))
+  context "when serializing as pson" do
+    before :each do
+      Puppet[:preferred_serialization_format] = 'pson'
+    end
 
-    expect(facthandler.facts_for_uploading).to eq({:facts_format => :pson, :facts => text})
+    it "should serialize and CGI escape the fact values for uploading" do
+      facts = Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name')
+      Puppet::Node::Facts.indirection.save(facts)
+      text = CGI.escape(facthandler.find_facts.render(:pson))
+
+      expect(facthandler.facts_for_uploading).to eq({:facts_format => :pson, :facts => text})
+    end
+
+    it "should properly accept facts containing a '+'" do
+      facts = Puppet::Node::Facts.new('foo', 'afact' => 'a+b')
+      Puppet::Node::Facts.indirection.save(facts)
+      text = CGI.escape(facthandler.find_facts.render(:pson))
+
+      expect(facthandler.facts_for_uploading).to eq({:facts_format => :pson, :facts => text})
+    end
   end
 
-  it "should properly accept facts containing a '+'" do
-    facts = Puppet::Node::Facts.new('foo', 'afact' => 'a+b')
-    Puppet::Node::Facts.indirection.save(facts)
-    text = CGI.escape(facthandler.find_facts.render(:pson))
+  context "when serializing as json" do
+    it "should serialize the fact values for uploading" do
+      facts = Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name')
+      Puppet::Node::Facts.indirection.save(facts)
+      text = facthandler.find_facts.render(:json)
 
-    expect(facthandler.facts_for_uploading).to eq({:facts_format => :pson, :facts => text})
+      expect(facthandler.facts_for_uploading).to eq({:facts_format => 'application/json', :facts => text})
+    end
+
+    it "should properly accept facts containing a '+'" do
+      facts = Puppet::Node::Facts.new('foo', 'afact' => 'a+b')
+      Puppet::Node::Facts.indirection.save(facts)
+      text = facthandler.find_facts.render(:json)
+
+      expect(facthandler.facts_for_uploading).to eq({:facts_format => 'application/json', :facts => text})
+    end
   end
 
   it "should generate valid facts data against the facts schema" do
     facts = Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name')
     Puppet::Node::Facts.indirection.save(facts)
 
-    expect(CGI.unescape(facthandler.facts_for_uploading[:facts])).to validate_against('api/schemas/facts.json')
+    expect(facthandler.facts_for_uploading[:facts]).to validate_against('api/schemas/facts.json')
   end
 
 end
-
