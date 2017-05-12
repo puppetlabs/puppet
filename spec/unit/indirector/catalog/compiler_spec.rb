@@ -388,6 +388,20 @@ describe Puppet::Resource::Catalog::Compiler do
 
       compiler.find(request)
     end
+
+    it "should pass a facts object from the original request facts to the node indirection" do
+      facts = Puppet::Node::Facts.new("hostname", :afact => "avalue")
+      compiler.expects(:extract_facts_from_request).returns(facts)
+      compiler.expects(:save_facts_from_request)
+
+      request = Puppet::Indirector::Request.new(:catalog, :find, "hostname",
+                                                nil, :facts_format => "application/json",
+                                                :facts => facts.render('json'))
+
+      Puppet::Node.indirection.expects(:find).with("hostname", has_entries(:facts => facts)).returns(node)
+
+      compiler.find(request)
+    end
   end
 
   describe "after finding nodes" do

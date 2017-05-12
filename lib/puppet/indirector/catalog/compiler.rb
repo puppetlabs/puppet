@@ -55,7 +55,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
     save_facts_from_request(facts, request) if !facts.nil?
 
-    node = node_from_request(request)
+    node = node_from_request(facts, request)
     node.trusted_data = Puppet.lookup(:trusted_information) { Puppet::Context::TrustedInformation.local(node) }.to_h
 
     if catalog = compile(node, request.options)
@@ -295,14 +295,15 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     config
   end
 
-  # Turn our host name into a node object.
-  def find_node(name, environment, transaction_uuid, configured_environment)
+  # Use indirection to find the node associated with a given request
+  def find_node(name, environment, transaction_uuid, configured_environment, facts)
     Puppet::Util::Profiler.profile(_("Found node information"), [:compiler, :find_node]) do
       node = nil
       begin
         node = Puppet::Node.indirection.find(name, :environment => environment,
                                              :transaction_uuid => transaction_uuid,
-                                             :configured_environment => configured_environment)
+                                             :configured_environment => configured_environment,
+                                             :facts => facts)
       rescue => detail
         message = _("Failed when searching for node %{name}: %{detail}") % { name: name, detail: detail }
         Puppet.log_exception(detail, message)
@@ -320,7 +321,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
   # Extract the node from the request, or use the request
   # to find the node.
-  def node_from_request(request)
+  def node_from_request(facts, request)
     if node = request.options[:use_node]
       if request.remote?
         raise Puppet::Error, _("Invalid option use_node for a remote request")
@@ -337,7 +338,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     # node's catalog with only one certificate and a modification to auth.conf
     # If no key is provided we can only compile the currently connected node.
     name = request.key || request.node
-    if node = find_node(name, request.environment, request.options[:transaction_uuid], request.options[:configured_environment])
+    if node = find_node(name, request.environment, request.options[:transaction_uuid], request.options[:configured_environment], facts)
       return node
     end
 
