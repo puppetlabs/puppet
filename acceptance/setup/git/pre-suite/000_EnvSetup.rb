@@ -11,8 +11,9 @@ PACKAGES = {
   :redhat => [
     'git',
     'ruby',
-    'rubygem-json',
-    'rubygem-io-console'
+    'rubygem-json',       # invalid on RHEL6
+    'rubygem-io-console', # required for Fedora25 to bundle install
+    'rubygem-rdoc'        # required for Fedora25 to install gems
   ],
   :debian => [
     ['git', 'git-core'],
