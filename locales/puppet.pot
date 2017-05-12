@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 4.10.1-665-g9ccdd7e\n"
+"Project-Id-Version: Puppet automation framework 4.10.1-680-g114c6d7\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-05-11 21:42-0700\n"
-"PO-Revision-Date: 2017-05-11 21:42-0700\n"
+"POT-Creation-Date: 2017-05-12 14:31-0700\n"
+"PO-Revision-Date: 2017-05-12 14:31-0700\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -23,15 +23,15 @@ msgstr ""
 msgid "Puppet %{version} requires ruby 1.9.3 or greater."
 msgstr ""
 
-#: ../lib/puppet.rb:177
+#: ../lib/puppet.rb:181
 msgid "Support for ruby version %{version} is deprecated and will be removed in a future release. See https://docs.puppet.com/puppet/latest/system_requirements.html#ruby for a list of supported ruby versions."
 msgstr ""
 
-#: ../lib/puppet.rb:224
+#: ../lib/puppet.rb:228
 msgid "Creating %{name} via Puppet.newtype is deprecated and will be removed in a future release. Use Puppet::Type.newtype instead."
 msgstr ""
 
-#: ../lib/puppet.rb:243
+#: ../lib/puppet.rb:247
 msgid "The environmentpath setting cannot be empty or nil."
 msgstr ""
 
@@ -144,7 +144,7 @@ msgstr ""
 msgid "Starting Puppet client version %{version}"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:387
+#: ../lib/puppet/application/agent.rb:386
 msgid "The puppet agent command does not take parameters"
 msgstr ""
 
@@ -3110,15 +3110,21 @@ msgstr ""
 msgid "Could not find instances in %{indirection} with '%{key}'"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:182
-msgid "Missing required Accept header"
+#: ../lib/puppet/network/http/api/indirected_routes.rb:198
+msgid "The request body is invalid: %{message}"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:200
+#. TRANSLATORS "mime-type" is a keyword and should not be translated
+#. TRANSLATORS "mime-type" is a keyword and should not be translated
+#: ../lib/puppet/network/http/api/indirected_routes.rb:204 ../lib/puppet/network/http/request.rb:31
+msgid "Client sent a mime-type (%{header}) that doesn't correspond to a format we support"
+msgstr ""
+
+#: ../lib/puppet/network/http/api/indirected_routes.rb:210
 msgid "No support for http method %{http_method}"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:204
+#: ../lib/puppet/network/http/api/indirected_routes.rb:214
 msgid "No support for plurality %{indirection} for %{http_method} operations"
 msgstr ""
 
@@ -3170,7 +3176,11 @@ msgstr ""
 msgid "Method Not Allowed: "
 msgstr ""
 
-#: ../lib/puppet/network/http/error.rb:59
+#: ../lib/puppet/network/http/error.rb:58
+msgid "Unsupported Media Type: "
+msgstr ""
+
+#: ../lib/puppet/network/http/error.rb:66
 msgid "Server Error: "
 msgstr ""
 
@@ -3206,21 +3216,16 @@ msgstr ""
 msgid "Unknown arguments: %{args}"
 msgstr ""
 
-#. TRANSLATORS "mime-type" is a keyword and should not be translated
-#: ../lib/puppet/network/http/request.rb:28
-msgid "Client sent a mime-type (%{header}) that doesn't correspond to a format we support"
-msgstr ""
-
-#: ../lib/puppet/network/http/request.rb:35
+#: ../lib/puppet/network/http/request.rb:36
 msgid "No Content-Type header was received, it isn't possible to unserialize the request"
 msgstr ""
 
 #: ../lib/puppet/network/http/request.rb:44
-msgid "No supported formats are acceptable (Accept: %{accepted_formats})"
+msgid "Missing required Accept header"
 msgstr ""
 
-#: ../lib/puppet/network/http/request.rb:54
-msgid "YAML in network requests is not supported. See http://links.puppetlabs.com/deprecate_yaml_on_network"
+#: ../lib/puppet/network/http/request.rb:56
+msgid "No supported formats are acceptable (Accept: %{accepted_formats})"
 msgstr ""
 
 #: ../lib/puppet/network/http/webrick.rb:24
