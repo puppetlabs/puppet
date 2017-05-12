@@ -41,6 +41,8 @@ Gem::Specification.new do |s|
   # i18n support (gettext-setup and dependencies)
   s.add_runtime_dependency(%q<gettext-setup>, [">= 0.10", "< 1"])
   s.add_runtime_dependency(%q<locale>, "~> 2.1")
+  # hocon is an optional hiera backend shipped in puppet-agent packages
+  s.add_runtime_dependency(%q<hocon>, "~> 1.0")
   # net-ssh is a runtime dependency of Puppet::Util::NetworkDevice::Transport::Ssh
   # Beaker 3.0.0 to 3.10.0 depends on net-ssh 3.3.0beta1
   # Beaker 3.11.0+ depends on net-ssh 4.0+
