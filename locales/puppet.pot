@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 4.10.0-659-g4b10d53\n"
+"Project-Id-Version: Puppet automation framework 4.10.1-665-g9ccdd7e\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-05-10 18:29-0700\n"
-"PO-Revision-Date: 2017-05-10 18:29-0700\n"
+"POT-Creation-Date: 2017-05-11 21:42-0700\n"
+"PO-Revision-Date: 2017-05-11 21:42-0700\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -299,7 +299,7 @@ msgstr ""
 msgid "inspected value is %{resource}"
 msgstr ""
 
-#: ../lib/puppet/application/inspect.rb:178 ../lib/puppet/configurer.rb:393 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/application/inspect.rb:178 ../lib/puppet/configurer.rb:394 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
@@ -405,79 +405,79 @@ msgstr ""
 msgid "Cannot remove %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:76
+#: ../lib/puppet/configurer.rb:77
 msgid "Using cached catalog from environment '%{environment}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:82
+#: ../lib/puppet/configurer.rb:83
 msgid "Not using cache on failed catalog"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:91
+#: ../lib/puppet/configurer.rb:92
 msgid "Not using cached catalog because its environment '%{catalog_env}' does not match '%{local_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:96 ../lib/puppet/configurer.rb:157
+#: ../lib/puppet/configurer.rb:97 ../lib/puppet/configurer.rb:159
 msgid "Using cached catalog from environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:150
+#: ../lib/puppet/configurer.rb:152
 msgid "Could not retrieve catalog; skipping run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:170
+#: ../lib/puppet/configurer.rb:171
 msgid "Applied catalog"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:209
+#: ../lib/puppet/configurer.rb:210
 msgid "Could not select a functional puppet master"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:240
+#: ../lib/puppet/configurer.rb:241
 msgid "Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:280
+#: ../lib/puppet/configurer.rb:281
 msgid "Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:285
+#: ../lib/puppet/configurer.rb:286
 msgid "Using configured environment '%{env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:289
+#: ../lib/puppet/configurer.rb:290
 msgid "Unable to fetch my node definition, but the agent run will continue:"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:314
+#: ../lib/puppet/configurer.rb:315
 msgid "Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:325
+#: ../lib/puppet/configurer.rb:326
 msgid "Catalog environment didn't stabilize after %{tries} fetches, aborting run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:327
+#: ../lib/puppet/configurer.rb:328
 msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:346
+#: ../lib/puppet/configurer.rb:347
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:402
+#: ../lib/puppet/configurer.rb:403
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:414
+#: ../lib/puppet/configurer.rb:415
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:427
+#: ../lib/puppet/configurer.rb:428
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:439
+#: ../lib/puppet/configurer.rb:440
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -2001,79 +2001,79 @@ msgstr ""
 msgid "Found facts"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:37
+#: ../lib/puppet/indirector/catalog/compiler.rb:39
 msgid "Catalog for %{request} was requested with fact definition for the wrong node (%{fact_name})."
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:72
+#: ../lib/puppet/indirector/catalog/compiler.rb:74
 msgid "Setup server facts for compiling"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:120
+#: ../lib/puppet/indirector/catalog/compiler.rb:122
 msgid "Not inlining absent resource"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:122
+#: ../lib/puppet/indirector/catalog/compiler.rb:124
 msgid "Not inlining resource without sources"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:124
+#: ../lib/puppet/indirector/catalog/compiler.rb:126
 msgid "Not inlining unsupported source scheme"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:144
+#: ../lib/puppet/indirector/catalog/compiler.rb:146
 msgid "Not inlining file outside environment"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:149
+#: ../lib/puppet/indirector/catalog/compiler.rb:151
 msgid "Inlining file metadata"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:236
+#: ../lib/puppet/indirector/catalog/compiler.rb:238
 msgid "Could not get metadata for %{resource}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:257
+#: ../lib/puppet/indirector/catalog/compiler.rb:259
 msgid "Unable to find a common checksum type between agent '%{agent_type}' and master '%{master_type}'."
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:260
+#: ../lib/puppet/indirector/catalog/compiler.rb:262
 msgid "Compiled %s for "
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:260
+#: ../lib/puppet/indirector/catalog/compiler.rb:262
 msgid "static catalog"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:260
+#: ../lib/puppet/indirector/catalog/compiler.rb:262
 msgid "catalog"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:262 ../lib/puppet/indirector/catalog/compiler.rb:279
+#: ../lib/puppet/indirector/catalog/compiler.rb:264 ../lib/puppet/indirector/catalog/compiler.rb:281
 msgid " in environment %{env}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:278
+#: ../lib/puppet/indirector/catalog/compiler.rb:280
 msgid "Inlined resource metadata into static catalog for %{node}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:295
+#: ../lib/puppet/indirector/catalog/compiler.rb:297
 msgid "Found node information"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:302
+#: ../lib/puppet/indirector/catalog/compiler.rb:304
 msgid "Failed when searching for node %{name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:321
+#: ../lib/puppet/indirector/catalog/compiler.rb:323
 msgid "Invalid option use_node for a remote request"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:339
+#: ../lib/puppet/indirector/catalog/compiler.rb:341
 msgid "Could not find node '%{name}'; cannot compile"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:357
+#: ../lib/puppet/indirector/catalog/compiler.rb:359
 msgid "Could not retrieve fact %{fact}"
 msgstr ""
 
@@ -3356,134 +3356,134 @@ msgid "Use of Puppet::Parser::AST::ResourceParam is deprecated and not fully fun
 msgstr ""
 
 #. TRANSLATORS "stage" is a keyword in Puppet and should not be translated
-#: ../lib/puppet/parser/compiler.rb:95 ../lib/puppet/parser/environment_compiler.rb:134
+#: ../lib/puppet/parser/compiler.rb:96 ../lib/puppet/parser/environment_compiler.rb:134
 msgid "Only classes can set 'stage'; normal resources like %{resource} cannot change run stage"
 msgstr ""
 
 #. TRANSLATORS "Site" is a puppet keyword and should not be translated
-#: ../lib/puppet/parser/compiler.rb:122
+#: ../lib/puppet/parser/compiler.rb:123
 msgid "Application instances like '%{resource}' can only be contained within a Site"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:148
+#: ../lib/puppet/parser/compiler.rb:149
 msgid "For compiling %{node}"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:152
+#: ../lib/puppet/parser/compiler.rb:153
 msgid "Compile: Set node parameters"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:154
+#: ../lib/puppet/parser/compiler.rb:155
 msgid "Compile: Created settings scope"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:156
+#: ../lib/puppet/parser/compiler.rb:157
 msgid "Compile: Evaluated capability mappings"
 msgstr ""
 
 #. TRANSLATORS "main" is a function name and should not be translated
-#: ../lib/puppet/parser/compiler.rb:159
+#: ../lib/puppet/parser/compiler.rb:160
 msgid "Compile: Evaluated main"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:161
+#: ../lib/puppet/parser/compiler.rb:162
 msgid "Compile: Evaluated site"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:163
+#: ../lib/puppet/parser/compiler.rb:164
 msgid "Compile: Evaluated AST node"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:165
+#: ../lib/puppet/parser/compiler.rb:166
 msgid "Compile: Evaluated node classes"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:167
+#: ../lib/puppet/parser/compiler.rb:168
 msgid "Compile: Evaluated application instances"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:170
+#: ../lib/puppet/parser/compiler.rb:171
 msgid "Compile: Evaluated site capability mappings"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:172
+#: ../lib/puppet/parser/compiler.rb:173
 msgid "Compile: Evaluated generators"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:174
+#: ../lib/puppet/parser/compiler.rb:175
 msgid "Compile: Validate Catalog pre-finish"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:178
+#: ../lib/puppet/parser/compiler.rb:179
 msgid "Compile: Finished catalog"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:180
+#: ../lib/puppet/parser/compiler.rb:181
 msgid "Compile: Prune"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:184
+#: ../lib/puppet/parser/compiler.rb:185
 msgid "Compile: Validate Catalog final"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:314
+#: ../lib/puppet/parser/compiler.rb:315
 msgid "Invalid node mapping in %{app}: Mapping must be a hash"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:317
+#: ../lib/puppet/parser/compiler.rb:318
 msgid "Invalid node mapping in %{app}: Key %{k} is not a Node"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:317
+#: ../lib/puppet/parser/compiler.rb:318
 msgid "Node"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:320
+#: ../lib/puppet/parser/compiler.rb:321
 msgid "Invalid node mapping in %{app}: Value %{res} is not a resource"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:321
+#: ../lib/puppet/parser/compiler.rb:322
 msgid "Application %{app} maps component %{res} to multiple nodes"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:366
+#: ../lib/puppet/parser/compiler.rb:367
 msgid "Could not find class %{name} for %{node}"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:491
+#: ../lib/puppet/parser/compiler.rb:494
 msgid "Could not find node statement with name 'default' or '%{names}'"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:512
+#: ../lib/puppet/parser/compiler.rb:515
 msgid "Evaluated collections"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:527
+#: ../lib/puppet/parser/compiler.rb:530
 msgid "Evaluated definitions"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:556
+#: ../lib/puppet/parser/compiler.rb:559
 msgid "Iterated (%{count}) on generators"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:567
+#: ../lib/puppet/parser/compiler.rb:570
 msgid "Somehow looped more than 1000 times while evaluating host catalog"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:598
+#: ../lib/puppet/parser/compiler.rb:601
 msgid "Could not find resource(s) %{resources} for overriding"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:609
+#: ../lib/puppet/parser/compiler.rb:612
 msgid "Failed to realize virtual resources %{resources}"
 msgstr ""
 
 #. TRANSLATORS "main" is a function name and should not be translated
-#: ../lib/puppet/parser/compiler.rb:639
+#: ../lib/puppet/parser/compiler.rb:642
 msgid "Couldn't find main"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:711
+#: ../lib/puppet/parser/compiler.rb:714
 msgid "For initializing compiler"
 msgstr ""
 
@@ -3685,103 +3685,91 @@ msgstr ""
 msgid "Duplicate parameter '%{param}' for on %{resource}"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:158
+#: ../lib/puppet/parser/scope.rb:159
 msgid "Numerical variables cannot be changed. Attempt to set $%{name}"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:163
+#: ../lib/puppet/parser/scope.rb:164
 msgid "Numerical variables cannot be deleted: Attempt to delete: $%{name}"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:217
+#: ../lib/puppet/parser/scope.rb:218
 msgid "%{callee}: expects a value for parameter $%{to}"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:218
+#: ../lib/puppet/parser/scope.rb:219
 msgid "%{callee}: default expression for $%{from} tries to illegally access not yet evaluated $%{to}"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:237
+#: ../lib/puppet/parser/scope.rb:238
 msgid "Attempt to assign variable %{name} when evaluating parameters"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:500
+#: ../lib/puppet/parser/scope.rb:496
 msgid "Scope variable name %{name} is a %{klass}, not a string"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:539
+#: ../lib/puppet/parser/scope.rb:538
 msgid "Variable: %{name}"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:540 ../lib/puppet/parser/scope.rb:542
+#: ../lib/puppet/parser/scope.rb:539 ../lib/puppet/parser/scope.rb:541
 msgid "Undefined variable '%{name}'; %{reason}"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:667
+#: ../lib/puppet/parser/scope.rb:649
 msgid "class %{classname} could not be found"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:668
+#: ../lib/puppet/parser/scope.rb:650
 msgid "class %{classname} has not been evaluated"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:718
+#: ../lib/puppet/parser/scope.rb:695
 msgid "Default already defined for %{type} { %{param} }; cannot redefine"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:764
+#: ../lib/puppet/parser/scope.rb:752
 msgid "Cannot assign to a numeric match result variable '$%{name}'"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:767
+#: ../lib/puppet/parser/scope.rb:755
 msgid "Scope variable name %{value0} is a %{value1}, not a string"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:772 ../lib/puppet/parser/scope.rb:777
+#: ../lib/puppet/parser/scope.rb:760 ../lib/puppet/parser/scope.rb:765
 msgid "Attempt to assign to a reserved variable name: '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:783
-msgid "Cannot append, variable '$%{name}' is defined in this scope"
-msgstr ""
-
-#: ../lib/puppet/parser/scope.rb:785
+#: ../lib/puppet/parser/scope.rb:770
 msgid "Cannot reassign variable '$%{name}'"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:830
+#: ../lib/puppet/parser/scope.rb:824
 msgid "Unsupported data type: '%{klass}'"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:875
-msgid "Trying to append to a hash with something which is not a hash is unsupported"
-msgstr ""
-
-#: ../lib/puppet/parser/scope.rb:897
-msgid "Method Parser::Scope#unset_ephemeral_var() is deprecated"
-msgstr ""
-
-#: ../lib/puppet/parser/scope.rb:1019
+#: ../lib/puppet/parser/scope.rb:982
 msgid "Invalid regex match data. Got a %{klass}"
 msgstr ""
 
 #. TRANSLATORS "Class" and "Type" are Puppet keywords and should not be translated
-#: ../lib/puppet/parser/scope.rb:1109
+#: ../lib/puppet/parser/scope.rb:1049
 msgid "Cannot use an unspecific Class[] Type"
 msgstr ""
 
 #. TRANSLATORS "Resource" is a class name and should not be translated
-#: ../lib/puppet/parser/scope.rb:1136
+#: ../lib/puppet/parser/scope.rb:1076
 msgid "Cannot use an unspecific Resource[] where a Resource['class', name] is expected"
 msgstr ""
 
 #. TRANSLATORS "Resource" is a class name and should not be translated
-#: ../lib/puppet/parser/scope.rb:1140
+#: ../lib/puppet/parser/scope.rb:1080
 msgid "Cannot use a Resource[%{type_name}] where a Resource['class', name] is expected"
 msgstr ""
 
 #. TRANSLATORS "Resource" is a class name and should not be translated
-#: ../lib/puppet/parser/scope.rb:1144
+#: ../lib/puppet/parser/scope.rb:1084
 msgid "Cannot use an unspecific Resource['class'] where a Resource['class', name] is expected"
 msgstr ""
 
@@ -5617,31 +5605,31 @@ msgstr ""
 msgid "No Puppet Type found for %{type_name}"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:550
+#: ../lib/puppet/resource.rb:547
 msgid "The method Puppet::Resource.set_default_parameters is deprecated and will be removed in the next major release of Puppet."
 msgstr ""
 
-#: ../lib/puppet/resource.rb:555
+#: ../lib/puppet/resource.rb:552
 msgid "Cannot evaluate default parameters for %{resource} - not a parser resource"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:595
+#: ../lib/puppet/resource.rb:592
 msgid "The method Puppet::Resource.validate_complete is deprecated and will be removed in the next major release of Puppet."
 msgstr ""
 
-#: ../lib/puppet/resource.rb:601
+#: ../lib/puppet/resource.rb:598
 msgid "Must pass %{param} to %{resource}"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:612
+#: ../lib/puppet/resource.rb:609
 msgid "Expected parameter '%{name}' of '%{value0}' to have type %{value1}, got %{value2}"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:618
+#: ../lib/puppet/resource.rb:615
 msgid "no parameter named '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:727
+#: ../lib/puppet/resource.rb:724
 msgid "No set of title patterns matched the title \"%{title}\"."
 msgstr ""
 
