@@ -198,9 +198,9 @@ describe Puppet::Node do
       expect(Puppet::Node).to read_json_attribute('parameters').from(@node.to_json).as({"a" => "b", "c" => "d"})
     end
 
-    it "deserializes environment to environment_name as a string" do
+    it "deserializes environment to environment_name as a symbol" do
       @node.environment = environment
-      expect(Puppet::Node).to read_json_attribute('environment_name').from(@node.to_json).as('bar')
+      expect(Puppet::Node).to read_json_attribute('environment_name').from(@node.to_json).as(:bar)
     end
   end
 end
