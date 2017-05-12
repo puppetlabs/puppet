@@ -188,18 +188,65 @@ module Puppet::Util::Execution
 
     begin
       stdin = Puppet::FileSystem.open(options[:stdinfile] || null_file, nil, 'r')
-      stdout = options[:squelch] ? Puppet::FileSystem.open(null_file, nil, 'w') : Puppet::FileSystem::Uniquefile.new('puppet')
+      # On Windows, continue to use the file-based approach to avoid breaking people's existing
+      # manifests. If they use a script that doesn't background cleanly, such as
+      # `start /b ping 127.0.0.1`, we couldn't handle it with pipes as there's no non-blocking
+      # read available.
+      if options[:squelch]
+        stdout = Puppet::FileSystem.open(null_file, nil, 'w')
+      elsif Puppet.features.posix?
+        reader, stdout = IO.pipe
+      else
+        stdout = Puppet::FileSystem::Uniquefile.new('puppet')
+      end
       stderr = options[:combine] ? stdout : Puppet::FileSystem.open(null_file, nil, 'w')
 
       exec_args = [command, options, stdin, stdout, stderr]
+      output = ''
 
+      # We close stdin/stdout/stderr immediately after execution as there no longer needed.
+      # In most cases they could be closed later, but when stdout is the writer pipe we
+      # must close it or we'll never reach eof on the reader.
       if execution_stub = Puppet::Util::ExecutionStub.current_value
-        return execution_stub.call(*exec_args)
+        child_pid = execution_stub.call(*exec_args)
+        [stdin, stdout, stderr].each {|io| io.close rescue nil}
+        return child_pid
       elsif Puppet.features.posix?
         child_pid = nil
         begin
           child_pid = execute_posix(*exec_args)
-          exit_status = Process.waitpid2(child_pid).last.exitstatus
+          [stdin, stdout, stderr].each {|io| io.close rescue nil}
+          if options[:squelch]
+            exit_status = Process.waitpid2(child_pid).last.exitstatus
+          else
+            # Use non-blocking read to check for data. After each attempt,
+            # check whether the child is done. This is done in case the child
+            # forks and inherits stdout, as happens in `foo &`.
+            until results = Process.waitpid2(child_pid, Process::WNOHANG)
+
+              # If not done, wait for data to read with a timeout
+              # This timeout is selected to keep activity low while waiting on
+              # a long process, while not waiting too long for the pathological
+              # case where stdout is never closed.
+              ready = IO.select([reader], [], [], 0.1)
+              begin
+                output << reader.read_nonblock(4096) if ready
+              rescue Errno::EAGAIN
+              rescue EOFError
+              end
+            end
+
+            # Read any remaining data. Allow for but don't expect EOF.
+            begin
+              loop do
+                output << reader.read_nonblock(4096)
+              end
+            rescue Errno::EAGAIN
+            rescue EOFError
+            end
+
+            exit_status = results.last.exitstatus
+          end
           child_pid = nil
         rescue Timeout::Error => e
           # NOTE: For Ruby 2.1+, an explicit Timeout::Error class has to be
@@ -216,28 +263,30 @@ module Puppet::Util::Execution
       elsif Puppet.features.microsoft_windows?
         process_info = execute_windows(*exec_args)
         begin
+          [stdin, stderr].each {|io| io.close rescue nil}
           exit_status = Puppet::Util::Windows::Process.wait_process(process_info.process_handle)
+
+          # read output in if required
+          unless options[:squelch]
+            output = wait_for_output(stdout)
+            Puppet.warning _("Could not get output") unless output
+          end
         ensure
           FFI::WIN32.CloseHandle(process_info.process_handle)
           FFI::WIN32.CloseHandle(process_info.thread_handle)
         end
       end
 
-      [stdin, stdout, stderr].each {|io| io.close rescue nil}
-
-      # read output in if required
-      unless options[:squelch]
-        output = wait_for_output(stdout)
-        Puppet.warning _("Could not get output") unless output
-      end
-
       if options[:failonfail] and exit_status != 0
         raise Puppet::ExecutionFailure, _("Execution of '%{str}' returned %{exit_status}: %{output}") % { str: command_str, exit_status: exit_status, output: output.strip }
       end
     ensure
-      if !options[:squelch] && stdout
-        # if we opened a temp file for stdout, we need to clean it up.
-        stdout.close!
+      # Make sure all handles are closed in case an exception was thrown attempting to execute.
+      [stdin, stdout, stderr].each {|io| io.close rescue nil}
+      if !options[:squelch]
+        # if we opened a pipe, we need to clean it up.
+        reader.close if reader
+        stdout.close! if Puppet.features.microsoft_windows?
       end
     end
 
