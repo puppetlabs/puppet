@@ -48,7 +48,7 @@ Gem::Specification.new do |s|
   # Beaker 3.0.0 to 3.10.0 depends on net-ssh 3.3.0beta1
   # Beaker 3.11.0+ depends on net-ssh 4.0+
   # be lenient to allow module testing where Beaker and Puppet are in same Gemfile
-  s.add_runtime_dependency(%q<net-ssh>, [">= 3.0", "< 5"]) if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new('2.0.0')
+  s.add_runtime_dependency(%q<net-ssh>, [">= 3.0", "< 5"]) if Gem::Version.new(RUBY_VERSION.dup) >= Gem::Version.new('2.0.0')
 
   # loads platform specific gems like ffi, win32 platform gems
   # as additional runtime dependencies
