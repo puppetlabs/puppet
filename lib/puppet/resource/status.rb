@@ -101,7 +101,7 @@ module Puppet
       YAML_ATTRIBUTES = %w{@resource @file @line @evaluation_time @change_count
                            @out_of_sync_count @tags @time @events @out_of_sync
                            @changed @resource_type @title @skipped @failed
-                           @containment_path}.
+                           @containment_path @corrective_change}.
         map(&:to_sym)
 
       def self.from_data_hash(data)
