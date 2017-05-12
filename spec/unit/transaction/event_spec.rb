@@ -138,7 +138,7 @@ describe Puppet::Transaction::Event do
     end
   end
 
-  it "should round trip through pson" do
+  it "should round trip through json" do
       resource = Puppet::Type.type(:file).new(:title => make_absolute("/tmp/foo"))
       event = Puppet::Transaction::Event.new(
         :source_description => "/my/param",
@@ -154,7 +154,7 @@ describe Puppet::Transaction::Event do
         :property => :mode,
         :status => 'success')
 
-      tripped = Puppet::Transaction::Event.from_data_hash(PSON.parse(event.to_pson))
+      tripped = Puppet::Transaction::Event.from_data_hash(JSON.parse(event.to_json))
 
       expect(tripped.audited).to eq(event.audited)
       expect(tripped.property).to eq(event.property)
@@ -167,7 +167,7 @@ describe Puppet::Transaction::Event do
       expect(tripped.time).to eq(event.time)
   end
 
-  it "should round trip an event for an inspect report through pson" do
+  it "should round trip an event for an inspect report through json" do
       resource = Puppet::Type.type(:file).new(:title => make_absolute("/tmp/foo"))
       event = Puppet::Transaction::Event.new(
         :audited => true,
@@ -181,7 +181,7 @@ describe Puppet::Transaction::Event do
         :property => :mode,
         :status => 'success')
 
-      tripped = Puppet::Transaction::Event.from_data_hash(PSON.parse(event.to_pson))
+      tripped = Puppet::Transaction::Event.from_data_hash(JSON.parse(event.to_json))
 
       expect(tripped.desired_value).to be_nil
       expect(tripped.historical_value).to be_nil

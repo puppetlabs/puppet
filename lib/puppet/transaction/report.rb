@@ -398,10 +398,6 @@ class Puppet::Transaction::Report
     status
   end
 
-  def self.default_format
-    :pson
-  end
-
   private
 
   # Mark the report as corrective, if there are any resource_status marked corrective.
