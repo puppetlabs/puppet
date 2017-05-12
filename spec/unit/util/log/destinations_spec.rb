@@ -133,7 +133,7 @@ describe Puppet::Util::Log.desttypes[:logstash_event] do
       dest = described_class.new
       result = dest.format(@msg)
       expect(result["version"]).to eq(1)
-      expect(result["level"]).to   eq(:info)
+      expect(result["level"]).to   eq('info')
       expect(result["message"]).to eq("So long, and thanks for all the fish.")
       expect(result["source"]).to  eq("a dolphin")
       # timestamp should be within 10 seconds

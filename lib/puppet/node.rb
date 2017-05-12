@@ -39,7 +39,7 @@ class Puppet::Node
   def to_data_hash
     result = {
       'name' => name,
-      'environment' => environment.name,
+      'environment' => environment.name.to_s,
     }
     result['classes'] = classes unless classes.empty?
     result['parameters'] = parameters unless parameters.empty?

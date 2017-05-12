@@ -105,14 +105,15 @@ class Puppet::Resource
     self.to_hash.each_pair do |param, value|
       # Don't duplicate the title as the namevar
       unless param == namevar && value == title
+        name = param.to_s
         value = Puppet::Resource.value_to_json_data(value)
         if is_json_type?(value)
-          params[param] = value
+          params[name] = value
         elsif !rich_data_enabled
           Puppet.warning(_("Resource '%{resource}' contains a %{klass} value. It will be converted to the String '%{value}'") % { resource: to_s, klass: value.class.name, value: value })
-          params[param] = value
+          params[name] = value
         else
-          ext_params[param] = value
+          ext_params[name] = value
         end
       end
     end
