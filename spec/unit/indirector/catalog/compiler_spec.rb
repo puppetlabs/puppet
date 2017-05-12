@@ -101,7 +101,7 @@ describe Puppet::Resource::Catalog::Compiler do
       @compiler.find(@request)
     end
 
-    it "should extract and save any facts from the request" do
+    it "should extract any facts from the request" do
       Puppet::Node.indirection.expects(:find).with(@name, anything).returns @node
       @compiler.expects(:extract_facts_from_request).with(@request)
       Puppet::Parser::Compiler.stubs(:compile)
@@ -246,7 +246,7 @@ describe Puppet::Resource::Catalog::Compiler do
     end
   end
 
-  describe "when extracting facts from the request" do
+  describe "when handling a request with facts" do
     before do
       Puppet::Node::Facts.indirection.terminus_class = :memory
       Facter.stubs(:value).returns "something"
@@ -269,61 +269,86 @@ describe Puppet::Resource::Catalog::Compiler do
       request
     end
 
-    it "should do nothing if no facts are provided" do
-      request = Puppet::Indirector::Request.new(:catalog, :find, "hostname", nil)
-      request.options[:facts] = nil
+    context "when extracting facts from the request" do
+      it "should do nothing if no facts are provided" do
+        request = Puppet::Indirector::Request.new(:catalog, :find, "hostname", nil)
+        request.options[:facts] = nil
 
-      expect(@compiler.extract_facts_from_request(request)).to be_nil
+        expect(@compiler.extract_facts_from_request(request)).to be_nil
+      end
+
+      it "should deserialize the facts without changing the timestamp" do
+        time = Time.now
+        @facts.timestamp = time
+        request = a_request_that_contains(@facts)
+        facts = @compiler.extract_facts_from_request(request)
+        expect(facts.timestamp).to eq(time)
+      end
+
+      it "accepts PSON facts from older agents" do
+        request = a_legacy_request_that_contains(@facts)
+
+        options = {
+          :environment => request.environment,
+          :transaction_uuid => request.options[:transaction_uuid],
+        }
+        facts = @compiler.extract_facts_from_request(request)
+        expect(facts).to eq(@facts)
+      end
+
+      it "rejects YAML facts" do
+        request = a_legacy_request_that_contains(@facts, :yaml)
+
+        options = {
+          :environment => request.environment,
+          :transaction_uuid => request.options[:transaction_uuid],
+        }
+
+        expect {
+          @compiler.extract_facts_from_request(request)
+        }.to raise_error(ArgumentError, /Unsupported facts format/)
+      end
+
+      it "rejects unknown fact formats" do
+        request = a_request_that_contains(@facts)
+        request.options[:facts_format] = 'unknown-format'
+
+        options = {
+          :environment => request.environment,
+          :transaction_uuid => request.options[:transaction_uuid],
+        }
+
+        expect {
+          @compiler.extract_facts_from_request(request)
+        }.to raise_error(ArgumentError, /Unsupported facts format/)
+      end
     end
 
-    it "should deserialize the facts without changing the timestamp" do
-      time = Time.now
-      @facts.timestamp = time
-      request = a_request_that_contains(@facts)
-      facts = @compiler.extract_facts_from_request(request)
-      expect(facts.timestamp).to eq(time)
+    context "when saving facts from the request" do
+      it "should save facts if they were issued by the request" do
+        request = a_request_that_contains(@facts)
+
+        options = {
+          :environment => request.environment,
+          :transaction_uuid => request.options[:transaction_uuid],
+        }
+
+        Puppet::Node::Facts.indirection.expects(:save).with(equals(@facts), nil, options)
+        @compiler.find(request)
+      end
+
+      it "should skip saving facts if none were supplied" do
+        request = Puppet::Indirector::Request.new(:catalog, :find, "hostname", nil)
+
+        options = {
+          :environment => request.environment,
+          :transaction_uuid => request.options[:transaction_uuid],
+        }
+
+        Puppet::Node::Facts.indirection.expects(:save).with(equals(@facts), nil, options).never
+        @compiler.find(request)
+      end
     end
-
-    it "accepts PSON facts from older agents" do
-      request = a_legacy_request_that_contains(@facts)
-
-      options = {
-        :environment => request.environment,
-        :transaction_uuid => request.options[:transaction_uuid],
-      }
-
-      Puppet::Node::Facts.indirection.expects(:save).with(equals(@facts), nil, options)
-
-      @compiler.extract_facts_from_request(request)
-    end
-
-    it "rejects YAML facts" do
-      request = a_legacy_request_that_contains(@facts, :yaml)
-
-      options = {
-        :environment => request.environment,
-        :transaction_uuid => request.options[:transaction_uuid],
-      }
-
-      expect {
-        @compiler.extract_facts_from_request(request)
-      }.to raise_error(ArgumentError, /Unsupported facts format/)
-    end
-
-    it "rejects unknown fact formats" do
-      request = a_request_that_contains(@facts)
-      request.options[:facts_format] = 'unknown-format'
-
-      options = {
-        :environment => request.environment,
-        :transaction_uuid => request.options[:transaction_uuid],
-      }
-
-      expect {
-        @compiler.extract_facts_from_request(request)
-      }.to raise_error(ArgumentError, /Unsupported facts format/)
-    end
-
   end
 
   describe "when finding nodes" do

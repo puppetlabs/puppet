@@ -20,6 +20,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       raise ArgumentError, _("Facts but no fact format provided for %{request}") % { request: request.key }
     end
 
+    facts = nil
     Puppet::Util::Profiler.profile(_("Found facts"), [:compiler, :find_facts]) do
       # If the facts were encoded as yaml, then the param reconstitution system
       # in Network::HTTP::Handler will automagically deserialize the value.
@@ -38,19 +39,21 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       unless facts.name == request.key
         raise Puppet::Error, _("Catalog for %{request} was requested with fact definition for the wrong node (%{fact_name}).") % { request: request.key.inspect, fact_name: facts.name.inspect }
       end
-
-      options = {
-        :environment => request.environment,
-        :transaction_uuid => request.options[:transaction_uuid],
-      }
-
-      Puppet::Node::Facts.indirection.save(facts, nil, options)
     end
+    facts
+  end
+
+  def save_facts_from_request(facts, request)
+    Puppet::Node::Facts.indirection.save(facts, nil,
+                                         :environment => request.environment,
+                                         :transaction_uuid => request.options[:transaction_uuid])
   end
 
   # Compile a node's catalog.
   def find(request)
-    extract_facts_from_request(request)
+    facts = extract_facts_from_request(request)
+
+    save_facts_from_request(facts, request) if !facts.nil?
 
     node = node_from_request(request)
     node.trusted_data = Puppet.lookup(:trusted_information) { Puppet::Context::TrustedInformation.local(node) }.to_h
