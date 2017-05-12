@@ -117,8 +117,7 @@ file { "#{module_dir}/foo/files/foo.txt" :
 MANIFEST
 
       step "Run agent again using --use_cached_catalog and ensure content from the first code_id is used"
-      on(agent, puppet("agent", "--no-usecacheonfailure", "--no-splay", "--show_diff", "--no-daemonize", 
-                       "--verbose", "--onetime", "--detailed-exitcodes", "--use_cached_catalog", "--server #{master}"), :acceptable_exit_codes => [0,2])
+      on(agent, puppet("agent", "-t", "--use_cached_catalog", "--server #{master}"), :acceptable_exit_codes => [0,2])
       on(agent, "cat #{agent_test_file_path}") do
         assert_equal('code_version_1', stdout)
       end
