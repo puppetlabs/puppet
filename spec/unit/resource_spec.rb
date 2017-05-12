@@ -682,6 +682,11 @@ describe Puppet::Resource do
     it 'to_yaml_properties and to_data_hash references the same attributes' do
       expect(@resource.to_yaml_properties.map {|attr| attr.to_s[1..-1]}.sort).to eql(@resource.to_data_hash.keys.sort)
     end
+
+    it 'to_data_hash returns value that is instance of to Data' do
+      Puppet::Pops::Types::TypeAsserter.assert_instance_of('', Puppet::Pops::Types::TypeFactory.data, @resource.to_data_hash)
+      expect(Puppet::Pops::Types::TypeFactory.data.instance?(@resource.to_data_hash)).to be_truthy
+    end
   end
 
   describe "when converting to a RAL resource" do

@@ -35,6 +35,7 @@ require 'puppet/indirector'
 #
 # @api public
 class Puppet::Transaction::Report
+  include Puppet::Util::PsychSupport
   extend Puppet::Indirector
 
   indirects :report, :terminus_class => :processor
@@ -274,34 +275,32 @@ class Puppet::Transaction::Report
 
     @metrics = {}
     data['metrics'].each do |name, hash|
-      @metrics[name] = Puppet::Util::Metric.from_data_hash(hash)
+      # Older versions contain tags that causes Psych to create instances directly
+      @metrics[name] = hash.is_a?(Puppet::Util::Metric) ? hash : Puppet::Util::Metric.from_data_hash(hash)
     end
 
     @logs = data['logs'].map do |record|
-      Puppet::Util::Log.from_data_hash(record)
+      # Older versions contain tags that causes Psych to create instances directly
+      record.is_a?(Puppet::Util::Log) ? record : Puppet::Util::Log.from_data_hash(record)
     end
 
     @resource_statuses = {}
-    data['resource_statuses'].map do |record|
-      if record[1] == {}
-        status = nil
+    data['resource_statuses'].map do |key, rs|
+      @resource_statuses[key] = if rs == Puppet::Resource::EMPTY_HASH
+        nil
       else
-        status = Puppet::Resource::Status.from_data_hash(record[1])
+        # Older versions contain tags that causes Psych to create instances directly
+        rs.is_a?(Puppet::Resource::Status) ? rs : Puppet::Resource::Status.from_data_hash(rs)
       end
-      @resource_statuses[record[0]] = status
     end
   end
 
   def to_data_hash
-    {
+    hash = {
       'host' => @host,
       'time' => @time.iso8601(9),
       'configuration_version' => @configuration_version,
       'transaction_uuid' => @transaction_uuid,
-      'catalog_uuid' => @catalog_uuid,
-      'code_id' => @code_id,
-      'job_id' => @job_id,
-      'cached_catalog_status' => @cached_catalog_status,
       'report_format' => @report_format,
       'puppet_version' => @puppet_version,
       'kind' => @kind,
@@ -309,12 +308,19 @@ class Puppet::Transaction::Report
       'noop' => @noop,
       'noop_pending' => @noop_pending,
       'environment' => @environment,
-      'master_used' => @master_used,
-      'logs' => @logs,
-      'metrics' => @metrics,
-      'resource_statuses' => @resource_statuses,
+      'logs' => @logs.map { |log| log.to_data_hash },
+      'metrics' => Hash[@metrics.map { |key, metric| [key, metric.to_data_hash] }],
+      'resource_statuses' => Hash[@resource_statuses.map { |key, rs| [key, rs.nil? ? nil : rs.to_data_hash] }],
       'corrective_change' => @corrective_change,
     }
+
+    # The following is include only when set
+    hash['master_used'] = @master_used if @master_used
+    hash['catalog_uuid'] = @catalog_uuid if @catalog_uuid
+    hash['code_id'] = @code_id if @code_id
+    hash['job_id'] = @job_id if @job_id
+    hash['cached_catalog_status'] = @cached_catalog_status if @cached_catalog_status
+    hash
   end
 
   # @return [String] the host name

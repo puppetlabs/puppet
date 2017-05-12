@@ -8,10 +8,11 @@ require 'puppet/parameter'
 # @api public
 class Puppet::Resource
   include Puppet::Util::Tagging
+  include Puppet::Util::PsychSupport
 
   include Enumerable
   attr_accessor :file, :line, :catalog, :exported, :virtual, :strict
-  attr_reader :type, :title
+  attr_reader :type, :title, :parameters, :rich_data_enabled
 
   # @!attribute [rw] sensitive_parameters
   #   @api private
@@ -25,6 +26,7 @@ class Puppet::Resource
   extend Puppet::Indirector
   indirects :resource, :terminus_class => :ral
 
+  EMPTY_ARRAY = [].freeze
   EMPTY_HASH = {}.freeze
 
   ATTRIBUTES = [:file, :line, :exported].freeze
@@ -36,37 +38,46 @@ class Puppet::Resource
   VALUE_KEY = 'value'.freeze
 
   def self.from_data_hash(data, rich_data_enabled = false)
-    raise ArgumentError, "No resource type provided in serialized data" unless type = data['type']
-    raise ArgumentError, "No resource title provided in serialized data" unless title = data['title']
+    resource = self.allocate
+    resource.instance_variable_set(:@rich_data_enabled, true) if rich_data_enabled
+    resource.initialize_from_hash(data)
+    resource
+  end
 
-    resource = new(type, title)
+  def initialize_from_hash(data)
+    raise ArgumentError, _('No resource type provided in serialized data') unless type = data['type']
+    raise ArgumentError, _('No resource title provided in serialized data') unless title = data['title']
+    @type, @title = self.class.type_and_title(type, title)
 
     if params = data['parameters']
+      @parameters = {}
       params.each do |param, value|
-        value = convert_rich_data_hash(value, rich_data_enabled) if value.is_a?(Hash) && value.include?(PCORE_TYPE_KEY)
-        resource[param] = value
+        value = convert_rich_data_hash(value) if value.is_a?(Hash) && value.include?(PCORE_TYPE_KEY)
+        self[param] = value
       end
+    else
+      @parameters = EMPTY_HASH
     end
 
-    if sensitive_parameters = data['sensitive_parameters']
-      resource.sensitive_parameters = sensitive_parameters.map(&:to_sym)
+    if sensitives = data['sensitive_parameters']
+      @sensitive_parameters = sensitives.map(&:to_sym)
+    else
+      @sensitive_parameters = EMPTY_ARRAY
     end
 
     if tags = data['tags']
-      tags.each { |tag| resource.tag(tag) }
+      tags.each { |t| tag(t) }
     end
 
     ATTRIBUTES.each do |a|
       if value = data[a.to_s]
-        resource.send(a.to_s + "=", value)
+        send(a.to_s + "=", value)
       end
     end
-
-    resource
   end
 
-  def self.convert_rich_data_hash(rich_data_hash, rich_data_enabled)
-    if rich_data_enabled
+  def convert_rich_data_hash(rich_data_hash)
+    if instance_variable_defined?(:@rich_data_enabled)
       value = rich_data_hash[VALUE_KEY]
       if value.is_a?(Array)
         json_deserializer ||= Puppet::Pops::Serialization::Deserializer.new(Puppet::Pops::Serialization::JSON::Reader.new([]), nil)
@@ -87,17 +98,21 @@ class Puppet::Resource
       rich_data_hash
     end
   end
-  private_class_method :convert_rich_data_hash
+  private :convert_rich_data_hash
 
   def inspect
     "#{@type}[#{@title}]#{to_hash.inspect}"
   end
 
   def to_data_hash(rich_data_enabled = false)
-    data = ([:type, :title, :tags] + ATTRIBUTES).inject({}) do |hash, param|
-      next hash unless value = self.send(param)
-      hash[param.to_s] = value
-      hash
+    data = {
+      'type' => type,
+      'title' => title,
+      'tags' => tags.to_data_hash
+    }
+    ATTRIBUTES.each do |param|
+      value = send(param)
+      data[param.to_s] = value if value
     end
 
     data['exported'] ||= false
@@ -729,11 +744,5 @@ class Puppet::Resource
     else
       return { :name => title.to_s }
     end
-  end
-
-  def parameters
-    # @parameters could have been loaded from YAML, causing it to be nil (by
-    # bypassing initialize).
-    @parameters ||= {}
   end
 end

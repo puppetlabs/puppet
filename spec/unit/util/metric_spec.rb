@@ -87,4 +87,8 @@ describe Puppet::Util::Metric do
   it 'to_yaml_properties and to_data_hash references the same attributes' do
     expect(metric.to_yaml_properties.map {|attr| attr.to_s[1..-1]}.sort).to eql(metric.to_data_hash.keys.sort)
   end
+
+  it 'to_data_hash returns value that is instance of to Data' do
+    expect(Puppet::Pops::Types::TypeFactory.data.instance?(metric.to_data_hash)).to be_truthy
+  end
 end

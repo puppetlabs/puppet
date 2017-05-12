@@ -497,6 +497,10 @@ describe Puppet::Transaction::Report do
       report = generate_report
       expect(report.to_yaml_properties.map {|attr| attr.to_s[1..-1]}.sort).to eql(report.to_data_hash.keys.sort)
     end
+
+    it 'to_data_hash returns value that is instance of to Data' do
+      expect(Puppet::Pops::Types::TypeFactory.data.instance?(generate_report.to_data_hash)).to be_truthy
+    end
   end
 
   it "defaults to serializing to json" do

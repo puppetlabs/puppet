@@ -191,14 +191,8 @@ module Puppet
         @failed = data['failed']
         @corrective_change = data['corrective_change']
         @events = data['events'].map do |event|
-          # in YAML (for reports) we serialize this as an object, but
-          # in PSON it becomes a hash. Depending on where we came from
-          # we might not need to deserialize it.
-          if event.class == Puppet::Transaction::Event
-            event
-          else
-            Puppet::Transaction::Event.from_data_hash(event)
-          end
+          # Older versions contain tags that causes Psych to create instances directly
+          event.is_a?(Puppet::Transaction::Event) ? event : Puppet::Transaction::Event.from_data_hash(event)
         end
       end
 
@@ -219,7 +213,7 @@ module Puppet
           'skipped' => @skipped,
           'change_count' => @change_count,
           'out_of_sync_count' => @out_of_sync_count,
-          'events' => @events,
+          'events' => @events.map { |event| event.to_data_hash },
           'corrective_change' => @corrective_change,
         }
       end

@@ -543,4 +543,8 @@ describe Puppet::Util::Log do
   it 'to_yaml_properties and to_data_hash references the same attributes' do
     expect(log.to_yaml_properties.map {|attr| attr.to_s[1..-1]}.sort).to eql(log.to_data_hash.keys.sort)
   end
+
+  it 'to_data_hash returns value that is instance of to Data' do
+    expect(Puppet::Pops::Types::TypeFactory.data.instance?(log.to_data_hash)).to be_truthy
+  end
 end

@@ -140,6 +140,10 @@ describe Puppet::Transaction::Event do
     it 'to_yaml_properties and to_data_hash references the same attributes' do
       expect(event.to_yaml_properties.map {|attr| attr.to_s[1..-1]}.sort).to eql(event.to_data_hash.keys.sort)
     end
+
+    it 'to_data_hash returns value that is instance of to Data' do
+      expect(Puppet::Pops::Types::TypeFactory.data.instance?(event.to_data_hash)).to be_truthy
+    end
   end
 
   it "should round trip through pson" do

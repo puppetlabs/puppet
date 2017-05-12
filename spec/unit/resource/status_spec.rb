@@ -184,6 +184,10 @@ describe Puppet::Resource::Status do
     expect(status.to_yaml_properties.map {|attr| attr.to_s[1..-1]}.sort).to eql(status.to_data_hash.keys.sort)
   end
 
+  it 'to_data_hash returns value that is instance of to Data' do
+    expect(Puppet::Pops::Types::TypeFactory.data.instance?(status.to_data_hash)).to be_truthy
+  end
+
   def events_as_hashes(report)
     report.events.collect do |e|
       {

@@ -4,15 +4,22 @@ require 'puppet/network/format_support'
 
 # A class for handling metrics.  This is currently ridiculously hackish.
 class Puppet::Util::Metric
+  include Puppet::Util::PsychSupport
   include Puppet::Network::FormatSupport
 
   attr_accessor :type, :name, :value, :label
   attr_writer :values
 
   def self.from_data_hash(data)
-    metric = new(data['name'], data['label'])
-    metric.values = data['values']
+    metric = allocate
+    metric.initialize_from_hash(data)
     metric
+  end
+
+  def initialize_from_hash(data)
+    @name = data['name']
+    @label = data['label'] || self.class.labelize(@name)
+    @values = data['values']
   end
 
   def to_data_hash
