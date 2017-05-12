@@ -25,6 +25,8 @@ class Puppet::Resource
   extend Puppet::Indirector
   indirects :resource, :terminus_class => :ral
 
+  EMPTY_HASH = {}.freeze
+
   ATTRIBUTES = [:file, :line, :exported].freeze
   TYPE_CLASS = 'Class'.freeze
   TYPE_NODE  = 'Node'.freeze
@@ -98,7 +100,7 @@ class Puppet::Resource
       hash
     end
 
-    data["exported"] ||= false
+    data['exported'] ||= false
 
     ext_params = {}
     params = {}
@@ -286,7 +288,7 @@ class Puppet::Resource
   #   be the full resource name in the form of `"Type[Title]"`.
   #
   # @api public
-  def initialize(type, title = nil, attributes = {})
+  def initialize(type, title = nil, attributes = EMPTY_HASH)
     @parameters = {}
     @sensitive_parameters = []
     if type.is_a?(Puppet::Resource)
@@ -617,7 +619,7 @@ class Puppet::Resource
     raise Puppet::ParseError.new(_("no parameter named '%{name}'") % { name: name }, file, line) unless valid_parameter?(name)
   end
 
-  def prune_parameters(options = {})
+  def prune_parameters(options = EMPTY_HASH)
     properties = resource_type.properties.map(&:name)
 
     dup.collect do |attribute, value|
