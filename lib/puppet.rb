@@ -1,6 +1,6 @@
 require 'puppet/version'
 
-if Gem::Version.new(RUBY_VERSION) < Gem::Version.new("1.9.3")
+if Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new("1.9.3")
   raise LoadError, _("Puppet %{version} requires ruby 1.9.3 or greater.") % { version: Puppet.version }
 end
 
@@ -173,7 +173,7 @@ module Puppet
 
   # Now that settings are loaded we have the code loaded to be able to issue
   # deprecation warnings. Warn if we're on a deprecated ruby version.
-  if Gem::Version.new(RUBY_VERSION) < Gem::Version.new(Puppet::OLDEST_RECOMMENDED_RUBY_VERSION)
+  if Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new(Puppet::OLDEST_RECOMMENDED_RUBY_VERSION)
     Puppet.deprecation_warning(_("Support for ruby version %{version} is deprecated and will be removed in a future release. See https://docs.puppet.com/puppet/latest/system_requirements.html#ruby for a list of supported ruby versions.") % { version: RUBY_VERSION })
   end
 
