@@ -25,6 +25,10 @@ module PuppetSpec::Network
     Puppet::Network::HTTP::Error::HTTPMethodNotAllowedError
   end
 
+  def unsupported_media_type_error
+    Puppet::Network::HTTP::Error::HTTPUnsupportedMediaTypeError
+  end
+
   def params
     { :environment => "production" }
   end

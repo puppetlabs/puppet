@@ -263,26 +263,6 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       expect(response.type).to eq(Puppet::Network::FormatHandler.format(:json))
     end
 
-    it "raises not_acceptable_error when no accept header is provided" do
-      data = Puppet::IndirectorTesting.new("my data")
-      indirection.save(data, "my data")
-      request = a_request_that_finds(data, :accept_header => nil)
-
-      expect {
-        handler.call(request, response)
-      }.to raise_error(not_acceptable_error)
-    end
-
-    it "raises not_acceptable_error when no accepted formats are known" do
-      data = Puppet::IndirectorTesting.new("my data")
-      indirection.save(data, "my data")
-      request = a_request_that_finds(data, :accept_header => "unknown, also/unknown")
-
-      expect {
-        handler.call(request, response)
-      }.to raise_error(not_acceptable_error)
-    end
-
     it "should pass the result through without rendering it if the result is a string" do
       data = Puppet::IndirectorTesting.new("my data")
       data_string = "my data string"
@@ -347,17 +327,6 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       expect(Puppet::IndirectorTesting.indirection.find("my data")).to be_nil
     end
 
-    it "responds with json when no Accept header is given" do
-      data = Puppet::IndirectorTesting.new("my data")
-      indirection.save(data, "my data")
-      request = a_request_that_destroys(data, :accept_header => nil)
-
-      handler.call(request, response)
-
-      expect(response.body).to eq(data.render(:json))
-      expect(response.type).to eq(Puppet::Network::FormatHandler.format(:json))
-    end
-
     it "uses the first supported format for the response" do
       data = Puppet::IndirectorTesting.new("my data")
       indirection.save(data, "my data")
@@ -413,14 +382,23 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       expect(saved.name).to eq(data.name)
     end
 
-    it "responds with json when no Accept header is given" do
+    it "responds with bad request when failing to parse the body" do
       data = Puppet::IndirectorTesting.new("my data")
-      request = a_request_that_submits(data, :accept_header => nil)
+      request = a_request_that_submits(data, :content_type_header => 'application/json', :body => "this is invalid json content")
 
-      handler.call(request, response)
+      expect {
+        handler.call(request, response)
+      }.to raise_error(bad_request_error, /The request body is invalid: Could not intern from json/)
+    end
 
-      expect(response.body).to eq(data.render(:json))
-      expect(response.type).to eq(Puppet::Network::FormatHandler.format(:json))
+    it "responds with unsupported media type error when submitted content is known, but not supported by the model" do
+      data = Puppet::IndirectorTesting.new("my data")
+      request = a_request_that_submits(data, :content_type_header => 's')
+      expect(data).to_not be_support_format('s')
+
+      expect {
+        handler.call(request, response)
+      }.to raise_error(unsupported_media_type_error, /Client sent a mime-type \(s\) that doesn't correspond to a format we support/)
     end
 
     it "uses the first supported format for the response" do
