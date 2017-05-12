@@ -121,17 +121,24 @@ describe Puppet::Transaction::Event do
   end
 
   describe "When converting to YAML" do
-    it "should include only documented attributes" do
-      resource = Puppet::Type.type(:file).new(:title => make_absolute("/tmp/foo"))
-      event = Puppet::Transaction::Event.new(:source_description => "/my/param", :resource => resource,
-                                             :file => "/foo.rb", :line => 27, :tags => %w{one two},
-                                             :desired_value => 7, :historical_value => 'Brazil',
-                                             :message => "Help I'm trapped in a spec test",
-                                             :name => :mode_changed, :previous_value => 6, :property => :mode,
-                                             :status => 'success',
-                                             :redacted => false,
-                                             :corrective_change => false)
+    let(:resource) { Puppet::Type.type(:file).new(:title => make_absolute('/tmp/foo')) }
+    let(:event) do
+      Puppet::Transaction::Event.new(:source_description => "/my/param", :resource => resource,
+        :file => "/foo.rb", :line => 27, :tags => %w{one two},
+        :desired_value => 7, :historical_value => 'Brazil',
+        :message => "Help I'm trapped in a spec test",
+        :name => :mode_changed, :previous_value => 6, :property => :mode,
+        :status => 'success',
+        :redacted => false,
+        :corrective_change => false)
+    end
+
+    it 'should include only documented attributes' do
       expect(event.to_yaml_properties).to match_array(Puppet::Transaction::Event::YAML_ATTRIBUTES)
+    end
+
+    it 'to_yaml_properties and to_data_hash references the same attributes' do
+      expect(event.to_yaml_properties.map {|attr| attr.to_s[1..-1]}.sort).to eql(event.to_data_hash.keys.sort)
     end
   end
 

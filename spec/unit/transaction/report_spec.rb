@@ -492,6 +492,11 @@ describe Puppet::Transaction::Report do
       report.resources_failed_to_generate = true
       expect(report.to_yaml_properties).not_to include(:@resources_failed_to_generate)
     end
+
+    it 'to_yaml_properties and to_data_hash references the same attributes' do
+      report = generate_report
+      expect(report.to_yaml_properties.map {|attr| attr.to_s[1..-1]}.sort).to eql(report.to_data_hash.keys.sort)
+    end
   end
 
   it "defaults to serializing to json" do
@@ -613,7 +618,7 @@ describe Puppet::Transaction::Report do
     status.changed = true
     status.add_event(event)
 
-    report = Puppet::Transaction::Report.new('apply', 1357986, 'test_environment', "df34516e-4050-402d-a166-05b03b940749")
+    report = Puppet::Transaction::Report.new('apply', 1357986, 'test_environment', "df34516e-4050-402d-a166-05b03b940749", '42')
     report << Puppet::Util::Log.new(:level => :warning, :message => "log message")
     report.add_times("timing", 4)
     report.code_id = "some code id"
@@ -630,7 +635,7 @@ describe Puppet::Transaction::Report do
     status.changed = true
     status.failed_because("bad stuff happened")
 
-    report = Puppet::Transaction::Report.new('apply', 1357986, 'test_environment', "df34516e-4050-402d-a166-05b03b940749")
+    report = Puppet::Transaction::Report.new('apply', 1357986, 'test_environment', "df34516e-4050-402d-a166-05b03b940749", '42')
     report << Puppet::Util::Log.new(:level => :warning, :message => "log message")
     report.add_times("timing", 4)
     report.code_id = "some code id"

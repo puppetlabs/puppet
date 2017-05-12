@@ -343,6 +343,7 @@ class Puppet::Resource
         # set the type name to the symbolic name
         type = type.name
       end
+      @exported = false
 
       # Set things like strictness first.
       attributes.each do |attr, value|

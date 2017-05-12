@@ -36,6 +36,10 @@ class Puppet::Node
     node
   end
 
+  def to_yaml_properties
+    [:@classes, :@environment, :@name, :@parameters]
+  end
+
   def to_data_hash
     result = {
       'name' => name,

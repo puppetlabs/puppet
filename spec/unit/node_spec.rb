@@ -94,6 +94,15 @@ describe Puppet::Node do
       expect(node.environment_name).to eq(:bar)
       expect(node.parameters['environment']).to eq('bar')
     end
+
+    it 'to_yaml_properties and to_data_hash references the same attributes' do
+      node = Puppet::Node.new("hello",
+        :environment => 'bar',
+        :classes => ['erth', 'aiu'],
+        :parameters => {"hostname"=>"food"}
+      )
+      expect(node.to_yaml_properties.map {|attr| attr.to_s[1..-1]}.sort).to eql(node.to_data_hash.keys.sort)
+    end
   end
 
   describe "when serializing using yaml" do
