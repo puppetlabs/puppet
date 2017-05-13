@@ -70,9 +70,8 @@ class Puppet::Resource
     end
 
     ATTRIBUTES.each do |a|
-      if value = data[a.to_s]
-        send(a.to_s + "=", value)
-      end
+      value = data[a.to_s]
+      send("#{a}=", value) unless value.nil?
     end
   end
 
@@ -112,7 +111,7 @@ class Puppet::Resource
     }
     ATTRIBUTES.each do |param|
       value = send(param)
-      data[param.to_s] = value if value
+      data[param.to_s] = value unless value.nil?
     end
 
     data['exported'] ||= false
