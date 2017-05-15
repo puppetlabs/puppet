@@ -23,6 +23,7 @@ describe provider_class do
         expect(output['gawk.i686']).to eq([{:name => 'gawk', :epoch => '0', :version => '4.1.0', :release => '3.fc20', :arch => 'i686'}])
         expect(output['dhclient.i686']).to eq([{:name => 'dhclient', :epoch => '12', :version => '4.1.1', :release => '38.P1.fc20', :arch => 'i686'}])
         expect(output['selinux-policy.noarch']).to eq([{:name => 'selinux-policy', :epoch => '0', :version => '3.12.1', :release => '163.fc20', :arch => 'noarch'}])
+        expect(output['java-1.8.0-openjdk.x86_64']).to eq([{:name => 'java-1.8.0-openjdk', :epoch => '1', :version => '1.8.0.131', :release => '2.b11.el7_3', :arch => 'x86_64'}])
       end
     end
     describe "with multiline entries" do
@@ -59,6 +60,13 @@ describe provider_class do
       end
       it "includes updates before 'Update'" do
         expect(output).to include("yum-plugin-fastestmirror.noarch")
+      end
+    end
+    describe "with improper package names in output" do
+      it "raises an exception parsing package name" do
+        expect {
+          described_class.update_to_hash('badpackagename', '1')
+        }.to raise_exception(Exception, /Failed to parse/)
       end
     end
   end
