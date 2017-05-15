@@ -25,11 +25,9 @@ describe Puppet::Util::Execution do
         FFI::WIN32.stubs(:CloseHandle).with(process_handle)
         FFI::WIN32.stubs(:CloseHandle).with(thread_handle)
       else
-        Process.stubs(:waitpid2).with(pid, Process::WNOHANG).returns(nil, [pid, stub('child_status', :exitstatus => exitstatus)])
         Process.stubs(:waitpid2).with(pid).returns([pid, stub('child_status', :exitstatus => exitstatus)])
       end
     end
-
 
     describe "#execute_posix (stubs)", :unless => Puppet.features.microsoft_windows? do
       before :each do
@@ -217,136 +215,82 @@ describe Puppet::Util::Execution do
           end
         end
 
-        describe "on POSIX", :if => Puppet.features.posix? do
-          describe "when squelch is not set" do
-            it "should set stdout to a pipe" do
-              Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,_|
-                stdout.class == IO
-              end.returns(rval)
+        describe "when squelch is not set" do
+          it "should set stdout to a temporary output file" do
+            outfile = Puppet::FileSystem::Uniquefile.new('stdout')
+            Puppet::FileSystem::Uniquefile.stubs(:new).returns(outfile)
 
-              Puppet::Util::Execution.execute('test command', :squelch => false)
-            end
+            Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,_|
+              stdout.path == outfile.path
+            end.returns(rval)
 
-            it "should set stderr to the same file as stdout if combine is true" do
-              Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
-                stdout == stderr
-              end.returns(rval)
-
-              Puppet::Util::Execution.execute('test command', :squelch => false, :combine => true)
-            end
-
-            it "should set stderr to the null device if combine is false" do
-              Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
-                stdout.class == IO and stderr.path == null_file
-              end.returns(rval)
-
-              Puppet::Util::Execution.execute('test command', :squelch => false, :combine => false)
-            end
-
-            it "should default combine to true when no options are specified" do
-              Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
-                stdout == stderr
-              end.returns(rval)
-
-              Puppet::Util::Execution.execute('test command')
-            end
-
-            it "should default combine to false when options are specified, but combine is not" do
-              Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
-                stdout.class == IO and stderr.path == null_file
-              end.returns(rval)
-
-              Puppet::Util::Execution.execute('test command', :failonfail => false)
-            end
-
-            it "should default combine to false when an empty hash of options is specified" do
-              Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
-                stdout.class == IO and stderr.path == null_file
-              end.returns(rval)
-
-              Puppet::Util::Execution.execute('test command', {})
-            end
+            Puppet::Util::Execution.execute('test command', :squelch => false)
           end
-        end
 
-        describe "on Windows", :if => Puppet.features.microsoft_windows? do
-          describe "when squelch is not set" do
-            it "should set stdout to a temporary output file" do
-              outfile = Puppet::FileSystem::Uniquefile.new('stdout')
-              Puppet::FileSystem::Uniquefile.stubs(:new).returns(outfile)
+          it "should set stderr to the same file as stdout if combine is true" do
+            outfile = Puppet::FileSystem::Uniquefile.new('stdout')
+            Puppet::FileSystem::Uniquefile.stubs(:new).returns(outfile)
 
-              Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,_|
-                stdout.path == outfile.path
-              end.returns(rval)
+            Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
+              stdout.path == outfile.path and stderr.path == outfile.path
+            end.returns(rval)
 
-              Puppet::Util::Execution.execute('test command', :squelch => false)
-            end
+            Puppet::Util::Execution.execute('test command', :squelch => false, :combine => true)
+          end
 
-            it "should set stderr to the same file as stdout if combine is true" do
-              outfile = Puppet::FileSystem::Uniquefile.new('stdout')
-              Puppet::FileSystem::Uniquefile.stubs(:new).returns(outfile)
+          it "should set stderr to the null device if combine is false" do
+            outfile = Puppet::FileSystem::Uniquefile.new('stdout')
+            Puppet::FileSystem::Uniquefile.stubs(:new).returns(outfile)
 
-              Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
-                stdout.path == outfile.path and stderr.path == outfile.path
-              end.returns(rval)
+            Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
+              stdout.path == outfile.path and stderr.path == null_file
+            end.returns(rval)
 
-              Puppet::Util::Execution.execute('test command', :squelch => false, :combine => true)
-            end
+            Puppet::Util::Execution.execute('test command', :squelch => false, :combine => false)
+          end
 
-            it "should set stderr to the null device if combine is false" do
-              outfile = Puppet::FileSystem::Uniquefile.new('stdout')
-              Puppet::FileSystem::Uniquefile.stubs(:new).returns(outfile)
+          it "should combine stdout and stderr if combine is true" do
+            outfile = Puppet::FileSystem::Uniquefile.new('stdout')
+            Puppet::FileSystem::Uniquefile.stubs(:new).returns(outfile)
 
-              Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
-                stdout.path == outfile.path and stderr.path == null_file
-              end.returns(rval)
+            Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
+              stdout.path == outfile.path and stderr.path == outfile.path
+            end.returns(rval)
 
-              Puppet::Util::Execution.execute('test command', :squelch => false, :combine => false)
-            end
+            Puppet::Util::Execution.execute('test command', :combine => true)
+          end
 
-            it "should combine stdout and stderr if combine is true" do
-              outfile = Puppet::FileSystem::Uniquefile.new('stdout')
-              Puppet::FileSystem::Uniquefile.stubs(:new).returns(outfile)
+          it "should default combine to true when no options are specified" do
+            outfile = Puppet::FileSystem::Uniquefile.new('stdout')
+            Puppet::FileSystem::Uniquefile.stubs(:new).returns(outfile)
 
-              Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
-                stdout.path == outfile.path and stderr.path == outfile.path
-              end.returns(rval)
+            Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
+              stdout.path == outfile.path and stderr.path == outfile.path
+            end.returns(rval)
 
-              Puppet::Util::Execution.execute('test command', :combine => true)
-            end
+            Puppet::Util::Execution.execute('test command')
+          end
 
-            it "should default combine to true when no options are specified" do
-              outfile = Puppet::FileSystem::Uniquefile.new('stdout')
-              Puppet::FileSystem::Uniquefile.stubs(:new).returns(outfile)
+          it "should default combine to false when options are specified, but combine is not" do
+            outfile = Puppet::FileSystem::Uniquefile.new('stdout')
+            Puppet::FileSystem::Uniquefile.stubs(:new).returns(outfile)
 
-              Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
-                stdout.path == outfile.path and stderr.path == outfile.path
-              end.returns(rval)
+            Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
+              stdout.path == outfile.path and stderr.path == null_file
+            end.returns(rval)
 
-              Puppet::Util::Execution.execute('test command')
-            end
+            Puppet::Util::Execution.execute('test command', :failonfail => false)
+          end
 
-            it "should default combine to false when options are specified, but combine is not" do
-              outfile = Puppet::FileSystem::Uniquefile.new('stdout')
-              Puppet::FileSystem::Uniquefile.stubs(:new).returns(outfile)
+          it "should default combine to false when an empty hash of options is specified" do
+            outfile = Puppet::FileSystem::Uniquefile.new('stdout')
+            Puppet::FileSystem::Uniquefile.stubs(:new).returns(outfile)
 
-              Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
-                stdout.path == outfile.path and stderr.path == null_file
-              end.returns(rval)
+            Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
+              stdout.path == outfile.path and stderr.path == null_file
+            end.returns(rval)
 
-              Puppet::Util::Execution.execute('test command', :failonfail => false)
-            end
-
-            it "should default combine to false when an empty hash of options is specified" do
-              outfile = Puppet::FileSystem::Uniquefile.new('stdout')
-              Puppet::FileSystem::Uniquefile.stubs(:new).returns(outfile)
-
-              Puppet::Util::Execution.expects(executor).with do |_,_,_,stdout,stderr|
-                stdout.path == outfile.path and stderr.path == null_file
-              end.returns(rval)
-
-              Puppet::Util::Execution.execute('test command', {})
-            end
+            Puppet::Util::Execution.execute('test command', {})
           end
         end
       end
@@ -592,10 +536,9 @@ describe Puppet::Util::Execution do
       end
 
       it "should close the stdin/stdout/stderr files used by the child" do
-        stdin = mock 'file'
-        stdout = mock 'file'
-        stderr = mock 'file'
-        [stdin, stdout, stderr].each {|io| io.expects(:close).at_least_once}
+        stdin = mock 'file', :close
+        stdout = mock 'file', :close
+        stderr = mock 'file', :close
 
         File.expects(:open).
             times(3).
@@ -606,81 +549,38 @@ describe Puppet::Util::Execution do
         Puppet::Util::Execution.execute('test command', {:squelch => true, :combine => false})
       end
 
-      describe "on POSIX", :if => Puppet.features.posix? do
-        it "should read and return the output if squelch is false" do
-          r, w = IO.pipe
-          IO.expects(:pipe).returns([r, w])
-          w.write("My expected command output")
+      it "should read and return the output if squelch is false" do
+        stdout = Puppet::FileSystem::Uniquefile.new('test')
+        Puppet::FileSystem::Uniquefile.stubs(:new).returns(stdout)
+        stdout.write("My expected command output")
 
-          expect(Puppet::Util::Execution.execute('test command')).to eq("My expected command output")
-        end
-
-        it "should not read the output if squelch is true" do
-          IO.expects(:pipe).never
-
-          expect(Puppet::Util::Execution.execute('test command', :squelch => true)).to eq('')
-        end
-
-        it "should close the pipe used for output if squelch is false" do
-          r, w = IO.pipe
-          IO.expects(:pipe).returns([r, w])
-
-          expect(Puppet::Util::Execution.execute('test command')).to eq("")
-          expect(r.closed?)
-          expect(w.closed?)
-        end
-
-        it "should close the pipe used for output if squelch is false and an error is raised" do
-          r, w = IO.pipe
-          IO.expects(:pipe).returns([r, w])
-
-          if Puppet.features.microsoft_windows?
-            Puppet::Util::Execution.expects(:execute_windows).raises(Exception, 'execution failed')
-          else
-            Puppet::Util::Execution.expects(:execute_posix).raises(Exception, 'execution failed')
-          end
-
-          expect {
-            subject.execute('fail command')
-          }.to raise_error(Exception, 'execution failed')
-          expect(r.closed?)
-          expect(w.closed?)
-        end
+        expect(Puppet::Util::Execution.execute('test command')).to eq("My expected command output")
       end
-      describe "on Windows", :if => Puppet.features.microsoft_windows? do
-        it "should read and return the output if squelch is false" do
-          stdout = Puppet::FileSystem::Uniquefile.new('test')
-          Puppet::FileSystem::Uniquefile.stubs(:new).returns(stdout)
-          stdout.write("My expected command output")
 
-          expect(Puppet::Util::Execution.execute('test command')).to eq("My expected command output")
-        end
+      it "should not read the output if squelch is true" do
+        stdout = Puppet::FileSystem::Uniquefile.new('test')
+        Puppet::FileSystem::Uniquefile.stubs(:new).returns(stdout)
+        stdout.write("My expected command output")
 
-        it "should not read the output if squelch is true" do
-          stdout = Puppet::FileSystem::Uniquefile.new('test')
-          Puppet::FileSystem::Uniquefile.stubs(:new).returns(stdout)
-          stdout.write("My expected command output")
+        expect(Puppet::Util::Execution.execute('test command', :squelch => true)).to eq('')
+      end
 
-          expect(Puppet::Util::Execution.execute('test command', :squelch => true)).to eq('')
-        end
+      it "should delete the file used for output if squelch is false" do
+        stdout = Puppet::FileSystem::Uniquefile.new('test')
+        path = stdout.path
+        Puppet::FileSystem::Uniquefile.stubs(:new).returns(stdout)
 
-        it "should delete the file used for output if squelch is false" do
-          stdout = Puppet::FileSystem::Uniquefile.new('test')
-          path = stdout.path
-          Puppet::FileSystem::Uniquefile.stubs(:new).returns(stdout)
+        Puppet::Util::Execution.execute('test command')
 
-          Puppet::Util::Execution.execute('test command')
+        expect(Puppet::FileSystem.exist?(path)).to be_falsey
+      end
 
-          expect(Puppet::FileSystem.exist?(path)).to be_falsey
-        end
+      it "should not raise an error if the file is open" do
+        stdout = Puppet::FileSystem::Uniquefile.new('test')
+        Puppet::FileSystem::Uniquefile.stubs(:new).returns(stdout)
+        file = File.new(stdout.path, 'r')
 
-        it "should not raise an error if the file is open" do
-          stdout = Puppet::FileSystem::Uniquefile.new('test')
-          Puppet::FileSystem::Uniquefile.stubs(:new).returns(stdout)
-          file = File.new(stdout.path, 'r')
-
-          Puppet::Util::Execution.execute('test command')
-        end
+        Puppet::Util::Execution.execute('test command')
       end
 
       it "should raise an error if failonfail is true and the child failed" do
