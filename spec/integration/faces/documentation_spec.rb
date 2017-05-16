@@ -43,10 +43,10 @@ describe "documentation of faces" do
       ########################################################################
       # Ensure that we have authorship and copyright information in *our* faces;
       # if you apply this to third party faces you might well be disappointed.
-      context "licensing of Puppet Labs face '#{face_name}'" do
+      context "licensing of Puppet Inc. face '#{face_name}'" do
         subject { Puppet::Face[face_name, :current] }
         its :license   do should =~ /Apache\s*2/ end
-        its :copyright do should =~ /Puppet Labs|Puppet Inc\./ end
+        its :copyright do should =~ /Puppet Inc\./ end
 
         # REVISIT: This is less that ideal, I think, but right now I am more
         # comfortable watching us ship with some copyright than without any; we

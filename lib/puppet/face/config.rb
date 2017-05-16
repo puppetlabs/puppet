@@ -2,7 +2,7 @@ require 'puppet/face'
 require 'puppet/settings/ini_file'
 
 Puppet::Face.define(:config, '0.0.1') do
-  copyright "Puppet Labs", 2011
+  copyright "Puppet Inc.", 2011
   license   "Apache 2 license; see COPYING"
 
   summary "Interact with Puppet's settings."

@@ -155,7 +155,7 @@ Brice Figureau
 
 COPYRIGHT
 ---------
-Copyright (c) 2011 Puppet Labs, LLC
+Copyright (c) 2011 Puppet Inc., LLC
 Licensed under the Apache 2.0 License
       HELP
     end
