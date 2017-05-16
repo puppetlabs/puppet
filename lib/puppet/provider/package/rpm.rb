@@ -219,6 +219,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
         # if they both have ~, strip it
         str1 = str1[1..-1]
         str2 = str2[1..-1]
+        next
       elsif /^~/.match(str1)
         return -1
       elsif /^~/.match(str2)

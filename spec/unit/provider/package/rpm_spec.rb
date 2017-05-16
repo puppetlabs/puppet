@@ -499,6 +499,10 @@ describe provider_class do
     it { expect(provider.rpmvercmp("1.0~rc1~git123", "1.0~rc1")).to eq(-1) }
     it { expect(provider.rpmvercmp("1.0~rc1", "1.0~rc1~git123")).to eq(1) }
     it { expect(provider.rpmvercmp("1.0~rc1", "1.0arc1")).to eq(-1) }
+    it { expect(provider.rpmvercmp("", "~")).to eq(1) }
+    it { expect(provider.rpmvercmp("~", "~~")).to eq(1) }
+    it { expect(provider.rpmvercmp("~", "~+~")).to eq(1) }
+    it { expect(provider.rpmvercmp("~", "~a")).to eq(-1) }
 
     # non-upstream test cases
     it { expect(provider.rpmvercmp("405", "406")).to eq(-1) }
