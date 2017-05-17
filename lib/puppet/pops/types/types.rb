@@ -324,6 +324,13 @@ class PAnyType < TypedModelObject
     raise ArgumentError.new("Creation of new instance of type '#{instance.to_s}' is not supported")
   end
 
+  # Answers the question if instances of this type can represent themselves as a string that
+  # can then be passed to the create method
+  #
+  # @return [Boolean] wether or not the instance has a canonical string representation
+  def roundtrip_with_string?
+    false
+  end
 
   # The default instance of this type. Each type in the type system has this constant
   # declared.
@@ -657,6 +664,10 @@ class PScalarType < PAnyType
     else
       assignable?(TypeCalculator.infer(o))
     end
+  end
+
+  def roundtrip_with_string?
+    true
   end
 
   DEFAULT = PScalarType.new

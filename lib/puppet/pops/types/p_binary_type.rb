@@ -137,6 +137,12 @@ class PBinaryType < PAnyType
     self.class == o.class
   end
 
+  # Binary uses the strict base64 format as its string representation
+  # @return [TrueClass] true
+  def roundtrip_with_string?
+    true
+  end
+
   # @api private
   def self.new_function(_, loader)
     @new_function ||= Puppet::Functions.create_loaded_function(:new_Binary, loader) do
