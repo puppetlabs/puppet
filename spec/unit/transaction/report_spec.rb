@@ -564,6 +564,7 @@ describe Puppet::Transaction::Report do
     expect(tripped.kind).to eq(report.kind)
     expect(tripped.status).to eq(report.status)
     expect(tripped.environment).to eq(report.environment)
+    expect(tripped.corrective_change).to eq(report.corrective_change)
 
     expect(logs_as_strings(tripped)).to eq(logs_as_strings(report))
     expect(metrics_as_hashes(tripped)).to eq(metrics_as_hashes(report))
