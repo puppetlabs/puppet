@@ -1,4 +1,5 @@
 test_name "should remove directory, but force required"
+tag
 
 agents.each do |agent|
   target = agent.tmpdir("delete-dir")

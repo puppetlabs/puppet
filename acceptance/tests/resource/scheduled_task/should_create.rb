@@ -1,4 +1,5 @@
 test_name "should create a scheduled task"
+tag
 
 name = "pl#{rand(999999).to_i}"
 confine :to, :platform => 'windows'

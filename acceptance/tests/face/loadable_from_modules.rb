@@ -1,4 +1,5 @@
 test_name "Exercise loading a face from a module"
+tag
 
 # Because the module tool does not work on windows, we can't run this test there
 confine :except, :platform => 'windows'

@@ -1,4 +1,5 @@
 test_name "Lookup data using the agnostic lookup function" do
+  tag
   # pre-docs:
   # https://puppet-on-the-edge.blogspot.com/2015/01/puppet-40-data-in-modules-and.html
 

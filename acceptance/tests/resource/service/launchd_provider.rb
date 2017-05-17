@@ -1,4 +1,5 @@
 test_name 'Mac OS X launchd Provider Testing'
+tag
 
 confine :to, {:platform => /osx/}, agents
 

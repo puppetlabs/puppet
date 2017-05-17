@@ -1,4 +1,5 @@
 test_name "should update an entry for an SSH authorized key"
+tag
 
 confine :except, :platform => ['windows']
 

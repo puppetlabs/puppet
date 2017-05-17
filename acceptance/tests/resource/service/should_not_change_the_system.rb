@@ -1,4 +1,5 @@
 test_name "`puppet resource service` should list running services without calling dangerous init scripts"
+tag
 
 confine :except, :platform => 'windows'
 confine :except, :platform => 'solaris'

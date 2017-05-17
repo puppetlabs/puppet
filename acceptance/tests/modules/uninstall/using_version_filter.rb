@@ -1,4 +1,5 @@
 test_name "puppet module uninstall (with module installed)"
+tag
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 

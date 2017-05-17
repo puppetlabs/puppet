@@ -1,4 +1,5 @@
 test_name "should delete a user"
+tag
 confine :except, :platform => /^eos-/ # See ARISTA-37
 confine :except, :platform => /^cisco_/ # See PUP-5828
 

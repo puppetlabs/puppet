@@ -1,4 +1,5 @@
 test_name 'utf-8 characters in cached catalog' do
+  tag
   confine :except, :platform => [
     'windows',      # PUP-6983
     'cumulus',      # PUP-7147
@@ -17,7 +18,7 @@ test_name 'utf-8 characters in cached catalog' do
   agents.each do |agent|
     puts "agent name: #{agent.hostname}, platform: #{agent.platform}"
     agent_vardir = agent.tmpdir("agent_vardir")
-    agent_file = agent.tmpfile("file" + utf8chars) 
+    agent_file = agent.tmpfile("file" + utf8chars)
     teardown do
       on(agent, "rm -rf #{agent_vardir} #{agent_file}")
     end
@@ -27,10 +28,10 @@ test_name 'utf-8 characters in cached catalog' do
         "rm -rf #{agent_file}",
         :environment => {:LANG => "en_US.UTF-8"}
       )
-    
+
       master_manifest =
 <<PP
-    
+
 File {
   ensure => directory,
   mode => "0755",
@@ -57,7 +58,7 @@ file { "#{agent_file}" :
 }
 
 PP
-        
+
       apply_manifest_on(
         master,
         master_manifest,
@@ -77,8 +78,8 @@ PP
         'use_cached_catalog' => 'true'
       }
     }
-    
-    with_puppet_running_on(master, master_opts, codedir) do 
+
+    with_puppet_running_on(master, master_opts, codedir) do
       step "apply utf-8 catalog" do
         on(
           agent,
@@ -91,7 +92,7 @@ PP
           }
         )
       end
-    
+
       step "verify cached catalog" do
         catalog_file_name =
           "#{agent_vardir}/client_data/catalog/#{agent.node_name}.json"
@@ -113,7 +114,7 @@ PP
           )
         end
       end
-  
+
       step "apply cached catalog" do
         on(
           agent,
@@ -139,5 +140,4 @@ PP
       end
     end
   end
-end 
- 
+end

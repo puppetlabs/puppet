@@ -1,4 +1,5 @@
 test_name 'utf-8 characters in function parameters' do
+  tag
   confine :except, :platform => [
     'windows',      # PUP-6983
     'eos-4',        # PUP-7146

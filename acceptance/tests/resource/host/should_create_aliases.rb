@@ -1,4 +1,5 @@
 test_name "host should create aliases"
+tag
 
 agents.each do |agent|
   target  = agent.tmpfile('host-create-aliases')

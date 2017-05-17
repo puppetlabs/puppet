@@ -1,4 +1,5 @@
 test_name "should query all services"
+tag
 
 agents.each do |agent|
   step "query with puppet"

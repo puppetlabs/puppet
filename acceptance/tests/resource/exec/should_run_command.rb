@@ -1,4 +1,5 @@
 test_name "tests that puppet correctly runs an exec."
+tag
 # original author: Dan Bode  --daniel 2010-12-23
 
 def before(agent)
@@ -29,5 +30,3 @@ agents.each do |agent|
   end
   after(agent, touched)
 end
-
-

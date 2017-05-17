@@ -1,4 +1,5 @@
 begin test_name 'puppet module search should print a reasonable message on ssl errors'
+tag
 
 step "Search against a website where the certificate is not signed by a public authority"
 

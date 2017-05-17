@@ -1,4 +1,5 @@
 test_name "Calling Hiera function from inside templates"
+tag
 
 @module_name = "hieratest"
 @coderoot = master.tmpdir("#{@module_name}")

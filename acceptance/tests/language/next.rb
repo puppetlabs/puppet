@@ -1,4 +1,5 @@
 test_name 'C98162 - Validate `next` immediately returns from a block of code' do
+  tag
   agents.each do |agent|
 
     step 'apply class with next' do

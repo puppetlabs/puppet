@@ -1,4 +1,5 @@
 test_name "Zone: ticket #4840 - verify that the given manifest works."
+tag
 confine :to, :platform => 'solaris'
 
 require 'puppet/acceptance/solaris_util'

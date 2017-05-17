@@ -1,4 +1,5 @@
 test_name "Cron: should allow changing parameters after creation"
+tag
 confine :except, :platform => 'windows'
 confine :except, :platform => /^eos-/ # See PUP-5500
 require 'puppet/acceptance/common_utils'

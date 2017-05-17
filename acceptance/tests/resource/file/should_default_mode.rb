@@ -1,4 +1,5 @@
 test_name "file resource: set default modes"
+tag
 
 def regexp_mode(mode)
   Regexp.new("mode\s*=>\s*'0?#{mode}'")
@@ -39,4 +40,3 @@ agents.each do |agent|
 
   on(agent, "rm -rf #{parent}")
 end
-

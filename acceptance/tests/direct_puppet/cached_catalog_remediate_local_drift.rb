@@ -2,6 +2,7 @@ require 'puppet/acceptance/static_catalog_utils'
 extend Puppet::Acceptance::StaticCatalogUtils
 
 test_name "PUP-5122: Puppet remediates local drift using code_id and content_uri" do
+  tag
 
   skip_test 'requires puppetserver installation' if @options[:type] != 'aio'
 

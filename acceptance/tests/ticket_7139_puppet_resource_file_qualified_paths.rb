@@ -1,4 +1,5 @@
 test_name "#7139: Puppet resource file fails on path with leading '/'"
+tag
 
 agents.each do |agent|
   target = agent.tmpfile('ticket-7139')

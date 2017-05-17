@@ -1,4 +1,5 @@
 test_name "should not run command creates"
+tag
 
 agents.each do |agent|
   touch      = agent.tmpfile('touched')

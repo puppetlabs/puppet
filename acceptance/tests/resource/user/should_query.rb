@@ -1,4 +1,5 @@
 test_name "test that we can query and find a user that exists."
+tag
 confine :except, :platform => /^eos-/ # See ARISTA-37
 confine :except, :platform => /^cisco_/ # See PUP-5828
 

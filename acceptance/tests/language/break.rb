@@ -1,4 +1,5 @@
 test_name 'C98162 - Validate `break` terminates execution in a block of code' do
+  tag
   agents.each do |agent|
 
     step 'apply class with break' do

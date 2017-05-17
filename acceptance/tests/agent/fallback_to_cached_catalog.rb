@@ -1,4 +1,5 @@
 test_name "fallback to the cached catalog"
+tag
 
 step "run agents once to cache the catalog" do
   with_puppet_running_on master, {} do

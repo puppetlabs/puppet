@@ -1,4 +1,5 @@
 test_name 'C99572: v4 hieradata with v5 configs' do
+  tag
   require 'puppet/acceptance/puppet_type_test_tools.rb'
   extend Puppet::Acceptance::PuppetTypeTestTools
 

@@ -1,4 +1,5 @@
 test_name "Priority of server_list setting over server setting" do
+  tag
   master_port = 8140
 
   step "Conflict warnings for server settings"

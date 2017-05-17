@@ -1,4 +1,5 @@
 test_name "#4124: should list all disabled services on Redhat/CentOS"
+tag
 confine :to, :platform => /(el|centos|oracle|redhat|scientific)-5/
 
 step "Validate disabled services agreement ralsh vs. OS service count"

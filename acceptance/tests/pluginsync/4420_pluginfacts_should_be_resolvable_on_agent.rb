@@ -1,4 +1,5 @@
 test_name "Pluginsync'ed external facts should be resolvable on the agent"
+tag
 confine :except, :platform => 'cisco_nexus' #See BKR-749
 
 #

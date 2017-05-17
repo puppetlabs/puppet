@@ -1,4 +1,5 @@
 test_name "should remove file"
+tag
 
 agents.each do |agent|
   target = agent.tmpfile('delete-file')

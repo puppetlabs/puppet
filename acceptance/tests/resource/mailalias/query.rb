@@ -1,4 +1,5 @@
 test_name "should be able to find an exisitng email alias"
+tag
 
 confine :except, :platform => 'windows'
 

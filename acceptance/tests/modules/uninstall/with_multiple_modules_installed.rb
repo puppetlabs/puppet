@@ -1,4 +1,5 @@
 test_name "puppet module uninstall (with multiple modules installed)"
+tag
 
 if master.is_pe?
   skip_test

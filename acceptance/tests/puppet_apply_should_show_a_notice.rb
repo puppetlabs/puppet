@@ -1,4 +1,5 @@
 test_name "puppet apply should show a notice"
+tag
 
 agents.each do |host|
   apply_manifest_on(host, "notice 'Hello World'") do

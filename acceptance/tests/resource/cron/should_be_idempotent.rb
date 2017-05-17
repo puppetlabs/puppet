@@ -1,4 +1,5 @@
 test_name "Cron: check idempotency"
+tag
 confine :except, :platform => 'windows'
 confine :except, :platform => /^eos-/ # See PUP-5500
 

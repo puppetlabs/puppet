@@ -1,4 +1,5 @@
 test_name "puppet module list (with no installed modules)"
+tag
 
 
 step "List the installed modules"

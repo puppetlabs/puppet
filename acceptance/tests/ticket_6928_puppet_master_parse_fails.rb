@@ -1,4 +1,5 @@
 test_name "#6928: Puppet --parseonly should return deprication message"
+tag
 
 # Create good and bad formatted manifests
 step "Master: create valid, invalid formatted manifests"

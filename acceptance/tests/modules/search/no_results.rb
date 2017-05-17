@@ -1,4 +1,5 @@
 test_name 'puppet module search should print a reasonable message for no results'
+tag
 
 module_name   = "module_not_appearing_in_this_forge"
 

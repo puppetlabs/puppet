@@ -16,6 +16,7 @@ skip_test "Test only supported on Jetty" unless @options[:is_puppetserver]
 #  - CA disabled on the master `ca = false`
 #
 test_name "Puppet agent and master work when both configured with externally issued certificates from independent intermediate CAs"
+tag
 
 step "Copy certificates and configuration files to the master..."
 fixture_dir = File.expand_path('../fixtures', __FILE__)

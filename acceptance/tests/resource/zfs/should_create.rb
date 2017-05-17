@@ -1,4 +1,5 @@
 test_name "ZFS: should create"
+tag
 confine :to, :platform => 'solaris'
 
 require 'puppet/acceptance/solaris_util'

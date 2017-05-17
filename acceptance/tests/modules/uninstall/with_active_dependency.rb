@@ -1,4 +1,5 @@
 test_name "puppet module uninstall (with active dependency)"
+tag
 
 step "Setup"
 apply_manifest_on master, <<-PP

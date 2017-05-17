@@ -1,4 +1,5 @@
 test_name "NIM package provider should work correctly"
+tag
 
 confine :to, :platform => "aix"
 

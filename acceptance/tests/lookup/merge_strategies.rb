@@ -1,4 +1,5 @@
 test_name 'C99903: merge strategies' do
+  tag
   require 'puppet/acceptance/environment_utils.rb'
   extend Puppet::Acceptance::EnvironmentUtils
 

@@ -1,4 +1,5 @@
 test_name "SMF: basic tests"
+tag
 confine :to, :platform => 'solaris'
 
 require 'puppet/acceptance/solaris_util'

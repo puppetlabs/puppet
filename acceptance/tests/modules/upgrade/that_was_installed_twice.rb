@@ -1,4 +1,5 @@
 test_name "puppet module upgrade (that was installed twice)"
+tag
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 require 'puppet/acceptance/environment_utils'

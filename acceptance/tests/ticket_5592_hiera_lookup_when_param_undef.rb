@@ -1,4 +1,5 @@
 test_name 'Ensure hiera lookup occurs if class param is undef' do
+  tag
 
   agents.each do |agent|
 

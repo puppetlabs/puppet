@@ -1,4 +1,5 @@
 test_name "puppet module upgrade (to installed version)"
+tag
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 

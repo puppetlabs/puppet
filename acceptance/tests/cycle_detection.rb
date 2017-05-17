@@ -1,4 +1,5 @@
 test_name "cycle detection and reporting"
+tag
 
 step "check we report a simple cycle"
 manifest = <<EOT

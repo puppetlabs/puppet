@@ -1,4 +1,5 @@
 test_name "defined should create an entry in filesystem table"
+tag
 
 confine :except, :platform => ['windows']
 confine :except, :platform => /osx/ # See PUP-4823

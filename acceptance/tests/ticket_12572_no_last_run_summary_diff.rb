@@ -1,4 +1,5 @@
 test_name "#12572: Don't print a diff for last_run_summary when show_diff is on"
+tag
 
 agents.each do |host|
   # Have to run apply twice in order to make sure a diff would be relevant

@@ -1,4 +1,5 @@
 test_name "(PUP-5508) Should add an SSH key to the correct ssh_known_hosts file on OS X/macOS" do
+  tag
 # TestRail test case C93370
 
 confine :to, :platform => /osx/
@@ -44,7 +45,7 @@ step 'Verify that the default file is empty or non-existent' do
   # Is it even there?
   rc = on(agent, "[ ! -e #{ssh_known_hosts} ]",
           :acceptable_exit_codes => [0, 1])
-  if rc.exit_code == 1 
+  if rc.exit_code == 1
     # If it's there, it should be empty
     on(agent, "cat #{ssh_known_hosts}") do |res|
       fail_test "Default #{ssh_known_hosts} file not empty" \

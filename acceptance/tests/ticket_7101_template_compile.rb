@@ -1,4 +1,5 @@
 test_name "#7101: template compile"
+tag
 
 agents.each do |agent|
   template = agent.tmpfile('template_7101.erb')

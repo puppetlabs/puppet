@@ -1,4 +1,5 @@
 test_name "should delete an entry in filesystem table and unmount it"
+tag
 
 confine :except, :platform => ['windows']
 confine :except, :platform => /osx/ # See PUP-4823

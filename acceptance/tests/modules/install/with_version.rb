@@ -1,4 +1,5 @@
 test_name "puppet module install (with version)"
+tag
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
@@ -23,4 +24,3 @@ agents.each do |agent|
     assert_module_installed_on_disk(agent, module_name)
   end
 end
-

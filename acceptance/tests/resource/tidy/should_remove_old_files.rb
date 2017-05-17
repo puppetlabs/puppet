@@ -1,4 +1,5 @@
 test_name "Tidying files by date"
+tag
 
 agents.each do |agent|
   step "Create a directory of old and new files"

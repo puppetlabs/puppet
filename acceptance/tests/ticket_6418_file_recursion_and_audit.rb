@@ -4,6 +4,7 @@
 # FixedVersion:
 
 test_name "#6418: file recursion and audit"
+tag
 
 agents.each do |agent|
   dir = agent.tmpdir('6418-recurse-audit')

@@ -1,4 +1,5 @@
 test_name "#4655: Allow setting the default stage for parameterized classes"
+tag
 
 agents.each do |agent|
   temp_file_name = agent.tmpfile('4655-stage-in-parameterized-class')

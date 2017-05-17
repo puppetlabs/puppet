@@ -1,4 +1,5 @@
 test_name "Zone: dataset configuration"
+tag
 
 confine :to, :platform => 'solaris'
 

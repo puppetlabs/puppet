@@ -1,4 +1,5 @@
 test_name "#4131: should not create host without IP attribute"
+tag
 
 agents.each do |agent|
   file = agent.tmpfile('4131-require-ip')

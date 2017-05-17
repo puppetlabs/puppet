@@ -1,4 +1,5 @@
 test_name "puppet module uninstall (with modulepath)"
+tag
 
 codedir = master.puppet('master')['codedir']
 

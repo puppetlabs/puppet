@@ -1,4 +1,5 @@
 test_name "Zone: should be idempotent"
+tag
 
 confine :to, :platform => 'solaris'
 

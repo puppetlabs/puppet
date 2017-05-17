@@ -1,4 +1,5 @@
 test_name "#7680: 'links => follow' should use the file source content"
+tag
 
 agents.each do |agent|
   if agent.platform.variant == 'windows'
@@ -42,5 +43,3 @@ agents.each do |agent|
     on agent, "rm -f '#{file}'"
   end
 end
-
-

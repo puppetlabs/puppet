@@ -1,4 +1,5 @@
 test_name "Content Attribute"
+tag
 
 agents.each do |agent|
   target = agent.tmpfile('content_file_test')

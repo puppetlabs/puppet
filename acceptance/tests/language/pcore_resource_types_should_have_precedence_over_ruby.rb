@@ -1,4 +1,5 @@
 test_name 'C98097 - generated pcore resource types should be loaded instead of ruby for custom types' do
+  tag
   environment = 'production'
   step 'setup - install module with custom ruby resource type' do
     #{{{

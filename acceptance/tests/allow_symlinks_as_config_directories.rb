@@ -1,4 +1,5 @@
 test_name "Should allow symlinks to directories as configuration directories"
+tag
 confine :except, :platform => 'windows'
 
 agents.each do |agent|

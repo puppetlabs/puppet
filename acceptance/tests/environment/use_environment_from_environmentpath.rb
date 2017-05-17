@@ -1,4 +1,5 @@
 test_name "Use environments from the environmentpath"
+tag
 require 'puppet/acceptance/classifier_utils'
 extend Puppet::Acceptance::ClassifierUtils
 

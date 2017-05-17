@@ -1,4 +1,5 @@
 test_name 'C14943: Class inheritance works correctly' do
+  tag
 
   agents.each do |agent|
     test_manifest = <<MANIFEST

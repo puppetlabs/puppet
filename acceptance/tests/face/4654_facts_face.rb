@@ -1,4 +1,5 @@
 test_name "Puppet facts face should resolve custom and external facts"
+tag
 
 #
 # This test is intended to ensure that custom and external facts present

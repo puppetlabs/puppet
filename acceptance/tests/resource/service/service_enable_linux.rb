@@ -1,4 +1,5 @@
 test_name 'SysV and Systemd Service Provider Validation'
+tag
 
 
 confine :to, :platform => /el-|centos|fedora|debian|sles|ubuntu-v/

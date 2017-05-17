@@ -1,4 +1,5 @@
 test_name "Lookup data using the hiera parser function"
+tag
 
 testdir = master.tmpdir('hiera')
 

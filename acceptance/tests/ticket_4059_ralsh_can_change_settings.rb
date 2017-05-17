@@ -1,4 +1,5 @@
 test_name "#4059: ralsh can change settings"
+tag
 
 agents.each do |agent|
   target = agent.tmpfile('hosts-#4059')

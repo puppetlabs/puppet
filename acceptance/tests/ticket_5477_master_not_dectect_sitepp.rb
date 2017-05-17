@@ -4,6 +4,7 @@
 # puppetmaster does not detect when site.pp is created. This requires a restart
 #
 test_name "Ticket 5477, Puppet Master does not detect newly created site.pp file"
+tag
 
 testdir = master.tmpdir('missing_site_pp')
 manifest_file = "#{testdir}/environments/production/manifests/site.pp"

@@ -1,4 +1,5 @@
 test_name "should create empty file for 'present'"
+tag
 
 agents.each do |agent|
   target = agent.tmpfile("empty")

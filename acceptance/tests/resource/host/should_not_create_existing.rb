@@ -1,4 +1,5 @@
 test_name "should not create host if it exists"
+tag
 
 agents.each do |agent|
   file = agent.tmpfile('host-not-create-existing')

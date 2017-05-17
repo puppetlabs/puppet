@@ -1,4 +1,5 @@
 test_name 'Upstart Testing'
+tag
 
 # only run these on ubuntu vms
 confine :to, :platform => 'ubuntu'

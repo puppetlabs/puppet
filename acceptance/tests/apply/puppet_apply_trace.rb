@@ -1,4 +1,5 @@
 test_name 'puppet apply --trace should provide a stack trace'
+tag
 
 agents.each do |agent|
   on(agent, puppet('apply --trace -e "blue < 2"'), :acceptable_exit_codes => 1) do

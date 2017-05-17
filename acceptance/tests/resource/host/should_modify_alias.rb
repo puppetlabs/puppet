@@ -1,4 +1,5 @@
 test_name "should be able to modify a host alias"
+tag
 
 agents.each do |agent|
   file = agent.tmpfile('host-modify-alias')

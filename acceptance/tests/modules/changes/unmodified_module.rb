@@ -1,4 +1,5 @@
 test_name 'puppet module changes (on an unmodified module)'
+tag
 
 step 'Setup'
 

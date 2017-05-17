@@ -1,4 +1,5 @@
 test_name 'PUP-6586 Ensure puppet does not continually reset password for disabled user' do
+  tag
 
   confine :to, :platform => 'windows'
 
@@ -33,5 +34,3 @@ MANIFEST
     end
   end
 end
-
-

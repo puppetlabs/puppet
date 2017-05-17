@@ -1,4 +1,5 @@
 test_name "puppet module build should verify there are no symlinks in module"
+tag
 
 confine :except, :platform => 'windows'
 

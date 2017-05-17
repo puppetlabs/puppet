@@ -1,4 +1,5 @@
 test_name "puppet module list (with invalid dependencies)"
+tag
 
 teardown do
   on master, "rm -rf #{master['distmoduledir']}/thelock"

@@ -1,6 +1,7 @@
 test_name "C94788: exported resources using a yaml terminus for storeconfigs" do
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils
+  tag
 
   # user resource doesn't have a provider on arista
   skip_test if agents.any? {|agent| agent['platform'] =~ /^eos/ } # see PUP-5404, ARISTA-42

@@ -1,4 +1,5 @@
 test_name 'C99578: hiera5 lookup config with interpolated scoped nested variables' do
+  tag
   require 'puppet/acceptance/environment_utils.rb'
   extend Puppet::Acceptance::EnvironmentUtils
 

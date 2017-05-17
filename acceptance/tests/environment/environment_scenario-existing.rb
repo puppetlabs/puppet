@@ -1,4 +1,5 @@
 test_name "Test a specific, existing directory environment configuration"
+tag
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils
 require 'puppet/acceptance/classifier_utils'

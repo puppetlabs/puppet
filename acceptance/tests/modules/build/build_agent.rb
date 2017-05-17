@@ -1,4 +1,5 @@
 test_name "puppet module build (agent)"
+tag
 
 agents.each do |agent|
   teardown do
