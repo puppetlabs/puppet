@@ -88,6 +88,14 @@ module Serialization
       @options[:type_by_reference] == true
     end
 
+    def to_s
+      "#{self.class.name} with #{@writer}"
+    end
+
+    def inspect
+      to_s
+    end
+
     # First time write of a tabulated object. This means that the object is written and then remembered. Subsequent writes
     # of the same object will yield a write of a tabulation index instead.
     # @param [Object] value the value to write
