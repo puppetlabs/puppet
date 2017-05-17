@@ -4,12 +4,10 @@ require 'openssl'
 module Puppet::Util::HttpProxy
   def self.proxy(uri)
     if self.no_proxy?(uri)
-      proxy_class = Net::HTTP::Proxy(nil)
+      return Net::HTTP.new(uri.host, uri.port, nil)
     else
-      proxy_class = Net::HTTP::Proxy(self.http_proxy_host, self.http_proxy_port, self.http_proxy_user, self.http_proxy_password)
+      return Net::HTTP.new(uri.host, uri.port, self.http_proxy_host, self.http_proxy_port, self.http_proxy_user, self.http_proxy_password)
     end
-
-    return proxy_class.new(uri.host, uri.port)
   end
 
   def self.http_proxy_env
@@ -126,14 +124,14 @@ module Puppet::Util::HttpProxy
     return Puppet.settings[:http_proxy_password]
   end
 
-  # Return a Net::HTTP::Proxy object.
+  # Return a Net::HTTP object.
   #
   # This method optionally configures SSL correctly if the URI scheme is
   # 'https', including setting up the root certificate store so remote server
   # SSL certificates can be validated.
   #
   # @param [URI] uri The URI that is to be accessed.
-  # @return [Net::HTTP::Proxy] object constructed tailored for the passed URI
+  # @return [Net::HTTP] object constructed tailored for the passed URI
   def self.get_http_object(uri)
     proxy = proxy(uri)
 
