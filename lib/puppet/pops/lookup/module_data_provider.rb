@@ -60,8 +60,16 @@ class ModuleDataProvider < ConfiguredDataProvider
   protected
 
   def assert_config_version(config)
-    config.fail(Issues::HIERA_VERSION_3_NOT_GLOBAL, :where => 'module') unless config.version > 3
-    config
+    if config.version > 3
+      config
+    else
+      if Puppet[:strict] == :error
+        config.fail(Issues::HIERA_VERSION_3_NOT_GLOBAL, :where => 'module')
+      else
+        Puppet.warn_once(:hiera_v3_at_module_root, config.config_path, _('hiera.yaml version 3 found at module root was ignored'))
+      end
+      nil
+    end
   end
 
   # Return the root of the module with the name equal to the configured module name
