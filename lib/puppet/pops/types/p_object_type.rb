@@ -556,13 +556,6 @@ class PObjectType < PMetaType
     end
   end
 
-  # @api private
-  def equality_include_type?
-    return true if @equality_include_type
-    rp = resolved_parent
-    rp.is_a?(PObjectType) && rp.equality_include_type?
-  end
-
   def self.from_hash(hash)
     new(hash, nil)
   end
