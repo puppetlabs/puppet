@@ -563,6 +563,10 @@ class PObjectType < PMetaType
     rp.is_a?(PObjectType) && rp.equality_include_type?
   end
 
+  def self.from_hash(hash)
+    new(hash, nil)
+  end
+
   # @api private
   def _pcore_init_from_hash(init_hash)
     TypeAsserter.assert_instance_of('object initializer', TYPE_OBJECT_I12N, init_hash)
