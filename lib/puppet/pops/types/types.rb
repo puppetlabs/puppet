@@ -79,6 +79,11 @@ class PAnyType < TypedModelObject
     @type = Pcore::create_object_type(loader, ir, self, 'Pcore::AnyType', 'Any', EMPTY_HASH)
   end
 
+  def self.create(*args)
+    # NOTE! Important to use self::DEFAULT and not just DEFAULT since the latter yields PAnyType::DEFAULT
+    args.empty? ? self::DEFAULT : new(*args)
+  end
+
   # Accept a visitor that will be sent the message `visit`, once with `self` as the
   # argument. The visitor will then visit all types that this type contains.
   #
