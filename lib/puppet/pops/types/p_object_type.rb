@@ -370,9 +370,6 @@ class PObjectType < PMetaType
   #
   # @api private
   def initialize(_pcore_init_hash, init_hash_expression = nil)
-    @attributes = EMPTY_HASH
-    @functions = EMPTY_HASH
-
     if _pcore_init_hash.is_a?(Hash)
       _pcore_init_from_hash(_pcore_init_hash)
     else
@@ -569,6 +566,8 @@ class PObjectType < PMetaType
   # @api private
   def _pcore_init_from_hash(init_hash)
     TypeAsserter.assert_instance_of('object initializer', TYPE_OBJECT_I12N, init_hash)
+    @attributes = EMPTY_HASH
+    @functions = EMPTY_HASH
 
     # Name given to the loader have higher precedence than a name declared in the type
     @name ||= init_hash[KEY_NAME]
@@ -679,6 +678,10 @@ class PObjectType < PMetaType
   # @api public
   def i12n_type
     @i12n_type ||= create_i12n_type
+  end
+
+  def allocate
+    implementation_class.allocate
   end
 
   def create(*args)
