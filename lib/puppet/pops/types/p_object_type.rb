@@ -61,7 +61,7 @@ class PObjectType < PMetaType
   })
 
   def self.register_ptype(loader, ir)
-    type = create_ptype(loader, ir, 'AnyType', 'i12n_hash' => TYPE_OBJECT_I12N)
+    type = create_ptype(loader, ir, 'AnyType', '_pcore_init_hash' => TYPE_OBJECT_I12N)
 
     # Now, when the Object type exists, add annotations with keys derived from Annotation and freeze the types.
     annotations = TypeFactory.optional(PHashType.new(PType.new(Annotation._pcore_type), TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, PAnyType::DEFAULT)))
@@ -92,21 +92,21 @@ class PObjectType < PMetaType
 
     # @param name [String] The name of the member
     # @param container [PObjectType] The containing object type
-    # @param i12n_hash [Hash{String=>Object}] Hash containing feature options
-    # @option i12n_hash [PAnyType] 'type' The member type (required)
-    # @option i12n_hash [Boolean] 'override' `true` if this feature must override an inherited feature. Default is `false`.
-    # @option i12n_hash [Boolean] 'final' `true` if this feature cannot be overridden. Default is `false`.
-    # @option i12n_hash [Hash{PType => Hash}] 'annotations' Annotations hash. Default is `nil`.
+    # @param init_hash [Hash{String=>Object}] Hash containing feature options
+    # @option init_hash [PAnyType] 'type' The member type (required)
+    # @option init_hash [Boolean] 'override' `true` if this feature must override an inherited feature. Default is `false`.
+    # @option init_hash [Boolean] 'final' `true` if this feature cannot be overridden. Default is `false`.
+    # @option init_hash [Hash{PType => Hash}] 'annotations' Annotations hash. Default is `nil`.
     # @api public
-    def initialize(name, container, i12n_hash)
+    def initialize(name, container, init_hash)
       @name = name
       @container = container
-      @type = i12n_hash[KEY_TYPE]
-      @override = i12n_hash[KEY_OVERRIDE]
+      @type = init_hash[KEY_TYPE]
+      @override = init_hash[KEY_OVERRIDE]
       @override = false if @override.nil?
-      @final = i12n_hash[KEY_FINAL]
+      @final = init_hash[KEY_FINAL]
       @final = false if @final.nil?
-      init_annotatable(i12n_hash)
+      init_annotatable(init_hash)
     end
 
     # Delegates to the contained type
@@ -179,7 +179,7 @@ class PObjectType < PMetaType
     # Returns the member as a hash suitable as an argument for constructor. Name is excluded
     # @return [Hash{String=>Object}] the initialization hash
     # @api private
-    def i12n_hash
+    def _pcore_init_hash
       hash = { KEY_TYPE => @type }
       hash[KEY_FINAL] = true if @final
       hash[KEY_OVERRIDE] = true if @override
@@ -246,26 +246,26 @@ class PObjectType < PMetaType
 
     # @param name [String] The name of the attribute
     # @param container [PObjectType] The containing object type
-    # @param i12n_hash [Hash{String=>Object}] Hash containing attribute options
-    # @option i12n_hash [PAnyType] 'type' The attribute type (required)
-    # @option i12n_hash [Object] 'value' The default value, must be an instanceof the given `type` (optional)
-    # @option i12n_hash [String] 'kind' The attribute kind, matching #TYPE_ATTRIBUTE_KIND
+    # @param init_hash [Hash{String=>Object}] Hash containing attribute options
+    # @option init_hash [PAnyType] 'type' The attribute type (required)
+    # @option init_hash [Object] 'value' The default value, must be an instanceof the given `type` (optional)
+    # @option init_hash [String] 'kind' The attribute kind, matching #TYPE_ATTRIBUTE_KIND
     # @api public
-    def initialize(name, container, i12n_hash)
-      super(name, container, TypeAsserter.assert_instance_of(nil, TYPE_ATTRIBUTE, i12n_hash) { "initializer for #{self.class.label(container, name)}" })
-      @kind = i12n_hash[KEY_KIND]
+    def initialize(name, container, init_hash)
+      super(name, container, TypeAsserter.assert_instance_of(nil, TYPE_ATTRIBUTE, init_hash) { "initializer for #{self.class.label(container, name)}" })
+      @kind = init_hash[KEY_KIND]
       if @kind == ATTRIBUTE_KIND_CONSTANT # final is implied
-        if i12n_hash.include?(KEY_FINAL) && !@final
+        if init_hash.include?(KEY_FINAL) && !@final
           raise Puppet::ParseError, "#{label} of kind 'constant' cannot be combined with final => false"
         end
         @final = true
       end
 
-      if i12n_hash.include?(KEY_VALUE)
+      if init_hash.include?(KEY_VALUE)
         if @kind == ATTRIBUTE_KIND_DERIVED || @kind == ATTRIBUTE_KIND_GIVEN_OR_DERIVED
           raise Puppet::ParseError, "#{label} of kind '#{@kind}' cannot be combined with an attribute value"
         end
-        v = i12n_hash[KEY_VALUE]
+        v = init_hash[KEY_VALUE]
         @value = v == :default ? v : TypeAsserter.assert_instance_of(nil, type, v) {"#{label} #{KEY_VALUE}" }
       else
         raise Puppet::ParseError, "#{label} of kind 'constant' requires a value" if @kind == ATTRIBUTE_KIND_CONSTANT
@@ -285,7 +285,7 @@ class PObjectType < PMetaType
     # Returns the member as a hash suitable as an argument for constructor. Name is excluded
     # @return [Hash{String=>Object}] the hash
     # @api private
-    def i12n_hash
+    def _pcore_init_hash
       hash = super
       unless @kind.nil?
         hash[KEY_KIND] = @kind
@@ -329,10 +329,10 @@ class PObjectType < PMetaType
 
     # @param name [String] The name of the attribute
     # @param container [PObjectType] The containing object type
-    # @param i12n_hash [Hash{String=>Object}] Hash containing function options
+    # @param init_hash [Hash{String=>Object}] Hash containing function options
     # @api public
-    def initialize(name, container, i12n_hash)
-      super(name, container, TypeAsserter.assert_instance_of(["initializer for function '%s'", name], TYPE_FUNCTION, i12n_hash))
+    def initialize(name, container, init_hash)
+      super(name, container, TypeAsserter.assert_instance_of(["initializer for function '%s'", name], TYPE_FUNCTION, init_hash))
     end
 
     def callable_type
@@ -356,28 +356,30 @@ class PObjectType < PMetaType
   # Initialize an Object Type instance. The initialization will use either a name and an initialization
   # hash expression, or a fully resolved initialization hash.
   #
-  # @overload initialize(name, i12n_hash_expression)
+  # @overload initialize(name, init_hash_expression)
   #   Used when the Object type is loaded using a type alias expression. When that happens, it is important that
   #   the actual resolution of the expression is deferred until all definitions have been made known to the current
   #   loader. The object will then be resolved when it is loaded by the {TypeParser}. "resolved" here, means that
-  #   the hash expression is fully resolved, and then passed to the {#initialize_from_hash} method.
+  #   the hash expression is fully resolved, and then passed to the {#_pcore_init_from_hash} method.
   #   @param name [String] The name of the object
-  #   @param i12n_hash_expression [Model::LiteralHash] The hash describing the Object features
+  #   @param init_hash_expression [Model::LiteralHash] The hash describing the Object features
   #
-  # @overload initialize(i12n_hash)
-  #   Used when the object is created by the {TypeFactory}. The i12n_hash must be fully resolved.
-  #   @param i12n_hash [Hash{String=>Object}] The hash describing the Object features
+  # @overload initialize(init_hash)
+  #   Used when the object is created by the {TypeFactory}. The init_hash must be fully resolved.
+  #   @param _pcore_init_hash [Hash{String=>Object}] The hash describing the Object features
   #
   # @api private
-  def initialize(i12n_hash, i12n_hash_expression = nil)
+  def initialize(_pcore_init_hash, init_hash_expression = nil)
     @attributes = EMPTY_HASH
     @functions = EMPTY_HASH
 
-    if i12n_hash.is_a?(Hash)
-      initialize_from_hash(i12n_hash)
+    if _pcore_init_hash.is_a?(Hash)
+      _pcore_init_from_hash(_pcore_init_hash)
     else
-      @name = TypeAsserter.assert_instance_of('object name', TYPE_OBJECT_NAME, i12n_hash)
-      @i12n_hash_expression = i12n_hash_expression
+      @attributes = EMPTY_HASH
+      @functions = EMPTY_HASH
+      @name = TypeAsserter.assert_instance_of('object name', TYPE_OBJECT_NAME, _pcore_init_hash)
+      @init_hash_expression = init_hash_expression
     end
   end
 
@@ -565,14 +567,14 @@ class PObjectType < PMetaType
   end
 
   # @api private
-  def initialize_from_hash(i12n_hash)
-    TypeAsserter.assert_instance_of('object initializer', TYPE_OBJECT_I12N, i12n_hash)
+  def _pcore_init_from_hash(init_hash)
+    TypeAsserter.assert_instance_of('object initializer', TYPE_OBJECT_I12N, init_hash)
 
     # Name given to the loader have higher precedence than a name declared in the type
-    @name ||= i12n_hash[KEY_NAME]
+    @name ||= init_hash[KEY_NAME]
     @name.freeze unless @name.nil?
 
-    @parent = i12n_hash[KEY_PARENT]
+    @parent = init_hash[KEY_PARENT]
 
     parent_members = EMPTY_HASH
     parent_object_type = nil
@@ -585,7 +587,7 @@ class PObjectType < PMetaType
       end
     end
 
-    attr_specs = i12n_hash[KEY_ATTRIBUTES]
+    attr_specs = init_hash[KEY_ATTRIBUTES]
     unless attr_specs.nil? || attr_specs.empty?
       @attributes = Hash[attr_specs.map do |key, attr_spec|
         unless attr_spec.is_a?(Hash)
@@ -598,7 +600,7 @@ class PObjectType < PMetaType
       end].freeze
     end
 
-    func_specs = i12n_hash[KEY_FUNCTIONS]
+    func_specs = init_hash[KEY_FUNCTIONS]
     unless func_specs.nil? || func_specs.empty?
       @functions = Hash[func_specs.map do |key, func_spec|
         func_spec = { KEY_TYPE => TypeAsserter.assert_instance_of(nil, TYPE_FUNCTION_TYPE, func_spec) { "function #{label}[#{key}]" } } unless func_spec.is_a?(Hash)
@@ -609,10 +611,10 @@ class PObjectType < PMetaType
       end].freeze
     end
 
-    @equality_include_type = i12n_hash[KEY_EQUALITY_INCLUDE_TYPE]
+    @equality_include_type = init_hash[KEY_EQUALITY_INCLUDE_TYPE]
     @equality_include_type = true if @equality_include_type.nil?
 
-    equality = i12n_hash[KEY_EQUALITY]
+    equality = init_hash[KEY_EQUALITY]
     equality = [equality] if equality.is_a?(String)
     if equality.is_a?(Array)
       unless equality.empty?
@@ -645,8 +647,8 @@ class PObjectType < PMetaType
     end
     @equality = equality
 
-    @checks = i12n_hash[KEY_CHECKS]
-    init_annotatable(i12n_hash)
+    @checks = init_hash[KEY_CHECKS]
+    init_annotatable(init_hash)
   end
 
   def [](name)
@@ -705,12 +707,12 @@ class PObjectType < PMetaType
     TypeFactory.struct(struct_elems)
   end
 
-  # The i12n_hash is primarily intended for serialization and string representation purposes. It creates a hash
-  # suitable for passing to {PObjectType#new(i12n_hash)}
+  # The init_hash is primarily intended for serialization and string representation purposes. It creates a hash
+  # suitable for passing to {PObjectType#new(init_hash)}
   #
   # @return [Hash{String=>Object}] the features hash
   # @api public
-  def i12n_hash(include_name = true)
+  def _pcore_init_hash(include_name = true)
     result = super()
     result[KEY_NAME] = @name if include_name && !@name.nil?
     result[KEY_PARENT] = @parent unless @parent.nil?
@@ -870,7 +872,7 @@ class PObjectType < PMetaType
 
   def compressed_members_hash(features)
     Hash[features.values.map do |feature|
-      fh = feature.i12n_hash
+      fh = feature._pcore_init_hash
       if fh.size == 1
         type = fh[KEY_TYPE]
         fh = type unless type.nil?

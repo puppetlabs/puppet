@@ -16,8 +16,8 @@ module Annotatable
   end
 
   # @api private
-  def init_annotatable(i12n_hash)
-    @annotations = i12n_hash[KEY_ANNOTATIONS].freeze
+  def init_annotatable(init_hash)
+    @annotations = init_hash[KEY_ANNOTATIONS].freeze
   end
 
   # @api private
@@ -26,7 +26,7 @@ module Annotatable
   end
 
   # @api private
-  def i12n_hash
+  def _pcore_init_hash
     result = {}
     result[KEY_ANNOTATIONS] = @annotations unless @annotations.nil?
     result
