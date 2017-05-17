@@ -19,8 +19,17 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
     @providerless_types = []
   end
 
+  def check_conflicts(catalog)
+    vertices.each do |vertex|
+      vertex.conflict(catalog)
+    end
+  end
+
   def populate_from(catalog)
     add_all_resources_as_vertices(catalog)
+
+    check_conflicts(catalog)
+
     build_manual_dependencies
     build_autorelation_dependencies(catalog)
 

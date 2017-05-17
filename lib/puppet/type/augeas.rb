@@ -208,4 +208,39 @@ Puppet::Type.newtype(:augeas) do
     end
   end
 
+  conflict(:file) do
+    cons = []
+    if incl = @parameters[:incl]
+      cons << incl.value
+    end
+
+    if context = @parameters[:context]
+      cons << context.value.gsub(%r{^/files}, '')
+    end
+
+    cons.flatten.uniq
+
+    files = []
+
+    catalog.resources.each do |r| 
+      next unless r.is_a?(Puppet::Type.type(:file))
+
+      if p = r.parameter(:path)
+        next unless cons.include?(p.value)
+      else
+        next unless cons.include?(r.title)
+      end
+
+      next unless r.parameter(:content) || r.parameter(:source)
+      
+      if rep = r.parameter(:replace)
+        next if rep.value == false
+      end
+
+      files << r
+    end
+
+    files
+  end
+
 end
