@@ -359,6 +359,28 @@ describe 'Puppet Type System' do
       t = tf.runtime('ruby', [/^MyPackage::(.*)$/, 'MyModule::\1'])
       expect(t.from_puppet_name('MyPackage::MyType').to_s).to eq("Runtime[ruby, 'MyModule::MyType']")
     end
+
+    it 'with parameters is assignable to the default Runtime type' do
+      code = <<-CODE
+      notice(Runtime[ruby, 'Symbol'] < Runtime)
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true'])
+    end
+
+    it 'with parameters is not assignable from the default Runtime type' do
+      code = <<-CODE
+      notice(Runtime < Runtime[ruby, 'Symbol'])
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['false'])
+    end
+
+    it 'default is assignable to itself' do
+      code = <<-CODE
+      notice(Runtime < Runtime)
+      notice(Runtime <= Runtime)
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['false', 'true'])
+    end
   end
 
   context 'Type aliases' do
