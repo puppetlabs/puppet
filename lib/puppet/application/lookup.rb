@@ -61,15 +61,8 @@ class Puppet::Application::Lookup < Puppet::Application
     end
   end
 
-  # Sets up the 'node_cache_terminus' default to use the Write Only Yaml terminus :write_only_yaml.
-  # If this is not wanted, the setting ´node_cache_terminus´ should be set to nil.
-  # @see Puppet::Node::WriteOnlyYaml
-  # @see #setup_node_cache
-  # @see puppet issue 16753
-  #
   def app_defaults
     super.merge({
-      :node_cache_terminus => :write_only_yaml,
       :facts_terminus => 'yaml'
     })
   end
@@ -336,7 +329,6 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
       # If we want to lookup the node we are currently on
       # we must returning these settings to their default values
       Puppet.settings[:facts_terminus] = 'facter'
-      Puppet.settings[:node_cache_terminus] = nil
     end
 
     node = Puppet::Node.indirection.find(node) unless node.is_a?(Puppet::Node) # to allow unit tests to pass a node instance
