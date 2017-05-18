@@ -826,15 +826,15 @@ class PObjectType < PMetaType
   # An Object type is only assignable from another Object type. The other type
   # or one of its parents must be equal to this type.
   def _assignable?(o, guard)
-    if self == o
-      true
-    else
-      if o.is_a?(PObjectType)
+    if o.is_a?(PObjectType)
+      if DEFAULT == self || self == o
+        true
+      else
         op = o.parent
         op.nil? ? false : assignable?(op, guard)
-      else
-        false
       end
+    else
+      false
     end
   end
 
