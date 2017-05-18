@@ -727,7 +727,7 @@ describe Puppet::Resource do
         one::two { '/my/file':
           ensure => 'present',
           foo    => ['one', 'two'],
-          noop   => 'true',
+          noop   => true,
         }
       HEREDOC
     end
@@ -749,7 +749,7 @@ describe Puppet::Resource do
           /my/file:
             ensure: 'present'
             foo   : ['one', 'two']
-            noop  : 'true'
+            noop  : true
       HEREDOC
     end
   end

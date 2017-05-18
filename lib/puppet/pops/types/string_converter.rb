@@ -289,6 +289,13 @@ class StringConverter
     PAnyType::DEFAULT      => Format.new('%s').freeze,    # unquoted string
   }.freeze
 
+  DEFAULT_PARAMETER_FORMAT = {
+    PCollectionType::DEFAULT => '%#p',
+    PObjectType::DEFAULT => '%#p',
+    PBinaryType::DEFAULT => '%p',
+    PStringType::DEFAULT => '%p',
+    PRuntimeType::DEFAULT => '%p'
+  }.freeze
 
   # Converts the given value to a String, under the direction of formatting rules per type.
   #
