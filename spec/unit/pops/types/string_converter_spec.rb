@@ -828,7 +828,7 @@ describe 'The string converter' do
         string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#1a', 'separator' =>"," } }
         result = [
         "{1 => [ 1,",
-        "    2,", 
+        "    2,",
         "    3]}"
         ].join("\n")
         formatted = converter.convert({ 1 => [1, 2, 3] }, string_formats)
@@ -843,7 +843,7 @@ describe 'The string converter' do
         result = [
         "{",
         "  1 => [ 1,",
-        "    2,", 
+        "    2,",
         "    3]",
         "}"
         ].join("\n")
@@ -1080,5 +1080,9 @@ describe 'The string converter' do
 
   it "allows format to be directly given (instead of as a type=> format hash)" do
     expect(converter.convert('hello', '%5.1s')).to eq('    h')
+  end
+
+  it 'an explicit format for a type will override more specific defaults' do
+    expect(converter.convert({ 'x' => 'X' }, { Puppet::Pops::Types::PCollectionType::DEFAULT => '%#p' })).to eq("{\n  'x' => 'X'\n}")
   end
 end

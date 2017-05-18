@@ -163,6 +163,11 @@ class StringConverter
       unless lower && higher
         return lower || higher
       end
+
+      # drop all formats in lower than is more generic in higher. Lower must never
+      # override higher
+      lower = lower.reject { |lk, _| higher.keys.any? { |hk| hk != lk && hk.assignable?(lk) }}
+
       merged = (lower.keys + higher.keys).uniq.map do |k|
         [k, merge(lower[k], higher[k])]
       end
