@@ -280,6 +280,7 @@ class StringConverter
   DEFAULT_ARRAY_DELIMITERS                      = ['[', ']'].freeze
 
   DEFAULT_STRING_FORMATS = {
+    PObjectType::DEFAULT   => Format.new('%p').freeze,    # call with initialization hash
     PFloatType::DEFAULT    => Format.new('%f').freeze,    # float
     PNumericType::DEFAULT  => Format.new('%d').freeze,    # decimal number
     PArrayType::DEFAULT    => DEFAULT_ARRAY_FORMAT.freeze,
@@ -542,6 +543,23 @@ class StringConverter
     result
   end
   private :validate_container_input
+
+  def string_PObjectType(val_type, val, format_map, indentation)
+    f = get_format(val_type, format_map)
+    case f.format
+    when :p
+      fmt = TypeFormatter.singleton
+      indentation = indentation.indenting(f.alt? || indentation.is_indenting?)
+      fmt = fmt.indented(indentation.level, 2) if indentation.is_indenting?
+      fmt.string(val)
+    when :s
+      val.to_s
+    when :q
+      val.inspect
+    else
+      raise FormatError.new('Object', f.format, 'spq')
+    end
+  end
 
   def string_PRuntimeType(val_type, val, format_map, _)
     f = get_format(val_type, format_map)
@@ -929,7 +947,7 @@ class StringConverter
 
   def is_container?(t)
     case t
-    when PArrayType, PHashType, PStructType, PTupleType
+    when PArrayType, PHashType, PStructType, PTupleType, PObjectType
       true
     else
       false

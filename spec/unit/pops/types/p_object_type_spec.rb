@@ -723,7 +723,7 @@ describe 'The Object Type' do
       type Spec::MySecondObject = Object[{parent => Spec::MyObject, attributes => { b => String }}]
       notice(Spec::MySecondObject(42, 'Meaning of life'))
       CODE
-      expect(eval_and_collect_notices(code)).to eql(["Spec::MySecondObject({\n  'a' => 42,\n  'b' => 'Meaning of life'\n})"])
+      expect(eval_and_collect_notices(code)).to eql(["Spec::MySecondObject({'a' => 42, 'b' => 'Meaning of life'})"])
     end
   end
 
