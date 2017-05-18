@@ -905,10 +905,14 @@ describe 'The string converter' do
       it "the '%q' string representation for #{value} is #inspect" do
         expect(converter.convert(value, '%q')).to eq(value.inspect)
       end
+
+      it "the '%p' string representation for #{value} is quoted #to_s" do
+        expect(converter.convert(value, '%p')).to eq("'#{value}'")
+      end
     end
 
     it 'an unknown format raises an error' do
-      expect { converter.convert(:sym, '%b') }.to raise_error("Illegal format 'b' specified for value of Runtime type - expected one of the characters 'sq'")
+      expect { converter.convert(:sym, '%b') }.to raise_error("Illegal format 'b' specified for value of Runtime type - expected one of the characters 'spq'")
     end
   end
 

@@ -548,10 +548,12 @@ class StringConverter
     case f.format
     when :s
       val.to_s
+    when :p
+      puppet_quote(val.to_s)
     when :q
       val.inspect
     else
-      raise FormatError.new('Runtime', f.format, 'sq')
+      raise FormatError.new('Runtime', f.format, 'spq')
     end
   end
 
