@@ -31,6 +31,13 @@ Puppet::Type.newtype(:yumrepo) do
     val.to_s == 'absent' ? :absent : val.to_s.capitalize
   end
 
+  # Common munge logic for YUM_BOOLEAN values. Munges for two requirements:
+  # 1) In order for the default Puppet::Parameter::Value validation routines to
+  # work correctly, the @should value cannot be represented as Boolean false.
+  # 2) In order for parameter removal to work correctly, when absent is passed
+  # as a string it needs to be munged back to a symbol.
+  munge_yum_bool = Proc.new { |val| val.to_s == 'absent' ? :absent : val.to_s }
+
   VALID_SCHEMES = %w[file http https ftp]
 
   newparam(:name, :namevar => true) do
