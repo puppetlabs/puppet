@@ -98,11 +98,11 @@ module Puppet::Util::Execution
   # @raise [exception] under same conditions as {execute}, but raises the given `exception` with the output as argument
   # @return (see execute)
   # @api public
+  # @deprecated
   def self.execfail(command, exception)
-    output = execute(command)
-    return output
-  rescue Puppet::ExecutionFailure
-    raise exception, output, exception.backtrace
+    execute(command)
+  rescue Puppet::ExecutionFailure => detail
+    raise exception, detail.message, detail.backtrace
   end
 
   # Default empty options for {execute}

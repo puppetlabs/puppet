@@ -132,8 +132,10 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     end
 
     cmd = [command(:rpm), "-q", "--qf", "'#{self.class::NEVRA_FORMAT}'", "-p", source]
-    h = self.class.nevra_to_hash(execfail(cmd, Puppet::Error))
+    h = self.class.nevra_to_hash(execute(cmd))
     h[:ensure]
+  rescue Puppet::ExecutionFailure => e
+    raise Puppet::Error, e.message, e.backtrace
   end
 
   def install
