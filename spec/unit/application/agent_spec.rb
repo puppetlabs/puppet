@@ -530,6 +530,13 @@ describe Puppet::Application::Agent do
         expect { execute_agent }.to exit_with 0
       end
 
+      it "should run the agent with the supplied job_id" do
+        @puppetd.options[:job_id] = 'special id'
+        @agent.expects(:run).with(:job_id => 'special id').returns(:report)
+
+        expect { execute_agent }.to exit_with 0
+      end
+
       it "should stop the daemon" do
         @daemon.expects(:stop).with(:exit => false)
 
