@@ -236,7 +236,7 @@ class Puppet::Application::FaceBase < Puppet::Application
     # --daniel 2011-04-27
     if (arity = @action.positional_arg_count) > 0
       unless (count = arguments.length) == arity then
-        raise ArgumentError, n_("puppet %{face} %{action} takes %{arg_count} argument, but you gave %{given_count}", "puppet %{face} %{action} takes %{arg_count} arguments, but you gave %{given_count}", arity - 1) % { face: @face.name, action: @action.name, arg_count: arity-1, s: s, given_count: count-1 }
+        raise ArgumentError, n_("puppet %{face} %{action} takes %{arg_count} argument, but you gave %{given_count}", "puppet %{face} %{action} takes %{arg_count} arguments, but you gave %{given_count}", arity - 1) % { face: @face.name, action: @action.name, arg_count: arity-1, given_count: count-1 }
       end
     end
 
