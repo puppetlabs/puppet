@@ -174,8 +174,6 @@ describe "http compression" do
       end
 
       it "should close the underlying adapter if the yielded block raises" do
-        pending("We need to close the stream even if finish raises")
-
         stubs_response_with(response, 'identity', data)
         adapter = stub_everything 'adapter'
         Puppet::Network::HTTP::Compression::IdentityAdapter.expects(:new).returns(adapter)
@@ -226,8 +224,6 @@ describe "http compression" do
       end
 
       it "should close the stream even if finish raises" do
-        pending("We need to ensure close is called")
-
         inflater = stub 'inflater'
         inflater.expects(:finish).raises(Zlib::BufError)
         inflater.expects(:close)

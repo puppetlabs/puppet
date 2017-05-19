@@ -43,9 +43,11 @@ module Puppet::Network::HTTP::Compression
         raise Net::HTTPError.new(_("Unknown content encoding - %{encoding}") % { encoding: response['content-encoding'] }, response)
       end
 
-      yield uncompressor
-
-      uncompressor.close
+      begin
+        yield uncompressor
+      ensure
+        uncompressor.close
+      end
     end
 
     def add_accept_encoding(headers={})
@@ -87,6 +89,7 @@ module Puppet::Network::HTTP::Compression
 
       def close
         @uncompressor.finish
+      ensure
         @uncompressor.close
       end
     end
