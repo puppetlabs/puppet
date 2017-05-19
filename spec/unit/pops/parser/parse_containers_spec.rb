@@ -75,7 +75,7 @@ describe "egrammar parsing containers" do
         # a very confusing effect when resolving relative names, getting the global hardwired "Class"
         # instead of some foo::class etc.
         # This was allowed in 3.x.
-        expect { parse("class class {}") }.to raise_error(/not a valid classname/)
+        expect { parse("class class {}") }.to raise_error(/'class' keyword not allowed at this location/)
       end
 
       it "class default {} # a class named 'default'" do
@@ -83,6 +83,12 @@ describe "egrammar parsing containers" do
         # (It will work with relative names i.e. foo::default though). The whole idea with keywords as
         # names is flawed to begin with - it generally just a very bad idea.
         expect { parse("class default {}") }.to raise_error(Puppet::ParseError)
+      end
+
+      it "class 'foo' {} # a string as class name" do
+        # A common error is to put quotes around the class name, the parser should provide the error message at the right location
+        # See PUP-7471
+        expect { parse("class 'foo' {}") }.to raise_error(/A quoted string is not valid as a name here at line 1:7/)
       end
 
 
@@ -102,11 +108,11 @@ describe "egrammar parsing containers" do
         # full class name for nested classes - only, it gets this wrong when a class is named "class" - or at least
         # I think it is wrong.)
         #
-        expect { parse("class class inherits default {}") }.to raise_error(/not a valid classname/)
+        expect { parse("class class inherits default {}") }.to raise_error(/'class' keyword not allowed at this location/)
       end
 
       it "class foo inherits class" do
-        expect { parse("class foo inherits class {}") }.to raise_error(/not a valid classname/)
+        expect { parse("class foo inherits class {}") }.to raise_error(/'class' keyword not allowed at this location/)
       end
     end
 
@@ -172,7 +178,7 @@ describe "egrammar parsing containers" do
       it "define class {} # a define named 'class'" do
         # This is weird because Class already exists, and instantiating this define will probably not
         # work
-        expect { parse("define class {}") }.to raise_error(/not a valid classname/)
+        expect { parse("define class {}") }.to raise_error(/'class' keyword not allowed at this location/)
       end
 
       it "define default {} # a define named 'default'" do

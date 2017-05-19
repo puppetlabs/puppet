@@ -655,7 +655,8 @@ classname
   : NAME
   | WORD
   | CLASSREF
-  | CLASS { error val[0], "'class' is not a valid classname" }
+  | CLASS { error val[0], "'class' keyword not allowed at this location" }
+  | STRING { error val[0], "A quoted string is not valid as a name here" }
 
 # Produces Array<Model::Parameter>
 parameter_list
