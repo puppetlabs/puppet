@@ -1,6 +1,6 @@
 require 'pathspec/spec'
 
-class RegexSpec < Spec
+class RegexSpec < BSpec
   def initialize(regex)
     @regex = Regexp.compile regex
 
