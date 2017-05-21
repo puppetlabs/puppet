@@ -59,9 +59,10 @@ module SemanticPuppet
     #   * ex, `">=1.0.0 <2.3.0 || >=2.5.0 <3.0.0"`
     #
     # @param range_string [String] the version range string to parse
+    # @param strict_semver [Boolean] `false` if pre-releases should be included even when not explicitly appointed
     # @return [VersionRange] a new {VersionRange} instance
     # @api public
-    def self.parse(range_string)
+    def self.parse(range_string, strict_semver = true)
       # Remove extra whitespace after operators. Such whitespace should not cause a split
       range_set = range_string.gsub(/([><=~^])(?:\s+|\s*v)/, '\1')
       ranges = range_set.split(LOGICAL_OR)
@@ -99,7 +100,7 @@ module SemanticPuppet
           end
           simples.size == 1 ? simples[0] : MinMaxRange.create(*simples)
         end
-      end.uniq, range_string).freeze
+      end.uniq, range_string, strict_semver).freeze
     end
 
     def self.parse_partial(expr)
@@ -219,10 +220,13 @@ module SemanticPuppet
     #   Creates a new instance based on parsed content. For internal use only
     #   @param ranges [Array<AbstractRange>] the ranges to include in this range
     #   @param string [String] the original string representation that was parsed to produce the ranges
+    #   @param include_prerelease [Boolean] `true` if prereleases should be included even when not explicitly appointed
     #
     # @api private
-    def initialize(ranges, string, exclude_end = false)
-      unless ranges.is_a?(Array)
+    def initialize(ranges, string, exclude_end = nil)
+      if ranges.is_a?(Array)
+        @strict_semver = exclude_end.nil? ? true : exclude_end
+      else
         lb = GtEqRange.new(ranges)
         if exclude_end
           ub = LtRange.new(string)
@@ -232,6 +236,7 @@ module SemanticPuppet
           string = "#{string} - #{ranges}"
         end
         ranges = [MinMaxRange.create(lb, ub)]
+        @strict_semver = true
       end
       ranges.compact!
 
@@ -319,7 +324,11 @@ module SemanticPuppet
     # @return [Boolean] `true` if the given version is included in the range
     # @api public
     def include?(version)
-      @ranges.any? { |range| range.include?(version) && (version.stable? || range.test_prerelease?(version)) }
+      if @strict_semver
+        @ranges.any? { |range| range.include?(version) && (version.stable? || range.test_prerelease?(version)) }
+      else
+        @ranges.any? { |range| range.include?(version) || !version.stable? && range.stable? &&  range.include?(version.to_stable) }
+      end
     end
     alias member? include?
     alias cover? include?
@@ -504,6 +513,10 @@ module SemanticPuppet
         false
       end
 
+      def stable?
+        false
+      end
+
       private
 
       def from_to(a, b)
@@ -524,6 +537,10 @@ module SemanticPuppet
       end
 
       def test_prerelease?(_)
+        true
+      end
+
+      def stable?
         true
       end
 
@@ -585,6 +602,10 @@ module SemanticPuppet
         @min.test_prerelease?(version) || @max.test_prerelease?(version)
       end
 
+      def stable?
+        @min.stable? && @max.stable?
+      end
+
       def to_s
         "#{@min} #{@max}"
       end
@@ -610,6 +631,10 @@ module SemanticPuppet
       # Checks if this matcher accepts a prerelease with the same major, minor, patch triple as the given version
       def test_prerelease?(version)
         !@version.stable? && @version.major == version.major && @version.minor == version.minor && @version.patch == version.patch
+      end
+
+      def stable?
+        @version.stable?
       end
     end
 
