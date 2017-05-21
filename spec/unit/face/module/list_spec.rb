@@ -218,6 +218,66 @@ describe "puppet module list" do
       console_output(:tree => true)
     end
 
+    it 'should not warn about dependent module with pre-release version by default' do
+      PuppetSpec::Modules.create('depender', @modpath1, :metadata => {
+        :version => '1.0.0',
+        :dependencies => [{
+          "version_requirement" => ">= 1.0.0",
+          "name"                => "puppetlabs/dependable"
+        }]
+      })
+      PuppetSpec::Modules.create('dependable', @modpath1, :metadata => { :version => '1.0.0-rc1' })
+
+      expected = <<-OUTPUT.unindent
+      #{@modpath1}
+      ├── puppetlabs-dependable (\e[0;36mv1.0.0-rc1\e[0m)
+      └── puppetlabs-depender (\e[0;36mv1.0.0\e[0m)
+      #{@modpath2} (no modules installed)
+      OUTPUT
+
+      expect(console_output).to eq(expected)
+    end
+
+    it 'should warn about dependent module with pre-release version by if pre-release is less than given pre-release' do
+      PuppetSpec::Modules.create('depender', @modpath1, :metadata => {
+        :version => '1.0.0',
+        :dependencies => [{
+          "version_requirement" => ">= 1.0.0-rc1",
+          "name"                => "puppetlabs/dependable"
+        }]
+      })
+      PuppetSpec::Modules.create('dependable', @modpath1, :metadata => { :version => '1.0.0-rc0' })
+
+      expected = <<-OUTPUT.unindent
+      #{@modpath1}
+      ├── puppetlabs-dependable (\e[0;36mv1.0.0-rc0\e[0m)  \e[0;31minvalid\e[0m
+      └── puppetlabs-depender (\e[0;36mv1.0.0\e[0m)
+      #{@modpath2} (no modules installed)
+      OUTPUT
+
+      expect(console_output).to eq(expected)
+    end
+
+    it 'should warn about dependent module with pre-release version when using strict SemVer' do
+      PuppetSpec::Modules.create('depender', @modpath1, :metadata => {
+        :version => '1.0.0',
+        :dependencies => [{
+          "version_requirement" => ">= 1.0.0",
+          "name"                => "puppetlabs/dependable"
+        }]
+      })
+      PuppetSpec::Modules.create('dependable', @modpath1, :metadata => { :version => '1.0.0-rc1' })
+
+      expected = <<-OUTPUT.unindent
+      #{@modpath1}
+      ├── puppetlabs-dependable (\e[0;36mv1.0.0-rc1\e[0m)  \e[0;31minvalid\e[0m
+      └── puppetlabs-depender (\e[0;36mv1.0.0\e[0m)
+      #{@modpath2} (no modules installed)
+      OUTPUT
+
+      expect(console_output(:strict_semver => true)).to eq(expected)
+    end
+
     it "should warn about out of range dependencies" do
       PuppetSpec::Modules.create('dependable', @modpath1, :metadata => { :version => '0.0.1'})
       PuppetSpec::Modules.create('depender', @modpath1, :metadata => {
