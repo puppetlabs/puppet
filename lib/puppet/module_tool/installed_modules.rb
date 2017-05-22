@@ -54,7 +54,7 @@ module Puppet::ModuleTool
     class ModuleRelease < SemanticPuppet::Dependency::ModuleRelease
       attr_reader :mod, :metadata
 
-      def initialize(source, mod)
+      def initialize(source, mod, strict_semver = true)
         @mod = mod
         @metadata = mod.metadata
         name = mod.forge_name.tr('/', '-')
@@ -70,7 +70,7 @@ module Puppet::ModuleTool
 
         if mod.dependencies
           mod.dependencies.each do |dependency|
-            results = Puppet::ModuleTool.parse_module_dependency(release, dependency)
+            results = Puppet::ModuleTool.parse_module_dependency(release, dependency, strict_semver)
             dep_name, parsed_range, range = results
 
             add_constraint('initialize', dep_name, range.to_s) do |node|

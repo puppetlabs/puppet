@@ -117,7 +117,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
   class ModuleRelease < SemanticPuppet::Dependency::ModuleRelease
     attr_reader :install_dir, :metadata
 
-    def initialize(source, data)
+    def initialize(source, data, strict_semver = true)
       @data = data
       @metadata = meta = data['metadata']
 
@@ -129,7 +129,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
         dependencies = meta['dependencies'].collect do |dep|
           begin
             Puppet::ModuleTool::Metadata.new.add_dependency(dep['name'], dep['version_requirement'], dep['repository'])
-            Puppet::ModuleTool.parse_module_dependency(release, dep)[0..1]
+            Puppet::ModuleTool.parse_module_dependency(release, dep, strict_semver)[0..1]
           rescue ArgumentError => e
             raise ArgumentError, "Malformed dependency: #{dep['name']}. Exception was: #{e}"
           end

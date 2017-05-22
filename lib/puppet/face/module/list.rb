@@ -17,6 +17,10 @@ Puppet::Face.define(:module, '1.0.0') do
       summary _("Whether to show dependencies as a tree view")
     end
 
+    option '--strict-semver' do
+      summary _('Whether version ranges should exclude pre-release versions')
+    end
+
     examples <<-'EOT'
       List installed modules:
 
@@ -73,6 +77,7 @@ Puppet::Face.define(:module, '1.0.0') do
 
       output = ''
 
+      environment.modules_strict_semver = !!options[:strict_semver]
       warn_unmet_dependencies(environment)
 
       environment.modulepath.each do |path|

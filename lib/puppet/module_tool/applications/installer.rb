@@ -25,6 +25,7 @@ module Puppet::ModuleTool
         @ignore_dependencies = forced? || options[:ignore_dependencies]
         @name                = name
         @install_dir         = install_dir
+        @strict_semver       = !!options[:strict_semver]
 
         Puppet::Forge::Cache.clean
 
@@ -59,7 +60,7 @@ module Puppet::ModuleTool
         begin
           if installed_module = installed_modules[name]
             unless forced?
-              if SemanticPuppet::VersionRange.parse(version).include? installed_module.version
+              if SemanticPuppet::VersionRange.parse(version, @strict_semver).include? installed_module.version
                 results[:result] = :noop
                 results[:version] = installed_module.version
                 return results
@@ -103,7 +104,7 @@ module Puppet::ModuleTool
               # locking it to upgrades within the same major version.
               installed_range = ">=#{version} #{version.major}.x"
               graph.add_constraint('installed', mod, installed_range) do |node|
-                SemanticPuppet::VersionRange.parse(installed_range).include? node.version
+                SemanticPuppet::VersionRange.parse(installed_range, @strict_semver).include? node.version
               end
 
               release.mod.dependencies.each do |dep|
@@ -111,7 +112,7 @@ module Puppet::ModuleTool
 
                 range = dep['version_requirement']
                 graph.add_constraint("#{mod} constraint", dep_name, range) do |node|
-                  SemanticPuppet::VersionRange.parse(range).include? node.version
+                  SemanticPuppet::VersionRange.parse(range, @strict_semver).include? node.version
                 end
               end
             end
@@ -190,7 +191,7 @@ module Puppet::ModuleTool
 
       def local_tarball_source
         @tarball_source ||= begin
-          Puppet::ModuleTool::LocalTarball.new(@name)
+          Puppet::ModuleTool::LocalTarball.new(@name, @strict_semver)
         rescue Puppet::Module::Error => e
           raise InvalidModuleError.new(@name, :action => @action, :error  => e)
         end
@@ -205,7 +206,7 @@ module Puppet::ModuleTool
       end
 
       def build_single_module_graph(name, version)
-        range = SemanticPuppet::VersionRange.parse(version)
+        range = SemanticPuppet::VersionRange.parse(version, @strict_semver)
         graph = SemanticPuppet::Dependency::Graph.new(name => range)
         releases = SemanticPuppet::Dependency.fetch_releases(name)
         releases.each { |release| release.dependencies.clear }

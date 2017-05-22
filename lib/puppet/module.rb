@@ -58,9 +58,10 @@ class Puppet::Module
   attr_accessor :dependencies, :forge_name
   attr_accessor :source, :author, :version, :license, :summary, :description, :project_page
 
-  def initialize(name, path, environment)
+  def initialize(name, path, environment, strict_semver = true)
     @name = name
     @path = path
+    @strict_semver = strict_semver
     @environment = environment
 
     assert_validity
@@ -325,7 +326,7 @@ class Puppet::Module
 
       if version_string
         begin
-          required_version_semver_range = SemanticPuppet::VersionRange.parse(version_string)
+          required_version_semver_range = SemanticPuppet::VersionRange.parse(version_string, @strict_semver)
           actual_version_semver = SemanticPuppet::Version.parse(dep_mod.version)
         rescue ArgumentError
           error_details[:reason] = :non_semantic_version
@@ -349,6 +350,10 @@ class Puppet::Module
     self.version == other.version &&
     self.path == other.path &&
     self.environment == other.environment
+  end
+
+  def strict_semver?
+    @strict_semver
   end
 
   private
