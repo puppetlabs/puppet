@@ -210,13 +210,6 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   #   The report object to log this transaction to. This is optional,
   #   and the resulting transaction will create a report if not
   #   supplied.
-  # @option options [Array[String]] :tags
-  #   Tags used to filter the transaction. If supplied then only
-  #   resources tagged with any of these tags will be evaluated.
-  # @option options [Boolean] :ignoreschedules
-  #   Ignore schedules when evaluating resources
-  # @option options [Boolean] :for_network_device
-  #   Whether this catalog is for a network device
   #
   # @return [Puppet::Transaction] the transaction created for this
   #   application
