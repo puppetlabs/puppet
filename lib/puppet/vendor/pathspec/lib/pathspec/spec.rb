@@ -1,4 +1,4 @@
-class BSpec
+class Spec
   attr_reader :regex
 
   def initialize(*_)
