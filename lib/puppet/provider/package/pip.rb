@@ -48,7 +48,11 @@ Puppet::Type.type(:package).provide :pip,
   end
 
   def self.cmd
-    ["pip", "pip-python"]
+    if Puppet.features.microsoft_windows?
+      ["pip.exe"]
+    else
+      ["pip", "pip-python"]
+    end
   end
 
   def self.pip_cmd
