@@ -220,7 +220,7 @@ module SemanticPuppet
     #   Creates a new instance based on parsed content. For internal use only
     #   @param ranges [Array<AbstractRange>] the ranges to include in this range
     #   @param string [String] the original string representation that was parsed to produce the ranges
-    #   @param include_prerelease [Boolean] `true` if prereleases should be included even when not explicitly appointed
+    #   @param strict_semver [Boolean] `false` if pre-releases should be included even when not explicitly appointed
     #
     # @api private
     def initialize(ranges, string, exclude_end = nil)
