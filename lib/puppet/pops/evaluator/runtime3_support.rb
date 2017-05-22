@@ -44,6 +44,30 @@ module Runtime3Support
     diagnostic_producer.accept(issue, semantic, options, except)
   end
 
+  # Optionally (based on severity) Fails the evaluation with a given issue
+  # If the given issue is configured to be of severity < :error it is only reported, and the function returns.
+  # The location the issue is reported against is found is based on the top file/line in the puppet call stack
+  #
+  # @param issue [Issue] the issue to report
+  # @param options [Hash] hash of optional named data elements for the given issue
+  # @return [!] this method may not return, nil if it does
+  # @raise [Puppet::ParseError] an evaluation error initialized from the arguments
+  #
+  def runtime_issue(issue, options={})
+    # Get position from puppet runtime stack
+    stacktrace = Puppet::Pops::PuppetStack.stacktrace()
+    if stacktrace.size > 0
+      file, line = stacktrace[0]
+    else
+      file = nil
+      line = nil
+    end
+    # Use a SemanticError as the sourcepos
+    semantic = Puppet::Pops::SemanticError.new(issue, nil, options.merge({:file => file, :line => line}))
+    optionally_fail(issue,  semantic)
+    nil
+  end
+
   # Binds the given variable name to the given value in the given scope.
   # The reference object `o` is intended to be used for origin information - the 3x scope implementation
   # only makes use of location when there is an error. This is now handled by other mechanisms; first a check
@@ -498,6 +522,7 @@ module Runtime3Support
       # Store config issues, ignore or warning
       p[Issues::RT_NO_STORECONFIGS_EXPORT]    = Puppet[:storeconfigs] ? :ignore : :warning
       p[Issues::RT_NO_STORECONFIGS]           = Puppet[:storeconfigs] ? :ignore : :warning
+      p[Issues::CLASS_NOT_VIRTUALIZABLE]     = Puppet[:strict] == :off ? :warning : Puppet[:strict]
     end
   end
 
