@@ -506,6 +506,10 @@ module Issues
     "The value '#{value}' cannot be converted to Numeric."
   end
 
+  NUMERIC_COERCION = issue :NUMERIC_COERCION, :before, :after do
+    "The string '#{before}' was automatically coerced to the numerical value #{after}"
+  end
+
   UNKNOWN_FUNCTION = issue :UNKNOWN_FUNCTION, :name do
     "Unknown function: '#{name}'."
   end

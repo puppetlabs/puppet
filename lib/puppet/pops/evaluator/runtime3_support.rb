@@ -260,9 +260,14 @@ module Runtime3Support
   # @return [Numeric] value `v` converted to Numeric.
   #
   def coerce_numeric(v, o, scope)
+    if v.is_a?(Numeric)
+      return v
+    end
     unless n = Utils.to_n(v)
       fail(Issues::NOT_NUMERIC, o, {:value => v})
     end
+    # this point is reached if there was a conversion
+    optionally_fail(Issues::NUMERIC_COERCION, o, {:before => v, :after => n})
     n
   end
 
@@ -522,7 +527,8 @@ module Runtime3Support
       # Store config issues, ignore or warning
       p[Issues::RT_NO_STORECONFIGS_EXPORT]    = Puppet[:storeconfigs] ? :ignore : :warning
       p[Issues::RT_NO_STORECONFIGS]           = Puppet[:storeconfigs] ? :ignore : :warning
-      p[Issues::CLASS_NOT_VIRTUALIZABLE]     = Puppet[:strict] == :off ? :warning : Puppet[:strict]
+      p[Issues::CLASS_NOT_VIRTUALIZABLE]      = Puppet[:strict] == :off ? :warning : Puppet[:strict]
+      p[Issues::NUMERIC_COERCION]             = Puppet[:strict] == :off ? :ignore : Puppet[:strict]
     end
   end
 
