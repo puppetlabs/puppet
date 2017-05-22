@@ -2,6 +2,7 @@
 # fact via environment.bat on Windows systems. Test to ensure it is both
 # present and accurate.
 test_name 'PA-466: Ensure env_windows_installdir fact is present and correct' do
+  tag
 
   confine :to, :platform => 'windows'
 

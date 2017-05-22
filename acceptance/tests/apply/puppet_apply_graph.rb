@@ -1,4 +1,5 @@
 test_name 'puppet apply should generate a graph'
+tag
 
 agents.each do |agent|
   step "Create var temp directory"

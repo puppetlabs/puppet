@@ -1,4 +1,5 @@
 test_name "hash reassignment should fail"
+tag
 manifest = %q{
 $my_hash = {'one' => '1', 'two' => '2' }
 $my_hash['one']='1.5'

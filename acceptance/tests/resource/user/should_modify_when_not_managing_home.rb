@@ -1,4 +1,5 @@
 test_name "should modify a user when no longer managing home (#20726)"
+tag
 confine :except, :platform => /^eos-/ # See ARISTA-37
 confine :except, :platform => /^cisco_/ # See PUP-5828
 

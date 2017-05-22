@@ -1,4 +1,5 @@
 test_name "#15560: Manage home directories"
+tag
 
 confine :to, :platform => 'windows'
 

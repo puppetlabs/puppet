@@ -1,4 +1,5 @@
 test_name "should allow password, salt, and iteration attributes in OSX"
+tag
 
 confine :to, :platform => /osx/
 

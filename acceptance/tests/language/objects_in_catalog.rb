@@ -1,4 +1,5 @@
 test_name 'C99627: can use Object types in the catalog and apply/agent' do
+  tag
   require 'puppet/acceptance/environment_utils.rb'
   extend Puppet::Acceptance::EnvironmentUtils
 

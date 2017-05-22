@@ -1,5 +1,6 @@
 require 'puppet/acceptance/environment_utils'
 test_name 'C97760: Bignum in reduce() should not cause exception' do
+  tag
   extend Puppet::Acceptance::EnvironmentUtils
 
   skip_test "This test needs to be reworked to not rely on merge, see PUP-6994"

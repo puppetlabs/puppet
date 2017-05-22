@@ -1,4 +1,5 @@
 test_name "ticket 1073: common package name in two different providers should be allowed"
+tag
 
 confine :to, {:platform => /(?:centos|el-|fedora)/}, agents
 confine :except, :platform => /centos-4|el-4/ # PUP-5227
@@ -132,4 +133,3 @@ apply_manifest_on(agents, remove_manifest) do |result|
 end
 
 verify_absent agents, 'guid'
-

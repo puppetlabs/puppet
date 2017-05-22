@@ -1,6 +1,7 @@
 test_name "should create an email alias"
+tag
 
-confine :except, :platform => 'windows' 
+confine :except, :platform => 'windows'
 
 name = "pl#{rand(999999).to_i}"
 agents.each do |agent|
@@ -23,4 +24,4 @@ agents.each do |agent|
   on(agent, "cat /etc/aliases")  do |res|
     assert_match(/#{name}:.*foo,bar,baz/, res.stdout, "mailalias not in aliases file")
   end
-end  
+end

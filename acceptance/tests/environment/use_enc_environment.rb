@@ -1,4 +1,5 @@
 test_name "Agent should use environment given by ENC"
+tag
 require 'puppet/acceptance/classifier_utils.rb'
 extend Puppet::Acceptance::ClassifierUtils
 

@@ -1,4 +1,5 @@
 test_name 'Calling all functions.. test in progress!'
+tag
 
 # create single manifest calling all functions
 step 'Apply manifest containing all function calls'

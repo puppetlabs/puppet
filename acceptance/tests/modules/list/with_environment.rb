@@ -1,4 +1,5 @@
 test_name 'puppet module list (with environment)'
+tag
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 

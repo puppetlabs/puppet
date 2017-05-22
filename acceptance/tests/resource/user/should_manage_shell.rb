@@ -1,4 +1,5 @@
 test_name "should manage user shell"
+tag
 
 name = "pl#{rand(999999).to_i}"
 

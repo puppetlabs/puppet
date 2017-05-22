@@ -8,6 +8,7 @@
 # - modify an existing ASCII comment to a UTF-8 one
 # Where applicable, we should be able to do this in different locales
 test_name 'PUP-6777 Manage users with UTF-8 comments' do
+  tag
 
   # PUP-7049 / ARISTA-42 - user provider bug on Arista
   confine :except, :platform => /^eos-/

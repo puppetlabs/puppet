@@ -1,4 +1,5 @@
 test_name "Zone:Path configuration"
+tag
 confine :to, :platform => 'solaris'
 
 require 'puppet/acceptance/solaris_util'
@@ -46,4 +47,3 @@ agents.each do |agent|
     assert_match(/set zonepath=.tstzones.mnt/, result.stdout, "err: #{agent}")
   end
 end
-

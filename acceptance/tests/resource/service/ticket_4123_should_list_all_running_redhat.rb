@@ -1,4 +1,5 @@
 test_name "#4123: should list all running services on Redhat/CentOS"
+tag
 confine :to, :platform => /(el|centos|oracle|redhat|scientific)-5/
 
 step "Validate services running agreement ralsh vs. OS service count"

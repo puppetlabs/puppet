@@ -1,4 +1,5 @@
 test_name "Bug #7165: Don't refresh service immediately after starting it"
+tag
 
 confine :except, :platform => 'windows'
 

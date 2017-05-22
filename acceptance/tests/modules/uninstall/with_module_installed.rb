@@ -1,4 +1,5 @@
 test_name "puppet module uninstall (with module installed)"
+tag
 
 teardown do
   on master, "rm -rf #{master['distmoduledir']}/crakorn"

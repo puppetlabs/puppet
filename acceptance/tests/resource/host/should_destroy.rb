@@ -1,4 +1,5 @@
 test_name "should be able to remove a host record"
+tag
 
 agents.each do |agent|
   file = agent.tmpfile('host-destroy')

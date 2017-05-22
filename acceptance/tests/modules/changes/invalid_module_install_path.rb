@@ -1,4 +1,5 @@
 test_name 'puppet module changes (on an invalid module install path)'
+tag
 
 step 'Setup'
 

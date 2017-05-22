@@ -1,4 +1,5 @@
 test_name "resources declared in a class can be applied with include"
+tag
 manifest = %q{
 class x {
   notify{'a':}

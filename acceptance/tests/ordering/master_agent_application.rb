@@ -1,4 +1,5 @@
 test_name "Puppet applies resources without dependencies in file order over the network"
+tag
 
 testdir = master.tmpdir('application_order')
 

@@ -1,4 +1,5 @@
 test_name "#6857: redact password hashes when applying in noop mode"
+tag
 
 require 'puppet/acceptance/common_utils'
 extend Puppet::Acceptance::CommandUtils

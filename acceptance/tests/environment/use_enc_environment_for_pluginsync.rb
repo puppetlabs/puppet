@@ -1,4 +1,5 @@
 test_name "Agent should use environment given by ENC for pluginsync"
+tag
 
 testdir = create_tmpdir_for_user master, 'respect_enc_test'
 

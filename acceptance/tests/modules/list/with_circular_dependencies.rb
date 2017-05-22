@@ -1,4 +1,5 @@
 test_name "puppet module list (with circular dependencies)"
+tag
 
 teardown do
   on master, "rm -rf #{master['distmoduledir']}/appleseed"

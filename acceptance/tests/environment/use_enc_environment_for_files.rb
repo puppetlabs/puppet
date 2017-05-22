@@ -1,4 +1,5 @@
 test_name "Agent should use environment given by ENC for fetching remote files"
+tag
 
 testdir = create_tmpdir_for_user master, 'respect_enc_test'
 

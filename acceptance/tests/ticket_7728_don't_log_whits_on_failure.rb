@@ -1,4 +1,5 @@
 test_name "#7728: Don't log whits on resource failure"
+tag
 
 manifest = %Q{
   class foo {

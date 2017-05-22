@@ -1,4 +1,5 @@
 test_name "The source attribute"
+tag
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 

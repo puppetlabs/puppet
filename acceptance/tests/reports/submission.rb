@@ -1,4 +1,5 @@
 test_name "Report submission"
+tag
 
 if master.is_pe?
   require "time"

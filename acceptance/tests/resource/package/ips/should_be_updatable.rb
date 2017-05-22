@@ -1,4 +1,5 @@
 test_name "Package:IPS test for updatable (update, latest)"
+tag
 confine :to, :platform => 'solaris-11'
 
 require 'puppet/acceptance/solaris_util'

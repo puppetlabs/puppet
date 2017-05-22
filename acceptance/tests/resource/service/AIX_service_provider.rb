@@ -1,4 +1,5 @@
 test_name 'AIX Service Provider Testing'
+tag
 
 confine :to, :platform =>  'aix'
 
@@ -68,7 +69,7 @@ agents.each do |agent|
     PP
     apply_manifest_on(agent, manifest, :catch_changes => true)
   end
-  
+
   step "Verify starting a non-existent service prints an error message but does not fail the run without detailed exit codes" do
     manifest = <<-PP
       service { 'sloth_daemon' : ensure => running }

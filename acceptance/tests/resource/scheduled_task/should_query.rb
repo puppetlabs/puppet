@@ -1,4 +1,5 @@
 test_name "test that we can query and find a scheduled task that exists."
+tag
 
 name = "pl#{rand(999999).to_i}"
 confine :to, :platform => 'windows'

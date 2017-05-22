@@ -1,4 +1,5 @@
 test_name 'puppet module changes (on a module which is missing metadata.json)'
+tag
 
 step 'Setup'
 

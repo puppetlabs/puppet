@@ -1,4 +1,5 @@
 test_name "puppet module uninstall (using directory name)"
+tag
 
 teardown do
   on master, "rm -rf #{master['distmoduledir']}/apache"

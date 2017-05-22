@@ -1,4 +1,5 @@
 test_name 'C99630: hiera v3 custom backend' do
+  tag
   require 'puppet/acceptance/environment_utils.rb'
   extend Puppet::Acceptance::EnvironmentUtils
   require 'puppet/acceptance/temp_file_utils.rb'

@@ -1,4 +1,5 @@
 test_name "Zone:Statemachine configuration"
+tag
 confine :to, :platform => 'solaris'
 
 require 'puppet/acceptance/solaris_util'

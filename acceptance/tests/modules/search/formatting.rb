@@ -1,4 +1,5 @@
 test_name 'puppet module search output should be well structured'
+tag
 
 step 'Setup'
 stub_forge_on(master)

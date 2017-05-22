@@ -1,4 +1,5 @@
 test_name "should allow param override"
+tag
 
 manifest = %q{
 class parent {
@@ -17,4 +18,3 @@ apply_manifest_on(agents, manifest) do
     fail_test "parameter override didn't work" unless
         stdout.include? "defined 'message' as 'child'"
 end
-

@@ -1,4 +1,5 @@
 test_name 'PUP-3981 - C63215 - Build Module Should Ignore Module File'
+tag
 
 #Init
 temp_module_path = master.tmpdir('build_ignore_module_file_test')

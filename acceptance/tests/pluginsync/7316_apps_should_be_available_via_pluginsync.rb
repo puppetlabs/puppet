@@ -1,4 +1,5 @@
 test_name "the pluginsync functionality should sync app definitions, and they should be runnable afterwards"
+tag
 
 #
 # This test is intended to ensure that pluginsync syncs app definitions to the agents.

@@ -1,4 +1,5 @@
 test_name 'C64667: ensure server_facts is set and error if any value is overwritten by an agent' do
+  tag
   require 'puppet/acceptance/environment_utils.rb'
   extend Puppet::Acceptance::EnvironmentUtils
 

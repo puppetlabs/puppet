@@ -1,4 +1,5 @@
 test_name "Be able to execute multi-line commands (#9996)"
+tag
 confine :except, :platform => 'windows'
 
 agents.each do |agent|

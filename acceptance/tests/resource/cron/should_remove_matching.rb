@@ -1,4 +1,5 @@
 test_name "puppet should remove a crontab entry based on command matching"
+tag
 confine :except, :platform => 'windows'
 confine :except, :platform => /^eos-/ # See PUP-5500
 

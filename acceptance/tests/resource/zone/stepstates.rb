@@ -1,4 +1,5 @@
 test_name "Zone:statemachine single states"
+tag
 confine :to, :platform => 'solaris'
 require 'puppet/acceptance/solaris_util'
 extend Puppet::Acceptance::ZoneUtils

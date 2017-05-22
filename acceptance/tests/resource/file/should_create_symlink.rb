@@ -1,4 +1,5 @@
 test_name "should create symlink"
+tag
 
 def message
   'hello world'

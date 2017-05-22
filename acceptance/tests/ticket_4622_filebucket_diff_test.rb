@@ -1,4 +1,5 @@
 test_name "ticket 4622 filebucket diff test."
+tag
 confine :except, :platform => 'windows'
 skip_test 'skip test, no non-Windows agents specified' if agents.empty?
 

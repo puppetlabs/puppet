@@ -1,4 +1,5 @@
 test_name "parametrized classes"
+tag
 
 ########################################################################
 step "should allow param classes"

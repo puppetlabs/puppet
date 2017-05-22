@@ -1,4 +1,5 @@
 test_name "#4233: resource with a newline"
+tag
 
 # 2010-07-22 Jeff McCune <jeff@puppetlabs.com>
 # AffectedVersion: 2.6.0rc3

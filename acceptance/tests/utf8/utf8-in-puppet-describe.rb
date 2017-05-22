@@ -1,8 +1,9 @@
 test_name 'utf-8 characters in module doc string, puppet describe' do
+  tag
   platforms = hosts.map {|val| val[:platform]}
   if (platforms.any? { |val| /^eos-/ =~ val})
     skip_test "Skipping because Puppet describe fails when the Arista module is installed (ARISTA-51)"
-  end 
+  end
 
   # utf8chars = "€‰ㄘ万竹ÜÖ"
   utf8chars = "\u20ac\u2030\u3118\u4e07\u7af9\u00dc\u00d6"
@@ -12,7 +13,7 @@ test_name 'utf-8 characters in module doc string, puppet describe' do
   teardown do
     on(master, "rm -rf #{master_mod_dir}")
   end
-  master_manifest = 
+  master_manifest =
 <<MASTER_MANIFEST
 
 File {
@@ -62,14 +63,14 @@ MASTER_MANIFEST
   with_puppet_running_on(master, master_opts, master_mod_dir) do
     agents.each do |agent|
       puts "agent name: #{agent.hostname}, platform: #{agent.platform}"
-      step "Run puppet agent for plugin sync" do 
+      step "Run puppet agent for plugin sync" do
         on(
           agent, puppet("agent", "-t", "--server #{master.node_name}"),
           :acceptable_exit_codes => [0, 2]
         )
       end
 
-      step "Puppet describe for master-hosted mytype" do 
+      step "Puppet describe for master-hosted mytype" do
         on(agent, puppet("describe", "master_mytype")) do |result|
           assert_match(
             /master_mytype.*such as #{utf8chars}/m,

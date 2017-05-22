@@ -1,4 +1,5 @@
 test_name "Bug #4285: ArgumentError: Cannot alias File[mytitle] to [nil]"
+tag
 
 agents.each do |host|
   dir = host.tmpdir('4285-aliasing')

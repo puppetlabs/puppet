@@ -1,4 +1,5 @@
 test_name "#6710: Relationship syntax should work with title arrays"
+tag
 
 # Jeff McCune <jeff@puppetlabs.com>
 # 2011-03-14
@@ -12,4 +13,3 @@ apply_manifest_on agents, %q{
   notify { left: } -> notify { right: }
   notify { left_one_to_many: } -> notify { [ right_one_to_many_1, right_one_to_many_2 ]: }
 }
-

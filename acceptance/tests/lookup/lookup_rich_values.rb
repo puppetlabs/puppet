@@ -1,4 +1,5 @@
 test_name 'C99044: lookup should allow rich data as values' do
+  tag
   require 'puppet/acceptance/environment_utils.rb'
   extend Puppet::Acceptance::EnvironmentUtils
 

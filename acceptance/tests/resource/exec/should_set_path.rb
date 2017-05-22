@@ -1,4 +1,5 @@
 test_name "the path statement should work to locate commands"
+tag
 
 agents.each do |agent|
   file = agent.tmpfile('touched-should-set-path')

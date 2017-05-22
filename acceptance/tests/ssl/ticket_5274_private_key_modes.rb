@@ -1,4 +1,5 @@
 test_name "PUP-5274: CA and host private keys should not be world readable"
+tag
 require 'puppet/acceptance/common_utils'
 
 confine :except, :platform => 'windows'

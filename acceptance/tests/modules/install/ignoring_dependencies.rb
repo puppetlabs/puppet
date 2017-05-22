@@ -1,4 +1,5 @@
 test_name "puppet module install (ignoring dependencies)"
+tag
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 

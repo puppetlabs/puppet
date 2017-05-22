@@ -5,6 +5,7 @@ extend Puppet::Acceptance::TempFileUtils
 # https://github.com/puppetlabs/puppet-specifications/blob/master/file_paths.md
 
 test_name 'PA-466: Ensure version file is created on agent' do
+  tag
 
   skip_test 'requires version file which is created by AIO' if @options[:type] != 'aio'
 
@@ -27,4 +28,3 @@ test_name 'PA-466: Ensure version file is created on agent' do
     end
   end
 end
-

@@ -1,4 +1,5 @@
 test_name "puppet module install (nonexistent module)"
+tag
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 

@@ -1,6 +1,7 @@
 # ensure installs and code honor new puppet-agent path spec:
 # https://github.com/puppetlabs/puppet-specifications/blob/master/file_paths.md
 test_name 'PUP-4033: Ensure aio path spec is honored'
+tag
 
 require 'puppet/acceptance/common_utils'
 extend Puppet::Acceptance::CommandUtils
@@ -173,4 +174,3 @@ agents.each do |agent|
     end
   end
 end
-

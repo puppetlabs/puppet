@@ -1,4 +1,5 @@
 test_name "should delete an email alias"
+tag
 
 confine :except, :platform => 'windows'
 
@@ -32,4 +33,4 @@ agents.each do |agent|
   on(agent, "cat /etc/aliases")  do |res|
     assert_no_match(/#{name}:.*foo,bar,baz/, res.stdout, "mailalias was not removed from aliases file")
   end
-end  
+end

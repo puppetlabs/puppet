@@ -1,4 +1,5 @@
 test_name "puppet module upgrade (with constraints on its dependencies)"
+tag
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 

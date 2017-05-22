@@ -1,4 +1,5 @@
 test_name "Write to Windows eventlog"
+tag
 
 confine :to, :platform => 'windows'
 

@@ -1,4 +1,5 @@
 test_name "puppet apply should create a file and report an MD5"
+tag
 
 agents.each do |agent|
   file = agent.tmpfile('hello-world')

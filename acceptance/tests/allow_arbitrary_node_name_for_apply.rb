@@ -1,4 +1,5 @@
 test_name "node_name_value should be used as the node name for puppet apply"
+tag
 
 success_message = "node_name_value setting was correctly used as the node name"
 

@@ -1,4 +1,5 @@
 test_name 'CODEMGMT-69 - Build a Module Using "metadata.json" Only'
+tag
 
 #Init
 temp_module_path = '/tmp/nginx'

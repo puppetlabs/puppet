@@ -1,4 +1,5 @@
 test_name "should be able to modify a host address"
+tag
 
 agents.each do |agent|
   file = agent.tmpfile('host-modify-ip')

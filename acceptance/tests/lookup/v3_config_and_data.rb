@@ -1,4 +1,5 @@
 test_name 'C99629: hiera v5 can use v3 config and data' do
+  tag
   require 'puppet/acceptance/environment_utils.rb'
   extend Puppet::Acceptance::EnvironmentUtils
 

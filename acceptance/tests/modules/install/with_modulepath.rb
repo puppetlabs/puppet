@@ -1,6 +1,7 @@
 # encoding: UTF-8
 
 test_name "puppet module install (with modulepath)"
+tag
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 

@@ -1,4 +1,5 @@
 test_name "Environment control of static catalogs"
+tag
 
 skip_test 'requires puppetserver to test static catalogs' if @options[:type] != 'aio'
 

@@ -1,4 +1,5 @@
 test_name "should create directory"
+tag
 
 agents.each do |agent|
   target = agent.tmpfile("create-dir")

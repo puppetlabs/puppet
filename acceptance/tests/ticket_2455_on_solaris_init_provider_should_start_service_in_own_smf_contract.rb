@@ -1,4 +1,5 @@
 test_name "(PUP-2455) Service provider should start Solaris init service in its own SMF contract"
+tag
 
 skip_test unless agents.any? {|agent| agent['platform'] =~ /solaris/ }
 

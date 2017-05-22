@@ -1,4 +1,5 @@
 test_name 'C99977 corrupted clientbucket' do
+  tag
   agents.each do |agent|
     tmpfile = agent.tmpfile('c99977file')
     unmanaged_content = "unmanaged\n"

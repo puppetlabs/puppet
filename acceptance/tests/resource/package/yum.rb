@@ -1,4 +1,5 @@
 test_name "test the yum package provider"
+tag
 
 confine :to, {:platform => /(?:centos|el-|fedora)/}, agents
 confine :except, :platform => /centos-4|el-4/ # PUP-5227

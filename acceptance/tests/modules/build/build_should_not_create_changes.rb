@@ -1,4 +1,5 @@
 test_name "puppet module build should not result in changed files"
+tag
 
 modauthor = 'foo'
 modname = 'bar'

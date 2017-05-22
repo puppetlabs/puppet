@@ -1,4 +1,5 @@
 test_name "should be able to find an existing filesystem table entry"
+tag
 
 confine :except, :platform => ['windows']
 confine :except, :platform => /osx/ # See PUP-4823

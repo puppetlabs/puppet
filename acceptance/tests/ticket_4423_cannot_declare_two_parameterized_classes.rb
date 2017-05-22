@@ -7,6 +7,7 @@
 # Make sure two parameterized classes are able to be declared.
 
 test_name "#4423: cannot declare two parameterized classes"
+tag
 
 class1 = %q{
     class rainbow($color) {

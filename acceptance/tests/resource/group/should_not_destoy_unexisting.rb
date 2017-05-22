@@ -1,4 +1,5 @@
 test_name "should not destroy a group that doesn't exist"
+tag
 confine :except, :platform => /^cisco_/ # See PUP-5828
 
 name = "test-group-#{Time.new.to_i}"
@@ -13,4 +14,3 @@ on(agents, puppet_resource('group', name, 'ensure=absent')) do
   fail_test "it looks like we tried to remove the group" if
     stdout.include? "/Group[#{name}]/ensure: removed"
 end
-

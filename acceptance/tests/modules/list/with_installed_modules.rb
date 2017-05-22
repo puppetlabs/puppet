@@ -1,4 +1,5 @@
 test_name "puppet module list (with installed modules)"
+tag
 
 teardown do
   on master, "rm -rf #{master['distmoduledir']}/thelock"

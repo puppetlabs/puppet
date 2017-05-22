@@ -1,4 +1,5 @@
 test_name "ensure that puppet does not report removing a user that does not exist"
+tag
 confine :except, :platform => /^eos-/ # See ARISTA-37
 confine :except, :platform => /^cisco_/ # See PUP-5828
 

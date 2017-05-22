@@ -1,4 +1,5 @@
 test_name "Package:IPS idempotency"
+tag
 confine :to, :platform => 'solaris-11'
 
 require 'puppet/acceptance/solaris_util'

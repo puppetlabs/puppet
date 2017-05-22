@@ -1,4 +1,5 @@
 require 'rexml/document'
+tag
 
 test_name "should modify a scheduled task"
 

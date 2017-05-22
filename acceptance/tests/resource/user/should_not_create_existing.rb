@@ -1,4 +1,5 @@
 test_name "tests that user resource will not add users that already exist."
+tag
 confine :except, :platform => /^eos-/ # See ARISTA-37
 confine :except, :platform => /^cisco_/ # See PUP-5828
 

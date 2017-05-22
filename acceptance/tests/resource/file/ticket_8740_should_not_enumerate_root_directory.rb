@@ -1,4 +1,5 @@
 test_name "#8740: should not enumerate root directory"
+tag
 confine :except, :platform => 'windows'
 
 target = "/test-socket-#{$$}"

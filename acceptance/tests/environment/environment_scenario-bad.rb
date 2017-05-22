@@ -1,4 +1,5 @@
 test_name 'Test behavior of directory environments when environmentpath is set to a non-existent directory'
+tag
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils
 require 'puppet/acceptance/classifier_utils'

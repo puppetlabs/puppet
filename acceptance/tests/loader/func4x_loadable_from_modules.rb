@@ -1,4 +1,5 @@
 test_name "Exercise a module with 4x function and 4x system function"
+tag
 
 # Purpose:
 # Test that a packed puppet can call a 4x system function, and that a 4x function in

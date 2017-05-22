@@ -1,4 +1,5 @@
 test_name "should query all hosts from hosts file"
+tag
 
 content = %q{127.0.0.1 test1 test1.local
 127.0.0.2 test2 test2.local

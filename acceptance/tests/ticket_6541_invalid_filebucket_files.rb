@@ -1,4 +1,5 @@
 test_name "#6541: file type truncates target when filebucket cannot retrieve hash"
+tag
 
 agents.each do |agent|
   target=agent.tmpfile('6541-target')

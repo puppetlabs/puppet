@@ -1,4 +1,5 @@
 test_name "mounted should create an entry in filesystem table and mount it"
+tag
 
 confine :except, :platform => ['windows']
 confine :except, :platform => /osx/ # See PUP-4823

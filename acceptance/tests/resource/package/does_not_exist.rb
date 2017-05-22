@@ -1,5 +1,6 @@
 # Redmine (#22529)
 test_name "Puppet returns only resource package declaration when querying an uninstalled package" do
+  tag
 
   resource_declaration_regex = %r@package \{ 'not-installed-on-this-host':
   ensure => '(?:purged|absent)',

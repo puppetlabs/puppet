@@ -1,4 +1,5 @@
 test_name 'parser validate' do
+  tag
   require 'puppet/acceptance/environment_utils'
   extend Puppet::Acceptance::EnvironmentUtils
   require 'puppet/acceptance/temp_file_utils'

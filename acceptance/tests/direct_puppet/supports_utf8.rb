@@ -2,6 +2,7 @@ test_name "C97172: static catalogs support utf8" do
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils
 
+  tag
   app_type = File.basename(__FILE__, '.*')
   tmp_environment   = mk_tmp_environment_with_teardown(master, app_type)
 

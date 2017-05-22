@@ -1,4 +1,5 @@
 test_name "#17371 file metadata specified in puppet.conf needs to be applied"
+tag
 
 # when owner/group works on windows for settings, this confine should be removed.
 confine :except, :platform => 'windows'

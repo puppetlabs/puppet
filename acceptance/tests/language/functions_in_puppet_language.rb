@@ -1,4 +1,5 @@
 test_name 'Puppet executes functions written in the Puppet language'
+tag
 
 teardown do
   on master, 'rm -rf /etc/puppetlabs/code/modules/jenny'
@@ -125,4 +126,3 @@ step 'Call an env-specific function in a non-default environment' do
   fail_test 'Failed to call env-specific function from that environment' \
     unless rc.stdout.include?('This is the two::bar() function in the tommy environment')
 end
-
