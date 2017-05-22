@@ -89,6 +89,15 @@ describe 'function for dynamically creating resources' do
       expect(catalog.resource(:file, "/etc/foo")['ensure']).to eq('present')
     end
 
+    it 'unrealized exported resources should not be added' do
+      # a compiled catalog is normally filtered on virtual resources
+      # here the compilation is performed unfiltered to be able to find the exported resource
+      # it is then asserted that the exported resource is also virtual (and therefore filtered out by a real compilation).
+      catalog = compile_to_catalog_unfiltered("create_resources('@@file', {'/etc/foo'=>{'ensure'=>'present'}})")
+      expect(catalog.resource(:file, "/etc/foo").exported).to eq(true)
+      expect(catalog.resource(:file, "/etc/foo").virtual).to eq(true)
+    end
+
     it 'should be able to add exported resources' do
       catalog = compile_to_catalog("create_resources('@@file', {'/etc/foo'=>{'ensure'=>'present'}}) realize(File['/etc/foo'])")
       expect(catalog.resource(:file, "/etc/foo")['ensure']).to eq('present')

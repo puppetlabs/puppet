@@ -71,6 +71,7 @@ Puppet::Parser::Functions::newfunction(:create_resources, :arity => -3, :doc => 
 
   if type.start_with? '@@'
     exported = true
+    virtual = true
   elsif type.start_with? '@'
     virtual = true
   end
