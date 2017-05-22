@@ -13,7 +13,6 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
     Puppet::Util::Log.stubs(:newdestination)
 
     Puppet::Node.indirection.stubs(:terminus_class=)
-    Puppet::Node.indirection.stubs(:cache_class=)
     Puppet::Node::Facts.indirection.stubs(:terminus_class=)
     Puppet::Node::Facts.indirection.stubs(:cache_class=)
     Puppet::Transaction::Report.indirection.stubs(:terminus_class=)
@@ -206,10 +205,27 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
 
         @master.setup
       end
-
-
     end
 
+    it "should not set Puppet[:node_cache_terminus] by default" do
+      # This is normally called early in the application lifecycle but in our
+      # spec testing we don't actually do a full application initialization so
+      # we call it here to validate the (possibly) overridden settings are as we
+      # expect
+      @master.initialize_app_defaults
+      @master.setup
+
+      expect(Puppet[:node_cache_terminus]).to be(nil)
+    end
+
+    it "should honor Puppet[:node_cache_terminus] by setting the cache_class to its value" do
+      # PUP-6060 - ensure we honor this value if specified
+      @master.initialize_app_defaults
+      Puppet[:node_cache_terminus] = 'plain'
+      @master.setup
+
+      expect(Puppet::Node.indirection.cache_class).to eq(:plain)
+    end
   end
 
   describe "when running" do

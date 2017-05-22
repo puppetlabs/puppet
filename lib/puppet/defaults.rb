@@ -415,8 +415,7 @@ deprecated and has been replaced by 'always_retry_plugins'."
       :type       => :terminus,
       :default    => nil,
       :desc       => "How to store cached nodes.
-      Valid values are (none), 'json', 'msgpack', 'yaml' or write only yaml ('write_only_yaml').
-      The master application defaults to 'write_only_yaml', all others to none.",
+      Valid values are (none), 'json', 'msgpack', 'yaml' or write only yaml ('write_only_yaml').",
     },
     :data_binding_terminus => {
       :type    => :terminus,
