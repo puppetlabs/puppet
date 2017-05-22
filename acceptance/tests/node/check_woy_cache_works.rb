@@ -120,6 +120,7 @@ master_opts = {
   'master' => {
     'rest_authconfig' => authfile,
     'yamldir' => temp_yamldir,
+    'node_cache_terminus' => 'write_only_yaml',
   }
 }
 
