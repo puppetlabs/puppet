@@ -481,7 +481,7 @@ class Puppet::Parser::Scope
   #
   # @param [String] name the variable name to lookup
   #
-  # @return Object the value of the variable, or nil if it's not found
+  # @return Object the value of the variable, or if not found; nil if `strict_variables` is false, and thrown :undefined_variable otherwise
   #
   # @api public
   def lookupvar(name, options = EMPTY_HASH)
