@@ -107,9 +107,9 @@ hosts.each do |host|
     step "#{host} Selected architecture #{arch}"
 
     revision = if arch == 'x64'
-                 '2.1.x-x64'
+                 '2.4.x-x64'
                else
-                 '2.1.x-x86'
+                 '2.4.x-x86'
                end
 
     step "#{host} Install ruby from git using revision #{revision}"
