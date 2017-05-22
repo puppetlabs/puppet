@@ -99,14 +99,14 @@ describe "validating 4x" do
       acceptor = validate(parse('@class { test: }'))
       expect(acceptor.warning_count).to eql(1)
       expect(acceptor.error_count).to eql(0)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZEABLE)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZABLE)
     end
 
     it 'produces a  warning for exported class resource' do
       acceptor = validate(parse('@@class { test: }'))
       expect(acceptor.warning_count).to eql(1)
       expect(acceptor.error_count).to eql(0)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZEABLE)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZABLE)
     end
 
   end
@@ -138,14 +138,14 @@ describe "validating 4x" do
       acceptor = validate(parse('@class { test: }'))
       expect(acceptor.warning_count).to eql(0)
       expect(acceptor.error_count).to eql(1)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZEABLE)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZABLE)
     end
 
     it 'produces an error for exported class resource' do
       acceptor = validate(parse('@@class { test: }'))
       expect(acceptor.warning_count).to eql(0)
       expect(acceptor.error_count).to eql(1)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZEABLE)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZABLE)
     end
   end
 
@@ -176,14 +176,14 @@ describe "validating 4x" do
       acceptor = validate(parse('@class { test: }'))
       expect(acceptor.warning_count).to eql(1)
       expect(acceptor.error_count).to eql(0)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZEABLE)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZABLE)
     end
 
     it 'produces a  warning for exported class resource' do
       acceptor = validate(parse('@@class { test: }'))
       expect(acceptor.warning_count).to eql(1)
       expect(acceptor.error_count).to eql(0)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZEABLE)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZABLE)
     end
   end
 

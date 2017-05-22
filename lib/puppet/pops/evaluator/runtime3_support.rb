@@ -522,7 +522,7 @@ module Runtime3Support
       # Store config issues, ignore or warning
       p[Issues::RT_NO_STORECONFIGS_EXPORT]    = Puppet[:storeconfigs] ? :ignore : :warning
       p[Issues::RT_NO_STORECONFIGS]           = Puppet[:storeconfigs] ? :ignore : :warning
-      p[Issues::CLASS_NOT_VIRTUALIZEABLE]     = Puppet[:strict] == :off ? :warning : Puppet[:strict]
+      p[Issues::CLASS_NOT_VIRTUALIZABLE]     = Puppet[:strict] == :off ? :warning : Puppet[:strict]
     end
   end
 

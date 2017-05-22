@@ -628,7 +628,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     # tests that expect the detailed reporting).
     type_name_expr = o.type_name
     if o.form && o.form != :regular && type_name_expr.is_a?(Model::QualifiedName) && type_name_expr.value == 'class'
-      acceptor.accept(Issues::CLASS_NOT_VIRTUALIZEABLE, o)
+      acceptor.accept(Issues::CLASS_NOT_VIRTUALIZABLE, o)
     end
   end
 

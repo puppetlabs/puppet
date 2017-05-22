@@ -79,7 +79,7 @@ Puppet::Parser::Functions::newfunction(:create_resources, :arity => -3, :doc => 
     # cannot find current evaluator, so use another
     evaluator = Puppet::Pops::Parser::EvaluatingParser.new.evaluator
     # optionally fails depending on configured severity of issue
-    evaluator.runtime_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZEABLE)
+    evaluator.runtime_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZABLE)
   end
 
   instances.map do |title, params|

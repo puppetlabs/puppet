@@ -368,7 +368,7 @@ module Issues
     "Resource Defaults are not virtualizable"
   end
 
-  CLASS_NOT_VIRTUALIZEABLE = issue :CLASS_NOT_VIRTUALIZEABLE do
+  CLASS_NOT_VIRTUALIZABLE = issue :CLASS_NOT_VIRTUALIZABLE do
     "Classes are not virtualizable"
   end
 
