@@ -4,7 +4,7 @@ require 'pathname'
 require 'erb'
 
 Puppet::Face.define(:man, '0.0.1') do
-  copyright "Puppet Labs", 2011
+  copyright "Puppet Inc.", 2011
   license   _("Apache 2 license; see COPYING")
 
   summary _("Display Puppet manual pages.")
@@ -75,7 +75,7 @@ Puppet::Face.define(:man, '0.0.1') do
         # ronn is a stupid about pager selection, we can be smarter. :)
         if pager then ENV['PAGER'] = pager end
 
-        args  = "--man --manual='Puppet Manual' --organization='Puppet Labs, LLC'"
+        args  = "--man --manual='Puppet Manual' --organization='Puppet Inc., LLC'"
         # manual pages could contain UTF-8 text
         IO.popen("#{ronn} #{args}", 'w:UTF-8') do |fh| fh.write text end
 

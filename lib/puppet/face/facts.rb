@@ -2,7 +2,7 @@ require 'puppet/indirector/face'
 require 'puppet/node/facts'
 
 Puppet::Indirector::Face.define(:facts, '0.0.1') do
-  copyright "Puppet Labs", 2011
+  copyright "Puppet Inc.", 2011
   license   _("Apache 2 license; see COPYING")
 
   summary _("Retrieve and store facts.")

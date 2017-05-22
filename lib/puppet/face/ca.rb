@@ -1,7 +1,7 @@
 require 'puppet/face'
 
 Puppet::Face.define(:ca, '0.1.0') do
-  copyright "Puppet Labs", 2011
+  copyright "Puppet Inc.", 2011
   license   _("Apache 2 license; see COPYING")
 
   summary _("Local Puppet Certificate Authority management.")

@@ -3,7 +3,7 @@ require 'puppet/configurer/downloader_factory'
 require 'puppet/configurer/plugin_handler'
 
 Puppet::Face.define(:plugin, '0.0.1') do
-  copyright "Puppet Labs", 2011
+  copyright "Puppet Inc.", 2011
   license   _("Apache 2 license; see COPYING")
 
   summary _("Interact with the Puppet plugin system.")

@@ -668,6 +668,10 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     # to enable better error message of the result of the expression rather than the static instruction.
     # (This can be revised as there are static constructs that are illegal, but require updating many
     # tests that expect the detailed reporting).
+    type_name_expr = o.type_name
+    if o.form && o.form != :regular && type_name_expr.is_a?(Model::QualifiedName) && type_name_expr.value == 'class'
+      acceptor.accept(Issues::CLASS_NOT_VIRTUALIZABLE, o)
+    end
   end
 
   def check_ResourceBody(o)

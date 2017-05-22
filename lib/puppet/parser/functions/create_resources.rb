@@ -71,8 +71,16 @@ Puppet::Parser::Functions::newfunction(:create_resources, :arity => -3, :doc => 
 
   if type.start_with? '@@'
     exported = true
+    virtual = true
   elsif type.start_with? '@'
     virtual = true
+  end
+
+  if type_name == 'class' && (exported || virtual)
+    # cannot find current evaluator, so use another
+    evaluator = Puppet::Pops::Parser::EvaluatingParser.new.evaluator
+    # optionally fails depending on configured severity of issue
+    evaluator.runtime_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZABLE)
   end
 
   instances.map do |title, params|

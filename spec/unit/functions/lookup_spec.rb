@@ -2080,8 +2080,9 @@ describe "The lookup function" do
             }
           end
 
-          it 'raises an error' do
-            expect { lookup('mod_a::a') }.to raise_error(Puppet::Error, /hiera.yaml version 3 cannot be used in a module/)
+          it 'raises a warning' do
+            expect(lookup('mod_a::a')).to eql('value mod_a::a (from environment)')
+            expect(warnings).to include(/hiera.yaml version 3 found at module root was ignored/)
           end
         end
 

@@ -89,6 +89,15 @@ describe 'function for dynamically creating resources' do
       expect(catalog.resource(:file, "/etc/foo")['ensure']).to eq('present')
     end
 
+    it 'unrealized exported resources should not be added' do
+      # a compiled catalog is normally filtered on virtual resources
+      # here the compilation is performed unfiltered to be able to find the exported resource
+      # it is then asserted that the exported resource is also virtual (and therefore filtered out by a real compilation).
+      catalog = compile_to_catalog_unfiltered("create_resources('@@file', {'/etc/foo'=>{'ensure'=>'present'}})")
+      expect(catalog.resource(:file, "/etc/foo").exported).to eq(true)
+      expect(catalog.resource(:file, "/etc/foo").virtual).to eq(true)
+    end
+
     it 'should be able to add exported resources' do
       catalog = compile_to_catalog("create_resources('@@file', {'/etc/foo'=>{'ensure'=>'present'}}) realize(File['/etc/foo'])")
       expect(catalog.resource(:file, "/etc/foo")['ensure']).to eq('present')
@@ -232,6 +241,9 @@ describe 'function for dynamically creating resources' do
   end
 
   describe 'when creating classes' do
+    let(:logs) { [] }
+    let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
+
     it 'should be able to create classes' do
       catalog = compile_to_catalog(<<-MANIFEST)
         class bar($one) {
@@ -245,12 +257,34 @@ describe 'function for dynamically creating resources' do
       expect(catalog.resource(:class, "bar")).not_to be_nil
     end
 
-    it 'should fail to create non-existing classes' do
-      expect do
-        compile_to_catalog(<<-MANIFEST)
-          create_resources('class', {'blah'=>{'one'=>'two'}})
-        MANIFEST
-      end.to raise_error(/Could not find declared class blah at line 1:11 on node test/)
+    [:off, :warning].each do | strictness |
+      it "should warn if strict = #{strictness} and class is exported" do
+        Puppet[:strict] = strictness
+        collect_notices('class test{} create_resources("@@class", {test => {}})')
+        expect(warnings).to include(/Classes are not virtualizable/)
+      end
+    end
+
+    it 'should error if strict = error and class is exported' do
+      Puppet[:strict] = :error
+      expect{
+        compile_to_catalog('class test{} create_resources("@@class", {test => {}})')
+      }.to raise_error(/Classes are not virtualizable/)
+    end
+
+    [:off, :warning].each do | strictness |
+      it "should warn if strict = #{strictness} and class is virtual" do
+        Puppet[:strict] = strictness
+        collect_notices('class test{} create_resources("@class", {test => {}})')
+        expect(warnings).to include(/Classes are not virtualizable/)
+      end
+    end
+
+    it 'should error if strict = error and class is virtual' do
+      Puppet[:strict] = :error
+      expect{
+        compile_to_catalog('class test{} create_resources("@class", {test => {}})')
+      }.to raise_error(/Classes are not virtualizable/)
     end
 
     it 'should be able to add edges' do
@@ -291,4 +325,11 @@ describe 'function for dynamically creating resources' do
       }.to raise_error(Puppet::Error, /Syntax error at.*/)
     end
   end
+
+  def collect_notices(code)
+    Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+      compile_to_catalog(code)
+    end
+  end
+
 end

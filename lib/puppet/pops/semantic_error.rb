@@ -14,4 +14,16 @@ class Puppet::Pops::SemanticError < RuntimeError
     @semantic = semantic
     @options = options
   end
+
+  def file
+    @options[:file]
+  end
+
+  def line
+    @options[:line]
+  end
+
+  def pos
+    @options[:pos]
+  end
 end

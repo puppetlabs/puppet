@@ -488,7 +488,7 @@ class Puppet::Parser::Scope
   # @param [String] name the variable name to lookup
   # @param [Hash] hash of options, only internal code should give this
   # @param [Boolean] if resolution is of the leaf of a qualified name - only internal code should give this
-  # @return Object the value of the variable, or nil if it's not found
+  # @return Object the value of the variable, or if not found; nil if `strict_variables` is false, and thrown :undefined_variable otherwise
   #
   # @api public
   def lookupvar(name, options = EMPTY_HASH)

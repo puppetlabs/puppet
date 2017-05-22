@@ -1,6 +1,6 @@
 require 'puppet/indirector/face'
 Puppet::Indirector::Face.define(:node, '0.0.1') do
-  copyright "Puppet Labs", 2011
+  copyright "Puppet Inc.", 2011
   license   _("Apache 2 license; see COPYING")
 
   summary _("View and manage node definitions.")

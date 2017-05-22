@@ -1,7 +1,7 @@
 require 'puppet/indirector/face'
 
 Puppet::Indirector::Face.define(:key, '0.0.1') do
-  copyright "Puppet Labs", 2011
+  copyright "Puppet Inc.", 2011
   license   _("Apache 2 license; see COPYING")
 
   summary _("Create, save, and remove certificate keys.")

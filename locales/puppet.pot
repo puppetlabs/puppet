@@ -2221,6 +2221,10 @@ msgstr ""
 msgid "Existing backup does not match its expected sum, %{sum}. Overwriting corrupted backup."
 msgstr ""
 
+#: ../lib/puppet/pops/lookup/module_data_provider.rb:69
+msgid "hiera.yaml version 3 found at module root was ignored"
+msgstr ""
+
 #: ../lib/puppet/indirector/file_bucket_file/file.rb:196
 msgid "Unsupported checksum type %{checksum_type}"
 msgstr ""
