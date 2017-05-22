@@ -368,6 +368,10 @@ module Issues
     "Resource Defaults are not virtualizable"
   end
 
+  CLASS_NOT_VIRTUALIZEABLE = issue :CLASS_NOT_VIRTUALIZEABLE do
+    "Classes are not virtualizable"
+  end
+
   # When an attempt is made to use multiple keys (to produce a range in Ruby - e.g. $arr[2,-1]).
   # This is not supported in 3x, but it allowed in 4x.
   #
