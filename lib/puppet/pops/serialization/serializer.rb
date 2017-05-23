@@ -93,25 +93,31 @@ module Serialization
     # @param [Object] value the value to write
     # @api private
     def write_tabulated_first_time(value)
-      case value
-      when Symbol, Regexp, SemanticPuppet::Version, SemanticPuppet::VersionRange, Time::Timestamp, Time::Timespan, Types::PBinaryType::Binary
+      case
+      when value.instance_of?(Symbol),
+          value.instance_of?(Regexp),
+          value.instance_of?(SemanticPuppet::Version),
+          value.instance_of?(SemanticPuppet::VersionRange),
+          value.instance_of?(Time::Timestamp),
+          value.instance_of?(Time::Timespan),
+          value.instance_of?(Types::PBinaryType::Binary)
         push_written(value)
         @writer.write(value)
-      when Array
+      when value.instance_of?(Array)
         push_written(value)
         start_array(value.size)
         value.each { |elem| write(elem) }
-      when Hash
+      when value.instance_of?(Hash)
         push_written(value)
         start_map(value.size)
         value.each_pair { |key, val| write(key); write(val) }
-      when Types::PSensitiveType::Sensitive
+      when value.instance_of?(Types::PSensitiveType::Sensitive)
         start_sensitive
         write(value.unwrap)
-      when Types::PTypeReferenceType
+      when value.instance_of?(Types::PTypeReferenceType)
         push_written(value)
         @writer.write(value)
-      when Types::PuppetObject
+      when value.is_a?(Types::PuppetObject)
         value._pcore_type.write(value, self)
       else
         impl_class = value.class
