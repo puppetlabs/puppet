@@ -32,7 +32,7 @@ gem_rdoc_options:
 gem_platform_dependencies:
   universal-darwin:
     gem_runtime_dependencies:
-      CFPropertyList: '~> 2.2.6'
+      CFPropertyList: '~> 2.2'
   x86-mingw32:
     gem_runtime_dependencies:
       # Pinning versions that require native extensions
