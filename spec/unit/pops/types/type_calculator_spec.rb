@@ -116,6 +116,14 @@ describe 'The type calculator' do
     PUnitType::DEFAULT
   end
 
+  def runtime_t(t, c)
+    TypeFactory.runtime(t, c)
+  end
+
+  def object_t(hash)
+    TypeFactory.object(hash)
+  end
+
   def types
     Types
   end
@@ -268,8 +276,46 @@ describe 'The type calculator' do
     end
 
     context 'array' do
+      let(:derived) do
+        Class.new(Array).new([1,2])
+      end
+
+      let(:derived_object) do
+        Class.new(Array) do
+          include PuppetObject
+
+          def self._pcore_type
+            @type ||= TypeFactory.object('name' => 'DerivedObjectArray')
+          end
+        end.new([1,2])
+      end
+
       it 'translates to PArrayType' do
         expect(calculator.infer([1,2]).class).to eq(PArrayType)
+      end
+
+      it 'translates derived Array to PRuntimeType' do
+        expect(calculator.infer(derived).class).to eq(PRuntimeType)
+      end
+
+      it 'translates derived Puppet Object Array to PObjectType' do
+        expect(calculator.infer(derived_object).class).to eq(PObjectType)
+      end
+
+      it 'Instance of derived Array class is not instance of Array type' do
+        expect(PArrayType::DEFAULT).not_to be_instance(derived)
+      end
+
+      it 'Instance of derived Array class is instance of Runtime type' do
+        expect(runtime_t('ruby', nil)).to be_instance(derived)
+      end
+
+      it 'Instance of derived Puppet Object Array class is not instance of Array type' do
+        expect(PArrayType::DEFAULT).not_to be_instance(derived_object)
+      end
+
+      it 'Instance of derived Puppet Object Array class is instance of Object type' do
+        expect(object_t('name' => 'DerivedObjectArray')).to be_instance(derived_object)
       end
 
       it 'with fixnum values translates to PArrayType[PIntegerType]' do
@@ -379,8 +425,46 @@ describe 'The type calculator' do
     end
 
     context 'hash' do
+      let(:derived) do
+        Class.new(Hash)[:first => 1, :second => 2]
+      end
+
+      let(:derived_object) do
+        Class.new(Hash) do
+          include PuppetObject
+
+          def self._pcore_type
+            @type ||= TypeFactory.object('name' => 'DerivedObjectHash')
+          end
+        end[:first => 1, :second => 2]
+      end
+
       it 'translates to PHashType' do
         expect(calculator.infer({:first => 1, :second => 2}).class).to eq(PHashType)
+      end
+
+      it 'translates derived Hash to PRuntimeType' do
+        expect(calculator.infer(derived).class).to eq(PRuntimeType)
+      end
+
+      it 'translates derived Puppet Object Hash to PObjectType' do
+        expect(calculator.infer(derived_object).class).to eq(PObjectType)
+      end
+
+      it 'Instance of derived Hash class is not instance of Hash type' do
+        expect(PHashType::DEFAULT).not_to be_instance(derived)
+      end
+
+      it 'Instance of derived Hash class is instance of Runtime type' do
+        expect(runtime_t('ruby', nil)).to be_instance(derived)
+      end
+
+      it 'Instance of derived Puppet Object Hash class is not instance of Hash type' do
+        expect(PHashType::DEFAULT).not_to be_instance(derived_object)
+      end
+
+      it 'Instance of derived Puppet Object Hash class is instance of Object type' do
+        expect(object_t('name' => 'DerivedObjectHash')).to be_instance(derived_object)
       end
 
       it 'with symbolic keys translates to PHashType[PRuntimeType[ruby, Symbol], value]' do

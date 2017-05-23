@@ -237,16 +237,16 @@ class TypeCalculator
   #
   def infer(o)
     # Optimize the most common cases into direct calls.
-    case o
-    when String
+    # Explicit if/elsif/else is faster than case
+    if o.is_a?(String)
       infer_String(o)
-    when Integer
+    elsif o.is_a?(Integer) # need subclasses for Ruby < 2.4
       infer_Integer(o)
-    when Array
+    elsif o.is_a?(Array)
       infer_Array(o)
-    when Hash
+    elsif o.is_a?(Hash)
       infer_Hash(o)
-    when Evaluator::PuppetProc
+    elsif o.is_a?(Evaluator::PuppetProc)
       infer_PuppetProc(o)
     else
       @@infer_visitor.visit_this_0(self, o)
@@ -261,15 +261,14 @@ class TypeCalculator
   # @api public
   #
   def infer_set(o)
-    case o
-      when Array
-        infer_set_Array(o)
-      when Hash
-        infer_set_Hash(o)
-      when SemanticPuppet::Version
-        infer_set_Version(o)
-      else
-        infer_set_Object(o)
+    if o.instance_of?(Array)
+      infer_set_Array(o)
+    elsif o.instance_of?(Hash)
+      infer_set_Hash(o)
+    elsif o.instance_of?(SemanticPuppet::Version)
+      infer_set_Version(o)
+    else
+      infer(o)
     end
   end
 
@@ -635,10 +634,14 @@ class TypeCalculator
 
   # @api private
   def infer_Array(o)
-    if o.empty?
-      PArrayType::EMPTY
+    if o.instance_of?(Array)
+      if o.empty?
+        PArrayType::EMPTY
+      else
+        PArrayType.new(infer_and_reduce_type(o), size_as_type(o))
+      end
     else
-      PArrayType.new(infer_and_reduce_type(o), size_as_type(o))
+      infer_Object(o)
     end
   end
 
@@ -659,12 +662,16 @@ class TypeCalculator
 
   # @api private
   def infer_Hash(o)
-    if o.empty?
-      PHashType::EMPTY
+    if o.instance_of?(Hash)
+      if o.empty?
+        PHashType::EMPTY
+      else
+        ktype = infer_and_reduce_type(o.keys)
+        etype = infer_and_reduce_type(o.values)
+        PHashType.new(ktype, etype, size_as_type(o))
+      end
     else
-      ktype = infer_and_reduce_type(o.keys)
-      etype = infer_and_reduce_type(o.values)
-      PHashType.new(ktype, etype, size_as_type(o))
+      infer_Object(o)
     end
   end
 
