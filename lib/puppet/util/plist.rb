@@ -125,6 +125,8 @@ module Puppet::Util::Plist
         plist_format = CFPropertyList::List::FORMAT_XML
       elsif format.to_sym == :binary
         plist_format = CFPropertyList::List::FORMAT_BINARY
+      elsif format.to_sym == :plain
+        plist_format = CFPropertyList::List::FORMAT_PLAIN
       else
         raise FormatError.new "Unknown plist format #{format}"
       end
