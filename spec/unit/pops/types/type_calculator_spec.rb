@@ -91,7 +91,7 @@ describe 'The type calculator' do
     TypeFactory.struct(type_hash)
   end
 
-  def object_t
+  def any_t
     TypeFactory.any
   end
 
@@ -114,6 +114,14 @@ describe 'The type calculator' do
   def unit_t
     # Cannot be created via factory, the type is private to the type system
     PUnitType::DEFAULT
+  end
+
+  def runtime_t(t, c)
+    TypeFactory.runtime(t, c)
+  end
+
+  def object_t(hash)
+    TypeFactory.object(hash)
   end
 
   def types
@@ -268,8 +276,46 @@ describe 'The type calculator' do
     end
 
     context 'array' do
+      let(:derived) do
+        Class.new(Array).new([1,2])
+      end
+
+      let(:derived_object) do
+        Class.new(Array) do
+          include PuppetObject
+
+          def self._pcore_type
+            @type ||= TypeFactory.object('name' => 'DerivedObjectArray')
+          end
+        end.new([1,2])
+      end
+
       it 'translates to PArrayType' do
         expect(calculator.infer([1,2]).class).to eq(PArrayType)
+      end
+
+      it 'translates derived Array to PRuntimeType' do
+        expect(calculator.infer(derived).class).to eq(PRuntimeType)
+      end
+
+      it 'translates derived Puppet Object Array to PObjectType' do
+        expect(calculator.infer(derived_object).class).to eq(PObjectType)
+      end
+
+      it 'Instance of derived Array class is not instance of Array type' do
+        expect(PArrayType::DEFAULT).not_to be_instance(derived)
+      end
+
+      it 'Instance of derived Array class is instance of Runtime type' do
+        expect(runtime_t('ruby', nil)).to be_instance(derived)
+      end
+
+      it 'Instance of derived Puppet Object Array class is not instance of Array type' do
+        expect(PArrayType::DEFAULT).not_to be_instance(derived_object)
+      end
+
+      it 'Instance of derived Puppet Object Array class is instance of Object type' do
+        expect(object_t('name' => 'DerivedObjectArray')).to be_instance(derived_object)
       end
 
       it 'with fixnum values translates to PArrayType[PIntegerType]' do
@@ -379,8 +425,46 @@ describe 'The type calculator' do
     end
 
     context 'hash' do
+      let(:derived) do
+        Class.new(Hash)[:first => 1, :second => 2]
+      end
+
+      let(:derived_object) do
+        Class.new(Hash) do
+          include PuppetObject
+
+          def self._pcore_type
+            @type ||= TypeFactory.object('name' => 'DerivedObjectHash')
+          end
+        end[:first => 1, :second => 2]
+      end
+
       it 'translates to PHashType' do
         expect(calculator.infer({:first => 1, :second => 2}).class).to eq(PHashType)
+      end
+
+      it 'translates derived Hash to PRuntimeType' do
+        expect(calculator.infer(derived).class).to eq(PRuntimeType)
+      end
+
+      it 'translates derived Puppet Object Hash to PObjectType' do
+        expect(calculator.infer(derived_object).class).to eq(PObjectType)
+      end
+
+      it 'Instance of derived Hash class is not instance of Hash type' do
+        expect(PHashType::DEFAULT).not_to be_instance(derived)
+      end
+
+      it 'Instance of derived Hash class is instance of Runtime type' do
+        expect(runtime_t('ruby', nil)).to be_instance(derived)
+      end
+
+      it 'Instance of derived Puppet Object Hash class is not instance of Hash type' do
+        expect(PHashType::DEFAULT).not_to be_instance(derived_object)
+      end
+
+      it 'Instance of derived Puppet Object Hash class is instance of Object type' do
+        expect(object_t('name' => 'DerivedObjectHash')).to be_instance(derived_object)
       end
 
       it 'with symbolic keys translates to PHashType[PRuntimeType[ruby, Symbol], value]' do
@@ -1033,7 +1117,7 @@ describe 'The type calculator' do
       it 'Default key optionality is controlled by value assignability to undef' do
         t1 = struct_t({'member' => string_t})
         expect(t1.elements[0].key_type).to eq(string_t('member'))
-        t1 = struct_t({'member' => object_t})
+        t1 = struct_t({'member' => any_t})
         expect(t1.elements[0].key_type).to eq(optional_t(string_t('member')))
       end
 
@@ -1054,7 +1138,7 @@ describe 'The type calculator' do
       end
 
       it 'Required members not optional even when value is' do
-        t1 = struct_t({not_undef_t('required_member') => object_t, not_undef_t('other_member') => string_t})
+        t1 = struct_t({not_undef_t('required_member') => any_t, not_undef_t('other_member') => string_t})
         t2 = struct_t({not_undef_t('other_member') => string_t})
         expect(t2).not_to be_assignable_to(t1)
       end
@@ -1100,11 +1184,11 @@ describe 'The type calculator' do
       end
 
       it 'a callable with a return type Any is assignable to the default callable' do
-        expect(callable_t([], object_t)).to be_assignable_to(PCallableType::DEFAULT)
+        expect(callable_t([], any_t)).to be_assignable_to(PCallableType::DEFAULT)
       end
 
       it 'a callable with a return type Any is equal to a callable with the same parameters and no return type' do
-        expect(callable_t([string_t], object_t)).to eql(callable_t(string_t))
+        expect(callable_t([string_t], any_t)).to eql(callable_t(string_t))
       end
 
       it 'a callable with a return type different than Any is not equal to a callable with the same parameters and no return type' do
@@ -1796,7 +1880,7 @@ describe 'The type calculator' do
       end
 
       it 'should consider nil to be a valid element value' do
-        struct = struct_t({not_undef_t('a') => object_t, 'b'=>String})
+        struct = struct_t({not_undef_t('a') => any_t, 'b'=>String})
         expect(calculator.instance?(struct, {'a'=>nil , 'b'=>'a'})).to eq(true)
       end
 
@@ -1859,8 +1943,8 @@ describe 'The type calculator' do
         the_block = factory.LAMBDA(params,factory.literal(42), nil).model
         the_closure = Evaluator::Closure::Dynamic.new(:fake_evaluator, the_block, :fake_scope)
         expect(calculator.instance?(all_callables_t, the_closure)).to be_truthy
-        expect(calculator.instance?(callable_t(object_t), the_closure)).to be_truthy
-        expect(calculator.instance?(callable_t(object_t, object_t), the_closure)).to be_falsey
+        expect(calculator.instance?(callable_t(any_t), the_closure)).to be_truthy
+        expect(calculator.instance?(callable_t(any_t, any_t), the_closure)).to be_falsey
       end
 
       it 'a Function instance should be considered a Callable' do
@@ -2117,9 +2201,9 @@ describe 'The type calculator' do
     end
 
     it 'ensures that Struct key types are not generalized' do
-      generic = struct_t({'a' => object_t}).generalize
+      generic = struct_t({'a' => any_t}).generalize
       expect(generic.to_s).to eq("Struct[{'a' => Any}]")
-      generic = struct_t({not_undef_t('a') => object_t}).generalize
+      generic = struct_t({not_undef_t('a') => any_t}).generalize
       expect(generic.to_s).to eq("Struct[{NotUndef['a'] => Any}]")
       generic = struct_t({optional_t('a') => string_t}).generalize
       expect(generic.to_s).to eq("Struct[{Optional['a'] => String}]")
@@ -2195,50 +2279,50 @@ describe 'The type calculator' do
     context 'and given is more generic' do
       it 'with callable' do
         required = callable_t(string_t)
-        given = callable_t(object_t)
+        given = callable_t(any_t)
         expect(calculator.callable?(required, given)).to eq(true)
       end
 
       it 'with args tuple' do
         required = callable_t(string_t)
-        given = tuple_t(object_t)
+        given = tuple_t(any_t)
         expect(calculator.callable?(required, given)).to eq(false)
       end
 
       it 'with args tuple having a block' do
         required = callable_t(string_t, callable_t(string_t))
-        given = tuple_t(string_t, callable_t(object_t))
+        given = tuple_t(string_t, callable_t(any_t))
         expect(calculator.callable?(required, given)).to eq(true)
       end
 
       it 'with args tuple having a block with captures rest' do
         required = callable_t(string_t, callable_t(string_t))
-        given = tuple_t(string_t, callable_t(object_t, 0, :default))
+        given = tuple_t(string_t, callable_t(any_t, 0, :default))
         expect(calculator.callable?(required, given)).to eq(true)
       end
     end
 
     context 'and given is more specific' do
       it 'with callable' do
-        required = callable_t(object_t)
+        required = callable_t(any_t)
         given = callable_t(string_t)
         expect(calculator.callable?(required, given)).to eq(false)
       end
 
       it 'with args tuple' do
-        required = callable_t(object_t)
+        required = callable_t(any_t)
         given = tuple_t(string_t)
         expect(calculator.callable?(required, given)).to eq(true)
       end
 
       it 'with args tuple having a block' do
-        required = callable_t(string_t, callable_t(object_t))
+        required = callable_t(string_t, callable_t(any_t))
         given = tuple_t(string_t, callable_t(string_t))
         expect(calculator.callable?(required, given)).to eq(false)
       end
 
       it 'with args tuple having a block with captures rest' do
-        required = callable_t(string_t, callable_t(object_t))
+        required = callable_t(string_t, callable_t(any_t))
         given = tuple_t(string_t, callable_t(string_t, 0, :default))
         expect(calculator.callable?(required, given)).to eq(false)
       end

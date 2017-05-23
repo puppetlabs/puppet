@@ -647,7 +647,7 @@ class PScalarType < PAnyType
   def instance?(o, guard = nil)
     if o.is_a?(String) || o.is_a?(Numeric) || o.is_a?(TrueClass) || o.is_a?(FalseClass) || o.is_a?(Regexp)
       true
-    elsif o.is_a?(Array) || o.is_a?(Hash) || o.is_a?(PAnyType) || o.is_a?(NilClass)
+    elsif o.instance_of?(Array) || o.instance_of?(Hash) || o.is_a?(PAnyType) || o.is_a?(NilClass)
       false
     else
       assignable?(TypeCalculator.infer(o))
@@ -1196,7 +1196,8 @@ class PCollectionType < PAnyType
   end
 
   def instance?(o, guard = nil)
-    if o.is_a?(Array) || o.is_a?(Hash)
+    # The inferred type of a class derived from Array or Hash is either Runtime or Object. It's not assignable to the Collection type.
+    if o.instance_of?(Array) || o.instance_of?(Hash)
       @size_type.nil? || @size_type.instance?(o.size)
     else
       false
@@ -1871,7 +1872,8 @@ class PStructType < PAnyType
   end
 
   def instance?(o, guard = nil)
-    return false unless o.is_a?(Hash)
+    # The inferred type of a class derived from Hash is either Runtime or Object. It's not assignable to the Struct type.
+    return false unless o.instance_of?(Hash)
     matched = 0
     @elements.all? do |e|
       key = e.name
@@ -2043,7 +2045,8 @@ class PTupleType < PAnyType
   end
 
   def instance?(o, guard = nil)
-    return false unless o.is_a?(Array)
+    # The inferred type of a class derived from Array is either Runtime or Object. It's not assignable to the Tuple type.
+    return false unless o.instance_of?(Array)
     if @size_type
       return false unless @size_type.instance?(o.size, guard)
     else
@@ -2372,7 +2375,8 @@ class PArrayType < PCollectionType
   end
 
   def instance?(o, guard = nil)
-    return false unless o.is_a?(Array)
+    # The inferred type of a class derived from Array is either Runtime or Object. It's not assignable to the Array type.
+    return false unless o.instance_of?(Array)
     return false unless o.all? {|element| @element_type.instance?(element, guard) }
     size_t = size_type
     size_t.nil? || size_t.instance?(o.size, guard)
@@ -2521,7 +2525,8 @@ class PHashType < PCollectionType
   end
 
   def instance?(o, guard = nil)
-    return false unless o.is_a?(Hash)
+    # The inferred type of a class derived from Hash is either Runtime or Object. It's not assignable to the Hash type.
+    return false unless o.instance_of?(Hash)
     if o.keys.all? {|key| @key_type.instance?(key, guard) } && o.values.all? {|value| @value_type.instance?(value, guard) }
       size_t = size_type
       size_t.nil? || size_t.instance?(o.size, guard)
