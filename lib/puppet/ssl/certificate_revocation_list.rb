@@ -57,6 +57,11 @@ DOC
     Puppet::SSL::CertificateRevocationList.indirection.save(self)
   end
 
+  def expiration
+    return nil unless @content
+    @content.next_update
+  end
+
 private
 
   def create_crl_issued_by(cert)
