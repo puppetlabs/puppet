@@ -403,6 +403,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     context "on strings requiring boxing to Numeric" do
+      let(:logs) { [] }
+      let(:notices) { logs.select { |log| log.level == :notice }.map { |log| log.message } }
+      let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
+      let(:debugs) { logs.select { |log| log.level == :debug }.map { |log| log.message } }
+
       {
         "'2' + '2'"       => 4,
         "'-2' + '2'"      => 0,
@@ -425,6 +430,35 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
             expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
           end
         end
+
+      {
+        "'2' + 2"       => 2,
+        "'4' - 2"       => 4,
+        "'2' * 2"       => 2,
+        "'2' / 1"       => 2,
+        "'8' >> 1"      => 8,
+        "'4' << 1"      => 4,
+        "'10' % 3"      => 10,
+      }.each do |source, coerced_val|
+          it "should warn about numeric coercion in '#{source}' when strict = warning" do
+            Puppet[:strict] = :warning
+            collect_notices(source)
+            expect(warnings).to include(/The string '#{coerced_val}' was automatically coerced to the numerical value #{coerced_val}/)
+          end
+
+          it "should not warn about numeric coercion in '#{source}' if strict = off" do
+            Puppet[:strict] = :off
+            collect_notices(source)
+            expect(warnings).to_not include(/The string '#{coerced_val}' was automatically coerced to the numerical value #{coerced_val}/)
+          end
+
+        it "should error when finding numeric coercion in '#{source}' if strict = error" do
+          Puppet[:strict] = :error
+          expect { parser.evaluate_string(scope, source, __FILE__) }.to raise_error(
+            /The string '#{coerced_val}' was automatically coerced to the numerical value #{coerced_val}/
+            )
+        end
+      end
 
       {
         "'0888' + '010'"   => :error,
@@ -1475,6 +1509,12 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
     failure_message do |actual|
       "Relationship #{expected[0]}[#{expected[1]}] #{expected[2]} #{expected[3]}[#{expected[4]}] but was unknown to compiler"
+    end
+  end
+
+  def collect_notices(code)
+    Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+      parser.evaluate_string(scope, code, __FILE__)
     end
   end
 
