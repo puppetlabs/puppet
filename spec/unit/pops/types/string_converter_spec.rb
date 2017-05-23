@@ -866,6 +866,28 @@ describe 'The string converter' do
       end
     end
 
+    context 'that is subclassed' do
+      let(:array) { ['a', 2] }
+      let(:derived_array) do
+        Class.new(Array).new(array)
+      end
+
+      let(:hash) { {'first' => 1, 'second' => 2} }
+      let(:derived_hash) do
+        Class.new(Hash)[hash]
+      end
+
+      it 'formats a derived array as a Runtime' do
+        expect(converter.convert(array)).to eq('[\'a\', 2]')
+        expect(converter.convert(derived_array)).to eq('["a", 2]')
+      end
+
+      it 'formats a derived hash as a Runtime' do
+        expect(converter.convert(hash)).to eq('{\'first\' => 1, \'second\' => 2}')
+        expect(converter.convert(derived_hash)).to eq('{"first"=>1, "second"=>2}')
+      end
+    end
+
     it 'errors when format is not recognized' do
       expect do
       string_formats = { Puppet::Pops::Types::PHashType::DEFAULT => "%k"}
