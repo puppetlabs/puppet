@@ -181,7 +181,9 @@ class Puppet::Transaction
 
   # Are there any failed resources in this transaction?
   def any_failed?
-    report.resource_statuses.values.detect { |status| status.failed? }
+    report.resource_statuses.values.detect { |status|
+      status.failed? || status.failed_to_restart?
+    }
   end
 
   # Find all of the changed resources.
@@ -229,7 +231,10 @@ class Puppet::Transaction
   def apply(resource, ancestor = nil)
     status = resource_harness.evaluate(resource)
     add_resource_status(status)
-    event_manager.queue_events(ancestor || resource, status.events) unless status.failed?
+    ancestor ||= resource
+    if !(status.failed? || status.failed_to_restart?)
+      event_manager.queue_events(ancestor, status.events)
+    end
   rescue => detail
     resource.err _("Could not evaluate: %{detail}") % { detail: detail }
   end
@@ -281,7 +286,7 @@ class Puppet::Transaction
     relationship_graph.direct_dependencies_of(resource).each do |dep|
       if (s = resource_status(dep))
         failed.merge(s.failed_dependencies) if s.dependency_failed?
-        if s.failed?
+        if s.failed? || s.failed_to_restart?
           failed.add(dep)
         end
       end

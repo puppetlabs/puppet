@@ -170,7 +170,9 @@ class Puppet::Transaction::Report
 
   # @api private
   def compute_status(resource_metrics, change_metric)
-    if resources_failed_to_generate || (resource_metrics["failed"] || 0) > 0
+    if resources_failed_to_generate ||
+       (resource_metrics["failed"] || 0) > 0 ||
+       (resource_metrics["failed_to_restart"] || 0) > 0
       'failed'
     elsif change_metric > 0
       'changed'

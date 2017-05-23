@@ -292,6 +292,12 @@ describe Puppet::Transaction::Report do
         expect(@report.status).to eq('failed')
       end
 
+      it "should mark the report as 'failed' if resources failed to restart" do
+        add_statuses(1) { |status| status.failed_to_restart = true }
+        @report.finalize_report
+        expect(@report.status).to eq('failed')
+      end
+
       it "should mark the report as 'failed' if resources_failed_to_generate" do
         @report.resources_failed_to_generate = true
         @report.finalize_report
