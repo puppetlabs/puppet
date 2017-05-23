@@ -70,7 +70,7 @@ require 'hiera/puppet_function'
 # # "Key 'classes' not found".
 # ~~~
 #
-# See [the documentation](http://links.puppetlabs.com/hierainclude) for more information
+# See [the documentation](http://links.puppet.com/hierainclude) for more information
 # and a more detailed example of how `hiera_include` uses array merge lookups to classify
 # nodes.
 #

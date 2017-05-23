@@ -1336,7 +1336,7 @@ EOT
         makes to the master. WARNING: This setting is mutually exclusive with
         node_name_fact.  Changing this setting also requires changes to the default
         auth.conf configuration on the Puppet Master.  Please see
-        http://links.puppetlabs.com/node_name_value for more information."
+        http://links.puppet.com/node_name_value for more information."
     },
     :node_name_fact => {
       :default => "",
@@ -1344,7 +1344,7 @@ EOT
         makes to the master. WARNING: This setting is mutually exclusive with
         node_name_value.  Changing this setting also requires changes to the default
         auth.conf configuration on the Puppet Master.  Please see
-        http://links.puppetlabs.com/node_name_fact for more information.",
+        http://links.puppet.com/node_name_fact for more information.",
       :hook => proc do |value|
         if !value.empty? and Puppet[:node_name_value] != Puppet[:certname]
           raise "Cannot specify both the node_name_value and node_name_fact settings"

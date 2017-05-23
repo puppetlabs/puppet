@@ -10,7 +10,7 @@ require 'puppet/util/json_lockfile'
 #  because it used by external tools such as mcollective.
 #
 # For more information, please see docs on the website.
-#  http://links.puppetlabs.com/agent_lockfiles
+#  http://links.puppet.com/agent_lockfiles
 module Puppet::Agent::Disabler
   DISABLED_MESSAGE_JSON_KEY = "disabled_message"
 

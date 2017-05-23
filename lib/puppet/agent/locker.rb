@@ -11,7 +11,7 @@ require 'puppet/error'
 # Puppet API because it used by external tools such as mcollective.
 #
 # For more information, please see docs on the website.
-#  http://links.puppetlabs.com/agent_lockfiles
+#  http://links.puppet.com/agent_lockfiles
 module Puppet::Agent::Locker
   # Yield if we get a lock, else raise Puppet::LockError. Return
   # value of block yielded.

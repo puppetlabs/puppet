@@ -355,7 +355,7 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
       end
 
       it "should log a deprecation notice when running a WEBrick server" do
-        Puppet.expects(:deprecation_warning).with("The WEBrick Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppetlabs.com/deprecate-rack-webrick-servers for more information.")
+        Puppet.expects(:deprecation_warning).with("The WEBrick Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppet.com/deprecate-rack-webrick-servers for more information.")
 
         @master.main
       end
@@ -394,7 +394,7 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
         end
 
         it "should log a deprecation notice" do
-          Puppet.expects(:deprecation_warning).with("The Rack Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppetlabs.com/deprecate-rack-webrick-servers for more information.")
+          Puppet.expects(:deprecation_warning).with("The Rack Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppet.com/deprecate-rack-webrick-servers for more information.")
 
           @master.main
         end

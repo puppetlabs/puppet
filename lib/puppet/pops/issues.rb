@@ -235,7 +235,7 @@ module Issues
   end
 
   APPENDS_DELETES_NO_LONGER_SUPPORTED = hard_issue :APPENDS_DELETES_NO_LONGER_SUPPORTED, :operator do
-    _("The operator '%{operator}' is no longer supported. See http://links.puppetlabs.com/remove-plus-equals") % { operator: operator }
+    _("The operator '%{operator}' is no longer supported. See http://links.puppet.com/remove-plus-equals") % { operator: operator }
   end
 
   # For unsupported operators (e.g. += and -= in puppet 4).
@@ -583,7 +583,7 @@ module Issues
 
   DISCONTINUED_IMPORT = hard_issue :DISCONTINUED_IMPORT do
     #TRANSLATORS "import" is a function name and should not be translated
-    _("Use of 'import' has been discontinued in favor of a manifest directory. See http://links.puppetlabs.com/puppet-import-deprecation")
+    _("Use of 'import' has been discontinued in favor of a manifest directory. See http://links.puppet.com/puppet-import-deprecation")
   end
 
   IDEM_EXPRESSION_NOT_LAST = issue :IDEM_EXPRESSION_NOT_LAST do
@@ -615,7 +615,7 @@ module Issues
   end
 
   ILLEGAL_NODE_INHERITANCE = issue :ILLEGAL_NODE_INHERITANCE do
-    _("Node inheritance is not supported in Puppet >= 4.0.0. See http://links.puppetlabs.com/puppet-node-inheritance-deprecation")
+    _("Node inheritance is not supported in Puppet >= 4.0.0. See http://links.puppet.com/puppet-node-inheritance-deprecation")
   end
 
   ILLEGAL_OVERRIDEN_TYPE = issue :ILLEGAL_OVERRIDEN_TYPE, :actual do
