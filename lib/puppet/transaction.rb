@@ -257,7 +257,7 @@ class Puppet::Transaction
     suppress_report = (resource.class == Puppet::Type.type(:whit))
 
     s = resource_status(resource)
-    if s && s.dependency_failed?
+    if s && (s.dependency_failed? || s.failed_to_restart?)
       # See above. --daniel 2011-06-06
       unless suppress_report then
         s.failed_dependencies.each do |dep|
@@ -266,7 +266,7 @@ class Puppet::Transaction
       end
     end
 
-    s && s.dependency_failed?
+    s && (s.dependency_failed? || s.failed_to_restart?)
   end
 
   # We need to know if a resource has any failed dependencies before
@@ -280,8 +280,8 @@ class Puppet::Transaction
     failed = Set.new
     relationship_graph.direct_dependencies_of(resource).each do |dep|
       if (s = resource_status(dep))
-        failed.merge(s.failed_dependencies) if s.dependency_failed?
-        if s.failed?
+        failed.merge(s.failed_dependencies) if s.dependency_failed? || s.failed_to_restart?
+        if s.failed? || s.failed_to_restart?
           failed.add(dep)
         end
       end
