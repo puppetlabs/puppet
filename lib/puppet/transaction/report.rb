@@ -315,11 +315,11 @@ class Puppet::Transaction::Report
     }
 
     # The following is include only when set
-    hash['master_used'] = @master_used if @master_used
-    hash['catalog_uuid'] = @catalog_uuid if @catalog_uuid
-    hash['code_id'] = @code_id if @code_id
-    hash['job_id'] = @job_id if @job_id
-    hash['cached_catalog_status'] = @cached_catalog_status if @cached_catalog_status
+    hash['master_used'] = @master_used unless @master_used.nil?
+    hash['catalog_uuid'] = @catalog_uuid unless @catalog_uuid.nil?
+    hash['code_id'] = @code_id unless @code_id.nil?
+    hash['job_id'] = @job_id unless @job_id.nil?
+    hash['cached_catalog_status'] = @cached_catalog_status unless @cached_catalog_status.nil?
     hash
   end
 
