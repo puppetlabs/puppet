@@ -326,7 +326,7 @@ class Puppet::Util::Log
 
   def to_data_hash
     {
-      'level' => @level,
+      'level' => @level.to_s,
       'message' => to_s,
       'source' => @source,
       'tags' => @tags.to_a,

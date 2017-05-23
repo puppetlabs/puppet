@@ -526,8 +526,9 @@ describe Puppet::Util::Log do
     end
   end
 
+  let(:log) { Puppet::Util::Log.new(:level => 'notice', :message => 'hooray', :file => 'thefile', :line => 1729, :source => 'specs', :tags => ['a', 'b', 'c']) }
+
   it "should round trip through pson" do
-    log = Puppet::Util::Log.new(:level => 'notice', :message => 'hooray', :file => 'thefile', :line => 1729, :source => 'specs', :tags => ['a', 'b', 'c'])
     tripped = Puppet::Util::Log.from_data_hash(PSON.parse(log.to_pson))
 
     expect(tripped.file).to eq(log.file)
@@ -537,5 +538,13 @@ describe Puppet::Util::Log do
     expect(tripped.source).to eq(log.source)
     expect(tripped.tags).to eq(log.tags)
     expect(tripped.time).to eq(log.time)
+  end
+
+  it 'to_yaml_properties and to_data_hash references the same attributes' do
+    expect(log.to_yaml_properties.map {|attr| attr.to_s[1..-1]}.sort).to eql(log.to_data_hash.keys.sort)
+  end
+
+  it 'to_data_hash returns value that is instance of to Data' do
+    expect(Puppet::Pops::Types::TypeFactory.data.instance?(log.to_data_hash)).to be_truthy
   end
 end

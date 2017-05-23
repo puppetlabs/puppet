@@ -484,13 +484,22 @@ describe Puppet::Transaction::Report do
     it "should not include @external_times" do
       report = Puppet::Transaction::Report.new('apply')
       report.add_times('config_retrieval', 1.0)
-      expect(report.to_yaml_properties).not_to include('@external_times')
+      expect(report.to_yaml_properties).not_to include(:@external_times)
     end
 
     it "should not include @resources_failed_to_generate" do
       report = Puppet::Transaction::Report.new("apply")
       report.resources_failed_to_generate = true
-      expect(report.to_yaml_properties).not_to include('@resources_failed_to_generate')
+      expect(report.to_yaml_properties).not_to include(:@resources_failed_to_generate)
+    end
+
+    it 'to_yaml_properties and to_data_hash references the same attributes' do
+      report = generate_report
+      expect(report.to_yaml_properties.map {|attr| attr.to_s[1..-1]}.sort).to eql(report.to_data_hash.keys.sort)
+    end
+
+    it 'to_data_hash returns value that is instance of to Data' do
+      expect(Puppet::Pops::Types::TypeFactory.data.instance?(generate_report.to_data_hash)).to be_truthy
     end
   end
 
@@ -555,6 +564,7 @@ describe Puppet::Transaction::Report do
     expect(tripped.kind).to eq(report.kind)
     expect(tripped.status).to eq(report.status)
     expect(tripped.environment).to eq(report.environment)
+    expect(tripped.corrective_change).to eq(report.corrective_change)
 
     expect(logs_as_strings(tripped)).to eq(logs_as_strings(report))
     expect(metrics_as_hashes(tripped)).to eq(metrics_as_hashes(report))
@@ -613,7 +623,7 @@ describe Puppet::Transaction::Report do
     status.changed = true
     status.add_event(event)
 
-    report = Puppet::Transaction::Report.new('apply', 1357986, 'test_environment', "df34516e-4050-402d-a166-05b03b940749")
+    report = Puppet::Transaction::Report.new('apply', 1357986, 'test_environment', "df34516e-4050-402d-a166-05b03b940749", '42')
     report << Puppet::Util::Log.new(:level => :warning, :message => "log message")
     report.add_times("timing", 4)
     report.code_id = "some code id"
@@ -630,7 +640,7 @@ describe Puppet::Transaction::Report do
     status.changed = true
     status.failed_because("bad stuff happened")
 
-    report = Puppet::Transaction::Report.new('apply', 1357986, 'test_environment', "df34516e-4050-402d-a166-05b03b940749")
+    report = Puppet::Transaction::Report.new('apply', 1357986, 'test_environment', "df34516e-4050-402d-a166-05b03b940749", '42')
     report << Puppet::Util::Log.new(:level => :warning, :message => "log message")
     report.add_times("timing", 4)
     report.code_id = "some code id"

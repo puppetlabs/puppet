@@ -94,6 +94,24 @@ describe Puppet::Node do
       expect(node.environment_name).to eq(:bar)
       expect(node.parameters['environment']).to eq('bar')
     end
+
+    it 'to_yaml_properties and to_data_hash references the same attributes' do
+      node = Puppet::Node.new("hello",
+        :environment => 'bar',
+        :classes => ['erth', 'aiu'],
+        :parameters => {"hostname"=>"food"}
+      )
+      expect(node.to_yaml_properties.map {|attr| attr.to_s[1..-1]}.sort).to eql(node.to_data_hash.keys.sort)
+    end
+
+    it 'to_data_hash returns value that is instance of to Data' do
+      node = Puppet::Node.new("hello",
+        :environment => 'bar',
+        :classes => ['erth', 'aiu'],
+        :parameters => {"hostname"=>"food"}
+      )
+      expect(Puppet::Pops::Types::TypeFactory.data.instance?(node.to_data_hash)).to be_truthy
+    end
   end
 
   describe "when serializing using yaml" do
@@ -180,9 +198,9 @@ describe Puppet::Node do
       expect(Puppet::Node).to read_json_attribute('parameters').from(@node.to_json).as({"a" => "b", "c" => "d"})
     end
 
-    it "deserializes environment to environment_name as a string" do
+    it "deserializes environment to environment_name as a symbol" do
       @node.environment = environment
-      expect(Puppet::Node).to read_json_attribute('environment_name').from(@node.to_json).as('bar')
+      expect(Puppet::Node).to read_json_attribute('environment_name').from(@node.to_json).as(:bar)
     end
   end
 end

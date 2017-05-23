@@ -57,7 +57,7 @@ class Puppet::Transaction::Event
       'desired_value' => @desired_value,
       'historical_value' => @historical_value,
       'message' => @message,
-      'name' => @name,
+      'name' => @name.nil? ? nil : @name.to_s,
       'status' => @status,
       'time' => @time.iso8601(9),
       'redacted' => @redacted,

@@ -27,7 +27,10 @@ class Puppet::Node
     @name       = data['name']       || (raise ArgumentError, _("No name provided in serialized data"))
     @classes    = data['classes']    || []
     @parameters = data['parameters'] || {}
-    @environment_name = data['environment']
+    env_name = data['environment']
+    env_name = env_name.intern unless env_name.nil?
+    @environment_name = env_name
+    environment = env_name
   end
 
   def self.from_data_hash(data)
@@ -36,10 +39,14 @@ class Puppet::Node
     node
   end
 
+  def to_yaml_properties
+    [:@classes, :@environment, :@name, :@parameters]
+  end
+
   def to_data_hash
     result = {
       'name' => name,
-      'environment' => environment.name,
+      'environment' => environment.name.to_s,
     }
     result['classes'] = classes unless classes.empty?
     result['parameters'] = parameters unless parameters.empty?
