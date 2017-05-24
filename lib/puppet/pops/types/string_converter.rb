@@ -568,7 +568,20 @@ class StringConverter
     end
   end
 
-  def string_PRuntimeType(val_type, val, format_map, _)
+  def string_PRuntimeType(val_type, val, format_map, indent)
+    # Before giving up on this, and use a string representation of the unknown
+    # object, a check is made to see if the object can present itself as
+    # a hash or an array. If it can, then that representation is used instead.
+    if val.is_a?(Hash)
+      hash = val.to_hash
+      # Ensure that the returned value isn't derived from Hash
+      return string_PHashType(val_type, hash, format_map, indent) if hash.instance_of?(Hash)
+    elsif val.is_a?(Array)
+      array = val.to_a
+      # Ensure that the returned value isn't derived from Array
+      return string_PArrayType(val_type, array, format_map, indent) if array.instance_of?(Array)
+    end
+
     f = get_format(val_type, format_map)
     case f.format
     when :s

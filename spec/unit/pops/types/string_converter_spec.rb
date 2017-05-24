@@ -869,12 +869,30 @@ describe 'The string converter' do
     context 'that is subclassed' do
       let(:array) { ['a', 2] }
       let(:derived_array) do
-        Class.new(Array).new(array)
+        Class.new(Array) do
+          def to_a
+            self # Dead wrong! Should return a plain Array copy
+          end
+        end.new(array)
+      end
+      let(:derived_with_to_a) do
+        Class.new(Array) do
+          def to_a
+            super
+          end
+        end.new(array)
       end
 
       let(:hash) { {'first' => 1, 'second' => 2} }
       let(:derived_hash) do
         Class.new(Hash)[hash]
+      end
+      let(:derived_with_to_hash) do
+        Class.new(Hash) do
+          def to_hash
+            {}.merge(self)
+          end
+        end[hash]
       end
 
       it 'formats a derived array as a Runtime' do
@@ -882,9 +900,17 @@ describe 'The string converter' do
         expect(converter.convert(derived_array)).to eq('["a", 2]')
       end
 
+      it 'formats a derived array with #to_a retuning plain Array as an Array' do
+        expect(converter.convert(derived_with_to_a)).to eq('[\'a\', 2]')
+      end
+
       it 'formats a derived hash as a Runtime' do
         expect(converter.convert(hash)).to eq('{\'first\' => 1, \'second\' => 2}')
         expect(converter.convert(derived_hash)).to eq('{"first"=>1, "second"=>2}')
+      end
+
+      it 'formats a derived hash with #to_hash retuning plain Hash as a Hash' do
+        expect(converter.convert(derived_with_to_hash, '%p')).to eq('{\'first\' => 1, \'second\' => 2}')
       end
     end
 
