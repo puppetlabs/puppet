@@ -310,7 +310,10 @@ class Puppet::Indirector::Indirection
     end
   end
 
-  # Setup a request, pick the appropriate terminus, check the request's authorization, and return it.
+  # Pick the appropriate terminus, check the request's authorization, and return it.
+  # @param [Puppet::Indirector::Request] request instance
+  # @return [Puppet::Indirector::Terminus] terminus instance (usually a subclass
+  #   of Puppet::Indirector::Terminus) for this request
   def prepare(request)
     # Pick our terminus.
     if respond_to?(:select_terminus)
