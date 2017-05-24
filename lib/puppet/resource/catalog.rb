@@ -82,7 +82,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     tag(*classes)
   end
 
-  # Returns [typename, title] when given a String with "Type[title]". 
+  # Returns [typename, title] when given a String with "Type[title]".
   # Returns [nil, nil] if '[' ']' not detected.
   #
   def title_key_for_ref( ref )
@@ -487,7 +487,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       end
 
     {
-      'tags'      => tags,
+      'tags'      => tags.to_a,
       'name'      => name,
       'version'   => version,
       'code_id'   => code_id,

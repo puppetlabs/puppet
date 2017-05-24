@@ -106,7 +106,7 @@ class Puppet::Resource
   def to_data_hash(rich_data_enabled = false)
     data = {
       'type' => type,
-      'title' => title,
+      'title' => title.to_s,
       'tags' => tags.to_data_hash
     }
     ATTRIBUTES.each do |param|
@@ -163,7 +163,7 @@ class Puppet::Resource
     end
 
     data['parameters'] = params unless params.empty?
-    data["sensitive_parameters"] = sensitive_parameters unless sensitive_parameters.empty?
+    data["sensitive_parameters"] = sensitive_parameters.map(&:to_s) unless sensitive_parameters.empty?
 
     data
   end
