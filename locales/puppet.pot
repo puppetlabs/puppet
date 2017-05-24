@@ -358,11 +358,11 @@ msgid "Could not change user to %{user}. User does not exist and is required to 
 msgstr ""
 
 #: ../lib/puppet/application/master.rb:207
-msgid "The Rack Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppetlabs.com/deprecate-rack-webrick-servers for more information."
+msgid "The Rack Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppet.com/deprecate-rack-webrick-servers for more information."
 msgstr ""
 
 #: ../lib/puppet/application/master.rb:210
-msgid "The WEBrick Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppetlabs.com/deprecate-rack-webrick-servers for more information."
+msgid "The WEBrick Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppet.com/deprecate-rack-webrick-servers for more information."
 msgstr ""
 
 #: ../lib/puppet/application/master.rb:270
@@ -3941,7 +3941,7 @@ msgid "No value for required variable '$%{name}' in assignment to variables from
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:238
-msgid "The operator '%{operator}' is no longer supported. See http://links.puppetlabs.com/remove-plus-equals"
+msgid "The operator '%{operator}' is no longer supported. See http://links.puppet.com/remove-plus-equals"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:244
@@ -4250,7 +4250,7 @@ msgstr ""
 
 #. TRANSLATORS "import" is a function name and should not be translated
 #: ../lib/puppet/pops/issues.rb:578
-msgid "Use of 'import' has been discontinued in favor of a manifest directory. See http://links.puppetlabs.com/puppet-import-deprecation"
+msgid "Use of 'import' has been discontinued in favor of a manifest directory. See http://links.puppet.com/puppet-import-deprecation"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:582
@@ -4282,7 +4282,7 @@ msgid "No matching entry for selector parameter with value '%{param}'"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:610
-msgid "Node inheritance is not supported in Puppet >= 4.0.0. See http://links.puppetlabs.com/puppet-node-inheritance-deprecation"
+msgid "Node inheritance is not supported in Puppet >= 4.0.0. See http://links.puppet.com/puppet-node-inheritance-deprecation"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:614

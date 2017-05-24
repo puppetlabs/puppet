@@ -4,7 +4,7 @@ class Puppet::Parser::AST::Node < Puppet::Parser::AST::TopLevelConstruct
   def initialize(names, context = {})
     raise ArgumentError, "names should be an array" unless names.is_a? Array
     if context[:parent]
-      raise Puppet::DevError, "Node inheritance is removed in Puppet 4.0.0. See http://links.puppetlabs.com/puppet-node-inheritance-deprecation"
+      raise Puppet::DevError, "Node inheritance is removed in Puppet 4.0.0. See http://links.puppet.com/puppet-node-inheritance-deprecation"
     end
 
     @names = names

@@ -89,7 +89,7 @@ Note that calls using the 'override level' option are not directly supported by 
 result must be post processed to get exactly the same result, for example using simple hash/array `+` or
 with calls to stdlib's `deep_merge` function depending on kind of hiera call and setting of merge in hiera.yaml.
 
-See [the documentation](http://links.puppetlabs.com/hierainclude) for more information
+See [the documentation](http://links.puppet.com/hierainclude) for more information
 and a more detailed example of how `hiera_include` uses array merge lookups to classify
 nodes.
 
