@@ -723,7 +723,7 @@ describe 'The Object Type' do
       type Spec::MySecondObject = Object[{parent => Spec::MyObject, attributes => { b => String }}]
       notice(Spec::MySecondObject(42, 'Meaning of life'))
       CODE
-      expect(eval_and_collect_notices(code)).to eql(["Spec::MySecondObject({\n  'a' => 42,\n  'b' => 'Meaning of life'\n})"])
+      expect(eval_and_collect_notices(code)).to eql(["Spec::MySecondObject({'a' => 42, 'b' => 'Meaning of life'})"])
     end
   end
 
@@ -780,6 +780,34 @@ describe 'The Object Type' do
       notice($x == $y)
       CODE
       expect(eval_and_collect_notices(code)).to eql(['true'])
+    end
+
+    it 'declared Object type is assignable to default Object type' do
+      code = <<-CODE
+      type MyObject = Object[{ attributes => { a => Integer }}]
+      notice(MyObject < Object)
+      notice(MyObject <= Object)
+      CODE
+      expect(eval_and_collect_notices(code)).to eql(['true', 'true'])
+    end
+
+    it 'default Object type not is assignable to declared Object type' do
+      code = <<-CODE
+      type MyObject = Object[{ attributes => { a => Integer }}]
+      notice(Object < MyObject)
+      notice(Object <= MyObject)
+      CODE
+      expect(eval_and_collect_notices(code)).to eql(['false', 'false'])
+    end
+
+    it 'default Object type is assignable to itself' do
+      code = <<-CODE
+      notice(Object < Object)
+      notice(Object <= Object)
+      notice(Object > Object)
+      notice(Object >= Object)
+      CODE
+      expect(eval_and_collect_notices(code)).to eql(['false', 'true', 'false', 'true'])
     end
 
     it 'an object type is an instance of an object type type' do

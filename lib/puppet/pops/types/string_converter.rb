@@ -163,6 +163,11 @@ class StringConverter
       unless lower && higher
         return lower || higher
       end
+
+      # drop all formats in lower than is more generic in higher. Lower must never
+      # override higher
+      lower = lower.reject { |lk, _| higher.keys.any? { |hk| hk != lk && hk.assignable?(lk) }}
+
       merged = (lower.keys + higher.keys).uniq.map do |k|
         [k, merge(lower[k], higher[k])]
       end
@@ -275,6 +280,7 @@ class StringConverter
   DEFAULT_ARRAY_DELIMITERS                      = ['[', ']'].freeze
 
   DEFAULT_STRING_FORMATS = {
+    PObjectType::DEFAULT   => Format.new('%p').freeze,    # call with initialization hash
     PFloatType::DEFAULT    => Format.new('%f').freeze,    # float
     PNumericType::DEFAULT  => Format.new('%d').freeze,    # decimal number
     PArrayType::DEFAULT    => DEFAULT_ARRAY_FORMAT.freeze,
@@ -283,6 +289,13 @@ class StringConverter
     PAnyType::DEFAULT      => Format.new('%s').freeze,    # unquoted string
   }.freeze
 
+  DEFAULT_PARAMETER_FORMAT = {
+    PCollectionType::DEFAULT => '%#p',
+    PObjectType::DEFAULT => '%#p',
+    PBinaryType::DEFAULT => '%p',
+    PStringType::DEFAULT => '%p',
+    PRuntimeType::DEFAULT => '%p'
+  }.freeze
 
   # Converts the given value to a String, under the direction of formatting rules per type.
   #
@@ -538,15 +551,47 @@ class StringConverter
   end
   private :validate_container_input
 
-  def string_PRuntimeType(val_type, val, format_map, _)
+  def string_PObjectType(val_type, val, format_map, indentation)
     f = get_format(val_type, format_map)
     case f.format
+    when :p
+      fmt = TypeFormatter.singleton
+      indentation = indentation.indenting(f.alt? || indentation.is_indenting?)
+      fmt = fmt.indented(indentation.level, 2) if indentation.is_indenting?
+      fmt.string(val)
     when :s
       val.to_s
     when :q
       val.inspect
     else
-      raise FormatError.new('Runtime', f.format, 'sq')
+      raise FormatError.new('Object', f.format, 'spq')
+    end
+  end
+
+  def string_PRuntimeType(val_type, val, format_map, indent)
+    # Before giving up on this, and use a string representation of the unknown
+    # object, a check is made to see if the object can present itself as
+    # a hash or an array. If it can, then that representation is used instead.
+    if val.is_a?(Hash)
+      hash = val.to_hash
+      # Ensure that the returned value isn't derived from Hash
+      return string_PHashType(val_type, hash, format_map, indent) if hash.instance_of?(Hash)
+    elsif val.is_a?(Array)
+      array = val.to_a
+      # Ensure that the returned value isn't derived from Array
+      return string_PArrayType(val_type, array, format_map, indent) if array.instance_of?(Array)
+    end
+
+    f = get_format(val_type, format_map)
+    case f.format
+    when :s
+      val.to_s
+    when :p
+      puppet_quote(val.to_s)
+    when :q
+      val.inspect
+    else
+      raise FormatError.new('Runtime', f.format, 'spq')
     end
   end
 
@@ -922,7 +967,7 @@ class StringConverter
 
   def is_container?(t)
     case t
-    when PArrayType, PHashType, PStructType, PTupleType
+    when PArrayType, PHashType, PStructType, PTupleType, PObjectType
       true
     else
       false
