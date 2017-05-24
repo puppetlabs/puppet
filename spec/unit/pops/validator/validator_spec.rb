@@ -98,6 +98,13 @@ describe "validating 4x" do
       expect(acceptor).to have_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZABLE)
     end
 
+    it 'does not produce an error for regular class resource' do
+      acceptor = validate(parse('class { test: }'))
+      expect(acceptor.warning_count).to eql(0)
+      expect(acceptor.error_count).to eql(0)
+      expect(acceptor).not_to have_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZABLE)
+    end
+
     it 'produces an error for exported class resource' do
       acceptor = validate(parse('@@class { test: }'))
       expect(acceptor.warning_count).to eql(0)

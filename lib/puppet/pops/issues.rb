@@ -371,7 +371,7 @@ module Issues
   end
 
   CLASS_NOT_VIRTUALIZABLE = issue :CLASS_NOT_VIRTUALIZABLE do
-    "Classes are not virtualizable"
+    _("Classes are not virtualizable")
   end
 
   # When an attempt is made to use multiple keys (to produce a range in Ruby - e.g. $arr[2,-1]).
