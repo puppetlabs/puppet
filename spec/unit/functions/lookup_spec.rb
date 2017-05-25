@@ -1293,6 +1293,11 @@ describe "The lookup function" do
           expect(explain('hello')).to match(/No such key: "hello"/)
           expect(warnings).to be_empty
         end
+
+        it 'explains an undefined variable' do
+          expect(explain('hello')).to match(/mapped_paths variable is undefined/)
+          expect(warnings).to be_empty
+        end
       end
     end
 

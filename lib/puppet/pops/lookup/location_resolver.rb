@@ -79,7 +79,13 @@ module Lookup
       mapped_vars = interpolate_method(:scope).call(mapped_path_triplet[0], lookup_invocation, 'mapped_path[0]')
 
       # No paths here unless the scope lookup returned something
-      return EMPTY_ARRAY if mapped_vars.nil? || mapped_vars.empty?
+      if mapped_vars.nil?
+        lookup_invocation.report_text { "mapped_paths variable is undefined - no paths produced" }
+        return EMPTY_ARRAY
+      elsif mapped_vars.empty?
+        lookup_invocation.report_text { "mapped_paths variable is empty - no paths produced" }
+        return EMPTY_ARRAY
+      end
 
       mapped_vars = [mapped_vars] if mapped_vars.is_a?(String)
       var_key = mapped_path_triplet[1]
