@@ -62,16 +62,22 @@ module Puppet::Util::SELinux
     if context.nil? or context == "unlabeled"
       return nil
     end
-    unless context =~ /^([^\s:]+):([^\s:]+):([^\s:]+)(?::([\sa-zA-Z0-9:,._-]+))?$/
+    components = /^([^\s:]+):([^\s:]+):([^\s:]+)(?::([\sa-zA-Z0-9:,._-]+))?$/.match(context)
+    unless components
       raise Puppet::Error, _("Invalid context to parse: %{context}") % { context: context }
     end
-    ret = {
-      :seluser => $1,
-      :selrole => $2,
-      :seltype => $3,
-      :selrange => $4,
-    }
-    ret[component]
+    case component
+    when :seluser
+      components[1]
+    when :selrole
+      components[2]
+    when :seltype
+      components[3]
+    when :selrange
+      components[4]
+    else
+      raise Puppet::Error, _("Invalid SELinux parameter type")
+    end
   end
 
   # This updates the actual SELinux label on the file.  You can update
@@ -135,6 +141,42 @@ module Puppet::Util::SELinux
       return new_context
     end
     nil
+  end
+
+  ##
+  # selinux_category_to_label is an internal method that converts all
+  # selinux categories to their internal representation, avoiding
+  # potential issues when mcstransd is not functional.
+  #
+  # It is not marked private because it is needed by File's
+  # selcontext.rb, but it is not intended for use outside of Puppet's
+  # code.
+  #
+  # @param category [String] An selinux category, such as "s0" or "SystemLow"
+  #
+  # @return [String] the numeric category name, such as "s0"
+  def selinux_category_to_label(category)
+    # We don't cache this, but there's already a ton of duplicate work
+    # in the selinux handling code.
+
+    path = Selinux.selinux_translations_path
+    begin
+      File.open(path).each do |line|
+        line.strip!
+        next if line.empty?
+        next if line[0] == "#" # skip comments
+        line.gsub!(/[[:space:]]+/m, '')
+        mapping = line.split("=", 2)
+        if category == mapping[1]
+          return mapping[0]
+        end
+      end
+    rescue SystemCallError => ex
+      log_exception(ex)
+      raise Puppet::Error, _("Could not open SELinux category translation file %{path}.") % { context: context }
+    end
+
+    category
   end
 
   ########################################################################
