@@ -29,7 +29,7 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
   end
 
   let :resource do
-    described_class.new(:name => "yay", :audit => :ensure, :provider => provider)
+    described_class.new(:name => "yay", :ensure => :absent, :provider => provider)
   end
 
   let :ensureprop do

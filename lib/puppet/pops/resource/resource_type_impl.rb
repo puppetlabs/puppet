@@ -79,7 +79,6 @@ class ResourceTypeImpl
   METAPARAMS = [
     :noop,
     :schedule,
-    :audit,
     :loglevel,
     :alias,
     :tag,

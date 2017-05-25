@@ -251,10 +251,6 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
 
     describe "when determining if instances of the type are managed" do
-      it "should not consider audit only resources to be managed" do
-        expect(@type.new(:name => "foo", :audit => 'all').managed?).to be_falsey
-      end
-
       it "should not consider resources with only parameters to be managed" do
         expect(@type.new(:name => "foo", :foo => 'did someone say food?').managed?).to be_falsey
       end
@@ -1154,151 +1150,107 @@ describe Puppet::Type::RelationshipMetaparam do
   end
 end
 
-describe Puppet::Type.metaparamclass(:audit) do
+describe "when generating the uniqueness key" do
   include PuppetSpec::Files
-
-  before do
-    @resource = Puppet::Type.type(:file).new :path => make_absolute('/foo')
+  it "should include all of the key_attributes in alphabetical order by attribute name" do
+    Puppet::Type.type(:file).stubs(:key_attributes).returns [:path, :mode, :owner]
+    Puppet::Type.type(:file).stubs(:title_patterns).returns(
+      [ [ /(.*)/, [ [:path, lambda{|x| x} ] ] ] ]
+    )
+    myfile = make_absolute('/my/file')
+    res = Puppet::Type.type(:file).new( :title => myfile, :path => myfile, :owner => 'root', :content => 'hello' )
+    expect(res.uniqueness_key).to eq([ nil, 'root', myfile])
   end
+end
 
-  it "should default to being nil" do
-    expect(@resource[:audit]).to be_nil
-  end
-
-  it "should specify all possible properties when asked to audit all properties" do
-    @resource[:audit] = :all
-
-    list = @resource.class.properties.collect { |p| p.name }
-    expect(@resource[:audit]).to eq(list)
-  end
-
-  it "should accept the string 'all' to specify auditing all possible properties" do
-    @resource[:audit] = 'all'
-
-    list = @resource.class.properties.collect { |p| p.name }
-    expect(@resource[:audit]).to eq(list)
-  end
-
-  it "should fail if asked to audit an invalid property" do
-    expect { @resource[:audit] = :foobar }.to raise_error(Puppet::Error)
-  end
-
-  it "should create an attribute instance for each auditable property" do
-    @resource[:audit] = :mode
-    expect(@resource.parameter(:mode)).not_to be_nil
-  end
-
-  it "should accept properties specified as a string" do
-    @resource[:audit] = "mode"
-    expect(@resource.parameter(:mode)).not_to be_nil
-  end
-
-  it "should not create attribute instances for parameters, only properties" do
-    @resource[:audit] = :noop
-    expect(@resource.parameter(:noop)).to be_nil
-  end
-
-  describe "when generating the uniqueness key" do
-    it "should include all of the key_attributes in alphabetical order by attribute name" do
-      Puppet::Type.type(:file).stubs(:key_attributes).returns [:path, :mode, :owner]
-      Puppet::Type.type(:file).stubs(:title_patterns).returns(
-        [ [ /(.*)/, [ [:path, lambda{|x| x} ] ] ] ]
-      )
-      myfile = make_absolute('/my/file')
-      res = Puppet::Type.type(:file).new( :title => myfile, :path => myfile, :owner => 'root', :content => 'hello' )
-      expect(res.uniqueness_key).to eq([ nil, 'root', myfile])
+context "type attribute bracket methods" do
+  after :each do Puppet::Type.rmtype(:attributes)     end
+  let   :type do
+    Puppet::Type.newtype(:attributes) do
+      newparam(:name) {}
     end
   end
 
-  context "type attribute bracket methods" do
-    after :each do Puppet::Type.rmtype(:attributes)     end
-    let   :type do
-      Puppet::Type.newtype(:attributes) do
-        newparam(:name) {}
+  it "should work with parameters" do
+    type.newparam(:param) {}
+    instance = type.new(:name => 'test')
+
+    expect { instance[:param] = true }.to_not raise_error
+    expect { instance["param"] = true }.to_not raise_error
+    expect(instance[:param]).to eq(true)
+    expect(instance["param"]).to eq(true)
+  end
+
+  it "should work with meta-parameters" do
+    instance = type.new(:name => 'test')
+
+    expect { instance[:noop] = true }.to_not raise_error
+    expect { instance["noop"] = true }.to_not raise_error
+    expect(instance[:noop]).to eq(true)
+    expect(instance["noop"]).to eq(true)
+  end
+
+  it "should work with properties" do
+    type.newproperty(:property) {}
+    instance = type.new(:name => 'test')
+
+    expect { instance[:property] = true }.to_not raise_error
+    expect { instance["property"] = true }.to_not raise_error
+    expect(instance.property(:property)).to be
+    expect(instance.should(:property)).to be_truthy
+  end
+
+  it "should handle proprieties correctly" do
+    # Order of assignment is significant in this test.
+    props = {}
+    [:one, :two, :three].each {|prop| type.newproperty(prop) {} }
+    instance = type.new(:name => "test")
+
+    instance[:one] = "boo"
+    one = instance.property(:one)
+    expect(instance.properties).to eq [one]
+
+    instance[:three] = "rah"
+    three = instance.property(:three)
+    expect(instance.properties).to eq [one, three]
+
+    instance[:two] = "whee"
+    two = instance.property(:two)
+    expect(instance.properties).to eq [one, two, three]
+  end
+
+  it "newattr should handle required features correctly" do
+    Puppet::Util::Log.level = :debug
+
+    type.feature :feature1, "one"
+    type.feature :feature2, "two"
+
+    none = type.newproperty(:none) {}
+    one  = type.newproperty(:one, :required_features => :feature1) {}
+    two  = type.newproperty(:two, :required_features => [:feature1, :feature2]) {}
+
+    nope  = type.provide(:nope)  {}
+    maybe = type.provide(:maybe) { has_features :feature1 }
+    yep   = type.provide(:yep)   { has_features :feature1, :feature2 }
+
+    [nope, maybe, yep].each_with_index do |provider, i|
+      rsrc = type.new(:provider => provider.name, :name => "test#{i}",
+                      :none => "a", :one => "b", :two => "c")
+
+      expect(rsrc.should(:none)).to be
+
+      if provider.declared_feature? :feature1
+        expect(rsrc.should(:one)).to be
+      else
+        expect(rsrc.should(:one)).to_not be
+        expect(@logs.find {|l| l.message =~ /not managing attribute one/ }).to be
       end
-    end
 
-    it "should work with parameters" do
-      type.newparam(:param) {}
-      instance = type.new(:name => 'test')
-
-      expect { instance[:param] = true }.to_not raise_error
-      expect { instance["param"] = true }.to_not raise_error
-      expect(instance[:param]).to eq(true)
-      expect(instance["param"]).to eq(true)
-    end
-
-    it "should work with meta-parameters" do
-      instance = type.new(:name => 'test')
-
-      expect { instance[:noop] = true }.to_not raise_error
-      expect { instance["noop"] = true }.to_not raise_error
-      expect(instance[:noop]).to eq(true)
-      expect(instance["noop"]).to eq(true)
-    end
-
-    it "should work with properties" do
-      type.newproperty(:property) {}
-      instance = type.new(:name => 'test')
-
-      expect { instance[:property] = true }.to_not raise_error
-      expect { instance["property"] = true }.to_not raise_error
-      expect(instance.property(:property)).to be
-      expect(instance.should(:property)).to be_truthy
-    end
-
-    it "should handle proprieties correctly" do
-      # Order of assignment is significant in this test.
-      props = {}
-      [:one, :two, :three].each {|prop| type.newproperty(prop) {} }
-      instance = type.new(:name => "test")
-
-      instance[:one] = "boo"
-      one = instance.property(:one)
-      expect(instance.properties).to eq [one]
-
-      instance[:three] = "rah"
-      three = instance.property(:three)
-      expect(instance.properties).to eq [one, three]
-
-      instance[:two] = "whee"
-      two = instance.property(:two)
-      expect(instance.properties).to eq [one, two, three]
-    end
-
-    it "newattr should handle required features correctly" do
-      Puppet::Util::Log.level = :debug
-
-      type.feature :feature1, "one"
-      type.feature :feature2, "two"
-
-      none = type.newproperty(:none) {}
-      one  = type.newproperty(:one, :required_features => :feature1) {}
-      two  = type.newproperty(:two, :required_features => [:feature1, :feature2]) {}
-
-      nope  = type.provide(:nope)  {}
-      maybe = type.provide(:maybe) { has_features :feature1 }
-      yep   = type.provide(:yep)   { has_features :feature1, :feature2 }
-
-      [nope, maybe, yep].each_with_index do |provider, i|
-        rsrc = type.new(:provider => provider.name, :name => "test#{i}",
-                        :none => "a", :one => "b", :two => "c")
-
-        expect(rsrc.should(:none)).to be
-
-        if provider.declared_feature? :feature1
-          expect(rsrc.should(:one)).to be
-        else
-          expect(rsrc.should(:one)).to_not be
-          expect(@logs.find {|l| l.message =~ /not managing attribute one/ }).to be
-        end
-
-        if provider.declared_feature? :feature2
-          expect(rsrc.should(:two)).to be
-        else
-          expect(rsrc.should(:two)).to_not be
-          expect(@logs.find {|l| l.message =~ /not managing attribute two/ }).to be
-        end
+      if provider.declared_feature? :feature2
+        expect(rsrc.should(:two)).to be
+      else
+        expect(rsrc.should(:two)).to_not be
+        expect(@logs.find {|l| l.message =~ /not managing attribute two/ }).to be
       end
     end
   end

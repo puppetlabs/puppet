@@ -1574,37 +1574,6 @@ describe Puppet::Type.type(:file) do
     end
   end
 
-  describe "when auditing" do
-    before :each do
-      # to prevent the catalog from trying to write state.yaml
-      Puppet::Util::Storage.stubs(:store)
-    end
-
-    it "should not fail if creating a new file if group is not set" do
-      file = described_class.new(:path => path, :audit => 'all', :content => 'content')
-      catalog.add_resource(file)
-
-      report = catalog.apply.report
-
-      expect(report.resource_statuses["File[#{path}]"]).not_to be_failed
-      expect(File.read(path)).to eq('content')
-    end
-
-    it "should not log errors if creating a new file with ensure present and no content" do
-      file[:audit]  = 'content'
-      file[:ensure] = 'present'
-      catalog.add_resource(file)
-
-      catalog.apply
-
-      expect(Puppet::FileSystem.exist?(path)).to be_truthy
-      expect(@logs).not_to be_any { |l|
-        # the audit metaparameter is deprecated and logs a warning
-        l.level != :notice
-      }
-    end
-  end
-
   describe "when specifying both source and checksum" do
     it 'should use the specified checksum when source is first' do
       file[:source] = File.expand_path('/foo')
