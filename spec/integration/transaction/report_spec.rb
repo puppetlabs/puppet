@@ -701,6 +701,16 @@ describe Puppet::Transaction::Report do
         expect(report.corrective_change).to eq(false)
         expect(get_cc_count(report)).to eq(0)
       end
+
+      it "a circular dependency is reported with status == failed" do
+        resources = [
+          Puppet::Type.type(:notify).new(:title => 'a', :before => 'Notify[b]'),
+          Puppet::Type.type(:notify).new(:title => 'b', :before => 'Notify[a]')
+          ]
+        report = run_catalogs(resources, resources, true, true)
+
+        expect(report.status).to eq('failed')
+      end
     end
   end
 end

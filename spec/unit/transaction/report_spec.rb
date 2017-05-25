@@ -147,12 +147,14 @@ describe Puppet::Transaction::Report do
     end
 
     it "should add new logs to the log list" do
-      @report << "log"
-      expect(@report.logs[-1]).to eq("log")
+      lg = Puppet::Util::Log.new(:level => :err, :message => 'log')
+      @report << lg
+      expect(@report.logs[-1]).to eq(lg)
     end
 
     it "should return self" do
-      r = @report << "log"
+      lg = Puppet::Util::Log.new(:level => :err, :message => 'log')
+      r = @report << lg
       expect(r).to equal(@report)
     end
   end
