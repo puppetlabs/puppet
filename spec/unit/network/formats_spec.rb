@@ -160,7 +160,7 @@ describe "Puppet Network Format" do
     end
 
     it "should use 'utf-8' charset" do
-      expect(text.charset).to eq('utf-8')
+      expect(text.charset).to eq(Encoding::UTF_8)
     end
 
     it "should use 'txt' as its extension" do
@@ -318,7 +318,7 @@ describe "Puppet Network Format" do
     end
 
     it "should use 'utf-8' charset" do
-      expect(json.charset).to eq('utf-8')
+      expect(json.charset).to eq(Encoding::UTF_8)
     end
 
     it "should require the :render_method" do

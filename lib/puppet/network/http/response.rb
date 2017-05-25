@@ -10,17 +10,12 @@ class Puppet::Network::HTTP::Response
     charset = format.charset
 
     if charset
-      if body.is_a?(String)
-        # REMIND: not all charsets are valid ruby encodings, e.g. ISO-2022-KR
-        encoding = Encoding.find(charset)
-
-        if body.encoding != encoding
-          # REMIND this can raise if body contains invalid UTF-8
-          body.encode!(encoding)
-        end
+      if body.is_a?(String) && body.encoding != charset
+        # REMIND this can raise if body contains invalid UTF-8
+        body.encode!(charset)
       end
 
-      mime += "; charset=#{charset}"
+      mime += "; charset=#{charset.name.downcase}"
     end
 
     @handler.set_content_type(@response, mime)
