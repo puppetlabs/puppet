@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 4.10.1-780-gaea17d1\n"
+"Project-Id-Version: Puppet automation framework 4.10.1-806-g73e7c47\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-05-23 18:45+0000\n"
-"PO-Revision-Date: 2017-05-23 18:45+0000\n"
+"POT-Creation-Date: 2017-05-25 18:09+0000\n"
+"PO-Revision-Date: 2017-05-25 18:09+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -2280,11 +2280,11 @@ msgstr ""
 msgid "Cached %{indirection} for %{request} failed: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/indirector/indirection.rb:318
+#: ../lib/puppet/indirector/indirection.rb:321
 msgid "Could not determine appropriate terminus for %{request}"
 msgstr ""
 
-#: ../lib/puppet/indirector/indirection.rb:335
+#: ../lib/puppet/indirector/indirection.rb:338
 msgid "Could not find terminus %{terminus_class} for indirection %{indirection}"
 msgstr ""
 
@@ -4042,6 +4042,10 @@ msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:370
 msgid "Resource Defaults are not virtualizable"
+msgstr ""
+
+#: ../lib/puppet/pops/issues.rb:374
+msgid "Classes are not virtualizable"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:381
@@ -7512,7 +7516,7 @@ msgstr ""
 msgid "Details: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/plist.rb:141
+#: ../lib/puppet/util/plist.rb:143
 msgid "Unable to write the file %{file_path}. %{error}"
 msgstr ""
 
