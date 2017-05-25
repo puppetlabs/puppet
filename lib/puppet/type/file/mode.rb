@@ -13,6 +13,10 @@ module Puppet
       notation. This value **must** be specified as a string; do not use
       un-quoted numbers to represent file modes.
 
+      If the mode is omitted (or explicitly set to `undef`), Puppet does not
+      enforce permissions on existing files and creates new files with
+      permissions of `0644`.
+
       The `file` type uses traditional Unix permission schemes and translates
       them to equivalent permissions for systems which represent permissions
       differently, including Windows. For detailed ACL controls on Windows,

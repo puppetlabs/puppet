@@ -1945,7 +1945,7 @@ EOT
     :default => false,
     :type => :boolean,
     :desc => <<-'EOT'
-      Makes the parser raise errors when referencing unknown variables. (This does not affect
+      Causes an evaluation error when referencing unknown variables. (This does not affect
       referencing variables that are explicitly set to undef).
     EOT
     }
