@@ -5,18 +5,28 @@ require 'puppet/indirector/node/plain'
 
 describe Puppet::Node::Plain do
   let(:nodename) { "mynode" }
-  let(:fact_values) { {:afact => "a value"} }
-  let(:facts) { Puppet::Node::Facts.new(nodename, fact_values) }
+  let(:indirection_fact_values) { {:afact => "a value"} }
+  let(:indirection_facts) { Puppet::Node::Facts.new(nodename, indirection_fact_values) }
+  let(:request_fact_values) { {:foo => "bar" } }
+  let(:request_facts) { Puppet::Node::Facts.new(nodename, request_fact_values)}
   let(:environment) { Puppet::Node::Environment.create(:myenv, []) }
   let(:request) { Puppet::Indirector::Request.new(:node, :find, nodename, nil, :environment => environment) }
   let(:node_indirection) { Puppet::Node::Plain.new }
 
-  before do
-    Puppet::Node::Facts.indirection.expects(:find).with(nodename, :environment => environment).returns(facts)
+  it "should merge facts from the request if supplied" do
+    Puppet::Node::Facts.indirection.expects(:find).never
+    request.options[:facts] = request_facts
+    node = node_indirection.find(request)
+    expect(node.parameters).to include(request_fact_values)
+    expect(node.facts).to eq(request_facts)
   end
 
-  it "merges facts into the node" do
-    expect(node_indirection.find(request).parameters).to include(fact_values)
+  it "should find facts if none are supplied" do
+    Puppet::Node::Facts.indirection.expects(:find).with(nodename, :environment => environment).returns(indirection_facts)
+    request.options.delete(:facts)
+    node = node_indirection.find(request)
+    expect(node.parameters).to include(indirection_fact_values)
+    expect(node.facts).to eq(indirection_facts)
   end
 
   it "should set the node environment from the request" do
