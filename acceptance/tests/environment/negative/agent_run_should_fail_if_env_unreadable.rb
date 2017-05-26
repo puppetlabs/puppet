@@ -1,5 +1,5 @@
 test_name "C97899 - Agent run should fail if environment is unreadable" do
-  skip_test 'requires a master for managing the environment' if hosts_with_role(hosts, 'master').length == 0
+  skip_test 'requires a puppetserver master for managing the environment' if hosts_with_role(hosts, 'master').length == 0 or not @options[:is_puppetserver]
 
   testdir = ''
   env_path = ''
