@@ -135,7 +135,7 @@ describe Puppet::Network::Format do
     end
 
     it "allows charset to be set to 'utf-8'" do
-      expect(Puppet::Network::Format.new(:foo, :charset => 'utf-8').charset).to eq('utf-8')
+      expect(Puppet::Network::Format.new(:foo, :charset => Encoding::UTF_8).charset).to eq(Encoding::UTF_8)
     end
 
     [:intern_method, :intern_multiple_method, :render_multiple_method, :render_method].each do |method|

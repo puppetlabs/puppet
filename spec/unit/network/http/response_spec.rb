@@ -15,7 +15,7 @@ describe Puppet::Network::HTTP::Response do
   let(:body_shift_jis) { [130, 174].pack('C*').force_encoding(Encoding::Shift_JIS) }
   let(:invalid_shift_jis) { "\xC0\xFF".force_encoding(Encoding::Shift_JIS) }
 
-  context "when passed a respose body" do
+  context "when passed a response body" do
     it "passes the status code and body to the handler" do
       handler.expects(:set_response).with(response, body_utf8, 200)
 
