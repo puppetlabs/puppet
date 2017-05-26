@@ -26,7 +26,7 @@ agents.each do |agent|
   # and unfortunately schtasks.exe and the MMC snap-in may get out of sync
   step "verify the arguments were updated from Puppet"
   on agent, puppet_resource('scheduled_task', name) do
-    assert_match(/command\s*=>\s*'c:\\windows\\system32\\notepad2.exe'/, stdout)
+    assert_match(/command\s*=>\s*"c:\\\\windows\\\\system32\\\\notepad2.exe"/, stdout)
     assert_match(/arguments\s*=>\s*'args-#{verylongstring}'/, stdout)
   end
 
