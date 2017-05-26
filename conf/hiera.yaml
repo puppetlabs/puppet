@@ -1,0 +1,11 @@
+---
+version: 5
+defaults:
+  datadir: "/etc/puppetlabs/code/environments/%{environment}/hieradata"
+  data_hash: yaml_data
+hierarchy:
+  - name: "Per-node data (yaml version)"
+    path: "nodes/%{::trusted.certname}.yaml"
+  - name: "Other YAML hierarchy levels"
+    paths:
+      - "common.yaml"
