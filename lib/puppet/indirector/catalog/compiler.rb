@@ -14,33 +14,24 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
   attr_accessor :code
 
+  # @param request [Puppet::Indirector::Request] an indirection request
+  #   (possibly) containing facts
+  # @return [Puppet::Node::Facts] facts object corresponding to facts in request
   def extract_facts_from_request(request)
     return unless text_facts = request.options[:facts]
     unless format = request.options[:facts_format]
       raise ArgumentError, _("Facts but no fact format provided for %{request}") % { request: request.key }
     end
 
-    facts = nil
     Puppet::Util::Profiler.profile(_("Found facts"), [:compiler, :find_facts]) do
-      # If the facts were encoded as yaml, then the param reconstitution system
-      # in Network::HTTP::Handler will automagically deserialize the value.
-      if text_facts.is_a?(Puppet::Node::Facts)
-        facts = text_facts
-      elsif format == 'pson'
-        # We unescape here because the corresponding code in Puppet::Configurer::FactHandler escapes
-        # PSON is deprecated, but continue to accept from older agents
-        facts = Puppet::Node::Facts.convert_from('pson', CGI.unescape(text_facts))
-      elsif format == 'application/json'
-        facts = Puppet::Node::Facts.convert_from('json', text_facts)
-      else
-        raise ArgumentError, "Unsupported facts format"
-      end
+      facts = text_facts.is_a?(Puppet::Node::Facts) ? text_facts :
+                                                      convert_wire_facts(text_facts, format)
 
       unless facts.name == request.key
         raise Puppet::Error, _("Catalog for %{request} was requested with fact definition for the wrong node (%{fact_name}).") % { request: request.key.inspect, fact_name: facts.name.inspect }
       end
+      return facts
     end
-    facts
   end
 
   def save_facts_from_request(facts, request)
@@ -85,6 +76,22 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   end
 
   private
+
+  # @param facts [String] facts in a wire format for decoding
+  # @param format [String] a content-type string
+  # @return [Puppet::Node::Facts] facts object deserialized from supplied string
+  # @api private
+  def convert_wire_facts(facts, format)
+    if format == 'pson'
+      # We unescape here because the corresponding code in Puppet::Configurer::FactHandler escapes
+      # PSON is deprecated, but continue to accept from older agents
+      return Puppet::Node::Facts.convert_from('pson', CGI.unescape(facts))
+    elsif format == 'application/json'
+      return Puppet::Node::Facts.convert_from('json', facts)
+    else
+      raise ArgumentError, "Unsupported facts format"
+    end
+  end
 
   # Add any extra data necessary to the node.
   def add_node_data(node)
