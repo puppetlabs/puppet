@@ -30,13 +30,15 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
     names << request.key.sub(/\..+/, '') if request.key.include?(".") # we assume it's an fqdn
     names << "default"
 
+    facts = request.options[:facts].is_a?(Puppet::Node::Facts) ? request.options[:facts] : nil
+
     node = nil
     names.each do |name|
       next unless info = name2hash(name)
 
       merge_parent(info) if info[:parent]
       info[:environment] ||= request.environment
-      node = info2node(request.key, info)
+      node = info2node(request.key, info, facts)
       break
     end
 
@@ -186,12 +188,12 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
   end
 
   # Take a name and a hash, and return a node instance.
-  def info2node(name, info)
+  def info2node(name, info, facts = nil)
     node = Puppet::Node.new(name)
 
     add_to_node(node, info)
 
-    node.fact_merge
+    node.fact_merge(facts)
 
     node
   end
