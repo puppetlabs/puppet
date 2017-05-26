@@ -129,7 +129,7 @@ class Puppet::Node
     begin
       @facts = facts.nil? ? Puppet::Node::Facts.indirection.find(name, :environment => environment) : facts
     rescue => detail
-      error = Puppet::Error.new(_("Could not retrieve facts for %{name}: %{detail}") % { name: name, detail: detail })
+      error = Puppet::Error.new(_("Could not retrieve facts for %{name}: %{detail}") % { name: name, detail: detail }, detail)
       error.set_backtrace(detail.backtrace)
       raise error
     end
