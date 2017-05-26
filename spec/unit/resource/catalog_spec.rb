@@ -975,7 +975,7 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to json"
         catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog.to_json))
         message = catalog2.resource('notify', 'foo')['message']
         expect(message).to be_a(String)
-        expect(message).to eql('2016-09-15T08:32:16.123 UTC')
+        expect(message).to eql('2016-09-15T08:32:16.123000000 UTC')
       end
 
       it 'should convert param containing array with :undef entries' do
