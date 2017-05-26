@@ -412,7 +412,7 @@ class Puppet::Util::Log
 
 end
 
-# This is for backward compatibility from when we changed the constant to Puppet::Util::Log
-# because the reports include the constant name.  Apparently the alias was created in
-# March 2007, should could probably be removed soon.
+# This is for backward compatibility from when we changed the constant to
+# Puppet::Util::Log because the reports include the constant name. It was
+# considered for removal but left in due to risk of breakage (PUP-7502).
 Puppet::Log = Puppet::Util::Log
