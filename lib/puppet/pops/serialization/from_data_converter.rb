@@ -119,8 +119,9 @@ module Serialization
         without_value { convert(pcore_type) }
       else
         type = Types::TypeParser.singleton.parse(pcore_type, @loader)
-        raise SerializationError, _('No implementation mapping found for Puppet Type %{type_name}') %
-            { type_name: pcore_type } if type.is_a?(Types::PTypeReferenceType)
+        if type.is_a?(Types::PTypeReferenceType)
+          raise SerializationError, _('No implementation mapping found for Puppet Type %{type_name}') % { type_name: pcore_type }
+        end
         type
       end
     end

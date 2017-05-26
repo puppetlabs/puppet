@@ -4,7 +4,7 @@ require 'puppet/pops'
 module Puppet::Pops
 module Serialization
   describe 'Passing values through ToDataConverter/FromDataConverter' do
-  let!(:dumper) { Model::ModelTreeDumper.new }
+  let(:dumper) { Model::ModelTreeDumper.new }
   let(:io) { StringIO.new }
   let(:parser) { Parser::EvaluatingParser.new }
   let(:env) { Puppet::Node::Environment.create(:testing, []) }
@@ -13,10 +13,13 @@ module Serialization
   let(:to_converter) { ToDataConverter.new(:rich_data => true) }
   let(:from_converter) { FromDataConverter.new(:loader => loader) }
 
-  around :each do |example|
-     Puppet.override(:loaders => loaders, :current_environment => env) do
-      example.run
-    end
+  before(:each) do
+    Puppet.lookup(:environments).clear_all
+    Puppet.push_context(:loaders => loaders, :current_environment => env)
+  end
+
+  after(:each) do
+    Puppet.pop_context
   end
 
   def write(value)

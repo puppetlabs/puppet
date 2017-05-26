@@ -472,20 +472,23 @@ class amod::bad_type {
       end
 
       it 'will notify a string that is the result of to_s on uknown data types' do
-        logs = []
-        json = Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
-           compile_to_catalog('include amod::bad_type', node).to_json
-        end
-        logs = logs.select { |log| log.level == :warning }.map { |log| log.message }
-        expect(logs.empty?).to be_falsey
-        expect(logs[0]).to eql("Resource 'Notify[bogus]' contains a Time value. It will be converted to the String '2016-10-06 23:51:14 +0200'")
-
+        json = compile_to_catalog('include amod::bad_type', node).to_json
         apply = Puppet::Application[:apply]
         apply.options[:catalog] = file_containing('manifest', json)
         apply.expects(:apply_catalog).with do |catalog|
           catalog.resource(:notify, 'bogus')['message'].is_a?(String)
         end
         apply.run
+      end
+
+      it 'will log a warning that a value of unknown type is converted into a string' do
+        logs = []
+        json = Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          compile_to_catalog('include amod::bad_type', node).to_json
+        end
+        logs = logs.select { |log| log.level == :warning }.map { |log| log.message }
+        expect(logs.empty?).to be_falsey
+        expect(logs[0]).to eql("Notify[bogus]['message'] contains a Time value. It will be converted to the String '2016-10-06 23:51:14 +0200'")
       end
     end
 
@@ -505,11 +508,6 @@ class amod::bad_type {
           catalog.resource(:notify, 'tstamp')['message'].is_a?(Puppet::Pops::Time::Timestamp)
         end
         apply.run
-      end
-
-      it 'will raise an error on uknown data types' do
-        catalog = compile_to_catalog('include amod::bad_type', node)
-        expect { catalog.to_json }.to raise_error(/No Puppet Type found for Time/)
       end
     end
 

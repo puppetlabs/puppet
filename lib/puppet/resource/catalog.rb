@@ -424,9 +424,8 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     end
 
     if resources = data['resources']
-      rich_data_enabled = Puppet[:rich_data] || result.environment_instance && result.environment_instance.rich_data?
       result.add_resource(*resources.collect do |res|
-        Puppet::Resource.from_data_hash(res, rich_data_enabled)
+        Puppet::Resource.from_data_hash(res)
       end)
     end
 
@@ -478,14 +477,6 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       h
     end
 
-    resources = if @resources.empty?
-        []
-      elsif environment_instance.rich_data?
-        @resources.collect { |v| @resource_table[v].to_data_hash(true) }
-      else
-        @resources.collect { |v| @resource_table[v].to_data_hash }
-      end
-
     {
       'tags'      => tags.to_a,
       'name'      => name,
@@ -494,8 +485,8 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       'catalog_uuid' => catalog_uuid,
       'catalog_format' => catalog_format,
       'environment'  => environment.to_s,
-      'resources' => resources,
-      'edges'     => edges.   collect { |e| e.to_data_hash },
+      'resources' => @resources.map { |v| @resource_table[v].to_data_hash },
+      'edges'     => edges.map { |e| e.to_data_hash },
       'classes'   => classes,
     }.merge(metadata_hash.empty? ?
       {} : {'metadata' => metadata_hash}).merge(recursive_metadata_hash.empty? ?
