@@ -129,6 +129,15 @@ describe Puppet::Network::Format do
     it "should support overriding the extension" do
       expect(Puppet::Network::Format.new(:foo, :extension => "bar").extension).to eq("bar")
     end
+
+    it "doesn't support charset by default" do
+      expect(Puppet::Network::Format.new(:foo).charset).to be_nil
+    end
+
+    it "allows charset to be set to 'utf-8'" do
+      expect(Puppet::Network::Format.new(:foo, :charset => Encoding::UTF_8).charset).to eq(Encoding::UTF_8)
+    end
+
     [:intern_method, :intern_multiple_method, :render_multiple_method, :render_method].each do |method|
       it "should allow assignment of the #{method}" do
         expect(Puppet::Network::Format.new(:foo, method => :foo).send(method)).to eq(:foo)

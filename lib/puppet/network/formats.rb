@@ -63,7 +63,7 @@ Puppet::Network::FormatHandler.create_serialized_formats(:yaml) do
   end
 end
 
-Puppet::Network::FormatHandler.create(:s, :mime => "text/plain", :extension => "txt")
+Puppet::Network::FormatHandler.create(:s, :mime => "text/plain", :charset => Encoding::UTF_8, :extension => "txt")
 
 # By default, to_binary is called to render and from_binary called to intern. Note unlike
 # text-based formats (json, yaml, etc), we don't use to_data_hash for binary.
@@ -99,7 +99,7 @@ Puppet::Network::FormatHandler.create_serialized_formats(:pson, :weight => 10, :
   end
 end
 
-Puppet::Network::FormatHandler.create_serialized_formats(:json, :mime => 'application/json', :weight => 15, :required_methods => [:render_method, :intern_method], :intern_method => :from_data_hash) do
+Puppet::Network::FormatHandler.create_serialized_formats(:json, :mime => 'application/json', :charset => Encoding::UTF_8, :weight => 15, :required_methods => [:render_method, :intern_method], :intern_method => :from_data_hash) do
   def intern(klass, text)
     data_to_instance(klass, JSON.parse(text))
   end
