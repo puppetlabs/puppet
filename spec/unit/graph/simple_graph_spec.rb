@@ -296,32 +296,37 @@ describe Puppet::Graph::SimpleGraph do
       end
     end
 
-    it "should fail on two-vertex loops" do
+    def expect_cycle_to_include(cycle, *resource_names)
+      resource_names.each_with_index do |resource, index|
+        expect(cycle[index].ref).to eq("Notify[#{resource}]")
+      end
+    end
+
+    it "should report two-vertex loops" do
       add_edges :a => :b, :b => :a
-      expect { @graph.report_cycles_in_graph }.to raise_error(Puppet::Error)
+      Puppet.expects(:err).with(regexp_matches(/Found 1 dependency cycle:\n\(Notify\[a\] => Notify\[b\] => Notify\[a\]\)/))
+      cycle = @graph.report_cycles_in_graph.first
+      expect_cycle_to_include(cycle, :a, :b)
     end
 
-    it "should fail on multi-vertex loops" do
+    it "should report multi-vertex loops" do
       add_edges :a => :b, :b => :c, :c => :a
-      expect { @graph.report_cycles_in_graph }.to raise_error(Puppet::Error)
+      Puppet.expects(:err).with(regexp_matches(/Found 1 dependency cycle:\n\(Notify\[a\] => Notify\[b\] => Notify\[c\] => Notify\[a\]\)/))
+      cycle = @graph.report_cycles_in_graph.first
+      expect_cycle_to_include(cycle, :a, :b, :c)
     end
 
-    it "should fail when a larger tree contains a small cycle" do
+    it "should report when a larger tree contains a small cycle" do
       add_edges :a => :b, :b => :a, :c => :a, :d => :c
-      expect { @graph.report_cycles_in_graph }.to raise_error(Puppet::Error)
+      Puppet.expects(:err).with(regexp_matches(/Found 1 dependency cycle:\n\(Notify\[a\] => Notify\[b\] => Notify\[a\]\)/))
+      cycle = @graph.report_cycles_in_graph.first
+      expect_cycle_to_include(cycle, :a, :b)
     end
 
     it "should succeed on trees with no cycles" do
       add_edges :a => :b, :b => :e, :c => :a, :d => :c
-      expect { @graph.report_cycles_in_graph }.to_not raise_error
-    end
-
-    it "should produce the correct relationship text" do
-      add_edges :a => :b, :b => :a
-      # cycle detection starts from a or b randomly
-      # so we need to check for either ordering in the error message
-      want = %r{Found 1 dependency cycle:\n\((Notify\[a\] => Notify\[b\] => Notify\[a\]|Notify\[b\] => Notify\[a\] => Notify\[b\])\)\nTry}
-      expect { @graph.report_cycles_in_graph }.to raise_error(Puppet::Error, want)
+      Puppet.expects(:err).never
+      expect(@graph.report_cycles_in_graph).to be_nil
     end
 
     it "cycle discovery should be the minimum cycle for a simple graph" do

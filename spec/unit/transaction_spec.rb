@@ -675,23 +675,26 @@ describe Puppet::Transaction do
   end
 
   it "errors with a dependency cycle for a resource that requires itself" do
+    Puppet.expects(:err).with(regexp_matches(/Found 1 dependency cycle:.*\(Notify\[cycle\] => Notify\[cycle\]\)/m))
     expect do
       apply_compiled_manifest(<<-MANIFEST)
         notify { cycle: require => Notify[cycle] }
       MANIFEST
-    end.to raise_error(Puppet::Error, /Found 1 dependency cycle:.*\(Notify\[cycle\] => Notify\[cycle\]\)/m)
+    end.to raise_error(Puppet::Error, 'One or more resource dependency cycles detected in graph')
   end
 
   it "errors with a dependency cycle for a self-requiring resource also required by another resource" do
+    Puppet.expects(:err).with(regexp_matches(/Found 1 dependency cycle:.*\(Notify\[cycle\] => Notify\[cycle\]\)/m))
     expect do
       apply_compiled_manifest(<<-MANIFEST)
         notify { cycle: require => Notify[cycle] }
         notify { other: require => Notify[cycle] }
       MANIFEST
-    end.to raise_error(Puppet::Error, /Found 1 dependency cycle:.*\(Notify\[cycle\] => Notify\[cycle\]\)/m)
+    end.to raise_error(Puppet::Error, 'One or more resource dependency cycles detected in graph')
   end
 
   it "errors with a dependency cycle for a resource that requires itself and another resource" do
+    Puppet.expects(:err).with(regexp_matches(/Found 1 dependency cycle:.*\(Notify\[cycle\] => Notify\[cycle\]\)/m))
     expect do
       apply_compiled_manifest(<<-MANIFEST)
         notify { cycle:
@@ -699,10 +702,11 @@ describe Puppet::Transaction do
         }
         notify { other: }
       MANIFEST
-    end.to raise_error(Puppet::Error, /Found 1 dependency cycle:.*\(Notify\[cycle\] => Notify\[cycle\]\)/m)
+    end.to raise_error(Puppet::Error, 'One or more resource dependency cycles detected in graph')
   end
 
   it "errors with a dependency cycle for a resource that is later modified to require itself" do
+    Puppet.expects(:err).with(regexp_matches(/Found 1 dependency cycle:.*\(Notify\[cycle\] => Notify\[cycle\]\)/m))
     expect do
       apply_compiled_manifest(<<-MANIFEST)
         notify { cycle: }
@@ -710,7 +714,41 @@ describe Puppet::Transaction do
           require => Notify[cycle]
         }
       MANIFEST
-    end.to raise_error(Puppet::Error, /Found 1 dependency cycle:.*\(Notify\[cycle\] => Notify\[cycle\]\)/m)
+    end.to raise_error(Puppet::Error, 'One or more resource dependency cycles detected in graph')
+  end
+
+  context "when generating a report for a transaction with a dependency cycle" do
+    let(:catalog) do
+      compile_to_ral(<<-MANIFEST)
+        notify { foo: require => Notify[bar] }
+        notify { bar: require => Notify[foo] }
+      MANIFEST
+    end
+
+    let(:prioritizer) { Puppet::Graph::SequentialPrioritizer.new }
+    let(:transaction) { Puppet::Transaction.new(catalog,
+                                          Puppet::Transaction::Report.new("apply"),
+                                          prioritizer) }
+
+    before(:each) do
+      expect { transaction.evaluate }.to raise_error(Puppet::Error)
+      transaction.report.finalize_report
+    end
+
+    it "should report resources involved in a dependency cycle as failed" do
+      expect(transaction.report.resource_statuses['Notify[foo]']).to be_failed
+      expect(transaction.report.resource_statuses['Notify[bar]']).to be_failed
+    end
+
+    it "should generate a failure event for a resource in a dependency cycle" do
+      status = transaction.report.resource_statuses['Notify[foo]']
+      expect(status.events.first.status).to eq('failure')
+      expect(status.events.first.message).to eq('resource is part of a dependency cycle')
+    end
+
+    it "should report that the transaction is failed" do
+      expect(transaction.report.status).to eq('failed')
+    end
   end
 
   it "reports a changed resource with a successful run" do

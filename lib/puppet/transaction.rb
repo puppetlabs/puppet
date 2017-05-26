@@ -148,6 +148,23 @@ class Puppet::Transaction
       persistence.save if catalog.host_config?
     end
 
+    # Graph cycles are returned as an array of arrays
+    # - outer array is an array of cycles
+    # - each inner array is an array of resources involved in a cycle
+    # Short circuit resource evaluation if we detect cycle(s) in the graph. Mark
+    # each corresponding resource as failed in the report before we fail to
+    # ensure accurate reporting.
+    graph_cycle_handler = lambda do |cycles|
+      cycles.flatten.uniq.each do |resource|
+        # We add a failed resource event to the status to ensure accurate
+        # reporting through the event manager. Adding an event via #add_event
+        # with status of 'failure' causes the status itself to be failed.
+        event = resource.event(:name => :resource_error, :status => "failure", :message => _('resource is part of a dependency cycle'))
+        resource_status(resource).add_event(event)
+      end
+      raise Puppet::Error, _('One or more resource dependency cycles detected in graph')
+    end
+
     # Generate the relationship graph, set up our generator to use it
     # for eval_generate, then kick off our traversal.
     generator.relationship_graph = relationship_graph
@@ -155,6 +172,7 @@ class Puppet::Transaction
                                 :pre_process => pre_process,
                                 :overly_deferred_resource_handler => overly_deferred_resource_handler,
                                 :canceled_resource_handler => canceled_resource_handler,
+                                :graph_cycle_handler => graph_cycle_handler,
                                 :teardown => teardown) do |resource|
       if resource.is_a?(Puppet::Type::Component)
         Puppet.warning _("Somehow left a component in the relationship graph")
