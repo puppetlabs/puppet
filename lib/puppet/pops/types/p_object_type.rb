@@ -380,6 +380,17 @@ class PObjectType < PMetaType
     end
   end
 
+  def instance?(o, guard = nil)
+    if o.is_a?(PuppetObject)
+      assignable?(o._pcore_type, guard)
+    else
+      name = o.class.name
+      ir = Loaders.implementation_registry
+      type = ir.nil? ? nil : ir.type_for_module(name)
+      !type.nil? && assignable?(type, guard)
+    end
+  end
+
   # @api private
   def new_function(loader)
     @new_function ||= create_new_function(loader)
