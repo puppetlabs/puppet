@@ -26,7 +26,7 @@ describe Puppet::Node::Exec do
   describe "when handling the results of the command" do
     let(:testing_env) { Puppet::Node::Environment.create(:testing, []) }
     let(:other_env) { Puppet::Node::Environment.create(:other, []) }
-
+    let(:request) { Puppet::Indirector::Request.new(:node, :find, @name, nil) }
     before do
       @name = "yay"
       @node = Puppet::Node.new(@name)
@@ -38,8 +38,6 @@ describe Puppet::Node::Exec do
       @searcher.meta_def(:execute) do |command, arguments|
         return YAML.dump(result)
       end
-
-      @request = Puppet::Indirector::Request.new(:node, :find, @name, nil)
     end
 
     around do |example|
@@ -52,35 +50,37 @@ describe Puppet::Node::Exec do
 
     it "should translate the YAML into a Node instance" do
       # Use an empty hash
-      expect(@searcher.find(@request)).to equal(@node)
+      expect(@searcher.find(request)).to equal(@node)
     end
 
     it "should set the resulting parameters as the node parameters" do
       @result[:parameters] = {"a" => "b", "c" => "d"}
-      @searcher.find(@request)
+      @searcher.find(request)
       expect(@node.parameters).to eq({"a" => "b", "c" => "d"})
     end
 
     it "should set the resulting classes as the node classes" do
       @result[:classes] = %w{one two}
-      @searcher.find(@request)
+      @searcher.find(request)
       expect(@node.classes).to eq([ 'one', 'two' ])
     end
 
-    it "should merge the node's facts with its parameters" do
-      @node.expects(:fact_merge)
-      @searcher.find(@request)
+    it "should merge facts from the request if supplied" do
+      facts = Puppet::Node::Facts.new('test', 'foo' => 'bar')
+      request.options[:facts] = facts
+      @node.expects(:fact_merge).with(facts)
+      @searcher.find(request)
     end
 
     it "should set the node's environment if one is provided" do
       @result[:environment] = "testing"
-      @searcher.find(@request)
+      @searcher.find(request)
       expect(@node.environment.name).to eq(:testing)
     end
 
     it "should set the node's environment based on the request if not otherwise provided" do
-      @request.environment = "other"
-      @searcher.find(@request)
+      request.environment = "other"
+      @searcher.find(request)
       expect(@node.environment.name).to eq(:other)
     end
   end
