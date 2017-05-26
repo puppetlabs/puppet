@@ -243,7 +243,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   end
 
   def exec_cmd(*cmd)
-    output = Puppet::Util::Execution.execute(cmd, :failonfail => false, :combine => true)
+    output = execute(cmd, :failonfail => false, :combine => true)
     {:out => output, :exit => $CHILD_STATUS.exitstatus}
   end
 end

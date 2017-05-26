@@ -64,6 +64,8 @@ module Puppet
       ensured for the given package. The meaning and format of these settings is
       provider-specific.",
       :methods => [:package_settings_insync?, :package_settings, :package_settings=]
+    feature :settable_environment, "The provider accepts the `environment` parameter
+      to be applied to the installer commands."
     feature :virtual_packages, "The provider accepts virtual package names for install and uninstall."
 
     ensurable do
@@ -294,6 +296,61 @@ module Puppet
       # This is the default title pattern for all types, except hard-wired to
       # set only name.
       [ [ /(.*)/m, [ [:name] ] ] ]
+    end
+
+    # I am accepting the `environment` parameter using the same format
+    # that the `exec` type does, but I transform it to a hash in the
+    # parameter's `munge` code.
+    #
+    # I am skipping the :required_features in the declaration, since
+    # that causes the parameter to be [mostly] silently ignored.  I will
+    # enforce the existence of the :settable_environment feature during
+    # validation, instead.
+    #   newparam(:environment, :required_features=>:settable_environment) do
+    newparam(:environment) do
+      desc "Any additional environment variables you want to set for operations
+        against this package.  The value should be a single string of the form
+        `NAME=value` or an array of such strings.
+
+        An error will be raised if this parameter is used with a provider that
+        does not support it."
+
+      validate do |values|
+        # enforce provider feature here
+        unless provider.satisfies?([:settable_environment])
+          raise ArgumentError, "environment is not supported by the #{provider.class.name} provider"
+        end
+        values = [values] unless values.is_a? Array
+        values.each do |value|
+          unless value =~ /\w+=/
+            raise ArgumentError, "Invalid environment setting '#{value}'"
+          end
+        end
+      end
+
+      # transform environment string or array into a hash
+      # code stolen from `Puppet::Provider::Exec`
+      munge do |envlist|
+        environment = {}
+
+        if envlist
+          envlist = [envlist] unless envlist.is_a? Array
+          envlist.each do |setting|
+            if setting =~ /^(\w+)=((.|\n)+)$/
+              env_name = $1
+              value = $2
+              if environment.include?(env_name) || environment.include?(env_name.to_sym)
+                warning "Overriding environment setting '#{env_name}' with '#{value}'"
+              end
+              environment[env_name] = value
+            else
+              warning "Cannot understand environment setting #{setting.inspect}"
+            end
+          end
+        end
+
+        environment
+      end
     end
 
     newproperty(:package_settings, :required_features=>:package_settings) do

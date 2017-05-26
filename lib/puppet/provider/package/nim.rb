@@ -87,7 +87,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
       version = nil
       showres_command << "'#{Regexp.escape(pkg)}'"
     end
-    output = Puppet::Util::Execution.execute(showres_command)
+    output = execute(showres_command)
 
 
     if (version_specified)
