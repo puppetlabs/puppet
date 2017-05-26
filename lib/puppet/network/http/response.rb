@@ -11,7 +11,6 @@ class Puppet::Network::HTTP::Response
 
     if charset
       if body.is_a?(String) && body.encoding != charset
-        # REMIND this can raise if body contains invalid UTF-8
         body.encode!(charset)
       end
 

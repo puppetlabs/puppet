@@ -13,6 +13,7 @@ describe Puppet::Network::HTTP::Response do
   let(:subject) { described_class.new(handler, response) }
   let(:body_utf8) { JSON.dump({ "foo" => "bar"}).encode('UTF-8') }
   let(:body_shift_jis) { [130, 174].pack('C*').force_encoding(Encoding::Shift_JIS) }
+  let(:invalid_shift_jis) { "\xC0\xFF".force_encoding(Encoding::Shift_JIS) }
 
   context "when passed a respose body" do
     it "passes the status code and body to the handler" do
@@ -73,6 +74,12 @@ describe Puppet::Network::HTTP::Response do
 
         subject.respond_with(200, formatter, body_shift_jis)
       end
+
+      it "raises an exception if transcoding fails" do
+        expect {
+          subject.respond_with(200, formatter, invalid_shift_jis)
+        }.to raise_error(EncodingError, /"\\xFF" on Shift_JIS/)
+      end
     end
 
     context "with application/json content" do
@@ -89,6 +96,12 @@ describe Puppet::Network::HTTP::Response do
         handler.expects(:set_response).with(response, body_shift_jis.encode('utf-8'), 200)
 
         subject.respond_with(200, formatter, body_shift_jis)
+      end
+
+      it "raises an exception if transcoding fails" do
+        expect {
+          subject.respond_with(200, formatter, invalid_shift_jis)
+        }.to raise_error(EncodingError, /"\\xFF" on Shift_JIS/)
       end
     end
   end
