@@ -11,7 +11,7 @@ pw = "Passwrd-#{rand(999999).to_i}"[0..11]
 def get_home_dir(host, user_name)
   home_dir = nil
   on host, puppet_resource('user', user_name) do |result|
-    home_dir = result.stdout.match(/home\s*=>\s*'([^']+)'/m)[1]
+    home_dir = result.stdout.match(/home\s*=>\s*"([^"]+)"/m)[1].gsub(/\\\\/, '\\')
   end
   home_dir
 end
@@ -50,7 +50,7 @@ agents.each do |agent|
   step "modify the user"
   new_home_dir = "#{home_dir}_foo"
   on agent, puppet_resource('user', name, ["ensure=present", "home='#{new_home_dir}'"]) do |result|
-    found_home_dir = result.stdout.match(/home\s*=>\s*'([^']+)'/m)[1]
+    found_home_dir = result.stdout.match(/home\s*=>\s*"([^"]+)"/m)[1].gsub(/\\\\/, '\\')
     assert_equal new_home_dir, found_home_dir, "Failed to change home property of user"
   end
 
