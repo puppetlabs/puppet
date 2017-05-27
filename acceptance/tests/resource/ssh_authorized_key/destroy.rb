@@ -17,13 +17,11 @@ agents.each do |agent|
 
   step "(setup) create an authorized key in the #{auth_keys} file"
   on(agent, "echo '' >> #{auth_keys} && echo 'ssh-rsa mykey #{name}' >> #{auth_keys}")
-  on(agent, "chown $LOGNAME #{auth_keys}")
-
 
   #------- TESTS -------#
   step "delete an authorized key entry with puppet (absent)"
   args = ['ensure=absent',
-          "user='$LOGNAME'",
+          "user='root'",
           "type='rsa'",
           "key='mykey'",
          ]

@@ -14,12 +14,11 @@ agents.each do |agent|
   #------- SETUP -------#
   step "(setup) backup #{auth_keys} file"
   on(agent, "cp #{auth_keys} /tmp/auth_keys", :acceptable_exit_codes => [0,1])
-  on(agent, "chown $LOGNAME #{auth_keys}")
 
   #------- TESTS -------#
   step "create an authorized key entry with puppet (present)"
   args = ['ensure=present',
-          "user='$LOGNAME'",
+          "user='root'",
           "type='rsa'",
           "key='mykey'",
          ]
