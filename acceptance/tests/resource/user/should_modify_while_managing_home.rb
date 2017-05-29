@@ -11,7 +11,7 @@ pw = "Passwrd-#{rand(999999).to_i}"[0..11]
 def get_home_dir(host, user_name)
   home_dir = nil
   on host, puppet_resource('user', user_name) do |result|
-    home_dir = result.stdout.match(/home\s*=>\s*['"]([^'"]+)['"]/m)[1]
+    home_dir = result.stdout.match(/home\s*=>\s*"([^"]+)"/m)[1]
   end
   home_dir
 end
