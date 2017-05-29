@@ -351,6 +351,13 @@ msgstr ""
 
 #: ../lib/puppet/application/master.rb:190
 msgid "Could not change user to %{user}: %{detail}"
+
+#: ../lib/puppet/pops/lookup/environment_data_provider.rb:20
+msgid "hiera.yaml version 3 found at the environment root was ignored"
+msgstr ""
+
+#: ../lib/puppet/pops/lookup/module_data_provider.rb:69
+msgid "hiera.yaml version 3 found at module root was ignored"
 msgstr ""
 
 #: ../lib/puppet/application/master.rb:194
