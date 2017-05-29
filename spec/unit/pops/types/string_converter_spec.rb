@@ -135,6 +135,7 @@ describe 'The string converter' do
       end
 
       it 'escape for $ in double quoted string' do
+        # Use \n in string to force double quotes
         expect(converter.convert("escape the $ sign\n", string_formats)).to eq('"escape the \$ sign\n"')
       end
 
@@ -143,6 +144,7 @@ describe 'The string converter' do
       end
 
       it 'escape for double quote but not for single quote in double quoted string' do
+        # Use \n in string to force double quotes
         expect(converter.convert("the ' single and \" double quote\n", string_formats)).to eq('"the \' single and \\" double quote\n"')
       end
 
