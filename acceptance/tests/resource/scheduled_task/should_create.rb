@@ -22,10 +22,10 @@ agents.each do |agent|
 
   step "verify task properties"
   on agent, puppet_resource('scheduled_task', name) do
-    assert_match(/command\s*=>\s*"c:\\\\windows\\\\system32\\\\notepad.exe"/, stdout)
+    assert_match(/command\s*=>\s*'c:\\windows\\system32\\notepad.exe'/, stdout)
     assert_match(/arguments\s*=>\s*'foo bar baz'/, stdout)
     assert_match(/enabled\s*=>\s*'true'/, stdout)
-    assert_match(/working_dir\s*=>\s*"c:\\\\windows"/, stdout)
+    assert_match(/working_dir\s*=>\s*'c:\\windows'/, stdout)
   end
 
   step "delete the task"
