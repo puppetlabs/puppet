@@ -562,9 +562,9 @@ class Puppet::Resource
   end
 
   # This method, together with #file and #line, makes it possible for a Resource to be a 'source_pos' in a reported issue.
-  # @return [Integer] Instances of this class will always return 0.
+  # @return [Integer] Instances of this class will always return `nil`.
   def pos
-    0
+    nil
   end
 
   def prune_parameters(options = EMPTY_HASH)
