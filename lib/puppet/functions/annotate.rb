@@ -11,7 +11,7 @@
 # $annotation = annotate(Mod::NickNameAdapter.annotate, o)
 # ~~~
 #
-# With two arguments, an `Annotation` type and an object, and a block, the function returns the
+# With three arguments, an `Annotation` type, an object, and a block, the function returns the
 # annotation for the object of the given type, or annotates it with a new annotation initialized
 # from the hash returned by the given block when no such annotation exists. The block will not
 # be called when an annotation of the given type is already present.
@@ -73,7 +73,7 @@ Puppet::Functions.create_function(:annotate) do
   dispatch :annotate_new do
     param 'Type[Annotation]', :type
     param 'Any', :value
-    param 'Variant[Enum[clear],Hash[Pcore::MemberName,Any]]', :i12n_hash
+    param 'Variant[Enum[clear],Hash[Pcore::MemberName,Any]]', :annotation_hash
   end
 
   dispatch :annotate_multi do
@@ -82,22 +82,25 @@ Puppet::Functions.create_function(:annotate) do
     param 'Hash[Type[Annotation], Hash[Pcore::MemberName,Any]]', :annotations
   end
 
-  # @param type [Type] the type the value must be an instance of
-  # @param value [Object] the value to assert
+  # @param type [Annotation] the annotation type
+  # @param value [Object] the value to annotate
+  # @param block [Proc] optional block to produce the annotation hash
   #
   def annotate(type, value, &block)
     type.implementation_class.annotate(value, &block)
   end
 
-  # @param type [Type] the type the value must be an instance of
-  # @param value [Object] the value to assert
+  # @param type [Annotation] the annotation type
+  # @param value [Object] the value to annotate
+  # @param annotation_hash [Hash{String => Object}] the annotation hash
   #
-  def annotate_new(type, value, i12n_hash)
-    type.implementation_class.annotate_new(value, i12n_hash)
+  def annotate_new(type, value, annotation_hash)
+    type.implementation_class.annotate_new(value, annotation_hash)
   end
 
-  # @param type [Type] the type the value must be an instance of
-  # @param value [Object] the value to assert
+  # @param type [Type] the Pcore type
+  # @param value [Object] the value to annotate
+  # @param annotations [Hash{Annotation => Hash{String => Object}}] hash of annotation hashes
   #
   def annotate_multi(type, value, annotations)
     type.implementation_class.annotate(value, annotations)

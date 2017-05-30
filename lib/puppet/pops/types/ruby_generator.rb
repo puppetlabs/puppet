@@ -153,7 +153,7 @@ class RubyGenerator < TypeFormatter
     bld << "\n"
     bld << "  def self._pcore_type\n"
     bld << '    @_pcore_type ||= ' << namespace_relative(segments, obj.class.name) << ".new('" << obj.name << "', "
-    bld << TypeFormatter.singleton.ruby('ref').indented(2).string(obj.i12n_hash(false)) << ")\n"
+    bld << TypeFormatter.singleton.ruby('ref').indented(2).string(obj._pcore_init_hash(false)) << ")\n"
     bld << "  end\n"
 
     class_body(obj, segments, bld)

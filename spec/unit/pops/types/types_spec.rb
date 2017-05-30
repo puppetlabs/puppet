@@ -627,6 +627,24 @@ describe 'Puppet Type System' do
       end
     end
   end
+
+  context 'creation of parameterized type via ruby create function on class' do
+    around(:each) do |example|
+      Puppet.override(:loaders => Loaders.new(Puppet::Node::Environment.create(:testing, []))) do
+        example.run
+      end
+    end
+
+    it 'is supported by Integer' do
+      int_type = tf.integer.class.create(0, 32)
+      expect(int_type).to eq(tf.range(0, 32))
+    end
+
+    it 'is supported by Regexp' do
+      rx_type = tf.regexp.class.create('[a-z]+')
+      expect(rx_type).to eq(tf.regexp(/[a-z]+/))
+    end
+  end
 end
 end
 end

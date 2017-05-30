@@ -193,7 +193,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
       it 'Timespan + Timestamp = Timestamp' do
         code = "notice(assert_type(Timestamp, Timespan({days => 3}) + Timestamp('2016-08-27T16:44:49.999 UTC')))"
-        expect(eval_and_collect_notices(code)).to eql(['2016-08-30T16:44:49.999 UTC'])
+        expect(eval_and_collect_notices(code)).to eql(['2016-08-30T16:44:49.999000000 UTC'])
       end
 
       it 'Timespan - Timestamp is an error' do
@@ -223,17 +223,17 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
       it 'Timestamp + Timespan = Timestamp' do
         code = "notice(assert_type(Timestamp, Timestamp('2016-10-10') + Timespan('0-12:00:00')))"
-        expect(eval_and_collect_notices(code)).to eql(['2016-10-10T12:00:00.000 UTC'])
+        expect(eval_and_collect_notices(code)).to eql(['2016-10-10T12:00:00.000000000 UTC'])
       end
 
       it 'Timestamp + Numeric = Timestamp' do
         code = "notice(assert_type(Timestamp, Timestamp('2016-10-10T12:00:00.000') + 3600.123))"
-        expect(eval_and_collect_notices(code)).to eql(['2016-10-10T13:00:00.123 UTC'])
+        expect(eval_and_collect_notices(code)).to eql(['2016-10-10T13:00:00.123000000 UTC'])
       end
 
       it 'Numeric + Timestamp = Timestamp' do
         code = "notice(assert_type(Timestamp, 3600.123 + Timestamp('2016-10-10T12:00:00.000')))"
-        expect(eval_and_collect_notices(code)).to eql(['2016-10-10T13:00:00.123 UTC'])
+        expect(eval_and_collect_notices(code)).to eql(['2016-10-10T13:00:00.123000000 UTC'])
       end
 
       it 'Timestamp - Timestamp = Timespan' do
@@ -243,12 +243,12 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
       it 'Timestamp - Timespan = Timestamp' do
         code = "notice(assert_type(Timestamp, Timestamp('2016-10-10') - Timespan('0-12:00:00')))"
-        expect(eval_and_collect_notices(code)).to eql(['2016-10-09T12:00:00.000 UTC'])
+        expect(eval_and_collect_notices(code)).to eql(['2016-10-09T12:00:00.000000000 UTC'])
       end
 
       it 'Timestamp - Numeric = Timestamp' do
         code = "notice(assert_type(Timestamp, Timestamp('2016-10-10') - 3600.123))"
-        expect(eval_and_collect_notices(code)).to eql(['2016-10-09T22:59:59.877 UTC'])
+        expect(eval_and_collect_notices(code)).to eql(['2016-10-09T22:59:59.877000000 UTC'])
       end
 
       it 'Numeric - Timestamp = Timestamp' do

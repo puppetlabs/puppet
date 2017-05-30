@@ -90,6 +90,10 @@ class PSemVerRangeType < PAnyType
     end
   end
 
+  def roundtrip_with_string?
+    true
+  end
+
   def instance?(o, guard = nil)
     o.is_a?(SemanticPuppet::VersionRange)
   end

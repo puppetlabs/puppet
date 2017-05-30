@@ -25,8 +25,8 @@ module Pcore
   end
 
   def self.annotate(instance, annotations_hash)
-    annotations_hash.each_pair do |type, i12n_hash|
-      type.implementation_class.annotate(instance) { i12n_hash }
+    annotations_hash.each_pair do |type, init_hash|
+      type.implementation_class.annotate(instance) { init_hash }
     end
     instance
   end
@@ -66,13 +66,13 @@ module Pcore
   #
   # @api private
   def self.create_object_type(loader, ir, impl_class, type_name, parent_name, attributes_hash = EMPTY_HASH, functions_hash = EMPTY_HASH, equality = nil)
-    i12n_hash = {}
-    i12n_hash[Types::KEY_PARENT] = Types::PTypeReferenceType.new(parent_name) unless parent_name.nil?
-    i12n_hash[Types::KEY_ATTRIBUTES] = attributes_hash unless attributes_hash.empty?
-    i12n_hash[Types::KEY_FUNCTIONS] = functions_hash unless functions_hash.empty?
-    i12n_hash[Types::KEY_EQUALITY] = equality unless equality.nil?
+    init_hash = {}
+    init_hash[Types::KEY_PARENT] = Types::PTypeReferenceType.new(parent_name) unless parent_name.nil?
+    init_hash[Types::KEY_ATTRIBUTES] = attributes_hash unless attributes_hash.empty?
+    init_hash[Types::KEY_FUNCTIONS] = functions_hash unless functions_hash.empty?
+    init_hash[Types::KEY_EQUALITY] = equality unless equality.nil?
     ir.register_implementation(type_name, impl_class, loader)
-    add_type(Types::PObjectType.new(type_name, i12n_hash), loader)
+    add_type(Types::PObjectType.new(type_name, init_hash), loader)
   end
 
   def self.add_object_type(name, body, loader)

@@ -867,7 +867,7 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to json"
 
       it 'should generate rich value hash for parameter values that are not Data' do
         s = catalog_w_regexp.to_json
-        expect(s).to include('"parameters":{"message":{"__pcore_type__":"Regexp","value":"[a-z]+"}}')
+        expect(s).to include('"parameters":{"message":{"__pcore_type__":"Regexp","__pcore_value__":"[a-z]+"}}')
       end
 
       it 'should read and convert rich value hash containing Regexp from json' do
@@ -975,7 +975,7 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to json"
         catalog2 = Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog.to_json))
         message = catalog2.resource('notify', 'foo')['message']
         expect(message).to be_a(String)
-        expect(message).to eql('2016-09-15T08:32:16.123 UTC')
+        expect(message).to eql('2016-09-15T08:32:16.123000000 UTC')
       end
 
       it 'should convert param containing array with :undef entries' do
@@ -1066,18 +1066,18 @@ describe Puppet::Resource::Catalog, "when converting from json" do
     }
   end
 
-  it "should create it with the provided name" do
+  it 'should create it with the provided name' do
     @data['version'] = 50
     @data['code_id'] = 'b59e5df0578ef411f773ee6c33d8073c50e7b8fe'
     @data['catalog_uuid'] = '827a74c8-cf98-44da-9ff7-18c5e4bee41e'
     @data['catalog_format'] = 42
     @data['tags'] = %w{one two}
     @data['classes'] = %w{one two}
-    @data['edges'] = [Puppet::Relationship.new("File[/foo]", "File[/bar]",
-                                               :event => "one",
-                                               :callback => "refresh").to_data_hash]
-    @data['resources'] = [Puppet::Resource.new(:file, "/foo").to_data_hash,
-                          Puppet::Resource.new(:file, "/bar").to_data_hash]
+    @data['edges'] = [Puppet::Relationship.new('File[/foo]', 'File[/bar]',
+                                               :event => :one,
+                                               :callback => :refresh).to_data_hash]
+    @data['resources'] = [Puppet::Resource.new(:file, '/foo').to_data_hash,
+                          Puppet::Resource.new(:file, '/bar').to_data_hash]
 
 
     catalog = Puppet::Resource::Catalog.from_data_hash JSON.parse @data.to_json
@@ -1087,15 +1087,15 @@ describe Puppet::Resource::Catalog, "when converting from json" do
     expect(catalog.code_id).to eq(@data['code_id'])
     expect(catalog.catalog_uuid).to eq(@data['catalog_uuid'])
     expect(catalog.catalog_format).to eq(@data['catalog_format'])
-    expect(catalog).to be_tagged("one")
-    expect(catalog).to be_tagged("two")
+    expect(catalog).to be_tagged('one')
+    expect(catalog).to be_tagged('two')
 
     expect(catalog.classes).to eq(@data['classes'])
-    expect(catalog.resources.collect(&:ref)).to eq(["File[/foo]", "File[/bar]"])
+    expect(catalog.resources.collect(&:ref)).to eq(['File[/foo]', 'File[/bar]'])
 
-    expect(catalog.edges.collect(&:event)).to eq(["one"])
-    expect(catalog.edges[0].source).to eq(catalog.resource(:file, "/foo"))
-    expect(catalog.edges[0].target).to eq(catalog.resource(:file, "/bar"))
+    expect(catalog.edges.collect(&:event)).to eq([:one])
+    expect(catalog.edges[0].source).to eq(catalog.resource(:file, '/foo'))
+    expect(catalog.edges[0].target).to eq(catalog.resource(:file, '/bar'))
   end
 
   it "defaults the catalog_format to 0" do

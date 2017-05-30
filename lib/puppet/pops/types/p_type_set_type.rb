@@ -54,7 +54,7 @@ class PTypeSetType < PMetaType
   })
 
   def self.register_ptype(loader, ir)
-    create_ptype(loader, ir, 'AnyType', 'i12n_hash' => TYPE_TYPESET_I12N.resolve(TypeParser.singleton, loader))
+    create_ptype(loader, ir, 'AnyType', '_pcore_init_hash' => TYPE_TYPESET_I12N.resolve(TypeParser.singleton, loader))
   end
 
   attr_reader :pcore_uri
@@ -69,58 +69,58 @@ class PTypeSetType < PMetaType
   # Initialize a TypeSet Type instance. The initialization will use either a name and an initialization
   # hash expression, or a fully resolved initialization hash.
   #
-  # @overload initialize(name, i12n_hash_expression)
+  # @overload initialize(name, init_hash_expression)
   #   Used when the TypeSet type is loaded using a type alias expression. When that happens, it is important that
   #   the actual resolution of the expression is deferred until all definitions have been made known to the current
   #   loader. The package will then be resolved when it is loaded by the {TypeParser}. "resolved" here, means that
-  #   the hash expression is fully resolved, and then passed to the {#initialize_from_hash} method.
+  #   the hash expression is fully resolved, and then passed to the {#_pcore_init_from_hash} method.
   #   @param name [String] The name of the type set
-  #   @param i12n_hash_expression [Model::LiteralHash] The hash describing the TypeSet features
+  #   @param init_hash_expression [Model::LiteralHash] The hash describing the TypeSet features
   #   @param name_authority [String] The default name authority for the type set
   #
-  # @overload initialize(i12n_hash)
-  #   Used when the package is created by the {TypeFactory}. The i12n_hash must be fully resolved.
-  #   @param i12n_hash [Hash{String=>Object}] The hash describing the TypeSet features
+  # @overload initialize(init_hash)
+  #   Used when the package is created by the {TypeFactory}. The init_hash must be fully resolved.
+  #   @param init_hash [Hash{String=>Object}] The hash describing the TypeSet features
   #
   # @api private
-  def initialize(name_or_i12n_hash, i12n_hash_expression = nil, name_authority = nil)
+  def initialize(name_or_init_hash, init_hash_expression = nil, name_authority = nil)
     @types = EMPTY_HASH
     @references = EMPTY_HASH
 
-    if name_or_i12n_hash.is_a?(Hash)
-      initialize_from_hash(name_or_i12n_hash)
+    if name_or_init_hash.is_a?(Hash)
+      _pcore_init_from_hash(name_or_init_hash)
     else
       # Creation using "type XXX = TypeSet[{}]". This means that the name is given
-      @name = TypeAsserter.assert_instance_of('TypeSet name', Pcore::TYPE_QUALIFIED_REFERENCE, name_or_i12n_hash)
+      @name = TypeAsserter.assert_instance_of('TypeSet name', Pcore::TYPE_QUALIFIED_REFERENCE, name_or_init_hash)
       @name_authority = TypeAsserter.assert_instance_of('TypeSet name_authority', Pcore::TYPE_URI, name_authority, true)
-      @i12n_hash_expression = i12n_hash_expression
+      @init_hash_expression = init_hash_expression
     end
   end
 
   # @api private
-  def initialize_from_hash(i12n_hash)
-    TypeAsserter.assert_instance_of('TypeSet initializer', TYPE_TYPESET_I12N, i12n_hash)
+  def _pcore_init_from_hash(init_hash)
+    TypeAsserter.assert_instance_of('TypeSet initializer', TYPE_TYPESET_I12N, init_hash)
 
     # Name given to the loader have higher precedence than a name declared in the type
-    @name ||= i12n_hash[KEY_NAME].freeze
-    @name_authority ||= i12n_hash[KEY_NAME_AUTHORITY].freeze
+    @name ||= init_hash[KEY_NAME].freeze
+    @name_authority ||= init_hash[KEY_NAME_AUTHORITY].freeze
 
-    @pcore_version = PSemVerType.convert(i12n_hash[Pcore::KEY_PCORE_VERSION]).freeze
+    @pcore_version = PSemVerType.convert(init_hash[Pcore::KEY_PCORE_VERSION]).freeze
     unless Pcore::PARSABLE_PCORE_VERSIONS.include?(@pcore_version)
       raise ArgumentError,
         "The pcore version for TypeSet '#{@name}' is not understood by this runtime. Expected range #{Pcore::PARSABLE_PCORE_VERSIONS}, got #{@pcore_version}"
     end
 
-    @pcore_uri = i12n_hash[Pcore::KEY_PCORE_URI].freeze
-    @version = PSemVerType.convert(i12n_hash[KEY_VERSION])
-    @types = i12n_hash[KEY_TYPES] || EMPTY_HASH
+    @pcore_uri = init_hash[Pcore::KEY_PCORE_URI].freeze
+    @version = PSemVerType.convert(init_hash[KEY_VERSION])
+    @types = init_hash[KEY_TYPES] || EMPTY_HASH
     @types.freeze
 
     # Map downcase names to their camel-cased equivalent
     @dc_to_cc_map = {}
     @types.keys.each { |key| @dc_to_cc_map[key.downcase] = key }
 
-    refs = i12n_hash[KEY_REFERENCES]
+    refs = init_hash[KEY_REFERENCES]
     if refs.nil?
       @references = EMPTY_HASH
     else
@@ -158,14 +158,14 @@ class PTypeSetType < PMetaType
       @references = ref_map.freeze
     end
     @dc_to_cc_map.freeze
-    init_annotatable(i12n_hash)
+    init_annotatable(init_hash)
   end
 
   # Produce a hash suitable for the initializer
   # @return [Hash{String => Object}] the initialization hash
   #
   # @api private
-  def i12n_hash
+  def _pcore_init_hash
     result = super()
     result[Pcore::KEY_PCORE_URI] = @pcore_uri unless @pcore_uri.nil?
     result[Pcore::KEY_PCORE_VERSION] =  @pcore_version.to_s
@@ -173,7 +173,7 @@ class PTypeSetType < PMetaType
     result[KEY_NAME] = @name
     result[KEY_VERSION] = @version.to_s unless @version.nil?
     result[KEY_TYPES] = @types unless @types.empty?
-    result[KEY_REFERENCES] = Hash[@references.map { |ref_alias, ref| [ref_alias, ref.i12n_hash] }] unless @references.empty?
+    result[KEY_REFERENCES] = Hash[@references.map { |ref_alias, ref| [ref_alias, ref._pcore_init_hash] }] unless @references.empty?
     result
   end
 
@@ -263,9 +263,9 @@ class PTypeSetType < PMetaType
   end
 
   # @api private
-  def resolve_literal_hash(type_parser, loader, i12n_hash_expression)
+  def resolve_literal_hash(type_parser, loader, init_hash_expression)
     result = {}
-    i12n_hash_expression.entries.each do |entry|
+    init_hash_expression.entries.each do |entry|
       key = type_parser.interpret_any(entry.key, loader)
       if (key == KEY_TYPES || key == KEY_REFERENCES) && entry.value.is_a?(Model::LiteralHash)
         # Skip type parser interpretation and convert qualified references directly to String keys.
@@ -297,8 +297,8 @@ class PTypeSetType < PMetaType
   end
 
   # @api private
-  def resolve_hash(type_parser, loader, i12n_hash)
-    result = Hash[i12n_hash.map do |key, value|
+  def resolve_hash(type_parser, loader, init_hash)
+    result = Hash[init_hash.map do |key, value|
       key = resolve_type_refs(type_parser, loader, key)
       value = resolve_type_refs(type_parser, loader, value) unless key == KEY_TYPES && value.is_a?(Hash)
       [key, value]
@@ -343,13 +343,13 @@ class PTypeSetType < PMetaType
 
   private
 
-  def resolve_name_authority(i12n_hash, loader)
+  def resolve_name_authority(init_hash, loader)
     name_auth = @name_authority
     if name_auth.nil?
-      name_auth = i12n_hash[KEY_NAME_AUTHORITY]
+      name_auth = init_hash[KEY_NAME_AUTHORITY]
       name_auth = loader.name_authority if name_auth.nil? && loader.is_a?(TypeSetLoader)
       if name_auth.nil?
-        name = @name || i12n_hash[KEY_NAME]
+        name = @name || init_hash[KEY_NAME]
         raise ArgumentError, "No 'name_authority' is declared in TypeSet '#{name}' and it cannot be inferred"
       end
     end

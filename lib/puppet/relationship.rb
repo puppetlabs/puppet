@@ -19,10 +19,10 @@ class Puppet::Relationship
 
     args = {}
     if event = data["event"]
-      args[:event] = event
+      args[:event] = :"#{event}"
     end
     if callback = data["callback"]
-      args[:callback] = callback
+      args[:callback] = :"#{callback}"
     end
 
     new(source, target, args)
@@ -76,11 +76,8 @@ class Puppet::Relationship
       'source' => source.to_s,
       'target' => target.to_s
     }
-
-    ["event", "callback"].each do |attr|
-      next unless value = send(attr)
-      data[attr] = value
-    end
+    data['event'] = event.to_s unless event.nil?
+    data['callback'] = callback.to_s unless callback.nil?
     data
   end
 

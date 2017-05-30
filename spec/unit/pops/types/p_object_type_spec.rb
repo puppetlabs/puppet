@@ -711,7 +711,7 @@ describe 'The Object Type' do
         },
         equality => [b]
       OBJECT
-      obj2 = PObjectType.new(obj.i12n_hash)
+      obj2 = PObjectType.new(obj._pcore_init_hash)
       expect(obj).to eql(obj2)
     end
   end
