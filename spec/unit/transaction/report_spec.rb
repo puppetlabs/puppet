@@ -514,20 +514,38 @@ describe Puppet::Transaction::Report do
     expect(Puppet::Transaction::Report.supported_formats).to include(:json, :pson, :yaml)
   end
 
-  it "can make a round trip through pson" do
-    report = generate_report
+  context 'can make a round trip through' do
+    before(:each) do
+      Puppet.push_context(:loaders => Puppet::Pops::Loaders.new(Puppet.lookup(:current_environment)))
+    end
 
-    tripped = Puppet::Transaction::Report.convert_from(:pson, report.render)
+    after(:each) { Puppet.pop_context }
 
-    expect_equivalent_reports(tripped, report)
-  end
+    it 'pson' do
+      report = generate_report
 
-  it "can make a round trip through json" do
-    report = generate_report
+      tripped = Puppet::Transaction::Report.convert_from(:pson, report.render)
 
-    tripped = Puppet::Transaction::Report.convert_from(:json, report.render)
+      expect_equivalent_reports(tripped, report)
+    end
 
-    expect_equivalent_reports(tripped, report)
+    it 'json' do
+      report = generate_report
+
+      tripped = Puppet::Transaction::Report.convert_from(:json, report.render)
+
+      expect_equivalent_reports(tripped, report)
+    end
+
+    it 'yaml' do
+      report = generate_report
+
+      yaml_output = report.render(:yaml)
+      tripped = Puppet::Transaction::Report.convert_from(:yaml, yaml_output)
+
+      expect(yaml_output).to match(/^--- /)
+      expect_equivalent_reports(tripped, report)
+    end
   end
 
   it "generates pson which validates against the report schema" do
@@ -538,16 +556,6 @@ describe Puppet::Transaction::Report do
   it "generates pson for error report which validates against the report schema" do
     error_report = generate_report_with_error
     expect(error_report.render).to validate_against('api/schemas/report.json')
-  end
-
-  it "can make a round trip through yaml" do
-    report = generate_report
-
-    yaml_output = report.render(:yaml)
-    tripped = Puppet::Transaction::Report.convert_from(:yaml, yaml_output)
-
-    expect(yaml_output).to match(/^--- /)
-    expect_equivalent_reports(tripped, report)
   end
 
   def expect_equivalent_reports(tripped, report)
@@ -602,7 +610,7 @@ describe Puppet::Transaction::Report do
       expect(status.skipped).to eq(expected.skipped)
       expect(status.change_count).to eq(expected.change_count)
       expect(status.out_of_sync_count).to eq(expected.out_of_sync_count)
-      expect(status.events.map(&:to_data_hash)).to eq(expected.events.map(&:to_data_hash))
+      expect(status.events).to eq(expected.events)
     end
   end
 
@@ -610,8 +618,8 @@ describe Puppet::Transaction::Report do
     event_hash = {
       :audited => false,
       :property => 'message',
-      :previous_value => 'absent',
-      :desired_value => 'a resource',
+      :previous_value => SemanticPuppet::VersionRange.parse('>=1.0.0'),
+      :desired_value => SemanticPuppet::VersionRange.parse('>=1.2.0'),
       :historical_value => nil,
       :message => "defined 'message' as 'a resource'",
       :name => :message_changed,

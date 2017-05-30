@@ -34,7 +34,13 @@ class Puppet::Transaction::Event
     @time = Time.now
   end
 
+  def eql?(event)
+    self.class == event.class && ATTRIBUTES.all? { |attr| send(attr).eql?(event.send(attr)) }
+  end
+  alias == eql?
+
   def initialize_from_hash(data)
+    data = Puppet::Pops::Serialization::FromDataConverter.convert(data)
     @audited = data['audited']
     @property = data['property']
     @previous_value = data['previous_value']
@@ -50,7 +56,7 @@ class Puppet::Transaction::Event
   end
 
   def to_data_hash
-    {
+    hash = {
       'audited' => @audited,
       'property' => @property,
       'previous_value' => @previous_value,
@@ -63,6 +69,13 @@ class Puppet::Transaction::Event
       'redacted' => @redacted,
       'corrective_change' => @corrective_change,
     }
+    Puppet::Pops::Serialization::ToDataConverter.convert(hash, {
+      :rich_data => true,
+      :symbol_as_string => true,
+      :local_reference => false,
+      :type_by_reference => true,
+      :message_prefix => 'Event'
+    })
   end
 
   def property=(prop)
