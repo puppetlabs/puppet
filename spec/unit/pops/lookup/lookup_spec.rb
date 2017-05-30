@@ -57,6 +57,11 @@ describe 'The lookup API' do
           mod::c: mod::c (from module)
           mod::e: mod::e (from module)
           mod::f: mod::f (from module)
+          mod::g:
+            :symbol: value
+            key: value
+            6: value
+            2.7: value
           YAML
       }
     }
@@ -135,6 +140,17 @@ describe 'The lookup API' do
 
     it 'environment layer wins over module layer' do
       expect(Lookup.lookup('mod::f', nil, 'not found', true, nil, invocation)).to eql('mod::f (from environment)')
+    end
+
+    it 'returns the correct types for hash keys' do
+      expect(Lookup.lookup('mod::g', nil, 'not found', true, nil, invocation)).to eql(
+	      {
+		      "symbol" => "value",
+		      "key" => "value",
+		      6 => "value",
+		      2.7 => "value",
+	      }
+      )
     end
 
     context "with 'global_only' set to true in the invocation" do
