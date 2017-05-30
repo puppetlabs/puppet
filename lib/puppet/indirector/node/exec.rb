@@ -44,7 +44,9 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
       end
     end
 
-    node.fact_merge
+    if not Puppet[:merge_facts_later]
+      node.fact_merge
+    end
     node
   end
 

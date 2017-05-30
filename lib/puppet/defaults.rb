@@ -317,6 +317,15 @@ deprecated and has been replaced by 'always_retry_plugins'."
         improvement for features that are checked frequently.
       EOT
     },
+    :merge_facts_later => {
+        :type     => :boolean,
+        :default  => false,
+        :desc     => <<-'EOT'
+        Do not merge facts when creating nodes but do it later on when the catalog
+        is compiled. If true, the facts known for the node won't be listed as parameters
+        when /node is invoked.
+      EOT
+    },
     :always_retry_plugins => {
         :type     => :boolean,
         :default  => true,

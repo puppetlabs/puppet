@@ -191,7 +191,9 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
 
     add_to_node(node, info)
 
-    node.fact_merge
+    if not Puppet[:merge_facts_later]
+      node.fact_merge
+    end
 
     node
   end
