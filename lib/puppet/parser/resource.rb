@@ -6,13 +6,11 @@ require 'puppet/resource'
 class Puppet::Parser::Resource < Puppet::Resource
   require 'puppet/parser/resource/param'
   require 'puppet/util/tagging'
-  require 'puppet/parser/yaml_trimmer'
 
   include Puppet::Util
   include Puppet::Util::MethodHelper
   include Puppet::Util::Errors
   include Puppet::Util::Logging
-  include Puppet::Parser::YamlTrimmer
 
   attr_accessor :source, :scope, :collector_id
   attr_accessor :virtual, :override, :translated, :catalog, :evaluated

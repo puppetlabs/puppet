@@ -398,12 +398,6 @@ class Puppet::Transaction::Report
     status
   end
 
-  # @api private
-  #
-  def to_yaml_properties
-    super - [:@external_times, :@resources_failed_to_generate]
-  end
-
   def self.default_format
     :pson
   end

@@ -95,15 +95,6 @@ describe Puppet::Node do
       expect(node.parameters['environment']).to eq('bar')
     end
 
-    it 'to_yaml_properties and to_data_hash references the same attributes' do
-      node = Puppet::Node.new("hello",
-        :environment => 'bar',
-        :classes => ['erth', 'aiu'],
-        :parameters => {"hostname"=>"food"}
-      )
-      expect(node.to_yaml_properties.map {|attr| attr.to_s[1..-1]}.sort).to eql(node.to_data_hash.keys.sort)
-    end
-
     it 'to_data_hash returns value that is instance of to Data' do
       node = Puppet::Node.new("hello",
         :environment => 'bar',

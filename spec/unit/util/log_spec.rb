@@ -511,18 +511,18 @@ describe Puppet::Util::Log do
   describe "to_yaml" do
     it "should not include the @version attribute" do
       log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :version => 100)
-      expect(log.to_yaml_properties).not_to include('@version')
+      expect(log.to_data_hash.keys).not_to include('version')
     end
 
-    it "should include attributes @level, @message, @source, @tags, and @time" do
+    it "should include attributes 'file', 'line', 'level', 'message', 'source', 'tags', and 'time'" do
       log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :version => 100)
-      expect(log.to_yaml_properties).to match_array([:@level, :@message, :@source, :@tags, :@time])
+      expect(log.to_data_hash.keys).to match_array(%w(file line level message source tags time))
     end
 
-    it "should include attributes @file and @line if specified" do
+    it "should include attributes 'file' and 'line' if specified" do
       log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :file => "foo", :line => 35)
-      expect(log.to_yaml_properties).to include(:@file)
-      expect(log.to_yaml_properties).to include(:@line)
+      expect(log.to_data_hash.keys).to include('file')
+      expect(log.to_data_hash.keys).to include('line')
     end
   end
 
@@ -538,10 +538,6 @@ describe Puppet::Util::Log do
     expect(tripped.source).to eq(log.source)
     expect(tripped.tags).to eq(log.tags)
     expect(tripped.time).to eq(log.time)
-  end
-
-  it 'to_yaml_properties and to_data_hash references the same attributes' do
-    expect(log.to_yaml_properties.map {|attr| attr.to_s[1..-1]}.sort).to eql(log.to_data_hash.keys.sort)
   end
 
   it 'to_data_hash returns value that is instance of to Data' do

@@ -6,6 +6,7 @@ require 'set'
 class Puppet::Graph::SimpleGraph
   include Puppet::Util::PsychSupport
 
+  #
   # All public methods of this class must maintain (assume ^ ensure) the following invariants, where "=~=" means
   # equiv. up to order:
   #
@@ -519,11 +520,6 @@ class Puppet::Graph::SimpleGraph
       result
     end
     hash
-  end
-
-  def to_yaml_properties
-    (super + [:@vertices, :@edges] -
-     [:@in_to, :@out_from, :@upstream_from, :@downstream_from]).uniq
   end
 
   def multi_vertex_component?(component)

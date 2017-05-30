@@ -132,18 +132,6 @@ class Puppet::Resource
     self.value.to_json_data(x)
   end
 
-  YAML_ATTRIBUTES = [:@file, :@line, :@exported, :@type, :@title, :@tags, :@parameters]
-
-  # Explicitly list the instance variables that should be serialized when
-  # converting to YAML.
-  #
-  # @api private
-  # @return [Array<Symbol>] The intersection of our explicit variable list and
-  #   all of the instance variables defined on this class.
-  def to_yaml_properties
-    YAML_ATTRIBUTES & super
-  end
-
   # Proxy these methods to the parameters hash.  It's likely they'll
   # be overridden at some point, but this works for now.
   %w{has_key? keys length delete empty? <<}.each do |method|
