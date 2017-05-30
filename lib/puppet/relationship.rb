@@ -8,14 +8,15 @@ class Puppet::Relationship
 
   # FormatSupport for serialization methods
   include Puppet::Network::FormatSupport
+  include Puppet::Util::PsychSupport
 
   attr_accessor :source, :target, :callback
 
   attr_reader :event
 
   def self.from_data_hash(data)
-    source = data["source"]
-    target = data["target"]
+    source = data['source']
+    target = data['target']
 
     args = {}
     if event = data["event"]
