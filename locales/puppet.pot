@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 4.10.1-857-g60f55b2\n"
+"Project-Id-Version: Puppet automation framework 4.10.1-872-g6123242\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-05-29 07:10+0000\n"
-"PO-Revision-Date: 2017-05-29 07:10+0000\n"
+"POT-Creation-Date: 2017-05-30 17:17+0000\n"
+"PO-Revision-Date: 2017-05-30 17:17+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -4513,6 +4513,14 @@ msgstr ""
 msgid "Interpolation using method syntax is not allowed in this context"
 msgstr ""
 
+#: ../lib/puppet/pops/issues.rb:843
+msgid "Endless recursion detected when attempting to serialize value of class %{type_name}"
+msgstr ""
+
+#: ../lib/puppet/pops/issues.rb:847
+msgid "%{path} contains a %{klass} value. It will be converted to the String '%{value}'"
+msgstr ""
+
 #: ../lib/puppet/pops/loader/base_loader.rb:112
 msgid "Originally set %{original}."
 msgstr ""
@@ -4613,7 +4621,7 @@ msgstr ""
 msgid "Attempt to redefine already initialized loaders for environment"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:168
+#: ../lib/puppet/pops/loaders.rb:170
 msgid "Unable to find loader named '%{loader_name}'"
 msgstr ""
 
@@ -4747,8 +4755,12 @@ msgstr ""
 msgid "Integer out of bounds"
 msgstr ""
 
-#: ../lib/puppet/pops/serialization/deserializer.rb:46
+#: ../lib/puppet/pops/serialization/deserializer.rb:46 ../lib/puppet/pops/serialization/from_data_converter.rb:123
 msgid "No implementation mapping found for Puppet Type %{type_name}"
+msgstr ""
+
+#: ../lib/puppet/pops/serialization/from_data_converter.rb:112
+msgid "Cannot create a %{type_name} from a %{arg_class"
 msgstr ""
 
 #: ../lib/puppet/pops/serialization/json.rb:204
@@ -4767,6 +4779,18 @@ msgstr ""
 msgid "Invalid input. %{ext_no} is not a valid extension number"
 msgstr ""
 
+#: ../lib/puppet/pops/serialization/json_path.rb:92
+msgid "undef"
+msgstr ""
+
+#: ../lib/puppet/pops/serialization/json_path.rb:96
+msgid "default"
+msgstr ""
+
+#: ../lib/puppet/pops/serialization/json_path.rb:120
+msgid "Unable to parse jsonpath \"%{path}\""
+msgstr ""
+
 #: ../lib/puppet/pops/serialization/object.rb:17
 msgid "Feature count mismatch for %{value0}. Expected %{required_count} - %{max}, actual %{value_count}"
 msgstr ""
@@ -4775,7 +4799,7 @@ msgstr ""
 msgid "Missing default value for %{type_name}[%{name}]"
 msgstr ""
 
-#: ../lib/puppet/pops/serialization/serializer.rb:125
+#: ../lib/puppet/pops/serialization/serializer.rb:133
 msgid "No Puppet Type found for %{klass}"
 msgstr ""
 
@@ -5610,51 +5634,39 @@ msgstr ""
 msgid "Unable to submit report to %{url} [%{code}] %{message}"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:48
+#: ../lib/puppet/resource.rb:47
 msgid "No resource type provided in serialized data"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:49
+#: ../lib/puppet/resource.rb:48
 msgid "No resource title provided in serialized data"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:93
-msgid "Unable to deserialize non-Data value for parameter %{param} unless rich data is enabled"
-msgstr ""
-
-#: ../lib/puppet/resource.rb:129
-msgid "Resource '%{resource}' contains a %{klass} value. It will be converted to the String '%{value}'"
-msgstr ""
-
-#: ../lib/puppet/resource.rb:144
-msgid "No Puppet Type found for %{type_name}"
-msgstr ""
-
-#: ../lib/puppet/resource.rb:565
+#: ../lib/puppet/resource.rb:493
 msgid "The method Puppet::Resource.set_default_parameters is deprecated and will be removed in the next major release of Puppet."
 msgstr ""
 
-#: ../lib/puppet/resource.rb:570
+#: ../lib/puppet/resource.rb:498
 msgid "Cannot evaluate default parameters for %{resource} - not a parser resource"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:610
+#: ../lib/puppet/resource.rb:538
 msgid "The method Puppet::Resource.validate_complete is deprecated and will be removed in the next major release of Puppet."
 msgstr ""
 
-#: ../lib/puppet/resource.rb:616
+#: ../lib/puppet/resource.rb:544
 msgid "Must pass %{param} to %{resource}"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:627
+#: ../lib/puppet/resource.rb:555
 msgid "Expected parameter '%{name}' of '%{value0}' to have type %{value1}, got %{value2}"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:633
+#: ../lib/puppet/resource.rb:561
 msgid "no parameter named '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:742
+#: ../lib/puppet/resource.rb:676
 msgid "No set of title patterns matched the title \"%{title}\"."
 msgstr ""
 
@@ -5667,11 +5679,11 @@ msgstr ""
 msgid "Cannot alias %{ref} to %{key}%{resource_declaration}; resource %{newref} already declared%{existing_declaration}"
 msgstr ""
 
-#: ../lib/puppet/resource/catalog.rb:542
+#: ../lib/puppet/resource/catalog.rb:533
 msgid "Could not create class file %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/resource/catalog.rb:562
+#: ../lib/puppet/resource/catalog.rb:553
 msgid "Could not create resource file %{file}: %{detail}"
 msgstr ""
 
