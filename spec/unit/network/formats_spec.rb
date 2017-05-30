@@ -47,6 +47,10 @@ describe "Puppet Network Format" do
       expect(msgpack.mime).to eq("application/x-msgpack")
     end
 
+    it "should have a nil charset" do
+      expect(msgpack.charset).to be_nil
+    end
+
     it "should have a weight of 20" do
       expect(msgpack.weight).to eq(20)
     end
@@ -86,6 +90,11 @@ describe "Puppet Network Format" do
 
     it "should have its mime type set to text/yaml" do
       expect(yaml.mime).to eq("text/yaml")
+    end
+
+    # we shouldn't be using yaml on the network
+    it "should have a nil charset" do
+      expect(yaml.charset).to be_nil
     end
 
     it "should be supported on Strings" do
@@ -150,6 +159,10 @@ describe "Puppet Network Format" do
       expect(text.mime).to eq("text/plain")
     end
 
+    it "should use 'utf-8' charset" do
+      expect(text.charset).to eq(Encoding::UTF_8)
+    end
+
     it "should use 'txt' as its extension" do
       expect(text.extension).to eq("txt")
     end
@@ -172,6 +185,10 @@ describe "Puppet Network Format" do
 
     it "should have its mimetype set to application/octet-stream" do
       expect(binary.mime).to eq("application/octet-stream")
+    end
+
+    it "should have a nil charset" do
+      expect(binary.charset).to be_nil
     end
 
     it "should not be supported by default" do
@@ -214,6 +231,10 @@ describe "Puppet Network Format" do
 
     it "should have its mime type set to text/pson" do
       expect(pson.mime).to eq("text/pson")
+    end
+
+    it "should have a nil charset" do
+      expect(pson.charset).to be_nil
     end
 
     it "should require the :render_method" do
@@ -294,6 +315,10 @@ describe "Puppet Network Format" do
 
     it "should have its mime type set to application/json" do
       expect(json.mime).to eq("application/json")
+    end
+
+    it "should use 'utf-8' charset" do
+      expect(json.charset).to eq(Encoding::UTF_8)
     end
 
     it "should require the :render_method" do

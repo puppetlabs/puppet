@@ -352,7 +352,7 @@ describe 'Puppet Type System' do
     end
 
     it 'can be created with a runtime and, puppet name pattern, and runtime replacement' do
-      expect(tf.runtime('ruby', [/^MyPackage::(.*)$/, 'MyModule::\1']).to_s).to eq("Runtime[ruby, [/^MyPackage::(.*)$/, \"MyModule::\\\\1\"]]")
+      expect(tf.runtime('ruby', [/^MyPackage::(.*)$/, 'MyModule::\1']).to_s).to eq("Runtime[ruby, [/^MyPackage::(.*)$/, 'MyModule::\\1']]")
     end
 
     it 'will map a Puppet name to a runtime type' do
@@ -625,6 +625,24 @@ describe 'Puppet Type System' do
       [tf.any, tf.scalar, tf.collection ].each do |t|
         expect { t.create }.to raise_error(ArgumentError, /Creation of new instance of type '#{t.to_s}' is not supported/)
       end
+    end
+  end
+
+  context 'creation of parameterized type via ruby create function on class' do
+    around(:each) do |example|
+      Puppet.override(:loaders => Loaders.new(Puppet::Node::Environment.create(:testing, []))) do
+        example.run
+      end
+    end
+
+    it 'is supported by Integer' do
+      int_type = tf.integer.class.create(0, 32)
+      expect(int_type).to eq(tf.range(0, 32))
+    end
+
+    it 'is supported by Regexp' do
+      rx_type = tf.regexp.class.create('[a-z]+')
+      expect(rx_type).to eq(tf.regexp(/[a-z]+/))
     end
   end
 end

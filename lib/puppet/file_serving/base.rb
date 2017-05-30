@@ -75,7 +75,7 @@ class Puppet::FileServing::Base
     {
       'path'          => @path,
       'relative_path' => @relative_path,
-      'links'         => @links
+      'links'         => @links.to_s
     }
   end
 

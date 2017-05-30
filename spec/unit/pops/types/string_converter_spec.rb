@@ -134,16 +134,30 @@ describe 'The string converter' do
         expect(converter.convert("esc \u{1b}.", string_formats)).to eq('"esc \\u{1B}."')
       end
 
-      it 'escape for $' do
-        expect(converter.convert('escape the $ sign', string_formats)).to eq('"escape the \$ sign"')
+      it 'escape for $ in double quoted string' do
+        # Use \n in string to force double quotes
+        expect(converter.convert("escape the $ sign\n", string_formats)).to eq('"escape the \$ sign\n"')
       end
 
-      it 'escape for double qoute but not for single quote' do
-        expect(converter.convert('the \' single and " double quote', string_formats)).to eq('"the \' single and \\" double quote"')
+      it 'no escape for $ in single quoted string' do
+        expect(converter.convert('don\'t escape the $ sign', string_formats)).to eq("'don\\'t escape the $ sign'")
+      end
+
+      it 'escape for double quote but not for single quote in double quoted string' do
+        # Use \n in string to force double quotes
+        expect(converter.convert("the ' single and \" double quote\n", string_formats)).to eq('"the \' single and \\" double quote\n"')
+      end
+
+      it 'escape for single quote but not for double quote in single quoted string' do
+        expect(converter.convert('the \' single and " double quote', string_formats)).to eq("'the \\' single and \" double quote'")
       end
 
       it 'no escape for #' do
         expect(converter.convert('do not escape #{x}', string_formats)).to eq('\'do not escape #{x}\'')
+      end
+
+      it 'escape for last \\' do
+        expect(converter.convert('escape the last \\', string_formats)).to eq("'escape the last \\'")
       end
     end
 

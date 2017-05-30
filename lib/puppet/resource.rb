@@ -37,9 +37,8 @@ class Puppet::Resource
   PCORE_TYPE_KEY = '__pcore_type__'.freeze
   VALUE_KEY = 'value'.freeze
 
-  def self.from_data_hash(data, rich_data_enabled = false)
+  def self.from_data_hash(data)
     resource = self.allocate
-    resource.instance_variable_set(:@rich_data_enabled, true) if rich_data_enabled
     resource.initialize_from_hash(data)
     resource
   end
@@ -50,11 +49,9 @@ class Puppet::Resource
     @type, @title = self.class.type_and_title(type, title)
 
     if params = data['parameters']
+      params = Puppet::Pops::Serialization::FromDataConverter.convert(params)
       @parameters = {}
-      params.each do |param, value|
-        value = convert_rich_data_hash(value) if value.is_a?(Hash) && value.include?(PCORE_TYPE_KEY)
-        self[param] = value
-      end
+      params.each { |param, value| self[param] = value }
     else
       @parameters = EMPTY_HASH
     end
@@ -75,38 +72,14 @@ class Puppet::Resource
     end
   end
 
-  def convert_rich_data_hash(rich_data_hash)
-    if instance_variable_defined?(:@rich_data_enabled)
-      value = rich_data_hash[VALUE_KEY]
-      if value.is_a?(Array)
-        json_deserializer ||= Puppet::Pops::Serialization::Deserializer.new(Puppet::Pops::Serialization::JSON::Reader.new([]), nil)
-        reader = json_deserializer.reader
-        reader.re_initialize(value)
-        json_deserializer.read
-      else
-        pcore_type =  Puppet::Pops::Types::TypeParser.singleton.parse(rich_data_hash[PCORE_TYPE_KEY])
-        pcore_type.create(value)
-      end
-    else
-      strict = Puppet[:strict]
-      unless strict == :off
-        msg = _('Unable to deserialize non-Data value for parameter %{param} unless rich data is enabled') % { :param => "#{resource.name}.#{param}" }
-        raise Puppet::Error, msg if strict == :error
-        Puppet.warn(msg)
-      end
-      rich_data_hash
-    end
-  end
-  private :convert_rich_data_hash
-
   def inspect
     "#{@type}[#{@title}]#{to_hash.inspect}"
   end
 
-  def to_data_hash(rich_data_enabled = false)
+  def to_data_hash
     data = {
       'type' => type,
-      'title' => title,
+      'title' => title.to_s,
       'tags' => tags.to_data_hash
     }
     ATTRIBUTES.each do |param|
@@ -116,72 +89,27 @@ class Puppet::Resource
 
     data['exported'] ||= false
 
-    ext_params = {}
     params = {}
     self.to_hash.each_pair do |param, value|
       # Don't duplicate the title as the namevar
       unless param == namevar && value == title
-        name = param.to_s
-        value = Puppet::Resource.value_to_json_data(value)
-        if is_json_type?(value)
-          params[name] = value
-        elsif !rich_data_enabled
-          Puppet.warning(_("Resource '%{resource}' contains a %{klass} value. It will be converted to the String '%{value}'") % { resource: to_s, klass: value.class.name, value: value })
-          params[name] = value
-        else
-          ext_params[name] = value
-        end
+        params[param.to_s] = Puppet::Resource.value_to_json_data(value)
       end
     end
 
-    unless ext_params.empty?
-      tc = Puppet::Pops::Types::TypeCalculator.singleton
-      sc = Puppet::Pops::Types::StringConverter.singleton
-      ext_params.each_pair do |key, value|
-        pcore_type = tc.infer(value)
-
-        # Don't allow unknown runtime types to leak into the catalog
-        raise Puppet::Error, _('No Puppet Type found for %{type_name}') % { :type_name => value.class.name } if pcore_type.is_a?(Puppet::Pops::Types::PRuntimeType)
-
-        if value.is_a?(Hash) || value.is_a?(Array) || value.is_a?(Puppet::Pops::Types::PuppetObject)
-          # Non scalars and Objects are serialized into an array using Pcore
-          json_serializer ||= Puppet::Pops::Serialization::Serializer.new(Puppet::Pops::Serialization::JSON::Writer.new(''), :type_by_reference => true)
-          writer = json_serializer.writer
-          writer.clear_io
-          json_serializer.write(value)
-          writer.finish
-          value = writer.to_a
-        else
-          # Scalar values are stored using their default string representation
-          value = sc.convert(value)
-        end
-        params[key] = {
-          PCORE_TYPE_KEY => pcore_type.name,
-          VALUE_KEY => value
-        }
-      end
+    unless params.empty?
+      data['parameters'] = Puppet::Pops::Serialization::ToDataConverter.convert(params, {
+        :rich_data => environment.rich_data?,
+        :symbol_as_string => true,
+        :local_reference => false,
+        :type_by_reference => true,
+        :message_prefix => ref,
+        :semantic => self
+      })
     end
 
-    data['parameters'] = params unless params.empty?
-    data["sensitive_parameters"] = sensitive_parameters unless sensitive_parameters.empty?
-
+    data['sensitive_parameters'] = sensitive_parameters.map(&:to_s) unless sensitive_parameters.empty?
     data
-  end
-
-  # @param [Object] value The value to test
-  # @return [Boolean] `true` if the value can be represented as JSON
-  # @api private
-  def is_json_type?(value)
-    case value
-    when NilClass, TrueClass, FalseClass, Integer, Float, String
-      true
-    when Array
-      value.all? { |elem| is_json_type?(elem) }
-    when Hash
-      value.all? { |key, val| key.is_a?(String) && is_json_type?(val) }
-    else
-      false
-    end
   end
 
   def self.value_to_json_data(value)
@@ -631,6 +559,12 @@ class Puppet::Resource
 
   def validate_parameter(name)
     raise Puppet::ParseError.new(_("no parameter named '%{name}'") % { name: name }, file, line) unless valid_parameter?(name)
+  end
+
+  # This method, together with #file and #line, makes it possible for a Resource to be a 'source_pos' in a reported issue.
+  # @return [Integer] Instances of this class will always return `nil`.
+  def pos
+    nil
   end
 
   def prune_parameters(options = EMPTY_HASH)

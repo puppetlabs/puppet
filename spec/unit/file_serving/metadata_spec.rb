@@ -46,8 +46,8 @@ describe Puppet::FileServing::Metadata do
       expect(metadata.to_data_hash['relative_path']).to eq(metadata.relative_path)
     end
 
-    it "should pass the links in the hash verbatim" do
-      expect(metadata.to_data_hash['links']).to eq(metadata.links)
+    it "should pass the links in the hash as a string" do
+      expect(metadata.to_data_hash['links']).to eq(metadata.links.to_s)
     end
 
     it "should pass the path owner in the hash verbatim" do

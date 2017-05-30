@@ -115,7 +115,7 @@ describe 'when converting to 3.x' do
     it 'converts a Timestamp instance to string' do
       c = converter.convert(Puppet::Pops::Time::Timestamp.parse('2016-09-15T12:24:47.193 UTC'), {}, nil)
       expect(c).to be_a(String)
-      expect(c).to eql('2016-09-15T12:24:47.193 UTC')
+      expect(c).to eql('2016-09-15T12:24:47.193000000 UTC')
     end
 
     it 'converts a Binary instance to string' do

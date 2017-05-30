@@ -202,6 +202,14 @@ class AbstractWriter
       end
     end
   end
+
+  def to_s
+    "#{self.class.name}"
+  end
+
+  def inspect
+    to_s
+  end
 end
 end
 end

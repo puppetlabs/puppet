@@ -835,35 +835,60 @@ class StringConverter
   #
   # @api public
   def puppet_quote(str)
-    if str.ascii_only? && (str =~ /(?:'|\$|\p{Cntrl}|\\)/).nil?
-      "'#{str}'"
-    else
-      bld = '"'
-      str.codepoints do |codepoint|
-        case codepoint
-        when 0x09
-          bld << '\\t'
-        when 0x0a
-          bld << '\\n'
-        when 0x0d
-          bld << '\\r'
-        when 0x22
-          bld << '\\"'
-        when 0x24
-          bld << '\\$'
-        when 0x5c
-          bld << '\\\\'
+    # Assume that the string can be single quoted
+    bld = '\''
+    escaped = false
+    str.each_codepoint do |codepoint|
+      # Control characters and non-ascii characters cannot be present in a single quoted string
+      return puppet_double_quote(str) if codepoint > 0x7f || codepoint < 0x20
+
+      if escaped
+        bld << 0x5c << codepoint
+        escaped = false
+      else
+        if codepoint == 0x27
+          bld << 0x5c << codepoint
+        elsif codepoint == 0x5c
+          escaped = true
         else
-          if codepoint < 0x20 || codepoint > 0x7f
-            bld << sprintf('\\u{%X}', codepoint)
-          else
-            bld.concat(codepoint)
-          end
+          bld << codepoint
         end
       end
-      bld << '"'
-      bld
     end
+
+    # If string ended with a backslash, then that backslash must be escaped
+    bld << 0x5c if escaped
+
+    bld << '\''
+    bld
+  end
+
+  def puppet_double_quote(str)
+    bld = '"'
+    str.each_codepoint do |codepoint|
+      case codepoint
+      when 0x09
+        bld << '\\t'
+      when 0x0a
+        bld << '\\n'
+      when 0x0d
+        bld << '\\r'
+      when 0x22
+        bld << '\\"'
+      when 0x24
+        bld << '\\$'
+      when 0x5c
+        bld << '\\\\'
+      else
+        if codepoint < 0x20 || codepoint > 0x7f
+          bld << sprintf('\\u{%X}', codepoint)
+        else
+          bld.concat(codepoint)
+        end
+      end
+    end
+    bld << '"'
+    bld
   end
 
   # @api private

@@ -46,17 +46,17 @@ module Types
     # @param i12n [Hash{String,Object},nil] the initializer for the annotation or `nil` to clear the annotation
     # @return [Annotation<self>] an annotation of the same class as the receiver of the call
     #
-    def self.annotate_new(o, i12n_hash)
+    def self.annotate_new(o, init_hash)
       if o.is_a?(Annotatable) && o.annotations.include?(_pcore_type)
         # Prevent clear or redefine of annotations declared on type
-        action = i12n_hash == CLEAR ? 'clear' : 'redefine'
+        action = init_hash == CLEAR ? 'clear' : 'redefine'
         raise ArgumentError, "attempt to #{action} #{type_name} annotation declared on #{o.label}"
       end
 
-      if i12n_hash == CLEAR
+      if init_hash == CLEAR
         clear(o)
       else
-        associate_adapter(_pcore_type.from_hash(i12n_hash), o)
+        associate_adapter(_pcore_type.from_hash(init_hash), o)
       end
     end
 

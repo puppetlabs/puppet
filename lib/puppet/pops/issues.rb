@@ -838,5 +838,13 @@ module Issues
   HIERA_INTERPOLATION_METHOD_SYNTAX_NOT_ALLOWED = hard_issue :HIERA_INTERPOLATION_METHOD_SYNTAX_NOT_ALLOWED do
     _('Interpolation using method syntax is not allowed in this context')
   end
+
+  SERIALIZATION_ENDLESS_RECURSION = hard_issue :SERIALIZATION_ENDLESS_RECURSION, :type_name do
+    _('Endless recursion detected when attempting to serialize value of class %{type_name}') % { :type_name => type_name }
+  end
+
+  SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING = issue :SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING, :path, :klass, :value do
+    _("%{path} contains a %{klass} value. It will be converted to the String '%{value}'") % { path: path, klass: klass, value: value }
+  end
 end
 end

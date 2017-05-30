@@ -296,12 +296,12 @@ ERROR_STRING
 
   def to_data_hash
     my_cert = Puppet::SSL::Certificate.indirection.find(name)
-    result = { :name  => name }
+    result = { 'name'  => name }
 
     my_state = state
 
-    result[:state] = my_state
-    result[:desired_state] = desired_state if desired_state
+    result['state'] = my_state
+    result['desired_state'] = desired_state if desired_state
 
     thing_to_use = (my_state == 'requested') ? certificate_request : my_cert
 
@@ -310,7 +310,7 @@ ERROR_STRING
     # json[:fingerprints][:default]
     # It appears that we have no internal consumers of this api
     # --jeffweiss 30 aug 2012
-    result[:fingerprint] = thing_to_use.fingerprint
+    result['fingerprint'] = thing_to_use.fingerprint
 
     # The above fingerprint doesn't tell us what message digest algorithm was used
     # No problem, except that the default is changing between 2.7 and 3.0. Also, as
@@ -319,13 +319,13 @@ ERROR_STRING
     # So, when we add the newer fingerprints, we're explicit about the hashing
     # algorithm used.
     # --jeffweiss 31 july 2012
-    result[:fingerprints] = {}
-    result[:fingerprints][:default] = thing_to_use.fingerprint
+    result['fingerprints'] = {}
+    result['fingerprints']['default'] = thing_to_use.fingerprint
 
     suitable_message_digest_algorithms.each do |md|
-      result[:fingerprints][md] = thing_to_use.fingerprint md
+      result['fingerprints'][md.to_s] = thing_to_use.fingerprint md
     end
-    result[:dns_alt_names] = thing_to_use.subject_alt_names
+    result['dns_alt_names'] = thing_to_use.subject_alt_names
 
     result
   end

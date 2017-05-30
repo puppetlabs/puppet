@@ -79,6 +79,11 @@ class PAnyType < TypedModelObject
     @type = Pcore::create_object_type(loader, ir, self, 'Pcore::AnyType', 'Any', EMPTY_HASH)
   end
 
+  def self.create(*args)
+    # NOTE! Important to use self::DEFAULT and not just DEFAULT since the latter yields PAnyType::DEFAULT
+    args.empty? ? self::DEFAULT : new(*args)
+  end
+
   # Accept a visitor that will be sent the message `visit`, once with `self` as the
   # argument. The visitor will then visit all types that this type contains.
   #
@@ -319,6 +324,13 @@ class PAnyType < TypedModelObject
     raise ArgumentError.new("Creation of new instance of type '#{instance.to_s}' is not supported")
   end
 
+  # Answers the question if instances of this type can represent themselves as a string that
+  # can then be passed to the create method
+  #
+  # @return [Boolean] wether or not the instance has a canonical string representation
+  def roundtrip_with_string?
+    false
+  end
 
   # The default instance of this type. Each type in the type system has this constant
   # declared.
@@ -652,6 +664,10 @@ class PScalarType < PAnyType
     else
       assignable?(TypeCalculator.infer(o))
     end
+  end
+
+  def roundtrip_with_string?
+    true
   end
 
   DEFAULT = PScalarType.new

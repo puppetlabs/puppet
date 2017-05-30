@@ -67,6 +67,8 @@ class Loaders
   #
   def self.clear
     @@static_loader = nil
+    Model.class_variable_set(:@@pcore_ast_initialized, false)
+    Model.register_pcore_types
   end
 
   # Calls {#loaders} to obtain the {{Loaders}} instance and then uses it to find the appropriate loader
