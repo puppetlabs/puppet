@@ -518,7 +518,7 @@ class Puppet::Graph::SimpleGraph
       end
       result
     end
-    Puppet::Pops::Types::TypeAsserter.assert_instance_of('SimpleGraph', Puppet::Pops::Types::TypeFactory.data, hash)
+    hash
   end
 
   def to_yaml_properties
