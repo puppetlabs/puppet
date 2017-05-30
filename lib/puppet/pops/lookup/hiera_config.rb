@@ -106,7 +106,9 @@ class HieraConfig
   def self.symkeys_to_string(struct)
     case(struct)
     when Hash
-      Hash[struct.map { |k,v| [k.to_s, symkeys_to_string(v)] }]
+      map = {}
+      struct.each_pair {|k,v| map[ k.is_a?(Symbol) ? k.to_s : k] = symkeys_to_string(v) }
+      map
     when Array
       struct.map { |v| symkeys_to_string(v) }
     else
