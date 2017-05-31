@@ -684,27 +684,6 @@ describe Puppet::Graph::SimpleGraph do
           # the internal representation of the graph is about to change.
         end
       end
-
-      it "should be able to serialize a graph where the vertices contain backreferences to the graph (#{which_format} format)" do
-        pending('Make SimpleGraph a known to the Puppet Type System')
-
-        reference_graph = Puppet::Graph::SimpleGraph.new
-        vertex = { 'graph' => reference_graph }
-        reference_graph.add_edge(vertex, :other_vertex)
-        yaml_form = graph_to_yaml(reference_graph, which_format) do
-          rich_hash = Puppet::Pops::Serialization::ToDataConverter.convert(reference_graph, :rich_data => true)
-          YAML.dump(rich_hash)
-        end
-        recovered_graph = Puppet::Pops::Serialization::FromDataConverter.convert(YAML.load(yaml_form))
-
-        expect(recovered_graph.vertices.length).to eq(2)
-        recovered_vertex = recovered_graph.vertices.reject { |x| x.is_a?(Symbol) }[0]
-        expect(recovered_vertex['graph']).to equal(recovered_graph)
-        expect(recovered_graph.edges.length).to eq(1)
-        recovered_edge = recovered_graph.edges[0]
-        expect(recovered_edge.source).to equal(recovered_vertex)
-        expect(recovered_edge.target).to eq(:other_vertex)
-      end
     end
 
     it "should serialize properly when used as a base class" do
