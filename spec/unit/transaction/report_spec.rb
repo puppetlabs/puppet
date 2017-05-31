@@ -484,18 +484,13 @@ describe Puppet::Transaction::Report do
     it "should not include @external_times" do
       report = Puppet::Transaction::Report.new('apply')
       report.add_times('config_retrieval', 1.0)
-      expect(report.to_yaml_properties).not_to include(:@external_times)
+      expect(report.to_data_hash.keys).not_to include('external_times')
     end
 
     it "should not include @resources_failed_to_generate" do
       report = Puppet::Transaction::Report.new("apply")
       report.resources_failed_to_generate = true
-      expect(report.to_yaml_properties).not_to include(:@resources_failed_to_generate)
-    end
-
-    it 'to_yaml_properties and to_data_hash references the same attributes' do
-      report = generate_report
-      expect(report.to_yaml_properties.map {|attr| attr.to_s[1..-1]}.sort).to eql(report.to_data_hash.keys.sort)
+      expect(report.to_data_hash.keys).not_to include('resources_failed_to_generate')
     end
 
     it 'to_data_hash returns value that is instance of to Data' do

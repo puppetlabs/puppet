@@ -96,14 +96,6 @@ module Puppet
         failed_dependencies && !failed_dependencies.empty?
       end
 
-      # A list of instance variables that should be serialized with this object
-      # when converted to YAML.
-      YAML_ATTRIBUTES = %w{@resource @file @line @evaluation_time @change_count
-                           @out_of_sync_count @tags @time @events @out_of_sync
-                           @changed @resource_type @title @skipped @failed
-                           @containment_path @corrective_change}.
-        map(&:to_sym)
-
       def self.from_data_hash(data)
         obj = self.allocate
         obj.initialize_from_hash(data)
@@ -216,10 +208,6 @@ module Puppet
           'events' => @events.map { |event| event.to_data_hash },
           'corrective_change' => @corrective_change,
         }
-      end
-
-      def to_yaml_properties
-        YAML_ATTRIBUTES & super
       end
     end
   end

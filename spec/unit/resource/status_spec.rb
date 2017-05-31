@@ -132,16 +132,6 @@ describe Puppet::Resource::Status do
     end
   end
 
-  describe "When converting to YAML" do
-    it "should include only documented attributes" do
-      @status.file = "/foo.rb"
-      @status.line = 27
-      @status.evaluation_time = 2.7
-      @status.tags = %w{one two}
-      expect(@status.to_yaml_properties).to match_array(Puppet::Resource::Status::YAML_ATTRIBUTES)
-    end
-  end
-
   let(:status) do
     s = @status
     s.file = "/foo.rb"
@@ -178,10 +168,6 @@ describe Puppet::Resource::Status do
     expect(tripped.change_count).to eq(status.change_count)
     expect(tripped.out_of_sync_count).to eq(status.out_of_sync_count)
     expect(events_as_hashes(tripped)).to eq(events_as_hashes(status))
-  end
-
-  it 'to_yaml_properties and to_data_hash references the same attributes' do
-    expect(status.to_yaml_properties.map {|attr| attr.to_s[1..-1]}.sort).to eql(status.to_data_hash.keys.sort)
   end
 
   it 'to_data_hash returns value that is instance of to Data' do
