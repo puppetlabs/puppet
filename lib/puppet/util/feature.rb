@@ -32,7 +32,7 @@ class Puppet::Util::Feature
       #    configured to always cache
       if block_given?     ||
           @results[name]  ||
-          (@results.has_key?(name) && (Puppet[:always_cache_features] || !Puppet[:always_retry_plugins]))
+          (@results.has_key?(name) && (!Puppet[:always_retry_plugins]))
         @results[name]
       else
         @results[name] = test(name, options)
