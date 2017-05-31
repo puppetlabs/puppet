@@ -4,7 +4,8 @@ require 'set'
 
 # A hopefully-faster graph class to replace the use of GRATR.
 class Puppet::Graph::SimpleGraph
-  #
+  include Puppet::Util::PsychSupport
+
   # All public methods of this class must maintain (assume ^ ensure) the following invariants, where "=~=" means
   # equiv. up to order:
   #
@@ -295,6 +296,7 @@ class Puppet::Graph::SimpleGraph
   # since they have to specify what kind of edge it is.
   def add_edge(e,*a)
     return add_relationship(e,*a) unless a.empty?
+    e = Puppet::Relationship.from_data_hash(e) if e.is_a?(Hash)
     @upstream_from.clear
     @downstream_from.clear
     add_vertex(e.source)
@@ -481,68 +483,47 @@ class Puppet::Graph::SimpleGraph
   end
   self.use_new_yaml_format = false
 
-  # Stub class to allow graphs to be represented in YAML using the old
-  # (version 2.6) format.
-  class VertexWrapper
-    attr_reader :vertex, :adjacencies
-    def initialize(vertex, adjacencies)
-      @vertex = vertex
-      @adjacencies = adjacencies
+  def initialize_from_hash(hash)
+    initialize
+    vertices = hash['vertices']
+    edges = hash['edges']
+    if vertices.is_a?(Hash)
+      # Support old (2.6) format
+      vertices = vertices.keys
     end
-
-    def inspect
-      { :@adjacencies => @adjacencies, :@vertex => @vertex.to_s }.inspect
-    end
+    vertices.each { |v| add_vertex(v) } unless vertices.nil?
+    edges.each { |e| add_edge(e) } unless edges.nil?
   end
 
-  # instance_variable_get is used by YAML.dump to get instance
-  # variables.  Override it so that we can simulate the presence of
-  # instance variables @edges and @vertices for serialization.
-  def instance_variable_get(v)
-    case v.to_s
-    when '@edges' then
-      edges
-    when '@vertices' then
-      if self.class.use_new_yaml_format
-        vertices
-      else
-        result = {}
-        vertices.each do |vertex|
-          adjacencies = {}
-          [:in, :out].each do |direction|
-            adjacencies[direction] = {}
-            adjacent(vertex, :direction => direction, :type => :edges).each do |edge|
-              other_vertex = direction == :in ? edge.source : edge.target
-              (adjacencies[direction][other_vertex] ||= Set.new).add(edge)
-            end
-          end
-          result[vertex] = Puppet::Graph::SimpleGraph::VertexWrapper.new(vertex, adjacencies)
-        end
-        result
-      end
+  def to_data_hash
+    hash = { 'edges' => edges.map(&:to_data_hash) }
+    hash['vertices'] = if self.class.use_new_yaml_format
+      vertices
     else
-      super(v)
+      # Represented in YAML using the old (version 2.6) format.
+      result = {}
+      vertices.each do |vertex|
+        adjacencies = {}
+        [:in, :out].each do |direction|
+          direction_hash = {}
+          adjacencies[direction.to_s] = direction_hash
+          adjacent(vertex, :direction => direction, :type => :edges).each do |edge|
+            other_vertex = direction == :in ? edge.source : edge.target
+            (direction_hash[other_vertex.to_s] ||= []) << edge
+          end
+          direction_hash.each_pair { |key, edges| direction_hash[key] = edges.uniq.map(&:to_data_hash) }
+        end
+        vname = vertex.to_s
+        result[vname] = { 'adjacencies' => adjacencies, 'vertex' => vname }
+      end
+      result
     end
+    hash
   end
 
   def to_yaml_properties
     (super + [:@vertices, :@edges] -
      [:@in_to, :@out_from, :@upstream_from, :@downstream_from]).uniq
-  end
-
-  def yaml_initialize(tag, var)
-    initialize()
-    vertices = var.delete('vertices')
-    edges = var.delete('edges')
-    if vertices.is_a?(Hash)
-      # Support old (2.6) format
-      vertices = vertices.keys
-    end
-    vertices.each { |v| add_vertex(v) }
-    edges.each { |e| add_edge(e) }
-    var.each do |varname, value|
-      instance_variable_set("@#{varname}", value)
-    end
   end
 
   def multi_vertex_component?(component)
