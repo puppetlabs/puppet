@@ -240,7 +240,7 @@ describe Puppet::Parser::Scope do
         klass = newclass(name)
 
         catalog = Puppet::Resource::Catalog.new
-        catalog.add_resource(Puppet::Parser::Resource.new("stage", :main, :scope => Puppet::Parser::Scope.new(@compiler)))
+        catalog.add_resource(Puppet::Parser::Resource.new("stage", Puppet::Resource::MAIN, :scope => Puppet::Parser::Scope.new(@compiler)))
 
         Puppet::Parser::Resource.new("class", name, :scope => @scope, :source => mock('source'), :catalog => catalog).evaluate
 

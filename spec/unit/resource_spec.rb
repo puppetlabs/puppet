@@ -207,31 +207,46 @@ describe Puppet::Resource do
       end
 
       describe "and its name is set to the empty string" do
-        it "should set its title to :main" do
-          expect(Puppet::Resource.new("class", "").title).to eq(:main)
+        it "should set its title to 'main'" do
+          expect(Puppet::Resource.new("class", "").title).to eq(Puppet::Resource::MAIN)
         end
 
         describe "and a class exists whose name is the empty string" do # this was a bit tough to track down
-          it "should set its title to :main" do
+          it "should set its title to 'main'" do
             @type = Puppet::Resource::Type.new(:hostclass, "")
             environment.known_resource_types.add @type
 
-            expect(Puppet::Resource.new("class", "", :environment => environment).title).to eq(:main)
+            expect(Puppet::Resource.new("class", "", :environment => environment).title).to eq(Puppet::Resource::MAIN)
+          end
+        end
+      end
+
+      describe "and its name is set to 'main'" do
+        it "should set its title to 'main'" do
+          expect(Puppet::Resource.new("class", Puppet::Resource::MAIN).title).to eq(Puppet::Resource::MAIN)
+        end
+
+        describe "and a class exists whose name is the empty string" do # this was a bit tough to track down
+          it "should set its title to 'main'" do
+            @type = Puppet::Resource::Type.new(:hostclass, "")
+            environment.known_resource_types.add @type
+
+            expect(Puppet::Resource.new("class", Puppet::Resource::MAIN, :environment => environment).title).to eq(Puppet::Resource::MAIN)
           end
         end
       end
 
       describe "and its name is set to :main" do
-        it "should set its title to :main" do
-          expect(Puppet::Resource.new("class", :main).title).to eq(:main)
+        it "should set its title to 'main'" do
+          expect(Puppet::Resource.new("class", :main).title).to eq(Puppet::Resource::MAIN)
         end
 
         describe "and a class exists whose name is the empty string" do # this was a bit tough to track down
-          it "should set its title to :main" do
+          it "should set its title to 'main'" do
             @type = Puppet::Resource::Type.new(:hostclass, "")
             environment.known_resource_types.add @type
 
-            expect(Puppet::Resource.new("class", :main, :environment => environment).title).to eq(:main)
+            expect(Puppet::Resource.new("class", :main, :environment => environment).title).to eq(Puppet::Resource::MAIN)
           end
         end
       end

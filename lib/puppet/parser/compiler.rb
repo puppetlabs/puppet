@@ -577,7 +577,7 @@ class Puppet::Parser::Compiler
     krt = environment.known_resource_types
     @main = krt.find_hostclass('') || krt.add(Puppet::Resource::Type.new(:hostclass, ''))
     @topscope.source = @main
-    @main_resource = Puppet::Parser::Resource.new('class', :main, :scope => @topscope, :source => @main)
+    @main_resource = Puppet::Parser::Resource.new('class', Puppet::Resource::MAIN, :scope => @topscope, :source => @main)
     @topscope.resource = @main_resource
 
     add_resource(@topscope, @main_resource)
@@ -637,7 +637,7 @@ class Puppet::Parser::Compiler
   end
 
   def add_resource_metaparams
-    unless main = catalog.resource(:class, :main)
+    unless main = catalog.resource(:class, Puppet::Resource::MAIN)
       #TRANSLATORS "main" is a function name and should not be translated
       raise _("Couldn't find main")
     end
@@ -716,7 +716,7 @@ class Puppet::Parser::Compiler
       @catalog.version = environment.known_resource_types.version
     end
 
-    @catalog.add_resource(Puppet::Parser::Resource.new("stage", :main, :scope => @topscope))
+    @catalog.add_resource(Puppet::Parser::Resource.new("stage", Puppet::Resource::MAIN, :scope => @topscope))
 
     # local resource array to maintain resource ordering
     @resources = []

@@ -12,7 +12,7 @@ class CompilerTestResource
 
   def [](attr)
     return nil if (attr == :stage || attr == :alias)
-    :main
+    'main'
   end
 
   def ref
@@ -410,7 +410,7 @@ describe Puppet::Parser::Compiler do
       end
 
       it "should add each container's metaparams to its contained resources" do
-        main = @catalog.resource(:class, :main)
+        main = @catalog.resource(:class, Puppet::Resource::MAIN)
         main[:noop] = true
 
         resource1 = add_resource("meh", main)
@@ -420,7 +420,7 @@ describe Puppet::Parser::Compiler do
       end
 
       it "should add metaparams recursively" do
-        main = @catalog.resource(:class, :main)
+        main = @catalog.resource(:class, Puppet::Resource::MAIN)
         main[:noop] = true
 
         resource1 = add_resource("meh", main)
@@ -431,7 +431,7 @@ describe Puppet::Parser::Compiler do
       end
 
       it "should prefer metaparams from immediate parents" do
-        main = @catalog.resource(:class, :main)
+        main = @catalog.resource(:class, Puppet::Resource::MAIN)
         main[:noop] = true
 
         resource1 = add_resource("meh", main)
@@ -444,7 +444,7 @@ describe Puppet::Parser::Compiler do
       end
 
       it "should merge tags downward" do
-        main = @catalog.resource(:class, :main)
+        main = @catalog.resource(:class, Puppet::Resource::MAIN)
         main.tag("one")
 
         resource1 = add_resource("meh", main)
@@ -457,7 +457,7 @@ describe Puppet::Parser::Compiler do
       end
 
       it "should work if only middle resources have metaparams set" do
-        main = @catalog.resource(:class, :main)
+        main = @catalog.resource(:class, Puppet::Resource::MAIN)
 
         resource1 = add_resource("meh", main)
         resource1[:noop] = true
@@ -501,7 +501,7 @@ describe Puppet::Parser::Compiler do
     end
 
     it "should not add non-class resources that don't specify a stage to the 'main' stage" do
-      main = @compiler.catalog.resource(:stage, :main)
+      main = @compiler.catalog.resource(:stage, Puppet::Resource::MAIN)
       resource = resource(:file, "foo")
       @compiler.add_resource(@scope, resource)
 

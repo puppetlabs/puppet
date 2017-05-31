@@ -43,7 +43,7 @@ describe component do
     end
 
     it "should produce the class name even for the class named main" do
-      expect(component.new(:name => "Class[main]").pathbuilder).to eq(["Main"])
+      expect(component.new(:name => "Class[main]").pathbuilder).to eq(['main'])
     end
 
     it "should produce a resource reference if the component does not model a class" do

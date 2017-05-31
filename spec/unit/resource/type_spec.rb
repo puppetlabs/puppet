@@ -554,8 +554,8 @@ describe Puppet::Resource::Type do
       @type.evaluate_code(@resource)
     end
 
-    it "should not create a subscope for the :main class" do
-      @resource.stubs(:title).returns(:main)
+    it "should not create a subscope for the 'main' class" do
+      @resource.stubs(:title).returns(Puppet::Resource::MAIN)
       @type.expects(:subscope).never
       @type.expects(:set_resource_parameters).with(@resource, @scope)
 
