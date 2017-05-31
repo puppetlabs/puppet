@@ -842,6 +842,24 @@ describe "The lookup function" do
           end
         end
       end
+
+      context 'that contains an array with duplicates' do
+        let(:common_yaml) { <<-YAML.unindent }
+          a:
+           - alpha
+           - bravo
+           - charlie
+           - bravo
+          YAML
+
+        it 'retains the duplicates when using default merge strategy' do
+          expect(lookup('a')).to eql(%w(alpha bravo charlie bravo))
+        end
+
+        it 'does deduplification when using merge strategy "unique"' do
+          expect(lookup('a', :merge => 'unique')).to eql(%w(alpha bravo charlie))
+        end
+      end
     end
 
     context 'with lookup_options configured using patterns' do
