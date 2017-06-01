@@ -1,4 +1,3 @@
 debian/puppet.conf etc/puppet
 debian/tmp/usr/bin/puppet usr/bin
-debian/tmp/usr/bin/extlookup2hiera usr/bin
 debian/tmp/usr/lib/ruby/vendor_ruby/* usr/lib/ruby/vendor_ruby

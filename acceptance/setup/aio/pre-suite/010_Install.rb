@@ -34,17 +34,16 @@ MASTER_PACKAGES = {
 }
 
 step "Install puppetserver..." do
-  if ENV['SERVER_VERSION']
-    install_puppetlabs_dev_repo(master, 'puppetserver', ENV['SERVER_VERSION'])
+  if ENV['SERVER_VERSION'].nil? || ENV['SERVER_VERSION'] == 'latest'
+    server_version = 'latest'
+    server_download_url = "http://nightlies.puppet.com"
+  else
+    server_version = ENV['SERVER_VERSION']
+    server_download_url = "http://builds.delivery.puppetlabs.net"
+  end
+    install_puppetlabs_dev_repo(master, 'puppetserver', server_version, nil, :dev_builds_url => server_download_url)
     install_puppetlabs_dev_repo(master, 'puppet-agent', ENV['SHA'])
     master.install_package('puppetserver')
-  else
-    # beaker can't install puppetserver from nightlies (BKR-673)
-    repo_configs_dir = 'repo-configs'
-    install_repos_on(master, 'puppetserver', 'nightly', repo_configs_dir)
-    install_repos_on(master, 'puppet-agent', ENV['SHA'], repo_configs_dir)
-    install_packages_on(master, MASTER_PACKAGES)
-  end
 end
 
 # make sure install is sane, beaker has already added puppet and ruby

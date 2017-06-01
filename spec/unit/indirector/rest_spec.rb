@@ -17,8 +17,7 @@ shared_examples_for "a REST terminus method" do |terminus_method|
       let(:body) do
         JSON.generate({
           :issue_kind => 'server-error',
-          :message    => message,
-          :stacktrace => ['worst/stack/trace/ever.rb:4']
+          :message    => message
         })
       end
       let(:response) { mock_response(code, body, 'application/json') }
@@ -277,15 +276,15 @@ describe Puppet::Indirector::REST do
   end
 
   it 'excludes yaml from the Accept header' do
-    model.expects(:supported_formats).returns([:pson, :yaml, :binary])
+    model.expects(:supported_formats).returns([:json, :pson, :yaml, :binary])
 
-    expect(terminus.headers['Accept']).to eq('pson, binary')
+    expect(terminus.headers['Accept']).to eq('json, pson, binary')
   end
 
   it 'excludes b64_zlib_yaml from the Accept header' do
-    model.expects(:supported_formats).returns([:pson, :b64_zlib_yaml])
+    model.expects(:supported_formats).returns([:json, :pson, :b64_zlib_yaml])
 
-    expect(terminus.headers['Accept']).to eq('pson')
+    expect(terminus.headers['Accept']).to eq('json, pson')
   end
 
   describe "when creating an HTTP client" do

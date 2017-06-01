@@ -19,7 +19,7 @@ class Puppet::Parameter::PackageOptions < Puppet::Parameter
       when String
         quote(val)
       else
-        fail("Expected either a string or hash of options")
+        fail(_("Expected either a string or hash of options"))
       end
     end
   end

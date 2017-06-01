@@ -19,6 +19,10 @@ class PMetaType < PAnyType
     super
   end
 
+  def instance?(o, guard = nil)
+    assignable?(TypeCalculator.infer(o), guard)
+  end
+
   # Called from the TypeParser once it has found a type using the Loader. The TypeParser will
   # interpret the contained expression and the resolved type is remembered. This method also
   # checks and remembers if the resolve type contains self recursion.
@@ -28,17 +32,17 @@ class PMetaType < PAnyType
   # @return [PTypeAliasType] the receiver of the call, i.e. `self`
   # @api private
   def resolve(type_parser, loader)
-    unless @i12n_hash_expression.nil?
+    unless @init_hash_expression.nil?
       @self_recursion = true # assumed while it being found out below
 
-      i12n_hash_expression = @i12n_hash_expression
-      @i12n_hash_expression = nil
-      if i12n_hash_expression.is_a?(Model::LiteralHash)
-        i12n_hash = resolve_literal_hash(type_parser, loader, i12n_hash_expression)
+      init_hash_expression = @init_hash_expression
+      @init_hash_expression = nil
+      if init_hash_expression.is_a?(Model::LiteralHash)
+        init_hash = resolve_literal_hash(type_parser, loader, init_hash_expression)
       else
-        i12n_hash = resolve_hash(type_parser, loader, i12n_hash_expression)
+        init_hash = resolve_hash(type_parser, loader, init_hash_expression)
       end
-      initialize_from_hash(i12n_hash)
+      _pcore_init_from_hash(init_hash)
 
       # Find out if this type is recursive. A recursive type has performance implications
       # on several methods and this knowledge is used to avoid that for non-recursive
@@ -50,12 +54,12 @@ class PMetaType < PAnyType
     self
   end
 
-  def resolve_literal_hash(type_parser, loader, i12n_hash_expression)
-    type_parser.interpret_LiteralHash(i12n_hash_expression, loader)
+  def resolve_literal_hash(type_parser, loader, init_hash_expression)
+    type_parser.interpret_LiteralHash(init_hash_expression, loader)
   end
 
-  def resolve_hash(type_parser, loader, i12n_hash)
-    resolve_type_refs(type_parser, loader, i12n_hash)
+  def resolve_hash(type_parser, loader, init_hash)
+    resolve_type_refs(type_parser, loader, init_hash)
   end
 
   def resolve_type_refs(type_parser, loader, o)

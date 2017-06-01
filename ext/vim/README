@@ -1,3 +1,0 @@
-To install these files, copy them into ~/.vim, or the relevant
-system-wide location.  To use the ftplugin and indenting, you may need
-to enable them with "filetype plugin indent on" in your vimrc.

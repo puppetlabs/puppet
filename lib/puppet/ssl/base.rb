@@ -29,7 +29,7 @@ class Puppet::SSL::Base
   end
 
   def self.validate_certname(name)
-    raise "Certname #{name.inspect} must not contain unprintable or non-ASCII characters" unless name =~ VALID_CERTNAME
+    raise _("Certname %{name} must not contain unprintable or non-ASCII characters") % { name: name.inspect } unless name =~ VALID_CERTNAME
   end
 
   attr_accessor :name, :content
@@ -141,7 +141,7 @@ class Puppet::SSL::Base
     if match = digest_re.match(ln)
       match[0].downcase
     else
-      raise Puppet::Error, "Unknown signature algorithm '#{ln}'"
+      raise Puppet::Error, _("Unknown signature algorithm '%{ln}'") % { ln: ln }
     end
   end
 

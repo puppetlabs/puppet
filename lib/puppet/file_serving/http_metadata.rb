@@ -23,7 +23,7 @@ class Puppet::FileServing::HttpMetadata < Puppet::FileServing::Metadata
 
     if last_modified = http_response['last-modified']
       mtime = DateTime.httpdate(last_modified).to_time
-      @checksums[:mtime] = "{mtime}#{mtime}"
+      @checksums[:mtime] = "{mtime}#{mtime.utc}"
     end
 
     @ftype = 'file'

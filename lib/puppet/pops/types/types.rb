@@ -32,11 +32,8 @@ EMPTY_STRING = Puppet::Pops::EMPTY_STRING
 
 # The Types model is a model of Puppet Language types.
 #
-# The exact relationship between types is not visible in this model wrt. the PDataType which is an abstraction
-# of Scalar, Array[Data], and Hash[Scalar, Data] nested to any depth. This means it is not possible to
-# infer the type by simply looking at the inheritance hierarchy. The {TypeCalculator} should
-# be used to answer questions about types. The {TypeFactory} should be used to create an instance
-# of a type whenever one is needed.
+# The {TypeCalculator} should be used to answer questions about types. The {TypeFactory} or {TypeParser} should be used
+# to create an instance of a type whenever one is needed.
 #
 # The implementation of the Types model contains methods that are required for the type objects to behave as
 # expected when comparing them and using them as keys in hashes. (No other logic is, or should be included directly in
@@ -44,13 +41,12 @@ EMPTY_STRING = Puppet::Pops::EMPTY_STRING
 #
 # @api public
 #
-# TODO: See PUP-2978 for possible performance optimization
 class TypedModelObject < Object
   include PuppetObject
   include Visitable
   include Adaptable
 
-  def self._ptype
+  def self._pcore_type
     @type
   end
 
@@ -59,7 +55,10 @@ class TypedModelObject < Object
   end
 
   def self.register_ptypes(loader, ir)
-    types = []
+    types = [
+      Annotation.register_ptype(loader, ir),
+      RubyMethod.register_ptype(loader, ir)
+    ]
     Types.constants.each do |c|
       cls = Types.const_get(c)
       next unless cls.is_a?(Class) && cls < self
@@ -78,6 +77,11 @@ class PAnyType < TypedModelObject
 
   def self.register_ptype(loader, ir)
     @type = Pcore::create_object_type(loader, ir, self, 'Pcore::AnyType', 'Any', EMPTY_HASH)
+  end
+
+  def self.create(*args)
+    # NOTE! Important to use self::DEFAULT and not just DEFAULT since the latter yields PAnyType::DEFAULT
+    args.empty? ? self::DEFAULT : new(*args)
   end
 
   # Accept a visitor that will be sent the message `visit`, once with `self` as the
@@ -320,6 +324,13 @@ class PAnyType < TypedModelObject
     raise ArgumentError.new("Creation of new instance of type '#{instance.to_s}' is not supported")
   end
 
+  # Answers the question if instances of this type can represent themselves as a string that
+  # can then be passed to the create method
+  #
+  # @return [Boolean] wether or not the instance has a canonical string representation
+  def roundtrip_with_string?
+    false
+  end
 
   # The default instance of this type. Each type in the type system has this constant
   # declared.
@@ -637,43 +648,7 @@ class PDefaultType < PAnyType
   end
 end
 
-# A flexible data type, being assignable to its subtypes as well as PArrayType and PHashType with element type assignable to PDataType.
-#
-# @api public
-#
-class PDataType < PAnyType
-  def self.register_ptype(loader, ir)
-    create_ptype(loader, ir, 'AnyType')
-  end
-
-  def eql?(o)
-    self.class == o.class || o == PVariantType::DATA
-  end
-
-  def instance?(o, guard = nil)
-    PVariantType::DATA.instance?(o, guard)
-  end
-
-  DEFAULT = PDataType.new
-
-  protected
-
-  # Data is assignable by other Data and by Array[Data] and Hash[Scalar, Data]
-  # @api private
-  def _assignable?(o, guard)
-    # We cannot put the NotUndefType[Data] in the @data_variant_t since that causes an endless recursion
-    case o
-    when Types::PDataType
-      true
-    when Types::PNotUndefType
-      assignable?(o.type || PUndefType::DEFAULT, guard)
-    else
-      PVariantType::DATA.assignable?(o, guard)
-    end
-  end
-end
-
-# Type that is PDataType compatible, but is not a PCollectionType.
+# Type that is a Scalar
 # @api public
 #
 class PScalarType < PAnyType
@@ -682,13 +657,17 @@ class PScalarType < PAnyType
   end
 
   def instance?(o, guard = nil)
-    if o.is_a?(String) || o.is_a?(Numeric) || o.is_a?(TrueClass) || o.is_a?(FalseClass) || o.is_a?(Regexp) || o.is_a?(SemanticPuppet::VersionRange)
+    if o.is_a?(String) || o.is_a?(Numeric) || o.is_a?(TrueClass) || o.is_a?(FalseClass) || o.is_a?(Regexp)
       true
-    elsif o.is_a?(Array) || o.is_a?(Hash) || o.is_a?(PAnyType) || o.is_a?(NilClass)
+    elsif o.instance_of?(Array) || o.instance_of?(Hash) || o.is_a?(PAnyType) || o.is_a?(NilClass)
       false
     else
       assignable?(TypeCalculator.infer(o))
     end
+  end
+
+  def roundtrip_with_string?
+    true
   end
 
   DEFAULT = PScalarType.new
@@ -701,12 +680,34 @@ class PScalarType < PAnyType
   end
 end
 
+# Like Scalar but limited to Json Data.
+# @api public
+#
+class PScalarDataType < PScalarType
+  def self.register_ptype(loader, ir)
+    create_ptype(loader, ir, 'ScalarType')
+  end
+
+  def instance?(o, guard = nil)
+    return o.is_a?(String) || o.is_a?(Integer) || o.is_a?(Float) || o.is_a?(TrueClass) || o.is_a?(FalseClass)
+  end
+
+  DEFAULT = PScalarDataType.new
+
+  protected
+
+  # @api private
+  def _assignable?(o, guard)
+    o.is_a?(PScalarDataType)
+  end
+end
+
 # A string type describing the set of strings having one of the given values
 # @api public
 #
-class PEnumType < PScalarType
+class PEnumType < PScalarDataType
   def self.register_ptype(loader, ir)
-    create_ptype(loader, ir, 'ScalarType', 'values' => PArrayType.new(PStringType::NON_EMPTY))
+    create_ptype(loader, ir, 'ScalarDataType', 'values' => PArrayType.new(PStringType::NON_EMPTY))
   end
 
   attr_reader :values
@@ -776,72 +777,11 @@ class PEnumType < PScalarType
   end
 end
 
-# Abstract class that encapsulates behavior common to PNumericType and PAbstractTimeDataType
-# @api public
-class PAbstractRangeType < PScalarType
-  def initialize(from, to = Float::INFINITY)
-    from = -Float::INFINITY if from.nil? || from == :default
-    to = Float::INFINITY if to.nil? || to == :default
-    raise ArgumentError, "'from' must be less or equal to 'to'. Got (#{from}, #{to}" if from.is_a?(Numeric) && to.is_a?(Numeric) && from > to
-    @from = from
-    @to = to
-  end
-
-  # Checks if this numeric range intersects with another
-  #
-  # @param o [PNumericType] the range to compare with
-  # @return [Boolean] `true` if this range intersects with the other range
-  # @api public
-  def intersect?(o)
-    self.class == o.class && !(@to < o.numeric_from || o.numeric_to < @from)
-  end
-
-  # Returns the lower bound of the numeric range or `nil` if no lower bound is set.
-  # @return [Float,Integer]
-  def from
-    @from == -Float::INFINITY ? nil : @from
-  end
-
-  # Returns the upper bound of the numeric range or `nil` if no upper bound is set.
-  # @return [Float,Integer]
-  def to
-    @to == Float::INFINITY ? nil : @to
-  end
-
-  # Same as #from but will return `-Float::Infinity` instead of `nil` if no lower bound is set.
-  # @return [Float,Integer]
-  def numeric_from
-    @from
-  end
-
-  # Same as #to but will return `Float::Infinity` instead of `nil` if no lower bound is set.
-  # @return [Float,Integer]
-  def numeric_to
-    @to
-  end
-
-  def hash
-    @from.hash ^ @to.hash
-  end
-
-  def eql?(o)
-    self.class == o.class && @from == o.numeric_from && @to == o.numeric_to
-  end
-
-  def instance?(o, guard = nil)
-    o.is_a?(Numeric) && o >= @from && o <= @to
-  end
-
-  def unbounded?
-    @from == -Float::INFINITY && @to == Float::INFINITY
-  end
-end
-
 # @api public
 #
-class PNumericType < PAbstractRangeType
+class PNumericType < PScalarDataType
   def self.register_ptype(loader, ir)
-    create_ptype(loader, ir, 'ScalarType',
+    create_ptype(loader, ir, 'ScalarDataType',
       'from' => { KEY_TYPE => POptionalType.new(PNumericType::DEFAULT), KEY_VALUE => nil },
       'to' => { KEY_TYPE => POptionalType.new(PNumericType::DEFAULT), KEY_VALUE => nil }
     )
@@ -904,6 +844,63 @@ class PNumericType < PAbstractRangeType
         end
       end
     end
+  end
+
+  def initialize(from, to = Float::INFINITY)
+    from = -Float::INFINITY if from.nil? || from == :default
+    to = Float::INFINITY if to.nil? || to == :default
+    raise ArgumentError, "'from' must be less or equal to 'to'. Got (#{from}, #{to}" if from > to
+    @from = from
+    @to = to
+  end
+
+  # Checks if this numeric range intersects with another
+  #
+  # @param o [PNumericType] the range to compare with
+  # @return [Boolean] `true` if this range intersects with the other range
+  # @api public
+  def intersect?(o)
+    self.class == o.class && !(@to < o.numeric_from || o.numeric_to < @from)
+  end
+
+  # Returns the lower bound of the numeric range or `nil` if no lower bound is set.
+  # @return [Float,Integer]
+  def from
+    @from == -Float::INFINITY ? nil : @from
+  end
+
+  # Returns the upper bound of the numeric range or `nil` if no upper bound is set.
+  # @return [Float,Integer]
+  def to
+    @to == Float::INFINITY ? nil : @to
+  end
+
+  # Same as #from but will return `-Float::Infinity` instead of `nil` if no lower bound is set.
+  # @return [Float,Integer]
+  def numeric_from
+    @from
+  end
+
+  # Same as #to but will return `Float::Infinity` instead of `nil` if no lower bound is set.
+  # @return [Float,Integer]
+  def numeric_to
+    @to
+  end
+
+  def hash
+    @from.hash ^ @to.hash
+  end
+
+  def eql?(o)
+    self.class == o.class && @from == o.numeric_from && @to == o.numeric_to
+  end
+
+  def instance?(o, guard = nil)
+    o.is_a?(Numeric) && o >= @from && o <= @to
+  end
+
+  def unbounded?
+    @from == -Float::INFINITY && @to == Float::INFINITY
   end
 
   protected
@@ -1215,7 +1212,8 @@ class PCollectionType < PAnyType
   end
 
   def instance?(o, guard = nil)
-    if o.is_a?(Array) || o.is_a?(Hash)
+    # The inferred type of a class derived from Array or Hash is either Runtime or Object. It's not assignable to the Collection type.
+    if o.instance_of?(Array) || o.instance_of?(Hash)
       @size_type.nil? || @size_type.instance?(o.size)
     else
       false
@@ -1372,9 +1370,9 @@ end
 
 # @api public
 #
-class PStringType < PScalarType
+class PStringType < PScalarDataType
   def self.register_ptype(loader, ir)
-    create_ptype(loader, ir, 'ScalarType',
+    create_ptype(loader, ir, 'ScalarDataType',
       'size_type_or_value' => {
         KEY_TYPE => POptionalType.new(PVariantType.new([PStringType::DEFAULT, PType.new(PIntegerType::DEFAULT)])),
       KEY_VALUE => nil
@@ -1614,9 +1612,9 @@ end
 #
 # @api public
 #
-class PPatternType < PScalarType
+class PPatternType < PScalarDataType
   def self.register_ptype(loader, ir)
-    create_ptype(loader, ir, 'ScalarType', 'patterns' => PArrayType.new(PRegexpType::DEFAULT))
+    create_ptype(loader, ir, 'ScalarDataType', 'patterns' => PArrayType.new(PRegexpType::DEFAULT))
   end
 
   attr_reader :patterns
@@ -1684,9 +1682,9 @@ end
 
 # @api public
 #
-class PBooleanType < PScalarType
+class PBooleanType < PScalarDataType
   def self.register_ptype(loader, ir)
-    create_ptype(loader, ir, 'ScalarType')
+    create_ptype(loader, ir, 'ScalarDataType')
   end
 
   def instance?(o, guard = nil)
@@ -1794,6 +1792,14 @@ class PStructElement < TypedModelObject
   def ==(o)
     self.class == o.class && value_type == o.value_type && key_type == o.key_type
   end
+
+  # Special boostrap method to overcome the hen and egg problem with the Object initializer that contains
+  # types that are derived from Object (such as Annotation)
+  #
+  # @api private
+  def replace_value_type(new_type)
+    @value_type = new_type
+  end
 end
 
 # @api public
@@ -1882,7 +1888,8 @@ class PStructType < PAnyType
   end
 
   def instance?(o, guard = nil)
-    return false unless o.is_a?(Hash)
+    # The inferred type of a class derived from Hash is either Runtime or Object. It's not assignable to the Struct type.
+    return false unless o.instance_of?(Hash)
     matched = 0
     @elements.all? do |e|
       key = e.name
@@ -2054,7 +2061,8 @@ class PTupleType < PAnyType
   end
 
   def instance?(o, guard = nil)
-    return false unless o.is_a?(Array)
+    # The inferred type of a class derived from Array is either Runtime or Object. It's not assignable to the Tuple type.
+    return false unless o.instance_of?(Array)
     if @size_type
       return false unless @size_type.instance?(o.size, guard)
     else
@@ -2113,7 +2121,6 @@ class PTupleType < PAnyType
     PArrayType.new_function(self, loader)
   end
 
-  DATA = PTupleType.new([PDataType::DEFAULT], PCollectionType::DEFAULT_SIZE)
   DEFAULT = PTupleType.new(EMPTY_ARRAY)
 
   protected
@@ -2323,7 +2330,7 @@ class PArrayType < PCollectionType
     create_ptype(loader, ir, 'CollectionType',
       'element_type' => {
         KEY_TYPE => POptionalType.new(PType::DEFAULT),
-        KEY_VALUE => nil
+        KEY_VALUE => PAnyType::DEFAULT
       }
     )
   end
@@ -2335,13 +2342,13 @@ class PArrayType < PCollectionType
     if !size_type.nil? && size_type.from == 0 && size_type.to == 0
       @element_type = PUnitType::DEFAULT
     else
-      @element_type = element_type
+      @element_type = element_type.nil? ? PAnyType::DEFAULT : element_type
     end
   end
 
   def accept(visitor, guard)
     super
-    @element_type.accept(visitor, guard) unless @element_type.nil?
+    @element_type.accept(visitor, guard)
   end
 
   # @api private
@@ -2353,9 +2360,7 @@ class PArrayType < PCollectionType
   end
 
   def generalize
-    if self == DATA
-      self
-    elsif @element_type.nil?
+    if PAnyType::DEFAULT.eql?(@element_type)
       DEFAULT
     else
       ge_type = @element_type.generalize
@@ -2372,9 +2377,7 @@ class PArrayType < PCollectionType
   end
 
   def normalize(guard = nil)
-    if self == DATA
-      self
-    elsif @element_type.nil?
+    if PAnyType::DEFAULT.eql?(@element_type)
       DEFAULT
     else
       ne_type = @element_type.normalize(guard)
@@ -2383,21 +2386,20 @@ class PArrayType < PCollectionType
   end
 
   def resolve(type_parser, loader)
-    relement_type = @element_type
-    relement_type = relement_type.resolve(type_parser, loader) unless relement_type.nil?
+    relement_type = @element_type.resolve(type_parser, loader)
     relement_type.equal?(@element_type) ? self : self.class.new(relement_type, @size_type)
   end
 
   def instance?(o, guard = nil)
-    return false unless o.is_a?(Array)
-    element_t = element_type
-    return false unless element_t.nil? || o.all? {|element| element_t.instance?(element, guard) }
+    # The inferred type of a class derived from Array is either Runtime or Object. It's not assignable to the Array type.
+    return false unless o.instance_of?(Array)
+    return false unless o.all? {|element| @element_type.instance?(element, guard) }
     size_t = size_type
     size_t.nil? || size_t.instance?(o.size, guard)
   end
 
   def iterable_type(guard = nil)
-    @element_type.nil? ? PIterableType::DEFAULT : PIterableType.new(@element_type)
+    PAnyType::DEFAULT.eql?(@element_type) ? PIterableType::DEFAULT : PIterableType.new(@element_type)
   end
 
   # Returns a new function that produces an Array
@@ -2443,7 +2445,6 @@ class PArrayType < PCollectionType
     end
   end
 
-  DATA = PArrayType.new(PDataType::DEFAULT, DEFAULT_SIZE)
   DEFAULT = PArrayType.new(nil)
   EMPTY = PArrayType.new(PUnitType::DEFAULT, ZERO_SIZE)
 
@@ -2452,12 +2453,7 @@ class PArrayType < PCollectionType
   # Array is assignable if o is an Array and o's element type is assignable, or if o is a Tuple
   # @api private
   def _assignable?(o, guard)
-    s_entry = element_type
     if o.is_a?(PTupleType)
-      # If s_entry is nil, this Array type has no opinion on element types. Therefore any
-      # tuple can be assigned.
-      return true if s_entry.nil?
-
       o_types = o.types
       size_s = size_type || DEFAULT_SIZE
       size_o = o.size_type
@@ -2465,9 +2461,9 @@ class PArrayType < PCollectionType
         type_count = o_types.size
         size_o = PIntegerType.new(type_count, type_count)
       end
-      size_s.assignable?(size_o) && o_types.all? { |ot| s_entry.assignable?(ot, guard) }
+      size_s.assignable?(size_o) && o_types.all? { |ot| @element_type.assignable?(ot, guard) }
     elsif o.is_a?(PArrayType)
-      super && (s_entry.nil? || s_entry.assignable?(o.element_type, guard))
+      super && @element_type.assignable?(o.element_type, guard)
     else
       false
     end
@@ -2482,11 +2478,11 @@ class PHashType < PCollectionType
     create_ptype(loader, ir, 'CollectionType',
       'key_type' => {
         KEY_TYPE => POptionalType.new(PType::DEFAULT),
-        KEY_VALUE => nil
+        KEY_VALUE => PAnyType::DEFAULT
       },
       'value_type' => {
         KEY_TYPE => POptionalType.new(PType::DEFAULT),
-        KEY_VALUE => nil,
+        KEY_VALUE => PAnyType::DEFAULT
       }
     )
   end
@@ -2499,15 +2495,15 @@ class PHashType < PCollectionType
       @key_type = PUnitType::DEFAULT
       @value_type = PUnitType::DEFAULT
     else
-      @key_type = key_type
-      @value_type = value_type
+      @key_type = key_type.nil? ? PAnyType::DEFAULT : key_type
+      @value_type = value_type.nil? ? PAnyType::DEFAULT : value_type
     end
   end
 
   def accept(visitor, guard)
     super
-    @key_type.accept(visitor, guard) unless @key_type.nil?
-    @value_type.accept(visitor, guard) unless @value_type.nil?
+    @key_type.accept(visitor, guard)
+    @value_type.accept(visitor, guard)
   end
 
   def element_type
@@ -2519,25 +2515,23 @@ class PHashType < PCollectionType
   end
 
   def generalize
-    if self == DEFAULT || self == DATA || self == EMPTY
+    if self == DEFAULT || self == EMPTY
       self
     else
       key_t = @key_type
-      key_t = key_t.generalize unless key_t.nil?
+      key_t = key_t.generalize
       value_t = @value_type
-      value_t = value_t.generalize unless value_t.nil?
+      value_t = value_t.generalize
       @size_type.nil? && @key_type.equal?(key_t) && @value_type.equal?(value_t) ? self : PHashType.new(key_t, value_t, nil)
     end
   end
 
   def normalize(guard = nil)
-    if self == DEFAULT || self == DATA || self == EMPTY
+    if self == DEFAULT || self == EMPTY
       self
     else
-      key_t = @key_type
-      key_t = key_t.normalize(guard) unless key_t.nil?
-      value_t = @value_type
-      value_t = value_t.normalize(guard) unless value_t.nil?
+      key_t = @key_type.normalize(guard)
+      value_t = @value_type.normalize(guard)
       @size_type.nil? && @key_type.equal?(key_t) && @value_type.equal?(value_t) ? self : PHashType.new(key_t, value_t, @size_type)
     end
   end
@@ -2547,11 +2541,9 @@ class PHashType < PCollectionType
   end
 
   def instance?(o, guard = nil)
-    return false unless o.is_a?(Hash)
-    key_t = key_type
-    value_t = value_type
-    if (key_t.nil? || o.keys.all? {|key| key_t.instance?(key, guard) }) &&
-        (value_t.nil? || o.values.all? {|value| value_t.instance?(value, guard) })
+    # The inferred type of a class derived from Hash is either Runtime or Object. It's not assignable to the Hash type.
+    return false unless o.instance_of?(Hash)
+    if o.keys.all? {|key| @key_type.instance?(key, guard) } && o.values.all? {|value| @value_type.instance?(value, guard) }
       size_t = size_type
       size_t.nil? || size_t.instance?(o.size, guard)
     else
@@ -2580,10 +2572,8 @@ class PHashType < PCollectionType
   end
 
   def resolve(type_parser, loader)
-    rkey_type = @key_type
-    rkey_type = rkey_type.resolve(type_parser, loader) unless rkey_type.nil?
-    rvalue_type = @value_type
-    rvalue_type = rvalue_type.resolve(type_parser, loader) unless rvalue_type.nil?
+    rkey_type = @key_type.resolve(type_parser, loader)
+    rvalue_type = @value_type.resolve(type_parser, loader)
     rkey_type.equal?(@key_type) && rvalue_type.equal?(@value_type) ? self : self.class.new(rkey_type, rvalue_type, @size_type)
   end
 
@@ -2637,7 +2627,6 @@ class PHashType < PCollectionType
   DEFAULT = PHashType.new(nil, nil)
   KEY_PAIR_TUPLE_SIZE = PIntegerType.new(2,2)
   DEFAULT_KEY_PAIR_TUPLE = PTupleType.new([PUnitType::DEFAULT, PUnitType::DEFAULT], KEY_PAIR_TUPLE_SIZE)
-  DATA = PHashType.new(PScalarType::DEFAULT, PDataType::DEFAULT, DEFAULT_SIZE)
   EMPTY = PHashType.new(PUnitType::DEFAULT, PUnitType::DEFAULT, PIntegerType.new(0, 0))
 
   protected
@@ -2646,20 +2635,20 @@ class PHashType < PCollectionType
   # @api private
   def _assignable?(o, guard)
     case o
-      when PHashType
-        size_s = size_type
-        return true if (size_s.nil? || size_s.from == 0) && o.is_the_empty_hash?
-        return false unless (key_type.nil? || key_type.assignable?(o.key_type, guard)) && (value_type.nil? || value_type.assignable?(o.value_type, guard))
-        super
-      when PStructType
-        # hash must accept String as key type
-        # hash must accept all value types
-        # hash must accept the size of the struct
-        o_elements = o.elements
-        (size_type || DEFAULT_SIZE).instance?(o_elements.size, guard) &&
-            o_elements.all? {|e| (key_type.nil? || key_type.instance?(e.name, guard)) && (value_type.nil? || value_type.assignable?(e.value_type, guard)) }
-      else
-        false
+    when PHashType
+      size_s = size_type
+      return true if (size_s.nil? || size_s.from == 0) && o.is_the_empty_hash?
+      return false unless @key_type.assignable?(o.key_type, guard) && @value_type.assignable?(o.value_type, guard)
+      super
+    when PStructType
+      # hash must accept String as key type
+      # hash must accept all value types
+      # hash must accept the size of the struct
+      o_elements = o.elements
+      (size_type || DEFAULT_SIZE).instance?(o_elements.size, guard) &&
+          o_elements.all? {|e| @key_type.instance?(e.name, guard) && @value_type.assignable?(e.value_type, guard) }
+    else
+      false
     end
   end
 end
@@ -2707,7 +2696,7 @@ class PVariantType < PAnyType
   end
 
   def generalize
-    if self == DEFAULT || self == DATA
+    if self == DEFAULT
       self
     else
       alter_type_array(@types, :generalize) { |altered| PVariantType.maybe_create(altered) }
@@ -2715,7 +2704,7 @@ class PVariantType < PAnyType
   end
 
   def normalize(guard = nil)
-    if self == DEFAULT || self == DATA || @types.empty?
+    if self == DEFAULT || @types.empty?
       self
     else
       # Normalize all contained types
@@ -2794,12 +2783,8 @@ class PVariantType < PAnyType
   end
 
   def eql?(o)
-    o = DATA if o.is_a?(PDataType)
     self.class == o.class && @types.size == o.types.size && (@types - o.types).empty?
   end
-
-  # Variant compatible with the Data type.
-  DATA = PVariantType.new([PHashType::DATA, PArrayType::DATA, PScalarType::DEFAULT, PUndefType::DEFAULT, PTupleType::DATA])
 
   DEFAULT = PVariantType.new(EMPTY_ARRAY)
 
@@ -2807,14 +2792,11 @@ class PVariantType < PAnyType
 
   # @api private
   def _assignable?(o, guard)
-    # Data is a specific variant
-    o = DATA if o.is_a?(PDataType)
     if o.is_a?(PVariantType)
       # A variant is assignable if all of its options are assignable to one of this type's options
       return true if self == o
       o.types.all? do |other|
         # if the other is a Variant, all of its options, but be assignable to one of this type's options
-        other = other.is_a?(PDataType) ? DATA : other
         if other.is_a?(PVariantType)
           assignable?(other, guard)
         else
@@ -3398,6 +3380,8 @@ require 'puppet/pops/pcore'
 require_relative 'annotatable'
 require_relative 'p_meta_type'
 require_relative 'p_object_type'
+require_relative 'annotation'
+require_relative 'ruby_method'
 require_relative 'p_runtime_type'
 require_relative 'p_sem_ver_type'
 require_relative 'p_sem_ver_range_type'

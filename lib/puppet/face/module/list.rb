@@ -2,7 +2,7 @@
 
 Puppet::Face.define(:module, '1.0.0') do
   action(:list) do
-    summary "List installed modules"
+    summary _("List installed modules")
     description <<-HEREDOC
       Lists the installed puppet modules. By default, this action scans the
       modulepath from puppet.conf's `[main]` block; use the --modulepath
@@ -11,10 +11,14 @@ Puppet::Face.define(:module, '1.0.0') do
       The output of this action includes information from the module's
       metadata, including version numbers and unmet module dependencies.
     HEREDOC
-    returns "hash of paths to module objects"
+    returns _("hash of paths to module objects")
 
     option "--tree" do
-      summary "Whether to show dependencies as a tree view"
+      summary _("Whether to show dependencies as a tree view")
+    end
+
+    option '--strict-semver' do
+      summary _('Whether version ranges should exclude pre-release versions')
     end
 
     examples <<-'EOT'
@@ -73,11 +77,12 @@ Puppet::Face.define(:module, '1.0.0') do
 
       output = ''
 
+      environment.modules_strict_semver = !!options[:strict_semver]
       warn_unmet_dependencies(environment)
 
       environment.modulepath.each do |path|
         modules = modules_by_path[path]
-        no_mods = modules.empty? ? ' (no modules installed)' : ''
+        no_mods = modules.empty? ? _(' (no modules installed)') : ''
         output << "#{path}#{no_mods}\n"
 
         if options[:tree]
@@ -106,13 +111,13 @@ Puppet::Face.define(:module, '1.0.0') do
   def warn_unmet_dependencies(environment)
     error_types = {
       :non_semantic_version => {
-        :title => "Non semantic version dependency"
+        :title => _("Non semantic version dependency")
       },
       :missing => {
-        :title => "Missing dependency"
+        :title => _("Missing dependency")
       },
       :version_mismatch => {
-        :title => "Module '%s' (v%s) fails to meet some dependencies:"
+        :title => _("Module '%s' (v%s) fails to meet some dependencies:")
       }
     }
 
@@ -139,8 +144,7 @@ Puppet::Face.define(:module, '1.0.0') do
             parent_name        = dep[:parent][:name].gsub('/', '-')
             parent_version     = dep[:parent][:version]
 
-            msg = "'#{parent_name}' (#{parent_version})"
-            msg << " requires '#{dep_name}' (#{version_constraint})"
+            msg = _("'%{parent_name}' (%{parent_version}) requires '%{dependency_name}' (%{dependency_version})") % { parent_name: parent_name, parent_version: parent_version, dependency_name: dep_name, dependency_version: version_constraint }
             @unmet_deps[type][dep[:name]][:errors] << msg
             @unmet_deps[type][dep[:name]][:parent] = {
               :name    => dep[:parent][:name],
@@ -226,7 +230,7 @@ Puppet::Face.define(:module, '1.0.0') do
           dep[:reason] == :missing
         end
         missing_deps.map do |mis_mod|
-          str = "#{colorize(:bg_red, 'UNMET DEPENDENCY')} #{mis_mod[:name].gsub('/', '-')} "
+          str = "#{colorize(:bg_red, _('UNMET DEPENDENCY'))} #{mis_mod[:name].gsub('/', '-')} "
           str << "(#{colorize(:cyan, mis_mod[:version_constraint])})"
           node[:dependencies] << { :text => str }
         end
@@ -260,12 +264,12 @@ Puppet::Face.define(:module, '1.0.0') do
 
     if @unmet_deps[:version_mismatch].include?(mod.forge_name)
       if params[:label_invalid]
-        str << '  ' + colorize(:red, 'invalid')
+        str << '  ' + colorize(:red, _('invalid'))
       elsif parent.respond_to?(:forge_name)
         unmet_parent = @unmet_deps[:version_mismatch][mod.forge_name][:parent]
         if (unmet_parent[:name] == parent.forge_name &&
             unmet_parent[:version] == "v#{parent.version}")
-          str << '  ' + colorize(:red, 'invalid')
+          str << '  ' + colorize(:red, _('invalid'))
         end
       end
     end

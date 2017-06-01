@@ -204,8 +204,17 @@ describe provider_class do
   describe "#latest" do
     it "retrieves version string after querying rpm for version from source file" do
       resource.expects(:[]).with(:source).returns('source-string')
-      Puppet::Util::Execution.expects(:execfail).with(["/bin/rpm", "-q", "--qf", "'#{nevra_format}'", "-p", "source-string"], Puppet::Error).returns("myresource 0 1.2.3.4 5.el4 noarch\n")
+      Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q", "--qf", "'#{nevra_format}'", "-p", "source-string"]).returns("myresource 0 1.2.3.4 5.el4 noarch\n")
       expect(provider.latest).to eq("1.2.3.4-5.el4")
+    end
+
+    it "raises an error if the rpm command fails" do
+      resource.expects(:[]).with(:source).returns('source-string')
+      Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q", "--qf", "'#{nevra_format}'", "-p", "source-string"]).raises(Puppet::ExecutionFailure, 'rpm command failed')
+
+      expect {
+        provider.latest
+      }.to raise_error(Puppet::Error, 'rpm command failed')
     end
   end
 
@@ -499,6 +508,10 @@ describe provider_class do
     it { expect(provider.rpmvercmp("1.0~rc1~git123", "1.0~rc1")).to eq(-1) }
     it { expect(provider.rpmvercmp("1.0~rc1", "1.0~rc1~git123")).to eq(1) }
     it { expect(provider.rpmvercmp("1.0~rc1", "1.0arc1")).to eq(-1) }
+    it { expect(provider.rpmvercmp("", "~")).to eq(1) }
+    it { expect(provider.rpmvercmp("~", "~~")).to eq(1) }
+    it { expect(provider.rpmvercmp("~", "~+~")).to eq(1) }
+    it { expect(provider.rpmvercmp("~", "~a")).to eq(-1) }
 
     # non-upstream test cases
     it { expect(provider.rpmvercmp("405", "406")).to eq(-1) }

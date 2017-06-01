@@ -4,11 +4,6 @@ require 'puppet/pops'
 require 'puppet_spec/pops'
 require 'puppet_spec/scope'
 
-require 'rgen/environment'
-require 'rgen/metamodel_builder'
-require 'rgen/serializer/json_serializer'
-require 'rgen/instantiator/json_instantiator'
-
 describe "Benchmark", :benchmark => true do
   include PuppetSpec::Pops
   include PuppetSpec::Scope
@@ -28,30 +23,17 @@ $a = "interpolate ${foo} and stuff"
     alias write concat
   end
 
-  class MyJSonSerializer < RGen::Serializer::JsonSerializer
-    def attributeValue(value, a)
-      x = super
-      puts "#{a.eType} value: <<#{value}>> serialize: <<#{x}>>"
-      x
-    end
-  end
-
   def json_dump(model)
     output = StringWriter.new
-    ser = MyJSonSerializer.new(output)
-    ser.serialize(model)
+    ser = Puppet::Pops::Serialization::Serializer.new(Puppet::Pops::Serialization::JSON.writer.new(output))
+    ser.write(model)
+    ser.finish
     output
-  end
-
-  def json_load(string)
-    env = RGen::Environment.new
-    inst = RGen::Instantiator::JsonInstantiator.new(env, Puppet::Pops::Model)
-    inst.instantiate(string)
   end
 
   it "transformer", :profile => true do
     parser = Puppet::Pops::Parser::Parser.new()
-    model = parser.parse_string(code).current
+    model = parser.parse_string(code).model
     transformer = Puppet::Pops::Model::AstTransformer.new()
     m = Benchmark.measure { 10000.times { transformer.transform(model) }}
     puts "Transformer: #{m}"
@@ -67,7 +49,7 @@ $a = "interpolate ${foo} and stuff"
   it "parse transform", :profile => true do
     parser = Puppet::Pops::Parser::Parser.new()
     transformer = Puppet::Pops::Model::AstTransformer.new()
-    m = Benchmark.measure { 10000.times { transformer.transform(parser.parse_string(code).current) }}
+    m = Benchmark.measure { 10000.times { transformer.transform(parser.parse_string(code).model) }}
     puts "Parse and transform: #{m}"
   end
 
@@ -85,7 +67,7 @@ $a = "interpolate ${foo} and stuff"
 
   it "marshal1", :profile => true do
     parser = Puppet::Pops::Parser::EvaluatingParser.new()
-    model = parser.parse_string(code).current
+    model = parser.parse_string(code).model
     dumped = Marshal.dump(model)
     m = Benchmark.measure { 10000.times { Marshal.load(dumped) }}
     puts "Marshal1: #{m}"
@@ -93,10 +75,10 @@ $a = "interpolate ${foo} and stuff"
 
   it "rgenjson", :profile => true do
     parser = Puppet::Pops::Parser::EvaluatingParser.new()
-    model = parser.parse_string(code).current
+    model = parser.parse_string(code).model
     dumped = json_dump(model)
     m = Benchmark.measure { 10000.times { json_load(dumped) }}
-    puts "RGen Json: #{m}"
+    puts "Pcore Json: #{m}"
   end
 
   it "lexer2", :profile => true do

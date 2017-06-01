@@ -82,7 +82,7 @@ class HieraConfig
   def self.v4_function_config(config_root, function_name, owner)
     unless Puppet[:strict] == :off
       Puppet.warn_once(:deprecation, 'legacy_provider_function',
-        "Using of legacy data provider function '#{function_name}'. Please convert to a 'data_hash' function")
+        _("Using of legacy data provider function '%{function_name}'. Please convert to a 'data_hash' function") % { function_name: function_name })
     end
     HieraConfigV5.new(config_root, nil,
       {
@@ -139,7 +139,7 @@ class HieraConfig
           if parsed.is_a?(Hash)
             parsed
           else
-            Puppet.warning("#{config_path}: File exists but does not contain a valid YAML hash. Falling back to Hiera version 3 default config")
+            Puppet.warning(_("%{config_path}: File exists but does not contain a valid YAML hash. Falling back to Hiera version 3 default config") % { config_path: config_path })
             HieraConfigV3::DEFAULT_CONFIG_HASH
           end
         end
@@ -197,7 +197,7 @@ class HieraConfig
   def configured_data_providers(lookup_invocation, parent_data_provider, use_default_hierarchy = false)
     unless @data_providers && scope_interpolations_stable?(lookup_invocation)
       if @data_providers
-        lookup_invocation.report_text { 'Hiera configuration recreated due to change of scope variables used in interpolation expressions' }
+        lookup_invocation.report_text { _('Hiera configuration recreated due to change of scope variables used in interpolation expressions') }
       end
       slc_invocation = ScopeLookupCollectingInvocation.new(lookup_invocation.scope)
       begin
@@ -424,7 +424,7 @@ class HieraConfigV3 < HieraConfig
   def validate_config(config, owner)
     unless Puppet[:strict] == :off
       Puppet.warn_once(:deprecation, 'hiera.yaml',
-        "#{@config_path}: Use of 'hiera.yaml' version 3 is deprecated. It should be converted to version 5", config_path.to_s)
+        _("%{config_path}: Use of 'hiera.yaml' version 3 is deprecated. It should be converted to version 5") % { config_path: @config_path }, config_path.to_s)
     end
     config[KEY_VERSION] ||= 3
     config[KEY_BACKENDS] ||= DEFAULT_CONFIG_HASH[KEY_BACKENDS]
@@ -471,10 +471,6 @@ end
 
 # @api private
 class HieraConfigV4 < HieraConfig
-  require 'puppet/plugins/data_providers'
-
-  include Puppet::Plugins::DataProviders
-
   def self.config_type
     return @@CONFIG_TYPE if class_variable_defined?(:@@CONFIG_TYPE)
     tf = Types::TypeFactory
@@ -491,25 +487,6 @@ class HieraConfigV4 < HieraConfig
         tf.optional(KEY_PATHS) => tf.array_of(nes_t)
       ))
     })
-  end
-
-  def factory_create_data_provider(lookup_invocation, name, parent_data_provider, provider_name, datadir, original_paths)
-    service_type = Registry.hash_of_path_based_data_provider_factories
-    provider_factory = Puppet.lookup(:injector).lookup(nil, service_type, PATH_BASED_DATA_PROVIDER_FACTORIES_KEY)[provider_name]
-    unless provider_factory
-      fail(Issues::HIERA_NO_PROVIDER_FOR_BACKEND, { :name => provider_name }, find_line_matching(/[^\w]#{provider_name}(?:[^\w]|$)/))
-    end
-
-    paths = original_paths.map { |path| interpolate(path, lookup_invocation, false) }
-    paths = provider_factory.resolve_paths(datadir, original_paths, paths, lookup_invocation)
-
-    provider_factory_version = provider_factory.respond_to?(:version) ? provider_factory.version : 1
-    if provider_factory_version == 1
-      # Version 1 is not aware of the parent provider
-      provider_factory.create(name, paths)
-    else
-      provider_factory.create(name, paths, parent_data_provider)
-    end
   end
 
   def create_configured_data_providers(lookup_invocation, parent_data_provider, _)
@@ -538,7 +515,7 @@ class HieraConfigV4 < HieraConfig
         create_data_provider(name, parent_data_provider, KEY_DATA_HASH, 'hocon_data', {},
           resolve_paths(datadir, original_paths, lookup_invocation, @config_path.nil?, '.conf'))
       else
-        factory_create_data_provider(lookup_invocation, name, parent_data_provider, provider_name, datadir, original_paths)
+        fail(Issues::HIERA_NO_PROVIDER_FOR_BACKEND, { :name => provider_name }, find_line_matching(/[^\w]#{provider_name}(?:[^\w]|$)/))
       end
     end
     data_providers.values
@@ -547,7 +524,7 @@ class HieraConfigV4 < HieraConfig
   def validate_config(config, owner)
     unless Puppet[:strict] == :off
       Puppet.warn_once(:deprecation, 'hiera.yaml',
-        "#{@config_path}: Use of 'hiera.yaml' version 4 is deprecated. It should be converted to version 5", config_path.to_s)
+        _("%{config_path}: Use of 'hiera.yaml' version 4 is deprecated. It should be converted to version 5") % { config_path: @config_path }, config_path.to_s)
     end
     config[KEY_DATADIR] ||= 'data'
     config[KEY_HIERARCHY] ||= [{ KEY_NAME => 'common', KEY_BACKEND => 'yaml' }]
@@ -608,7 +585,7 @@ class HieraConfigV5 < HieraConfig
 
   def create_configured_data_providers(lookup_invocation, parent_data_provider, use_default_hierarchy)
     defaults = @config[KEY_DEFAULTS] || EMPTY_HASH
-    datadir = defaults[KEY_DATADIR] || 'data'
+    datadir = defaults[KEY_DATADIR] || _('data')
 
     # Hashes enumerate their values in the order that the corresponding keys were inserted so it's safe to use
     # a hash for the data_providers.

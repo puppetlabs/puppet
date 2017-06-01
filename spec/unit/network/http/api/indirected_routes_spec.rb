@@ -255,49 +255,29 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     it "uses the first supported format for the response" do
       data = Puppet::IndirectorTesting.new("my data")
       indirection.save(data, "my data")
-      request = a_request_that_finds(data, :accept_header => "unknown, pson")
+      request = a_request_that_finds(data, :accept_header => "unknown, application/json")
 
       handler.call(request, response)
 
-      expect(response.body).to eq(data.render(:pson))
-      expect(response.type).to eq(Puppet::Network::FormatHandler.format(:pson))
-    end
-
-    it "raises not_acceptable_error when no accept header is provided" do
-      data = Puppet::IndirectorTesting.new("my data")
-      indirection.save(data, "my data")
-      request = a_request_that_finds(data, :accept_header => nil)
-
-      expect {
-        handler.call(request, response)
-      }.to raise_error(not_acceptable_error)
-    end
-
-    it "raises not_acceptable_error when no accepted formats are known" do
-      data = Puppet::IndirectorTesting.new("my data")
-      indirection.save(data, "my data")
-      request = a_request_that_finds(data, :accept_header => "unknown, also/unknown")
-
-      expect {
-        handler.call(request, response)
-      }.to raise_error(not_acceptable_error)
+      expect(response.body).to eq(data.render(:json))
+      expect(response.type).to eq(Puppet::Network::FormatHandler.format(:json))
     end
 
     it "should pass the result through without rendering it if the result is a string" do
       data = Puppet::IndirectorTesting.new("my data")
       data_string = "my data string"
-      request = a_request_that_finds(data, :accept_header => "text/pson")
+      request = a_request_that_finds(data, :accept_header => "application/json")
       indirection.expects(:find).returns(data_string)
 
       handler.call(request, response)
 
       expect(response.body).to eq(data_string)
-      expect(response.type).to eq(Puppet::Network::FormatHandler.format(:pson))
+      expect(response.type).to eq(Puppet::Network::FormatHandler.format(:json))
     end
 
     it "should raise not_found_error when no model instance can be found" do
       data = Puppet::IndirectorTesting.new("my data")
-      request = a_request_that_finds(data, :accept_header => "unknown, text/pson")
+      request = a_request_that_finds(data, :accept_header => "unknown, application/json")
 
       expect {
         handler.call(request, response)
@@ -309,25 +289,25 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     it "uses the first supported format for the response" do
       data = Puppet::IndirectorTesting.new("my data")
       indirection.save(data, "my data")
-      request = a_request_that_searches(Puppet::IndirectorTesting.new("my"), :accept_header => "unknown, text/pson")
+      request = a_request_that_searches(Puppet::IndirectorTesting.new("my"), :accept_header => "unknown, application/json")
 
       handler.call(request, response)
 
-      expect(response.type).to eq(Puppet::Network::FormatHandler.format(:pson))
-      expect(response.body).to eq(Puppet::IndirectorTesting.render_multiple(:pson, [data]))
+      expect(response.type).to eq(Puppet::Network::FormatHandler.format(:json))
+      expect(response.body).to eq(Puppet::IndirectorTesting.render_multiple(:json, [data]))
     end
 
     it "should return [] when searching returns an empty array" do
-      request = a_request_that_searches(Puppet::IndirectorTesting.new("nothing"), :accept_header => "unknown, text/pson")
+      request = a_request_that_searches(Puppet::IndirectorTesting.new("nothing"), :accept_header => "unknown, application/json")
 
       handler.call(request, response)
 
       expect(response.body).to eq("[]")
-      expect(response.type).to eq(Puppet::Network::FormatHandler.format(:pson))
+      expect(response.type).to eq(Puppet::Network::FormatHandler.format(:json))
     end
 
     it "should raise not_found_error when searching returns nil" do
-      request = a_request_that_searches(Puppet::IndirectorTesting.new("nothing"), :accept_header => "unknown, text/pson")
+      request = a_request_that_searches(Puppet::IndirectorTesting.new("nothing"), :accept_header => "unknown, application/json")
       indirection.expects(:search).returns(nil)
 
       expect {
@@ -347,26 +327,15 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       expect(Puppet::IndirectorTesting.indirection.find("my data")).to be_nil
     end
 
-    it "responds with pson when no Accept header is given" do
-      data = Puppet::IndirectorTesting.new("my data")
-      indirection.save(data, "my data")
-      request = a_request_that_destroys(data, :accept_header => nil)
-
-      handler.call(request, response)
-
-      expect(response.body).to eq(data.render(:pson))
-      expect(response.type).to eq(Puppet::Network::FormatHandler.format(:pson))
-    end
-
     it "uses the first supported format for the response" do
       data = Puppet::IndirectorTesting.new("my data")
       indirection.save(data, "my data")
-      request = a_request_that_destroys(data, :accept_header => "unknown, text/pson")
+      request = a_request_that_destroys(data, :accept_header => "unknown, application/json")
 
       handler.call(request, response)
 
-      expect(response.body).to eq(data.render(:pson))
-      expect(response.type).to eq(Puppet::Network::FormatHandler.format(:pson))
+      expect(response.body).to eq(data.render(:json))
+      expect(response.type).to eq(Puppet::Network::FormatHandler.format(:json))
     end
 
     it "raises an error and does not destroy when no accepted formats are known" do
@@ -399,12 +368,8 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
 
       handler.call(request, response)
 
-      # PUP-3272 this test fails when yaml is removed and pson is used. Instead of returning an
-      # empty string, the a string '""' is returned - Don't know what the expecation is, if this is
-      # corrent or not.
-      # (helindbe)
-      #
-      expect(Puppet::IndirectorTesting.indirection.find("test").name).to eq('')
+      saved = Puppet::IndirectorTesting.indirection.find("test")
+      expect(saved.name).to eq('')
     end
 
     it "saves the data sent in the request" do
@@ -417,24 +382,33 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       expect(saved.name).to eq(data.name)
     end
 
-    it "responds with pson when no Accept header is given" do
+    it "responds with bad request when failing to parse the body" do
       data = Puppet::IndirectorTesting.new("my data")
-      request = a_request_that_submits(data, :accept_header => nil)
+      request = a_request_that_submits(data, :content_type_header => 'application/json', :body => "this is invalid json content")
 
-      handler.call(request, response)
+      expect {
+        handler.call(request, response)
+      }.to raise_error(bad_request_error, /The request body is invalid: Could not intern from json/)
+    end
 
-      expect(response.body).to eq(data.render(:pson))
-      expect(response.type).to eq(Puppet::Network::FormatHandler.format(:pson))
+    it "responds with unsupported media type error when submitted content is known, but not supported by the model" do
+      data = Puppet::IndirectorTesting.new("my data")
+      request = a_request_that_submits(data, :content_type_header => 's')
+      expect(data).to_not be_support_format('s')
+
+      expect {
+        handler.call(request, response)
+      }.to raise_error(unsupported_media_type_error, /Client sent a mime-type \(s\) that doesn't correspond to a format we support/)
     end
 
     it "uses the first supported format for the response" do
       data = Puppet::IndirectorTesting.new("my data")
-      request = a_request_that_submits(data, :accept_header => "unknown, text/pson")
+      request = a_request_that_submits(data, :accept_header => "unknown, application/json")
 
       handler.call(request, response)
 
-      expect(response.body).to eq(data.render(:pson))
-      expect(response.type).to eq(Puppet::Network::FormatHandler.format(:pson))
+      expect(response.body).to eq(data.render(:json))
+      expect(response.type).to eq(Puppet::Network::FormatHandler.format(:json))
     end
 
     it "raises an error and does not save when no accepted formats are known" do

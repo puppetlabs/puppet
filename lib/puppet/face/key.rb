@@ -2,9 +2,9 @@ require 'puppet/indirector/face'
 
 Puppet::Indirector::Face.define(:key, '0.0.1') do
   copyright "Puppet Inc.", 2011
-  license   "Apache 2 license; see COPYING"
+  license   _("Apache 2 license; see COPYING")
 
-  summary "Create, save, and remove certificate keys."
+  summary _("Create, save, and remove certificate keys.")
   description <<-'EOT'
     This subcommand manages certificate private keys. Keys are created
     automatically by puppet agent and when certificate requests are generated

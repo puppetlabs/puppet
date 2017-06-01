@@ -170,7 +170,7 @@ module Puppet::Util::Windows::Security
       if GetVolumeInformationW(wide_string(root), FFI::Pointer::NULL, 0,
           FFI::Pointer::NULL, FFI::Pointer::NULL,
           flags_ptr, FFI::Pointer::NULL, 0) == FFI::WIN32_FALSE
-        raise Puppet::Util::Windows::Error.new("Failed to get volume information")
+        raise Puppet::Util::Windows::Error.new(_("Failed to get volume information"))
       end
       supported = flags_ptr.read_dword & FILE_PERSISTENT_ACLS == FILE_PERSISTENT_ACLS
     end
@@ -380,11 +380,11 @@ module Puppet::Util::Windows::Security
 
     Puppet::Util::Windows::SID.string_to_sid_ptr(sid) do |sid_ptr|
       if Puppet::Util::Windows::SID.IsValidSid(sid_ptr) == FFI::WIN32_FALSE
-        raise Puppet::Util::Windows::Error.new("Invalid SID")
+        raise Puppet::Util::Windows::Error.new(_("Invalid SID"))
       end
 
       if AddAccessAllowedAceEx(acl, ACL_REVISION, inherit, mask, sid_ptr) == FFI::WIN32_FALSE
-        raise Puppet::Util::Windows::Error.new("Failed to add access control entry")
+        raise Puppet::Util::Windows::Error.new(_("Failed to add access control entry"))
       end
     end
 
@@ -397,11 +397,11 @@ module Puppet::Util::Windows::Security
 
     Puppet::Util::Windows::SID.string_to_sid_ptr(sid) do |sid_ptr|
       if Puppet::Util::Windows::SID.IsValidSid(sid_ptr) == FFI::WIN32_FALSE
-        raise Puppet::Util::Windows::Error.new("Invalid SID")
+        raise Puppet::Util::Windows::Error.new(_("Invalid SID"))
       end
 
       if AddAccessDeniedAceEx(acl, ACL_REVISION, inherit, mask, sid_ptr) == FFI::WIN32_FALSE
-        raise Puppet::Util::Windows::Error.new("Failed to add access control entry")
+        raise Puppet::Util::Windows::Error.new(_("Failed to add access control entry"))
       end
     end
 
@@ -412,7 +412,7 @@ module Puppet::Util::Windows::Security
   def parse_dacl(dacl_ptr)
     # REMIND: need to handle NULL DACL
     if IsValidAcl(dacl_ptr) == FFI::WIN32_FALSE
-      raise Puppet::Util::Windows::Error.new("Invalid DACL")
+      raise Puppet::Util::Windows::Error.new(_("Invalid DACL"))
     end
 
     dacl_struct = ACL.new(dacl_ptr)
@@ -435,7 +435,7 @@ module Puppet::Util::Windows::Security
         ace_type = ace[:Header][:AceType]
         if ace_type != Puppet::Util::Windows::AccessControlEntry::ACCESS_ALLOWED_ACE_TYPE &&
           ace_type != Puppet::Util::Windows::AccessControlEntry::ACCESS_DENIED_ACE_TYPE
-          Puppet.warning "Unsupported access control entry type: 0x#{ace_type.to_s(16)}"
+          Puppet.warning _("Unsupported access control entry type: 0x%{type}") % { type: ace_type.to_s(16) }
           next
         end
 
@@ -469,7 +469,7 @@ module Puppet::Util::Windows::Security
              FFI::Pointer::NULL_HANDLE) # template
 
     if handle == Puppet::Util::Windows::File::INVALID_HANDLE_VALUE
-      raise Puppet::Util::Windows::Error.new("Failed to open '#{path}'")
+      raise Puppet::Util::Windows::Error.new(_("Failed to open '%{path}'") % { path: path })
     end
 
     begin
@@ -516,7 +516,7 @@ module Puppet::Util::Windows::Security
             if AdjustTokenPrivileges(token, FFI::WIN32_FALSE,
                 token_privileges, token_privileges.size,
                 FFI::MemoryPointer::NULL, FFI::MemoryPointer::NULL) == FFI::WIN32_FALSE
-              raise Puppet::Util::Windows::Error.new("Failed to adjust process privileges")
+              raise Puppet::Util::Windows::Error.new(_("Failed to adjust process privileges"))
             end
           end
         end
@@ -546,7 +546,7 @@ module Puppet::Util::Windows::Security
                   dacl_ptr_ptr,
                   FFI::Pointer::NULL, #sacl
                   sd_ptr_ptr) #sec desc
-                raise Puppet::Util::Windows::Error.new("Failed to get security information") if rv != FFI::ERROR_SUCCESS
+                raise Puppet::Util::Windows::Error.new(_("Failed to get security information")) if rv != FFI::ERROR_SUCCESS
 
                 # these 2 convenience params are not freed since they point inside sd_ptr
                 owner = Puppet::Util::Windows::SID.sid_ptr_to_string(owner_sid_ptr_ptr.get_pointer(0))
@@ -557,7 +557,7 @@ module Puppet::Util::Windows::Security
                     sd_ptr_ptr.read_win32_local_pointer do |sd_ptr|
 
                       if GetSecurityDescriptorControl(sd_ptr, control, revision) == FFI::WIN32_FALSE
-                        raise Puppet::Util::Windows::Error.new("Failed to get security descriptor control")
+                        raise Puppet::Util::Windows::Error.new(_("Failed to get security descriptor control"))
                       end
 
                       protect = (control.read_word & SE_DACL_PROTECTED) == SE_DACL_PROTECTED
@@ -590,11 +590,11 @@ module Puppet::Util::Windows::Security
   def set_security_descriptor(path, sd)
     FFI::MemoryPointer.new(:byte, get_max_generic_acl_size(sd.dacl.count)) do |acl_ptr|
       if InitializeAcl(acl_ptr, acl_ptr.size, ACL_REVISION) == FFI::WIN32_FALSE
-        raise Puppet::Util::Windows::Error.new("Failed to initialize ACL")
+        raise Puppet::Util::Windows::Error.new(_("Failed to initialize ACL"))
       end
 
       if IsValidAcl(acl_ptr) == FFI::WIN32_FALSE
-        raise Puppet::Util::Windows::Error.new("Invalid DACL")
+        raise Puppet::Util::Windows::Error.new(_("Invalid DACL"))
       end
 
       with_privilege(SE_BACKUP_NAME) do
@@ -629,7 +629,7 @@ module Puppet::Util::Windows::Security
                                      FFI::MemoryPointer::NULL)
 
                 if rv != FFI::ERROR_SUCCESS
-                  raise Puppet::Util::Windows::Error.new("Failed to set security information")
+                  raise Puppet::Util::Windows::Error.new(_("Failed to set security information"))
                 end
               end
             end

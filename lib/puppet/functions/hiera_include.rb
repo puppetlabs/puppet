@@ -70,7 +70,7 @@ require 'hiera/puppet_function'
 # # "Key 'classes' not found".
 # ~~~
 #
-# See [the documentation](http://links.puppetlabs.com/hierainclude) for more information
+# See [the documentation](http://links.puppet.com/hierainclude) for more information
 # and a more detailed example of how `hiera_include` uses array merge lookups to classify
 # nodes.
 #
@@ -84,7 +84,7 @@ Puppet::Functions.create_function(:hiera_include, Hiera::PuppetFunction) do
   end
 
   def post_lookup(scope, key, value)
-    raise Puppet::ParseError, "Could not find data item #{key}" if value.nil?
+    raise Puppet::ParseError, _("Could not find data item %{key}") % { key: key } if value.nil?
     call_function_with_scope(scope, 'include', value) unless value.empty?
   end
 end

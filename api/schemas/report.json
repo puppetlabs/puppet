@@ -100,6 +100,11 @@
             "type":        "string"
         },
 
+        "job_id": {
+            "description": "The id of the job that this transaction is a part of.",
+            "type":        ["string", "null"]
+        },
+
         "catalog_uuid": {
             "description": "A UUID covering a specific catalog.",
             "type":        "string"
@@ -122,7 +127,7 @@
         "report_format": {
             "description": "The report format version documented by this schema",
             "type":        "integer",
-            "enum":        ["6", 6]
+            "enum":        ["7", 7]
         },
 
         "puppet_version": {

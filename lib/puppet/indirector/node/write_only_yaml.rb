@@ -11,7 +11,12 @@ require 'puppet/indirector/yaml'
 # @api private
 #
 class Puppet::Node::WriteOnlyYaml < Puppet::Indirector::Yaml
-  desc "Store node information as flat files, serialized using YAML,
+  def initialize
+    Puppet.warn_once(:deprecation, 'Puppet::Node::WriteOnlyYaml', _('Puppet::Node::WriteOnlyYaml is deprecated and will be removed in a future release of Puppet.'))
+    super
+  end
+
+  desc "(Deprecated) Store node information as flat files, serialized using YAML,
     does not deserialize (write only)."
 
   # Overridden to always return nil. This is a write only terminus.

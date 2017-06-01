@@ -4,10 +4,12 @@ test_name "C98092 - a new resource should not be reported as a corrective change
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils
 
+  tag 'broken:images'
+
   test_file_name = File.basename(__FILE__, '.*')
   tmp_environment   = mk_tmp_environment_with_teardown(master, test_file_name)
   tmp_file = {}
-  
+
   agents.each do |agent|
     tmp_file[agent.hostname] = agent.tmpfile(tmp_environment)
   end
@@ -15,15 +17,15 @@ extend Puppet::Acceptance::EnvironmentUtils
   teardown do
     step 'clean out produced resources' do
       agents.each do |agent|
-        if tmp_file.has_key?(agent.hostname) && tmp_file[agent.hostname] != ''  
+        if tmp_file.has_key?(agent.hostname) && tmp_file[agent.hostname] != ''
           on(agent, "rm #{tmp_file[agent.hostname]}", :accept_all_exit_codes => true)
-        end 
+        end
       end
     end
   end
 
   step 'create file resource - site.pp to verify corrective change flag' do
-    file_contents     = 'this is a test'   
+    file_contents     = 'this is a test'
     manifest = <<MANIFEST
 file { '#{environmentpath}/#{tmp_environment}/manifests/site.pp':
   ensure => file,
@@ -32,7 +34,7 @@ file { '#{environmentpath}/#{tmp_environment}/manifests/site.pp':
 file { \$test_path:
   content => @(UTF8)
     #{file_contents}
-    | UTF8 
+    | UTF8
 }
   ',
 }

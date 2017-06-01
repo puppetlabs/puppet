@@ -8,6 +8,11 @@ describe "Two step scoping for variables" do
     expect(catalog.resource('Notify', 'something')[:message]).to eq(message)
   end
 
+  def expect_the_message_not_to_be(message, node = Puppet::Node.new('the node'))
+    catalog = compile_to_catalog(yield, node)
+    expect(catalog.resource('Notify', 'something')[:message]).to_not eq(message)
+  end
+
   before :each do
     Puppet.expects(:deprecation_warning).never
   end
@@ -250,13 +255,15 @@ describe "Two step scoping for variables" do
       end
     end
 
-    it "finds a qualified variable by following parent scopes of the specified scope" do
-      expect_the_message_to_be("from node") do <<-MANIFEST
+    it "finds a qualified variable by following inherited scope of the specified scope" do
+      expect_the_message_to_be("from parent") do <<-MANIFEST
             class c {
               notify { 'something': message => "$a::b" }
             }
-
-            class a { }
+            class parent {
+              $b = 'from parent'
+            }
+            class a inherits parent { }
 
             node default {
               $b = "from node"
@@ -264,6 +271,48 @@ describe "Two step scoping for variables" do
               include c
             }
         MANIFEST
+      end
+    end
+
+    ['a:.b', '::a::b'].each do |ref|
+      it "does not resolve a qualified name on the form #{ref} against top scope" do
+        expect_the_message_not_to_be("from topscope") do <<-"MANIFEST"
+              class c {
+                notify { 'something': message => "$#{ref}" }
+              }
+              class parent {
+                $not_b = 'from parent'
+              }
+              class a inherits parent { }
+
+              $b = "from topscope"
+              node default {
+                include a
+                include c
+              }
+          MANIFEST
+        end
+      end
+    end
+
+    ['a:.b', '::a::b'].each do |ref|
+      it "does not resolve a qualified name on the form #{ref} against node scope" do
+        expect_the_message_not_to_be("from node") do <<-MANIFEST
+              class c {
+                notify { 'something': message => "$a::b" }
+              }
+              class parent {
+                $not_b = 'from parent'
+              }
+              class a inherits parent { }
+
+              node default {
+                $b = "from node"
+                include a
+                include c
+              }
+          MANIFEST
+        end
       end
     end
 

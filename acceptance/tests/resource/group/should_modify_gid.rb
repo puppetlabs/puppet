@@ -7,14 +7,15 @@ gid1  = (rand(989999).to_i + 10000)
 gid2  = (rand(989999).to_i + 10000)
 
 agents.each do |agent|
+  # AIX group provider returns quoted gids
   step "ensure that the group exists with gid #{gid1}"
   on(agent, puppet_resource('group', name, 'ensure=present', "gid=#{gid1}")) do
-    fail_test "missing gid notice" unless stdout =~ /gid +=> +'#{gid1}'/
+    fail_test "missing gid notice" unless stdout =~ /gid +=> +'?#{gid1}'?/
   end
 
   step "ensure that we can modify the GID of the group to #{gid2}"
   on(agent, puppet_resource('group', name, 'ensure=present', "gid=#{gid2}")) do
-    fail_test "missing gid notice" unless stdout =~ /gid +=> +'#{gid2}'/
+    fail_test "missing gid notice" unless stdout =~ /gid +=> +'?#{gid2}'?/
   end
 
   step "verify that the GID changed"

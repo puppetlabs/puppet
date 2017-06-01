@@ -136,6 +136,21 @@ module ModuleLoaders
         when :resource_type
         when :resource_type_pp
         when :type
+          if !global?
+            # Global name can only be the module typeset
+            return nil unless name_parts[0] == module_name
+
+            origin, smart_path = find_existing_path(init_typeset_name)
+            return nil unless smart_path
+
+            value = smart_path.instantiator.create(self, typed_name, origin, get_contents(origin))
+            if value.is_a?(Types::PTypeSetType)
+              # cache the entry and return it
+              return set_entry(typed_name, value, origin)
+            end
+
+            raise ArgumentError,"The code loaded from #{origin} does not define the TypeSet '#{module_name.capitalize}'"
+          end
         else
           # anything else cannot possibly be in this module
           # TODO: should not be allowed anyway... may have to revisit this decision
@@ -146,17 +161,31 @@ module ModuleLoaders
       # Get the paths that actually exist in this module (they are lazily processed once and cached).
       # The result is an array (that may be empty).
       # Find the file to instantiate, and instantiate the entity if file is found
-      origin = nil
-      if (smart_path = smart_paths.effective_paths(typed_name.type).find do |sp|
-          origin = sp.effective_path(typed_name, global? ? 0 : 1)
-          existing_path(origin)
-        end)
+      origin, smart_path = find_existing_path(typed_name)
+      if smart_path
         value = smart_path.instantiator.create(self, typed_name, origin, get_contents(origin))
         # cache the entry and return it
-        set_entry(typed_name, value, origin)
-      else
-        nil
+        return set_entry(typed_name, value, origin)
       end
+
+      return nil unless typed_name.type == :type && typed_name.qualified?
+
+      # Search for TypeSet using parent name
+      ts_name = typed_name.parent
+      while ts_name
+        # Do not traverse parents here. This search must be confined to this loader
+        tse = get_entry(ts_name)
+        tse = find(ts_name) if tse.nil? || tse.value.nil?
+        if tse && (ts = tse.value).is_a?(Types::PTypeSetType)
+          # The TypeSet might be unresolved at this point. If so, it must be resolved using
+          # this loader. That in turn, adds all contained types to this loader.
+          ts.resolve(Types::TypeParser.singleton, self)
+          te = get_entry(typed_name)
+          return te unless te.nil?
+        end
+        ts_name = ts_name.parent
+      end
+      nil
     end
 
     # Abstract method that subclasses override that checks if it is meaningful to search using a generic smart path.
@@ -218,6 +247,28 @@ module ModuleLoaders
       # The system loader has a nil module_name and it does not have a private_loader as there are no functions
       # that can only by called by puppet runtime - if so, it acts as the private loader directly.
       @private_loader ||= (global? ? self : @loaders.private_loader_for_module(module_name))
+    end
+
+    private
+
+    # @return [TypedName] the fake typed name that maps to the init_typeset path for this module
+    def init_typeset_name
+      @init_typeset_name ||= TypedName.new(:type, "#{module_name}::init_typeset")
+    end
+
+    # Find an existing path for the given `typed_name`. Return `nil` if no such path is found
+    # @param typed_name [TypedName] the `typed_name` to find a path for
+    # @return [Array,nil] `nil`or a two element array an effective path `String` and the `SmartPath` that produced the effective path.
+    def find_existing_path(typed_name)
+      is_global = global?
+      smart_paths.effective_paths(typed_name.type).each do |sp|
+        origin = sp.effective_path(typed_name, is_global ? 0 : 1)
+        unless origin.nil?
+          existing = existing_path(origin)
+          return [origin, sp] unless existing.nil?
+        end
+      end
+      nil
     end
   end
 

@@ -74,18 +74,23 @@ describe "egrammar parsing containers" do
         # Not as much weird as confusing that it is possible to name a class 'class'. Can have
         # a very confusing effect when resolving relative names, getting the global hardwired "Class"
         # instead of some foo::class etc.
-        # This is allowed in 3.x.
-        expect {
-          expect(dump(parse("class class {}"))).to eq("(class class ())")
-        }.to raise_error(/not a valid classname/)
+        # This was allowed in 3.x.
+        expect { parse("class class {}") }.to raise_error(/'class' keyword not allowed at this location/)
       end
 
       it "class default {} # a class named 'default'" do
         # The weirdness here is that a class can inherit 'default' but not declare a class called default.
         # (It will work with relative names i.e. foo::default though). The whole idea with keywords as
         # names is flawed to begin with - it generally just a very bad idea.
-        expect { expect(dump(parse("class default {}"))).to eq("(class default ())") }.to raise_error(Puppet::ParseError)
+        expect { parse("class default {}") }.to raise_error(Puppet::ParseError)
       end
+
+      it "class 'foo' {} # a string as class name" do
+        # A common error is to put quotes around the class name, the parser should provide the error message at the right location
+        # See PUP-7471
+        expect { parse("class 'foo' {}") }.to raise_error(/A quoted string is not valid as a name here at line 1:7/)
+      end
+
 
       it "class foo::default {} # a nested name 'default'" do
         expect(dump(parse("class foo::default {}"))).to eq("(class foo::default ())")
@@ -93,7 +98,7 @@ describe "egrammar parsing containers" do
 
       it "class class inherits default {} # inherits default", :broken => true do
         expect {
-          expect(dump(parse("class class inherits default {}"))).to eq("(class class (inherits default) ())")
+          parse("class class inherits default {}")
         }.to raise_error(/not a valid classname/)
       end
 
@@ -102,16 +107,12 @@ describe "egrammar parsing containers" do
         # this because a class is named at parse time (since class evaluation is lazy, the model must have the
         # full class name for nested classes - only, it gets this wrong when a class is named "class" - or at least
         # I think it is wrong.)
-        # 
-        expect {
-        expect(dump(parse("class class inherits default {}"))).to eq("(class class::class (inherits default) ())")
-          }.to raise_error(/not a valid classname/)
+        #
+        expect { parse("class class inherits default {}") }.to raise_error(/'class' keyword not allowed at this location/)
       end
 
       it "class foo inherits class" do
-        expect {
-          expect(dump(parse("class foo inherits class {}"))).to eq("(class foo (inherits class) ())")
-        }.to raise_error(/not a valid classname/)
+        expect { parse("class foo inherits class {}") }.to raise_error(/'class' keyword not allowed at this location/)
       end
     end
 
@@ -119,7 +120,7 @@ describe "egrammar parsing containers" do
       ['and', 'case', 'class', 'default', 'define', 'else', 'elsif', 'if', 'in', 'inherits', 'node', 'or',
         'undef', 'unless', 'type', 'attr', 'function', 'private'].each do |keyword|
         it "such as #{keyword}" do
-          expect {parse("class x ($#{keyword}){} class { x: #{keyword} => 1 }")}.to_not raise_error
+          expect { parse("class x ($#{keyword}){} class { x: #{keyword} => 1 }") }.to_not raise_error
         end
       end
     end
@@ -177,16 +178,13 @@ describe "egrammar parsing containers" do
       it "define class {} # a define named 'class'" do
         # This is weird because Class already exists, and instantiating this define will probably not
         # work
-        expect {
-          expect(dump(parse("define class {}"))).to eq("(define class ())")
-          }.to raise_error(/not a valid classname/)
+        expect { parse("define class {}") }.to raise_error(/'class' keyword not allowed at this location/)
       end
 
       it "define default {} # a define named 'default'" do
         # Check unwanted ability to define 'default'.
         # The expression below is not allowed (which is good).
-        #
-        expect { expect(dump(parse("define default {}"))).to eq("(define default ())")}.to raise_error(Puppet::ParseError)
+        expect { parse("define default {}") }.to raise_error(Puppet::ParseError)
       end
     end
 

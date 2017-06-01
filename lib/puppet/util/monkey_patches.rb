@@ -18,24 +18,6 @@ module RDoc
   end
 end
 
-class Symbol
-  def <=> (other)
-    if (other.class != Symbol)
-      case Puppet[:strict]
-      when :warning
-        Puppet.warn_once('deprecation', 'symbol_comparison', 'Comparing Symbols to non-Symbol values is deprecated')
-      when :error
-        raise ArgumentError.new("Comparing Symbols to non-Symbol values is no longer allowed")
-      end
-    end
-    self.to_s <=> other.to_s
-  end
-
-  def intern
-    self
-  end unless method_defined? 'intern'
-end
-
 class Object
   # ActiveSupport 2.3.x mixes in a dangerous method
   # that can cause rspec to fork bomb
@@ -43,54 +25,6 @@ class Object
   def daemonize
     raise NotImplementedError, "Kernel.daemonize is too dangerous, please don't try to use it."
   end
-end
-
-require 'fcntl'
-class IO
-  def self.binwrite(name, string, offset = nil)
-    # Determine if we should truncate or not.  Since the truncate method on a
-    # file handle isn't implemented on all platforms, safer to do this in what
-    # looks like the libc / POSIX flag - which is usually pretty robust.
-    # --daniel 2012-03-11
-    mode = Fcntl::O_CREAT | Fcntl::O_WRONLY | (offset.nil? ? Fcntl::O_TRUNC : 0)
-
-    # We have to duplicate the mode because Ruby on Windows is a bit precious,
-    # and doesn't actually carry over the mode.  It won't work to just use
-    # open, either, because that doesn't like our system modes and the default
-    # open bits don't do what we need, which is awesome. --daniel 2012-03-30
-    IO.open(IO::sysopen(name, mode), mode) do |f|
-      # ...seek to our desired offset, then write the bytes.  Don't try to
-      # seek past the start of the file, eh, because who knows what platform
-      # would legitimately blow up if we did that.
-      #
-      # Double-check the positioning, too, since destroying data isn't my idea
-      # of a good time. --daniel 2012-03-11
-      target = [0, offset.to_i].max
-      unless (landed = f.sysseek(target, IO::SEEK_SET)) == target
-        raise "unable to seek to target offset #{target} in #{name}: got to #{landed}"
-      end
-
-      f.syswrite(string)
-    end
-  end unless singleton_methods.include?(:binwrite)
-end
-
-class Range
-  def intersection(other)
-    raise ArgumentError, 'value must be a Range' unless other.kind_of?(Range)
-    return unless other === self.first || self === other.first
-
-    start = [self.first, other.first].max
-    if self.exclude_end? && self.last <= other.last
-      start ... self.last
-    elsif other.exclude_end? && self.last >= other.last
-      start ... other.last
-    else
-      start .. [ self.last, other.last ].min
-    end
-  end unless method_defined? :intersection
-
-  alias_method :&, :intersection unless method_defined? :&
 end
 
 # (#19151) Reject all SSLv2 ciphers and handshakes

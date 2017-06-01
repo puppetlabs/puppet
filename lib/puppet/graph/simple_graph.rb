@@ -4,6 +4,8 @@ require 'set'
 
 # A hopefully-faster graph class to replace the use of GRATR.
 class Puppet::Graph::SimpleGraph
+  include Puppet::Util::PsychSupport
+
   #
   # All public methods of this class must maintain (assume ^ ensure) the following invariants, where "=~=" means
   # equiv. up to order:
@@ -61,7 +63,7 @@ class Puppet::Graph::SimpleGraph
     source = base || event.resource
 
     unless vertex?(source)
-      Puppet.warning "Got an event from invalid vertex #{source.ref}"
+      Puppet.warning _("Got an event from invalid vertex %{source}") % { source: source.ref }
       return []
     end
     # Get all of the edges that this vertex should forward events
@@ -193,7 +195,8 @@ class Puppet::Graph::SimpleGraph
   # through the graph first, which are more likely to be interesting to the
   # user.  I think; it would be interesting to verify that. --daniel 2011-01-23
   def paths_in_cycle(cycle, max_paths = 1)
-    raise ArgumentError, "negative or zero max_paths" if max_paths < 1
+    #TRANSLATORS "negative or zero" refers to the count of paths
+    raise ArgumentError, _("negative or zero max_paths") if max_paths < 1
 
     # Calculate our filtered outbound vertex lists...
     adj = {}
@@ -225,7 +228,7 @@ class Puppet::Graph::SimpleGraph
     return if n == 0
     s = n == 1 ? '' : 's'
 
-    message = "Found #{n} dependency cycle#{s}:\n"
+    message = n_("Found %{num} dependency cycle:\n", "Found %{num} dependency cycles:\n", n) % { num: n }
     cycles.each do |cycle|
       paths = paths_in_cycle(cycle)
       message += paths.map{ |path| '(' + path.join(" => ") + ')'}.join("\n") + "\n"
@@ -233,10 +236,11 @@ class Puppet::Graph::SimpleGraph
 
     if Puppet[:graph] then
       filename = write_cycles_to_graph(cycles)
-      message += "Cycle graph written to #{filename}."
+      message += _("Cycle graph written to %{filename}.") % { filename: filename }
     else
-      message += "Try the '--graph' option and opening the "
-      message += "resulting '.dot' file in OmniGraffle or GraphViz"
+      #TRANSLATORS "graph" refers to a command line option and should not be translated
+      #TRANSLATORS OmniGraffle and GraphViz and program names and should not be translated
+      message += _("Try the '--graph' option and opening the resulting '.dot' file in OmniGraffle or GraphViz")
     end
 
     raise Puppet::Error, message
@@ -293,6 +297,7 @@ class Puppet::Graph::SimpleGraph
   # since they have to specify what kind of edge it is.
   def add_edge(e,*a)
     return add_relationship(e,*a) unless a.empty?
+    e = Puppet::Relationship.from_data_hash(e) if e.is_a?(Hash)
     @upstream_from.clear
     @downstream_from.clear
     add_vertex(e.source)
@@ -479,68 +484,42 @@ class Puppet::Graph::SimpleGraph
   end
   self.use_new_yaml_format = false
 
-  # Stub class to allow graphs to be represented in YAML using the old
-  # (version 2.6) format.
-  class VertexWrapper
-    attr_reader :vertex, :adjacencies
-    def initialize(vertex, adjacencies)
-      @vertex = vertex
-      @adjacencies = adjacencies
-    end
-
-    def inspect
-      { :@adjacencies => @adjacencies, :@vertex => @vertex.to_s }.inspect
-    end
-  end
-
-  # instance_variable_get is used by YAML.dump to get instance
-  # variables.  Override it so that we can simulate the presence of
-  # instance variables @edges and @vertices for serialization.
-  def instance_variable_get(v)
-    case v.to_s
-    when '@edges' then
-      edges
-    when '@vertices' then
-      if self.class.use_new_yaml_format
-        vertices
-      else
-        result = {}
-        vertices.each do |vertex|
-          adjacencies = {}
-          [:in, :out].each do |direction|
-            adjacencies[direction] = {}
-            adjacent(vertex, :direction => direction, :type => :edges).each do |edge|
-              other_vertex = direction == :in ? edge.source : edge.target
-              (adjacencies[direction][other_vertex] ||= Set.new).add(edge)
-            end
-          end
-          result[vertex] = Puppet::Graph::SimpleGraph::VertexWrapper.new(vertex, adjacencies)
-        end
-        result
-      end
-    else
-      super(v)
-    end
-  end
-
-  def to_yaml_properties
-    (super + [:@vertices, :@edges] -
-     [:@in_to, :@out_from, :@upstream_from, :@downstream_from]).uniq
-  end
-
-  def yaml_initialize(tag, var)
-    initialize()
-    vertices = var.delete('vertices')
-    edges = var.delete('edges')
+  def initialize_from_hash(hash)
+    initialize
+    vertices = hash['vertices']
+    edges = hash['edges']
     if vertices.is_a?(Hash)
       # Support old (2.6) format
       vertices = vertices.keys
     end
-    vertices.each { |v| add_vertex(v) }
-    edges.each { |e| add_edge(e) }
-    var.each do |varname, value|
-      instance_variable_set("@#{varname}", value)
+    vertices.each { |v| add_vertex(v) } unless vertices.nil?
+    edges.each { |e| add_edge(e) } unless edges.nil?
+  end
+
+  def to_data_hash
+    hash = { 'edges' => edges.map(&:to_data_hash) }
+    hash['vertices'] = if self.class.use_new_yaml_format
+      vertices
+    else
+      # Represented in YAML using the old (version 2.6) format.
+      result = {}
+      vertices.each do |vertex|
+        adjacencies = {}
+        [:in, :out].each do |direction|
+          direction_hash = {}
+          adjacencies[direction.to_s] = direction_hash
+          adjacent(vertex, :direction => direction, :type => :edges).each do |edge|
+            other_vertex = direction == :in ? edge.source : edge.target
+            (direction_hash[other_vertex.to_s] ||= []) << edge
+          end
+          direction_hash.each_pair { |key, edges| direction_hash[key] = edges.uniq.map(&:to_data_hash) }
+        end
+        vname = vertex.to_s
+        result[vname] = { 'adjacencies' => adjacencies, 'vertex' => vname }
+      end
+      result
     end
+    hash
   end
 
   def multi_vertex_component?(component)

@@ -96,14 +96,6 @@ module Puppet
         failed_dependencies && !failed_dependencies.empty?
       end
 
-      # A list of instance variables that should be serialized with this object
-      # when converted to YAML.
-      YAML_ATTRIBUTES = %w{@resource @file @line @evaluation_time @change_count
-                           @out_of_sync_count @tags @time @events @out_of_sync
-                           @changed @resource_type @title @skipped @failed
-                           @containment_path}.
-        map(&:to_sym)
-
       def self.from_data_hash(data)
         obj = self.allocate
         obj.initialize_from_hash(data)
@@ -140,7 +132,7 @@ module Puppet
       end
 
       def failed_because(detail)
-        @real_resource.log_exception(detail, "Could not evaluate: #{detail}")
+        @real_resource.log_exception(detail, _("Could not evaluate: %{detail}") % { detail: detail })
         failed = true
         # There's a contract (implicit unfortunately) that a status of failed
         # will always be accompanied by an event with some explanatory power.  This
@@ -191,14 +183,8 @@ module Puppet
         @failed = data['failed']
         @corrective_change = data['corrective_change']
         @events = data['events'].map do |event|
-          # in YAML (for reports) we serialize this as an object, but
-          # in PSON it becomes a hash. Depending on where we came from
-          # we might not need to deserialize it.
-          if event.class == Puppet::Transaction::Event
-            event
-          else
-            Puppet::Transaction::Event.from_data_hash(event)
-          end
+          # Older versions contain tags that causes Psych to create instances directly
+          event.is_a?(Puppet::Transaction::Event) ? event : Puppet::Transaction::Event.from_data_hash(event)
         end
       end
 
@@ -219,13 +205,9 @@ module Puppet
           'skipped' => @skipped,
           'change_count' => @change_count,
           'out_of_sync_count' => @out_of_sync_count,
-          'events' => @events,
+          'events' => @events.map { |event| event.to_data_hash },
           'corrective_change' => @corrective_change,
         }
-      end
-
-      def to_yaml_properties
-        YAML_ATTRIBUTES & super
       end
     end
   end

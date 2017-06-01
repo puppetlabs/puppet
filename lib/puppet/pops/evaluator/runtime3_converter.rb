@@ -7,6 +7,9 @@ module Puppet::Pops::Evaluator
 # Users should not create instances of this class. Instead the class methods {Runtime3Converter.convert},
 # {Runtime3Converter.map_args}, or {Runtime3Converter.instance} should be used
 class Runtime3Converter
+  MAX_INTEGER =  Puppet::Pops::MAX_INTEGER
+  MIN_INTEGER = Puppet::Pops::MIN_INTEGER
+
   # Converts 4x supported values to a 3x values. Same as calling Runtime3Converter.instance.map_args(...)
   #
   # @param args [Array] Array of values to convert
@@ -61,6 +64,19 @@ class Runtime3Converter
     @inner ? :undef : undef_value
   end
 
+  def convert_Integer(o, scope, undef_value)
+    return o unless o < MIN_INTEGER || o > MAX_INTEGER
+    range_end = o > MAX_INTEGER ? 'max' : 'min'
+    raise Puppet::Error, "Use of a Ruby Integer outside of Puppet Integer #{range_end} range, got '#{"0x%x" % o}'"
+  end
+
+  def convert_BigDecimal(o, scope, undef_value)
+    # transform to same value float value if possible without any rounding error
+    f = o.to_f
+    return f unless f != o
+    raise Puppet::Error, "Use of a Ruby BigDecimal value outside Puppet Float range, got '#{o}'"
+  end
+
   def convert_String(o, scope, undef_value)
     # although wasteful, needed because user code may mutate these strings in Resources
     o.frozen? ? o.dup : o
@@ -83,7 +99,7 @@ class Runtime3Converter
   end
 
   def convert_Iterator(o, scope, undef_value)
-    raise Puppet::Error, 'Use of an Iterator is not supported here'
+    raise Puppet::Error, _('Use of an Iterator is not supported here')
   end
 
   def convert_Symbol(o, scope, undef_value)

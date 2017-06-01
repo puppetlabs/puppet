@@ -13,7 +13,5 @@ Developer References
 * [Windows](windows.md)
 * [Unicode and you](unicode.md)
 * [Working on the parser](parser_work.md)
-* 
-Misc
 
-* [Static Compiler](static_compiler.md)
+Misc

@@ -175,4 +175,21 @@ describe Puppet::Application::Resource do
       @resource_app.main
     end
   end
+
+  describe 'when handling a custom type' do
+    it 'the Puppet::Pops::Loaders instance is available' do
+      Puppet::Type.newtype(:testing) do
+        newparam(:name) do
+          isnamevar
+        end
+        def self.instances
+          fail('Loader not found') unless Puppet::Pops::Loaders.find_loader(nil).is_a?(Puppet::Pops::Loader::Loader)
+          @instances ||= [new(:name => name)]
+        end
+      end
+      @resource_app.command_line.stubs(:args).returns(['testing', 'hello'])
+      @resource_app.expects(:puts).with { |args| expect(args).to eql("testing { 'hello':\n}") }
+      expect { @resource_app.main }.not_to raise_error
+    end
+  end
 end

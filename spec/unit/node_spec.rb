@@ -55,14 +55,14 @@ describe Puppet::Node do
       end
     end
 
-    it "can round-trip through pson" do
+    it "can round-trip through json" do
       facts = Puppet::Node::Facts.new("hello", "one" => "c", "two" => "b")
       node = Puppet::Node.new("hello",
                               :environment => 'bar',
                               :classes => ['erth', 'aiu'],
                               :parameters => {"hostname"=>"food"}
                              )
-      new_node = Puppet::Node.convert_from('pson', node.render('pson'))
+      new_node = Puppet::Node.convert_from('json', node.render('json'))
       expect(new_node.environment).to eq(node.environment)
       expect(new_node.parameters).to eq(node.parameters)
       expect(new_node.classes).to eq(node.classes)
@@ -76,7 +76,7 @@ describe Puppet::Node do
                               :classes => ['erth', 'aiu'],
                               :parameters => {"hostname"=>"food"}
                              )
-      expect(node.to_pson).to validate_against('api/schemas/node.json')
+      expect(node.to_json).to validate_against('api/schemas/node.json')
     end
 
     it "when missing optional parameters validates against the node json schema", :unless => Puppet.features.microsoft_windows? do
@@ -84,7 +84,7 @@ describe Puppet::Node do
       node = Puppet::Node.new("hello",
                               :environment => 'bar'
                              )
-      expect(node.to_pson).to validate_against('api/schemas/node.json')
+      expect(node.to_json).to validate_against('api/schemas/node.json')
     end
 
     it "should allow its environment parameter to be set by attribute after initialization" do
@@ -93,6 +93,15 @@ describe Puppet::Node do
       node.environment = :bar
       expect(node.environment_name).to eq(:bar)
       expect(node.parameters['environment']).to eq('bar')
+    end
+
+    it 'to_data_hash returns value that is instance of to Data' do
+      node = Puppet::Node.new("hello",
+        :environment => 'bar',
+        :classes => ['erth', 'aiu'],
+        :parameters => {"hostname"=>"food"}
+      )
+      expect(Puppet::Pops::Types::TypeFactory.data.instance?(node.to_data_hash)).to be_truthy
     end
   end
 
@@ -159,7 +168,7 @@ describe Puppet::Node do
   describe "when converting from json" do
     before do
       @node = Puppet::Node.new("mynode")
-      @format = Puppet::Network::FormatHandler.format('pson')
+      @format = Puppet::Network::FormatHandler.format('json')
     end
 
     def from_json(json)
@@ -167,22 +176,22 @@ describe Puppet::Node do
     end
 
     it "sets its name" do
-      expect(Puppet::Node).to read_json_attribute('name').from(@node.to_pson).as("mynode")
+      expect(Puppet::Node).to read_json_attribute('name').from(@node.to_json).as("mynode")
     end
 
     it "includes the classes if set" do
       @node.classes = %w{a b c}
-      expect(Puppet::Node).to read_json_attribute('classes').from(@node.to_pson).as(%w{a b c})
+      expect(Puppet::Node).to read_json_attribute('classes').from(@node.to_json).as(%w{a b c})
     end
 
     it "includes parameters if set" do
       @node.parameters = {"a" => "b", "c" => "d"}
-      expect(Puppet::Node).to read_json_attribute('parameters').from(@node.to_pson).as({"a" => "b", "c" => "d"})
+      expect(Puppet::Node).to read_json_attribute('parameters').from(@node.to_json).as({"a" => "b", "c" => "d"})
     end
 
-    it "deserializes environment to environment_name as a string" do
+    it "deserializes environment to environment_name as a symbol" do
       @node.environment = environment
-      expect(Puppet::Node).to read_json_attribute('environment_name').from(@node.to_pson).as('bar')
+      expect(Puppet::Node).to read_json_attribute('environment_name').from(@node.to_json).as(:bar)
     end
   end
 end

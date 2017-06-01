@@ -84,13 +84,7 @@ module Runtime3Support
     # TODO: Improve the messy implementation in Scope.
     #
     if name == "server_facts"
-      if Puppet[:trusted_server_facts] || Puppet[:strict] == :error
-        fail(Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, {:name => name} )
-      elsif Puppet[:strict] == :warning
-        file, line = extract_file_line(o)
-        msg = "Assignment to $server_facts is deprecated"
-        Puppet.warn_once(:deprecation, msg, msg, file, line)
-      end
+      fail(Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, {:name => name} )
     end
 
     if scope.bound?(name)
@@ -331,7 +325,7 @@ module Runtime3Support
       :name   => name,
       :value  => convert(value, scope, nil), # converted to 3x since 4x supports additional objects / types
       :source => scope.source, :line => line, :file => file,
-      :add    => operator == :'+>'
+      :add    => operator == '+>'
     )
   end
 
@@ -385,13 +379,14 @@ module Runtime3Support
       end
       t = Runtime3ResourceSupport.find_resource_type(scope, r.type_name)
       resource = Puppet::Parser::Resource.new(
-        t, r.title,
-        :parameters => evaluated_parameters,
-        :file => file,
-        :line => line,
-        # WTF is this? Which source is this? The file? The name of the context ?
-        :source => scope.source,
-        :scope => scope
+        t, r.title, {
+          :parameters => evaluated_parameters,
+          :file => file,
+          :line => line,
+          # WTF is this? Which source is this? The file? The name of the context ?
+          :source => scope.source,
+          :scope => scope
+        }, false # defaults should not override
       )
 
       scope.compiler.add_override(resource)
@@ -474,21 +469,7 @@ module Runtime3Support
   end
 
   def extract_file_line(o)
-    positioned = find_closest_with_offset(o)
-    unless positioned.nil?
-      locator = Adapters::SourcePosAdapter.find_locator(positioned)
-      return [locator.file, locator.line_for_offset(positioned.offset)] unless locator.nil?
-    end
-    [nil, -1]
-  end
-
-  def find_closest_with_offset(o)
-    if o.offset.nil?
-      c = o.eContainer
-      c.nil? ? nil : find_closest_with_offset(c)
-    else
-      o
-    end
+    o.is_a?(Model::Positioned) ? [o.file, o.line] : [nil, -1]
   end
 
   # Creates a diagnostic producer
@@ -529,6 +510,7 @@ module Runtime3Support
       p[Issues::RT_NO_STORECONFIGS]           = Puppet[:storeconfigs] ? :ignore : :warning
       p[Issues::CLASS_NOT_VIRTUALIZABLE]      = Puppet[:strict] == :off ? :warning : Puppet[:strict]
       p[Issues::NUMERIC_COERCION]             = Puppet[:strict] == :off ? :ignore : Puppet[:strict]
+      p[Issues::SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING] = Puppet[:strict] == :off ? :warning : Puppet[:strict]
     end
   end
 

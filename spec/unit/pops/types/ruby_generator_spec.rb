@@ -22,7 +22,32 @@ describe 'Puppet Ruby Generator' do
           attributes => {
             name => String,
             age  => { type => Integer, value => 30 },
-            what => { type => String, value => 'what is this', kind => constant }
+            what => { type => String, value => 'what is this', kind => constant },
+            uc_name => {
+              type => String,
+              kind => derived,
+              annotations => {
+                RubyMethod => { body => '@name.upcase' }
+              }
+            },
+            other_name => {
+              type => String,
+              kind => derived
+            }
+          },
+          functions => {
+            some_other => {
+              type => Callable[1,1]
+            },
+            name_and_age => {
+              type => Callable[1,1],
+              annotations => {
+                RubyMethod => {
+                  parameters => 'joiner',
+                  body => '"\#{@name}\#{joiner}\#{@age}"'
+                }
+              }
+            },
           }
         }]
         type MyModule::SecondGenerated = Object[{
@@ -32,7 +57,8 @@ describe 'Puppet Ruby Generator' do
             zipcode => String,
             email => String,
             another => { type => Optional[MyModule::FirstGenerated], value => undef },
-            number => Integer
+            number => Integer,
+            aref => { type => Optional[MyModule::FirstGenerated], value => undef, kind => reference }
           }
         }]
       CODE
@@ -103,6 +129,21 @@ describe 'Puppet Ruby Generator' do
           expect(inst.age).to eql(30)
           expect(inst.another).to be_nil
         end
+
+        it 'generates a code body for derived attribute from a RubyMethod body attribute' do
+          inst = first.create('Bob Builder', 52)
+          expect(inst.uc_name).to eq('BOB BUILDER')
+        end
+
+        it "generates a code body with 'not implemented' in the absense of a RubyMethod body attribute" do
+          inst = first.create('Bob Builder', 52)
+          expect { inst.other_name }.to raise_error(/no method is implemented for derived attribute MyModule::FirstGenerated\[other_name\]/)
+        end
+
+        it 'generates parameter list and a code body for derived function from a RubyMethod body attribute' do
+          inst = first.create('Bob Builder', 52)
+          expect(inst.name_and_age(' of age ')).to eq('Bob Builder of age 52')
+        end
       end
 
       context 'the #from_hash class method' do
@@ -136,6 +177,14 @@ describe 'Puppet Ruby Generator' do
       context 'creates an instance' do
         it 'that the TypeCalculator infers to the Object type' do
           expect(TypeCalculator.infer(first.from_hash('name' => 'Bob Builder'))).to eq(first_type)
+        end
+
+        it "where attributes of kind 'reference' are not considered part of #_pcore_all_contents" do
+          inst = first.from_hash('name' => 'Bob Builder')
+          wrinst = second.create('Bob Builder', '42 Cool Street', '12345', 'bob@example.com', 23, 40, inst, inst)
+          results = []
+          wrinst._pcore_all_contents([]) { |v| results << v }
+          expect(results).to eq([inst])
         end
       end
     end
@@ -175,18 +224,12 @@ describe 'Puppet Ruby Generator' do
         PuppetSpec.send(:remove_const, :RubyGenerator)
       end
 
-      it 'the #_ptype class method returns a resolved Type' do
-        first_type = PuppetSpec::RubyGenerator::FirstGenerated._ptype
+      it 'the #_pcore_type class method returns a resolved Type' do
+        first_type = PuppetSpec::RubyGenerator::FirstGenerated._pcore_type
         expect(first_type).to be_a(PObjectType)
-        second_type = PuppetSpec::RubyGenerator::SecondGenerated._ptype
+        second_type = PuppetSpec::RubyGenerator::SecondGenerated._pcore_type
         expect(second_type).to be_a(PObjectType)
         expect(second_type.parent).to eql(first_type)
-      end
-
-      it 'the #_plocation class method returns a file URI' do
-        loc = PuppetSpec::RubyGenerator::SecondGenerated._plocation
-        expect(loc).to be_a(URI)
-        expect(loc.to_s).to match(/^file:\/.*ruby_generator_spec.rb\?line=\d+$/)
       end
 
       context 'the #create class method' do
@@ -513,18 +556,12 @@ describe 'Puppet Ruby Generator' do
         PuppetSpec.send(:remove_const, :RubyGenerator)
       end
 
-      it 'the #_ptype class method returns a resolved Type' do
-        first_type = PuppetSpec::RubyGenerator::My::FirstGenerated._ptype
+      it 'the #_pcore_type class method returns a resolved Type' do
+        first_type = PuppetSpec::RubyGenerator::My::FirstGenerated._pcore_type
         expect(first_type).to be_a(PObjectType)
-        second_type = PuppetSpec::RubyGenerator::My::SecondGenerated._ptype
+        second_type = PuppetSpec::RubyGenerator::My::SecondGenerated._pcore_type
         expect(second_type).to be_a(PObjectType)
         expect(second_type.parent).to eql(first_type)
-      end
-
-      it 'the #_plocation class method returns a file URI' do
-        loc = PuppetSpec::RubyGenerator::My::SecondGenerated._plocation
-        expect(loc).to be_a(URI)
-        expect(loc.to_s).to match(/^file:\/.*ruby_generator_spec.rb\?line=\d+$/)
       end
 
       context 'the #create class method' do

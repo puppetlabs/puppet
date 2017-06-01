@@ -60,7 +60,8 @@ class Puppet::Indirector::Indirection
 
   # Set the time-to-live for instances created through this indirection.
   def ttl=(value)
-    raise ArgumentError, "Indirection TTL must be an integer" unless value.is_a?(Fixnum)
+    #TRANSLATORS "TTL" stands for "time to live" and refers to a duration of time
+    raise ArgumentError, _("Indirection TTL must be an integer") unless value.is_a?(Integer)
     @ttl = value
   end
 
@@ -165,7 +166,7 @@ class Puppet::Indirector::Indirection
 
     return nil unless instance = cache.find(request(:find, key, nil, options))
 
-    Puppet.info "Expiring the #{self.name} cache of #{instance.name}"
+    Puppet.info _("Expiring the %{cache} cache of %{instance}") % { cache: self.name, instance: instance.name }
 
     # Set an expiration date in the past
     instance.expiration = Time.now - 60
@@ -195,7 +196,7 @@ class Puppet::Indirector::Indirection
       if not result.nil?
         result.expiration ||= self.expiration if result.respond_to?(:expiration)
         if cache?
-          Puppet.info "Caching #{self.name} for #{request.key}"
+          Puppet.info _("Caching %{indirection} for %{request}") % { indirection: self.name, request: request.key }
           begin
             cache.save request(:save, key, result, options)
           rescue => detail
@@ -206,7 +207,7 @@ class Puppet::Indirector::Indirection
 
         filtered = result
         if terminus.respond_to?(:filter)
-          Puppet::Util::Profiler.profile("Filtered result for #{self.name} #{request.key}", [:indirector, :filter, self.name, request.key]) do
+          Puppet::Util::Profiler.profile(_("Filtered result for %{indirection} %{request}") % { indirection: self.name, request: request.key }, [:indirector, :filter, self.name, request.key]) do
             begin
               filtered = terminus.filter(result)
             rescue Puppet::Error => detail
@@ -235,14 +236,14 @@ class Puppet::Indirector::Indirection
     # See if our instance is in the cache and up to date.
     return nil unless cache? and ! request.ignore_cache? and cached = cache.find(request)
     if cached.expired?
-      Puppet.info "Not using expired #{self.name} for #{request.key} from cache; expired at #{cached.expiration}"
+      Puppet.info _("Not using expired %{indirection} for %{request} from cache; expired at %{expiration}") % { indirection: self.name, request: request.key, expiration: cached.expiration }
       return nil
     end
 
     Puppet.debug "Using cached #{self.name} for #{request.key}"
     cached
   rescue => detail
-    Puppet.log_exception(detail, "Cached #{self.name} for #{request.key} failed: #{detail}")
+    Puppet.log_exception(detail, _("Cached %{indirection} for %{request} failed: %{detail}") % { indirection: self.name, request: request.key, detail: detail })
     nil
   end
 
@@ -309,16 +310,13 @@ class Puppet::Indirector::Indirection
     end
   end
 
-  # Setup a request, pick the appropriate terminus, check the request's authorization, and return it.
+  # Pick the appropriate terminus, check the request's authorization, and return it.
+  # @param [Puppet::Indirector::Request] request instance
+  # @return [Puppet::Indirector::Terminus] terminus instance (usually a subclass
+  #   of Puppet::Indirector::Terminus) for this request
   def prepare(request)
     # Pick our terminus.
-    if respond_to?(:select_terminus)
-      unless terminus_name = select_terminus(request)
-        raise ArgumentError, "Could not determine appropriate terminus for #{request.description}"
-      end
-    else
-      terminus_name = terminus_class
-    end
+    terminus_name = terminus_class
 
     dest_terminus = terminus(terminus_name)
     check_authorization(request, dest_terminus)
@@ -331,7 +329,7 @@ class Puppet::Indirector::Indirection
   def make_terminus(terminus_class)
     # Load our terminus class.
     unless klass = Puppet::Indirector::Terminus.terminus_class(self.name, terminus_class)
-      raise ArgumentError, "Could not find terminus #{terminus_class} for indirection #{self.name}"
+      raise ArgumentError, _("Could not find terminus %{terminus_class} for indirection %{indirection}") % { terminus_class: terminus_class, indirection: self.name }
     end
     klass.new
   end

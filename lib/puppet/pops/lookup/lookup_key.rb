@@ -9,14 +9,14 @@ class LookupKey
   attr_reader :module_name, :root_key, :segments
 
   def initialize(key)
-    segments = split_key(key) { |problem| Puppet::DataBinding::LookupError.new("#{problem} in key: '#{key}'") }
+    segments = split_key(key) { |problem| Puppet::DataBinding::LookupError.new(_("%{problem} in key: '%{key}'") % { problem: problem, key: key }) }
     root_key = segments.shift.freeze
     qual_index = root_key.index(DOUBLE_COLON)
 
     @key = key
     @module_name = qual_index.nil? ? nil : root_key[0..qual_index-1].freeze
     @root_key = root_key
-    @segments = segments.empty? ? nil : segments.map { |segment| segment =~ /^[0-9]+$/ ? segment.to_i : segment }.freeze
+    @segments = segments.empty? ? nil : segments.freeze
   end
 
   def dig(lookup_invocation, value)

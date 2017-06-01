@@ -40,6 +40,14 @@ describe Puppet::Transaction::Report do
     expect(Puppet::Transaction::Report.new("inspect", "some configuration version", "some environment", "some transaction uuid").transaction_uuid).to eq("some transaction uuid")
   end
 
+  it "should take a 'transaction_uuid' as an argument" do
+    expect(Puppet::Transaction::Report.new("inspect", "some configuration version", "some environment", "some transaction uuid").transaction_uuid).to eq("some transaction uuid")
+  end
+
+  it "should take a 'job_id' as an argument" do
+    expect(Puppet::Transaction::Report.new('inspect', 'cv', 'env', 'tid', 'some job id').job_id).to eq('some job id')
+  end
+
   it "should be able to set configuration_version" do
     report = Puppet::Transaction::Report.new("inspect")
     report.configuration_version = "some version"
@@ -50,6 +58,12 @@ describe Puppet::Transaction::Report do
     report = Puppet::Transaction::Report.new("inspect")
     report.transaction_uuid = "some transaction uuid"
     expect(report.transaction_uuid).to eq("some transaction uuid")
+  end
+
+  it "should be able to set job_id" do
+    report = Puppet::Transaction::Report.new("inspect")
+    report.job_id = "some job id"
+    expect(report.job_id).to eq("some job id")
   end
 
   it "should be able to set code_id" do
@@ -470,30 +484,63 @@ describe Puppet::Transaction::Report do
     it "should not include @external_times" do
       report = Puppet::Transaction::Report.new('apply')
       report.add_times('config_retrieval', 1.0)
-      expect(report.to_yaml_properties).not_to include('@external_times')
+      expect(report.to_data_hash.keys).not_to include('external_times')
     end
 
     it "should not include @resources_failed_to_generate" do
       report = Puppet::Transaction::Report.new("apply")
       report.resources_failed_to_generate = true
-      expect(report.to_yaml_properties).not_to include('@resources_failed_to_generate')
+      expect(report.to_data_hash.keys).not_to include('resources_failed_to_generate')
+    end
+
+    it 'to_data_hash returns value that is instance of to Data' do
+      expect(Puppet::Pops::Types::TypeFactory.data.instance?(generate_report.to_data_hash)).to be_truthy
     end
   end
 
-  it "defaults to serializing to pson" do
-    expect(Puppet::Transaction::Report.default_format).to eq(:pson)
+  it "defaults to serializing to json" do
+    pending("PUP-7259 sending reports in JSON not yet supported")
+
+    expect(Puppet::Transaction::Report.default_format).to eq(:json)
   end
 
-  it "supports both yaml and pson" do
-    expect(Puppet::Transaction::Report.supported_formats).to eq([:pson, :yaml])
+  it "supports both json, pson and yaml" do
+    # msgpack is optional, so using include instead of eq
+    expect(Puppet::Transaction::Report.supported_formats).to include(:json, :pson, :yaml)
   end
 
-  it "can make a round trip through pson" do
-    report = generate_report
+  context 'can make a round trip through' do
+    before(:each) do
+      Puppet.push_context(:loaders => Puppet::Pops::Loaders.new(Puppet.lookup(:current_environment)))
+    end
 
-    tripped = Puppet::Transaction::Report.convert_from(:pson, report.render)
+    after(:each) { Puppet.pop_context }
 
-    expect_equivalent_reports(tripped, report)
+    it 'pson' do
+      report = generate_report
+
+      tripped = Puppet::Transaction::Report.convert_from(:pson, report.render)
+
+      expect_equivalent_reports(tripped, report)
+    end
+
+    it 'json' do
+      report = generate_report
+
+      tripped = Puppet::Transaction::Report.convert_from(:json, report.render)
+
+      expect_equivalent_reports(tripped, report)
+    end
+
+    it 'yaml' do
+      report = generate_report
+
+      yaml_output = report.render(:yaml)
+      tripped = Puppet::Transaction::Report.convert_from(:yaml, yaml_output)
+
+      expect(yaml_output).to match(/^--- /)
+      expect_equivalent_reports(tripped, report)
+    end
   end
 
   it "generates pson which validates against the report schema" do
@@ -506,21 +553,12 @@ describe Puppet::Transaction::Report do
     expect(error_report.render).to validate_against('api/schemas/report.json')
   end
 
-  it "can make a round trip through yaml" do
-    report = generate_report
-
-    yaml_output = report.render(:yaml)
-    tripped = Puppet::Transaction::Report.convert_from(:yaml, yaml_output)
-
-    expect(yaml_output).to match(/^--- /)
-    expect_equivalent_reports(tripped, report)
-  end
-
   def expect_equivalent_reports(tripped, report)
     expect(tripped.host).to eq(report.host)
     expect(tripped.time.to_i).to eq(report.time.to_i)
     expect(tripped.configuration_version).to eq(report.configuration_version)
     expect(tripped.transaction_uuid).to eq(report.transaction_uuid)
+    expect(tripped.job_id).to eq(report.job_id)
     expect(tripped.code_id).to eq(report.code_id)
     expect(tripped.catalog_uuid).to eq(report.catalog_uuid)
     expect(tripped.cached_catalog_status).to eq(report.cached_catalog_status)
@@ -529,6 +567,7 @@ describe Puppet::Transaction::Report do
     expect(tripped.kind).to eq(report.kind)
     expect(tripped.status).to eq(report.status)
     expect(tripped.environment).to eq(report.environment)
+    expect(tripped.corrective_change).to eq(report.corrective_change)
 
     expect(logs_as_strings(tripped)).to eq(logs_as_strings(report))
     expect(metrics_as_hashes(tripped)).to eq(metrics_as_hashes(report))
@@ -566,7 +605,7 @@ describe Puppet::Transaction::Report do
       expect(status.skipped).to eq(expected.skipped)
       expect(status.change_count).to eq(expected.change_count)
       expect(status.out_of_sync_count).to eq(expected.out_of_sync_count)
-      expect(status.events.map(&:to_data_hash)).to eq(expected.events.map(&:to_data_hash))
+      expect(status.events).to eq(expected.events)
     end
   end
 
@@ -574,8 +613,8 @@ describe Puppet::Transaction::Report do
     event_hash = {
       :audited => false,
       :property => 'message',
-      :previous_value => 'absent',
-      :desired_value => 'a resource',
+      :previous_value => SemanticPuppet::VersionRange.parse('>=1.0.0'),
+      :desired_value => SemanticPuppet::VersionRange.parse('>=1.2.0'),
       :historical_value => nil,
       :message => "defined 'message' as 'a resource'",
       :name => :message_changed,
@@ -587,7 +626,7 @@ describe Puppet::Transaction::Report do
     status.changed = true
     status.add_event(event)
 
-    report = Puppet::Transaction::Report.new('apply', 1357986, 'test_environment', "df34516e-4050-402d-a166-05b03b940749")
+    report = Puppet::Transaction::Report.new('apply', 1357986, 'test_environment', "df34516e-4050-402d-a166-05b03b940749", '42')
     report << Puppet::Util::Log.new(:level => :warning, :message => "log message")
     report.add_times("timing", 4)
     report.code_id = "some code id"
@@ -604,7 +643,7 @@ describe Puppet::Transaction::Report do
     status.changed = true
     status.failed_because("bad stuff happened")
 
-    report = Puppet::Transaction::Report.new('apply', 1357986, 'test_environment', "df34516e-4050-402d-a166-05b03b940749")
+    report = Puppet::Transaction::Report.new('apply', 1357986, 'test_environment', "df34516e-4050-402d-a166-05b03b940749", '42')
     report << Puppet::Util::Log.new(:level => :warning, :message => "log message")
     report.add_times("timing", 4)
     report.code_id = "some code id"

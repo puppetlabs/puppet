@@ -74,7 +74,7 @@ module Puppet::Resource::CapabilityFinder
             ['=', 'code_id', code_id]]]]
     end
 
-    Puppet.notice "Looking up capability #{cap} in PuppetDB: #{query_terms}"
+    Puppet.notice _("Looking up capability %{cap} in PuppetDB: %{query_terms}") % { cap: cap, query_terms: query_terms }
 
     query_puppetdb(query_terms)
   end

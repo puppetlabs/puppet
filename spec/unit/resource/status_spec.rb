@@ -132,48 +132,46 @@ describe Puppet::Resource::Status do
     end
   end
 
-  describe "When converting to YAML" do
-    it "should include only documented attributes" do
-      @status.file = "/foo.rb"
-      @status.line = 27
-      @status.evaluation_time = 2.7
-      @status.tags = %w{one two}
-      expect(@status.to_yaml_properties).to match_array(Puppet::Resource::Status::YAML_ATTRIBUTES)
-    end
+  let(:status) do
+    s = @status
+    s.file = "/foo.rb"
+    s.line = 27
+    s.evaluation_time = 2.7
+    s.tags = %w{one two}
+    s << Puppet::Transaction::Event.new(:name => :mode_changed, :status => 'audit')
+    s.failed = false
+    s.changed = true
+    s.out_of_sync = true
+    s.skipped = false
+    s
   end
 
   it "should round trip through pson" do
-    @status.file = "/foo.rb"
-    @status.line = 27
-    @status.evaluation_time = 2.7
-    @status.tags = %w{one two}
-    @status << Puppet::Transaction::Event.new(:name => :mode_changed, :status => 'audit')
-    @status.failed = false
-    @status.changed = true
-    @status.out_of_sync = true
-    @status.skipped = false
+    expect(status.containment_path).to eq(@containment_path)
 
-    expect(@status.containment_path).to eq(@containment_path)
+    tripped = Puppet::Resource::Status.from_data_hash(PSON.parse(status.to_pson))
 
-    tripped = Puppet::Resource::Status.from_data_hash(PSON.parse(@status.to_pson))
+    expect(tripped.title).to eq(status.title)
+    expect(tripped.containment_path).to eq(status.containment_path)
+    expect(tripped.file).to eq(status.file)
+    expect(tripped.line).to eq(status.line)
+    expect(tripped.resource).to eq(status.resource)
+    expect(tripped.resource_type).to eq(status.resource_type)
+    expect(tripped.evaluation_time).to eq(status.evaluation_time)
+    expect(tripped.tags).to eq(status.tags)
+    expect(tripped.time).to eq(status.time)
+    expect(tripped.failed).to eq(status.failed)
+    expect(tripped.changed).to eq(status.changed)
+    expect(tripped.out_of_sync).to eq(status.out_of_sync)
+    expect(tripped.skipped).to eq(status.skipped)
 
-    expect(tripped.title).to eq(@status.title)
-    expect(tripped.containment_path).to eq(@status.containment_path)
-    expect(tripped.file).to eq(@status.file)
-    expect(tripped.line).to eq(@status.line)
-    expect(tripped.resource).to eq(@status.resource)
-    expect(tripped.resource_type).to eq(@status.resource_type)
-    expect(tripped.evaluation_time).to eq(@status.evaluation_time)
-    expect(tripped.tags).to eq(@status.tags)
-    expect(tripped.time).to eq(@status.time)
-    expect(tripped.failed).to eq(@status.failed)
-    expect(tripped.changed).to eq(@status.changed)
-    expect(tripped.out_of_sync).to eq(@status.out_of_sync)
-    expect(tripped.skipped).to eq(@status.skipped)
+    expect(tripped.change_count).to eq(status.change_count)
+    expect(tripped.out_of_sync_count).to eq(status.out_of_sync_count)
+    expect(events_as_hashes(tripped)).to eq(events_as_hashes(status))
+  end
 
-    expect(tripped.change_count).to eq(@status.change_count)
-    expect(tripped.out_of_sync_count).to eq(@status.out_of_sync_count)
-    expect(events_as_hashes(tripped)).to eq(events_as_hashes(@status))
+  it 'to_data_hash returns value that is instance of to Data' do
+    expect(Puppet::Pops::Types::TypeFactory.data.instance?(status.to_data_hash)).to be_truthy
   end
 
   def events_as_hashes(report)

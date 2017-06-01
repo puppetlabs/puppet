@@ -121,17 +121,20 @@ describe Puppet::Transaction::Event do
   end
 
   describe "When converting to YAML" do
-    it "should include only documented attributes" do
-      resource = Puppet::Type.type(:file).new(:title => make_absolute("/tmp/foo"))
-      event = Puppet::Transaction::Event.new(:source_description => "/my/param", :resource => resource,
-                                             :file => "/foo.rb", :line => 27, :tags => %w{one two},
-                                             :desired_value => 7, :historical_value => 'Brazil',
-                                             :message => "Help I'm trapped in a spec test",
-                                             :name => :mode_changed, :previous_value => 6, :property => :mode,
-                                             :status => 'success',
-                                             :redacted => false,
-                                             :corrective_change => false)
-      expect(event.to_yaml_properties).to match_array(Puppet::Transaction::Event::YAML_ATTRIBUTES)
+    let(:resource) { Puppet::Type.type(:file).new(:title => make_absolute('/tmp/foo')) }
+    let(:event) do
+      Puppet::Transaction::Event.new(:source_description => "/my/param", :resource => resource,
+        :file => "/foo.rb", :line => 27, :tags => %w{one two},
+        :desired_value => 7, :historical_value => 'Brazil',
+        :message => "Help I'm trapped in a spec test",
+        :name => :mode_changed, :previous_value => 6, :property => :mode,
+        :status => 'success',
+        :redacted => false,
+        :corrective_change => false)
+    end
+
+    it 'to_data_hash returns value that is instance of to Data' do
+      expect(Puppet::Pops::Types::TypeFactory.data.instance?(event.to_data_hash)).to be_truthy
     end
   end
 

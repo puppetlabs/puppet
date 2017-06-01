@@ -255,10 +255,17 @@ describe Puppet::Resource::Catalog::Compiler do
       @facts = Puppet::Node::Facts.new('hostname', "fact" => "value", "architecture" => "i386")
     end
 
-    def a_request_that_contains(facts, format = :pson)
+    def a_legacy_request_that_contains(facts, format = :pson)
       request = Puppet::Indirector::Request.new(:catalog, :find, "hostname", nil)
       request.options[:facts_format] = format.to_s
       request.options[:facts] = CGI.escape(facts.render(format))
+      request
+    end
+
+    def a_request_that_contains(facts)
+      request = Puppet::Indirector::Request.new(:catalog, :find, "hostname", nil)
+      request.options[:facts_format] = "application/json"
+      request.options[:facts] = facts.render('json')
       request
     end
 
@@ -277,8 +284,8 @@ describe Puppet::Resource::Catalog::Compiler do
       expect(facts.timestamp).to eq(time)
     end
 
-    it "accepts PSON facts" do
-      request = a_request_that_contains(@facts)
+    it "accepts PSON facts from older agents" do
+      request = a_legacy_request_that_contains(@facts)
 
       options = {
         :environment => request.environment,
@@ -291,7 +298,7 @@ describe Puppet::Resource::Catalog::Compiler do
     end
 
     it "rejects YAML facts" do
-      request = a_request_that_contains(@facts, :yaml)
+      request = a_legacy_request_that_contains(@facts, :yaml)
 
       options = {
         :environment => request.environment,

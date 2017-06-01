@@ -1,8 +1,8 @@
 module Puppet::Pops
 module Time
 class Timestamp < TimeData
-  DEFAULT_FORMATS_WO_TZ = ['%FT%T.L', '%FT%T', '%F']
-  DEFAULT_FORMATS = ['%FT%T.%L %Z', '%FT%T %Z', '%F %Z'] + DEFAULT_FORMATS_WO_TZ
+  DEFAULT_FORMATS_WO_TZ = ['%FT%T.%N', '%FT%T', '%F']
+  DEFAULT_FORMATS = ['%FT%T.%N %Z', '%FT%T %Z', '%F %Z'] + DEFAULT_FORMATS_WO_TZ
 
   CURRENT_TIMEZONE = 'current'.freeze
   KEY_TIMEZONE = 'timezone'.freeze
@@ -37,7 +37,7 @@ class Timestamp < TimeData
     else
       hash = DateTime._strptime(timezone, '%z')
       offset = hash.nil? ? nil : hash[:offset]
-      raise ArgumentError, "Illegal timezone '#{timezone}'" if offset.nil?
+      raise ArgumentError, _("Illegal timezone '%{timezone}'") % { timezone: timezone } if offset.nil?
       offset
     end
   end
@@ -78,13 +78,13 @@ class Timestamp < TimeData
         rescue ArgumentError
         end
       end
-      raise ArgumentError, "Unable to parse '#{str}' using any of the formats #{format.join(', ')}" if parsed.nil?
+      raise ArgumentError, _("Unable to parse '%{str}' using any of the formats %{formats}") % { str: str, formats: format.join(', ') } if parsed.nil?
     else
       assert_no_tz_extractor(format) if has_timezone
       begin
         parsed = DateTime.strptime(str, format)
       rescue ArgumentError
-        raise ArgumentError, "Unable to parse '#{str}' using format '#{format}'"
+        raise ArgumentError, _("Unable to parse '%{str}' using format '%{format}'") % { str: str, format: format }
       end
     end
     parsed_time = parsed.to_time
@@ -94,7 +94,7 @@ class Timestamp < TimeData
 
   def self.assert_no_tz_extractor(format)
     if format =~ /[^%]%[zZ]/
-      raise ArgumentError, 'Using a Timezone designator in format specification is mutually exclusive to providing an explicit timezone argument'
+      raise ArgumentError, _('Using a Timezone designator in format specification is mutually exclusive to providing an explicit timezone argument')
     end
   end
 
@@ -113,7 +113,7 @@ class Timestamp < TimeData
     when Integer, Float
       Timestamp.new(@nsecs + (o * NSECS_PER_SEC).to_i)
     else
-      raise ArgumentError, "#{a_an_uc(o)} cannot be added to a Timestamp"
+      raise ArgumentError, _("%{klass} cannot be added to a Timestamp") % { klass: a_an_uc(o) }
     end
   end
 
@@ -128,7 +128,7 @@ class Timestamp < TimeData
       # Subtract seconds
       Timestamp.new(@nsecs - (o * NSECS_PER_SEC).to_i)
     else
-      raise ArgumentError, "#{a_an_uc(o)} cannot be subtracted from a Timestamp"
+      raise ArgumentError, _("%{klass} cannot be subtracted from a Timestamp") % { klass: a_an_uc(o) }
     end
   end
 

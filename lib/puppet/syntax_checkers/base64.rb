@@ -15,9 +15,9 @@ class Puppet::SyntaxCheckers::Base64 < Puppet::Plugins::SyntaxCheckers::SyntaxCh
   # @api public
   #
   def check(text, syntax, acceptor, source_pos)
-    raise ArgumentError.new("Base64 syntax checker: the text to check must be a String.") unless text.is_a?(String)
-    raise ArgumentError.new("Base64 syntax checker: the syntax identifier must be a String, e.g. json, data+json") unless syntax.is_a?(String)
-    raise ArgumentError.new("Base64 syntax checker: invalid Acceptor, got: '#{acceptor.class.name}'.") unless acceptor.is_a?(Puppet::Pops::Validation::Acceptor)
+    raise ArgumentError.new(_("Base64 syntax checker: the text to check must be a String.")) unless text.is_a?(String)
+    raise ArgumentError.new(_("Base64 syntax checker: the syntax identifier must be a String, e.g. json, data+json")) unless syntax.is_a?(String)
+    raise ArgumentError.new(_("Base64 syntax checker: invalid Acceptor, got: '%{klass}'.") % { klass: acceptor.class.name }) unless acceptor.is_a?(Puppet::Pops::Validation::Acceptor)
     cleaned_text = text.gsub(/[\r?\n[:blank:]]/, '')
     begin
       # Do a strict decode64 on text with all whitespace stripped since the non strict version
@@ -25,17 +25,17 @@ class Puppet::SyntaxCheckers::Base64 < Puppet::Plugins::SyntaxCheckers::SyntaxCh
       Base64.strict_decode64(cleaned_text)
     rescue => e
       if (cleaned_text.bytes.to_a.size * 8) % 6 != 0
-        msg2 = "padding is not correct"
+        msg2 = _("padding is not correct")
       else
-        msg2 = "contains letters outside strict base 64 range (or whitespace)"
+        msg2 = _("contains letters outside strict base 64 range (or whitespace)")
       end
-      msg = "Base64 syntax checker: Cannot parse invalid Base64 string - #{msg2}"
+      msg = _("Base64 syntax checker: Cannot parse invalid Base64 string - %{msg2}") % { msg2: msg2 }
 
       # TODO: improve the pops API to allow simpler diagnostic creation while still maintaining capabilities
       # and the issue code. (In this case especially, where there is only a single error message being issued).
       #
       issue = Puppet::Pops::Issues::issue(:ILLEGAL_BASE64) { msg }
-      acceptor.accept(Puppet::Pops::Validation::Diagnostic.new(:error, issue, source_pos.locator.file, source_pos, {}))
+      acceptor.accept(Puppet::Pops::Validation::Diagnostic.new(:error, issue, source_pos.file, source_pos, {}))
     end
   end
 end

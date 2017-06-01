@@ -6,7 +6,7 @@
 # Raketasks and such to set the version based on the output of `git describe`
 
 module Puppet
-  PUPPETVERSION = '4.10.1'
+  PUPPETVERSION = '5.0.0'
 
   ##
   # version is a public API method intended to always provide a fast and

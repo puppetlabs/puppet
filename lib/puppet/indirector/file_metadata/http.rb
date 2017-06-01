@@ -22,6 +22,6 @@ class Puppet::Indirector::FileMetadata::Http < Puppet::Indirector::GenericHttp
   end
 
   def search(request)
-    raise Puppet::Error, "cannot lookup multiple files"
+    raise Puppet::Error, _("cannot lookup multiple files")
   end
 end

@@ -25,73 +25,6 @@ describe Puppet::Resource::Type do
     end
   end
 
-  it "should indirect 'resource_type'" do
-    expect(Puppet::Resource::Type.indirection.name).to eq(:resource_type)
-  end
-
-  it "should default to 'parser' for its terminus class" do
-    expect(Puppet::Resource::Type.indirection.terminus_class).to eq(:parser)
-  end
-
-  describe "when converting to json" do
-    before do
-      @type = Puppet::Resource::Type.new(:hostclass, "foo")
-    end
-
-    def from_json(json)
-      Puppet::Resource::Type.from_data_hash(json)
-    end
-
-    def double_convert
-      Puppet::Resource::Type.from_data_hash(PSON.parse(@type.to_pson))
-    end
-
-    it "should include the name and type" do
-      expect(double_convert.name).to eq(@type.name)
-      expect(double_convert.type).to eq(@type.type)
-    end
-
-    it "should validate with only name and kind" do
-      expect(@type.to_pson).to validate_against('api/schemas/resource_type.json')
-    end
-
-    it "should validate with all fields set" do
-      @type.set_arguments("one" => nil, "two" => "foo")
-      @type.line = 100
-      @type.doc = "A weird type"
-      @type.file = "/etc/manifests/thing.pp"
-      @type.parent = "one::two"
-
-      expect(@type.to_pson).to validate_against('api/schemas/resource_type.json')
-    end
-
-    it "should include any arguments" do
-      @type.set_arguments("one" => nil, "two" => "foo")
-
-      expect(double_convert.arguments).to eq({"one" => nil, "two" => "foo"})
-    end
-
-    it "should not include arguments if none are present" do
-      expect(@type.to_pson["arguments"]).to be_nil
-    end
-
-    [:line, :doc, :file, :parent].each do |attr|
-      it "should include #{attr} when set" do
-        @type.send(attr.to_s + "=", "value")
-        expect(double_convert.send(attr)).to eq("value")
-      end
-
-      it "should not include #{attr} when not set" do
-        expect(@type.to_pson[attr.to_s]).to be_nil
-      end
-    end
-
-    it "should not include docs if they are empty" do
-      @type.doc = ""
-      expect(@type.to_pson["doc"]).to be_nil
-    end
-  end
-
   describe "when a node"  do
     it "should allow a regex as its name" do
       expect { Puppet::Resource::Type.new(:node, /foo/) }.not_to raise_error
@@ -243,7 +176,7 @@ describe Puppet::Resource::Type do
     let(:parser) { Puppet::Pops::Parser::Parser.new() }
 
     def wrap3x(expression)
-      Puppet::Parser::AST::PopsBridge::Expression.new(:value => expression.current)
+      Puppet::Parser::AST::PopsBridge::Expression.new(:value => expression.model)
     end
 
     def parse_expression(expr_string)
@@ -589,7 +522,7 @@ describe Puppet::Resource::Type do
       @type.stubs(:code).returns code
 
       subscope = stub 'subscope', :compiler => @compiler
-      @scope.expects(:newscope).with(:source => @type, :namespace => '', :resource => @resource).returns subscope
+      @scope.expects(:newscope).with(:source => @type, :resource => @resource).returns subscope
 
       elevel = 876
       subscope.expects(:with_guarded_scope).yields
@@ -615,7 +548,7 @@ describe Puppet::Resource::Type do
 
     it "should set all of its parameters in a subscope" do
       subscope = stub 'subscope', :compiler => @compiler
-      @scope.expects(:newscope).with(:source => @type, :namespace => 'foo', :resource => @resource).returns subscope
+      @scope.expects(:newscope).with(:source => @type, :resource => @resource).returns subscope
       @type.expects(:set_resource_parameters).with(@resource, subscope)
 
       @type.evaluate_code(@resource)
@@ -903,7 +836,7 @@ describe Puppet::Resource::Type do
 
     it "should set the other class's code as its code if it has none" do
       dest = Puppet::Resource::Type.new(:hostclass, "bar")
-      source = Puppet::Resource::Type.new(:hostclass, "foo", :code => code("bar"))
+      source = Puppet::Resource::Type.new(:hostclass, "foo", :code => code("bar").model)
 
       dest.merge(source)
 

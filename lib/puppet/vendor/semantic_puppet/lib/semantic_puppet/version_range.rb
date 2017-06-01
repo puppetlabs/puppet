@@ -1,422 +1,758 @@
 require 'semantic_puppet'
 
 module SemanticPuppet
-  class VersionRange < Range
-    class << self
-      # Parses a version range string into a comparable {VersionRange} instance.
-      #
-      # Currently parsed version range string may take any of the following:
-      # forms:
-      #
-      # * Regular Semantic Version strings
-      #   * ex. `"1.0.0"`, `"1.2.3-pre"`
-      # * Partial Semantic Version strings
-      #   * ex. `"1.0.x"`, `"1"`, `"2.X"`
-      # * Inequalities
-      #   * ex. `"> 1.0.0"`, `"<3.2.0"`, `">=4.0.0"`
-      # * Approximate Versions
-      #   * ex. `"~1.0.0"`, `"~ 3.2.0"`, `"~4.0.0"`
-      # * Inclusive Ranges
-      #   * ex. `"1.0.0 - 1.3.9"`
-      # * Range Intersections
-      #   * ex. `">1.0.0 <=2.3.0"`
-      #
-      # @param range_str [String] the version range string to parse
-      # @return [VersionRange] a new {VersionRange} instance
-      def parse(range_str)
-        partial = '\d+(?:[.]\d+)?(?:[.][x]|[.]\d+(?:[-][0-9a-z.-]*)?)?'
-        exact   = '\d+[.]\d+[.]\d+(?:[-][0-9a-z.-]*)?'
+  # A Semantic Version Range.
+  #
+  # @see https://github.com/npm/node-semver for full specification
+  # @api public
+  class VersionRange
+    UPPER_X = 'X'.freeze
+    LOWER_X = 'x'.freeze
+    STAR = '*'.freeze
 
-        range = range_str.gsub(/([(><=~])[ ]+/, '\1')
-        range = range.gsub(/ - /, '#').strip
+    NR = '0|[1-9][0-9]*'.freeze
+    XR = '(x|X|\*|' + NR + ')'.freeze
+    XR_NC = '(?:x|X|\*|' + NR + ')'.freeze
 
-        return case range
-        when /\A(#{partial})\Z/i
-          parse_loose_version_expression($1)
-        when /\A([><][=]?)(#{exact})\Z/i
-          parse_inequality_expression($1, $2)
-        when /\A~(#{partial})\Z/i
-          parse_reasonably_close_expression($1)
-        when /\A(#{exact})#(#{exact})\Z/i
-          parse_inclusive_range_expression($1, $2)
-        when /[ ]+/
-          parse_intersection_expression(range)
+    PART = '(?:[0-9A-Za-z-]+)'.freeze
+    PARTS = PART + '(?:\.' + PART + ')*'.freeze
+    QUALIFIER = '(?:-(' + PARTS + '))?(?:\+(' + PARTS + '))?'.freeze
+    QUALIFIER_NC = '(?:-' + PARTS + ')?(?:\+' + PARTS + ')?'.freeze
+
+    PARTIAL = XR_NC + '(?:\.' + XR_NC + '(?:\.' + XR_NC + QUALIFIER_NC + ')?)?'.freeze
+
+    # The ~> isn't in the spec but allowed
+    SIMPLE = '([<>=~^]|<=|>=|~>|~=)?(' + PARTIAL + ')'.freeze
+    SIMPLE_EXPR = /\A#{SIMPLE}\z/.freeze
+
+    SIMPLE_WITH_EXTRA_WS = '([<>=~^]|<=|>=)?\s+(' + PARTIAL + ')'.freeze
+    SIMPLE_WITH_EXTRA_WS_EXPR = /\A#{SIMPLE_WITH_EXTRA_WS}\z/.freeze
+
+    HYPHEN = '(' + PARTIAL + ')\s+-\s+(' + PARTIAL + ')'.freeze
+    HYPHEN_EXPR = /\A#{HYPHEN}\z/.freeze
+
+    PARTIAL_EXPR = /\A#{XR}(?:\.#{XR}(?:\.#{XR}#{QUALIFIER})?)?\z/.freeze
+
+    LOGICAL_OR = /\s*\|\|\s*/.freeze
+    RANGE_SPLIT = /\s+/.freeze
+
+    # Parses a version range string into a comparable {VersionRange} instance.
+    #
+    # Currently parsed version range string may take any of the following:
+    # forms:
+    #
+    # * Regular Semantic Version strings
+    #   * ex. `"1.0.0"`, `"1.2.3-pre"`
+    # * Partial Semantic Version strings
+    #   * ex. `"1.0.x"`, `"1"`, `"2.X"`, `"3.*"`,
+    # * Inequalities
+    #   * ex. `"> 1.0.0"`, `"<3.2.0"`, `">=4.0.0"`
+    # * Approximate Caret Versions
+    #   * ex. `"^1"`, `"^3.2"`, `"^4.1.0"`
+    # * Approximate Tilde Versions
+    #   * ex. `"~1.0.0"`, `"~ 3.2.0"`, `"~4.0.0"`
+    # * Inclusive Ranges
+    #   * ex. `"1.0.0 - 1.3.9"`
+    # * Range Intersections
+    #   * ex. `">1.0.0 <=2.3.0"`
+    # * Combined ranges
+    #   * ex, `">=1.0.0 <2.3.0 || >=2.5.0 <3.0.0"`
+    #
+    # @param range_string [String] the version range string to parse
+    # @param strict_semver [Boolean] `false` if pre-releases should be included even when not explicitly appointed
+    # @return [VersionRange] a new {VersionRange} instance
+    # @api public
+    def self.parse(range_string, strict_semver = true)
+      # Remove extra whitespace after operators. Such whitespace should not cause a split
+      range_set = range_string.gsub(/([><=~^])(?:\s+|\s*v)/, '\1')
+      ranges = range_set.split(LOGICAL_OR)
+      return ALL_RANGE if ranges.empty?
+
+      new(ranges.map do |range|
+        if range =~ HYPHEN_EXPR
+          MinMaxRange.create(GtEqRange.new(parse_version($1)), LtEqRange.new(parse_version($2)))
         else
-          raise ArgumentError
+          # Split on whitespace
+          simples = range.split(RANGE_SPLIT).map do |simple|
+            match_data = SIMPLE_EXPR.match(simple)
+            raise ArgumentError, _("Unparsable version range: \"%{range}\"") % { range: range_string } unless match_data
+            operand = match_data[2]
+
+            # Case based on operator
+            case match_data[1]
+            when '~', '~>', '~='
+              parse_tilde(operand)
+            when '^'
+              parse_caret(operand)
+            when '>'
+              parse_gt_version(operand)
+            when '>='
+              GtEqRange.new(parse_version(operand))
+            when '<'
+              LtRange.new(parse_version(operand))
+            when '<='
+              parse_lteq_version(operand)
+            when '='
+              parse_xrange(operand)
+            else
+              parse_xrange(operand)
+            end
+          end
+          simples.size == 1 ? simples[0] : MinMaxRange.create(*simples)
         end
+      end.uniq, range_string, strict_semver).freeze
+    end
 
-      rescue ArgumentError
-        raise ArgumentError, _("Unparsable version range: %{range}") % {range: range_str.inspect}
-      end
+    def self.parse_partial(expr)
+      match_data = PARTIAL_EXPR.match(expr)
+      raise ArgumentError, _("Unparsable version range: \"%{expr}\"") % { expr: expr } unless match_data
+      match_data
+    end
+    private_class_method :parse_partial
 
-      private
+    def self.parse_caret(expr)
+      match_data = parse_partial(expr)
+      major = digit(match_data[1])
+      major == 0 ? allow_patch_updates(major, match_data) : allow_minor_updates(major, match_data)
+    end
+    private_class_method :parse_caret
 
-      # Creates a new {VersionRange} from a range intersection expression.
-      #
-      # @param expr [String] a range intersection expression
-      # @return [VersionRange] a version range representing `expr`
-      def parse_intersection_expression(expr)
-        expr.split(/[ ]+/).map { |x| parse(x) }.inject { |a,b| a & b }
-      end
+    def self.parse_tilde(expr)
+      match_data = parse_partial(expr)
+      allow_patch_updates(digit(match_data[1]), match_data)
+    end
+    private_class_method :parse_tilde
 
-      # Creates a new {VersionRange} from a "loose" description of a Semantic
-      # Version number.
-      #
-      # @see .process_loose_expr
-      #
-      # @param expr [String] a "loose" version expression
-      # @return [VersionRange] a version range representing `expr`
-      def parse_loose_version_expression(expr)
-        start, finish = process_loose_expr(expr)
+    def self.parse_xrange(expr)
+      match_data = parse_partial(expr)
+      allow_patch_updates(digit(match_data[1]), match_data, false)
+    end
+    private_class_method :parse_xrange
 
-        if start.stable?
-          start = start.send(:first_prerelease)
-        end
+    def self.allow_patch_updates(major, match_data, tilde_or_caret = true)
+      return AllRange::SINGLETON unless major
 
-        if finish.stable?
-          exclude = true
-          finish = finish.send(:first_prerelease)
-        end
+      minor = digit(match_data[2])
+      return MinMaxRange.new(GtEqRange.new(Version.new(major, 0, 0)), LtRange.new(Version.new(major + 1, 0, 0))) unless minor
 
-        self.new(start, finish, exclude)
-      end
+      patch = digit(match_data[3])
+      return MinMaxRange.new(GtEqRange.new(Version.new(major, minor, 0)), LtRange.new(Version.new(major, minor + 1, 0))) unless patch
 
-      # Creates an open-ended version range from an inequality expression.
-      #
-      # @overload parse_inequality_expression('<', expr)
-      #   {include:.parse_lt_expression}
-      #
-      # @overload parse_inequality_expression('<=', expr)
-      #   {include:.parse_lte_expression}
-      #
-      # @overload parse_inequality_expression('>', expr)
-      #   {include:.parse_gt_expression}
-      #
-      # @overload parse_inequality_expression('>=', expr)
-      #   {include:.parse_gte_expression}
-      #
-      # @param comp ['<', '<=', '>', '>='] an inequality operator
-      # @param expr [String] a "loose" version expression
-      # @return [VersionRange] a range covering all versions in the inequality
-      def parse_inequality_expression(comp, expr)
-        case comp
-        when '>'
-          parse_gt_expression(expr)
-        when '>='
-          parse_gte_expression(expr)
-        when '<'
-          parse_lt_expression(expr)
-        when '<='
-          parse_lte_expression(expr)
-        end
-      end
+      version = Version.new(major, minor, patch, Version.parse_prerelease(match_data[4]), Version.parse_build(match_data[5]))
+      return EqRange.new(version) unless tilde_or_caret
 
-      # Returns a range covering all versions greater than the given `expr`.
-      #
-      # @param expr [String] the version to be greater than
-      # @return [VersionRange] a range covering all versions greater than the
-      #         given `expr`
-      def parse_gt_expression(expr)
-        if expr =~ /^[^+]*-/
-          start = Version.parse("#{expr}.0")
+      MinMaxRange.new(GtEqRange.new(version), LtRange.new(Version.new(major, minor + 1, 0)))
+    end
+    private_class_method :allow_patch_updates
+
+    def self.allow_minor_updates(major, match_data)
+      return AllRange.SINGLETON unless major
+      minor = digit(match_data[2])
+      if minor
+        patch = digit(match_data[3])
+        if patch.nil?
+          MinMaxRange.new(GtEqRange.new(Version.new(major, minor, 0)), LtRange.new(Version.new(major + 1, 0, 0)))
         else
-          start = process_loose_expr(expr).last.send(:first_prerelease)
+          if match_data[4].nil?
+            MinMaxRange.new(GtEqRange.new(Version.new(major, minor, patch)), LtRange.new(Version.new(major + 1, 0, 0)))
+          else
+            MinMaxRange.new(
+              GtEqRange.new(
+                Version.new(major, minor, patch, Version.parse_prerelease(match_data[4]), Version.parse_build(match_data[5]))),
+              LtRange.new(Version.new(major + 1, 0, 0)))
+          end
         end
-
-        self.new(start, SemanticPuppet::Version::MAX)
-      end
-
-      # Returns a range covering all versions greater than or equal to the given
-      # `expr`.
-      #
-      # @param expr [String] the version to be greater than or equal to
-      # @return [VersionRange] a range covering all versions greater than or
-      #         equal to the given `expr`
-      def parse_gte_expression(expr)
-        if expr =~ /^[^+]*-/
-          start = Version.parse(expr)
-        else
-          start = process_loose_expr(expr).first.send(:first_prerelease)
-        end
-
-        self.new(start, SemanticPuppet::Version::MAX)
-      end
-
-      # Returns a range covering all versions less than the given `expr`.
-      #
-      # @param expr [String] the version to be less than
-      # @return [VersionRange] a range covering all versions less than the
-      #         given `expr`
-      def parse_lt_expression(expr)
-        if expr =~ /^[^+]*-/
-          finish = Version.parse(expr)
-        else
-          finish = process_loose_expr(expr).first.send(:first_prerelease)
-        end
-
-        self.new(SemanticPuppet::Version::MIN, finish, true)
-      end
-
-      # Returns a range covering all versions less than or equal to the given
-      # `expr`.
-      #
-      # @param expr [String] the version to be less than or equal to
-      # @return [VersionRange] a range covering all versions less than or equal
-      #         to the given `expr`
-      def parse_lte_expression(expr)
-        if expr =~ /^[^+]*-/
-          finish = Version.parse(expr)
-          self.new(SemanticPuppet::Version::MIN, finish)
-        else
-          finish = process_loose_expr(expr).last.send(:first_prerelease)
-          self.new(SemanticPuppet::Version::MIN, finish, true)
-        end
-      end
-
-      # The "reasonably close" expression is used to designate ranges that have
-      # a reasonable proximity to the given "loose" version number. These take
-      # the form:
-      #
-      #     ~[Version]
-      #
-      # The general semantics of these expressions are that the given version
-      # forms a lower bound for the range, and the upper bound is either the
-      # next version number increment (at whatever precision the expression
-      # provides) or the next stable version (in the case of a prerelease
-      # version).
-      #
-      # @example "Reasonably close" major version
-      #   "~1" # => (>=1.0.0 <2.0.0)
-      # @example "Reasonably close" minor version
-      #   "~1.2" # => (>=1.2.0 <1.3.0)
-      # @example "Reasonably close" patch version
-      #   "~1.2.3" # => (>=1.2.3 <1.3.0)
-      # @example "Reasonably close" prerelease version
-      #   "~1.2.3-alpha" # => (>=1.2.3-alpha <1.2.4)
-      #
-      # @param expr [String] a "loose" expression to build the range around
-      # @return [VersionRange] a "reasonably close" version range
-      def parse_reasonably_close_expression(expr)
-        parsed, succ = process_loose_expr(expr)
-
-        if parsed.stable?
-          parsed = parsed.send(:first_prerelease)
-
-          # Handle the special case of "~1.2.3" expressions.
-          succ = succ.next(:minor) if ((parsed.major == succ.major) && (parsed.minor == succ.minor))
-
-          succ = succ.send(:first_prerelease)
-          self.new(parsed, succ, true)
-        else
-          self.new(parsed, succ.next(:patch).send(:first_prerelease), true)
-        end
-      end
-
-      # An "inclusive range" expression takes two version numbers (or partial
-      # version numbers) and creates a range that covers all versions between
-      # them. These take the form:
-      #
-      #     [Version] - [Version]
-      #
-      # @param start [String] a "loose" expresssion for the start of the range
-      # @param finish [String] a "loose" expression for the end of the range
-      # @return [VersionRange] a {VersionRange} covering `start` to `finish`
-      def parse_inclusive_range_expression(start, finish)
-        start, _ = process_loose_expr(start)
-        _, finish = process_loose_expr(finish)
-
-        start = start.send(:first_prerelease) if start.stable?
-        if finish.stable?
-          exclude = true
-          finish = finish.send(:first_prerelease)
-        end
-
-        self.new(start, finish, exclude)
-      end
-
-      # A "loose expression" is one that takes the form of all or part of a
-      # valid Semantic Version number. Particularly:
-      #
-      # * [Major].[Minor].[Patch]-[Prerelease]
-      # * [Major].[Minor].[Patch]
-      # * [Major].[Minor]
-      # * [Major]
-      #
-      # Various placeholders are also permitted in "loose expressions"
-      # (typically an 'x' or an asterisk).
-      #
-      # This method parses these expressions into a minimal and maximal version
-      # number pair.
-      #
-      # @todo Stabilize whether the second value is inclusive or exclusive
-      #
-      # @param expr [String] a string containing a "loose" version expression
-      # @return [(VersionNumber, VersionNumber)] a minimal and maximal
-      #         version pair for the given expression
-      def process_loose_expr(expr)
-        case expr
-        when /^(\d+)(?:[.][xX*])?$/
-          expr = "#{$1}.0.0"
-          arity = :major
-        when /^(\d+[.]\d+)(?:[.][xX*])?$/
-          expr = "#{$1}.0"
-          arity = :minor
-        when /^\d+[.]\d+[.]\d+$/
-          arity = :patch
-        end
-
-        version = next_version = Version.parse(expr)
-
-        if arity
-          next_version = version.next(arity)
-        end
-
-        [ version, next_version ]
+      else
+        MinMaxRange.new(GtEqRange.new(Version.new(major, 0, 0)), LtRange.new(Version.new(major + 1, 0, 0)))
       end
     end
+    private_class_method :allow_minor_updates
+
+    def self.digit(str)
+      (str.nil? || UPPER_X == str || LOWER_X == str || STAR == str) ? nil : str.to_i
+    end
+    private_class_method :digit
+
+    def self.parse_version(expr)
+      match_data = parse_partial(expr)
+      major = digit(match_data[1]) || 0
+      minor = digit(match_data[2]) || 0
+      patch = digit(match_data[3]) || 0
+      Version.new(major, minor, patch, Version.parse_prerelease(match_data[4]), Version.parse_build(match_data[5]))
+    end
+    private_class_method :parse_version
+
+    def self.parse_gt_version(expr)
+      match_data = parse_partial(expr)
+      major = digit(match_data[1])
+      return LtRange::MATCH_NOTHING unless major
+      minor = digit(match_data[2])
+      return GtEqRange.new(Version.new(major + 1, 0, 0)) unless minor
+      patch = digit(match_data[3])
+      return GtEqRange.new(Version.new(major, minor + 1, 0)) unless patch
+      return GtRange.new(Version.new(major, minor, patch, Version.parse_prerelease(match_data[4]), Version.parse_build(match_data[5])))
+    end
+    private_class_method :parse_gt_version
+
+    def self.parse_lteq_version(expr)
+      match_data = parse_partial(expr)
+      major = digit(match_data[1])
+      return AllRange.SINGLETON unless major
+      minor = digit(match_data[2])
+      return LtRange.new(Version.new(major + 1, 0, 0)) unless minor
+      patch = digit(match_data[3])
+      return LtRange.new(Version.new(major, minor + 1, 0)) unless patch
+      return LtEqRange.new(Version.new(major, minor, patch, Version.parse_prerelease(match_data[4]), Version.parse_build(match_data[5])))
+    end
+    private_class_method :parse_lteq_version
+
+    # Provides read access to the ranges. For internal use only
+    # @api private
+    attr_reader :ranges
+
+    # Creates a new version range
+    # @overload initialize(from, to, exclude_end = false)
+    #   Creates a new instance using ruby `Range` semantics
+    #   @param begin [String,Version] the version denoting the start of the range (always inclusive)
+    #   @param end [String,Version] the version denoting the end of the range
+    #   @param exclude_end [Boolean] `true` if the `end` version should be excluded from the range
+    # @overload initialize(ranges, string)
+    #   Creates a new instance based on parsed content. For internal use only
+    #   @param ranges [Array<AbstractRange>] the ranges to include in this range
+    #   @param string [String] the original string representation that was parsed to produce the ranges
+    #   @param strict_semver [Boolean] `false` if pre-releases should be included even when not explicitly appointed
+    #
+    # @api private
+    def initialize(ranges, string, exclude_end = nil)
+      if ranges.is_a?(Array)
+        @strict_semver = exclude_end.nil? ? true : exclude_end
+      else
+        lb = GtEqRange.new(ranges)
+        if exclude_end
+          ub = LtRange.new(string)
+          string = ">=#{string} <#{ranges}"
+        else
+          ub = LtEqRange.new(string)
+          string = "#{string} - #{ranges}"
+        end
+        ranges = [MinMaxRange.create(lb, ub)]
+        @strict_semver = true
+      end
+      ranges.compact!
+
+      merge_happened = true
+      while ranges.size > 1 && merge_happened
+        # merge ranges if possible
+        merge_happened = false
+        result = []
+        until ranges.empty?
+          unmerged = []
+          x = ranges.pop
+          result << ranges.reduce(x) do |memo, y|
+            merged = memo.merge(y)
+            if merged.nil?
+              unmerged << y
+            else
+              merge_happened = true
+              memo = merged
+            end
+            memo
+          end
+          ranges = unmerged
+        end
+        ranges = result.reverse!
+      end
+
+      ranges = [LtRange::MATCH_NOTHING] if ranges.empty?
+      @ranges = ranges
+      @string = string.nil? ? ranges.join(' || ') : string
+    end
+
+    def eql?(range)
+      range.is_a?(VersionRange) && @ranges.eql?(range.ranges)
+    end
+    alias == eql?
+
+    def hash
+      @ranges.hash
+    end
+
+    # Returns the version that denotes the beginning of this range.
+    #
+    # Since this really is an OR between disparate ranges, it may have multiple beginnings. This method
+    # returns `nil` if that is the case.
+    #
+    # @return [Version] the beginning of the range, or `nil` if there are multiple beginnings
+    # @api public
+    def begin
+      @ranges.size == 1 ? @ranges[0].begin : nil
+    end
+
+    # Returns the version that denotes the end of this range.
+    #
+    # Since this really is an OR between disparate ranges, it may have multiple ends. This method
+    # returns `nil` if that is the case.
+    #
+    # @return [Version] the end of the range, or `nil` if there are multiple ends
+    # @api public
+    def end
+      @ranges.size == 1 ? @ranges[0].end : nil
+    end
+
+    # Returns `true` if the beginning is excluded from the range.
+    #
+    # Since this really is an OR between disparate ranges, it may have multiple beginnings. This method
+    # returns `nil` if that is the case.
+    #
+    # @return [Boolean] `true` if the beginning is excluded from the range, `false` if included, or `nil` if there are multiple beginnings
+    # @api public
+    def exclude_begin?
+      @ranges.size == 1 ? @ranges[0].exclude_begin? : nil
+    end
+
+    # Returns `true` if the end is excluded from the range.
+    #
+    # Since this really is an OR between disparate ranges, it may have multiple ends. This method
+    # returns `nil` if that is the case.
+    #
+    # @return [Boolean] `true` if the end is excluded from the range, `false` if not, or `nil` if there are multiple ends
+    # @api public
+    def exclude_end?
+      @ranges.size == 1 ? @ranges[0].exclude_end? : nil
+    end
+
+    # @return [Boolean] `true` if the given version is included in the range
+    # @api public
+    def include?(version)
+      if @strict_semver
+        @ranges.any? { |range| range.include?(version) && (version.stable? || range.test_prerelease?(version)) }
+      else
+        @ranges.any? { |range| range.include?(version) || !version.stable? && range.stable? &&  range.include?(version.to_stable) }
+      end
+    end
+    alias member? include?
+    alias cover? include?
+    alias === include?
 
     # Computes the intersection of a pair of ranges. If the ranges have no
     # useful intersection, an empty range is returned.
     #
     # @param other [VersionRange] the range to intersect with
     # @return [VersionRange] the common subset
+    # @api public
     def intersection(other)
-      raise NOT_A_VERSION_RANGE unless other.kind_of?(VersionRange)
-
-      if self.begin < other.begin
-        return other.intersection(self)
-      end
-
-      unless include?(other.begin) || other.include?(self.begin)
-        return EMPTY_RANGE
-      end
-
-      endpoint = ends_before?(other) ? self : other
-      VersionRange.new(self.begin, endpoint.end, endpoint.exclude_end?)
+      raise ArgumentError, _("value must be a %{type}") % { :type => self.class.name } unless other.is_a?(VersionRange)
+      result = @ranges.map { |range| other.ranges.map { |o_range| range.intersection(o_range) } }.flatten
+      result.compact!
+      result.uniq!
+      result.empty? ? EMPTY_RANGE : VersionRange.new(result, nil)
     end
     alias :& :intersection
 
-    # Returns a string representation of this range, prefering simple common
-    # expressions for comprehension.
+    # Returns a string representation of this range. This will be the string that was used
+    # when the range was parsed.
     #
     # @return [String] a range expression representing this VersionRange
+    # @api public
     def to_s
-      start, finish  = self.begin, self.end
-      inclusive = exclude_end? ? '' : '='
+      @string
+    end
 
-      case
-      when EMPTY_RANGE == self
-        "<0.0.0"
-      when exact_version?, patch_version?
-        "#{ start }"
-      when minor_version?
-        "#{ start }".sub(/.0$/, '.x')
-      when major_version?
-        "#{ start }".sub(/.0.0$/, '.x')
-      when open_end? && start.to_s =~ /-.*[.]0$/
-        ">#{ start }".sub(/.0$/, '')
-      when open_end?
-        ">=#{ start }"
-      when open_begin?
-        "<#{ inclusive }#{ finish }"
-      else
-        ">=#{ start } <#{ inclusive }#{ finish }"
+    # Returns a canonical string representation of this range, assembled from the internal
+    # matchers.
+    #
+    # @return [String] a range expression representing this VersionRange
+    # @api public
+    def inspect
+      @ranges.join(' || ')
+    end
+
+    # @api private
+    class AbstractRange
+      def include?(_)
+        true
+      end
+
+      def begin
+        Version::MIN
+      end
+
+      def end
+        Version::MAX
+      end
+
+      def exclude_begin?
+        false
+      end
+
+      def exclude_end?
+        false
+      end
+
+      def eql?(other)
+        other.class.eql?(self.class)
+      end
+
+      def ==(other)
+        eql?(other)
+      end
+
+      def lower_bound?
+        false
+      end
+
+      def upper_bound?
+        false
+      end
+
+      # Merge two ranges so that the result matches the intersection of all matching versions.
+      #
+      # @param range [AbastractRange] the range to intersect with
+      # @return [AbastractRange,nil] the intersection between the ranges
+      #
+      # @api private
+      def intersection(range)
+        cmp = self.begin <=> range.end
+        if cmp > 0
+          nil
+        elsif cmp == 0
+          exclude_begin? || range.exclude_end? ? nil : EqRange.new(self.begin)
+        else
+          cmp = range.begin <=> self.end
+          if cmp > 0
+            nil
+          elsif cmp == 0
+            range.exclude_begin? || exclude_end? ? nil : EqRange.new(range.begin)
+          else
+            cmp = self.begin <=> range.begin
+            min = if cmp < 0
+              range
+            elsif cmp > 0
+              self
+            else
+              self.exclude_begin? ? self : range
+            end
+
+            cmp = self.end <=> range.end
+            max = if cmp > 0
+              range
+            elsif cmp < 0
+              self
+            else
+              self.exclude_end? ? self : range
+            end
+
+            if !max.upper_bound?
+              min
+            elsif !min.lower_bound?
+              max
+            else
+              MinMaxRange.new(min, max)
+            end
+          end
+        end
+      end
+
+      # Merge two ranges so that the result matches the sum of all matching versions. A merge
+      # is only possible when the ranges are either adjacent or have an overlap.
+      #
+      # @param other [AbastractRange] the range to merge with
+      # @return [AbastractRange,nil] the result of the merge
+      #
+      # @api private
+      def merge(other)
+        if include?(other.begin) || other.include?(self.begin)
+          cmp = self.begin <=> other.begin
+          if cmp < 0
+            min = self.begin
+            excl_begin = exclude_begin?
+          elsif cmp > 0
+            min = other.begin
+            excl_begin = other.exclude_begin?
+          else
+            min = self.begin
+            excl_begin = exclude_begin? && other.exclude_begin?
+          end
+
+          cmp = self.end <=> other.end
+          if cmp > 0
+            max = self.end
+            excl_end = self.exclude_end?
+          elsif cmp < 0
+            max = other.end
+            excl_end = other.exclude_end?
+          else
+            max = self.end
+            excl_end = exclude_end && other.exclude_end?
+          end
+
+          MinMaxRange.create(excl_begin ? GtRange.new(min) : GtEqRange.new(min), excl_end ? LtRange.new(max) : LtEqRange.new(max))
+        elsif exclude_end? && !other.exclude_begin? && self.end == other.begin
+          # Adjacent, self before other
+          from_to(self, other)
+        elsif other.exclude_end? && !exclude_begin? && other.end == self.begin
+          # Adjacent, other before self
+          from_to(other, self)
+        elsif !exclude_end? && !other.exclude_begin? && self.end.next(:patch) == other.begin
+          # Adjacent, self before other
+          from_to(self, other)
+        elsif !other.exclude_end? && !exclude_begin? && other.end.next(:patch) == self.begin
+          # Adjacent, other before self
+          from_to(other, self)
+        else
+          # No overlap
+          nil
+        end
+      end
+
+      # Checks if this matcher accepts a prerelease with the same major, minor, patch triple as the given version. Only matchers
+      # where this has been explicitly stated will respond `true` to this method
+      #
+      # @return [Boolean] `true` if this matcher accepts a prerelase with the tuple from the given version
+      def test_prerelease?(_)
+        false
+      end
+
+      def stable?
+        false
+      end
+
+      private
+
+      def from_to(a, b)
+        MinMaxRange.create(a.exclude_begin? ? GtRange.new(a.begin) : GtEqRange.new(a.begin), b.exclude_end? ? LtRange.new(b.end) : LtEqRange.new(b.end))
       end
     end
-    alias :inspect :to_s
 
-    private
+    # @api private
+    class AllRange < AbstractRange
+      SINGLETON = AllRange.new
 
-    # Determines whether this {VersionRange} has an earlier endpoint than the
-    # give `other` range.
-    #
-    # @param other [VersionRange] the range to compare against
-    # @return [Boolean] true if the endpoint for this range is less than or
-    #         equal to the endpoint of the `other` range.
-    def ends_before?(other)
-      self.end < other.end || (self.end == other.end && self.exclude_end?)
+      def intersection(range)
+        range
+      end
+
+      def merge(range)
+        self
+      end
+
+      def test_prerelease?(_)
+        true
+      end
+
+      def stable?
+        true
+      end
+
+      def to_s
+        '*'
+      end
     end
 
-    # Describes whether this range has an upper limit.
-    # @return [Boolean] true if this range has no upper limit
-    def open_end?
-      self.end == SemanticPuppet::Version::MAX
+    # @api private
+    class MinMaxRange < AbstractRange
+      attr_reader :min, :max
+
+      def self.create(*ranges)
+        ranges.reduce { |memo, range| memo.intersection(range) }
+      end
+
+      def initialize(min, max)
+        @min = min.is_a?(MinMaxRange) ? min.min : min
+        @max = max.is_a?(MinMaxRange) ? max.max : max
+      end
+
+      def begin
+        @min.begin
+      end
+
+      def end
+        @max.end
+      end
+
+      def exclude_begin?
+        @min.exclude_begin?
+      end
+
+      def exclude_end?
+        @max.exclude_end?
+      end
+
+      def eql?(other)
+        super && @min.eql?(other.min) && @max.eql?(other.max)
+      end
+
+      def hash
+        @min.hash ^ @max.hash
+      end
+
+      def include?(version)
+        @min.include?(version) && @max.include?(version)
+      end
+
+      def lower_bound?
+        @min.lower_bound?
+      end
+
+      def upper_bound?
+        @max.upper_bound?
+      end
+
+      def test_prerelease?(version)
+        @min.test_prerelease?(version) || @max.test_prerelease?(version)
+      end
+
+      def stable?
+        @min.stable? && @max.stable?
+      end
+
+      def to_s
+        "#{@min} #{@max}"
+      end
+      alias inspect to_s
     end
 
-    # Describes whether this range has a lower limit.
-    # @return [Boolean] true if this range has no lower limit
-    def open_begin?
-      self.begin == SemanticPuppet::Version::MIN
+    # @api private
+    class ComparatorRange < AbstractRange
+      attr_reader :version
+
+      def initialize(version)
+        @version = version
+      end
+
+      def eql?(other)
+        super && @version.eql?(other.version)
+      end
+
+      def hash
+        @class.hash ^ @version.hash
+      end
+
+      # Checks if this matcher accepts a prerelease with the same major, minor, patch triple as the given version
+      def test_prerelease?(version)
+        !@version.stable? && @version.major == version.major && @version.minor == version.minor && @version.patch == version.patch
+      end
+
+      def stable?
+        @version.stable?
+      end
     end
 
-    # Describes whether this range follows the patterns for matching all
-    # releases with the same exact version.
-    # @return [Boolean] true if this range matches only a single exact version
-    def exact_version?
-      self.begin == self.end
+    # @api private
+    class GtRange < ComparatorRange
+      def include?(version)
+        version > @version
+      end
+
+      def exclude_begin?
+        true
+      end
+
+      def begin
+        @version
+      end
+
+      def lower_bound?
+        true
+      end
+
+      def to_s
+        ">#{@version}"
+      end
     end
 
-    # Describes whether this range follows the patterns for matching all
-    # releases with the same major version.
-    # @return [Boolean] true if this range matches only a single major version
-    def major_version?
-      start, finish = self.begin, self.end
+    # @api private
+    class GtEqRange < ComparatorRange
+      def include?(version)
+        version >= @version
+      end
 
-      exclude_end? &&
-      start.major.next == finish.major &&
-      same_minor? && start.minor == 0 &&
-      same_patch? && start.patch == 0 &&
-      [start.prerelease, finish.prerelease] == ['', '']
+      def begin
+        @version
+      end
+
+      def lower_bound?
+        @version != Version::MIN
+      end
+
+      def to_s
+        ">=#{@version}"
+      end
     end
 
-    # Describes whether this range follows the patterns for matching all
-    # releases with the same minor version.
-    # @return [Boolean] true if this range matches only a single minor version
-    def minor_version?
-      start, finish = self.begin, self.end
+    # @api private
+    class LtRange < ComparatorRange
+      MATCH_NOTHING = LtRange.new(Version::MIN)
 
-      exclude_end? &&
-      same_major? &&
-      start.minor.next == finish.minor &&
-      same_patch? && start.patch == 0 &&
-      [start.prerelease, finish.prerelease] == ['', '']
+      def include?(version)
+        version < @version
+      end
+
+      def exclude_end?
+        true
+      end
+
+      def end
+        @version
+      end
+
+      def upper_bound?
+        true
+      end
+
+      def to_s
+        self.equal?(MATCH_NOTHING) ? '<0.0.0' : "<#{@version}"
+      end
     end
 
-    # Describes whether this range follows the patterns for matching all
-    # releases with the same patch version.
-    # @return [Boolean] true if this range matches only a single patch version
-    def patch_version?
-      start, finish = self.begin, self.end
+    # @api private
+    class LtEqRange < ComparatorRange
+      def include?(version)
+        version <= @version
+      end
 
-      exclude_end? &&
-      same_major? &&
-      same_minor? &&
-      start.patch.next == finish.patch &&
-      [start.prerelease, finish.prerelease] == ['', '']
+      def end
+        @version
+      end
+
+      def upper_bound?
+        @version != Version::MAX
+      end
+
+      def to_s
+        "<=#{@version}"
+      end
     end
 
-    # @return [Boolean] true if `begin` and `end` share the same major verion
-    def same_major?
-      self.begin.major == self.end.major
+    # @api private
+    class EqRange < ComparatorRange
+      def include?(version)
+        version == @version
+      end
+
+      def begin
+        @version
+      end
+
+      def lower_bound?
+        @version != Version::MIN
+      end
+
+      def upper_bound?
+        @version != Version::MAX
+      end
+
+      def end
+        @version
+      end
+
+      def to_s
+        @version.to_s
+      end
     end
-
-    # @return [Boolean] true if `begin` and `end` share the same minor verion
-    def same_minor?
-      self.begin.minor == self.end.minor
-    end
-
-    # @return [Boolean] true if `begin` and `end` share the same patch verion
-    def same_patch?
-      self.begin.patch == self.end.patch
-    end
-
-    undef :to_a
-
-    NOT_A_VERSION_RANGE = ArgumentError.new("value must be a #{VersionRange}")
-
-    public
 
     # A range that matches no versions
-    EMPTY_RANGE = VersionRange.parse('< 0.0.0').freeze
+    EMPTY_RANGE = VersionRange.new([], nil).freeze
+    ALL_RANGE = VersionRange.new([AllRange::SINGLETON], '*')
   end
 end

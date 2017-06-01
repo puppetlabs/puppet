@@ -89,7 +89,6 @@ to manage the configuration of a node.
 These services are not directly used by Puppet agent, but may be used by other
 tools.
 
-* [Resource Type](./http_resource_type.md)
 * [Status](./http_status.md)
 
 ### Environment Endpoints
@@ -134,8 +133,6 @@ error responses will uniformly be a JSON object with the following properties:
 
 * `message`: (`String`) A human readable message explaining the error.
 * `issue_kind`: (`String`) A unique label to identify the error class.
-* `stacktrace` (only for 5xx errors): (`Array<String>`) A stacktrace to where
-  the error occurred.
 
 A [JSON schema for the error objects](../schemas/error.json) is also available.
 

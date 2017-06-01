@@ -1,0 +1,3 @@
+Benchmark scenario: Serializing catalogs in JSON vs PSON
+Benchmark target: overhead of ruby PSON/JSON serialization
+

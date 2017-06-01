@@ -12,7 +12,6 @@ class Puppet::Transaction::Event
   include Puppet::Network::FormatSupport
 
   ATTRIBUTES = [:name, :resource, :property, :previous_value, :desired_value, :historical_value, :status, :message, :file, :line, :source_description, :audited, :invalidate_refreshes, :redacted, :corrective_change]
-  YAML_ATTRIBUTES = %w{@audited @property @previous_value @desired_value @historical_value @message @name @status @time @redacted @corrective_change}.map(&:to_sym)
   attr_accessor *ATTRIBUTES
   attr_accessor :time
   attr_reader :default_log_level
@@ -34,7 +33,13 @@ class Puppet::Transaction::Event
     @time = Time.now
   end
 
+  def eql?(event)
+    self.class == event.class && ATTRIBUTES.all? { |attr| send(attr).eql?(event.send(attr)) }
+  end
+  alias == eql?
+
   def initialize_from_hash(data)
+    data = Puppet::Pops::Serialization::FromDataConverter.convert(data)
     @audited = data['audited']
     @property = data['property']
     @previous_value = data['previous_value']
@@ -50,19 +55,26 @@ class Puppet::Transaction::Event
   end
 
   def to_data_hash
-    {
+    hash = {
       'audited' => @audited,
       'property' => @property,
       'previous_value' => @previous_value,
       'desired_value' => @desired_value,
       'historical_value' => @historical_value,
       'message' => @message,
-      'name' => @name,
+      'name' => @name.nil? ? nil : @name.to_s,
       'status' => @status,
       'time' => @time.iso8601(9),
       'redacted' => @redacted,
       'corrective_change' => @corrective_change,
     }
+    Puppet::Pops::Serialization::ToDataConverter.convert(hash, {
+      :rich_data => true,
+      :symbol_as_string => true,
+      :local_reference => false,
+      :type_by_reference => true,
+      :message_prefix => 'Event'
+    })
   end
 
   def property=(prop)
@@ -82,7 +94,7 @@ class Puppet::Transaction::Event
   end
 
   def status=(value)
-    raise ArgumentError, "Event status can only be #{EVENT_STATUSES.join(', ')}" unless EVENT_STATUSES.include?(value)
+    raise ArgumentError, _("Event status can only be %{statuses}") % { statuses: EVENT_STATUSES.join(', ') } unless EVENT_STATUSES.include?(value)
     @status = value
   end
 
@@ -92,10 +104,6 @@ class Puppet::Transaction::Event
 
   def inspect
     %Q(#<#{self.class.name} @name="#{@name.inspect}" @message="#{@message.inspect}">)
-  end
-
-  def to_yaml_properties
-    YAML_ATTRIBUTES & super
   end
 
   # Calculate and set the corrective_change parameter, based on the old_system_value of the property.

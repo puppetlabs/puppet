@@ -40,7 +40,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
       # TODO: should we tell the user we found an indirection but it doesn't
       # allow remote requests, or just pretend there's no handler at all? what
       # are the security implications for the former?
-      raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new("No handler for #{indirection.name}", :NO_INDIRECTION_REMOTE_REQUESTS)
+      raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(_("No handler for %{indirection}") % { indirection: indirection.name }, :NO_INDIRECTION_REMOTE_REQUESTS)
     end
 
     trusted = Puppet::Context::TrustedInformation.remote(params[:authenticated], params[:node], certificate)
@@ -57,7 +57,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
 
     if indirection_name !~ /^\w+$/
       raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
-        "The indirection name must be purely alphanumeric, not '#{indirection_name}'")
+        _("The indirection name must be purely alphanumeric, not '%{indirection_name}'") % { indirection_name: indirection_name })
     end
 
     # this also depluralizes the indirection_name if it is a search
@@ -67,24 +67,24 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     # request
     if url_prefix != IndirectionType.url_prefix_for(indirection_name)
       raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
-        "Indirection '#{indirection_name}' does not match url prefix '#{url_prefix}'")
+        _("Indirection '%{indirection_name}' does not match url prefix '%{url_prefix}'") % { indirection_name: indirection_name, url_prefix: url_prefix })
     end
 
     indirection = Puppet::Indirector::Indirection.instance(indirection_name.to_sym)
     if !indirection
       raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(
-        "Could not find indirection '#{indirection_name}'",
+        _("Could not find indirection '%{indirection_name}'") % { indirection_name: indirection_name },
         Puppet::Network::HTTP::Issues::HANDLER_NOT_FOUND)
     end
 
     if !environment
       raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
-        "An environment parameter must be specified")
+        _("An environment parameter must be specified"))
     end
 
     if ! Puppet::Node::Environment.valid_name?(environment)
       raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
-        "The environment must be purely alphanumeric, not '#{environment}'")
+        _("The environment must be purely alphanumeric, not '%{environment}'") % { environment: environment })
     end
 
     configured_environment = Puppet.lookup(:environments).get(environment)
@@ -101,14 +101,14 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
 
     if configured_environment.nil?
       raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(
-        "Could not find environment '#{environment}'")
+        _("Could not find environment '%{environment}'") % { environment: environment })
     end
 
     params.delete(:bucket_path)
 
     if key == "" or key.nil?
       raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
-        "No request key specified in #{uri}")
+        _("No request key specified in %{uri}") % { uri: uri })
     end
 
     [indirection, method, key, params]
@@ -119,19 +119,19 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
   # Execute our find.
   def do_find(indirection, key, params, request, response)
     unless result = indirection.find(key, params)
-      raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new("Could not find #{indirection.name} #{key}", Puppet::Network::HTTP::Issues::RESOURCE_NOT_FOUND)
+      raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(_("Could not find %{value0} %{key}") % { value0: indirection.name, key: key }, Puppet::Network::HTTP::Issues::RESOURCE_NOT_FOUND)
     end
 
     format = accepted_response_formatter_for(indirection.model, request)
 
     rendered_result = result
     if result.respond_to?(:render)
-      Puppet::Util::Profiler.profile("Rendered result in #{format}", [:http, :v3_render, format]) do
+      Puppet::Util::Profiler.profile(_("Rendered result in %{format}") % { format: format }, [:http, :v3_render, format]) do
         rendered_result = result.render(format)
       end
     end
 
-    Puppet::Util::Profiler.profile("Sent response", [:http, :v3_response]) do
+    Puppet::Util::Profiler.profile(_("Sent response"), [:http, :v3_response]) do
       response.respond_with(200, format, rendered_result)
     end
   end
@@ -139,7 +139,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
   # Execute our head.
   def do_head(indirection, key, params, request, response)
     unless indirection.head(key, params)
-      raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new("Could not find #{indirection.name} #{key}", Puppet::Network::HTTP::Issues::RESOURCE_NOT_FOUND)
+      raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(_("Could not find %{indirection} %{key}") % { indirection: indirection.name, key: key }, Puppet::Network::HTTP::Issues::RESOURCE_NOT_FOUND)
     end
 
     # No need to set a response because no response is expected from a
@@ -151,7 +151,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     result = indirection.search(key, params)
 
     if result.nil?
-      raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new("Could not find instances in #{indirection.name} with '#{key}'", Puppet::Network::HTTP::Issues::RESOURCE_NOT_FOUND)
+      raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(_("Could not find instances in %{indirection} with '%{key}'") % { indirection: indirection.name, key: key }, Puppet::Network::HTTP::Issues::RESOURCE_NOT_FOUND)
     end
 
     format = accepted_response_formatter_for(indirection.model, request)
@@ -161,7 +161,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
 
   # Execute our destroy.
   def do_destroy(indirection, key, params, request, response)
-    formatter = accepted_response_formatter_or_pson_for(indirection.model, request)
+    formatter = accepted_response_formatter_or_json_for(indirection.model, request)
 
     result = indirection.destroy(key, params)
 
@@ -170,7 +170,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
 
   # Execute our save.
   def do_save(indirection, key, params, request, response)
-    formatter = accepted_response_formatter_or_pson_for(indirection.model, request)
+    formatter = accepted_response_formatter_or_json_for(indirection.model, request)
     sent_object = read_body_into_model(indirection.model, request)
 
     result = indirection.save(sent_object, key)
@@ -179,29 +179,39 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
   end
 
   def accepted_response_formatter_for(model_class, request)
-    accepted_formats = request.headers['accept'] or raise Puppet::Network::HTTP::Error::HTTPNotAcceptableError.new("Missing required Accept header", Puppet::Network::HTTP::Issues::MISSING_HEADER_FIELD)
-    request.response_formatter_for(model_class.supported_formats, accepted_formats)
+    request.response_formatter_for(model_class.supported_formats)
   end
 
-  def accepted_response_formatter_or_pson_for(model_class, request)
-    accepted_formats = request.headers['accept'] || "text/pson"
-    request.response_formatter_for(model_class.supported_formats, accepted_formats)
+  def accepted_response_formatter_or_json_for(model_class, request)
+    request.response_formatter_for(model_class.supported_formats, "application/json")
   end
 
   def read_body_into_model(model_class, request)
     data = request.body.to_s
+    formatter = request.formatter
 
-    format = request.format
-    model_class.convert_from(format, data)
+    if formatter.supported?(model_class)
+      begin
+        return model_class.convert_from(formatter.name.to_s, data)
+      rescue => e
+        raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
+          _("The request body is invalid: %{message}") % { message: e.message })
+      end
+    end
+
+    #TRANSLATORS "mime-type" is a keyword and should not be translated
+    raise Puppet::Network::HTTP::Error::HTTPUnsupportedMediaTypeError.new(
+      _("Client sent a mime-type (%{header}) that doesn't correspond to a format we support") % { header: request.headers['content-type'] },
+      Puppet::Network::HTTP::Issues::UNSUPPORTED_MEDIA_TYPE)
   end
 
   def indirection_method(http_method, indirection)
     raise Puppet::Network::HTTP::Error::HTTPMethodNotAllowedError.new(
-      "No support for http method #{http_method}") unless METHOD_MAP[http_method]
+      _("No support for http method %{http_method}") % { http_method: http_method }) unless METHOD_MAP[http_method]
 
     unless method = METHOD_MAP[http_method][plurality(indirection)]
       raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
-        "No support for plurality #{plurality(indirection)} for #{http_method} operations")
+        _("No support for plurality %{indirection} for %{http_method} operations") % { indirection: plurality(indirection), http_method: http_method })
     end
 
     method

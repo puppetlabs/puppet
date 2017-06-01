@@ -16,7 +16,7 @@ module PuppetSpec::Modules
         metadata[:name] = "#{metadata[:author]}/#{name}"
 
         File.open(File.join(module_dir, 'metadata.json'), 'w') do |f|
-          f.write(metadata.to_pson)
+          f.write(metadata.to_json)
         end
       end
 
@@ -29,7 +29,7 @@ module PuppetSpec::Modules
 
       if metadata = options[:metadata]
         File.open(File.join(module_dir, 'metadata.json'), 'w') do |f|
-          f.write(metadata.to_pson)
+          f.write(metadata.to_json)
         end
       end
     end

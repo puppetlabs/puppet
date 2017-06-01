@@ -165,8 +165,8 @@ describe "egrammar parsing basic expressions" do
     end
 
     it "calculates the text length of an empty array" do
-      expect(parse("[]").current.body.length).to eq(2)
-      expect(parse("[ ]").current.body.length).to eq(3)
+      expect(parse("[]").model.body.length).to eq(2)
+      expect(parse("[ ]").model.body.length).to eq(3)
     end
 
     {
@@ -251,8 +251,8 @@ describe "egrammar parsing basic expressions" do
     end
 
     it "calculates the text length of an empty hash" do
-      expect(parse("{}").current.body.length).to eq(2)
-      expect(parse("{ }").current.body.length).to eq(3)
+      expect(parse("{}").model.body.length).to eq(2)
+      expect(parse("{ }").model.body.length).to eq(3)
     end
   end
 

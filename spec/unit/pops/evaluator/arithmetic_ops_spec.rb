@@ -28,6 +28,59 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       it "8 << -1 == 4"   do; expect(evaluate(literal(8) << literal(-1))).to eq(4); end
     end
 
+    # 64 bit signed integer max and min
+    MAX_INTEGER =  0x7fffffffffffffff
+    MIN_INTEGER = -0x8000000000000000
+
+    context "on integer values that cause 64 bit overflow" do
+      it "MAX + 1 => error" do
+        expect{
+          evaluate(literal(MAX_INTEGER) + literal(1))
+        }.to raise_error(/resulted in a value outside of Puppet Integer max range/)
+      end
+
+      it "MAX - -1 => error" do
+        expect{
+          evaluate(literal(MAX_INTEGER) - literal(-1))
+        }.to raise_error(/resulted in a value outside of Puppet Integer max range/)
+      end
+
+      it "MAX * 2 => error" do
+        expect{
+          evaluate(literal(MAX_INTEGER) * literal(2))
+        }.to raise_error(/resulted in a value outside of Puppet Integer max range/)
+      end
+
+      it "(MAX+1)*2 / 2 => error" do
+        expect{
+          evaluate(literal((MAX_INTEGER+1)*2) / literal(2))
+        }.to raise_error(/resulted in a value outside of Puppet Integer max range/)
+      end
+
+      it "MAX << 1 => error" do
+        expect{
+          evaluate(literal(MAX_INTEGER) << literal(1))
+        }.to raise_error(/resulted in a value outside of Puppet Integer max range/)
+      end
+
+      it "((MAX+1)*2)  << 1 => error" do
+        expect{
+          evaluate(literal((MAX_INTEGER+1)*2) >> literal(1))
+        }.to raise_error(/resulted in a value outside of Puppet Integer max range/)
+      end
+
+      it "MIN - 1 => error" do
+        expect{
+          evaluate(literal(MIN_INTEGER) - literal(1))
+        }.to raise_error(/resulted in a value outside of Puppet Integer min range/)
+      end
+
+      it "does not error on the border values" do
+          expect(evaluate(literal(MAX_INTEGER) + literal(MIN_INTEGER))).to eq(MAX_INTEGER+MIN_INTEGER)
+      end
+
+    end
+
     context "on Floats" do
       it "2.2 + 2.2  ==  4.4"   do; expect(evaluate(literal(2.2) + literal(2.2))).to eq(4.4)  ; end
       it "7.7 - 3.3  ==  4.4"   do; expect(evaluate(literal(7.7) - literal(3.3))).to eq(4.4)  ; end
@@ -140,7 +193,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
       it 'Timespan + Timestamp = Timestamp' do
         code = "notice(assert_type(Timestamp, Timespan({days => 3}) + Timestamp('2016-08-27T16:44:49.999 UTC')))"
-        expect(eval_and_collect_notices(code)).to eql(['2016-08-30T16:44:49.999 UTC'])
+        expect(eval_and_collect_notices(code)).to eql(['2016-08-30T16:44:49.999000000 UTC'])
       end
 
       it 'Timespan - Timestamp is an error' do
@@ -170,17 +223,17 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
       it 'Timestamp + Timespan = Timestamp' do
         code = "notice(assert_type(Timestamp, Timestamp('2016-10-10') + Timespan('0-12:00:00')))"
-        expect(eval_and_collect_notices(code)).to eql(['2016-10-10T12:00:00.000 UTC'])
+        expect(eval_and_collect_notices(code)).to eql(['2016-10-10T12:00:00.000000000 UTC'])
       end
 
       it 'Timestamp + Numeric = Timestamp' do
         code = "notice(assert_type(Timestamp, Timestamp('2016-10-10T12:00:00.000') + 3600.123))"
-        expect(eval_and_collect_notices(code)).to eql(['2016-10-10T13:00:00.123 UTC'])
+        expect(eval_and_collect_notices(code)).to eql(['2016-10-10T13:00:00.123000000 UTC'])
       end
 
       it 'Numeric + Timestamp = Timestamp' do
         code = "notice(assert_type(Timestamp, 3600.123 + Timestamp('2016-10-10T12:00:00.000')))"
-        expect(eval_and_collect_notices(code)).to eql(['2016-10-10T13:00:00.123 UTC'])
+        expect(eval_and_collect_notices(code)).to eql(['2016-10-10T13:00:00.123000000 UTC'])
       end
 
       it 'Timestamp - Timestamp = Timespan' do
@@ -190,12 +243,12 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
       it 'Timestamp - Timespan = Timestamp' do
         code = "notice(assert_type(Timestamp, Timestamp('2016-10-10') - Timespan('0-12:00:00')))"
-        expect(eval_and_collect_notices(code)).to eql(['2016-10-09T12:00:00.000 UTC'])
+        expect(eval_and_collect_notices(code)).to eql(['2016-10-09T12:00:00.000000000 UTC'])
       end
 
       it 'Timestamp - Numeric = Timestamp' do
         code = "notice(assert_type(Timestamp, Timestamp('2016-10-10') - 3600.123))"
-        expect(eval_and_collect_notices(code)).to eql(['2016-10-09T22:59:59.877 UTC'])
+        expect(eval_and_collect_notices(code)).to eql(['2016-10-09T22:59:59.877000000 UTC'])
       end
 
       it 'Numeric - Timestamp = Timestamp' do

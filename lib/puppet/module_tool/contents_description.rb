@@ -52,7 +52,7 @@ module Puppet::ModuleTool
             end
             @data << type_hash
           else
-            Puppet.warning "Could not find/load type: #{name}"
+            Puppet.warning _("Could not find/load type: %{name}") % { name: name }
           end
         end
       end
