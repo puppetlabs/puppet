@@ -553,11 +553,6 @@
             "type":        "object",
             "properties": {
 
-                "audited": {
-                    "description": "True if this property is being audited, otherwise false. True in report of `inspect` kind.",
-                    "type":        "boolean"
-                },
-
                 "property": {
                     "description": "The property for which the event occurred.",
                     "oneOf": [
@@ -630,7 +625,6 @@
                 }
             },
             "required": [
-                "audited",
                 "property",
                 "message",
                 "name",

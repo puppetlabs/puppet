@@ -604,7 +604,6 @@ describe Puppet::Transaction::Report do
 
   def generate_report
     event_hash = {
-      :audited => false,
       :property => 'message',
       :previous_value => SemanticPuppet::VersionRange.parse('>=1.0.0'),
       :desired_value => SemanticPuppet::VersionRange.parse('>=1.2.0'),
