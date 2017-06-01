@@ -119,7 +119,7 @@ describe Puppet::Transaction::Event do
     let(:event) do
       Puppet::Transaction::Event.new(:source_description => "/my/param", :resource => resource,
         :file => "/foo.rb", :line => 27, :tags => %w{one two},
-        :desired_value => 7, :historical_value => 'Brazil',
+        :desired_value => 7,
         :message => "Help I'm trapped in a spec test",
         :name => :mode_changed, :previous_value => 6, :property => :mode,
         :status => 'success',
@@ -141,7 +141,6 @@ describe Puppet::Transaction::Event do
         :line => 27,
         :tags => %w{one two},
         :desired_value => 7,
-        :historical_value => 'Brazil',
         :message => "Help I'm trapped in a spec test",
         :name => :mode_changed,
         :previous_value => 6,
@@ -153,7 +152,6 @@ describe Puppet::Transaction::Event do
       expect(tripped.property).to eq(event.property)
       expect(tripped.previous_value).to eq(event.previous_value)
       expect(tripped.desired_value).to eq(event.desired_value)
-      expect(tripped.historical_value).to eq(event.historical_value)
       expect(tripped.message).to eq(event.message)
       expect(tripped.name).to eq(event.name)
       expect(tripped.status).to eq(event.status)
@@ -176,7 +174,6 @@ describe Puppet::Transaction::Event do
       tripped = Puppet::Transaction::Event.from_data_hash(PSON.parse(event.to_pson))
 
       expect(tripped.desired_value).to be_nil
-      expect(tripped.historical_value).to be_nil
       expect(tripped.name).to be_nil
 
       expect(tripped.property).to eq(event.property)

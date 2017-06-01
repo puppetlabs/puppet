@@ -174,7 +174,6 @@ describe Puppet::Resource::Status do
         :property => e.property,
         :previous_value => e.previous_value,
         :desired_value => e.desired_value,
-        :historical_value => e.historical_value,
         :message => e.message,
         :name => e.name,
         :status => e.status,

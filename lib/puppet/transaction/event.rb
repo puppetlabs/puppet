@@ -11,7 +11,7 @@ class Puppet::Transaction::Event
   include Puppet::Util::Logging
   include Puppet::Network::FormatSupport
 
-  ATTRIBUTES = [:name, :resource, :property, :previous_value, :desired_value, :historical_value, :status, :message, :file, :line, :source_description, :invalidate_refreshes, :redacted, :corrective_change]
+  ATTRIBUTES = [:name, :resource, :property, :previous_value, :desired_value, :status, :message, :file, :line, :source_description, :invalidate_refreshes, :redacted, :corrective_change]
   attr_accessor *ATTRIBUTES
   attr_accessor :time
   attr_reader :default_log_level
@@ -42,7 +42,6 @@ class Puppet::Transaction::Event
     @property = data['property']
     @previous_value = data['previous_value']
     @desired_value = data['desired_value']
-    @historical_value = data['historical_value']
     @message = data['message']
     @name = data['name'].intern if data['name']
     @status = data['status']
@@ -57,7 +56,6 @@ class Puppet::Transaction::Event
       'property' => @property,
       'previous_value' => @previous_value,
       'desired_value' => @desired_value,
-      'historical_value' => @historical_value,
       'message' => @message,
       'name' => @name.nil? ? nil : @name.to_s,
       'status' => @status,
