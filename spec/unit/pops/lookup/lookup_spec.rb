@@ -58,10 +58,12 @@ describe 'The lookup API' do
           mod::e: mod::e (from module)
           mod::f: mod::f (from module)
           mod::g:
-            :symbol: value
-            key: value
-            6: value
-            2.7: value
+            :symbol: symbol key value
+            key: string key value
+            6: integer key value
+            -4: negative integer key value
+            2.7: float key value
+            '6': string integer key value
           YAML
       }
     }
@@ -145,12 +147,26 @@ describe 'The lookup API' do
     it 'returns the correct types for hash keys' do
       expect(Lookup.lookup('mod::g', nil, 'not found', true, nil, invocation)).to eql(
 	      {
-		      "symbol" => "value",
-		      "key" => "value",
-		      6 => "value",
-		      2.7 => "value",
+          'symbol' => 'symbol key value',
+		      'key' => 'string key value',
+		      6 => 'integer key value',
+          -4 => 'negative integer key value',
+		      2.7 => 'float key value',
+          '6' => 'string integer key value'
 	      }
       )
+    end
+
+    it 'can navigate a hash with an integer key using a dotted key' do
+      expect(Lookup.lookup('mod::g.6', nil, 'not found', true, nil, invocation)).to eql('integer key value')
+    end
+
+    it 'can navigate a hash with a negative integer key using a dotted key' do
+      expect(Lookup.lookup('mod::g.-4', nil, 'not found', true, nil, invocation)).to eql('negative integer key value')
+    end
+
+    it 'can navigate a hash with an string integer key using a dotted key with quoted integer' do
+      expect(Lookup.lookup("mod::g.'6'", nil, 'not found', true, nil, invocation)).to eql('string integer key value')
     end
 
     context "with 'global_only' set to true in the invocation" do
