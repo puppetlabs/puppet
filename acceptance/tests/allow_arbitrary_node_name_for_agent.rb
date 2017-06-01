@@ -6,12 +6,12 @@ testdir = master.tmpdir('nodenamevalue')
 if @options[:is_puppetserver]
   step "Prepare for custom tk-auth rules" do
     on master, 'cp /etc/puppetlabs/puppetserver/conf.d/auth.conf /etc/puppetlabs/puppetserver/conf.d/auth.bak'
-    modify_tk_config(master, options['puppetserver-config'], {'jruby-puppet' => {'use-legacy-auth-conf' => false}})
+    modify_tk_config(master, @options['puppetserver-config'], {'jruby-puppet' => {'use-legacy-auth-conf' => false}})
   end
 
   teardown do
     on master, 'cp /etc/puppetlabs/puppetserver/conf.d/auth.bak /etc/puppetlabs/puppetserver/conf.d/auth.conf'
-    modify_tk_config(master, options['puppetserver-config'], {'jruby-puppet' => {'use-legacy-auth-conf' => true}})
+    modify_tk_config(master, @options['puppetserver-config'], {'jruby-puppet' => {'use-legacy-auth-conf' => true}})
   end
 
   step "Setup tk-auth rules" do
