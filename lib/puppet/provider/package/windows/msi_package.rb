@@ -23,7 +23,7 @@ class Puppet::Provider::Package::Windows
           MsiPackage.new(get_display_name(values),
                          values['DisplayVersion'],
                          name, # productcode
-                         inst.ProductInfo(name, 'PackageCode'))
+                         inst.ProductInfo(name, 'PackageCode').encode(Encoding::UTF_8))
         end
       end
     end
