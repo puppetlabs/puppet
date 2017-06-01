@@ -16,7 +16,7 @@ class LookupKey
     @key = key
     @module_name = qual_index.nil? ? nil : root_key[0..qual_index-1].freeze
     @root_key = root_key
-    @segments = segments.empty? ? nil : segments.map { |segment| segment =~ /^[0-9]+$/ ? segment.to_i : segment }.freeze
+    @segments = segments.empty? ? nil : segments.freeze
   end
 
   def dig(lookup_invocation, value)

@@ -30,7 +30,13 @@ module SubLookup
       raise yield('Syntax error') unless segments.size * 2 == count + 1
       segments.map! do |segment|
         segment.strip!
-        segment.start_with?('"') || segment.start_with?("'") ? segment[1..-2] : segment
+        if segment.start_with?('"') || segment.start_with?("'")
+          segment[1..-2]
+        elsif segment =~ /^(:?[+-]?[0-9]+)$/
+          segment.to_i
+        else
+          segment
+        end
       end
     else
       raise yield('Syntax error')
@@ -58,20 +64,16 @@ module SubLookup
             lookup_invocation.report_not_found(segment)
             throw :no_such_key
           end
-          if segment.is_a?(Integer) || segment =~ /^[0-9]+$/
-            segment = segment.to_i
-            unless value.instance_of?(Array)
-              raise Puppet::DataBinding::LookupError,
-                _("Data Provider type mismatch: Got %{klass} when Array was expected to access value using '%{segment}' from key '%{key}'") % { klass: value.class.name, segment: segment, key: key }
-            end
-            unless segment < value.size
+          if segment.is_a?(Integer) && value.instance_of?(Array)
+            unless segment >= 0 && segment < value.size
               lookup_invocation.report_not_found(segment)
               throw :no_such_key
             end
           else
-            unless value.respond_to?(:'[]') && !(value.instance_of?(Array) || value.instance_of?(String))
+            unless value.respond_to?(:'[]') && !(value.is_a?(Array) || value.instance_of?(String))
               raise Puppet::DataBinding::LookupError,
-                _("Data Provider type mismatch: Got %{klass} when a hash-like object was expected to access value using '%{segment}' from key '%{key}'") % { klass: value.class.name, segment: segment, key: key }
+                _("Data Provider type mismatch: Got %{klass} when a hash-like object was expected to access value using '%{segment}' from key '%{key}'") %
+                  { klass: value.class.name, segment: segment, key: key }
             end
             unless value.include?(segment)
               lookup_invocation.report_not_found(segment)
