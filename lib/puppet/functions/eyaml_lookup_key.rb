@@ -29,17 +29,11 @@ Puppet::Functions.create_function(:eyaml_lookup_key) do
     # nil key is used to indicate that the cache contains the raw content of the eyaml file
     raw_data = context.cached_value(nil)
     if raw_data.nil?
-      options.each_pair do |k, v|
-        unless k == 'path'
-          Hiera::Backend::Eyaml::Options[k.to_sym] = v
-          context.explain { "Setting Eyaml option '#{k}' to '#{v}'" }
-        end
-      end
       raw_data = load_data_hash(options, context)
       context.cache(nil, raw_data)
     end
     context.not_found unless raw_data.include?(key)
-    context.cache(key, decrypt_value(raw_data[key], context))
+    context.cache(key, decrypt_value(raw_data[key], context, options))
   end
 
   def load_data_hash(options, context)
@@ -61,23 +55,29 @@ Puppet::Functions.create_function(:eyaml_lookup_key) do
     end
   end
 
-  def decrypt_value(value, context)
+  def decrypt_value(value, context, options)
     case value
     when String
-      decrypt(value, context)
+      decrypt(value, context, options)
     when Hash
       result = {}
-      value.each_pair { |k, v| result[context.interpolate(k)] = decrypt_value(v, context) }
+      value.each_pair { |k, v| result[context.interpolate(k)] = decrypt_value(v, context, options) }
       result
     when Array
-      value.map { |v| decrypt_value(v, context) }
+      value.map { |v| decrypt_value(v, context, options) }
     else
       value
     end
   end
 
-  def decrypt(data, context)
+  def decrypt(data, context, options)
     if encrypted?(data)
+      # Options must be set prior to each call to #parse since they end up as static variables in
+      # the Options class. They cannot be set once before #decrypt_value is called, since each #decrypt
+      # might cause a new lookup through interpolation. That lookup in turn, might use a different eyaml
+      # config.
+      #
+      Hiera::Backend::Eyaml::Options.set(options)
       tokens = Hiera::Backend::Eyaml::Parser::ParserFactory.hiera_backend_parser.parse(data)
       data = tokens.map(&:to_plain_text).join.chomp
     end
