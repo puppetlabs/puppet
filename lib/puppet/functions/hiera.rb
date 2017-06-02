@@ -2,6 +2,11 @@ require 'hiera/puppet_function'
 # Performs a standard priority lookup of the hierarchy and returns the most specific value
 # for a given key. The returned value can be any type of data.
 #
+# This function is deprecated in favor of the `lookup` function. While this function
+# continues to work, it does **not** support:
+# * `lookup_options` stored in the data
+# * lookup across global, environment, and module layers
+#
 # The function takes up to three arguments, in this order:
 #
 # 1. A string key that Hiera searches for in the hierarchy. **Required**.
@@ -71,8 +76,10 @@ require 'hiera/puppet_function'
 # above, Hiera matches the 'users' key and returns it as a hash.
 #
 # See
-# [the documentation](https://docs.puppetlabs.com/hiera/latest/puppet.html#hiera-lookup-functions)
-# for more information about Hiera lookup functions.
+# [the 'Using the lookup function' documentation](https://docs.puppet.com/puppet/latest/hiera_use_function.html) for how to perform lookup of data.
+# Also see
+# [the 'Using the deprecated hiera functions' documentation](https://docs.puppet.com/puppet/latest/hiera_use_hiera_functions.html)
+# for more information about the Hiera 3 functions.
 #
 # @since 4.0.0
 #
