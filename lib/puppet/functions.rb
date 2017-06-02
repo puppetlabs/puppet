@@ -659,8 +659,8 @@ module Puppet::Functions
     # @return [Object] The result returned by the called function
     #
     # @api public
-    def call_function_with_scope(scope, function_name, *args)
-      internal_call_function(scope, function_name, args)
+    def call_function_with_scope(scope, function_name, *args, &block)
+      internal_call_function(scope, function_name, args, &block)
     end
   end
 
