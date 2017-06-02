@@ -28,7 +28,7 @@ Puppet::Type.type(:package).provide :dnf, :parent => :yum do
       end
   end
 
-  defaultfor :operatingsystem => :fedora, :operatingsystemmajrelease => (22..30).to_a
+  defaultfor :operatingsystem => :fedora, :feature => :supports_dnf
 
   def self.update_command
     # In DNF, update is deprecated for upgrade
