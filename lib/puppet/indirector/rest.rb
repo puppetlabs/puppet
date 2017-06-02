@@ -104,8 +104,9 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     network_formats = model.supported_formats.reject do |format|
       [:yaml, :b64_zlib_yaml].include?(format)
     end
+    mime_types = network_formats.map { |f| model.get_format(f).mime }
     common_headers = {
-      "Accept"                                     => network_formats.join(", "),
+      "Accept"                                     => mime_types.join(', '),
       Puppet::Network::HTTP::HEADER_PUPPET_VERSION => Puppet.version
     }
 
