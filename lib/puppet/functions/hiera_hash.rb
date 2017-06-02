@@ -1,6 +1,12 @@
 require 'hiera/puppet_function'
 
 # Finds all matches of a key throughout the hierarchy and returns them in a merged hash.
+#
+# This function is deprecated in favor of the `lookup` function. While this function
+# continues to work, it does **not** support:
+# * `lookup_options` stored in the data
+# * lookup across global, environment, and module layers
+#
 # If any of the matched hashes share keys, the final hash uses the value from the
 # highest priority match. This is called a
 # [hash merge lookup](https://docs.puppetlabs.com/hiera/latest/lookup_types.html#hash-merge).
@@ -70,8 +76,10 @@ require 'hiera/puppet_function'
 # found in the data sources are strings or arrays, Puppet raises a type mismatch error.
 #
 # See
-# [the documentation](https://docs.puppetlabs.com/hiera/latest/puppet.html#hiera-lookup-functions)
-# for more information about Hiera lookup functions.
+# [the 'Using the lookup function' documentation](https://docs.puppet.com/puppet/latest/hiera_use_function.html) for how to perform lookup of data.
+# Also see
+# [the 'Using the deprecated hiera functions' documentation](https://docs.puppet.com/puppet/latest/hiera_use_hiera_functions.html)
+# for more information about the Hiera 3 functions.
 #
 # @since 4.0.0
 #
