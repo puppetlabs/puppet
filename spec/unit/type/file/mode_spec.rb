@@ -173,8 +173,8 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
     end
 
     describe 'when passed :absent' do
-      it 'returns :absent' do
-        expect(mode.is_to_s(:absent)).to eq(:absent)
+      it "returns 'absent'" do
+        expect(mode.is_to_s(:absent)).to eq("'absent'")
       end
     end
   end

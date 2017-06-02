@@ -430,7 +430,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
               it "should log that the mode changed" do
                 report = catalog.apply.report
 
-                expect(report.logs.first.message).to eq("mode changed '0644' to '0600'")
+                expect(report.logs.first.message).to eq("mode changed 0644 to 0600")
                 expect(report.logs.first.source).to eq("/File[#{path}]/mode")
               end
             end
