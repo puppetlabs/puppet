@@ -16,6 +16,10 @@ module Puppet
   Puppet::Type.type(:file).newparam(:source) do
     include Puppet::Network::HTTP::Compression.module
 
+    BINARY_MIME_TYPES = [
+      Puppet::Network::FormatHandler.format_for('binary').mime
+    ].join(', ').freeze
+
     attr_accessor :source, :local
     desc <<-'EOT'
       A source file, which will be copied into place on the local system. This
@@ -289,7 +293,7 @@ module Puppet
 
       request.do_request(:fileserver) do |req|
         connection = Puppet::Network::HttpPool.http_instance(req.server, req.port)
-        connection.request_get(Puppet::Network::HTTP::API::IndirectedRoutes.request_to_uri(req), add_accept_encoding({"Accept" => "binary"}), &block)
+        connection.request_get(Puppet::Network::HTTP::API::IndirectedRoutes.request_to_uri(req), add_accept_encoding({"Accept" => BINARY_MIME_TYPES}), &block)
       end
     end
 
