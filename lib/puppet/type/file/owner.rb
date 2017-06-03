@@ -33,11 +33,11 @@ module Puppet
 
     # We want to print names, not numbers
     def is_to_s(currentvalue)
-      provider.uid2name(currentvalue) || currentvalue
+      super(provider.uid2name(currentvalue) || currentvalue)
     end
 
     def should_to_s(newvalue)
-      provider.uid2name(newvalue) || newvalue
+      super(provider.uid2name(newvalue) || newvalue)
     end
   end
 end

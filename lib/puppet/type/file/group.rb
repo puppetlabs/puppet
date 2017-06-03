@@ -31,11 +31,11 @@ module Puppet
 
     # We want to print names, not numbers
     def is_to_s(currentvalue)
-      provider.gid2name(currentvalue) || currentvalue
+      super(provider.gid2name(currentvalue) || currentvalue)
     end
 
     def should_to_s(newvalue)
-      provider.gid2name(newvalue) || newvalue
+      super(provider.gid2name(newvalue) || newvalue)
     end
   end
 end
