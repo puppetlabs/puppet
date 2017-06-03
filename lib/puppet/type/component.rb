@@ -49,6 +49,10 @@ Puppet::Type.newtype(:component) do
     reference.to_s
   end
 
+  def reference=(resource)
+    @reference = resource
+  end
+
   # We want our title to just be the whole reference, rather than @title.
   def title
     ref

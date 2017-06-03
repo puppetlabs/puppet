@@ -298,6 +298,11 @@ class Puppet::Resource
 
       @type, @title = self.class.type_and_title(type, title)
 
+      if TYPE_CLASS == @type && MAIN == @title && '' != title
+        # The main class can only be created using the empty string
+        raise ArgumentError, _("'main' is a reserved class name")
+      end
+
       rt = resource_type
 
       if strict? && rt.nil?

@@ -2374,7 +2374,11 @@ end
       self.title = resource.title
     else
       # This should only ever happen for components
-      self.title = resource.ref
+      if is_a?(Puppet::Type::Component)
+        self.reference = resource
+      else
+        self.title = resource.ref
+      end
     end
 
     [:file, :line, :catalog, :exported, :virtual].each do |getter|

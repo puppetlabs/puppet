@@ -577,7 +577,7 @@ class Puppet::Parser::Compiler
     krt = environment.known_resource_types
     @main = krt.find_hostclass('') || krt.add(Puppet::Resource::Type.new(:hostclass, ''))
     @topscope.source = @main
-    @main_resource = Puppet::Parser::Resource.new('class', Puppet::Resource::MAIN, :scope => @topscope, :source => @main)
+    @main_resource = Puppet::Parser::Resource.new(Puppet::Resource::TYPE_CLASS, '', :scope => @topscope, :source => @main)
     @topscope.resource = @main_resource
 
     add_resource(@topscope, @main_resource)

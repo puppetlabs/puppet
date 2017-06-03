@@ -222,32 +222,8 @@ describe Puppet::Resource do
       end
 
       describe "and its name is set to 'main'" do
-        it "should set its title to 'main'" do
-          expect(Puppet::Resource.new("class", Puppet::Resource::MAIN).title).to eq(Puppet::Resource::MAIN)
-        end
-
-        describe "and a class exists whose name is the empty string" do # this was a bit tough to track down
-          it "should set its title to 'main'" do
-            @type = Puppet::Resource::Type.new(:hostclass, "")
-            environment.known_resource_types.add @type
-
-            expect(Puppet::Resource.new("class", Puppet::Resource::MAIN, :environment => environment).title).to eq(Puppet::Resource::MAIN)
-          end
-        end
-      end
-
-      describe "and its name is set to :main" do
-        it "should set its title to 'main'" do
-          expect(Puppet::Resource.new("class", :main).title).to eq(Puppet::Resource::MAIN)
-        end
-
-        describe "and a class exists whose name is the empty string" do # this was a bit tough to track down
-          it "should set its title to 'main'" do
-            @type = Puppet::Resource::Type.new(:hostclass, "")
-            environment.known_resource_types.add @type
-
-            expect(Puppet::Resource.new("class", :main, :environment => environment).title).to eq(Puppet::Resource::MAIN)
-          end
+        it 'should raise a reserved class name error' do
+          expect { Puppet::Resource.new('class', Puppet::Resource::MAIN) }.to raise_error(/'main' is a reserved class name/)
         end
       end
     end
