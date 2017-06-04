@@ -149,12 +149,12 @@ describe Puppet::Type.type(:ssh_authorized_key), :unless => Puppet.features.micr
 
       it "property should return well formed string of arrays from is_to_s" do
         resource = described_class.new(:name => "whev", :type => :rsa, :user => "nobody", :options => ["a","b","c"])
-        expect(resource.property(:options).is_to_s(["a","b","c"])).to eq "a,b,c"
+        expect(resource.property(:options).is_to_s(["a","b","c"])).to eq "['a', 'b', 'c']"
       end
 
       it "property should return well formed string of arrays from should_to_s" do
         resource = described_class.new(:name => "whev", :type => :rsa, :user => "nobody", :options => ["a","b","c"])
-        expect(resource.property(:options).should_to_s(["a","b","c"])).to eq "a,b,c"
+        expect(resource.property(:options).should_to_s(["a","b","c"])).to eq "['a', 'b', 'c']"
       end
 
     end

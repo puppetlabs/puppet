@@ -35,8 +35,8 @@ describe list_class do
       expect(@property.is_to_s(["foo","bar"])).to eq("foo,bar")
     end
 
-    it "should be able to correctly convert ':absent' to a string" do
-      expect(@property.is_to_s(:absent)).to eq("absent")
+    it "should be able to correctly convert ':absent' to a quoted string" do
+      expect(@property.is_to_s(:absent)).to eq("'absent'")
     end
 
     describe "when adding should to current" do

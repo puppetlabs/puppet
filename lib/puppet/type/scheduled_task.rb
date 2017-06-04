@@ -174,11 +174,11 @@ Puppet::Type.newtype(:scheduled_task) do
     end
 
     def should_to_s(new_value=@should)
-      self.class.format_value_for_display(new_value)
+      super(new_value)
     end
 
     def is_to_s(current_value=@is)
-      self.class.format_value_for_display(current_value)
+      super(current_value)
     end
   end
 end

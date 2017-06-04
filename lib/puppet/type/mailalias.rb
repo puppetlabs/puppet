@@ -12,22 +12,6 @@ module Puppet
       desc "Where email should be sent.  Multiple values
         should be specified as an array.  The file and the
         recipient entries are mutually exclusive."
-
-      def is_to_s(value)
-        if value.include?(:absent)
-          super
-        else
-          value.join(",")
-        end
-      end
-
-      def should_to_s(value)
-        if value.include?(:absent)
-          super
-        else
-          value.join(",")
-        end
-      end
     end
 
     newproperty(:file) do
