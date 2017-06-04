@@ -11,7 +11,7 @@ HTTP_ERROR_CODES = [300, 400, 500]
 # Just one from each category since the code makes no real distinctions
 shared_examples_for "a REST terminus method" do |terminus_method|
 
-  describe "when the server's major version is less than 5" do
+  describe "when handling the response" do
     let(:response) do
       mock_response(200, 'OK')
     end
