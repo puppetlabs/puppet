@@ -30,8 +30,10 @@ module Puppet::Configurer::FactHandler
   def facts_for_uploading
     facts = find_facts
 
-    text = facts.render(:pson)
-
-    {:facts_format => :pson, :facts => CGI.escape(text)}
+    if Puppet[:preferred_serialization_format] == "pson"
+      {:facts_format => :pson, :facts => CGI.escape(facts.render(:pson)) }
+    else
+      {:facts_format => 'application/json', :facts => facts.render(:json) }
+    end
   end
 end

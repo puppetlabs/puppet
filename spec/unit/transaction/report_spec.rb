@@ -499,8 +499,6 @@ describe Puppet::Transaction::Report do
   end
 
   it "defaults to serializing to json" do
-    pending("PUP-7259 sending reports in JSON not yet supported")
-
     expect(Puppet::Transaction::Report.default_format).to eq(:json)
   end
 
@@ -543,12 +541,12 @@ describe Puppet::Transaction::Report do
     end
   end
 
-  it "generates pson which validates against the report schema" do
+  it "generates json which validates against the report schema" do
     report = generate_report
     expect(report.render).to validate_against('api/schemas/report.json')
   end
 
-  it "generates pson for error report which validates against the report schema" do
+  it "generates json for error report which validates against the report schema" do
     error_report = generate_report_with_error
     expect(error_report.render).to validate_against('api/schemas/report.json')
   end

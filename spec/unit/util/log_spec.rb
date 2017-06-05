@@ -528,8 +528,8 @@ describe Puppet::Util::Log do
 
   let(:log) { Puppet::Util::Log.new(:level => 'notice', :message => 'hooray', :file => 'thefile', :line => 1729, :source => 'specs', :tags => ['a', 'b', 'c']) }
 
-  it "should round trip through pson" do
-    tripped = Puppet::Util::Log.from_data_hash(PSON.parse(log.to_pson))
+  it "should round trip through json" do
+    tripped = Puppet::Util::Log.from_data_hash(JSON.parse(log.to_json))
 
     expect(tripped.file).to eq(log.file)
     expect(tripped.line).to eq(log.line)

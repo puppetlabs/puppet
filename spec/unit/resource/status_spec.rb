@@ -146,10 +146,10 @@ describe Puppet::Resource::Status do
     s
   end
 
-  it "should round trip through pson" do
+  it "should round trip through json" do
     expect(status.containment_path).to eq(@containment_path)
 
-    tripped = Puppet::Resource::Status.from_data_hash(PSON.parse(status.to_pson))
+    tripped = Puppet::Resource::Status.from_data_hash(JSON.parse(status.to_json))
 
     expect(tripped.title).to eq(status.title)
     expect(tripped.containment_path).to eq(status.containment_path)

@@ -76,8 +76,8 @@ describe Puppet::Util::Metric do
     metric
   end
 
-  it "should round trip through pson" do
-    tripped = Puppet::Util::Metric.from_data_hash(PSON.parse(metric.to_pson))
+  it "should round trip through json" do
+    tripped = Puppet::Util::Metric.from_data_hash(JSON.parse(metric.to_json))
 
     expect(tripped.name).to eq(metric.name)
     expect(tripped.label).to eq(metric.label)
