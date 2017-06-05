@@ -14,6 +14,9 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
   attr_accessor :code
 
+  # @param request [Puppet::Indirector::Request] an indirection request
+  #   (possibly) containing facts
+  # @return [Puppet::Node::Facts] facts object corresponding to facts in request
   def extract_facts_from_request(request)
     return unless text_facts = request.options[:facts]
     unless format = request.options[:facts_format]
@@ -21,38 +24,29 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     end
 
     Puppet::Util::Profiler.profile(_("Found facts"), [:compiler, :find_facts]) do
-      # If the facts were encoded as yaml, then the param reconstitution system
-      # in Network::HTTP::Handler will automagically deserialize the value.
-      if text_facts.is_a?(Puppet::Node::Facts)
-        facts = text_facts
-      elsif format == 'pson'
-        # We unescape here because the corresponding code in Puppet::Configurer::FactHandler escapes
-        # PSON is deprecated, but continue to accept from older agents
-        facts = Puppet::Node::Facts.convert_from('pson', CGI.unescape(text_facts))
-      elsif format == 'application/json'
-        facts = Puppet::Node::Facts.convert_from('json', text_facts)
-      else
-        raise ArgumentError, "Unsupported facts format"
-      end
+      facts = text_facts.is_a?(Puppet::Node::Facts) ? text_facts :
+                                                      convert_wire_facts(text_facts, format)
 
       unless facts.name == request.key
         raise Puppet::Error, _("Catalog for %{request} was requested with fact definition for the wrong node (%{fact_name}).") % { request: request.key.inspect, fact_name: facts.name.inspect }
       end
-
-      options = {
-        :environment => request.environment,
-        :transaction_uuid => request.options[:transaction_uuid],
-      }
-
-      Puppet::Node::Facts.indirection.save(facts, nil, options)
+      return facts
     end
+  end
+
+  def save_facts_from_request(facts, request)
+    Puppet::Node::Facts.indirection.save(facts, nil,
+                                         :environment => request.environment,
+                                         :transaction_uuid => request.options[:transaction_uuid])
   end
 
   # Compile a node's catalog.
   def find(request)
-    extract_facts_from_request(request)
+    facts = extract_facts_from_request(request)
 
-    node = node_from_request(request)
+    save_facts_from_request(facts, request) if !facts.nil?
+
+    node = node_from_request(facts, request)
     node.trusted_data = Puppet.lookup(:trusted_information) { Puppet::Context::TrustedInformation.local(node) }.to_h
 
     if catalog = compile(node, request.options)
@@ -82,6 +76,22 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   end
 
   private
+
+  # @param facts [String] facts in a wire format for decoding
+  # @param format [String] a content-type string
+  # @return [Puppet::Node::Facts] facts object deserialized from supplied string
+  # @api private
+  def convert_wire_facts(facts, format)
+    if format == 'pson'
+      # We unescape here because the corresponding code in Puppet::Configurer::FactHandler escapes
+      # PSON is deprecated, but continue to accept from older agents
+      return Puppet::Node::Facts.convert_from('pson', CGI.unescape(facts))
+    elsif format == 'application/json'
+      return Puppet::Node::Facts.convert_from('json', facts)
+    else
+      raise ArgumentError, "Unsupported facts format"
+    end
+  end
 
   # Add any extra data necessary to the node.
   def add_node_data(node)
@@ -292,14 +302,15 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     config
   end
 
-  # Turn our host name into a node object.
-  def find_node(name, environment, transaction_uuid, configured_environment)
+  # Use indirection to find the node associated with a given request
+  def find_node(name, environment, transaction_uuid, configured_environment, facts)
     Puppet::Util::Profiler.profile(_("Found node information"), [:compiler, :find_node]) do
       node = nil
       begin
         node = Puppet::Node.indirection.find(name, :environment => environment,
                                              :transaction_uuid => transaction_uuid,
-                                             :configured_environment => configured_environment)
+                                             :configured_environment => configured_environment,
+                                             :facts => facts)
       rescue => detail
         message = _("Failed when searching for node %{name}: %{detail}") % { name: name, detail: detail }
         Puppet.log_exception(detail, message)
@@ -317,7 +328,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
   # Extract the node from the request, or use the request
   # to find the node.
-  def node_from_request(request)
+  def node_from_request(facts, request)
     if node = request.options[:use_node]
       if request.remote?
         raise Puppet::Error, _("Invalid option use_node for a remote request")
@@ -334,7 +345,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     # node's catalog with only one certificate and a modification to auth.conf
     # If no key is provided we can only compile the currently connected node.
     name = request.key || request.node
-    if node = find_node(name, request.environment, request.options[:transaction_uuid], request.options[:configured_environment])
+    if node = find_node(name, request.environment, request.options[:transaction_uuid], request.options[:configured_environment], facts)
       return node
     end
 

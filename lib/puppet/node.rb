@@ -116,15 +116,24 @@ class Puppet::Node
   end
 
   # Merge the node facts with parameters from the node source.
-  def fact_merge
-    if @facts = Puppet::Node::Facts.indirection.find(name, :environment => environment)
+  # @api public
+  # @param facts [optional, Puppet::Node::Facts] facts to merge into node parameters.
+  #   Will query Facts indirection if not supplied.
+  # @raise [Puppet::Error] Raise on failure to retrieve facts if not supplied
+  # @return [nil]
+  def fact_merge(facts = nil)
+    begin
+      @facts = facts.nil? ? Puppet::Node::Facts.indirection.find(name, :environment => environment) : facts
+    rescue => detail
+      error = Puppet::Error.new(_("Could not retrieve facts for %{name}: %{detail}") % { name: name, detail: detail }, detail)
+      error.set_backtrace(detail.backtrace)
+      raise error
+    end
+
+    if !@facts.nil?
       @facts.sanitize
       merge(@facts.values)
     end
-  rescue => detail
-    error = Puppet::Error.new(_("Could not retrieve facts for %{name}: %{detail}") % { name: name, detail: detail })
-    error.set_backtrace(detail.backtrace)
-    raise error
   end
 
   # Merge any random parameters into our parameter list.

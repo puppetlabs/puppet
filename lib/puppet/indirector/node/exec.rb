@@ -19,11 +19,13 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
     # Translate the output to ruby.
     result = translate(request.key, output)
 
+    facts = request.options[:facts].is_a?(Puppet::Node::Facts) ? request.options[:facts] : nil
+
     # Set the requested environment if it wasn't overridden
     # If we don't do this it gets set to the local default
     result[:environment] ||= request.environment
 
-    create_node(request.key, result)
+    create_node(request.key, result, facts)
   end
 
   private
@@ -34,7 +36,7 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
   end
 
   # Turn our outputted objects into a Puppet::Node instance.
-  def create_node(name, result)
+  def create_node(name, result, facts = nil)
     node = Puppet::Node.new(name)
     set = false
     [:parameters, :classes, :environment].each do |param|
@@ -44,7 +46,7 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
       end
     end
 
-    node.fact_merge
+    node.fact_merge(facts)
     node
   end
 

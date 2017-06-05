@@ -246,6 +246,20 @@ describe Puppet::Node, "when merging facts" do
     Puppet::Node::Facts.indirection.save(Puppet::Node::Facts.new(@node.name, "one" => "c", "two" => "b"))
   end
 
+  context "when supplied facts as a parameter" do
+    let(:facts) { Puppet::Node::Facts.new(@node.name, "foo" => "bar") }
+
+    it "accepts facts to merge with the node" do
+      @node.expects(:merge).with({ 'foo' => 'bar' })
+      @node.fact_merge(facts)
+    end
+
+    it "will not query the facts indirection if facts are supplied" do
+      Puppet::Node::Facts.indirection.expects(:find).never
+      @node.fact_merge(facts)
+    end
+  end
+
   it "recovers with a Puppet::Error if something is thrown from the facts indirection" do
     Puppet::Node::Facts.indirection.expects(:find).raises "something bad happened in the indirector"
     expect { @node.fact_merge }.to raise_error(Puppet::Error, /Could not retrieve facts for testnode: something bad happened in the indirector/)
