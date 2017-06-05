@@ -362,6 +362,38 @@ module Util
 
   public
 
+  # Percent-encodes a URI query parameter per RFC3986 - https://tools.ietf.org/html/rfc3986
+  #
+  # The output will correctly round-trip through URI.unescape
+  #
+  # @param [String query_string] A URI query string that may be in the form of:
+  #
+  #   query
+  #   query=foo
+  #   query=foo&query2=bar
+  #   query=foo+bar
+  #   query=hello world are you there
+  #
+  #   Note: Also usable by fragments, but not suitable for paths
+  #
+  # @return [String] a new string containing an encoded query string per the
+  #   rules of RFC3986.
+  #
+  #   In particular,
+  #   query will encode + as %2B and space as %20
+  def uri_query_encode(query_string)
+    return nil if query_string.nil?
+
+    # query can encode space to %20 OR +
+    # + MUST be encoded as %2B
+    # in RFC3968 both query and fragment are defined as:
+    # = *( pchar / "/" / "?" )
+    # CGI.escape turns space into + which is the most backward compatible
+    # however it doesn't roundtrip through URI.unescape which prefers %20
+    CGI.escape(query_string).gsub('+', '%20').gsub('%3D', '=').gsub('%26', '&')
+  end
+  module_function :uri_query_encode
+
   # Percent-encodes a URI string per RFC3986 - https://tools.ietf.org/html/rfc3986
   #
   # Properly handles escaping rules for paths, query strings and fragments
@@ -408,14 +440,8 @@ module Util
     # URI.escape does not change / to %2F and : to %3A like CGI.escape
     encoded += URI.escape(parts[:path]) unless parts[:path].nil?
 
-    # query can encode space to %20 OR +
-    # + MUST be encoded as %2B
-    # in RFC3968 both query and fragment are defined as:
-    # = *( pchar / "/" / "?" )
-    # CGI.escape turns space into + which is the most backward compatible
-    # however it doesn't roundtrip through URI.unescape which prefers %20
-    encoded += ('?' + CGI.escape(parts[:query]).gsub('+', '%20')) unless parts[:query].nil?
-    encoded += ('#' + CGI.escape(parts[:fragment]).gsub('+', '%20')) unless parts[:fragment].nil?
+    encoded += ('?' + uri_query_encode(parts[:query])) unless parts[:query].nil?
+    encoded += ('#' + uri_query_encode(parts[:fragment])) unless parts[:fragment].nil?
 
     encoded
   end

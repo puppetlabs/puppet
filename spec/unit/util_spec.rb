@@ -390,6 +390,61 @@ describe Puppet::Util do
     end
   end
 
+  describe "#uri_query_encode" do
+    # different UTF-8 widths
+    # 1-byte A
+    # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
+    # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
+    # 4-byte ܎ - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
+    let (:mixed_utf8) { "A\u06FF\u16A0\u{2070E}" } # Aۿᚠ܎
+    let (:mixed_utf8_urlencoded) { "A%DB%BF%E1%9A%A0%F0%A0%9C%8E" }
+
+    it "should perform basic URI escaping that includes space and +" do
+      expect(Puppet::Util.uri_query_encode("foo bar+foo")).to eq("foo%20bar%2Bfoo")
+    end
+
+    it "should perform basic URI escaping including multiple query parameters" do
+      expect(Puppet::Util.uri_query_encode("foo=bar+foo baz&bar=baz qux")).to eq("foo=bar%2Bfoo%20baz&bar=baz%20qux")
+    end
+
+    [
+      "A\u06FF\u16A0\u{2070E}",
+      "A\u06FF\u16A0\u{2070E}".force_encoding(Encoding::BINARY)
+    ].each do |uri_string|
+      it "should perform UTF-8 URI escaping, even when input strings are not UTF-8" do
+        uri = Puppet::Util.uri_query_encode(mixed_utf8)
+
+        expect(uri.encoding).to eq(Encoding::UTF_8)
+        expect(uri).to eq(mixed_utf8_urlencoded)
+      end
+    end
+
+    it "should be usable by URI::parse" do
+      uri = URI::parse("puppet://server/path?" + Puppet::Util.uri_query_encode(mixed_utf8))
+
+      expect(uri.scheme).to eq('puppet')
+      expect(uri.host).to eq('server')
+      expect(uri.path).to eq('/path')
+      expect(uri.query).to eq(mixed_utf8_urlencoded)
+    end
+
+    it "should be usable by URI::Generic.build" do
+      params = {
+        :scheme => 'file',
+        :host => 'foobar',
+        :path => '/path/to',
+        :query => Puppet::Util.uri_query_encode(mixed_utf8)
+      }
+
+      uri = URI::Generic.build(params)
+
+      expect(uri.scheme).to eq('file')
+      expect(uri.host).to eq('foobar')
+      expect(uri.path).to eq("/path/to")
+      expect(uri.query).to eq(mixed_utf8_urlencoded)
+    end
+  end
+
   describe "#uri_encode" do
     # different UTF-8 widths
     # 1-byte A

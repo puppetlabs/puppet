@@ -24,6 +24,7 @@ class Puppet::Forge
         uri = url.is_a?(::URI) ? url : ::URI.parse(url)
         unless cached_file.file?
           if uri.scheme == 'file'
+            # CGI.unescape butchers Uris that are escaped properly
             FileUtils.cp(URI.unescape(uri.path), cached_file)
           else
             # TODO: Handle HTTPS; probably should use repository.contact
