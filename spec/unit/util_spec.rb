@@ -505,6 +505,32 @@ describe Puppet::Util do
       end
     end
 
+    describe "with fragment support" do
+      context "disabled by default" do
+        it "should encode # as %23 in path" do
+          encoded = Puppet::Util.uri_encode("/foo bar#fragment")
+          expect(encoded).to eq("/foo%20bar%23fragment")
+        end
+
+        it "should encode # as %23 in query" do
+          encoded = Puppet::Util.uri_encode("/foo bar?baz+qux#fragment")
+          expect(encoded).to eq("/foo%20bar?baz%2Bqux%23fragment")
+        end
+      end
+
+      context "optionally enabled" do
+        it "should leave fragment delimiter # after encoded paths" do
+          encoded = Puppet::Util.uri_encode("/foo bar#fragment", { :allow_fragment => true })
+          expect(encoded).to eq("/foo%20bar#fragment")
+        end
+
+        it "should leave fragment delimiter # after encoded query" do
+          encoded = Puppet::Util.uri_encode("/foo bar?baz+qux#fragment", { :allow_fragment => true })
+          expect(encoded).to eq("/foo%20bar?baz%2Bqux#fragment")
+        end
+      end
+    end
+
     describe "when using platform :windows" do
       before :each do
         Puppet.features.stubs(:posix).returns false

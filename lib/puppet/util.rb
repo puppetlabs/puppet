@@ -416,13 +416,17 @@ module Util
   #   Note that with no specified scheme, authority or query parameter delimiter
   #  ? that a naked string will be treated as a path.
   #
+  # @param [Hash{Symbol=>String} opts] Options to alter encoding
+  # @option opts [Array<Symbol>] :allow_fragment defaults to false. When false
+  #   will treat # as part of a path or query and not a fragment delimiter
+  #
   # @return [String] a new string containing appropriate portions of the URI
   #   encoded per the rules of RFC3986.
   #   In particular,
   #   path will not encode +, but will encode space as %20
   #   query will encode + as %2B and space as %20
   #   fragment behaves like query
-  def uri_encode(path)
+  def uri_encode(path, opts = { :allow_fragment => false })
     raise ArgumentError.new('path may not be nil') if path.nil?
 
     # ensure string starts as UTF-8 for the sake of Ruby 1.9.3
@@ -441,7 +445,7 @@ module Util
     encoded += URI.escape(parts[:path]) unless parts[:path].nil?
 
     encoded += ('?' + uri_query_encode(parts[:query])) unless parts[:query].nil?
-    encoded += ('#' + uri_query_encode(parts[:fragment])) unless parts[:fragment].nil?
+    encoded += ((opts[:allow_fragment] ? '#' : '%23') + uri_query_encode(parts[:fragment])) unless parts[:fragment].nil?
 
     encoded
   end

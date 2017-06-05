@@ -1074,6 +1074,35 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       expect(File.read(dest)).to eq("foo")
     end
 
+    it "should maintain source URIs as UTF-8 with Unicode characters in their names and be able to copy such files" do
+      # different UTF-8 widths
+      # 1-byte A
+      # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
+      # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
+      # 4-byte <U+070E> - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
+      mixed_utf8 = "A\u06FF\u16A0\u{2070E}" # Aۿᚠ<U+070E>
+
+      dest = tmpfile("destwith #{mixed_utf8}")
+      source = tmpfile_with_contents("filewith #{mixed_utf8}", "foo")
+      catalog.add_resource described_class.new(:path => dest, :source => source)
+
+      catalog.apply
+
+      # find the resource and verify
+      resource = catalog.resources.first { |r| r.title == "File[#{dest}]" }
+      uri_path = resource.parameters[:source].uri.path
+
+      # note that Windows file:// style URIs get an extra / in front of c:/ like /c:/
+      source_prefix = Puppet.features.microsoft_windows? ? '/' : ''
+
+      # the URI can be round-tripped through unescape
+      expect(URI.unescape(uri_path)).to eq(source_prefix + source)
+      # and is properly UTF-8
+      expect(uri_path.encoding).to eq (Encoding::UTF_8)
+
+      expect(File.read(dest)).to eq('foo')
+    end
+
     it "should be able to copy individual files even if recurse has been specified" do
       source = tmpfile_with_contents("source", "foo")
       dest = tmpfile("dest")
