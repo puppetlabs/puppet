@@ -5,6 +5,9 @@ agents.each do |agent|
     on agent, 'rm -rf bar'
   end
 
+  step 'setup: ensure clean working directory'
+  on agent, 'rm -rf bar'
+
   step 'generate'
   on(agent, puppet('module generate foo-bar --skip-interview'))
 
