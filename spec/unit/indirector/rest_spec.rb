@@ -287,6 +287,12 @@ describe Puppet::Indirector::REST do
     expect(terminus.headers['Accept']).to eq('application/json, text/pson')
   end
 
+  it 'excludes dot from the Accept header' do
+    model.expects(:supported_formats).returns([:json, :dot])
+
+    expect(terminus.headers['Accept']).to eq('application/json')
+  end
+
   describe "when creating an HTTP client" do
     it "should use the class's server and port if the indirection request provides neither" do
       @request = stub 'request', :key => "foo", :server => nil, :port => nil

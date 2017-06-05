@@ -102,7 +102,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   def headers
     # yaml is not allowed on the network
     network_formats = model.supported_formats.reject do |format|
-      [:yaml, :b64_zlib_yaml].include?(format)
+      [:yaml, :b64_zlib_yaml, :dot].include?(format)
     end
     mime_types = network_formats.map { |f| model.get_format(f).mime }
     common_headers = {
