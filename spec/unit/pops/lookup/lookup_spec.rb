@@ -63,7 +63,7 @@ describe 'The lookup API' do
             6: integer key value
             -4: negative integer key value
             2.7: float key value
-            '42': string integer key value
+            '6': string integer key value
           YAML
       }
     }
@@ -152,7 +152,7 @@ describe 'The lookup API' do
 		      6 => 'integer key value',
           -4 => 'negative integer key value',
 		      2.7 => 'float key value',
-          '42' => 'string integer key value'
+          '6' => 'string integer key value'
 	      }
       )
     end
@@ -166,7 +166,7 @@ describe 'The lookup API' do
     end
 
     it 'can navigate a hash with an string integer key using a dotted key with quoted integer' do
-      expect(Lookup.lookup("mod::g.'42'", nil, 'not found', true, nil, invocation)).to eql('string integer key value')
+      expect(Lookup.lookup("mod::g.'6'", nil, 'not found', true, nil, invocation)).to eql('string integer key value')
     end
 
     context "with 'global_only' set to true in the invocation" do

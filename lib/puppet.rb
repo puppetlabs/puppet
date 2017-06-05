@@ -38,9 +38,9 @@ begin
 
   if File.exist?(local_locale_path)
     locale_path = local_locale_path
-  elsif File.exist?(win32_system_locale_path)
+  elsif Puppet::Util::Platform.windows? && File.exist?(win32_system_locale_path)
     locale_path = win32_system_locale_path
-  elsif File.exist?(posix_system_locale_path)
+  elsif !Puppet::Util::Platform.windows? && File.exist?(posix_system_locale_path)
     locale_path = posix_system_locale_path
   else
     # We couldn't load our locale data.

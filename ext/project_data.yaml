@@ -7,7 +7,7 @@ summary: 'Puppet, an automated configuration management tool'
 description: 'Puppet, an automated configuration management tool'
 version_file: 'lib/puppet/version.rb'
 # files and gem_files are space separated lists
-files: '[A-Z]* install.rb bin lib conf man examples ext tasks spec'
+files: '[A-Z]* install.rb bin lib conf man examples ext tasks spec locales'
 # The gem specification bits only work on Puppet >= 3.0rc, NOT 2.7.x and earlier
 gem_files: '[A-Z]* install.rb bin lib conf man examples ext tasks spec locales'
 gem_test_files: 'spec/**/*'
