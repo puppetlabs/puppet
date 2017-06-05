@@ -1,6 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
+require 'puppet/transaction/resource_harness'
 require 'puppet/type/component'
 
 describe Puppet::Transaction::ResourceHarness do
