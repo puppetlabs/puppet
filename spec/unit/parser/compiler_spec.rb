@@ -704,7 +704,7 @@ describe Puppet::Parser::Compiler do
         catalog = @compiler.compile
 
         r2 = catalog.resources.detect {|r| r.title == 'Bar::Foo' }
-        expect(r2.tags).to eq(Puppet::Util::TagSet.new(['bar::foo', 'class', 'bar', 'foo']))
+        expect(r2.tags).to eq(Puppet::Util::TagSet.new(%w(bar::foo class bar foo main)))
       end
     end
 
