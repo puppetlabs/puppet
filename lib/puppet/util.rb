@@ -321,9 +321,12 @@ module Util
       end
     end
 
-    # URI::Generic.build doesn't like a path encoded with CGI.escape
-    # but as long as the source "path" is UTF-8, then CGI.escape is correct
-    params[:path] = URI.escape(path.encode(Encoding::UTF_8)).force_encoding(Encoding::UTF_8)
+    # have to split *after* any relevant escaping
+    params[:path], params[:query] = uri_encode(path).split('?')
+    search_for_fragment = params[:query] ? :query : :path
+    if params[search_for_fragment].include?('#')
+      params[search_for_fragment], _, params[:fragment] = params[search_for_fragment].rpartition('#')
+    end
 
     begin
       URI::Generic.build(params)
@@ -352,6 +355,71 @@ module Util
     path
   end
   module_function :uri_to_path
+
+  private
+
+  RFC_3986_URI_REGEX = /^(?<scheme>([^:\/?#]+):)?(?<authority>\/\/([^\/?#]*))?(?<path>[^?#]*)(\?(?<query>[^#]*))?(#(?<fragment>.*))?$/
+
+  public
+
+  # Percent-encodes a URI string per RFC3986 - https://tools.ietf.org/html/rfc3986
+  #
+  # Properly handles escaping rules for paths, query strings and fragments
+  # independently
+  #
+  # The output is safe to pass to URI.parse or URI::Generic.build and will
+  # correctly round-trip through URI.unescape
+  #
+  # @param [String path] A URI string that may be in the form of:
+  #
+  #   http://foo.com/bar?query
+  #   file://tmp/foo bar
+  #   //foo.com/bar?query
+  #   /bar?query
+  #   bar?query
+  #   bar
+  #   .
+  #   C:\Windows\Temp
+  #
+  #   Note that with no specified scheme, authority or query parameter delimiter
+  #  ? that a naked string will be treated as a path.
+  #
+  # @return [String] a new string containing appropriate portions of the URI
+  #   encoded per the rules of RFC3986.
+  #   In particular,
+  #   path will not encode +, but will encode space as %20
+  #   query will encode + as %2B and space as %20
+  #   fragment behaves like query
+  def uri_encode(path)
+    raise ArgumentError.new('path may not be nil') if path.nil?
+
+    # ensure string starts as UTF-8 for the sake of Ruby 1.9.3
+    encoded = ''.encode!(Encoding::UTF_8)
+
+    # parse uri into named matches, then reassemble properly encoded
+    parts = path.match(RFC_3986_URI_REGEX)
+
+    encoded += parts[:scheme] unless parts[:scheme].nil?
+    encoded += parts[:authority] unless parts[:authority].nil?
+
+    # path requires space to be encoded as %20 (NEVER +)
+    # + should be left unencoded
+    # URI::parse and URI::Generic.build don't like paths encoded with CGI.escape
+    # URI.escape does not change / to %2F and : to %3A like CGI.escape
+    encoded += URI.escape(parts[:path]) unless parts[:path].nil?
+
+    # query can encode space to %20 OR +
+    # + MUST be encoded as %2B
+    # in RFC3968 both query and fragment are defined as:
+    # = *( pchar / "/" / "?" )
+    # CGI.escape turns space into + which is the most backward compatible
+    # however it doesn't roundtrip through URI.unescape which prefers %20
+    encoded += ('?' + CGI.escape(parts[:query]).gsub('+', '%20')) unless parts[:query].nil?
+    encoded += ('#' + CGI.escape(parts[:fragment]).gsub('+', '%20')) unless parts[:fragment].nil?
+
+    encoded
+  end
+  module_function :uri_encode
 
   def safe_posix_fork(stdin=$stdin, stdout=$stdout, stderr=$stderr, &block)
     child_pid = Kernel.fork do
