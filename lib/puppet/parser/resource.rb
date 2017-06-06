@@ -332,6 +332,9 @@ class Puppet::Parser::Resource < Puppet::Resource
     # than replacing an existing one.
     (set_parameter(param) and return) unless current = @parameters[param.name]
 
+    # Parameter is already set - if overriding with a default - simply ignore the setting of the default value
+    return if scope.is_default?(type, param.name, param.value)
+
     # The parameter is already set.  Fail if they're not allowed to override it.
     unless param.source.child_of?(current.source) || param.source.equal?(current.source) && scope.is_default?(type, param.name, current.value)
       msg = "Parameter '#{param.name}' is already set on #{self}"
