@@ -10,6 +10,7 @@ Puppet::Type.type(:package).provide :puppet_gem, :parent => :gem do
     # On windows, we put our ruby ahead of anything that already
     # existed on the system PATH. This means that we do not need to
     # sort out the absolute path.
+    # To specify the absolute path, consider using Puppet::Util.get_env('RUBY_DIR').
     commands :gemcmd => "gem"
   else
     commands :gemcmd => "/opt/puppetlabs/puppet/bin/gem"
