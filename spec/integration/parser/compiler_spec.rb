@@ -1135,4 +1135,29 @@ describe Puppet::Parser::Compiler do
       }.to raise_error(/Could not find resource 'Notify\[alias_2\]'/)
     end
   end
+
+  describe 'the compiler when using collection and override' do
+    include PuppetSpec::Compiler
+
+    it 'allows an override when there is a default present' do
+      catalog = compile_to_catalog(<<-MANIFEST)
+        Package { require => Class['bar'] }
+        class bar { }
+        class foo {
+          package { 'python': }
+          package { 'pip': require => Package['python'] }
+
+          Package <| title == 'pip' |> {
+            name     => "python-pip",
+            category => undef,
+          }
+        }
+        include foo
+        include bar
+      MANIFEST
+      package = catalog.resource('Package', 'pip')
+      expect(catalog.resource('Package', 'pip')[:require].to_s).to eql('Package[python]')
+    end
+
+  end
 end
