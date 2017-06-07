@@ -26,7 +26,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       if text_facts.is_a?(Puppet::Node::Facts)
         facts = text_facts
       elsif format == 'pson'
-        # We unescape here because the corresponding code in Puppet::Configurer::FactHandler escapes
+        # We unescape here because the corresponding code in Puppet::Configurer::FactHandler encodes with Puppet::Util.uri_query_encode
         facts = Puppet::Node::Facts.convert_from('pson', CGI.unescape(text_facts))
       else
         raise ArgumentError, "Unsupported facts format"
@@ -105,7 +105,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     # This does that, while preserving any user-specified server or port.
     source_path = Pathname.new(metadata.full_path)
     path = source_path.relative_path_from(environment_path).to_s
-    source_as_uri = URI.parse(URI.escape(source))
+    source_as_uri = URI.parse(Puppet::Util.uri_encode(source))
     server = source_as_uri.host
     port = ":#{source_as_uri.port}" if source_as_uri.port
     return "puppet://#{server}#{port}/#{path}"
@@ -130,7 +130,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   # for the 'modules' mount and the resolved path is of the form:
   #   $codedir/environments/$environment/*/*/files/**
   def inlineable_metadata?(metadata, source, environment_path)
-    source_as_uri = URI.parse(URI.escape(source))
+    source_as_uri = URI.parse(Puppet::Util.uri_encode(source))
+
     location = Puppet::Module::FILETYPES['files']
 
     !!(source_as_uri.path =~ /^\/modules\// &&

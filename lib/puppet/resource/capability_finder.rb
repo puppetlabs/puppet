@@ -87,7 +87,7 @@ module Puppet::Resource::CapabilityFinder
         Puppet::Util::Puppetdb.query_puppetdb(["from", "resources", query])
       # For PuppetDB < 4, use the old internal method action()
       else
-        url = "/pdb/query/v4/resource?query=#{CGI.escape(query.to_json)}"
+        url = "/pdb/query/v4/resource?query=#{Puppet::Util.uri_query_encode(query.to_json)}"
         response = Puppet::Util::Puppetdb::Http.action(url) do |conn, uri|
           conn.get(uri, { 'Accept' => 'application/json'})
         end
