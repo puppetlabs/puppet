@@ -10,6 +10,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   include Puppet::Network::HTTP::Compression.module
 
   IndirectedRoutes = Puppet::Network::HTTP::API::IndirectedRoutes
+  EXCLUDED_FORMATS = [:yaml, :b64_zlib_yaml, :dot]
 
   class << self
     attr_reader :server_setting, :port_setting
@@ -101,11 +102,10 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   # Provide appropriate headers.
   def headers
     # yaml is not allowed on the network
-    network_formats = model.supported_formats.reject do |format|
-      [:yaml, :b64_zlib_yaml].include?(format)
-    end
+    network_formats = model.supported_formats - EXCLUDED_FORMATS
+    mime_types = network_formats.map { |f| model.get_format(f).mime }
     common_headers = {
-      "Accept"                                     => network_formats.join(", "),
+      "Accept"                                     => mime_types.join(', '),
       Puppet::Network::HTTP::HEADER_PUPPET_VERSION => Puppet.version
     }
 
