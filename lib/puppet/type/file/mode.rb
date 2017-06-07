@@ -161,7 +161,7 @@ module Puppet
     end
 
     def should_to_s(should_value)
-      should_value.rjust(4, "0")
+      "'#{should_value.rjust(4, '0')}'"
     end
 
     def is_to_s(currentvalue)
@@ -170,7 +170,7 @@ module Puppet
         # present to absent the mode will have a value of `:absent`.
         super
       else
-        currentvalue.rjust(4, "0")
+        "'#{currentvalue.rjust(4, '0')}'"
       end
     end
   end

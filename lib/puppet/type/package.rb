@@ -206,7 +206,7 @@ module Puppet
       # Provide a bit more information when logging upgrades.
       def should_to_s(newvalue = @should)
         if @latest
-          @latest.to_s
+          super(@latest)
         else
           super(newvalue)
         end

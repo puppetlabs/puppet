@@ -45,13 +45,13 @@ describe Puppet::Type.type(:file).attrclass(:owner) do
       it "should use the name of the user if it can find it" do
         resource.provider.stubs(:uid2name).with(1001).returns 'foo'
 
-        expect(owner.send(prop_to_s, 1001)).to eq('foo')
+        expect(owner.send(prop_to_s, 1001)).to eq("'foo'")
       end
 
       it "should use the id of the user if it can't" do
         resource.provider.stubs(:uid2name).with(1001).returns nil
 
-        expect(owner.send(prop_to_s, 1001)).to eq(1001)
+        expect(owner.send(prop_to_s, 1001)).to eq('1001')
       end
     end
   end
