@@ -41,6 +41,8 @@ class Puppet::Indirector::Request
     end
   end
 
+  # @api private
+  # @deprecated used only internally to be removed in Puppet 5
   def escaped_key
     # Puppet::Network::HTTP::API::IndirectedRoutes is the only caller to escaped_key
     # and these fragments only appear in the path part of a URI
