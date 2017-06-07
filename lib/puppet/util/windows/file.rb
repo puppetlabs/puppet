@@ -397,7 +397,7 @@ module Puppet::Util::Windows::File
   begin
     ffi_lib :kernel32
     attach_function_private :CreateSymbolicLinkW,
-      [:lpwstr, :lpwstr, :dword], :win32_bool
+      [:lpwstr, :lpwstr, :dword], :boolean
   rescue LoadError
   end
 
