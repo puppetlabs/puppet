@@ -369,7 +369,7 @@ describe Puppet::Type.type(:user) do
             is.force_encoding(Encoding::ASCII_8BIT)
             should.force_encoding(Encoding::UTF_8)
             expect(Encoding.compatible?(is, should)).to be_falsey
-            expect(comment_property.change_to_s(is,should)).to match(/changed "\\u\{E2\}\\u\{98\}\\u\{83\}" to "\\u\{DB\}\\u\{BF\}"/)
+            expect(comment_property.change_to_s(is,should)).to match(/changed '\u{E2}\u{98}\u{83}' to '\u{DB}\u{BF}'/)
           end
         end
 
@@ -378,7 +378,7 @@ describe Puppet::Type.type(:user) do
             is.force_encoding(Encoding::UTF_8)
             should.force_encoding(Encoding::UTF_8)
             expect(Encoding.compatible?(is, should)).to be_truthy
-            expect(comment_property.change_to_s(is,should)).to match(/changed "\\u\{2603\}" to "\\u\{6FF\}"/)
+            expect(comment_property.change_to_s(is,should)).to match(/changed '\u{2603}' to '\u{6FF}'/u)
           end
         end
       end

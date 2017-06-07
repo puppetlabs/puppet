@@ -28,9 +28,9 @@ test_name 'PUP-6777 Manage users with UTF-8 comments' do
   # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
   # 4-byte 𠜎 - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
   mixed_utf8_0 = "A\u06FF"
-  reported_mixed_utf8_0 = '"A\\\\u\\{6FF\\}"'
+  reported_mixed_utf8_0 = '\'A\u{6FF}\''
   mixed_utf8_1 = "\u16A0\u{2070E}"
-  reported_mixed_utf8_1 = '"\\\\u\\{16A0\\}\\\\u\\{2070E\\}"'
+  reported_mixed_utf8_1 = '\'\u{16A0}\u{2070E}\''
 
   teardown do
     # remove user on all agents
