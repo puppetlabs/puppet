@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 4.10.1-938-gffa7971\n"
+"Project-Id-Version: Puppet automation framework 4.10.1-974-g7937f7e\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-06-07 11:34+0000\n"
-"PO-Revision-Date: 2017-06-07 11:34+0000\n"
+"POT-Creation-Date: 2017-06-07 22:55+0000\n"
+"PO-Revision-Date: 2017-06-07 22:55+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -1878,15 +1878,15 @@ msgstr ""
 msgid "The given data does not contain a Collection at %{walked_path}, got '%{klass}'"
 msgstr ""
 
-#: ../lib/puppet/functions/hiera_include.rb:87
+#: ../lib/puppet/functions/hiera_include.rb:101
 msgid "Could not find data item %{key}"
 msgstr ""
 
-#: ../lib/puppet/functions/hocon_data.rb:5
+#: ../lib/puppet/functions/hocon_data.rb:11
 msgid "Lookup using Hocon data_hash function is not supported without hocon library"
 msgstr ""
 
-#: ../lib/puppet/functions/hocon_data.rb:27
+#: ../lib/puppet/functions/hocon_data.rb:33
 msgid "Unable to parse (%{path}): %{message}"
 msgstr ""
 
@@ -2025,59 +2025,59 @@ msgstr ""
 msgid "Not inlining unsupported source scheme"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:156
+#: ../lib/puppet/indirector/catalog/compiler.rb:157
 msgid "Not inlining file outside environment"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:161
+#: ../lib/puppet/indirector/catalog/compiler.rb:162
 msgid "Inlining file metadata"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:248
+#: ../lib/puppet/indirector/catalog/compiler.rb:249
 msgid "Could not get metadata for %{resource}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:269
+#: ../lib/puppet/indirector/catalog/compiler.rb:270
 msgid "Unable to find a common checksum type between agent '%{agent_type}' and master '%{master_type}'."
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:272
+#: ../lib/puppet/indirector/catalog/compiler.rb:273
 msgid "Compiled %s for "
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:272
+#: ../lib/puppet/indirector/catalog/compiler.rb:273
 msgid "static catalog"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:272
+#: ../lib/puppet/indirector/catalog/compiler.rb:273
 msgid "catalog"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:274 ../lib/puppet/indirector/catalog/compiler.rb:291
+#: ../lib/puppet/indirector/catalog/compiler.rb:275 ../lib/puppet/indirector/catalog/compiler.rb:292
 msgid " in environment %{env}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:290
+#: ../lib/puppet/indirector/catalog/compiler.rb:291
 msgid "Inlined resource metadata into static catalog for %{node}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:307
+#: ../lib/puppet/indirector/catalog/compiler.rb:308
 msgid "Found node information"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:315
+#: ../lib/puppet/indirector/catalog/compiler.rb:316
 msgid "Failed when searching for node %{name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:334
+#: ../lib/puppet/indirector/catalog/compiler.rb:335
 msgid "Invalid option use_node for a remote request"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:352
+#: ../lib/puppet/indirector/catalog/compiler.rb:353
 msgid "Could not find node '%{name}'; cannot compile"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:370
+#: ../lib/puppet/indirector/catalog/compiler.rb:371
 msgid "Could not retrieve fact %{fact}"
 msgstr ""
 
@@ -2237,7 +2237,11 @@ msgstr ""
 msgid "cannot lookup multiple files"
 msgstr ""
 
-#: ../lib/puppet/indirector/file_server.rb:39
+#: ../lib/puppet/indirector/file_server.rb:25
+msgid "Denying %{method} request for %{desc} on fileserver mount '%{mount_name}'. Use of auth directives for 'fileserver.conf' mount points is no longer supported. Remove these directives and use the 'auth.conf' file instead for access control."
+msgstr ""
+
+#: ../lib/puppet/indirector/file_server.rb:47
 msgid "Could not find filesystem info for file '%{request}' in environment %{env}"
 msgstr ""
 
@@ -2406,19 +2410,19 @@ msgstr ""
 msgid "No report named '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/indirector/request.rb:100
+#: ../lib/puppet/indirector/request.rb:104
 msgid "Could not find indirection '%{indirection}'"
 msgstr ""
 
-#: ../lib/puppet/indirector/request.rb:139
+#: ../lib/puppet/indirector/request.rb:143
 msgid "HTTP REST queries cannot handle values of type '%{klass}'"
 msgstr ""
 
-#: ../lib/puppet/indirector/request.rb:194
+#: ../lib/puppet/indirector/request.rb:198
 msgid "Error connecting to %{srv_server}:%{srv_port}: %{message}"
 msgstr ""
 
-#: ../lib/puppet/indirector/request.rb:250
+#: ../lib/puppet/indirector/request.rb:253
 msgid "Could not understand URL %{key}: %{detail}"
 msgstr ""
 
@@ -6950,11 +6954,11 @@ msgstr ""
 msgid "Couldn't expand PATH containing a ~ character; ignoring PATH element '%{dir}'."
 msgstr ""
 
-#: ../lib/puppet/util.rb:333
+#: ../lib/puppet/util.rb:338
 msgid "Failed to convert '%{path}' to URI: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:558
+#: ../lib/puppet/util.rb:660
 msgid "Could not %{message}: %{err}"
 msgstr ""
 
