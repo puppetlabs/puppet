@@ -83,11 +83,14 @@ describe Puppet::Configurer::FactHandler do
     end
 
     it "should properly accept facts containing a '+'" do
-      facts = Puppet::Node::Facts.new('foo', 'afact' => 'a+b')
+      fact_hash = { 'afact' => 'a+b' }
+      facts = Puppet::Node::Facts.new(Puppet[:node_name_value], fact_hash)
       Puppet::Node::Facts.indirection.save(facts)
       text = Puppet::Util.uri_query_encode(facthandler.find_facts.render(:pson))
 
-      expect(facthandler.facts_for_uploading).to eq({:facts_format => :pson, :facts => text})
+      to_upload = facthandler.facts_for_uploading
+      expect(to_upload).to eq({:facts_format => :pson, :facts => text})
+      expect(JSON.parse(URI.unescape(to_upload[:facts]))['values']).to eq(fact_hash)
     end
 
     it "should properly accept facts containing UTF-8 characters in their names and values" do
@@ -97,12 +100,15 @@ describe Puppet::Configurer::FactHandler do
       # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
       # 4-byte ܎ - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
       mixed_utf8 = "A\u06FF\u16A0\u{2070E}" # Aۿᚠ܎
+      fact_hash = { "name-#{mixed_utf8}" => "value-#{mixed_utf8}" }
 
-      facts = Puppet::Node::Facts.new('foo', "name-#{mixed_utf8}" => "value-#{mixed_utf8}")
+      facts = Puppet::Node::Facts.new(Puppet[:node_name_value], fact_hash)
       Puppet::Node::Facts.indirection.save(facts)
       text = Puppet::Util.uri_query_encode(facthandler.find_facts.render(:pson))
 
-      expect(facthandler.facts_for_uploading).to eq({:facts_format => :pson, :facts => text})
+      to_upload = facthandler.facts_for_uploading
+      expect(to_upload).to eq({:facts_format => :pson, :facts => text})
+      expect(JSON.parse(URI.unescape(to_upload[:facts]))['values']).to eq(fact_hash)
     end
   end
 
@@ -116,11 +122,14 @@ describe Puppet::Configurer::FactHandler do
     end
 
     it "should properly accept facts containing a '+'" do
-      facts = Puppet::Node::Facts.new('foo', 'afact' => 'a+b')
+      fact_hash = { 'afact' => 'a+b' }
+      facts = Puppet::Node::Facts.new(Puppet[:node_name_value], fact_hash)
       Puppet::Node::Facts.indirection.save(facts)
       text = facthandler.find_facts.render(:json)
 
-      expect(facthandler.facts_for_uploading).to eq({:facts_format => 'application/json', :facts => text})
+      to_upload = facthandler.facts_for_uploading
+      expect(to_upload).to eq({:facts_format => 'application/json', :facts => text})
+      expect(JSON.parse(to_upload[:facts])['values']).to eq(fact_hash)
     end
   end
 
