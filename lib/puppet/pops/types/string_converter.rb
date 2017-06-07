@@ -837,10 +837,11 @@ class StringConverter
   def puppet_quote(str)
     # Assume that the string can be single quoted
     bld = '\''
+    bld.force_encoding(str.encoding)
     escaped = false
     str.each_codepoint do |codepoint|
       # Control characters and non-ascii characters cannot be present in a single quoted string
-      return puppet_double_quote(str) if codepoint > 0x7f || codepoint < 0x20
+      return puppet_double_quote(str) if codepoint < 0x20
 
       if escaped
         bld << 0x5c << codepoint
@@ -850,8 +851,10 @@ class StringConverter
           bld << 0x5c << codepoint
         elsif codepoint == 0x5c
           escaped = true
-        else
+        elsif codepoint <= 0x7f
           bld << codepoint
+        else
+          bld << [codepoint].pack('U')
         end
       end
     end
@@ -880,10 +883,12 @@ class StringConverter
       when 0x5c
         bld << '\\\\'
       else
-        if codepoint < 0x20 || codepoint > 0x7f
+        if codepoint < 0x20
           bld << sprintf('\\u{%X}', codepoint)
+        elsif codepoint <= 0x7f
+          bld << codepoint
         else
-          bld.concat(codepoint)
+          bld << [codepoint].pack('U')
         end
       end
     end

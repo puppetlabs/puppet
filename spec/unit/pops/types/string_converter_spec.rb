@@ -127,7 +127,7 @@ describe 'The string converter' do
       end
 
       it 'quoted 5-byte unicode chars' do
-        expect(converter.convert("smile \u{1f603}.", string_formats)).to eq('"smile \\u{1F603}."')
+        expect(converter.convert("smile \u{1f603}.", string_formats)).to eq("'smile \u{1F603}.'")
       end
 
       it 'quoted 2-byte unicode chars' do
