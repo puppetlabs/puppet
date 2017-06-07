@@ -13,7 +13,6 @@
         "configuration_version",
         "report_format",
         "puppet_version",
-        "kind",
         "status",
         "noop",
         "noop_pending",
@@ -135,14 +134,6 @@
             "type":        "string"
         },
 
-        "kind": {
-            "description": "Report kind, enumerator with one of the values:\n\n* `inspect`, if this report came from a puppet inspect run.\n* `apply`, if this report came from a puppet apply or puppet agent run",
-            "enum": [
-                "inspect",
-                "apply"
-            ]
-        },
-
         "status": {
             "description": "Report status, enumerator with one of the values:\n\n* `failed`, if run failed\n* `changed`, if something changed\n* `unchanged`, if nothing changed from the previous run\n",
             "enum": [
@@ -255,7 +246,7 @@
                 },
 
                 "values": {
-                    "description": "The metric values in the 'time' category contains one entry per resource type in the catalog for\nwhich there is at least one resource and the values named:\n\n* `config_retrieval`\n* `total`\n* `inspect` (only present if the report is of `inspect`-kind)\n",
+                    "description": "The metric values in the 'time' category contains one entry per resource type in the catalog for\nwhich there is at least one resource and the values named:\n\n* `config_retrieval`\n* `total`\n\n",
                     "type":        "array",
                     "items": {
                         "description": "Each entry in `values` is an array with 3 slots for `name`, `label` and `value`",
@@ -371,7 +362,6 @@
                                 "enum": [
                                     "success",
                                     "failure",
-                                    "audit",
                                     "noop",
                                     "total"
                                 ]
@@ -381,7 +371,6 @@
                                 "enum":  [
                                     "Success",
                                     "Failure",
-                                    "Audit",
                                     "Noop",
                                     "Total"
                                 ]
@@ -480,7 +469,7 @@
                 },
 
                 "evaluation_time": {
-                    "description": "The amount of time, in seconds, taken to evaluate the resource. Not present in reports of `inspect` kind.",
+                    "description": "The amount of time, in seconds, taken to evaluate the resource.",
                     "oneOf":       [
                         {"type": "number"},
                         {"type": "null"}
@@ -488,12 +477,12 @@
                 },
 
                 "change_count": {
-                    "description": "The number of properties which changed. Always 0 in reports of `inspect` kind.",
+                    "description": "The number of properties which changed.",
                     "type":        "integer"
                 },
 
                 "out_of_sync_count": {
-                    "description": "The number of properties which were out of sync. Always 0 in reports of `inspect` kind.",
+                    "description": "The number of properties which were out of sync.",
                     "type":        "integer"
                 },
 
@@ -564,11 +553,6 @@
             "type":        "object",
             "properties": {
 
-                "audited": {
-                    "description": "True if this property is being audited, otherwise false. True in report of `inspect` kind.",
-                    "type":        "boolean"
-                },
-
                 "property": {
                     "description": "The property for which the event occurred.",
                     "oneOf": [
@@ -588,17 +572,7 @@
                 },
 
                 "desired_value": {
-                    "description": "the value specified in the manifest. Absent in reports of `inspect` kind.",
-                    "oneOf": [
-                        { "type": "string" },
-                        { "type": "array" },
-                        { "type": "object" },
-                        { "type": "null" }
-                    ]
-                },
-
-                "historical_value": {
-                    "description": "The audited value from a previous run of Puppet, if known. Absent in reports of `inspect` kind.",
+                    "description": "the value specified in the manifest.",
                     "oneOf": [
                         { "type": "string" },
                         { "type": "array" },
@@ -613,7 +587,7 @@
                 },
 
                 "name": {
-                    "description": "The name of the event. Absent in reports of `inspect` kind.",
+                    "description": "The name of the event.",
                     "type":        "string"
                 },
 
@@ -623,12 +597,11 @@
                 },
 
                 "status": {
-                    "description": "One of the following strings:\n\n* `success` - property was out of sync, and was successfully changed to be in sync.\n* `failure`- property was out of sync, and couldn't be changed to be in sync due to an error.\n* `noop` - property was out of sync, and wasn't changed due to noop mode.\n* `audit` - property was in sync, and was being audited.\n\ndepending on the type of the event. Always `audit` in reports of `inspect` kind.\n",
+                    "description": "One of the following strings:\n\n* `success` - property was out of sync, and was successfully changed to be in sync.\n* `failure`- property was out of sync, and couldn't be changed to be in sync due to an error.\n* `noop` - property was out of sync, and wasn't changed due to noop mode.\n\ndepending on the type of the event.\n",
                     "enum": [
                         "success",
                         "failure",
-                        "noop",
-                        "audit"
+                        "noop"
                     ]
                 },
                 "time": {
@@ -642,7 +615,6 @@
                 }
             },
             "required": [
-                "audited",
                 "property",
                 "message",
                 "name",

@@ -32,7 +32,7 @@ describe Puppet::Configurer do
     end
 
     it "should save a correct last run summary" do
-      report = Puppet::Transaction::Report.new("apply")
+      report = Puppet::Transaction::Report.new
       Puppet::Transaction::Report.indirection.stubs(:save)
 
       Puppet[:lastrunfile] = tmpfile("lastrunfile")

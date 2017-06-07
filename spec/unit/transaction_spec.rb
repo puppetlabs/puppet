@@ -59,7 +59,7 @@ describe Puppet::Transaction do
   end
 
   it "should use the provided report object" do
-    report = Puppet::Transaction::Report.new("apply")
+    report = Puppet::Transaction::Report.new
     transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, report, nil)
 
     expect(transaction.report).to eq(report)
@@ -86,7 +86,7 @@ describe Puppet::Transaction do
 
     it "should set retrieval time on the report" do
       catalog = Puppet::Resource::Catalog.new
-      report = Puppet::Transaction::Report.new("apply")
+      report = Puppet::Transaction::Report.new
       catalog.retrieval_duration = 5
 
       report.expects(:add_times).with(:config_retrieval, 5)
@@ -330,7 +330,7 @@ describe Puppet::Transaction do
   describe "after resource traversal" do
     let(:catalog) { Puppet::Resource::Catalog.new }
     let(:prioritizer) { Puppet::Graph::RandomPrioritizer.new }
-    let(:report) { Puppet::Transaction::Report.new("apply") }
+    let(:report) { Puppet::Transaction::Report.new }
     let(:transaction) { Puppet::Transaction.new(catalog, report, prioritizer) }
     let(:generator) { Puppet::Transaction::AdditionalResourceGenerator.new(catalog, nil, prioritizer) }
 

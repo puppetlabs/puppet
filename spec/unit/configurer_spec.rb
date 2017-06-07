@@ -117,7 +117,7 @@ describe Puppet::Configurer do
     end
 
     it "should initialize a transaction report if one is not provided" do
-      report = Puppet::Transaction::Report.new("apply")
+      report = Puppet::Transaction::Report.new
       Puppet::Transaction::Report.expects(:new).returns report
 
       @agent.run
@@ -127,14 +127,14 @@ describe Puppet::Configurer do
       Puppet[:node_name_fact] = 'my_name_fact'
       @facts.values = {'my_name_fact' => 'node_name_from_fact'}
 
-      report = Puppet::Transaction::Report.new("apply")
+      report = Puppet::Transaction::Report.new
 
       @agent.run(:report => report)
       expect(report.host).to eq('node_name_from_fact')
     end
 
     it "should pass the new report to the catalog" do
-      report = Puppet::Transaction::Report.new("apply")
+      report = Puppet::Transaction::Report.new
       Puppet::Transaction::Report.stubs(:new).returns report
       @catalog.expects(:apply).with{|options| options[:report] == report}
 
@@ -142,14 +142,14 @@ describe Puppet::Configurer do
     end
 
     it "should use the provided report if it was passed one" do
-      report = Puppet::Transaction::Report.new("apply")
+      report = Puppet::Transaction::Report.new
       @catalog.expects(:apply).with {|options| options[:report] == report}
 
       @agent.run(:report => report)
     end
 
     it "should set the report as a log destination" do
-      report = Puppet::Transaction::Report.new("apply")
+      report = Puppet::Transaction::Report.new
 
       report.expects(:<<).with(instance_of(Puppet::Util::Log)).at_least_once
 
@@ -203,15 +203,15 @@ describe Puppet::Configurer do
       @agent = Puppet::Configurer.new(Puppet::Configurer::DownloaderFactory.new, "test_tuuid", "test_jid")
       @agent.stubs(:init_storage)
 
-      report = Puppet::Transaction::Report.new('apply', nil, "test", "aaaa")
-      Puppet::Transaction::Report.expects(:new).with(anything, anything, anything, 'test_tuuid', 'test_jid').returns(report)
+      report = Puppet::Transaction::Report.new(nil, "test", "aaaa")
+      Puppet::Transaction::Report.expects(:new).with(anything, anything, 'test_tuuid', 'test_jid').returns(report)
       @agent.expects(:send_report).with(report)
 
       @agent.run
     end
 
     it "should send the report" do
-      report = Puppet::Transaction::Report.new("apply", nil, "test", "aaaa")
+      report = Puppet::Transaction::Report.new(nil, "test", "aaaa")
       Puppet::Transaction::Report.expects(:new).returns(report)
       @agent.expects(:send_report).with(report)
 
@@ -224,7 +224,7 @@ describe Puppet::Configurer do
     it "should send the transaction report even if the catalog could not be retrieved" do
       @agent.expects(:retrieve_catalog).returns nil
 
-      report = Puppet::Transaction::Report.new("apply", nil, "test", "aaaa")
+      report = Puppet::Transaction::Report.new(nil, "test", "aaaa")
       Puppet::Transaction::Report.expects(:new).returns(report)
       @agent.expects(:send_report).with(report)
 
@@ -237,7 +237,7 @@ describe Puppet::Configurer do
     it "should send the transaction report even if there is a failure" do
       @agent.expects(:retrieve_catalog).raises "whatever"
 
-      report = Puppet::Transaction::Report.new("apply", nil, "test", "aaaa")
+      report = Puppet::Transaction::Report.new(nil, "test", "aaaa")
       Puppet::Transaction::Report.expects(:new).returns(report)
       @agent.expects(:send_report).with(report)
 
@@ -248,7 +248,7 @@ describe Puppet::Configurer do
     end
 
     it "should remove the report as a log destination when the run is finished" do
-      report = Puppet::Transaction::Report.new("apply")
+      report = Puppet::Transaction::Report.new
       Puppet::Transaction::Report.expects(:new).returns(report)
 
       @agent.run
@@ -257,7 +257,7 @@ describe Puppet::Configurer do
     end
 
     it "should return the report exit_status as the result of the run" do
-      report = Puppet::Transaction::Report.new("apply")
+      report = Puppet::Transaction::Report.new
       Puppet::Transaction::Report.expects(:new).returns(report)
       report.expects(:exit_status).returns(1234)
 
@@ -265,7 +265,7 @@ describe Puppet::Configurer do
     end
 
     it "should send the transaction report even if the pre-run command fails" do
-      report = Puppet::Transaction::Report.new("apply")
+      report = Puppet::Transaction::Report.new
       Puppet::Transaction::Report.expects(:new).returns(report)
 
       Puppet.settings[:prerun_command] = "/my/command"
@@ -276,7 +276,7 @@ describe Puppet::Configurer do
     end
 
     it "should include the pre-run command failure in the report" do
-      report = Puppet::Transaction::Report.new("apply")
+      report = Puppet::Transaction::Report.new
       Puppet::Transaction::Report.expects(:new).returns(report)
 
       Puppet.settings[:prerun_command] = "/my/command"
@@ -287,7 +287,7 @@ describe Puppet::Configurer do
     end
 
     it "should send the transaction report even if the post-run command fails" do
-      report = Puppet::Transaction::Report.new("apply")
+      report = Puppet::Transaction::Report.new
       Puppet::Transaction::Report.expects(:new).returns(report)
 
       Puppet.settings[:postrun_command] = "/my/command"
@@ -298,7 +298,7 @@ describe Puppet::Configurer do
     end
 
     it "should include the post-run command failure in the report" do
-      report = Puppet::Transaction::Report.new("apply")
+      report = Puppet::Transaction::Report.new
       Puppet::Transaction::Report.expects(:new).returns(report)
 
       Puppet.settings[:postrun_command] = "/my/command"
@@ -319,7 +319,7 @@ describe Puppet::Configurer do
     end
 
     it "should finalize the report" do
-      report = Puppet::Transaction::Report.new("apply")
+      report = Puppet::Transaction::Report.new
       Puppet::Transaction::Report.expects(:new).returns(report)
 
       report.expects(:finalize_report)
@@ -327,7 +327,7 @@ describe Puppet::Configurer do
     end
 
     it "should not apply the catalog if the pre-run command fails" do
-      report = Puppet::Transaction::Report.new("apply")
+      report = Puppet::Transaction::Report.new
       Puppet::Transaction::Report.expects(:new).returns(report)
 
       Puppet.settings[:prerun_command] = "/my/command"
@@ -340,7 +340,7 @@ describe Puppet::Configurer do
     end
 
     it "should apply the catalog, send the report, and return nil if the post-run command fails" do
-      report = Puppet::Transaction::Report.new("apply")
+      report = Puppet::Transaction::Report.new
       Puppet::Transaction::Report.expects(:new).returns(report)
 
       Puppet.settings[:postrun_command] = "/my/command"
@@ -368,7 +368,7 @@ describe Puppet::Configurer do
     end
 
     it "should fix the report if the server specifies a new environment in the catalog" do
-      report = Puppet::Transaction::Report.new("apply", nil, "test", "aaaa")
+      report = Puppet::Transaction::Report.new(nil, "test", "aaaa")
       Puppet::Transaction::Report.expects(:new).returns(report)
       @agent.expects(:send_report).with(report)
 
@@ -457,7 +457,7 @@ describe Puppet::Configurer do
       @configurer = Puppet::Configurer.new
       Puppet[:lastrunfile] = tmpfile('last_run_file')
 
-      @report = Puppet::Transaction::Report.new("apply")
+      @report = Puppet::Transaction::Report.new
       Puppet[:reports] = "none"
     end
 

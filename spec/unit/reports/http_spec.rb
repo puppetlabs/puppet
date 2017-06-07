@@ -5,7 +5,7 @@ require 'puppet/reports'
 processor = Puppet::Reports.report(:http)
 
 describe processor do
-  subject { Puppet::Transaction::Report.new("apply").extend(processor) }
+  subject { Puppet::Transaction::Report.new.extend(processor) }
 
   describe "when setting up the connection" do
     let(:http) { stub_everything "http" }

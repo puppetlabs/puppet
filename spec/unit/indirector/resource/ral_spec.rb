@@ -36,6 +36,7 @@ describe "Puppet::Resource::Ral" do
       require 'puppet/type/user'
       Puppet::Type::User.expects(:instances).returns([ wrong_instance, wrong_instance ])
       Puppet::Type::User.expects(:new).with(has_entry(:name => "root")).returns(root)
+      root.expects(:newattr).at_least_once
       root.expects(:to_resource).returns(root_resource)
 
       result = Puppet::Resource::Ral.new.find(@request)

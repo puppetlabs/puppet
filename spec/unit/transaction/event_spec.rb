@@ -41,7 +41,7 @@ describe Puppet::Transaction::Event do
     expect(event.status).to eq("success")
   end
 
-  it "should fail if the status is not to 'audit', 'noop', 'success', or 'failure" do
+  it "should fail if the status is not to 'noop', 'success', or 'failure" do
     event = Puppet::Transaction::Event.new
     expect { event.status = "foo" }.to raise_error(ArgumentError)
   end
@@ -52,12 +52,6 @@ describe Puppet::Transaction::Event do
 
   it "should create a timestamp at its creation time" do
     expect(Puppet::Transaction::Event.new.time).to be_instance_of(Time)
-  end
-
-  describe "audit property" do
-    it "should default to false" do
-      expect(Puppet::Transaction::Event.new.audited).to eq(false)
-    end
   end
 
   describe "when sending logs" do
@@ -125,7 +119,7 @@ describe Puppet::Transaction::Event do
     let(:event) do
       Puppet::Transaction::Event.new(:source_description => "/my/param", :resource => resource,
         :file => "/foo.rb", :line => 27, :tags => %w{one two},
-        :desired_value => 7, :historical_value => 'Brazil',
+        :desired_value => 7,
         :message => "Help I'm trapped in a spec test",
         :name => :mode_changed, :previous_value => 6, :property => :mode,
         :status => 'success',
@@ -147,7 +141,6 @@ describe Puppet::Transaction::Event do
         :line => 27,
         :tags => %w{one two},
         :desired_value => 7,
-        :historical_value => 'Brazil',
         :message => "Help I'm trapped in a spec test",
         :name => :mode_changed,
         :previous_value => 6,
@@ -156,11 +149,9 @@ describe Puppet::Transaction::Event do
 
       tripped = Puppet::Transaction::Event.from_data_hash(JSON.parse(event.to_json))
 
-      expect(tripped.audited).to eq(event.audited)
       expect(tripped.property).to eq(event.property)
       expect(tripped.previous_value).to eq(event.previous_value)
       expect(tripped.desired_value).to eq(event.desired_value)
-      expect(tripped.historical_value).to eq(event.historical_value)
       expect(tripped.message).to eq(event.message)
       expect(tripped.name).to eq(event.name)
       expect(tripped.status).to eq(event.status)
@@ -170,7 +161,6 @@ describe Puppet::Transaction::Event do
   it "should round trip an event for an inspect report through json" do
       resource = Puppet::Type.type(:file).new(:title => make_absolute("/tmp/foo"))
       event = Puppet::Transaction::Event.new(
-        :audited => true,
         :source_description => "/my/param",
         :resource => resource,
         :file => "/foo.rb",
@@ -184,10 +174,8 @@ describe Puppet::Transaction::Event do
       tripped = Puppet::Transaction::Event.from_data_hash(JSON.parse(event.to_json))
 
       expect(tripped.desired_value).to be_nil
-      expect(tripped.historical_value).to be_nil
       expect(tripped.name).to be_nil
 
-      expect(tripped.audited).to eq(event.audited)
       expect(tripped.property).to eq(event.property)
       expect(tripped.previous_value).to eq(event.previous_value)
       expect(tripped.message).to eq(event.message)

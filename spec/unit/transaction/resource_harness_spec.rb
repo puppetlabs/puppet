@@ -330,94 +330,6 @@ describe Puppet::Transaction::ResourceHarness do
     end
   end
 
-  describe "when auditing" do
-    it "should not call insync? on parameters that are merely audited" do
-      stub_provider = make_stub_provider
-      resource = stub_provider.new :name => 'name', :audit => ['foo']
-      resource.property(:foo).expects(:insync?).never
-      status = @harness.evaluate(resource)
-
-      expect(status.events).to be_empty
-    end
-
-    it "should be able to audit a file's group" do # see bug #5710
-      test_file = tmpfile('foo')
-      File.open(test_file, 'w').close
-      resource = Puppet::Type.type(:file).new :path => test_file, :audit => ['group'], :backup => false
-      resource.expects(:err).never # make sure no exceptions get swallowed
-
-      status = @harness.evaluate(resource)
-
-      status.events.each do |event|
-        expect(event.status).to != 'failure'
-      end
-    end
-
-    it "should not ignore microseconds when auditing a file's mtime" do
-      test_file = tmpfile('foo')
-      File.open(test_file, 'w').close
-      resource = Puppet::Type.type(:file).new :path => test_file, :audit => ['mtime'], :backup => false
-
-      # construct a property hash with nanosecond resolution as would be
-      # found on an ext4 file system
-      time_with_nsec_resolution = Time.at(1000, 123456.999)
-      current_from_filesystem    = {:mtime => time_with_nsec_resolution}
-
-      # construct a property hash with a 1 microsecond difference from above
-      time_with_usec_resolution = Time.at(1000, 123457.000)
-      historical_from_state_yaml = {:mtime => time_with_usec_resolution}
-
-      # set up the sequence of stubs; yeah, this is pretty
-      # brittle, so this might need to be adjusted if the
-      # resource_harness logic changes
-      resource.expects(:retrieve).returns(current_from_filesystem)
-      Puppet::Util::Storage.stubs(:cache).with(resource).
-        returns(historical_from_state_yaml).then.
-        returns(current_from_filesystem).then.
-        returns(current_from_filesystem)
-
-      # there should be an audit change recorded, since the two
-      # timestamps differ by at least 1 microsecond
-      status = @harness.evaluate(resource)
-      expect(status.events).not_to be_empty
-      status.events.each do |event|
-        expect(event.message).to match(/audit change: previously recorded/)
-      end
-    end
-
-    it "should ignore nanoseconds when auditing a file's mtime" do
-      test_file = tmpfile('foo')
-      File.open(test_file, 'w').close
-      resource = Puppet::Type.type(:file).new :path => test_file, :audit => ['mtime'], :backup => false
-
-      # construct a property hash with nanosecond resolution as would be
-      # found on an ext4 file system
-      time_with_nsec_resolution = Time.at(1000, 123456.789)
-      current_from_filesystem    = {:mtime => time_with_nsec_resolution}
-
-      # construct a property hash with the same timestamp as above,
-      # truncated to microseconds, as would be read back from state.yaml
-      time_with_usec_resolution = Time.at(1000, 123456.000)
-      historical_from_state_yaml = {:mtime => time_with_usec_resolution}
-
-      # set up the sequence of stubs; yeah, this is pretty
-      # brittle, so this might need to be adjusted if the
-      # resource_harness logic changes
-      resource.expects(:retrieve).returns(current_from_filesystem)
-      Puppet::Util::Storage.stubs(:cache).with(resource).
-        returns(historical_from_state_yaml).then.
-        returns(current_from_filesystem).then.
-        returns(current_from_filesystem)
-
-      # there should be no audit change recorded, despite the
-      # slight difference in the two timestamps
-      status = @harness.evaluate(resource)
-      status.events.each do |event|
-        expect(event.message).not_to match(/audit change: previously recorded/)
-      end
-    end
-  end
-
   describe "handling sensitive properties" do
     describe 'when syncing' do
       let(:test_file) do
@@ -450,39 +362,6 @@ describe Puppet::Transaction::ResourceHarness do
         status = @harness.evaluate(resource)
         sync_event = status.events[0]
         expect(sync_event.message).to eq 'current_value [redacted], should be [redacted] (noop)'
-      end
-
-      describe 'auditing' do
-        before do
-          resource[:audit] = ['content']
-        end
-
-        it "redacts notices when a parameter is newly audited" do
-          resource.property(:content).expects(:notice).with("audit change: newly-recorded value [redacted]")
-          @harness.evaluate(resource)
-        end
-
-        it "redacts event messages for sensitive properties" do
-          Puppet::Util::Storage.stubs(:cache).with(resource).returns({:content => "historical world"})
-          status = @harness.evaluate(resource)
-          sync_event = status.events[0]
-          expect(sync_event.message).to eq 'changed [redacted] to [redacted] (previously recorded value was [redacted])'
-        end
-
-        it "redacts audit event messages for sensitive properties when simulating noop changes" do
-          Puppet::Util::Storage.stubs(:cache).with(resource).returns({:content => "historical world"})
-          resource[:noop] = true
-          status = @harness.evaluate(resource)
-          sync_event = status.events[0]
-          expect(sync_event.message).to eq 'current_value [redacted], should be [redacted] (noop) (previously recorded value was [redacted])'
-        end
-
-        it "redacts event contents for sensitive properties" do
-          Puppet::Util::Storage.stubs(:cache).with(resource).returns({:content => "historical world"})
-          status = @harness.evaluate(resource)
-          sync_event = status.events[0]
-          expect(sync_event.historical_value).to eq '[redacted]'
-        end
       end
     end
 

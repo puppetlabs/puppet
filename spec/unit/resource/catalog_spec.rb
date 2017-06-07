@@ -19,8 +19,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     expect(Puppet::Resource::Catalog.supported_formats).to include(:json, :pson, :dot, :yaml)
   end
 
-  # audit only resources are unmanaged
-  # as are resources without properties with should values
+  # resources without properties with should values are unmanaged
   it "should write its managed resources' types, namevars" do
     catalog = Puppet::Resource::Catalog.new("host")
 
@@ -35,7 +34,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     res2.file = File.expand_path('/modules/bob/manifests/bob.pp')
     res2.line = 42
 
-    res3 = Puppet::Type.type('file').new(:title => File.expand_path('/tmp/susan'), :audit => 'all')
+    res3 = Puppet::Type.type('file').new(:title => File.expand_path('/tmp/susan'))
     res3.file = 'site.pp'
     res3.line = 63
 

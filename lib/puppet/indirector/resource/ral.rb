@@ -12,7 +12,13 @@ class Puppet::Resource::Ral < Puppet::Indirector::Code
   def find( request )
     # find by name
     res   = type(request).instances.find { |o| o.name == resource_name(request) }
-    res ||= type(request).new(:name => resource_name(request), :audit => type(request).properties.collect { |s| s.name })
+    if !res
+      res = type(request).new(:name => resource_name(request))
+      # Register all of the properties for data collection
+      type(request).properties.collect do |s|
+        res.newattr(s.name.to_sym)
+      end
+    end
 
     res.to_resource
   end

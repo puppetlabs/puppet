@@ -43,7 +43,7 @@ class Puppet::Transaction
 
     @persistence = Puppet::Transaction::Persistence.new
 
-    @report = report || Puppet::Transaction::Report.new("apply", catalog.version, catalog.environment)
+    @report = report || Puppet::Transaction::Report.new(catalog.version, catalog.environment)
 
     @prioritizer = prioritizer
 
