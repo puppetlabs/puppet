@@ -511,6 +511,7 @@ module Runtime3Support
       p[Issues::CLASS_NOT_VIRTUALIZABLE]      = Puppet[:strict] == :off ? :warning : Puppet[:strict]
       p[Issues::NUMERIC_COERCION]             = Puppet[:strict] == :off ? :ignore : Puppet[:strict]
       p[Issues::SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING] = Puppet[:strict] == :off ? :warning : Puppet[:strict]
+      p[Issues::SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING] = Puppet[:strict] == :off ? :warning : Puppet[:strict]
     end
   end
 
