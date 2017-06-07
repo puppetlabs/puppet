@@ -5,6 +5,11 @@ require 'hiera/puppet_function'
 # included in the results. This is called an
 # [array merge lookup](https://docs.puppetlabs.com/hiera/latest/lookup_types.html#array-merge).
 #
+# This function is deprecated in favor of the `lookup` function. While this function
+# continues to work, it does **not** support:
+# * `lookup_options` stored in the data
+# * lookup across global, environment, and module layers
+#
 # The `hiera_array` function takes up to three arguments, in this order:
 #
 # 1. A string key that Hiera searches for in the hierarchy. **Required**.
@@ -60,8 +65,10 @@ require 'hiera/puppet_function'
 # value is a hash, Puppet raises a type mismatch error.
 #
 # See
-# [the documentation](https://docs.puppetlabs.com/hiera/latest/puppet.html#hiera-lookup-functions)
-# for more information about Hiera lookup functions.
+# [the 'Using the lookup function' documentation](https://docs.puppet.com/puppet/latest/hiera_use_function.html) for how to perform lookup of data.
+# Also see
+# [the 'Using the deprecated hiera functions' documentation](https://docs.puppet.com/puppet/latest/hiera_use_hiera_functions.html)
+# for more information about the Hiera 3 functions.
 #
 # @since 4.0.0
 #

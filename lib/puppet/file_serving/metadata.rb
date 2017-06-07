@@ -31,14 +31,14 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
 
   def content_uri=(path)
     begin
-      uri = URI.parse(URI.escape(path))
+      uri = URI.parse(Puppet::Util.uri_encode(path))
     rescue URI::InvalidURIError => detail
       raise(ArgumentError, _("Could not understand URI %{path}: %{detail}") % { path: path, detail: detail })
     end
     raise(ArgumentError, _("Cannot use opaque URLs '%{path}'") % { path: path }) unless uri.hierarchical?
     raise(ArgumentError, _("Must use URLs of type puppet as content URI")) if uri.scheme != "puppet"
 
-    @content_uri = path
+    @content_uri = path.encode(Encoding::UTF_8)
   end
 
   class MetaStat

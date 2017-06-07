@@ -4,6 +4,18 @@ require 'hiera/puppet_function'
 # [array merge lookup](https://docs.puppetlabs.com/hiera/latest/lookup_types.html#array-merge)
 # that retrieves the value for a user-specified key from Hiera's data.
 #
+# This function is deprecated in favor of the `lookup` function in combination with `include`.
+# While this function continues to work, it does **not** support:
+# * `lookup_options` stored in the data
+# * lookup across global, environment, and module layers
+#
+# @example Using `lookup` and `include` instead of of the deprecated `hiera_include`
+# 
+# ~~~puppet
+# # In site.pp, outside of any node definitions and below any top-scope variables:
+# lookup('classes', Array[String], 'unique').include
+# ~~~
+#
 # The `hiera_include` function requires:
 #
 # - A string key name to use for classes.
@@ -70,9 +82,11 @@ require 'hiera/puppet_function'
 # # "Key 'classes' not found".
 # ~~~
 #
-# See [the documentation](http://links.puppet.com/hierainclude) for more information
-# and a more detailed example of how `hiera_include` uses array merge lookups to classify
-# nodes.
+# See
+# [the 'Using the lookup function' documentation](https://docs.puppet.com/puppet/latest/hiera_use_function.html) for how to perform lookup of data.
+# Also see
+# [the 'Using the deprecated hiera functions' documentation](https://docs.puppet.com/puppet/latest/hiera_use_hiera_functions.html)
+# for more information about the Hiera 3 functions.
 #
 # @since 4.0.0
 #

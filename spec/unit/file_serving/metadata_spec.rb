@@ -112,6 +112,27 @@ describe Puppet::FileServing::Metadata do
         expect(metadata.content_uri).to eq(uri)
       end
 
+      it "should accept UTF-8 characters" do
+        # different UTF-8 widths
+        # 1-byte A
+        # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
+        # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
+        # 4-byte <U+070E> - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
+        mixed_utf8 = "A\u06FF\u16A0\u{2070E}" # Aۿᚠ<U+070E>
+
+        uri = "puppet:///modules/foo/files/ #{mixed_utf8}"
+        metadata.content_uri = uri
+        expect(metadata.content_uri).to eq(uri)
+        expect(metadata.content_uri.encoding).to eq(Encoding::UTF_8)
+      end
+
+      it "should always set it as UTF-8" do
+        uri = "puppet:///modules/foo/files/".encode(Encoding::ASCII)
+        metadata.content_uri = uri
+        expect(metadata.content_uri).to eq(uri)
+        expect(metadata.content_uri.encoding).to eq(Encoding::UTF_8)
+      end
+
       it "should fail if uri is opaque" do
         expect { metadata.content_uri = 'scheme:www.example.com' }.to raise_error ArgumentError, "Cannot use opaque URLs 'scheme:www.example.com'"
       end

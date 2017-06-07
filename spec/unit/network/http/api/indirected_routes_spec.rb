@@ -127,13 +127,13 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     end
 
     it "should not URI unescape the indirection key" do
-      escaped = URI.escape("foo bar")
+      escaped = Puppet::Util.uri_encode("foo bar")
       indirection, _, key, _ = handler.uri2indirection("GET", "#{master_url_prefix}/node/#{escaped}", params)
       expect(key).to eq(escaped)
     end
 
     it "should not unescape the URI passed through in a call to check_authorization" do
-      key_escaped = URI.escape("foo bar")
+      key_escaped = Puppet::Util.uri_encode("foo bar")
       uri_escaped = "#{master_url_prefix}/node/#{key_escaped}"
       handler.expects(:check_authorization).with(anything, uri_escaped, anything)
       indirection, _, _, _ = handler.uri2indirection("GET", uri_escaped, params)
@@ -199,7 +199,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     end
 
     it "should use the escaped key as the remainder of the URI" do
-      escaped = URI.escape("with spaces")
+      escaped = Puppet::Util.uri_encode("with spaces")
       expect(handler.class.request_to_uri_and_body(request).first.split("/")[4].sub(/\?.+/, '')).to eq(escaped)
     end
 

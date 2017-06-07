@@ -70,7 +70,7 @@ module Puppet
         next if Puppet::Util.absolute_path?(source)
 
         begin
-          uri = URI.parse(URI.escape(source))
+          uri = URI.parse(Puppet::Util.uri_encode(source))
         rescue => detail
           self.fail Puppet::Error, "Could not understand source #{source}: #{detail}", detail
         end
@@ -91,7 +91,13 @@ module Puppet
         source = self.class.normalize(source)
 
         if Puppet::Util.absolute_path?(source)
-          URI.unescape(Puppet::Util.path_to_uri(source).to_s)
+          # CGI.unescape will butcher properly escaped URIs
+          uri_string = Puppet::Util.path_to_uri(source).to_s
+          # Ruby 1.9.3 and earlier have a URI bug in URI
+          # to_s returns an ASCII string despite UTF-8 fragments
+          # since its escaped its safe to universally call encode
+          # URI.unescape always returns strings in the original encoding
+          URI.unescape(uri_string.encode(Encoding::UTF_8))
         else
           source
         end
@@ -219,7 +225,7 @@ module Puppet
     end
 
     def uri
-      @uri ||= URI.parse(URI.escape(metadata.source))
+      @uri ||= URI.parse(Puppet::Util.uri_encode(metadata.source))
     end
 
     def write(file)

@@ -31,7 +31,7 @@ module Puppet::Configurer::FactHandler
     facts = find_facts
 
     if Puppet[:preferred_serialization_format] == "pson"
-      {:facts_format => :pson, :facts => CGI.escape(facts.render(:pson)) }
+      {:facts_format => :pson, :facts => Puppet::Util.uri_query_encode(facts.render(:pson)) }
     else
       {:facts_format => 'application/json', :facts => facts.render(:json) }
     end

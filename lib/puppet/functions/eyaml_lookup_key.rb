@@ -1,3 +1,7 @@
+# The `eyaml_lookup_key` is a hiera 5 `lookup_key` data provider function.
+# See [the configuration guide documentation](https://docs.puppet.com/puppet/latest/hiera_config_yaml_5.html#configuring-a-hierarchy-level-hiera-eyaml) for
+# how to use this function.
+#
 # @since 5.0.0
 #
 Puppet::Functions.create_function(:eyaml_lookup_key) do
