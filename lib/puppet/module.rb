@@ -146,7 +146,9 @@ class Puppet::Module
   rescue JSON::JSONError => e
     msg = "#{name} has an invalid and unparsable metadata.json file. The parse error: #{e.message}"
     case Puppet[:strict]
-    when :off, :warning
+    when :off
+      Puppet.debug(msg)
+    when :warning
       Puppet.warning(msg)
     when :error
       raise FaultyMetadata, msg
