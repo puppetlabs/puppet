@@ -111,7 +111,7 @@ Puppet::Type.newtype(:cron) do
 
     def should_to_s(value = @should)
       if value
-        if name == :command || value.is_a?(Array) && value[0].is_a?(Symbol)
+        if name == :command || (value.is_a?(Array) && value[0].is_a?(Symbol))
           value = value[0]
         end
         super(value)
@@ -122,7 +122,7 @@ Puppet::Type.newtype(:cron) do
 
     def is_to_s(value = @is)
       if value
-        if name == :command || value.is_a?(Array) && value[0].is_a?(Symbol)
+        if name == :command || (value.is_a?(Array) && value[0].is_a?(Symbol))
           value = value[0]
         end
         super(value)
