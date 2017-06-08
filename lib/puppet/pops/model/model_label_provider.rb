@@ -122,7 +122,8 @@ class ModelLabelProvider
       simple_name = o.name.split('::').last
       simple_name[1..-5] + "-Type"
     else
-      o.name
+      n = o.name
+      n.nil? ? 'Anonymous Class' : n
     end
   end
 end
