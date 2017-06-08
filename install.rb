@@ -493,7 +493,7 @@ end
 # Change directory into the puppet root so we don't get the wrong files for install.
 FileUtils.cd File.dirname(__FILE__) do
   # Set these values to what you want installed.
-  configs = glob(%w{conf/auth.conf conf/puppet.conf})
+  configs = glob(%w{conf/auth.conf conf/puppet.conf conf/hiera.yaml})
   bins  = glob(%w{bin/*})
   rdoc  = glob(%w{bin/* lib/**/*.rb README* }).reject { |e| e=~ /\.(bat|cmd)$/ }
   ri    = glob(%w{bin/*.rb lib/**/*.rb}).reject { |e| e=~ /\.(bat|cmd)$/ }
