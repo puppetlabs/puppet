@@ -75,7 +75,7 @@ step "Managing a package which does not include an epoch in its version" do
     verify_absent agents, 'guid'
     apply_manifest_on(agents, 'package {"guid": ensure => "1.1"}') do |result|
       assert_not_match(/Package\[guid\]\/ensure: created/, "#{result.host}: #{result.stdout}")
-      assert_match('Package[guid]/ensure: change from purged to 1.1 failed', "#{result.host}: #{result.stderr}")
+      assert_match("Package[guid]/ensure: change from 'purged' to '1.1' failed", "#{result.host}: #{result.stderr}")
     end
     verify_absent agents, 'guid'
   end
@@ -84,7 +84,7 @@ step "Managing a package which does not include an epoch in its version" do
     verify_absent agents, 'not_a_package'
     apply_manifest_on(agents, 'package {"not_a_package": ensure => present}') do |result|
       assert_not_match(/Package\[not_a_package\]\/ensure: created/, "#{result.host}: #{result.stdout}")
-      assert_match('Package[not_a_package]/ensure: change from purged to present failed', "#{result.host}: #{result.stderr}")
+      assert_match("Package[not_a_package]/ensure: change from 'purged' to 'present' failed", "#{result.host}: #{result.stderr}")
     end
     verify_absent agents, 'not_a_package'
   end
