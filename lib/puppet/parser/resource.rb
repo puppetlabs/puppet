@@ -57,11 +57,11 @@ class Puppet::Parser::Resource < Puppet::Resource
   def add_edge_to_stage
     return unless self.class?
 
-    unless stage = catalog.resource(:stage, self[:stage] || (scope && scope.resource && scope.resource[:stage]) || :main)
-      raise ArgumentError, _("Could not find stage %{stage} specified by %{resource}") % { stage: self[:stage] || :main, resource: self }
+    unless stage = catalog.resource(:stage, self[:stage] || (scope && scope.resource && scope.resource[:stage]) || MAIN)
+      raise ArgumentError, _("Could not find stage %{stage} specified by %{resource}") % { stage: self[:stage] || MAIN, resource: self }
     end
 
-    self[:stage] ||= stage.title unless stage.title == :main
+    self[:stage] ||= stage.title unless MAIN == stage.title
     catalog.add_edge(stage, self)
   end
 

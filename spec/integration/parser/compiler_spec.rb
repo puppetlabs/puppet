@@ -13,7 +13,7 @@ class CompilerTestResource
 
   def [](attr)
     return nil if (attr == :stage || attr == :alias)
-    :main
+    Puppet::Resource::MAIN
   end
 
   def ref

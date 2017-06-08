@@ -36,6 +36,7 @@ class Puppet::Resource
 
   PCORE_TYPE_KEY = '__pcore_type__'.freeze
   VALUE_KEY = 'value'.freeze
+  MAIN = 'main'.freeze
 
   def self.from_data_hash(data)
     resource = self.allocate
@@ -214,7 +215,7 @@ class Puppet::Resource
   #   of construction is much more efficient as it skips calls to
   #   {Puppet::Node::Environment#known_resource_types}.
   #
-  # @param title [String, :main, nil] The title of the resource. If type is `nil`, may also
+  # @param title [String, nil] The title of the resource. If type is `nil`, may also
   #   be the full resource name in the form of `"Type[Title]"`.
   #
   # @api public
@@ -285,6 +286,11 @@ class Puppet::Resource
 
       @type, @title = self.class.type_and_title(type, title)
 
+      if TYPE_CLASS == @type && MAIN == @title && '' != title
+        # The main class can only be created using the empty string
+        raise ArgumentError, _("'main' is a reserved class name")
+      end
+
       rt = resource_type
 
       if strict? && rt.nil?
@@ -351,8 +357,9 @@ class Puppet::Resource
   # @return [Puppet::Type, Puppet::Resource::Type]
   # @api private
   def self.resource_type(type, title, environment)
+    title = title.to_s if title.instance_of?(Symbol)
     case type
-    when TYPE_CLASS; environment.known_resource_types.hostclass(title == :main ? "" : title)
+    when TYPE_CLASS; environment.known_resource_types.hostclass(MAIN == title ? '' : title)
     when TYPE_NODE; environment.known_resource_types.node(title)
     when TYPE_SITE; environment.known_resource_types.site(nil)
     else
@@ -576,7 +583,7 @@ class Puppet::Resource
     type, title = extract_type_and_title(type, title)
     type = munge_type_name(type)
     if type == TYPE_CLASS
-      title = title == '' ? :main : munge_type_name(title)
+      title = title == '' ? MAIN : munge_type_name(title)
     end
     [type, title]
   end
@@ -594,9 +601,10 @@ class Puppet::Resource
   private_class_method :extract_type_and_title
 
   def self.munge_type_name(value)
-    return :main if value == :main
-    return TYPE_CLASS if value == '' || value.nil? || value.to_s.casecmp('component') == 0
-    Puppet::Pops::Types::TypeFormatter.singleton.capitalize_segments(value.to_s)
+    value = value.to_s if value.instance_of?(Symbol)
+    return MAIN if MAIN == value
+    return TYPE_CLASS if value == '' || value.nil? || value.casecmp('component') == 0
+    Puppet::Pops::Types::TypeFormatter.singleton.capitalize_segments(value)
   end
   private_class_method :munge_type_name
 
