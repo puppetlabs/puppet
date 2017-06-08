@@ -90,12 +90,22 @@ describe Puppet::Resource::Status do
     expect(status.events).to eq([event])
   end
 
-  it "records an event for a failure caused by an error" do
-    status.failed_because(StandardError.new("the message"))
+  it "fails and records a failure event with a given message" do
+    status.fail_with_event("foo fail")
+    event = status.events[0]
 
-    expect(status.events[0].message).to eq("the message")
-    expect(status.events[0].status).to eq("failure")
-    expect(status.events[0].name).to eq(:resource_error)
+    expect(event.message).to eq("foo fail")
+    expect(event.status).to eq("failure")
+    expect(event.name).to eq(:resource_error)
+    expect(status.failed?).to be_truthy
+  end
+
+  it "fails and records a failure event with a given exception" do
+    error = StandardError.new("the message")
+    resource.expects(:log_exception).with(error, "Could not evaluate: the message")
+    status.expects(:fail_with_event).with("the message")
+
+    status.failed_because(error)
   end
 
   it "should count the number of successful events and set changed" do

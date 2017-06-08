@@ -157,10 +157,8 @@ class Puppet::Transaction
     graph_cycle_handler = lambda do |cycles|
       cycles.flatten.uniq.each do |resource|
         # We add a failed resource event to the status to ensure accurate
-        # reporting through the event manager. Adding an event via #add_event
-        # with status of 'failure' causes the status itself to be failed.
-        event = resource.event(:name => :resource_error, :status => "failure", :message => _('resource is part of a dependency cycle'))
-        resource_status(resource).add_event(event)
+        # reporting through the event manager.
+        resource_status(resource).fail_with_event(_('resource is part of a dependency cycle'))
       end
       raise Puppet::Error, _('One or more resource dependency cycles detected in graph')
     end
