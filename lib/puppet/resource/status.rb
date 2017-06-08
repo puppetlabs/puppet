@@ -131,12 +131,19 @@ module Puppet
 
       def failed_because(detail)
         @real_resource.log_exception(detail, _("Could not evaluate: %{detail}") % { detail: detail })
-        failed = true
         # There's a contract (implicit unfortunately) that a status of failed
         # will always be accompanied by an event with some explanatory power.  This
         # is useful for reporting/diagnostics/etc.  So synthesize an event here
         # with the exception detail as the message.
-        add_event(@real_resource.event(:name => :resource_error, :status => "failure", :message => detail.to_s))
+        fail_with_event(detail.to_s)
+      end
+
+      # Both set the status state to failed and generate a corresponding
+      # Puppet::Transaction::Event failure with the given message.
+      # @param message [String] the reason for a status failure
+      def fail_with_event(message)
+        failed = true
+        add_event(@real_resource.event(:name => :resource_error, :status => "failure", :message => message))
       end
 
       def initialize(resource)

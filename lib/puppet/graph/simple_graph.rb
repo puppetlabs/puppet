@@ -222,13 +222,13 @@ class Puppet::Graph::SimpleGraph
     return found.sort
   end
 
+  # @return [Array] array of dependency cycles (arrays)
   def report_cycles_in_graph
     cycles = find_cycles_in_graph
-    n = cycles.length           # where is "pluralize"? --daniel 2011-01-22
-    return if n == 0
-    s = n == 1 ? '' : 's'
+    number_of_cycles = cycles.length
+    return if number_of_cycles == 0
 
-    message = n_("Found %{num} dependency cycle:\n", "Found %{num} dependency cycles:\n", n) % { num: n }
+    message = n_("Found %{num} dependency cycle:\n", "Found %{num} dependency cycles:\n", number_of_cycles) % { num: number_of_cycles }
     cycles.each do |cycle|
       paths = paths_in_cycle(cycle)
       message += paths.map{ |path| '(' + path.join(" => ") + ')'}.join("\n") + "\n"
@@ -242,8 +242,8 @@ class Puppet::Graph::SimpleGraph
       #TRANSLATORS OmniGraffle and GraphViz and program names and should not be translated
       message += _("Try the '--graph' option and opening the resulting '.dot' file in OmniGraffle or GraphViz")
     end
-
-    raise Puppet::Error, message
+    Puppet.err(message)
+    cycles
   end
 
   def write_cycles_to_graph(cycles)
