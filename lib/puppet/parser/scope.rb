@@ -516,7 +516,6 @@ class Puppet::Parser::Scope
   end
 
   UNDEFINED_VARIABLES_KIND = 'undefined_variables'.freeze
-  DEPRECATION_KIND = 'deprecation'.freeze
 
   # The exception raised when a throw is uncaught is different in different versions
   # of ruby. In >=2.2.0 it is UncaughtThrowError (which did not exist prior to this)

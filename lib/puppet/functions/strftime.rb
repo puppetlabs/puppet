@@ -28,8 +28,16 @@ Puppet::Functions.create_function(:strftime) do
   end
 
   def legacy_strftime(format, timezone = nil)
-    Puppet.warn_once('deprecation', 'legacy#strftime',
-      _('The argument signature (String format, [String timezone]) is deprecated for #strfime. See #strftime documentation and Timespan type for more info'))
+    stacktrace = Puppet::Pops::PuppetStack.stacktrace()
+    if stacktrace.size > 0
+      file, line = stacktrace[0]
+    else
+      file = nil
+      line = nil
+    end
+    Puppet.warn_once('deprecations', 'legacy#strftime',
+      _('The argument signature (String format, [String timezone]) is deprecated for #strfime. See #strftime documentation and Timespan type for more info'),
+      file, line)
     Puppet::Pops::Time::Timestamp.format_time(format, Time.now.utc, timezone)
   end
 end

@@ -6,7 +6,7 @@ class Puppet::Parser::AST::Resource < Puppet::Parser::AST::Branch
   attr_accessor :type, :instances, :exported, :virtual
 
   def initialize(argshash)
-    Puppet.warn_once('deprecation', 'AST::Resource', _('Use of Puppet::Parser::AST::Resource is deprecated and not fully functional'))
+    Puppet.warn_once('deprecations', 'AST::Resource', _('Use of Puppet::Parser::AST::Resource is deprecated and not fully functional'))
     super(argshash)
   end
 

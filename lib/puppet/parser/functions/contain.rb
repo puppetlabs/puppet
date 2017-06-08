@@ -25,6 +25,6 @@ allowing the function call to `contain` to directly continue.
 "
 ) do |classes|
   # Call the 4.x version of this function in case 3.x ruby code uses this function
-  Puppet.warn_once(:deprecation, '3xfunction#contain', _("Calling function_contain via the Scope class is deprecated. Use Scope#call_function instead"))
+  Puppet.warn_once('deprecations', '3xfunction#contain', _("Calling function_contain via the Scope class is deprecated. Use Scope#call_function instead"))
   call_function('contain', classes)
 end

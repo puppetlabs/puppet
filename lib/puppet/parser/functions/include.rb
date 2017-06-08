@@ -30,5 +30,5 @@ the future parser's resource and relationship expressions.
 ") do |classes|
   call_function('include', classes)
   #TRANSLATORS "function_include", "Scope", and "Scope#call_function" refer to Puppet internals and should not be translated
-  Puppet.warn_once(:deprecation, '3xfunction#include', _("Calling function_include via the Scope class is deprecated. Use Scope#call_function instead"))
+  Puppet.warn_once('deprecations', '3xfunction#include', _("Calling function_include via the Scope class is deprecated. Use Scope#call_function instead"))
 end
