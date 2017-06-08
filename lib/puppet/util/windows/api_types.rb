@@ -165,6 +165,9 @@ module Puppet::Util::Windows::APITypes
   # https://blogs.msdn.com/b/oldnewthing/archive/2011/03/28/10146459.aspx
   FFI.typedef :int32, :win32_bool
 
+  # BOOLEAN (unlike BOOL) is a BYTE - typedef unsigned char BYTE;
+  FFI.typedef :uchar, :boolean
+
   # Same as a LONG, a 32-bit signed integer
   FFI.typedef :int32, :hresult
 
