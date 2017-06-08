@@ -141,8 +141,10 @@ class Puppet::Transaction::Report
   end
 
   # @api private
-  def <<(msg)
-    @logs << msg
+  def <<(log_entry)
+    # runtime errors after completion of report are added after report has finalized
+    @status = 'failed' if log_entry.level == :err
+    @logs << log_entry
     self
   end
 
@@ -170,7 +172,7 @@ class Puppet::Transaction::Report
 
   # @api private
   def compute_status(resource_metrics, change_metric)
-    if resources_failed_to_generate || (resource_metrics["failed"] || 0) > 0
+    if resources_failed_to_generate || (resource_metrics["failed"] || 0) > 0 || @logs.any? { |lg| lg.level == :err }
       'failed'
     elsif change_metric > 0
       'changed'
