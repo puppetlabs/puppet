@@ -1101,7 +1101,7 @@ describe "The lookup function" do
       end
 
       context 'that originates from an array' do
-        let (:mapped_paths) { '[mapped.array_var, var, "paths/%{var}.yaml"]' }
+        let(:mapped_paths) { '[mapped.array_var, var, "paths/%{var}.yaml"]' }
 
         let(:env_data) do
           {
@@ -1212,7 +1212,7 @@ describe "The lookup function" do
       end
 
       context 'that originates from a hash' do
-        let (:mapped_paths) { '[mapped.hash_var, var, "paths/%{var.0}.%{var.1}.yaml"]' }
+        let(:mapped_paths) { '[mapped.hash_var, var, "paths/%{var.0}.%{var.1}.yaml"]' }
 
         let(:env_data) do
           {
@@ -1263,7 +1263,7 @@ describe "The lookup function" do
       end
 
       context 'that originates from a string' do
-        let (:mapped_paths) { '[mapped.string_var, var, "paths/%{var}.yaml"]' }
+        let(:mapped_paths) { '[mapped.string_var, var, "paths/%{var}.yaml"]' }
 
         let(:env_data) do
           {
@@ -1286,11 +1286,16 @@ describe "The lookup function" do
         end
       end
 
-      context 'where the enty does not exist' do
-        let (:mapped_paths) { '[mapped.nosuch_var, var, "paths/%{var}.yaml"]' }
+      context 'where the entry does not exist' do
+        let(:mapped_paths) { '[mapped.nosuch_var, var, "paths/%{var}.yaml"]' }
 
         it 'finds environment data using mapped_paths' do
           expect(explain('hello')).to match(/No such key: "hello"/)
+          expect(warnings).to be_empty
+        end
+
+        it 'explains an undefined variable' do
+          expect(explain('hello')).to match(/mapped_paths variable is undefined/)
           expect(warnings).to be_empty
         end
       end
