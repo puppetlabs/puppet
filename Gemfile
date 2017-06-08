@@ -54,6 +54,9 @@ group(:development, :test) do
   # pin rainbow gem as 2.2.1 requires rubygems 2.6.9+ and (donotwant)
   gem "rainbow", "< 2.2.1", :platforms => [:ruby]
 
+  # pin rainbow gem as 2.2.1 requires rubygems 2.6.9+ and (donotwant)
+  gem "rainbow", "< 2.2.1", :platforms => [:ruby]
+
   gem 'rdoc', "~> 4.1", :platforms => [:ruby]
   gem 'yard'
 
