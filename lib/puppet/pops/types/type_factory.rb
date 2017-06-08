@@ -85,7 +85,7 @@ module TypeFactory
       size_type_or_value.nil? ? PStringType::DEFAULT : PStringType.new(size_type_or_value)
     else
       if Puppet[:strict] != :off
-        Puppet.warn_once(:deprecation, "TypeFactory#string_multi_args", "Passing more than one argument to TypeFactory#string is deprecated")
+        Puppet.warn_once('deprecations', "TypeFactory#string_multi_args", "Passing more than one argument to TypeFactory#string is deprecated")
       end
       deprecated_second_argument.size == 1 ? PStringType.new(deprecated_second_argument[0]) : PEnumType.new(*deprecated_second_argument)
     end

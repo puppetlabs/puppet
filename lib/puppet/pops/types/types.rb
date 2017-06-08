@@ -1384,7 +1384,7 @@ class PStringType < PScalarDataType
   def initialize(size_type_or_value, deprecated_multi_args = EMPTY_ARRAY)
     unless deprecated_multi_args.empty?
       if Puppet[:strict] != :off
-        Puppet.warn_once(:deprecation, "PStringType#initialize_multi_args", "Passing more than one argument to PStringType#initialize is deprecated")
+        Puppet.warn_once('deprecations', "PStringType#initialize_multi_args", "Passing more than one argument to PStringType#initialize is deprecated")
       end
       size_type_or_value = deprecated_multi_args[0]
     end
@@ -1437,7 +1437,7 @@ class PStringType < PScalarDataType
   # @api private
   def values
     if Puppet[:strict] != :off
-      Puppet.warn_once(:deprecation, "PStringType#values", "Method PStringType#values is deprecated. Use #value instead")
+      Puppet.warn_once('deprecations', "PStringType#values", "Method PStringType#values is deprecated. Use #value instead")
     end
     @value.is_a?(String) ? [@value] : EMPTY_ARRAY
   end
@@ -2508,7 +2508,7 @@ class PHashType < PCollectionType
 
   def element_type
     if Puppet[:strict] != :off
-      Puppet.warn_once(:deprecation, 'Puppet::Pops::Types::PHashType#element_type',
+      Puppet.warn_once('deprecations', 'Puppet::Pops::Types::PHashType#element_type',
         'Puppet::Pops::Types::PHashType#element_type is deprecated, use #value_type instead')
     end
     @value_type

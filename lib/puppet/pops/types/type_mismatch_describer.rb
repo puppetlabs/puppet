@@ -550,7 +550,7 @@ module Types
     end
 
     def tense_deprecated
-      Puppet.warn_once(:deprecation, 'typemismatch#tense', "Passing a 'tense' argument to the TypeMismatchDescriber is deprecated and ignored. Everything is now reported using present tense")
+      Puppet.warn_once('deprecations', 'typemismatch#tense', "Passing a 'tense' argument to the TypeMismatchDescriber is deprecated and ignored. Everything is now reported using present tense")
     end
 
     # Validates that all entries in the give_hash exists in the given param_struct, that their type conforms
