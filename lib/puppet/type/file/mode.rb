@@ -20,7 +20,7 @@ module Puppet
       [the puppetlabs/acl module.](https://forge.puppetlabs.com/puppetlabs/acl)
 
       Numeric modes should use the standard octal notation of
-      `<SETUID/SETGID/STICKY><OWNER><GROUP><OTHER>` (e.g. '0644').
+      `<SETUID/SETGID/STICKY><OWNER><GROUP><OTHER>` (for example, "0644").
 
       * Each of the "owner," "group," and "other" digits should be a sum of the
         permissions for that class of users, where read = 4, write = 2, and
@@ -50,7 +50,7 @@ module Puppet
           * g (group's current permissions)
           * o (other's current permissions)
 
-      Thus, mode `0664` could be represented symbolically as either `a=r,ug+w`
+      Thus, mode `"0664"` could be represented symbolically as either `a=r,ug+w`
       or `ug=rw,o=r`.  However, symbolic modes are more expressive than numeric
       modes: a mode only affects the specified bits, so `mode => 'ug+w'` will
       set the user and group write bits, without affecting any other bits.
@@ -66,8 +66,8 @@ module Puppet
         `FILE_GENERIC_WRITE`, and `FILE_GENERIC_EXECUTE` access rights; a
         file's owner always has the `FULL_CONTROL` right
       * "Other" users can't have any permissions a file's group lacks,
-        and its group can't have any permissions its owner lacks; that is, 0644
-        is an acceptable mode, but 0464 is not.
+        and its group can't have any permissions its owner lacks; that is, "0644"
+        is an acceptable mode, but "0464" is not.
     EOT
 
     validate do |value|
