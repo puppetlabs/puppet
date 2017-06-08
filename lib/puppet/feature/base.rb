@@ -80,7 +80,7 @@ Puppet.features.add(:manages_symlinks) do
       def self.is_implemented
         begin
           ffi_lib :kernel32
-          attach_function :CreateSymbolicLinkW, [:lpwstr, :lpwstr, :dword], :win32_bool
+          attach_function :CreateSymbolicLinkW, [:lpwstr, :lpwstr, :dword], :boolean
 
           true
         rescue LoadError => err
