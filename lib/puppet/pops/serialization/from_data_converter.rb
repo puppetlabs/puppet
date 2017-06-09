@@ -5,7 +5,7 @@ module Serialization
   #
   # @api public
   class FromDataConverter
-    # Convert the given `Data` _value_ according to the given _options_ and return the resulting `RichData`.
+    # Converts the given `Data` _value_ according to the given _options_ and returns the resulting `RichData`.
     #
     # @param value [Data] the value to convert
     # @param options {Symbol => <Boolean,String>} options hash
@@ -20,7 +20,7 @@ module Serialization
       new(options).convert(value)
     end
 
-    # Create a new instance of the processor
+    # Creates a new instance of the processor
     #
     # @param options {Symbol => Object} options hash
     # @option options [Loaders::Loader] :loader the loader to use. Can be `nil` in which case the default is
@@ -89,7 +89,7 @@ module Serialization
       end
     end
 
-    # Convert the given `Data` _value_ and return the resulting `RichData`
+    # Converts the given `Data` _value_ and returns the resulting `RichData`
     #
     # @param value [Data] the value to convert
     # @return [RichData] the processed result
