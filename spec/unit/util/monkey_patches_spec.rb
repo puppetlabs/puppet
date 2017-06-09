@@ -121,3 +121,9 @@ describe SecureRandom do
     expect(SecureRandom.uuid).to match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)
   end
 end
+
+describe 'Enumerable' do
+  it 'expects uniq to work on an Enumerable' do
+    expect(['c', 'c', 'C'].reverse_each.uniq).to eql(['C', 'c'])
+  end
+end

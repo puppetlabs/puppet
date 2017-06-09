@@ -79,3 +79,30 @@ if Puppet::Util::Platform.windows?
     end
   end
 end
+
+# The Enumerable#uniq method was added in Ruby 2.4.0 (https://bugs.ruby-lang.org/issues/11090)
+# This is a backport to earlier Ruby versions.
+#
+unless Enumerable.instance_methods.include?(:uniq)
+  module Enumerable
+    def uniq
+      result = []
+      uniq_map = {}
+      if block_given?
+        each do |value|
+          key = yield value
+          next if uniq_map.has_key?(key)
+          uniq_map[key] = true
+          result << value
+        end
+      else
+        each do |value|
+          next if uniq_map.has_key?(value)
+          uniq_map[value] = true
+          result << value
+        end
+      end
+      result
+    end
+  end
+end
