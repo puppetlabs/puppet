@@ -4852,7 +4852,7 @@ msgid "removed"
 msgstr ""
 
 #: ../lib/puppet/property/ensure.rb:57
-msgid "%{value0} changed %{value1} to %{value2}"
+msgid "%{name} changed %{is} to %{should}"
 msgstr ""
 
 #: ../lib/puppet/provider/aixobject.rb:169
