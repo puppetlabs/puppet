@@ -22,7 +22,7 @@ module Serialization
       new(options).convert(value)
     end
 
-    # Create a new instance of the processer
+    # Create a new instance of the processor
     #
     # @param options {Symbol => Object} options hash
     # @option options [Boolean] :rich_data `true` if rich data is enabled
@@ -52,6 +52,8 @@ module Serialization
     #
     # @param value [Object] the value to convert
     # @return [Data] the processed result. An object assignable to `Data`.
+    #
+    # @api public
     def convert(value)
       @path = []
       @values = {}

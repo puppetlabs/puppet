@@ -1,10 +1,34 @@
 module Puppet::Pops
 module Serialization
+  # Class that can process the `Data` produced by the {ToDataConverter} class and reassemble
+  # the objects that were converted.
+  #
+  # @api public
   class FromDataConverter
+    # Convert the given `Data` _value_ according to the given _options_ and return the resulting `RichData`.
+    #
+    # @param value [Data] the value to convert
+    # @param options {Symbol => <Boolean,String>} options hash
+    # @option options [Loaders::Loader] :loader the loader to use. Can be `nil` in which case the default is
+    #    determined by the {Types::TypeParser}.
+    # @option options [Boolean] :allow_unresolved `true` to allow that rich_data hashes are kept "as is" if the
+    #    designated '__pcore_type__' cannot be resolved. Defaults to `false`.
+    # @return [RichData] the processed result.
+    #
+    # @api public
     def self.convert(value, options = EMPTY_HASH)
       new(options).convert(value)
     end
 
+    # Create a new instance of the processor
+    #
+    # @param options {Symbol => Object} options hash
+    # @option options [Loaders::Loader] :loader the loader to use. Can be `nil` in which case the default is
+    #    determined by the {Types::TypeParser}.
+    # @option options [Boolean] :allow_unresolved `true` to allow that rich_data hashes are kept "as is" if the
+    #    designated '__pcore_type__' cannot be resolved. Defaults to `false`.
+    #
+    # @api public
     def initialize(options = EMPTY_HASH)
       @allow_unresolved = options[:allow_unresolved]
       @allow_unresolved = false if @allow_unresolved.nil?
@@ -65,6 +89,12 @@ module Serialization
       end
     end
 
+    # Convert the given `Data` _value_ and return the resulting `RichData`
+    #
+    # @param value [Data] the value to convert
+    # @return [RichData] the processed result
+    #
+    # @api public
     def convert(value)
       if value.is_a?(Hash)
         pcore_type = value[PCORE_TYPE_KEY]
