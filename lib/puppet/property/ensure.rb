@@ -54,7 +54,7 @@ class Puppet::Property::Ensure < Puppet::Property
       elsif newvalue == :absent
         return _("removed")
       else
-        return _("%{value0} changed '%{value1}' to '%{value2}'") % { value0: self.name, value1: self.is_to_s(currentvalue), value2: self.should_to_s(newvalue) }
+        return _('%{name} changed %{is} to %{should}') % { name: name, is: is_to_s(currentvalue), should: should_to_s(newvalue) }
       end
     rescue Puppet::Error, Puppet::DevError
       raise
