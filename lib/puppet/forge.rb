@@ -55,7 +55,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
     matches = []
     uri = "/v3/modules?query=#{term}"
     if Puppet[:module_groups]
-      uri += "&module_groups=#{Puppet[:module_groups]}"
+      uri += "&module_groups=#{Puppet[:module_groups].gsub('+', ' ')}"
     end
 
     while uri
@@ -91,7 +91,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
     name = input.tr('/', '-')
     uri = "/v3/releases?module=#{name}"
     if Puppet[:module_groups]
-      uri += "&module_groups=#{Puppet[:module_groups]}"
+      uri += "&module_groups=#{Puppet[:module_groups].gsub('+', ' ')}"
     end
     releases = []
 
