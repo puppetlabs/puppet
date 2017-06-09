@@ -1,6 +1,7 @@
 require 'net/http'
 require 'uri'
 require 'json'
+require 'semantic_puppet'
 
 require 'puppet/network/http'
 require 'puppet/network/http_pool'
@@ -249,7 +250,21 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   # to request.do_request from here, thus if we change what we pass or how we
   # get it, we only need to change it here.
   def do_request(request)
-    request.do_request(self.class.srv_service, self.class.server, self.class.port) { |req| yield(req) }
+    response = request.do_request(self.class.srv_service, self.class.server, self.class.port) { |req| yield(req) }
+
+    handle_response(request, response) if response
+
+    response
+  end
+
+  def handle_response(request, response)
+    server_version = response[Puppet::Network::HTTP::HEADER_PUPPET_VERSION]
+    if server_version &&
+       SemanticPuppet::Version.parse(server_version).major < 5 &&
+       Puppet[:preferred_serialization_format] != 'pson'
+      Puppet.warning("Downgrading to PSON for future requests")
+      Puppet[:preferred_serialization_format] = 'pson'
+    end
   end
 
   def validate_key(request)
