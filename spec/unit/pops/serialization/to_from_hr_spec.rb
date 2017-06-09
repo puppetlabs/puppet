@@ -408,11 +408,21 @@ module Serialization
       })
     end
 
-    it 'fails when deserializer is unaware of the referenced type' do
-      write(type.create(32))
+    context 'fails when deserializer is unaware of the referenced type' do
+      it 'fails by default' do
+        write(type.create(32))
 
-      # Should fail since no loader knows about 'MyType'
-      expect{ read }.to raise_error(Puppet::Error, 'No implementation mapping found for Puppet Type MyType')
+        # Should fail since no loader knows about 'MyType'
+        expect{ read }.to raise_error(Puppet::Error, 'No implementation mapping found for Puppet Type MyType')
+      end
+
+      context "succeds but produces an rich_type hash when deserializer has 'allow_unresolved' set to true" do
+        let(:from_converter) { FromDataConverter.new(:allow_unresolved => true) }
+        it do
+          write(type.create(32))
+          expect(read).to eql({'__pcore_type__'=>'MyType', 'x'=>32})
+        end
+      end
     end
 
     it 'succeeds when deserializer is aware of the referenced type' do

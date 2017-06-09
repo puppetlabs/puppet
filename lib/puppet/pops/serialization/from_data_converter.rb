@@ -1,12 +1,15 @@
 module Puppet::Pops
 module Serialization
   class FromDataConverter
-    def self.convert(value)
-      new.convert(value)
+    def self.convert(value, options = EMPTY_HASH)
+      new(options).convert(value)
     end
 
     def initialize(options = EMPTY_HASH)
+      @allow_unresolved = options[:allow_unresolved]
+      @allow_unresolved = false if @allow_unresolved.nil?
       @loader = options[:loader]
+
       @pcore_type_procs = {
         PCORE_TYPE_HASH => proc do |hash, _|
           value = hash[PCORE_VALUE_KEY]
@@ -38,9 +41,27 @@ module Serialization
           build(JsonPath::Resolver.singleton.resolve(@root, hash[PCORE_VALUE_KEY]))
         end
       }
-      @pcore_type_procs.default = proc do |hash, type_name|
+      @pcore_type_procs.default = proc do |hash, type_value|
         value = hash.include?(PCORE_VALUE_KEY) ? hash[PCORE_VALUE_KEY] : hash.reject { |key, _| PCORE_TYPE_KEY == key }
-        pcore_type_hash_to_value(data_to_pcore_type(type_name), value)
+        if type_value.is_a?(Hash)
+          type = without_value { convert(type_value) }
+          if type.is_a?(Hash)
+            raise SerializationError, _('Unable to deserialize type from %{type}') % { type: type } unless @allow_unresolved
+            hash
+          else
+            pcore_type_hash_to_value(type, value)
+          end
+        else
+          type = Types::TypeParser.singleton.parse(type_value, @loader)
+          if type.is_a?(Types::PTypeReferenceType)
+            unless @allow_unresolved
+              raise SerializationError, _('No implementation mapping found for Puppet Type %{type_name}') % { type_name: type_value }
+            end
+            hash
+          else
+            pcore_type_hash_to_value(type, value)
+          end
+        end
       end
     end
 
