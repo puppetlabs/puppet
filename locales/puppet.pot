@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 4.10.1-974-g7937f7e\n"
+"Project-Id-Version: Puppet automation framework 4.10.1-1009-g951a367\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-06-07 22:55+0000\n"
-"PO-Revision-Date: 2017-06-07 22:55+0000\n"
+"POT-Creation-Date: 2017-06-09 01:46+0000\n"
+"PO-Revision-Date: 2017-06-09 01:46+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -173,7 +173,7 @@ msgstr ""
 msgid "%{file} is not readable"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:314 ../lib/puppet/application/inspect.rb:90
+#: ../lib/puppet/application/apply.rb:314
 msgid "Exiting"
 msgstr ""
 
@@ -273,34 +273,6 @@ msgstr ""
 
 #: ../lib/puppet/application/filebucket.rb:233
 msgid "Cancelling"
-msgstr ""
-
-#: ../lib/puppet/application/inspect.rb:82
-msgid "Inspect requires reporting to be enabled. Set report=true in puppet.conf to enable reporting."
-msgstr ""
-
-#: ../lib/puppet/application/inspect.rb:106
-msgid "Finished inspection"
-msgstr ""
-
-#: ../lib/puppet/application/inspect.rb:110
-msgid "Could not find catalog for %{certname}"
-msgstr ""
-
-#: ../lib/puppet/application/inspect.rb:132
-msgid "Could not inspect %{ral_resource}; skipping: %{detail}"
-msgstr ""
-
-#: ../lib/puppet/application/inspect.rb:138
-msgid "failed to inspect %{name}"
-msgstr ""
-
-#: ../lib/puppet/application/inspect.rb:152
-msgid "inspected value is %{resource}"
-msgstr ""
-
-#: ../lib/puppet/application/inspect.rb:178 ../lib/puppet/configurer.rb:394 ../lib/puppet/face/report.rb:47
-msgid "Could not send report: %{detail}"
 msgstr ""
 
 #: ../lib/puppet/application/lookup.rb:8
@@ -465,6 +437,10 @@ msgstr ""
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
+#: ../lib/puppet/configurer.rb:394 ../lib/puppet/face/report.rb:47
+msgid "Could not send report: %{detail}"
+msgstr ""
+
 #: ../lib/puppet/configurer.rb:403
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
@@ -515,14 +491,6 @@ msgstr ""
 
 #: ../lib/puppet/context/trusted_information.rb:48
 msgid "TrustedInformation expected a certificate, but none was given."
-msgstr ""
-
-#: ../lib/puppet/defaults.rb:1664
-msgid "Setting 'archive_files' is deprecated. It will be removed in a future release along with the `inspect` command."
-msgstr ""
-
-#: ../lib/puppet/defaults.rb:1673
-msgid "Setting 'archive_file_server' is deprecated. It will be removed in a future release along with the `inspect` command."
 msgstr ""
 
 #: ../lib/puppet/face/ca.rb:5 ../lib/puppet/face/certificate.rb:6 ../lib/puppet/face/config.rb:6 ../lib/puppet/face/epp.rb:8 ../lib/puppet/face/facts.rb:6 ../lib/puppet/face/generate.rb:7 ../lib/puppet/face/help.rb:9 ../lib/puppet/face/key.rb:5 ../lib/puppet/face/man.rb:8 ../lib/puppet/face/module.rb:9 ../lib/puppet/face/node.rb:4 ../lib/puppet/face/parser.rb:6 ../lib/puppet/face/plugin.rb:7 ../lib/puppet/face/report.rb:5 ../lib/puppet/face/resource.rb:5 ../lib/puppet/face/status.rb:5
@@ -1914,7 +1882,7 @@ msgstr ""
 msgid "the same number of parameters as the given size of the slice (%{slice_size}). Block has %{serving_size}; "
 msgstr ""
 
-#: ../lib/puppet/functions/strftime.rb:32
+#: ../lib/puppet/functions/strftime.rb:39
 msgid "The argument signature (String format, [String timezone]) is deprecated for #strfime. See #strftime documentation and Timespan type for more info"
 msgstr ""
 
@@ -2410,23 +2378,23 @@ msgstr ""
 msgid "No report named '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/indirector/request.rb:104
+#: ../lib/puppet/indirector/request.rb:96
 msgid "Could not find indirection '%{indirection}'"
 msgstr ""
 
-#: ../lib/puppet/indirector/request.rb:143
+#: ../lib/puppet/indirector/request.rb:135
 msgid "HTTP REST queries cannot handle values of type '%{klass}'"
 msgstr ""
 
-#: ../lib/puppet/indirector/request.rb:198
+#: ../lib/puppet/indirector/request.rb:190
 msgid "Error connecting to %{srv_server}:%{srv_port}: %{message}"
 msgstr ""
 
-#: ../lib/puppet/indirector/request.rb:253
+#: ../lib/puppet/indirector/request.rb:245
 msgid "Could not understand URL %{key}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/indirector/resource/ral.rb:61
+#: ../lib/puppet/indirector/resource/ral.rb:67
 msgid "Could not find type %{request_type}"
 msgstr ""
 
@@ -3722,67 +3690,67 @@ msgstr ""
 msgid "Scope variable name %{name} is a %{klass}, not a string"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:538
+#: ../lib/puppet/parser/scope.rb:537
 msgid "Variable: %{name}"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:539 ../lib/puppet/parser/scope.rb:541
+#: ../lib/puppet/parser/scope.rb:538 ../lib/puppet/parser/scope.rb:540
 msgid "Undefined variable '%{name}'; %{reason}"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:649
+#: ../lib/puppet/parser/scope.rb:648
 msgid "class %{classname} could not be found"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:650
+#: ../lib/puppet/parser/scope.rb:649
 msgid "class %{classname} has not been evaluated"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:695
+#: ../lib/puppet/parser/scope.rb:694
 msgid "Default already defined for %{type} { %{param} }; cannot redefine"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:752
+#: ../lib/puppet/parser/scope.rb:751
 msgid "Cannot assign to a numeric match result variable '$%{name}'"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:755
+#: ../lib/puppet/parser/scope.rb:754
 msgid "Scope variable name %{value0} is a %{value1}, not a string"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:760 ../lib/puppet/parser/scope.rb:765
+#: ../lib/puppet/parser/scope.rb:759 ../lib/puppet/parser/scope.rb:764
 msgid "Attempt to assign to a reserved variable name: '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:770
+#: ../lib/puppet/parser/scope.rb:769
 msgid "Cannot reassign variable '$%{name}'"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:824
+#: ../lib/puppet/parser/scope.rb:823
 msgid "Unsupported data type: '%{klass}'"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:982
+#: ../lib/puppet/parser/scope.rb:981
 msgid "Invalid regex match data. Got a %{klass}"
 msgstr ""
 
 #. TRANSLATORS "Class" and "Type" are Puppet keywords and should not be translated
-#: ../lib/puppet/parser/scope.rb:1049
+#: ../lib/puppet/parser/scope.rb:1048
 msgid "Cannot use an unspecific Class[] Type"
 msgstr ""
 
 #. TRANSLATORS "Resource" is a class name and should not be translated
-#: ../lib/puppet/parser/scope.rb:1076
+#: ../lib/puppet/parser/scope.rb:1075
 msgid "Cannot use an unspecific Resource[] where a Resource['class', name] is expected"
 msgstr ""
 
 #. TRANSLATORS "Resource" is a class name and should not be translated
-#: ../lib/puppet/parser/scope.rb:1080
+#: ../lib/puppet/parser/scope.rb:1079
 msgid "Cannot use a Resource[%{type_name}] where a Resource['class', name] is expected"
 msgstr ""
 
 #. TRANSLATORS "Resource" is a class name and should not be translated
-#: ../lib/puppet/parser/scope.rb:1084
+#: ../lib/puppet/parser/scope.rb:1083
 msgid "Cannot use an unspecific Resource['class'] where a Resource['class', name] is expected"
 msgstr ""
 
@@ -4887,10 +4855,6 @@ msgstr ""
 msgid "%{value0} changed '%{value1}' to '%{value2}'"
 msgstr ""
 
-#: ../lib/puppet/property/list.rb:17
-msgid "absent"
-msgstr ""
-
 #: ../lib/puppet/provider/aixobject.rb:169
 msgid "Empty key in string 'i'?"
 msgstr ""
@@ -5691,7 +5655,7 @@ msgstr ""
 msgid "Could not create resource file %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/resource/status.rb:135 ../lib/puppet/transaction.rb:234
+#: ../lib/puppet/resource/status.rb:133 ../lib/puppet/transaction.rb:250
 msgid "Could not evaluate: %{detail}"
 msgstr ""
 
@@ -6229,28 +6193,36 @@ msgstr ""
 msgid "post_resource_eval failed for provider %{provider}"
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:160
+#: ../lib/puppet/transaction.rb:161
+msgid "resource is part of a dependency cycle"
+msgstr ""
+
+#: ../lib/puppet/transaction.rb:163
+msgid "One or more resource dependency cycles detected in graph"
+msgstr ""
+
+#: ../lib/puppet/transaction.rb:176
 msgid "Somehow left a component in the relationship graph"
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:162
+#: ../lib/puppet/transaction.rb:178
 msgid "Starting to evaluate the resource"
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:164
+#: ../lib/puppet/transaction.rb:180
 msgid "Evaluated in %0.2f seconds"
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:264
+#: ../lib/puppet/transaction.rb:280
 msgid "Dependency %{dep} has failures: %{status}"
 msgstr ""
 
 #. TRANSLATORS `prefetch` is a function name and should not be translated
-#: ../lib/puppet/transaction.rb:322
+#: ../lib/puppet/transaction.rb:338
 msgid "Could not prefetch %{type_name} provider '%{name}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:350
+#: ../lib/puppet/transaction.rb:366
 msgid "Skipping because of failed dependencies"
 msgstr ""
 
@@ -6267,7 +6239,7 @@ msgstr ""
 msgid "Failed to generate additional resources using 'eval_generate': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/transaction/event.rb:97
+#: ../lib/puppet/transaction/event.rb:92
 msgid "Event status can only be %{statuses}"
 msgstr ""
 
@@ -6331,32 +6303,20 @@ msgstr ""
 msgid "Could not find schedule %{name}"
 msgstr ""
 
-#: ../lib/puppet/transaction/resource_harness.rb:147 ../lib/puppet/transaction/resource_harness.rb:155
+#: ../lib/puppet/transaction/resource_harness.rb:134 ../lib/puppet/transaction/resource_harness.rb:142
 msgid "change from %s to %s failed: "
 msgstr ""
 
-#: ../lib/puppet/transaction/resource_harness.rb:212
-msgid "audit change: previously recorded value %s has been changed to %s"
-msgstr ""
-
-#: ../lib/puppet/transaction/resource_harness.rb:222
-msgid " (previously recorded value was %s)"
-msgstr ""
-
-#: ../lib/puppet/transaction/resource_harness.rb:229
+#: ../lib/puppet/transaction/resource_harness.rb:172
 msgid "current_value %s, should be %s (noop)"
 msgstr ""
 
-#: ../lib/puppet/transaction/resource_harness.rb:238
+#: ../lib/puppet/transaction/resource_harness.rb:181
 msgid "changed %s to %s"
 msgstr ""
 
-#: ../lib/puppet/transaction/resource_harness.rb:261
-msgid "audit change: newly-recorded value %s"
-msgstr ""
-
-#: ../lib/puppet/type.rb:1318
-msgid "The `audit` metaparameter is deprecated and will be ignored in a future release."
+#: ../lib/puppet/type.rb:1298
+msgid "The `audit` metaparameter is ignored."
 msgstr ""
 
 #: ../lib/puppet/type/augeas.rb:167
@@ -6367,19 +6327,19 @@ msgstr ""
 msgid "executed successfully"
 msgstr ""
 
-#: ../lib/puppet/type/cron.rb:198
+#: ../lib/puppet/type/cron.rb:193
 msgid "%{value} is not a valid %{name}"
 msgstr ""
 
-#: ../lib/puppet/type/cron.rb:256
+#: ../lib/puppet/type/cron.rb:251
 msgid "Invalid special schedule %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/cron.rb:329
+#: ../lib/puppet/type/cron.rb:324
 msgid "Invalid environment setting %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/cron.rb:436
+#: ../lib/puppet/type/cron.rb:419
 msgid "%{cron} cannot specify both a special schedule and a value for %{field}"
 msgstr ""
 
@@ -6573,11 +6533,11 @@ msgstr ""
 msgid "munge_integer only takes integers"
 msgstr ""
 
-#: ../lib/puppet/type/mailalias.rb:39
+#: ../lib/puppet/type/mailalias.rb:23
 msgid "File paths must be fully qualified, not '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/type/mailalias.rb:58
+#: ../lib/puppet/type/mailalias.rb:42
 msgid "You cannot specify both a recipient and a file"
 msgstr ""
 
@@ -6701,11 +6661,11 @@ msgstr ""
 msgid "Key must not contain whitespace: %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/ssh_authorized_key.rb:133
+#: ../lib/puppet/type/ssh_authorized_key.rb:117
 msgid "Option %{value} is not valid. A single option must either be of the form 'option' or 'option=\"value\". Multiple options must be provided as an array"
 msgstr ""
 
-#: ../lib/puppet/type/ssh_authorized_key.rb:150
+#: ../lib/puppet/type/ssh_authorized_key.rb:134
 msgid "Attribute 'user' or 'target' is mandatory"
 msgstr ""
 
@@ -7757,7 +7717,7 @@ msgstr ""
 msgid "Unable to read wide strings with %{null_terminator} terminal nulls"
 msgstr ""
 
-#: ../lib/puppet/util/windows/api_types.rb:196
+#: ../lib/puppet/util/windows/api_types.rb:199
 msgid "Bad GUID format."
 msgstr ""
 
