@@ -38,7 +38,10 @@ class Puppet::Transaction::Event
   alias == eql?
 
   def initialize_from_hash(data)
-    data = Puppet::Pops::Serialization::FromDataConverter.convert(data)
+    data = Puppet::Pops::Serialization::FromDataConverter.convert(data, {
+      :allow_unresolved => true,
+      :loader => Puppet::Pops::Loaders.static_loader
+    })
     @property = data['property']
     @previous_value = data['previous_value']
     @desired_value = data['desired_value']
