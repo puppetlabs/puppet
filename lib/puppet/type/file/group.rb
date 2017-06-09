@@ -10,7 +10,7 @@ module Puppet
       On Windows, a user (such as "Administrator") can be set as a file's group
       and a group (such as "Administrators") can be set as a file's owner;
       however, a file's owner and group shouldn't be the same. (If the owner
-      is also the group, files with modes like `0640` will cause log churn, as
+      is also the group, files with modes like `"0640"` will cause log churn, as
       they will always appear out of sync.)
     EOT
 
