@@ -48,6 +48,14 @@ hosts.each do |host|
 
   host['puppetbindir'] = '/usr/bin' if platform == 'windows'
 
+  if host['platform'] =~ /osx/
+    # because of OSX SIP, /usr/bin is not writable and /usr/local/bin is preferred
+    host['puppetbindir'] = '/usr/local/bin'
+    # inject /usr/local/bin into ~/.ssh/environment until BKR-1139 is released
+    # this helps to resolve bundle, puppet and other Ruby binstubs // no restart necessary
+    on host, 'sed -i \'\' "s/^PATH=PATH:/PATH=PATH:\/usr\/local\/bin:/" ~/.ssh/environment'
+  end
+
   # Beakers add_aio_defaults_on helper is not appropriate here as it
   # also alters puppetbindir / privatebindir to use package installed
   # paths rather than git installed paths
