@@ -171,7 +171,7 @@ class StaticLoader < Loader
   end
 
   def create_resource_type_reference(name)
-    typed_name = TypedName.new(:type, name.downcase)
+    typed_name = TypedName.new(:type, name)
     type = Puppet::Pops::Types::TypeFactory.resource(name)
     @loaded[ typed_name ] = NamedEntry.new(typed_name, type, __FILE__)
   end

@@ -94,7 +94,7 @@ class Loaders
     loader = @private_environment_loader
     types = obj_classes.map do |obj_class|
       type = obj_class._ptype
-      typed_name = Loader::TypedName.new(:type, type.name.downcase, name_authority)
+      typed_name = Loader::TypedName.new(:type, type.name, name_authority)
       entry = loader.loaded_entry(typed_name)
       loader.set_entry(typed_name, type, obj_class._plocation) if entry.nil? || entry.value.nil?
       type
@@ -119,7 +119,7 @@ class Loaders
 
     name = name.to_s
     caps_name = Types::TypeFormatter.singleton.capitalize_segments(name)
-    typed_name = Loader::TypedName.new(:type, name.downcase)
+    typed_name = Loader::TypedName.new(:type, name)
     rt3_loader.set_entry(typed_name, Types::PResourceType.new(caps_name), origin)
     nil
   end
