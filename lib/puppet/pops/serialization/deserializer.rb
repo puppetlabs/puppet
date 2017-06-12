@@ -47,10 +47,13 @@ module Serialization
         result = type.read(val.attribute_count, self)
         if result.is_a?(Types::PObjectType)
           existing_type = loader.load(:type, result.name)
-
-          # Add result to the loader unless it is the exact same instance as the existing_type. The add
-          # will succeed when the existing_type is nil.
-          loader.add_entry(:type, result.name, result, nil) unless result.equal?(existing_type)
+          if result.eql?(existing_type)
+            result = existing_type
+          else
+            # Add result to the loader unless it is equal to the existing_type. The add
+            # will only succeed when the existing_type is nil.
+            loader.add_entry(:type, result.name, result, nil)
+          end
         end
         result
       when Extension::ObjectStart
