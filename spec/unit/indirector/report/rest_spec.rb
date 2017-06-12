@@ -65,6 +65,8 @@ describe Puppet::Transaction::Report::Rest do
     describe "when handling the response" do
       describe "when the server major version is less than 5" do
         it "raises if the save fails and we're not using pson" do
+          Puppet[:preferred_serialization_format] = "json"
+
           response = mock_response('500', '{}', 'text/pson')
           response.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns("4.10.1")
           connection.expects(:put).returns response
