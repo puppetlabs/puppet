@@ -11,10 +11,10 @@ class Puppet::Transaction::Report::Rest < Puppet::Indirector::REST
     if !response.is_a?(Net::HTTPSuccess)
       server_version = response[Puppet::Network::HTTP::HEADER_PUPPET_VERSION]
       if server_version &&
-         SemanticPuppet::Version.parse(server_version).major < 5 &&
+         SemanticPuppet::Version.parse(server_version).major < Puppet::Indirector::REST::MAJOR_VERSION_JSON_DEFAULT &&
          Puppet[:preferred_serialization_format] != 'pson'
-        mime = indirection.model.default_format
-        raise Puppet::Error.new(_("Server version %{version} does not accept reports in '%{mime}', use `preferred_serialization_format=pson`") % {version: server_version, mime: mime})
+        format = Puppet[:preferred_serialization_format]
+        raise Puppet::Error.new(_("Server version %{version} does not accept reports in '%{format}', use `preferred_serialization_format=pson`") % {version: server_version, format: format})
       end
     end
   end

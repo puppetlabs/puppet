@@ -12,6 +12,9 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
 
   IndirectedRoutes = Puppet::Network::HTTP::API::IndirectedRoutes
 
+  # puppet major version where JSON is enabled by default
+  MAJOR_VERSION_JSON_DEFAULT = 5
+
   class << self
     attr_reader :server_setting, :port_setting
   end
@@ -260,7 +263,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   def handle_response(request, response)
     server_version = response[Puppet::Network::HTTP::HEADER_PUPPET_VERSION]
     if server_version &&
-       SemanticPuppet::Version.parse(server_version).major < 5 &&
+       SemanticPuppet::Version.parse(server_version).major < MAJOR_VERSION_JSON_DEFAULT &&
        Puppet[:preferred_serialization_format] != 'pson'
       Puppet.warning("Downgrading to PSON for future requests")
       Puppet[:preferred_serialization_format] = 'pson'
