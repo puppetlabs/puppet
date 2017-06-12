@@ -11,6 +11,43 @@ HTTP_ERROR_CODES = [300, 400, 500]
 # Just one from each category since the code makes no real distinctions
 shared_examples_for "a REST terminus method" do |terminus_method|
 
+  describe "when handling the response" do
+    let(:response) do
+      mock_response(200, 'OK')
+    end
+
+    it "falls back to pson for future requests" do
+      response.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns("4.10.1")
+      terminus.send(terminus_method, request)
+
+      expect(Puppet[:preferred_serialization_format]).to eq("pson")
+    end
+
+    it "doesn't change the serialization format if the X-Puppet-Version header is missing" do
+      response.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns(nil)
+
+      terminus.send(terminus_method, request)
+
+      expect(Puppet[:preferred_serialization_format]).to eq("json")
+    end
+
+    it "doesn't change the serialization format if the server major version is 5" do
+      response.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns("5.0.3")
+
+      terminus.send(terminus_method, request)
+
+      expect(Puppet[:preferred_serialization_format]).to eq("json")
+    end
+
+    it "doesn't change the serialization format if the current format is already pson" do
+      response.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns("4.10.1")
+      Puppet[:preferred_serialization_format] = "pson"
+      terminus.send(terminus_method, request)
+
+      expect(Puppet[:preferred_serialization_format]).to eq("pson")
+    end
+  end
+
   HTTP_ERROR_CODES.each do |code|
     describe "when the response code is #{code}" do
       let(:message) { 'error messaged!!!' }
