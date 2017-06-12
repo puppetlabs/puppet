@@ -12,3 +12,11 @@ describe Apply do
     end
   end
 end
+
+describe Puppet::FileSystem do
+  context 'symlink' do
+    it 'returns proper type' do
+      expect(described_class.symlink('/etc/passwd/', "#{Dir.home}/etcpasswd")).to be_falsy
+    end
+  end
+end
