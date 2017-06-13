@@ -179,11 +179,11 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
   end
 
   def accepted_response_formatter_for(model_class, request)
-    request.response_formatter_for(model_class.supported_formats)
+    request.response_formatters_for(model_class.supported_formats).first
   end
 
   def accepted_response_formatter_or_json_for(model_class, request)
-    request.response_formatter_for(model_class.supported_formats, "application/json")
+    request.response_formatters_for(model_class.supported_formats, "application/json").first
   end
 
   def read_body_into_model(model_class, request)

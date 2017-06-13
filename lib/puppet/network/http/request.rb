@@ -37,20 +37,24 @@ Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :
             Puppet::Network::HTTP::Issues::MISSING_HEADER_FIELD)
   end
 
-  def response_formatter_for(supported_formats, default_accepted_formats = nil)
+  def response_formatters_for(supported_formats, default_accepted_formats = nil)
     accepted_formats = headers['accept'] || default_accepted_formats
 
     if accepted_formats.nil?
       raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(_("Missing required Accept header"), Puppet::Network::HTTP::Issues::MISSING_HEADER_FIELD)
     end
 
-    format = Puppet::Network::FormatHandler.most_suitable_format_for(
+    formats = Puppet::Network::FormatHandler.most_suitable_formats_for(
       accepted_formats.split(/\s*,\s*/),
       supported_formats)
 
-    # we are only passed supported_formats that are suitable
-    # and whose klass implements the required_methods
-    return format if valid_network_format?(format)
+    formats.find_all do |format|
+      # we are only passed supported_formats that are suitable
+      # and whose klass implements the required_methods
+      valid_network_format?(format)
+    end
+
+    return formats unless formats.empty?
 
     raise Puppet::Network::HTTP::Error::HTTPNotAcceptableError.new(
       _("No supported formats are acceptable (Accept: %{accepted_formats})") % { accepted_formats: accepted_formats },
