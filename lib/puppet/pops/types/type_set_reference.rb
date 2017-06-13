@@ -37,7 +37,7 @@ class TypeSetReference
   end
 
   def resolve(type_parser, loader)
-    typed_name = Loader::TypedName.new(:type, @name.downcase, @name_authority)
+    typed_name = Loader::TypedName.new(:type, @name, @name_authority)
     loaded_entry = loader.load_typed(typed_name)
     type_set = loaded_entry.nil? ? nil : loaded_entry.value
 
