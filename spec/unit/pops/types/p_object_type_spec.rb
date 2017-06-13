@@ -597,7 +597,7 @@ describe 'The Object Type' do
     end
   end
 
-  context 'when producing an i12n_type' do
+  context 'when producing an init_hash_type' do
     it 'produces a struct of all attributes that are not derived or constant' do
       t = parse_object('MyObject', <<-OBJECT)
         attributes => {
@@ -607,7 +607,7 @@ describe 'The Object Type' do
           d => { type => Integer, kind => constant, value => 4 }
         }
       OBJECT
-      expect(t.i12n_type).to eql(factory.struct({
+      expect(t.init_hash_type).to eql(factory.struct({
         'a' => factory.integer,
         'b' => factory.integer
       }))
@@ -620,7 +620,7 @@ describe 'The Object Type' do
           b => { type => Integer, value => 4 }
         }
       OBJECT
-      expect(t.i12n_type).to eql(factory.struct({
+      expect(t.init_hash_type).to eql(factory.struct({
         'a' => factory.integer,
         factory.optional('b') => factory.integer
       }))
@@ -638,8 +638,8 @@ describe 'The Object Type' do
           b => { type => Integer }
         }
       OBJECT
-      expect(t1.i12n_type).to eql(factory.struct({ 'a' => factory.integer }))
-      expect(t2.i12n_type).to eql(factory.struct({ 'a' => factory.integer, 'b' => factory.integer }))
+      expect(t1.init_hash_type).to eql(factory.struct({ 'a' => factory.integer }))
+      expect(t2.init_hash_type).to eql(factory.struct({ 'a' => factory.integer, 'b' => factory.integer }))
     end
 
     it 'produces a struct that reflects overrides made in derived type' do
@@ -655,8 +655,8 @@ describe 'The Object Type' do
           b => { type => Integer, override => true, value => 5 }
         }
       OBJECT
-      expect(t1.i12n_type).to eql(factory.struct({ 'a' => factory.integer, 'b' => factory.integer }))
-      expect(t2.i12n_type).to eql(factory.struct({ 'a' => factory.integer, factory.optional('b') => factory.integer }))
+      expect(t1.init_hash_type).to eql(factory.struct({ 'a' => factory.integer, 'b' => factory.integer }))
+      expect(t2.init_hash_type).to eql(factory.struct({ 'a' => factory.integer, factory.optional('b') => factory.integer }))
     end
   end
 

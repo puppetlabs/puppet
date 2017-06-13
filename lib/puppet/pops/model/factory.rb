@@ -40,27 +40,27 @@ class Factory
   attr_reader :model_class
 
   def [](key)
-    @i12n[key]
+    @init_hash[key]
   end
 
   def []=(key, value)
-    @i12n[key] = value
+    @init_hash[key] = value
   end
 
   def all_factories(&block)
     block.call(self)
-    @i12n.each_value { |value| value.all_factories(&block) if value.instance_of?(Factory) }
+    @init_hash.each_value { |value| value.all_factories(&block) if value.instance_of?(Factory) }
   end
 
   def model
     if @current.nil?
       # Assign a default Locator if it's missing. Should only happen when the factory is used by other
       # means than from a parser (e.g. unit tests)
-      unless @i12n.include?(KEY_LOCATOR)
-        @i12n[KEY_LOCATOR] = Parser::Locator.locator('<no source>', 'no file')
+      unless @init_hash.include?(KEY_LOCATOR)
+        @init_hash[KEY_LOCATOR] = Parser::Locator.locator('<no source>', 'no file')
         unless @model_class <= Program
-          @i12n[KEY_OFFSET] = 0
-          @i12n[KEY_LENGTH] = 0
+          @init_hash[KEY_OFFSET] = 0
+          @init_hash[KEY_LENGTH] = 0
         end
       end
       @current = create_model
@@ -72,15 +72,15 @@ class Factory
   alias current model
 
   def create_model
-    @i12n.each_pair { |key, elem| @i12n[key] = factory_to_model(elem) }
-    model_class.from_asserted_hash(@i12n)
+    @init_hash.each_pair { |key, elem| @init_hash[key] = factory_to_model(elem) }
+    model_class.from_asserted_hash(@init_hash)
   end
 
   # Initialize a factory with a single object, or a class with arguments applied to build of
   # created instance
   #
   def initialize(o, *args)
-    @i12n = {}
+    @init_hash = {}
     if o.instance_of?(Class)
       @model_class = o
       BUILD_VISITOR.visit_this_class(self, o, args)
@@ -97,94 +97,94 @@ class Factory
   # Building of Model classes
 
   def build_Application(o, n, ps, body)
-    @i12n[KEY_NAME] = n
-    @i12n[KEY_PARAMETERS] = ps
+    @init_hash[KEY_NAME] = n
+    @init_hash[KEY_PARAMETERS] = ps
     b = f_build_body(body)
-    @i12n[KEY_BODY] = b unless b.nil?
+    @init_hash[KEY_BODY] = b unless b.nil?
   end
 
   def build_ArithmeticExpression(o, op, a, b)
-    @i12n[KEY_OPERATOR] = op
+    @init_hash[KEY_OPERATOR] = op
     build_BinaryExpression(o, a, b)
   end
 
   def build_AssignmentExpression(o, op, a, b)
-    @i12n[KEY_OPERATOR] = op
+    @init_hash[KEY_OPERATOR] = op
     build_BinaryExpression(o, a, b)
   end
 
   def build_AttributeOperation(o, name, op, value)
-    @i12n[KEY_OPERATOR] = op
-    @i12n['attribute_name'] = name.to_s # BOOLEAN is allowed in the grammar
-    @i12n['value_expr'] = value
+    @init_hash[KEY_OPERATOR] = op
+    @init_hash['attribute_name'] = name.to_s # BOOLEAN is allowed in the grammar
+    @init_hash['value_expr'] = value
   end
 
   def build_AttributesOperation(o, value)
-    @i12n[KEY_EXPR] = value
+    @init_hash[KEY_EXPR] = value
   end
 
   def build_AccessExpression(o, left, keys)
-    @i12n[KEY_LEFT_EXPR] = left
-    @i12n[KEY_KEYS] = keys
+    @init_hash[KEY_LEFT_EXPR] = left
+    @init_hash[KEY_KEYS] = keys
   end
 
   def build_BinaryExpression(o, left, right)
-    @i12n[KEY_LEFT_EXPR] = left
-    @i12n[KEY_RIGHT_EXPR] = right
+    @init_hash[KEY_LEFT_EXPR] = left
+    @init_hash[KEY_RIGHT_EXPR] = right
   end
 
   def build_BlockExpression(o, args)
-    @i12n['statements'] = args
+    @init_hash['statements'] = args
   end
 
   def build_EppExpression(o, parameters_specified, body)
-    @i12n['parameters_specified'] = parameters_specified
+    @init_hash['parameters_specified'] = parameters_specified
     b = f_build_body(body)
-    @i12n[KEY_BODY] = b unless b.nil?
+    @init_hash[KEY_BODY] = b unless b.nil?
   end
 
   # @param rval_required [Boolean] if the call must produce a value
   def build_CallExpression(o, functor, rval_required, args)
-    @i12n['functor_expr'] = functor
-    @i12n['rval_required'] = rval_required
-    @i12n['arguments'] = args
+    @init_hash['functor_expr'] = functor
+    @init_hash['rval_required'] = rval_required
+    @init_hash['arguments'] = args
   end
 
   def build_CallMethodExpression(o, functor, rval_required, lambda, args)
     build_CallExpression(o, functor, rval_required, args)
-    @i12n['lambda'] = lambda
+    @init_hash['lambda'] = lambda
   end
 
   def build_CaseExpression(o, test, args)
-    @i12n['test'] = test
-    @i12n['options'] = args
+    @init_hash['test'] = test
+    @init_hash['options'] = args
   end
 
   def build_CaseOption(o, value_list, then_expr)
     value_list = [value_list] unless value_list.is_a?(Array)
-    @i12n['values'] = value_list
+    @init_hash['values'] = value_list
     b = f_build_body(then_expr)
-    @i12n['then_expr'] = b unless b.nil?
+    @init_hash['then_expr'] = b unless b.nil?
   end
 
   def build_CollectExpression(o, type_expr, query_expr, attribute_operations)
-    @i12n['type_expr'] = type_expr
-    @i12n['query'] = query_expr
-    @i12n['operations'] = attribute_operations
+    @init_hash['type_expr'] = type_expr
+    @init_hash['query'] = query_expr
+    @init_hash['operations'] = attribute_operations
   end
 
   def build_ComparisonExpression(o, op, a, b)
-    @i12n[KEY_OPERATOR] = op
+    @init_hash[KEY_OPERATOR] = op
     build_BinaryExpression(o, a, b)
   end
 
   def build_ConcatenatedString(o, args)
-    @i12n['segments'] = args
+    @init_hash['segments'] = args
   end
 
   def build_HeredocExpression(o, name, expr)
-    @i12n['syntax'] = name
-    @i12n['text_expr'] = expr
+    @init_hash['syntax'] = name
+    @init_hash['text_expr'] = expr
   end
 
   # @param name [String] a valid classname
@@ -195,53 +195,53 @@ class Factory
   #
   def build_HostClassDefinition(o, name, parameters, parent_class_name, body)
     build_NamedDefinition(o, name, parameters, body)
-    @i12n['parent_class'] = parent_class_name unless parent_class_name.nil?
+    @init_hash['parent_class'] = parent_class_name unless parent_class_name.nil?
   end
 
   def build_ResourceOverrideExpression(o, resources, attribute_operations)
-    @i12n['resources'] = resources
-    @i12n['operations'] = attribute_operations
+    @init_hash['resources'] = resources
+    @init_hash['operations'] = attribute_operations
   end
 
   def build_ReservedWord(o, name, future)
-    @i12n['word'] = name
-    @i12n['future'] = future
+    @init_hash['word'] = name
+    @init_hash['future'] = future
   end
 
   def build_KeyedEntry(o, k, v)
-    @i12n['key'] = k
-    @i12n[KEY_VALUE] = v
+    @init_hash['key'] = k
+    @init_hash[KEY_VALUE] = v
   end
 
   def build_LiteralHash(o, keyed_entries)
-    @i12n['entries'] = keyed_entries
+    @init_hash['entries'] = keyed_entries
   end
 
   def build_LiteralList(o, values)
-    @i12n['values'] = values
+    @init_hash['values'] = values
   end
 
   def build_LiteralFloat(o, val)
-    @i12n[KEY_VALUE] = val
+    @init_hash[KEY_VALUE] = val
   end
 
   def build_LiteralInteger(o, val, radix)
-    @i12n[KEY_VALUE] = val
-    @i12n['radix'] = radix
+    @init_hash[KEY_VALUE] = val
+    @init_hash['radix'] = radix
   end
 
   def build_LiteralString(o, value)
-    @i12n[KEY_VALUE] = val
+    @init_hash[KEY_VALUE] = val
   end
 
   def build_IfExpression(o, t, ift, els)
-    @i12n['test'] = t
-    @i12n['then_expr'] = ift
-    @i12n['else_expr'] = els
+    @init_hash['test'] = t
+    @init_hash['then_expr'] = ift
+    @init_hash['else_expr'] = els
   end
 
   def build_MatchExpression(o, op, a, b)
-    @i12n[KEY_OPERATOR] = op
+    @init_hash[KEY_OPERATOR] = op
     build_BinaryExpression(o, a, b)
   end
 
@@ -251,7 +251,7 @@ class Factory
 
   def infer_String(o)
     @model_class = LiteralString
-    @i12n[KEY_VALUE] = o
+    @init_hash[KEY_VALUE] = o
   end
 
   def infer_NilClass(o)
@@ -260,28 +260,28 @@ class Factory
 
   def infer_TrueClass(o)
     @model_class = LiteralBoolean
-    @i12n[KEY_VALUE] = o
+    @init_hash[KEY_VALUE] = o
   end
 
   def infer_FalseClass(o)
     @model_class = LiteralBoolean
-    @i12n[KEY_VALUE] = o
+    @init_hash[KEY_VALUE] = o
   end
 
   def infer_Integer(o)
     @model_class = LiteralInteger
-    @i12n[KEY_VALUE] = o
+    @init_hash[KEY_VALUE] = o
   end
 
   def infer_Float(o)
     @model_class = LiteralFloat
-    @i12n[KEY_VALUE] = o
+    @init_hash[KEY_VALUE] = o
   end
 
   def infer_Regexp(o)
     @model_class = LiteralRegularExpression
-    @i12n['pattern'] = o.inspect
-    @i12n[KEY_VALUE] = o
+    @init_hash['pattern'] = o.inspect
+    @init_hash[KEY_VALUE] = o
   end
 
   # Creates a String literal, unless the symbol is one of the special :undef, or :default
@@ -301,7 +301,7 @@ class Factory
   # Creates a LiteralList instruction from an Array, where the entries are built.
   def infer_Array(o)
     @model_class = LiteralList
-    @i12n['values'] = o.map { |e| Factory.infer(e) }
+    @init_hash['values'] = o.map { |e| Factory.infer(e) }
   end
 
   # Create a LiteralHash instruction from a hash, where keys and values are built
@@ -309,7 +309,7 @@ class Factory
   #
   def infer_Hash(o)
     @model_class = LiteralHash
-    @i12n['entries'] = o.sort_by { |k,_| k.to_s }.map { |k, v| Factory.new(KeyedEntry, Factory.infer(k), Factory.infer(v)) }
+    @init_hash['entries'] = o.sort_by { |k,_| k.to_s }.map { |k, v| Factory.new(KeyedEntry, Factory.infer(k), Factory.infer(v)) }
   end
 
   def f_build_body(body)
@@ -326,82 +326,82 @@ class Factory
   end
 
   def build_LambdaExpression(o, parameters, body, return_type)
-    @i12n[KEY_PARAMETERS] = parameters
+    @init_hash[KEY_PARAMETERS] = parameters
     b = f_build_body(body)
-    @i12n[KEY_BODY] = b unless b.nil?
-    @i12n['return_type'] = return_type unless return_type.nil?
+    @init_hash[KEY_BODY] = b unless b.nil?
+    @init_hash['return_type'] = return_type unless return_type.nil?
   end
 
   def build_NamedDefinition(o, name, parameters, body)
-    @i12n[KEY_PARAMETERS] = parameters
+    @init_hash[KEY_PARAMETERS] = parameters
     b = f_build_body(body)
-    @i12n[KEY_BODY] = b unless b.nil?
-    @i12n[KEY_NAME] = name
+    @init_hash[KEY_BODY] = b unless b.nil?
+    @init_hash[KEY_NAME] = name
   end
 
   def build_FunctionDefinition(o, name, parameters, body, return_type)
-    @i12n[KEY_PARAMETERS] = parameters
+    @init_hash[KEY_PARAMETERS] = parameters
     b = f_build_body(body)
-    @i12n[KEY_BODY] = b unless b.nil?
-    @i12n[KEY_NAME] = name
-    @i12n['return_type'] = return_type unless return_type.nil?
+    @init_hash[KEY_BODY] = b unless b.nil?
+    @init_hash[KEY_NAME] = name
+    @init_hash['return_type'] = return_type unless return_type.nil?
   end
 
   def build_CapabilityMapping(o, kind, component, capability, mappings)
-    @i12n['kind'] = kind
-    @i12n['component'] = component
-    @i12n['capability'] = capability
-    @i12n['mappings'] = mappings
+    @init_hash['kind'] = kind
+    @init_hash['component'] = component
+    @init_hash['capability'] = capability
+    @init_hash['mappings'] = mappings
   end
 
   def build_NodeDefinition(o, hosts, parent, body)
-    @i12n['host_matches'] = hosts
-    @i12n['parent'] = parent unless parent.nil? # no nop here
+    @init_hash['host_matches'] = hosts
+    @init_hash['parent'] = parent unless parent.nil? # no nop here
     b = f_build_body(body)
-    @i12n[KEY_BODY] = b unless b.nil?
+    @init_hash[KEY_BODY] = b unless b.nil?
   end
 
   def build_SiteDefinition(o, body)
     b = f_build_body(body)
-    @i12n[KEY_BODY] = b unless b.nil?
+    @init_hash[KEY_BODY] = b unless b.nil?
   end
 
   def build_Parameter(o, name, expr)
-    @i12n[KEY_NAME] = name
-    @i12n[KEY_VALUE] = expr
+    @init_hash[KEY_NAME] = name
+    @init_hash[KEY_VALUE] = expr
   end
 
   def build_QualifiedReference(o, name)
-    @i12n['cased_value'] = name.to_s
+    @init_hash['cased_value'] = name.to_s
   end
 
   def build_RelationshipExpression(o, op, a, b)
-    @i12n[KEY_OPERATOR] = op
+    @init_hash[KEY_OPERATOR] = op
     build_BinaryExpression(o, a, b)
   end
 
   def build_ResourceExpression(o, type_name, bodies)
-    @i12n['type_name'] = type_name
-    @i12n['bodies'] = bodies
+    @init_hash['type_name'] = type_name
+    @init_hash['bodies'] = bodies
   end
 
   def build_RenderStringExpression(o, string)
-    @i12n[KEY_VALUE] = string;
+    @init_hash[KEY_VALUE] = string;
   end
 
   def build_ResourceBody(o, title_expression, attribute_operations)
-    @i12n['title'] = title_expression
-    @i12n['operations'] = attribute_operations
+    @init_hash['title'] = title_expression
+    @init_hash['operations'] = attribute_operations
   end
 
   def build_ResourceDefaultsExpression(o, type_ref, attribute_operations)
-    @i12n['type_ref'] = type_ref
-    @i12n['operations'] = attribute_operations
+    @init_hash['type_ref'] = type_ref
+    @init_hash['operations'] = attribute_operations
   end
 
   def build_SelectorExpression(o, left, *selectors)
-    @i12n[KEY_LEFT_EXPR] = left
-    @i12n['selectors'] = selectors
+    @init_hash[KEY_LEFT_EXPR] = left
+    @init_hash['selectors'] = selectors
   end
 
   # Builds a SubLocatedExpression - this wraps the expression in a sublocation configured
@@ -410,56 +410,56 @@ class Factory
   # to what it describes.
   #
   def build_SubLocatedExpression(o, token, expression)
-    @i12n[KEY_EXPR] = expression
-    @i12n[KEY_OFFSET] = token.offset
-    @i12n[KEY_LENGTH] =  token.length
+    @init_hash[KEY_EXPR] = expression
+    @init_hash[KEY_OFFSET] = token.offset
+    @init_hash[KEY_LENGTH] =  token.length
     locator = token.locator
-    @i12n[KEY_LOCATOR] = locator
-    @i12n['leading_line_count'] = locator.leading_line_count
-    @i12n['leading_line_offset'] = locator.leading_line_offset
+    @init_hash[KEY_LOCATOR] = locator
+    @init_hash['leading_line_count'] = locator.leading_line_count
+    @init_hash['leading_line_offset'] = locator.leading_line_offset
     # Index is held in sublocator's parent locator - needed to be able to reconstruct
-    @i12n['line_offsets'] = locator.locator.line_index
+    @init_hash['line_offsets'] = locator.locator.line_index
   end
 
   def build_SelectorEntry(o, matching, value)
-    @i12n['matching_expr'] = matching
-    @i12n['value_expr'] = value
+    @init_hash['matching_expr'] = matching
+    @init_hash['value_expr'] = value
   end
 
   def build_QueryExpression(o, expr)
-    @i12n[KEY_EXPR] = expr unless Factory.nop?(expr)
+    @init_hash[KEY_EXPR] = expr unless Factory.nop?(expr)
   end
 
   def build_TypeAlias(o, name, type_expr)
-    @i12n['type_expr'] = type_expr
-    @i12n[KEY_NAME] = name
+    @init_hash['type_expr'] = type_expr
+    @init_hash[KEY_NAME] = name
   end
 
   def build_TypeMapping(o, lhs, rhs)
-    @i12n['type_expr'] = lhs
-    @i12n['mapping_expr'] = rhs
+    @init_hash['type_expr'] = lhs
+    @init_hash['mapping_expr'] = rhs
   end
 
   def build_TypeDefinition(o, name, parent, body)
     b = f_build_body(body)
-    @i12n[KEY_BODY] = b unless b.nil?
-    @i12n['parent'] = parent
-    @i12n[KEY_NAME] = name
+    @init_hash[KEY_BODY] = b unless b.nil?
+    @init_hash['parent'] = parent
+    @init_hash[KEY_NAME] = name
   end
 
   def build_UnaryExpression(o, expr)
-    @i12n[KEY_EXPR] = expr unless Factory.nop?(expr)
+    @init_hash[KEY_EXPR] = expr unless Factory.nop?(expr)
   end
 
   def build_Program(o, body, definitions, locator)
-    @i12n[KEY_BODY] = body
+    @init_hash[KEY_BODY] = body
     # non containment
-    @i12n['definitions'] = definitions
-    @i12n[KEY_LOCATOR] = locator
+    @init_hash['definitions'] = definitions
+    @init_hash[KEY_LOCATOR] = locator
   end
 
   def build_QualifiedName(o, name)
-    @i12n[KEY_VALUE] = name
+    @init_hash[KEY_VALUE] = name
   end
 
   def build_TokenValue(o)
@@ -559,12 +559,12 @@ class Factory
 
   # For CaseExpression, setting the default for an already build CaseExpression
   def default(r)
-    @i12n['options'] << Factory.WHEN(Factory.infer(:default), r)
+    @init_hash['options'] << Factory.WHEN(Factory.infer(:default), r)
     self
   end
 
   def lambda=(lambda)
-    @i12n['lambda'] = lambda
+    @init_hash['lambda'] = lambda
     self
   end
 
@@ -584,16 +584,16 @@ class Factory
   end
 
   def attributes(*args)
-    @i12n['attributes'] = args
+    @init_hash['attributes'] = args
     self
   end
 
   def offset
-    @i12n[KEY_OFFSET]
+    @init_hash[KEY_OFFSET]
   end
 
   def length
-    @i12n[KEY_LENGTH]
+    @init_hash[KEY_LENGTH]
   end
 
   # Records the position (start -> end) and computes the resulting length.
@@ -601,9 +601,9 @@ class Factory
   def record_position(locator, start_locatable, end_locatable)
     # record information directly in the Positioned object
     start_offset = start_locatable.offset
-    @i12n[KEY_LOCATOR] = locator
-    @i12n[KEY_OFFSET] = start_offset
-    @i12n[KEY_LENGTH] = end_locatable.nil? ? start_locatable.length : end_locatable.offset + end_locatable.length - start_offset
+    @init_hash[KEY_LOCATOR] = locator
+    @init_hash[KEY_OFFSET] = start_offset
+    @init_hash[KEY_LENGTH] = end_locatable.nil? ? start_locatable.length : end_locatable.offset + end_locatable.length - start_offset
     self
   end
 
@@ -697,12 +697,12 @@ class Factory
 
   # Mark parameter as capturing the rest of arguments
   def captures_rest
-    @i12n['captures_rest'] = true
+    @init_hash['captures_rest'] = true
   end
 
   # Set Expression that should evaluate to the parameter's type
   def type_expr(o)
-    @i12n['type_expr'] = o
+    @init_hash['type_expr'] = o
   end
 
   # Creates a QualifiedName representation of o, unless o already represents a QualifiedName in which
@@ -998,26 +998,26 @@ class Factory
   # other expressions requires variables to be preceded with $
   #
   def interpolate_AccessExpression(c)
-    lhs = @i12n[KEY_LEFT_EXPR]
+    lhs = @init_hash[KEY_LEFT_EXPR]
     if is_interop_rewriteable?(lhs)
-      @i12n[KEY_LEFT_EXPR] = lhs.interpolate
+      @init_hash[KEY_LEFT_EXPR] = lhs.interpolate
     end
     self
   end
 
   def interpolate_NamedAccessExpression(c)
-    lhs = @i12n[KEY_LEFT_EXPR]
+    lhs = @init_hash[KEY_LEFT_EXPR]
     if is_interop_rewriteable?(lhs)
-      @i12n[KEY_LEFT_EXPR] = lhs.interpolate
+      @init_hash[KEY_LEFT_EXPR] = lhs.interpolate
     end
     self
   end
 
   # Rewrite method calls on the form ${x.each ...} to ${$x.each}
   def interpolate_CallMethodExpression(c)
-    functor_expr = @i12n['functor_expr']
+    functor_expr = @init_hash['functor_expr']
     if is_interop_rewriteable?(functor_expr)
-      @i12n['functor_expr'] = functor_expr.interpolate
+      @init_hash['functor_expr'] = functor_expr.interpolate
     end
     self
   end
@@ -1064,10 +1064,10 @@ class Factory
 
   def contained_current(container)
     if @current.nil?
-      unless @i12n.include?(KEY_LOCATOR)
-        @i12n[KEY_LOCATOR] = container[KEY_LOCATOR]
-        @i12n[KEY_OFFSET] = container[KEY_OFFSET] || 0
-        @i12n[KEY_LENGTH] = 0
+      unless @init_hash.include?(KEY_LOCATOR)
+        @init_hash[KEY_LOCATOR] = container[KEY_LOCATOR]
+        @init_hash[KEY_OFFSET] = container[KEY_OFFSET] || 0
+        @init_hash[KEY_LENGTH] = 0
       end
       @current = create_model
     end

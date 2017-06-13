@@ -11,11 +11,11 @@ class PopsObject
 
   include Types::PuppetObject
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::PopsObject initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::PopsObject initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new
   end
 
@@ -75,15 +75,15 @@ class Positioned < PopsObject
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::Positioned initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::Positioned initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'])
   end
 
   def self.create(locator, offset, length)
@@ -154,17 +154,17 @@ class BinaryExpression < Expression
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::BinaryExpression initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::BinaryExpression initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['left_expr'],
-      i12n['right_expr'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['left_expr'],
+      init_hash['right_expr'])
   end
 
   def self.create(locator, offset, length, left_expr, right_expr)
@@ -231,16 +231,16 @@ class UnaryExpression < Expression
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::UnaryExpression initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::UnaryExpression initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['expr'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['expr'])
   end
 
   def self.create(locator, offset, length, expr)
@@ -381,18 +381,18 @@ class AssignmentExpression < BinaryExpression
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::AssignmentExpression initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::AssignmentExpression initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['left_expr'],
-      i12n['right_expr'],
-      i12n['operator'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['left_expr'],
+      init_hash['right_expr'],
+      init_hash['operator'])
   end
 
   def self.create(locator, offset, length, left_expr, right_expr, operator)
@@ -456,18 +456,18 @@ class ArithmeticExpression < BinaryExpression
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ArithmeticExpression initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ArithmeticExpression initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['left_expr'],
-      i12n['right_expr'],
-      i12n['operator'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['left_expr'],
+      init_hash['right_expr'],
+      init_hash['operator'])
   end
 
   def self.create(locator, offset, length, left_expr, right_expr, operator)
@@ -531,18 +531,18 @@ class RelationshipExpression < BinaryExpression
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::RelationshipExpression initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::RelationshipExpression initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['left_expr'],
-      i12n['right_expr'],
-      i12n['operator'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['left_expr'],
+      init_hash['right_expr'],
+      init_hash['operator'])
   end
 
   def self.create(locator, offset, length, left_expr, right_expr, operator)
@@ -610,17 +610,17 @@ class AccessExpression < Expression
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::AccessExpression initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::AccessExpression initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['left_expr'],
-      i12n.fetch('keys') { _pcore_type['keys'].value })
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['left_expr'],
+      init_hash.fetch('keys') { _pcore_type['keys'].value })
   end
 
   def self.create(locator, offset, length, left_expr, keys = _pcore_type['keys'].value)
@@ -687,18 +687,18 @@ class ComparisonExpression < BinaryExpression
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ComparisonExpression initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ComparisonExpression initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['left_expr'],
-      i12n['right_expr'],
-      i12n['operator'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['left_expr'],
+      init_hash['right_expr'],
+      init_hash['operator'])
   end
 
   def self.create(locator, offset, length, left_expr, right_expr, operator)
@@ -762,18 +762,18 @@ class MatchExpression < BinaryExpression
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::MatchExpression initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::MatchExpression initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['left_expr'],
-      i12n['right_expr'],
-      i12n['operator'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['left_expr'],
+      init_hash['right_expr'],
+      init_hash['operator'])
   end
 
   def self.create(locator, offset, length, left_expr, right_expr, operator)
@@ -944,16 +944,16 @@ class LiteralList < Expression
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralList initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralList initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n.fetch('values') { _pcore_type['values'].value })
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash.fetch('values') { _pcore_type['values'].value })
   end
 
   def self.create(locator, offset, length, values = _pcore_type['values'].value)
@@ -1011,17 +1011,17 @@ class KeyedEntry < Positioned
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::KeyedEntry initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::KeyedEntry initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['key'],
-      i12n['value'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['key'],
+      init_hash['value'])
   end
 
   def self.create(locator, offset, length, key, value)
@@ -1091,16 +1091,16 @@ class LiteralHash < Expression
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralHash initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralHash initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n.fetch('entries') { _pcore_type['entries'].value })
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash.fetch('entries') { _pcore_type['entries'].value })
   end
 
   def self.create(locator, offset, length, entries = _pcore_type['entries'].value)
@@ -1160,16 +1160,16 @@ class BlockExpression < Expression
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::BlockExpression initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::BlockExpression initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n.fetch('statements') { _pcore_type['statements'].value })
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash.fetch('statements') { _pcore_type['statements'].value })
   end
 
   def self.create(locator, offset, length, statements = _pcore_type['statements'].value)
@@ -1230,17 +1230,17 @@ class CaseOption < Expression
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::CaseOption initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::CaseOption initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['values'],
-      i12n['then_expr'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['values'],
+      init_hash['then_expr'])
   end
 
   def self.create(locator, offset, length, values, then_expr = nil)
@@ -1311,17 +1311,17 @@ class CaseExpression < Expression
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::CaseExpression initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::CaseExpression initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['test'],
-      i12n.fetch('options') { _pcore_type['options'].value })
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['test'],
+      init_hash.fetch('options') { _pcore_type['options'].value })
   end
 
   def self.create(locator, offset, length, test, options = _pcore_type['options'].value)
@@ -1391,16 +1391,16 @@ class QueryExpression < Expression
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::QueryExpression initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::QueryExpression initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['expr'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['expr'])
   end
 
   def self.create(locator, offset, length, expr = nil)
@@ -1509,18 +1509,18 @@ class AttributeOperation < AbstractAttributeOperation
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::AttributeOperation initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::AttributeOperation initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['attribute_name'],
-      i12n['operator'],
-      i12n['value_expr'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['attribute_name'],
+      init_hash['operator'],
+      init_hash['value_expr'])
   end
 
   def self.create(locator, offset, length, attribute_name, operator, value_expr)
@@ -1587,16 +1587,16 @@ class AttributesOperation < AbstractAttributeOperation
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::AttributesOperation initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::AttributesOperation initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['expr'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['expr'])
   end
 
   def self.create(locator, offset, length, expr)
@@ -1658,18 +1658,18 @@ class CollectExpression < Expression
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::CollectExpression initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::CollectExpression initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['type_expr'],
-      i12n['query'],
-      i12n.fetch('operations') { _pcore_type['operations'].value })
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['type_expr'],
+      init_hash['query'],
+      init_hash.fetch('operations') { _pcore_type['operations'].value })
   end
 
   def self.create(locator, offset, length, type_expr, query, operations = _pcore_type['operations'].value)
@@ -1758,19 +1758,19 @@ class Parameter < Positioned
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::Parameter initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::Parameter initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['name'],
-      i12n['value'],
-      i12n['type_expr'],
-      i12n['captures_rest'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['name'],
+      init_hash['value'],
+      init_hash['type_expr'],
+      init_hash['captures_rest'])
   end
 
   def self.create(locator, offset, length, name, value = nil, type_expr = nil, captures_rest = nil)
@@ -1863,18 +1863,18 @@ class NamedDefinition < Definition
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::NamedDefinition initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::NamedDefinition initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['name'],
-      i12n.fetch('parameters') { _pcore_type['parameters'].value },
-      i12n['body'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['name'],
+      init_hash.fetch('parameters') { _pcore_type['parameters'].value },
+      init_hash['body'])
   end
 
   def self.create(locator, offset, length, name, parameters = _pcore_type['parameters'].value, body = nil)
@@ -1949,19 +1949,19 @@ class FunctionDefinition < NamedDefinition
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::FunctionDefinition initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::FunctionDefinition initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['name'],
-      i12n.fetch('parameters') { _pcore_type['parameters'].value },
-      i12n['body'],
-      i12n['return_type'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['name'],
+      init_hash.fetch('parameters') { _pcore_type['parameters'].value },
+      init_hash['body'],
+      init_hash['return_type'])
   end
 
   def self.create(locator, offset, length, name, parameters = _pcore_type['parameters'].value, body = nil, return_type = nil)
@@ -2083,16 +2083,16 @@ class QRefDefinition < Definition
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::QRefDefinition initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::QRefDefinition initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['name'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['name'])
   end
 
   def self.create(locator, offset, length, name)
@@ -2139,17 +2139,17 @@ class TypeAlias < QRefDefinition
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::TypeAlias initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::TypeAlias initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['name'],
-      i12n['type_expr'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['name'],
+      init_hash['type_expr'])
   end
 
   def self.create(locator, offset, length, name, type_expr = nil)
@@ -2214,17 +2214,17 @@ class TypeMapping < Definition
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::TypeMapping initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::TypeMapping initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['type_expr'],
-      i12n['mapping_expr'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['type_expr'],
+      init_hash['mapping_expr'])
   end
 
   def self.create(locator, offset, length, type_expr = nil, mapping_expr = nil)
@@ -2298,18 +2298,18 @@ class TypeDefinition < QRefDefinition
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::TypeDefinition initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::TypeDefinition initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['name'],
-      i12n['parent'],
-      i12n['body'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['name'],
+      init_hash['parent'],
+      init_hash['body'])
   end
 
   def self.create(locator, offset, length, name, parent = nil, body = nil)
@@ -2380,18 +2380,18 @@ class NodeDefinition < Definition
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::NodeDefinition initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::NodeDefinition initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['host_matches'],
-      i12n['parent'],
-      i12n['body'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['host_matches'],
+      init_hash['parent'],
+      init_hash['body'])
   end
 
   def self.create(locator, offset, length, host_matches, parent = nil, body = nil)
@@ -2471,16 +2471,16 @@ class SiteDefinition < Definition
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::SiteDefinition initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::SiteDefinition initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['body'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['body'])
   end
 
   def self.create(locator, offset, length, body = nil)
@@ -2549,19 +2549,19 @@ class SubLocatedExpression < Expression
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::SubLocatedExpression initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::SubLocatedExpression initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['expr'],
-      i12n.fetch('line_offsets') { _pcore_type['line_offsets'].value },
-      i12n['leading_line_count'],
-      i12n['leading_line_offset'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['expr'],
+      init_hash.fetch('line_offsets') { _pcore_type['line_offsets'].value },
+      init_hash['leading_line_count'],
+      init_hash['leading_line_offset'])
   end
 
   def self.create(locator, offset, length, expr, line_offsets = _pcore_type['line_offsets'].value, leading_line_count = nil, leading_line_offset = nil)
@@ -2637,17 +2637,17 @@ class HeredocExpression < Expression
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::HeredocExpression initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::HeredocExpression initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['text_expr'],
-      i12n['syntax'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['text_expr'],
+      init_hash['syntax'])
   end
 
   def self.create(locator, offset, length, text_expr, syntax = nil)
@@ -2712,19 +2712,19 @@ class HostClassDefinition < NamedDefinition
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::HostClassDefinition initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::HostClassDefinition initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['name'],
-      i12n.fetch('parameters') { _pcore_type['parameters'].value },
-      i12n['body'],
-      i12n['parent_class'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['name'],
+      init_hash.fetch('parameters') { _pcore_type['parameters'].value },
+      init_hash['body'],
+      init_hash['parent_class'])
   end
 
   def self.create(locator, offset, length, name, parameters = _pcore_type['parameters'].value, body = nil, parent_class = nil)
@@ -2800,18 +2800,18 @@ class LambdaExpression < Expression
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LambdaExpression initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LambdaExpression initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n.fetch('parameters') { _pcore_type['parameters'].value },
-      i12n['body'],
-      i12n['return_type'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash.fetch('parameters') { _pcore_type['parameters'].value },
+      init_hash['body'],
+      init_hash['return_type'])
   end
 
   def self.create(locator, offset, length, parameters = _pcore_type['parameters'].value, body = nil, return_type = nil)
@@ -2896,18 +2896,18 @@ class IfExpression < Expression
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::IfExpression initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::IfExpression initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['test'],
-      i12n['then_expr'],
-      i12n['else_expr'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['test'],
+      init_hash['then_expr'],
+      init_hash['else_expr'])
   end
 
   def self.create(locator, offset, length, test, then_expr = nil, else_expr = nil)
@@ -3027,19 +3027,19 @@ class CallExpression < Expression
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::CallExpression initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::CallExpression initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['functor_expr'],
-      i12n.fetch('rval_required') { false },
-      i12n.fetch('arguments') { _pcore_type['arguments'].value },
-      i12n['lambda'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['functor_expr'],
+      init_hash.fetch('rval_required') { false },
+      init_hash.fetch('arguments') { _pcore_type['arguments'].value },
+      init_hash['lambda'])
   end
 
   def self.create(locator, offset, length, functor_expr, rval_required = false, arguments = _pcore_type['arguments'].value, lambda = nil)
@@ -3231,17 +3231,17 @@ class LiteralRegularExpression < LiteralValue
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralRegularExpression initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralRegularExpression initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['value'],
-      i12n['pattern'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['value'],
+      init_hash['pattern'])
   end
 
   def self.create(locator, offset, length, value, pattern)
@@ -3290,16 +3290,16 @@ class LiteralString < LiteralValue
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralString initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralString initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['value'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['value'])
   end
 
   def self.create(locator, offset, length, value)
@@ -3355,17 +3355,17 @@ class LiteralInteger < LiteralNumber
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralInteger initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralInteger initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['value'],
-      i12n.fetch('radix') { 10 })
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['value'],
+      init_hash.fetch('radix') { 10 })
   end
 
   def self.create(locator, offset, length, value, radix = 10)
@@ -3414,16 +3414,16 @@ class LiteralFloat < LiteralNumber
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralFloat initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralFloat initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['value'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['value'])
   end
 
   def self.create(locator, offset, length, value)
@@ -3483,16 +3483,16 @@ class LiteralBoolean < LiteralValue
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralBoolean initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::LiteralBoolean initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['value'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['value'])
   end
 
   def self.create(locator, offset, length, value)
@@ -3560,16 +3560,16 @@ class ConcatenatedString < Expression
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ConcatenatedString initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ConcatenatedString initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n.fetch('segments') { _pcore_type['segments'].value })
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash.fetch('segments') { _pcore_type['segments'].value })
   end
 
   def self.create(locator, offset, length, segments = _pcore_type['segments'].value)
@@ -3626,16 +3626,16 @@ class QualifiedName < LiteralValue
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::QualifiedName initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::QualifiedName initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['value'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['value'])
   end
 
   def self.create(locator, offset, length, value)
@@ -3683,17 +3683,17 @@ class ReservedWord < LiteralValue
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ReservedWord initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ReservedWord initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['word'],
-      i12n['future'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['word'],
+      init_hash['future'])
   end
 
   def self.create(locator, offset, length, word, future = nil)
@@ -3746,16 +3746,16 @@ class QualifiedReference < LiteralValue
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::QualifiedReference initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::QualifiedReference initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['cased_value'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['cased_value'])
   end
 
   def self.create(locator, offset, length, cased_value)
@@ -3831,17 +3831,17 @@ class EppExpression < Expression
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::EppExpression initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::EppExpression initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['parameters_specified'],
-      i12n['body'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['parameters_specified'],
+      init_hash['body'])
   end
 
   def self.create(locator, offset, length, parameters_specified = nil, body = nil)
@@ -3939,17 +3939,17 @@ class ResourceBody < Positioned
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ResourceBody initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ResourceBody initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['title'],
-      i12n.fetch('operations') { _pcore_type['operations'].value })
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['title'],
+      init_hash.fetch('operations') { _pcore_type['operations'].value })
   end
 
   def self.create(locator, offset, length, title = nil, operations = _pcore_type['operations'].value)
@@ -4027,16 +4027,16 @@ class AbstractResource < Expression
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::AbstractResource initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::AbstractResource initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n.fetch('form') { "regular" })
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash.fetch('form') { "regular" })
   end
 
   def self.create(locator, offset, length, form = "regular")
@@ -4092,18 +4092,18 @@ class ResourceExpression < AbstractResource
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ResourceExpression initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ResourceExpression initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['type_name'],
-      i12n.fetch('form') { "regular" },
-      i12n.fetch('bodies') { _pcore_type['bodies'].value })
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['type_name'],
+      init_hash.fetch('form') { "regular" },
+      init_hash.fetch('bodies') { _pcore_type['bodies'].value })
   end
 
   def self.create(locator, offset, length, type_name, form = "regular", bodies = _pcore_type['bodies'].value)
@@ -4177,19 +4177,19 @@ class CapabilityMapping < Definition
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::CapabilityMapping initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::CapabilityMapping initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['kind'],
-      i12n['capability'],
-      i12n['component'],
-      i12n.fetch('mappings') { _pcore_type['mappings'].value })
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['kind'],
+      init_hash['capability'],
+      init_hash['component'],
+      init_hash.fetch('mappings') { _pcore_type['mappings'].value })
   end
 
   def self.create(locator, offset, length, kind, capability, component, mappings = _pcore_type['mappings'].value)
@@ -4273,18 +4273,18 @@ class ResourceDefaultsExpression < AbstractResource
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ResourceDefaultsExpression initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ResourceDefaultsExpression initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n.fetch('form') { "regular" },
-      i12n['type_ref'],
-      i12n.fetch('operations') { _pcore_type['operations'].value })
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash.fetch('form') { "regular" },
+      init_hash['type_ref'],
+      init_hash.fetch('operations') { _pcore_type['operations'].value })
   end
 
   def self.create(locator, offset, length, form = "regular", type_ref = nil, operations = _pcore_type['operations'].value)
@@ -4356,18 +4356,18 @@ class ResourceOverrideExpression < AbstractResource
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ResourceOverrideExpression initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ResourceOverrideExpression initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['resources'],
-      i12n.fetch('form') { "regular" },
-      i12n.fetch('operations') { _pcore_type['operations'].value })
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['resources'],
+      init_hash.fetch('form') { "regular" },
+      init_hash.fetch('operations') { _pcore_type['operations'].value })
   end
 
   def self.create(locator, offset, length, resources, form = "regular", operations = _pcore_type['operations'].value)
@@ -4436,17 +4436,17 @@ class SelectorEntry < Positioned
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::SelectorEntry initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::SelectorEntry initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['matching_expr'],
-      i12n['value_expr'])
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['matching_expr'],
+      init_hash['value_expr'])
   end
 
   def self.create(locator, offset, length, matching_expr, value_expr)
@@ -4517,17 +4517,17 @@ class SelectorExpression < Expression
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::SelectorExpression initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::SelectorExpression initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['offset'],
-      i12n['length'],
-      i12n['left_expr'],
-      i12n.fetch('selectors') { _pcore_type['selectors'].value })
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['left_expr'],
+      init_hash.fetch('selectors') { _pcore_type['selectors'].value })
   end
 
   def self.create(locator, offset, length, left_expr, selectors = _pcore_type['selectors'].value)
@@ -4641,15 +4641,15 @@ class Program < PopsObject
     })
   end
 
-  def self.from_hash(i12n)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::Program initializer', _pcore_type.i12n_type, i12n))
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::Program initializer', _pcore_type.init_hash_type, init_hash))
   end
 
-  def self.from_asserted_hash(i12n)
+  def self.from_asserted_hash(init_hash)
     new(
-      i12n['locator'],
-      i12n['body'],
-      i12n.fetch('definitions') { _pcore_type['definitions'].value })
+      init_hash['locator'],
+      init_hash['body'],
+      init_hash.fetch('definitions') { _pcore_type['definitions'].value })
   end
 
   def self.create(locator, body = nil, definitions = _pcore_type['definitions'].value)
