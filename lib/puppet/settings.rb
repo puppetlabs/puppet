@@ -369,7 +369,7 @@ class Puppet::Settings
       begin
         setting.handle(self.value(setting.name))
       rescue InterpolationError => err
-        raise InterpolationError, err, err.backtrace unless options[:ignore_interpolation_dependency_errors]
+        raise InterpolationError, err.message, err.backtrace unless options[:ignore_interpolation_dependency_errors]
         #swallow. We're not concerned if we can't call hooks because dependencies don't exist yet
         #we'll get another chance after application defaults are initialized
       end
