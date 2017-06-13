@@ -50,7 +50,7 @@ describe Puppet::Transaction do
     expect(transaction.report.resource_statuses[resource.to_s]).to equal(status)
   end
 
-  it "should not consider there to be failed resources if no statuses are marked failed" do
+  it "should not consider there to be failed or failed_to_restart resources if no statuses are marked failed" do
     resource = Puppet::Type.type(:notify).new :title => "foobar"
     transaction = transaction_with_resource(resource)
     transaction.evaluate
@@ -171,6 +171,13 @@ describe Puppet::Transaction do
     it "should report any_failed if any resources failed" do
       @resource.expects(:properties).raises ArgumentError
       @transaction.evaluate
+
+      expect(@transaction).to be_any_failed
+    end
+
+    it "should report any_failed if any resources failed to restart" do
+      @transaction.evaluate
+      @transaction.report.resource_statuses[@resource.to_s].failed_to_restart = true
 
       expect(@transaction).to be_any_failed
     end
