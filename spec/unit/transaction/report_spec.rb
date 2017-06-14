@@ -611,6 +611,7 @@ describe Puppet::Transaction::Report do
       :property => 'message',
       :previous_value => SemanticPuppet::VersionRange.parse('>=1.0.0'),
       :desired_value => SemanticPuppet::VersionRange.parse('>=1.2.0'),
+      :historical_value => nil,
       :message => "defined 'message' as 'a resource'",
       :name => :message_changed,
       :status => 'success',

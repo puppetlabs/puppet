@@ -109,11 +109,12 @@ class Puppet::Transaction::ResourceHarness
   end
 
   def sync_if_needed(param, context)
+    historical_value = context.historical_values[param.name]
     current_value = context.current_values[param.name]
 
     begin
       if param.should && !param.safe_insync?(current_value)
-        event = create_change_event(param, current_value)
+        event = create_change_event(param, current_value, historical_value)
 
         if param.noop
           noop(event, param, current_value)
@@ -129,7 +130,7 @@ class Puppet::Transaction::ResourceHarness
       # Execution will continue on StandardErrors, just store the event
       Puppet.log_exception(detail)
 
-      event = create_change_event(param, current_value)
+      event = create_change_event(param, current_value, historical_value)
       event.status = "failure"
       event.message = param.format(_("change from %s to %s failed: "),
                                    param.is_to_s(current_value),
@@ -137,7 +138,7 @@ class Puppet::Transaction::ResourceHarness
       event
     rescue Exception => detail
       # Execution will halt on Exceptions, they get raised to the application
-      event = create_change_event(param, current_value)
+      event = create_change_event(param, current_value, historical_value)
       event.status = "failure"
       event.message = param.format(_("change from %s to %s failed: "),
                                    param.is_to_s(current_value),
@@ -153,16 +154,18 @@ class Puppet::Transaction::ResourceHarness
     end
   end
 
-  def create_change_event(property, current_value)
+  def create_change_event(property, current_value, historical_value)
     options = {}
     should = property.should
 
     if property.sensitive
       options[:previous_value] = current_value.nil? ? nil : '[redacted]'
       options[:desired_value] = should.nil? ? nil : '[redacted]'
+      options[:historical_value] = historical_value.nil? ? nil : '[redacted]'
     else
       options[:previous_value] = current_value
       options[:desired_value] = should
+      options[:historical_value] = historical_value
     end
 
     property.event(options)
@@ -216,12 +219,14 @@ class Puppet::Transaction::ResourceHarness
   # @api private
   ResourceApplicationContext = Struct.new(:resource,
                                           :current_values,
+                                          :historical_values,
                                           :synced_params,
                                           :status,
                                           :system_value_params) do
     def self.from_resource(resource, status)
       ResourceApplicationContext.new(resource,
                                      resource.retrieve_resource.to_hash,
+                                     Puppet::Util::Storage.cache(resource).dup,
                                      [],
                                      status,
                                      resource.parameters.select { |n,p| p.is_a?(Puppet::Property) && !p.sensitive })
