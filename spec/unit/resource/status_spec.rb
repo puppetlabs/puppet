@@ -123,10 +123,16 @@ describe Puppet::Resource::Status do
     expect(status.out_of_sync).to eq(false)
   end
 
-  it "should not treat failure, or noop events as changed" do
-    ['failure', 'noop'].each do |s| status << Puppet::Transaction::Event.new(:status => s) end
+  it "should not treat failure, audit, or noop events as changed" do
+    ['failure', 'audit', 'noop'].each do |s| status << Puppet::Transaction::Event.new(:status => s) end
     expect(status.change_count).to eq(0)
     expect(status.changed).to eq(false)
+  end
+
+  it "should not treat audit events as out of sync" do
+    status << Puppet::Transaction::Event.new(:status => 'audit')
+    expect(status.out_of_sync_count).to eq(0)
+    expect(status.out_of_sync).to eq(false)
   end
 
   ['failure', 'noop', 'success'].each do |event_status|
@@ -144,7 +150,7 @@ describe Puppet::Resource::Status do
       s.line = 27
       s.evaluation_time = 2.7
       s.tags = %w{one two}
-      s << Puppet::Transaction::Event.new(:name => :mode_changed)
+      s << Puppet::Transaction::Event.new(:name => :mode_changed, :status => 'audit')
       s.failed = false
       s.changed = true
       s.out_of_sync = true
@@ -183,9 +189,11 @@ describe Puppet::Resource::Status do
     def events_as_hashes(report)
       report.events.collect do |e|
         {
+          :audited => e.audited,
           :property => e.property,
           :previous_value => e.previous_value,
           :desired_value => e.desired_value,
+          :historical_value => e.historical_value,
           :message => e.message,
           :name => e.name,
           :status => e.status,

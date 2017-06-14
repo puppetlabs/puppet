@@ -787,7 +787,7 @@ class Puppet::Settings
     return @service_user_available if defined?(@service_user_available)
 
     if self[:user]
-      user = Puppet::Type.type(:user).new :name => self[:user]
+      user = Puppet::Type.type(:user).new :name => self[:user], :audit => :ensure
 
       @service_user_available = user.exists?
     else
@@ -799,7 +799,7 @@ class Puppet::Settings
     return @service_group_available if defined?(@service_group_available)
 
     if self[:group]
-      group = Puppet::Type.type(:group).new :name => self[:group]
+      group = Puppet::Type.type(:group).new :name => self[:group], :audit => :ensure
 
       @service_group_available = group.exists?
     else

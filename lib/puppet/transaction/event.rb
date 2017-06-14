@@ -11,12 +11,12 @@ class Puppet::Transaction::Event
   include Puppet::Util::Logging
   include Puppet::Network::FormatSupport
 
-  ATTRIBUTES = [:name, :resource, :property, :previous_value, :desired_value, :status, :message, :file, :line, :source_description, :invalidate_refreshes, :redacted, :corrective_change]
+  ATTRIBUTES = [:name, :resource, :property, :previous_value, :desired_value, :historical_value, :status, :message, :file, :line, :source_description, :audited, :invalidate_refreshes, :redacted, :corrective_change]
   attr_accessor *ATTRIBUTES
   attr_accessor :time
   attr_reader :default_log_level
 
-  EVENT_STATUSES = %w{noop success failure }
+  EVENT_STATUSES = %w{noop success failure audit}
 
   def self.from_data_hash(data)
     obj = self.allocate
@@ -25,6 +25,7 @@ class Puppet::Transaction::Event
   end
 
   def initialize(options = {})
+    @audited = false
     @redacted = false
     @corrective_change = false
 
@@ -42,9 +43,11 @@ class Puppet::Transaction::Event
       :allow_unresolved => true,
       :loader => Puppet::Pops::Loaders.static_loader
     })
+    @audited = data['audited']
     @property = data['property']
     @previous_value = data['previous_value']
     @desired_value = data['desired_value']
+    @historical_value = data['historical_value']
     @message = data['message']
     @name = data['name'].intern if data['name']
     @status = data['status']
@@ -56,9 +59,11 @@ class Puppet::Transaction::Event
 
   def to_data_hash
     hash = {
+      'audited' => @audited,
       'property' => @property,
       'previous_value' => @previous_value,
       'desired_value' => @desired_value,
+      'historical_value' => @historical_value,
       'message' => @message,
       'name' => @name.nil? ? nil : @name.to_s,
       'status' => @status,
