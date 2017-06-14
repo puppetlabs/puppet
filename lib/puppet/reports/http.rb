@@ -6,8 +6,10 @@ Puppet::Reports.register_report(:http) do
 
   desc <<-DESC
     Send reports via HTTP or HTTPS. This report processor submits reports as
-    POST requests to the address in the `reporturl` setting. The body of each POST
-    request is the YAML dump of a Puppet::Transaction::Report object, and the
+    POST requests to the address in the `reporturl` setting. When a HTTPS URL
+    is used, the remote server must present a certificate issued by the Puppet
+    CA or the connection will fail validation. The body of each POST request
+    is the YAML dump of a Puppet::Transaction::Report object, and the
     Content-Type is set as `application/x-yaml`.
   DESC
 
