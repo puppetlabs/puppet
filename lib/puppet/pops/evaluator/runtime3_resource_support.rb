@@ -67,12 +67,10 @@ module Runtime3ResourceSupport
   end
 
   def self.find_resource_type(scope, type_name)
-    type_name = type_name.to_s.downcase
     find_builtin_resource_type(scope, type_name) || find_defined_resource_type(scope, type_name)
   end
 
   def self.find_resource_type_or_class(scope, name)
-    type_name = type_name.to_s.downcase
     find_builtin_resource_type(scope, name) || find_defined_resource_type(scope, name) || find_hostclass(scope, name)
   end
 
