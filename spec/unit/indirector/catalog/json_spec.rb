@@ -49,7 +49,7 @@ describe Puppet::Resource::Catalog::Json do
       parsed_catalog = subject.find(request)
 
       content = parsed_catalog.resource(:file, '/tmp/a_file')[:content]
-      expect(content.bytes).to eq(binary.bytes)
+      expect(content.bytes.to_a).to eq(binary.bytes.to_a)
     end
 
     it 'searches for catalogs contains binary content' do
@@ -61,7 +61,7 @@ describe Puppet::Resource::Catalog::Json do
 
       expect(parsed_catalogs.size).to eq(1)
       content = parsed_catalogs.first.resource(:file, '/tmp/a_file')[:content]
-      expect(content.bytes).to eq(binary.bytes)
+      expect(content.bytes.to_a).to eq(binary.bytes.to_a)
     end
   end
 end
