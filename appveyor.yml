@@ -7,7 +7,7 @@ matrix:
 
 # Ruby versions under test
 platform:
-  - Ruby23-x64
+  - Ruby24-x64
   - Ruby21-x64
 
 # Note that locales are mainly code page changes and are not the FULL set of localization
