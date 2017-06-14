@@ -57,7 +57,6 @@ class Puppet::Forge
       end
     end
 
-    # responsible for properly encoding a URI
     def get_request_object(path)
       headers = {
         "User-Agent" => user_agent,

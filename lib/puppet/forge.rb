@@ -53,13 +53,12 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
   #   bad HTTP response
   def search(term)
     matches = []
-    uri = "/v3/modules?query=#{term}"
+    uri = "/v3/modules?query=#{Puppet::Util.uri_query_encode(term)}"
     if Puppet[:module_groups]
-      uri += "&module_groups=#{Puppet[:module_groups].gsub('+', ' ')}"
+      uri += "&module_groups=#{Puppet::Util.uri_query_encode(Puppet[:module_groups])}"
     end
 
     while uri
-      # make_http_request URI encodes parameters
       response = make_http_request(uri)
 
       if response.code == '200'
@@ -91,12 +90,11 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
     name = input.tr('/', '-')
     uri = "/v3/releases?module=#{name}"
     if Puppet[:module_groups]
-      uri += "&module_groups=#{Puppet[:module_groups].gsub('+', ' ')}"
+      uri += "&module_groups=#{Puppet::Util.uri_query_encode(Puppet[:module_groups])}"
     end
     releases = []
 
     while uri
-      # make_http_request URI encodes parameters
       response = make_http_request(uri)
 
       if response.code == '200'
