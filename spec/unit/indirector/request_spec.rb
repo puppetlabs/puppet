@@ -149,21 +149,6 @@ describe Puppet::Indirector::Request do
         expect(request.key.encoding).to eq(Encoding::UTF_8)
       end
 
-      it "should set the request key properly given a UTF-8 URI" do
-        # different UTF-8 widths
-        # 1-byte A
-        # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
-        # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
-        # 4-byte <U+070E> - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
-        mixed_utf8 = "A\u06FF\u16A0\u{2070E}" # Aۿᚠ<U+070E>
-
-        key = "a/path/stu ff/#{mixed_utf8}"
-        req = Puppet::Indirector::Request.new(:ind, :method, "http:///#{key}", nil)
-        expect(req.key).to eq(key)
-        expect(req.key.encoding).to eq(Encoding::UTF_8)
-        expect(req.uri).to eq("http:///#{key}")
-      end
-
       it "should set the :uri attribute to the full URI" do
         expect(Puppet::Indirector::Request.new(:ind, :method, "http:///a/path/stu ff", nil).uri).to eq('http:///a/path/stu ff')
       end
@@ -246,7 +231,7 @@ describe Puppet::Indirector::Request do
   end
 
   it "should be able to return the URI-escaped key" do
-    expect(Puppet::Indirector::Request.new(:myind, :find, "my key", nil).escaped_key).to eq(Puppet::Util.uri_encode("my key"))
+    expect(Puppet::Indirector::Request.new(:myind, :find, "my key", nil).escaped_key).to eq(URI.escape("my key"))
   end
 
   it "should set its environment to an environment instance when a string is specified as its environment" do

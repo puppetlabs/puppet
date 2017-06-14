@@ -297,14 +297,6 @@ describe Puppet::Util do
   end
 
   describe "#path_to_uri" do
-    # different UTF-8 widths
-    # 1-byte A
-    # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
-    # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
-    # 4-byte ܎ - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
-    let (:mixed_utf8) { "A\u06FF\u16A0\u{2070E}" } # Aۿᚠ܎
-    let (:mixed_utf8_urlencoded) { "A%DB%BF%E1%9A%A0%F0%A0%9C%8E" }
-
     %w[. .. foo foo/bar foo/../bar].each do |path|
       it "should reject relative path: #{path}" do
         expect { Puppet::Util.path_to_uri(path) }.to raise_error(Puppet::Error)
@@ -313,42 +305,6 @@ describe Puppet::Util do
 
     it "should perform URI escaping" do
       expect(Puppet::Util.path_to_uri("/foo bar").path).to eq("/foo%20bar")
-    end
-
-    it "should properly URI encode + and space in path" do
-      expect(Puppet::Util.path_to_uri("/foo+foo bar").path).to eq("/foo+foo%20bar")
-    end
-
-    # reserved characters are different for each part
-    # https://web.archive.org/web/20151229061347/http://blog.lunatech.com/2009/02/03/what-every-web-developer-must-know-about-url-encoding#Thereservedcharactersaredifferentforeachpart
-    # "?" is allowed unescaped anywhere within a query part,
-    # "/" is allowed unescaped anywhere within a query part,
-    # "=" is allowed unescaped anywhere within a path parameter or query parameter value, and within a path segment,
-    # ":@-._~!$&'()*+,;=" are allowed unescaped anywhere within a path segment part,
-    # "/?:@-._~!$&'()*+,;=" are allowed unescaped anywhere within a fragment part.
-    it "should properly URI encode + and space in path and query" do
-      path = "/foo+foo bar?foo+foo bar"
-      uri = Puppet::Util.path_to_uri(path)
-
-      # Ruby 1.9.3 URI#to_s has a bug that returns ASCII always
-      # despite parts being UTF-8 strings
-      expected_encoding = RUBY_VERSION == '1.9.3' ? Encoding::ASCII : Encoding::UTF_8
-
-      expect(uri.to_s.encoding).to eq(expected_encoding)
-      expect(uri.path).to eq("/foo+foo%20bar")
-      # either + or %20 is correct for an encoded space in query
-      # + is usually used for backward compatibility, but %20 is preferred for compat with Uri.unescape
-      expect(uri.query).to eq("foo%2Bfoo%20bar")
-      # complete roundtrip
-      expect(URI.unescape(uri.to_s)).to eq("file:#{path}")
-      expect(URI.unescape(uri.to_s).encoding).to eq(expected_encoding)
-    end
-
-    it "should perform UTF-8 URI escaping" do
-      uri = Puppet::Util.path_to_uri("/#{mixed_utf8}")
-
-      expect(uri.path.encoding).to eq(Encoding::UTF_8)
-      expect(uri.path).to eq("/#{mixed_utf8_urlencoded}")
     end
 
     describe "when using platform :posix" do
@@ -384,166 +340,7 @@ describe Puppet::Util do
         it "should convert UNC #{path} to absolute URI" do
           uri = Puppet::Util.path_to_uri("\\\\server\\#{path}")
           expect(uri.host).to eq('server')
-          expect(uri.path).to eq('/' + Puppet::Util.uri_encode(path))
-        end
-      end
-    end
-  end
-
-  describe "#uri_query_encode" do
-    # different UTF-8 widths
-    # 1-byte A
-    # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
-    # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
-    # 4-byte ܎ - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
-    let (:mixed_utf8) { "A\u06FF\u16A0\u{2070E}" } # Aۿᚠ܎
-    let (:mixed_utf8_urlencoded) { "A%DB%BF%E1%9A%A0%F0%A0%9C%8E" }
-
-    it "should perform basic URI escaping that includes space and +" do
-      expect(Puppet::Util.uri_query_encode("foo bar+foo")).to eq("foo%20bar%2Bfoo")
-    end
-
-    it "should perform basic URI escaping including multiple query parameters" do
-      expect(Puppet::Util.uri_query_encode("foo=bar+foo baz&bar=baz qux")).to eq("foo=bar%2Bfoo%20baz&bar=baz%20qux")
-    end
-
-    [
-      "A\u06FF\u16A0\u{2070E}",
-      "A\u06FF\u16A0\u{2070E}".force_encoding(Encoding::BINARY)
-    ].each do |uri_string|
-      it "should perform UTF-8 URI escaping, even when input strings are not UTF-8" do
-        uri = Puppet::Util.uri_query_encode(mixed_utf8)
-
-        expect(uri.encoding).to eq(Encoding::UTF_8)
-        expect(uri).to eq(mixed_utf8_urlencoded)
-      end
-    end
-
-    it "should be usable by URI::parse" do
-      uri = URI::parse("puppet://server/path?" + Puppet::Util.uri_query_encode(mixed_utf8))
-
-      expect(uri.scheme).to eq('puppet')
-      expect(uri.host).to eq('server')
-      expect(uri.path).to eq('/path')
-      expect(uri.query).to eq(mixed_utf8_urlencoded)
-    end
-
-    it "should be usable by URI::Generic.build" do
-      params = {
-        :scheme => 'file',
-        :host => 'foobar',
-        :path => '/path/to',
-        :query => Puppet::Util.uri_query_encode(mixed_utf8)
-      }
-
-      uri = URI::Generic.build(params)
-
-      expect(uri.scheme).to eq('file')
-      expect(uri.host).to eq('foobar')
-      expect(uri.path).to eq("/path/to")
-      expect(uri.query).to eq(mixed_utf8_urlencoded)
-    end
-  end
-
-  describe "#uri_encode" do
-    # different UTF-8 widths
-    # 1-byte A
-    # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
-    # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
-    # 4-byte ܎ - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
-    let (:mixed_utf8) { "A\u06FF\u16A0\u{2070E}" } # Aۿᚠ܎
-    let (:mixed_utf8_urlencoded) { "A%DB%BF%E1%9A%A0%F0%A0%9C%8E" }
-
-    it "should perform URI escaping" do
-      expect(Puppet::Util.uri_encode("/foo bar")).to eq("/foo%20bar")
-    end
-
-    [
-      "A\u06FF\u16A0\u{2070E}",
-      "A\u06FF\u16A0\u{2070E}".force_encoding(Encoding::BINARY)
-    ].each do |uri_string|
-      it "should perform UTF-8 URI escaping, even when input strings are not UTF-8" do
-        uri = Puppet::Util.uri_encode(mixed_utf8)
-
-        expect(uri.encoding).to eq(Encoding::UTF_8)
-        expect(uri).to eq(mixed_utf8_urlencoded)
-      end
-    end
-
-    it "should be usable by URI::parse" do
-      uri = URI::parse(Puppet::Util.uri_encode("puppet://server/path/to/#{mixed_utf8}"))
-
-      expect(uri.scheme).to eq('puppet')
-      expect(uri.host).to eq('server')
-      expect(uri.path).to eq("/path/to/#{mixed_utf8_urlencoded}")
-    end
-
-    it "should be usable by URI::Generic.build" do
-      params = {
-        :scheme => 'file',
-        :host => 'foobar',
-        :path => Puppet::Util.uri_encode("/path/to/#{mixed_utf8}")
-      }
-
-      uri = URI::Generic.build(params)
-
-      expect(uri.scheme).to eq('file')
-      expect(uri.host).to eq('foobar')
-      expect(uri.path).to eq("/path/to/#{mixed_utf8_urlencoded}")
-    end
-
-    describe "when using platform :posix" do
-      before :each do
-        Puppet.features.stubs(:posix).returns true
-        Puppet.features.stubs(:microsoft_windows?).returns false
-      end
-
-      %w[/ /foo /foo/../bar].each do |path|
-        it "should not replace / in #{path} with %2F" do
-          expect(Puppet::Util.uri_encode(path)).to eq(path)
-        end
-      end
-    end
-
-    describe "with fragment support" do
-      context "disabled by default" do
-        it "should encode # as %23 in path" do
-          encoded = Puppet::Util.uri_encode("/foo bar#fragment")
-          expect(encoded).to eq("/foo%20bar%23fragment")
-        end
-
-        it "should encode # as %23 in query" do
-          encoded = Puppet::Util.uri_encode("/foo bar?baz+qux#fragment")
-          expect(encoded).to eq("/foo%20bar?baz%2Bqux%23fragment")
-        end
-      end
-
-      context "optionally enabled" do
-        it "should leave fragment delimiter # after encoded paths" do
-          encoded = Puppet::Util.uri_encode("/foo bar#fragment", { :allow_fragment => true })
-          expect(encoded).to eq("/foo%20bar#fragment")
-        end
-
-        it "should leave fragment delimiter # after encoded query" do
-          encoded = Puppet::Util.uri_encode("/foo bar?baz+qux#fragment", { :allow_fragment => true })
-          expect(encoded).to eq("/foo%20bar?baz%2Bqux#fragment")
-        end
-      end
-    end
-
-    describe "when using platform :windows" do
-      before :each do
-        Puppet.features.stubs(:posix).returns false
-        Puppet.features.stubs(:microsoft_windows?).returns true
-      end
-
-      it "should url encode \\ as %5C, but not replace : as %3F" do
-        expect(Puppet::Util.uri_encode('c:\\foo\\bar\\baz')).to eq('c:%5Cfoo%5Cbar%5Cbaz')
-      end
-
-      %w[C:/ C:/foo/bar].each do |path|
-        it "should not replace / in #{path} with %2F" do
-          expect(Puppet::Util.uri_encode(path)).to eq(path)
+          expect(uri.path).to eq('/' + path)
         end
       end
     end
@@ -551,13 +348,6 @@ describe Puppet::Util do
 
   describe ".uri_to_path" do
     require 'uri'
-
-    # different UTF-8 widths
-    # 1-byte A
-    # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
-    # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
-    # 4-byte ܎ - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
-    let (:mixed_utf8) { "A\u06FF\u16A0\u{2070E}" } # Aۿᚠ܎
 
     it "should strip host component" do
       expect(Puppet::Util.uri_to_path(URI.parse('http://foo/bar'))).to eq('/bar')
@@ -569,19 +359,6 @@ describe Puppet::Util do
 
     it "should return unencoded path" do
       expect(Puppet::Util.uri_to_path(URI.parse('http://foo/bar%20baz'))).to eq('/bar baz')
-    end
-
-
-    [
-      "http://foo/A%DB%BF%E1%9A%A0%F0%A0%9C%8E",
-      "http://foo/A%DB%BF%E1%9A%A0%F0%A0%9C%8E".force_encoding(Encoding::ASCII)
-    ].each do |uri_string|
-      it "should return paths as UTF-8" do
-        path = Puppet::Util.uri_to_path(URI.parse(uri_string))
-
-        expect(path).to eq("/#{mixed_utf8}")
-        expect(path.encoding).to eq(Encoding::UTF_8)
-      end
     end
 
     it "should be nil-safe" do
