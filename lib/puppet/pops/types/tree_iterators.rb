@@ -71,6 +71,8 @@ class TreeIterator
       v.size.times
     elsif v.is_a?(Hash)
       v.keys.each
+    else
+      v._pcore_type.attributes.keys.each
     end
   end
   private :indexer_on
@@ -119,10 +121,10 @@ class DepthFirstTreeIterator < TreeIterator
           @current_path << nil
           @recursed = false
         end
-
         idx = @indexer_stack[-1].next
         @current_path[-1] = idx
-        value = @value_stack[-1][idx]
+        v = @value_stack[-1]
+        value = v.is_a?(Puppet::Pops::Types::PuppetObject) ? v.send(idx) : v[idx]
         indexer = indexer_on(value)
         if indexer
           # recurse
@@ -182,7 +184,8 @@ class BreadthFirstTreeIterator < TreeIterator
 
         idx = @indexer_stack[0].next
         @current_path[-1] = idx
-        value = @value_stack[0][idx]
+        v = @value_stack[0]
+        value = v.is_a?(Puppet::Pops::Types::PuppetObject) ? v.send(idx) : v[idx]
         indexer = indexer_on(value)
         if indexer
           @value_stack << value

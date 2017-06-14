@@ -118,26 +118,14 @@ Puppet::Functions.create_function(:tree_each) do
     }]"
   end
 
-#  dispatch :tree_Hash2 do
-#    param 'Hash[Any, Any]', :tree
-#    optional_param 'OptionsType', :options
-#    block_param 'Callable[2,2]', :block
-#  end
-#
-#  dispatch :tree_Hash1 do
-#    param 'Hash[Any, Any]', :tree
-#    optional_param 'OptionsType', :options
-#    block_param 'Callable[1,1]', :block
-#  end
-
   dispatch :tree_Enumerable2 do
-    param 'Variant[Iterator, Array, Hash]', :tree
+    param 'Variant[Iterator, Array, Hash, Object]', :tree
     optional_param 'OptionsType', :options
     block_param 'Callable[2,2]', :block
   end
 
   dispatch :tree_Enumerable1 do
-    param 'Variant[Iterator, Array, Hash]', :tree
+    param 'Variant[Iterator, Array, Hash, Object]', :tree
     optional_param 'OptionsType', :options
     block_param 'Callable[1,1]', :block
   end

@@ -85,6 +85,36 @@ describe 'the tree_each function' do
           ''
           ].join("\n"))
     end
+
+    it 'an Object, yielding path and value when lambda has arity 2' do
+      catalog = compile_to_catalog(<<-MANIFEST)
+        type Person = Object[{attributes => {name => String, father => Optional[Person], mother => Optional[Person]}}]
+        $adam  = Person({name => 'Adam'})
+        $eve   = Person({name => 'Eve'})
+        $cain  = Person({name => 'Cain',  mother => $eve,  father => $adam})
+        $awan  = Person({name => 'Awan',  mother => $eve,  father => $adam})
+        $enoch = Person({name => 'Enoch', mother => $awan, father => $cain})
+
+        $msg = inline_epp(@(TEMPLATE))
+          <% $enoch.tree_each({include_containers=>false}) |$path, $v| { unless $v =~ Undef {-%>
+          path: <%= $path %> value: <%= $v %>
+          <% }} -%>
+          | TEMPLATE
+        notify {'test': message => $msg}
+      MANIFEST
+
+      expect(catalog.resource(:notify, 'test')['message']).to eq(
+        [
+          'path: [name] value: Enoch',
+          'path: [father, name] value: Cain',
+          'path: [father, father, name] value: Adam',
+          'path: [father, mother, name] value: Eve',
+          'path: [mother, name] value: Awan',
+          'path: [mother, father, name] value: Adam',
+          'path: [mother, mother, name] value: Eve',
+          ''
+          ].join("\n"))
+    end
   end
 
   context 'a yielded path' do
@@ -140,7 +170,7 @@ describe 'the tree_each function' do
         notice "$v"
       }
     MANIFEST
-    }.to raise_error(/expects a value of type Iterator, Array, or Hash/)
+    }.to raise_error(/expects a value of type Iterator, Array, Hash, or Object/)
   end
 
   it 'produces the receiver' do
