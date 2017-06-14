@@ -362,6 +362,7 @@
                                 "enum": [
                                     "success",
                                     "failure",
+                                    "audit",
                                     "noop",
                                     "total"
                                 ]
@@ -371,6 +372,7 @@
                                 "enum":  [
                                     "Success",
                                     "Failure",
+                                    "Audit",
                                     "Noop",
                                     "Total"
                                 ]
@@ -612,11 +614,12 @@
                 },
 
                 "status": {
-                    "description": "One of the following strings:\n\n* `success` - property was out of sync, and was successfully changed to be in sync.\n* `failure`- property was out of sync, and couldn't be changed to be in sync due to an error.\n* `noop` - property was out of sync, and wasn't changed due to noop mode.\n\ndepending on the type of the event.\n",
+                    "description": "One of the following strings:\n\n* `success` - property was out of sync, and was successfully changed to be in sync.\n* `failure`- property was out of sync, and couldn't be changed to be in sync due to an error.\n* `noop` - property was out of sync, and wasn't changed due to noop mode.\n* `audit` - property was in sync, and was being audited.\n\ndepending on the type of the event. Always `audit` in reports of `inspect` kind.\n",
                     "enum": [
                         "success",
                         "failure",
-                        "noop"
+                        "noop",
+                        "audit"
                     ]
                 },
                 "time": {

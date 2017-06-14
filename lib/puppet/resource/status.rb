@@ -64,7 +64,7 @@ module Puppet
       attr_reader :change_count
 
       # @!attribute [r] out_of_sync_count
-      #   @return [Integer] A count of the changes made while
+      #   @return [Integer] A count of the audited changes made while
       #     evaluating `@real_resource`.
       attr_reader :out_of_sync_count
 
@@ -122,8 +122,10 @@ module Puppet
           @change_count += 1
           @changed = true
         end
-        @out_of_sync_count += 1
-        @out_of_sync = true
+        if event.status != 'audit'
+          @out_of_sync_count += 1
+          @out_of_sync = true
+        end
         if event.corrective_change
           @corrective_change = true
         end
