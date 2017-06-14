@@ -287,7 +287,7 @@ class PTypeSetType < PMetaType
     if types.is_a?(Hash)
       types.each do |type_name, value|
         full_name = "#{@name}::#{type_name}".freeze
-        typed_name = Loader::TypedName.new(:type, full_name.downcase, name_auth)
+        typed_name = Loader::TypedName.new(:type, full_name, name_auth)
         type = Loader::TypeDefinitionInstantiator.create_type(full_name, value, name_auth)
         loader.set_entry(typed_name, type, value.locator.to_uri(value))
         types[type_name] = type
@@ -308,7 +308,7 @@ class PTypeSetType < PMetaType
     if types.is_a?(Hash)
       types.each do |type_name, value|
         full_name = "#{@name}::#{type_name}".freeze
-        typed_name = Loader::TypedName.new(:type, full_name.downcase, name_auth)
+        typed_name = Loader::TypedName.new(:type, full_name, name_auth)
         meta_name = value.is_a?(Hash) ? 'Object' : 'TypeAlias'
         type = Loader::TypeDefinitionInstantiator.create_named_type(full_name, meta_name, value, name_auth)
         loader.set_entry(typed_name, type)

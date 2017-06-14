@@ -131,7 +131,7 @@ class StaticLoader < Loader
   end
 
   def add_type(name, type)
-    set_entry(TypedName.new(:type, name.downcase), type)
+    set_entry(TypedName.new(:type, name), type)
     type
   end
 

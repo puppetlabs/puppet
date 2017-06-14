@@ -12,6 +12,7 @@ class TypedName
   attr_reader :compound_name
 
   def initialize(type, name, name_authority = Pcore::RUNTIME_NAME_AUTHORITY)
+    name = name.downcase
     @type = type
     @name_authority = name_authority
     # relativize the name (get rid of leading ::), and make the split string available

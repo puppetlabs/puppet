@@ -22,6 +22,16 @@ describe 'loader helper classes' do
     expect(tn.name).to eq('foo::bar')
     expect(tn.qualified?).to be_truthy
   end
+
+  it 'TypedName converts name to lower case' do
+    tn = Puppet::Pops::Loader::TypedName.new(:type, '::Foo::Bar')
+    expect(tn.name_parts).to eq(['foo', 'bar'])
+    expect(tn.name).to eq('foo::bar')
+  end
+
+  it 'TypedName is case insensitive' do
+    expect(Puppet::Pops::Loader::TypedName.new(:type, '::Foo::Bar')).to eq(Puppet::Pops::Loader::TypedName.new(:type, '::foo::bar'))
+  end
 end
 
 describe 'loaders' do

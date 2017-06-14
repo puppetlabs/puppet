@@ -79,12 +79,11 @@ module Puppet::Util::CharacterEncoding
     }
 
     # Given a string, return a copy of that string with any invalid byte
-    # sequences in its current encoding replaced with "?". We use "?" to make
-    # sure our output is consistent across ruby versions and encodings, and
-    # because calling scrub on a non-UTF8 string with the unicode replacement
-    # character "\uFFFD" results in an Encoding::CompatibilityError.
+    # sequences in its current encoding replaced with the replacement character
+    # "\uFFFD" (UTF-8) if the string is UTF-8 or UTF-16LE, or "?" otherwise.
     # @param string a string to remove invalid byte sequences from
-    # @return a copy of string invalid byte sequences replaced by "?" character
+    # @return a copy of string invalid byte sequences replaced by the unicode
+    #   replacement character or "?" character
     # @note does not modify encoding, but new string will have different bytes
     #   from original. Only needed for ruby 1.9.3 support.
     def scrub(string)
