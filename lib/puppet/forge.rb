@@ -53,9 +53,9 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
   #   bad HTTP response
   def search(term)
     matches = []
-    uri = "/v3/modules?query=#{Puppet::Util.uri_query_encode(term)}"
+    uri = "/v3/modules?query=#{URI.escape(term)}"
     if Puppet[:module_groups]
-      uri += "&module_groups=#{Puppet::Util.uri_query_encode(Puppet[:module_groups])}"
+      uri += "&module_groups=#{Puppet[:module_groups]}"
     end
 
     while uri
@@ -90,7 +90,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
     name = input.tr('/', '-')
     uri = "/v3/releases?module=#{name}"
     if Puppet[:module_groups]
-      uri += "&module_groups=#{Puppet::Util.uri_query_encode(Puppet[:module_groups])}"
+      uri += "&module_groups=#{Puppet[:module_groups]}"
     end
     releases = []
 

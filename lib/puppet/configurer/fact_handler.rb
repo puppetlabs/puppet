@@ -32,6 +32,6 @@ module Puppet::Configurer::FactHandler
 
     text = facts.render(:pson)
 
-    {:facts_format => :pson, :facts => Puppet::Util.uri_query_encode(text)}
+    {:facts_format => :pson, :facts => CGI.escape(text)}
   end
 end
