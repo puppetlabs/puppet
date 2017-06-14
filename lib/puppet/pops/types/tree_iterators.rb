@@ -65,6 +65,25 @@ class TreeIterator
     false
   end
 
+  def to_array
+    result = []
+    loop do
+      k,v = self.next
+      result << [k,v]
+    end
+    result
+  end
+
+  def reverse_each(&block)
+    r = Iterator.new(Puppet::Pops::Types::PAnyType::DEFAULT, to_array.reverse_each)
+    block_given? ? r.each(&block) : r
+  end
+
+  def step(step, &block)
+    r = StepIterator.new(Puppet::Pops::Types::PAnyType::DEFAULT, self, step)
+    block_given? ? r.each(&block) : r
+  end
+
   def indexer_on(v)
     return nil unless @containers_t.instance?(v)
     if v.is_a?(Array)
@@ -90,7 +109,6 @@ class TreeIterator
 end
 
 class DepthFirstTreeIterator < TreeIterator
-  include Iterable
 
   # Creates a DepthFirstTreeIterator that by default treats all Array, Hash and Object instances as
   # containers - the 'containers' option can be set to a type that denotes which types of values
@@ -131,11 +149,11 @@ class DepthFirstTreeIterator < TreeIterator
           @recursed = true
           @value_stack << value
           @indexer_stack << indexer
-          next unless @with_containers
+          redo unless @with_containers
         else
-          next unless @with_values
+          redo unless @with_values
         end
-        return [@current_path, value]
+        return [@current_path.dup, value]
 
       rescue StopIteration
         # end of current value's range of content
@@ -193,7 +211,7 @@ class BreadthFirstTreeIterator < TreeIterator
           @path_stack << @current_path.dup
           next unless @with_containers
         end
-        return [@current_path, value]
+        return [@current_path.dup, value]
 
       rescue StopIteration
         # end of current value's range of content

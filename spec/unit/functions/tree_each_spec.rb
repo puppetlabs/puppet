@@ -173,16 +173,31 @@ describe 'the tree_each function' do
     }.to raise_error(/expects a value of type Iterator, Array, Hash, or Object/)
   end
 
-  it 'produces the receiver' do
-    catalog = compile_to_catalog(<<-MANIFEST)
-      $a = [1, 3, 2]
-      $b = $a.tree_each |$path, $x| { "unwanted" }
-      file { "/file_${b[1]}":
-        ensure => present
-      }
-    MANIFEST
+  context 'produces' do
+    it 'the receiver when given a lambda' do
+      catalog = compile_to_catalog(<<-MANIFEST)
+        $a = [1, 3, 2]
+        $b = $a.tree_each |$path, $x| { "unwanted" }
+        file { "/file_${b[1]}":
+          ensure => present
+        }
+      MANIFEST
 
-    expect(catalog.resource(:file, "/file_3")['ensure']).to eq('present')
+      expect(catalog.resource(:file, "/file_3")['ensure']).to eq('present')
+    end
+
+    it 'an Iterator when not given a lambda' do
+      catalog = compile_to_catalog(<<-MANIFEST)
+        $a = [1, 3, 2]
+        $b = $a.tree_each
+        file { "/file_${$b =~ Iterator}":
+          ensure => present
+        }
+      MANIFEST
+
+      expect(catalog.resource(:file, "/file_true")['ensure']).to eq('present')
+    end
+
   end
 
   context 'recursively yields under the control of options such that' do
@@ -335,6 +350,47 @@ describe 'the tree_each function' do
           'path: [1, 0] value: 2',
           'path: [1, 2] value: 4',
           'path: [1, 1, 0] value: 3',
+          ''
+          ].join("\n"))
+    end
+  end
+  context 'can be chained' do
+    it 'with reverse_each()' do
+      catalog = compile_to_catalog(<<-MANIFEST)
+        $a = [1,[2,[3]]]
+        $msg = inline_epp(@(TEMPLATE))
+          <% $a.tree_each({include_containers => false}).reverse_each |$v| { -%>
+          path: <%= $v[0] %> value: <%= $v[1] %>
+          <% } -%>
+          | TEMPLATE
+        notify {'test': message => $msg}
+      MANIFEST
+
+      expect(catalog.resource(:notify, 'test')['message']).to eq(
+        [
+          'path: [1, 1, 0] value: 3',
+          'path: [1, 0] value: 2',
+          'path: [0] value: 1',
+          ''
+          ].join("\n"))
+    end
+
+    it 'with step()' do
+      catalog = compile_to_catalog(<<-MANIFEST)
+        $a = [1,[2,[3,[4,[5]]]]]
+        $msg = inline_epp(@(TEMPLATE))
+          <% $a.tree_each({include_containers => false}).step(2) |$v| { -%>
+          path: <%= $v[0] %> value: <%= $v[1] %>
+          <% } -%>
+          | TEMPLATE
+        notify {'test': message => $msg}
+      MANIFEST
+
+      expect(catalog.resource(:notify, 'test')['message']).to eq(
+        [
+          'path: [0] value: 1',
+          'path: [1, 1, 0] value: 3',
+          'path: [1, 1, 1, 1, 0] value: 5',
           ''
           ].join("\n"))
     end
