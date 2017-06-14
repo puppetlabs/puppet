@@ -503,6 +503,14 @@ describe Puppet::Parser::Compiler do
           }.to raise_error(/Could not find resource 'Notify\[tooth_fairy\]' in parameter '#{meta_param}'/)
         end
       end
+
+      it 'are not reported for virtual resources' do
+        expect { 
+          compile_to_catalog(<<-PP)
+            @notify{ x : require => Notify[tooth_fairy] }
+          PP
+        }.to_not raise_error
+      end
     end
 
     describe "relationships can be formed" do
