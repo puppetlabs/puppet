@@ -5,6 +5,7 @@ class Puppet::Parser::Compiler
     def validate
       catalog.resources.each do |resource|
         next unless resource.is_a?(Puppet::Parser::Resource)
+        next if resource.virtual?
         resource.eachparam do |param|
           pclass = Puppet::Type.metaparamclass(param.name)
           validate_relationship(param) if !pclass.nil? && pclass < Puppet::Type::RelationshipMetaparam
