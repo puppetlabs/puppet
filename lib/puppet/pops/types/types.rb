@@ -1446,10 +1446,6 @@ class PStringType < PScalarDataType
     @size_type_or_value.is_a?(PIntegerType) ? @size_type_or_value : nil
   end
 
-  def size_type
-    @size_type_or_value.is_a?(PIntegerType) ? @size_type_or_value : nil
-  end
-
   def derived_size_type
     if @size_type_or_value.is_a?(PIntegerType)
       @size_type_or_value
