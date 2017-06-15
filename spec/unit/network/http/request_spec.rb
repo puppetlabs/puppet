@@ -76,13 +76,13 @@ describe Puppet::Network::HTTP::Request do
       end
     end
 
-    it "selects the first format supported by the server and accepted by the client" do
-      request = a_request(headers.merge('accept' => 'application/json, pson'))
-      expect(request.response_formatters_for([:json, :msgpack])).to eq([json_formatter])
+    it "returns accepted and supported formats, in the accepted order" do
+      request = a_request(headers.merge('accept' => 'application/json, application/x-msgpack, text/pson'))
+      expect(request.response_formatters_for([:pson, :json])).to eq([json_formatter, pson_formatter])
     end
 
     it "selects the second format if the first one isn't supported by the server" do
-      request = a_request(headers.merge('accept' => 'application/json, pson'))
+      request = a_request(headers.merge('accept' => 'application/json, text/pson'))
       expect(request.response_formatters_for([:pson])).to eq([pson_formatter])
     end
 

@@ -321,6 +321,18 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       expect(response.body).to eq(Puppet::IndirectorTesting.render_multiple(:pson, [data]))
     end
 
+    it "raises 406 not acceptable if no formats are accceptable" do
+      data = Puppet::IndirectorTesting.new("my data")
+      indirection.save(data, "my data")
+      request = a_request_that_searches(Puppet::IndirectorTesting.new("my"), :accept_header => "application/json, text/pson")
+      data.stubs(:to_json).raises(Puppet::Network::FormatHandler::FormatError, 'Could not render to Puppet::Network::Format[json]: source sequence is illegal/malformed utf-8')
+      data.stubs(:to_pson).raises(Puppet::Network::FormatHandler::FormatError, 'Could not render to Puppet::Network::Format[pson]: source sequence is illegal/malformed utf-8')
+
+      expect {
+        handler.call(request, response)
+      }.to raise_error(Puppet::Network::HTTP::Error::HTTPNotAcceptableError, /No supported formats are acceptable/)
+    end
+
     it "should return [] when searching returns an empty array" do
       request = a_request_that_searches(Puppet::IndirectorTesting.new("nothing"), :accept_header => "unknown, application/json")
 

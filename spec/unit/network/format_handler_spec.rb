@@ -71,12 +71,12 @@ describe Puppet::Network::FormatHandler do
       expect(suitable_in_setup_formats(["three"])).to eq([])
     end
 
-    it "skips unsupported, but accepted, formats" do
+    it "returns only the accepted and supported format" do
       expect(suitable_in_setup_formats(["three", "two"])).to eq([format_two])
     end
 
-    it "gives the first acceptable and suitable format" do
-      expect(suitable_in_setup_formats(["three", "one", "two"])).to eq([format_one, format_two])
+    it "returns only accepted and supported formats, in order of accepted" do
+      expect(suitable_in_setup_formats(["three", "two", "one"])).to eq([format_two, format_one])
     end
 
     it "allows specifying acceptable formats by mime type" do
