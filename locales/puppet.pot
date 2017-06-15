@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 4.10.2-933-ged61eaa\n"
+"Project-Id-Version: Puppet automation framework 4.10.2-945-g545ce43\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-06-15 00:36+0000\n"
-"PO-Revision-Date: 2017-06-15 00:36+0000\n"
+"POT-Creation-Date: 2017-06-15 22:59+0000\n"
+"PO-Revision-Date: 2017-06-15 22:59+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -2049,6 +2049,14 @@ msgstr ""
 msgid "Could not retrieve fact %{fact}"
 msgstr ""
 
+#: ../lib/puppet/indirector/catalog/json.rb:13
+msgid "Unable to deserialize catalog from json, retrying with pson"
+msgstr ""
+
+#: ../lib/puppet/indirector/catalog/json.rb:21
+msgid "Unable to serialize catalog to json, retrying with pson"
+msgstr ""
+
 #: ../lib/puppet/indirector/certificate/disabled_ca.rb:16 ../lib/puppet/indirector/certificate_request/disabled_ca.rb:16 ../lib/puppet/indirector/certificate_revocation_list/disabled_ca.rb:16 ../lib/puppet/indirector/key/disabled_ca.rb:16
 msgid "this master is not a CA"
 msgstr ""
@@ -3005,6 +3013,10 @@ msgstr ""
 msgid "%{klass} does not respond to %{method}; can not render multiple instances to %{mime}"
 msgstr ""
 
+#: ../lib/puppet/network/format_handler.rb:67
+msgid "No format matches the given format name or mime-type (%{format})"
+msgstr ""
+
 #. TRANSLATORS "intern" is a function name and should not be translated
 #: ../lib/puppet/network/format_support.rb:15
 msgid "Could not intern from %{format}: %{err}"
@@ -3078,33 +3090,37 @@ msgstr ""
 msgid "Rendered result in %{format}"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:134
+#: ../lib/puppet/network/http/api/indirected_routes.rb:135
 msgid "Sent response"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:142
+#: ../lib/puppet/network/http/api/indirected_routes.rb:143
 msgid "Could not find %{indirection} %{key}"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:154
+#: ../lib/puppet/network/http/api/indirected_routes.rb:155
 msgid "Could not find instances in %{indirection} with '%{key}'"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:198
+#: ../lib/puppet/network/http/api/indirected_routes.rb:202 ../lib/puppet/network/http/request.rb:60
+msgid "No supported formats are acceptable (Accept: %{accepted_formats})"
+msgstr ""
+
+#: ../lib/puppet/network/http/api/indirected_routes.rb:227
 msgid "The request body is invalid: %{message}"
 msgstr ""
 
 #. TRANSLATORS "mime-type" is a keyword and should not be translated
 #. TRANSLATORS "mime-type" is a keyword and should not be translated
-#: ../lib/puppet/network/http/api/indirected_routes.rb:204 ../lib/puppet/network/http/request.rb:31
+#: ../lib/puppet/network/http/api/indirected_routes.rb:233 ../lib/puppet/network/http/request.rb:31
 msgid "Client sent a mime-type (%{header}) that doesn't correspond to a format we support"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:210
+#: ../lib/puppet/network/http/api/indirected_routes.rb:239
 msgid "No support for http method %{http_method}"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:214
+#: ../lib/puppet/network/http/api/indirected_routes.rb:243
 msgid "No support for plurality %{indirection} for %{http_method} operations"
 msgstr ""
 
@@ -3202,10 +3218,6 @@ msgstr ""
 
 #: ../lib/puppet/network/http/request.rb:44
 msgid "Missing required Accept header"
-msgstr ""
-
-#: ../lib/puppet/network/http/request.rb:56
-msgid "No supported formats are acceptable (Accept: %{accepted_formats})"
 msgstr ""
 
 #: ../lib/puppet/network/http/webrick.rb:24
