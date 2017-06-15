@@ -21,7 +21,7 @@ PUT
 
 ### Supported Format(s)
 
-PSON
+`application/json`, `text/pson`
 
 ### Parameters
 
@@ -44,7 +44,7 @@ Here is an example of a PUT request. (Note that the content-length is not correc
 example is formatted for readability)
 
     PUT /puppet/v3/report/kermit.com?environment=production HTTP/1.0
-    ContentType: text/pson
+    Content-Type: application/json
     Content-Length: 1428
 
     {"host"=>"kermit.com",
