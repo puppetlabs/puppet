@@ -1415,6 +1415,52 @@ describe Puppet::Type.type(:file) do
     end
   end
 
+  describe 'when using source' do
+    # different UTF-8 widths
+    # 1-byte A
+    # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
+    # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
+    # 4-byte <U+070E> - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
+    let (:mixed_utf8) { "A\u06FF\u16A0\u{2070E}" } # Aۿᚠ<U+070E>
+
+    it 'should allow UTF-8 characters and return a UTF-8 uri' do
+      filename = "/bar #{mixed_utf8}"
+      source = "puppet://foo#{filename}"
+      file[:source] = source
+
+      # intercept the indirector call to provide back mocked metadata for the given URI
+      metadata = stub 'metadata', :source => source
+      metadata.expects(:source=)
+      Puppet::FileServing::Metadata.indirection.expects(:find).with do |path, opts|
+        path == source
+      end.returns metadata
+
+      uri = file.parameters[:source].uri
+      expect(URI.unescape(uri.path)).to eq(filename)
+      expect(uri.path.encoding).to eq(Encoding::UTF_8)
+    end
+
+    it 'should allow UTF-8 characters inside the indirector / terminus code' do
+      filename = "/bar #{mixed_utf8}"
+      source = "puppet://foo#{filename}"
+      file[:source] = source
+
+      # for this test to properly trigger previously errant behavior, the code for
+      # Puppet::FileServing::Metadata.indirection.find must run and produce an
+      # instance of Puppet::Indirector::FileMetadata::Rest that can be amended
+      metadata = stub 'metadata', :source => source
+      metadata.expects(:source=)
+      require 'puppet/indirector/file_metadata/rest'
+      Puppet::Indirector::FileMetadata::Rest.any_instance.expects(:find).with do |req|
+        req.key == filename[1..-1]
+      end.returns(metadata)
+
+      uri = file.parameters[:source].uri
+      expect(URI.unescape(uri.path)).to eq(filename)
+      expect(uri.path.encoding).to eq(Encoding::UTF_8)
+    end
+  end
+
   describe "when using source" do
     before do
       file[:source] = File.expand_path('/one')

@@ -67,7 +67,7 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
 
       it "should return the unescaped path for an escaped request path" do
         unescaped_path = '/foo/bar baz'
-        escaped_path = URI.escape(unescaped_path)
+        escaped_path = Puppet::Util.uri_encode(unescaped_path)
         req = mk_req(escaped_path)
         expect(@handler.path(req)).to eq(unescaped_path)
       end
@@ -170,7 +170,7 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
       end
 
       it "should CGI-decode the HTTP parameters" do
-        encoding = CGI.escape("foo bar")
+        encoding = Puppet::Util.uri_query_encode("foo bar")
         req = mk_req("/?foo=#{encoding}")
         result = @handler.params(req)
         expect(result[:foo]).to eq("foo bar")
@@ -201,7 +201,7 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
       end
 
       it "should treat YAML encoded parameters like it was any string" do
-        escaping = CGI.escape(YAML.dump(%w{one two}))
+        escaping = Puppet::Util.uri_query_encode(YAML.dump(%w{one two}))
         req = mk_req("/?foo=#{escaping}")
         expect(@handler.params(req)[:foo]).to eq("---\n- one\n- two\n")
       end

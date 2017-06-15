@@ -41,8 +41,12 @@ class Puppet::Indirector::Request
     end
   end
 
+  # @api private
+  # @deprecated used only internally to be removed in Puppet 5
   def escaped_key
-    URI.escape(key)
+    # Puppet::Network::HTTP::API::IndirectedRoutes is the only caller to escaped_key
+    # and these fragments only appear in the path part of a URI
+    Puppet::Util.uri_encode(key)
   end
 
   # LAK:NOTE This is a messy interface to the cache, and it's only
@@ -143,7 +147,7 @@ class Puppet::Indirector::Request
 
   def encode_params(params)
     params.collect do |key, value|
-      "#{key}=#{CGI.escape(value.to_s)}"
+      "#{key}=#{Puppet::Util.uri_query_encode(value.to_s)}"
     end.join("&")
   end
 
@@ -243,9 +247,8 @@ class Puppet::Indirector::Request
   def set_uri_key(key)
     @uri = key
     begin
-      # calling URI.escape for UTF-8 characters will % escape them
-      # and the resulting string components of the URI are now ASCII
-      uri = URI.parse(URI.escape(key))
+      # calling uri_encode for UTF-8 characters will % escape them and keep them UTF-8
+      uri = URI.parse(Puppet::Util.uri_encode(key))
     rescue => detail
       raise ArgumentError, "Could not understand URL #{key}: #{detail}", detail.backtrace
     end
@@ -274,8 +277,6 @@ class Puppet::Indirector::Request
       @protocol = uri.scheme
     end
 
-    # The unescaped bytes are correct but in ASCII and must be treated
-    # as UTF-8 for the sake of performing string comparisons later
-    @key = URI.unescape(uri.path.sub(/^\//, '')).force_encoding(Encoding::UTF_8)
+    @key = URI.unescape(uri.path.sub(/^\//, ''))
   end
 end

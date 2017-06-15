@@ -258,7 +258,7 @@ describe Puppet::Resource::Catalog::Compiler do
     def a_request_that_contains(facts, format = :pson)
       request = Puppet::Indirector::Request.new(:catalog, :find, "hostname", nil)
       request.options[:facts_format] = format.to_s
-      request.options[:facts] = CGI.escape(facts.render(format))
+      request.options[:facts] = Puppet::Util.uri_encode(facts.render(format))
       request
     end
 
