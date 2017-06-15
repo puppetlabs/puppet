@@ -60,7 +60,7 @@ describe Puppet::Indirector::JSON do
 
     def with_content(text)
       FileUtils.mkdir_p(File.dirname(file))
-      File.open(file, 'w') {|f| f.puts text }
+      File.binwrite(file, text)
       yield if block_given?
     end
 
@@ -81,7 +81,7 @@ describe Puppet::Indirector::JSON do
           # I don't like this, but there isn't a credible alternative that
           # also works on Windows, so a stub it is. At least the expectation
           # will fail if the implementation changes. Sorry to the next dev.
-          Puppet::FileSystem.expects(:read).with(file).raises(Errno::EPERM)
+          Puppet::FileSystem.expects(:read).with(file, anything).raises(Errno::EPERM)
           expect { subject.find(request) }.
             to raise_error Puppet::Error, /Could not read JSON/
         end
@@ -91,6 +91,16 @@ describe Puppet::Indirector::JSON do
         with_content("this is totally invalid JSON") do
           expect { subject.find(request) }.
             to raise_error Puppet::Error, /Could not parse JSON data/
+        end
+      end
+
+      it "raises if the content contains binary" do
+        binary = "\xC0\xFF".force_encoding(Encoding::BINARY)
+
+        with_content(binary) do
+          expect {
+            subject.find(request)
+          }.to raise_error Puppet::Error, /Could not parse JSON data/
         end
       end
 
@@ -160,7 +170,7 @@ describe Puppet::Indirector::JSON do
     end
 
     def create_file(name, value = 12)
-      File.open(subject.path(name, ''), 'w') do |f|
+      File.open(subject.path(name, ''), 'wb') do |f|
         f.puts Puppet::IndirectorTesting.new(value).to_json
       end
     end
@@ -187,6 +197,17 @@ describe Puppet::Indirector::JSON do
       create_file('foo.pson', 'foo-pson')
       create_file('foo.json~', 'foo-backup')
       expect(subject.search(request('f*')).map(&:value)).to eq(['foo-json'])
+    end
+
+    it "raises if the content contains binary" do
+      binary = "\xC0\xFF".force_encoding(Encoding::BINARY)
+
+      File.binwrite(subject.path('foo.json', ''), "foo-json")
+      File.binwrite(subject.path("foo#{binary}.bin", ''), "foo-binary")
+
+      expect {
+        subject.search(request('*'))
+      }.to raise_error Puppet::Error, /Could not parse JSON data/
     end
   end
 end
