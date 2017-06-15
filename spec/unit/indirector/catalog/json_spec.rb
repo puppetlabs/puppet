@@ -29,12 +29,6 @@ describe Puppet::Resource::Catalog::Json do
       FileUtils.mkdir_p(File.join(Puppet[:server_datadir], 'indirector_testing'))
     end
 
-    def with_content(text)
-      FileUtils.mkdir_p(File.dirname(file))
-      File.binwrite(file, text)
-      yield if block_given?
-    end
-
     it 'saves a catalog containing binary content' do
       request = subject.indirection.request(:save, key, catalog)
 

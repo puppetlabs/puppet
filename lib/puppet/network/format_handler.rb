@@ -62,7 +62,11 @@ module Puppet::Network::FormatHandler
     else
       out = format(format)
     end
-    raise ArgumentError, "No format matches the given format name or mime-type (#{format})" if out.nil?
+
+    if out.nil?
+      raise ArgumentError, _("No format matches the given format name or mime-type (%{format})") % {format: format}
+    end
+
     out.name
   end
 
@@ -74,7 +78,8 @@ module Puppet::Network::FormatHandler
   #   (most preferred is first)
   # @param supported [Array<Symbol>] the names of the supported formats (the
   #   most preferred format is first)
-  # @return [Puppet::Network::Format, nil] the most suitable format
+  # @return [Array<Puppet::Network::Format>] the most suitable formats that
+  #   are both accepted and supported
   # @api private
   def self.most_suitable_formats_for(accepted, supported)
     accepted.collect do |format|
