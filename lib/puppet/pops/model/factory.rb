@@ -846,7 +846,13 @@ class Factory
 
   # Builds a BlockExpression if args size > 1, else the single expression/value in args
   def self.block_or_expression(args)
-    args.size > 1 ? new(BlockExpression, args) : args[0]
+    if args.size > 1
+      block_expr = new(BlockExpression, args)
+      block_expr.record_position(args.first[KEY_LOCATOR], args.first, args.last)
+      block_expr
+    else
+      args[0]
+    end
   end
 
   def self.HOSTCLASS(name, parameters, parent, body)

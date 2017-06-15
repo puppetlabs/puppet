@@ -361,7 +361,6 @@ if_expression
       }
     | ELSE LBRACE statements RBRACE {
         result = Factory.block_or_expression(val[2])
-        loc result, val[0], val[3]
       }
     | ELSE LBRACE RBRACE {
         result = nil # don't think a nop is needed here either
@@ -386,7 +385,6 @@ unless_expression
     : # nothing
     | ELSE LBRACE statements RBRACE {
         result = Factory.block_or_expression(val[2])
-        loc result, val[0], val[3]
       }
     | ELSE LBRACE RBRACE {
         result = nil # don't think a nop is needed here either
