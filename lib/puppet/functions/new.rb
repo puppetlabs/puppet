@@ -21,7 +21,7 @@ Puppet::Functions.create_function(:new, Puppet::Functions::InternalFunction) do
   end
 
   def new_function_for_type(t, scope)
-    @new_function_cache ||= Hash.new() {|hsh, key| hsh[key] = key.new_function(loader).new(scope, loader) }
+    @new_function_cache ||= Hash.new() {|hsh, key| hsh[key] = key.new_function.new(scope, loader) }
     @new_function_cache[t]
   end
 

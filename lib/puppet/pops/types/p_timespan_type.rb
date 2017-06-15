@@ -103,8 +103,8 @@ module Types
       )
     end
 
-    def self.new_function(_, loader)
-      @new_function ||= Puppet::Functions.create_loaded_function(:new_timespan, loader) do
+    def self.new_function(type)
+      @new_function ||= Puppet::Functions.create_loaded_function(:new_timespan, type.loader) do
         local_types do
           type 'Formats = Variant[String[2],Array[String[2]], 1]'
         end

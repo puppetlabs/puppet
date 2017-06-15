@@ -55,8 +55,8 @@ class PSemVerType < PScalarType
   end
 
   # @api private
-  def self.new_function(_, loader)
-    @@new_function ||= Puppet::Functions.create_loaded_function(:new_Version, loader) do
+  def self.new_function(type)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_Version, type.loader) do
       local_types do
         type 'PositiveInteger = Integer[0,default]'
         type 'SemVerQualifier = Pattern[/\A(?<part>[0-9A-Za-z-]+)(?:\.\g<part>)*\Z/]'

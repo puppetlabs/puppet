@@ -392,8 +392,8 @@ class PObjectType < PMetaType
   end
 
   # @api private
-  def new_function(loader)
-    @new_function ||= create_new_function(loader)
+  def new_function
+    @new_function ||= create_new_function
   end
 
   # Assign a new instance reader to this type
@@ -428,7 +428,7 @@ class PObjectType < PMetaType
   end
 
     # @api private
-  def create_new_function(loader)
+  def create_new_function
     impl_class = implementation_class
     class_name = impl_class.name || "Anonymous Ruby class for #{name}"
 

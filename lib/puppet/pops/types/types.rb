@@ -315,8 +315,15 @@ class PAnyType < TypedModelObject
     Loaders.find_loader(nil).load(:function, 'new').call({}, self, *args)
   end
 
-  def new_function(loader)
-    self.class.new_function(self, loader)
+  # Create an instance of this type.
+  # The default implementation will just dispatch the call to the class method with the
+  # same name and pass `self` as the first argument.
+  #
+  # @return [Function] the created function
+  # @raises ArgumentError
+  #
+  def new_function
+    self.class.new_function(self)
   end
 
   # This default implementation of of a new_function raises an Argument Error.
@@ -324,10 +331,12 @@ class PAnyType < TypedModelObject
   # a Puppet Function class by using Puppet:Loaders.create_loaded_function(:new, loader)
   # and return that result.
   #
+  # @param type [PAnyType] the type to create a new function for
+  # @return [Function] the created function
   # @raises ArgumentError
   #
-  def self.new_function(instance, loader)
-    raise ArgumentError.new("Creation of new instance of type '#{instance.to_s}' is not supported")
+  def self.new_function(type)
+    raise ArgumentError.new("Creation of new instance of type '#{type.to_s}' is not supported")
   end
 
   # Answers the question if instances of this type can represent themselves as a string that
@@ -555,12 +564,12 @@ class PNotUndefType < PTypeWithContainedType
     end
   end
 
-  def new_function(loader)
+  def new_function
     # If only NotUndef, then use Unit's null converter
     if type.nil?
-      PUnitType.new_function(self.class, loader)
+      PUnitType.new_function(self)
     else
-      type.new_function(loader)
+      type.new_function
     end
   end
 
@@ -613,8 +622,8 @@ class PUnitType < PAnyType
   end
 
   # A "null" implementation - that simply returns the given argument
-  def self.new_function(_, loader)
-    @new_function ||= Puppet::Functions.create_loaded_function(:new_unit, loader) do
+  def self.new_function(type)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_unit, type.loader) do
       dispatch :from_args do
         param          'Any',  :from
       end
@@ -793,8 +802,8 @@ class PNumericType < PScalarDataType
     )
   end
 
-  def self.new_function(_, loader)
-    @new_function ||= Puppet::Functions.create_loaded_function(:new_numeric, loader) do
+  def self.new_function(type)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_numeric, type.loader) do
       local_types do
         type 'Convertible = Variant[Undef, Integer, Float, Boolean, String, Timespan, Timestamp]'
         type 'NamedArgs   = Struct[{from => Convertible, Optional[abs] => Boolean}]'
@@ -1003,7 +1012,7 @@ class PIntegerType < PNumericType
     @from >= 0 ? self : PIntegerType.new(0, @to < 0 ? 0 : @to)
   end
 
-  def new_function(loader)
+  def new_function
     @@new_function ||= Puppet::Functions.create_loaded_function(:new, loader) do
       local_types do
         type 'Radix       = Variant[Default, Integer[2,2], Integer[8,8], Integer[10,10], Integer[16,16]]'
@@ -1114,8 +1123,8 @@ class PFloatType < PNumericType
 
   # Returns a new function that produces a Float value
   #
-  def self.new_function(_, loader)
-    @new_function ||= Puppet::Functions.create_loaded_function(:new_float, loader) do
+  def self.new_function(type)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_float, type.loader) do
       local_types do
         type 'Convertible = Variant[Undef, Numeric, Boolean, String, Timespan, Timestamp]'
         type 'NamedArgs   = Struct[{from => Convertible, Optional[abs] => Boolean}]'
@@ -1463,8 +1472,8 @@ class PStringType < PScalarDataType
     end
   end
 
-  def self.new_function(_, loader)
-    @new_function ||= Puppet::Functions.create_loaded_function(:new_string, loader) do
+  def self.new_function(type)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_string, type.loader) do
       local_types do
         type 'Format = Pattern[/^%([\s\+\-#0\[\{<\(\|]*)([1-9][0-9]*)?(?:\.([0-9]+))?([a-zA-Z])/]'
         type 'ContainerFormat = Struct[{
@@ -1559,8 +1568,8 @@ class PRegexpType < PScalarType
 
   # Returns a new function that produces a Regexp instance
   #
-  def self.new_function(_, loader)
-    @new_function ||= Puppet::Functions.create_loaded_function(:new_float, loader) do
+  def self.new_function(type)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_float, type.loader) do
       dispatch :from_string do
         param 'String', :pattern
       end
@@ -1693,8 +1702,8 @@ class PBooleanType < PScalarDataType
     o == true || o == false
   end
 
-  def self.new_function(_, loader)
-    @new_function ||= Puppet::Functions.create_loaded_function(:new_boolean, loader) do
+  def self.new_function(type)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_boolean, type.loader) do
       dispatch :from_args do
         param          'Variant[Undef, Integer, Float, Boolean, String]',  :from
       end
@@ -1906,10 +1915,10 @@ class PStructType < PAnyType
     end && matched == o.size
   end
 
-  def new_function(loader)
+  def new_function
     # Simply delegate to Hash type and let the higher level assertion deal with
     # compliance with the Struct type regarding the produced result.
-    PHashType.new_function(self, loader)
+    PHashType.new_function(self)
   end
 
   DEFAULT = PStructType.new(EMPTY_ARRAY)
@@ -2117,10 +2126,10 @@ class PTupleType < PAnyType
     self.class == o.class && @types == o.types && @size_type == o.size_type
   end
 
-  def new_function(loader)
+  def new_function
     # Simply delegate to Array type and let the higher level assertion deal with
     # compliance with the Tuple type regarding the produced result.
-    PArrayType.new_function(self, loader)
+    PArrayType.new_function(self)
   end
 
   DEFAULT = PTupleType.new(EMPTY_ARRAY)
@@ -2406,8 +2415,8 @@ class PArrayType < PCollectionType
 
   # Returns a new function that produces an Array
   #
-  def self.new_function(_, loader)
-    @new_function ||= Puppet::Functions.create_loaded_function(:new_array, loader) do
+  def self.new_function(type)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_array, type.loader) do
 
       dispatch :from_args do
         param           'Any',  :from
@@ -2581,8 +2590,8 @@ class PHashType < PCollectionType
 
   # Returns a new function that produces a  Hash
   #
-  def self.new_function(_, loader)
-    @new_function ||= Puppet::Functions.create_loaded_function(:new_hash, loader) do
+  def self.new_function(type)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_hash, type.loader) do
       local_types do
         type 'KeyValueArray = Array[Tuple[Any,Any],1]'
       end
@@ -3049,8 +3058,8 @@ class POptionalType < PTypeWithContainedType
     end
   end
 
-  def new_function(loader)
-    optional_type.new_function(loader)
+  def new_function
+    optional_type.new_function
   end
 
   DEFAULT = POptionalType.new(nil)
@@ -3334,8 +3343,8 @@ class PTypeAliasType < PAnyType
     resolved_type.assignable?(o, guard)
   end
 
-  def new_function(loader)
-    resolved_type.new_function(loader)
+  def new_function
+    resolved_type.new_function
   end
 
   private
