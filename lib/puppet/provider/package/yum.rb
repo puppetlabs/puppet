@@ -175,7 +175,15 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
         operation = :install
       end
       should = nil
-    when true, false, Symbol
+    when true, :present, :installed 
+      # if we have been given a source and we were not asked for a specific
+      # version feed it to yum directly
+      if @resource[:source]
+        wanted = @resource[:source]
+        self.debug "Downloading directly from #{wanted}"
+      end
+      should = nil
+    when false,:absent
       # pass
       should = nil
     else
