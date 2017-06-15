@@ -22,6 +22,16 @@ PACKAGES = {
   :debian_ruby18 => [
     'libjson-ruby',
   ],
+  # necessary to build Ruby on SLES11 which ships 1.8.7
+  :sles_11 => [
+    'git',
+    'make',
+    'gcc',
+    'openssl',
+    'openssl-devel',
+    # 'zlib',
+    'zlib-devel'
+  ],
   :solaris_11 => [
     ['git', 'developer/versioning/git'],
   ],
@@ -39,6 +49,16 @@ PACKAGES = {
   ],
 }
 
+UNSUPPORTED_PLATFORMS = [
+  /sles-10/, # requires building git
+]
+
+hosts.each do |host|
+  if UNSUPPORTED_PLATFORMS.any? { |p| host['platform'] =~ p }
+    raise "ci:test:git is not currently suported on #{host['platform']}"
+  end
+end
+
 # override incorrect FOSS (git) defaults from Beaker with AIO applicable ones
 #
 # Remove after PUP-4867 breaks distmoduledir and sitemoduledir into individual
@@ -48,12 +68,21 @@ hosts.each do |host|
 
   host['puppetbindir'] = '/usr/bin' if platform == 'windows'
 
-  if host['platform'] =~ /osx/
+  if host['platform'] =~ /osx|sles/
     # because of OSX SIP, /usr/bin is not writable and /usr/local/bin is preferred
     host['puppetbindir'] = '/usr/local/bin'
+  end
+
+  if platform == 'unix'
+    backup_extension = "''" if host['platform'] =~ /osx/
+
     # inject /usr/local/bin into ~/.ssh/environment until BKR-1139 is released
     # this helps to resolve bundle, puppet and other Ruby binstubs // no restart necessary
-    on host, 'sed -i \'\' "s/^PATH=PATH:/PATH=PATH:\/usr\/local\/bin:/" ~/.ssh/environment'
+    on host, "sed -i #{backup_extension} \"s/^PATH=PATH:/PATH=PATH:\\/usr\\/local\\/bin:/\" ~/.ssh/environment"
+
+    # TODO: the above doesn't work right on SLES - only way to get /usr/local/bin early in path is to add ~/.bashrc like
+    # PATH=/usr/local/bin:$PATH
+    on host, "echo 'PATH=/usr/local/bin:$PATH' > ~/.bashrc"
   end
 
   # Beakers add_aio_defaults_on helper is not appropriate here as it
@@ -134,6 +163,16 @@ hosts.each do |host|
     on host, 'cd /; icacls bin /reset /T'
     on host, 'ruby --version'
     on host, 'cmd /c gem list'
+  when /sles-11/
+    ruby_version = '2.4.1'
+
+    step "#{host} Build ruby #{ruby_version} from source"
+
+    on host, "wget http://buildsources.delivery.puppetlabs.net/ruby-#{ruby_version}.tar.gz"
+    on host, "tar xfvz ruby-#{ruby_version}.tar.gz"
+    on host, "cd ~/ruby-#{ruby_version} && ./configure"
+    on host, "cd ~/ruby-#{ruby_version} && make"
+    on host, "cd ~/ruby-#{ruby_version} && sudo make install"
   end
 end
 

@@ -13,6 +13,8 @@ module Puppet
         :solaris_10    => /solaris-10/,
         :solaris_11    => /solaris-11/,
         :windows       => /windows/,
+        # NOTE: Beaker already has this helper - should a PR go up to Beaker?
+        :sles_11       => /sles-11/,
         :eos           => /^eos-/,
       }.freeze
 
