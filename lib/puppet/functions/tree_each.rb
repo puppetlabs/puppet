@@ -148,7 +148,8 @@ Puppet::Functions.create_function(:tree_each) do
       include_root   => Optional[Boolean],
       include_containers => Optional[Boolean],\
       include_values => Optional[Boolean],\
-      order => Optional[Enum[depth_first, breadth_first]]\
+      order => Optional[Enum[depth_first, breadth_first]],\
+      include_refs   => Optional[Boolean]\
     }]"
   end
 

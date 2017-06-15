@@ -87,8 +87,13 @@ describe 'the tree_each function' do
     end
 
     it 'an Object, yielding path and value when lambda has arity 2' do
+      # this also tests that include_refs => true includes references
       catalog = compile_to_catalog(<<-MANIFEST)
-        type Person = Object[{attributes => {name => String, father => Optional[Person], mother => Optional[Person]}}]
+        type Person = Object[{attributes => {
+          name => String,
+          father => Optional[Person],
+          mother => { kind => reference, type => Optional[Person] }
+        }}]
         $adam  = Person({name => 'Adam'})
         $eve   = Person({name => 'Eve'})
         $cain  = Person({name => 'Cain',  mother => $eve,  father => $adam})
@@ -96,14 +101,15 @@ describe 'the tree_each function' do
         $enoch = Person({name => 'Enoch', mother => $awan, father => $cain})
 
         $msg = inline_epp(@(TEMPLATE))
-          <% $enoch.tree_each({include_containers=>false}) |$path, $v| { unless $v =~ Undef {-%>
+          <% $enoch.tree_each({include_containers=>false, include_refs => true}) |$path, $v| { unless $v =~ Undef {-%>
           path: <%= $path %> value: <%= $v %>
           <% }} -%>
           | TEMPLATE
-        notify {'test': message => $msg}
+        notify {'with_refs': message => $msg}
+
       MANIFEST
 
-      expect(catalog.resource(:notify, 'test')['message']).to eq(
+      expect(catalog.resource(:notify, 'with_refs')['message']).to eq(
         [
           'path: [name] value: Enoch',
           'path: [father, name] value: Cain',
@@ -197,7 +203,6 @@ describe 'the tree_each function' do
 
       expect(catalog.resource(:file, "/file_true")['ensure']).to eq('present')
     end
-
   end
 
   context 'recursively yields under the control of options such that' do
@@ -353,7 +358,48 @@ describe 'the tree_each function' do
           ''
           ].join("\n"))
     end
+
+    it 'attributes of an Object of "reference" kind are not yielded by default' do
+      catalog = compile_to_catalog(<<-MANIFEST)
+        type Person = Object[{attributes => {
+          name => String,
+          father => Optional[Person],
+          mother => { kind => reference, type => Optional[Person] }
+        }}]
+        $adam  = Person({name => 'Adam'})
+        $eve   = Person({name => 'Eve'})
+        $cain  = Person({name => 'Cain',  mother => $eve,  father => $adam})
+        $awan  = Person({name => 'Awan',  mother => $eve,  father => $adam})
+        $enoch = Person({name => 'Enoch', mother => $awan, father => $cain})
+
+        $msg = inline_epp(@(TEMPLATE))
+          <% $enoch.tree_each({include_containers=>false }) |$path, $v| { unless $v =~ Undef {-%>
+          path: <%= $path %> value: <%= $v %>
+          <% }} -%>
+          | TEMPLATE
+        notify {'by_default': message => $msg}
+
+        $msg2 = inline_epp(@(TEMPLATE))
+          <% $enoch.tree_each({include_containers=>false, include_refs => false}) |$path, $v| { unless $v =~ Undef {-%>
+          path: <%= $path %> value: <%= $v %>
+          <% }} -%>
+          | TEMPLATE
+        notify {'when_false': message => $msg2}
+
+      MANIFEST
+
+      expected_refs_excluded_result = [
+        'path: [name] value: Enoch',
+        'path: [father, name] value: Cain',
+        'path: [father, father, name] value: Adam',
+        ''
+        ].join("\n")
+
+      expect(catalog.resource(:notify, 'by_default')['message']).to eq(expected_refs_excluded_result)
+      expect(catalog.resource(:notify, 'when_false')['message']).to eq(expected_refs_excluded_result)
+    end
   end
+
   context 'can be chained' do
     it 'with reverse_each()' do
       catalog = compile_to_catalog(<<-MANIFEST)

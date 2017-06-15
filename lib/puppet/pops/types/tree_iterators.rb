@@ -24,6 +24,7 @@ class TreeIterator
   #   `include_containers` to also be `true` to take effect).
   # @option options [Boolean] :include_containers ('true') If containers should be included in the iteration
   # @option options [Boolean] :include_values ('true') If non containers (values) should be included in the iteration
+  # @option options [Boolean] :include_refs ('false') If (non containment) referenced values in Objects should be included 
   #
   def initialize(enum, options={})
     @root = enum
@@ -43,6 +44,7 @@ class TreeIterator
     unless @with_containers || @with_values
       raise ArgumentError, _("Options 'include_containers' and 'include_values' cannot both be false")
     end
+    @include_refs = !!options['include_refs']
   end
 
   # Yields each `path, value` if the block arity is 2, and only `value` if arity is 1
@@ -91,7 +93,11 @@ class TreeIterator
     elsif v.is_a?(Hash)
       v.keys.each
     else
-      v._pcore_type.attributes.keys.each
+      if @include_refs
+        v._pcore_type.attributes.keys.each
+      else
+        v._pcore_type.attributes.reject {|k,v| v.kind == Puppet::Pops::Types::PObjectType::ATTRIBUTE_KIND_REFERENCE }.keys.each
+      end
     end
   end
   private :indexer_on
