@@ -187,6 +187,12 @@ class PAnyType < TypedModelObject
     self
   end
 
+  # Returns the loader that loaded this type.
+  # @return [Loaders::Loader] the loader
+  def loader
+    Loaders.static_loader
+  end
+
   # Normalizes the type. This does not change the characteristics of the type but it will remove duplicates
   # and constructs like NotUndef[T] where T is not assignable from Undef and change Variant[*T] where all
   # T are enums into an Enum.
@@ -3125,7 +3131,7 @@ class PTypeAliasType < PAnyType
     )
   end
 
-  attr_reader :name
+  attr_reader :loader, :name
 
   # @param name [String] The name of the type
   # @param type_expr [Model::PopsObject] The expression that describes the aliased type
@@ -3231,6 +3237,7 @@ class PTypeAliasType < PAnyType
   # @return [PTypeAliasType] the receiver of the call, i.e. `self`
   # @api private
   def resolve(type_parser, loader)
+    @loader = loader
     if @resolved_type.nil?
       # resolved to PTypeReferenceType::DEFAULT during resolve to avoid endless recursion
       @resolved_type = PTypeReferenceType::DEFAULT

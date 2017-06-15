@@ -10,6 +10,8 @@ KEY_VALUE = 'value'.freeze
 class PMetaType < PAnyType
   include Annotatable
 
+  attr_reader :loader
+
   def self.register_ptype(loader, ir)
     # Abstract type. It doesn't register anything
   end
@@ -33,6 +35,7 @@ class PMetaType < PAnyType
   # @api private
   def resolve(type_parser, loader)
     unless @init_hash_expression.nil?
+      @loader = loader
       @self_recursion = true # assumed while it being found out below
 
       init_hash_expression = @init_hash_expression
