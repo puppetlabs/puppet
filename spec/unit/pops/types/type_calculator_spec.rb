@@ -2094,7 +2094,7 @@ describe 'The type calculator' do
       expect(calculator.infer(PArrayType::DEFAULT     ).to_s).to eq('Type[Array]')
       expect(calculator.infer(PHashType::DEFAULT      ).to_s).to eq('Type[Hash]')
       expect(calculator.infer(PIterableType::DEFAULT  ).to_s).to eq('Type[Iterable]')
-      expect(calculator.infer(PRuntimeType::DEFAULT   ).to_s).to eq('Type[Runtime[?, ?]]')
+      expect(calculator.infer(PRuntimeType::DEFAULT   ).to_s).to eq('Type[Runtime]')
       expect(calculator.infer(PHostClassType::DEFAULT ).to_s).to eq('Type[Class]')
       expect(calculator.infer(PResourceType::DEFAULT  ).to_s).to eq('Type[Resource]')
       expect(calculator.infer(PEnumType::DEFAULT      ).to_s).to eq('Type[Enum]')

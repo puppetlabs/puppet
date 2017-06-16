@@ -341,7 +341,7 @@ class TypeFormatter
 
   # @api private
   def string_PRuntimeType(t)
-    append_array('Runtime') { append_strings([t.runtime, t.name_or_pattern]) }
+    append_array('Runtime', t.runtime.nil? && t.name_or_pattern.nil?) { append_strings([t.runtime, t.name_or_pattern]) }
   end
 
   # @api private
