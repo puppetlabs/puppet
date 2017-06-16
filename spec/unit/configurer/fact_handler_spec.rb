@@ -77,33 +77,32 @@ describe Puppet::Configurer::FactHandler do
     expect(facthandler.facts_for_uploading).to eq({:facts_format => :pson, :facts => text})
   end
 
-  it "should properly accept facts containing a '+'" do
-    fact_hash = { 'afact' => 'a+b' }
-    facts = Puppet::Node::Facts.new(Puppet[:node_name_value], fact_hash)
-    Puppet::Node::Facts.indirection.save(facts)
-    text = Puppet::Util.uri_query_encode(facthandler.find_facts.render(:pson))
-
-    to_upload = facthandler.facts_for_uploading
-    expect(to_upload).to eq({:facts_format => :pson, :facts => text})
-    expect(JSON.parse(URI.unescape(to_upload[:facts]))['values']).to eq(fact_hash)
-  end
-
-  it "should properly accept facts containing UTF-8 characters in their names and values" do
+  [
+    { :hash => { 'afact' => 'a+b' }, :encoded => '%22values%22%3A%7B%22afact%22%3A%22' + 'a%2Bb' + '%22%7D' },
+    { :hash => { 'afact' => 'a b' }, :encoded => '%22values%22%3A%7B%22afact%22%3A%22' + 'a%20b' + '%22%7D' },
+    { :hash => { 'afact' => 'a&b' }, :encoded => '%22values%22%3A%7B%22afact%22%3A%22' + 'a%26b' + '%22%7D' },
+    { :hash => { 'afact' => 'a*b' }, :encoded => '%22values%22%3A%7B%22afact%22%3A%22' + 'a%2Ab' + '%22%7D' },
+    { :hash => { 'afact' => 'a=b' }, :encoded => '%22values%22%3A%7B%22afact%22%3A%22' + 'a%3Db' + '%22%7D' },
     # different UTF-8 widths
     # 1-byte A
     # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
     # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
-    # 4-byte ܎ - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
-    mixed_utf8 = "A\u06FF\u16A0\u{2070E}" # Aۿᚠ܎
-    fact_hash = { "name-#{mixed_utf8}" => "value-#{mixed_utf8}" }
+    # 4-byte 𠜎 - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
+    { :hash => { 'afact' => "A\u06FF\u16A0\u{2070E}" }, :encoded => '%22values%22%3A%7B%22afact%22%3A%22' + 'A%DB%BF%E1%9A%A0%F0%A0%9C%8E' + '%22%7D' },
 
-    facts = Puppet::Node::Facts.new(Puppet[:node_name_value], fact_hash)
-    Puppet::Node::Facts.indirection.save(facts)
-    text = Puppet::Util.uri_query_encode(facthandler.find_facts.render(:pson))
+  ].each do |test_fact|
+    it "should properly accept the fact #{test_fact[:hash]}" do
+      facts = Puppet::Node::Facts.new(Puppet[:node_name_value], test_fact[:hash])
+      Puppet::Node::Facts.indirection.save(facts)
+      text = Puppet::Util.uri_query_encode(facthandler.find_facts.render(:pson))
 
-    to_upload = facthandler.facts_for_uploading
-    expect(to_upload).to eq({:facts_format => :pson, :facts => text})
-    expect(JSON.parse(URI.unescape(to_upload[:facts]))['values']).to eq(fact_hash)
+      to_upload = facthandler.facts_for_uploading
+      expect(to_upload).to eq({:facts_format => :pson, :facts => text})
+      expect(text).to include(test_fact[:encoded])
+
+      # this is not sufficient to test whether these values are sent via HTTP GET or HTTP POST in actual catalog request
+      expect(JSON.parse(URI.unescape(to_upload[:facts]))['values']).to eq(test_fact[:hash])
+    end
   end
 
   it "should generate valid facts data against the facts schema" do

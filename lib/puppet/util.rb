@@ -366,13 +366,16 @@ module Util
   #
   # The output will correctly round-trip through URI.unescape
   #
-  # @param [String query_string] A URI query string that may be in the form of:
+  # @param [String query_string] A URI query parameter that may contain reserved
+  #   characters that must be percent encoded for the key or value to be
+  #   properly decoded as part of a larger query string:
   #
   #   query
-  #   query=foo
-  #   query=foo&query2=bar
-  #   query=foo+bar
-  #   query=hello world are you there
+  #   encodes as : query
+  #
+  #   query_with_special=chars like&and * and# plus+this
+  #   encodes as:
+  #   query_with_special%3Dchars%20like%26and%20%2A%20and%23%20plus%2Bthis
   #
   #   Note: Also usable by fragments, but not suitable for paths
   #
@@ -390,7 +393,7 @@ module Util
     # = *( pchar / "/" / "?" )
     # CGI.escape turns space into + which is the most backward compatible
     # however it doesn't roundtrip through URI.unescape which prefers %20
-    CGI.escape(query_string).gsub('+', '%20').gsub('%3D', '=').gsub('%26', '&')
+    CGI.escape(query_string).gsub('+', '%20')
   end
   module_function :uri_query_encode
 
@@ -414,7 +417,12 @@ module Util
   #   C:\Windows\Temp
   #
   #   Note that with no specified scheme, authority or query parameter delimiter
-  #  ? that a naked string will be treated as a path.
+  #   ? that a naked string will be treated as a path.
+  #
+  #   Note that if query parameters need to contain data such as & or =
+  #   that this method should not be used, as there is no way to differentiate
+  #   query parameter data from query delimiters when multiple parameters
+  #   are specified
   #
   # @param [Hash{Symbol=>String} opts] Options to alter encoding
   # @option opts [Array<Symbol>] :allow_fragment defaults to false. When false
@@ -444,7 +452,17 @@ module Util
     # URI.escape does not change / to %2F and : to %3A like CGI.escape
     encoded += URI.escape(parts[:path]) unless parts[:path].nil?
 
-    encoded += ('?' + uri_query_encode(parts[:query])) unless parts[:query].nil?
+    # each query parameter
+    if !parts[:query].nil?
+      query_string = parts[:query].split('&').map do |pair|
+        # can optionally be separated by an =
+        pair.split('=').map do |v|
+          uri_query_encode(v)
+        end.join('=')
+      end.join('&')
+      encoded += '?' + query_string
+    end
+
     encoded += ((opts[:allow_fragment] ? '#' : '%23') + uri_query_encode(parts[:fragment])) unless parts[:fragment].nil?
 
     encoded

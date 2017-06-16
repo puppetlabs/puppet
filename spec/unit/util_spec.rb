@@ -403,8 +403,8 @@ describe Puppet::Util do
       expect(Puppet::Util.uri_query_encode("foo bar+foo")).to eq("foo%20bar%2Bfoo")
     end
 
-    it "should perform basic URI escaping including multiple query parameters" do
-      expect(Puppet::Util.uri_query_encode("foo=bar+foo baz&bar=baz qux")).to eq("foo=bar%2Bfoo%20baz&bar=baz%20qux")
+    it "should URI encode any special characters: = + <space> & * and #" do
+      expect(Puppet::Util.uri_query_encode("foo=bar+foo baz&bar=baz qux&special= *&qux=not fragment#")).to eq("foo%3Dbar%2Bfoo%20baz%26bar%3Dbaz%20qux%26special%3D%20%2A%26qux%3Dnot%20fragment%23")
     end
 
     [
@@ -468,6 +468,12 @@ describe Puppet::Util do
         expect(uri.encoding).to eq(Encoding::UTF_8)
         expect(uri).to eq(mixed_utf8_urlencoded)
       end
+    end
+
+    it "should treat & and = as delimiters in a query string, but URI encode other special characters: + <space> * and #" do
+      input = "http://foo.bar.com/path?foo=bar+foo baz&bar=baz qux&special= *&qux=not fragment#"
+      expected_output = "http://foo.bar.com/path?foo=bar%2Bfoo%20baz&bar=baz%20qux&special=%20%2A&qux=not%20fragment%23"
+      expect(Puppet::Util.uri_encode(input)).to eq(expected_output)
     end
 
     it "should be usable by URI::parse" do
