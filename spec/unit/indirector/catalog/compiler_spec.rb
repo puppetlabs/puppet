@@ -257,14 +257,14 @@ describe Puppet::Resource::Catalog::Compiler do
     def a_legacy_request_that_contains(facts, format = :pson)
       request = Puppet::Indirector::Request.new(:catalog, :find, "hostname", nil)
       request.options[:facts_format] = format.to_s
-      request.options[:facts] = Puppet::Util.uri_encode(facts.render(format))
+      request.options[:facts] = Puppet::Util.uri_query_encode(facts.render(format))
       request
     end
 
     def a_request_that_contains(facts)
       request = Puppet::Indirector::Request.new(:catalog, :find, "hostname", nil)
       request.options[:facts_format] = "application/json"
-      request.options[:facts] = facts.render('json')
+      request.options[:facts] = Puppet::Util.uri_query_encode(facts.render('json'))
       request
     end
 
