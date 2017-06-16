@@ -237,6 +237,7 @@ class Puppet::Resource::TypeCollection
           debug_once _("Not attempting to load %{type} %{fqname} as this object was missing during a prior compilation") % { type: type, fqname: fqname }
         end
       else
+        fqname = munge_name(fqname)
         result = loader.try_load_fqname(type, fqname)
         @notfound[ fqname ] = result.nil?
       end

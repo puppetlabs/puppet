@@ -401,16 +401,16 @@ describe Puppet::Util do
     # 1-byte A
     # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
     # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
-    # 4-byte ܎ - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
-    let (:mixed_utf8) { "A\u06FF\u16A0\u{2070E}" } # Aۿᚠ܎
+    # 4-byte 𠜎 - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
+    let (:mixed_utf8) { "A\u06FF\u16A0\u{2070E}" } # Aۿᚠ𠜎
     let (:mixed_utf8_urlencoded) { "A%DB%BF%E1%9A%A0%F0%A0%9C%8E" }
 
     it "should perform basic URI escaping that includes space and +" do
       expect(Puppet::Util.uri_query_encode("foo bar+foo")).to eq("foo%20bar%2Bfoo")
     end
 
-    it "should perform basic URI escaping including multiple query parameters" do
-      expect(Puppet::Util.uri_query_encode("foo=bar+foo baz&bar=baz qux")).to eq("foo=bar%2Bfoo%20baz&bar=baz%20qux")
+    it "should URI encode any special characters: = + <space> & * and #" do
+      expect(Puppet::Util.uri_query_encode("foo=bar+foo baz&bar=baz qux&special= *&qux=not fragment#")).to eq("foo%3Dbar%2Bfoo%20baz%26bar%3Dbaz%20qux%26special%3D%20%2A%26qux%3Dnot%20fragment%23")
     end
 
     [
@@ -474,6 +474,12 @@ describe Puppet::Util do
         expect(uri.encoding).to eq(Encoding::UTF_8)
         expect(uri).to eq(mixed_utf8_urlencoded)
       end
+    end
+
+    it "should treat & and = as delimiters in a query string, but URI encode other special characters: + <space> * and #" do
+      input = "http://foo.bar.com/path?foo=bar+foo baz&bar=baz qux&special= *&qux=not fragment#"
+      expected_output = "http://foo.bar.com/path?foo=bar%2Bfoo%20baz&bar=baz%20qux&special=%20%2A&qux=not%20fragment%23"
+      expect(Puppet::Util.uri_encode(input)).to eq(expected_output)
     end
 
     it "should be usable by URI::parse" do
@@ -562,8 +568,8 @@ describe Puppet::Util do
     # 1-byte A
     # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
     # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
-    # 4-byte ܎ - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
-    let (:mixed_utf8) { "A\u06FF\u16A0\u{2070E}" } # Aۿᚠ܎
+    # 4-byte 𠜎 - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
+    let (:mixed_utf8) { "A\u06FF\u16A0\u{2070E}" } # Aۿᚠ𠜎
 
     it "should strip host component" do
       expect(Puppet::Util.uri_to_path(URI.parse('http://foo/bar'))).to eq('/bar')
