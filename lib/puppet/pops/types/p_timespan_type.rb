@@ -50,10 +50,6 @@ module Types
       self.class == o.class && @from == o.numeric_from && @to == o.numeric_to
     end
 
-    def instance?(o, guard = nil)
-      o.is_a?(Numeric) && o >= @from && o <= @to
-    end
-
     def unbounded?
       @from == -Float::INFINITY && @to == Float::INFINITY
     end
@@ -184,6 +180,10 @@ module Types
 
     def impl_class
       Time::Timespan
+    end
+
+    def instance?(o, guard = nil)
+      o.is_a?(Time::Timespan) && o >= @from && o <= @to
     end
 
     DEFAULT = PTimespanType.new(nil, nil)

@@ -24,6 +24,20 @@ describe 'Timespan type' do
       expect(eval_and_collect_notices(code)).to eq(%w(true true false false))
     end
 
+    it 'does not consider an Integer to be an instance' do
+      code = <<-CODE
+        notice(assert_type(Timespan, 1234))
+      CODE
+      expect { eval_and_collect_notices(code) }.to raise_error(/expects a Timespan value, got Integer/)
+    end
+
+    it 'does not consider a Float to be an instance' do
+      code = <<-CODE
+        notice(assert_type(Timespan, 1.234))
+      CODE
+      expect { eval_and_collect_notices(code) }.to raise_error(/expects a Timespan value, got Float/)
+    end
+
     context "when parameterized" do
       it 'is equal other types with the same parameterization' do
         code = <<-CODE

@@ -63,6 +63,10 @@ module Types
       Time::Timestamp
     end
 
+    def instance?(o, guard = nil)
+      o.is_a?(Time::Timestamp) && o >= @from && o <= @to
+    end
+
     DEFAULT = PTimestampType.new(nil, nil)
   end
 end
