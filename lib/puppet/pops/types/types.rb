@@ -2583,6 +2583,12 @@ class PHashType < PCollectionType
     @new_function ||= Puppet::Functions.create_loaded_function(:new_hash, loader) do
       local_types do
         type 'KeyValueArray = Array[Tuple[Any,Any],1]'
+        type 'TreeArray = Array[Tuple[Array,Any],1]'
+      end
+
+      dispatch :from_tree do
+        param           'TreeArray',  :from
+        optional_param  'Boolean',         :build_tree
       end
 
       dispatch :from_tuples do
@@ -2594,7 +2600,33 @@ class PHashType < PCollectionType
       end
 
       def from_tuples(tuple_array)
-        Hash[tuple_array]
+        return Hash[tuple_array]
+      end
+
+      def from_tree(tuple_array, build_tree = false)
+        unless build_tree
+          return from_tuples(tuple_array)
+        end
+
+        result = {}
+        tuple_array.each do |entry|
+          path = entry[0]
+          value = entry[1]
+          if path.empty?
+            # root node (index [] was included - values merge into the result)
+            # An array must be changed to a hash first as this is the root
+            # (Cannot return an array from a Hash.new)
+            if value.is_a?(Array)
+              value.each_with_index {|v, idx| result[idx] = v }
+            else
+              result.merge!(value)
+            end
+          else
+            r = path[0..-2].reduce(result) {|memo, idx| (memo.is_a?(Array) || memo.has_key?(idx)) ? memo[idx] : memo[idx] = {}}
+            r[path[-1]]= value
+          end
+        end
+        result
       end
 
       def from_array(from)
