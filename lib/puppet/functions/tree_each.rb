@@ -12,6 +12,8 @@
 #    * `container_type` => `Optional[Type[Variant[Array, Hash, Object]]]` # a type that determines what a container is - can only
 #       be set to a type that matches the default `Variant[Array, Hash, Object]`.
 #    * `order` => `Enum[depth_first, breadth_first]` # default ´depth_first`, the order in which elements are visited
+#    * `include_refs` => Optional[Boolean] # default `false`, if attributes in objects marked as bing of `reference` kind
+#       should be included.
 # 3. An optional lambda, which the function calls for each element in the first argument. It must
 #    accept one or two arguments; either `$path`, and `$value`, or just `$value`.
 #
@@ -34,14 +36,14 @@
 # For `Object` containers, the entry is the name of the attribute (a `String`).
 #
 # The tree is walked in either depth-first order, or in breadth-first order under the control of the
-# `order` option, yielding each `Array` and `Hash` and each entry. The default is `depth_first` which
-# means that children are processed before siblings. An order of `breadth_first` means that siblings are
-# processed before children.
+# `order` option, yielding each `Array`, `Hash`, `Object`, and each entry/attribute.
+# The default is `depth_first` which means that children are processed before siblings.
+# An order of `breadth_first` means that siblings are processed before children.
 #
-# @example depth or breadth first order
+# @example depth- or breadth-first order
 #
-# ~~~
-# [1, [2,3], 4]
+# ~~~ puppet
+# [1, [2, 3], 4]
 # ~~~
 # 
 # Results in:
@@ -53,8 +55,8 @@
 #
 # If containers and root, are included:
 #
-# * `depth_first` order `[1, [2,3], 4]`, `1`, `[2,3]`, `2`, `3`, `4` 
-# * `breadth_first` order `[1, [2,3], 4]`, `1`, `[2,3]`, `4`, `2`, `3` 
+# * `depth_first` order `[1, [2, 3], 4]`, `1`, `[2, 3]`, `2`, `3`, `4` 
+# * `breadth_first` order `[1, [2, 3], 4]`, `1`, `[2, 3]`, `4`, `2`, `3` 
 #
 # Typical use of the `tree_each` function include:
 # * a more efficient way to iterate over a tree than first using `flatten` on an array
