@@ -457,7 +457,7 @@ class TypeFormatter
 
   # @api private
   def string_PSensitiveType(t)
-    append_array('Sensitive') { append_string(t.type) }
+    append_array('Sensitive', PAnyType::DEFAULT == t.type) { append_string(t.type) }
   end
 
   # @api private
