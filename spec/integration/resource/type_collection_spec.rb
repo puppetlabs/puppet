@@ -83,5 +83,11 @@ describe Puppet::Resource::TypeCollection do
       mk_module(name, :define => true, :mydefine => ["mymod::mydefine"])
       expect(@code.find_definition("mymod::mydefine").name).to eq("mymod::mydefine")
     end
+
+    it 'should be able to load definitions from their own file using uppercased name' do
+      name = 'mymod'
+      mk_module(name, :define => true, :mydefine => ['mymod::mydefine'])
+      expect(@code.find_definition('Mymod::Mydefine')).not_to be_nil
+    end
   end
 end
