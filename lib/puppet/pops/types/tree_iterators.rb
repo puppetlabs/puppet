@@ -86,17 +86,17 @@ class TreeIterator
     block_given? ? r.each(&block) : r
   end
 
-  def indexer_on(v)
-    return nil unless @containers_t.instance?(v)
-    if v.is_a?(Array)
-      v.size.times
-    elsif v.is_a?(Hash)
-      v.keys.each
+  def indexer_on(val)
+    return nil unless @containers_t.instance?(val)
+    if val.is_a?(Array)
+      val.size.times
+    elsif val.is_a?(Hash)
+      val.keys.each
     else
       if @include_refs
-        v._pcore_type.attributes.keys.each
+        val._pcore_type.attributes.keys.each
       else
-        v._pcore_type.attributes.reject {|k,v| v.kind == Puppet::Pops::Types::PObjectType::ATTRIBUTE_KIND_REFERENCE }.keys.each
+        val._pcore_type.attributes.reject {|k,v| v.kind == Puppet::Pops::Types::PObjectType::ATTRIBUTE_KIND_REFERENCE }.keys.each
       end
     end
   end
