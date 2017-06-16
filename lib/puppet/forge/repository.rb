@@ -57,6 +57,7 @@ class Puppet::Forge
       end
     end
 
+    # responsible for properly encoding a URI
     def get_request_object(path)
       headers = {
         "User-Agent" => user_agent,
@@ -72,7 +73,7 @@ class Puppet::Forge
         headers = headers.merge({"Authorization" => forge_authorization})
       end
 
-      request = Net::HTTP::Get.new(URI.escape(path), headers)
+      request = Net::HTTP::Get.new(Puppet::Util.uri_encode(path), headers)
 
       unless @uri.user.nil? || @uri.password.nil? || forge_authorization
         request.basic_auth(@uri.user, @uri.password)

@@ -383,7 +383,7 @@ module Generators
       resources.each do |r|
         res << {
           "name" => CGI.escapeHTML(r.name),
-          "aref" => CGI.escape(path_prefix)+"\#"+CGI.escape(r.aref)
+          "aref" => Puppet::Util.uri_encode(path_prefix)+"\#"+Puppet::Util.uri_query_encode(r.aref)
         }
       end
       res
