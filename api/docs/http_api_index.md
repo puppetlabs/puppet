@@ -181,4 +181,4 @@ REST services support all of the formats.
 * [JSON](https://tools.ietf.org/html/rfc7159)
 * [PSON](./pson.md)
 
-`YAML` was supported in earlier versions of puppet, but is no longer for security reasons.
+`YAML` was supported in earlier versions of Puppet, but is no longer for security reasons.

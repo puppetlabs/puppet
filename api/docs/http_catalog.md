@@ -35,7 +35,7 @@ Four parameters should be provided to the POST or GET:
 
 - `environment`: the environment name.
 - `facts_format`: must be `application/json` or `pson`.
-- `facts`: serialized pson of the facts hash. Since facts can contain `&`, which
+- `facts`: serialized JSON or PSON of the facts hash. Since facts can contain `&`, which
   is also the HTTP query parameter delimiter, facts are doubly-escaped.
 - `transaction_uuid`: a transaction uuid identifying the entire transaction (shows up in the report as well).
 
@@ -59,7 +59,7 @@ Optional parameters that may be provided to the POST or GET:
 
     POST /puppet/v3/catalog/elmo.mydomain.com
 
-    environment=env&configured_environment=canary_env&facts_format=application%2Fjson&facts=%7B%22name%22%3A%22elmo.mydomain.com%22%2C%22values%22%3A%7B%22architecture%22%3A%22x86_64%22%7D&transaction_uuid=aff261a2-1a34-4647-8c20-ff662ec11c4c
+    environment=env&configured_environment=canary_env&facts_format=application%2Fjson&facts=%257B%2522name%2522%253A%2522elmo.mydomain.com%2522%252C%2522values%2522%253A%257B%2522architecture%2522%253A%2522x86_64%2522%257D%257D&transaction_uuid=aff261a2-1a34-4647-8c20-ff662ec11c4c
 
     HTTP 200 OK
     Content-Type: application/json
