@@ -2577,6 +2577,13 @@ class PHashType < PCollectionType
     rkey_type.equal?(@key_type) && rvalue_type.equal?(@value_type) ? self : self.class.new(rkey_type, rvalue_type, @size_type)
   end
 
+  def self.array_as_hash(value)
+    return value unless value.is_a?(Array)
+    result = {}
+    value.each_with_index {|v, idx| result[idx] = array_as_hash(v) }
+    result
+  end
+
   # Returns a new function that produces a  Hash
   #
   def self.new_function(_, loader)
@@ -2584,11 +2591,12 @@ class PHashType < PCollectionType
       local_types do
         type 'KeyValueArray = Array[Tuple[Any,Any],1]'
         type 'TreeArray = Array[Tuple[Array,Any],1]'
+        type 'NewHashOption = Enum[tree, hash_tree]'
       end
 
       dispatch :from_tree do
-        param           'TreeArray',  :from
-        optional_param  'Boolean',         :build_tree
+        param           'TreeArray',       :from
+        optional_param  'NewHashOption',   :build_option
       end
 
       dispatch :from_tuples do
@@ -2603,11 +2611,13 @@ class PHashType < PCollectionType
         return Hash[tuple_array]
       end
 
-      def from_tree(tuple_array, build_tree = false)
-        unless build_tree
+      def from_tree(tuple_array, build_option = nil)
+        if build_option.nil?
           return from_tuples(tuple_array)
         end
+        # only remaining possible options is 'tree' or 'hash_tree'
 
+        all_hashes = build_option == 'hash_tree'
         result = {}
         tuple_array.each do |entry|
           path = entry[0]
@@ -2623,7 +2633,7 @@ class PHashType < PCollectionType
             end
           else
             r = path[0..-2].reduce(result) {|memo, idx| (memo.is_a?(Array) || memo.has_key?(idx)) ? memo[idx] : memo[idx] = {}}
-            r[path[-1]]= value
+            r[path[-1]]= (all_hashes ? PHashType.array_as_hash(value) : value)
           end
         end
         result

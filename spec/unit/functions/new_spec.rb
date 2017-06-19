@@ -640,6 +640,42 @@ describe 'the new function' do
         )}.to raise_error(Puppet::Error, error_match)
       end
     end
+
+    context 'when using the optional "tree" format' do
+      it 'can convert a tree in flat form to a hash' do
+        expect(compile_to_catalog(<<-"MANIFEST"
+          $x = Hash.new([[[0], a],[[1,0], b],[[1,1], c],[[2,0], d]], tree)
+          notify { test: message => $x }
+        MANIFEST
+        )).to have_resource('Notify[test]').with_parameter(:message, { 0 => 'a', 1 => { 0 => 'b', 1=> 'c'}, 2 => {0 => 'd'} })
+      end
+
+      it 'preserves array in flattened tree but overwrites entries if they are present' do
+        expect(compile_to_catalog(<<-"MANIFEST"
+          $x = Hash.new([[[0], a],[[1,0], b],[[1,1], c],[[2], [overwritten, kept]], [[2,0], d]], tree)
+          notify { test: message => $x }
+        MANIFEST
+        )).to have_resource('Notify[test]').with_parameter(:message, { 0 => 'a', 1 => { 0 => 'b', 1=> 'c'}, 2 => ['d', 'kept'] })
+      end
+
+      it 'preserves hash in flattened tree but overwrites entries if they are present' do
+        expect(compile_to_catalog(<<-"MANIFEST"
+          $x = Hash.new([[[0], a],[[1,0], b],[[1,1], c],[[2], {0 => 0, kept => 1}], [[2,0], d]], tree)
+          notify { test: message => $x }
+        MANIFEST
+  )).to have_resource('Notify[test]').with_parameter(:message, { 0 => 'a', 1 => { 0 => 'b', 1=> 'c'}, 2 => {0=>'d', 'kept'=>1} })
+      end
+    end
+
+    context 'when using the optional "tree_hash" format' do
+      it 'turns array in flattened tree into hash' do
+        expect(compile_to_catalog(<<-"MANIFEST"
+          $x = Hash.new([[[0], a],[[1,0], b],[[1,1], c],[[2], [overwritten, kept]], [[2,0], d]], hash_tree)
+          notify { test: message => $x }
+        MANIFEST
+        )).to have_resource('Notify[test]').with_parameter(:message, { 0=>'a', 1=>{ 0=>'b', 1=>'c'}, 2=>{0=>'d', 1=>'kept'}})
+      end
+    end
   end
 
   context 'when invoked on Struct' do
