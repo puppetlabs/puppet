@@ -3,14 +3,14 @@ class Puppet::Pops::Evaluator::Collectors::CatalogCollector < Puppet::Pops::Eval
   # Creates a CatalogCollector using the AbstractCollector's 
   # constructor to set the scope and overrides
   #
-  # param [Symbol] type the resource type to be collected
+  # param [Puppet::CompilableResourceType] type the resource type to be collected
   # param [Proc] query the query which defines which resources to match
   def initialize(scope, type, query, overrides = nil)
     super(scope, overrides)
 
     @query = query
 
-    @type = Puppet::Resource.new(type, "whatever").type
+    @type = Puppet::Resource.new(type, 'whatever').type
   end
 
   # Collects virtual resources based off a collection in a manifest
