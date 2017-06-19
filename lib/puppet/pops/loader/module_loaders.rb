@@ -179,7 +179,7 @@ module ModuleLoaders
         if tse && (ts = tse.value).is_a?(Types::PTypeSetType)
           # The TypeSet might be unresolved at this point. If so, it must be resolved using
           # this loader. That in turn, adds all contained types to this loader.
-          ts.resolve(Types::TypeParser.singleton, self)
+          ts.resolve(self)
           te = get_entry(typed_name)
           return te unless te.nil?
         end

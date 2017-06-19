@@ -65,8 +65,7 @@ class TypedModelObject < Object
       type = cls.register_ptype(loader, ir)
       types << type unless type.nil?
     end
-    tp = TypeParser.singleton
-    types.each { |type| type.resolve(tp, loader) }
+    types.each { |type| type.resolve(loader) }
   end
 end
 
@@ -208,11 +207,10 @@ class PAnyType < TypedModelObject
   # resolve internal type expressions using a loader. Presently, this method is a no-op for all types
   # except the {{PTypeAliasType}}.
   #
-  # @param type_parser [TypeParser] type parser
   # @param loader [Loader::Loader] loader to use
   # @return [PTypeAliasType] the receiver of the call, i.e. `self`
   # @api private
-  def resolve(type_parser, loader)
+  def resolve(loader)
     self
   end
 
@@ -449,9 +447,9 @@ class PTypeWithContainedType < PAnyType
     self.class == o.class && @type == o.type
   end
 
-  def resolve(type_parser, loader)
+  def resolve(loader)
     rtype = @type
-    rtype = rtype.resolve(type_parser, loader) unless rtype.nil?
+    rtype = rtype.resolve(loader) unless rtype.nil?
     rtype.equal?(@type) ? self : self.class.new(rtype)
   end
 end
@@ -1784,11 +1782,9 @@ class PStructElement < TypedModelObject
     @value_type.equal?(nv_type) ? self : PStructElement.new(@key_type, nv_type)
   end
 
-  def resolve(type_parser, loader)
-    rkey_type = @key_type
-    rkey_type = rkey_type.resolve(type_parser, loader) unless rkey_type.nil?
-    rvalue_type = @value_type
-    rvalue_type = rvalue_type.resolve(type_parser, loader) unless rvalue_type.nil?
+  def resolve(loader)
+    rkey_type = @key_type.resolve(loader)
+    rvalue_type = @value_type.resolve(loader)
     rkey_type.equal?(@key_type) && rvalue_type.equal?(@value_type) ? self : self.class.new(rkey_type, rvalue_type)
   end
 
@@ -1880,10 +1876,10 @@ class PStructType < PAnyType
     end
   end
 
-  def resolve(type_parser, loader)
+  def resolve(loader)
     changed = false
     relements = @elements.map do |elem|
-      relem = elem.resolve(type_parser, loader)
+      relem = elem.resolve(loader)
       changed ||= !relem.equal?(elem)
       relem
     end
@@ -2061,10 +2057,10 @@ class PTupleType < PAnyType
     end
   end
 
-  def resolve(type_parser, loader)
+  def resolve(loader)
     changed = false
     rtypes = @types.map do |type|
-      rtype = type.resolve(type_parser, loader)
+      rtype = type.resolve(loader)
       changed ||= !rtype.equal?(type)
       rtype
     end
@@ -2301,10 +2297,10 @@ class PCallableType < PAnyType
     self.class == o.class && @param_types == o.param_types && @block_type == o.block_type && @return_type == o.return_type
   end
 
-  def resolve(type_parser, loader)
-    params_t = @param_types.nil? ? nil : @param_types.resolve(type_parser, loader)
-    block_t = @block_type.nil? ? nil : @block_type.resolve(type_parser, loader)
-    return_t = @return_type.nil? ? nil : @return_type.resolve(type_parser, loader)
+  def resolve(loader)
+    params_t = @param_types.nil? ? nil : @param_types.resolve(loader)
+    block_t = @block_type.nil? ? nil : @block_type.resolve(loader)
+    return_t = @return_type.nil? ? nil : @return_type.resolve(loader)
     @param_types.equal?(params_t) && @block_type.equal?(block_t) && @return_type.equal?(return_t) ? self : self.class.new(params_t, block_t, return_t)
   end
 
@@ -2396,8 +2392,8 @@ class PArrayType < PCollectionType
     end
   end
 
-  def resolve(type_parser, loader)
-    relement_type = @element_type.resolve(type_parser, loader)
+  def resolve(loader)
+    relement_type = @element_type.resolve(loader)
     relement_type.equal?(@element_type) ? self : self.class.new(relement_type, @size_type)
   end
 
@@ -2582,9 +2578,9 @@ class PHashType < PCollectionType
     self == EMPTY
   end
 
-  def resolve(type_parser, loader)
-    rkey_type = @key_type.resolve(type_parser, loader)
-    rvalue_type = @value_type.resolve(type_parser, loader)
+  def resolve(loader)
+    rkey_type = @key_type.resolve(loader)
+    rvalue_type = @value_type.resolve(loader)
     rkey_type.equal?(@key_type) && rvalue_type.equal?(@value_type) ? self : self.class.new(rkey_type, rvalue_type, @size_type)
   end
 
@@ -2788,10 +2784,6 @@ class PVariantType < PAnyType
 
   def kind_of_callable?(optional = true, guard = nil)
     @types.all? { |type| type.kind_of_callable?(optional, guard) }
-  end
-
-  def resolved?
-    @types.all? { |type| type.resolved? }
   end
 
   def eql?(o)
@@ -3106,8 +3098,8 @@ class PTypeReferenceType < PAnyType
     super && o.type_string == @type_string
   end
 
-  def resolve(type_parser, loader)
-    type_parser.parse(@type_string, loader)
+  def resolve(loader)
+    TypeParser.singleton.parse(@type_string, loader)
   end
 
   protected
@@ -3245,7 +3237,7 @@ class PTypeAliasType < PAnyType
   # @param loader [Loader::Loader] loader to use when loading type aliases
   # @return [PTypeAliasType] the receiver of the call, i.e. `self`
   # @api private
-  def resolve(type_parser, loader)
+  def resolve(loader)
     @loader = loader
     if @resolved_type.nil?
       # resolved to PTypeReferenceType::DEFAULT during resolve to avoid endless recursion
@@ -3253,9 +3245,9 @@ class PTypeAliasType < PAnyType
       @self_recursion = true # assumed while it being found out below
       begin
         if @type_expr.is_a?(PTypeReferenceType)
-          @resolved_type = @type_expr.resolve(type_parser, loader)
+          @resolved_type = @type_expr.resolve(loader)
         else
-          @resolved_type = type_parser.interpret(@type_expr, loader).normalize
+          @resolved_type = TypeParser.singleton.interpret(@type_expr, loader).normalize
         end
 
         # Find out if this type is recursive. A recursive type has performance implications
@@ -3280,7 +3272,7 @@ class PTypeAliasType < PAnyType
     else
       # An alias may appoint an Object type that isn't resolved yet. The default type
       # reference is used to prevent endless recursion and should not be resolved here.
-      @resolved_type.resolve(type_parser, loader) unless @resolved_type.equal?(PTypeReferenceType::DEFAULT)
+      @resolved_type.resolve(loader) unless @resolved_type.equal?(PTypeReferenceType::DEFAULT)
     end
     self
   end

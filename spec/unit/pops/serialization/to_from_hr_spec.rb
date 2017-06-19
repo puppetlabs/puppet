@@ -321,7 +321,7 @@ module Serialization
 
           def self.register_ptype(loader, ir)
             @type = Pcore.create_object_type(loader, ir, DerivedArray, 'DerivedArray', nil, 'values' => Types::PArrayType::DEFAULT)
-              .resolve(Types::TypeParser.singleton, loader)
+              .resolve(loader)
           end
 
           def initialize(values)
@@ -342,7 +342,7 @@ module Serialization
 
           def self.register_ptype(loader, ir)
             @type = Pcore.create_object_type(loader, ir, DerivedHash, 'DerivedHash', nil, '_pcore_init_hash' => Types::PHashType::DEFAULT)
-              .resolve(Types::TypeParser.singleton, loader)
+              .resolve(loader)
           end
 
           def initialize(_pcore_init_hash)

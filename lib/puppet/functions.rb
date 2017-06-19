@@ -301,7 +301,7 @@ module Puppet::Functions
 
     # @api private
     def self.builder
-      DispatcherBuilder.new(dispatcher, Puppet::Pops::Types::TypeParser.singleton, Puppet::Pops::Types::PCallableType::DEFAULT, loader)
+      DispatcherBuilder.new(dispatcher, Puppet::Pops::Types::PCallableType::DEFAULT, loader)
     end
 
     # Dispatch any calls that match the signature to the provided method name.
@@ -389,8 +389,7 @@ module Puppet::Functions
     attr_reader :loader
 
     # @api private
-    def initialize(dispatcher, type_parser, all_callables, loader)
-      @type_parser = type_parser
+    def initialize(dispatcher, all_callables, loader)
       @all_callables = all_callables
       @dispatcher = dispatcher
       @loader = loader
@@ -476,7 +475,7 @@ module Puppet::Functions
         name = type_and_name[0]
       when 2
         type_string, name = type_and_name
-        type = @type_parser.parse(type_string, loader)
+        type = Puppet::Pops::Types::TypeParser.singleton.parse(type_string, loader)
       else
         raise ArgumentError, _("block_param accepts max 2 arguments (type, name), got %{size}.") % { size: type_and_name.size }
       end
@@ -572,10 +571,10 @@ module Puppet::Functions
     # @api private
     def create_callable(types, block_type, return_type, from, to)
       mapped_types = types.map do |t|
-        @type_parser.parse(t, loader)
+        Puppet::Pops::Types::TypeParser.singleton.parse(t, loader)
       end
       param_types = Puppet::Pops::Types::PTupleType.new(mapped_types, from > 0 && from == to ? nil : Puppet::Pops::Types::PIntegerType.new(from, to))
-      return_type = @type_parser.parse(return_type, loader) unless return_type.nil?
+      return_type = Puppet::Pops::Types::TypeParser.singleton.parse(return_type, loader) unless return_type.nil?
       Puppet::Pops::Types::PCallableType.new(param_types, block_type, return_type)
     end
   end
@@ -646,7 +645,7 @@ module Puppet::Functions
   class InternalFunction < Function
     # @api private
     def self.builder
-      InternalDispatchBuilder.new(dispatcher, Puppet::Pops::Types::TypeParser.singleton, Puppet::Pops::Types::PCallableType::DEFAULT, loader)
+      InternalDispatchBuilder.new(dispatcher, Puppet::Pops::Types::PCallableType::DEFAULT, loader)
     end
 
     # Allows the implementation of a function to call other functions by name and pass the caller

@@ -841,7 +841,7 @@ describe 'The type calculator' do
         # Add a non-empty variant
         all_instances << variant_t(PAnyType::DEFAULT, PUnitType::DEFAULT)
         # Add a type alias that doesn't resolve to 't'
-        all_instances << type_alias_t('MyInt', 'Integer').resolve(TypeParser.singleton, nil)
+        all_instances << type_alias_t('MyInt', 'Integer').resolve(nil)
 
         all_instances.each { |i| expect(i).not_to be_assignable_to(t) }
       end
@@ -1585,12 +1585,12 @@ describe 'The type calculator' do
       let!(:parser) { TypeParser.singleton }
 
       it 'it is assignable to the type that it is an alias for' do
-        t = type_alias_t('Alias', 'Integer').resolve(parser, nil)
+        t = type_alias_t('Alias', 'Integer').resolve(nil)
         expect(calculator.assignable?(integer_t, t)).to be_truthy
       end
 
       it 'the type that it is an alias for is assignable to it' do
-        t = type_alias_t('Alias', 'Integer').resolve(parser, nil)
+        t = type_alias_t('Alias', 'Integer').resolve(nil)
         expect(calculator.assignable?(t, integer_t)).to be_truthy
       end
 
@@ -1603,7 +1603,7 @@ describe 'The type calculator' do
 
         Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
-        t.resolve(parser, scope)
+        t.resolve(scope)
         expect(calculator.assignable?(t, parser.parse('Hash[String,Variant[String,Hash[String,Variant[String,String]]]]'))).to be_truthy
       end
 
@@ -1619,8 +1619,8 @@ describe 'The type calculator' do
 
         Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
-        t1.resolve(parser, scope)
-        t2.resolve(parser, scope)
+        t1.resolve(scope)
+        t2.resolve(scope)
         expect(calculator.assignable?(t1, t2)).to be_truthy
       end
 
@@ -1633,8 +1633,8 @@ describe 'The type calculator' do
 
         Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
-        t1.resolve(parser, loader)
-        t2.resolve(parser, loader)
+        t1.resolve(loader)
+        t2.resolve(loader)
         expect(calculator.assignable?(t1, t2)).to be_truthy
       end
 
@@ -1969,12 +1969,12 @@ describe 'The type calculator' do
       let!(:parser) { TypeParser.singleton }
 
       it 'should consider x an instance of the aliased simple type' do
-        t = type_alias_t('Alias', 'Integer').resolve(parser, nil)
+        t = type_alias_t('Alias', 'Integer').resolve(nil)
         expect(calculator.instance?(t, 15)).to be_truthy
       end
 
       it 'should consider x an instance of the aliased parameterized type' do
-        t = type_alias_t('Alias', 'Integer[0,20]').resolve(parser, nil)
+        t = type_alias_t('Alias', 'Integer[0,20]').resolve(nil)
         expect(calculator.instance?(t, 15)).to be_truthy
       end
 
@@ -1985,7 +1985,7 @@ describe 'The type calculator' do
 
         Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
-        t.resolve(parser, loader)
+        t.resolve(loader)
         expect(calculator.instance?(t, {'a'=>{'aa'=>{'aaa'=>'aaaa'}}, 'b'=>'bb'})).to be_truthy
       end
 
@@ -1998,7 +1998,7 @@ describe 'The type calculator' do
 
         Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
-        t1.resolve(parser, loader)
+        t1.resolve(loader)
         expect(calculator.instance?(t1, {'a'=>{'aa'=>{'aaa'=>'aaaa'}}, 'b'=>'bb'})).to be_truthy
       end
     end

@@ -26,7 +26,7 @@ describe 'The Object Type' do
 
   def parse_object(name, body_string)
     type_object_t(name, body_string)
-    parser.parse(name, loader)
+    parser.parse(name, loader).resolve(loader)
   end
 
   context 'when dealing with attributes' do

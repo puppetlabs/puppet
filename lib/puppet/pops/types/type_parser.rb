@@ -71,7 +71,7 @@ class TypeParser
 
   # @api private
   def interpret_TypeAlias(o, context)
-    Loader::TypeDefinitionInstantiator.create_type(o.name, o.type_expr, Pcore::RUNTIME_NAME_AUTHORITY).resolve(self, loader_from_context(o, context))
+    Loader::TypeDefinitionInstantiator.create_type(o.name, o.type_expr, Pcore::RUNTIME_NAME_AUTHORITY).resolve(loader_from_context(o, context))
   end
 
   # @api private
@@ -208,7 +208,7 @@ class TypeParser
       loader = loader_from_context(name_ast, context)
       unless loader.nil?
         type = loader.load(:type, name)
-        type = type.resolve(self, loader) unless type.nil?
+        type = type.resolve(loader) unless type.nil?
       end
       type || TypeFactory.type_reference(name_ast.cased_value)
     end
@@ -517,7 +517,7 @@ class TypeParser
       type = nil
       unless loader.nil?
         type = loader.load(:type, type_name)
-        type = type.resolve(self, loader) unless type.nil?
+        type = type.resolve(loader) unless type.nil?
       end
 
       if type.nil?
