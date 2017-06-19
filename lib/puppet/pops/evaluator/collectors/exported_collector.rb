@@ -3,7 +3,7 @@ class Puppet::Pops::Evaluator::Collectors::ExportedCollector < Puppet::Pops::Eva
   # Creates an ExportedCollector using the AbstractCollector's
   # constructor to set the scope and overrides
   #
-  # param [Symbol] type the resource type to be collected
+  # param [Puppet::CompilableResourceType] type the resource type to be collected
   # param [Array] equery an array representation of the query (exported query)
   # param [Proc] cquery a proc representation of the query (catalog query)
   def initialize(scope, type, equery, cquery, overrides = nil)
@@ -12,7 +12,7 @@ class Puppet::Pops::Evaluator::Collectors::ExportedCollector < Puppet::Pops::Eva
     @equery = equery
     @cquery = cquery
 
-    @type = Puppet::Resource.new(type, "whatever").type
+    @type = Puppet::Resource.new(type, 'whatever').type
   end
 
   # Ensures that storeconfigs is present before calling AbstractCollector's

@@ -131,6 +131,16 @@ end
         expect(notices).to include('false')
         expect(notices).not_to include('the Puppet::Type says hello')
       end
+
+      it 'does not load the ruby type when when referenced from collector during compile' do
+        notices = eval_and_collect_notices("@applytest { 'applytest was here': }\nApplytest<| title == 'applytest was here' |>", node)
+        expect(notices).not_to include('the Puppet::Type says hello')
+      end
+
+      it 'does not load the ruby type when when referenced from exported collector during compile' do
+        notices = eval_and_collect_notices("@@applytest { 'applytest was here': }\nApplytest<<| |>>", node)
+        expect(notices).not_to include('the Puppet::Type says hello')
+      end
     end
   end
 
