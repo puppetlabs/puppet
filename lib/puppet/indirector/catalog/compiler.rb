@@ -87,7 +87,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       # PSON is deprecated, but continue to accept from older agents
       return Puppet::Node::Facts.convert_from('pson', CGI.unescape(facts))
     elsif format == 'application/json'
-      return Puppet::Node::Facts.convert_from('json', facts)
+      return Puppet::Node::Facts.convert_from('json', CGI.unescape(facts))
     else
       raise ArgumentError, "Unsupported facts format"
     end
