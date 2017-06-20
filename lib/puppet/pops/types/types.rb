@@ -2766,6 +2766,7 @@ class PVariantType < PAnyType
   def really_instance?(o, guard = nil)
     @types.reduce(-1) do |memo, type|
       ri = type.really_instance?(o, guard)
+      break ri if ri > 0
       ri > memo ? ri : memo
     end
   end
