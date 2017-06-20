@@ -949,14 +949,17 @@ The type `Init[T]` describes a value that can be used when instantiating a type.
 will dispatch the call to its contained type and optionally augment the parameter list with additional arguments.
 
 **Example:** Creating an instance of Integer using Init[Integer]
-```
+
+```puppet
 # The following declaration
 $x = Init[Integer].new('128')
 # is exactly the same as
 $x = Integer.new('128')
 ```
+
 or, with base 16 and using implicit new
-```
+
+```puppet
 # The following declaration
 $x = Init[Integer,16]('80')
 # is exactly the same as
@@ -964,7 +967,8 @@ $x = Integer('80', 16)
 ```
 
 **Example:** Creating an instance of String using a predefined format
-```
+
+```puppet
 $fmt = Init[String,'%#x']
 notice($fmt(256)) # will notice '0x100'
 ```
