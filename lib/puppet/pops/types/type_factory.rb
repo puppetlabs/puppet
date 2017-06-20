@@ -54,6 +54,21 @@ module TypeFactory
     PNumericType::DEFAULT
   end
 
+  # Produces the Init type
+  # @api public
+  def self.init(*args)
+    case args.size
+    when 0
+      PInitType::DEFAULT
+    when 1
+      type = args[0]
+      type.nil? ? PInitType::DEFAULT : PInitType.new(type, EMPTY_ARRAY)
+    else
+      type = args.shift
+      PInitType.new(type, args)
+    end
+  end
+
   # Produces the Iterable type
   # @api public
   #

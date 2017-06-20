@@ -873,7 +873,7 @@ describe 'The type calculator' do
       end
 
       it 'Data is not assignable to any disjunct type' do
-        tested_types = all_types - [PAnyType, POptionalType] - scalar_types
+        tested_types = all_types - [PAnyType, POptionalType, PInitType] - scalar_types
         tested_types.each {|t2| expect(data).not_to be_assignable_to(t2::DEFAULT) }
       end
     end
@@ -909,7 +909,7 @@ describe 'The type calculator' do
       end
 
       it 'Scalar is not assignable to any disjunct type' do
-        tested_types = all_types - [PAnyType, POptionalType, PNotUndefType] - scalar_types
+        tested_types = all_types - [PAnyType, POptionalType, PInitType, PNotUndefType] - scalar_types
         t = PScalarType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
       end
@@ -931,6 +931,7 @@ describe 'The type calculator' do
         tested_types = all_types - [
           PAnyType,
           POptionalType,
+          PInitType,
           PNotUndefType,
           PScalarType,
           PScalarDataType,
@@ -1087,6 +1088,7 @@ describe 'The type calculator' do
         tested_types = all_types - [
           PAnyType,
           POptionalType,
+          PInitType,
           PNotUndefType,
           PIterableType] - collection_types
         t = PTupleType::DEFAULT
@@ -1100,7 +1102,8 @@ describe 'The type calculator' do
         tested_types = collection_types - [
           PCollectionType,
           PStructType,
-          PHashType]
+          PHashType,
+          PInitType]
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
       end
 
@@ -1109,7 +1112,8 @@ describe 'The type calculator' do
           PAnyType,
           POptionalType,
           PNotUndefType,
-          PIterableType] - collection_types
+          PIterableType,
+          PInitType] - collection_types
         t = PStructType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
       end
@@ -1723,11 +1727,12 @@ describe 'The type calculator' do
       expect(calculator.instance?(POptionalType::DEFAULT, :undef)).to eq(true)
     end
 
-    it 'should not consider undef to be an instance of any other type than Any, UndefType and Data' do
+    it 'should not consider undef to be an instance of any other type than Any, Undef, Optional, and Init' do
       types_to_test = all_types - [
         PAnyType,
         PUndefType,
         POptionalType,
+        PInitType
         ]
 
       types_to_test.each {|t| expect(calculator.instance?(t::DEFAULT, nil)).to eq(false) }

@@ -174,6 +174,11 @@ class TypeFormatter
   end
 
   # @api private
+  def string_PInitType(t)
+    append_array('Init', t.type.nil?)  { append_strings([t.type, *t.init_args]) }
+  end
+
+  # @api private
   def string_PIterableType(t)
     append_array('Iterable', t.element_type.nil?)  { append_string(t.element_type) }
   end

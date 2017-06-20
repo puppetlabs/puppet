@@ -359,6 +359,13 @@ class AccessOperator
     end
   end
 
+  def access_PInitType(o, scope, keys)
+    unless keys[0].is_a?(Types::PAnyType)
+      fail(Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Init-Type', :actual => keys[0].class})
+    end
+    Types::TypeFactory.init(*keys)
+  end
+
   def access_PIterableType(o, scope, keys)
     keys.flatten!
     if keys.size == 1

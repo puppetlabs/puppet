@@ -159,6 +159,7 @@ class TypeParser
         'integer'      => TypeFactory.integer,
         'float'        => TypeFactory.float,
         'numeric'      => TypeFactory.numeric,
+        'init'         => TypeFactory.init,
         'iterable'     => TypeFactory.iterable,
         'iterator'     => TypeFactory.iterator,
         'string'       => TypeFactory.string,
@@ -407,6 +408,10 @@ class TypeParser
     when 'typeset'
       raise_invalid_parameters_error('Object', 1, parameters.size) unless parameters.size == 1
       TypeFactory.type_set(parameters[0])
+
+    when 'init'
+      assert_type(ast, parameters[0])
+      TypeFactory.init(*parameters)
 
     when 'iterable'
       if parameters.size != 1
