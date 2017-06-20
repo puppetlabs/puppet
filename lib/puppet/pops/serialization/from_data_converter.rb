@@ -164,18 +164,6 @@ module Serialization
             { :type_name => pcore_type.name, :arg_class => value.class.name }
       end
     end
-
-    def data_to_pcore_type(pcore_type)
-      if pcore_type.is_a?(Hash)
-        without_value { convert(pcore_type) }
-      else
-        type = Types::TypeParser.singleton.parse(pcore_type, @loader)
-        if type.is_a?(Types::PTypeReferenceType)
-          raise SerializationError, _('No implementation mapping found for Puppet Type %{type_name}') % { type_name: pcore_type }
-        end
-        type
-      end
-    end
   end
 end
 end
