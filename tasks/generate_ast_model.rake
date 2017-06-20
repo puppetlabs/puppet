@@ -31,7 +31,11 @@ module Puppet::Pops
       ruby.gsub!(/ref\('Array\[([0-9A-Za-z_]+)\]'\)/, 'Types::PArrayType.new(Types::P\1Type::DEFAULT)')
       ruby.gsub!(/ref\('Optional\[Array\[([0-9A-Za-z_]+)\]\]'\)/,
           'Types::POptionalType.new(Types::PArrayType.new(Types::P\1Type::DEFAULT))')
-      ruby.gsub!(/ref\("Enum(\[[^\]]+\])"\)/, 'Types::PEnumType.new(\1)')
+      ruby.gsub!(/ref\('Enum(\[[^\]]+\])'\)/) do |match|
+        params = $1
+        params.gsub!(/\\'/, '\'')
+        "Types::PEnumType.new(#{params})"
+      end
 
       # Replace ref() constructs with references to _pcore_type of the types in the module namespace
       ruby.gsub!(/ref\('Puppet::AST::Locator'\)/, 'Parser::Locator::Locator19._pcore_type')
