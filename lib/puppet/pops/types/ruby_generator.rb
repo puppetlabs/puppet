@@ -60,6 +60,7 @@ class RubyGenerator < TypeFormatter
       index += 1
       len > segments.size ? segments.size : len
     end
+    min_prefix_length = 0 if min_prefix_length == Float::INFINITY
 
     common_prefix = []
     segments_array = names_by_prefix.keys
