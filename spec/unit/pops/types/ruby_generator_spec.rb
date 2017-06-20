@@ -379,28 +379,15 @@ describe 'Puppet Ruby Generator' do
 
       context 'the typeset' do
         it 'produces expected string representation' do
-          typeset.to_s == "TypeSet[{"+
-            "pcore_version => '1.0.0', "+
-            "name_authority => 'http://puppet.com/2016.1/runtime', "+
-            "name => 'OtherModule', "+
-            "version => '1.0.0', "+
-            "types => {"+
-            "MyFloat => Float, "+
-            "ThirdGenerated => Object[{"+
-            "attributes => {"+
-            "'first' => MyModule::FirstGenerated}}], "+
-            "FourthGenerated => Object[{"+
-            "parent => MyModule::SecondGenerated, "+
-            "attributes => {"+
-            "'complex' => {"+
-            "type => Optional[ThirdGenerated], "+
-            "value => ?}, "+
-            "'n1' => MyModule::MyInteger, "+
-            "'n2' => MyFloat}}]}, "+
-            "references => [{"+
-            "'name' => 'MyModule', "+
-            "'alias' => 'My', "+
-            "'version_range' => '1.x'}]}]"
+          expect(typeset.to_s).to eq(
+            "TypeSet[{pcore_version => '1.0.0', name_authority => 'http://puppet.com/2016.1/runtime', name => 'OtherModule', version => '1.0.0', types => {"+
+              "MyFloat => Float, "+
+              "ThirdGenerated => Object[{attributes => {'first' => My::FirstGenerated}}], "+
+              "FourthGenerated => Object[{parent => My::SecondGenerated, attributes => {"+
+                "'complex' => {type => Optional[ThirdGenerated], value => ?}, "+
+                "'n1' => My::MyInteger, "+
+                "'n2' => MyFloat"+
+              "}}]}, references => {My => {'name' => 'MyModule', 'version_range' => '1.x'}}}]")
         end
       end
 
