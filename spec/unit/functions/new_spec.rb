@@ -711,4 +711,14 @@ describe 'the new function' do
       )).to have_resource('Notify[Boolean, true]')
     end
   end
+
+  context 'when invoked on a Type' do
+    it 'creates a Type from its string representation' do
+      expect(compile_to_catalog(<<-MANIFEST
+        $x = Type.new('Integer[3,10]')
+        notify { "${type($x)}": }
+      MANIFEST
+      )).to have_resource('Notify[Type[Integer[3, 10]]]')
+    end
+  end
 end

@@ -468,6 +468,20 @@ class PType < PTypeWithContainedType
     )
   end
 
+  # Returns a new function that produces a Type instance
+  #
+  def self.new_function(type)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_type, type.loader) do
+      dispatch :from_string do
+        param 'String', :type_string
+      end
+
+      def from_string(type_string)
+        TypeParser.singleton.parse(type_string, loader)
+      end
+    end
+  end
+
   def instance?(o, guard = nil)
     if o.is_a?(PAnyType)
       type.nil? || type.assignable?(o, guard)

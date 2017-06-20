@@ -475,6 +475,16 @@ $ts = Timestamp('2016-08-24T12:13:14', default, 'PST')   # 2016-08-24 20:13:14.0
 
 ```
 
+Conversion to Type
+------------------
+A new `Type` can be create from its `String` representation.
+
+**Example:** Creating a type from a string
+
+```puppet
+$t = Type.new('Integer[10]')
+```
+
 Conversion to String
 --------------------
 
