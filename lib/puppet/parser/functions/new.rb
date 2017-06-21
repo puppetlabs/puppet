@@ -775,7 +775,7 @@ Accepts a single value as argument:
 Alternatively, a tree can be constructed by giving two values; an array of tuples on the form `[path, value]`
 (where the `path` is the path from the root of a tree, and `value` the value at that position in the tree), and
 either the option `'tree'` (do not convert arrays to hashes except the top level), or
-`'hash_tree' (convert all arrays to hashes).
+`'hash_tree'` (convert all arrays to hashes).
 
 The tree/hash_tree forms of Hash creation are suited for transforming the result of an iteration
 using `tree_each` and subsequent filtering or mapping.

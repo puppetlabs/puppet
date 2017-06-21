@@ -88,7 +88,7 @@
 #
 # ~~~ puppet
 # $data = [1, 2, [3, [4, 5]]]
-# $data.tree_each({include_values => false, include_root => false} |$v| { notice "$v" }
+# $data.tree_each({include_values => false, include_root => false}) |$v| { notice "$v" }
 # ~~~
 #
 # This would call the lambda 2 times with the following values in sequence:
