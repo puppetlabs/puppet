@@ -25,7 +25,7 @@ class PopsObject
   attr_reader :hash
 
   def initialize
-    @hash = -1052386662549381418
+    @hash = -1631630444118989922
   end
   def _pcore_init_hash
     {}
@@ -4664,6 +4664,10 @@ class Program < PopsObject
   attr_reader :body
   attr_reader :definitions
   attr_reader :locator
+
+  def current
+    self
+  end
 
   def source_text
     @locator.string
