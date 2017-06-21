@@ -118,6 +118,19 @@ agents.each do |agent|
   end
 end
 
+step 'test puppet hiera file install' do
+  agents.each do |agent|
+    hiera_config = config_options(agent).select {|v| v[:name] == :hiera_config}.first[:expected]
+    env_path = config_options(agent).select {|v| v[:name] == :environmentpath}.first
+    hiera_env_config = "#{env_path[:expected]}/production/hiera.yaml"
+
+    [hiera_config, hiera_env_config].each do |file|
+      on(agent, "cat '#{file}'") do |cat_result|
+        assert_match(/version: 5/, cat_result.stdout, "Expected hiera version to be set in #{file}")
+      end
+    end
+  end
+end
 
 public_binaries = {
   :posix => ['puppet', 'facter', 'hiera'],
