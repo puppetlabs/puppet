@@ -238,7 +238,6 @@ describe Puppet::Face[:epp, :current] do
     end
 
     it 'initializes the 4x loader' do
-      pending 'fix for PUP-7691'
       expect(eppface.render({ :e => <<-EPP.unindent })).to eql("\nString\n\nInteger\n\nBoolean\n")
         <% $data = [type('a',generalized), type(2,generalized), type(true)] -%>
         <% $data.each |$value| { %>
