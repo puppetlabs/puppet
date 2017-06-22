@@ -49,6 +49,7 @@ class Puppet::Agent
             return
           rescue StandardError => detail
             Puppet.log_exception(detail, _("Could not run %{client_class}: %{detail}") % { client_class: client_class, detail: detail })
+            1
           end
         end
       end

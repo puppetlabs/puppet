@@ -217,6 +217,17 @@ describe Puppet::Agent do
         @agent.run
       end
 
+      it 'should exit with 1 if an exception is raised' do
+        client = AgentTestClient.new
+        AgentTestClient.expects(:new).returns client
+
+        client.expects(:run).raises(StandardError)
+
+        Kernel.expects(:fork).yields
+        @agent.expects(:exit).with(1)
+        @agent.run
+      end
+
       it "should re-raise exit happening in the child" do
         Process.stubs(:waitpid2).returns [123, (stub 'process::status', :exitstatus => -1)]
         expect { @agent.run }.to raise_error(SystemExit)
