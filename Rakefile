@@ -92,8 +92,9 @@ task(:commits) do
       raise "\n\n\n\tThis commit summary didn't match CONTRIBUTING.md guidelines:\n" \
         "\n\t\t#{commit_summary}\n" \
         "\tThe commit summary (i.e. the first line of the commit message) should start with one of:\n"  \
-        "\t\t(pup-<digits>) # this is most common and should be a ticket at tickets.puppetlabs.com\n" \
+        "\t\t(PUP-<digits>) # this is most common and should be a ticket at tickets.puppet.com\n" \
         "\t\t(docs)\n" \
+        "\t\t(docs)(DOCUMENT-<digits>)\n" \
         "\t\t(maint)\n" \
         "\t\t(packaging)\n" \
         "\n\tThis test for the commit summary is case-insensitive.\n\n\n"
