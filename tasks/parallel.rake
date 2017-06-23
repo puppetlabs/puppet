@@ -156,17 +156,21 @@ else
 
       #
       # Responsible for parallelizing spec testing.
+      # Optional options list will be passed to rspec.
       #
       class Parallelizer
         # Number of processes to use
         attr_reader :process_count
         # Approximate size of each group of tests
         attr_reader :group_size
+        # Options list for rspec
+        attr_reader :options
 
-        def initialize(process_count, group_size, color)
+        def initialize(process_count, group_size, color, options = [])
           @process_count = process_count
           @group_size = group_size
           @color = color
+          @options = options
         end
 
         def color?
@@ -180,7 +184,7 @@ else
           fail red('error: no specs were found') if groups.length == 0
 
           begin
-            run_specs groups
+            run_specs(groups, options)
           ensure
             groups.each do |file|
               File.unlink(file)
@@ -211,7 +215,7 @@ else
           spec_group_files
         end
 
-        def run_specs(groups)
+        def run_specs(groups, options)
           puts "Processing #{groups.length} spec group(s) with #{@process_count} worker(s)"
 
           interrupted = false
@@ -246,7 +250,8 @@ else
                 break unless group && !interrupted
 
                 # Spawn the worker process with redirected output
-                io = IO.popen("ruby util/rspec_runner #{group}")
+                options_string = options ? options.join(' ') : ''
+                io = IO.popen("ruby util/rspec_runner #{group} #{options_string}")
                 pids[thread_id] = io.pid
 
                 # TODO: make the buffer pluggable to handle other output formats like documentation
@@ -391,15 +396,15 @@ else
       config.color
     end
 
-    desc 'Runs specs in parallel.'
-    task 'spec', :process_count, :group_size do |_, args|
+    desc 'Runs specs in parallel. Extra args are passed to rspec.'
+    task 'spec', [:process_count, :group_size] do |_, args|
       # Default group size in rspec examples
       DEFAULT_GROUP_SIZE = 1000
 
       process_count = [(args[:process_count] || Facter.value("processorcount")).to_i, 1].max
       group_size = [(args[:group_size] || DEFAULT_GROUP_SIZE).to_i, 1].max
 
-      abort unless Parallel::RSpec::Parallelizer.new(process_count, group_size, color_output?).run
+      abort unless Parallel::RSpec::Parallelizer.new(process_count, group_size, color_output?, args.extras).run
     end
   end
 end

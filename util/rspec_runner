@@ -24,13 +24,18 @@ module Parallel
     end
     #
     # Responsible for running spec files given a spec file.
+    # Can supply an optional list of additional options (used when running in CI).
     # We do it this way so that we can run very long spec file lists on Windows, since
     # Windows has a limited argument length depending on method of invocation.
     #
     class Runner
-      def initialize(specs_file)
+      def initialize(specs_file, options = [])
         abort "error: spec list file '#{specs_file}' does not exist." unless File.exists? specs_file
-        @options = ['-fParallel::RSpec::Formatter']
+        if options.empty?
+          @options = ['-fParallel::RSpec::Formatter']
+        else
+          @options = options
+        end
         File.readlines(specs_file).each { |line| @options << line.chomp }
       end
 
@@ -43,13 +48,18 @@ module Parallel
 end
 
 def print_usage
-  puts 'usage: rspec_runner <spec_list_file>'
+  puts 'usage: rspec_runner <spec_list_file> [<rspec_options_string>]'
 end
 
 if __FILE__ == $0
-  if ARGV.length != 1
+  if ARGV.length < 1
     print_usage
   else
-    exit Parallel::RSpec::Runner.new(ARGV[0]).run
+    if ARGV.length == 1
+      exit Parallel::RSpec::Runner.new(ARGV[0]).run
+    else
+      spec_file, *options = ARGV
+      exit Parallel::RSpec::Runner.new(spec_file, options).run
+    end
   end
 end
