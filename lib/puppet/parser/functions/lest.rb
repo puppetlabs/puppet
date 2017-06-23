@@ -45,5 +45,5 @@ Would notice the value `20`
 * Since 4.5.0
 DOC
 ) do |args|
-  Error.is4x('lest')
+  Puppet::Parser::Functions::Error.is4x('lest')
 end

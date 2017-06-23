@@ -35,5 +35,5 @@ to empty arrays for a hash.
 - Since 4.0.0
 DOC
 ) do |args|
-  Error.is4x('slice')
+  Puppet::Parser::Functions::Error.is4x('slice')
 end

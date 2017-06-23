@@ -143,6 +143,10 @@ class Puppet::Parser::Compiler
   # Return a list of all of the defined classes.
   def_delegator :@catalog, :classes, :classlist
 
+  def with_context_overrides(description = '', &block)
+    Puppet.override( @context_overrides , description, &block)
+  end
+
   # Compiler our catalog.  This mostly revolves around finding and evaluating classes.
   # This is the main entry into our catalog.
   def compile

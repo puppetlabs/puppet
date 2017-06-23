@@ -102,5 +102,5 @@ $combine = $data.reduce( [d, 4] ) |$memo, $value| {
 - Since 4.0.0
 DOC
 ) do |args|
-  Error.is4x('reduce')
+  Puppet::Parser::Functions::Error.is4x('reduce')
 end

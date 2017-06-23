@@ -35,5 +35,5 @@ Would notice the value `[10]`
 * Since 4.8.0
 DOC
 ) do |args|
-  Error.is4x('break')
+  Puppet::Parser::Functions::Error.is4x('break')
 end
