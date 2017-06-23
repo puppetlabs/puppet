@@ -2577,12 +2577,26 @@ class PHashType < PCollectionType
     rkey_type.equal?(@key_type) && rvalue_type.equal?(@value_type) ? self : self.class.new(rkey_type, rvalue_type, @size_type)
   end
 
+  def self.array_as_hash(value)
+    return value unless value.is_a?(Array)
+    result = {}
+    value.each_with_index {|v, idx| result[idx] = array_as_hash(v) }
+    result
+  end
+
   # Returns a new function that produces a  Hash
   #
   def self.new_function(_, loader)
     @new_function ||= Puppet::Functions.create_loaded_function(:new_hash, loader) do
       local_types do
         type 'KeyValueArray = Array[Tuple[Any,Any],1]'
+        type 'TreeArray = Array[Tuple[Array,Any],1]'
+        type 'NewHashOption = Enum[tree, hash_tree]'
+      end
+
+      dispatch :from_tree do
+        param           'TreeArray',       :from
+        optional_param  'NewHashOption',   :build_option
       end
 
       dispatch :from_tuples do
@@ -2595,6 +2609,34 @@ class PHashType < PCollectionType
 
       def from_tuples(tuple_array)
         Hash[tuple_array]
+      end
+
+      def from_tree(tuple_array, build_option = nil)
+        if build_option.nil?
+          return from_tuples(tuple_array)
+        end
+        # only remaining possible options is 'tree' or 'hash_tree'
+
+        all_hashes = build_option == 'hash_tree'
+        result = {}
+        tuple_array.each do |entry|
+          path = entry[0]
+          value = entry[1]
+          if path.empty?
+            # root node (index [] was included - values merge into the result)
+            # An array must be changed to a hash first as this is the root
+            # (Cannot return an array from a Hash.new)
+            if value.is_a?(Array)
+              value.each_with_index {|v, idx| result[idx] = v }
+            else
+              result.merge!(value)
+            end
+          else
+            r = path[0..-2].reduce(result) {|memo, idx| (memo.is_a?(Array) || memo.has_key?(idx)) ? memo[idx] : memo[idx] = {}}
+            r[path[-1]]= (all_hashes ? PHashType.array_as_hash(value) : value)
+          end
+        end
+        result
       end
 
       def from_array(from)
@@ -3392,3 +3434,4 @@ require_relative 'p_timestamp_type'
 require_relative 'p_binary_type'
 require_relative 'type_set_reference'
 require_relative 'implementation_registry'
+require_relative 'tree_iterators'

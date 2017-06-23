@@ -818,7 +818,7 @@ class PObjectType < PMetaType
 
   # @api private
   def label
-    @name || '<anonymous object type>'
+    @name || 'Object'
   end
 
   # @api private

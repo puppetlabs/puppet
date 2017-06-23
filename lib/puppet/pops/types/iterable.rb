@@ -132,13 +132,13 @@ module Puppet::Pops::Types
     def reverse_each(&block)
       # Default implementation cannot propagate reverse_each to a new enumerator so chained
       # calls must put reverse_each last.
-      raise ArgumentError 'reverse_each() is not implemented'
+      raise ArgumentError, 'reverse_each() is not implemented'
     end
 
     def step(step, &block)
       # Default implementation cannot propagate step to a new enumerator so chained
       # calls must put stepping last.
-      raise ArgumentError 'step() is not implemented'
+      raise ArgumentError, 'step() is not implemented'
     end
 
     def to_a
