@@ -71,7 +71,7 @@ class TypeParser
 
   # @api private
   def interpret_TypeAlias(o, context)
-    Loader::TypeDefinitionInstantiator.create_type(o.name, o.type_expr, Pcore::RUNTIME_NAME_AUTHORITY).resolve(self, loader_from_context(o, context))
+    Loader::TypeDefinitionInstantiator.create_type(o.name, o.type_expr, Pcore::RUNTIME_NAME_AUTHORITY).resolve(loader_from_context(o, context))
   end
 
   # @api private
@@ -159,6 +159,7 @@ class TypeParser
         'integer'      => TypeFactory.integer,
         'float'        => TypeFactory.float,
         'numeric'      => TypeFactory.numeric,
+        'init'         => TypeFactory.init,
         'iterable'     => TypeFactory.iterable,
         'iterator'     => TypeFactory.iterator,
         'string'       => TypeFactory.string,
@@ -208,7 +209,7 @@ class TypeParser
       loader = loader_from_context(name_ast, context)
       unless loader.nil?
         type = loader.load(:type, name)
-        type = type.resolve(self, loader) unless type.nil?
+        type = type.resolve(loader) unless type.nil?
       end
       type || TypeFactory.type_reference(name_ast.cased_value)
     end
@@ -408,6 +409,10 @@ class TypeParser
       raise_invalid_parameters_error('Object', 1, parameters.size) unless parameters.size == 1
       TypeFactory.type_set(parameters[0])
 
+    when 'init'
+      assert_type(ast, parameters[0])
+      TypeFactory.init(*parameters)
+
     when 'iterable'
       if parameters.size != 1
         raise_invalid_parameters_error('Iterable', 1, parameters.size)
@@ -517,7 +522,7 @@ class TypeParser
       type = nil
       unless loader.nil?
         type = loader.load(:type, type_name)
-        type = type.resolve(self, loader) unless type.nil?
+        type = type.resolve(loader) unless type.nil?
       end
 
       if type.nil?

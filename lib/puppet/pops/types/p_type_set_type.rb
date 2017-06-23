@@ -54,7 +54,7 @@ class PTypeSetType < PMetaType
   })
 
   def self.register_ptype(loader, ir)
-    create_ptype(loader, ir, 'AnyType', '_pcore_init_hash' => TYPE_TYPESET_I12N.resolve(TypeParser.singleton, loader))
+    create_ptype(loader, ir, 'AnyType', '_pcore_init_hash' => TYPE_TYPESET_I12N.resolve(loader))
   end
 
   attr_reader :pcore_uri
@@ -254,17 +254,18 @@ class PTypeSetType < PMetaType
   end
 
   # @api private
-  def resolve(type_parser, loader)
+  def resolve(loader)
     super
-    @references.each_value { |ref| ref.resolve(type_parser, loader) }
+    @references.each_value { |ref| ref.resolve(loader) }
     tsa_loader = TypeSetLoader.new(self, loader)
-    @types.values.each { |type| type.resolve(type_parser, tsa_loader) }
+    @types.values.each { |type| type.resolve(tsa_loader) }
     self
   end
 
   # @api private
-  def resolve_literal_hash(type_parser, loader, init_hash_expression)
+  def resolve_literal_hash(loader, init_hash_expression)
     result = {}
+    type_parser = TypeParser.singleton
     init_hash_expression.entries.each do |entry|
       key = type_parser.interpret_any(entry.key, loader)
       if (key == KEY_TYPES || key == KEY_REFERENCES) && entry.value.is_a?(Model::LiteralHash)
@@ -297,10 +298,10 @@ class PTypeSetType < PMetaType
   end
 
   # @api private
-  def resolve_hash(type_parser, loader, init_hash)
+  def resolve_hash(loader, init_hash)
     result = Hash[init_hash.map do |key, value|
-      key = resolve_type_refs(type_parser, loader, key)
-      value = resolve_type_refs(type_parser, loader, value) unless key == KEY_TYPES && value.is_a?(Hash)
+      key = resolve_type_refs(loader, key)
+      value = resolve_type_refs(loader, value) unless key == KEY_TYPES && value.is_a?(Hash)
       [key, value]
     end]
     name_auth = resolve_name_authority(result, loader)

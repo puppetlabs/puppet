@@ -39,6 +39,26 @@ describe 'the new function' do
     )}.to raise_error(Puppet::Error, /expects an Integer\[1, 5\] value, got Integer\[42, 42\]/)
   end
 
+  it 'accepts and returns a second parameter that is an instance of the first, even when the type has no backing new_function' do
+    expect(eval_and_collect_notices(<<-MANIFEST)).to eql(%w(true true true true true true))
+      notice(undef == Undef(undef))
+
+      notice(default == Default(default))
+
+      notice(Any == Type(Any))
+
+      $b = Binary('YmluYXI=')
+      notice($b == Binary($b))
+
+      $t = Timestamp('2012-03-04:09:10:11.001')
+      notice($t == Timestamp($t))
+
+      type MyObject = Object[{attributes => {'type' => String}}]
+      $o = MyObject('Remote')
+      notice($o == MyObject($o))
+    MANIFEST
+  end
+
   context 'when invoked on NotUndef' do
     it 'produces an instance of the NotUndef nested type' do
       expect(compile_to_catalog(<<-MANIFEST
@@ -725,6 +745,16 @@ describe 'the new function' do
         notify { "${type($x, generalized)}, $x": }
       MANIFEST
       )).to have_resource('Notify[Boolean, true]')
+    end
+  end
+
+  context 'when invoked on a Type' do
+    it 'creates a Type from its string representation' do
+      expect(compile_to_catalog(<<-MANIFEST
+        $x = Type.new('Integer[3,10]')
+        notify { "${type($x)}": }
+      MANIFEST
+      )).to have_resource('Notify[Type[Integer[3, 10]]]')
     end
   end
 end

@@ -38,11 +38,50 @@ shared_context 'types_setup' do
       Puppet::Pops::Types::PTimestampType,
       Puppet::Pops::Types::PSensitiveType,
       Puppet::Pops::Types::PBinaryType,
+      Puppet::Pops::Types::PInitType
     ]
   end
   def all_types
     self.class.all_types
   end
+
+  def self.abstract_types
+    [ Puppet::Pops::Types::PAnyType,
+      Puppet::Pops::Types::PCallableType,
+      Puppet::Pops::Types::PEnumType,
+      Puppet::Pops::Types::PHostClassType,
+      Puppet::Pops::Types::PDefaultType,
+      Puppet::Pops::Types::PCollectionType,
+      Puppet::Pops::Types::PInitType,
+      Puppet::Pops::Types::PIterableType,
+      Puppet::Pops::Types::PIteratorType,
+      Puppet::Pops::Types::PNotUndefType,
+      Puppet::Pops::Types::PResourceType,
+      Puppet::Pops::Types::PRuntimeType,
+      Puppet::Pops::Types::POptionalType,
+      Puppet::Pops::Types::PPatternType,
+      Puppet::Pops::Types::PScalarType,
+      Puppet::Pops::Types::PScalarDataType,
+      Puppet::Pops::Types::PVariantType,
+      Puppet::Pops::Types::PUndefType,
+      Puppet::Pops::Types::PTypeReferenceType,
+      Puppet::Pops::Types::PTypeAliasType,
+    ]
+  end
+  def abstract_types
+    self.class.abstract_types
+  end
+
+  # Internal types. Not meaningful in pp
+  def self.internal_types
+    [ Puppet::Pops::Types::PTypeReferenceType,
+      Puppet::Pops::Types::PTypeAliasType,
+    ]
+  end
+  def internal_types
+    self.class.internal_types
+  end
+
 
   def self.scalar_data_types
     # PVariantType is also scalar data, if its types are all ScalarData

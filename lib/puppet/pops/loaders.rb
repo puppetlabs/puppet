@@ -110,8 +110,7 @@ class Loaders
       type
     end
     # Resolve lazy so that all types can cross reference each other
-    parser = Types::TypeParser.singleton
-    types.each { |type| type.resolve(parser, loader) }
+    types.each { |type| type.resolve(loader) }
   end
 
   # Register the given type with the Runtime3TypeLoader. The registration will not happen unless

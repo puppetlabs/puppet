@@ -10,6 +10,8 @@ KEY_VALUE = 'value'.freeze
 class PMetaType < PAnyType
   include Annotatable
 
+  attr_reader :loader
+
   def self.register_ptype(loader, ir)
     # Abstract type. It doesn't register anything
   end
@@ -31,16 +33,17 @@ class PMetaType < PAnyType
   # @param loader [Loader::Loader] loader to use when loading type aliases
   # @return [PTypeAliasType] the receiver of the call, i.e. `self`
   # @api private
-  def resolve(type_parser, loader)
+  def resolve(loader)
     unless @init_hash_expression.nil?
+      @loader = loader
       @self_recursion = true # assumed while it being found out below
 
       init_hash_expression = @init_hash_expression
       @init_hash_expression = nil
       if init_hash_expression.is_a?(Model::LiteralHash)
-        init_hash = resolve_literal_hash(type_parser, loader, init_hash_expression)
+        init_hash = resolve_literal_hash(loader, init_hash_expression)
       else
-        init_hash = resolve_hash(type_parser, loader, init_hash_expression)
+        init_hash = resolve_hash(loader, init_hash_expression)
       end
       _pcore_init_from_hash(init_hash)
 
@@ -54,22 +57,22 @@ class PMetaType < PAnyType
     self
   end
 
-  def resolve_literal_hash(type_parser, loader, init_hash_expression)
-    type_parser.interpret_LiteralHash(init_hash_expression, loader)
+  def resolve_literal_hash(loader, init_hash_expression)
+    TypeParser.singleton.interpret_LiteralHash(init_hash_expression, loader)
   end
 
-  def resolve_hash(type_parser, loader, init_hash)
-    resolve_type_refs(type_parser, loader, init_hash)
+  def resolve_hash(loader, init_hash)
+    resolve_type_refs(loader, init_hash)
   end
 
-  def resolve_type_refs(type_parser, loader, o)
+  def resolve_type_refs(loader, o)
     case o
     when Hash
-      Hash[o.map { |k, v| [resolve_type_refs(type_parser, loader, k), resolve_type_refs(type_parser, loader, v)] }]
+      Hash[o.map { |k, v| [resolve_type_refs(loader, k), resolve_type_refs(loader, v)] }]
     when Array
-      o.map { |e| resolve_type_refs(type_parser, loader, e) }
+      o.map { |e| resolve_type_refs(loader, e) }
     when PAnyType
-      o.resolve(type_parser, loader)
+      o.resolve(loader)
     else
       o
     end

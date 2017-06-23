@@ -60,6 +60,7 @@ class RubyGenerator < TypeFormatter
       index += 1
       len > segments.size ? segments.size : len
     end
+    min_prefix_length = 0 if min_prefix_length == Float::INFINITY
 
     common_prefix = []
     segments_array = names_by_prefix.keys
@@ -190,17 +191,17 @@ class RubyGenerator < TypeFormatter
 
     unless obj.parent.is_a?(PObjectType) && obj_attrs.empty?
       # Output type safe hash constructor
-      bld << "\n  def self.from_hash(i12n)\n"
+      bld << "\n  def self.from_hash(init_hash)\n"
       bld << '    from_asserted_hash(' << namespace_relative(segments, TypeAsserter.name) << '.assert_instance_of('
-      bld << "'" << obj.label << " initializer', _pcore_type.i12n_type, i12n))\n  end\n\n  def self.from_asserted_hash(i12n)\n    new"
+      bld << "'" << obj.label << " initializer', _pcore_type.init_hash_type, init_hash))\n  end\n\n  def self.from_asserted_hash(init_hash)\n    new"
       unless non_opt.empty? && opt.empty?
         bld << "(\n"
-        non_opt.each { |ip| bld << "      i12n['" << ip.name << "'],\n" }
+        non_opt.each { |ip| bld << "      init_hash['" << ip.name << "'],\n" }
         opt.each do |ip|
           if ip.value.nil?
-            bld << "      i12n['" << ip.name << "'],\n"
+            bld << "      init_hash['" << ip.name << "'],\n"
           else
-            bld << "      i12n.fetch('" << ip.name << "') { "
+            bld << "      init_hash.fetch('" << ip.name << "') { "
             default_string(bld, ip)
             bld << " },\n"
           end

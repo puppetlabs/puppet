@@ -96,8 +96,7 @@ module Pcore
     aliases.each do |name, type_string|
       add_type(Types::PTypeAliasType.new(name, Types::TypeFactory.type_reference(type_string), nil), loader, name_authority)
     end
-    parser = Types::TypeParser.singleton
-    aliases.each_key.map { |name| loader.load(:type, name).resolve(parser, loader) }
+    aliases.each_key.map { |name| loader.load(:type, name).resolve(loader) }
   end
 end
 end

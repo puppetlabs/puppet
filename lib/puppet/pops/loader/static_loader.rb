@@ -141,8 +141,7 @@ class StaticLoader < Loader
 
   def register_aliases
     aliases = BUILTIN_ALIASES.map { |name, string| add_type(name, Types::PTypeAliasType.new(name, Types::TypeFactory.type_reference(string), nil)) }
-    parser = Types::TypeParser.singleton
-    aliases.each { |type| type.resolve(parser, self) }
+    aliases.each { |type| type.resolve(self) }
   end
 end
 end

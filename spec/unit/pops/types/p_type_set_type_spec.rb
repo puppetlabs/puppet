@@ -14,8 +14,8 @@ module Puppet::Pops
       let(:loader) { loaders.find_loader(nil) }
 
       def type_set_t(name, body_string, name_authority)
-        i12n_literal_hash = pp_parser.parse_string("{#{body_string}}").body
-        typeset = PTypeSetType.new(name, i12n_literal_hash, name_authority)
+        init_literal_hash = pp_parser.parse_string("{#{body_string}}").body
+        typeset = PTypeSetType.new(name, init_literal_hash, name_authority)
         loader.set_entry(Loader::TypedName.new(:type, name, name_authority), typeset)
         typeset
       end

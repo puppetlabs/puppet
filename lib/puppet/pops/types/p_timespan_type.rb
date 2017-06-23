@@ -50,10 +50,6 @@ module Types
       self.class == o.class && @from == o.numeric_from && @to == o.numeric_to
     end
 
-    def instance?(o, guard = nil)
-      o.is_a?(Numeric) && o >= @from && o <= @to
-    end
-
     def unbounded?
       @from == -Float::INFINITY && @to == Float::INFINITY
     end
@@ -107,8 +103,8 @@ module Types
       )
     end
 
-    def self.new_function(_, loader)
-      @new_function ||= Puppet::Functions.create_loaded_function(:new_timespan, loader) do
+    def self.new_function(type)
+      @new_function ||= Puppet::Functions.create_loaded_function(:new_timespan, type.loader) do
         local_types do
           type 'Formats = Variant[String[2],Array[String[2]], 1]'
         end
@@ -184,6 +180,10 @@ module Types
 
     def impl_class
       Time::Timespan
+    end
+
+    def instance?(o, guard = nil)
+      o.is_a?(Time::Timespan) && o >= @from && o <= @to
     end
 
     DEFAULT = PTimespanType.new(nil, nil)

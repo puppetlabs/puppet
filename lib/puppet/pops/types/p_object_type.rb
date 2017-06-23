@@ -392,8 +392,8 @@ class PObjectType < PMetaType
   end
 
   # @api private
-  def new_function(loader)
-    @new_function ||= create_new_function(loader)
+  def new_function
+    @new_function ||= create_new_function
   end
 
   # Assign a new instance reader to this type
@@ -428,7 +428,7 @@ class PObjectType < PMetaType
   end
 
     # @api private
-  def create_new_function(loader)
+  def create_new_function
     impl_class = implementation_class
     class_name = impl_class.name || "Anonymous Ruby class for #{name}"
 
@@ -439,7 +439,7 @@ class PObjectType < PMetaType
     param_types << param_names.size
 
     create_type = TypeFactory.callable(*param_types)
-    from_hash_type = TypeFactory.callable(i12n_type, 1, 1)
+    from_hash_type = TypeFactory.callable(init_hash_type, 1, 1)
 
     # Create and return a #new_XXX function where the dispatchers are added programmatically.
     Puppet::Functions.create_loaded_function(:"new_#{name}", loader) do
@@ -514,7 +514,7 @@ class PObjectType < PMetaType
     opt_names = []
     non_opt_types = []
     non_opt_names = []
-    i12n_type.elements.each do |se|
+    init_hash_type.elements.each do |se|
       if se.key_type.is_a?(POptionalType)
         opt_names << se.name
         opt_types << se.value_type
@@ -684,8 +684,8 @@ class PObjectType < PMetaType
   #
   # @return [PStructType] the initialization hash type
   # @api public
-  def i12n_type
-    @i12n_type ||= create_i12n_type
+  def init_hash_type
+    @init_hash_type ||= create_init_hash_type
   end
 
   def allocate
@@ -704,7 +704,7 @@ class PObjectType < PMetaType
   #
   # @return [PStructType] the initialization hash type
   # @api private
-  def create_i12n_type
+  def create_init_hash_type
     struct_elems = {}
     attributes(true).values.each do |attr|
       unless attr.kind == ATTRIBUTE_KIND_CONSTANT || attr.kind == ATTRIBUTE_KIND_DERIVED

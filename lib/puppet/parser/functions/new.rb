@@ -475,6 +475,16 @@ $ts = Timestamp('2016-08-24T12:13:14', default, 'PST')   # 2016-08-24 20:13:14.0
 
 ```
 
+Conversion to Type
+------------------
+A new `Type` can be create from its `String` representation.
+
+**Example:** Creating a type from a string
+
+```puppet
+$t = Type.new('Integer[10]')
+```
+
 Conversion to String
 --------------------
 
@@ -957,6 +967,37 @@ $b = binary_file('mymodule/mypicture.jpg')
 
 * Since 4.5.0
 * Binary type since 4.8.0
+
+Creating an instance of a `Type` using the `Init` type.
+-------
+
+The type `Init[T]` describes a value that can be used when instantiating a type. When used as the first argument in a call to `new`, it
+will dispatch the call to its contained type and optionally augment the parameter list with additional arguments.
+
+**Example:** Creating an instance of Integer using Init[Integer]
+
+```puppet
+# The following declaration
+$x = Init[Integer].new('128')
+# is exactly the same as
+$x = Integer.new('128')
+```
+
+or, with base 16 and using implicit new
+
+```puppet
+# The following declaration
+$x = Init[Integer,16]('80')
+# is exactly the same as
+$x = Integer('80', 16)
+```
+
+**Example:** Creating an instance of String using a predefined format
+
+```puppet
+$fmt = Init[String,'%#x']
+notice($fmt(256)) # will notice '0x100'
+```
 
 DOC
 ) do |args|

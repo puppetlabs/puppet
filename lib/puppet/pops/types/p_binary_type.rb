@@ -144,8 +144,8 @@ class PBinaryType < PAnyType
   end
 
   # @api private
-  def self.new_function(_, loader)
-    @new_function ||= Puppet::Functions.create_loaded_function(:new_Binary, loader) do
+  def self.new_function(type)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_Binary, type.loader) do
       local_types do
         type 'ByteInteger = Integer[0,255]'
         type 'Base64Format = Enum["%b", "%u", "%B", "%s", "%r"]'

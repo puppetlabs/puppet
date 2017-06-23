@@ -54,6 +54,21 @@ module TypeFactory
     PNumericType::DEFAULT
   end
 
+  # Produces the Init type
+  # @api public
+  def self.init(*args)
+    case args.size
+    when 0
+      PInitType::DEFAULT
+    when 1
+      type = args[0]
+      type.nil? ? PInitType::DEFAULT : PInitType.new(type, EMPTY_ARRAY)
+    else
+      type = args.shift
+      PInitType.new(type, args)
+    end
+  end
+
   # Produces the Iterable type
   # @api public
   #
@@ -101,7 +116,11 @@ module TypeFactory
   # @api public
   #
   def self.optional(optional_type = nil)
-    POptionalType.new(type_of(optional_type.is_a?(String) ? string(optional_type) : type_of(optional_type)))
+    if optional_type.nil?
+      POptionalType::DEFAULT
+    else
+      POptionalType.new(type_of(optional_type.is_a?(String) ? string(optional_type) : type_of(optional_type)))
+    end
   end
 
   # Produces the Enum type, optionally with specific string values

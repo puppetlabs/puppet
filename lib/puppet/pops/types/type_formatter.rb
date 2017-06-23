@@ -174,6 +174,11 @@ class TypeFormatter
   end
 
   # @api private
+  def string_PInitType(t)
+    append_array('Init', t.type.nil?)  { append_strings([t.type, *t.init_args]) }
+  end
+
+  # @api private
   def string_PIterableType(t)
     append_array('Iterable', t.element_type.nil?)  { append_string(t.element_type) }
   end
@@ -341,7 +346,7 @@ class TypeFormatter
 
   # @api private
   def string_PRuntimeType(t)
-    append_array('Runtime') { append_strings([t.runtime, t.name_or_pattern]) }
+    append_array('Runtime', t.runtime.nil? && t.name_or_pattern.nil?) { append_strings([t.runtime, t.name_or_pattern]) }
   end
 
   # @api private
@@ -457,7 +462,7 @@ class TypeFormatter
 
   # @api private
   def string_PSensitiveType(t)
-    append_array('Sensitive') { append_string(t.type) }
+    append_array('Sensitive', PAnyType::DEFAULT == t.type) { append_string(t.type) }
   end
 
   # @api private

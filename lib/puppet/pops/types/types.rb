@@ -65,8 +65,7 @@ class TypedModelObject < Object
       type = cls.register_ptype(loader, ir)
       types << type unless type.nil?
     end
-    tp = TypeParser.singleton
-    types.each { |type| type.resolve(tp, loader) }
+    types.each { |type| type.resolve(loader) }
   end
 end
 
@@ -187,6 +186,12 @@ class PAnyType < TypedModelObject
     self
   end
 
+  # Returns the loader that loaded this type.
+  # @return [Loaders::Loader] the loader
+  def loader
+    Loaders.static_loader
+  end
+
   # Normalizes the type. This does not change the characteristics of the type but it will remove duplicates
   # and constructs like NotUndef[T] where T is not assignable from Undef and change Variant[*T] where all
   # T are enums into an Enum.
@@ -202,11 +207,10 @@ class PAnyType < TypedModelObject
   # resolve internal type expressions using a loader. Presently, this method is a no-op for all types
   # except the {{PTypeAliasType}}.
   #
-  # @param type_parser [TypeParser] type parser
   # @param loader [Loader::Loader] loader to use
   # @return [PTypeAliasType] the receiver of the call, i.e. `self`
   # @api private
-  def resolve(type_parser, loader)
+  def resolve(loader)
     self
   end
 
@@ -309,8 +313,15 @@ class PAnyType < TypedModelObject
     Loaders.find_loader(nil).load(:function, 'new').call({}, self, *args)
   end
 
-  def new_function(loader)
-    self.class.new_function(self, loader)
+  # Create an instance of this type.
+  # The default implementation will just dispatch the call to the class method with the
+  # same name and pass `self` as the first argument.
+  #
+  # @return [Function] the created function
+  # @raises ArgumentError
+  #
+  def new_function
+    self.class.new_function(self)
   end
 
   # This default implementation of of a new_function raises an Argument Error.
@@ -318,10 +329,12 @@ class PAnyType < TypedModelObject
   # a Puppet Function class by using Puppet:Loaders.create_loaded_function(:new, loader)
   # and return that result.
   #
+  # @param type [PAnyType] the type to create a new function for
+  # @return [Function] the created function
   # @raises ArgumentError
   #
-  def self.new_function(instance, loader)
-    raise ArgumentError.new("Creation of new instance of type '#{instance.to_s}' is not supported")
+  def self.new_function(type)
+    raise ArgumentError.new("Creation of new instance of type '#{type.to_s}' is not supported")
   end
 
   # Answers the question if instances of this type can represent themselves as a string that
@@ -434,9 +447,9 @@ class PTypeWithContainedType < PAnyType
     self.class == o.class && @type == o.type
   end
 
-  def resolve(type_parser, loader)
+  def resolve(loader)
     rtype = @type
-    rtype = rtype.resolve(type_parser, loader) unless rtype.nil?
+    rtype = rtype.resolve(loader) unless rtype.nil?
     rtype.equal?(@type) ? self : self.class.new(rtype)
   end
 end
@@ -453,6 +466,20 @@ class PType < PTypeWithContainedType
          KEY_VALUE => nil
        }
     )
+  end
+
+  # Returns a new function that produces a Type instance
+  #
+  def self.new_function(type)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_type, type.loader) do
+      dispatch :from_string do
+        param 'String', :type_string
+      end
+
+      def from_string(type_string)
+        TypeParser.singleton.parse(type_string, loader)
+      end
+    end
   end
 
   def instance?(o, guard = nil)
@@ -549,12 +576,12 @@ class PNotUndefType < PTypeWithContainedType
     end
   end
 
-  def new_function(loader)
+  def new_function
     # If only NotUndef, then use Unit's null converter
     if type.nil?
-      PUnitType.new_function(self.class, loader)
+      PUnitType.new_function(self)
     else
-      type.new_function(loader)
+      type.new_function
     end
   end
 
@@ -607,8 +634,8 @@ class PUnitType < PAnyType
   end
 
   # A "null" implementation - that simply returns the given argument
-  def self.new_function(_, loader)
-    @new_function ||= Puppet::Functions.create_loaded_function(:new_unit, loader) do
+  def self.new_function(type)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_unit, type.loader) do
       dispatch :from_args do
         param          'Any',  :from
       end
@@ -787,8 +814,8 @@ class PNumericType < PScalarDataType
     )
   end
 
-  def self.new_function(_, loader)
-    @new_function ||= Puppet::Functions.create_loaded_function(:new_numeric, loader) do
+  def self.new_function(type)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_numeric, type.loader) do
       local_types do
         type 'Convertible = Variant[Undef, Integer, Float, Boolean, String, Timespan, Timestamp]'
         type 'NamedArgs   = Struct[{from => Convertible, Optional[abs] => Boolean}]'
@@ -997,7 +1024,7 @@ class PIntegerType < PNumericType
     @from >= 0 ? self : PIntegerType.new(0, @to < 0 ? 0 : @to)
   end
 
-  def new_function(loader)
+  def new_function
     @@new_function ||= Puppet::Functions.create_loaded_function(:new, loader) do
       local_types do
         type 'Radix       = Variant[Default, Integer[2,2], Integer[8,8], Integer[10,10], Integer[16,16]]'
@@ -1108,8 +1135,8 @@ class PFloatType < PNumericType
 
   # Returns a new function that produces a Float value
   #
-  def self.new_function(_, loader)
-    @new_function ||= Puppet::Functions.create_loaded_function(:new_float, loader) do
+  def self.new_function(type)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_float, type.loader) do
       local_types do
         type 'Convertible = Variant[Undef, Numeric, Boolean, String, Timespan, Timestamp]'
         type 'NamedArgs   = Struct[{from => Convertible, Optional[abs] => Boolean}]'
@@ -1446,10 +1473,6 @@ class PStringType < PScalarDataType
     @size_type_or_value.is_a?(PIntegerType) ? @size_type_or_value : nil
   end
 
-  def size_type
-    @size_type_or_value.is_a?(PIntegerType) ? @size_type_or_value : nil
-  end
-
   def derived_size_type
     if @size_type_or_value.is_a?(PIntegerType)
       @size_type_or_value
@@ -1461,8 +1484,8 @@ class PStringType < PScalarDataType
     end
   end
 
-  def self.new_function(_, loader)
-    @new_function ||= Puppet::Functions.create_loaded_function(:new_string, loader) do
+  def self.new_function(type)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_string, type.loader) do
       local_types do
         type 'Format = Pattern[/^%([\s\+\-#0\[\{<\(\|]*)([1-9][0-9]*)?(?:\.([0-9]+))?([a-zA-Z])/]'
         type 'ContainerFormat = Struct[{
@@ -1557,8 +1580,8 @@ class PRegexpType < PScalarType
 
   # Returns a new function that produces a Regexp instance
   #
-  def self.new_function(_, loader)
-    @new_function ||= Puppet::Functions.create_loaded_function(:new_float, loader) do
+  def self.new_function(type)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_float, type.loader) do
       dispatch :from_string do
         param 'String', :pattern
       end
@@ -1691,8 +1714,8 @@ class PBooleanType < PScalarDataType
     o == true || o == false
   end
 
-  def self.new_function(_, loader)
-    @new_function ||= Puppet::Functions.create_loaded_function(:new_boolean, loader) do
+  def self.new_function(type)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_boolean, type.loader) do
       dispatch :from_args do
         param          'Variant[Undef, Integer, Float, Boolean, String]',  :from
       end
@@ -1773,11 +1796,9 @@ class PStructElement < TypedModelObject
     @value_type.equal?(nv_type) ? self : PStructElement.new(@key_type, nv_type)
   end
 
-  def resolve(type_parser, loader)
-    rkey_type = @key_type
-    rkey_type = rkey_type.resolve(type_parser, loader) unless rkey_type.nil?
-    rvalue_type = @value_type
-    rvalue_type = rvalue_type.resolve(type_parser, loader) unless rvalue_type.nil?
+  def resolve(loader)
+    rkey_type = @key_type.resolve(loader)
+    rvalue_type = @value_type.resolve(loader)
     rkey_type.equal?(@key_type) && rvalue_type.equal?(@value_type) ? self : self.class.new(rkey_type, rvalue_type)
   end
 
@@ -1869,10 +1890,10 @@ class PStructType < PAnyType
     end
   end
 
-  def resolve(type_parser, loader)
+  def resolve(loader)
     changed = false
     relements = @elements.map do |elem|
-      relem = elem.resolve(type_parser, loader)
+      relem = elem.resolve(loader)
       changed ||= !relem.equal?(elem)
       relem
     end
@@ -1904,10 +1925,10 @@ class PStructType < PAnyType
     end && matched == o.size
   end
 
-  def new_function(loader)
+  def new_function
     # Simply delegate to Hash type and let the higher level assertion deal with
     # compliance with the Struct type regarding the produced result.
-    PHashType.new_function(self, loader)
+    PHashType.new_function(self)
   end
 
   DEFAULT = PStructType.new(EMPTY_ARRAY)
@@ -2050,10 +2071,10 @@ class PTupleType < PAnyType
     end
   end
 
-  def resolve(type_parser, loader)
+  def resolve(loader)
     changed = false
     rtypes = @types.map do |type|
-      rtype = type.resolve(type_parser, loader)
+      rtype = type.resolve(loader)
       changed ||= !rtype.equal?(type)
       rtype
     end
@@ -2115,10 +2136,10 @@ class PTupleType < PAnyType
     self.class == o.class && @types == o.types && @size_type == o.size_type
   end
 
-  def new_function(loader)
+  def new_function
     # Simply delegate to Array type and let the higher level assertion deal with
     # compliance with the Tuple type regarding the produced result.
-    PArrayType.new_function(self, loader)
+    PArrayType.new_function(self)
   end
 
   DEFAULT = PTupleType.new(EMPTY_ARRAY)
@@ -2290,10 +2311,10 @@ class PCallableType < PAnyType
     self.class == o.class && @param_types == o.param_types && @block_type == o.block_type && @return_type == o.return_type
   end
 
-  def resolve(type_parser, loader)
-    params_t = @param_types.nil? ? nil : @param_types.resolve(type_parser, loader)
-    block_t = @block_type.nil? ? nil : @block_type.resolve(type_parser, loader)
-    return_t = @return_type.nil? ? nil : @return_type.resolve(type_parser, loader)
+  def resolve(loader)
+    params_t = @param_types.nil? ? nil : @param_types.resolve(loader)
+    block_t = @block_type.nil? ? nil : @block_type.resolve(loader)
+    return_t = @return_type.nil? ? nil : @return_type.resolve(loader)
     @param_types.equal?(params_t) && @block_type.equal?(block_t) && @return_type.equal?(return_t) ? self : self.class.new(params_t, block_t, return_t)
   end
 
@@ -2385,8 +2406,8 @@ class PArrayType < PCollectionType
     end
   end
 
-  def resolve(type_parser, loader)
-    relement_type = @element_type.resolve(type_parser, loader)
+  def resolve(loader)
+    relement_type = @element_type.resolve(loader)
     relement_type.equal?(@element_type) ? self : self.class.new(relement_type, @size_type)
   end
 
@@ -2404,8 +2425,8 @@ class PArrayType < PCollectionType
 
   # Returns a new function that produces an Array
   #
-  def self.new_function(_, loader)
-    @new_function ||= Puppet::Functions.create_loaded_function(:new_array, loader) do
+  def self.new_function(type)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_array, type.loader) do
 
       dispatch :from_args do
         param           'Any',  :from
@@ -2571,9 +2592,9 @@ class PHashType < PCollectionType
     self == EMPTY
   end
 
-  def resolve(type_parser, loader)
-    rkey_type = @key_type.resolve(type_parser, loader)
-    rvalue_type = @value_type.resolve(type_parser, loader)
+  def resolve(loader)
+    rkey_type = @key_type.resolve(loader)
+    rvalue_type = @value_type.resolve(loader)
     rkey_type.equal?(@key_type) && rvalue_type.equal?(@value_type) ? self : self.class.new(rkey_type, rvalue_type, @size_type)
   end
 
@@ -2586,8 +2607,8 @@ class PHashType < PCollectionType
 
   # Returns a new function that produces a  Hash
   #
-  def self.new_function(_, loader)
-    @new_function ||= Puppet::Functions.create_loaded_function(:new_hash, loader) do
+  def self.new_function(type)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_hash, type.loader) do
       local_types do
         type 'KeyValueArray = Array[Tuple[Any,Any],1]'
         type 'TreeArray = Array[Tuple[Array,Any],1]'
@@ -2812,16 +2833,13 @@ class PVariantType < PAnyType
   def really_instance?(o, guard = nil)
     @types.reduce(-1) do |memo, type|
       ri = type.really_instance?(o, guard)
+      break ri if ri > 0
       ri > memo ? ri : memo
     end
   end
 
   def kind_of_callable?(optional = true, guard = nil)
     @types.all? { |type| type.kind_of_callable?(optional, guard) }
-  end
-
-  def resolved?
-    @types.all? { |type| type.resolved? }
   end
 
   def eql?(o)
@@ -3088,8 +3106,8 @@ class POptionalType < PTypeWithContainedType
     end
   end
 
-  def new_function(loader)
-    optional_type.new_function(loader)
+  def new_function
+    optional_type.new_function
   end
 
   DEFAULT = POptionalType.new(nil)
@@ -3136,8 +3154,8 @@ class PTypeReferenceType < PAnyType
     super && o.type_string == @type_string
   end
 
-  def resolve(type_parser, loader)
-    type_parser.parse(@type_string, loader)
+  def resolve(loader)
+    TypeParser.singleton.parse(@type_string, loader)
   end
 
   protected
@@ -3170,7 +3188,7 @@ class PTypeAliasType < PAnyType
     )
   end
 
-  attr_reader :name
+  attr_reader :loader, :name
 
   # @param name [String] The name of the type
   # @param type_expr [Model::PopsObject] The expression that describes the aliased type
@@ -3275,16 +3293,17 @@ class PTypeAliasType < PAnyType
   # @param loader [Loader::Loader] loader to use when loading type aliases
   # @return [PTypeAliasType] the receiver of the call, i.e. `self`
   # @api private
-  def resolve(type_parser, loader)
+  def resolve(loader)
+    @loader = loader
     if @resolved_type.nil?
       # resolved to PTypeReferenceType::DEFAULT during resolve to avoid endless recursion
       @resolved_type = PTypeReferenceType::DEFAULT
       @self_recursion = true # assumed while it being found out below
       begin
         if @type_expr.is_a?(PTypeReferenceType)
-          @resolved_type = @type_expr.resolve(type_parser, loader)
+          @resolved_type = @type_expr.resolve(loader)
         else
-          @resolved_type = type_parser.interpret(@type_expr, loader).normalize
+          @resolved_type = TypeParser.singleton.interpret(@type_expr, loader).normalize
         end
 
         # Find out if this type is recursive. A recursive type has performance implications
@@ -3309,7 +3328,7 @@ class PTypeAliasType < PAnyType
     else
       # An alias may appoint an Object type that isn't resolved yet. The default type
       # reference is used to prevent endless recursion and should not be resolved here.
-      @resolved_type.resolve(type_parser, loader) unless @resolved_type.equal?(PTypeReferenceType::DEFAULT)
+      @resolved_type.resolve(loader) unless @resolved_type.equal?(PTypeReferenceType::DEFAULT)
     end
     self
   end
@@ -3372,8 +3391,8 @@ class PTypeAliasType < PAnyType
     resolved_type.assignable?(o, guard)
   end
 
-  def new_function(loader)
-    resolved_type.new_function(loader)
+  def new_function
+    resolved_type.new_function
   end
 
   private
@@ -3432,6 +3451,7 @@ require_relative 'p_type_set_type'
 require_relative 'p_timespan_type'
 require_relative 'p_timestamp_type'
 require_relative 'p_binary_type'
+require_relative 'p_init_type'
 require_relative 'type_set_reference'
 require_relative 'implementation_registry'
 require_relative 'tree_iterators'
