@@ -23,6 +23,6 @@ The function returns `undef` if none of the given paths were found
 - since 4.8.0
 DOC
 ) do |args|
-  Error.is4x('find_file')
+  Puppet::Parser::Functions::Error.is4x('find_file')
 end
 

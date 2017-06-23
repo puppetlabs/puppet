@@ -24,5 +24,5 @@ $check_var = $x
 - Since 4.0.0
 DOC
 ) do |args|
-  Error.is4x('with')
+  Puppet::Parser::Functions::Error.is4x('with')
 end

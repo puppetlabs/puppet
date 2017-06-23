@@ -67,5 +67,5 @@ Note that the returned value is ignored if used in a class or user defined type.
 * Since 4.8.0
 DOC
 ) do |args|
-  Error.is4x('return')
+  Puppet::Parser::Functions::Error.is4x('return')
 end

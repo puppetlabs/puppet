@@ -32,5 +32,5 @@ function fails to pass any required parameter.
 
 - Since 4.0.0") do |args|
 
-  Error.is4x('epp')
+  Puppet::Parser::Functions::Error.is4x('epp')
 end

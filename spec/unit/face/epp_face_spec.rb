@@ -237,6 +237,15 @@ describe Puppet::Face[:epp, :current] do
       expect(eppface.render({ :e => 'trusted is hash: <%= $trusted =~ Hash %>' })).to eql("trusted is hash: true")
     end
 
+    it 'initializes the 4x loader' do
+      expect(eppface.render({ :e => <<-EPP.unindent })).to eql("\nString\n\nInteger\n\nBoolean\n")
+        <% $data = [type('a',generalized), type(2,generalized), type(true)] -%>
+        <% $data.each |$value| { %>
+        <%= $value %>
+        <% } -%>
+      EPP
+    end
+
     it "facts can be added to" do
       expect(eppface.render({
         :facts => {'the_crux' => 'biscuit'},

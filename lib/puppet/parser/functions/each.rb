@@ -100,5 +100,5 @@ documentation.
 - Since 4.0.0
 DOC
 ) do |args|
-  Error.is4x('each')
+  Puppet::Parser::Functions::Error.is4x('each')
 end
