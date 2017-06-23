@@ -79,5 +79,5 @@ $transformed_data = map(reverse_each($data)) |$item| { $item * 10 }
 
 DOC
 ) do |args|
-  Error.is4x('reverse_each')
+  Puppet::Parser::Functions::Error.is4x('reverse_each')
 end

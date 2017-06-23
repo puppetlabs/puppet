@@ -316,34 +316,36 @@ Puppet::Face.define(:epp, '0.0.1') do
       options[:header] = options[:header].nil? ? true : options[:header]
 
       compiler = create_compiler(options)
+      compiler.with_context_overrides('For rendering epp') do
 
-      # Print to a buffer since the face needs to return the resulting string
-      # and the face API is "all or nothing"
-      #
-      buffer = StringIO.new
-      status = true
-      if options[:e]
-        buffer.print render_inline(options[:e], compiler, options)
-      elsif args.empty?
-        if ! STDIN.tty?
-          buffer.print render_inline(STDIN.read, compiler, options)
+        # Print to a buffer since the face needs to return the resulting string
+        # and the face API is "all or nothing"
+        #
+        buffer = StringIO.new
+        status = true
+        if options[:e]
+          buffer.print render_inline(options[:e], compiler, options)
+        elsif args.empty?
+          if ! STDIN.tty?
+            buffer.print render_inline(STDIN.read, compiler, options)
+          else
+            raise Puppet::Error, _("No input to process given on command line or stdin")
+          end
         else
-          raise Puppet::Error, _("No input to process given on command line or stdin")
-        end
-      else
-        show_filename = args.count > 1
-        file_nbr = 0
-        args.each do |file|
-          begin
-            buffer.print render_file(file, compiler, options, show_filename, file_nbr += 1)
-          rescue Puppet::ParseError => detail
-            Puppet.err(detail.message)
-            status = false
+          show_filename = args.count > 1
+          file_nbr = 0
+          args.each do |file|
+            begin
+              buffer.print render_file(file, compiler, options, show_filename, file_nbr += 1)
+            rescue Puppet::ParseError => detail
+              Puppet.err(detail.message)
+              status = false
+            end
           end
         end
+        raise Puppet::Error, _("error while rendering epp") unless status
+        buffer.string
       end
-      raise Puppet::Error, _("error while rendering epp") unless status
-      buffer.string
     end
   end
 

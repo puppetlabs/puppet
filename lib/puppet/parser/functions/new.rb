@@ -934,6 +934,6 @@ $b = binary_file('mymodule/mypicture.jpg')
 
 DOC
 ) do |args|
-  Error.is4x('new')
+  Puppet::Parser::Functions::Error.is4x('new')
 end
 

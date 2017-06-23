@@ -69,5 +69,5 @@ was not a String.
 
 DOC
 ) do |args|
-  Error.is4x('then')
+  Puppet::Parser::Functions::Error.is4x('then')
 end

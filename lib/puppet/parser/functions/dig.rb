@@ -25,5 +25,5 @@ Would notice the value 100.
 * Since 4.5.0
 DOC
 ) do |args|
-  Error.is4x('dig')
+  Puppet::Parser::Functions::Error.is4x('dig')
 end
