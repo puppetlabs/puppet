@@ -12,6 +12,10 @@ Get the list of known environments.
 
     GET /puppet/v3/environments
 
+### Supported Response Formats
+
+`application/json`
+
 ### Parameters
 
 None
