@@ -15,6 +15,10 @@ Get the catalog for an environment
 
     GET /puppet/v3/environment/:environment
 
+### Supported Response Formats
+
+`application/json`
+
 ### Parameters
 
 None

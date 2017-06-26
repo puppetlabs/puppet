@@ -77,6 +77,10 @@ available and how to interact with it.
 These services are all directly used by the Puppet agent application, in order
 to manage the configuration of a node.
 
+These endpoints accept payload formats formatted as JSON or PSON (MIME types of
+`application/json` and `text/pson`, respectively) except for `File Content` and
+`File Bucket File` which always use `application/octet-stream`.
+
 * [Catalog](./http_catalog.md)
 * [Node](./http_node.md)
 * [File Bucket File](./http_file_bucket_file.md)
@@ -159,6 +163,10 @@ documents provide additional specification.
 
 ### SSL Certificate Related Services
 
+These endpoints only accept plain text payload formats. Historically, Puppet has
+used the MIME type `s` to mean `text/plain`. In Puppet 5, it will always use
+`text/plain`, but will continue to accept `s` to mean the same thing.
+
 * [Certificate](./http_certificate.md)
 * [Certificate Signing Requests](./http_certificate_request.md)
 * [Certificate Status](./http_certificate_status.md)
@@ -170,6 +178,7 @@ Serialization Formats
 Puppet sends messages using several different serialization formats. Not all
 REST services support all of the formats.
 
+* [JSON](https://tools.ietf.org/html/rfc7159)
 * [PSON](./pson.md)
-* [YAML](http://www.yaml.org/spec/1.2/spec.html)
 
+`YAML` was supported in earlier versions of Puppet, but is no longer for security reasons.
