@@ -19,7 +19,7 @@ module Puppet::Pops
       ruby = Types::RubyGenerator.new.module_definition_from_typeset(ast_model)
 
       # Replace ref() constructs to known Pcore types with directly initialized types. ref() cannot be used
-      # since it requires a parser (hen and egg problem)
+      # since it requires a parser (chicken-and-egg problem)
       ruby.gsub!(/^module Parser\nmodule Locator\n.*\nend\nend\nmodule Model\n/m, "module Model\n")
 
       # Remove generated RubyMethod annotations. The ruby methods are there now, no need to also have
@@ -47,6 +47,9 @@ module Puppet::Pops
 
       # Remove the generated ref() method. It's not needed by this model
       ruby.gsub!(/  def self\.ref\(type_string\)\n.*\n  end\n\n/, '')
+
+      # Add Program#current method for backward compatibility
+      ruby.gsub!(/(attr_reader :body\n  attr_reader :definitions\n  attr_reader :locator)/, "\\1\n\n  def current\n    self\n  end")
 
       # Replace the generated registration with a registration that uses the static loader. This will
       # become part of the Puppet bootstrap code and there will be no other loader until we have a
