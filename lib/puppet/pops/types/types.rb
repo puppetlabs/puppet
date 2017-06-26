@@ -60,6 +60,7 @@ class TypedModelObject < Object
       RubyMethod.register_ptype(loader, ir)
     ]
     Types.constants.each do |c|
+      next if c == :PType || c == :PHostClassType
       cls = Types.const_get(c)
       next unless cls.is_a?(Class) && cls < self
       type = cls.register_ptype(loader, ir)
@@ -534,6 +535,9 @@ class PTypeType < PTypeWithContainedType
     @type.assignable?(o.type, guard)
   end
 end
+
+# For backward compatibility
+PType = PTypeType
 
 class PNotUndefType < PTypeWithContainedType
   def self.register_ptype(loader, ir)
@@ -3005,6 +3009,10 @@ class PClassType < PCatalogEntryType
     @class_name == o.class_name
   end
 end
+
+# For backward compatibility
+PHostClassType = PClassType
+
 
 # Represents a Resource Type in the Puppet Language
 # @api public
