@@ -287,11 +287,10 @@ class PAnyType < TypedModelObject
   # an instance of PVariantType will return 'Variant'
   # @return [String] the simple name of this type
   def self.simple_name
-    if @simple_name.nil?
+    @simple_name ||= (
       n = name
-      @simple_name = n[n.rindex('::')+3..n.size-5]
-    end
-    @simple_name
+      n[n.rindex(DOUBLE_COLON)+3..n.size-5].freeze
+    )
   end
 
   def to_alias_expanded_s
@@ -521,11 +520,6 @@ class PTypeType < PTypeWithContainedType
 
   def eql?(o)
     self.class == o.class && @type == o.type
-  end
-
-  def self.simple_name
-    # since this the class is inconsistently named PType and not PTypeType
-    'Type'
   end
 
   DEFAULT = PTypeType.new(nil)
@@ -2987,8 +2981,6 @@ class PClassType < PCatalogEntryType
     )
   end
 
-  NAME = 'Class'.freeze
-
   def initialize(class_name)
     @class_name = class_name
   end
@@ -2998,10 +2990,6 @@ class PClassType < PCatalogEntryType
   end
   def eql?(o)
     self.class == o.class && @class_name == o.class_name
-  end
-
-  def self.simple_name
-    NAME
   end
 
   DEFAULT = PClassType.new(nil)
