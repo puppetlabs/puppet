@@ -24,7 +24,7 @@ class ClassLoader
     when Array
       provide_from_name_path(name.join('::'), name)
 
-    when PAnyType, PType
+    when PAnyType, PTypeType
       provide_from_type(name)
 
     else
@@ -44,8 +44,8 @@ class ClassLoader
       # There is no other thing to load except this Enum meta type
       RGen::MetamodelBuilder::MMBase::Boolean
 
-    when PType
-      # TODO: PType should has a type argument (a PAnyType) so the Class' class could be returned
+    when PTypeType
+      # TODO: PTypeType should have a type argument (a PAnyType) so the Class' class could be returned
       #       (but this only matters in special circumstances when meta programming has been used).
       Class
 

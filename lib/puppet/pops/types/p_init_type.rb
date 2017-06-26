@@ -6,7 +6,7 @@ class PInitType < PTypeWithContainedType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
       'type' => {
-        KEY_TYPE => POptionalType.new(PType::DEFAULT),
+        KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
         KEY_VALUE => nil
       },
       'init_args' => {

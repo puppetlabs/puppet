@@ -501,7 +501,7 @@ module TypeFactory
   # @api public
   #
   def self.type_type(inst_type = nil)
-    inst_type.nil? ? PType::DEFAULT : PType.new(inst_type)
+    inst_type.nil? ? PTypeType::DEFAULT : PTypeType.new(inst_type)
   end
 
   # Produce a type corresponding to the class of given unless given is a

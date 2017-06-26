@@ -127,7 +127,7 @@ class Runtime3Converter
   # Ensures that resources are *not* absolute.
   #
   def catalog_type_to_split_type_title(catalog_type)
-    split_type = catalog_type.is_a?(Puppet::Pops::Types::PType) ? catalog_type.type : catalog_type
+    split_type = catalog_type.is_a?(Puppet::Pops::Types::PTypeType) ? catalog_type.type : catalog_type
     case split_type
       when Puppet::Pops::Types::PHostClassType
         class_name = split_type.class_name

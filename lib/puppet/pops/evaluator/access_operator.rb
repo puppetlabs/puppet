@@ -347,13 +347,13 @@ class AccessOperator
     end
   end
 
-  def access_PType(o, scope, keys)
+  def access_PTypeType(o, scope, keys)
     keys.flatten!
     if keys.size == 1
       unless keys[0].is_a?(Types::PAnyType)
         fail(Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Type-Type', :actual => keys[0].class})
       end
-      Types::PType.new(keys[0])
+      Types::PTypeType.new(keys[0])
     else
       fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Type-Type', :min => 1, :actual => keys.size})
     end

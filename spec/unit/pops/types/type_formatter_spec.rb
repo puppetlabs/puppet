@@ -83,7 +83,7 @@ FORMATTED
   context 'when representing the type as string' do
     include_context 'types_setup'
 
-    it "should yield 'Type' for PType" do
+    it "should yield 'Type' for PTypeType" do
       expect(s.string(f.type_type)).to eq('Type')
     end
 
@@ -397,11 +397,11 @@ FORMATTED
     end
 
     it 'should present a valid simple name' do
-      (all_types - [PType, PHostClassType]).each do |t|
+      (all_types - [PTypeType, PHostClassType]).each do |t|
         name = t::DEFAULT.simple_name
         expect(t.name).to match("^Puppet::Pops::Types::P#{name}Type$")
       end
-      expect(PType::DEFAULT.simple_name).to eql('Type')
+      expect(PTypeType::DEFAULT.simple_name).to eql('Type')
       expect(PHostClassType::DEFAULT.simple_name).to eql('Class')
     end
   end

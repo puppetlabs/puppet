@@ -137,7 +137,7 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
         raise  ArgumentError, _('The given class type is a reference to all classes') if val.class_name.nil?
         scope.compiler.findresource(:class, val.class_name)
 
-      when Puppet::Pops::Types::PType
+      when Puppet::Pops::Types::PTypeType
         case val.type
         when Puppet::Pops::Types::PResourceType
           # It is most reasonable to take Type[File] and Type[File[foo]] to mean the same as if not wrapped in a Type

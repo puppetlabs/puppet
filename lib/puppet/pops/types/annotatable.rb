@@ -7,9 +7,9 @@ KEY_ANNOTATIONS = 'annotations'.freeze
 #
 # @api public
 module Annotatable
-  TYPE_ANNOTATIONS = PHashType.new(PType.new(PTypeReferenceType.new('Annotation')), PHashType::DEFAULT)
+  TYPE_ANNOTATIONS = PHashType.new(PTypeType.new(PTypeReferenceType.new('Annotation')), PHashType::DEFAULT)
 
-  # @return [{PType => PStructType}] the map of annotations
+  # @return [{PTypeType => PStructType}] the map of annotations
   # @api public
   def annotations
     @annotations.nil? ? EMPTY_HASH : @annotations

@@ -35,13 +35,13 @@ describe 'the Puppet::Pops::Types::TypeAcceptor' do
   end
 
   it "should get a visit from the type of a Type that accepts it" do
-    t = PType.new(PAnyType::DEFAULT)
+    t = PTypeType.new(PAnyType::DEFAULT)
     t.accept(acceptor, nil)
     expect(acceptor.visitors).to include(t, PAnyType::DEFAULT)
   end
 
   [
-    PType,
+    PTypeType,
     PNotUndefType,
     PIterableType,
     PIteratorType,

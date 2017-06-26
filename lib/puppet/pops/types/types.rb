@@ -457,12 +457,12 @@ end
 # The type of types.
 # @api public
 #
-class PType < PTypeWithContainedType
+class PTypeType < PTypeWithContainedType
 
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
        'type' => {
-         KEY_TYPE => POptionalType.new(PType::DEFAULT),
+         KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
          KEY_VALUE => nil
        }
     )
@@ -528,13 +528,13 @@ class PType < PTypeWithContainedType
     'Type'
   end
 
-  DEFAULT = PType.new(nil)
+  DEFAULT = PTypeType.new(nil)
 
   protected
 
   # @api private
   def _assignable?(o, guard)
-    return false unless o.is_a?(PType)
+    return false unless o.is_a?(PTypeType)
     return true if @type.nil? # wide enough to handle all types
     return false if o.type.nil? # wider than t
     @type.assignable?(o.type, guard)
@@ -545,7 +545,7 @@ class PNotUndefType < PTypeWithContainedType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
        'type' => {
-         KEY_TYPE => POptionalType.new(PType::DEFAULT),
+         KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
          KEY_VALUE => nil
        }
     )
@@ -1213,7 +1213,7 @@ class PCollectionType < PAnyType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
       'size_type' => {
-        KEY_TYPE => POptionalType.new(PType.new(PIntegerType::DEFAULT)),
+        KEY_TYPE => POptionalType.new(PTypeType.new(PIntegerType::DEFAULT)),
         KEY_VALUE => nil
       }
     )
@@ -1305,7 +1305,7 @@ class PIterableType < PTypeWithContainedType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
       'type' => {
-        KEY_TYPE => POptionalType.new(PType::DEFAULT),
+        KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
         KEY_VALUE => nil
       }
     )
@@ -1363,7 +1363,7 @@ class PIteratorType < PTypeWithContainedType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
       'type' => {
-        KEY_TYPE => POptionalType.new(PType::DEFAULT),
+        KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
         KEY_VALUE => nil
       }
     )
@@ -1401,7 +1401,7 @@ class PStringType < PScalarDataType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'ScalarDataType',
       'size_type_or_value' => {
-        KEY_TYPE => POptionalType.new(PVariantType.new([PStringType::DEFAULT, PType.new(PIntegerType::DEFAULT)])),
+        KEY_TYPE => POptionalType.new(PVariantType.new([PStringType::DEFAULT, PTypeType.new(PIntegerType::DEFAULT)])),
       KEY_VALUE => nil
     })
   end
@@ -1760,8 +1760,8 @@ end
 class PStructElement < TypedModelObject
   def self.register_ptype(loader, ir)
     @type = Pcore::create_object_type(loader, ir, self, 'Pcore::StructElement'.freeze, nil,
-      'key_type' => PType::DEFAULT,
-      'value_type' => PType::DEFAULT)
+      'key_type' => PTypeType::DEFAULT,
+      'value_type' => PTypeType::DEFAULT)
   end
 
   attr_accessor :key_type, :value_type
@@ -1986,9 +1986,9 @@ class PTupleType < PAnyType
 
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
-      'types' => PArrayType.new(PType::DEFAULT),
+      'types' => PArrayType.new(PTypeType::DEFAULT),
       'size_type' => {
-        KEY_TYPE => POptionalType.new(PType.new(PIntegerType::DEFAULT)),
+        KEY_TYPE => POptionalType.new(PTypeType.new(PIntegerType::DEFAULT)),
         KEY_VALUE => nil
       }
     )
@@ -2193,7 +2193,7 @@ class PCallableType < PAnyType
         KEY_VALUE => nil
       },
       'return_type' => {
-        KEY_TYPE => POptionalType.new(PType::DEFAULT),
+        KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
         KEY_VALUE => PAnyType::DEFAULT
       }
     )
@@ -2350,7 +2350,7 @@ class PArrayType < PCollectionType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'CollectionType',
       'element_type' => {
-        KEY_TYPE => POptionalType.new(PType::DEFAULT),
+        KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
         KEY_VALUE => PAnyType::DEFAULT
       }
     )
@@ -2498,11 +2498,11 @@ class PHashType < PCollectionType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'CollectionType',
       'key_type' => {
-        KEY_TYPE => POptionalType.new(PType::DEFAULT),
+        KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
         KEY_VALUE => PAnyType::DEFAULT
       },
       'value_type' => {
-        KEY_TYPE => POptionalType.new(PType::DEFAULT),
+        KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
         KEY_VALUE => PAnyType::DEFAULT
       }
     )
@@ -2723,7 +2723,7 @@ class PVariantType < PAnyType
   include Enumerable
 
   def self.register_ptype(loader, ir)
-    create_ptype(loader, ir, 'AnyType', 'types' => PArrayType.new(PType::DEFAULT))
+    create_ptype(loader, ir, 'AnyType', 'types' => PArrayType.new(PTypeType::DEFAULT))
   end
 
   attr_reader :types
@@ -3071,7 +3071,7 @@ class POptionalType < PTypeWithContainedType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
       'type' => {
-        KEY_TYPE => POptionalType.new(PType::DEFAULT),
+        KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
         KEY_VALUE => nil
       }
     )
@@ -3182,7 +3182,7 @@ class PTypeAliasType < PAnyType
        'name' => PStringType::NON_EMPTY,
        'type_expr' => PAnyType::DEFAULT,
        'resolved_type' => {
-         KEY_TYPE => POptionalType.new(PType::DEFAULT),
+         KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
          KEY_VALUE => nil
        }
     )

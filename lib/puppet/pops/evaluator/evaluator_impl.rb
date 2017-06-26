@@ -305,7 +305,7 @@ class EvaluatorImpl
     nil
   end
 
-  # A QualifiedReference (i.e. a  capitalized qualified name such as Foo, or Foo::Bar) evaluates to a PType
+  # A QualifiedReference (i.e. a  capitalized qualified name such as Foo, or Foo::Bar) evaluates to a PTypeType
   #
   def eval_QualifiedReference(o, scope)
     type = Types::TypeParser.singleton.interpret(o)

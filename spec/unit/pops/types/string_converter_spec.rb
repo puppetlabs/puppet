@@ -1109,14 +1109,14 @@ describe 'The string converter' do
       "%#p" => 'Integer',
     }.each do |fmt, result |
       it "the format #{fmt} produces #{result}" do
-        string_formats = { Puppet::Pops::Types::PType::DEFAULT => fmt}
+        string_formats = { Puppet::Pops::Types::PTypeType::DEFAULT => fmt}
         expect(converter.convert(factory.integer, string_formats)).to eq(result)
       end
     end
 
     it 'errors when format is not recognized' do
       expect do
-        string_formats = { Puppet::Pops::Types::PType::DEFAULT => "%k"}
+        string_formats = { Puppet::Pops::Types::PTypeType::DEFAULT => "%k"}
         converter.convert(factory.integer, string_formats)
       end.to raise_error(/Illegal format 'k' specified for value of Type type - expected one of the characters 'sp'/)
     end

@@ -27,7 +27,7 @@ shared_context 'types_setup' do
       Puppet::Pops::Types::PStructType,
       Puppet::Pops::Types::PTupleType,
       Puppet::Pops::Types::PCallableType,
-      Puppet::Pops::Types::PType,
+      Puppet::Pops::Types::PTypeType,
       Puppet::Pops::Types::POptionalType,
       Puppet::Pops::Types::PDefaultType,
       Puppet::Pops::Types::PTypeReferenceType,

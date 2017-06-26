@@ -169,7 +169,7 @@ class TypeFormatter
   end
 
   # @api private
-  def string_PType(t)
+  def string_PTypeType(t)
     append_array('Type', t.type.nil?) { append_string(t.type) }
   end
 
