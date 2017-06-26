@@ -563,17 +563,17 @@ describe 'The type calculator' do
     end
 
     it 'computes given hostclass type commonality' do
-      r1 = PHostClassType.new('foo')
-      r2 = PHostClassType.new('foo')
+      r1 = PClassType.new('foo')
+      r2 = PClassType.new('foo')
       expect(calculator.common_type(r1, r2).to_s).to eq('Class[foo]')
 
-      r2 = PHostClassType.new('bar')
+      r2 = PClassType.new('bar')
       expect(calculator.common_type(r1, r2).to_s).to eq('Class')
 
-      r2 = PHostClassType.new(nil)
+      r2 = PClassType.new(nil)
       expect(calculator.common_type(r1, r2).to_s).to eq('Class')
 
-      r1 = PHostClassType.new(nil)
+      r1 = PClassType.new(nil)
       expect(calculator.common_type(r1, r2).to_s).to eq('Class')
     end
 
@@ -2075,7 +2075,7 @@ describe 'The type calculator' do
       expect(calculator.infer(PHashType::DEFAULT      ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(PIterableType::DEFAULT  ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(PRuntimeType::DEFAULT   ).is_a?(ptype)).to eq(true)
-      expect(calculator.infer(PHostClassType::DEFAULT ).is_a?(ptype)).to eq(true)
+      expect(calculator.infer(PClassType::DEFAULT ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(PResourceType::DEFAULT  ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(PEnumType::DEFAULT      ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(PPatternType::DEFAULT   ).is_a?(ptype)).to eq(true)
@@ -2100,7 +2100,7 @@ describe 'The type calculator' do
       expect(calculator.infer(PHashType::DEFAULT      ).to_s).to eq('Type[Hash]')
       expect(calculator.infer(PIterableType::DEFAULT  ).to_s).to eq('Type[Iterable]')
       expect(calculator.infer(PRuntimeType::DEFAULT   ).to_s).to eq('Type[Runtime]')
-      expect(calculator.infer(PHostClassType::DEFAULT ).to_s).to eq('Type[Class]')
+      expect(calculator.infer(PClassType::DEFAULT ).to_s).to eq('Type[Class]')
       expect(calculator.infer(PResourceType::DEFAULT  ).to_s).to eq('Type[Resource]')
       expect(calculator.infer(PEnumType::DEFAULT      ).to_s).to eq('Type[Enum]')
       expect(calculator.infer(PVariantType::DEFAULT   ).to_s).to eq('Type[Variant]')

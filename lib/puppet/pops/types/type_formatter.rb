@@ -381,7 +381,7 @@ class TypeFormatter
   end
 
   # @api private
-  def string_PHostClassType(t)
+  def string_PClassType(t)
     append_array('Class', t.class_name.nil?) { append_elements([t.class_name]) }
   end
 

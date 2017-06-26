@@ -67,14 +67,14 @@ class Puppet::Parser::Relationship
     end
   end
 
-  # Turns a PResourceType or PHostClassType into an array [type, title] and all other references to [ref, nil]
+  # Turns a PResourceType or PClassType into an array [type, title] and all other references to [ref, nil]
   # This is needed since it is not possible to find resources in the catalog based on the type system types :-(
   # (note, the catalog is also used on the agent side)
   def canonical_ref(ref)
     case ref
     when Puppet::Pops::Types::PResourceType
       [ref.type_name, ref.title]
-    when Puppet::Pops::Types::PHostClassType
+    when Puppet::Pops::Types::PClassType
       ['class', ref.class_name]
     else
       [ref.to_s, nil]

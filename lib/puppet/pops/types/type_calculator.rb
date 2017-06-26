@@ -347,8 +347,8 @@ class TypeCalculator
     end
 
     # when both are host-classes, reduce to PHostClass[] (since one was not assignable to the other)
-    if t1.is_a?(PHostClassType) && t2.is_a?(PHostClassType)
-      return PHostClassType::DEFAULT
+    if t1.is_a?(PClassType) && t2.is_a?(PClassType)
+      return PClassType::DEFAULT
     end
 
     # when both are resources, reduce to Resource[T] or Resource[] (since one was not assignable to the other)

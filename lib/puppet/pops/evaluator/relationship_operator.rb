@@ -91,7 +91,7 @@ class RelationshipOperator
   end
 
   # Asserts (and returns) the type if it is a PCatalogEntryType
-  # (A PCatalogEntryType is the base class of PHostClassType, and PResourceType).
+  # (A PCatalogEntryType is the base class of PClassType, and PResourceType).
   #
   def assert_catalog_type(o, scope)
     unless @type_calculator.assignable?(@catalog_type, o)

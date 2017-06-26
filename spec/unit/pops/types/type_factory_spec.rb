@@ -133,21 +133,21 @@ describe 'The type factory' do
       expect(pr.type_name).to eq('X')
     end
 
-    it 'host_class() creates a generic PHostClassType' do
+    it 'host_class() creates a generic PClassType' do
       hc = TypeFactory.host_class()
-      expect(hc.class()).to eq(PHostClassType)
+      expect(hc.class()).to eq(PClassType)
       expect(hc.class_name).to eq(nil)
     end
 
-    it 'host_class(x) creates a PHostClassType[x]' do
+    it 'host_class(x) creates a PClassType[x]' do
       hc = TypeFactory.host_class('x')
-      expect(hc.class()).to eq(PHostClassType)
+      expect(hc.class()).to eq(PClassType)
       expect(hc.class_name).to eq('x')
     end
 
-    it 'host_class(::x) creates a PHostClassType[x]' do
+    it 'host_class(::x) creates a PClassType[x]' do
       hc = TypeFactory.host_class('::x')
-      expect(hc.class()).to eq(PHostClassType)
+      expect(hc.class()).to eq(PClassType)
       expect(hc.class_name).to eq('x')
     end
 

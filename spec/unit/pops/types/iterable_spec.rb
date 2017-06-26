@@ -62,7 +62,7 @@ describe 'The iterable support' do
       PCatalogEntryType::DEFAULT,
       PDefaultType::DEFAULT,
       PFloatType::DEFAULT,
-      PHostClassType::DEFAULT,
+      PClassType::DEFAULT,
       PNotUndefType::DEFAULT,
       PNumericType::DEFAULT,
       POptionalType::DEFAULT,

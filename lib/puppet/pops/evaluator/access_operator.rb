@@ -625,7 +625,7 @@ class AccessOperator
 
   NS = '::'.freeze
 
-  def access_PHostClassType(o, scope, keys)
+  def access_PClassType(o, scope, keys)
     blamed = keys.size == 0 ? @semantic : @semantic.keys[0]
     keys_orig_size = keys.size
 
@@ -658,7 +658,7 @@ class AccessOperator
         name = name[2..-1] if name[0,2] == NS
 
         fail(Issues::ILLEGAL_NAME, @semantic.keys[i], {:name=>c}) unless name =~ Patterns::NAME
-        Types::PHostClassType.new(name)
+        Types::PClassType.new(name)
       end
     else
       # lookup class resource and return one or more parameter values

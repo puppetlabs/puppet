@@ -2975,7 +2975,7 @@ end
 # Represents a (host-) class in the Puppet Language.
 # @api public
 #
-class PHostClassType < PCatalogEntryType
+class PClassType < PCatalogEntryType
   attr_reader :class_name
 
   def self.register_ptype(loader, ir)
@@ -3004,13 +3004,13 @@ class PHostClassType < PCatalogEntryType
     NAME
   end
 
-  DEFAULT = PHostClassType.new(nil)
+  DEFAULT = PClassType.new(nil)
 
   protected
 
   # @api private
   def _assignable?(o, guard)
-    return false unless o.is_a?(PHostClassType)
+    return false unless o.is_a?(PClassType)
     # Class = Class[name}, Class[name] != Class
     return true if @class_name.nil?
     # Class[name] = Class[name]

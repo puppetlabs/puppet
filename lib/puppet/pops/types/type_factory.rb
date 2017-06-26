@@ -415,16 +415,16 @@ module TypeFactory
     end
   end
 
-  # Produces PHostClassType with a string class_name.  A PHostClassType with
-  # nil or empty name is compatible with any other PHostClassType.  A
-  # PHostClassType with a given name is only compatible with a PHostClassType
+  # Produces PClassType with a string class_name.  A PClassType with
+  # nil or empty name is compatible with any other PClassType.  A
+  # PClassType with a given name is only compatible with a PClassType
   # with the same name.
   #
   def self.host_class(class_name = nil)
     if class_name.nil?
-      PHostClassType::DEFAULT
+      PClassType::DEFAULT
     else
-      PHostClassType.new(class_name.sub(/^::/, ''))
+      PClassType.new(class_name.sub(/^::/, ''))
     end
   end
 
