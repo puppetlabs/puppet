@@ -33,7 +33,7 @@ end
 step "Create Temp Folder"
 
 agents.each do |agent|
-  on(agent, puppet('apply', '--debug'), :stdin => temp_folder)    
+  on(agent, puppet('apply', '--debug'), :stdin => temp_folder)
 end
 
 step "Create Dash Dot File 100 Times"
