@@ -1,6 +1,12 @@
-test_name "Windows Exit Codes - Acceptance Tests"
+test_name "Windows Exec `exit_code` Parameter Acceptance Test"
 
-tag 'risk:medium'
+tag 'risk:medium',
+    'audit:medium',
+    'audit:refactor',   # Use block style `test_name`
+    'audit:integration' # exec resource succeeds when the `exit_code` parameter
+                        # is given a windows specific exit code and a exec
+                        # returns that exit code, ie. it either correctly matches
+                        # exit_code parameter to returned exit code, or ignores both (;
 
 confine :to, :platform => 'windows'
 
