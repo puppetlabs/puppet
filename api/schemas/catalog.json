@@ -9,7 +9,7 @@
             "type": "array",
             "items": {
                 "type": "string",
-                "pattern": "^[a-z0-9_][a-z0-9_:\.\-]*$"
+                "pattern": "\\A[[:alnum:]_][[:alnum:]_:.-]*\\Z"
             }
         },
         "name": {
@@ -63,7 +63,7 @@
                         "type": "array",
                         "items": {
                             "type": "string",
-                            "pattern": "^[a-z0-9_][a-z0-9_:\.\-]*$"
+                            "pattern": "\\A[[:alnum:]_][[:alnum:]_:.-]*\\Z"
                         }
                     },
                     "parameters": {
