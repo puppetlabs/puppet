@@ -339,7 +339,6 @@ describe 'collectors' do
         end
 
         it 'and --strict=warning, it warns about the attempt to override and skips it' do
-          pending('Fix for PUP-6290')
           Puppet[:strict] = :warning
           expect_the_message_to_be(['given'], manifest)
           expect(warnings).to include(
@@ -347,7 +346,6 @@ describe 'collectors' do
         end
 
         it 'and --strict=error, it fails compilation' do
-          pending('Fix for PUP-6290')
           Puppet[:strict] = :error
           expect { compile_to_catalog(manifest) }.to raise_error(
             /Attempt to override an already evaluated resource, defined at line 4, with new values at line 6/)

@@ -167,6 +167,18 @@ class Puppet::Parser::Resource < Puppet::Resource
     unless self.source.object_id == resource.source.object_id || resource.source.child_of?(self.source)
       raise Puppet::ParseError.new(_("Only subclasses can override parameters"), resource.file, resource.line)
     end
+
+    if evaluated?
+      strict = Puppet[:strict]
+      unless strict == :off
+        msg = _('Attempt to override an already evaluated resource%{location} with new values') %
+          { resource: ref, location: append_location(file, line, _(', defined'), ',') }
+        raise Puppet::ParseError.new(msg, resource.file, resource.line) if strict == :error
+        msg << append_location(resource.file, resource.line)
+        Puppet.warning(msg)
+      end
+    end
+
     # Some of these might fail, but they'll fail in the way we want.
     resource.parameters.each do |name, param|
       override_parameter(param)
@@ -310,6 +322,28 @@ class Puppet::Parser::Resource < Puppet::Resource
 
   private
 
+  # Append location to the message if location is present. If it is not, an empty string
+  # is returned instead.
+  #
+  # @param file [String] path to the file
+  # @param line [Integer] the line in the file
+  # @param prefix [String] string prefix
+  # @param suffix [String] string suffix
+  # @return [String] the formatted location or an empty string
+  def append_location(file, line, prefix = '', suffix = '')
+    if file && file != ''
+      if line
+        _('%{prefix} at %{file}:%{line}%{suffix}') % { prefix: prefix, suffix: suffix, file: file, line: line }
+      else
+        _('%{prefix} in %{file}%{suffix}') % { prefix: prefix, suffix: suffix, file: file }
+      end
+    elsif line
+      _('%{prefix} at line %{line}%{suffix}') % { prefix: prefix, suffix: suffix, line: line }
+    else
+      ''
+    end
+  end
+
   def add_scope_tags
     scope_resource = scope.resource
     unless scope_resource.nil? || scope_resource.equal?(self)
@@ -337,15 +371,10 @@ class Puppet::Parser::Resource < Puppet::Resource
 
     # The parameter is already set.  Fail if they're not allowed to override it.
     unless param.source.child_of?(current.source) || param.source.equal?(current.source) && scope.is_default?(type, param.name, current.value)
-      msg = "Parameter '#{param.name}' is already set on #{self}"
-      msg += " by #{current.source}" if current.source.to_s != ""
-      if current.file or current.line
-        fields = []
-        fields << current.file if current.file
-        fields << current.line.to_s if current.line
-        msg += " at #{fields.join(":")}"
-      end
-      msg += "; cannot redefine"
+      msg = _("Parameter '%{name}' is already set on %{resource}") % { name: param.name, resource: ref }
+      msg << _(' by %{source}') % { source: current.source.to_s } unless current.source.to_s == ''
+      msg << append_location(current.file, current.line)
+      msg << _('; cannot redefine')
       raise Puppet::ParseError.new(msg, param.file, param.line)
     end
 
