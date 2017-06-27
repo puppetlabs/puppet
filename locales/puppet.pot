@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 4.10.4-1000-gc4f4254\n"
+"Project-Id-Version: Puppet automation framework 4.10.4-1018-ga172011\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-06-23 13:16+0000\n"
-"PO-Revision-Date: 2017-06-23 13:16+0000\n"
+"POT-Creation-Date: 2017-06-27 15:34+0000\n"
+"PO-Revision-Date: 2017-06-27 15:34+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -3658,27 +3658,59 @@ msgstr ""
 msgid "Only subclasses can override parameters"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:254
+#: ../lib/puppet/parser/resource.rb:174
+msgid "Attempt to override an already evaluated resource%{location} with new values"
+msgstr ""
+
+#: ../lib/puppet/parser/resource.rb:175
+msgid ", defined"
+msgstr ""
+
+#: ../lib/puppet/parser/resource.rb:266
 msgid "Invalid consume in %{value0}: %{ref} is not a resource"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:261
+#: ../lib/puppet/parser/resource.rb:273
 msgid "Resource %{ref} could not be found; it might not have been produced yet"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:265
+#: ../lib/puppet/parser/resource.rb:277
 msgid "Invalid consume in %{ref}: %{cap} is not a capability resource"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:274
+#: ../lib/puppet/parser/resource.rb:286
 msgid "Resource %{res} tries to consume %{cns} but no 'consumes' mapping exists for %{resource_type} and %{cns_type}"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:293
+#: ../lib/puppet/parser/resource.rb:305
 msgid "Attempt to reassign attribute '%{name}' in '%{resource}' caused by multiple consumed mappings to the same attribute"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:384
+#: ../lib/puppet/parser/resource.rb:336
+msgid "%{prefix} at %{file}:%{line}%{suffix}"
+msgstr ""
+
+#: ../lib/puppet/parser/resource.rb:338
+msgid "%{prefix} in %{file}%{suffix}"
+msgstr ""
+
+#: ../lib/puppet/parser/resource.rb:341
+msgid "%{prefix} at line %{line}%{suffix}"
+msgstr ""
+
+#: ../lib/puppet/parser/resource.rb:374
+msgid "Parameter '%{name}' is already set on %{resource}"
+msgstr ""
+
+#: ../lib/puppet/parser/resource.rb:375
+msgid " by %{source}"
+msgstr ""
+
+#: ../lib/puppet/parser/resource.rb:377
+msgid "; cannot redefine"
+msgstr ""
+
+#: ../lib/puppet/parser/resource.rb:413
 msgid "Duplicate parameter '%{param}' for on %{resource}"
 msgstr ""
 
