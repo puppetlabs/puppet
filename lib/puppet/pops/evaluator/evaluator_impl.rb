@@ -231,7 +231,7 @@ class EvaluatorImpl
           values.fetch(lval) {|k| fail(Issues::MISSING_MULTI_ASSIGNMENT_KEY, o, :key =>k)},
           o, scope)
       end
-    elsif values.is_a?(Puppet::Pops::Types::PHostClassType)
+    elsif values.is_a?(Puppet::Pops::Types::PClassType)
       # assign variables from class variables
       # lookup class resource and return one or more parameter values
       # TODO: behavior when class_name is nil
@@ -305,7 +305,7 @@ class EvaluatorImpl
     nil
   end
 
-  # A QualifiedReference (i.e. a  capitalized qualified name such as Foo, or Foo::Bar) evaluates to a PType
+  # A QualifiedReference (i.e. a  capitalized qualified name such as Foo, or Foo::Bar) evaluates to a PTypeType
   #
   def eval_QualifiedReference(o, scope)
     type = Types::TypeParser.singleton.interpret(o)
@@ -479,7 +479,7 @@ class EvaluatorImpl
   def eval_AccessExpression(o, scope)
     left = evaluate(o.left_expr, scope)
     keys = o.keys || []
-    if left.is_a?(Types::PHostClassType)
+    if left.is_a?(Types::PClassType)
       # Evaluate qualified references without errors no undefined types
       keys = keys.map {|key| key.is_a?(Model::QualifiedReference) ? Types::TypeParser.singleton.interpret(key) : evaluate(key, scope) }
     else
@@ -755,7 +755,7 @@ class EvaluatorImpl
 
       # must be a CatalogEntry subtype
       case evaluated_name
-      when Types::PHostClassType
+      when Types::PClassType
         unless evaluated_name.class_name.nil?
           fail(Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual=> evaluated_name.to_s})
         end

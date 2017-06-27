@@ -25,7 +25,7 @@ class PObjectType < PMetaType
   TYPE_OBJECT_NAME = Pcore::TYPE_QUALIFIED_REFERENCE
 
   TYPE_ATTRIBUTE = TypeFactory.struct({
-    KEY_TYPE => PType::DEFAULT,
+    KEY_TYPE => PTypeType::DEFAULT,
     TypeFactory.optional(KEY_FINAL) => PBooleanType::DEFAULT,
     TypeFactory.optional(KEY_OVERRIDE) => PBooleanType::DEFAULT,
     TypeFactory.optional(KEY_KIND) => TYPE_ATTRIBUTE_KIND,
@@ -35,7 +35,7 @@ class PObjectType < PMetaType
   TYPE_ATTRIBUTES = TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, TypeFactory.not_undef)
   TYPE_ATTRIBUTE_CALLABLE = TypeFactory.callable(0,0)
 
-  TYPE_FUNCTION_TYPE = PType.new(PCallableType::DEFAULT)
+  TYPE_FUNCTION_TYPE = PTypeType.new(PCallableType::DEFAULT)
 
   TYPE_FUNCTION = TypeFactory.struct({
     KEY_TYPE => TYPE_FUNCTION_TYPE,
@@ -51,7 +51,7 @@ class PObjectType < PMetaType
 
   TYPE_OBJECT_I12N = TypeFactory.struct({
     TypeFactory.optional(KEY_NAME) => TYPE_OBJECT_NAME,
-    TypeFactory.optional(KEY_PARENT) => PType::DEFAULT,
+    TypeFactory.optional(KEY_PARENT) => PTypeType::DEFAULT,
     TypeFactory.optional(KEY_ATTRIBUTES) => TYPE_ATTRIBUTES,
     TypeFactory.optional(KEY_FUNCTIONS) => TYPE_FUNCTIONS,
     TypeFactory.optional(KEY_EQUALITY) => TYPE_EQUALITY,
@@ -64,7 +64,7 @@ class PObjectType < PMetaType
     type = create_ptype(loader, ir, 'AnyType', '_pcore_init_hash' => TYPE_OBJECT_I12N)
 
     # Now, when the Object type exists, add annotations with keys derived from Annotation and freeze the types.
-    annotations = TypeFactory.optional(PHashType.new(PType.new(Annotation._pcore_type), TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, PAnyType::DEFAULT)))
+    annotations = TypeFactory.optional(PHashType.new(PTypeType.new(Annotation._pcore_type), TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, PAnyType::DEFAULT)))
     TYPE_ATTRIBUTE.hashed_elements[KEY_ANNOTATIONS].replace_value_type(annotations)
     TYPE_FUNCTION.hashed_elements[KEY_ANNOTATIONS].replace_value_type(annotations)
     TYPE_OBJECT_I12N.hashed_elements[KEY_ANNOTATIONS].replace_value_type(annotations)
@@ -96,7 +96,7 @@ class PObjectType < PMetaType
     # @option init_hash [PAnyType] 'type' The member type (required)
     # @option init_hash [Boolean] 'override' `true` if this feature must override an inherited feature. Default is `false`.
     # @option init_hash [Boolean] 'final' `true` if this feature cannot be overridden. Default is `false`.
-    # @option init_hash [Hash{PType => Hash}] 'annotations' Annotations hash. Default is `nil`.
+    # @option init_hash [Hash{PTypeType => Hash}] 'annotations' Annotations hash. Default is `nil`.
     # @api public
     def initialize(name, container, init_hash)
       @name = name
@@ -598,7 +598,7 @@ class PObjectType < PMetaType
     unless attr_specs.nil? || attr_specs.empty?
       @attributes = Hash[attr_specs.map do |key, attr_spec|
         unless attr_spec.is_a?(Hash)
-          attr_type = TypeAsserter.assert_instance_of(nil, PType::DEFAULT, attr_spec) { "attribute #{label}[#{key}]" }
+          attr_type = TypeAsserter.assert_instance_of(nil, PTypeType::DEFAULT, attr_spec) { "attribute #{label}[#{key}]" }
           attr_spec = { KEY_TYPE => attr_type }
           attr_spec[KEY_VALUE] = nil if attr_type.is_a?(POptionalType)
         end

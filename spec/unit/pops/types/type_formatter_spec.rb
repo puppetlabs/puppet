@@ -83,7 +83,7 @@ FORMATTED
   context 'when representing the type as string' do
     include_context 'types_setup'
 
-    it "should yield 'Type' for PType" do
+    it "should yield 'Type' for PTypeType" do
       expect(s.string(f.type_type)).to eq('Type')
     end
 
@@ -265,11 +265,11 @@ FORMATTED
       expect(s.string(f.hash_of_any)).to eq('Hash')
     end
 
-    it "should yield 'Class' for a PHostClassType" do
+    it "should yield 'Class' for a PClassType" do
       expect(s.string(f.host_class)).to eq('Class')
     end
 
-    it "should yield 'Class[x]' for a PHostClassType[x]" do
+    it "should yield 'Class[x]' for a PClassType[x]" do
       expect(s.string(f.host_class('x'))).to eq('Class[x]')
     end
 
@@ -397,12 +397,12 @@ FORMATTED
     end
 
     it 'should present a valid simple name' do
-      (all_types - [PType, PHostClassType]).each do |t|
+      (all_types - [PTypeType, PClassType]).each do |t|
         name = t::DEFAULT.simple_name
         expect(t.name).to match("^Puppet::Pops::Types::P#{name}Type$")
       end
-      expect(PType::DEFAULT.simple_name).to eql('Type')
-      expect(PHostClassType::DEFAULT.simple_name).to eql('Class')
+      expect(PTypeType::DEFAULT.simple_name).to eql('Type')
+      expect(PClassType::DEFAULT.simple_name).to eql('Class')
     end
   end
 end

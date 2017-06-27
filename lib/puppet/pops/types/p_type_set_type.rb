@@ -48,7 +48,7 @@ class PTypeSetType < PMetaType
     TypeFactory.optional(KEY_NAME_AUTHORITY) => Pcore::TYPE_URI,
     TypeFactory.optional(KEY_NAME) => Pcore::TYPE_QUALIFIED_REFERENCE,
     TypeFactory.optional(KEY_VERSION) => TYPE_STRING_OR_VERSION,
-    TypeFactory.optional(KEY_TYPES) => TypeFactory.hash_kv(Pcore::TYPE_SIMPLE_TYPE_NAME, PType::DEFAULT, PCollectionType::NOT_EMPTY_SIZE),
+    TypeFactory.optional(KEY_TYPES) => TypeFactory.hash_kv(Pcore::TYPE_SIMPLE_TYPE_NAME, PTypeType::DEFAULT, PCollectionType::NOT_EMPTY_SIZE),
     TypeFactory.optional(KEY_REFERENCES) => TypeFactory.hash_kv(Pcore::TYPE_SIMPLE_TYPE_NAME, TYPE_TYPE_REFERENCE_I12N, PCollectionType::NOT_EMPTY_SIZE),
     TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS,
   })

@@ -645,6 +645,18 @@ describe 'Puppet Type System' do
       expect(rx_type).to eq(tf.regexp(/[a-z]+/))
     end
   end
+
+  context 'backward compatibility' do
+    it 'PTypeType can be accessed from PType' do
+      # should appoint the exact same instance
+      expect(PType).to equal(PTypeType)
+    end
+
+    it 'PClassType can be accessed from PHostClassType' do
+      # should appoint the exact same instance
+      expect(PHostClassType).to equal(PClassType)
+    end
+  end
 end
 end
 end

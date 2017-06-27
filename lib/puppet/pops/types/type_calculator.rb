@@ -212,7 +212,7 @@ class TypeCalculator
     when c == FalseClass, c == TrueClass
       type = PBooleanType::DEFAULT
     when c == Class
-      type = PType::DEFAULT
+      type = PTypeType::DEFAULT
     when c == Array
       # Assume array of any
       type = PArrayType::DEFAULT
@@ -347,8 +347,8 @@ class TypeCalculator
     end
 
     # when both are host-classes, reduce to PHostClass[] (since one was not assignable to the other)
-    if t1.is_a?(PHostClassType) && t2.is_a?(PHostClassType)
-      return PHostClassType::DEFAULT
+    if t1.is_a?(PClassType) && t2.is_a?(PClassType)
+      return PClassType::DEFAULT
     end
 
     # when both are resources, reduce to Resource[T] or Resource[] (since one was not assignable to the other)
@@ -427,8 +427,8 @@ class TypeCalculator
     end
 
     # Meta types Type[Integer] + Type[String] => Type[Data]
-    if t1.is_a?(PType) && t2.is_a?(PType)
-      return PType.new(common_type(t1.type, t2.type))
+    if t1.is_a?(PTypeType) && t2.is_a?(PTypeType)
+      return PTypeType.new(common_type(t1.type, t2.type))
     end
 
     if common_rich_data?(t1,t2)
@@ -484,11 +484,11 @@ class TypeCalculator
     reduce_type(enumerable.map {|o| infer(o) })
   end
 
-  # The type of all modules is PType
+  # The type of all modules is PTypeType
   # @api private
   #
   def infer_Module(o)
-    PType::new(PRuntimeType.new(:ruby, o.name))
+    PTypeType::new(PRuntimeType.new(:ruby, o.name))
   end
 
   # @api private
@@ -518,19 +518,19 @@ class TypeCalculator
     end
   end
 
-  # The type of all types is PType
+  # The type of all types is PTypeType
   # @api private
   #
   def infer_PAnyType(o)
-    PType.new(o)
+    PTypeType.new(o)
   end
 
-  # The type of all types is PType
+  # The type of all types is PTypeType
   # This is the metatype short circuit.
   # @api private
   #
-  def infer_PType(o)
-    PType.new(o)
+  def infer_PTypeType(o)
+    PTypeType.new(o)
   end
 
   # @api private
@@ -629,7 +629,7 @@ class TypeCalculator
     # A mapping must be made to empty string. A nil value will result in an error later
     title = o.title
     title = '' if :undef == title
-    PType.new(PResourceType.new(o.type.to_s, title))
+    PTypeType.new(PResourceType.new(o.type.to_s, title))
   end
 
   # @api private

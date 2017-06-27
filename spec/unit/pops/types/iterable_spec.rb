@@ -50,8 +50,8 @@ describe 'The iterable support' do
       PStructType::DEFAULT,
       PUnitType::DEFAULT
     ]
-    iterable_types << PType.new(PIntegerType.new(0, 10))
-    iterable_types << PType.new(PEnumType.new(%w(yes no)))
+    iterable_types << PTypeType.new(PIntegerType.new(0, 10))
+    iterable_types << PTypeType.new(PEnumType.new(%w(yes no)))
     iterable_types << PRuntimeType.new(:ruby, 'Puppet::Pops::Types::Iterator')
     iterable_types << PVariantType.new(iterable_types.clone)
 
@@ -62,7 +62,7 @@ describe 'The iterable support' do
       PCatalogEntryType::DEFAULT,
       PDefaultType::DEFAULT,
       PFloatType::DEFAULT,
-      PHostClassType::DEFAULT,
+      PClassType::DEFAULT,
       PNotUndefType::DEFAULT,
       PNumericType::DEFAULT,
       POptionalType::DEFAULT,
@@ -72,10 +72,10 @@ describe 'The iterable support' do
       PRuntimeType::DEFAULT,
       PScalarType::DEFAULT,
       PScalarDataType::DEFAULT,
-      PType::DEFAULT,
+      PTypeType::DEFAULT,
       PUndefType::DEFAULT
     ]
-    not_iterable_types << PType.new(PIntegerType::DEFAULT)
+    not_iterable_types << PTypeType.new(PIntegerType::DEFAULT)
     not_iterable_types << PVariantType.new([iterable_types[0], not_iterable_types[0]])
 
     iterable_types.each do |type|
@@ -91,19 +91,19 @@ describe 'The iterable support' do
     end
 
     it "should consider Type[Integer[0,5]] to be assignable to Iterable[Integer[0,5]]" do
-      expect(PIterableType.new(PIntegerType.new(0,5)).assignable?(PType.new(PIntegerType.new(0,5)))).to eq(true)
+      expect(PIterableType.new(PIntegerType.new(0,5)).assignable?(PTypeType.new(PIntegerType.new(0,5)))).to eq(true)
     end
 
     it "should consider Type[Enum[yes,no]] to be assignable to Iterable[Enum[yes,no]]" do
-      expect(PIterableType.new(PEnumType.new(%w(yes no))).assignable?(PType.new(PEnumType.new(%w(yes no))))).to eq(true)
+      expect(PIterableType.new(PEnumType.new(%w(yes no))).assignable?(PTypeType.new(PEnumType.new(%w(yes no))))).to eq(true)
     end
 
     it "should not consider Type[Enum[ok,fail]] to be assignable to Iterable[Enum[yes,no]]" do
-      expect(PIterableType.new(PEnumType.new(%w(ok fail))).assignable?(PType.new(PEnumType.new(%w(yes no))))).to eq(false)
+      expect(PIterableType.new(PEnumType.new(%w(ok fail))).assignable?(PTypeType.new(PEnumType.new(%w(yes no))))).to eq(false)
     end
 
     it "should not consider Type[String] to be assignable to Iterable[String]" do
-      expect(PIterableType.new(PStringType::DEFAULT).assignable?(PType.new(PStringType::DEFAULT))).to eq(false)
+      expect(PIterableType.new(PStringType::DEFAULT).assignable?(PTypeType.new(PStringType::DEFAULT))).to eq(false)
     end
   end
 

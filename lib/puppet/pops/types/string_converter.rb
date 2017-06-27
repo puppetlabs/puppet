@@ -1073,7 +1073,7 @@ class StringConverter
   end
 
   # @api private
-  def string_PType(val_type, val, format_map, _)
+  def string_PTypeType(val_type, val, format_map, _)
     f = get_format(val_type, format_map)
     case f.format
     when :s

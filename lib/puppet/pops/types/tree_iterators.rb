@@ -18,7 +18,7 @@ class TreeIterator
   # Unrecognized options are silently ignored
   #
   # @param [Hash] options the options
-  # @option options [PType] :container_type ('Variant[Hash, Array, Object]') The type(s) that should be treated as containers. The
+  # @option options [PTypeType] :container_type ('Variant[Hash, Array, Object]') The type(s) that should be treated as containers. The
   #   given type(s) must be assignable to the default container_type.
   # @option options [Boolean] :include_root ('true') If the root container itself should be included in the iteration (requires
   #   `include_containers` to also be `true` to take effect).
@@ -126,7 +126,7 @@ class DepthFirstTreeIterator < TreeIterator
   # Object values as containers, whereas just `Object` would only treat objects as containers.
   #
   # @param [Hash] options the options
-  # @option options [PType] :containers ('Variant[Hash, Array, Object]') The type(s) that should be treated as containers
+  # @option options [PTypeType] :containers ('Variant[Hash, Array, Object]') The type(s) that should be treated as containers
   # @option options [Boolean] :with_root ('true') If the root container itself should be included in the iteration
   #
   def initialize(enum, options = EMPTY_HASH)
