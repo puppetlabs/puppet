@@ -1,5 +1,8 @@
 test_name 'utf-8 characters in resource title and param values' do
 
+  tag 'audit:high',       # utf-8 is high impact in general
+      'audit:integration' # not package dependent but may want to vary platform by LOCALE/encoding
+
   confine :except, :platform => [
     'windows',    # PUP-6983
     'eos-4',      # PUP-7146
