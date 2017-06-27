@@ -1,4 +1,10 @@
 test_name 'utf-8 characters in cached catalog' do
+
+  tag 'audit:high',        # utf-8 is high impact in general
+      'audit:integration', # not package dependent but may want to vary platform by LOCALE/encoding
+      'audit:refactor',    # use mk_temp_environment_with_teardown
+      'server'
+
   confine :except, :platform => [
     'windows',      # PUP-6983
     'cumulus',      # PUP-7147
