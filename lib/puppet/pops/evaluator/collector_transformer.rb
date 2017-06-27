@@ -27,7 +27,7 @@ class CollectorTransformer
       overrides = {
         :parameters => o.operations.map{ |x| @@evaluator.evaluate(x, scope)}.flatten,
         :file       => o.file,
-        :line       => [o.line, o.pos],
+        :line       => o.line,
         :source     => scope.source,
         :scope      => scope
       }
