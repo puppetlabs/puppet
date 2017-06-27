@@ -1,6 +1,9 @@
 test_name "QA-760 - Windows Files Containing '-' and '.'"
 
-tag 'risk:medium'
+tag 'risk:medium',
+    'audit:medium',
+    'audit:refactor',   # Use block style `test_name`
+    'audit:integration'
 
 confine(:to, :platform => 'windows')
 

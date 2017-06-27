@@ -1,6 +1,9 @@
 test_name 'MCollective service exits on windows agent'
 
-tag 'risk:medium'
+tag 'risk:medium',
+    'audit:medium',
+    'audit:refactor',   # Use block style `test_name`
+    'audit:acceptance'
 
 confine :to, :platform => 'windows'
 confine :to, {}, hosts.select { |host| (host[:roles].include?('aio')) }
