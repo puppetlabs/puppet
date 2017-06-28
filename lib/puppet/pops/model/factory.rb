@@ -845,10 +845,18 @@ class Factory
   end
 
   # Builds a BlockExpression if args size > 1, else the single expression/value in args
-  def self.block_or_expression(args)
+  def self.block_or_expression(args, left_brace = nil, right_brace = nil)
     if args.size > 1
       block_expr = new(BlockExpression, args)
-      block_expr.record_position(args.first[KEY_LOCATOR], args.first, args.last)
+
+      # If given a left and right brace position, use those
+      # otherwise use the first and last element of the block
+      if !left_brace.nil? && !right_brace.nil?
+        block_expr.record_position(args.first[KEY_LOCATOR], left_brace, right_brace)
+      else
+        block_expr.record_position(args.first[KEY_LOCATOR], args.first, args.last)
+      end
+
       block_expr
     else
       args[0]

@@ -2184,7 +2184,7 @@ module_eval(<<'.,.,', 'egrammar.ra', 339)
 
 module_eval(<<'.,.,', 'egrammar.ra', 346)
   def _reduce_109(val, _values, result)
-            result = Factory.IF(val[0], Factory.block_or_expression(val[2]), val[4])
+            result = Factory.IF(val[0], Factory.block_or_expression(val[2], val[1], val[3]), val[4])
         loc(result, val[0], (val[4] ? val[4] : val[3]))
       
     result
@@ -2213,7 +2213,7 @@ module_eval(<<'.,.,', 'egrammar.ra', 358)
 
 module_eval(<<'.,.,', 'egrammar.ra', 362)
   def _reduce_113(val, _values, result)
-            result = Factory.block_or_expression(val[2])
+            result = Factory.block_or_expression(val[2], val[1], val[3])
       
     result
   end
@@ -2229,7 +2229,7 @@ module_eval(<<'.,.,', 'egrammar.ra', 365)
 
 module_eval(<<'.,.,', 'egrammar.ra', 372)
   def _reduce_115(val, _values, result)
-          result = Factory.UNLESS(val[1], Factory.block_or_expression(val[3]), val[5])
+          result = Factory.UNLESS(val[1], Factory.block_or_expression(val[3], val[2], val[4]), val[5])
       loc result, val[0], val[4]
     
     result
@@ -2249,7 +2249,7 @@ module_eval(<<'.,.,', 'egrammar.ra', 376)
 
 module_eval(<<'.,.,', 'egrammar.ra', 386)
   def _reduce_118(val, _values, result)
-            result = Factory.block_or_expression(val[2])
+            result = Factory.block_or_expression(val[2], val[1], val[3])
       
     result
   end
@@ -3050,7 +3050,7 @@ module_eval(<<'.,.,', 'egrammar.ra', 813)
 
 module_eval(<<'.,.,', 'egrammar.ra', 814)
   def _reduce_251(val, _values, result)
-     result = Factory.RENDER_EXPR(Factory.block_or_expression(val[2])); loc result, val[0], val[4] 
+     result = Factory.RENDER_EXPR(Factory.block_or_expression(val[2], val[1], val[3])); loc result, val[0], val[4] 
     result
   end
 .,.,

@@ -84,7 +84,7 @@ class firewall {
     expect(if_expr.class).to eq(Puppet::Pops::Model::IfExpression)
     expect(if_expr.offset).to eq(19)
     expect(block_expr.class).to eq(Puppet::Pops::Model::BlockExpression)
-    expect(block_expr.offset).to eq(block_expr.statements.first.offset)
+    expect(block_expr.offset).to eq(28)
     expect(block_expr.statements[0].class).to eq(Puppet::Pops::Model::ResourceExpression)
     expect(block_expr.statements[0].offset).to eq(34)
     expect(block_expr.statements[1].class).to eq(Puppet::Pops::Model::ResourceExpression)
@@ -92,7 +92,7 @@ class firewall {
 
     block_expr = model.body.body.statements[0].else_expr
     expect(block_expr.class).to eq(Puppet::Pops::Model::BlockExpression)
-    expect(block_expr.offset).to eq(block_expr.statements.first.offset)
+    expect(block_expr.offset).to eq(166)
     expect(block_expr.statements[0].class).to eq(Puppet::Pops::Model::ResourceExpression)
     expect(block_expr.statements[0].offset).to eq(172)
     expect(block_expr.statements[1].class).to eq(Puppet::Pops::Model::ResourceExpression)
@@ -153,7 +153,7 @@ class firewall {
     expect(if_expr.class).to eq(Puppet::Pops::Model::UnlessExpression)
     expect(if_expr.offset).to eq(19)
     expect(block_expr.class).to eq(Puppet::Pops::Model::BlockExpression)
-    expect(block_expr.offset).to eq(block_expr.statements.first.offset)
+    expect(block_expr.offset).to eq(32)
     expect(block_expr.statements[0].class).to eq(Puppet::Pops::Model::ResourceExpression)
     expect(block_expr.statements[0].offset).to eq(38)
     expect(block_expr.statements[1].class).to eq(Puppet::Pops::Model::ResourceExpression)
@@ -161,7 +161,7 @@ class firewall {
 
     block_expr = model.body.body.statements[0].else_expr
     expect(block_expr.class).to eq(Puppet::Pops::Model::BlockExpression)
-    expect(block_expr.offset).to eq(block_expr.statements.first.offset)
+    expect(block_expr.offset).to eq(170)
     expect(block_expr.statements[0].class).to eq(Puppet::Pops::Model::ResourceExpression)
     expect(block_expr.statements[0].offset).to eq(176)
     expect(block_expr.statements[1].class).to eq(Puppet::Pops::Model::ResourceExpression)
