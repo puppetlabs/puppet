@@ -1,22 +1,23 @@
-require 'puppet/acceptance/environment_utils'
-extend Puppet::Acceptance::EnvironmentUtils
-
-
 test_name 'Ensure a file resource can have a UTF-8 source attribute, content, and path when served via a module' do
 
   skip_test 'requires a master for serving module content' if master.nil?
-  tag 'broken:images'
+
+  require 'puppet/acceptance/environment_utils'
+  extend Puppet::Acceptance::EnvironmentUtils
+
+  require 'puppet/acceptance/agent_fqdn_utils'
+  extend Puppet::Acceptance::AgentFqdnUtils
 
   tmp_environment = mk_tmp_environment_with_teardown(master, File.basename(__FILE__, '.*'))
-  agent_tmp_dirs = {}
+  agent_tmp_dirs  = {}
 
   agents.each do |agent|
-    agent_tmp_dirs[agent.hostname] = agent.tmpdir(tmp_environment)
+    agent_tmp_dirs[agent_to_fqdn(agent)] = agent.tmpdir(tmp_environment)
   end
 
   teardown do
     step 'remove all test files on agents' do
-      agents.each { |agent| on(agent, "rm -r #{agent_tmp_dirs[agent.hostname]}", :accept_all_exit_codes => true) }
+      agents.each {|agent| on(agent, "rm -r '#{agent_tmp_dirs[agent_to_fqdn(agent)]}'", :accept_all_exit_codes => true)}
     end
     # note - master teardown is registered by #mk_tmp_environment_with_teardown
   end
@@ -72,10 +73,9 @@ test_name 'Ensure a file resource can have a UTF-8 source attribute, content, an
 
     with_puppet_running_on(master, {}) do
       agents.each do |agent|
-        fqdn = agent.hostname
-        on(agent, puppet("agent -t --environment #{tmp_environment} --server #{master.hostname}"), :acceptable_exit_codes => 2)
+        on(agent, puppet("agent -t --environment '#{tmp_environment}' --server #{master.hostname}"), :acceptable_exit_codes => 2)
 
-        on(agent, "cat #{agent_tmp_dirs[fqdn]}/\uff72\uff67\u30d5\u30eb") do |result|
+        on(agent, "cat '#{agent_tmp_dirs[agent_to_fqdn(agent)]}/\uff72\uff67\u30d5\u30eb'") do |result|
           assert_match("\u2603", result.stdout, "managed UTF-8 file contents '#{result.stdout}' did not match expected value '\u2603'")
         end
       end
