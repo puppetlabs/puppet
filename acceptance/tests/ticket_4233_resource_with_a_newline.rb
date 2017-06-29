@@ -9,6 +9,10 @@ test_name "#4233: resource with a newline"
 # Look for the line in the output and fail the test
 # if we find it.
 
+tag 'audit:low',      # basic parser functionality
+    'audit:refactor', # Use block style `test_run`
+    'audit:unit'
+
 agents.each do |host|
   resource = host.echo('-e "\nHello World\n"')
   apply_manifest_on(host, "exec { '#{resource}': }") do

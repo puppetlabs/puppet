@@ -5,6 +5,10 @@
 
 test_name "#6418: file recursion and audit"
 
+tag 'audit:low',
+    'audit:refactor',    # Use block style `test_name`
+    'audit:integration'
+
 agents.each do |agent|
   dir = agent.tmpdir('6418-recurse-audit')
 
