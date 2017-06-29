@@ -2,6 +2,12 @@ test_name 'PUP-6586 Ensure puppet does not continually reset password for disabl
 
   confine :to, :platform => 'windows'
 
+  tag 'audit:medium',
+      'audit:acceptance' # Could be done as integration tests, but would
+                         # require changing the system running the test
+                         # in ways that might require special permissions
+                         # or be harmful to the system running the test
+
   name = "pl#{rand(99999).to_i}"
 
   teardown do
