@@ -1,5 +1,11 @@
 test_name "#9862: puppet runs without service user or group present"
 
+tag 'audit:medium',     # startup/configuration, high impact, low risk
+    'audit:refactor',    # Use block style `test_name`
+    'audit:integration' # could easily be acceptance, not package dependant,
+                        # but changing a person running the tests users and
+                        # groups can be very onerous
+
 # puppet doesn't try to manage ownership on windows.
 confine :except, :platform => 'windows'
 confine :except, :platform => /solaris-10/ # See PUP-5200

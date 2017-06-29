@@ -2,6 +2,12 @@ test_name "ticket 4622 filebucket diff test."
 confine :except, :platform => 'windows'
 skip_test 'skip test, no non-Windows agents specified' if agents.empty?
 
+tag 'audit:medium',
+    'audit:integration',
+    'audit:refactor',    # look into combining with ticket_6541_invalid_filebucket_files.rb
+                         # Use block style `test_run`
+    'server'
+
 def get_checksum_from_backup_on(host, filename, bucket_locale)
   on host, puppet("filebucket backup #{filename} #{bucket_locale}"), :acceptable_exit_codes => [ 0, 2 ]
   output = result.stdout.strip.split(": ")
