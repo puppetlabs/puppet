@@ -26,7 +26,7 @@ which also includes orchestration features, a web console, and professional supp
 [The PE documentation is available here.](https://docs.puppetlabs.com/pe/latest)
 
 To install an open source release of Puppet,
-[see the installation guide on the docs site.](http://docs.puppetlabs.com/puppet/latest/reference/install_pre.html)
+[see the installation guide on the docs site.](https://docs.puppetlabs.com/puppet/latest/reference/install_pre.html)
 
 If you need to run Puppet from source as a tester or developer,
 [see the running from source guide on the docs site.](https://docs.puppetlabs.com/guides/from_source.html)
