@@ -12,6 +12,10 @@ initialize_temp_dirs
 test_name "certificate extensions available as trusted data" do
   confine :except, :platform => /^cisco_/ # See PUP-5827
 
+  tag 'audit:high',        # ca/cert core functionality
+      'audit:integration',
+      'server'             # Ruby implimentation is deprecated
+
   agent_certnames = []
 
   teardown do
