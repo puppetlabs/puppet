@@ -1,5 +1,9 @@
 test_name "Bug #7165: Don't refresh service immediately after starting it"
 
+tag 'audit:low',
+    'audit:refactor', # Use block style `test_name`
+    'audit:unit'     # testing basic service type behavior
+
 confine :except, :platform => 'windows'
 
 agents.each do |host|

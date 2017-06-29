@@ -1,5 +1,11 @@
 test_name "(PUP-2455) Service provider should start Solaris init service in its own SMF contract"
 
+tag 'audit:medium',
+    'audit:refactor',  # Use block style `test_name`
+                       # Use mk_temp_environment_with_teardown
+                       # Combine with Service resource tests
+    'audit:acceptance' # Service provider functionality
+
 skip_test unless agents.any? {|agent| agent['platform'] =~ /solaris/ }
 
 sleepy_daemon_initscript = <<INITSCRIPT
