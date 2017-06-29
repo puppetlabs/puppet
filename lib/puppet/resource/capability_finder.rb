@@ -95,7 +95,7 @@ module Puppet::Resource::CapabilityFinder
       end
 
       # The format of the response body is documented at
-      #   http://docs.puppetlabs.com/puppetdb/3.0/api/query/v4/resources.html#response-format
+      #   https://docs.puppetlabs.com/puppetdb/3.0/api/query/v4/resources.html#response-format
       unless result.is_a?(Array)
         raise Puppet::DevError,
         "Unexpected response from PuppetDB when looking up #{cap}: " \
