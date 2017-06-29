@@ -1,6 +1,11 @@
 test_name "Zone: ticket #4840 - verify that the given manifest works."
 confine :to, :platform => 'solaris'
 
+tag 'audit:medium',
+    'audit:refactor',  # Use block style `test_name`
+    'audit:acceptance' # Could be done as integration tests, but would
+                       # require drastically changing the system running the test
+
 require 'puppet/acceptance/solaris_util'
 extend Puppet::Acceptance::ZoneUtils
 
