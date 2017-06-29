@@ -115,11 +115,14 @@ class Puppet::FileSystem::MemoryImpl
   end
 
   def all_children_of(files)
-    children = files.collect(&:children).flatten
-    if children.empty?
-      []
-    else
-      children + all_children_of(children)
+    children = []
+    files.each do |file|
+      begin
+        children.concat(file.children)
+      rescue Errno::EACCES
+      end
     end
+    children.concat(all_children_of(children)) unless children.empty?
+    children
   end
 end

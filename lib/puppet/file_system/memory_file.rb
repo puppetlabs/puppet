@@ -1,7 +1,7 @@
 # An in-memory file abstraction. Commonly used with Puppet::FileSystem::File#overlay
 # @api private
 class Puppet::FileSystem::MemoryFile
-  attr_reader :path, :children
+  attr_reader :path
 
   def self.a_missing_file(path)
     new(path, :exist? => false, :executable? => false, :readable? => false)
@@ -43,6 +43,11 @@ class Puppet::FileSystem::MemoryFile
     @children = (properties[:children] || []).map do |child|
       child.duplicate_as(File.join(@path, child.path))
     end
+  end
+
+  def children
+    raise Errno::EACCES, @path unless readable?
+    @children
   end
 
   def directory?; @properties[:directory?]; end
