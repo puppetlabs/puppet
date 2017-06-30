@@ -1,5 +1,6 @@
 require 'puppet/util/logging'
 require 'json'
+require 'semantic_puppet/gem_version'
 
 # Support for modules
 class Puppet::Module
@@ -54,7 +55,26 @@ class Puppet::Module
 
   # @api private
   def self.parse_range(range, strict)
-    SemanticPuppet::VersionRange.parse(range, strict)
+    @parse_range_method ||= SemanticPuppet::VersionRange.method(:parse)
+    if @parse_range_method.arity == 1
+      @semver_gem_version ||= SemanticPuppet::Version.parse(SemanticPuppet::VERSION)
+
+      # Give user a heads-up if the desired strict setting cannot be honored
+      if strict
+        if @semver_gem_version.major < 1
+          Puppet.warn_once('strict_version_ranges', 'version_range_cannot_be_strict',
+            _('VersionRanges will never be strict when using non-vendored SemanticPuppet gem, version %{version}') % { version: @semver_gem_version} )
+        end
+      else
+        if @semver_gem_version.major >= 1
+          Puppet.warn_once('strict_version_ranges', 'version_range_always_strict',
+            _('VersionRanges will always be strict when using non-vendored SemanticPuppet gem, version %{version}') % { version: @semver_gem_version} )
+        end
+      end
+      @parse_range_method.call(range)
+    else
+      @parse_range_method.call(range, strict)
+    end
   end
 
   attr_reader :name, :environment, :path, :metadata
