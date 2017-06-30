@@ -261,6 +261,52 @@ describe Puppet::Network::HTTP::Connection do
     end
   end
 
+  context "when response indicates an overloaded server" do
+    let(:http) { stub('http') }
+    let(:site) { Puppet::Network::HTTP::Site.new('http', 'my_server', 8140) }
+    let(:verify) { Puppet::SSL::Validator.no_validator }
+    let(:httpunavailable) { Net::HTTPServiceUnavailable.new('1.1', 503, 'Service Unavailable') }
+
+    subject { Puppet::Network::HTTP::Connection.new(site.host, site.port, :use_ssl => false, :verify => verify) }
+
+    it "should return a 503 response if Retry-After is not set" do
+      http.stubs(:request).returns(httpunavailable)
+
+      pool = Puppet.lookup(:http_pool)
+      pool.expects(:with_connection).with(site, anything).yields(http)
+
+      result = subject.get('/foo')
+
+      expect(result.code).to eq(503)
+    end
+
+    it "should return a 503 response if Retry-After is not convertable to an Integer" do
+      httpunavailable['Retry-After'] = 'foo'
+      http.stubs(:request).returns(httpunavailable)
+
+      pool = Puppet.lookup(:http_pool)
+      pool.expects(:with_connection).with(site, anything).yields(http)
+
+      result = subject.get('/foo')
+
+      expect(result.code).to eq(503)
+    end
+
+    it "should sleep and retry if Retry-After is an integer" do
+      httpunavailable['Retry-After'] = '42'
+      http.stubs(:request).returns(httpunavailable).then.returns(httpok)
+
+      pool = Puppet.lookup(:http_pool)
+      pool.expects(:with_connection).with(site, anything).twice.yields(http)
+
+      ::Kernel.expects(:sleep).with(42)
+
+      result = subject.get('/foo')
+
+      expect(result.code).to eq(200)
+    end
+  end
+
   it "allows setting basic auth on get requests" do
     expect_request_with_basic_auth
 
