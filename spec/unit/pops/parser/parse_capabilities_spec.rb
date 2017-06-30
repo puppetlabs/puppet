@@ -6,9 +6,6 @@ require_relative 'parser_rspec_helper'
 describe "egrammar parsing of capability mappings" do
   include ParserRspecHelper
 
-  before(:each) { Puppet[:app_management] = true }
-  after(:each) { Puppet[:app_management] = false }
-
   context "when parsing 'produces'" do
     it "the ast contains produces and attributes" do
       prog = "Foo produces Sql { name => value }"

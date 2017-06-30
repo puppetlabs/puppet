@@ -82,6 +82,9 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     tag(*classes)
   end
 
+  # Returns [typename, title] when given a String with "Type[title]".
+  # Returns [nil, nil] if '[' ']' not detected.
+  #
   def title_key_for_ref( ref )
     s = ref.index('[')
     e = ref.rindex(']')
@@ -154,7 +157,13 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   private :add_resource_to_graph
 
   def create_resource_aliases(resource)
-    # Skip creating aliases and checking collisions for non-isomorphic resources.
+    # Explicit aliases must always be processed
+    # The alias setting logic checks, and does not error if the alias is set to an already set alias
+    # for the same resource (i.e. it is ok if alias == title
+    explicit_aliases = [resource[:alias]].flatten.compact
+    explicit_aliases.each {| given_alias | self.alias(resource, given_alias) }
+
+    # Skip creating uniqueness key alias and checking collisions for non-isomorphic resources.
     return unless resource.respond_to?(:isomorphic?) and resource.isomorphic?
 
     # Add an alias if the uniqueness key is valid and not the title, which has already been checked.
@@ -186,7 +195,8 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       return if existing == resource
       resource_declaration = " at #{resource.file}:#{resource.line}" if resource.file and resource.line
       existing_declaration = " at #{existing.file}:#{existing.line}" if existing.file and existing.line
-      msg = "Cannot alias #{ref} to #{key.inspect}#{resource_declaration}; resource #{newref.inspect} already declared#{existing_declaration}"
+      #TRANSLATORS "resource" here is a Puppet type and should not be translated
+      msg = _("Cannot alias %{ref} to %{key}%{resource_declaration}; resource %{newref} already declared%{existing_declaration}") % { ref: ref, key: key.inspect, resource_declaration: resource_declaration, newref: newref.inspect, existing_declaration: existing_declaration }
       raise ArgumentError, msg
     end
     @resource_table[newref] = resource
@@ -200,13 +210,6 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   #   The report object to log this transaction to. This is optional,
   #   and the resulting transaction will create a report if not
   #   supplied.
-  # @option options [Array[String]] :tags
-  #   Tags used to filter the transaction. If supplied then only
-  #   resources tagged with any of these tags will be evaluated.
-  # @option options [Boolean] :ignoreschedules
-  #   Ignore schedules when evaluating resources
-  # @option options [Boolean] :for_network_device
-  #   Whether this catalog is for a network device
   #
   # @return [Puppet::Transaction] the transaction created for this
   #   application
@@ -360,16 +363,13 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       # an instance has to be created in order to construct the unique key used when
       # searching for aliases, or when app_management is active and nothing is found in
       # which case it is needed by the CapabilityFinder.
-      res = nil
-      app_mgnt = Puppet[:app_management]
-      if app_mgnt || !@aliases.empty?
-        res = Puppet::Resource.new(type, title, { :environment => @environment_instance })
+      res = Puppet::Resource.new(type, title, { :environment => @environment_instance })
 
-        # No need to build the uniqueness key unless there are aliases
-        result = @resource_table[[type_name, res.uniqueness_key].flatten] unless @aliases.empty?
-      end
+      # Must check with uniqueness key because of aliases or if resource transforms title in title
+      # to attribute mappings.
+      result = @resource_table[[type_name, res.uniqueness_key].flatten]
 
-      if result.nil? && app_mgnt
+      if result.nil?
         resource_type = res.resource_type
         if resource_type && resource_type.is_capability?
           # @todo lutter 2015-03-10: this assumes that it is legal to just
@@ -424,9 +424,8 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     end
 
     if resources = data['resources']
-      rich_data_enabled = Puppet[:rich_data] || result.environment_instance && result.environment_instance.rich_data?
       result.add_resource(*resources.collect do |res|
-        Puppet::Resource.from_data_hash(res, rich_data_enabled)
+        Puppet::Resource.from_data_hash(res)
       end)
     end
 
@@ -478,27 +477,20 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       h
     end
 
-    resources = if @resources.empty?
-        []
-      elsif environment_instance.rich_data?
-        @resources.collect { |v| @resource_table[v].to_data_hash(true) }
-      else
-        @resources.collect { |v| @resource_table[v].to_data_hash }
-      end
-
     {
-      'tags'      => tags,
+      'tags'      => tags.to_a,
       'name'      => name,
       'version'   => version,
       'code_id'   => code_id,
       'catalog_uuid' => catalog_uuid,
       'catalog_format' => catalog_format,
       'environment'  => environment.to_s,
-      'resources' => resources,
-      'edges'     => edges.   collect { |e| e.to_data_hash },
+      'resources' => @resources.map { |v| @resource_table[v].to_data_hash },
+      'edges'     => edges.map { |e| e.to_data_hash },
       'classes'   => classes,
-    }.merge(metadata_hash.empty? ? {} : {'metadata' => metadata_hash})
-     .merge(recursive_metadata_hash.empty? ? {} : {'recursive_metadata' => recursive_metadata_hash})
+    }.merge(metadata_hash.empty? ?
+      {} : {'metadata' => metadata_hash}).merge(recursive_metadata_hash.empty? ?
+        {} : {'recursive_metadata' => recursive_metadata_hash})
   end
 
   # Convert our catalog into a RAL catalog.
@@ -538,7 +530,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       f.puts classes.join("\n")
     end
   rescue => detail
-    Puppet.err "Could not create class file #{Puppet[:classfile]}: #{detail}"
+    Puppet.err _("Could not create class file %{file}: %{detail}") % { file: Puppet[:classfile], detail: detail }
   end
 
   # Store the list of resources we manage
@@ -558,7 +550,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       f.puts to_print.join("\n")
     end
   rescue => detail
-    Puppet.err "Could not create resource file #{Puppet[:resourcefile]}: #{detail}"
+    Puppet.err _("Could not create resource file %{file}: %{detail}") % { file: Puppet[:resourcefile], detail: detail }
   end
 
   # Produce the graph files if requested.

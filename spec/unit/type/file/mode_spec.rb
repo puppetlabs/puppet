@@ -13,7 +13,7 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
     it "should reject non-string values" do
       expect {
         mode.value = 0755
-      }.to raise_error(Puppet::Error, /The file mode specification must be a string, not 'Fixnum'/)
+      }.to raise_error(Puppet::Error, /The file mode specification must be a string, not '(?:Fixnum|Integer)'/)
     end
 
     it "should accept values specified as octal numbers in strings" do
@@ -140,17 +140,17 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
   describe '#should_to_s' do
     describe 'with a 3-digit mode' do
       it 'returns a 4-digit mode with a leading zero' do
-        expect(mode.should_to_s('755')).to eq('0755')
+        expect(mode.should_to_s('755')).to eq("'0755'")
       end
     end
 
     describe 'with a 4-digit mode' do
       it 'returns the 4-digit mode when the first digit is a zero' do
-        expect(mode.should_to_s('0755')).to eq('0755')
+        expect(mode.should_to_s('0755')).to eq("'0755'")
       end
 
       it 'returns the 4-digit mode when the first digit is not a zero' do
-        expect(mode.should_to_s('1755')).to eq('1755')
+        expect(mode.should_to_s('1755')).to eq("'1755'")
       end
     end
   end
@@ -158,23 +158,23 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
   describe '#is_to_s' do
     describe 'with a 3-digit mode' do
       it 'returns a 4-digit mode with a leading zero' do
-        expect(mode.is_to_s('755')).to eq('0755')
+        expect(mode.is_to_s('755')).to eq("'0755'")
       end
     end
 
     describe 'with a 4-digit mode' do
       it 'returns the 4-digit mode when the first digit is a zero' do
-        expect(mode.is_to_s('0755')).to eq('0755')
+        expect(mode.is_to_s('0755')).to eq("'0755'")
       end
 
       it 'returns the 4-digit mode when the first digit is not a zero' do
-        expect(mode.is_to_s('1755')).to eq('1755')
+        expect(mode.is_to_s('1755')).to eq("'1755'")
       end
     end
 
     describe 'when passed :absent' do
-      it 'returns :absent' do
-        expect(mode.is_to_s(:absent)).to eq(:absent)
+      it "returns 'absent'" do
+        expect(mode.is_to_s(:absent)).to eq("'absent'")
       end
     end
   end

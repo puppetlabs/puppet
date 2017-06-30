@@ -35,15 +35,14 @@ Gem::Specification.new do |s|
   s.summary = "Puppet, an automated configuration management tool"
   s.specification_version = 3
   s.add_runtime_dependency(%q<facter>, [">= 2.0.1", "< 4"])
-  s.add_runtime_dependency(%q<hiera>, [">= 2.0", "< 4"])
+  s.add_runtime_dependency(%q<hiera>, [">= 3.2.1", "< 4"])
   # PUP-7115 - return to a gem dependency in Puppet 5
   # s.add_runtime_dependency(%q<semantic_puppet>, ['>= 0.1.3', '< 2'])
   # i18n support (gettext-setup and dependencies)
   s.add_runtime_dependency(%q<gettext-setup>, [">= 0.10", "< 1"])
   s.add_runtime_dependency(%q<locale>, "~> 2.1")
-  # Hiera has an unbound dependency on json_pure
-  # json_pure 2.0.2+ officially requires Ruby >= 2.0, but should have specified that in 2.0
-  s.add_runtime_dependency(%q<json_pure>, "~> 1.8")
+  # hocon is an optional hiera backend shipped in puppet-agent packages
+  s.add_runtime_dependency(%q<hocon>, "~> 1.0")
   # net-ssh is a runtime dependency of Puppet::Util::NetworkDevice::Transport::Ssh
   # Beaker 3.0.0 to 3.10.0 depends on net-ssh 3.3.0beta1
   # Beaker 3.11.0+ depends on net-ssh 4.0+

@@ -41,7 +41,7 @@ module Types
         TypeAsserter.assert_instance_of('Second argument of type mapping', TYPE_REGEXP_SUBST, puppet_type_or_pattern)
         register_implementation_regexp(puppet_type_or_pattern, expr, loader)
       else
-        TypeAsserter.assert_instance_of('Second argument of type mapping', PType::DEFAULT, puppet_type_or_pattern)
+        TypeAsserter.assert_instance_of('Second argument of type mapping', PTypeType::DEFAULT, puppet_type_or_pattern)
         register_implementation(puppet_type_or_pattern, expr, loader)
       end
     end

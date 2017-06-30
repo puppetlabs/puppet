@@ -39,6 +39,26 @@ describe 'the new function' do
     )}.to raise_error(Puppet::Error, /expects an Integer\[1, 5\] value, got Integer\[42, 42\]/)
   end
 
+  it 'accepts and returns a second parameter that is an instance of the first, even when the type has no backing new_function' do
+    expect(eval_and_collect_notices(<<-MANIFEST)).to eql(%w(true true true true true true))
+      notice(undef == Undef(undef))
+
+      notice(default == Default(default))
+
+      notice(Any == Type(Any))
+
+      $b = Binary('YmluYXI=')
+      notice($b == Binary($b))
+
+      $t = Timestamp('2012-03-04:09:10:11.001')
+      notice($t == Timestamp($t))
+
+      type MyObject = Object[{attributes => {'type' => String}}]
+      $o = MyObject('Remote')
+      notice($o == MyObject($o))
+    MANIFEST
+  end
+
   context 'when invoked on NotUndef' do
     it 'produces an instance of the NotUndef nested type' do
       expect(compile_to_catalog(<<-MANIFEST
@@ -532,7 +552,7 @@ describe 'the new function' do
   context 'when invoked on Array' do
     { []            => 'Notify[Array[Unit], []]',
       [true]        => 'Notify[Array[Boolean], [true]]',
-      {'a'=>true, 'b' => false}   => 'Notify[Array[Array[Scalar]], [[a, true], [b, false]]]',
+      {'a'=>true, 'b' => false}   => 'Notify[Array[Array[ScalarData]], [[a, true], [b, false]]]',
       'abc'         => 'Notify[Array[String[1, 1]], [a, b, c]]',
       3             => 'Notify[Array[Integer], [0, 1, 2]]',
     }.each do |input, result|
@@ -640,6 +660,42 @@ describe 'the new function' do
         )}.to raise_error(Puppet::Error, error_match)
       end
     end
+
+    context 'when using the optional "tree" format' do
+      it 'can convert a tree in flat form to a hash' do
+        expect(compile_to_catalog(<<-"MANIFEST"
+          $x = Hash.new([[[0], a],[[1,0], b],[[1,1], c],[[2,0], d]], tree)
+          notify { test: message => $x }
+        MANIFEST
+        )).to have_resource('Notify[test]').with_parameter(:message, { 0 => 'a', 1 => { 0 => 'b', 1=> 'c'}, 2 => {0 => 'd'} })
+      end
+
+      it 'preserves array in flattened tree but overwrites entries if they are present' do
+        expect(compile_to_catalog(<<-"MANIFEST"
+          $x = Hash.new([[[0], a],[[1,0], b],[[1,1], c],[[2], [overwritten, kept]], [[2,0], d]], tree)
+          notify { test: message => $x }
+        MANIFEST
+        )).to have_resource('Notify[test]').with_parameter(:message, { 0 => 'a', 1 => { 0 => 'b', 1=> 'c'}, 2 => ['d', 'kept'] })
+      end
+
+      it 'preserves hash in flattened tree but overwrites entries if they are present' do
+        expect(compile_to_catalog(<<-"MANIFEST"
+          $x = Hash.new([[[0], a],[[1,0], b],[[1,1], c],[[2], {0 => 0, kept => 1}], [[2,0], d]], tree)
+          notify { test: message => $x }
+        MANIFEST
+  )).to have_resource('Notify[test]').with_parameter(:message, { 0 => 'a', 1 => { 0 => 'b', 1=> 'c'}, 2 => {0=>'d', 'kept'=>1} })
+      end
+    end
+
+    context 'when using the optional "tree_hash" format' do
+      it 'turns array in flattened tree into hash' do
+        expect(compile_to_catalog(<<-"MANIFEST"
+          $x = Hash.new([[[0], a],[[1,0], b],[[1,1], c],[[2], [overwritten, kept]], [[2,0], d]], hash_tree)
+          notify { test: message => $x }
+        MANIFEST
+        )).to have_resource('Notify[test]').with_parameter(:message, { 0=>'a', 1=>{ 0=>'b', 1=>'c'}, 2=>{0=>'d', 1=>'kept'}})
+      end
+    end
   end
 
   context 'when invoked on Struct' do
@@ -689,6 +745,16 @@ describe 'the new function' do
         notify { "${type($x, generalized)}, $x": }
       MANIFEST
       )).to have_resource('Notify[Boolean, true]')
+    end
+  end
+
+  context 'when invoked on a Type' do
+    it 'creates a Type from its string representation' do
+      expect(compile_to_catalog(<<-MANIFEST
+        $x = Type.new('Integer[3,10]')
+        notify { "${type($x)}": }
+      MANIFEST
+      )).to have_resource('Notify[Type[Integer[3, 10]]]')
     end
   end
 end

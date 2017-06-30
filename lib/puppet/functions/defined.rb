@@ -129,31 +129,31 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
         scope.compiler.findresource(val.resource_type, val.title)
 
       when Puppet::Pops::Types::PResourceType
-        raise ArgumentError, 'The given resource type is a reference to all kind of types' if val.type_name.nil?
+        raise ArgumentError, _('The given resource type is a reference to all kind of types') if val.type_name.nil?
         type = Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_resource_type(scope, val.type_name)
         val.title.nil? ? type : scope.compiler.findresource(type, val.title)
 
-      when Puppet::Pops::Types::PHostClassType
-        raise  ArgumentError, 'The given class type is a reference to all classes' if val.class_name.nil?
+      when Puppet::Pops::Types::PClassType
+        raise  ArgumentError, _('The given class type is a reference to all classes') if val.class_name.nil?
         scope.compiler.findresource(:class, val.class_name)
 
-      when Puppet::Pops::Types::PType
+      when Puppet::Pops::Types::PTypeType
         case val.type
         when Puppet::Pops::Types::PResourceType
           # It is most reasonable to take Type[File] and Type[File[foo]] to mean the same as if not wrapped in a Type
           # Since the difference between File and File[foo] already captures the distinction of type vs instance.
           is_defined(scope, val.type)
 
-        when Puppet::Pops::Types::PHostClassType
+        when Puppet::Pops::Types::PClassType
           # Interpreted as asking if a class (and nothing else) is defined without having to be included in the catalog
           # (this is the same as asking for just the class' name, but with the added certainty that it cannot be a defined type.
           #
-          raise  ArgumentError, 'The given class type is a reference to all classes' if val.type.class_name.nil?
+          raise  ArgumentError, _('The given class type is a reference to all classes') if val.type.class_name.nil?
           Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_hostclass(scope, val.type.class_name)
           #scope.environment.known_resource_types.find_hostclass(val.type.class_name)
         end
       else
-        raise ArgumentError, "Invalid argument of type '#{val.class}' to 'defined'"
+        raise ArgumentError, _("Invalid argument of type '%{value_class}' to 'defined'") % { value_class: val.class }
       end
     end
   end

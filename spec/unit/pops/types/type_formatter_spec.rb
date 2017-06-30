@@ -38,9 +38,13 @@ describe 'The type formatter' do
       expect(s.indented_string({'a' => 32,'b' => [1, 2, {'c' => 'd'}]})).to eq(<<-FORMATTED)
 {
   'a' => 32,
-  'b' => [1, 2, {
-    'c' => 'd'
-  }]
+  'b' => [
+    1,
+    2,
+    {
+      'c' => 'd'
+    }
+  ]
 }
 FORMATTED
     end
@@ -49,9 +53,13 @@ FORMATTED
       expect(s.indented_string({'a' => 32,'b' => [1, 2, {'c' => 'd'}]}, 3)).to eq(<<-FORMATTED)
       {
         'a' => 32,
-        'b' => [1, 2, {
-          'c' => 'd'
-        }]
+        'b' => [
+          1,
+          2,
+          {
+            'c' => 'd'
+          }
+        ]
       }
 FORMATTED
     end
@@ -60,18 +68,22 @@ FORMATTED
       expect(s.indented_string({'a' => 32,'b' => [1, 2, {'c' => 'd'}]}, 2, 4)).to eq(<<-FORMATTED)
         {
             'a' => 32,
-            'b' => [1, 2, {
-                'c' => 'd'
-            }]
+            'b' => [
+                1,
+                2,
+                {
+                    'c' => 'd'
+                }
+            ]
         }
-    FORMATTED
+FORMATTED
+    end
   end
-end
 
   context 'when representing the type as string' do
     include_context 'types_setup'
 
-    it "should yield 'Type' for PType" do
+    it "should yield 'Type' for PTypeType" do
       expect(s.string(f.type_type)).to eq('Type')
     end
 
@@ -87,7 +99,7 @@ end
       expect(s.string(f.boolean)).to eq('Boolean')
     end
 
-    it "should yield 'Data' for PDataType" do
+    it "should yield 'Data' for the Data type" do
       expect(s.string(f.data)).to eq('Data')
     end
 
@@ -138,8 +150,8 @@ end
       expect(s.string(f.array_of(f.integer))).to eq('Array[Integer]')
     end
 
-    it "should yield 'Array' for PArrayType::DATA" do
-      expect(s.string(f.array_of_data)).to eq('Array')
+    it "should yield 'Array' for PArrayType::DEFAULT" do
+      expect(s.string(f.array_of_any)).to eq('Array')
     end
 
     it "should yield 'Array[0, 0]' for an empty array" do
@@ -203,15 +215,16 @@ end
     end
 
     it "should yield 'Timestamp['2016-09-05T13:00:00.000 UTC'] for PTimestampType[Timestamp]" do
-      expect(s.string(f.timestamp('2016-09-05T13:00:00.000 UTC'))).to eq("Timestamp['2016-09-05T13:00:00.000 UTC']")
+      expect(s.string(f.timestamp('2016-09-05T13:00:00.000 UTC'))).to eq("Timestamp['2016-09-05T13:00:00.000000000 UTC']")
     end
 
     it "should yield 'Timestamp[default, '2016-09-05T13:00:00.000 UTC'] for PTimestampType[nil, Timestamp]" do
-      expect(s.string(f.timestamp(nil, '2016-09-05T13:00:00.000 UTC'))).to eq("Timestamp[default, '2016-09-05T13:00:00.000 UTC']")
+      expect(s.string(f.timestamp(nil, '2016-09-05T13:00:00.000 UTC'))).to eq("Timestamp[default, '2016-09-05T13:00:00.000000000 UTC']")
     end
 
     it "should yield 'Timestamp['2016-09-05T13:00:00.000 UTC', '2016-12-01T00:00:00.000 UTC'] for PTimestampType[Timestamp, Timestamp]" do
-      expect(s.string(f.timestamp('2016-09-05T13:00:00.000 UTC', '2016-12-01T00:00:00.000 UTC'))).to eq("Timestamp['2016-09-05T13:00:00.000 UTC', '2016-12-01T00:00:00.000 UTC']")
+      expect(s.string(f.timestamp('2016-09-05T13:00:00.000 UTC', '2016-12-01T00:00:00.000 UTC'))).to(
+        eq("Timestamp['2016-09-05T13:00:00.000000000 UTC', '2016-12-01T00:00:00.000000000 UTC']"))
     end
 
     it "should yield 'Tuple[Integer]' for PTupleType[PIntegerType]" do
@@ -248,15 +261,15 @@ end
       expect(s.string(f.hash_of(f.string, f.string, f.range(2, :default)))).to eq('Hash[String, String, 2, default]')
     end
 
-    it "should yield 'Hash' for PHashType::DATA" do
-      expect(s.string(f.hash_of_data)).to eq('Hash')
+    it "should yield 'Hash' for PHashType::DEFAULT" do
+      expect(s.string(f.hash_of_any)).to eq('Hash')
     end
 
-    it "should yield 'Class' for a PHostClassType" do
+    it "should yield 'Class' for a PClassType" do
       expect(s.string(f.host_class)).to eq('Class')
     end
 
-    it "should yield 'Class[x]' for a PHostClassType[x]" do
+    it "should yield 'Class[x]' for a PClassType[x]" do
       expect(s.string(f.host_class('x'))).to eq('Class[x]')
     end
 
@@ -384,12 +397,12 @@ end
     end
 
     it 'should present a valid simple name' do
-      (all_types - [PType, PHostClassType]).each do |t|
+      (all_types - [PTypeType, PClassType]).each do |t|
         name = t::DEFAULT.simple_name
         expect(t.name).to match("^Puppet::Pops::Types::P#{name}Type$")
       end
-      expect(PType::DEFAULT.simple_name).to eql('Type')
-      expect(PHostClassType::DEFAULT.simple_name).to eql('Class')
+      expect(PTypeType::DEFAULT.simple_name).to eql('Type')
+      expect(PClassType::DEFAULT.simple_name).to eql('Class')
     end
   end
 end

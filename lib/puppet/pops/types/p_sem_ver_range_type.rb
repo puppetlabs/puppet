@@ -4,9 +4,9 @@ module Types
 # An unparameterized type that represents all VersionRange instances
 #
 # @api public
-class PSemVerRangeType < PScalarType
+class PSemVerRangeType < PAnyType
   def self.register_ptype(loader, ir)
-    create_ptype(loader, ir, 'ScalarType')
+    create_ptype(loader, ir, 'AnyType')
   end
 
   # Check if a version is included in a version range. The version can be a string or
@@ -90,6 +90,10 @@ class PSemVerRangeType < PScalarType
     end
   end
 
+  def roundtrip_with_string?
+    true
+  end
+
   def instance?(o, guard = nil)
     o.is_a?(SemanticPuppet::VersionRange)
   end
@@ -102,9 +106,9 @@ class PSemVerRangeType < PScalarType
     super ^ @version_range.hash
   end
 
-  def self.new_function(_, loader)
+  def self.new_function(type)
     range_expr = "\\A#{range_pattern}\\Z"
-    @@new_function ||= Puppet::Functions.create_loaded_function(:new_VersionRange, loader) do
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_VersionRange, type.loader) do
       local_types do
         type 'SemVerRangeString = String[1]'
         type 'SemVerRangeHash = Struct[{min=>Variant[default,SemVer],Optional[max]=>Variant[default,SemVer],Optional[exclude_max]=>Boolean}]'

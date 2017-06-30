@@ -35,7 +35,7 @@ class Puppet::Settings::ConfigFile
         if line.is_a?(Puppet::Settings::IniFile::SettingLine)
           parse_setting(line, section)
         elsif line.text !~ /^\s*#|^\s*$/
-          raise Puppet::Settings::ParseError.new("Could not match line #{line.text}", file, line.line_number)
+          raise Puppet::Settings::ParseError.new(_("Could not match line %{text}") % { text: line.text }, file, line.line_number)
         end
       end
     end
@@ -83,7 +83,7 @@ private
   def unique_sections_in(ini, file, allowed_section_names)
     ini.section_lines.collect do |section|
       if !allowed_section_names.empty? && !allowed_section_names.include?(section.name)
-        raise(Puppet::Error, "Illegal section '#{section.name}' in config file #{file} at line #{section.line_number}. The only valid puppet.conf sections are: [#{allowed_section_names.join(", ")}]. Please use the directory environments feature to specify environments. (See https://docs.puppet.com/puppet/latest/reference/environments.html)")
+        raise(Puppet::Error, _("Illegal section '%{name}' in config file %{file} at line %{line}. The only valid puppet.conf sections are: [%{allowed_sections}]. Please use the directory environments feature to specify environments. (See https://docs.puppet.com/puppet/latest/reference/environments.html)") % { name: section.name, file: file, line: section.line_number, allowed_sections: allowed_section_names.join(", ") })
       end
       section.name
     end.uniq

@@ -50,7 +50,7 @@ class Puppet::Provider::Package::Windows
 
     # Get the class that knows how to install this resource
     def self.installer_class(resource)
-      fail("The source parameter is required when using the Windows provider.") unless resource[:source]
+      fail(_("The source parameter is required when using the Windows provider.")) unless resource[:source]
 
       case resource[:source]
       when /\.msi"?\Z/i
@@ -58,10 +58,10 @@ class Puppet::Provider::Package::Windows
         # REMIND: what about msp, etc
         MsiPackage
       when /\.exe"?\Z/i
-        fail("The source does not exist: '#{resource[:source]}'") unless Puppet::FileSystem.exist?(resource[:source])
+        fail(_("The source does not exist: '%{source}'") % { source: resource[:source] }) unless Puppet::FileSystem.exist?(resource[:source])
         ExePackage
       else
-        fail("Don't know how to install '#{resource[:source]}'")
+        fail(_("Don't know how to install '%{source}'") % { source: resource[:source] })
       end
     end
 

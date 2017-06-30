@@ -475,6 +475,16 @@ $ts = Timestamp('2016-08-24T12:13:14', default, 'PST')   # 2016-08-24 20:13:14.0
 
 ```
 
+Conversion to Type
+------------------
+A new `Type` can be create from its `String` representation.
+
+**Example:** Creating a type from a string
+
+```puppet
+$t = Type.new('Integer[10]')
+```
+
 Conversion to String
 --------------------
 
@@ -772,6 +782,32 @@ Accepts a single value as argument:
 * An `Iterable` is turned into an `Array` and then converted to hash as per the array rules
 * A `Hash` is simply returned
 
+Alternatively, a tree can be constructed by giving two values; an array of tuples on the form `[path, value]`
+(where the `path` is the path from the root of a tree, and `value` the value at that position in the tree), and
+either the option `'tree'` (do not convert arrays to hashes except the top level), or
+`'hash_tree'` (convert all arrays to hashes).
+
+The tree/hash_tree forms of Hash creation are suited for transforming the result of an iteration
+using `tree_each` and subsequent filtering or mapping.
+
+**Example:** Mapping a hash tree
+
+Mapping an arbitrary structure in a way that keeps the structure, but where some values are replaced
+can be done by using the `tree_each` function, mapping, and then constructing a new Hash from the result:
+
+```puppet
+# A hash tree with 'water' at different locations
+$h = { a => { b => { x => 'water'}}, b => { y => 'water'} }
+# a helper function that turns water into wine
+function make_wine($x) { if $x == 'water' { 'wine' } else { $x } }
+# create a flattened tree with water turned into wine
+$flat_tree = $h.tree_each.map |$entry| { [$entry[0], make_wine($entry[1])] }
+# create a new Hash and log it
+notice Hash($flat_tree, 'hash_tree')
+```
+
+Would notice the hash `{a => {b => {x => wine}}, b => {y => wine}}`
+
 Conversion to a `Struct` works exactly as conversion to a `Hash`, only that the constructed hash is
 asserted against the given struct type.
 
@@ -931,6 +967,37 @@ $b = binary_file('mymodule/mypicture.jpg')
 
 * Since 4.5.0
 * Binary type since 4.8.0
+
+Creating an instance of a `Type` using the `Init` type.
+-------
+
+The type `Init[T]` describes a value that can be used when instantiating a type. When used as the first argument in a call to `new`, it
+will dispatch the call to its contained type and optionally augment the parameter list with additional arguments.
+
+**Example:** Creating an instance of Integer using Init[Integer]
+
+```puppet
+# The following declaration
+$x = Init[Integer].new('128')
+# is exactly the same as
+$x = Integer.new('128')
+```
+
+or, with base 16 and using implicit new
+
+```puppet
+# The following declaration
+$x = Init[Integer,16]('80')
+# is exactly the same as
+$x = Integer('80', 16)
+```
+
+**Example:** Creating an instance of String using a predefined format
+
+```puppet
+$fmt = Init[String,'%#x']
+notice($fmt(256)) # will notice '0x100'
+```
 
 DOC
 ) do |args|

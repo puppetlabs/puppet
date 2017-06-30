@@ -19,7 +19,7 @@ reference = Puppet::Util::Reference.newreference :indirection, :doc => "Indirect
         terminus_doc = Puppet::Util::Docs.scrub(term_class.doc)
         text << markdown_header("`#{terminus_name}` terminus", 3) << terminus_doc << "\n\n"
       else
-        Puppet.warning "Could not build docs for indirector #{name.inspect}, terminus #{terminus_name.inspect}: could not locate terminus."
+        Puppet.warning _("Could not build docs for indirector %{name}, terminus %{terminus}: could not locate terminus.") % { name: name.inspect, terminus: terminus_name.inspect }
       end
     end
   end

@@ -1,4 +1,3 @@
-require 'rgen/ecore/ecore'
 require 'puppet/parser/scope'
 require 'puppet/pops/evaluator/compare_operator'
 require 'puppet/pops/evaluator/relationship_operator'
@@ -232,7 +231,7 @@ class EvaluatorImpl
           values.fetch(lval) {|k| fail(Issues::MISSING_MULTI_ASSIGNMENT_KEY, o, :key =>k)},
           o, scope)
       end
-    elsif values.is_a?(Puppet::Pops::Types::PHostClassType)
+    elsif values.is_a?(Puppet::Pops::Types::PClassType)
       # assign variables from class variables
       # lookup class resource and return one or more parameter values
       # TODO: behavior when class_name is nil
@@ -264,7 +263,7 @@ class EvaluatorImpl
   end
 
   def eval_Factory(o, scope)
-    evaluate(o.current, scope)
+    evaluate(o.model, scope)
   end
 
   # Evaluates any object not evaluated to something else to itself.
@@ -306,7 +305,7 @@ class EvaluatorImpl
     nil
   end
 
-  # A QualifiedReference (i.e. a  capitalized qualified name such as Foo, or Foo::Bar) evaluates to a PType
+  # A QualifiedReference (i.e. a  capitalized qualified name such as Foo, or Foo::Bar) evaluates to a PTypeType
   #
   def eval_QualifiedReference(o, scope)
     type = Types::TypeParser.singleton.interpret(o)
@@ -358,7 +357,7 @@ class EvaluatorImpl
     name = lvalue(o.left_expr, scope)
     value = evaluate(o.right_expr, scope)
 
-    if o.operator == :'='
+    if o.operator == '='
       assign(name, value, o, scope)
     else
       fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
@@ -366,8 +365,8 @@ class EvaluatorImpl
     value
   end
 
-  ARITHMETIC_OPERATORS = [:'+', :'-', :'*', :'/', :'%', :'<<', :'>>']
-  COLLECTION_OPERATORS = [:'+', :'-', :'<<']
+  ARITHMETIC_OPERATORS = ['+', '-', '*', '/', '%', '<<', '>>'].freeze
+  COLLECTION_OPERATORS = ['+', '-', '<<'].freeze
 
   # Handles binary expression where lhs and rhs are array/hash or numeric and operator is +, - , *, % / << >>
   #
@@ -376,7 +375,7 @@ class EvaluatorImpl
     right = evaluate(o.right_expr, scope)
 
     begin
-      result = calculate(left, right, o.operator, o.left_expr, o.right_expr, scope)
+      result = calculate(left, right, o, scope)
     rescue ArgumentError => e
       fail(Issues::RUNTIME_ERROR, o, {:detail => e.message}, e)
     end
@@ -386,19 +385,21 @@ class EvaluatorImpl
 
   # Handles binary expression where lhs and rhs are array/hash or numeric and operator is +, - , *, % / << >>
   #
-  def calculate(left, right, operator, left_o, right_o, scope)
+  def calculate(left, right, bin_expr, scope)
+    operator = bin_expr.operator
     unless ARITHMETIC_OPERATORS.include?(operator)
-      fail(Issues::UNSUPPORTED_OPERATOR, left_o.eContainer, {:operator => o.operator})
+      fail(Issues::UNSUPPORTED_OPERATOR, bin_expr, {:operator => operator})
     end
 
+    left_o = bin_expr.left_expr
     if (left.is_a?(Array) || left.is_a?(Hash)) && COLLECTION_OPERATORS.include?(operator)
       # Handle operation on collections
       case operator
-      when :'+'
+      when '+'
         concatenate(left, right)
-      when :'-'
+      when '-'
         delete(left, right)
-      when :'<<'
+      when '<<'
         unless left.is_a?(Array)
           fail(Issues::OPERATOR_NOT_APPLICABLE, left_o, {:operator => operator, :left_value => left})
         end
@@ -407,20 +408,20 @@ class EvaluatorImpl
     else
       # Handle operation on numeric
       left = coerce_numeric(left, left_o, scope)
-      right = coerce_numeric(right, right_o, scope)
+      right = coerce_numeric(right, bin_expr.right_expr, scope)
       begin
-        if operator == :'%' && (left.is_a?(Float) || right.is_a?(Float))
+        if operator == '%' && (left.is_a?(Float) || right.is_a?(Float))
           # Deny users the fun of seeing severe rounding errors and confusing results
           fail(Issues::OPERATOR_NOT_APPLICABLE, left_o, {:operator => operator, :left_value => left}) if left.is_a?(Float)
           fail(Issues::OPERATOR_NOT_APPLICABLE_WHEN, left_o, {:operator => operator, :left_value => left, :right_value => right})
         end
         if right.is_a?(Time::TimeData) && !left.is_a?(Time::TimeData)
-          if operator == :'+' || operator == :'*' && right.is_a?(Time::Timespan)
+          if operator == '+' || operator == '*' && right.is_a?(Time::Timespan)
             # Switch places. Let the TimeData do the arithmetic
             x = left
             left = right
             right = x
-          elsif operator == :'-' && right.is_a?(Time::Timespan)
+          elsif operator == '-' && right.is_a?(Time::Timespan)
             left = Time::Timespan.new((left * Time::NSECS_PER_SEC).to_i)
           else
             fail(Issues::OPERATOR_NOT_APPLICABLE_WHEN, left_o, {:operator => operator, :left_value => left, :right_value => right})
@@ -430,10 +431,17 @@ class EvaluatorImpl
       rescue NoMethodError => e
         fail(Issues::OPERATOR_NOT_APPLICABLE, left_o, {:operator => operator, :left_value => left})
       rescue ZeroDivisionError => e
-        fail(Issues::DIV_BY_ZERO, right_o)
+        fail(Issues::DIV_BY_ZERO, bin_expr.right_expr)
       end
-      if result == Float::INFINITY || result == -Float::INFINITY
-        fail(Issues::RESULT_IS_INFINITY, left_o, {:operator => operator})
+      case result
+      when Float
+        if result == Float::INFINITY || result == -Float::INFINITY
+          fail(Issues::RESULT_IS_INFINITY, left_o, {:operator => operator})
+        end
+      when Integer
+        if result < MIN_INTEGER || result > MAX_INTEGER
+          fail(Issues::NUMERIC_OVERFLOW, bin_expr, {:value => result})
+        end
       end
       result
     end
@@ -471,7 +479,7 @@ class EvaluatorImpl
   def eval_AccessExpression(o, scope)
     left = evaluate(o.left_expr, scope)
     keys = o.keys || []
-    if left.is_a?(Types::PHostClassType)
+    if left.is_a?(Types::PClassType)
       # Evaluate qualified references without errors no undefined types
       keys = keys.map {|key| key.is_a?(Model::QualifiedReference) ? Types::TypeParser.singleton.interpret(key) : evaluate(key, scope) }
     else
@@ -492,22 +500,22 @@ class EvaluatorImpl
     # Left is a type
     if left.is_a?(Types::PAnyType)
       case o.operator
-      when :'=='
+      when '=='
         @@type_calculator.equals(left,right)
 
-      when :'!='
+      when '!='
         !@@type_calculator.equals(left,right)
 
-      when :'<'
+      when '<'
         # left can be assigned to right, but they are not equal
         @@type_calculator.assignable?(right, left) && ! @@type_calculator.equals(left,right)
-      when :'<='
+      when '<='
         # left can be assigned to right
         @@type_calculator.assignable?(right, left)
-      when :'>'
+      when '>'
         # right can be assigned to left, but they are not equal
         @@type_calculator.assignable?(left,right) && ! @@type_calculator.equals(left,right)
-      when :'>='
+      when '>='
         # right can be assigned to left
         @@type_calculator.assignable?(left, right)
       else
@@ -515,17 +523,17 @@ class EvaluatorImpl
       end
     else
       case o.operator
-      when :'=='
+      when '=='
         @@compare_operator.equals(left,right)
-      when :'!='
+      when '!='
         ! @@compare_operator.equals(left,right)
-      when :'<'
+      when '<'
         @@compare_operator.compare(left,right) < 0
-      when :'<='
+      when '<='
         @@compare_operator.compare(left,right) <= 0
-      when :'>'
+      when '>'
         @@compare_operator.compare(left,right) > 0
-      when :'>='
+      when '>='
         @@compare_operator.compare(left,right) >= 0
       else
         fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
@@ -567,13 +575,13 @@ class EvaluatorImpl
       # evaluate as instance? of type check
       matched = pattern.instance?(left)
       # convert match result to Boolean true, or false
-      return o.operator == :'=~' ? !!matched : !matched
+      return o.operator == '=~' ? !!matched : !matched
     end
 
     if pattern.is_a?(SemanticPuppet::VersionRange)
       # evaluate if range includes version
       matched = Types::PSemVerRangeType.include?(pattern, left)
-      return o.operator == :'=~' ? matched : !matched
+      return o.operator == '=~' ? matched : !matched
     end
 
     begin
@@ -589,7 +597,7 @@ class EvaluatorImpl
     set_match_data(matched,scope) # creates ephemeral
 
     # convert match result to Boolean true, or false
-    o.operator == :'=~' ? !!matched : !matched
+    o.operator == '=~' ? !!matched : !matched
   end
 
   # Evaluates Puppet DSL `in` expression
@@ -747,7 +755,7 @@ class EvaluatorImpl
 
       # must be a CatalogEntry subtype
       case evaluated_name
-      when Types::PHostClassType
+      when Types::PClassType
         unless evaluated_name.class_name.nil?
           fail(Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual=> evaluated_name.to_s})
         end
@@ -861,7 +869,7 @@ class EvaluatorImpl
       actual = type_calculator.generalize(type_calculator.infer(hashed_params)).to_s
       fail(Issues::TYPE_MISMATCH, o.expr, {:expected => 'Hash', :actual => actual})
     end
-    hashed_params.map { |k,v| create_resource_parameter(o, scope, k, v, :'=>') }
+    hashed_params.map { |k,v| create_resource_parameter(o, scope, k, v, '=>') }
   end
 
   # Sets default parameter values for a type, produces the type
@@ -1169,11 +1177,11 @@ class EvaluatorImpl
           Hash[*y]
         end
       else
-        raise ArgumentError.new("Can only append Array or Hash to a Hash")
+        raise ArgumentError.new(_("Can only append Array or Hash to a Hash"))
       end
       x.merge y # new hash with overwrite
     else
-      raise ArgumentError.new("Can only append to an Array or a Hash.")
+      raise ArgumentError.new(_("Can only append to an Array or a Hash."))
     end
   end
 
@@ -1203,7 +1211,7 @@ class EvaluatorImpl
       end
       y.each {|e| result.delete(e) }
     else
-      raise ArgumentError.new("Can only delete from an Array or Hash.")
+      raise ArgumentError.new(_("Can only delete from an Array or Hash."))
     end
     result
   end

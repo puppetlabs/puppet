@@ -25,15 +25,15 @@ module Puppet::Forge::Errors
       @uri     = options[:uri]
       original = options[:original]
 
-      super("Unable to verify the SSL certificate at #{@uri}", original)
+      super(_("Unable to verify the SSL certificate at %{uri}") % { uri: @uri }, original)
     end
 
     # Return a multiline version of the error message
     #
     # @return [String] the multiline version of the error message
     def multiline
-      <<-EOS.chomp
-Could not connect via HTTPS to #{@uri}
+      _(<<-EOS).chomp % { uri: @uri }
+Could not connect via HTTPS to %{uri}
   Unable to verify the SSL certificate
     The certificate may not be signed by a valid CA
     The CA bundle included with OpenSSL may not be valid or up to date
@@ -51,7 +51,7 @@ Could not connect via HTTPS to #{@uri}
       original = options[:original]
       @detail  = original.message
 
-      message = "Unable to connect to the server at #{@uri}. Detail: #{@detail}."
+      message = _("Unable to connect to the server at %{uri}. Detail: %{detail}.") % { uri: @uri, detail: @detail }
       super(message, original)
     end
 
@@ -59,10 +59,10 @@ Could not connect via HTTPS to #{@uri}
     #
     # @return [String] the multiline version of the error message
     def multiline
-      <<-EOS.chomp
-Could not connect to #{@uri}
+      _(<<-EOS).chomp % { uri: @uri, detail: @detail }
+Could not connect to %{uri}
   There was a network communications problem
-    The error we caught said '#{@detail}'
+    The error we caught said '%{detail}'
     Check your network connection and try again
       EOS
     end
@@ -89,7 +89,7 @@ Could not connect to #{@uri}
       rescue JSON::ParserError
       end
 
-      message = "Request to Puppet Forge failed. Detail: "
+      message = _("Request to Puppet Forge failed. Detail: ")
       message << @message << " / " if @message
       message << @response << "."
       super(message, original)
@@ -99,12 +99,12 @@ Could not connect to #{@uri}
     #
     # @return [String] the multiline version of the error message
     def multiline
-      message = <<-EOS.chomp
+      message = _(<<-EOS).chomp % { uri: @uri, response: @response }
 Request to Puppet Forge failed.
-  The server being queried was #{@uri}
-  The HTTP response we received was '#{@response}'
+  The server being queried was %{uri}
+  The HTTP response we received was '%{response}'
       EOS
-      message << "\n  The message we received said '#{@message}'" if @message
+      message << _("\n  The message we received said '%{message}'") % { message: @message } if @message
       message
     end
   end

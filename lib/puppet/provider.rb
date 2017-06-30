@@ -119,11 +119,13 @@ class Puppet::Provider
 
   # Convenience methods - see class method with the same name.
   # @return (see self.execfail)
+  # @deprecated
   def execfail(*args)
     Puppet::Util::Execution.execfail(*args)
   end
 
   # (see Puppet::Util::Execution.execfail)
+  # @deprecated
   def self.execfail(*args)
     Puppet::Util::Execution.execfail(*args)
   end

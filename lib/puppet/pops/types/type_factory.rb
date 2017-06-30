@@ -54,6 +54,21 @@ module TypeFactory
     PNumericType::DEFAULT
   end
 
+  # Produces the Init type
+  # @api public
+  def self.init(*args)
+    case args.size
+    when 0
+      PInitType::DEFAULT
+    when 1
+      type = args[0]
+      type.nil? ? PInitType::DEFAULT : PInitType.new(type, EMPTY_ARRAY)
+    else
+      type = args.shift
+      PInitType.new(type, args)
+    end
+  end
+
   # Produces the Iterable type
   # @api public
   #
@@ -85,7 +100,7 @@ module TypeFactory
       size_type_or_value.nil? ? PStringType::DEFAULT : PStringType.new(size_type_or_value)
     else
       if Puppet[:strict] != :off
-        Puppet.warn_once(:deprecatation, "TypeFactory#string_multi_args", "Passing more than one argument to TypeFactory#string is deprecated")
+        Puppet.warn_once('deprecations', "TypeFactory#string_multi_args", "Passing more than one argument to TypeFactory#string is deprecated")
       end
       deprecated_second_argument.size == 1 ? PStringType.new(deprecated_second_argument[0]) : PEnumType.new(*deprecated_second_argument)
     end
@@ -101,7 +116,11 @@ module TypeFactory
   # @api public
   #
   def self.optional(optional_type = nil)
-    POptionalType.new(type_of(optional_type.is_a?(String) ? string(optional_type) : type_of(optional_type)))
+    if optional_type.nil?
+      POptionalType::DEFAULT
+    else
+      POptionalType.new(type_of(optional_type.is_a?(String) ? string(optional_type) : type_of(optional_type)))
+    end
   end
 
   # Produces the Enum type, optionally with specific string values
@@ -252,11 +271,18 @@ module TypeFactory
     PPatternType.new(patterns)
   end
 
-  # Produces the Literal type
+  # Produces the Scalar type
   # @api public
   #
   def self.scalar
     PScalarType::DEFAULT
+  end
+
+  # Produces the ScalarData type
+  # @api public
+  #
+  def self.scalar_data
+    PScalarDataType::DEFAULT
   end
 
   # Produces a CallableType matching all callables
@@ -325,7 +351,14 @@ module TypeFactory
   # @api public
   #
   def self.data
-    PDataType::DEFAULT
+    @data_t ||= TypeParser.singleton.parse('Data', Loaders.static_loader)
+  end
+
+  # Produces the RichData type
+  # @api public
+  #
+  def self.rich_data
+    @rich_data_t ||= TypeParser.singleton.parse('RichData', Loaders.static_loader)
   end
 
   # Creates an instance of the Undef type
@@ -382,16 +415,16 @@ module TypeFactory
     end
   end
 
-  # Produces PHostClassType with a string class_name.  A PHostClassType with
-  # nil or empty name is compatible with any other PHostClassType.  A
-  # PHostClassType with a given name is only compatible with a PHostClassType
+  # Produces PClassType with a string class_name.  A PClassType with
+  # nil or empty name is compatible with any other PClassType.  A
+  # PClassType with a given name is only compatible with a PClassType
   # with the same name.
   #
   def self.host_class(class_name = nil)
     if class_name.nil?
-      PHostClassType::DEFAULT
+      PClassType::DEFAULT
     else
-      PHostClassType.new(class_name.sub(/^::/, ''))
+      PClassType.new(class_name.sub(/^::/, ''))
     end
   end
 
@@ -422,18 +455,32 @@ module TypeFactory
     PHashType.new(key_type, value_type, size_type)
   end
 
+  # Produces a type for Array[Any]
+  # @api public
+  #
+  def self.array_of_any
+    PArrayType::DEFAULT
+  end
+
   # Produces a type for Array[Data]
   # @api public
   #
   def self.array_of_data
-    PArrayType::DATA
+    @array_of_data_t = PArrayType.new(data)
   end
 
-  # Produces a type for Hash[Scalar, Data]
+  # Produces a type for Hash[Any,Any]
+  # @api public
+  #
+  def self.hash_of_any
+    PHashType::DEFAULT
+  end
+
+  # Produces a type for Hash[String,Data]
   # @api public
   #
   def self.hash_of_data
-    PHashType::DATA
+    @hash_of_data_t = PHashType.new(string, data)
   end
 
   # Produces a type for NotUndef[T]
@@ -454,7 +501,7 @@ module TypeFactory
   # @api public
   #
   def self.type_type(inst_type = nil)
-    inst_type.nil? ? PType::DEFAULT : PType.new(inst_type)
+    inst_type.nil? ? PTypeType::DEFAULT : PTypeType.new(inst_type)
   end
 
   # Produce a type corresponding to the class of given unless given is a

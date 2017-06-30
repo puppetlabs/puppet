@@ -74,7 +74,7 @@ DOC
   #
   # @return [OpenSSL::X509::Request] The generated CSR
   def generate(key, options = {})
-    Puppet.info "Creating a new SSL certificate request for #{name}"
+    Puppet.info _("Creating a new SSL certificate request for %{name}") % { name: name }
 
     # Support either an actual SSL key, or a Puppet key.
     key = key.content if key.is_a?(Puppet::SSL::Key)
@@ -100,10 +100,10 @@ DOC
     signer = Puppet::SSL::CertificateSigner.new
     signer.sign(csr, key)
 
-    raise Puppet::Error, "CSR sign verification failed; you need to clean the certificate request for #{name} on the server" unless csr.verify(key.public_key)
+    raise Puppet::Error, _("CSR sign verification failed; you need to clean the certificate request for %{name} on the server") % { name: name } unless csr.verify(key.public_key)
 
     @content = csr
-    Puppet.info "Certificate Request fingerprint (#{digest.name}): #{digest.to_hex}"
+    Puppet.info _("Certificate Request fingerprint (%{digest}): %{hex_digest}") % { digest: digest.name, hex_digest: digest.to_hex }
     @content
   end
 
@@ -146,7 +146,7 @@ DOC
   # hashes, with key/value pairs for the extension's oid, its value, and
   # optionally its critical state.
   def request_extensions
-    raise Puppet::Error, "CSR needs content to extract fields" unless @content
+    raise Puppet::Error, _("CSR needs content to extract fields") unless @content
 
     # Prefer the standard extReq, but accept the Microsoft specific version as
     # a fallback, if the standard version isn't found.
@@ -173,7 +173,7 @@ DOC
       when 3
         {"oid" => ext_values[0].value, "value" => value, "critical" => ext_values[1].value}
       else
-        raise Puppet::Error, "In #{attribute.oid}, expected extension record #{index} to have two or three items, but found #{ext_values.length}"
+        raise Puppet::Error, _("In %{attr}, expected extension record %{index} to have two or three items, but found %{count}") % { attr: attribute.oid, index: index, count: ext_values.length }
       end
     end
   end
@@ -224,7 +224,7 @@ DOC
     csr_attributes.each do |oid, value|
       begin
         if PRIVATE_CSR_ATTRIBUTES.include? oid
-          raise ArgumentError, "Cannot specify CSR attribute #{oid}: conflicts with internally used CSR attribute"
+          raise ArgumentError, _("Cannot specify CSR attribute %{oid}: conflicts with internally used CSR attribute") % { oid: oid }
         end
 
         encoded = OpenSSL::ASN1::PrintableString.new(value.to_s)
@@ -233,7 +233,7 @@ DOC
         csr.add_attribute(OpenSSL::X509::Attribute.new(oid, attr_set))
         Puppet.debug("Added csr attribute: #{oid} => #{attr_set.inspect}")
       rescue OpenSSL::X509::AttributeError => e
-        raise Puppet::Error, "Cannot create CSR with attribute #{oid}: #{e.message}", e.backtrace
+        raise Puppet::Error, _("Cannot create CSR with attribute %{oid}: %{message}") % { oid: oid, message: e.message }, e.backtrace
       end
     end
   end
@@ -252,13 +252,13 @@ DOC
       options[:extension_requests].each_pair do |oid, value|
         begin
           if PRIVATE_EXTENSIONS.include? oid
-            raise Puppet::Error, "Cannot specify CSR extension request #{oid}: conflicts with internally used extension request"
+            raise Puppet::Error, _("Cannot specify CSR extension request %{oid}: conflicts with internally used extension request") % { oid: oid }
           end
 
           ext = OpenSSL::X509::Extension.new(oid, OpenSSL::ASN1::UTF8String.new(value.to_s).to_der, false)
           extensions << ext
         rescue OpenSSL::X509::ExtensionError => e
-          raise Puppet::Error, "Cannot create CSR with extension request #{oid}: #{e.message}", e.backtrace
+          raise Puppet::Error, _("Cannot create CSR with extension request %{oid}: %{message}") % { oid: oid, message: e.message }, e.backtrace
         end
       end
     end
@@ -301,23 +301,23 @@ DOC
   def unpack_extension_request(attribute)
 
     unless attribute.value.is_a? OpenSSL::ASN1::Set
-      raise Puppet::Error, "In #{attribute.oid}, expected Set but found #{attribute.value.class}"
+      raise Puppet::Error, _("In %{attr}, expected Set but found %{klass}") % { attr: attribute.oid, klass: attribute.value.class }
     end
 
     unless attribute.value.value.is_a? Array
-      raise Puppet::Error, "In #{attribute.oid}, expected Set[Array] but found #{attribute.value.value.class}"
+      raise Puppet::Error, _("In %{attr}, expected Set[Array] but found %{klass}") % { attr: attribute.oid, klass: attribute.value.value.class }
     end
 
     unless attribute.value.value.size == 1
-      raise Puppet::Error, "In #{attribute.oid}, expected Set[Array] with one value but found #{attribute.value.value.size} elements"
+      raise Puppet::Error, _("In %{attr}, expected Set[Array] with one value but found %{count} elements") % { attr: attribute.oid, count: attribute.value.value.size }
     end
 
     unless attribute.value.value.first.is_a? OpenSSL::ASN1::Sequence
-      raise Puppet::Error, "In #{attribute.oid}, expected Set[Array[Sequence[...]]], but found #{extension.class}"
+      raise Puppet::Error, _("In %{attr}, expected Set[Array[Sequence[...]]], but found %{klass}") % { attr: attribute.oid, klass: extension.class }
     end
 
     unless attribute.value.value.first.value.is_a? Array
-      raise Puppet::Error, "In #{attribute.oid}, expected Set[Array[Sequence[Array[...]]]], but found #{extension.value.class}"
+      raise Puppet::Error, _("In %{attr}, expected Set[Array[Sequence[Array[...]]]], but found %{klass}") % { attr: attribute.oid, klass: extension.value.class }
     end
 
     extensions = attribute.value.value.first.value

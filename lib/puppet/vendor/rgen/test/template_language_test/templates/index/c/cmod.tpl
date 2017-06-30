@@ -1,1 +1,0 @@
-<% define 'cmod' do %>Module C is special !<% end %>

@@ -1,6 +1,6 @@
 ^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppet-master\[[0-9]+\]: (Handled resources in|Resource comparison took|Searched for (host|resources|resource params and tags) in) [0-9.]+ seconds
 ^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppet-master\[[0-9]+\]: Starting Puppet server version [.0-9]+$
-^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppet-master\[[0-9]+\]: Compiled catalog for [._[:alnum:]-]+ in [.0-9]+ seconds$
+^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppet-master\[[0-9]+\]: Compiled catalog for [._[:alnum:]-]+ in environment [_[:alnum:]]+ in [.[:digit:]]+ seconds$
 ^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppet-master\[[0-9]+\]: Caught TERM; shutting down$
 ^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppet-master\[[0-9]+\]: Shutting down$
 ^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppet-agent\[[0-9]+\]: Starting Puppet client version [.0-9]+$

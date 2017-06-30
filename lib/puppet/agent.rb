@@ -1,5 +1,6 @@
 require 'puppet/application'
 require 'puppet/error'
+require 'puppet/util/at_fork'
 
 # A general class for triggering a run of another
 # class.
@@ -31,7 +32,7 @@ class Puppet::Agent
   # Perform a run with our client.
   def run(client_options = {})
     if disabled?
-      Puppet.notice "Skipping run of #{client_class}; administratively disabled (Reason: '#{disable_message}');\nUse 'puppet agent --enable' to re-enable."
+      Puppet.notice _("Skipping run of %{client_class}; administratively disabled (Reason: '%{disable_message}');\nUse 'puppet agent --enable' to re-enable.") % { client_class: client_class, disable_message: disable_message }
       return
     end
 
@@ -39,21 +40,22 @@ class Puppet::Agent
     block_run = Puppet::Application.controlled_run do
       splay client_options.fetch :splay, Puppet[:splay]
       result = run_in_fork(should_fork) do
-        with_client(client_options[:transaction_uuid]) do |client|
+        with_client(client_options[:transaction_uuid], client_options[:job_id]) do |client|
           begin
             client_args = client_options.merge(:pluginsync => Puppet::Configurer.should_pluginsync?)
             lock { client.run(client_args) }
           rescue Puppet::LockError
-            Puppet.notice "Run of #{client_class} already in progress; skipping  (#{lockfile_path} exists)"
+            Puppet.notice _("Run of %{client_class} already in progress; skipping  (%{lockfile_path} exists)") % { client_class: client_class, lockfile_path: lockfile_path }
             return
           rescue StandardError => detail
-            Puppet.log_exception(detail, "Could not run #{client_class}: #{detail}")
+            Puppet.log_exception(detail, _("Could not run %{client_class}: %{detail}") % { client_class: client_class, detail: detail })
+            1
           end
         end
       end
       true
     end
-    Puppet.notice "Shutdown/restart in progress (#{Puppet::Application.run_status.inspect}); skipping run" unless block_run
+    Puppet.notice _("Shutdown/restart in progress (%{status}); skipping run") % { status: Puppet::Application.run_status.inspect } unless block_run
     result
   end
 
@@ -64,16 +66,26 @@ class Puppet::Agent
   def run_in_fork(forking = true)
     return yield unless forking or Puppet.features.windows?
 
-    child_pid = Kernel.fork do
-      $0 = "puppet agent: applying configuration"
-      begin
-        exit(yield)
-      rescue SystemExit
-        exit(-1)
-      rescue NoMemoryError
-        exit(-2)
+    atForkHandler = Puppet::Util::AtFork.get_handler
+
+    atForkHandler.prepare
+
+    begin
+      child_pid = Kernel.fork do
+        atForkHandler.child
+        $0 = _("puppet agent: applying configuration")
+        begin
+          exit(yield)
+        rescue SystemExit
+          exit(-1)
+        rescue NoMemoryError
+          exit(-2)
+        end
       end
+    ensure
+      atForkHandler.parent
     end
+
     exit_code = Process.waitpid2(child_pid)
     case exit_code[1].exitstatus
     when -1
@@ -88,11 +100,11 @@ class Puppet::Agent
 
   # Create and yield a client instance, keeping a reference
   # to it during the yield.
-  def with_client(transaction_uuid)
+  def with_client(transaction_uuid, job_id = nil)
     begin
-      @client = client_class.new(Puppet::Configurer::DownloaderFactory.new, transaction_uuid)
+      @client = client_class.new(Puppet::Configurer::DownloaderFactory.new, transaction_uuid, job_id)
     rescue StandardError => detail
-      Puppet.log_exception(detail, "Could not create instance of #{client_class}: #{detail}")
+      Puppet.log_exception(detail, _("Could not create instance of %{client_class}: %{detail}") % { client_class: client_class, detail: detail })
       return
     end
     yield @client

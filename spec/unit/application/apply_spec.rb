@@ -279,6 +279,15 @@ describe Puppet::Application::Apply do
         expect { @apply.main }.to exit_with 0
       end
 
+      it 'should make the Puppet::Pops::Loaders available when applying the compiled catalog' do
+        Puppet::Resource::Catalog.indirection.expects(:find).returns(@catalog)
+        @apply.expects(:apply_catalog).with(@catalog) do
+          fail('Loaders not found') unless Puppet.lookup(:loaders) { nil }.is_a?(Puppet::Pops::Loaders)
+          true
+        end.returns(0)
+        expect { @apply.main }.to exit_with 0
+      end
+
       it "should transform the catalog to ral" do
 
         @catalog.expects(:to_ral).returns(@catalog)
@@ -322,7 +331,7 @@ describe Puppet::Application::Apply do
 
       it "should save the last run summary" do
         Puppet[:noop] = false
-        report = Puppet::Transaction::Report.new("apply")
+        report = Puppet::Transaction::Report.new
         Puppet::Transaction::Report.stubs(:new).returns(report)
 
         Puppet::Configurer.any_instance.expects(:save_last_run_summary).with(report)
@@ -404,7 +413,7 @@ describe Puppet::Application::Apply do
       # We want this memoized, and to be able to adjust the content, so we
       # have to do it ourselves.
       def temporary_catalog(content = '"something"')
-        @tempfile = Tempfile.new('catalog.pson')
+        @tempfile = Tempfile.new('catalog.json')
         @tempfile.write(content)
         @tempfile.close
         @tempfile.path
@@ -413,7 +422,7 @@ describe Puppet::Application::Apply do
       it "should read the catalog in from disk if a file name is provided" do
         @apply.options[:catalog] = temporary_catalog
         catalog = Puppet::Resource::Catalog.new("testing", Puppet::Node::Environment::NONE)
-        Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'"something"').returns(catalog)
+        Puppet::Resource::Catalog.stubs(:convert_from).with(:json,'"something"').returns(catalog)
         @apply.apply
       end
 
@@ -421,7 +430,7 @@ describe Puppet::Application::Apply do
         @apply.options[:catalog] = "-"
         $stdin.expects(:read).returns '"something"'
         catalog = Puppet::Resource::Catalog.new("testing", Puppet::Node::Environment::NONE)
-        Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'"something"').returns(catalog)
+        Puppet::Resource::Catalog.stubs(:convert_from).with(:json,'"something"').returns(catalog)
         @apply.apply
       end
 
@@ -438,18 +447,10 @@ describe Puppet::Application::Apply do
         expect { @apply.apply }.to raise_error(Puppet::Error)
       end
 
-      it "should convert plain data structures into a catalog if deserialization does not do so" do
-        @apply.options[:catalog] = temporary_catalog
-        Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'"something"').returns({:foo => "bar"})
-        catalog = Puppet::Resource::Catalog.new("testing", Puppet::Node::Environment::NONE)
-        Puppet::Resource::Catalog.expects(:pson_create).with({:foo => "bar"}).returns(catalog)
-        @apply.apply
-      end
-
       it "should convert the catalog to a RAL catalog and use a Configurer instance to apply it" do
         @apply.options[:catalog] = temporary_catalog
         catalog = Puppet::Resource::Catalog.new("testing", Puppet::Node::Environment::NONE)
-        Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'"something"').returns catalog
+        Puppet::Resource::Catalog.stubs(:convert_from).with(:json,'"something"').returns catalog
         catalog.expects(:to_ral).returns "mycatalog"
 
         configurer = stub 'configurer'
@@ -458,6 +459,20 @@ describe Puppet::Application::Apply do
           with(:catalog => "mycatalog", :pluginsync => false)
 
         @apply.apply
+      end
+
+      it 'should make the Puppet::Pops::Loaders available when applying a catalog' do
+        @apply.options[:catalog] = temporary_catalog
+        catalog = Puppet::Resource::Catalog.new("testing", Puppet::Node::Environment::NONE)
+        @apply.expects(:read_catalog).with('something') do
+          fail('Loaders not found') unless Puppet.lookup(:loaders) { nil }.is_a?(Puppet::Pops::Loaders)
+          true
+        end.returns(catalog)
+        @apply.expects(:apply_catalog).with(catalog) do
+          fail('Loaders not found') unless Puppet.lookup(:loaders) { nil }.is_a?(Puppet::Pops::Loaders)
+          true
+        end
+        expect { @apply.apply }.not_to raise_error
       end
     end
   end

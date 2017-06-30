@@ -612,6 +612,19 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
         resource.write(source)
       end
 
+      it 'should request binary content' do
+        response.stubs(:code).returns('200')
+        Puppet::Network::HttpPool.stubs(:http_instance).returns(conn)
+        source.stubs(:metadata).returns stub_everything('metadata', :source => 'puppet:///test/foo bar', :ftype => 'file')
+
+        conn.unstub(:request_get)
+        conn.expects(:request_get).with do |_, options|
+          expect(options).to include('Accept' => 'application/octet-stream')
+        end.yields(response)
+
+        resource.write(source)
+      end
+
       describe 'when handling file_content responses' do
         before do
           File.open(filename, 'w') {|f| f.write "initial file content"}

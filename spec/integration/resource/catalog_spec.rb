@@ -2,10 +2,6 @@
 require 'spec_helper'
 
 describe Puppet::Resource::Catalog do
-  it "should support pson" do
-    expect(Puppet::Resource::Catalog.supported_formats).to be_include(:pson)
-  end
-
   describe "when using the indirector" do
     before do
       # This is so the tests work w/out networking.

@@ -6,35 +6,35 @@ class TypeDefinitionInstantiator
   def self.create(loader, typed_name, source_ref, pp_code_string)
     # parse and validate
     parser = Parser::EvaluatingParser.new()
-    model = parser.parse_string(pp_code_string, source_ref).model
+    model = parser.parse_string(pp_code_string, source_ref)
     # Only one type is allowed (and no other definitions)
 
     name = typed_name.name
     case model.definitions.size
     when 0
-      raise ArgumentError, "The code loaded from #{source_ref} does not define the type '#{name}' - it is empty."
+      raise ArgumentError, _("The code loaded from %{source_ref} does not define the type '%{name}' - it is empty.") % { source_ref: source_ref, name: name }
     when 1
       # ok
     else
       raise ArgumentError,
-        "The code loaded from #{source_ref} must contain only the type '#{name}' - it has additional definitions."
+        _("The code loaded from %{source_ref} must contain only the type '%{name}' - it has additional definitions.") % { source_ref: source_ref, name: name }
     end
     type_definition = model.definitions[0]
 
     unless type_definition.is_a?(Model::TypeAlias) || type_definition.is_a?(Model::TypeDefinition)
       raise ArgumentError,
-        "The code loaded from #{source_ref} does not define the type '#{name}' - no type alias or type definition found."
+        _("The code loaded from %{source_ref} does not define the type '%{name}' - no type alias or type definition found.") % { source_ref: source_ref, name: name }
     end
 
     actual_name = type_definition.name
     unless name == actual_name.downcase
       raise ArgumentError,
-        "The code loaded from #{source_ref} produced type with the wrong name, expected '#{name}', actual '#{actual_name}'"
+        _("The code loaded from %{source_ref} produced type with the wrong name, expected '%{name}', actual '%{actual_name}'") % { source_ref: source_ref, name: name, actual_name: actual_name }
     end
 
     unless model.body == type_definition
       raise ArgumentError,
-        "The code loaded from #{source_ref} contains additional logic - can only contain the type '#{name}'"
+        _("The code loaded from %{source_ref} contains additional logic - can only contain the type '%{name}'") % { source_ref: source_ref, name: name }
     end
 
     # Adapt the type definition with loader - this is used from logic contained in its body to find the
@@ -51,7 +51,7 @@ class TypeDefinitionInstantiator
     loader.set_entry(
       typed_name,
       type,
-      Adapters::SourcePosAdapter.adapt(type_definition).to_uri)
+      type_definition.locator.to_uri(type_definition))
     type
   end
 

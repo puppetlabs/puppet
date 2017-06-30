@@ -161,7 +161,7 @@ describe Puppet::Parameter do
     end
 
     it 'should format numbers appropriately' do
-      expect(described_class.format_value_for_display(1)).to eq("'1'")
+      expect(described_class.format_value_for_display(1)).to eq('1')
     end
 
     it 'should format symbols appropriately' do
@@ -169,25 +169,93 @@ describe Puppet::Parameter do
     end
 
     it 'should format arrays appropriately' do
-      expect(described_class.format_value_for_display([1, 'foo', :bar])).to eq("['1', 'foo', 'bar']")
+      expect(described_class.format_value_for_display([1, 'foo', :bar])).to eq("[1, 'foo', 'bar']")
     end
 
     it 'should format hashes appropriately' do
       expect(described_class.format_value_for_display(
         {1 => 'foo', :bar => 2, 'baz' => :qux}
-      )).to eq("{'1' => 'foo', 'bar' => '2', 'baz' => 'qux'}")
+      )).to eq(<<-RUBY.unindent.sub(/\n$/, ''))
+        {
+          1 => 'foo',
+          'bar' => 2,
+          'baz' => 'qux'
+        }
+      RUBY
     end
 
     it 'should format arrays with nested data appropriately' do
       expect(described_class.format_value_for_display(
         [1, 'foo', :bar, [1, 2, 3], {1 => 2, 3 => 4}]
-      )).to eq("['1', 'foo', 'bar', ['1', '2', '3'], {'1' => '2', '3' => '4'}]")
+      )).to eq(<<-RUBY.unindent.sub(/\n$/, ''))
+        [1, 'foo', 'bar',
+          [1, 2, 3],
+          {
+            1 => 2,
+            3 => 4
+          }]
+      RUBY
     end
 
     it 'should format hashes with nested data appropriately' do
       expect(described_class.format_value_for_display(
         {1 => 'foo', :bar => [2, 3, 4], 'baz' => {:qux => 1, :quux => 'two'}}
-      )).to eq("{'1' => 'foo', 'bar' => ['2', '3', '4'], 'baz' => {'quux' => 'two', 'qux' => '1'}}")
+      )).to eq(<<-RUBY.unindent.sub(/\n$/, ''))
+        {
+          1 => 'foo',
+          'bar' => [2, 3, 4],
+          'baz' => {
+            'qux' => 1,
+            'quux' => 'two'
+          }
+        }
+       RUBY
+    end
+
+    it 'should format hashes with nested Objects appropriately' do
+      tf = Puppet::Pops::Types::TypeFactory
+      type = tf.object({'name' => 'MyType', 'attributes' => { 'qux' => tf.integer, 'quux' => tf.string }})
+      expect(described_class.format_value_for_display(
+        {1 => 'foo', 'bar' => type.create(1, 'one'), 'baz' => type.create(2, 'two')}
+      )).to eq(<<-RUBY.unindent.sub(/\n$/, ''))
+        {
+          1 => 'foo',
+          'bar' => MyType({
+            'qux' => 1,
+            'quux' => 'one'
+          }),
+          'baz' => MyType({
+            'qux' => 2,
+            'quux' => 'two'
+          })
+        }
+      RUBY
+    end
+
+    it 'should format Objects with nested Objects appropriately' do
+      tf = Puppet::Pops::Types::TypeFactory
+      inner_type = tf.object({'name' => 'MyInnerType', 'attributes' => { 'qux' => tf.integer, 'quux' => tf.string }})
+      outer_type = tf.object({'name' => 'MyOuterType', 'attributes' => { 'x' => tf.string, 'inner' => inner_type }})
+      expect(described_class.format_value_for_display(
+        {'bar' => outer_type.create('a', inner_type.create(1, 'one')), 'baz' => outer_type.create('b', inner_type.create(2, 'two'))}
+      )).to eq(<<-RUBY.unindent.sub(/\n$/, ''))
+        {
+          'bar' => MyOuterType({
+            'x' => 'a',
+            'inner' => MyInnerType({
+              'qux' => 1,
+              'quux' => 'one'
+            })
+          }),
+          'baz' => MyOuterType({
+            'x' => 'b',
+            'inner' => MyInnerType({
+              'qux' => 2,
+              'quux' => 'two'
+            })
+          })
+        }
+      RUBY
     end
   end
 

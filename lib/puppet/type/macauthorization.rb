@@ -31,7 +31,7 @@ Puppet::Type.newtype(:macauthorization) do
   def munge_integer(value)
       Integer(value)
   rescue ArgumentError
-      fail("munge_integer only takes integers")
+      fail _("munge_integer only takes integers")
   end
 
   newparam(:name) do

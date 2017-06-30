@@ -14,42 +14,7 @@ shared_examples_for "Indirection Delegator" do
     @indirection.send(@method, "mystuff", :one => :two)
   end
 
-  it "should let the :select_terminus method choose the terminus using the created request if the :select_terminus method is available" do
-    # Define the method, so our respond_to? hook matches.
-    class << @indirection
-      def select_terminus(request)
-      end
-    end
-
-    request = Puppet::Indirector::Request.new(:indirection, :find, "me", nil)
-
-    @indirection.stubs(:request).returns request
-
-    @indirection.expects(:select_terminus).with(request).returns :test_terminus
-
-    @indirection.stubs(:check_authorization)
-    @terminus.expects(@method)
-
-    @indirection.send(@method, "me")
-  end
-
-  it "should fail if the :select_terminus hook does not return a terminus name" do
-    # Define the method, so our respond_to? hook matches.
-    class << @indirection
-      def select_terminus(request)
-      end
-    end
-
-    request = Puppet::Indirector::Request.new(:indirection, :find, "me", nil)
-
-    @indirection.stubs(:request).returns request
-
-    @indirection.expects(:select_terminus).with(request).returns nil
-
-    expect { @indirection.send(@method, "me") }.to raise_error(ArgumentError)
-  end
-
-  it "should choose the terminus returned by the :terminus_class method if no :select_terminus method is available" do
+  it "should choose the terminus returned by the :terminus_class" do
     @indirection.expects(:terminus_class).returns :test_terminus
 
     @terminus.expects(@method)

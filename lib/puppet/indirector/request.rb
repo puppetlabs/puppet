@@ -41,14 +41,6 @@ class Puppet::Indirector::Request
     end
   end
 
-  # @api private
-  # @deprecated used only internally to be removed in Puppet 5
-  def escaped_key
-    # Puppet::Network::HTTP::API::IndirectedRoutes is the only caller to escaped_key
-    # and these fragments only appear in the path part of a URI
-    Puppet::Util.uri_encode(key)
-  end
-
   # LAK:NOTE This is a messy interface to the cache, and it's only
   # used by the Configurer class.  I decided it was better to implement
   # it now and refactor later, when we have a better design, than
@@ -101,7 +93,7 @@ class Puppet::Indirector::Request
   end
 
   def model
-    raise ArgumentError, "Could not find indirection '#{indirection_name}'" unless i = indirection
+    raise ArgumentError, _("Could not find indirection '%{indirection}'") % { indirection: indirection_name } unless i = indirection
     i.model
   end
 
@@ -137,10 +129,10 @@ class Puppet::Indirector::Request
       case value
       when nil
         params
-      when true, false, String, Symbol, Fixnum, Bignum, Float
+      when true, false, String, Symbol, Integer, Float
         params << [key, value]
       else
-        raise ArgumentError, "HTTP REST queries cannot handle values of type '#{value.class}'"
+        raise ArgumentError, _("HTTP REST queries cannot handle values of type '%{klass}'") % { klass: value.class }
       end
     end
   end
@@ -195,7 +187,7 @@ class Puppet::Indirector::Request
           self.port   = srv_port
           return yield(self)
         rescue SystemCallError => e
-          Puppet.warning "Error connecting to #{srv_server}:#{srv_port}: #{e.message}"
+          Puppet.warning _("Error connecting to %{srv_server}:%{srv_port}: %{message}") % { srv_server: srv_server, srv_port: srv_port, message: e.message }
         end
       end
     end
@@ -250,7 +242,7 @@ class Puppet::Indirector::Request
       # calling uri_encode for UTF-8 characters will % escape them and keep them UTF-8
       uri = URI.parse(Puppet::Util.uri_encode(key))
     rescue => detail
-      raise ArgumentError, "Could not understand URL #{key}: #{detail}", detail.backtrace
+      raise ArgumentError, _("Could not understand URL %{key}: %{detail}") % { key: key, detail: detail }, detail.backtrace
     end
 
     # Just short-circuit these to full paths

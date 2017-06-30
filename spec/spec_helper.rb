@@ -84,17 +84,6 @@ RSpec.configure do |config|
   oldtmpdir = Puppet::FileSystem.expand_path(Dir.tmpdir())
   ENV['TMPDIR'] = tmpdir
 
-  if Puppet::Util::Platform.windows?
-    config.output_stream = $stdout
-    config.error_stream = $stderr
-
-    config.formatters.each do |f|
-      if not f.instance_variable_get(:@output).kind_of?(::File)
-        f.instance_variable_set(:@output, $stdout)
-      end
-    end
-  end
-
   Puppet::Test::TestHelper.initialize
 
   config.before :all do

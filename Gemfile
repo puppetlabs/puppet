@@ -1,7 +1,5 @@
 source ENV['GEM_SOURCE'] || "https://rubygems.org"
 
-gemspec
-
 def location_for(place, fake_version = nil)
   if place =~ /^(git[:@][^#]*)#(.*)/
     [fake_version, { :git => $1, :branch => $2, :require => false }].compact
@@ -24,17 +22,16 @@ platforms :ruby do
   #gem 'ruby-augeas', :group => :development
 end
 
-# override .gemspec deps - may issue warning depending on Bundler version
-gem "facter", *location_for(ENV['FACTER_LOCATION']) if ENV.has_key?('FACTER_LOCATION')
-gem "hiera", *location_for(ENV['HIERA_LOCATION']) if ENV.has_key?('HIERA_LOCATION')
+gem "puppet", :path => File.dirname(__FILE__), :require => false
+gem "facter", *location_for(ENV['FACTER_LOCATION'] || ['> 2.0', '< 4'])
+gem "hiera", *location_for(ENV['HIERA_LOCATION'] || ['>= 3.2.1', '< 4'])
 # PUP-7115 - return to a gem dependency in Puppet 5
 # gem "semantic_puppet", *location_for(ENV['SEMANTIC_PUPPET_LOCATION'] || ['>= 0.1.3', '< 2'])
+# i18n support (gettext-setup and dependencies)
+gem 'gettext-setup', '>= 0.10', '< 1.0', :require => false
+gem 'locale', '~> 2.1', :require => false
 
 group(:development, :test) do
-  # rake is in .gemspec as a development dependency but cannot
-  # be removed here *yet* due to TravisCI / AppVeyor which call:
-  # bundle install --without development
-  # PUP-7433 describes work necessary to restructure this
   gem "rake", "10.1.1", :require => false
   gem "rspec", "~> 3.1", :require => false
   gem "rspec-its", "~> 1.1", :require => false
@@ -54,6 +51,8 @@ group(:development, :test) do
   gem "json-schema", "2.1.1", :require => false, :platforms => [:ruby, :jruby]
 
   gem "rubocop", "~> 0.39.0", :platforms => [:ruby]
+  # pin rainbow gem as 2.2.1 requires rubygems 2.6.9+ and (donotwant)
+  gem "rainbow", "< 2.2.1", :platforms => [:ruby]
 
   gem 'rdoc', "~> 4.1", :platforms => [:ruby]
   gem 'yard'
@@ -63,13 +62,12 @@ group(:development, :test) do
   gem 'addressable', '< 2.5.0'
   gem 'webmock', '~> 1.24'
   gem 'vcr', '~> 2.9'
-  gem "hocon", :require => false
   gem "hiera-eyaml", :require => false
 end
 
 group(:development) do
   if RUBY_PLATFORM != 'java'
-    gem 'ruby-prof', :require => false
+    gem 'ruby-prof', '>= 0.16.0', :require => false
   end
 end
 
@@ -79,6 +77,28 @@ group(:extra) do
   gem "msgpack", :require => false
 end
 
+require 'yaml'
+data = YAML.load_file(File.join(File.dirname(__FILE__), 'ext', 'project_data.yaml'))
+bundle_platforms = data['bundle_platforms']
+x64_platform = Gem::Platform.local.cpu == 'x64'
+data['gem_platform_dependencies'].each_pair do |gem_platform, info|
+  next if gem_platform == 'x86-mingw32' && x64_platform
+  next if gem_platform == 'x64-mingw32' && !x64_platform
+  if bundle_deps = info['gem_runtime_dependencies']
+    bundle_platform = bundle_platforms[gem_platform] or raise "Missing bundle_platform"
+    if bundle_platform == "all"
+      bundle_deps.each_pair do |name, version|
+        gem(name, version, :require => false)
+      end
+    else
+      platform(bundle_platform.intern) do
+        bundle_deps.each_pair do |name, version|
+          gem(name, version, :require => false)
+        end
+      end
+    end
+  end
+end
 
 if File.exists? "#{__FILE__}.local"
   eval(File.read("#{__FILE__}.local"), binding)

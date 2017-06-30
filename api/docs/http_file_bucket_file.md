@@ -50,7 +50,7 @@ GET, HEAD, PUT
 
 ### Supported Response Formats
 
-`binary` or `application/octet-stream` (a string of the raw file contents)
+`application/octet-stream`
 
 ### Parameters
 
@@ -73,7 +73,7 @@ None
 #### Retrieving a file
 
     > GET /puppet/v3/file_bucket_file/md5/4949e56d376cc80ce5387e8e89a75396//home/user/myfile.txt?environment=production HTTP/1.1
-    > Accept: binary
+    > Accept: application/octet-stream
 
 
     < HTTP/1.1 200 OK
@@ -84,7 +84,7 @@ None
 #### Wrong file name
 
     > GET /puppet/v3/file_bucket_file/md5/4949e56d376cc80ce5387e8e89a75396//home/user/wrong_name?environment=production HTTP/1.1
-    > Accept: binary
+    > Accept: application/octet-stream
 
 
     < HTTP/1.1 404 Not Found

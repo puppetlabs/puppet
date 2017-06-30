@@ -11,24 +11,9 @@ module DataProvider
   end
 
   def self.register_types(loader)
-    (@key_type, @value_type) = Pcore::register_aliases({
-      # The Pcore type for all keys and subkeys in a data hash.
-      'Puppet::LookupKey' => 'Variant[String,Numeric]',
-
-      # The Pcore type for all values and sub-values in a data hash. The
-      # type is self-recursive to enforce the same constraint on values contained
-      # in arrays and hashes
-      'Puppet::LookupValue' => <<-PUPPET
-        Variant[
-          Scalar,
-          Undef,
-          Sensitive,
-          Type,
-          Hash[Puppet::LookupKey, Puppet::LookupValue],
-          Array[Puppet::LookupValue]
-        ]
-        PUPPET
-    }, Pcore::RUNTIME_NAME_AUTHORITY, loader)
+    tp = Types::TypeParser.singleton
+    @key_type = tp.parse('RichDataKey', loader)
+    @value_type = tp.parse('RichData', loader)
   end
 
   # Performs a lookup with an endless recursion check.
