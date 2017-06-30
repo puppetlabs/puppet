@@ -17,11 +17,12 @@ agents.each do |agent|
 
   step "(setup) create an authorized key in the #{auth_keys} file"
   on(agent, "echo '' >> #{auth_keys} && echo 'ssh-rsa mykey #{name}' >> #{auth_keys}")
+  on(agent, "chown $LOGNAME #{auth_keys}")
 
   #------- TESTS -------#
   step "update an authorized key entry with puppet (present)"
   args = ['ensure=present',
-          "user='root'",
+          "user=$LOGNAME",
           "type='rsa'",
           "key='mynewshinykey'",
          ]
