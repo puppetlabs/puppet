@@ -819,4 +819,17 @@ describe Puppet::Module do
       }
     ])
   end
+
+  context 'when parsing VersionRange' do
+    let(:logs) { [] }
+    let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
+
+    it 'can parse a strict range' do
+      expect(Puppet::Module.parse_range('>=1.0.0', true).include?(SemanticPuppet::Version.parse('1.0.1-rc1'))).to be_falsey
+    end
+
+    it 'can parse a non-strict range' do
+      expect(Puppet::Module.parse_range('>=1.0.0', false).include?(SemanticPuppet::Version.parse('1.0.1-rc1'))).to be_truthy
+    end
+  end
 end

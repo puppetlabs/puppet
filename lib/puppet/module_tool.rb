@@ -174,7 +174,7 @@ module Puppet
       range = dep['version_requirement'] || '>= 0.0.0'
 
       begin
-        parsed_range = SemanticPuppet::VersionRange.parse(range, strict_semver)
+        parsed_range = Module.parse_range(range, strict_semver)
       rescue ArgumentError => e
         Puppet.debug "Error in #{where} parsing dependency #{dep_name} (#{e.message}); using empty range."
         parsed_range = SemanticPuppet::VersionRange::EMPTY_RANGE

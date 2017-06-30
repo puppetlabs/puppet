@@ -52,6 +52,11 @@ class Puppet::Module
     return false
   end
 
+  # @api private
+  def self.parse_range(range, strict)
+    SemanticPuppet::VersionRange.parse(range, strict)
+  end
+
   attr_reader :name, :environment, :path, :metadata
   attr_writer :environment
 
@@ -328,7 +333,7 @@ class Puppet::Module
 
       if version_string
         begin
-          required_version_semver_range = SemanticPuppet::VersionRange.parse(version_string, @strict_semver)
+          required_version_semver_range = self.class.parse_range(version_string, @strict_semver)
           actual_version_semver = SemanticPuppet::Version.parse(dep_mod.version)
         rescue ArgumentError
           error_details[:reason] = :non_semantic_version
