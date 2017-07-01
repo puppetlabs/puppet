@@ -216,7 +216,7 @@ module Puppet::ModuleTool
 
       private
       def module_repository
-        @repo ||= Puppet::Forge.new
+        @repo ||= Puppet::Forge.new(Puppet[:module_repository], @strict_semver)
       end
 
       def installed_modules_source

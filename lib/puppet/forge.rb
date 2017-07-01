@@ -19,9 +19,10 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
 
   attr_reader :host, :repository
 
-  def initialize(host = Puppet[:module_repository])
+  def initialize(host = Puppet[:module_repository], strict_semver = true)
     @host = host
     @repository = Puppet::Forge::Repository.new(host, USER_AGENT)
+    @strict_semver = strict_semver
   end
 
   # Return a list of module metadata hashes that match the search query.
@@ -216,7 +217,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
     l = list.map do |release|
       metadata = release['metadata']
       begin
-        ModuleRelease.new(self, release)
+        ModuleRelease.new(self, release, @strict_semver)
       rescue ArgumentError => e
         Puppet.warning _("Cannot consider release %{name}-%{version}: %{error}") % { name: metadata['name'], version: metadata['version'], error: e }
         false
