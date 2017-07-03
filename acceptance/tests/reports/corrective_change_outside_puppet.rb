@@ -4,11 +4,15 @@ extend Puppet::Acceptance::EnvironmentUtils
 
 test_name "C98093 - a resource changed outside of Puppet will be reported as a corrective change" do
 
-  tag 'broken:images'
+  tag 'audit:medium',
+      'audit:integration',
+      'audit:refactor',    # Uses a server currently, but is testing agent report
+      'broken:images'
 
   test_file_name = File.basename(__FILE__, '.*')
   tmp_environment   = mk_tmp_environment_with_teardown(master, test_file_name)
   tmp_file = {}
+
 
   agents.each do |agent|
     tmp_file[agent.hostname] = agent.tmpfile(tmp_environment)

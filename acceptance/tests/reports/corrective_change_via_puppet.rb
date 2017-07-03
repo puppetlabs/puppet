@@ -4,11 +4,15 @@ extend Puppet::Acceptance::EnvironmentUtils
 
 test_name "C98094 - a resource changed via Puppet manifest will not be reported as a corrective change" do
 
-  tag 'broken:images'
+  tag 'audit:medium',
+      'audit:integration',
+      'audit:refactor',    # Uses a server currently, but is testing agent report
+      'broken:images'
 
   test_file_name = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, test_file_name)
   tmp_file = {}
+
   original_test_data = 'this is my original important data'
   modified_test_data = 'this is my modified important data'
 
