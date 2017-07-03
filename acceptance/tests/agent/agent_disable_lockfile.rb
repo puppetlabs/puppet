@@ -1,6 +1,12 @@
 test_name "the agent --disable/--enable functionality should manage the agent lockfile properly"
 confine :except, :platform => 'cisco_nexus' #See BKR-749
 
+tag 'audit:integration', # lockfile uses the standard `vardir` location to store/query lockfile.
+                         # The validation of the `vardir` at the OS level
+                         # should be accomplished in another test.
+    'audit:medium',
+    'audit:refactor'     # This test should not require a master. Remove the use of `with_puppet_running_on`.
+
 #
 # This test is intended to ensure that puppet agent --enable/--disable
 #  work properly, both in terms of complying with our public "API" around
