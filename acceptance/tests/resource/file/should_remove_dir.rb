@@ -1,4 +1,7 @@
 test_name "should remove directory, but force required"
+tag 'audit:high',
+    'audit:refactor',   # Use block style `test_name`
+    'audit:acceptance'
 
 agents.each do |agent|
   target = agent.tmpdir("delete-dir")

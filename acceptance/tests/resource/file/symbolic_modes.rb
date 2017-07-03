@@ -3,6 +3,8 @@ test_name 'file resource: symbolic modes' do
   confine :except, :platform => /^solaris-10/
   confine :except, :platform => /^windows/
   confine :to, {}, hosts.select {|host| !host[:roles].include?('master')}
+  tag 'audit:high',
+      'audit:acceptance'
 
   require 'puppet/acceptance/temp_file_utils'
   extend Puppet::Acceptance::TempFileUtils
