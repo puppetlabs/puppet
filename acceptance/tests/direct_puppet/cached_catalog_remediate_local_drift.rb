@@ -3,6 +3,12 @@ extend Puppet::Acceptance::StaticCatalogUtils
 
 test_name "PUP-5122: Puppet remediates local drift using code_id and content_uri" do
 
+  tag 'audit:medium',
+      'audit:acceptance',
+      'audit:refactor',  # use mk_tmp_environment_with_teardown helper for environment construction
+      'server'
+
+
   skip_test 'requires puppetserver installation' if @options[:type] != 'aio'
 
   basedir = master.tmpdir(File.basename(__FILE__, '.*'))

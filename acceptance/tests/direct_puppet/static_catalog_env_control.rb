@@ -1,5 +1,10 @@
 test_name "Environment control of static catalogs"
 
+tag 'audit:medium',
+    'audit:acceptance',
+    'audit:refactor',  # use mk_tmp_environment_with_teardown helper for environment construction
+    'server'
+
 skip_test 'requires puppetserver to test static catalogs' if @options[:type] != 'aio'
 
 require 'json'
