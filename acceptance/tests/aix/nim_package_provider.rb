@@ -1,5 +1,8 @@
 test_name "NIM package provider should work correctly"
 
+tag 'audit:medium',
+    'audit:acceptance'  # OS specific by definition
+
 confine :to, :platform => "aix"
 
 # NOTE: This test is duplicated in the pe_acceptance_tests repo
