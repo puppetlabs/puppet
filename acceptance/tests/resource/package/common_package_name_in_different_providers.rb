@@ -3,6 +3,10 @@ test_name "ticket 1073: common package name in two different providers should be
 confine :to, {:platform => /(?:centos|el-|fedora)/}, agents
 confine :except, :platform => /centos-4|el-4/ # PUP-5227
 
+tag 'audit:medium',
+    'audit:refactor',  # Use block style `test_name`
+    'audit:acceptance' # Uses a provider that depends on AIO packaging
+
 require 'puppet/acceptance/rpm_util'
 extend Puppet::Acceptance::RpmUtils
 require 'puppet/acceptance/common_utils'
