@@ -1,5 +1,9 @@
 test_name "node_name_fact should be used to determine the node name for puppet apply"
 
+tag 'audit:medium',
+    'audit:integration',  # Ruby level integration tests already exist. This acceptance test can be deleted.
+    'audit:delete'
+
 success_message = "node_name_fact setting was correctly used to determine the node name"
 
 node_names = []
