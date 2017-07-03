@@ -1,5 +1,8 @@
 test_name "should query all groups"
 confine :except, :platform => /^cisco_/ # See PUP-5828
+tag 'audit:high',
+    'audit:refactor',   # Use block style `test_name`
+    'audit:integration' # Does not modify system running test
 
 agents.each do |agent|
   step "query natively"
