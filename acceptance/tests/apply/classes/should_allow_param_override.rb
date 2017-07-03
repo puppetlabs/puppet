@@ -1,5 +1,9 @@
 test_name "should allow param override"
 
+tag 'audit:high',
+    'audit:unit',  # This should be covered at the unit layer.
+    'audit:delete'
+
 manifest = %q{
 class parent {
   notify { 'msg':

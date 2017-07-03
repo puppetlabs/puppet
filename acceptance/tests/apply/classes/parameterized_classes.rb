@@ -1,5 +1,9 @@
 test_name "parametrized classes"
 
+tag 'audit:high',
+    'audit:unit',  # This should be covered at the unit layer.
+    'audit:delete'
+
 ########################################################################
 step "should allow param classes"
 manifest = %q{
