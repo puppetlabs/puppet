@@ -4,6 +4,10 @@ extend Puppet::Acceptance::EnvironmentUtils
 require 'puppet/acceptance/classifier_utils'
 extend Puppet::Acceptance::ClassifierUtils
 
+tag 'audit:high',
+    'audit:refactor',
+    'audit:delete'  # These validations are covered by other tests.
+
 classify_nodes_as_agent_specified_if_classifer_present
 
 step "setup environments"

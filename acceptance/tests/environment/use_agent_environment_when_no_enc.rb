@@ -1,5 +1,10 @@
 test_name "Agent should use agent environment if there is no enc-specified environment"
 
+tag 'audit:medium',
+    'audit:integration',
+    'audit:refactor',  # This can be combined with use_agent_environment_when_enc_doesnt_specify test
+    'server'
+
 testdir = create_tmpdir_for_user master, 'use_agent_env'
 
 apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)

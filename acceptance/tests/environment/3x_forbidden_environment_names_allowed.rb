@@ -1,5 +1,11 @@
 test_name 'PUP-4413 3x forbidden environment names should be allowed in 4x'
 
+tag 'audit:medium',
+    'audit:unit',  # This should be covered at the unit layer.
+    'audit:refactor',
+    'audit:delete'
+
+
 step 'setup environments'
 
 testdir = create_tmpdir_for_user(master, 'forbidden_env')

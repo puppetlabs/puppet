@@ -2,6 +2,10 @@ test_name "Master should produce error if enc specifies a nonexistent environmen
 require 'puppet/acceptance/classifier_utils.rb'
 extend Puppet::Acceptance::ClassifierUtils
 
+tag 'audit:medium',
+    'audit:unit',
+    'server'
+
 testdir = create_tmpdir_for_user master, 'nonexistent_env'
 
 apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
