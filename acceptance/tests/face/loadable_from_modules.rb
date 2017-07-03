@@ -4,6 +4,11 @@ test_name "Exercise loading a face from a module"
 confine :except, :platform => 'windows'
 confine :except, :platform => /centos-4|el-4/ # PUP-5226
 
+tag 'audit:medium',
+    'audit:acceptance',    # This has been OS sensitive.
+    'audit:refactor'       # Remove the confine against windows and refactor to
+                           # accommodate the Windows platform.
+
 require 'puppet/acceptance/temp_file_utils'
 extend Puppet::Acceptance::TempFileUtils
 initialize_temp_dirs
