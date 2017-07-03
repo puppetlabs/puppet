@@ -1,4 +1,9 @@
 test_name "PUP-5872: catalog_uuid correlates catalogs with reports" do
+
+  tag 'audit:medium',
+      'audit:acceptance',
+      'server'
+
   master_reportdir = create_tmpdir_for_user(master, 'reportdir')
 
   def remove_reports_on_master(master_reportdir, agent_node_name)
