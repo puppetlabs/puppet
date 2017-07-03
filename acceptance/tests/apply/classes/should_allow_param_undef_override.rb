@@ -1,5 +1,8 @@
 test_name "should allow overriding a parameter to undef in inheritence"
 
+tag 'audit:high',
+    'audit:unit'   # This should be covered at the unit layer.
+
 agents.each do |agent|
   dir = agent.tmpdir('class_undef_override')
   out = File.join(dir, 'class_undef_override_out')
