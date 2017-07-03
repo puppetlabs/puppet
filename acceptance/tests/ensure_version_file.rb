@@ -1,6 +1,10 @@
 require 'puppet/acceptance/temp_file_utils'
 extend Puppet::Acceptance::TempFileUtils
 
+tag 'audit:high',
+    'audit:acceptance',
+    'audit:refactor'  # This should be folded into `ensure_puppet-agent_paths` test
+
 # ensure a version file is created according to the puppet-agent path specification:
 # https://github.com/puppetlabs/puppet-specifications/blob/master/file_paths.md
 

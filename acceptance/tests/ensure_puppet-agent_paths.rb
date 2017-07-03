@@ -2,6 +2,11 @@
 # https://github.com/puppetlabs/puppet-specifications/blob/master/file_paths.md
 test_name 'PUP-4033: Ensure aio path spec is honored'
 
+tag 'audit:high',
+    'audit:acceptance',
+    'audit:refactor'    # move to puppet-agent acceptance
+
+
 require 'puppet/acceptance/common_utils'
 extend Puppet::Acceptance::CommandUtils
 
