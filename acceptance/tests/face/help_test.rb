@@ -1,6 +1,8 @@
 test_name 'Test `puppet help` workflow'
 
-tag 'risk:medium'
+tag 'risk:medium',
+    'audit:low',
+    'audit:unit' # basic command line handling
 
 hosts.each do |host|
 
