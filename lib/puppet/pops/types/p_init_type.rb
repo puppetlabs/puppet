@@ -45,13 +45,14 @@ class PInitType < PTypeWithContainedType
         if v < 1
           if @single_type
             s = @single_type.really_instance?(o, g)
-            v = s if v > s
+            v = s if s > v
           end
         end
         if v < 1
           if @other_type
             s = @other_type.really_instance?(o, g)
-            v = s if v > s
+            s = @other_type.really_instance?([o], g) if s < 0 && @has_optional_single
+            v = s if s > v
           end
         end
         v
@@ -72,13 +73,11 @@ class PInitType < PTypeWithContainedType
     assert_initialized
 
     target_type = type
+    single_type = @single_type
     if @init_args.empty?
       @new_function ||= Puppet::Functions.create_function(:new_Init, Puppet::Functions::InternalFunction) do
         @target_type = target_type
-
-        def self.target_type
-          @target_type
-        end
+        @single_type = single_type
 
         dispatch :from_array do
           scope_param
@@ -90,17 +89,26 @@ class PInitType < PTypeWithContainedType
           param 'Any', :value
         end
 
-        def from_array(scope, value)
-          f = loader.load(:function, 'new')
-          tp = self.class.target_type
+        def self.create(scope, value, func)
+          func.call(scope, @target_type, value)
+        end
 
+        def self.from_array(scope, value, func)
           # If there is a single argument that matches the array, then that gets priority over
           # expanding the array into all arguments
-          @single_type.instance?(o, guard) ? f.call(scope, tp, value) : f.call(scope, tp, *value)
+          if @single_type.instance?(value) || (@other_type && !@other_type.instance?(value) && @has_optional_single && @other_type.instance?([value]))
+            func.call(scope, @target_type, value)
+          else
+            func.call(scope, @target_type, *value)
+          end
+        end
+
+        def from_array(scope, value)
+          self.class.from_array(scope, value, loader.load(:function, 'new'))
         end
 
         def create(scope, value)
-          loader.load(:function, 'new').call(scope, self.class.target_type, value)
+          self.class.create(scope, value, loader.load(:function, 'new'))
         end
       end
     else
@@ -173,13 +181,17 @@ class PInitType < PTypeWithContainedType
         end
       end
       if param_tuples.empty?
-        raise ArgumentError, _("The type '%{type}' does not represent a valid set of parameters for 'new' function") % { type: to_s }
+        raise ArgumentError, _("The type '%{type}' does not represent a valid set of parameters for %{subject}.new()") %
+          { type: to_s, subject: @type.generalize.name }
       end
       single_types.concat(param_tuples.map { |tuple| tuple.types[0] })
       other_tuples = EMPTY_ARRAY
     end
     @single_type = PVariantType.maybe_create(single_types)
-    @other_type = other_tuples.empty? ? nil : PVariantType.maybe_create(other_tuples)
+    unless other_tuples.empty?
+      @other_type = PVariantType.maybe_create(other_tuples)
+      @has_optional_single = other_tuples.any? { |tuple| tuple.size_range.min == 1 }
+    end
 
     guard = RecursionGuard.new
     accept(NoopTypeAcceptor::INSTANCE, guard)
@@ -204,7 +216,9 @@ class PInitType < PTypeWithContainedType
       elsif @type.nil?
         TypeFactory.rich_data.assignable?(o, g)
       else
-        @type.assignable?(o, g) || @single_type && @single_type.assignable?(o, g) || @other_type && @other_type.assignable?(o, g)
+        @type.assignable?(o, g) ||
+          @single_type && @single_type.assignable?(o, g) ||
+          @other_type && (@other_type.assignable?(o, g) || @has_optional_single && @other_type.assignable?(PTupleType.new([o])))
       end
     end
   end
