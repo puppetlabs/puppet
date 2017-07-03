@@ -1,5 +1,9 @@
 test_name "#4655: Allow setting the default stage for parameterized classes"
 
+tag 'audit:low',      # basic language functionality for relatively little used concept
+    'audit:refactor', # Use block style `test_name`
+    'audit:unit'
+
 agents.each do |agent|
   temp_file_name = agent.tmpfile('4655-stage-in-parameterized-class')
 test_manifest = <<HERE
