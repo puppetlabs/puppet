@@ -2,6 +2,13 @@ test_name 'Use a directory environment from environmentpath with an environment.
 require 'puppet/acceptance/classifier_utils'
 extend Puppet::Acceptance::ClassifierUtils
 
+tag 'audit:low',
+    'audit:integration',
+    'audit:refactor'    # Is this a component of a larger workflow scenario?
+                        # Do we have customer examples of this usage to
+                        # support the continued existance of this feature?
+
+
 classify_nodes_as_agent_specified_if_classifer_present
 
 testdir = create_tmpdir_for_user master, 'use-environment-conf'

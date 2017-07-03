@@ -2,6 +2,10 @@ test_name 'C98115 compilation should get new values in variables on each compila
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils
 
+tag 'audit:medium',
+    'audit:integration',
+    'server'
+
   app_type               = File.basename(__FILE__, '.*')
   tmp_environment        = mk_tmp_environment_with_teardown(master, app_type)
   fq_tmp_environmentpath = "#{environmentpath}/#{tmp_environment}"

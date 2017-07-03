@@ -1,5 +1,11 @@
 test_name 'PUP-3755 Test an un-assigned broken environment'
 
+tag 'audit:medium',
+    'audit:integration',
+    'audit:refactor',     # Use mk_temp_environment_with_teardown helper
+    'server'
+
+
 step 'setup environments'
 
 testdir = create_tmpdir_for_user(master, 'confdir')
