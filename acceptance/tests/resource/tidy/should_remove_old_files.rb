@@ -1,5 +1,9 @@
 test_name "Tidying files by date"
 
+tag 'audit:medium',
+    'audit:refactor',  # Use block style `test_run`
+    'audit:integration'
+
 agents.each do |agent|
   step "Create a directory of old and new files"
   dir = agent.tmpdir('tidy-test')
