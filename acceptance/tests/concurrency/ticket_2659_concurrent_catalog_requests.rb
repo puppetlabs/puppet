@@ -1,5 +1,9 @@
 test_name "concurrent catalog requests (PUP-2659)"
 
+tag 'audit:low',
+    'audit:integration',
+    'server'
+
 # we're only testing the effects of loading a master with concurrent requests
 confine :except, :platform => 'windows'
 confine :except, :platform => /osx/ # see PUP-4820
