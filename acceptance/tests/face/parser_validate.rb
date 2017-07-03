@@ -1,4 +1,9 @@
 test_name 'parser validate' do
+
+tag 'audit:medium',
+    'audit:unit'   # Parser validation should be core to ruby
+                   # and platform agnostic.
+
   require 'puppet/acceptance/environment_utils'
   extend Puppet::Acceptance::EnvironmentUtils
   require 'puppet/acceptance/temp_file_utils'
