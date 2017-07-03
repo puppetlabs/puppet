@@ -1,5 +1,9 @@
 test_name 'puppet apply should generate a graph'
 
+tag 'audit:low',
+    'audit:integration',  # Core testing of `vardir` should occur in another test.
+    'audit:refactor'      # The test should validate that the content of the dot file is sane.
+
 agents.each do |agent|
   step "Create var temp directory"
   vardir = agent.tmpdir('vardir')
