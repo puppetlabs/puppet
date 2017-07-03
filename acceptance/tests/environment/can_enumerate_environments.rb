@@ -1,5 +1,9 @@
 test_name "Can enumerate environments via an HTTP endpoint"
 
+tag 'audit:high',
+    'audit:integration',
+    'server'
+
 confine :except, :platform => /osx/ # see PUP-4820
 
 def master_port(agent)
