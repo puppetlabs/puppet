@@ -1,4 +1,9 @@
 test_name "Priority of server_list setting over server setting" do
+
+  tag 'audit:medium',
+      'audit:unit',
+      'audit:refactor'     # is only testing agent side behavior, should remove server
+
   master_port = 8140
 
   step "Conflict warnings for server settings"
