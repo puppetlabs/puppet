@@ -1,8 +1,12 @@
 test_name "Augeas puppet configuration" do
 
-  skip_test 'requires augeas which is included in AIO' if @options[:type] != 'aio'
+  tag 'risk:medium',
+      'audit:medium',
+      'audit:acceptance',
+      'audit:refactor'      # move to types test dir
+                            # remove spurious `puppet config set`
 
-  tag 'risk:medium'
+  skip_test 'requires augeas which is included in AIO' if @options[:type] != 'aio'
 
   confine :except, :platform => 'windows'
   confine :to, {}, hosts.select { |host| ! host[:roles].include?('master') }
