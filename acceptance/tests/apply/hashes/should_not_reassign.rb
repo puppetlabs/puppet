@@ -1,4 +1,9 @@
 test_name "hash reassignment should fail"
+
+tag 'audit:high',
+    'audit:unit',  # This should be covered at the unit layer.
+    'audit:delete'
+
 manifest = %q{
 $my_hash = {'one' => '1', 'two' => '2' }
 $my_hash['one']='1.5'
