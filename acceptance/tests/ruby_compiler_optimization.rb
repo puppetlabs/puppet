@@ -1,6 +1,10 @@
 test_name 'ensure ruby compiler optimization is >= 2'
 
-tag 'risk:medium'
+tag 'risk:medium',
+    'audit:low',
+    'audit:refactor',   # Use block style `test_name`
+    'audit:acceptance',
+    'audit:delete'      # why is this packaging detail a test?
 
 step 'Validate ruby compiler optimization is >= 2' do
   hosts.each do |host|
