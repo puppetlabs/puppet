@@ -17,6 +17,10 @@ skip_test "Test only supported on Jetty" unless @options[:is_puppetserver]
 #
 test_name "Puppet agent and master work when both configured with externally issued certificates from independent intermediate CAs"
 
+tag 'audit:medium',
+    'audit:integration',  # This could also be a component in a platform workflow test.
+    'server'
+
 step "Copy certificates and configuration files to the master..."
 fixture_dir = File.expand_path('../fixtures', __FILE__)
 testdir = master.tmpdir('jetty_external_root_ca')
