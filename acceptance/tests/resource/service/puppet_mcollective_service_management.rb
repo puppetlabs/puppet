@@ -3,6 +3,10 @@ test_name "Puppet and Mcollective services should be manageable with Puppet"
 confine :except, :platform => 'windows' # See MCO-727
 confine :except, :platform => /centos-4|el-4/ # PUP-5257
 
+tag 'audit:medium',
+    'audit:refactor',  # Use block style `test_name`
+    'audit:acceptance' # uses services from a running puppet-agent install
+
 #
 # This test is intended to ensure that the Puppet and Mcollective services can
 # be directly managed by Puppet. See PUP-5053, PUP-5257, and RE-5574 for

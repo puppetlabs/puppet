@@ -1,5 +1,9 @@
 test_name "`puppet resource service` should list running services without calling dangerous init scripts"
 
+tag 'audit:medium',
+    'audit:refactor',   # Use block style `test_name`
+    'audit:integration' # Doesn't change the system it runs on
+
 confine :except, :platform => 'windows'
 confine :except, :platform => 'solaris'
 confine :except, :platform => /^cisco_/ # See PUP-5827
