@@ -2,6 +2,13 @@ test_name "generate a helpful error message when hostname doesn't match server c
 
 skip_test( 'Changing certnames of the master will break PE/Passenger installations' ) if master.is_using_passenger?
 
+tag 'audit:low',
+    'audit:integration',
+    'server',
+    'audit:delete'        # This test is unlikely to regress and is of
+                          # such low risk that it is not worth the cost
+                          # of automatically guarding against it failing.
+
 certname = "foobar_not_my_hostname"
 dns_alt_names = "one_cert,two_cert,red_cert,blue_cert"
 
