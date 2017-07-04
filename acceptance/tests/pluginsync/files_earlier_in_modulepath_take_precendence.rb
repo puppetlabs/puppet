@@ -1,5 +1,9 @@
 test_name "earlier modules take precendence over later modules in the modulepath"
 
+tag 'audit:medium',
+    'audit:integration',
+    'server'
+
 step "Create some modules in the modulepath"
 basedir = master.tmpdir("module_precedence")
 
