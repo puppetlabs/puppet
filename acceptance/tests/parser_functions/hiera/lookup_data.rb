@@ -1,5 +1,9 @@
 test_name "Lookup data using the hiera parser function"
 
+tag 'audit:medium',
+    'audit:acceptance',
+    'audit:refactor'    # Master is not required for this test. Replace with agents.each
+
 testdir = master.tmpdir('hiera')
 
 step 'Setup'
