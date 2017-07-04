@@ -2,6 +2,13 @@ test_name 'C99578: lookup should allow interpolation in hiera3 configs' do
   require 'puppet/acceptance/environment_utils.rb'
   extend Puppet::Acceptance::EnvironmentUtils
 
+tag 'audit:medium',
+    'audit:integration',
+    'audit:refactor',  # This test specifically tests interpolation on the master.
+                       # Recommend adding an additonal test that validates
+                       # lookup in a masterless setup.
+    'server'
+
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type)
   fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"
