@@ -1,5 +1,9 @@
 test_name "Puppet applies resources without dependencies in file order over the network"
 
+tag 'audit:medium',
+    'audit:integration',
+    'server'
+
 testdir = master.tmpdir('application_order')
 
 apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
