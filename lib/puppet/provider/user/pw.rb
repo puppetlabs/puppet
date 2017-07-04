@@ -5,7 +5,7 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
   desc "User management via `pw` on FreeBSD and DragonFly BSD."
 
   commands :pw => "pw"
-  has_features :manages_homedir, :allows_duplicates, :manages_passwords, :manages_expiry, :manages_shell
+  has_features :manages_homedir, :allows_duplicates, :manages_passwords, :manages_expiry, :manages_shell, :manages_loginclass
 
   defaultfor :operatingsystem => [:freebsd, :dragonfly]
   confine    :operatingsystem => [:freebsd, :dragonfly]
@@ -13,6 +13,7 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
   options :home, :flag => "-d", :method => :dir
   options :comment, :method => :gecos
   options :groups, :flag => "-G"
+  options :loginclass, :flag => '-L'
   options :expiry, :method => :expire, :munge => proc { |value|
     value = '0000-00-00' if value == :absent
     value.split("-").reverse.join("-")
