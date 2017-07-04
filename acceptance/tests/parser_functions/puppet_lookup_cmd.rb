@@ -1,4 +1,10 @@
 test_name "Puppet Lookup Command"
+
+tag 'audit:medium',
+    'audit:acceptance',
+    'audit:refactor'   # Master is not required for this test. Replace with agents.each
+                       # Wrap steps in blocks in accordance with Beaker style guide
+
 # doc:
 # https://docs.puppetlabs.com/puppet/latest/reference/lookup_quick_module.html
 

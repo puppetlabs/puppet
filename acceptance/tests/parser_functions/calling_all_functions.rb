@@ -1,5 +1,8 @@
 test_name 'Calling all functions.. test in progress!'
 
+tag 'audit:medium',
+    'audit:acceptance'
+
 # create single manifest calling all functions
 step 'Apply manifest containing all function calls'
 def manifest_call_each_function_from_array(functions)
