@@ -1,5 +1,8 @@
 test_name "puppet module list (with modulepath)"
 
+tag 'audit:low',
+    'audit:unit'
+
 codedir = master.puppet('master')['codedir']
 
 step "Setup"

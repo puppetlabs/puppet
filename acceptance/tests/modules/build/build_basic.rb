@@ -1,5 +1,10 @@
 test_name 'CODEMGMT-69 - Build a Module Using "metadata.json" Only'
 
+tag 'audit:medium',
+    'audit:acceptance'
+    'audit:refactor'   # Wrap steps in blocks in accordance with Beaker style guide
+
+
 #Init
 temp_module_path = '/tmp/nginx'
 metadata_json_file_path = File.join(temp_module_path, 'metadata.json')

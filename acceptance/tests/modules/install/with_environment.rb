@@ -2,6 +2,11 @@ test_name 'puppet module install (with environment)'
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
+tag 'audit:low',       # Install via pmt is not the primary support workflow
+    'audit:acceptance',
+    'audit:refactor'   # Master is not required for this test. Replace with agents.each
+                       # Wrap steps in blocks in accordance with Beaker style guide
+
 tmpdir = master.tmpdir('module-install-with-environment')
 
 module_author = "pmtacceptance"

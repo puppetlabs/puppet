@@ -1,5 +1,8 @@
 test_name 'puppet module search output should be well structured'
 
+tag 'audit:low',
+    'audit:unit'
+
 step 'Setup'
 stub_forge_on(master)
 
