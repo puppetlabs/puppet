@@ -1,5 +1,9 @@
 test_name "the pluginsync functionality should sync feature definitions"
 
+tag 'audit:medium',
+    'audit:integration',
+    'server'
+
 #
 # This test is intended to ensure that pluginsync syncs feature definitions to
 # the agents.  It checks the feature twice; once to make sure that it gets
