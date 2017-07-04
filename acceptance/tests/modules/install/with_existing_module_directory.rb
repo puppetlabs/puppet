@@ -2,6 +2,9 @@ test_name "puppet module install (with existing module directory)"
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
+tag 'audit:low',       # Install via pmt is not the primary support workflow
+    'audit:unit',
+
 module_author = "pmtacceptance"
 module_name   = "nginx"
 module_dependencies = []
