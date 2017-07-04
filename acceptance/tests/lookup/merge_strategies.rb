@@ -2,6 +2,11 @@ test_name 'C99903: merge strategies' do
   require 'puppet/acceptance/environment_utils.rb'
   extend Puppet::Acceptance::EnvironmentUtils
 
+tag 'audit:medium',
+    'audit:acceptance',
+    'audit:refactor',  # Master is not needed for this test. Refactor
+                       # to use puppet apply with a local module tree.
+
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type + '1')
   fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"
