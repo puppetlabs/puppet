@@ -1,5 +1,8 @@
 test_name "puppet module build should not result in changed files"
 
+tag 'audit:medium',
+    'audit:acceptance'
+
 modauthor = 'foo'
 modname = 'bar'
 defaultversion = '0.1.0'

@@ -2,6 +2,10 @@ test_name "puppet module install (agent)"
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
+tag 'audit:low',       # Install via pmt is not the primary support workflow
+    'audit:acceptance',
+    'audit:delete'     # This behavior is validated with other tests in this suite
+
 confine :except, :platform => /centos-4|el-4/ # PUP-5226
 
 module_author = "pmtacceptance"

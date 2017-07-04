@@ -1,5 +1,8 @@
 test_name 'puppet module search should print a reasonable message on communication errors'
 
+tag 'audit:low',
+    'audit:integration'
+
 step 'Setup'
 stub_hosts_on(master, 'forgeapi.puppet.com' => '127.0.0.2')
 

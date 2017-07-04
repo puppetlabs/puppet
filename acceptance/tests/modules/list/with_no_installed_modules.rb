@@ -1,5 +1,7 @@
 test_name "puppet module list (with no installed modules)"
 
+tag 'audit:low',
+    'audit:unit'
 
 step "List the installed modules"
 modulesdir = master.tmpdir('puppet_module')
