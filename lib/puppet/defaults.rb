@@ -1047,7 +1047,7 @@ EOT
             the process table.",
       },
       :bindaddress => {
-        :default    => "0.0.0.0",
+        :default    => "*",
         :desc       => "The address a listening server should bind to.",
       }
   )
