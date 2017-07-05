@@ -3,7 +3,7 @@ test_name "Puppet returns only resource package declaration when querying an uni
 
   tag 'audit:medium',
       'audit:acceptance' # Could be done at the integration (or unit) layer though
-                         # actual changing of resources could irreprebly damage a
+                         # actual changing of resources could irreparably damage a
                          # host running this, or require special permissions.
 
   resource_declaration_regex = %r@package \{ 'not-installed-on-this-host':
