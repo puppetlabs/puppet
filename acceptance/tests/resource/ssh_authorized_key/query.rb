@@ -3,7 +3,7 @@ test_name "should be able to find an existing SSH authorized key"
 tag 'audit:medium',
     'audit:refactor',  # Use block style `test_run`
     'audit:acceptance' # Could be done at the integration (or unit) layer though
-                       # actual changing of resources could irreprebly damage a
+                       # actual changing of resources could irreparably damage a
                        # host running this, or require special permissions.
 
 skip_test("This test is blocked by PUP-1605")

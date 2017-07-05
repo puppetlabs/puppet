@@ -4,7 +4,7 @@ tag 'audit:medium',
     'audit:refactor',  # Investigate merging with init_on_systemd.rb
                        # Use block style `test_name`
     'audit:acceptance' # Could be done at the integration (or unit) layer though
-                       # actual changing of resources could irreprebly damage a
+                       # actual changing of resources could irreparably damage a
                        # host running this, or require special permissions.
 
 confine :to, :platform => /el-|centos|fedora|debian|sles|ubuntu-v/

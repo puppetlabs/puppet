@@ -3,7 +3,7 @@ test_name "(PUP-5508) Should add an SSH key to the correct ssh_known_hosts file 
 
 tag 'audit:medium',
     'audit:acceptance' # Could be done at the integration (or unit) layer though
-                       # actual changing of resources could irreprebly damage a
+                       # actual changing of resources could irreparably damage a
                        # host running this, or require special permissions.
 
 confine :to, :platform => /osx/

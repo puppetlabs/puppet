@@ -3,7 +3,7 @@ test_name "should query all hosts from hosts file"
 tag 'audit:low',
     'audit:refactor',  # Use block style `test_name`
     'audit:acceptance' # Could be done at the integration (or unit) layer though
-                       # actual changing of resources could irreprebly damage a
+                       # actual changing of resources could irreparably damage a
                        # host running this, or require special permissions.
 
 content = %q{127.0.0.1 test1 test1.local
