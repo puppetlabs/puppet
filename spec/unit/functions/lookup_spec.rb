@@ -933,6 +933,8 @@ describe "The lookup function" do
                 bab: bab (from environment)
               bc:
                 bca: bca (from environment)
+            sa:
+              sa1: ['e', 'd', '--f']
             YAML
           'second.yaml' => <<-YAML.unindent,
             a:
@@ -946,6 +948,8 @@ describe "The lookup function" do
             c:
               ca:
                 cab: c.ca.cab
+            sa:
+              sa1: ['b', 'a', 'f', 'c']
             YAML
         }
       end
@@ -1024,6 +1028,28 @@ describe "The lookup function" do
 
         it 'finds lookup_options that matches a pattern' do
           expect(lookup('a')).to eql({'aa' => { 'aaa' => 'a.aa.aaa', 'aab' => 'a.aa.aab' }})
+        end
+      end
+
+      context 'and lookup options use a hash' do
+
+        let(:env_lookup_options) { <<-YAML.unindent }
+          lookup_options:
+            'sa':
+              merge:
+                strategy: deep
+                knockout_prefix: --
+                sort_merged_arrays: true
+        YAML
+
+        it 'applies knockout_prefix and sort_merged_arrays' do
+          expect(lookup('sa')).to eql({ 'sa1' => %w(a b c d e) })
+        end
+
+        it 'overrides knockout_prefix and sort_merged_arrays with explicitly given values' do
+          expect(
+            lookup('sa', 'merge' => { 'strategy' => 'deep', 'knockout_prefix' => '##', 'sort_merged_arrays' => false })).to(
+              eql({ 'sa1' => %w(b a f c e d --f) }))
         end
       end
     end
