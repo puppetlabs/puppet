@@ -59,7 +59,7 @@ describe Puppet::Application::Lookup do
       lookup.command_line.stubs(:args).returns(['atton', 'kreia'])
       lookup.stubs(:generate_scope).yields('scope')
 
-      expected_merge = { "strategy" => "deep", "sort_merge_arrays" => false, "merge_hash_arrays" => true }
+      expected_merge = { "strategy" => "deep", "sort_merged_arrays" => false, "merge_hash_arrays" => true }
 
       (Puppet::Pops::Lookup).expects(:lookup).with(['atton', 'kreia'], nil, nil, false, expected_merge, anything).returns('rand')
 

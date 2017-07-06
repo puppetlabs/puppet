@@ -258,7 +258,7 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
     #  raise "No node was given via the '--node' flag for the scope of the lookup.\n#{RUN_HELP}"
     #end
 
-    if (options[:sort_merge_arrays] || options[:merge_hash_arrays] || options[:prefix]) && options[:merge] != 'deep'
+    if (options[:sort_merged_arrays] || options[:merge_hash_arrays] || options[:prefix]) && options[:merge] != 'deep'
       raise _("The options %{deep_merge_opts} are only available with '--merge deep'\n%{run_help}") % { deep_merge_opts: DEEP_MERGE_OPTIONS, run_help: RUN_HELP }
     end
 
@@ -275,7 +275,7 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
 
       if merge == 'deep'
         merge_options = {'strategy' => 'deep',
-          'sort_merge_arrays' => !options[:sort_merge_arrays].nil?,
+          'sort_merged_arrays' => !options[:sort_merged_arrays].nil?,
           'merge_hash_arrays' => !options[:merge_hash_arrays].nil?}
 
         if options[:prefix]
