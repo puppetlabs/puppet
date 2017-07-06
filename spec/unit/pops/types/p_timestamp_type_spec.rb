@@ -65,13 +65,42 @@ describe 'Timestamp type' do
     end
 
     context 'a Timestamp instance' do
-      it 'can be created from a string' do
+      it 'can be created from a string with just a date' do
         code = <<-CODE
             $o = Timestamp('2015-03-01')
             notice($o)
             notice(type($o))
         CODE
         expect(eval_and_collect_notices(code)).to eq(['2015-03-01T00:00:00.000000000 UTC', "Timestamp['2015-03-01T00:00:00.000000000 UTC']"])
+      end
+
+      it 'can be created from a string and time separated by "T"' do
+        code = <<-CODE
+            notice(Timestamp('2015-03-01T11:12:13'))
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(['2015-03-01T11:12:13.000000000 UTC'])
+      end
+
+      it 'can be created from a string and time separated by space' do
+        code = <<-CODE
+            notice(Timestamp('2015-03-01 11:12:13'))
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(['2015-03-01T11:12:13.000000000 UTC'])
+      end
+
+      it 'should error when none of the default formats can parse the string' do
+        code = <<-CODE
+            notice(Timestamp('2015#03#01 11:12:13'))
+        CODE
+        expect { eval_and_collect_notices(code) }.to raise_error(/Unable to parse/)
+      end
+
+      it 'should error when only part of the string is parsed' do
+        pending("Requires full rewrite of Timestamp parse since there's no way to detect trailing garbage using DateTime#strptime")
+        code = <<-CODE
+            notice(Timestamp('2015-03-01T11:12:13 bogus after'))
+        CODE
+        expect { eval_and_collect_notices(code) }.to raise_error(/Unable to parse/)
       end
 
       it 'can be created from a string and format' do
