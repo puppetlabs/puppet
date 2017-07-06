@@ -13,7 +13,7 @@ Find
 ----
 
     GET /puppet-ca/v1/certificate_status/:certname?environment=:environment
-    Accept: application/json, text/pson
+    Accept: pson
 
 Retrieve information about the specified certificate. Similar to `puppet
 cert --list :certname`.
@@ -22,7 +22,7 @@ Search
 -----
 
     GET /puppet-ca/v1/certificate_statuses/:any_key?environment=:environment
-    Accept: application/json, text/pson
+    Accept: pson
 
 Retrieve information about all known certificates. Similar to `puppet
 cert --list --all`. A key is required but is ignored.
@@ -47,7 +47,7 @@ Delete
 -----
 
     DELETE /puppet-ca/v1/certificate_status/:hostname?environment=:environment
-    Accept: application/json, text/pson
+    Accept: pson
 
 Cause the certificate authority to discard all SSL information regarding
 a host (including any certificates, certificate requests, and keys).
@@ -75,7 +75,7 @@ GET, PUT, DELETE
 
 ### Supported Response Formats
 
-`application/json`, `text/pson`, `pson`
+PSON
 
 This endpoint can produce yaml as well, but the returned data is
 incomplete.

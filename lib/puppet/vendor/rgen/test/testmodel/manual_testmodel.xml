@@ -1,0 +1,22 @@
+<TestModel xmlns:MNS="testmodel.org/myNamespace" >
+	<MNS:House>
+		before kitchen
+		<MNS:Room id="1" name="Kitchen" />
+		after kitchen
+		<MNS:Room id="2" name="TomsRoom">within toms room</MNS:Room>
+		after toms room
+	</MNS:House>
+	<Person name="Tom" room="2">
+		<Parents>
+			<Person name="Kate">
+				<Parents>
+					<Person name="Maria" />
+					<Person name="Will" />
+				</Parents>
+			</Person>
+		</Parents>
+	</Person>
+	<MULTI-PART-NAME>
+		<INSIDE_MULTI_PART/>
+	</MULTI-PART-NAME>
+</TestModel>

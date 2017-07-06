@@ -25,7 +25,7 @@ GET
 
 ### Supported Response Formats
 
-`application/octet-stream`
+binary (the raw binary content)
 
 ### Parameters
 
@@ -38,7 +38,7 @@ None
 #### File found
 
     GET /puppet/v3/file_content/modules/example/my_file?environment=env
-    Accept: application/octet-stream
+    Accept: binary
 
     HTTP/1.1 200 OK
     Content-Type: application/octet-stream
@@ -50,7 +50,7 @@ None
 #### File not found
 
     GET /puppet/v3/file_content/modules/example/not_found?environment=env
-    Accept: application/octet-stream
+    Accept: binary
 
     HTTP/1.1 404 Not Found
     Content-Type: text/plain

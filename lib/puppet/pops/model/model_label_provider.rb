@@ -18,7 +18,7 @@ class ModelLabelProvider
     @@label_visitor.visit_this_0(self, o)
   end
 
-  def label_Factory o                     ; label(o.model)                      end
+  def label_Factory o                     ; label(o.current)                    end
   def label_Array o                       ; "Array"                             end
   def label_LiteralInteger o              ; "Literal Integer"                   end
   def label_LiteralFloat o                ; "Literal Float"                     end
@@ -122,8 +122,7 @@ class ModelLabelProvider
       simple_name = o.name.split('::').last
       simple_name[1..-5] + "-Type"
     else
-      n = o.name
-      n.nil? ? 'Anonymous Class' : n
+      o.name
     end
   end
 end

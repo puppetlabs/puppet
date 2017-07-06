@@ -3,17 +3,17 @@ require 'puppet/settings/ini_file'
 
 Puppet::Face.define(:config, '0.0.1') do
   copyright "Puppet Inc.", 2011
-  license   _("Apache 2 license; see COPYING")
+  license   "Apache 2 license; see COPYING"
 
-  summary _("Interact with Puppet's settings.")
+  summary "Interact with Puppet's settings."
 
   description "This subcommand can inspect and modify settings from Puppet's
     'puppet.conf' configuration file. For documentation about individual settings,
     see https://docs.puppetlabs.com/puppet/latest/reference/configuration.html."
 
-  option "--section " + _("SECTION_NAME") do
+  option "--section SECTION_NAME" do
     default_to { "main" }
-    summary _("The section of the configuration file to interact with.")
+    summary "The section of the configuration file to interact with."
     description <<-EOT
       The section of the puppet.conf configuration file to interact with.
 
@@ -31,8 +31,8 @@ Puppet::Face.define(:config, '0.0.1') do
   end
 
   action(:print) do
-    summary _("Examine Puppet's current settings.")
-    arguments _("(all | <setting> [<setting> ...]")
+    summary "Examine Puppet's current settings."
+    arguments "(all | <setting> [<setting> ...]"
     description <<-'EOT'
       Prints the value of a single setting or a list of settings.
 
@@ -68,7 +68,7 @@ Puppet::Face.define(:config, '0.0.1') do
       }
 
       Puppet.override(Puppet.base_context(loader_settings),
-                     _("New environment loaders generated from the requested section.")) do
+                     "New environment loaders generated from the requested section.") do
         # And now we can lookup values that include those from environments configured from
         # the requested section
         values = Puppet.settings.values(Puppet[:environment].to_sym, options[:section].to_sym)
@@ -85,8 +85,8 @@ Puppet::Face.define(:config, '0.0.1') do
   end
 
   action(:set) do
-    summary _("Set Puppet's settings.")
-    arguments _("[setting_name] [setting_value]")
+    summary "Set Puppet's settings."
+    arguments "[setting_name] [setting_value]"
     description <<-'EOT'
       Updates values in the `puppet.conf` configuration file.
     EOT

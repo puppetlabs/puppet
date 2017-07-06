@@ -532,7 +532,7 @@ describe 'the new function' do
   context 'when invoked on Array' do
     { []            => 'Notify[Array[Unit], []]',
       [true]        => 'Notify[Array[Boolean], [true]]',
-      {'a'=>true, 'b' => false}   => 'Notify[Array[Array[ScalarData]], [[a, true], [b, false]]]',
+      {'a'=>true, 'b' => false}   => 'Notify[Array[Array[Scalar]], [[a, true], [b, false]]]',
       'abc'         => 'Notify[Array[String[1, 1]], [a, b, c]]',
       3             => 'Notify[Array[Integer], [0, 1, 2]]',
     }.each do |input, result|

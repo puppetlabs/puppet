@@ -88,49 +88,35 @@ module Serialization
       @options[:type_by_reference] == true
     end
 
-    def to_s
-      "#{self.class.name} with #{@writer}"
-    end
-
-    def inspect
-      to_s
-    end
-
     # First time write of a tabulated object. This means that the object is written and then remembered. Subsequent writes
     # of the same object will yield a write of a tabulation index instead.
     # @param [Object] value the value to write
     # @api private
     def write_tabulated_first_time(value)
-      case
-      when value.instance_of?(Symbol),
-          value.instance_of?(Regexp),
-          value.instance_of?(SemanticPuppet::Version),
-          value.instance_of?(SemanticPuppet::VersionRange),
-          value.instance_of?(Time::Timestamp),
-          value.instance_of?(Time::Timespan),
-          value.instance_of?(Types::PBinaryType::Binary)
+      case value
+      when Symbol, Regexp, SemanticPuppet::Version, SemanticPuppet::VersionRange, Time::Timestamp, Time::Timespan, Types::PBinaryType::Binary
         push_written(value)
         @writer.write(value)
-      when value.instance_of?(Array)
+      when Array
         push_written(value)
         start_array(value.size)
         value.each { |elem| write(elem) }
-      when value.instance_of?(Hash)
+      when Hash
         push_written(value)
         start_map(value.size)
         value.each_pair { |key, val| write(key); write(val) }
-      when value.instance_of?(Types::PSensitiveType::Sensitive)
+      when Types::PSensitiveType::Sensitive
         start_sensitive
         write(value.unwrap)
-      when value.instance_of?(Types::PTypeReferenceType)
+      when Types::PTypeReferenceType
         push_written(value)
         @writer.write(value)
-      when value.is_a?(Types::PuppetObject)
-        value._pcore_type.write(value, self)
+      when Types::PuppetObject
+        value._ptype.write(value, self)
       else
         impl_class = value.class
         type = Loaders.implementation_registry.type_for_module(impl_class)
-        raise SerializationError, _("No Puppet Type found for %{klass}") % { klass: impl_class.name } unless type.is_a?(Types::PObjectType)
+        raise SerializationError, "No Puppet Type found for #{impl_class.name}" unless type.is_a?(Types::PObjectType)
         type.write(value, self)
       end
     end

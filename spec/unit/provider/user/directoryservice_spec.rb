@@ -157,7 +157,7 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     "9377c46908a1c8ac2c3e45c0d44da8ad0fcd85ec5c14d9a59ffc40c9da31f0ec"
   end
 
-  # The below value is an Integer iterations value used in the PBKDF2
+  # The below value is a Fixnum iterations value used in the PBKDF2
   # key stretching algorithm
   let(:pbkdf2_iterations_value) do
     24752
@@ -394,12 +394,12 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
       provider.class.prefetch({})
     end
 
-    it 'should return :uid values as an Integer' do
-      expect(provider.class.generate_attribute_hash(user_plist_hash)[:uid]).to be_a Integer
+    it 'should return :uid values as a Fixnum' do
+      expect(provider.class.generate_attribute_hash(user_plist_hash)[:uid]).to be_a_kind_of Fixnum
     end
 
-    it 'should return :gid values as an Integer' do
-      expect(provider.class.generate_attribute_hash(user_plist_hash)[:gid]).to be_a Integer
+    it 'should return :gid values as a Fixnum' do
+      expect(provider.class.generate_attribute_hash(user_plist_hash)[:gid]).to be_a_kind_of Fixnum
     end
 
     it 'should return a hash of resource attributes' do
@@ -799,8 +799,8 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     it "should accept a hash containing a PBKDF2 password hash, salt, and iterations value and return the correct iterations value" do
         expect(provider.class.get_salted_sha512_pbkdf2('iterations', pbkdf2_embedded_bplist_hash)).to eq(pbkdf2_iterations_value)
     end
-    it "should return an Integer value when looking up the PBKDF2 iterations value" do
-        expect(provider.class.get_salted_sha512_pbkdf2('iterations', pbkdf2_embedded_bplist_hash)).to be_a(Integer)
+    it "should return a Fixnum value when looking up the PBKDF2 iterations value" do
+        expect(provider.class.get_salted_sha512_pbkdf2('iterations', pbkdf2_embedded_bplist_hash)).to be_a_kind_of(Fixnum)
     end
     it "should raise an error if a field other than 'entropy', 'salt', or 'iterations' is passed" do
       expect { provider.class.get_salted_sha512_pbkdf2('othervalue', pbkdf2_embedded_bplist_hash) }.to raise_error(Puppet::Error, /Puppet has tried to read an incorrect value from the SALTED-SHA512-PBKDF2 hash. Acceptable fields are 'salt', 'entropy', or 'iterations'/)

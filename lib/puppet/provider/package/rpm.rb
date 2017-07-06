@@ -88,7 +88,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
         }
       }
     rescue Puppet::ExecutionFailure
-      raise Puppet::Error, _("Failed to list packages"), $!.backtrace
+      raise Puppet::Error, "Failed to list packages", $!.backtrace
     end
 
     packages
@@ -128,19 +128,17 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
   # Here we just retrieve the version from the file specified in the source.
   def latest
     unless source = @resource[:source]
-      @resource.fail _("RPMs must specify a package source")
+      @resource.fail "RPMs must specify a package source"
     end
 
     cmd = [command(:rpm), "-q", "--qf", "'#{self.class::NEVRA_FORMAT}'", "-p", source]
-    h = self.class.nevra_to_hash(execute(cmd))
+    h = self.class.nevra_to_hash(execfail(cmd, Puppet::Error))
     h[:ensure]
-  rescue Puppet::ExecutionFailure => e
-    raise Puppet::Error, e.message, e.backtrace
   end
 
   def install
     unless source = @resource[:source]
-      @resource.fail _("RPMs must specify a package source")
+      @resource.fail "RPMs must specify a package source"
     end
 
     version =  @property_hash[:ensure]
@@ -221,7 +219,6 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
         # if they both have ~, strip it
         str1 = str1[1..-1]
         str2 = str2[1..-1]
-        next
       elsif /^~/.match(str1)
         return -1
       elsif /^~/.match(str2)

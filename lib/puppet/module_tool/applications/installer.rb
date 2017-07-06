@@ -25,7 +25,6 @@ module Puppet::ModuleTool
         @ignore_dependencies = forced? || options[:ignore_dependencies]
         @name                = name
         @install_dir         = install_dir
-        @strict_semver       = !!options[:strict_semver]
 
         Puppet::Forge::Cache.clean
 
@@ -60,7 +59,7 @@ module Puppet::ModuleTool
         begin
           if installed_module = installed_modules[name]
             unless forced?
-              if SemanticPuppet::VersionRange.parse(version, @strict_semver).include? installed_module.version
+              if SemanticPuppet::VersionRange.parse(version).include? installed_module.version
                 results[:result] = :noop
                 results[:version] = installed_module.version
                 return results
@@ -79,7 +78,7 @@ module Puppet::ModuleTool
           results[:install_dir] = @install_dir.target
 
           unless @local_tarball && @ignore_dependencies
-            Puppet.notice _("Downloading from %{host} ...") % { host: module_repository.host }
+            Puppet.notice "Downloading from #{module_repository.host} ..."
           end
 
           if @ignore_dependencies
@@ -104,7 +103,7 @@ module Puppet::ModuleTool
               # locking it to upgrades within the same major version.
               installed_range = ">=#{version} #{version.major}.x"
               graph.add_constraint('installed', mod, installed_range) do |node|
-                SemanticPuppet::VersionRange.parse(installed_range, @strict_semver).include? node.version
+                SemanticPuppet::VersionRange.parse(installed_range).include? node.version
               end
 
               release.mod.dependencies.each do |dep|
@@ -112,7 +111,7 @@ module Puppet::ModuleTool
 
                 range = dep['version_requirement']
                 graph.add_constraint("#{mod} constraint", dep_name, range) do |node|
-                  SemanticPuppet::VersionRange.parse(range, @strict_semver).include? node.version
+                  SemanticPuppet::VersionRange.parse(range).include? node.version
                 end
               end
             end
@@ -125,7 +124,7 @@ module Puppet::ModuleTool
           end
 
           begin
-            Puppet.info _("Resolving dependencies ...")
+            Puppet.info "Resolving dependencies ..."
             releases = SemanticPuppet::Dependency.resolve(graph)
           rescue SemanticPuppet::Dependency::UnsatisfiableGraph
             raise NoVersionsSatisfyError, results.merge(:requested_name => name)
@@ -154,10 +153,10 @@ module Puppet::ModuleTool
             end
           end
 
-          Puppet.info _("Preparing to install ...")
+          Puppet.info "Preparing to install ..."
           releases.each { |release| release.prepare }
 
-          Puppet.notice _('Installing -- do not interrupt ...')
+          Puppet.notice 'Installing -- do not interrupt ...'
           releases.each do |release|
             installed = installed_modules[release.name]
             if forced? || installed.nil?
@@ -191,7 +190,7 @@ module Puppet::ModuleTool
 
       def local_tarball_source
         @tarball_source ||= begin
-          Puppet::ModuleTool::LocalTarball.new(@name, @strict_semver)
+          Puppet::ModuleTool::LocalTarball.new(@name)
         rescue Puppet::Module::Error => e
           raise InvalidModuleError.new(@name, :action => @action, :error  => e)
         end
@@ -206,7 +205,7 @@ module Puppet::ModuleTool
       end
 
       def build_single_module_graph(name, version)
-        range = SemanticPuppet::VersionRange.parse(version, @strict_semver)
+        range = SemanticPuppet::VersionRange.parse(version)
         graph = SemanticPuppet::Dependency::Graph.new(name => range)
         releases = SemanticPuppet::Dependency.fetch_releases(name)
         releases.each { |release| release.dependencies.clear }
@@ -259,7 +258,7 @@ module Puppet::ModuleTool
           @remote = { "#{@module_name}@#{@version}" => { } }
           @versions = {
             @module_name => [
-              { :vstring => @version, :semver => SemanticPuppet::Version.parse(@version) }
+              { :vstring => @version, :semver => SemVer.new(@version) }
             ]
           }
         else

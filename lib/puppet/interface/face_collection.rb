@@ -41,13 +41,8 @@ module Puppet::Interface::FaceCollection
     return @faces[name][:current] if pattern == :current
 
     versions = @faces[name].keys - [ :current ]
-    range = pattern.is_a?(SemanticPuppet::Version) ? SemanticPuppet::VersionRange.new(pattern, pattern) : SemanticPuppet::VersionRange.parse(pattern)
-    found = find_matching(range, versions)
+    found    = SemVer.find_matching(pattern, versions)
     return @faces[name][found]
-  end
-
-  def self.find_matching(range, versions)
-    versions.select { |v| range === v }.sort.last
   end
 
   # try to load the face, and return it.

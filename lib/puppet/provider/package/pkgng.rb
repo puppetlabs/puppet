@@ -7,7 +7,7 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
 
   confine :operatingsystem => [:freebsd, :dragonfly]
 
-  defaultfor :operatingsystem => [:freebsd, :dragonfly]
+  defaultfor :operatingsystem => :freebsd
 
   has_feature :versionable
   has_feature :upgradeable

@@ -56,7 +56,7 @@ class AbstractWriter
     case value
     when Integer
       # not tabulated, but integers larger than 64-bit cannot be allowed.
-      raise SerializationError, _('Integer out of bounds') if value > MAX_INTEGER || value < MIN_INTEGER
+      raise SerializationError, 'Integer out of bounds' if value > MAX_INTEGER || value < MIN_INTEGER
     when Numeric, Symbol, Extension::NotTabulated, true, false, nil
       # not tabulated
     else
@@ -201,14 +201,6 @@ class AbstractWriter
         build_payload { |ep| ep.write(o.to_s) }
       end
     end
-  end
-
-  def to_s
-    "#{self.class.name}"
-  end
-
-  def inspect
-    to_s
   end
 end
 end

@@ -18,7 +18,8 @@ class PuppetResourceTypeImplInstantiator
     parser = Parser::EvaluatingParser.new()
 
     # parse and validate
-    model = parser.parse_string(pp_code_string, source_ref)
+    result = parser.parse_string(pp_code_string, source_ref)
+    model = result.model
     statements = if model.is_a?(Model::Program)
       if model.body.is_a?(Model::BlockExpression)
         statements = model.body.statements
@@ -30,10 +31,10 @@ class PuppetResourceTypeImplInstantiator
     end
     statements = statements.reject { |s| s.is_a?(Model::Nop) }
     if statements.empty?
-      raise ArgumentError, _("The code loaded from %{source_ref} does not create the resource type '%{type_name}' - it is empty") % { source_ref: source_ref, type_name: typed_name.name }
+      raise ArgumentError, "The code loaded from #{source_ref} does not create the resource type '#{typed_name.name}' - it is empty"
     end
 
-    rname = Resource::ResourceTypeImpl._pcore_type.name
+    rname = Resource::ResourceTypeImpl._ptype.name
     unless statements.find do |s|
       if s.is_a?(Model::CallMethodExpression)
         functor_expr = s.functor_expr
@@ -41,30 +42,30 @@ class PuppetResourceTypeImplInstantiator
           functor_expr.left_expr.is_a?(Model::QualifiedReference) &&
           functor_expr.left_expr.cased_value == rname &&
           functor_expr.right_expr.is_a?(Model::QualifiedName) &&
-          functor_expr.right_expr.value == _('new')
+          functor_expr.right_expr.value == 'new'
       else
         false
       end
     end
-      raise ArgumentError, _("The code loaded from %{source_ref} does not create the resource type '%{type_name}' - no call to %{rname}.new found.") % { source_ref: source_ref, type_name: typed_name.name, rname: rname }
+      raise ArgumentError, "The code loaded from #{source_ref} does not create the resource type '#{typed_name.name}' - no call to #{rname}.new found."
     end
 
     unless statements.size == 1
-      raise ArgumentError, _("The code loaded from %{source_ref} must contain only the creation of resource type '%{type_name}' - it has additional logic.") % { source_ref: source_ref, type_name: typed_name.name }
+      raise ArgumentError, "The code loaded from #{source_ref} must contain only the creation of resource type '#{typed_name.name}' - it has additional logic."
     end
 
     closure_scope = Puppet.lookup(:global_scope) { {} }
-    resource_type_impl = parser.evaluate(closure_scope, model)
+    resource_type_impl = parser.evaluate(closure_scope, result)
 
     unless resource_type_impl.is_a?(Puppet::Pops::Resource::ResourceTypeImpl)
       got = resource_type.class
-      raise ArgumentError, _("The code loaded from %{source_ref} does not define the resource type '%{type_name}' - got '%{got}'.") % { source_ref: source_ref, type_name: typed_name.name, got: got }
+      raise ArgumentError, "The code loaded from #{source_ref} does not define the resource type '#{typed_name.name}' - got '#{got}'."
     end
 
     unless resource_type_impl.name == typed_name.name
       expected = typed_name.name
       actual = resource_type_impl.name
-      raise ArgumentError, _("The code loaded from %{source_ref} produced resource type with the wrong name, expected '%{expected}', actual '%{actual}'") % { source_ref: source_ref, expected: expected, actual: actual }
+      raise ArgumentError, "The code loaded from #{source_ref} produced resource type with the wrong name, expected '#{expected}', actual '#{actual}'"
     end
 
     # Adapt the resource type definition with loader - this is used from logic contained in it body to find the

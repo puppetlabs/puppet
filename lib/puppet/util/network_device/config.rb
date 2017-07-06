@@ -52,7 +52,7 @@ class Puppet::Util::NetworkDevice::Config
           when /^\[([\w.-]+)\]\s*$/ # [device.fqdn]
             name = $1
             name.chomp!
-            raise Puppet::Error, _("Duplicate device found at line %{count}, already found at %{line}") % { count: count, line: device.line } if devices.include?(name)
+            raise Puppet::Error, "Duplicate device found at line #{count}, already found at #{device.line}" if devices.include?(name)
             device = OpenStruct.new
             device.name = name
             device.line = count
@@ -62,16 +62,16 @@ class Puppet::Util::NetworkDevice::Config
           when /^\s*(type|url|debug)(\s+(.+)\s*)*$/
             parse_directive(device, $1, $3, count)
           else
-            raise Puppet::Error, _("Invalid line %{count}: %{line}") % { count: count, line: line }
+            raise Puppet::Error, "Invalid line #{count}: #{line}"
           end
           count += 1
         }
       }
     rescue Errno::EACCES => detail
-      Puppet.err _("Configuration error: Cannot read %{file}; cannot serve") % { file: @file }
+      Puppet.err "Configuration error: Cannot read #{@file}; cannot serve"
       #raise Puppet::Error, "Cannot read #{@config}"
     rescue Errno::ENOENT => detail
-      Puppet.err _("Configuration error: '%{file}' does not exit; cannot serve") % { file: @file }
+      Puppet.err "Configuration error: '#{@file}' does not exit; cannot serve"
     end
 
     @devices = devices
@@ -85,13 +85,13 @@ class Puppet::Util::NetworkDevice::Config
       begin
         URI.parse(value)
       rescue URI::InvalidURIError
-        raise Puppet::Error, _("%{value} is an invalid url") % { value: value }
+        raise Puppet::Error, "#{value} is an invalid url"
       end
       device.url = value
     when "debug"
       device.options[:debug] = true
     else
-      raise Puppet::Error, _("Invalid argument '%{var}' at line %{count}") % { var: var, count: count }
+      raise Puppet::Error, "Invalid argument '#{var}' at line #{count}"
     end
   end
 

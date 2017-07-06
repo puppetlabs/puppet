@@ -78,11 +78,11 @@ Puppet::Face.define(:help, '0.0.1') do
   def render_application_help(applicationname)
     return Puppet::Application[applicationname].help
   rescue StandardError, LoadError => detail
-    msg = _(<<-MSG) % { applicationname: applicationname, detail: detail.message }
-Could not load help for the application %{applicationname}.
+    msg = _(<<-MSG)
+Could not load help for the application #{applicationname}.
 Please check the error logs for more information.
 
-Detail: "%{detail}"
+Detail: "#{detail.message}"
 MSG
     fail ArgumentError, msg, detail.backtrace
   end
@@ -91,11 +91,11 @@ MSG
     face, action = load_face_help(facename, actionname, version)
     return template_for(face, action).result(binding)
   rescue StandardError, LoadError => detail
-    msg = _(<<-MSG) % { facename: facename, detail: detail.message }
-Could not load help for the face %{facename}.
+    msg = _(<<-MSG)
+Could not load help for the face #{facename}.
 Please check the error logs for more information.
 
-Detail: "%{detail}"
+Detail: "#{detail.message}"
 MSG
     fail ArgumentError, msg, detail.backtrace
   end
@@ -105,7 +105,7 @@ MSG
     if actionname
       action = face.get_action(actionname.to_sym)
       if not action
-        fail ArgumentError, _("Unable to load action %{actionname} from %{face}") % { actionname: actionname, face: face }
+        fail ArgumentError, _("Unable to load action #{actionname} from #{face}")
       end
     end
 

@@ -10,20 +10,20 @@ require 'puppet/util/json_lockfile'
 #  because it used by external tools such as mcollective.
 #
 # For more information, please see docs on the website.
-#  http://links.puppet.com/agent_lockfiles
+#  http://links.puppetlabs.com/agent_lockfiles
 module Puppet::Agent::Disabler
   DISABLED_MESSAGE_JSON_KEY = "disabled_message"
 
   # Let the daemon run again, freely in the filesystem.
   def enable
-    Puppet.notice _("Enabling Puppet.")
+    Puppet.notice "Enabling Puppet."
     disable_lockfile.unlock
   end
 
   # Stop the daemon from making any catalog runs.
   def disable(msg=nil)
     data = {}
-    Puppet.notice _("Disabling Puppet.")
+    Puppet.notice "Disabling Puppet."
     if (! msg.nil?)
       data[DISABLED_MESSAGE_JSON_KEY] = msg
     end

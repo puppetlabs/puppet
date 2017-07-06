@@ -1,9 +1,9 @@
 # Select and show a list of resources of a given type.
 Puppet::Face.define(:catalog, '0.0.1') do
   action :select do
-    summary _("Retrieve a catalog and filter it for resources of a given type.")
-    arguments _("<host> <resource_type>")
-    returns _(<<-'EOT')
+    summary "Retrieve a catalog and filter it for resources of a given type."
+    arguments "<host> <resource_type>"
+    returns <<-'EOT'
       A list of resource references ("Type[title]"). When used from the API,
       returns an array of Puppet::Resource objects excised from a catalog.
     EOT
@@ -40,7 +40,7 @@ Puppet::Face.define(:catalog, '0.0.1') do
 
     when_rendering :console do |value|
       if value.nil? then
-        _("no matching resources found")
+        "no matching resources found"
       else
         value.map {|x| x.to_s }.join("\n")
       end

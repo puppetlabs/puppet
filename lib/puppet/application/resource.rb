@@ -129,13 +129,11 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
   end
 
   def main
-    env = Puppet.lookup(:environments).get(Puppet[:environment])
-    Puppet.override(:current_environment => env, :loaders => Puppet::Pops::Loaders.new(env)) do
-      type, name, params = parse_args(command_line.args)
+    type, name, params = parse_args(command_line.args)
 
-      raise _("Editing with Yaml output is not supported") if options[:edit] and options[:to_yaml]
+    raise "Editing with Yaml output is not supported" if options[:edit] and options[:to_yaml]
 
-      resources = find_or_save_resources(type, name, params)
+    resources = find_or_save_resources(type, name, params)
 
     if options[:to_yaml]
       text = resources.map do |resource|
@@ -148,10 +146,9 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
       end.join("\n")
     end
 
-      options[:edit] ?
-        handle_editing(text) :
-        (puts text)
-    end
+    options[:edit] ?
+      handle_editing(text) :
+      (puts text)
   end
 
   def setup
@@ -189,15 +186,15 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
   end
 
   def parse_args(args)
-    type = args.shift or raise _("You must specify the type to display")
-    Puppet::Type.type(type) or raise _("Could not find type %{type}") % { type: type }
+    type = args.shift or raise "You must specify the type to display"
+    Puppet::Type.type(type) or raise "Could not find type #{type}"
     name = args.shift
     params = {}
     args.each do |setting|
       if setting =~ /^(\w+)=(.+)$/
         params[$1] = $2
       else
-        raise _("Invalid parameter setting %{setting}") % { setting: setting }
+        raise "Invalid parameter setting #{setting}"
       end
     end
 
@@ -219,7 +216,7 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
       end
     else
       if type == "file"
-        raise _("Listing all file instances is not supported.  Please specify a file or directory, e.g. puppet resource file /etc")
+        raise "Listing all file instances is not supported.  Please specify a file or directory, e.g. puppet resource file /etc"
       end
       Puppet::Resource.indirection.search( key, {} )
     end

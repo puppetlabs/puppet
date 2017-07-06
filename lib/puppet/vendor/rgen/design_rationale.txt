@@ -1,0 +1,71 @@
+=ElementSet vs. Array
+
+Subject:
+Use a special array-like class "ElementSet" with the following properties:
+* can call methods of elements by . notation
+* can use all set and enumerable methods of Array
+* enforce constraints regarding type of elements
+* auto register/unregister with counterpart of an association
+
+Dependencies:
+* Without the constraint and register/unregister functionality of the ElementSet,
+  the API of model elements built by MetamodelBuilder has to be different:
+  instead of "e.myelements << newel" would be "e.addMyelements(newel)"
+  However this can also be an advantage (see Metamodel Many Assoc API)
+
+A1. ElementSet:
++ nice notation for calling methods of elements (.)
++ nice notation for adding/removing elements from a model element
+  (e.myelements << newel; e.myelements.delete newel)
+- complicated to realize
+  if ElementSet inherits from Array:
+  	constraints/registration can not be garanteed for all add/remove operations
+  	input and output of Array methods must be wrapped into ElementSet objects
+  if ElementSet delegates to an Array:
+    all (relevant) methods have to be delegated (methods from including
+    Enumerable do not automatically return ElementSet objects)
+- dot notation for calling methods of elements my lead to errors which are difficult
+  to find
+
+A2. Array:
++ a separate operator like >> makes calling methods of elements more explicit
++ very easy to implement
++ easy to understand by users (no "magic" going on)
+
+Decision: (2006-06-08)
+A2. Array
+Simplicity of implementation and ease of use are more important than a nice notation
+
+
+
+= Metamodel Many Assoc API
+
+Subject:
+How to implement the API to deal with to-many associations of model elements.
+One option is an array like object which is held by the model element for each to-many
+association and which is given to the user for modification (external array).
+The other option is an internal array which is only accessed via add and remove
+methods
+
+Dependencies:
+If an external array is used, this array must check the association's constraints
+and register/unregister with the other side of the association.
+(see ElementSet vs. Array)
+
+A1.External Array
++ nice API (e.myassocs << newel; e. myassocs.delete newel)
++ this is a Rails like API
+- a reference to the array might be stored somewhere else in the program and
+  accidentially be modified, this would modify the model element it belongs to
+  as well as register/unregister with other model elements leading to errors
+  which are hard to find
+- an external array is complicated to implement (see ElementSet vs. Array)
+
+A2.Internal Array
++ easy to understand for non Ruby/Rails aware users
++ simple implementation
+
+Decision: (2006-06-09)
+A2. Internal Array
+Simplicity of implementation and ease of use are more important than a nice notation
+ 

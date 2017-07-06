@@ -15,7 +15,7 @@ Find
 Get a submitted CSR
 
     GET /puppet-ca/v1/certificate_request/:nodename?environment=:environment
-    Accept: text/plain
+    Accept: s
 
 Save
 ----
@@ -39,7 +39,7 @@ Server doesn't support it, and we don't plan to add support in the future.
 List submitted CSRs
 
     GET /puppet-ca/v1/certificate_requests/:ignored_pattern?environment=:environment
-    Accept: text/plain
+    Accept: s
 
 The `:ignored_pattern` parameter is not used, but must still be provided.
 
@@ -49,7 +49,7 @@ Destroy
 Delete a submitted CSR
 
     DELETE /puppet-ca/v1/certificate_request/:nodename?environment=:environment
-    Accept: text/plain
+    Accept: s
 
 ### Supported HTTP Methods
 
@@ -61,7 +61,7 @@ GET, PUT, DELETE
 
 ### Supported Response Formats
 
-`text/plain`
+s (denotes a string of text)
 
 The returned CSR is always in the `.pem` format.
 

@@ -14,8 +14,7 @@ class Puppet::Node::Plain < Puppet::Indirector::Plain
   def find(request)
     node = super
     node.environment = request.environment
-    facts = request.options[:facts].is_a?(Puppet::Node::Facts) ? request.options[:facts] : nil
-    node.fact_merge(facts)
+    node.fact_merge
     node
   end
 end

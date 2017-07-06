@@ -137,8 +137,8 @@ describe "Puppet defaults" do
     end
   end
 
-  it "should default to json for the preferred serialization format" do
-    expect(Puppet.settings.value(:preferred_serialization_format)).to eq("json")
+  it "should default to pson for the preferred serialization format" do
+    expect(Puppet.settings.value(:preferred_serialization_format)).to eq("pson")
   end
 
   it "should have a setting for determining the configuration version and should default to an empty string" do

@@ -21,7 +21,7 @@ class ResourceTypeImpl
   include Puppet::CompilableResourceType
 
   # Returns the Puppet Type for this instance.
-  def self._pcore_type
+  def self._ptype
     @ptype
   end
 

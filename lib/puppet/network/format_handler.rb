@@ -62,11 +62,7 @@ module Puppet::Network::FormatHandler
     else
       out = format(format)
     end
-
-    if out.nil?
-      raise ArgumentError, _("No format matches the given format name or mime-type (%{format})") % {format: format}
-    end
-
+    raise ArgumentError, "No format match the given format name or mime-type (#{format})" if out.nil?
     out.name
   end
 
@@ -78,11 +74,10 @@ module Puppet::Network::FormatHandler
   #   (most preferred is first)
   # @param supported [Array<Symbol>] the names of the supported formats (the
   #   most preferred format is first)
-  # @return [Array<Puppet::Network::Format>] the most suitable formats that
-  #   are both accepted and supported
+  # @return [Puppet::Network::Format, nil] the most suitable format
   # @api private
-  def self.most_suitable_formats_for(accepted, supported)
-    accepted.collect do |format|
+  def self.most_suitable_format_for(accepted, supported)
+    format_name = accepted.collect do |format|
       format.to_s.sub(/;q=.*$/, '')
     end.collect do |format|
       if format == ALL_MEDIA_TYPES
@@ -90,10 +85,12 @@ module Puppet::Network::FormatHandler
       else
         format_to_canonical_name_or_nil(format)
       end
-    end.compact.find_all do |format|
+    end.find do |format|
       supported.include?(format)
-    end.collect do |format|
-      format_for(format)
+    end
+
+    if format_name
+      format_for(format_name)
     end
   end
 

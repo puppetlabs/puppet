@@ -56,21 +56,21 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
         missing.each do |test, values|
           case test
           when :exists
-            details << _("  - Missing files %{files}\n") % { files: values.join(", ") }
+            details << "  - Missing files #{values.join(", ")}\n"
           when :variable
             values.each do |name, facts|
               if Puppet.settings.valid?(name)
-                details << _("  - Setting %{name} (currently %{value}) not in list %{facts}\n") % { name: name, value: Puppet.settings.value(name).inspect, facts: facts.join(", ") }
+                details << "  - Setting #{name} (currently #{Puppet.settings.value(name).inspect}) not in list #{facts.join(", ")}\n"
               else
-                details << _("  - Fact %{name} (currently %{value}) not in list %{facts}\n") % { name: name, value: Facter.value(name).inspect, facts: facts.join(", ") }
+                details << "  - Fact #{name} (currently #{Facter.value(name).inspect}) not in list #{facts.join(", ")}\n"
               end
             end
           when :true
-            details << _("  - Got %{values} true tests that should have been false\n") % { values: values }
+            details << "  - Got #{values} true tests that should have been false\n"
           when :false
-            details << _("  - Got %{values} false tests that should have been true\n") % { values: values }
+            details << "  - Got #{values} false tests that should have been true\n"
           when :feature
-            details << _("  - Missing features %{values}\n") % { values: values.collect { |f| f.to_s }.join(",") }
+            details << "  - Missing features #{values.collect { |f| f.to_s }.join(",")}\n"
           end
         end
         notes << details

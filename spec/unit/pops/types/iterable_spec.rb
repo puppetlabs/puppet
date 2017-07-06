@@ -60,6 +60,7 @@ describe 'The iterable support' do
       PBooleanType::DEFAULT,
       PCallableType::DEFAULT,
       PCatalogEntryType::DEFAULT,
+      PDataType::DEFAULT,
       PDefaultType::DEFAULT,
       PFloatType::DEFAULT,
       PHostClassType::DEFAULT,
@@ -71,7 +72,6 @@ describe 'The iterable support' do
       PResourceType::DEFAULT,
       PRuntimeType::DEFAULT,
       PScalarType::DEFAULT,
-      PScalarDataType::DEFAULT,
       PType::DEFAULT,
       PUndefType::DEFAULT
     ]

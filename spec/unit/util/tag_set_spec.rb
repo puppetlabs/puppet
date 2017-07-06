@@ -29,11 +29,11 @@ describe Puppet::Util::TagSet do
     expect(Puppet::Util::TagSet.from_yaml(array.to_yaml)).to eq(Puppet::Util::TagSet.new(array))
   end
 
-  it 'round trips through json' do
+  it 'round trips through pson' do
     array = ['a', 'b', 1, 5.4]
     set.merge(array)
 
-    tes = Puppet::Util::TagSet.from_data_hash(JSON.parse(set.to_json))
+    tes = Puppet::Util::TagSet.from_data_hash(PSON.parse(set.to_pson))
     expect(tes).to eq(set)
   end
 

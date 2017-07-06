@@ -78,7 +78,7 @@ Puppet::Functions.create_function(:match) do
   protected
 
   def match_Object(obj, s)
-    msg = _("match() expects pattern of T, where T is String, Regexp, Regexp[r], Pattern[p], or Array[T]. Got %{klass}") % { klass: obj.class }
+    msg = "match() expects pattern of T, where T is String, Regexp, Regexp[r], Pattern[p], or Array[T]. Got #{obj.class}"
     raise ArgumentError, msg
   end
 
@@ -91,7 +91,7 @@ Puppet::Functions.create_function(:match) do
   end
 
   def match_PRegexpType(regexp_t, s)
-    raise ArgumentError, _("Given Regexp Type has no regular expression") unless regexp_t.pattern
+    raise ArgumentError, "Given Regexp Type has no regular expression" unless regexp_t.pattern
     do_match(s, regexp_t.regexp)
   end
 

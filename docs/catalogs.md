@@ -1,9 +1,10 @@
-# Two Types of Catalogs
+# Two Types of Catalog
 
 When working on subsystems of Puppet that deal with the catalog it is important
-to be aware of the two different types of Catalogs.
+to be aware of the two different types of Catalog.  Developers will often find
+this difference while working on the static compiler and types and providers.
 
-The two different types of catalogs becomes relevant when writing spec tests
+The two different types of catalog becomes relevant when writing spec tests
 because we frequently need to wire up a fake catalog so that we can exercise
 types, providers, or termini that filter the catalog.
 

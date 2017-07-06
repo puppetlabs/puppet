@@ -1,0 +1,9 @@
+<ecore:EPackage name="P1" xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore">
+  <eClassifiers name="C1" xsi:type="ecore:EClass">
+    <eStructuralFeatures iD="false" changeable="true" derived="false" transient="false" unsettable="false" volatile="false" lowerBound="0" ordered="true" unique="true" upperBound="1" name="a1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" xsi:type="ecore:EAttribute"/>
+    <eStructuralFeatures iD="false" changeable="true" derived="false" transient="false" unsettable="false" volatile="false" lowerBound="0" ordered="true" unique="true" upperBound="1" name="a2" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt" xsi:type="ecore:EAttribute"/>
+    <eStructuralFeatures iD="false" changeable="true" derived="false" transient="false" unsettable="false" volatile="false" lowerBound="0" ordered="true" unique="true" upperBound="1" name="a3" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//ELong" xsi:type="ecore:EAttribute"/>
+    <eStructuralFeatures iD="false" changeable="true" derived="false" transient="false" unsettable="false" volatile="false" lowerBound="0" ordered="true" unique="true" upperBound="1" name="a4" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EFloat" xsi:type="ecore:EAttribute"/>
+    <eStructuralFeatures iD="false" changeable="true" derived="false" transient="false" unsettable="false" volatile="false" lowerBound="0" ordered="true" unique="true" upperBound="1" name="a5" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean" xsi:type="ecore:EAttribute"/>
+  </eClassifiers>
+</ecore:EPackage>

@@ -5,7 +5,7 @@ require 'puppet/reports'
 processor = Puppet::Reports.report(:http)
 
 describe processor do
-  subject { Puppet::Transaction::Report.new.extend(processor) }
+  subject { Puppet::Transaction::Report.new("apply").extend(processor) }
 
   describe "when setting up the connection" do
     let(:http) { stub_everything "http" }
@@ -39,7 +39,6 @@ describe processor do
   describe "when making a request" do
     let(:connection) { stub_everything "connection" }
     let(:httpok) { Net::HTTPOK.new('1.1', 200, '') }
-    let(:options) { {:metric_id => [:puppet, :report, :http]} }
 
     before :each do
       Puppet::Network::HttpPool.expects(:http_instance).returns(connection)
@@ -47,7 +46,7 @@ describe processor do
 
     it "should use the path specified by the 'reporturl' setting" do
       report_path = URI.parse(Puppet[:reporturl]).path
-      connection.expects(:post).with(report_path, anything, anything, options).returns(httpok)
+      connection.expects(:post).with(report_path, anything, anything, {}).returns(httpok)
 
       subject.process
     end
@@ -55,24 +54,22 @@ describe processor do
     it "should use the username and password specified by the 'reporturl' setting" do
       Puppet[:reporturl] = "https://user:pass@myhost.mydomain:1234/report/upload"
 
-      connection.expects(:post).with(anything, anything, anything,
-                                     {:metric_id => [:puppet, :report, :http],
-                                      :basic_auth => {
-                                        :user => 'user',
-                                        :password => 'pass'
-                                      }}).returns(httpok)
+      connection.expects(:post).with(anything, anything, anything, :basic_auth => {
+        :user => 'user',
+        :password => 'pass'
+      }).returns(httpok)
 
       subject.process
     end
 
     it "should give the body as the report as YAML" do
-      connection.expects(:post).with(anything, subject.to_yaml, anything, options).returns(httpok)
+      connection.expects(:post).with(anything, subject.to_yaml, anything, {}).returns(httpok)
 
       subject.process
     end
 
     it "should set content-type to 'application/x-yaml'" do
-      connection.expects(:post).with(anything, anything, has_entry("Content-Type" => "application/x-yaml"), options).returns(httpok)
+      connection.expects(:post).with(anything, anything, has_entry("Content-Type" => "application/x-yaml"), {}).returns(httpok)
 
       subject.process
     end

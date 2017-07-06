@@ -37,11 +37,11 @@ module Puppet::Util::Errors
   # @return [String] description of file and line
   def error_context
     if file and line
-      _(" at %{file}:%{line}") % { file: file, line: line }
+      " at #{file}:#{line}"
     elsif line
-      _(" at line %{line}") % { line: line }
+      " at line #{line}"
     elsif file
-      _(" in %{file}") % { file: file }
+      " in #{file}"
     else
       ""
     end
@@ -65,7 +65,7 @@ module Puppet::Util::Errors
     rescue Puppet::Error => detail
       raise adderrorcontext(detail)
     rescue => detail
-      message = options[:message] || _("%{klass} failed with error %{error_type}: %{detail}") % { klass: self.class, error_type: detail.class, detail: detail }
+      message = options[:message] || "#{self.class} failed with error #{detail.class}: #{detail}"
 
       error = options[:type].new(message)
       # We can't use self.fail here because it always expects strings,

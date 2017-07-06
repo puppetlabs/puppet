@@ -35,7 +35,7 @@ class Puppet::Util::Ldap::Connection
   end
 
   def initialize(host, port, options = {})
-    raise Puppet::Error, _("Could not set up LDAP Connection: Missing ruby/ldap libraries") unless Puppet.features.ldap?
+    raise Puppet::Error, "Could not set up LDAP Connection: Missing ruby/ldap libraries" unless Puppet.features.ldap?
 
     @host, @port = host, port
 
@@ -66,6 +66,6 @@ class Puppet::Util::Ldap::Connection
       @connection.set_option(LDAP::LDAP_OPT_REFERRALS, LDAP::LDAP_OPT_ON)
       @connection.simple_bind(user, password)
   rescue => detail
-      raise Puppet::Error, _("Could not connect to LDAP: %{detail}") % { detail: detail }, detail.backtrace
+      raise Puppet::Error, "Could not connect to LDAP: #{detail}", detail.backtrace
   end
 end

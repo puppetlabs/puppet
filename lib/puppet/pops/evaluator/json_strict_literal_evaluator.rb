@@ -1,3 +1,5 @@
+require 'rgen/ecore/ecore'
+
 # Literal values for
 #
 #   * String

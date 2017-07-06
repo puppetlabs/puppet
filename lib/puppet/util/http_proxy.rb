@@ -192,6 +192,6 @@ module Puppet::Util::HttpProxy
       return response
     end
 
-    raise RedirectionLimitExceededException, _("Too many HTTP redirections for %{uri}") % { uri: uri }
+    raise RedirectionLimitExceededException, "Too many HTTP redirections for #{uri}"
   end
 end

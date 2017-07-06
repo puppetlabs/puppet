@@ -1,0 +1,5 @@
+<% define 'Test', :for => Object do %>
+This file was created on Linux and does not contain \r before \n
+The next blank line is done by the "nl" command which shall only add a \n, no \r:
+<%nl%>END
+<% end %>

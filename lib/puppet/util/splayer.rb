@@ -11,7 +11,7 @@ module Puppet::Util::Splayer
     return if splayed?
 
     time = rand(Puppet[:splaylimit] + 1)
-    Puppet.info _("Sleeping for %{time} seconds (splay is enabled)") % { time: time }
+    Puppet.info "Sleeping for #{time} seconds (splay is enabled)"
     sleep(time)
     @splayed = true
   end

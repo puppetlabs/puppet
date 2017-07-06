@@ -1,6 +1,6 @@
 Puppet::Face.define(:module, '1.0.0') do
   action(:generate) do
-    summary _("Generate boilerplate for a new module.")
+    summary "Generate boilerplate for a new module."
     description <<-EOT
       Generates boilerplate for a new module by creating the directory
       structure and files recommended for the Puppet community's best practices.
@@ -9,7 +9,7 @@ Puppet::Face.define(:module, '1.0.0') do
       if it provides plugins, files, or templates.
     EOT
 
-    returns _("Array of Pathname objects representing paths of generated files.")
+    returns "Array of Pathname objects representing paths of generated files."
 
     examples <<-EOT
       Generate a new module in the current directory:
@@ -77,14 +77,14 @@ Puppet::Face.define(:module, '1.0.0') do
     EOT
 
     option "--skip-interview" do
-      summary _("Bypass the interactive metadata interview")
+      summary "Bypass the interactive metadata interview"
       description <<-EOT
         Do not attempt to perform a metadata interview.  Primarily useful for automatic
         execution of `puppet module generate`.
       EOT
     end
 
-    arguments _("<name>")
+    arguments "<name>"
 
     when_invoked do |name, options|
       # Since we only want to interview if it's being rendered to the console
@@ -98,7 +98,7 @@ Puppet::Face.define(:module, '1.0.0') do
       #
       # All this is necessary because it is not possible at this point in time
       # to know what the destination of the output is.
-      _("This format is not supported by this action.")
+      "This format is not supported by this action."
     end
 
     when_rendering :console do |_, name, options|
@@ -118,7 +118,7 @@ Puppet::Face.define(:module, '1.0.0') do
           ]
         )
       rescue ArgumentError
-        msg = _("Could not generate directory %{name}, you must specify a dash-separated username and module name.") % { name: name.inspect }
+        msg = "Could not generate directory #{name.inspect}, you must specify a dash-separated username and module name."
         raise ArgumentError, msg, $!.backtrace
       end
 
@@ -126,7 +126,7 @@ Puppet::Face.define(:module, '1.0.0') do
       result = Puppet::ModuleTool::Generate.generate(metadata, options[:skip_interview])
 
       path = dest.relative_path_from(Pathname.pwd)
-      puts _("Finished; module generated in %{path}.") % { path: path }
+      puts "Finished; module generated in #{path}."
       result.join("\n")
     end
   end
@@ -144,42 +144,42 @@ module Puppet::ModuleTool::Generate
   end
 
   def interview(metadata)
-    puts _("We need to create a metadata.json file for this module.  Please answer the
-    following questions; if the question is not applicable to this module, feel free
-    to leave it blank.")
+    puts "We need to create a metadata.json file for this module.  Please answer the"
+    puts "following questions; if the question is not applicable to this module, feel free"
+    puts "to leave it blank."
 
     begin
       puts
-      puts _("Puppet uses Semantic Versioning (semver.org) to version modules.")
-      puts _("What version is this module?  [%{version}]") % { version: metadata.version }
+      puts "Puppet uses Semantic Versioning (semver.org) to version modules."
+      puts "What version is this module?  [#{metadata.version}]"
       metadata.update 'version' => user_input(metadata.version)
     rescue
-      Puppet.err _("We're sorry, we could not parse that as a Semantic Version.")
+      Puppet.err "We're sorry, we could not parse that as a Semantic Version."
       retry
     end
 
     puts
-    puts _("Who wrote this module?  [%{author}]") % { author: metadata.author }
+    puts "Who wrote this module?  [#{metadata.author}]"
     metadata.update 'author' => user_input(metadata.author)
 
     puts
-    puts _("What license does this module code fall under?  [%{license}]") % { license: metadata.license }
+    puts "What license does this module code fall under?  [#{metadata.license}]"
     metadata.update 'license' => user_input(metadata.license)
 
     puts
-    puts _("How would you describe this module in a single sentence?")
+    puts "How would you describe this module in a single sentence?"
     metadata.update 'summary' => user_input(metadata.summary)
 
     puts
-    puts _("Where is this module's source code repository?")
+    puts "Where is this module's source code repository?"
     metadata.update 'source' => user_input(metadata.source)
 
     puts
-    puts _("Where can others go to learn more about this module?%{project_page}") % { project_page: metadata.project_page && "  [#{metadata.project_page}]" }
+    puts "Where can others go to learn more about this module?#{ metadata.project_page && "  [#{metadata.project_page}]" }"
     metadata.update 'project_page' => user_input(metadata.project_page)
 
     puts
-    puts _("Where can others go to file issues about this module?%{issues}") % { issues: metadata.issues_url && "  [#{metadata.issues_url}]" }
+    puts "Where can others go to file issues about this module?#{ metadata.issues_url && "  [#{metadata.issues_url}]" }"
     metadata.update 'issues_url' => user_input(metadata.issues_url)
 
     puts
@@ -187,10 +187,10 @@ module Puppet::ModuleTool::Generate
     puts metadata.to_json
     puts '-' * 40
     puts
-    puts _("About to generate this metadata; continue? [n/Y]")
+    puts "About to generate this metadata; continue? [n/Y]"
 
     if user_input('Y') !~ /^y(es)?$/i
-      puts _("Aborting...")
+      puts "Aborting..."
       exit 0
     end
   end
@@ -205,7 +205,7 @@ module Puppet::ModuleTool::Generate
   def destination(metadata)
     return @dest if defined? @dest
     @dest = Pathname.pwd + metadata.name
-    raise ArgumentError, _("%{destination} already exists.") % { destination: @dest } if @dest.exist?
+    raise ArgumentError, "#{@dest} already exists." if @dest.exist?
     return @dest
   end
 
@@ -213,7 +213,7 @@ module Puppet::ModuleTool::Generate
     dest = destination(metadata)
 
     puts
-    Puppet.notice _("Generating module at %{dest}...") % { dest: dest }
+    Puppet.notice "Generating module at #{dest}..."
     FileUtils.cp_r skeleton_path, dest
 
     populate_templates(metadata, dest)
@@ -221,7 +221,7 @@ module Puppet::ModuleTool::Generate
   end
 
   def populate_templates(metadata, destination)
-    Puppet.notice _("Populating templates...")
+    Puppet.notice "Populating templates..."
 
     formatters = {
       :erb      => proc { |data, ctx| ERB.new(data).result(ctx) },

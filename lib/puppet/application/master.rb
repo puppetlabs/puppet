@@ -135,15 +135,22 @@ Copyright (c) 2012 Puppet Inc., LLC Licensed under the Apache 2.0 License
     HELP
   end
 
+  # Sets up the 'node_cache_terminus' default to use the Write Only Yaml terminus :write_only_yaml.
+  # If this is not wanted, the setting ´node_cache_terminus´ should be set to nil.
+  # @see Puppet::Node::WriteOnlyYaml
+  # @see #setup_node_cache
+  # @see puppet issue 16753
+  #
   def app_defaults
     super.merge({
+      :node_cache_terminus => :write_only_yaml,
       :facts_terminus => 'yaml'
     })
   end
 
   def preinit
     Signal.trap(:INT) do
-      $stderr.puts _("Canceling startup")
+      $stderr.puts "Canceling startup"
       exit(0)
     end
 
@@ -162,12 +169,12 @@ Copyright (c) 2012 Puppet Inc., LLC Licensed under the Apache 2.0 License
   def compile
     begin
       unless catalog = Puppet::Resource::Catalog.indirection.find(options[:node])
-        raise _("Could not compile catalog for %{node}") % { node: options[:node] }
+        raise "Could not compile catalog for #{options[:node]}"
       end
 
-      puts JSON::pretty_generate(catalog.to_resource, :allow_nan => true, :max_nesting => false)
+      puts PSON::pretty_generate(catalog.to_resource, :allow_nan => true, :max_nesting => false)
     rescue => detail
-      Puppet.log_exception(detail, _("Failed to compile catalog for node %{node}: %{detail}") % { node: options[:node], detail: detail })
+      Puppet.log_exception(detail, "Failed to compile catalog for node #{options[:node]}: #{detail}")
       exit(30)
     end
     exit(0)
@@ -187,20 +194,20 @@ Copyright (c) 2012 Puppet Inc., LLC Licensed under the Apache 2.0 License
         begin
           Puppet::Util.chuser
         rescue => detail
-          Puppet.log_exception(detail, _("Could not change user to %{user}: %{detail}") % { user: Puppet[:user], detail: detail })
+          Puppet.log_exception(detail, "Could not change user to #{Puppet[:user]}: #{detail}")
           exit(39)
         end
       else
-        Puppet.err(_("Could not change user to %{user}. User does not exist and is required to continue.") % { user: Puppet[:user] })
+        Puppet.err("Could not change user to #{Puppet[:user]}. User does not exist and is required to continue.")
         exit(74)
       end
     end
 
     if options[:rack]
-      Puppet.deprecation_warning(_("The Rack Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppet.com/deprecate-rack-webrick-servers for more information."))
+      Puppet.deprecation_warning("The Rack Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppetlabs.com/deprecate-rack-webrick-servers for more information.")
       start_rack_master
     else
-      Puppet.deprecation_warning(_("The WEBrick Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppet.com/deprecate-rack-webrick-servers for more information."))
+      Puppet.deprecation_warning("The WEBrick Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppetlabs.com/deprecate-rack-webrick-servers for more information.")
       start_webrick_master
     end
   end
@@ -249,17 +256,18 @@ Copyright (c) 2012 Puppet Inc., LLC Licensed under the Apache 2.0 License
     Puppet::SSL::Oids.load_custom_oid_file(Puppet[:trusted_oid_mapping_file])
   end
 
-  # Honor the :node_cache_terminus setting if users have specified it directly.
-  # We normally want this nil as use-cases for querying nodes should be going to
-  # PuppetDB.
-  # @see PUP-6060
+  # Sets up a special node cache "write only yaml" that collects and stores node data in yaml
+  # but never finds or reads anything (this since a real cache causes stale data to be served
+  # in circumstances when the cache can not be cleared).
+  # @see puppet issue 16753
+  # @see Puppet::Node::WriteOnlyYaml
   # @return [void]
   def setup_node_cache
     Puppet::Node.indirection.cache_class = Puppet[:node_cache_terminus]
   end
 
   def setup
-    raise Puppet::Error.new(_("Puppet master is not supported on Microsoft Windows")) if Puppet.features.microsoft_windows?
+    raise Puppet::Error.new("Puppet master is not supported on Microsoft Windows") if Puppet.features.microsoft_windows?
 
     setup_logs
 
@@ -308,6 +316,6 @@ Copyright (c) 2012 Puppet Inc., LLC Licensed under the Apache 2.0 License
   end
 
   def announce_start_of_master
-    Puppet.notice _("Starting Puppet master version %{version}") % { version: Puppet.version }
+    Puppet.notice "Starting Puppet master version #{Puppet.version}"
   end
 end

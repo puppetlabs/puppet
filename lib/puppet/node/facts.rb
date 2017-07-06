@@ -107,6 +107,11 @@ class Puppet::Node::Facts
     @timestamp = Time.now
   end
 
+  # @deprecated Use {#values} instead of this method.
+  def strip_internal
+    values
+  end
+
   private
 
   def sanitize_fact(fact)

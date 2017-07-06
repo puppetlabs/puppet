@@ -109,23 +109,28 @@ Puppet::Type.newtype(:cron) do
       false
     end
 
-    def should_to_s(value = @should)
-      if value
-        if value.is_a?(Array) && (name == :command || value[0].is_a?(Symbol))
-          value = value[0]
+    def should_to_s(newvalue = @should)
+      if newvalue
+        newvalue = [newvalue] unless newvalue.is_a?(Array)
+        if self.name == :command or newvalue[0].is_a? Symbol
+          newvalue[0]
+        else
+          newvalue.join(",")
         end
-        super(value)
       else
         nil
       end
     end
 
-    def is_to_s(value = @is)
-      if value
-        if value.is_a?(Array) && (name == :command || value[0].is_a?(Symbol))
-          value = value[0]
+    def is_to_s(currentvalue = @is)
+      if currentvalue
+        return currentvalue unless currentvalue.is_a?(Array)
+
+        if self.name == :command or currentvalue[0].is_a? Symbol
+          currentvalue[0]
+        else
+          currentvalue.join(",")
         end
-        super(value)
       else
         nil
       end
@@ -190,7 +195,7 @@ Puppet::Type.newtype(:cron) do
       if retval
         return retval.to_s
       else
-        self.fail _("%{value} is not a valid %{name}") % { value: value, name: self.class.name }
+        self.fail "#{value} is not a valid #{self.class.name}"
       end
     end
   end
@@ -248,7 +253,7 @@ Puppet::Type.newtype(:cron) do
     end
 
     validate do |value|
-      raise ArgumentError, _("Invalid special schedule %{value}") % { value: value.inspect } unless specials.include?(value)
+      raise ArgumentError, "Invalid special schedule #{value.inspect}" unless specials.include?(value)
     end
 
     def munge(value)
@@ -321,7 +326,7 @@ Puppet::Type.newtype(:cron) do
 
     validate do |value|
       unless value =~ /^\s*(\w+)\s*=\s*(.*)\s*$/ or value == :absent or value == "absent"
-        raise ArgumentError, _("Invalid environment setting %{value}") % { value: value.inspect }
+        raise ArgumentError, "Invalid environment setting #{value.inspect}"
       end
     end
 
@@ -330,6 +335,18 @@ Puppet::Type.newtype(:cron) do
         return is.sort == @should.sort
       else
         return is == @should
+      end
+    end
+
+    def is_to_s(newvalue)
+      if newvalue
+        if newvalue.is_a?(Array)
+          newvalue.join(",")
+        else
+          newvalue
+        end
+      else
+        nil
       end
     end
 
@@ -416,7 +433,7 @@ Puppet::Type.newtype(:cron) do
     [ :minute, :hour, :weekday, :monthday, :month ].each do |field|
       next unless self[field]
       next if self[field] == :absent
-      raise ArgumentError, _("%{cron} cannot specify both a special schedule and a value for %{field}") % { cron: self.ref, field: field }
+      raise ArgumentError, "#{self.ref} cannot specify both a special schedule and a value for #{field}"
     end
   end
 

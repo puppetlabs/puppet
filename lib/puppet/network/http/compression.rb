@@ -27,7 +27,7 @@ module Puppet::Network::HTTP::Compression
       when nil, 'identity'
         return response.body
       else
-        raise Net::HTTPError.new(_("Unknown content encoding - %{encoding}") % { encoding: response['content-encoding'] }, response)
+        raise Net::HTTPError.new("Unknown content encoding - #{response['content-encoding']}", response)
       end
     end
 
@@ -40,14 +40,12 @@ module Puppet::Network::HTTP::Compression
       when nil, 'identity'
         uncompressor = IdentityAdapter.new
       else
-        raise Net::HTTPError.new(_("Unknown content encoding - %{encoding}") % { encoding: response['content-encoding'] }, response)
+        raise Net::HTTPError.new("Unknown content encoding - #{response['content-encoding']}", response)
       end
 
-      begin
-        yield uncompressor
-      ensure
-        uncompressor.close
-      end
+      yield uncompressor
+
+      uncompressor.close
     end
 
     def add_accept_encoding(headers={})
@@ -58,7 +56,7 @@ module Puppet::Network::HTTP::Compression
     # This adapters knows how to uncompress both 'zlib' stream (the deflate algorithm from Content-Encoding)
     # and GZip streams.
     class ZlibAdapter
-      def initialize(uncompressor = Zlib::Inflate.new(15 + 32))
+      def initialize
         # Create an inflater that knows to parse GZip streams and zlib streams.
         # This uses a property of the C Zlib library, documented as follow:
         #   windowBits can also be greater than 15 for optional gzip decoding. Add
@@ -66,7 +64,7 @@ module Puppet::Network::HTTP::Compression
         #   detection, or add 16 to decode only the gzip format (the zlib format will
         #   return a Z_DATA_ERROR).  If a gzip stream is being decoded, strm->adler is
         #   a crc32 instead of an adler32.
-        @uncompressor = uncompressor
+        @uncompressor = Zlib::Inflate.new(15 + 32)
         @first = true
       end
 
@@ -89,7 +87,6 @@ module Puppet::Network::HTTP::Compression
 
       def close
         @uncompressor.finish
-      ensure
         @uncompressor.close
       end
     end

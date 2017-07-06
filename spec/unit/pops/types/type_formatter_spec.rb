@@ -38,13 +38,9 @@ describe 'The type formatter' do
       expect(s.indented_string({'a' => 32,'b' => [1, 2, {'c' => 'd'}]})).to eq(<<-FORMATTED)
 {
   'a' => 32,
-  'b' => [
-    1,
-    2,
-    {
-      'c' => 'd'
-    }
-  ]
+  'b' => [1, 2, {
+    'c' => 'd'
+  }]
 }
 FORMATTED
     end
@@ -53,13 +49,9 @@ FORMATTED
       expect(s.indented_string({'a' => 32,'b' => [1, 2, {'c' => 'd'}]}, 3)).to eq(<<-FORMATTED)
       {
         'a' => 32,
-        'b' => [
-          1,
-          2,
-          {
-            'c' => 'd'
-          }
-        ]
+        'b' => [1, 2, {
+          'c' => 'd'
+        }]
       }
 FORMATTED
     end
@@ -68,17 +60,13 @@ FORMATTED
       expect(s.indented_string({'a' => 32,'b' => [1, 2, {'c' => 'd'}]}, 2, 4)).to eq(<<-FORMATTED)
         {
             'a' => 32,
-            'b' => [
-                1,
-                2,
-                {
-                    'c' => 'd'
-                }
-            ]
+            'b' => [1, 2, {
+                'c' => 'd'
+            }]
         }
-FORMATTED
-    end
+    FORMATTED
   end
+end
 
   context 'when representing the type as string' do
     include_context 'types_setup'
@@ -99,7 +87,7 @@ FORMATTED
       expect(s.string(f.boolean)).to eq('Boolean')
     end
 
-    it "should yield 'Data' for the Data type" do
+    it "should yield 'Data' for PDataType" do
       expect(s.string(f.data)).to eq('Data')
     end
 
@@ -150,8 +138,8 @@ FORMATTED
       expect(s.string(f.array_of(f.integer))).to eq('Array[Integer]')
     end
 
-    it "should yield 'Array' for PArrayType::DEFAULT" do
-      expect(s.string(f.array_of_any)).to eq('Array')
+    it "should yield 'Array' for PArrayType::DATA" do
+      expect(s.string(f.array_of_data)).to eq('Array')
     end
 
     it "should yield 'Array[0, 0]' for an empty array" do
@@ -215,16 +203,15 @@ FORMATTED
     end
 
     it "should yield 'Timestamp['2016-09-05T13:00:00.000 UTC'] for PTimestampType[Timestamp]" do
-      expect(s.string(f.timestamp('2016-09-05T13:00:00.000 UTC'))).to eq("Timestamp['2016-09-05T13:00:00.000000000 UTC']")
+      expect(s.string(f.timestamp('2016-09-05T13:00:00.000 UTC'))).to eq("Timestamp['2016-09-05T13:00:00.000 UTC']")
     end
 
     it "should yield 'Timestamp[default, '2016-09-05T13:00:00.000 UTC'] for PTimestampType[nil, Timestamp]" do
-      expect(s.string(f.timestamp(nil, '2016-09-05T13:00:00.000 UTC'))).to eq("Timestamp[default, '2016-09-05T13:00:00.000000000 UTC']")
+      expect(s.string(f.timestamp(nil, '2016-09-05T13:00:00.000 UTC'))).to eq("Timestamp[default, '2016-09-05T13:00:00.000 UTC']")
     end
 
     it "should yield 'Timestamp['2016-09-05T13:00:00.000 UTC', '2016-12-01T00:00:00.000 UTC'] for PTimestampType[Timestamp, Timestamp]" do
-      expect(s.string(f.timestamp('2016-09-05T13:00:00.000 UTC', '2016-12-01T00:00:00.000 UTC'))).to(
-        eq("Timestamp['2016-09-05T13:00:00.000000000 UTC', '2016-12-01T00:00:00.000000000 UTC']"))
+      expect(s.string(f.timestamp('2016-09-05T13:00:00.000 UTC', '2016-12-01T00:00:00.000 UTC'))).to eq("Timestamp['2016-09-05T13:00:00.000 UTC', '2016-12-01T00:00:00.000 UTC']")
     end
 
     it "should yield 'Tuple[Integer]' for PTupleType[PIntegerType]" do
@@ -261,8 +248,8 @@ FORMATTED
       expect(s.string(f.hash_of(f.string, f.string, f.range(2, :default)))).to eq('Hash[String, String, 2, default]')
     end
 
-    it "should yield 'Hash' for PHashType::DEFAULT" do
-      expect(s.string(f.hash_of_any)).to eq('Hash')
+    it "should yield 'Hash' for PHashType::DATA" do
+      expect(s.string(f.hash_of_data)).to eq('Hash')
     end
 
     it "should yield 'Class' for a PHostClassType" do
