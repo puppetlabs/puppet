@@ -112,7 +112,9 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     # characters preceding the final dot are the package name. Parse out
     # these two pieces of component data.
     name, _, arch = pkgname.rpartition('.')
-    raise "Failed to parse package name and architecture from '#{pkgname}'" if name.empty?    
+    if name.empty?
+      raise _("Failed to parse package name and architecture from '%{pkgname}'") % { pkgname: pkgname }
+    end
 
     match = pkgversion.match(/^(?:(\d+):)?(\S+)-(\S+)$/)
     epoch = match[1] || '0'
