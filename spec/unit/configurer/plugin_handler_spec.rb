@@ -14,23 +14,29 @@ describe Puppet::Configurer::PluginHandler do
     Puppet.expects(:err).never
   end
 
-  it "downloads plugins and facts" do
-    plugin_downloader = stub('plugin-downloader', :evaluate => [])
-    facts_downloader = stub('facts-downloader', :evaluate => [])
+  context "when external facts are supported" do
+    before :each do
+      Puppet.features.stubs(:external_facts?).returns(true)
+    end
 
-    factory.expects(:create_plugin_downloader).returns(plugin_downloader)
-    factory.expects(:create_plugin_facts_downloader).returns(facts_downloader)
+    it "downloads plugins and facts" do
+      plugin_downloader = stub('plugin-downloader', :evaluate => [])
+      facts_downloader = stub('facts-downloader', :evaluate => [])
 
-    pluginhandler.download_plugins(environment)
-  end
+      factory.expects(:create_plugin_downloader).returns(plugin_downloader)
+      factory.expects(:create_plugin_facts_downloader).returns(facts_downloader)
 
-  it "returns downloaded plugin and fact filenames" do
-    plugin_downloader = stub('plugin-downloader', :evaluate => %w[/a])
-    facts_downloader = stub('facts-downloader', :evaluate => %w[/b])
+      pluginhandler.download_plugins(environment)
+    end
 
-    factory.expects(:create_plugin_downloader).returns(plugin_downloader)
-    factory.expects(:create_plugin_facts_downloader).returns(facts_downloader)
+    it "returns downloaded plugin and fact filenames" do
+      plugin_downloader = stub('plugin-downloader', :evaluate => %w[/a])
+      facts_downloader = stub('facts-downloader', :evaluate => %w[/b])
 
-    expect(pluginhandler.download_plugins(environment)).to match_array(%w[/a /b])
+      factory.expects(:create_plugin_downloader).returns(plugin_downloader)
+      factory.expects(:create_plugin_facts_downloader).returns(facts_downloader)
+
+      expect(pluginhandler.download_plugins(environment)).to match_array(%w[/a /b])
+    end
   end
 end

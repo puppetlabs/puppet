@@ -102,11 +102,8 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
     overly_deferred_resource_handler = options[:overly_deferred_resource_handler] || lambda { |resource| }
     canceled_resource_handler = options[:canceled_resource_handler] || lambda { |resource| }
     teardown = options[:teardown] || lambda {}
-    graph_cycle_handler = options[:graph_cycle_handler] || lambda { [] }
 
-    if cycles = report_cycles_in_graph
-      graph_cycle_handler.call(cycles)
-    end
+    report_cycles_in_graph
 
     enqueue_roots
 

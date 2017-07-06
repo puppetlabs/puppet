@@ -179,7 +179,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
       name = $1
       unless @settings.include?(name)
         raise ArgumentError,
-          _("Settings parameter '%{name}' is undefined") % { name: name }
+          "Settings parameter '#{name}' is undefined"
       end
     }
   end
@@ -215,7 +215,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
   end
 
   def unknown_value(parameter, value)
-    raise SettingError, _("The %{parameter} parameter for the setting '%{name}' must be either 'root' or 'service', not '%{value}'") % { parameter: parameter, name: name, value: value }
+    raise SettingError, "The #{parameter} parameter for the setting '#{name}' must be either 'root' or 'service', not '#{value}'"
   end
 
   def controlled_access(&block)

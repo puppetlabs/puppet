@@ -37,7 +37,7 @@ module Puppet
         # @return [Symbol] Returns the new format.
         def format=(format)
           format = format.to_sym
-          raise _("unsupported format '%{format}'.") % { format: format } unless self.class.supported_format?(format)
+          raise "unsupported format '#{format}'." unless self.class.supported_format?(format)
           @format = format
         end
 
@@ -57,7 +57,7 @@ module Puppet
             when :pcore
               "#{File.basename(@path, '.rb')}.pp"
             else
-              raise _("unsupported format '%{format}'.") % { format: @format }
+              raise "unsupported format '#{@format}'."
             end
         end
 
@@ -69,7 +69,7 @@ module Puppet
             when :pcore
               File.join(@base, 'pcore', 'types', output_name)
             else
-              raise _("unsupported format '%{format}'.") % { format: @format }
+              raise "unsupported format '#{@format}'."
             end
         end
 
@@ -153,24 +153,24 @@ module Puppet
           files_to_remove.each do |f|
             Puppet::FileSystem.unlink(File.join(outputdir, f))
           end
-          Puppet.notice(_("Removed output '%{files_to_remove}' for non existing inputs") % { files_to_remove: files_to_remove }) unless files_to_remove.empty?
+          Puppet.notice("Removed output '#{files_to_remove}' for non existing inputs") unless files_to_remove.empty?
         end
 
         if inputs.empty?
-          Puppet.notice _('No custom types were found.')
+          Puppet.notice 'No custom types were found.'
           return nil
         end
 
         templates = {}
         templates.default_proc = lambda { |hash, key|
-          raise _("template was not found at '%{key}'.") % { key: key } unless Puppet::FileSystem.file?(key)
+          raise "template was not found at '#{key}'." unless Puppet::FileSystem.file?(key)
           template = ERB.new(File.read(key), nil, '-')
           template.filename = key
           template
         }
 
         up_to_date = true
-        Puppet.notice _('Generating Puppet resource types.')
+        Puppet.notice 'Generating Puppet resource types.'
         inputs.each do |input|
           if !force && input.up_to_date?(outputdir)
             Puppet.debug "Skipping '#{input}' because it is up-to-date."
@@ -187,7 +187,7 @@ module Puppet
             raise
           rescue Exception => e
             # Log the exception and move on to the next input
-            Puppet.log_exception(e, _("Failed to load custom type '%{type_name}' from '%{input}': %{message}") % { type_name: type_name, input: input, message: e.message })
+            Puppet.log_exception(e, "Failed to load custom type '#{type_name}' from '#{input}': #{e.message}")
             next
           end
 
@@ -196,7 +196,7 @@ module Puppet
 
           # Assume the type follows the naming convention
           unless type = types[type_name]
-            Puppet.err _("Custom type '%{type_name}' was not defined in '%{input}'.") % { type_name: type_name, input: input }
+            Puppet.err "Custom type '#{type_name}' was not defined in '#{input}'."
             next
           end
 
@@ -220,19 +220,19 @@ module Puppet
           # Write the output file
           begin
             effective_output_path = input.effective_output_path(outputdir)
-            Puppet.notice _("Generating '%{effective_output_path}' using '%{format}' format.") % { effective_output_path: effective_output_path, format: input.format }
+            Puppet.notice "Generating '#{effective_output_path}' using '#{input.format}' format."
             FileUtils.mkdir_p(File.dirname(effective_output_path))
             Puppet::FileSystem.open(effective_output_path, nil, 'w:UTF-8') do |file|
               file.write(result)
             end
           rescue Exception => e
-            Puppet.log_exception(e, _("Failed to generate '%{effective_output_path}': %{message}") % { effective_output_path: effective_output_path, message: e.message })
+            Puppet.log_exception(e, "Failed to generate '#{effective_output_path}': #{e.message}")
             # Move on to the next input
             next
           end
         end
 
-        Puppet.notice _('No files were generated because all inputs were up-to-date.') if up_to_date
+        Puppet.notice 'No files were generated because all inputs were up-to-date.' if up_to_date
       end
     end
   end

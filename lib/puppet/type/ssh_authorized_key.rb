@@ -71,7 +71,7 @@ module Puppet
           the `name` attribute/resource title."
 
       validate do |value|
-        raise Puppet::Error, _("Key must not contain whitespace: %{value}") % { value: value } if value =~ /\s/
+        raise Puppet::Error, "Key must not contain whitespace: #{value}" if value =~ /\s/
       end
     end
 
@@ -112,9 +112,25 @@ module Puppet
 
       defaultto do :absent end
 
+      def is_to_s(value)
+        if value == :absent or value.include?(:absent)
+          super
+        else
+          value.join(",")
+        end
+      end
+
+      def should_to_s(value)
+        if value == :absent or value.include?(:absent)
+          super
+        else
+          value.join(",")
+        end
+      end
+
       validate do |value|
         unless value == :absent or value =~ /^[-a-z0-9A-Z_]+(?:=\".*?\")?$/
-          raise Puppet::Error, _("Option %{value} is not valid. A single option must either be of the form 'option' or 'option=\"value\". Multiple options must be provided as an array") % { value: value }
+          raise Puppet::Error, "Option #{value} is not valid. A single option must either be of the form 'option' or 'option=\"value\". Multiple options must be provided as an array"
         end
       end
     end
@@ -131,7 +147,7 @@ module Puppet
       return if @parameters.include?(:user)
 
       # If neither target nor user is defined, this is an error
-      raise Puppet::Error, _("Attribute 'user' or 'target' is mandatory")
+      raise Puppet::Error, "Attribute 'user' or 'target' is mandatory"
     end
 
     # regular expression suitable for use by a ParsedFile based provider

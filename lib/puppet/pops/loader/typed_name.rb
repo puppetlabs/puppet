@@ -37,11 +37,6 @@ class TypedName
 
   alias eql? ==
 
-  # @return the parent of this instance, or nil if this instance is not qualified
-  def parent
-    @name_parts.size > 1 ? self.class.new(@type, @name_parts[0...-1].join(DOUBLE_COLON), @name_authority) : nil
-  end
-
   def qualified?
     @name_parts.size > 1
   end

@@ -367,7 +367,7 @@ describe provider_class do
       it "should return false for nil" do
         expect(@provider.is_numeric?(nil)).to eq(false)
       end
-      it "should return true for Integers" do
+      it "should return true for Fixnums" do
         expect(@provider.is_numeric?(9)).to eq(true)
       end
       it "should return true for numbers in Strings" do

@@ -15,6 +15,26 @@ module Puppet
 
   AS_DURATION = %q{This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y).}
 
+  # This is defined first so that the facter implementation is replaced before other setting defaults are evaluated.
+  define_settings(:main,
+    :cfacter => {
+        :default => false,
+        :type    => :boolean,
+        :desc    => 'Whether to enable a pre-Facter 3.0 release of native Facter (distributed as
+          the "cfacter" package). This is not necessary if Facter 3.0 or later is installed.
+          This setting is deprecated, as Facter 3 is now the default in puppet-agent.',
+        :hook    => proc do |value|
+          return unless value
+          raise ArgumentError, 'facter has already evaluated facts.' if Facter.instance_variable_get(:@collection)
+          raise ArgumentError, 'cfacter version 0.2.0 or later is not installed.' unless Puppet.features.cfacter?
+          CFacter.initialize
+
+          # Setup Facter's logging again now that native facter is initialized
+          Puppet::Util::Logging.setup_facter_logging!
+        end
+    }
+  )
+
   define_settings(:main,
     :confdir  => {
         :default  => nil,
@@ -292,6 +312,31 @@ module Puppet
         <https://docs.puppet.com/puppet/latest/reference/environments.html>",
       :type    => :path,
     },
+    :always_cache_features => {
+      :type     => :boolean,
+      :default  => false,
+      :hook     => proc { |value|
+        Puppet.deprecation_warning "Setting 'always_cache_features' is
+deprecated and has been replaced by 'always_retry_plugins'."
+      },
+      :desc     => <<-'EOT'
+        This setting is deprecated and has been replaced by always_retry_plugins.
+
+        Affects how we cache attempts to load Puppet 'features'.  If false, then
+        calls to `Puppet.features.<feature>?` will always attempt to load the
+        feature (which can be an expensive operation) unless it has already been
+        loaded successfully.  This makes it possible for a single agent run to,
+        e.g., install a package that provides the underlying capabilities for
+        a feature, and then later load that feature during the same run (even if
+        the feature had been tested earlier and had not been available).
+
+        If this setting is set to true, then features will only be checked once,
+        and if they are not available, the negative result is cached and returned
+        for all subsequent attempts to load the feature.  This behavior is almost
+        always appropriate for the server, and can result in a significant performance
+        improvement for features that are checked frequently.
+      EOT
+    },
     :always_retry_plugins => {
         :type     => :boolean,
         :default  => true,
@@ -390,7 +435,8 @@ module Puppet
       :type       => :terminus,
       :default    => nil,
       :desc       => "How to store cached nodes.
-      Valid values are (none), 'json', 'msgpack', 'yaml' or write only yaml ('write_only_yaml').",
+      Valid values are (none), 'json', 'msgpack', 'yaml' or write only yaml ('write_only_yaml').
+      The master application defaults to 'write_only_yaml', all others to none.",
     },
     :data_binding_terminus => {
       :type    => :terminus,
@@ -580,11 +626,14 @@ module Puppet
           class, or definition other than in the site manifest.",
     },
     :trusted_server_facts => {
-      :default => true,
+      :default => false,
       :type    => :boolean,
-      :deprecated => :completely,
-      :desc    => "The 'trusted_server_facts' setting is deprecated and has no effect as the
-        feature this enabled is now always on. The setting will be removed in a future version of puppet.",
+      :desc    => "When enabled, Puppet creates a protected top-scope variable called $server_facts.
+        This variable name can't be re-used in any local scope, and can't be overridden
+        by agent-provided facts.
+
+        The $server_facts variable is a hash, containing server-provided information
+        like the current node's environment and the version of Puppet running on the server.",
     },
     :preview_outputdir => {
       :default => '$vardir/preview',
@@ -597,12 +646,14 @@ module Puppet
   )
 
   define_settings(:main,
-      # Whether the application management feature is on or off - now deprecated and always on.
       :app_management => {
           :default  => false,
           :type     => :boolean,
-          :desc       => "This setting has no effect and will be removed in a future Puppet version.",
-          :deprecated => :completely,
+          :desc     => "Whether the application management feature is on or off. You must restart Puppet Server after changing this setting.",
+          :hook     => proc do |value|
+            # Statically loaded resource types differ depending on setting
+            Puppet::Pops::Loaders.clear
+          end
       }
   )
 
@@ -653,13 +704,13 @@ module Puppet
         for more details.)
 
         * For best compatibility, you should limit the value of `certname` to
-          only use lowercase letters, numbers, periods, underscores, and dashes. (That is,
+          only use letters, numbers, periods, underscores, and dashes. (That is,
           it should match `/\A[a-z0-9._-]+\Z/`.)
         * The special value `ca` is reserved, and can't be used as the certname
           for a normal node.
 
         Defaults to the node's fully qualified domain name.",
-      :hook => proc { |value| raise(ArgumentError, "Certificate names must be lower case") unless value == value.downcase }},
+      :hook => proc { |value| raise(ArgumentError, "Certificate names must be lower case; see #1168") unless value == value.downcase }},
     :dns_alt_names => {
       :default => '',
       :desc    => <<EOT,
@@ -1010,6 +1061,11 @@ EOT
       :desc       => "The default TTL for new certificates.
       #{AS_DURATION}"
     },
+    :req_bits => {
+      :default    => 4096,
+      :desc       => "This setting has no effect and will be removed in a future Puppet version.",
+      :deprecated => :completely,
+    },
     :keylength => {
       :default    => 4096,
       :desc       => "The bit length of keys.",
@@ -1311,7 +1367,7 @@ EOT
         makes to the master. WARNING: This setting is mutually exclusive with
         node_name_fact.  Changing this setting also requires changes to the default
         auth.conf configuration on the Puppet Master.  Please see
-        http://links.puppet.com/node_name_value for more information."
+        http://links.puppetlabs.com/node_name_value for more information."
     },
     :node_name_fact => {
       :default => "",
@@ -1319,7 +1375,7 @@ EOT
         makes to the master. WARNING: This setting is mutually exclusive with
         node_name_value.  Changing this setting also requires changes to the default
         auth.conf configuration on the Puppet Master.  Please see
-        http://links.puppet.com/node_name_fact for more information.",
+        http://links.puppetlabs.com/node_name_fact for more information.",
       :hook => proc do |value|
         if !value.empty? and Puppet[:node_name_value] != Puppet[:certname]
           raise "Cannot specify both the node_name_value and node_name_fact settings"
@@ -1476,7 +1532,7 @@ EOT
       :desc       => "The port to use for the certificate authority.",
     },
     :preferred_serialization_format => {
-      :default    => "json",
+      :default    => "pson",
       :desc       => "The preferred means of serializing
       ruby instances for passing over the wire.  This won't guarantee that all
       instances will be serialized using this method, since not all classes
@@ -1651,6 +1707,28 @@ EOT
       dependencies set with the before/require/notify/subscribe metaparameters
       and the `->`/`~>` chaining arrows; this setting only affects the relative
       ordering of _unrelated_ resources."
+    }
+  )
+
+  define_settings(:inspect,
+    :archive_files => {
+        :type     => :boolean,
+        :default  => false,
+        :desc     => "During an inspect run, whether to archive files whose contents are audited to a file bucket. Note that the `inspect` command is deprecated.",
+        :hook => proc { |value|
+          if Puppet[:strict] != :off
+            Puppet.deprecation_warning(_("Setting 'archive_files' is deprecated. It will be removed in a future release along with the `inspect` command."))
+          end
+        }
+    },
+    :archive_file_server => {
+        :default  => "$server",
+        :desc     => "During an inspect run, the file bucket server to archive files to if archive_files is set. Note that the `inspect` command is deprecated.",
+        :hook => proc { |value|
+          if Puppet[:strict] != :off
+            Puppet.deprecation_warning(_("Setting 'archive_file_server' is deprecated. It will be removed in a future release along with the `inspect` command."))
+          end
+        }
     }
   )
 

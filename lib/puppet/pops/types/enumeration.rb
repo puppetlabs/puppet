@@ -4,12 +4,12 @@
 module Puppet::Pops::Types
   class Enumeration
     def self.enumerator(o)
-      Puppet.deprecation_warning(_('Enumeration.enumerator is deprecated. Use Iterable.on instead'))
+      Puppet.deprecation_warning('Enumeration.enumerator is deprecated. Use Iterable.on instead')
       Iterable.on(o)
     end
 
     def enumerator(o)
-      Puppet.deprecation_warning(_('Enumeration.enumerator is deprecated. Use Iterable.on instead'))
+      Puppet.deprecation_warning('Enumeration.enumerator is deprecated. Use Iterable.on instead')
       Iterable.on(o)
     end
   end

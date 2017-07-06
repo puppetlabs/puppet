@@ -9,61 +9,28 @@ describe provider do
     packagename="sl"
     @resource = stub('resource', :should => true)
     @resource.stubs(:[]).with(:name).returns(packagename)
-    @resource.stubs(:[]).with(:install_options).returns(['--foo', '--bar'])
-    @resource.stubs(:[]).with(:uninstall_options).returns(['--foo', { '--bar' => 'baz', '--baz' => 'foo' }])
+    @resource.stubs(:[]).with(:category).returns(nil)
 
     unslotted_packagename = "dev-lang/ruby"
     @unslotted_resource = stub('resource', :should => true)
-    @unslotted_resource.stubs(:should).with(:ensure).returns :latest
     @unslotted_resource.stubs(:[]).with(:name).returns(unslotted_packagename)
-    @unslotted_resource.stubs(:[]).with(:install_options).returns([])
+    @unslotted_resource.stubs(:[]).with(:category).returns(nil)
 
-    slotted_packagename = "dev-lang/ruby:2.1"
+    slotted_packagename = "dev-lang/ruby:1.9"
     @slotted_resource = stub('resource', :should => true)
     @slotted_resource.stubs(:[]).with(:name).returns(slotted_packagename)
-    @slotted_resource.stubs(:[]).with(:install_options).returns(['--foo', { '--bar' => 'baz', '--baz' => 'foo' }])
+    @slotted_resource.stubs(:[]).with(:category).returns(nil)
 
-    versioned_packagename = "dev-lang/ruby-1.9.3"
-    @versioned_resource = stub('resource', :should => true)
-    @versioned_resource.stubs(:[]).with(:name).returns(versioned_packagename)
-    @versioned_resource.stubs(:[]).with(:uninstall_options).returns([])
-
-    versioned_slotted_packagename = "=dev-lang/ruby-1.9.3:1.9"
-    @versioned_slotted_resource = stub('resource', :should => true)
-    @versioned_slotted_resource.stubs(:[]).with(:name).returns(versioned_slotted_packagename)
-    @versioned_slotted_resource.stubs(:[]).with(:uninstall_options).returns([])
-
-    set_packagename = "@system"
-    @set_resource = stub('resource', :should => true)
-    @set_resource.stubs(:[]).with(:name).returns(set_packagename)
-    @set_resource.stubs(:[]).with(:install_options).returns([])
-
-    package_sets = "system\nworld\n"
     @provider = provider.new(@resource)
-    @provider.stubs(:qatom).returns({:category=>nil, :pn=>"sl", :pv=>nil, :pr=>nil, :slot=>nil, :pfx=>nil, :sfx=>nil})
-    @provider.class.stubs(:emerge).with('--list-sets').returns(package_sets)
     @unslotted_provider = provider.new(@unslotted_resource)
-    @unslotted_provider.stubs(:qatom).returns({:category=>"dev-lang", :pn=>"ruby", :pv=>nil, :pr=>nil, :slot=>nil, :pfx=>nil, :sfx=>nil})
-    @unslotted_provider.class.stubs(:emerge).with('--list-sets').returns(package_sets)
     @slotted_provider = provider.new(@slotted_resource)
-    @slotted_provider.stubs(:qatom).returns({:category=>"dev-lang", :pn=>"ruby", :pv=>nil, :pr=>nil, :slot=>":2.1", :pfx=>nil, :sfx=>nil})
-    @slotted_provider.class.stubs(:emerge).with('--list-sets').returns(package_sets)
-    @versioned_provider = provider.new(@versioned_resource)
-    @versioned_provider.stubs(:qatom).returns({:category=>"dev-lang", :pn=>"ruby", :pv=>"1.9.3", :pr=>nil, :slot=>nil, :pfx=>nil, :sfx=>nil})
-    @versioned_provider.class.stubs(:emerge).with('--list-sets').returns(package_sets)
-    @versioned_slotted_provider = provider.new(@versioned_slotted_resource)
-    @versioned_slotted_provider.stubs(:qatom).returns({:category=>"dev-lang", :pn=>"ruby", :pv=>"1.9.3", :pr=>nil, :slot=>":1.9", :pfx=>"=", :sfx=>nil})
-    @versioned_slotted_provider.class.stubs(:emerge).with('--list-sets').returns(package_sets)
-    @set_provider = provider.new(@set_resource)
-    @set_provider.stubs(:qatom).returns({:category=>nil, :pn=>"@system", :pv=>nil, :pr=>nil, :slot=>nil, :pfx=>nil, :sfx=>nil})
-    @set_provider.class.stubs(:emerge).with('--list-sets').returns(package_sets)
 
     portage   = stub(:executable => "foo",:execute => true)
     Puppet::Provider::CommandDefiner.stubs(:define).returns(portage)
 
     @nomatch_result = ""
-    @match_result    = "app-misc sl [] [5.02] [] [] [5.02] [5.02:0] http://www.tkl.iis.u-tokyo.ac.jp/~toyoda/index_e.html https://github.com/mtoyoda/sl/ sophisticated graphical program which corrects your miss typing\n"
-    @slot_match_result = "dev-lang ruby [2.1.8] [2.1.9] [2.1.8:2.1] [2.1.8] [2.1.9,,,,,,,] [2.1.9:2.1] http://www.ruby-lang.org/ An object-oriented scripting language\n"
+    @match_result   = "app-misc sl [] [] [] [] http://www.tkl.iis.u-tokyo.ac.jp/~toyoda/index_e.html http://www.izumix.org.uk/sl/ sophisticated graphical program which corrects your miss typing\n"
+    @slot_match_result = "dev-lang ruby [2.0.0] [2.1.0] [1.8.7:1.8,1.9.2:1.9,2.0.0:2.0] [1.9.3:1.9,2.0.1:2.0,2.1.0:2.1] http://www.ruby-lang.org/ An object-oriented scripting language\n"
   end
 
   it "is versionable" do
@@ -72,42 +39,6 @@ describe provider do
 
   it "is reinstallable" do
     expect(provider).to be_reinstallable
-  end
-
-  it 'should support string install options' do
-    @provider.expects(:emerge).with('--foo', '--bar', @resource[:name])
-
-    @provider.install
-  end
-
-  it 'should support updating' do
-    @unslotted_provider.expects(:emerge).with('--update', @unslotted_resource[:name])
-
-    @unslotted_provider.install
-  end
-
-  it 'should support hash install options' do
-    @slotted_provider.expects(:emerge).with('--foo', '--bar=baz', '--baz=foo', @slotted_resource[:name])
-
-    @slotted_provider.install
-  end
-
-  it 'should support hash uninstall options' do
-    @provider.expects(:emerge).with('--rage-clean', '--foo', '--bar=baz', '--baz=foo', @resource[:name])
-
-    @provider.uninstall
-  end
-
-  it 'should support uninstall of specific version' do
-    @versioned_provider.expects(:emerge).with('--rage-clean', @versioned_resource[:name])
-
-    @versioned_provider.uninstall
-  end
-
-  it 'should support uninstall of specific version and slot' do
-    @versioned_slotted_provider.expects(:emerge).with('--rage-clean', @versioned_slotted_resource[:name])
-
-    @versioned_slotted_provider.uninstall
   end
 
   it "uses :emerge to install packages" do
@@ -127,19 +58,6 @@ describe provider do
     @provider.expects(:eix).returns(StringIO.new(@match_result))
 
     @provider.query
-  end
-
-  it "allows to emerge package sets" do
-    @set_provider.expects(:emerge).with(@set_resource[:name])
-
-    @set_provider.install
-  end
-
-  it "allows to emerge and update package sets" do
-    @set_resource.stubs(:should).with(:ensure).returns :latest
-    @set_provider.expects(:emerge).with('--update', @set_resource[:name])
-
-    @set_provider.install
   end
 
   it "eix arguments must not include --stable" do
@@ -166,27 +84,23 @@ describe provider do
   end
 
   it "can provide the package name without slot" do
-    expect(@unslotted_provider.qatom[:slot]).to be_nil
+    expect(@slotted_provider.package_name_without_slot).to eq("dev-lang/ruby")
   end
 
   it "can extract the slot from the package name" do
-    expect(@slotted_provider.qatom[:slot]).to eq(':2.1')
+    expect(@slotted_provider.package_slot).to eq("1.9")
   end
 
   it "returns nil for as the slot when no slot is specified" do
-    expect(@provider.qatom[:slot]).to be_nil
+    expect(@provider.package_slot).to be_nil
   end
 
   it "provides correct package atoms for unslotted packages" do
-    expect(@versioned_provider.qatom[:pv]).to eq('1.9.3')
+    expect(@provider.package_atom_with_version("1.0")).to eq("=sl-1.0")
   end
 
   it "provides correct package atoms for slotted packages" do
-    expect(@versioned_slotted_provider.qatom[:pfx]).to eq('=')
-    expect(@versioned_slotted_provider.qatom[:category]).to eq('dev-lang')
-    expect(@versioned_slotted_provider.qatom[:pn]).to eq('ruby')
-    expect(@versioned_slotted_provider.qatom[:pv]).to eq('1.9.3')
-    expect(@versioned_slotted_provider.qatom[:slot]).to eq(':1.9')
+    expect(@slotted_provider.package_atom_with_version("1.9.3")).to eq("=dev-lang/ruby-1.9.3:1.9")
   end
 
   it "can handle search output with slots for unslotted packages" do
@@ -194,9 +108,9 @@ describe provider do
     @unslotted_provider.expects(:eix).returns(StringIO.new(@slot_match_result))
 
     result = @unslotted_provider.query
-    expect(result[:name]).to eq('ruby')
-    expect(result[:ensure]).to eq('2.1.8')
-    expect(result[:version_available]).to eq('2.1.9')
+    expect(result[:name]).to eq("ruby")
+    expect(result[:ensure]).to eq("2.0.0")
+    expect(result[:version_available]).to eq("2.1.0")
   end
 
   it "can handle search output with slots" do
@@ -204,8 +118,8 @@ describe provider do
     @slotted_provider.expects(:eix).returns(StringIO.new(@slot_match_result))
 
     result = @slotted_provider.query
-    expect(result[:name]).to eq('ruby')
-    expect(result[:ensure]).to eq('2.1.8')
-    expect(result[:version_available]).to eq('2.1.9')
+    expect(result[:name]).to eq("ruby")
+    expect(result[:ensure]).to eq("1.9.2")
+    expect(result[:version_available]).to eq("1.9.3")
   end
 end

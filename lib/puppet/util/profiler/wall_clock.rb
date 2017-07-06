@@ -12,7 +12,7 @@ class Puppet::Util::Profiler::WallClock < Puppet::Util::Profiler::Logging
 
   def do_finish(context, description, metric_id)
     {:time => context.stop,
-     :msg => _("took %{context} seconds") % { context: context }}
+     :msg => "took #{context} seconds"}
   end
 
   class Timer

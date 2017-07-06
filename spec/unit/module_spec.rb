@@ -665,15 +665,7 @@ describe Puppet::Module do
         Puppet[:strict] = :off
       end
 
-      it "should not warn about a failure to parse" do
-        File.stubs(:read).with(mymod_metadata, {:encoding => 'utf-8'}).returns(my_fixture('trailing-comma.json'))
-
-        expect(mymod.has_metadata?).to be_falsey
-        expect(@logs).to_not have_matching_log(/mymod has an invalid and unparsable metadata\.json file.*/)
-      end
-
-      it "should log debug output about a failure to parse when --debug is on" do
-        Puppet[:log_level] = :debug
+      it "should warn about a failure to parse" do
         File.stubs(:read).with(mymod_metadata, {:encoding => 'utf-8'}).returns(my_fixture('trailing-comma.json'))
 
         expect(mymod.has_metadata?).to be_falsey
@@ -696,7 +688,7 @@ describe Puppet::Module do
     end
 
   def a_module_with_metadata(data)
-    File.stubs(:read).with("/path/metadata.json", {:encoding => 'utf-8'}).returns data.to_json
+    File.stubs(:read).with("/path/metadata.json", {:encoding => 'utf-8'}).returns data.to_pson
     Puppet::Module.new("foo", "/path", mock("env"))
   end
 

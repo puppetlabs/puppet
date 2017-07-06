@@ -72,8 +72,7 @@ module SubLookup
           else
             unless value.respond_to?(:'[]') && !(value.is_a?(Array) || value.instance_of?(String))
               raise Puppet::DataBinding::LookupError,
-                _("Data Provider type mismatch: Got %{klass} when a hash-like object was expected to access value using '%{segment}' from key '%{key}'") %
-                  { klass: value.class.name, segment: segment, key: key }
+                "Data Provider type mismatch: Got #{value.class.name} when a hash-like object was expected to access value using '#{segment}' from key '#{key}'"
             end
             unless value.include?(segment)
               lookup_invocation.report_not_found(segment)

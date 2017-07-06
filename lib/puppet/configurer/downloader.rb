@@ -6,7 +6,7 @@ class Puppet::Configurer::Downloader
 
   # Evaluate our download, returning the list of changed values.
   def evaluate
-    Puppet.info _("Retrieving %{name}") % { name: name }
+    Puppet.info "Retrieving #{name}"
 
     files = []
     begin
@@ -17,7 +17,7 @@ class Puppet::Configurer::Downloader
         end
       end
     rescue Puppet::Error => detail
-      Puppet.log_exception(detail, _("Could not retrieve %{name}: %{detail}") % { name: name, detail: detail })
+      Puppet.log_exception(detail, "Could not retrieve #{name}: #{detail}")
     end
     files
   end

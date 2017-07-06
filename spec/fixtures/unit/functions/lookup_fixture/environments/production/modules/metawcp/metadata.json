@@ -1,0 +1,9 @@
+{
+    "name": "example/metawcp",
+    "version": "0.0.2",
+    "source": "git@github.com/example/example-metawcp.git",
+    "dependencies": [],
+    "author": "Bob the Builder",
+    "license": "Apache-2.0",
+    "data_provider": "sample"
+}

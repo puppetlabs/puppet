@@ -66,23 +66,6 @@ for advice.
 * Make sure you have added the necessary tests for your changes.
 * Run _all_ the tests to assure nothing else was accidentally broken.
 
-## Writing Translatable Code
-
-We use [gettext tooling](https://github.com/puppetlabs/gettext-setup-gem) to
-extract user-facing strings and pull in translations based on the user's locale
-at runtime. In order for this tooling to work, all user-facing strings must be
-wrapped in the `_()` translation function, so they can be extracted into files
-for the translators.
-
-When adding user-facing strings to your work, follow these guidelines:
-* Use full sentences. Strings built up out of concatenated bits are hard to translate.
-* Use string formatting instead of interpolation.
-    Ex. `_('Creating new user %{name}.') % { name: user.name }`
-* Use `n_()` for pluralization. (see gettext gem docs linked above for details)
-
-It is the responsibility of contributors and code reviewers to ensure that all
-user-facing strings are marked in new PRs before merging.
-
 ## Making Trivial Changes
 
 ### Documentation

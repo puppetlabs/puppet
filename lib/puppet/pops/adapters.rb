@@ -11,42 +11,96 @@ module Adapters
     attr_accessor :documentation
   end
 
-  # An  empty alternative adapter is used when there is the need to
-  # attach a value to be used if the original is empty. This is used
-  # when a lazy evaluation takes place, and the decision how to handle an
-  # empty case must be delayed.
+  # A SourcePosAdapter holds a reference to  a *Positioned* object (object that has offset and length).
+  # This somewhat complex structure makes it possible to correctly refer to a source position
+  # in source that is embedded in some resource; a parser only sees the embedded snippet of source text
+  # and does not know where it was embedded. It also enables lazy evaluation of source positions (they are
+  # rarely needed - typically just when there is an error to report.
   #
-  class EmptyAlternativeAdapter < Adaptable::Adapter
-    # @return [Object] The alternative value associated with an object
-    attr_accessor :empty_alternative
-  end
+  # @note It is relatively expensive to compute line and position on line - it is not something that
+  #   should be done for every token or model object.
+  #
+  # @see Utils#find_adapter, Utils#find_closest_positioned
+  #
+  class SourcePosAdapter < Adaptable::Adapter
+    attr_accessor :locator
+    attr_reader :adapted
 
-  # This class is for backward compatibility only. It's not really an adapter but it is
-  # needed for the puppetlabs-strings gem
-  # @deprecated
-  class SourcePosAdapter
-    def self.adapt(object)
-      new(object)
+    def self.create_adapter(o)
+      new(o)
     end
 
-    def initialize(object)
-      @object = object
+    def initialize(o)
+      @adapted = o
     end
 
-    def file
-      @object.file
+    def locator
+      # The locator is always the parent locator, all positioned objects are positioned within their
+      # parent. If a positioned object also has a locator that locator is for its children!
+      #
+      @locator ||= self.class.find_locator(@adapted.eContainer)
     end
 
+    # @api private
+    def self.find_locator(o)
+      raise ArgumentError, 'InternalError: SourcePosAdapter for something that has no locator among parents' if o.nil?
+      found_locator = o.respond_to?(:locator) ? o.locator : nil
+      return found_locator unless found_locator.nil?
+      adapter = get(o)
+      return adapter.locator unless adapter.nil?
+      container = o.eContainer
+      container.nil? ? nil : find_locator(container)
+    end
+
+    def offset
+      @adapted.offset
+    end
+
+    def length
+      @adapted.length
+    end
+
+    # Produces the line number for the given offset.
+    # @note This is an expensive operation
+    #
     def line
-      @object.line
+      locator.line_for_offset(offset)
     end
 
+    # Produces the position on the line of the given offset.
+    # @note This is an expensive operation
+    #
     def pos
-      @object.pos
+      locator.pos_on_line(offset)
     end
 
+    # Extracts the text represented by this source position (the string is obtained from the locator)
     def extract_text
-      @object.locator.extract_text(@object.offset, @object.length)
+      locator.extract_text(offset, length)
+    end
+
+    def extract_tree_text
+      first = @adapted.offset
+      last = first + @adapted.length
+      @adapted.eAllContents.each do |m|
+        m_offset = m.offset
+        next if m_offset.nil?
+        first = m_offset if m_offset < first
+        m_last = m_offset + m.length
+        last = m_last if m_last > last
+      end
+      locator.extract_text(first, last-first)
+    end
+
+    # Produces an URI with path?line=n&pos=n. If origin is unknown the URI is string:?line=n&pos=n
+    def to_uri
+      f = locator.file
+      if f.nil? || f.empty?
+        f = 'string:'
+      else
+        f = Puppet::Util.path_to_uri(f).to_s
+      end
+      URI("#{f}?line=#{line.to_s}&pos=#{pos.to_s}")
     end
   end
 
@@ -72,7 +126,7 @@ module Adapters
     def self.loader_for_model_object(model, file = nil, default_loader = nil)
       loaders = Puppet.lookup(:loaders) { nil }
       if loaders.nil?
-        default_loader || Loaders.static_loader
+        default_loader
       else
         loader_name = loader_name_by_source(loaders.environment, model, file)
         if loader_name.nil?
@@ -101,7 +155,7 @@ module Adapters
     # @return [String] the name of the loader associated with the source
     # @api private
     def self.loader_name_by_source(environment, instance, file)
-      file = instance.file if file.nil?
+      file = find_file(instance) if file.nil?
       return nil if file.nil? || EMPTY_STRING == file
       pn_adapter = PathsAndNameCacheAdapter.adapt(environment) do |a|
         a.paths ||= environment.modulepath.map { |p| Pathname.new(p) }
@@ -132,6 +186,12 @@ module Adapters
         end
       end
       nil
+    end
+
+    # @api private
+    def self.find_file(instance)
+      source_pos = Utils.find_closest_positioned(instance)
+      source_pos.nil? ? nil : source_pos.locator.file
     end
   end
 end

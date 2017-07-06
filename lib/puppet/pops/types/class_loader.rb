@@ -1,3 +1,5 @@
+require 'rgen/metamodel_builder'
+
 module Puppet::Pops
 module Types
 # The ClassLoader provides a Class instance given a class name or a meta-type.
@@ -84,24 +86,24 @@ class ClassLoader
     # If class is already loaded, try this first
     result = find_class(name_path)
 
-    unless result.is_a?(Module)
+    unless result.is_a?(Class)
       # Attempt to load it using the auto loader
       loaded_path = nil
       if paths_for_name(name_path).find {|path| loaded_path = path; @autoloader.load(path, Puppet.lookup(:current_environment)) }
         result = find_class(name_path)
-        unless result.is_a?(Module)
+        unless result.is_a?(Class)
           raise RuntimeError, "Loading of #{name} using relative path: '#{loaded_path}' did not create expected class"
         end
       end
     end
-    return nil unless result.is_a?(Module)
+    return nil unless result.is_a?(Class)
     result
   end
 
   def self.find_class(name_path)
     name_path.reduce(Object) do |ns, name|
       begin
-        ns.const_get(name, false) # don't search ancestors
+        ns.const_get(name)
       rescue NameError
         return nil
       end

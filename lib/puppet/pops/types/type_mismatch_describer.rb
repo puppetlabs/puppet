@@ -330,11 +330,9 @@ module Types
       multi = false
       if @optional
         if e.is_a?(PVariantType)
-          e = e.types
-          e = [PUndefType::DEFAULT] + e unless e.include?(PUndefType::DEFAULT)
+          e = [PUndefType::DEFAULT] + e.types
         else
-          er = all_resolved(e)
-          e = [PUndefType::DEFAULT, e] unless er.is_a?(PVariantType) && er.types.include?(PUndefType::DEFAULT)
+          e = [PUndefType::DEFAULT, e]
         end
       elsif e.is_a?(PVariantType)
         e = e.types
@@ -447,7 +445,7 @@ module Types
       if e.is_a?(Array)
         e.map { |t| all_resolved(t) }
       else
-        e.is_a?(PTypeAliasType) ? all_resolved(e.resolved_type) : e
+        e.is_a?(PTypeAliasType) ? e.resolved_type : e
       end
     end
 
@@ -465,7 +463,8 @@ module Types
       if always_fully_detailed?(e, a)
         a.to_alias_expanded_s
       else
-        any_assignable?(e, a.generalize) ? a.to_alias_expanded_s : a.simple_name
+        g = a.generalize
+        any_assignable?(e, g) ? a.to_alias_expanded_s : g.to_s
       end
     end
   end
@@ -550,7 +549,7 @@ module Types
     end
 
     def tense_deprecated
-      Puppet.warn_once('deprecations', 'typemismatch#tense', "Passing a 'tense' argument to the TypeMismatchDescriber is deprecated and ignored. Everything is now reported using present tense")
+      Puppet.warn_once(:deprecation, 'typemismatch#tense', "Passing a 'tense' argument to the TypeMismatchDescriber is deprecated and ignored. Everything is now reported using present tense")
     end
 
     # Validates that all entries in the give_hash exists in the given param_struct, that their type conforms
@@ -796,7 +795,7 @@ module Types
     def describe_PTypeAliasType(expected, actual, path)
       resolved_type = expected.resolved_type
       describe(resolved_type, actual, path).map do |description|
-        if description.is_a?(ExpectedActualMismatch)
+        if description.is_a?(ExpectedActualMismatch) && description.expected.equal?(resolved_type)
           description.swap_expected(expected)
         else
           description

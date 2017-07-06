@@ -21,6 +21,10 @@ module FactoryRspecHelper
     Puppet::Pops::Model::Factory.string(*args)
   end
 
+  def text(x)
+    Puppet::Pops::Model::Factory.text(x)
+  end
+
   def minus(x)
     Puppet::Pops::Model::Factory.minus(x)
   end

@@ -1,8 +1,8 @@
 Puppet::Face.define(:node, '0.0.1') do
   action(:clean) do
 
-    summary _("Clean up signed certs, cached facts, node objects, and reports for a node stored by the puppetmaster")
-    arguments _("<host1> [<host2> ...]")
+    summary "Clean up signed certs, cached facts, node objects, and reports for a node stored by the puppetmaster"
+    arguments "<host1> [<host2> ...]"
     description <<-'EOT'
       Cleans up the following information a puppet master knows about a node:
 
@@ -19,7 +19,7 @@ Puppet::Face.define(:node, '0.0.1') do
     when_invoked do |*args|
       nodes = args[0..-2]
       options = args.last
-      raise _("At least one node should be passed") if nodes.empty? || nodes == options
+      raise "At least one node should be passed" if nodes.empty? || nodes == options
 
       # This seems really bad; run_mode should be set as part of a class
       # definition, and should not be modifiable beyond that.  This is one of
@@ -56,28 +56,28 @@ Puppet::Face.define(:node, '0.0.1') do
     if Puppet::SSL::CertificateAuthority.ca?
       Puppet::Face[:ca, :current].revoke(node)
       Puppet::Face[:ca, :current].destroy(node)
-      Puppet.info _("%{node} certificates removed from ca") % { node: node }
+      Puppet.info "#{node} certificates removed from ca"
     else
-      Puppet.info _("Not managing %{node} certs as this host is not a CA") % { node: node }
+      Puppet.info "Not managing #{node} certs as this host is not a CA"
     end
   end
 
   # clean facts for +host+
   def clean_cached_facts(node)
     Puppet::Node::Facts.indirection.destroy(node)
-    Puppet.info _("%{node}'s facts removed") % { node: node }
+    Puppet.info "#{node}'s facts removed"
   end
 
   # clean cached node +host+
   def clean_cached_node(node)
     Puppet::Node.indirection.destroy(node)
-    Puppet.info _("%{node}'s cached node removed") % { node: node }
+    Puppet.info "#{node}'s cached node removed"
   end
 
   # clean node reports for +host+
   def clean_reports(node)
     Puppet::Transaction::Report.indirection.destroy(node)
-    Puppet.info _("%{node}'s reports removed") % { node: node }
+    Puppet.info "#{node}'s reports removed"
   end
 
   def environment

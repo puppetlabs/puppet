@@ -15,15 +15,15 @@ describe Puppet::Status do
     expect(Puppet::Status.new.status["is_alive"]).to eq(true)
   end
 
-  it "should return a json hash" do
-    expect(Puppet::Status.new.status.to_json).to eq('{"is_alive":true}')
+  it "should return a pson hash" do
+    expect(Puppet::Status.new.status.to_pson).to eq('{"is_alive":true}')
   end
 
-  it "should render to a json hash" do
-    expect(JSON::pretty_generate(Puppet::Status.new)).to match(/"is_alive":\s*true/)
+  it "should render to a pson hash" do
+    expect(PSON::pretty_generate(Puppet::Status.new)).to match(/"is_alive":\s*true/)
   end
 
-  it "should accept a hash from json" do
+  it "should accept a hash from pson" do
     status = Puppet::Status.new( { "is_alive" => false } )
     expect(status.status).to eq({ "is_alive" => false })
   end
@@ -36,10 +36,10 @@ describe Puppet::Status do
     Puppet::Status.new.name = "status"
   end
 
-  it "serializes to JSON that conforms to the status schema" do
+  it "serializes to PSON that conforms to the status schema" do
     status = Puppet::Status.new
     status.version = Puppet.version
 
-    expect(status.render('json')).to validate_against('api/schemas/status.json')
+    expect(status.render('pson')).to validate_against('api/schemas/status.json')
   end
 end

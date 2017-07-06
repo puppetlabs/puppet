@@ -134,13 +134,13 @@ Puppet::Type.type(:mcx).provide :mcxcontent, :parent => Puppet::Provider do
     ds_type = name.split('/')[1]
     unless ds_type
       raise MCXContentProviderException,
-      _("Could not parse ds_type from resource name '%{name}'.  Specify with ds_type parameter.") % { name: name }
+      "Could not parse ds_type from resource name '#{name}'.  Specify with ds_type parameter."
     end
     # De-pluralize and downcase.
     ds_type = ds_type.chop.downcase.to_sym
     unless TypeMap.key? ds_type
       raise MCXContentProviderException,
-      _("Could not parse ds_type from resource name '%{name}'.  Specify with ds_type parameter.") % { name: name }
+      "Could not parse ds_type from resource name '#{name}'.  Specify with ds_type parameter."
     end
     ds_type
   end
@@ -150,7 +150,7 @@ Puppet::Type.type(:mcx).provide :mcxcontent, :parent => Puppet::Provider do
     ds_name = name.split('/')[2]
     unless ds_name
       raise MCXContentProviderException,
-      _("Could not parse ds_name from resource name '%{name}'.  Specify with ds_name parameter.") % { name: name }
+      "Could not parse ds_name from resource name '#{name}'.  Specify with ds_name parameter."
     end
     ds_name
   end

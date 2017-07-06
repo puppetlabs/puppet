@@ -1,0 +1,29 @@
+   Document: SomeDocument
+
+      by Martin, EMail: martin(at)somewhe.re and Otherguy, EMail: other(at)somewhereel.se
+
+   Index:
+      1 Intro in SomeDocument
+      2 MainPart in SomeDocument
+      3 Summary in SomeDocument
+
+   ----------------
+
+   Chapters in one line:
+   *** Intro ***, *** MainPart ***, *** Summary ***
+
+   Chapters each in one line:
+   *** Intro ***,
+   *** MainPart ***,
+   *** Summary ***
+
+   Here are some code examples:
+   int myArray[5] = {
+      1,
+      2,
+      3,
+      4,
+      5
+   };
+   Text from Root
+   Text from Root

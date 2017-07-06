@@ -11,7 +11,7 @@ class CompilerTestResource
   end
 
   def [](attr)
-    return nil if (attr == :stage || attr == :alias)
+    return nil if attr == :stage
     :main
   end
 

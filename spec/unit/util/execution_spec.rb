@@ -675,42 +675,13 @@ describe Puppet::Util::Execution do
     it "should fail if asked to fail, and the child does" do
       Puppet::Util::Execution.stubs(:open).with('| echo hello 2>&1').returns('error message')
       Puppet::Util::Execution.expects(:exitstatus).returns(1)
-      expect {
-        Puppet::Util::Execution.execpipe('echo hello')
-      }.to raise_error Puppet::ExecutionFailure, /error message/
+      expect { Puppet::Util::Execution.execpipe('echo hello') }.
+        to raise_error Puppet::ExecutionFailure, /error message/
     end
 
     it "should not fail if asked not to fail, and the child does" do
       Puppet::Util::Execution.stubs(:open).returns('error message')
       expect(Puppet::Util::Execution.execpipe('echo hello', false)).to eq('error message')
-    end
-  end
-
-  describe "execfail" do
-    it "returns the executed command output" do
-      Puppet::Util::Execution.stubs(:execute).returns("process output")
-      expect(Puppet::Util::Execution.execfail('echo hello', Puppet::Error)).to eq('process output')
-    end
-
-    it "raises a caller-specified exception on failure with the backtrace" do
-      Puppet::Util::Execution.stubs(:execute).raises(Puppet::ExecutionFailure, "failed to execute")
-      expect {
-        Puppet::Util::Execution.execfail("this will fail", Puppet::Error)
-      }.to raise_error(Puppet::Error, /failed to execute/)
-    end
-
-    it "raises exceptions that don't extend ExecutionFailure" do
-      Puppet::Util::Execution.stubs(:execute).raises(ArgumentError, "failed to execute")
-      expect {
-        Puppet::Util::Execution.execfail("this will fail", Puppet::Error)
-      }.to raise_error(ArgumentError, /failed to execute/)
-    end
-
-    it "raises a TypeError if the exception class is nil" do
-      Puppet::Util::Execution.stubs(:execute).raises(Puppet::ExecutionFailure, "failed to execute")
-      expect {
-        Puppet::Util::Execution.execfail('echo hello', nil)
-      }.to raise_error(TypeError), /exception class\/object expected/
     end
   end
 end

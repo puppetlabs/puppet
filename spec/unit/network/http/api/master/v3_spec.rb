@@ -41,7 +41,7 @@ describe Puppet::Network::HTTP::API::Master::V3 do
     request = Puppet::Network::HTTP::Request.
         from_hash(:path => "#{master_url_prefix}/node/foo",
                   :params => {:environment => "production"},
-                  :headers => {"accept" => "application/json"})
+                  :headers => {"accept" => "text/pson"})
     master_routes.process(request, response)
 
     expect(response.code).to eq(200)

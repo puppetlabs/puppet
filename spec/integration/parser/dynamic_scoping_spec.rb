@@ -5,6 +5,7 @@ require 'puppet_spec/compiler'
 require 'puppet_spec/pops'
 require 'puppet_spec/scope'
 require 'matchers/resource'
+require 'rgen/metamodel_builder'
 
 # These tests are in a separate file since othr compiler related tests have
 # been dramatically changed between 3.x and 4.x and it is a pain to merge

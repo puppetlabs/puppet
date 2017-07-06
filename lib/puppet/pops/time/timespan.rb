@@ -109,7 +109,7 @@ module Time
           rescue ArgumentError
           end
         end
-        raise ArgumentError, _("Unable to parse '%{str}' using any of the formats %{formats}") % { str: str, formats: format.join(', ') }
+        raise ArgumentError, "Unable to parse '#{str}' using any of the formats #{format.join(', ')}"
       end
       format = FormatParser.singleton.parse_format(format) unless format.is_a?(Format)
       format.parse(str)
@@ -130,7 +130,7 @@ module Time
         # Add seconds
         Timespan.new(@nsecs + (o * NSECS_PER_SEC).to_i)
       else
-        raise ArgumentError, _("%{klass} cannot be added to a Timespan") % { klass: a_an_uc(o) } unless o.is_a?(Timespan)
+        raise ArgumentError, "#{a_an_uc(o)} cannot be added to a Timespan" unless o.is_a?(Timespan)
       end
     end
 
@@ -142,7 +142,7 @@ module Time
         # Subtract seconds
         Timespan.new(@nsecs - (o * NSECS_PER_SEC).to_i)
       else
-        raise ArgumentError, _("%{klass} cannot be subtracted from a Timespan") % { klass: a_an_uc(o) }
+        raise ArgumentError, "#{a_an_uc(o)} cannot be subtracted from a Timespan"
       end
     end
 
@@ -155,7 +155,7 @@ module Time
       when Integer, Float
         Timespan.new((@nsecs * o).to_i)
       else
-        raise ArgumentError, _("A Timestamp cannot be multiplied by %{klass}") % { klass: a_an(o) }
+        raise ArgumentError, "A Timestamp cannot be multiplied by #{a_an(o)}"
       end
     end
 
@@ -166,7 +166,7 @@ module Time
       when Float
         to_f.divmod(o)
       else
-        raise ArgumentError, _("Can not do modulus on a Timespan using a %{klass}") % { klass: a_an(o) }
+        raise ArgumentError, "Can not do modulus on a Timespan using a #{a_an(o)}"
       end
     end
 
@@ -186,7 +186,7 @@ module Time
       when Integer, Float
         Timespan.new(@nsecs.div(o))
       else
-        raise ArgumentError, _("A Timespan cannot be divided by %{klass}") % { klass: a_an(o) }
+        raise ArgumentError, "A Timespan cannot be divided by #{a_an(o)}"
       end
     end
 
@@ -473,7 +473,7 @@ module Time
         def nanoseconds(group)
           # Using %L or %N to parse a string only makes sense when they are considered to be fractions. Using them
           # as a total quantity would introduce ambiguities.
-          raise ArgumentError, _('Format specifiers %L and %N denotes fractions and must be used together with a specifier of higher magnitude') if use_total?
+          raise ArgumentError, 'Format specifiers %L and %N denotes fractions and must be used together with a specifier of higher magnitude' if use_total?
           n = group.to_i
           p = 9 - group.length
           p <= 0 ? n : n * 10 ** p
@@ -549,13 +549,13 @@ module Time
 
       def parse(timespan)
         md = regexp.match(timespan)
-        raise ArgumentError, _("Unable to parse '%{timespan}' using format '%{format}'") % { timespan: timespan, format: @format } if md.nil?
+        raise ArgumentError, "Unable to parse '#{timespan}' using format '#{@format}'" if md.nil?
         nanoseconds = 0
         md.captures.each_with_index do |group, index|
           segment = @segments[index]
           next if segment.is_a?(LiteralSegment)
           group.lstrip!
-          raise ArgumentError, _("Unable to parse '%{timespan}' using format '%{format}'") % { timespan: timespan, format: @format } unless group =~ /\A[0-9]+\z/
+          raise ArgumentError, "Unable to parse '#{timespan}' using format '#{@format}'" unless group =~ /\A[0-9]+\z/
           nanoseconds += segment.nanoseconds(group)
         end
         Timespan.new(timespan.start_with?('-') ? -nanoseconds : nanoseconds)
@@ -607,7 +607,7 @@ module Time
       ]
 
       def bad_format_specifier(format, start, position)
-        _("Bad format specifier '%{expression}' in '%{format}', at position %{position}") % { expression: format[start,position-start], format: format, position: position }
+        "Bad format specifier '#{format[start,position-start]}' in '#{format}', at position #{position}"
       end
 
       def append_literal(bld, codepoint)
@@ -625,7 +625,7 @@ module Time
 
       def internal_parse(str)
         bld = []
-        raise ArgumentError, _('Format must be a String') unless str.is_a?(String)
+        raise ArgumentError, 'Format must be a String' unless str.is_a?(String)
         highest = -1
         state = STATE_LITERAL
         padchar = '0'

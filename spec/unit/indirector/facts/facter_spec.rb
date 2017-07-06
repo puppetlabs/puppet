@@ -51,8 +51,9 @@ describe Puppet::Node::Facts::Facter do
       @facter.find(@request)
     end
 
-    it 'should include external facts' do
+    it 'should include external facts when feature is present' do
       reset = sequence 'reset'
+      Puppet.features.stubs(:external_facts?).returns true
       Facter.expects(:reset).in_sequence(reset)
       Puppet::Node::Facts::Facter.expects(:setup_external_search_paths).in_sequence(reset)
       Puppet::Node::Facts::Facter.expects(:setup_search_paths).in_sequence(reset)

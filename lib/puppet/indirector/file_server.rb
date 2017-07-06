@@ -15,15 +15,7 @@ class Puppet::Indirector::FileServer < Puppet::Indirector::Terminus
 
     # If we're not serving this mount, then access is denied.
     return false unless mount
-
-    # If there are no auth directives or there is an 'allow *' directive, then
-    # access is allowed.
-    if mount.empty? || mount.globalallow?
-      return true
-    end
-
-    Puppet.err _("Denying %{method} request for %{desc} on fileserver mount '%{mount_name}'. Use of auth directives for 'fileserver.conf' mount points is no longer supported. Remove these directives and use the 'auth.conf' file instead for access control.") % { method: request.method, desc: request.description, mount_name: mount.name }
-    return false
+    mount.allowed?(request.node, request.ip)
   end
 
   # Find our key using the fileserver.
@@ -44,7 +36,7 @@ class Puppet::Indirector::FileServer < Puppet::Indirector::Terminus
     mount, relative_path = configuration.split_path(request)
 
     unless mount and paths = mount.search(relative_path, request)
-      Puppet.info _("Could not find filesystem info for file '%{request}' in environment %{env}") % { request: request.key, env: request.environment }
+      Puppet.info "Could not find filesystem info for file '#{request.key}' in environment #{request.environment}"
       return nil
     end
     path2instances(request, *paths)

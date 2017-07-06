@@ -5,15 +5,15 @@ describe "Class expressions" do
   extend PuppetSpec::Language
 
   produces(
-    "class hi { }"                                       => '!defined(Class[hi])',
+    "class hi { }"                                       => '!defined(Class[Hi])',
 
-    "class hi { } include hi"                            => 'defined(Class[hi])',
-    "include(hi) class hi { }"                           => 'defined(Class[hi])',
+    "class hi { } include hi"                            => 'defined(Class[Hi])',
+    "include(hi) class hi { }"                           => 'defined(Class[Hi])',
 
-    "class hi { } class { hi: }"                         => 'defined(Class[hi])',
-    "class { hi: } class hi { }"                         => 'defined(Class[hi])',
+    "class hi { } class { hi: }"                         => 'defined(Class[Hi])',
+    "class { hi: } class hi { }"                         => 'defined(Class[Hi])',
 
-    "class bye { } class hi inherits bye { } include hi" => 'defined(Class[hi]) and defined(Class[bye])')
+    "class bye { } class hi inherits bye { } include hi" => 'defined(Class[Hi]) and defined(Class[Bye])')
 
   produces(<<-EXAMPLE => 'defined(Notify[foo]) and defined(Notify[bar]) and !defined(Notify[foo::bar])')
     class bar { notify { 'bar': } }

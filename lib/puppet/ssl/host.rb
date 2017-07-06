@@ -104,7 +104,7 @@ DOC
   # Specify how we expect to interact with our certificate authority.
   def self.ca_location=(mode)
     modes = CA_MODES.collect { |m, vals| m.to_s }.join(", ")
-    raise ArgumentError, _("CA Mode can only be one of: %{modes}") % { modes: modes } unless CA_MODES.include?(mode)
+    raise ArgumentError, "CA Mode can only be one of: #{modes}" unless CA_MODES.include?(mode)
 
     @ca_location = mode
 
@@ -207,18 +207,18 @@ DOC
   end
 
   def validate_certificate_with_key
-    raise Puppet::Error, _("No certificate to validate.") unless certificate
-    raise Puppet::Error, _("No private key with which to validate certificate with fingerprint: %{fingerprint}") % { fingerprint: certificate.fingerprint } unless key
+    raise Puppet::Error, "No certificate to validate." unless certificate
+    raise Puppet::Error, "No private key with which to validate certificate with fingerprint: #{certificate.fingerprint}" unless key
     unless certificate.content.check_private_key(key.content)
-      raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: certificate.fingerprint, cert_name: Puppet[:certname], ssl_dir: Puppet[:ssldir], cert_dir: Puppet[:certdir].gsub('/', '\\') }
+      raise Puppet::Error, <<ERROR_STRING
 The certificate retrieved from the master does not match the agent's private key.
-Certificate fingerprint: %{fingerprint}
+Certificate fingerprint: #{certificate.fingerprint}
 To fix this, remove the certificate from both the master and the agent and then start a puppet run, which will automatically regenerate a certificate.
 On the master:
-  puppet cert clean %{cert_name}
+  puppet cert clean #{Puppet[:certname]}
 On the agent:
-  1a. On most platforms: find %{ssl_dir} -name %{cert_name}.pem -delete
-  1b. On Windows: del "%{cert_dir}\\%{cert_name}.pem" /f
+  1a. On most platforms: find #{Puppet[:ssldir]} -name #{Puppet[:certname]}.pem -delete
+  1b. On Windows: del "#{Puppet[:certdir].gsub('/', '\\')}\\#{Puppet[:certname]}.pem" /f
   2. puppet agent -t
 ERROR_STRING
     end
@@ -235,17 +235,17 @@ ERROR_STRING
     if !existing_request.nil? &&
       (key.content.public_key.to_s != existing_request.content.public_key.to_s)
 
-      raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: existing_request.fingerprint, csr_public_key: existing_request.content.public_key.to_text, agent_public_key: key.content.public_key.to_text, cert_name: Puppet[:certname], ssl_dir: Puppet[:ssldir], cert_dir: Puppet[:certdir].gsub('/', '\\') }
+      raise Puppet::Error, <<ERROR_STRING
 The CSR retrieved from the master does not match the agent's public key.
-CSR fingerprint: %{fingerprint}
-CSR public key: %{csr_public_key}
-Agent public key: %{agent_public_key}
+CSR fingerprint: #{existing_request.fingerprint}
+CSR public key: #{existing_request.content.public_key.to_text}
+Agent public key: #{key.content.public_key.to_text}
 To fix this, remove the CSR from both the master and the agent and then start a puppet run, which will automatically regenerate a CSR.
 On the master:
-  puppet cert clean %{cert_name}
+  puppet cert clean #{Puppet[:certname]}
 On the agent:
-  1a. On most platforms: find %{ssl_dir} -name %{cert_name}.pem -delete
-  1b. On Windows: del "%{cert_dir}\\%{cert_name}.pem" /f
+  1a. On most platforms: find #{Puppet[:ssldir]} -name #{Puppet[:certname]}.pem -delete
+  1b. On Windows: del "#{Puppet[:certdir].gsub('/', '\\')}\\#{Puppet[:certname]}.pem" /f
   2. puppet agent -t
 ERROR_STRING
     end
@@ -296,21 +296,21 @@ ERROR_STRING
 
   def to_data_hash
     my_cert = Puppet::SSL::Certificate.indirection.find(name)
-    result = { 'name'  => name }
+    result = { :name  => name }
 
     my_state = state
 
-    result['state'] = my_state
-    result['desired_state'] = desired_state if desired_state
+    result[:state] = my_state
+    result[:desired_state] = desired_state if desired_state
 
     thing_to_use = (my_state == 'requested') ? certificate_request : my_cert
 
     # this is for backwards-compatibility
     # we should deprecate it and transition people to using
-    # json[:fingerprints][:default]
+    # pson[:fingerprints][:default]
     # It appears that we have no internal consumers of this api
     # --jeffweiss 30 aug 2012
-    result['fingerprint'] = thing_to_use.fingerprint
+    result[:fingerprint] = thing_to_use.fingerprint
 
     # The above fingerprint doesn't tell us what message digest algorithm was used
     # No problem, except that the default is changing between 2.7 and 3.0. Also, as
@@ -319,13 +319,13 @@ ERROR_STRING
     # So, when we add the newer fingerprints, we're explicit about the hashing
     # algorithm used.
     # --jeffweiss 31 july 2012
-    result['fingerprints'] = {}
-    result['fingerprints']['default'] = thing_to_use.fingerprint
+    result[:fingerprints] = {}
+    result[:fingerprints][:default] = thing_to_use.fingerprint
 
     suitable_message_digest_algorithms.each do |md|
-      result['fingerprints'][md.to_s] = thing_to_use.fingerprint md
+      result[:fingerprints][md] = thing_to_use.fingerprint md
     end
-    result['dns_alt_names'] = thing_to_use.subject_alt_names
+    result[:dns_alt_names] = thing_to_use.subject_alt_names
 
     result
   end
@@ -344,9 +344,9 @@ ERROR_STRING
       generate
       return if certificate
     rescue StandardError => detail
-      Puppet.log_exception(detail, _("Could not request certificate: %{message}") % { message: detail.message })
+      Puppet.log_exception(detail, "Could not request certificate: #{detail.message}")
       if time < 1
-        puts _("Exiting; failed to retrieve certificate and waitforcert is disabled")
+        puts "Exiting; failed to retrieve certificate and waitforcert is disabled"
         exit(1)
       else
         sleep(time)
@@ -355,7 +355,7 @@ ERROR_STRING
     end
 
     if time < 1
-      puts _("Exiting; no certificate found and waitforcert is disabled")
+      puts "Exiting; no certificate found and waitforcert is disabled"
       exit(1)
     end
 
@@ -363,9 +363,9 @@ ERROR_STRING
       sleep time
       begin
         break if certificate
-        Puppet.notice _("Did not receive certificate")
+        Puppet.notice "Did not receive certificate"
       rescue StandardError => detail
-        Puppet.log_exception(detail, _("Could not request certificate: %{message}") % { message: detail.message })
+        Puppet.log_exception(detail, "Could not request certificate: #{detail.message}")
       end
     end
   end

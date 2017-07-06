@@ -36,7 +36,7 @@ class Puppet::Settings::PrioritySetting < Puppet::Settings::BaseSetting
     when (value.is_a?(String) and PRIORITY_MAP[value.to_sym])
       PRIORITY_MAP[value.to_sym]
     else
-      raise Puppet::Settings::ValidationError, _("Invalid priority format '%{value}' for parameter: %{name}") % { value: value.inspect, name: @name }
+      raise Puppet::Settings::ValidationError, "Invalid priority format '#{value.inspect}' for parameter: #{@name}"
     end
   end
 end

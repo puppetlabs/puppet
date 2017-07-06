@@ -29,14 +29,14 @@ module Puppet::ModuleTool::Shared
     @urls     = {}
     @versions = Hash.new { |h,k| h[k] = [] }
 
-    Puppet.notice _("Downloading from %{uri} ...") % { uri: forge.uri }
+    Puppet.notice "Downloading from #{forge.uri} ..."
     author, modname = Puppet::ModuleTool.username_and_modname_from(@module_name)
     info = forge.remote_dependency_info(author, modname, @options[:version])
     info.each do |pair|
       mod_name, releases = pair
       mod_name = mod_name.gsub('/', '-')
       releases.each do |rel|
-        semver = SemanticPuppet::Version.parse(rel['version']) rescue SemanticPuppet::Version::MIN
+        semver = SemVer.new(rel['version'] || '0.0.0') rescue SemVer::MIN
         @versions[mod_name] << { :vstring => rel['version'], :semver => semver }
         @versions[mod_name].sort! { |a, b| a[:semver] <=> b[:semver] }
         @urls["#{mod_name}@#{rel['version']}"] = rel['file']
@@ -76,10 +76,10 @@ module Puppet::ModuleTool::Shared
       }
 
       if forced?
-        range = SemanticPuppet::VersionRange.parse(@version, @strict_semver) rescue SemanticPuppet::VersionRange.parse('>= 0.0.0', @strict_semver)
+        range = SemVer[@version] rescue SemVer['>= 0.0.0']
       else
         range = (@conditions[mod]).map do |r|
-          SemanticPuppet::VersionRange.parse(r[:dependency], @strict_semver) rescue SemanticPuppet::VersionRange.parse('>= 0.0.0', @strict_semver)
+          SemVer[r[:dependency]] rescue SemVer['>= 0.0.0']
         end.inject(&:&)
       end
 
@@ -97,7 +97,7 @@ module Puppet::ModuleTool::Shared
       end
 
       if !(forced? || @installed[mod].empty? || source.last[:name] == :you)
-        next if range === SemanticPuppet::Version.parse(@installed[mod].first.version)
+        next if range === SemVer.new(@installed[mod].first.version)
         action = :upgrade
       elsif @installed[mod].empty?
         action = :install
@@ -151,7 +151,7 @@ module Puppet::ModuleTool::Shared
           cache_path = forge.retrieve(release[:file])
         end
       rescue OpenURI::HTTPError => e
-        raise RuntimeError, _("Could not download module: %{message}") % { message: e.message }, e.backtrace
+        raise RuntimeError, "Could not download module: #{e.message}", e.backtrace
       end
 
       [

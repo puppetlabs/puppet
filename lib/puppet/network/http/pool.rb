@@ -62,7 +62,7 @@ class Puppet::Network::HTTP::Pool
     Puppet.debug("Closing connection for #{site}")
     http.finish
   rescue => detail
-    Puppet.log_exception(detail, _("Failed to close connection for %{site}: %{detail}") % { site: site, detail: detail })
+    Puppet.log_exception(detail, "Failed to close connection for #{site}: #{detail}")
   end
 
   # Borrow and take ownership of a persistent connection. If a new

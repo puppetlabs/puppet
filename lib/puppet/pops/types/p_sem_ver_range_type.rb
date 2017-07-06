@@ -4,9 +4,9 @@ module Types
 # An unparameterized type that represents all VersionRange instances
 #
 # @api public
-class PSemVerRangeType < PAnyType
+class PSemVerRangeType < PScalarType
   def self.register_ptype(loader, ir)
-    create_ptype(loader, ir, 'AnyType')
+    create_ptype(loader, ir, 'ScalarType')
   end
 
   # Check if a version is included in a version range. The version can be a string or
@@ -88,10 +88,6 @@ class PSemVerRangeType < PAnyType
       # No overlap
       nil
     end
-  end
-
-  def roundtrip_with_string?
-    true
   end
 
   def instance?(o, guard = nil)

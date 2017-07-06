@@ -1,4 +1,5 @@
 man/man5/puppet.conf.5
+man/man8/extlookup2hiera.8
 man/man8/puppet.8
 man/man8/puppet-agent.8
 man/man8/puppet-apply.8
@@ -25,4 +26,5 @@ man/man8/puppet-parser.8
 man/man8/puppet-plugin.8
 man/man8/puppet-report.8
 man/man8/puppet-resource.8
+man/man8/puppet-resource_type.8
 man/man8/puppet-status.8
