@@ -43,7 +43,7 @@ Puppet::Type.type(:file).provide :windows do
     begin
       set_owner(should, resolved_path)
     rescue => detail
-      raise Puppet::Error, _("Failed to set owner to '%{should}': %{detail}") % { should: should, detail: detail }, detail.backtrace
+      raise Puppet::Error, "Failed to set owner to '#{should}': #{detail}", detail.backtrace
     end
   end
 
@@ -56,7 +56,7 @@ Puppet::Type.type(:file).provide :windows do
     begin
       set_group(should, resolved_path)
     rescue => detail
-      raise Puppet::Error, _("Failed to set group to '%{should}': %{detail}") % { should: should, detail: detail }, detail.backtrace
+      raise Puppet::Error, "Failed to set group to '#{should}': #{detail}", detail.backtrace
     end
   end
 
@@ -73,7 +73,7 @@ Puppet::Type.type(:file).provide :windows do
     begin
       set_mode(value.to_i(8), resource[:path])
     rescue => detail
-      error = Puppet::Error.new(_("failed to set mode %{mode} on %{path}: %{message}") % { mode: mode, path: resource[:path], message: detail.message })
+      error = Puppet::Error.new("failed to set mode #{mode} on #{resource[:path]}: #{detail.message}")
       error.set_backtrace detail.backtrace
       raise error
     end
@@ -82,7 +82,7 @@ Puppet::Type.type(:file).provide :windows do
 
   def validate
     if [:owner, :group, :mode].any?{|p| resource[p]} and !supports_acl?(resource[:path])
-      resource.fail(_("Can only manage owner, group, and mode on filesystems that support Windows ACLs, such as NTFS"))
+      resource.fail("Can only manage owner, group, and mode on filesystems that support Windows ACLs, such as NTFS")
     end
   end
 

@@ -1,6 +1,14 @@
+begin
+  require 'gettext-setup'
+rescue LoadError
+  def _(msg)
+    msg
+  end
+end
+
 module SemanticPuppet
-  if Puppet::GETTEXT_AVAILABLE
-    GettextSetup.initialize(File.absolute_path('../locales', File.dirname(__FILE__)))
+  if defined?(GettextSetup)
+    GettextSetup.initialize(File.absolute_path('semantic_puppet/locales', File.dirname(__FILE__)))
   end
 
   autoload :Version, 'semantic_puppet/version'

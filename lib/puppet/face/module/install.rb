@@ -5,7 +5,7 @@ require 'pathname'
 
 Puppet::Face.define(:module, '1.0.0') do
   action(:install) do
-    summary _("Install a module from the Puppet Forge or a release archive.")
+    summary "Install a module from the Puppet Forge or a release archive."
     description <<-EOT
       Installs a module from the Puppet Forge or from a release archive file.
 
@@ -14,7 +14,7 @@ Puppet::Face.define(:module, '1.0.0') do
       directory in the modulepath.
     EOT
 
-    returns _("Pathname object representing the path to the installed module.")
+    returns "Pathname object representing the path to the installed module."
 
     examples <<-'EOT'
       Install a module:
@@ -81,10 +81,10 @@ Puppet::Face.define(:module, '1.0.0') do
 
     EOT
 
-    arguments _("<name>")
+    arguments "<name>"
 
     option "--force", "-f" do
-      summary _("Force overwrite of existing module, if any. (Implies --ignore-dependencies.)")
+      summary "Force overwrite of existing module, if any. (Implies --ignore-dependencies.)"
       description <<-EOT
         Force overwrite of existing module, if any.
         Implies --ignore-dependencies.
@@ -92,7 +92,7 @@ Puppet::Face.define(:module, '1.0.0') do
     end
 
     option "--target-dir DIR", "-i DIR" do
-      summary _("The directory into which modules are installed.")
+      summary "The directory into which modules are installed."
       description <<-EOT
         The directory into which modules are installed; defaults to the first
         directory in the modulepath.
@@ -105,27 +105,23 @@ Puppet::Face.define(:module, '1.0.0') do
     end
 
     option "--ignore-dependencies" do
-      summary _("Do not attempt to install dependencies. (Implied by --force.)")
+      summary "Do not attempt to install dependencies. (Implied by --force.)"
       description <<-EOT
         Do not attempt to install dependencies. Implied by --force.
       EOT
     end
 
     option "--version VER", "-v VER" do
-      summary _("Module version to install.")
+      summary "Module version to install."
       description <<-EOT
         Module version to install; can be an exact version or a requirement string,
         eg '>= 1.0.3'. Defaults to latest version.
       EOT
     end
 
-    option '--strict-semver' do
-      summary _('Whether version ranges should exclude pre-release versions')
-    end
-
     when_invoked do |name, options|
       Puppet::ModuleTool.set_option_defaults options
-      Puppet.notice _("Preparing to install into %{dir} ...") % { dir: options[:target_dir] }
+      Puppet.notice "Preparing to install into #{options[:target_dir]} ..."
 
       install_dir = Puppet::ModuleTool::InstallDirectory.new(Pathname.new(options[:target_dir]))
       Puppet::ModuleTool::Applications::Installer.run(name, install_dir, options)
@@ -133,7 +129,7 @@ Puppet::Face.define(:module, '1.0.0') do
 
     when_rendering :console do |return_value, name, options|
       if return_value[:result] == :noop
-        Puppet.notice _("Module %{name} %{version} is already installed.") % { name: name, version: return_value[:version] }
+        Puppet.notice "Module #{name} #{return_value[:version]} is already installed."
         exit 0
       elsif return_value[:result] == :failure
         Puppet.err(return_value[:error][:multiline])

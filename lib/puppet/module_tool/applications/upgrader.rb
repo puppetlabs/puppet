@@ -20,7 +20,6 @@ module Puppet::ModuleTool
         @name                = name
         @ignore_changes      = forced? || options[:ignore_changes]
         @ignore_dependencies = forced? || options[:ignore_dependencies]
-        @strict_semver       = !!options[:strict_semver]
 
         SemanticPuppet::Dependency.add_source(installed_modules_source)
         SemanticPuppet::Dependency.add_source(module_repository)
@@ -71,7 +70,7 @@ module Puppet::ModuleTool
           dir = Pathname.new(mod.modulepath)
 
           vstring = mod.version ? "v#{mod.version}" : '???'
-          Puppet.notice _("Found '%{name}' (%{version}) in %{dir} ...") % { name: name, version: colorize(:cyan, vstring), dir: dir }
+          Puppet.notice "Found '#{name}' (#{colorize(:cyan, vstring)}) in #{dir} ..."
           unless @ignore_changes
             changes = Checksummer.run(mod.path) rescue []
             if mod.has_metadata? && !changes.empty?
@@ -91,13 +90,13 @@ module Puppet::ModuleTool
           if available_versions.empty?
             raise NoCandidateReleasesError, results.merge(:module_name => name, :source => module_repository.host)
           elsif results[:requested_version] != :latest
-            requested = SemanticPuppet::VersionRange.parse(results[:requested_version], @strict_semver)
+            requested = SemanticPuppet::VersionRange.parse(results[:requested_version])
             unless available_versions.any? {|m| requested.include? m.version}
               raise NoCandidateReleasesError, results.merge(:module_name => name, :source => module_repository.host)
             end
           end
 
-          Puppet.notice _("Downloading from %{host} ...") % { host: module_repository.host }
+          Puppet.notice "Downloading from #{module_repository.host} ..."
           if @ignore_dependencies
             graph = build_single_module_graph(name, version)
           else
@@ -120,7 +119,7 @@ module Puppet::ModuleTool
               # module, locking it to upgrades within the same major version.
               installed_range = ">=#{version} #{version.major}.x"
               graph.add_constraint('installed', installed_module, installed_range) do |node|
-                SemanticPuppet::VersionRange.parse(installed_range, @strict_semver).include? node.version
+                SemanticPuppet::VersionRange.parse(installed_range).include? node.version
               end
 
               release.mod.dependencies.each do |dep|
@@ -128,14 +127,14 @@ module Puppet::ModuleTool
 
                 range = dep['version_requirement']
                 graph.add_constraint("#{installed_module} constraint", dep_name, range) do |node|
-                  SemanticPuppet::VersionRange.parse(range, @strict_semver).include? node.version
+                  SemanticPuppet::VersionRange.parse(range).include? node.version
                 end
               end
             end
           end
 
           begin
-            Puppet.info _("Resolving dependencies ...")
+            Puppet.info "Resolving dependencies ..."
             releases = SemanticPuppet::Dependency.resolve(graph)
           rescue SemanticPuppet::Dependency::UnsatisfiableGraph
             raise NoVersionsSatisfyError, results.merge(:requested_name => name)
@@ -182,10 +181,10 @@ module Puppet::ModuleTool
             end
           end
 
-          Puppet.info _("Preparing to upgrade ...")
+          Puppet.info "Preparing to upgrade ..."
           releases.each { |release| release.prepare }
 
-          Puppet.notice _('Upgrading -- do not interrupt ...')
+          Puppet.notice 'Upgrading -- do not interrupt ...'
           releases.each do |release|
             if installed = installed_modules[release.name]
               release.install(Pathname.new(installed.mod.modulepath))
@@ -228,7 +227,7 @@ module Puppet::ModuleTool
       end
 
       def build_single_module_graph(name, version)
-        range = SemanticPuppet::VersionRange.parse(version, @strict_semver)
+        range = SemanticPuppet::VersionRange.parse(version)
         graph = SemanticPuppet::Dependency::Graph.new(name => range)
         releases = SemanticPuppet::Dependency.fetch_releases(name)
         releases.each { |release| release.dependencies.clear }

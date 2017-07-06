@@ -23,11 +23,16 @@ class CollectorTransformer
 
     fail "Resource type #{type} doesn't exist" unless resource_type
 
+    adapter = Adapters::SourcePosAdapter.adapt(o)
+    line_num = adapter.line
+    position = adapter.pos
+    file_path = adapter.locator.file
+
     if !o.operations.empty?
       overrides = {
         :parameters => o.operations.map{ |x| @@evaluator.evaluate(x, scope)}.flatten,
-        :file       => o.file,
-        :line       => [o.line, o.pos],
+        :file       => file_path,
+        :line       => [line_num, position],
         :source     => scope.source,
         :scope      => scope
       }
@@ -91,7 +96,7 @@ protected
     right_code = query(o.right_expr, scope)
 
     case o.operator
-    when '=='
+    when :'=='
       if left_code == "tag"
         # Ensure that to_s and downcase is done once, i.e. outside the proc block and
         # then use raw_tagged? instead of tagged?
@@ -101,7 +106,7 @@ protected
           tags = [ right_code ]
         end
         tags = tags.collect do |t|
-          raise ArgumentError, _('Cannot transform a number to a tag') if t.is_a?(Numeric)
+          raise ArgumentError, 'Cannot transform a number to a tag' if t.is_a?(Numeric)
           t.to_s.downcase
         end
         proc do |resource|
@@ -116,7 +121,7 @@ protected
           end
         end
       end
-    when '!='
+    when :'!='
       proc do |resource|
         !@@compare_operator.equals(resource[left_code], right_code)
       end
@@ -164,7 +169,7 @@ protected
   end
 
   def query_Object(o, scope)
-    raise ArgumentError, _("Cannot transform object of class %{klass}") % { klass: o.class }
+    raise ArgumentError, "Cannot transform object of class #{o.class}"
   end
 
   def match_AccessExpression(o, scope)
@@ -226,7 +231,7 @@ protected
   end
 
   def match_Object(o, scope)
-    raise ArgumentError, _("Cannot transform object of class %{klass}") % { klass: o.class }
+    raise ArgumentError, "Cannot transform object of class #{o.class}"
   end
 end
 end

@@ -65,7 +65,7 @@ module Puppet
                      # the wrong attributes so I sync AFTER the umount
           return :mount_unmounted
         else
-          raise Puppet::Error, _("Unexpected change from %{current} to unmounted}") % { current: current_value }
+          raise Puppet::Error, "Unexpected change from #{current_value} to unmounted}"
         end
       end
 
@@ -131,7 +131,7 @@ module Puppet
         path, depending on the operating system."
 
       validate do |value|
-        raise Puppet::Error, _("device must not contain whitespace: %{value}") % { value: value } if value =~ /\s/
+        raise Puppet::Error, "device must not contain whitespace: #{value}" if value =~ /\s/
       end
     end
 
@@ -157,7 +157,7 @@ module Puppet
       end
 
       validate do |value|
-        raise Puppet::Error, _("blockdevice must not contain whitespace: %{value}") % { value: value } if value =~ /\s/
+        raise Puppet::Error, "blockdevice must not contain whitespace: #{value}" if value =~ /\s/
       end
     end
 
@@ -166,8 +166,8 @@ module Puppet
         operating system.  This is a required option."
 
       validate do |value|
-        raise Puppet::Error, _("fstype must not contain whitespace: %{value}") % { value: value } if value =~ /\s/
-        raise Puppet::Error, _("fstype must not be an empty string") if value.empty?
+        raise Puppet::Error, "fstype must not contain whitespace: #{value}" if value =~ /\s/
+        raise Puppet::Error, "fstype must not be an empty string" if value.empty?
       end
     end
 
@@ -177,8 +177,8 @@ module Puppet
         Consult the fstab(5) man page for system-specific details."
 
       validate do |value|
-        raise Puppet::Error, _("options must not contain whitespace: %{value}") % { value: value } if value =~ /\s/
-        raise Puppet::Error, _("options must not be an empty string") if value.empty?
+        raise Puppet::Error, "options must not contain whitespace: #{value}" if value =~ /\s/
+        raise Puppet::Error, "options must not be an empty string" if value.empty?
       end
     end
 
@@ -243,7 +243,7 @@ module Puppet
       isnamevar
 
       validate do |value|
-        raise Puppet::Error, _("name must not contain whitespace: %{value}") % { value: value } if value =~ /\s/
+        raise Puppet::Error, "name must not contain whitespace: #{value}" if value =~ /\s/
       end
 
       munge do |value|

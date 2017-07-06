@@ -80,7 +80,7 @@ module Logging
     if exception.respond_to?(:original)
       original =  exception.original
       unless original.nil?
-        arr << _('Wrapped exception:')
+        arr << 'Wrapped exception:'
         arr << original.message
         build_exception_trace(arr, original, trace)
       end
@@ -103,7 +103,7 @@ module Logging
       arr << Puppet::Util.pretty_backtrace(exception.backtrace)
     end
     if exception.respond_to?(:original) and exception.original
-      arr << _("Wrapped exception:")
+      arr << "Wrapped exception:"
       arr << format_exception(exception.original, :default, trace)
     end
     arr.flatten.join("\n")
@@ -176,13 +176,13 @@ module Logging
         call_trace =
         case MM.new(file, line)
         when FILE_AND_LINE
-          _("\n   (at %{file}:%{line})") % { file: file, line: line }
+          "\n   (at #{file}:#{line})"
         when FILE_NO_LINE
-          _("\n   (in %{file})") % { file: file }
+          "\n   (in #{file})"
         when NO_FILE_LINE
-          _("\n   (in unknown file, line %{line})") % { line: line }
+          "\n   (in unknown file, line #{line})"
         else
-          _("\n   (file & line not available)")
+          "\n   (file & line not available)"
         end
         warning("#{message}#{call_trace}")
       end
@@ -279,13 +279,10 @@ module Logging
       key ||= (offender = get_deprecation_offender)
       if (! $deprecation_warnings.has_key?(key)) then
         $deprecation_warnings[key] = message
-        # split out to allow translation
-        unknown = _('unknown')
         call_trace = use_caller ?
           (offender || get_deprecation_offender).join('; ') :
-          "#{file || unknown}:#{line || unknown}"
-        #TRANSLATORS error message with origin location
-        warning(_("%{message}\n   (at %{call_trace})") % { message: message, call_trace: call_trace })
+          "#{file || 'unknown'}:#{line || 'unknown'}"
+        warning("#{message}\n   (at #{call_trace})")
       end
     end
   end

@@ -41,10 +41,10 @@ module Puppet
 
       validate do |value|
         if value =~ /\s/
-          raise Puppet::Error, _("Aliases cannot include whitespace")
+          raise Puppet::Error, "Aliases cannot include whitespace"
         end
         if value =~ /,/
-          raise Puppet::Error, _("Aliases must be provided as an array, not a comma-separated list")
+          raise Puppet::Error, "Aliases must be provided as an array, not a comma-separated list"
         end
       end
     end
@@ -55,8 +55,8 @@ module Puppet
       isnamevar
 
       validate do |value|
-        raise Puppet::Error, _("Resourcename cannot include whitespaces") if value =~ /\s/
-        raise Puppet::Error, _("No comma in resourcename allowed. If you want to specify aliases use the host_aliases property") if value.include?(',')
+        raise Puppet::Error, "Resourcename cannot include whitespaces" if value =~ /\s/
+        raise Puppet::Error, "No comma in resourcename allowed. If you want to specify aliases use the host_aliases property" if value.include?(',')
       end
     end
 

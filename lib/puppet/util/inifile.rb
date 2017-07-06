@@ -136,7 +136,7 @@ module Puppet::Util::IniConfig
     def read
       text = @filetype.read
       if text.nil?
-        raise IniParseError, _("Cannot read nonexistent file %{file}") % { file: @file.inspect }
+        raise IniParseError, "Cannot read nonexistent file #{@file.inspect}"
       end
       parse(text)
     end
@@ -183,13 +183,13 @@ module Puppet::Util::IniConfig
           val = match[2]
 
           if section.nil?
-            raise IniParseError.new(_("Property with key %{key} outside of a section") % { key: key.inspect })
+            raise IniParseError.new("Property with key #{key.inspect} outside of a section")
           end
 
           section[key] = val
           optname = key
         else
-          raise IniParseError.new(_("Can't parse line '%{line}'") % { line: l.chomp }, @file, line_num)
+          raise IniParseError.new("Can't parse line '#{l.chomp}'", @file, line_num)
         end
       end
       section.mark_clean unless section.nil?
@@ -238,7 +238,7 @@ module Puppet::Util::IniConfig
     # @return [Puppet::Util::IniConfig::Section]
     def add_section(name)
       if section_exists?(name)
-        raise IniParseError.new(_("Section %{name} is already defined, cannot redefine") % { name: name.inspect }, @file)
+        raise IniParseError.new("Section #{name.inspect} is already defined, cannot redefine", @file)
       end
 
       section = Section.new(name, @file)

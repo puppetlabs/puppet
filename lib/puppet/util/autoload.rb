@@ -70,7 +70,7 @@ class Puppet::Util::Autoload
       rescue SystemExit,NoMemoryError
         raise
       rescue Exception => detail
-        message = _("Could not autoload %{name}: %{detail}") % { name: name, detail: detail }
+        message = "Could not autoload #{name}: #{detail}"
         Puppet.log_exception(detail, message)
         raise Puppet::Error, message, detail.backtrace
       end
@@ -184,7 +184,7 @@ class Puppet::Util::Autoload
 
   def initialize(obj, path, options = {})
     @path = path.to_s
-    raise ArgumentError, _("Autoload paths cannot be fully qualified") if Puppet::Util.absolute_path?(@path)
+    raise ArgumentError, "Autoload paths cannot be fully qualified" if Puppet::Util.absolute_path?(@path)
     @object = obj
 
     set_options(options)

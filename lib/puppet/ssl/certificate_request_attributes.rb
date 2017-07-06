@@ -19,16 +19,16 @@ class Puppet::SSL::CertificateRequestAttributes
   # @return true if we are able to load the file, false otherwise
   # @raise [Puppet::Error] if there are unexpected attribute keys
   def load
-    Puppet.info(_("csr_attributes file loading from %{path}") % { path: path })
+    Puppet.info("csr_attributes file loading from #{path}")
     if Puppet::FileSystem.exist?(path)
       hash = Puppet::Util::Yaml.load_file(path, {})
       if ! hash.is_a?(Hash)
-        raise Puppet::Error, _("invalid CSR attributes, expected instance of Hash, received instance of %{klass}") % { klass: hash.class }
+        raise Puppet::Error, "invalid CSR attributes, expected instance of Hash, received instance of #{hash.class}"
       end
       @custom_attributes = hash.delete('custom_attributes') || {}
       @extension_requests = hash.delete('extension_requests') || {}
       if not hash.keys.empty?
-        raise Puppet::Error, _("unexpected attributes %{keys} in %{path}") % { keys: hash.keys.inspect, path: @path.inspect }
+        raise Puppet::Error, "unexpected attributes #{hash.keys.inspect} in #{@path.inspect}"
       end
       return true
     end

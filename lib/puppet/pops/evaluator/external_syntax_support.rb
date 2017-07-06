@@ -3,7 +3,13 @@
 #
 require 'puppet/plugins/syntax_checkers'
 module Puppet::Pops::Evaluator::ExternalSyntaxSupport
+  # TODO: This can be simplified if the Factory directly supported hash_of/type_of
+  TYPES = Puppet::Pops::Types::TypeFactory
+  SERVICE_TYPE = Puppet::Plugins::SyntaxCheckers::SYNTAX_CHECKERS_TYPE
+  SERVICE_NAME = Puppet::Plugins::SyntaxCheckers::SYNTAX_CHECKERS_KEY
+
   def assert_external_syntax(scope, result, syntax, reference_expr)
+    @@HASH_OF_SYNTAX_CHECKERS ||= TYPES.hash_of(TYPES.type_of(SERVICE_TYPE))
     # ignore 'unspecified syntax'
     return if syntax.nil? || syntax == ''
 
@@ -14,7 +20,8 @@ module Puppet::Pops::Evaluator::ExternalSyntaxSupport
     # Call checker and give it the location information from the expression
     # (as opposed to where the heredoc tag is (somewhere on the line above)).
     acceptor = Puppet::Pops::Validation::Acceptor.new()
-    checker.check(result, syntax, acceptor, reference_expr)
+    source_pos = Puppet::Pops::Utils.find_closest_positioned(reference_expr)
+    checker.check(result, syntax, acceptor, source_pos)
 
     if acceptor.error_count > 0
       checker_message = "Invalid produced text having syntax: '#{syntax}'."
@@ -27,7 +34,7 @@ module Puppet::Pops::Evaluator::ExternalSyntaxSupport
   # Returns nil if there is no registered checker.
   #
   def checker_for_syntax(scope, syntax)
-    checkers_hash = Puppet.lookup(:plugins)[Puppet::Plugins::SyntaxCheckers::SYNTAX_CHECKERS_KEY]
+    checkers_hash = scope.compiler.injector.lookup(scope, @@HASH_OF_SYNTAX_CHECKERS, SERVICE_NAME) || {}
     checkers_hash[lookup_keys_for_syntax(syntax).find {|x| checkers_hash[x] }]
   end
 

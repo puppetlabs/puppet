@@ -2,8 +2,7 @@ test_name "#3360: Allow duplicate CSR when allow_duplicate_certs is on"
 
 agent_hostnames = agents.map {|a| a.to_s}
 
-with_puppet_running_on(master, {'master' => {'allow_duplicate_certs' => true,
-                                             'autosign' => false}}) do
+with_puppet_running_on(master, {'master' => {'allow_duplicate_certs' => true}}) do
   agents_with_cert_name = {}
   agents.each do |agent|
     step "Collect fqdn for the agent"

@@ -3,11 +3,10 @@ class Puppet::Parser::Relationship
 
   PARAM_MAP = {:relationship => :before, :subscription => :notify}
 
-  def arrayify(resources, left)
+  def arrayify(resources)
     case resources
     when Puppet::Pops::Evaluator::Collectors::AbstractCollector
-      # on the LHS, go as far left as possible, else whatever the collected result is
-      left ? leftmost_alternative(resources) : resources.collected.values
+      resources.collected.values
     when Array
       resources
     else
@@ -16,8 +15,8 @@ class Puppet::Parser::Relationship
   end
 
   def evaluate(catalog)
-    arrayify(source, true).each do |s|
-      arrayify(target, false).each do |t|
+    arrayify(source).each do |s|
+      arrayify(target).each do |t|
         mk_relationship(s, t, catalog)
       end
     end
@@ -28,56 +27,28 @@ class Puppet::Parser::Relationship
   end
 
   def param_name
-    PARAM_MAP[type] || raise(ArgumentError, _("Invalid relationship type %{relationship_type}") % { relationship_type: type })
+    PARAM_MAP[type] || raise(ArgumentError, "Invalid relationship type #{type}")
   end
 
   def mk_relationship(source, target, catalog)
-    source_ref = canonical_ref(source)
-    target_ref = canonical_ref(target)
-    rel_param = param_name
+    # There was once an assumption that this could be an array. These raise
+    # assertions are here as a sanity check for 4.0 and can be removed after
+    # a release or two
+    raise ArgumentError, "source shouldn't be an array" if source.is_a?(Array)
+    raise ArgumentError, "target shouldn't be an array" if target.is_a?(Array)
+    source = source.to_s
+    target = target.to_s
 
-    unless source_resource = catalog.resource(*source_ref)
-      raise ArgumentError, _("Could not find resource '%{source}' for relationship on '%{target}'") % { source: source.to_s, target: target.to_s }
+    unless source_resource = catalog.resource(source)
+      raise ArgumentError, "Could not find resource '#{source}' for relationship on '#{target}'"
     end
-    unless catalog.resource(*target_ref)
-      raise ArgumentError, _("Could not find resource '%{target}' for relationship from '%{source}'") % { target: target.to_s, source: source.to_s }
+    unless catalog.resource(target)
+      raise ArgumentError, "Could not find resource '#{target}' for relationship from '#{source}'"
     end
     Puppet.debug {"Adding relationship from #{source} to #{target} with '#{param_name}'"}
-    if source_resource[rel_param].class != Array
-      source_resource[rel_param] = [source_resource[rel_param]].compact
+    if source_resource[param_name].class != Array
+      source_resource[param_name] = [source_resource[param_name]].compact
     end
-    source_resource[rel_param] << (target_ref[1].nil? ? target_ref[0] : "#{target_ref[0]}[#{target_ref[1]}]")
-  end
-
-  private
-
-  # Finds the leftmost alternative for a collector (if it is empty, try its empty alternative recursively until there is
-  # either nothing left, or a non empty set is found.
-  #
-  def leftmost_alternative(x)
-    if x.is_a?(Puppet::Pops::Evaluator::Collectors::AbstractCollector)
-      collected = x.collected
-      return collected.values unless collected.empty?
-      adapter = Puppet::Pops::Adapters::EmptyAlternativeAdapter.get(x)
-      adapter.nil? ? [] : leftmost_alternative(adapter.empty_alternative)
-    elsif x.is_a?(Array) && x.size == 1 && x[0].is_a?(Puppet::Pops::Evaluator::Collectors::AbstractCollector)
-      leftmost_alternative(x[0])
-    else
-      x
-    end
-  end
-
-  # Turns a PResourceType or PHostClassType into an array [type, title] and all other references to [ref, nil]
-  # This is needed since it is not possible to find resources in the catalog based on the type system types :-(
-  # (note, the catalog is also used on the agent side)
-  def canonical_ref(ref)
-    case ref
-    when Puppet::Pops::Types::PResourceType
-      [ref.type_name, ref.title]
-    when Puppet::Pops::Types::PHostClassType
-      ['class', ref.class_name]
-    else
-      [ref.to_s, nil]
-    end
+    source_resource[param_name] << target
   end
 end

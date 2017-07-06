@@ -26,7 +26,7 @@ module Puppet::FileServing::TerminusSelector
     when nil
       :file_server
     else
-      raise ArgumentError, _("URI protocol '%{protocol}' is not currently supported for file serving") % { protocol: request.protocol }
+      raise ArgumentError, "URI protocol '#{request.protocol}' is not currently supported for file serving"
     end
   end
 end

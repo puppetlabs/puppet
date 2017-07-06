@@ -30,14 +30,14 @@ module Puppet::Network::HTTP
 
     # Creates a new HTTP client connection to `host`:`port`.
     # @param host [String] the host to which this client will connect to
-    # @param port [Integer] the port to which this client will connect to
+    # @param port [Fixnum] the port to which this client will connect to
     # @param options [Hash] options influencing the properties of the created
     #   connection,
     # @option options [Boolean] :use_ssl true to connect with SSL, false
     #   otherwise, defaults to true
     # @option options [#setup_connection] :verify An object that will configure
     #   any verification to do on the connection
-    # @option options [Integer] :redirect_limit the number of allowed
+    # @option options [Fixnum] :redirect_limit the number of allowed
     #   redirections, defaults to 10 passing any other option in the options
     #   hash results in a Puppet::Error exception
     #
@@ -51,7 +51,7 @@ module Puppet::Network::HTTP
       @port = port
 
       unknown_options = options.keys - OPTION_DEFAULTS.keys
-      raise Puppet::Error, _("Unrecognized option(s): %{opts}") % { opts: unknown_options.map(&:inspect).sort.join(', ') } unless unknown_options.empty?
+      raise Puppet::Error, "Unrecognized option(s): #{unknown_options.map(&:inspect).sort.join(', ')}" unless unknown_options.empty?
 
       options = OPTION_DEFAULTS.merge(options)
       @use_ssl = options[:use_ssl]
@@ -62,13 +62,9 @@ module Puppet::Network::HTTP
     end
 
     # @!macro [new] common_options
-    #   @param options [Hash] options influencing the request made. Any
-    #   options not recognized by this class will be ignored - no error will
-    #   be thrown.
+    #   @param options [Hash] options influencing the request made
     #   @option options [Hash{Symbol => String}] :basic_auth The basic auth
-    #     :username and :password to use for the request, :metric_id Ignored
-    #     by this class - used by Puppet Server only. The metric id by which
-    #     to track metrics on requests.
+    #     :username and :password to use for the request
 
     # @param path [String]
     # @param headers [Hash{String => String}]
@@ -197,7 +193,7 @@ module Puppet::Network::HTTP
         # and try again...
       end
 
-      raise RedirectionLimitExceededException, _("Too many HTTP redirections for %{host}:%{port}") % { host: @host, port: @port }
+      raise RedirectionLimitExceededException, "Too many HTTP redirections for #{@host}:#{@port}"
     end
 
     def apply_options_to(request, options)
@@ -219,17 +215,17 @@ module Puppet::Network::HTTP
       end
       response
     rescue OpenSSL::SSL::SSLError => error
-      # can be nil
-      peer_cert = @verify.peer_certs.last
-
-      if peer_cert && !OpenSSL::SSL.verify_certificate_identity(peer_cert.content, site.host)
-        valid_certnames = [peer_cert.name, *peer_cert.subject_alt_names].uniq
-        msg = valid_certnames.length > 1 ? _("one of %{certnames}") % { certnames: valid_certnames.join(', ') } : valid_certnames.first
-        msg += _("Server hostname '%{host}' did not match server certificate; expected %{msg}") % { host: site.host, msg: msg }
-        raise Puppet::Error, msg, error.backtrace
-      elsif error.message.include? "certificate verify failed"
+      if error.message.include? "certificate verify failed"
         msg = error.message
         msg << ": [" + @verify.verify_errors.join('; ') + "]"
+        raise Puppet::Error, msg, error.backtrace
+      elsif error.message =~ /hostname.*not match.*server certificate/
+        leaf_ssl_cert = @verify.peer_certs.last
+
+        valid_certnames = [leaf_ssl_cert.name, *leaf_ssl_cert.subject_alt_names].uniq
+        msg = valid_certnames.length > 1 ? "one of #{valid_certnames.join(', ')}" : valid_certnames.first
+        msg = "Server hostname '#{site.host}' did not match server certificate; expected #{msg}"
+
         raise Puppet::Error, msg, error.backtrace
       else
         raise

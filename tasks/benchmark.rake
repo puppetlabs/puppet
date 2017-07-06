@@ -94,9 +94,9 @@ namespace :benchmark do
         end
 
         printer = RubyProf::CallTreePrinter.new(result)
-        printer.print(:profile => name, :path => ENV['TARGET'])
-        path = File.join(ENV['TARGET'], "#{name}.callgrind.out.#{$$}")
-        puts "Generated callgrind file: #{path}"
+        File.open(File.join("callgrind.#{name}.#{Time.now.to_i}.trace"), "w") do |f|
+          printer.print(f)
+        end
       end
 
       def to_millis(seconds)

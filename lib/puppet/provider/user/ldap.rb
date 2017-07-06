@@ -46,7 +46,7 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
 
   # Convert our gid to a group name, if necessary.
   def gid=(value)
-    value = group2id(value) unless value.is_a?(Integer)
+    value = group2id(value) unless [Fixnum, Bignum].include?(value.class)
 
     @property_hash[:gid] = value
   end

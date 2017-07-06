@@ -29,7 +29,7 @@ class Loaders
 
   def initialize(environment, for_agent)
     # Protect against environment havoc
-    raise ArgumentError.new(_("Attempt to redefine already initialized loaders for environment")) unless environment.loaders.nil?
+    raise ArgumentError.new("Attempt to redefine already initialized loaders for environment") unless environment.loaders.nil?
     environment.loaders = self
     @environment = environment
     @loaders_by_name = {}
@@ -67,8 +67,6 @@ class Loaders
   #
   def self.clear
     @@static_loader = nil
-    Model.class_variable_set(:@@pcore_ast_initialized, false)
-    Model.register_pcore_types
   end
 
   # Calls {#loaders} to obtain the {{Loaders}} instance and then uses it to find the appropriate loader
@@ -93,20 +91,12 @@ class Loaders
   end
 
   def register_implementations(obj_classes, name_authority)
-    self.class.register_implementations_with_loader(obj_classes, name_authority, loader = @private_environment_loader)
-  end
-
-  # Register implementations using the global static loader
-  def self.register_static_implementations(obj_classes)
-    register_implementations_with_loader(obj_classes, Pcore::RUNTIME_NAME_AUTHORITY, static_loader)
-  end
-
-  def self.register_implementations_with_loader(obj_classes, name_authority, loader)
+    loader = @private_environment_loader
     types = obj_classes.map do |obj_class|
-      type = obj_class._pcore_type
+      type = obj_class._ptype
       typed_name = Loader::TypedName.new(:type, type.name, name_authority)
       entry = loader.loaded_entry(typed_name)
-      loader.set_entry(typed_name, type) if entry.nil? || entry.value.nil?
+      loader.set_entry(typed_name, type, obj_class._plocation) if entry.nil? || entry.value.nil?
       type
     end
     # Resolve lazy so that all types can cross reference each other
@@ -167,7 +157,7 @@ class Loaders
     if loader.nil?
       # Unable to find the module private loader. Try resolving the module
       loader = private_loader_for_module(loader_name[0..-9]) if loader_name.end_with?(' private')
-      raise Puppet::ParseError, _("Unable to find loader named '%{loader_name}'") % { loader_name: loader_name } if loader.nil?
+      raise Puppet::ParseError, "Unable to find loader named '#{loader_name}'" if loader.nil?
     end
     loader
   end

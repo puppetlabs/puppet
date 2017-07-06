@@ -44,7 +44,7 @@ module Puppet
           elsif args.length == 4
             long, short, desc, type = args
           else
-            raise ArgumentError, _("this method only takes 3 or 4 arguments. Given: %{args}") % { args: args.inspect }
+            raise ArgumentError, "this method only takes 3 or 4 arguments. Given: #{args.inspect}"
           end
 
           options = {
@@ -61,7 +61,7 @@ module Puppet
             when :NONE
               options[:type] = :flag
             else
-              raise PuppetOptionError.new(_("Unsupported type: '%{type}'") % { type: type })
+              raise PuppetOptionError.new("Unsupported type: '#{type}'")
           end
 
           @parser.opt long.sub("^--", "").intern, desc, options
@@ -73,7 +73,7 @@ module Puppet
           begin
             @parser.parse args_copy
           rescue Puppet::Util::CommandLine::Trollop::CommandlineError => err
-            raise PuppetOptionError.new(_("Error parsing arguments"), err)
+            raise PuppetOptionError.new("Error parsing arguments", err)
           end
         end
 

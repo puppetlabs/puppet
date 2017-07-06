@@ -11,50 +11,14 @@ HTTP_ERROR_CODES = [300, 400, 500]
 # Just one from each category since the code makes no real distinctions
 shared_examples_for "a REST terminus method" do |terminus_method|
 
-  describe "when handling the response" do
-    let(:response) do
-      mock_response(200, 'OK')
-    end
-
-    it "falls back to pson for future requests" do
-      response.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns("4.10.1")
-      terminus.send(terminus_method, request)
-
-      expect(Puppet[:preferred_serialization_format]).to eq("pson")
-    end
-
-    it "doesn't change the serialization format if the X-Puppet-Version header is missing" do
-      response.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns(nil)
-
-      terminus.send(terminus_method, request)
-
-      expect(Puppet[:preferred_serialization_format]).to eq("json")
-    end
-
-    it "doesn't change the serialization format if the server major version is 5" do
-      response.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns("5.0.3")
-
-      terminus.send(terminus_method, request)
-
-      expect(Puppet[:preferred_serialization_format]).to eq("json")
-    end
-
-    it "doesn't change the serialization format if the current format is already pson" do
-      response.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns("4.10.1")
-      Puppet[:preferred_serialization_format] = "pson"
-      terminus.send(terminus_method, request)
-
-      expect(Puppet[:preferred_serialization_format]).to eq("pson")
-    end
-  end
-
   HTTP_ERROR_CODES.each do |code|
     describe "when the response code is #{code}" do
       let(:message) { 'error messaged!!!' }
       let(:body) do
         JSON.generate({
           :issue_kind => 'server-error',
-          :message    => message
+          :message    => message,
+          :stacktrace => ['worst/stack/trace/ever.rb:4']
         })
       end
       let(:response) { mock_response(code, body, 'application/json') }
@@ -313,21 +277,15 @@ describe Puppet::Indirector::REST do
   end
 
   it 'excludes yaml from the Accept header' do
-    model.expects(:supported_formats).returns([:json, :pson, :yaml, :binary])
+    model.expects(:supported_formats).returns([:pson, :yaml, :binary])
 
-    expect(terminus.headers['Accept']).to eq('application/json, text/pson, application/octet-stream')
+    expect(terminus.headers['Accept']).to eq('pson, binary')
   end
 
   it 'excludes b64_zlib_yaml from the Accept header' do
-    model.expects(:supported_formats).returns([:json, :pson, :b64_zlib_yaml])
+    model.expects(:supported_formats).returns([:pson, :b64_zlib_yaml])
 
-    expect(terminus.headers['Accept']).to eq('application/json, text/pson')
-  end
-
-  it 'excludes dot from the Accept header' do
-    model.expects(:supported_formats).returns([:json, :dot])
-
-    expect(terminus.headers['Accept']).to eq('application/json')
+    expect(terminus.headers['Accept']).to eq('pson')
   end
 
   describe "when creating an HTTP client" do
@@ -475,10 +433,10 @@ describe Puppet::Indirector::REST do
       expect(terminus.find(request)).to eq(model.new('name', 'decoded body'))
     end
 
-    it "provides an Accept header containing the list of supported mime types joined with commas" do
-      connection.expects(:get).with(anything, has_entry("Accept" => "application/json, text/pson")).returns(response)
+    it "provides an Accept header containing the list of supported formats joined with commas" do
+      connection.expects(:get).with(anything, has_entry("Accept" => "supported, formats")).returns(response)
 
-      terminus.model.expects(:supported_formats).returns [:json, :pson]
+      terminus.model.expects(:supported_formats).returns %w{supported formats}
       terminus.find(request)
     end
 
@@ -581,9 +539,9 @@ describe Puppet::Indirector::REST do
     end
 
     it "should provide an Accept header containing the list of supported formats joined with commas" do
-      connection.expects(:get).with(anything, has_entry("Accept" => "application/json, text/pson")).returns(mock_response(200, ''))
+      connection.expects(:get).with(anything, has_entry("Accept" => "supported, formats")).returns(mock_response(200, ''))
 
-      terminus.model.expects(:supported_formats).returns [:json, :pson]
+      terminus.model.expects(:supported_formats).returns %w{supported formats}
       terminus.search(request)
     end
 
@@ -640,9 +598,9 @@ describe Puppet::Indirector::REST do
     end
 
     it "should provide an Accept header containing the list of supported formats joined with commas" do
-      connection.expects(:delete).with(anything, has_entry("Accept" => "application/json, text/pson")).returns(response)
+      connection.expects(:delete).with(anything, has_entry("Accept" => "supported, formats")).returns(response)
 
-      terminus.model.expects(:supported_formats).returns [:json, :pson]
+      terminus.model.expects(:supported_formats).returns %w{supported formats}
       terminus.destroy(request)
     end
 
@@ -700,10 +658,10 @@ describe Puppet::Indirector::REST do
     end
 
     it "should provide an Accept header containing the list of supported formats joined with commas" do
-      connection.expects(:put).with(anything, anything, has_entry("Accept" => "application/json, text/pson")).returns(response)
+      connection.expects(:put).with(anything, anything, has_entry("Accept" => "supported, formats")).returns(response)
 
       instance.expects(:render).returns('')
-      model.expects(:supported_formats).returns [:json, :pson]
+      model.expects(:supported_formats).returns %w{supported formats}
       instance.expects(:mime).returns "supported"
 
       terminus.save(request)

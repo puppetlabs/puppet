@@ -3,14 +3,14 @@ require 'puppet/parser'
 
 Puppet::Face.define(:parser, '0.0.1') do
   copyright "Puppet Inc.", 2014
-  license   _("Apache 2 license; see COPYING")
+  license   "Apache 2 license; see COPYING"
 
-  summary _("Interact directly with the parser.")
+  summary "Interact directly with the parser."
 
   action :validate do
-    summary _("Validate the syntax of one or more Puppet manifests.")
-    arguments _("[<manifest>] [<manifest> ...]")
-    returns _("Nothing, or the first syntax error encountered.")
+    summary "Validate the syntax of one or more Puppet manifests."
+    arguments "[<manifest>] [<manifest> ...]"
+    returns "Nothing, or the first syntax error encountered."
     description <<-'EOT'
       This action validates Puppet DSL syntax without compiling a catalog or
       syncing any resources. If no manifest files are provided, it will
@@ -43,7 +43,7 @@ Puppet::Face.define(:parser, '0.0.1') do
         else
           manifest = Puppet.lookup(:current_environment).manifest
           files << manifest
-          Puppet.notice _("No manifest specified. Validating the default manifest %{manifest}") % { manifest: manifest }
+          Puppet.notice "No manifest specified. Validating the default manifest #{manifest}"
         end
       end
       missing_files = []
@@ -55,7 +55,7 @@ Puppet::Face.define(:parser, '0.0.1') do
         end
       end
       unless missing_files.empty?
-        raise Puppet::Error, _("One or more file(s) specified did not exist:\n%{files}") % { files: missing_files.collect {|f| " " * 3 + f + "\n"} }
+        raise Puppet::Error, "One or more file(s) specified did not exist:\n#{missing_files.collect {|f| " " * 3 + f + "\n"}}"
       end
       nil
     end
@@ -63,9 +63,9 @@ Puppet::Face.define(:parser, '0.0.1') do
 
 
   action (:dump) do
-    summary _("Outputs a dump of the internal parse tree for debugging")
-    arguments "-e " + _("<source>| [<manifest> ...] ")
-    returns _("A dump of the resulting AST model unless there are syntax or validation errors.")
+    summary "Outputs a dump of the internal parse tree for debugging"
+    arguments "-e <source>| [<manifest> ...] "
+    returns "A dump of the resulting AST model unless there are syntax or validation errors."
     description <<-'EOT'
       This action parses and validates the Puppet DSL syntax without compiling a catalog
       or syncing any resources.
@@ -78,13 +78,13 @@ Puppet::Face.define(:parser, '0.0.1') do
       not API, it may change from time to time.
     EOT
 
-    option "--e " + _("<source>") do
+    option "--e <source>" do
       default_to { nil }
-      summary _("dump one source expression given on the command line.")
+      summary "dump one source expression given on the command line."
     end
 
     option("--[no-]validate") do
-      summary _("Whether or not to validate the parsed result, if no-validate only syntax errors are reported")
+      summary "Whether or not to validate the parsed result, if no-validate only syntax errors are reported"
     end
 
     when_invoked do |*args|
@@ -96,7 +96,7 @@ Puppet::Face.define(:parser, '0.0.1') do
         if ! STDIN.tty?
           dump_parse(STDIN.read, 'stdin', options, false)
         else
-          raise Puppet::Error, _("No input to parse given on command line or stdin")
+          raise Puppet::Error, "No input to parse given on command line or stdin"
         end
       else
         missing_files = []
@@ -113,7 +113,7 @@ Puppet::Face.define(:parser, '0.0.1') do
         if missing_files.empty?
           dumps
         else
-          dumps + _("One or more file(s) specified did not exist:\n") + missing_files.collect { |f| "   #{f}" }.join("\n")
+          dumps + "One or more file(s) specified did not exist:\n" + missing_files.collect { |f| "   #{f}" }.join("\n")
         end
       end
     end
@@ -147,7 +147,7 @@ Puppet::Face.define(:parser, '0.0.1') do
   def validate_manifest(manifest = nil)
     env = Puppet.lookup(:current_environment)
     loaders = Puppet::Pops::Loaders.new(env)
-    Puppet.override( {:loaders => loaders } , _('For puppet parser validate')) do
+    Puppet.override( {:loaders => loaders } , 'For puppet parser validate') do
       begin
         validation_environment = manifest ? env.override_with(:manifest => manifest) : env
         validation_environment.check_for_reparse

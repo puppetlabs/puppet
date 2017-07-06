@@ -16,11 +16,7 @@ Puppet::Reports.register_report(:http) do
   def process
     url = URI.parse(Puppet[:reporturl])
     headers = { "Content-Type" => "application/x-yaml" }
-    # This metric_id option is silently ignored by Puppet's http client
-    # (Puppet::Network::HTTP) but is used by Puppet Server's http client
-    # (Puppet::Server::HttpClient) to track metrics on the request made to the
-    # `reporturl` to store a report.
-    options = { :metric_id => [:puppet, :report, :http] }
+    options = {}
     if url.user && url.password
       options[:basic_auth] = {
         :user => url.user,
@@ -31,7 +27,7 @@ Puppet::Reports.register_report(:http) do
     conn = Puppet::Network::HttpPool.http_instance(url.host, url.port, use_ssl)
     response = conn.post(url.path, self.to_yaml, headers, options)
     unless response.kind_of?(Net::HTTPSuccess)
-      Puppet.err _("Unable to submit report to %{url} [%{code}] %{message}") % { url: Puppet[:reporturl].to_s, code: response.code, message: response.msg }
+      Puppet.err "Unable to submit report to #{Puppet[:reporturl].to_s} [#{response.code}] #{response.msg}"
     end
   end
 end

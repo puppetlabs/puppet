@@ -16,9 +16,12 @@ class Puppet::Util::TagSet < Set
     self.new(data)
   end
 
-  # TODO: A method named #to_data_hash should not return an array
   def to_data_hash
     to_a
+  end
+
+  def to_pson(*args)
+    to_data_hash.to_pson
   end
 
   def join(*args)

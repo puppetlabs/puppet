@@ -46,7 +46,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
             unless line =~ /Updating the pkgdb/
               # Print a warning on lines we can't match, but move
               # on, since it should be non-fatal
-              warning(_("Failed to match line %{line}") % { line: line })
+              warning("Failed to match line #{line}")
             end
           end
         }
@@ -133,11 +133,11 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
         unless @resource[:source]
           raise Puppet::Error,
-          _("No valid installpath found in /etc/pkg.conf and no source was set")
+          "No valid installpath found in /etc/pkg.conf and no source was set"
         end
       else
         raise Puppet::Error,
-        _("You must specify a package source or configure an installpath in /etc/pkg.conf")
+        "You must specify a package source or configure an installpath in /etc/pkg.conf"
       end
     end
   end
@@ -209,7 +209,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
       return master_version unless master_version == 0
       return '' if version == -1
-      raise Puppet::Error, _("%{version} is not available for this package") % { version: version }
+      raise Puppet::Error, "#{version} is not available for this package"
     end
   rescue Puppet::ExecutionFailure
     return nil

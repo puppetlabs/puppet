@@ -1,6 +1,7 @@
 require 'puppet'
 require 'puppet/util/autoload'
 require 'prettyprint'
+require 'semver'
 
 # @api public
 class Puppet::Interface
@@ -137,7 +138,7 @@ class Puppet::Interface
   attr_reader :name
 
   # The version of the face
-  # @return [SemanticPuppet::Version]
+  # @return [SemVer]
   attr_reader :version
 
   # The autoloader instance for the face
@@ -153,7 +154,10 @@ class Puppet::Interface
     end
 
     @name    = Puppet::Interface::FaceCollection.underscorize(name)
-    @version = SemanticPuppet::Version.parse(version)
+
+    # SemVer is deprecated but in 4.x we must use it here (the attr_reader is public api). The
+    # extra boolean argument suppresses the deprecation warning.
+    @version = SemVer.new(version, true)
 
     # The few bits of documentation we actually demand.  The default license
     # is a favour to our end users; if you happen to get that in a core face

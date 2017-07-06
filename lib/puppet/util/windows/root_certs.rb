@@ -44,7 +44,7 @@ class Puppet::Util::Windows::RootCerts
         begin
           certs << OpenSSL::X509::Certificate.new(cert_buf)
         rescue => detail
-          Puppet.warning(_("Failed to import root certificate: %{detail}") % { detail: detail.inspect })
+          Puppet.warning("Failed to import root certificate: #{detail.inspect}")
         end
       end
     ensure

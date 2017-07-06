@@ -19,7 +19,7 @@ class Puppet::Configurer
 
   # Provide more helpful strings to the logging that the Agent does
   def self.to_s
-    _("Puppet configuration client")
+    "Puppet configuration client"
   end
 
   def self.should_pluginsync?
@@ -47,22 +47,21 @@ class Puppet::Configurer
       Puppet::Util::Storage.load
       @compile_time ||= Puppet::Util::Storage.cache(:configuration)[:compile_time]
   rescue => detail
-    Puppet.log_exception(detail, _("Removing corrupt state file %{file}: %{detail}") % { file: Puppet[:statefile], detail: detail })
+    Puppet.log_exception(detail, "Removing corrupt state file #{Puppet[:statefile]}: #{detail}")
     begin
       Puppet::FileSystem.unlink(Puppet[:statefile])
       retry
     rescue => detail
-      raise Puppet::Error.new(_("Cannot remove %{file}: %{detail}") % { file: Puppet[:statefile], detail: detail }, detail)
+      raise Puppet::Error.new("Cannot remove #{Puppet[:statefile]}: #{detail}", detail)
     end
   end
 
-  def initialize(factory = Puppet::Configurer::DownloaderFactory.new, transaction_uuid = nil, job_id = nil)
+  def initialize(factory = Puppet::Configurer::DownloaderFactory.new, transaction_uuid = nil)
     @running = false
     @splayed = false
     @cached_catalog_status = 'not_used'
     @environment = Puppet[:environment]
     @transaction_uuid = transaction_uuid || SecureRandom.uuid
-    @job_id = job_id
     @static_catalog = true
     @checksum_type = Puppet[:supported_checksum_types]
     @handler = Puppet::Configurer::PluginHandler.new(factory)
@@ -74,13 +73,13 @@ class Puppet::Configurer
     if (Puppet[:use_cached_catalog] && result = retrieve_catalog_from_cache(query_options))
       @cached_catalog_status = 'explicitly_requested'
 
-      Puppet.info _("Using cached catalog from environment '%{environment}'") % { environment: result.environment }
+      Puppet.info "Using cached catalog from environment '#{result.environment}'"
     else
       result = retrieve_new_catalog(query_options)
 
       if !result
         if !Puppet[:usecacheonfailure]
-          Puppet.warning _("Not using cache on failed catalog")
+          Puppet.warning "Not using cache on failed catalog"
           return nil
         end
 
@@ -89,12 +88,12 @@ class Puppet::Configurer
         if result
           # don't use use cached catalog if it doesn't match server specified environment
           if @node_environment && result.environment != @environment
-            Puppet.err _("Not using cached catalog because its environment '%{catalog_env}' does not match '%{local_env}'") % { catalog_env: result.environment, local_env: @environment }
+            Puppet.err "Not using cached catalog because its environment '#{result.environment}' does not match '#{@environment}'"
             return nil
           end
 
           @cached_catalog_status = 'on_failure'
-          Puppet.info _("Using cached catalog from environment '%{catalog_env}'") % { catalog_env: result.environment }
+          Puppet.info "Using cached catalog from environment '#{result.environment}'"
         end
       end
     end
@@ -134,7 +133,6 @@ class Puppet::Configurer
     # set report host name now that we have the fact
     options[:report].host = Puppet[:node_name_value]
     query_options[:transaction_uuid] = @transaction_uuid
-    query_options[:job_id] = @job_id
     query_options[:static_catalog] = @static_catalog
 
     # Query params don't enforce ordered evaluation, so munge this list into a
@@ -149,26 +147,27 @@ class Puppet::Configurer
     catalog = retrieve_catalog(query_options)
     return convert_catalog(catalog, @duration) if catalog
 
-    Puppet.err _("Could not retrieve catalog; skipping run")
+    Puppet.err "Could not retrieve catalog; skipping run"
     nil
   end
 
   def prepare_and_retrieve_catalog_from_cache
     result = retrieve_catalog_from_cache({:transaction_uuid => @transaction_uuid, :static_catalog => @static_catalog})
     if result
-      Puppet.info _("Using cached catalog from environment '%{catalog_env}'") % { catalog_env: result.environment }
+      Puppet.info "Using cached catalog from environment '#{result.environment}'"
       return convert_catalog(result, @duration)
     end
     nil
   end
 
-  # Apply supplied catalog and return associated application report
+  # Retrieve (optionally) and apply a catalog. If a catalog is passed in
+  # the options, then apply that one, otherwise retrieve it.
   def apply_catalog(catalog, options)
     report = options[:report]
     begin
       report.configuration_version = catalog.version
 
-      benchmark(:notice, _("Applied catalog")) do
+      benchmark(:notice, "Applied catalog") do
         catalog.apply(options)
       end
     ensure
@@ -186,7 +185,7 @@ class Puppet::Configurer
     # environment and transaction_uuid very early, this is to ensure
     # they are sent regardless of any catalog compilation failures or
     # exceptions.
-    options[:report] ||= Puppet::Transaction::Report.new(nil, @environment, @transaction_uuid, @job_id)
+    options[:report] ||= Puppet::Transaction::Report.new("apply", nil, @environment, @transaction_uuid)
     report = options[:report]
     init_storage
 
@@ -207,7 +206,7 @@ class Puppet::Configurer
           found = find_functional_server()
           server = found[:server]
           if server.nil?
-            Puppet.warning _("Could not select a functional puppet master")
+            Puppet.warning "Could not select a functional puppet master"
             server = [nil, nil]
           end
           Puppet.override(:server => server[0], :serverport => server[1]) do
@@ -238,7 +237,7 @@ class Puppet::Configurer
         @cached_catalog_status = 'explicitly_requested'
 
         if @environment != catalog.environment && !Puppet[:strict_environment_mode]
-          Puppet.notice _("Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'.") % { local_env: @environment, catalog_env: catalog.environment }
+          Puppet.notice "Local environment: '#{@environment}' doesn't match the environment of the cached catalog '#{catalog.environment}', switching agent to '#{catalog.environment}'."
           @environment = catalog.environment
         end
 
@@ -278,16 +277,16 @@ class Puppet::Configurer
             @node_environment = node.environment.to_s
 
             if node.environment.to_s != @environment
-              Puppet.notice _("Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'.") % { local_env: @environment, node_env: node.environment }
+              Puppet.notice "Local environment: '#{@environment}' doesn't match server specified node environment '#{node.environment}', switching agent to '#{node.environment}'."
               @environment = node.environment.to_s
               report.environment = @environment
               query_options = nil
             else
-              Puppet.info _("Using configured environment '%{env}'") % { env: @environment }
+              Puppet.info "Using configured environment '#{@environment}'"
             end
           end
         rescue StandardError => detail
-          Puppet.warning(_("Unable to fetch my node definition, but the agent run will continue:"))
+          Puppet.warning("Unable to fetch my node definition, but the agent run will continue:")
           Puppet.warning(detail)
         end
       end
@@ -312,7 +311,7 @@ class Puppet::Configurer
       end
 
       if Puppet[:strict_environment_mode] && catalog.environment != @environment
-        Puppet.err _("Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set") % { catalog_env: catalog.environment, local_env: @environment }
+        Puppet.err "Not using catalog because its environment '#{catalog.environment}' does not match agent specified environment '#{@environment}' and strict_environment_mode is set"
         return nil
       end
 
@@ -323,9 +322,9 @@ class Puppet::Configurer
       tries = 0
       while catalog.environment and not catalog.environment.empty? and catalog.environment != @environment
         if tries > 3
-          raise Puppet::Error, _("Catalog environment didn't stabilize after %{tries} fetches, aborting run") % { tries: tries }
+          raise Puppet::Error, "Catalog environment didn't stabilize after #{tries} fetches, aborting run"
         end
-        Puppet.notice _("Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'") % { local_env: @environment, catalog_env: catalog.environment }
+        Puppet.notice "Local environment: '#{@environment}' doesn't match server specified environment '#{catalog.environment}', restarting agent run with environment '#{catalog.environment}'"
         @environment = catalog.environment
         report.environment = @environment
 
@@ -344,7 +343,7 @@ class Puppet::Configurer
       apply_catalog(catalog, options)
       report.exit_status
     rescue => detail
-      Puppet.log_exception(detail, _("Failed to apply catalog: %{detail}") % { detail: detail })
+      Puppet.log_exception(detail, "Failed to apply catalog: #{detail}")
       return nil
     ensure
       execute_postrun_command or return nil
@@ -391,7 +390,7 @@ class Puppet::Configurer
     save_last_run_summary(report)
     Puppet::Transaction::Report.indirection.save(report, nil, :environment => Puppet::Node::Environment.remote(@environment)) if Puppet[:report]
   rescue => detail
-    Puppet.log_exception(detail, _("Could not send report: %{detail}") % { detail: detail })
+    Puppet.log_exception(detail, "Could not send report: #{detail}")
   end
 
   def save_last_run_summary(report)
@@ -400,7 +399,7 @@ class Puppet::Configurer
       fh.print YAML.dump(report.raw_summary)
     end
   rescue => detail
-    Puppet.log_exception(detail, _("Could not save last run local report: %{detail}") % { detail: detail })
+    Puppet.log_exception(detail, "Could not save last run local report: #{detail}")
   end
 
   private
@@ -412,7 +411,7 @@ class Puppet::Configurer
       Puppet::Util::Execution.execute([command])
       true
     rescue => detail
-      Puppet.log_exception(detail, _("Could not run command from %{setting}: %{detail}") % { setting: setting, detail: detail })
+      Puppet.log_exception(detail, "Could not run command from #{setting}: #{detail}")
       false
     end
   end
@@ -425,7 +424,7 @@ class Puppet::Configurer
     end
     result
   rescue => detail
-    Puppet.log_exception(detail, _("Could not retrieve catalog from cache: %{detail}") % { detail: detail })
+    Puppet.log_exception(detail, "Could not retrieve catalog from cache: #{detail}")
     return nil
   end
 
@@ -437,7 +436,7 @@ class Puppet::Configurer
     end
     result
   rescue StandardError => detail
-    Puppet.log_exception(detail, _("Could not retrieve catalog from remote server: %{detail}") % { detail: detail })
+    Puppet.log_exception(detail, "Could not retrieve catalog from remote server: #{detail}")
     return nil
   end
 

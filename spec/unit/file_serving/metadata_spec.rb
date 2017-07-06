@@ -18,13 +18,8 @@ describe Puppet::FileServing::Metadata do
     expect(Puppet::FileServing::Metadata.new(foobar)).to respond_to(:collect)
   end
 
-  it "should default to json" do
-    expect(Puppet::FileServing::Metadata.default_format).to eq(:json)
-  end
-
-  it "should support json, pson, yaml" do
-    # msgpack is optional, so using include instead of eq
-    expect(Puppet::FileServing::Metadata.supported_formats).to include(:json, :pson, :yaml)
+  it "should support pson serialization" do
+    expect(Puppet::FileServing::Metadata.new(foobar)).to respond_to(:to_pson)
   end
 
   it "should support deserialization" do
@@ -46,8 +41,8 @@ describe Puppet::FileServing::Metadata do
       expect(metadata.to_data_hash['relative_path']).to eq(metadata.relative_path)
     end
 
-    it "should pass the links in the hash as a string" do
-      expect(metadata.to_data_hash['links']).to eq(metadata.links.to_s)
+    it "should pass the links in the hash verbatim" do
+      expect(metadata.to_data_hash['links']).to eq(metadata.links)
     end
 
     it "should pass the path owner in the hash verbatim" do
@@ -198,7 +193,7 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
         end
 
         it "should validate against the schema" do
-          expect(metadata.to_json).to validate_against('api/schemas/file_metadata.json')
+          expect(metadata.to_pson).to validate_against('api/schemas/file_metadata.json')
         end
 
         describe "when a source and content_uri are set" do
@@ -208,7 +203,7 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
           end
 
           it "should validate against the schema" do
-            expect(metadata.to_json).to validate_against('api/schemas/file_metadata.json')
+            expect(metadata.to_pson).to validate_against('api/schemas/file_metadata.json')
           end
         end
       end
@@ -235,7 +230,7 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
 
         it "should validate against the schema" do
           metadata.collect
-          expect(metadata.to_json).to validate_against('api/schemas/file_metadata.json')
+          expect(metadata.to_pson).to validate_against('api/schemas/file_metadata.json')
         end
       end
     end
@@ -304,7 +299,7 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
         end
 
         it "should validate against the schema" do
-          expect(metadata.to_json).to validate_against('api/schemas/file_metadata.json')
+          expect(metadata.to_pson).to validate_against('api/schemas/file_metadata.json')
         end
       end
     end
@@ -338,7 +333,7 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
       end
 
       it "should validate against the schema" do
-        expect(metadata.to_json).to validate_against('api/schemas/file_metadata.json')
+        expect(metadata.to_pson).to validate_against('api/schemas/file_metadata.json')
       end
     end
   end

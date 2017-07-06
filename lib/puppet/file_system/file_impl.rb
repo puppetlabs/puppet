@@ -14,7 +14,7 @@ class Puppet::FileSystem::FileImpl
     if path.respond_to?(:to_str)
       Pathname.new(path)
     else
-      raise ArgumentError, _("FileSystem implementation expected Pathname, got: '%{klass}'") % { klass: path.class }
+      raise ArgumentError, "FileSystem implementation expected Pathname, got: '#{path.class}'"
     end
   end
 
@@ -61,7 +61,7 @@ class Puppet::FileSystem::FileImpl
           timeout -= wait
           wait *= 2
           if timeout < 0
-            raise Timeout::Error, _("Timeout waiting for exclusive lock on %{path}") % { path: @path }
+            raise Timeout::Error, "Timeout waiting for exclusive lock on #{@path}"
           end
         end
       end

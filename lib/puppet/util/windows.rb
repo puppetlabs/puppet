@@ -10,7 +10,6 @@ module Puppet::Util::Windows
   module SID
     class Principal; end
   end
-  class EventLog; end
 
   if Puppet::Util::Platform.windows?
     # these reference platform specific gems
@@ -30,6 +29,5 @@ module Puppet::Util::Windows
     require 'puppet/util/windows/security_descriptor'
     require 'puppet/util/windows/adsi'
     require 'puppet/util/windows/registry'
-    require 'puppet/util/windows/eventlog'
   end
 end

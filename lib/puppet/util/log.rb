@@ -170,17 +170,6 @@ class Puppet::Util::Log
   def Log.newmessage(msg)
     return if @levels.index(msg.level) < @loglevel
 
-    if msg.message.valid_encoding?
-      message = Puppet::Util::CharacterEncoding.convert_to_utf_8(msg.message)
-    else
-      message = _("Received a log message with invalid encoding:")
-      message << Puppet::Util::CharacterEncoding.convert_to_utf_8(msg.message.dump) << "\n"
-      # We only select the last 10 callers in the stack to avoid being spammy
-      message << _("Backtrace:") << "\n" << caller[0..10].join("\n")
-    end
-
-    msg.message = message
-
     queuemessage(msg) if @destinations.length == 0
 
     @destinations.each do |name, dest|
@@ -220,7 +209,7 @@ class Puppet::Util::Log
 
   # Reopen all of our logs.
   def Log.reopen
-    Puppet.notice _("Reopening log files")
+    Puppet.notice "Reopening log files"
     types = @destinations.keys
     @destinations.each { |type, dest|
       dest.close if dest.respond_to?(:close)
@@ -326,7 +315,7 @@ class Puppet::Util::Log
 
   def to_data_hash
     {
-      'level' => @level.to_s,
+      'level' => @level,
       'message' => to_s,
       'source' => @source,
       'tags' => @tags.to_a,
@@ -349,6 +338,10 @@ class Puppet::Util::Log
       hash[name] = instance_variable_get(attr_name) if instance_variable_defined?(attr_name)
     end
     hash
+  end
+
+  def to_pson(*args)
+    to_data_hash.to_pson(*args)
   end
 
   def message=(msg)
@@ -389,19 +382,19 @@ class Puppet::Util::Log
     # Issue based messages do not have details in the message. It
     # must be appended here
     unless issue_code.nil?
-      msg = _("Could not parse for environment %{env}: %{msg}") % { env: environment, msg: msg } unless environment.nil?
+      msg = "Could not parse for environment #{environment}: #{msg}" unless environment.nil?
       if file && line && pos
-        msg = _("%{msg} at %{file}:%{line}:%{pos}") % { msg: msg, file: file, line: line, pos: pos }
+        msg = "#{msg} at #{file}:#{line}:#{pos}"
       elsif file and line
-        msg = _("%{msg}  at %{file}:%{line}") % { msg: msg, file: file, line: line }
+        msg = "#{msg}  at #{file}:#{line}"
       elsif line && pos
-        msg = _("%{msg}  at line %{line}:%{pos}") % { msg: msg, line: line, pos: pos }
+        msg = "#{msg}  at line #{line}:#{pos}"
       elsif line
-        msg = _("%{msg}  at line %{line}") % { msg: msg, line: line }
+        msg = "#{msg}  at line #{line}"
       elsif file
-        msg = _("%{msg}  in %{file}") % { msg: msg, file: file }
+        msg = "#{msg}  in #{file}"
       end
-      msg = _("%{msg} on node %{node}") % { msg: msg, node: node } unless node.nil?
+      msg = "#{msg} on node #{node}" unless node.nil?
       if @backtrace.is_a?(Array)
         msg += "\n"
         msg += @backtrace.join("\n")
@@ -412,7 +405,7 @@ class Puppet::Util::Log
 
 end
 
-# This is for backward compatibility from when we changed the constant to
-# Puppet::Util::Log because the reports include the constant name. It was
-# considered for removal but left in due to risk of breakage (PUP-7502).
+# This is for backward compatibility from when we changed the constant to Puppet::Util::Log
+# because the reports include the constant name.  Apparently the alias was created in
+# March 2007, should could probably be removed soon.
 Puppet::Log = Puppet::Util::Log

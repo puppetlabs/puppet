@@ -65,6 +65,12 @@ describe Puppet::Application do
         @klass.find("ThisShallNeverEverEverExist")
       }.to raise_error(LoadError)
     end
+
+    it "#12114: should prevent File namespace collisions" do
+      # have to require the file face once, then the second time around it would fail
+      expect(@klass.find("File")).to eq(Puppet::Application::File)
+      expect(@klass.find("File")).to eq(Puppet::Application::File)
+    end
   end
 
   describe "#available_application_names" do

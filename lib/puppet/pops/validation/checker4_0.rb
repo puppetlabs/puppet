@@ -25,6 +25,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     @@hostname_visitor    ||= Visitor.new(nil, "hostname", 1, 2)
     @@assignment_visitor  ||= Visitor.new(nil, "assign", 0, 1)
     @@query_visitor       ||= Visitor.new(nil, "query", 0, 0)
+    @@top_visitor         ||= Visitor.new(nil, "top", 1, 1)
     @@relation_visitor    ||= Visitor.new(nil, "relation", 0, 0)
     @@idem_visitor        ||= Visitor.new(self, "idem", 0, 0)
 
@@ -40,13 +41,8 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   #
   def validate(model)
     # tree iterate the model, and call check for each element
-    @path = []
     check(model)
-    model._pcore_all_contents(@path) { |element| check(element) }
-  end
-
-  def container(index = -1)
-    @path[index]
+    model.eAllContents.each {|m| check(m) }
   end
 
   # Performs regular validity check
@@ -75,34 +71,9 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     @@rvalue_visitor.visit_this_0(self, o)
   end
 
-  #---TOP CHECK
   # Performs check if this is valid as a container of a definition (class, define, node)
-  def top(definition, idx = -1)
-    o = container(idx)
-    idx -= 1
-    case o
-    when NilClass, Model::HostClassDefinition, Model::Program
-      # ok, stop scanning parents
-    when Model::BlockExpression
-      c = container(idx)
-      if !c.is_a?(Model::Program) &&
-        (definition.is_a?(Model::FunctionDefinition) || definition.is_a?(Model::TypeAlias) || definition.is_a?(Model::TypeDefinition))
-
-        # not ok. These can never be nested in a block
-        acceptor.accept(Issues::NOT_ABSOLUTE_TOP_LEVEL, definition)
-      else
-        # ok, if this is a block representing the body of a class, or is top level
-        top(definition, idx)
-      end
-    when Model::LambdaExpression
-      # A LambdaExpression is a BlockExpression, and this check is needed to prevent the polymorph method for BlockExpression
-      # to accept a lambda.
-      # A lambda can not iteratively create classes, nodes or defines as the lambda does not have a closure.
-      acceptor.accept(Issues::NOT_TOP_LEVEL, definition)
-    else
-      # fail, reached a container that is not top level
-      acceptor.accept(Issues::NOT_TOP_LEVEL, definition)
-    end
+  def top(o, definition)
+    @@top_visitor.visit_this_1(self, o, definition)
   end
 
   # Checks the LHS of an assignment (is it assignable?).
@@ -176,7 +147,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def check_Factory(o)
-    check(o.model)
+    check(o.current)
   end
 
   def check_AccessExpression(o)
@@ -189,10 +160,10 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   def check_AssignmentExpression(o)
     case o.operator
-    when '='
+    when :'='
       assign(o.left_expr)
       rvalue(o.right_expr)
-    when '+=', '-='
+    when :'+=', :'-='
       acceptor.accept(Issues::APPENDS_DELETES_NO_LONGER_SUPPORTED, o, {:operator => o.operator})
     else
       acceptor.accept(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
@@ -208,11 +179,11 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   # * ResourceDefaults (ILLEGAL)
   #
   def check_AttributeOperation(o)
-    if o.operator == '+>'
+    if o.operator == :'+>'
       # Append operator use is constrained
-      p = container
-      unless p.is_a?(Model::CollectExpression) || p.is_a?(Model::ResourceOverrideExpression)
-        acceptor.accept(Issues::ILLEGAL_ATTRIBUTE_APPEND, o, {:name=>o.attribute_name, :parent=>p})
+      parent = o.eContainer
+      unless parent.is_a?(Model::CollectExpression) || parent.is_a?(Model::ResourceOverrideExpression)
+        acceptor.accept(Issues::ILLEGAL_ATTRIBUTE_APPEND, o, {:name=>o.attribute_name, :parent=>parent})
       end
     end
     rvalue(o.value_expr)
@@ -220,16 +191,16 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   def check_AttributesOperation(o)
     # Append operator use is constrained
-    p = container
-    case p
+    parent1 = o.eContainer
+    case parent1
     when Model::AbstractResource
     when Model::CollectExpression
     when Model::CapabilityMapping
-      acceptor.accept(Issues::UNSUPPORTED_OPERATOR_IN_CONTEXT, p, :operator=>'* =>')
+      acceptor.accept(Issues::UNSUPPORTED_OPERATOR_IN_CONTEXT, parent1, :operator=>'* =>')
     else
       # protect against just testing a snippet that has no parent, error message will be a bit strange
       # but it is not for a real program.
-      parent2 = p.nil? ? o : container(-2)
+      parent2 = parent1.nil? ? o : parent1.eContainer
       unless parent2.is_a?(Model::AbstractResource)
         acceptor.accept(Issues::UNSUPPORTED_OPERATOR_IN_CONTEXT, parent2, :operator=>'* =>')
       end
@@ -266,7 +237,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   def check_CallNamedFunctionExpression(o)
     functor = o.functor_expr
-    if functor.is_a?(Model::QualifiedReference) ||
+    if functor.is_a?(Model::QualifiedReference) || 
       functor.is_a?(Model::AccessExpression) && functor.left_expr.is_a?(Model::QualifiedReference)
       # ok (a call to a type)
       return nil
@@ -310,10 +281,9 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def check_EppExpression(o)
-    p = container
-    if p.is_a?(Model::LambdaExpression)
-      internal_check_no_capture(p, o)
-      internal_check_parameter_name_uniqueness(p)
+    if o.eContainer.is_a?(Model::LambdaExpression)
+      internal_check_no_capture(o.eContainer, o)
+      internal_check_parameter_name_uniqueness(o.eContainer)
     end
   end
 
@@ -326,15 +296,10 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def check_CaseExpression(o)
     rvalue(o.test)
     # There can only be one LiteralDefault case option value
-    found_default = false
-    o.options.each do |option|
-      option.values.each do |value|
-        if value.is_a?(Model::LiteralDefault)
-          # Flag the second default as 'unreachable'
-          acceptor.accept(Issues::DUPLICATE_DEFAULT, value, :container => o) if found_default
-          found_default = true
-        end
-      end
+    defaults = o.options.values.select {|v| v.is_a?(Model::LiteralDefault) }
+    unless defaults.size <= 1
+      # Flag the second default as 'unreachable'
+      acceptor.accept(Issues::DUPLICATE_DEFAULT, defaults[1], :container => o)
     end
   end
 
@@ -353,7 +318,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def check_NamedAccessExpression(o)
     name = o.right_expr
     unless name.is_a? Model::QualifiedName
-      acceptor.accept(Issues::ILLEGAL_EXPRESSION, name, :feature=> 'function name', :container => container)
+      acceptor.accept(Issues::ILLEGAL_EXPRESSION, name, :feature=> 'function name', :container => o.eContainer)
     end
   end
 
@@ -387,7 +352,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   # for 'class', 'define', and function
   def check_NamedDefinition(o)
-    top(o)
+    top(o.eContainer, o)
     if o.name !~ Patterns::CLASSREF_DECL
       acceptor.accept(Issues::ILLEGAL_DEFINITION_NAME, o, {:name=>o.name})
     end
@@ -396,7 +361,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def check_TypeAlias(o)
-    top(o)
+    top(o.eContainer, o)
     if o.name !~ Patterns::CLASSREF_EXT_DECL
       acceptor.accept(Issues::ILLEGAL_DEFINITION_NAME, o, {:name=>o.name})
     end
@@ -405,7 +370,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def check_TypeMapping(o)
-    top(o)
+    top(o.eContainer, o)
     lhs = o.type_expr
     lhs_type = 0 # Not Runtime
     if lhs.is_a?(Model::AccessExpression)
@@ -449,7 +414,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def check_TypeDefinition(o)
-    top(o)
+    top(o.eContainer, o)
     internal_check_reserved_type_name(o, o.name)
     # TODO: Check TypeDefinition body. For now, just error out
     acceptor.accept(Issues::UNSUPPORTED_EXPRESSION, o)
@@ -555,7 +520,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     rvalue(o.key)
     rvalue(o.value)
     # In case there are additional things to forbid than non-rvalues
-    # acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.key, :feature => 'hash key', :container => container)
+    # acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.key, :feature => 'hash key', :container => o.eContainer)
   end
 
   def check_LambdaExpression(o)
@@ -565,13 +530,6 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   def check_LiteralList(o)
     o.values.each {|v| rvalue(v) }
-  end
-
-  def check_LiteralInteger(o)
-    v = o.value
-    if v < MIN_INTEGER || v > MAX_INTEGER
-      acceptor.accept(Issues::NUMERIC_OVERFLOW, o, {:value => v})
-    end
   end
 
   def check_LiteralHash(o)
@@ -588,7 +546,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def check_NodeDefinition(o)
     # Check that hostnames are valid hostnames (or regular expressions)
     hostname(o.host_matches, o)
-    top(o)
+    top(o.eContainer, o)
     if violator = ends_with_idem(o.body)
       acceptor.accept(Issues::IDEM_NOT_ALLOWED_LAST, violator, {:container => o}) unless resource_without_title?(violator)
     end
@@ -645,7 +603,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     else
       # recursively check all contents unless it's a lambda expression. A lambda may contain
       # local assignments
-      o._pcore_contents {|model| internal_check_illegal_assignment(model) } unless o.is_a?(Model::LambdaExpression)
+      o.eContents.each {|model| internal_check_illegal_assignment(model) } unless o.is_a?(Model::LambdaExpression)
     end
   end
 
@@ -669,7 +627,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     # (This can be revised as there are static constructs that are illegal, but require updating many
     # tests that expect the detailed reporting).
     type_name_expr = o.type_name
-    if o.form && o.form != 'regular' && type_name_expr.is_a?(Model::QualifiedName) && type_name_expr.value == 'class'
+    if o.form && o.form != :regular && type_name_expr.is_a?(Model::QualifiedName) && type_name_expr.value == 'class'
       acceptor.accept(Issues::CLASS_NOT_VIRTUALIZABLE, o)
     end
   end
@@ -688,13 +646,13 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def check_ResourceDefaultsExpression(o)
-    if o.form != 'regular'
+    if o.form && o.form != :regular
       acceptor.accept(Issues::NOT_VIRTUALIZEABLE, o)
     end
   end
 
   def check_ResourceOverrideExpression(o)
-    if o.form != 'regular'
+    if o.form && o.form != :regular
       acceptor.accept(Issues::NOT_VIRTUALIZEABLE, o)
     end
   end
@@ -821,7 +779,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   # Puppet AST only allows == and !=
   #
   def query_ComparisonExpression(o)
-    acceptor.accept(Issues::ILLEGAL_QUERY_EXPRESSION, o) unless ['==', '!='].include? o.operator
+    acceptor.accept(Issues::ILLEGAL_QUERY_EXPRESSION, o) unless [:'==', :'!='].include? o.operator
   end
 
   # Allows AND, OR, and checks if left/right are allowed in query.
@@ -851,20 +809,52 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   #
   def rvalue_Expression(o); end
 
-  def rvalue_CollectExpression(o)
-    acceptor.accept(Issues::NOT_RVALUE, o)
+  def rvalue_CollectExpression(o)         ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
+
+  def rvalue_Definition(o)                ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
+
+  def rvalue_NodeDefinition(o)            ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
+
+  def rvalue_UnaryExpression(o)           ; rvalue o.expr                 ; end
+
+  #---TOP CHECK
+
+  def top_NilClass(o, definition)
+    # ok, reached the top, no more parents
   end
 
-  def rvalue_Definition(o)
-    acceptor.accept(Issues::NOT_RVALUE, o)
+  def top_Object(o, definition)
+    # fail, reached a container that is not top level
+    acceptor.accept(Issues::NOT_TOP_LEVEL, definition)
   end
 
-  def rvalue_NodeDefinition(o)
-    acceptor.accept(Issues::NOT_RVALUE, o)
+  def top_BlockExpression(o, definition)
+    if !o.eContainer.is_a?(Model::Program) &&
+      (definition.is_a?(Model::FunctionDefinition) || definition.is_a?(Model::TypeAlias) || definition.is_a?(Model::TypeDefinition))
+
+      # not ok. These can never be nested in a block
+      acceptor.accept(Issues::NOT_ABSOLUTE_TOP_LEVEL, definition)
+    else
+      # ok, if this is a block representing the body of a class, or is top level
+      top o.eContainer, definition
+    end
   end
 
-  def rvalue_UnaryExpression(o)
-    rvalue o.expr
+  def top_HostClassDefinition(o, definition)
+    # ok, stop scanning parents
+  end
+
+  def top_Program(o, definition)
+    # ok
+  end
+
+  # A LambdaExpression is a BlockExpression, and this method is needed to prevent the polymorph method for BlockExpression
+  # to accept a lambda.
+  # A lambda can not iteratively create classes, nodes or defines as the lambda does not have a closure.
+  #
+  def top_LambdaExpression(o, definition)
+    # fail, stop scanning parents
+    acceptor.accept(Issues::NOT_TOP_LEVEL, definition)
   end
 
   #--IDEM CHECK
@@ -893,7 +883,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def idem_Factory(o)
-    idem(o.model)
+    idem(o.current)
   end
 
   def idem_AccessExpression(o)

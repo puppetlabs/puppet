@@ -99,7 +99,7 @@ module Puppet::Util::SUIDManager
   # change to a different gid without root.
   def change_group(group, permanently=false)
     gid = convert_xid(:gid, group)
-    raise Puppet::Error, _("No such group %{group}") % { group: group } unless gid
+    raise Puppet::Error, "No such group #{group}" unless gid
 
     return if Process.egid == gid
 
@@ -115,7 +115,7 @@ module Puppet::Util::SUIDManager
   # supplementary groups will be set the to default groups for the new uid.
   def change_user(user, permanently=false)
     uid = convert_xid(:uid, user)
-    raise Puppet::Error, _("No such user %{user}") % { user: user } unless uid
+    raise Puppet::Error, "No such user #{user}" unless uid
 
     return if Process.euid == uid
 
@@ -142,10 +142,10 @@ module Puppet::Util::SUIDManager
   # Make sure the passed argument is a number.
   def convert_xid(type, id)
     map = {:gid => :group, :uid => :user}
-    raise ArgumentError, _("Invalid id type %{type}") % { type: type } unless map.include?(type)
+    raise ArgumentError, "Invalid id type #{type}" unless map.include?(type)
     ret = Puppet::Util.send(type, id)
     if ret == nil
-      raise Puppet::Error, _("Invalid %{klass}: %{id}") % { klass: map[type], id: id }
+      raise Puppet::Error, "Invalid #{map[type]}: #{id}"
     end
     ret
   end

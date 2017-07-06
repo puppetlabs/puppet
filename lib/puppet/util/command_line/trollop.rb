@@ -146,7 +146,7 @@ class Parser
   ## value, you must specify +:type+ as well.
 
   def opt name, desc="", opts={}
-    raise ArgumentError, _("you already have an argument named '%{name}'") % { name: name } if @specs.member? name
+    raise ArgumentError, "you already have an argument named '#{name}'" if @specs.member? name
 
     ## fill in :type
     opts[:type] = # normalize
@@ -194,7 +194,7 @@ class Parser
       when Date; :date
       when Array
         if opts[:default].empty?
-          raise ArgumentError, _("multiple argument type cannot be deduced from an empty array for '%{value0}'") % { value0: opts[:default][0].class.name }
+          raise ArgumentError, "multiple argument type cannot be deduced from an empty array for '#{opts[:default][0].class.name}'"
         end
         case opts[:default][0]    # the first element determines the types
         when Integer; :ints
@@ -203,14 +203,14 @@ class Parser
         when IO; :ios
         when Date; :dates
         else
-          raise ArgumentError, _("unsupported multiple argument type '%{value0}'") % { value0: opts[:default][0].class.name }
+          raise ArgumentError, "unsupported multiple argument type '#{opts[:default][0].class.name}'"
         end
       when nil; nil
       else
-        raise ArgumentError, _("unsupported argument type '%{value0}'") % { value0: opts[:default].class.name }
+        raise ArgumentError, "unsupported argument type '#{opts[:default].class.name}'"
       end
 
-    raise ArgumentError, _(":type specification and default type don't match (default type is %{type_from_default})") % { type_from_default: type_from_default } if opts[:type] && type_from_default && opts[:type] != type_from_default
+    raise ArgumentError, ":type specification and default type don't match (default type is #{type_from_default})" if opts[:type] && type_from_default && opts[:type] != type_from_default
 
     opts[:type] = opts[:type] || type_from_default || :flag
 
@@ -225,7 +225,7 @@ class Parser
       else
         raise ArgumentError, "invalid long option name #{opts[:long].inspect}"
       end
-    raise ArgumentError, _("long option name %{value0} is already taken; please specify a (different) :long") % { value0: opts[:long].inspect } if @long[opts[:long]]
+    raise ArgumentError, "long option name #{opts[:long].inspect} is already taken; please specify a (different) :long" if @long[opts[:long]]
 
     ## fill in :short
     opts[:short] = opts[:short].to_s if opts[:short] unless opts[:short] == :none
@@ -236,8 +236,8 @@ class Parser
     end
 
     if opts[:short]
-      raise ArgumentError, _("short option name %{value0} is already taken; please specify a (different) :short") % { value0: opts[:short].inspect } if @short[opts[:short]]
-      raise ArgumentError, _("a short option name can't be a number or a dash") if opts[:short] =~ INVALID_SHORT_ARG_REGEX
+      raise ArgumentError, "short option name #{opts[:short].inspect} is already taken; please specify a (different) :short" if @short[opts[:short]]
+      raise ArgumentError, "a short option name can't be a number or a dash" if opts[:short] =~ INVALID_SHORT_ARG_REGEX
     end
 
     ## fill in :default for flags
@@ -270,13 +270,13 @@ class Parser
   ## undirected (i.e., mutual) dependencies. Directed dependencies are
   ## better modeled with Trollop::die.
   def depends *syms
-    syms.each { |sym| raise ArgumentError, _("unknown option '%{sym}'") % { sym: sym } unless @specs[sym] }
+    syms.each { |sym| raise ArgumentError, "unknown option '#{sym}'" unless @specs[sym] }
     @constraints << [:depends, syms]
   end
 
   ## Marks two (or more!) options as conflicting.
   def conflicts *syms
-    syms.each { |sym| raise ArgumentError, _("unknown option '%{sym}'") % { sym: sym } unless @specs[sym] }
+    syms.each { |sym| raise ArgumentError, "unknown option '#{sym}'" unless @specs[sym] }
     @constraints << [:conflicts, syms]
   end
 
@@ -310,8 +310,8 @@ class Parser
     required = {}
 
     if handle_help_and_version
-      opt :version, _("Print version and exit") if @version unless @specs[:version] || @long["version"]
-      opt :help, _("Show this message") unless @specs[:help] || @long["help"]
+      opt :version, "Print version and exit" if @version unless @specs[:version] || @long["version"]
+      opt :help, "Show this message" unless @specs[:help] || @long["help"]
     end
 
     @specs.each do |sym, opts|
@@ -333,16 +333,16 @@ class Parser
       when /^--([^-]\S*)$/
         @long[$1] ? @long[$1] : @long["[no-]#{$1}"]
       else
-        raise CommandlineError, _("invalid argument syntax: '%{arg}'") % { arg: arg }
+        raise CommandlineError, "invalid argument syntax: '#{arg}'"
       end
 
       unless sym
         next 0 if ignore_invalid_options
-        raise CommandlineError, _("unknown argument '%{arg}'") % { arg: arg } unless sym
+        raise CommandlineError, "unknown argument '#{arg}'" unless sym
       end
 
       if given_args.include?(sym) && !@specs[sym][:multi]
-        raise CommandlineError, _("option '%{arg}' specified multiple times") % { arg: arg }
+        raise CommandlineError, "option '#{arg}' specified multiple times"
       end
 
       given_args[sym] ||= {}
@@ -379,14 +379,14 @@ class Parser
 
       case type
       when :depends
-        syms.each { |sym| raise CommandlineError, _("--%{value0} requires --%{value1}") % { value0: @specs[constraint_sym][:long], value1: @specs[sym][:long] } unless given_args.include? sym }
+        syms.each { |sym| raise CommandlineError, "--#{@specs[constraint_sym][:long]} requires --#{@specs[sym][:long]}" unless given_args.include? sym }
       when :conflicts
-        syms.each { |sym| raise CommandlineError, _("--%{value0} conflicts with --%{value1}") % { value0: @specs[constraint_sym][:long], value1: @specs[sym][:long] } if given_args.include?(sym) && (sym != constraint_sym) }
+        syms.each { |sym| raise CommandlineError, "--#{@specs[constraint_sym][:long]} conflicts with --#{@specs[sym][:long]}" if given_args.include?(sym) && (sym != constraint_sym) }
       end
     end
 
     required.each do |sym, val|
-      raise CommandlineError, _("option --%{opt} must be specified") % { opt: @specs[sym][:long] } unless given_args.include? sym
+      raise CommandlineError, "option --#{@specs[sym][:long]} must be specified" unless given_args.include? sym
     end
 
     ## parse parameters
@@ -395,7 +395,7 @@ class Parser
       params = given_data[:params]
 
       opts = @specs[sym]
-      raise CommandlineError, _("option '%{arg}' needs a parameter") % { arg: arg } if params.empty? && opts[:type] != :flag
+      raise CommandlineError, "option '#{arg}' needs a parameter" if params.empty? && opts[:type] != :flag
 
       vals["#{sym}_given".intern] = true # mark argument as specified on the commandline
 
@@ -455,7 +455,7 @@ class Parser
       end
       time ? Date.new(time.year, time.month, time.day) : Date.parse(param)
     rescue ArgumentError
-      raise CommandlineError, _("option '%{arg}' needs a date") % { arg: arg }, $!.backtrace
+      raise CommandlineError, "option '#{arg}' needs a date", $!.backtrace
     end
   end
 
@@ -488,7 +488,7 @@ class Parser
 
     unless @order.size > 0 && @order.first.first == :text
       stream.puts "#@version\n" if @version
-      stream.puts _("Options:")
+      stream.puts "Options:"
     end
 
     @order.each do |what, opt|
@@ -512,9 +512,9 @@ class Parser
 
         if spec[:default]
           if spec[:desc] =~ /\.$/
-            _(" (Default: %{default_s})") % { default_s: default_s }
+            " (Default: #{default_s})"
           else
-            _(" (default: %{default_s})") % { default_s: default_s }
+            " (default: #{default_s})"
           end
         else
           ""
@@ -551,11 +551,11 @@ class Parser
   ## The per-parser version of Trollop::die (see that for documentation).
   def die arg, msg
     if msg
-      $stderr.puts _("Error: argument --%{value0} %{msg}.") % { value0: @specs[arg][:long], msg: msg }
+      $stderr.puts "Error: argument --#{@specs[arg][:long]} #{msg}."
     else
-      $stderr.puts _("Error: %{arg}.") % { arg: arg }
+      $stderr.puts "Error: #{arg}."
     end
-    $stderr.puts _("Try --help for help.")
+    $stderr.puts "Try --help for help."
     exit(-1)
   end
 
@@ -634,12 +634,12 @@ private
   end
 
   def parse_integer_parameter param, arg
-    raise CommandlineError, _("option '%{arg}' needs an integer") % { arg: arg } unless param =~ /^\d+$/
+    raise CommandlineError, "option '#{arg}' needs an integer" unless param =~ /^\d+$/
     param.to_i
   end
 
   def parse_float_parameter param, arg
-    raise CommandlineError, _("option '%{arg}' needs a floating-point number") % { arg: arg } unless param =~ FLOAT_RE
+    raise CommandlineError, "option '#{arg}' needs a floating-point number" unless param =~ FLOAT_RE
     param.to_f
   end
 
@@ -651,7 +651,7 @@ private
       begin
         open param
       rescue SystemCallError => e
-        raise CommandlineError, _("file or url for option '%{arg}' cannot be opened: %{value0}") % { arg: arg, value0: e.message }, e.backtrace
+        raise CommandlineError, "file or url for option '#{arg}' cannot be opened: #{e.message}", e.backtrace
       end
     end
   end
@@ -778,8 +778,8 @@ def with_standard_exception_handling parser
   begin
     yield
   rescue CommandlineError => e
-    $stderr.puts _("Error: %{value0}.") % { value0: e.message }
-    $stderr.puts _("Try --help for help.")
+    $stderr.puts "Error: #{e.message}."
+    $stderr.puts "Try --help for help."
     exit(-1)
   rescue HelpNeeded
     parser.educate

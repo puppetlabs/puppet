@@ -348,9 +348,9 @@ module Puppet
 
       def assert_review(review)
         failures = []
-        review.each do |failed|
+        review.each do |scenario, failed|
           if !failed.empty?
-            problems = "Problems in the output reported above:\n  #{failed}"
+            problems = "Problems in the '#{scenario}' output reported above:\n  #{failed.join("\n  ")}"
             logger.warn(problems)
             failures << problems
           end

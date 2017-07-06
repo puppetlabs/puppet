@@ -62,22 +62,16 @@ module Puppet::Util::SELinux
     if context.nil? or context == "unlabeled"
       return nil
     end
-    components = /^([^\s:]+):([^\s:]+):([^\s:]+)(?::([\sa-zA-Z0-9:,._-]+))?$/.match(context)
-    unless components
-      raise Puppet::Error, _("Invalid context to parse: %{context}") % { context: context }
+    unless context =~ /^([^\s:]+):([^\s:]+):([^\s:]+)(?::([\sa-zA-Z0-9:,._-]+))?$/
+      raise Puppet::Error, "Invalid context to parse: #{context}"
     end
-    case component
-    when :seluser
-      components[1]
-    when :selrole
-      components[2]
-    when :seltype
-      components[3]
-    when :selrange
-      components[4]
-    else
-      raise Puppet::Error, _("Invalid SELinux parameter type")
-    end
+    ret = {
+      :seluser => $1,
+      :selrole => $2,
+      :seltype => $3,
+      :selrange => $4,
+    }
+    ret[component]
   end
 
   # This updates the actual SELinux label on the file.  You can update
@@ -97,7 +91,7 @@ module Puppet::Util::SELinux
         # We can't set partial context components when no context exists
         # unless/until we can find a way to make Puppet call this method
         # once for all selinux file label attributes.
-        Puppet.warning _("Can't set SELinux context on file unless the file already has some kind of context")
+        Puppet.warning "Can't set SELinux context on file unless the file already has some kind of context"
         return nil
       end
       context = context.split(':')
@@ -111,7 +105,7 @@ module Puppet::Util::SELinux
         when :selrange
           context[3] = value
         else
-          raise ArgumentError, _("set_selinux_context component must be one of :seluser, :selrole, :seltype, or :selrange")
+          raise ArgumentError, "set_selinux_context component must be one of :seluser, :selrole, :seltype, or :selrange"
       end
       context = context.join(':')
     else
@@ -122,7 +116,7 @@ module Puppet::Util::SELinux
     if retval == 0
       return true
     else
-      Puppet.warning _("Failed to set SELinux context %{context} on %{file}") % { context: context, file: file }
+      Puppet.warning "Failed to set SELinux context #{context} on #{file}"
       return false
     end
   end
@@ -141,42 +135,6 @@ module Puppet::Util::SELinux
       return new_context
     end
     nil
-  end
-
-  ##
-  # selinux_category_to_label is an internal method that converts all
-  # selinux categories to their internal representation, avoiding
-  # potential issues when mcstransd is not functional.
-  #
-  # It is not marked private because it is needed by File's
-  # selcontext.rb, but it is not intended for use outside of Puppet's
-  # code.
-  #
-  # @param category [String] An selinux category, such as "s0" or "SystemLow"
-  #
-  # @return [String] the numeric category name, such as "s0"
-  def selinux_category_to_label(category)
-    # We don't cache this, but there's already a ton of duplicate work
-    # in the selinux handling code.
-
-    path = Selinux.selinux_translations_path
-    begin
-      File.open(path).each do |line|
-        line.strip!
-        next if line.empty?
-        next if line[0] == "#" # skip comments
-        line.gsub!(/[[:space:]]+/m, '')
-        mapping = line.split("=", 2)
-        if category == mapping[1]
-          return mapping[0]
-        end
-      end
-    rescue SystemCallError => ex
-      log_exception(ex)
-      raise Puppet::Error, _("Could not open SELinux category translation file %{path}.") % { context: context }
-    end
-
-    category
   end
 
   ########################################################################

@@ -14,22 +14,22 @@ class Puppet::SyntaxCheckers::Json < Puppet::Plugins::SyntaxCheckers::SyntaxChec
   # @api public
   #
   def check(text, syntax, acceptor, source_pos)
-    raise ArgumentError.new(_("Json syntax checker: the text to check must be a String.")) unless text.is_a?(String)
-    raise ArgumentError.new(_("Json syntax checker: the syntax identifier must be a String, e.g. json, data+json")) unless syntax.is_a?(String)
-    raise ArgumentError.new(_("Json syntax checker: invalid Acceptor, got: '%{klass}'.") % { klass: acceptor.class.name }) unless acceptor.is_a?(Puppet::Pops::Validation::Acceptor)
+    raise ArgumentError.new("Json syntax checker: the text to check must be a String.") unless text.is_a?(String)
+    raise ArgumentError.new("Json syntax checker: the syntax identifier must be a String, e.g. json, data+json") unless syntax.is_a?(String)
+    raise ArgumentError.new("Json syntax checker: invalid Acceptor, got: '#{acceptor.class.name}'.") unless acceptor.is_a?(Puppet::Pops::Validation::Acceptor)
     #raise ArgumentError.new("Json syntax checker: location_info must be a Hash") unless location_info.is_a?(Hash)
 
     begin
       JSON.parse(text)
     rescue => e
       # Cap the message to 100 chars and replace newlines
-      msg = _("JSON syntax checker: Cannot parse invalid JSON string. \"%{message}\"") % { message: e.message().slice(0,100).gsub(/\r?\n/, "\\n") }
+      msg = "JSON syntax checker: Cannot parse invalid JSON string. \"#{e.message().slice(0,100).gsub(/\r?\n/, "\\n")}\""
 
       # TODO: improve the pops API to allow simpler diagnostic creation while still maintaining capabilities
       # and the issue code. (In this case especially, where there is only a single error message being issued).
       #
       issue = Puppet::Pops::Issues::issue(:ILLEGAL_JSON) { msg }
-      acceptor.accept(Puppet::Pops::Validation::Diagnostic.new(:error, issue, source_pos.file, source_pos, {}))
+      acceptor.accept(Puppet::Pops::Validation::Diagnostic.new(:error, issue, source_pos.locator.file, source_pos, {}))
     end
   end
 end

@@ -322,7 +322,7 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
   # Create and run an applicator.  I wanted to build an interface where you could do
   # something like 'ca.apply(:generate).to(:all) but I don't think it's really possible.
   def apply(ca, method, options)
-    raise ArgumentError, _("You must specify the hosts to apply to; valid values are an array or the symbol :all") unless options[:to]
+    raise ArgumentError, "You must specify the hosts to apply to; valid values are an array or the symbol :all" unless options[:to]
     applier = Puppet::SSL::CertificateAuthority::Interface.new(method, options)
     applier.apply(ca)
   end

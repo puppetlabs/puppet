@@ -8,12 +8,12 @@ class TypeSetReference
   attr_reader :version_range
   attr_reader :type_set
 
-  def initialize(owner, init_hash)
+  def initialize(owner, i12n_hash)
     @owner = owner
-    @name_authority = (init_hash[KEY_NAME_AUTHORITY] || owner.name_authority).freeze
-    @name = init_hash[KEY_NAME].freeze
-    @version_range = PSemVerRangeType.convert(init_hash[KEY_VERSION_RANGE])
-    init_annotatable(init_hash)
+    @name_authority = (i12n_hash[KEY_NAME_AUTHORITY] || owner.name_authority).freeze
+    @name = i12n_hash[KEY_NAME].freeze
+    @version_range = PSemVerRangeType.convert(i12n_hash[KEY_VERSION_RANGE])
+    init_annotatable(i12n_hash)
   end
 
   def accept(visitor, guard)
@@ -28,7 +28,7 @@ class TypeSetReference
     [@name_authority, @name, @version_range].hash
   end
 
-  def _pcore_init_hash
+  def i12n_hash
     result = super
     result[KEY_NAME_AUTHORITY] = @name_authority unless @name_authority == @owner.name_authority
     result[KEY_NAME] = @name

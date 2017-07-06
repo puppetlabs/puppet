@@ -115,6 +115,17 @@ class TypeCalculator
     singleton.callable?(callable, args)
   end
 
+  # Produces a String representation of the given type.
+  # @param t [PAnyType] the type to produce a string form
+  # @return [String] the type in string form
+  #
+  # @api public
+  #
+  def self.string(t)
+    Puppet.deprecation_warning('TypeCalculator.string is deprecated. Use TypeFormatter')
+    TypeFormatter.string(t)
+  end
+
   # @api public
   def self.infer(o)
     singleton.infer(o)
@@ -128,6 +139,18 @@ class TypeCalculator
   # @api public
   def self.infer_set(o)
     singleton.infer_set(o)
+  end
+
+  # @api public
+  def self.debug_string(t)
+    Puppet.deprecation_warning('TypeCalculator.debug_string is deprecated. Use TypeFormatter')
+    TypeFormatter.debug_string(t)
+  end
+
+  # @api public
+  def self.enumerable(t)
+    Puppet.deprecation_warning('TypeCalculator.enumerable is deprecated. Use iterable')
+    singleton.iterable(t)
   end
 
   # @api public
@@ -147,6 +170,29 @@ class TypeCalculator
   def initialize
     @@infer_visitor ||= Visitor.new(nil, 'infer',0,0)
     @@extract_visitor ||= Visitor.new(nil, 'extract',0,0)
+  end
+
+  # Answers the question 'is it possible to inject an instance of the given class'
+  # A class is injectable if it has a special *assisted inject* class method called `inject` taking
+  # an injector and a scope as argument, or if it has a zero args `initialize` method.
+  #
+  # @param klazz [Class, PRuntimeType] the class/type to check if it is injectable
+  # @return [Class, nil] the injectable Class, or nil if not injectable
+  # @api public
+  #
+  def injectable_class(klazz)
+    # Handle case when we get a PType instead of a class
+    if klazz.is_a?(PRuntimeType)
+      klazz = ClassLoader.provide(klazz)
+    end
+
+    # data types can not be injected (check again, it is not safe to assume that given RubyRuntime klazz arg was ok)
+    return false unless type(klazz).is_a?(PRuntimeType)
+    if (klazz.respond_to?(:inject) && klazz.method(:inject).arity == -4) || klazz.instance_method(:initialize).arity == 0
+      klazz
+    else
+      nil
+    end
   end
 
   # Answers 'can an instance of type t2 be assigned to a variable of type t'.
@@ -214,11 +260,11 @@ class TypeCalculator
     when c == Class
       type = PType::DEFAULT
     when c == Array
-      # Assume array of any
-      type = PArrayType::DEFAULT
+      # Assume array of data values
+      type = PArrayType::DATA
     when c == Hash
-      # Assume hash of any
-      type = PHashType::DEFAULT
+      # Assume hash with scalar keys and data values
+      type = PHashType::DATA
    else
       type = PRuntimeType.new(:ruby, c.name)
     end
@@ -237,16 +283,16 @@ class TypeCalculator
   #
   def infer(o)
     # Optimize the most common cases into direct calls.
-    # Explicit if/elsif/else is faster than case
-    if o.is_a?(String)
+    case o
+    when String
       infer_String(o)
-    elsif o.is_a?(Integer) # need subclasses for Ruby < 2.4
+    when Integer
       infer_Integer(o)
-    elsif o.is_a?(Array)
+    when Array
       infer_Array(o)
-    elsif o.is_a?(Hash)
+    when Hash
       infer_Hash(o)
-    elsif o.is_a?(Evaluator::PuppetProc)
+    when Evaluator::PuppetProc
       infer_PuppetProc(o)
     else
       @@infer_visitor.visit_this_0(self, o)
@@ -261,14 +307,15 @@ class TypeCalculator
   # @api public
   #
   def infer_set(o)
-    if o.instance_of?(Array)
-      infer_set_Array(o)
-    elsif o.instance_of?(Hash)
-      infer_set_Hash(o)
-    elsif o.instance_of?(SemanticPuppet::Version)
-      infer_set_Version(o)
-    else
-      infer(o)
+    case o
+      when Array
+        infer_set_Array(o)
+      when Hash
+        infer_set_Hash(o)
+      when SemanticPuppet::Version
+        infer_set_Version(o)
+      else
+        infer_set_Object(o)
     end
   end
 
@@ -414,25 +461,17 @@ class TypeCalculator
       return PNumericType::DEFAULT
     end
 
-    if common_scalar_data?(t1, t2)
-      return PScalarDataType::DEFAULT
-    end
-
     if common_scalar?(t1, t2)
       return PScalarType::DEFAULT
     end
 
     if common_data?(t1,t2)
-      return TypeFactory.data
+      return PDataType::DEFAULT
     end
 
     # Meta types Type[Integer] + Type[String] => Type[Data]
     if t1.is_a?(PType) && t2.is_a?(PType)
       return PType.new(common_type(t1.type, t2.type))
-    end
-
-    if common_rich_data?(t1,t2)
-      return TypeFactory.rich_data
     end
 
     # If both are Runtime types
@@ -469,6 +508,23 @@ class TypeCalculator
     end
     result
   end
+
+  # Produces a string representing the type
+  # @api public
+  #
+  def string(t)
+    Puppet.deprecation_warning('TypeCalculator.string is deprecated. Use TypeFormatter')
+    TypeFormatter.singleton.string(t)
+  end
+
+  # Produces a debug string representing the type (possibly with more information that the regular string format)
+  # @api public
+  #
+  def debug_string(t)
+    Puppet.deprecation_warning('TypeCalculator.debug_string is deprecated. Use TypeFormatter')
+    TypeFormatter.singleton.debug_string(t)
+  end
+
 
   # Reduces an enumerable of types to a single common type.
   # @api public
@@ -509,7 +565,7 @@ class TypeCalculator
   # @api private
   def infer_Object(o)
     if o.is_a?(PuppetObject)
-      o._pcore_type
+      o._ptype
     else
       name = o.class.name
       ir = Loaders.implementation_registry
@@ -634,14 +690,10 @@ class TypeCalculator
 
   # @api private
   def infer_Array(o)
-    if o.instance_of?(Array)
-      if o.empty?
-        PArrayType::EMPTY
-      else
-        PArrayType.new(infer_and_reduce_type(o), size_as_type(o))
-      end
+    if o.empty?
+      PArrayType::EMPTY
     else
-      infer_Object(o)
+      PArrayType.new(infer_and_reduce_type(o), size_as_type(o))
     end
   end
 
@@ -662,16 +714,12 @@ class TypeCalculator
 
   # @api private
   def infer_Hash(o)
-    if o.instance_of?(Hash)
-      if o.empty?
-        PHashType::EMPTY
-      else
-        ktype = infer_and_reduce_type(o.keys)
-        etype = infer_and_reduce_type(o.values)
-        PHashType.new(ktype, etype, size_as_type(o))
-      end
+    if o.empty?
+      PHashType::EMPTY
     else
-      infer_Object(o)
+      ktype = infer_and_reduce_type(o.keys)
+      etype = infer_and_reduce_type(o.values)
+      PHashType.new(ktype, etype, size_as_type(o))
     end
   end
 
@@ -771,18 +819,8 @@ class TypeCalculator
 
   private
 
-  def common_rich_data?(t1, t2)
-    d = TypeFactory.rich_data
-    d.assignable?(t1) && d.assignable?(t2)
-  end
-
   def common_data?(t1, t2)
-    d = TypeFactory.data
-    d.assignable?(t1) && d.assignable?(t2)
-  end
-
-  def common_scalar_data?(t1, t2)
-    PScalarDataType::DEFAULT.assignable?(t1) && PScalarDataType::DEFAULT.assignable?(t2)
+    PDataType::DEFAULT.assignable?(t1) && PDataType::DEFAULT.assignable?(t2)
   end
 
   def common_scalar?(t1, t2)

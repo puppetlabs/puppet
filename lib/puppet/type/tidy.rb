@@ -42,10 +42,10 @@ Puppet::Type.newtype(:tidy) do
       case newval
       when :true, :inf; true
       when :false; false
-      when Integer; value
+      when Integer, Fixnum, Bignum; value
       when /^\d+$/; Integer(value)
       else
-        raise ArgumentError, _("Invalid recurse value %{value}") % { value: value.inspect }
+        raise ArgumentError, "Invalid recurse value #{value.inspect}"
       end
     end
   end
@@ -82,7 +82,7 @@ Puppet::Type.newtype(:tidy) do
 
     # Make sure we convert to an array.
     munge do |value|
-      fail _("Tidy can't use matches with recurse 0, false, or undef") if "#{@resource[:recurse]}" =~ /^(0|false|)$/
+      fail "Tidy can't use matches with recurse 0, false, or undef" if "#{@resource[:recurse]}" =~ /^(0|false|)$/
       [value].flatten
     end
 
@@ -121,7 +121,7 @@ Puppet::Type.newtype(:tidy) do
       if num = AgeConvertors[unit]
         return num * multi
       else
-        self.fail _("Invalid age unit '%{unit}'") % { unit: unit }
+        self.fail "Invalid age unit '#{unit}'"
       end
     end
 
@@ -140,8 +140,7 @@ Puppet::Type.newtype(:tidy) do
         multi = Integer($1)
         unit = :d
       else
-        #TRANSLATORS tidy is the name of a program and should not be translated
-        self.fail _("Invalid tidy age %{age}") % { age: age }
+        self.fail "Invalid tidy age #{age}"
       end
 
       convert(unit, multi)
@@ -162,7 +161,7 @@ Puppet::Type.newtype(:tidy) do
         num.times do result *= 1024 end
         return result
       else
-        self.fail _("Invalid size unit '%{unit}'") % { unit: unit }
+        self.fail "Invalid size unit '#{unit}'"
       end
     end
 
@@ -179,8 +178,7 @@ Puppet::Type.newtype(:tidy) do
         multi = Integer($1)
         unit = :k
       else
-        #TRANSLATORS tidy is the name of a program and should not be translated
-        self.fail _("Invalid tidy size %{age}") % { age: age }
+        self.fail "Invalid tidy size #{age}"
       end
 
       convert(unit, multi)
@@ -245,7 +243,7 @@ Puppet::Type.newtype(:tidy) do
     return [] unless stat(self[:path])
 
     case self[:recurse]
-    when Integer, /^\d+$/
+    when Integer, Fixnum, Bignum, /^\d+$/
       parameter = { :recurse => true, :recurselimit => self[:recurse] }
     when true, :true, :inf
       parameter = { :recurse => true }
@@ -260,8 +258,7 @@ Puppet::Type.newtype(:tidy) do
     end
     found_files = files.find_all { |path| tidy?(path) }.collect { |path| mkfile(path) }
     result = found_files.each { |file| debug "Tidying #{file.ref}" }.sort { |a,b| b[:path] <=> a[:path] }
-    #TRANSLATORS "Tidy" is a program name and should not be translated
-    notice _("Tidying %{count} files") % { count: found_files.size }
+    notice "Tidying #{found_files.size} files"
 
     # No need to worry about relationships if we don't have rmdirs; there won't be
     # any directories.
@@ -325,11 +322,10 @@ Puppet::Type.newtype(:tidy) do
     begin
       Puppet::FileSystem.lstat(path)
     rescue Errno::ENOENT => error
-      info _("File does not exist")
+      info "File does not exist"
       return nil
     rescue Errno::EACCES => error
-      #TRANSLATORS "stat" is a program name and should not be translated
-      warning _("Could not stat; permission denied")
+      warning "Could not stat; permission denied"
       return nil
     end
   end

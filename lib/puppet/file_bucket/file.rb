@@ -17,6 +17,10 @@ class Puppet::FileBucket::File
     [:binary]
   end
 
+  def self.default_format
+    :binary
+  end
+
   def initialize(contents, options = {})
     case contents
     when String
@@ -24,12 +28,12 @@ class Puppet::FileBucket::File
     when Pathname
       @contents = FileContents.new(contents)
     else
-      raise ArgumentError.new(_("contents must be a String or Pathname, got a %{contents_class}") % { contents_class: contents.class })
+      raise ArgumentError.new("contents must be a String or Pathname, got a #{contents.class}")
     end
 
     @bucket_path = options.delete(:bucket_path)
     @checksum_type = Puppet[:digest_algorithm].to_sym
-    raise ArgumentError.new(_("Unknown option(s): %{opts}") % { opts: options.keys.join(', ') }) unless options.empty?
+    raise ArgumentError.new("Unknown option(s): #{options.keys.join(', ')}") unless options.empty?
   end
 
   # @return [Num] The size of the contents
@@ -74,6 +78,15 @@ class Puppet::FileBucket::File
     self.new(contents)
   end
 
+  def to_data_hash
+    # Note that this serializes the entire data to a string and places it in a hash.
+    { "contents" => contents.to_binary }
+  end
+
+  def self.from_data_hash(data)
+    self.new(data["contents"])
+  end
+
   private
 
   class StringContents
@@ -95,7 +108,7 @@ class Puppet::FileBucket::File
     end
 
     def checksum_data(base_method)
-      Puppet.info(_("Computing checksum on string"))
+      Puppet.info("Computing checksum on string")
       Puppet::Util::Checksums.method(base_method).call(@contents)
     end
 
@@ -120,7 +133,7 @@ class Puppet::FileBucket::File
     end
 
     def checksum_data(base_method)
-      Puppet.info(_("Computing checksum on file %{path}") % { path: @path })
+      Puppet.info("Computing checksum on file #{@path}")
       Puppet::Util::Checksums.method(:"#{base_method}_file").call(@path)
     end
 

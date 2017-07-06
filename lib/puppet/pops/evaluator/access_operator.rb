@@ -268,7 +268,7 @@ class AccessOperator
     expected = expected_classes.map {|c| label_provider.label(c) }.join(' or ')
     fail(Issues::BAD_TYPE_SPECIALIZATION, @semantic.keys[key_index], {
       :type => type,
-      :message => _("Cannot use %{key} where %{expected} is expected") % { key: bad_key_type_name(actual), expected: expected }
+      :message => "Cannot use #{bad_key_type_name(actual)} where #{expected} is expected"
     })
   end
 
@@ -616,8 +616,6 @@ class AccessOperator
     return result_type_array ? result : result.pop
   end
 
-  NS = '::'.freeze
-
   def access_PHostClassType(o, scope, keys)
     blamed = keys.size == 0 ? @semantic : @semantic.keys[0]
     keys_orig_size = keys.size
@@ -644,14 +642,30 @@ class AccessOperator
     end
 
     if o.class_name.nil?
+      # The type argument may be a Resource Type - the Puppet Language allows a reference such as
+      # Class[Foo], and this is interpreted as Class[Resource[Foo]] - which is ok as long as the resource
+      # does not have a title. This should probably be deprecated.
+      #
       result = keys.each_with_index.map do |c, i|
-        fail(Issues::ILLEGAL_HOSTCLASS_NAME, @semantic.keys[i], {:name => c}) unless c.is_a?(String)
-        name = c.downcase
-        # Remove leading '::' since all references are global, and 3x runtime does the wrong thing
-        name = name[2..-1] if name[0,2] == NS
+        name = if c.is_a?(Types::PResourceType) && !c.type_name.nil? && c.title.nil?
+                 strict_check(c, i)
+                 # type_name is already downcase. Don't waste time trying to downcase again
+                 c.type_name
+               elsif c.is_a?(String)
+                 c.downcase
+               elsif c.is_a?(Types::PTypeReferenceType)
+                 strict_check(c, i)
+                 c.type_string.downcase
+               else
+                 fail(Issues::ILLEGAL_HOSTCLASS_NAME, @semantic.keys[i], {:name => c})
+               end
 
-        fail(Issues::ILLEGAL_NAME, @semantic.keys[i], {:name=>c}) unless name =~ Patterns::NAME
-        Types::PHostClassType.new(name)
+        if name =~ Patterns::NAME
+          # Remove leading '::' since all references are global, and 3x runtime does the wrong thing
+          Types::PHostClassType.new(name.sub(/^::/, EMPTY_STRING))
+        else
+          fail(Issues::ILLEGAL_NAME, @semantic.keys[i], {:name=>c})
+        end
       end
     else
       # lookup class resource and return one or more parameter values
@@ -673,6 +687,21 @@ class AccessOperator
     # returns single type as type, else an array of types
     return result_type_array ? result : result.pop
   end
+
+  # PUP-6083 - Using Class[Foo] is deprecated since an arbitrary foo will trigger a "resource not found"
+  # @api private
+  def strict_check(name, index)
+    if Puppet[:strict] != :off
+      msg = 'Upper cased class-name in a Class[<class-name>] is deprecated, class-name should be a lowercase string'
+      case Puppet[:strict]
+      when :error
+        fail(Issues::ILLEGAL_HOSTCLASS_NAME, @semantic.keys[index], {:name => name})
+      when :warning
+        Puppet.warn_once(:deprecation, 'ClassReferenceInUpperCase', msg)
+      end
+    end
+  end
+
 end
 end
 end

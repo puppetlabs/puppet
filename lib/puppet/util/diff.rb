@@ -25,7 +25,7 @@ module Puppet::Util::Diff
   # context defaults to 3 lines
   def lcs_diff(data_old, data_new, format=:unified, context_lines=3)
     unless Puppet.features.diff?
-      Puppet.warning _("Cannot provide diff without the diff/lcs Ruby library")
+      Puppet.warning "Cannot provide diff without the diff/lcs Ruby library"
       return ""
     end
     data_old = data_old.split(/\n/).map! { |e| e.chomp }

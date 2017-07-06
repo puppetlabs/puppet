@@ -9,6 +9,7 @@ describe 'Capability types' do
   let(:loaders) { Puppet::Pops::Loaders.new(env) }
 
   around :each do |example|
+    Puppet[:app_management] = true
     Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
     Puppet.override(:loaders => loaders, :current_environment => env) do
       Puppet::Type.newtype :cap, :is_capability => true do
@@ -18,6 +19,7 @@ describe 'Capability types' do
       example.run
       Puppet::Type.rmtype(:cap)
     end
+    Puppet[:app_management] = false
   end
 
   context 'annotations' do
@@ -400,8 +402,10 @@ test { one: hostname => "ahost", export => Cap[two] }
         ensure => directory
       }
 
-      file { $same_dir:
-        ensure => directory
+      if !defined(File["${same_dir}"]) {
+        file { $same_dir:
+          ensure => directory
+        }
       }
     PUPPET
 

@@ -25,10 +25,6 @@ module PuppetSpec::Network
     Puppet::Network::HTTP::Error::HTTPMethodNotAllowedError
   end
 
-  def unsupported_media_type_error
-    Puppet::Network::HTTP::Error::HTTPUnsupportedMediaTypeError
-  end
-
   def params
     { :environment => "production" }
   end
@@ -45,7 +41,7 @@ module PuppetSpec::Network
     Puppet::Network::HTTP::Request.from_hash({
       :headers => {
         'accept' => request[:accept_header],
-        'content-type' => "application/json"
+        'content-type' => "text/pson"
       },
       :method => "HEAD",
       :path => "#{master_url_prefix}/#{data.class.indirection.name}/#{data.value}",
@@ -57,12 +53,12 @@ module PuppetSpec::Network
     Puppet::Network::HTTP::Request.from_hash({
       :headers => {
         'accept' => request[:accept_header],
-        'content-type' => request[:content_type_header] || "application/json"
+        'content-type' => request[:content_type_header] || "text/pson"
       },
       :method => "PUT",
       :path => "#{master_url_prefix}/#{data.class.indirection.name}/#{data.value}",
       :params => params,
-      :body => request[:body].nil? ? data.render("json") : request[:body]
+      :body => request[:body].nil? ? data.render("pson") : request[:body]
     })
   end
 
@@ -70,7 +66,7 @@ module PuppetSpec::Network
     Puppet::Network::HTTP::Request.from_hash({
       :headers => {
         'accept' => request[:accept_header],
-        'content-type' => "application/json"
+        'content-type' => "text/pson"
       },
       :method => "DELETE",
       :path => "#{master_url_prefix}/#{data.class.indirection.name}/#{data.value}",
@@ -83,7 +79,7 @@ module PuppetSpec::Network
     Puppet::Network::HTTP::Request.from_hash({
       :headers => {
         'accept' => request[:accept_header],
-        'content-type' => "application/json"
+        'content-type' => "text/pson"
       },
       :method => "GET",
       :path => "#{master_url_prefix}/#{data.class.indirection.name}/#{data.value}",
@@ -96,7 +92,7 @@ module PuppetSpec::Network
     Puppet::Network::HTTP::Request.from_hash({
       :headers => {
         'accept' => request[:accept_header],
-        'content-type' => "application/json"
+        'content-type' => "text/pson"
       },
       :method => "GET",
       :path => "#{master_url_prefix}/#{data.class.indirection.name}s/#{data.name}",

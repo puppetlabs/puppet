@@ -79,7 +79,7 @@ describe Puppet::Network::HTTP::API do
       it "responds to v3 indirector requests" do
         req = Puppet::Network::HTTP::Request.from_hash(:path => "#{master_prefix}/v3/node/foo",
                                                        :params => {:environment => "production"},
-                                                       :headers => {'accept' => "application/json"})
+                                                       :headers => {'accept' => "pson"})
         res = {}
         handler.process(req, res)
         expect(res[:status]).to eq(200)

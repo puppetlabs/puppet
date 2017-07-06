@@ -41,8 +41,8 @@ describe 'The type factory' do
       expect(TypeFactory.scalar().class()).to eq(PScalarType)
     end
 
-    it 'data() returns Data' do
-      expect(TypeFactory.data.name).to eq('Data')
+    it 'data() returns PDataType' do
+      expect(TypeFactory.data().class()).to eq(PDataType)
     end
 
     it 'optional() returns POptionalType' do
@@ -163,24 +163,24 @@ describe 'The type factory' do
       expect(at.element_type.class).to eq(PIntegerType)
     end
 
-    it 'array_of_data returns Array[Data]' do
+    it 'array_of_data returns PArrayType[PDataType]' do
       at = TypeFactory.array_of_data
       expect(at.class()).to eq(PArrayType)
-      expect(at.element_type.name).to eq('Data')
+      expect(at.element_type.class).to eq(PDataType)
     end
 
-    it 'hash_of_data returns Hash[String,Data]' do
+    it 'hash_of_data returns PHashType[PScalarType,PDataType]' do
       ht = TypeFactory.hash_of_data
       expect(ht.class()).to eq(PHashType)
-      expect(ht.key_type.class).to eq(PStringType)
-      expect(ht.value_type.name).to eq('Data')
+      expect(ht.key_type.class).to eq(PScalarType)
+      expect(ht.value_type.class).to eq(PDataType)
     end
 
-    it 'ruby(1) returns PRuntimeType[ruby, \'Integer\']' do
+    it 'ruby(1) returns PRuntimeType[ruby, \'Fixnum\']' do
       ht = TypeFactory.ruby(1)
       expect(ht.class()).to eq(PRuntimeType)
       expect(ht.runtime).to eq(:ruby)
-      expect(ht.runtime_type_name).to eq(1.class.name)
+      expect(ht.runtime_type_name).to eq('Fixnum')
     end
 
     it 'a size constrained collection can be created from array' do
