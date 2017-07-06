@@ -1,8 +1,8 @@
 module Puppet::Pops
 module Time
 class Timestamp < TimeData
-  DEFAULT_FORMATS_WO_TZ = ['%FT%T.%N', '%FT%T', '%F']
-  DEFAULT_FORMATS = ['%FT%T.%N %Z', '%FT%T %Z', '%F %Z'] + DEFAULT_FORMATS_WO_TZ
+  DEFAULT_FORMATS_WO_TZ = ['%FT%T.%N', '%FT%T', '%F %T.%N', '%F %T', '%F']
+  DEFAULT_FORMATS = ['%FT%T.%N %Z', '%FT%T %Z', '%F %T.%N %Z', '%F %T %Z', '%F %Z'] + DEFAULT_FORMATS_WO_TZ
 
   CURRENT_TIMEZONE = 'current'.freeze
   KEY_TIMEZONE = 'timezone'.freeze
