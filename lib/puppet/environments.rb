@@ -220,7 +220,7 @@ module Puppet::Environments
       begin
         stat = Puppet::FileSystem.stat(envdir)
       rescue Errno::ENOENT
-        false
+        return false
       rescue Errno::EACCES
         # If the stat on envdir failed with Errno::EACCES, then the problem is in a parent directory and
         # should be reported as such.
