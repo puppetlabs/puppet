@@ -45,7 +45,7 @@ class Puppet::Context::TrustedInformation
     if authenticated
       extensions = {}
       if certificate.nil?
-        Puppet.info(_('TrustedInformation expected a certificate, but none was given.'))
+        Puppet.info('TrustedInformation expected a certificate, but none was given.')
       else
         extensions = Hash[certificate.custom_extensions.collect do |ext|
           [ext['oid'].freeze, ext['value'].freeze]

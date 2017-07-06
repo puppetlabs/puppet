@@ -22,7 +22,7 @@ class Puppet::Settings::BooleanSetting < Puppet::Settings::BaseSetting
     when true, "true"; return true
     when false, "false"; return false
     else
-      raise Puppet::Settings::ValidationError, _("Invalid value '%{value}' for boolean parameter: %{name}") % { value: value.inspect, name: @name }
+      raise Puppet::Settings::ValidationError, "Invalid value '#{value.inspect}' for boolean parameter: #{@name}"
     end
   end
 

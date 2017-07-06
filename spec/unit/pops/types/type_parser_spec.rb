@@ -54,12 +54,12 @@ describe TypeParser do
     expect(the_type_parsed_from(types.default)).to be_the_type(types.default)
   end
 
-  it "interprets an unparameterized Array as an Array of Any" do
-    expect(parser.parse("Array")).to be_the_type(types.array_of_any)
+  it "interprets an unparameterized Array as an Array of Data" do
+    expect(parser.parse("Array")).to be_the_type(types.array_of_data)
   end
 
-  it "interprets an unparameterized Hash as a Hash of Any, Any" do
-    expect(parser.parse("Hash")).to be_the_type(types.hash_of_any)
+  it "interprets an unparameterized Hash as a Hash of Scalar to Data" do
+    expect(parser.parse("Hash")).to be_the_type(types.hash_of_data)
   end
 
   it "interprets a parameterized Array[0, 0] as an empty hash with no key and value type" do
@@ -223,11 +223,11 @@ describe TypeParser do
 
   context 'without a scope' do
     it "interprets anything that is not a built in type to be a type reference" do
-      expect(parser.parse('TestType')).to eq(types.type_reference('TestType'))
+      expect(parser.parse('File')).to eq(types.type_reference('File'))
     end
 
     it "interprets anything that is not a built in type with parameterers to be type reference with parameters" do
-      expect(parser.parse("TestType['/tmp/foo']")).to eq(types.type_reference("TestType['/tmp/foo']"))
+      expect(parser.parse("File['/tmp/foo']")).to eq(types.type_reference("File['/tmp/foo']"))
     end
   end
 

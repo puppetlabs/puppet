@@ -22,6 +22,7 @@ gem 'uuidtools', :require => false
 group(:test) do
   gem "rspec", "~> 2.14.0", :require => false
   gem "mocha", "~> 0.10.5", :require => false
+  gem "master_manipulator", "~> 2.1", :require => false
 end
 
 if File.exists? "#{__FILE__}.local"

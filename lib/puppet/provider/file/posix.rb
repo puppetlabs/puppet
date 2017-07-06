@@ -63,7 +63,7 @@ Puppet::Type.type(:file).provide :posix do
     # large UIDs instead of negative ones.  This isn't a Ruby bug,
     # it's an OS X bug, since it shows up in perl, too.
     if currentvalue > Puppet[:maximum_uid].to_i
-      self.warning _("Apparently using negative UID (%{currentvalue}) on a platform that does not consistently handle them") % { currentvalue: currentvalue }
+      self.warning "Apparently using negative UID (#{currentvalue}) on a platform that does not consistently handle them"
       currentvalue = :silly
     end
 
@@ -81,7 +81,7 @@ Puppet::Type.type(:file).provide :posix do
     begin
       File.send(method, should, nil, resource[:path])
     rescue => detail
-      raise Puppet::Error, _("Failed to set owner to '%{should}': %{detail}") % { should: should, detail: detail }, detail.backtrace
+      raise Puppet::Error, "Failed to set owner to '#{should}': #{detail}", detail.backtrace
     end
   end
 
@@ -94,7 +94,7 @@ Puppet::Type.type(:file).provide :posix do
     # large GIDs instead of negative ones.  This isn't a Ruby bug,
     # it's an OS X bug, since it shows up in perl, too.
     if currentvalue > Puppet[:maximum_uid].to_i
-      self.warning _("Apparently using negative GID (%{currentvalue}) on a platform that does not consistently handle them") % { currentvalue: currentvalue }
+      self.warning "Apparently using negative GID (#{currentvalue}) on a platform that does not consistently handle them"
       currentvalue = :silly
     end
 
@@ -112,7 +112,7 @@ Puppet::Type.type(:file).provide :posix do
     begin
       File.send(method, nil, should, resource[:path])
     rescue => detail
-      raise Puppet::Error, _("Failed to set group to '%{should}': %{detail}") % { should: should, detail: detail }, detail.backtrace
+      raise Puppet::Error, "Failed to set group to '#{should}': #{detail}", detail.backtrace
     end
   end
 
@@ -128,7 +128,7 @@ Puppet::Type.type(:file).provide :posix do
     begin
       File.chmod(value.to_i(8), resource[:path])
     rescue => detail
-      error = Puppet::Error.new(_("failed to set mode %{mode} on %{path}: %{message}") % { mode: mode, path: resource[:path], message: detail.message })
+      error = Puppet::Error.new("failed to set mode #{mode} on #{resource[:path]}: #{detail.message}")
       error.set_backtrace detail.backtrace
       raise error
     end

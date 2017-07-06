@@ -85,7 +85,6 @@ class Puppet::Node::Environment
     @modulepath = modulepath
     @manifest = manifest
     @config_version = config_version
-    @modules_strict_semver = false
   end
 
   # Creates a new Puppet::Node::Environment instance, overriding any of the passed
@@ -214,7 +213,7 @@ class Puppet::Node::Environment
   def validation_errors
     errors = []
     if conflicting_manifest_settings?
-      errors << _("The 'disable_per_environment_manifest' setting is true, and the '%{env_name}' environment has an environment.conf manifest that conflicts with the 'default_manifest' setting.") % { env_name: name }
+      errors << "The 'disable_per_environment_manifest' setting is true, and the '#{name}' environment has an environment.conf manifest that conflicts with the 'default_manifest' setting."
     end
     errors
   end
@@ -238,22 +237,6 @@ class Puppet::Node::Environment
   # @return [Object] The resolved setting value
   def [](param)
     Puppet.settings.value(param, self.name)
-  end
-
-  # A SemanticPuppet::VersionRange version >= 1.0.0 will not include versions with pre-release
-  # identifiers unless that is explicitly declared. This may cause backward compatibility
-  # issues when resolving module dependencies and the flag is therefore set to `false` by default.
-  #
-  # @param flag [Boolean] set to true to resolve module dependencies using strict SemVer semantics
-  #
-  def modules_strict_semver=(flag)
-    @modules_strict_semver = flag
-  end
-
-  # @return [Boolean] the current value of the modules_strict_semver flag.
-  # @api public
-  def modules_strict_semver?
-    @modules_strict_semver
   end
 
   # @api public
@@ -330,7 +313,7 @@ class Puppet::Node::Environment
 
       @modules = module_references.collect do |reference|
         begin
-          Puppet::Module.new(reference[:name], reference[:path], self, modules_strict_semver?)
+          Puppet::Module.new(reference[:name], reference[:path], self)
         rescue Puppet::Module::Error => e
           Puppet.log_exception(e)
           nil
@@ -372,7 +355,7 @@ class Puppet::Node::Environment
             Puppet::Module.is_module_directory?(name, path)
           end
           modules_by_path[path] = module_names.sort.map do |name|
-            Puppet::Module.new(name, File.join(path, name), self, modules_strict_semver?)
+            Puppet::Module.new(name, File.join(path, name), self)
           end
         end
       else
@@ -547,7 +530,7 @@ class Puppet::Node::Environment
   rescue => detail
     @known_resource_types.parse_failed = true
 
-    msg = _("Could not parse for environment %{env}: %{detail}") % { env: self, detail: detail }
+    msg = "Could not parse for environment #{self}: #{detail}"
     error = Puppet::Error.new(msg)
     error.set_backtrace(detail.backtrace)
     raise error

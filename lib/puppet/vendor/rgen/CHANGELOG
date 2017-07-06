@@ -1,0 +1,197 @@
+=0.1.0 (August 3rd, 2006)
+
+* First public release
+
+=0.2.0 (September 3rd, 2006)
+
+* Added model transformation language (Transformer)
+* Now RGen is distributed as a gem
+* More complete documentation
+
+=0.3.0 (October 9th, 2006)
+
+* Improved XML Instantiator (Namespaces, Resolver, Customization)
+* Added many_to_one builder method
+* Added attribute reflection to MMBase (one_attributes, many_attributes)
+* Added +copy+ method to Transformer
+* Added simple model dumper module
+* Fixed mmgen/mmgen.rb
+
+=0.4.0 (Aug 8th, 2007)
+
+* Added ECore metamodel and use it as the core metametamodel
+* Revised and extended MetamodelBuilder language
+* There is an ECore instance describing each metamodel built using MetamodelBuilder now
+* Metamodel generator is now ECore based
+* Added Ruby implementation of Boolean and Enum types
+* Switched XML Instantiator to xmlscan for performance reasons
+* Cleaned up instantiator file structure
+* Renamed RGen::XMLInstantiator into RGen::Instantiator::DefaultXMLInstantiator
+* Included xmlscan as a redistributed module
+* Added support for chardata within XML tags
+* Added (Enterprise Architect) XMI to ECore instantiator
+* Some minor fixes in NameHelper
+* Some fixes to template language
+* Added UML1.3 Metamodel
+* Added tranformation from UML1.3 to ECore
+
+=0.4.1 (Nov 25th, 2007)
+
+* Template language performance improvement
+* Bugfix: use true/false instead of symbols for boolean attribute default values in metamodel classes
+* Minor fixes on metamodel generator and ecore primitive type handling
+* Made transformer implementation non-recursive to prevent "stack level too deep" exception for large models
+* Minor fixes on EAInstantiator
+* Made transformer search for matching rules for superclasses 
+* Bugfix: Enums are now added to EPackages created using the "ecore" method on a module
+* Bugfix: Metamodel generator now writes enum names
+* Performance improvement: don't require ecore transformer every time someone calls "ecore"
+* Major performance improvement of template engine (no Regexps to check \n at end of line)
+* Major performance improvement: AbstractXMLInstantiator optionally controls the garbage collector
+* Major performance improvement: ERB templates are reused in metamodel_builder
+* Added delete method to Environment
+
+=0.4.2 (Mar 2nd, 2008)
+
+* Performance improvement: collection feature of array extension uses hashes now to speed up array union
+* Performance improvement: find on environment hashes elements by class
+* Extended Transformer to allow sharing of result maps between several Transformer instances
+* Bugfix: User defined upper bound values are no longer overwritten by -1 in all "many" metamodel builder methods
+
+=0.4.3 (Aug 12th, 2008)
+
+* Performance improvement: significant speed up of metamodel reverse registration
+* Bugfix: Use object identity for metamodel to-many add/remove methods
+* Bugfix: If expand's :for expression evaluates to nil an error is generated (silently used current context before)
+* Template language indentation string can be set on DirectoryTemplateContainer and with the "file" command
+
+=0.4.4 (Sep 10th, 2008)
+
+* Added "abstract" metamodel DSL command
+* Added ecore_ext.rb with convenience methods
+* Added XMI1.1 serializer, revised XMLSerializer super class
+
+=0.4.5 (Nov 17th, 2008)
+
+* Updated XMI1.1 serializer to support explicit placement of elements on content level of the XMI file
+
+=0.4.6 (Mar 1st, 2009)
+
+* Bugfix: expand :foreach silently assumed current context if :foreach evalutated to nil
+* Bugfix: fixed unit test for non-Windows plattforms (\r\n)
+* Bugfix: depending on the Ruby version and/or platform constants used in templates could not be resolved
+* Added automatic line ending detection (\n or \r\n) for template language +nl+ command
+
+=0.5.0 (Jun 8th, 2009)
+
+* Added ModelBuilder and ModelSerializer
+* Added template language "define_local" command
+* Added template language "evaluate" command
+* Fixed template language bug: indentation problem when expand continues a non-empty line
+* Fixed template language bug: template content expands several times when a template container is called recursively
+* Fixed template language bug: template resolution problem if a template file has the same name as a template directory
+* Cleaned up EA support
+* Added method to clear ecore metamodel reflection cache
+* Improved overriding of metamodel features in reopened classes
+
+=0.5.1 (Nov 10th, 2009)
+
+* Fixed metamodel builder bug: _register at one-side did not unregister from the element referenced by the old value
+* Added helper class for building simple model comparators
+
+=0.5.2 (Jun 13th, 2010)
+
+* Added has_many_attr to metamodel builder, support for "many" attributes
+* Added JSON support (json instantiator and serializer)
+* Added QualifiedNameResolver instantiation helper
+* Added reference proxy support
+* Added more generic access methods on metaclasses
+* Added ReferenceResolver resolver mixin
+* Fixed ecore xml instantiator and serializer to handle references to builtin datatypes correctly
+* Fixed bug in ecore xml serializer to not output references which are opposites of containment references
+
+=0.5.3 (Aug 13th, 2010)
+
+* Fixed string escaping in JSON instantiator and serializer
+* Fixed order of eClassifiers and eSubpackages within an EPackage created by reflection on a RGen module
+
+=0.5.4
+
+* Fixed undeterministic order of child elements in ModelSerializer
+* Fixed undeterministic order of attributes in XMI serializers
+* Fixed ModelSerializer to always serialize the to-one part of bidirectional 1:N references
+* Fixed ModelSerializer to add :as => in case of ambiguous child roles
+* Made JsonInstantiator search subpackages for unqualified class names
+
+=0.6.0
+
+* Added exception when trying to instantiate abstract class
+* Replaced xmlscan by dependency to nokogiri
+* Made RGen work with Ruby 1.9
+* Cleaned up intermediate attribute and reference description, improvement of metamodel load time
+* Added optional data property for MMProxy
+* Added ECoreToRuby which can create Ruby classes and modules from ECore models in memory (without metamodel generator)
+* Refactored out QualifiedNameProvider and OppositeReferenceFilter
+* Added model fragment/fragmented models support
+* Extended Instantiator::ReferenceResolver and changed it into a class
+* Moved utilities into util folder/module
+* Added FileCacheMap
+* Fixed template language bug: indenting not correct after callback into same template container and iinc/idec
+* Added support for fragmented models
+* Added FileChangeDetector utility
+* Added CachedGlob utility
+* Added index parameter to model element add methods
+* Added MMGeneric
+* Modified has_many_attr to allow the same value in the same attribute multiple times 
+* Made Environment#delete faster on large models
+* Added type check of ecore defaultValueLiteral content in MetamodelBuilder
+* Many-feature setters can work with an Enumerable instead of an Array
+* Added pattern matcher utility
+* Fixed problem of Ruby hanging when exceptions occur
+* Fixed metamodel generator to quote illegal enum literal symbols
+* Imporved UML to ECore transformer and EA support
+
+=0.6.1
+
+* Fixed metamodel builder to not overwrite a model element's 'class' method
+* Added enum type transformation to ECoreToUML13 transformer, primitive type mapping based on instanceClassName
+* Fixed default value appearing on read after setting a feature value to nil
+* Added eIsSet and eUnset methods
+* Added eContainer and eContainingFeature methods
+* Fixed ModelFragment#elements not containing root elements
+* Added optional output of invalidation reason to FileCacheMap#load_data
+
+=0.6.2
+
+* Made qualified name provider work with unidirectional containment references
+* Fixed array_extension breaking the Hash[] method
+
+=0.6.3
+
+* Added BigDecimal support
+
+=0.6.4
+
+* Made FileChangeDetector and FileCacheMap robust against missing files
+
+=0.6.5
+
+* Fixed missing default argument of FragmentedModel#resolve
+* Added to_str to methods which aren't forwarded by array extension on empty arrays
+
+=0.6.6
+
+* Added ModelFragment#mark_resolved and ResolutionHelper
+* Added ReferenceResolver option to output failed resolutions
+* Major performance improvement of FragmentedModel#resolve
+* Fixed a Ruby 2.0 related warning
+
+=0.7.0
+
+* Enforce unique container rule by automatically disconnecting elements from other containers
+* Added support for long typed values (ELong), thanks to Thomas Hallgren;
+  Note that this is merely an EMF compatibility thing, RGen could already handle big integers before
+* Added eContents and eAllContents methods
+* Added setNilOrRemoveGeneric and setNilOrRemoveAllGeneric methods
+* Added disconnectContainer method
+

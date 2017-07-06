@@ -119,7 +119,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
   class ModuleRelease < SemanticPuppet::Dependency::ModuleRelease
     attr_reader :install_dir, :metadata
 
-    def initialize(source, data, strict_semver = true)
+    def initialize(source, data)
       @data = data
       @metadata = meta = data['metadata']
 
@@ -131,7 +131,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
         dependencies = meta['dependencies'].collect do |dep|
           begin
             Puppet::ModuleTool::Metadata.new.add_dependency(dep['name'], dep['version_requirement'], dep['repository'])
-            Puppet::ModuleTool.parse_module_dependency(release, dep, strict_semver)[0..1]
+            Puppet::ModuleTool.parse_module_dependency(release, dep)[0..1]
           rescue ArgumentError => e
             raise ArgumentError, "Malformed dependency: #{dep['name']}. Exception was: #{e}"
           end
@@ -197,7 +197,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
 
     def validate_checksum(file, checksum)
       if Digest::MD5.file(file.path).hexdigest != checksum
-        raise RuntimeError, _("Downloaded release for %{name} did not match expected checksum") % { name: name }
+        raise RuntimeError, "Downloaded release for #{name} did not match expected checksum"
       end
     end
 
@@ -205,7 +205,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
       begin
         Puppet::ModuleTool::Applications::Unpacker.unpack(file.path, destination)
       rescue Puppet::ExecutionFailure => e
-        raise RuntimeError, _("Could not extract contents of module archive: %{message}") % { message: e.message }
+        raise RuntimeError, "Could not extract contents of module archive: #{e.message}"
       end
     end
   end
@@ -218,7 +218,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
       begin
         ModuleRelease.new(self, release)
       rescue ArgumentError => e
-        Puppet.warning _("Cannot consider release %{name}-%{version}: %{error}") % { name: metadata['name'], version: metadata['version'], error: e }
+        Puppet.warning "Cannot consider release #{metadata['name']}-#{metadata['version']}: #{e}"
         false
       end
     end

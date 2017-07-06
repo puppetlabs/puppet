@@ -25,7 +25,7 @@ class EvaluatingParser
     # Also a possible improvement (if the YAML parser returns positions) is to provide correct output of position.
     #
     begin
-      assert_and_report(parser.parse_string(s, file_source)).model
+      assert_and_report(parser.parse_string(s, file_source))
     rescue Puppet::ParseErrorWithIssue => e
       raise e
     rescue Puppet::ParseError => e
@@ -38,7 +38,7 @@ class EvaluatingParser
   def parse_file(file)
     @file_source = file
     clear()
-    assert_and_report(parser.parse_file(file)).model
+    assert_and_report(parser.parse_file(file))
   end
 
   def evaluate_string(scope, s, file_source = nil)
@@ -99,10 +99,10 @@ class EvaluatingParser
 
   def assert_and_report(parse_result)
     return nil unless parse_result
-    if parse_result['source_ref'].nil? || parse_result['source_ref'] == ''
-      parse_result['source_ref'] = @file_source
+    if parse_result.source_ref.nil? || parse_result.source_ref == ''
+      parse_result.source_ref = @file_source
     end
-    validation_result = validate(parse_result.model)
+    validation_result = validate(parse_result)
 
     IssueReporter.assert_and_report(validation_result,
                                           :emit_warnings => true)

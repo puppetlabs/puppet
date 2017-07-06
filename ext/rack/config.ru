@@ -20,10 +20,10 @@ ARGV << "--logdir"  << "/var/log/puppetlabs/puppetmaster"
 ARGV << "--rundir"  << "/var/run/puppetlabs/puppetmaster"
 ARGV << "--codedir"  << "/etc/puppetlabs/code"
 
-# disable always_retry_plugsin as a performance improvement. This is safe for a master to
+# always_cache_features is a performance improvement and safe for a master to
 # apply. This is intended to allow agents to recognize new features that may be
 # delivered during catalog compilation.
-ARGV << "--no-always_retry_plugins"
+ARGV << "--always_cache_features"
 
 # NOTE: it's unfortunate that we have to use the "CommandLine" class
 #  here to launch the app, but it contains some initialization logic

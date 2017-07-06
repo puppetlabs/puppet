@@ -4,9 +4,9 @@ require 'puppet/configurer/plugin_handler'
 
 Puppet::Face.define(:plugin, '0.0.1') do
   copyright "Puppet Inc.", 2011
-  license   _("Apache 2 license; see COPYING")
+  license   "Apache 2 license; see COPYING"
 
-  summary _("Interact with the Puppet plugin system.")
+  summary "Interact with the Puppet plugin system."
   description <<-'EOT'
     This subcommand provides network access to the puppet master's store of
     plugins.
@@ -18,13 +18,13 @@ Puppet::Face.define(:plugin, '0.0.1') do
   EOT
 
   action :download do
-    summary _("Download plugins from the puppet master.")
+    summary "Download plugins from the puppet master."
     description <<-'EOT'
       Downloads plugins from the configured puppet master. Any plugins
       downloaded in this way will be used in all subsequent Puppet activity.
       This action modifies files on disk.
     EOT
-    returns _(<<-'EOT')
+    returns <<-'EOT'
       A list of the files downloaded, or a confirmation that no files were
       downloaded. When used from the Ruby API, this action returns an array of
       the files downloaded, which will be empty if none were retrieved.
@@ -49,9 +49,9 @@ Puppet::Face.define(:plugin, '0.0.1') do
 
     when_rendering :console do |value|
       if value.empty? then
-        _("No plugins downloaded.")
+        "No plugins downloaded."
       else
-        _("Downloaded these plugins: %{plugins}") % { plugins: value.join(', ') }
+        "Downloaded these plugins: #{value.join(', ')}"
       end
     end
   end

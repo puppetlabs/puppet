@@ -166,7 +166,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
 
             # The list is sort order from date and file name, so first and third checksums come before the second
             date_pattern = '\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
-            expect(find_result.to_s).to match(Regexp.new("^(#{checksum1}|#{checksum3}) #{date_pattern} foo/bar1\\n(#{checksum3}|#{checksum1}) #{date_pattern} foo/bar1\\n#{checksum2} #{date_pattern} foo/bar2\\n$"))
+            expect(find_result.to_s).to match(Regexp.new("^#{checksum1} #{date_pattern} foo/bar1\\n#{checksum3} #{date_pattern} foo/bar1\\n#{checksum2} #{date_pattern} foo/bar2\\n$"))
           end
 
           it "should fail in an informative way when provided dates are not in the right format" do

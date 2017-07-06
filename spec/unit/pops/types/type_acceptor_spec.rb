@@ -48,9 +48,9 @@ describe 'the Puppet::Pops::Types::TypeAcceptor' do
     POptionalType
   ].each do |tc|
     it "should get a visit from the contained type of an #{tc.class.name} that accepts it" do
-      t = tc.new(PStringType::DEFAULT)
+      t = tc.new(PDataType::DEFAULT)
       t.accept(acceptor, nil)
-      expect(acceptor.visitors).to include(t, PStringType::DEFAULT)
+      expect(acceptor.visitors).to include(t, PDataType::DEFAULT)
     end
   end
 

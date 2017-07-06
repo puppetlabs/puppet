@@ -1,12 +1,12 @@
 Puppet::Face.define(:module, '1.0.0') do
   action(:uninstall) do
-    summary _("Uninstall a puppet module.")
+    summary "Uninstall a puppet module."
     description <<-EOT
       Uninstalls a puppet module from the modulepath (or a specific
       target directory).
     EOT
 
-    returns _("Hash of module objects representing uninstalled modules and related errors.")
+    returns "Hash of module objects representing uninstalled modules and related errors."
 
     examples <<-'EOT'
       Uninstall a module:
@@ -30,10 +30,10 @@ Puppet::Face.define(:module, '1.0.0') do
       Removed /etc/puppetlabs/code/modules/ssh (v2.0.0)
     EOT
 
-    arguments _("<name>")
+    arguments "<name>"
 
     option "--force", "-f" do
-      summary _("Force uninstall of an installed module.")
+      summary "Force uninstall of an installed module."
       description <<-EOT
         Force the uninstall of an installed module even if there are local
         changes or the possibility of causing broken dependencies.
@@ -41,29 +41,25 @@ Puppet::Face.define(:module, '1.0.0') do
     end
 
     option "--ignore-changes", "-c" do
-      summary _("Ignore any local changes made. (Implied by --force.)")
+      summary "Ignore any local changes made. (Implied by --force.)"
       description <<-EOT
         Uninstall an installed module even if there are local changes to it.  (Implied by --force.)
       EOT
     end
 
     option "--version=" do
-      summary _("The version of the module to uninstall")
+      summary "The version of the module to uninstall"
       description <<-EOT
         The version of the module to uninstall. When using this option, a module
         matching the specified version must be installed or else an error is raised.
       EOT
     end
 
-    option '--strict-semver' do
-      summary _('Whether version ranges should exclude pre-release versions')
-    end
-
     when_invoked do |name, options|
       name = name.gsub('/', '-')
 
       Puppet::ModuleTool.set_option_defaults options
-      Puppet.notice _("Preparing to uninstall '%{name}'") % { name: name } << (options[:version] ? " (#{colorize(:cyan, options[:version].sub(/^(?=\d)/, 'v'))})" : '') << " ..."
+      Puppet.notice "Preparing to uninstall '#{name}'" << (options[:version] ? " (#{colorize(:cyan, options[:version].sub(/^(?=\d)/, 'v'))})" : '') << " ..."
       Puppet::ModuleTool::Applications::Uninstaller.run(name, options)
     end
 
@@ -73,8 +69,9 @@ Puppet::Face.define(:module, '1.0.0') do
         exit 1
       else
         mod = return_value[:affected_modules].first
-        module_version = mod.version ? " (#{colorize(:cyan, mod.version.to_s.sub(/^(?=\d)/, 'v'))})" : ''
-        _("Removed '%{name}'%{module_version} from %{path}") % { name: return_value[:module_name], module_version: module_version, path: mod.modulepath }
+        "Removed '#{return_value[:module_name]}'" <<
+        (mod.version ? " (#{colorize(:cyan, mod.version.to_s.sub(/^(?=\d)/, 'v'))})" : '') <<
+        " from #{mod.modulepath}"
       end
     end
   end

@@ -18,7 +18,7 @@ module Puppet::Util::Windows
     def root(name)
       Win32::Registry.const_get(name)
     rescue NameError
-      raise Puppet::Error, _("Invalid registry key '%{name}'") % { name: name }, $!.backtrace
+      raise Puppet::Error, "Invalid registry key '#{name}'", $!.backtrace
     end
 
     def open(name, path, mode = KEY_READ | KEY64, &block)
@@ -28,7 +28,7 @@ module Puppet::Util::Windows
           return yield subkey
         end
       rescue Win32::Registry::Error => error
-        raise Puppet::Util::Windows::Error.new(_("Failed to open registry key '%{key}\\%{path}'") % { key: hkey.keyname, path: path }, error.code, error)
+        raise Puppet::Util::Windows::Error.new("Failed to open registry key '#{hkey.keyname}\\#{path}'", error.code, error)
       end
     end
 
@@ -103,7 +103,7 @@ module Puppet::Util::Windows
             break if result == ERROR_NO_MORE_ITEMS
 
             if result != FFI::ERROR_SUCCESS
-              msg = _("Failed to enumerate %{key} registry keys at index %{index}") % { key: key.keyname, index: index }
+              msg = "Failed to enumerate #{key.keyname} registry keys at index #{index}"
               raise Puppet::Util::Windows::Error.new(msg)
             end
 
@@ -134,7 +134,7 @@ module Puppet::Util::Windows
           break if result == ERROR_NO_MORE_ITEMS
 
           if result != FFI::ERROR_SUCCESS
-            msg = _("Failed to enumerate %{key} registry values at index %{index}") % { key: key.keyname, index: index }
+            msg = "Failed to enumerate #{key.keyname} registry values at index #{index}"
             raise Puppet::Util::Windows::Error.new(msg)
           end
 
@@ -164,7 +164,7 @@ module Puppet::Util::Windows
           )
 
           if status != FFI::ERROR_SUCCESS
-            msg = _("Failed to query registry %{key} for sizes") % { key: key.keyname }
+            msg = "Failed to query registry #{key.keyname} for sizes"
             raise Puppet::Util::Windows::Error.new(msg)
           end
 
@@ -200,7 +200,7 @@ module Puppet::Util::Windows
 
       query_value_ex(key, name_ptr) do |type, data_ptr, byte_length|
         unless rtype.empty? or rtype.include?(type)
-          raise TypeError, _("Type mismatch (expect %{rtype} but %{type} present)") % { rtype: rtype.inspect, type: type }
+          raise TypeError, "Type mismatch (expect #{rtype.inspect} but #{type} present)"
         end
 
         string_length = 0
@@ -222,12 +222,12 @@ module Puppet::Util::Windows
             when Win32::Registry::REG_QWORD
               result = [ type, data_ptr.read_qword ]
             else
-              raise TypeError, _("Type %{type} is not supported.") % { type: type }
+              raise TypeError, "Type #{type} is not supported."
           end
         rescue IndexError => ex
           raise if (ex.message !~ /^Memory access .* is out of bounds$/i)
           parent_key_name = key.parent ? "#{key.parent.keyname}\\" : ""
-          Puppet.warning _("A value in the registry key %{parent_key_name}%{key} is corrupt or invalid") % { parent_key_name: parent_key_name, key: key.keyname }
+          Puppet.warning "A value in the registry key #{parent_key_name}#{key.keyname} is corrupt or invalid"
         end
       end
 
@@ -247,7 +247,7 @@ module Puppet::Util::Windows
               buffer_ptr, length_ptr)
 
             if result != FFI::ERROR_SUCCESS
-              msg = _("Failed to read registry value %{value} at %{key}") % { value: name_ptr.read_wide_string, key: key.keyname }
+              msg = "Failed to read registry value #{name_ptr.read_wide_string} at #{key.keyname}"
               raise Puppet::Util::Windows::Error.new(msg)
             end
 
@@ -265,7 +265,7 @@ module Puppet::Util::Windows
         result = RegDeleteValueW(key.hkey, name_ptr)
 
         if result != FFI::ERROR_SUCCESS
-          msg = _("Failed to delete registry value %{name} at %{key}") % { name: name, key: key.keyname }
+          msg = "Failed to delete registry value #{name} at #{key.keyname}"
           raise Puppet::Util::Windows::Error.new(msg, result)
         end
       end
@@ -280,7 +280,7 @@ module Puppet::Util::Windows
         result = RegDeleteKeyExW(key.hkey, name_ptr, regsam, 0)
 
         if result != FFI::ERROR_SUCCESS
-          msg = _("Failed to delete registry key %{name} at %{key}") % { name: name, key: key.keyname }
+          msg = "Failed to delete registry key #{name} at #{key.keyname}"
           raise Puppet::Util::Windows::Error.new(msg, result)
         end
       end

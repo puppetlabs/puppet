@@ -5,7 +5,7 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
 
   commands :pkgin => "pkgin"
 
-  defaultfor :operatingsystem => [ :smartos, :netbsd ]
+  defaultfor :operatingsystem => [ :dragonfly , :smartos, :netbsd ]
 
   has_feature :installable, :uninstallable, :upgradeable, :versionable
 
@@ -40,10 +40,10 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
 
     if packages.empty?
       if @resource[:ensure] == :absent
-        notice _("declared as absent but unavailable %{file}:%{line}") % { file: @resource.file, line: resource.line }
+        notice "declared as absent but unavailable #{@resource.file}:#{resource.line}"
         return false
       else
-        @resource.fail _("No candidate to be installed")
+        @resource.fail "No candidate to be installed"
       end
     end
 

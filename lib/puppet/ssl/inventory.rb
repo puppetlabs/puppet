@@ -29,7 +29,7 @@ class Puppet::SSL::Inventory
   # Rebuild the inventory from scratch.  This should happen if
   # the file is entirely missing or if it's somehow corrupted.
   def rebuild
-    Puppet.notice _("Rebuilding inventory file")
+    Puppet.notice "Rebuilding inventory file"
 
     # RFC 5280 says the cert subject may contain UTF8 - https://www.ietf.org/rfc/rfc5280.txt
     Puppet.settings.setting(:cert_inventory).open('w:UTF-8') do |f|

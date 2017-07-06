@@ -47,7 +47,7 @@ class Param
     name
   end
 
-  def self._pcore_type
+  def self._ptype
     @ptype
   end
 end

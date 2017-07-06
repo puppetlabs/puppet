@@ -1,7 +1,7 @@
 require 'puppet/version'
 
 if Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new("1.9.3")
-  raise LoadError, _("Puppet %{version} requires ruby 1.9.3 or greater.") % { version: Puppet.version }
+  raise LoadError, "Puppet #{Puppet.version} requires ruby 1.9.3 or greater."
 end
 
 Puppet::OLDEST_RECOMMENDED_RUBY_VERSION = '2.1.0'
@@ -17,7 +17,6 @@ require 'puppet/settings'
 require 'puppet/util/feature'
 require 'puppet/util/suidmanager'
 require 'puppet/util/run_mode'
-# PSON is deprecated, use JSON instead
 require 'puppet/external/pson/common'
 require 'puppet/external/pson/version'
 require 'puppet/external/pson/pure'
@@ -178,7 +177,7 @@ module Puppet
   # Now that settings are loaded we have the code loaded to be able to issue
   # deprecation warnings. Warn if we're on a deprecated ruby version.
   if Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new(Puppet::OLDEST_RECOMMENDED_RUBY_VERSION)
-    Puppet.deprecation_warning(_("Support for ruby version %{version} is deprecated and will be removed in a future release. See https://docs.puppet.com/puppet/latest/system_requirements.html#ruby for a list of supported ruby versions.") % { version: RUBY_VERSION })
+    Puppet.deprecation_warning("Support for ruby version #{RUBY_VERSION} is deprecated and will be removed in a future release. See https://docs.puppet.com/puppet/latest/system_requirements.html#ruby for a list of supported ruby versions.")
   end
 
   # Initialize puppet's settings. This is intended only for use by external tools that are not
@@ -225,7 +224,7 @@ module Puppet
   # code was deprecated in 2008, but this is still in heavy use.  I suppose
   # this can count as a soft deprecation for the next dev. --daniel 2011-04-12
   def self.newtype(name, options = {}, &block)
-    Puppet.deprecation_warning(_("Creating %{name} via Puppet.newtype is deprecated and will be removed in a future release. Use Puppet::Type.newtype instead.") % { name: name })
+    Puppet.deprecation_warning("Creating #{name} via Puppet.newtype is deprecated and will be removed in a future release. Use Puppet::Type.newtype instead.")
     Puppet::Type.newtype(name, options, &block)
   end
 
@@ -244,7 +243,7 @@ module Puppet
     basemodulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
 
     if environmentpath.nil? || environmentpath.empty?
-      raise(Puppet::Error, _("The environmentpath setting cannot be empty or nil."))
+      raise(Puppet::Error, "The environmentpath setting cannot be empty or nil.")
     else
       loaders = Puppet::Environments::Directories.from_path(environmentpath, basemodulepath)
       # in case the configured environment (used for the default sometimes)
@@ -265,7 +264,6 @@ module Puppet
         Puppet::Network::HTTP::NoCachePool.new
       },
       :ssl_host => proc { Puppet::SSL::Host.localhost },
-      :plugins => proc { Puppet::Plugins::Configuration.load_plugins }
     }
   end
 
@@ -352,4 +350,4 @@ require 'puppet/data_binding'
 require 'puppet/util/storage'
 require 'puppet/status'
 require 'puppet/file_bucket/file'
-require 'puppet/plugins/configuration'
+require 'puppet/plugins'

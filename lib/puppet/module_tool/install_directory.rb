@@ -19,7 +19,7 @@ module Puppet
 
         begin
           @target.mkpath
-          Puppet.notice _("Created target directory %{dir}") % { dir: @target }
+          Puppet.notice "Created target directory #{@target}"
         rescue SystemCallError => orig_error
           raise converted_to_friendly_error(module_name, version, orig_error)
         end

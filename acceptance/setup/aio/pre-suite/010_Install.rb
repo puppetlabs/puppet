@@ -91,11 +91,7 @@ step "Install puppetserver..." do
       install_repos_on(master, 'puppet-agent', ENV['SHA'], repo_configs_dir)
       install_packages_on(master, MASTER_PACKAGES)
     end
-
   end
-    install_puppetlabs_dev_repo(master, 'puppetserver', server_version, nil, :dev_builds_url => server_download_url)
-    install_puppetlabs_dev_repo(master, 'puppet-agent', ENV['SHA'])
-    master.install_package('puppetserver')
 end
 
 # make sure install is sane, beaker has already added puppet and ruby

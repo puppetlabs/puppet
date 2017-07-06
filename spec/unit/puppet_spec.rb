@@ -2,13 +2,14 @@
 require 'spec_helper'
 require 'puppet'
 require 'puppet_spec/files'
+require 'semver'
 
 describe Puppet do
   include PuppetSpec::Files
 
   context "#version" do
     it "should be valid semver" do
-      expect(SemanticPuppet::Version).to be_valid Puppet.version
+      expect(SemVer).to be_valid Puppet.version
     end
   end
 
@@ -48,7 +49,7 @@ describe Puppet do
     end
 
     it "should match a semver version" do
-      expect(SemanticPuppet::Version).to be_valid(Puppet::OLDEST_RECOMMENDED_RUBY_VERSION)
+      expect(SemVer).to be_valid(Puppet::OLDEST_RECOMMENDED_RUBY_VERSION)
     end
   end
 

@@ -1,4 +1,3 @@
-require 'hiera/scope'
 require_relative 'sub_lookup'
 module Puppet::Pops
 module Lookup

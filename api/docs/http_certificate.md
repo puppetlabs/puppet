@@ -22,7 +22,7 @@ GET
 
 ### Supported Response Formats
 
-`text/plain`
+s (denotes a string of text)
 
 The returned certificate is always in the `.pem` format.
 

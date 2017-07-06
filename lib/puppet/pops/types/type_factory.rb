@@ -85,7 +85,7 @@ module TypeFactory
       size_type_or_value.nil? ? PStringType::DEFAULT : PStringType.new(size_type_or_value)
     else
       if Puppet[:strict] != :off
-        Puppet.warn_once('deprecations', "TypeFactory#string_multi_args", "Passing more than one argument to TypeFactory#string is deprecated")
+        Puppet.warn_once(:deprecatation, "TypeFactory#string_multi_args", "Passing more than one argument to TypeFactory#string is deprecated")
       end
       deprecated_second_argument.size == 1 ? PStringType.new(deprecated_second_argument[0]) : PEnumType.new(*deprecated_second_argument)
     end
@@ -252,18 +252,11 @@ module TypeFactory
     PPatternType.new(patterns)
   end
 
-  # Produces the Scalar type
+  # Produces the Literal type
   # @api public
   #
   def self.scalar
     PScalarType::DEFAULT
-  end
-
-  # Produces the ScalarData type
-  # @api public
-  #
-  def self.scalar_data
-    PScalarDataType::DEFAULT
   end
 
   # Produces a CallableType matching all callables
@@ -332,14 +325,7 @@ module TypeFactory
   # @api public
   #
   def self.data
-    @data_t ||= TypeParser.singleton.parse('Data', Loaders.static_loader)
-  end
-
-  # Produces the RichData type
-  # @api public
-  #
-  def self.rich_data
-    @rich_data_t ||= TypeParser.singleton.parse('RichData', Loaders.static_loader)
+    PDataType::DEFAULT
   end
 
   # Creates an instance of the Undef type
@@ -436,32 +422,18 @@ module TypeFactory
     PHashType.new(key_type, value_type, size_type)
   end
 
-  # Produces a type for Array[Any]
-  # @api public
-  #
-  def self.array_of_any
-    PArrayType::DEFAULT
-  end
-
   # Produces a type for Array[Data]
   # @api public
   #
   def self.array_of_data
-    @array_of_data_t = PArrayType.new(data)
+    PArrayType::DATA
   end
 
-  # Produces a type for Hash[Any,Any]
-  # @api public
-  #
-  def self.hash_of_any
-    PHashType::DEFAULT
-  end
-
-  # Produces a type for Hash[String,Data]
+  # Produces a type for Hash[Scalar, Data]
   # @api public
   #
   def self.hash_of_data
-    @hash_of_data_t = PHashType.new(string, data)
+    PHashType::DATA
   end
 
   # Produces a type for NotUndef[T]

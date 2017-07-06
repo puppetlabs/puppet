@@ -22,13 +22,13 @@ class Puppet::Network::Server
   end
 
   def start
-    raise _("Cannot listen -- already listening.") if listening?
+    raise "Cannot listen -- already listening." if listening?
     @listening = true
     @http_server.listen(address, port)
   end
 
   def stop
-    raise _("Cannot unlisten -- not currently listening.") unless listening?
+    raise "Cannot unlisten -- not currently listening." unless listening?
     @http_server.unlisten
     @listening = false
   end

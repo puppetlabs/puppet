@@ -56,7 +56,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "banana::split" => 'banana::split',
       "false"         => false,
       "true"          => true,
-      "Array"         => types.array_of_any,
+      "Array"         => types.array_of_data(),
       "/.*/"          => /.*/
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
@@ -323,7 +323,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
                     'Array', 'Hash', 'CatalogEntry', 'Resource', 'Class', 'Undef', 'File' ],
 
       # Note, Data > Collection is false (so not included)
-      'Data'    => ['ScalarData', 'Numeric', 'Integer', 'Float', 'Boolean', 'String', 'Pattern', 'Array[Data]', 'Hash[String,Data]',],
+      'Data'    => ['Scalar', 'Numeric', 'Integer', 'Float', 'Boolean', 'String', 'Pattern', 'Array', 'Hash',],
       'Scalar' => ['Numeric', 'Integer', 'Float', 'Boolean', 'String', 'Pattern'],
       'Numeric' => ['Integer', 'Float'],
       'CatalogEntry' => ['Class', 'Resource', 'File'],
@@ -777,14 +777,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       end
     end
 
-    # Integer for >= 2.4.0, otherwise Fixnum
-    int_class_name = 0.class.name
-
     # Errors when wrong number/type of keys are used
     {
-      "Array[0]"                    => "Array-Type[] arguments must be types. Got #{int_class_name}",
-      "Hash[0]"                     => "Hash-Type[] arguments must be types. Got #{int_class_name}",
-      "Hash[Integer, 0]"            => "Hash-Type[] arguments must be types. Got #{int_class_name}",
+      "Array[0]"                    => 'Array-Type[] arguments must be types. Got Fixnum',
+      "Hash[0]"                     => 'Hash-Type[] arguments must be types. Got Fixnum',
+      "Hash[Integer, 0]"            => 'Hash-Type[] arguments must be types. Got Fixnum',
       "Array[Integer,1,2,3]"        => 'Array-Type[] accepts 1 to 3 arguments. Got 4',
       "Array[Integer,String]"       => "A Type's size constraint arguments must be a single Integer type, or 1-2 integers (or default). Got a String-Type",
       "Hash[Integer,String, 1,2,3]" => 'Hash-Type[] accepts 2 to 4 arguments. Got 5',
@@ -792,7 +789,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "'abc'[1.0]"                  => "A substring operation does not accept a Float as a character index. Expected an Integer",
       "'abc'[1, x]"                 => "A substring operation does not accept a String as a character index. Expected an Integer",
       "'abc'[1,2,3]"                => "String supports [] with one or two arguments. Got 3",
-      "NotUndef[0]"                 => "NotUndef-Type[] argument must be a Type or a String. Got #{int_class_name}",
+      "NotUndef[0]"                 => 'NotUndef-Type[] argument must be a Type or a String. Got Fixnum',
       "NotUndef[a,b]"               => 'NotUndef-Type[] accepts 0 to 1 arguments. Got 2',
       "Resource[0]"                 => 'First argument to Resource[] must be a resource type or a String. Got Integer',
       "Resource[a, 0]"              => 'Error creating type specialization of a Resource-Type, Cannot use Integer where a resource title String is expected',
@@ -826,7 +823,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       it "[n] gets class parameter [n]" do
         source = "class wonka($produces='chocolate'){ }
            include wonka
-           Class[wonka]['produces']"
+           Class[wonka][produces]"
 
         # This is more complicated since it needs to run like 3.x and do an import_ast
         adapted_parser = Puppet::Parser::E4ParserAdapter.new
@@ -1283,15 +1280,6 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       source = "File[a] <~ File[b]"
       parser.evaluate_string(scope, source, __FILE__)
       expect(scope.compiler).to have_relationship(['File', 'b', '~>', 'File', 'a'])
-    end
-
-    it 'should close the gap created by an intermediate empty set' do
-      source = "[File[a], File[aa]] -> [] ~> [File[b], File[bb]]"
-      parser.evaluate_string(scope, source, __FILE__)
-      expect(scope.compiler).to have_relationship(['File', 'a',  '~>', 'File', 'b'])
-      expect(scope.compiler).to have_relationship(['File', 'aa', '~>', 'File', 'b'])
-      expect(scope.compiler).to have_relationship(['File', 'a',  '~>', 'File', 'bb'])
-      expect(scope.compiler).to have_relationship(['File', 'aa', '~>', 'File', 'bb'])
     end
   end
 

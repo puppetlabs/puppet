@@ -8,14 +8,14 @@ module Puppet::ModuleTool::Errors
       @conditions        = options[:conditions]
       @action            = options[:action]
 
-      super _("Could not %{action} '%{module_name}' (%{version}); no version satisfies all dependencies") % { action: @action, module_name: @requested_name, version: vstring }
+      super "Could not #{@action} '#{@requested_name}' (#{vstring}); no version satisfies all dependencies"
     end
 
     def multiline
       message = []
-      message << _("Could not %{action} module '%{module_name}' (%{version})") % { action: @action, module_name: @requested_name, version: vstring }
-      message << _("  No version of '%{module_name}' can satisfy all dependencies") % { module_name: @requested_name }
-      message << _("    Use `puppet module %{action} --ignore-dependencies` to %{action} only this module") % { action: @action }
+      message << "Could not #{@action} module '#{@requested_name}' (#{vstring})"
+      message << "  No version of '#{@requested_name}' can satisfy all dependencies"
+      message << "    Use `puppet module #{@action} --ignore-dependencies` to #{@action} only this module"
 
       message.join("\n")
     end
@@ -30,21 +30,21 @@ module Puppet::ModuleTool::Errors
       @action            = options[:action]
 
       if @requested_version == :latest
-        super _("Could not %{action} '%{module_name}'; no releases are available from %{source}") % { action: @action, module_name: @module_name, source: @source }
+        super "Could not #{@action} '#{@module_name}'; no releases are available from #{@source}"
       else
-        super _("Could not %{action} '%{module_name}'; no releases matching '%{version}' are available from %{source}") % { action: @action, module_name: @module_name, version: @requested_version, source: @source }
+        super "Could not #{@action} '#{@module_name}'; no releases matching '#{@requested_version}' are available from #{@source}"
       end
     end
 
     def multiline
       message = []
-      message << _("Could not %{action} '%{module_name}' (%{version})") % { action: @action, module_name: @module_name, version: vstring }
+      message << "Could not #{@action} '#{@module_name}' (#{vstring})"
 
       if @requested_version == :latest
-        message << _("  No releases are available from %{source}") % { source: @source }
-        message << _("    Does '%{module_name}' have at least one published release?") % { module_name: @module_name }
+        message << "  No releases are available from #{@source}"
+        message << "    Does '#{@module_name}' have at least one published release?"
       else
-        message << _("  No releases matching '%{version}' are available from %{source}") % { version: @requested_version, source: @source }
+        message << "  No releases matching '#{@requested_version}' are available from #{@source}"
       end
 
       message.join("\n")
@@ -58,27 +58,27 @@ module Puppet::ModuleTool::Errors
       @dependency        = options[:dependency]
       @directory         = options[:directory]
       @metadata          = options[:metadata]
-      super _("'%{module_name}' (%{version}) requested; installation conflict") % { module_name: @requested_module, version: @requested_version }
+      super "'#{@requested_module}' (#{@requested_version}) requested; installation conflict"
     end
 
     def multiline
       message = []
-      message << _("Could not install module '%{module_name}' (%{version})") % { module_name: @requested_module, version: @requested_version }
+      message << "Could not install module '#{@requested_module}' (#{@requested_version})"
 
       if @dependency
-        message << _("  Dependency '%{name}' (%{version}) would overwrite %{dir}") % { name: @dependency[:name], version: v(@dependency[:version]), dir: @directory }
+        message << "  Dependency '#{@dependency[:name]}' (#{v(@dependency[:version])}) would overwrite #{@directory}"
       else
-        message << _("  Installation would overwrite %{dir}") % { dir: @directory }
+        message << "  Installation would overwrite #{@directory}"
       end
 
       if @metadata
-        message << _("    Currently, '%{name}' (%{version}) is installed to that directory") % { name: @metadata["name"], version: v(@metadata["version"]) }
+        message << "    Currently, '#{@metadata["name"]}' (#{v(@metadata["version"])}) is installed to that directory"
       end
 
       if @dependency
-        message << _("    Use `puppet module install --ignore-dependencies` to install only this module")
+        message << "    Use `puppet module install --ignore-dependencies` to install only this module"
       else
-        message << _("    Use `puppet module install --force` to install this module anyway")
+        message << "    Use `puppet module install --force` to install this module anyway"
       end
 
       message.join("\n")
@@ -93,20 +93,19 @@ module Puppet::ModuleTool::Errors
       @conditions        = options[:conditions]
       @source            = options[:source][1..-1]
 
-      super _("'%{module_name}' (%{version}) requested; Invalid dependency cycle") % { module_name: @requested_module, version: v(@requested_version) }
+      super "'#{@requested_module}' (#{v(@requested_version)}) requested; Invalid dependency cycle"
     end
 
     def multiline
       trace = []
-      trace << _("You specified '%{name}' (%{version})") % { name: @source.first[:name], version: v(@requested_version) }
-      #TRANSLATORS Second half of "You specified a module..."
-      trace += @source[1..-1].map { |m| _("which depends on '%{name}' (%{version})") % { name: m[:name], version: v(m[:version]) } }
+      trace << "You specified '#{@source.first[:name]}' (#{v(@requested_version)})"
+      trace += @source[1..-1].map { |m| "which depends on '#{m[:name]}' (#{v(m[:version])})" }
 
       message = []
-      message << _("Could not install module '%{module_name}' (%{version})") % { module_name: @requested_module, version: v(@requested_version) }
-      message << _("  No version of '%{module_name}' will satisfy dependencies") % { module_name: @module_name }
-      message << trace.map { |s| "    #{s}".join(",\n") }
-      message << _("    Use `puppet module install --force` to install this module anyway")
+      message << "Could not install module '#{@requested_module}' (#{v(@requested_version)})"
+      message << "  No version of '#{@module_name}' will satisfy dependencies"
+      message << trace.map { |s| "    #{s}" }.join(",\n")
+      message << "    Use `puppet module install --force` to install this module anyway"
 
       message.join("\n")
     end
@@ -117,17 +116,17 @@ module Puppet::ModuleTool::Errors
       @module_name = options[:module_name]
       @suggestions = options[:suggestions] || []
       @action      = options[:action]
-      super _("Could not %{action} '%{module_name}'; module is not installed") % { action: @action, module_name: @module_name }
+      super "Could not #{@action} '#{@module_name}'; module is not installed"
     end
 
     def multiline
       message = []
-      message << _("Could not %{action} module '%{module_name}'") % { action: @action, module_name: @module_name }
-      message << _("  Module '%{module_name}' is not installed") % { module_name: @module_name }
+      message << "Could not #{@action} module '#{@module_name}'"
+      message << "  Module '#{@module_name}' is not installed"
       message += @suggestions.map do |suggestion|
-        _("    You may have meant `puppet module %{action} %{suggestion}`") % { action: @action, suggestion: suggestion }
+        "    You may have meant `puppet module #{@action} #{suggestion}`"
       end
-      message << _("    Use `puppet module install` to install this module") if @action == :upgrade
+      message << "    Use `puppet module install` to install this module" if @action == :upgrade
       message.join("\n")
     end
   end
@@ -137,18 +136,17 @@ module Puppet::ModuleTool::Errors
       @module_name = options[:module_name]
       @modules     = options[:installed_modules]
       @action      = options[:action]
-      #TRANSLATORS "module path" refers to a set of directories where modules may be installed
-      super _("Could not %{action} '%{module_name}'; module appears in multiple places in the module path") % { action: @action, module_name: @module_name }
+      super "Could not #{@action} '#{@module_name}'; module appears in multiple places in the module path"
     end
 
     def multiline
       message = []
-      message << _("Could not %{action} module '%{module_name}'") % { action: @action, module_name: @module_name }
-      message << _("  Module '%{module_name}' appears multiple places in the module path") % { module_name: @module_name }
+      message << "Could not #{@action} module '#{@module_name}'"
+      message << "  Module '#{@module_name}' appears multiple places in the module path"
       message += @modules.map do |mod|
-        _("    '%{module_name}' (%{version}) was found in %{path}") % { module_name: @module_name, version: v(mod.version), path: mod.modulepath }
+        "    '#{@module_name}' (#{v(mod.version)}) was found in #{mod.modulepath}"
       end
-      message << _("    Use the `--modulepath` option to limit the search to specific directories")
+      message << "    Use the `--modulepath` option to limit the search to specific directories"
       message.join("\n")
     end
   end
@@ -159,14 +157,14 @@ module Puppet::ModuleTool::Errors
       @requested_version = options[:requested_version]
       @installed_version = options[:installed_version]
       @action            = options[:action]
-      super _("Could not %{action} '%{module_name}'; module has had changes made locally") % { action: @action, module_name: @module_name }
+      super "Could not #{@action} '#{@module_name}'; module has had changes made locally"
     end
 
     def multiline
       message = []
-      message << _("Could not %{action} module '%{module_name}' (%{version})") % { action: @action, module_name: @module_name, version: vstring }
-      message << _("  Installed module has had changes made locally")
-      message << _("    Use `puppet module %{action} --ignore-changes` to %{action} this module anyway") % { action: @action }
+      message << "Could not #{@action} module '#{@module_name}' (#{vstring})"
+      message << "  Installed module has had changes made locally"
+      message << "    Use `puppet module #{@action} --ignore-changes` to #{@action} this module anyway"
       message.join("\n")
     end
   end
@@ -176,14 +174,14 @@ module Puppet::ModuleTool::Errors
       @name   = name
       @action = options[:action]
       @error  = options[:error]
-      super _("Could not %{action} '%{module_name}'; %{error}") % { action: @action, module_name: @name, error: @error.message }
+      super "Could not #{@action} '#{@name}'; #{@error.message}"
     end
 
     def multiline
       message = []
-      message << _("Could not %{action} module '%{module_name}'") % { action: @action, module_name: @name }
-      message << _("  Failure trying to parse metadata")
-      message << _("    Original message was: %{message}") % { message: @error.message }
+      message << "Could not #{@action} module '#{@name}'"
+      message << "  Failure trying to parse metadata"
+      message << "    Original message was: #{@error.message}"
       message.join("\n")
     end
   end

@@ -32,12 +32,11 @@ Puppet.features.add(:microsoft_windows) do
     require 'win32/service'
     true
   rescue LoadError => err
-    #TRANSLATORS "win32-process", "win32-dir", and "win32-service" are program names and should not be translated
-    warn _("Cannot run on Microsoft Windows without the win32-process, win32-dir and win32-service gems: %{err}") % { err: err } unless Puppet.features.posix?
+    warn "Cannot run on Microsoft Windows without the win32-process, win32-dir and win32-service gems: #{err}" unless Puppet.features.posix?
   end
 end
 
-raise Puppet::Error,_("Cannot determine basic system flavour") unless Puppet.features.posix? or Puppet.features.microsoft_windows?
+raise Puppet::Error,"Cannot determine basic system flavour" unless Puppet.features.posix? or Puppet.features.microsoft_windows?
 
 # We've got LDAP available.
 Puppet.features.add(:ldap, :libs => ["ldap"])

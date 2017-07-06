@@ -12,7 +12,7 @@ Puppet::Type.newtype(:resources) do
     desc "The name of the type to be managed."
 
     validate do |name|
-      raise ArgumentError, _("Could not find resource type '%{name}'") % { name: name } unless Puppet::Type.type(name)
+      raise ArgumentError, "Could not find resource type '#{name}'" unless Puppet::Type.type(name)
     end
 
     munge { |v| v.to_s }
@@ -30,9 +30,9 @@ Puppet::Type.newtype(:resources) do
     validate do |value|
       if munge(value)
         unless @resource.resource_type.respond_to?(:instances)
-          raise ArgumentError, _("Purging resources of type %{res_type} is not supported, since they cannot be queried from the system") % { res_type: @resource[:name] }
+          raise ArgumentError, "Purging resources of type #{@resource[:name]} is not supported, since they cannot be queried from the system"
         end
-        raise ArgumentError, _("Purging is only supported on types that accept 'ensure'") unless @resource.resource_type.validproperty?(:ensure)
+        raise ArgumentError, "Purging is only supported on types that accept 'ensure'" unless @resource.resource_type.validproperty?(:ensure)
       end
     end
   end
@@ -54,7 +54,7 @@ Puppet::Type.newtype(:resources) do
         false
       when Integer; value
       else
-        raise ArgumentError, _("Invalid value %{value}") % { value: value.inspect }
+        raise ArgumentError, "Invalid value #{value.inspect}"
       end
     end
 
@@ -81,7 +81,7 @@ Puppet::Type.newtype(:resources) do
           when String
             Integer(v)
           else
-            raise ArgumentError, _("Invalid value %{value}.") % { value: v.inspect }
+            raise ArgumentError, "Invalid value #{v.inspect}."
         end
       end
     end
@@ -100,7 +100,7 @@ Puppet::Type.newtype(:resources) do
   def able_to_ensure_absent?(resource)
       resource[:ensure] = :absent
   rescue ArgumentError, Puppet::Error
-      err _("The 'ensure' attribute on %{name} resources does not accept 'absent' as a value") % { name: self[:name] }
+      err "The 'ensure' attribute on #{self[:name]} resources does not accept 'absent' as a value"
       false
   end
 

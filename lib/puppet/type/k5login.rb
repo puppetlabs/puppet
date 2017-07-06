@@ -20,7 +20,7 @@ Puppet::Type.newtype(:k5login) do
 
     validate do |value|
       unless absolute_path?(value)
-        raise Puppet::Error, _("File paths must be fully qualified.")
+        raise Puppet::Error, "File paths must be fully qualified."
       end
     end
   end

@@ -23,7 +23,7 @@ class Puppet::Util::JsonLockfile < Puppet::Util::Lockfile
   def lock(lock_data = nil)
     return false if locked?
 
-    super(lock_data.to_json)
+    super(lock_data.to_pson)
   end
 
   # Retrieve the (optional) lock data that was specified at the time the file
@@ -35,9 +35,9 @@ class Puppet::Util::JsonLockfile < Puppet::Util::Lockfile
     return nil unless file_locked?
     file_contents = super
     return nil if file_contents.nil? or file_contents.empty?
-    JSON.parse(file_contents)
-  rescue JSON::ParserError => e
-    Puppet.warning _("Unable to read lockfile data from %{path}: not in JSON") % { path: @file_path }
+    PSON.parse(file_contents)
+  rescue PSON::ParserError => e
+    Puppet.warning "Unable to read lockfile data from #{@file_path}: not in PSON"
     nil
   end
 

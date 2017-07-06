@@ -8,7 +8,7 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
 
   def command
     command = Puppet[:external_nodes]
-    raise ArgumentError, _("You must set the 'external_nodes' parameter to use the external node terminus") unless command != _("none")
+    raise ArgumentError, "You must set the 'external_nodes' parameter to use the external node terminus" unless command != "none"
     command.split
   end
 
@@ -19,13 +19,11 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
     # Translate the output to ruby.
     result = translate(request.key, output)
 
-    facts = request.options[:facts].is_a?(Puppet::Node::Facts) ? request.options[:facts] : nil
-
     # Set the requested environment if it wasn't overridden
     # If we don't do this it gets set to the local default
     result[:environment] ||= request.environment
 
-    create_node(request.key, result, facts)
+    create_node(request.key, result)
   end
 
   private
@@ -36,7 +34,7 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
   end
 
   # Turn our outputted objects into a Puppet::Node instance.
-  def create_node(name, result, facts = nil)
+  def create_node(name, result)
     node = Puppet::Node.new(name)
     set = false
     [:parameters, :classes, :environment].each do |param|
@@ -46,7 +44,7 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
       end
     end
 
-    node.fact_merge(facts)
+    node.fact_merge
     node
   end
 
@@ -59,13 +57,13 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
       when Symbol
         hash[data[0]] = data[1]
       else
-        raise Puppet::Error, _("key is a %{klass}, not a string or symbol") % { klass: data[0].class }
+        raise Puppet::Error, "key is a #{data[0].class}, not a string or symbol"
       end
 
       hash
     end
 
   rescue => detail
-      raise Puppet::Error, _("Could not load external node results for %{name}: %{detail}") % { name: name, detail: detail }, detail.backtrace
+      raise Puppet::Error, "Could not load external node results for #{name}: #{detail}", detail.backtrace
   end
 end

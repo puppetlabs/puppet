@@ -1,0 +1,56 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'csv'
+
+options = {:in => nil, :out => nil, :format => :yaml}
+
+OptionParser.new do |opts|
+  opts.banner = "Converter for extlookup CSV files into Hiera JSON and YAML files"
+
+  opts.on("--in FILE", "-i", "Input CSV file") do |v|
+    options[:in] = v
+  end
+
+  opts.on("--out FILE", "-o", "Output Hiera file") do |v|
+    options[:out] = v
+  end
+
+  opts.on("--json", "-j", "Create JSON format file") do |v|
+    options[:format] = :json
+  end
+end.parse!
+
+if options[:in].nil? || options[:out].nil?
+  STDERR.puts "Please specify an input and output file with --in and --out"
+  exit 1
+end
+
+unless File.exist?(options[:in])
+  STDERR.puts "Cannot find input file #{options[:in]}"
+  exit 1
+end
+
+csvdata = CSV.read(options[:in])
+hieradata = {}
+
+csvdata.each do |d|
+  d = d.map{|item| item.to_s}
+
+  if d.size > 2
+    hieradata[d[0]] = d[1, d.size].flatten
+  else
+    hieradata[d[0]] = d[1]
+  end
+end
+
+case options[:format]
+when :yaml
+  require 'yaml'
+  File.open(options[:out], "w") {|f| f.write hieradata.to_yaml}
+when :json
+  require 'rubygems'
+  require 'json'
+  File.open(options[:out], "w") {|f| f.write JSON.pretty_generate hieradata}
+end
+

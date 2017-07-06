@@ -2,9 +2,9 @@ require 'puppet/indirector/face'
 
 Puppet::Indirector::Face.define(:status, '0.0.1') do
   copyright "Puppet Inc.", 2011
-  license   _("Apache 2 license; see COPYING")
+  license   "Apache 2 license; see COPYING"
 
-  summary _("View puppet server status.")
+  summary "View puppet server status."
 
   deactivate_action(:destroy)
   deactivate_action(:save)
@@ -12,8 +12,8 @@ Puppet::Indirector::Face.define(:status, '0.0.1') do
 
   find = get_action(:find)
   find.default = true
-  find.summary _("Check status of puppet master server.")
-  find.returns _(<<-'EOT')
+  find.summary "Check status of puppet master server."
+  find.returns <<-'EOT'
     A "true" response or a low-level connection error. When used from the Ruby
     API: returns a Puppet::Status object.
   EOT

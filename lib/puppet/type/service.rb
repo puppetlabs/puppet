@@ -86,7 +86,7 @@ module Puppet
 
       validate do |value|
         if value == :manual and !Puppet.features.microsoft_windows?
-          raise Puppet::Error.new(_("Setting enable to manual is only supported on Microsoft Windows."))
+          raise Puppet::Error.new("Setting enable to manual is only supported on Microsoft Windows.")
         end
       end
     end

@@ -94,7 +94,7 @@ Puppet::Type.newtype(:interface) do
       validate do |values|
         values = [values] unless values.is_a?(Array)
         values.each do |value|
-          self.fail _("Invalid interface ip address") unless parse(value.gsub(/\s*(eui-64|link-local)\s*$/,''))
+          self.fail "Invalid interface ip address" unless parse(value.gsub(/\s*(eui-64|link-local)\s*$/,''))
         end
       end
 

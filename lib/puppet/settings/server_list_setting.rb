@@ -13,7 +13,7 @@ class Puppet::Settings::ServerListSetting < Puppet::Settings::ArraySetting
       when Array
         server
       else
-        raise ArgumentError, _("Expected an Array of String, got a %{klass}") % { klass: value.class }
+        raise ArgumentError, "Expected an Array of String, got a #{value.class}"
       end
     }
   end

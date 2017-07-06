@@ -11,7 +11,7 @@ Puppet::Type.type(:group).provide :pw, :parent => Puppet::Provider::NameService:
 
   options :members, :flag => "-M", :method => :mem
 
-  verify :gid, _("GID must be an integer") do |value|
+  verify :gid, "GID must be an integer" do |value|
     value.is_a? Integer
   end
 

@@ -352,34 +352,12 @@ describe 'Puppet Type System' do
     end
 
     it 'can be created with a runtime and, puppet name pattern, and runtime replacement' do
-      expect(tf.runtime('ruby', [/^MyPackage::(.*)$/, 'MyModule::\1']).to_s).to eq("Runtime[ruby, [/^MyPackage::(.*)$/, 'MyModule::\\1']]")
+      expect(tf.runtime('ruby', [/^MyPackage::(.*)$/, 'MyModule::\1']).to_s).to eq("Runtime[ruby, [/^MyPackage::(.*)$/, \"MyModule::\\\\1\"]]")
     end
 
     it 'will map a Puppet name to a runtime type' do
       t = tf.runtime('ruby', [/^MyPackage::(.*)$/, 'MyModule::\1'])
       expect(t.from_puppet_name('MyPackage::MyType').to_s).to eq("Runtime[ruby, 'MyModule::MyType']")
-    end
-
-    it 'with parameters is assignable to the default Runtime type' do
-      code = <<-CODE
-      notice(Runtime[ruby, 'Symbol'] < Runtime)
-      CODE
-      expect(eval_and_collect_notices(code)).to eq(['true'])
-    end
-
-    it 'with parameters is not assignable from the default Runtime type' do
-      code = <<-CODE
-      notice(Runtime < Runtime[ruby, 'Symbol'])
-      CODE
-      expect(eval_and_collect_notices(code)).to eq(['false'])
-    end
-
-    it 'default is assignable to itself' do
-      code = <<-CODE
-      notice(Runtime < Runtime)
-      notice(Runtime <= Runtime)
-      CODE
-      expect(eval_and_collect_notices(code)).to eq(['false', 'true'])
     end
   end
 
@@ -461,7 +439,7 @@ describe 'Puppet Type System' do
       type Foo = Variant[Foo,String,Integer]
       assert_type(Foo, /x/)
       CODE
-      expect { eval_and_collect_notices(code) }.to raise_error(/expects a Foo = Variant\[String, Integer\] value, got Regexp/)
+      expect { eval_and_collect_notices(code) }.to raise_error(/expects a value of type String or Integer, got Regexp/)
     end
 
     it 'will handle a scalar correctly in combinations of nested aliased variants' do
@@ -625,24 +603,6 @@ describe 'Puppet Type System' do
       [tf.any, tf.scalar, tf.collection ].each do |t|
         expect { t.create }.to raise_error(ArgumentError, /Creation of new instance of type '#{t.to_s}' is not supported/)
       end
-    end
-  end
-
-  context 'creation of parameterized type via ruby create function on class' do
-    around(:each) do |example|
-      Puppet.override(:loaders => Loaders.new(Puppet::Node::Environment.create(:testing, []))) do
-        example.run
-      end
-    end
-
-    it 'is supported by Integer' do
-      int_type = tf.integer.class.create(0, 32)
-      expect(int_type).to eq(tf.range(0, 32))
-    end
-
-    it 'is supported by Regexp' do
-      rx_type = tf.regexp.class.create('[a-z]+')
-      expect(rx_type).to eq(tf.regexp(/[a-z]+/))
     end
   end
 end

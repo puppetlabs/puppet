@@ -16,6 +16,7 @@ describe "Application instantiation" do
   end
 
   around :each do |example|
+    Puppet[:app_management] = true
     Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
     Puppet::Parser::EnvironmentCompiler.any_instance.stubs(:loaders).returns(loaders)
     Puppet.override(:loaders => loaders, :current_environment => env) do
@@ -26,6 +27,7 @@ describe "Application instantiation" do
       example.run
       Puppet::Type.rmtype(:cap)
     end
+    Puppet[:app_management] = false
   end
 
   MANIFEST = <<-EOS

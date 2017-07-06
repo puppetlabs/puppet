@@ -43,7 +43,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       when '-'
         {:status => 'known'}
       else
-        raise ArgumentError, _('Unknown format %s: %s[%s]') % [self.name, flags, flags[0..0]]
+        raise ArgumentError, 'Unknown format %s: %s[%s]' % [self.name, flags, flags[0..0]]
       end
     ).merge(
       case flags[1..1]
@@ -52,7 +52,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       when '-'
         {}
       else
-        raise ArgumentError, _('Unknown format %s: %s[%s]') % [self.name, flags, flags[1..1]]
+        raise ArgumentError, 'Unknown format %s: %s[%s]' % [self.name, flags, flags[1..1]]
       end
     )
   end
@@ -82,7 +82,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     when /known/
       {:status => 'known'}
     else
-      raise ArgumentError, _('Unknown format %s: %s') % [self.name, state]
+      raise ArgumentError, 'Unknown format %s: %s' % [self.name, state]
     end
   end
 
@@ -101,7 +101,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       {:publisher => $1, :name => $2, :ensure => $3}.merge pkg_state($4).merge(ufoxi_flag($5))
 
     else
-      raise ArgumentError, _('Unknown line format %s: %s') % [self.name, line]
+      raise ArgumentError, 'Unknown line format %s: %s' % [self.name, line]
     end).merge({:provider => self.name})
   end
 
@@ -111,7 +111,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
 
   def unhold
     r = exec_cmd(command(:pkg), 'unfreeze', @resource[:name])
-    raise Puppet::Error, _("Unable to unfreeze %{package}") % { package: r[:out] } unless [0,4].include? r[:exit]
+    raise Puppet::Error, "Unable to unfreeze #{r[:out]}" unless [0,4].include? r[:exit]
   end
 
   def insync?(is)
@@ -146,7 +146,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       potential_matches = pkg(:list, '-Hvfa', "#{name}@#{should}").split("\n").map{|l|self.class.parse_line(l)}
       n = potential_matches.length
       if n > 1
-        warning(_("Implicit version %{should} has %{n} possible matches") % { should: should, n: n })
+        warning("Implicit version #{should} has #{n} possible matches")
       end
       potential_matches.each{ |p|
         command = is == :absent ? 'install' : 'update'
@@ -156,7 +156,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
           # if the first installable match would cause no changes, we're in sync
           return true
         when 0
-          warning(_("Selecting version '%{version}' for implicit '%{should}'") % { version: p[:ensure], should: should })
+          warning("Selecting version '#{p[:ensure]}' for implicit '#{should}'")
           @resource[:ensure] = p[:ensure]
           return false
         end
@@ -212,7 +212,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     end
     r = exec_cmd(command(:pkg), command, *args, name)
     return r if nofail
-    raise Puppet::Error, _("Unable to update %{package}") % { package: r[:out] } if r[:exit] != 0
+    raise Puppet::Error, "Unable to update #{r[:out]}" if r[:exit] != 0
   end
 
   # uninstall the package. The complication comes from the -r_ecursive flag which is no longer
@@ -232,7 +232,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     r = install(true)
     # 4 == /No updates available for this image./
     return if [0,4].include? r[:exit]
-    raise Puppet::Error, _("Unable to update %{package}") % { package: r[:out] }
+    raise Puppet::Error, "Unable to update #{r[:out]}"
   end
 
   # list a specific package

@@ -5,6 +5,11 @@ require 'puppet/parser/ast/leaf'
 
 # Puppet::Resource::Type represents nodes, classes and defined types.
 #
+# It has a standard format for external consumption, usable from the
+# resource_type indirection via rest and the resource_type face. See the
+# {file:api_docs/http_resource_type.md#Schema resource type schema
+# description}.
+#
 # @api public
 class Puppet::Resource::Type
   Puppet::ResourceType = self
@@ -59,6 +64,49 @@ class Puppet::Resource::Type
     define_method("#{t}?") { self.type == t }
   end
 
+  require 'puppet/indirector'
+  extend Puppet::Indirector
+  indirects :resource_type, :terminus_class => :parser
+
+  def self.from_data_hash(data)
+    name = data.delete(NAME) or raise ArgumentError, 'Resource Type names must be specified'
+    kind = data.delete(KIND) || 'definition'
+
+    unless type = RESOURCE_EXTERNAL_NAMES_TO_KINDS[kind]
+      raise ArgumentError, "Unsupported resource kind '#{kind}'"
+    end
+
+    data = data.inject({}) { |result, ary| result[ary[0].intern] = ary[1]; result }
+
+    # External documentation uses "parameters" but the internal name
+    # is "arguments"
+    data[:arguments] = data.delete(:parameters)
+
+    new(type, name, data)
+  end
+
+  def to_data_hash
+    data = [:doc, :line, :file, :parent].inject({}) do |hash, param|
+      next hash unless (value = self.send(param)) and (value != "")
+      hash[param.to_s] = value
+      hash
+    end
+
+    # External documentation uses "parameters" but the internal name
+    # is "arguments"
+    # Dump any arguments as source
+    data[PARAMETERS] = Hash[arguments.map do |k,v|
+                                [k, v.respond_to?(:source_text) ? v.source_text : v]
+                              end]
+    data[NAME] = name
+
+    unless RESOURCE_KINDS_TO_EXTERNAL_NAMES.has_key?(type)
+      raise ArgumentError, "Unsupported resource kind '#{type}'"
+    end
+    data[KIND] = RESOURCE_KINDS_TO_EXTERNAL_NAMES[type]
+    data
+  end
+
   # Are we a child of the passed class?  Do a recursive search up our
   # parentage tree to figure it out.
   def child_of?(klass)
@@ -75,12 +123,12 @@ class Puppet::Resource::Type
 
     resource.export.map do |ex|
       # Assert that the ref really is a resource reference
-      raise Puppet::Error, _("Invalid export in %{reference}: %{ex} is not a resource") % { reference: resource.ref, ex: ex } unless ex.is_a?(Puppet::Resource)
-      raise Puppet::Error, _("Invalid export in %{reference}: %{ex} is not a capability resource") % { reference: resource.ref, ex: ex } if ex.resource_type.nil? || !ex.resource_type.is_capability?
+      raise Puppet::Error, "Invalid export in #{resource.ref}: #{ex} is not a resource" unless ex.is_a?(Puppet::Resource)
+      raise Puppet::Error, "Invalid export in #{resource.ref}: #{ex} is not a capability resource" if ex.resource_type.nil? || !ex.resource_type.is_capability?
 
       blueprint = produces.find { |pr| pr[:capability] == ex.type }
       if blueprint.nil?
-        raise Puppet::ParseError, _("Resource type %{res_type} does not produce %{ex_type}") % { res_type: resource.type, ex_type: ex.type }
+        raise Puppet::ParseError, "Resource type #{resource.type} does not produce #{ex.type}"
       end
       t = ex.type
       t = Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_resource_type(scope, t) unless t == 'class' || t == 'node'
@@ -117,7 +165,7 @@ class Puppet::Resource::Type
     static_parent = evaluate_parent_type(resource)
     scope = static_parent || resource.scope
 
-    scope = scope.newscope(:source => self, :resource => resource) unless resource.title == :main
+    scope = scope.newscope(:namespace => namespace, :source => self, :resource => resource) unless resource.title == :main
     scope.compiler.add_class(name) unless definition?
 
     set_resource_parameters(resource, scope)
@@ -187,12 +235,12 @@ class Puppet::Resource::Type
 
   # Add code from a new instance to our code.
   def merge(other)
-    fail _("%{name} is not a class; cannot add code to it") % { name: name } unless type == :hostclass
-    fail _("%{name} is not a class; cannot add code from it") % { name: other.name } unless other.type == :hostclass
-    fail _("Cannot have code outside of a class/node/define because 'freeze_main' is enabled") if name == "" and Puppet.settings[:freeze_main]
+    fail "#{name} is not a class; cannot add code to it" unless type == :hostclass
+    fail "#{other.name} is not a class; cannot add code from it" unless other.type == :hostclass
+    fail "Cannot have code outside of a class/node/define because 'freeze_main' is enabled" if name == "" and Puppet.settings[:freeze_main]
 
     if parent and other.parent and parent != other.parent
-      fail _("Cannot merge classes with different parent classes (%{name} => %{parent} vs. %{other_name} => %{other_parent})") % { name: name, parent: parent, other_name: other.name, other_parent: other.parent }
+      fail "Cannot merge classes with different parent classes (#{name} => #{parent} vs. #{other.name} => #{other.parent})"
     end
 
     # We know they're either equal or only one is set, so keep whichever parent is specified.
@@ -277,7 +325,7 @@ class Puppet::Resource::Type
   # @deprecated Not used by Puppet
   # @api private
   def assign_parameter_values(parameters, resource)
-    Puppet.deprecation_warning(_('The method Puppet::Resource::Type.assign_parameter_values is deprecated and will be removed in the next major release of Puppet.'))
+    Puppet.deprecation_warning('The method Puppet::Resource::Type.assign_parameter_values is deprecated and will be removed in the next major release of Puppet.')
 
     return unless parameters
 
@@ -293,7 +341,7 @@ class Puppet::Resource::Type
     return nil unless parent
 
     @parent_type ||= scope.environment.known_resource_types.send("find_#{type}", parent) ||
-      fail(Puppet::ParseError, _("Could not find parent resource type '%{parent}' of type %{parent_type} in %{env}") % { parent: parent, parent_type: type, env: scope.environment })
+      fail(Puppet::ParseError, "Could not find parent resource type '#{parent}' of type #{type} in #{scope.environment}")
   end
 
   # Validate and set any arguments passed by the resource as variables in the scope.
@@ -484,9 +532,9 @@ class Puppet::Resource::Type
     return unless Puppet::Type.metaparamclass(param)
 
     if default
-      warnonce _("%{param} is a metaparam; this value will inherit to all contained resources in the %{name} definition") % { param: param, name: self.name }
+      warnonce "#{param} is a metaparam; this value will inherit to all contained resources in the #{self.name} definition"
     else
-      raise Puppet::ParseError, _("%{param} is a metaparameter; please choose another parameter name in the %{name} definition") % { param: param, name: self.name }
+      raise Puppet::ParseError, "#{param} is a metaparameter; please choose another parameter name in the #{self.name} definition"
     end
   end
 
@@ -501,7 +549,7 @@ class Puppet::Resource::Type
 
     if application?
       resource_type = type_factory.type_type(type_factory.resource)
-      members[type_factory.string(NODES)] = type_factory.hash_of(type_factory.variant(
+      members[type_factory.optional(type_factory.string(NODES))] = type_factory.hash_of(type_factory.variant(
           resource_type, type_factory.array_of(resource_type)), type_factory.type_type(type_factory.resource('node')))
     end
 

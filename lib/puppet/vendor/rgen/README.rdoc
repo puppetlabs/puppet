@@ -1,0 +1,78 @@
+= RGen - Ruby Modelling and Generator Framework
+
+RGen is a framework for Model Driven Software Development (MDSD)in Ruby.
+This means that it helps you build Metamodels, instantiate Models, modify
+and transform Models and finally generate arbitrary textual content from it.
+
+RGen features include:
+* Supporting Ruby 1.8.6, 1.8.7 and 1.9.x
+* Metamodel definition language (internal Ruby DSL)
+* ECore Meta-metamodel with an ECore instance available for every Metamodel
+* Generator creating the Ruby metamodel definition from an ECore instance
+* Transformer creating Ruby metamodel classes/modules from an ECore instance
+* Instantiation of Metamodels, i.e. creation of Models (e.g. from XML)
+* Model builder, internal Ruby DSL
+* Model fragmentation over several several files and per-fragment caching
+* Model Transformation language (internal Ruby DSL)
+* Powerful template based generator language (internal Ruby DSL inside of ERB)
+* UML 1.3 metamodel and XMI 1.1 instantiator included
+* ECore XML support (XMI 2.0)
+* UML-to-ECore and ECore-to-UML transformation (UML class models)
+* Enterprise Architect support (UML1.3/XMI1.1) 
+
+
+== Download
+
+Get the latest release from Github: https://github.com/mthiede/rgen
+
+
+== Installation
+
+Install RGen as a Ruby gem:
+
+  gem install rgen
+
+
+== Running the Tests 
+
+Change to the 'test' folder and run the test suite:
+
+  cd test
+  ruby rgen_test.rb
+
+
+== Documentation
+
+RDoc documentation is available at Github: https://mthiede.github.com/rgen/
+
+Find the main documentation parts for:
+* RGen::MetamodelBuilder
+* RGen::Transformer
+* RGen::TemplateLanguage
+* RGen::Fragment::FragmentedModel
+
+
+== Examples
+
+There are several examples of using RGen within the framework itself.
+
+Metamodel Definition:
+  lib/rgen/ecore/ecore.rb
+  lib/metamodels/uml13_metamodel.rb
+
+Instantiation:
+  lib/rgen/instantiator/xmi11_instantiator.rb
+  lib/rgen/instantiator/ecore_xml_instantiator.rb
+  
+Transformations:
+  lib/rgen/ecore/ruby_to_ecore.rb
+  lib/transformers/uml13_to_ecore.rb
+  
+Generators:
+  lib/mmgen/metamodel_generator.rb
+
+  
+== License
+
+RGen is released under the MIT license.
+

@@ -3,7 +3,7 @@
 # fast_gettext for your project.
 gettext:
   # This is used for the name of the .pot and .po files; they will be
-  # called <project_name>.pot
+  # called <project_name>.pot?
   project_name: 'puppet'
   # This is used in comments in the .pot and .po files to indicate what
   # project the files belong to and should be a little more descriptive than
