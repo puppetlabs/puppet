@@ -205,7 +205,7 @@ module Puppet::Functions
   # @api public
   def self.create_loaded_function(func_name, loader, function_base = Function, &block)
     if function_base.ancestors.none? { |s| s == Puppet::Pops::Functions::Function }
-      raise ArgumentError, "Functions must be based on Puppet::Pops::Functions::Function. Got #{function_base}"
+      raise ArgumentError, _("Functions must be based on Puppet::Pops::Functions::Function. Got %{function_base}") % { function_base: function_base }
     end
 
     func_name = func_name.to_s
@@ -265,7 +265,7 @@ module Puppet::Functions
   # @api private
   def self.default_dispatcher(the_class, func_name)
     unless the_class.method_defined?(func_name)
-      raise ArgumentError, "Function Creation Error, cannot create a default dispatcher for function '#{func_name}', no method with this name found"
+      raise ArgumentError, _("Function Creation Error, cannot create a default dispatcher for function '%{func_name}', no method with this name found") % { func_name: func_name }
     end
     any_signature(*min_max_param(the_class.instance_method(func_name)))
   end
@@ -343,7 +343,7 @@ module Puppet::Functions
     #
     def self.local_types(&block)
       if loader.nil?
-        raise ArgumentError, "No loader present. Call create_loaded_function(:myname, loader,...), instead of 'create_function' if running tests"
+        raise ArgumentError, _("No loader present. Call create_loaded_function(:myname, loader,...), instead of 'create_function' if running tests")
       end
       aliases = LocalTypeAliasesBuilder.new(loader, name)
       aliases.instance_eval(&block)
@@ -407,7 +407,7 @@ module Puppet::Functions
     # @api public
     def param(type, name)
       internal_param(type, name)
-      raise ArgumentError, 'A required parameter cannot be added after an optional parameter' if @min != @max
+      raise ArgumentError, _('A required parameter cannot be added after an optional parameter') if @min != @max
       @min += 1
       @max += 1
     end
@@ -456,7 +456,7 @@ module Puppet::Functions
     # @api public
     def required_repeated_param(type, name)
       internal_param(type, name, true)
-      raise ArgumentError, 'A required repeated parameter cannot be added after an optional parameter' if @min != @max
+      raise ArgumentError, _('A required repeated parameter cannot be added after an optional parameter') if @min != @max
       @min += 1
       @max = :default
     end
@@ -478,22 +478,22 @@ module Puppet::Functions
         type_string, name = type_and_name
         type = @type_parser.parse(type_string, loader)
       else
-        raise ArgumentError, "block_param accepts max 2 arguments (type, name), got #{type_and_name.size}."
+        raise ArgumentError, _("block_param accepts max 2 arguments (type, name), got %{size}.") % { size: type_and_name.size }
       end
 
       unless Puppet::Pops::Types::TypeCalculator.is_kind_of_callable?(type, false)
-        raise ArgumentError, "Expected PCallableType or PVariantType thereof, got #{type.class}"
+        raise ArgumentError, _("Expected PCallableType or PVariantType thereof, got %{type_class}") % { type_class: type.class }
       end
 
       unless name.is_a?(Symbol)
-        raise ArgumentError, "Expected block_param name to be a Symbol, got #{name.class}"
+        raise ArgumentError, _("Expected block_param name to be a Symbol, got %{name_class}") % { name_class: name.class }
       end
 
       if @block_type.nil?
         @block_type = type
         @block_name = name
       else
-        raise ArgumentError, 'Attempt to redefine block'
+        raise ArgumentError, _('Attempt to redefine block')
       end
     end
     alias required_block_param block_param
@@ -514,7 +514,7 @@ module Puppet::Functions
     #
     # @api public
     def return_type(type)
-      raise ArgumentError, "Argument to 'return_type' must be a String reference to a Puppet Data Type. Got #{type.class}" unless type.is_a?(String)
+      raise ArgumentError, _("Argument to 'return_type' must be a String reference to a Puppet Data Type. Got %{type_class}") % { type_class: type.class } unless type.is_a?(String)
       @return_type = type
     end
 
@@ -522,11 +522,11 @@ module Puppet::Functions
 
     # @api private
     def internal_param(type, name, repeat = false)
-      raise ArgumentError, 'Parameters cannot be added after a block parameter' unless @block_type.nil?
-      raise ArgumentError, 'Parameters cannot be added after a repeated parameter' if @max == :default
+      raise ArgumentError, _('Parameters cannot be added after a block parameter') unless @block_type.nil?
+      raise ArgumentError, _('Parameters cannot be added after a repeated parameter') if @max == :default
 
       if name.is_a?(String)
-        raise ArgumentError, "Parameter name argument must be a Symbol. Got #{name.class}"
+        raise ArgumentError, _("Parameter name argument must be a Symbol. Got %{name_class}") % { name_class: name.class }
       end
 
       if type.is_a?(String)
@@ -539,7 +539,7 @@ module Puppet::Functions
           @weaving << @names.size()-1
         end
       else
-        raise ArgumentError, "Parameter 'type' must be a String reference to a Puppet Data Type. Got #{type.class}"
+        raise ArgumentError, _("Parameter 'type' must be a String reference to a Puppet Data Type. Got %{type_class}") % { type_class: type.class }
       end
     end
 
@@ -604,7 +604,7 @@ module Puppet::Functions
     def type(assignment_string)
       result = parser.parse_string("type #{assignment_string}", nil) # no file source :-(
       unless result.body.kind_of?(Puppet::Pops::Model::TypeAlias)
-        raise ArgumentError, "Expected a type alias assignment on the form 'AliasType = T', got '#{assignment_string}'"
+        raise ArgumentError, _("Expected a type alias assignment on the form 'AliasType = T', got '%{assignment_string}'") % { assignment_string: assignment_string }
       end
       @local_types << result.body
     end
@@ -649,34 +649,6 @@ module Puppet::Functions
       InternalDispatchBuilder.new(dispatcher, Puppet::Pops::Types::TypeParser.singleton, Puppet::Pops::Types::PCallableType::DEFAULT, loader)
     end
 
-    # Defines class level injected attribute with reader method
-    #
-    # @api private
-    def self.attr_injected(type, attribute_name, injection_name = nil)
-      define_method(attribute_name) do
-        ivar = :"@#{attribute_name.to_s}"
-        unless instance_variable_defined?(ivar)
-          injector = Puppet.lookup(:injector)
-          instance_variable_set(ivar, injector.lookup(closure_scope, type, injection_name))
-        end
-        instance_variable_get(ivar)
-      end
-    end
-
-    # Defines class level injected producer attribute with reader method
-    #
-    # @api private
-    def self.attr_injected_producer(type, attribute_name, injection_name = nil)
-      define_method(attribute_name) do
-        ivar = :"@#{attribute_name.to_s}"
-        unless instance_variable_defined?(ivar)
-          injector = Puppet.lookup(:injector)
-          instance_variable_set(ivar, injector.lookup_producer(closure_scope, type, injection_name))
-        end
-        instance_variable_get(ivar)
-      end
-    end
-
     # Allows the implementation of a function to call other functions by name and pass the caller
     # scope. The callable functions are those visible to the same loader that loaded this function
     # (the calling function).
@@ -687,8 +659,8 @@ module Puppet::Functions
     # @return [Object] The result returned by the called function
     #
     # @api public
-    def call_function_with_scope(scope, function_name, *args)
-      internal_call_function(scope, function_name, args)
+    def call_function_with_scope(scope, function_name, *args, &block)
+      internal_call_function(scope, function_name, args, &block)
     end
   end
 

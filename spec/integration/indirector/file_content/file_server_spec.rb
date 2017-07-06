@@ -70,6 +70,7 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
 
     # Use a real mount, so the integration is a bit deeper.
     mount1 = Puppet::FileServing::Configuration::Mount::File.new("one")
+    mount1.stubs(:globalallow?).returns true
     mount1.stubs(:allowed?).returns true
     mount1.path = File.join(path, "%h")
 

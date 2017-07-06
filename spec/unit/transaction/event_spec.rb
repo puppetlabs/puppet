@@ -121,21 +121,24 @@ describe Puppet::Transaction::Event do
   end
 
   describe "When converting to YAML" do
-    it "should include only documented attributes" do
-      resource = Puppet::Type.type(:file).new(:title => make_absolute("/tmp/foo"))
-      event = Puppet::Transaction::Event.new(:source_description => "/my/param", :resource => resource,
-                                             :file => "/foo.rb", :line => 27, :tags => %w{one two},
-                                             :desired_value => 7, :historical_value => 'Brazil',
-                                             :message => "Help I'm trapped in a spec test",
-                                             :name => :mode_changed, :previous_value => 6, :property => :mode,
-                                             :status => 'success',
-                                             :redacted => false,
-                                             :corrective_change => false)
-      expect(event.to_yaml_properties).to match_array(Puppet::Transaction::Event::YAML_ATTRIBUTES)
+    let(:resource) { Puppet::Type.type(:file).new(:title => make_absolute('/tmp/foo')) }
+    let(:event) do
+      Puppet::Transaction::Event.new(:source_description => "/my/param", :resource => resource,
+        :file => "/foo.rb", :line => 27, :tags => %w{one two},
+        :desired_value => 7, :historical_value => 'Brazil',
+        :message => "Help I'm trapped in a spec test",
+        :name => :mode_changed, :previous_value => 6, :property => :mode,
+        :status => 'success',
+        :redacted => false,
+        :corrective_change => false)
+    end
+
+    it 'to_data_hash returns value that is instance of to Data' do
+      expect(Puppet::Pops::Types::TypeFactory.data.instance?(event.to_data_hash)).to be_truthy
     end
   end
 
-  it "should round trip through pson" do
+  it "should round trip through json" do
       resource = Puppet::Type.type(:file).new(:title => make_absolute("/tmp/foo"))
       event = Puppet::Transaction::Event.new(
         :source_description => "/my/param",
@@ -151,7 +154,7 @@ describe Puppet::Transaction::Event do
         :property => :mode,
         :status => 'success')
 
-      tripped = Puppet::Transaction::Event.from_data_hash(PSON.parse(event.to_pson))
+      tripped = Puppet::Transaction::Event.from_data_hash(JSON.parse(event.to_json))
 
       expect(tripped.audited).to eq(event.audited)
       expect(tripped.property).to eq(event.property)
@@ -164,7 +167,7 @@ describe Puppet::Transaction::Event do
       expect(tripped.time).to eq(event.time)
   end
 
-  it "should round trip an event for an inspect report through pson" do
+  it "should round trip an event for an inspect report through json" do
       resource = Puppet::Type.type(:file).new(:title => make_absolute("/tmp/foo"))
       event = Puppet::Transaction::Event.new(
         :audited => true,
@@ -178,7 +181,7 @@ describe Puppet::Transaction::Event do
         :property => :mode,
         :status => 'success')
 
-      tripped = Puppet::Transaction::Event.from_data_hash(PSON.parse(event.to_pson))
+      tripped = Puppet::Transaction::Event.from_data_hash(JSON.parse(event.to_json))
 
       expect(tripped.desired_value).to be_nil
       expect(tripped.historical_value).to be_nil

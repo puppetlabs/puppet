@@ -32,15 +32,15 @@ class Puppet::Util::Reference
     depth = 4
     # Use the minimum depth
     sections.each do |name|
-      section = reference(name) or raise "Could not find section #{name}"
+      section = reference(name) or raise _("Could not find section %{name}") % { name: name }
       depth = section.depth if section.depth < depth
     end
   end
 
   def self.pdf(text)
-    puts "creating pdf"
+    puts _("creating pdf")
     rst2latex = which('rst2latex') || which('rst2latex.py') ||
-      raise("Could not find rst2latex")
+      raise(_("Could not find rst2latex"))
 
     cmd = %{#{rst2latex} /tmp/puppetdoc.txt > /tmp/puppetdoc.tex}
     Puppet::Util.replace_file("/tmp/puppetdoc.txt") {|f| f.puts text }
@@ -50,7 +50,7 @@ class Puppet::Util::Reference
     Puppet::FileSystem.unlink('/tmp/puppetdoc.tex') rescue nil
     output = %x{#{cmd}}
     unless $CHILD_STATUS == 0
-      $stderr.puts "rst2latex failed"
+      $stderr.puts _("rst2latex failed")
       $stderr.puts output
       exit(1)
     end
@@ -90,7 +90,7 @@ class Puppet::Util::Reference
     meta_def(:generate, &block)
 
     # Now handle the defaults
-    @title ||= "#{@name.to_s.capitalize} Reference"
+    @title ||= _("%{name} Reference") % { name: @name.to_s.capitalize }
     @page ||= @title.gsub(/\s+/, '')
     @depth ||= 2
     @header ||= ""

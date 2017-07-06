@@ -34,13 +34,13 @@ class TypeParser
   #
   def parse(string, context = nil)
     model = @parser.parse_string(string)
-    interpret(model.current.body, context)
+    interpret(model.model.body, context)
   end
 
   # @api private
   def parse_literal(string, context = nil)
-    model = @parser.parse_string(string)
-    interpret_any(model.current.body, context)
+    factory = @parser.parse_string(string)
+    interpret_any(factory.model.body, context)
   end
 
   # @param ast [Puppet::Pops::Model::PopsObject] the ast to interpret
@@ -69,6 +69,17 @@ class TypeParser
     interpret_any(o.body, context)
   end
 
+  # @api private
+  def interpret_TypeAlias(o, context)
+    Loader::TypeDefinitionInstantiator.create_type(o.name, o.type_expr, Pcore::RUNTIME_NAME_AUTHORITY).resolve(self, loader_from_context(o, context))
+  end
+
+  # @api private
+  def interpret_TypeDefinition(o, context)
+    Loader::TypeDefinitionInstantiator.create_runtime_type(o)
+  end
+
+  # @api private
   def interpret_LambdaExpression(o, context)
     o
   end
@@ -76,6 +87,11 @@ class TypeParser
   # @api private
   def interpret_QualifiedName(o, context)
     o.value
+  end
+
+  # @api private
+  def interpret_QualifiedReference(o, context)
+    o.cased_value
   end
 
   # @api private
@@ -152,17 +168,17 @@ class TypeParser
         'boolean'      => TypeFactory.boolean,
         'pattern'      => TypeFactory.pattern,
         'regexp'       => TypeFactory.regexp,
-        'data'         => TypeFactory.data,
-        'array'        => TypeFactory.array_of_data,
-        'hash'         => TypeFactory.hash_of_data,
+        'array'        => TypeFactory.array_of_any,
+        'hash'         => TypeFactory.hash_of_any,
         'class'        => TypeFactory.host_class,
         'resource'     => TypeFactory.resource,
         'collection'   => TypeFactory.collection,
         'scalar'       => TypeFactory.scalar,
+        'scalardata'   => TypeFactory.scalar_data,
         'catalogentry' => TypeFactory.catalog_entry,
         'undef'        => TypeFactory.undef,
-        'notundef'     => TypeFactory.not_undef(),
-        'default'      => TypeFactory.default(),
+        'notundef'     => TypeFactory.not_undef,
+        'default'      => TypeFactory.default,
         'any'          => TypeFactory.any,
         'variant'      => TypeFactory.variant,
         'optional'     => TypeFactory.optional,
@@ -180,7 +196,7 @@ class TypeParser
         'semverrange'  => TypeFactory.sem_ver_range,
         'timestamp'    => TypeFactory.timestamp,
         'timespan'     => TypeFactory.timespan
-    }
+    }.freeze
   end
 
   # @api private
@@ -305,7 +321,7 @@ class TypeParser
         if param_start.nil?
           type = type_str
         else
-          tps = interpret_any(@parser.parse_string(type_str[param_start..-1]).current, context)
+          tps = interpret_any(@parser.parse_string(type_str[param_start..-1]).model, context)
           raise_invalid_parameters_error(type.to_s, '1', tps.size) unless tps.size == 1
           type = type_str[0..param_start-1]
           parameters = [type] + tps
@@ -505,7 +521,7 @@ class TypeParser
       end
 
       if type.nil?
-        TypeFactory.type_reference(original_text_of(qref.eContainer))
+        TypeFactory.type_reference(original_text_of(ast))
       elsif type.is_a?(PResourceType)
         raise_invalid_parameters_error(qref.cased_value, 1, parameters.size) unless parameters.size == 1
         TypeFactory.resource(type.type_name, parameters[0])
@@ -556,8 +572,7 @@ class TypeParser
   end
 
   def original_text_of(ast)
-    position = Adapters::SourcePosAdapter.adapt(ast)
-    position.extract_tree_text
+    ast.locator.extract_tree_text(ast)
   end
 end
 end

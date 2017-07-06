@@ -10,6 +10,8 @@ require 'spec_helper'
       @path = make_absolute("/my/file")
       @resource = Puppet::Type.type(:file).new :path => @path
       @sel = property.new :resource => @resource
+      @sel.stubs(:normalize_selinux_category).with("s0").returns("s0")
+      @sel.stubs(:normalize_selinux_category).with(nil).returns(nil)
     end
 
     it "retrieve on #{param} should return :absent if the file isn't statable" do

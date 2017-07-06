@@ -109,8 +109,8 @@ class BaseLoader < Loader
   private
 
   def fail_redefine(entry)
-    origin_info = entry.origin ? "Originally set #{origin_label(entry.origin)}." : "Set at unknown location"
-    raise ArgumentError, "Attempt to redefine entity '#{entry.typed_name}'. #{origin_info}"
+    origin_info = entry.origin ? _("Originally set %{original}.") % { original: origin_label(entry.origin) } : _("Set at unknown location")
+    raise ArgumentError, _("Attempt to redefine entity '%{name}'. %{origin_info}") % { name: entry.typed_name, origin_info: origin_info }
   end
 
   # TODO: Should not really be here?? - TODO: A Label provider ? semantics for the URI?

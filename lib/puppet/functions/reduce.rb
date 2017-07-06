@@ -111,11 +111,23 @@ Puppet::Functions.create_function(:reduce) do
 
   def reduce_without_memo(enumerable)
     enum = Puppet::Pops::Types::Iterable.asserted_iterable(self, enumerable)
-    enum.reduce {|memo, x| yield(memo, x) }
+    enum.reduce do |memo, x|
+      begin
+        yield(memo, x)
+      rescue StopIteration
+        return memo
+      end
+    end
   end
 
   def reduce_with_memo(enumerable, given_memo)
     enum = Puppet::Pops::Types::Iterable.asserted_iterable(self, enumerable)
-    enum.reduce(given_memo) {|memo, x| yield(memo, x) }
+    enum.reduce(given_memo) do |memo, x|
+      begin
+        yield(memo, x)
+      rescue StopIteration
+        return memo
+      end
+    end
   end
 end

@@ -8,11 +8,11 @@ module Puppet::ModuleTool
   class LocalTarball < SemanticPuppet::Dependency::Source
     attr_accessor :release
 
-    def initialize(filename)
+    def initialize(filename, strict_semver = true)
       unpack(filename, tmpdir)
       Puppet.debug "Unpacked local tarball to #{tmpdir}"
 
-      mod = Puppet::Module.new('tarball', tmpdir, nil)
+      mod = Puppet::Module.new('tarball', tmpdir, nil, strict_semver)
       @release = ModuleRelease.new(self, mod)
     end
 
@@ -52,7 +52,7 @@ module Puppet::ModuleTool
 
         if mod.dependencies
           dependencies = mod.dependencies.map do |dep|
-            Puppet::ModuleTool.parse_module_dependency(release, dep)[0..1]
+            Puppet::ModuleTool.parse_module_dependency(release, dep, mod.strict_semver?)[0..1]
           end
           dependencies = Hash[dependencies]
         end
@@ -83,7 +83,7 @@ module Puppet::ModuleTool
       begin
         Puppet::ModuleTool::Applications::Unpacker.unpack(file, destination)
       rescue Puppet::ExecutionFailure => e
-        raise RuntimeError, "Could not extract contents of module archive: #{e.message}"
+        raise RuntimeError, _("Could not extract contents of module archive: %{message}") % { message: e.message }
       end
     end
   end

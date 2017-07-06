@@ -19,7 +19,7 @@ GET
 
 ### Supported Response Formats
 
-PSON
+`application/json`, `text/pson`
 
 ### Parameters
 
@@ -30,7 +30,7 @@ None
     GET /puppet/v3/status/whatever?environment=env
 
     HTTP 200 OK
-    Content-Type: text/pson
+    Content-Type: application/json
 
     {"is_alive":true,"version":"3.3.2"}
 

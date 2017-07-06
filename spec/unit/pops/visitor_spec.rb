@@ -40,7 +40,7 @@ describe Puppet::Pops::Visitor do
 
     it "should select method for superclass" do
       duck_processor = DuckProcessor.new
-      expect(duck_processor.hi(42)).to eq("Howdy Fixnum")
+      expect(duck_processor.hi(42)).to match(/Howdy (?:Fixnum|Integer)/)
     end
 
     it "should select method for superclass" do

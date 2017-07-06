@@ -94,7 +94,7 @@ class PRuntimeType < PAnyType
   # @api private
   def _assignable?(o, guard)
     return false unless o.is_a?(PRuntimeType)
-    return false unless @runtime == o.runtime
+    return false unless @runtime.nil? || @runtime == o.runtime
     return true if @name_or_pattern.nil? # t1 is wider
 
     onp = o.name_or_pattern

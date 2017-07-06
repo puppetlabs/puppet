@@ -15,7 +15,7 @@ Puppet::Parser::Functions::newfunction(:inline_template, :type => :rvalue, :arit
         wrapper.result(string)
       rescue => detail
         raise Puppet::ParseError,
-          "Failed to parse inline template: #{detail}", detail.backtrace
+          _("Failed to parse inline template: %{detail}") % { detail: detail }, detail.backtrace
       end
     end.join("")
 end

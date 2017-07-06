@@ -33,7 +33,7 @@ GET
 
 ### Supported Response Formats
 
-PSON
+`application/json`, `text/pson`
 
 ### Parameters
 
@@ -133,9 +133,9 @@ Get a list of metadata for multiple files
 
 GET
 
-### Supported Format
+### Supported Response Formats
 
-Accept: pson, text/pson
+`application/json`, `text/pson`
 
 ### Parameters
 

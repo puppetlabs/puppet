@@ -53,7 +53,7 @@ Puppet::Type.newtype(:file) do
 
     validate do |value|
       unless Puppet::Util.absolute_path?(value)
-        fail Puppet::Error, "File paths must be fully qualified, not '#{value}'"
+        fail Puppet::Error, _("File paths must be fully qualified, not '%{path}'") % { path: value }
       end
     end
 
@@ -121,7 +121,7 @@ Puppet::Type.newtype(:file) do
       when String
         value
       else
-        self.fail "Invalid backup type #{value.inspect}"
+        self.fail _("Invalid backup type %{value}") % { value: value.inspect }
       end
     end
   end
@@ -165,7 +165,7 @@ Puppet::Type.newtype(:file) do
       when :false; false
       when :remote; :remote
       else
-        self.fail "Invalid recurse value #{value.inspect}"
+        self.fail _("Invalid recurse value %{value}") % { value: value.inspect }
       end
     end
   end
@@ -195,10 +195,10 @@ Puppet::Type.newtype(:file) do
     munge do |value|
       newval = super(value)
       case newval
-      when Integer, Fixnum, Bignum; value
+      when Integer; value
       when /^\d+$/; Integer(value)
       else
-        self.fail "Invalid recurselimit value #{value.inspect}"
+        self.fail _("Invalid recurselimit value %{value}") % { value: value.inspect }
       end
     end
   end
@@ -368,17 +368,17 @@ Puppet::Type.newtype(:file) do
     end
     creator_count += 1 if @parameters.include?(:source)
 
-    self.fail "You cannot specify more than one of #{CREATORS.collect { |p| p.to_s}.join(", ")}" if creator_count > 1
+    self.fail _("You cannot specify more than one of %{creators}") % { creators: CREATORS.collect { |p| p.to_s}.join(", ") } if creator_count > 1
 
-    self.fail "You cannot specify a remote recursion without a source" if !self[:source] && self[:recurse] == :remote
+    self.fail _("You cannot specify a remote recursion without a source") if !self[:source] && self[:recurse] == :remote
 
-    self.fail "You cannot specify source when using checksum 'none'" if self[:checksum] == :none && !self[:source].nil?
+    self.fail _("You cannot specify source when using checksum 'none'") if self[:checksum] == :none && !self[:source].nil?
 
     SOURCE_ONLY_CHECKSUMS.each do |checksum_type|
-      self.fail "You cannot specify content when using checksum '#{checksum_type}'" if self[:checksum] == checksum_type && !self[:content].nil?
+      self.fail _("You cannot specify content when using checksum '%{checksum_type}'") % { checksum_type: checksum_type } if self[:checksum] == checksum_type && !self[:content].nil?
     end
 
-    self.warning "Possible error: recurselimit is set but not recurse, no recursion will happen" if !self[:recurse] && self[:recurselimit]
+    self.warning _("Possible error: recurselimit is set but not recurse, no recursion will happen") if !self[:recurse] && self[:recurselimit]
 
     if @parameters[:content] && @parameters[:content].actual_content
       # Now that we know the checksum, update content (in case it was created before checksum was known).
@@ -386,10 +386,10 @@ Puppet::Type.newtype(:file) do
     end
 
     if self[:checksum] && self[:checksum_value] && !send("#{self[:checksum]}?", self[:checksum_value])
-      self.fail "Checksum value '#{self[:checksum_value]}' is not a valid checksum type #{self[:checksum]}"
+      self.fail _("Checksum value '%{value}' is not a valid checksum type %{checksum}") % { value: self[:checksum_value], checksum: self[:checksum] }
     end
 
-    self.warning "Checksum value is ignored unless content or source are specified" if self[:checksum_value] && !self[:content] && !self[:source]
+    self.warning _("Checksum value is ignored unless content or source are specified") if self[:checksum_value] && !self[:content] && !self[:source]
 
     provider.validate if provider.respond_to?(:validate)
   end
@@ -427,11 +427,11 @@ Puppet::Type.newtype(:file) do
     return nil if backup =~ /^\./
 
     unless catalog or backup == "puppet"
-      fail "Can not find filebucket for backups without a catalog"
+      fail _("Can not find filebucket for backups without a catalog")
     end
 
     unless catalog and filebucket = catalog.resource(:filebucket, backup) or backup == "puppet"
-      fail "Could not find filebucket #{backup} specified in backup"
+      fail _("Could not find filebucket %{backup} specified in backup") % { backup: backup }
     end
 
     return default_bucket unless filebucket
@@ -737,7 +737,7 @@ Puppet::Type.newtype(:file) do
     when "link", "file"
       return remove_file(current_type, wanted_type)
     else
-      self.fail "Could not back up files of type #{current_type}"
+      self.fail _("Could not back up files of type %{current_type}") % { current_type: current_type }
     end
   end
 
@@ -747,9 +747,7 @@ Puppet::Type.newtype(:file) do
     # catalog validation (because that would be a breaking change from Puppet 4).
     if Puppet.features.microsoft_windows? && parameter(:source) &&
       [:use, :use_when_creating].include?(self[:source_permissions])
-      err_msg = "Copying owner/mode/group from the source file on Windows" <<
-      " is not supported; use source_permissions => ignore."
-
+      err_msg = _("Copying owner/mode/group from the source file on Windows is not supported; use source_permissions => ignore.")
       if self[:owner] == nil || self[:group] == nil || self[:mode] == nil
         # Fail on Windows if source permissions are being used and the file resource
         # does not have mode owner, group, and mode all set (which would take precedence).
@@ -830,7 +828,7 @@ Puppet::Type.newtype(:file) do
     rescue Errno::ENOTDIR => error
       nil
     rescue Errno::EACCES => error
-      warning "Could not stat; permission denied"
+      warning _("Could not stat; permission denied")
       nil
     end
   end
@@ -952,7 +950,7 @@ Puppet::Type.newtype(:file) do
       stat_needed
       true
     else
-      notice "Not removing directory; use 'force' to override"
+      notice _("Not removing directory; use 'force' to override")
       false
     end
   end
@@ -976,7 +974,8 @@ Puppet::Type.newtype(:file) do
   # @return [void]
   def backup_existing
     unless perform_backup
-      raise Puppet::Error, "Could not back up; will not replace"
+      #TRANSLATORS refers to a file which could not be backed up
+      raise Puppet::Error, _("Could not back up; will not replace")
     end
   end
 
@@ -990,7 +989,7 @@ Puppet::Type.newtype(:file) do
     newsum = parameter(:checksum).sum_file(path)
     return if [:absent, nil, content_checksum].include?(newsum)
 
-    self.fail "File written to disk did not match checksum; discarding changes (#{content_checksum} vs #{newsum})"
+    self.fail _("File written to disk did not match checksum; discarding changes (%{content_checksum} vs %{newsum})") % { content_checksum: content_checksum, newsum: newsum }
   end
 
   def write_temporary_file?

@@ -50,8 +50,8 @@ class Puppet::FileServing::Configuration
 
     mount_name, path = request.key.split(File::Separator, 2)
 
-    raise(ArgumentError, "Cannot find file: Invalid mount '#{mount_name}'") unless mount_name =~ %r{^[-\w]+$}
-    raise(ArgumentError, "Cannot find file: Invalid relative path '#{path}'") if path and path.split('/').include?('..')
+    raise(ArgumentError, _("Cannot find file: Invalid mount '%{mount_name}'") % { mount_name: mount_name }) unless mount_name =~ %r{^[-\w]+$}
+    raise(ArgumentError, _("Cannot find file: Invalid relative path '%{path}'") % { path: path }) if path and path.split('/').include?('..')
 
     return nil unless mount = find_mount(mount_name, request.environment)
     if mount.name == "modules" and mount_name != "modules"
@@ -99,7 +99,7 @@ class Puppet::FileServing::Configuration
       newmounts = @parser.parse
       @mounts = newmounts
     rescue => detail
-      Puppet.log_exception(detail, "Error parsing fileserver configuration: #{detail}; using old configuration")
+      Puppet.log_exception(detail, _("Error parsing fileserver configuration: %{detail}; using old configuration") % { detail: detail })
     end
 
   ensure

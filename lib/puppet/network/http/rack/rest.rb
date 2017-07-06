@@ -35,7 +35,7 @@ class Puppet::Network::HTTP::RackREST
   end
 
   def set_content_type(response, format)
-    response[ContentType] = format_to_mime(format)
+    response[ContentType] = format
   end
 
   # produce the body of the response

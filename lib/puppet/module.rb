@@ -1,5 +1,4 @@
 require 'puppet/util/logging'
-require 'semver'
 require 'json'
 
 # Support for modules
@@ -59,9 +58,10 @@ class Puppet::Module
   attr_accessor :dependencies, :forge_name
   attr_accessor :source, :author, :version, :license, :summary, :description, :project_page
 
-  def initialize(name, path, environment)
+  def initialize(name, path, environment, strict_semver = true)
     @name = name
     @path = path
+    @strict_semver = strict_semver
     @environment = environment
 
     assert_validity
@@ -96,7 +96,7 @@ class Puppet::Module
   FILETYPES.each do |type, location|
     # A boolean method to let external callers determine if
     # we have files of a given type.
-    define_method(type +'?') do
+    define_method(type + '?') do
       type_subpath = subpath(location)
       unless Puppet::FileSystem.exist?(type_subpath)
         Puppet.debug("No #{type} found in subpath '#{type_subpath}' " +
@@ -146,7 +146,9 @@ class Puppet::Module
   rescue JSON::JSONError => e
     msg = "#{name} has an invalid and unparsable metadata.json file. The parse error: #{e.message}"
     case Puppet[:strict]
-    when :off, :warning
+    when :off
+      Puppet.debug(msg)
+    when :warning
       Puppet.warning(msg)
     when :error
       raise FaultyMetadata, msg
@@ -326,9 +328,8 @@ class Puppet::Module
 
       if version_string
         begin
-          # Suppress deprecation warnings from SemVer in 4.9. In 5.0, this will be SemanticPuppet instead
-          required_version_semver_range = SemVer[version_string, true]
-          actual_version_semver = SemVer.new(dep_mod.version, true)
+          required_version_semver_range = SemanticPuppet::VersionRange.parse(version_string, @strict_semver)
+          actual_version_semver = SemanticPuppet::Version.parse(dep_mod.version)
         rescue ArgumentError
           error_details[:reason] = :non_semantic_version
           unmet_dependencies << error_details
@@ -351,6 +352,10 @@ class Puppet::Module
     self.version == other.version &&
     self.path == other.path &&
     self.environment == other.environment
+  end
+
+  def strict_semver?
+    @strict_semver
   end
 
   private

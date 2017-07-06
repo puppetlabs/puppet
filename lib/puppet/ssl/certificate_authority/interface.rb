@@ -18,13 +18,13 @@ module Puppet
         # Actually perform the work.
         def apply(ca)
           unless subjects || SUBJECTLESS_METHODS.include?(method)
-            raise ArgumentError, "You must provide hosts or --all when using #{method}"
+            raise ArgumentError, _("You must provide hosts or --all when using %{method}") % { method: method }
           end
 
           destructive_subjects = [:signed, :all].include?(subjects)
           if DESTRUCTIVE_METHODS.include?(method) && destructive_subjects
-            subject_text = (subjects == :all ? subjects : "all signed")
-            raise ArgumentError, "Refusing to #{method} #{subject_text} certs, provide an explicit list of certs to #{method}"
+            subject_text = (subjects == :all ? subjects : _("all signed"))
+            raise ArgumentError, _("Refusing to %{method} %{subject_text} certs, provide an explicit list of certs to %{method}") % { method: method, subject_text: subject_text }
           end
 
           # if the interface implements the method, use it instead of the ca's method
@@ -38,7 +38,7 @@ module Puppet
         end
 
         def generate(ca)
-          raise InterfaceError, "It makes no sense to generate all hosts; you must specify a list" if subjects == :all
+          raise InterfaceError, _("It makes no sense to generate all hosts; you must specify a list") if subjects == :all
 
           subjects.each do |host|
             ca.generate(host, options)
@@ -250,7 +250,7 @@ module Puppet
             if value = ca.print(host)
               puts value
             else
-              raise ArgumentError, "Could not find certificate for #{host}"
+              raise ArgumentError, _("Could not find certificate for %{host}") % { host: host }
             end
           end
         end
@@ -261,7 +261,7 @@ module Puppet
             if cert = (Puppet::SSL::Certificate.indirection.find(host) || Puppet::SSL::CertificateRequest.indirection.find(host))
               puts "#{host} #{cert.digest(@digest)}"
             else
-	      raise ArgumentError, "Could not find certificate for #{host}"
+	      raise ArgumentError, _("Could not find certificate for %{host}") % { host: host }
             end
           end
         end
@@ -269,7 +269,7 @@ module Puppet
         # Signs given certificates or all waiting if subjects == :all
         def sign(ca)
           list = subjects == :all ? ca.waiting? : subjects
-          raise InterfaceError, "No waiting certificate requests to sign" if list.empty?
+          raise InterfaceError, _("No waiting certificate requests to sign") if list.empty?
 
           signing_options = options.select { |k,_|
             [:allow_authorization_extensions, :allow_dns_alt_names].include?(k)
@@ -278,7 +278,7 @@ module Puppet
           list.each do |host|
             cert = Puppet::SSL::CertificateRequest.indirection.find(host)
 
-            raise InterfaceError, "Could not find CSR for: #{host.inspect}." unless cert
+            raise InterfaceError, _("Could not find CSR for: %{host}.") % { host: host.inspect } unless cert
 
             # ca.sign will also do this - and it should if it is called
             # elsewhere - but we want to reject an attempt to sign a
@@ -288,16 +288,16 @@ module Puppet
             name_width = host.inspect.length
             info = {:type => :request, :cert => cert}
             host_string = format_host(host, info, name_width, options[:format])
-            puts "Signing Certificate Request for:\n#{host_string}"
+            puts _("Signing Certificate Request for:\n%{host_string}") % { host_string: host_string }
 
             if options[:interactive]
-              STDOUT.print "Sign Certificate Request? [y/N] "
+              STDOUT.print _("Sign Certificate Request? [y/N] ")
 
               if !options[:yes]
                 input = STDIN.gets.chomp
-                raise InterfaceError, "NOT Signing Certificate Request" unless VALID_CONFIRMATION_VALUES.include?(input)
+                raise InterfaceError, _("NOT Signing Certificate Request") unless VALID_CONFIRMATION_VALUES.include?(input)
               else
-                puts "Assuming YES from `-y' or `--assume-yes' flag"
+                puts _("Assuming YES from `-y' or `--assume-yes' flag")
               end
             end
 
@@ -312,7 +312,7 @@ module Puppet
         # Set the list of hosts we're operating on.  Also supports keywords.
         def subjects=(value)
           unless value == :all || value == :signed || value.is_a?(Array)
-            raise ArgumentError, "Subjects must be an array or :all; not #{value}"
+            raise ArgumentError, _("Subjects must be an array or :all; not %{value}") % { value: value }
           end
 
           @subjects = (value == []) ? nil : value

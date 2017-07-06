@@ -1308,10 +1308,9 @@ describe Puppet::Settings do
       @settings.to_catalog
     end
 
-    describe "on Microsoft Windows" do
+    describe "on Microsoft Windows", :if => Puppet.features.microsoft_windows? do
       before :each do
         Puppet.features.stubs(:root?).returns true
-        Puppet.features.stubs(:microsoft_windows?).returns true
 
         @settings.define_settings :foo,
             :mkusers => { :type => :boolean, :default => true, :desc => "e" },
@@ -1477,8 +1476,11 @@ describe Puppet::Settings do
 
       main = stub 'main_resource', :ref => "File[/maindir]"
       main.expects(:to_manifest).returns "maindir"
+      main.expects(:'[]').with(:alias).returns nil
       second = stub 'second_resource', :ref => "File[/seconddir]"
       second.expects(:to_manifest).returns "seconddir"
+      second.expects(:'[]').with(:alias).returns nil
+
       @settings.setting(:maindir).expects(:to_resource).returns main
       @settings.setting(:seconddir).expects(:to_resource).returns second
 

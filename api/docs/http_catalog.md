@@ -17,7 +17,7 @@ POST, GET
 
 ### Supported Response Formats
 
-PSON
+`application/json`, `text/pson`
 
 ### Notes
 
@@ -34,10 +34,9 @@ The examples below use the POST method.
 Four parameters should be provided to the POST or GET:
 
 - `environment`: the environment name.
-- `facts_format`: must be `pson`.
-- `facts`: serialized pson of the facts hash. One odd note: due to a long-ago misunderstanding in the code, this is
-doubly-escaped (it should just be singly-escaped). To keep backward compatibility, the extraneous
-escaping is still used/supported.
+- `facts_format`: must be `application/json` or `pson`.
+- `facts`: serialized JSON or PSON of the facts hash. Since facts can contain `&`, which
+  is also the HTTP query parameter delimiter, facts are doubly-escaped.
 - `transaction_uuid`: a transaction uuid identifying the entire transaction (shows up in the report as well).
 
 Two optional parameters are required for static catalogs:
@@ -47,10 +46,12 @@ be `true`.
 - `checksum_type`: a dot-separated list of checksum types supported by the agent, for use in file resources of a static
 catalog. The order signifies preference, highest first.
 
-An optional parameter can be provided to the POST or GET to notify a node classifier that the client requested a specific
-environment, which might differ from what the client believes is its current environment:
+Optional parameters that may be provided to the POST or GET:
 
-- `configured_environment`: the environment configured on the client.
+- `configured_environment`: the environment configured on the client. May be
+  provided to notify an ENC that the client requested a specific environment
+  which might differ from what the client believes is its current environment.
+- `job_id`: which orchestration job triggered this catalog request.
 
 ### Example Response
 
@@ -58,10 +59,10 @@ environment, which might differ from what the client believes is its current env
 
     POST /puppet/v3/catalog/elmo.mydomain.com
 
-    environment=env&configured_environment=canary_env&facts_format=pson&facts=%7B%22name%22%3A%22elmo.mydomain.com%22%2C%22values%22%3A%7B%22architecture%22%3A%22x86_64%22%7D&transaction_uuid=aff261a2-1a34-4647-8c20-ff662ec11c4c
+    environment=env&configured_environment=canary_env&facts_format=application%2Fjson&facts=%257B%2522name%2522%253A%2522elmo.mydomain.com%2522%252C%2522values%2522%253A%257B%2522architecture%2522%253A%2522x86_64%2522%257D%257D&transaction_uuid=aff261a2-1a34-4647-8c20-ff662ec11c4c
 
     HTTP 200 OK
-    Content-Type: text/pson
+    Content-Type: application/json
 
     {
       "tags": [
@@ -166,10 +167,10 @@ environment, which might differ from what the client believes is its current env
 ~~~
 POST /puppet/v3/catalog/elmo.mydomain.com
 
-environment=env&configured_environment=canary_env&facts_format=pson&facts=%7B%22name%22%3A%22elmo.mydomain.com%22%2C%22values%22%3A%7B%22architecture%22%3A%22x86_64%22%7D&transaction_uuid=aff261a2-1a34-4647-8c20-ff662ec11c4c&static_catalog=true&checksum_type=sha256.md5
+environment=env&configured_environment=canary_env&facts_format=application%2Fjson&facts=%7B%22name%22%3A%22elmo.mydomain.com%22%2C%22values%22%3A%7B%22architecture%22%3A%22x86_64%22%7D&transaction_uuid=aff261a2-1a34-4647-8c20-ff662ec11c4c&static_catalog=true&checksum_type=sha256.md5
 
 HTTP 200 OK
-Content-Type: text/pson
+Content-Type: application/json
 
 {
   "tags": [

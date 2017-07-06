@@ -7,6 +7,6 @@ module Puppet::Util::Limits
 
     Process.setpriority(0, Process.pid, priority)
   rescue Errno::EACCES, NotImplementedError
-    Puppet.warning("Failed to set process priority to '#{priority}'")
+    Puppet.warning(_("Failed to set process priority to '%{priority}'") % { priority: priority })
   end
 end

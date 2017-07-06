@@ -842,6 +842,24 @@ describe "The lookup function" do
           end
         end
       end
+
+      context 'that contains an array with duplicates' do
+        let(:common_yaml) { <<-YAML.unindent }
+          a:
+           - alpha
+           - bravo
+           - charlie
+           - bravo
+          YAML
+
+        it 'retains the duplicates when using default merge strategy' do
+          expect(lookup('a')).to eql(%w(alpha bravo charlie bravo))
+        end
+
+        it 'does deduplification when using merge strategy "unique"' do
+          expect(lookup('a', :merge => 'unique')).to eql(%w(alpha bravo charlie))
+        end
+      end
     end
 
     context 'with lookup_options configured using patterns' do
@@ -2540,7 +2558,7 @@ describe "The lookup function" do
 
           it 'fails and reports error' do
             expect{lookup('mod_a::a')}.to raise_error(
-              "Return type of 'lookup_key' function named 'mod_a::pp_lookup_key' is incorrect, expects a value of type Undef, Scalar, Sensitive, Type, Hash, or Array, got Runtime")
+              "Return type of 'lookup_key' function named 'mod_a::pp_lookup_key' is incorrect, expects a RichData value, got Runtime")
           end
         end
       end

@@ -24,7 +24,8 @@ module Puppet::Provider::Mount
   end
 
   def remount
-    info "Remounting"
+    #TRANSLATORS refers to remounting a file system
+    info _("Remounting")
     if resource[:remounts] == :true
       mountcmd "-o", "remount", resource[:name]
     elsif ["FreeBSD", "DragonFly", "OpenBSD"].include?(Facter.value(:operatingsystem))

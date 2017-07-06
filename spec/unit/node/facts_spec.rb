@@ -160,27 +160,27 @@ describe Puppet::Node::Facts, "when indirecting" do
       end
     end
 
-    describe "using pson" do
+    describe "using json" do
       before :each do
         @timestamp = Time.parse("Thu Oct 28 11:16:31 -0700 2010")
         @expiration = Time.parse("Thu Oct 28 11:21:31 -0700 2010")
       end
 
-      it "should accept properly formatted pson" do
-        pson = %Q({"name": "foo", "expiration": "#{@expiration}", "timestamp": "#{@timestamp}", "values": {"a": "1", "b": "2", "c": "3"}})
-        format = Puppet::Network::FormatHandler.format('pson')
-        facts = format.intern(Puppet::Node::Facts,pson)
+      it "should accept properly formatted json" do
+        json = %Q({"name": "foo", "expiration": "#{@expiration}", "timestamp": "#{@timestamp}", "values": {"a": "1", "b": "2", "c": "3"}})
+        format = Puppet::Network::FormatHandler.format('json')
+        facts = format.intern(Puppet::Node::Facts, json)
         expect(facts.name).to eq('foo')
         expect(facts.expiration).to eq(@expiration)
         expect(facts.timestamp).to eq(@timestamp)
         expect(facts.values).to eq({'a' => '1', 'b' => '2', 'c' => '3'})
       end
 
-      it "should generate properly formatted pson" do
+      it "should generate properly formatted json" do
         Time.stubs(:now).returns(@timestamp)
         facts = Puppet::Node::Facts.new("foo", {'a' => 1, 'b' => 2, 'c' => 3})
         facts.expiration = @expiration
-        result = PSON.parse(facts.to_pson)
+        result = JSON.parse(facts.to_json)
         expect(result['name']).to eq(facts.name)
         expect(result['values']).to eq(facts.values)
         expect(result['timestamp']).to eq(facts.timestamp.iso8601(9))
@@ -192,19 +192,19 @@ describe Puppet::Node::Facts, "when indirecting" do
         facts = Puppet::Node::Facts.new("foo", {'a' => 1, 'b' => 2, 'c' => 3})
         facts.expiration = @expiration
 
-        expect(facts.to_pson).to validate_against('api/schemas/facts.json')
+        expect(facts.to_json).to validate_against('api/schemas/facts.json')
       end
 
       it "should not include nil values" do
         facts = Puppet::Node::Facts.new("foo", {'a' => 1, 'b' => 2, 'c' => 3})
-        pson = PSON.parse(facts.to_pson)
-        expect(pson).not_to be_include("expiration")
+        json= JSON.parse(facts.to_json)
+        expect(json).not_to be_include("expiration")
       end
 
       it "should be able to handle nil values" do
-        pson = %Q({"name": "foo", "values": {"a": "1", "b": "2", "c": "3"}})
-        format = Puppet::Network::FormatHandler.format('pson')
-        facts = format.intern(Puppet::Node::Facts,pson)
+        json = %Q({"name": "foo", "values": {"a": "1", "b": "2", "c": "3"}})
+        format = Puppet::Network::FormatHandler.format('json')
+        facts = format.intern(Puppet::Node::Facts, json)
         expect(facts.name).to eq('foo')
         expect(facts.expiration).to be_nil
       end

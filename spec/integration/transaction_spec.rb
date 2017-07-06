@@ -233,7 +233,7 @@ describe Puppet::Transaction do
     expect(Puppet::FileSystem.exist?(path)).not_to be_truthy
   end
 
-  it "should not let one failed refresh result in other refreshes failing" do
+  it "one failed refresh should propagate its failure to dependent refreshes" do
     path = tmpfile("path")
     newfile = tmpfile("file")
       file = Puppet::Type.type(:file).new(
@@ -263,7 +263,7 @@ describe Puppet::Transaction do
 
     catalog = mk_catalog(file, exec1, exec2)
     catalog.apply
-    expect(Puppet::FileSystem.exist?(newfile)).to be_truthy
+    expect(Puppet::FileSystem.exist?(newfile)).to be_falsey
   end
 
   # Ensure when resources have been generated with eval_generate that event

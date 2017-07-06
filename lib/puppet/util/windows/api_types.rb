@@ -65,7 +65,7 @@ module Puppet::Util::Windows::APITypes
     #   null_terminator = :double_null, then the terminating sequence is four bytes of zero.  This is UNIT32 = 0
     def read_arbitrary_wide_string_up_to(max_char_length = 512, null_terminator = :single_null)
       if null_terminator != :single_null && null_terminator != :double_null
-        raise "Unable to read wide strings with #{null_terminator} terminal nulls"
+        raise _("Unable to read wide strings with %{null_terminator} terminal nulls") % { null_terminator: null_terminator }
       end
 
       terminator_width = null_terminator == :single_null ? 1 : 2
@@ -196,7 +196,7 @@ module Puppet::Util::Windows::APITypes
              :Data4, [:byte, 8]
 
       def self.[](s)
-        raise 'Bad GUID format.' unless s =~ /^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/i
+        raise _('Bad GUID format.') unless s =~ /^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/i
 
         new.tap do |guid|
           guid[:Data1] = s[0, 8].to_i(16)

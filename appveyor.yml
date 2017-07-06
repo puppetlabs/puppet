@@ -7,7 +7,7 @@ matrix:
 
 # Ruby versions under test
 platform:
-  - Ruby23-x64
+  - Ruby24-x64
   - Ruby21-x64
 
 # Note that locales are mainly code page changes and are not the FULL set of localization
@@ -46,6 +46,15 @@ test_script:
       $Env:PATH = "C:\${Env:PLATFORM}\bin;${Env:PATH}"
       $Env:LOG_SPEC_ORDER = 'true'
       Get-ChildItem Env: | % { Write-Output "$($_.Key): $($_.Value)"  }
+      if ( $(ruby --version) -match "^ruby\s+2\.4" ) {
+        # AppVeyor appears to have OpenSSL headers available already
+        # which msys2 would normally install with:
+        # pacman -S mingw-w64-x86_64-openssl --noconfirm
+        Write-Output "Building OpenSSL gem ~> 2.0.4 to fix Ruby 2.4 / AppVeyor issue"
+        gem install openssl --version '~> 2.0.4' --no-ri --no-rdoc -- --with-openssl-dir=C:\msys64\mingw64
+      }
+      gem list openssl
+      ruby -ropenssl -e 'puts \"OpenSSL Version - #{OpenSSL::OPENSSL_VERSION}\"; puts \"OpenSSL Library Version - #{OpenSSL::OPENSSL_LIBRARY_VERSION}\"' 
       bundle install --jobs 4 --retry 2 --without development extra
       Get-Content Gemfile.lock
       ruby -v

@@ -4,10 +4,10 @@ require 'spec_helper'
 require 'puppet/ssl/host'
 require 'matchers/json'
 
-def base_pson_comparison(result, pson_hash)
-  expect(result["fingerprint"]).to eq(pson_hash["fingerprint"])
-  expect(result["name"]).to        eq(pson_hash["name"])
-  expect(result["state"]).to       eq(pson_hash["desired_state"])
+def base_json_comparison(result, json_hash)
+  expect(result["fingerprint"]).to eq(json_hash["fingerprint"])
+  expect(result["name"]).to        eq(json_hash["name"])
+  expect(result["state"]).to       eq(json_hash["desired_state"])
 end
 
 describe Puppet::SSL::Host do
@@ -807,7 +807,7 @@ describe Puppet::SSL::Host do
     end
   end
 
-  describe "when handling PSON", :unless => Puppet.features.microsoft_windows? do
+  describe "when handling JSON", :unless => Puppet.features.microsoft_windows? do
     include PuppetSpec::Files
 
     before do
@@ -821,12 +821,12 @@ describe Puppet::SSL::Host do
       @ca=Puppet::SSL::CertificateAuthority.new
     end
 
-    describe "when converting to PSON" do
+    describe "when converting to JSON" do
       let(:host) do
         Puppet::SSL::Host.new("bazinga")
       end
 
-      let(:pson_hash) do
+      let(:json_hash) do
         {
           "fingerprint"   => host.certificate_request.fingerprint,
           "desired_state" => 'requested',
@@ -837,15 +837,15 @@ describe Puppet::SSL::Host do
       it "should be able to identify a host with an unsigned certificate request" do
         host.generate_certificate_request
 
-        result = PSON.parse(Puppet::SSL::Host.new(host.name).to_pson)
+        result = JSON.parse(Puppet::SSL::Host.new(host.name).to_json)
 
-        base_pson_comparison result, pson_hash
+        base_json_comparison result, json_hash
       end
 
       it "should validate against the schema" do
         host.generate_certificate_request
 
-        expect(host.to_pson).to validate_against('api/schemas/host.json')
+        expect(host.to_json).to validate_against('api/schemas/host.json')
       end
 
       describe "explicit fingerprints" do
@@ -853,12 +853,12 @@ describe Puppet::SSL::Host do
           it "should include #{md}" do
             mds = md.to_s
             host.generate_certificate_request
-            pson_hash["fingerprints"] = {}
-            pson_hash["fingerprints"][mds] = host.certificate_request.fingerprint(md)
+            json_hash["fingerprints"] = {}
+            json_hash["fingerprints"][mds] = host.certificate_request.fingerprint(md)
 
-            result = PSON.parse(Puppet::SSL::Host.new(host.name).to_pson)
-            base_pson_comparison result, pson_hash
-            expect(result["fingerprints"][mds]).to eq(pson_hash["fingerprints"][mds])
+            result = JSON.parse(Puppet::SSL::Host.new(host.name).to_json)
+            base_json_comparison result, json_hash
+            expect(result["fingerprints"][mds]).to eq(json_hash["fingerprints"][mds])
           end
         end
       end
@@ -867,11 +867,11 @@ describe Puppet::SSL::Host do
         describe "when not specified" do
           it "should include the dns_alt_names associated with the certificate" do
             host.generate_certificate_request
-            pson_hash["desired_alt_names"] = host.certificate_request.subject_alt_names
+            json_hash["desired_alt_names"] = host.certificate_request.subject_alt_names
 
-            result = PSON.parse(Puppet::SSL::Host.new(host.name).to_pson)
-            base_pson_comparison result, pson_hash
-            expect(result["dns_alt_names"]).to eq(pson_hash["desired_alt_names"])
+            result = JSON.parse(Puppet::SSL::Host.new(host.name).to_json)
+            base_json_comparison result, json_hash
+            expect(result["dns_alt_names"]).to eq(json_hash["desired_alt_names"])
           end
         end
 
@@ -884,15 +884,15 @@ describe Puppet::SSL::Host do
             end
 
             it "should include the dns_alt_names associated with the certificate" do
-              pson_hash["desired_alt_names"] = host.certificate_request.subject_alt_names
+              json_hash["desired_alt_names"] = host.certificate_request.subject_alt_names
 
-              result = PSON.parse(Puppet::SSL::Host.new(host.name).to_pson)
-              base_pson_comparison result, pson_hash
-              expect(result["dns_alt_names"]).to eq(pson_hash["desired_alt_names"])
+              result = JSON.parse(Puppet::SSL::Host.new(host.name).to_json)
+              base_json_comparison result, json_hash
+              expect(result["dns_alt_names"]).to eq(json_hash["desired_alt_names"])
             end
 
             it "should validate against the schema" do
-              expect(host.to_pson).to validate_against('api/schemas/host.json')
+              expect(host.to_json).to validate_against('api/schemas/host.json')
             end
           end
         end
@@ -901,37 +901,37 @@ describe Puppet::SSL::Host do
       it "should be able to identify a host with a signed certificate" do
         host.generate_certificate_request
         @ca.sign(host.name)
-        pson_hash = {
+        json_hash = {
           "fingerprint"          => Puppet::SSL::Certificate.indirection.find(host.name).fingerprint,
           "desired_state"        => 'signed',
           "name"                 => host.name,
         }
 
-        result = PSON.parse(Puppet::SSL::Host.new(host.name).to_pson)
-        base_pson_comparison result, pson_hash
+        result = JSON.parse(Puppet::SSL::Host.new(host.name).to_json)
+        base_json_comparison result, json_hash
       end
 
       it "should be able to identify a host with a revoked certificate" do
         host.generate_certificate_request
         @ca.sign(host.name)
         @ca.revoke(host.name)
-        pson_hash["fingerprint"] = Puppet::SSL::Certificate.indirection.find(host.name).fingerprint
-        pson_hash["desired_state"] = 'revoked'
+        json_hash["fingerprint"] = Puppet::SSL::Certificate.indirection.find(host.name).fingerprint
+        json_hash["desired_state"] = 'revoked'
 
-        result = PSON.parse(Puppet::SSL::Host.new(host.name).to_pson)
-        base_pson_comparison result, pson_hash
+        result = JSON.parse(Puppet::SSL::Host.new(host.name).to_json)
+        base_json_comparison result, json_hash
       end
     end
 
-    describe "when converting from PSON" do
+    describe "when converting from JSON" do
       it "should return a Puppet::SSL::Host object with the specified desired state" do
         host = Puppet::SSL::Host.new("bazinga")
         host.desired_state="signed"
-        pson_hash = {
+        json_hash = {
           "name"  => host.name,
           "desired_state" => host.desired_state,
         }
-        generated_host = Puppet::SSL::Host.from_data_hash(pson_hash)
+        generated_host = Puppet::SSL::Host.from_data_hash(json_hash)
         expect(generated_host.desired_state).to eq(host.desired_state)
         expect(generated_host.name).to eq(host.name)
       end

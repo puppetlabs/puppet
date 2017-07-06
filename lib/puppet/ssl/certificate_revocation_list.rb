@@ -26,7 +26,7 @@ DOC
 
   # Knows how to create a CRL with our system defaults.
   def generate(cert, cakey)
-    Puppet.info "Creating a new certificate revocation list"
+    Puppet.info _("Creating a new certificate revocation list")
 
     create_crl_issued_by(cert)
     start_at_initial_crl_number
@@ -39,14 +39,14 @@ DOC
   # The name doesn't actually matter; there's only one CRL.
   # We just need the name so our Indirector stuff all works more easily.
   def initialize(fakename)
-    @name = "crl"
+    @name = _("crl")
   end
 
   # Revoke the certificate with serial number SERIAL issued by this
   # CA, then write the CRL back to disk. The REASON must be one of the
   # OpenSSL::OCSP::REVOKED_* reasons
   def revoke(serial, cakey, reason = OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE)
-    Puppet.notice "Revoked certificate with serial #{serial}"
+    Puppet.notice _("Revoked certificate with serial %{serial}") % { serial: serial }
     time = Time.now
 
     add_certificate_revocation_for(serial, reason, time)
