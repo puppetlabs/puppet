@@ -66,6 +66,14 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       provider.create
     end
 
+    it "should be able to create users with null passwords" do
+      described_class.has_feature :manages_passwords
+      resource[:ensure] = :present
+      resource[:password] = ''
+      provider.expects(:execute).with(includes('-p'), kind_of(Hash))
+      provider.create
+    end
+
     it "should add -o when allowdupe is enabled and the user is being created" do
       resource[:allowdupe] = true
       provider.expects(:execute).with(includes('-o'), kind_of(Hash))
