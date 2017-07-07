@@ -50,7 +50,7 @@ describe 'the new function' do
       $b = Binary('YmluYXI=')
       notice($b == Binary($b))
 
-      $t = Timestamp('2012-03-04:09:10:11.001')
+      $t = Timestamp('2012-03-04T09:10:11.001')
       notice($t == Timestamp($t))
 
       type MyObject = Object[{attributes => {'type' => String}}]

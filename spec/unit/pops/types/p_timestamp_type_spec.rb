@@ -12,6 +12,11 @@ describe 'Timestamp type' do
     expect(t).to eql(TypeFactory.timestamp('2015-03-01', '2016-12-24'))
   end
 
+  it 'DateTime#_strptime creates hash with :leftover field' do
+    expect(DateTime._strptime('2015-05-04 and bogus', '%F')).to include(:leftover)
+    expect(DateTime._strptime('2015-05-04T10:34:11.003 UTC and bogus', '%FT%T.%N %Z')).to include(:leftover)
+  end
+
   context 'when used in Puppet expressions' do
     include PuppetSpec::Compiler
     it 'is equal to itself only' do
@@ -96,7 +101,6 @@ describe 'Timestamp type' do
       end
 
       it 'should error when only part of the string is parsed' do
-        pending("Requires full rewrite of Timestamp parse since there's no way to detect trailing garbage using DateTime#strptime")
         code = <<-CODE
             notice(Timestamp('2015-03-01T11:12:13 bogus after'))
         CODE
