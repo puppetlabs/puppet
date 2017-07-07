@@ -30,7 +30,7 @@ module SemanticPuppet
         false
       else
         prerelease = match[4]
-        prerelease.nil? || prerelease.split('.').all? { |x| !(x =~ /^0\d+/) }
+        prerelease.nil? || prerelease.split('.').all? { |x| !(x =~ /^0\d+$/) }
       end
     end
 
