@@ -390,7 +390,7 @@ module Puppet::Pops
           'knockout_prefix=>Optional[String],'\
           'merge_debug=>Optional[Boolean],'\
           'merge_hash_arrays=>Optional[Boolean],'\
-          'sort_merge_arrays=>Optional[Boolean],'\
+          'sort_merged_arrays=>Optional[Boolean],'\
           '}]')
     end
 
