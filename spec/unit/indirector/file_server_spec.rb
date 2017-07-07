@@ -249,6 +249,7 @@ describe Puppet::Indirector::FileServer do
       @configuration.stubs(:split_path).with(@request).returns([@mount, "rel/path"])
       @request.stubs(:node).returns("mynode")
       @request.stubs(:ip).returns("myip")
+      @mount.stubs(:name).returns "myname"
       @mount.stubs(:allowed?).with("mynode", "myip").returns "something"
     end
 
@@ -274,8 +275,22 @@ describe Puppet::Indirector::FileServer do
       expect(@file_server).not_to be_authorized(@request)
     end
 
-    it "should return the results of asking the mount whether the node and IP are authorized" do
-      expect(@file_server.authorized?(@request)).to eq("something")
+    it "should return true when no auth directives are defined for the mount point" do
+      @mount.stubs(:empty?).returns true
+      @mount.stubs(:globalallow?).returns nil
+      expect(@file_server).to be_authorized(@request)
+    end
+
+    it "should return true when a global allow directive is defined for the mount point" do
+      @mount.stubs(:empty?).returns false
+      @mount.stubs(:globalallow?).returns true
+      expect(@file_server).to be_authorized(@request)
+    end
+
+    it "should return false when a non-global allow directive is defined for the mount point" do
+      @mount.stubs(:empty?).returns false
+      @mount.stubs(:globalallow?).returns false
+      expect(@file_server).not_to be_authorized(@request)
     end
   end
 end

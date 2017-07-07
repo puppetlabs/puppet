@@ -16,7 +16,7 @@ test_name "PUP-5872: catalog_uuid correlates catalogs with reports" do
   def get_catalog_uuid_from_report(master_reportdir, agent_node_name)
     report_catalog_uuid = nil
     on(master, "cat #{master_reportdir}/#{agent_node_name}/*") do
-      report_catalog_uuid = stdout.match(/catalog_uuid: ([a-z0-9\-]*)/)[1]
+      report_catalog_uuid = stdout.match(/catalog_uuid: '?([a-z0-9\-]*)'?/)[1]
     end
     report_catalog_uuid
   end

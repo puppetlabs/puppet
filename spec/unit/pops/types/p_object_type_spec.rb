@@ -19,7 +19,7 @@ describe 'The Object Type' do
   end
 
   def type_object_t(name, body_string)
-    object = PObjectType.new(name, pp_parser.parse_string("{#{body_string}}").current.body)
+    object = PObjectType.new(name, pp_parser.parse_string("{#{body_string}}").body)
     loader.set_entry(Loader::TypedName.new(:type, name), object)
     object
   end
@@ -67,7 +67,7 @@ describe 'The Object Type' do
         }
       OBJECT
       expect { parse_object('MyObject', obj) }.to raise_error(TypeAssertionError,
-        /expects a match for Enum\['constant', 'derived', 'given_or_derived'\], got 'derivd'/)
+        /expects a match for Enum\['constant', 'derived', 'given_or_derived', 'reference'\], got 'derivd'/)
     end
 
     it 'stores value in attribute' do
@@ -99,6 +99,17 @@ describe 'The Object Type' do
       OBJECT
       attr = tp['a']
       expect(attr.value?).to be_falsey
+    end
+
+    it 'attribute without defined value but optional type responds true to value?' do
+      tp = parse_object('MyObject', <<-OBJECT)
+        attributes => {
+          a => Optional[Integer]
+        }
+      OBJECT
+      attr = tp['a']
+      expect(attr.value?).to be_truthy
+      expect(attr.value).to be_nil
     end
 
     it 'raises an error when value is requested from an attribute that has no value' do
@@ -700,7 +711,7 @@ describe 'The Object Type' do
         },
         equality => [b]
       OBJECT
-      obj2 = PObjectType.new(obj.i12n_hash)
+      obj2 = PObjectType.new(obj._pcore_init_hash)
       expect(obj).to eql(obj2)
     end
   end
@@ -712,7 +723,7 @@ describe 'The Object Type' do
       type Spec::MySecondObject = Object[{parent => Spec::MyObject, attributes => { b => String }}]
       notice(Spec::MySecondObject(42, 'Meaning of life'))
       CODE
-      expect(eval_and_collect_notices(code)).to eql(["Spec::MySecondObject({\n  'a' => 42,\n  'b' => 'Meaning of life'\n})"])
+      expect(eval_and_collect_notices(code)).to eql(["Spec::MySecondObject({'a' => 42, 'b' => 'Meaning of life'})"])
     end
   end
 
@@ -769,6 +780,34 @@ describe 'The Object Type' do
       notice($x == $y)
       CODE
       expect(eval_and_collect_notices(code)).to eql(['true'])
+    end
+
+    it 'declared Object type is assignable to default Object type' do
+      code = <<-CODE
+      type MyObject = Object[{ attributes => { a => Integer }}]
+      notice(MyObject < Object)
+      notice(MyObject <= Object)
+      CODE
+      expect(eval_and_collect_notices(code)).to eql(['true', 'true'])
+    end
+
+    it 'default Object type not is assignable to declared Object type' do
+      code = <<-CODE
+      type MyObject = Object[{ attributes => { a => Integer }}]
+      notice(Object < MyObject)
+      notice(Object <= MyObject)
+      CODE
+      expect(eval_and_collect_notices(code)).to eql(['false', 'false'])
+    end
+
+    it 'default Object type is assignable to itself' do
+      code = <<-CODE
+      notice(Object < Object)
+      notice(Object <= Object)
+      notice(Object > Object)
+      notice(Object >= Object)
+      CODE
+      expect(eval_and_collect_notices(code)).to eql(['false', 'true', 'false', 'true'])
     end
 
     it 'an object type is an instance of an object type type' do
@@ -1125,7 +1164,7 @@ describe 'The Object Type' do
     include_context 'types_setup'
 
     def find_parent(tc, parent_name)
-      p = tc._ptype
+      p = tc._pcore_type
       while p.is_a?(PObjectType) && p.name != parent_name
         p = p.parent
       end
@@ -1133,33 +1172,80 @@ describe 'The Object Type' do
       p
     end
 
-    it 'the class has a _ptype method' do
+    it 'the class has a _pcore_type method' do
       all_types.each do |tc|
-        expect(tc).to respond_to(:_ptype).with(0).arguments
+        expect(tc).to respond_to(:_pcore_type).with(0).arguments
       end
     end
 
-    it 'the _ptype method returns a PObjectType instance' do
+    it 'the _pcore_type method returns a PObjectType instance' do
       all_types.each do |tc|
-        expect(tc._ptype).to be_a(PObjectType)
+        expect(tc._pcore_type).to be_a(PObjectType)
       end
     end
 
-    it 'the instance returned by _ptype is a descendant from Pcore::AnyType' do
+    it 'the instance returned by _pcore_type is a descendant from Pcore::AnyType' do
       all_types.each { |tc| expect(find_parent(tc, 'Pcore::AnyType').name).to eq('Pcore::AnyType') }
     end
 
-    it 'PScalarType classes _ptype returns a descendant from Pcore::ScalarType' do
+    it 'PScalarType classes _pcore_type returns a descendant from Pcore::ScalarType' do
       scalar_types.each { |tc| expect(find_parent(tc, 'Pcore::ScalarType').name).to eq('Pcore::ScalarType') }
     end
 
-    it 'PNumericType classes _ptype returns a descendant from Pcore::NumberType' do
+    it 'PNumericType classes _pcore_type returns a descendant from Pcore::NumberType' do
       numeric_types.each { |tc| expect(find_parent(tc, 'Pcore::NumericType').name).to eq('Pcore::NumericType') }
     end
 
-    it 'PCollectionType classes _ptype returns a descendant from Pcore::CollectionType' do
+    it 'PCollectionType classes _pcore_type returns a descendant from Pcore::CollectionType' do
       coll_descendants = collection_types - [PTupleType, PStructType]
       coll_descendants.each { |tc| expect(find_parent(tc, 'Pcore::CollectionType').name).to eq('Pcore::CollectionType') }
+    end
+  end
+
+  context 'when dealing with annotations' do
+    let(:annotation) { <<-PUPPET }
+      type MyAdapter = Object[{
+        parent => Annotation,
+        attributes => {
+          id => Integer,
+          value => String[1]
+        }
+      }]
+    PUPPET
+
+    it 'the Annotation type can be used as parent' do
+      code = <<-PUPPET
+        #{annotation}
+        notice(MyAdapter < Annotation)
+      PUPPET
+      expect(eval_and_collect_notices(code)).to eql(['true'])
+    end
+
+    it 'an annotation can be added to an Object type' do
+      code = <<-PUPPET
+        #{annotation}
+        type MyObject = Object[{
+          annotations => {
+            MyAdapter => { 'id' => 2, 'value' => 'annotation value' }
+          }
+        }]
+        notice(MyObject)
+      PUPPET
+      expect(eval_and_collect_notices(code)).to eql([
+        "Object[{annotations => {MyAdapter => {'id' => 2, 'value' => 'annotation value'}}, name => 'MyObject'}]"])
+    end
+
+    it 'other types can not be used as annotations' do
+      code = <<-PUPPET
+        type NotAnAnnotation = Object[{}]
+        type MyObject = Object[{
+          annotations => {
+            NotAnAnnotation => {}
+          }
+        }]
+        notice(MyObject)
+      PUPPET
+      expect{eval_and_collect_notices(code)}.to raise_error(/entry 'annotations' expects a value of type Undef or Hash/)
     end
   end
 end

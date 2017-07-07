@@ -133,7 +133,7 @@ class Puppet::Parameter::ValueCollection
     call_opt = options[:call]
     unless call_opt.nil?
       devfail "Cannot use obsolete :call value '#{call_opt}' for property '#{self.class.name}'" unless call_opt == :none || call_opt == :instead
-      Puppet.deprecation_warning("Property option :call is deprecated and no longer used. Please remove it.")
+      Puppet.deprecation_warning(_("Property option :call is deprecated and no longer used. Please remove it."))
       options = options.reject { |k,v| k == :call }
     end
 
@@ -181,11 +181,11 @@ class Puppet::Parameter::ValueCollection
     return if empty?
 
     unless @values.detect { |name, v| v.match?(value) }
-      str = "Invalid value #{value.inspect}. "
+      str = _("Invalid value %{value}. ") % { value: value.inspect }
 
-      str += "Valid values are #{values.join(", ")}. " unless values.empty?
+      str += _("Valid values are %{value_list}. ") % { value_list: values.join(", ") } unless values.empty?
 
-      str += "Valid values match #{regexes.join(", ")}." unless regexes.empty?
+      str += _("Valid values match %{pattern}.") % { pattern: regexes.join(", ") } unless regexes.empty?
 
       raise ArgumentError, str
     end

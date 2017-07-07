@@ -10,13 +10,13 @@ describe "apply" do
   end
 
   describe "when applying provided catalogs" do
-    it "can apply catalogs provided in a file in pson" do
-      file_to_create = tmpfile("pson_catalog")
+    it "can apply catalogs provided in a file in json" do
+      file_to_create = tmpfile("json_catalog")
       catalog = Puppet::Resource::Catalog.new('mine', Puppet.lookup(:environments).get(Puppet[:environment]))
       resource = Puppet::Resource.new(:file, file_to_create, :parameters => {:content => "my stuff"})
       catalog.add_resource resource
 
-      manifest = file_containing("manifest", catalog.to_pson)
+      manifest = file_containing("manifest", catalog.to_json)
 
       puppet = Puppet::Application[:apply]
       puppet.options[:catalog] = manifest
@@ -94,7 +94,7 @@ end
       it 'does not load the pcore type' do
         catalog = compile_to_catalog('applytest { "applytest was here":}', node)
         apply = Puppet::Application[:apply]
-        apply.options[:catalog] = file_containing('manifest', catalog.to_pson)
+        apply.options[:catalog] = file_containing('manifest', catalog.to_json)
 
         Puppet[:environmentpath] = envdir
         Puppet::Pops::Loader::Runtime3TypeLoader.any_instance.expects(:find).never
@@ -220,12 +220,11 @@ end
     end
 
     it 'can apply the catalog' do
-      pending('awaits PUP-7423') # test no longer functional when Object types are serialized by reference
       catalog = compile_to_catalog('include mod', node)
 
       Puppet[:environment] = env_name
       apply = Puppet::Application[:apply]
-      apply.options[:catalog] = file_containing('manifest', catalog.to_pson)
+      apply.options[:catalog] = file_containing('manifest', catalog.to_json)
       expect { apply.run_command; exit(0) }.to exit_with(0)
       expect(@logs.map(&:to_s)).to include('The Street 23')
     end
@@ -245,9 +244,8 @@ end
     expect(@logs.map(&:to_s)).to include('it was applied')
   end
 
-  it "adds environment to the $server_facts variable if trusted_server_facts is true" do
+  it "adds environment to the $server_facts variable" do
     manifest = file_containing("manifest.pp", "notice(\"$server_facts\")")
-    Puppet[:trusted_server_facts] = true
 
     puppet = Puppet::Application[:apply]
     puppet.stubs(:command_line).returns(stub('command_line', :args => [manifest]))
@@ -471,7 +469,7 @@ class amod::bad_type {
       it 'will notify a string that is the result of Regexp#inspect (from Runtime3xConverter)' do
         catalog = compile_to_catalog(execute, node)
         apply = Puppet::Application[:apply]
-        apply.options[:catalog] = file_containing('manifest', catalog.to_pson)
+        apply.options[:catalog] = file_containing('manifest', catalog.to_json)
         apply.expects(:apply_catalog).with do |catalog|
           catalog.resource(:notify, 'rx')['message'].is_a?(String)
           catalog.resource(:notify, 'bin')['message'].is_a?(String)
@@ -484,20 +482,23 @@ class amod::bad_type {
       end
 
       it 'will notify a string that is the result of to_s on uknown data types' do
-        logs = []
-        json = Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
-           compile_to_catalog('include amod::bad_type', node).to_pson
-        end
-        logs = logs.select { |log| log.level == :warning }.map { |log| log.message }
-        expect(logs.empty?).to be_falsey
-        expect(logs[0]).to eql("Resource 'Notify[bogus]' contains a Time value. It will be converted to the String '2016-10-06 23:51:14 +0200'")
-
+        json = compile_to_catalog('include amod::bad_type', node).to_json
         apply = Puppet::Application[:apply]
         apply.options[:catalog] = file_containing('manifest', json)
         apply.expects(:apply_catalog).with do |catalog|
           catalog.resource(:notify, 'bogus')['message'].is_a?(String)
         end
         apply.run
+      end
+
+      it 'will log a warning that a value of unknown type is converted into a string' do
+        logs = []
+        json = Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          compile_to_catalog('include amod::bad_type', node).to_json
+        end
+        logs = logs.select { |log| log.level == :warning }.map { |log| log.message }
+        expect(logs.empty?).to be_falsey
+        expect(logs[0]).to eql("Notify[bogus]['message'] contains a Time value. It will be converted to the String '2016-10-06 23:51:14 +0200'")
       end
     end
 
@@ -507,7 +508,7 @@ class amod::bad_type {
       it 'will notify a regexp using Regexp#to_s' do
         catalog = compile_to_catalog(execute, node)
         apply = Puppet::Application[:apply]
-        apply.options[:catalog] = file_containing('manifest', catalog.to_pson)
+        apply.options[:catalog] = file_containing('manifest', catalog.to_json)
         apply.expects(:apply_catalog).with do |catalog|
           catalog.resource(:notify, 'rx')['message'].is_a?(Regexp)
           catalog.resource(:notify, 'bin')['message'].is_a?(Puppet::Pops::Types::PBinaryType::Binary)
@@ -517,11 +518,6 @@ class amod::bad_type {
           catalog.resource(:notify, 'tstamp')['message'].is_a?(Puppet::Pops::Time::Timestamp)
         end
         apply.run
-      end
-
-      it 'will raise an error on uknown data types' do
-        catalog = compile_to_catalog('include amod::bad_type', node)
-        expect { catalog.to_pson }.to raise_error(/No Puppet Type found for Time/)
       end
     end
 

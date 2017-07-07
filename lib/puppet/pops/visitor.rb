@@ -51,6 +51,27 @@ class Visitor
     raise "Visitor Error: the configured receiver (#{receiver.class}) can't handle instance of: #{thing.class}"
   end
 
+  # Visit an explicit receiver
+  def visit_this_class(receiver, clazz, args)
+    raise "Visitor Error: Too few arguments passed. min = #{@min_args}" unless args.length >= @min_args
+    if @max_args
+      raise "Visitor Error: Too many arguments passed. max = #{@max_args}" unless args.length <= @max_args
+    end
+    if method_name = @cache[clazz]
+      return receiver.send(method_name, clazz, *args)
+    else
+      clazz.ancestors().each do |ancestor|
+        name = ancestor.name
+        next if name.nil?
+        method_name = :"#{@message}_#{name.split(DOUBLE_COLON).last}"
+        next unless receiver.respond_to?(method_name, true)
+        @cache[clazz] = method_name
+        return receiver.send(method_name, clazz, *args)
+      end
+    end
+    raise "Visitor Error: the configured receiver (#{receiver.class}) can't handle instance of: #{clazz}"
+  end
+
   # Visit an explicit receiver with 0 args
   # (This is ~30% faster than calling the general method)
   #

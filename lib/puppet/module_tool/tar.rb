@@ -11,7 +11,8 @@ module Puppet::ModuleTool::Tar
     elsif Puppet::Util.which('tar') && ! Puppet::Util::Platform.windows?
       Gnu.new
     else
-      raise RuntimeError, 'No suitable tar implementation found'
+      #TRANSLATORS "tar" is a program name and should not be translated
+      raise RuntimeError, _('No suitable tar implementation found')
     end
   end
 end

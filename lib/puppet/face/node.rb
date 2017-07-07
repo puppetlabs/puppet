@@ -1,9 +1,9 @@
 require 'puppet/indirector/face'
 Puppet::Indirector::Face.define(:node, '0.0.1') do
   copyright "Puppet Inc.", 2011
-  license   "Apache 2 license; see COPYING"
+  license   _("Apache 2 license; see COPYING")
 
-  summary "View and manage node definitions."
+  summary _("View and manage node definitions.")
   description <<-'EOT'
     This subcommand interacts with node objects, which are used by Puppet to
     build a catalog. A node object consists of the node's facts, environment,
@@ -15,9 +15,9 @@ Puppet::Indirector::Face.define(:node, '0.0.1') do
   deactivate_action(:save)
 
   find = get_action(:find)
-  find.summary "Retrieve a node object."
-  find.arguments "<host>"
-  find.returns <<-'EOT'
+  find.summary _("Retrieve a node object.")
+  find.arguments _("<host>")
+  find.returns _(<<-'EOT')
     A hash containing the node's `classes`, `environment`, `expiration`, `name`,
     `parameters` (its facts, combined with any ENC-set parameters), and `time`.
     When used from the Ruby API: a Puppet::Node object.

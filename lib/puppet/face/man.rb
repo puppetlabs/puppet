@@ -5,9 +5,9 @@ require 'erb'
 
 Puppet::Face.define(:man, '0.0.1') do
   copyright "Puppet Inc.", 2011
-  license   "Apache 2 license; see COPYING"
+  license   _("Apache 2 license; see COPYING")
 
-  summary "Display Puppet manual pages."
+  summary _("Display Puppet manual pages.")
 
   description <<-EOT
     This subcommand displays manual pages for all Puppet subcommands. If the
@@ -23,9 +23,9 @@ Puppet::Face.define(:man, '0.0.1') do
   EOT
 
   action(:man) do
-    summary "Display the manual page for a Puppet subcommand."
-    arguments "<subcommand>"
-    returns <<-'EOT'
+    summary _("Display the manual page for a Puppet subcommand.")
+    arguments _("<subcommand>")
+    returns _(<<-'EOT')
       The man data, in Markdown format, suitable for consumption by Ronn.
 
       RENDERING ISSUES: To skip fancy formatting and output the raw Markdown

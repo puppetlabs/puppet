@@ -5,7 +5,7 @@ require 'puppet/parser/compiler'
 
 class Puppet::Application::Lookup < Puppet::Application
 
-  RUN_HELP = "Run 'puppet lookup --help' for more details".freeze
+  RUN_HELP = _("Run 'puppet lookup --help' for more details").freeze
   DEEP_MERGE_OPTIONS = '--knock-out-prefix, --sort-merged-arrays, and --merge-hash-arrays'.freeze
 
   run_mode :master
@@ -57,19 +57,12 @@ class Puppet::Application::Lookup < Puppet::Application
     if %w{.yaml .yml .json}.include?(arg.match(/\.[^.]*$/)[0])
       options[:fact_file] = arg
     else
-      raise "The --fact file only accepts yaml and json files.\n#{RUN_HELP}"
+      raise _("The --fact file only accepts yaml and json files.\n%{run_help}") % { run_help: RUN_HELP }
     end
   end
 
-  # Sets up the 'node_cache_terminus' default to use the Write Only Yaml terminus :write_only_yaml.
-  # If this is not wanted, the setting ´node_cache_terminus´ should be set to nil.
-  # @see Puppet::Node::WriteOnlyYaml
-  # @see #setup_node_cache
-  # @see puppet issue 16753
-  #
   def app_defaults
     super.merge({
-      :node_cache_terminus => :write_only_yaml,
       :facts_terminus => 'yaml'
     })
   end
@@ -105,127 +98,149 @@ class Puppet::Application::Lookup < Puppet::Application
   def help
     <<-'HELP'
 
-puppet-lookup(8) -- Data in modules lookup function
+puppet-lookup(8) -- Interactive Hiera lookup
 ========
 
 SYNOPSIS
 --------
-The lookup command is used for debugging and testing a given data
-configuration. For a given data key, lookup will produce either a
-value or an explanation of how that value was obtained on the standard
-output stream with the specified rendering format. Lookup is designed
-to be run on a puppet master or a node in a masterless setup.
+Does Hiera lookups from the command line.
+
+Since this command needs access to your Hiera data, make sure to run it on a
+node that has a copy of that data. This usually means logging into a Puppet
+Server node and running 'puppet lookup' with sudo.
+
+The most common version of this command is:
+
+'puppet lookup <KEY> --node <NAME> --environment <ENV> --explain'
 
 USAGE
 -----
-puppet lookup [--help] [--type <TYPESTRING>] [--merge unique|hash|deep]
+puppet lookup [--help] [--type <TYPESTRING>] [--merge first|unique|hash|deep]
   [--knock-out-prefix <PREFIX-STRING>] [--sort-merged-arrays]
-  [--merge-hash-arrays] [--explain]
+  [--merge-hash-arrays] [--explain] [--environment <ENV>]
   [--default <VALUE>] [--node <NODE-NAME>] [--facts <FILE>]
   [--compile]
   [--render-as s|json|yaml|binary|msgpack] <keys>
 
 DESCRIPTION
 -----------
-The lookup command is a CLI interface for the puppet lookup function.
-When given one or more keys, the lookup command will return the first
-value found when run from the puppet master or a masterless node.
+The lookup command is a CLI for Puppet's 'lookup()' function. It searches your
+Hiera data and returns a value for the requested lookup key, so you can test and
+explore your data. It is a modern replacement for the 'hiera' command.
 
-When an explanation has not been requested and
-lookup is simply looking up a value, the application will exit with 0
-if a value was found and 1 otherwise. When an explanation is requested,
-lookup will always exit with 0 unless there is a major error.
+Hiera usually relies on a node's facts to locate the relevant data sources. By
+default, 'puppet lookup' uses facts from the node you run the command on, but
+you can get data for any other node with the '--node <NAME>' option. If
+possible, the lookup command will use the requested node's real stored facts
+from PuppetDB; if PuppetDB isn't configured or you want to provide arbitrary
+fact values, you can pass alternate facts as a JSON or YAML file with '--facts
+<FILE>'.
 
-The other options are as passed into the lookup function, and the effect
-they have on the lookup is described in more detail in the header
-for the lookup function:
+If you're debugging your Hiera data and want to see where values are coming
+from, use the '--explain' option.
 
-http://links.puppetlabs.com/lookup-docs
+If '--explain' isn't specified, lookup exits with 0 if a value was found and 1
+otherwise. With '--explain', lookup always exits with 0 unless there is a major
+error.
+
+You can provide multiple lookup keys to this command, but it only returns a
+value for the first found key, omitting the rest.
+
+For more details about how Hiera works, see the Hiera documentation:
+https://docs.puppet.com/puppet/latest/hiera_intro.html
 
 OPTIONS
 -------
-These options and their effects are described in more detail in
-the puppet lookup function linked to above.
 
 * --help:
   Print this help message.
 
-* --type <TYPESTRING>:
-  Assert that the value has the specified type.
-
-* --merge unique|hash|deep:
-  Specify the merge strategy. 'hash' performs a simple hash-merge by
-  overwriting keys of lower lookup priority. 'unique' appends everything
-  to an array containing no nested arrays and where all duplicates have been
-  removed. 'deep' Performs a deep merge on values of Array and Hash type. There
-  are additional option flags that can be used with 'deep'.
-
-* --knock-out-prefix <PREFIX-STRING>
-  Can be used with the 'deep' merge strategy. Specify string value to signify
-  prefix which deletes elements from existing element.
-
-* --sort-merged-arrays
-  Can be used with the 'deep' merge strategy. When this flag is used all
-  merged arrays will be sorted.
-
-* --merge-hash-arrays
-  Can be used with the 'deep' merge strategy. When this flag is used arrays
-  and hashes will be merged.
-
 * --explain
-  Print an explanation for the details of how the lookup performed rather
-  than the value returned for the key. The explanation will describe how
-  the result was obtained or why lookup failed to obtain the result.
-
-* --explain-options
-  Explain if a lookup_options hash will be used and how it was assembled
-  when performing a lookup.
-
-* --default <VALUE>
-  A value produced if no value was found in the lookup.
+  Explain the details of how the lookup was performed and where the final value
+  came from (or the reason no value was found).
 
 * --node <NODE-NAME>
-  Specify node which defines the scope in which the lookup will be performed.
-  If a node is not given, lookup will default to the machine from which the
-  lookup is being run (which should be the master).
+  Specify which node to look up data for; defaults to the node where the command
+  is run. Since Hiera's purpose is to provide different values for different
+  nodes (usually based on their facts), you'll usually want to use some specific
+  node's facts to explore your data. If the node where you're running this
+  command is configured to talk to PuppetDB, the command will use the requested
+  node's most recent facts. Otherwise, you can override facts with the '--facts'
+  option.
 
 * --facts <FILE>
-  Specify a .json, or .yaml file holding key => value mappings that will
-  override the facts for the current node. Any facts not specified by the
-  user will maintain their original value.
+  Specify a .json or .yaml file of key => value mappings to override the facts
+  for this lookup. Any facts not specified in this file maintain their
+  original value.
+
+* --environment <ENV>
+  Like with most Puppet commands, you can specify an environment on the command
+  line. This is important for lookup because different environments can have
+  different Hiera data.
+
+* --merge first|unique|hash|deep:
+  Specify the merge behavior, overriding any merge behavior from the data's
+  lookup_options. 'first' returns the first value found. 'unique' appends
+  everything to a merged, deduplicated array. 'hash' performs a simple hash
+  merge by overwriting keys of lower lookup priority. 'deep' performs a deep
+  merge on values of Array and Hash type. There are additional options that can
+  be used with 'deep'.
+
+* --knock-out-prefix <PREFIX-STRING>
+  Can be used with the 'deep' merge strategy. Specifies a prefix to indicate a
+  value should be removed from the final result.
+
+* --sort-merged-arrays
+  Can be used with the 'deep' merge strategy. When this flag is used, all
+  merged arrays are sorted.
+
+* --merge-hash-arrays
+  Can be used with the 'deep' merge strategy. When this flag is used, hashes
+  WITHIN arrays are deep-merged with their counterparts by position.
+
+* --explain-options
+  Explain whether a lookup_options hash affects this lookup, and how that hash
+  was assembled. (lookup_options is how Hiera configures merge behavior in data.)
+
+* --default <VALUE>
+  A value to return if Hiera can't find a value in data. For emulating calls to
+  the 'lookup()' function that include a default.
+
+* --type <TYPESTRING>:
+  Assert that the value has the specified type. For emulating calls to the
+  'lookup()' function that include a data type.
 
 * --compile
-  Perform a full catalog compilation prior to the lookup. This is meaningful when
-  the catalog changes global variables that are referenced in interpolated values.
-  No catalog compilation takes place unless this flag is given.
+  Perform a full catalog compilation prior to the lookup. If your hierarchy and
+  data only use the $facts, $trusted, and $server_facts variables, you don't
+  need this option; however, if your Hiera configuration uses arbitrary
+  variables set by a Puppet manifest, you might need this option to get accurate
+  data. No catalog compilation takes place unless this flag is given.
 
 * --render-as s|json|yaml|binary|msgpack
-  Determines how the results will be rendered to the standard output where
-  s means plain text. The default when lookup is producing a value is yaml
-  and the default when producing an explanation is s.
+  Specify the output format of the results; "s" means plain text. The default
+  when producing a value is yaml and the default when producing an explanation
+  is s.
 
 EXAMPLE
 -------
-  If you wanted to lookup 'key_name' within the scope of the master, you would
-  call lookup like this:
+  To look up 'key_name' using the Puppet Server node's facts:
   $ puppet lookup key_name
 
-  If you wanted to lookup 'key_name' within the scope of the agent.local node,
-  you would call lookup like this:
+  To look up 'key_name' with agent.local's facts:
   $ puppet lookup --node agent.local key_name
 
-  If you wanted to get the first value found for 'key_name_one' and 'key_name_two'
-  within the scope of the agent.local node while merging values and knocking out
-  the prefix 'foo' while merging, you would call lookup like this:
+  To get the first value found for 'key_name_one' and 'key_name_two'
+  with agent.local's facts while merging values and knocking out
+  the prefix 'foo' while merging:
   $ puppet lookup --node agent.local --merge deep --knock-out-prefix foo key_name_one key_name_two
 
-  If you wanted to lookup 'key_name' within the scope of the agent.local node,
-  and return a default value of 'bar' if nothing was found, you would call
-  lookup like this:
+  To lookup 'key_name' with agent.local's facts, and return a default value of
+  'bar' if nothing was found:
   $ puppet lookup --node agent.local --default bar key_name
 
-  If you wanted to see an explanation of how the value for 'key_name' would be
-  obtained in the context of the agent.local node, you would call lookup like this:
+  To see an explanation of how the value for 'key_name' would be found, using
+  agent.local's facts:
   $ puppet lookup --node agent.local --explain key_name
 
 COPYRIGHT
@@ -244,7 +259,7 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
     #end
 
     if (options[:sort_merged_arrays] || options[:merge_hash_arrays] || options[:prefix]) && options[:merge] != 'deep'
-      raise "The options #{DEEP_MERGE_OPTIONS} are only available with '--merge deep'\n#{RUN_HELP}"
+      raise _("The options %{deep_merge_opts} are only available with '--merge deep'\n%{run_help}") % { deep_merge_opts: DEEP_MERGE_OPTIONS, run_help: RUN_HELP }
     end
 
     use_default_value = !options[:default_value].nil?
@@ -255,7 +270,7 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
       strategies = Puppet::Pops::MergeStrategy.strategy_keys
       unless strategies.include?(merge.to_sym)
         strategies = strategies.map {|k| "'#{k}'"}
-        raise "The --merge option only accepts #{strategies[0...-1].join(', ')}, or #{strategies.last}\n#{RUN_HELP}"
+        raise _("The --merge option only accepts %{strategies}, or %{last_strategy}\n%{run_help}") % { strategies: strategies[0...-1].join(', '), last_strategy: strategies.last, run_help: RUN_HELP }
       end
 
       if merge == 'deep'
@@ -280,16 +295,15 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
         # Explain lookup_options for lookup of an unqualified value.
         keys = Puppet::Pops::Lookup::GLOBAL
       else
-        raise 'No keys were given to lookup.'
+        raise _('No keys were given to lookup.')
       end
     end
     explain = explain_data || explain_options
 
     # Format defaults to text (:s) when producing an explanation and :yaml when producing the value
     format = options[:render_as] || (explain ? :s : :yaml)
-    renderer = Puppet::Network::FormatHandler.format(format == :json ? :pson : format)
-    raise "Unknown rendering format '#{format}'" if renderer.nil?
-
+    renderer = Puppet::Network::FormatHandler.format(format)
+    raise _("Unknown rendering format '%{format}'") % { format: format } if renderer.nil?
 
     generate_scope do |scope|
       lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {}, explain ? Puppet::Pops::Lookup::Explainer.new(explain_options, only_explain_options) : nil)
@@ -315,7 +329,6 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
       # If we want to lookup the node we are currently on
       # we must returning these settings to their default values
       Puppet.settings[:facts_terminus] = 'facter'
-      Puppet.settings[:node_cache_terminus] = nil
     end
 
     node = Puppet::Node.indirection.find(node) unless node.is_a?(Puppet::Node) # to allow unit tests to pass a node instance
@@ -331,7 +344,7 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
       end
 
       unless given_facts.instance_of?(Hash)
-        raise "Incorrect formatted data in #{fact_file} given via the --facts flag"
+        raise _("Incorrect formatted data in %{fact_file} given via the --facts flag") % { fact_file: fact_file }
       end
 
       node.parameters = original_facts.merge(given_facts)

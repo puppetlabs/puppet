@@ -96,7 +96,7 @@ class Puppet::Provider::NameService < Puppet::Provider
       name = name.intern if name.is_a? String
       if @checks.include? name
         block = @checks[name][:block]
-        raise ArgumentError, "Invalid value #{value}: #{@checks[name][:error]}" unless block.call(value)
+        raise ArgumentError, _("Invalid value %{value}: %{error}") % { value: value, error: @checks[name][:error] } unless block.call(value)
       end
     end
 
@@ -161,7 +161,7 @@ class Puppet::Provider::NameService < Puppet::Provider
 
   def create
     if exists?
-      info "already exists"
+      info _("already exists")
       # The object already exists
       return nil
     end
@@ -172,13 +172,13 @@ class Puppet::Provider::NameService < Puppet::Provider
         execute(cmd)
       end
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not create #{@resource.class.name} #{@resource.name}: #{detail}", detail.backtrace
+      raise Puppet::Error, _("Could not create %{resource} %{name}: %{detail}") % { resource: @resource.class.name, name: @resource.name, detail: detail }, detail.backtrace
     end
   end
 
   def delete
     unless exists?
-      info "already absent"
+      info _("already absent")
       # the object already doesn't exist
       return nil
     end
@@ -186,7 +186,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     begin
       execute(self.deletecmd)
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not delete #{@resource.class.name} #{@resource.name}: #{detail}", detail.backtrace
+      raise Puppet::Error, _("Could not delete %{resource} %{name}: %{detail}") % { resource: @resource.class.name, name: @resource.name, detail: detail }, detail.backtrace
     end
   end
 
@@ -293,7 +293,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     begin
       execute(cmd)
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}", detail.backtrace
+      raise Puppet::Error, _("Could not set %{param} on %{resource}[%{name}]: %{detail}") % { param: param, resource: @resource.class.name, name: @resource.name, detail: detail }, detail.backtrace
     end
   end
 

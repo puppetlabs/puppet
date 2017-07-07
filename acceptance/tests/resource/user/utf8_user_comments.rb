@@ -28,7 +28,9 @@ test_name 'PUP-6777 Manage users with UTF-8 comments' do
   # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
   # 4-byte 𠜎 - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
   mixed_utf8_0 = "A\u06FF"
+  reported_mixed_utf8_0 = '\'A\u{6FF}\''
   mixed_utf8_1 = "\u16A0\u{2070E}"
+  reported_mixed_utf8_1 = '\'\u{16A0}\u{2070E}\''
 
   teardown do
     # remove user on all agents
@@ -57,7 +59,7 @@ test_name 'PUP-6777 Manage users with UTF-8 comments' do
     EOF
     # Note setting LANG='<encoding>' environment like this has no effect on Windows agents.
     apply_manifest_on(agents, set_comment_utf8, :expect_changes => true, :environment => {:LANG => "en_US.UTF-8"}) do |result|
-      assert_match(/changed '#{mixed_utf8_0}' to '#{mixed_utf8_1}'/, result.stdout, "failed to modify UTF-8 user comment in UTF-8 environment")
+      assert_match(/changed #{reported_mixed_utf8_0} to #{reported_mixed_utf8_1}/, result.stdout, "failed to modify UTF-8 user comment in UTF-8 environment")
     end
   end
 
@@ -81,7 +83,7 @@ test_name 'PUP-6777 Manage users with UTF-8 comments' do
     EOF
     # Since LANG=<'encoding'> has no effect, this test is redundant on Windows - exclude it.
     apply_manifest_on(agents - windows_agents, set_comment_utf8, :expect_changes => true, :environment => {:LANG => "en_US.ISO8859-1"}) do |result|
-      assert_match(/changed '#{mixed_utf8_0}' to '#{mixed_utf8_1}'/, result.stdout, "failed to modify UTF-8 user comment in ISO-8859-1 environment")
+      assert_match(/changed #{reported_mixed_utf8_0} to #{reported_mixed_utf8_1}/, result.stdout, "failed to modify UTF-8 user comment in ISO-8859-1 environment")
     end
   end
 
@@ -107,7 +109,7 @@ test_name 'PUP-6777 Manage users with UTF-8 comments' do
     # OS X is known broken in POSIX locale with UTF-8 chars on OS X, so exclude OS X here.
     # Also since LANG=<'encoding'> has no effect, this test is redundant on Windows - exclude it.
     apply_manifest_on(agents - osx_agents - windows_agents, set_comment_utf8, :expect_changes => true, :environment => {:LANG => "POSIX"}) do |result|
-      assert_match(/changed '#{mixed_utf8_0}' to '#{mixed_utf8_1}'/, result.stdout, "failed to modify UTF-8 user comment with POSIX environment")
+      assert_match(/changed #{reported_mixed_utf8_0} to #{reported_mixed_utf8_1}/, result.stdout, "failed to modify UTF-8 user comment with POSIX environment")
     end
   end
 
@@ -143,7 +145,7 @@ test_name 'PUP-6777 Manage users with UTF-8 comments' do
     # and back.
     # OS X is known broken in POSIX locale with UTF-8 chars on OS X, so exclude OS X here.
     apply_manifest_on(agents - osx_agents, set_comment_utf8, :expect_changes => true, :environment => {:LANG => "POSIX"}) do |result|
-      assert_match(/changed 'bar' to '#{mixed_utf8_0}'/, result.stdout, "failed to modify user ASCII comment to UTF-8 comment with POSIX locale")
+      assert_match(/changed 'bar' to #{reported_mixed_utf8_0}/, result.stdout, "failed to modify user ASCII comment to UTF-8 comment with POSIX locale")
     end
   end
 
@@ -174,7 +176,7 @@ test_name 'PUP-6777 Manage users with UTF-8 comments' do
     # ensure we can set create/modify ASCII comments to UTF-8 and back.
     # OS X is known broken in POSIX locale with UTF-8 chars, so exclude OS X here
     apply_manifest_on(agents - osx_agents, set_comment_ascii, :expect_changes => true, :environment => {:LANG => "POSIX"}) do |result|
-      assert_match(/changed '#{mixed_utf8_0}' to 'bar'/, result.stdout, "failed to modify user UTF-8 comment to ASCII comment with POSIX locale")
+      assert_match(/changed #{reported_mixed_utf8_0} to 'bar'/, result.stdout, "failed to modify user UTF-8 comment to ASCII comment with POSIX locale")
     end
   end
 end

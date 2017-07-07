@@ -43,7 +43,7 @@ describe 'The type calculator' do
   end
 
   def type_alias_t(name, type_string)
-    type_expr = Parser::EvaluatingParser.new.parse_string(type_string).current
+    type_expr = Parser::EvaluatingParser.new.parse_string(type_string)
     TypeFactory.type_alias(name, type_expr)
   end
 
@@ -91,7 +91,7 @@ describe 'The type calculator' do
     TypeFactory.struct(type_hash)
   end
 
-  def object_t
+  def any_t
     TypeFactory.any
   end
 
@@ -114,6 +114,14 @@ describe 'The type calculator' do
   def unit_t
     # Cannot be created via factory, the type is private to the type system
     PUnitType::DEFAULT
+  end
+
+  def runtime_t(t, c)
+    TypeFactory.runtime(t, c)
+  end
+
+  def object_t(hash)
+    TypeFactory.object(hash)
   end
 
   def types
@@ -268,8 +276,46 @@ describe 'The type calculator' do
     end
 
     context 'array' do
+      let(:derived) do
+        Class.new(Array).new([1,2])
+      end
+
+      let(:derived_object) do
+        Class.new(Array) do
+          include PuppetObject
+
+          def self._pcore_type
+            @type ||= TypeFactory.object('name' => 'DerivedObjectArray')
+          end
+        end.new([1,2])
+      end
+
       it 'translates to PArrayType' do
         expect(calculator.infer([1,2]).class).to eq(PArrayType)
+      end
+
+      it 'translates derived Array to PRuntimeType' do
+        expect(calculator.infer(derived).class).to eq(PRuntimeType)
+      end
+
+      it 'translates derived Puppet Object Array to PObjectType' do
+        expect(calculator.infer(derived_object).class).to eq(PObjectType)
+      end
+
+      it 'Instance of derived Array class is not instance of Array type' do
+        expect(PArrayType::DEFAULT).not_to be_instance(derived)
+      end
+
+      it 'Instance of derived Array class is instance of Runtime type' do
+        expect(runtime_t('ruby', nil)).to be_instance(derived)
+      end
+
+      it 'Instance of derived Puppet Object Array class is not instance of Array type' do
+        expect(PArrayType::DEFAULT).not_to be_instance(derived_object)
+      end
+
+      it 'Instance of derived Puppet Object Array class is instance of Object type' do
+        expect(object_t('name' => 'DerivedObjectArray')).to be_instance(derived_object)
       end
 
       it 'with fixnum values translates to PArrayType[PIntegerType]' do
@@ -293,23 +339,23 @@ describe 'The type calculator' do
         expect(t.values).to eq(['a', 'b', 'c'])
       end
 
-      it 'with fixnum and float values translates to PArrayType[PNumericType]' do
+      it 'with integer and float values translates to PArrayType[PNumericType]' do
         expect(calculator.infer([1,2.0]).element_type.class).to eq(PNumericType)
       end
 
-      it 'with fixnum and string values translates to PArrayType[PScalarType]' do
-        expect(calculator.infer([1,'two']).element_type.class).to eq(PScalarType)
+      it 'with integer and string values translates to PArrayType[PScalarDataType]' do
+        expect(calculator.infer([1,'two']).element_type.class).to eq(PScalarDataType)
       end
 
-      it 'with float and string values translates to PArrayType[PScalarType]' do
-        expect(calculator.infer([1.0,'two']).element_type.class).to eq(PScalarType)
+      it 'with float and string values translates to PArrayType[PScalarDataType]' do
+        expect(calculator.infer([1.0,'two']).element_type.class).to eq(PScalarDataType)
       end
 
-      it 'with fixnum, float, and string values translates to PArrayType[PScalarType]' do
-        expect(calculator.infer([1, 2.0,'two']).element_type.class).to eq(PScalarType)
+      it 'with integer, float, and string values translates to PArrayType[PScalarDataType]' do
+        expect(calculator.infer([1, 2.0,'two']).element_type.class).to eq(PScalarDataType)
       end
 
-      it 'with fixnum and regexp values translates to PArrayType[PScalarType]' do
+      it 'with integer and regexp values translates to PArrayType[PScalarType]' do
         expect(calculator.infer([1, /two/]).element_type.class).to eq(PScalarType)
       end
 
@@ -321,8 +367,24 @@ describe 'The type calculator' do
         expect(calculator.infer(['one', :two]).element_type.class).to eq(PAnyType)
       end
 
-      it 'with fixnum and nil values translates to PArrayType[PIntegerType]' do
+      it 'with integer and nil values translates to PArrayType[PIntegerType]' do
         expect(calculator.infer([1, nil]).element_type.class).to eq(PIntegerType)
+      end
+
+      it 'with integer value, and array of string values, translates to Array[Data]' do
+        expect(calculator.infer([1, ['two']]).element_type.name).to eq('Data')
+      end
+
+      it 'with integer value, and hash of string => string values, translates to Array[Data]' do
+        expect(calculator.infer([1, {'two' => 'three'} ]).element_type.name).to eq('Data')
+      end
+
+      it 'with integer value, and hash of integer => string values, translates to Array[RichData]' do
+        expect(calculator.infer([1, {2 => 'three'} ]).element_type.name).to eq('RichData')
+      end
+
+      it 'with integer, regexp, and binary values translates to Array[RichData]' do
+        expect(calculator.infer([1, /two/, PBinaryType::Binary.from_string('three')]).element_type.name).to eq('RichData')
       end
 
       it 'with arrays of string values translates to PArrayType[PArrayType[PStringType]]' do
@@ -334,13 +396,13 @@ describe 'The type calculator' do
         expect(et.class).to eq(PEnumType)
       end
 
-      it 'with array of string values and array of fixnums translates to PArrayType[PArrayType[PScalarType]]' do
+      it 'with array of string values and array of fixnums translates to PArrayType[PArrayType[PScalarDataType]]' do
         et = calculator.infer([['first', 'array'], [1,2]])
         expect(et.class).to eq(PArrayType)
         et = et.element_type
         expect(et.class).to eq(PArrayType)
         et = et.element_type
-        expect(et.class).to eq(PScalarType)
+        expect(et.class).to eq(PScalarDataType)
       end
 
       it 'with hashes of string values translates to PArrayType[PHashType[PEnumType]]' do
@@ -352,19 +414,57 @@ describe 'The type calculator' do
         expect(et.class).to eq(PEnumType)
       end
 
-      it 'with hash of string values and hash of fixnums translates to PArrayType[PHashType[PScalarType]]' do
+      it 'with hash of string values and hash of fixnums translates to PArrayType[PHashType[PScalarDataType]]' do
         et = calculator.infer([{:first => 'first', :second => 'second' }, {:first => 1, :second => 2 }])
         expect(et.class).to eq(PArrayType)
         et = et.element_type
         expect(et.class).to eq(PHashType)
         et = et.value_type
-        expect(et.class).to eq(PScalarType)
+        expect(et.class).to eq(PScalarDataType)
       end
     end
 
     context 'hash' do
+      let(:derived) do
+        Class.new(Hash)[:first => 1, :second => 2]
+      end
+
+      let(:derived_object) do
+        Class.new(Hash) do
+          include PuppetObject
+
+          def self._pcore_type
+            @type ||= TypeFactory.object('name' => 'DerivedObjectHash')
+          end
+        end[:first => 1, :second => 2]
+      end
+
       it 'translates to PHashType' do
         expect(calculator.infer({:first => 1, :second => 2}).class).to eq(PHashType)
+      end
+
+      it 'translates derived Hash to PRuntimeType' do
+        expect(calculator.infer(derived).class).to eq(PRuntimeType)
+      end
+
+      it 'translates derived Puppet Object Hash to PObjectType' do
+        expect(calculator.infer(derived_object).class).to eq(PObjectType)
+      end
+
+      it 'Instance of derived Hash class is not instance of Hash type' do
+        expect(PHashType::DEFAULT).not_to be_instance(derived)
+      end
+
+      it 'Instance of derived Hash class is instance of Runtime type' do
+        expect(runtime_t('ruby', nil)).to be_instance(derived)
+      end
+
+      it 'Instance of derived Puppet Object Hash class is not instance of Hash type' do
+        expect(PHashType::DEFAULT).not_to be_instance(derived_object)
+      end
+
+      it 'Instance of derived Puppet Object Hash class is instance of Object type' do
+        expect(object_t('name' => 'DerivedObjectHash')).to be_instance(derived_object)
       end
 
       it 'with symbolic keys translates to PHashType[PRuntimeType[ruby, Symbol], value]' do
@@ -551,6 +651,38 @@ describe 'The type calculator' do
       expect(Set.new(common_t.types)).to  eq(Set.new([a_t1, a_t2]))
     end
 
+    context 'commonality of scalar data types' do
+      it 'Numeric and String == ScalarData' do
+        expect(calculator.common_type(PNumericType::DEFAULT, PStringType::DEFAULT).class).to eq(PScalarDataType)
+      end
+
+      it 'Numeric and Boolean == ScalarData' do
+        expect(calculator.common_type(PNumericType::DEFAULT, PBooleanType::DEFAULT).class).to eq(PScalarDataType)
+      end
+
+      it 'String and Boolean == ScalarData' do
+        expect(calculator.common_type(PStringType::DEFAULT, PBooleanType::DEFAULT).class).to eq(PScalarDataType)
+      end
+    end
+
+    context 'commonality of scalar types' do
+      it 'Regexp and Integer == Scalar' do
+        expect(calculator.common_type(PRegexpType::DEFAULT, PScalarDataType::DEFAULT).class).to eq(PScalarType)
+      end
+
+      it 'Regexp and SemVer == ScalarData' do
+        expect(calculator.common_type(PRegexpType::DEFAULT, PSemVerType::DEFAULT).class).to eq(PScalarType)
+      end
+
+      it 'Timestamp and Timespan == ScalarData' do
+        expect(calculator.common_type(PTimestampType::DEFAULT, PTimespanType::DEFAULT).class).to eq(PScalarType)
+      end
+
+      it 'Timestamp and Boolean == ScalarData' do
+        expect(calculator.common_type(PTimestampType::DEFAULT, PBooleanType::DEFAULT).class).to eq(PScalarType)
+      end
+    end
+
     context 'of callables' do
       it 'incompatible instances => generic callable' do
         t1 = callable_t(String)
@@ -728,28 +860,21 @@ describe 'The type calculator' do
     end
 
     context 'for Data, such that' do
-      it 'all scalars + array and hash are assignable to Data' do
-        t = PDataType::DEFAULT
-        data_compatible_types.each { |t2|
-          expect(type_from_class(t2)).to be_assignable_to(t)
-        }
-      end
-
-      it 'a scalar, hash, or array is assignable to Data' do
-        t = PDataType::DEFAULT
-        data_compatible_types.each { |t2| expect(type_from_class(t2)).to be_assignable_to(t) }
+      let(:data) { TypeFactory.data }
+      data_compatible_types.map { |t2| type_from_class(t2) }.each do |tc|
+        it "#{tc.name} is assignable to Data" do
+          expect(tc).to be_assignable_to(data)
+        end
       end
 
       it 'Data is not assignable to any of its subtypes' do
-        t = PDataType::DEFAULT
-        types_to_test = data_compatible_types- [PDataType]
-        types_to_test.each {|t2| expect(t).not_to be_assignable_to(type_from_class(t2)) }
+        types_to_test = data_compatible_types
+        types_to_test.each {|t2| expect(data).not_to be_assignable_to(type_from_class(t2)) }
       end
 
       it 'Data is not assignable to any disjunct type' do
-        tested_types = all_types - [PAnyType, POptionalType, PDataType] - scalar_types
-        t = PDataType::DEFAULT
-        tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
+        tested_types = all_types - [PAnyType, POptionalType] - scalar_types
+        tested_types.each {|t2| expect(data).not_to be_assignable_to(t2::DEFAULT) }
       end
     end
 
@@ -784,7 +909,7 @@ describe 'The type calculator' do
       end
 
       it 'Scalar is not assignable to any disjunct type' do
-        tested_types = all_types - [PAnyType, POptionalType, PNotUndefType, PDataType] - scalar_types
+        tested_types = all_types - [PAnyType, POptionalType, PNotUndefType] - scalar_types
         t = PScalarType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
       end
@@ -807,8 +932,8 @@ describe 'The type calculator' do
           PAnyType,
           POptionalType,
           PNotUndefType,
-          PDataType,
           PScalarType,
+          PScalarDataType,
           ] - numeric_types
         t = PNumericType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
@@ -854,8 +979,7 @@ describe 'The type calculator' do
           PAnyType,
           POptionalType,
           PNotUndefType,
-          PIterableType,
-          PDataType] - collection_types
+          PIterableType] - collection_types
         t = PArrayType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
       end
@@ -893,8 +1017,7 @@ describe 'The type calculator' do
           PAnyType,
           POptionalType,
           PNotUndefType,
-          PIterableType,
-          PDataType] - collection_types
+          PIterableType] - collection_types
         t = PHashType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
       end
@@ -965,8 +1088,7 @@ describe 'The type calculator' do
           PAnyType,
           POptionalType,
           PNotUndefType,
-          PIterableType,
-          PDataType] - collection_types
+          PIterableType] - collection_types
         t = PTupleType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
       end
@@ -987,8 +1109,7 @@ describe 'The type calculator' do
           PAnyType,
           POptionalType,
           PNotUndefType,
-          PIterableType,
-          PDataType] - collection_types
+          PIterableType] - collection_types
         t = PStructType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
       end
@@ -996,7 +1117,7 @@ describe 'The type calculator' do
       it 'Default key optionality is controlled by value assignability to undef' do
         t1 = struct_t({'member' => string_t})
         expect(t1.elements[0].key_type).to eq(string_t('member'))
-        t1 = struct_t({'member' => object_t})
+        t1 = struct_t({'member' => any_t})
         expect(t1.elements[0].key_type).to eq(optional_t(string_t('member')))
       end
 
@@ -1017,7 +1138,7 @@ describe 'The type calculator' do
       end
 
       it 'Required members not optional even when value is' do
-        t1 = struct_t({not_undef_t('required_member') => object_t, not_undef_t('other_member') => string_t})
+        t1 = struct_t({not_undef_t('required_member') => any_t, not_undef_t('other_member') => string_t})
         t2 = struct_t({not_undef_t('other_member') => string_t})
         expect(t2).not_to be_assignable_to(t1)
       end
@@ -1063,11 +1184,11 @@ describe 'The type calculator' do
       end
 
       it 'a callable with a return type Any is assignable to the default callable' do
-        expect(callable_t([], object_t)).to be_assignable_to(PCallableType::DEFAULT)
+        expect(callable_t([], any_t)).to be_assignable_to(PCallableType::DEFAULT)
       end
 
       it 'a callable with a return type Any is equal to a callable with the same parameters and no return type' do
-        expect(callable_t([string_t], object_t)).to eql(callable_t(string_t))
+        expect(callable_t([string_t], any_t)).to eql(callable_t(string_t))
       end
 
       it 'a callable with a return type different than Any is not equal to a callable with the same parameters and no return type' do
@@ -1095,8 +1216,8 @@ describe 'The type calculator' do
         String     => PStringType::DEFAULT,
         Regexp     => PRegexpType::DEFAULT,
         Regexp     => PRegexpType::DEFAULT,
-        Array      => TypeFactory.array_of_data,
-        Hash       => TypeFactory.hash_of_data
+        Array      => TypeFactory.array_of_any,
+        Hash       => TypeFactory.hash_of_any
       }.each do |ruby_type, puppet_type |
           expect(ruby_type).to be_assignable_to(puppet_type)
       end
@@ -1606,7 +1727,6 @@ describe 'The type calculator' do
       types_to_test = all_types - [
         PAnyType,
         PUndefType,
-        PDataType,
         POptionalType,
         ]
 
@@ -1629,12 +1749,12 @@ describe 'The type calculator' do
       types_to_test.each {|t| expect(calculator.instance?(t::DEFAULT, :default)).to eq(false) }
     end
 
-    it 'should consider fixnum instanceof PIntegerType' do
+    it 'should consider integer instanceof PIntegerType' do
       expect(calculator.instance?(PIntegerType::DEFAULT, 1)).to eq(true)
     end
 
-    it 'should consider fixnum instanceof Fixnum' do
-      expect(calculator.instance?(Fixnum, 1)).to eq(true)
+    it 'should consider integer instanceof Integer' do
+      expect(calculator.instance?(Integer, 1)).to eq(true)
     end
 
     it 'should consider integer in range' do
@@ -1760,7 +1880,7 @@ describe 'The type calculator' do
       end
 
       it 'should consider nil to be a valid element value' do
-        struct = struct_t({not_undef_t('a') => object_t, 'b'=>String})
+        struct = struct_t({not_undef_t('a') => any_t, 'b'=>String})
         expect(calculator.instance?(struct, {'a'=>nil , 'b'=>'a'})).to eq(true)
       end
 
@@ -1820,11 +1940,11 @@ describe 'The type calculator' do
       it 'a Closure should be considered a Callable' do
         factory = Model::Factory
         params = [factory.PARAM('a')]
-        the_block = factory.LAMBDA(params,factory.literal(42), nil)
+        the_block = factory.LAMBDA(params,factory.literal(42), nil).model
         the_closure = Evaluator::Closure::Dynamic.new(:fake_evaluator, the_block, :fake_scope)
         expect(calculator.instance?(all_callables_t, the_closure)).to be_truthy
-        expect(calculator.instance?(callable_t(object_t), the_closure)).to be_truthy
-        expect(calculator.instance?(callable_t(object_t, object_t), the_closure)).to be_falsey
+        expect(calculator.instance?(callable_t(any_t), the_closure)).to be_truthy
+        expect(calculator.instance?(callable_t(any_t, any_t), the_closure)).to be_falsey
       end
 
       it 'a Function instance should be considered a Callable' do
@@ -1885,10 +2005,16 @@ describe 'The type calculator' do
   end
 
   context 'when converting a ruby class' do
-    it 'should yield \'PIntegerType\' for Integer, Fixnum, and Bignum' do
-      [Integer,Fixnum,Bignum].each do |c|
-        expect(calculator.type(c).class).to eq(PIntegerType)
-      end
+    it 'should yield \'PIntegerType\' for Fixnum' do
+      expect(calculator.type(Fixnum).class).to eq(PIntegerType)
+    end
+
+    it 'should yield \'PIntegerType\' for Bignum' do
+      expect(calculator.type(Bignum).class).to eq(PIntegerType)
+    end
+
+    it 'should yield \'PIntegerType\' for Integer' do
+      expect(calculator.type(Integer).class).to eq(PIntegerType)
     end
 
     it 'should yield \'PFloatType\' for Float' do
@@ -1913,17 +2039,17 @@ describe 'The type calculator' do
       expect(calculator.type(Regexp).class).to eq(PRegexpType)
     end
 
-    it 'should yield \'PArrayType[PDataType]\' for Array' do
+    it 'should yield \'PArrayType[PAnyType]\' for Array' do
       t = calculator.type(Array)
       expect(t.class).to eq(PArrayType)
-      expect(t.element_type.class).to eq(PDataType)
+      expect(t.element_type.class).to eq(PAnyType)
     end
 
-    it 'should yield \'PHashType[PScalarType,PDataType]\' for Hash' do
+    it 'should yield \'PHashType[PAnyType,PAnyType]\' for Hash' do
       t = calculator.type(Hash)
       expect(t.class).to eq(PHashType)
-      expect(t.key_type.class).to eq(PScalarType)
-      expect(t.value_type.class).to eq(PDataType)
+      expect(t.key_type.class).to eq(PAnyType)
+      expect(t.value_type.class).to eq(PAnyType)
     end
   end
 
@@ -1931,8 +2057,8 @@ describe 'The type calculator' do
     it 'should infer PType as the type of all other types' do
       ptype = PType
       expect(calculator.infer(PUndefType::DEFAULT     ).is_a?(ptype)).to eq(true)
-      expect(calculator.infer(PDataType::DEFAULT      ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(PScalarType::DEFAULT    ).is_a?(ptype)).to eq(true)
+      expect(calculator.infer(PScalarDataType::DEFAULT).is_a?(ptype)).to eq(true)
       expect(calculator.infer(PStringType::DEFAULT    ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(PNumericType::DEFAULT   ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(PIntegerType::DEFAULT   ).is_a?(ptype)).to eq(true)
@@ -1956,8 +2082,8 @@ describe 'The type calculator' do
 
     it 'should infer PType as the type of all other types' do
       expect(calculator.infer(PUndefType::DEFAULT     ).to_s).to eq('Type[Undef]')
-      expect(calculator.infer(PDataType::DEFAULT      ).to_s).to eq('Type[Data]')
       expect(calculator.infer(PScalarType::DEFAULT    ).to_s).to eq('Type[Scalar]')
+      expect(calculator.infer(PScalarDataType::DEFAULT).to_s).to eq('Type[ScalarData]')
       expect(calculator.infer(PStringType::DEFAULT    ).to_s).to eq('Type[String]')
       expect(calculator.infer(PNumericType::DEFAULT   ).to_s).to eq('Type[Numeric]')
       expect(calculator.infer(PIntegerType::DEFAULT   ).to_s).to eq('Type[Integer]')
@@ -1965,8 +2091,8 @@ describe 'The type calculator' do
       expect(calculator.infer(PRegexpType::DEFAULT    ).to_s).to eq('Type[Regexp]')
       expect(calculator.infer(PBooleanType::DEFAULT   ).to_s).to eq('Type[Boolean]')
       expect(calculator.infer(PCollectionType::DEFAULT).to_s).to eq('Type[Collection]')
-      expect(calculator.infer(PArrayType::DEFAULT     ).to_s).to eq('Type[Array[?]]')
-      expect(calculator.infer(PHashType::DEFAULT      ).to_s).to eq('Type[Hash[?, ?]]')
+      expect(calculator.infer(PArrayType::DEFAULT     ).to_s).to eq('Type[Array]')
+      expect(calculator.infer(PHashType::DEFAULT      ).to_s).to eq('Type[Hash]')
       expect(calculator.infer(PIterableType::DEFAULT  ).to_s).to eq('Type[Iterable]')
       expect(calculator.infer(PRuntimeType::DEFAULT   ).to_s).to eq('Type[Runtime[?, ?]]')
       expect(calculator.infer(PHostClassType::DEFAULT ).to_s).to eq('Type[Class]')
@@ -1987,7 +2113,7 @@ describe 'The type calculator' do
       int_t    = PIntegerType::DEFAULT
       string_t = PStringType::DEFAULT
       expect(calculator.infer([int_t]).to_s).to eq('Array[Type[Integer], 1, 1]')
-      expect(calculator.infer([int_t, string_t]).to_s).to eq('Array[Type[Scalar], 2, 2]')
+      expect(calculator.infer([int_t, string_t]).to_s).to eq('Array[Type[ScalarData], 2, 2]')
     end
 
     it 'should infer PType as the type of ruby classes' do
@@ -2075,9 +2201,9 @@ describe 'The type calculator' do
     end
 
     it 'ensures that Struct key types are not generalized' do
-      generic = struct_t({'a' => object_t}).generalize
+      generic = struct_t({'a' => any_t}).generalize
       expect(generic.to_s).to eq("Struct[{'a' => Any}]")
-      generic = struct_t({not_undef_t('a') => object_t}).generalize
+      generic = struct_t({not_undef_t('a') => any_t}).generalize
       expect(generic.to_s).to eq("Struct[{NotUndef['a'] => Any}]")
       generic = struct_t({optional_t('a') => string_t}).generalize
       expect(generic.to_s).to eq("Struct[{Optional['a'] => String}]")
@@ -2090,7 +2216,7 @@ describe 'The type calculator' do
 
     it "does not reduce by combining types when using infer_set" do
       element_type = calculator.infer(['a','b',1,2]).element_type
-      expect(element_type.class).to eq(PScalarType)
+      expect(element_type.class).to eq(PScalarDataType)
       inferred_type = calculator.infer_set(['a','b',1,2])
       expect(inferred_type.class).to eq(PTupleType)
       element_types = inferred_type.types
@@ -2153,50 +2279,50 @@ describe 'The type calculator' do
     context 'and given is more generic' do
       it 'with callable' do
         required = callable_t(string_t)
-        given = callable_t(object_t)
+        given = callable_t(any_t)
         expect(calculator.callable?(required, given)).to eq(true)
       end
 
       it 'with args tuple' do
         required = callable_t(string_t)
-        given = tuple_t(object_t)
+        given = tuple_t(any_t)
         expect(calculator.callable?(required, given)).to eq(false)
       end
 
       it 'with args tuple having a block' do
         required = callable_t(string_t, callable_t(string_t))
-        given = tuple_t(string_t, callable_t(object_t))
+        given = tuple_t(string_t, callable_t(any_t))
         expect(calculator.callable?(required, given)).to eq(true)
       end
 
       it 'with args tuple having a block with captures rest' do
         required = callable_t(string_t, callable_t(string_t))
-        given = tuple_t(string_t, callable_t(object_t, 0, :default))
+        given = tuple_t(string_t, callable_t(any_t, 0, :default))
         expect(calculator.callable?(required, given)).to eq(true)
       end
     end
 
     context 'and given is more specific' do
       it 'with callable' do
-        required = callable_t(object_t)
+        required = callable_t(any_t)
         given = callable_t(string_t)
         expect(calculator.callable?(required, given)).to eq(false)
       end
 
       it 'with args tuple' do
-        required = callable_t(object_t)
+        required = callable_t(any_t)
         given = tuple_t(string_t)
         expect(calculator.callable?(required, given)).to eq(true)
       end
 
       it 'with args tuple having a block' do
-        required = callable_t(string_t, callable_t(object_t))
+        required = callable_t(string_t, callable_t(any_t))
         given = tuple_t(string_t, callable_t(string_t))
         expect(calculator.callable?(required, given)).to eq(false)
       end
 
       it 'with args tuple having a block with captures rest' do
-        required = callable_t(string_t, callable_t(object_t))
+        required = callable_t(string_t, callable_t(any_t))
         given = tuple_t(string_t, callable_t(string_t, 0, :default))
         expect(calculator.callable?(required, given)).to eq(false)
       end
@@ -2204,18 +2330,16 @@ describe 'The type calculator' do
   end
 
   matcher :be_assignable_to do |type|
-    calc = TypeCalculator.singleton
-
     match do |actual|
-      calc.assignable?(type, actual)
+      type.is_a?(PAnyType) && type.assignable?(actual)
     end
 
     failure_message do |actual|
-      "#{calc.string(actual)} should be assignable to #{calc.string(type)}"
+      "#{TypeFormatter.string(actual)} should be assignable to #{TypeFormatter.string(type)}"
     end
 
     failure_message_when_negated do |actual|
-      "#{calc.string(actual)} is assignable to #{calc.string(type)} when it should not"
+      "#{TypeFormatter.string(actual)} is assignable to #{TypeFormatter.string(type)} when it should not"
     end
   end
 end

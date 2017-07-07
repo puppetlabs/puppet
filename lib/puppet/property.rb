@@ -202,11 +202,11 @@ class Puppet::Property < Puppet::Parameter
   def change_to_s(current_value, newvalue)
     begin
       if current_value == :absent
-        return "defined '#{name}' as #{self.class.format_value_for_display should_to_s(newvalue)}"
+        return "defined '#{name}' as #{should_to_s(newvalue)}"
       elsif newvalue == :absent or newvalue == [:absent]
-        return "undefined '#{name}' from #{self.class.format_value_for_display is_to_s(current_value)}"
+        return "undefined '#{name}' from #{is_to_s(current_value)}"
       else
-        return "#{name} changed #{self.class.format_value_for_display is_to_s(current_value)} to #{self.class.format_value_for_display should_to_s(newvalue)}"
+        return "#{name} changed #{is_to_s(current_value)} to #{should_to_s(newvalue)}"
       end
     rescue Puppet::Error, Puppet::DevError
       raise
@@ -396,12 +396,13 @@ class Puppet::Property < Puppet::Parameter
   end
 
   # Produces a pretty printing string for the given value.
-  # This default implementation simply returns the given argument. A derived implementation
-  # may perform property specific pretty printing when the _is_ and _should_ values are not
-  # already in suitable form.
+  # This default implementation calls {#format_value_for_display} on the class. A derived
+  # implementation may perform property specific pretty printing when the _is_ values
+  # are not already in suitable form.
+  # @param value [Object] the value to format as a string
   # @return [String] a pretty printing string
-  def is_to_s(currentvalue)
-    currentvalue
+  def is_to_s(value)
+    self.class.format_value_for_display(value)
   end
 
   # Emits a log message at the log level specified for the associated resource.
@@ -544,12 +545,14 @@ class Puppet::Property < Puppet::Parameter
     @should = values.collect { |val| self.munge(val) }
   end
 
-  # Formats the given newvalue (following _should_ type conventions) for inclusion in a string describing a change.
-  # @return [String] Returns the given newvalue in string form with space separated entries if it is an array.
-  # @see #change_to_s
-  #
-  def should_to_s(newvalue)
-    [newvalue].flatten.join(" ")
+  # Produces a pretty printing string for the given value.
+  # This default implementation calls {#format_value_for_display} on the class. A derived
+  # implementation may perform property specific pretty printing when the _should_ values
+  # are not already in suitable form.
+  # @param value [Object] the value to format as a string
+  # @return [String] a pretty printing string
+  def should_to_s(value)
+    self.class.format_value_for_display(value)
   end
 
   # Synchronizes the current value _(is)_ and the wanted value _(should)_ by calling {#set}.

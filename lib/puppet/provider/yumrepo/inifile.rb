@@ -181,7 +181,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   # Save all yum repository files and force the mode to 0644
   # @api private
   # @return [void]
-  def self.store
+  def self.store(resource)
     inifile = self.virtual_inifile
     inifile.store
 
@@ -189,7 +189,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     inifile.each_file do |file|
       current_mode = Puppet::FileSystem.stat(file).mode & 0777
       unless current_mode == target_mode
-        Puppet.info "changing mode of #{file} from %03o to %03o" % [current_mode, target_mode]
+        resource.info "changing mode of #{file} from %03o to %03o" % [current_mode, target_mode]
         Puppet::FileSystem.chmod(target_mode, file)
       end
     end
@@ -245,7 +245,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   # @api public
   # @return [void]
   def flush
-    self.class.store
+    self.class.store(self)
   end
 
   # Generate setters and getters for our INI properties.

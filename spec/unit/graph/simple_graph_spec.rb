@@ -296,32 +296,37 @@ describe Puppet::Graph::SimpleGraph do
       end
     end
 
-    it "should fail on two-vertex loops" do
+    def expect_cycle_to_include(cycle, *resource_names)
+      resource_names.each_with_index do |resource, index|
+        expect(cycle[index].ref).to eq("Notify[#{resource}]")
+      end
+    end
+
+    it "should report two-vertex loops" do
       add_edges :a => :b, :b => :a
-      expect { @graph.report_cycles_in_graph }.to raise_error(Puppet::Error)
+      Puppet.expects(:err).with(regexp_matches(/Found 1 dependency cycle:\n\(Notify\[a\] => Notify\[b\] => Notify\[a\]\)/))
+      cycle = @graph.report_cycles_in_graph.first
+      expect_cycle_to_include(cycle, :a, :b)
     end
 
-    it "should fail on multi-vertex loops" do
+    it "should report multi-vertex loops" do
       add_edges :a => :b, :b => :c, :c => :a
-      expect { @graph.report_cycles_in_graph }.to raise_error(Puppet::Error)
+      Puppet.expects(:err).with(regexp_matches(/Found 1 dependency cycle:\n\(Notify\[a\] => Notify\[b\] => Notify\[c\] => Notify\[a\]\)/))
+      cycle = @graph.report_cycles_in_graph.first
+      expect_cycle_to_include(cycle, :a, :b, :c)
     end
 
-    it "should fail when a larger tree contains a small cycle" do
+    it "should report when a larger tree contains a small cycle" do
       add_edges :a => :b, :b => :a, :c => :a, :d => :c
-      expect { @graph.report_cycles_in_graph }.to raise_error(Puppet::Error)
+      Puppet.expects(:err).with(regexp_matches(/Found 1 dependency cycle:\n\(Notify\[a\] => Notify\[b\] => Notify\[a\]\)/))
+      cycle = @graph.report_cycles_in_graph.first
+      expect_cycle_to_include(cycle, :a, :b)
     end
 
     it "should succeed on trees with no cycles" do
       add_edges :a => :b, :b => :e, :c => :a, :d => :c
-      expect { @graph.report_cycles_in_graph }.to_not raise_error
-    end
-
-    it "should produce the correct relationship text" do
-      add_edges :a => :b, :b => :a
-      # cycle detection starts from a or b randomly
-      # so we need to check for either ordering in the error message
-      want = %r{Found 1 dependency cycle:\n\((Notify\[a\] => Notify\[b\] => Notify\[a\]|Notify\[b\] => Notify\[a\] => Notify\[b\])\)\nTry}
-      expect { @graph.report_cycles_in_graph }.to raise_error(Puppet::Error, want)
+      Puppet.expects(:err).never
+      expect(@graph.report_cycles_in_graph).to be_nil
     end
 
     it "cycle discovery should be the minimum cycle for a simple graph" do
@@ -528,31 +533,31 @@ describe Puppet::Graph::SimpleGraph do
     end
 
     def one_vertex_graph(graph)
-      graph.add_vertex(:a)
+      graph.add_vertex('a')
     end
 
     def graph_without_edges(graph)
-      [:a, :b, :c].each { |x| graph.add_vertex(x) }
+      ['a', 'b', 'c'].each { |x| graph.add_vertex(x) }
     end
 
     def one_edge_graph(graph)
-      graph.add_edge(:a, :b)
+      graph.add_edge('a', 'b')
     end
 
     def many_edge_graph(graph)
-      graph.add_edge(:a, :b)
-      graph.add_edge(:a, :c)
-      graph.add_edge(:b, :d)
-      graph.add_edge(:c, :d)
+      graph.add_edge('a', 'b')
+      graph.add_edge('a', 'c')
+      graph.add_edge('b', 'd')
+      graph.add_edge('c', 'd')
     end
 
     def labeled_edge_graph(graph)
-      graph.add_edge(:a, :b, :callback => :foo, :event => :bar)
+      graph.add_edge('a', 'b', :callback => :foo, :event => :bar)
     end
 
     def overlapping_edge_graph(graph)
-      graph.add_edge(:a, :b, :callback => :foo, :event => :bar)
-      graph.add_edge(:a, :b, :callback => :biz, :event => :baz)
+      graph.add_edge('a', 'b', :callback => :foo, :event => :bar)
+      graph.add_edge('a', 'b', :callback => :biz, :event => :baz)
     end
 
     def self.all_test_graphs
@@ -569,7 +574,11 @@ describe Puppet::Graph::SimpleGraph do
     def graph_to_yaml(graph, which_format)
       previous_use_new_yaml_format = Puppet::Graph::SimpleGraph.use_new_yaml_format
       Puppet::Graph::SimpleGraph.use_new_yaml_format = (which_format == :new)
-      YAML.dump(graph)
+      if block_given?
+        yield
+      else
+        YAML.dump(graph)
+      end
     ensure
       Puppet::Graph::SimpleGraph.use_new_yaml_format = previous_use_new_yaml_format
     end
@@ -605,7 +614,7 @@ describe Puppet::Graph::SimpleGraph do
             edge.keys.each { |x| expect(['source', 'target', 'callback', 'event']).to include(x) }
             %w{source target callback event}.collect { |x| edge[x] }
           end
-          expect(Set.new(actual_edge_tuples)).to eq(Set.new(expected_edge_tuples))
+          expect(Set.new(actual_edge_tuples)).to eq(Set.new(expected_edge_tuples.map { |tuple| tuple.map {|e| e.nil? ? nil : e.to_s }}))
           expect(actual_edge_tuples.length).to eq(expected_edge_tuples.length)
 
           # Check vertices one by one.
@@ -615,15 +624,16 @@ describe Puppet::Graph::SimpleGraph do
             expect(Set.new(vertices.keys)).to eq(Set.new(graph.vertices))
             vertices.each do |key, value|
               expect(value.keys.sort).to eq(%w{adjacencies vertex})
-              expect(value['vertex']).to equal(key)
+              expect(value['vertex']).to eq(key)
               adjacencies = value['adjacencies']
               expect(adjacencies).to be_a(Hash)
-              expect(Set.new(adjacencies.keys)).to eq(Set.new([:in, :out]))
+              expect(Set.new(adjacencies.keys)).to eq(Set.new(['in', 'out']))
               [:in, :out].each do |direction|
-                expect(adjacencies[direction]).to be_a(Hash)
+                direction_hash = adjacencies[direction.to_s]
+                expect(direction_hash).to be_a(Hash)
                 expected_adjacent_vertices = Set.new(graph.adjacent(key, :direction => direction, :type => :vertices))
-                expect(Set.new(adjacencies[direction].keys)).to eq(expected_adjacent_vertices)
-                adjacencies[direction].each do |adj_key, adj_value|
+                expect(Set.new(direction_hash.keys)).to eq(expected_adjacent_vertices)
+                direction_hash.each do |adj_key, adj_value|
                   # Since we already checked edges, just check consistency
                   # with edges.
                   desired_source = direction == :in ? adj_key : key
@@ -631,8 +641,8 @@ describe Puppet::Graph::SimpleGraph do
                   expected_edges = edges.select do |edge|
                     edge['source'] == desired_source && edge['target'] == desired_target
                   end
-                  expect(adj_value).to be_a(Set)
-                  if object_ids(adj_value) != object_ids(expected_edges)
+                  expect(adj_value).to be_a(Array)
+                  if adj_value != expected_edges
                     raise "For vertex #{key.inspect}, direction #{direction.inspect}: expected adjacencies #{expected_edges.inspect} but got #{adj_value.inspect}"
                   end
                 end
@@ -679,37 +689,30 @@ describe Puppet::Graph::SimpleGraph do
           # the internal representation of the graph is about to change.
         end
       end
-
-      it "should be able to serialize a graph where the vertices contain backreferences to the graph (#{which_format} format)" do
-        reference_graph = Puppet::Graph::SimpleGraph.new
-        vertex = Object.new
-        vertex.instance_eval { @graph = reference_graph }
-        reference_graph.add_edge(vertex, :other_vertex)
-        yaml_form = graph_to_yaml(reference_graph, which_format)
-        recovered_graph = YAML.load(yaml_form)
-
-        expect(recovered_graph.vertices.length).to eq(2)
-        recovered_vertex = recovered_graph.vertices.reject { |x| x.is_a?(Symbol) }[0]
-        expect(recovered_vertex.instance_eval { @graph }).to equal(recovered_graph)
-        expect(recovered_graph.edges.length).to eq(1)
-        recovered_edge = recovered_graph.edges[0]
-        expect(recovered_edge.source).to equal(recovered_vertex)
-        expect(recovered_edge.target).to eq(:other_vertex)
-      end
     end
 
     it "should serialize properly when used as a base class" do
       class Puppet::TestDerivedClass < Puppet::Graph::SimpleGraph
         attr_accessor :foo
+
+        def initialize_from_hash(hash)
+          super(hash)
+          @foo = hash['foo']
+        end
+
+        def to_data_hash
+          super.merge('foo' => @foo)
+        end
       end
       derived = Puppet::TestDerivedClass.new
-      derived.add_edge(:a, :b)
+      derived.add_edge('a', 'b')
       derived.foo = 1234
-      recovered_derived = YAML.load(YAML.dump(derived))
+      yaml = YAML.dump(derived)
+      recovered_derived = YAML.load(yaml)
       expect(recovered_derived.class).to equal(Puppet::TestDerivedClass)
       expect(recovered_derived.edges.length).to eq(1)
-      expect(recovered_derived.edges[0].source).to eq(:a)
-      expect(recovered_derived.edges[0].target).to eq(:b)
+      expect(recovered_derived.edges[0].source).to eq('a')
+      expect(recovered_derived.edges[0].target).to eq('b')
       expect(recovered_derived.vertices.length).to eq(2)
       expect(recovered_derived.foo).to eq(1234)
     end

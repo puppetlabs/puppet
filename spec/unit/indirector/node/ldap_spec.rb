@@ -191,15 +191,36 @@ describe Puppet::Node::Ldap do
         expect(node_indirection.find(request).parameters).to include({"one" => false})
       end
 
-      it "should merge the node's facts after the parameters from ldap are assigned" do
-        # Make sure we've got data to start with, so the parameters are actually set.
-        params = {"one" => "yay", "two" => "hooray"}
-        @result[:parameters] = params
+      context("when merging facts") do
+        let(:request_facts) { Puppet::Node::Facts.new('test', 'foo' => 'bar') }
+        let(:indirection_facts) { Puppet::Node::Facts.new('test', 'baz' => 'qux') }
 
-        # Node implements its own merge so that an existing param takes
-        # precedence over facts. We get the same result here by merging params
-        # into facts
-        expect(node_indirection.find(request).parameters).to eq(facts.values.merge(params))
+        it "should merge facts from the request if supplied" do
+          request.options[:facts] = request_facts
+          Puppet::Node::Facts.stubs(:find) { indirection_facts }
+
+          expect(node_indirection.find(request).parameters).to include(request_facts.values)
+          expect(node_indirection.find(request).facts).to eq(request_facts)
+        end
+
+        it "should find facts if none are supplied" do
+          Puppet::Node::Facts.indirection.stubs(:find).with(nodename, :environment => environment).returns(indirection_facts)
+          request.options.delete(:facts)
+
+          expect(node_indirection.find(request).parameters).to include(indirection_facts.values)
+          expect(node_indirection.find(request).facts).to eq(indirection_facts)
+        end
+
+        it "should merge the node's facts after the parameters from ldap are assigned" do
+          # Make sure we've got data to start with, so the parameters are actually set.
+          params = {"one" => "yay", "two" => "hooray"}
+          @result[:parameters] = params
+
+          # Node implements its own merge so that an existing param takes
+          # precedence over facts. We get the same result here by merging params
+          # into facts
+          expect(node_indirection.find(request).parameters).to eq(facts.values.merge(params))
+        end
       end
 
       describe "and a parent node is specified" do

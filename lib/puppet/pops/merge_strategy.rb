@@ -120,7 +120,7 @@ module Puppet::Pops
       when 0
         throw :no_such_key
       when 1
-        yield(lookup_variants[0])
+        merge_single(yield(lookup_variants[0]))
       else
         lookup_invocation.with(:merge, self) do
           result = lookup_variants.reduce(NOT_FOUND) do |memo, lookup_variant|
@@ -146,6 +146,13 @@ module Puppet::Pops
     # @param value [Object] the value to convert
     # @return [Object] the converted value
     def convert_value(value)
+      value
+    end
+
+    # Applies the merge strategy on a single element. Only applicable for `unique`
+    # @param value [Object] the value to merge with nothing
+    # @return [Object] the merged value
+    def merge_single(value)
       value
     end
 
@@ -280,6 +287,14 @@ module Puppet::Pops
 
     def convert_value(e)
       e.is_a?(Array) ? e.flatten : [e]
+    end
+
+    # If _value_ is an array, then return the result of calling `uniq` on that array. Otherwise,
+    # the argument is returned.
+    # @param value [Object] the value to merge with nothing
+    # @return [Object] the merged value
+    def merge_single(value)
+      value.is_a?(Array) ? value.uniq : value
     end
 
     protected

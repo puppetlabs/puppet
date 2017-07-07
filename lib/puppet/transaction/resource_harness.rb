@@ -47,12 +47,12 @@ class Puppet::Transaction::ResourceHarness
 
   def schedule(resource)
     unless resource.catalog
-      resource.warning "Cannot schedule without a schedule-containing catalog"
+      resource.warning _("Cannot schedule without a schedule-containing catalog")
       return nil
     end
 
     return nil unless name = resource[:schedule]
-    resource.catalog.resource(:schedule, name) || resource.fail("Could not find schedule #{name}")
+    resource.catalog.resource(:schedule, name) || resource.fail(_("Could not find schedule %{name}") % { name: name })
   end
 
   # Used mostly for scheduling and auditing at this point.
@@ -144,17 +144,17 @@ class Puppet::Transaction::ResourceHarness
 
       event = create_change_event(param, current_value, historical_value)
       event.status = "failure"
-      event.message = param.format("change from %s to %s failed: #{detail}",
+      event.message = param.format(_("change from %s to %s failed: "),
                                    param.is_to_s(current_value),
-                                   param.should_to_s(param.should))
+                                   param.should_to_s(param.should)) + detail.to_s
       event
     rescue Exception => detail
       # Execution will halt on Exceptions, they get raised to the application
       event = create_change_event(param, current_value, historical_value)
       event.status = "failure"
-      event.message = param.format("change from %s to %s failed: #{detail}",
+      event.message = param.format(_("change from %s to %s failed: "),
                                    param.is_to_s(current_value),
-                                   param.should_to_s(param.should))
+                                   param.should_to_s(param.should)) + detail.to_s
       raise
     ensure
       if event
@@ -209,7 +209,7 @@ class Puppet::Transaction::ResourceHarness
     # The event we've been provided might have been redacted so we need to use the state stored within
     # the resource application context to see if an event was actually generated.
     if !are_audited_values_equal(context.historical_values[property.name], context.current_values[property.name])
-      event.message = property.format("audit change: previously recorded value %s has been changed to %s",
+      event.message = property.format(_("audit change: previously recorded value %s has been changed to %s"),
                  property.is_to_s(event.historical_value),
                  property.is_to_s(event.previous_value))
     end
@@ -219,23 +219,25 @@ class Puppet::Transaction::ResourceHarness
 
   def audit_message(param, do_audit, historical_value, current_value)
     if do_audit && historical_value && !are_audited_values_equal(historical_value, current_value)
-      param.format(" (previously recorded value was %s)", param.is_to_s(historical_value))
+      param.format(_(" (previously recorded value was %s)"), param.is_to_s(historical_value))
     else
       ""
     end
   end
 
   def noop(event, param, current_value, audit_message)
-    event.message = param.format("current_value %s, should be %s (noop)#{audit_message}",
+    event.message = param.format(_("current_value %s, should be %s (noop)"),
                                  param.is_to_s(current_value),
-                                 param.should_to_s(param.should))
+                                 param.should_to_s(param.should)) + audit_message.to_s
     event.status = "noop"
   end
 
   def sync(event, param, current_value, audit_message)
     param.sync
     if param.sensitive
-      event.message = param.format("changed %s to %s#{audit_message}", param.is_to_s(current_value), param.should_to_s(param.should))
+      event.message = param.format(_("changed %s to %s"),
+                                   param.is_to_s(current_value),
+                                   param.should_to_s(param.should)) + audit_message.to_s
     else
       event.message = "#{param.change_to_s(current_value, param.should)}#{audit_message}"
     end
@@ -256,7 +258,7 @@ class Puppet::Transaction::ResourceHarness
         end
       else
         property = resource.property(param_name)
-        property.notice(property.format("audit change: newly-recorded value %s", context.current_values[param_name]))
+        property.notice(property.format(_("audit change: newly-recorded value %s"), context.current_values[param_name]))
       end
     end
   end

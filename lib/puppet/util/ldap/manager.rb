@@ -213,14 +213,14 @@ class Puppet::Util::Ldap::Manager
   # Update the ldap entry with the desired state.
   def update(name, is, should)
     if should[:ensure] == :absent
-      Puppet.info "Removing #{dn(name)} from ldap"
+      Puppet.info _("Removing %{name} from ldap") % { name: dn(name) }
       delete(name)
       return
     end
 
     # We're creating a new entry
     if is.empty? or is[:ensure] == :absent
-      Puppet.info "Creating #{dn(name)} in ldap"
+      Puppet.info _("Creating %{name} in ldap") % { name: dn(name) }
       # Remove any :absent params and :ensure, then convert the names to ldap names.
       attrs = ldap_convert(should)
       create(name, attrs)

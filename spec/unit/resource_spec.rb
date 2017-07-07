@@ -399,11 +399,6 @@ describe Puppet::Resource do
             inject_and_set_defaults(resource, scope)
           end
 
-          it "should not query the injector" do
-            compiler.injector.expects(:find).never
-            inject_and_set_defaults(resource, scope)
-          end
-
           it "should use the value provided" do
             Puppet::DataBinding.indirection.expects(:find).never
             expect(resource.set_default_parameters(scope)).to eq([])
@@ -653,11 +648,11 @@ describe Puppet::Resource do
       expect(newresource).to equal_resource_attributes_of(@resource)
     end
 
-    # PUP-3272, since serialization to network is done in pson, not yaml
-    it "should produce an equivalent pson object" do
-      text = @resource.render('pson')
+    # PUP-3272, since serialization to network is done in json, not yaml
+    it "should produce an equivalent json object" do
+      text = @resource.render('json')
 
-      newresource = Puppet::Resource.convert_from('pson', text)
+      newresource = Puppet::Resource.convert_from('json', text)
       expect(newresource).to equal_resource_attributes_of(@resource)
     end
   end
@@ -674,14 +669,19 @@ describe Puppet::Resource do
     end
 
     it "doesn't include transient instance variables (#4506)" do
-      expect(@resource.to_yaml_properties).to_not include(:@rstype)
+      expect(@resource.to_data_hash.keys).to_not include('rstype')
     end
 
-    it "produces an equivalent pson object" do
-      text = @resource.render('pson')
+    it "produces an equivalent json object" do
+      text = @resource.render('json')
 
-      newresource = Puppet::Resource.convert_from('pson', text)
+      newresource = Puppet::Resource.convert_from('json', text)
       expect(newresource).to equal_resource_attributes_of(@resource)
+    end
+
+    it 'to_data_hash returns value that is instance of to Data' do
+      Puppet::Pops::Types::TypeAsserter.assert_instance_of('', Puppet::Pops::Types::TypeFactory.data, @resource.to_data_hash)
+      expect(Puppet::Pops::Types::TypeFactory.data.instance?(@resource.to_data_hash)).to be_truthy
     end
   end
 
@@ -732,7 +732,7 @@ describe Puppet::Resource do
         one::two { '/my/file':
           ensure => 'present',
           foo    => ['one', 'two'],
-          noop   => 'true',
+          noop   => true,
         }
       HEREDOC
     end
@@ -754,54 +754,54 @@ describe Puppet::Resource do
           /my/file:
             ensure: 'present'
             foo   : ['one', 'two']
-            noop  : 'true'
+            noop  : true
       HEREDOC
     end
   end
-  describe "when converting to pson" do
+  describe "when converting to json" do
     # LAK:NOTE For all of these tests, we convert back to the resource so we can
     # trap the actual data structure then.
 
     it "should set its type to the provided type" do
-      expect(Puppet::Resource.from_data_hash(PSON.parse(Puppet::Resource.new("File", "/foo").to_pson)).type).to eq("File")
+      expect(Puppet::Resource.from_data_hash(JSON.parse(Puppet::Resource.new("File", "/foo").to_json)).type).to eq("File")
     end
 
     it "should set its title to the provided title" do
-      expect(Puppet::Resource.from_data_hash(PSON.parse(Puppet::Resource.new("File", "/foo").to_pson)).title).to eq("/foo")
+      expect(Puppet::Resource.from_data_hash(JSON.parse(Puppet::Resource.new("File", "/foo").to_json)).title).to eq("/foo")
     end
 
     it "should include all tags from the resource" do
       resource = Puppet::Resource.new("File", "/foo")
       resource.tag("yay")
 
-      expect(Puppet::Resource.from_data_hash(PSON.parse(resource.to_pson)).tags).to eq(resource.tags)
+      expect(Puppet::Resource.from_data_hash(JSON.parse(resource.to_json)).tags).to eq(resource.tags)
     end
 
     it "should include the file if one is set" do
       resource = Puppet::Resource.new("File", "/foo")
       resource.file = "/my/file"
 
-      expect(Puppet::Resource.from_data_hash(PSON.parse(resource.to_pson)).file).to eq("/my/file")
+      expect(Puppet::Resource.from_data_hash(JSON.parse(resource.to_json)).file).to eq("/my/file")
     end
 
     it "should include the line if one is set" do
       resource = Puppet::Resource.new("File", "/foo")
       resource.line = 50
 
-      expect(Puppet::Resource.from_data_hash(PSON.parse(resource.to_pson)).line).to eq(50)
+      expect(Puppet::Resource.from_data_hash(JSON.parse(resource.to_json)).line).to eq(50)
     end
 
     it "should include the 'exported' value if one is set" do
       resource = Puppet::Resource.new("File", "/foo")
       resource.exported = true
 
-      expect(Puppet::Resource.from_data_hash(PSON.parse(resource.to_pson)).exported?).to be_truthy
+      expect(Puppet::Resource.from_data_hash(JSON.parse(resource.to_json)).exported?).to be_truthy
     end
 
     it "should set 'exported' to false if no value is set" do
       resource = Puppet::Resource.new("File", "/foo")
 
-      expect(Puppet::Resource.from_data_hash(PSON.parse(resource.to_pson)).exported?).to be_falsey
+      expect(Puppet::Resource.from_data_hash(JSON.parse(resource.to_json)).exported?).to be_falsey
     end
 
     it "should set all of its parameters as the 'parameters' entry" do
@@ -809,37 +809,33 @@ describe Puppet::Resource do
       resource[:foo] = %w{bar eh}
       resource[:fee] = %w{baz}
 
-      result = Puppet::Resource.from_data_hash(PSON.parse(resource.to_pson))
+      result = Puppet::Resource.from_data_hash(JSON.parse(resource.to_json))
       expect(result["foo"]).to eq(%w{bar eh})
       expect(result["fee"]).to eq(%w{baz})
     end
 
     it "should set sensitive parameters as an array of strings" do
       resource = Puppet::Resource.new("File", "/foo", :sensitive_parameters => [:foo, :fee])
-      result = PSON.parse(resource.to_pson)
+      result = JSON.parse(resource.to_json)
       expect(result["sensitive_parameters"]).to eq ["foo", "fee"]
     end
 
     it "should serialize relationships as reference strings" do
       resource = Puppet::Resource.new("File", "/foo")
       resource[:requires] = Puppet::Resource.new("File", "/bar")
-      result = Puppet::Resource.from_data_hash(PSON.parse(resource.to_pson))
+      result = Puppet::Resource.from_data_hash(JSON.parse(resource.to_json))
       expect(result[:requires]).to eq("File[/bar]")
     end
 
     it "should serialize multiple relationships as arrays of reference strings" do
       resource = Puppet::Resource.new("File", "/foo")
       resource[:requires] = [Puppet::Resource.new("File", "/bar"), Puppet::Resource.new("File", "/baz")]
-      result = Puppet::Resource.from_data_hash(PSON.parse(resource.to_pson))
+      result = Puppet::Resource.from_data_hash(JSON.parse(resource.to_json))
       expect(result[:requires]).to eq([ "File[/bar]",  "File[/baz]" ])
     end
   end
 
-  describe "when converting from pson" do
-    def pson_result_should
-      Puppet::Resource.expects(:new).with { |hash| yield hash }
-    end
-
+  describe "when converting from json" do
     before do
       @data = {
         'type' => "file",
@@ -872,12 +868,12 @@ describe Puppet::Resource do
       expect(Puppet::Resource.from_data_hash(@data).line).to eq(50)
     end
 
-    it "should 'exported' to true if set in the pson data" do
+    it "should 'exported' to true if set in the json data" do
       @data['exported'] = true
       expect(Puppet::Resource.from_data_hash(@data).exported).to be_truthy
     end
 
-    it "should 'exported' to false if not set in the pson data" do
+    it "should 'exported' to false if not set in the json data" do
       expect(Puppet::Resource.from_data_hash(@data).exported).to be_falsey
     end
 

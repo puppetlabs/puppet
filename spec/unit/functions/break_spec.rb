@@ -8,7 +8,7 @@ describe 'the break function' do
   include Matchers::Resource
 
   context  do
-    it 'breaks iteration as if at end of input' do
+    it 'breaks iteration as if at end of input in a map' do
       expect(compile_to_catalog(<<-CODE)).to have_resource('Notify[[1, 2]]')
           function please_break() {
             [1,2,3].map |$x| { if $x == 3 { break() } $x }
@@ -16,6 +16,34 @@ describe 'the break function' do
           notify { String(please_break()): }
         CODE
     end
+
+    it 'breaks iteration as if at end of input in a reduce' do
+      expect(compile_to_catalog(<<-CODE)).to have_resource('Notify[6]')
+          function please_break() {
+            [1,2,3,4].reduce |$memo, $x| { if $x == 4 { break() } $memo + $x }
+          }
+          notify { String(please_break()): }
+        CODE
+    end
+
+    it 'breaks iteration as if at end of input in an each' do
+      expect(compile_to_catalog(<<-CODE)).to_not have_resource('Notify[3]')
+          function please_break() {
+            [1,2,3].each |$x| { if $x == 3 { break() } notify { "$x": } }
+          }
+          please_break()
+        CODE
+    end
+
+    it 'breaks iteration as if at end of input in a reverse_each' do
+      expect(compile_to_catalog(<<-CODE)).to have_resource('Notify[2]')
+          function please_break() {
+            [1,2,3].reverse_each |$x| { if $x == 1 { break() } notify { "$x": } }
+          }
+          please_break()
+        CODE
+    end
+
   end
 
   it 'does not provide early exit from a class' do

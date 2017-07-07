@@ -69,15 +69,22 @@ describe Puppet::Util::Metric do
     expect(@metric["foo"]).to eq(0)
   end
 
-  it "should round trip through pson" do
+  let(:metric) do
     metric = Puppet::Util::Metric.new("foo", "mylabel")
     metric.newvalue("v1", 10.1, "something")
     metric.newvalue("v2", 20, "something else")
+    metric
+  end
 
-    tripped = Puppet::Util::Metric.from_data_hash(PSON.parse(metric.to_pson))
+  it "should round trip through json" do
+    tripped = Puppet::Util::Metric.from_data_hash(JSON.parse(metric.to_json))
 
     expect(tripped.name).to eq(metric.name)
     expect(tripped.label).to eq(metric.label)
     expect(tripped.values).to eq(metric.values)
+  end
+
+  it 'to_data_hash returns value that is instance of to Data' do
+    expect(Puppet::Pops::Types::TypeFactory.data.instance?(metric.to_data_hash)).to be_truthy
   end
 end

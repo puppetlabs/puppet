@@ -1,77 +1,58 @@
-test_name "Lookup data using the agnostic lookup function"
-# pre-docs:
-# https://puppet-on-the-edge.blogspot.com/2015/01/puppet-40-data-in-modules-and.html
+test_name "Lookup data using the agnostic lookup function" do
+  # pre-docs:
+  # https://puppet-on-the-edge.blogspot.com/2015/01/puppet-40-data-in-modules-and.html
 
-testdir = master.tmpdir('lookup')
+  testdir = master.tmpdir('lookup')
 
-step 'Setup'
+  module_name                     = "data_module"
+  module_name2                    = "other_module"
+  hash_name                       = "hash_name"
+  array_key                       = "array_key"
 
-module_name                     = "data_module"
-module_name2                    = "other_module"
-hash_name                       = "hash_name"
-array_key                       = "array_key"
+  env_data_implied_key            = "env_data_implied"
+  env_data_implied_value          = "env_implied_a"
+  env_data_key                    = "env_data"
+  env_data_value                  = "env_a"
+  env_hash_key                    = "env_hash_key"
+  env_hash_value                  = "env_class_a"
+  env_array_value0                = "env_array_a"
+  env_array_value1                = "env_array_b"
 
-env_data_implied_key            = "env_data_implied"
-env_data_implied_value          = "env_implied_a"
-env_data_key                    = "env_data"
-env_data_value                  = "env_a"
-env_hash_key                    = "env_hash_key"
-env_hash_value                  = "env_class_a"
-env_array_value0                = "env_array_a"
-env_array_value1                = "env_array_b"
+  module_data_implied_key         = "module_data_implied"
+  module_data_implied_value       = "module_implied_b"
+  module_data_key                 = "module_data"
+  module_data_value               = "module_b"
+  module_data_value_other         = "other_module_b"
+  module_hash_key                 = "module_hash_key"
+  module_hash_value               = "module_class_b"
+  module_array_value0             = "module_array_a"
+  module_array_value1             = "module_array_b"
 
-module_data_implied_key         = "module_data_implied"
-module_data_implied_value       = "module_implied_b"
-module_data_key                 = "module_data"
-module_data_value               = "module_b"
-module_data_value_other         = "other_module_b"
-module_hash_key                 = "module_hash_key"
-module_hash_value               = "module_class_b"
-module_array_value0             = "module_array_a"
-module_array_value1             = "module_array_b"
+  env_data_override_implied_key   = "env_data_override_implied"
+  env_data_override_implied_value = "env_override_implied_c"
+  env_data_override_key           = "env_data_override"
+  env_data_override_value         = "env_override_c"
 
-env_data_override_implied_key   = "env_data_override_implied"
-env_data_override_implied_value = "env_override_implied_c"
-env_data_override_key           = "env_data_override"
-env_data_override_value         = "env_override_c"
+  hiera_data_implied_key          = "apache_server_port_implied"
+  hiera_data_implied_value        = "8080"
+  hiera_data_key                  = "apache_server_port"
+  hiera_data_value                = "9090"
+  hiera_hash_key                  = "hiera_hash_key"
+  hiera_hash_value                = "hiera_class_c"
+  hiera_array_value0              = "hiera_array_a"
+  hiera_array_value1              = "hiera_array_b"
 
-hiera_data_implied_key          = "apache_server_port_implied"
-hiera_data_implied_value        = "8080"
-hiera_data_key                  = "apache_server_port"
-hiera_data_value                = "9090"
-hiera_hash_key                  = "hiera_hash_key"
-hiera_hash_value                = "hiera_class_c"
-hiera_array_value0              = "hiera_array_a"
-hiera_array_value1              = "hiera_array_b"
+  automatic_data_key              = "automatic_data_key"
+  automatic_data_value            = "automatic_data_value"
+  automatic_default_value         = "automatic_default_value"
 
-automatic_data_key              = "automatic_data_key"
-automatic_data_value            = "automatic_data_value"
-automatic_default_value         = "automatic_default_value"
-
-def mod_manifest_entry(module_name = nil, testdir, module_data_implied_key,
-                       module_data_implied_value, module_data_key,
-                       module_data_value, hash_name, module_hash_key,
-                       module_hash_value, array_key, module_array_value0,
-                       module_array_value1)
-  if module_name
-    module_files_manifest = <<PP
-      # the binding to specify the function to provide data for this module
-      file { '#{testdir}/environments/production/modules/#{module_name}/lib/puppet/bindings/#{module_name}/default.rb':
-        ensure => file,
-        content => "
-          Puppet::Bindings.newbindings('#{module_name}::default') do
-            # In the default bindings for this module
-            bind {
-              # bind its name to the 'puppet' module data provider
-              name         '#{module_name}'
-              to           'function'
-              in_multibind 'puppet::module_data'
-           }
-          end
-        ",
-        mode => "0640",
-      }
-
+  def mod_manifest_entry(module_name = nil, testdir, module_data_implied_key,
+                         module_data_implied_value, module_data_key,
+                         module_data_value, hash_name, module_hash_key,
+                         module_hash_value, array_key, module_array_value0,
+                         module_array_value1)
+    if module_name
+      module_files_manifest = <<PP
       # the function to provide data for this module
       file { '#{testdir}/environments/production/modules/#{module_name}/lib/puppet/functions/#{module_name}/data.rb':
         ensure => file,
@@ -89,13 +70,13 @@ def mod_manifest_entry(module_name = nil, testdir, module_data_implied_key,
         mode => "0640",
       }
 PP
-    module_files_manifest
+      module_files_manifest
+    end
   end
-end
 
-def mod_manifest_metadata_json(module_name = nil, testdir)
-  if module_name
-    metadata_manifest = <<PPmetadata
+  def mod_manifest_metadata_json(module_name = nil, testdir)
+    if module_name
+      metadata_manifest = <<PPmetadata
       file { '#{testdir}/environments/production/modules/#{module_name}/metadata.json':
         ensure => file,
         content => '
@@ -120,21 +101,21 @@ def mod_manifest_metadata_json(module_name = nil, testdir)
 	force  => true,
       }
 PPmetadata
+    end
   end
-end
 
-module_manifest1 = mod_manifest_entry(module_name, testdir, module_data_implied_key,
-                       module_data_implied_value, module_data_key, module_data_value,
-                       hash_name, module_hash_key, module_hash_value, array_key,
-                       module_array_value0, module_array_value1)
-module_manifest2 = mod_manifest_entry(module_name2, testdir, module_data_implied_key,
-                       module_data_implied_value, module_data_key, module_data_value_other,
-                       hash_name, module_hash_key, module_hash_value, array_key,
-                       module_array_value0, module_array_value1)
-metadata_manifest1 = mod_manifest_metadata_json(module_name, testdir)
-metadata_manifest2 = mod_manifest_metadata_json(module_name2, testdir)
+  module_manifest1 = mod_manifest_entry(module_name, testdir, module_data_implied_key,
+                         module_data_implied_value, module_data_key, module_data_value,
+                         hash_name, module_hash_key, module_hash_value, array_key,
+                         module_array_value0, module_array_value1)
+  module_manifest2 = mod_manifest_entry(module_name2, testdir, module_data_implied_key,
+                         module_data_implied_value, module_data_key, module_data_value_other,
+                         hash_name, module_hash_key, module_hash_value, array_key,
+                         module_array_value0, module_array_value1)
+  metadata_manifest1 = mod_manifest_metadata_json(module_name, testdir)
+  metadata_manifest2 = mod_manifest_metadata_json(module_name2, testdir)
 
-apply_manifest_on(master, <<-PP, :catch_failures => true)
+  apply_manifest_on(master, <<-PP, :catch_failures => true)
 File {
   ensure => directory,
   mode => "0750",
@@ -302,69 +283,45 @@ file { '#{testdir}/environments/production/manifests/site.pp':
 }
 PP
 
-
-master_opts = {
-  'main' => {
-    'environmentpath' => "#{testdir}/environments",
-    'hiera_config' => "#{testdir}/hiera.yaml",
-    # required for site{}
-    'app_management' => true,
-  },
-}
-with_puppet_running_on master, master_opts, testdir do
-  agents.each do |agent|
-
-    step "Try to lookup string data, binding specified in bindings/default.rb"
-
-    on(agent, puppet('agent', "-t --server #{master}"), :acceptable_exit_codes => [2])
-    assert_match("#{env_data_implied_key} #{env_data_implied_value}", stdout)
-    assert_match("#{env_data_key} #{env_data_value}", stdout)
-
-    assert_match("#{module_data_implied_key} #{module_data_implied_value}", stdout)
-    assert_match("#{module_data_key} #{module_data_value}", stdout)
-
-    assert_match("#{module_data_key} #{module_data_value_other}", stdout)
-
-    assert_match("#{env_data_override_implied_key} #{env_data_override_implied_value}", stdout)
-    assert_match("#{env_data_override_key} #{env_data_override_value}", stdout)
-
-    assert_match("#{hiera_data_implied_key} #{hiera_data_implied_value}", stdout)
-    assert_match("#{hiera_data_key} #{hiera_data_value}", stdout)
-
-    assert_match("#{hash_name} {#{module_hash_key} => #{module_hash_value}, #{env_hash_key} => #{env_hash_value}, #{hiera_hash_key} => #{hiera_hash_value}}", stdout)
-
-    assert_match("#{array_key} [#{hiera_array_value0}, #{hiera_array_value1}, #{env_array_value0}, #{env_array_value1}, #{module_array_value0}, #{module_array_value1}]", stdout)
-
-    assert_match("#{automatic_data_key} #{automatic_data_value}", stdout)
-  end
-
   apply_manifest_on(master, <<-PP, :catch_failures => true)
-  #{metadata_manifest1}
-  #{metadata_manifest2}
+#{metadata_manifest1}
+#{metadata_manifest2}
   PP
 
 
-  step "Try again to lookup string data, binding specified in metadata.json"
+  master_opts = {
+    'main' => {
+      'environmentpath' => "#{testdir}/environments",
+      'hiera_config' => "#{testdir}/hiera.yaml",
+      # required for site{}
+      'app_management' => true,
+    },
+  }
+  with_puppet_running_on master, master_opts, testdir do
+    step "Lookup string data, binding specified in metadata.json" do
+      agents.each do |agent|
+        on(agent, puppet('agent', "-t --server #{master}"), :acceptable_exit_codes => [0, 2])
+        assert_match("#{env_data_implied_key} #{env_data_implied_value}", stdout)
+        assert_match("#{env_data_key} #{env_data_value}", stdout)
 
-  agents.each do |agent|
-    on(agent, puppet('agent', "-t --server #{master}"), :acceptable_exit_codes => [0, 2])
-    assert_match("#{env_data_implied_key} #{env_data_implied_value}", stdout)
-    assert_match("#{env_data_key} #{env_data_value}", stdout)
+        assert_match("#{module_data_implied_key} #{module_data_implied_value}", stdout)
+        assert_match("#{module_data_key} #{module_data_value}", stdout)
 
-    assert_match("#{module_data_implied_key} #{module_data_implied_value}", stdout)
-    assert_match("#{module_data_key} #{module_data_value}", stdout)
+        assert_match("#{module_data_key} #{module_data_value_other}", stdout)
 
-    assert_match("#{module_data_key} #{module_data_value_other}", stdout)
+        assert_match("#{env_data_override_implied_key} #{env_data_override_implied_value}", stdout)
+        assert_match("#{env_data_override_key} #{env_data_override_value}", stdout)
 
-    assert_match("#{env_data_override_implied_key} #{env_data_override_implied_value}", stdout)
-    assert_match("#{env_data_override_key} #{env_data_override_value}", stdout)
+        assert_match("#{hiera_data_implied_key} #{hiera_data_implied_value}", stdout)
+        assert_match("#{hiera_data_key} #{hiera_data_value}", stdout)
 
-    assert_match("#{hiera_data_implied_key} #{hiera_data_implied_value}", stdout)
-    assert_match("#{hiera_data_key} #{hiera_data_value}", stdout)
+        assert_match("#{hash_name} {#{module_hash_key} => #{module_hash_value}, #{env_hash_key} => #{env_hash_value}, #{hiera_hash_key} => #{hiera_hash_value}}", stdout)
 
-    assert_match("#{hash_name} {#{module_hash_key} => #{module_hash_value}, #{env_hash_key} => #{env_hash_value}, #{hiera_hash_key} => #{hiera_hash_value}}", stdout)
+        assert_match("#{array_key} [#{hiera_array_value0}, #{hiera_array_value1}, #{env_array_value0}, #{env_array_value1}, #{module_array_value0}, #{module_array_value1}]", stdout)
 
-    assert_match("#{array_key} [#{hiera_array_value0}, #{hiera_array_value1}, #{env_array_value0}, #{env_array_value1}, #{module_array_value0}, #{module_array_value1}]", stdout)
-
+        assert_match("#{automatic_data_key} #{automatic_data_value}", stdout)
+      end
+    end
   end
+
 end

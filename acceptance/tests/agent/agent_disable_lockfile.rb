@@ -4,7 +4,7 @@ confine :except, :platform => 'cisco_nexus' #See BKR-749
 #
 # This test is intended to ensure that puppet agent --enable/--disable
 #  work properly, both in terms of complying with our public "API" around
-#  lockfile semantics ( http://links.puppetlabs.com/agent_lockfiles ), and
+#  lockfile semantics ( http://links.puppet.com/agent_lockfiles ), and
 #  in terms of actually restricting or allowing new agent runs to begin.
 #
 

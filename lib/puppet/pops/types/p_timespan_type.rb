@@ -1,10 +1,61 @@
 module Puppet::Pops
 module Types
-  class PAbstractTimeDataType < PAbstractRangeType
+  class PAbstractTimeDataType < PScalarType
     # @param from [AbstractTime] lower bound for this type. Nil or :default means unbounded
     # @param to [AbstractTime] upper bound for this type. Nil or :default means unbounded
-    def initialize(from = nil, to = nil)
-      super(convert_arg(from, true), convert_arg(to, false))
+    def initialize(from, to)
+      @from = convert_arg(from, true)
+      @to = convert_arg(to, false)
+      raise ArgumentError, "'from' must be less or equal to 'to'. Got (#{@from}, #{@to}" unless @from <= @to
+    end
+
+    # Checks if this numeric range intersects with another
+    #
+    # @param o [PNumericType] the range to compare with
+    # @return [Boolean] `true` if this range intersects with the other range
+    # @api public
+    def intersect?(o)
+      self.class == o.class && !(@to < o.numeric_from || o.numeric_to < @from)
+    end
+
+    # Returns the lower bound of the numeric range or `nil` if no lower bound is set.
+    # @return [Float,Integer]
+    def from
+      @from == -Float::INFINITY ? nil : @from
+    end
+
+    # Returns the upper bound of the numeric range or `nil` if no upper bound is set.
+    # @return [Float,Integer]
+    def to
+      @to == Float::INFINITY ? nil : @to
+    end
+
+    # Same as #from but will return `-Float::Infinity` instead of `nil` if no lower bound is set.
+    # @return [Float,Integer]
+    def numeric_from
+      @from
+    end
+
+    # Same as #to but will return `Float::Infinity` instead of `nil` if no lower bound is set.
+    # @return [Float,Integer]
+    def numeric_to
+      @to
+    end
+
+    def hash
+      @from.hash ^ @to.hash
+    end
+
+    def eql?(o)
+      self.class == o.class && @from == o.numeric_from && @to == o.numeric_to
+    end
+
+    def instance?(o, guard = nil)
+      o.is_a?(Numeric) && o >= @from && o <= @to
+    end
+
+    def unbounded?
+      @from == -Float::INFINITY && @to == Float::INFINITY
     end
 
     def convert_arg(arg, min)
@@ -14,7 +65,7 @@ module Types
       when Hash
         impl_class.from_hash(arg)
       when nil, :default
-        nil
+        min ? -Float::INFINITY : Float::INFINITY
       when String
         impl_class.parse(arg)
       when Integer

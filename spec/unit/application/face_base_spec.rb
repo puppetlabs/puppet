@@ -341,9 +341,9 @@ describe Puppet::Application::FaceBase do
         end
       end
 
-      it "should render a non-trivially-keyed Hash with using pretty printed PSON" do
+      it "should render a non-trivially-keyed Hash with using pretty printed JSON" do
         hash = { [1,2] => 3, [2,3] => 5, [3,4] => 7 }
-        expect(app.render(hash, {})).to eq(PSON.pretty_generate(hash).chomp)
+        expect(app.render(hash, {})).to eq(JSON.pretty_generate(hash).chomp)
       end
 
       it "should render a {String,Numeric}-keyed Hash into a table" do
@@ -356,7 +356,7 @@ describe Puppet::Application::FaceBase do
         expect(app.render(hash, {})).to eq <<EOT
 5      5
 6.0    6
-four   #{object.to_pson.chomp}
+four   #{object.to_json.chomp}
 one    1
 three  {}
 two    []
@@ -406,7 +406,7 @@ EOT
         json = app.render({ :one => 1, :two => 2 }, {})
         expect(json).to match(/"one":\s*1\b/)
         expect(json).to match(/"two":\s*2\b/)
-        expect(PSON.parse(json)).to eq({ "one" => 1, "two" => 2 })
+        expect(JSON.parse(json)).to eq({ "one" => 1, "two" => 2 })
       end
     end
 
@@ -421,8 +421,8 @@ EOT
       expect { app.run }.to exit_with(1)
     end
 
-    it "should work if asked to render a NetworkHandler format" do
-      app.command_line.stubs(:args).returns %w{count_args a b c --render-as pson}
+    it "should work if asked to render json" do
+      app.command_line.stubs(:args).returns %w{count_args a b c --render-as json}
       expect {
         expect { app.run }.to exit_with(0)
       }.to have_printed(/3/)

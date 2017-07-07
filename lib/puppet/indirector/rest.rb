@@ -1,6 +1,7 @@
 require 'net/http'
 require 'uri'
 require 'json'
+require 'semantic_puppet'
 
 require 'puppet/network/http'
 require 'puppet/network/http_pool'
@@ -10,6 +11,10 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   include Puppet::Network::HTTP::Compression.module
 
   IndirectedRoutes = Puppet::Network::HTTP::API::IndirectedRoutes
+  EXCLUDED_FORMATS = [:yaml, :b64_zlib_yaml, :dot]
+
+  # puppet major version where JSON is enabled by default
+  MAJOR_VERSION_JSON_DEFAULT = 5
 
   class << self
     attr_reader :server_setting, :port_setting
@@ -101,11 +106,10 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   # Provide appropriate headers.
   def headers
     # yaml is not allowed on the network
-    network_formats = model.supported_formats.reject do |format|
-      [:yaml, :b64_zlib_yaml].include?(format)
-    end
+    network_formats = model.supported_formats - EXCLUDED_FORMATS
+    mime_types = network_formats.map { |f| model.get_format(f).mime }
     common_headers = {
-      "Accept"                                     => network_formats.join(", "),
+      "Accept"                                     => mime_types.join(', '),
       Puppet::Network::HTTP::HEADER_PUPPET_VERSION => Puppet.version
     }
 
@@ -180,7 +184,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
       # that makes a user aware of the reason for the failure.
       #
       content_type, body = parse_response(response)
-      msg = "Find #{elide(uri_with_query_string, 100)} resulted in 404 with the message: #{body}"
+      msg = _("Find %{uri} resulted in 404 with the message: %{body}") % { uri: elide(uri_with_query_string, 100), body: body }
       raise Puppet::Error, msg
     else
       nil
@@ -213,7 +217,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def destroy(request)
-    raise ArgumentError, "DELETE does not accept options" unless request.options.empty?
+    raise ArgumentError, _("DELETE does not accept options") unless request.options.empty?
 
     response = do_request(request) do |req|
       http_delete(req, IndirectedRoutes.request_to_uri(req), headers)
@@ -228,7 +232,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def save(request)
-    raise ArgumentError, "PUT does not accept options" unless request.options.empty?
+    raise ArgumentError, _("PUT does not accept options") unless request.options.empty?
 
     response = do_request(request) do |req|
       http_put(req, IndirectedRoutes.request_to_uri(req), req.instance.render, headers.merge({ "Content-Type" => req.instance.mime }))
@@ -249,7 +253,21 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   # to request.do_request from here, thus if we change what we pass or how we
   # get it, we only need to change it here.
   def do_request(request)
-    request.do_request(self.class.srv_service, self.class.server, self.class.port) { |req| yield(req) }
+    response = request.do_request(self.class.srv_service, self.class.server, self.class.port) { |req| yield(req) }
+
+    handle_response(request, response) if response
+
+    response
+  end
+
+  def handle_response(request, response)
+    server_version = response[Puppet::Network::HTTP::HEADER_PUPPET_VERSION]
+    if server_version &&
+       SemanticPuppet::Version.parse(server_version).major < MAJOR_VERSION_JSON_DEFAULT &&
+       Puppet[:preferred_serialization_format] != 'pson'
+      Puppet.warning("Downgrading to PSON for future requests")
+      Puppet[:preferred_serialization_format] = 'pson'
+    end
   end
 
   def validate_key(request)
@@ -288,7 +306,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
       returned_message = uncompress_body(response)
     end
 
-    message = "Error #{response.code} on SERVER: #{returned_message}"
+    message = _("Error %{code} on SERVER: %{returned_message}") % { code: response.code, returned_message: returned_message }
     Net::HTTPError.new(message, response)
   end
 
@@ -300,7 +318,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
       [ response['content-type'].gsub(/\s*;.*$/,''),
         body = uncompress_body(response) ]
     else
-      raise "No content type in http response; cannot parse"
+      raise _("No content type in http response; cannot parse")
     end
   end
 

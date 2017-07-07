@@ -3,13 +3,13 @@ require 'puppet/forge'
 
 Puppet::Face.define(:module, '1.0.0') do
   action(:search) do
-    summary "Search the Puppet Forge for a module."
+    summary _("Search the Puppet Forge for a module.")
     description <<-EOT
       Searches a repository for modules whose names, descriptions, or keywords
       match the provided search term.
     EOT
 
-    returns "Array of module metadata hashes"
+    returns _("Array of module metadata hashes")
 
     examples <<-EOT
       Search the Puppet Forge for a module:
@@ -19,7 +19,7 @@ Puppet::Face.define(:module, '1.0.0') do
       bacula        This is a generic Apache module      @puppetlabs        backups
     EOT
 
-    arguments "<search_term>"
+    arguments _("<search_term>")
 
     when_invoked do |term, options|
       Puppet::ModuleTool.set_option_defaults options
@@ -31,7 +31,7 @@ Puppet::Face.define(:module, '1.0.0') do
         raise results[:error][:multiline]
       end
 
-      return "No results found for '#{term}'." if results[:answers].empty?
+      return _("No results found for '%{term}'.") % { term: term } if results[:answers].empty?
 
       padding = '  '
       headers = {

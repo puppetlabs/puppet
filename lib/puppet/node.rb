@@ -24,10 +24,13 @@ class Puppet::Node
   ENVIRONMENT = 'environment'.freeze
 
   def initialize_from_hash(data)
-    @name       = data['name']       || (raise ArgumentError, "No name provided in serialized data")
+    @name       = data['name']       || (raise ArgumentError, _("No name provided in serialized data"))
     @classes    = data['classes']    || []
     @parameters = data['parameters'] || {}
-    @environment_name = data['environment']
+    env_name = data['environment']
+    env_name = env_name.intern unless env_name.nil?
+    @environment_name = env_name
+    environment = env_name
   end
 
   def self.from_data_hash(data)
@@ -39,7 +42,7 @@ class Puppet::Node
   def to_data_hash
     result = {
       'name' => name,
-      'environment' => environment.name,
+      'environment' => environment.name.to_s,
     }
     result['classes'] = classes unless classes.empty?
     result['parameters'] = parameters unless parameters.empty?
@@ -86,7 +89,7 @@ class Puppet::Node
   end
 
   def initialize(name, options = {})
-    raise ArgumentError, "Node names cannot be nil" unless name
+    raise ArgumentError, _("Node names cannot be nil") unless name
     @name = name
 
     if classes = options[:classes]
@@ -113,22 +116,31 @@ class Puppet::Node
   end
 
   # Merge the node facts with parameters from the node source.
-  def fact_merge
-    if @facts = Puppet::Node::Facts.indirection.find(name, :environment => environment)
+  # @api public
+  # @param facts [optional, Puppet::Node::Facts] facts to merge into node parameters.
+  #   Will query Facts indirection if not supplied.
+  # @raise [Puppet::Error] Raise on failure to retrieve facts if not supplied
+  # @return [nil]
+  def fact_merge(facts = nil)
+    begin
+      @facts = facts.nil? ? Puppet::Node::Facts.indirection.find(name, :environment => environment) : facts
+    rescue => detail
+      error = Puppet::Error.new(_("Could not retrieve facts for %{name}: %{detail}") % { name: name, detail: detail }, detail)
+      error.set_backtrace(detail.backtrace)
+      raise error
+    end
+
+    if !@facts.nil?
       @facts.sanitize
       merge(@facts.values)
     end
-  rescue => detail
-    error = Puppet::Error.new("Could not retrieve facts for #{name}: #{detail}")
-    error.set_backtrace(detail.backtrace)
-    raise error
   end
 
   # Merge any random parameters into our parameter list.
   def merge(params)
     params.each do |name, value|
       if @parameters.include?(name)
-        Puppet::Util::Warnings.warnonce("The node parameter '#{name}' for node '#{@name}' was already set to '#{@parameters[name]}'. It could not be set to '#{value}'")
+        Puppet::Util::Warnings.warnonce(_("The node parameter '%{param_name}' for node '%{node_name}' was already set to '%{value}'. It could not be set to '%{desired_value}'") % { param_name: name, node_name: @name, value: @parameters[name], desired_value: value })
       else
         @parameters[name] = value
       end
@@ -159,7 +171,7 @@ class Puppet::Node
       if parameters["hostname"] and parameters["domain"]
         fqdn = parameters["hostname"] + "." + parameters["domain"]
       else
-        Puppet.warning "Host is missing hostname and/or domain: #{name}"
+        Puppet.warning _("Host is missing hostname and/or domain: %{name}") % { name: name }
       end
     end
 
@@ -191,7 +203,7 @@ class Puppet::Node
   # Ensures the data is frozen
   #
   def trusted_data=(data)
-    Puppet.warning("Trusted node data modified for node #{name}") unless @trusted_data.nil?
+    Puppet.warning(_("Trusted node data modified for node %{name}") % { name: name }) unless @trusted_data.nil?
     @trusted_data = data.freeze
   end
 end

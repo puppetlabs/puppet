@@ -14,7 +14,7 @@ module Puppet::Pops
       let(:loader) { loaders.find_loader(nil) }
 
       def type_set_t(name, body_string, name_authority)
-        i12n_literal_hash = pp_parser.parse_string("{#{body_string}}").current.body
+        i12n_literal_hash = pp_parser.parse_string("{#{body_string}}").body
         typeset = PTypeSetType.new(name, i12n_literal_hash, name_authority)
         loader.set_entry(Loader::TypedName.new(:type, name, name_authority), typeset)
         typeset
@@ -108,14 +108,6 @@ module Puppet::Pops
             OBJECT
             expect { parse_type_set('MySet', ts) }.to raise_error(TypeAssertionError,
               /expects a value for key 'pcore_version'/)
-          end
-
-          it 'version is missing' do
-            ts = <<-OBJECT
-            pcore_version => '1.0.0',
-            OBJECT
-            expect { parse_type_set('MySet', ts) }.to raise_error(TypeAssertionError,
-              /expects a value for key 'version'/)
           end
 
           it 'the version is an invalid semantic version' do

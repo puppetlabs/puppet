@@ -76,4 +76,23 @@ describe Puppet::Application::Describe do
       @describe.run_command
     end
   end
+
+  it "should format text with long non-space runs without garbling" do
+    @f = Formatter.new(76)
+
+    @teststring = <<TESTSTRING
+. 12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890 nick@magpie.puppetlabs.lan
+**this part should not repeat!**
+TESTSTRING
+
+    @expected_result = <<EXPECTED
+.
+1234567890123456789012345678901234567890123456789012345678901234567890123456
+7890123456789012345678901234567890 nick@magpie.puppetlabs.lan
+**this part should not repeat!**
+EXPECTED
+
+    result = @f.wrap(@teststring, {:indent => 0, :scrub => true})
+    expect(result).to eql(@expected_result)
+  end
 end

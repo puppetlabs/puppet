@@ -205,16 +205,10 @@ module Validation
         unless semantic.respond_to?(:file) && semantic.respond_to?(:line) && semantic.respond_to?(:pos)
           raise Puppet::DevError("Issue #{issue.issue_code}: Cannot pass a #{semantic.class} as a semantic object when it does not support #pos(), #file() and #line()")
         end
-        source_pos = semantic
-        file = semantic.file
-
-      elsif semantic.is_a?(Puppet::Parser::Resource)
-        source_pos = semantic
-        file = semantic.file
-      else
-        source_pos = Utils.find_closest_positioned(semantic)
-        file = source_pos ? source_pos.locator.file : nil
       end
+
+      source_pos = semantic
+      file = semantic.file unless semantic.nil?
 
       severity = @severity_producer.severity(issue)
       @acceptor.accept(Diagnostic.new(severity, issue, file, source_pos, arguments, except))

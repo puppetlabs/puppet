@@ -189,7 +189,6 @@ touch %{buildroot}%{_localstatedir}/log/puppet/masterhttp.log
 %defattr(-, root, root, 0755)
 %doc LICENSE README.md examples
 %{_bindir}/puppet
-%{_bindir}/extlookup2hiera
 %{puppet_libdir}/*
 %if 0%{?_with_systemd}
 %{_unitdir}/puppet.service
@@ -239,9 +238,7 @@ touch %{buildroot}%{_localstatedir}/log/puppet/masterhttp.log
 %{_mandir}/man8/puppet-plugin.8.gz
 %{_mandir}/man8/puppet-report.8.gz
 %{_mandir}/man8/puppet-resource.8.gz
-%{_mandir}/man8/puppet-resource_type.8.gz
 %{_mandir}/man8/puppet-status.8.gz
-%{_mandir}/man8/extlookup2hiera.8.gz
 # These need to be owned by puppet so the server can
 # write to them. The separate %defattr's are required
 # to work around RH Bugzilla 681540
