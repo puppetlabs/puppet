@@ -18,7 +18,7 @@ class Puppet::FileServing::Mount::PluginFacts < Puppet::FileServing::Mount
     # them all.
     Puppet.debug("Warning: calling Plugins.search with empty module path.") if request.environment.modules.empty?
 
-    modules = request.environment.modules.find_all { |mod| mod.plugins? }
+    modules = request.environment.modules.find_all { |mod| mod.pluginfacts? }
 
     whitelist = find_node_whitelist(request) if Puppet.settings[:pluginsync_filter_enable]
 
@@ -28,7 +28,7 @@ class Puppet::FileServing::Mount::PluginFacts < Puppet::FileServing::Mount
     else
         Puppet.debug "Pluginsync filter not enabled or not found, all modules will be included"
     end
-    paths = modules.select{ |mod| mod.pluginfacts? }.collect { |mod| mod.plugin_fact_directory }
+    paths = modules.collect { |mod| mod.plugin_fact_directory }
 
     if paths.empty?
       # If the modulepath is valid then we still need to return a valid root
