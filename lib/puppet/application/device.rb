@@ -70,51 +70,54 @@ puppet-device(8) -- Manage remote network devices
 
 SYNOPSIS
 --------
-Retrieves all configurations from the puppet master and apply
-them to the remote devices configured in /etc/puppetlabs/puppet/device.conf.
+Retrieves catalogs from the Puppet master and applies them to remote devices. 
 
-Currently must be run out periodically, using cron or something similar.
+This subcommand can be run manually; or periodically using cron,
+a scheduled task, or a similar tool.
+
 
 USAGE
 -----
   puppet device [-d|--debug] [--detailed-exitcodes] [--deviceconfig <file>]
                 [-h|--help] [-l|--logdest syslog|<file>|console]
                 [-v|--verbose] [-w|--waitforcert <seconds>]
-                [-t|--target <device>] [-V|--version]
+                [-t|--target <device>] [--user=<user>] [-V|--version]
 
 
 DESCRIPTION
 -----------
-Once the client has a signed certificate for a given remote device, it will
-retrieve its configuration and apply it.
+Devices require a proxy Puppet agent to request certificates, collect facts,
+retrieve and apply catalogs, and store reports.
+
 
 USAGE NOTES
 -----------
-One need a /etc/puppetlabs/puppet/device.conf file with the following content:
+Devices managed by the puppet-device subcommand on a Puppet agent are 
+configured in device.conf, which is located at $confdir/device.conf by default, 
+and is configurable with the $deviceconfig setting. 
 
-[remote.device.fqdn]
-type <type>
-url <url>
+The device.conf file is an INI-like file, with one section per device:
 
-where:
- * type: the current device type (the only value at this time is cisco)
- * url: an url allowing to connect to the device
+[<DEVICE_CERTNAME>]
+type <TYPE>
+url <URL>
+debug
 
-Supported url must conforms to:
- scheme://user:password@hostname/?query
+The section name specifies the certname of the device. 
 
- with:
-  * scheme: either ssh or telnet
-  * user: username, can be omitted depending on the switch/router configuration
-  * password: the connection password
-  * query: this is device specific. Cisco devices supports an enable parameter whose
-  value would be the enable password.
+The values for the type and url properties are specific to each type of device.
+
+The optional debug property specifies transport-level debugging,
+and is limited to telnet and ssh transports.
+
+See https://docs.puppet.com/puppet/latest/config_file_device.html for details.
+
 
 OPTIONS
 -------
-Note that any setting that's valid in the configuration file
-is also a valid long argument.  For example, 'server' is a valid configuration
-parameter, so you can specify '--server <servername>' as an argument.
+Note that any setting that's valid in the configuration file is also a valid 
+long argument. For example, 'server' is a valid configuration parameter, so 
+you can specify '--server <servername>' as an argument.
 
 * --debug:
   Enable full debugging.
@@ -144,8 +147,12 @@ parameter, so you can specify '--server <servername>' as an argument.
   valid JSON.
 
 * --target:
-  Target a specific device/certificate in the device.conf. Doing so will perform a
-  device run against only that device/certificate.
+  Target a specific device in device.conf. Doing so will perform a device run
+  for only that device.
+
+* --user:
+  The user to run as. Due to a bug (PUP-1391), '--user=root' is required, 
+  even when run as root, for runs that create device certificates or keys.
 
 * --verbose:
   Turn on verbose reporting.
@@ -155,12 +162,13 @@ parameter, so you can specify '--server <servername>' as an argument.
   and it is enabled by default, with a value of 120 (seconds).  This causes
   +puppet agent+ to connect to the server every 2 minutes and ask it to sign a
   certificate request.  This is useful for the initial setup of a puppet
-  client.  You can turn off waiting for certificates by specifying a time
-  of 0.
+  client.  You can turn off waiting for certificates by specifying a time of 0.
+
 
 EXAMPLE
 -------
       $ puppet device --server puppet.domain.com
+
 
 AUTHOR
 ------
