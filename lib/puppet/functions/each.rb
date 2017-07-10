@@ -1,4 +1,4 @@
-# Runs a [lambda](http://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html)
+# Runs a [lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html)
 # repeatedly using each value in a data structure, then returns the values unchanged.
 #
 # This function takes two mandatory arguments, in this order:

@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
-.\" https://github.com/rtomayko/ronn/tree/0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-DEVICE" "8" "May 2015" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-DEVICE" "8" "June 2017" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-device\fR \- Manage remote network devices
@@ -13,7 +13,7 @@ Retrieves all configurations from the puppet master and apply them to the remote
 Currently must be run out periodically, using cron or something similar\.
 .
 .SH "USAGE"
-puppet device [\-d|\-\-debug] [\-\-detailed\-exitcodes] [\-V|\-\-version] [\-h|\-\-help] [\-l|\-\-logdest syslog|\fIfile\fR|console] [\-v|\-\-verbose] [\-w|\-\-waitforcert \fIseconds\fR]
+puppet device [\-d|\-\-debug] [\-\-detailed\-exitcodes] [\-\-deviceconfig \fIfile\fR] [\-h|\-\-help] [\-l|\-\-logdest syslog|\fIfile\fR|console] [\-v|\-\-verbose] [\-w|\-\-waitforcert \fIseconds\fR] [\-t|\-\-target \fIdevice\fR] [\-V|\-\-version]
 .
 .SH "DESCRIPTION"
 Once the client has a signed certificate for a given remote device, it will retrieve its configuration and apply it\.
@@ -42,7 +42,11 @@ Enable full debugging\.
 .
 .TP
 \-\-detailed\-exitcodes
-Provide transaction information via exit codes\. If this is enabled, an exit code of \'1\' means at least one device had a compile failure, an exit code of \'2\' means at least one device had resource changes, and an exit code of \'4\' means at least one device had resource failures\. Exit codes of \'3\', \'5\', \'6\', or \'7\' means that a bitwise combination of the preceeding exit codes happened\.
+Provide transaction information via exit codes\. If this is enabled, an exit code of \'1\' means at least one device had a compile failure, an exit code of \'2\' means at least one device had resource changes, and an exit code of \'4\' means at least one device had resource failures\. Exit codes of \'3\', \'5\', \'6\', or \'7\' means that a bitwise combination of the preceding exit codes happened\.
+.
+.TP
+\-\-deviceconfig
+Path to the device config file for puppet device\. Default: $confdir/device\.conf
 .
 .TP
 \-\-help
@@ -54,6 +58,10 @@ Where to send log messages\. Choose between \'syslog\' (the POSIX syslog service
 .
 .IP
 A path ending with \'\.json\' will receive structured output in JSON format\. The log file will not have an ending \']\' automatically written to it due to the appending nature of logging\. It must be appended manually to make the content valid JSON\.
+.
+.TP
+\-\-target
+Target a specific device/certificate in the device\.conf\. Doing so will perform a device run against only that device/certificate\.
 .
 .TP
 \-\-verbose
@@ -75,4 +83,4 @@ This option only matters for daemons that do not yet have certificates and it is
 Brice Figureau
 .
 .SH "COPYRIGHT"
-Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2\.0 License
+Copyright (c) 2011 Puppet Inc\., LLC Licensed under the Apache 2\.0 License
