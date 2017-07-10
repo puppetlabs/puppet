@@ -1,4 +1,5 @@
 require 'puppet/file_serving/mount'
+require 'hiera'
 
 # Find files in the modules' plugins directories.
 # This is a very strange mount because it merges
@@ -17,7 +18,19 @@ class Puppet::FileServing::Mount::Plugins < Puppet::FileServing::Mount
     # We currently only support one kind of search on plugins - return
     # them all.
     Puppet.debug("Warning: calling Plugins.search with empty module path.") if request.environment.modules.empty?
-    paths = request.environment.modules.find_all { |mod| mod.plugins? }.collect { |mod| mod.plugin_directory }
+
+    modules = request.environment.modules.find_all { |mod| mod.plugins? }
+
+    whitelist = find_node_whitelist(request) if Puppet.settings[:pluginsync_filter_enable]
+
+    if whitelist
+        Puppet.debug "Modules to be pluginsynced: #{whitelist.inspect}"
+        modules = modules.select { |mod| whitelist.include? mod.name }
+    else
+        Puppet.debug "Pluginsync filter not enabled or not found, all modules will be included"
+    end
+    paths = modules.collect { |mod| mod.plugin_directory }
+
     if paths.empty?
       # If the modulepath is valid then we still need to return a valid root
       # directory for the search, but make sure nothing inside it is
@@ -32,4 +45,5 @@ class Puppet::FileServing::Mount::Plugins < Puppet::FileServing::Mount
   def valid?
     true
   end
+
 end
