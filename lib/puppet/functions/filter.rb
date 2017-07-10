@@ -1,4 +1,4 @@
-# Applies a [lambda](http://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html)
+# Applies a [lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html)
 # to every value in a data structure and returns an array or hash containing any elements
 # for which the lambda evaluates to `true`.
 #
