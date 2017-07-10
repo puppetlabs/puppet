@@ -1,16 +1,13 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-MAN" "8" "June 2017" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-GENERATE" "8" "June 2017" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
-\fBpuppet\-man\fR \- Display Puppet manual pages\.
+\fBpuppet\-generate\fR \- Generates Puppet code from Ruby definitions\.
 .
 .SH "SYNOPSIS"
-puppet man \fIaction\fR
-.
-.SH "DESCRIPTION"
-This subcommand displays manual pages for all Puppet subcommands\. If the \fBronn\fR gem (\fIhttps://github\.com/rtomayko/ronn/\fR) is installed on your system, puppet man will display fully\-formatted man pages\. If \fBronn\fR is not available, puppet man will display the raw (but human\-readable) source text in a pager\.
+puppet generate \fIaction\fR
 .
 .SH "OPTIONS"
 Note that any setting that\'s valid in the configuration file is also a valid long argument, although it may or may not be relevant to the present action\. For example, \fBserver\fR and \fBrun_mode\fR are valid settings, so you can specify \fB\-\-server <servername>\fR, or \fB\-\-run_mode <runmode>\fR as an argument\.
@@ -33,38 +30,55 @@ Whether to log debug information\.
 .SH "ACTIONS"
 .
 .TP
-\fBman\fR \- Display the manual page for a Puppet subcommand\.
+\fBtypes\fR \- Generates Puppet code for custom types
 \fBSYNOPSIS\fR
 .
 .IP
-puppet man \fIsubcommand\fR
+puppet generate types [\-\-format \fIformat\fR] [\-\-force]
 .
 .IP
 \fBDESCRIPTION\fR
 .
 .IP
-Display the manual page for a Puppet subcommand\.
+Generates definitions for custom resource types using Puppet code\.
 .
 .IP
-\fBRETURNS\fR
+Types defined in Puppet code can be used to isolate custom type definitions between different environments\.
 .
 .IP
-The man data, in Markdown format, suitable for consumption by Ronn\.
+\fBOPTIONS\fR \fI\-\-force\fR \- Forces the generation of output files (skips up\-to\-date checks)\.
 .
 .IP
-RENDERING ISSUES: To skip fancy formatting and output the raw Markdown text (e\.g\. for use in a pipeline), call this action with \'\-\-render\-as s\'\.
+\fI\-\-format <format\fR> \- The generation output format to use\. Supported formats: pcore\.
 .
 .SH "EXAMPLES"
-\fBman\fR
+\fBtypes\fR
 .
 .P
-View the manual page for a subcommand:
+Generate Puppet type definitions for all custom resource types in the current environment:
+.
+.IP "" 4
+.
+.nf
+
+$ puppet generate types
+.
+.fi
+.
+.IP "" 0
 .
 .P
-$ puppet man facts
+Generate Puppet type definitions for all custom resource types in the specified environment:
 .
-.SH "NOTES"
-The pager used for display will be the first found of \fB$MANPAGER\fR, \fB$PAGER\fR, \fBless\fR, \fBmost\fR, or \fBmore\fR\.
+.IP "" 4
+.
+.nf
+
+$ puppet generate types \-\-environment development
+.
+.fi
+.
+.IP "" 0
 .
 .SH "COPYRIGHT AND LICENSE"
-Copyright 2011 by Puppet Inc\. Apache 2 license; see COPYING
+Copyright 2016 by Puppet Inc\. Apache 2 license; see COPYING
