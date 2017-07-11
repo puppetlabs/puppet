@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.0.0-80-gb221d0b\n"
+"Project-Id-Version: Puppet automation framework 5.0.0-129-g6ef079e\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-07-04 20:24+0000\n"
-"PO-Revision-Date: 2017-07-04 20:24+0000\n"
+"POT-Creation-Date: 2017-07-11 22:33+0000\n"
+"PO-Revision-Date: 2017-07-11 22:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -4827,7 +4827,7 @@ msgstr ""
 msgid "No Puppet Type found for %{klass}"
 msgstr ""
 
-#: ../lib/puppet/pops/time/timespan.rb:112 ../lib/puppet/pops/time/timestamp.rb:81
+#: ../lib/puppet/pops/time/timespan.rb:112 ../lib/puppet/pops/time/timestamp.rb:83
 msgid "Unable to parse '%{str}' using any of the formats %{formats}"
 msgstr ""
 
@@ -4871,19 +4871,19 @@ msgstr ""
 msgid "Illegal timezone '%{timezone}'"
 msgstr ""
 
-#: ../lib/puppet/pops/time/timestamp.rb:87
+#: ../lib/puppet/pops/time/timestamp.rb:89
 msgid "Unable to parse '%{str}' using format '%{format}'"
 msgstr ""
 
-#: ../lib/puppet/pops/time/timestamp.rb:97
+#: ../lib/puppet/pops/time/timestamp.rb:92
 msgid "Using a Timezone designator in format specification is mutually exclusive to providing an explicit timezone argument"
 msgstr ""
 
-#: ../lib/puppet/pops/time/timestamp.rb:116
+#: ../lib/puppet/pops/time/timestamp.rb:128
 msgid "%{klass} cannot be added to a Timestamp"
 msgstr ""
 
-#: ../lib/puppet/pops/time/timestamp.rb:131
+#: ../lib/puppet/pops/time/timestamp.rb:143
 msgid "%{klass} cannot be subtracted from a Timestamp"
 msgstr ""
 
@@ -5291,7 +5291,7 @@ msgstr ""
 msgid "No responsefile specified or non existent, not preseeding anything"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:93 ../lib/puppet/provider/package/portupgrade.rb:151 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:205 ../lib/puppet/provider/package/zypper.rb:109
+#: ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:93 ../lib/puppet/provider/package/portupgrade.rb:151 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:213 ../lib/puppet/provider/package/zypper.rb:109
 msgid "Could not find package %{name}"
 msgstr ""
 
@@ -5612,11 +5612,15 @@ msgstr ""
 msgid "Could not check for updates, '%{cmd} check-update' exited with %{status}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:199
+#: ../lib/puppet/provider/package/yum.rb:116
+msgid "Failed to parse package name and architecture from '%{pkgname}'"
+msgstr ""
+
+#: ../lib/puppet/provider/package/yum.rb:207
 msgid "Could not find package %{wanted}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:210
+#: ../lib/puppet/provider/package/yum.rb:218
 msgid "Failed to update to version %{should}, got version %{version} instead"
 msgstr ""
 
@@ -5670,7 +5674,7 @@ msgstr ""
 msgid "No docs for %{type}[%{sname}]"
 msgstr ""
 
-#: ../lib/puppet/reports/http.rb:32
+#: ../lib/puppet/reports/http.rb:34
 msgid "Unable to submit report to %{url} [%{code}] %{message}"
 msgstr ""
 
