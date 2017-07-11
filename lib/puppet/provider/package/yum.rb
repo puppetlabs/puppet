@@ -106,7 +106,15 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   end
 
   def self.update_to_hash(pkgname, pkgversion)
-    name, arch = pkgname.split('.')
+    
+    # The pkgname string has two parts: name, and architecture. Architecture
+    # is the portion of the string following the last "." character. All
+    # characters preceding the final dot are the package name. Parse out
+    # these two pieces of component data.
+    name, _, arch = pkgname.rpartition('.')
+    if name.empty?
+      raise _("Failed to parse package name and architecture from '%{pkgname}'") % { pkgname: pkgname }
+    end
 
     match = pkgversion.match(/^(?:(\d+):)?(\S+)-(\S+)$/)
     epoch = match[1] || '0'
