@@ -62,5 +62,12 @@ describe provider_class do
         expect(output).to include("yum-plugin-fastestmirror.noarch")
       end
     end
+    describe "with improper package names in output" do
+      it "raises an exception parsing package name" do
+        expect {
+          described_class.update_to_hash('badpackagename', '1')
+        }.to raise_exception(Exception, /Failed to parse/)
+      end
+    end
   end
 end
