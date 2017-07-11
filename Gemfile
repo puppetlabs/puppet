@@ -15,6 +15,7 @@ platforms :ruby do
   gem 'pry', :group => :development
   gem 'redcarpet', '~> 2.0', :group => :development
   gem "racc", "1.4.9", :group => :development
+  gem "rb-readline"
 
   # To enable the augeas feature, use this gem.
   # Note that it is a native gem, so the augeas headers/libs

@@ -8,15 +8,7 @@ describe Apply do
       MANIFEST
     }
     it 'does its thang' do
-      expect(described_class.new.manifest(notify)).to output('it werks')
-    end
-  end
-end
-
-describe Puppet::FileSystem do
-  context 'symlink' do
-    it 'returns proper type' do
-      expect(described_class.symlink('/etc/passwd/', "#{Dir.home}/etcpasswd")).to be_falsy
+      expect(described_class.new.manifest(notify)).to output('it werksasf')
     end
   end
 end
