@@ -25,7 +25,8 @@ class Puppet::Provider::NameService < Puppet::Provider
     def instances
       objects = []
       begin
-        while ent = Puppet::Etc.send("get#{section}ent")
+        method = Puppet::Etc.method(:"get#{section}ent")
+        while ent = method.call
           objects << new(:name => ent.name, :canonical_name => ent.canonical_name, :ensure => :present)
         end
       ensure
