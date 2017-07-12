@@ -59,7 +59,11 @@ agents.each do |agent|
   apply_manifest_on(agent, manifest_install_package, :catch_failures => true)
 
   step "ensure enabling service creates the start & kill symlinks"
-  is_sysV = ((platform == 'centos' || platform == 'el') && majrelease < 7) ||
+  # amazon linux is based on el-6 but uses the year for its majrelease
+  # version. The condition for a version > 2016 should be removed and
+  # replaced with a discrete amazon condition if/when Beaker understands
+  # amazon as a platform. BKR-1148
+  is_sysV = ((platform == 'centos' || platform == 'el') && (majrelease < 7 || majrelease > 2016)) ||
               platform == 'debian' || platform == 'ubuntu' ||
              (platform == 'sles'                        && majrelease < 12)
   apply_manifest_on(agent, manifest_service_disabled, :catch_failures => true)
