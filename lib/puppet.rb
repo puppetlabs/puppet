@@ -251,9 +251,11 @@ module Puppet
       # doesn't exist
       default_environment = Puppet[:environment].to_sym
       if default_environment == :production
+        modulepath = settings[:modulepath]
+        modulepath = modulepath.nil? ? basemodulepath : Puppet::Node::Environment.split_path(modulepath)
         loaders << Puppet::Environments::StaticPrivate.new(
           Puppet::Node::Environment.create(default_environment,
-                                           basemodulepath,
+                                           modulepath,
                                            Puppet::Node::Environment::NO_MANIFEST))
       end
     end

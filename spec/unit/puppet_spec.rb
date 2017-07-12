@@ -38,6 +38,16 @@ describe Puppet do
     expect($LOAD_PATH).to include two
   end
 
+  it 'should propagate --modulepath to base environment' do
+    Puppet::Node::Environment.expects(:create).with(
+      is_a(Symbol), ['/my/modules'], Puppet::Node::Environment::NO_MANIFEST)
+    expect(Puppet.base_context({
+      :environmentpath => '/envs',
+      :basemodulepath => '/base/modules',
+      :modulepath => '/my/modules'
+    })).to be_a(Hash)
+  end
+
   context "Puppet::OLDEST_RECOMMENDED_RUBY_VERSION" do
     it "should have an oldest recommended ruby version constant" do
       expect(Puppet::OLDEST_RECOMMENDED_RUBY_VERSION).not_to be_nil
