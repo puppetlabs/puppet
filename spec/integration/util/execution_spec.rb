@@ -15,6 +15,14 @@ describe Puppet::Util::Execution do
       Puppet::Util::Execution.execpipe('echo $LC_ALL'){ |line| out << line.read.chomp }
       expect(out).to eq("C")
     end
+
+    it "should raise an ExecutionFailure with a missing command and :failonfail set to true" do
+      expect {
+        failonfail = true
+        # NOTE: critical to return l in the block for `output` in method to be #<IO:(closed)>
+        Puppet::Util::Execution.execpipe('conan_the_librarion', failonfail) { |l| l }
+      }.to raise_error(Puppet::ExecutionFailure)
+    end
   end
 
   describe "#execute (non-Windows)", :if => !Puppet.features.microsoft_windows? do
