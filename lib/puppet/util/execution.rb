@@ -83,7 +83,7 @@ module Puppet::Util::Execution
     end
 
     if failonfail && exitstatus != 0
-      raise Puppet::ExecutionFailure, output
+      raise Puppet::ExecutionFailure, output.to_s
     end
 
     output
