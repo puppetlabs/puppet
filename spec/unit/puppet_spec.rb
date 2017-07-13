@@ -48,6 +48,16 @@ describe Puppet do
     })).to be_a(Hash)
   end
 
+  it 'empty modulepath does not override basemodulepath' do
+    Puppet::Node::Environment.expects(:create).with(
+      is_a(Symbol), ['/base/modules'], Puppet::Node::Environment::NO_MANIFEST)
+    expect(Puppet.base_context({
+      :environmentpath => '/envs',
+      :basemodulepath => '/base/modules',
+      :modulepath => ''
+    })).to be_a(Hash)
+  end
+
   context "Puppet::OLDEST_RECOMMENDED_RUBY_VERSION" do
     it "should have an oldest recommended ruby version constant" do
       expect(Puppet::OLDEST_RECOMMENDED_RUBY_VERSION).not_to be_nil
