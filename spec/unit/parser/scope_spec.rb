@@ -210,7 +210,7 @@ describe Puppet::Parser::Scope do
     end
 
     it "warns once for a non found variable" do
-      Puppet.expects(:warning).once
+      Puppet.expects(:send_log).with(:warning, is_a(String)).once
       expect([@scope["santa_claus"],@scope["santa_claus"]]).to eq([nil, nil])
     end
 
