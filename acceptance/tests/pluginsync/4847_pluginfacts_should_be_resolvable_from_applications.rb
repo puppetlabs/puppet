@@ -1,5 +1,9 @@
 test_name "Pluginsync'ed custom facts should be resolvable during application runs"
 
+tag 'audit:medium',
+    'audit:integration',
+    'server'
+
 #
 # This test is intended to ensure that custom facts downloaded onto an agent via
 # pluginsync are resolvable by puppet applications besides agent/apply.

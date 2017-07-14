@@ -2,6 +2,9 @@ test_name "puppet module generate (agent)"
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
+tag 'audit:medium',
+    'audit:acceptance'
+
 module_author = "pmtacceptance"
 module_name   = "nginx"
 module_dependencies = []

@@ -1,4 +1,10 @@
 test_name 'C98162 - Validate `break` terminates execution in a block of code' do
+
+tag 'audit:low',
+    'audit:unit',   # This is testing core ruby functionality that is covered by
+                    # existing spec tests.
+    'audit:delete'
+
   agents.each do |agent|
 
     step 'apply class with break' do

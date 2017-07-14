@@ -3,6 +3,11 @@ confine :to, :platform => 'solaris'
 require 'puppet/acceptance/solaris_util'
 extend Puppet::Acceptance::ZoneUtils
 
+tag 'audit:medium',
+    'audit:refactor',  # Use block style `test_name`
+    'audit:acceptance' # Could be done as integration tests, but would
+                       # require drastically changing the system running the test
+
 teardown do
   step "Zone: ip - cleanup"
   agents.each do |agent|

@@ -3,6 +3,10 @@ extend Puppet::Acceptance::CAUtils
 
 test_name "Puppet cert generate behavior (#6112)" do
 
+  tag 'audit:low',          # cli/ca behavior for non-standard workflows
+      'audit:integration',
+      'server'              # Ruby CA is deprecated
+
   # This acceptance test documents the behavior of `puppet cert generate` calls
   # for three cases:
   #

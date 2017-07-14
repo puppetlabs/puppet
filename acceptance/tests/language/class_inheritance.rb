@@ -1,5 +1,8 @@
 test_name 'C14943: Class inheritance works correctly' do
 
+tag 'audit:low',
+    'audit:unit'   # This is testing core ruby functionality
+
   agents.each do |agent|
     test_manifest = <<MANIFEST
       class bar { notice("This is class bar") }

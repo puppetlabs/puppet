@@ -3,6 +3,12 @@ test_name "test the yum package provider"
 confine :to, {:platform => /(?:centos|el-|fedora)/}, agents
 confine :except, :platform => /centos-4|el-4/ # PUP-5227
 
+tag 'audit:medium',
+    'audit:refactor',  # Use block style `test_name`
+    'audit:acceptance' # Could be done at the integration (or unit) layer though
+                       # actual changing of resources could irreparably damage a
+                       # host running this, or require special permissions.
+
 require 'puppet/acceptance/rpm_util'
 extend Puppet::Acceptance::RpmUtils
 

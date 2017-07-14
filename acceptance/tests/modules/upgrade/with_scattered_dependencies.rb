@@ -4,6 +4,11 @@ extend Puppet::Acceptance::ModuleUtils
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils
 
+tag 'audit:low',       # Module management via pmt is not the primary support workflow
+    'audit:acceptance',
+    'audit:refactor'   # Master is not required for this test. Replace with agents.each
+                       # Wrap steps in blocks in accordance with Beaker style guide
+
 fq_prod_env_modpath = "#{environmentpath}/production/modules"
 
 stub_forge_on(master)

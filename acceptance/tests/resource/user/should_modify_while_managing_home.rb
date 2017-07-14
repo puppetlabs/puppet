@@ -1,6 +1,12 @@
 test_name "should modify a user without changing home directory (pending #19542)"
 confine :except, :platform => /^eos-/ # See ARISTA-37
 confine :except, :platform => /^cisco_/ # See PUP-5828
+tag 'audit:medium',
+    'audit:refactor',  # Use block style `test_run`
+    'audit:acceptance' # Could be done as integration tests, but would
+                       # require changing the system running the test
+                       # in ways that might require special permissions
+                       # or be harmful to the system running the test
 
 require 'puppet/acceptance/windows_utils'
 extend Puppet::Acceptance::WindowsUtils

@@ -1,5 +1,8 @@
 test_name "should query all users"
 confine :except, :platform => /^cisco_/ # See PUP-5828
+tag 'audit:medium',
+    'audit:refactor',  # Use block style `test_run`
+    'audit:integration'
 
 agents.each do |agent|
   next if agent == master

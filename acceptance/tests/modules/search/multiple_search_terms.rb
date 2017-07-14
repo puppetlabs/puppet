@@ -1,5 +1,9 @@
 test_name 'puppet module search should handle multiple search terms sensibly'
 
+tag 'audit:low',
+    'audit:unit',
+    'audit:delete'
+
 #step 'Setup'
 #stub_forge_on(master)
 

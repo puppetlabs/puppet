@@ -2,6 +2,12 @@ test_name "Lookup data using the agnostic lookup function" do
   # pre-docs:
   # https://puppet-on-the-edge.blogspot.com/2015/01/puppet-40-data-in-modules-and.html
 
+tag 'audit:medium',
+    'audit:acceptance',
+    'audit:refactor',  # Master is not needed for this test. Refactor
+                       # to use puppet apply with a local module tree.
+                       # Use mk_tmp_environment_with_teardown to create environment.
+
   testdir = master.tmpdir('lookup')
 
   module_name                     = "data_module"

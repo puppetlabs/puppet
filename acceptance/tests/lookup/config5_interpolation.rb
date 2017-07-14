@@ -2,6 +2,13 @@ test_name 'C99578: hiera5 lookup config with interpolated scoped nested variable
   require 'puppet/acceptance/environment_utils.rb'
   extend Puppet::Acceptance::EnvironmentUtils
 
+tag 'audit:medium',
+    'audit:integration',
+    'audit:refactor',  # This test specifically tests interpolation on the master.
+                       # Recommend adding an additonal test that validates
+                       # lookup in a masterless setup.
+    'server'
+
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type + '1')
   fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"

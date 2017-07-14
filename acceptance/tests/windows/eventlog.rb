@@ -1,5 +1,15 @@
 test_name "Write to Windows eventlog"
 
+tag 'audit:medium',    # core feature, high impact, but low risk
+    'audit:refactor',  # Use block style `test_name`
+    'audit:acceptance' # unclear if this is an important packaging level feature
+                       # test (warrants acceptance level) that wouldn't also be
+                       # caught by other test (perhaps combine with other tests),
+                       # or if the functionality is assumed by other acceptance tests
+                       # (then this test can be deleted), or if packaging can be
+                       # assumed and the logging functionality can be tested at the
+                       # integration level.
+
 confine :to, :platform => 'windows'
 
 require 'puppet/acceptance/common_utils'

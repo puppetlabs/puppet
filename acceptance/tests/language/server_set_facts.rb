@@ -2,6 +2,10 @@ test_name 'C64667: ensure server_facts is set and error if any value is overwrit
   require 'puppet/acceptance/environment_utils.rb'
   extend Puppet::Acceptance::EnvironmentUtils
 
+tag 'audit:medium',
+    'audit:acceptance', # Validating server/client interaction
+    'server'
+
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type)
   fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"

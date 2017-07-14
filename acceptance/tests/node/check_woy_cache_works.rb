@@ -5,6 +5,10 @@ extend Puppet::Acceptance::TempFileUtils
 
 test_name "ticket #16753 node data should be cached in yaml to allow it to be queried"
 
+tag 'audit:medium',
+    'audit:integration',
+    'server'
+
 node_name = "woy_node_#{SecureRandom.hex}"
 
 # Only used when running under webrick

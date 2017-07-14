@@ -8,6 +8,11 @@
 # Stage[main] -> Stage[last]
 # works as expected
 
+tag 'audit:high', # basic language functionality
+    'audit:unit',
+    'audit:refactor', # Use block style `test_name`
+    'audit:delete'
+
 apply_manifest_on agents, %q{
   stage { [ "pre", "post" ]: }
   Stage["pre"] -> Stage["main"] -> Stage["post"]

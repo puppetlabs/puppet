@@ -4,6 +4,11 @@ test_name 'C99630: hiera v3 custom backend' do
   require 'puppet/acceptance/temp_file_utils.rb'
   extend Puppet::Acceptance::TempFileUtils
 
+tag 'audit:medium',
+    'audit:acceptance',
+    'audit:refactor',  # Master is not needed for this test. Refactor
+                       # to use puppet apply with a local module tree.
+
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type)
   fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"

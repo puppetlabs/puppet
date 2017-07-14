@@ -1,5 +1,9 @@
 test_name "#6710: Relationship syntax should work with title arrays"
 
+tag 'audit:low',
+    'audit:refactor', # Use block style `test_name`
+    'audit:unit'     # basic language syntax
+
 # Jeff McCune <jeff@puppetlabs.com>
 # 2011-03-14
 #

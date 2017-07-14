@@ -1,8 +1,12 @@
 test_name "Augeas hosts file" do
 
-skip_test 'requires augeas which is included in AIO' if @options[:type] != 'aio'
+tag 'risk:medium',
+    'audit:medium',
+    'audit:acceptance',
+    'audit:refactor' # move to puppet types test directory, this is not testing puppet apply
+                     # reduce to a single manifest and apply
 
-tag 'risk:medium'
+skip_test 'requires augeas which is included in AIO' if @options[:type] != 'aio'
 
   confine :except, :platform => [
     'windows',

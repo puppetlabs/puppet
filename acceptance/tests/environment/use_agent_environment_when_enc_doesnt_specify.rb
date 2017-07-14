@@ -2,6 +2,10 @@ test_name "Agent should use agent environment if there is an enc that does not s
 require 'puppet/acceptance/classifier_utils'
 extend Puppet::Acceptance::ClassifierUtils
 
+tag 'audit:medium',
+    'audit:integration',
+    'server'
+
 classify_nodes_as_agent_specified_if_classifer_present
 
 testdir = create_tmpdir_for_user master, 'use_agent_env'

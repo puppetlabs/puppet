@@ -1,5 +1,8 @@
 test_name "puppet module build should verify there are no symlinks in module"
 
+tag 'audit:medium',
+    'audit:acceptance'
+
 confine :except, :platform => 'windows'
 
 modauthor = 'foo'

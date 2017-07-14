@@ -1,4 +1,7 @@
 test_name "Content Attribute"
+tag 'audit:high',
+    'audit:refactor',   # Use block stype test_name
+    'audit:acceptance'
 
 agents.each do |agent|
   target = agent.tmpfile('content_file_test')

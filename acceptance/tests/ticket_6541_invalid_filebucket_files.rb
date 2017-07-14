@@ -1,5 +1,10 @@
 test_name "#6541: file type truncates target when filebucket cannot retrieve hash"
 
+tag 'audit:medium',
+    'audit:integration', # file type and file bucket interop
+    'audit:refactor'     # look into combining with ticket_4622_filebucket_diff_test.rb
+                         # Use block style `test_run`
+
 agents.each do |agent|
   target=agent.tmpfile('6541-target')
 

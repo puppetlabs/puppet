@@ -2,6 +2,12 @@ test_name "verifies that puppet resource creates a user and assigns the correct 
 confine :except, :platform => 'windows'
 confine :except, :platform => /^eos-/ # See ARISTA-37
 confine :except, :platform => /^cisco_/ # See PUP-5828
+tag 'audit:medium',
+    'audit:refactor',  # Use block style `test_run`
+    'audit:acceptance' # Could be done as integration tests, but would
+                       # require changing the system running the test
+                       # in ways that might require special permissions
+                       # or be harmful to the system running the test
 
 user = "pl#{rand(999999).to_i}"
 group = "gp#{rand(999999).to_i}"

@@ -1,6 +1,12 @@
 test_name "tests that user resource will not add users that already exist."
 confine :except, :platform => /^eos-/ # See ARISTA-37
 confine :except, :platform => /^cisco_/ # See PUP-5828
+tag 'audit:medium',
+    'audit:refactor',  # Use block style `test_run`
+    'audit:acceptance' # Could be done as integration tests, but would
+                       # require changing the system running the test
+                       # in ways that might require special permissions
+                       # or be harmful to the system running the test
 
 user  = "u#{rand(999999).to_i}"
 group = "g#{rand(999999).to_i}"

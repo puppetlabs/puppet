@@ -1,4 +1,11 @@
 test_name 'utf-8 characters in module doc string, puppet describe' do
+
+  tag 'audit:medium',      # utf-8 is high impact in general, puppet describe low risk?
+      'audit:integration', # not package dependent but may want to vary platform by LOCALE/encoding
+      'audit:refactor'     # if keeping, use mk_temp_environment_with_teardown
+                           # remove with_puppet_running_on unless pluginsync is absolutely necessary
+                           # (if it is, add 'server' tag
+
   platforms = hosts.map {|val| val[:platform]}
   if (platforms.any? { |val| /^eos-/ =~ val})
     skip_test "Skipping because Puppet describe fails when the Arista module is installed (ARISTA-51)"
