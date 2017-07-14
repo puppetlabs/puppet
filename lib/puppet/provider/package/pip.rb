@@ -31,17 +31,20 @@ Puppet::Type.type(:package).provide :pip,
     packages = []
     pip_cmd = self.pip_cmd
     return [] unless pip_cmd
-    execpipe "#{pip_cmd} freeze" do |process|
+    pip_version = self.pip_version
+    freeze_cmd = "freeze"
+    freeze_cmd += " --all" if Puppet::Util::Package.versioncmp(pip_version, "8.0.3") >= 0
+    execpipe "#{pip_cmd} #{freeze_cmd}" do |process|
       process.collect do |line|
         next unless options = parse(line)
         packages << new(options)
       end
     end
 
-    # Pip can also upgrade pip, but it's not listed in freeze so need to special case it
+    # Pip can also upgrade pip, but it's not listed in freeze in versions of pip before 8.0.3 so need to special case it
     # Pip list would also show pip installed version, but "pip list" doesn't exist for older versions of pip (E.G v1.0)
-    if version = self.pip_version
-      packages << new({:ensure => version, :name => File.basename(pip_cmd), :provider => name})
+    if Puppet::Util::Package.versioncmp(pip_version, "8.0.3") < 0
+      packages << new({:ensure => pip_version, :name => File.basename(pip_cmd), :provider => name})
     end
 
     packages
