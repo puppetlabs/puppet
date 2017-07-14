@@ -165,9 +165,10 @@ module Logging
   # @param file [String,nil] the File related to the warning
   # @param line [Integer,nil] the Line number related to the warning
   #   warning as unique
+  # @param level [Symbol] log level to use, defaults to :warning
   #
   # Either :file and :line and/or :key must be passed.
-  def warn_once(kind, key, message, file = nil, line = nil)
+  def warn_once(kind, key, message, file = nil, line = nil, level = :warning)
     return if Puppet[:disable_warnings].include?(kind)
     $unique_warnings ||= {}
     if $unique_warnings.length < 100 then
@@ -184,7 +185,7 @@ module Logging
         else
           _("\n   (file & line not available)")
         end
-        warning("#{message}#{call_trace}")
+        send_log(level, "#{message}#{call_trace}")
       end
     end
   end
