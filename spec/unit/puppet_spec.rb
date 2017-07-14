@@ -41,21 +41,34 @@ describe Puppet do
   it 'should propagate --modulepath to base environment' do
     Puppet::Node::Environment.expects(:create).with(
       is_a(Symbol), ['/my/modules'], Puppet::Node::Environment::NO_MANIFEST)
-    expect(Puppet.base_context({
+
+    Puppet.base_context({
       :environmentpath => '/envs',
       :basemodulepath => '/base/modules',
       :modulepath => '/my/modules'
-    })).to be_a(Hash)
+    })
   end
 
   it 'empty modulepath does not override basemodulepath' do
     Puppet::Node::Environment.expects(:create).with(
       is_a(Symbol), ['/base/modules'], Puppet::Node::Environment::NO_MANIFEST)
-    expect(Puppet.base_context({
+
+    Puppet.base_context({
       :environmentpath => '/envs',
       :basemodulepath => '/base/modules',
       :modulepath => ''
-    })).to be_a(Hash)
+    })
+  end
+
+  it 'nil modulepath does not override basemodulepath' do
+    Puppet::Node::Environment.expects(:create).with(
+      is_a(Symbol), ['/base/modules'], Puppet::Node::Environment::NO_MANIFEST)
+
+    Puppet.base_context({
+      :environmentpath => '/envs',
+      :basemodulepath => '/base/modules',
+      :modulepath => nil
+    })
   end
 
   context "Puppet::OLDEST_RECOMMENDED_RUBY_VERSION" do
