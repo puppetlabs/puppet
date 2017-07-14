@@ -1,5 +1,8 @@
 test_name "puppet module build (agent)"
 
+tag 'audit:medium',
+    'audit:acceptance'
+
 agents.each do |agent|
   teardown do
     on agent, 'rm -rf bar'

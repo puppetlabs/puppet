@@ -1,5 +1,11 @@
 test_name 'AIX Service Provider Testing'
 
+tag 'audit:medium',
+    'audit:refactor',  # Use block style `test_name`
+    'audit:acceptance' # Could be done at the integration (or unit) layer though
+                       # actual changing of resources could irreparably damage a
+                       # host running this, or require special permissions.
+
 confine :to, :platform =>  'aix'
 
 require 'puppet/acceptance/service_utils'

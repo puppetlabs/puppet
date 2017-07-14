@@ -1,5 +1,9 @@
 test_name "#13489: refresh service"
 
+tag 'audit:low',      # basic Service type behavior on windows
+    'audit:refactor', # Use block style `test_namme`
+    'audit:unit'
+
 confine :to, :platform => 'windows'
 
 manifest = <<MANIFEST

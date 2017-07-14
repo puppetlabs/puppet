@@ -1,5 +1,9 @@
 test_name "Report submission"
 
+tag 'audit:medium',
+    'audit:integration',
+    'server'             # Tests actual master-side report processing
+
 if master.is_pe?
   require "time"
 

@@ -1,6 +1,11 @@
 test_name "should create cron"
 confine :except, :platform => 'windows'
 confine :except, :platform => /^eos-/ # See PUP-5500
+tag 'audit:medium',
+    'audit:refactor',  # Use block style `test_name`
+    'audit:acceptance' # Could be done at the integration (or unit) layer though
+                       # actual changing of resources could irreparably damage a
+                       # host running this, or require special permissions.
 
 require 'puppet/acceptance/common_utils'
 extend Puppet::Acceptance::CronUtils

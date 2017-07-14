@@ -1,5 +1,9 @@
 test_name "#7139: Puppet resource file fails on path with leading '/'"
 
+tag 'audit:low',
+    'audit:refactor', # Use block style `test_name`
+    'audit:unit'     # basic puppet file resource validation?
+
 agents.each do |agent|
   target = agent.tmpfile('ticket-7139')
 

@@ -1,6 +1,10 @@
 test_name "tests that puppet correctly runs an exec."
 # original author: Dan Bode  --daniel 2010-12-23
 
+tag 'audit:high',
+    'audit:refactor',   # Use block style `test_name`
+    'audit:acceptance'
+
 def before(agent)
   step "file to be touched should not exist."
   touched = agent.tmpfile('test-exec')

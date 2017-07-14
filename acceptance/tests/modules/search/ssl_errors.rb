@@ -1,5 +1,8 @@
 begin test_name 'puppet module search should print a reasonable message on ssl errors'
 
+tag 'audit:low',
+    'audit:unit'
+
 step "Search against a website where the certificate is not signed by a public authority"
 
 # This might seem silly, but a master has a self-signed certificate and is a

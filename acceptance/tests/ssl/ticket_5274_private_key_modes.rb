@@ -3,6 +3,11 @@ require 'puppet/acceptance/common_utils'
 
 confine :except, :platform => 'windows'
 
+tag 'audit:medium',      # low risk of change, high (security) impact if changed
+    'audit:refactor',    # Use block style `test_name`
+    'audit:integration', # afaict, code creates and manages these files (not packaging)
+    'server'             # this code path in Ruby is deprecated...
+
 def get_setting(host, ssldir, command)
   on(host, puppet("agent --ssldir #{ssldir} #{command}")).stdout.chomp
 end

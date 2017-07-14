@@ -1,5 +1,9 @@
 test_name "#7101: template compile"
 
+tag 'audit:low',
+    'audit:refactor', # Use block style `test_name`
+    'audit:unit'     # basic template handling
+
 agents.each do |agent|
   template = agent.tmpfile('template_7101.erb')
   target = agent.tmpfile('file_7101.erb')

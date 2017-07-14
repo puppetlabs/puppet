@@ -2,6 +2,9 @@ require 'puppet/acceptance/environment_utils'
 test_name 'C97760: Bignum in reduce() should not cause exception' do
   extend Puppet::Acceptance::EnvironmentUtils
 
+tag 'audit:medium',
+    'audit:unit'
+
   skip_test "This test needs to be reworked to not rely on merge, see PUP-6994"
 
   app_type = File.basename(__FILE__, '.*')

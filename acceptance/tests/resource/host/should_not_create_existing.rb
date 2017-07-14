@@ -1,5 +1,11 @@
 test_name "should not create host if it exists"
 
+tag 'audit:low',
+    'audit:refactor',  # Use block style `test_name`
+    'audit:acceptance' # Could be done at the integration (or unit) layer though
+                       # actual changing of resources could irreparably damage a
+                       # host running this, or require special permissions.
+
 agents.each do |agent|
   file = agent.tmpfile('host-not-create-existing')
 

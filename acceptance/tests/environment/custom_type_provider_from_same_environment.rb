@@ -2,6 +2,10 @@ test_name 'C59122: ensure provider from same env as custom type' do
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils
 
+tag 'audit:medium',
+    'audit:integration',  # This behavior is specific to the master to 'do the right thing'
+    'server'
+
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type)
   file_correct    = "#{tmp_environment}-correct.txt"

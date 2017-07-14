@@ -1,5 +1,8 @@
 test_name "aix package provider should work correctly"
 
+tag 'audit:medium',
+    'audit:acceptance'  # OS specific by definition.
+
 confine :to, :platform => /aix/
 
 dir = "/tmp/aix-packages-#{$$}"

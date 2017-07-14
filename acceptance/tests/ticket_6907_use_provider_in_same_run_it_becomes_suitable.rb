@@ -1,5 +1,9 @@
 test_name "providers should be useable in the same run they become suitable"
 
+tag 'audit:high',       # autoloader, core puppet agent run functionality
+    'audit:refactor',    # Use block style `test_name`
+    'audit:integration' # does not require packages, probably implicitly assumed in many other places
+
 agents.each do |agent|
   dir = agent.tmpdir('provider-6907')
 

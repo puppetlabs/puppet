@@ -1,6 +1,9 @@
 test_name "QA-760 - Windows Files Containing '-' and '.'"
 
-tag 'risk:medium'
+tag 'risk:medium',
+    'audit:medium',
+    'audit:refactor',   # Use block style `test_name`
+    'audit:integration'
 
 confine(:to, :platform => 'windows')
 
@@ -30,7 +33,7 @@ end
 step "Create Temp Folder"
 
 agents.each do |agent|
-  on(agent, puppet('apply', '--debug'), :stdin => temp_folder)    
+  on(agent, puppet('apply', '--debug'), :stdin => temp_folder)
 end
 
 step "Create Dash Dot File 100 Times"

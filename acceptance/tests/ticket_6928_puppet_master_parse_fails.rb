@@ -1,5 +1,9 @@
 test_name "#6928: Puppet --parseonly should return deprication message"
 
+tag 'audit:low',
+    'audit:refactor', # Use block style `test_name`
+    'audit:unit'
+
 # Create good and bad formatted manifests
 step "Master: create valid, invalid formatted manifests"
 create_remote_file(master, '/tmp/good.pp', %w{notify{good:}} )

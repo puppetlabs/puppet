@@ -8,6 +8,11 @@
 
 test_name "#4423: cannot declare two parameterized classes"
 
+tag 'audit:high', # basic language functionality
+    'audit:unit',
+    'audit:refactor', # Use block style `test_name`
+    'audit:delete'
+
 class1 = %q{
     class rainbow($color) {
       notify { "color": message => "Color is [${color}]" }

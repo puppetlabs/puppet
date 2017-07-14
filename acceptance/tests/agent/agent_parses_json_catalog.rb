@@ -1,5 +1,10 @@
 test_name "C99978: Agent parses a JSON catalog"
-tag 'risk:medium'
+
+tag 'risk:medium',
+    'audit:high',        # tests defined catalog format
+    'audit:integration', # There is no OS specific risk here.
+    'server',
+    'catalog:json'
 
 require 'puppet/acceptance/common_utils'
 require 'json'

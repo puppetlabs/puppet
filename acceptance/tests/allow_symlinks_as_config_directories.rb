@@ -1,4 +1,8 @@
 test_name "Should allow symlinks to directories as configuration directories"
+
+tag 'audit:low',
+    'audit:acceptance'  # Need to cover risk of OS/ruby symlink behavior (OSX, Solaris).
+
 confine :except, :platform => 'windows'
 
 agents.each do |agent|

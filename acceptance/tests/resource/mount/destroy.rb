@@ -7,6 +7,12 @@ confine :except, :platform => /^eos-/ # Mount provider not supported on Arista E
 confine :except, :platform => /^cisco_/ # See PUP-5826
 confine :except, :platform => /^huawei/ # See PUP-6126
 
+tag 'audit:low',
+    'audit:refactor',  # Use block style `test_name`
+    'audit:acceptance' # Could be done at the integration (or unit) layer though
+                       # actual changing of resources could irreparably damage a
+                       # host running this, or require special permissions.
+
 require 'puppet/acceptance/mount_utils'
 extend Puppet::Acceptance::MountUtils
 

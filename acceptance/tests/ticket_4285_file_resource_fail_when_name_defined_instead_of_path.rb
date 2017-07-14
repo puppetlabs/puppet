@@ -1,5 +1,9 @@
 test_name "Bug #4285: ArgumentError: Cannot alias File[mytitle] to [nil]"
 
+tag 'audit:low',     # Wierd File type name parameter handling
+    'audit:refactor', # Use block style `test_name`
+    'audit:unit'
+
 agents.each do |host|
   dir = host.tmpdir('4285-aliasing')
 

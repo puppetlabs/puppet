@@ -1,5 +1,8 @@
 test_name "#17371 file metadata specified in puppet.conf needs to be applied"
 
+tag 'audit:low',
+    'audit:acceptance'
+
 # when owner/group works on windows for settings, this confine should be removed.
 confine :except, :platform => 'windows'
 confine :except, :platform => /solaris-10/ # See PUP-5200

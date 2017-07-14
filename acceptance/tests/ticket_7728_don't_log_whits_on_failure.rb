@@ -1,5 +1,9 @@
 test_name "#7728: Don't log whits on resource failure"
 
+tag 'audit:low',
+    'audit:refactor', # Use block style `test_name`
+    'audit:unit'
+
 manifest = %Q{
   class foo {
     exec { "test": command => "false", path => ['/bin', '/usr/bin'] }

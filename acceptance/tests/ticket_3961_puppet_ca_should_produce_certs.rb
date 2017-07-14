@@ -2,6 +2,11 @@ test_name "#3961: puppet ca should produce certs spec"
 confine :except, :platform => 'windows'
 confine :except, :platform => /^eos-/
 
+tag 'audit:high',        # basic CA functionality
+    'audit:refactor',     # Use block style `test_name`
+    'audit:integration',
+    'server'
+
 target  = "working3961.example.org"
 
 expect = ['Signed certificate request for ca',

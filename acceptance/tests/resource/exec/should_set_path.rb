@@ -1,4 +1,7 @@
 test_name "the path statement should work to locate commands"
+tag 'audit:high',
+    'audit:refactor',   # Use block style `test_name`
+    'audit:acceptance'
 
 agents.each do |agent|
   file = agent.tmpfile('touched-should-set-path')

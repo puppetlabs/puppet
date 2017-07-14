@@ -1,5 +1,8 @@
 test_name "puppet apply should create a file and report an MD5"
 
+tag 'audit:medium',
+    'audit:unit'
+
 agents.each do |agent|
   file = agent.tmpfile('hello-world')
   manifest = "file{'#{file}': content => 'test'}"

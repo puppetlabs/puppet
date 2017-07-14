@@ -4,6 +4,12 @@ extend Puppet::Acceptance::EnvironmentUtils
 require 'puppet/acceptance/classifier_utils'
 extend Puppet::Acceptance::ClassifierUtils
 
+tag 'audit:medium',
+    'audit:unit',  # The error responses for the agent should be covered by Ruby unit tests.
+                   # The server 404/400 response should be covered by server integration tests.
+    'server'
+
+
 classify_nodes_as_agent_specified_if_classifer_present
 
 step 'setup environments'

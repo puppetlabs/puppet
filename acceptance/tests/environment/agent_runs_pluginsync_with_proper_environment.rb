@@ -4,6 +4,12 @@
 # details see PUP-3591.
 test_name "Agent should pluginsync with the environment the agent resolves to"
 
+tag 'audit:high',
+    'audit:integration',
+    'audit:refactor',  # Inquire as to whether this is still a risk with puppet 5+
+                       # Use mk_temp_environment_with_teardown helper
+    'server'
+
 testdir = create_tmpdir_for_user master, 'environment_resolve'
 
 create_remote_file master, "#{testdir}/enc.rb", <<END

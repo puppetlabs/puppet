@@ -1,5 +1,11 @@
 test_name "test that we can query and find a scheduled task that exists."
 
+tag 'audit:medium',
+    'audit:refactor',  # Use block style `test_name`
+    'audit:acceptance' # Could be done at the integration (or unit) layer though
+                       # actual changing of resources could irreparably damage a
+                       # host running this, or require special permissions.
+
 name = "pl#{rand(999999).to_i}"
 confine :to, :platform => 'windows'
 
