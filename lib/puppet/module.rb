@@ -63,12 +63,14 @@ class Puppet::Module
       if strict
         if @semver_gem_version.major < 1
           Puppet.warn_once('strict_version_ranges', 'version_range_cannot_be_strict',
-            _('VersionRanges will never be strict when using non-vendored SemanticPuppet gem, version %{version}') % { version: @semver_gem_version} )
+            _('VersionRanges will never be strict when using non-vendored SemanticPuppet gem, version %{version}') % { version: @semver_gem_version},
+            nil, nil, :notice)
         end
       else
         if @semver_gem_version.major >= 1
           Puppet.warn_once('strict_version_ranges', 'version_range_always_strict',
-            _('VersionRanges will always be strict when using non-vendored SemanticPuppet gem, version %{version}') % { version: @semver_gem_version} )
+            _('VersionRanges will always be strict when using non-vendored SemanticPuppet gem, version %{version}') % { version: @semver_gem_version},
+            nil, nil, :notice)
         end
       end
       @parse_range_method.call(range)

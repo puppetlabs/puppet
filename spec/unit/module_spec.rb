@@ -822,7 +822,7 @@ describe Puppet::Module do
 
   context 'when parsing VersionRange' do
     let(:logs) { [] }
-    let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
+    let(:notices) { logs.select { |log| log.level == :notice }.map { |log| log.message } }
 
     it 'can parse a strict range' do
       expect(Puppet::Module.parse_range('>=1.0.0', true).include?(SemanticPuppet::Version.parse('1.0.1-rc1'))).to be_falsey
@@ -842,44 +842,44 @@ describe Puppet::Module do
         end
       end
 
-      it 'will warn when non-strict ranges cannot be parsed' do
+      it 'will notify when non-strict ranges cannot be parsed' do
         Puppet::Module.instance_variable_set(:@semver_gem_version, SemanticPuppet::Version.parse('1.0.0'))
         Puppet::Module.instance_variable_set(:@parse_range_method, Proc.new { |str| SemanticPuppet::VersionRange.parse(str, true) })
 
         Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
           expect(Puppet::Module.parse_range('>=1.0.0', false).include?(SemanticPuppet::Version.parse('1.0.1-rc1'))).to be_falsey
         end
-        expect(warnings).to include(/VersionRanges will always be strict when using non-vendored SemanticPuppet gem, version 1\.0\.0/)
+        expect(notices).to include(/VersionRanges will always be strict when using non-vendored SemanticPuppet gem, version 1\.0\.0/)
       end
 
-      it 'will warn when strict ranges cannot be parsed' do
+      it 'will notify when strict ranges cannot be parsed' do
         Puppet::Module.instance_variable_set(:@semver_gem_version, SemanticPuppet::Version.parse('0.1.4'))
         Puppet::Module.instance_variable_set(:@parse_range_method, Proc.new { |str| SemanticPuppet::VersionRange.parse(str, false) })
 
         Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
           expect(Puppet::Module.parse_range('>=1.0.0', true).include?(SemanticPuppet::Version.parse('1.0.1-rc1'))).to be_truthy
         end
-        expect(warnings).to include(/VersionRanges will never be strict when using non-vendored SemanticPuppet gem, version 0\.1\.4/)
+        expect(notices).to include(/VersionRanges will never be strict when using non-vendored SemanticPuppet gem, version 0\.1\.4/)
       end
 
-      it 'will not warn when strict ranges can be parsed' do
+      it 'will not notify when strict ranges can be parsed' do
         Puppet::Module.instance_variable_set(:@semver_gem_version, SemanticPuppet::Version.parse('1.0.0'))
         Puppet::Module.instance_variable_set(:@parse_range_method, Proc.new { |str| SemanticPuppet::VersionRange.parse(str, true) })
 
         Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
           expect(Puppet::Module.parse_range('>=1.0.0', true).include?(SemanticPuppet::Version.parse('1.0.1-rc1'))).to be_falsey
         end
-        expect(warnings).to be_empty
+        expect(notices).to be_empty
       end
 
-      it 'will not warn when non-strict ranges can be parsed' do
+      it 'will not notify when non-strict ranges can be parsed' do
         Puppet::Module.instance_variable_set(:@semver_gem_version, SemanticPuppet::Version.parse('0.1.4'))
         Puppet::Module.instance_variable_set(:@parse_range_method, Proc.new { |str| SemanticPuppet::VersionRange.parse(str, false) })
 
         Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
           expect(Puppet::Module.parse_range('>=1.0.0', false).include?(SemanticPuppet::Version.parse('1.0.1-rc1'))).to be_truthy
         end
-        expect(warnings).to be_empty
+        expect(notices).to be_empty
       end
     end
   end
