@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 4.10.2-945-g545ce43\n"
+"Project-Id-Version: Puppet automation framework 5.0.0-77-g7f53ea2\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-06-15 22:59+0000\n"
-"PO-Revision-Date: 2017-06-15 22:59+0000\n"
+"POT-Creation-Date: 2017-07-14 22:07+0000\n"
+"PO-Revision-Date: 2017-07-14 22:07+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -305,7 +305,7 @@ msgstr ""
 msgid "Unknown rendering format '%{format}'"
 msgstr ""
 
-#: ../lib/puppet/application/lookup.rb:347 ../lib/puppet/face/epp.rb:489
+#: ../lib/puppet/application/lookup.rb:347 ../lib/puppet/face/epp.rb:491
 msgid "Incorrect formatted data in %{fact_file} given via the --facts flag"
 msgstr ""
 
@@ -811,27 +811,27 @@ msgstr ""
 msgid "Whether or not to show a file name header between rendered results."
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:331
+#: ../lib/puppet/face/epp.rb:332
 msgid "No input to process given on command line or stdin"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:345
+#: ../lib/puppet/face/epp.rb:346
 msgid "error while rendering epp"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:384
+#: ../lib/puppet/face/epp.rb:386
 msgid "Only .yaml or .pp can be used as a --values_file"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:387
+#: ../lib/puppet/face/epp.rb:389
 msgid "Could not load --values_file %{error}"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:390
+#: ../lib/puppet/face/epp.rb:392
 msgid "--values_file option must evaluate to a Hash or undef/nil, got: '%{template_class}'"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:403
+#: ../lib/puppet/face/epp.rb:405
 msgid "--values option must evaluate to a Hash or undef, got: '%{values_class}'"
 msgstr ""
 
@@ -1713,15 +1713,15 @@ msgstr ""
 msgid "The current user does not have the necessary permission to manage symlinks."
 msgstr ""
 
-#: ../lib/puppet/forge.rb:200
+#: ../lib/puppet/forge.rb:201
 msgid "Downloaded release for %{name} did not match expected checksum"
 msgstr ""
 
-#: ../lib/puppet/forge.rb:208 ../lib/puppet/module_tool/applications/unpacker.rb:58 ../lib/puppet/module_tool/local_tarball.rb:86
+#: ../lib/puppet/forge.rb:209 ../lib/puppet/module_tool/applications/unpacker.rb:58 ../lib/puppet/module_tool/local_tarball.rb:86
 msgid "Could not extract contents of module archive: %{message}"
 msgstr ""
 
-#: ../lib/puppet/forge.rb:221
+#: ../lib/puppet/forge.rb:222
 msgid "Cannot consider release %{name}-%{version}: %{error}"
 msgstr ""
 
@@ -2492,6 +2492,14 @@ msgstr ""
 
 #: ../lib/puppet/info_service/class_information_service.rb:55
 msgid "The file %{f} does not exist"
+msgstr ""
+
+#: ../lib/puppet/module.rb:66
+msgid "VersionRanges will never be strict when using non-vendored SemanticPuppet gem, version %{version}"
+msgstr ""
+
+#: ../lib/puppet/module.rb:72
+msgid "VersionRanges will always be strict when using non-vendored SemanticPuppet gem, version %{version}"
 msgstr ""
 
 #: ../lib/puppet/module_tool.rb:37
@@ -3362,125 +3370,125 @@ msgstr ""
 msgid "Application instances like '%{resource}' can only be contained within a Site"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:149
+#: ../lib/puppet/parser/compiler.rb:153
 msgid "For compiling %{node}"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:153
+#: ../lib/puppet/parser/compiler.rb:157
 msgid "Compile: Set node parameters"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:155
+#: ../lib/puppet/parser/compiler.rb:159
 msgid "Compile: Created settings scope"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:157
+#: ../lib/puppet/parser/compiler.rb:161
 msgid "Compile: Evaluated capability mappings"
 msgstr ""
 
 #. TRANSLATORS "main" is a function name and should not be translated
-#: ../lib/puppet/parser/compiler.rb:160
+#: ../lib/puppet/parser/compiler.rb:164
 msgid "Compile: Evaluated main"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:162
+#: ../lib/puppet/parser/compiler.rb:166
 msgid "Compile: Evaluated site"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:164
+#: ../lib/puppet/parser/compiler.rb:168
 msgid "Compile: Evaluated AST node"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:166
+#: ../lib/puppet/parser/compiler.rb:170
 msgid "Compile: Evaluated node classes"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:168
+#: ../lib/puppet/parser/compiler.rb:172
 msgid "Compile: Evaluated application instances"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:171
+#: ../lib/puppet/parser/compiler.rb:175
 msgid "Compile: Evaluated site capability mappings"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:173
+#: ../lib/puppet/parser/compiler.rb:177
 msgid "Compile: Evaluated generators"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:175
+#: ../lib/puppet/parser/compiler.rb:179
 msgid "Compile: Validate Catalog pre-finish"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:179
+#: ../lib/puppet/parser/compiler.rb:183
 msgid "Compile: Finished catalog"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:181
+#: ../lib/puppet/parser/compiler.rb:185
 msgid "Compile: Prune"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:185
+#: ../lib/puppet/parser/compiler.rb:189
 msgid "Compile: Validate Catalog final"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:315
+#: ../lib/puppet/parser/compiler.rb:319
 msgid "Invalid node mapping in %{app}: Mapping must be a hash"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:318
+#: ../lib/puppet/parser/compiler.rb:322
 msgid "Invalid node mapping in %{app}: Key %{k} is not a Node"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:318
+#: ../lib/puppet/parser/compiler.rb:322
 msgid "Node"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:321
+#: ../lib/puppet/parser/compiler.rb:325
 msgid "Invalid node mapping in %{app}: Value %{res} is not a resource"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:322
+#: ../lib/puppet/parser/compiler.rb:326
 msgid "Application %{app} maps component %{res} to multiple nodes"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:367
+#: ../lib/puppet/parser/compiler.rb:371
 msgid "Could not find class %{name} for %{node}"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:494
+#: ../lib/puppet/parser/compiler.rb:498
 msgid "Could not find node statement with name 'default' or '%{names}'"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:515
+#: ../lib/puppet/parser/compiler.rb:519
 msgid "Evaluated collections"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:530
+#: ../lib/puppet/parser/compiler.rb:534
 msgid "Evaluated definitions"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:559
+#: ../lib/puppet/parser/compiler.rb:563
 msgid "Iterated (%{count}) on generators"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:570
+#: ../lib/puppet/parser/compiler.rb:574
 msgid "Somehow looped more than 1000 times while evaluating host catalog"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:601
+#: ../lib/puppet/parser/compiler.rb:605
 msgid "Could not find resource(s) %{resources} for overriding"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:612
+#: ../lib/puppet/parser/compiler.rb:616
 msgid "Failed to realize virtual resources %{resources}"
 msgstr ""
 
 #. TRANSLATORS "main" is a function name and should not be translated
-#: ../lib/puppet/parser/compiler.rb:642
+#: ../lib/puppet/parser/compiler.rb:646
 msgid "Couldn't find main"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:714
+#: ../lib/puppet/parser/compiler.rb:718
 msgid "For initializing compiler"
 msgstr ""
 
@@ -4879,19 +4887,19 @@ msgstr ""
 msgid "Empty key in string 'i'?"
 msgstr ""
 
-#: ../lib/puppet/provider/aixobject.rb:312 ../lib/puppet/provider/nameservice.rb:164
+#: ../lib/puppet/provider/aixobject.rb:312 ../lib/puppet/provider/nameservice.rb:166
 msgid "already exists"
 msgstr ""
 
-#: ../lib/puppet/provider/aixobject.rb:320 ../lib/puppet/provider/nameservice.rb:175 ../lib/puppet/provider/nameservice/directoryservice.rb:420
+#: ../lib/puppet/provider/aixobject.rb:320 ../lib/puppet/provider/nameservice.rb:177 ../lib/puppet/provider/nameservice/directoryservice.rb:420
 msgid "Could not create %{resource} %{name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/aixobject.rb:327 ../lib/puppet/provider/nameservice.rb:181
+#: ../lib/puppet/provider/aixobject.rb:327 ../lib/puppet/provider/nameservice.rb:183
 msgid "already absent"
 msgstr ""
 
-#: ../lib/puppet/provider/aixobject.rb:335 ../lib/puppet/provider/nameservice.rb:189
+#: ../lib/puppet/provider/aixobject.rb:335 ../lib/puppet/provider/nameservice.rb:191
 msgid "Could not delete %{resource} %{name}: %{detail}"
 msgstr ""
 
@@ -4899,7 +4907,7 @@ msgstr ""
 msgid "Trying to update parameter '%{param}' to '%{value}' for a resource that does not exists %{resource} %{name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/aixobject.rb:379 ../lib/puppet/provider/group/aix.rb:130 ../lib/puppet/provider/nameservice.rb:296 ../lib/puppet/provider/nameservice/directoryservice.rb:336 ../lib/puppet/provider/nameservice/directoryservice.rb:365
+#: ../lib/puppet/provider/aixobject.rb:379 ../lib/puppet/provider/group/aix.rb:130 ../lib/puppet/provider/nameservice.rb:298 ../lib/puppet/provider/nameservice/directoryservice.rb:336 ../lib/puppet/provider/nameservice/directoryservice.rb:365
 msgid "Could not set %{param} on %{resource}[%{name}]: %{detail}"
 msgstr ""
 
@@ -5150,11 +5158,11 @@ msgstr ""
 msgid "Could not parse configuration for %{resource}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/nameservice.rb:56
+#: ../lib/puppet/provider/nameservice.rb:58
 msgid "listbyname is deprecated and will be removed in a future release of Puppet. Please use `self.instances` to obtain a list of users."
 msgstr ""
 
-#: ../lib/puppet/provider/nameservice.rb:99
+#: ../lib/puppet/provider/nameservice.rb:101
 msgid "Invalid value %{value}: %{error}"
 msgstr ""
 
@@ -5618,7 +5626,7 @@ msgstr ""
 msgid "No docs for %{type}[%{sname}]"
 msgstr ""
 
-#: ../lib/puppet/reports/http.rb:32
+#: ../lib/puppet/reports/http.rb:34
 msgid "Unable to submit report to %{url} [%{code}] %{message}"
 msgstr ""
 
@@ -6950,7 +6958,7 @@ msgstr ""
 msgid "Failed to convert '%{path}' to URI: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:660
+#: ../lib/puppet/util.rb:678
 msgid "Could not %{message}: %{err}"
 msgstr ""
 
@@ -7398,36 +7406,36 @@ msgstr ""
 msgid "Wrapped exception:"
 msgstr ""
 
-#: ../lib/puppet/util/logging.rb:179
+#: ../lib/puppet/util/logging.rb:183
 msgid ""
 "\n"
 "   (at %{file}:%{line})"
 msgstr ""
 
-#: ../lib/puppet/util/logging.rb:181
+#: ../lib/puppet/util/logging.rb:185
 msgid ""
 "\n"
 "   (in %{file})"
 msgstr ""
 
-#: ../lib/puppet/util/logging.rb:183
+#: ../lib/puppet/util/logging.rb:187
 msgid ""
 "\n"
 "   (in unknown file, line %{line})"
 msgstr ""
 
-#: ../lib/puppet/util/logging.rb:185
+#: ../lib/puppet/util/logging.rb:189
 msgid ""
 "\n"
 "   (file & line not available)"
 msgstr ""
 
-#: ../lib/puppet/util/logging.rb:283
+#: ../lib/puppet/util/logging.rb:287
 msgid "unknown"
 msgstr ""
 
 #. TRANSLATORS error message with origin location
-#: ../lib/puppet/util/logging.rb:288
+#: ../lib/puppet/util/logging.rb:292
 msgid ""
 "%{message}\n"
 "   (at %{call_trace})"
