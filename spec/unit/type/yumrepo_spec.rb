@@ -174,6 +174,11 @@ describe Puppet::Type.type(:yumrepo) do
       it_behaves_like "a yumrepo parameter that can be absent", :gpgcheck
     end
 
+    describe "payload_gpgcheck" do
+      it_behaves_like "a yumrepo parameter that expects a boolean parameter", :payload_gpgcheck
+      it_behaves_like "a yumrepo parameter that can be absent", :payload_gpgcheck
+    end
+
     describe "repo_gpgcheck" do
       it_behaves_like "a yumrepo parameter that expects a boolean parameter", :repo_gpgcheck
       it_behaves_like "a yumrepo parameter that can be absent", :repo_gpgcheck
