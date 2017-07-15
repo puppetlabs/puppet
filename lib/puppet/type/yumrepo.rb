@@ -104,6 +104,15 @@ Puppet::Type.newtype(:yumrepo) do
     munge(&munge_yum_bool)
   end
 
+  newproperty(:payload_gpgcheck) do
+    desc "Whether to check the GPG signature of the packages payload.
+      #{YUM_BOOLEAN_DOC}
+      #{ABSENT_DOC}"
+
+    newvalues(YUM_BOOLEAN, :absent)
+    munge(&munge_yum_bool)
+  end
+
   newproperty(:repo_gpgcheck) do
     desc "Whether to check the GPG signature on repodata.
       #{YUM_BOOLEAN_DOC}
