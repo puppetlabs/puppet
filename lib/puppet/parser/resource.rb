@@ -270,7 +270,7 @@ class Puppet::Parser::Resource < Puppet::Resource
       t = Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_resource_type(scope, t) unless t == 'class' || t == 'node'
       cap = catalog.resource(t, ref.title)
       if cap.nil?
-        raise _("Resource %{ref} could not be found; it might not have been produced yet") % { ref: ref }
+        raise Puppet::Error, _("Resource %{ref} could not be found; it might not have been produced yet") % { ref: ref }
       end
 
       # Ensure that the found resource is a capability resource
