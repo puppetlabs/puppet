@@ -33,7 +33,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     end
 
     begin
-      list = execute(gem_list_command).lines.
+      list = execute(gem_list_command, {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}}).lines.
         map {|set| gemsplit(set) }.
         reject {|x| x.nil? }
     rescue Puppet::ExecutionFailure => detail
@@ -130,7 +130,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
 
     command += install_options if resource[:install_options]
 
-    output = execute(command)
+    output = execute(command, {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}})
     # Apparently some stupid gem versions don't exit non-0 on failure
     self.fail _("Could not install: %{output}") % { output: output.chomp } if output.include?("ERROR")
   end
@@ -154,7 +154,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
 
     command += uninstall_options if resource[:uninstall_options]
 
-    output = execute(command)
+    output = execute(command, {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}})
 
     # Apparently some stupid gem versions don't exit non-0 on failure
     self.fail _("Could not uninstall: %{output}") % { output: output.chomp } if output.include?("ERROR")
