@@ -65,8 +65,23 @@ describe provider_class do
           provider_class.expects(:which).with(pip_cmd).returns("/fake/bin/#{pip_cmd}")
           p = stub("process")
           p.expects(:collect).yields("real_package==1.2.5")
-          provider_class.expects(:execpipe).with("/fake/bin/#{pip_cmd} freeze").yields(p)
+          provider_class.expects(:execpipe).with(["/fake/bin/#{pip_cmd}", "freeze"]).yields(p)
           provider_class.instances
+        end
+      end
+
+      context "with pip version >= 8.1.0" do
+        versions = ['8.1.0', '9.0.1']
+        versions.each do |version|
+          it "should use the --all option when version is '#{version}'" do
+            Puppet.features.stubs(:microsoft_windows?).returns (osfamily == 'windows')
+            provider_class.stubs(:pip_cmd).returns('/fake/bin/pip')
+            provider_class.stubs(:pip_version).returns(version)
+            p = stub("process")
+            p.expects(:collect).yields("real_package==1.2.5")
+            provider_class.expects(:execpipe).with(["/fake/bin/pip", "freeze", "--all"]).yields(p)
+            provider_class.instances
+          end
         end
       end
 
