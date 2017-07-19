@@ -44,7 +44,7 @@ describe Puppet::Settings::IniFile do
     expect(config_fh.string).to eq "[the_section]\n#{mixed_utf8} = #{mixed_utf8.reverse}\n"
   end
 
-  it "does not add a [main] section to a file when it isn't needed" do
+  it "adds a [main] section to a file when it's needed" do
     config_fh = a_config_file_containing(<<-CONF)
     [section]
     name = different value
@@ -56,6 +56,7 @@ describe Puppet::Settings::IniFile do
     end
 
     expect(config_fh.string).to eq(<<-CONF)
+[main]
 name = value
     [section]
     name = different value
@@ -151,7 +152,7 @@ name = value
     CONFIG
   end
 
-  it "considers settings outside a section to be in section 'main'" do
+  it "considers settings found outside a section to be in section 'main'" do
     config_fh = a_config_file_containing(<<-CONFIG)
     name = original value
     CONFIG
@@ -161,6 +162,7 @@ name = value
     end
 
     expect(config_fh.string).to eq <<-CONFIG
+[main]
     name = changed value
     CONFIG
   end
