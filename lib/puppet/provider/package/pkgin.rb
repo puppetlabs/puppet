@@ -4,6 +4,7 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
   desc "Package management using pkgin, a binary package manager for pkgsrc."
 
   commands :pkgin => "pkgin"
+  commands :pkg_add => "pkg_add"
 
   defaultfor :operatingsystem => [ :smartos, :netbsd ]
 
@@ -64,7 +65,9 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
 
   def install
     if String === @resource[:ensure]
-      pkgin("-y", :install, "#{resource[:name]}-#{resource[:ensure]}")
+    # Workaround for https://github.com/NetBSDfr/pkgin/issues/73
+      #pkgin("-y", :install, "#{resource[:name]}-#{resource[:ensure]}")
+      pkg_add("-U", "#{resource[:name]}-#{resource[:ensure]}")
     else
       pkgin("-y", :install, resource[:name])
     end
