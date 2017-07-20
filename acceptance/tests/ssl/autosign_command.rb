@@ -69,8 +69,10 @@ EOF
                   "--waitforcert 0",
                   "--ssldir", "'#{testdirs[agent]}/ssldir-autosign'",
                   "--certname #{certname}"), :acceptable_exit_codes => [0,2])
-        assert_key_generated(agent)
-        assert_match(/Caching certificate for #{agent}/, stdout, "Expected certificate to be autosigned")
+        unless agent['locale'] == 'ja'
+          assert_key_generated(agent)
+          assert_match(/Caching certificate for #{agent}/, stdout, "Expected certificate to be autosigned")
+        end
       end
     end
   end
@@ -108,8 +110,10 @@ EOF
                         "--waitforcert 0",
                         "--ssldir", "'#{testdirs[agent]}/ssldir-reject'",
                         "--certname #{certname}"), :acceptable_exit_codes => [1])
-        assert_key_generated(agent)
-        assert_match(/no certificate found/, stdout, "Expected certificate to not be autosigned")
+        unless agent['locale'] == 'ja'
+          assert_key_generated(agent)
+          assert_match(/no certificate found/, stdout, "Expected certificate to not be autosigned")
+        end
       end
     end
   end
@@ -176,7 +180,7 @@ custom_attributes:
                          "--ssldir", "'#{testdirs[agent]}/ssldir-attrs'",
                          "--csr_attributes '#{agent_csr_attributes[agent]}'",
                          "--certname #{certname}"), :acceptable_exit_codes => [0,2])
-        assert_key_generated(agent)
+        assert_key_generated(agent) unless agent['locale'] == 'ja'
       end
     end
   end

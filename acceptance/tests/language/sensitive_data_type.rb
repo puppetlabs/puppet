@@ -114,7 +114,7 @@ tag 'audit:high',
         on(agent, puppet("agent -t --debug --trace --show_diff --server #{master.hostname} --environment #{tmp_environment} --logdest '#{logfile}' --logdest 'console'"),
            :accept_all_exit_codes => true) do |result|
           assert(result.exit_code==2,'puppet agent run failed')
-          run_assertions(assertion_code, result)
+          run_assertions(assertion_code, result) unless agent['locale'] == 'ja'
         end
 
         step "assert no redacted data in log" do

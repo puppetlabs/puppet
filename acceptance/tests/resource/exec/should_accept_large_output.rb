@@ -17,13 +17,13 @@ EOF
 
   apply_manifest_on(agent, "exec {'cat #{testfile}': path => ['/bin', '/usr/bin', 'C:/cygwin32/bin', 'C:/cygwin64/bin', 'C:/cygwin/bin'], logoutput => true}") do
     fail_test "didn't seem to run the command" unless
-      stdout.include? 'executed successfully'
+      stdout.include? 'executed successfully' unless agent['locale'] == 'ja'
     fail_test "didn't print output correctly" unless
       stdout.lines.select {|line| line =~ /\/returns:/}.count == 4097
   end
 
   apply_manifest_on(agent, "exec {'echo': path => ['/bin', '/usr/bin', 'C:/cygwin32/bin', 'C:/cygwin64/bin', 'C:/cygwin/bin'], logoutput => true}") do
     fail_test "didn't seem to run the command" unless
-      stdout.include? 'executed successfully'
+      stdout.include? 'executed successfully' unless agent['locale'] == 'ja'
   end
 end

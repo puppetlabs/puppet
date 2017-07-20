@@ -97,7 +97,7 @@ with_puppet_running_on master, master_opts, codedir do
 
     step "Use plugin face to download to the agent"
     on(agent, puppet('plugin', 'download', '--server', master, '--pluginfactdest', pluginfactdest))
-    assert_match(/Downloaded these plugins: .*external_fact/, stdout)
+    assert_match(/Downloaded these plugins: .*external_fact/, stdout) unless agent['locale'] == 'ja'
 
     step "Ensure it resolves correctly"
     on(agent, puppet('apply', '--pluginfactdest', pluginfactdest, '-e', "'notify { \"foo is ${foo}\": }'"))
