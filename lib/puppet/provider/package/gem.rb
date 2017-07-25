@@ -3,10 +3,12 @@ require 'uri'
 
 # Ruby gems support.
 Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package do
-  desc "Ruby Gem support.  If a URL is passed via `source`, then that URL is used as the
-    remote gem repository; if a source is present but is not a valid URL, it will be
-    interpreted as the path to a local gem file.  If source is not present at all,
-    the gem will be installed from the default gem repositories.
+  desc "Ruby Gem support. If a URL is passed via `source`, then that URL is
+    appended to the list of remote gem repositories; to ensure that only the
+    specified source is used, also pass `--clear-sources` via `install_options`.
+    If source is present but is not a valid URL, it will be interpreted as the
+    path to a local gem file. If source is not present, the gem will be
+    installed from the default gem repositories.
 
     This provider supports the `install_options` and `uninstall_options` attributes,
     which allow command-line flags to be passed to the gem command.
@@ -92,6 +94,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
 
   def install(useversion = true)
     command = [command(:gemcmd), "install"]
+    command += install_options if resource[:install_options]
     if Puppet.features.microsoft_windows?
       version = resource[:ensure]
       command << "-v" << %Q["#{version}"] if (! resource[:ensure].is_a? Symbol) and useversion
@@ -127,8 +130,6 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     else
       command << "--no-rdoc" << "--no-ri" << resource[:name]
     end
-
-    command += install_options if resource[:install_options]
 
     output = execute(command)
     # Apparently some stupid gem versions don't exit non-0 on failure
