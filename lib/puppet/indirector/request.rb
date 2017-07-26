@@ -207,7 +207,7 @@ class Puppet::Indirector::Request
       if primary_server = Puppet.settings[:server_list][0]
         bound_server = primary_server[0]
       else
-        bound_server = nil
+        bound_server = Puppet.settings[:server]
       end
     end
 
@@ -217,11 +217,11 @@ class Puppet::Indirector::Request
       if primary_server = Puppet.settings[:server_list][0]
         bound_port = primary_server[1]
       else
-        bound_port = nil
+        bound_port = Puppet.settings[:masterport]
       end
     end
-    self.server = default_server || bound_server || Puppet.settings[:server]
-    self.port   = default_port || bound_port || Puppet.settings[:masterport]
+    self.server = default_server || bound_server
+    self.port   = default_port || bound_port
 
     Puppet.debug "No more servers left, falling back to #{self.server}:#{self.port}" if Puppet.settings[:use_srv_records]
 
