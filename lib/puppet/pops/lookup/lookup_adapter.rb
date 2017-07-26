@@ -68,7 +68,8 @@ class LookupAdapter < DataAdapter
   end
 
   def lookup_global(key, lookup_invocation, merge_strategy)
-    terminus = Puppet[:data_binding_terminus]
+    # hiera_xxx will always use global_provider regardless of data_binding_terminus setting
+    terminus = lookup_invocation.hiera_xxx_call? ? :hiera : Puppet[:data_binding_terminus]
     case terminus
     when :hiera, 'hiera'
       provider = global_provider(lookup_invocation)
