@@ -271,7 +271,7 @@ class StringConverter
   DEFAULT_ARRAY_FORMAT.freeze
 
   DEFAULT_HASH_FORMAT                           = Format.new('%h')
-  DEFAULT_HASH_FORMAT.separator                 = ','.freeze
+  DEFAULT_HASH_FORMAT.separator                 = ', '.freeze
   DEFAULT_HASH_FORMAT.separator2                = ' => '.freeze
   DEFAULT_HASH_FORMAT.container_string_formats  = DEFAULT_CONTAINER_FORMATS
   DEFAULT_HASH_FORMAT.freeze
@@ -1024,7 +1024,10 @@ class StringConverter
     string_formats = format.container_string_formats || DEFAULT_CONTAINER_FORMATS
     delims         = format.delimiter_pair(DEFAULT_HASH_DELIMITERS)
 
-    sep = format.alt? ? "#{sep}\n" : "#{sep} "
+    if format.alt? 
+      sep = sep.rstrip unless sep[-1] == "\n"
+      sep = "#{sep}\n"
+    end
 
     cond_break     = ''
     padding        = ''

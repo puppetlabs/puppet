@@ -801,7 +801,7 @@ describe 'The string converter' do
        } => "(1 'hello', 2 'world')",
 
        {'format' => '%(h',
-         'separator' => ' >>',
+         'separator' => ' >> ',
          'separator2' => ' <=> ',
          'string_formats' => {Puppet::Pops::Types::PIntegerType::DEFAULT => '%#x'}
        } => "(0x1 <=> 'hello' >> 0x2 <=> 'world')",
