@@ -647,6 +647,10 @@ describe 'The string converter' do
         'separator' => ' '
       } => "(1 'hello')",
 
+      {'format' => '%(a',
+        'separator' => ''
+      } => "(1'hello')",
+
       {'format' => '%|a',
         'separator' => ' '
       } => "|1 'hello'|",
@@ -799,6 +803,11 @@ describe 'The string converter' do
        {'format' => '%(h',
          'separator2' => ' '
        } => "(1 'hello', 2 'world')",
+
+       {'format' => '%(h',
+         'separator' => '',
+         'separator2' => ''
+       } => "(1'hello'2'world')",
 
        {'format' => '%(h',
          'separator' => ' >> ',
