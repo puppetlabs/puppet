@@ -265,8 +265,8 @@ class StringConverter
   }.freeze
 
   DEFAULT_ARRAY_FORMAT                          = Format.new('%a')
-  DEFAULT_ARRAY_FORMAT.separator                = ','.freeze
-  DEFAULT_ARRAY_FORMAT.separator2               = ','.freeze
+  DEFAULT_ARRAY_FORMAT.separator                = ', '.freeze
+  DEFAULT_ARRAY_FORMAT.separator2               = ', '.freeze
   DEFAULT_ARRAY_FORMAT.container_string_formats = DEFAULT_CONTAINER_FORMATS
   DEFAULT_ARRAY_FORMAT.freeze
 
@@ -976,12 +976,13 @@ class StringConverter
           # or, if indenting, and previous was an array or hash, then break and continue on next line
           # indented.
           if (sz_break && !is_a_or_h?(v)) || (format.alt? && i > 0 && is_a_or_h?(val[i-1]) && !is_a_or_h?(v))
+            buf.rstrip! unless buf[-1] == "\n"
             buf << "\n"
             buf << children_indentation.padding
-          elsif !(format.alt? && is_a_or_h?(v))
-            buf << ' '
           end
         end
+        # remove trailing space added by separator if followed by break
+        buf.rstrip! if buf[-1] == ' ' && str_val[0] == "\n"
         buf << str_val
       end
       buf << delims[1]

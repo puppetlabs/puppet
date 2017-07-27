@@ -644,15 +644,15 @@ describe 'The string converter' do
       "% a"  => "1, 'hello'",
 
       {'format' => '%(a',
-        'separator' => ''
+        'separator' => ' '
       } => "(1 'hello')",
 
       {'format' => '%|a',
-        'separator' => ''
+        'separator' => ' '
       } => "|1 'hello'|",
 
       {'format' => '%(a',
-        'separator' => '',
+        'separator' => ' ',
         'string_formats' => {Puppet::Pops::Types::PIntegerType::DEFAULT => '%#x'}
       } => "(0x1 'hello')",
     }.each do |fmt, result |
@@ -674,7 +674,7 @@ describe 'The string converter' do
     end
 
     it 'indents elements in alternate mode' do
-      string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#a', 'separator' =>"," } }
+      string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#a', 'separator' =>", " } }
       # formatting matters here
       result = [
        "[1, 2, 9, 9,",
@@ -689,7 +689,7 @@ describe 'The string converter' do
     end
 
     it 'treats hashes as nested arrays wrt indentation' do
-      string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#a', 'separator' =>"," } }
+      string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#a', 'separator' =>", " } }
       # formatting matters here
       result = [
        "[1, 2, 9, 9,",
@@ -704,7 +704,7 @@ describe 'The string converter' do
     end
 
     it 'indents and breaks when a sequence > given width, in alternate mode' do
-      string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#3a', 'separator' =>"," } }
+      string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#3a', 'separator' =>", " } }
       # formatting matters here
       result = [
        "[ 1,",
@@ -722,7 +722,7 @@ describe 'The string converter' do
     end
 
     it 'indents and breaks when a sequence (placed last) > given width, in alternate mode' do
-      string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#3a', 'separator' =>"," } }
+      string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#3a', 'separator' =>", " } }
       # formatting matters here
       result = [
        "[ 1,",
@@ -740,7 +740,7 @@ describe 'The string converter' do
     end
 
     it 'indents and breaks nested sequences when one is placed first' do
-      string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#a', 'separator' =>"," } }
+      string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#a', 'separator' =>", " } }
       # formatting matters here
       result = [
        "[",
@@ -851,7 +851,7 @@ describe 'The string converter' do
 
       it 'both hash and array renders with breaks and indentation if so specified for both' do
         string_formats = {
-          Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#1a', 'separator' =>"," },
+          Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#1a', 'separator' =>", " },
           Puppet::Pops::Types::PHashType::DEFAULT => { 'format' => '%#h', 'separator' =>"," }
         }
         result = [
@@ -867,7 +867,7 @@ describe 'The string converter' do
 
       it 'hash, but not array is rendered with breaks and indentation if so specified only for the hash' do
         string_formats = {
-          Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%a', 'separator' =>"," },
+          Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%a', 'separator' =>", " },
           Puppet::Pops::Types::PHashType::DEFAULT => { 'format' => '%#h', 'separator' =>"," }
         }
         result = [
