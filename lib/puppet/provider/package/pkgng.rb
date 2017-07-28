@@ -17,7 +17,7 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
   end
 
   def self.get_version_list
-    pkg(['version', '-voRL='])
+    pkg(['version', '-voL='])
   end
 
   def self.get_latest_version(origin, version_list)
