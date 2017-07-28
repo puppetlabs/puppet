@@ -13,8 +13,10 @@ agents.each do |agent|
 
   step "run the resource agent"
   on(agent, puppet_resource(content)) do
-    stdout.index('Host[example.com]/ensure: created') or
-      fail_test("missing notice about host record creation")
+    unless agent['locale'] == 'ja'
+      stdout.index('Host[example.com]/ensure: created') or
+        fail_test("missing notice about host record creation")
+    end
   end
   on(agent, "cat #{target}") do
     assert_match(/^127\.0\.0\.1\s+example\.com/, stdout, "missing host record in #{target} on #{agent}")

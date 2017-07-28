@@ -32,8 +32,11 @@ tag 'audit:medium',
       on(agent, puppet("agent -t --server #{master}",
                        'ENV' => { 'FACTER_server_facts' => 'overwrite' }),
         :acceptable_exit_codes => 1) do |result|
-                         assert_match(/Error.*Attempt to assign to a reserved variable name: 'server_facts'/,
-                     result.stderr, "#{agent}: $server_facts should error if overwritten" )
+          # Do not perform this check on non-English hosts
+          unless agent['locale'] == 'ja'
+            assert_match(/Error.*Attempt to assign to a reserved variable name: 'server_facts'/,
+                         result.stderr, "#{agent}: $server_facts should error if overwritten" )
+          end
       end
     end
   end

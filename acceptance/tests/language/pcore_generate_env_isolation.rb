@@ -52,8 +52,10 @@ tag 'audit:medium',
       step 'run agent in environment with type with an extra parameter. try to use this parameter' do
         on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment2}"),
            :accept_all_exit_codes => true) do |result|
-          assert_match("Error: no parameter named 'other'", result.output,
-                       'did not produce environment isolation issue as expected')
+          unless agent['locale'] == 'ja'
+            assert_match("Error: no parameter named 'other'", result.output,
+                         'did not produce environment isolation issue as expected')
+          end
         end
       end
     end

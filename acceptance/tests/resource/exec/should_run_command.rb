@@ -22,14 +22,14 @@ agents.each do |agent|
   touched = before(agent)
   apply_manifest_on(agent, "exec {'test': command=>'#{agent.touch(touched)}'}") do
     fail_test "didn't seem to run the command" unless
-      stdout.include? 'executed successfully'
+      stdout.include? 'executed successfully' unless agent['locale'] == 'ja'
   end
   after(agent, touched)
 
   touched = before(agent)
   on(agent, puppet_resource('-d', 'exec', 'test', "command='#{agent.touch(touched)}'}")) do
     fail_test "didn't seem to run the command" unless
-      stdout.include? 'executed successfully'
+      stdout.include? 'executed successfully' unless agent['locale'] == 'ja'
   end
   after(agent, touched)
 end

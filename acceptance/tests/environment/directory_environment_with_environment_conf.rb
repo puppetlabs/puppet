@@ -109,11 +109,13 @@ with_puppet_running_on master, master_opts, testdir do
        puppet("agent", "-t", "--server", master, "--environment", "direnv"),
        :acceptable_exit_codes => [2]) do |result|
 
-      assert_match(/direnv site.pp/, result.stdout)
-      assert_match(/included relmod/, result.stdout)
-      assert_match(/included absmod/, result.stdout)
-      assert_match(/included globalmod/, result.stdout)
-      assert_match(/Applying.*ver123/, result.stdout)
+      unless agent['locale'] == 'ja'
+        assert_match(/direnv site.pp/, result.stdout)
+        assert_match(/included relmod/, result.stdout)
+        assert_match(/included absmod/, result.stdout)
+        assert_match(/included globalmod/, result.stdout)
+        assert_match(/Applying.*ver123/, result.stdout)
+      end
     end
   end
 end

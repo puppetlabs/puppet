@@ -46,5 +46,5 @@ MANIFEST
 
 apply_manifest_on(hosts_to_test, adduser_manifest )
 apply_manifest_on(hosts_to_test, changepass_manifest ) do |result|
-  assert_match( /current_value \[old password hash redacted\], should be \[new password hash redacted\]/ , "#{result.host}: #{result.stdout}" )
+  assert_match( /current_value \[old password hash redacted\], should be \[new password hash redacted\]/ , "#{result.host}: #{result.stdout}" ) unless agent['locale'] == 'ja'
 end

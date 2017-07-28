@@ -11,8 +11,10 @@ notify { "a2": require => Notify["a1"] }
 EOT
 
 apply_manifest_on(agents, manifest, :acceptable_exit_codes => [1]) do
-  assert_match(/Found 1 dependency cycle/, stderr,
-               "found and reported the cycle correctly")
+  unless agent['locale'] == 'ja'
+    assert_match(/Found 1 dependency cycle/, stderr,
+                 "found and reported the cycle correctly")
+  end
 end
 
 step "report multiple cycles in the same graph"
@@ -25,6 +27,8 @@ notify { "b2": require => Notify["b1"] }
 EOT
 
 apply_manifest_on(agents, manifest, :acceptable_exit_codes => [1]) do
-  assert_match(/Found 2 dependency cycles/, stderr,
-               "found and reported the cycle correctly")
+  unless agent['locale'] == 'ja'
+    assert_match(/Found 2 dependency cycles/, stderr,
+                 "found and reported the cycle correctly")
+  end
 end

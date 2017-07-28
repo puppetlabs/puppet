@@ -64,7 +64,7 @@ agents.each do |agent|
 
   apply_manifest_on(agent, "exec {'#{daemon}': logoutput => true}") do
     fail_test "didn't seem to run the command" unless
-      stdout.include? 'executed successfully'
+      stdout.include? 'executed successfully' unless agent['locale'] == 'ja'
   end
 end
 
