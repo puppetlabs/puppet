@@ -553,6 +553,10 @@ describe Puppet::Module do
   it "should return the path to the plugin directory" do
     expect(mod.plugin_directory).to eq(File.join(path, "lib"))
   end
+
+  it "should return the path to the tasks directory" do
+    expect(mod.tasks_directory).to eq(File.join(path, "tasks"))
+  end
 end
 
 describe Puppet::Module, "when finding matching manifests" do

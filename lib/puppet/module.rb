@@ -169,6 +169,10 @@ class Puppet::Module
     end
   end
 
+  def tasks_directory
+    subpath("tasks")
+  end
+
   def license_file
     return @license_file if defined?(@license_file)
 
