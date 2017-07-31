@@ -4,7 +4,7 @@ Setting up and running tests
 
 * [Quickstart Guide](quickstart.md)
 * [RSpec Tutorial](rspec_tutorial.md)
-* [Running acceptance tests](acceptance_tests.md)
+* [Running acceptance tests](../acceptance/README.md)
 
 Developer References
 
