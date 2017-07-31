@@ -97,15 +97,7 @@ class Puppet::Module
     @absolute_path_to_manifests = Puppet::FileSystem::PathPattern.absolute(manifests)
 
     # i18n initialization for modules
-    if Puppet::GETTEXT_AVAILABLE
-      begin
-        initialize_i18n
-      rescue Exception => e
-        Puppet.warning _("GettextSetup initialization for %{module_name} failed with: %{error_message}") % { module_name: name, error_message: e.message }
-      end
-    else
-      Puppet.warning _("GettextSetup is not available, skipping GettextSetup initialization for %{module_name}.") % { module_name: name }
-    end
+    initialize_i18n
   end
 
   # @deprecated The puppetversion module metadata field is no longer used.
@@ -403,7 +395,7 @@ class Puppet::Module
     locales_path = File.absolute_path('locales', path)
 
     begin
-      GettextSetup.initialize(locales_path)
+      Puppet::GettextConfig.initialize(locales_path, :po)
       Puppet.debug "#{module_name} initialized for i18n: #{GettextSetup.translation_repositories[module_name]}"
     rescue
       config_path = File.absolute_path('config.yaml', locales_path)
