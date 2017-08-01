@@ -184,28 +184,37 @@ describe Puppet::Util::Logging do
     after(:each) {
       # this is required because of bugs in Mocha whe tearing down expectations for each test
       # why it works elsewhere is a mystery.
-      @logger.unstub(:warning)
+      @logger.unstub(:send_log)
     }
 
     it "warns with file when only file is given" do
-      @logger.expects(:warning).with(regexp_matches(/wet paint.*\(in aFile\)/m))
+      @logger.expects(:send_log).with(:warning, regexp_matches(/wet paint.*\(in aFile\)/m))
       @logger.warn_once('kind', 'wp', "wet paint", 'aFile')
     end
 
     it "warns with unknown file and line when only line is given" do
-      @logger.expects(:warning).with(regexp_matches(/wet paint.*\(in unknown file, line 5\)/m))
+      @logger.expects(:send_log).with(:warning, regexp_matches(/wet paint.*\(in unknown file, line 5\)/m))
       @logger.warn_once('kind', 'wp', "wet paint", nil, 5)
     end
 
     it "warns with file and line when both are given" do
-      @logger.expects(:warning).with(regexp_matches(/wet paint.*\(at aFile:5\)/m))
+      @logger.expects(:send_log).with(:warning, regexp_matches(/wet paint.*\(at aFile:5\)/m))
       @logger.warn_once('kind', 'wp', "wet paint",'aFile', 5)
     end
 
     it "warns once per key" do
-      @logger.expects(:warning).with(regexp_matches(/wet paint.*/m)).once
+      @logger.expects(:send_log).with(:warning, regexp_matches(/wet paint.*/m)).once
       5.times do
         @logger.warn_once('kind', 'wp', "wet paint")
+      end
+    end
+
+    Puppet::Util::Log.eachlevel do |level|
+      it "can use log level #{level}" do
+        @logger.expects(:send_log).with(level, regexp_matches(/wet paint.*/m)).once
+        5.times do
+          @logger.warn_once('kind', 'wp', "wet paint", nil, nil, level)
+        end
       end
     end
   end
@@ -219,11 +228,11 @@ describe Puppet::Util::Logging do
       Puppet[:disable_warnings] = ['undefined_variables']
       example.run
       Puppet[:disable_warnings] = []
-      logger.unstub(:warning)
+      logger.unstub(:send_log)
     end
 
     it "does not produce warning if kind is disabled" do
-      logger.expects(:warning).never
+      logger.expects(:send_log).never
       logger.warn_once('undefined_variables', 'wp', "wet paint")
     end
   end
@@ -237,11 +246,11 @@ describe Puppet::Util::Logging do
       Puppet[:disable_warnings] = ['deprecations']
       example.run
       Puppet[:disable_warnings] = []
-      logger.unstub(:warning)
+      logger.unstub(:send_log)
     end
 
     it "produces warning even if deprecation warnings are disabled " do
-      logger.expects(:warning).once
+      logger.expects(:send_log).with(:warning, regexp_matches(/wet paint/)).once
       logger.warn_once('undefined_variables', 'wp', "wet paint")
     end
   end
