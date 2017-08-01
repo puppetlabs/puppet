@@ -293,6 +293,11 @@ describe 'when calling' do
         expect(func('mod::c')).to eql('mod::c (from module)')
       end
     end
+
+    it 'should not be disabled by data_binding_terminus setting' do
+      Puppet[:data_binding_terminus] = 'none'
+      expect(func('a')).to eql('first a')
+    end
   end
 
   context 'hiera_array' do

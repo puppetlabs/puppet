@@ -132,7 +132,7 @@ module Puppet
       options[:target_dir] = face_environment.full_modulepath.first
 
       # Default false to retain backward compatibility with SemanticPuppet 0.1.4
-      options[:strict_semver] = false
+      options[:strict_semver] = false unless options.include?(:strict_semver)
     end
 
     # Given a hash of options, we should discover or create a
@@ -174,7 +174,7 @@ module Puppet
       range = dep['version_requirement'] || '>= 0.0.0'
 
       begin
-        parsed_range = SemanticPuppet::VersionRange.parse(range, strict_semver)
+        parsed_range = Module.parse_range(range, strict_semver)
       rescue ArgumentError => e
         Puppet.debug "Error in #{where} parsing dependency #{dep_name} (#{e.message}); using empty range."
         parsed_range = SemanticPuppet::VersionRange::EMPTY_RANGE
