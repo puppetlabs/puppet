@@ -229,6 +229,28 @@ TREE
       end
     end
 
+    describe ':strict_semver' do
+      context 'when set' do
+        let(:options) do
+          { :strict_semver => true }
+        end
+
+        it 'is not overridden by default' do
+          expect(subject).to include :strict_semver => true
+        end
+      end
+
+      context 'when unset' do
+        let(:options) do
+          { }
+        end
+
+        it 'defaults to false' do
+          expect(subject).to include :strict_semver => false
+        end
+      end
+    end
+
     describe ':target_dir' do
       let(:options) do
         { :target_dir => 'foo' }

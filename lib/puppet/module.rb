@@ -1,5 +1,6 @@
 require 'puppet/util/logging'
 require 'json'
+require 'semantic_puppet/gem_version'
 
 # Support for modules
 class Puppet::Module
@@ -52,6 +53,32 @@ class Puppet::Module
     return false
   end
 
+  # @api private
+  def self.parse_range(range, strict)
+    @parse_range_method ||= SemanticPuppet::VersionRange.method(:parse)
+    if @parse_range_method.arity == 1
+      @semver_gem_version ||= SemanticPuppet::Version.parse(SemanticPuppet::VERSION)
+
+      # Give user a heads-up if the desired strict setting cannot be honored
+      if strict
+        if @semver_gem_version.major < 1
+          Puppet.warn_once('strict_version_ranges', 'version_range_cannot_be_strict',
+            _('VersionRanges will never be strict when using non-vendored SemanticPuppet gem, version %{version}') % { version: @semver_gem_version},
+            :default, :default, :notice)
+        end
+      else
+        if @semver_gem_version.major >= 1
+          Puppet.warn_once('strict_version_ranges', 'version_range_always_strict',
+            _('VersionRanges will always be strict when using non-vendored SemanticPuppet gem, version %{version}') % { version: @semver_gem_version},
+            :default, :default, :notice)
+        end
+      end
+      @parse_range_method.call(range)
+    else
+      @parse_range_method.call(range, strict)
+    end
+  end
+
   attr_reader :name, :environment, :path, :metadata
   attr_writer :environment
 
@@ -68,6 +95,17 @@ class Puppet::Module
     load_metadata
 
     @absolute_path_to_manifests = Puppet::FileSystem::PathPattern.absolute(manifests)
+
+    # i18n initialization for modules
+    if Puppet::GETTEXT_AVAILABLE
+      begin
+        initialize_i18n
+      rescue Exception => e
+        Puppet.warning _("GettextSetup initialization for %{module_name} failed with: %{error_message}") % { module_name: name, error_message: e.message }
+      end
+    else
+      Puppet.warning _("GettextSetup is not available, skipping GettextSetup initialization for %{module_name}.") % { module_name: name }
+    end
   end
 
   # @deprecated The puppetversion module metadata field is no longer used.
@@ -328,7 +366,7 @@ class Puppet::Module
 
       if version_string
         begin
-          required_version_semver_range = SemanticPuppet::VersionRange.parse(version_string, @strict_semver)
+          required_version_semver_range = self.class.parse_range(version_string, @strict_semver)
           actual_version_semver = SemanticPuppet::Version.parse(dep_mod.version)
         rescue ArgumentError
           error_details[:reason] = :non_semantic_version
@@ -358,7 +396,26 @@ class Puppet::Module
     @strict_semver
   end
 
+  def initialize_i18n
+    module_name = @forge_name.gsub("/","-") if @forge_name
+    return if module_name.nil? || i18n_initialized?(module_name)
+
+    locales_path = File.absolute_path('locales', path)
+
+    begin
+      GettextSetup.initialize(locales_path)
+      Puppet.debug "#{module_name} initialized for i18n: #{GettextSetup.translation_repositories[module_name]}"
+    rescue
+      config_path = File.absolute_path('config.yaml', locales_path)
+      Puppet.debug "Could not find locales configuration file for #{module_name} at #{config_path}. Skipping i18n initialization."
+    end
+  end
+
   private
+
+  def i18n_initialized?(module_name)
+    GettextSetup.translation_repositories.has_key? module_name
+  end
 
   def wanted_manifests_from(pattern)
     begin
