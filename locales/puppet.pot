@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.0.0-129-g6ef079e\n"
+"Project-Id-Version: Puppet automation framework 5.0.1-176-g233d8b3\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-07-11 22:33+0000\n"
-"PO-Revision-Date: 2017-07-11 22:33+0000\n"
+"POT-Creation-Date: 2017-08-01 17:54+0000\n"
+"PO-Revision-Date: 2017-08-01 17:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -325,28 +325,12 @@ msgstr ""
 msgid "Could not change user to %{user}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/module.rb:77
-msgid "GettextSetup initialization for %{module_name} failed with: %{error_message}"
-msgstr ""
-
-#: ../lib/puppet/module.rb:80
-msgid "GettextSetup is not available, skipping GettextSetup initialization for %{module_name}."
-msgstr ""
-
-#: ../lib/puppet/pops/lookup/environment_data_provider.rb:20
-msgid "hiera.yaml version 3 found at the environment root was ignored"
-msgstr ""
-
 #: ../lib/puppet/application/master.rb:194
 msgid "Could not change user to %{user}. User does not exist and is required to continue."
 msgstr ""
 
 #: ../lib/puppet/application/master.rb:200
 msgid "The Rack Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppet.com/deprecate-rack-webrick-servers for more information."
-msgstr ""
-
-#: ../lib/puppet/provider/nameservice.rb:58
-msgid "listbyname is deprecated and will be removed in a future release of Puppet. Please use `self.instances` to obtain a list of users."
 msgstr ""
 
 #: ../lib/puppet/application/master.rb:203
@@ -2516,6 +2500,14 @@ msgstr ""
 
 #: ../lib/puppet/module.rb:72
 msgid "VersionRanges will always be strict when using non-vendored SemanticPuppet gem, version %{version}"
+msgstr ""
+
+#: ../lib/puppet/module.rb:104
+msgid "GettextSetup initialization for %{module_name} failed with: %{error_message}"
+msgstr ""
+
+#: ../lib/puppet/module.rb:107
+msgid "GettextSetup is not available, skipping GettextSetup initialization for %{module_name}."
 msgstr ""
 
 #: ../lib/puppet/module_tool.rb:37
@@ -4711,47 +4703,47 @@ msgstr ""
 msgid "Recursive lookup detected in [%{name_stack}]"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:93
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:94
 msgid "Lookup of key '%{key}' failed: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:239
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:240
 msgid "value of %{opts} must be a hash"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:246
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:247
 msgid "all %{opts} patterns must match a key starting with module name '%{module_name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:250
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:251
 msgid "all %{opts} keys must start with module name '%{module_name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:375
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:376
 msgid "Defining \"data_provider\": \"%{name}\" in metadata.json is deprecated. It is ignored since a '%{config}' with version >= 5 is present"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:385
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:386
 msgid "Defining \"data_provider\": \"%{name}\" in metadata.json is deprecated"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:386 ../lib/puppet/pops/lookup/lookup_adapter.rb:440
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:387 ../lib/puppet/pops/lookup/lookup_adapter.rb:441
 msgid ". A '%{config}' file should be used instead"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:400
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:401
 msgid "Environment '%{env}', cannot find module_data_provider '%{provider}'"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:424 ../lib/puppet/pops/lookup/lookup_adapter.rb:439
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:425 ../lib/puppet/pops/lookup/lookup_adapter.rb:440
 msgid "Defining environment_data_provider='%{provider_name}' in environment.conf is deprecated"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:428
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:429
 msgid "The environment_data_provider='%{provider_name}' setting is ignored since '%{config_path}' version >= 5"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:455
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:456
 msgid "Environment '%{env}', cannot find environment_data_provider '%{provider}'"
 msgstr ""
 
@@ -5355,27 +5347,27 @@ msgstr ""
 msgid "source is defined but does not have trailing slash, ignoring %{source}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:40
+#: ../lib/puppet/provider/package/gem.rb:42
 msgid "Could not list gems: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:66
+#: ../lib/puppet/provider/package/gem.rb:68
 msgid "Could not match %{desc}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:106
+#: ../lib/puppet/provider/package/gem.rb:109
 msgid "Invalid source '%{uri}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:117
+#: ../lib/puppet/provider/package/gem.rb:120
 msgid "puppet:// URLs are not supported as gem sources"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:135
+#: ../lib/puppet/provider/package/gem.rb:136
 msgid "Could not install: %{output}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:160
+#: ../lib/puppet/provider/package/gem.rb:161
 msgid "Could not uninstall: %{output}"
 msgstr ""
 
@@ -5738,7 +5730,7 @@ msgstr ""
 msgid "No set of title patterns matched the title \"%{title}\"."
 msgstr ""
 
-#: ../lib/puppet/resource/capability_finder.rb:77
+#: ../lib/puppet/resource/capability_finder.rb:75
 msgid "Looking up capability %{cap} in PuppetDB: %{query_terms}"
 msgstr ""
 
