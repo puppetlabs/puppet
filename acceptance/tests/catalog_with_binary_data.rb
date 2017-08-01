@@ -1,9 +1,12 @@
-require 'puppet/acceptance/common_utils'
-require 'puppet/acceptance/environment_utils'
-extend Puppet::Acceptance::EnvironmentUtils
-
 test_name "C100300: Catalog containing binary data is applied correctly" do
   skip_test 'requires a master for serving module content' if master.nil?
+
+  require 'puppet/acceptance/common_utils'
+  require 'puppet/acceptance/environment_utils'
+  extend Puppet::Acceptance::EnvironmentUtils
+
+  require 'puppet/acceptance/agent_fqdn_utils'
+  extend Puppet::Acceptance::AgentFqdnUtils
 
   tag 'risk:medium',
       'server'
@@ -12,12 +15,12 @@ test_name "C100300: Catalog containing binary data is applied correctly" do
   tmp_environment = mk_tmp_environment_with_teardown(master, File.basename(__FILE__, '.*'))
   agent_tmp_dirs = {}
   agents.each do |agent|
-    agent_tmp_dirs[agent.hostname] = agent.tmpdir(tmp_environment)
+    agent_tmp_dirs[agent_to_fqdn(agent)] = agent.tmpdir(tmp_environment)
   end
 
   teardown do
     step 'remove all test files on agents' do
-      agents.each { |agent| on(agent, "rm -r #{agent_tmp_dirs[agent.hostname]}", :accept_all_exit_codes => true) }
+      agents.each { |agent| on(agent, "rm -r '#{agent_tmp_dirs[agent_to_fqdn(agent)]}'", :accept_all_exit_codes => true) }
     end
     # note - master teardown is registered by #mk_tmp_environment_with_teardown
   end
@@ -61,8 +64,8 @@ test_name "C100300: Catalog containing binary data is applied correctly" do
 
       step "run puppet and ensure that binary data was correctly applied" do
         agents.each do |agent|
-          on(agent, puppet('agent', '--test', "--environment #{tmp_environment}", "--server #{master.hostname}"), :acceptable_exit_codes => 2)
-          on(agent, "#{Puppet::Acceptance::CommandUtils::ruby_command(agent)} -e 'puts File.binread(\"#{agent_tmp_dirs[agent.hostname]}/#{test_num}\").bytes.map {|b| b.to_s(16)}'") do |res|
+          on(agent, puppet('agent', '--test', "--environment '#{tmp_environment}'", "--server #{master.hostname}"), :acceptable_exit_codes => 2)
+          on(agent, "#{Puppet::Acceptance::CommandUtils::ruby_command(agent)} -e 'puts File.binread(\"#{agent_tmp_dirs[agent_to_fqdn(agent)]}/#{test_num}\").bytes.map {|b| b.to_s(16)}'") do |res|
             assert_match(/c0\nff/, res.stdout, 'Binary file did not contain originally specified data')
           end
         end
