@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.0.1-176-g233d8b3\n"
+"Project-Id-Version: Puppet automation framework 5.0.1-184-gc50f87a\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-08-01 17:54+0000\n"
-"PO-Revision-Date: 2017-08-01 17:54+0000\n"
+"POT-Creation-Date: 2017-08-01 23:58+0000\n"
+"PO-Revision-Date: 2017-08-01 23:58+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -6555,29 +6555,29 @@ msgstr ""
 msgid "Could not find filebucket %{backup} specified in backup"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:740
-msgid "Could not back up files of type %{current_type}"
+#: ../lib/puppet/type/file.rb:745
+msgid "Could not remove files of type %{current_type}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:750
+#: ../lib/puppet/type/file.rb:755
 msgid "Copying owner/mode/group from the source file on Windows is not supported; use source_permissions => ignore."
 msgstr ""
 
 #. TRANSLATORS "stat" is a program name and should not be translated
-#: ../lib/puppet/type/file.rb:831 ../lib/puppet/type/tidy.rb:332
+#: ../lib/puppet/type/file.rb:836 ../lib/puppet/type/tidy.rb:332
 msgid "Could not stat; permission denied"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:953
+#: ../lib/puppet/type/file.rb:961
 msgid "Not removing directory; use 'force' to override"
 msgstr ""
 
 #. TRANSLATORS refers to a file which could not be backed up
-#: ../lib/puppet/type/file.rb:978
-msgid "Could not back up; will not replace"
+#: ../lib/puppet/type/file.rb:986
+msgid "Could not back up; will not remove"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:992
+#: ../lib/puppet/type/file.rb:1000
 msgid "File written to disk did not match checksum; discarding changes (%{content_checksum} vs %{newsum})"
 msgstr ""
 
@@ -7717,11 +7717,11 @@ msgstr ""
 msgid "No such user %{user}"
 msgstr ""
 
-#: ../lib/puppet/util/suidmanager.rb:145
+#: ../lib/puppet/util/suidmanager.rb:146
 msgid "Invalid id type %{type}"
 msgstr ""
 
-#: ../lib/puppet/util/suidmanager.rb:148
+#: ../lib/puppet/util/suidmanager.rb:149
 msgid "Invalid %{klass}: %{id}"
 msgstr ""
 
