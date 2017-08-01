@@ -440,6 +440,35 @@ describe Puppet::Module do
     end
   end
 
+
+  describe "initialize_i18n" do
+
+    let(:modpath) { tmpdir('modpath') }
+    let(:modname) { 'puppetlabs-i18n'}
+    let(:modroot) { "#{modpath}/#{modname}/" }
+    let(:config_path) { "#{modroot}/locales/config.yaml" }
+    let(:mod_obj) { PuppetSpec::Modules.create( modname, modpath, :metadata => { :dependencies => [] }, :env => env ) }
+
+    it "is expected to initialize an un-initialized module" do
+      expect(GettextSetup.translation_repositories.has_key? modname).to be false
+
+      FileUtils.mkdir_p("#{mod_obj.path}/locales")
+      config = {
+        "gettext" => {
+          "project_name" => modname
+        }
+      }
+      File.open(config_path, 'w') { |file| file.write(config.to_yaml) }
+
+      mod_obj.initialize_i18n
+
+      expect(GettextSetup.translation_repositories.has_key? modname).to be true
+    end
+    it "is expected return nil if module is intiailized" do
+      expect(mod_obj.initialize_i18n).to be nil
+    end
+  end
+
   describe "when managing supported platforms" do
     it "should support specifying a supported platform" do
       mod.supports "solaris"
