@@ -33,7 +33,7 @@ DOC
   def self.localhost
     return @localhost if @localhost
     @localhost = new
-    @localhost.generate unless @localhost.certificate
+    @localhost.generate unless @localhost.certificate(false)
     @localhost.key
     @localhost
   end
@@ -192,13 +192,14 @@ DOC
     true
   end
 
-  def certificate
+  def certificate(search_certificate = true)
     unless @certificate
       generate_key unless key
 
       # get the CA cert first, since it's required for the normal cert
       # to be of any use.
       return nil unless Certificate.indirection.find("ca", :fail_on_404 => true) unless ca?
+      return nil unless search_certificate
       return nil unless @certificate = Certificate.indirection.find(name)
 
       validate_certificate_with_key
