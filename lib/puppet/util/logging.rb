@@ -155,6 +155,7 @@ module Logging
   FILE_AND_LINE = MM::TUPLE
   FILE_NO_LINE  = MM.new(MM::NOT_NIL, nil).freeze
   NO_FILE_LINE  = MM.new(nil, MM::NOT_NIL).freeze
+  SUPPRESS_FILE_LINE = MM.new(:default, :default).freeze
 
   # Logs a (non deprecation) warning once for a given key.
   #
@@ -162,12 +163,13 @@ module Logging
   #   kind must be one of the defined kinds for the Puppet[:disable_warnings] setting.
   # @param message [String] The message to log (logs via warning)
   # @param key [String] Key used to make this warning unique
-  # @param file [String,nil] the File related to the warning
-  # @param line [Integer,nil] the Line number related to the warning
+  # @param file [String,:default,nil] the File related to the warning
+  # @param line [Integer,:default,nil] the Line number related to the warning
   #   warning as unique
+  # @param level [Symbol] log level to use, defaults to :warning
   #
   # Either :file and :line and/or :key must be passed.
-  def warn_once(kind, key, message, file = nil, line = nil)
+  def warn_once(kind, key, message, file = nil, line = nil, level = :warning)
     return if Puppet[:disable_warnings].include?(kind)
     $unique_warnings ||= {}
     if $unique_warnings.length < 100 then
@@ -175,6 +177,8 @@ module Logging
         $unique_warnings[key] = message
         call_trace =
         case MM.new(file, line)
+        when SUPPRESS_FILE_LINE
+          ''
         when FILE_AND_LINE
           _("\n   (at %{file}:%{line})") % { file: file, line: line }
         when FILE_NO_LINE
@@ -184,7 +188,7 @@ module Logging
         else
           _("\n   (file & line not available)")
         end
-        warning("#{message}#{call_trace}")
+        send_log(level, "#{message}#{call_trace}")
       end
     end
   end

@@ -1,5 +1,6 @@
 require 'puppet/util/logging'
 require 'json'
+require 'semantic_puppet/gem_version'
 
 # Support for modules
 class Puppet::Module
@@ -50,6 +51,32 @@ class Puppet::Module
     # it must match the full module name according to forge validator
     return true if name =~ /^[a-zA-Z0-9]+[-][a-z][a-z0-9_]*$/
     return false
+  end
+
+  # @api private
+  def self.parse_range(range, strict)
+    @parse_range_method ||= SemanticPuppet::VersionRange.method(:parse)
+    if @parse_range_method.arity == 1
+      @semver_gem_version ||= SemanticPuppet::Version.parse(SemanticPuppet::VERSION)
+
+      # Give user a heads-up if the desired strict setting cannot be honored
+      if strict
+        if @semver_gem_version.major < 1
+          Puppet.warn_once('strict_version_ranges', 'version_range_cannot_be_strict',
+            _('VersionRanges will never be strict when using non-vendored SemanticPuppet gem, version %{version}') % { version: @semver_gem_version},
+            :default, :default, :notice)
+        end
+      else
+        if @semver_gem_version.major >= 1
+          Puppet.warn_once('strict_version_ranges', 'version_range_always_strict',
+            _('VersionRanges will always be strict when using non-vendored SemanticPuppet gem, version %{version}') % { version: @semver_gem_version},
+            :default, :default, :notice)
+        end
+      end
+      @parse_range_method.call(range)
+    else
+      @parse_range_method.call(range, strict)
+    end
   end
 
   attr_reader :name, :environment, :path, :metadata
@@ -328,7 +355,7 @@ class Puppet::Module
 
       if version_string
         begin
-          required_version_semver_range = SemanticPuppet::VersionRange.parse(version_string, @strict_semver)
+          required_version_semver_range = self.class.parse_range(version_string, @strict_semver)
           actual_version_semver = SemanticPuppet::Version.parse(dep_mod.version)
         rescue ArgumentError
           error_details[:reason] = :non_semantic_version
