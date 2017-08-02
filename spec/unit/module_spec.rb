@@ -222,7 +222,9 @@ describe Puppet::Module do
       env = Puppet::Node::Environment.create(:testing, [@modpath])
 
       ['test_gte_req', 'test_specific_req', 'foobar'].each do |mod_name|
-        metadata_file = "#{@modpath}/#{mod_name}/metadata.json"
+        mod_dir = "#{@modpath}/#{mod_name}"
+        metadata_file = "#{mod_dir}/metadata.json"
+        tasks_dir = "#{mod_dir}/tasks"
         Puppet::FileSystem.stubs(:exist?).with(metadata_file).returns true
       end
       mod = PuppetSpec::Modules.create(
@@ -556,6 +558,66 @@ describe Puppet::Module do
 
   it "should return the path to the tasks directory" do
     expect(mod.tasks_directory).to eq(File.join(path, "tasks"))
+  end
+
+  describe "when finding tasks" do
+    before do
+      Puppet::FileSystem.unstub(:exist?)
+      @modpath = tmpdir('modpath')
+      Puppet.settings[:modulepath] = @modpath
+    end
+
+    it "should have an empty array for the tasks when the tasks directory does not exist" do
+      mod = PuppetSpec::Modules.create('tasks_test_nodir', @modpath, :environment => env)
+      expect(mod.tasks).to eq([])
+    end
+
+    it "should have an empty array for the tasks when the tasks directory does exist and is empty" do
+      mod = PuppetSpec::Modules.create('tasks_test_empty', @modpath, {:environment => env,
+                                                                      :tasks => []})
+      expect(mod.tasks).to eq([])
+    end
+
+    it "should list the expected tasks when the required files exist" do
+      fake_tasks = [['task1'], ['task2.sh', 'task2.json']]
+      mod = PuppetSpec::Modules.create('tasks_smoke', @modpath, {:environment => env,
+                                                                 :tasks => fake_tasks})
+
+      expect(mod.tasks.count).to eq(2)
+      expect(mod.tasks.map{|t| t.name}.sort).to eq(['tasks_smoke::task1', 'tasks_smoke::task2'])
+      expect(mod.tasks.map{|t| t.class}).to eq([Puppet::Module::Task] * 2)
+    end
+
+    describe "does the task finding" do
+      before :each do
+        Puppet::FileSystem.unstub(:exist?)
+        Puppet::Module::Task.unstub(:tasks_in_module)
+      end
+
+      let(:mod_name) { 'tasks_test_lazy' }
+      let(:mod_tasks_dir) { File.join(@modpath, mod_name, 'tasks') }
+
+      it "after the module is initialized" do
+        Puppet::FileSystem.expects(:exist?).with(mod_tasks_dir).never
+        Puppet::Module::Task.expects(:tasks_in_module).never
+        mod = Puppet::Module.new(mod_name, @modpath, env)
+      end
+
+      it "when the tasks method is called" do
+        Puppet::Module::Task.expects(:tasks_in_module)
+        mod = PuppetSpec::Modules.create(mod_name, @modpath, {:environment => env,
+                                                              :tasks => [['itascanstaccatotask']]})
+        mod.tasks
+      end
+
+      it "only once for the lifetime of the module object" do
+        Dir.expects(:glob).with("#{mod_tasks_dir}/*").once.returns ['allalaskataskattacktactics']
+        mod = PuppetSpec::Modules.create(mod_name, @modpath, {:environment => env,
+                                                              :tasks => []})
+        mod.tasks
+        mod.tasks
+      end
+    end
   end
 end
 
