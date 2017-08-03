@@ -727,7 +727,7 @@ Puppet::Type.newtype(:file) do
       if can_backup?(current_type)
         backup_existing
       else
-        self.fail "Could not back up file of type #{current_type}; will not remove"
+        self.warning "Could not back up file of type #{current_type}"
       end
     end
 

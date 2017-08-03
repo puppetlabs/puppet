@@ -907,8 +907,8 @@ describe Puppet::Type.type(:file) do
         file.stubs(:stat).returns stub('stat', :ftype => 'directory')
 
         file.expects(:perform_backup).never
-
-        expect { file.remove_existing(:file) }.to raise_error(Puppet::Error, /Could not back up file of type directory; will not remove/)
+        file.expects(:warning).with("Could not back up file of type directory")
+        expect(file.remove_existing(:file)).to eq(false)
       end
 
       it "should backup directories if backup is true and force is true" do
@@ -935,9 +935,6 @@ describe Puppet::Type.type(:file) do
       file.stat
       file.stubs(:stat).returns stub('stat', :ftype => 'directory')
 
-      file.expects(:remove_directory).never
-      expect { file.remove_existing(:file) }.to raise_error(Puppet::Error, /Could not back up file of type directory; will not remove/)
-      #expect(file.instance_variable_get(:@needs_stat)).to eq(nil)
       expect(file.instance_variable_get(:@stat)).to eq(nil)
     end
 
@@ -976,7 +973,8 @@ describe Puppet::Type.type(:file) do
     it "should fail if the file is not a directory, link, file, fifo, socket, or is unknown" do
       file.stubs(:stat).returns stub('stat', :ftype => 'blockSpecial')
 
-      expect { file.remove_existing(:file) }.to raise_error(Puppet::Error, /Could not back up file of type blockSpecial; will not remove/)
+      file.expects(:warning).with("Could not back up file of type blockSpecial")
+      expect { file.remove_existing(:file) }.to raise_error(Puppet::Error, /Could not remove files of type blockSpecial/)
     end
 
     it "should invalidate the existing stat of the file" do
