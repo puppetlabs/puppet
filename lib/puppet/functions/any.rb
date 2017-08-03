@@ -30,13 +30,12 @@
 # `$lookued_up[routers] || $looked_up[servers] || $looked_up[workstations]`.
 #
 # When the first argument is a `Hash`, Puppet passes each key and value pair to the lambda
-# as an array in the form `[key, value]` and returns the original hash.
+# as an array in the form `[key, value]`.
 #
-# @example Using the `each` function with a `Hash` and a one-parameter lambda
+# @example Using the `any` function with a `Hash` and a one-parameter lambda
 #
 # ~~~ puppet
-# # For the hash $data, run a lambda using each item as a key-value array that creates a
-# # resource for each item.
+# # For the hash $data, run a lambda using each item as a key-value array.
 # $data = {"rtr" => "Router", "svr" => "Server", "wks" => "Workstation"}
 # $looked_up = lookup('somekey', Hash)
 # notice $data.any |$item| { $looked_up[$item[0]] }
