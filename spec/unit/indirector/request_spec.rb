@@ -521,4 +521,45 @@ describe Puppet::Indirector::Request do
       expect(request(:node => 'example.com', :ip => '127.0.0.1')).to be_remote
     end
   end
+
+  describe "failover" do
+    it "should use the provided failover host and port" do
+      Puppet.override(:server => 'myhost', :serverport => 666) do
+        req = Puppet::Indirector::Request.new('node', 'find', 'localhost', nil)
+        req.do_request() do |request|
+          expect(request.server).to eq('myhost')
+          expect(request.port).to eq(666)
+        end
+      end
+    end
+
+    it "should not use raw settings when failover fails" do
+      Puppet.override(:server => nil, :serverport => nil) do
+        req = Puppet::Indirector::Request.new('node', 'find', 'localhost', nil)
+        req.do_request() do |request|
+          expect(request.server).to be_nil
+          expect(request.port).to be_nil
+          expect(Puppet.settings[:server]).not_to be_nil
+          expect(Puppet.settings[:masterport]).not_to be_nil
+        end
+      end
+    end
+
+    it "should use server_list when set and failover has not occured" do
+      Puppet.settings[:server_list] = [['myhost',666]]
+      req = Puppet::Indirector::Request.new('node', 'find', 'localhost', nil)
+      req.do_request() do |request|
+        expect(request.server).to eq('myhost')
+        expect(request.port).to eq(666)
+      end
+    end
+
+    it "should use server when server_list is not set" do
+      req = Puppet::Indirector::Request.new('node', 'find', 'localhost', nil)
+      req.do_request() do |request|
+        expect(request.server).to eq(Puppet.settings[:server])
+        expect(request.port).to eq(Puppet.settings[:masterport])
+      end
+    end
+  end
 end
