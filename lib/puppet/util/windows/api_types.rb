@@ -57,6 +57,9 @@ module Puppet::Util::Windows::APITypes
       # char_length is number of wide chars (typically excluding NULLs), *not* bytes
       str = get_bytes(0, char_length * 2).force_encoding('UTF-16LE')
       str.encode(dst_encoding)
+    rescue Exception => e
+      Puppet.debug "Unable to convert value #{str.dump} to encoding #{dst_encoding} due to #{e.inspect}"
+      raise
     end
 
     # @param max_char_length [Integer] Maximum number of wide chars to return (typically excluding NULLs), *not* bytes
