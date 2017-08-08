@@ -441,8 +441,7 @@ module Issues
   end
 
   BAD_STRING_SLICE_KEY_TYPE = issue :BAD_STRING_SLICE_KEY_TYPE, :left_value, :actual_type do
-    actual_type_text = _("#{label.article(actual_type)} #{actual_type}")
-    _("A substring operation does not accept %{actual_type_text} as a character index. Expected an Integer") % { actual_type_text: actual_type_text }
+    _("A substring operation does not accept %{label_article} %{actual_type} as a character index. Expected an Integer") % { label_article: label.article(actual_type), actual_type: actual_type }
   end
 
   BAD_NOT_UNDEF_SLICE_TYPE = issue :BAD_NOT_UNDEF_SLICE_TYPE, :base_type, :actual do
@@ -509,7 +508,7 @@ module Issues
   end
 
   NUMERIC_COERCION = issue :NUMERIC_COERCION, :before, :after do
-    "The string '#{before}' was automatically coerced to the numerical value #{after}"
+    _("The string '%{before}' was automatically coerced to the numerical value %{after}") % { before: before, after: after }
   end
 
   UNKNOWN_FUNCTION = issue :UNKNOWN_FUNCTION, :name do
@@ -751,8 +750,11 @@ module Issues
   end
 
   NUMERIC_OVERFLOW = hard_issue :NUMERIC_OVERFLOW, :value do
-    range_end = value > 0 ? _('max') : _('min')
-    _("#{label.a_an_uc(semantic)} resulted in a value outside of Puppet Integer #{range_end} range, got '#{"%#+x" % value}'")
+    if value > 0
+      _("%{expression} resulted in a value outside of Puppet Integer max range, got '%{value}'") % { expression: label.a_an_uc(semantic), value: ("%#+x" % value) }
+    else
+      _("%{expression} resulted in a value outside of Puppet Integer min range, got '%{value}'") % { expression: label.a_an_uc(semantic), value: ("%#+x" % value) }
+    end
   end
 
   HIERA_UNSUPPORTED_VERSION = hard_issue :HIERA_UNSUPPORTED_VERSION, :version do
