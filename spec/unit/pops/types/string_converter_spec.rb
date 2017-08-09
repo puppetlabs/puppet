@@ -87,6 +87,12 @@ describe 'The string converter' do
       end.to raise_error(/Only one of the delimiters/)
     end
 
+    it "Is an error to have trailing characters after the format" do
+      expect do
+        fmt = format.new("%dv")
+      end.to raise_error(/The format '%dv' is not a valid format/)
+    end
+
     it "Is an error to specify the same flag more than once" do
       expect do
         fmt = format.new("%[[d")
