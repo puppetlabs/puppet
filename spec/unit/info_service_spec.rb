@@ -1,14 +1,78 @@
 require 'spec_helper'
 require 'puppet_spec/files'
+require 'puppet_spec/modules'
 
 require 'puppet/pops'
 require 'puppet/info_service'
 require 'puppet/pops/evaluator/literal_evaluator'
 
 describe "Puppet::InfoService" do
-  context 'classes_per_environment service' do
-    include PuppetSpec::Files
+  include PuppetSpec::Files
 
+  context 'task information service' do
+    let(:mod_name) { 'test1' }
+    let(:task_name) { "#{mod_name}::thingtask" }
+    let(:modpath) { tmpdir('modpath') }
+    let(:env_name) { 'testing' }
+    let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [modpath]) }
+    let(:env_loader) { Puppet::Environments::Static.new(env) }
+
+    context 'tasks_per_environment method' do
+      it "returns task data for the tasks in an environment" do
+        Puppet.override(:environments => env_loader) do
+          mod = PuppetSpec::Modules.create(mod_name, modpath, {:environment => env, :tasks => [['thingtask']]})
+          expect(Puppet::InfoService.tasks_per_environment(env_name)).to eq([{:name => task_name, :module => {:name => mod_name}}])
+        end
+      end
+
+      it "should throw EnvironmentNotFound if given a nonexistent environment" do
+        expect{ Puppet::InfoService.tasks_per_environment('utopia') }.to raise_error(Puppet::Environments::EnvironmentNotFound)
+      end
+    end
+
+    context 'task_data method' do
+      before do
+        Puppet.override(:environments => env_loader) do
+          @mod = PuppetSpec::Modules.create(mod_name, modpath, {:environment => env, :tasks => [['thingtask', 'thingtask.json']]})
+          @result = Puppet::InfoService.task_data(env_name, mod_name, task_name)
+        end
+      end
+      describe 'in the happy case' do
+        it 'returns the right set of keys' do
+          expect(@result.keys.sort).to eq([:files, :metadata_file])
+        end
+        it 'specifies the metadata_file correctly' do
+          task = @mod.tasks[0]
+          expect(@result[:metadata_file]).to eq(task.metadata_file)
+        end
+
+        it 'specifies the other files correctly' do
+          task = @mod.tasks[0]
+          expect(@result[:files]).to eq(task.files)
+        end
+      end
+
+      it "should raise EnvironmentNotFound if given a nonexistent environment" do
+        expect{ Puppet::InfoService.task_data('utopia', mod_name, task_name) }.to raise_error(Puppet::Environments::EnvironmentNotFound)
+      end
+
+      it "should raise MissingModule if the module does not exist" do
+        Puppet.override(:environments => env_loader) do
+          expect { Puppet::InfoService.task_data(env_name, 'notamodule', 'notamodule::thingtask') }
+            .to raise_error(Puppet::Module::MissingModule)
+        end
+      end
+
+      it "should raise TaskNotFound if the task does not exist" do
+        Puppet.override(:environments => env_loader) do
+          expect { Puppet::InfoService.task_data(env_name, mod_name, 'testing1::notatask') }
+            .to raise_error(Puppet::Module::Task::TaskNotFound)
+        end
+      end
+    end
+  end
+
+  context 'classes_per_environment service' do
     let(:code_dir) do
       dir_containing('manifests', {
         'foo.pp' => <<-CODE,
