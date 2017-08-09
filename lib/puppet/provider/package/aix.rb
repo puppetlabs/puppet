@@ -38,7 +38,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
 
     return unless packages.detect { |name, package| package.should(:ensure) == :latest }
 
-    sources = packages.collect { |name, package| package[:source] }.uniq
+    sources = packages.collect { |name, package| package[:source] }.uniq.compact
 
     updates = {}
     sources.each do |source|
