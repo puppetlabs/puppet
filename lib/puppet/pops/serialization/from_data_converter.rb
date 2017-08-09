@@ -160,7 +160,7 @@ module Serialization
       elsif value.is_a?(String)
         build(pcore_type.create(value))
       else
-        raise SerializationError, _('Cannot create a %{type_name} from a %{arg_class') %
+        raise SerializationError, _('Cannot create a %{type_name} from a %{arg_class}') %
             { :type_name => pcore_type.name, :arg_class => value.class.name }
       end
     end
