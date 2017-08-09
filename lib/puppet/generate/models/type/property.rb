@@ -40,7 +40,7 @@ module Puppet
             values = property.value_collection.instance_variable_get('@values') || {}
             values.each do |_, value|
               if value.regex?
-                regexes << "/#{value.name.source.gsub(/\//, '\/')}/"
+                regexes << Puppet::Pops::Types::StringConverter.convert(value.name, '%p')
                 next
               end
 

@@ -60,13 +60,12 @@ describe Puppet::Parser::AST::Regex do
     end
   end
 
-  it "should return the regex source with to_s" do
+  it 'should return the PRegexpType#regexp_to_s_with_delimiters with to_s' do
     regex = stub 'regex'
     Regexp.stubs(:new).returns(regex)
 
-    val = Puppet::Parser::AST::Regex.new :value => "/ab/"
-
-    regex.expects(:source)
+    val = Puppet::Parser::AST::Regex.new :value => '/ab/'
+    Puppet::Pops::Types::PRegexpType.expects(:regexp_to_s_with_delimiters)
 
     val.to_s
   end

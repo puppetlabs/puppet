@@ -901,12 +901,10 @@ class StringConverter
     f = get_format(val_type, format_map)
     case f.format
     when :p
-      rx_s = val.options == 0 ? val.source : val.to_s
-      rx_s = rx_s.gsub(/\//, '\/') unless Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new('2.0.0')
-      str_regexp = "/#{rx_s}/"
+      str_regexp = PRegexpType.regexp_to_s_with_delimiters(val)
       f.orig_fmt == '%p' ? str_regexp : Kernel.format(f.orig_fmt.gsub('p', 's'), str_regexp)
     when :s
-      str_regexp = val.options == 0 ? val.source : val.to_s
+      str_regexp = PRegexpType.regexp_to_s(val)
       str_regexp = puppet_quote(str_regexp) if f.alt?
       f.orig_fmt == '%s' ? str_regexp : Kernel.format(f.orig_fmt, str_regexp)
     else

@@ -545,7 +545,7 @@ class TypeFormatter
   def string_Numeric(t)      ; @bld << t.to_s    ; end
 
   # @api private
-  def string_Regexp(t)       ; @bld << t.inspect; end
+  def string_Regexp(t)       ; @bld << PRegexpType.regexp_to_s_with_delimiters(t); end
 
   # @api private
   def string_String(t)
