@@ -89,24 +89,12 @@ Puppet::Functions.create_function(:all) do
   end
 
   def all_Enumerable_1(enumerable)
-    enum = Puppet::Pops::Types::Iterable.asserted_iterable(self, enumerable)
-      begin
-        loop { return false unless yield(enum.next) }
-      rescue StopIteration
-      end
-    true
+    Puppet::Pops::Types::Iterable.asserted_iterable(self, enumerable).all? { |e| yield(e) }
   end
 
   def all_Enumerable_2(enumerable)
     enum = Puppet::Pops::Types::Iterable.asserted_iterable(self, enumerable)
-    index = 0
-    begin
-      loop do
-        return false unless yield(index, enum.next)
-        index += 1
-      end
-    rescue StopIteration
-    end
-    return true
+    enum.each_with_index { |e, i| return false unless yield(i, e) }
+    true
   end
 end
