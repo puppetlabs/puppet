@@ -1573,10 +1573,41 @@ class PRegexpType < PScalarType
 
   attr_reader :pattern
 
+  # @param regexp [Regexp] the regular expression
+  # @return [String] the Regexp as a slash delimited string with slashes escaped
+  def self.regexp_to_s_with_delimiters(regexp)
+    regexp.options == 0 ? regexp.inspect : "/#{regexp.to_s}/"
+  end
+
+  # @param regexp [Regexp] the regular expression
+  # @return [String] the Regexp as a string without escaped slash
+  def self.regexp_to_s(regexp)
+    append_flags_group(regexp.source, regexp.options)
+  end
+
+  def self.append_flags_group(rx_string, options)
+    if options == 0
+      rx_string
+    else
+      bld = '(?'
+      bld << 'i' if (options & Regexp::IGNORECASE) != 0
+      bld << 'm' if (options & Regexp::MULTILINE) != 0
+      bld << 'x' if (options & Regexp::EXTENDED) != 0
+      unless options == (Regexp::IGNORECASE | Regexp::MULTILINE | Regexp::EXTENDED)
+        bld << '-'
+        bld << 'i' if (options & Regexp::IGNORECASE) == 0
+        bld << 'm' if (options & Regexp::MULTILINE) == 0
+        bld << 'x' if (options & Regexp::EXTENDED) == 0
+      end
+      bld << ':' << rx_string << ')'
+      bld.freeze
+    end
+  end
+
   def initialize(pattern)
     if pattern.is_a?(Regexp)
       @regexp = pattern
-      @pattern = pattern.options == 0 ? pattern.source : pattern.to_s
+      @pattern = PRegexpType.regexp_to_s(pattern)
     else
       @pattern = pattern
     end
@@ -1595,7 +1626,7 @@ class PRegexpType < PScalarType
   end
 
   def instance?(o, guard=nil)
-    o.is_a?(Regexp) && (@pattern.nil? || @pattern == (o.options == 0 ? o.source : o.to_s))
+    o.is_a?(Regexp) && @pattern.nil? || regexp == o
   end
 
   DEFAULT = PRegexpType.new(nil)
