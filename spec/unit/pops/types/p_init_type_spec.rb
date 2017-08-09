@@ -191,7 +191,7 @@ describe 'The Init Type' do
       expect(eval_and_collect_notices(code)).to eql(['true'])
     end
 
-    it 'T1 is assignable to Init[T2] if T2 can be created from instance of T1 is valid' do
+    it 'T1 is assignable to Init[T2] if T2 can be created from instance of T1' do
       code = <<-CODE
       notice(Integer < Init[String])
       CODE
