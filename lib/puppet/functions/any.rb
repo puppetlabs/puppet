@@ -86,19 +86,11 @@ Puppet::Functions.create_function(:any) do
   end
 
   def any_Hash_1(hash)
-    enumerator = hash.each_pair
-    hash.size.times do
-      return true if yield(enumerator.next)
-    end
-    false
+    hash.each_pair.any? { |x| yield(x) }
   end
 
   def any_Hash_2(hash)
-    enumerator = hash.each_pair
-    hash.size.times do
-      return true if yield(*enumerator.next)
-    end
-    false
+    hash.each_pair.any? { |x,y| yield(x, y) }
   end
 
   def any_Enumerable_1(enumerable)
