@@ -81,19 +81,11 @@ Puppet::Functions.create_function(:all) do
   end
 
   def all_Hash_1(hash)
-    enumerator = hash.each_pair
-    hash.size.times do
-      return false unless yield(enumerator.next)
-    end
-    true
+    hash.each_pair.all? { |x| yield(x) }
   end
 
   def all_Hash_2(hash)
-    enumerator = hash.each_pair
-    hash.size.times do
-      return false unless yield(*enumerator.next)
-    end
-    true
+    hash.each_pair.all? { |x,y| yield(x,y) }
   end
 
   def all_Enumerable_1(enumerable)
