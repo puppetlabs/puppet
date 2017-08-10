@@ -30,6 +30,12 @@ describe TypeParser do
       /The expression <Array\[notAType\]> is not a valid type specification/)
   end
 
+  it "rejects an unknown type parameter in a variant" do
+    pending 'Fix for PUP-7829'
+    expect { parser.parse("Variant[Integer,'not a type']") }.to raise_error(Puppet::ParseError,
+      /The expression <Variant\[Integer,'not a type'\]> is not a valid type specification/)
+  end
+
   [
     'Any', 'Data', 'CatalogEntry', 'Boolean', 'Scalar', 'Undef', 'Numeric', 'Default'
   ].each do |name|
