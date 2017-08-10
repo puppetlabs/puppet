@@ -1,14 +1,38 @@
 require 'spec_helper'
 require 'puppet_spec/files'
+require 'puppet_spec/modules'
 
 require 'puppet/pops'
 require 'puppet/info_service'
 require 'puppet/pops/evaluator/literal_evaluator'
 
 describe "Puppet::InfoService" do
-  context 'classes_per_environment service' do
-    include PuppetSpec::Files
+  include PuppetSpec::Files
 
+  context 'task information service' do
+    let(:mod_name) { 'test1' }
+    let(:modpath) { tmpdir('modpath') }
+    let(:env) { Puppet::Node::Environment.create(:testing, [modpath]) }
+    let(:env_loader) { Puppet::Environments::Static.new(env) }
+
+    context 'tasks_per_environment method' do
+      it "returns task data for the tasks in an environment" do
+        Puppet.override(:environments => env_loader) do
+          mod = PuppetSpec::Modules.create(mod_name, modpath, {:environment => env, :tasks => [['thingtask']]})
+          expect(Puppet::InfoService.tasks_per_environment('testing')).to eq([{:name => 'test1::thingtask', :module => {:name =>'test1' }}])
+        end
+      end
+
+      it "should throw EnvironmentNotFound if given a nonexistent environment" do
+        expect{ Puppet::InfoService.tasks_per_environment('utopia') }.to raise_error(Puppet::Environments::EnvironmentNotFound)
+      end
+    end
+
+    context 'task_data method' do
+    end
+  end
+
+  context 'classes_per_environment service' do
     let(:code_dir) do
       dir_containing('manifests', {
         'foo.pp' => <<-CODE,

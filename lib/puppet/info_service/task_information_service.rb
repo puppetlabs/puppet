@@ -3,12 +3,11 @@ class Puppet::InfoService::TaskInformationService
   def self.tasks_per_environment(environment_name)
     # get the actual environment object, raise error if the named env doesn't exist
     env = Puppet.lookup(:environments).get!(environment_name)
-
-    env.modules.each do |mod|
-      mod.tasks do |task|
-        {:module => task.module, :name => task.name}
+    env.modules.map do |mod|
+      mod.tasks.map do |task|
+        {:module => {:name => task.module.name}, :name => task.name}
       end
-    end
+    end.flatten
   end
 
   def self.task_data(environment_name, module_name, task_name)
