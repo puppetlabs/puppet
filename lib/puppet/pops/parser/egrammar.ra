@@ -344,7 +344,7 @@ if_expression
   # Produces Model::IfExpression
   if_part
     : expression LBRACE statements RBRACE else {
-        result = Factory.IF(val[0], Factory.block_or_expression(val[2]), val[4])
+        result = Factory.IF(val[0], Factory.block_or_expression(val[2], val[1], val[3]), val[4])
         loc(result, val[0], (val[4] ? val[4] : val[3]))
       }
     | expression LBRACE RBRACE else {
@@ -360,8 +360,7 @@ if_expression
         loc(result, val[0], val[1])
       }
     | ELSE LBRACE statements RBRACE {
-        result = Factory.block_or_expression(val[2])
-        loc result, val[0], val[3]
+        result = Factory.block_or_expression(val[2], val[1], val[3])
       }
     | ELSE LBRACE RBRACE {
         result = nil # don't think a nop is needed here either
@@ -371,7 +370,7 @@ if_expression
 #
 unless_expression
   : UNLESS expression LBRACE statements RBRACE unless_else {
-      result = Factory.UNLESS(val[1], Factory.block_or_expression(val[3]), val[5])
+      result = Factory.UNLESS(val[1], Factory.block_or_expression(val[3], val[2], val[4]), val[5])
       loc result, val[0], val[4]
     }
   | UNLESS expression LBRACE RBRACE unless_else {
@@ -385,8 +384,7 @@ unless_expression
   unless_else
     : # nothing
     | ELSE LBRACE statements RBRACE {
-        result = Factory.block_or_expression(val[2])
-        loc result, val[0], val[3]
+        result = Factory.block_or_expression(val[2], val[1], val[3])
       }
     | ELSE LBRACE RBRACE {
         result = nil # don't think a nop is needed here either
@@ -814,7 +812,7 @@ epp_parameters_list
 epp_render_expression
   : RENDER_STRING                  { result = Factory.RENDER_STRING(val[0][:value]); loc result, val[0] }
   | RENDER_EXPR expression epp_end { result = Factory.RENDER_EXPR(val[1]); loc result, val[0], val[2] }
-  | RENDER_EXPR LBRACE statements RBRACE epp_end { result = Factory.RENDER_EXPR(Factory.block_or_expression(val[2])); loc result, val[0], val[4] }
+  | RENDER_EXPR LBRACE statements RBRACE epp_end { result = Factory.RENDER_EXPR(Factory.block_or_expression(val[2], val[1], val[3])); loc result, val[0], val[4] }
 
 epp_end
   : EPP_END
