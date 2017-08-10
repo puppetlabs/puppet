@@ -1485,9 +1485,9 @@ class PStringType < PScalarDataType
   def self.new_function(type)
     @new_function ||= Puppet::Functions.create_loaded_function(:new_string, type.loader) do
       local_types do
-        type 'Format = Pattern[/^%([\s\+\-#0\[\{<\(\|]*)([1-9][0-9]*)?(?:\.([0-9]+))?([a-zA-Z])/]'
+        type "Format = Pattern[/#{StringConverter::Format::FMT_PATTERN_STR}/]"
         type 'ContainerFormat = Struct[{
-          Optional[format]         => String,
+          Optional[format]         => Format,
           Optional[separator]      => String,
           Optional[separator2]     => String,
           Optional[string_formats] => Hash[Type, Format]
