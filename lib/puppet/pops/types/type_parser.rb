@@ -348,6 +348,7 @@ class TypeParser
     when 'variant'
       # 1..m parameters being strings or regular expressions
       raise_invalid_parameters_error('Variant', '1 or more', parameters.size) unless parameters.size >= 1
+      parameters.each { |p| assert_type(ast, p) }
       TypeFactory.variant(*parameters)
 
     when 'tuple'

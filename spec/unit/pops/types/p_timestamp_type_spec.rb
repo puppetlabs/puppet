@@ -164,7 +164,6 @@ describe 'Timestamp type' do
       end
 
       it 'it cannot be created using an empty formats array' do
-        pending 'Fix for PUP-7829'
         code = <<-CODE
             notice(Timestamp('2015-03-01T11:12:13', []))
         CODE

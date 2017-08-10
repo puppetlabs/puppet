@@ -108,7 +108,6 @@ describe 'Timespan type' do
       end
 
       it 'it cannot be created using an empty formats array' do
-        pending 'Fix for PUP-7829'
         code = <<-CODE
             notice(Timespan('1d11h23m13s', []))
         CODE
