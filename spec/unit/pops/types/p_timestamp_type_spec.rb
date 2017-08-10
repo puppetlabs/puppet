@@ -163,6 +163,14 @@ describe 'Timestamp type' do
           ['2016-08-28T12:15:00.000000000 UTC', '2016-07-24T01:20:00.000000000 UTC', '2016-06-21T18:23:15.000000000 UTC'])
       end
 
+      it 'it cannot be created using an empty formats array' do
+        pending 'Fix for PUP-7829'
+        code = <<-CODE
+            notice(Timestamp('2015-03-01T11:12:13', []))
+        CODE
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /parameter 'format' variant 1 expects size to be at least 1, got 0/)
+      end
+
       it 'can be created from a string, array of formats, and a timezone' do
         code = <<-CODE
             $fmts = [
