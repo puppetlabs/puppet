@@ -489,6 +489,14 @@ module Serialization
       expect { write(val) }.to raise_error(/Endless recursion detected when attempting to serialize value of class Hash/)
     end
   end
+
+  context 'will fail when' do
+    it 'the value of a type description is something other than a String or a Hash' do
+      expect do
+        from_converter.convert({ '__pcore_type__' => { '__pcore_type__' => 'Pcore::TimestampType', '__pcore_value__' => 12345 }})
+      end.to raise_error(/Cannot create a Pcore::TimestampType from a (Fixnum|Integer)/)
+    end
+  end
 end
 end
 end
