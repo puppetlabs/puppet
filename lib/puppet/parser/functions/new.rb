@@ -221,7 +221,7 @@ An exception is raised when no format was able to parse the given string.
 
 ```puppet
 function Timespan.new(
-  String $string, Variant[String[2],Array[String[2]], 1] $format = <default format>)
+  String $string, Variant[String[2],Array[String[2], 1]] $format = <default format>)
 )
 ```
 
@@ -231,7 +231,7 @@ the arguments may also be passed as a `Hash`:
 function Timespan.new(
   Struct[{
     string => String[1],
-    Optional[format] => Variant[String[2],Array[String[2]], 1]
+    Optional[format] => Variant[String[2],Array[String[2], 1]]
   }] $hash
 )
 ```
@@ -316,7 +316,7 @@ An exception is raised when no format was able to parse the given string.
 ```puppet
 function Timestamp.new(
   String $string,
-  Variant[String[2],Array[String[2]], 1] $format = <default format>,
+  Variant[String[2],Array[String[2], 1]] $format = <default format>,
   String $timezone = default)
 )
 ```
@@ -327,7 +327,7 @@ the arguments may also be passed as a `Hash`:
 function Timestamp.new(
   Struct[{
     string => String[1],
-    Optional[format] => Variant[String[2],Array[String[2]], 1],
+    Optional[format] => Variant[String[2],Array[String[2], 1]],
     Optional[timezone] => String[1]
   }] $hash
 )
@@ -889,8 +889,8 @@ The signatures are:
 ```puppet
 type SemVerRangeString = String[1]
 type SemVerRangeHash = Struct[{
-  min                   => Variant[default, SemVer],
-  Optional[max]         => Variant[default, SemVer],
+  min                   => Variant[Default, SemVer],
+  Optional[max]         => Variant[Default, SemVer],
   Optional[exclude_max] => Boolean
 }]
 
@@ -899,8 +899,8 @@ function SemVerRange.new(
 )
 
 function SemVerRange.new(
-  Variant[default,SemVer] $min
-  Variant[default,SemVer] $max
+  Variant[Default,SemVer] $min
+  Variant[Default,SemVer] $max
   Optional[Boolean]       $exclude_max = undef
 )
 

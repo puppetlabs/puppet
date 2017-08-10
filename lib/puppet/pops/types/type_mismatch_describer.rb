@@ -796,7 +796,7 @@ module Types
     def describe_PTypeAliasType(expected, actual, path)
       resolved_type = expected.resolved_type
       describe(resolved_type, actual, path).map do |description|
-        if description.is_a?(ExpectedActualMismatch)
+        if description.is_a?(ExpectedActualMismatch) && description.path.length == path.length
           description.swap_expected(expected)
         else
           description
