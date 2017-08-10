@@ -160,7 +160,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   end
 
   def dump_LiteralRegularExpression o
-    "/#{o.value.source}/"
+    Puppet::Pops::Types::StringConverter.convert(o.value, '%p')
   end
 
   def dump_Nop o

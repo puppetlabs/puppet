@@ -550,7 +550,7 @@ class TypeCalculator
 
   # @api private
   def infer_Regexp(o)
-    PRegexpType.new(o.source)
+    PRegexpType.new(o)
   end
 
   # @api private

@@ -1095,7 +1095,7 @@ class EvaluatorImpl
   end
 
   def string_Regexp(o, scope)
-    "/#{o.source}/"
+    Types::PRegexpType.regexp_to_s_with_delimiters(o)
   end
 
   def string_PAnyType(o, scope)

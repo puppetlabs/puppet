@@ -70,6 +70,6 @@ class Puppet::Parser::AST::Regex < Puppet::Parser::AST::Leaf
   end
 
   def to_s
-    "/#{@value.source}/"
+    Puppet::Pops::Types::PRegexpType.regexp_to_s_with_delimiters(@value)
   end
 end
