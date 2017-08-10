@@ -23,4 +23,6 @@ class Puppet::InfoService::TaskInformationService
     {:metadata_file => task.metadata_file,
      :files => task.files}
   end
+
+  private
 end

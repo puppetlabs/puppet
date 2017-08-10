@@ -29,6 +29,25 @@ describe "Puppet::InfoService" do
     end
 
     context 'task_data method' do
+      before do
+        Puppet.override(:environments => env_loader) do
+          @mod = PuppetSpec::Modules.create(mod_name, modpath, {:environment => env, :tasks => [['thingtask', 'thingtask.json']]})
+          @result = Puppet::InfoService.task_data('testing', 'test1', 'test1::thingtask')
+        end
+      end
+      describe 'in the happy case' do
+        it 'returns the right set of keys' do
+          expect(@result.keys.sort).to eq([:files, :metadata_file])
+        end
+        it 'specifies the metadata_file correctly' do
+          task = @mod.tasks[0]
+          expect(@result[:metadata_file]).to eq(task.metadata_file)
+        end
+
+        it 'specifies the other files correctly' do
+
+        end
+      end
     end
   end
 
