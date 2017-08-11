@@ -92,51 +92,6 @@ module Types
     end
   end
 
-  # Module to handle present/past tense.
-  #
-  # All method names prefixed with "it_" to avoid conflict with Mocha expectations. Adding a method
-  # named 'expects' just doesn't work.
-  #
-  # @deprecated Will be removed in Puppet 5
-  # @api private
-  module TenseVariants
-    def it_expects(tense)
-      case tense
-      when :present
-        'expects'
-      else
-        'expected'
-      end
-    end
-
-    def it_does_not_expect(tense)
-      case tense
-      when :present
-        'does not expect'
-      else
-        'did not expect'
-      end
-    end
-
-    def it_has_no(tense)
-      case tense
-      when :present
-        'has no'
-      else
-        'did not have a'
-      end
-    end
-
-    def it_references(tense)
-      case tense
-        when :present
-          'references'
-        else
-          'referenced'
-      end
-    end
-  end
-
   # @api private
   class Mismatch
     attr_reader :path
