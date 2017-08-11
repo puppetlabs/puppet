@@ -812,9 +812,9 @@ describe "The lookup function" do
           YAML
         end
 
-        it 'fails lookup and reports a type mismatch' do
+        it 'fails lookup and reports unspecified class' do
           expect { lookup('a') }.to raise_error do |e|
-            expect(e.message).to match(/key 'a'.*data_hash function 'yaml_data'.*using location.*wrong type, expects Puppet::LookupValue, got Runtime/)
+            expect(e.message).to match(/Tried to load unspecified class: Puppet::Graph::Key/)
           end
         end
       end

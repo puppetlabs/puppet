@@ -461,7 +461,7 @@ Searching for "a"
       lookup.options[:render_as] = :yaml
       lookup.command_line.stubs(:args).returns(['a'])
       output = run_lookup(lookup)
-      expect(YAML.load(output)).to eq(expected_yaml_hash)
+      expect(YAML.safe_load(output, [Symbol])).to eq(expected_yaml_hash)
     end
 
     it 'can produce a json explanation' do

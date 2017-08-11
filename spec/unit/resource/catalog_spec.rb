@@ -777,7 +777,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @catalog.add_edge("one", "two")
 
       text = YAML.dump(@catalog)
-      @newcatalog = YAML.load(text)
+      @newcatalog = YAML.safe_load(text, [Puppet::Resource::Catalog])
     end
 
     it "should get converted back to a catalog" do
