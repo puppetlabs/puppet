@@ -92,7 +92,6 @@ describe 'The Object Type' do
     end
 
     it 'attribute value can be defined using heredoc?' do
-      pending 'Fix for PUP-7768'
       tp = parse_object('MyObject', <<-OBJECT.unindent)
         attributes => {
           a => { type => String, value => @(END) }
