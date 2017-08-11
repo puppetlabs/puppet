@@ -11,15 +11,17 @@ describe "Puppet::InfoService" do
 
   context 'task information service' do
     let(:mod_name) { 'test1' }
+    let(:task_name) { "#{mod_name}::thingtask" }
     let(:modpath) { tmpdir('modpath') }
-    let(:env) { Puppet::Node::Environment.create(:testing, [modpath]) }
+    let(:env_name) { 'testing' }
+    let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [modpath]) }
     let(:env_loader) { Puppet::Environments::Static.new(env) }
 
     context 'tasks_per_environment method' do
       it "returns task data for the tasks in an environment" do
         Puppet.override(:environments => env_loader) do
           mod = PuppetSpec::Modules.create(mod_name, modpath, {:environment => env, :tasks => [['thingtask']]})
-          expect(Puppet::InfoService.tasks_per_environment('testing')).to eq([{:name => 'test1::thingtask', :module => {:name =>'test1' }}])
+          expect(Puppet::InfoService.tasks_per_environment(env_name)).to eq([{:name => task_name, :module => {:name => mod_name}}])
         end
       end
 
@@ -32,7 +34,7 @@ describe "Puppet::InfoService" do
       before do
         Puppet.override(:environments => env_loader) do
           @mod = PuppetSpec::Modules.create(mod_name, modpath, {:environment => env, :tasks => [['thingtask', 'thingtask.json']]})
-          @result = Puppet::InfoService.task_data('testing', 'test1', 'test1::thingtask')
+          @result = Puppet::InfoService.task_data(env_name, mod_name, task_name)
         end
       end
       describe 'in the happy case' do
@@ -45,7 +47,28 @@ describe "Puppet::InfoService" do
         end
 
         it 'specifies the other files correctly' do
+          task = @mod.tasks[0]
+          expect(@result[:files]).to eq(task.files)
+        end
+      end
 
+      it "should throw EnvironmentNotFound if given a nonexistent environment" do
+        expect{ Puppet::InfoService.task_data('utopia', mod_name, task_name) }.to raise_error(Puppet::Environments::EnvironmentNotFound)
+      end
+
+      it "should return an empty task if the module does not exist" do
+        Puppet.override(:environments => env_loader) do
+          result = Puppet::InfoService.task_data(env_name, 'notamodule', 'notamodule::thingtask')
+          expect(Puppet::Module.find('notamodule', env_name)).to be_nil
+          expect(result).to eq({:metadata_file => nil, :files => nil})
+        end
+      end
+
+      it "should return an empty task if the task does not exist" do
+        Puppet.override(:environments => env_loader) do
+          result = Puppet::InfoService.task_data(env_name, mod_name, 'testing1::notatask')
+          expect(Puppet::Module.find(mod_name, env_name)).to be_truthy
+          expect(result).to eq({:metadata_file => nil, :files => nil})
         end
       end
     end
