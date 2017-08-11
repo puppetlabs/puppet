@@ -99,11 +99,6 @@ class TypeParser
   end
 
   # @api private
-  def interpret_QualifiedReference(o, context)
-    o.cased_value
-  end
-
-  # @api private
   def interpret_LiteralBoolean(o, context)
     o.value
   end
