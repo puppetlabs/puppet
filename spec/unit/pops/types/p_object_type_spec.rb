@@ -91,6 +91,20 @@ describe 'The Object Type' do
       expect(attr.value?).to be_truthy
     end
 
+    it 'attribute value can be defined using heredoc?' do
+      pending 'Fix for PUP-7768'
+      tp = parse_object('MyObject', <<-OBJECT.unindent)
+        attributes => {
+          a => { type => String, value => @(END) }
+            The value is some
+            multiline text
+            |-END
+        }
+      OBJECT
+      attr = tp['a']
+      expect(attr.value).to eql("The value is some\nmultiline text")
+    end
+
     it 'attribute without defined value responds false to value?' do
       tp = parse_object('MyObject', <<-OBJECT)
         attributes => {
