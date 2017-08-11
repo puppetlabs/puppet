@@ -1,4 +1,5 @@
 require 'puppet/util/logging'
+require 'puppet/module/task'
 require 'json'
 require 'semantic_puppet/gem_version'
 
@@ -79,7 +80,7 @@ class Puppet::Module
     end
   end
 
-  attr_reader :name, :environment, :path, :metadata
+  attr_reader :name, :environment, :path, :metadata, :tasks
   attr_writer :environment
 
   attr_accessor :dependencies, :forge_name
@@ -166,6 +167,20 @@ class Puppet::Module
     # Return the base directory for the given type
     define_method(type) do
       subpath(location)
+    end
+  end
+
+  def tasks_directory
+    subpath("tasks")
+  end
+
+  def tasks
+    return @tasks if instance_variable_defined?(:@tasks)
+
+    if Puppet::FileSystem.exist?(tasks_directory)
+      @tasks = Puppet::Module::Task.tasks_in_module(self)
+    else
+      @tasks = []
     end
   end
 

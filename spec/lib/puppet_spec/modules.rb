@@ -20,6 +20,16 @@ module PuppetSpec::Modules
         end
       end
 
+      if tasks = options[:tasks]
+        tasks_dir = File.join(module_dir, 'tasks')
+        FileUtils.mkdir_p(tasks_dir)
+        tasks.each do |task_files|
+          task_files.each do |task_file|
+            FileUtils.touch(File.join(tasks_dir, task_file))
+          end
+        end
+      end
+
       Puppet::Module.new(name, module_dir, environment)
     end
 
