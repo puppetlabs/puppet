@@ -461,7 +461,7 @@ Searching for "a"
       lookup.options[:render_as] = :yaml
       lookup.command_line.stubs(:args).returns(['a'])
       output = run_lookup(lookup)
-      expect(YAML.safe_load(output, [Symbol])).to eq(expected_yaml_hash)
+      expect(Puppet::Util::Yaml.safe_load(output, [Symbol])).to eq(expected_yaml_hash)
     end
 
     it 'can produce a json explanation' do

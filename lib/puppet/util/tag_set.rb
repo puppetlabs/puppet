@@ -5,7 +5,7 @@ class Puppet::Util::TagSet < Set
   include Puppet::Network::FormatSupport
 
   def self.from_yaml(yaml)
-    self.new(YAML.safe_load(yaml, [Symbol]))
+    self.new(Puppet::Util::Yaml.safe_load(yaml, [Symbol]))
   end
 
   def to_yaml

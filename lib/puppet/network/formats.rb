@@ -37,12 +37,12 @@ Puppet::Network::FormatHandler.create_serialized_formats(:yaml) do
   end
 
   def intern(klass, text)
-    data = YAML.safe_load(text, allowed_yaml_classes)
+    data = Puppet::Util::Yaml.safe_load(text, allowed_yaml_classes)
     data_to_instance(klass, data)
   end
 
   def intern_multiple(klass, text)
-    data = YAML.safe_load(text, allowed_yaml_classes)
+    data = Puppet::Util::Yaml.safe_load(text, allowed_yaml_classes)
     unless data.respond_to?(:collect)
       raise Puppet::Network::FormatHandler::FormatError, _("Serialized YAML did not contain a collection of instances when calling intern_multiple")
     end
