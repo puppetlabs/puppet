@@ -41,7 +41,7 @@ describe Puppet::FileServing::Mount::Modules do
 
   describe "when searching for files" do
     it "should fail if no module is specified" do
-      expect { @mount.find("", @request) }.to raise_error(/No module specified/)
+      expect { @mount.search("", @request) }.to raise_error(/No module specified/)
     end
 
     it "should use the node's environment to search the module" do
