@@ -54,6 +54,7 @@ class Puppet::Network::HTTP::WEBrick
 
   # @api private
   def create_server(address, port)
+    address = nil if address == '*'
     arguments = {:BindAddress => address, :Port => port, :DoNotReverseLookup => true}
     arguments.merge!(setup_logger)
     arguments.merge!(setup_ssl)
