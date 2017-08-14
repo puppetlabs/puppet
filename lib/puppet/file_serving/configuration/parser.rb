@@ -92,6 +92,8 @@ class Puppet::FileServing::Configuration::Parser
       mount = Mount::Modules.new(name)
     when "plugins"
       mount = Mount::Plugins.new(name)
+    when "tasks"
+      mount = Mount::Tasks.new(name)
     else
       mount = Mount::File.new(name)
     end

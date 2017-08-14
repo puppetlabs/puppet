@@ -83,14 +83,15 @@ describe Puppet::FileServing::Configuration do
       expect(config.mounted?("one")).to be_truthy
     end
 
-    it "should add modules and plugins mounts even if the file does not exist" do
+    it "should add modules, plugins, and tasks mounts even if the file does not exist" do
       Puppet::FileSystem.expects(:exist?).returns false # the file doesn't exist
       config = Puppet::FileServing::Configuration.configuration
       expect(config.mounted?("modules")).to be_truthy
       expect(config.mounted?("plugins")).to be_truthy
+      expect(config.mounted?("tasks")).to be_truthy
     end
 
-    it "should allow all access to modules and plugins if no fileserver.conf exists" do
+    it "should allow all access to modules, plugins, and tasks if no fileserver.conf exists" do
       Puppet::FileSystem.expects(:exist?).returns false # the file doesn't exist
       modules = stub 'modules', :empty? => true
       Puppet::FileServing::Mount::Modules.stubs(:new).returns(modules)
@@ -100,10 +101,14 @@ describe Puppet::FileServing::Configuration do
       Puppet::FileServing::Mount::Plugins.stubs(:new).returns(plugins)
       plugins.expects(:allow).with('*')
 
+      tasks = stub 'tasks', :empty? => true
+      Puppet::FileServing::Mount::Tasks.stubs(:new).returns(tasks)
+      tasks.expects(:allow).with('*')
+
       Puppet::FileServing::Configuration.configuration
     end
 
-    it "should not allow access from all to modules and plugins if the fileserver.conf provided some rules" do
+    it "should not allow access from all to modules, plugins, and tasks if the fileserver.conf provided some rules" do
       Puppet::FileSystem.expects(:exist?).returns false # the file doesn't exist
 
       modules = stub 'modules', :empty? => false
@@ -114,15 +119,20 @@ describe Puppet::FileServing::Configuration do
       Puppet::FileServing::Mount::Plugins.stubs(:new).returns(plugins)
       plugins.expects(:allow).with('*').never
 
+      tasks = stub 'tasks', :empty? => false
+      Puppet::FileServing::Mount::Tasks.stubs(:new).returns(tasks)
+      tasks.expects(:allow).with('*').never
+
       Puppet::FileServing::Configuration.configuration
     end
 
-    it "should add modules and plugins mounts even if they are not returned by the parser" do
+    it "should add modules, plugins, and tasks mounts even if they are not returned by the parser" do
       @parser.expects(:parse).returns("one" => mock("mount"))
       Puppet::FileSystem.expects(:exist?).returns true # the file doesn't exist
       config = Puppet::FileServing::Configuration.configuration
       expect(config.mounted?("modules")).to be_truthy
       expect(config.mounted?("plugins")).to be_truthy
+      expect(config.mounted?("tasks")).to be_truthy
     end
   end
 
