@@ -280,7 +280,7 @@ describe Puppet::Network::HTTP::Connection do
       expect(result.code).to eq(503)
     end
 
-    it "should return a 503 response if Retry-After is not convertable to an Integer" do
+    it "should return a 503 response if Retry-After is not convertable to an Integer or RFC 2822 Date" do
       httpunavailable['Retry-After'] = 'foo'
       http.stubs(:request).returns(httpunavailable)
 
@@ -292,7 +292,7 @@ describe Puppet::Network::HTTP::Connection do
       expect(result.code).to eq(503)
     end
 
-    it "should sleep and retry if Retry-After is an integer" do
+    it "should sleep and retry if Retry-After is an Integer" do
       httpunavailable['Retry-After'] = '42'
       http.stubs(:request).returns(httpunavailable).then.returns(httpok)
 
@@ -300,6 +300,23 @@ describe Puppet::Network::HTTP::Connection do
       pool.expects(:with_connection).with(site, anything).twice.yields(http)
 
       ::Kernel.expects(:sleep).with(42)
+
+      result = subject.get('/foo')
+
+      expect(result.code).to eq(200)
+    end
+
+    it "should sleep and retry if Retry-After is an RFC 2822 Date" do
+      httpunavailable['Retry-After'] = 'Wed, 13 Apr 2005 15:18:05 GMT'
+      http.stubs(:request).returns(httpunavailable).then.returns(httpok)
+
+      now = DateTime.new(2005, 4, 13, 8, 17, 5, '-07:00')
+      DateTime.stubs(:now).returns(now)
+
+      pool = Puppet.lookup(:http_pool)
+      pool.expects(:with_connection).with(site, anything).twice.yields(http)
+
+      ::Kernel.expects(:sleep).with(60)
 
       result = subject.get('/foo')
 

@@ -4,6 +4,7 @@ require 'puppet/ssl/configuration'
 require 'puppet/ssl/validator'
 require 'puppet/network/http'
 require 'uri'
+require 'date'
 
 module Puppet::Network::HTTP
 
@@ -198,22 +199,33 @@ module Puppet::Network::HTTP
               next
             end
 
-            begin
-              retry_sleep = Integer(retry_after)
-            rescue TypeError, ArgumentError
-              Puppet.err(_('Received a %{status_code} response from the server, but the Retry-After header value of "%{retry_after}" could not be converted to an integer.') %
-                         {status_code: current_response.code,
-                          retry_after: retry_after.inspect})
+            retry_after = begin
+                            Integer(retry_after)
+                          rescue TypeError, ArgumentError
+                            begin
+                              DateTime.rfc2822(retry_after)
+                            rescue ArgumentError
+                              Puppet.err(_('Received a %{status_code} response from the server, but the Retry-After header value of "%{retry_after}" could not be converted to an integer or RFC 2822 Date.') %
+                                         {status_code: current_response.code,
+                                          retry_after: retry_after.inspect})
 
-              response = current_response
-              next
-            end
+                              response = current_response
+                              next
+                            end
+                          end
 
-            Puppet.warning(_('Received a %{status_code} response from the server. Sleeping for %{retry_after} seconds before retrying the request.') %
+            retry_sleep = case retry_after
+                          when DateTime
+                            (retry_after.to_time - DateTime.now.to_time).to_i
+                          when Integer
+                            retry_after
+                          end
+
+            Puppet.warning(_('Received a %{status_code} response from the server. Sleeping for %{retry_sleep} seconds before retrying the request.') %
                            {status_code: current_response.code,
-                            retry_after: retry_after})
+                            retry_sleep: retry_sleep})
 
-            ::Kernel.sleep(retry_sleep)
+            ::Kernel.sleep(retry_sleep) if (retry_sleep > 0)
           else
             response = current_response
           end
