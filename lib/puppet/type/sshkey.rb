@@ -19,7 +19,15 @@ module Puppet
     end
 
     newproperty(:key) do
-      desc "The key itself; generally a long string of uuencoded characters."
+      desc "The key itself; generally a long string of uuencoded characters. The `key`
+        attribute may not contain whitespace.
+
+        Make sure to omit the following in this attribute (and specify them in
+        other attributes):
+
+        * Key headers (e.g. 'ssh-rsa') --- put these in the `type` attribute.
+        * Key identifiers / comments (e.g. 'joescomputer.local') --- put these in
+          the `name` attribute/resource title."
     end
 
     # FIXME This should automagically check for aliases to the hosts, just
