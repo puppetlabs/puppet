@@ -854,11 +854,23 @@ EOT
         This is distinct from the certificate authority's CRL."
     },
     :certificate_revocation => {
-        :default  => true,
-        :type     => :boolean,
-        :desc     => "Whether certificate revocation should be supported by downloading a
-          Certificate Revocation List (CRL)
-          to all clients.  If enabled, CA chaining will almost definitely not work.",
+        :default  => 'chain',
+        :type     => :certificate_revocation,
+        :desc     => <<EOT
+Whether certificate revocation checking should be enabled, and what level of checking should be performed.
+
+When certificate_revocation is set to 'true' or 'chain', Puppet will download the CA CRL and will perform revocation
+checking against each certificate in the chain. When Puppet is using a single root certificate and has no intermediates
+this will perform revocation checking with the root CA certificate. Puppet is unable to load multiple CRLs so if
+intermediate CAs are in use full chain revocation checking will fail.
+
+When certificate_revocation is set to 'leaf', Puppet will download the CA CRL and will verify the leaf certificate
+against that CRL. CRLs will not be fetched or checked for the rest of the certificates in the chain. If you are using
+an intermediate CA certificate and want to enable certificate revocation checking, this setting must be set to 'leaf'.
+
+When certificate_revocation is set to 'false', Puppet will disable all certificate revocation checking and will not
+attempt to download the CRL.
+EOT
     },
     :digest_algorithm => {
         :default  => 'md5',

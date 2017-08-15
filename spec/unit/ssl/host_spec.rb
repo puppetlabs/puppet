@@ -714,9 +714,27 @@ describe Puppet::SSL::Host do
         Puppet::SSL::CertificateRevocationList.indirection.stubs(:find).returns @crl
       end
 
-      describe "and 'certificate_revocation' is true" do
+      [true, 'chain'].each do |crl_setting|
+        describe "and 'certificate_revocation' is #{crl_setting}" do
+          before do
+            Puppet[:certificate_revocation] = crl_setting
+          end
+
+          it "should add the CRL" do
+            @store.expects(:add_crl).with "real_crl"
+            @host.ssl_store
+          end
+
+          it "should set the flags to OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK" do
+            @store.expects(:flags=).with(OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK)
+            @host.ssl_store
+          end
+        end
+      end
+
+      describe "and 'certificate_revocation' is leaf" do
         before do
-          Puppet[:certificate_revocation] = true
+          Puppet[:certificate_revocation] = 'leaf'
         end
 
         it "should add the CRL" do
@@ -724,8 +742,8 @@ describe Puppet::SSL::Host do
           @host.ssl_store
         end
 
-        it "should set the flags to OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK" do
-          @store.expects(:flags=).with OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
+        it "should set the flags to OpenSSL::X509::V_FLAG_CRL_CHECK" do
+          @store.expects(:flags=).with(OpenSSL::X509::V_FLAG_CRL_CHECK)
           @host.ssl_store
         end
       end

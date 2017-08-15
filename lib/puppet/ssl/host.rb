@@ -274,22 +274,8 @@ ERROR_STRING
   # Create/return a store that uses our SSL info to validate
   # connections.
   def ssl_store(purpose = OpenSSL::X509::PURPOSE_ANY)
-    unless @ssl_store
-      @ssl_store = OpenSSL::X509::Store.new
-      @ssl_store.purpose = purpose
-
-      # Use the file path here, because we don't want to cause
-      # a lookup in the middle of setting our ssl connection.
-      @ssl_store.add_file(Puppet[:localcacert])
-
-      # If we're doing revocation and there's a CRL, add it to our store.
-      if Puppet.settings[:certificate_revocation]
-        if crl = Puppet::SSL::CertificateRevocationList.indirection.find(CA_NAME)
-          @ssl_store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
-          @ssl_store.add_crl(crl.content)
-        end
-      end
-      return @ssl_store
+    if @ssl_store.nil?
+      @ssl_store = build_ssl_store(purpose)
     end
     @ssl_store
   end
@@ -381,6 +367,33 @@ ERROR_STRING
     rescue Puppet::SSL::CertificateAuthority::CertificateVerificationError
       return 'revoked'
     end
+  end
+
+  private
+
+  def build_ssl_store(purpose)
+    store = OpenSSL::X509::Store.new
+    store.purpose = purpose
+
+    # Use the file path here, because we don't want to cause
+    # a lookup in the middle of setting our ssl connection.
+    store.add_file(Puppet[:localcacert])
+
+    # If we're doing revocation and there's a CRL, add it to our store.
+    if Puppet.settings[:certificate_revocation]
+      if crl = Puppet::SSL::CertificateRevocationList.indirection.find(CA_NAME)
+        flags = OpenSSL::X509::V_FLAG_CRL_CHECK
+        if Puppet.settings[:certificate_revocation] == :chain
+          flags |= OpenSSL::X509::V_FLAG_CRL_CHECK_ALL
+        end
+
+        store.flags = flags
+        store.add_crl(crl.content)
+      else
+        Puppet.debug _("Certificate revocation checking is enabled but a CRL cannot be found; CRL checking will not be performed.")
+      end
+    end
+    store
   end
 end
 
