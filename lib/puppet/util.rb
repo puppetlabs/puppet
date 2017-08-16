@@ -675,7 +675,7 @@ module Util
     ## NOTE: when debugging spec failures, these two lines can be very useful
     #puts err.inspect
     #puts Puppet::Util.pretty_backtrace(err.backtrace)
-    Puppet.log_exception(err, _("Could not %{message}: %{err}") % { message: message, err: err })
+    Puppet.log_exception(err, "#{message}: #{err}")
     Puppet::Util::Log.force_flushqueue()
     exit(code)
   end
