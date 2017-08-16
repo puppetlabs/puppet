@@ -83,9 +83,9 @@ Puppet::Type.type(:zfs).provide(:zfs) do
   # On FreeBSD zoned is called jailed
   container = case Facter.value(:operatingsystem)
     when "FreeBSD"
-      "jailed"
+      :jailed
     else
-      "zoned"
+      :zoned
   end
 
   define_method(:zoned) do
