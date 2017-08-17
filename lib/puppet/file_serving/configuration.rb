@@ -5,6 +5,7 @@ require 'puppet/file_serving/mount/file'
 require 'puppet/file_serving/mount/modules'
 require 'puppet/file_serving/mount/plugins'
 require 'puppet/file_serving/mount/pluginfacts'
+require 'puppet/file_serving/mount/tasks'
 
 class Puppet::FileServing::Configuration
   require 'puppet/file_serving/configuration/parser'
@@ -82,6 +83,8 @@ class Puppet::FileServing::Configuration
     @mounts["plugins"].allow('*') if @mounts["plugins"].empty?
     @mounts["pluginfacts"] ||= Mount::PluginFacts.new("pluginfacts")
     @mounts["pluginfacts"].allow('*') if @mounts["pluginfacts"].empty?
+    @mounts["tasks"] ||= Mount::Tasks.new("tasks")
+    @mounts["tasks"].allow('*') if @mounts["tasks"].empty?
   end
 
   # Read the configuration file.

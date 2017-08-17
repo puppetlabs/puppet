@@ -588,6 +588,20 @@ describe Puppet::Module do
       expect(mod.tasks.map{|t| t.class}).to eq([Puppet::Module::Task] * 2)
     end
 
+    it "should be able to find individual task files when they exist" do
+      task_exe = 'stateskatetask.stk'
+      mod = PuppetSpec::Modules.create('task_file_smoke', @modpath, {:environment => env,
+                                                                     :tasks => [[task_exe]]})
+
+      expect(mod.task_file(task_exe)).to eq("#{mod.path}/tasks/#{task_exe}")
+    end
+
+    it "should return nil when asked for an individual task file if it does not exist" do
+      mod = PuppetSpec::Modules.create('task_file_neg', @modpath, {:environment => env,
+                                                                   :tasks => []})
+      expect(mod.task_file('nosuchtask')).to be_nil
+    end
+
     describe "does the task finding" do
       before :each do
         Puppet::FileSystem.unstub(:exist?)

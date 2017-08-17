@@ -184,6 +184,25 @@ class Puppet::Module
     end
   end
 
+  # This is a re-implementation of the Filetypes singular type method (e.g.
+  # `manifest('my/manifest.pp')`. We don't implement the full filetype "API" for
+  # tasks since tasks don't map 1:1 onto files.
+  def task_file(name)
+    # If 'file' is nil then they're asking for the base path.
+    # This is used for things like fileserving.
+    if name
+      full_path = File.join(tasks_directory, name)
+    else
+      full_path = tasks_directory
+    end
+
+    if Puppet::FileSystem.exist?(full_path)
+      return full_path
+    else
+      return nil
+    end
+  end
+
   def license_file
     return @license_file if defined?(@license_file)
 
