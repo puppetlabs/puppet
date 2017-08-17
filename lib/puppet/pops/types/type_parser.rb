@@ -85,13 +85,17 @@ class TypeParser
   end
 
   # @api private
-  def interpret_QualifiedName(o, context)
-    o.value
+  def interpret_HeredocExpression(o, context)
+    interpret_any(o.text_expr, context)
+  end
+
+  def interpret_SubLocatedExpression(o, context)
+    interpret_any(o.expr, context)
   end
 
   # @api private
-  def interpret_QualifiedReference(o, context)
-    o.cased_value
+  def interpret_QualifiedName(o, context)
+    o.value
   end
 
   # @api private
