@@ -54,9 +54,11 @@ expectations = {
   },
 }
 
-unless agent['locale'] == 'ja'
-  expectations[:puppet_agent][:matches] = [%r{(Warning|Error).*(404|400).*Could not find environment '#{env}'},
-                                          %r{Could not retrieve catalog; skipping run}]
+agents.each do |host|
+  unless host['locale'] == 'ja'
+    expectations[:puppet_agent][:matches] = [%r{(Warning|Error).*(404|400).*Could not find environment '#{env}'},
+                                             %r{Could not retrieve catalog; skipping run}]
+  end
 end
 
 assert_review(review_results(results,expectations))

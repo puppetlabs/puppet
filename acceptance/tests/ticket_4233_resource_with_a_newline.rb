@@ -16,6 +16,6 @@ tag 'audit:low',      # basic parser functionality
 agents.each do |host|
   resource = host.echo('-e "\nHello World\n"')
   apply_manifest_on(host, "exec { '#{resource}': }") do
-    assert_match(/Hello World.*success/, stdout) unless agent['locale'] == 'ja'
+    assert_match(/Hello World.*success/, stdout) unless host['locale'] == 'ja'
   end
 end
