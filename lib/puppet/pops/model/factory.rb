@@ -905,6 +905,10 @@ class Factory
     new(Application, name, parameters, body)
   end
 
+  def self.PLAN(name, parameters, body)
+    new(PlanDefinition, name, parameters, body)
+  end
+
   def self.FUNCTION(name, parameters, body, return_type)
     new(FunctionDefinition, name, parameters, body, return_type)
   end

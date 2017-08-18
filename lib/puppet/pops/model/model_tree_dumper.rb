@@ -224,6 +224,17 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     result
   end
 
+  def dump_PlanDefinition o
+    result = ["plan", o.name]
+    result << ["parameters"] + o.parameters.collect {|p| do_dump(p) } if o.parameters.size() > 0
+    if o.body
+      result << do_dump(o.body)
+    else
+      result << []
+    end
+    result
+  end
+
   def dump_NodeDefinition o
     result = ["node"]
     result << ["matches"] + o.host_matches.collect {|m| do_dump(m) }

@@ -121,6 +121,8 @@ class Puppet::Parser::AST::PopsBridge
           next
         when Puppet::Pops::Model::Application
           instantiate_ApplicationDefinition(d, modname)
+        when Puppet::Pops::Model::PlanDefinition
+          instantiate_PlanDefinition(d, modname)
         else
           raise Puppet::ParseError, "Internal Error: Unknown type of definition - got '#{d.class}'"
         end
@@ -296,6 +298,10 @@ class Puppet::Parser::AST::PopsBridge
       rhs = tf.interpret_any(type_mapping.mapping_expr, loader)
       Puppet::Pops::Loaders.implementation_registry.register_type_mapping(lhs, rhs, loader)
       nil
+    end
+
+    def instantiate_PlanDefinition(plan, modname)
+      raise "NotImplemented: instantiate_PlanDefinition"
     end
 
     def code()
