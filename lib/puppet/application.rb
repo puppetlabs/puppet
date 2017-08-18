@@ -339,23 +339,23 @@ class Application
     # I don't really like the names of these lifecycle phases.  It would be nice to change them to some more meaningful
     # names, and make deprecated aliases.  --cprice 2012-03-16
 
-    exit_on_fail(_("get application-specific default settings")) do
+    exit_on_fail(_("Could not get application-specific default settings")) do
       initialize_app_defaults
     end
 
     Puppet::ApplicationSupport.push_application_context(self.class.run_mode)
 
-    exit_on_fail(_("initialize"))                                   { preinit }
-    exit_on_fail(_("parse application options"))                    { parse_options }
-    exit_on_fail(_("prepare for execution"))                        { setup }
+    exit_on_fail(_("Could not initialize"))                { preinit }
+    exit_on_fail(_("Could not parse application options")) { parse_options }
+    exit_on_fail(_("Could not prepare for execution"))     { setup }
 
     if deprecated?
       Puppet.deprecation_warning(_("`puppet %{name}` is deprecated and will be removed in a future release.") % { name: name })
     end
 
-    exit_on_fail(_("configure routes from %{route_file}") % { route_file: Puppet[:route_file] }) { configure_indirector_routes }
-    exit_on_fail(_("log runtime debug info"))                       { log_runtime_environment }
-    exit_on_fail(_("run"))                                          { run_command }
+    exit_on_fail(_("Could not configure routes from %{route_file}") % { route_file: Puppet[:route_file] }) { configure_indirector_routes }
+    exit_on_fail(_("Could not log runtime debug info"))                       { log_runtime_environment }
+    exit_on_fail(_("Could not run"))                                          { run_command }
   end
 
   def main

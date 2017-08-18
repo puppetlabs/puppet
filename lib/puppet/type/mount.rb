@@ -65,7 +65,7 @@ module Puppet
                      # the wrong attributes so I sync AFTER the umount
           return :mount_unmounted
         else
-          raise Puppet::Error, _("Unexpected change from %{current} to unmounted}") % { current: current_value }
+          raise Puppet::Error, _("Unexpected change from %{current} to unmounted") % { current: current_value }
         end
       end
 
