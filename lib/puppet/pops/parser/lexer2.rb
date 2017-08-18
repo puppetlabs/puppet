@@ -138,6 +138,7 @@ class Lexer2
     'consumes'    => [:CONSUMES,    'consumes',  8],
     'produces'    => [:PRODUCES,    'produces',  8],
     'site'        => [:SITE,        'site',  4],
+    'plan'        => [:PLAN,        'plan',  4],
   }
 
   KEYWORDS.each {|k,v| v[1].freeze; v.freeze }
