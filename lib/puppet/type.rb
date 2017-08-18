@@ -1358,9 +1358,9 @@ class Type
 
       The order of the log levels, in decreasing priority, is:
 
-      * `crit`
       * `emerg`
       * `alert`
+      * `crit`
       * `err`
       * `warning`
       * `notice`
