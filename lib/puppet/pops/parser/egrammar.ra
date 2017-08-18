@@ -242,8 +242,6 @@ primary_expression
   | if_expression
   | unless_expression
   | definition_expression
-  # @todo lutter 2014-09-03: application declarations must be at the toplevel
-  # in a manifest - Should be validated, not handled here. helindbe 2015-09-10
   | application_expression
   | hostclass_expression
   | node_definition_expression
