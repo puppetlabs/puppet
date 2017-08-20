@@ -424,24 +424,19 @@ class Puppet::Module
 
   def initialize_i18n
     module_name = @forge_name.gsub("/","-") if @forge_name
-    return if module_name.nil? || i18n_initialized?(module_name)
+    return if module_name.nil? || Puppet::GettextConfig.module_initialized?(module_name)
 
     locales_path = File.absolute_path('locales', path)
 
-    begin
-      Puppet::GettextConfig.initialize(locales_path, :po)
+    if Puppet::GettextConfig.initialize(locales_path, :po)
       Puppet.debug "#{module_name} initialized for i18n: #{GettextSetup.translation_repositories[module_name]}"
-    rescue
+    else
       config_path = File.absolute_path('config.yaml', locales_path)
       Puppet.debug "Could not find locales configuration file for #{module_name} at #{config_path}. Skipping i18n initialization."
     end
   end
 
   private
-
-  def i18n_initialized?(module_name)
-    GettextSetup.translation_repositories.has_key? module_name
-  end
 
   def wanted_manifests_from(pattern)
     begin

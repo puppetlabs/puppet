@@ -30,6 +30,15 @@ module Puppet::GettextConfig
     end
   end
 
+  def self.module_initialized?(module_name)
+    begin
+      GettextSetup.translation_repositories.has_key? module_name
+    rescue NameError
+      # If GettextSetup has not been loaded yet, just return false
+      false
+    end
+  end
+
   # Attempt to initialize the gettext-setup gem
   # @param path [String] to gettext config file
   # @param file_format [Symbol] translation file format to use, either :po or :mo
