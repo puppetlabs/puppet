@@ -135,44 +135,88 @@ describe 'The Object Type' do
     end
 
     context 'that are constants' do
-      it 'sets final => true' do
-        tp = parse_object('MyObject', <<-OBJECT)
-          attributes => {
-            a => {
-              type => Integer,
-              kind => constant,
-              value => 3
+      context 'and declared under key "constants"' do
+        it 'sets final => true' do
+          tp = parse_object('MyObject', <<-OBJECT)
+            constants => {
+              a => 3
             }
-          }
-        OBJECT
-        expect(tp['a'].final?).to be_truthy
+          OBJECT
+          expect(tp['a'].final?).to be_truthy
+        end
+
+        it 'sets kind => constant' do
+          tp = parse_object('MyObject', <<-OBJECT)
+            constants => {
+              a => 3
+            }
+          OBJECT
+          expect(tp['a'].constant?).to be_truthy
+        end
+
+        it 'infers generic type from value' do
+          tp = parse_object('MyObject', <<-OBJECT)
+            constants => {
+              a => 3
+            }
+          OBJECT
+          expect(tp['a'].type.to_s).to eql('Integer')
+        end
+
+        it 'cannot have the same name as an attribute' do
+          obj = <<-OBJECT
+            constants => {
+              a => 3
+            },
+            attributes => {
+              a => Integer
+            }
+          OBJECT
+          expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
+            'attribute MyObject[a] is defined as both a constant and an attribute')
+        end
       end
 
-      it 'raises an error when no value is declared' do
-        obj = <<-OBJECT
-          attributes => {
-            a => {
-              type => Integer,
-              kind => constant
+      context 'and declared under key "attributes"' do
+        it 'sets final => true when declard in attributes' do
+          tp = parse_object('MyObject', <<-OBJECT)
+            attributes => {
+              a => {
+                type => Integer,
+                kind => constant,
+                value => 3
+              }
             }
-          }
-        OBJECT
-        expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
-          "attribute MyObject[a] of kind 'constant' requires a value")
-      end
+          OBJECT
+          expect(tp['a'].final?).to be_truthy
+        end
 
-      it 'raises an error when final => false' do
-        obj = <<-OBJECT
-          attributes => {
-            a => {
-              type => Integer,
-              kind => constant,
-              final => false
+        it 'raises an error when no value is declared' do
+          obj = <<-OBJECT
+            attributes => {
+              a => {
+                type => Integer,
+                kind => constant
+              }
             }
-          }
-        OBJECT
-        expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
-          "attribute MyObject[a] of kind 'constant' cannot be combined with final => false")
+          OBJECT
+          expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
+            "attribute MyObject[a] of kind 'constant' requires a value")
+        end
+
+        it 'raises an error when final => false' do
+          obj = <<-OBJECT
+            attributes => {
+              a => {
+                type => Integer,
+                kind => constant,
+                final => false
+              }
+            }
+          OBJECT
+          expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
+            "attribute MyObject[a] of kind 'constant' cannot be combined with final => false")
+        end
       end
     end
   end
@@ -218,6 +262,24 @@ describe 'The Object Type' do
       parse_object('MyObject', parent)
       tp = parse_object('MyDerivedObject', obj)
       expect(tp['a'].type).to eql(PIntegerType.new(0,10))
+    end
+
+    it 'can redefine inherited constant to assignable type' do
+      parent = <<-OBJECT
+        constants => {
+          a => 23
+        }
+      OBJECT
+      obj = <<-OBJECT
+        parent => MyObject,
+        constants => {
+          a => 46
+        }
+      OBJECT
+      tp = parse_object('MyObject', parent)
+      td = parse_object('MyDerivedObject', obj)
+      expect(tp['a'].value).to eql(23)
+      expect(td['a'].value).to eql(46)
     end
 
     it 'raises an error when an attribute overrides a function' do
