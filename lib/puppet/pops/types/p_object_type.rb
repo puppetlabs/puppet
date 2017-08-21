@@ -5,6 +5,7 @@ module Types
 
 KEY_ATTRIBUTES = 'attributes'.freeze
 KEY_CHECKS = 'checks'.freeze
+KEY_CONSTANTS = 'constants'.freeze
 KEY_EQUALITY = 'equality'.freeze
 KEY_EQUALITY_INCLUDE_TYPE = 'equality_include_type'.freeze
 KEY_FINAL = 'final'.freeze
@@ -32,6 +33,8 @@ class PObjectType < PMetaType
     KEY_VALUE => PAnyType::DEFAULT,
     TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
   })
+
+  TYPE_CONSTANTS = TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, PAnyType::DEFAULT)
   TYPE_ATTRIBUTES = TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, TypeFactory.not_undef)
   TYPE_ATTRIBUTE_CALLABLE = TypeFactory.callable(0,0)
 
@@ -53,6 +56,7 @@ class PObjectType < PMetaType
     TypeFactory.optional(KEY_NAME) => TYPE_OBJECT_NAME,
     TypeFactory.optional(KEY_PARENT) => PTypeType::DEFAULT,
     TypeFactory.optional(KEY_ATTRIBUTES) => TYPE_ATTRIBUTES,
+    TypeFactory.optional(KEY_CONSTANTS) => TYPE_CONSTANTS,
     TypeFactory.optional(KEY_FUNCTIONS) => TYPE_FUNCTIONS,
     TypeFactory.optional(KEY_EQUALITY) => TYPE_EQUALITY,
     TypeFactory.optional(KEY_EQUALITY_INCLUDE_TYPE) => PBooleanType::DEFAULT,
@@ -143,10 +147,14 @@ class PObjectType < PMetaType
     # @api private
     def assert_can_be_overridden(member)
       raise Puppet::ParseError, "#{member.label} attempts to override #{label}" unless self.class == member.class
-      raise Puppet::ParseError, "#{member.label} attempts to override final #{label}" if @final
+      raise Puppet::ParseError, "#{member.label} attempts to override final #{label}" if @final && !(constant? && member.constant?)
       raise Puppet::ParseError, "#{member.label} attempts to override #{label} without having override => true" unless member.override?
       raise Puppet::ParseError, "#{member.label} attempts to override #{label} with a type that does not match" unless @type.assignable?(member.type)
       member
+    end
+
+    def constant?
+      false
     end
 
     # @return [Boolean] `true` if this feature cannot be overridden
@@ -293,6 +301,10 @@ class PObjectType < PMetaType
       end
       hash[KEY_VALUE] = @value unless @value == :undef
       hash
+    end
+
+    def constant?
+      @kind == ATTRIBUTE_KIND_CONSTANT
     end
 
     # @return [Booelan] true if the given value equals the default value for this attribute
@@ -594,8 +606,24 @@ class PObjectType < PMetaType
       end
     end
 
-    attr_specs = init_hash[KEY_ATTRIBUTES]
-    unless attr_specs.nil? || attr_specs.empty?
+    constants = init_hash[KEY_CONSTANTS]
+    attr_specs = init_hash[KEY_ATTRIBUTES] || {}
+    unless constants.nil? || constants.empty?
+      constants.each do |key, value|
+        raise Puppet::ParseError, "attribute #{label}[#{key}] is defined as both a constant and an attribute" if attr_specs.include?(key)
+        attr_spec = {
+          # Type must be generic here, or overrides would become impossible
+          KEY_TYPE => TypeCalculator.infer(value).generalize,
+          KEY_VALUE => value,
+          KEY_KIND => ATTRIBUTE_KIND_CONSTANT
+        }
+        # Indicate override if parent member exists. Type check etc. will take place later on.
+        attr_spec[KEY_OVERRIDE] = true if parent_members.include?(key)
+        attr_specs[key] = attr_spec
+      end
+    end
+
+    unless attr_specs.empty?
       @attributes = Hash[attr_specs.map do |key, attr_spec|
         unless attr_spec.is_a?(Hash)
           attr_type = TypeAsserter.assert_instance_of(nil, PTypeType::DEFAULT, attr_spec) { "attribute #{label}[#{key}]" }
