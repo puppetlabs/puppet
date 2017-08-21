@@ -431,6 +431,32 @@ class Factory
   end
 
   def build_TypeAlias(o, name, type_expr)
+    if type_expr.model_class <= KeyedEntry
+      # KeyedEntry is used for the form:
+      #
+      #   type Foo = Bar { ... }
+      #
+      # The entry contains Bar => { ... } and must be transformed into:
+      #
+      #   Object[{parent => Bar, ... }]
+      #
+      parent = type_expr['key']
+      hash = type_expr['value']
+      unless parent['cased_value'] == 'Object'
+        hash['entries'] << Factory.KEY_ENTRY(Factory.QNAME('parent'), parent)
+      end
+      type_expr = Factory.QREF('Object').access([hash])
+    elsif type_expr.model_class <= LiteralHash
+      # LiteralHash is used for the form:
+      #
+      #   type Foo = { ... }
+      #
+      # The hash must be transformed into:
+      #
+      #   Object[{ ... }]
+      #
+      type_expr = Factory.QREF('Object').access([type_expr])
+    end
     @init_hash['type_expr'] = type_expr
     @init_hash[KEY_NAME] = name
   end

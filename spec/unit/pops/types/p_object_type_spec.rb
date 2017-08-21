@@ -858,6 +858,37 @@ describe 'The Object Type' do
         /attribute MySecondObject\[a\] attempts to override final attribute MyObject\[a\]/)
     end
 
+    it 'a type alias can use a bracket-less (implicit Object) form' do
+      code = <<-CODE
+      type MyObject = { name => 'MyFirstObject', attributes => { a => Integer}}
+      notice(MyObject =~ Type)
+      notice(MyObject(3))
+      CODE
+      expect(eval_and_collect_notices(code)).to eql(['true', "MyObject({'a' => 3})"])
+    end
+
+    it 'a type alias can use a bracket-less form with Object specified' do
+      code = <<-CODE
+      type MyObject = Object { name => 'MyFirstObject', attributes => { a =>Integer }}
+      notice(MyObject =~ Type)
+      notice(MyObject(3))
+      CODE
+      expect(eval_and_collect_notices(code)).to eql(['true', "MyObject({'a' => 3})"])
+    end
+
+    it 'a type alias can use a bracket-less form with parent specified' do
+      code = <<-CODE
+      type MyObject = { name => 'MyFirstObject', attributes => { a => String }}
+      type MySecondObject = MyObject { attributes => { b => String }}
+      notice(MySecondObject =~ Type)
+      notice(MySecondObject < MyObject)
+      notice(MyObject('hi'))
+      notice(MySecondObject('hello', 'world'))
+      CODE
+      expect(eval_and_collect_notices(code)).to eql(
+        ['true', 'true', "MyObject({'a' => 'hi'})", "MySecondObject({'a' => 'hello', 'b' => 'world'})"])
+    end
+
     it 'can inherit from an aliased type' do
       code = <<-CODE
       type MyObject = Object[{ name => 'MyFirstObject', attributes => { a => Integer }}]

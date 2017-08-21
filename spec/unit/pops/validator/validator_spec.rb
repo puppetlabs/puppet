@@ -472,12 +472,12 @@ describe "validating 4x" do
     context 'that are type aliases' do
       it 'raises errors when RHS is a name that is an invalid reference' do
         source = 'type MyInt = integer'
-        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::ILLEGAL_EXPRESSION)
+        expect { parse(source) }.to raise_error(/Syntax error at 'integer'/)
       end
 
       it 'raises errors when RHS is an AccessExpression with a name that is an invalid reference on LHS' do
         source = 'type IntegerArray = array[Integer]'
-        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::ILLEGAL_EXPRESSION)
+        expect { parse(source) }.to raise_error(/Syntax error at 'array'/)
       end
     end
 
