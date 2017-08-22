@@ -31,10 +31,14 @@ class Puppet::Application::Apply < Puppet::Application
     exit 1
   end
 
-  def help
-    <<-'HELP'
+  def summary
+    _("Apply Puppet manifests locally")
+  end
 
-puppet-apply(8) -- Apply Puppet manifests locally
+  def help
+    <<-HELP
+
+puppet-apply(8) -- #{summary}
 ========
 
 SYNOPSIS

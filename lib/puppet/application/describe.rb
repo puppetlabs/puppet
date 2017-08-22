@@ -178,10 +178,14 @@ class Puppet::Application::Describe < Puppet::Application
   option("--list", "-l")
   option("--meta","-m")
 
-  def help
-    <<-'HELP'
+  def summary
+    _("Display help about resource types")
+  end
 
-puppet-describe(8) -- Display help about resource types
+  def help
+    <<-HELP
+
+puppet-describe(8) -- #{summary}
 ========
 
 SYNOPSIS

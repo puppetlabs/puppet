@@ -4,7 +4,7 @@ Puppet::Indirector::Face.define(:certificate_revocation_list, '0.0.1') do
   copyright "Puppet Inc.", 2011
   license   "Apache 2 license; see COPYING"
 
-  summary "Manage the list of revoked certificates."
+  summary _("Manage the list of revoked certificates.")
   description <<-EOT
     This subcommand is primarily for retrieving the certificate revocation
     list from the CA.
