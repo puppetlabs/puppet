@@ -71,11 +71,20 @@ module Serialization
     def to_data(value)
       if value.nil? || Types::PScalarDataType::DEFAULT.instance?(value)
         value
-      elsif value.is_a?(Symbol)
-        if value == :default
+      elsif :default == value
+        if @rich_data
           { PCORE_TYPE_KEY => PCORE_TYPE_DEFAULT }
         else
-          @symbol_as_string ? value.to_s : { PCORE_TYPE_KEY => PCORE_TYPE_SYMBOL, PCORE_VALUE_KEY => value.to_s }
+          serialization_issue(Issues::SERIALIZATION_DEFAULT_CONVERTED_TO_STRING, :path => path_to_s)
+          'default'
+        end
+      elsif value.is_a?(Symbol)
+        if @symbol_as_string
+          value.to_s
+        elsif @rich_data
+          { PCORE_TYPE_KEY => PCORE_TYPE_SYMBOL, PCORE_VALUE_KEY => value.to_s }
+        else
+          unknown_to_string_with_warning(value)
         end
       elsif value.instance_of?(Array)
         process(value) do

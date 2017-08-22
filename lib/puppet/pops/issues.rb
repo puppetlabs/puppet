@@ -843,6 +843,10 @@ module Issues
     _('Endless recursion detected when attempting to serialize value of class %{type_name}') % { :type_name => type_name }
   end
 
+  SERIALIZATION_DEFAULT_CONVERTED_TO_STRING = issue :SERIALIZATION_DEFAULT_CONVERTED_TO_STRING, :path, :klass, :value do
+    _("%{path} contains the special value default. It will be converted to the String 'default'") % { path: path }
+  end
+
   SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING = issue :SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING, :path, :klass, :value do
     _("%{path} contains %{klass} value. It will be converted to the String '%{value}'") % { path: path, klass: label.a_an(klass), value: value }
   end
