@@ -51,7 +51,6 @@ absent_manifest = <<-MANIFEST
 package { '#{package}':
   ensure   => absent,
   provider => aix,
-  source   => '#{dir}',
 }
 MANIFEST
 
