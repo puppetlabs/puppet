@@ -465,7 +465,7 @@ module Serialization
     end
 
     context 'and symbol_as_string is set to true' do
-      let(:to_converter) { ToDataConverter.new(:symbol_as_string => true) }
+      let(:to_converter) { ToDataConverter.new(:rich_data => false, :symbol_as_string => true) }
 
       it 'A Hash with Symbol keys is silently converted to hash with String keys' do
         val = { :one => 'one', :two => 'two' }
@@ -474,6 +474,72 @@ module Serialization
           val2 = read
           expect(val2).to be_a(Hash)
           expect(val2).to eql({ 'one' => 'one', 'two' => 'two' })
+        end
+        expect(warnings).to be_empty
+      end
+
+      it 'A Hash with Symbol values is silently converted to hash with String values' do
+        val = { 'one' => :one, 'two' => :two  }
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          write(val)
+          val2 = read
+          expect(val2).to be_a(Hash)
+          expect(val2).to eql({ 'one' => 'one', 'two' => 'two' })
+        end
+        expect(warnings).to be_empty
+      end
+
+      it 'A Hash with default values will have the values converted to string with a warning' do
+        pending 'Fix for PUP-7855'
+        val = { 'key' => :default  }
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          write(val)
+          val2 = read
+          expect(val2).to be_a(Hash)
+          expect(val2).to eql({ 'key' => 'default' })
+        end
+        expect(warnings).to eql(["['key'] contains the special value default. It will be converted to the String 'default'"])
+      end
+    end
+  end
+
+  context 'with rich_data is set to true' do
+    let(:to_converter) { ToDataConverter.new(:message_prefix => 'Test Hash', :rich_data => true) }
+    let(:logs) { [] }
+    let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
+
+    context 'and symbol_as_string is set to true' do
+      let(:to_converter) { ToDataConverter.new(:rich_data => true, :symbol_as_string => true) }
+
+      it 'A Hash with Symbol keys is silently converted to hash with String keys' do
+        val = { :one => 'one', :two => 'two' }
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          write(val)
+          val2 = read
+          expect(val2).to be_a(Hash)
+          expect(val2).to eql({ 'one' => 'one', 'two' => 'two' })
+        end
+        expect(warnings).to be_empty
+      end
+
+      it 'A Hash with Symbol values is silently converted to hash with String values' do
+        val = { 'one' => :one, 'two' => :two  }
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          write(val)
+          val2 = read
+          expect(val2).to be_a(Hash)
+          expect(val2).to eql({ 'one' => 'one', 'two' => 'two' })
+        end
+        expect(warnings).to be_empty
+      end
+
+      it 'A Hash with default values will not loose type information' do
+        val = { 'key' => :default  }
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          write(val)
+          val2 = read
+          expect(val2).to be_a(Hash)
+          expect(val2).to eql({ 'key' => :default })
         end
         expect(warnings).to be_empty
       end
