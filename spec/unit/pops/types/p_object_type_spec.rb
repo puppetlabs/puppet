@@ -920,6 +920,115 @@ describe 'The Object Type' do
         /attribute MySecondObject\[a\] attempts to override final attribute MyObject\[a\]/)
     end
 
+    context 'type alias using bracket-less (implicit Object) form' do
+      let(:logs) { [] }
+      let(:notices) { logs.select { |log| log.level == :notice }.map { |log| log.message } }
+      let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
+      let(:node) { Puppet::Node.new('example.com') }
+      let(:compiler) { Puppet::Parser::Compiler.new(node) }
+
+      def compile(code)
+        Puppet[:code] = code
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) { compiler.compile }
+      end
+
+      it 'Object is implicit' do
+        compile(<<-CODE)
+          type MyObject = { name => 'MyFirstObject', attributes => { a => Integer}}
+          notice(MyObject =~ Type)
+          notice(MyObject(3))
+        CODE
+        expect(warnings).to be_empty
+        expect(notices).to eql(['true', "MyObject({'a' => 3})"])
+      end
+
+      it 'Object can be specified' do
+        compile(<<-CODE)
+          type MyObject = Object { name => 'MyFirstObject', attributes => { a =>Integer }}
+          notice(MyObject =~ Type)
+          notice(MyObject(3))
+        CODE
+        expect(warnings).to be_empty
+        expect(notices).to eql(['true', "MyObject({'a' => 3})"])
+      end
+
+      it 'parent can be specified before the hash' do
+        compile(<<-CODE)
+          type MyObject = { name => 'MyFirstObject', attributes => { a => String }}
+          type MySecondObject = MyObject { attributes => { b => String }}
+          notice(MySecondObject =~ Type)
+          notice(MySecondObject < MyObject)
+          notice(MyObject('hi'))
+          notice(MySecondObject('hello', 'world'))
+        CODE
+        expect(warnings).to be_empty
+        expect(notices).to eql(
+          ['true', 'true', "MyObject({'a' => 'hi'})", "MySecondObject({'a' => 'hello', 'b' => 'world'})"])
+      end
+
+      it 'parent can be specified in the hash' do
+        Puppet[:strict] = 'warning'
+        compile(<<-CODE)
+          type MyObject = { name => 'MyFirstObject', attributes => { a => String }}
+          type MySecondObject = { parent => MyOtherType, attributes => { b => String }}
+          notice(MySecondObject =~ Type)
+        CODE
+        expect(warnings).to be_empty
+        expect(notices).to eql(['true'])
+      end
+
+      it 'Object before the hash and parent inside the hash can be combined' do
+        Puppet[:strict] = 'warning'
+        compile(<<-CODE)
+          type MyObject = { name => 'MyFirstObject', attributes => { a => String }}
+          type MySecondObject = Object { parent => MyOtherType, attributes => { b => String }}
+          notice(MySecondObject =~ Type)
+        CODE
+        expect(warnings).to be_empty
+        expect(notices).to eql(['true'])
+      end
+
+      it 'if strict == warning, a warning is issued when the same is parent specified both before and inside the hash' do
+        Puppet[:strict] = 'warning'
+        compile(<<-CODE)
+          type MyObject = { name => 'MyFirstObject', attributes => { a => String }}
+          type MySecondObject = MyObject { parent => MyObject, attributes => { b => String }}
+          notice(MySecondObject =~ Type)
+        CODE
+        expect(notices).to eql(['true'])
+        expect(warnings).to eql(["The key 'parent' is declared more than once"])
+      end
+
+      it 'if strict == warning, a warning is issued when different parents are specified before and inside the hash. The former overrides the latter' do
+        Puppet[:strict] = 'warning'
+        compile(<<-CODE)
+          type MyObject = { name => 'MyFirstObject', attributes => { a => String }}
+          type MySecondObject = MyObject { parent => MyObject, attributes => { b => String }}
+          notice(MySecondObject =~ Type)
+        CODE
+        expect(notices).to eql(['true'])
+        expect(warnings).to eql(["The key 'parent' is declared more than once"])
+      end
+
+      it 'if strict == error, an error is raised when the same parent is specified both before and inside the hash' do
+        Puppet[:strict] = 'error'
+        expect { compile(<<-CODE) }.to raise_error(/The key 'parent' is declared more than once/)
+          type MyObject = { name => 'MyFirstObject', attributes => { a => String }}
+          type MySecondObject = MyObject { parent => MyObject, attributes => { b => String }}
+          notice(MySecondObject =~ Type)
+        CODE
+      end
+
+      it 'if strict == error, an error is raised when different parents are specified before and inside the hash' do
+        Puppet[:strict] = 'error'
+        expect { compile(<<-CODE) }.to raise_error(/The key 'parent' is declared more than once/)
+          type MyObject = { name => 'MyFirstObject', attributes => { a => String }}
+          type MySecondObject = MyObject { parent => MyOtherType, attributes => { b => String }}
+          notice(MySecondObject =~ Type)
+        CODE
+      end
+    end
+
     it 'can inherit from an aliased type' do
       code = <<-CODE
       type MyObject = Object[{ name => 'MyFirstObject', attributes => { a => Integer }}]

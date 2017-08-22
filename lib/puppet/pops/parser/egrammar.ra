@@ -694,11 +694,34 @@ parameter_type
 
 #--TYPE ALIAS
 type_alias
-  : TYPE parameter_type EQUALS expression {
-      definition = Factory.TYPE_ASSIGNMENT(val[1], val[3])
+  : type_alias_lhs EQUALS type hash {
+      definition = Factory.TYPE_ASSIGNMENT(val[0], Factory.KEY_ENTRY(val[2], val[3]))
       loc(definition, val[0], val[3])
       result = add_definition(definition)
     }
+  | type_alias_lhs EQUALS type LBRACK expressions RBRACK {
+      definition = Factory.TYPE_ASSIGNMENT(val[0], val[2].access(val[4]))
+      loc(definition, val[0], val[5])
+      result = add_definition(definition)
+    }
+  | type_alias_lhs EQUALS type {
+      definition = Factory.TYPE_ASSIGNMENT(val[0], val[2])
+      loc(definition, val[0], val[2])
+      result = add_definition(definition)
+    }
+  | type_alias_lhs EQUALS hash {
+      definition = Factory.TYPE_ASSIGNMENT(val[0], val[2])
+      loc(definition, val[0], val[2])
+      result = add_definition(definition)
+    }
+  | type_alias_lhs EQUALS array {
+      definition = Factory.TYPE_ASSIGNMENT(val[0], val[2])
+      loc(definition, val[0], val[4])
+      result = add_definition(definition)
+    }
+
+type_alias_lhs
+  : TYPE parameter_type { result = val[1] }
 
 #--TYPE definition
 # TODO: Uses the optional_statements rule temporarily since the actual body awaits final spec on methods and attributes.
