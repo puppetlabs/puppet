@@ -440,7 +440,12 @@ class Puppet::Module
   private
 
   def i18n_initialized?(module_name)
-    GettextSetup.translation_repositories.has_key? module_name
+    begin
+      GettextSetup.translation_repositories.has_key? module_name
+    rescue NameError
+      # GettextSetup not yet initialized
+      false
+    end
   end
 
   def wanted_manifests_from(pattern)
