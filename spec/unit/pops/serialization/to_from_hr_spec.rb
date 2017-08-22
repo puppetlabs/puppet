@@ -490,7 +490,6 @@ module Serialization
       end
 
       it 'A Hash with default values will have the values converted to string with a warning' do
-        pending 'Fix for PUP-7855'
         val = { 'key' => :default  }
         Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
           write(val)
