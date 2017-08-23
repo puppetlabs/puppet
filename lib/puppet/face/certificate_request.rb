@@ -4,7 +4,7 @@ Puppet::Indirector::Face.define(:certificate_request, '0.0.1') do
   copyright "Puppet Inc.", 2011
   license   "Apache 2 license; see COPYING"
 
-  summary "Manage certificate requests."
+  summary _("Manage certificate requests.")
   description <<-EOT
     This subcommand retrieves and submits certificate signing requests (CSRs).
   EOT

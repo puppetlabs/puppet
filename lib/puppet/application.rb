@@ -474,5 +474,12 @@ class Application
   def help
     _("No help available for puppet %{app_name}") % { app_name: name }
   end
+
+  # The description used in top level `puppet help` output
+  # If left empty in implementations, we will attempt to extract
+  # the summary from the help text itself.
+  def summary
+    ""
+  end
 end
 end

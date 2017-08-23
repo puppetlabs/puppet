@@ -25,10 +25,14 @@ class Puppet::Application::Master < Puppet::Application
     exit 1
   end
 
-  def help
-    <<-'HELP'
+  def summary
+    _("The puppet master daemon")
+  end
 
-puppet-master(8) -- The puppet master daemon
+  def help
+    <<-HELP
+
+puppet-master(8) -- #{summary}
 ========
 
 SYNOPSIS

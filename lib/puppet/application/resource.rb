@@ -28,10 +28,14 @@ class Puppet::Application::Resource < Puppet::Application
     @extra_params << arg.to_sym
   end
 
-  def help
-    <<-'HELP'
+  def summary
+    _("The resource abstraction layer shell")
+  end
 
-puppet-resource(8) -- The resource abstraction layer shell
+  def help
+    <<-HELP
+
+puppet-resource(8) -- #{summary}
 ========
 
 SYNOPSIS

@@ -12,10 +12,14 @@ class Puppet::Application::Filebucket < Puppet::Application
 
   attr :args
 
-  def help
-    <<-'HELP'
+  def summary
+    _("Store and retrieve files in a filebucket")
+  end
 
-puppet-filebucket(8) -- Store and retrieve files in a filebucket
+  def help
+    <<-HELP
+
+puppet-filebucket(8) -- #{summary}
 ========
 
 SYNOPSIS
