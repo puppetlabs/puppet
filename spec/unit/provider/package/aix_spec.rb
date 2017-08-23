@@ -104,4 +104,12 @@ mypackage                 1.2.3.3         Already superseded by 1.2.3.4
     @provider.expects(:install).with(false)
     @provider.update
   end
+
+  it "should prefetch when some packages lack sources" do
+    latest = Puppet::Type.type(:package).new(:name => 'mypackage', :ensure => :latest, :source => 'mysource', :provider => :aix)
+    absent = Puppet::Type.type(:package).new(:name => 'otherpackage', :ensure => :absent, :provider => :aix)
+    Process.stubs(:euid).returns(0)
+    provider_class.expects(:execute).returns 'mypackage:mypackage.rte:1.8.6.4::I:T:::::N:A Super Cool Package::::0::\n'
+    provider_class.prefetch({ 'mypackage' => latest, 'otherpackage' => absent })
+  end
 end
