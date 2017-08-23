@@ -1775,11 +1775,12 @@ describe 'The type calculator' do
       expect(calculator.instance?(PAnyType::DEFAULT, :default)).to eq(true)
     end
 
-    it 'should not consider "default" to be an instance of anything but Default, NotUndef, and Any' do
+    it 'should not consider "default" to be an instance of anything but Default, Init, NotUndef, and Any' do
       types_to_test = all_types - [
         PAnyType,
         PNotUndefType,
         PDefaultType,
+        PInitType,
         ]
 
       types_to_test.each {|t| expect(calculator.instance?(t::DEFAULT, :default)).to eq(false) }

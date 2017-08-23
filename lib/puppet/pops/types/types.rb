@@ -664,7 +664,9 @@ class PDefaultType < PAnyType
   end
 
   def instance?(o, guard = nil)
-    o == :default
+    # Ensure that Symbol.== is called here instead of something unknown
+    # that is implemented on o
+    :default == o
   end
 
   DEFAULT = PDefaultType.new
