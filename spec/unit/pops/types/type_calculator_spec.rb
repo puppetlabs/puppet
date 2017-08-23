@@ -862,19 +862,50 @@ describe 'The type calculator' do
     context 'for Data, such that' do
       let(:data) { TypeFactory.data }
       data_compatible_types.map { |t2| type_from_class(t2) }.each do |tc|
-        it "#{tc.name} is assignable to Data" do
+        it "it is assignable from #{tc.name}" do
           expect(tc).to be_assignable_to(data)
         end
       end
 
-      it 'Data is not assignable to any of its subtypes' do
+      data_compatible_types.map { |t2| type_from_class(t2) }.each do |tc|
+        it "it is assignable from Optional[#{tc.name}]" do
+          expect(optional_t(tc)).to be_assignable_to(data)
+        end
+      end
+
+      it 'it is not assignable to any of its subtypes' do
         types_to_test = data_compatible_types
         types_to_test.each {|t2| expect(data).not_to be_assignable_to(type_from_class(t2)) }
       end
 
-      it 'Data is not assignable to any disjunct type' do
-        tested_types = all_types - [PAnyType, POptionalType, PInitType] - scalar_types
+      it 'it is not assignable to any disjunct type' do
+        tested_types = all_types - [PAnyType, POptionalType, PInitType] - scalar_data_types
         tested_types.each {|t2| expect(data).not_to be_assignable_to(t2::DEFAULT) }
+      end
+    end
+
+    context 'for Rich Data, such that' do
+      let(:rich_data) { TypeFactory.rich_data }
+      rich_data_compatible_types.map { |t2| type_from_class(t2) }.each do |tc|
+        it "it is assignable from #{tc.name}" do
+          expect(tc).to be_assignable_to(rich_data)
+        end
+      end
+
+      rich_data_compatible_types.map { |t2| type_from_class(t2) }.each do |tc|
+        it "it is assignable from Optional[#{tc.name}]" do
+          expect(optional_t(tc)).to be_assignable_to(rich_data)
+        end
+      end
+
+      it 'it is not assignable to any of its subtypes' do
+        types_to_test = rich_data_compatible_types
+        types_to_test.each {|t2| expect(rich_data).not_to be_assignable_to(type_from_class(t2)) }
+      end
+
+      it 'it is not assignable to any disjunct type' do
+        tested_types = all_types - [PAnyType, POptionalType, PInitType] - scalar_types
+        tested_types.each {|t2| expect(rich_data).not_to be_assignable_to(t2::DEFAULT) }
       end
     end
 

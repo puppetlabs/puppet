@@ -93,6 +93,7 @@ shared_context 'types_setup' do
       Puppet::Pops::Types::PFloatType,
       Puppet::Pops::Types::PBooleanType,
       Puppet::Pops::Types::PEnumType,
+      Puppet::Pops::Types::PPatternType,
     ]
   end
   def scalar_data_types
@@ -161,16 +162,29 @@ shared_context 'types_setup' do
   end
 
   def self.data_compatible_types
+    tf = Puppet::Pops::Types::TypeFactory
     result = scalar_data_types
-    result << Puppet::Pops::Types::PArrayType.new(Puppet::Pops::Types::PScalarDataType::DEFAULT)
-    result << Puppet::Pops::Types::PHashType.new(Puppet::Pops::Types::PStringType::DEFAULT, Puppet::Pops::Types::PScalarDataType::DEFAULT)
+    result << Puppet::Pops::Types::PArrayType.new(tf.data)
+    result << Puppet::Pops::Types::PHashType.new(Puppet::Pops::Types::PStringType::DEFAULT, tf.data)
     result << Puppet::Pops::Types::PUndefType
-    result << Puppet::Pops::Types::PNotUndefType.new(Puppet::Pops::Types::PScalarDataType::DEFAULT)
-    result << Puppet::Pops::Types::PTupleType.new([Puppet::Pops::Types::PScalarDataType::DEFAULT])
+    result << Puppet::Pops::Types::PTupleType.new([tf.data])
     result
   end
   def data_compatible_types
     self.class.data_compatible_types
+  end
+
+  def self.rich_data_compatible_types
+    tf = Puppet::Pops::Types::TypeFactory
+    result = scalar_types
+    result << Puppet::Pops::Types::PArrayType.new(tf.rich_data)
+    result << Puppet::Pops::Types::PHashType.new(tf.rich_data_key, tf.rich_data)
+    result << Puppet::Pops::Types::PUndefType
+    result << Puppet::Pops::Types::PTupleType.new([tf.rich_data])
+    result
+  end
+  def rich_data_compatible_types
+    self.class.rich_data_compatible_types
   end
 
   def self.type_from_class(c)
