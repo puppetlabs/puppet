@@ -131,6 +131,9 @@ class PAnyType < TypedModelObject
     when PVariantType
       # Assignable if all contained types are assignable
       o.types.all? { |vt| assignable?(vt, guard) }
+    when POptionalType
+      # Assignable if undef and contained type is assignable
+      assignable?(PUndefType::DEFAULT) && (o.type.nil? || assignable?(o.type))
     when PNotUndefType
       if !(o.type.nil? || o.type.assignable?(PUndefType::DEFAULT))
         assignable?(o.type, guard)
@@ -701,7 +704,16 @@ class PScalarType < PAnyType
 
   # @api private
   def _assignable?(o, guard)
-    o.is_a?(PScalarType)
+    o.is_a?(PScalarType) ||
+      PStringType::DEFAULT.assignable?(o, guard) ||
+      PIntegerType::DEFAULT.assignable?(o, guard) ||
+      PFloatType::DEFAULT.assignable?(o, guard) ||
+      PBooleanType::DEFAULT.assignable?(o, guard) ||
+      PRegexpType::DEFAULT.assignable?(o, guard) ||
+      PSemVerType::DEFAULT.assignable?(o, guard) ||
+      PSemVerRangeType::DEFAULT.assignable?(o, guard) ||
+      PTimespanType::DEFAULT.assignable?(o, guard) ||
+      PTimestampType::DEFAULT.assignable?(o, guard)
   end
 end
 
@@ -723,7 +735,11 @@ class PScalarDataType < PScalarType
 
   # @api private
   def _assignable?(o, guard)
-    o.is_a?(PScalarDataType)
+    o.is_a?(PScalarDataType) ||
+      PStringType::DEFAULT.assignable?(o, guard) ||
+      PIntegerType::DEFAULT.assignable?(o, guard) ||
+      PFloatType::DEFAULT.assignable?(o, guard) ||
+      PBooleanType::DEFAULT.assignable?(o, guard)
   end
 end
 
@@ -2904,21 +2920,8 @@ class PVariantType < PAnyType
 
   # @api private
   def _assignable?(o, guard)
-    if o.is_a?(PVariantType)
-      # A variant is assignable if all of its options are assignable to one of this type's options
-      return true if self == o
-      o.types.all? do |other|
-        # if the other is a Variant, all of its options, but be assignable to one of this type's options
-        if other.is_a?(PVariantType)
-          assignable?(other, guard)
-        else
-          types.any? {|option_t| option_t.assignable?(other, guard) }
-        end
-      end
-    else
-      # A variant is assignable if o is assignable to any of its types
-      types.any? { |option_t| option_t.assignable?(o, guard) }
-    end
+    # A variant is assignable if o is assignable to any of its types
+    types.any? { |option_t| option_t.assignable?(o, guard) }
   end
 
   # @api private

@@ -361,6 +361,13 @@ module TypeFactory
     @rich_data_t ||= TypeParser.singleton.parse('RichData', Loaders.static_loader)
   end
 
+  # Produces the RichData type
+  # @api public
+  #
+  def self.rich_data_key
+    @rich_data_key_t ||= TypeParser.singleton.parse('RichDataKey', Loaders.static_loader)
+  end
+
   # Creates an instance of the Undef type
   # @api public
   def self.undef
