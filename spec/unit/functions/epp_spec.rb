@@ -17,6 +17,11 @@ describe "the epp function" do
       expect(eval_template("<%= $kryptonite == undef %>")).to eq("true")
     end
 
+    it "gets error accessing a variable that is malformed" do
+      expect { eval_template("<%= $kryptonite::USER %>")}.to raise_error(
+        /Illegal variable name, The given name 'kryptonite::USER' does not conform to the naming rule/)
+    end
+
     it "get nil accessing a variable that is undef" do
       scope['undef_var'] = nil
       expect(eval_template("<%= $undef_var == undef %>")).to eq("true")
