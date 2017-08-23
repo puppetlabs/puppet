@@ -53,17 +53,21 @@ module Puppet::Util::Windows::APITypes
     alias_method :read_word,  :read_uint16
     alias_method :read_array_of_wchar, :read_array_of_uint16
 
-    def read_wide_string(char_length, dst_encoding = Encoding::UTF_8)
+    def read_wide_string(char_length, dst_encoding = Encoding::UTF_8, encode_options = {})
       # char_length is number of wide chars (typically excluding NULLs), *not* bytes
       str = get_bytes(0, char_length * 2).force_encoding('UTF-16LE')
-      str.encode(dst_encoding)
+      str.encode(dst_encoding, str.encoding, encode_options)
+    rescue Exception => e
+      Puppet.debug "Unable to convert value #{str.dump} to encoding #{dst_encoding} due to #{e.inspect}"
+      raise
     end
 
     # @param max_char_length [Integer] Maximum number of wide chars to return (typically excluding NULLs), *not* bytes
     # @param null_terminator [Symbol] Number of number of null wchar characters, *not* bytes, that determine the end of the string
     #   null_terminator = :single_null, then the terminating sequence is two bytes of zero.   This is UNIT16 = 0
     #   null_terminator = :double_null, then the terminating sequence is four bytes of zero.  This is UNIT32 = 0
-    def read_arbitrary_wide_string_up_to(max_char_length = 512, null_terminator = :single_null)
+    # @param encode_options [Hash] Accepts the same option hash that may be passed to String#encode in Ruby
+    def read_arbitrary_wide_string_up_to(max_char_length = 512, null_terminator = :single_null, encode_options = {})
       if null_terminator != :single_null && null_terminator != :double_null
         raise _("Unable to read wide strings with %{null_terminator} terminal nulls") % { null_terminator: null_terminator }
       end
@@ -73,11 +77,11 @@ module Puppet::Util::Windows::APITypes
 
       # Look for a null terminating characters; if found, read up to that null (exclusive)
       (0...max_char_length - terminator_width).each do |i|
-        return read_wide_string(i) if send(reader_method, (i * 2)) == 0
+        return read_wide_string(i, Encoding::UTF_8, encode_options) if send(reader_method, (i * 2)) == 0
       end
 
       # String is longer than the max; read just to the max
-      read_wide_string(max_char_length)
+      read_wide_string(max_char_length, Encoding::UTF_8, encode_options)
     end
 
     def read_win32_local_pointer(&block)
