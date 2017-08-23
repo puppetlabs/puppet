@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.0.1-275-gee73b90\n"
+"Project-Id-Version: Puppet automation framework 5.0.1-291-gf6537de\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-08-22 13:54+0000\n"
-"PO-Revision-Date: 2017-08-22 13:54+0000\n"
+"POT-Creation-Date: 2017-08-23 17:24+0000\n"
+"PO-Revision-Date: 2017-08-23 17:24+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -132,68 +132,88 @@ msgstr ""
 msgid "Cancelling startup"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:349
+#: ../lib/puppet/application/agent.rb:79
+msgid "The puppet agent daemon"
+msgstr ""
+
+#: ../lib/puppet/application/agent.rb:353
 msgid "Fingerprint asked but no certificate nor certificate request have yet been issued"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:354
+#: ../lib/puppet/application/agent.rb:358
 msgid "Could not get fingerprint for digest '%{digest}'"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:378
+#: ../lib/puppet/application/agent.rb:382
 msgid "Starting Puppet client version %{version}"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:394
+#: ../lib/puppet/application/agent.rb:398
 msgid "The puppet agent command does not take parameters"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:193
+#: ../lib/puppet/application/apply.rb:35
+msgid "Apply Puppet manifests locally"
+msgstr ""
+
+#: ../lib/puppet/application/apply.rb:197
 msgid "Could not find file %{manifest}"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:194
+#: ../lib/puppet/application/apply.rb:198
 msgid "Only one file can be applied per run.  Skipping %{files}"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:203
+#: ../lib/puppet/application/apply.rb:207
 msgid "Could not find facts for %{node}"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:212
+#: ../lib/puppet/application/apply.rb:216
 msgid "Could not find node %{node}"
 msgstr ""
 
 #. TRANSLATORS "puppet apply" is a program command and should not be translated
-#: ../lib/puppet/application/apply.rb:229
+#: ../lib/puppet/application/apply.rb:233
 msgid "For puppet apply"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:241
+#: ../lib/puppet/application/apply.rb:245
 msgid "%{file} is not readable"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:314
+#: ../lib/puppet/application/apply.rb:318
 msgid "Exiting"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:344
+#: ../lib/puppet/application/apply.rb:348
 msgid "Could not deserialize catalog from %{format}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/application/cert.rb:325
+#: ../lib/puppet/application/cert.rb:103
+msgid "Manage certificates and requests"
+msgstr ""
+
+#: ../lib/puppet/application/cert.rb:329
 msgid "You must specify the hosts to apply to; valid values are an array or the symbol :all"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:193
+#: ../lib/puppet/application/describe.rb:182
+msgid "Display help about resource types"
+msgstr ""
+
+#: ../lib/puppet/application/device.rb:66
+msgid "Manage remote network devices"
+msgstr ""
+
+#: ../lib/puppet/application/device.rb:197
 msgid "Target device / certificate '%{target}' not found in %{config}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:195
+#: ../lib/puppet/application/device.rb:199
 msgid "No device found in %{config}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:205
+#: ../lib/puppet/application/device.rb:209
 msgid "starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
@@ -205,19 +225,23 @@ msgstr ""
 msgid "Invalid output mode %{arg}"
 msgstr ""
 
-#: ../lib/puppet/application/doc.rb:130
+#: ../lib/puppet/application/doc.rb:52
+msgid "Generate Puppet references"
+msgstr ""
+
+#: ../lib/puppet/application/doc.rb:134
 msgid "scanning: %{files}"
 msgstr ""
 
-#: ../lib/puppet/application/doc.rb:142
+#: ../lib/puppet/application/doc.rb:146
 msgid "Could not generate documentation: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/application/doc.rb:154
+#: ../lib/puppet/application/doc.rb:158
 msgid "Could not find reference %{name}"
 msgstr ""
 
-#: ../lib/puppet/application/doc.rb:160
+#: ../lib/puppet/application/doc.rb:164
 msgid "Could not generate reference %{name}: %{detail}"
 msgstr ""
 
@@ -251,27 +275,31 @@ msgstr ""
 msgid "Try 'puppet help %{face} %{action}' for usage"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:169
-msgid "You must specify a file to back up"
+#: ../lib/puppet/application/filebucket.rb:16
+msgid "Store and retrieve files in a filebucket"
 msgstr ""
 
 #: ../lib/puppet/application/filebucket.rb:173
-msgid "%{file}: no such file"
+msgid "You must specify a file to back up"
 msgstr ""
 
 #: ../lib/puppet/application/filebucket.rb:177
+msgid "%{file}: no such file"
+msgstr ""
+
+#: ../lib/puppet/application/filebucket.rb:181
 msgid "%{file}: cannot read file"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:199 ../lib/puppet/application/filebucket.rb:222
+#: ../lib/puppet/application/filebucket.rb:203 ../lib/puppet/application/filebucket.rb:226
 msgid "Need exactly two arguments: filebucket diff <file_a> <file_b>"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:219
+#: ../lib/puppet/application/filebucket.rb:223
 msgid "Comparing %{checksum_a} %{checksum_b} %{file_a} %{file_b}"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:233
+#: ../lib/puppet/application/filebucket.rb:237
 msgid "Cancelling"
 msgstr ""
 
@@ -285,83 +313,95 @@ msgid ""
 "%{run_help}"
 msgstr ""
 
-#: ../lib/puppet/application/lookup.rb:262
+#: ../lib/puppet/application/lookup.rb:99
+msgid "Interactive Hiera lookup"
+msgstr ""
+
+#: ../lib/puppet/application/lookup.rb:266
 msgid ""
 "The options %{deep_merge_opts} are only available with '--merge deep'\n"
 "%{run_help}"
 msgstr ""
 
-#: ../lib/puppet/application/lookup.rb:273
+#: ../lib/puppet/application/lookup.rb:277
 msgid ""
 "The --merge option only accepts %{strategies}, or %{last_strategy}\n"
 "%{run_help}"
 msgstr ""
 
-#: ../lib/puppet/application/lookup.rb:298
+#: ../lib/puppet/application/lookup.rb:302
 msgid "No keys were given to lookup."
 msgstr ""
 
-#: ../lib/puppet/application/lookup.rb:306
+#: ../lib/puppet/application/lookup.rb:310
 msgid "Unknown rendering format '%{format}'"
 msgstr ""
 
-#: ../lib/puppet/application/lookup.rb:347 ../lib/puppet/face/epp.rb:491
+#: ../lib/puppet/application/lookup.rb:351 ../lib/puppet/face/epp.rb:491
 msgid "Incorrect formatted data in %{fact_file} given via the --facts flag"
 msgstr ""
 
-#: ../lib/puppet/application/master.rb:146
+#: ../lib/puppet/application/master.rb:29
+msgid "The puppet master daemon"
+msgstr ""
+
+#: ../lib/puppet/application/master.rb:150
 msgid "Canceling startup"
 msgstr ""
 
-#: ../lib/puppet/application/master.rb:165
+#: ../lib/puppet/application/master.rb:169
 msgid "Could not compile catalog for %{node}"
 msgstr ""
 
-#: ../lib/puppet/application/master.rb:170
+#: ../lib/puppet/application/master.rb:174
 msgid "Failed to compile catalog for node %{node}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/application/master.rb:190
+#: ../lib/puppet/application/master.rb:194
 msgid "Could not change user to %{user}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/application/master.rb:194
+#: ../lib/puppet/application/master.rb:198
 msgid "Could not change user to %{user}. User does not exist and is required to continue."
 msgstr ""
 
-#: ../lib/puppet/application/master.rb:200
+#: ../lib/puppet/application/master.rb:204
 msgid "The Rack Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppet.com/deprecate-rack-webrick-servers for more information."
 msgstr ""
 
-#: ../lib/puppet/application/master.rb:203
+#: ../lib/puppet/application/master.rb:207
 msgid "The WEBrick Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppet.com/deprecate-rack-webrick-servers for more information."
 msgstr ""
 
-#: ../lib/puppet/application/master.rb:262
+#: ../lib/puppet/application/master.rb:266
 msgid "Puppet master is not supported on Microsoft Windows"
 msgstr ""
 
-#: ../lib/puppet/application/master.rb:311
+#: ../lib/puppet/application/master.rb:315
 msgid "Starting Puppet master version %{version}"
 msgstr ""
 
-#: ../lib/puppet/application/resource.rb:136
+#: ../lib/puppet/application/resource.rb:32
+msgid "The resource abstraction layer shell"
+msgstr ""
+
+#: ../lib/puppet/application/resource.rb:140
 msgid "Editing with Yaml output is not supported"
 msgstr ""
 
-#: ../lib/puppet/application/resource.rb:192
+#: ../lib/puppet/application/resource.rb:196
 msgid "You must specify the type to display"
 msgstr ""
 
-#: ../lib/puppet/application/resource.rb:193
+#: ../lib/puppet/application/resource.rb:197
 msgid "Could not find type %{type}"
 msgstr ""
 
-#: ../lib/puppet/application/resource.rb:200
+#: ../lib/puppet/application/resource.rb:204
 msgid "Invalid parameter setting %{setting}"
 msgstr ""
 
-#: ../lib/puppet/application/resource.rb:222
+#: ../lib/puppet/application/resource.rb:226
 msgid "Listing all file instances is not supported.  Please specify a file or directory, e.g. puppet resource file /etc"
 msgstr ""
 
@@ -600,6 +640,10 @@ msgstr ""
 msgid "Could not verify %{host}: %{error}"
 msgstr ""
 
+#: ../lib/puppet/face/catalog.rb:7
+msgid "Compile, save, view, and convert catalogs."
+msgstr ""
+
 #: ../lib/puppet/face/catalog/select.rb:4
 msgid "Retrieve a catalog and filter it for resources of a given type."
 msgstr ""
@@ -668,6 +712,14 @@ msgstr ""
 
 #: ../lib/puppet/face/certificate.rb:156
 msgid "Delete a certificate."
+msgstr ""
+
+#: ../lib/puppet/face/certificate_request.rb:7
+msgid "Manage certificate requests."
+msgstr ""
+
+#: ../lib/puppet/face/certificate_revocation_list.rb:7
+msgid "Manage the list of revoked certificates."
 msgstr ""
 
 #: ../lib/puppet/face/config.rb:8
@@ -942,7 +994,7 @@ msgstr ""
 msgid " (Deprecated)"
 msgstr ""
 
-#: ../lib/puppet/face/help.rb:153 ../lib/puppet/face/help.rb:174
+#: ../lib/puppet/face/help.rb:153 ../lib/puppet/face/help.rb:163
 msgid "! Subcommand unavailable due to error. Check error logs."
 msgstr ""
 
