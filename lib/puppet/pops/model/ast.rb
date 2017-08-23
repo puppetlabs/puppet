@@ -25,7 +25,7 @@ class PopsObject
   attr_reader :hash
 
   def initialize
-    @hash = 4000807243706601169
+    @hash = 2270595461303489901
   end
   def _pcore_init_hash
     {}
@@ -2779,16 +2779,17 @@ class HostClassDefinition < NamedDefinition
   alias == eql?
 end
 
-class PlanDefinition < NamedDefinition
+class PlanDefinition < FunctionDefinition
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::PlanDefinition', {
-      'parent' => NamedDefinition._pcore_type
+      'parent' => FunctionDefinition._pcore_type
     })
   end
 
   def _pcore_contents
     @parameters.each { |value| yield(value) }
     yield(@body) unless @body.nil?
+    yield(@return_type) unless @return_type.nil?
   end
 
   def _pcore_all_contents(path, &block)
@@ -2800,6 +2801,10 @@ class PlanDefinition < NamedDefinition
     unless @body.nil?
       block.call(@body, path)
       @body._pcore_all_contents(path, &block)
+    end
+    unless @return_type.nil?
+      block.call(@return_type, path)
+      @return_type._pcore_all_contents(path, &block)
     end
     path.pop
   end

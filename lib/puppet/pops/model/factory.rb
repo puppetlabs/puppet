@@ -347,6 +347,14 @@ class Factory
     @init_hash['return_type'] = return_type unless return_type.nil?
   end
 
+  def build_PlanDefinition(o, name, parameters, body, return_type=nil)
+    @init_hash[KEY_PARAMETERS] = parameters
+    b = f_build_body(body)
+    @init_hash[KEY_BODY] = b unless b.nil?
+    @init_hash[KEY_NAME] = name
+    @init_hash['return_type'] = return_type unless return_type.nil?
+  end
+
   def build_CapabilityMapping(o, kind, component, capability, mappings)
     @init_hash['kind'] = kind
     @init_hash['component'] = component
@@ -906,7 +914,7 @@ class Factory
   end
 
   def self.PLAN(name, parameters, body)
-    new(PlanDefinition, name, parameters, body)
+    new(PlanDefinition, name, parameters, body, nil)
   end
 
   def self.FUNCTION(name, parameters, body, return_type)

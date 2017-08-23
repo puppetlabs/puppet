@@ -107,6 +107,8 @@ class Puppet::Parser::AST::PopsBridge
           instantiate_NodeDefinition(d, modname)
         when Puppet::Pops::Model::SiteDefinition
             instantiate_SiteDefinition(d, modname)
+        when Puppet::Pops::Model::PlanDefinition
+          instantiate_PlanDefinition(d, modname)
         when Puppet::Pops::Model::FunctionDefinition
           # The 3x logic calling this will not know what to do with the result, it is compacted away at the end
           instantiate_FunctionDefinition(d, modname)
@@ -121,8 +123,6 @@ class Puppet::Parser::AST::PopsBridge
           next
         when Puppet::Pops::Model::Application
           instantiate_ApplicationDefinition(d, modname)
-        when Puppet::Pops::Model::PlanDefinition
-          instantiate_PlanDefinition(d, modname)
         else
           raise Puppet::ParseError, "Internal Error: Unknown type of definition - got '#{d.class}'"
         end
@@ -300,8 +300,16 @@ class Puppet::Parser::AST::PopsBridge
       nil
     end
 
-    def instantiate_PlanDefinition(plan, modname)
-      raise "NotImplemented: instantiate_PlanDefinition"
+    # Instantiate Plan Function, and store it in the loader
+    # as a :plan type using a Function as the implementation
+    #
+    def instantiate_PlanDefinition(plan_definition, modname)
+      loader = Puppet::Pops::Loaders.find_loader(modname)
+
+      typed_name, f = Puppet::Pops::Loader::PuppetPlanInstantiator.create_from_model(plan_definition, loader)
+      loader.set_entry(typed_name, f, plan_definition.locator.to_uri(plan_definition))
+
+      nil # do not want the plan-function to inadvertently leak into 3x
     end
 
     def code()
