@@ -2,6 +2,7 @@ test_name "test the yum package provider" do
 
   confine :to, {:platform => /(?:centos|el-|fedora)/}, agents
   confine :except, :platform => /centos-4|el-4/ # PUP-5227
+  confine :except, :hypervisor => /ec2/
 
   tag 'audit:medium',
       'audit:acceptance' # Could be done at the integration (or unit) layer though
