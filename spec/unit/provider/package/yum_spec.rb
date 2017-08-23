@@ -69,5 +69,15 @@ describe provider_class do
         }.to raise_exception(Exception, /Failed to parse/)
       end
     end
+    describe "with trailing plugin output" do
+      let(:check_update) { File.read(my_fixture("yum-check-update-plugin-output.txt")) }
+      let(:output) { described_class.parse_updates(check_update) }
+      it "parses correctly formatted entries" do
+        expect(output['bash']).to eq([{:name => 'bash', :epoch => '0', :version => '4.2.46', :release => '12.el7', :arch => 'x86_64'}])
+      end
+      it "ignores all mentions of plugin output" do
+        expect(output).not_to include("Random plugin")
+      end
+    end
   end
 end
