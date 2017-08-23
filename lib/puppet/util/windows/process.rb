@@ -236,9 +236,17 @@ module Puppet::Util::Windows::Process
   def get_environment_strings
     env_ptr = GetEnvironmentStringsW()
 
-    pairs = env_ptr.read_arbitrary_wide_string_up_to(65534, :double_null)
+    # pass :invalid => :replace to the Ruby String#encode to use replacement characters
+    pairs = env_ptr.read_arbitrary_wide_string_up_to(65534, :double_null, { :invalid => :replace })
       .split(?\x00)
       .reject { |env_str| env_str.nil? || env_str.empty? || env_str[0] == '=' }
+      .reject do |env_str|
+        # reject any string containing the Unicode replacement character
+        if env_str.include?("\uFFFD")
+          Puppet.warning("Discarding environment variable #{env_str} which contains invalid bytes")
+          true
+        end
+      end
       .map { |env_pair| env_pair.split('=', 2) }
     Hash[ pairs ]
   ensure
