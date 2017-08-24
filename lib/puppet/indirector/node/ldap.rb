@@ -93,7 +93,7 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
     result[:stacked] = get_stacked_values_from_entry(entry)
     result[:parameters] = get_parameters_from_entry(entry)
 
-    result[:environment] = result[:parameters]["environment"] if result[:parameters]["environment"]
+    result[:environment] = result[:parameters][:environment] if result[:parameters][:environment]
 
     result[:stacked_parameters] = {}
 
