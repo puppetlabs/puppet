@@ -26,12 +26,12 @@ class PuppetPlanInstantiator
     when 1
       # ok
     else
-      raise ArgumentError, _("The code loaded from %{source_ref} must contain only the plan '%{type_name}' - it has additional definitions.") % { source_ref: source_ref, type_name: typed_name.name }
+      raise ArgumentError, _("The code loaded from %{source_ref} must contain only the plan '%{plan_name}' - it has additional definitions.") % { source_ref: source_ref, plan_name: typed_name.name }
     end
     the_plan_definition = result.definitions[0]
 
     unless the_plan_definition.is_a?(Model::PlanDefinition)
-      raise ArgumentError, _("The code loaded from %{source_ref} does not define the plan '%{type_name}' - no plan found.") % { source_ref: source_ref, type_name: typed_name.name }
+      raise ArgumentError, _("The code loaded from %{source_ref} does not define the plan '%{plan_name}' - no plan found.") % { source_ref: source_ref, plan_name: typed_name.name }
     end
     unless the_plan_definition.name == typed_name.name
       expected = typed_name.name
@@ -39,7 +39,7 @@ class PuppetPlanInstantiator
       raise ArgumentError, _("The code loaded from %{source_ref} produced plan with the wrong name, expected %{expected}, actual %{actual}") % { source_ref: source_ref, expected: expected, actual: actual }
     end
     unless result.body == the_plan_definition
-      raise ArgumentError, _("The code loaded from %{source} contains additional logic - can only contain the plan %{name}") % { source: source_ref, name: typed_name.name }
+      raise ArgumentError, _("The code loaded from %{source} contains additional logic - can only contain the plan %{plan_name}") % { source: source_ref, plan_name: typed_name.name }
     end
 
     # Adapt the function definition with loader - this is used from logic contained in it body to find the
