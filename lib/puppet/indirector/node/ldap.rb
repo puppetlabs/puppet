@@ -5,7 +5,8 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
   desc "Search in LDAP for node configuration information.  See
   the [LDAP Nodes](https://docs.puppetlabs.com/guides/ldap_nodes.html) page for more information.  This will first
   search for whatever the certificate name is, then (if that name
-  contains a `.`) for the short name, then `default`."
+  contains a `.`) for the short name, then `default`.
+  Requires ruby-ldap with MRI ruby or jruby-ldap with puppetserver/jruby"
 
   # The attributes that Puppet class information is stored in.
   def class_attributes
@@ -223,9 +224,22 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
     result.uniq
   end
 
+  # Workaround jruby-ldap 0.0.2 missing the #to_hash method
+  #
+  # @see https://github.com/jruby/jruby-ldap/pull/5
+  #
+  # @param entry [LDAP::Entry] The LDAP::Entry object to convert to a hash
+  # @return [Hash] The hash of the provided LDAP::Entry object
+  def ldap_entry_to_hash(entry)
+     h = {}
+     entry.get_attributes.each { |a| h[a.to_sym] = entry[a] }
+     h[:dn] = [entry.dn]
+     h
+  end
+
   def get_parameters_from_entry(entry)
     stacked_params = stacked_attributes
-    entry.to_hash.inject({}) do |hash, ary|
+    ldap_entry_to_hash(entry).inject({}) do |hash, ary|
       unless stacked_params.include?(ary[0]) # don't add our stacked parameters to the main param list
         if ary[1].length == 1
           hash[ary[0]] = ary[1].shift
