@@ -93,7 +93,8 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
     result[:stacked] = get_stacked_values_from_entry(entry)
     result[:parameters] = get_parameters_from_entry(entry)
 
-    result[:environment] = result[:parameters][:environment] if result[:parameters][:environment]
+    # delete from parameters to prevent "Already declered variable $environment" error
+    result[:environment] = result[:parameters].delete(:environment) if result[:parameters][:environment]
 
     result[:stacked_parameters] = {}
 
