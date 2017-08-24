@@ -229,10 +229,11 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
   # @see https://github.com/jruby/jruby-ldap/pull/5
   #
   # @param entry [LDAP::Entry] The LDAP::Entry object to convert to a hash
-  # @return [Hash] The hash of the provided LDAP::Entry object
+  # @return [Hash] The hash of the provided LDAP::Entry object with keys
+  #   downcased (puppet variables need to start with lowercase char)
   def ldap_entry_to_hash(entry)
      h = {}
-     entry.get_attributes.each { |a| h[a.to_sym] = entry[a] }
+     entry.get_attributes.each { |a| h[a.downcase.to_sym] = entry[a] }
      h[:dn] = [entry.dn]
      h
   end
