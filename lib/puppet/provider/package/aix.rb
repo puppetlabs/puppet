@@ -52,7 +52,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
           if updates.key?(current[:name])
             previous = updates[current[:name]]
 
-            updates[ current[:name] ] = current unless Puppet::Util::Package.versioncmp(previous[:version], current[:version]) == 1
+            updates[current[:name]] = current unless Puppet::Util::Package.versioncmp(previous[:version], current[:version]) == 1
 
           else
             updates[current[:name]] = current
@@ -62,8 +62,8 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
     end
 
     packages.each do |name, package|
-      if info = updates[package[:name]]
-        package.provider.latest_info = info[0]
+      if updates.key?(name)
+        package.provider.latest_info = updates[name]
       end
     end
   end
