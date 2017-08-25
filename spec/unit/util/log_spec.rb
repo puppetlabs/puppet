@@ -32,11 +32,11 @@ describe Puppet::Util::Log do
     end
 
     it "includes a backtrace in the log" do
-      expect(logs.last.message).to match(/Backtrace:\n.*in `initialize'/ )
+      expect(logs.last.message).to match(/Backtrace:\n.*in `newmessage'\n.*in `initialize'/ )
     end
 
     it "warns that message included invalid encoding" do
-      expect(logs.last.message).to match(/Received a log message with invalid encoding/)
+      expect(logs.last.message).to match(/Received a Log attribute with invalid encoding/)
     end
 
     it "includes the 'dump' of the invalid message" do
