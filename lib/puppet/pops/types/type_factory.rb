@@ -190,8 +190,8 @@ module TypeFactory
   # @param hash [{String=>Object}] the hash of feature groups
   # @return [PObjectType] the created type
   #
-  def self.object(hash = nil)
-    hash.nil? || hash.empty? ? PObjectType::DEFAULT : PObjectType.new(hash)
+  def self.object(hash = nil, loader = nil)
+    hash.nil? || hash.empty? ? PObjectType::DEFAULT : PObjectType.new(hash, loader)
   end
 
   def self.type_set(hash = nil)

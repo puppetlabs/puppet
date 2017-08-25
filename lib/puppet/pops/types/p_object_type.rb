@@ -379,11 +379,13 @@ class PObjectType < PMetaType
   # @overload initialize(init_hash)
   #   Used when the object is created by the {TypeFactory}. The init_hash must be fully resolved.
   #   @param _pcore_init_hash [Hash{String=>Object}] The hash describing the Object features
+  #   @param loader [Loaders::Loader,nil] the loader that loaded the type
   #
   # @api private
   def initialize(_pcore_init_hash, init_hash_expression = nil)
     if _pcore_init_hash.is_a?(Hash)
       _pcore_init_from_hash(_pcore_init_hash)
+      @loader = init_hash_expression unless init_hash_expression.nil?
     else
       @attributes = EMPTY_HASH
       @functions = EMPTY_HASH
