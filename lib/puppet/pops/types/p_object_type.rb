@@ -755,7 +755,20 @@ class PObjectType < PMetaType
     result = super()
     result[KEY_NAME] = @name if include_name && !@name.nil?
     result[KEY_PARENT] = @parent unless @parent.nil?
-    result[KEY_ATTRIBUTES] = compressed_members_hash(@attributes) unless @attributes.empty?
+    unless @attributes.empty?
+      # Divide attributes into constants and others
+      tc = TypeCalculator.singleton
+      constants, others = @attributes.partition do |_, a|
+        a.kind == ATTRIBUTE_KIND_CONSTANT && a.type == tc.infer(a.value).generalize
+      end.map { |ha| Hash[ha] }
+
+      result[KEY_ATTRIBUTES] = compressed_members_hash(others) unless others.empty?
+      unless constants.empty?
+        # { kind => 'constant', type => <type of value>, value => <value> } becomes just <value>
+        constants.each_pair { |key, a| constants[key] = a.value }
+        result[KEY_CONSTANTS] = constants
+      end
+    end
     result[KEY_FUNCTIONS] = compressed_members_hash(@functions) unless @functions.empty?
     result[KEY_EQUALITY] = @equality unless @equality.nil?
     result[KEY_CHECKS] = @checks unless @checks.nil?
