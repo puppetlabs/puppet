@@ -379,11 +379,13 @@ class PObjectType < PMetaType
   # @overload initialize(init_hash)
   #   Used when the object is created by the {TypeFactory}. The init_hash must be fully resolved.
   #   @param _pcore_init_hash [Hash{String=>Object}] The hash describing the Object features
+  #   @param loader [Loaders::Loader,nil] the loader that loaded the type
   #
   # @api private
   def initialize(_pcore_init_hash, init_hash_expression = nil)
     if _pcore_init_hash.is_a?(Hash)
       _pcore_init_from_hash(_pcore_init_hash)
+      @loader = init_hash_expression unless init_hash_expression.nil?
     else
       @attributes = EMPTY_HASH
       @functions = EMPTY_HASH
@@ -607,7 +609,13 @@ class PObjectType < PMetaType
     end
 
     constants = init_hash[KEY_CONSTANTS]
-    attr_specs = init_hash[KEY_ATTRIBUTES] || {}
+    attr_specs = init_hash[KEY_ATTRIBUTES]
+    if attr_specs.nil?
+      attr_specs = {}
+    else
+      # attr_specs might be frozen
+      attr_specs = Hash[attr_specs]
+    end
     unless constants.nil? || constants.empty?
       constants.each do |key, value|
         raise Puppet::ParseError, "attribute #{label}[#{key}] is defined as both a constant and an attribute" if attr_specs.include?(key)
@@ -755,7 +763,20 @@ class PObjectType < PMetaType
     result = super()
     result[KEY_NAME] = @name if include_name && !@name.nil?
     result[KEY_PARENT] = @parent unless @parent.nil?
-    result[KEY_ATTRIBUTES] = compressed_members_hash(@attributes) unless @attributes.empty?
+    unless @attributes.empty?
+      # Divide attributes into constants and others
+      tc = TypeCalculator.singleton
+      constants, others = @attributes.partition do |_, a|
+        a.kind == ATTRIBUTE_KIND_CONSTANT && a.type == tc.infer(a.value).generalize
+      end.map { |ha| Hash[ha] }
+
+      result[KEY_ATTRIBUTES] = compressed_members_hash(others) unless others.empty?
+      unless constants.empty?
+        # { kind => 'constant', type => <type of value>, value => <value> } becomes just <value>
+        constants.each_pair { |key, a| constants[key] = a.value }
+        result[KEY_CONSTANTS] = constants
+      end
+    end
     result[KEY_FUNCTIONS] = compressed_members_hash(@functions) unless @functions.empty?
     result[KEY_EQUALITY] = @equality unless @equality.nil?
     result[KEY_CHECKS] = @checks unless @checks.nil?

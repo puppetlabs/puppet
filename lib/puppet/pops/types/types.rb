@@ -57,7 +57,9 @@ class TypedModelObject < Object
   def self.register_ptypes(loader, ir)
     types = [
       Annotation.register_ptype(loader, ir),
-      RubyMethod.register_ptype(loader, ir)
+      RubyMethod.register_ptype(loader, ir),
+      Task.register_ptype(loader, ir),
+      GenericTask.register_ptype(loader, ir)
     ]
     Types.constants.each do |c|
       next if c == :PType || c == :PHostClassType
@@ -3507,6 +3509,7 @@ require_relative 'p_timespan_type'
 require_relative 'p_timestamp_type'
 require_relative 'p_binary_type'
 require_relative 'p_init_type'
+require_relative 'task'
 require_relative 'type_set_reference'
 require_relative 'implementation_registry'
 require_relative 'tree_iterators'

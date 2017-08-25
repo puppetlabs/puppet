@@ -765,14 +765,30 @@ describe 'The Object Type' do
       expect(obj.to_s).to eql("Object[{name => 'MyObject', attributes => {'a' => Integer}}]")
     end
 
-    it 'produced hash that does not include defaults' do
+    it 'produced hash that does not include default for equality_include_type' do
       obj = t = parse_object('MyObject', <<-OBJECT)
-        attributes => {
-          a => { type => Integer, value => 23, kind => constant, final => true },
-        },
+        attributes => { a => Integer },
         equality_include_type => true
       OBJECT
-      expect(obj.to_s).to eql("Object[{name => 'MyObject', attributes => {'a' => {type => Integer, kind => constant, value => 23}}}]")
+      expect(obj.to_s).to eql("Object[{name => 'MyObject', attributes => {'a' => Integer}}]")
+    end
+
+    it 'constants are presented in a separate hash if they use a generic type' do
+      obj = t = parse_object('MyObject', <<-OBJECT)
+        attributes => {
+          a => { type => Integer, value => 23, kind => constant },
+        },
+      OBJECT
+      expect(obj.to_s).to eql("Object[{name => 'MyObject', constants => {'a' => 23}}]")
+    end
+
+    it 'constants are not presented in a separate hash unless they use a generic type' do
+      obj = t = parse_object('MyObject', <<-OBJECT)
+        attributes => {
+          a => { type => Integer[0, 30], value => 23, kind => constant },
+        },
+      OBJECT
+      expect(obj.to_s).to eql("Object[{name => 'MyObject', attributes => {'a' => {type => Integer[0, 30], kind => constant, value => 23}}}]")
     end
 
     it 'can create an equal copy from produced hash' do
@@ -1101,10 +1117,12 @@ describe 'The Object Type' do
           "name => 'MyFirstObject', "+
           "attributes => {"+
           "'first_a' => Integer, "+
-          "'first_b' => {type => String, kind => constant, value => 'the first constant'}, "+
           "'first_c' => {type => String, final => true, kind => derived}, "+
           "'first_d' => {type => String, kind => given_or_derived}, "+
           "'first_e' => String"+
+          "}, "+
+          "constants => {"+
+          "'first_b' => 'the first constant'"+
           "}, "+
           "functions => {"+
           "'first_x' => Callable[Integer], "+
@@ -1117,8 +1135,10 @@ describe 'The Object Type' do
           "parent => MyFirstObject, "+
           "attributes => {"+
           "'second_a' => Integer, "+
-          "'second_b' => {type => String, kind => constant, value => 'the second constant'}, "+
           "'first_e' => {type => Enum['fee', 'foo', 'fum'], final => true, override => true, value => 'fee'}"+
+          "}, "+
+          "constants => {"+
+          "'second_b' => 'the second constant'"+
           "}, "+
           "functions => {"+
           "'second_x' => Callable[Integer], "+
