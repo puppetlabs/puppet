@@ -64,6 +64,10 @@ module LoaderPaths
       @generic_path = (the_root_path.nil? ? relative_path : File.join(the_root_path, relative_path))
     end
 
+    def match_many?
+      false
+    end
+
     def root_path
       @loader.path
     end
