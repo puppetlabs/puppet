@@ -6,7 +6,10 @@
 #
 # TODO: Currently only supports loading of functions (2 kinds)
 #
-module Puppet::Pops::Loader::LoaderPaths
+module Puppet::Pops
+module Loader
+module LoaderPaths
+
   # Returns an array of SmartPath, each instantiated with a reference to the given loader (for root path resolution
   # and existence checks). The smart paths in the array appear in precedence order. The returned array may be
   # mutated.
@@ -54,10 +57,10 @@ module Puppet::Pops::Loader::LoaderPaths
       @loader = loader
     end
 
-    def generic_path()
+    def generic_path
       return @generic_path unless @generic_path.nil?
 
-      the_root_path = root_path() # @loader.path
+      the_root_path = root_path # @loader.path
       @generic_path = (the_root_path.nil? ? relative_path : File.join(the_root_path, relative_path))
     end
 
@@ -71,11 +74,11 @@ module Puppet::Pops::Loader::LoaderPaths
       "#{File.join(generic_path, typed_name.name_parts)}#{extension}"
     end
 
-    def relative_path()
+    def relative_path
       raise NotImplementedError.new
     end
 
-    def instantiator()
+    def instantiator
       raise NotImplementedError.new
     end
   end
@@ -127,8 +130,8 @@ module Puppet::Pops::Loader::LoaderPaths
       FUNCTION_PATH_4X
     end
 
-    def instantiator()
-      Puppet::Pops::Loader::RubyFunctionInstantiator
+    def instantiator
+      RubyFunctionInstantiator
     end
   end
 
@@ -139,8 +142,8 @@ module Puppet::Pops::Loader::LoaderPaths
       FUNCTION_PATH_3X
     end
 
-    def instantiator()
-      Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
+    def instantiator
+      RubyLegacyFunctionInstantiator
     end
   end
 
@@ -152,8 +155,8 @@ module Puppet::Pops::Loader::LoaderPaths
       FUNCTION_PATH_PP
     end
 
-    def instantiator()
-      Puppet::Pops::Loader::PuppetFunctionInstantiator
+    def instantiator
+      PuppetFunctionInstantiator
     end
   end
 
@@ -164,8 +167,8 @@ module Puppet::Pops::Loader::LoaderPaths
       TYPE_PATH_PP
     end
 
-    def instantiator()
-      Puppet::Pops::Loader::TypeDefinitionInstantiator
+    def instantiator
+      TypeDefinitionInstantiator
     end
   end
 
@@ -180,8 +183,8 @@ module Puppet::Pops::Loader::LoaderPaths
       @loader.path
     end
 
-    def instantiator()
-      Puppet::Pops::Loader::PuppetResourceTypeImplInstantiator
+    def instantiator
+      PuppetResourceTypeImplInstantiator
     end
 
     # The effect paths for resource type impl is the full name
@@ -229,7 +232,7 @@ module Puppet::Pops::Loader::LoaderPaths
       unless effective_paths = smart_paths[type]
         # type not yet processed, does the various directories for the type exist ?
         # Get the relative dirs for the type
-        paths_for_type = Puppet::Pops::Loader::LoaderPaths.relative_paths_for_type(type, loader)
+        paths_for_type = LoaderPaths.relative_paths_for_type(type, loader)
         # Check which directories exist in the loader's content/index
         effective_paths = smart_paths[type] = paths_for_type.select { |sp| loader.meaningful_to_search?(sp) }
       end
@@ -237,3 +240,6 @@ module Puppet::Pops::Loader::LoaderPaths
     end
   end
 end
+end
+end
+
