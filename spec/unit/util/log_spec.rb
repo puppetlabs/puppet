@@ -44,9 +44,18 @@ describe Puppet::Util::Log do
     end
   end
 
+  # need a string that cannot be converted to US-ASCII or other encodings easily
+  # different UTF-8 widths
+  # 1-byte A
+  # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
+  # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
+  # 4-byte ܎ - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
+  let (:mixed_utf8) { "A\u06FF\u16A0\u{2070E}" } # Aۿᚠ܎
+
   it "converts a given non-UTF-8 message to UTF-8" do
     logs = []
     Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(logs))
+    Puppet::Util::Log.newdestination(:console)
 
     # HIRAGANA LETTER SO
     # In Windows_31J: \x82 \xbb - 130 187
@@ -54,8 +63,28 @@ describe Puppet::Util::Log do
     win_31j_msg = [130, 187].pack('C*').force_encoding(Encoding::Windows_31J)
     utf_8_msg = "\u305d"
 
-    Puppet::Util::Log.new(:level => :notice, :message => win_31j_msg, :source => 'Puppet')
+    $stdout.expects(:puts).with("\e[mNotice: #{mixed_utf8}: #{utf_8_msg}\e[0m")
+
+    # most handlers do special things with a :source => 'Puppet', so use something else
+    Puppet::Util::Log.new(:level => :notice, :message => win_31j_msg, :source => mixed_utf8)
     expect(logs.last.message).to eq(utf_8_msg)
+  end
+
+  it "converts a given non-UTF-8 source to UTF-8" do
+    logs = []
+    Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(logs))
+    Puppet::Util::Log.newdestination(:console)
+
+    # HIRAGANA LETTER SO
+    # In Windows_31J: \x82 \xbb - 130 187
+    # In Unicode: \u305d - \xe3 \x81 \x9d - 227 129 157
+    win_31j_msg = [130, 187].pack('C*').force_encoding(Encoding::Windows_31J)
+    utf_8_msg = "\u305d"
+
+    $stdout.expects(:puts).with("\e[mNotice: #{utf_8_msg}: #{mixed_utf8}\e[0m")
+
+    Puppet::Util::Log.new(:level => :notice, :message => mixed_utf8, :source => win_31j_msg)
+    expect(logs.last.source).to eq(utf_8_msg)
   end
 
   describe ".setup_default" do

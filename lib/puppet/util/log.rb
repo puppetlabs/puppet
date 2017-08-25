@@ -184,6 +184,7 @@ class Puppet::Util::Log
     return if @levels.index(msg.level) < @loglevel
 
     msg.message = coerce_string(msg.message)
+    msg.source = coerce_string(msg.source)
 
     queuemessage(msg) if @destinations.length == 0
 
