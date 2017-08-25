@@ -189,56 +189,56 @@ class RubyGenerator < TypeFormatter
       eq_names = obj.equality
     end
 
-    unless obj.parent.is_a?(PObjectType) && obj_attrs.empty?
-      # Output type safe hash constructor
-      bld << "\n  def self.from_hash(init_hash)\n"
-      bld << '    from_asserted_hash(' << namespace_relative(segments, TypeAsserter.name) << '.assert_instance_of('
-      bld << "'" << obj.label << " initializer', _pcore_type.init_hash_type, init_hash))\n  end\n\n  def self.from_asserted_hash(init_hash)\n    new"
-      unless non_opt.empty? && opt.empty?
-        bld << "(\n"
-        non_opt.each { |ip| bld << "      init_hash['" << ip.name << "'],\n" }
-        opt.each do |ip|
-          if ip.value.nil?
-            bld << "      init_hash['" << ip.name << "'],\n"
-          else
-            bld << "      init_hash.fetch('" << ip.name << "') { "
-            default_string(bld, ip)
-            bld << " },\n"
-          end
-        end
-        bld.chomp!(",\n")
-        bld << ')'
-      end
-      bld << "\n  end\n"
-
-      # Output type safe constructor
-      bld << "\n  def self.create"
-      if init_params.empty?
-        bld << "\n    new"
-      else
-        bld << '('
-        non_opt.each { |ip| bld << ip.name << ', ' }
-        opt.each do |ip|
-          bld << ip.name << ' = '
+    # Output type safe hash constructor
+    bld << "\n  def self.from_hash(init_hash)\n"
+    bld << '    from_asserted_hash(' << namespace_relative(segments, TypeAsserter.name) << '.assert_instance_of('
+    bld << "'" << obj.label << " initializer', _pcore_type.init_hash_type, init_hash))\n  end\n\n  def self.from_asserted_hash(init_hash)\n    new"
+    unless non_opt.empty? && opt.empty?
+      bld << "(\n"
+      non_opt.each { |ip| bld << "      init_hash['" << ip.name << "'],\n" }
+      opt.each do |ip|
+        if ip.value.nil?
+          bld << "      init_hash['" << ip.name << "'],\n"
+        else
+          bld << "      init_hash.fetch('" << ip.name << "') { "
           default_string(bld, ip)
-          bld << ', '
+          bld << " },\n"
         end
-        bld.chomp!(', ')
-        bld << ")\n"
-        bld << '    ta = ' << namespace_relative(segments, TypeAsserter.name) << "\n"
-        bld << "    attrs = _pcore_type.attributes(true)\n"
-        init_params.each do |a|
-          bld << "    ta.assert_instance_of('" << a.container.name << '[' << a.name << ']'
-          bld << "', attrs['" << a.name << "'].type, " << a.name << ")\n"
-        end
-        bld << '    new('
-        non_opt.each { |a| bld << a.name << ', ' }
-        opt.each { |a| bld << a.name << ', ' }
-        bld.chomp!(', ')
-        bld << ')'
       end
-      bld << "\n  end\n"
+      bld.chomp!(",\n")
+      bld << ')'
+    end
+    bld << "\n  end\n"
 
+    # Output type safe constructor
+    bld << "\n  def self.create"
+    if init_params.empty?
+      bld << "\n    new"
+    else
+      bld << '('
+      non_opt.each { |ip| bld << ip.name << ', ' }
+      opt.each do |ip|
+        bld << ip.name << ' = '
+        default_string(bld, ip)
+        bld << ', '
+      end
+      bld.chomp!(', ')
+      bld << ")\n"
+      bld << '    ta = ' << namespace_relative(segments, TypeAsserter.name) << "\n"
+      bld << "    attrs = _pcore_type.attributes(true)\n"
+      init_params.each do |a|
+        bld << "    ta.assert_instance_of('" << a.container.name << '[' << a.name << ']'
+        bld << "', attrs['" << a.name << "'].type, " << a.name << ")\n"
+      end
+      bld << '    new('
+      non_opt.each { |a| bld << a.name << ', ' }
+      opt.each { |a| bld << a.name << ', ' }
+      bld.chomp!(', ')
+      bld << ')'
+    end
+    bld << "\n  end\n"
+
+    unless obj.parent.is_a?(PObjectType) && obj_attrs.empty?
       # Output attr_readers
       unless obj_attrs.empty?
         bld << "\n"
