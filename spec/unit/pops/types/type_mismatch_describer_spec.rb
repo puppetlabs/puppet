@@ -223,6 +223,18 @@ describe 'the type mismatch describer' do
       expect(subject.describe_signatures('function', [dispatch], args_tuple)).to eq("'function' block return expects a String value, got Integer")
     end
   end
+
+  it "reports struct mismatch correctly when hash doesn't contain required keys" do
+    code = <<-PUPPET
+      type Test::Options = Struct[{
+        var => String
+      }]
+      class test(String $var, Test::Options $opts) {}
+      class { 'test': var => 'hello', opts => {} }
+    PUPPET
+    expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
+      /Class\[Test\]: parameter 'opts' expects size to be 1, got 0/))
+  end
 end
 end
 end
