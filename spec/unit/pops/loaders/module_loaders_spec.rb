@@ -58,6 +58,184 @@ describe 'FileBased module loader' do
     expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
   end
 
+  context 'when loading tasks' do
+    let(:testmodule) { {} }
+    let(:modules_dir) { dir_containing('modules', { 'testmodule' => testmodule }) }
+    let(:loaders) { Puppet::Pops::Loaders.new(Puppet::Node::Environment.create(:testing, [modules_dir])) }
+
+    before {
+      Puppet.push_context(:loaders => loaders)
+    }
+
+    after {
+      Puppet.pop_context
+    }
+
+    context 'without metadata' do
+      let(:testmodule) {
+        {
+          'tasks' => {
+            'hello' => <<-RUBY
+            require 'json'
+            args = JSON.parse(STDIN.read)
+            puts({message: args['message']}.to_json)
+            exit 0
+          RUBY
+          }
+        }
+      }
+
+      it 'loads task as a GenericTask subtype' do
+        module_loader = loaders.find_loader('testmodule')
+        task_t = module_loader.load(:type, 'testmodule::hello')
+        expect(task_t).to be_a(Puppet::Pops::Types::PObjectType)
+        expect(task_t.name).to eq('Testmodule::Hello')
+        expect(task_t.parent.name).to eq('GenericTask')
+
+        task = task_t.create('foo' => 'the foo', 'fee' => 311, 'fum' => false)
+        expect(task).to be_a(Puppet::Pops::Types::Task)
+        expect(task.executable_path).to eql("#{modules_dir}/testmodule/tasks/hello")
+        expect(task.task_json).to eql('{"foo":"the foo","fee":311,"fum":false}')
+      end
+    end
+
+    context 'with metadata' do
+      let(:testmodule) {
+        {
+          'tasks' => {
+            'hello.rb' => <<-RUBY,
+            require 'json'
+            args = JSON.parse(STDIN.read)
+            puts({message: args['message']}.to_json)
+            exit 0
+          RUBY
+          'hello.json' => <<-JSON
+            {
+              "supports_noop": true,
+              "parameters": {
+                 "message": {
+                   "type": "String"
+                 },
+                 "font": {
+                   "type": "Optional[String]"
+                 }
+            }}
+          JSON
+          }
+        }
+      }
+
+      it 'loads a task with parameters as a Task subtype' do
+        module_loader = loaders.find_loader('testmodule')
+        task_t = module_loader.load(:type, 'testmodule::hello')
+        expect(task_t).to be_a(Puppet::Pops::Types::PObjectType)
+        expect(task_t.name).to eq('Testmodule::Hello')
+        expect(task_t.parent.name).to eq('Task')
+
+        expect(task_t['message']).to be_a(Puppet::Pops::Types::PObjectType::PAttribute)
+        expect(task_t['message'].type).to be_a(Puppet::Pops::Types::PStringType)
+        expect(task_t['supports_noop']).to be_a(Puppet::Pops::Types::PObjectType::PAttribute)
+        expect(task_t['supports_noop'].type).to be_a(Puppet::Pops::Types::PBooleanType)
+        expect(task_t['supports_noop'].kind).to eql('constant')
+        expect(task_t['supports_noop'].value).to eql(true)
+
+        task = task_t.create('a message')
+        expect(task).to be_a(Puppet::Pops::Types::Task)
+        expect(task.executable_path).to eql("#{modules_dir}/testmodule/tasks/hello.rb")
+        expect(task.task_json).to eql('{"message":"a message"}')
+      end
+
+      context 'that has a malformed top-level entry' do
+        let(:testmodule) {
+          {
+            'tasks' => {
+              'hello' => 'echo hello',
+              'hello.json' => <<-JSON
+                {
+                  "supports_nop": true,
+                  "parameters": {
+                     "message": { "type": "String" }
+                  }
+                }
+                JSON
+            }
+          }
+        }
+
+        it 'loads a task with parameters as a Task subtype' do
+          module_loader = loaders.find_loader('testmodule')
+          expect{module_loader.load(:type, 'testmodule::hello')}.to raise_error(
+            /The metadata for task testmodule::hello has wrong type, unrecognized key 'supports_nop'/)
+        end
+      end
+
+      context 'that has a malformed parameter name' do
+        let(:testmodule) {
+          {
+            'tasks' => {
+              'hello' => 'echo hello',
+              'hello.json' => <<-JSON
+                {
+                  "supports_noop": true,
+                  "parameters": {
+                     "Message": { "type": "String" }
+                  }
+                }
+            JSON
+            }
+          }
+        }
+
+        it 'loads a task with parameters as a Task subtype' do
+          module_loader = loaders.find_loader('testmodule')
+          expect{module_loader.load(:type, 'testmodule::hello')}.to raise_error(
+            /entry 'parameters' key of entry 'Message' expects a match for Pattern\[\/\\A\[a-z\]\[a-z0-9_\]\*\\z\/\], got 'Message'/)
+        end
+      end
+    end
+
+    context 'with defined type' do
+      let(:testmodule) {
+        {
+          'tasks' => {
+            'hello.rb' => <<-RUBY,
+            require 'json'
+            args = JSON.parse(STDIN.read)
+            puts({message: args['message']}.to_json)
+            exit 0
+          RUBY
+          },
+          'types' => {
+            'hello.pp' => <<-PUPPET
+            type Testmodule::Hello = Task {
+              constants => {
+                supports_noop => true,
+                executable => 'hello.rb'
+              },
+              attributes => {
+                message => String,
+                font => {
+                  type => Optional[String],
+                  value => undef
+                }
+              }
+            }
+          PUPPET
+          }
+        }
+      }
+
+      it 'loads a task defined as a Type' do
+        module_loader = loaders.find_loader('testmodule')
+        task_t = module_loader.load(:type, 'testmodule::hello').resolve(module_loader)
+        expect(task_t).to be_a(Puppet::Pops::Types::PObjectType)
+        expect(task_t.name).to eq('Testmodule::Hello')
+        task = task_t.create('a message')
+        expect(task.executable_path).to eql("#{modules_dir}/testmodule/tasks/hello.rb")
+      end
+    end
+  end
+
   it 'system loader has itself as private loader' do
     module_loader = loaders.puppet_system_loader
     expect(module_loader.private_loader).to be(module_loader)

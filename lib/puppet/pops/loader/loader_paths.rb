@@ -30,6 +30,7 @@ module LoaderPaths
       result << PlanPathPP.new(loader)
     when :type
       result << TypePathPP.new(loader) if loader.loadables.include?(:type_pp)
+      result << TaskPath.new(loader) if loader.loadables.include?(:task)
     when :resource_type_pp
       result << ResourceTypeImplPP.new(loader) if loader.loadables.include?(:resource_type_pp)
     else
@@ -168,6 +169,37 @@ module LoaderPaths
 
     def instantiator
       TypeDefinitionInstantiator
+    end
+  end
+
+  class TaskPath < SmartPath
+    TASKS_PATH = 'tasks'.freeze
+
+    def extension
+      EMPTY_STRING
+    end
+
+    def match_many?
+      true
+    end
+
+    def relative_path
+      TASKS_PATH
+    end
+
+    def effective_path(typed_name, start_index_in_name)
+      # Puppet name to path always skips the name-space as that is part of the generic path
+      # i.e. <module>/mymodule/tasks/foo is the function mymodule::foo
+      parts = typed_name.name_parts
+      if start_index_in_name > 0
+        return nil if start_index_in_name >= parts.size
+        parts = parts[start_index_in_name..-1]
+      end
+      "#{File.join(generic_path, parts)}"
+    end
+
+    def instantiator
+      TaskInstantiator
     end
   end
 

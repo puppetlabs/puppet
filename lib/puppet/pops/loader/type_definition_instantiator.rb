@@ -88,6 +88,10 @@ class TypeDefinitionInstantiator
   def self.named_definition(te)
     te.is_a?(Model::AccessExpression) && (left = te.left_expr).is_a?(Model::QualifiedReference) ? left.cased_value : nil
   end
+
+  def several_paths?
+    false
+  end
 end
 end
 end
