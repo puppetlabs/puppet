@@ -34,4 +34,9 @@ describe Puppet::Pops::Model::Factory do
     x = Factory.literal(2) * Factory.literal(10) + Factory.literal(20)
     expect(Puppet::Pops::Model::ModelTreeDumper.new.dump(x.model)).to eq("(+ (* 2 10) 20)")
   end
+
+describe "should be describable with labels"
+  it 'describes a PlanDefinition as "Plan Definition"' do
+    expect(Puppet::Pops::Model::ModelLabelProvider.new.label(Factory.PLAN('test', [], nil))).to eq("Plan Definition")
+  end
 end

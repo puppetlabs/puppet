@@ -23,6 +23,8 @@ module Puppet::Pops::Loader::LoaderPaths
           result << FunctionPathPP.new(loader)
         end
         # When wanted also add FunctionPath3x to load 3x functions
+    when :plan
+      result << PlanPathPP.new(loader)
     when :type
       result << TypePathPP.new(loader) if loader.loadables.include?(:type_pp)
     when :resource_type_pp
@@ -190,6 +192,18 @@ module Puppet::Pops::Loader::LoaderPaths
       # Resource type to name does not skip the name-space
       # i.e. <module>/mymodule/resource_types/foo.pp is the reource type foo
       "#{File.join(generic_path, typed_name.name_parts)}.pp"
+    end
+  end
+
+  class PlanPathPP < PuppetSmartPath
+    PLAN_PATH_PP = File.join('plans')
+
+    def relative_path
+      PLAN_PATH_PP
+    end
+
+    def instantiator()
+      Puppet::Pops::Loader::PuppetPlanInstantiator
     end
   end
 

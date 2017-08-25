@@ -377,6 +377,9 @@ type Puppet::AST = TypeSet[{
         }
       }
     }],
+    PlanDefinition => Object[{
+      parent => FunctionDefinition,
+    }],
     LambdaExpression => Object[{
       parent => Expression,
       attributes => {
