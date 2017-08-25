@@ -607,7 +607,13 @@ class PObjectType < PMetaType
     end
 
     constants = init_hash[KEY_CONSTANTS]
-    attr_specs = init_hash[KEY_ATTRIBUTES] || {}
+    attr_specs = init_hash[KEY_ATTRIBUTES]
+    if attr_specs.nil?
+      attr_specs = {}
+    else
+      # attr_specs might be frozen
+      attr_specs = Hash[attr_specs]
+    end
     unless constants.nil? || constants.empty?
       constants.each do |key, value|
         raise Puppet::ParseError, "attribute #{label}[#{key}] is defined as both a constant and an attribute" if attr_specs.include?(key)
