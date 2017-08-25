@@ -75,10 +75,14 @@ class Puppet::Application::Agent < Puppet::Application
     options[:job_id] = arg
   end
 
-  def help
-    <<-'HELP'
+  def summary
+    _("The puppet agent daemon")
+  end
 
-puppet-agent(8) -- The puppet agent daemon
+  def help
+    <<-HELP
+
+puppet-agent(8) -- #{summary}
 ========
 
 SYNOPSIS

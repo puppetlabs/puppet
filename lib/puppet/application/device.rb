@@ -62,10 +62,14 @@ class Puppet::Application::Device < Puppet::Application
     options[:target] = arg.to_s
   end
 
-    def help
-      <<-'HELP'
+  def summary
+    _("Manage remote network devices")
+  end
 
-puppet-device(8) -- Manage remote network devices
+  def help
+      <<-HELP
+
+puppet-device(8) -- #{summary}
 ========
 
 SYNOPSIS

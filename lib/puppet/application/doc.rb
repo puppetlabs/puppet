@@ -48,10 +48,14 @@ class Puppet::Application::Doc < Puppet::Application
     options[:references] << arg.intern
   end
 
-  def help
-    <<-'HELP'
+  def summary
+    _("Generate Puppet references")
+  end
 
-puppet-doc(8) -- Generate Puppet references
+  def help
+    <<-HELP
+
+puppet-doc(8) -- #{summary}
 ========
 
 SYNOPSIS

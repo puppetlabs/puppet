@@ -95,10 +95,14 @@ class Puppet::Application::Lookup < Puppet::Application
     setup_terminuses
   end
 
-  def help
-    <<-'HELP'
+  def summary
+    _("Interactive Hiera lookup")
+  end
 
-puppet-lookup(8) -- Interactive Hiera lookup
+  def help
+    <<-HELP
+
+puppet-lookup(8) -- #{summary}
 ========
 
 SYNOPSIS

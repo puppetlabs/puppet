@@ -4,7 +4,7 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
   copyright "Puppet Inc.", 2011
   license   "Apache 2 license; see COPYING"
 
-  summary "Compile, save, view, and convert catalogs."
+  summary _("Compile, save, view, and convert catalogs.")
   description <<-'EOT'
     This subcommand deals with catalogs, which are compiled per-node artifacts
     generated from a set of Puppet manifests. By default, it interacts with the

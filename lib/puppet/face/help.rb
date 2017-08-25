@@ -153,25 +153,29 @@ MSG
           result << [ "! #{appname}", _("! Subcommand unavailable due to error. Check error logs.") ]
         end
       else
-        result << [appname, horribly_extract_summary_from(appname)]
+        begin
+          summary = Puppet::Application[appname].summary
+          if summary.empty?
+            summary = horribly_extract_summary_from(appname)
+          end
+          result << [appname, summary]
+        rescue StandardError, LoadError
+          result << ["! #{appname}", _("! Subcommand unavailable due to error. Check error logs.")]
+        end
       end
     end
   end
 
   def horribly_extract_summary_from(appname)
-    begin
-      help = Puppet::Application[appname].help.split("\n")
-      # Now we find the line with our summary, extract it, and return it.  This
-      # depends on the implementation coincidence of how our pages are
-      # formatted.  If we can't match the pattern we expect we return the empty
-      # string to ensure we don't blow up in the summary. --daniel 2011-04-11
-      while line = help.shift do
-        if md = /^puppet-#{appname}\([^\)]+\) -- (.*)$/.match(line) then
-          return md[1]
-        end
+    help = Puppet::Application[appname].help.split("\n")
+    # Now we find the line with our summary, extract it, and return it.  This
+    # depends on the implementation coincidence of how our pages are
+    # formatted.  If we can't match the pattern we expect we return the empty
+    # string to ensure we don't blow up in the summary. --daniel 2011-04-11
+    while line = help.shift do
+      if md = /^puppet-#{appname}\([^\)]+\) -- (.*)$/.match(line) then
+        return md[1]
       end
-    rescue StandardError, LoadError
-      return _("! Subcommand unavailable due to error. Check error logs.")
     end
     return ''
   end

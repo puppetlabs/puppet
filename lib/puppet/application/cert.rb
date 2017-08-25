@@ -99,10 +99,14 @@ class Puppet::Application::Cert < Puppet::Application
     options[:yes] = true
   end
 
-  def help
-    <<-'HELP'
+  def summary
+    _("Manage certificates and requests")
+  end
 
-puppet-cert(8) -- Manage certificates and requests
+  def help
+    <<-HELP
+
+puppet-cert(8) -- #{summary}
 ========
 
 SYNOPSIS
