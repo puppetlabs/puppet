@@ -106,10 +106,6 @@ module LoaderPaths
       EXTENSION
     end
 
-    def root_path
-      Puppet::FileSystem.dir_string(@loader.path)
-    end
-
     # Duplication of extension information, but avoids one call
     def effective_path(typed_name, start_index_in_name)
       # Puppet name to path always skips the name-space as that is part of the generic path
@@ -124,7 +120,7 @@ module LoaderPaths
   end
 
   class FunctionPath4x < RubySmartPath
-    FUNCTION_PATH_4X = File.join('puppet', 'functions')
+    FUNCTION_PATH_4X = File.join('lib', 'puppet', 'functions').freeze
 
     def relative_path
       FUNCTION_PATH_4X
@@ -136,7 +132,7 @@ module LoaderPaths
   end
 
   class FunctionPath3x < RubySmartPath
-    FUNCTION_PATH_3X = File.join('puppet', 'parser', 'functions')
+    FUNCTION_PATH_3X = File.join('lib', 'puppet', 'parser', 'functions').freeze
 
     def relative_path
       FUNCTION_PATH_3X
@@ -148,8 +144,7 @@ module LoaderPaths
   end
 
   class FunctionPathPP < PuppetSmartPath
-    # Navigate to directory where 'lib' is, then down again
-    FUNCTION_PATH_PP = File.join('functions')
+    FUNCTION_PATH_PP = 'functions'.freeze
 
     def relative_path
       FUNCTION_PATH_PP
@@ -161,7 +156,7 @@ module LoaderPaths
   end
 
   class TypePathPP < PuppetSmartPath
-    TYPE_PATH_PP = File.join('types')
+    TYPE_PATH_PP = 'types'.freeze
 
     def relative_path
       TYPE_PATH_PP
@@ -173,7 +168,7 @@ module LoaderPaths
   end
 
   class ResourceTypeImplPP < PuppetSmartPath
-    RESOURCE_TYPES_PATH_PP = File.join('.resource_types')
+    RESOURCE_TYPES_PATH_PP = '.resource_types'.freeze
 
     def relative_path
       RESOURCE_TYPES_PATH_PP

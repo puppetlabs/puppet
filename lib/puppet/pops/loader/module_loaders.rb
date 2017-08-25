@@ -27,7 +27,7 @@ module ModuleLoaders
     # to search up the path from this source file's __FILE__ location until it finds the base of
     # puppet.
     #
-    puppet_lib = File.join(File.dirname(__FILE__), '../../..')
+    puppet_lib = File.join(File.dirname(__FILE__), '../../../..')
     ModuleLoaders::FileBased.new(parent_loader,
                                                        loaders,
                                                        nil,
@@ -41,7 +41,7 @@ module ModuleLoaders
     ModuleLoaders::FileBased.new(parent_loader,
       loaders,
       ENVIRONMENT,
-      File.join(env_path, 'lib'),
+      env_path,
       ENVIRONMENT
     )
   end
@@ -50,7 +50,7 @@ module ModuleLoaders
     ModuleLoaders::FileBased.new(parent_loader,
                                                        loaders,
                                                        module_name,
-                                                       File.join(module_path, 'lib'),
+                                                       module_path,
                                                        module_name
                                                        )
   end
