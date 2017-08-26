@@ -163,6 +163,19 @@ class Puppet::Util::Log
     end
   end
 
+  private
+  # produces UTF-8 strings or dumps strings when they cannot be re-encoded
+  def Log.coerce_string(str)
+    return Puppet::Util::CharacterEncoding.convert_to_utf_8(str) if str.valid_encoding?
+
+    annotated_string = _("Received a Log attribute with invalid encoding:")
+    annotated_string << Puppet::Util::CharacterEncoding.convert_to_utf_8(str.dump) << "\n"
+    # We only select the last 10 callers in the stack to avoid being spammy
+    annotated_string << _("Backtrace:") << "\n" << caller[0..10].join("\n")
+  end
+
+  public
+
   # Route the actual message. FIXME There are lots of things this method
   # should do, like caching and a bit more.  It's worth noting that there's
   # a potential for a loop here, if the machine somehow gets the destination set as
@@ -170,16 +183,8 @@ class Puppet::Util::Log
   def Log.newmessage(msg)
     return if @levels.index(msg.level) < @loglevel
 
-    if msg.message.valid_encoding?
-      message = Puppet::Util::CharacterEncoding.convert_to_utf_8(msg.message)
-    else
-      message = _("Received a log message with invalid encoding:")
-      message << Puppet::Util::CharacterEncoding.convert_to_utf_8(msg.message.dump) << "\n"
-      # We only select the last 10 callers in the stack to avoid being spammy
-      message << _("Backtrace:") << "\n" << caller[0..10].join("\n")
-    end
-
-    msg.message = message
+    msg.message = coerce_string(msg.message)
+    msg.source = coerce_string(msg.source)
 
     queuemessage(msg) if @destinations.length == 0
 
