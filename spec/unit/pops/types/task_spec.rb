@@ -81,7 +81,14 @@ describe 'The Task Type' do
           end
         end
 
-        it 'evaluator loads and notices an empty GenericTask' do
+        it 'evaluator loads and notices an empty GenericTask without parameters' do
+          compile(<<-PUPPET.unindent)
+            notice(Testmodule::Hello())
+          PUPPET
+          expect(notices).to eql(["Testmodule::Hello({})"])
+        end
+
+        it 'evaluator loads and notices an empty GenericTask using {}' do
           compile(<<-PUPPET.unindent)
             notice(Testmodule::Hello({}))
           PUPPET

@@ -70,7 +70,10 @@ module Types
     # Register the GenericTask type with the Pcore loader and implementation registry
     def self.register_ptype(loader, ir)
       @type = Pcore::create_object_type(loader, ir, self, 'GenericTask', 'Task', {
-        'args' => PHashType.new(PARAMETER_NAME_PATTERN, PTypeReferenceType.new('Data'))
+        'args' => {
+          'type' => PHashType.new(PARAMETER_NAME_PATTERN, PTypeReferenceType.new('Data')),
+          'value' => EMPTY_HASH
+        }
       })
     end
 
@@ -84,7 +87,7 @@ module Types
       { 'args' => args }
     end
 
-    def initialize(args)
+    def initialize(args = EMPTY_HASH)
       @args = args
     end
 
