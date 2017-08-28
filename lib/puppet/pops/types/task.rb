@@ -91,6 +91,12 @@ module Types
     def task_json
       @args.to_json
     end
+
+    # Special to_s needed to cloak the 'attr' attribute and instead present
+    # the hash
+    def to_s
+      "#{_pcore_type.name}(#{TypeFormatter.string(@args)})"
+    end
   end
 end
 end
