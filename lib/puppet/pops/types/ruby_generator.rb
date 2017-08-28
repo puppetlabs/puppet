@@ -347,12 +347,6 @@ class RubyGenerator < TypeFormatter
       bld << "    path.pop\n  end\n"
     end
 
-    unless obj.parent.is_a?(PObjectType)
-      bld << "\n  def to_s\n"
-      bld << '    ' << namespace_relative(segments, TypeFormatter.name) << ".string(self)\n"
-      bld << "  end\n"
-    end
-
     # Output function placeholders
     obj.functions(false).each_value do |func|
       code_annotation = RubyMethod.annotate(func)
