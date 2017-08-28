@@ -298,9 +298,7 @@ class RubyGenerator < TypeFormatter
       end
     end
 
-    if obj_attrs.empty?
-      bld << "\n  def _pcore_init_hash\n    {}\n  end\n" unless obj.parent.is_a?(PObjectType)
-    else
+    unless obj_attrs.empty? && obj.parent.nil?
       bld << "\n  def _pcore_init_hash\n"
       bld << '    result = '
       bld << (obj.parent.nil? ? '{}' : 'super')
