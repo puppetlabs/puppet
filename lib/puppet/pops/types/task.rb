@@ -80,8 +80,12 @@ module Types
 
     attr_reader :args
 
-    def initialize(args_hash)
-      @args = args_hash
+    def _pcore_init_hash
+      { 'args' => args }
+    end
+
+    def initialize(args)
+      @args = args
     end
 
     def task_json
