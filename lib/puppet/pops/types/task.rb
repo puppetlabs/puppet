@@ -80,12 +80,22 @@ module Types
 
     attr_reader :args
 
-    def initialize(args_hash)
-      @args = args_hash
+    def _pcore_init_hash
+      { 'args' => args }
+    end
+
+    def initialize(args)
+      @args = args
     end
 
     def task_json
       @args.to_json
+    end
+
+    # Special to_s needed to cloak the 'attr' attribute and instead present
+    # the hash
+    def to_s
+      "#{_pcore_type.name}(#{TypeFormatter.string(@args)})"
     end
   end
 end

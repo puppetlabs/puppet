@@ -298,9 +298,7 @@ class RubyGenerator < TypeFormatter
       end
     end
 
-    if obj_attrs.empty?
-      bld << "\n  def _pcore_init_hash\n    {}\n  end\n" unless obj.parent.is_a?(PObjectType)
-    else
+    unless obj_attrs.empty? && obj.parent.nil?
       bld << "\n  def _pcore_init_hash\n"
       bld << '    result = '
       bld << (obj.parent.nil? ? '{}' : 'super')
@@ -345,12 +343,6 @@ class RubyGenerator < TypeFormatter
         bld << "    end\n"
       end
       bld << "    path.pop\n  end\n"
-    end
-
-    unless obj.parent.is_a?(PObjectType)
-      bld << "\n  def to_s\n"
-      bld << '    ' << namespace_relative(segments, TypeFormatter.name) << ".string(self)\n"
-      bld << "  end\n"
     end
 
     # Output function placeholders

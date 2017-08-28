@@ -19,7 +19,11 @@ module PuppetObject
   end
 
   def _pcore_init_hash
-    EMPTY_HASH
+    {}
+  end
+
+  def to_s
+    TypeFormatter.string(self)
   end
 end
 end
