@@ -699,7 +699,7 @@ class Puppet::Parser::Scope
 
   # Merge all settings for the given _env_name_ into this scope
   # @param env_name [Symbol] the name of the environment
-  def merge_settings(env_name)
+  def merge_settings(env_name, set_in_this_scope=true)
     settings = Puppet.settings
     table = effective_symtable(false)
     global_table = compiler.qualified_variables
@@ -708,7 +708,9 @@ class Puppet::Parser::Scope
       next if :name == name
       key = name.to_s
       value = transform_setting(settings.value_sym(name, env_name))
-      table[key] = value
+      if set_in_this_scope
+        table[key] = value
+      end
       all_local[key] = value
       # also write the fqn into global table for direct lookup
       global_table["settings::#{key}"] = value
@@ -859,6 +861,7 @@ class Puppet::Parser::Scope
 
   # Used mainly for logging
   def to_s
+    require 'byebug'; debugger
     "Scope(#{@resource})"
   end
 
