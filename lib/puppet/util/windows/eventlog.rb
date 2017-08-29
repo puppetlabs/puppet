@@ -28,7 +28,8 @@ class Puppet::Util::Windows::EventLog
   # @param source_name [String] the name of the event source to retrieve a handle for
   # @return [void]
   # @api public
-  def initialize(source_name = 'Puppet')
+  def initialize(source_name = 'Puppet', create_custom = true)
+    create_custom_event_log(source_name) if create_custom
     @eventlog_handle = RegisterEventSourceW(FFI::Pointer::NULL, wide_string(source_name))
     if @eventlog_handle == NULL_HANDLE
       raise EventLogError.new("RegisterEventSourceW failed to open Windows eventlog", FFI.errno)
@@ -112,6 +113,63 @@ class Puppet::Util::Windows::EventLog
       def initialize(msg, code)
         super(msg + " (Win32 error: #{code})")
       end
+    end
+  end
+
+  def create_custom_event_log(name)
+    raise ArgumentError, "Invalid custom log name" if name.nil?
+
+    require 'win32/registry'
+    include Win32::Registry::Constants
+
+    begin
+      Win32::Registry::HKEY_LOCAL_MACHINE.create('SYSTEM\CurrentControlSet\Services\Eventlog\Puppet', KEY_ALL_ACCESS | 0x0100) do |reg_parent|
+        # // The reasoning behind filling these values is historical. WS03 RTM had a ----
+        # // between registry changes and EventLog service, which made the service wait 2 secs
+        # // before retrying to see whether all regkey values are present. To avoid this
+        # // potential lag (worst case up to n*2 secs where n is the number of required regkeys)
+        # // between creation and being able to write events, we started filling some of these
+        # // values explicitly but for XP and latter OS releases like WS03 SP1 and Vista this
+        # // is not necessary and in some cases like the "File" key it's plain wrong to write.
+        # private static void SetSpecialLogRegValues(RegistryKey logKey, string logName) {
+        #     // Set all the default values for this log.  AutoBackupLogfiles only makes sense in
+        #     // Win2000 SP4, WinXP SP1, and Win2003, but it should alright elsewhere.
+
+        #     // Since we use this method on the existing system logs as well as our own,
+        #     // we need to make sure we don't overwrite any existing values.
+        #     if (logKey.GetValue("MaxSize") == null)
+        #         logKey.SetValue("MaxSize", DefaultMaxSize, RegistryValueKind.DWord);
+        #     if (logKey.GetValue("AutoBackupLogFiles") == null)
+        #         logKey.SetValue("AutoBackupLogFiles", 0, RegistryValueKind.DWord);
+
+        #     if (!SkipRegPatch) {
+        #         // In Vista, "retention of events for 'n' days" concept is removed
+        #         if (logKey.GetValue("Retention") == null)
+        #             logKey.SetValue("Retention", DefaultRetention, RegistryValueKind.DWord);
+
+        #         if (logKey.GetValue("File") == null) {
+        #             string filename;
+        #             if (logName.Length > 8)
+        #                 filename = @"%SystemRoot%\System32\config\" + logName.Substring(0,8) + ".evt";
+        #             else
+        #                 filename = @"%SystemRoot%\System32\config\" + logName + ".evt";
+
+        #             logKey.SetValue("File", filename, RegistryValueKind.ExpandString);
+        #         }
+        #     }
+        reg_parent.write_i('AutoBackupLogFiles', 0x0)
+        reg_parent.write_i('MaxSize', 0x80000)
+
+        reg_parent.create('Puppet', KEY_ALL_ACCESS | 0x0100) do |reg|
+          # TODO: hack a relative path based on the location of this file - not awesome as things may move
+          # TODO: has puppetres.dll moved in newer MSIs so its easy to move for upgrades?
+          message_dll = File.expand_path(File.join(__FILE__, '..', '..', '..', '..', '..', '..', '..', '..', 'puppet', 'bin', 'puppetres.dll'))
+          reg.write_s('EventMessageFile', message_dll.tr('/', '\\'))
+          reg.write_i('TypesSupported', 0x7)
+        end
+      end
+    rescue Win32::Registry::Error => e
+      warn "Failed to create puppet eventlog registry key: #{e}"
     end
   end
 
