@@ -5371,7 +5371,7 @@ msgstr ""
 msgid "No responsefile specified or non existent, not preseeding anything"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:93 ../lib/puppet/provider/package/portupgrade.rb:151 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:213 ../lib/puppet/provider/package/zypper.rb:109
+#: ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:93 ../lib/puppet/provider/package/portupgrade.rb:151 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:214 ../lib/puppet/provider/package/zypper.rb:109
 msgid "Could not find package %{name}"
 msgstr ""
 
@@ -5692,15 +5692,15 @@ msgstr ""
 msgid "Could not check for updates, '%{cmd} check-update' exited with %{status}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:116
+#: ../lib/puppet/provider/package/yum.rb:117
 msgid "Failed to parse package name and architecture from '%{pkgname}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:207
+#: ../lib/puppet/provider/package/yum.rb:208
 msgid "Could not find package %{wanted}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:218
+#: ../lib/puppet/provider/package/yum.rb:219
 msgid "Failed to update to version %{should}, got version %{version} instead"
 msgstr ""
 
@@ -7474,43 +7474,43 @@ msgstr ""
 msgid "Failed to set process priority to '%{priority}'"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:176
-msgid "Received a log message with invalid encoding:"
+#: ../lib/puppet/util/log.rb:171
+msgid "Received a Log attribute with invalid encoding:"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:179
+#: ../lib/puppet/util/log.rb:174
 msgid "Backtrace:"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:223
+#: ../lib/puppet/util/log.rb:228
 msgid "Reopening log files"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:392
+#: ../lib/puppet/util/log.rb:397
 msgid "Could not parse for environment %{env}: %{msg}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:394
+#: ../lib/puppet/util/log.rb:399
 msgid "%{msg} at %{file}:%{line}:%{pos}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:396
+#: ../lib/puppet/util/log.rb:401
 msgid "%{msg}  at %{file}:%{line}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:398
+#: ../lib/puppet/util/log.rb:403
 msgid "%{msg}  at line %{line}:%{pos}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:400
+#: ../lib/puppet/util/log.rb:405
 msgid "%{msg}  at line %{line}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:402
+#: ../lib/puppet/util/log.rb:407
 msgid "%{msg}  in %{file}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:404
+#: ../lib/puppet/util/log.rb:409
 msgid "%{msg} on node %{node}"
 msgstr ""
 
