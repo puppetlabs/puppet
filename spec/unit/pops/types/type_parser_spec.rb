@@ -376,6 +376,26 @@ describe TypeParser do
     expect(t.type_string).to eql('Nonesuch[{a=>undef,b=>true,c=>false,d=>default,e=>"string",f=>0,g=>1.0,h=>[1,2,3]}]')
   end
 
+  it 'parses a parameterized Enum using identifiers' do
+    t = parser.parse('Enum[a, b]')
+    expect(t).to be_a(PEnumType)
+    expect(t.to_s).to eql("Enum['a', 'b']")
+  end
+
+  it 'parses a parameterized Enum using strings' do
+    t = parser.parse("Enum['a', 'b']")
+    expect(t).to be_a(PEnumType)
+    expect(t.to_s).to eql("Enum['a', 'b']")
+  end
+
+  it 'rejects a parameterized Enum using type refs' do
+    expect { parser.parse('Enum[A, B]') }.to raise_error(/Enum parameters must be identifiers or strings/)
+  end
+
+  it 'rejects a parameterized Enum using integers' do
+    expect { parser.parse('Enum[1, 2]') }.to raise_error(/Enum parameters must be identifiers or strings/)
+  end
+
   matcher :be_the_type do |type|
     calc = TypeCalculator.new
 
