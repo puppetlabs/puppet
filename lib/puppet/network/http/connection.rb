@@ -221,11 +221,16 @@ module Puppet::Network::HTTP
                             retry_after
                           end
 
-            Puppet.warning(_('Received a %{status_code} response from the server. Sleeping for %{retry_sleep} seconds before retrying the request.') %
-                           {status_code: current_response.code,
-                            retry_sleep: retry_sleep})
+            if (retry_sleep > 0)
+              # Cap maximum sleep at the run interval of the Puppet agent.
+              retry_sleep = [retry_sleep, Puppet[:runinterval]].min
 
-            ::Kernel.sleep(retry_sleep) if (retry_sleep > 0)
+              Puppet.warning(_('Received a %{status_code} response from the server. Sleeping for %{retry_sleep} seconds before retrying the request.') %
+                             {status_code: current_response.code,
+                              retry_sleep: retry_sleep})
+
+              ::Kernel.sleep(retry_sleep) if (retry_sleep > 0)
+            end
           else
             response = current_response
           end

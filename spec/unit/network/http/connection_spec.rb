@@ -322,6 +322,19 @@ describe Puppet::Network::HTTP::Connection do
 
       expect(result.code).to eq(200)
     end
+
+    it "should sleep for no more than the Puppet runinterval" do
+      httpunavailable['Retry-After'] = '60'
+      http.stubs(:request).returns(httpunavailable).then.returns(httpok)
+      Puppet[:runinterval] = 30
+
+      pool = Puppet.lookup(:http_pool)
+      pool.expects(:with_connection).with(site, anything).twice.yields(http)
+
+      ::Kernel.expects(:sleep).with(30)
+
+      result = subject.get('/foo')
+    end
   end
 
   it "allows setting basic auth on get requests" do
