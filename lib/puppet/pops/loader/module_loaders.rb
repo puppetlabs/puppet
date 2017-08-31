@@ -107,6 +107,19 @@ module ModuleLoaders
       @loadables
     end
 
+    def discover(type, name_authority = Pcore::RUNTIME_NAME_AUTHORITY, &block)
+      global = global?
+      if name_authority == Pcore::RUNTIME_NAME_AUTHORITY
+        smart_paths.effective_paths(type).each do |sp|
+          relative_paths(sp).each do |rp|
+            tp = sp.typed_name(type, name_authority, rp, global ? nil : @module_name)
+            load_typed(tp) unless block_given? && !block.yield(tp)
+          end
+        end
+      end
+      super
+    end
+
     # Finds typed/named entity in this module
     # @param typed_name [TypedName] the type/name to find
     # @return [Loader::NamedEntry, nil found/created entry, or nil if not found
@@ -263,6 +276,15 @@ module ModuleLoaders
       @private_loader ||= (global? ? self : @loaders.private_loader_for_module(module_name))
     end
 
+    # Return all paths that matches the given smart path. The returned paths are
+    # relative to the `#generic_path` of the given smart path.
+    #
+    # @param smart_path [SmartPath] the path to find relative paths for
+    # @return [Array<String>] found paths
+    def relative_paths(smart_path)
+      raise NotImplementedError.new
+    end
+
     private
 
     # @return [TypedName] the fake typed name that maps to the init_typeset path for this module
@@ -339,6 +361,25 @@ module ModuleLoaders
 
     def get_contents(effective_path)
       Puppet::FileSystem.read(effective_path, :encoding => 'utf-8')
+    end
+
+    # Return all paths that matches the given smart path. The returned paths are
+    # relative to the `#generic_path` of the given smart path.
+    #
+    # This method relies on the cache and does not perform any file system access
+    #
+    # @param smart_path [SmartPath] the path to find relative paths for
+    # @return [Array<String>] found paths
+    def relative_paths(smart_path)
+      root = smart_path.generic_path
+      ext = smart_path.extension
+      ext = nil if ext.empty?
+      found = []
+      @path_index.each do |path|
+        next unless (ext.nil? || path.end_with?(ext)) && path.start_with?(root)
+        found << Pathname(path).relative_path_from(Pathname(root)).to_s
+      end
+      found
     end
   end
 

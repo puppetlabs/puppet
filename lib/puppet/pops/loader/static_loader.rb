@@ -79,6 +79,14 @@ class StaticLoader < Loader
     register_aliases
   end
 
+  def discover(type, name_authority = Pcore::RUNTIME_NAME_AUTHORITY)
+    # Static loader only contains runtime types
+    return EMPTY_ARRAY unless type == :type && name_authority == name_authority = Pcore::RUNTIME_NAME_AUTHORITY
+
+    typed_names = type == :type && name_authority == Pcore::RUNTIME_NAME_AUTHORITY ? @loaded.keys : EMPTY_ARRAY
+    block_given? ? typed_names.select { |tn| yield(tn) } : typed_names
+  end
+
   def load_typed(typed_name)
     load_constant(typed_name)
   end

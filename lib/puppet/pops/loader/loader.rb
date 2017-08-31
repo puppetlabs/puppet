@@ -36,6 +36,20 @@ class Loader
     @loader_name = loader_name.freeze
   end
 
+  # Search all places where this loader would find values of a given type and return a list the
+  # found values for which the given block returns true. All found entries will be returned if no
+  # block is given.
+  #
+  # @param type [Symbol] the type of values to search for
+  # @param name_authority [String] the name authority, defaults to the pcore runtime
+  # @yield [typed_name] optional block to filter the results
+  # @yieldparam [TypedName] typed_name the typed name of a found entry
+  # @yieldreturn [Boolean] `true` to keep the entry, `false` to discard it.
+  # @return [Array<TypedName>] the list of names of discovered values
+  def discover(type, name_authority = Pcore::RUNTIME_NAME_AUTHORITY, &block)
+    return EMPTY_ARRAY
+  end
+
   # Produces the value associated with the given name if already loaded, or available for loading
   # by this loader, one of its parents, or other loaders visible to this loader.
   # This is the method an external party should use to "get" the named element.

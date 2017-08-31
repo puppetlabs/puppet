@@ -79,6 +79,20 @@ module LoaderPaths
       "#{File.join(generic_path, typed_name.name_parts)}#{extension}"
     end
 
+    def typed_name(type, name_authority, relative_path, module_name)
+      # Module name is assumed to be included in the path and therefore not added here
+      n = ''
+      unless extension.empty?
+        # Remove extension
+        relative_path = relative_path[0..-(extension.length+1)]
+      end
+      relative_path.split('/').each do |segment|
+        n << '::' if n.size > 0
+        n << segment
+      end
+      TypedName.new(type, n, name_authority)
+    end
+
     def relative_path
       raise NotImplementedError.new
     end
@@ -120,7 +134,21 @@ module LoaderPaths
         return nil if start_index_in_name >= parts.size
         parts = parts[start_index_in_name..-1]
       end
-      "#{File.join(generic_path, parts)}.pp"
+      "#{File.join(generic_path, parts)}#{extension}"
+    end
+
+    def typed_name(type, name_authority, relative_path, module_name)
+      n = ''
+      n << module_name unless module_name.nil?
+      unless extension.empty?
+        # Remove extension
+        relative_path = relative_path[0..-(extension.length+1)]
+      end
+      relative_path.split('/').each do |segment|
+        n << '::' if n.size > 0
+        n << segment
+      end
+      TypedName.new(type, n, name_authority)
     end
   end
 
@@ -172,7 +200,9 @@ module LoaderPaths
     end
   end
 
-  class TaskPath < SmartPath
+  # TaskPath is like PuppetSmartPath but it does not use an extension and may
+  # match more than one path with one name
+  class TaskPath < PuppetSmartPath
     TASKS_PATH = 'tasks'.freeze
 
     def extension
@@ -185,17 +215,6 @@ module LoaderPaths
 
     def relative_path
       TASKS_PATH
-    end
-
-    def effective_path(typed_name, start_index_in_name)
-      # Puppet name to path always skips the name-space as that is part of the generic path
-      # i.e. <module>/mymodule/tasks/foo is the function mymodule::foo
-      parts = typed_name.name_parts
-      if start_index_in_name > 0
-        return nil if start_index_in_name >= parts.size
-        parts = parts[start_index_in_name..-1]
-      end
-      "#{File.join(generic_path, parts)}"
     end
 
     def instantiator
