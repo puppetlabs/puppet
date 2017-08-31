@@ -6,12 +6,12 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.0.1-268-g9851701\n"
+"Project-Id-Version: Puppet automation framework 5.0.1-294-g802509d\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-08-18 18:09+0000\n"
-"PO-Revision-Date: 2017-08-18 18:09+0000\n"
-"Last-Translator: 梅田智世 <c-umeda@nifty.com>, 2017\n"
+"POT-Creation-Date: 2017-08-23 21:04+0000\n"
+"PO-Revision-Date: 2017-08-23 21:04+0000\n"
+"Last-Translator: LarissaLane <larissa@puppet.com>, 2017\n"
 "Language-Team: Japanese (Japan) (https://www.transifex.com/puppet/teams/29089/ja_JP/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -151,73 +151,93 @@ msgstr "puppet %{app_name}で利用できるヘルプがありません。"
 msgid "Cancelling startup"
 msgstr "起動をキャンセルしています。"
 
-#: ../lib/puppet/application/agent.rb:349
+#: ../lib/puppet/application/agent.rb:79
+msgid "The puppet agent daemon"
+msgstr "Puppet agentデーモン"
+
+#: ../lib/puppet/application/agent.rb:353
 msgid ""
 "Fingerprint asked but no certificate nor certificate request have yet been "
 "issued"
 msgstr "フィンガープリントが要求されましたが、証明書や証明書リクエストがまだ発行されていません。"
 
-#: ../lib/puppet/application/agent.rb:354
+#: ../lib/puppet/application/agent.rb:358
 msgid "Could not get fingerprint for digest '%{digest}'"
 msgstr "ダイジェスト'%{digest}'のフィンガープリントを取得できませんでした。"
 
-#: ../lib/puppet/application/agent.rb:378
+#: ../lib/puppet/application/agent.rb:382
 msgid "Starting Puppet client version %{version}"
 msgstr "Puppetクライアントバージョン%{version}を起動しています。"
 
-#: ../lib/puppet/application/agent.rb:394
+#: ../lib/puppet/application/agent.rb:398
 msgid "The puppet agent command does not take parameters"
 msgstr "puppet agentコマンドがパラメータを取っていません。"
 
-#: ../lib/puppet/application/apply.rb:193
+#: ../lib/puppet/application/apply.rb:35
+msgid "Apply Puppet manifests locally"
+msgstr "Puppetマニフェストをローカルに適用"
+
+#: ../lib/puppet/application/apply.rb:197
 msgid "Could not find file %{manifest}"
 msgstr "ファイル%{manifest}が見つかりませんでした。"
 
-#: ../lib/puppet/application/apply.rb:194
+#: ../lib/puppet/application/apply.rb:198
 msgid "Only one file can be applied per run.  Skipping %{files}"
 msgstr "1回の実行で適用できるのは1ファイルのみです。%{files}をスキップしています。"
 
-#: ../lib/puppet/application/apply.rb:203
+#: ../lib/puppet/application/apply.rb:207
 msgid "Could not find facts for %{node}"
 msgstr "%{node}のfactsが見つかりませんでした。"
 
-#: ../lib/puppet/application/apply.rb:212
+#: ../lib/puppet/application/apply.rb:216
 msgid "Could not find node %{node}"
 msgstr "ノード%{node}が見つかりませんでした。"
 
 #. TRANSLATORS "puppet apply" is a program command and should not be
 #. translated
-#: ../lib/puppet/application/apply.rb:229
+#: ../lib/puppet/application/apply.rb:233
 msgid "For puppet apply"
 msgstr "puppet適用"
 
-#: ../lib/puppet/application/apply.rb:241
+#: ../lib/puppet/application/apply.rb:245
 msgid "%{file} is not readable"
 msgstr "%{file}を読み込めません。"
 
-#: ../lib/puppet/application/apply.rb:314
+#: ../lib/puppet/application/apply.rb:318
 msgid "Exiting"
 msgstr "終了しています。"
 
-#: ../lib/puppet/application/apply.rb:344
+#: ../lib/puppet/application/apply.rb:348
 msgid "Could not deserialize catalog from %{format}: %{detail}"
 msgstr "%{format}からカタログをデシリアライズできませんでした: %{detail}"
 
-#: ../lib/puppet/application/cert.rb:325
+#: ../lib/puppet/application/cert.rb:103
+msgid "Manage certificates and requests"
+msgstr "証明書とリクエストを管理"
+
+#: ../lib/puppet/application/cert.rb:329
 msgid ""
 "You must specify the hosts to apply to; valid values are an array or the "
 "symbol :all"
 msgstr "適用するホストを指定する必要があります; 有効な値は、配列または記号:allです。"
 
-#: ../lib/puppet/application/device.rb:193
+#: ../lib/puppet/application/describe.rb:182
+msgid "Display help about resource types"
+msgstr "リソース型に関するヘルプを表示"
+
+#: ../lib/puppet/application/device.rb:66
+msgid "Manage remote network devices"
+msgstr "リモートネットワークデバイスを管理"
+
+#: ../lib/puppet/application/device.rb:197
 msgid "Target device / certificate '%{target}' not found in %{config}"
 msgstr "ターゲットのデバイス/証明書'%{target}'が%{config}で見つかりません。"
 
-#: ../lib/puppet/application/device.rb:195
+#: ../lib/puppet/application/device.rb:199
 msgid "No device found in %{config}"
 msgstr "デバイスが%{config}で見つかりません。"
 
-#: ../lib/puppet/application/device.rb:205
+#: ../lib/puppet/application/device.rb:209
 msgid ""
 "starting applying configuration to %{target} at "
 "%{scheme}%{url_host}%{port}%{url_path}"
@@ -231,19 +251,23 @@ msgstr "無効な出力フォーマット%{arg}"
 msgid "Invalid output mode %{arg}"
 msgstr "無効な出力モード%{arg}"
 
-#: ../lib/puppet/application/doc.rb:130
+#: ../lib/puppet/application/doc.rb:52
+msgid "Generate Puppet references"
+msgstr "Puppetリファレンスを生成"
+
+#: ../lib/puppet/application/doc.rb:134
 msgid "scanning: %{files}"
 msgstr "スキャンしています: %{files}"
 
-#: ../lib/puppet/application/doc.rb:142
+#: ../lib/puppet/application/doc.rb:146
 msgid "Could not generate documentation: %{detail}"
 msgstr "ドキュメントを生成できませんでした: %{detail}"
 
-#: ../lib/puppet/application/doc.rb:154
+#: ../lib/puppet/application/doc.rb:158
 msgid "Could not find reference %{name}"
 msgstr "リファレンス%{name}が見つかりませんでした。"
 
-#: ../lib/puppet/application/doc.rb:160
+#: ../lib/puppet/application/doc.rb:164
 msgid "Could not generate reference %{name}: %{detail}"
 msgstr "リファレンス%{name}を生成できませんでした: %{detail}"
 
@@ -281,28 +305,32 @@ msgstr "'puppet %{face}'は廃止予定であり、今後のリリースで廃�
 msgid "Try 'puppet help %{face} %{action}' for usage"
 msgstr "'puppet help %{face} %{action}'を使用してみてください。"
 
-#: ../lib/puppet/application/filebucket.rb:169
+#: ../lib/puppet/application/filebucket.rb:16
+msgid "Store and retrieve files in a filebucket"
+msgstr "ファイルをfilebucketに保存して取得"
+
+#: ../lib/puppet/application/filebucket.rb:173
 msgid "You must specify a file to back up"
 msgstr "バックアップするファイルを指定する必要があります。"
 
-#: ../lib/puppet/application/filebucket.rb:173
+#: ../lib/puppet/application/filebucket.rb:177
 msgid "%{file}: no such file"
 msgstr "%{file}: このファイルがありません。"
 
-#: ../lib/puppet/application/filebucket.rb:177
+#: ../lib/puppet/application/filebucket.rb:181
 msgid "%{file}: cannot read file"
 msgstr "%{file}: ファイルを読み込めません。"
 
-#: ../lib/puppet/application/filebucket.rb:199
-#: ../lib/puppet/application/filebucket.rb:222
+#: ../lib/puppet/application/filebucket.rb:203
+#: ../lib/puppet/application/filebucket.rb:226
 msgid "Need exactly two arguments: filebucket diff <file_a> <file_b>"
 msgstr "引数は2つ必要です: filebucket diff <file_a> <file_b>"
 
-#: ../lib/puppet/application/filebucket.rb:219
+#: ../lib/puppet/application/filebucket.rb:223
 msgid "Comparing %{checksum_a} %{checksum_b} %{file_a} %{file_b}"
 msgstr "%{checksum_a} %{checksum_b} %{file_a} %{file_b}を比較しています。"
 
-#: ../lib/puppet/application/filebucket.rb:233
+#: ../lib/puppet/application/filebucket.rb:237
 msgid "Cancelling"
 msgstr "キャンセルしています。"
 
@@ -318,7 +346,11 @@ msgstr ""
 "--factファイルは、yamlおよびjsonファイルのみ受け入れます。\n"
 "%{run_help}"
 
-#: ../lib/puppet/application/lookup.rb:262
+#: ../lib/puppet/application/lookup.rb:99
+msgid "Interactive Hiera lookup"
+msgstr "インタラクティブなHiera lookup"
+
+#: ../lib/puppet/application/lookup.rb:266
 msgid ""
 "The options %{deep_merge_opts} are only available with '--merge deep'\n"
 "%{run_help}"
@@ -326,7 +358,7 @@ msgstr ""
 "オプション%{deep_merge_opts}は、'--merge deep'でのみ利用できます。\n"
 "%{run_help}"
 
-#: ../lib/puppet/application/lookup.rb:273
+#: ../lib/puppet/application/lookup.rb:277
 msgid ""
 "The --merge option only accepts %{strategies}, or %{last_strategy}\n"
 "%{run_help}"
@@ -334,41 +366,45 @@ msgstr ""
 "--mergeオプションは、%{strategies}または%{last_strategy}のみ受け入れます。\n"
 "%{run_help}"
 
-#: ../lib/puppet/application/lookup.rb:298
+#: ../lib/puppet/application/lookup.rb:302
 msgid "No keys were given to lookup."
 msgstr "参照するキーが指定されていません。"
 
-#: ../lib/puppet/application/lookup.rb:306
+#: ../lib/puppet/application/lookup.rb:310
 msgid "Unknown rendering format '%{format}'"
 msgstr "未知のレンダリングフォーマット'%{format}'"
 
-#: ../lib/puppet/application/lookup.rb:347 ../lib/puppet/face/epp.rb:491
+#: ../lib/puppet/application/lookup.rb:351 ../lib/puppet/face/epp.rb:491
 msgid "Incorrect formatted data in %{fact_file} given via the --facts flag"
 msgstr "--factsフラグにより%{fact_file}で不適切なフォーマットのデータが指定されています。"
 
-#: ../lib/puppet/application/master.rb:146
+#: ../lib/puppet/application/master.rb:29
+msgid "The puppet master daemon"
+msgstr "Puppet masterデーモン"
+
+#: ../lib/puppet/application/master.rb:150
 msgid "Canceling startup"
 msgstr "起動をキャンセルしています。"
 
-#: ../lib/puppet/application/master.rb:165
+#: ../lib/puppet/application/master.rb:169
 msgid "Could not compile catalog for %{node}"
 msgstr "%{node}のカタログをコンパイルできませんでした。"
 
-#: ../lib/puppet/application/master.rb:170
+#: ../lib/puppet/application/master.rb:174
 msgid "Failed to compile catalog for node %{node}: %{detail}"
 msgstr "ノード%{node}のカタログコンパイルに失敗しました: %{detail}"
 
-#: ../lib/puppet/application/master.rb:190
+#: ../lib/puppet/application/master.rb:194
 msgid "Could not change user to %{user}: %{detail}"
 msgstr "%{user}へのユーザ変更ができませんでした: %{detail}"
 
-#: ../lib/puppet/application/master.rb:194
+#: ../lib/puppet/application/master.rb:198
 msgid ""
 "Could not change user to %{user}. User does not exist and is required to "
 "continue."
 msgstr "ユーザを%{user}に変更できませんでした。ユーザは存在しませんがこのまま続ける必要があります。"
 
-#: ../lib/puppet/application/master.rb:200
+#: ../lib/puppet/application/master.rb:204
 msgid ""
 "The Rack Puppet master server is deprecated and will be removed in a future "
 "release. Please use Puppet Server instead. See http://links.puppet.com"
@@ -378,7 +414,7 @@ msgstr ""
 "Serverを使用してください。詳細については、http://links.puppet.com/deprecate-rack-webrick-"
 "serversを参照してください。"
 
-#: ../lib/puppet/application/master.rb:203
+#: ../lib/puppet/application/master.rb:207
 msgid ""
 "The WEBrick Puppet master server is deprecated and will be removed in a "
 "future release. Please use Puppet Server instead. See "
@@ -388,31 +424,35 @@ msgstr ""
 "Serverを使用してください。詳細については、http://links.puppet.com/deprecate-rack-webrick-"
 "serversを参照してください。"
 
-#: ../lib/puppet/application/master.rb:262
+#: ../lib/puppet/application/master.rb:266
 msgid "Puppet master is not supported on Microsoft Windows"
 msgstr "Puppet masterはMicrosoft Windowsではサポートされていません。"
 
-#: ../lib/puppet/application/master.rb:311
+#: ../lib/puppet/application/master.rb:315
 msgid "Starting Puppet master version %{version}"
 msgstr "Puppet masterバージョン%{version}を起動しています。"
 
-#: ../lib/puppet/application/resource.rb:136
+#: ../lib/puppet/application/resource.rb:32
+msgid "The resource abstraction layer shell"
+msgstr "resource abstraction layerシェル"
+
+#: ../lib/puppet/application/resource.rb:140
 msgid "Editing with Yaml output is not supported"
 msgstr "Yamlアウトプットによる編集はサポートされていません。"
 
-#: ../lib/puppet/application/resource.rb:192
+#: ../lib/puppet/application/resource.rb:196
 msgid "You must specify the type to display"
 msgstr "表示するタイプを指定する必要があります。"
 
-#: ../lib/puppet/application/resource.rb:193
+#: ../lib/puppet/application/resource.rb:197
 msgid "Could not find type %{type}"
 msgstr "ファイルタイプ%{type}が見つかりませんでした。"
 
-#: ../lib/puppet/application/resource.rb:200
+#: ../lib/puppet/application/resource.rb:204
 msgid "Invalid parameter setting %{setting}"
 msgstr "無効なパラメータ設定%{setting}"
 
-#: ../lib/puppet/application/resource.rb:222
+#: ../lib/puppet/application/resource.rb:226
 msgid ""
 "Listing all file instances is not supported.  Please specify a file or "
 "directory, e.g. puppet resource file /etc"
@@ -455,7 +495,7 @@ msgstr "カタログを取得できませんでした; 実行をスキップし�
 
 #: ../lib/puppet/configurer.rb:171
 msgid "Applied catalog"
-msgstr "適用されたカタログ"
+msgstr "カタログが適用されました。"
 
 #: ../lib/puppet/configurer.rb:210
 msgid "Could not select a functional puppet master"
@@ -689,6 +729,10 @@ msgstr "ホストの証明書のダイジェスト(アルゴリズム署名の�
 msgid "Could not verify %{host}: %{error}"
 msgstr "%{host}を確認できませんでした: %{error}"
 
+#: ../lib/puppet/face/catalog.rb:7
+msgid "Compile, save, view, and convert catalogs."
+msgstr "カタログをコンパイル、保存、表示、変換"
+
 #: ../lib/puppet/face/catalog/select.rb:4
 msgid "Retrieve a catalog and filter it for resources of a given type."
 msgstr "カタログを取得し、指定されたタイプのリソースをフィルタリング。"
@@ -763,6 +807,14 @@ msgstr "証明書を取得。"
 #: ../lib/puppet/face/certificate.rb:156
 msgid "Delete a certificate."
 msgstr "証明書を削除。"
+
+#: ../lib/puppet/face/certificate_request.rb:7
+msgid "Manage certificate requests."
+msgstr "証明書リクエストを管理"
+
+#: ../lib/puppet/face/certificate_revocation_list.rb:7
+msgid "Manage the list of revoked certificates."
+msgstr "無効化された証明書のリストを管理"
 
 #: ../lib/puppet/face/config.rb:8
 msgid "Interact with Puppet's settings."
@@ -1064,7 +1116,7 @@ msgstr "%{face}からアクション%{actionname}をロードできません。"
 msgid " (Deprecated)"
 msgstr " (廃止予定)"
 
-#: ../lib/puppet/face/help.rb:153 ../lib/puppet/face/help.rb:174
+#: ../lib/puppet/face/help.rb:153 ../lib/puppet/face/help.rb:163
 msgid "! Subcommand unavailable due to error. Check error logs."
 msgstr "エラーのため! サブコマンドを使用できません。エラーログを確認してください。"
 
@@ -4697,171 +4749,175 @@ msgid "%{expression}[] cannot use %{actual} where %{expected_text} expected"
 msgstr "%{expected_text}が要求されている場合は、%{expression}[]で%{actual}を使用できません。"
 
 #: ../lib/puppet/pops/issues.rb:444
-msgid "\"#{label.article(actual_type)} #{actual_type}\""
-msgstr "\"#{label.article(actual_type)} #{actual_type}\""
-
-#: ../lib/puppet/pops/issues.rb:445
 msgid ""
-"A substring operation does not accept %{actual_type_text} as a character "
-"index. Expected an Integer"
-msgstr "サブストリング操作では、%{actual_type_text}は文字インデックスとして許可されていません。整数が要求されています。"
+"A substring operation does not accept %{label_article} %{actual_type} as a "
+"character index. Expected an Integer"
+msgstr ""
+"サブストリング操作では、%{label_article} "
+"%{actual_type}は文字インデックスとして許可されていません。整数が要求されています。"
 
-#: ../lib/puppet/pops/issues.rb:449
+#: ../lib/puppet/pops/issues.rb:448
 msgid "%{expression}[] argument must be a Type or a String. Got %{actual}"
 msgstr "%{expression}[]引数は、タイプまたは文字列でなければなりません。%{actual}が与えられています。"
 
-#: ../lib/puppet/pops/issues.rb:453
+#: ../lib/puppet/pops/issues.rb:452
 msgid "%{base_type}[] arguments must be types. Got %{actual}"
 msgstr "%{base_type}[]引数は、タイプでなければなりません。%{actual}が与えられています。"
 
-#: ../lib/puppet/pops/issues.rb:459
+#: ../lib/puppet/pops/issues.rb:458
 msgid "%{base_type_label}[] accepts %{min} or more arguments. Got %{actual}"
 msgstr "%{base_type_label}[]で許可されるのは%{min}以上の引数です。%{actual}が与えられています。"
 
-#: ../lib/puppet/pops/issues.rb:461
+#: ../lib/puppet/pops/issues.rb:460
 msgid "%{base_type_label}[] accepts %{min} to %{max} arguments. Got %{actual}"
 msgstr "%{base_type_label}[]で許可されるのは%{min}から%{max}までの引数です。%{actual}が与えられています。"
 
-#: ../lib/puppet/pops/issues.rb:463
+#: ../lib/puppet/pops/issues.rb:462
 msgid "%{base_type_label}[] accepts %{min} %{label}. Got %{actual}"
 msgstr "%{base_type_label}[]で許可されるのは%{min} %{label}です。%{actual}が与えられています。"
 
-#: ../lib/puppet/pops/issues.rb:463
+#: ../lib/puppet/pops/issues.rb:462
 msgid "argument"
 msgstr "引数"
 
-#: ../lib/puppet/pops/issues.rb:468
+#: ../lib/puppet/pops/issues.rb:467
 msgid "Error creating type specialization of %{base_type}, %{message}"
 msgstr "%{base_type}のタイプ特殊化を作成するエラー、%{message}"
 
-#: ../lib/puppet/pops/issues.rb:472
+#: ../lib/puppet/pops/issues.rb:471
 msgid "Cannot specialize an already specialized %{kind} type"
 msgstr "すでに特殊化されている%{kind}タイプを特殊化することはできません。"
 
-#: ../lib/puppet/pops/issues.rb:476
+#: ../lib/puppet/pops/issues.rb:475
 msgid ""
 "First argument to Resource[] must be a resource type or a String. Got "
 "%{actual}."
 msgstr "リソース[]の最初の引数は、リソースタイプまたは文字列でなければなりません。%{actual}が与えられています。"
 
-#: ../lib/puppet/pops/issues.rb:480
+#: ../lib/puppet/pops/issues.rb:479
 msgid "Arguments to Resource[] are all empty/undefined"
 msgstr "リソース[]の引数がすべて空/未定義です。"
 
-#: ../lib/puppet/pops/issues.rb:484
+#: ../lib/puppet/pops/issues.rb:483
 msgid ""
 "Illegal Class name in class reference. %{expression} cannot be used where a "
 "String is expected"
 msgstr "クラスリファレンスに不正なクラス名。文字列が要求されている場合は、%{expression}は使用できません。"
 
-#: ../lib/puppet/pops/issues.rb:488
+#: ../lib/puppet/pops/issues.rb:487
 msgid ""
 "Unacceptable name. The name '%{name}' is unacceptable as the name of "
 "%{value}"
 msgstr "許可されない名前。名前'%{name}'は%{value}の名前として許可されません。"
 
-#: ../lib/puppet/pops/issues.rb:492
+#: ../lib/puppet/pops/issues.rb:491
 msgid "Parameter $%{param} is not last, and has 'captures rest'"
 msgstr "パラメータ$%{param}が最後ではなく、'captures rest'があります。"
 
-#: ../lib/puppet/pops/issues.rb:496
+#: ../lib/puppet/pops/issues.rb:495
 msgid ""
 "Parameter $%{param} has 'captures rest' - not supported in %{container}"
 msgstr "パラメータ$%{param}に'captures rest'があります。%{container}ではサポートされていません。"
 
-#: ../lib/puppet/pops/issues.rb:500
+#: ../lib/puppet/pops/issues.rb:499
 msgid "Parameter $%{param} is required but appears after optional parameters"
 msgstr "パラメータ$%{param}が必要ですが、オプションパラメータの後に出てきます。"
 
-#: ../lib/puppet/pops/issues.rb:504
+#: ../lib/puppet/pops/issues.rb:503
 msgid "Parameter $%{param} is required but no value was given"
 msgstr "パラメータ$%{param}が必要ですが、値が指定されていません。"
 
-#: ../lib/puppet/pops/issues.rb:508
+#: ../lib/puppet/pops/issues.rb:507
 msgid "The value '%{value}' cannot be converted to Numeric."
 msgstr "値'%{value}'を数字に変換できません。"
 
-#: ../lib/puppet/pops/issues.rb:516
+#: ../lib/puppet/pops/issues.rb:511
+msgid ""
+"The string '%{before}' was automatically coerced to the numerical value "
+"%{after}"
+msgstr "文字列'%{before}'は強制的に数値%{after}に自動変換されました。"
+
+#: ../lib/puppet/pops/issues.rb:515
 msgid "Unknown function: '%{name}'."
 msgstr "不明な関数: '%{name}'。"
 
-#: ../lib/puppet/pops/issues.rb:520
+#: ../lib/puppet/pops/issues.rb:519
 msgid "Unknown variable: '%{name}'."
 msgstr "不明な変数: '%{name}'。"
 
-#: ../lib/puppet/pops/issues.rb:524
+#: ../lib/puppet/pops/issues.rb:523
 msgid "Error while evaluating %{expression}, %{detail}"
 msgstr "%{expression}の検証中にエラーが生じました。%{detail}"
 
-#: ../lib/puppet/pops/issues.rb:528
+#: ../lib/puppet/pops/issues.rb:527
 msgid "Resource type not found: %{res_type}"
 msgstr "リソースタイプが見つかりませんでした: %{res_type}"
 
-#: ../lib/puppet/pops/issues.rb:532
+#: ../lib/puppet/pops/issues.rb:531
 msgid ""
 "Illegal Resource Type expression, expected result to be a type name, or "
 "untitled Resource, got %{actual}"
 msgstr "不正なリソースタイプ表現。タイプ名またはタイトルのないリソースになる結果が必要ですが、%{actual}が与えられています。"
 
-#: ../lib/puppet/pops/issues.rb:536
+#: ../lib/puppet/pops/issues.rb:535
 msgid "The title '%{title}' has already been used in this resource expression"
 msgstr "タイトル'%{title}'はすでにこのリソース表現で使われています。"
 
-#: ../lib/puppet/pops/issues.rb:540
+#: ../lib/puppet/pops/issues.rb:539
 msgid "The attribute '%{attribute}' has already been set"
 msgstr "属性'%{attribute}'はすでに設定されています。"
 
-#: ../lib/puppet/pops/issues.rb:544
+#: ../lib/puppet/pops/issues.rb:543
 msgid "Missing title. The title expression resulted in undef"
 msgstr "タイトルがありません。タイトル表現が未定義になりました。"
 
-#: ../lib/puppet/pops/issues.rb:548
+#: ../lib/puppet/pops/issues.rb:547
 msgid ""
 "Missing title at index %{index}. The title expression resulted in an undef "
 "title"
 msgstr "インデックス%{index}にタイトルがありません。タイトル表現が未定義のタイトルになりました。"
 
-#: ../lib/puppet/pops/issues.rb:552
+#: ../lib/puppet/pops/issues.rb:551
 msgid "Illegal title type at index %{index}. Expected String, got %{actual}"
 msgstr "インデックス%{index}に不正なタイトルタイプ。文字列が要求されていますが、%{actual}が与えられています。"
 
-#: ../lib/puppet/pops/issues.rb:556
+#: ../lib/puppet/pops/issues.rb:555
 msgid ""
 "Empty string title at %{index}. Title strings must have a length greater "
 "than zero."
 msgstr "%{index}に空の文字列タイトル。タイトル文字列の長さは0より大きくなければなりません。"
 
-#: ../lib/puppet/pops/issues.rb:560
+#: ../lib/puppet/pops/issues.rb:559
 msgid "Resource not found: %{type_name}['%{title}']"
 msgstr "リソースが見つかりませんでした: %{type_name}['%{title}']"
 
-#: ../lib/puppet/pops/issues.rb:564
+#: ../lib/puppet/pops/issues.rb:563
 msgid ""
 "The resource %{type_name}['%{title}'] does not have a parameter called "
 "'%{param}'"
 msgstr "リソース%{type_name}['%{title}']には'%{param}'というパラメータはありません。"
 
-#: ../lib/puppet/pops/issues.rb:568
+#: ../lib/puppet/pops/issues.rb:567
 msgid "Division by 0"
 msgstr "0で除算"
 
-#: ../lib/puppet/pops/issues.rb:572
+#: ../lib/puppet/pops/issues.rb:571
 msgid "The result of the %{operator} expression is Infinity"
 msgstr "%{operator}表現の結果が無限大です。"
 
-#: ../lib/puppet/pops/issues.rb:577
+#: ../lib/puppet/pops/issues.rb:576
 msgid ""
 "Heredoc syntax specification has empty segment between '+' : '%{syntax}'"
 msgstr "Heredoc構文仕様の '+' : '%{syntax}'の間に空のセグメントがあります。"
 
-#: ../lib/puppet/pops/issues.rb:581
+#: ../lib/puppet/pops/issues.rb:580
 msgid ""
 "Ambiguous EPP parameter expression. Probably missing '<%-' before parameters"
 " to remove leading whitespace"
 msgstr "不明瞭なEPPパラメータ表現。パラメータの前に先頭の空白を削除する'<%-'がない可能性があります。"
 
 #. TRANSLATORS "import" is a function name and should not be translated
-#: ../lib/puppet/pops/issues.rb:586
+#: ../lib/puppet/pops/issues.rb:585
 msgid ""
 "Use of 'import' has been discontinued in favor of a manifest directory. See "
 "http://links.puppet.com/puppet-import-deprecation"
@@ -4869,46 +4925,46 @@ msgstr ""
 "'import'の使用は廃止され、マニフェストディレクトリに引き継がれました。http://links.puppet.com/puppet-"
 "import-deprecationを参照してください。"
 
-#: ../lib/puppet/pops/issues.rb:590
+#: ../lib/puppet/pops/issues.rb:589
 msgid ""
 "This %{expression} has no effect. A value was produced and then forgotten "
 "(one or more preceding expressions may have the wrong form)"
 msgstr ""
 "この%{expression}は無効です。値が生成され、無視されました(先行する1つまたは複数の表現に、誤った形式が存在する可能性があります)。"
 
-#: ../lib/puppet/pops/issues.rb:594
+#: ../lib/puppet/pops/issues.rb:593
 msgid ""
 "This expression is invalid. Did you try declaring a '%{name}' resource "
 "without a title?"
 msgstr "この表現は無効です。タイトルなしの'%{name}'リソースの宣言を試みましたか？"
 
-#: ../lib/puppet/pops/issues.rb:598
+#: ../lib/puppet/pops/issues.rb:597
 msgid ""
 "This %{expression} has no effect. %{container} can not end with a value-"
 "producing expression without other effect"
 msgstr "この%{expression}は無効です。%{container}は、他に効力を持たない、値を生成する表現で終えることはできません。"
 
-#: ../lib/puppet/pops/issues.rb:602
+#: ../lib/puppet/pops/issues.rb:601
 msgid ""
 "Use of reserved word: %{word}, must be quoted if intended to be a String "
 "value"
 msgstr "予約された単語の使用: 文字列の値にするには、%{word}を引用する必要があります。"
 
-#: ../lib/puppet/pops/issues.rb:606
+#: ../lib/puppet/pops/issues.rb:605
 msgid "Use of future reserved word: '%{word}'"
 msgstr "将来予約される単語の使用: '%{word}'"
 
-#: ../lib/puppet/pops/issues.rb:610
+#: ../lib/puppet/pops/issues.rb:609
 msgid ""
 "The name: '%{name}' is already defined by Puppet and can not be used as the "
 "name of %{expression}."
 msgstr "名前: '%{name}'はすでにPuppetにより定義されており、%{expression}の名前として使うことはできません。"
 
-#: ../lib/puppet/pops/issues.rb:614
+#: ../lib/puppet/pops/issues.rb:613
 msgid "No matching entry for selector parameter with value '%{param}'"
 msgstr "値'%{param}'を持つセレクタパラメータに一致するエントリがありません。"
 
-#: ../lib/puppet/pops/issues.rb:618
+#: ../lib/puppet/pops/issues.rb:617
 msgid ""
 "Node inheritance is not supported in Puppet >= 4.0.0. See "
 "http://links.puppet.com/puppet-node-inheritance-deprecation"
@@ -4916,205 +4972,201 @@ msgstr ""
 "ノード継承はPuppet >= 4.0.0ではサポートされていません。http://links.puppet.com/puppet-node-"
 "inheritance-deprecationを参照してください。"
 
-#: ../lib/puppet/pops/issues.rb:622
+#: ../lib/puppet/pops/issues.rb:621
 msgid "Resource Override can only operate on resources, got: %{actual}"
 msgstr "リソースオーバーライドはリソースでのみ使用できますが、%{actual}が与えられています。"
 
-#: ../lib/puppet/pops/issues.rb:626
+#: ../lib/puppet/pops/issues.rb:625
 msgid ""
 "The parameter '%{param}' is declared more than once in the parameter list"
 msgstr "パラメータリストでパラメータ'%{param}'が複数回宣言されています。"
 
-#: ../lib/puppet/pops/issues.rb:630
+#: ../lib/puppet/pops/issues.rb:629
 msgid "The key '%{key}' is declared more than once"
 msgstr "キー'%{key}'が複数回宣言されています。"
 
-#: ../lib/puppet/pops/issues.rb:634
+#: ../lib/puppet/pops/issues.rb:633
 msgid "This %{container} already has a 'default' entry - this is a duplicate"
 msgstr "この%{container}にはすでに'default'エントリがあります。これは重複です。"
 
-#: ../lib/puppet/pops/issues.rb:638
+#: ../lib/puppet/pops/issues.rb:637
 msgid "The parameter $%{param} redefines a built in parameter in %{container}"
 msgstr "パラメータ$%{param}が%{container}のビルトインパラメータを再定義しています。"
 
-#: ../lib/puppet/pops/issues.rb:642
+#: ../lib/puppet/pops/issues.rb:641
 msgid "Expected value of type %{expected}, got %{actual}"
 msgstr "要求されているタイプの値は%{expected}ですが、%{actual}が与えられています。"
 
-#: ../lib/puppet/pops/issues.rb:646
+#: ../lib/puppet/pops/issues.rb:645
 msgid ""
 "Unfolding of attributes from Hash can only be used once per resource body"
 msgstr "ハッシュからの属性の展開を使用できるのは、1つのリソースボディにつき1回のみです。"
 
-#: ../lib/puppet/pops/issues.rb:650
+#: ../lib/puppet/pops/issues.rb:649
 msgid ""
 "This %{expression} appears in a context where catalog related expressions "
 "are not allowed"
 msgstr "表現に関連するカタログが許可されていない文脈で、この%{expression}が出てきます。"
 
-#: ../lib/puppet/pops/issues.rb:654
+#: ../lib/puppet/pops/issues.rb:653
 msgid "Syntax error at %{location}"
 msgstr "%{location}に構文エラー"
 
-#: ../lib/puppet/pops/issues.rb:658
+#: ../lib/puppet/pops/issues.rb:657
 msgid "Illegal class reference"
 msgstr "不正なクラスリファレンス"
 
-#: ../lib/puppet/pops/issues.rb:662
+#: ../lib/puppet/pops/issues.rb:661
 msgid "Illegal fully qualified class reference"
 msgstr "不正な完全修飾クラスリファレンス"
 
-#: ../lib/puppet/pops/issues.rb:666
+#: ../lib/puppet/pops/issues.rb:665
 msgid "Illegal fully qualified name"
 msgstr "不正な完全修飾名"
 
-#: ../lib/puppet/pops/issues.rb:670
+#: ../lib/puppet/pops/issues.rb:669
 msgid "Illegal name or bare word"
 msgstr "不正な名前またはベアワード"
 
-#: ../lib/puppet/pops/issues.rb:674
+#: ../lib/puppet/pops/issues.rb:673
 msgid "Illegal number '%{value}'"
 msgstr "不正な数字'%{value}'"
 
-#: ../lib/puppet/pops/issues.rb:678
+#: ../lib/puppet/pops/issues.rb:677
 msgid ""
 "Unicode escape '\\u' was not followed by 4 hex digits or 1-6 hex digits in "
 "{} or was > 10ffff"
 msgstr "ユニコードエスケープ'\\u'の後に4つの16進数字または{}で括った1-6の16進数字が続いていないか、> 10ffffになっています。"
 
-#: ../lib/puppet/pops/issues.rb:682
+#: ../lib/puppet/pops/issues.rb:681
 msgid "Not a valid hex number %{value}"
 msgstr "有効な16進数字ではありません%{value}。"
 
-#: ../lib/puppet/pops/issues.rb:686
+#: ../lib/puppet/pops/issues.rb:685
 msgid "Not a valid octal number %{value}"
 msgstr "有効な8進数字ではありません%{value}。"
 
-#: ../lib/puppet/pops/issues.rb:690
+#: ../lib/puppet/pops/issues.rb:689
 msgid "Not a valid decimal number %{value}"
 msgstr "有効な10進数字ではありません%{value}。"
 
-#: ../lib/puppet/pops/issues.rb:694
+#: ../lib/puppet/pops/issues.rb:693
 msgid "Internal Error: No string or file given to lexer to process."
 msgstr "内部エラー: レキサーに処理する文字列またはファイルが指定されていません。"
 
-#: ../lib/puppet/pops/issues.rb:698
+#: ../lib/puppet/pops/issues.rb:697
 msgid "Unrecognized escape sequence '\\%{ch}'"
 msgstr "認識されていないエスケープシーケンス'\\%{ch}'"
 
-#: ../lib/puppet/pops/issues.rb:702
+#: ../lib/puppet/pops/issues.rb:701
 msgid "Unclosed quote after %{after} followed by '%{followed_by}'"
 msgstr "%{after}の後のクォートが閉じていない状態で'%{followed_by}'が続いています。"
 
-#: ../lib/puppet/pops/issues.rb:706
+#: ../lib/puppet/pops/issues.rb:705
 msgid "Unclosed multiline comment"
 msgstr "閉じられていない複数行のコメント"
 
-#: ../lib/puppet/pops/issues.rb:710
+#: ../lib/puppet/pops/issues.rb:709
 msgid "Internal error: %{error}"
 msgstr "内部エラー: %{error}"
 
-#: ../lib/puppet/pops/issues.rb:714
+#: ../lib/puppet/pops/issues.rb:713
 msgid "Unbalanced epp tag, reached <eof> without closing tag."
 msgstr "アンバランスなeppタグ、タグを閉じずに<eof> に到達しています。"
 
-#: ../lib/puppet/pops/issues.rb:718
+#: ../lib/puppet/pops/issues.rb:717
 msgid "Reaching end after opening <%# without seeing %>"
 msgstr "<%#から始まった後、%>がないまま最後に到達しています。"
 
-#: ../lib/puppet/pops/issues.rb:722
+#: ../lib/puppet/pops/issues.rb:721
 msgid "Unbalanced embedded expression - opening <% and reaching end of input"
 msgstr "アンバランスな埋め込み表現 - 開く側の<%があり、そのままインプットの最後に到達しています。"
 
-#: ../lib/puppet/pops/issues.rb:726
+#: ../lib/puppet/pops/issues.rb:725
 msgid "Unclosed parenthesis after '@(' followed by '%{followed_by}'"
 msgstr "'@('の後の括弧が閉じていない状態で'%{followed_by}'が続いています。"
 
-#: ../lib/puppet/pops/issues.rb:730
+#: ../lib/puppet/pops/issues.rb:729
 msgid "Heredoc without end-tagged line"
 msgstr "終了タグ行のないヒアドキュメント"
 
-#: ../lib/puppet/pops/issues.rb:734
+#: ../lib/puppet/pops/issues.rb:733
 msgid ""
 "Invalid heredoc escape char. Only t, r, n, s,  u, L, $ allowed. Got "
 "'%{actual}'"
 msgstr "無効なヒアドキュメントエスケープ文字。許可されているのはt、r、n、s、u、L、$のみです。'%{actual}'が与えられています。"
 
-#: ../lib/puppet/pops/issues.rb:738
+#: ../lib/puppet/pops/issues.rb:737
 msgid "Invalid syntax in heredoc expected @(endtag[:syntax][/escapes])"
 msgstr "@(endtag[:syntax][/escapes])が要求されるヒアドキュメントに無効な構文"
 
-#: ../lib/puppet/pops/issues.rb:742
+#: ../lib/puppet/pops/issues.rb:741
 msgid "Heredoc without any following lines of text"
 msgstr "後続にテキスト行がないヒアドキュメント"
 
-#: ../lib/puppet/pops/issues.rb:746
+#: ../lib/puppet/pops/issues.rb:745
 msgid "An escape char for @() may only appear once. Got '%{escapes}'"
 msgstr "@()のエスケープ文字は、一度しか使えません。'%{escapes}'が与えられています。"
 
-#: ../lib/puppet/pops/issues.rb:750
+#: ../lib/puppet/pops/issues.rb:749
 msgid ""
 "Illegal %{format} Byte Order mark at beginning of input: %{bom} - remove "
 "these from the puppet source"
 msgstr "インプットの冒頭に不正な%{format}バイトオーダーマーク: %{bom} - Puppetソースからこれらを削除してください。"
 
 #: ../lib/puppet/pops/issues.rb:754
-msgid "max"
-msgstr "最大"
-
-#: ../lib/puppet/pops/issues.rb:754
-msgid "min"
-msgstr "最小"
-
-#: ../lib/puppet/pops/issues.rb:755
 msgid ""
-"\"#{label.a_an_uc(semantic)} resulted in a value outside of Puppet Integer "
-"#{range_end} range, got '#{\"%#+x\" % value}'\""
-msgstr ""
-"\"#{label.a_an_uc(semantic)}がPuppet整数#{range_end}の範囲外になり、'#{\"%#+x\" % "
-"value}'\"が指定されています。"
+"%{expression} resulted in a value outside of Puppet Integer max range, got "
+"'%{value}'"
+msgstr "%{expression}がPuppet整数の最大値の範囲外になり、'%{value}'が与えられています。"
 
-#: ../lib/puppet/pops/issues.rb:759
+#: ../lib/puppet/pops/issues.rb:756
+msgid ""
+"%{expression} resulted in a value outside of Puppet Integer min range, got "
+"'%{value}'"
+msgstr "%{expression}がPuppet整数の最小値の範囲外になり、'%{value}'が与えられています。"
+
+#: ../lib/puppet/pops/issues.rb:761
 msgid "This runtime does not support hiera.yaml version %{version}"
 msgstr "このランタイムはhiera.yamlバージョン%{version}をサポートしていません。"
 
-#: ../lib/puppet/pops/issues.rb:763
+#: ../lib/puppet/pops/issues.rb:765
 msgid "hiera.yaml version 3 cannot be used in %{location}"
 msgstr "hiera.yamlバージョン3は%{location}では使用できません。"
 
-#: ../lib/puppet/pops/issues.rb:767
+#: ../lib/puppet/pops/issues.rb:769
 msgid "hiera.yaml version 4 cannot be used in the global layer"
 msgstr "hiera.yamlバージョン4はグローバルレイヤでは使用できません。"
 
-#: ../lib/puppet/pops/issues.rb:771
+#: ../lib/puppet/pops/issues.rb:773
 msgid "Undefined variable '%{name}'"
 msgstr "定義されていない変数'%{name}'"
 
-#: ../lib/puppet/pops/issues.rb:775
+#: ../lib/puppet/pops/issues.rb:777
 msgid "Backend '%{name}' is defined more than once"
 msgstr "バックエンド'%{name}'が複数回定義されています。"
 
-#: ../lib/puppet/pops/issues.rb:777 ../lib/puppet/pops/issues.rb:787
+#: ../lib/puppet/pops/issues.rb:779 ../lib/puppet/pops/issues.rb:789
 msgid "%{msg}. First defined at line %{line}"
 msgstr "%{msg}。行%{line}で最初に定義されています。"
 
-#: ../lib/puppet/pops/issues.rb:781
+#: ../lib/puppet/pops/issues.rb:783
 msgid "No data provider is registered for backend '%{name}'"
 msgstr "バックエンド'%{name}'のデータプロバイダが登録されていません。"
 
-#: ../lib/puppet/pops/issues.rb:785
+#: ../lib/puppet/pops/issues.rb:787
 msgid "Hierarchy name '%{name}' defined more than once"
 msgstr "階層名'%{name}'が複数回定義されています。"
 
-#: ../lib/puppet/pops/issues.rb:791
+#: ../lib/puppet/pops/issues.rb:793
 msgid "'hiera3_backend' is only allowed in the global layer"
 msgstr "'hiera3_backend'が許可されているのはグローバルレイヤのみです。"
 
-#: ../lib/puppet/pops/issues.rb:795
+#: ../lib/puppet/pops/issues.rb:797
 msgid "'default_hierarchy' is only allowed in the module layer"
 msgstr "'default_hierarchy'が許可されているのはモジュールレイヤのみです。"
 
-#: ../lib/puppet/pops/issues.rb:799
+#: ../lib/puppet/pops/issues.rb:801
 msgid ""
 "Use \"data_hash: %{function_name}_data\" instead of \"hiera3_backend: "
 "%{function_name}\""
@@ -5122,57 +5174,63 @@ msgstr ""
 "\"hiera3_backend: %{function_name}\"ではなく\"data_hash: "
 "%{function_name}_data\"を使用してください。"
 
-#: ../lib/puppet/pops/issues.rb:803
+#: ../lib/puppet/pops/issues.rb:805
 msgid "One of %{keys} must be defined in hierarchy '%{name}'"
 msgstr "%{keys}の1つを階層'%{name}'で定義する必要があります。"
 
-#: ../lib/puppet/pops/issues.rb:807 ../lib/puppet/pops/issues.rb:815
+#: ../lib/puppet/pops/issues.rb:809 ../lib/puppet/pops/issues.rb:817
 msgid "Only one of %{keys} can be defined in hierarchy '%{name}'"
 msgstr "階層'%{name}'で定義できるのは1つの%{keys}のみです。"
 
-#: ../lib/puppet/pops/issues.rb:811
+#: ../lib/puppet/pops/issues.rb:813
 msgid "Only one of %{keys} can be defined in defaults"
 msgstr "デフォルトで定義できるのは1つの%{keys}のみです。"
 
-#: ../lib/puppet/pops/issues.rb:819
+#: ../lib/puppet/pops/issues.rb:821
 msgid "Option key '%{key}' used in hierarchy '%{name}' is reserved by Puppet"
 msgstr "階層'%{name}'で使用されているオプションキー'%{key}'は、Puppetにより予約されています。"
 
-#: ../lib/puppet/pops/issues.rb:823
+#: ../lib/puppet/pops/issues.rb:825
 msgid "Option key '%{key}' used in defaults is reserved by Puppet"
 msgstr "デフォルトで使用されているオプションキー'%{key}'は、Puppetにより予約されています。"
 
-#: ../lib/puppet/pops/issues.rb:827
+#: ../lib/puppet/pops/issues.rb:829
 msgid "Unable to find '%{function_type}' function named '%{function_name}'"
 msgstr "'%{function_name}'という名前の'%{function_type}'関数が見つかりません。"
 
-#: ../lib/puppet/pops/issues.rb:831
+#: ../lib/puppet/pops/issues.rb:833
 msgid ""
 "'alias' interpolation is only permitted if the expression is equal to the "
 "entire string"
 msgstr "'alias'補間が許可されるのは、表現が文字列全体と等しい場合のみです。"
 
-#: ../lib/puppet/pops/issues.rb:835
+#: ../lib/puppet/pops/issues.rb:837
 msgid "Unknown interpolation method '%{name}'"
 msgstr "不明な補間メソッド'%{name}'"
 
-#: ../lib/puppet/pops/issues.rb:839
+#: ../lib/puppet/pops/issues.rb:841
 msgid "Interpolation using method syntax is not allowed in this context"
 msgstr "メソッド構文を用いた補間は、この文脈では許可されていません。"
 
-#: ../lib/puppet/pops/issues.rb:843
+#: ../lib/puppet/pops/issues.rb:845
 msgid ""
 "Endless recursion detected when attempting to serialize value of class "
 "%{type_name}"
 msgstr "クラス%{type_name}の値のシリアライズを試みている際に、無限再帰が検出されました。"
 
-#: ../lib/puppet/pops/issues.rb:847
+#: ../lib/puppet/pops/issues.rb:849
+msgid ""
+"%{path} contains the special value default. It will be converted to the "
+"String 'default'"
+msgstr "%{path}に特殊なデフォルト値が含まれています。これは文字列'default'に変換されます。"
+
+#: ../lib/puppet/pops/issues.rb:853
 msgid ""
 "%{path} contains %{klass} value. It will be converted to the String "
 "'%{value}'"
 msgstr "%{path}に%{klass}値が含まれています。これは文字列'%{value}'に変換されます。"
 
-#: ../lib/puppet/pops/issues.rb:851
+#: ../lib/puppet/pops/issues.rb:857
 msgid ""
 "%{path} contains a hash with %{klass} key. It will be converted to the "
 "String '%{value}'"
@@ -6109,7 +6167,7 @@ msgstr "レスポンスファイルが指定されていないか、存在しま
 #: ../lib/puppet/provider/package/portupgrade.rb:151
 #: ../lib/puppet/provider/package/rug.rb:28
 #: ../lib/puppet/provider/package/up2date.rb:17
-#: ../lib/puppet/provider/package/yum.rb:213
+#: ../lib/puppet/provider/package/yum.rb:214
 #: ../lib/puppet/provider/package/zypper.rb:109
 msgid "Could not find package %{name}"
 msgstr "パッケージ%{name}が見つかりませんでした。"
@@ -6463,15 +6521,15 @@ msgid ""
 "Could not check for updates, '%{cmd} check-update' exited with %{status}"
 msgstr "更新をチェックできませんでした。'%{cmd} check-update'が%{status}で終了しました。"
 
-#: ../lib/puppet/provider/package/yum.rb:116
+#: ../lib/puppet/provider/package/yum.rb:117
 msgid "Failed to parse package name and architecture from '%{pkgname}'"
 msgstr "'%{pkgname}'からのパッケージ名とアーキテクチャの解析に失敗しました。"
 
-#: ../lib/puppet/provider/package/yum.rb:207
+#: ../lib/puppet/provider/package/yum.rb:208
 msgid "Could not find package %{wanted}"
 msgstr "パッケージ%{wanted}が見つかりませんでした。"
 
-#: ../lib/puppet/provider/package/yum.rb:218
+#: ../lib/puppet/provider/package/yum.rb:219
 msgid "Failed to update to version %{should}, got version %{version} instead"
 msgstr "バージョン%{should}へのアップデートに失敗しました。代わりにバージョン%{version}を取得しました。"
 
@@ -8473,43 +8531,43 @@ msgstr "ldapに%{name}を作成しています。"
 msgid "Failed to set process priority to '%{priority}'"
 msgstr "プロセスの優先順位を'%{priority}'に設定することができませんでした。"
 
-#: ../lib/puppet/util/log.rb:176
-msgid "Received a log message with invalid encoding:"
-msgstr "無効なエンコーディングのログメッセージを受信しました:"
+#: ../lib/puppet/util/log.rb:171
+msgid "Received a Log attribute with invalid encoding:"
+msgstr "無効なエンコーディングのログ属性を受信しました: "
 
-#: ../lib/puppet/util/log.rb:179
+#: ../lib/puppet/util/log.rb:174
 msgid "Backtrace:"
 msgstr "バックトレース:"
 
-#: ../lib/puppet/util/log.rb:223
+#: ../lib/puppet/util/log.rb:228
 msgid "Reopening log files"
 msgstr "ログファイルを再度開いています。"
 
-#: ../lib/puppet/util/log.rb:392
+#: ../lib/puppet/util/log.rb:397
 msgid "Could not parse for environment %{env}: %{msg}"
 msgstr "環境%{env}を解析できませんでした: %{msg}"
 
-#: ../lib/puppet/util/log.rb:394
+#: ../lib/puppet/util/log.rb:399
 msgid "%{msg} at %{file}:%{line}:%{pos}"
 msgstr "%{file}: %{line}: %{pos}に%{msg} "
 
-#: ../lib/puppet/util/log.rb:396
+#: ../lib/puppet/util/log.rb:401
 msgid "%{msg}  at %{file}:%{line}"
 msgstr "%{file}:%{line}に%{msg} "
 
-#: ../lib/puppet/util/log.rb:398
+#: ../lib/puppet/util/log.rb:403
 msgid "%{msg}  at line %{line}:%{pos}"
 msgstr "行%{line}:%{pos}に%{msg}"
 
-#: ../lib/puppet/util/log.rb:400
+#: ../lib/puppet/util/log.rb:405
 msgid "%{msg}  at line %{line}"
 msgstr "行%{line}に%{msg}"
 
-#: ../lib/puppet/util/log.rb:402
+#: ../lib/puppet/util/log.rb:407
 msgid "%{msg}  in %{file}"
 msgstr "%{file}に%{msg}"
 
-#: ../lib/puppet/util/log.rb:404
+#: ../lib/puppet/util/log.rb:409
 msgid "%{msg} on node %{node}"
 msgstr "ノード%{node}に%{msg}"
 
