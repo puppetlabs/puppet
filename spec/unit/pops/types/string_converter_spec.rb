@@ -927,6 +927,28 @@ describe 'The string converter' do
         string_formats = { Puppet::Pops::Types::PRegexpType::DEFAULT => '%p'}
         expect(converter.convert(/foo\/bar/, string_formats)).to eq('/foo\/bar/')
       end
+
+      context 'and slashes' do
+        it 'the format %s produces \'(?m-ix:foo/bar)\' for expression /foo\/bar/m' do
+          string_formats = { Puppet::Pops::Types::PRegexpType::DEFAULT => '%s'}
+          expect(converter.convert(/foo\/bar/m, string_formats)).to eq('(?m-ix:foo/bar)')
+        end
+
+        it 'the format %s produces \'(?m-ix:foo\/bar)\' for expression /foo\\\/bar/m' do
+          string_formats = { Puppet::Pops::Types::PRegexpType::DEFAULT => '%s'}
+          expect(converter.convert(/foo\\\/bar/m, string_formats)).to eq('(?m-ix:foo\\\\/bar)')
+        end
+
+        it 'the format %p produces \'(?m-ix:foo\/bar)\' for expression /foo\/bar/m' do
+          string_formats = { Puppet::Pops::Types::PRegexpType::DEFAULT => '%p'}
+          expect(converter.convert(/foo\/bar/m, string_formats)).to eq('/(?m-ix:foo\/bar)/')
+        end
+
+        it 'the format %p produces \'(?m-ix:foo\/bar)\' for expression /(?m-ix:foo\/bar)/' do
+          string_formats = { Puppet::Pops::Types::PRegexpType::DEFAULT => '%p'}
+          expect(converter.convert(/(?m-ix:foo\/bar)/, string_formats)).to eq('/(?m-ix:foo\/bar)/')
+        end
+      end
     end
 
     it 'errors when format is not recognized' do
