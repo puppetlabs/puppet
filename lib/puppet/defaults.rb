@@ -1901,6 +1901,14 @@ EOT
       Causes an evaluation error when referencing unknown variables. (This does not affect
       referencing variables that are explicitly set to undef).
     EOT
+    },
+  :tasks => {
+    :default => false,
+    :type => :boolean,
+    :desc => <<-'EOT'
+      Turns on experimental support for tasks and plans in the puppet language. This is for internal API use only.
+      Do not change this setting.
+    EOT
     }
   )
   define_settings(:puppetdoc,
