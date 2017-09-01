@@ -862,23 +862,20 @@ class Puppet::Parser::Scope
 
   # Used mainly for logging
   def to_s
-    # As this is used for logging, this should really not be done in this class.
-    # For logging of functionscope - it is now showing the file and line.
-    detail = if @resource.nil?
-      detail = Puppet::Pops::PuppetStack.stacktrace[0]
-      # shorten the path if possible
-      if detail.is_a?(Array)
-        path = detail[0]
-        if environment && environment.configuration && path.start_with?(environment.configuration.path_to_env)
-          path = "<env>" + path[environment.configuration.path_to_env.length..-1]
-        end
-        # Make the output appear as "Scope(path, line)"
-        detail = [path, detail[1]].join(', ')
-      end
-    else
-      detail = @resource
+    # As this is used for logging, this should really not be done in this class at all...
+    return "Scope(#{@resource})" unless @resource.nil?
+
+    # For logging of function-scope - it is now showing the file and line.
+    detail = Puppet::Pops::PuppetStack.stacktrace[0]
+    return "Scope()" unless detail.is_a?(Array)
+
+    # shorten the path if possible
+    path = detail[0]
+    if environment && environment.configuration && path.start_with?(environment.configuration.path_to_env)
+      path = "<env>" + path[environment.configuration.path_to_env.length..-1]
     end
-    "Scope(#{detail})"
+    # Make the output appear as "Scope(path, line)"
+    "Scope(#{[path, detail[1]].join(', ')})" 
   end
 
   alias_method :inspect, :to_s
