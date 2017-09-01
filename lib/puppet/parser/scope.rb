@@ -699,6 +699,7 @@ class Puppet::Parser::Scope
 
   # Merge all settings for the given _env_name_ into this scope
   # @param env_name [Symbol] the name of the environment
+  # @param set_in_this_scope [Boolean] if the settings variables should also be set in this instance of scope
   def merge_settings(env_name, set_in_this_scope=true)
     settings = Puppet.settings
     table = effective_symtable(false)
