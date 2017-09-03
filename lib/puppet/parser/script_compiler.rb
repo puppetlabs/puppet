@@ -9,7 +9,8 @@ require 'puppet/pops'
 
 # Maintain a graph of scopes, along with a bunch of data
 # about the individual catalog we're compiling.
-class Puppet::Parser::ScriptCompiler < Puppet::Parser::Compiler
+class Puppet::Parser::ScriptCompiler# < Puppet::Parser::Compiler
+  include Puppet::Parser::AbstractCompiler
   extend Forwardable
 
   include Puppet::Util

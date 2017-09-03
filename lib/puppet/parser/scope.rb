@@ -375,7 +375,7 @@ class Puppet::Parser::Scope
 
   # Initialize our new scope.  Defaults to having no parent.
   def initialize(compiler, options = EMPTY_HASH)
-    if compiler.is_a? Puppet::Parser::Compiler
+    if compiler.is_a? Puppet::Parser::AbstractCompiler
       @compiler = compiler
     else
       raise Puppet::DevError, "you must pass a compiler instance to a new scope object"
