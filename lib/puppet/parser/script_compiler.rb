@@ -11,8 +11,8 @@ require 'puppet/pops'
 class Puppet::Parser::ScriptCompiler
   include Puppet::Parser::AbstractCompiler
 
-  def self.compile(node, code_id = nil)
-    new(node, code_id).compile
+  def self.compile(node)
+    new(node).compile
 
   rescue Puppet::ParseErrorWithIssue => detail
     detail.node = node.name
@@ -45,15 +45,11 @@ class Puppet::Parser::ScriptCompiler
   # @api private
   attr_reader :loaders
 
-  # The id of code input to the compiler.
-  # @api private
-  attr_accessor :code_id
-
   def with_context_overrides(description = '', &block)
     Puppet.override( @context_overrides , description, &block)
   end
 
-  # Evaluates the configured setup for a script + code in an envrionment with modules
+  # Evaluates the configured setup for a script + code in an environment with modules
   #
   def compile
     # TRANSLATORS, "For running script" is not user facing
@@ -87,10 +83,9 @@ class Puppet::Parser::ScriptCompiler
     node.environment
   end
 
-  def initialize(node, code_id)
+  def initialize(node)
     # fix things like getting trusted information in a node parameter
     @node = sanitize_node(node)
-    @code_id = code_id
 
     initvars
     # Resolutions of fully qualified variable names
@@ -152,7 +147,7 @@ class Puppet::Parser::ScriptCompiler
     #
     Puppet.override( @context_overrides , _("For initializing script compiler")) do
       # THE MAGIC STARTS HERE ! This triggers parsing, loading etc.
-      @version = environment.known_resource_types.version
+      # @version = environment.known_resource_types.version
     end
   end
 
@@ -160,7 +155,7 @@ class Puppet::Parser::ScriptCompiler
   # We want this logic to reside elsewhere, but for now a copy is needed since the method is private
   # in the Compiler and it operates on the node that is set in the compiler.
   # The real Compiler gets the node via the indirector and there is no way to easily add code on that code
-  # path, the node is therefore sanitized by the compiler. The ScriptCompuiler has the same need
+  # path, the node is therefore sanitized by the compiler. The ScriptCompiler has the same need
   # (to santize it) since it is not known where the node is coming from (although it is typically
   # the local node, and facter runs to get facts). Ideally the logic would be in 'Node'.
   #
