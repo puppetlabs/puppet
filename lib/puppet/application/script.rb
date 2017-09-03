@@ -172,7 +172,33 @@ Copyright (c) 2017 Puppet Inc., LLC Licensed under the Apache 2.0 License
         # rule and gets logged.
         #
         begin
-          Puppet::Parser::ScriptCompiler.compile(node)
+          # support the following features when evaluating puppet code
+          # * $facts with facts from host running the script
+          # * $settings with 'settings::*' namespace populated, and '$settings::all_local' hash
+          # * $trusted as setup when using puppet apply
+          # * an environment
+          #
+
+          # fixup trusted information
+          node.sanitize()
+
+          compiler = Puppet::Parser::ScriptCompiler.new(node.environment, node.name)
+          topscope = compiler.topscope
+
+          # When scripting the trusted data are always local, but set them anyway
+          topscope.set_trusted(node.trusted_data)
+
+          # Server facts are always about the local node's version etc.
+          topscope.set_server_facts(node.server_facts)
+
+          # Set $facts for the node running the script
+          facts_hash = node.facts.nil? ? {} : node.facts.values
+          topscope.set_facts(facts_hash)
+
+          # create the $settings:: variables
+          topscope.merge_settings(node.environment.name, false)
+
+          compiler.compile()
 
         rescue Puppet::ParseErrorWithIssue, Puppet::Error
           # already logged and handled by the compiler for these two cases
