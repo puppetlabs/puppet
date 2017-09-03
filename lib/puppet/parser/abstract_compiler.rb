@@ -15,6 +15,8 @@ module Puppet::Parser::AbstractCompiler
   end
 
   # Produces a new scope
+  # This method is here if there are functions/logic that will call this for some other purpose than to create
+  # a named scope for a class. It may not have to be here. (TODO)
   #
   def newscope(scope, options)
     raise Puppet::DevError("Class '#{self.class}' should have implemented 'newscope'")
