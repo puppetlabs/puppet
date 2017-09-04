@@ -151,6 +151,39 @@ describe 'The Loader' do
         end
 
         context 'with multiple modules' do
+          let(:metadata_json_a) {
+              {
+                'name': 'example/a',
+                'version': '0.1.0',
+                'source': 'git@github.com/example/example-a.git',
+                'dependencies': [{'name' => 'c', 'version_range' => '>=0.1.0'}],
+                'author': 'Bob the Builder',
+                'license': 'Apache-2.0'
+              }
+          }
+
+          let(:metadata_json_b) {
+            {
+              'name': 'example/b',
+              'version': '0.1.0',
+              'source': 'git@github.com/example/example-b.git',
+              'dependencies': [{'name' => 'c', 'version_range' => '>=0.1.0'}],
+              'author': 'Bob the Builder',
+              'license': 'Apache-2.0'
+            }
+          }
+
+          let(:metadata_json_c) {
+            {
+              'name': 'example/c',
+              'version': '0.1.0',
+              'source': 'git@github.com/example/example-c.git',
+              'dependencies': [],
+              'author': 'Bob the Builder',
+              'license': 'Apache-2.0'
+            }
+          }
+
           let(:modules) {
             {
               'a' => {
@@ -159,6 +192,7 @@ describe 'The Loader' do
                 'plans' => a_plans,
                 'tasks' => a_tasks,
                 'types' => a_types,
+                'metadata.json' => metadata_json_a.to_json
               },
               'b' => {
                 'functions' => b_functions,
@@ -166,6 +200,11 @@ describe 'The Loader' do
                 'plans' => b_plans,
                 'tasks' => b_tasks,
                 'types' => b_types,
+                'metadata.json' => metadata_json_b.to_json
+              },
+              'c' => {
+                'types' => c_types,
+                'metadata.json' => metadata_json_c.to_json
               },
             }
           }
@@ -246,6 +285,14 @@ describe 'The Loader' do
             }
           }
 
+          let(:c_types) {
+            {
+              'atype.pp' => <<-PUPPET.unindent,
+                type C::Atype = Integer
+            PUPPET
+            }
+          }
+
           it 'private loader finds plans in all modules' do
             expect(loader.private_loader.discover(:plan) { |t| t.name =~ /^.::.*\z/ }).to(
               contain_exactly(tn(:plan, 'a::aplan'), tn(:plan, 'b::aplan')))
@@ -258,7 +305,7 @@ describe 'The Loader' do
 
           it 'private loader finds types in all modules' do
             expect(loader.private_loader.discover(:type) { |t| t.name =~ /^.::.*\z/ }).to(
-              contain_exactly(tn(:type, 'a::atype'), tn(:type, 'b::atype'), tn(:type, 'a::atask'), tn(:type, 'b::atask')))
+              contain_exactly(tn(:type, 'a::atype'), tn(:type, 'b::atype'), tn(:type, 'c::atype'), tn(:type, 'a::atask'), tn(:type, 'b::atask')))
           end
 
           it 'module loader finds types only in itself' do
@@ -274,6 +321,41 @@ describe 'The Loader' do
           it 'module loader finds functions only in itself' do
             expect(Loaders.find_loader('a').discover(:function) { |t| t.name =~ /^.::.*\z/ }).to(
               contain_exactly(tn(:function, 'a::afunc'), tn(:function, 'a::arubyfunc')))
+          end
+
+          it 'discover is only called once on dependent loader' do
+            ModuleLoaders::FileBased.any_instance.expects(:discover).times(4).with(:type, Pcore::RUNTIME_NAME_AUTHORITY).returns([])
+            expect(loader.private_loader.discover(:type) { |t| t.name =~ /^.::.*\z/ }).to(contain_exactly())
+          end
+
+          context 'with no explicit dependencies' do
+
+            let(:modules) {
+              {
+                'a' => {
+                  'functions' => a_functions,
+                  'lib' => { 'puppet' => a_lib_puppet },
+                  'plans' => a_plans,
+                  'tasks' => a_tasks,
+                  'types' => a_types,
+                },
+                'b' => {
+                  'functions' => b_functions,
+                  'lib' => { 'puppet' => b_lib_puppet },
+                  'plans' => b_plans,
+                  'tasks' => b_tasks,
+                  'types' => b_types,
+                },
+                'c' => {
+                  'types' => c_types,
+                },
+              }
+
+              it 'discover is only called once on dependent loader' do
+                ModuleLoaders::FileBased.any_instance.expects(:discover).times(4).with(:type, Pcore::RUNTIME_NAME_AUTHORITY).returns([])
+                expect(loader.private_loader.discover(:type) { |t| t.name =~ /^.::.*\z/ }).to(contain_exactly())
+              end
+            }
           end
         end
       end
