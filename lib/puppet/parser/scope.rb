@@ -375,7 +375,7 @@ class Puppet::Parser::Scope
 
   # Initialize our new scope.  Defaults to having no parent.
   def initialize(compiler, options = EMPTY_HASH)
-    if compiler.is_a? Puppet::Parser::Compiler
+    if compiler.is_a? Puppet::Parser::AbstractCompiler
       @compiler = compiler
     else
       raise Puppet::DevError, "you must pass a compiler instance to a new scope object"
@@ -699,7 +699,8 @@ class Puppet::Parser::Scope
 
   # Merge all settings for the given _env_name_ into this scope
   # @param env_name [Symbol] the name of the environment
-  def merge_settings(env_name)
+  # @param set_in_this_scope [Boolean] if the settings variables should also be set in this instance of scope
+  def merge_settings(env_name, set_in_this_scope=true)
     settings = Puppet.settings
     table = effective_symtable(false)
     global_table = compiler.qualified_variables
@@ -708,7 +709,9 @@ class Puppet::Parser::Scope
       next if :name == name
       key = name.to_s
       value = transform_setting(settings.value_sym(name, env_name))
-      table[key] = value
+      if set_in_this_scope
+        table[key] = value
+      end
       all_local[key] = value
       # also write the fqn into global table for direct lookup
       global_table["settings::#{key}"] = value
@@ -859,7 +862,20 @@ class Puppet::Parser::Scope
 
   # Used mainly for logging
   def to_s
-    "Scope(#{@resource})"
+    # As this is used for logging, this should really not be done in this class at all...
+    return "Scope(#{@resource})" unless @resource.nil?
+
+    # For logging of function-scope - it is now showing the file and line.
+    detail = Puppet::Pops::PuppetStack.stacktrace[0]
+    return "Scope()" unless detail.is_a?(Array)
+
+    # shorten the path if possible
+    path = detail[0]
+    if environment && environment.configuration && path.start_with?(environment.configuration.path_to_env)
+      path = "<env>" + path[environment.configuration.path_to_env.length..-1]
+    end
+    # Make the output appear as "Scope(path, line)"
+    "Scope(#{[path, detail[1]].join(', ')})" 
   end
 
   alias_method :inspect, :to_s
