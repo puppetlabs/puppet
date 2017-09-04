@@ -474,7 +474,6 @@ describe 'Lexer2' do
     end
 
     it 'strips only last newline when using trim option' do
-      pending 'fix for PUP-7902'
       code = <<-CODE.unindent
         @(END)
         Line 1
