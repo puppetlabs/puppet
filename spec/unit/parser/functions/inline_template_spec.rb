@@ -28,6 +28,13 @@ describe "the inline_template function" do
     expect(inline_template("string was: <%= @string %>")).to eq("string was: this is a variable")
   end
 
+  it 'is not available when --tasks is on' do
+    Puppet[:tasks] = true
+    expect {
+      inline_template("<%= lookupvar('myvar') %>")
+    }.to raise_error(Puppet::ParseError, /is only available when compiling a catalog/)
+  end
+
   def inline_template(*templates)
     scope.function_inline_template(templates)
   end
