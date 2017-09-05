@@ -523,6 +523,19 @@ describe 'The type calculator' do
         end
       end
     end
+
+    it 'infers an instance of an anonymous class to Runtime[ruby]' do
+      cls = Class.new do
+        attr_reader :name
+        def initialize(name)
+          @name = name
+        end
+      end
+      t = calculator.infer(cls.new('test'))
+      expect(t.class).to eql(PRuntimeType)
+      expect(t.runtime).to eql(:ruby)
+      expect(t.name_or_pattern).to eql(nil)
+    end
   end
 
   context 'patterns' do

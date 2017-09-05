@@ -397,6 +397,7 @@ class PObjectType < PMetaType
       assignable?(o._pcore_type, guard)
     else
       name = o.class.name
+      return false if name.nil? # anonymous class that doesn't implement PuppetObject is not an instance
       ir = Loaders.implementation_registry
       type = ir.nil? ? nil : ir.type_for_module(name)
       !type.nil? && assignable?(type, guard)
