@@ -117,6 +117,9 @@ Copyright (c) 2017 Puppet Inc., LLC Licensed under the Apache 2.0 License
   end
 
   def main
+    # The tasks feature is always on
+    Puppet[:tasks] = true
+
     # Set the puppet code or file to use.
     if options[:code] || command_line.args.length == 0
       Puppet[:code] = options[:code] || STDIN.read
