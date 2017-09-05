@@ -856,5 +856,14 @@ module Issues
   SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING = issue :SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING, :path, :klass, :value do
     _("%{path} contains a hash with %{klass} key. It will be converted to the String '%{value}'") % { path: path, klass: label.a_an(klass), value: value }
   end
+
+  FEATURE_NOT_SUPPORTED_WHEN_SCRIPTING = issue :NOT_SUPPORTED_WHEN_SCRIPTING, :feature do
+    _("The feature '%{feature}' is only available when compiling a catalog") % { feature: feature }
+  end
+
+  CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING = issue :CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING, :operation do
+    _("The catalog operation '%{operation}' is only available when compiling a catalog") % { operration: operation }
+  end
+
 end
 end

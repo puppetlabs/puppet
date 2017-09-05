@@ -78,6 +78,23 @@ module Puppet
       msg = "#{msg} on node #{node}" if node
       msg
     end
+
+    def self.from_issue_and_stack(issue, args = {})
+      stacktrace = Puppet::Pops::PuppetStack.stacktrace()
+      if stacktrace.size > 0
+        filename, line = stacktrace[0]
+      else
+        file = nil
+        line = nil
+      end
+      self.new(
+            issue.format(args),
+            filename,
+            line,
+            nil,
+            nil,
+            issue.issue_code)
+    end
   end
 
   # An error that already contains location information in the message text
