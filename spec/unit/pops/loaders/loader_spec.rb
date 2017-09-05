@@ -153,34 +153,34 @@ describe 'The Loader' do
         context 'with multiple modules' do
           let(:metadata_json_a) {
               {
-                'name': 'example/a',
-                'version': '0.1.0',
-                'source': 'git@github.com/example/example-a.git',
-                'dependencies': [{'name' => 'c', 'version_range' => '>=0.1.0'}],
-                'author': 'Bob the Builder',
-                'license': 'Apache-2.0'
+                'name' => 'example/a',
+                'version' => '0.1.0',
+                'source' => 'git@github.com/example/example-a.git',
+                'dependencies' => [{'name' => 'c', 'version_range' => '>=0.1.0'}],
+                'author' => 'Bob the Builder',
+                'license' => 'Apache-2.0'
               }
           }
 
           let(:metadata_json_b) {
             {
-              'name': 'example/b',
-              'version': '0.1.0',
-              'source': 'git@github.com/example/example-b.git',
-              'dependencies': [{'name' => 'c', 'version_range' => '>=0.1.0'}],
-              'author': 'Bob the Builder',
-              'license': 'Apache-2.0'
+              'name' => 'example/b',
+              'version' => '0.1.0',
+              'source' => 'git@github.com/example/example-b.git',
+              'dependencies' => [{'name' => 'c', 'version_range' => '>=0.1.0'}],
+              'author' => 'Bob the Builder',
+              'license' => 'Apache-2.0'
             }
           }
 
           let(:metadata_json_c) {
             {
-              'name': 'example/c',
-              'version': '0.1.0',
-              'source': 'git@github.com/example/example-c.git',
-              'dependencies': [],
-              'author': 'Bob the Builder',
-              'license': 'Apache-2.0'
+              'name' => 'example/c',
+              'version' => '0.1.0',
+              'source' => 'git@github.com/example/example-c.git',
+              'dependencies' => [],
+              'author' => 'Bob the Builder',
+              'license' => 'Apache-2.0'
             }
           }
 
