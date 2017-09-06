@@ -46,8 +46,13 @@ describe 'The Loader' do
   let(:env) { Puppet::Node::Environment.create(:testing, [modules_dir]) }
   let(:node) { Puppet::Node.new('test', :environment => env) }
   let(:loader) { Loaders.find_loader(nil) }
+  let(:tasks_feature) { false }
 
-  before(:each) { Puppet.push_context(:loaders => Loaders.new(env)) }
+  before(:each) do
+    Puppet[:tasks] = tasks_feature
+    Puppet.push_context(:loaders => Loaders.new(env))
+  end
+
   after(:each) { Puppet.pop_context }
 
   context 'when doing discovery' do
@@ -119,14 +124,6 @@ describe 'The Loader' do
           expect(loader.discover(:type)).to include(tn(:type, 'environment::env'))
         end
 
-        it 'finds global tasks in environment' do
-          expect(loader.discover(:type)).to include(tn(:type, 'globtask'))
-        end
-
-        it 'finds tasks prefixed with Environment in environment' do
-          expect(loader.discover(:type)).to include(tn(:type, 'environment::envtask'))
-        end
-
         it 'finds global functions in environment' do
           expect(loader.discover(:function)).to include(tn(:function, 'globfunc'))
         end
@@ -148,6 +145,18 @@ describe 'The Loader' do
             tn(:function, 'environment::envrubyfunc'),
             tn(:function, 'globrubyfunc')
           )
+        end
+
+        context 'with tasks feature enabled' do
+          let(:tasks_feature) { true }
+
+          it 'finds global tasks in environment' do
+            expect(loader.discover(:type)).to include(tn(:type, 'globtask'))
+          end
+
+          it 'finds tasks prefixed with Environment in environment' do
+            expect(loader.discover(:type)).to include(tn(:type, 'environment::envtask'))
+          end
         end
 
         context 'with multiple modules' do
@@ -305,12 +314,12 @@ describe 'The Loader' do
 
           it 'private loader finds types in all modules' do
             expect(loader.private_loader.discover(:type) { |t| t.name =~ /^.::.*\z/ }).to(
-              contain_exactly(tn(:type, 'a::atype'), tn(:type, 'b::atype'), tn(:type, 'c::atype'), tn(:type, 'a::atask'), tn(:type, 'b::atask')))
+              contain_exactly(tn(:type, 'a::atype'), tn(:type, 'b::atype'), tn(:type, 'c::atype')))
           end
 
           it 'module loader finds types only in itself' do
             expect(Loaders.find_loader('a').discover(:type) { |t| t.name =~ /^.::.*\z/ }).to(
-              contain_exactly(tn(:type, 'a::atype'), tn(:type, 'a::atask')))
+              contain_exactly(tn(:type, 'a::atype')))
           end
 
           it 'private loader finds functions in all modules' do
@@ -328,6 +337,19 @@ describe 'The Loader' do
             expect(loader.private_loader.discover(:type) { |t| t.name =~ /^.::.*\z/ }).to(contain_exactly())
           end
 
+          context 'with tasks enabled' do
+            let(:tasks_feature) { true }
+
+            it 'private loader finds types and tasks in all modules' do
+              expect(loader.private_loader.discover(:type) { |t| t.name =~ /^.::.*\z/ }).to(
+                contain_exactly(tn(:type, 'a::atype'), tn(:type, 'b::atype'), tn(:type, 'c::atype'), tn(:type, 'a::atask'), tn(:type, 'b::atask')))
+            end
+
+            it 'module loader finds types and tasks only in itself' do
+              expect(Loaders.find_loader('a').discover(:type) { |t| t.name =~ /^.::.*\z/ }).to(
+                contain_exactly(tn(:type, 'a::atype'), tn(:type, 'a::atask')))
+            end
+          end
           context 'with no explicit dependencies' do
 
             let(:modules) {

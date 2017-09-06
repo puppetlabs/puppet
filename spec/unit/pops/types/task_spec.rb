@@ -35,6 +35,8 @@ describe 'The Task Type' do
     let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
     let(:notices) { logs.select { |log| log.level == :notice }.map { |log| log.message } }
 
+    before(:each) { Puppet[:tasks] = true }
+
     context 'tasks' do
       let(:compiler) { Puppet::Parser::Compiler.new(node) }
 
@@ -100,6 +102,16 @@ describe 'The Task Type' do
             notice(Testmodule::Hello({foo => 'the foo', fee => 311, fum => false}))
           PUPPET
           expect(notices).to eql(["Testmodule::Hello({'foo' => 'the foo', 'fee' => 311, 'fum' => false})"])
+        end
+
+        context 'without --tasks' do
+          before(:each) { Puppet[:tasks] = false }
+
+          it 'evaluator does not recognize generic tasks' do
+            expect{compile(<<-PUPPET.unindent)}.to raise_error(/Resource type not found: Testmodule::Hello/)
+              notice(Testmodule::Hello())
+            PUPPET
+          end
         end
       end
 
@@ -182,6 +194,16 @@ describe 'The Task Type' do
           expect { compile(<<-PUPPET.unindent) }.to raise_error(/expects a value for key 'message'.*unrecognized key 'echo'/m)
             notice(Testmodule::Hello({echo => 'a message'}))
           PUPPET
+        end
+
+        context 'without --tasks' do
+          before(:each) { Puppet[:tasks] = false }
+
+          it 'evaluator does not recognize generic tasks' do
+            expect{compile(<<-PUPPET.unindent)}.to raise_error(/Resource type not found: Testmodule::Hello/)
+              notice(Testmodule::Hello('a message'))
+              PUPPET
+          end
         end
 
         context 'that has a malformed top-level entry' do
@@ -282,14 +304,26 @@ describe 'The Task Type' do
         it 'evaluator loads and notices a Task with named parameters' do
           compile(<<-PUPPET.unindent)
             notice(Testmodule::Hello({message => 'a message'}))
-          PUPPET
+            PUPPET
           expect(notices).to eql(["Testmodule::Hello({'message' => 'a message'})"])
+        end
+
+        context 'without --tasks' do
+          before(:each) { Puppet[:tasks] = false }
+
+          it 'evaluator fails to load Task' do
+            expect { compile(<<-PUPPET.unindent) }.to raise_error(/unresolved type 'Task'/)
+            notice(Testmodule::Hello({message => 'a message'}))
+            PUPPET
+          end
         end
       end
     end
   end
 
   it 'can present itself as json' do
+    Puppet[:tasks] = true
+
     code = <<-PUPPET.unindent
     
       type Service::Action = Enum[

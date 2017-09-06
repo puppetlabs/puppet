@@ -38,6 +38,10 @@ module Pcore
     add_alias('Pcore::MemberName', TYPE_MEMBER_NAME, loader)
     add_alias('Pcore::TypeName', TYPE_QUALIFIED_REFERENCE, loader)
     add_alias('Pcore::QRef', TYPE_QUALIFIED_REFERENCE, loader)
+
+    if Puppet[:tasks]
+      require_relative 'types/task'
+    end
     Types::TypedModelObject.register_ptypes(loader, ir)
 
     @type = create_object_type(loader, ir, Pcore, 'Pcore', nil)
