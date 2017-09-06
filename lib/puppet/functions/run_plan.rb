@@ -18,6 +18,12 @@ Puppet::Functions.create_function(:run_plan, Puppet::Functions::InternalFunction
   end
 
   def run_plan(scope, plan_name, named_args = {})
+    unless Puppet[:tasks]
+      raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
+        Puppet::Pops::Issues::TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING,
+        {:operation => 'run_plan'})
+    end
+
     loaders = closure_scope.compiler.loaders
     # The perspective of the environment is wanted here (for now) to not have to require modules
     # to have dependencies defined in meta data.

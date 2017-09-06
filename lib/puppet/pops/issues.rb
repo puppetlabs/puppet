@@ -865,5 +865,8 @@ module Issues
     _("The catalog operation '%{operation}' is only available when compiling a catalog") % { operration: operation }
   end
 
+  TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING = issue :TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING, :operation do
+    _("The task operation '%{operation}' is not available when compiling a catalog") % { operation: operation }
+  end
 end
 end
