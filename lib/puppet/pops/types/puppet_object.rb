@@ -19,7 +19,7 @@ module PuppetObject
   end
 
   def _pcore_init_hash
-    EMPTY_HASH
+    {}
   end
 end
 end
