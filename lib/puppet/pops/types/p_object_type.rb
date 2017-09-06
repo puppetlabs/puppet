@@ -601,6 +601,7 @@ class PObjectType < PMetaType
     unless @parent.nil?
       check_self_recursion(self)
       rp = resolved_parent
+      raise Puppet::ParseError, _("reference to unresolved type '%{name}'") % { :name => rp.type_string } if rp.is_a?(PTypeReferenceType)
       if rp.is_a?(PObjectType)
         parent_object_type = rp
         parent_members = rp.members(true)
