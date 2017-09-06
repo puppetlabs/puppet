@@ -342,6 +342,7 @@ class TypeParser
     when 'enum'
       # 1..m parameters being strings
       raise_invalid_parameters_error('Enum', '1 or more', parameters.size) unless parameters.size >= 1
+      parameters.each { |p|  raise Puppet::ParseError, 'Enum parameters must be identifiers or strings' unless p.is_a?(String) }
       TypeFactory.enum(*parameters)
 
     when 'pattern'

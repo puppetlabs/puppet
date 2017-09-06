@@ -936,6 +936,14 @@ describe 'The Object Type' do
         /attribute MySecondObject\[a\] attempts to override final attribute MyObject\[a\]/)
     end
 
+    it 'a type cannot be created using an unresolved parent' do
+      code = <<-CODE
+      notice(Object[{ name => 'MyObject', parent => Type('NoneSuch'), attributes => { a => String}}].new('hello'))
+      CODE
+      expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error,
+        /reference to unresolved type 'NoneSuch'/)
+    end
+
     context 'type alias using bracket-less (implicit Object) form' do
       let(:logs) { [] }
       let(:notices) { logs.select { |log| log.level == :notice }.map { |log| log.message } }
@@ -986,7 +994,7 @@ describe 'The Object Type' do
         Puppet[:strict] = 'warning'
         compile(<<-CODE)
           type MyObject = { name => 'MyFirstObject', attributes => { a => String }}
-          type MySecondObject = { parent => MyOtherType, attributes => { b => String }}
+          type MySecondObject = { parent => MyObject, attributes => { b => String }}
           notice(MySecondObject =~ Type)
         CODE
         expect(warnings).to be_empty
@@ -997,7 +1005,7 @@ describe 'The Object Type' do
         Puppet[:strict] = 'warning'
         compile(<<-CODE)
           type MyObject = { name => 'MyFirstObject', attributes => { a => String }}
-          type MySecondObject = Object { parent => MyOtherType, attributes => { b => String }}
+          type MySecondObject = Object { parent => MyObject, attributes => { b => String }}
           notice(MySecondObject =~ Type)
         CODE
         expect(warnings).to be_empty

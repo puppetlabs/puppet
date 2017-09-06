@@ -163,7 +163,7 @@ class RubyGenerator < TypeFormatter
   end
 
   def class_body(obj, segments, bld)
-    if obj.parent.nil?
+    unless obj.parent.is_a?(PObjectType)
       bld << "\n  include " << namespace_relative(segments, Puppet::Pops::Types::PuppetObject.name) << "\n\n" # marker interface
       bld << "  def self.ref(type_string)\n"
       bld << '    ' << namespace_relative(segments, Puppet::Pops::Types::PTypeReferenceType.name) << ".new(type_string)\n"
