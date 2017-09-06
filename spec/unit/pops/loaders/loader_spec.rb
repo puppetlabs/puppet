@@ -11,6 +11,10 @@ describe 'The Loader' do
   include PuppetSpec::Compiler
   include PuppetSpec::Files
 
+  before(:each) do
+    Puppet[:tasks] = true
+  end
+
   let(:testing_env) do
     {
       'testing' => {

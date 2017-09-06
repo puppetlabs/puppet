@@ -6,6 +6,10 @@ require_relative 'parser_rspec_helper'
 describe "egrammar parsing of 'plan'" do
   include ParserRspecHelper
 
+  before(:each) do
+    Puppet[:tasks] = true
+  end
+
   it "an empty body" do
     expect(dump(parse("plan foo { }"))).to eq("(plan foo ())")
   end

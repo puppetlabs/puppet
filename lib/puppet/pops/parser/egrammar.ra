@@ -24,6 +24,7 @@ token TYPE
 token PRIVATE ATTR
 token APPLICATION PRODUCES CONSUMES SITE
 token PLAN
+token PLAN_R
 token LOW
 
 prechigh
@@ -472,6 +473,7 @@ attribute_operations
   attribute_name
     : NAME
     | keyword
+    | PLAN_R
 
   # In this version, illegal combinations are validated instead of producing syntax errors
   # (Can give nicer error message "+> is not applicable to...")
@@ -663,6 +665,7 @@ classname
   : NAME
   | WORD
   | CLASSREF
+  | PLAN_R
   | CLASS { error val[0], "'class' keyword not allowed at this location" }
   | STRING { error val[0], "A quoted string is not valid as a name here" }
 
@@ -764,6 +767,8 @@ variable
 reserved_word
   : PRIVATE   { result = Factory.RESERVED(val[0][:value]) ; loc result, val[0] }
   | ATTR      { result = Factory.RESERVED(val[0][:value]) ; loc result, val[0] }
+  | PLAN_R    { result = Factory.RESERVED(val[0][:value], true) ; loc result, val[0] }
+
 
 #---LITERALS (dynamic and static)
 #
