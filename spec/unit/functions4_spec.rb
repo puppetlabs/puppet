@@ -440,6 +440,7 @@ describe 'the 4x function api' do
       let(:parser) {  Puppet::Pops::Parser::EvaluatingParser.new }
       let(:node) { 'node.example.com' }
       let(:scope) { s = create_test_scope_for_node(node); s }
+      let(:loader) { Puppet::Pops::Loaders.find_loader(nil) }
 
       it 'function with required block can be called' do
         # construct ruby function to call
@@ -455,9 +456,9 @@ describe 'the 4x function api' do
           end
         end
         # add the function to the loader (as if it had been loaded from somewhere)
-        the_loader = loader()
+        the_loader = loader
         f = fc.new({}, the_loader)
-        loader.add_function('testing::test', f)
+        loader.set_entry(Puppet::Pops::Loader::TypedName.new(:function, 'testing::test'), f)
         # evaluate a puppet call
         source = "testing::test(10) |$x| { $x+1 }"
         program = parser.parse_string(source, __FILE__)

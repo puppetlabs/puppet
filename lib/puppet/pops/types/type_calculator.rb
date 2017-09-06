@@ -512,6 +512,7 @@ class TypeCalculator
       o._pcore_type
     else
       name = o.class.name
+      return PRuntimeType.new(:ruby, nil) if name.nil? # anonymous class that doesn't implement PuppetObject is impossible to infer
       ir = Loaders.implementation_registry
       type = ir.nil? ? nil : ir.type_for_module(name)
       type.nil? ? PRuntimeType.new(:ruby, name) : type
