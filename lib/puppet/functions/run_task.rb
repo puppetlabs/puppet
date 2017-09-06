@@ -9,6 +9,12 @@ Puppet::Functions.create_function(:run_task) do
   end
 
   def mocked_run_task(task, *hosts)
+    unless Puppet[:tasks]
+      raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
+        Puppet::Pops::Issues::TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING,
+        {:operation => 'run_task'})
+    end
+
     call_function('notice', "Simulating run of task #{task._pcore_type.name} on hosts: [" + hosts.join(', ') + "]")
     hosts.map do |hostname|
       exit_code = task.respond_to?(:simulated_exit_code) ? task.exit_code : 0

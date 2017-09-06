@@ -8,6 +8,9 @@ describe 'the run_plan function' do
   include PuppetSpec::Compiler
   include PuppetSpec::Files
   include Matchers::Resource
+  before(:each) do
+    Puppet[:tasks] = true
+  end
 
   context "when invoked" do
     let(:env_name) { 'testenv' }
