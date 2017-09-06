@@ -23,12 +23,7 @@ module Puppet
       def filesystem_type(host)
         case host['platform']
         when /aix/
-          maj_version = on(host, facter('operatingsystemmajrelease')).stdout.chomp.to_i
-          if maj_version >= 6100
-            'jfs2'
-          else
-            'jfs'
-          end
+          'jfs2'
         when /el-|centos|fedora|sles|debian|ubuntu|cumulus/
           'ext3'
         else
