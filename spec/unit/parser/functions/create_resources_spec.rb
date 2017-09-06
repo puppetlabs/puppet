@@ -324,6 +324,15 @@ describe 'function for dynamically creating resources' do
         compile_to_catalog('include foo')
       }.to raise_error(Puppet::Error, /Syntax error at.*/)
     end
+
+    it 'is not available when --tasks is on' do
+      Puppet[:tasks] = true
+      expect do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          create_resources('class', {'bar'=>{}}, {'one' => 'two'})
+        MANIFEST
+      end.to raise_error(Puppet::ParseError, /is only available when compiling a catalog/)
+    end
   end
 
   def collect_notices(code)
