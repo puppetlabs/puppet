@@ -191,46 +191,7 @@ module Puppet::Network::HTTP
               current_request[header] = value
             end
           when 429, 503
-            retry_after = current_response['Retry-After']
-
-            if retry_after.nil?
-              # Set return value and advance to next loop.
-              response = current_response
-              next
-            end
-
-            retry_after = begin
-                            Integer(retry_after)
-                          rescue TypeError, ArgumentError
-                            begin
-                              DateTime.rfc2822(retry_after)
-                            rescue ArgumentError
-                              Puppet.err(_('Received a %{status_code} response from the server, but the Retry-After header value of "%{retry_after}" could not be converted to an integer or RFC 2822 Date.') %
-                                         {status_code: current_response.code,
-                                          retry_after: retry_after.inspect})
-
-                              response = current_response
-                              next
-                            end
-                          end
-
-            retry_sleep = case retry_after
-                          when DateTime
-                            (retry_after.to_time - DateTime.now.to_time).to_i
-                          when Integer
-                            retry_after
-                          end
-
-            if (retry_sleep > 0)
-              # Cap maximum sleep at the run interval of the Puppet agent.
-              retry_sleep = [retry_sleep, Puppet[:runinterval]].min
-
-              Puppet.warning(_('Received a %{status_code} response from the server. Sleeping for %{retry_sleep} seconds before retrying the request.') %
-                             {status_code: current_response.code,
-                              retry_sleep: retry_sleep})
-
-              ::Kernel.sleep(retry_sleep) if (retry_sleep > 0)
-            end
+            response = handle_retry_after(current_response)
           else
             response = current_response
           end
@@ -240,6 +201,77 @@ module Puppet::Network::HTTP
       end
 
       raise RedirectionLimitExceededException, _("Too many HTTP redirections for %{host}:%{port}") % { host: @host, port: @port }
+    end
+
+    # Handles the Retry-After header of a HTTPResponse
+    #
+    # This method checks the response for a Retry-After header and handles
+    # it by sleeping for the indicated number of seconds. The response is
+    # returned unmodified if no Retry-After header is present.
+    #
+    # @param response [Net::HTTPResponse] A response recieved from the
+    #   HTTP client.
+    #
+    # @return [nil] Sleeps and returns nil if the response contained a
+    #   Retry-After header that indicated the request should be retried.
+    # @return [Net::HTTPResponse] Returns the `response` unmodified if
+    #   no Retry-After header was present or the Retry-After header could
+    #   not be parsed as an integer or RFC 2822 date.
+    def handle_retry_after(response)
+      retry_after = response['Retry-After']
+      return response if retry_after.nil?
+
+      retry_sleep = parse_retry_after_header(retry_after)
+      if retry_sleep.nil?
+        Puppet.err(_('Received a %{status_code} response from the server, but the Retry-After header value of "%{retry_after}" could not be converted to an integer or RFC 2822 Date.') %
+                   {status_code: response.code,
+                    retry_after: retry_after.inspect})
+
+        return response
+      end
+
+      # Cap maximum sleep at the run interval of the Puppet agent.
+      retry_sleep = [retry_sleep, Puppet[:runinterval]].min
+
+      Puppet.warning(_('Received a %{status_code} response from the server. Sleeping for %{retry_sleep} seconds before retrying the request.') %
+                     {status_code: response.code,
+                      retry_sleep: retry_sleep})
+
+      ::Kernel.sleep(retry_sleep)
+
+      return nil
+    end
+
+    # Parse the value of a Retry-After header
+    #
+    # Parses a string containing an Integer or RFC 2822 datestamp and returns
+    # an integer number of seconds before a request can be retried.
+    #
+    # @param header_value [String] The value of the Retry-After header.
+    #
+    # @return [Integer] Number of seconds to wait before retrying the
+    #   request. Will be equal to 0 for the case of date that has already
+    #   passed.
+    # @return [nil] Returns `nil` when the `header_value` can't be
+    #   parsed as an Integer or RFC 2822 date.
+    def parse_retry_after_header(header_value)
+      retry_after = begin
+                      Integer(header_value)
+                    rescue TypeError, ArgumentError
+                      begin
+                        DateTime.rfc2822(header_value)
+                      rescue ArgumentError
+                        return nil
+                      end
+                    end
+
+      case retry_after
+      when Integer
+        retry_after
+      when DateTime
+        sleep = (retry_after.to_time - DateTime.now.to_time).to_i
+        (sleep > 0) ? sleep : 0
+      end
     end
 
     def apply_options_to(request, options)

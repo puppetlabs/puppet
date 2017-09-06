@@ -269,6 +269,17 @@ describe Puppet::Network::HTTP::Connection do
 
     subject { Puppet::Network::HTTP::Connection.new(site.host, site.port, :use_ssl => false, :verify => verify) }
 
+    context "when parsing Retry-After headers" do
+      # Private method. Create a reference that can be called by tests.
+      let(:header_parser) { subject.method(:parse_retry_after_header) }
+
+      it "returns 0 when parsing a RFC 2822 date that has passed" do
+        test_date = 'Wed, 13 Apr 2005 15:18:05 GMT'
+
+        expect(header_parser.call(test_date)).to eq(0)
+      end
+    end
+
     it "should return a 503 response if Retry-After is not set" do
       http.stubs(:request).returns(httpunavailable)
 
