@@ -30,7 +30,7 @@ module LoaderPaths
       result << PlanPathPP.new(loader)
     when :type
       result << TypePathPP.new(loader) if loader.loadables.include?(:type_pp)
-      result << TaskPath.new(loader) if loader.loadables.include?(:task)
+      result << TaskPath.new(loader) if Puppet[:tasks] && loader.loadables.include?(:task)
     when :resource_type_pp
       result << ResourceTypeImplPP.new(loader) if loader.loadables.include?(:resource_type_pp)
     else
@@ -218,6 +218,7 @@ module LoaderPaths
     end
 
     def instantiator
+      require_relative 'task_instantiator'
       TaskInstantiator
     end
   end
