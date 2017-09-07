@@ -98,10 +98,24 @@ describe 'Lexer2' do
     "consumes"     => :CONSUMES,
     "produces"     => :PRODUCES,
     "site"         => :SITE,
-    "plan"         => :PLAN,
   }.each do |string, name|
     it "should lex a keyword from '#{string}'" do
       expect(tokens_scanned_from(string)).to match_tokens2(name)
+    end
+  end
+
+  context 'when --no-tasks (the default)' do
+    it "should lex a (future reserved) keyword from 'plan'" do
+      expect(tokens_scanned_from('plan')).to match_tokens2(:PLAN_R)
+    end
+  end
+
+  context 'when --tasks' do
+    before(:each) { Puppet[:tasks] = true }
+    after(:each) { Puppet[:tasks] = false }
+
+    it "should lex a keyword from 'plan'" do
+      expect(tokens_scanned_from('plan')).to match_tokens2(:PLAN)
     end
   end
 
