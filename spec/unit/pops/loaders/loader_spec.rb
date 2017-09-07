@@ -306,16 +306,6 @@ describe 'The Loader' do
             }
           }
 
-          it 'private loader finds plans in all modules' do
-            expect(loader.private_loader.discover(:plan) { |t| t.name =~ /^.::.*\z/ }).to(
-              contain_exactly(tn(:plan, 'a::aplan'), tn(:plan, 'b::aplan')))
-          end
-
-          it 'module loader finds plans only in itself' do
-            expect(Loaders.find_loader('a').discover(:plan)).to(
-              contain_exactly(tn(:plan, 'a::aplan')))
-          end
-
           it 'private loader finds types in all modules' do
             expect(loader.private_loader.discover(:type) { |t| t.name =~ /^.::.*\z/ }).to(
               contain_exactly(tn(:type, 'a::atype'), tn(:type, 'b::atype'), tn(:type, 'c::atype')))
@@ -343,6 +333,16 @@ describe 'The Loader' do
 
           context 'with tasks enabled' do
             let(:tasks_feature) { true }
+
+            it 'private loader finds plans in all modules' do
+              expect(loader.private_loader.discover(:plan) { |t| t.name =~ /^.::.*\z/ }).to(
+                contain_exactly(tn(:plan, 'a::aplan'), tn(:plan, 'b::aplan')))
+            end
+
+            it 'module loader finds plans only in itself' do
+              expect(Loaders.find_loader('a').discover(:plan)).to(
+                contain_exactly(tn(:plan, 'a::aplan')))
+            end
 
             it 'private loader finds types and tasks in all modules' do
               expect(loader.private_loader.discover(:type) { |t| t.name =~ /^.::.*\z/ }).to(
