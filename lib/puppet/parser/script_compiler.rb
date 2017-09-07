@@ -35,6 +35,8 @@ class Puppet::Parser::ScriptCompiler
   # Evaluates the configured setup for a script + code in an environment with modules
   #
   def compile
+    Puppet[:strict_variables] = true
+
     # TRANSLATORS, "For running script" is not user facing
     Puppet.override( @context_overrides , "For running script") do
 
