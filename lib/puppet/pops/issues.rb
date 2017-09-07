@@ -354,7 +354,7 @@ module Issues
   # Issues when a variable is not a NAME
   #
   ILLEGAL_VARIABLE_EXPRESSION = hard_issue :ILLEGAL_VARIABLE_EXPRESSION do
-    _("Illegal variable expression. %{expresion} did not produce a variable name (String or Numeric).") % { expression: label.a_an_uc(semantic) }
+    _("Illegal variable expression. %{expression} did not produce a variable name (String or Numeric).") % { expression: label.a_an_uc(semantic) }
   end
 
   # Issues when an expression is used illegally in a query.
