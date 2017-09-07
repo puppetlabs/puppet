@@ -473,6 +473,36 @@ describe 'Lexer2' do
         )
     end
 
+    it 'strips only last newline when using trim option' do
+      code = <<-CODE.unindent
+        @(END)
+        Line 1
+        
+        Line 2
+        -END
+        CODE
+      expect(tokens_scanned_from(code)).to match_tokens2(
+        [:HEREDOC, ''],
+        [:SUBLOCATE, ["Line 1\n", "\n", "Line 2\n"]],
+        [:STRING, "Line 1\n\nLine 2"],
+      )
+    end
+
+    it 'strips only one newline at the end when using trim option' do
+      code = <<-CODE.unindent
+        @(END)
+        Line 1
+        Line 2
+        
+        -END
+      CODE
+      expect(tokens_scanned_from(code)).to match_tokens2(
+        [:HEREDOC, ''],
+        [:SUBLOCATE, ["Line 1\n", "Line 2\n", "\n"]],
+        [:STRING, "Line 1\nLine 2\n"],
+      )
+    end
+
     context 'with bad syntax' do
       def expect_issue(code, issue)
         expect { tokens_scanned_from(code) }.to raise_error(Puppet::ParseErrorWithIssue) { |e|
