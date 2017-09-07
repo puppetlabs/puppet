@@ -153,6 +153,76 @@ describe "validating 4x" do
     end
   end
 
+  context 'with --tasks set' do
+    before(:each) { Puppet[:tasks] = true }
+
+    it 'produces an error for application' do
+      acceptor = validate(parse('application test {}'))
+      expect(acceptor.error_count).to eql(1)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::UNSUPPORTED_TASKS_EXPRESSION)
+    end
+
+    it 'produces an error for capability mapping' do
+      acceptor = validate(parse('Foo produces Sql {}'))
+      expect(acceptor.error_count).to eql(1)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::UNSUPPORTED_TASKS_EXPRESSION)
+    end
+
+    it 'produces an error for collect expressions' do
+      acceptor = validate(parse("User <| title == 'admin' |>"))
+      expect(acceptor.error_count).to eql(1)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::UNSUPPORTED_TASKS_EXPRESSION)
+    end
+
+    it 'produces an error for class expressions' do
+      acceptor = validate(parse('class test {}'))
+      expect(acceptor.error_count).to eql(1)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::UNSUPPORTED_TASKS_EXPRESSION)
+    end
+
+    it 'produces an error for node expressions' do
+      acceptor = validate(parse('node default {}'))
+      expect(acceptor.error_count).to eql(1)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::UNSUPPORTED_TASKS_EXPRESSION)
+    end
+
+    it 'produces an error for relationship expressions' do
+      acceptor = validate(parse('$x -> $y'))
+      expect(acceptor.error_count).to eql(1)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::UNSUPPORTED_TASKS_EXPRESSION)
+    end
+
+    it 'produces an error for resource expressions' do
+      acceptor = validate(parse('notify { nope: }'))
+      expect(acceptor.error_count).to eql(1)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::UNSUPPORTED_TASKS_EXPRESSION)
+    end
+
+    it 'produces an error for resource default expressions' do
+      acceptor = validate(parse("File { mode => '0644' }"))
+      expect(acceptor.error_count).to eql(1)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::UNSUPPORTED_TASKS_EXPRESSION)
+    end
+
+    it 'produces an error for resource override expressions' do
+      acceptor = validate(parse("File['/tmp/foo'] { mode => '0644' }"))
+      expect(acceptor.error_count).to eql(1)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::UNSUPPORTED_TASKS_EXPRESSION)
+    end
+
+    it 'produces an error for resource definitions' do
+      acceptor = validate(parse('define foo($a) {}'))
+      expect(acceptor.error_count).to eql(1)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::UNSUPPORTED_TASKS_EXPRESSION)
+    end
+
+    it 'produces an error for site definitions' do
+      acceptor = validate(parse('site {}'))
+      expect(acceptor.error_count).to eql(1)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::UNSUPPORTED_TASKS_EXPRESSION)
+    end
+  end
+
   context 'for non productive expressions' do
     [ '1',
       '3.14',
