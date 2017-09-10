@@ -65,6 +65,16 @@ describe 'the script compiler' do
 
         end.to raise_error(/Unknown variable: 'rubyversion'/)
       end
+
+      it 'performing a multi assign from a class reference raises an error' do
+        expect do
+          Puppet[:code] = <<-CODE
+              [$a] = Class[the_dalit]
+            CODE
+            Puppet::Parser::ScriptCompiler.new(env, 'test_node_name').compile
+
+        end.to raise_error(/The catalog operation 'multi var assignment from class' is only available when compiling a catalog/)
+      end
     end
   end
 end
