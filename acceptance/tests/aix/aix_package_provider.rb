@@ -40,6 +40,10 @@ package { '#{package}':
   provider => aix,
   source   => '#{dir}',
 }
+
+package { 'nonexistant_example_package.rte':
+  ensure => absent,
+}
 MANIFEST
 
 version2_manifest = <<-MANIFEST
