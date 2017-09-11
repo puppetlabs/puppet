@@ -38,25 +38,25 @@ describe 'the run_plan function' do
 
     context 'can be called as' do
       it 'run_plan(name) referencing a plan defined in the manifest' do
-        expect(compile_to_catalog(<<-CODE, node)).to have_resource('Notify[worked1]')
+        expect(eval_and_collect_notices(<<-CODE, node)).to eql(['worked1'])
             plan run_me() { "worked1" }
             $a = run_plan('run_me')
-            notify { $a: }
+            notice $a
           CODE
       end
 
       it 'run_plan(name) referencing an autoloaded plan in a module' do
-        expect(compile_to_catalog(<<-CODE, node)).to have_resource('Notify[worked2]')
+        expect(eval_and_collect_notices(<<-CODE, node)).to eql(['worked2'])
             $a = run_plan('test::run_me')
-            notify { $a: }
+            notice $a
           CODE
       end
 
       it 'run_plan(name, hash) where hash is mapping argname to value' do
-        expect(compile_to_catalog(<<-CODE, node)).to have_resource('Notify[worked3]')
+        expect(eval_and_collect_notices(<<-CODE, node)).to eql(['worked3'])
             plan run_me($x) { $x }
             $a = run_plan('run_me', {x=>'worked3'})
-            notify { $a: }
+            notice $a
           CODE
       end
     end
@@ -65,7 +65,7 @@ describe 'the run_plan function' do
       it 'failing with error for non-existent plan name' do
         expect { compile_to_catalog(<<-CODE) }.to raise_error(Puppet::Error, /Unknown plan/)
           $a = run_plan('not_a_plan_name')
-          notify { $a: }
+          notice $a
         CODE
       end
 
