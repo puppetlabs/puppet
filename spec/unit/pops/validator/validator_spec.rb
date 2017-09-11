@@ -168,8 +168,14 @@ describe "validating 4x" do
       expect(acceptor).to have_issue(Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING)
     end
 
-    it 'produces an error for collect expressions' do
+    it 'produces an error for collect expressions with virtual query' do
       acceptor = validate(parse("User <| title == 'admin' |>"))
+      expect(acceptor.error_count).to eql(1)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING)
+    end
+
+    it 'produces an error for collect expressions with exported query' do
+      acceptor = validate(parse("User <<| title == 'admin' |>>"))
       expect(acceptor.error_count).to eql(1)
       expect(acceptor).to have_issue(Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING)
     end
