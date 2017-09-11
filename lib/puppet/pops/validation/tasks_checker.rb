@@ -49,7 +49,7 @@ class TasksChecker < Checker4_0
   end
 
   def illegalTasksExpression(o)
-    acceptor.accept(Issues::UNSUPPORTED_TASKS_EXPRESSION, o)
+    acceptor.accept(Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING, o)
   end
 
   def resource_without_title?(o)

@@ -387,12 +387,6 @@ module Issues
     _("Expressions of type %{expression} are not supported in this version of Puppet") % { expression: label.a_an(semantic) }
   end
 
-  # Issues when expressions that are not implemented or activated when running with --tasks
-  #
-  UNSUPPORTED_TASKS_EXPRESSION = issue :UNSUPPORTED_TASKS_EXPRESSION do
-    _("Expressions of type %{expression} are not supported when running with --tasks") % { expression: label.a_an(semantic) }
-  end
-
   ILLEGAL_RELATIONSHIP_OPERAND_TYPE = issue :ILLEGAL_RELATIONSHIP_OPERAND_TYPE, :operand do
     _("Illegal relationship operand, can not form a relationship with %{expression}. A Catalog type is required.") % { expression: label.a_an(operand) }
   end
