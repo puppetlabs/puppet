@@ -232,6 +232,9 @@ class EvaluatorImpl
           o, scope)
       end
     elsif values.is_a?(Puppet::Pops::Types::PClassType)
+      if Puppet[:tasks]
+        fail(Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING, o, {:operation => _('multi var assignment from class')})
+      end
       # assign variables from class variables
       # lookup class resource and return one or more parameter values
       # TODO: behavior when class_name is nil
