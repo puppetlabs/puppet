@@ -1,6 +1,7 @@
 require 'spec_helper'
 require 'puppet/pops'
 require 'puppet_spec/compiler'
+require 'puppet/parser/script_compiler'
 
 module Puppet::Pops
 module Types
@@ -38,7 +39,7 @@ describe 'The Task Type' do
     before(:each) { Puppet[:tasks] = true }
 
     context 'tasks' do
-      let(:compiler) { Puppet::Parser::Compiler.new(node) }
+      let(:compiler) { Puppet::Parser::ScriptCompiler.new(env, node.name) }
 
       let(:modules) do
         { 'testmodule' => testmodule }

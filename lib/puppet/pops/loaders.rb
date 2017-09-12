@@ -229,6 +229,49 @@ class Loaders
     @loaders_by_name[name] = loader
   end
 
+  # Reparse the manifests for the given environment
+  #
+  # There are two sources that can be used for the initial parse:
+  #
+  #   1. The value of `Puppet[:code]`: Puppet can take a string from
+  #     its settings and parse that as a manifest. This is used by various
+  #     Puppet applications to read in a manifest and pass it to the
+  #     environment as a side effect. This is attempted first.
+  #   2. The contents of the environment's +manifest+ attribute: Puppet will
+  #     try to load the environment manifest.
+  #
+  # @return [Array<Model::Program>] The parsed model objects
+  def perform_initial_import
+    parser = Parser::EvaluatingParser.singleton
+    parsed_code = Puppet[:code]
+    if parsed_code != ""
+      [parser.parse_string(parsed_code, 'unknown-source-location')]
+    else
+      file = @environment.manifest
+
+      # if the manifest file is a reference to a directory, parse and combine
+      # all .pp files in that directory
+      if file == Puppet::Node::Environment::NO_MANIFEST
+        []
+      elsif File.directory?(file)
+        files = Puppet::FileSystem::PathPattern.absolute(File.join(file, '**/*.pp')).glob.sort
+        files.map do | file_to_parse |
+          parser.parse_file(file_to_parse)
+        end
+      else
+        [parser.parse_file(file)]
+      end
+    end
+  rescue Puppet::ParseErrorWithIssue => detail
+    detail.environment = @environment.name
+    raise
+  rescue => detail
+    msg = _('Could not parse for environment %{env}: %{detail}') % { env: self, detail: detail }
+    error = Puppet::Error.new(msg)
+    error.set_backtrace(detail.backtrace)
+    raise error
+  end
+
   private
 
   def create_puppet_system_loader()
