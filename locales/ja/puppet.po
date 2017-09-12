@@ -197,7 +197,7 @@ msgstr "ノード%{node}が見つかりませんでした。"
 #. translated
 #: ../lib/puppet/application/apply.rb:233
 msgid "For puppet apply"
-msgstr "puppet apply"
+msgstr "puppet applyを実行する時"
 
 #: ../lib/puppet/application/apply.rb:245
 msgid "%{file} is not readable"
