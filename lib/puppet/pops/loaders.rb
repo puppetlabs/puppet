@@ -266,7 +266,7 @@ class Loaders
     detail.environment = @environment.name
     raise
   rescue => detail
-    msg = _('Could not parse for environment %{env}: %{detail}') % { env: self, detail: detail }
+    msg = _('Could not parse for environment %{env}: %{detail}') % { env: @environment, detail: detail }
     error = Puppet::Error.new(msg)
     error.set_backtrace(detail.backtrace)
     raise error
