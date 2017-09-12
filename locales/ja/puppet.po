@@ -11,7 +11,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
 "POT-Creation-Date: 2017-09-06 15:11+0000\n"
 "PO-Revision-Date: 2017-09-06 15:11+0000\n"
-"Last-Translator: LarissaLane <larissa@puppet.com>, 2017\n"
+"Last-Translator: 梅田智世 <c-umeda@nifty.com>, 2017\n"
 "Language-Team: Japanese (Japan) (https://www.transifex.com/puppet/teams/29089/ja_JP/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -140,7 +140,7 @@ msgstr "実行できませんでした。"
 
 #: ../lib/puppet/application.rb:362
 msgid "No valid command or main"
-msgstr "有効なコマンドまたはメインがありません。"
+msgstr "有効なコマンドまたはmainがありません。"
 
 #: ../lib/puppet/application.rb:475
 msgid "No help available for puppet %{app_name}"
@@ -457,7 +457,8 @@ msgid ""
 "Listing all file instances is not supported.  Please specify a file or "
 "directory, e.g. puppet resource file /etc"
 msgstr ""
-"すべてのファイルインスタンスのリスト化はサポートされていません。puppetリソースファイルなどのファイルまたはディレクトリを指定してください。"
+"すべてのファイルインスタンスのリスト化はサポートされていません。ファイルまたはディレクトリを指定してください。例：puppet resource "
+"file /etc"
 
 #: ../lib/puppet/configurer.rb:22
 msgid "Puppet configuration client"
@@ -1817,12 +1818,12 @@ msgstr "ファイルセットパスは存在するものでなければなりま
 msgid ""
 "Fileset recurse parameter must not be a number anymore, please use "
 "recurselimit"
-msgstr "ファイルセット再帰パラメータは、数字である必要がなくなりました。recurselimitを使用してください。"
+msgstr "ファイルセットrecurseパラメータは、数字である必要がなくなりました。recurselimitを使用してください。"
 
 #. TRANSLATORS ":links" is a parameter name and should not be translated
 #: ../lib/puppet/file_serving/fileset.rb:80
 msgid "Invalid :links value '%{links}'"
-msgstr "無効: リンク値'%{links}'"
+msgstr "無効: links値'%{links}'"
 
 #: ../lib/puppet/file_serving/fileset.rb:93
 msgid "Invalid option '%{option}'"
@@ -3484,16 +3485,16 @@ msgstr "無効なIPパターン%{value}"
 msgid ""
 "%{klass} does not respond to %{method}; can not render multiple instances to"
 " %{mime}"
-msgstr "%{klass}が%{method}に応答しません; 複数のインスタンスを%{mime}にレンダリングすることはできません。"
+msgstr "%{klass}が%{method}に応答しません; 複数のインスタンスを%{mime}にrenderできません。"
 
 #: ../lib/puppet/network/format_handler.rb:67
 msgid "No format matches the given format name or mime-type (%{format})"
-msgstr "指定されたフォーマット名またはmimeタイプ(%{format})に一致するフォーマットはありません。"
+msgstr "指定されたフォーマット名またはmime-type(%{format})に一致するフォーマットはありません。"
 
 #. TRANSLATORS "intern" is a function name and should not be translated
 #: ../lib/puppet/network/format_support.rb:15
 msgid "Could not intern from %{format}: %{err}"
-msgstr "%{format}からインターンできませんでした: %{err}"
+msgstr "%{format}からinternできませんでした: %{err}"
 
 #. TRANSLATORS "intern_multiple" is a function name and should not be
 #. translated
@@ -3510,7 +3511,7 @@ msgstr "%{format}にrender_multipleできませんでした: %{err}"
 #. TRANSLATORS "render" is a function name and should not be translated
 #: ../lib/puppet/network/format_support.rb:109
 msgid "Could not render to %{format}: %{err}"
-msgstr "%{format}にレンダリングできませんでした: %{err}"
+msgstr "%{format}にrenderできませんでした: %{err}"
 
 #. TRANSLATORS "mime" is a function name and should not be translated
 #: ../lib/puppet/network/format_support.rb:118
@@ -3597,7 +3598,7 @@ msgstr "リクエストボディが無効です: %{message}"
 msgid ""
 "Client sent a mime-type (%{header}) that doesn't correspond to a format we "
 "support"
-msgstr "サポート対象のフォーマットに対応しないmimeタイプ(%{header})をクライアントが送信しました。"
+msgstr "サポート対象のフォーマットに対応しないmime-type(%{header})をクライアントが送信しました。"
 
 #: ../lib/puppet/network/http/api/indirected_routes.rb:239
 msgid "No support for http method %{http_method}"
@@ -3837,7 +3838,7 @@ msgstr "有効な値は%{pattern}と一致します。"
 msgid ""
 "Instantiating Resource with type checked parameters - scope is missing, "
 "skipping type checking."
-msgstr "タイプチェックしたパラメータによるリソースのインスタンス生成 - 範囲が不明です。タイプチェックをスキップしています。"
+msgstr "タイプチェックしたパラメータによるResourceのインスタンス生成 - 範囲が不明です。タイプチェックをスキップしています。"
 
 #: ../lib/puppet/parser/ast/resource.rb:9
 msgid ""
@@ -3866,7 +3867,7 @@ msgstr "'stage'を設定できるのはクラスだけです; %{resource}など�
 #: ../lib/puppet/parser/compiler.rb:123
 msgid ""
 "Application instances like '%{resource}' can only be contained within a Site"
-msgstr "'%{resource}'などのアプリケーションインスタンスは、サイト内にのみ含めることができます。"
+msgstr "'%{resource}'などのアプリケーションインスタンスは、Site内にのみ含めることができます。"
 
 #: ../lib/puppet/parser/compiler.rb:153
 msgid "For compiling %{node}"
@@ -3887,11 +3888,11 @@ msgstr "コンパイル: 機能マッピングを検証"
 #. TRANSLATORS "main" is a function name and should not be translated
 #: ../lib/puppet/parser/compiler.rb:164
 msgid "Compile: Evaluated main"
-msgstr "コンパイル: メインを検証"
+msgstr "コンパイル: mainを検証"
 
 #: ../lib/puppet/parser/compiler.rb:166
 msgid "Compile: Evaluated site"
-msgstr "コンパイル: サイトを検証"
+msgstr "コンパイル: siteを検証"
 
 #: ../lib/puppet/parser/compiler.rb:168
 msgid "Compile: Evaluated AST node"
@@ -3907,7 +3908,7 @@ msgstr "コンパイル: アプリケーションインスタンスを検証"
 
 #: ../lib/puppet/parser/compiler.rb:175
 msgid "Compile: Evaluated site capability mappings"
-msgstr "コンパイル: サイト機能マッピングを検証"
+msgstr "コンパイル: site機能マッピングを検証"
 
 #: ../lib/puppet/parser/compiler.rb:177
 msgid "Compile: Evaluated generators"
@@ -3984,7 +3985,7 @@ msgstr "仮想リソース%{resources}の現実化に失敗しました。"
 #. TRANSLATORS "main" is a function name and should not be translated
 #: ../lib/puppet/parser/compiler.rb:646
 msgid "Couldn't find main"
-msgstr "メインが見つかりませんでした。"
+msgstr "mainが見つかりませんでした。"
 
 #: ../lib/puppet/parser/compiler.rb:718
 msgid "For initializing compiler"
@@ -4009,7 +4010,7 @@ msgstr "パラメータ'%{param}'でリソース'%{res}'が見つかりません
 #: ../lib/puppet/parser/compiler/catalog_validator/site_validator.rb:14
 msgid ""
 "Only application components can appear inside a site - %{res} is not allowed"
-msgstr "サイト内に表示できるのはアプリケーションコンポーネントのみです - %{res}は許可されていません。"
+msgstr "Site内に表示できるのはアプリケーションコンポーネントのみです - %{res}は許可されていません。"
 
 #: ../lib/puppet/parser/environment_compiler.rb:12
 msgid "%{detail} in environment %{env}"
@@ -4025,11 +4026,11 @@ msgstr "環境コンパイル: 設定範囲を作成"
 
 #: ../lib/puppet/parser/environment_compiler.rb:64
 msgid "Env Compile: Evaluated main"
-msgstr "環境コンパイル: メインを検証"
+msgstr "環境コンパイル: mainを検証"
 
 #: ../lib/puppet/parser/environment_compiler.rb:66
 msgid "Env Compile: Evaluated site"
-msgstr "環境コンパイル: サイトを検証"
+msgstr "環境コンパイル: siteを検証"
 
 #: ../lib/puppet/parser/environment_compiler.rb:68
 msgid "Env Compile: Evaluated application instances"
@@ -4053,7 +4054,7 @@ msgstr "環境コンパイル: 完成したカタログのバリデーション"
 
 #: ../lib/puppet/parser/environment_compiler.rb:156
 msgid "Environment Compiler: Could not find a site definition to evaluate"
-msgstr "環境コンパイラ: 検証するサイト定義が見つかりませんでした。"
+msgstr "環境コンパイラ: 検証するsite定義が見つかりませんでした。"
 
 #: ../lib/puppet/parser/environment_compiler.rb:162
 msgid "Evaluated application %{resource}"
@@ -4095,7 +4096,7 @@ msgid ""
 "Calling function_contain via the Scope class is deprecated. Use "
 "Scope#call_function instead"
 msgstr ""
-"スコープクラスによるfunction_containのコールは廃止予定です。代わりにScope#call_functionを使用してください。"
+"Scopeクラスによるfunction_containのコールは廃止予定です。代わりにScope#call_functionを使用してください。"
 
 #: ../lib/puppet/parser/functions/create_resources.rb:50
 msgid ""
@@ -4138,7 +4139,7 @@ msgid ""
 "Calling function_include via the Scope class is deprecated. Use "
 "Scope#call_function instead"
 msgstr ""
-"スコープクラスによるfunction_includeのコールは廃止予定です。代わりにScope#call_functionを使用してください。"
+"Scopeクラスによるfunction_includeのコールは廃止予定です。代わりにScope#call_functionを使用してください。"
 
 #: ../lib/puppet/parser/functions/inline_template.rb:18
 msgid "Failed to parse inline template: %{detail}"
@@ -4149,7 +4150,7 @@ msgid ""
 "Calling function_require via the Scope class is deprecated. Use "
 "Scope#call_function instead"
 msgstr ""
-"スコープクラスによるfunction_requireのコールは廃止予定です。代わりにScope#call_functionを使用してください。"
+"Scopeクラスによるfunction_requireのコールは廃止予定です。代わりにScope#call_functionを使用してください。"
 
 #: ../lib/puppet/parser/relationship.rb:31
 msgid "Invalid relationship type %{relationship_type}"
@@ -4320,28 +4321,28 @@ msgstr "正規表現一致データが正しくありません。%{klass}が与�
 #. translated
 #: ../lib/puppet/parser/scope.rb:1048
 msgid "Cannot use an unspecific Class[] Type"
-msgstr "指定されていないクラス[]タイプは使用できません。"
+msgstr "指定されていないClass[] Typeは使用できません。"
 
 #. TRANSLATORS "Resource" is a class name and should not be translated
 #: ../lib/puppet/parser/scope.rb:1075
 msgid ""
 "Cannot use an unspecific Resource[] where a Resource['class', name] is "
 "expected"
-msgstr "リソース['class', name]が要求されている場合は、指定されていないリソース[]は使用できません。"
+msgstr "Resource['class', name]が要求されている場合は、指定されていないResource[]は使用できません。"
 
 #. TRANSLATORS "Resource" is a class name and should not be translated
 #: ../lib/puppet/parser/scope.rb:1079
 msgid ""
 "Cannot use a Resource[%{type_name}] where a Resource['class', name] is "
 "expected"
-msgstr "リソース['class', name]が要求されている場合は、リソース[%{type_name}]を使用できません。"
+msgstr "Resource['class', name]が要求されている場合は、Resource[%{type_name}]を使用できません。"
 
 #. TRANSLATORS "Resource" is a class name and should not be translated
 #: ../lib/puppet/parser/scope.rb:1083
 msgid ""
 "Cannot use an unspecific Resource['class'] where a Resource['class', name] "
 "is expected"
-msgstr "リソース['class', name]が要求されている場合は、指定されていないリソース['class']は使用できません。"
+msgstr "Resource['class', name]が要求されている場合は、指定されていないResource['class']は使用できません。"
 
 #: ../lib/puppet/parser/templatewrapper.rb:81
 msgid "Bound template variables for %{template_source}"
@@ -4431,13 +4432,13 @@ msgstr "問題のレポート作成中にエラーが生じました: %{code}. %
 #: ../lib/puppet/pops/issues.rb:94
 msgid ""
 "Label provider key :label must be set to produce the text of the message!"
-msgstr "プロバイダキーのラベル: ラベルはメッセージのテキストを生成するように設定する必要があります。"
+msgstr ":labelというラベルプロバイダキーはメッセージのテキストを生成するように設定する必要があります。"
 
 #. TRANSLATORS ":semantic" is a keyword and should not be translated
 #: ../lib/puppet/pops/issues.rb:102
 msgid ""
 "Label provider key :semantic must be set to produce the text of the message!"
-msgstr "プロバイダキーのラベル: セマンティックはメッセージのテキストを生成するように設定する必要があります。"
+msgstr ":semanticというプロバイダキーラベルはメッセージのテキストを生成するように設定する必要があります。"
 
 #: ../lib/puppet/pops/issues.rb:147
 msgid ""
@@ -4792,17 +4793,17 @@ msgstr "すでに特殊化されている%{kind}タイプを特殊化するこ�
 msgid ""
 "First argument to Resource[] must be a resource type or a String. Got "
 "%{actual}."
-msgstr "リソース[]の最初の引数は、リソースタイプまたは文字列でなければなりません。%{actual}が与えられています。"
+msgstr "Resource[]の最初の引数は、リソースタイプまたは文字列でなければなりません。%{actual}が与えられています。"
 
 #: ../lib/puppet/pops/issues.rb:479
 msgid "Arguments to Resource[] are all empty/undefined"
-msgstr "リソース[]の引数がすべて空/未定義です。"
+msgstr "Resource[]の引数がすべて空/未定義です。"
 
 #: ../lib/puppet/pops/issues.rb:483
 msgid ""
 "Illegal Class name in class reference. %{expression} cannot be used where a "
 "String is expected"
-msgstr "クラスリファレンスに不正なクラス名。文字列が要求されている場合は、%{expression}は使用できません。"
+msgstr "クラスリファレンスに不正なClass名。文字列が要求されている場合は、%{expression}は使用できません。"
 
 #: ../lib/puppet/pops/issues.rb:487
 msgid ""
@@ -4851,13 +4852,14 @@ msgstr "%{expression}の検証中にエラーが生じました。%{detail}"
 
 #: ../lib/puppet/pops/issues.rb:527
 msgid "Resource type not found: %{res_type}"
-msgstr "リソースタイプが見つかりませんでした: %{res_type}"
+msgstr "Resourceタイプが見つかりませんでした: %{res_type}"
 
 #: ../lib/puppet/pops/issues.rb:531
 msgid ""
 "Illegal Resource Type expression, expected result to be a type name, or "
 "untitled Resource, got %{actual}"
-msgstr "不正なリソースタイプ表現。タイプ名またはタイトルのないリソースになる結果が必要ですが、%{actual}が与えられています。"
+msgstr ""
+"不正なResourceタイプ表現。タイプ名またはタイトルのないResourceになる結果が必要ですが、%{actual}が与えられています。"
 
 #: ../lib/puppet/pops/issues.rb:535
 msgid "The title '%{title}' has already been used in this resource expression"
@@ -4974,7 +4976,7 @@ msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:621
 msgid "Resource Override can only operate on resources, got: %{actual}"
-msgstr "リソースオーバーライドはリソースでのみ使用できますが、%{actual}が与えられています。"
+msgstr "Resource Overrideはリソースでのみ使用できますが、%{actual}が与えられています。"
 
 #: ../lib/puppet/pops/issues.rb:625
 msgid ""
@@ -5703,7 +5705,7 @@ msgstr "タイプ'%{type}'は、%{subject}.new()の有効なパラメータセ�
 
 #: ../lib/puppet/pops/types/p_object_type.rb:604
 msgid "reference to unresolved type '%{name}'"
-msgstr ""
+msgstr "unresolved type '%{name}'への参照"
 
 #: ../lib/puppet/pops/types/tree_iterators.rb:38
 msgid ""
@@ -6025,12 +6027,12 @@ msgstr "再マウント"
 #. TRANSLATORS "prefetch" is a program name and should not be translated
 #: ../lib/puppet/provider/mount/parsed.rb:127
 msgid "Prefetch: Mount[%{name}]: Field 'device' is missing"
-msgstr "プリフェッチ: マウント[%{name}]: フィールド'device'が見つかりません。"
+msgstr "Prefetch: マウント[%{name}]: フィールド'device'が見つかりません。"
 
 #. TRANSLATORS "prefetch" is a program name and should not be translated
 #: ../lib/puppet/provider/mount/parsed.rb:132
 msgid "Prefetch: Mount[%{name}]: Field 'fstype' is missing"
-msgstr "プリフェッチ: マウント[%{name}]: フィールド'fstype'が見つかりません。"
+msgstr "Prefetch: マウント[%{name}]: フィールド'fstype'が見つかりません。"
 
 #: ../lib/puppet/provider/mount/parsed.rb:143
 msgid ""
@@ -6105,7 +6107,7 @@ msgstr "グループ: %{name}に%{new_member}を追加できませんでした�
 #. TRANSLATORS "prefetch" is a program name and should not be translated
 #: ../lib/puppet/provider/network_device.rb:26
 msgid "Could not perform network device prefetch: %{detail}"
-msgstr "ネットワークデバイスのプリフェッチを実行できませんでした: %{detail}"
+msgstr "ネットワークデバイスのprefetchを実行できませんでした: %{detail}"
 
 #: ../lib/puppet/provider/package/aix.rb:37
 msgid "The aix provider can only be used by root"
@@ -6542,7 +6544,7 @@ msgid ""
 "Could not prefetch %{resource} provider '%{name}' target '%{target}': "
 "%{detail}. Treating as empty"
 msgstr ""
-"%{resource}プロバイダ'%{name}'ターゲット'%{target}'をプリフェッチできませんでした: "
+"%{resource}プロバイダ'%{name}'ターゲット'%{target}'をprefetchできませんでした: "
 "%{detail}。空として処理しています。"
 
 #: ../lib/puppet/reference/indirection.rb:22
@@ -6648,7 +6650,7 @@ msgid ""
 "already declared%{existing_declaration}"
 msgstr ""
 "%{key}%{resource_declaration}に別名%{ref}を付けることはできません; "
-"リソース%{newref}はすでに%{existing_declaration}が宣言されています。"
+"resource%{newref}はすでに%{existing_declaration}が宣言されています。"
 
 #: ../lib/puppet/resource/catalog.rb:533
 msgid "Could not create class file %{file}: %{detail}"
@@ -6743,7 +6745,7 @@ msgstr "ノード'%{name}'はすでに定義されています%{error}; 再定�
 
 #: ../lib/puppet/resource/type_collection.rb:111
 msgid "Site is already defined%{error}; cannot redefine"
-msgstr "サイトはすでに定義されています%{error}; 再定義はできません。"
+msgstr "Siteはすでに定義されています%{error}; 再定義はできません。"
 
 #: ../lib/puppet/resource/type_collection.rb:147
 msgid ""
@@ -7367,7 +7369,7 @@ msgstr "依存関係%{dep}に不具合があります: %{status}"
 #. TRANSLATORS `prefetch` is a function name and should not be translated
 #: ../lib/puppet/transaction.rb:343
 msgid "Could not prefetch %{type_name} provider '%{name}': %{detail}"
-msgstr "%{type_name}プロバイダ '%{name}'をプリフェッチできませんでした: %{detail}"
+msgstr "%{type_name}プロバイダ '%{name}'をprefetchできませんでした: %{detail}"
 
 #: ../lib/puppet/transaction.rb:371
 msgid "Skipping because of failed dependencies"
@@ -7575,11 +7577,11 @@ msgstr "無効なバックアップタイプ%{value}"
 
 #: ../lib/puppet/type/file.rb:168 ../lib/puppet/type/tidy.rb:48
 msgid "Invalid recurse value %{value}"
-msgstr "無効な再帰値%{value}"
+msgstr "無効なrecurse%{value}"
 
 #: ../lib/puppet/type/file.rb:201
 msgid "Invalid recurselimit value %{value}"
-msgstr "無効な再帰限界値%{value}"
+msgstr "無効なrecurselimit値%{value}"
 
 #: ../lib/puppet/type/file.rb:371
 msgid "You cannot specify more than one of %{creators}"
@@ -7601,7 +7603,7 @@ msgstr "チェックサム'%{checksum_type}'を使っている場合はコンテ
 msgid ""
 "Possible error: recurselimit is set but not recurse, no recursion will "
 "happen"
-msgstr "エラーの可能性: 再帰限界が設定されていますが、再帰が生じません。"
+msgstr "エラーの可能性:recurselimitが設定されていますが、再帰が生じません。"
 
 #: ../lib/puppet/type/file.rb:389
 msgid "Checksum value '%{value}' is not a valid checksum type %{checksum}"
@@ -7898,7 +7900,7 @@ msgstr "無効なtidyサイズ%{age}"
 #. TRANSLATORS "Tidy" is a program name and should not be translated
 #: ../lib/puppet/type/tidy.rb:264
 msgid "Tidying %{count} files"
-msgstr "%{count}ファイルを整理しています。"
+msgstr "%{count}ファイルをTidyしています。"
 
 #: ../lib/puppet/type/tidy.rb:328
 msgid "File does not exist"
