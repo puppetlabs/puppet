@@ -229,7 +229,7 @@ class Loaders
     @loaders_by_name[name] = loader
   end
 
-  # Reparse the manifests for the given environment
+  # Load the main manifest for the given environment
   #
   # There are two sources that can be used for the initial parse:
   #
@@ -238,28 +238,27 @@ class Loaders
   #     Puppet applications to read in a manifest and pass it to the
   #     environment as a side effect. This is attempted first.
   #   2. The contents of the environment's +manifest+ attribute: Puppet will
-  #     try to load the environment manifest.
+  #     try to load the environment manifest. The manifest must be a file.
   #
-  # @return [Array<Model::Program>] The parsed model objects
-  def perform_initial_import
+  # @return [Model::Program] The manifest parsed into a model object
+  def load_main_manifest
     parser = Parser::EvaluatingParser.singleton
     parsed_code = Puppet[:code]
     if parsed_code != ""
-      [parser.parse_string(parsed_code, 'unknown-source-location')]
+      parser.parse_string(parsed_code, 'unknown-source-location')
     else
       file = @environment.manifest
 
       # if the manifest file is a reference to a directory, parse and combine
       # all .pp files in that directory
       if file == Puppet::Node::Environment::NO_MANIFEST
-        []
+        nil
       elsif File.directory?(file)
-        files = Puppet::FileSystem::PathPattern.absolute(File.join(file, '**/*.pp')).glob.sort
-        files.map do | file_to_parse |
-          parser.parse_file(file_to_parse)
-        end
+        raise Puppet::Error, "manifest of environment '#{@environment.name}' appoints directory '#{file}'. It must be a file"
+      elsif File.exists?(file)
+        parser.parse_file(file)
       else
-        [parser.parse_file(file)]
+        raise Puppet::Error, "manifest of environment '#{@environment.name}' appoints '#{file}'. It does not exist"
       end
     end
   rescue Puppet::ParseErrorWithIssue => detail

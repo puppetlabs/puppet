@@ -105,13 +105,7 @@ class Puppet::Parser::ScriptCompiler
 
   # Find and evaluate the top level code.
   def evaluate_main
-    evaluator = Puppet::Pops::Parser::EvaluatingParser.singleton.evaluator
-
-    # Evaluate all programs and return the result of the last evaluation
-    result = nil
-    @loaders.perform_initial_import.each do |program|
-      result = evaluator.evaluate(program, @topscope)
-    end
-    result
+    program = @loaders.load_main_manifest
+    return program.nil? ? nil : Puppet::Pops::Parser::EvaluatingParser.singleton.evaluator.evaluate(program, @topscope)
   end
 end
