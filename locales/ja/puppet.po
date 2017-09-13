@@ -4026,7 +4026,7 @@ msgstr "環境コンパイル: 設定範囲を作成"
 
 #: ../lib/puppet/parser/environment_compiler.rb:64
 msgid "Env Compile: Evaluated main"
-msgstr "環境コンパイル: mainを検証"
+msgstr "環境コンパイル: mainが検証されました。"
 
 #: ../lib/puppet/parser/environment_compiler.rb:66
 msgid "Env Compile: Evaluated site"
