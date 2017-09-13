@@ -16,11 +16,15 @@ describe 'the script compiler' do
     let(:env_name) { 'testenv' }
     let(:environments_dir) { Puppet[:environmentpath] }
     let(:env_dir) { File.join(environments_dir, env_name) }
-    let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(populated_env_dir, 'modules')]) }
+    let(:manifest) { Puppet::Node::Environment::NO_MANIFEST }
+    let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(populated_env_dir, 'modules')], manifest) }
     let(:node) { Puppet::Node.new("test", :environment => env) }
 
     let(:env_dir_files) {
       {
+        'manifests' => {
+          'good.pp' => "'good'\n"
+        },
         'modules' => {
           'test' => {
             'plans' => {
@@ -74,6 +78,32 @@ describe 'the script compiler' do
             Puppet::Parser::ScriptCompiler.new(env, 'test_node_name').compile
 
         end.to raise_error(/The catalog operation 'multi var assignment from class' is only available when compiling a catalog/)
+      end
+    end
+
+    context 'when using environment manifest' do
+      context 'set to single file' do
+        let (:manifest) { "#{env_dir}/manifests/good.pp" }
+
+        it 'loads and evaluates' do
+          expect(script_compiler.compile).to eql('good')
+        end
+      end
+
+      context 'set to directory' do
+        let (:manifest) { "#{env_dir}/manifests" }
+
+        it 'fails with an error' do
+          expect{script_compiler.compile}.to raise_error(/manifest of environment 'testenv' appoints directory '.*\/manifests'. It must be a file/)
+        end
+      end
+
+      context 'set to non existing path' do
+        let (:manifest) { "#{env_dir}/manyfiests/good.pp" }
+
+        it 'fails with an error' do
+          expect{script_compiler.compile}.to raise_error(/manifest of environment 'testenv' appoints '.*\/good.pp'. It does not exist/)
+        end
       end
     end
   end

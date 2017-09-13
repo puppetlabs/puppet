@@ -103,19 +103,9 @@ class Puppet::Parser::ScriptCompiler
 
   private
 
-  # Find and evaluate the main class object.
-  # TODO: this is really strange, but needed for the time being since the parser creates the main class
-  #
+  # Find and evaluate the top level code.
   def evaluate_main
-    krt = environment.known_resource_types
-    @main = krt.find_hostclass('')
-
-    # short circuit the chain of evaluation done via the resource_type (the "main" class), and its code
-    # via pops bridge to get to an evaluator.
-    # 
-    # TODO: set up with modified evaluator.
-    #
-    code = @main.code.program_model
-    Puppet::Pops::Parser::EvaluatingParser.new().evaluate(@topscope, code)
+    program = @loaders.load_main_manifest
+    return program.nil? ? nil : Puppet::Pops::Parser::EvaluatingParser.singleton.evaluator.evaluate(program, @topscope)
   end
 end
