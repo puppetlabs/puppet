@@ -244,7 +244,7 @@ class Loaders
   def load_main_manifest
     parser = Parser::EvaluatingParser.singleton
     parsed_code = Puppet[:code]
-    if parsed_code != ""
+    program = if parsed_code != ""
       parser.parse_string(parsed_code, 'unknown-source-location')
     else
       file = @environment.manifest
@@ -261,6 +261,8 @@ class Loaders
         raise Puppet::Error, "manifest of environment '#{@environment.name}' appoints '#{file}'. It does not exist"
       end
     end
+    instantiate_definitions(program, public_environment_loader) unless program.nil?
+    program
   rescue Puppet::ParseErrorWithIssue => detail
     detail.environment = @environment.name
     raise
@@ -271,7 +273,56 @@ class Loaders
     raise error
   end
 
+  # Add 4.x definitions found in the given program to the given loader.
+  def instantiate_definitions(program, loader)
+    program.definitions.each { |d| instantiate_definition(d, loader) }
+    nil
+  end
+
+  # Add given 4.x definition to the given loader.
+  def instantiate_definition(definition, loader)
+    case definition
+    when Model::PlanDefinition
+      instantiate_PlanDefinition(definition, loader)
+    when Model::FunctionDefinition
+      instantiate_FunctionDefinition(definition, loader)
+    when Model::TypeAlias
+      instantiate_TypeAlias(definition, loader)
+    when Model::TypeMapping
+      instantiate_TypeMapping(definition, loader)
+    else
+      raise Puppet::ParseError, "Internal Error: Unknown type of definition - got '#{definition.class}'"
+    end
+  end
+
   private
+
+  def instantiate_PlanDefinition(plan_definition, loader)
+    typed_name, f = Loader::PuppetPlanInstantiator.create_from_model(plan_definition, loader)
+    loader.set_entry(typed_name, f, plan_definition.locator.to_uri(plan_definition))
+    nil
+  end
+
+  def instantiate_FunctionDefinition(function_definition, loader)
+    # Instantiate Function, and store it in the loader
+    typed_name, f = Loader::PuppetFunctionInstantiator.create_from_model(function_definition, loader)
+    loader.set_entry(typed_name, f, function_definition.locator.to_uri(function_definition))
+    nil
+  end
+
+  def instantiate_TypeAlias(type_alias, loader)
+    # Bind the type alias to the loader using the alias
+    Puppet::Pops::Loader::TypeDefinitionInstantiator.create_from_model(type_alias, loader)
+    nil
+  end
+
+  def instantiate_TypeMapping(type_mapping, loader)
+    tf = Types::TypeParser.singleton
+    lhs = tf.interpret(type_mapping.type_expr, loader)
+    rhs = tf.interpret_any(type_mapping.mapping_expr, loader)
+    implementation_registry.register_type_mapping(lhs, rhs, loader)
+    nil
+  end
 
   def create_puppet_system_loader()
     Loader::ModuleLoaders.system_loader_from(static_loader, self)
