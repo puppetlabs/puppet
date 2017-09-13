@@ -3883,7 +3883,7 @@ msgstr "コンパイル: 設定範囲を作成"
 
 #: ../lib/puppet/parser/compiler.rb:161
 msgid "Compile: Evaluated capability mappings"
-msgstr "コンパイル: 機能マッピングを検証"
+msgstr "コンパイル: 機能マッピングが検証されました。"
 
 #. TRANSLATORS "main" is a function name and should not be translated
 #: ../lib/puppet/parser/compiler.rb:164
