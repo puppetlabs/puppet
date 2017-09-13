@@ -871,9 +871,12 @@ class Puppet::Parser::Scope
 
     # shorten the path if possible
     path = detail[0]
-    if environment && environment.configuration && path.start_with?(environment.configuration.path_to_env)
-      path = "<env>" + path[environment.configuration.path_to_env.length..-1]
+    env_path = environment && environment.configuration && environment.configuration.path_to_env
+    if env_path && path && path.start_with?(env_path)
+      path = "<env>" + path[env_path.length..-1]
     end
+    # TODO: also shorten module paths to <module>/name/...
+
     # Make the output appear as "Scope(path, line)"
     "Scope(#{[path, detail[1]].join(', ')})" 
   end
