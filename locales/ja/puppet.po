@@ -3888,31 +3888,31 @@ msgstr "コンパイル: 機能マッピングが検証されました。"
 #. TRANSLATORS "main" is a function name and should not be translated
 #: ../lib/puppet/parser/compiler.rb:164
 msgid "Compile: Evaluated main"
-msgstr "コンパイル: mainを検証"
+msgstr "コンパイル: mainが検証されました。"
 
 #: ../lib/puppet/parser/compiler.rb:166
 msgid "Compile: Evaluated site"
-msgstr "コンパイル: siteを検証"
+msgstr "コンパイル: siteが検証されました。"
 
 #: ../lib/puppet/parser/compiler.rb:168
 msgid "Compile: Evaluated AST node"
-msgstr "コンパイル: ASTノードを検証"
+msgstr "コンパイル: ASTノードが検証されました。"
 
 #: ../lib/puppet/parser/compiler.rb:170
 msgid "Compile: Evaluated node classes"
-msgstr "コンパイル: ノードクラスを検証"
+msgstr "コンパイル: ノードクラスが検証されました。"
 
 #: ../lib/puppet/parser/compiler.rb:172
 msgid "Compile: Evaluated application instances"
-msgstr "コンパイル: アプリケーションインスタンスを検証"
+msgstr "コンパイル: アプリケーションインスタンスが検証されました。"
 
 #: ../lib/puppet/parser/compiler.rb:175
 msgid "Compile: Evaluated site capability mappings"
-msgstr "コンパイル: site機能マッピングを検証"
+msgstr "コンパイル: site機能マッピングが検証されました。"
 
 #: ../lib/puppet/parser/compiler.rb:177
 msgid "Compile: Evaluated generators"
-msgstr "コンパイル: ジェネレータを検証"
+msgstr "コンパイル: ジェネレータが検証されました。"
 
 #: ../lib/puppet/parser/compiler.rb:179
 msgid "Compile: Validate Catalog pre-finish"
@@ -3960,11 +3960,11 @@ msgstr "'%{names}'の名前'default'でノードステートメントが見つ�
 
 #: ../lib/puppet/parser/compiler.rb:519
 msgid "Evaluated collections"
-msgstr "検証されたコレクション"
+msgstr "コレクションが検証されました。"
 
 #: ../lib/puppet/parser/compiler.rb:534
 msgid "Evaluated definitions"
-msgstr "検証された定義"
+msgstr "定義が検証されました。"
 
 #: ../lib/puppet/parser/compiler.rb:563
 msgid "Iterated (%{count}) on generators"
