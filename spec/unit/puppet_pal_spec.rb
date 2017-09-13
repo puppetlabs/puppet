@@ -1,9 +1,13 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-require 'puppet_pal'
 require 'puppet_spec/files'
 
 describe 'Puppet Pal' do
+  before { skip("Puppet::Pal is not available on Ruby 1.9.3") if RUBY_VERSION == '1.9.3' }
+
+  # Require here since it will not work on RUBY < 2.0.0
+  require 'puppet_pal'
+
   include PuppetSpec::Files
 
   let(:testing_env) do
@@ -48,7 +52,7 @@ describe 'Puppet Pal' do
 
     it 'evaluates code string in a given tmp environment' do
       result = Puppet::Pal.in_tmp_environment('pal_env', modulepath) do
-        Puppet::Pal.evaluate_script_string('1+2+3')
+        Puppet::Pal.evaluate_script_string(code_string: '1+2+3')
       end
       expect(result).to eq(6)
     end
@@ -56,7 +60,7 @@ describe 'Puppet Pal' do
     it 'evaluates a manifest file in a given tmp environment' do
       result = Puppet::Pal.in_tmp_environment('pal_env', modulepath) do
         manifest = file_containing('testing.pp', "1+2+3+4")
-        Puppet::Pal.evaluate_script_manifest(manifest)
+        Puppet::Pal.evaluate_script_manifest(manifest_file: manifest)
       end
       expect(result).to eq(10)
     end

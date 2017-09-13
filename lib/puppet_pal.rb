@@ -18,15 +18,24 @@ require 'puppet/parser/script_compiler'
 #
 module Puppet::Pal
 
-  def self.evaluate_script_string(code_string)
+  def self.evaluate_script_string(code_string:)
     Puppet[:tasks] = true
     Puppet[:code] = code_string
     main
   end
 
-  def self.evaluate_script_manifest(manifest_file)
+  def self.evaluate_script_manifest(manifest_file:)
     Puppet[:tasks] = true
     main(manifest_file)
+  end
+
+  # Runs the given named plan passing arguments by name in the given hash.
+  # @param plan_name [String] the name of the plan to run
+  # @param plan_args [Hash] arguments to the plan - a map of plan parameter name to value
+  #
+  def self.run_plan(plan_name: , plan_args: {})
+    Puppet[:tasks] = true
+    main()
   end
 
   def self.main(manifest = nil, facts = nil)
