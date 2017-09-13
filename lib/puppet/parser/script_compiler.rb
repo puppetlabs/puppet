@@ -42,7 +42,12 @@ class Puppet::Parser::ScriptCompiler
     Puppet.override( @context_overrides , "For running script") do
 
       #TRANSLATORS "main" is a function name and should not be translated
-      Puppet::Util::Profiler.profile(_("Script: Evaluated main"), [:script, :evaluate_main]) { evaluate_main }
+      result = Puppet::Util::Profiler.profile(_("Script: Evaluated main"), [:script, :evaluate_main]) { evaluate_main }
+      if block_given?
+        yield self
+      else
+        result
+      end
     end
 
   rescue Puppet::ParseErrorWithIssue => detail

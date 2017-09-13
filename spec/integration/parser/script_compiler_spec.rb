@@ -60,6 +60,13 @@ describe 'the script compiler' do
         expect(script_compiler.compile).to eql('worked2')
       end
 
+      it 'can execute code after manifest is done by giving a block' do
+        Puppet[:code] = <<-CODE
+            $check_me = run_plan('test::run_me')
+          CODE
+        expect(script_compiler.compile {|c| c.topscope.lookupvar('check_me')}).to eql('worked2')
+      end
+
       it 'referencing undefined variables raises an error' do
         expect do
           Puppet[:code] = <<-CODE
