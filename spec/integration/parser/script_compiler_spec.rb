@@ -70,6 +70,16 @@ describe 'the script compiler' do
         end.to raise_error(/Unknown variable: 'rubyversion'/)
       end
 
+      it 'has strict=error behavior' do
+        expect do
+          Puppet[:code] = <<-CODE
+              notice({a => 10, a => 20})
+            CODE
+            Puppet::Parser::ScriptCompiler.new(env, 'test_node_name').compile
+
+        end.to raise_error(/The key 'a' is declared more than once/)
+      end
+
       it 'performing a multi assign from a class reference raises an error' do
         expect do
           Puppet[:code] = <<-CODE
