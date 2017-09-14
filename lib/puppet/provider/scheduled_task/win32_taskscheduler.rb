@@ -420,6 +420,7 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
 
     days = [days] unless days.is_a?(Array)
     days.each do |day|
+      # TODO: it appears that 'last' doesn't work with v1 tasks (easy to repro in the MMC task UI)
       # The special "day" of 'last' is represented by day "number"
       # 32. 'last' has the special meaning of "the last day of the
       # month", no matter how many days there are in the month.
