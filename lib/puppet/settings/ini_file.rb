@@ -93,14 +93,11 @@ class Puppet::Settings::IniFile
   end
 
   def write(fh)
-    # If no real section line for the default section exists, convert the
-    # existing DefaultSection object into a regular SectionLine so that when we
-    # write the file, the section line part will actually be written
-    # (DefaultSection objects don't write the section line)
-    if settings_exist_in_default_section?
-      unless section_exists_with_default_section_name?
-        set_default_section_write_sectionline(true)
-      end
+    # If no real section line for the default section exists, configure the
+    # DefaultSection object to write its section line. (DefaultSection objects
+    # don't write the section line unless explicitly configured to do so)
+    if settings_exist_in_default_section? && !section_exists_with_default_section_name?
+      set_default_section_write_sectionline(true)
     end
 
     fh.truncate(0)
