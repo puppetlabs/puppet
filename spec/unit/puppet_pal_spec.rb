@@ -153,7 +153,7 @@ describe 'Puppet Pal' do
     let(:a_plans) {
       {
         'aplan.pp' => <<-PUPPET.unindent,
-        plan a::aplan() {}
+        plan a::aplan() { 'a::aplan value' }
         PUPPET
       }
     }
@@ -239,6 +239,13 @@ describe 'Puppet Pal' do
         ctx.evaluate_script_string('a::afunc()')
       end
       expect(result).to eq("a::afunc value")
+    end
+
+    it 'configures the environment so that a plan in a module can be called with run_plan' do
+      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+        ctx.evaluate_script_string('run_plan("a::aplan")')
+      end
+      expect(result).to eq("a::aplan value")
     end
 
     it 'sets the facts' do
