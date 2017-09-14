@@ -81,12 +81,14 @@ module Puppet::Pal
   # @param env_name [String] a name to use for the temporary environment - this only shows up in errors
   # @param modulepath [Array<String>] an array of directory names containing Puppet modules, may be empty, defaults to empty array
   # @param settings_hash [Hash] a hash of settings - currently not used for anything, defaults to empty hash
+  # @param facts [Hash] optional map of fact name to fact value - if not given will initialize the facts (which is a slow operation)
   # @return [Object] returns what the given block returns
   # @yieldparam [Puppet::Pal] context, a context that responds to Puppet::Pal methods
   #
   def self.in_tmp_environment(env_name,
       modulepath:    [],
-      settings_hash: {}
+      settings_hash: {},
+      facts: nil
     )
     unless env_name.is_a?(String) && env_name.length > 0
       raise ArgumentError(_("Puppet Pal: temporary environment name must be a non empty string, got '%{env_name}'") % {env_name: env_name})
@@ -105,7 +107,25 @@ module Puppet::Pal
     return unless block_given?
 
     env = Puppet::Node::Environment.create(env_name, modulepath)
-    Puppet.override(environments: Puppet::Environments::Static.new(env)) do
+    node = Puppet::Node.new(Puppet[:node_name_value], :environment => env)
+
+    Puppet.override(
+      environments: Puppet::Environments::Static.new(env), # The tmp env is the only known env
+      current_node: node                                   # to allow it to be picked up instead of created
+      ) do
+      # Prepare the node with facts if it does not already have them
+      if node.facts.nil?
+        # if a hash of facts values is given, then the operation of creating a node with facts is much
+        # speeded up.
+        #
+        node_facts = facts.nil? ? nil : Puppet::Node::Facts.new(Puppet[:node_name_value], facts)
+        node.fact_merge(node_facts)
+        # Add server facts so $server_facts[environment] exists when doing a puppet script
+        # SCRIPT TODO: May be needed when running scripts under orchestrator. Leave it for now.
+        #
+        node.add_server_facts({})
+      end
+
       return yield self
     end
   end
@@ -117,16 +137,9 @@ module Puppet::Pal
   #  end
 
   private
+
   def self.main(manifest = nil, facts = nil, &block)
-
-    # Find the Node (TODO: This is slow when running many tests against the API
-    # Need to find good method of speeding that up since the node facts will be the
-    # same every time.
-    #
-    unless node = Puppet::Node.indirection.find(Puppet[:node_name_value])
-      raise _("Could not find node %{node}") % { node: Puppet[:node_name_value] }
-    end
-
+    node = Puppet.lookup(:current_node)
     configured_environment = node.environment || Puppet.lookup(:current_environment)
 
     apply_environment = manifest ?
@@ -140,26 +153,8 @@ module Puppet::Pal
     # the :manifest setting of the apply_environment.
     node.environment = apply_environment
 
-    # TRANSLATION, the string "For puppet PAL" is not user facing
+    # TRANSLATORS, the string "For puppet PAL" is not user facing
     Puppet.override({:current_environment => apply_environment}, "For puppet PAL") do
-#      # Facts are always in the node we are running on, nothing to merge here
-#      # Merge in the facts.
-#      node.merge(facts.values) if facts
-# keep this commented out as reminder that we may want to feed in facts for testing purposes
-
-
-      # Add server facts so $server_facts[environment] exists when doing a puppet script
-      # SCRIPT TODO: May be needed when running scripts under orchestrator. Leave it for now.
-      #
-      node.add_server_facts({})
-
-      begin
-        # Evaluate
-
-        # When compiling, the compiler traps and logs certain errors
-        # Those that do not lead to an immediate exit are caught by the general
-        # rule and gets logged.
-        #
         begin
           # support the following features when evaluating puppet code
           # * $facts with facts from host running the script
@@ -189,20 +184,14 @@ module Puppet::Pal
 
           compiler.compile(&block)
 
-# TODO: cannot exit here, for now only logging takes place and raised errors are propagated
-#        rescue Puppet::ParseErrorWithIssue, Puppet::Error
-#          # already logged and handled by the compiler for these two cases
-#          exit(1)
-        end
-#
-#        exit(0)
-      rescue => detail
-        Puppet.log_exception(detail)
-        raise # exit(1)
+        rescue Puppet::ParseErrorWithIssue, Puppet::Error => detail
+          # already logged and handled by the compiler for these two cases
+          raise
+
+        rescue => detail
+          Puppet.log_exception(detail)
+          raise # exit(1)
       end
     end
   end
-
 end
-
-
