@@ -380,10 +380,10 @@ ERROR_STRING
     store.add_file(Puppet[:localcacert])
 
     # If we're doing revocation and there's a CRL, add it to our store.
-    if Puppet.settings[:certificate_revocation]
+    if Puppet.lookup(:certificate_revocation)
       if crl = Puppet::SSL::CertificateRevocationList.indirection.find(CA_NAME)
         flags = OpenSSL::X509::V_FLAG_CRL_CHECK
-        if Puppet.settings[:certificate_revocation] == :chain
+        if Puppet.lookup(:certificate_revocation) == :chain
           flags |= OpenSSL::X509::V_FLAG_CRL_CHECK_ALL
         end
 
