@@ -61,11 +61,11 @@ module Puppet::Pal
     end
 
     unless manifest_file.nil? || manifest_file.is_a?(String)
-      raise ArgumentError, _("Expected 'manifest_file' to be a String, got '%{type}") % { :type => manifest_file.class }
+      raise ArgumentError, _("Expected 'manifest_file' to be a String, got '%{type}") % { type: manifest_file.class }
     end
 
     unless code_string.nil? || code_string.is_a?(String)
-      raise ArgumentError, _("Expected 'code_string' to be a String, got '%{type}") % { :type => manifest_file.class }
+      raise ArgumentError, _("Expected 'code_string' to be a String, got '%{type}") % { type: manifest_file.class }
     end
 
     Puppet[:tasks] = true
@@ -89,11 +89,11 @@ module Puppet::Pal
       settings_hash: {}
     )
     unless env_name.is_a?(String) && env_name.length > 0
-      raise ArgumentError(_("Puppet Pal: temporary environment name must be a non empty string, got '%{env_name}'") % {:env_name => env_name})
+      raise ArgumentError(_("Puppet Pal: temporary environment name must be a non empty string, got '%{env_name}'") % {env_name: env_name})
     end
 
     unless modulepath.is_a?(Array)
-      raise ArgumentError(_("Puppet Pal: modulepath must be an Array, got '%{type}'") % {:type => modulepath.class})
+      raise ArgumentError(_("Puppet Pal: modulepath must be an Array, got '%{type}'") % {type: modulepath.class})
     end
 
     # tmp env with an optional empty modulepath - (may be empty if just running snippet of code)
