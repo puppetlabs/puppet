@@ -9,36 +9,115 @@ require 'puppet/parser/script_compiler'
 # Initially, this will require ALL of puppet - over time this will change as the monolithical "puppet" is broken up
 # into smaller components.
 #
-# @Example Usage
+# @example Running a snippet of Puppet Language code
 #   require 'puppet_pal'
-#   result = Puppet::Pal.in_tmp_environment('pal_env', modulepath) do
-#     Puppet::Pal.evaluate_script_string('1+2+3')
+#   result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: ['/tmp/testmodules']) do |pal|
+#     pal.evaluate_script_string('1+2+3')
 #   end
 #   # The result is the value 6
 #
+# @example Making a run_plan call
+#   require 'puppet_pal'
+#   result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: ['/tmp/testmodules']) do |pal|
+#     pal.run_plan('mymodule::myplan', plan_args: { 'arg1' => 10, 'arg2' => '20 })
+#   end
+#   # The result is what 'mymodule::myplan' returns
+#
 module Puppet::Pal
 
-  def self.evaluate_script_string(code_string:)
+  # Evaluates a Puppet Language script string. 
+  # @param code_string [String] a snippet of Puppet Language source code
+  # @return [Object] what the Puppet Language code_string evaluates to
+  #
+  def self.evaluate_script_string(code_string)
     Puppet[:tasks] = true
     Puppet[:code] = code_string
     main
   end
 
-  def self.evaluate_script_manifest(manifest_file:)
+  # Evaluates a Puppet Language script (.pp) file.
+  # @param manifest_file [String] a file with Puppet Language source code
+  # @return [Object] what the Puppet Language manifest_file contents evaluates to
+  #
+  def self.evaluate_script_manifest(manifest_file)
     Puppet[:tasks] = true
     main(manifest_file)
   end
 
-  # Runs the given named plan passing arguments by name in the given hash.
+  # Runs the given named plan passing arguments by name in a hash.
   # @param plan_name [String] the name of the plan to run
-  # @param plan_args [Hash] arguments to the plan - a map of plan parameter name to value
+  # @param plan_args [Hash] arguments to the plan - a map of plan parameter name to value, defaults to empty hash
+  # @param manifest_file [String] a Puppet Language file to load and evaluate before running the plan, mutually exclusive with code_string
+  # @param code_string [String] a Puppet Language source string to load and evaluate before running the plan, mutually exclusive with manifest_file
+  # @return [Object] returns what the evaluated plan returns
   #
-  def self.run_plan(plan_name: , plan_args: {})
+  def self.run_plan(plan_name,
+      plan_args:     {},
+      manifest_file: nil,
+      code_string:   nil
+    )
+    if manifest_file && code_string
+      raise ArgumentError, _("Cannot use 'manifest' and 'code_string' at the same time")
+    end
+
+    unless manifest_file.nil? || manifest_file.is_a?(String)
+      raise ArgumentError, _("Expected 'manifest_file' to be a String, got '%{type}") % { :type => manifest_file.class }
+    end
+
+    unless code_string.nil? || code_string.is_a?(String)
+      raise ArgumentError, _("Expected 'code_string' to be a String, got '%{type}") % { :type => manifest_file.class }
+    end
+
     Puppet[:tasks] = true
-    main()
+    Puppet[:code] = code_string unless code_string.nil?
+    main(manifest_file) do | compiler |
+      compiler.topscope.call_function('run_plan', [plan_name, plan_args])
+    end
   end
 
-  def self.main(manifest = nil, facts = nil)
+  # Defines the context in which to perform puppet operations (evaluation, etc)
+  # The code to evaluate in this context is given in a block.
+  #
+  # @param env_name [String] a name to use for the temporary environment - this only shows up in errors
+  # @param modulepath [Array<String>] an array of directory names containing Puppet modules, may be empty, defaults to empty array
+  # @param settings_hash [Hash] a hash of settings - currently not used for anything, defaults to empty hash
+  # @return [Object] returns what the given block returns
+  # @yieldparam [Puppet::Pal] context, a context that responds to Puppet::Pal methods
+  #
+  def self.in_tmp_environment(env_name,
+      modulepath:    [],
+      settings_hash: {}
+    )
+    unless env_name.is_a?(String) && env_name.length > 0
+      raise ArgumentError(_("Puppet Pal: temporary environment name must be a non empty string, got '%{env_name}'") % {:env_name => env_name})
+    end
+
+    unless modulepath.is_a?(Array)
+      raise ArgumentError(_("Puppet Pal: modulepath must be an Array, got '%{type}'") % {:type => modulepath.class})
+    end
+
+    # tmp env with an optional empty modulepath - (may be empty if just running snippet of code)
+
+    unless modulepath.is_a?(Array)
+      raise ArgumentError(_("Puppet Pal: modulepath must be an Array (it may be empty)'"))
+    end
+
+    return unless block_given?
+
+    env = Puppet::Node::Environment.create(env_name, modulepath)
+    Puppet.override(environments: Puppet::Environments::Static.new(env)) do
+      return yield self
+    end
+  end
+
+  # TODO: Make it possible to run in an existing environment (pick up environment settings from there
+  # with modulepath etc.
+  #
+  #  def self.in_existing_environment(env_name, settings_hash)
+  #  end
+
+  private
+  def self.main(manifest = nil, facts = nil, &block)
 
     # Find the Node (TODO: This is slow when running many tests against the API
     # Need to find good method of speeding that up since the node facts will be the
@@ -108,7 +187,7 @@ module Puppet::Pal
           # create the $settings:: variables
           topscope.merge_settings(node.environment.name, false)
 
-          compiler.compile()
+          compiler.compile(&block)
 
 # TODO: cannot exit here, for now only logging takes place and raised errors are propagated
 #        rescue Puppet::ParseErrorWithIssue, Puppet::Error
@@ -123,35 +202,6 @@ module Puppet::Pal
       end
     end
   end
-
-  def self.in_tmp_environment(env_name, modulepath, settings_hash ={})
-    unless env_name.is_a?(String) && env_name.length > 0
-      raise ArgumentError(_("Puppet Pal: temporary environment name must be a non empty string, got '%{env_name}'") % {:env_name => env_name})
-    end
-
-    unless modulepath.is_a?(Array)
-      raise ArgumentError(_("Puppet Pal: modulepath must be an Array, got '%{type}'") % {:type => modulepath.class})
-    end
-
-    # tmp env with an optional empty modulepath - (may be empty if just running snippet of code)
-
-    unless modulepath.is_a?(Array)
-      raise ArgumentError(_("Puppet Pal: modulepath must be an Array (it may be empty)'"))
-    end
-
-    return unless block_given?
-
-    env = Puppet::Node::Environment.create(env_name, modulepath)
-    Puppet.override(environments: Puppet::Environments::Static.new(env)) do
-      return yield
-    end
-  end
-
-# TODO: Make it possible to run in an existing environment (pick up environment settings from there
-# with modulepath etc.
-#
-#  def self.in_existing_environment(env_name, settings_hash)
-#  end
 
 end
 

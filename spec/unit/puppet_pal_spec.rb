@@ -51,18 +51,26 @@ describe 'Puppet Pal' do
     let(:modulepath) { [] }
 
     it 'evaluates code string in a given tmp environment' do
-      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath) do
-        Puppet::Pal.evaluate_script_string(code_string: '1+2+3')
+      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath) do |ctx|
+        ctx.evaluate_script_string('1+2+3')
       end
       expect(result).to eq(6)
     end
 
     it 'evaluates a manifest file in a given tmp environment' do
-      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath) do
+      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath) do |ctx|
         manifest = file_containing('testing.pp', "1+2+3+4")
-        Puppet::Pal.evaluate_script_manifest(manifest_file: manifest)
+        ctx.evaluate_script_manifest(manifest)
       end
       expect(result).to eq(10)
+    end
+
+    it 'can call a plan using call_plan and specify content in a manifest' do
+      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath) do | ctx|
+        manifest = file_containing('aplan.pp', "plan myplan() { 'brilliant' }")
+        ctx.run_plan('myplan', manifest_file: manifest)
+      end
+      expect(result).to eq('brilliant')
     end
 
   end
