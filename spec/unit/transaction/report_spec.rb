@@ -199,6 +199,11 @@ describe Puppet::Transaction::Report do
   end
 
   describe "when computing exit status" do
+    it "should produce -1 if no metrics are present" do
+      report = Puppet::Transaction::Report.new("apply")
+      expect(report.exit_status).to eq(-1)
+    end
+
     it "should produce 2 if changes are present" do
       report = Puppet::Transaction::Report.new
       report.add_metric("changes", {"total" => 1})
