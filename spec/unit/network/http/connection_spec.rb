@@ -261,6 +261,93 @@ describe Puppet::Network::HTTP::Connection do
     end
   end
 
+  context "when response indicates an overloaded server" do
+    let(:http) { stub('http') }
+    let(:site) { Puppet::Network::HTTP::Site.new('http', 'my_server', 8140) }
+    let(:verify) { Puppet::SSL::Validator.no_validator }
+    let(:httpunavailable) { Net::HTTPServiceUnavailable.new('1.1', 503, 'Service Unavailable') }
+
+    subject { Puppet::Network::HTTP::Connection.new(site.host, site.port, :use_ssl => false, :verify => verify) }
+
+    context "when parsing Retry-After headers" do
+      # Private method. Create a reference that can be called by tests.
+      let(:header_parser) { subject.method(:parse_retry_after_header) }
+
+      it "returns 0 when parsing a RFC 2822 date that has passed" do
+        test_date = 'Wed, 13 Apr 2005 15:18:05 GMT'
+
+        expect(header_parser.call(test_date)).to eq(0)
+      end
+    end
+
+    it "should return a 503 response if Retry-After is not set" do
+      http.stubs(:request).returns(httpunavailable)
+
+      pool = Puppet.lookup(:http_pool)
+      pool.expects(:with_connection).with(site, anything).yields(http)
+
+      result = subject.get('/foo')
+
+      expect(result.code).to eq(503)
+    end
+
+    it "should return a 503 response if Retry-After is not convertable to an Integer or RFC 2822 Date" do
+      httpunavailable['Retry-After'] = 'foo'
+      http.stubs(:request).returns(httpunavailable)
+
+      pool = Puppet.lookup(:http_pool)
+      pool.expects(:with_connection).with(site, anything).yields(http)
+
+      result = subject.get('/foo')
+
+      expect(result.code).to eq(503)
+    end
+
+    it "should sleep and retry if Retry-After is an Integer" do
+      httpunavailable['Retry-After'] = '42'
+      http.stubs(:request).returns(httpunavailable).then.returns(httpok)
+
+      pool = Puppet.lookup(:http_pool)
+      pool.expects(:with_connection).with(site, anything).twice.yields(http)
+
+      ::Kernel.expects(:sleep).with(42)
+
+      result = subject.get('/foo')
+
+      expect(result.code).to eq(200)
+    end
+
+    it "should sleep and retry if Retry-After is an RFC 2822 Date" do
+      httpunavailable['Retry-After'] = 'Wed, 13 Apr 2005 15:18:05 GMT'
+      http.stubs(:request).returns(httpunavailable).then.returns(httpok)
+
+      now = DateTime.new(2005, 4, 13, 8, 17, 5, '-07:00')
+      DateTime.stubs(:now).returns(now)
+
+      pool = Puppet.lookup(:http_pool)
+      pool.expects(:with_connection).with(site, anything).twice.yields(http)
+
+      ::Kernel.expects(:sleep).with(60)
+
+      result = subject.get('/foo')
+
+      expect(result.code).to eq(200)
+    end
+
+    it "should sleep for no more than the Puppet runinterval" do
+      httpunavailable['Retry-After'] = '60'
+      http.stubs(:request).returns(httpunavailable).then.returns(httpok)
+      Puppet[:runinterval] = 30
+
+      pool = Puppet.lookup(:http_pool)
+      pool.expects(:with_connection).with(site, anything).twice.yields(http)
+
+      ::Kernel.expects(:sleep).with(30)
+
+      result = subject.get('/foo')
+    end
+  end
+
   it "allows setting basic auth on get requests" do
     expect_request_with_basic_auth
 
