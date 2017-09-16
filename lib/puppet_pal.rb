@@ -114,6 +114,8 @@ module Puppet::Pal
   # @param env_name [String] the name of an existing environment
   # @param modulepath [Array<String>] an array of directory paths containing Puppet modules, overrides the modulepath of an existing env
   # @param settings_hash [Hash] a hash of settings - currently not used for anything, defaults to empty hash
+  # @param env_dir [String] a reference to a directory being the named environment (mutually exclusive with `envpath`)
+  # @param envpath [String] a path of directories in which there are environments to search for `env_name` (mutually exclusive with `env_dir`)
   # @param facts [Hash] optional map of fact name to fact value - if not given will initialize the facts (which is a slow operation)
   # @return [Object] returns what the given block returns
   # @yieldparam [Puppet::Pal] context, a context that responds to Puppet::Pal methods
@@ -125,15 +127,23 @@ module Puppet::Pal
       envpath:      nil,
       facts: nil
     )
-    assert_non_empty_string(env_name, _("environment name"))
-    assert_optionally_empty_array(modulepath, 'modulepath', true) # TRANSLATORS 'modulepath' is a term on the command line
+    # TRANSLATORS terms in the assertions below are names of terms in code
+    assert_non_empty_string(env_name, 'env_name')
+    assert_optionally_empty_array(modulepath, 'modulepath', true) 
+    assert_mutually_exclusive(env_dir, envpath, 'env_dir', 'envpath')
+
     return unless block_given?
+
+    # a nil modulepath for env_dir means it should use its ./modules directory
+    if !env_dir.nil? && modulepath.nil?
+      modulepath = [Puppet::FileSystem.expand_path(File.join(env_dir, 'modules'))]
+    end
 
     env = Puppet::Node::Environment.create(env_name, modulepath)
     node = Puppet::Node.new(Puppet[:node_name_value], :environment => env)
 
     Puppet.override(
-      environments: Puppet::Environments::StaticDir.new(env_name, env_dir, env), # The env being used is the only one...
+      environments: Puppet::Environments::StaticDirectory.new(env_name, env_dir, env), # The env being used is the only one...
       current_node: node                                   # to allow it to be picked up instead of created
       ) do
       prepare_node_facts(node, facts)

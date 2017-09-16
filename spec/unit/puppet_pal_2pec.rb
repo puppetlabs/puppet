@@ -49,7 +49,7 @@ describe 'Puppet Pal' do
   # TODO: to be used in examples for running in an existing env
   #  let(:env) { Puppet::Node::Environment.create(:testing, [modules_dir]) }
 
-  context 'with empty modulepath' do
+  context 'without code in modules or env' do
     let(:modulepath) { [] }
 
     it 'evaluates code string in a given tmp environment' do
@@ -86,7 +86,7 @@ describe 'Puppet Pal' do
 
   end
 
-  context 'with a non empty modulepath' do
+  context 'with code in modules and env' do
     let(:modulepath) { [modules_dir] }
 
     let(:metadata_json_a) {
@@ -233,22 +233,47 @@ describe 'Puppet Pal' do
         PUPPET
       }
     }
-
-    it 'configures the environment so that modules are available' do
-      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
-        ctx.evaluate_script_string('a::afunc()')
+    context 'configured a temporary environment such that' do
+      it 'modules are available' do
+        result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+          ctx.evaluate_script_string('a::afunc()')
+        end
+        expect(result).to eq("a::afunc value")
       end
-      expect(result).to eq("a::afunc value")
+
+      it 'a plan in a module can be called with run_plan' do
+        result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+          ctx.evaluate_script_string('run_plan("a::aplan")')
+        end
+        expect(result).to eq("a::aplan value")
+      end
     end
 
-    it 'configures the environment so that a plan in a module can be called with run_plan' do
-      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
-        ctx.evaluate_script_string('run_plan("a::aplan")')
+    context 'configured as existing given environment directory such that' do
+      it 'modules in it are available from its "modules" directory' do
+        result = Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, facts: node_facts) do |ctx|
+          ctx.evaluate_script_string('a::afunc()')
+        end
+        expect(result).to eq("a::afunc value")
       end
-      expect(result).to eq("a::aplan value")
+
+      it 'a given "modulepath" overrides the default' do
+        expect do
+          result = Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, modulepath: [], facts: node_facts) do |ctx|
+            ctx.evaluate_script_string('a::afunc()')
+          end
+        end.to raise_error(/Unknown function: 'a::afunc'/)
+      end
+
+      it 'a plan in a module can be called with run_plan' do
+        result = Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, facts: node_facts) do |ctx|
+          ctx.evaluate_script_string('run_plan("a::aplan")')
+        end
+        expect(result).to eq("a::aplan value")
+      end
     end
 
-    it 'sets the facts' do
+    it 'sets the facts if they are not given' do
       result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath ) do |ctx|
         ctx.evaluate_script_string("$facts =~ Hash and $facts[puppetversion] == '#{Puppet.version}'")
       end
@@ -256,5 +281,4 @@ describe 'Puppet Pal' do
     end
 
   end
-
 end
