@@ -138,6 +138,23 @@ module Puppet::Environments
     end
   end
 
+  class StaticDirectory < Static
+    # Accepts a single environment in the given directory having the given name (not required to be reflected as the name
+    # of the directory)
+    # 
+    def initialize(env_name, env_dir, environment)
+      super(environment)
+      @env_dir = env_dir
+      @env_name = env_name
+    end
+
+    # @!macro loader_get_conf
+    def get_conf(name)
+      return nil unless name == @env_name
+      Puppet::Settings::EnvironmentConf.load_from(@env_dir, '')
+    end
+  end
+
   # Reads environments from a directory on disk. Each environment is
   # represented as a sub-directory. The environment's manifest setting is the
   # `manifest` directory of the environment directory. The environment's

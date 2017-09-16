@@ -40,6 +40,7 @@ module Puppet::Pal
   # @return [Object] what the Puppet Language manifest_file contents evaluates to
   #
   def self.evaluate_script_manifest(manifest_file)
+    assert_non_empty_string(manifest_file, _("manifest file"))
     Puppet[:tasks] = true
     main(manifest_file)
   end
@@ -56,17 +57,10 @@ module Puppet::Pal
       manifest_file: nil,
       code_string:   nil
     )
-    if manifest_file && code_string
-      raise ArgumentError, _("Cannot use 'manifest' and 'code_string' at the same time")
-    end
-
-    unless manifest_file.nil? || manifest_file.is_a?(String)
-      raise ArgumentError, _("Expected 'manifest_file' to be a String, got '%{type}") % { type: manifest_file.class }
-    end
-
-    unless code_string.nil? || code_string.is_a?(String)
-      raise ArgumentError, _("Expected 'code_string' to be a String, got '%{type}") % { type: manifest_file.class }
-    end
+    # TRANSLATORS: do not translate variable name string in these assertions
+    assert_mutually_exclusive(manifest_file, code_string, 'manifest_file', 'code_string')
+    assert_non_empty_string(manifest_file, 'manifest_file', true)
+    assert_non_empty_string(code_string, 'code_string', true) 
 
     Puppet[:tasks] = true
     Puppet[:code] = code_string unless code_string.nil?
@@ -79,7 +73,7 @@ module Puppet::Pal
   # The code to evaluate in this context is given in a block.
   #
   # @param env_name [String] a name to use for the temporary environment - this only shows up in errors
-  # @param modulepath [Array<String>] an array of directory names containing Puppet modules, may be empty, defaults to empty array
+  # @param modulepath [Array<String>] an array of directory paths containing Puppet modules, may be empty, defaults to empty array
   # @param settings_hash [Hash] a hash of settings - currently not used for anything, defaults to empty hash
   # @param facts [Hash] optional map of fact name to fact value - if not given will initialize the facts (which is a slow operation)
   # @return [Object] returns what the given block returns
@@ -90,20 +84,9 @@ module Puppet::Pal
       settings_hash: {},
       facts: nil
     )
-    unless env_name.is_a?(String) && env_name.length > 0
-      raise ArgumentError(_("Puppet Pal: temporary environment name must be a non empty string, got '%{env_name}'") % {env_name: env_name})
-    end
-
-    unless modulepath.is_a?(Array)
-      raise ArgumentError(_("Puppet Pal: modulepath must be an Array, got '%{type}'") % {type: modulepath.class})
-    end
-
-    # tmp env with an optional empty modulepath - (may be empty if just running snippet of code)
-
-    unless modulepath.is_a?(Array)
-      raise ArgumentError(_("Puppet Pal: modulepath must be an Array (it may be empty)'"))
-    end
-
+    assert_non_empty_string(env_name, _("temporary environment name"))
+    # TRANSLATORS: do not translate variable name string in these assertions
+    assert_optionally_empty_array(modulepath, 'modulepath')
     return unless block_given?
 
     env = Puppet::Node::Environment.create(env_name, modulepath)
@@ -113,30 +96,68 @@ module Puppet::Pal
       environments: Puppet::Environments::Static.new(env), # The tmp env is the only known env
       current_node: node                                   # to allow it to be picked up instead of created
       ) do
-      # Prepare the node with facts if it does not already have them
-      if node.facts.nil?
-        # if a hash of facts values is given, then the operation of creating a node with facts is much
-        # speeded up.
-        #
-        node_facts = facts.nil? ? nil : Puppet::Node::Facts.new(Puppet[:node_name_value], facts)
-        node.fact_merge(node_facts)
-        # Add server facts so $server_facts[environment] exists when doing a puppet script
-        # SCRIPT TODO: May be needed when running scripts under orchestrator. Leave it for now.
-        #
-        node.add_server_facts({})
-      end
-
+      prepare_node_facts(node, facts)
       return yield self
     end
   end
 
-  # TODO: Make it possible to run in an existing environment (pick up environment settings from there
-  # with modulepath etc.
+  # Defines the context in which to perform puppet operations (evaluation, etc)
+  # The code to evaluate in this context is given in a block.
   #
-  #  def self.in_existing_environment(env_name, settings_hash)
-  #  end
+  # The name of an environment (env_name) is always given. The location of that environment on disk
+  # is then either constructed by:
+  # * searching a given envpath where name is a child of a directory on that path, or
+  # * it is the directory given in env_dir (which must exist).
+  # 
+  # The env_dir and envpath options are mutually exclusive.
+  #
+  # @param env_name [String] the name of an existing environment
+  # @param modulepath [Array<String>] an array of directory paths containing Puppet modules, overrides the modulepath of an existing env
+  # @param settings_hash [Hash] a hash of settings - currently not used for anything, defaults to empty hash
+  # @param facts [Hash] optional map of fact name to fact value - if not given will initialize the facts (which is a slow operation)
+  # @return [Object] returns what the given block returns
+  # @yieldparam [Puppet::Pal] context, a context that responds to Puppet::Pal methods
+  #
+  def self.in_environment(env_name,
+      modulepath:    nil,
+      settings_hash: {},
+      env_dir:       nil,
+      envpath:      nil,
+      facts: nil
+    )
+    assert_non_empty_string(env_name, _("environment name"))
+    assert_optionally_empty_array(modulepath, 'modulepath', true) # TRANSLATORS 'modulepath' is a term on the command line
+    return unless block_given?
+
+    env = Puppet::Node::Environment.create(env_name, modulepath)
+    node = Puppet::Node.new(Puppet[:node_name_value], :environment => env)
+
+    Puppet.override(
+      environments: Puppet::Environments::StaticDir.new(env_name, env_dir, env), # The env being used is the only one...
+      current_node: node                                   # to allow it to be picked up instead of created
+      ) do
+      prepare_node_facts(node, facts)
+      return yield self
+    end
+  end
 
   private
+
+  # Prepares the node for use by giving it node_facts (if given)
+  # If a hash of facts values is given, then the operation of creating a node with facts is much
+  # speeded up (as getting a fresh set of facts is avoided in a later step).
+  #
+  def self.prepare_node_facts(node, facts)
+    # Prepare the node with facts if it does not already have them
+    if node.facts.nil?
+      node_facts = facts.nil? ? nil : Puppet::Node::Facts.new(Puppet[:node_name_value], facts)
+      node.fact_merge(node_facts)
+      # Add server facts so $server_facts[environment] exists when doing a puppet script
+      # SCRIPT TODO: May be needed when running scripts under orchestrator. Leave it for now.
+      #
+      node.add_server_facts({})
+    end
+  end
 
   def self.main(manifest = nil, facts = nil, &block)
     node = Puppet.lookup(:current_node)
@@ -190,8 +211,31 @@ module Puppet::Pal
 
         rescue => detail
           Puppet.log_exception(detail)
-          raise # exit(1)
+          raise
       end
     end
   end
+
+  def self.assert_non_empty_string(s, what, allow_nil=false)
+    unless s.is_a?(String) && s.length > 0 || (allow_nil && s.nil?)
+      if s.is_a?(String)
+        raise ArgumentError(_("Puppet Pal: %{what} must be a non empty string, got ''") % {what: what})
+      else
+        raise ArgumentError(_("Puppet Pal: %{what} must be a non empty string, got value of type '%{type}'") % {what: what, type: s.class})
+      end
+    end
+  end
+
+  def self.assert_optionally_empty_array(a, what, allow_nil=false)
+    unless a.is_a?(Array) || (allow_nil && a.nil?)
+      raise ArgumentError(_("Puppet Pal: %{what} must be an Array (it may be empty), got '%{type}'") % {what: what, type: a.class})
+    end
+  end
+
+  def self.assert_mutually_exclusive(a, b, a_term, b_term)
+    if a && b
+      raise ArgumentError, _("Cannot use '%{a_term}' and '%{b_term}' at the same time") % { a_term: a_term, b_term: b_term }
+    end
+  end
+
 end
