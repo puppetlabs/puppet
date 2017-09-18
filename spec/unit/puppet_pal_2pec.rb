@@ -300,6 +300,18 @@ describe 'Puppet Pal' do
         end.to raise_error(/The environment directory '.*' does not exist/)
       end
 
+      it 'errors if an env_name is given and is not a String[1]' do |ctx|
+        expect do
+          Puppet::Pal.in_environment('', env_dir: testing_env_dir, facts: node_facts)
+            ctx.evaluate_script_string('a::afunc()')
+        end.to raise_error(/env_name has wrong type/)
+
+        expect do
+          Puppet::Pal.in_environment(32, env_dir: testing_env_dir, facts: node_facts)
+            ctx.evaluate_script_string('a::afunc()')
+        end.to raise_error(/env_name has wrong type/)
+      end
+
     end
 
     context 'configured as existing given envpath such that' do
