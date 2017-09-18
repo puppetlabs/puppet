@@ -4,6 +4,11 @@
 #
 # @api private
 class Puppet::SSL::CertificateSigner
+
+  # @!attribute [r] digest
+  #   @return [OpenSSL::Digest]
+  attr_reader :digest
+
   def initialize
     if OpenSSL::Digest.const_defined?('SHA256')
       @digest = OpenSSL::Digest::SHA256
