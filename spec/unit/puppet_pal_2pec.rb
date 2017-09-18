@@ -247,6 +247,13 @@ describe 'Puppet Pal' do
         end
         expect(result).to eq("a::aplan value")
       end
+
+      it 'errors if a block is not given to in_tmp_environment' do
+        expect do
+          Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts)
+        end.to raise_error(/A block must be given to 'in_tmp_environment/)
+      end
+
     end
 
     context 'configured as existing given environment directory such that' do
@@ -318,6 +325,11 @@ describe 'Puppet Pal' do
         end.to raise_error(/No directory found for the environment 'blah_env' on the path '.*'/)
       end
 
+      it 'errors if a block is not given to in_environment' do
+        expect do
+          Puppet::Pal.in_environment('blah_env', envpath: environments_dir, facts: node_facts)
+        end.to raise_error(/A block must be given to 'in_environment/)
+      end
     end
 
     it 'sets the facts if they are not given' do

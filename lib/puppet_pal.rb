@@ -87,7 +87,10 @@ module Puppet::Pal
     assert_non_empty_string(env_name, _("temporary environment name"))
     # TRANSLATORS: do not translate variable name string in these assertions
     assert_optionally_empty_array(modulepath, 'modulepath')
-    return unless block_given?
+
+    unless block_given?
+      raise ArgumentError, _("A block must be given to 'in_tmp_environment'") # TRANSLATORS 'in_tmp_environment' is a name, do not translate
+    end
 
     env = Puppet::Node::Environment.create(env_name, modulepath)
     node = Puppet::Node.new(Puppet[:node_name_value], :environment => env)
@@ -133,7 +136,9 @@ module Puppet::Pal
     assert_optionally_empty_array(modulepath, 'modulepath', true) 
     assert_mutually_exclusive(env_dir, envpath, 'env_dir', 'envpath')
 
-    return unless block_given?
+    unless block_given?
+      raise ArgumentError, _("A block must be given to 'in_environment'") # TRANSLATORS 'in_environment' is a name, do not translate
+    end
 
     if env_dir
       unless Puppet::FileSystem.exist?(env_dir)
