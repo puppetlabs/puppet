@@ -356,6 +356,15 @@ describe 'Puppet Pal' do
         end.to raise_error(/modulepath has wrong type/)
       end
 
+      it 'errors if env_dir and envpath are both given' do
+        testing_env_dir # creates the structure
+        expect do
+          Puppet::Pal.in_environment('blah_env', env_dir: testing_env_dir, envpath: environments_dir, facts: node_facts) do |ctx|
+            ctx.evaluate_script_string('run_plan("a::aplan")')
+          end
+        end.to raise_error(/Cannot use 'env_dir' and 'envpath' at the same time/)
+      end
+
     end
 
     context 'configured as existing given envpath such that' do
