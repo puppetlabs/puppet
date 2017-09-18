@@ -60,7 +60,7 @@ agents.each do |agent|
 
   teardown do
     if platform == 'sles'
-      on agent, 'zypper remove -y apache2 apache2-prefork apache2-worker libapr1 libapr-util1'
+      on agent, 'zypper remove -y apache2 apache2-prefork libapr1 libapr-util1'
     else
       apply_manifest_on(agent, manifest_uninstall_package)
     end
