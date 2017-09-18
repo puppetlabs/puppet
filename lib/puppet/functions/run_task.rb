@@ -9,16 +9,20 @@
 # Since > 5.2.0 TODO: Update when version is known
 #
 Puppet::Functions.create_function(:run_task) do
-  dispatch :mocked_run_task do
+  dispatch :run_task do
     param 'Object', :task
     repeated_param 'String', :hosts
   end
 
-  def mocked_run_task(task, *hosts)
+  def run_task(task, *hosts)
     unless Puppet[:tasks]
       raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
         Puppet::Pops::Issues::TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING,
         {:operation => 'run_task'})
+    end
+
+    unless Puppet.features.bolt?
+      raise Puppet::ParseErrorWithIssue.from_issue_and_stack(Puppet::Pops::Issues::TASK_MISSING_BOLT)
     end
 
     if hosts.empty?
@@ -26,18 +30,31 @@ Puppet::Functions.create_function(:run_task) do
       return nil
     end
 
-    call_function('notice', "Simulating run of task #{task._pcore_type.name} on hosts: [" + hosts.join(', ') + "]")
-    hosts.map do |hostname|
-      exit_code = task.respond_to?(:simulated_exit_code) ? task.exit_code : 0
-      result =
-      if exit_code == 0
-        result = task.respond_to?(:simluated_result) ? task.simulated_result : '<simulated result>'
+    executor = Bolt::Executor.from_uris(hosts)
+
+    # TODO: separate handling of default since it's platform specific
+    input_method = task._pcore_type['input_method'].value
+
+    # Should have a uniform way to retrieve arguments
+    arguments = if task.respond_to?(:args)
+                  task.args
+                else
+                  task._pcore_init_hash
+                end
+    raw_results = executor.run_task(task.executable_path, input_method, arguments)
+
+    results = {}
+    raw_results.each do |node, result|
+      results[node.uri] = result
+    end
+
+    results.map do |host, result|
+      output = result.output_string
+      if result.success?
+        output
       else
-        exit_code
+        result.exit_code
       end
-      call_function('notice', "Simulating run of task #{task._pcore_type.name} on '#{hostname}' with result '#{result}'")
-      result
     end
   end
 end
-

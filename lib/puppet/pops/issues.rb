@@ -868,5 +868,9 @@ module Issues
   TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING = issue :TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING, :operation do
     _("The task operation '%{operation}' is not available when compiling a catalog") % { operation: operation }
   end
+
+  TASK_MISSING_BOLT = issue :TASK_MISSING_BOLT do
+    _("The 'bolt' library is required to run a task")
+  end
 end
 end

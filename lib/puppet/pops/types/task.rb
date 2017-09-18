@@ -20,7 +20,7 @@ module Types
         },
         'input_method' => {
           'type' => PStringType::DEFAULT,
-          'value' => 'stdin',
+          'value' => 'both',
           'kind' => 'constant'
         },
         'executable' => {
