@@ -12,7 +12,7 @@ describe 'Puppet Pal' do
 
   let(:testing_env) do
     {
-      'testing' => {
+      'pal_env' => {
       'functions' => functions,
       'lib' => { 'puppet' => lib_puppet },
       'manifests' => manifests,
@@ -36,7 +36,7 @@ describe 'Puppet Pal' do
 
   let(:testing_env_dir) do
     dir_contained_in(environments_dir, testing_env)
-    env_dir = File.join(environments_dir, 'testing')
+    env_dir = File.join(environments_dir, 'pal_env')
     PuppetSpec::Files.record_tmp(env_dir)
     env_dir
   end
@@ -271,9 +271,57 @@ describe 'Puppet Pal' do
         end
         expect(result).to eq("a::aplan value")
       end
+
+      it 'errors in a meaningful way when a non existing env name is given' do
+        testing_env_dir # creates the structure
+        expect do
+          Puppet::Pal.in_environment('blah_env', env_dir: testing_env_dir.chop, facts: node_facts) do |ctx|
+            ctx.evaluate_script_string('run_plan("a::aplan")')
+          end
+        end.to raise_error(/The environment directory '.*' does not exist/)
+      end
+
+    end
+
+    context 'configured as existing given envpath such that' do
+      it 'modules in it are available from its "modules" directory' do
+        testing_env_dir # creates the structure
+        result = Puppet::Pal.in_environment('pal_env', envpath: environments_dir, facts: node_facts) do |ctx|
+          ctx.evaluate_script_string('a::afunc()')
+        end
+        expect(result).to eq("a::afunc value")
+      end
+
+      it 'a given "modulepath" overrides the default' do
+        testing_env_dir # creates the structure
+        expect do
+          result = Puppet::Pal.in_environment('pal_env', envpath: environments_dir, modulepath: [], facts: node_facts) do |ctx|
+            ctx.evaluate_script_string('a::afunc()')
+          end
+        end.to raise_error(/Unknown function: 'a::afunc'/)
+      end
+
+      it 'a plan in a module can be called with run_plan' do
+        testing_env_dir # creates the structure
+        result = Puppet::Pal.in_environment('pal_env', envpath: environments_dir, facts: node_facts) do |ctx|
+          ctx.evaluate_script_string('run_plan("a::aplan")')
+        end
+        expect(result).to eq("a::aplan value")
+      end
+
+      it 'errors in a meaningful way when a non existing env name is given' do
+        testing_env_dir # creates the structure
+        expect do
+          Puppet::Pal.in_environment('blah_env', envpath: environments_dir, facts: node_facts) do |ctx|
+            ctx.evaluate_script_string('run_plan("a::aplan")')
+          end
+        end.to raise_error(/No directory found for the environment 'blah_env' on the path '.*'/)
+      end
+
     end
 
     it 'sets the facts if they are not given' do
+      testing_env_dir # creates the structure
       result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath ) do |ctx|
         ctx.evaluate_script_string("$facts =~ Hash and $facts[puppetversion] == '#{Puppet.version}'")
       end

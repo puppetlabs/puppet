@@ -112,7 +112,8 @@ module Puppet::Pal
   # The env_dir and envpath options are mutually exclusive.
   #
   # @param env_name [String] the name of an existing environment
-  # @param modulepath [Array<String>] an array of directory paths containing Puppet modules, overrides the modulepath of an existing env
+  # @param modulepath [Array<String>] an array of directory paths containing Puppet modules, overrides the modulepath of an existing env.
+  #   Defaults to `{env_dir}/modules` if `env_dir` is given,
   # @param settings_hash [Hash] a hash of settings - currently not used for anything, defaults to empty hash
   # @param env_dir [String] a reference to a directory being the named environment (mutually exclusive with `envpath`)
   # @param envpath [String] a path of directories in which there are environments to search for `env_name` (mutually exclusive with `env_dir`)
@@ -134,17 +135,34 @@ module Puppet::Pal
 
     return unless block_given?
 
-    # a nil modulepath for env_dir means it should use its ./modules directory
-    if !env_dir.nil? && modulepath.nil?
-      modulepath = [Puppet::FileSystem.expand_path(File.join(env_dir, 'modules'))]
+    if env_dir
+      unless Puppet::FileSystem.exist?(env_dir)
+        raise ArgumentError, _("The environment directory '%{env_dir}' does not exist") % { env_dir: env_dir }
+      end
+
+      # a nil modulepath for env_dir means it should use its ./modules directory
+      if modulepath.nil?
+        modulepath = [Puppet::FileSystem.expand_path(File.join(env_dir, 'modules'))]
+      end
+      env = Puppet::Node::Environment.create(env_name, modulepath)
+      node = Puppet::Node.new(Puppet[:node_name_value], :environment => env)
+      environments = Puppet::Environments::StaticDirectory.new(env_name, env_dir, env) # The env being used is the only one...
+    else
+      # The environment is resolved against the envpath. This is setup without a basemodulepath
+      # The modulepath defaults to the 'modulepath' in the found env when "Directories" is used
+      #
+      environments = Puppet::Environments::Directories.new(envpath, [])
+      env = environments.get(env_name)
+      if env.nil?
+        raise ArgumentError, _("No directory found for the environment '%{env_name}' on the path '%{envpath}'") % { env_name: env_name, envpath: envpath }
+      end
+      # A given modulepath should override the default
+      env = env.override_with(:modulepath => modulepath) if !modulepath.nil?
+      node = Puppet::Node.new(Puppet[:node_name_value], :environment => env)
     end
-
-    env = Puppet::Node::Environment.create(env_name, modulepath)
-    node = Puppet::Node.new(Puppet[:node_name_value], :environment => env)
-
     Puppet.override(
-      environments: Puppet::Environments::StaticDirectory.new(env_name, env_dir, env), # The env being used is the only one...
-      current_node: node                                   # to allow it to be picked up instead of created
+      environments: environments,        # The env being used is the only one...
+      current_node: node                 # to allow it to be picked up instead of created
       ) do
       prepare_node_facts(node, facts)
       return yield self
