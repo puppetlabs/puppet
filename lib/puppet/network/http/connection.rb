@@ -228,8 +228,13 @@ module Puppet::Network::HTTP
         raise Puppet::Error, msg, error.backtrace
       elsif peer_cert && !OpenSSL::SSL.verify_certificate_identity(peer_cert.content, site.host)
         valid_certnames = [peer_cert.name, *peer_cert.subject_alt_names].uniq
-        certnames_msg = valid_certnames.length > 1 ? _("one of %{certnames}") % { certnames: valid_certnames.join(', ') } : valid_certnames.first
-        msg = _("Server hostname '%{host}' did not match server certificate; expected %{msg}") % { host: site.host, msg: certnames_msg }
+        if valid_certnames.size > 1
+          expected_certnames = _("expected one of %{certnames}") % { certnames: valid_certnames.join(', ') }
+        else
+          expected_certnames = _("expected %{certname}") % { certname: valid_certnames.first }
+        end
+
+        msg = _("Server hostname '%{host}' did not match server certificate; %{expected_certnames}") % { host: site.host, expected_certnames: expected_certnames }
         raise Puppet::Error, msg, error.backtrace
       else
         raise
