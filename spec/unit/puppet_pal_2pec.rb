@@ -251,9 +251,21 @@ describe 'Puppet Pal' do
       it 'errors if a block is not given to in_tmp_environment' do
         expect do
           Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts)
+          ctx.evaluate_script_string('a::afunc()')
         end.to raise_error(/A block must be given to 'in_tmp_environment/)
       end
 
+      it 'errors if an env_name is given and is not a String[1]' do |ctx|
+        expect do
+          Puppet::Pal.in_tmp_environment('', modulepath: modulepath, facts: node_facts)
+            ctx.evaluate_script_string('a::afunc()')
+        end.to raise_error(/temporary environment name has wrong type/)
+
+        expect do
+          Puppet::Pal.in_tmp_environment(32, modulepath: modulepath, facts: node_facts)
+            ctx.evaluate_script_string('a::afunc()')
+        end.to raise_error(/temporary environment name has wrong type/)
+      end
     end
 
     context 'configured as existing given environment directory such that' do

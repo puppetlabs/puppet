@@ -249,20 +249,19 @@ module Puppet::Pal
     end
   end
 
+  T_STRING = Puppet::Pops::Types::PStringType::NON_EMPTY
+  T_STRING_ARRAY = Puppet::Pops::Types::TypeFactory.array_of(T_STRING)
+
+  def self.assert_type(type, value, what, allow_nil=false)
+    Puppet::Pops::Types::TypeAsserter.assert_instance_of(nil, type, value, allow_nil) { _('Puppet Pal: %{what}') % {what: what} }
+  end
+
   def self.assert_non_empty_string(s, what, allow_nil=false)
-    unless s.is_a?(String) && s.length > 0 || (allow_nil && s.nil?)
-      if s.is_a?(String)
-        raise ArgumentError(_("Puppet Pal: %{what} must be a non empty string, got ''") % {what: what})
-      else
-        raise ArgumentError(_("Puppet Pal: %{what} must be a non empty string, got value of type '%{type}'") % {what: what, type: s.class})
-      end
-    end
+    assert_type(T_STRING, s, what, allow_nil)
   end
 
   def self.assert_optionally_empty_array(a, what, allow_nil=false)
-    unless a.is_a?(Array) || (allow_nil && a.nil?)
-      raise ArgumentError(_("Puppet Pal: %{what} must be an Array (it may be empty), got '%{type}'") % {what: what, type: a.class})
-    end
+    assert_type(T_STRING_ARRAY, a, what, allow_nil)
   end
 
   def self.assert_mutually_exclusive(a, b, a_term, b_term)
