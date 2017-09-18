@@ -266,6 +266,28 @@ describe 'Puppet Pal' do
             ctx.evaluate_script_string('a::afunc()')
         end.to raise_error(/temporary environment name has wrong type/)
       end
+
+      it 'errors if modulepath is something other than an array of strings, empty, or nil' do
+        expect do
+          Puppet::Pal.in_tmp_environment('pal_env', modulepath: {'a' => 'hm'}, facts: node_facts)
+          ctx.evaluate_script_string('a::afunc()')
+        end.to raise_error(/modulepath has wrong type/)
+
+        expect do
+          Puppet::Pal.in_tmp_environment('pal_env', modulepath: 32, facts: node_facts)
+          ctx.evaluate_script_string('a::afunc()')
+        end.to raise_error(/modulepath has wrong type/)
+
+        expect do
+          Puppet::Pal.in_tmp_environment('pal_env', modulepath: 'dir1;dir2', facts: node_facts)
+          ctx.evaluate_script_string('a::afunc()')
+        end.to raise_error(/modulepath has wrong type/)
+
+        expect do
+          Puppet::Pal.in_tmp_environment('pal_env', modulepath: [''], facts: node_facts)
+          ctx.evaluate_script_string('a::afunc()')
+        end.to raise_error(/modulepath has wrong type/)
+      end
     end
 
     context 'configured as existing given environment directory such that' do
@@ -310,6 +332,28 @@ describe 'Puppet Pal' do
           Puppet::Pal.in_environment(32, env_dir: testing_env_dir, facts: node_facts)
             ctx.evaluate_script_string('a::afunc()')
         end.to raise_error(/env_name has wrong type/)
+      end
+
+      it 'errors if modulepath is something other than an array of strings, empty, or nil' do
+        expect do
+          Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, modulepath: {'a' => 'hm'}, facts: node_facts)
+          ctx.evaluate_script_string('a::afunc()')
+        end.to raise_error(/modulepath has wrong type/)
+
+        expect do
+          Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, modulepath: 32, facts: node_facts)
+          ctx.evaluate_script_string('a::afunc()')
+        end.to raise_error(/modulepath has wrong type/)
+
+        expect do
+          Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, modulepath: 'dir1;dir2', facts: node_facts)
+          ctx.evaluate_script_string('a::afunc()')
+        end.to raise_error(/modulepath has wrong type/)
+
+        expect do
+          Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, modulepath: [''], facts: node_facts)
+          ctx.evaluate_script_string('a::afunc()')
+        end.to raise_error(/modulepath has wrong type/)
       end
 
     end
