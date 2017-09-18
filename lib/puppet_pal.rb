@@ -119,7 +119,8 @@ module Puppet::Pal
   #   Defaults to `{env_dir}/modules` if `env_dir` is given,
   # @param settings_hash [Hash] a hash of settings - currently not used for anything, defaults to empty hash
   # @param env_dir [String] a reference to a directory being the named environment (mutually exclusive with `envpath`)
-  # @param envpath [String] a path of directories in which there are environments to search for `env_name` (mutually exclusive with `env_dir`)
+  # @param envpath [String] a path of directories in which there are environments to search for `env_name` (mutually exclusive with `env_dir`).
+  #   Should be a single directory, or several directories separated with platform specific `File::PATH_SEPARATOR` character.
   # @param facts [Hash] optional map of fact name to fact value - if not given will initialize the facts (which is a slow operation)
   # @return [Object] returns what the given block returns
   # @yieldparam [Puppet::Pal] context, a context that responds to Puppet::Pal methods
@@ -153,10 +154,18 @@ module Puppet::Pal
       node = Puppet::Node.new(Puppet[:node_name_value], :environment => env)
       environments = Puppet::Environments::StaticDirectory.new(env_name, env_dir, env) # The env being used is the only one...
     else
+      assert_non_empty_string(envpath, 'envpath')
+
       # The environment is resolved against the envpath. This is setup without a basemodulepath
       # The modulepath defaults to the 'modulepath' in the found env when "Directories" is used
       #
-      environments = Puppet::Environments::Directories.new(envpath, [])
+      if envpath.is_a?(String) && envpath.include?(File::PATH_SEPARATOR)
+        # potentially more than one directory to search
+        env_loaders = Puppet::Environments::Directories.from_path(envpath, [])
+        environments = Puppet::Environments::Combined.new(*env_loaders)
+      else
+        environments = Puppet::Environments::Directories.new(envpath, [])
+      end
       env = environments.get(env_name)
       if env.nil?
         raise ArgumentError, _("No directory found for the environment '%{env_name}' on the path '%{envpath}'") % { env_name: env_name, envpath: envpath }

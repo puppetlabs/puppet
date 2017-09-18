@@ -360,11 +360,10 @@ describe 'Puppet Pal' do
         testing_env_dir # creates the structure
         expect do
           Puppet::Pal.in_environment('blah_env', env_dir: testing_env_dir, envpath: environments_dir, facts: node_facts) do |ctx|
-            ctx.evaluate_script_string('run_plan("a::aplan")')
+            ctx.evaluate_script_string('irrelevant')
           end
         end.to raise_error(/Cannot use 'env_dir' and 'envpath' at the same time/)
       end
-
     end
 
     context 'configured as existing given envpath such that' do
@@ -393,6 +392,15 @@ describe 'Puppet Pal' do
         expect(result).to eq("a::aplan value")
       end
 
+      it 'the envpath can have multiple entries - that are searched for the given env' do
+        testing_env_dir # creates the structure
+        several_dirs = "/tmp/nowhere/to/be/found:#{environments_dir}"
+        result = Puppet::Pal.in_environment('pal_env', envpath: environments_dir, facts: node_facts) do |ctx|
+          ctx.evaluate_script_string('run_plan("a::aplan")')
+        end
+        expect(result).to eq("a::aplan value")
+      end
+
       it 'errors in a meaningful way when a non existing env name is given' do
         testing_env_dir # creates the structure
         expect do
@@ -407,6 +415,22 @@ describe 'Puppet Pal' do
           Puppet::Pal.in_environment('blah_env', envpath: environments_dir, facts: node_facts)
         end.to raise_error(/A block must be given to 'in_environment/)
       end
+
+      it 'errors if envpath is something other than a string' do
+        testing_env_dir # creates the structure
+        expect do
+          Puppet::Pal.in_environment('blah_env', envpath: '', facts: node_facts) do |ctx|
+            ctx.evaluate_script_string('irrelevant')
+          end
+        end.to raise_error(/envpath has wrong type/)
+
+        expect do
+          Puppet::Pal.in_environment('blah_env', envpath: [environments_dir], facts: node_facts) do |ctx|
+            ctx.evaluate_script_string('irrelevant')
+          end
+        end.to raise_error(/envpath has wrong type/)
+      end
+
     end
 
     it 'sets the facts if they are not given' do
