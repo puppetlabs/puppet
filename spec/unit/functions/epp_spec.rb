@@ -18,8 +18,13 @@ describe "the epp function" do
     end
 
     it "gets error accessing a variable that is malformed" do
-      expect { eval_template("<%= $kryptonite::USER %>")}.to raise_error(
-        /Illegal variable name, The given name 'kryptonite::USER' does not conform to the naming rule/)
+      expect { eval_template("<%= $kryptonite::bbbbbbbbbbbb::cccccccc::ddd::USER %>")}.to raise_error(
+        /Illegal variable name, The given name 'kryptonite::bbbbbbbbbbbb::cccccccc::ddd::USER' does not conform to the naming rule/)
+    end
+
+    it "gets error accessing a variable that is malformed as reported in PUP-7848" do
+      expect { eval_template("USER='<%= $hg_oais::archivematica::requirements::automation_tools::USER %>'")}.to raise_error(
+        /Illegal variable name, The given name 'hg_oais::archivematica::requirements::automation_tools::USER' does not conform to the naming rule/)
     end
 
     it "get nil accessing a variable that is undef" do

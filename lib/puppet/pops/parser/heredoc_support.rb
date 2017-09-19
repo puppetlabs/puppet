@@ -133,7 +133,7 @@ module HeredocSupport
       lines = lines.collect {|s| s.gsub(leading_pattern, '') }
     end
     result = lines.join('')
-    result.gsub!(/\r?\n$/, '') if remove_break
+    result.gsub!(/\r?\n\z/m, '') if remove_break
     result
   end
 
