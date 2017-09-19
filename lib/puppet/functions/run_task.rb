@@ -6,15 +6,46 @@
 #   including "user" and "password" parts of a URI.
 # * The returned value contains information about the result per node. TODO: needs mapping to a runtime Pcore Object to be useful
 #
-# Since > 5.2.0 TODO: Update when version is known
+# 
+# Since > 5.4.0 TODO: Update when version is known
 #
 Puppet::Functions.create_function(:run_task) do
-  dispatch :run_task do
-    param 'Object', :task
-    repeated_param 'String', :hosts
+  local_types do
+    type 'NodeOrNodes = Variant[String[1], Array[NodeOrNodes]]'
   end
 
-  def run_task(task, *hosts)
+  dispatch :run_task_type do
+    param 'Type[Task]', :task_type
+    param 'NodeOrNodes', :nodes
+    optional_param 'Hash[String[1], Any]', :task_args
+  end
+
+  dispatch :run_named_task do
+    param 'String[1]', :task_type
+    param 'NodeOrNodes', :nodes
+    optional_param 'Hash[String[1], Any]', :task_args
+  end
+
+  dispatch :run_task_instance do
+    param 'Task', :task
+    param 'NodeOrNodes', :nodes
+  end
+
+  def run_task_type(task_type, nodes, task_args = nil)
+    use_args = task_args.nil? ? {} : task_args
+    task_instance = call_function('new', task_type, use_args)
+    run_task_instance(task_instance, nodes)
+  end
+
+  def run_named_task(task_name, nodes, task_args = nil)
+    task_type = Puppet.lookup(:loaders).private_environment_loader.load(:type, task_name)
+    use_args = task_args.nil? ? {} : task_args
+    task_instance = call_function('new', task_type, use_args)
+    run_task_instance(task_instance, nodes)
+  end
+
+  def run_task_instance(task, *nodes)
+    hosts = nodes.flatten
     unless Puppet[:tasks]
       raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
         Puppet::Pops::Issues::TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING,
@@ -26,7 +57,7 @@ Puppet::Functions.create_function(:run_task) do
     end
 
     if hosts.empty?
-      call_function('notice', "Simulating run of task #{task._pcore_type.name} - no hosts given - no action taken")
+      call_function('debug', "Simulating run of task #{task._pcore_type.name} - no hosts given - no action taken")
       return nil
     end
 
