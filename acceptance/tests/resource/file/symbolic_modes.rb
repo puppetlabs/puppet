@@ -188,7 +188,7 @@ test_name 'file resource: symbolic modes' do
     base_dir_modify = agent.tmpdir('symbolic-modes-modify_test')
 
     teardown do
-      on(agent, puppet('resource user symuser ensure=absent'))
+      on(agent, puppet('resource user symuser ensure=absent')) unless agent['platform'] =~ /fedora-2[6-9]/
       on(agent, puppet('resource group symgroup ensure=absent'))
       on(agent, "rm -rf '#{base_dir_create}' '#{base_dir_modify}'")
     end
