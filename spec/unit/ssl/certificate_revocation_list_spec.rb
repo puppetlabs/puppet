@@ -156,7 +156,8 @@ describe Puppet::SSL::CertificateRevocationList do
     end
 
     it "should sign the CRL with the CA's private key and a digest instance" do
-      @crl.content.expects(:sign).with { |key, digest| key == @key and digest.is_a?(OpenSSL::Digest::SHA1) }
+      digest = Puppet::SSL::CertificateSigner.new.digest
+      @crl.content.expects(:sign).with { |key, signer| key == @key and signer.is_a?(digest) }
       @crl.revoke(1, @key)
     end
 
