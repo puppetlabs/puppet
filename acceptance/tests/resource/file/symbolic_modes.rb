@@ -185,7 +185,7 @@ agents.each do |agent|
   on(agent, puppet("resource group symgroup ensure=present"))
 
   teardown do
-    on(agent, puppet("resource user symuser ensure=absent"))
+    on(agent, puppet("resource user symuser ensure=absent")) unless agent['platform'] =~ /fedora-2[6-9]/
     on(agent, puppet("resource group symgroup ensure=absent"))
   end
 
