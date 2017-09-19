@@ -207,6 +207,36 @@ describe "egrammar parsing basic expressions" do
     end
   end
 
+  context 'When parsing type aliases' do
+    it 'type A = B' do
+      expect(dump(parse('type A = B'))).to eq('(type-alias A b)')
+    end
+
+    it 'type A = B[]' do
+      expect{parse('type A = B[]')}.to raise_error(/Syntax error at '\]'/)
+    end
+
+    it 'type A = B[,]' do
+      expect{parse('type A = B[,]')}.to raise_error(/Syntax error at ','/)
+    end
+
+    it 'type A = B[C]' do
+      expect(dump(parse('type A = B[C]'))).to eq('(type-alias A (slice b c))')
+    end
+
+    it 'type A = B[C,]' do
+      expect(dump(parse('type A = B[C,]'))).to eq('(type-alias A (slice b c))')
+    end
+
+    it 'type A = B[C,D]' do
+      expect(dump(parse('type A = B[C,D]'))).to eq('(type-alias A (slice b (c d)))')
+    end
+
+    it 'type A = B[C,D,]' do
+      expect(dump(parse('type A = B[C,D,]'))).to eq('(type-alias A (slice b (c d)))')
+    end
+  end
+
   context "When parsing assignments" do
     it "Should allow simple assignment" do
       expect(dump(parse("$a = 10"))).to eq("(= $a 10)")
