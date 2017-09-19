@@ -66,12 +66,7 @@ Puppet::Functions.create_function(:run_task) do
     # TODO: separate handling of default since it's platform specific
     input_method = task._pcore_type['input_method'].value
 
-    # Should have a uniform way to retrieve arguments
-    arguments = if task.respond_to?(:args)
-                  task.args
-                else
-                  task._pcore_init_hash
-                end
+    arguments = task.task_args
     raw_results = executor.run_task(task.executable_path, input_method, arguments)
 
     results = {}
