@@ -47,8 +47,21 @@ step "Install puppetserver..." do
       master.install_package('puppetserver')
 
       logger.info "EC2 master found: Installing #{ENV['SHA']} build of puppet-agent."
-      dev_builds_url = ENV['DEV_BUILDS_URL'] || 'http://builds.delivery.puppetlabs.net'
-      install_from_build_data_url('puppet-agent', "#{dev_builds_url}/puppet-agent/#{ENV['SHA']}/artifacts/#{ENV['SHA']}.yaml", master)
+      # Upgrade installed puppet-agent with targeted SHA.
+      opts = {
+        :puppet_collection => 'PC1',
+        :puppet_agent_sha => ENV['SHA'],
+        :puppet_agent_version => ENV['SUITE_VERSION'] || ENV['SHA'] ,
+        :dev_builds_url => "http://builds.delivery.puppetlabs.net"
+      }
+
+      copy_dir_local = File.join('tmp', 'repo_configs', master['platform'])
+      release_path_end, release_file = master.puppet_agent_dev_package_info( opts[:puppet_collection], opts[:puppet_agent_version], opts)
+      release_path = "#{opts[:dev_builds_url]}/puppet-agent/#{opts[:puppet_agent_sha]}/repos/"
+      release_path << release_path_end
+      fetch_http_file(release_path, release_file, copy_dir_local)
+      scp_to master, File.join(copy_dir_local, release_file), master.external_copy_base
+      on master, "rpm -Uvh #{File.join(master.external_copy_base, release_file)} --oldpackage --force"
     else
       fail_test("EC2 master found, but it was not an `el` host: The specified `puppet-agent` build (#{ENV['SHA']}) cannot be installed.")
     end
