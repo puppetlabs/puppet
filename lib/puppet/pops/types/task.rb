@@ -61,6 +61,13 @@ module Types
       rich_json.delete('__pcore_type__')
       rich_json.to_json
     end
+
+    # Returns the parameters of this instance as a Hash
+    # @return [Hash] a map of attribute names to values as given when the instance of Task was created
+    #
+    def task_args()
+      _pcore_init_hash
+    end
   end
 
   # Ruby implementation of the GenericTask. It is a specialization of the Task Pcore type used as the super type
@@ -93,6 +100,10 @@ module Types
 
     def task_json
       @args.to_json
+    end
+
+    def task_args()
+      args
     end
 
     # Special to_s needed to cloak the 'attr' attribute and instead present

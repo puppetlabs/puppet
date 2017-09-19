@@ -81,6 +81,7 @@ describe 'The Task Type' do
             expect(task).to be_a(Puppet::Pops::Types::Task)
             expect(task.executable_path).to eql("#{modules_dir}/testmodule/tasks/hello")
             expect(task.task_json).to eql('{"foo":"the foo","fee":311,"fum":false}')
+            expect(task.task_args).to eql({"foo" => "the foo", "fee"=> 311, "fum" => false})
           end
         end
 
@@ -161,6 +162,7 @@ describe 'The Task Type' do
             expect(task).to be_a(Puppet::Pops::Types::Task)
             expect(task.executable_path).to eql("#{modules_dir}/testmodule/tasks/hello.rb")
             expect(task.task_json).to eql('{"message":"a message"}')
+            expect(task.task_args).to eql({"message" => "a message"})
           end
         end
 
