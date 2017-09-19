@@ -1,5 +1,5 @@
 ---
-packaging_url: 'git://github.com/puppetlabs/packaging.git --branch=master'
+packaging_url: 'git://github.com/puppetlabs/packaging.git --branch=1.0.x'
 packaging_repo: 'packaging'
 packager: 'puppetlabs'
 gpg_key: '7F438280EF8D349F'

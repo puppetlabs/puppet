@@ -6,22 +6,8 @@ extend Puppet::Acceptance::InstallUtils
 test_name "Install Packages"
 
 step "Install puppet-agent..." do
-  opts = {
-    :puppet_collection    => 'PC1',
-    :puppet_agent_sha     => ENV['SHA'],
-    # SUITE_VERSION is necessary for Beaker to build a package download
-    # url which is built upon a `git describe` for a SHA.
-    # Beaker currently cannot find or calculate this value based on
-    # the SHA, and thus it must be passed at invocation time.
-    # The one exception is when SHA is a tag like `1.8.0` and
-    # SUITE_VERSION will be equivalent.
-    # RE-8333 may make this unnecessary in the future
-    :puppet_agent_version => ENV['SUITE_VERSION'] || ENV['SHA']
-  }
-  agents.each do |agent|
-    next if agent == master # Avoid SERVER-528
-    install_puppet_agent_dev_repo_on(agent, opts)
-  end
+  dev_builds_url = ENV['DEV_BUILDS_URL'] || 'http://builds.delivery.puppetlabs.net'
+  install_from_build_data_url('puppet-agent', "#{dev_builds_url}/puppet-agent/#{ENV['SHA']}/artifacts/#{ENV['SHA']}.yaml", agents)
 end
 
 MASTER_PACKAGES = {
@@ -61,35 +47,20 @@ step "Install puppetserver..." do
       master.install_package('puppetserver')
 
       logger.info "EC2 master found: Installing #{ENV['SHA']} build of puppet-agent."
-      # Upgrade installed puppet-agent with targeted SHA.
-      opts = {
-        :puppet_collection => 'PC1',
-        :puppet_agent_sha => ENV['SHA'],
-        :puppet_agent_version => ENV['SUITE_VERSION'] || ENV['SHA'] ,
-        :dev_builds_url => "http://builds.delivery.puppetlabs.net"
-      }
-
-      copy_dir_local = File.join('tmp', 'repo_configs', master['platform'])
-      release_path_end, release_file = master.puppet_agent_dev_package_info( opts[:puppet_collection], opts[:puppet_agent_version], opts)
-      release_path = "#{opts[:dev_builds_url]}/puppet-agent/#{opts[:puppet_agent_sha]}/repos/"
-      release_path << release_path_end
-      fetch_http_file(release_path, release_file, copy_dir_local)
-      scp_to master, File.join(copy_dir_local, release_file), master.external_copy_base
-      on master, "rpm -Uvh #{File.join(master.external_copy_base, release_file)} --oldpackage --force"
+      dev_builds_url = ENV['DEV_BUILDS_URL'] || 'http://builds.delivery.puppetlabs.net'
+      install_from_build_data_url('puppet-agent', "#{dev_builds_url}/puppet-agent/#{ENV['SHA']}/artifacts/#{ENV['SHA']}.yaml", master)
     else
       fail_test("EC2 master found, but it was not an `el` host: The specified `puppet-agent` build (#{ENV['SHA']}) cannot be installed.")
     end
   else
+    dev_builds_url = ENV['DEV_BUILDS_URL'] || "http://builds.delivery.puppetlabs.net"
+    install_from_build_data_url('puppet-agent', "#{dev_builds_url}/puppet-agent/#{ENV['SHA']}/artifacts/#{ENV['SHA']}.yaml", master)
     if ENV['SERVER_VERSION'].nil? || ENV['SERVER_VERSION'] == 'latest'
-      server_version = 'latest'
-      server_download_url = "http://nightlies.puppet.com"
+      install_puppetlabs_dev_repo(master, 'puppetserver', 'latest', nil, :dev_builds_url => 'http://nightlies.puppet.com')
+      master.install_package('puppetserver')
     else
-      server_version = ENV['SERVER_VERSION']
-      server_download_url = "http://builds.delivery.puppetlabs.net"
+      install_from_build_data_url('puppetserver', "#{dev_builds_url}/puppetserver/#{ENV['SERVER_VERSION']}/artifacts/#{ENV['SERVER_VERSION']}.yaml", master)
     end
-    install_puppetlabs_dev_repo(master, 'puppetserver', server_version, nil, :dev_builds_url => server_download_url)
-    install_puppetlabs_dev_repo(master, 'puppet-agent', ENV['SHA'])
-    master.install_package('puppetserver')
   end
 end
 
