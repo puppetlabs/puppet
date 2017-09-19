@@ -97,9 +97,15 @@ assignment
   | relationship APPENDS assignment         { result = val[0].plus_set(val[2]) ; loc result, val[1] }
   | relationship DELETES assignment         { result = val[0].minus_set(val[2]); loc result, val[1] }
 
-assignments
-  : assignment                              { result = [val[0]] }
-  | assignments COMMA assignment            { result = val[0].push(val[2]) }
+# Argument is like assignment but permits KEY_ENTRY which it converts it to a HASH_UNFOLDED
+argument
+  : assignment
+  | hashpair { result = Factory.HASH_UNFOLDED([val[0]]); loc result, val[0] }
+
+# Repeated adjacent HASH_UNFOLDED entries merged into one HASH_UNFOLDED
+arguments
+  : argument                            { result = [val[0]] }
+  | arguments COMMA argument            { result = Factory.ARGUMENTS(val[0], val[2]) }
 
 relationship
   : resource =LOW
@@ -222,7 +228,15 @@ expression
   |            WSLPAREN     assignment RPAREN          { result = val[1].paren          ; loc result, val[0] }
 
 bracketed_expression
-  : expression LBRACK       expressions endcomma RBRACK =LBRACK { result = val[0].access(val[2])         ; loc result, val[0], val[4] }
+  : expression LBRACK access_args endcomma RBRACK =LBRACK { result = val[0].access(val[2]); loc result, val[0], val[4] }
+
+access_args
+  : access_arg                   { result = [val[0]] }
+  | access_args COMMA access_arg { result = Factory.ARGUMENTS(val[0], val[2]) }
+
+access_arg
+  : expression
+  | hashpair { result = Factory.HASH_UNFOLDED([val[0]]); loc result, val[0] }
 
 #---EXPRESSIONS
 #   (i.e. "argument list")
@@ -270,7 +284,7 @@ primary_expression
 # Produces Model::CallNamedFunction
 
 call_function_expression
-  : call_function_start assignments endcomma RPAREN {
+  : call_function_start arguments endcomma RPAREN {
       result = Factory.CALL_NAMED(val[0], true, val[1])
       loc result, val[0], val[3]
     }
@@ -278,7 +292,7 @@ call_function_expression
       result = Factory.CALL_NAMED(val[0], true, [])
       loc result, val[0], val[1]
     }
-  | call_function_start assignments endcomma RPAREN lambda {
+  | call_function_start arguments endcomma RPAREN lambda {
       result = Factory.CALL_NAMED(val[0], true, val[1])
       loc result, val[0], val[4]
       result.lambda = val[4]
@@ -300,7 +314,7 @@ call_method_with_lambda_expression
   | call_method_expression lambda       { result = val[0]; val[0].lambda = val[1] }
 
   call_method_expression
-    : named_access LPAREN assignments RPAREN { result = Factory.CALL_METHOD(val[0], val[2]); loc result, val[1], val[3] }
+    : named_access LPAREN arguments RPAREN { result = Factory.CALL_METHOD(val[0], val[2]); loc result, val[1], val[3] }
     | named_access LPAREN RPAREN             { result = Factory.CALL_METHOD(val[0], []); loc result, val[1], val[3] }
     | named_access =LOW                      { result = Factory.CALL_METHOD(val[0], []); loc result, val[0] }
 
@@ -643,7 +657,7 @@ function_definition
 
 opt_return_type
   : RSHIFT type { result = val[1] }
-  | RSHIFT type LBRACK expressions RBRACK { result = val[1].access(val[3]) ; loc result, val[1], val[4] }
+  | RSHIFT type LBRACK access_args RBRACK { result = val[1].access(val[3]) ; loc result, val[1], val[4] }
   | nil
 
 #---NAMES AND PARAMETERS COMMON TO SEVERAL RULES
@@ -690,7 +704,7 @@ typed_parameter
 
 parameter_type
   : type { result = val[0] }
-  | type LBRACK expressions RBRACK { result = val[0].access(val[2]) ; loc result, val[0], val[3] }
+  | type LBRACK access_args RBRACK { result = val[0].access(val[2]) ; loc result, val[0], val[3] }
 
 #--TYPE ALIAS
 type_alias
@@ -699,7 +713,7 @@ type_alias
       loc(definition, val[0], val[3])
       result = add_definition(definition)
     }
-  | type_alias_lhs EQUALS type LBRACK expressions RBRACK {
+  | type_alias_lhs EQUALS type LBRACK access_args RBRACK {
       definition = Factory.TYPE_ASSIGNMENT(val[0], val[2].access(val[4]))
       loc(definition, val[0], val[5])
       result = add_definition(definition)
@@ -774,15 +788,20 @@ hash
     | hashpairs COMMA hashpair { result = val[0].push val[2] }
 
   hashpair
-    : collection_entry FARROW collection_entry { result = Factory.KEY_ENTRY(val[0], val[2]); loc result, val[1] }
+    : hash_entry FARROW hash_entry { result = Factory.KEY_ENTRY(val[0], val[2]); loc result, val[1] }
 
 collection_entry:
+  : argument
+  | collection_entry_keyword { result = Factory.literal(val[0][:value]) ; loc result, val[0] }
+
+# Like collection_entry but will not allow nested hashpair
+hash_entry:
   : assignment
   | collection_entry_keyword { result = Factory.literal(val[0][:value]) ; loc result, val[0] }
 
 collection_entries
   : collection_entry                           { result = [val[0]] }
-  | collection_entries COMMA collection_entry  { result = val[0].push(val[2]) }
+  | collection_entries COMMA collection_entry  { result = Factory.ARGUMENTS(val[0], val[2]) }
 
 # Keywords valid as a collection value
 collection_entry_keyword
