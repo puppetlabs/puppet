@@ -699,7 +699,7 @@ type_alias
       loc(definition, val[0], val[3])
       result = add_definition(definition)
     }
-  | type_alias_lhs EQUALS type LBRACK expressions RBRACK {
+  | type_alias_lhs EQUALS type LBRACK expressions endcomma RBRACK {
       definition = Factory.TYPE_ASSIGNMENT(val[0], val[2].access(val[4]))
       loc(definition, val[0], val[5])
       result = add_definition(definition)
