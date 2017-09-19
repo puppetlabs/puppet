@@ -137,6 +137,7 @@ describe "egrammar parsing basic expressions" do
   context "When parsing unfold" do
     it "$a = *[1,2]" do; expect(dump(parse("$a = *[1,2]"))).to eq("(= $a (unfold ([] 1 2)))") ; end
     it "$a = *1"     do; expect(dump(parse("$a = *1"))).to eq("(= $a (unfold 1))") ; end
+    it "$a = *[1,a => 2]" do; expect(dump(parse("$a = *[1,a => 2]"))).to eq("(= $a (unfold ([] 1 ({} (a 2)))))") ; end
   end
 
   context "When parsing Lists" do
@@ -150,6 +151,26 @@ describe "egrammar parsing basic expressions" do
 
     it "$a = [1,2,3]" do
       expect(dump(parse("$a = [1,2,3]"))).to eq("(= $a ([] 1 2 3))")
+    end
+
+    it "$a = [1,a => 2]" do
+      expect(dump(parse("$a = [1,a => 2]"))).to eq('(= $a ([] 1 ({} (a 2))))')
+    end
+
+    it "$a = [1,a => 2, 3]" do
+      expect(dump(parse("$a = [1,a => 2, 3]"))).to eq('(= $a ([] 1 ({} (a 2)) 3))')
+    end
+
+    it "$a = [1,a => 2, b => 3]" do
+      expect(dump(parse("$a = [1,a => 2, b => 3]"))).to eq('(= $a ([] 1 ({} (a 2) (b 3))))')
+    end
+
+    it "$a = [1,a => 2, b => 3, 4]" do
+      expect(dump(parse("$a = [1,a => 2, b => 3, 4]"))).to eq('(= $a ([] 1 ({} (a 2) (b 3)) 4))')
+    end
+
+    it "$a = [{ x => y }, a => 2, b => 3, { z => p }]" do
+      expect(dump(parse("$a = [{ x => y }, a => 2, b => 3, { z => p }]"))).to eq('(= $a ([] ({} (x y)) ({} (a 2) (b 3)) ({} (z p))))')
     end
 
     it "[...[...[]]] should create nested arrays without trouble" do
@@ -202,6 +223,10 @@ describe "egrammar parsing basic expressions" do
       expect(dump(parse("$a = [1,2,3][2]"))).to eq("(= $a (slice ([] 1 2 3) 2))")
     end
 
+    it '$a = [1, 2, 3][a => 2]' do
+      expect(dump(parse('$a = [1,2,3][a => 2]'))).to eq('(= $a (slice ([] 1 2 3) ({} (a 2))))')
+    end
+
     it "$a = {'a' => 1, 'b' => 2}['b']" do
       expect(dump(parse("$a = {'a'=>1,'b' =>2}[b]"))).to eq("(= $a (slice ({} ('a' 1) ('b' 2)) b))")
     end
@@ -248,6 +273,14 @@ describe "egrammar parsing basic expressions" do
 
     it "$a = {'a'=> 1, 'b'=>2} != {'x'=> 1, 'y'=>3}" do
       expect(dump(parse("$a = {'a'=>1,'b'=>2} != {'a'=>1,'b'=>2}"))).to eq("(= $a (!= ({} ('a' 1) ('b' 2)) ({} ('a' 1) ('b' 2))))")
+    end
+
+    it "$a = 'a' => 1" do
+      expect{parse("$a = 'a' => 1")}.to raise_error(/Syntax error at '=>'/)
+    end
+
+    it "$a = { 'a' => 'b' => 1 }" do
+      expect{parse("$a = { 'a' => 'b' => 1 }")}.to raise_error(/Syntax error at '=>'/)
     end
 
     it "calculates the text length of an empty hash" do

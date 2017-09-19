@@ -37,7 +37,7 @@ class Factory
     end
   end
 
-  attr_reader :model_class
+  attr_reader :model_class, :unfolded
 
   def [](key)
     @init_hash[key]
@@ -213,8 +213,9 @@ class Factory
     @init_hash[KEY_VALUE] = v
   end
 
-  def build_LiteralHash(o, keyed_entries)
+  def build_LiteralHash(o, keyed_entries, unfolded)
     @init_hash['entries'] = keyed_entries
+    @unfolded = unfolded
   end
 
   def build_LiteralList(o, values)
@@ -310,6 +311,7 @@ class Factory
   def infer_Hash(o)
     @model_class = LiteralHash
     @init_hash['entries'] = o.sort_by { |k,_| k.to_s }.map { |k, v| Factory.new(KeyedEntry, Factory.infer(k), Factory.infer(v)) }
+    @unfolded = false
   end
 
   def f_build_body(body)
@@ -703,7 +705,9 @@ class Factory
 
   def self.KEY_ENTRY(key, val);          new(KeyedEntry, key, val);                      end
 
-  def self.HASH(entries);                new(LiteralHash, entries);                      end
+  def self.HASH(entries);                new(LiteralHash, entries, false);               end
+
+  def self.HASH_UNFOLDED(entries);       new(LiteralHash, entries, true);                end
 
   def self.HEREDOC(name, expr);          new(HeredocExpression, name, expr);             end
 
@@ -819,6 +823,17 @@ class Factory
 
   def self.EXPORTED_QUERY(query_expr)
     new(ExportedQuery, query_expr)
+  end
+
+  def self.ARGUMENTS(args, arg)
+    if !args.empty? && arg.model_class <= LiteralHash && arg.unfolded
+      last = args[args.size() - 1]
+      if last.model_class <= LiteralHash && last.unfolded
+        last['entries'].concat(arg['entries'])
+        return args
+      end
+    end
+    args.push(arg)
   end
 
   def self.ATTRIBUTE_OP(name, op, expr)
