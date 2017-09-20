@@ -163,7 +163,24 @@ module Puppet
             on host, "curl -o /etc/apt/sources.list.d/#{list_filename} #{list_url}"
             on host, "apt-get update"
           else
-            fail_test("No repository installation step for #{platform} yet...")
+            if project == 'puppet-agent'
+              opts = {
+                :puppet_collection => 'PC1',
+                :puppet_agent_sha => ENV['SHA'],
+                # SUITE_VERSION is necessary for Beaker to build a package download
+                # url which is built upon a `git describe` for a SHA.
+                # Beaker currently cannot find or calculate this value based on
+                # the SHA, and thus it must be passed at invocation time.
+                # The one exception is when SHA is a tag like `1.8.0` and
+                # SUITE_VERSION will be equivalent.
+                # RE-8333 may make this unnecessary in the future
+                :puppet_agent_version => ENV['SUITE_VERSION'] || ENV['SHA']
+              }
+              # this installs puppet-agent on windows (msi), osx (dmg) and eos (swix)
+              install_puppet_agent_dev_repo_on(agent, opts)
+            else
+              fail_test("No repository installation step for #{platform} yet...")
+            end
           end
         else
           install_from_build_data_url(project, "#{tld}/#{project}/#{sha}/artifacts/#{sha}.yaml", host)
