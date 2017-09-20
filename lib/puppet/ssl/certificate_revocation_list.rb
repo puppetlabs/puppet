@@ -1,5 +1,6 @@
 require 'puppet/ssl/base'
 require 'puppet/indirector'
+require 'puppet/ssl/certificate_signer'
 
 # Manage the CRL.
 class Puppet::SSL::CertificateRevocationList < Puppet::SSL::Base
@@ -105,6 +106,6 @@ private
   end
 
   def sign_with(cakey)
-    @content.sign(cakey, OpenSSL::Digest::SHA1.new)
+    Puppet::SSL::CertificateSigner.new.sign(@content, cakey)
   end
 end

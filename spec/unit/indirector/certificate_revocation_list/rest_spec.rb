@@ -23,4 +23,12 @@ describe Puppet::SSL::CertificateRevocationList::Rest do
   it "should use the :ca SRV service" do
     expect(Puppet::SSL::CertificateRevocationList::Rest.srv_service).to eq(:ca)
   end
+
+  it "temporarily disables revocation checking when finding a CRL and no CRL is available" do
+    Puppet::FileSystem.expects(:exist?).with(Puppet[:hostcrl]).returns false
+    Puppet.override({:certificate_revocation => :chain}) do
+      Puppet.expects(:override).with({:certificate_revocation => false}, anything)
+      subject.find(nil)
+    end
+  end
 end

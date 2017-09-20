@@ -650,6 +650,16 @@ describe "validating 4x" do
     end
   end
 
+  context 'uses a var pattern that is performant' do
+    it 'such that illegal VAR_NAME is not too slow' do
+      t = Time.now.nsec
+      result = '$hg_oais::archivematica::requirements::automation_tools::USER' =~ Puppet::Pops::Patterns::VAR_NAME
+      t2 = Time.now.nsec
+      expect(result).to be(nil)
+      expect(t2-t).to be < 1000000 # one ms as a check for very slow operation, is in fact at ~< 10 microsecond 
+    end
+  end
+
   def parse(source)
     Puppet::Pops::Parser::Parser.new.parse_string(source)
   end

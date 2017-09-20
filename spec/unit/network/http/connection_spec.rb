@@ -137,7 +137,7 @@ describe Puppet::Network::HTTP::Connection do
       expect do
         connection.get('request')
       end.to raise_error(Puppet::Error) do |error|
-        error.message =~ /Server hostname 'my_server' did not match server certificate; expected one of (.+)/
+        error.message =~ /\AServer hostname 'my_server' did not match server certificate; expected one of (.+)/
         expect($1.split(', ')).to match_array(%w[DNS:foo DNS:bar DNS:baz DNS:not_my_server not_my_server])
       end
     end
