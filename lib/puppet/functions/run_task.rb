@@ -28,7 +28,7 @@ Puppet::Functions.create_function(:run_task) do
 
   dispatch :run_task_instance do
     param 'Task', :task
-    param 'NodeOrNodes', :nodes
+    repeated_param 'NodeOrNodes', :nodes
   end
 
   def run_task_type(task_type, nodes, task_args = nil)
