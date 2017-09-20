@@ -749,6 +749,10 @@ module Issues
     _("Illegal %{format} Byte Order mark at beginning of input: %{bom} - remove these from the puppet source") % { format: format_name, bom: bytes }
   end
 
+  NO_SUCH_FILE_OR_DIRECTORY = hard_issue :NO_SUCH_FILE_OR_DIRECTORY, :file do
+    _('No such file or directory: %{file}') % { file: file }
+  end
+
   NUMERIC_OVERFLOW = hard_issue :NUMERIC_OVERFLOW, :value do
     if value > 0
       _("%{expression} resulted in a value outside of Puppet Integer max range, got '%{value}'") % { expression: label.a_an_uc(semantic), value: ("%#+x" % value) }
@@ -869,8 +873,8 @@ module Issues
     _("The task operation '%{operation}' is not available when compiling a catalog") % { operation: operation }
   end
 
-  TASK_MISSING_BOLT = issue :TASK_MISSING_BOLT do
-    _("The 'bolt' library is required to run a task")
+  TASK_MISSING_BOLT = issue :TASK_MISSING_BOLT, :action do
+    _("The 'bolt' library is required to %{action}") % { action: action }
   end
 end
 end
