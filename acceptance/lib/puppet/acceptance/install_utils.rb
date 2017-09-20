@@ -125,7 +125,7 @@ module Puppet
         project         = sha == 'nightly' ? project + '-latest'                :  project
         sha             = sha == 'nightly' ? nil                                :  sha
 
-        if sha == 'nightly'
+        if sha.nil?
           case platform
           when /^(fedora|el|centos)-(\d+)-(.+)$/
             variant = (($1 == 'centos') ? 'el' : $1)
