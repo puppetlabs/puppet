@@ -183,7 +183,9 @@ module Puppet
             end
           end
         else
-          install_from_build_data_url(project, "#{tld}/#{project}/#{sha}/artifacts/#{sha}.yaml", host)
+          base_url, build_details = fetch_build_details("#{tld}/#{project}/#{sha}/artifacts/#{sha}.yaml")
+          _, repoconfig_url = host_urls(host, build_details, base_url)
+          install_repo_configs_on(host, repoconfig_url)
         end
       end
 
