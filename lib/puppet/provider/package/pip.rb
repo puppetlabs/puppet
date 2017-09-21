@@ -79,7 +79,7 @@ Puppet::Type.type(:package).provide :pip,
   # it is not installed or `pip` itself is not available.
   def query
     self.class.instances.each do |provider_pip|
-      return provider_pip.properties if @resource[:name].downcase == provider_pip.name.downcase
+      return provider_pip.properties if @resource[:name].gsub(/[-]/, '_').downcase == provider_pip.name.gsub(/[-]/, '_').downcase
     end
     return nil
   end
