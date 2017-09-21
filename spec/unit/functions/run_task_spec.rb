@@ -47,9 +47,11 @@ describe 'the run_task function' do
 
   context 'it calls bolt with executor, input method, and arguments' do
     let(:hostname) { 'a.b.com' }
+    let(:hostname2) { 'x.y.com' }
     let(:message) { 'the message' }
     let(:hosts) { [hostname] }
     let(:host) { stub(uri: hostname) }
+    let(:host2) { stub(uri: hostname2) }
     let(:result) { stub(output_string: message, success?: true) }
     before(:each) do
       Puppet.features.stubs(:bolt?).returns(true)
@@ -79,6 +81,20 @@ describe 'the run_task function' do
 
       expect(eval_and_collect_notices(<<-CODE, node)).to eql(["[#{message}]"])
         $a = run_task(Test::Meta({message => "#{message}"}), "#{hostname}")
+        notice $a
+      CODE
+    end
+
+    it 'nodes can be specified as repeated nested arrays and strings and combine into one list of nodes' do
+      executor = mock('executor')
+      executable = File.join(env_dir, 'modules/test/tasks/meta.sh')
+
+      Bolt::Executor.expects(:from_uris).with([hostname, hostname2]).returns(executor)
+      executor.expects(:run_task).with(executable, 'environment', {'message' => 'the message'}).returns(
+        { host => result, host2 => result })
+
+      expect(eval_and_collect_notices(<<-CODE, node)).to eql(["[#{message}, #{message}]"])
+        $a = run_task(Test::Meta({message => "#{message}"}), "#{hostname}", [["#{hostname2}"]],[])
         notice $a
       CODE
     end
