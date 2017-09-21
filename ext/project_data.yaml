@@ -1,5 +1,5 @@
 ---
-project: 'puppet-bolt'
+project: 'puppet'
 author: 'Puppet Labs'
 email: 'info@puppetlabs.com'
 homepage: 'https://github.com/puppetlabs/puppet'
@@ -7,11 +7,12 @@ summary: 'Puppet, an automated configuration management tool'
 description: 'Puppet, an automated configuration management tool'
 version_file: 'lib/puppet/version.rb'
 # files and gem_files are space separated lists
-files: '[A-Z]* install.rb lib conf man examples ext tasks spec locales'
+files: '[A-Z]* install.rb bin lib conf man examples ext tasks spec locales'
 # The gem specification bits only work on Puppet >= 3.0rc, NOT 2.7.x and earlier
-gem_files: '[A-Z]* install.rb lib libbolt conf man examples ext tasks spec locales'
+gem_files: '[A-Z]* install.rb bin lib conf man examples ext tasks spec locales'
 gem_test_files: 'spec/**/*'
-gem_require_path: 'libbolt'
+gem_executables: 'puppet'
+gem_default_executables: 'puppet'
 gem_forge_project: 'puppet'
 gem_required_ruby_version: '>= 1.9.3'
 gem_required_rubygems_version: '> 1.3.1'

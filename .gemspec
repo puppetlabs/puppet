@@ -12,7 +12,7 @@
 # to build the Puppet gem package.
 
 Gem::Specification.new do |s|
-  s.name = "puppet-bolt"
+  s.name = "puppet"
   version = "5.2.0"
   mdata = version.match(/(\d+\.\d+\.\d+)/)
   s.version = mdata ? mdata[1] : version
@@ -23,9 +23,12 @@ Gem::Specification.new do |s|
   s.date = "2012-08-17"
   s.description = "Puppet, an automated configuration management tool"
   s.email = "puppet@puppetlabs.com"
+  s.executables = ["puppet"]
+  s.files = ["bin/puppet"]
   s.homepage = "https://puppetlabs.com"
   s.rdoc_options = ["--title", "Puppet - Configuration Management", "--main", "README", "--line-numbers"]
   s.require_paths = ["lib"]
+  s.rubyforge_project = "puppet"
   s.summary = "Puppet, an automated configuration management tool"
   s.specification_version = 3
   s.add_runtime_dependency(%q<facter>, [">= 2.0.1", "< 4"])
