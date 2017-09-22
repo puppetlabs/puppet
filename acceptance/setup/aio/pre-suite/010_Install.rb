@@ -9,13 +9,16 @@ DEFAULT_BUILDS_URL = 'http://builds.delivery.puppetlabs.net'
 dev_builds_url = ENV['DEV_BUILDS_URL'] || DEFAULT_BUILDS_URL
 
 step "Install puppet-agent..." do
-  agents.each do |agent|
-    next if agent == master # Avoid SERVER-528 and potential failure if installing on EC2 host
+  hosts.each do |host|
+    # An EC2 master instance does not have access to puppetlabs.net for getting
+    # dev repos. They are installed during the puppetserver install step.
+    next if host == master && master[:hypervisor] == 'ec2'
+
     if dev_builds_url == DEFAULT_BUILDS_URL
-      install_from_build_data_url('puppet-agent', "#{dev_builds_url}/puppet-agent/#{ENV['SHA']}/artifacts/#{ENV['SHA']}.yaml", agent)
+      install_from_build_data_url('puppet-agent', "#{dev_builds_url}/puppet-agent/#{ENV['SHA']}/artifacts/#{ENV['SHA']}.yaml",host)
     else
-      install_puppetlabs_dev_repo(agent, 'puppet-agent', ENV['SHA'], nil, :dev_builds_url => dev_builds_url)
-      agent.install_package('puppet-agent')
+      install_puppetlabs_dev_repo(host, 'puppet-agent', ENV['SHA'], nil, :dev_builds_url => dev_builds_url)
+      host.install_package('puppet-agent')
     end
   end
 end
@@ -77,13 +80,11 @@ step "Install puppetserver..." do
     end
   else
     if ENV['SERVER_VERSION'] && ENV['SERVER_VERSION'] != 'latest' && dev_builds_url == DEFAULT_BUILDS_URL
-      install_from_build_data_url('puppet-agent', "#{dev_builds_url}/puppet-agent/#{ENV['SHA']}/artifacts/#{ENV['SHA']}.yaml", master)
       install_from_build_data_url('puppetserver', "#{dev_builds_url}/puppetserver/#{ENV['SERVER_VERSION']}/artifacts/#{ENV['SERVER_VERSION']}.yaml", master)
     else
       dev_builds_url = 'https://nightlies.puppetlabs.com' if dev_builds_url == DEFAULT_BUILDS_URL
       server_version = ENV['SERVER_VERSION'] || 'latest'
       install_puppetlabs_dev_repo(master, 'puppetserver', server_version, nil, :dev_builds_url => dev_builds_url)
-      install_puppetlabs_dev_repo(master, 'puppet-agent', ENV['SHA'])
       master.install_package('puppetserver')
     end
   end
