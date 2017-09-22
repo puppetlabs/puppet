@@ -236,6 +236,39 @@ describe Puppet::Agent do
         expect(agent.should_fork).to be_falsey
       end
     end
+
+    describe 'when runtimeout is set' do
+      before(:each) do
+        Puppet[:runtimeout] = 1
+      end
+
+      it 'times out when a run exceeds the set limit' do
+        client = AgentTestClient.new
+        client.instance_eval do
+          # Stub methods used to set test expectations.
+          def processing; end
+          def handling; end
+
+          def run(client_options = {})
+            # Simulate a hanging agent operation that also traps errors.
+            begin
+              ::Kernel.sleep(5)
+              processing()
+            rescue
+              handling()
+            end
+          end
+        end
+
+        AgentTestClient.expects(:new).returns client
+
+        client.expects(:processing).never
+        client.expects(:handling).never
+        Puppet.expects(:log_exception).with(instance_of(Puppet::Agent::RunTimeoutError), anything)
+
+        expect(@agent.run).to eq(1)
+      end
+    end
   end
 
   describe "when checking execution state" do
