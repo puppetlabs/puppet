@@ -6,7 +6,7 @@
 #   including "user" and "password" parts of a URI.
 # * The returned value contains information about the result per node. TODO: needs mapping to a runtime Pcore Object to be useful
 #
-# 
+#
 # Since > 5.4.0 TODO: Update when version is known
 #
 Puppet::Functions.create_function(:run_task) do
@@ -53,7 +53,7 @@ Puppet::Functions.create_function(:run_task) do
     end
 
     unless Puppet.features.bolt?
-      raise Puppet::ParseErrorWithIssue.from_issue_and_stack(Puppet::Pops::Issues::TASK_MISSING_BOLT)
+      raise Puppet::ParseErrorWithIssue.from_issue_and_stack(Puppet::Pops::Issues::TASK_MISSING_BOLT, :action => _('run a task'))
     end
 
     if hosts.empty?
