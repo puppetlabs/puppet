@@ -57,6 +57,21 @@ describe Puppet::Type.type(:scheduled_task), :if => Puppet.features.microsoft_wi
   end
 
   describe 'when setting whether the task is enabled or not' do
+    it 'should return true when enabled is set to true' do
+      expect(described_class.new(
+        :title   => 'Foo',
+        :command => 'C:\Windows\System32\notepad.exe',
+        :enabled => 'true',
+      )[:enabled]).to eq(:true)
+    end
+
+    it 'should return false when enabled is set to false' do
+      expect(described_class.new(
+        :title   => 'Foo',
+        :command => 'C:\Windows\System32\notepad.exe',
+        :enabled => 'false',
+      )[:enabled]).to eq(:false)
+    end
   end
 
   describe 'when setting the working directory' do
