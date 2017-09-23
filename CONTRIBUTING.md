@@ -47,9 +47,12 @@ for advice.
     `master` branch.
 * Make commits of logical units.
 * Check for unnecessary whitespace with `git diff --check` before committing.
-* Make sure your commit messages are in the proper format.
+* Make sure your commit messages are in the proper format. If the commit
+  addresses an issue filed in the
+  [Puppet Jira project](https://tickets.puppetlabs.com/browse/PUP), start
+  the first line of the commit with the issue number in parentheses.
 
-````
+```
     (PUP-1234) Make the example in CONTRIBUTING imperative and concrete
 
     Without this patch applied the example commit message in the CONTRIBUTING
@@ -61,7 +64,7 @@ for advice.
     The first line is a real life imperative statement with a ticket number
     from our issue tracker.  The body describes the behavior without the patch,
     why this is a problem, and how the patch fixes the problem when applied.
-````
+```
 
 * Make sure you have added the necessary tests for your changes.
 * Run _all_ the tests to assure nothing else was accidentally broken.
@@ -77,7 +80,7 @@ for the translators.
 When adding user-facing strings to your work, follow these guidelines:
 * Use full sentences. Strings built up out of concatenated bits are hard to translate.
 * Use string formatting instead of interpolation.
-    Ex. `_('Creating new user %{name}.') % { name: user.name }`
+  For example: `_('Creating new user %{name}.') % { name: user.name }`
 * Use `n_()` for pluralization. (see gettext gem docs linked above for details)
 
 It is the responsibility of contributors and code reviewers to ensure that all
@@ -89,21 +92,28 @@ user-facing strings are marked in new PRs before merging.
 
 For changes of a trivial nature to comments and documentation, it is not
 always necessary to create a new ticket in Jira. In this case, it is
-appropriate to start the first line of a commit with '(doc)' instead of
+appropriate to start the first line of a commit with `(docs)` instead of
 a ticket number.
 
-````
-    (doc) Add documentation commit example to CONTRIBUTING
+If a Jira ticket exists for the documentation commit, you can include it
+after the `(docs)` token.
+
+```
+    (docs)(DOCUMENT-000) Add docs commit example to CONTRIBUTING
 
     There is no example for contributing a documentation commit
     to the Puppet repository. This is a problem because the contributor
     is left to assume how a commit of this nature may appear.
 
-    The first line is a real life imperative statement with '(doc)' in
-    place of what would have been the ticket number in a
+    The first line is a real life imperative statement with '(docs)' in
+    place of what would have been the PUP project ticket number in a
     non-documentation related commit. The body describes the nature of
     the new documentation or comments added.
-````
+```
+
+For commits that address trivial repository maintenance tasks or packaging
+issues, start the first line of the commit with `(maint)` or `(packaging)`,
+respectively.
 
 ## Submitting Changes
 
