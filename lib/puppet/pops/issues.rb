@@ -753,6 +753,10 @@ module Issues
     _('No such file or directory: %{file}') % { file: file }
   end
 
+  NOT_A_FILE = hard_issue :NOT_A_FILE, :file do
+    _('%{file} is not a file') % { file: file }
+  end
+
   NUMERIC_OVERFLOW = hard_issue :NUMERIC_OVERFLOW, :value do
     if value > 0
       _("%{expression} resulted in a value outside of Puppet Integer max range, got '%{value}'") % { expression: label.a_an_uc(semantic), value: ("%#+x" % value) }
