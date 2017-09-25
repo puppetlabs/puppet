@@ -19,11 +19,11 @@ describe Puppet::Transaction do
   end
 
   def touch_path
-    Puppet.features.microsoft_windows? ? "#{ENV['windir']}/system32" : "/usr/bin:/bin"
+    Puppet.features.microsoft_windows? ? "#{ENV['windir']}\\system32" : "/usr/bin:/bin"
   end
 
   def usr_bin_touch(path)
-    Puppet.features.microsoft_windows? ? "#{ENV['windir']}/system32/cmd.exe /c \"type NUL >> \"#{path}\"\"" : "/usr/bin/touch #{path}"
+    Puppet.features.microsoft_windows? ? "#{ENV['windir']}\\system32\\cmd.exe /c \"type NUL >> \"#{path}\"\"" : "/usr/bin/touch #{path}"
   end
 
   def touch(path)
