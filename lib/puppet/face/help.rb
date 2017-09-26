@@ -14,7 +14,7 @@ Puppet::Face.define(:help, '0.0.1') do
     summary _("Display help about Puppet subcommands and their actions.")
     arguments _("[<subcommand>] [<action>]")
     returns _("Short help text for the specified subcommand or action.")
-    examples _(<<-'EOT')
+    examples <<-'EOT'
       Get help for an action:
 
       $ puppet help
@@ -78,7 +78,7 @@ Puppet::Face.define(:help, '0.0.1') do
   def render_application_help(applicationname)
     return Puppet::Application[applicationname].help
   rescue StandardError, LoadError => detail
-    msg = _(<<-MSG) % { applicationname: applicationname, detail: detail.message }
+    msg = <<-MSG % { applicationname: applicationname, detail: detail.message }
 Could not load help for the application %{applicationname}.
 Please check the error logs for more information.
 
@@ -91,7 +91,7 @@ MSG
     face, action = load_face_help(facename, actionname, version)
     return template_for(face, action).result(binding)
   rescue StandardError, LoadError => detail
-    msg = _(<<-MSG) % { facename: facename, detail: detail.message }
+    msg = <<-MSG % { facename: facename, detail: detail.message }
 Could not load help for the face %{facename}.
 Please check the error logs for more information.
 

@@ -25,7 +25,7 @@ Puppet::Face.define(:man, '0.0.1') do
   action(:man) do
     summary _("Display the manual page for a Puppet subcommand.")
     arguments _("<subcommand>")
-    returns _(<<-'EOT')
+    returns <<-'EOT'
       The man data, in Markdown format, suitable for consumption by Ronn.
 
       RENDERING ISSUES: To skip fancy formatting and output the raw Markdown
