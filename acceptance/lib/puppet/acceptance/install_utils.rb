@@ -120,65 +120,72 @@ module Puppet
       def install_repos_on(host, project, sha, repo_configs_dir)
         platform = host['platform'].with_version_codename
         platform_configs_dir = File.join(repo_configs_dir,platform)
-        tld     = sha == 'nightly' ? 'nightlies.puppetlabs.com' : 'builds.puppetlabs.lan'
-        project = sha == 'nightly' ? project + '-latest'        :  project
-        sha     = sha == 'nightly' ? nil                        :  sha
+        dev_builds_url  = ENV['DEV_BUILDS_URL'] || 'http://builds.delivery.puppetlabs.net'
+        tld             = sha == 'nightly' ? 'http://nightlies.puppetlabs.com'  :  dev_builds_url
+        project         = sha == 'nightly' ? project + '-latest'                :  project
+        sha             = sha == 'nightly' ? nil                                :  sha
 
-        case platform
-        when /^(fedora|el|centos)-(\d+)-(.+)$/
-          variant = (($1 == 'centos') ? 'el' : $1)
-          fedora_prefix = ((variant == 'fedora') ? 'f' : '')
-          version = $2
-          arch = $3
+        if sha.nil?
+          case platform
+          when /^(fedora|el|centos)-(\d+)-(.+)$/
+            variant = (($1 == 'centos') ? 'el' : $1)
+            fedora_prefix = ((variant == 'fedora') ? 'f' : '')
+            version = $2
+            arch = $3
 
-          repo_filename = "pl-%s%s-%s-%s%s-%s.repo" % [
-            project,
-            sha ? '-' + sha : '',
-            variant,
-            fedora_prefix,
-            version,
-            arch
-          ]
-          repo_url = "http://%s/%s/%s/repo_configs/rpm/%s" % [tld, project, sha, repo_filename]
+            repo_filename = "pl-%s%s-%s-%s%s-%s.repo" % [
+              project,
+              sha ? '-' + sha : '',
+              variant,
+              fedora_prefix,
+              version,
+              arch
+            ]
+            repo_url = "%s/%s/%s/repo_configs/rpm/%s" % [tld, project, sha, repo_filename]
 
-          on host, "curl -o /etc/yum.repos.d/#{repo_filename} #{repo_url}"
-        when /^(debian|ubuntu|cumulus)-([^-]+)-(.+)$/
-          variant = $1
-          version = $2
-          arch = $3
+            on host, "curl -o /etc/yum.repos.d/#{repo_filename} #{repo_url}"
+          when /^(debian|ubuntu|cumulus)-([^-]+)-(.+)$/
+            variant = $1
+            version = $2
+            arch = $3
 
-          if variant =~ /cumulus/ then
-            version = variant
-          end
+            if variant =~ /cumulus/ then
+              version = variant
+            end
 
-          list_filename = "pl-%s%s-%s.list" % [
-            project,
-            sha ? '-' + sha : '',
-            version
-          ]
-          list_url = "http://%s/%s/%s/repo_configs/deb/%s" % [tld, project, sha, list_filename]
+            list_filename = "pl-%s%s-%s.list" % [
+              project,
+              sha ? '-' + sha : '',
+              version
+            ]
+            list_url = "%s/%s/%s/repo_configs/deb/%s" % [tld, project, sha, list_filename]
 
-          on host, "curl -o /etc/apt/sources.list.d/#{list_filename} #{list_url}"
-          on host, "apt-get update"
-        else
-          if project == 'puppet-agent'
-            opts = {
-              :puppet_collection => 'PC1',
-              :puppet_agent_sha => ENV['SHA'],
-              # SUITE_VERSION is necessary for Beaker to build a package download
-              # url which is built upon a `git describe` for a SHA.
-              # Beaker currently cannot find or calculate this value based on
-              # the SHA, and thus it must be passed at invocation time.
-              # The one exception is when SHA is a tag like `1.8.0` and
-              # SUITE_VERSION will be equivalent.
-              # RE-8333 may make this unnecessary in the future
-              :puppet_agent_version => ENV['SUITE_VERSION'] || ENV['SHA']
-            }
-            # this installs puppet-agent on windows (msi), osx (dmg) and eos (swix)
-            install_puppet_agent_dev_repo_on(agent, opts)
+            on host, "curl -o /etc/apt/sources.list.d/#{list_filename} #{list_url}"
+            on host, "apt-get update"
           else
-            fail_test("No repository installation step for #{platform} yet...")
+            if project == 'puppet-agent'
+              opts = {
+                :puppet_collection => 'PC1',
+                :puppet_agent_sha => ENV['SHA'],
+                # SUITE_VERSION is necessary for Beaker to build a package download
+                # url which is built upon a `git describe` for a SHA.
+                # Beaker currently cannot find or calculate this value based on
+                # the SHA, and thus it must be passed at invocation time.
+                # The one exception is when SHA is a tag like `1.8.0` and
+                # SUITE_VERSION will be equivalent.
+                # RE-8333 may make this unnecessary in the future
+                :puppet_agent_version => ENV['SUITE_VERSION'] || ENV['SHA']
+              }
+              # this installs puppet-agent on windows (msi), osx (dmg) and eos (swix)
+              install_puppet_agent_dev_repo_on(agent, opts)
+            else
+              fail_test("No repository installation step for #{platform} yet...")
+            end
           end
+        else
+          base_url, build_details = fetch_build_details("#{tld}/#{project}/#{sha}/artifacts/#{sha}.yaml")
+          _, repoconfig_url = host_urls(host, build_details, base_url)
+          install_repo_configs_on(host, repoconfig_url)
         end
       end
 
