@@ -3,7 +3,7 @@ Puppet::Face.define(:catalog, '0.0.1') do
   action :select do
     summary _("Retrieve a catalog and filter it for resources of a given type.")
     arguments _("<host> <resource_type>")
-    returns <<-'EOT'
+    returns _(<<-'EOT')
       A list of resource references ("Type[title]"). When used from the API,
       returns an array of Puppet::Resource objects excised from a catalog.
     EOT

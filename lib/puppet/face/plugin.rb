@@ -24,7 +24,7 @@ Puppet::Face.define(:plugin, '0.0.1') do
       downloaded in this way will be used in all subsequent Puppet activity.
       This action modifies files on disk.
     EOT
-    returns <<-'EOT'
+    returns _(<<-'EOT')
       A list of the files downloaded, or a confirmation that no files were
       downloaded. When used from the Ruby API, this action returns an array of
       the files downloaded, which will be empty if none were retrieved.
