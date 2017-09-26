@@ -13,7 +13,7 @@ Puppet::Indirector::Face.define(:status, '0.0.1') do
   find = get_action(:find)
   find.default = true
   find.summary _("Check status of puppet master server.")
-  find.returns <<-'EOT'
+  find.returns _(<<-'EOT')
     A "true" response or a low-level connection error. When used from the Ruby
     API: returns a Puppet::Status object.
   EOT

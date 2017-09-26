@@ -50,7 +50,7 @@ module Puppet::ModuleTool::Errors
     end
 
     def multiline
-      <<-MSG.strip % { module_name: @requested_module, version: @requested_version, dir: @directory }
+      _(<<-MSG).strip % { module_name: @requested_module, version: @requested_version, dir: @directory }
 Could not install module '%{module_name}' (%{version})
   Path '%{dir}' exists but is not a directory.
   A potential solution is to rename the path and then
@@ -68,7 +68,7 @@ Could not install module '%{module_name}' (%{version})
     end
 
     def multiline
-      <<-MSG.strip % { module_name: @requested_module, version: @requested_version, dir: @directory }
+      _(<<-MSG).strip % { module_name: @requested_module, version: @requested_version, dir: @directory }
 Could not install module '%{module_name}' (%{version})
   Permission is denied when trying to create directory '%{dir}'.
   A potential solution is to check the ownership and permissions of
@@ -85,7 +85,7 @@ Could not install module '%{module_name}' (%{version})
     end
 
     def multiline
-      <<-MSG.strip % { path: @entry_path.inspect, dir: @directory.inspect }
+      _(<<-MSG).strip % { path: @entry_path.inspect, dir: @directory.inspect }
 Could not install package with an invalid path.
   Package attempted to install file into
   %{path} under %{dir}.
