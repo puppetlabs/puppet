@@ -17,7 +17,7 @@ Puppet::Indirector::Face.define(:node, '0.0.1') do
   find = get_action(:find)
   find.summary _("Retrieve a node object.")
   find.arguments _("<host>")
-  find.returns _(<<-'EOT')
+  find.returns <<-'EOT'
     A hash containing the node's `classes`, `environment`, `expiration`, `name`,
     `parameters` (its facts, combined with any ENC-set parameters), and `time`.
     When used from the Ruby API: a Puppet::Node object.
