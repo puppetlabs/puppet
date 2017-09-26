@@ -6,12 +6,12 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.1.0-138-g2088f82\n"
+"Project-Id-Version: Puppet automation framework 5.2.0-39-gd1951d8\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-09-06 15:11+0000\n"
-"PO-Revision-Date: 2017-09-06 15:11+0000\n"
-"Last-Translator: sayaka inagaki <sayaka-inagaki@to-in.co.jp>, 2017\n"
+"POT-Creation-Date: 2017-09-18 19:09+0000\n"
+"PO-Revision-Date: 2017-09-18 19:09+0000\n"
+"Last-Translator: Hidekatsu Tsuru <hidekatsu-tsuru@to-in.co.jp>, 2017\n"
 "Language-Team: Japanese (Japan) (https://www.transifex.com/puppet/teams/29089/ja_JP/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -229,15 +229,15 @@ msgstr "リソース型に関するヘルプを表示"
 msgid "Manage remote network devices"
 msgstr "リモートネットワークデバイスを管理"
 
-#: ../lib/puppet/application/device.rb:197
+#: ../lib/puppet/application/device.rb:204
 msgid "Target device / certificate '%{target}' not found in %{config}"
 msgstr "ターゲットのデバイス/証明書'%{target}'が%{config}で見つかりません。"
 
-#: ../lib/puppet/application/device.rb:199
+#: ../lib/puppet/application/device.rb:206
 msgid "No device found in %{config}"
 msgstr "デバイスが%{config}で見つかりません。"
 
-#: ../lib/puppet/application/device.rb:209
+#: ../lib/puppet/application/device.rb:216
 msgid ""
 "starting applying configuration to %{target} at "
 "%{scheme}%{url_host}%{port}%{url_path}"
@@ -3621,22 +3621,49 @@ msgstr "アプリケーション%{app}が複数のノードをコンポーネン
 msgid "Unknown content encoding - %{encoding}"
 msgstr "不明なコンテンツエンコーディング - %{encoding}"
 
-#: ../lib/puppet/network/http/connection.rb:54
+#: ../lib/puppet/network/http/connection.rb:55
 msgid "Unrecognized option(s): %{opts}"
 msgstr "認識されていないオプション: %{opts}"
 
-#: ../lib/puppet/network/http/connection.rb:200
+#: ../lib/puppet/network/http/connection.rb:203
 msgid "Too many HTTP redirections for %{host}:%{port}"
 msgstr "%{host}のHTTPリダイレクションが多すぎます:%{port}"
 
-#: ../lib/puppet/network/http/connection.rb:227
-msgid "one of %{certnames}"
-msgstr "%{certnames}の1つ"
+#. TRANSLATORS: Used in the phrase:
+#. "Received a response from the remote server."
+#: ../lib/puppet/network/http/connection.rb:234
+msgid "the remote server"
+msgstr "リモートサーバー"
 
-#: ../lib/puppet/network/http/connection.rb:228
+#: ../lib/puppet/network/http/connection.rb:238
 msgid ""
-"Server hostname '%{host}' did not match server certificate; expected %{msg}"
-msgstr "サーバホスト名'%{host}'がサーバ証明書と一致しませんでした; %{msg}が予期されています。"
+"Received a %{status_code} response from %{server_hostname}, but the Retry-"
+"After header value of \"%{retry_after}\" could not be converted to an "
+"integer or RFC 2822 date."
+msgstr ""
+"%{server_hostname}から%{status_code}応答を受信しましたが、\"%{retry_after}\"のRetry-"
+"Afterヘッダ値を整数またはRFC 2822日付に変換できませんでした。"
+
+#: ../lib/puppet/network/http/connection.rb:249
+msgid ""
+"Received a %{status_code} response from %{server_hostname}. Sleeping for "
+"%{retry_sleep} seconds before retrying the request."
+msgstr ""
+"%{server_hostname}から%{status_code}応答を受信しました。リクエストを再試行する前に%{retry_sleep}秒間スリープ中です。"
+
+#: ../lib/puppet/network/http/connection.rb:320
+msgid "expected one of %{certnames}"
+msgstr "想定される%{certnames}の1つ"
+
+#: ../lib/puppet/network/http/connection.rb:322
+msgid "expected %{certname}"
+msgstr "想定される%{certname}"
+
+#: ../lib/puppet/network/http/connection.rb:325
+msgid ""
+"Server hostname '%{host}' did not match server certificate; "
+"%{expected_certnames}"
+msgstr "サーバーホスト名'%{host}'がサーバー証明書; %{expected_certnames}と一致しませんでした"
 
 #: ../lib/puppet/network/http/error.rb:23
 msgid "Not Acceptable: "
@@ -4030,11 +4057,11 @@ msgstr "環境コンパイル: mainが検証されました。"
 
 #: ../lib/puppet/parser/environment_compiler.rb:66
 msgid "Env Compile: Evaluated site"
-msgstr "環境コンパイル: siteを検証"
+msgstr "環境コンパイル: siteが検証されました。"
 
 #: ../lib/puppet/parser/environment_compiler.rb:68
 msgid "Env Compile: Evaluated application instances"
-msgstr "環境コンパイル: アプリケーションインスタンスを検証"
+msgstr "環境コンパイル: アプリケーションインスタンスが検証されました。"
 
 #: ../lib/puppet/parser/environment_compiler.rb:70
 msgid "Env Compile: Prune"
@@ -4058,7 +4085,7 @@ msgstr "環境コンパイラ: 検証するsite定義が見つかりませんで
 
 #: ../lib/puppet/parser/environment_compiler.rb:162
 msgid "Evaluated application %{resource}"
-msgstr "検証されたアプリケーション%{resource}"
+msgstr "アプリケーション%{resource}が検証されました。"
 
 #: ../lib/puppet/parser/functions.rb:149
 msgid "Overwriting previous definition for function %{name}"
@@ -4170,7 +4197,7 @@ msgstr "%{resource}により指定されたステージ%{stage}が見つかり�
 
 #: ../lib/puppet/parser/resource.rb:71
 msgid "Evaluated resource %{res}"
-msgstr "検証されたリソース%{res}"
+msgstr "Resource%{res}が検証されました。"
 
 #: ../lib/puppet/parser/resource.rb:125
 msgid "Resources require a hash as last argument"
@@ -6804,6 +6831,12 @@ msgstr "無効なautosign値%{value}: 'true'/'false'または絶対パスでな�
 msgid "Invalid value '%{value}' for boolean parameter: %{name}"
 msgstr "ブーリアンパラメータに関して無効な値'%{value}': %{name}"
 
+#: ../lib/puppet/settings/certificate_revocation_setting.rb:18
+msgid ""
+"Invalid certificate revocation value %{value}: must be one of 'true', "
+"'chain', 'leaf', or 'false'"
+msgstr "無効な証明書失効値%{value}です: 'true'、'chain'、'leaf'、または'false'のいずれかである必要があります"
+
 #: ../lib/puppet/settings/config_file.rb:38
 msgid "Could not match line %{text}"
 msgstr "行%{text}が一致しませんでした。"
@@ -7219,21 +7252,27 @@ msgstr ""
 "  1b. Windows: del \"%{cert_dir}\\\\%{cert_name}.pem\" /f\n"
 "  2. puppet agent -t\n"
 
-#: ../lib/puppet/ssl/host.rb:347 ../lib/puppet/ssl/host.rb:368
+#: ../lib/puppet/ssl/host.rb:333 ../lib/puppet/ssl/host.rb:354
 msgid "Could not request certificate: %{message}"
 msgstr "証明書をリクエストできませんでした: %{message}"
 
-#: ../lib/puppet/ssl/host.rb:349
+#: ../lib/puppet/ssl/host.rb:335
 msgid "Exiting; failed to retrieve certificate and waitforcert is disabled"
 msgstr "終了しています; 証明書の取得に失敗し、waitforcertが無効になっています。"
 
-#: ../lib/puppet/ssl/host.rb:358
+#: ../lib/puppet/ssl/host.rb:344
 msgid "Exiting; no certificate found and waitforcert is disabled"
 msgstr "終了しています; 証明書が見つからず、waitforcertが無効になっています。"
 
-#: ../lib/puppet/ssl/host.rb:366
+#: ../lib/puppet/ssl/host.rb:352
 msgid "Did not receive certificate"
 msgstr "証明書を受信していません。"
+
+#: ../lib/puppet/ssl/host.rb:393
+msgid ""
+"Certificate revocation checking is enabled but a CRL cannot be found; CRL "
+"checking will not be performed."
+msgstr "証明書失効チェックが有効化されていますがCRLが見つかりません; CRLチェックは実行されません。"
 
 #: ../lib/puppet/ssl/inventory.rb:32
 msgid "Rebuilding inventory file"
