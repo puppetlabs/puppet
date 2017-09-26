@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.0-3-g6116199\n"
+"Project-Id-Version: Puppet automation framework 5.3.0-6-gf66f9d9\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-09-26 13:24+0000\n"
-"PO-Revision-Date: 2017-09-26 13:24+0000\n"
+"POT-Creation-Date: 2017-09-26 17:02+0000\n"
+"PO-Revision-Date: 2017-09-26 17:02+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -71,6 +71,13 @@ msgstr ""
 
 #: ../lib/puppet/agent/locker.rb:26
 msgid "Failed to acquire lock"
+msgstr ""
+
+#: ../lib/puppet/agent/locker.rb:32
+msgid ""
+"Puppet::Agent::Locker.running? is deprecated as it is inherently unsafe.\n"
+"The only safe way to know if the lock is locked is to try lock and perform some\n"
+"action and then handle the LockError that may result.\n"
 msgstr ""
 
 #: ../lib/puppet/application.rb:231
@@ -645,6 +652,12 @@ msgstr ""
 msgid "<host> <resource_type>"
 msgstr ""
 
+#: ../lib/puppet/face/catalog/select.rb:6
+msgid ""
+"      A list of resource references (\"Type[title]\"). When used from the API,\n"
+"      returns an array of Puppet::Resource objects excised from a catalog.\n"
+msgstr ""
+
 #: ../lib/puppet/face/catalog/select.rb:43
 msgid "no matching resources found"
 msgstr ""
@@ -930,6 +943,13 @@ msgstr ""
 msgid "Short help text for the specified subcommand or action."
 msgstr ""
 
+#: ../lib/puppet/face/help.rb:17
+msgid ""
+"      Get help for an action:\n"
+"\n"
+"      $ puppet help\n"
+msgstr ""
+
 #: ../lib/puppet/face/help.rb:23
 msgid "VERSION"
 msgstr ""
@@ -948,6 +968,22 @@ msgstr ""
 
 #: ../lib/puppet/face/help.rb:69
 msgid "Legacy subcommands don't take actions"
+msgstr ""
+
+#: ../lib/puppet/face/help.rb:81
+msgid ""
+"Could not load help for the application %{applicationname}.\n"
+"Please check the error logs for more information.\n"
+"\n"
+"Detail: \"%{detail}\"\n"
+msgstr ""
+
+#: ../lib/puppet/face/help.rb:94
+msgid ""
+"Could not load help for the face %{facename}.\n"
+"Please check the error logs for more information.\n"
+"\n"
+"Detail: \"%{detail}\"\n"
 msgstr ""
 
 #: ../lib/puppet/face/help.rb:108
@@ -976,6 +1012,14 @@ msgstr ""
 
 #: ../lib/puppet/face/man.rb:27
 msgid "<subcommand>"
+msgstr ""
+
+#: ../lib/puppet/face/man.rb:28
+msgid ""
+"      The man data, in Markdown format, suitable for consumption by Ronn.\n"
+"\n"
+"      RENDERING ISSUES: To skip fancy formatting and output the raw Markdown\n"
+"      text (e.g. for use in a pipeline), call this action with '--render-as s'.\n"
 msgstr ""
 
 #: ../lib/puppet/face/module.rb:11
@@ -1269,6 +1313,16 @@ msgstr ""
 msgid "Retrieve a node object."
 msgstr ""
 
+#: ../lib/puppet/face/node.rb:20
+msgid ""
+"    A hash containing the node's `classes`, `environment`, `expiration`, `name`,\n"
+"    `parameters` (its facts, combined with any ENC-set parameters), and `time`.\n"
+"    When used from the Ruby API: a Puppet::Node object.\n"
+"\n"
+"    RENDERING ISSUES: Rendering as string and json are currently broken;\n"
+"    node objects can only be rendered as yaml.\n"
+msgstr ""
+
 #: ../lib/puppet/face/node/clean.rb:4
 msgid "Clean up signed certs, cached facts, node objects, and reports for a node stored by the puppetmaster"
 msgstr ""
@@ -1355,6 +1409,13 @@ msgstr ""
 msgid "Download plugins from the puppet master."
 msgstr ""
 
+#: ../lib/puppet/face/plugin.rb:27
+msgid ""
+"      A list of the files downloaded, or a confirmation that no files were\n"
+"      downloaded. When used from the Ruby API, this action returns an array of\n"
+"      the files downloaded, which will be empty if none were retrieved.\n"
+msgstr ""
+
 #: ../lib/puppet/face/plugin.rb:52
 msgid "No plugins downloaded."
 msgstr ""
@@ -1433,6 +1494,12 @@ msgstr ""
 
 #: ../lib/puppet/face/status.rb:15
 msgid "Check status of puppet master server."
+msgstr ""
+
+#: ../lib/puppet/face/status.rb:16
+msgid ""
+"    A \"true\" response or a low-level connection error. When used from the Ruby\n"
+"    API: returns a Puppet::Status object.\n"
 msgstr ""
 
 #. TRANSLATORS "win32-process", "win32-dir", and "win32-service" are program names and should not be translated
@@ -1718,12 +1785,35 @@ msgstr ""
 msgid "Unable to verify the SSL certificate at %{uri}"
 msgstr ""
 
+#: ../lib/puppet/forge/errors.rb:35
+msgid ""
+"Could not connect via HTTPS to %{uri}\n"
+"  Unable to verify the SSL certificate\n"
+"    The certificate may not be signed by a valid CA\n"
+"    The CA bundle included with OpenSSL may not be valid or up to date\n"
+msgstr ""
+
 #: ../lib/puppet/forge/errors.rb:54
 msgid "Unable to connect to the server at %{uri}. Detail: %{detail}."
 msgstr ""
 
+#: ../lib/puppet/forge/errors.rb:62
+msgid ""
+"Could not connect to %{uri}\n"
+"  There was a network communications problem\n"
+"    The error we caught said '%{detail}'\n"
+"    Check your network connection and try again\n"
+msgstr ""
+
 #: ../lib/puppet/forge/errors.rb:92
 msgid "Request to Puppet Forge failed. Detail: "
+msgstr ""
+
+#: ../lib/puppet/forge/errors.rb:102
+msgid ""
+"Request to Puppet Forge failed.\n"
+"  The server being queried was %{uri}\n"
+"  The HTTP response we received was '%{response}'\n"
 msgstr ""
 
 #: ../lib/puppet/forge/errors.rb:107
@@ -2620,12 +2710,35 @@ msgstr ""
 msgid "'%{module_name}' (%{version}) requested; Path %{dir} is not a directory."
 msgstr ""
 
+#: ../lib/puppet/module_tool/errors/installer.rb:53
+msgid ""
+"Could not install module '%{module_name}' (%{version})\n"
+"  Path '%{dir}' exists but is not a directory.\n"
+"  A potential solution is to rename the path and then\n"
+"  mkdir -p '%{dir}'\n"
+msgstr ""
+
 #: ../lib/puppet/module_tool/errors/installer.rb:67
 msgid "'%{module_name}' (%{version}) requested; Permission is denied to create %{dir}."
 msgstr ""
 
+#: ../lib/puppet/module_tool/errors/installer.rb:71
+msgid ""
+"Could not install module '%{module_name}' (%{version})\n"
+"  Permission is denied when trying to create directory '%{dir}'.\n"
+"  A potential solution is to check the ownership and permissions of\n"
+"  parent directories.\n"
+msgstr ""
+
 #: ../lib/puppet/module_tool/errors/installer.rb:84
 msgid "Attempt to install file with an invalid path into %{path} under %{dir}"
+msgstr ""
+
+#: ../lib/puppet/module_tool/errors/installer.rb:88
+msgid ""
+"Could not install package with an invalid path.\n"
+"  Package attempted to install file into\n"
+"  %{path} under %{dir}.\n"
 msgstr ""
 
 #: ../lib/puppet/module_tool/errors/shared.rb:11
@@ -6112,6 +6225,34 @@ msgstr ""
 
 #: ../lib/puppet/ssl/host.rb:211
 msgid "No private key with which to validate certificate with fingerprint: %{fingerprint}"
+msgstr ""
+
+#: ../lib/puppet/ssl/host.rb:213
+msgid ""
+"The certificate retrieved from the master does not match the agent's private key.\n"
+"Certificate fingerprint: %{fingerprint}\n"
+"To fix this, remove the certificate from both the master and the agent and then start a puppet run, which will automatically regenerate a certificate.\n"
+"On the master:\n"
+"  puppet cert clean %{cert_name}\n"
+"On the agent:\n"
+"  1a. On most platforms: find %{ssl_dir} -name %{cert_name}.pem -delete\n"
+"  1b. On Windows: del \"%{cert_dir}\\\\%{cert_name}.pem\" /f\n"
+"  2. puppet agent -t\n"
+msgstr ""
+
+#: ../lib/puppet/ssl/host.rb:238
+msgid ""
+"The CSR retrieved from the master does not match the agent's public key.\n"
+"CSR fingerprint: %{fingerprint}\n"
+"CSR public key: %{csr_public_key}\n"
+"Agent public key: %{agent_public_key}\n"
+"To fix this, remove the CSR from both the master and the agent and then start a puppet run, which will automatically regenerate a CSR.\n"
+"On the master:\n"
+"  puppet cert clean %{cert_name}\n"
+"On the agent:\n"
+"  1a. On most platforms: find %{ssl_dir} -name %{cert_name}.pem -delete\n"
+"  1b. On Windows: del \"%{cert_dir}\\\\%{cert_name}.pem\" /f\n"
+"  2. puppet agent -t\n"
 msgstr ""
 
 #: ../lib/puppet/ssl/host.rb:333 ../lib/puppet/ssl/host.rb:354
