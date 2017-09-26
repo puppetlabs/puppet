@@ -1,10 +1,12 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'puppet_spec/compiler'
 
 require 'puppet/transaction'
 
 describe Puppet::Transaction do
   include PuppetSpec::Files
+  include PuppetSpec::Compiler
 
   before do
     Puppet::Util::Storage.stubs(:store)
@@ -17,11 +19,11 @@ describe Puppet::Transaction do
   end
 
   def touch_path
-    Puppet.features.microsoft_windows? ? "#{ENV['windir']}/system32" : "/usr/bin:/bin"
+    Puppet.features.microsoft_windows? ? "#{ENV['windir']}\\system32" : "/usr/bin:/bin"
   end
 
   def usr_bin_touch(path)
-    Puppet.features.microsoft_windows? ? "#{ENV['windir']}/system32/cmd.exe /c \"type NUL >> \"#{path}\"\"" : "/usr/bin/touch #{path}"
+    Puppet.features.microsoft_windows? ? "#{ENV['windir']}\\system32\\cmd.exe /c \"type NUL >> \"#{path}\"\"" : "/usr/bin/touch #{path}"
   end
 
   def touch(path)
@@ -337,6 +339,37 @@ describe Puppet::Transaction do
         expect(Puppet::FileSystem.exist?(file1)).to be_truthy
         expect(Puppet::FileSystem.exist?(file2)).to be_truthy
       end
+    end
+
+    it "should propagate events correctly from a tagged container when running with tags" do
+      file1 = tmpfile("original_tag")
+      file2 = tmpfile("tag_propagation")
+      command1 = usr_bin_touch(file1)
+      command2 = usr_bin_touch(file2)
+      manifest = <<-"MANIFEST"
+        class foo {
+          exec { 'notify test':
+            command     => '#{command1}',
+            refreshonly => true,
+          }
+        }
+
+        class test {
+          include foo
+
+          exec { 'test':
+            command => '#{command2}',
+            notify  => Class['foo'],
+          }
+        }
+
+        include test
+      MANIFEST
+
+      Puppet[:tags] = 'test'
+      apply_compiled_manifest(manifest)
+      expect(Puppet::FileSystem.exist?(file1)).to be_truthy
+      expect(Puppet::FileSystem.exist?(file2)).to be_truthy
     end
   end
 
