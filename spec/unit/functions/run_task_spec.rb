@@ -180,6 +180,12 @@ describe 'the run_task function' do
           notice type($a)
         CODE
       end
+
+      it 'with non existing task - reports an unknown task error' do
+        expect{eval_and_collect_notices(<<-CODE, node)}.to raise_error(/Task not found: test::nonesuch/)
+          run_task('test::nonesuch', [])
+        CODE
+      end
     end
 
   end

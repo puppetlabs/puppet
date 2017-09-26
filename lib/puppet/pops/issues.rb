@@ -880,5 +880,9 @@ module Issues
   TASK_MISSING_BOLT = issue :TASK_MISSING_BOLT, :action do
     _("The 'bolt' library is required to %{action}") % { action: action }
   end
+
+  UNKNOWN_TASK = issue :UNKNOWN_TASK, :type_name do
+    _('Task not found: %{type_name}') % { type_name: type_name }
+  end
 end
 end
