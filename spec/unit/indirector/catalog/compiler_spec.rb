@@ -226,12 +226,12 @@ describe Puppet::Resource::Catalog::Compiler do
     it "errors if checksum_type contains no shared checksum types" do
       Puppet::Node.indirection.stubs(:find).returns(node)
       @request.options[:static_catalog] = true
-      @request.options[:checksum_type] = 'atime.sha512'
+      @request.options[:checksum_type] = 'atime.md2'
       @request.options[:code_id] = 'some_code_id'
       node.environment.stubs(:static_catalogs?).returns true
 
       expect { compiler.find(@request) }.to raise_error Puppet::Error,
-        "Unable to find a common checksum type between agent 'atime.sha512' and master '[:sha256, :sha256lite, :md5, :md5lite, :sha1, :sha1lite, :mtime, :ctime, :none]'."
+        "Unable to find a common checksum type between agent 'atime.md2' and master '[:sha256, :sha256lite, :md5, :md5lite, :sha1, :sha1lite, :sha512, :sha384, :sha224, :mtime, :ctime, :none]'."
     end
 
     it "errors if checksum_type contains no shared checksum types" do
@@ -242,7 +242,7 @@ describe Puppet::Resource::Catalog::Compiler do
       node.environment.stubs(:static_catalogs?).returns true
 
       expect { compiler.find(@request) }.to raise_error Puppet::Error,
-        "Unable to find a common checksum type between agent '' and master '[:sha256, :sha256lite, :md5, :md5lite, :sha1, :sha1lite, :mtime, :ctime, :none]'."
+        "Unable to find a common checksum type between agent '' and master '[:sha256, :sha256lite, :md5, :md5lite, :sha1, :sha1lite, :sha512, :sha384, :sha224, :mtime, :ctime, :none]'."
     end
   end
 

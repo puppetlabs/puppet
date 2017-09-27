@@ -1816,7 +1816,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     end
   end
 
-  [:md5, :sha256, :md5lite, :sha256lite].each do |checksum|
+  [:md5, :sha256, :md5lite, :sha256lite, :sha384, :sha512, :sha224].each do |checksum|
     describe "setting checksum_value explicitly with checksum #{checksum}" do
       let(:path) { tmpfile('target') }
       let(:contents) { 'yay' }
