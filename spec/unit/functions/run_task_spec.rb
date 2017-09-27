@@ -188,7 +188,6 @@ describe 'the run_task function' do
       end
 
       it 'with name of puppet runtime type - reports an unknown task error' do
-        pending 'Fix for PUP-7996'
         expect{eval_and_collect_notices(<<-CODE, node)}.to raise_error(/Task not found: package/)
           run_task(package, [])
         CODE
@@ -211,8 +210,6 @@ describe 'the run_task function' do
         }
 
         it 'the call does not load init.pp' do
-          pending 'Fix for PUP-7996'
-
           executor = mock('executor')
           Bolt::Executor.expects(:from_uris).never
           executor.expects(:run_task).never
