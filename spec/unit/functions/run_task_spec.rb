@@ -193,6 +193,36 @@ describe 'the run_task function' do
           run_task(package, [])
         CODE
       end
+
+      context 'on a module that contains manifests/init.pp' do
+        let(:env_dir_files) {
+          {
+            'modules' => {
+              'test' => {
+                'manifests' => {
+                  'init.pp' => 'class test ? this is not valid puppet ?'
+                },
+                'tasks' => {
+                  'echo.sh' => 'echo -n "$PT_message"',
+                }
+              }
+            }
+          }
+        }
+
+        it 'the call does not load init.pp' do
+          pending 'Fix for PUP-7996'
+
+          executor = mock('executor')
+          Bolt::Executor.expects(:from_uris).never
+          executor.expects(:run_task).never
+
+          expect(eval_and_collect_notices(<<-CODE, node)).to eql(['ok'])
+          run_task('test::echo', [])
+          notice ok
+          CODE
+        end
+      end
     end
   end
 end
