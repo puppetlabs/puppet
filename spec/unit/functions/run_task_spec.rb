@@ -186,7 +186,13 @@ describe 'the run_task function' do
           run_task('test::nonesuch', [])
         CODE
       end
-    end
 
+      it 'with name of puppet runtime type - reports an unknown task error' do
+        pending 'Fix for PUP-7996'
+        expect{eval_and_collect_notices(<<-CODE, node)}.to raise_error(/Task not found: package/)
+          run_task(package, [])
+        CODE
+      end
+    end
   end
 end
