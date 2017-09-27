@@ -39,6 +39,9 @@ Puppet::Functions.create_function(:run_task) do
 
   def run_named_task(task_name, nodes, task_args = nil)
     task_type = Puppet.lookup(:loaders).private_environment_loader.load(:type, task_name)
+    if task_type.nil?
+      raise Puppet::ParseErrorWithIssue.from_issue_and_stack(Puppet::Pops::Issues::UNKNOWN_TASK, :type_name => task_name)
+    end
     use_args = task_args.nil? ? {} : task_args
     task_instance = call_function('new', task_type, use_args)
     run_task_instance(task_instance, nodes)

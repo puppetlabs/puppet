@@ -180,7 +180,46 @@ describe 'the run_task function' do
           notice type($a)
         CODE
       end
-    end
 
+      it 'with non existing task - reports an unknown task error' do
+        expect{eval_and_collect_notices(<<-CODE, node)}.to raise_error(/Task not found: test::nonesuch/)
+          run_task('test::nonesuch', [])
+        CODE
+      end
+
+      it 'with name of puppet runtime type - reports an unknown task error' do
+        expect{eval_and_collect_notices(<<-CODE, node)}.to raise_error(/Task not found: package/)
+          run_task(package, [])
+        CODE
+      end
+
+      context 'on a module that contains manifests/init.pp' do
+        let(:env_dir_files) {
+          {
+            'modules' => {
+              'test' => {
+                'manifests' => {
+                  'init.pp' => 'class test ? this is not valid puppet ?'
+                },
+                'tasks' => {
+                  'echo.sh' => 'echo -n "$PT_message"',
+                }
+              }
+            }
+          }
+        }
+
+        it 'the call does not load init.pp' do
+          executor = mock('executor')
+          Bolt::Executor.expects(:from_uris).never
+          executor.expects(:run_task).never
+
+          expect(eval_and_collect_notices(<<-CODE, node)).to eql(['ok'])
+          run_task('test::echo', [])
+          notice ok
+          CODE
+        end
+      end
+    end
   end
 end
