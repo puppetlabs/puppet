@@ -143,18 +143,37 @@ module ModuleLoaders
       else
         # The name is in the global name space.
 
-        # The only globally name-spaced elements that may be loaded from modules are functions and resource types
         case typed_name.type
-        when :function
-        when :resource_type
-        when :resource_type_pp
-        when :type
+        when :function, :resource_type, :resource_type_pp
+          # Can be defined in module using a global name. No action required
+
+        when :plan
           if !global?
-            # Global name can only be the module typeset
+            # Global name must be the name of the module
             return nil unless name_parts[0] == module_name
 
+            # Look for the special 'init' plan.
+            origin, smart_path = find_existing_path(init_plan_name)
+            return smart_path.nil? ? nil : instantiate(smart_path, typed_name, origin)
+          end
+
+        when :type
+          if !global?
+            # Global name must be the name of the module
+            return nil unless name_parts[0] == module_name
+
+            # Look for the special 'init_typeset' TypeSet
             origin, smart_path = find_existing_path(init_typeset_name)
-            return nil unless smart_path
+
+            # The init_typeset has no special meaning unless found under the 'types' folder
+            unless smart_path.is_a?(LoaderPaths::TypePathPP)
+
+              # Look for the special 'init' Task
+              origin, smart_path = find_existing_path(init_type_name)
+
+              # The init has no special meaning unless found under the 'tasks' folder
+              return smart_path.is_a?(LoaderPaths::TaskPath) ? instantiate(smart_path, typed_name, origin) : nil
+            end
 
             value = smart_path.instantiator.create(self, typed_name, origin, get_contents(origin))
             if value.is_a?(Types::PTypeSetType)
@@ -175,15 +194,7 @@ module ModuleLoaders
       # The result is an array (that may be empty).
       # Find the file to instantiate, and instantiate the entity if file is found
       origin, smart_path = find_existing_path(typed_name)
-      if smart_path
-        if origin.is_a?(Array)
-          value = smart_path.instantiator.create(self, typed_name, origin)
-        else
-          value = smart_path.instantiator.create(self, typed_name, origin, get_contents(origin))
-        end
-        # cache the entry and return it
-        return set_entry(typed_name, value, origin)
-      end
+      return instantiate(smart_path, typed_name, origin) unless smart_path.nil?
 
       return nil unless typed_name.type == :type && typed_name.qualified?
 
@@ -203,6 +214,16 @@ module ModuleLoaders
         ts_name = ts_name.parent
       end
       nil
+    end
+
+    def instantiate(smart_path, typed_name, origin)
+      if origin.is_a?(Array)
+        value = smart_path.instantiator.create(self, typed_name, origin)
+      else
+        value = smart_path.instantiator.create(self, typed_name, origin, get_contents(origin))
+      end
+      # cache the entry and return it
+      set_entry(typed_name, value, origin)
     end
 
     # Abstract method that subclasses override that checks if it is meaningful to search using a generic smart path.
@@ -290,6 +311,18 @@ module ModuleLoaders
     # @return [TypedName] the fake typed name that maps to the init_typeset path for this module
     def init_typeset_name
       @init_typeset_name ||= TypedName.new(:type, "#{module_name}::init_typeset")
+    end
+
+    # @return [TypedName] the fake typed name that maps to the path of an init[arbitrary extension]
+    #   file that represents a task named after the module
+    def init_type_name
+      @init_type_name ||= TypedName.new(:type, "#{module_name}::init")
+    end
+
+    # @return [TypedName] the fake typed name that maps to the path of an init.pp file that represents
+    #   a plan named after the module
+    def init_plan_name
+      @init_plan_name ||= TypedName.new(:plan, "#{module_name}::init")
     end
 
     # Find an existing path or paths for the given `typed_name`. Return `nil` if no path is found

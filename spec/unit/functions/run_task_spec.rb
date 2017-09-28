@@ -220,6 +220,33 @@ describe 'the run_task function' do
           CODE
         end
       end
+
+      context 'on a module that contains tasks/init.sh' do
+        let(:env_dir_files) {
+          {
+            'modules' => {
+              'test' => {
+                'tasks' => {
+                  'init.sh' => 'echo -n "$PT_message"',
+                }
+              }
+            }
+          }
+        }
+
+        it 'finds task named after the module' do
+          executor = mock('executor')
+          executable = File.join(env_dir, 'modules/test/tasks/init.sh')
+
+          Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
+          executor.expects(:run_task).with(executable, 'both', {}).returns({ host => result })
+
+          expect(eval_and_collect_notices(<<-CODE, node)).to eql(["[#{message}]"])
+          $a = run_task('test', "#{hostname}")
+          notice $a
+          CODE
+        end
+      end
     end
   end
 end
