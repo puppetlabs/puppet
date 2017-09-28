@@ -53,7 +53,11 @@ group(:development, :test) do
   gem "multi_json", "1.7.7", :require => false, :platforms => [:ruby, :jruby]
   gem "json-schema", "2.1.1", :require => false, :platforms => [:ruby, :jruby]
 
-  gem "rubocop", "~> 0.39.0", :platforms => [:ruby]
+  if RUBY_VERSION >= '2.0'
+    # pin rubocop as 0.50 requires a higher version of the rainbow gem (see below)
+    gem 'rubocop', '~> 0.49.1', :platforms => [:ruby]
+  end
+
   # pin rainbow gem as 2.2.1 requires rubygems 2.6.9+ and (donotwant)
   gem "rainbow", "< 2.2.1", :platforms => [:ruby]
 
