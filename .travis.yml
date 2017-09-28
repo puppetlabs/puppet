@@ -7,6 +7,8 @@ sudo: false
 #   https://github.com/travis-ci/travis-ci/issues/8357
 before_install:
   - gem install bundler --version 1.15.4
+  - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+
 bundler_args: --without development extra
 script:
   - "bundle exec rake $CHECK"
@@ -21,9 +23,12 @@ rvm:
   - 1.9.3
 
 env:
-  - "CHECK=parallel:spec\\[2\\]"
-  - "CHECK=rubocop"
-  - "CHECK=commits"
+  matrix:
+      - "CHECK=parallel:spec\\[2\\]"
+      - "CHECK=rubocop"
+      - "CHECK=commits"
+  global:
+      - secure: "gQ6dMv/Czl2UmrDGqxwH2QjVClRoEtirZ63YH2kZzoO7Xj4k/xGfeU8+R8eqHRY7rreyMj1+ksPpSPn8ZPHlZZHJSq0GOectJyUcD/ZBlkbp0q8BpTCXCEoM9tcbmd/kbfP95gBXDJvlSQ+QSwx2L0nWj8vvpU8bCRCOfRo1pjE="
 
 matrix:
   exclude:
@@ -47,3 +52,12 @@ matrix:
       env: "CHECK=commits"
     - rvm: 1.9.3
       env: "CHECK=commits"
+
+addons:
+  coverity_scan:
+    project:
+      name: "puppetlabs/puppet"
+    notification_email: bv@puppet.com
+    branch_pattern: coverity_scan
+    build_command_prepend: ""
+    build_command: "--no-command"
