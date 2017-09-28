@@ -41,7 +41,7 @@ class PuppetResourceTypeImplInstantiator
           functor_expr.left_expr.is_a?(Model::QualifiedReference) &&
           functor_expr.left_expr.cased_value == rname &&
           functor_expr.right_expr.is_a?(Model::QualifiedName) &&
-          functor_expr.right_expr.value == _('new')
+          functor_expr.right_expr.value == 'new'
       else
         false
       end
