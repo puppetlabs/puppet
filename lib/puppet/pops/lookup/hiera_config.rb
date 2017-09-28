@@ -585,7 +585,7 @@ class HieraConfigV5 < HieraConfig
 
   def create_configured_data_providers(lookup_invocation, parent_data_provider, use_default_hierarchy)
     defaults = @config[KEY_DEFAULTS] || EMPTY_HASH
-    datadir = defaults[KEY_DATADIR] || _('data')
+    datadir = defaults[KEY_DATADIR] || 'data'
 
     # Hashes enumerate their values in the order that the corresponding keys were inserted so it's safe to use
     # a hash for the data_providers.
