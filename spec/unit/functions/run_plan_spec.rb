@@ -61,6 +61,27 @@ describe 'the run_plan function' do
       end
     end
 
+    context 'using the name of the module' do
+      let(:env_dir_files) {
+        {
+          'modules' => {
+            'test' => {
+              'plans' => {
+                'init.pp' => 'plan test() { "worked3" }'
+              }
+            }
+          }
+        }
+      }
+
+      it 'the plans/init.pp is found and called' do
+        expect(eval_and_collect_notices(<<-CODE, node)).to eql(['worked3'])
+            $a = run_plan('test')
+            notice $a
+        CODE
+      end
+    end
+
     context 'handles exceptions by' do
       it 'failing with error for non-existent plan name' do
         expect { compile_to_catalog(<<-CODE) }.to raise_error(Puppet::Error, /Unknown plan/)
