@@ -27,7 +27,7 @@ describe 'the run_command function' do
 
   let(:func) { Puppet.lookup(:loaders).puppet_system_loader.load(:function, 'run_command') }
 
-  context 'it calls bolt executor execute' do
+  context 'it calls bolt executor run_command' do
     let(:hostname) { 'test.example.com' }
     let(:hosts) { [hostname] }
     let(:host) { stub(uri: hostname) }
@@ -42,7 +42,7 @@ describe 'the run_command function' do
     it 'with given command and host' do
       executor = mock('executor')
       Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
-      executor.expects(:execute).with(command).returns({ host => result })
+      executor.expects(:run_command).with(command).returns({ host => result })
 
       expect(eval_and_collect_notices(<<-CODE, node)).to eql(["[#{hostname}]"])
         $a = run_command('#{command}', '#{hostname}')
@@ -59,7 +59,7 @@ describe 'the run_command function' do
       it 'with propagates multiple hosts and returns multiple results' do
         executor = mock('executor')
         Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
-        executor.expects(:execute).with(command).returns({ host => result, host2 => result2 })
+        executor.expects(:run_command).with(command).returns({ host => result, host2 => result2 })
 
         expect(eval_and_collect_notices(<<-CODE, node)).to eql(["[#{hostname}, #{hostname2}]"])
           $a = run_command('#{command}', '#{hostname}', '#{hostname2}')
@@ -71,7 +71,7 @@ describe 'the run_command function' do
     it 'without nodes - does not invoke bolt' do
       executor = mock('executor')
       Bolt::Executor.expects(:from_uris).never
-      executor.expects(:execute).never
+      executor.expects(:run_command).never
 
       expect(eval_and_collect_notices(<<-CODE, node)).to eql(['[]'])
         $a = run_command('#{command}')

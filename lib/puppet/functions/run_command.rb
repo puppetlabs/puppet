@@ -36,7 +36,7 @@ Puppet::Functions.create_function(:run_command) do
       []
     else
       # TODO, rewrite once proper handling of returned values is fully specified
-      Bolt::Executor.from_uris(hosts).execute(command).map do |_, result|
+      Bolt::Executor.from_uris(hosts).run_command(command).map do |_, result|
         result.success? ? result.output_string : result.exit_code
       end
     end
