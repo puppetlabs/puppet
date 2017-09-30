@@ -5,6 +5,23 @@ module Puppet::GettextConfig
   POSIX_PATH = File.absolute_path('../../../../../share/locale', File.dirname(__FILE__))
   WINDOWS_PATH = File.absolute_path('../../../../../../../puppet/share/locale', File.dirname(__FILE__))
 
+  # Load gettext helpers and track whether they're available.
+  # Used instead of features because we initialize gettext before features is available.
+  # Stubbing gettext if unavailable is handled in puppet.rb.
+  begin
+    require 'gettext-setup'
+    require 'locale'
+    @gettext_found = true
+  rescue LoadError
+    @gettext_found = false
+  end
+
+  # Whether we were able to require gettext-setup and locale
+  # @return [Boolean] true if gettext-setup was successfully loaded
+  def self.gettext_found?
+    @gettext_found
+  end
+
   # Search for puppet gettext config files
   # @return [String] path to the config, or nil if not found
   def self.puppet_locale_path
@@ -35,7 +52,31 @@ module Puppet::GettextConfig
   # @param file_format [Symbol] translation file format to use, either :po or :mo
   # @return true if initialization succeeded, false otherwise
   def self.initialize(conf_file_location, file_format)
-    # Bypass gettext until we can resolve a performance regression related to it, PUP-8009.
-    return false
+    unless file_format == :po || file_format == :mo
+      raise Puppet::Error, "Unsupported translation file format #{file_format}; please use :po or :mo"
+    end
+
+    return false unless @gettext_found
+
+    if conf_file_location && File.exists?(conf_file_location)
+      if GettextSetup.method(:initialize).parameters.count == 1
+        # For use with old gettext-setup gem versions, will load PO files only
+        GettextSetup.initialize(conf_file_location)
+      else
+        GettextSetup.initialize(conf_file_location, :file_format => file_format)
+      end
+      # Only change this once.
+      # Because negotiate_locales will only return a non-default locale if
+      # the system locale matches a translation set actually available for the
+      # given gettext project, we don't want this to get set back to default if
+      # we load a module that doesn't have translations, but Puppet does have
+      # translations for the user's locale.
+      if FastGettext.locale == GettextSetup.default_locale
+        FastGettext.locale = GettextSetup.negotiate_locale(Locale.current.language)
+      end
+      true
+    else
+      false
+    end
   end
 end

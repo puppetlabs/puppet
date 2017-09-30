@@ -428,22 +428,25 @@ class Puppet::Module
 
     locales_path = File.absolute_path('locales', path)
 
-    begin
-      Puppet::GettextConfig.initialize(locales_path, :po)
+    if Puppet::GettextConfig.initialize(locales_path, :po)
       Puppet.debug "#{module_name} initialized for i18n: #{GettextSetup.translation_repositories[module_name]}"
-    rescue
-      config_path = File.absolute_path('config.yaml', locales_path)
-      Puppet.debug "Could not find locales configuration file for #{module_name} at #{config_path}. Skipping i18n initialization."
+    else
+      if Puppet::GettextConfig.gettext_found?
+        config_path = File.absolute_path('config.yaml', locales_path)
+        Puppet.debug "Could not find locales configuration file for #{module_name} at #{config_path}. Skipping i18n initialization."
+      else
+        Puppet.debug "No gettext library found, skipping i18n initialization."
+      end
     end
   end
 
   private
 
   def i18n_initialized?(module_name)
-    begin
+    if Puppet::GettextConfig.gettext_found?
       GettextSetup.translation_repositories.has_key? module_name
-    rescue NameError
-      # GettextSetup not yet initialized
+    else
+      # GettextSetup not yet initialized or not found
       false
     end
   end

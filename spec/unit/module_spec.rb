@@ -452,7 +452,6 @@ describe Puppet::Module do
     let(:mod_obj) { PuppetSpec::Modules.create( modname, modpath, :metadata => { :dependencies => [] }, :env => env ) }
 
     it "is expected to initialize an un-initialized module" do
-      pending 'PUP-8009'
       expect(GettextSetup.translation_repositories.has_key? modname).to be false
 
       FileUtils.mkdir_p("#{mod_obj.path}/locales")
