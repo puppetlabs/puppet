@@ -5,6 +5,14 @@ module Puppet::GettextConfig
   POSIX_PATH = File.absolute_path('../../../../../share/locale', File.dirname(__FILE__))
   WINDOWS_PATH = File.absolute_path('../../../../../../../puppet/share/locale', File.dirname(__FILE__))
 
+  begin
+    require 'gettext-setup'
+    require 'locale'
+    @found = true
+  rescue LoadError
+    @found = false
+  end
+
   # Search for puppet gettext config files
   # @return [String] path to the config, or nil if not found
   def self.puppet_locale_path
@@ -39,31 +47,26 @@ module Puppet::GettextConfig
       raise Puppet::Error, "Unsupported translation file format #{file_format}; please use :po or :mo"
     end
 
-    begin
-      require 'gettext-setup'
-      require 'locale'
+    return false unless @found
 
-      if conf_file_location && File.exists?(conf_file_location)
-        if GettextSetup.method(:initialize).parameters.count == 1
-          # For use with old gettext-setup gem versions, will load PO files only
-          GettextSetup.initialize(conf_file_location)
-        else
-          GettextSetup.initialize(conf_file_location, :file_format => file_format)
-        end
-        # Only change this once.
-        # Because negotiate_locales will only return a non-default locale if
-        # the system locale matches a translation set actually available for the
-        # given gettext project, we don't want this to get set back to default if
-        # we load a module that doesn't have translations, but Puppet does have
-        # translations for the user's locale.
-        if FastGettext.locale == GettextSetup.default_locale
-          FastGettext.locale = GettextSetup.negotiate_locale(Locale.current.language)
-        end
-        true
+    if conf_file_location && File.exists?(conf_file_location)
+      if GettextSetup.method(:initialize).parameters.count == 1
+        # For use with old gettext-setup gem versions, will load PO files only
+        GettextSetup.initialize(conf_file_location)
       else
-        false
+        GettextSetup.initialize(conf_file_location, :file_format => file_format)
       end
-    rescue LoadError
+      # Only change this once.
+      # Because negotiate_locales will only return a non-default locale if
+      # the system locale matches a translation set actually available for the
+      # given gettext project, we don't want this to get set back to default if
+      # we load a module that doesn't have translations, but Puppet does have
+      # translations for the user's locale.
+      if FastGettext.locale == GettextSetup.default_locale
+        FastGettext.locale = GettextSetup.negotiate_locale(Locale.current.language)
+      end
+      true
+    else
       false
     end
   end
