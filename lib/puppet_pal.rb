@@ -82,7 +82,8 @@ module Puppet::Pal
   def self.in_tmp_environment(env_name,
       modulepath:    [],
       settings_hash: {},
-      facts: nil,
+      facts:         nil,
+      variables:     {},
       &block
     )
     assert_non_empty_string(env_name, _("temporary environment name"))
@@ -94,9 +95,10 @@ module Puppet::Pal
     end
 
     env = Puppet::Node::Environment.create(env_name, modulepath)
+
     with_loaded_environment(
       Puppet::Environments::Static.new(env), # The tmp env is the only known env
-      env, facts, &block)
+      env, facts, variables, &block)
   end
 
   # Defines the context in which to perform puppet operations (evaluation, etc)
@@ -124,8 +126,9 @@ module Puppet::Pal
       modulepath:    nil,
       settings_hash: {},
       env_dir:       nil,
-      envpath:      nil,
-      facts: nil,
+      envpath:       nil,
+      facts:         nil,
+      variables:     {},
       &block
     )
     # TRANSLATORS terms in the assertions below are names of terms in code
@@ -168,12 +171,12 @@ module Puppet::Pal
       # A given modulepath should override the default
       env = env.override_with(:modulepath => modulepath) if !modulepath.nil?
     end
-    with_loaded_environment(environments, env, facts, &block)
+    with_loaded_environment(environments, env, facts, variables, &block)
   end
 
   private
 
-  def self.with_loaded_environment(environments, env, facts, &block)
+  def self.with_loaded_environment(environments, env, facts, variables, &block)
     env.each_plugin_directory do |dir|
       $LOAD_PATH << dir unless $LOAD_PATH.include?(dir)
     end
@@ -186,7 +189,8 @@ module Puppet::Pal
 
     Puppet.override(
       environments: environments,        # The env being used is the only one...
-      current_node: node                 # to allow it to be picked up instead of created
+      current_node: node,                # to allow it to be picked up instead of created
+      variables: variables
     ) do
       prepare_node_facts(node, facts)
       return block.call(self)
@@ -207,6 +211,15 @@ module Puppet::Pal
       #
       node.add_server_facts({})
     end
+  end
+
+  def self.add_variables(scope, variables)
+    return if variables.nil?
+    unless variables.is_a?(Hash)
+      raise Argument_Error, _("Given variables must be a hash, got %{type}") % { type: variables.class }
+    end
+    return if variables.empty?
+    variables.each_pair {|k,v| scope.setvar(k, v) }
   end
 
   def self.main(manifest = nil, facts = nil, &block)
@@ -252,6 +265,8 @@ module Puppet::Pal
 
           # create the $settings:: variables
           topscope.merge_settings(node.environment.name, false)
+
+          add_variables(topscope, Puppet.lookup(:variables))
 
           compiler.compile(&block)
 
