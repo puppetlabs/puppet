@@ -25,7 +25,7 @@ require 'puppet/parser/script_compiler'
 #
 module Puppet::Pal
 
-  # Evaluates a Puppet Language script string. 
+  # Evaluates a Puppet Language script string.
   # @param code_string [String] a snippet of Puppet Language source code
   # @return [Object] what the Puppet Language code_string evaluates to
   #
@@ -60,7 +60,7 @@ module Puppet::Pal
     # TRANSLATORS: do not translate variable name string in these assertions
     assert_mutually_exclusive(manifest_file, code_string, 'manifest_file', 'code_string')
     assert_non_empty_string(manifest_file, 'manifest_file', true)
-    assert_non_empty_string(code_string, 'code_string', true) 
+    assert_non_empty_string(code_string, 'code_string', true)
 
     Puppet[:tasks] = true
     Puppet[:code] = code_string unless code_string.nil?
@@ -82,7 +82,8 @@ module Puppet::Pal
   def self.in_tmp_environment(env_name,
       modulepath:    [],
       settings_hash: {},
-      facts: nil
+      facts: nil,
+      &block
     )
     assert_non_empty_string(env_name, _("temporary environment name"))
     # TRANSLATORS: do not translate variable name string in these assertions
@@ -93,15 +94,9 @@ module Puppet::Pal
     end
 
     env = Puppet::Node::Environment.create(env_name, modulepath)
-    node = Puppet::Node.new(Puppet[:node_name_value], :environment => env)
-
-    Puppet.override(
-      environments: Puppet::Environments::Static.new(env), # The tmp env is the only known env
-      current_node: node                                   # to allow it to be picked up instead of created
-      ) do
-      prepare_node_facts(node, facts)
-      return yield self
-    end
+    with_loaded_environment(
+      Puppet::Environments::Static.new(env), # The tmp env is the only known env
+      env, facts, &block)
   end
 
   # Defines the context in which to perform puppet operations (evaluation, etc)
@@ -111,7 +106,7 @@ module Puppet::Pal
   # is then either constructed by:
   # * searching a given envpath where name is a child of a directory on that path, or
   # * it is the directory given in env_dir (which must exist).
-  # 
+  #
   # The env_dir and envpath options are mutually exclusive.
   #
   # @param env_name [String] the name of an existing environment
@@ -130,11 +125,12 @@ module Puppet::Pal
       settings_hash: {},
       env_dir:       nil,
       envpath:      nil,
-      facts: nil
+      facts: nil,
+      &block
     )
     # TRANSLATORS terms in the assertions below are names of terms in code
     assert_non_empty_string(env_name, 'env_name')
-    assert_optionally_empty_array(modulepath, 'modulepath', true) 
+    assert_optionally_empty_array(modulepath, 'modulepath', true)
     assert_mutually_exclusive(env_dir, envpath, 'env_dir', 'envpath')
 
     unless block_given?
@@ -151,7 +147,6 @@ module Puppet::Pal
         modulepath = [Puppet::FileSystem.expand_path(File.join(env_dir, 'modules'))]
       end
       env = Puppet::Node::Environment.create(env_name, modulepath)
-      node = Puppet::Node.new(Puppet[:node_name_value], :environment => env)
       environments = Puppet::Environments::StaticDirectory.new(env_name, env_dir, env) # The env being used is the only one...
     else
       assert_non_empty_string(envpath, 'envpath')
@@ -172,18 +167,31 @@ module Puppet::Pal
       end
       # A given modulepath should override the default
       env = env.override_with(:modulepath => modulepath) if !modulepath.nil?
-      node = Puppet::Node.new(Puppet[:node_name_value], :environment => env)
     end
-    Puppet.override(
-      environments: environments,        # The env being used is the only one...
-      current_node: node                 # to allow it to be picked up instead of created
-      ) do
-      prepare_node_facts(node, facts)
-      return yield self
-    end
+    with_loaded_environment(environments, env, facts, &block)
   end
 
   private
+
+  def self.with_loaded_environment(environments, env, facts, &block)
+    env.each_plugin_directory do |dir|
+      $LOAD_PATH << dir unless $LOAD_PATH.include?(dir)
+    end
+
+    # Puppet requires Facter, which initializes its lookup paths. Reset Facter to
+    # pickup the new $LOAD_PATH.
+    Facter.reset
+
+    node = Puppet::Node.new(Puppet[:node_name_value], :environment => env)
+
+    Puppet.override(
+      environments: environments,        # The env being used is the only one...
+      current_node: node                 # to allow it to be picked up instead of created
+    ) do
+      prepare_node_facts(node, facts)
+      return block.call(self)
+    end
+  end
 
   # Prepares the node for use by giving it node_facts (if given)
   # If a hash of facts values is given, then the operation of creating a node with facts is much

@@ -137,7 +137,7 @@ describe 'Puppet Pal' do
         },
         'b' => {
         'functions' => b_functions,
-        'lib' => { 'puppet' => b_lib_puppet },
+        'lib' => b_lib,
         'plans' => b_plans,
         'tasks' => b_tasks,
         'types' => b_types,
@@ -181,9 +181,16 @@ describe 'Puppet Pal' do
     let(:a_lib_puppet) {
       {
         'functions' => {
-        'a' => {
-        'arubyfunc.rb' => "Puppet::Functions.create_function(:'a::arubyfunc') { def arubyfunc; end }",
-        }
+          'a' => {
+            'arubyfunc.rb' => <<-RUBY.unindent,
+              require 'stuff/something'
+              Puppet::Functions.create_function(:'a::arubyfunc') do
+                def arubyfunc
+                  Stuff::SOMETHING
+                end
+              end
+              RUBY
+          }
         }
       }
     }
@@ -216,6 +223,15 @@ describe 'Puppet Pal' do
       }
     }
 
+    let(:b_lib) {
+      {
+        'puppet' => b_lib_puppet,
+        'stuff' => {
+          'something.rb' => "module Stuff; SOMETHING = 'something'; end"
+        }
+      }
+    }
+
     let(:b_lib_puppet) {
       {
         'functions' => {
@@ -239,6 +255,13 @@ describe 'Puppet Pal' do
           ctx.evaluate_script_string('a::afunc()')
         end
         expect(result).to eq("a::afunc value")
+      end
+
+      it 'libs in a given "modulepath" are added to the Ruby $LOAD_PATH' do
+        result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+          ctx.evaluate_script_string('a::arubyfunc()')
+        end
+        expect(result).to eql('something')
       end
 
       it 'a plan in a module can be called with run_plan' do
@@ -296,6 +319,13 @@ describe 'Puppet Pal' do
           ctx.evaluate_script_string('a::afunc()')
         end
         expect(result).to eq("a::afunc value")
+      end
+
+      it 'libs in a given "modulepath" are added to the Ruby $LOAD_PATH' do
+        result = Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, facts: node_facts) do |ctx|
+          ctx.evaluate_script_string('a::arubyfunc()')
+        end
+        expect(result).to eql('something')
       end
 
       it 'a given "modulepath" overrides the default' do
