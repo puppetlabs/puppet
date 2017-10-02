@@ -5,6 +5,8 @@ test_name 'C100559: puppet agent run output with a supported language should be 
   confine :except, :platform => /^solaris/ # translation not supported
   confine :except, :platform => /^aix/     # QENG-5283 needed for this to work
 
+  pending 'PUP-8009'
+
   tag 'audit:medium',
       'audit:acceptance'
 
