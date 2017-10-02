@@ -44,12 +44,14 @@ describe Puppet::GettextConfig do
 
     context 'when given a valid config file location' do
       it 'should return true' do
+        pending 'PUP-8009'
         expect(Puppet::GettextConfig.initialize(local_path, :po)).to be true
       end
     end
 
     context 'when given a bad file format' do
       it 'should raise an exception' do
+        pending 'PUP-8009'
         expect { Puppet::GettextConfig.initialize(local_path, :bad_format) }.to raise_error(Puppet::Error)
       end
     end
