@@ -321,7 +321,7 @@ class Puppet::Parser::Compiler
       raise Puppet::Error, _("Invalid node mapping in %{app}: Mapping must be a hash") % { app: app.ref } unless mapping.is_a?(Hash)
       all_mapped = Set.new
       mapping.each do |k,v|
-        raise Puppet::Error, _("Invalid node mapping in %{app}: Key %{k} is not a Node") % { app: app.ref, k: k } unless k.is_a?(Puppet::Resource) && k.type == _('Node')
+        raise Puppet::Error, _("Invalid node mapping in %{app}: Key %{k} is not a Node") % { app: app.ref, k: k } unless k.is_a?(Puppet::Resource) && k.type == 'Node'
         v = [v] unless v.is_a?(Array)
         v.each do |res|
           raise Puppet::Error, _("Invalid node mapping in %{app}: Value %{res} is not a resource") % { app: app.ref, res: res } unless res.is_a?(Puppet::Resource)

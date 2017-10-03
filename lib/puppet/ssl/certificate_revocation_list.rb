@@ -40,7 +40,7 @@ DOC
   # The name doesn't actually matter; there's only one CRL.
   # We just need the name so our Indirector stuff all works more easily.
   def initialize(fakename)
-    @name = _("crl")
+    @name = "crl"
   end
 
   # Revoke the certificate with serial number SERIAL issued by this

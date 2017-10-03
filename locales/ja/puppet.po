@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.2.0-39-gd1951d8\n"
+"Project-Id-Version: Puppet automation framework 5.3.0-6-gf66f9d9\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-09-18 19:09+0000\n"
-"PO-Revision-Date: 2017-09-18 19:09+0000\n"
+"POT-Creation-Date: 2017-09-26 17:02+0000\n"
+"PO-Revision-Date: 2017-09-26 17:02+0000\n"
 "Last-Translator: Hidekatsu Tsuru <hidekatsu-tsuru@to-in.co.jp>, 2017\n"
 "Language-Team: Japanese (Japan) (https://www.transifex.com/puppet/teams/29089/ja_JP/)\n"
 "MIME-Version: 1.0\n"
@@ -3965,10 +3965,6 @@ msgstr "%{app}の無効なノードマッピング: マッピングはハッシ�
 msgid "Invalid node mapping in %{app}: Key %{k} is not a Node"
 msgstr "%{app}で無効なノードマッピング: キー%{k}はノードではありません。"
 
-#: ../lib/puppet/parser/compiler.rb:322
-msgid "Node"
-msgstr "ノード"
-
 #: ../lib/puppet/parser/compiler.rb:325
 msgid "Invalid node mapping in %{app}: Value %{res} is not a resource"
 msgstr "%{app}で無効なノードマッピング: 値%{res}はリソースではありません。"
@@ -5323,10 +5319,6 @@ msgid ""
 "'%{type_name}' - it is empty"
 msgstr "%{source_ref}からロードしたコードでは、リソースタイプ'%{type_name}'は作成されません - 空です。"
 
-#: ../lib/puppet/pops/loader/puppet_resource_type_impl_instantiator.rb:44
-msgid "new"
-msgstr "新規"
-
 #: ../lib/puppet/pops/loader/puppet_resource_type_impl_instantiator.rb:49
 msgid ""
 "The code loaded from %{source_ref} does not create the resource type "
@@ -5461,10 +5453,6 @@ msgid ""
 "%{config_path}: Use of 'hiera.yaml' version 4 is deprecated. It should be "
 "converted to version 5"
 msgstr "%{config_path}: 'hiera.yaml'バージョン4の使用は廃止予定です。バージョン5に変換する必要があります。"
-
-#: ../lib/puppet/pops/lookup/hiera_config.rb:588
-msgid "data"
-msgstr "データ"
 
 #: ../lib/puppet/pops/lookup/invocation.rb:84
 msgid "Recursive lookup detected in [%{name_stack}]"
@@ -7181,10 +7169,6 @@ msgstr "%{path}に予期せぬ属性%{keys}"
 #: ../lib/puppet/ssl/certificate_revocation_list.rb:29
 msgid "Creating a new certificate revocation list"
 msgstr "新しい証明書撤回リストを作成しています。"
-
-#: ../lib/puppet/ssl/certificate_revocation_list.rb:42
-msgid "crl"
-msgstr "crl"
 
 #: ../lib/puppet/ssl/certificate_revocation_list.rb:49
 msgid "Revoked certificate with serial %{serial}"

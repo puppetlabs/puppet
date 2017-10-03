@@ -114,6 +114,7 @@ test_name 'C100303: Resource type statement triggered auto-loading works both wi
 
     # we should not see any log entries on any of the agent nodes
     agents.each do |agent|
+      next if agent == master
       on(agent, "cat '#{execution_log[agent_to_fqdn(agent)]}'") do |cat_result|
         assert_empty(cat_result.stdout.chomp, "Expected execution log file to be empty on agent node #{agent_to_fqdn(agent)}")
       end
@@ -122,6 +123,7 @@ test_name 'C100303: Resource type statement triggered auto-loading works both wi
 
   empty_execution_log_file(master, execution_log[agent_to_fqdn(master)])
   agents.each do |agent|
+    next if agent == master
     empty_execution_log_file(agent, execution_log[agent_to_fqdn(agent)])
 
     # this test is relying on the beaker helper with_puppet_running_on() to restart the server
