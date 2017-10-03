@@ -511,6 +511,13 @@ module TypeFactory
     inst_type.nil? ? PTypeType::DEFAULT : PTypeType.new(inst_type)
   end
 
+  # Produces a type for Error[K, I]
+  # @api public
+  #
+  def self.error(kind = nil, issue_code = nil)
+    kind.nil? && issue_code.nil? ? PErrorType::DEFAULT : PErrorType.new(kind, issue_code)
+  end
+
   # Produce a type corresponding to the class of given unless given is a
   # String, Class or a PAnyType.  When a String is given this is taken as
   # a classname.
