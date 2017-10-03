@@ -1,4 +1,5 @@
 #! /usr/bin/env ruby
+# encoding: utf-8
 require 'spec_helper'
 
 require 'puppet/external/nagios'
@@ -86,6 +87,13 @@ EOL
 define command {
 \tcommand_line                   LC_ALL=en_US.UTF-8 /usr/lib/nagios/plugins/check_haproxy -u 'http://blah:blah@$HOSTADDRESS$:8080/haproxy?stats\\;csv'
 \tcommand_name                   check_haproxy
+}
+EOL
+
+  UNICODE_NAGIOS_CONTACT = <<-EOL
+define contact {
+\talias                          Paul Tötterman
+\tcontact_name                   ptman
 }
 EOL
 
@@ -190,7 +198,19 @@ EOL
     nagios_type.command_line = results[0].command_line
     expect(nagios_type.to_s).to eql(ANOTHER_ESCAPED_SEMICOLON)
   end
-
+  describe "when reading UTF8 values" do
+    it "should be converted to ASCII_8BIT for ruby 1.9 / 2.0", :if => RUBY_VERSION < "2.1.0" && String.method_defined?(:encode) do
+      parser = Nagios::Parser.new
+      results = parser.parse(UNICODE_NAGIOS_CONTACT)
+      expect(results[0].alias.encoding).to eq(Encoding::ASCII_8BIT)
+      expect(results[0].alias).to eq('Paul Tötterman'.force_encoding(Encoding::ASCII_8BIT))
+    end
+    it "must not be converted for ruby >= 2.1", :if => RUBY_VERSION >= "2.1.0" do
+      parser = Nagios::Parser.new
+      results = parser.parse(UNICODE_NAGIOS_CONTACT)
+      expect(results[0].alias.encoding).to eq(Encoding::UTF_8)
+    end
+  end
 end
 
 describe "Nagios generator" do
