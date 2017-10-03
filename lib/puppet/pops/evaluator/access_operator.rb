@@ -278,6 +278,23 @@ class AccessOperator
     Types::TypeFactory.pattern(*keys)
   end
 
+  def access_PErrorType(o, scope, keys)
+    # 1 - 2 parameters where both are string, regexp, or type
+    keys.flatten!
+    case keys.size
+    when 1, 2
+      pt = Types::PErrorType::TYPE_ERROR_PARAM
+      keys.each_with_index do |p, i|
+        unless pt.instance?(p)
+          fail(Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[i], {:base_type => 'Error-Type', :actual => p.class})
+        end
+      end
+      Types::TypeFactory.error(*keys)
+    else
+      fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Error-Type', :min => 1, :max => 2, :actual => keys.size})
+    end
+  end
+
   def access_POptionalType(o, scope, keys)
     keys.flatten!
     if keys.size == 1
