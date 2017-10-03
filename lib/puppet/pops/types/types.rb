@@ -62,6 +62,7 @@ class TypedModelObject < Object
     if Puppet[:tasks]
       types << Task.register_ptype(loader, ir)
       types << GenericTask.register_ptype(loader, ir)
+      types << ExecutionResult.register_ptype(loader, ir)
     end
 
     Types.constants.each do |c|
