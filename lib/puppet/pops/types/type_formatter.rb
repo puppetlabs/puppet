@@ -323,6 +323,36 @@ class TypeFormatter
   end
 
   # @api private
+  def string_PErrorType(t)
+    append_array('Error', t.kind.nil? && t.issue_code.nil?) do
+      t.kind.nil? ? append_default : append_error_param(t.kind)
+      unless t.issue_code.nil?
+        @bld << COMMA_SEP
+        append_error_param(t.issue_code)
+      end
+    end
+  end
+
+  def append_error_param(ep)
+    case ep
+    when PStringType
+      if ep.value.nil?
+        append_string(ep)
+      else
+        append_string(ep.value)
+      end
+    when PPatternType
+      if ep.patterns.size != 1
+        append_string(ep)
+      else
+        append_string(ep.patterns[0].regexp)
+      end
+    else
+      append_string(ep)
+    end
+  end
+
+  # @api private
   def string_PCollectionType(t)
     range = range_array_part(t.size_type)
     append_array('Collection', range.empty? ) { append_elements(range) }
