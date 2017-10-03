@@ -6,6 +6,7 @@
     'setup/aio/pre-suite/020_InstallCumulusModules.rb',
     'setup/aio/pre-suite/021_InstallAristaModule.rb',
     'setup/common/pre-suite/025_StopFirewall.rb',
+    'setup/common/pre-suite/030_StopSssd.rb',
     'setup/common/pre-suite/040_ValidateSignCert.rb',
     'setup/aio/pre-suite/045_EnsureMasterStarted.rb',
   ],
