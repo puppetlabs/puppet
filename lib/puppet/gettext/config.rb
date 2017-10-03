@@ -1,4 +1,5 @@
 require 'puppet/util/platform'
+require 'puppet/file_system'
 
 module Puppet::GettextConfig
   LOCAL_PATH = File.absolute_path('../../../locales', File.dirname(__FILE__))
@@ -11,25 +12,25 @@ module Puppet::GettextConfig
   begin
     require 'gettext-setup'
     require 'locale'
-    @gettext_found = true
+    @gettext_loaded = true
   rescue LoadError
-    @gettext_found = false
+    @gettext_loaded = false
   end
 
   # Whether we were able to require gettext-setup and locale
   # @return [Boolean] true if gettext-setup was successfully loaded
-  def self.gettext_found?
-    @gettext_found
+  def self.gettext_loaded?
+    @gettext_loaded
   end
 
   # Search for puppet gettext config files
   # @return [String] path to the config, or nil if not found
   def self.puppet_locale_path
-    if File.exist?(LOCAL_PATH)
+    if Puppet::FileSystem.exist?(LOCAL_PATH)
       return LOCAL_PATH
-    elsif Puppet::Util::Platform.windows? && File.exist?(WINDOWS_PATH)
+    elsif Puppet::Util::Platform.windows? && Puppet::FileSystem.exist?(WINDOWS_PATH)
       return WINDOWS_PATH
-    elsif !Puppet::Util::Platform.windows? && File.exist?(POSIX_PATH)
+    elsif !Puppet::Util::Platform.windows? && Puppet::FileSystem.exist?(POSIX_PATH)
       return POSIX_PATH
     else
       nil
@@ -47,18 +48,23 @@ module Puppet::GettextConfig
     end
   end
 
+  # Prevent future gettext initializations
+  def self.disable_gettext
+    @gettext_disabled = true
+  end
+
   # Attempt to initialize the gettext-setup gem
   # @param path [String] to gettext config file
   # @param file_format [Symbol] translation file format to use, either :po or :mo
   # @return true if initialization succeeded, false otherwise
   def self.initialize(conf_file_location, file_format)
+    return false if @gettext_disabled || !@gettext_loaded
+
     unless file_format == :po || file_format == :mo
       raise Puppet::Error, "Unsupported translation file format #{file_format}; please use :po or :mo"
     end
 
-    return false unless @gettext_found
-
-    if conf_file_location && File.exists?(conf_file_location)
+    if conf_file_location && Puppet::FileSystem.exist?(conf_file_location)
       if GettextSetup.method(:initialize).parameters.count == 1
         # For use with old gettext-setup gem versions, will load PO files only
         GettextSetup.initialize(conf_file_location)

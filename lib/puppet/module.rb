@@ -98,7 +98,7 @@ class Puppet::Module
     @absolute_path_to_manifests = Puppet::FileSystem::PathPattern.absolute(manifests)
 
     # i18n initialization for modules
-    initialize_i18n
+    initialize_i18n unless Puppet[:disable_i18n]
   end
 
   # @deprecated The puppetversion module metadata field is no longer used.
@@ -430,11 +430,10 @@ class Puppet::Module
 
     if Puppet::GettextConfig.initialize(locales_path, :po)
       Puppet.debug "#{module_name} initialized for i18n: #{GettextSetup.translation_repositories[module_name]}"
-    else
-      if Puppet::GettextConfig.gettext_found?
+    else if Puppet::GettextConfig.gettext_loaded?
         config_path = File.absolute_path('config.yaml', locales_path)
         Puppet.debug "Could not find locales configuration file for #{module_name} at #{config_path}. Skipping i18n initialization."
-      else
+    else
         Puppet.debug "No gettext library found, skipping i18n initialization."
       end
     end
@@ -443,7 +442,7 @@ class Puppet::Module
   private
 
   def i18n_initialized?(module_name)
-    if Puppet::GettextConfig.gettext_found?
+    if Puppet::GettextConfig.gettext_loaded?
       GettextSetup.translation_repositories.has_key? module_name
     else
       # GettextSetup not yet initialized or not found
