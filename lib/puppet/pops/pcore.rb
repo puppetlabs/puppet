@@ -41,6 +41,7 @@ module Pcore
 
     if Puppet[:tasks]
       require_relative 'types/task'
+      require_relative 'types/execution_result'
     end
     Types::TypedModelObject.register_ptypes(loader, ir)
 
