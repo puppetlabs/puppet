@@ -64,6 +64,7 @@ describe 'the run_script function' do
     it 'with fully resolved path of file' do
       executor = mock('executor')
       Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
+      result.expects(:to_h).returns(result)
       executor.expects(:run_script).with(full_path).returns({ host => result })
 
       expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{hostname}'}})"])
@@ -82,6 +83,8 @@ describe 'the run_script function' do
         executor = mock('executor')
         Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
         executor.expects(:run_script).with(full_path).returns({ host => result, host2 => result2 })
+        result.expects(:to_h).returns(result)
+        result2.expects(:to_h).returns(result2)
 
         expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{hostname}'}, '#{hostname2}' => {value => '#{hostname2}'}})"])
           $a = run_script('test/uploads/hostname.sh', '#{hostname}', '#{hostname2}')

@@ -43,6 +43,7 @@ describe 'the run_command function' do
       executor = mock('executor')
       Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
       executor.expects(:run_command).with(command).returns({ host => result })
+      result.expects(:to_h).returns(result)
 
       expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{hostname}'}})"])
         $a = run_command('#{command}', '#{hostname}')
@@ -60,6 +61,8 @@ describe 'the run_command function' do
         executor = mock('executor')
         Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
         executor.expects(:run_command).with(command).returns({ host => result, host2 => result2 })
+        result.expects(:to_h).returns(result)
+        result2.expects(:to_h).returns(result2)
 
         expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{hostname}'}, '#{hostname2}' => {value => '#{hostname2}'}})"])
           $a = run_command('#{command}', '#{hostname}', '#{hostname2}')

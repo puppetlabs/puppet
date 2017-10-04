@@ -65,6 +65,7 @@ describe 'the run_task function' do
 
       Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
       executor.expects(:run_task).with(executable, 'both', {'message' => 'the message'}).returns({ host => result })
+      result.expects(:to_h).returns(result)
 
       expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
         $a = run_task(Test::Echo({message => "#{message}"}), "#{hostname}")
@@ -78,6 +79,7 @@ describe 'the run_task function' do
 
       Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
       executor.expects(:run_task).with(executable, 'environment', {'message' => 'the message'}).returns({ host => result })
+      result.expects(:to_h).returns(result)
 
       expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
         $a = run_task(Test::Meta({message => "#{message}"}), "#{hostname}")
@@ -92,6 +94,7 @@ describe 'the run_task function' do
       Bolt::Executor.expects(:from_uris).with([hostname, hostname2]).returns(executor)
       executor.expects(:run_task).with(executable, 'environment', {'message' => 'the message'}).returns(
         { host => result, host2 => result })
+      result.expects(:to_h).twice.returns(result)
 
       expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}, '#{hostname2}' => {value => '#{message}'}})"])
         $a = run_task(Test::Meta({message => "#{message}"}), "#{hostname}", [["#{hostname2}"]],[])
@@ -107,6 +110,7 @@ describe 'the run_task function' do
 
           Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
           executor.expects(:run_task).with(executable, 'environment', {'message' => 'the message'}).returns({ host => result })
+          result.expects(:to_h).returns(result)
 
           expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
             $a = run_task(Test::Meta, "#{hostname}", {message => "#{message}"})
@@ -120,6 +124,7 @@ describe 'the run_task function' do
 
           Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
           executor.expects(:run_task).with(executable, 'both', {}).returns({ host => result })
+          result.expects(:to_h).returns(result)
 
           expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
             $a = run_task(Test::Yes, "#{hostname}")
@@ -148,6 +153,7 @@ describe 'the run_task function' do
 
         Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
         executor.expects(:run_task).with(executable, 'environment', {'message' => 'the message'}).returns({ host => result })
+        result.expects(:to_h).returns(result)
 
         expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
           $a = run_task('test::meta', "#{hostname}", {message => "#{message}"})
@@ -161,6 +167,7 @@ describe 'the run_task function' do
 
         Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
         executor.expects(:run_task).with(executable, 'both', {}).returns({ host => result })
+        result.expects(:to_h).returns(result)
 
         expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
           $a = run_task('test::yes', "#{hostname}")
@@ -240,6 +247,7 @@ describe 'the run_task function' do
 
           Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
           executor.expects(:run_task).with(executable, 'both', {}).returns({ host => result })
+          result.expects(:to_h).returns(result)
 
           expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
           $a = run_task('test', "#{hostname}")
