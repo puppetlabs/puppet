@@ -46,7 +46,7 @@ class PObjectType < PMetaType
     TypeFactory.optional(KEY_OVERRIDE) => PBooleanType::DEFAULT,
     TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
   })
-  TYPE_FUNCTIONS = TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, TypeFactory.not_undef)
+  TYPE_FUNCTIONS = TypeFactory.hash_kv(PVariantType.new([Pcore::TYPE_MEMBER_NAME, PStringType.new('[]')]), TypeFactory.not_undef)
 
   TYPE_EQUALITY = TypeFactory.variant(Pcore::TYPE_MEMBER_NAME, TypeFactory.array_of(Pcore::TYPE_MEMBER_NAME))
 
