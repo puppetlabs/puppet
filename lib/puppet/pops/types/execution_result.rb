@@ -41,11 +41,11 @@ module Types
     end
 
     def count
-      return @result_hash.size
+      @result_hash.size
     end
 
     def empty
-      return @result_hash.empty?
+      @result_hash.empty?
     end
     alias_method :empty?, :empty
 
@@ -56,7 +56,7 @@ module Types
     end
 
     def names
-      return @result_hash.keys
+      @result_hash.keys
     end
 
     def ok
@@ -67,19 +67,19 @@ module Types
     def ok_nodes
       result = {}
       @result_hash.each_pair { |k, v| result[k] = v unless v.is_a?(PErrorType::Error) }
-      return self.class.new(result)
+      self.class.new(result)
     end
 
     def value(node_uri)
-      return @result_hash[node_uri]
+      @result_hash[node_uri]
     end
 
     def values
-      return @result_hash.values
+      @result_hash.values
     end
 
     def _pcore_init_hash
-      return @result_hash
+      @result_hash
     end
 
     private
