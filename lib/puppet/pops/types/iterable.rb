@@ -1,4 +1,12 @@
 module Puppet::Pops::Types
+
+  # Implemented by classes that can produce an iterator to iterate over their contents
+  module IteratorProducer
+    def iterator
+      raise ArgumentError, 'iterator() is not implemented'
+    end
+  end
+
   # The runtime Iterable type for an Iterable
   module Iterable
     # Produces an `Iterable` for one of the following types with the following characterstics:
@@ -45,6 +53,8 @@ module Puppet::Pops::Types
     # @api public
     def self.on(o)
       case o
+      when IteratorProducer
+        o.iterator
       when Iterable
         o
       when String
