@@ -218,7 +218,7 @@ module Puppet::FileBucketFile
     #   and content as that in the bucket_file
     # @api private
     def verify_identical_file(contents_file, bucket_file)
-      (bucket_file.size == Puppet::FileSystem.size(contents_file)) &&
+      (bucket_file.to_binary.bytesize == Puppet::FileSystem.size(contents_file)) &&
         (bucket_file.stream() {|s| Puppet::FileSystem.compare_stream(contents_file, s) })
     end
 
