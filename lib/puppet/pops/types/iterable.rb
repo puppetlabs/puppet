@@ -59,10 +59,10 @@ module Puppet::Pops::Types
       when Hash
         # Each element is a two element [key, value] tuple.
         if o.empty?
-          Iterator.new(PHashType::DEFAULT_KEY_PAIR_TUPLE, o.each)
+          HashIterator.new(PHashType::DEFAULT_KEY_PAIR_TUPLE, o.each)
         else
           tc = TypeCalculator.singleton
-          Iterator.new(PTupleType.new([
+          HashIterator.new(PTupleType.new([
             PVariantType.maybe_create(o.keys.map {|e| tc.infer_set(e) }),
             PVariantType.maybe_create(o.values.map {|e| tc.infer_set(e) })], PHashType::KEY_PAIR_TUPLE_SIZE), o.each_pair)
         end
@@ -146,6 +146,10 @@ module Puppet::Pops::Types
       super
     end
 
+    def hash_style?
+      false
+    end
+
     def unbounded?
       true
     end
@@ -215,6 +219,14 @@ module Puppet::Pops::Types
 
     def unbounded?
       Iterable.unbounded?(@enumeration)
+    end
+  end
+
+  # Special iterator used when iterating over hashes. Returns `true` for `#hash_style?` so that
+  # it is possible to differentiate between two element arrays and key => value associations
+  class HashIterator < Iterator
+    def hash_style?
+      true
     end
   end
 
