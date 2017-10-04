@@ -29,6 +29,7 @@ module Types
           'ok_nodes' => TypeFactory.callable([], TypeFactory.type_reference('ExecutionResult')),
           'value' => TypeFactory.callable([PStringType::NON_EMPTY], TypeFactory.variant(TypeFactory.error, TypeFactory.data)),
           'values' => TypeFactory.callable([], TypeFactory.array_of(TypeFactory.variant(TypeFactory.error, TypeFactory.data))),
+          '[]' => TypeFactory.callable([PStringType::NON_EMPTY], TypeFactory.variant(TypeFactory.error, TypeFactory.data)),
         })
     end
 
@@ -84,8 +85,12 @@ module Types
       self.class.new(result)
     end
 
-    def value(node_uri)
+    def [](node_uri)
       @result_hash[node_uri]
+    end
+
+    def value(node_uri)
+      self[node_uri]
     end
 
     def values
