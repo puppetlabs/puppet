@@ -36,6 +36,14 @@ module Types
       @type
     end
 
+    # Creates a pure Data hash from a result hash returned from the Bolt::Executor
+    # @return [Hash{String => Data}] The data hash
+    def self.from_bolt(result_hash)
+      data_result = {}
+      result_hash.each_pair { |k, v| data_result[k.uri] = v.to_h }
+      self.new(data_result)
+    end
+
     attr_reader :result_hash
 
     def initialize(result_hash)
@@ -106,6 +114,8 @@ module Types
         PErrorType::Error.new(error['msg'], error['kind'], error['issue_code'] || PErrorType::DEFAULT_ISSUE_CODE, value, error['details'])
       end
     end
+
+    EMPTY_RESULT = ExecutionResult.new(EMPTY_HASH)
   end
 end
 end

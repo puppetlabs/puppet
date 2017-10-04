@@ -52,7 +52,7 @@ describe 'the run_script function' do
     let(:hostname) { 'test.example.com' }
     let(:hosts) { [hostname] }
     let(:host) { stub(uri: hostname) }
-    let(:result) { stub(output_string: hostname, success?: true) }
+    let(:result) { { value: hostname } }
     let(:full_dir_path) { File.join(env_dir, 'modules', 'test', 'files', 'uploads' ) }
     let(:full_path) { File.join(full_dir_path, 'hostname.sh') }
     before(:each) do
@@ -66,7 +66,7 @@ describe 'the run_script function' do
       Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
       executor.expects(:run_script).with(full_path).returns({ host => result })
 
-      expect(eval_and_collect_notices(<<-CODE, node)).to eql(["[#{hostname}]"])
+      expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{hostname}'}})"])
         $a = run_script('test/uploads/hostname.sh', '#{hostname}')
         notice $a
       CODE
@@ -76,14 +76,14 @@ describe 'the run_script function' do
       let(:hostname2) { 'test.testing.com' }
       let(:hosts) { [hostname, hostname2] }
       let(:host2) { stub(uri: hostname2) }
-      let(:result2) { stub(output_string: hostname2, success?: true) }
+      let(:result2) { { value: hostname2 } }
 
       it 'with propagated multiple hosts and returns multiple results' do
         executor = mock('executor')
         Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
         executor.expects(:run_script).with(full_path).returns({ host => result, host2 => result2 })
 
-        expect(eval_and_collect_notices(<<-CODE, node)).to eql(["[#{hostname}, #{hostname2}]"])
+        expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{hostname}'}, '#{hostname2}' => {value => '#{hostname2}'}})"])
           $a = run_script('test/uploads/hostname.sh', '#{hostname}', '#{hostname2}')
           notice $a
         CODE
@@ -95,7 +95,7 @@ describe 'the run_script function' do
       Bolt::Executor.expects(:from_uris).never
       executor.expects(:run_script).never
 
-      expect(eval_and_collect_notices(<<-CODE, node)).to eql(['[]'])
+      expect(eval_and_collect_notices(<<-CODE, node)).to eql(['ExecutionResult({})'])
         $a = run_script('test/uploads/hostname.sh')
         notice $a
       CODE

@@ -33,12 +33,9 @@ Puppet::Functions.create_function(:run_command) do
     hosts = nodes.flatten
     if hosts.empty?
       call_function('debug', "Simulating run_command('#{command}') - no hosts given - no action taken")
-      []
+      Puppet::Pops::Types::ExecutionResult::EMPTY_RESULT
     else
-      # TODO, rewrite once proper handling of returned values is fully specified
-      Bolt::Executor.from_uris(hosts).run_command(command).map do |_, result|
-        result.success? ? result.output_string : result.exit_code
-      end
+      Puppet::Pops::Types::ExecutionResult.from_bolt(Bolt::Executor.from_uris(hosts).run_command(command))
     end
   end
 end
