@@ -2,11 +2,13 @@ module Puppet::Pops
 module Types
   class ExecutionResult
     include PuppetObject
+    include Iterable
+    include IteratorProducer
 
     TYPE_RESULT_HASH = TypeFactory.hash_kv(PStringType::NON_EMPTY, TypeFactory.struct({
       TypeFactory.optional('value') => TypeFactory.data,
       TypeFactory.optional('error') => TypeFactory.struct({
-        'message' => PStringType::NON_EMPTY,
+        'msg' => PStringType::NON_EMPTY,
         TypeFactory.optional('kind') => PStringType::NON_EMPTY,
         TypeFactory.optional('issue_code') => PStringType::NON_EMPTY,
         TypeFactory.optional('details') => TypeFactory.hash_of_data,
@@ -41,22 +43,26 @@ module Types
     end
 
     def count
-      return @result_hash.size
+      @result_hash.size
     end
 
     def empty
-      return @result_hash.empty?
+      @result_hash.empty?
     end
     alias_method :empty?, :empty
 
     def error_nodes
       result = {}
       @result_hash.each_pair { |k, v| result[k] = v if v.is_a?(PErrorType::Error) }
-      return self.class.new(result)
+      self.class.new(result)
+    end
+
+    def iterator
+      Iterable.on(@result_hash)
     end
 
     def names
-      return @result_hash.keys
+      @result_hash.keys
     end
 
     def ok
@@ -67,19 +73,19 @@ module Types
     def ok_nodes
       result = {}
       @result_hash.each_pair { |k, v| result[k] = v unless v.is_a?(PErrorType::Error) }
-      return self.class.new(result)
+      self.class.new(result)
     end
 
     def value(node_uri)
-      return @result_hash[node_uri]
+      @result_hash[node_uri]
     end
 
     def values
-      return @result_hash.values
+      @result_hash.values
     end
 
     def _pcore_init_hash
-      return @result_hash
+      @result_hash
     end
 
     private
@@ -97,7 +103,7 @@ module Types
       if error.nil?
         value
       else
-        PErrorType::Error.new(error['message'], error['kind'], error['issue_code'] || PErrorType::DEFAULT_ISSUE_CODE, value, error['details'])
+        PErrorType::Error.new(error['msg'], error['kind'], error['issue_code'] || PErrorType::DEFAULT_ISSUE_CODE, value, error['details'])
       end
     end
   end
