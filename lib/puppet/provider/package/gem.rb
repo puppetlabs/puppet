@@ -31,7 +31,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
       gem_list_command << "--source" << options[:source]
     end
     if name = options[:justme]
-      gem_list_command << "^" + name + "$"
+      gem_list_command << '\A' + name + '\z'
     end
 
     begin
