@@ -57,19 +57,22 @@ module Puppet::GettextConfig
   # @param path [String] to gettext config file
   # @param file_format [Symbol] translation file format to use, either :po or :mo
   # @return true if initialization succeeded, false otherwise
-  def self.initialize(conf_file_location, file_format)
+  def self.initialize(conf_file_dir, file_format)
     return false if @gettext_disabled || !@gettext_loaded
 
     unless file_format == :po || file_format == :mo
       raise Puppet::Error, "Unsupported translation file format #{file_format}; please use :po or :mo"
     end
 
-    if conf_file_location && Puppet::FileSystem.exist?(conf_file_location)
+    return false if conf_file_dir.nil?
+
+    conf_file = File.join(conf_file_dir, "config.yaml")
+    if Puppet::FileSystem.exist?(conf_file)
       if GettextSetup.method(:initialize).parameters.count == 1
         # For use with old gettext-setup gem versions, will load PO files only
-        GettextSetup.initialize(conf_file_location)
+        GettextSetup.initialize(conf_file_dir)
       else
-        GettextSetup.initialize(conf_file_location, :file_format => file_format)
+        GettextSetup.initialize(conf_file_dir, :file_format => file_format)
       end
       # Only change this once.
       # Because negotiate_locales will only return a non-default locale if

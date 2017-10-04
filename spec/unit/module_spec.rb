@@ -225,10 +225,10 @@ describe Puppet::Module do
         mod_dir = "#{@modpath}/#{mod_name}"
         metadata_file = "#{mod_dir}/metadata.json"
         tasks_dir = "#{mod_dir}/tasks"
-        locales_dir = "#{mod_dir}/locales"
+        locale_config = "#{mod_dir}/locales/config.yaml"
         Puppet::FileSystem.stubs(:exist?).with(metadata_file).returns true
         # Skip checking for translation config file
-        Puppet::FileSystem.stubs(:exist?).with(locales_dir).returns false
+        Puppet::FileSystem.stubs(:exist?).with(locale_config).returns false
       end
       mod = PuppetSpec::Modules.create(
         'test_gte_req',
@@ -465,7 +465,7 @@ describe Puppet::Module do
         }
       }
       File.open(config_path, 'w') { |file| file.write(config.to_yaml) }
-      Puppet::FileSystem.stubs(:exist?).with(locale_dir).returns(true)
+      Puppet::FileSystem.stubs(:exist?).with(config_path).returns(true)
 
       mod_obj.initialize_i18n
 
