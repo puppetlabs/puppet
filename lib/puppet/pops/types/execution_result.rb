@@ -8,7 +8,7 @@ module Types
     TYPE_RESULT_HASH = TypeFactory.hash_kv(PStringType::NON_EMPTY, TypeFactory.struct({
       TypeFactory.optional('value') => TypeFactory.data,
       TypeFactory.optional('error') => TypeFactory.struct({
-        'message' => PStringType::NON_EMPTY,
+        'msg' => PStringType::NON_EMPTY,
         TypeFactory.optional('kind') => PStringType::NON_EMPTY,
         TypeFactory.optional('issue_code') => PStringType::NON_EMPTY,
         TypeFactory.optional('details') => TypeFactory.hash_of_data,
@@ -103,7 +103,7 @@ module Types
       if error.nil?
         value
       else
-        PErrorType::Error.new(error['message'], error['kind'], error['issue_code'] || PErrorType::DEFAULT_ISSUE_CODE, value, error['details'])
+        PErrorType::Error.new(error['msg'], error['kind'], error['issue_code'] || PErrorType::DEFAULT_ISSUE_CODE, value, error['details'])
       end
     end
   end
