@@ -61,29 +61,13 @@ Puppet::Functions.create_function(:run_task) do
 
     if hosts.empty?
       call_function('debug', "Simulating run of task #{task._pcore_type.name} - no hosts given - no action taken")
-      return nil
-    end
+      Puppet::Pops::Types::ExecutionResult::EMPTY_RESULT
+    else
+      # TODO: separate handling of default since it's platform specific
+      input_method = task._pcore_type['input_method'].value
 
-    executor = Bolt::Executor.from_uris(hosts)
-
-    # TODO: separate handling of default since it's platform specific
-    input_method = task._pcore_type['input_method'].value
-
-    arguments = task.task_args
-    raw_results = executor.run_task(task.executable_path, input_method, arguments)
-
-    results = {}
-    raw_results.each do |node, result|
-      results[node.uri] = result
-    end
-
-    results.map do |host, result|
-      output = result.output_string
-      if result.success?
-        output
-      else
-        result.exit_code
-      end
+      arguments = task.task_args
+      Puppet::Pops::Types::ExecutionResult.from_bolt(Bolt::Executor.from_uris(hosts).run_task(task.executable_path, input_method, arguments))
     end
   end
 end

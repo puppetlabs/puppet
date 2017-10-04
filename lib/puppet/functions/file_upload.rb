@@ -40,11 +40,9 @@ Puppet::Functions.create_function(:file_upload, Puppet::Functions::InternalFunct
     hosts = nodes.flatten
     if hosts.empty?
       call_function('debug', "Simulating file upload of '#{found}' - no hosts given - no action taken")
-      []
+      Puppet::Pops::Types::ExecutionResult::EMPTY_RESULT
     else
-      Bolt::Executor.from_uris(hosts).file_upload(found, destination).map do |_, result|
-        result.success? ? result.output_string : result.exit_code
-      end
+      Puppet::Pops::Types::ExecutionResult.from_bolt(Bolt::Executor.from_uris(hosts).file_upload(found, destination))
     end
   end
 end

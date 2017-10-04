@@ -54,7 +54,7 @@ describe 'the file_upload function' do
     let(:hosts) { [hostname] }
     let(:host) { stub(uri: hostname) }
     let(:message) { 'uploaded' }
-    let(:result) { stub(output_string: message, success?: true) }
+    let(:result) { { value: message } }
     let(:full_dir_path) { File.join(env_dir, 'modules', 'test', 'files', 'uploads' ) }
     let(:full_path) { File.join(full_dir_path, 'index.html') }
     let(:destination) { '/var/www/html' }
@@ -68,8 +68,9 @@ describe 'the file_upload function' do
       executor = mock('executor')
       Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
       executor.expects(:file_upload).with(full_path, destination).returns({ host => result })
+      result.expects(:to_h).returns(result)
 
-      expect(eval_and_collect_notices(<<-CODE, node)).to eql(["[#{message}]"])
+      expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
         $a = file_upload('test/uploads/index.html', '#{destination}', '#{hostname}')
         notice $a
       CODE
@@ -79,8 +80,9 @@ describe 'the file_upload function' do
       executor = mock('executor')
       Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
       executor.expects(:file_upload).with(full_dir_path, destination).returns({ host => result })
+      result.expects(:to_h).returns(result)
 
-      expect(eval_and_collect_notices(<<-CODE, node)).to eql(["[#{message}]"])
+      expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
         $a = file_upload('test/uploads', '#{destination}', '#{hostname}')
         notice $a
       CODE
@@ -91,14 +93,16 @@ describe 'the file_upload function' do
       let(:hosts) { [hostname, hostname2] }
       let(:host2) { stub(uri: hostname2) }
       let(:message2) { 'received' }
-      let(:result2) { stub(output_string: message2, success?: true) }
+      let(:result2) { { value: message2 } }
 
       it 'with propagates multiple hosts and returns multiple results' do
         executor = mock('executor')
         Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
         executor.expects(:file_upload).with(full_path, destination).returns({ host => result, host2 => result2 })
+        result.expects(:to_h).returns(result)
+        result2.expects(:to_h).returns(result2)
 
-        expect(eval_and_collect_notices(<<-CODE, node)).to eql(["[#{message}, #{message2}]"])
+        expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}, '#{hostname2}' => {value => '#{message2}'}})"])
           $a = file_upload('test/uploads/index.html', '#{destination}', '#{hostname}', '#{hostname2}')
           notice $a
         CODE
@@ -110,7 +114,7 @@ describe 'the file_upload function' do
       Bolt::Executor.expects(:from_uris).never
       executor.expects(:file_upload).never
 
-      expect(eval_and_collect_notices(<<-CODE, node)).to eql(['[]'])
+      expect(eval_and_collect_notices(<<-CODE, node)).to eql(['ExecutionResult({})'])
         $a = file_upload('test/uploads/index.html', '#{destination}')
         notice $a
       CODE

@@ -52,7 +52,7 @@ describe 'the run_task function' do
     let(:hosts) { [hostname] }
     let(:host) { stub(uri: hostname) }
     let(:host2) { stub(uri: hostname2) }
-    let(:result) { stub(output_string: message, success?: true) }
+    let(:result) { { value: message } }
     before(:each) do
       Puppet.features.stubs(:bolt?).returns(true)
       module ::Bolt; end
@@ -65,8 +65,9 @@ describe 'the run_task function' do
 
       Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
       executor.expects(:run_task).with(executable, 'both', {'message' => 'the message'}).returns({ host => result })
+      result.expects(:to_h).returns(result)
 
-      expect(eval_and_collect_notices(<<-CODE, node)).to eql(["[#{message}]"])
+      expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
         $a = run_task(Test::Echo({message => "#{message}"}), "#{hostname}")
         notice $a
       CODE
@@ -78,8 +79,9 @@ describe 'the run_task function' do
 
       Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
       executor.expects(:run_task).with(executable, 'environment', {'message' => 'the message'}).returns({ host => result })
+      result.expects(:to_h).returns(result)
 
-      expect(eval_and_collect_notices(<<-CODE, node)).to eql(["[#{message}]"])
+      expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
         $a = run_task(Test::Meta({message => "#{message}"}), "#{hostname}")
         notice $a
       CODE
@@ -92,8 +94,9 @@ describe 'the run_task function' do
       Bolt::Executor.expects(:from_uris).with([hostname, hostname2]).returns(executor)
       executor.expects(:run_task).with(executable, 'environment', {'message' => 'the message'}).returns(
         { host => result, host2 => result })
+      result.expects(:to_h).twice.returns(result)
 
-      expect(eval_and_collect_notices(<<-CODE, node)).to eql(["[#{message}, #{message}]"])
+      expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}, '#{hostname2}' => {value => '#{message}'}})"])
         $a = run_task(Test::Meta({message => "#{message}"}), "#{hostname}", [["#{hostname2}"]],[])
         notice $a
       CODE
@@ -107,8 +110,9 @@ describe 'the run_task function' do
 
           Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
           executor.expects(:run_task).with(executable, 'environment', {'message' => 'the message'}).returns({ host => result })
+          result.expects(:to_h).returns(result)
 
-          expect(eval_and_collect_notices(<<-CODE, node)).to eql(["[#{message}]"])
+          expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
             $a = run_task(Test::Meta, "#{hostname}", {message => "#{message}"})
             notice $a
           CODE
@@ -120,8 +124,9 @@ describe 'the run_task function' do
 
           Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
           executor.expects(:run_task).with(executable, 'both', {}).returns({ host => result })
+          result.expects(:to_h).returns(result)
 
-          expect(eval_and_collect_notices(<<-CODE, node)).to eql(["[#{message}]"])
+          expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
             $a = run_task(Test::Yes, "#{hostname}")
             notice $a
           CODE
@@ -134,9 +139,9 @@ describe 'the run_task function' do
           Bolt::Executor.expects(:from_uris).never
           executor.expects(:run_task).never
 
-          expect(eval_and_collect_notices(<<-CODE, node)).to eql(["Undef"])
+          expect(eval_and_collect_notices(<<-CODE, node)).to eql(['ExecutionResult({})'])
             $a = run_task(Test::Yes, [])
-            notice type($a)
+            notice $a
           CODE
         end
       end
@@ -148,8 +153,9 @@ describe 'the run_task function' do
 
         Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
         executor.expects(:run_task).with(executable, 'environment', {'message' => 'the message'}).returns({ host => result })
+        result.expects(:to_h).returns(result)
 
-        expect(eval_and_collect_notices(<<-CODE, node)).to eql(["[#{message}]"])
+        expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
           $a = run_task('test::meta', "#{hostname}", {message => "#{message}"})
           notice $a
         CODE
@@ -161,8 +167,9 @@ describe 'the run_task function' do
 
         Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
         executor.expects(:run_task).with(executable, 'both', {}).returns({ host => result })
+        result.expects(:to_h).returns(result)
 
-        expect(eval_and_collect_notices(<<-CODE, node)).to eql(["[#{message}]"])
+        expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
           $a = run_task('test::yes', "#{hostname}")
           notice $a
         CODE
@@ -175,9 +182,9 @@ describe 'the run_task function' do
         Bolt::Executor.expects(:from_uris).never
         executor.expects(:run_task).never
 
-        expect(eval_and_collect_notices(<<-CODE, node)).to eql(["Undef"])
+        expect(eval_and_collect_notices(<<-CODE, node)).to eql(['ExecutionResult({})'])
           $a = run_task('test::yes', [])
-          notice type($a)
+          notice $a
         CODE
       end
 
@@ -240,8 +247,9 @@ describe 'the run_task function' do
 
           Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
           executor.expects(:run_task).with(executable, 'both', {}).returns({ host => result })
+          result.expects(:to_h).returns(result)
 
-          expect(eval_and_collect_notices(<<-CODE, node)).to eql(["[#{message}]"])
+          expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
           $a = run_task('test', "#{hostname}")
           notice $a
           CODE

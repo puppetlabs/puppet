@@ -32,7 +32,7 @@ describe 'the run_command function' do
     let(:hosts) { [hostname] }
     let(:host) { stub(uri: hostname) }
     let(:command) { 'hostname' }
-    let(:result) { stub(output_string: hostname, success?: true) }
+    let(:result) { { value: hostname } }
     before(:each) do
       Puppet.features.stubs(:bolt?).returns(true)
       module ::Bolt; end
@@ -43,8 +43,9 @@ describe 'the run_command function' do
       executor = mock('executor')
       Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
       executor.expects(:run_command).with(command).returns({ host => result })
+      result.expects(:to_h).returns(result)
 
-      expect(eval_and_collect_notices(<<-CODE, node)).to eql(["[#{hostname}]"])
+      expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{hostname}'}})"])
         $a = run_command('#{command}', '#{hostname}')
         notice $a
       CODE
@@ -54,14 +55,16 @@ describe 'the run_command function' do
       let(:hostname2) { 'test.testing.com' }
       let(:hosts) { [hostname, hostname2] }
       let(:host2) { stub(uri: hostname2) }
-      let(:result2) { stub(output_string: hostname2, success?: true) }
+      let(:result2) { { value: hostname2 } }
 
       it 'with propagates multiple hosts and returns multiple results' do
         executor = mock('executor')
         Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
         executor.expects(:run_command).with(command).returns({ host => result, host2 => result2 })
+        result.expects(:to_h).returns(result)
+        result2.expects(:to_h).returns(result2)
 
-        expect(eval_and_collect_notices(<<-CODE, node)).to eql(["[#{hostname}, #{hostname2}]"])
+        expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{hostname}'}, '#{hostname2}' => {value => '#{hostname2}'}})"])
           $a = run_command('#{command}', '#{hostname}', '#{hostname2}')
           notice $a
         CODE
@@ -73,7 +76,7 @@ describe 'the run_command function' do
       Bolt::Executor.expects(:from_uris).never
       executor.expects(:run_command).never
 
-      expect(eval_and_collect_notices(<<-CODE, node)).to eql(['[]'])
+      expect(eval_and_collect_notices(<<-CODE, node)).to eql(['ExecutionResult({})'])
         $a = run_command('#{command}')
         notice $a
       CODE
