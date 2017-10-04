@@ -19,7 +19,7 @@ describe 'ExecutionResult' do
       CODE
     end
 
-    context 'a Error instance' do
+    context 'a ExecutionResult instance' do
       it 'can be created from an empty hash' do
         code = <<-CODE
             $o = ExecutionResult({})
@@ -114,6 +114,126 @@ describe 'ExecutionResult' do
           "ExecutionResult({'beta.example.com' => 'total success'})",
           "ExecutionResult({'alpha.example.com' => Error({'message' => 'nope', 'issue_code' => 'ERROR', 'partial_result' => 'almost there, almost th...argh'})})"
         ])
+      end
+
+      context 'using iterative features' do
+        context 'using a 1 argument block' do
+          it 'can do #all' do
+            code = <<-CODE
+                $o = ExecutionResult(
+                  'alpha.example.com' => {error => { 'message' => 'nope'}, value => 'almost there, almost th...argh'},
+                  'beta.example.com' => {error => { 'message' => 'bad'}})
+                notice($o.all |$e| { $e[1] =~ Error })
+            CODE
+            expect(eval_and_collect_notices(code)).to eq(['true'])
+          end
+
+          it 'can do #any' do
+            code = <<-CODE
+                $o = ExecutionResult(
+                  'alpha.example.com' => {error => { 'message' => 'nope'}, value => 'almost there, almost th...argh'},
+                  'beta.example.com' => {error => { 'message' => 'bad'}})
+                notice($o.any |$e| { $e[1] !~ Error })
+            CODE
+            expect(eval_and_collect_notices(code)).to eq(['false'])
+          end
+
+          it 'can do #each' do
+            code = <<-CODE
+                $o = ExecutionResult(
+                  'alpha.example.com' => {error => { 'message' => 'nope'}, value => 'almost there, almost th...argh'},
+                  'beta.example.com' => {value => 'total success'})
+                $o.each |$e| { notice("Node ${e[0]} returned ${e[1]}") }
+            CODE
+            expect(eval_and_collect_notices(code)).to eq([
+              "Node alpha.example.com returned Error({'message' => 'nope', 'issue_code' => 'ERROR', 'partial_result' => 'almost there, almost th...argh'})",
+              'Node beta.example.com returned total success'
+            ])
+          end
+
+          it 'can do #filter' do
+            code = <<-CODE
+              $o = ExecutionResult(
+                'alpha.example.com' => {error => { 'message' => 'nope'}, value => 'almost there, almost th...argh'},
+                'beta.example.com' => {value => 'total success'})
+              $o.filter |$e| { $e[0] =~ /^beta/ }.each |$e| { notice($e[1]) }
+            CODE
+            expect(eval_and_collect_notices(code)).to eq([
+              'total success'
+            ])
+          end
+
+          it 'can do #map' do
+            code = <<-CODE
+              $o = ExecutionResult(
+                'alpha.example.com' => {error => { 'message' => 'nope'}, value => 'almost there, almost th...argh'},
+                'beta.example.com' => {value => 'total success'})
+              notice($o.map |$e| { $e[1] })
+            CODE
+            expect(eval_and_collect_notices(code)).to eq([
+              "[Error({'message' => 'nope', 'issue_code' => 'ERROR', 'partial_result' => 'almost there, almost th...argh'}), total success]"
+            ])
+          end
+        end
+
+        context 'using a 2 argument block' do
+          it 'can do #all' do
+            code = <<-CODE
+                $o = ExecutionResult(
+                  'alpha.example.com' => {error => { 'message' => 'nope'}, value => 'almost there, almost th...argh'},
+                  'beta.example.com' => {error => { 'message' => 'bad'}})
+                notice($o.all |$k, $v| { $v =~ Error })
+            CODE
+            expect(eval_and_collect_notices(code)).to eq(['true'])
+          end
+
+          it 'can do #any' do
+            code = <<-CODE
+                $o = ExecutionResult(
+                  'alpha.example.com' => {error => { 'message' => 'nope'}, value => 'almost there, almost th...argh'},
+                  'beta.example.com' => {error => { 'message' => 'bad'}})
+                notice($o.any |$k, $v| { $v !~ Error })
+            CODE
+            expect(eval_and_collect_notices(code)).to eq(['false'])
+          end
+
+          it 'can do #each' do
+            code = <<-CODE
+                $o = ExecutionResult(
+                  'alpha.example.com' => {error => { 'message' => 'nope'}, value => 'almost there, almost th...argh'},
+                  'beta.example.com' => {value => 'total success'})
+                $o.each |$k, $v| { notice("Node $k returned $v") }
+            CODE
+            expect(eval_and_collect_notices(code)).to eq([
+              "Node alpha.example.com returned Error({'message' => 'nope', 'issue_code' => 'ERROR', 'partial_result' => 'almost there, almost th...argh'})",
+              'Node beta.example.com returned total success'
+            ])
+          end
+
+          it 'can do #filter' do
+            code = <<-CODE
+              $o = ExecutionResult(
+                'alpha.example.com' => {error => { 'message' => 'nope'}, value => 'almost there, almost th...argh'},
+                'beta.example.com' => {value => 'total success'})
+              $o.filter |$k, $v| { $k =~ /^beta/ }.each |$k, $v| { notice($v) }
+            CODE
+            expect(eval_and_collect_notices(code)).to eq([
+              'total success'
+            ])
+          end
+
+          it 'can do #map' do
+            code = <<-CODE
+              $o = ExecutionResult(
+                'alpha.example.com' => {error => { 'message' => 'nope'}, value => 'almost there, almost th...argh'},
+                'beta.example.com' => {value => 'total success'})
+              notice($o.map |$k, $v| { $v })
+            CODE
+            expect(eval_and_collect_notices(code)).to eq([
+              "[Error({'message' => 'nope', 'issue_code' => 'ERROR', 'partial_result' => 'almost there, almost th...argh'}), total success]"
+            ])
+          end
+        end
       end
     end
   end

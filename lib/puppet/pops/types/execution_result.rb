@@ -2,6 +2,8 @@ module Puppet::Pops
 module Types
   class ExecutionResult
     include PuppetObject
+    include Iterable
+    include IteratorProducer
 
     TYPE_RESULT_HASH = TypeFactory.hash_kv(PStringType::NON_EMPTY, TypeFactory.struct({
       TypeFactory.optional('value') => TypeFactory.data,
@@ -52,7 +54,11 @@ module Types
     def error_nodes
       result = {}
       @result_hash.each_pair { |k, v| result[k] = v if v.is_a?(PErrorType::Error) }
-      return self.class.new(result)
+      self.class.new(result)
+    end
+
+    def iterator
+      Iterable.on(@result_hash)
     end
 
     def names
