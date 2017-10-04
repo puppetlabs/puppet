@@ -72,7 +72,7 @@ In order to run the tests on hosts provisioned from packages produced by Deliver
 
 Typically if you are investigating a failure, you will have a SHA from a failed jenkins run which should correspond to a successful pipeline run, and you should not need to run the pipeline manually.
 
-A finished pipeline will have repository information available at http://builds.puppetlabs.lan/puppet-agent/  So you can also browse this list and select a recent sha which has repo_configs/ available.
+A finished pipeline will have repository information available at http://builds.delivery.puppetlabs.net/puppet-agent/  So you can also browse this list and select a recent sha which has repo_configs/ available.
 
 The ci:test:aio task depends on having a local installation of `wget`. When executing the `ci:test:aio` task, you must set the `SHA` and the `SUITE_VERSION` to identify a puppet-agent package version to test.
 
