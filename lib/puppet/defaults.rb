@@ -126,6 +126,19 @@ module Puppet
         munge(value)
         value.to_sym
       end
+    },
+    :disable_i18n => {
+      :default => false,
+      :type    => :boolean,
+      :desc    => "If true, turns off all translations of Puppet and module
+        log messages, which affects error, warning, and info log messages,
+        as well as any translations in the report and CLI.",
+      :hook    => proc do |value|
+        if value
+          require 'puppet/gettext/stubs'
+          Puppet::GettextConfig.disable_gettext
+        end
+      end
     }
   )
 
