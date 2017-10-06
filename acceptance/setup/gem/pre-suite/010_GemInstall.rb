@@ -4,7 +4,7 @@ require 'puppet/acceptance/common_utils'
 
 agents.each do |agent|
   sha = ENV['SHA']
-  base_url = "http://builds.puppetlabs.lan/puppet/#{sha}/artifacts"
+  base_url = "http://builds.delivery.puppetlabs.net/puppet/#{sha}/artifacts"
 
   ruby_command = Puppet::Acceptance::CommandUtils.ruby_command(agent)
   gem_command = Puppet::Acceptance::CommandUtils.gem_command(agent)

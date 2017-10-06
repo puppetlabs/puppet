@@ -104,14 +104,14 @@ describe 'InstallUtils' do
     end
 
     it "calls wget with the right amount of cut dirs for url that ends in '/'" do
-      url = 'http://builds.puppetlabs.lan/puppet/7807591405af849da2ad6534c66bd2d4efff604f/repos/el/6/devel/x86_64/'
+      url = 'http://builds.delivery.puppetlabs.net/puppet/7807591405af849da2ad6534c66bd2d4efff604f/repos/el/6/devel/x86_64/'
       testcase.expects(:`).with("wget -nv -P dir --reject \"index.html*\",\"*.gif\" --cut-dirs=6 -np -nH --no-check-certificate -r #{url} 2>&1").returns("log")
 
       expect( testcase.fetch_remote_dir(url, 'dir')).to eql('dir/x86_64')
     end
 
     it "calls wget with the right amount of cut dirs for url that doesn't end in '/'" do
-      url = 'http://builds.puppetlabs.lan/puppet/7807591405af849da2ad6534c66bd2d4efff604f/repos/apt/wheezy'
+      url = 'http://builds.delivery.puppetlabs.net/puppet/7807591405af849da2ad6534c66bd2d4efff604f/repos/apt/wheezy'
       testcase.expects(:`).with("wget -nv -P dir --reject \"index.html*\",\"*.gif\" --cut-dirs=4 -np -nH --no-check-certificate -r #{url}/ 2>&1").returns("log")
 
       expect( testcase.fetch_remote_dir(url, 'dir')).to eql('dir/wheezy')
@@ -176,11 +176,11 @@ describe 'InstallUtils' do
           "puppetlabs-release-el-6.noarch.rpm",
         ],
         :repo => [
-          "http://builds.puppetlabs.lan/puppet/abcdef10/repo_configs/rpm/",
+          "http://builds.delivery.puppetlabs.net/puppet/abcdef10/repo_configs/rpm/",
           "pl-puppet-abcdef10-el-6-i386.repo",
         ],
         :repo_dir => [
-          "http://builds.puppetlabs.lan/puppet/abcdef10/repos/el/6/products/i386/",
+          "http://builds.delivery.puppetlabs.net/puppet/abcdef10/repos/el/6/products/i386/",
           "i386",
         ],
       },
@@ -195,11 +195,11 @@ describe 'InstallUtils' do
           "puppetlabs-release-fedora-20.noarch.rpm",
         ],
         :repo => [
-          "http://builds.puppetlabs.lan/puppet/abcdef10/repo_configs/rpm/",
+          "http://builds.delivery.puppetlabs.net/puppet/abcdef10/repo_configs/rpm/",
           "pl-puppet-abcdef10-fedora-f20-x86_64.repo",
         ],
         :repo_dir => [
-          "http://builds.puppetlabs.lan/puppet/abcdef10/repos/fedora/f20/products/x86_64/",
+          "http://builds.delivery.puppetlabs.net/puppet/abcdef10/repos/fedora/f20/products/x86_64/",
           "x86_64",
         ],
       },
@@ -214,11 +214,11 @@ describe 'InstallUtils' do
           "puppetlabs-release-el-5.noarch.rpm",
         ],
         :repo => [
-          "http://builds.puppetlabs.lan/puppet/abcdef10/repo_configs/rpm/",
+          "http://builds.delivery.puppetlabs.net/puppet/abcdef10/repo_configs/rpm/",
           "pl-puppet-abcdef10-el-5-x86_64.repo",
         ],
         :repo_dir => [
-          "http://builds.puppetlabs.lan/puppet/abcdef10/repos/el/5/products/x86_64/",
+          "http://builds.delivery.puppetlabs.net/puppet/abcdef10/repos/el/5/products/x86_64/",
           "x86_64",
         ],
       },
@@ -237,13 +237,13 @@ describe 'InstallUtils' do
 
       list = "pl-puppet-#{sha}-precise.list"
       testcase.expects(:fetch).with(
-        "http://builds.puppetlabs.lan/puppet/#{sha}/repo_configs/deb/",
+        "http://builds.delivery.puppetlabs.net/puppet/#{sha}/repo_configs/deb/",
         list,
         platform_configs_dir
       ).returns("#{platform_configs_dir}/#{list}")
 
       testcase.expects(:fetch_remote_dir).with(
-        "http://builds.puppetlabs.lan/puppet/#{sha}/repos/apt/precise",
+        "http://builds.delivery.puppetlabs.net/puppet/#{sha}/repos/apt/precise",
         platform_configs_dir
       ).returns("#{platform_configs_dir}/precise")
 
