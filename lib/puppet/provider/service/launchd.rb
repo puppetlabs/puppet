@@ -65,6 +65,17 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     ]
   end
 
+  # These are known bad files in the normal paths, skip them completely.
+  # There's only one right now, it's a file of memory limits and other
+  # data, it's not actually a service and would generate a warning on every run.
+  #
+  # @api private
+  def self.launchd_skip_paths
+    [
+      '/System/Library/LaunchDaemons/com.apple.jetsamproperties.Mac.plist'
+    ]
+  end
+
   # Gets the current Darwin version, example 10.6 returns 9 and 10.10 returns 14
   # See https://en.wikipedia.org/wiki/Darwin_(operating_system)#Release_history
   # for more information.
@@ -135,15 +146,20 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     @label_to_path_map = {}
     launchd_paths.each do |path|
       return_globbed_list_of_file_paths(path).each do |filepath|
-        Puppet.debug("Reading launchd plist #{filepath}")
-        job = read_plist(filepath)
-        next if job.nil?
-        if job.has_key?("Label")
-          @label_to_path_map[job["Label"]] = filepath
-        else
-          Puppet.warning("The #{filepath} plist does not contain a 'label' key; " +
-                       "Puppet is skipping it")
+        if launchd_skip_paths.include? filepath
+          Puppet.debug("Skipping launchd plist #{filepath}")
           next
+        else
+          Puppet.debug("Reading launchd plist #{filepath}")
+          job = read_plist(filepath)
+          next if job.nil?
+          if job.has_key?("Label")
+            @label_to_path_map[job["Label"]] = filepath
+          else
+            Puppet.warning("The #{filepath} plist does not contain a 'label'" +
+                         " key; Puppet is skipping it")
+            next
+          end
         end
       end
     end
