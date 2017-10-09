@@ -8,35 +8,15 @@ test_name 'C100559: puppet agent run output with a supported language should be 
   tag 'audit:medium',
       'audit:acceptance'
 
-  def language_name(language)
-    on(agent, 'locale -a') do |locale_result|
-      ["#{language}.utf8", "#{language}.UTF-8", language].each do |lang|
-        return lang if locale_result.stdout =~ /#{lang}/
-      end
-      # no supported language installed skip test on this machine
-      skip_test("test machine is missing #{language} local Skipping")
-    end
-  end
+  require 'puppet/acceptance/i18n_utils'
+  extend Puppet::Acceptance::I18nUtils
 
   language = 'ja_JP'
   agents.each do |agent|
+
     step("ensure #{language} locale is configured") do
-      if agent['platform'] =~ /ubuntu/
-        on(agent, 'locale -a') do |locale_result|
-          if locale_result.stdout !~ /#{language}/
-            on(agent, "locale-gen --lang #{language}")
-            language = language_name(language)
-          end
-        end
-      elsif agent['platform'] =~ /debian/
-        on(agent, 'locale -a') do |locale_result|
-          if locale_result.stdout !~ /#{language}/
-            on(agent, "cp /etc/locale.gen /etc/locale.gen.orig ; sed -e 's/# ja_JP.UTF-8/ja_JP.UTF-8/' /etc/locale.gen.orig > /etc/locale.gen")
-            on(agent, 'locale-gen')
-            language = language_name(language)
-          end
-        end
-      end
+      language = enable_locale_language(agent, language)
+      skip_test("test machine is missing #{language} locale. Skipping") if language.nil?
     end
 
     step "Run Puppet apply with language #{language} and check the output" do
