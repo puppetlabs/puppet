@@ -474,8 +474,8 @@ module Puppet::Functions
         type = @all_callables
         name = type_and_name[0]
       when 2
-        type_string, name = type_and_name
-        type = Puppet::Pops::Types::TypeParser.singleton.parse(type_string, loader)
+        type, name = type_and_name
+        type = Puppet::Pops::Types::TypeParser.singleton.parse(type, loader) unless type.is_a?(Puppet::Pops::Types::PAnyType)
       else
         raise ArgumentError, _("block_param accepts max 2 arguments (type, name), got %{size}.") % { size: type_and_name.size }
       end
@@ -513,7 +513,9 @@ module Puppet::Functions
     #
     # @api public
     def return_type(type)
-      raise ArgumentError, _("Argument to 'return_type' must be a String reference to a Puppet Data Type. Got %{type_class}") % { type_class: type.class } unless type.is_a?(String)
+      unless type.is_a?(String) || type.is_a?(Puppet::Pops::Types::PAnyType)
+        raise ArgumentError, _("Argument to 'return_type' must be a String reference to a Puppet Data Type. Got %{type_class}") % { type_class: type.class }
+      end
       @return_type = type
     end
 
@@ -528,7 +530,7 @@ module Puppet::Functions
         raise ArgumentError, _("Parameter name argument must be a Symbol. Got %{name_class}") % { name_class: name.class }
       end
 
-      if type.is_a?(String)
+      if type.is_a?(String) || type.is_a?(Puppet::Pops::Types::PAnyType)
         @types << type
         @names << name
         # mark what should be picked for this position when dispatching
@@ -571,10 +573,10 @@ module Puppet::Functions
     # @api private
     def create_callable(types, block_type, return_type, from, to)
       mapped_types = types.map do |t|
-        Puppet::Pops::Types::TypeParser.singleton.parse(t, loader)
+        t.is_a?(Puppet::Pops::Types::PAnyType) ? t : Puppet::Pops::Types::TypeParser.singleton.parse(t, loader)
       end
       param_types = Puppet::Pops::Types::PTupleType.new(mapped_types, from > 0 && from == to ? nil : Puppet::Pops::Types::PIntegerType.new(from, to))
-      return_type = Puppet::Pops::Types::TypeParser.singleton.parse(return_type, loader) unless return_type.nil?
+      return_type = Puppet::Pops::Types::TypeParser.singleton.parse(return_type, loader) unless return_type.nil? || return_type.is_a?(Puppet::Pops::Types::PAnyType)
       Puppet::Pops::Types::PCallableType.new(param_types, block_type, return_type)
     end
   end
