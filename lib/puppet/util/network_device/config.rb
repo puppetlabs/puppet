@@ -12,6 +12,17 @@ class Puppet::Util::NetworkDevice::Config
     main.devices || []
   end
 
+  def self.device(name)
+    devices = self.devices.dup
+    devices.select! { |key, _value| key == name }
+    if devices.empty?
+      Puppet.err _("Target device '%{target}' not found in %{config}") % { target: name, config: Puppet[:deviceconfig] }
+      return nil
+    else
+      return devices[name]
+    end
+  end
+
   attr_reader :devices
 
   def exists?
@@ -71,7 +82,7 @@ class Puppet::Util::NetworkDevice::Config
       Puppet.err _("Configuration error: Cannot read %{file}; cannot serve") % { file: @file }
       #raise Puppet::Error, "Cannot read #{@config}"
     rescue Errno::ENOENT => detail
-      Puppet.err _("Configuration error: '%{file}' does not exit; cannot serve") % { file: @file }
+      Puppet.err _("Configuration error: '%{file}' does not exist; cannot serve") % { file: @file }
     end
 
     @devices = devices

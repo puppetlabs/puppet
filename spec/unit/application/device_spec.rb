@@ -314,11 +314,12 @@ describe Puppet::Application::Device do
 
       Puppet::Util::NetworkDevice::Config.expects(:devices).returns(device_hash)
       Puppet.expects(:info).with(regexp_matches(/starting applying configuration to/)).never
-      Puppet.expects(:err).with(regexp_matches(/Target device \/ certificate 'bla' not found in .*\.conf/))
+      Puppet.expects(:err).with(regexp_matches(/Target device 'bla' not found in .*\.conf/))
       expect { @device.main }.to exit_with 1
     end
 
     it "should exit if the device list is empty" do
+      Puppet.expects(:err).with(regexp_matches(/No device found in .*\.conf/))
       expect { @device.main }.to exit_with 1
     end
 
