@@ -77,7 +77,7 @@ class Puppet::Module
         Puppet.warning _("GettextSetup initialization for %{module_name} failed with: %{error_message}") % { module_name: name, error_message: e.message }
       end
     else
-      Puppet.warning _("GettextSetup is not available, skipping GettextSetup initialization for %{module_name}.") % { module_name: name }
+      Puppet.warn_once("gettext_unavailable", "gettext_unavailable", "GettextSetup is not available, skipping GettextSetup initialization for modules.")
     end
   end
 
