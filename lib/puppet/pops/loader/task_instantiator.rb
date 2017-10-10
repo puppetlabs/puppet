@@ -60,7 +60,7 @@ class TaskInstantiator
 
     @type_hash_t = tf.struct(
       tf.optional('description') => tf.string,
-      tf.optional('puppet_task_version') => tf.string,
+      tf.optional('puppet_task_version') => tf.integer,
       tf.optional('supports_noop') => tf.boolean,
       tf.optional('input_method') => tf.enum('stdin', 'environment'),
       'parameters' => params_t,
