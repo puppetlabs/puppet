@@ -292,7 +292,8 @@ describe Puppet::Type.type(:service).provider(:launchd) do
         provider.expects(:launchd_paths).returns(['/Library/LaunchAgents'])
         provider.expects(:return_globbed_list_of_file_paths).with('/Library/LaunchAgents').returns([busted_plist_path])
         plistlib.expects(:read_plist_file).with(busted_plist_path).returns(plist_without_label)
-        Puppet.expects(:warning).with("The #{busted_plist_path} plist does not contain a 'label' key; Puppet is skipping it")
+        Puppet.expects(:debug).with("Reading launchd plist #{busted_plist_path}")
+        Puppet.expects(:debug).with("The #{busted_plist_path} plist does not contain a 'label' key; Puppet is skipping it")
         provider.make_label_to_path_map
       end
     end
