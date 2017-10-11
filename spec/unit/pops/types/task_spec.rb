@@ -255,6 +255,24 @@ describe 'The Task Type' do
           PUPPET
         end
 
+        context 'using more than two segments in the name' do
+          let(:testmodule) {
+            {
+              'tasks' => {
+                'hello' => {
+                  'foo.sh' => 'echo hello'
+                }
+              }
+            }
+          }
+
+          it 'task is not found' do
+            expect{compile(<<-PUPPET.unindent)}.to raise_error(/Resource type not found: Testmodule::Hello::Foo/)
+              notice(Testmodule::Hello::Foo(message => 'a message'))
+            PUPPET
+          end
+        end
+
         context 'without --tasks' do
           before(:each) { Puppet[:tasks] = false }
 
