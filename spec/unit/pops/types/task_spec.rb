@@ -129,6 +129,7 @@ describe 'The Task Type' do
             RUBY
             'hello.json' => <<-JSON
             {
+              "puppet_task_version": 1,
               "supports_noop": true,
               "parameters": {
                  "message": {
@@ -157,6 +158,9 @@ describe 'The Task Type' do
             expect(task_t['supports_noop'].type).to be_a(Puppet::Pops::Types::PBooleanType)
             expect(task_t['supports_noop'].kind).to eql('constant')
             expect(task_t['supports_noop'].value).to eql(true)
+            expect(task_t['puppet_task_version'].type).to be_a(Puppet::Pops::Types::PIntegerType)
+            expect(task_t['puppet_task_version'].kind).to eql('constant')
+            expect(task_t['puppet_task_version'].value).to eql(1)
 
             task = task_t.create('a message')
             expect(task).to be_a(Puppet::Pops::Types::Task)
@@ -226,7 +230,7 @@ describe 'The Task Type' do
             }
           }
 
-          it 'loads a task with parameters as a Task subtype' do
+          it 'fails with unrecognized key error' do
             compile do
               module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
               expect{module_loader.load(:type, 'testmodule::hello')}.to raise_error(
@@ -252,11 +256,38 @@ describe 'The Task Type' do
             }
           }
 
-          it 'loads a task with parameters as a Task subtype' do
+          it 'fails with pattern mismatch error' do
             compile do
               module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
               expect{module_loader.load(:type, 'testmodule::hello')}.to raise_error(
                 /entry 'parameters' key of entry 'Message' expects a match for Pattern\[\/\\A\[a-z\]\[a-z0-9_\]\*\\z\/\], got 'Message'/)
+            end
+          end
+        end
+
+        context 'that has a puppet_task_version that is a string' do
+          let(:testmodule) {
+            {
+              'tasks' => {
+                'hello' => 'echo hello',
+                'hello.json' => <<-JSON
+                {
+                  "puppet_task_version": "1",
+                  "supports_noop": true,
+                  "parameters": {
+                     "message": { "type": "String" }
+                  }
+                }
+              JSON
+              }
+            }
+          }
+
+          it 'fails with type mismatch error' do
+            compile do
+              module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
+              expect{module_loader.load(:type, 'testmodule::hello')}.to raise_error(
+                /entry 'puppet_task_version' expects an Integer value, got String/)
             end
           end
         end
