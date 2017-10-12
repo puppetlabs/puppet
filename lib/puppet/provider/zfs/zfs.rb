@@ -70,7 +70,7 @@ Puppet::Type.type(:zfs).provide(:zfs) do
    :mountpoint, :nbmand,  :primarycache, :quota, :readonly,
    :recordsize, :refquota, :refreservation, :reservation,
    :secondarycache, :setuid, :sharenfs, :sharesmb,
-   :snapdir, :version, :volsize, :vscan, :xattr, :zoned].each do |field|
+   :snapdir, :version, :volsize, :vscan, :xattr].each do |field|
     define_method(field) do
       zfs(:get, "-H", "-o", "value", field, @resource[:name]).strip
     end
@@ -78,6 +78,22 @@ Puppet::Type.type(:zfs).provide(:zfs) do
     define_method(field.to_s + "=") do |should|
       zfs(:set, "#{field}=#{should}", @resource[:name])
     end
+  end
+
+  # On FreeBSD zoned is called jailed
+  container = case Facter.value(:operatingsystem)
+    when "FreeBSD"
+      :jailed
+    else
+      :zoned
+  end
+
+  define_method(:zoned) do
+    zfs(:get, "-H", "-o", "value", container, @resource[:name]).strip
+  end
+
+  define_method("zoned=") do |should|
+    zfs(:set, "#{container}=#{should}", @resource[:name])
   end
 
 end
