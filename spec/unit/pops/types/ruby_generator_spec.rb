@@ -15,6 +15,198 @@ describe 'Puppet Ruby Generator' do
   let!(:parser) { TypeParser.singleton }
   let(:generator) { RubyGenerator.new }
 
+  context 'when generating classes for Objects having attribute names that are Ruby reserved words' do
+    let (:source) { <<-PUPPET }
+      type MyObject = Object[{
+        attributes => {
+          alias => String,
+          begin => String,
+          break => String,
+          def => String,
+          do => String,
+          end => String,
+          ensure => String,
+          for => String,
+          module => String,
+          next => String,
+          nil => String,
+          not => String,
+          redo => String,
+          rescue => String,
+          retry => String,
+          return => String,
+          self => String,
+          super => String,
+          then => String,
+          until => String,
+          when => String,
+          while => String,
+          yield => String,
+        },
+      }]
+      $x = MyObject({
+        alias => 'value of alias',
+        begin => 'value of begin',
+        break => 'value of break',
+        def => 'value of def',
+        do => 'value of do',
+        end => 'value of end',
+        ensure => 'value of ensure',
+        for => 'value of for',
+        module => 'value of module',
+        next => 'value of next',
+        nil => 'value of nil',
+        not => 'value of not',
+        redo => 'value of redo',
+        rescue => 'value of rescue',
+        retry => 'value of retry',
+        return => 'value of return',
+        self => 'value of self',
+        super => 'value of super',
+        then => 'value of then',
+        until => 'value of until',
+        when => 'value of when',
+        while => 'value of while',
+        yield => 'value of yield',
+      })
+      notice($x.alias)
+      notice($x.begin)
+      notice($x.break)
+      notice($x.def)
+      notice($x.do)
+      notice($x.end)
+      notice($x.ensure)
+      notice($x.for)
+      notice($x.module)
+      notice($x.next)
+      notice($x.nil)
+      notice($x.not)
+      notice($x.redo)
+      notice($x.rescue)
+      notice($x.retry)
+      notice($x.return)
+      notice($x.self)
+      notice($x.super)
+      notice($x.then)
+      notice($x.until)
+      notice($x.when)
+      notice($x.while)
+      notice($x.yield)
+    PUPPET
+
+    it 'can create an instance and access all attributes' do
+      expect(eval_and_collect_notices(source)).to eql([
+        'value of alias',
+        'value of begin',
+        'value of break',
+        'value of def',
+        'value of do',
+        'value of end',
+        'value of ensure',
+        'value of for',
+        'value of module',
+        'value of next',
+        'value of nil',
+        'value of not',
+        'value of redo',
+        'value of rescue',
+        'value of retry',
+        'value of return',
+        'value of self',
+        'value of super',
+        'value of then',
+        'value of until',
+        'value of when',
+        'value of while',
+        'value of yield',
+      ])
+    end
+  end
+
+  context 'when generating classes for Objects having function names that are Ruby reserved words' do
+    let (:source) { <<-PUPPET }
+      type MyObject = Object[{
+        functions => {
+          alias  => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of alias'" }}},
+          begin  => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of begin'" }}},
+          break  => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of break'" }}},
+          def    => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of def'" }}},
+          do     => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of do'" }}},
+          end    => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of end'" }}},
+          ensure => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of ensure'" }}},
+          for    => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of for'" }}},
+          module => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of module'" }}},
+          next   => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of next'" }}},
+          nil    => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of nil'" }}},
+          not    => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of not'" }}},
+          redo   => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of redo'" }}},
+          rescue => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of rescue'" }}},
+          retry  => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of retry'" }}},
+          return => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of return'" }}},
+          self   => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of self'" }}},
+          super  => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of super'" }}},
+          then   => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of then'" }}},
+          until  => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of until'" }}},
+          when   => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of when'" }}},
+          while  => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of while'" }}},
+          yield  => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of yield'" }}},
+        },
+      }]
+      $x = MyObject()
+      notice($x.alias)
+      notice($x.begin)
+      notice($x.break)
+      notice($x.def)
+      notice($x.do)
+      notice($x.end)
+      notice($x.ensure)
+      notice($x.for)
+      notice($x.module)
+      notice($x.next)
+      notice($x.nil)
+      notice($x.not)
+      notice($x.redo)
+      notice($x.rescue)
+      notice($x.retry)
+      notice($x.return)
+      notice($x.self)
+      notice($x.super)
+      notice($x.then)
+      notice($x.until)
+      notice($x.when)
+      notice($x.while)
+      notice($x.yield)
+    PUPPET
+
+    it 'can create an instance and call all functions' do
+      expect(eval_and_collect_notices(source)).to eql([
+        'value of alias',
+        'value of begin',
+        'value of break',
+        'value of def',
+        'value of do',
+        'value of end',
+        'value of ensure',
+        'value of for',
+        'value of module',
+        'value of next',
+        'value of nil',
+        'value of not',
+        'value of redo',
+        'value of rescue',
+        'value of retry',
+        'value of return',
+        'value of self',
+        'value of super',
+        'value of then',
+        'value of until',
+        'value of when',
+        'value of while',
+        'value of yield',
+      ])
+    end
+  end
+
   context 'when generating from Object types' do
     def source
       <<-CODE

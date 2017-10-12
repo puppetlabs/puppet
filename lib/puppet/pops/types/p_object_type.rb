@@ -228,10 +228,10 @@ class PObjectType < PMetaType
       # TODO: Assumes Ruby implementation for now
       if(callable_type.is_a?(PVariantType))
         callable_type.types.map do |ct|
-          Functions::Dispatch.new(ct, name, [], false, ct.block_type.nil? ? nil : 'block')
+          Functions::Dispatch.new(ct, RubyGenerator.protect_reserved_name(name), [], false, ct.block_type.nil? ? nil : 'block')
         end
       else
-        [Functions::Dispatch.new(callable_type, name, [], false, callable_type.block_type.nil? ? nil : 'block')]
+        [Functions::Dispatch.new(callable_type, RubyGenerator.protect_reserved_name(name), [], false, callable_type.block_type.nil? ? nil : 'block')]
       end
     end
 
@@ -544,7 +544,13 @@ class PObjectType < PMetaType
     init_non_opt_count = 0
     init_param_names = init.parameters.map do |p|
       init_non_opt_count += 1 if :req == p[0]
-      p[1].to_s
+      n = p[1].to_s
+      r = RubyGenerator.unprotect_reserved_name(n)
+      unless r.equal?(n)
+        # assert that the protected name wasn't a real name (names can start with underscore)
+        n = r unless param_names.index(r).nil?
+      end
+      n
     end
 
     if init_param_names != param_names
