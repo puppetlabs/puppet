@@ -169,7 +169,9 @@ module Puppet
     :static_catalogs => {
       :default    => true,
       :type       => :boolean,
-      :desc       => "Whether to compile a static catalog."
+      :desc       => "Whether to compile a [static catalog](https://docs.puppet.com/puppet/latest/static_catalogs.html#enabling-or-disabling-static-catalogs),
+        which occurs only on a Puppet Server master when the `code-id-command` and
+        `code-content-command` settings are configured in its `puppetserver.conf` file.",
     },
     :strict_environment_mode => {
       :default    => false,
