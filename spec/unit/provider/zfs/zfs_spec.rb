@@ -89,7 +89,7 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
      :mountpoint, :nbmand,  :primarycache, :quota, :readonly,
      :recordsize, :refquota, :refreservation, :reservation,
      :secondarycache, :setuid, :shareiscsi, :sharenfs, :sharesmb,
-     :snapdir, :version, :volsize, :vscan, :xattr, :zoned].each do |prop|
+     :snapdir, :version, :volsize, :vscan, :xattr].each do |prop|
       it "should get #{prop}" do
         provider.expects(:zfs).with(:get, '-H', '-o', 'value', prop, name).returns("value\n")
 
@@ -101,6 +101,25 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
 
         provider.send("#{prop}=", "value")
       end
+    end
+  end
+  describe "zoned" do
+    container = case Facter.value(:operatingsystem)
+      when "FreeBSD"
+        :jailed
+      else
+        :zoned
+    end
+    it "should get zoned" do
+      provider.expects(:zfs).with(:get, '-H', '-o', 'value', container, name).returns("value\n")
+
+      expect(provider.send("zoned")).to eq('value')
+    end
+
+    it "should set zoned=value" do
+      provider.expects(:zfs).with(:set, "#{container}=value", name)
+
+      provider.send("zoned=", "value")
     end
   end
 end
