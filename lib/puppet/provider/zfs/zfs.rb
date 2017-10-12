@@ -38,6 +38,16 @@ Puppet::Type.type(:zfs).provide(:zfs) do
     end
   end
 
+  # On FreeBSD zoned is called jailed
+  def container_property
+    case Facter.value(:operatingsystem)
+      when "FreeBSD"
+        :jailed
+      else
+        :zoned
+    end
+  end
+
   PARAMETER_UNSET_OR_NOT_AVAILABLE = '-'
 
   # https://docs.oracle.com/cd/E19963-01/html/821-1448/gbscy.html
@@ -80,20 +90,13 @@ Puppet::Type.type(:zfs).provide(:zfs) do
     end
   end
 
-  # On FreeBSD zoned is called jailed
-  container = case Facter.value(:operatingsystem)
-    when "FreeBSD"
-      :jailed
-    else
-      :zoned
-  end
 
   define_method(:zoned) do
-    zfs(:get, "-H", "-o", "value", container, @resource[:name]).strip
+    zfs(:get, "-H", "-o", "value", container_property, @resource[:name]).strip
   end
 
   define_method("zoned=") do |should|
-    zfs(:set, "#{container}=#{should}", @resource[:name])
+    zfs(:set, "#{container_property}=#{should}", @resource[:name])
   end
 
 end

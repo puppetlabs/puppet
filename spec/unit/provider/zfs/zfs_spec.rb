@@ -104,22 +104,36 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
     end
   end
   describe "zoned" do
-    container = case Facter.value(:operatingsystem)
-      when "FreeBSD"
-        :jailed
-      else
-        :zoned
-    end
-    it "should get zoned" do
-      provider.expects(:zfs).with(:get, '-H', '-o', 'value', container, name).returns("value\n")
+    context "on FreeBSD" do
+      before do
+        Facter.stubs(:value).with(:operatingsystem).returns("FreeBSD")
+      end
+      it "should get 'jailed' property" do
+        provider.expects(:zfs).with(:get, '-H', '-o', 'value', :jailed, name).returns("value\n")
+        expect(provider.send("zoned")).to eq('value')
+      end
 
-      expect(provider.send("zoned")).to eq('value')
+      it "should set jalied=value" do
+        provider.expects(:zfs).with(:set, "jailed=value", name)
+        provider.send("zoned=", "value")
+      end
     end
 
-    it "should set zoned=value" do
-      provider.expects(:zfs).with(:set, "#{container}=value", name)
+    context "when not running FreeBSD" do
+      before do
+        Facter.stubs(:value).with(:operatingsystem).returns("Solaris")
+      end
+      it "should get 'zoned' property" do
+        provider.expects(:zfs).with(:get, '-H', '-o', 'value', :zoned, name).returns("value\n")
+        expect(provider.send("zoned")).to eq('value')
+      end
 
-      provider.send("zoned=", "value")
+      it "should set zoned=value" do
+        provider.expects(:zfs).with(:set, "zoned=value", name)
+        provider.send("zoned=", "value")
+      end
     end
+
+
   end
 end
