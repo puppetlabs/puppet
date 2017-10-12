@@ -375,7 +375,7 @@ class Puppet::Configurer
               :transaction_uuid => @transaction_uuid,
               :fail_on_404 => false)
           found = true
-        rescue Exception => e
+        rescue
           # Nothing to see here
         end
       end
