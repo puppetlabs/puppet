@@ -27,7 +27,11 @@ module Puppet::Provider::Mount
     #TRANSLATORS refers to remounting a file system
     info _("Remounting")
     if resource[:remounts] == :true
-      mountcmd "-o", "remount", resource[:name]
+      if Facter.value(:kernel) == 'AIX' && self.options && !self.options.empty?
+        mountcmd "-o", self.options + ",remount", resource[:name]
+      else
+        mountcmd "-o", "remount", resource[:name]
+      end
     elsif ["FreeBSD", "DragonFly", "OpenBSD"].include?(Facter.value(:operatingsystem))
       if self.options && !self.options.empty?
         options = self.options + ",update"
