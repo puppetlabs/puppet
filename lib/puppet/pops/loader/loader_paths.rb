@@ -93,6 +93,10 @@ module LoaderPaths
       TypedName.new(type, n, name_authority)
     end
 
+    def valid_name?(typed_name)
+      true
+    end
+
     def relative_path
       raise NotImplementedError.new
     end
@@ -220,6 +224,11 @@ module LoaderPaths
     def instantiator
       require_relative 'task_instantiator'
       TaskInstantiator
+    end
+
+    def valid_name?(typed_name)
+      # TODO: Remove when PE has proper namespace handling
+      typed_name.name_parts.size <= 2
     end
   end
 

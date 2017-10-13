@@ -180,6 +180,62 @@ describe 'The Task Type' do
           expect(notices).to eql(["Testmodule::Hello({'message' => 'a message', 'font' => 'helvetica'})"])
         end
 
+        context 'with adjacent directory for init task' do
+          let(:testmodule) {
+            {
+              'tasks' => {
+                'init' => {
+                  'foo.sh' => 'echo hello'
+                },
+                'init.sh' => 'echo hello',
+                'init.json' => <<-JSON
+                {
+                  "supports_noop": true,
+                  "parameters": {
+                     "message": { "type": "String" }
+                  }
+                }
+              JSON
+              }
+            }
+          }
+
+          it 'evaluator loads and notices a Task with positional parameters' do
+            compile(<<-PUPPET.unindent)
+            notice(Testmodule('a message'))
+            PUPPET
+            expect(notices).to eql(["Testmodule({'message' => 'a message'})"])
+          end
+        end
+
+        context 'with adjacent directory for named task' do
+          let(:testmodule) {
+            {
+              'tasks' => {
+                'hello' => {
+                  'foo.sh' => 'echo hello'
+                },
+                'hello.sh' => 'echo hello',
+                'hello.json' => <<-JSON
+                {
+                  "supports_noop": true,
+                  "parameters": {
+                     "message": { "type": "String" }
+                  }
+                }
+              JSON
+              }
+            }
+          }
+
+          it 'evaluator loads and notices a Task with positional parameters' do
+            compile(<<-PUPPET.unindent)
+            notice(Testmodule::Hello('a message'))
+            PUPPET
+            expect(notices).to eql(["Testmodule::Hello({'message' => 'a message'})"])
+          end
+        end
+
         it 'evaluator fails on invalid number of parameters' do
           expect { compile(<<-PUPPET.unindent) }.to raise_error(/expects between 1 and 2 arguments, got 3/)
             notice(Testmodule::Hello('a message', 'helvetica', 'bold'))
@@ -197,6 +253,24 @@ describe 'The Task Type' do
           expect { compile(<<-PUPPET.unindent) }.to raise_error(/expects a value for key 'message'.*unrecognized key 'echo'/m)
             notice(Testmodule::Hello({echo => 'a message'}))
           PUPPET
+        end
+
+        context 'using more than two segments in the name' do
+          let(:testmodule) {
+            {
+              'tasks' => {
+                'hello' => {
+                  'foo.sh' => 'echo hello'
+                }
+              }
+            }
+          }
+
+          it 'task is not found' do
+            expect{compile(<<-PUPPET.unindent)}.to raise_error(/Resource type not found: Testmodule::Hello::Foo/)
+              notice(Testmodule::Hello::Foo(message => 'a message'))
+            PUPPET
+          end
         end
 
         context 'without --tasks' do

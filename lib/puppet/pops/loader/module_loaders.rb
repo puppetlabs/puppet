@@ -113,6 +113,7 @@ module ModuleLoaders
         smart_paths.effective_paths(type).each do |sp|
           relative_paths(sp).each do |rp|
             tp = sp.typed_name(type, name_authority, rp, global ? nil : @module_name)
+            next unless sp.valid_name?(tp)
             load_typed(tp) unless block_given? && !block.yield(tp)
           end
         end
@@ -333,6 +334,7 @@ module ModuleLoaders
     def find_existing_path(typed_name)
       is_global = global?
       smart_paths.effective_paths(typed_name.type).each do |sp|
+        next unless sp.valid_name?(typed_name)
         origin = sp.effective_path(typed_name, is_global ? 0 : 1)
         unless origin.nil?
           if sp.match_many?
@@ -388,6 +390,12 @@ module ModuleLoaders
 
     def add_to_index(smart_path)
       found = Dir.glob(File.join(smart_path.generic_path, '**', "*#{smart_path.extension}"))
+
+      # The reason for not always rejecting directories here is performance (avoid extra stat calls). The
+      # false positives (directories with a matching extension) is an error in any case and will be caught
+      # later.
+      found = found.reject { |file_name| File.directory?(file_name) } if smart_path.extension.empty?
+
       @path_index.merge(found)
       found
     end
