@@ -217,6 +217,7 @@ Puppet::Util::Log.newdesttype :eventlog do
   Puppet::Util::Log::DestEventlog::EVENTLOG_ERROR_TYPE       = 0x0001
   Puppet::Util::Log::DestEventlog::EVENTLOG_WARNING_TYPE     = 0x0002
   Puppet::Util::Log::DestEventlog::EVENTLOG_INFORMATION_TYPE = 0x0004
+  Puppet::Util::Log::DestEventlog::EVENTLOG_CHARACTER_LIMIT  = 31838
 
   def self.suitable?(obj)
     Puppet.features.microsoft_windows?
@@ -232,6 +233,15 @@ Puppet::Util::Log.newdesttype :eventlog do
 
   def handle(msg)
     native_type, native_id = to_native(msg.level)
+
+    stringified_msg = msg.message.to_s
+    if stringified_msg.length > self.class::EVENTLOG_CHARACTER_LIMIT
+      warning = "...Message exceeds character length limit, truncating."
+      truncated_message_length = self.class::EVENTLOG_CHARACTER_LIMIT - warning.length
+      stringified_truncated_msg = stringified_msg[0..truncated_message_length]
+      stringified_truncated_msg << warning
+      msg.message = stringified_truncated_msg
+    end
 
     @eventlog.report_event(
       :event_type  => native_type,
