@@ -40,6 +40,11 @@ module Puppet::Provider::Mount
     end
   end
 
+  # Remount by appending the supplied param "option" to any existing explicitly
+  # defined options. If resource has no explicitly defined options, will mount
+  # with only "option".
+  # @param [String] option A remount option to use or append with existing options
+  #
   def remount_with_option(option)
     if using_explicit_options?
       options = self.options + "," + option
