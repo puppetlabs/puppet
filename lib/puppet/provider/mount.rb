@@ -26,19 +26,36 @@ module Puppet::Provider::Mount
   def remount
     #TRANSLATORS refers to remounting a file system
     info _("Remounting")
-    if resource[:remounts] == :true
+    os = Facter.value(:operatingsystem)
+    supports_remounts = (resource[:remounts] == :true)
+    if supports_remounts && os == 'AIX'
+      remount_with_option("remount")
+    elsif os.match(/^(FreeBSD|DragonFly|OpenBSD)$/)
+      remount_with_option("update")
+    elsif supports_remounts
       mountcmd "-o", "remount", resource[:name]
-    elsif ["FreeBSD", "DragonFly", "OpenBSD"].include?(Facter.value(:operatingsystem))
-      if self.options && !self.options.empty?
-        options = self.options + ",update"
-      else
-        options = "update"
-      end
-      mountcmd "-o", options, resource[:name]
     else
       unmount
       mount
     end
+  end
+
+  # Remount by appending the supplied param "option" to any existing explicitly
+  # defined options. If resource has no explicitly defined options, will mount
+  # with only "option".
+  # @param [String] option A remount option to use or append with existing options
+  #
+  def remount_with_option(option)
+    if using_explicit_options?
+      options = self.options + "," + option
+    else
+      options = option
+    end
+    mountcmd "-o", options, resource[:name]
+  end
+
+  def using_explicit_options?
+    !self.options.nil? && !self.options.empty?
   end
 
   # This only works when the mount point is synced to the fstab.
