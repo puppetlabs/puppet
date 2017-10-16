@@ -12,6 +12,10 @@ class PErrorType < PAnyType
       return PErrorType::DEFAULT
     end
 
+    def self.from_hash(hash)
+      self.new(hash['message'], hash['kind'], hash['issue_code'] || DEFAULT_ISSUE_CODE, hash['partial_result'], hash['details'])
+    end
+
     def initialize(message, kind = nil, issue_code = DEFAULT_ISSUE_CODE, partial_result = nil, details = nil)
       @issue_code = issue_code
       @kind = kind
@@ -61,6 +65,14 @@ class PErrorType < PAnyType
         optional_param 'Optional[String[1]]', :issue_code
         optional_param 'Data', :partial_result
         optional_param 'Optional[DataHash]', :details
+      end
+
+      dispatch :from_hash do
+        param 'Struct[message => String[1], Optional[kind] => String[1], Optional[issue_code] => String[1], Optional[partial_result] => Data, Optional[details] => DataHash]', :hash
+      end
+
+      def from_hash(hash)
+        Error.from_hash(hash)
       end
 
       def create(message, kind = nil, issue_code = nil, partial_result = nil, details = nil)
