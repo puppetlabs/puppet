@@ -216,10 +216,22 @@ module Puppet::Pal
   def self.add_variables(scope, variables)
     return if variables.nil?
     unless variables.is_a?(Hash)
-      raise Argument_Error, _("Given variables must be a hash, got %{type}") % { type: variables.class }
+      raise ArgumentError, _("Given variables must be a hash, got %{type}") % { type: variables.class }
     end
     return if variables.empty?
-    variables.each_pair {|k,v| scope.setvar(k, v) }
+
+    rich_data_t = Puppet::Pops::Types::TypeFactory.rich_data
+    variables.each_pair do |k,v|
+      unless k =~ Puppet::Pops::Patterns::VAR_NAME
+        raise ArgumentError, _("Given variable '%{varname}' has illegal name") % { varname: k }
+      end
+
+      unless rich_data_t.instance?(v)
+        raise ArgumentError, _("Given value for '%{varname}' has illegal type - got: %{type}") % { varname: k, type: v.class }
+      end
+
+      scope.setvar(k, v)
+    end
   end
 
   def self.main(manifest = nil, facts = nil, &block)
