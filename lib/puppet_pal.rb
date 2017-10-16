@@ -218,7 +218,6 @@ module Puppet::Pal
     unless variables.is_a?(Hash)
       raise ArgumentError, _("Given variables must be a hash, got %{type}") % { type: variables.class }
     end
-    return if variables.empty?
 
     rich_data_t = Puppet::Pops::Types::TypeFactory.rich_data
     variables.each_pair do |k,v|
