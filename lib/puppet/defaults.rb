@@ -126,6 +126,19 @@ module Puppet
         munge(value)
         value.to_sym
       end
+    },
+    :disable_i18n => {
+      :default => false,
+      :type    => :boolean,
+      :desc    => "If true, turns off all translations of Puppet and module
+        log messages, which affects error, warning, and info log messages,
+        as well as any translations in the report and CLI.",
+      :hook    => proc do |value|
+        if value
+          require 'puppet/gettext/stubs'
+          Puppet::GettextConfig.disable_gettext
+        end
+      end
     }
   )
 
@@ -156,7 +169,9 @@ module Puppet
     :static_catalogs => {
       :default    => true,
       :type       => :boolean,
-      :desc       => "Whether to compile a static catalog."
+      :desc       => "Whether to compile a [static catalog](https://docs.puppet.com/puppet/latest/static_catalogs.html#enabling-or-disabling-static-catalogs),
+        which occurs only on a Puppet Server master when the `code-id-command` and
+        `code-content-command` settings are configured in its `puppetserver.conf` file.",
     },
     :strict_environment_mode => {
       :default    => false,
@@ -1312,6 +1327,8 @@ EOT
         :default  => "$vardir/devices",
         :type     => :directory,
         :mode     => "0750",
+        :owner    => "service",
+        :group    => "service",
         :desc     => "The root directory of devices' $vardir.",
     },
     :deviceconfig => {

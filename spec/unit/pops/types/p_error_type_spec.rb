@@ -102,6 +102,18 @@ describe 'Error type' do
         ])
       end
 
+      it 'can be created from a hash' do
+        code = <<-CODE
+            $o = Error(message => 'Sorry, not implemented', kind => 'puppet/error', issue_code => 'NOT_IMPLEMENTED')
+            notice($o)
+            notice(type($o))
+        CODE
+        expect(eval_and_collect_notices(code)).to eq([
+          "Error({'message' => 'Sorry, not implemented', 'kind' => 'puppet/error', 'issue_code' => 'NOT_IMPLEMENTED'})",
+          "Error['puppet/error', 'NOT_IMPLEMENTED']"
+        ])
+      end
+
       it 'is an instance of its type' do
         code = <<-CODE
             $o = Error('bad tings happened', 'puppet/error')
