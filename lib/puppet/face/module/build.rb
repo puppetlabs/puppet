@@ -57,7 +57,7 @@ Puppet::Face.define(:module, '1.0.0') do
 
     when_rendering :console do |return_value|
       # Get the string representation of the Pathname object.
-      _("Module built: ") + return_value.expand_path.to_s
+      _("Module built: %{path}") % { path: return_value.expand_path.to_s }
     end
   end
 end

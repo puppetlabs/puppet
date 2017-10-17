@@ -45,7 +45,7 @@ module Puppet::Util::Plist
                                                   {:failonfail => true, :combine => true})
           return parse_plist(plist)
         rescue Puppet::ExecutionFailure => detail
-          Puppet.warning(_("Cannot read file %{file_path}; Puppet is skipping it.\n") % { file_path: file_path } + _("Details: %{detail}") % { detail: detail })
+          Puppet.warning(_("Cannot read file %{file_path}; Puppet is skipping it.\nDetails: %{detail}") % { file_path: file_path, detail: detail })
         end
       end
       return nil
