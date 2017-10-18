@@ -171,6 +171,9 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   # http://defect.opensolaris.org/bz/show_bug.cgi?id=19159%
   # notes that we can't use -Ha for the same even though the manual page reads that way.
   def latest
+    # Refresh package metadata before looking for latest versions
+    pkg(:refresh)
+
     lines = pkg(:list, "-Hvn", @resource[:name]).split("\n")
 
     # remove certificate expiration warnings from the output, but report them

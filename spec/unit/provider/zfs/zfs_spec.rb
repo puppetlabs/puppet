@@ -89,7 +89,7 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
      :mountpoint, :nbmand,  :primarycache, :quota, :readonly,
      :recordsize, :refquota, :refreservation, :reservation,
      :secondarycache, :setuid, :shareiscsi, :sharenfs, :sharesmb,
-     :snapdir, :version, :volsize, :vscan, :xattr, :zoned].each do |prop|
+     :snapdir, :version, :volsize, :vscan, :xattr].each do |prop|
       it "should get #{prop}" do
         provider.expects(:zfs).with(:get, '-H', '-o', 'value', prop, name).returns("value\n")
 
@@ -102,5 +102,38 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
         provider.send("#{prop}=", "value")
       end
     end
+  end
+  describe "zoned" do
+    context "on FreeBSD" do
+      before do
+        Facter.stubs(:value).with(:operatingsystem).returns("FreeBSD")
+      end
+      it "should get 'jailed' property" do
+        provider.expects(:zfs).with(:get, '-H', '-o', 'value', :jailed, name).returns("value\n")
+        expect(provider.send("zoned")).to eq('value')
+      end
+
+      it "should set jalied=value" do
+        provider.expects(:zfs).with(:set, "jailed=value", name)
+        provider.send("zoned=", "value")
+      end
+    end
+
+    context "when not running FreeBSD" do
+      before do
+        Facter.stubs(:value).with(:operatingsystem).returns("Solaris")
+      end
+      it "should get 'zoned' property" do
+        provider.expects(:zfs).with(:get, '-H', '-o', 'value', :zoned, name).returns("value\n")
+        expect(provider.send("zoned")).to eq('value')
+      end
+
+      it "should set zoned=value" do
+        provider.expects(:zfs).with(:set, "zoned=value", name)
+        provider.send("zoned=", "value")
+      end
+    end
+
+
   end
 end
