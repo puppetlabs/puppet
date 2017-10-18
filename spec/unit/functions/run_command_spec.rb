@@ -7,6 +7,7 @@ describe 'the run_command function' do
   include PuppetSpec::Compiler
   include PuppetSpec::Files
 
+  let(:executor) { mock('bolt_executor') }
   let(:tasks_enabled) { true }
   let(:env_name) { 'testenv' }
   let(:environments_dir) { Puppet[:environmentpath] }
@@ -18,6 +19,12 @@ describe 'the run_command function' do
     Puppet[:tasks] = tasks_enabled
     loaders = Puppet::Pops::Loaders.new(env)
     Puppet.push_context({:loaders => loaders}, "test-examples")
+  end
+
+  around(:each) do |example|
+    Puppet.override(:bolt_executor => executor) do
+      example.run
+    end
   end
 
   after(:each) do
@@ -35,14 +42,11 @@ describe 'the run_command function' do
     let(:result) { { value: hostname } }
     before(:each) do
       Puppet.features.stubs(:bolt?).returns(true)
-      module ::Bolt; end
-      class ::Bolt::Executor; end
     end
 
     it 'with given command and host' do
-      executor = mock('executor')
-      Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
-      executor.expects(:run_command).with(command).returns({ host => result })
+      executor.expects(:from_uris).with(hosts).returns([host])
+      executor.expects(:run_command).with([host], command).returns({ host => result })
       result.expects(:to_h).returns(result)
 
       expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{hostname}'}})"])
@@ -58,9 +62,8 @@ describe 'the run_command function' do
       let(:result2) { { value: hostname2 } }
 
       it 'with propagates multiple hosts and returns multiple results' do
-        executor = mock('executor')
-        Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
-        executor.expects(:run_command).with(command).returns({ host => result, host2 => result2 })
+        executor.expects(:from_uris).with(hosts).returns([host, host2])
+        executor.expects(:run_command).with([host, host2], command).returns({ host => result, host2 => result2 })
         result.expects(:to_h).returns(result)
         result2.expects(:to_h).returns(result2)
 
@@ -72,8 +75,7 @@ describe 'the run_command function' do
     end
 
     it 'without nodes - does not invoke bolt' do
-      executor = mock('executor')
-      Bolt::Executor.expects(:from_uris).never
+      executor.expects(:from_uris).never
       executor.expects(:run_command).never
 
       expect(eval_and_collect_notices(<<-CODE, node)).to eql(['ExecutionResult({})'])
