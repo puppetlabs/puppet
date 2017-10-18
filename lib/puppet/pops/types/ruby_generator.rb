@@ -3,6 +3,43 @@ module Types
 
 # @api private
 class RubyGenerator < TypeFormatter
+
+  RUBY_RESERVED_WORDS = {
+    'alias' => '_alias',
+    'begin' => '_begin',
+    'break' => '_break',
+    'def' => '_def',
+    'do' => '_do',
+    'end' => '_end',
+    'ensure' => '_ensure',
+    'for' => '_for',
+    'module' => '_module',
+    'next' => '_next',
+    'nil' => '_nil',
+    'not' => '_not',
+    'redo' => '_redo',
+    'rescue' => '_rescue',
+    'retry' => '_retry',
+    'return' => '_return',
+    'self' => '_self',
+    'super' => '_super',
+    'then' => '_then',
+    'until' => '_until',
+    'when' => '_when',
+    'while' => '_while',
+    'yield' => '_yield',
+  }
+
+  RUBY_RESERVED_WORDS_REVERSED = Hash[RUBY_RESERVED_WORDS.map { |k, v| [v, k] }]
+
+  def self.protect_reserved_name(name)
+    RUBY_RESERVED_WORDS[name] || name
+  end
+
+  def self.unprotect_reserved_name(name)
+    RUBY_RESERVED_WORDS_REVERSED[name] || name
+  end
+
   def remove_common_namespace(namespace_segments, name)
     segments = name.split(TypeFormatter::NAME_SEGMENT_SEPARATOR)
     namespace_segments.size.times do |idx|
@@ -174,8 +211,8 @@ class RubyGenerator < TypeFormatter
     constants, others = obj.attributes(true).values.partition { |a| a.kind == PObjectType::ATTRIBUTE_KIND_CONSTANT }
     constants = constants.select { |ca| ca.container.equal?(obj) }
     unless constants.empty?
-      constants.each { |ca| bld << "\n  def self." << ca.name << "\n    _pcore_type['" << ca.name << "'].value\n  end\n" }
-      constants.each { |ca| bld << "\n  def " << ca.name << "\n    self.class." << ca.name << "\n  end\n" }
+      constants.each { |ca| bld << "\n  def self." << rname(ca.name) << "\n    _pcore_type['" << ca.name << "'].value\n  end\n" }
+      constants.each { |ca| bld << "\n  def " << rname(ca.name) << "\n    self.class." << ca.name << "\n  end\n" }
     end
 
     init_params = others.reject { |a| a.kind == PObjectType::ATTRIBUTE_KIND_DERIVED }
@@ -217,9 +254,9 @@ class RubyGenerator < TypeFormatter
         bld << "\n    new"
       else
         bld << '('
-        non_opt.each { |ip| bld << ip.name << ', ' }
+        non_opt.each { |ip| bld << rname(ip.name) << ', ' }
         opt.each do |ip|
-          bld << ip.name << ' = '
+          bld << rname(ip.name) << ' = '
           default_string(bld, ip)
           bld << ', '
         end
@@ -229,11 +266,11 @@ class RubyGenerator < TypeFormatter
         bld << "    attrs = _pcore_type.attributes(true)\n"
         init_params.each do |a|
           bld << "    ta.assert_instance_of('" << a.container.name << '[' << a.name << ']'
-          bld << "', attrs['" << a.name << "'].type, " << a.name << ")\n"
+          bld << "', attrs['" << a.name << "'].type, " << rname(a.name) << ")\n"
         end
         bld << '    new('
-        non_opt.each { |a| bld << a.name << ', ' }
-        opt.each { |a| bld << a.name << ', ' }
+        non_opt.each { |a| bld << rname(a.name) << ', ' }
+        opt.each { |a| bld << rname(a.name) << ', ' }
         bld.chomp!(', ')
         bld << ')'
       end
@@ -242,13 +279,13 @@ class RubyGenerator < TypeFormatter
       # Output attr_readers
       unless obj_attrs.empty?
         bld << "\n"
-        obj_attrs.each { |a| bld << '  attr_reader :' << a.name << "\n" }
+        obj_attrs.each { |a| bld << '  attr_reader :' << rname(a.name) << "\n" }
       end
 
       bld << "  attr_reader :hash\n" if obj.parent.nil?
 
       derived_attrs.each do |a|
-        bld << "\n  def " << a.name << "\n"
+        bld << "\n  def " << rname(a.name) << "\n"
         code_annotation = RubyMethod.annotate(a)
         ruby_body = code_annotation.nil? ? nil: code_annotation.body
         if ruby_body.nil?
@@ -265,9 +302,9 @@ class RubyGenerator < TypeFormatter
         # Output initializer
         bld << "\n  def initialize"
         bld << '('
-        non_opt.each { |ip| bld << ip.name << ', ' }
+        non_opt.each { |ip| bld << rname(ip.name) << ', ' }
         opt.each do |ip|
-          bld << ip.name << ' = '
+          bld << rname(ip.name) << ' = '
           default_string(bld, ip)
           bld << ', '
         end
@@ -282,18 +319,18 @@ class RubyGenerator < TypeFormatter
           bld << "\n    super("
           super_args = (non_opt + opt).select { |ip| !ip.container.equal?(obj) }
           unless super_args.empty?
-            super_args.each { |ip| bld << ip.name << ', ' }
+            super_args.each { |ip| bld << rname(ip.name) << ', ' }
             bld.chomp!(', ')
           end
           bld << ")\n"
           bld << '    @hash = @hash ^ ' unless hash_participants.empty?
         end
         unless hash_participants.empty?
-          hash_participants.each { |a| bld << a.name << '.hash ^ ' if a.container.equal?(obj) }
+          hash_participants.each { |a| bld << rname(a.name) << '.hash ^ ' if a.container.equal?(obj) }
           bld.chomp!(' ^ ')
           bld << "\n"
         end
-        init_params.each { |a| bld << '    @' << a.name << ' = ' << a.name << "\n" if a.container.equal?(obj) }
+        init_params.each { |a| bld << '    @' << rname(a.name) << ' = ' << rname(a.name) << "\n" if a.container.equal?(obj) }
         bld << "  end\n"
       end
     end
@@ -306,7 +343,7 @@ class RubyGenerator < TypeFormatter
       bld << (obj.parent.nil? ? '{}' : 'super')
       bld << "\n"
       obj_attrs.each do |a|
-        bld << "    result['" << a.name << "'] = @" << a.name
+        bld << "    result['" << a.name << "'] = @" << rname(a.name)
         if a.value?
           bld << ' unless '
           equals_default_string(bld, a)
@@ -326,21 +363,21 @@ class RubyGenerator < TypeFormatter
       bld << "\n  def _pcore_contents\n"
       content_participants.each do |cp|
         if array_type?(cp.type)
-          bld << '    @' << cp.name << ".each { |value| yield(value) }\n"
+          bld << '    @' << rname(cp.name) << ".each { |value| yield(value) }\n"
         else
-          bld << '    yield(@' << cp.name << ') unless @' << cp.name  << ".nil?\n"
+          bld << '    yield(@' << rname(cp.name) << ') unless @' << rname(cp.name)  << ".nil?\n"
         end
       end
       bld << "  end\n\n  def _pcore_all_contents(path, &block)\n    path << self\n"
       content_participants.each do |cp|
         if array_type?(cp.type)
-          bld << '    @' << cp.name << ".each do |value|\n"
+          bld << '    @' << rname(cp.name) << ".each do |value|\n"
           bld << "      block.call(value, path)\n"
           bld << "      value._pcore_all_contents(path, &block)\n"
         else
-          bld << '    unless @' << cp.name << ".nil?\n"
-          bld << '      block.call(@' << cp.name << ", path)\n"
-          bld << '      @' << cp.name << "._pcore_all_contents(path, &block)\n"
+          bld << '    unless @' << rname(cp.name) << ".nil?\n"
+          bld << '      block.call(@' << rname(cp.name) << ", path)\n"
+          bld << '      @' << rname(cp.name) << "._pcore_all_contents(path, &block)\n"
         end
         bld << "    end\n"
       end
@@ -359,13 +396,13 @@ class RubyGenerator < TypeFormatter
       if code_annotation
         body = code_annotation.body
         params = code_annotation.parameters
-        bld << "\n  def " << func.name
+        bld << "\n  def " << rname(func.name)
         unless params.nil? || params.empty?
           bld << '(' << params << ')'
         end
         bld << "\n    " << body << "\n"
       else
-        bld << "\n  def " << func.name << "(*args)\n"
+        bld << "\n  def " << rname(func.name) << "(*args)\n"
         bld << "    # Placeholder for #{func.type}\n"
         bld << "    raise Puppet::Error, \"no method is implemented for #{func.label}\"\n"
       end
@@ -376,7 +413,7 @@ class RubyGenerator < TypeFormatter
       bld << "\n  def eql?(o)\n"
       bld << "    super &&\n" unless obj.parent.nil?
       bld << "    o.instance_of?(self.class) &&\n" if include_type
-      eq_names.each { |eqn| bld << '    @' << eqn << '.eql?(o.' <<  eqn << ") &&\n" }
+      eq_names.each { |eqn| bld << '    @' << rname(eqn) << '.eql?(o.' <<  rname(eqn) << ") &&\n" }
       bld.chomp!(" &&\n")
       bld << "\n  end\n  alias == eql?\n"
     end
@@ -434,6 +471,10 @@ class RubyGenerator < TypeFormatter
     else
       bld << "_pcore_type['" << a.name << "'].default_value?(@" << a.name << ')'
     end
+  end
+
+  def rname(name)
+    RUBY_RESERVED_WORDS[name] || name
   end
 end
 end
