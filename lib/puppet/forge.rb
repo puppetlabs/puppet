@@ -113,8 +113,14 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
     return releases
   end
 
-  def make_http_request(*args)
-    @repository.make_http_request(*args)
+  def make_http_request(uri, *args)
+    # Change plus to space so it can be encoded properly
+    uri = uri.gsub('+', ' ')
+
+    # Avoid double encoding
+    uri = URI.decode(uri)
+
+    @repository.make_http_request(uri, *args)
   end
 
   class ModuleRelease < SemanticPuppet::Dependency::ModuleRelease

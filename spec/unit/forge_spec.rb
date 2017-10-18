@@ -131,6 +131,59 @@ describe Puppet::Forge do
     end
   end
 
+  context "when multiple module_groups are defined" do
+    let(:release_response) do
+      releases = JSON.parse(http_response)
+      releases['results'] = []
+      JSON.dump(releases)
+    end
+
+    context "with space seperator" do
+      before :each do
+        repository_responds_with(stub(:body => release_response, :code => '200')).with {|uri| uri =~ /module_groups=foo bar/}
+        Puppet[:module_groups] = "foo bar"
+      end
+
+      it "passes module_groups with search" do
+        forge.search('bacula')
+      end
+
+      it "passes module_groups with fetch" do
+        forge.fetch('puppetlabs-bacula')
+      end
+    end
+
+    context "with plus seperator" do
+      before :each do
+        repository_responds_with(stub(:body => release_response, :code => '200')).with {|uri| uri =~ /module_groups=foo bar/}
+        Puppet[:module_groups] = "foo+bar"
+      end
+
+      it "passes module_groups with search" do
+        forge.search('bacula')
+      end
+
+      it "passes module_groups with fetch" do
+        forge.fetch('puppetlabs-bacula')
+      end
+    end
+
+    context "with already encoded space seperator" do
+      before :each do
+        repository_responds_with(stub(:body => release_response, :code => '200')).with {|uri| uri =~ /module_groups=foo bar/}
+        Puppet[:module_groups] = "foo%20bar"
+      end
+
+      it "passes module_groups with search" do
+        forge.search('bacula')
+      end
+
+      it "passes module_groups with fetch" do
+        forge.fetch('puppetlabs-bacula')
+      end
+    end
+  end
+
   context "when the connection to the forge fails" do
     before :each do
       repository_responds_with(stub(:body => '{}', :code => '404', :message => "not found"))
