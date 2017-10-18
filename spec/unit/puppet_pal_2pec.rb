@@ -76,6 +76,35 @@ describe 'Puppet Pal' do
       expect(result).to eq(10)
     end
 
+    it 'can set variables in any scope' do
+      vars = {'a'=> 10, 'x::y' => 20}
+      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts, variables: vars) do |ctx|
+        manifest = file_containing('testing.pp', "1+2+3+4+$a+$x::y")
+        ctx.evaluate_script_manifest(manifest)
+      end
+      expect(result).to eq(40)
+    end
+
+    it 'errors if variable name is not compliant with variable name rule' do
+      vars = {'_a::b'=> 10}
+      expect do
+        Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts, variables: vars) do |ctx|
+          manifest = file_containing('testing.pp', "ok")
+          ctx.evaluate_script_manifest(manifest)
+        end
+      end.to raise_error(/has illegal name/)
+    end
+
+    it 'errors if variable value is not RichData compliant' do
+      vars = {'a'=> ArgumentError.new("not rich data")}
+      expect do
+        Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts, variables: vars) do |ctx|
+          manifest = file_containing('testing.pp', "$a")
+          ctx.evaluate_script_manifest(manifest)
+        end
+      end.to raise_error(/has illegal type - got: ArgumentError/)
+    end
+
     it 'can call a plan using call_plan and specify content in a manifest' do
       result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
         manifest = file_containing('aplan.pp', "plan myplan() { 'brilliant' }")
@@ -83,7 +112,6 @@ describe 'Puppet Pal' do
       end
       expect(result).to eq('brilliant')
     end
-
   end
 
   context 'with code in modules and env' do
@@ -341,6 +369,15 @@ describe 'Puppet Pal' do
           ctx.evaluate_script_string('run_plan("a::aplan")')
         end
         expect(result).to eq("a::aplan value")
+      end
+
+      it 'can set variables in any scope' do
+        vars = {'a'=> 10, 'x::y' => 20}
+        result = Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, facts: node_facts, variables: vars) do |ctx|
+          manifest = file_containing('testing.pp', "1+2+3+4+$a+$x::y")
+          ctx.evaluate_script_manifest(manifest)
+        end
+        expect(result).to eq(40)
       end
 
       it 'errors in a meaningful way when a non existing env name is given' do
