@@ -90,7 +90,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
   # @see SemanticPuppet::Dependency::Source#fetch
   def fetch(input)
     name = input.tr('/', '-')
-    uri = "/v3/releases?module=#{name}"
+    uri = "/v3/releases?module=#{name}&sort_by=version"
     if Puppet[:module_groups]
       uri += "&module_groups=#{Puppet[:module_groups].gsub('+', ' ')}"
     end
