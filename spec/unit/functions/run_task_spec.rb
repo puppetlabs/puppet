@@ -13,11 +13,18 @@ describe 'the run_task function' do
     Puppet.push_context({:loaders => loaders}, "test-examples")
   end
 
+  around(:each) do |example|
+    Puppet.override(:bolt_executor => executor) do
+      example.run
+    end
+  end
+
   after(:each) do
     Puppet::Pops::Loaders.clear
     Puppet::pop_context()
   end
 
+  let(:executor) { mock('bolt_executor') }
   let(:env_name) { 'testenv' }
   let(:environments_dir) { Puppet[:environmentpath] }
   let(:env_dir) { File.join(environments_dir, env_name) }
@@ -53,18 +60,16 @@ describe 'the run_task function' do
     let(:host) { stub(uri: hostname) }
     let(:host2) { stub(uri: hostname2) }
     let(:result) { { value: message } }
+
     before(:each) do
       Puppet.features.stubs(:bolt?).returns(true)
-      module ::Bolt; end
-      class ::Bolt::Executor; end
     end
 
     it 'when running a task without metadata the input method is "both"' do
-      executor = mock('executor')
       executable = File.join(env_dir, 'modules/test/tasks/echo.sh')
 
-      Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
-      executor.expects(:run_task).with(executable, 'both', {'message' => 'the message'}).returns({ host => result })
+      executor.expects(:from_uris).with(hosts).returns([host])
+      executor.expects(:run_task).with([host], executable, 'both', {'message' => 'the message'}).returns({ host => result })
       result.expects(:to_h).returns(result)
 
       expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
@@ -74,11 +79,10 @@ describe 'the run_task function' do
     end
 
     it 'when running a task with metadata - the input method is specified by the metadata' do
-      executor = mock('executor')
       executable = File.join(env_dir, 'modules/test/tasks/meta.sh')
 
-      Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
-      executor.expects(:run_task).with(executable, 'environment', {'message' => 'the message'}).returns({ host => result })
+      executor.expects(:from_uris).with(hosts).returns([host])
+      executor.expects(:run_task).with([host], executable, 'environment', {'message' => 'the message'}).returns({ host => result })
       result.expects(:to_h).returns(result)
 
       expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
@@ -88,11 +92,10 @@ describe 'the run_task function' do
     end
 
     it 'nodes can be specified as repeated nested arrays and strings and combine into one list of nodes' do
-      executor = mock('executor')
       executable = File.join(env_dir, 'modules/test/tasks/meta.sh')
 
-      Bolt::Executor.expects(:from_uris).with([hostname, hostname2]).returns(executor)
-      executor.expects(:run_task).with(executable, 'environment', {'message' => 'the message'}).returns(
+      executor.expects(:from_uris).with([hostname, hostname2]).returns([host, host2])
+      executor.expects(:run_task).with([host, host2], executable, 'environment', {'message' => 'the message'}).returns(
         { host => result, host2 => result })
       result.expects(:to_h).twice.returns(result)
 
@@ -105,11 +108,10 @@ describe 'the run_task function' do
     context 'the same way as if a task instance was used; when called with'
       context 'a task type' do
         it 'and args hash' do
-          executor = mock('executor')
           executable = File.join(env_dir, 'modules/test/tasks/meta.sh')
 
-          Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
-          executor.expects(:run_task).with(executable, 'environment', {'message' => 'the message'}).returns({ host => result })
+          executor.expects(:from_uris).with(hosts).returns([host])
+          executor.expects(:run_task).with([host], executable, 'environment', {'message' => 'the message'}).returns({ host => result })
           result.expects(:to_h).returns(result)
 
           expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
@@ -119,11 +121,10 @@ describe 'the run_task function' do
         end
 
         it 'without args hash (for a task where this is allowed)' do
-          executor = mock('executor')
           executable = File.join(env_dir, 'modules/test/tasks/yes.sh')
 
-          Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
-          executor.expects(:run_task).with(executable, 'both', {}).returns({ host => result })
+          executor.expects(:from_uris).with(hosts).returns([host])
+          executor.expects(:run_task).with([host], anything, 'both', {}).returns({ host => result })
           result.expects(:to_h).returns(result)
 
           expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
@@ -133,10 +134,9 @@ describe 'the run_task function' do
         end
 
         it 'without nodes - does not invoke bolt' do
-          executor = mock('executor')
           executable = File.join(env_dir, 'modules/test/tasks/yes.sh')
 
-          Bolt::Executor.expects(:from_uris).never
+          executor.expects(:from_uris).never
           executor.expects(:run_task).never
 
           expect(eval_and_collect_notices(<<-CODE, node)).to eql(['ExecutionResult({})'])
@@ -148,11 +148,10 @@ describe 'the run_task function' do
 
     context 'a task name' do
       it 'and args hash' do
-        executor = mock('executor')
         executable = File.join(env_dir, 'modules/test/tasks/meta.sh')
 
-        Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
-        executor.expects(:run_task).with(executable, 'environment', {'message' => 'the message'}).returns({ host => result })
+        executor.expects(:from_uris).with(hosts).returns([host])
+        executor.expects(:run_task).with([host], executable, 'environment', {'message' => 'the message'}).returns({ host => result })
         result.expects(:to_h).returns(result)
 
         expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
@@ -162,11 +161,10 @@ describe 'the run_task function' do
       end
 
       it 'without args hash (for a task where this is allowed)' do
-        executor = mock('executor')
         executable = File.join(env_dir, 'modules/test/tasks/yes.sh')
 
-        Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
-        executor.expects(:run_task).with(executable, 'both', {}).returns({ host => result })
+        executor.expects(:from_uris).with(hosts).returns([host])
+        executor.expects(:run_task).with([host], executable, 'both', {}).returns({ host => result })
         result.expects(:to_h).returns(result)
 
         expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
@@ -176,10 +174,9 @@ describe 'the run_task function' do
       end
 
       it 'without nodes - does not invoke bolt' do
-        executor = mock('executor')
         executable = File.join(env_dir, 'modules/test/tasks/yes.sh')
 
-        Bolt::Executor.expects(:from_uris).never
+        executor.expects(:from_uris).never
         executor.expects(:run_task).never
 
         expect(eval_and_collect_notices(<<-CODE, node)).to eql(['ExecutionResult({})'])
@@ -217,8 +214,7 @@ describe 'the run_task function' do
         }
 
         it 'the call does not load init.pp' do
-          executor = mock('executor')
-          Bolt::Executor.expects(:from_uris).never
+          executor.expects(:from_uris).never
           executor.expects(:run_task).never
 
           expect(eval_and_collect_notices(<<-CODE, node)).to eql(['ok'])
@@ -242,11 +238,10 @@ describe 'the run_task function' do
         }
 
         it 'finds task named after the module' do
-          executor = mock('executor')
           executable = File.join(env_dir, 'modules/test/tasks/init.sh')
 
-          Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
-          executor.expects(:run_task).with(executable, 'both', {}).returns({ host => result })
+          executor.expects(:from_uris).with(hosts).returns([host])
+          executor.expects(:run_task).with([host], executable, 'both', {}).returns({ host => result })
           result.expects(:to_h).returns(result)
 
           expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])

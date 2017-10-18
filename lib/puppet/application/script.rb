@@ -113,7 +113,13 @@ Copyright (c) 2017 Puppet Inc., LLC Licensed under the Apache 2.0 License
   end
 
   def run_command
-    main
+    if Puppet.features.bolt?
+      Puppet.override(:bolt_executor => Bolt::Executor.new) do
+        main
+      end
+    else
+      raise _("Bolt must be installed to use the script application")
+    end
   end
 
   def main

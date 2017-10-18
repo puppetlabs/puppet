@@ -26,7 +26,8 @@ Puppet::Functions.create_function(:run_command) do
         {:operation => 'run_command'})
     end
 
-    unless Puppet.features.bolt?
+    executor = Puppet.lookup(:bolt_executor) { nil }
+    unless executor && Puppet.features.bolt?
       raise Puppet::ParseErrorWithIssue.from_issue_and_stack(Puppet::Pops::Issues::TASK_MISSING_BOLT, :action => _('run a command'))
     end
 
@@ -35,7 +36,9 @@ Puppet::Functions.create_function(:run_command) do
       call_function('debug', "Simulating run_command('#{command}') - no hosts given - no action taken")
       Puppet::Pops::Types::ExecutionResult::EMPTY_RESULT
     else
-      Puppet::Pops::Types::ExecutionResult.from_bolt(Bolt::Executor.from_uris(hosts).run_command(command))
+      Puppet::Pops::Types::ExecutionResult.from_bolt(
+        executor.run_command(executor.from_uris(hosts), command)
+      )
     end
   end
 end

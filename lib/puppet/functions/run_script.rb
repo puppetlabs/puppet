@@ -27,7 +27,8 @@ Puppet::Functions.create_function(:run_script, Puppet::Functions::InternalFuncti
         {:operation => 'run_script'})
     end
 
-    unless Puppet.features.bolt?
+    executor = Puppet.lookup(:bolt_executor) { nil }
+    unless executor && Puppet.features.bolt?
       raise Puppet::ParseErrorWithIssue.from_issue_and_stack(Puppet::Pops::Issues::TASK_MISSING_BOLT, :action => _('run a script'))
     end
 
@@ -44,7 +45,9 @@ Puppet::Functions.create_function(:run_script, Puppet::Functions::InternalFuncti
       call_function('debug', "Simulating run_script of '#{found}' - no hosts given - no action taken")
       Puppet::Pops::Types::ExecutionResult::EMPTY_RESULT
     else
-      Puppet::Pops::Types::ExecutionResult.from_bolt(Bolt::Executor.from_uris(hosts).run_script(found))
+      Puppet::Pops::Types::ExecutionResult.from_bolt(
+        executor.run_script(executor.from_uris(hosts), found)
+      )
     end
   end
 end

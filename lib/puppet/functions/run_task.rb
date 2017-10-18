@@ -55,7 +55,8 @@ Puppet::Functions.create_function(:run_task) do
         {:operation => 'run_task'})
     end
 
-    unless Puppet.features.bolt?
+    executor = Puppet.lookup(:bolt_executor) { nil }
+    unless executor && Puppet.features.bolt?
       raise Puppet::ParseErrorWithIssue.from_issue_and_stack(Puppet::Pops::Issues::TASK_MISSING_BOLT, :action => _('run a task'))
     end
 
@@ -67,7 +68,11 @@ Puppet::Functions.create_function(:run_task) do
       input_method = task._pcore_type['input_method'].value
 
       arguments = task.task_args
-      Puppet::Pops::Types::ExecutionResult.from_bolt(Bolt::Executor.from_uris(hosts).run_task(task.executable_path, input_method, arguments))
+      Puppet::Pops::Types::ExecutionResult.from_bolt(
+        executor.run_task(
+          executor.from_uris(hosts), task.executable_path, input_method, arguments
+        )
+      )
     end
   end
 end

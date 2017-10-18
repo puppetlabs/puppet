@@ -7,6 +7,7 @@ describe 'the run_script function' do
   include PuppetSpec::Compiler
   include PuppetSpec::Files
 
+  let(:executor) { mock('bolt_executor') }
   let(:tasks_enabled) { true }
   let(:env_name) { 'testenv' }
   let(:environments_dir) { Puppet[:environmentpath] }
@@ -36,6 +37,12 @@ describe 'the run_script function' do
     Puppet.push_context({:loaders => loaders}, "test-examples")
   end
 
+  around(:each) do |example|
+    Puppet.override(:bolt_executor => executor) do
+      example.run
+    end
+  end
+
   after(:each) do
     Puppet::Pops::Loaders.clear
     Puppet::pop_context()
@@ -57,15 +64,12 @@ describe 'the run_script function' do
     let(:full_path) { File.join(full_dir_path, 'hostname.sh') }
     before(:each) do
       Puppet.features.stubs(:bolt?).returns(true)
-      module ::Bolt; end
-      class ::Bolt::Executor; end
     end
 
     it 'with fully resolved path of file' do
-      executor = mock('executor')
-      Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
+      executor.expects(:from_uris).with(hosts).returns([host])
       result.expects(:to_h).returns(result)
-      executor.expects(:run_script).with(full_path).returns({ host => result })
+      executor.expects(:run_script).with([host], full_path).returns({ host => result })
 
       expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{hostname}'}})"])
         $a = run_script('test/uploads/hostname.sh', '#{hostname}')
@@ -78,11 +82,11 @@ describe 'the run_script function' do
       let(:hosts) { [hostname, hostname2] }
       let(:host2) { stub(uri: hostname2) }
       let(:result2) { { value: hostname2 } }
+      let(:nodes) { [mock(hostname), mock(hostname2)] }
 
       it 'with propagated multiple hosts and returns multiple results' do
-        executor = mock('executor')
-        Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
-        executor.expects(:run_script).with(full_path).returns({ host => result, host2 => result2 })
+        executor.expects(:from_uris).with(hosts).returns(nodes)
+        executor.expects(:run_script).with(nodes, full_path).returns({ host => result, host2 => result2 })
         result.expects(:to_h).returns(result)
         result2.expects(:to_h).returns(result2)
 
@@ -94,8 +98,7 @@ describe 'the run_script function' do
     end
 
     it 'without nodes - does not invoke bolt' do
-      executor = mock('executor')
-      Bolt::Executor.expects(:from_uris).never
+      executor.expects(:from_uris).never
       executor.expects(:run_script).never
 
       expect(eval_and_collect_notices(<<-CODE, node)).to eql(['ExecutionResult({})'])
@@ -105,8 +108,7 @@ describe 'the run_script function' do
     end
 
     it 'errors when script is not found' do
-      executor = mock('executor')
-      Bolt::Executor.expects(:from_uris).never
+      executor.expects(:from_uris).never
       executor.expects(:run_script).never
 
       expect{eval_and_collect_notices(<<-CODE, node)}.to raise_error(/No such file or directory: .*nonesuch\.sh/)
@@ -115,8 +117,7 @@ describe 'the run_script function' do
     end
 
     it 'errors when script appoints a directory' do
-      executor = mock('executor')
-      Bolt::Executor.expects(:from_uris).never
+      executor.expects(:from_uris).never
       executor.expects(:run_script).never
 
       expect{eval_and_collect_notices(<<-CODE, node)}.to raise_error(/.*\/uploads is not a file/)
