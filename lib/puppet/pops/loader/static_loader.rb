@@ -76,7 +76,6 @@ class StaticLoader < Loader
     @loaded = {}
     create_built_in_types
     create_resource_type_references
-    register_aliases
   end
 
   def load_typed(typed_name)
@@ -106,6 +105,26 @@ class StaticLoader < Loader
 
   def loaded_entry(typed_name, check_dependencies = false)
     @loaded[typed_name]
+  end
+
+  def create_built_in_puppet_types
+    Pcore.add_object_type('Error', <<-PUPPET, self)
+      {
+        type_parameters => {
+          kind => Optional[Variant[String,Regexp,Type[Enum],Type[Pattern],Type[NotUndef],Type[Undef]]],
+          issue_code => Optional[Variant[String,Regexp,Type[Enum],Type[Pattern],Type[NotUndef],Type[Undef]]]
+        },
+        attributes => {
+          message => String[1],
+          kind => { type => Optional[String[1]], value => undef },
+          issue_code => { type => Optional[String[1]], value => 'ERROR' },
+          partial_result => { type => Data, value => undef },
+          details => { type => Optional[Hash[String[1],Data]], value => undef },
+        }
+      }
+    PUPPET
+
+    register_aliases
   end
 
   private
