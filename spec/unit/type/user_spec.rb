@@ -86,7 +86,7 @@ describe Puppet::Type.type(:user) do
     end
   end
 
-  properties = [:ensure, :uid, :gid, :home, :comment, :shell, :password, :password_min_age, :password_max_age, :groups, :roles, :auths, :profiles, :project, :keys, :expiry]
+  properties = [:ensure, :uid, :gid, :home, :comment, :shell, :password, :password_min_age, :password_max_age, :password_warn_days, :groups, :roles, :auths, :profiles, :project, :keys, :expiry]
 
   properties.each do |property|
     it "should have a #{property} property" do
@@ -311,6 +311,16 @@ describe Puppet::Type.type(:user) do
 
     it "should fail with an empty maximum age" do
       expect { described_class.new(:name => 'foo', :password_max_age => '') }.to raise_error(Puppet::Error, /maximum age must be provided as a number/)
+    end
+  end
+
+  describe "when managing warning password days" do
+    it "should accept a negative warning days" do
+      expect { described_class.new(:name => 'foo', :password_warn_days => '-1') }.to_not raise_error
+    end
+
+    it "should fail with an empty warning days" do
+      expect { described_class.new(:name => 'foo', :password_warn_days => '') }.to raise_error(Puppet::Error, /warning days must be provided as a number/)
     end
   end
 

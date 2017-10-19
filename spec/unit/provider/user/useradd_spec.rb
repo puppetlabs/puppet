@@ -94,8 +94,9 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       described_class.has_feature :manages_password_age
       resource[:password_min_age] = 5
       resource[:password_max_age] = 10
+      resource[:password_warn_days] = 15
       provider.expects(:execute).with(includes('/usr/sbin/useradd'), kind_of(Hash))
-      provider.expects(:execute).with(['/usr/bin/chage', '-m', 5, '-M', 10, 'myuser'])
+      provider.expects(:execute).with(['/usr/bin/chage', '-m', 5, '-M', 10, '-W', 15, 'myuser'])
       provider.create
     end
 
@@ -340,9 +341,10 @@ describe Puppet::Type.type(:user).provider(:useradd) do
   end
 
   {
-    :password_min_age => 10,
-    :password_max_age => 20,
-    :password         => '$6$FvW8Ib8h$qQMI/CR9m.QzIicZKutLpBgCBBdrch1IX0rTnxuI32K1pD9.RXZrmeKQlaC.RzODNuoUtPPIyQDufunvLOQWF0'
+    :password_min_age   => 10,
+    :password_max_age   => 20,
+    :password_warn_days => 30,
+    :password           => '$6$FvW8Ib8h$qQMI/CR9m.QzIicZKutLpBgCBBdrch1IX0rTnxuI32K1pD9.RXZrmeKQlaC.RzODNuoUtPPIyQDufunvLOQWF0'
   }.each_pair do |property, expected_value|
     describe "##{property}" do
       before :each do
@@ -437,10 +439,22 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       expect(provider.passcmd).to eq(['/usr/bin/chage','-M',999,'myuser'])
     end
 
+    it "should return a chage command array with -W <value> if password_warn_days is set" do
+      resource[:password_warn_days] = 999
+      expect(provider.passcmd).to eq(['/usr/bin/chage','-W',999,'myuser'])
+    end
+
     it "should return a chage command array with -M <value> -m <value> if both password_min_age and password_max_age are set" do
       resource[:password_min_age] = 123
       resource[:password_max_age] = 999
       expect(provider.passcmd).to eq(['/usr/bin/chage','-m',123,'-M',999,'myuser'])
+    end
+
+    it "should return a chage command array with -M <value> -m <value> -W <value> if password_min_age, password_max_age and password_warn_days are set" do
+      resource[:password_min_age] = 123
+      resource[:password_max_age] = 999
+      resource[:password_warn_days] = 555
+      expect(provider.passcmd).to eq(['/usr/bin/chage','-m',123,'-M',999,'-W',555,'myuser'])
     end
   end
 

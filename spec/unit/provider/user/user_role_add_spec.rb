@@ -70,11 +70,11 @@ describe Puppet::Type.type(:user).provider(:user_role_add), :unless => Puppet.fe
     end
 
     it "should set password age rules" do
-      resource = Puppet::Type.type(:user).new :name => "myuser", :password_min_age => 5, :password_max_age => 10, :provider => :user_role_add
+      resource = Puppet::Type.type(:user).new :name => "myuser", :password_min_age => 5, :password_max_age => 10, :password_warn_days => 15, :provider => :user_role_add
       provider = described_class.new(resource)
       provider.stubs(:user_attributes)
       provider.stubs(:execute)
-      provider.expects(:execute).with { |cmd, *args| args == ["-n", 5, "-x", 10, "myuser"] }
+      provider.expects(:execute).with { |cmd, *args| args == ["-n", 5, "-x", 10, '-w', 15, "myuser"] }
       provider.create
     end
   end
@@ -352,6 +352,23 @@ EOT
     it "should return -1 for no minimum when failed attempts are present" do
       File.stubs(:readlines).returns(["fakeval:NP:12345::::::3\n"])
       expect(provider.password_min_age).to eq(-1)
+    end
+  end
+
+  describe "#password_warn_days" do
+    it "should return a warn days number" do
+      File.stubs(:readlines).returns(["fakeval:NP:12345:10:50:30:::\n"])
+      expect(provider.password_warn_days).to eq("30")
+    end
+
+    it "should return -1 for no warn days" do
+      File.stubs(:readlines).returns(["fakeval:NP:12345::::::\n"])
+      expect(provider.password_warn_days).to eq(-1)
+    end
+
+    it "should return -1 for no warn days when failed attempts are present" do
+      File.stubs(:readlines).returns(["fakeval:NP:12345::::::3\n"])
+      expect(provider.password_warn_days).to eq(-1)
     end
   end
 end
