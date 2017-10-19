@@ -257,7 +257,7 @@ class RubyGenerator < TypeFormatter
       opt.each do |ip|
         bld << rname(ip.name) << ' = '
         default_string(bld, ip)
-        bld << ", "
+        bld << ', '
       end
       bld.chomp!(', ')
       bld << ")\n"
@@ -273,9 +273,7 @@ class RubyGenerator < TypeFormatter
       bld.chomp!(', ')
       bld << ')'
     end
-    bld.chomp!(",\n")
     bld << "\n  end\n"
-
 
     unless obj.parent.is_a?(PObjectType) && obj_attrs.empty?
       # Output attr_readers
