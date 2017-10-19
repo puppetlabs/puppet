@@ -290,9 +290,27 @@ class Puppet::Provider
     end
   end
 
+  # Compare a fact value against one or more supplied value
+  # @param [Symbol] fact a fact to query to match against one of the given values
+  # @param [Array, Regexp, String] values one or more values to compare to the
+  #   value of the given fact
+  # @return [Boolean] whether or not the fact value matches one of the supplied
+  #   values. Given one or more Regexp instances, fact is compared via the basic
+  #   pattern-matching operator.
   def self.fact_match(fact, values)
     fact_val = Facter.value(fact).to_s.downcase
-    fact_val != "" and [*values].any? { |v| v === fact_val }
+    if fact_val.empty?
+      return false
+    else
+      values = [values] unless values.is_a?(Array)
+      values.any? do |value|
+        if value.is_a?(Regexp)
+          fact_val =~ value
+        else
+          fact_val.intern == value.to_s.downcase.intern
+        end
+      end
+    end
   end
 
   def self.feature_match(value)
