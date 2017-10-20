@@ -215,4 +215,74 @@ describe Puppet::Forge::ModuleRelease do
 
     it_behaves_like 'a module release'
   end
+
+  context 'deprecated forge module' do
+    let(:release_json) do %Q{
+    {
+      "uri": "/#{api_version}/releases/#{module_full_name_versioned}",
+      "module": {
+        "uri": "/#{api_version}/modules/#{module_full_name}",
+        "name": "#{module_name}",
+        "deprecated_at": "2017-10-10 10:21:32 -0700",
+        "owner": {
+          "uri": "/#{api_version}/users/#{module_author}",
+          "username": "#{module_author}",
+          "gravatar_id": "fdd009b7c1ec96e088b389f773e87aec"
+        }
+      },
+      "version": "#{module_version}",
+      "metadata": {
+        "types": [ ],
+        "license": "Apache 2.0",
+        "checksums": { },
+        "version": "#{module_version}",
+        "description": "Standard Library for Puppet Modules",
+        "source": "git://github.com/puppetlabs/puppetlabs-stdlib.git",
+        "project_page": "https://github.com/puppetlabs/puppetlabs-stdlib",
+        "summary": "Puppet Module Standard Library",
+        "dependencies": [
+
+        ],
+        "author": "#{module_author}",
+        "name": "#{module_full_name}"
+      },
+      "tags": [
+        "puppetlabs",
+        "library",
+        "stdlib",
+        "standard",
+        "stages"
+      ],
+      "file_uri": "/#{api_version}/files/#{module_full_name_versioned}.tar.gz",
+      "file_size": 67586,
+      "file_md5": "#{module_md5}",
+      "downloads": 610751,
+      "readme": "",
+      "changelog": "",
+      "license": "",
+      "created_at": "2013-05-13 08:31:19 -0700",
+      "updated_at": "2013-05-13 08:31:19 -0700",
+      "deleted_at": null
+    }
+    }
+    end
+
+    it_behaves_like 'a module release'
+
+    describe '#prepare' do
+      before :each do
+        release.stubs(:tmpfile).returns(mock_file)
+        release.stubs(:tmpdir).returns(mock_dir)
+        release.stubs(:download)
+        release.stubs(:validate_checksum)
+        release.stubs(:unpack)
+      end
+
+      it 'should emit warning about module deprecation' do
+        Puppet.expects(:warning).with(regexp_matches(/#{Regexp.escape(module_full_name)}.*deprecated/i))
+
+        release.prepare
+      end
+    end
+  end
 end

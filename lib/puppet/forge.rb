@@ -166,6 +166,8 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
     def prepare
       return @unpacked_into if @unpacked_into
 
+      Puppet.warning "#{@metadata['name']} has been deprecated by its author! View module on Puppet Forge for more info." if deprecated?
+
       download(@data['file_uri'], tmpfile)
       validate_checksum(tmpfile, @data['file_md5'])
       unpack(tmpfile, tmpdir)
@@ -208,6 +210,10 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
       rescue Puppet::ExecutionFailure => e
         raise RuntimeError, _("Could not extract contents of module archive: %{message}") % { message: e.message }
       end
+    end
+
+    def deprecated?
+      @data['module'] && (@data['module']['deprecated_at'] != nil)
     end
   end
 
