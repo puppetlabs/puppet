@@ -338,14 +338,6 @@ class Loaders
     def resolved?
       !@private_loader.nil?
     end
-
-#    def unmet_dependencies?
-#      @puppet_module.unmet_dependencies.any?
-#    end
-#
-#    def dependency_names
-#      @puppet_module.dependencies_as_modules.collect(&:name)
-#    end
   end
 
   # Resolves module loaders - resolution of model dependencies is done by Puppet::Module
