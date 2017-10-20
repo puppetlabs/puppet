@@ -7,6 +7,46 @@ describe provider_class do
   include PuppetSpec::Fixtures
   it_behaves_like 'RHEL package provider', provider_class, 'yum'
 
+  describe "when supplied the source param" do
+    let(:name) { 'baz' }
+
+    let(:resource) do
+      Puppet::Type.type(:package).new(
+        :name => name,
+        :provider => 'yum',
+      )
+    end
+
+    let(:provider) do
+      provider = provider_class.new
+      provider.resource = resource
+      provider
+    end
+
+    before { provider_class.stubs(:command).with(:cmd).returns("/usr/bin/yum") }
+
+    context "when installing" do
+      it "should use the supplied source as the explicit path to a package to install" do
+        resource[:ensure] = :present
+        resource[:source] = "/foo/bar/baz-1.1.0.rpm"
+        provider.expects(:execute).with(["/usr/bin/yum", "-d", "0", "-e", "0", "-y", :install, "/foo/bar/baz-1.1.0.rpm"])
+        provider.install
+      end
+    end
+
+    context "when ensuring a specific version" do
+      it "should use the suppplied source as the explicit path to the package to update" do
+        # The first query response informs yum provider that package 1.1.0 is
+        # already installed, and the second that it's been upgraded
+        provider.expects(:query).twice.returns({:ensure => "1.1.0"}, {:ensure => "1.2.0"})
+        resource[:ensure] = "1.2.0"
+        resource[:source] = "http://foo.repo.com/baz-1.2.0.rpm"
+        provider.expects(:execute).with(["/usr/bin/yum", "-d", "0", "-e", "0", "-y", 'update',  "http://foo.repo.com/baz-1.2.0.rpm"])
+        provider.install
+      end
+    end
+  end
+
   describe "parsing the output of check-update" do
     describe "with no multiline entries" do
       let(:check_update) { File.read(my_fixture("yum-check-update-simple.txt")) }
