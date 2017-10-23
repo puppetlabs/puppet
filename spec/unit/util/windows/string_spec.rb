@@ -55,4 +55,9 @@ describe "Puppet::Util::Windows::String", :if => Puppet.features.microsoft_windo
       expect(wide_string(nil)).to eq(nil)
     end
   end
+
+  context "get_CP_info" do
+    it "should return codepage info for all registered" do
+    end
+  end
 end

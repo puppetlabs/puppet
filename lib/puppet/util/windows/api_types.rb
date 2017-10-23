@@ -128,6 +128,7 @@ module Puppet::Util::Windows::APITypes
   # Windows Data Types
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa383751(v=vs.85).aspx
 
+  # Note UINT and UINT32 are the same on Windows
   FFI.typedef :uint16, :word
   FFI.typedef :uint32, :dword
   # uintptr_t is defined in an FFI conf as platform specific, either
@@ -179,6 +180,7 @@ module Puppet::Util::Windows::APITypes
   # FFI.typedef :uint16, :ushort
   # FFI.typedef :int16, :short
 
+  # require 'pry'; binding.pry
   # 8 bits per byte
   FFI.typedef :uchar, :byte
   FFI.typedef :uint16, :wchar

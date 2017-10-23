@@ -1,0 +1,135 @@
+U+2170
+http://www.fileformat.info/info/unicode/char/2170/charset_support.htm
+
+Known Ruby conversion failures:
+
+"\e\x24\x42\x7C\x71\e\x28\x42".force_encoding(Encoding::ISO_2022_JP).encode(Encoding::UTF_8)
+Encoding::UndefinedConversionError: "\xFC\xF1" to UTF-8 in conversion from ISO-2022-JP to stateless-ISO-2022-JP to EUC-JP to UTF-8
+from (pry):133:in `encode'
+
+"\e\x24\x42\x7C\x71\e\x28\x42".force_encoding(Encoding::ISO_2022_JP_2).encode(Encoding::UTF_8)
+Encoding::ConverterNotFoundError: code converter not found (ISO-2022-JP-2 to UTF-8)
+
+"\e\x24\x42\x7C\x71\e\x28\x42".force_encoding(Encoding::CP50220).encode(Encoding::ISO2022_JP)
+Encoding::UndefinedConversionError: U+2170 to EUC-JP in conversion from CP50220 to cp51932 to UTF-8 to EUC-JP to stateless-ISO-2022-JP to ISO-2022-JP
+from (pry):216:in `encode'
+
+"\xEE\xEF".force_encoding(Encoding::SJIS_KDDI).encode(Encoding::SHIFT_JIS)
+Encoding::UndefinedConversionError: U+2170 to Shift_JIS in conversion from SJIS-KDDI to UTF8-KDDI to UTF-8 to Shift_JIS
+from (pry):218:in `encode'
+
+
+1b24284473211b2842 - code page 50220 OR 50221 OR 50222 - uncertain
+==================
+
+These all behave about the same:
+
+"\e\x24\x42\x7C\x71\e\x28\x42".force_encoding(Encoding::CP50220).encode(Encoding::UTF_8)
+=> "\u2170"
+
+\e\x24\x42\x7C\x71\e\x28\x42".force_encoding(Encoding::CP50221).encode(Encoding::UTF_8)
+=> "\u2170"
+
+"\e\x24\x42\x7C\x71\e\x28\x42".force_encoding(Encoding::ISO_2022_JP_KDDI).encode(Encoding::UTF_8)
+=> "\u2170"
+
+HOWEVER, when using "\u2015".encode(Encoding::ISO_2022_JP) it more closely tracks above - CP50220 / CP50221
+
+
+
+FA40 - code page 932
+==================
+
+"\xFA\x40".force_encoding(Encoding::Windows_31J).encode(Encoding::UTF_8)
+=> "\u2170"
+# appears in the table ftp://ftp.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit932.txt
+"\xFA\x40".force_encoding(Encoding::CP932).encode(Encoding::UTF_8)
+=> "\u2170"
+\xFA\x40".force_encoding(Encoding::CSWINDOWS31J).encode(Encoding::UTF_8)
+=> "\u2170"
+\xFA\x40".force_encoding(Encoding::SJIS).encode(Encoding::UTF_8)
+=> "\u2170"
+\xFA\x40".force_encoding(Encoding::PCK).encode(Encoding::UTF_8)
+=> "\u2170"
+
+## SHIFT_JIS is supposed to be here... but fails in Ruby for some reason
+# even though chart at http://www.rikai.com/library/kanjitables/kanji_codes.sjis.shtml shows FA40
+# NOTE: Encoding::Windows_31J != Encoding::SHIFT_JIS
+'Shift_JIS'
+
+
+  EEEF - no code page equivalent
+  ==================
+  "\xEE\xEF".force_encoding(Encoding::SJIS_KDDI).encode(Encoding::UTF_8)
+  => "\u2170"
+
+HOWEVER, when using character \u2015 ... SJIS_KDDI matches above, so it's the "closest" thing
+
+
+FCF1 - code page 51932
+==================
+"\xFC\xF1".force_encoding(Encoding::CP51932).encode(Encoding::UTF_8)
+=> "\u2170"
+
+CP51932 table at http://cpansearch.perl.org/src/NARUSE/Encode-EUCJPMS-0.07/ucm/cp51932.ucm
+shows: <U2170> \xFC\xF1     |0 # SMALL ROMAN NUMERAL ONE
+
+
+EUC-JP table at http://www.rikai.com/library/kanjitables/kanji_codes.euc.shtml
+shows FCF1 as the location of small roman numeral i
+"\xFC\xF1".force_encoding(Encoding::EUC_JP).encode(Encoding::Stateless_ISO_2022_JP)
+=> "\x{92FCF1}"
+^ this seems to indicate that EUC_JP and CP51932 are the same
+  AND that Stateless_ISO_2022_JP and Stateless_ISO_2022_JP_KDDI are the same
+
+  ACB5 - no code page equivalent
+  ==================
+   "\xAC\xB5".force_encoding(Encoding::EUC_JIS_2004).encode(Encoding::UTF_8)
+  => "\u2170"
+
+  "\xAC\xB5".force_encoding(Encoding::EUC_JISX0213).encode(Encoding::UTF_8)
+  => "\u2170"
+
+HOWEVER, when using character \u2015 ... EUC_JIS_2004 and EUC_JISX0213 matches above,
+so it's the "closest" thing
+
+  8FF3F3 - no code page equivalent
+  ==================
+
+  a chart of what Ruby uses is here
+  http://www.wdic.org/w/WDIC/eucJP-ms
+
+  "\x8F\xF3\xF3".force_encoding(Encoding::EUCJP_MS).encode(Encoding::UTF_8)
+  => "\u2170"
+
+HOWEVER, when using character \u2015 ... EUCJP_MS matches above,
+so it's the "closest" thing
+
+
+E285B0 (UTF-8 bytes for \u2170) - code page 65001
+==================
+"\xE2\x85\xB0".force_encoding(Encoding::UTF8_KDDI).encode(Encoding::UTF_8)
+=> "\u2170"
+
+
+
+92FCF1 - no code page equivalent
+==================
+"\x92\xFC\xF1".force_encoding(Encoding::Stateless_ISO_2022_JP_KDDI).encode(Encoding::UTF_8)
+=> "\u2170"
+
+"\xFC\xF1".force_encoding(Encoding::EUC_JP).encode(Encoding::Stateless_ISO_2022_JP)
+=> "\x{92FCF1}"
+^ this seems to indicate that Stateless_ISO_2022_JP and Stateless_ISO_2022_JP_KDDI are the same
+
+This seems to be pretty similar to 51932 above - seems to be same bytes prefixed with something like '92'?
+
+
+
+Undetermined
+=====================
+
+'ISO-2022-JP'                   => 50220,
+'ISO2022-JP'                    => 50220,
+'ISO-2022-JP-2'                 => 50220,
+'ISO2022-JP2'                   => 50220,

@@ -196,7 +196,9 @@ describe Puppet::Util do
         # otherwise the key selected for this test contains characters
         # unavailable to a local codepage, hence doesn't work
         # HACK: tech debt to replace once PUP-7019 is understood
-        should_be_found = (Encoding.default_external == Encoding::CP932)
+        codepage_info = Puppet::Util::Windows::String.get_CP_info(Encoding.default_external)
+        # Ruby appears to treat MBCS codepages differently
+        should_be_found = (codepage_info.MaxCharSize > 1)
         expect(ENV.key?(codepage_key)).to eq(should_be_found)
         expect(ENV.key?(utf_8_key)).to eq(true)
 
