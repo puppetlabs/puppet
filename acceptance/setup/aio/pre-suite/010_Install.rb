@@ -5,7 +5,7 @@ extend Puppet::Acceptance::InstallUtils
 
 test_name "Install Packages"
 
-def func_use_system_openssl?
+def func_use_system_openssl()
   # Presently .i.e as of Oct 22 there is no way to specify an environment variable
   # in PA CI so we are going to hard code it till there is support for FIPS platforms
   return true
@@ -15,9 +15,9 @@ def func_use_system_openssl?
   # warn "Use system openssl: " + "#{sys_ssl}"
 
   # explicitly catch the expected "don't use this" values
-  return false if ENV["USE_SYSTEM_OPENSSL"] =~ /false|f|0/i
+  # return false if ENV["USE_SYSTEM_OPENSSL"] =~ /false|f|0/i
   # explicitly cast the environment variable to a true Boolean otherwise
-  !!ENV["USE_SYSTEM_OPENSSL"]
+  # !!ENV["USE_SYSTEM_OPENSSL"]
 end
 
 project "puppet-agent" do |proj|
@@ -38,7 +38,7 @@ step "Install puppet-agent..." do
     next if agent == master # Avoid SERVER-528
 
     # Update openssl package on rhel7 if linking against system openssl
-    use_system_openssl = func_use_system_openssl?
+    use_system_openssl = func_use_system_openssl()
     if use_system_openssl &&  agent[:platform].match(/(?:el-7|redhat-7)/)
       rhel7_openssl_version = ENV["RHEL7_OPENSSL_VERSION"]
       if rhel7_openssl_version.to_s.empty?
@@ -120,7 +120,7 @@ step "Install puppetserver..." do
     install_puppetlabs_dev_repo(master, 'puppetserver', server_version, nil, :dev_builds_url => server_download_url)
 
     # Bump version of openssl on rhel7 platforms
-    use_system_openssl = func_use_system_openssl?
+    use_system_openssl = func_use_system_openssl()
     if use_system_openssl && master[:platform].match(/(?:el-7|redhat-7)/)
       rhel7_openssl_version = ENV['RHEL7_OPENSSL_VERSION']
       if rhel7_openssl_version.to_s.empty?
@@ -175,7 +175,7 @@ step "Enable FIPS on agent hosts..." do
     next if agent == master # Only on agents.
 
     # Do this only on rhel7, rhel6, f24, f25
-    use_system_openssl = func_use_system_openssl?
+    use_system_openssl = func_use_system_openssl()
     if use_system_openssl
       # Other platforms to come...
       next if !agent[:platform].match(/(?:el-7|redhat-7)/)
