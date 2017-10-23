@@ -35,22 +35,22 @@ describe Puppet::GettextConfig do
     end
   end
 
-  describe 'initialization' do
+  describe 'loading translations' do
     context 'when given a nil config path' do
       it 'should return false' do
-        expect(Puppet::GettextConfig.initialize(nil, :po)).to be false
+        expect(Puppet::GettextConfig.load_translations('puppet', nil, :po)).to be false
       end
     end
 
     context 'when given a valid config file location' do
       it 'should return true' do
-        expect(Puppet::GettextConfig.initialize(local_path, :po)).to be true
+        expect(Puppet::GettextConfig.load_translations('puppet', local_path, :po)).to be true
       end
     end
 
     context 'when given a bad file format' do
       it 'should raise an exception' do
-        expect { Puppet::GettextConfig.initialize(local_path, :bad_format) }.to raise_error(Puppet::Error)
+        expect { Puppet::GettextConfig.load_translations('puppet', local_path, :bad_format) }.to raise_error(Puppet::Error)
       end
     end
   end
