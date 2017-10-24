@@ -268,6 +268,8 @@ Licensed under the Apache 2.0 License
   def setup
     setup_logs
 
+    exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
+
     args[:Server] = Puppet[:server]
     if options[:centrallogs]
       logdest = args[:Server]
@@ -284,9 +286,7 @@ Licensed under the Apache 2.0 License
     Puppet::SSL::Host.ca_location = :remote
 
     Puppet::Transaction::Report.indirection.terminus_class = :rest
-
-    if Puppet[:catalog_cache_terminus]
-      Puppet::Resource::Catalog.indirection.cache_class = Puppet[:catalog_cache_terminus].intern
-    end
+    # we want the last report to be persisted locally
+    Puppet::Transaction::Report.indirection.cache_class = :yaml
   end
 end
