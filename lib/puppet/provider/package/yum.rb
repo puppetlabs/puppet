@@ -175,17 +175,32 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
         operation = :install
       end
       should = nil
-    when true, false, Symbol
+    when true, :present, :installed
+      # if we have been given a source and we were not asked for a specific
+      # version feed it to yum directly
+      if @resource[:source]
+        wanted = @resource[:source]
+        self.debug "Installing directly from #{wanted}"
+      end
+      should = nil
+    when false,:absent
       # pass
       should = nil
     else
-      # Add the package version
-      wanted += "-#{should}"
-      if wanted.scan(ARCH_REGEX)
-        self.debug "Detected Arch argument in package! - Moving arch to end of version string"
-        wanted.gsub!(/(.+)(#{ARCH_REGEX})(.+)/,'\1\3\2')
+      if @resource[:source]
+        # An explicit source was supplied, which means we're ensuring a specific
+        # version, and also supplying the path to a package that supplies that
+        # version.
+        wanted = @resource[:source]
+        self.debug "Installing directly from #{wanted}"
+      else
+        # No explicit source was specified, so add the package version
+        wanted += "-#{should}"
+        if wanted.scan(ARCH_REGEX)
+          self.debug "Detected Arch argument in package! - Moving arch to end of version string"
+          wanted.gsub!(/(.+)(#{ARCH_REGEX})(.+)/,'\1\3\2')
+        end
       end
-
       current_package = self.query
       if current_package
         if rpm_compareEVR(rpm_parse_evr(should), rpm_parse_evr(current_package[:ensure])) < 0
