@@ -207,6 +207,20 @@ describe ":eventlog", :if => Puppet::Util::Platform.windows? do
     expect(Puppet.features.eventlog?).to be_truthy
   end
 
+  it "should truncate extremely long log messages" do
+    long_msg = "x" * 32000
+    expected_truncated_msg = "#{'x' * 31785}...Message exceeds character length limit, truncating."
+    expected_data = "a vogon ship: " + expected_truncated_msg
+
+    eventlog = stub('eventlog')
+    eventlog.expects(:report_event).with(has_entries(:event_type => 2, :event_id => 2, :data => expected_data))
+    msg = Puppet::Util::Log.new(:level => :warning, :message => long_msg, :source => "a vogon ship")
+    Puppet::Util::Windows::EventLog.stubs(:open).returns(eventlog)
+
+    dest = klass.new
+    dest.handle(msg)
+  end
+  
   it "logs to the Puppet Application event log" do
     Puppet::Util::Windows::EventLog.expects(:open).with('Puppet').returns(stub('eventlog'))
 
