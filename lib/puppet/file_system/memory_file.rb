@@ -1,39 +1,59 @@
 # An in-memory file abstraction. Commonly used with Puppet::FileSystem::File#overlay
 # @api private
 class Puppet::FileSystem::MemoryFile
-  attr_reader :path, :children
+  attr_reader :path
 
   def self.a_missing_file(path)
-    new(path, :exist? => false, :executable? => false)
+    new(path, :exist? => false, :executable? => false, :readable? => false)
   end
 
   def self.a_regular_file_containing(path, content)
-    new(path, :exist? => true, :executable? => false, :content => content)
+    new(path, :exist? => true, :directory? => false, :executable? => false, :content => content, :readable? => true)
+  end
+
+  def self.an_unreadable_regular_file(path)
+    new(path, :exist? => true, :directory => false, :executable? => false, :readable? => false)
   end
 
   def self.an_executable(path)
-    new(path, :exist? => true, :executable? => true)
+    new(path, :exist? => true, :directory => false, :executable? => true, :readable? => true)
   end
 
   def self.a_directory(path, children = [])
     new(path,
+      :exist? => true,
+      :executable? => true,
+      :directory? => true,
+      :children => children,
+      :readable? => true)
+  end
+
+  def self.an_unreadable_directory(path, children = [])
+    new(path,
         :exist? => true,
-        :excutable? => true,
+        :executable? => true,
         :directory? => true,
-        :children => children)
+        :children => children,
+        :readable? => false)
   end
 
   def initialize(path, properties)
     @path = path
     @properties = properties
-    @children = (properties[:children] || []).collect do |child|
+    @children = (properties[:children] || []).map do |child|
       child.duplicate_as(File.join(@path, child.path))
     end
+  end
+
+  def children
+    raise Errno::EACCES, @path unless readable?
+    @children
   end
 
   def directory?; @properties[:directory?]; end
   def exist?; @properties[:exist?]; end
   def executable?; @properties[:executable?]; end
+  def readable?; @properties[:readable?]; end
 
   def each_line(&block)
     handle.each_line(&block)

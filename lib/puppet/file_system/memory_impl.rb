@@ -19,6 +19,10 @@ class Puppet::FileSystem::MemoryImpl
     path.file?
   end
 
+  def readable?(path)
+    path.readable?
+  end
+
   def executable?(path)
     path.executable?
   end
@@ -33,6 +37,11 @@ class Puppet::FileSystem::MemoryImpl
 
   def pathname(path)
     find(path) || Puppet::FileSystem::MemoryFile.a_missing_file(path)
+  end
+
+  def dir(path)
+    dirname = File.dirname(path_string(path))
+    find(dirname) || Puppet::FileSystem::MemoryFile.a_directory(dirname, [path])
   end
 
   def basename(path)
@@ -61,6 +70,36 @@ class Puppet::FileSystem::MemoryImpl
     end
   end
 
+  class MemoryStat
+    def initialize(path)
+      @path = path
+    end
+
+    def directory?
+      @path.directory?
+    end
+
+    def file?
+      @path.directory?
+    end
+
+    def executable?
+      @path.executable?
+    end
+
+    def readable?
+      @path.readable?
+    end
+
+    def writable?
+      @path.executable?
+    end
+  end
+
+  def stat(path)
+    MemoryStat.new(path)
+  end
+
   def assert_path(path)
     if path.is_a?(Puppet::FileSystem::MemoryFile)
       path
@@ -76,11 +115,14 @@ class Puppet::FileSystem::MemoryImpl
   end
 
   def all_children_of(files)
-    children = files.collect(&:children).flatten
-    if children.empty?
-      []
-    else
-      children + all_children_of(children)
+    children = []
+    files.each do |file|
+      begin
+        children.concat(file.children)
+      rescue Errno::EACCES
+      end
     end
+    children.concat(all_children_of(children)) unless children.empty?
+    children
   end
 end

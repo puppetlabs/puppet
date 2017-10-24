@@ -126,6 +126,7 @@ describe Puppet::Util::SELinux do
       Puppet::FileSystem.expects(:lstat).with('/foo').returns(fstat)
       self.expects(:find_fs).with("/foo").returns "ext3"
       Selinux.expects(:matchpathcon).with("/foo", 0).returns [0, "user_u:role_r:type_t:s0"]
+      Selinux.expects(:matchpathcon_fini)
 
       expect(get_selinux_default_context("/foo")).to eq("user_u:role_r:type_t:s0")
     end
@@ -134,6 +135,7 @@ describe Puppet::Util::SELinux do
       self.stubs(:selinux_support?).returns true
       self.stubs(:selinux_label_support?).returns true
       Selinux.stubs(:matchpathcon).with("/root/chuj", 0).returns(-1)
+      Selinux.expects(:matchpathcon_fini)
       self.stubs(:file_lstat).with("/root/chuj").raises(Errno::EACCES, "/root/chuj")
 
       expect(get_selinux_default_context("/root/chuj")).to be_nil
@@ -143,6 +145,7 @@ describe Puppet::Util::SELinux do
       self.stubs(:selinux_support?).returns true
       self.stubs(:selinux_label_support?).returns true
       Selinux.stubs(:matchpathcon).with("/root/chuj", 0).returns(-1)
+      Selinux.expects(:matchpathcon_fini)
       self.stubs(:file_lstat).with("/root/chuj").raises(Errno::ENOENT, "/root/chuj")
 
       expect(get_selinux_default_context("/root/chuj")).to be_nil
@@ -154,6 +157,7 @@ describe Puppet::Util::SELinux do
       Puppet::FileSystem.expects(:lstat).with('/foo').returns(fstat)
       self.expects(:find_fs).with("/foo").returns "ext3"
       Selinux.expects(:matchpathcon).with("/foo", 0).returns -1
+      Selinux.expects(:matchpathcon_fini)
 
       expect(get_selinux_default_context("/foo")).to be_nil
     end
