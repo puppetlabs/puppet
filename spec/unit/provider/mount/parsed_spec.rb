@@ -212,6 +212,13 @@ FSTAB
     expect(instances[11].options).to eq("vers=2,account=false,log=NULL,mount=true")
   end
 
+  describe "::order" do
+    it "should behave correctly with empty input" do
+      result = described_class.order([])
+      expect(result).to be_an Array
+    end
+  end
+
   my_fixtures('*.fstab').each do |fstab|
     platform = File.basename(fstab, '.fstab')
 
@@ -286,8 +293,10 @@ FSTAB
 
         # Simulate transaction.rb:prefetch
         @resource_hash = {}
+        @catalog = Puppet::Resource::Catalog.new
         [@res_ghost, @res_mounted, @res_unmounted, @res_absent].each do |resource|
           @resource_hash[resource.name] = resource
+          resource.stubs(:catalog).returns @catalog
         end
       end
 

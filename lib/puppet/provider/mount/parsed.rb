@@ -197,6 +197,10 @@ Puppet::Type.type(:mount).provide(
     end
   end
 
+  # Class variable to store the catalog's choice about whether
+  # fstab entries should be sorted.
+  @sort_output = false
+
   # Every entry in fstab is :unmounted until we can prove different
   def self.prefetch_hook(target_records)
     target_records.collect do |record|
@@ -242,6 +246,15 @@ Puppet::Type.type(:mount).provide(
         end
       end
     end
+    # Examine the catalog to determine whether the fstab should be ordered.
+    # Default is no sorting
+    @sort_output = false
+    return if !resources || resources.empty?
+    meta = resources.values[0].catalog.resource('resources', 'mount')
+    return unless meta
+    if meta[:sort_output]
+      @sort_output = true
+    end
   end
 
   def self.mountinstances
@@ -272,6 +285,53 @@ Puppet::Type.type(:mount).provide(
       end
     end
     instances
+  end
+
+  # Sort fstab entries so that
+  # a mount point is located inside another mount point appears later and
+  # a device that is located inside a mount point appears later.
+  #
+  # "Stable opportunistic insertion sort"
+  # Copy unsorted list A to sorted B by repeatedly
+  # * removing the first element from A
+  # * compare with each element in B, from first to last
+  # * insert before current element in B if smaller
+  # * insert at the end of B otherwise
+  # * finish if A is empty
+  # * repeat
+  #
+  # Stabilizes itself by inserting as late as possible.
+  #
+  # A record is "smaller" than another if
+  # * the mount point of A is a leading substring of B's mount point
+  # * the mount point of A is a leading substring of B's device (B is a bind mount)
+  #
+  # @note Does not really care about directory names and does substring
+  #   comparison only. So /media will be put before /mediastuff. This is
+  #   not necessary but will be rare and usually cause no harm, either.
+  #
+  # @api private
+  def self.order(records)
+    return records if records.empty?
+    return records unless @sort_output;
+    # insert first record first
+    result = [ ]
+    # iterate over the rest
+    records.each do |a|
+      inserted = false
+      result.each_index do |i|
+        b = result[i]
+        # is a a leading substring of b?
+        if b[:name].index(a[:name]) == 0 || b[:device].index(a[:name])
+          result.insert(i, a)
+          inserted = true
+          break
+        end
+      end
+      next if inserted
+      result.push(a)
+    end
+    result
   end
 
   def flush

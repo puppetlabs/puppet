@@ -1,0 +1,4 @@
+UUID=a5d1054c-caa0-4b80-b12f-bf9449086f8e	/	ext4	defaults,relatime,errors=remount-ro	0	1
+/dev/vg0/data	/opt/data	ext4	defaults	0	0
+/dev/vg0/puppetlabs	/opt/data/research/projects/puppetlabs	ext4	defaults	0	2
+/opt/temp/tables	/var/local/mysql-temp	none	bind,rw	0	0

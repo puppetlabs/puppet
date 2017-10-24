@@ -56,6 +56,31 @@ describe resources do
     end
   end
 
+  context "sort_output" do
+    let (:file) { described_class.new(:name => 'file') }
+    let (:mount) { described_class.new(:name => 'mount') }
+
+    it "defaults to false" do
+      expect(file[:sort_output]).to be_falsey
+      expect(mount[:sort_output]).to be_falsey
+    end
+
+    it "can be set to false" do
+      file[:sort_output] = false
+      mount[:sort_output] = false
+    end
+
+    it "cannot be set to non-boolean values" do
+      expect { file[:sort_output] = '/some/file/path' }.to raise_error Puppet::Error
+      expect { mount[:sort_output] = 'Some["reference"]' }.to raise_error Puppet::Error
+    end
+
+    it "cannot be set to true for resource types besides mount" do
+      expect { file[:sort_output] = true }.to raise_error Puppet::Error
+      expect { mount[:sort_output] = true }.to_not raise_error
+    end
+  end
+
   context "#check_user purge behaviour" do
     context "with unless_system_user => true" do
       before do
