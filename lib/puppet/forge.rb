@@ -90,7 +90,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
   # @see SemanticPuppet::Dependency::Source#fetch
   def fetch(input)
     name = input.tr('/', '-')
-    uri = "/v3/releases?module=#{name}"
+    uri = "/v3/releases?module=#{name}&sort_by=version"
     if Puppet[:module_groups]
       uri += "&module_groups=#{Puppet[:module_groups].gsub('+', ' ')}"
     end
@@ -113,8 +113,14 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
     return releases
   end
 
-  def make_http_request(*args)
-    @repository.make_http_request(*args)
+  def make_http_request(uri, *args)
+    # Change plus to space so it can be encoded properly
+    uri = uri.gsub('+', ' ')
+
+    # Avoid double encoding
+    uri = URI.decode(uri)
+
+    @repository.make_http_request(uri, *args)
   end
 
   class ModuleRelease < SemanticPuppet::Dependency::ModuleRelease

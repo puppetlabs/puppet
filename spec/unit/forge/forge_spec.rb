@@ -20,7 +20,10 @@ describe Puppet::Forge do
   # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
   # 4-byte ܎ - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
   let (:mixed_utf8_query_param) { "foo + A\u06FF\u16A0\u{2070E}" } # Aۿᚠ
-  let (:mixed_utf8_query_param_encoded) { "foo%20%2B%20A%DB%BF%E1%9A%A0%F0%A0%9C%8E"}
+
+  # literal plus characters in the URI are converted to spaces prior to encoding
+  let (:mixed_utf8_query_param_encoded) { "foo%20%20%20A%DB%BF%E1%9A%A0%F0%A0%9C%8E"}
+
   let (:empty_json) { '{ "results": [], "pagination" : { "next" : null } }' }
   let (:ok_response) { stub('response', :code => '200', :body => empty_json) }
 
@@ -62,7 +65,7 @@ describe Puppet::Forge do
 
         # ignores Puppet::Forge::Repository#read_response, provides response to fetch
         performs_an_http_request(ok_response) do |http|
-          encoded_uri = "/v3/releases?module=#{module_name}&module_groups=base%20pe"
+          encoded_uri = "/v3/releases?module=#{module_name}&sort_by=version&module_groups=base%20pe"
           http.expects(:request).with(responds_with(:path, encoded_uri))
         end
 
@@ -74,7 +77,7 @@ describe Puppet::Forge do
 
         # ignores Puppet::Forge::Repository#read_response, provides response to fetch
         performs_an_http_request(ok_response) do |http|
-          encoded_uri = "/v3/releases?module=puppetlabs-#{mixed_utf8_query_param_encoded}"
+          encoded_uri = "/v3/releases?module=puppetlabs-#{mixed_utf8_query_param_encoded}&sort_by=version"
           http.expects(:request).with(responds_with(:path, encoded_uri))
         end
 
