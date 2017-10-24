@@ -20,6 +20,7 @@ describe Puppet::Environments do
       FS::MemoryFile.a_regular_file_containing("ignored_file", ''),
       FS::MemoryFile.a_directory("an_environment", [
         FS::MemoryFile.a_missing_file("environment.conf"),
+        FS::MemoryFile.a_directory("site"),
         FS::MemoryFile.a_directory("modules"),
         FS::MemoryFile.a_directory("manifests"),
       ]),
@@ -43,7 +44,8 @@ describe Puppet::Environments do
         expect(loader.list).to include_in_any_order(
           environment(:an_environment).
             with_manifest("#{FS.path_string(directory_tree)}/an_environment/manifests").
-            with_modulepath(["#{FS.path_string(directory_tree)}/an_environment/modules",
+            with_modulepath(["#{FS.path_string(directory_tree)}/an_environment/site",
+                             "#{FS.path_string(directory_tree)}/an_environment/modules",
                              global_path_1_location,
                              global_path_2_location]),
           environment(:another_environment))
@@ -178,16 +180,17 @@ static_catalogs=false
         ])
 
         manifestdir = FS::MemoryFile.a_directory(File.join(envdir, "env1", "manifests"))
+        sitemodulesdir = FS::MemoryFile.a_directory(File.join(envdir, "env1", "site"))
         modulesdir = FS::MemoryFile.a_directory(File.join(envdir, "env1", "modules"))
         global_path_location = File.expand_path("global_path")
         global_path = FS::MemoryFile.a_directory(global_path_location)
 
-        loader_from(:filesystem => [envdir, manifestdir, modulesdir, global_path].flatten,
+        loader_from(:filesystem => [envdir, manifestdir, sitemodulesdir, modulesdir, global_path].flatten,
                     :directory => envdir,
                     :modulepath => [global_path]) do |loader|
           expect(loader.get("env1")).to environment(:env1).
             with_manifest("#{FS.path_string(envdir)}/env1/manifests").
-            with_modulepath(["#{FS.path_string(envdir)}/env1/modules", global_path_location]).
+            with_modulepath(["#{FS.path_string(envdir)}/env1/site", "#{FS.path_string(envdir)}/env1/modules", global_path_location]).
             with_config_version(nil).
             with_static_catalogs(true)
         end
