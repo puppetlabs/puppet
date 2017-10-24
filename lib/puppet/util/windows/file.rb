@@ -179,9 +179,9 @@ module Puppet::Util::Windows::File
 
   def self.get_reparse_point_data(handle, &block)
     # must be multiple of 1024, min 10240
-    FFI::MemoryPointer.new(REPARSE_DATA_BUFFER.size) do |reparse_data_buffer_ptr|
+    FFI::MemoryPointer.new(SYMLINK_REPARSE_DATA_BUFFER.size) do |reparse_data_buffer_ptr|
       device_io_control(handle, FSCTL_GET_REPARSE_POINT, nil, reparse_data_buffer_ptr)
-      yield REPARSE_DATA_BUFFER.new(reparse_data_buffer_ptr)
+      yield SYMLINK_REPARSE_DATA_BUFFER.new(reparse_data_buffer_ptr)
     end
 
     # underlying struct MemoryPointer has been cleaned up by this point, nothing to return
@@ -448,11 +448,11 @@ module Puppet::Util::Windows::File
 
   MAXIMUM_REPARSE_DATA_BUFFER_SIZE = 16384
 
-  # REPARSE_DATA_BUFFER
+  # SYMLINK_REPARSE_DATA_BUFFER
   # https://msdn.microsoft.com/en-us/library/cc232006.aspx
   # https://msdn.microsoft.com/en-us/library/windows/hardware/ff552012(v=vs.85).aspx
   # struct is always MAXIMUM_REPARSE_DATA_BUFFER_SIZE bytes
-  class REPARSE_DATA_BUFFER < FFI::Struct
+  class SYMLINK_REPARSE_DATA_BUFFER < FFI::Struct
     layout :ReparseTag, :win32_ulong,
            :ReparseDataLength, :ushort,
            :Reserved, :ushort,
