@@ -20,7 +20,6 @@ def func_use_system_openssl()
   # !!ENV["USE_SYSTEM_OPENSSL"]
 end
 
-project "puppet-agent" do |proj|
 step "Install puppet-agent..." do
   opts = {
     :puppet_collection    => 'PC1',
