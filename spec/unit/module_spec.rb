@@ -225,10 +225,10 @@ describe Puppet::Module do
         mod_dir = "#{@modpath}/#{mod_name}"
         metadata_file = "#{mod_dir}/metadata.json"
         tasks_dir = "#{mod_dir}/tasks"
-        locale_config = "#{mod_dir}/locales/config.yaml"
+        locale_dir = "#{mod_dir}/locales"
         Puppet::FileSystem.stubs(:exist?).with(metadata_file).returns true
         # Skip checking for translation config file
-        Puppet::FileSystem.stubs(:exist?).with(locale_config).returns false
+        Puppet::FileSystem.stubs(:exist?).with(locale_dir).returns false
       end
       mod = PuppetSpec::Modules.create(
         'test_gte_req',
@@ -449,28 +449,22 @@ describe Puppet::Module do
   describe "initialize_i18n" do
 
     let(:modpath) { tmpdir('modpath') }
-    let(:modname) { 'puppetlabs-i18n'}
+    let(:modname) { 'i18n' }
     let(:modroot) { "#{modpath}/#{modname}/" }
     let(:locale_dir) { "#{modroot}locales" }
-    let(:config_path) { "#{locale_dir}/config.yaml" }
     let(:mod_obj) { PuppetSpec::Modules.create( modname, modpath, :metadata => { :dependencies => [] }, :env => env ) }
 
     it "is expected to initialize an un-initialized module" do
-      expect(GettextSetup.translation_repositories.has_key? modname).to be false
+      expect(Puppet::GettextConfig.translations_loaded?("puppetlabs-#{modname}")).to be false
 
       FileUtils.mkdir_p(locale_dir)
-      config = {
-        "gettext" => {
-          "project_name" => modname
-        }
-      }
-      File.open(config_path, 'w') { |file| file.write(config.to_yaml) }
-      Puppet::FileSystem.stubs(:exist?).with(config_path).returns(true)
+      Puppet::FileSystem.stubs(:exist?).with(locale_dir).returns(true)
 
       mod_obj.initialize_i18n
 
-      expect(GettextSetup.translation_repositories.has_key? modname).to be true
+      expect(Puppet::GettextConfig.translations_loaded?("puppetlabs-#{modname}")).to be true
     end
+
     it "is expected return nil if module is intiailized" do
       expect(mod_obj.initialize_i18n).to be nil
     end
@@ -618,6 +612,7 @@ describe Puppet::Module do
 
       it "after the module is initialized" do
         Puppet::FileSystem.expects(:exist?).with(mod_tasks_dir).never
+        Puppet::GettextConfig.expects(:load_translations).returns(false)
         Puppet::Module::Task.expects(:tasks_in_module).never
         Puppet::Module.new(mod_name, @modpath, env)
       end

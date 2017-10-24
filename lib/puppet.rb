@@ -42,11 +42,10 @@ module Puppet
   require 'puppet/environments'
 
   class << self
-    gettext_config_file = Puppet::GettextConfig.puppet_locale_path
-    unless Puppet::GettextConfig.initialize(gettext_config_file, Puppet::GettextConfig.translation_mode(gettext_config_file))
-      # Stub out gettext's `_` and `n_()` methods, which attempt to load translations,
-      # with versions that do nothing
-      require 'puppet/gettext/stubs'
+    Puppet::GettextConfig.create_text_domain('production')
+    locale_dir = Puppet::GettextConfig.puppet_locale_path
+    if Puppet::GettextConfig.load_translations('puppet', locale_dir, Puppet::GettextConfig.translation_mode(locale_dir))
+      Puppet::GettextConfig.set_locale(Locale.current.language)
     end
 
     include Puppet::Util

@@ -10,19 +10,57 @@ module Puppet::GettextConfig
   # Used instead of features because we initialize gettext before features is available.
   # Stubbing gettext if unavailable is handled in puppet.rb.
   begin
-    require 'gettext-setup'
+    require 'fast_gettext'
     require 'locale'
+
+    # Make translation methods (e.g. `_()` and `n_()`) available everywhere.
+    class ::Object
+      include FastGettext::Translation
+    end
+
     @gettext_loaded = true
   rescue LoadError
+    # Stub out gettext's `_` and `n_()` methods, which attempt to load translations,
+    # with versions that do nothing
+    require 'puppet/gettext/stubs'
     @gettext_loaded = false
   end
 
-  # Whether we were able to require gettext-setup and locale
-  # @return [Boolean] true if gettext-setup was successfully loaded
+  # @api private
+  # Whether we were able to require fast_gettext and locale
+  # @return [Boolean] true if translation gems were successfully loaded
   def self.gettext_loaded?
     @gettext_loaded
   end
 
+  # @api private
+  # Whether translations have been loaded for a given project
+  # @param project_name [String] the project whose translations we are querying
+  # @return [Boolean] true if translations have been loaded for the project
+  def self.translations_loaded?(project_name)
+    if @loaded_repositories[project_name]
+      return true
+    else
+      return false
+    end
+  end
+
+  # @api private
+  # Creates a new empty text domain with the given name, replacing
+  # any existing domain with that name, then switches to using
+  # that domain. Also clears the cache of loaded translations.
+  # @param domain_name [String] the name of the domain to create
+  def self.create_text_domain(domain_name)
+    return unless gettext_loaded?
+    # Clear the cache of loaded translation repositories
+    @loaded_repositories = {}
+    FastGettext.add_text_domain(domain_name, type: :chain, chain: [])
+    #TODO remove this when we start managing domains per environment
+    FastGettext.default_text_domain = domain_name
+    FastGettext.text_domain = domain_name
+  end
+
+  # @api private
   # Search for puppet gettext config files
   # @return [String] path to the config, or nil if not found
   def self.puppet_locale_path
@@ -37,6 +75,7 @@ module Puppet::GettextConfig
     end
   end
 
+  # @api private
   # Determine which translation file format to use
   # @param conf_path [String] the path to the gettext config file
   # @return [Symbol] :mo if in a package structure, :po otherwise
@@ -48,44 +87,62 @@ module Puppet::GettextConfig
     end
   end
 
+  # @api private
   # Prevent future gettext initializations
   def self.disable_gettext
     @gettext_disabled = true
   end
 
-  # Attempt to initialize the gettext-setup gem
-  # @param path [String] to gettext config file
+  # @api private
+  # Attempt to load tranlstions for the given project.
+  # @param project_name [String] the project whose translations we want to load
+  # @param locale_dir [String] the path to the directory containing translations
   # @param file_format [Symbol] translation file format to use, either :po or :mo
   # @return true if initialization succeeded, false otherwise
-  def self.initialize(conf_file_dir, file_format)
+  def self.load_translations(project_name, locale_dir, file_format)
     return false if @gettext_disabled || !@gettext_loaded
+
+    return false unless locale_dir && Puppet::FileSystem.exist?(locale_dir)
 
     unless file_format == :po || file_format == :mo
       raise Puppet::Error, "Unsupported translation file format #{file_format}; please use :po or :mo"
     end
 
-    return false if conf_file_dir.nil?
-
-    conf_file = File.join(conf_file_dir, "config.yaml")
-    if Puppet::FileSystem.exist?(conf_file)
-      if GettextSetup.method(:initialize).parameters.count == 1
-        # For use with old gettext-setup gem versions, will load PO files only
-        GettextSetup.initialize(conf_file_dir)
-      else
-        GettextSetup.initialize(conf_file_dir, :file_format => file_format)
-      end
-      # Only change this once.
-      # Because negotiate_locales will only return a non-default locale if
-      # the system locale matches a translation set actually available for the
-      # given gettext project, we don't want this to get set back to default if
-      # we load a module that doesn't have translations, but Puppet does have
-      # translations for the user's locale.
-      if FastGettext.locale == GettextSetup.default_locale
-        FastGettext.locale = GettextSetup.negotiate_locale(Locale.current.language)
-      end
-      true
-    else
-      false
+    if project_name.nil? || project_name.empty?
+      raise Puppet::Error, "A project name must be specified in order to initialize translations."
     end
+
+    add_repository_to_domain(project_name, locale_dir, file_format)
+    return true
+  end
+
+  # @api private
+  # Add the translations for this project to the domain's repository chain
+  # chain for the currently selected text domain, if needed.
+  # @param project_name [String] the name of the project for which to load translations
+  # @param locale_dir [String] the path to the directory containing translations
+  # @param file_format [Symbol] the fomat of the translations files, :po or :mo
+  def self.add_repository_to_domain(project_name, locale_dir, file_format)
+    # check if we've already loaded these transltaions
+    current_chain = FastGettext.translation_repositories[FastGettext.text_domain].chain
+    return current_chain if @loaded_repositories[project_name]
+
+    repository = FastGettext::TranslationRepository.build(project_name,
+                                                          path: locale_dir,
+                                                          type: file_format,
+                                                          ignore_fuzzy: false)
+    @loaded_repositories[project_name] = true
+    current_chain << repository
+  end
+
+  # @api private
+  # Sets the language in which to display strings.
+  # @param locale [String] the language portion of a locale string (e.g. "ja")
+  def self.set_locale(locale)
+    return if !gettext_loaded?
+    # make sure we're not using the `available_locales` machinery
+    FastGettext.default_available_locales = nil
+
+    FastGettext.default_locale = locale
   end
 end
