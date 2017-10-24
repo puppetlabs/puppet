@@ -188,8 +188,9 @@ module Puppet::Util::Windows::File
         SYMLINK_REPARSE_DATA_BUFFER
       when 0xA0000003
         MOUNT_POINT_REPARSE_DATA_BUFFER
+      when 0x80000014
+        raise Puppet::Util::Windows::Error.new("Retrieving NFS reparse point data is unsupported")
       else
-        # includes NFS reparse points of tag 0x80000014
         raise Puppet::Util::Windows::Error.new("DeviceIoControl(#{handle}, " +
           "FSCTL_GET_REPARSE_POINT) returned unknown tag 0x#{reparse_tag.to_s(16).upcase}")
       end
