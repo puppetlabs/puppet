@@ -120,46 +120,72 @@ describe Puppet::Util::SELinux do
       expect(get_selinux_default_context("/foo")).to be_nil
     end
 
-    it "should return a context if a default context exists" do
-      self.expects(:selinux_support?).returns true
-      fstat = stub 'File::Stat', :mode => 0
-      Puppet::FileSystem.expects(:lstat).with('/foo').returns(fstat)
-      self.expects(:find_fs).with("/foo").returns "ext3"
-      Selinux.expects(:matchpathcon).with("/foo", 0).returns [0, "user_u:role_r:type_t:s0"]
-      Selinux.expects(:matchpathcon_fini)
+    [['RedHat', '7', true], ['RedHat', '6', false],
+     ['RedHat', '5', false], ['Ubuntu', '14.04', true]].each do |osfamily, osmajor, expect|
+      context "on #{osfamily} #{osmajor}" do
+        before do
+          Facter.stubs(:value).with(:osfamily).returns osfamily
+          Facter.stubs(:value).with(:operatingsystemmajrelease).returns osmajor
+        end
 
-      expect(get_selinux_default_context("/foo")).to eq("user_u:role_r:type_t:s0")
-    end
+        it "should return a context if a default context exists" do
+          self.expects(:selinux_support?).returns true
+          fstat = stub 'File::Stat', :mode => 0
+          Puppet::FileSystem.expects(:lstat).with('/foo').returns(fstat)
+          self.expects(:find_fs).with("/foo").returns "ext3"
+          Selinux.expects(:matchpathcon).with("/foo", 0).returns [0, "user_u:role_r:type_t:s0"]
+          if expect
+            Selinux.expects(:matchpathcon_fini)
+          else
+            Selinux.expects(:matchpathcon_fini).never
+          end
 
-    it "handles permission denied errors by issuing a warning" do
-      self.stubs(:selinux_support?).returns true
-      self.stubs(:selinux_label_support?).returns true
-      Selinux.stubs(:matchpathcon).with("/root/chuj", 0).returns(-1)
-      Selinux.expects(:matchpathcon_fini)
-      self.stubs(:file_lstat).with("/root/chuj").raises(Errno::EACCES, "/root/chuj")
+          expect(get_selinux_default_context("/foo")).to eq("user_u:role_r:type_t:s0")
+        end
 
-      expect(get_selinux_default_context("/root/chuj")).to be_nil
-    end
+        it "handles permission denied errors by issuing a warning" do
+          self.stubs(:selinux_support?).returns true
+          self.stubs(:selinux_label_support?).returns true
+          Selinux.stubs(:matchpathcon).with("/root/chuj", 0).returns(-1)
+          if expect
+            Selinux.expects(:matchpathcon_fini)
+          else
+            Selinux.expects(:matchpathcon_fini).never
+          end
+          self.stubs(:file_lstat).with("/root/chuj").raises(Errno::EACCES, "/root/chuj")
 
-    it "handles no such file or directory errors by issuing a warning" do
-      self.stubs(:selinux_support?).returns true
-      self.stubs(:selinux_label_support?).returns true
-      Selinux.stubs(:matchpathcon).with("/root/chuj", 0).returns(-1)
-      Selinux.expects(:matchpathcon_fini)
-      self.stubs(:file_lstat).with("/root/chuj").raises(Errno::ENOENT, "/root/chuj")
+          expect(get_selinux_default_context("/root/chuj")).to be_nil
+        end
 
-      expect(get_selinux_default_context("/root/chuj")).to be_nil
-    end
+        it "handles no such file or directory errors by issuing a warning" do
+          self.stubs(:selinux_support?).returns true
+          self.stubs(:selinux_label_support?).returns true
+          Selinux.stubs(:matchpathcon).with("/root/chuj", 0).returns(-1)
+          if expect
+            Selinux.expects(:matchpathcon_fini)
+          else
+            Selinux.expects(:matchpathcon_fini).never
+          end
+          self.stubs(:file_lstat).with("/root/chuj").raises(Errno::ENOENT, "/root/chuj")
 
-    it "should return nil if matchpathcon returns failure" do
-      self.expects(:selinux_support?).returns true
-      fstat = stub 'File::Stat', :mode => 0
-      Puppet::FileSystem.expects(:lstat).with('/foo').returns(fstat)
-      self.expects(:find_fs).with("/foo").returns "ext3"
-      Selinux.expects(:matchpathcon).with("/foo", 0).returns -1
-      Selinux.expects(:matchpathcon_fini)
+          expect(get_selinux_default_context("/root/chuj")).to be_nil
+        end
 
-      expect(get_selinux_default_context("/foo")).to be_nil
+        it "should return nil if matchpathcon returns failure" do
+          self.expects(:selinux_support?).returns true
+          fstat = stub 'File::Stat', :mode => 0
+          Puppet::FileSystem.expects(:lstat).with('/foo').returns(fstat)
+          self.expects(:find_fs).with("/foo").returns "ext3"
+          Selinux.expects(:matchpathcon).with("/foo", 0).returns -1
+          if expect
+            Selinux.expects(:matchpathcon_fini)
+          else
+            Selinux.expects(:matchpathcon_fini).never
+          end
+
+          expect(get_selinux_default_context("/foo")).to be_nil
+        end
+      end
     end
 
     it "should return nil if selinux_label_support returns false" do
