@@ -64,7 +64,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
 
       if response.code == '200'
         result = JSON.parse(response.body)
-        uri = result['pagination']['next']
+        uri = decode_uri(result['pagination']['next'])
         matches.concat result['results']
       else
         raise ResponseError.new(:uri => URI.parse(@host).merge(uri), :response => response)
@@ -89,7 +89,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
   # @see SemanticPuppet::Dependency::Source#fetch
   def fetch(input)
     name = input.tr('/', '-')
-    uri = "/v3/releases?module=#{name}"
+    uri = "/v3/releases?module=#{name}&sort_by=version"
     if Puppet[:module_groups]
       uri += "&module_groups=#{Puppet[:module_groups].gsub('+', ' ')}"
     end
@@ -106,7 +106,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
       end
 
       releases.concat(process(response['results']))
-      uri = response['pagination']['next']
+      uri = decode_uri(response['pagination']['next'])
     end
 
     return releases
@@ -224,5 +224,11 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
     end
 
     l.select { |r| r }
+  end
+
+  def decode_uri(uri)
+    return if uri.nil?
+
+    URI.decode(uri.gsub('+', ' '))
   end
 end
