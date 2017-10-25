@@ -91,4 +91,24 @@ describe "base service provider" do
       expect {subject.stop }.to raise_error(Puppet::Error, 'Could not stop Service[test]: failed to stop')
     end
   end
+
+  context "when hasstatus is false" do
+    subject do
+      type.new(
+         :name  => "status test",
+         :provider => :base,
+         :hasstatus => false,
+         :pattern => "majestik m\u00f8\u00f8se",
+      ).provider
+    end
+
+    it "retrieves a PID from the process table" do
+      Facter.stubs(:value).with(:operatingsystem).returns("CentOS")
+      ps_output = File.binread(my_fixture("ps_ef.mixed_encoding")).force_encoding(Encoding::UTF_8)
+
+      executor.expects(:execute).with("ps -ef").returns(ps_output)
+
+      expect(subject.status).to eq(:running)
+    end
+  end
 end

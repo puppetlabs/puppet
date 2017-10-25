@@ -131,6 +131,111 @@ describe Puppet::Forge do
     end
   end
 
+  # See PUP-8008
+  context "when multiple module_groups are defined" do
+    let(:release_response) do
+      releases = JSON.parse(http_response)
+      releases['results'] = []
+      JSON.dump(releases)
+    end
+
+    context "with space seperator" do
+      before :each do
+        repository_responds_with(stub(:body => release_response, :code => '200')).with {|uri| uri =~ /module_groups=foo bar/}
+        Puppet[:module_groups] = "foo bar"
+      end
+
+      it "passes module_groups with search" do
+        forge.search('bacula')
+      end
+
+      it "passes module_groups with fetch" do
+        forge.fetch('puppetlabs-bacula')
+      end
+    end
+
+    context "with plus seperator" do
+      before :each do
+        repository_responds_with(stub(:body => release_response, :code => '200')).with {|uri| uri =~ /module_groups=foo bar/}
+        Puppet[:module_groups] = "foo+bar"
+      end
+
+      it "passes module_groups with search" do
+        forge.search('bacula')
+      end
+
+      it "passes module_groups with fetch" do
+        forge.fetch('puppetlabs-bacula')
+      end
+    end
+
+    # See PUP-8008
+    context "when there are multiple pages of results" do
+      before(:each) do
+        Puppet::Forge::Repository.any_instance.expects(:make_http_request).with {|uri| uri =~ /module_groups=foo bar/ && uri !=~ /offset/ }.returns(stub(:body => first_page, :code => '200'))
+
+        # Request for second page should not have module_groups already encoded
+        Puppet::Forge::Repository.any_instance.expects(:make_http_request).with {|uri| uri =~ /module_groups=foo bar/ && uri =~ /offset=1/ }.returns(stub(:body => last_page, :code => '200'))
+      end
+
+      context "with space seperator" do
+        before(:each) do
+          Puppet[:module_groups] = "foo bar"
+        end
+
+        let(:first_page) do
+          resp = JSON.parse(http_response)
+          resp['results'] = []
+          resp['pagination']['next'] = "/v3/modules?limit=1&offset=1&module_groups=foo%20bar"
+          JSON.dump(resp)
+        end
+
+        let(:last_page) do
+          resp = JSON.parse(http_response)
+          resp['results'] = []
+          resp['pagination']['current'] = "/v3/modules?limit=1&offset=1&module_groups=foo%20bar"
+          JSON.dump(resp)
+        end
+
+        it "traverses pages during search" do
+          forge.search('bacula')
+        end
+
+        it "traverses pages during fetch" do
+          forge.fetch('puppetlabs-bacula')
+        end
+      end
+
+      context "with plus seperator" do
+        before(:each) do
+          Puppet[:module_groups] = "foo+bar"
+        end
+
+        let(:first_page) do
+          resp = JSON.parse(http_response)
+          resp['results'] = []
+          resp['pagination']['next'] = "/v3/modules?limit=1&offset=1&module_groups=foo+bar"
+          JSON.dump(resp)
+        end
+
+        let(:last_page) do
+          resp = JSON.parse(http_response)
+          resp['results'] = []
+          resp['pagination']['current'] = "/v3/modules?limit=1&offset=1&module_groups=foo+bar"
+          JSON.dump(resp)
+        end
+
+        it "traverses pages during search" do
+          forge.search('bacula')
+        end
+
+        it "traverses pages during fetch" do
+          forge.fetch('puppetlabs-bacula')
+        end
+      end
+    end
+  end
+
   context "when the connection to the forge fails" do
     before :each do
       repository_responds_with(stub(:body => '{}', :code => '404', :message => "not found"))
