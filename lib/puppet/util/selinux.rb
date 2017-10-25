@@ -49,7 +49,6 @@ module Puppet::Util::SELinux
     end
 
     retval = Selinux.matchpathcon(file, mode)
-    Selinux.matchpathcon_fini
     if retval == -1
       return nil
     end
