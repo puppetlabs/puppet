@@ -129,10 +129,13 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   def inlineable?(resource, sources)
     case
       when resource[:ensure] == 'absent'
+        #TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
         return Puppet::Util::Profiler.profile(_("Not inlining absent resource"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :absent]) { false }
       when sources.empty?
+        #TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
         return Puppet::Util::Profiler.profile(_("Not inlining resource without sources"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :no_sources]) { false }
       when (not (sources.all? {|source| source =~ /^puppet:/}))
+        #TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
         return Puppet::Util::Profiler.profile(_("Not inlining unsupported source scheme"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :unsupported_scheme]) { false }
       else
         return true
@@ -154,11 +157,13 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   # Helper method to log file resources that could not be inlined because they
   # fall outside of an environment.
   def log_file_outside_environment
+    #TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
     Puppet::Util::Profiler.profile(_("Not inlining file outside environment"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :file_outside_environment]) { true }
   end
 
   # Helper method to log file resources that were successfully inlined.
   def log_metadata_inlining
+    #TRANSLATORS Inlining refers to adding additional metadata
     Puppet::Util::Profiler.profile(_("Inlining file metadata"), [:compiler, :static_compile_inlining, :inlined_file_metadata]) { true }
   end
 
@@ -299,8 +304,10 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
         if checksum_type && config.is_a?(model)
           str = if node.environment
+                  #TRANSLATORS Inlined refers to adding additional metadata
                   _("Inlined resource metadata into static catalog for %{node} in environment %{environment}") % { node: node.name, environment: node.environment }
                 else
+                  #TRANSLATORS Inlined refers to adding additional metadata
                   _("Inlined resource metadata into static catalog for %{node}") % { node: node.name }
                 end
           benchmark(:notice, str) do
