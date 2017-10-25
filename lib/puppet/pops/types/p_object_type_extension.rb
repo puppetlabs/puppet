@@ -52,7 +52,7 @@ class PObjectTypeExtension < PAnyType
     if named_args
       hash = init_parameters[0]
       hash.each_key { |k| raise Puppet::ParseError, "'#{k}' is not a known type parameter for #{base_type.name}" unless pts.include?(k) }
-      pts.each_pair { |pn, type_param| by_name[pn] = check_param(type_param, hash.include?(pn) ? hash[pn] : :default) }
+      pts.each_pair { |pn, tp| by_name[pn] = check_param(tp, hash.include?(pn) ? hash[pn] : :default) }
     else
       pts.values.each_with_index { |tp, idx| by_name[tp.name] = check_param(tp, idx < init_parameters.size ? init_parameters[idx] : :default) }
     end
