@@ -548,6 +548,8 @@ class TypeParser
       elsif type.is_a?(PResourceType)
         raise_invalid_parameters_error(qref.cased_value, 1, parameters.size) unless parameters.size == 1
         TypeFactory.resource(type.type_name, parameters[0])
+      elsif type.is_a?(PObjectType)
+        PObjectTypeExtension.create(type, parameters)
       else
         # Must be a type alias. They can't use parameters (yet)
         raise_unparameterized_type_error(qref)

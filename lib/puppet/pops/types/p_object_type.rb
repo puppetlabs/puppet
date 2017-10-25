@@ -13,6 +13,7 @@ KEY_FUNCTIONS = 'functions'.freeze
 KEY_KIND = 'kind'.freeze
 KEY_OVERRIDE = 'override'.freeze
 KEY_PARENT = 'parent'.freeze
+KEY_TYPE_PARAMETERS = 'type_parameters'.freeze
 
 # @api public
 class PObjectType < PMetaType
@@ -34,8 +35,15 @@ class PObjectType < PMetaType
     TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
   })
 
+  TYPE_PARAMETER = TypeFactory.struct({
+    KEY_TYPE => PTypeType::DEFAULT,
+    KEY_VALUE => PAnyType::DEFAULT,
+    TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
+  })
+
   TYPE_CONSTANTS = TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, PAnyType::DEFAULT)
   TYPE_ATTRIBUTES = TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, TypeFactory.not_undef)
+  TYPE_PARAMETERS = TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, TypeFactory.not_undef)
   TYPE_ATTRIBUTE_CALLABLE = TypeFactory.callable(0,0)
 
   TYPE_FUNCTION_TYPE = PTypeType.new(PCallableType::DEFAULT)
@@ -55,6 +63,7 @@ class PObjectType < PMetaType
   TYPE_OBJECT_I12N = TypeFactory.struct({
     TypeFactory.optional(KEY_NAME) => TYPE_OBJECT_NAME,
     TypeFactory.optional(KEY_PARENT) => PTypeType::DEFAULT,
+    TypeFactory.optional(KEY_TYPE_PARAMETERS) => TYPE_PARAMETERS,
     TypeFactory.optional(KEY_ATTRIBUTES) => TYPE_ATTRIBUTES,
     TypeFactory.optional(KEY_CONSTANTS) => TYPE_CONSTANTS,
     TypeFactory.optional(KEY_FUNCTIONS) => TYPE_FUNCTIONS,
@@ -335,6 +344,22 @@ class PObjectType < PMetaType
     end
   end
 
+  class PTypeParameter < PAttribute
+    # @return [Hash{String=>Object}] the hash
+    # @api private
+    def _pcore_init_hash
+      hash = super
+      hash[KEY_TYPE] = hash[KEY_TYPE].type
+      hash.delete(KEY_VALUE) if hash.include?(KEY_VALUE) && hash[KEY_VALUE].nil?
+      hash
+    end
+
+    # @api private
+    def self.feature_type
+      'type_parameter'
+    end
+  end
+
   # Describes a named Function in an Object type
   # @api public
   class PFunction < PAnnotatedMember
@@ -359,8 +384,6 @@ class PObjectType < PMetaType
 
   attr_reader :name
   attr_reader :parent
-  attr_reader :attributes
-  attr_reader :functions
   attr_reader :equality
   attr_reader :checks
   attr_reader :annotations
@@ -385,6 +408,7 @@ class PObjectType < PMetaType
     if _pcore_init_hash.is_a?(Hash)
       _pcore_init_from_hash(_pcore_init_hash)
     else
+      @type_parameters = EMPTY_HASH
       @attributes = EMPTY_HASH
       @functions = EMPTY_HASH
       @name = TypeAsserter.assert_instance_of('object name', TYPE_OBJECT_NAME, _pcore_init_hash)
@@ -593,6 +617,7 @@ class PObjectType < PMetaType
   # @api private
   def _pcore_init_from_hash(init_hash)
     TypeAsserter.assert_instance_of('object initializer', TYPE_OBJECT_I12N, init_hash)
+    @type_parameters = EMPTY_HASH
     @attributes = EMPTY_HASH
     @functions = EMPTY_HASH
 
@@ -603,6 +628,7 @@ class PObjectType < PMetaType
     @parent = init_hash[KEY_PARENT]
 
     parent_members = EMPTY_HASH
+    parent_type_params = EMPTY_HASH
     parent_object_type = nil
     unless @parent.nil?
       check_self_recursion(self)
@@ -611,6 +637,24 @@ class PObjectType < PMetaType
       if rp.is_a?(PObjectType)
         parent_object_type = rp
         parent_members = rp.members(true)
+        parent_type_params = rp.type_parameters(true)
+      end
+    end
+
+    type_parameters = init_hash[KEY_TYPE_PARAMETERS]
+    unless type_parameters.nil? || type_parameters.empty?
+      @type_parameters = {}
+      type_parameters.each do |key, param_spec|
+        param_value = :undef
+        if param_spec.is_a?(Hash)
+          param_type = param_spec[KEY_TYPE]
+          param_value = param_spec[KEY_VALUE] if param_spec.include?(KEY_VALUE)
+        else
+          param_type = TypeAsserter.assert_instance_of(nil, PTypeType::DEFAULT, param_spec) { "type_parameter #{label}[#{key}]" }
+        end
+        param_type = POptionalType.new(param_type) unless param_type.is_a?(POptionalType)
+        type_param = PTypeParameter.new(key, self, KEY_TYPE => param_type, KEY_VALUE => param_value).assert_override(parent_type_params)
+        @type_parameters[key] = type_param
       end
     end
 
@@ -626,7 +670,7 @@ class PObjectType < PMetaType
           KEY_KIND => ATTRIBUTE_KIND_CONSTANT
         }
         # Indicate override if parent member exists. Type check etc. will take place later on.
-        attr_spec[KEY_OVERRIDE] = true if parent_members.include?(key)
+        attr_spec[KEY_OVERRIDE] = parent_members.include?(key)
         attr_specs[key] = attr_spec
       end
     end
@@ -707,6 +751,7 @@ class PObjectType < PMetaType
     guarded_recursion(guard, nil) do |g|
       super(visitor, g)
       @parent.accept(visitor, g) unless parent.nil?
+      @type_parameters.values.each { |p| p.accept(visitor, g) }
       @attributes.values.each { |a| a.accept(visitor, g) }
       @functions.values.each { |f| f.accept(visitor, g) }
     end
@@ -763,6 +808,7 @@ class PObjectType < PMetaType
     result = super()
     result[KEY_NAME] = @name if include_name && !@name.nil?
     result[KEY_PARENT] = @parent unless @parent.nil?
+    result[KEY_TYPE_PARAMETERS] = compressed_members_hash(@type_parameters) unless @type_parameters.empty?
     result[KEY_ATTRIBUTES] = compressed_members_hash(@attributes) unless @attributes.empty?
     result[KEY_FUNCTIONS] = compressed_members_hash(@functions) unless @functions.empty?
     result[KEY_EQUALITY] = @equality unless @equality.nil?
@@ -774,6 +820,7 @@ class PObjectType < PMetaType
     self.class == o.class &&
       @name == o.name &&
       @parent == o.parent &&
+      @type_parameters == o.type_parameters &&
       @attributes == o.attributes &&
       @functions == o.functions &&
       @equality == o.equality &&
@@ -781,7 +828,7 @@ class PObjectType < PMetaType
   end
 
   def hash
-    @name.nil? ? [@parent, @attributes, @functions].hash : @name.hash
+    @name.nil? ? [@parent, @type_parameters, @attributes, @functions].hash : @name.hash
   end
 
   def kind_of_callable?(optional=true, guard = nil)
@@ -794,6 +841,14 @@ class PObjectType < PMetaType
 
   def iterable_type(guard = nil)
     @parent.nil? ? false : @parent.iterable_type(guard)
+  end
+
+  def parameterized?
+    if @type_parameters.empty?
+      @parent.is_a?(PObjectType) ? @parent.parameterized? : false
+    else
+      true
+    end
   end
 
   # Returns the members (attributes and functions) of this `Object` type. If _include_parent_ is `true`, then all
@@ -870,6 +925,18 @@ class PObjectType < PMetaType
     label.split(DOUBLE_COLON).last
   end
 
+  # Returns the type_parameters of this `Object` type. If _include_parent_ is `true`, then all
+  # inherited type_parameters will be included in the returned `Hash`.
+  #
+  # @param include_parent [Boolean] `true` if inherited type_parameters should be included
+  # @return [Hash{String=>PTypeParameter}] a hash with the type_parameters
+  # @api public
+  def type_parameters(include_parent = false)
+    all = {}
+    collect_type_parameters(all, include_parent)
+    all
+  end
+
   protected
 
   # An Object type is only assignable from another Object type. The other type
@@ -882,6 +949,8 @@ class PObjectType < PMetaType
         op = o.parent
         op.nil? ? false : assignable?(op, guard)
       end
+    elsif o.is_a?(PObjectTypeExtension)
+      assignable?(o.base_type, guard)
     else
       false
     end
@@ -912,6 +981,15 @@ class PObjectType < PMetaType
     else
       collector.merge!(Hash[@equality.map { |attr_name| [attr_name, @attributes[attr_name]] }])
     end
+    nil
+  end
+
+  def collect_type_parameters(collector, include_parent)
+    if include_parent
+      parent = resolved_parent
+      parent.collect_type_parameters(collector, include_parent) if parent.is_a?(PObjectType)
+    end
+    collector.merge!(@type_parameters)
     nil
   end
 
