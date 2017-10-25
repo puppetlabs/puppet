@@ -49,7 +49,10 @@ module Puppet::Util::SELinux
     end
 
     retval = Selinux.matchpathcon(file, mode)
-    Selinux.matchpathcon_fini
+    # The implementation of matchpathcon/matchpathcon_fini in RedHat before version 7 was very slow
+    # The original testing for adding matchpathcon_fini noted a modest performance hit on RedHat 7;
+    # on 5 and 6 it's ~2 orders of magnitude slower. Only apply the fix to RedHat 7.
+    Selinux.matchpathcon_fini unless Facter.value(:osfamily) == 'RedHat' && Facter.value(:operatingsystemmajrelease).to_i < 7
     if retval == -1
       return nil
     end
