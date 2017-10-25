@@ -1,5 +1,57 @@
 module Puppet::Pops
 module Serialization
+  class Builder
+    def initialize(values)
+      @values = values
+      @resolved = true
+    end
+
+    def [](key)
+      @values[key]
+    end
+
+    def []=(key, value)
+      @values[key] = value
+      @resolved = false if value.is_a?(Builder)
+    end
+
+    def resolve
+      unless @resolved
+        @resolved = true
+        if @values.is_a?(Array)
+          @values.each_with_index { |v, idx| @values[idx] = v.resolve if v.is_a?(Builder) }
+        elsif @values.is_a?(Hash)
+          @values.each_pair { |k, v| @values[k] = v.resolve if v.is_a?(Builder) }
+        end
+      end
+      @values
+    end
+  end
+
+  class ObjectHashBuilder < Builder
+    def initialize(instance)
+      super({})
+      @instance = instance
+    end
+
+    def resolve
+      @instance._pcore_init_from_hash(super)
+      @instance
+    end
+  end
+
+  class ObjectArrayBuilder < Builder
+    def initialize(instance)
+      super({})
+      @instance = instance
+    end
+
+    def resolve
+      @instance.send(:initialize, *super.values)
+      @instance
+    end
+  end
+
   # Class that can process the `Data` produced by the {ToDataConverter} class and reassemble
   # the objects that were converted.
   #
@@ -137,9 +189,16 @@ module Serialization
     end
 
     def build(value, &block)
-      @current[@key] = value unless @current.nil?
-      with_value(value, &block) if block_given?
-      value
+      vx = Builder.new(value)
+      @current[@key] = vx unless @current.nil?
+      with_value(vx, &block) if block_given?
+      vx.resolve
+    end
+
+    def build_object(builder, &block)
+      @current[@key] = builder unless @current.nil?
+      with_value(builder, &block) if block_given?
+      builder.resolve
     end
 
     def pcore_type_hash_to_value(pcore_type, value)
@@ -148,14 +207,9 @@ module Serialization
         if value.empty?
           build(pcore_type.create)
         elsif pcore_type.implementation_class.respond_to?(:_pcore_init_from_hash)
-          build(pcore_type.allocate) do
-            @current._pcore_init_from_hash(with_value({}) { value.each_pair { |key, elem| with(key) { convert(elem) } } })
-          end
+          build_object(ObjectHashBuilder.new(pcore_type.allocate)) { value.each_pair { |key, elem| with(key) { convert(elem) } } }
         else
-          build(pcore_type.allocate) do
-            args = with_value([]) { value.values.each_with_index { |elem, idx| with(idx) { convert(elem) }}}
-            @current.send(:initialize, *args)
-          end
+          build_object(ObjectArrayBuilder.new(pcore_type.allocate)) { value.each_pair { |key, elem| with(key) { convert(elem) } } }
         end
       elsif value.is_a?(String)
         build(pcore_type.create(value))
