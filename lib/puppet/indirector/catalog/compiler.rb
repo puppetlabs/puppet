@@ -270,9 +270,19 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       raise Puppet::Error, _("Unable to find a common checksum type between agent '%{agent_type}' and master '%{master_type}'.") % { agent_type: options[:checksum_type], master_type: known_checksum_types } unless checksum_type
     end
 
-    str = _("Compiled %s for ") % (checksum_type ? _('static catalog') : _('catalog'))
-    str += node.name
-    str += _(" in environment %{env}") % { env: node.environment } if node.environment
+    str = if checksum_type
+            if node.environment
+              _("Compiled static catalog for %{node} in environment %{environment}") % { node: node.name, environment: node.environment }
+            else
+              _("Compiled static catalog for %{node}") % { node: node.name }
+            end
+          else
+            if node.environment
+              _("Compiled catalog for %{node} in environment %{environment}") % { node: node.name, environment: node.environment }
+            else
+              _("Compiled catalog for %{node}") % { node: node.name }
+            end
+          end
     config = nil
 
     benchmark(:notice, str) do
@@ -288,8 +298,11 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         end
 
         if checksum_type && config.is_a?(model)
-          str = _("Inlined resource metadata into static catalog for %{node}") % { node: node.name }
-          str += _(" in environment %{env}") % { env: node.environment } if node.environment
+          str = if node.environment
+                  _("Inlined resource metadata into static catalog for %{node} in environment %{environment}") % { node: node.name, environment: node.environment }
+                else
+                  _("Inlined resource metadata into static catalog for %{node}") % { node: node.name }
+                end
           benchmark(:notice, str) do
             Puppet::Util::Profiler.profile(str, [:compiler, :static_compile_postprocessing, node.environment, node.name]) do
               inline_metadata(config, checksum_type)
