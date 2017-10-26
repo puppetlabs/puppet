@@ -38,6 +38,7 @@ module Puppet::GettextConfig
   # @param project_name [String] the project whose translations we are querying
   # @return [Boolean] true if translations have been loaded for the project
   def self.translations_loaded?(project_name)
+    return false unless gettext_loaded?
     if @loaded_repositories[project_name]
       return true
     else
