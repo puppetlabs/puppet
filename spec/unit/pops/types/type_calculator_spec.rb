@@ -802,6 +802,11 @@ describe 'The type calculator' do
         types_to_test.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
       end
 
+      it 'Numeric does not consider ruby Rational to be an instance' do
+        t = PNumericType::DEFAULT
+        expect(t).not_to be_instance(Rational(2,3))
+      end
+
       it 'Numeric is not assignable to any disjunct type' do
         tested_types = all_types - [
           PAnyType,
@@ -1924,6 +1929,20 @@ describe 'The type calculator' do
       expect(t.class).to eq(PHashType)
       expect(t.key_type.class).to eq(PScalarType)
       expect(t.value_type.class).to eq(PDataType)
+    end
+
+    it 'type should yield \'PRuntimeType[ruby,Rational]\' for Rational' do
+      t = calculator.type(Rational)
+      expect(t.class).to eq(PRuntimeType)
+      expect(t.runtime).to eq(:ruby)
+      expect(t.runtime_type_name).to eq('Rational')
+    end
+
+    it 'infer should yield \'PRuntimeType[ruby,Rational]\' for Rational instance' do
+      t = calculator.infer(Rational(2, 3))
+      expect(t.class).to eq(PRuntimeType)
+      expect(t.runtime).to eq(:ruby)
+      expect(t.runtime_type_name).to eq('Rational')
     end
   end
 
