@@ -22,14 +22,9 @@ class Puppet::Transaction::Persistence
   # @param [String] param_name name of the parameter
   # @return [Object,nil] the system_value
   def get_system_value(resource_name, param_name)
-    if !@old_data["resources"].nil? &&
-       !@old_data["resources"][resource_name].nil? &&
-       !@old_data["resources"][resource_name]["parameters"].nil? &&
-       !@old_data["resources"][resource_name]["parameters"][param_name].nil?
-      @old_data["resources"][resource_name]["parameters"][param_name]["system_value"]
-    else
-      nil
-    end
+    @old_data["resources"][resource_name]["parameters"][param_name]["system_value"]
+  rescue 
+    nil
   end
 
   def set_system_value(resource_name, param_name, value)
@@ -38,6 +33,14 @@ class Puppet::Transaction::Persistence
     @new_data["resources"][resource_name]["parameters"] ||= {}
     @new_data["resources"][resource_name]["parameters"][param_name] ||= {}
     @new_data["resources"][resource_name]["parameters"][param_name]["system_value"] = value
+  end
+
+  def copy_skipped(resource_name)
+    @old_data["resources"] ||= {}
+    old_value = @old_data["resources"][resource_name]
+    if !old_value.nil?
+      @new_data["resources"][resource_name] = old_value
+    end
   end
 
   # Load data from the persistence store on disk.
