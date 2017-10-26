@@ -906,6 +906,10 @@ class PNumericType < PAbstractRangeType
     end
   end
 
+  def instance?(o, guard = nil)
+    (o.is_a?(Float) || o.is_a?(Integer)) && o >= @from && o <= @to
+  end
+
   protected
 
   # @api_private
