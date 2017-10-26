@@ -1708,6 +1708,19 @@ EOT
       :default  => "puppet:///pluginfacts",
       :desc     => "Where to retrieve external facts for pluginsync",
     },
+    :localedest => {
+      :type       => :directory,
+      :default    => "$vardir/locales",
+      :desc       => "Where Puppet should store translation files that it pulls down from the central
+      server.",
+    },
+    :localesource => {
+      :default    => "puppet:///locales",
+      :desc       => "From where to retrieve translation files.  The standard Puppet `file` type
+      is used for retrieval, so anything that is a valid file source can
+      be used here.",
+    },
+
     :pluginsync => {
       :default    => true,
       :type       => :boolean,
@@ -1717,9 +1730,8 @@ EOT
         Puppet.deprecation_warning "Setting 'pluginsync' is deprecated."
       }
     },
-
     :pluginsignore => {
-        :default  => ".svn CVS .git .hg",
+        :default  => ".svn CVS .git .hg *.pot",
         :desc     => "What files to ignore when pulling down plugins.",
     }
   )

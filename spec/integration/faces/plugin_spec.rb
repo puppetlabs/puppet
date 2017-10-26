@@ -28,6 +28,7 @@ describe "Puppet plugin face" do
   before do
     FileUtils.mkdir(File.join(Puppet[:vardir], 'lib'))
     FileUtils.mkdir(File.join(Puppet[:vardir], 'facts.d'))
+    FileUtils.mkdir(File.join(Puppet[:vardir], 'locales'))
     @termini_classes = {}
     INDIRECTED_CLASSES.each do |indirected|
       @termini_classes[indirected] = indirected.indirection.terminus_class
