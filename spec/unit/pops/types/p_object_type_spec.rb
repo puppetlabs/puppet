@@ -1309,27 +1309,35 @@ describe 'The Object Type' do
         PUPPET
       end
 
-      it 'Undef can be used to prevent attribute setting' do
-        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(['true', 'true', 'true', 'false'])
+      it 'undef is a valid value for a type parameter' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(['true', 'false'])
         type MyType = Object[
           type_parameters => {
-            p1 => { type => Variant[Undef,String,Regexp,Type[Enum],Type[Pattern]], value => Enum['hello', 'good bye'] },
-            p2 => { type => Variant[Undef,String,Regexp,Type[Enum],Type[Pattern]], value => Pattern[/world/, /universe/] },
+            p1 => { type => Optional[String] },
           },
           attributes => {
-            p1 => String,
-            p2 => String
+            p1 => { type => Optional[String], value => undef },
           }]
-        $x = MyType('hello', 'world')
-        notice($x =~ MyType)
-        notice($x =~ MyType[default])
-        notice($x =~ MyType[default, default])
-        notice($x =~ MyType[default, undef])
+        notice(MyType() =~ MyType[undef])
+        notice(MyType('hello') =~ MyType[undef])
         PUPPET
       end
 
       it 'Required parameters cannot be set using default' do
         expect{eval_and_collect_notices(<<-PUPPET, node)}.to raise_error(/No value provided for required type_parameter MyType\[p1\]/)
+        type MyType = Object[
+          type_parameters => {
+            p1 => { type => Variant[Undef,String,Regexp,Type[Enum],Type[Pattern]] },
+          },
+          attributes => {
+            p1 => String
+          }]
+        notice(MyType('hello') =~ MyType[default])
+        PUPPET
+      end
+
+      it 'Required parameters does not mean that type must be parameterized' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(['true'])
         type MyType = Object[
           type_parameters => {
             p1 => { type => Variant[Undef,String,Regexp,Type[Enum],Type[Pattern]] },
@@ -1339,9 +1347,7 @@ describe 'The Object Type' do
             p1 => String,
             p2 => String
           }]
-        $x = MyType('hello', 'world')
-        notice($x =~ MyType)
-        notice($x =~ MyType[default, default])
+        notice(MyType('hello', 'world') =~ MyType)
         PUPPET
       end
 
@@ -1356,9 +1362,7 @@ describe 'The Object Type' do
             p1 => String,
             p2 => String
           }]
-        $x = MyType('hello', 'world')
-        notice($x =~ MyType)
-        notice($x =~ MyType['hello'])
+        notice(MyType('hello', 'world') =~ MyType['hello'])
         PUPPET
       end
 
@@ -1391,7 +1395,7 @@ describe 'The Object Type' do
         $x = MyType['hello']
         notice($x <= MyType)
         notice($x <= MyType['hello'])
-        notice($x <= MyType['hello', 'world'])
+        notice($x == MyType['hello', 'world'])
         notice($x <= MyType['my'])
         PUPPET
       end
