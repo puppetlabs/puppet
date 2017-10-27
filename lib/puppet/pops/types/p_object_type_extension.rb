@@ -143,8 +143,8 @@ class PObjectTypeExtension < PAnyType
   end
 
   # Checks that the given `param_values` hash contains all keys present in the `parameters` of
-  # this instance and that each keyed value is either assignable to the type stored in the
-  # `parameters` hash or equal to the value in that hash.
+  # this instance and that each keyed value is a match for the given parameter. The match is done
+  # using case expression semantics.
   #
   # This method is only called when a given type is found to be assignable to the base type of
   # this extension.
@@ -154,19 +154,13 @@ class PObjectTypeExtension < PAnyType
   # @return [Boolean] true or false to indicate assignability
   # @api public
   def test_assignable?(param_values, guard)
-    # Default implementation tests that all parameters in this instance exists in the given hash and
-    # that they are either equal or assignable (depending on type)
+    # Default implementation performs case expression style matching of all parameter values
+    # provided that the value exist (this should always be the case, since all defaults have
+    # been assigned at this point)
+    eval = Parser::EvaluatingParser.singleton.evaluator
     @parameters.keys.all? do |pn|
       if param_values.include?(pn)
-        v = @parameters[pn]
-        ov = param_values[pn]
-        if v.is_a?(PAnyType)
-          ov.is_a?(PAnyType) && v.assignable?(ov) || v.instance?(ov)
-        elsif v.is_a?(Regexp)
-          v == ov || ov.is_a?(String) && !!(ov =~ v)
-        else
-          v == ov
-        end
+        eval.match?(param_values[pn], @parameters[pn])
       else
         false
       end
@@ -174,8 +168,8 @@ class PObjectTypeExtension < PAnyType
   end
 
   # Checks that the given instance `o` has one attribute for each key present in the `parameters` of
-  # this instance and that each attribute value is either an instance matching the type stored in
-  # the `parameters` hash or equal to the value in that hash.
+  # this instance and that each attribute value is a match for the given parameter. The match is done
+  # using case expression semantics.
   #
   # This method is only called when the given value is found to be an instance of the base type of
   # this extension.
@@ -185,20 +179,14 @@ class PObjectTypeExtension < PAnyType
   # @return [Boolean] true or false to indicate if the value is an instance or not
   # @api public
   def test_instance?(o, guard)
+    eval = Parser::EvaluatingParser.singleton.evaluator
     @parameters.keys.all? do |pn|
       ov = nil
       begin
         m = o.public_method(pn)
-        ov = m.call if m.arity == 0
+        m.arity == 0 ? eval.match?(m.call, @parameters[pn]) : false
       rescue NameError
-      end
-      v = @parameters[pn]
-      if v.is_a?(PAnyType)
-        v.instance?(ov)
-      elsif v.is_a?(Regexp)
-        v == ov || ov.is_a?(String) && !!(ov =~ v)
-      else
-        v == ov
+        false
       end
     end
   end
