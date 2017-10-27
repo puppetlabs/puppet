@@ -29,7 +29,7 @@ class PObjectTypeExtension < PAnyType
   # @api private
   def initialize(base_type, init_parameters)
     pts = base_type.type_parameters(true)
-    raise Puppet::ParseError, "Not a parameterized type <#{base_type.name}>" if pts.empty?
+    raise Puppet::ParseError, _('The data type %{typename} cannot be parameterized using []') % { type_name: base_type.name } if pts.empty?
     @base_type = base_type
 
     named_args = false
@@ -51,7 +51,11 @@ class PObjectTypeExtension < PAnyType
     by_name = {}
     if named_args
       hash = init_parameters[0]
-      hash.each_key { |k| raise Puppet::ParseError, "'#{k}' is not a known type parameter for #{base_type.name}" unless pts.include?(k) }
+      hash.each_key do |pn|
+        unless pts.include?(pn)
+          raise Puppet::ParseError, _("'%{pn}' is not a known type parameter for %{type_name}") % { pn: pn, type_name: base_type.name }
+        end
+      end
       pts.each_pair { |pn, tp| by_name[pn] = check_param(tp, hash.include?(pn) ? hash[pn] : :default) }
     else
       pts.values.each_with_index { |tp, idx| by_name[tp.name] = check_param(tp, idx < init_parameters.size ? init_parameters[idx] : :default) }
@@ -61,7 +65,7 @@ class PObjectTypeExtension < PAnyType
 
   def check_param(type_param, v)
     if v == :default
-      raise Puppet::ParseError, "No value provided for required #{type_param.label}" unless type_param.value?
+      raise Puppet::ParseError, _('No value provided for required %{label}') % { label: type_param.label } unless type_param.value?
       v = type_param.value
     end
     TypeAsserter.assert_instance_of(nil, type_param.type, v) { type_param.label }
