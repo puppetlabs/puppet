@@ -245,7 +245,7 @@ class CompareOperator
 
   def match_Symbol(symbol, left, scope)
     return true if symbol == :default
-    equals(left, default, scope)
+    equals(left, default)
   end
 end
 end
