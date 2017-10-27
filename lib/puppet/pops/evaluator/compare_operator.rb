@@ -34,7 +34,7 @@ class CompareOperator
   end
 
   # Performs a match of a and b, and returns true if b matches a
-  def match(a, b, scope)
+  def match(a, b, scope = nil)
     @@match_visitor.visit_this_2(self, b, a, scope)
   end
 
@@ -200,7 +200,7 @@ class CompareOperator
   def match_Regexp(regexp, left, scope)
     return false unless left.is_a? String
     matched = regexp.match(left)
-    set_match_data(matched, scope) # creates or clears ephemeral
+    set_match_data(matched, scope) unless scope.nil? # creates or clears ephemeral
     !!matched # convert to boolean
   end
 
