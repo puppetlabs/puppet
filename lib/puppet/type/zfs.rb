@@ -20,6 +20,10 @@ parent zfs instances, the zfs resource will autorequire them."
       desc "The aclmode property. Valid values are `discard`, `groupmask`, `passthrough`."
     end
 
+    newproperty(:acltype) do
+      desc "The acltype propery. Valid values are 'noacl' and 'posixacl'. Only supported on Linux."
+    end
+
     newproperty(:atime) do
       desc "The atime property. Valid values are `on`, `off`."
     end
