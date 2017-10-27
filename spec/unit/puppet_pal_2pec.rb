@@ -13,14 +13,16 @@ describe 'Puppet Pal' do
   let(:testing_env) do
     {
       'pal_env' => {
-      'functions' => functions,
-      'lib' => { 'puppet' => lib_puppet },
-      'manifests' => manifests,
-      'modules' => modules,
-      'plans' => plans,
-      'tasks' => tasks,
-      'types' => types,
-      }
+        'functions' => functions,
+        'lib' => { 'puppet' => lib_puppet },
+        'manifests' => manifests,
+        'modules' => modules,
+        'plans' => plans,
+        'tasks' => tasks,
+        'types' => types,
+      },
+      'other_env1' => { 'modules' => {} },
+      'other_env2' => { 'modules' => {} },
     }
   end
 
@@ -38,6 +40,8 @@ describe 'Puppet Pal' do
     dir_contained_in(environments_dir, testing_env)
     env_dir = File.join(environments_dir, 'pal_env')
     PuppetSpec::Files.record_tmp(env_dir)
+    PuppetSpec::Files.record_tmp(File.join(environments_dir, 'other_env1'))
+    PuppetSpec::Files.record_tmp(File.join(environments_dir, 'other_env2'))
     env_dir
   end
 
@@ -364,6 +368,20 @@ describe 'Puppet Pal' do
         end.to raise_error(/Unknown function: 'a::afunc'/)
       end
 
+      it 'a "pre_modulepath" is prepended and a "post_modulepath" is appended to the effective modulepath' do
+        other_modules1 = File.join(environments_dir, 'other_env1/modules')
+        other_modules2 = File.join(environments_dir, 'other_env2/modules')
+        result = Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, 
+          pre_modulepath: [other_modules1],
+          post_modulepath: [other_modules2],
+          facts: node_facts
+        ) do |ctx|
+          the_modulepath = Puppet.lookup(:environments).get('pal_env').modulepath
+          the_modulepath[0] == other_modules1 && the_modulepath[-1] == other_modules2
+        end
+        expect(result).to be(true)
+      end
+
       it 'a plan in a module can be called with run_plan' do
         result = Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, facts: node_facts) do |ctx|
           ctx.evaluate_script_string('run_plan("a::aplan")')
@@ -449,6 +467,21 @@ describe 'Puppet Pal' do
             ctx.evaluate_script_string('a::afunc()')
           end
         end.to raise_error(/Unknown function: 'a::afunc'/)
+      end
+
+      it 'a "pre_modulepath" is prepended and a "post_modulepath" is appended to the effective modulepath' do
+        testing_env_dir # creates the structure
+        other_modules1 = File.join(environments_dir, 'other_env1/modules')
+        other_modules2 = File.join(environments_dir, 'other_env2/modules')
+        result = Puppet::Pal.in_environment('pal_env', envpath: environments_dir, 
+          pre_modulepath: [other_modules1],
+          post_modulepath: [other_modules2],
+          facts: node_facts
+        ) do |ctx|
+          the_modulepath = Puppet.lookup(:environments).get('pal_env').modulepath
+          the_modulepath[0] == other_modules1 && the_modulepath[-1] == other_modules2
+        end
+        expect(result).to be(true)
       end
 
       it 'a plan in a module can be called with run_plan' do
