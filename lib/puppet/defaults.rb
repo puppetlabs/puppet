@@ -299,7 +299,8 @@ module Puppet
         :desc     => "The environment Puppet is running in.  For clients
           (e.g., `puppet agent`) this determines the environment itself, which
           is used to find modules and much more.  For servers (i.e., `puppet master`)
-          this provides the default environment for nodes we know nothing about."
+          this provides the default environment for nodes we know nothing about.",
+        :short    => "E"
     },
     :environmentpath => {
       :default => "$codedir/environments",
