@@ -6,8 +6,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
     For `launchd` documentation, see:
 
-    * <https://developer.apple.com/macosx/launchd.html>
-    * <http://launchd.macosforge.org/>
+    * <https://developer.apple.com/library/content/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/CreatingLaunchdJobs.html>
 
     This provider reads plists out of the following directories:
 
