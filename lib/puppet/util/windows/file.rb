@@ -179,9 +179,23 @@ module Puppet::Util::Windows::File
 
   def self.get_reparse_point_data(handle, &block)
     # must be multiple of 1024, min 10240
-    FFI::MemoryPointer.new(REPARSE_DATA_BUFFER.size) do |reparse_data_buffer_ptr|
+    FFI::MemoryPointer.new(MAXIMUM_REPARSE_DATA_BUFFER_SIZE) do |reparse_data_buffer_ptr|
       device_io_control(handle, FSCTL_GET_REPARSE_POINT, nil, reparse_data_buffer_ptr)
-      yield REPARSE_DATA_BUFFER.new(reparse_data_buffer_ptr)
+
+      reparse_tag = reparse_data_buffer_ptr.read_win32_ulong
+      buffer_type = case reparse_tag
+      when 0xA000000C
+        SYMLINK_REPARSE_DATA_BUFFER
+      when 0xA0000003
+        MOUNT_POINT_REPARSE_DATA_BUFFER
+      when 0x80000014
+        raise Puppet::Util::Windows::Error.new("Retrieving NFS reparse point data is unsupported")
+      else
+        raise Puppet::Util::Windows::Error.new("DeviceIoControl(#{handle}, " +
+          "FSCTL_GET_REPARSE_POINT) returned unknown tag 0x#{reparse_tag.to_s(16).upcase}")
+      end
+
+      yield buffer_type.new(reparse_data_buffer_ptr)
     end
 
     # underlying struct MemoryPointer has been cleaned up by this point, nothing to return
@@ -448,11 +462,11 @@ module Puppet::Util::Windows::File
 
   MAXIMUM_REPARSE_DATA_BUFFER_SIZE = 16384
 
-  # REPARSE_DATA_BUFFER
+  # SYMLINK_REPARSE_DATA_BUFFER
   # https://msdn.microsoft.com/en-us/library/cc232006.aspx
   # https://msdn.microsoft.com/en-us/library/windows/hardware/ff552012(v=vs.85).aspx
   # struct is always MAXIMUM_REPARSE_DATA_BUFFER_SIZE bytes
-  class REPARSE_DATA_BUFFER < FFI::Struct
+  class SYMLINK_REPARSE_DATA_BUFFER < FFI::Struct
     layout :ReparseTag, :win32_ulong,
            :ReparseDataLength, :ushort,
            :Reserved, :ushort,
@@ -464,6 +478,23 @@ module Puppet::Util::Windows::File
            # max less above fields dword / uint 4 bytes, ushort 2 bytes
            # technically a WCHAR buffer, but we care about size in bytes here
            :PathBuffer, [:byte, MAXIMUM_REPARSE_DATA_BUFFER_SIZE - 20]
+  end
+
+  # MOUNT_POINT_REPARSE_DATA_BUFFER
+  # https://msdn.microsoft.com/en-us/library/cc232007.aspx
+  # https://msdn.microsoft.com/en-us/library/windows/hardware/ff552012(v=vs.85).aspx
+  # struct is always MAXIMUM_REPARSE_DATA_BUFFER_SIZE bytes
+  class MOUNT_POINT_REPARSE_DATA_BUFFER < FFI::Struct
+    layout :ReparseTag, :win32_ulong,
+           :ReparseDataLength, :ushort,
+           :Reserved, :ushort,
+           :SubstituteNameOffset, :ushort,
+           :SubstituteNameLength, :ushort,
+           :PrintNameOffset, :ushort,
+           :PrintNameLength, :ushort,
+           # max less above fields dword / uint 4 bytes, ushort 2 bytes
+           # technically a WCHAR buffer, but we care about size in bytes here
+           :PathBuffer, [:byte, MAXIMUM_REPARSE_DATA_BUFFER_SIZE - 16]
   end
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa364980(v=vs.85).aspx

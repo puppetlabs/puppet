@@ -129,10 +129,13 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   def inlineable?(resource, sources)
     case
       when resource[:ensure] == 'absent'
+        #TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
         return Puppet::Util::Profiler.profile(_("Not inlining absent resource"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :absent]) { false }
       when sources.empty?
+        #TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
         return Puppet::Util::Profiler.profile(_("Not inlining resource without sources"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :no_sources]) { false }
       when (not (sources.all? {|source| source =~ /^puppet:/}))
+        #TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
         return Puppet::Util::Profiler.profile(_("Not inlining unsupported source scheme"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :unsupported_scheme]) { false }
       else
         return true
@@ -154,11 +157,13 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   # Helper method to log file resources that could not be inlined because they
   # fall outside of an environment.
   def log_file_outside_environment
+    #TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
     Puppet::Util::Profiler.profile(_("Not inlining file outside environment"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :file_outside_environment]) { true }
   end
 
   # Helper method to log file resources that were successfully inlined.
   def log_metadata_inlining
+    #TRANSLATORS Inlining refers to adding additional metadata
     Puppet::Util::Profiler.profile(_("Inlining file metadata"), [:compiler, :static_compile_inlining, :inlined_file_metadata]) { true }
   end
 
@@ -270,9 +275,19 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       raise Puppet::Error, _("Unable to find a common checksum type between agent '%{agent_type}' and master '%{master_type}'.") % { agent_type: options[:checksum_type], master_type: known_checksum_types } unless checksum_type
     end
 
-    str = _("Compiled %s for ") % (checksum_type ? _('static catalog') : _('catalog'))
-    str += node.name
-    str += _(" in environment %{env}") % { env: node.environment } if node.environment
+    str = if checksum_type
+            if node.environment
+              _("Compiled static catalog for %{node} in environment %{environment}") % { node: node.name, environment: node.environment }
+            else
+              _("Compiled static catalog for %{node}") % { node: node.name }
+            end
+          else
+            if node.environment
+              _("Compiled catalog for %{node} in environment %{environment}") % { node: node.name, environment: node.environment }
+            else
+              _("Compiled catalog for %{node}") % { node: node.name }
+            end
+          end
     config = nil
 
     benchmark(:notice, str) do
@@ -288,8 +303,13 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         end
 
         if checksum_type && config.is_a?(model)
-          str = _("Inlined resource metadata into static catalog for %{node}") % { node: node.name }
-          str += _(" in environment %{env}") % { env: node.environment } if node.environment
+          str = if node.environment
+                  #TRANSLATORS Inlined refers to adding additional metadata
+                  _("Inlined resource metadata into static catalog for %{node} in environment %{environment}") % { node: node.name, environment: node.environment }
+                else
+                  #TRANSLATORS Inlined refers to adding additional metadata
+                  _("Inlined resource metadata into static catalog for %{node}") % { node: node.name }
+                end
           benchmark(:notice, str) do
             Puppet::Util::Profiler.profile(str, [:compiler, :static_compile_postprocessing, node.environment, node.name]) do
               inline_metadata(config, checksum_type)

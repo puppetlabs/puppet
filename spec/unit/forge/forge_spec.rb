@@ -62,7 +62,7 @@ describe Puppet::Forge do
 
         # ignores Puppet::Forge::Repository#read_response, provides response to fetch
         performs_an_http_request(ok_response) do |http|
-          encoded_uri = "/v3/releases?module=#{module_name}&module_groups=base%20pe"
+          encoded_uri = "/v3/releases?module=#{module_name}&sort_by=version&module_groups=base%20pe"
           http.expects(:request).with(responds_with(:path, encoded_uri))
         end
 
@@ -74,7 +74,7 @@ describe Puppet::Forge do
 
         # ignores Puppet::Forge::Repository#read_response, provides response to fetch
         performs_an_http_request(ok_response) do |http|
-          encoded_uri = "/v3/releases?module=puppetlabs-#{mixed_utf8_query_param_encoded}"
+          encoded_uri = "/v3/releases?module=puppetlabs-#{mixed_utf8_query_param_encoded}&sort_by=version"
           http.expects(:request).with(responds_with(:path, encoded_uri))
         end
 
