@@ -9,7 +9,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
   or an array where each element is either a string or a hash."
 
-  has_feature :install_options, :versionable, :virtual_packages
+  has_feature :install_options, :uninstall_options, :versionable, :virtual_packages
 
   commands :cmd => "yum", :rpm => "rpm"
 
@@ -255,8 +255,27 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     self.install
   end
 
+  # Relocated from rpm.rb
+  def uninstall
+    query if get(:arch) == :absent
+    nvr = "#{get(:name)}-#{get(:version)}-#{get(:release)}"
+    arch = ".#{get(:arch)}"
+    if @resource[:name][-arch.size, arch.size] == arch
+      nvr += arch
+    else
+      nvr += ".#{get(:arch)}"
+    end
+    error_level = self.class.error_level
+    command = [command(:cmd)] + ["-d", "0", "-e", error_level, "-y", uninstall_options, "erase", nvr].compact
+    output = execute(command)
+  end
+
   def purge
     execute([command(:cmd), "-y", :erase, @resource[:name]])
+  end
+
+  def uninstall_options
+    join_options(resource[:uninstall_options])
   end
 
   private
