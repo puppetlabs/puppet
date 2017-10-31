@@ -4,9 +4,9 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     This provider manages jobs with `launchd`, which is the default service
     framework for Mac OS X (and may be available for use on other platforms).
 
-    For `launchd` documentation, see:
+    For more information, see the `launchd` man page:
 
-    * <https://developer.apple.com/library/content/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/CreatingLaunchdJobs.html>
+    * <https://developer.apple.com/legacy/library/documentation/Darwin/Reference/ManPages/man8/launchd.8.html>
 
     This provider reads plists out of the following directories:
 
