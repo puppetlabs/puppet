@@ -1103,6 +1103,10 @@ EOT
             and monitoring systems to determine if a puppet process is still in
             the process table.",
       },
+      :sourceaddress => {
+        :default    => nil,
+        :desc       => "The address the agent should use to initiate requests.",
+      },
       :bindaddress => {
         :default    => "0.0.0.0",
         :desc       => "The address a listening server should bind to.",
