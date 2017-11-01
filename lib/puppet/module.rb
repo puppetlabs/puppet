@@ -23,6 +23,7 @@ class Puppet::Module
     "templates" => "templates",
     "plugins" => "lib",
     "pluginfacts" => "facts.d",
+    "locales" => "locales",
   }
 
   # Find and return the +module+ that +path+ belongs to. If +path+ is
@@ -302,6 +303,11 @@ class Puppet::Module
     subpath("facts.d")
   end
 
+  #@return [String]
+  def locale_directory
+    subpath("locales")
+  end
+
   def has_external_facts?
     File.directory?(plugin_fact_directory)
   end
@@ -428,12 +434,10 @@ class Puppet::Module
     module_name = @forge_name ? @forge_name.gsub("/", "-") : name
     return if Puppet::GettextConfig.translations_loaded?(module_name)
 
-    locales_path = File.absolute_path('locales', path)
-
-    if Puppet::GettextConfig.load_translations(module_name, locales_path, :po)
+    if Puppet::GettextConfig.load_translations(module_name, locale_directory, :po)
       Puppet.debug "i18n initialized for #{module_name}"
     elsif Puppet::GettextConfig.gettext_loaded?
-      Puppet.debug "Could not find translation files for #{module_name} at #{locales_path}. Skipping i18n initialization."
+      Puppet.debug "Could not find translation files for #{module_name} at #{locale_directory}. Skipping i18n initialization."
     else
       Puppet.debug "No gettext library found, skipping i18n initialization."
     end
