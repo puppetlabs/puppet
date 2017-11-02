@@ -128,6 +128,16 @@ describe 'Puppet Pal' do
       expect(result).to eq(12)
     end
 
+    it 'can call a function with a ruby block' do
+      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+        manifest = file_containing('empty.pp', "")
+        ctx.with_script_compiler(manifest_file: manifest) do |compiler|
+          compiler.call_function('with',[6]) {|x| x * 2}
+        end
+      end
+      expect(result).to eq(12)
+    end
+
     it 'can get the signatures from a puppet function' do
       result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
         manifest = file_containing('afunc.pp', "function myfunc(Integer $a) { $a * 2 } ")
