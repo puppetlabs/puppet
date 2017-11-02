@@ -19,7 +19,7 @@ describe 'The type formatter' do
     {
       'true' => true,
       'false' => false,
-      '?' => nil,
+      'undef' => nil,
       '23.4' => 23.4,
       '145' => 145,
       "'string'" => 'string',

@@ -580,7 +580,7 @@ class TypeFormatter
   end
 
   # @api private
-  def string_NilClass(t)     ; @bld << (@ruby ? 'nil' : '?') ; end
+  def string_NilClass(t)     ; @bld << (@ruby ? 'nil' : 'undef') ; end
 
   # @api private
   def string_Numeric(t)      ; @bld << t.to_s    ; end
