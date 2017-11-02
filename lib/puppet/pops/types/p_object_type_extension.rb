@@ -76,13 +76,18 @@ class PObjectTypeExtension < PAnyType
   # @return [Array] the parameter values
   # @api private
   def init_parameters
-    result = @base_type.type_parameters(true).values.map do |tp|
-      pn = tp.name
-      @parameters.include?(pn) ? @parameters[pn] : :default
+    pts = @base_type.type_parameters(true)
+    if pts.size > 2
+      @parameters
+    else
+      result = pts.values.map do |tp|
+        pn = tp.name
+        @parameters.include?(pn) ? @parameters[pn] : :default
+      end
+      # Remove trailing defaults
+      result.pop while result.last == :default
+      result
     end
-    # Remove trailing defaults
-    result.pop while result.last == :default
-    result
   end
 
   # @api private

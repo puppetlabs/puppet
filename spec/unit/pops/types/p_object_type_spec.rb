@@ -1187,6 +1187,19 @@ describe 'The Object Type' do
         PUPPET
       end
 
+      it 'a type with more than 2 type parameters uses named arguments in string representation' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(["MyType[{'p1' => 'my'}]"])
+        type MyType = Object[
+          type_parameters => {
+            p1 => String,
+            p2 => String,
+            p3 => String,
+          }]
+
+        notice(MyType['my'])
+        PUPPET
+      end
+
       it 'can be used without parameters' do
         expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(["Object[{name => 'MyType', type_parameters => {'p1' => String}}]"])
         type MyType = Object[
