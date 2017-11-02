@@ -88,6 +88,11 @@ describe provider_class, :if => Puppet.features.posix? do
       expect(@provider.enabled?).to eq(:true)
     end
 
+    it "should check for B" do
+      provider_class.stubs(:chkconfig).with(@resource[:name]).returns "#{@resource[:name]}  B"
+      expect(@provider.enabled?).to eq(:true)
+    end
+
     it "should check for off" do
       provider_class.stubs(:chkconfig).with(@resource[:name]).returns "#{@resource[:name]}  off"
       expect(@provider.enabled?).to eq(:false)
