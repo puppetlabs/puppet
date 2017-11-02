@@ -939,7 +939,7 @@ class PNumericType < PScalarDataType
   end
 
   def instance?(o, guard = nil)
-    o.is_a?(Numeric) && o >= @from && o <= @to
+    (o.is_a?(Float) || o.is_a?(Integer)) && o >= @from && o <= @to
   end
 
   def unbounded?
