@@ -161,6 +161,17 @@ describe 'Puppet Pal' do
       expect(result.all? {|s| s.is_a?(Puppet::Pops::Types::PCallableType) }).to eq(true)
     end
 
+    it 'returns an empty array for function_signatures if function is not found' do
+      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+        manifest = file_containing('afunc.pp', "")
+        ctx.with_script_compiler(manifest_file: manifest) do |compiler|
+          compiler.function_signatures('no_where_to_be_found')
+        end
+      end
+      expect(result.is_a?(Array)).to eq(true)
+      expect(result.empty?).to eq(true)
+    end
+
   end
 
   context 'with code in modules and env' do
