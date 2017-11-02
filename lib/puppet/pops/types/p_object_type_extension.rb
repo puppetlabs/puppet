@@ -29,7 +29,7 @@ class PObjectTypeExtension < PAnyType
   # @api private
   def initialize(base_type, init_parameters)
     pts = base_type.type_parameters(true)
-    raise Puppet::ParseError, _('The data type %{typename} cannot be parameterized using []') % { type_name: base_type.name } if pts.empty?
+    raise Puppet::ParseError, _('The %{label}-Type cannot be parameterized using []') % { label: base_type.label } if pts.empty?
     @base_type = base_type
 
     named_args = false
@@ -38,51 +38,50 @@ class PObjectTypeExtension < PAnyType
     else
       named_args = init_parameters.size == 1 && init_parameters[0].is_a?(Hash)
       if named_args
-        # Catch case when first parameter is a Hash and remaining parameters are optional
-        if pts.size >= 1 && pts.values[1..-1].all? { |type_param| type_param.value? }
-          type_param = pts.values[0]
-          v = init_parameters[0]
-          v = type_param.value if v == :default && type_param.value?
-          named_args = !type_param.type.instance?(v)
-        end
+        # Catch case when first parameter is an assignable Hash
+        named_args = pts.size >= 1 && !pts.values[0].type.instance?(init_parameters[0])
       end
     end
 
     by_name = {}
     if named_args
       hash = init_parameters[0]
-      hash.each_key do |pn|
-        unless pts.include?(pn)
-          raise Puppet::ParseError, _("'%{pn}' is not a known type parameter for %{type_name}") % { pn: pn, type_name: base_type.name }
+      hash.each_pair do |pn, pv|
+        tp = pts[pn]
+        if tp.nil?
+          raise Puppet::ParseError, _("'%{pn}' is not a known type parameter for %{label}-Type") % { pn: pn, label: base_type.label }
+        end
+        by_name[pn] = check_param(tp, pv) unless pv == :default
+      end
+    else
+      pts.values.each_with_index do |tp, idx|
+        if idx < init_parameters.size
+          pv = init_parameters[idx]
+          by_name[tp.name] = check_param(tp, pv) unless pv == :default
         end
       end
-      pts.each_pair { |pn, tp| by_name[pn] = check_param(tp, hash.include?(pn) ? hash[pn] : :default) }
-    else
-      pts.values.each_with_index { |tp, idx| by_name[tp.name] = check_param(tp, idx < init_parameters.size ? init_parameters[idx] : :default) }
+    end
+    if by_name.empty?
+      raise Puppet::ParseError, _('The %{label}-Type cannot be parameterized using an empty parameter list') % { label: base_type.label }
     end
     @parameters = by_name
   end
 
   def check_param(type_param, v)
-    if v == :default
-      raise Puppet::ParseError, _('No value provided for required %{label}') % { label: type_param.label } unless type_param.value?
-      v = type_param.value
-    end
     TypeAsserter.assert_instance_of(nil, type_param.type, v) { type_param.label }
   end
 
-  # Return the parameter values as positional arguments with values that represent `default` as :default. The
+  # Return the parameter values as positional arguments with unset values as :default. The
   # array is stripped from trailing :default values
   # @return [Array] the parameter values
   # @api private
   def init_parameters
     result = @base_type.type_parameters(true).values.map do |tp|
-      v = @parameters[tp.name]
-      tp.value? && tp.value == v ? :default : v
+      pn = tp.name
+      @parameters.include?(pn) ? @parameters[pn] : :default
     end
-    # Remove trailing defaults but avoid empty result. At least one parameter must
-    # be present, even it is :default
-    result.pop while result.size > 1 && result.last == :default
+    # Remove trailing defaults
+    result.pop while result.last == :default
     result
   end
 
@@ -185,7 +184,6 @@ class PObjectTypeExtension < PAnyType
   def test_instance?(o, guard)
     eval = Parser::EvaluatingParser.singleton.evaluator
     @parameters.keys.all? do |pn|
-      ov = nil
       begin
         m = o.public_method(pn)
         m.arity == 0 ? eval.match?(m.call, @parameters[pn]) : false

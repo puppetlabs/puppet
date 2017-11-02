@@ -37,7 +37,6 @@ class PObjectType < PMetaType
 
   TYPE_PARAMETER = TypeFactory.struct({
     KEY_TYPE => PTypeType::DEFAULT,
-    KEY_VALUE => PAnyType::DEFAULT,
     TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
   })
 
