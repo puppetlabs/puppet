@@ -94,6 +94,8 @@ class Puppet::FileServing::Configuration::Parser
       mount = Mount::Plugins.new(name)
     when "tasks"
       mount = Mount::Tasks.new(name)
+    when "locales"
+      mount = Mount::Locales.new(name)
     else
       mount = Mount::File.new(name)
     end
