@@ -117,7 +117,7 @@ class StaticLoader < Loader
         attributes => {
           message => String[1],
           kind => { type => Optional[String[1]], value => undef },
-          issue_code => { type => Optional[String[1]], value => 'ERROR' },
+          issue_code => { type => Optional[String[1]], value => undef },
           partial_result => { type => Data, value => undef },
           details => { type => Optional[Hash[String[1],Data]], value => undef },
         }

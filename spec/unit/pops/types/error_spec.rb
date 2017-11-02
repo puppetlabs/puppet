@@ -90,13 +90,13 @@ module Puppet::Pops
         context 'an Error instance' do
           it 'can be created using positional arguments' do
             code = <<-CODE
-              $o = Error('bad things happened', 'puppet/error')
+              $o = Error('bad things happened', 'puppet/error', 'OOPS')
               notice($o)
               notice(type($o))
               CODE
             expect(eval_and_collect_notices(code)).to eq([
-              "Error({'message' => 'bad things happened', 'kind' => 'puppet/error'})",
-              "Error['puppet/error', 'ERROR']"
+              "Error({'message' => 'bad things happened', 'kind' => 'puppet/error', 'issue_code' => 'OOPS'})",
+              "Error['puppet/error', 'OOPS']"
             ])
           end
 
@@ -128,14 +128,6 @@ module Puppet::Pops
             expect(eval_and_collect_notices(code)).to eq(['true'])
           end
 
-          it 'is an instance of Error with matching default issue' do
-            code = <<-CODE
-            $o = Error('bad tings happened')
-            notice($o =~ Error[default, 'ERROR'])
-            CODE
-            expect(eval_and_collect_notices(code)).to eq(['true'])
-          end
-
           it 'is an instance of Error with matching issue_code' do
             code = <<-CODE
               $o = Error('bad things happened', 'puppet/error', 'FEE')
@@ -157,14 +149,6 @@ module Puppet::Pops
               $o = Error('bad things happened', 'puppetlabs/error')
               notice($o =~ Error[/puppet\\/error/])
               CODE
-            expect(eval_and_collect_notices(code)).to eq(['false'])
-          end
-
-          it 'is not an instance of Error unless default issue_code is matched' do
-            code = <<-CODE
-            $o = Error('bad tings happened', undef)
-            notice($o =~ Error[default, 'OTHER'])
-            CODE
             expect(eval_and_collect_notices(code)).to eq(['false'])
           end
 
