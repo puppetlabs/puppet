@@ -9,13 +9,17 @@ describe 'The Object Type' do
 
   let(:parser) { TypeParser.singleton }
   let(:pp_parser) { Parser::EvaluatingParser.new }
+  let(:env) { Puppet::Node::Environment.create(:testing, []) }
+  let(:node) { Puppet::Node.new('testnode', :environment => env) }
   let(:loader) { Loaders.find_loader(nil) }
   let(:factory) { TypeFactory }
 
-  around(:each) do |example|
-    Puppet.override(:loaders => Loaders.new(Puppet::Node::Environment.create(:testing, []))) do
-      example.run
-    end
+  before(:each) do
+    Puppet.push_context(:loaders => Loaders.new(env))
+  end
+
+  after(:each) do
+    Puppet.pop_context()
   end
 
   def type_object_t(name, body_string)
@@ -1135,6 +1139,215 @@ describe 'The Object Type' do
           "equality => ['second_a']"+
           "}]"
         ])
+    end
+
+    context 'object with type parameters' do
+      it 'can be declared' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(['ok'])
+        type MyType = Object[
+          type_parameters => {
+            p1 => String
+          }]
+        notice('ok')
+        PUPPET
+      end
+
+      it 'can be referenced' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(["MyType['hello']"])
+        type MyType = Object[
+          type_parameters => {
+            p1 => String
+          }]
+
+        notice(MyType['hello'])
+        PUPPET
+      end
+
+      it 'leading unset parameters are represented as default in string representation' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(["MyType[default, 'world']"])
+        type MyType = Object[
+          type_parameters => {
+            p1 => String,
+            p2 => String,
+          }]
+
+        notice(MyType[default, 'world'])
+        PUPPET
+      end
+
+      it 'trailing unset parameters are skipped in string representation' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(["MyType['my']"])
+        type MyType = Object[
+          type_parameters => {
+            p1 => String,
+            p2 => String,
+          }]
+
+        notice(MyType['my'])
+        PUPPET
+      end
+
+      it 'a type with more than 2 type parameters uses named arguments in string representation' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(["MyType[{'p1' => 'my'}]"])
+        type MyType = Object[
+          type_parameters => {
+            p1 => String,
+            p2 => String,
+            p3 => String,
+          }]
+
+        notice(MyType['my'])
+        PUPPET
+      end
+
+      it 'can be used without parameters' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(["Object[{name => 'MyType', type_parameters => {'p1' => String}}]"])
+        type MyType = Object[
+          type_parameters => {
+            p1 => String
+          }]
+
+        notice(MyType)
+        PUPPET
+      end
+
+      it 'involves type parameter values when testing instance of' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(['true', 'false', 'true'])
+        type MyType = Object[
+          type_parameters => {
+            p1 => String
+          },
+          attributes => {
+            p1 => String
+          }]
+
+        $x = MyType('world')
+        notice($x =~ MyType)
+        notice($x =~ MyType['hello'])
+        notice($x =~ MyType['world'])
+        PUPPET
+      end
+
+      it 'involves type parameter values when testing assignability' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(['true', 'false', 'true', 'true', 'false', 'true'])
+        type MyType = Object[
+          type_parameters => {
+            p1 => String
+          },
+          attributes => {
+            p1 => String
+          }]
+
+        $x = MyType['world']
+        notice($x <= MyType)
+        notice($x <= MyType['hello'])
+        notice($x <= MyType['world'])
+
+        notice(MyType >= $x)
+        notice(MyType['hello'] >= $x)
+        notice(MyType['world'] >= $x)
+        PUPPET
+      end
+
+      it 'parameters can be types' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(['true', 'true', 'true', 'true', 'false'])
+        type MyType = Object[
+          type_parameters => {
+            p1 => Variant[String,Regexp,Type[Enum],Type[Pattern],Type[NotUndef]],
+            p2 => Variant[String,Regexp,Type[Enum],Type[Pattern],Type[NotUndef]],
+          },
+          attributes => {
+            p1 => String,
+            p2 => String
+          }]
+        $x = MyType('good bye', 'cruel world')
+        notice($x =~ MyType)
+        notice($x =~ MyType[Enum['hello', 'good bye']])
+        notice($x =~ MyType[Enum['hello', 'good bye'], Pattern[/world/, /universe/]])
+        notice($x =~ MyType[NotUndef, NotUndef])
+        notice($x =~ MyType[Enum['hello', 'yo']])
+        PUPPET
+      end
+
+      it 'parameters can be provided using named arguments' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(['true', 'false', 'true'])
+        type MyType = Object[
+          type_parameters => {
+            p1 => String,
+            p2 => String
+          },
+          attributes => {
+            p1 => String,
+            p2 => String
+          }]
+        $x = MyType('good bye', 'cruel world')
+        notice($x =~ MyType)
+        notice($x =~ MyType[p1 => 'hello', p2 => 'cruel world'])
+        notice($x =~ MyType[p1 => 'good bye', p2 => 'cruel world'])
+        PUPPET
+      end
+
+      it 'at least one parameter must be given' do
+        expect{eval_and_collect_notices(<<-PUPPET, node)}.to raise_error(/The MyType-Type cannot be parameterized using an empty parameter list/)
+        type MyType = Object[
+          type_parameters => {
+            p1 => Variant[String,Regexp,Type[Enum],Type[Pattern]],
+          },
+          attributes => {
+            p1 => String,
+          }]
+        notice(MyType[default])
+        PUPPET
+      end
+
+      it 'undef is a valid value for a type parameter' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(['true', 'false'])
+        type MyType = Object[
+          type_parameters => {
+            p1 => Optional[String],
+          },
+          attributes => {
+            p1 => Optional[String],
+          }]
+        notice(MyType() =~ MyType[undef])
+        notice(MyType('hello') =~ MyType[undef])
+        PUPPET
+      end
+
+      it 'Type parameters does not mean that type must be parameterized' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(['true'])
+        type MyType = Object[
+          type_parameters => {
+            p1 => Variant[Undef,String,Regexp,Type[Enum],Type[Pattern]],
+            p2 => Variant[Undef,String,Regexp,Type[Enum],Type[Pattern]],
+          },
+          attributes => {
+            p1 => String,
+            p2 => String
+          }]
+        notice(MyType('hello', 'world') =~ MyType)
+        PUPPET
+      end
+
+      it 'Instance is inferred to parameterized type' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(['true', 'true', 'true', 'true', 'true'])
+        type MyType = Object[
+          type_parameters => {
+            p1 => Variant[Undef,String,Regexp,Type[Enum],Type[Pattern]],
+            p2 => Variant[Undef,String,Regexp,Type[Enum],Type[Pattern]],
+          },
+          attributes => {
+            p1 => String,
+            p2 => String
+          }]
+        $x = MyType('hello', 'world')
+        notice(type($x, generalized) == MyType)
+        notice(type($x) < MyType)
+        notice(type($x) < MyType['hello'])
+        notice(type($x) < MyType[/hello/, /world/])
+        notice(type($x) == MyType['hello', 'world'])
+        PUPPET
+      end
     end
   end
 

@@ -78,6 +78,10 @@ class PMetaType < PAnyType
     end
   end
 
+  def resolved?
+    @init_hash_expression.nil?
+  end
+
   # Returns the expanded string the form of the alias, e.g. <alias name> = <resolved type>
   #
   # @return [String] the expanded form of this alias

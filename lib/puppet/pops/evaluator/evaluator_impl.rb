@@ -178,6 +178,15 @@ class EvaluatorImpl
     end
   end
 
+  # Implementation of case option matching.
+  #
+  # This is the type of matching performed in a case option, using == for every type
+  # of value except regular expression where a match is performed.
+  #
+  def match?(left, right)
+    @@compare_operator.match(left, right, nil)
+  end
+
   protected
 
   def lvalue_VariableExpression(o, scope)

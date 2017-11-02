@@ -47,7 +47,8 @@ module JsonPath
     #
     def resolve(context, path)
       factory = @parser.parse_string(path)
-      resolve_any(factory.model.body, context, path)
+      v = resolve_any(factory.model.body, context, path)
+      v.is_a?(Builder) ? v.resolve : v
     end
 
     def resolve_any(ast, context, path)
