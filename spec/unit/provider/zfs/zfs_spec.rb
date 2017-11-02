@@ -49,7 +49,7 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
     end
 
     Puppet::Type.type(:zfs).validproperties.each do |prop|
-      next if prop == :ensure
+      next if [:ensure, :volsize].include?(prop)
       it "should include property #{prop}" do
         resource[prop] = prop
 
@@ -57,6 +57,12 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
 
         provider.create
       end
+    end
+
+    it "should use -V for the volsize property" do
+      resource[:volsize] = "10"
+      provider.expects(:zfs).with(:create, '-V', "10", name)
+      provider.create
     end
   end
 

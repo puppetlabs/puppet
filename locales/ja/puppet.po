@@ -6,12 +6,12 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.0-6-gf66f9d9\n"
+"Project-Id-Version: Puppet automation framework 5.3.2-73-g035eee5\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-09-26 17:02+0000\n"
-"PO-Revision-Date: 2017-09-26 17:02+0000\n"
-"Last-Translator: Hidekatsu Tsuru <hidekatsu-tsuru@to-in.co.jp>, 2017\n"
+"POT-Creation-Date: 2017-10-25 23:09+0000\n"
+"PO-Revision-Date: 2017-10-25 23:09+0000\n"
+"Last-Translator: sayaka inagaki <sayaka-inagaki@to-in.co.jp>, 2017\n"
 "Language-Team: Japanese (Japan) (https://www.transifex.com/puppet/teams/29089/ja_JP/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -23,7 +23,7 @@ msgstr ""
 msgid "Puppet %{version} requires ruby 1.9.3 or greater."
 msgstr "Puppet %{version}ではruby 1.9.3以上が必要です。"
 
-#: ../lib/puppet.rb:134
+#: ../lib/puppet.rb:133
 msgid ""
 "Support for ruby version %{version} is deprecated and will be removed in a "
 "future release. See "
@@ -32,14 +32,14 @@ msgid ""
 msgstr ""
 "rubyバージョン%{version}のサポートは廃止予定であり、今後のリリースで廃止されます。サポートされているrubyのバージョンについては、https://docs.puppet.com/puppet/latest/system_requirements.html#rubyを参照してください。"
 
-#: ../lib/puppet.rb:181
+#: ../lib/puppet.rb:180
 msgid ""
 "Creating %{name} via Puppet.newtype is deprecated and will be removed in a "
 "future release. Use Puppet::Type.newtype instead."
 msgstr ""
 "Puppet.newtypeによる%{name}の作成は廃止予定であり、今後のリリースで廃止されます。代わりにPuppet::Type.newtypeを使用してください。"
 
-#: ../lib/puppet.rb:200
+#: ../lib/puppet.rb:199
 msgid "The environmentpath setting cannot be empty or nil."
 msgstr "environmentpath設定は空やゼロにはできません。"
 
@@ -2303,44 +2303,49 @@ msgid ""
 "master '%{master_type}'."
 msgstr "agent '%{agent_type}'と'%{master_type}'に共通するチェックサムタイプが見つかりません。"
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:273
-msgid "Compiled %s for "
-msgstr "コンパイルしました%s"
-
-#: ../lib/puppet/indirector/catalog/compiler.rb:273
-msgid "static catalog"
-msgstr "静的カタログ"
-
-#: ../lib/puppet/indirector/catalog/compiler.rb:273
-msgid "catalog"
-msgstr "カタログ"
-
 #: ../lib/puppet/indirector/catalog/compiler.rb:275
-#: ../lib/puppet/indirector/catalog/compiler.rb:292
-msgid " in environment %{env}"
-msgstr "環境%{env}内"
+msgid "Compiled static catalog for %{node} in environment %{environment}"
+msgstr "Environment%{environment}で%{node}の静的なカタログをコンパイルしました。"
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:291
+#: ../lib/puppet/indirector/catalog/compiler.rb:277
+msgid "Compiled static catalog for %{node}"
+msgstr "ノード%{node}の静的なカタログをコンパイルしました。"
+
+#: ../lib/puppet/indirector/catalog/compiler.rb:281
+msgid "Compiled catalog for %{node} in environment %{environment}"
+msgstr "Environment%{environment}で%{node}のカタログをコンパイルしました。"
+
+#: ../lib/puppet/indirector/catalog/compiler.rb:283
+msgid "Compiled catalog for %{node}"
+msgstr "ノード%{node}のカタログをコンパイルしました。"
+
+#: ../lib/puppet/indirector/catalog/compiler.rb:302
+msgid ""
+"Inlined resource metadata into static catalog for %{node} in environment "
+"%{environment}"
+msgstr "Environment%{environment}で%{node}の静的なカタログにリソースメタデータを追加しました。"
+
+#: ../lib/puppet/indirector/catalog/compiler.rb:304
 msgid "Inlined resource metadata into static catalog for %{node}"
 msgstr "リソースメタデータを%{node}の静的カタログにインライン展開しました。"
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:308
+#: ../lib/puppet/indirector/catalog/compiler.rb:321
 msgid "Found node information"
 msgstr "ノード情報が見つかりました。"
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:316
+#: ../lib/puppet/indirector/catalog/compiler.rb:329
 msgid "Failed when searching for node %{name}: %{detail}"
 msgstr "ノード%{name}の検索中に不具合が生じました: %{detail}"
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:335
+#: ../lib/puppet/indirector/catalog/compiler.rb:348
 msgid "Invalid option use_node for a remote request"
 msgstr "リモートリクエストの無効なオプションuse_node "
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:353
+#: ../lib/puppet/indirector/catalog/compiler.rb:366
 msgid "Could not find node '%{name}'; cannot compile"
 msgstr "ノード'%{name}'が見つかりませんでした; コンパイルできません。"
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:371
+#: ../lib/puppet/indirector/catalog/compiler.rb:384
 msgid "Could not retrieve fact %{fact}"
 msgstr "fact %{fact}を取得できませんでした。"
 
@@ -5697,7 +5702,7 @@ msgstr "%{klass}をタイムスタンプから引くことはできません。"
 msgid "Enumeration.enumerator is deprecated. Use Iterable.on instead"
 msgstr "Enumeration.enumeratorは廃止予定です。代わりにIterable.onを使用してください。"
 
-#: ../lib/puppet/pops/types/p_binary_type.rb:70
+#: ../lib/puppet/pops/types/p_binary_type.rb:77
 msgid ""
 "The given string in encoding '%{enc}' is invalid. Cannot create a Binary "
 "UTF-8 representation"
@@ -5718,7 +5723,7 @@ msgid ""
 "%{subject}.new()"
 msgstr "タイプ'%{type}'は、%{subject}.new()の有効なパラメータセットを表していません。"
 
-#: ../lib/puppet/pops/types/p_object_type.rb:604
+#: ../lib/puppet/pops/types/p_object_type.rb:610
 msgid "reference to unresolved type '%{name}'"
 msgstr "unresolved type '%{name}'への参照"
 
@@ -9019,11 +9024,11 @@ msgstr "FormatMessageWがコード%{code}のバッファの割り当てに失敗
 msgid "Failed to set file attributes"
 msgstr "ファイル属性の設定に失敗しました。"
 
-#: ../lib/puppet/util/windows/file.rb:193
+#: ../lib/puppet/util/windows/file.rb:207
 msgid "out_buffer is required"
 msgstr "out_bufferが必要です。"
 
-#: ../lib/puppet/util/windows/file.rb:274
+#: ../lib/puppet/util/windows/file.rb:288
 msgid "Failed to call GetLongPathName"
 msgstr "GetLongPathNameのコールに失敗しました。"
 

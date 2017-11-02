@@ -490,6 +490,17 @@ class TypeFormatter
     end
   end
 
+  def string_PObjectTypeExtension(t)
+    append_array(@type_set ? @type_set.name_for(t, t.name) : t.name, false) do
+      ips = t.init_parameters
+      if ips.is_a?(Array)
+        append_strings(ips)
+      else
+        append_string(ips)
+      end
+    end
+  end
+
   # @api private
   def string_PSensitiveType(t)
     append_array('Sensitive', PAnyType::DEFAULT == t.type) { append_string(t.type) }

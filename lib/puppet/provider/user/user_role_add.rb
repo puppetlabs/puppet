@@ -18,6 +18,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
   options :profiles, :flag => "-P"
   options :password_min_age, :flag => "-n"
   options :password_max_age, :flag => "-x"
+  options :password_warn_days, :flag => "-w"
 
   verify :gid, "GID must be an integer" do |value|
     value.is_a? Integer
@@ -48,7 +49,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
     cmd = []
     Puppet::Type.type(:user).validproperties.each do |property|
       #skip the password because we can't create it with the solaris useradd
-      next if [:ensure, :password, :password_min_age, :password_max_age].include?(property)
+      next if [:ensure, :password, :password_min_age, :password_max_age, :password_warn_days].include?(property)
       # 1680 Now you can set the hashed passwords on solaris:lib/puppet/provider/user/user_role_add.rb
       # the value needs to be quoted, mostly because -c might
       # have spaces in it
@@ -194,6 +195,11 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
   def password_max_age
     return :absent unless shadow_entry
     shadow_entry[4].empty? ? -1 : shadow_entry[4]
+  end
+
+  def password_warn_days
+    return :absent unless shadow_entry
+    shadow_entry[5].empty? ? -1 : shadow_entry[5]
   end
 
   # Read in /etc/shadow, find the line for our used and rewrite it with the

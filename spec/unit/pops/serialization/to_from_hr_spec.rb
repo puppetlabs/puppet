@@ -251,7 +251,30 @@ module Serialization
         expect(val2).to be_a(Types::PObjectType)
         expect(val2).to eql(val)
       end
+
+      context 'ObjectType' do
+        let(:type) do
+          Types::PObjectType.new({
+            'name' => 'MyType',
+            'type_parameters' => {
+              'x' => Types::PIntegerType::DEFAULT
+            },
+            'attributes' => {
+              'x' => Types::PIntegerType::DEFAULT
+            }
+          })
+        end
+
+        it 'with preserved parameters' do
+          val = type.create(34)._pcore_type
+          write(val)
+          val2 = read
+          expect(val2).to be_a(Types::PObjectTypeExtension)
+          expect(val2).to eql(val)
+        end
+      end
     end
+
 
     it 'Array of rich data' do
       # Sensitive omitted because it doesn't respond to ==

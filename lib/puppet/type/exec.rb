@@ -256,10 +256,11 @@ module Puppet
     end
 
     newparam(:environment) do
-      desc "Any additional environment variables you want to set for a
-        command.  Note that if you use this to set PATH, it will override
-        the `path` attribute.  Multiple environment variables should be
-        specified as an array."
+      desc "An array of any additional environment variables you want to set for a
+        command. e.g.: `[ 'HOME=/root', 'MAIL=root@example.com']`
+        Note that if you use this to set PATH, it will override the `path`
+        attribute. Multiple environment variables should be specified as an
+        array."
 
       validate do |values|
         values = [values] unless values.is_a? Array

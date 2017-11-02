@@ -945,7 +945,7 @@ class PNumericType < PScalarDataType
   end
 
   def instance?(o, guard = nil)
-    o.is_a?(Numeric) && o >= @from && o <= @to
+    (o.is_a?(Float) || o.is_a?(Integer)) && o >= @from && o <= @to
   end
 
   def unbounded?
@@ -3513,6 +3513,7 @@ require_relative 'p_timespan_type'
 require_relative 'p_timestamp_type'
 require_relative 'p_binary_type'
 require_relative 'p_init_type'
+require_relative 'p_object_type_extension'
 require_relative 'p_error_type'
 require_relative 'type_set_reference'
 require_relative 'implementation_registry'

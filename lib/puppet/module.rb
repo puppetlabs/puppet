@@ -23,6 +23,7 @@ class Puppet::Module
     "templates" => "templates",
     "plugins" => "lib",
     "pluginfacts" => "facts.d",
+    "locales" => "locales",
   }
 
   # Find and return the +module+ that +path+ belongs to. If +path+ is
@@ -302,6 +303,11 @@ class Puppet::Module
     subpath("facts.d")
   end
 
+  #@return [String]
+  def locale_directory
+    subpath("locales")
+  end
+
   def has_external_facts?
     File.directory?(plugin_fact_directory)
   end
@@ -423,31 +429,21 @@ class Puppet::Module
   end
 
   def initialize_i18n
-    module_name = @forge_name.gsub("/","-") if @forge_name
-    return if module_name.nil? || i18n_initialized?(module_name)
+    # this name takes the form "namespace-module", and should match the name of
+    # the PO file containing the translations.
+    module_name = @forge_name ? @forge_name.gsub("/", "-") : name
+    return if Puppet::GettextConfig.translations_loaded?(module_name)
 
-    locales_path = File.absolute_path('locales', path)
-
-    if Puppet::GettextConfig.initialize(locales_path, :po)
-      Puppet.debug "#{module_name} initialized for i18n: #{GettextSetup.translation_repositories[module_name]}"
+    if Puppet::GettextConfig.load_translations(module_name, locale_directory, :po)
+      Puppet.debug "i18n initialized for #{module_name}"
     elsif Puppet::GettextConfig.gettext_loaded?
-      config_path = File.absolute_path('config.yaml', locales_path)
-      Puppet.debug "Could not find locales configuration file for #{module_name} at #{config_path}. Skipping i18n initialization."
+      Puppet.debug "Could not find translation files for #{module_name} at #{locale_directory}. Skipping i18n initialization."
     else
       Puppet.debug "No gettext library found, skipping i18n initialization."
     end
   end
 
   private
-
-  def i18n_initialized?(module_name)
-    if Puppet::GettextConfig.gettext_loaded?
-      GettextSetup.translation_repositories.has_key? module_name
-    else
-      # GettextSetup not yet initialized or not found
-      false
-    end
-  end
 
   def wanted_manifests_from(pattern)
     begin

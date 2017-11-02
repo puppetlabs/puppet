@@ -32,15 +32,28 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
     @resource.fail "Either stop/status commands or a pattern must be specified" unless @resource[:pattern]
     regex = Regexp.new(@resource[:pattern])
     ps = getps
+
     self.debug "Executing '#{ps}'"
-    IO.popen(ps) { |table|
-      table.each_line { |line|
-        if regex.match(line)
-          self.debug "Process matched: #{line}"
-          ary = line.sub(/^\s+/, '').split(/\s+/)
-          return ary[1]
-        end
-      }
+    table = Puppet::Util::Execution.execute(ps)
+
+    # The output of the PS command can be a mashup of several different
+    # encodings depending on which processes are running and what
+    # arbitrary data has been used to set their name in the process table.
+    #
+    # First, try a polite conversion to in order to match the UTF-8 encoding
+    # of our regular expression.
+    table = Puppet::Util::CharacterEncoding.convert_to_utf_8(table)
+    # If that fails, force to UTF-8 and then scrub as most uses are scanning
+    # for ACII-compatible program names.
+    table.force_encoding(Encoding::UTF_8) unless table.encoding == Encoding::UTF_8
+    table = Puppet::Util::CharacterEncoding.scrub(table) unless table.valid_encoding?
+
+    table.each_line { |line|
+      if regex.match(line)
+        self.debug "Process matched: #{line}"
+        ary = line.sub(/^[[:space:]]+/u, '').split(/[[:space:]]+/u)
+        return ary[1]
+      end
     }
 
     nil
