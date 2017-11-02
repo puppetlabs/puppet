@@ -53,6 +53,19 @@ module Pal
       internal_evaluator.evaluator.external_call_function(function_name, args, topscope, &block)
     end
 
+    # Returns an Array[Callable] describing the given function's signatures, or empty array if function not found.
+    # @param function_name [String] the name of the function to get a signature for
+    # @return [Array[Callable]] an array of Callable signatures, or an empty array if function not found
+    def function_signatures(function_name)
+      loader = internal_compiler.loaders.private_environment_loader
+      if loader && func = loader.load(:function, function_name)
+        t = func.class.dispatcher.to_type
+        return t.is_a?(Puppet::Pops::Types::PVariantType) ? t.types : [t]
+      end
+      # Could not find function
+      Puppet::Pops::EMPTY_ARRAY
+    end
+
     # Evaluates a string of puppet language code in top scope.
     # A "source_file" reference to a source can be given - if not an actual file name, by convention the name should
     # be bracketed with < > to indicate it is something symbolic; for example `<commandline>` if the string was given on the

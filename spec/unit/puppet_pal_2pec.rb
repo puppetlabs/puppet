@@ -53,7 +53,7 @@ describe 'Puppet Pal' do
   # TODO: to be used in examples for running in an existing env
   #  let(:env) { Puppet::Node::Environment.create(:testing, [modules_dir]) }
 
-  context 'without code in modules or env' do
+  context 'in general - without code in modules or env' do
     let(:modulepath) { [] }
 
     it 'evaluates code string in a given tmp environment' do
@@ -109,6 +109,7 @@ describe 'Puppet Pal' do
       end.to raise_error(/has illegal type - got: ArgumentError/)
     end
 
+    # deprecated version
     it 'can call a plan using call_plan and specify content in a manifest' do
       result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
         manifest = file_containing('aplan.pp', "plan myplan() { 'brilliant' }")
@@ -116,6 +117,40 @@ describe 'Puppet Pal' do
       end
       expect(result).to eq('brilliant')
     end
+
+    it 'can call a function' do
+      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+        manifest = file_containing('afunc.pp', "function myfunc($a) { $a * 2 } ")
+        ctx.with_script_compiler(manifest_file: manifest) do |compiler|
+          compiler.call_function('myfunc',[6])
+        end
+      end
+      expect(result).to eq(12)
+    end
+
+    it 'can get the signatures from a puppet function' do
+      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+        manifest = file_containing('afunc.pp', "function myfunc(Integer $a) { $a * 2 } ")
+        ctx.with_script_compiler(manifest_file: manifest) do |compiler|
+          signatures = compiler.function_signatures('myfunc')
+          expect(signatures.is_a?(Array)).to eq(true)
+          [signatures[0].callable_with?([10]), signatures[0].callable_with?(['nope'])]
+        end
+      end
+      expect(result).to eq([true, false])
+    end
+
+    it 'can get the signatures from a ruby function with multiple dispatch' do
+      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+        manifest = file_containing('afunc.pp', "")
+        ctx.with_script_compiler(manifest_file: manifest) do |compiler|
+          compiler.function_signatures('lookup')
+        end
+      end
+      expect(result.is_a?(Array)).to eq(true)
+      expect(result.all? {|s| s.is_a?(Puppet::Pops::Types::PCallableType) }).to eq(true)
+    end
+
   end
 
   context 'with code in modules and env' do
