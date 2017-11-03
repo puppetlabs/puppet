@@ -128,7 +128,7 @@ module Pal
     #   or raises an error if it was not possible to parse data type or create an instance.
     #
     def new_object(data_type, arguments = [])
-      assert_optionally_empty_array(args, 'arguments')
+      Pal::assert_optionally_empty_array(arguments, 'arguments')
       t = data_type.is_a?(String) ? type(data_type) : data_type
       unless t.is_a?(Puppet::Pops::Types::PAnyType)
         raise ArgumentError, _("Given data_type value is not a data type, got '%{type}'") % {type: t.class}

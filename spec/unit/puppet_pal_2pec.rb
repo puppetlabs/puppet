@@ -184,6 +184,26 @@ describe 'Puppet Pal' do
       expect(result.instance?(3.14)).to eq(true)
     end
 
+    it 'creates a new_object from a puppet data type and args' do
+      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+        manifest = file_containing('main.pp', "")
+        ctx.with_script_compiler(manifest_file: manifest) do |compiler|
+          compiler.new_object(Puppet::Pops::Types::PIntegerType::DEFAULT, ['0x10'])
+        end
+      end
+      expect(result).to eq(16)
+    end
+
+    it 'creates a new_object from puppet data type in string form and args' do
+      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+        manifest = file_containing('main.pp', "")
+        ctx.with_script_compiler(manifest_file: manifest) do |compiler|
+          compiler.new_object('Integer', ['010'])
+        end
+      end
+      expect(result).to eq(8)
+    end
+
   end
 
   context 'with code in modules and env' do
