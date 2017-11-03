@@ -201,7 +201,6 @@ class TypeParser
         'semverrange'  => TypeFactory.sem_ver_range,
         'timestamp'    => TypeFactory.timestamp,
         'timespan'     => TypeFactory.timespan,
-        'error'        => TypeFactory.error
     }.freeze
   end
 
@@ -356,17 +355,6 @@ class TypeParser
       # 1..m parameters being strings or regular expressions
       raise_invalid_parameters_error('Pattern', '1 or more', parameters.size) unless parameters.size >= 1
       TypeFactory.pattern(*parameters)
-
-    when 'error'
-      # 1 - 2 parameters where both are string, regexp, or type
-      case parameters.size
-      when 1, 2
-        pt = PErrorType::TYPE_ERROR_PARAM
-        parameters.each { |p| raise Puppet::ParseError, "Error parameters must be ${pt}" unless pt.instance?(p) }
-        TypeFactory.error(*parameters)
-      else
-        raise_invalid_parameters_error('Error', '1 - 2', parameters.size)
-      end
 
     when 'variant'
       # 1..m parameters being strings or regular expressions

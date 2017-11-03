@@ -330,17 +330,6 @@ class TypeFormatter
     append_array('Pattern', t.patterns.empty?) { append_strings(t.patterns.map(&:regexp)) }
   end
 
-  # @api private
-  def string_PErrorType(t)
-    append_array('Error', t.kind.nil? && t.issue_code.nil?) do
-      t.kind.nil? ? append_default : append_error_param(t.kind)
-      unless t.issue_code.nil?
-        @bld << COMMA_SEP
-        append_error_param(t.issue_code)
-      end
-    end
-  end
-
   def append_error_param(ep)
     case ep
     when PStringType
@@ -588,7 +577,7 @@ class TypeFormatter
   end
 
   # @api private
-  def string_NilClass(t)     ; @bld << (@ruby ? 'nil' : '?') ; end
+  def string_NilClass(t)     ; @bld << (@ruby ? 'nil' : 'undef') ; end
 
   # @api private
   def string_Numeric(t)      ; @bld << t.to_s    ; end

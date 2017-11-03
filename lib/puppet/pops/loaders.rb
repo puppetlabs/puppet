@@ -84,7 +84,11 @@ class Loaders
 
   def self.static_loader
     # The static loader can only be changed after a reboot
-    @@static_loader ||= Loader::StaticLoader.new()
+    if !class_variable_defined?(:@@static_loader) || @@static_loader.nil?
+      @@static_loader = Loader::StaticLoader.new()
+      @@static_loader.create_built_in_puppet_types
+    end
+    @@static_loader
   end
 
   def self.implementation_registry
