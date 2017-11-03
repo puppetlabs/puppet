@@ -1780,8 +1780,26 @@ class PBooleanType < PScalarDataType
     create_ptype(loader, ir, 'ScalarDataType')
   end
 
+  attr_reader :value
+
+  def initialize(value = nil)
+    @value = value
+  end
+
+  def eql?(o)
+    o.is_a?(PBooleanType) && @value == o.value
+  end
+
+  def generalize
+    PBooleanType::DEFAULT
+  end
+
+  def hash
+    31 ^ @value.hash
+  end
+
   def instance?(o, guard = nil)
-    o == true || o == false
+    (o == true || o == false) && (@value.nil? || value == o)
   end
 
   def self.new_function(type)
@@ -1813,13 +1831,15 @@ class PBooleanType < PScalarDataType
   end
 
   DEFAULT = PBooleanType.new
+  TRUE = PBooleanType.new(true)
+  FALSE = PBooleanType.new(false)
 
   protected
 
   # @api private
   #
   def _assignable?(o, guard)
-    o.is_a?(PBooleanType)
+    o.is_a?(PBooleanType) && (@value.nil? || @value == o.value)
   end
 end
 

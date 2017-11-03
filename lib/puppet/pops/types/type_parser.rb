@@ -405,6 +405,12 @@ class TypeParser
       raise_invalid_type_specification_error(ast) unless h.is_a?(Hash)
       TypeFactory.struct(h)
 
+    when 'boolean'
+      raise_invalid_parameters_error('Boolean', '1', parameters.size) unless parameters.size == 1
+      p = parameters[0]
+      raise Puppet::ParseError, 'Boolean parameter must a true or false' unless p == true || p == false
+      TypeFactory.boolean(p)
+
     when 'integer'
       if parameters.size == 1
         case parameters[0]
@@ -497,7 +503,7 @@ class TypeParser
       assert_type(ast, param) unless param.is_a?(String)
       TypeFactory.optional(param)
 
-    when 'any', 'data', 'catalogentry', 'boolean', 'scalar', 'undef', 'numeric', 'default', 'semverrange'
+    when 'any', 'data', 'catalogentry', 'scalar', 'undef', 'numeric', 'default', 'semverrange'
       raise_unparameterized_type_error(qref)
 
     when 'notundef'

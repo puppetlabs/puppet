@@ -144,6 +144,12 @@ class AccessOperator
     end
   end
 
+  def access_PBooleanType(o, scope, keys)
+    keys.flatten!
+    assert_keys(keys, o, 1, 1, TrueClass, FalseClass)
+    Types::TypeFactory.boolean(keys[0])
+  end
+
   def access_PEnumType(o, scope, keys)
     keys.flatten!
     assert_keys(keys, o, 1, Float::INFINITY, String)
