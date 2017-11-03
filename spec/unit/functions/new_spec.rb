@@ -28,7 +28,7 @@ describe 'the new function' do
       $x = Integer.new(undef)
       notify { "one${x}word": }
     MANIFEST
-    )}.to raise_error(Puppet::Error, /expects an Integer value, got Undef/)
+    )}.to raise_error(Puppet::Error, /cannot be converted to Integer/)
   end
 
   it 'errors if converted value is not assignable to the type' do
@@ -294,11 +294,11 @@ describe 'the new function' do
         '+ 0XGG'=> :error,
         '- 0XGG'=> :error,
       }.each do |str, result|
-        it "errors when given the non octal value compliant string '#{str}'" do
+        it "errors when given the non hexadecimal value compliant string '#{str}'" do
           expect{compile_to_catalog(<<-"MANIFEST"
             $x = Integer.new("#{str}", 8)
           MANIFEST
-        )}.to raise_error(Puppet::Error, /invalid value/)
+        )}.to raise_error(Puppet::Error, /cannot be converted to Integer/)
         end
       end
     end
@@ -321,7 +321,7 @@ describe 'the new function' do
         '0b10'  => :error,
         '0B10'  => :error,
       }.each do |str, result|
-        it "errors when given the non octal value compliant string '#{str}'" do
+        it "errors when given the non binary value compliant string '#{str}'" do
           expect{compile_to_catalog(<<-"MANIFEST"
             $x = Integer.new("#{str}", 10)
           MANIFEST
@@ -352,28 +352,28 @@ describe 'the new function' do
         expect{compile_to_catalog(<<-"MANIFEST"
           $x = Integer.new('10', 3)
         MANIFEST
-      )}.to raise_error(Puppet::Error, /rejected: parameter 'radix'/m)
+      )}.to raise_error(Puppet::Error, /Illegal radix/)
       end
 
       it 'radix is wrong and when given in long form' do
         expect{compile_to_catalog(<<-"MANIFEST"
           $x = Integer.new({from =>'10', radix=>3})
         MANIFEST
-      )}.to raise_error(Puppet::Error, /rejected: parameter 'hash_args' entry 'radix'/m)
+      )}.to raise_error(Puppet::Error, /Illegal radix/)
       end
 
       it 'value is not numeric and given directly' do
         expect{compile_to_catalog(<<-"MANIFEST"
           $x = Integer.new('eleven', 10)
         MANIFEST
-      )}.to raise_error(Puppet::Error, /invalid value/)
+      )}.to raise_error(Puppet::Error, /cannot be converted to Integer/)
       end
 
       it 'value is not numeric and given in long form' do
         expect{compile_to_catalog(<<-"MANIFEST"
       $x = Integer.new({from => 'eleven', radix => 10})
         MANIFEST
-      )}.to raise_error(Puppet::Error, /invalid value/)
+      )}.to raise_error(Puppet::Error, /cannot be converted to Integer/)
       end
     end
   end
@@ -545,7 +545,7 @@ describe 'the new function' do
       expect{compile_to_catalog(<<-"MANIFEST"
         $x = Boolean.new(undef)
       MANIFEST
-      )}.to raise_error(Puppet::Error, /expects a Boolean value, got Undef/)
+      )}.to raise_error(Puppet::Error, /cannot be converted to Boolean/)
     end
   end
 

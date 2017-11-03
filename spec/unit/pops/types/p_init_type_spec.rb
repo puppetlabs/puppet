@@ -279,6 +279,64 @@ describe 'The Init Type' do
       CODE
       expect(eval_and_collect_notices(code)).to eql(["One({'init_one' => 'w'})"])
     end
+
+    context 'computes if x is an instance such that' do
+      %w(true false True False TRUE FALSE Yes No yes no YES NO y n Y N).each do |str|
+        it "string '#{str}' is an instance of Init[Boolean]" do
+          expect(eval_and_collect_notices("notice('#{str}' =~ Init[Boolean])")).to eql(['true'])
+        end
+      end
+
+      it 'arbitrary string is not an instance of Init[Boolean]' do
+        expect(eval_and_collect_notices("notice('blue' =~ Init[Boolean])")).to eql(['false'])
+      end
+
+      %w(0 1 0634 0x3b -0xba 0b1001 +0b1111 23.14 -2.3 2e-21 1.23e18  -0.23e18).each do |str|
+        it "string '#{str}' is an instance of Init[Numeric]" do
+          expect(eval_and_collect_notices("notice('#{str}' =~ Init[Numeric])")).to eql(['true'])
+        end
+      end
+
+      it 'non numeric string is not an instance of Init[Numeric]' do
+        expect(eval_and_collect_notices("notice('blue' =~ Init[Numeric])")).to eql(['false'])
+      end
+
+      %w(0 1 0634 0x3b -0xba 0b1001 +0b1111 23.14 -2.3 2e-21 1.23e18  -0.23e18).each do |str|
+        it "string '#{str}' is an instance of Init[Float]" do
+          expect(eval_and_collect_notices("notice('#{str}' =~ Init[Float])")).to eql(['true'])
+        end
+      end
+
+      it 'non numeric string is not an instance of Init[Float]' do
+        expect(eval_and_collect_notices("notice('blue' =~ Init[Float])")).to eql(['false'])
+      end
+
+      %w(0 1 0634 0x3b -0xba 0b1001 0b1111).each do |str|
+        it "string '#{str}' is an instance of Init[Integer]" do
+          expect(eval_and_collect_notices("notice('#{str}' =~ Init[Integer])")).to eql(['true'])
+        end
+      end
+
+      %w(23.14 -2.3 2e-21 1.23e18  -0.23e18).each do |str|
+        it "valid float string '#{str}' is not an instance of Init[Integer]" do
+          expect(eval_and_collect_notices("notice('#{str}' =~ Init[Integer])")).to eql(['false'])
+        end
+      end
+
+      it 'non numeric string is not an instance of Init[Integer]' do
+        expect(eval_and_collect_notices("notice('blue' =~ Init[Integer])")).to eql(['false'])
+      end
+
+      %w(1.2.3 1.1.1-a3 1.2.3+b3 1.2.3-a3+b3).each do |str|
+        it "string '#{str}' is an instance of Init[SemVer]" do
+          expect(eval_and_collect_notices("notice('#{str}' =~ Init[SemVer])")).to eql(['true'])
+        end
+      end
+
+      it 'non SemVer compliant string is not an instance of Init[SemVer]' do
+        expect(eval_and_collect_notices("notice('blue' =~ Init[SemVer])")).to eql(['false'])
+      end
+    end
   end
 end
 end
