@@ -172,6 +172,18 @@ describe 'Puppet Pal' do
       expect(result.empty?).to eq(true)
     end
 
+    it 'parses and returns a Type from a string specification' do
+      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+        manifest = file_containing('main.pp', "type MyType = Float")
+        ctx.with_script_compiler(manifest_file: manifest) do |compiler|
+          compiler.type('Variant[Integer, Boolean, MyType]')
+        end
+      end
+      expect(result.is_a?(Puppet::Pops::Types::PVariantType)).to eq(true)
+      expect(result.types.size).to eq(3)
+      expect(result.instance?(3.14)).to eq(true)
+    end
+
   end
 
   context 'with code in modules and env' do
