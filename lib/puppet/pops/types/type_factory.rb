@@ -127,7 +127,13 @@ module TypeFactory
   # @api public
   #
   def self.enum(*values)
-    PEnumType.new(values)
+    last = values.last
+    case_insensitive = false
+    if last == true || last == false
+      case_insensitive = last
+      values = values[0...-1]
+    end
+    PEnumType.new(values, case_insensitive)
   end
 
   # Produces the Variant type, optionally with the "one of" types

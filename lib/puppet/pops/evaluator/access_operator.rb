@@ -146,8 +146,14 @@ class AccessOperator
 
   def access_PEnumType(o, scope, keys)
     keys.flatten!
+    last = keys.last
+    case_insensitive = false
+    if last == true || last == false
+      keys = keys[0...-1]
+      case_insensitive = last
+    end
     assert_keys(keys, o, 1, Float::INFINITY, String)
-    Types::TypeFactory.enum(*keys)
+    Types::PEnumType.new(keys, case_insensitive)
   end
 
   def access_PVariantType(o, scope, keys)

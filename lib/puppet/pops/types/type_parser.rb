@@ -341,10 +341,16 @@ class TypeParser
       TypeFactory.regexp(parameters[0])
 
     when 'enum'
-      # 1..m parameters being strings
+      # 1..m parameters being string
+      last = parameters.last
+      case_insensitive = false
+      if last == true || last == false
+        parameters = parameters[0...-1]
+        case_insensitive = last
+      end
       raise_invalid_parameters_error('Enum', '1 or more', parameters.size) unless parameters.size >= 1
       parameters.each { |p|  raise Puppet::ParseError, 'Enum parameters must be identifiers or strings' unless p.is_a?(String) }
-      TypeFactory.enum(*parameters)
+      PEnumType.new(parameters, case_insensitive)
 
     when 'pattern'
       # 1..m parameters being strings or regular expressions
