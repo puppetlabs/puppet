@@ -87,6 +87,10 @@ describe TypeParser do
     expect(parser.parse('Boolean[false]')).to be_the_type(types.boolean(false))
   end
 
+  it 'does not accept non-boolean parameters' do
+    expect{parser.parse('Boolean["false"]')}.to raise_error(/Boolean parameter must be true or false/)
+  end
+
   it 'interprets an Integer with one parameter to have unbounded upper range' do
     expect(parser.parse('Integer[0]')).to eq(parser.parse('Integer[0,default]'))
   end
