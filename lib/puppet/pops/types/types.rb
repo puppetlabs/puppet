@@ -750,13 +750,20 @@ end
 #
 class PEnumType < PScalarDataType
   def self.register_ptype(loader, ir)
-    create_ptype(loader, ir, 'ScalarDataType', 'values' => PArrayType.new(PStringType::NON_EMPTY))
+    create_ptype(loader, ir, 'ScalarDataType',
+      'values' => PArrayType.new(PStringType::NON_EMPTY),
+      'case_insensitive' => { 'type' => PBooleanType::DEFAULT, 'value' => false })
   end
 
-  attr_reader :values
+  attr_reader :values, :case_insensitive
 
-  def initialize(values)
+  def initialize(values, case_insensitive = false)
     @values = values.uniq.sort.freeze
+    @case_insensitive = case_insensitive
+  end
+
+  def case_insensitive?
+    @case_insensitive
   end
 
   # Returns Enumerator if no block is given, otherwise, calls the given
@@ -786,15 +793,19 @@ class PEnumType < PScalarDataType
   end
 
   def hash
-    @values.hash
+    @values.hash ^ @case_insensitive.hash
   end
 
   def eql?(o)
-    self.class == o.class && @values == o.values
+    self.class == o.class && @values == o.values && @case_insensitive == o.case_insensitive?
   end
 
   def instance?(o, guard = nil)
-    o.is_a?(String) && @values.any? { |p| p == o }
+    if o.is_a?(String)
+      @case_insensitive ? @values.any? { |p| p.casecmp(o) == 0 } : @values.any? { |p| p == o }
+    else
+      false
+    end
   end
 
   DEFAULT = PEnumType.new(EMPTY_ARRAY)
@@ -813,7 +824,7 @@ class PEnumType < PScalarDataType
         # if the contained string is found in the set of enums
         instance?(o.value, guard)
       when PEnumType
-        !o.values.empty? && o.values.all? { |s| instance?(s, guard) }
+        !o.values.empty? && (case_insensitive? || !o.case_insensitive?) && o.values.all? { |s| instance?(s, guard) }
       else
         false
     end
@@ -1571,7 +1582,7 @@ class PStringType < PScalarDataType
         # Must match exactly when value is a string
         @size_type_or_value.nil? || @size_type_or_value == o.size_type_or_value
       when PEnumType
-        @size_type_or_value.nil? ? true : o.values.size == 1 && @size_type_or_value == o.values[0]
+        @size_type_or_value.nil? ? true : o.values.size == 1 && !o.case_insensitive? && o.values[0]
       when PPatternType
         @size_type_or_value.nil?
       else
@@ -2942,12 +2953,27 @@ class PVariantType < PAnyType
 
   # @api private
   def merge_enums(array)
+    # Merge case sensitive enums and strings
     if array.size > 1
-      parts = array.partition {|t| t.is_a?(PEnumType) && !t.values.empty? || t.is_a?(PStringType) && !t.value.nil? }
+      parts = array.partition {|t| t.is_a?(PEnumType) && !t.values.empty? && !t.case_insensitive? || t.is_a?(PStringType) && !t.value.nil? }
       enums = parts[0]
       if enums.size > 1
         others = parts[1]
         others <<  PEnumType.new(enums.map { |enum| enum.is_a?(PStringType) ? enum.value : enum.values }.flatten.uniq)
+        array = others
+      end
+    end
+
+    # Merge case insensitive enums
+    if array.size > 1
+      parts = array.partition {|t| t.is_a?(PEnumType) && !t.values.empty? && t.case_insensitive? }
+      enums = parts[0]
+      if enums.size > 1
+        others = parts[1]
+        values = []
+        enums.each { |enum| enum.values.each { |value| values << value.downcase }}
+        values.uniq!
+        others <<  PEnumType.new(values, true)
         array = others
       end
     end

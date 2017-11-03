@@ -290,6 +290,16 @@ FORMATTED
       expect(s.string(t)).to eq("Enum['a', 'b', 'c']")
     end
 
+    it "should yield 'Enum[s,...]' for a PEnumType[s,...,false]" do
+      t = f.enum('a', 'b', 'c', false)
+      expect(s.string(t)).to eq("Enum['a', 'b', 'c']")
+    end
+
+    it "should yield 'Enum[s,...,true]' for a PEnumType[s,...,true]" do
+      t = f.enum('a', 'b', 'c', true)
+      expect(s.string(t)).to eq("Enum['a', 'b', 'c', true]")
+    end
+
     it "should yield 'Pattern[/pat/,...]' for a PPatternType['pat',...]" do
       t = f.pattern('a')
       t2 = f.pattern('a', 'b', 'c')

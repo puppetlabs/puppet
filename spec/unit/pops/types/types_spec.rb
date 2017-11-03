@@ -167,6 +167,22 @@ describe 'Puppet Type System' do
       CODE
       expect(eval_and_collect_notices(code)).to eq(['a', 'b', 'c'])
     end
+
+    it 'is case sensitive by default' do
+      code = <<-CODE
+        notice('A' =~ Enum[a,b])
+        notice('a' =~ Enum[a,b])
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['false', 'true'])
+    end
+
+    it 'is case insensitive when last parameter argument is true' do
+      code = <<-CODE
+        notice('A' =~ Enum[a,b,true])
+        notice('a' =~ Enum[a,b,true])
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true', 'true'])
+    end
   end
 
   context 'Iterable type' do
@@ -291,6 +307,8 @@ describe 'Puppet Type System' do
     let!(:mix_ints) { tf.variant(overlapping_ints, adjacent_ints) }
     let!(:overlapping_floats) { tf.variant(tf.float_range(10.0, 20.0), tf.float_range(18.0, 28.0)) }
     let!(:enums) { tf.variant(tf.enum('a', 'b'), tf.enum('b', 'c')) }
+    let!(:enums_s_is) { tf.variant(tf.enum('a', 'b'), tf.enum('b', 'c', true)) }
+    let!(:enums_is_is) { tf.variant(tf.enum('A', 'b', true), tf.enum('B', 'c', true)) }
     let!(:patterns) { tf.variant(tf.pattern('a', 'b'), tf.pattern('b', 'c')) }
     let!(:with_undef) { tf.variant(tf.undef, tf.range(1,10)) }
     let!(:all_optional) { tf.variant(tf.optional(tf.range(1,10)), tf.optional(tf.range(11,20))) }
@@ -315,6 +333,14 @@ describe 'Puppet Type System' do
 
       it 'are enums, the result is an enum' do
         expect(enums.normalize).to eq(tf.enum('a', 'b', 'c'))
+      end
+
+      it 'are case sensitive versus case insensitive enums, does not merge the enums' do
+        expect(enums_s_is.normalize).to eq(enums_s_is)
+      end
+
+      it 'are case insensitive enums, result is case insensitive and unique irrespective of case' do
+        expect(enums_is_is.normalize).to eq(tf.enum('a', 'b', 'c', true))
       end
 
       it 'are patterns, the result is a pattern' do

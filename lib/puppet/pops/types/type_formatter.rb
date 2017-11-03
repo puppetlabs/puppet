@@ -213,7 +213,13 @@ class TypeFormatter
 
   # @api private
   def string_PEnumType(t)
-    append_array('Enum', t.values.empty?) { append_strings(t.values) }
+    append_array('Enum', t.values.empty?) do
+      append_strings(t.values)
+      if t.case_insensitive?
+        @bld << COMMA_SEP
+        append_string(true)
+      end
+    end
   end
 
   # @api private
