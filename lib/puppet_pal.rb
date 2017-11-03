@@ -161,19 +161,56 @@ module Pal
 
   # Defines a context in which multiple operations in an env with a script compiler can be performed in a given block.
   # The calls that takes place to PAL inside of the given block are all with the same instance of the compiler.
+  # The parameter `configured_by_env` makes it possible to either use the configuration in the environment, or specify
+  # `manifest_file` or `code_string` manually. If neither is given, an empty `code_string` is used.
+  #
+  # @example define a script compiler without any initial logic
+  #   pal.with_script_compiler do | compiler |
+  #     # do things with compiler
+  #   end
+  #
+  # @example define a script compiler with a code_string containing initial logic
+  #   pal.with_script_compiler(code_string: '$myglobal_var = 42')  do | compiler |
+  #     # do things with compiler
+  #   end
+  #
+  # @param configured_by_env [Boolean] when true the environment's settings are used, otherwise the given `manifest_file` or `code_string`
   # @param manifest_file [String] a Puppet Language file to load and evaluate before calling the given block, mutually exclusive with `code_string`
   # @param code_string [String] a Puppet Language source string to load and evaluate before calling the given block, mutually exclusive with `manifest_file`
   # @param block [Callable] the block performing operations on compiler
   # @return [Object] what the block returns
+  # @yieldparam [Puppet::Pal::ScriptCompiler] compiler, a ScriptCompiler to perform operations on.
   #
-  def self.with_script_compiler(manifest_file: nil, code_string: nil, &block)
+  def self.with_script_compiler(
+      configured_by_env: false, 
+      manifest_file: nil, 
+      code_string: nil, 
+      &block
+    )
     # TRANSLATORS: do not translate variable name strings in these assertions
     assert_mutually_exclusive(manifest_file, code_string, 'manifest_file', 'code_string')
     assert_non_empty_string(manifest_file, 'manifest_file', true)
     assert_non_empty_string(code_string, 'code_string', true)
+    assert_type(T_BOOLEAN, configured_by_env, "configured_by_env", false)
+
+    if configured_by_env
+      unless manifest_file.nil? && code_string.nil?
+        # TRANSLATORS: do not translate the variable names in this error message
+        raise ArgumentError, _("manifest_file or code_string cannot be given when configured_by_env is true")
+      end
+    else
+      # An "undef" code_string is the only way to override Puppet[:manifest] & Puppet[:code] settings since an
+      # empty string is taken as Puppet[:code] not being set.
+      #
+      if manifest_file.nil? && code_string.nil?
+        code_string = 'undef'
+      end
+    end
 
     Puppet[:tasks] = true
+    # After the assertions, if code_string is non nil - it has the highest precedence
     Puppet[:code] = code_string unless code_string.nil?
+    # At this point, if manifest_file is nil, the #main method will use the env configured manifest
     # do things in block while a Script Compiler is in effect
     main(manifest_file, &block)
   end
@@ -186,7 +223,7 @@ module Pal
   def self.evaluate_script_string(code_string)
     # prevent the default loading of Puppet[:manifest] which is the environment's manifest-dir by default settings
     # by setting code_string to 'undef'
-    with_script_compiler(code_string: 'undef') do |compiler|
+    with_script_compiler do |compiler|
       compiler.evaluate_string(code_string)
     end
   end
@@ -197,9 +234,7 @@ module Pal
   # @deprecated Use {#with_script_compiler} and then evaluate_file on the given compiler - to be removed in 1.0 version
   #
   def self.evaluate_script_manifest(manifest_file)
-    # prevent the default loading of Puppet[:manifest] which is the environment's manifest-dir by default settings
-    # by setting code_string to 'undef'
-    with_script_compiler(code_string: 'undef') do |compiler|
+    with_script_compiler do |compiler|
       compiler.evaluate_file(manifest_file)
     end
   end
@@ -220,16 +255,6 @@ module Pal
     with_script_compiler(manifest_file: manifest_file, code_string: code_string) do |compiler|
       compiler.call_function('run_plan', [plan_name, plan_args])
     end
-#    # TRANSLATORS: do not translate variable name string in these assertions
-#    assert_mutually_exclusive(manifest_file, code_string, 'manifest_file', 'code_string')
-#    assert_non_empty_string(manifest_file, 'manifest_file', true)
-#    assert_non_empty_string(code_string, 'code_string', true)
-#
-#    Puppet[:tasks] = true
-#    Puppet[:code] = code_string unless code_string.nil?
-#    main(manifest_file) do | compiler |
-#      compiler.topscope.call_function('run_plan', [plan_name, plan_args])
-#    end
   end
 
 
@@ -473,6 +498,7 @@ module Pal
   T_STRING = Puppet::Pops::Types::PStringType::NON_EMPTY
   T_STRING_ARRAY = Puppet::Pops::Types::TypeFactory.array_of(T_STRING)
   T_ANY_ARRAY = Puppet::Pops::Types::TypeFactory.array_of_any
+  T_BOOLEAN = Puppet::Pops::Types::PBooleanType::DEFAULT
 
   def self.assert_type(type, value, what, allow_nil=false)
     Puppet::Pops::Types::TypeAsserter.assert_instance_of(nil, type, value, allow_nil) { _('Puppet Pal: %{what}') % {what: what} }

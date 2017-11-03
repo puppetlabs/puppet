@@ -631,3 +631,7 @@ describe 'Puppet Pal' do
 
   end
 end
+
+# Tests TODO
+# with_script_compiler - configured_by_env true/false - when true does not accept manifest_file or code_string
+# 
