@@ -233,8 +233,8 @@ module TypeFactory
   # Produces the Boolean type
   # @api public
   #
-  def self.boolean
-    PBooleanType::DEFAULT
+  def self.boolean(value = nil)
+    value.nil? ? PBooleanType::DEFAULT : (value ? PBooleanType::TRUE : PBooleanType::FALSE)
   end
 
   # Produces the Any type

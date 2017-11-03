@@ -99,6 +99,14 @@ FORMATTED
       expect(s.string(f.boolean)).to eq('Boolean')
     end
 
+    it "should yield 'Boolean[true]' for PBooleanType parameterized with true" do
+      expect(s.string(f.boolean(true))).to eq('Boolean[true]')
+    end
+
+    it "should yield 'Boolean[false]' for PBooleanType parameterized with false" do
+      expect(s.string(f.boolean(false))).to eq('Boolean[false]')
+    end
+
     it "should yield 'Data' for the Data type" do
       expect(s.string(f.data)).to eq('Data')
     end

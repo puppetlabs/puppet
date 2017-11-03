@@ -149,7 +149,9 @@ class TypeFormatter
   def string_PDefaultType(_) ; @bld << 'Default' ; end
 
   # @api private
-  def string_PBooleanType(_) ; @bld << 'Boolean' ; end
+  def string_PBooleanType(t)
+    append_array('Boolean', t.value.nil?) { append_string(t.value) }
+  end
 
   # @api private
   def string_PScalarType(_)  ; @bld << 'Scalar'  ; end

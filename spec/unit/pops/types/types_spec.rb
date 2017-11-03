@@ -153,6 +153,40 @@ describe 'Puppet Type System' do
     end
   end
 
+  context 'Boolean type' do
+    it 'parameterized type is assignable to base type' do
+      code = <<-CODE
+        notice(Boolean[true] < Boolean)
+        notice(Boolean[false] < Boolean)
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true', 'true'])
+    end
+
+    it 'boolean literals are instances of the base type' do
+      code = <<-CODE
+        notice(true =~ Boolean)
+        notice(false =~ Boolean)
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true', 'true'])
+    end
+
+    it 'boolean literals are instances of type parameterized with the same literal' do
+      code = <<-CODE
+        notice(true =~ Boolean[true])
+        notice(false =~ Boolean[false])
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true', 'true'])
+    end
+
+    it 'boolean literals are not instances of type parameterized with a different literal' do
+      code = <<-CODE
+        notice(true =~ Boolean[false])
+        notice(false =~ Boolean[true])
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['false', 'false'])
+    end
+  end
+
   context 'Enum type' do
     it 'sorts its entries' do
       code = <<-CODE

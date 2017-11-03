@@ -36,7 +36,7 @@ describe TypeParser do
   end
 
   [
-    'Any', 'Data', 'CatalogEntry', 'Boolean', 'Scalar', 'Undef', 'Numeric', 'Default'
+    'Any', 'Data', 'CatalogEntry', 'Scalar', 'Undef', 'Numeric', 'Default'
   ].each do |name|
     it "does not support parameterizing unparameterized type <#{name}>" do
       expect { parser.parse("#{name}[Integer]") }.to raise_unparameterized_error_for(name)
@@ -77,6 +77,18 @@ describe TypeParser do
 
   it "interprets a parameterized Hash[t] as a Hash of Scalar to t" do
     expect(parser.parse("Hash[Scalar, Integer]")).to be_the_type(types.hash_of(types.integer))
+  end
+
+  it 'interprets an Boolean with a true parameter to represent boolean true' do
+    expect(parser.parse('Boolean[true]')).to be_the_type(types.boolean(true))
+  end
+
+  it 'interprets an Boolean with a false parameter to represent boolean false' do
+    expect(parser.parse('Boolean[false]')).to be_the_type(types.boolean(false))
+  end
+
+  it 'does not accept non-boolean parameters' do
+    expect{parser.parse('Boolean["false"]')}.to raise_error(/Boolean parameter must be true or false/)
   end
 
   it 'interprets an Integer with one parameter to have unbounded upper range' do
