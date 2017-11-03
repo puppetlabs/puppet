@@ -56,154 +56,169 @@ describe 'Puppet Pal' do
   context 'in general - without code in modules or env' do
     let(:modulepath) { [] }
 
-    it 'evaluates code string in a given tmp environment' do
-      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
-        ctx.evaluate_script_string('1+2+3')
+    context 'deprecated PAL API methods work and' do
+      it '"evaluate_script_string" evaluates a code string in a given tmp environment' do
+        result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+          ctx.evaluate_script_string('1+2+3')
+        end
+        expect(result).to eq(6)
       end
-      expect(result).to eq(6)
-    end
 
-    it 'can evaluates more than once in a given tmp environment - each in fresh compiler' do
-      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
-        result = ctx.evaluate_script_string('$a = 1+2+3')
-        expect { ctx.evaluate_script_string('$a') }.to raise_error(/Unknown variable: 'a'/)
-        result
-      end
-      expect(result).to eq(6)
-    end
-
-    it 'evaluates a manifest file in a given tmp environment' do
-      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
-        manifest = file_containing('testing.pp', "1+2+3+4")
-        ctx.evaluate_script_manifest(manifest)
-      end
-      expect(result).to eq(10)
-    end
-
-    it 'can set variables in any scope' do
-      vars = {'a'=> 10, 'x::y' => 20}
-      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts, variables: vars) do |ctx|
-        manifest = file_containing('testing.pp', "1+2+3+4+$a+$x::y")
-        ctx.evaluate_script_manifest(manifest)
-      end
-      expect(result).to eq(40)
-    end
-
-    it 'errors if variable name is not compliant with variable name rule' do
-      vars = {'_a::b'=> 10}
-      expect do
-        Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts, variables: vars) do |ctx|
-          manifest = file_containing('testing.pp', "ok")
+      it '"evaluate_script_manifest" evaluates a manifest file in a given tmp environment' do
+        result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+          manifest = file_containing('testing.pp', "1+2+3+4")
           ctx.evaluate_script_manifest(manifest)
         end
-      end.to raise_error(/has illegal name/)
-    end
+        expect(result).to eq(10)
+      end
 
-    it 'errors if variable value is not RichData compliant' do
-      vars = {'a'=> ArgumentError.new("not rich data")}
-      expect do
-        Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts, variables: vars) do |ctx|
-          manifest = file_containing('testing.pp', "$a")
-          ctx.evaluate_script_manifest(manifest)
+      it '"run_plan" runs a plan with specified content in a manifest' do
+        result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+          manifest = file_containing('aplan.pp', "plan myplan() { 'brilliant' }")
+          ctx.run_plan('myplan', manifest_file: manifest)
         end
-      end.to raise_error(/has illegal type - got: ArgumentError/)
+        expect(result).to eq('brilliant')
+      end
     end
 
-    # deprecated version
-    it 'can call a plan using call_plan and specify content in a manifest' do
-      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+    context "with a script compiler" do
+      context "evaluate_string method" do
+        it 'evaluates code string in a given tmp environment' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler {|c| c.evaluate_string('1+2+3') }
+          end
+          expect(result).to eq(6)
+        end
+
+        it 'can be evaluated more than once in a given tmp environment - each in fresh compiler' do
+          Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            expect(  ctx.with_script_compiler {|c| c.evaluate_string('$a = 1+2+3')}).to eq(6)
+            expect { ctx.with_script_compiler {|c| c.evaluate_string('$a') }}.to raise_error(/Unknown variable: 'a'/)
+          end
+        end
+      end
+
+      context "evaluate_file method" do
+        it 'evaluates a manifest file in a given tmp environment' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            manifest = file_containing('testing.pp', "1+2+3+4")
+            ctx.with_script_compiler {|c| c.evaluate_file(manifest) }
+          end
+          expect(result).to eq(10)
+        end
+      end
+
+      context "variables are supported such that" do
+        it 'they can be set in any scope' do
+          vars = {'a'=> 10, 'x::y' => 20}
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts, variables: vars) do |ctx|
+            ctx.with_script_compiler {|c| c.evaluate_string("1+2+3+4+$a+$x::y")}
+          end
+          expect(result).to eq(40)
+        end
+
+        it 'an error is raised if a variable name is illegal' do
+          vars = {'_a::b'=> 10}
+          expect do
+            Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts, variables: vars) do |ctx|
+              manifest = file_containing('testing.pp', "ok")
+              ctx.with_script_compiler {|c| c.evaluate_file(manifest) }
+            end
+          end.to raise_error(/has illegal name/)
+        end
+
+        it 'an error is raised if variable value is not RichData compliant' do
+          vars = {'a'=> ArgumentError.new("not rich data")}
+          expect do
+            Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts, variables: vars) do |ctx|
+              ctx.with_script_compiler {|c|  }
+            end
+          end.to raise_error(/has illegal type - got: ArgumentError/)
+        end
+      end
+
+      context "functions are supported such that" do
+        it '"call_function" calls a function' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            manifest = file_containing('afunc.pp', "function myfunc($a) { $a * 2 } ")
+            ctx.with_script_compiler(manifest_file: manifest) {|c| c.call_function('myfunc', [6]) }
+          end
+          expect(result).to eq(12)
+        end
+
+        it '"call_function" accepts a call with a ruby block' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler {|c| c.call_function('with',[6]) {|x| x * 2} }
+          end
+          expect(result).to eq(12)
+        end
+
+        it '"function_signatures" returns the signatures of a function' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            manifest = file_containing('afunc.pp', "function myfunc(Integer $a) { $a * 2 } ")
+            ctx.with_script_compiler(manifest_file: manifest) do |c|
+              signatures = c.function_signatures('myfunc')
+              expect(signatures.is_a?(Array)).to eq(true)
+              [ signatures[0].callable_with?([10]),
+                signatures[0].callable_with?(['nope'])
+              ]
+            end
+          end
+          expect(result).to eq([true, false])
+        end
+
+        it '"function_signatures" gets the signatures from a ruby function with multiple dispatch' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler {|c| c.function_signatures('lookup') }
+          end
+          expect(result.is_a?(Array)).to eq(true)
+          expect(result.all? {|s| s.is_a?(Puppet::Pops::Types::PCallableType) }).to eq(true)
+        end
+
+        it '"function_signatures" returns an empty array if function is not found' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler {|c| c.function_signatures('no_where_to_be_found') }
+          end
+          expect(result.is_a?(Array)).to eq(true)
+          expect(result.empty?).to eq(true)
+        end
+      end
+
+      context 'supports puppet data types such that' do
+        it '"type" parses and returns a Type from a string specification' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+            manifest = file_containing('main.pp', "type MyType = Float")
+            ctx.with_script_compiler(manifest_file: manifest) {|c| c.type('Variant[Integer, Boolean, MyType]') }
+          end
+          expect(result.is_a?(Puppet::Pops::Types::PVariantType)).to eq(true)
+          expect(result.types.size).to eq(3)
+          expect(result.instance?(3.14)).to eq(true)
+        end
+
+        it '"new_object" creates a new_object from a puppet data type and args' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+            ctx.with_script_compiler { |c| c.new_object(Puppet::Pops::Types::PIntegerType::DEFAULT, ['0x10']) }
+          end
+          expect(result).to eq(16)
+        end
+
+        it '"new_object" creates a new_object from puppet data type in string form and args' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+            ctx.with_script_compiler { |c| c.new_object('Integer', ['010']) }
+          end
+          expect(result).to eq(8)
+        end
+      end
+    end
+
+    # Note: When function run_plan moves to bolt, so should this test
+    it 'can call run_plan function to run a plan' do
+      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
         manifest = file_containing('aplan.pp', "plan myplan() { 'brilliant' }")
-        ctx.run_plan('myplan', manifest_file: manifest)
+        ctx.with_script_compiler(manifest_file: manifest) {|c| c.call_function('run_plan', ['myplan']) }
       end
       expect(result).to eq('brilliant')
     end
-
-    it 'can call a function' do
-      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
-        manifest = file_containing('afunc.pp', "function myfunc($a) { $a * 2 } ")
-        ctx.with_script_compiler(manifest_file: manifest) do |compiler|
-          compiler.call_function('myfunc',[6])
-        end
-      end
-      expect(result).to eq(12)
-    end
-
-    it 'can call a function with a ruby block' do
-      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
-        manifest = file_containing('empty.pp', "")
-        ctx.with_script_compiler(manifest_file: manifest) do |compiler|
-          compiler.call_function('with',[6]) {|x| x * 2}
-        end
-      end
-      expect(result).to eq(12)
-    end
-
-    it 'can get the signatures from a puppet function' do
-      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
-        manifest = file_containing('afunc.pp', "function myfunc(Integer $a) { $a * 2 } ")
-        ctx.with_script_compiler(manifest_file: manifest) do |compiler|
-          signatures = compiler.function_signatures('myfunc')
-          expect(signatures.is_a?(Array)).to eq(true)
-          [signatures[0].callable_with?([10]), signatures[0].callable_with?(['nope'])]
-        end
-      end
-      expect(result).to eq([true, false])
-    end
-
-    it 'can get the signatures from a ruby function with multiple dispatch' do
-      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
-        manifest = file_containing('afunc.pp', "")
-        ctx.with_script_compiler(manifest_file: manifest) do |compiler|
-          compiler.function_signatures('lookup')
-        end
-      end
-      expect(result.is_a?(Array)).to eq(true)
-      expect(result.all? {|s| s.is_a?(Puppet::Pops::Types::PCallableType) }).to eq(true)
-    end
-
-    it 'returns an empty array for function_signatures if function is not found' do
-      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
-        manifest = file_containing('afunc.pp', "")
-        ctx.with_script_compiler(manifest_file: manifest) do |compiler|
-          compiler.function_signatures('no_where_to_be_found')
-        end
-      end
-      expect(result.is_a?(Array)).to eq(true)
-      expect(result.empty?).to eq(true)
-    end
-
-    it 'parses and returns a Type from a string specification' do
-      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
-        manifest = file_containing('main.pp', "type MyType = Float")
-        ctx.with_script_compiler(manifest_file: manifest) do |compiler|
-          compiler.type('Variant[Integer, Boolean, MyType]')
-        end
-      end
-      expect(result.is_a?(Puppet::Pops::Types::PVariantType)).to eq(true)
-      expect(result.types.size).to eq(3)
-      expect(result.instance?(3.14)).to eq(true)
-    end
-
-    it 'creates a new_object from a puppet data type and args' do
-      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
-        manifest = file_containing('main.pp', "")
-        ctx.with_script_compiler(manifest_file: manifest) do |compiler|
-          compiler.new_object(Puppet::Pops::Types::PIntegerType::DEFAULT, ['0x10'])
-        end
-      end
-      expect(result).to eq(16)
-    end
-
-    it 'creates a new_object from puppet data type in string form and args' do
-      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
-        manifest = file_containing('main.pp', "")
-        ctx.with_script_compiler(manifest_file: manifest) do |compiler|
-          compiler.new_object('Integer', ['010'])
-        end
-      end
-      expect(result).to eq(8)
-    end
-
   end
 
   context 'with code in modules and env' do
@@ -369,24 +384,25 @@ describe 'Puppet Pal' do
         PUPPET
       }
     }
-    context 'configured a temporary environment such that' do
+    context 'configured as temporary environment such that' do
       it 'modules are available' do
         result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
-          ctx.evaluate_script_string('a::afunc()')
+          ctx.with_script_compiler {|c| c.evaluate_string('a::afunc()') }
         end
         expect(result).to eq("a::afunc value")
       end
 
       it 'libs in a given "modulepath" are added to the Ruby $LOAD_PATH' do
         result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
-          ctx.evaluate_script_string('a::arubyfunc()')
+          ctx.with_script_compiler {|c| c.evaluate_string('a::arubyfunc()') }
         end
         expect(result).to eql('something')
       end
 
+      # Note, when functions run_task and run_plan move to bolt, this test should be moved
       it 'a plan in a module can be called with run_plan' do
         result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
-          ctx.evaluate_script_string('run_plan("a::aplan")')
+          ctx.with_script_compiler {|c| c.call_function('run_plan', ["a::aplan"]) }
         end
         expect(result).to eq("a::aplan value")
       end
@@ -394,56 +410,43 @@ describe 'Puppet Pal' do
       it 'errors if a block is not given to in_tmp_environment' do
         expect do
           Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts)
-          ctx.evaluate_script_string('a::afunc()')
         end.to raise_error(/A block must be given to 'in_tmp_environment/)
       end
 
       it 'errors if an env_name is given and is not a String[1]' do |ctx|
         expect do
-          Puppet::Pal.in_tmp_environment('', modulepath: modulepath, facts: node_facts)
-            ctx.evaluate_script_string('a::afunc()')
+          Puppet::Pal.in_tmp_environment('', modulepath: modulepath, facts: node_facts) { |ctx| }
         end.to raise_error(/temporary environment name has wrong type/)
 
         expect do
-          Puppet::Pal.in_tmp_environment(32, modulepath: modulepath, facts: node_facts)
-            ctx.evaluate_script_string('a::afunc()')
+          Puppet::Pal.in_tmp_environment(32, modulepath: modulepath, facts: node_facts) { |ctx| }
         end.to raise_error(/temporary environment name has wrong type/)
       end
 
-      it 'errors if modulepath is something other than an array of strings, empty, or nil' do
-        expect do
-          Puppet::Pal.in_tmp_environment('pal_env', modulepath: {'a' => 'hm'}, facts: node_facts)
-          ctx.evaluate_script_string('a::afunc()')
-        end.to raise_error(/modulepath has wrong type/)
-
-        expect do
-          Puppet::Pal.in_tmp_environment('pal_env', modulepath: 32, facts: node_facts)
-          ctx.evaluate_script_string('a::afunc()')
-        end.to raise_error(/modulepath has wrong type/)
-
-        expect do
-          Puppet::Pal.in_tmp_environment('pal_env', modulepath: 'dir1;dir2', facts: node_facts)
-          ctx.evaluate_script_string('a::afunc()')
-        end.to raise_error(/modulepath has wrong type/)
-
-        expect do
-          Puppet::Pal.in_tmp_environment('pal_env', modulepath: [''], facts: node_facts)
-          ctx.evaluate_script_string('a::afunc()')
-        end.to raise_error(/modulepath has wrong type/)
+      { 'a hash'                => {'a' => 'hm'},
+        'an integer'            => 32,
+        'separated strings'     => 'dir1;dir2',
+        'empty string in array' => ['']
+      }.each_pair do |what, value|
+        it "errors if modulepath is #{what}" do
+          expect do
+            Puppet::Pal.in_tmp_environment('pal_env', modulepath: value, facts: node_facts) { |ctx| }
+          end.to raise_error(/modulepath has wrong type/)
+        end
       end
     end
 
-    context 'configured as existing given environment directory such that' do
+    context 'configured as an existing given environment directory such that' do
       it 'modules in it are available from its "modules" directory' do
         result = Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, facts: node_facts) do |ctx|
-          ctx.evaluate_script_string('a::afunc()')
+          ctx.with_script_compiler {|c| c.evaluate_string('a::afunc()') }
         end
         expect(result).to eq("a::afunc value")
       end
 
       it 'libs in a given "modulepath" are added to the Ruby $LOAD_PATH' do
         result = Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, facts: node_facts) do |ctx|
-          ctx.evaluate_script_string('a::arubyfunc()')
+          ctx.with_script_compiler {|c| c.evaluate_string('a::arubyfunc()') }
         end
         expect(result).to eql('something')
       end
@@ -451,7 +454,7 @@ describe 'Puppet Pal' do
       it 'a given "modulepath" overrides the default' do
         expect do
           result = Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, modulepath: [], facts: node_facts) do |ctx|
-            ctx.evaluate_script_string('a::afunc()')
+            ctx.with_script_compiler {|c| c.evaluate_string('a::afunc()') }
           end
         end.to raise_error(/Unknown function: 'a::afunc'/)
       end
@@ -459,7 +462,7 @@ describe 'Puppet Pal' do
       it 'a "pre_modulepath" is prepended and a "post_modulepath" is appended to the effective modulepath' do
         other_modules1 = File.join(environments_dir, 'other_env1/modules')
         other_modules2 = File.join(environments_dir, 'other_env2/modules')
-        result = Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, 
+        result = Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir,
           pre_modulepath: [other_modules1],
           post_modulepath: [other_modules2],
           facts: node_facts
@@ -470,9 +473,10 @@ describe 'Puppet Pal' do
         expect(result).to be(true)
       end
 
+      # Note when run_plan moves to bolt, this should be tested there
       it 'a plan in a module can be called with run_plan' do
         result = Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, facts: node_facts) do |ctx|
-          ctx.evaluate_script_string('run_plan("a::aplan")')
+          ctx.with_script_compiler {|c| c.evaluate_string('run_plan("a::aplan")') }
         end
         expect(result).to eq("a::aplan value")
       end
@@ -480,8 +484,7 @@ describe 'Puppet Pal' do
       it 'can set variables in any scope' do
         vars = {'a'=> 10, 'x::y' => 20}
         result = Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, facts: node_facts, variables: vars) do |ctx|
-          manifest = file_containing('testing.pp', "1+2+3+4+$a+$x::y")
-          ctx.evaluate_script_manifest(manifest)
+          ctx.with_script_compiler { |c| c.evaluate_string("1+2+3+4+$a+$x::y") }
         end
         expect(result).to eq(40)
       end
@@ -489,52 +492,37 @@ describe 'Puppet Pal' do
       it 'errors in a meaningful way when a non existing env name is given' do
         testing_env_dir # creates the structure
         expect do
-          Puppet::Pal.in_environment('blah_env', env_dir: testing_env_dir.chop, facts: node_facts) do |ctx|
-            ctx.evaluate_script_string('run_plan("a::aplan")')
-          end
+          Puppet::Pal.in_environment('blah_env', env_dir: testing_env_dir.chop, facts: node_facts) { |ctx| }
         end.to raise_error(/The environment directory '.*' does not exist/)
       end
 
       it 'errors if an env_name is given and is not a String[1]' do |ctx|
         expect do
-          Puppet::Pal.in_environment('', env_dir: testing_env_dir, facts: node_facts)
-            ctx.evaluate_script_string('a::afunc()')
+          Puppet::Pal.in_environment('', env_dir: testing_env_dir, facts: node_facts)  { |ctx| }
         end.to raise_error(/env_name has wrong type/)
 
         expect do
-          Puppet::Pal.in_environment(32, env_dir: testing_env_dir, facts: node_facts)
-            ctx.evaluate_script_string('a::afunc()')
+          Puppet::Pal.in_environment(32, env_dir: testing_env_dir, facts: node_facts)  { |ctx| }
         end.to raise_error(/env_name has wrong type/)
       end
 
-      it 'errors if modulepath is something other than an array of strings, empty, or nil' do
-        expect do
-          Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, modulepath: {'a' => 'hm'}, facts: node_facts)
-          ctx.evaluate_script_string('a::afunc()')
-        end.to raise_error(/modulepath has wrong type/)
-
-        expect do
-          Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, modulepath: 32, facts: node_facts)
-          ctx.evaluate_script_string('a::afunc()')
-        end.to raise_error(/modulepath has wrong type/)
-
-        expect do
-          Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, modulepath: 'dir1;dir2', facts: node_facts)
-          ctx.evaluate_script_string('a::afunc()')
-        end.to raise_error(/modulepath has wrong type/)
-
-        expect do
-          Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, modulepath: [''], facts: node_facts)
-          ctx.evaluate_script_string('a::afunc()')
-        end.to raise_error(/modulepath has wrong type/)
+      { 'a hash'                => {'a' => 'hm'},
+        'an integer'            => 32,
+        'separated strings'     => 'dir1;dir2',
+        'empty string in array' => ['']
+      }.each_pair do |what, value|
+        it "errors if modulepath is #{what}" do
+          expect do
+            Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, modulepath: {'a' => 'hm'}, facts: node_facts) { |ctx| }
+            Puppet::Pal.in_tmp_environment('pal_env', modulepath: value, facts: node_facts) { |ctx| }
+          end.to raise_error(/modulepath has wrong type/)
+        end
       end
 
       it 'errors if env_dir and envpath are both given' do
         testing_env_dir # creates the structure
         expect do
-          Puppet::Pal.in_environment('blah_env', env_dir: testing_env_dir, envpath: environments_dir, facts: node_facts) do |ctx|
-            ctx.evaluate_script_string('irrelevant')
-          end
+          Puppet::Pal.in_environment('blah_env', env_dir: testing_env_dir, envpath: environments_dir, facts: node_facts) { |ctx| }
         end.to raise_error(/Cannot use 'env_dir' and 'envpath' at the same time/)
       end
     end
@@ -543,7 +531,7 @@ describe 'Puppet Pal' do
       it 'modules in it are available from its "modules" directory' do
         testing_env_dir # creates the structure
         result = Puppet::Pal.in_environment('pal_env', envpath: environments_dir, facts: node_facts) do |ctx|
-          ctx.evaluate_script_string('a::afunc()')
+          ctx.with_script_compiler { |c| c.evaluate_string('a::afunc()') }
         end
         expect(result).to eq("a::afunc value")
       end
@@ -552,7 +540,7 @@ describe 'Puppet Pal' do
         testing_env_dir # creates the structure
         expect do
           result = Puppet::Pal.in_environment('pal_env', envpath: environments_dir, modulepath: [], facts: node_facts) do |ctx|
-            ctx.evaluate_script_string('a::afunc()')
+            ctx.with_script_compiler { |c| c.evaluate_string('a::afunc()') }
           end
         end.to raise_error(/Unknown function: 'a::afunc'/)
       end
@@ -572,19 +560,21 @@ describe 'Puppet Pal' do
         expect(result).to be(true)
       end
 
+      # Note that when run_plan moves to bolt, this needs to move there
       it 'a plan in a module can be called with run_plan' do
         testing_env_dir # creates the structure
         result = Puppet::Pal.in_environment('pal_env', envpath: environments_dir, facts: node_facts) do |ctx|
-          ctx.evaluate_script_string('run_plan("a::aplan")')
+          ctx.with_script_compiler {|c| c.evaluate_string('run_plan("a::aplan")') }
         end
         expect(result).to eq("a::aplan value")
       end
 
+      # Note that when run_plan moves to bolt, this needs to move there
       it 'the envpath can have multiple entries - that are searched for the given env' do
         testing_env_dir # creates the structure
         several_dirs = "/tmp/nowhere/to/be/found:#{environments_dir}"
         result = Puppet::Pal.in_environment('pal_env', envpath: environments_dir, facts: node_facts) do |ctx|
-          ctx.evaluate_script_string('run_plan("a::aplan")')
+          ctx.with_script_compiler {|c| c.evaluate_string('run_plan("a::aplan")') }
         end
         expect(result).to eq("a::aplan value")
       end
@@ -592,9 +582,7 @@ describe 'Puppet Pal' do
       it 'errors in a meaningful way when a non existing env name is given' do
         testing_env_dir # creates the structure
         expect do
-          Puppet::Pal.in_environment('blah_env', envpath: environments_dir, facts: node_facts) do |ctx|
-            ctx.evaluate_script_string('run_plan("a::aplan")')
-          end
+          Puppet::Pal.in_environment('blah_env', envpath: environments_dir, facts: node_facts) { |ctx| }
         end.to raise_error(/No directory found for the environment 'blah_env' on the path '.*'/)
       end
 
@@ -607,24 +595,19 @@ describe 'Puppet Pal' do
       it 'errors if envpath is something other than a string' do
         testing_env_dir # creates the structure
         expect do
-          Puppet::Pal.in_environment('blah_env', envpath: '', facts: node_facts) do |ctx|
-            ctx.evaluate_script_string('irrelevant')
-          end
+          Puppet::Pal.in_environment('blah_env', envpath: '', facts: node_facts)  { |ctx| }
         end.to raise_error(/envpath has wrong type/)
 
         expect do
-          Puppet::Pal.in_environment('blah_env', envpath: [environments_dir], facts: node_facts) do |ctx|
-            ctx.evaluate_script_string('irrelevant')
-          end
+          Puppet::Pal.in_environment('blah_env', envpath: [environments_dir], facts: node_facts) { |ctx| }
         end.to raise_error(/envpath has wrong type/)
       end
-
     end
 
     it 'sets the facts if they are not given' do
       testing_env_dir # creates the structure
       result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath ) do |ctx|
-        ctx.evaluate_script_string("$facts =~ Hash and $facts[puppetversion] == '#{Puppet.version}'")
+        ctx.with_script_compiler {|c| c.evaluate_string("$facts =~ Hash and $facts[puppetversion] == '#{Puppet.version}'") }
       end
       expect(result).to eq(true)
     end
