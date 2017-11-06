@@ -476,7 +476,7 @@ class PTypeType < PTypeWithContainedType
   def self.new_function(type)
     @new_function ||= Puppet::Functions.create_loaded_function(:new_type, type.loader) do
       dispatch :from_string do
-        param 'String', :type_string
+        param 'String[1]', :type_string
       end
 
       def from_string(type_string)
@@ -831,6 +831,19 @@ class PEnumType < PScalarDataType
   end
 end
 
+INTEGER_HEX = '(?:0[xX][0-9A-Fa-f]+)'
+INTEGER_OCT = '(?:0[0-7]+)'
+INTEGER_BIN = '(?:0[bB][01]+)'
+INTEGER_DEC = '(?:0|[1-9]\d*)'
+SIGN_PREFIX = '[+-]?\s*'
+
+OPTIONAL_FRACTION = '(?:\.\d+)?'
+OPTIONAL_EXPONENT = '(?:[eE]-?\d+)?'
+FLOAT_DEC = '(?:' + INTEGER_DEC + OPTIONAL_FRACTION + OPTIONAL_EXPONENT + ')'
+
+INTEGER_PATTERN = '\A' + SIGN_PREFIX + '(?:' + INTEGER_DEC + '|' + INTEGER_HEX + '|' + INTEGER_OCT + '|' + INTEGER_BIN + ')\z'
+FLOAT_PATTERN = '\A' + SIGN_PREFIX + '(?:' + FLOAT_DEC + '|' + INTEGER_HEX + '|' + INTEGER_OCT + '|' + INTEGER_BIN + ')\z'
+
 # @api public
 #
 class PNumericType < PScalarDataType
@@ -844,7 +857,7 @@ class PNumericType < PScalarDataType
   def self.new_function(type)
     @new_function ||= Puppet::Functions.create_loaded_function(:new_numeric, type.loader) do
       local_types do
-        type 'Convertible = Variant[Undef, Integer, Float, Boolean, String, Timespan, Timestamp]'
+        type "Convertible = Variant[Integer, Float, Boolean, Pattern[/#{FLOAT_PATTERN}/], Timespan, Timestamp]"
         type 'NamedArgs   = Struct[{from => Convertible, Optional[abs] => Boolean}]'
       end
 
@@ -855,6 +868,11 @@ class PNumericType < PScalarDataType
 
       dispatch :from_hash do
         param          'NamedArgs',  :hash_args
+      end
+
+      argument_mismatch :on_error do
+        param          'Any',     :from
+        optional_param 'Boolean', :abs
       end
 
       def from_args(from, abs = false)
@@ -868,8 +886,6 @@ class PNumericType < PScalarDataType
 
       def from_convertible(from)
         case from
-        when NilClass
-          throw :undefined_value
         when Float
           from
         when Integer
@@ -880,7 +896,7 @@ class PNumericType < PScalarDataType
           1
         when FalseClass
           0
-        when String
+        else
           begin
             if from[0] == '0' && (from[1].downcase == 'b' || from[1].downcase == 'x')
               Integer(from)
@@ -892,9 +908,15 @@ class PNumericType < PScalarDataType
           rescue ArgumentError => e
             raise TypeConversionError.new(e.message)
           end
+        end
+      end
+
+      def on_error(from, abs = false)
+        if from.is_a?(String)
+          _("The string '%{str}' cannot be converted to Numeric") % { str: from }
         else
-          t = Puppet::Pops::Types::TypeCalculator.singleton.infer(from).generalize
-          raise TypeConversionError.new("Value of type '#{t}' cannot be converted to Numeric")
+          t = TypeCalculator.singleton.infer(from).generalize
+          _("Value of type %{type} cannot be converted to Numeric") % { type: t }
         end
       end
     end
@@ -1055,7 +1077,7 @@ class PIntegerType < PNumericType
     @@new_function ||= Puppet::Functions.create_loaded_function(:new, loader) do
       local_types do
         type 'Radix       = Variant[Default, Integer[2,2], Integer[8,8], Integer[10,10], Integer[16,16]]'
-        type 'Convertible = Variant[Undef, Numeric, Boolean, String, Timespan, Timestamp]'
+        type "Convertible = Variant[Numeric, Boolean, Pattern[/#{INTEGER_PATTERN}/], Timespan, Timestamp]"
         type 'NamedArgs   = Struct[{from => Convertible, Optional[radix] => Radix, Optional[abs] => Boolean}]'
       end
 
@@ -1069,6 +1091,16 @@ class PIntegerType < PNumericType
         param          'NamedArgs',  :hash_args
       end
 
+      argument_mismatch :on_error_hash do
+        param          'Hash',  :hash_args
+      end
+
+      argument_mismatch :on_error do
+        param          'Any',     :from
+        optional_param 'Integer', :radix
+        optional_param 'Boolean', :abs
+      end
+
       def from_args(from, radix = :default, abs = false)
         result = from_convertible(from, radix)
         abs ? result.abs : result
@@ -1080,8 +1112,6 @@ class PIntegerType < PNumericType
 
       def from_convertible(from, radix)
         case from
-        when NilClass
-          throw :undefined_value
         when Float, Time::TimeData
           from.to_i
         when Integer
@@ -1090,9 +1120,9 @@ class PIntegerType < PNumericType
           1
         when FalseClass
           0
-        when String
+        else
           begin
-            radix == :default ? Integer(from) : Integer(from, assert_radix(radix))
+            radix == :default ? Integer(from) : Integer(from, radix)
           rescue TypeError => e
             raise TypeConversionError.new(e.message)
           rescue ArgumentError => e
@@ -1108,17 +1138,34 @@ class PIntegerType < PNumericType
             end
             raise TypeConversionError.new(e.message)
           end
+        end
+      end
+
+      def on_error_hash(args_hash)
+        if args_hash.include?('from')
+          from = args_hash['from']
+          return on_error(from) unless loader.load(:type, 'convertible').instance?(from)
+        end
+        radix = args_hash['radix']
+        assert_radix(radix) unless radix.nil? || radix == :default
+        TypeAsserter.assert_instance_of('Integer.new', loader.load(:type, 'namedargs'), args_hash)
+      end
+
+      def on_error(from, radix = :default, abs = nil)
+        assert_radix(radix) unless radix == :default
+        if from.is_a?(String)
+          _("The string '%{str}' cannot be converted to Integer") % { str: from }
         else
-          t = Puppet::Pops::Types::TypeCalculator.singleton.infer(from).generalize
-          raise TypeConversionError.new("Value of type '#{t}' cannot be converted to an Integer")
+          t = TypeCalculator.singleton.infer(from).generalize
+          _("Value of type %{type} cannot be converted to Integer") % { type: t }
         end
       end
 
       def assert_radix(radix)
         case radix
-        when 2, 8, 10, 16, :default
+        when 2, 8, 10, 16
         else
-          raise ArgumentError.new("Illegal radix: '#{radix}', expected 2, 8, 10, 16, or default")
+          raise ArgumentError.new(_("Illegal radix: %{radix}, expected 2, 8, 10, 16, or default") % { radix: radix })
         end
         radix
       end
@@ -1165,7 +1212,7 @@ class PFloatType < PNumericType
   def self.new_function(type)
     @new_function ||= Puppet::Functions.create_loaded_function(:new_float, type.loader) do
       local_types do
-        type 'Convertible = Variant[Undef, Numeric, Boolean, String, Timespan, Timestamp]'
+        type "Convertible = Variant[Numeric, Boolean, Pattern[/#{FLOAT_PATTERN}/], Timespan, Timestamp]"
         type 'NamedArgs   = Struct[{from => Convertible, Optional[abs] => Boolean}]'
       end
 
@@ -1176,6 +1223,11 @@ class PFloatType < PNumericType
 
       dispatch :from_hash do
         param          'NamedArgs',  :hash_args
+      end
+
+      argument_mismatch :on_error do
+        param          'Any',     :from
+        optional_param 'Boolean', :abs
       end
 
       def from_args(from, abs = false)
@@ -1189,8 +1241,6 @@ class PFloatType < PNumericType
 
       def from_convertible(from)
         case from
-        when NilClass
-          throw :undefined_value
         when Float
           from
         when Integer
@@ -1201,7 +1251,7 @@ class PFloatType < PNumericType
           1.0
         when FalseClass
           0.0
-        when String
+        else
           begin
             # support a binary as float
             if from[0] == '0' && from[1].downcase == 'b'
@@ -1223,9 +1273,15 @@ class PFloatType < PNumericType
             end
             raise TypeConversionError.new(e.message)
           end
+        end
+      end
+
+      def on_error(from, _ = false)
+        if from.is_a?(String)
+          _("The string '%{str}' cannot be converted to Float") % { str: from }
         else
-          t = Puppet::Pops::Types::TypeCalculator.singleton.infer(from).generalize
-          raise TypeConversionError.new("Value of type '#{t}' cannot be converted to Float")
+          t = TypeCalculator.singleton.infer(from).generalize
+          _("Value of type %{type} cannot be converted to Float") % { type: t }
         end
       end
     end
@@ -1816,26 +1872,33 @@ class PBooleanType < PScalarDataType
   def self.new_function(type)
     @new_function ||= Puppet::Functions.create_loaded_function(:new_boolean, type.loader) do
       dispatch :from_args do
-        param          'Variant[Undef, Integer, Float, Boolean, String]',  :from
+        param "Variant[Integer, Float, Boolean, Enum['false','true','yes','no','y','n',true]]",  :from
+      end
+
+      argument_mismatch :on_error do
+        param  'Any', :from
       end
 
       def from_args(from)
         from = from.downcase if from.is_a?(String)
         case from
-        when NilClass
-          throw :undefined_value
         when Float
           from != 0.0
         when Integer
           from != 0
-        when true, false
-          from
-        when 'false', 'no', 'n'
+        when false, 'false', 'no', 'n'
           false
-        when 'true', 'yes', 'y'
-          true
         else
-          raise TypeConversionError.new("Value '#{from}' of type '#{from.class}' cannot be converted to Boolean")
+          true
+        end
+      end
+
+      def on_error(from)
+        if from.is_a?(String)
+          _("The string '%{str}' cannot be converted to Boolean") % { str: from }
+        else
+          t = TypeCalculator.singleton.infer(from).generalize
+          _("Value of type %{type} cannot be converted to Boolean") % { type: t }
         end
       end
     end
@@ -2529,40 +2592,42 @@ class PArrayType < PCollectionType
   def self.new_function(type)
     @new_function ||= Puppet::Functions.create_loaded_function(:new_array, type.loader) do
 
-      dispatch :from_args do
-        param           'Any',  :from
-        optional_param  'Boolean',      :wrap
+      dispatch :to_array do
+        param           'Variant[Array,Hash,Binary,Iterable]', :from
+        optional_param  'Boolean[false]', :wrap
       end
 
-      def from_args(from, wrap = false)
+      dispatch :wrapped do
+        param  'Any',           :from
+        param  'Boolean[true]', :wrap
+      end
+
+      argument_mismatch :on_error do
+        param  'Any',             :from
+        optional_param 'Boolean', :wrap
+      end
+
+      def wrapped(from, _)
+        from.is_a?(Array) ? from : [from]
+      end
+
+      def to_array(from, _ = false)
         case from
-        when NilClass
-          if wrap
-            [nil]
-          else
-            throw :undefined_value
-          end
         when Array
           from
         when Hash
-          wrap ? [from] : from.to_a
-
+          from.to_a
         when PBinaryType::Binary
           # For older rubies, the #bytes method returns an Enumerator that must be rolled out
-          wrap ? [from] : from.binary_buffer.bytes.to_a
-
+          from.binary_buffer.bytes.to_a
         else
-          if wrap
-            [from]
-          else
-            if PIterableType::DEFAULT.instance?(from)
-              Iterable.on(from).to_a
-            else
-              t = Puppet::Pops::Types::TypeCalculator.singleton.infer(from).generalize
-              raise TypeConversionError.new("Value of type '#{t}' cannot be converted to Array")
-            end
-          end
+          Iterable.on(from).to_a
         end
+      end
+
+      def on_error(from, _ = false)
+        t = TypeCalculator.singleton.infer(from).generalize
+        _("Value of type %{type} cannot be converted to Array") % { type: t }
       end
     end
   end
@@ -2763,14 +2828,12 @@ class PHashType < PCollectionType
 
       def from_array(from)
         case from
-        when NilClass
-          throw :undefined_value
         when Array
           if from.size == 0
             {}
           else
             unless from.size % 2 == 0
-              raise TypeConversionError.new("odd number of arguments for Hash")
+              raise TypeConversionError.new(_('odd number of arguments for Hash'))
             end
             Hash[*from]
           end
@@ -2780,8 +2843,8 @@ class PHashType < PCollectionType
           if PIterableType::DEFAULT.instance?(from)
             Hash[*Iterable.on(from).to_a]
           else
-            t = Puppet::Pops::Types::TypeCalculator.singleton.infer(from).generalize
-            raise TypeConversionError.new("Value of type '#{t}' cannot be converted to Hash")
+            t = TypeCalculator.singleton.infer(from).generalize
+            raise TypeConversionError.new(_("Value of type %{type} cannot be converted to Hash") % { type: t })
           end
         end
       end
