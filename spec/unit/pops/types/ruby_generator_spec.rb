@@ -614,7 +614,7 @@ describe 'Puppet Ruby Generator' do
               "MyFloat => Float, "+
               "ThirdGenerated => Object[{attributes => {'first' => My::FirstGenerated}}], "+
               "FourthGenerated => Object[{parent => My::SecondGenerated, attributes => {"+
-                "'complex' => {type => Optional[ThirdGenerated], value => ?}, "+
+                "'complex' => {type => Optional[ThirdGenerated], value => undef}, "+
                 "'n1' => My::MyInteger, "+
                 "'n2' => MyFloat"+
               "}}]}, references => {My => {'name' => 'MyModule', 'version_range' => '1.x'}}}]")

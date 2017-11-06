@@ -201,7 +201,6 @@ class TypeParser
         'semverrange'  => TypeFactory.sem_ver_range,
         'timestamp'    => TypeFactory.timestamp,
         'timespan'     => TypeFactory.timespan,
-        'error'        => TypeFactory.error
     }.freeze
   end
 
@@ -341,26 +340,21 @@ class TypeParser
       TypeFactory.regexp(parameters[0])
 
     when 'enum'
-      # 1..m parameters being strings
+      # 1..m parameters being string
+      last = parameters.last
+      case_insensitive = false
+      if last == true || last == false
+        parameters = parameters[0...-1]
+        case_insensitive = last
+      end
       raise_invalid_parameters_error('Enum', '1 or more', parameters.size) unless parameters.size >= 1
       parameters.each { |p|  raise Puppet::ParseError, 'Enum parameters must be identifiers or strings' unless p.is_a?(String) }
-      TypeFactory.enum(*parameters)
+      PEnumType.new(parameters, case_insensitive)
 
     when 'pattern'
       # 1..m parameters being strings or regular expressions
       raise_invalid_parameters_error('Pattern', '1 or more', parameters.size) unless parameters.size >= 1
       TypeFactory.pattern(*parameters)
-
-    when 'error'
-      # 1 - 2 parameters where both are string, regexp, or type
-      case parameters.size
-      when 1, 2
-        pt = PErrorType::TYPE_ERROR_PARAM
-        parameters.each { |p| raise Puppet::ParseError, "Error parameters must be ${pt}" unless pt.instance?(p) }
-        TypeFactory.error(*parameters)
-      else
-        raise_invalid_parameters_error('Error', '1 - 2', parameters.size)
-      end
 
     when 'variant'
       # 1..m parameters being strings or regular expressions
@@ -404,6 +398,12 @@ class TypeParser
       h = parameters[0]
       raise_invalid_type_specification_error(ast) unless h.is_a?(Hash)
       TypeFactory.struct(h)
+
+    when 'boolean'
+      raise_invalid_parameters_error('Boolean', '1', parameters.size) unless parameters.size == 1
+      p = parameters[0]
+      raise Puppet::ParseError, 'Boolean parameter must be true or false' unless p == true || p == false
+      TypeFactory.boolean(p)
 
     when 'integer'
       if parameters.size == 1
@@ -497,7 +497,7 @@ class TypeParser
       assert_type(ast, param) unless param.is_a?(String)
       TypeFactory.optional(param)
 
-    when 'any', 'data', 'catalogentry', 'boolean', 'scalar', 'undef', 'numeric', 'default', 'semverrange'
+    when 'any', 'data', 'catalogentry', 'scalar', 'undef', 'numeric', 'default', 'semverrange'
       raise_unparameterized_type_error(qref)
 
     when 'notundef'

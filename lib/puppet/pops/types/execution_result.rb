@@ -62,7 +62,8 @@ module Types
 
     def error_nodes
       result = {}
-      @result_hash.each_pair { |k, v| result[k] = v if v.is_a?(PErrorType::Error) }
+      t = TypeFactory.error
+      @result_hash.each_pair { |k, v| result[k] = v if t.instance?(v) }
       self.class.new(result)
     end
 
@@ -75,13 +76,15 @@ module Types
     end
 
     def ok
-      !@result_hash.values.any? { |v| v.is_a?(PErrorType::Error) }
+      t = TypeFactory.error
+      !@result_hash.values.any? { |v| t.instance?(v) }
     end
     alias_method :ok?, :ok
 
     def ok_nodes
       result = {}
-      @result_hash.each_pair { |k, v| result[k] = v unless v.is_a?(PErrorType::Error) }
+      t = TypeFactory.error
+      @result_hash.each_pair { |k, v| result[k] = v unless t.instance?(v) }
       self.class.new(result)
     end
 
@@ -116,7 +119,7 @@ module Types
       if error.nil?
         value
       else
-        PErrorType::Error.new(error['msg'], error['kind'], error['issue_code'] || PErrorType::DEFAULT_ISSUE_CODE, value, error['details'])
+        TypeFactory.error.create(error['msg'], error['kind'], error['issue_code'], value, error['details'])
       end
     end
 

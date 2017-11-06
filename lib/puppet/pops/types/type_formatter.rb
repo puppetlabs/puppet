@@ -149,7 +149,9 @@ class TypeFormatter
   def string_PDefaultType(_) ; @bld << 'Default' ; end
 
   # @api private
-  def string_PBooleanType(_) ; @bld << 'Boolean' ; end
+  def string_PBooleanType(t)
+    append_array('Boolean', t.value.nil?) { append_string(t.value) }
+  end
 
   # @api private
   def string_PScalarType(_)  ; @bld << 'Scalar'  ; end
@@ -213,7 +215,13 @@ class TypeFormatter
 
   # @api private
   def string_PEnumType(t)
-    append_array('Enum', t.values.empty?) { append_strings(t.values) }
+    append_array('Enum', t.values.empty?) do
+      append_strings(t.values)
+      if t.case_insensitive?
+        @bld << COMMA_SEP
+        append_string(true)
+      end
+    end
   end
 
   # @api private
@@ -320,17 +328,6 @@ class TypeFormatter
   # @api private
   def string_PPatternType(t)
     append_array('Pattern', t.patterns.empty?) { append_strings(t.patterns.map(&:regexp)) }
-  end
-
-  # @api private
-  def string_PErrorType(t)
-    append_array('Error', t.kind.nil? && t.issue_code.nil?) do
-      t.kind.nil? ? append_default : append_error_param(t.kind)
-      unless t.issue_code.nil?
-        @bld << COMMA_SEP
-        append_error_param(t.issue_code)
-      end
-    end
   end
 
   def append_error_param(ep)
@@ -580,7 +577,7 @@ class TypeFormatter
   end
 
   # @api private
-  def string_NilClass(t)     ; @bld << (@ruby ? 'nil' : '?') ; end
+  def string_NilClass(t)     ; @bld << (@ruby ? 'nil' : 'undef') ; end
 
   # @api private
   def string_Numeric(t)      ; @bld << t.to_s    ; end

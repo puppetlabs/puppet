@@ -156,7 +156,7 @@ class PInitType < PTypeWithContainedType
     rescue ArgumentError
       raise ArgumentError, _("Creation of new instance of type '%{type_name}' is not supported") % { type_name: @type.to_s }
     end
-    param_tuples = new_func.dispatcher.dispatchers.map { |closure| closure.type.param_types }
+    param_tuples = new_func.dispatcher.signatures.map { |closure| closure.type.param_types }
 
     # An instance of the contained type is always a match to this type.
     single_types = [@type]

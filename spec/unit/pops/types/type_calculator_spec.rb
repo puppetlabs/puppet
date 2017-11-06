@@ -1052,6 +1052,32 @@ describe 'The type calculator' do
       end
     end
 
+    context 'for Enum, such that' do
+      it 'Enum is assignable to an Enum with all contained options' do
+        expect(enum_t('a', 'b')).to be_assignable_to(enum_t('a', 'b', 'c'))
+      end
+
+      it 'Enum is not assignable to an Enum with fewer contained options' do
+        expect(enum_t('a', 'b')).not_to be_assignable_to(enum_t('a'))
+      end
+
+      it 'case insensitive Enum is not assignable to case sensitive Enum' do
+        expect(enum_t('a', 'b', true)).not_to be_assignable_to(enum_t('a', 'b'))
+      end
+
+      it 'case sensitive Enum is assignable to case insensitive Enum' do
+        expect(enum_t('a', 'b')).to be_assignable_to(enum_t('a', 'b', true))
+      end
+
+      it 'case sensitive Enum is not assignable to case sensitive Enum using different case' do
+        expect(enum_t('a', 'b')).not_to be_assignable_to(enum_t('A', 'B'))
+      end
+
+      it 'case sensitive Enum is assignable to case insensitive Enum using different case' do
+        expect(enum_t('a', 'b')).to be_assignable_to(enum_t('A', 'B', true))
+      end
+    end
+
     context 'for Hash, such that' do
       it 'Hash is not assignable to any other Collection type' do
         t = PHashType::DEFAULT

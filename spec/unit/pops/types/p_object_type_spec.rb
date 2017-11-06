@@ -1349,6 +1349,21 @@ describe 'The Object Type' do
         PUPPET
       end
 
+      it 'A parameterized type is assignable to another parameterized type if base type and parameters are assignable' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(['true'])
+        type MyType = Object[
+          type_parameters => {
+            p1 => Variant[Undef,String,Regexp,Type[Enum],Type[Pattern]],
+            p2 => Variant[Undef,String,Regexp,Type[Enum],Type[Pattern]],
+          },
+          attributes => {
+            p1 => String,
+            p2 => String
+          }]
+        notice(MyType[Pattern[/a/,/b/]] > MyType[Enum['a','b']])
+        PUPPET
+      end
+
       it 'Instance is inferred to parameterized type' do
         expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(['true', 'true', 'true', 'true', 'true'])
         type MyType = Object[

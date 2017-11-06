@@ -19,7 +19,7 @@ describe 'The type formatter' do
     {
       'true' => true,
       'false' => false,
-      '?' => nil,
+      'undef' => nil,
       '23.4' => 23.4,
       '145' => 145,
       "'string'" => 'string',
@@ -97,6 +97,14 @@ FORMATTED
 
     it "should yield 'Boolean' for PBooleanType" do
       expect(s.string(f.boolean)).to eq('Boolean')
+    end
+
+    it "should yield 'Boolean[true]' for PBooleanType parameterized with true" do
+      expect(s.string(f.boolean(true))).to eq('Boolean[true]')
+    end
+
+    it "should yield 'Boolean[false]' for PBooleanType parameterized with false" do
+      expect(s.string(f.boolean(false))).to eq('Boolean[false]')
     end
 
     it "should yield 'Data' for the Data type" do
@@ -288,6 +296,16 @@ FORMATTED
     it "should yield 'Enum[s,...]' for a PEnumType[s,...]" do
       t = f.enum('a', 'b', 'c')
       expect(s.string(t)).to eq("Enum['a', 'b', 'c']")
+    end
+
+    it "should yield 'Enum[s,...]' for a PEnumType[s,...,false]" do
+      t = f.enum('a', 'b', 'c', false)
+      expect(s.string(t)).to eq("Enum['a', 'b', 'c']")
+    end
+
+    it "should yield 'Enum[s,...,true]' for a PEnumType[s,...,true]" do
+      t = f.enum('a', 'b', 'c', true)
+      expect(s.string(t)).to eq("Enum['a', 'b', 'c', true]")
     end
 
     it "should yield 'Pattern[/pat/,...]' for a PPatternType['pat',...]" do

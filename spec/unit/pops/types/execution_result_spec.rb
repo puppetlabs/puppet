@@ -84,7 +84,7 @@ describe 'ExecutionResult' do
             notice($o)
         CODE
         expect(eval_and_collect_notices(code)).to eq([
-          "ExecutionResult({'example.com' => Error({'message' => 'nope', 'issue_code' => 'ERROR', 'partial_result' => 'almost there, almost th...argh'})})"
+          "ExecutionResult({'example.com' => Error({'message' => 'nope', 'partial_result' => 'almost there, almost th...argh'})})"
         ])
       end
 
@@ -104,15 +104,15 @@ describe 'ExecutionResult' do
             notice($o.error_nodes)
         CODE
         expect(eval_and_collect_notices(code)).to eq([
-          "ExecutionResult({'alpha.example.com' => Error({'message' => 'nope', 'issue_code' => 'ERROR', 'partial_result' => 'almost there, almost th...argh'}), 'beta.example.com' => 'total success'})",
+          "ExecutionResult({'alpha.example.com' => Error({'message' => 'nope', 'partial_result' => 'almost there, almost th...argh'}), 'beta.example.com' => 'total success'})",
           'false',
           'false',
           '2',
-          "Error({'message' => 'nope', 'issue_code' => 'ERROR', 'partial_result' => 'almost there, almost th...argh'})",
+          "Error({'message' => 'nope', 'partial_result' => 'almost there, almost th...argh'})",
           'total success',
-          "[Error({'message' => 'nope', 'issue_code' => 'ERROR', 'partial_result' => 'almost there, almost th...argh'}), total success]",
+          "[Error({'message' => 'nope', 'partial_result' => 'almost there, almost th...argh'}), total success]",
           "ExecutionResult({'beta.example.com' => 'total success'})",
-          "ExecutionResult({'alpha.example.com' => Error({'message' => 'nope', 'issue_code' => 'ERROR', 'partial_result' => 'almost there, almost th...argh'})})"
+          "ExecutionResult({'alpha.example.com' => Error({'message' => 'nope', 'partial_result' => 'almost there, almost th...argh'})})"
         ])
       end
 
@@ -146,7 +146,7 @@ describe 'ExecutionResult' do
                 $o.each |$e| { notice("Node ${e[0]} returned ${e[1]}") }
             CODE
             expect(eval_and_collect_notices(code)).to eq([
-              "Node alpha.example.com returned Error({'message' => 'nope', 'issue_code' => 'ERROR', 'partial_result' => 'almost there, almost th...argh'})",
+              "Node alpha.example.com returned Error({'message' => 'nope', 'partial_result' => 'almost there, almost th...argh'})",
               'Node beta.example.com returned total success'
             ])
           end
@@ -171,7 +171,7 @@ describe 'ExecutionResult' do
               notice($o.map |$e| { $e[1] })
             CODE
             expect(eval_and_collect_notices(code)).to eq([
-              "[Error({'message' => 'nope', 'issue_code' => 'ERROR', 'partial_result' => 'almost there, almost th...argh'}), total success]"
+              "[Error({'message' => 'nope', 'partial_result' => 'almost there, almost th...argh'}), total success]"
             ])
           end
         end
@@ -205,7 +205,7 @@ describe 'ExecutionResult' do
                 $o.each |$k, $v| { notice("Node $k returned $v") }
             CODE
             expect(eval_and_collect_notices(code)).to eq([
-              "Node alpha.example.com returned Error({'message' => 'nope', 'issue_code' => 'ERROR', 'partial_result' => 'almost there, almost th...argh'})",
+              "Node alpha.example.com returned Error({'message' => 'nope', 'partial_result' => 'almost there, almost th...argh'})",
               'Node beta.example.com returned total success'
             ])
           end
@@ -230,7 +230,7 @@ describe 'ExecutionResult' do
               notice($o.map |$k, $v| { $v })
             CODE
             expect(eval_and_collect_notices(code)).to eq([
-              "[Error({'message' => 'nope', 'issue_code' => 'ERROR', 'partial_result' => 'almost there, almost th...argh'}), total success]"
+              "[Error({'message' => 'nope', 'partial_result' => 'almost there, almost th...argh'}), total success]"
             ])
           end
         end

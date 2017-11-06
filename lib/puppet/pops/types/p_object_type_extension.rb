@@ -168,7 +168,9 @@ class PObjectTypeExtension < PAnyType
     eval = Parser::EvaluatingParser.singleton.evaluator
     @parameters.keys.all? do |pn|
       if param_values.include?(pn)
-        eval.match?(param_values[pn], @parameters[pn])
+        a = param_values[pn]
+        b = @parameters[pn]
+        eval.match?(a, b) || a.is_a?(PAnyType) && b.is_a?(PAnyType) && b.assignable?(a)
       else
         false
       end

@@ -127,7 +127,13 @@ module TypeFactory
   # @api public
   #
   def self.enum(*values)
-    PEnumType.new(values)
+    last = values.last
+    case_insensitive = false
+    if last == true || last == false
+      case_insensitive = last
+      values = values[0...-1]
+    end
+    PEnumType.new(values, case_insensitive)
   end
 
   # Produces the Variant type, optionally with the "one of" types
@@ -227,8 +233,8 @@ module TypeFactory
   # Produces the Boolean type
   # @api public
   #
-  def self.boolean
-    PBooleanType::DEFAULT
+  def self.boolean(value = nil)
+    value.nil? ? PBooleanType::DEFAULT : (value ? PBooleanType::TRUE : PBooleanType::FALSE)
   end
 
   # Produces the Any type
@@ -511,11 +517,11 @@ module TypeFactory
     inst_type.nil? ? PTypeType::DEFAULT : PTypeType.new(inst_type)
   end
 
-  # Produces a type for Error[K, I]
+  # Produces a type for Error
   # @api public
   #
-  def self.error(kind = nil, issue_code = nil)
-    kind.nil? && issue_code.nil? ? PErrorType::DEFAULT : PErrorType.new(kind, issue_code)
+  def self.error
+    @error_t ||= TypeParser.singleton.parse('Error', Loaders.static_loader)
   end
 
   # Produce a type corresponding to the class of given unless given is a

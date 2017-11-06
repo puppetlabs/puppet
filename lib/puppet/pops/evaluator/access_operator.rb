@@ -148,10 +148,22 @@ class AccessOperator
     end
   end
 
+  def access_PBooleanType(o, scope, keys)
+    keys.flatten!
+    assert_keys(keys, o, 1, 1, TrueClass, FalseClass)
+    Types::TypeFactory.boolean(keys[0])
+  end
+
   def access_PEnumType(o, scope, keys)
     keys.flatten!
+    last = keys.last
+    case_insensitive = false
+    if last == true || last == false
+      keys = keys[0...-1]
+      case_insensitive = last
+    end
     assert_keys(keys, o, 1, Float::INFINITY, String)
-    Types::TypeFactory.enum(*keys)
+    Types::PEnumType.new(keys, case_insensitive)
   end
 
   def access_PVariantType(o, scope, keys)
@@ -280,23 +292,6 @@ class AccessOperator
     keys.flatten!
     assert_keys(keys, o, 1, Float::INFINITY, String, Regexp, Types::PPatternType, Types::PRegexpType)
     Types::TypeFactory.pattern(*keys)
-  end
-
-  def access_PErrorType(o, scope, keys)
-    # 1 - 2 parameters where both are string, regexp, or type
-    keys.flatten!
-    case keys.size
-    when 1, 2
-      pt = Types::PErrorType::TYPE_ERROR_PARAM
-      keys.each_with_index do |p, i|
-        unless pt.instance?(p)
-          fail(Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[i], {:base_type => 'Error-Type', :actual => p.class})
-        end
-      end
-      Types::TypeFactory.error(*keys)
-    else
-      fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Error-Type', :min => 1, :max => 2, :actual => keys.size})
-    end
   end
 
   def access_POptionalType(o, scope, keys)
