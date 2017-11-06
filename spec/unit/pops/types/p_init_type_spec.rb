@@ -281,7 +281,7 @@ describe 'The Init Type' do
     end
 
     context 'computes if x is an instance such that' do
-      %w(true false True False TRUE FALSE Yes No yes no YES NO y n Y N).each do |str|
+      %w(true false True False TRUE FALSE tRuE FaLsE Yes No yes no YES NO YeS nO y n Y N).each do |str|
         it "string '#{str}' is an instance of Init[Boolean]" do
           expect(eval_and_collect_notices("notice('#{str}' =~ Init[Boolean])")).to eql(['true'])
         end
@@ -289,6 +289,14 @@ describe 'The Init Type' do
 
       it 'arbitrary string is not an instance of Init[Boolean]' do
         expect(eval_and_collect_notices("notice('blue' =~ Init[Boolean])")).to eql(['false'])
+      end
+
+      it 'empty string is not an instance of Init[Boolean]' do
+        expect(eval_and_collect_notices("notice('' =~ Init[Boolean])")).to eql(['false'])
+      end
+
+      it 'undef string is not an instance of Init[Boolean]' do
+        expect(eval_and_collect_notices("notice(undef =~ Init[Boolean])")).to eql(['false'])
       end
 
       %w(0 1 0634 0x3b -0xba 0b1001 +0b1111 23.14 -2.3 2e-21 1.23e18  -0.23e18).each do |str|
@@ -301,6 +309,14 @@ describe 'The Init Type' do
         expect(eval_and_collect_notices("notice('blue' =~ Init[Numeric])")).to eql(['false'])
       end
 
+      it 'empty string is not an instance of Init[Numeric]' do
+        expect(eval_and_collect_notices("notice('' =~ Init[Numeric])")).to eql(['false'])
+      end
+
+      it 'undef is not an instance of Init[Numeric]' do
+        expect(eval_and_collect_notices("notice(undef =~ Init[Numeric])")).to eql(['false'])
+      end
+
       %w(0 1 0634 0x3b -0xba 0b1001 +0b1111 23.14 -2.3 2e-21 1.23e18  -0.23e18).each do |str|
         it "string '#{str}' is an instance of Init[Float]" do
           expect(eval_and_collect_notices("notice('#{str}' =~ Init[Float])")).to eql(['true'])
@@ -309,6 +325,14 @@ describe 'The Init Type' do
 
       it 'non numeric string is not an instance of Init[Float]' do
         expect(eval_and_collect_notices("notice('blue' =~ Init[Float])")).to eql(['false'])
+      end
+
+      it 'empty string is not an instance of Init[Float]' do
+        expect(eval_and_collect_notices("notice('' =~ Init[Float])")).to eql(['false'])
+      end
+
+      it 'undef is not an instance of Init[Float]' do
+        expect(eval_and_collect_notices("notice(undef =~ Init[Float])")).to eql(['false'])
       end
 
       %w(0 1 0634 0x3b -0xba 0b1001 0b1111).each do |str|
@@ -327,6 +351,14 @@ describe 'The Init Type' do
         expect(eval_and_collect_notices("notice('blue' =~ Init[Integer])")).to eql(['false'])
       end
 
+      it 'empty string is not an instance of Init[Integer]' do
+        expect(eval_and_collect_notices("notice('' =~ Init[Integer])")).to eql(['false'])
+      end
+
+      it 'undef is not an instance of Init[Integer]' do
+        expect(eval_and_collect_notices("notice(undef =~ Init[Integer])")).to eql(['false'])
+      end
+
       %w(1.2.3 1.1.1-a3 1.2.3+b3 1.2.3-a3+b3).each do |str|
         it "string '#{str}' is an instance of Init[SemVer]" do
           expect(eval_and_collect_notices("notice('#{str}' =~ Init[SemVer])")).to eql(['true'])
@@ -335,6 +367,14 @@ describe 'The Init Type' do
 
       it 'non SemVer compliant string is not an instance of Init[SemVer]' do
         expect(eval_and_collect_notices("notice('blue' =~ Init[SemVer])")).to eql(['false'])
+      end
+
+      it 'empty string is not an instance of Init[SemVer]' do
+        expect(eval_and_collect_notices("notice('' =~ Init[SemVer])")).to eql(['false'])
+      end
+
+      it 'undef is not an instance of Init[SemVer]' do
+        expect(eval_and_collect_notices("notice(undef =~ Init[SemVer])")).to eql(['false'])
       end
     end
   end

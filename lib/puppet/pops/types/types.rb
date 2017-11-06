@@ -870,6 +870,11 @@ class PNumericType < PScalarDataType
         param          'NamedArgs',  :hash_args
       end
 
+      argument_mismatch :on_error do
+        param          'Any',     :from
+        optional_param 'Boolean', :abs
+      end
+
       def from_args(from, abs = false)
         result = from_convertible(from)
         abs ? result.abs : result
@@ -891,7 +896,7 @@ class PNumericType < PScalarDataType
           1
         when FalseClass
           0
-        when String
+        else
           begin
             if from[0] == '0' && (from[1].downcase == 'b' || from[1].downcase == 'x')
               Integer(from)
@@ -903,9 +908,15 @@ class PNumericType < PScalarDataType
           rescue ArgumentError => e
             raise TypeConversionError.new(e.message)
           end
+        end
+      end
+
+      def on_error(from, abs = false)
+        if from.is_a?(String)
+          _("The string '%{str}' cannot be converted to Numeric") % { str: from }
         else
-          t = Puppet::Pops::Types::TypeCalculator.singleton.infer(from).generalize
-          raise TypeConversionError.new("Value of type '#{t}' cannot be converted to Numeric")
+          t = TypeCalculator.singleton.infer(from).generalize
+          _("Value of type %{type} cannot be converted to Numeric") % { type: t }
         end
       end
     end
@@ -1142,15 +1153,19 @@ class PIntegerType < PNumericType
 
       def on_error(from, radix = :default, abs = nil)
         assert_radix(radix) unless radix == :default
-        t = TypeCalculator.singleton.infer(from).generalize
-        "Value of type '#{t}' cannot be converted to Integer"
+        if from.is_a?(String)
+          _("The string '%{str}' cannot be converted to Integer") % { str: from }
+        else
+          t = TypeCalculator.singleton.infer(from).generalize
+          _("Value of type %{type} cannot be converted to Integer") % { type: t }
+        end
       end
 
       def assert_radix(radix)
         case radix
         when 2, 8, 10, 16
         else
-          raise ArgumentError.new("Illegal radix: '#{radix}', expected 2, 8, 10, 16, or default")
+          raise ArgumentError.new(_("Illegal radix: %{radix}, expected 2, 8, 10, 16, or default") % { radix: radix })
         end
         radix
       end
@@ -1261,9 +1276,13 @@ class PFloatType < PNumericType
         end
       end
 
-      def on_error(from, _)
-        t = TypeCalculator.singleton.infer(from).generalize
-        "Value of type '#{t}' cannot be converted to Float"
+      def on_error(from, _ = false)
+        if from.is_a?(String)
+          _("The string '%{str}' cannot be converted to Float") % { str: from }
+        else
+          t = TypeCalculator.singleton.infer(from).generalize
+          _("Value of type %{type} cannot be converted to Float") % { type: t }
+        end
       end
     end
   end
@@ -1875,8 +1894,12 @@ class PBooleanType < PScalarDataType
       end
 
       def on_error(from)
-        t = TypeCalculator.singleton.infer(from).generalize
-        "Value of type '#{t}' cannot be converted to Boolean"
+        if from.is_a?(String)
+          _("The string '%{str}' cannot be converted to Boolean") % { str: from }
+        else
+          t = TypeCalculator.singleton.infer(from).generalize
+          _("Value of type %{type} cannot be converted to Boolean") % { type: t }
+        end
       end
     end
   end
@@ -2604,7 +2627,7 @@ class PArrayType < PCollectionType
 
       def on_error(from, _ = false)
         t = TypeCalculator.singleton.infer(from).generalize
-        "Value of type '#{t}' cannot be converted to Array"
+        _("Value of type %{type} cannot be converted to Array") % { type: t }
       end
     end
   end
@@ -2810,7 +2833,7 @@ class PHashType < PCollectionType
             {}
           else
             unless from.size % 2 == 0
-              raise TypeConversionError.new("odd number of arguments for Hash")
+              raise TypeConversionError.new(_('odd number of arguments for Hash'))
             end
             Hash[*from]
           end
@@ -2820,8 +2843,8 @@ class PHashType < PCollectionType
           if PIterableType::DEFAULT.instance?(from)
             Hash[*Iterable.on(from).to_a]
           else
-            t = Puppet::Pops::Types::TypeCalculator.singleton.infer(from).generalize
-            raise TypeConversionError.new("Value of type '#{t}' cannot be converted to Hash")
+            t = TypeCalculator.singleton.infer(from).generalize
+            raise TypeConversionError.new(_("Value of type %{type} cannot be converted to Hash") % { type: t })
           end
         end
       end

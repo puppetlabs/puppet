@@ -28,7 +28,7 @@ describe 'the new function' do
       $x = Integer.new(undef)
       notify { "one${x}word": }
     MANIFEST
-    )}.to raise_error(Puppet::Error, /cannot be converted to Integer/)
+    )}.to raise_error(Puppet::Error, /of type Undef cannot be converted to Integer/)
   end
 
   it 'errors if converted value is not assignable to the type' do
@@ -298,7 +298,7 @@ describe 'the new function' do
           expect{compile_to_catalog(<<-"MANIFEST"
             $x = Integer.new("#{str}", 8)
           MANIFEST
-        )}.to raise_error(Puppet::Error, /cannot be converted to Integer/)
+        )}.to raise_error(Puppet::Error, /The string '#{Regexp.escape(str)}' cannot be converted to Integer/)
         end
       end
     end
@@ -366,14 +366,14 @@ describe 'the new function' do
         expect{compile_to_catalog(<<-"MANIFEST"
           $x = Integer.new('eleven', 10)
         MANIFEST
-      )}.to raise_error(Puppet::Error, /cannot be converted to Integer/)
+      )}.to raise_error(Puppet::Error, /The string 'eleven' cannot be converted to Integer/)
       end
 
       it 'value is not numeric and given in long form' do
         expect{compile_to_catalog(<<-"MANIFEST"
       $x = Integer.new({from => 'eleven', radix => 10})
         MANIFEST
-      )}.to raise_error(Puppet::Error, /cannot be converted to Integer/)
+      )}.to raise_error(Puppet::Error, /The string 'eleven' cannot be converted to Integer/)
       end
     end
   end
@@ -538,14 +538,14 @@ describe 'the new function' do
       expect{compile_to_catalog(<<-"MANIFEST"
         $x = Boolean.new('hello')
       MANIFEST
-      )}.to raise_error(Puppet::Error, /cannot be converted to Boolean/)
+      )}.to raise_error(Puppet::Error, /The string 'hello' cannot be converted to Boolean/)
     end
 
     it "does not convert an undef (as may be expected, but is handled as every other undef)" do
       expect{compile_to_catalog(<<-"MANIFEST"
         $x = Boolean.new(undef)
       MANIFEST
-      )}.to raise_error(Puppet::Error, /cannot be converted to Boolean/)
+      )}.to raise_error(Puppet::Error, /of type Undef cannot be converted to Boolean/)
     end
   end
 
@@ -566,8 +566,8 @@ describe 'the new function' do
     end
 
     {
-      true          => /cannot be converted to Array/,
-      42.3          => /cannot be converted to Array/,
+      true          => /of type Boolean cannot be converted to Array/,
+      42.3          => /of type Float cannot be converted to Array/,
     }.each do |input, error_match|
       it "errors when given an non convertible #{input.inspect} when wrap is not given" do
         expect{compile_to_catalog(<<-"MANIFEST"
@@ -650,7 +650,7 @@ describe 'the new function' do
       end
     end
 
-    { true             => /cannot be converted to Hash/,
+    { true             => /Value of type Boolean cannot be converted to Hash/,
       [1,2,3]          => /odd number of arguments for Hash/,
     }.each do |input, error_match|
       it "errors when given an non convertible #{input.inspect}" do

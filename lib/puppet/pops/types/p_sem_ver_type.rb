@@ -103,7 +103,7 @@ class PSemVerType < PScalarType
       end
 
       def on_error(str)
-        "The string '#{str}' cannot be converted to a SemVer"
+        _("The string '%{str}' cannot be converted to a SemVer") % { str: str }
       end
     end
   end
