@@ -177,14 +177,20 @@ module Pal
   # @param configured_by_env [Boolean] when true the environment's settings are used, otherwise the given `manifest_file` or `code_string`
   # @param manifest_file [String] a Puppet Language file to load and evaluate before calling the given block, mutually exclusive with `code_string`
   # @param code_string [String] a Puppet Language source string to load and evaluate before calling the given block, mutually exclusive with `manifest_file`
+  # @param facts [Hash] optional map of fact name to fact value - if not given will initialize the facts (which is a slow operation)
+  #   If given at the environment level, the facts given here are merged with higher priority.
+  # @param variables [Hash] optional map of fully qualified variable name to value. If given at the environment level, the variables
+  #   given here are merged with higher priority.
   # @param block [Callable] the block performing operations on compiler
   # @return [Object] what the block returns
   # @yieldparam [Puppet::Pal::ScriptCompiler] compiler, a ScriptCompiler to perform operations on.
   #
   def self.with_script_compiler(
-      configured_by_env: false, 
-      manifest_file: nil, 
-      code_string: nil, 
+      configured_by_env: false,
+      manifest_file:     nil,
+      code_string:       nil,
+      facts:             nil,
+      variables:         nil,
       &block
     )
     # TRANSLATORS: do not translate variable name strings in these assertions
@@ -210,9 +216,18 @@ module Pal
     Puppet[:tasks] = true
     # After the assertions, if code_string is non nil - it has the highest precedence
     Puppet[:code] = code_string unless code_string.nil?
-    # At this point, if manifest_file is nil, the #main method will use the env configured manifest
-    # do things in block while a Script Compiler is in effect
-    main(manifest_file, &block)
+    overrides = {}
+    unless facts.nil?
+      overrides[:pal_facts] = Puppet.lookup(:pal_facts).merge(facts)
+    end
+    unless variables.nil?
+      overrides[:pal_variables] = Puppet.lookup(:pal_variables).merge(variables)
+    end
+    Puppet.override(overrides, "PAL::with_script_compiler") do # TRANSLATORS: Do not translate, symbolic name
+      # If manifest_file is nil, the #main method will use the env configured manifest
+      # do things in block while a Script Compiler is in effect
+      main(manifest_file, &block)
+    end
   end
 
   # Evaluates a Puppet Language script string.
@@ -265,6 +280,7 @@ module Pal
   # @param modulepath [Array<String>] an array of directory paths containing Puppet modules, may be empty, defaults to empty array
   # @param settings_hash [Hash] a hash of settings - currently not used for anything, defaults to empty hash
   # @param facts [Hash] optional map of fact name to fact value - if not given will initialize the facts (which is a slow operation)
+  # @param variables [Hash] optional map of fully qualified variable name to value
   # @return [Object] returns what the given block returns
   # @yieldparam [Puppet::Pal] context, a context that responds to Puppet::Pal methods
   #
@@ -285,9 +301,10 @@ module Pal
 
     env = Puppet::Node::Environment.create(env_name, modulepath)
 
-    with_loaded_environment(
+    in_environment_context(
       Puppet::Environments::Static.new(env), # The tmp env is the only known env
-      env, facts, variables, &block)
+      env, facts, variables, &block
+      )
   end
 
   # Defines the context in which to perform puppet operations (evaluation, etc)
@@ -310,6 +327,7 @@ module Pal
   # @param envpath [String] a path of directories in which there are environments to search for `env_name` (mutually exclusive with `env_dir`).
   #   Should be a single directory, or several directories separated with platform specific `File::PATH_SEPARATOR` character.
   # @param facts [Hash] optional map of fact name to fact value - if not given will initialize the facts (which is a slow operation)
+  # @param variables [Hash] optional map of fully qualified variable name to value
   # @return [Object] returns what the given block returns
   # @yieldparam [Puppet::Pal] context, a context that responds to Puppet::Pal methods
   #
@@ -370,28 +388,27 @@ module Pal
       # not have the same effective modulepath).
       environments = Puppet::Environments::StaticDirectory.new(env_name, env_path, env) # The env being used is the only one...
     end
-    with_loaded_environment(environments, env, facts, variables, &block)
+    in_environment_context(environments, env, facts, variables, &block)
   end
 
   private
 
-  def self.with_loaded_environment(environments, env, facts, variables, &block)
-    env.each_plugin_directory do |dir|
-      $LOAD_PATH << dir unless $LOAD_PATH.include?(dir)
-    end
-
-    # Puppet requires Facter, which initializes its lookup paths. Reset Facter to
-    # pickup the new $LOAD_PATH.
-    Facter.reset
-
+  # Prepares the puppet context with pal information - and delegates to the block
+  # No set up is performed at this step - it is delayed until it is known what the
+  # operation is going to be (for example - using a ScriptCompiler).
+  #
+  def self.in_environment_context(environments, env, facts, variables, &block)
+    # Create a default node to use (may be overridden later)
     node = Puppet::Node.new(Puppet[:node_name_value], :environment => env)
 
     Puppet.override(
-      environments: environments,        # The env being used is the only one...
-      current_node: node,                # to allow it to be picked up instead of created
-      variables: variables
+      environments: environments,     # The env being used is the only one...
+      pal_env: env,                   # provide as convenience
+      pal_current_node: node,         # to allow it to be picked up instead of created
+      pal_variables: variables,       # common set of variables across several inner contexts
+      pal_facts: facts                # common set of facts across several inner contexts (or nil)
     ) do
-      prepare_node_facts(node, facts)
+      # DELAY: prepare_node_facts(node, facts)
       return block.call(self)
     end
   end
@@ -432,8 +449,24 @@ module Pal
     end
   end
 
+  # The main routine for script compiler
+  # Picks up information from the puppet context and configures a script compiler which is given to
+  # the provided block
+  #
   def self.main(manifest = nil, &block)
-    node = Puppet.lookup(:current_node)
+    # Configure the load path
+    env = Puppet.lookup(:pal_env)
+    env.each_plugin_directory do |dir|
+      $LOAD_PATH << dir unless $LOAD_PATH.include?(dir)
+    end
+
+    # Puppet requires Facter, which initializes its lookup paths. Reset Facter to
+    # pickup the new $LOAD_PATH.
+    Facter.reset
+
+    node = Puppet.lookup(:pal_current_node)
+    prepare_node_facts(node, Puppet.lookup(:pal_facts))
+
     configured_environment = node.environment || Puppet.lookup(:current_environment)
 
     apply_environment = manifest ?
@@ -476,7 +509,7 @@ module Pal
           # create the $settings:: variables
           topscope.merge_settings(node.environment.name, false)
 
-          add_variables(topscope, Puppet.lookup(:variables))
+          add_variables(topscope, Puppet.lookup(:pal_variables))
 
           # compiler.compile(&block)
           compiler.compile do | internal_compiler |

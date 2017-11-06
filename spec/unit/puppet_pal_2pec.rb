@@ -135,6 +135,14 @@ describe 'Puppet Pal' do
             end
           end.to raise_error(/has illegal type - got: ArgumentError/)
         end
+
+        it 'variable given to script_compiler overrides those given for environment' do
+          vars = {'a'=> 10, 'x::y' => 20}
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts, variables: vars) do |ctx|
+            ctx.with_script_compiler(variables: {'x::y' => 40}) {|c| c.evaluate_string("1+2+3+4+$a+$x::y")}
+          end
+          expect(result).to eq(60)
+        end
       end
 
       context "functions are supported such that" do
@@ -434,6 +442,32 @@ describe 'Puppet Pal' do
           end.to raise_error(/modulepath has wrong type/)
         end
       end
+
+      context 'facts are supported such that' do
+        it 'they are obtained if they are not given' do
+          testing_env_dir # creates the structure
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath ) do |ctx|
+            ctx.with_script_compiler {|c| c.evaluate_string("$facts =~ Hash and $facts[puppetversion] == '#{Puppet.version}'") }
+          end
+          expect(result).to eq(true)
+        end
+
+        it 'can be given as a hash when creating the environment' do
+          testing_env_dir # creates the structure
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: { 'myfact' => 42 }) do |ctx|
+            ctx.with_script_compiler {|c| c.evaluate_string("$facts =~ Hash and $facts[myfact] == 42") }
+          end
+          expect(result).to eq(true)
+        end
+
+        it 'can be overridden with a hash when creating a script compiler' do
+          testing_env_dir # creates the structure
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: { 'myfact' => 42 }) do |ctx|
+            ctx.with_script_compiler(facts: { 'myfact' => 43 }) {|c| c.evaluate_string("$facts =~ Hash and $facts[myfact] == 43") }
+          end
+          expect(result).to eq(true)
+        end
+      end
     end
 
     context 'configured as an existing given environment directory such that' do
@@ -603,15 +637,6 @@ describe 'Puppet Pal' do
         end.to raise_error(/envpath has wrong type/)
       end
     end
-
-    it 'sets the facts if they are not given' do
-      testing_env_dir # creates the structure
-      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath ) do |ctx|
-        ctx.with_script_compiler {|c| c.evaluate_string("$facts =~ Hash and $facts[puppetversion] == '#{Puppet.version}'") }
-      end
-      expect(result).to eq(true)
-    end
-
   end
 end
 
