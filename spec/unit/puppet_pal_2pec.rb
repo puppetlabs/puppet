@@ -82,6 +82,22 @@ describe 'Puppet Pal' do
     end
 
     context "with a script compiler" do
+      it 'errors if given both configured_by_env and manifest_file' do
+        expect {
+          Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler(configured_by_env: true, manifest_file: 'undef.pp') {|c|  }
+          end
+        }.to raise_error(/manifest_file or code_string cannot be given when configured_by_env is true/)
+      end
+
+      it 'errors if given both configured_by_env and code_string' do
+        expect {
+          Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler(configured_by_env: true, code_string: 'undef') {|c|  }
+          end
+        }.to raise_error(/manifest_file or code_string cannot be given when configured_by_env is true/)
+      end
+
       context "evaluate_string method" do
         it 'evaluates code string in a given tmp environment' do
           result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
@@ -636,10 +652,28 @@ describe 'Puppet Pal' do
           Puppet::Pal.in_environment('blah_env', envpath: [environments_dir], facts: node_facts) { |ctx| }
         end.to raise_error(/envpath has wrong type/)
       end
+
+      context 'with a script compiler' do
+        it 'uses configured manifest_file if configured_by_env is true and Puppet[:code] is unset' do
+          testing_env_dir # creates the structure
+          Puppet[:manifest] = file_containing('afunc.pp', "function myfunc(Integer $a) { $a * 2 } ")
+          result = Puppet::Pal.in_environment('pal_env', envpath: environments_dir, facts: node_facts) do |ctx|
+            ctx.with_script_compiler(configured_by_env: true) {|c|  c.call_function('myfunc',[4])}
+          end
+          expect(result).to eql(8)
+        end
+
+        it 'uses Puppet[:code] if configured_by_env is true and Puppet[:code] is set' do
+          testing_env_dir # creates the structure
+          Puppet[:manifest] = file_containing('amanifest.pp', "$a = 20")
+          Puppet[:code] = '$a = 40'
+          result = Puppet::Pal.in_environment('pal_env', envpath: environments_dir, facts: node_facts) do |ctx|
+            ctx.with_script_compiler(configured_by_env: true) {|c|  c.evaluate_string('$a')}
+          end
+          expect(result).to eql(40)
+        end
+      end
+
     end
   end
 end
-
-# Tests TODO
-# with_script_compiler - configured_by_env true/false - when true does not accept manifest_file or code_string
-# 

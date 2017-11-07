@@ -204,6 +204,8 @@ module Pal
         # TRANSLATORS: do not translate the variable names in this error message
         raise ArgumentError, _("manifest_file or code_string cannot be given when configured_by_env is true")
       end
+      # Use the manifest setting
+      manifest_file = Puppet[:manifest]
     else
       # An "undef" code_string is the only way to override Puppet[:manifest] & Puppet[:code] settings since an
       # empty string is taken as Puppet[:code] not being set.
