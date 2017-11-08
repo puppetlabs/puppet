@@ -17,6 +17,17 @@ describe Puppet::GettextConfig do
     windows_path ||= Puppet::GettextConfig::POSIX_PATH
   end
 
+  describe 'setting and getting the locale' do
+    it 'should return "en" by default' do
+      expect(Puppet::GettextConfig.current_locale).to eq('en')
+    end
+
+    it 'should allow the locale to be set' do
+      Puppet::GettextConfig.set_locale('ja')
+      expect(Puppet::GettextConfig.current_locale).to eq('ja')
+    end
+  end
+
   describe 'translation mode selection' do
     it 'should select PO mode when given a local config path' do
       expect(Puppet::GettextConfig.translation_mode(local_path)).to eq(:po)

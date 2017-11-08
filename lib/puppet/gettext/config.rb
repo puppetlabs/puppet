@@ -47,6 +47,17 @@ module Puppet::GettextConfig
   end
 
   # @api private
+  # Returns the currently selected locale from FastGettext,
+  # or 'en' of gettext has not been loaded
+  def self.current_locale
+    if gettext_loaded?
+      return FastGettext.default_locale
+    else
+      return 'en'
+    end
+  end
+
+  # @api private
   # Creates a new empty text domain with the given name, replacing
   # any existing domain with that name, then switches to using
   # that domain. Also clears the cache of loaded translations.
@@ -126,7 +137,6 @@ module Puppet::GettextConfig
   def self.add_repository_to_domain(project_name, locale_dir, file_format)
     # check if we've already loaded these transltaions
     current_chain = FastGettext.translation_repositories[FastGettext.text_domain].chain
-    return current_chain if @loaded_repositories[project_name]
 
     repository = FastGettext::TranslationRepository.build(project_name,
                                                           path: locale_dir,

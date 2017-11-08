@@ -14,6 +14,7 @@ require 'puppet/util'
 require "puppet/util/rubygems"
 require "puppet/util/limits"
 require 'puppet/util/colors'
+require 'puppet/gettext/module_translations'
 
 module Puppet
   module Util
@@ -120,6 +121,11 @@ module Puppet
             if configured_environment = Puppet.lookup(:environments).get(Puppet[:environment])
               configured_environment.each_plugin_directory do |dir|
                 $LOAD_PATH << dir unless $LOAD_PATH.include?(dir)
+              end
+
+              if !Puppet[:disable_i18n]
+                Puppet::ModuleTranslations.from_modulepath(configured_environment.modules)
+                Puppet::ModuleTranslations.from_vardir(Puppet[:vardir])
               end
 
               # Puppet requires Facter, which initializes its lookup paths. Reset Facter to
