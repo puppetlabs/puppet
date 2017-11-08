@@ -42,6 +42,15 @@ module Pcore
     if Puppet[:tasks]
       require_relative 'types/task'
       require_relative 'types/execution_result'
+
+      add_object_type('Target', <<-PUPPET, loader)
+      {
+        attributes => {
+          host => String[1],
+          options => { type => Hash[String[1], Data], value => {} }
+        }
+      }
+      PUPPET
     end
     Types::TypedModelObject.register_ptypes(loader, ir)
 

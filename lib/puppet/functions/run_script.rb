@@ -1,26 +1,24 @@
-# Uploads the given script to the given set of nodes and returns the result of having each node execute the script.
+# Uploads the given script to the given set of targets and returns the result of having each target execute the script.
 #
-# * This function does nothing if the list of nodes is empty.
-# * It is possible to run on the node 'localhost'
-# * A node is a String with a node's hostname or a URI that also describes how to connect and run the task on that node
-#   including "user" and "password" parts of a URI.
-# * The returned value contains information about the result per node. TODO: needs mapping to a runtime Pcore Object to be useful
-#
+# * This function does nothing if the list of targets is empty.
+# * It is possible to run on the target 'localhost'
+# * A target is a String with a targets's hostname or a Target.
+# * The returned value contains information about the result per target.
 #
 # Since > 5.4.0 TODO: Update when version is known
 #
 Puppet::Functions.create_function(:run_script, Puppet::Functions::InternalFunction) do
   local_types do
-    type 'NodeOrNodes = Variant[String[1], Array[NodeOrNodes]]'
+    type 'TargetOrTargets = Variant[String[1], Target, Array[TargetOrTargets]]'
   end
 
   dispatch :run_script do
     scope_param
     param 'String[1]', :script
-    repeated_param 'NodeOrNodes', :nodes
+    repeated_param 'TargetOrTargets', :targets
   end
 
-  def run_script(scope, script, *nodes)
+  def run_script(scope, script, *targets)
     unless Puppet[:tasks]
       raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
         Puppet::Pops::Issues::TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING,
@@ -40,11 +38,15 @@ Puppet::Functions.create_function(:run_script, Puppet::Functions::InternalFuncti
       raise Puppet::ParseErrorWithIssue.from_issue_and_stack(Puppet::Pops::Issues::NOT_A_FILE, {:file => script})
     end
 
-    hosts = nodes.flatten
-    if hosts.empty?
-      call_function('debug', "Simulating run_script of '#{found}' - no hosts given - no action taken")
+    # Ensure that that given targets are all Target instances
+    targets = targets.flatten.map { |t| t.is_a?(String) ? Puppet::Pops::Types::TypeFactory.target.create(t) : t }
+    if targets.empty?
+      call_function('debug', "Simulating run_script of '#{found}' - no targets given - no action taken")
       Puppet::Pops::Types::ExecutionResult::EMPTY_RESULT
     else
+      # Awaits change in the executor, enabling it receive Target instances
+      hosts = targets.map { |h| h.host }
+
       Puppet::Pops::Types::ExecutionResult.from_bolt(
         executor.run_script(executor.from_uris(hosts), found)
       )

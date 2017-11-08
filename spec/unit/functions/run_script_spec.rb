@@ -77,6 +77,17 @@ describe 'the run_script function' do
       CODE
     end
 
+    it 'with host given as Target' do
+      executor.expects(:from_uris).with(hosts).returns([host])
+      result.expects(:to_h).returns(result)
+      executor.expects(:run_script).with([host], full_path).returns({ host => result })
+
+      expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{hostname}'}})"])
+        $a = run_script('test/uploads/hostname.sh', Target('#{hostname}'))
+        notice $a
+      CODE
+    end
+
     context 'with multiple destinations' do
       let(:hostname2) { 'test.testing.com' }
       let(:hosts) { [hostname, hostname2] }

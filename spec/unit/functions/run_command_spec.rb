@@ -55,6 +55,17 @@ describe 'the run_command function' do
       CODE
     end
 
+    it 'with given command and Target' do
+      executor.expects(:from_uris).with(hosts).returns([host])
+      executor.expects(:run_command).with([host], command).returns({ host => result })
+      result.expects(:to_h).returns(result)
+
+      expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{hostname}'}})"])
+        $a = run_command('#{command}', Target('#{hostname}'))
+        notice $a
+      CODE
+    end
+
     context 'with multiple hosts' do
       let(:hostname2) { 'test.testing.com' }
       let(:hosts) { [hostname, hostname2] }
@@ -69,6 +80,18 @@ describe 'the run_command function' do
 
         expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{hostname}'}, '#{hostname2}' => {value => '#{hostname2}'}})"])
           $a = run_command('#{command}', '#{hostname}', '#{hostname2}')
+          notice $a
+        CODE
+      end
+
+      it 'with propagates multiple Targets and returns multiple results' do
+        executor.expects(:from_uris).with(hosts).returns([host, host2])
+        executor.expects(:run_command).with([host, host2], command).returns({ host => result, host2 => result2 })
+        result.expects(:to_h).returns(result)
+        result2.expects(:to_h).returns(result2)
+
+        expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{hostname}'}, '#{hostname2}' => {value => '#{hostname2}'}})"])
+          $a = run_command('#{command}', Target('#{hostname}'), Target('#{hostname2}'))
           notice $a
         CODE
       end
