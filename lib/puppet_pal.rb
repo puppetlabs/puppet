@@ -58,7 +58,7 @@ module Pal
     # @return [Array<Puppet::Pops::Types::PCallableType>] an array of callable signatures, or an empty array if function not found
     def function_signatures(function_name)
       loader = internal_compiler.loaders.private_environment_loader
-      if loader && func = loader.load(:function, function_name)
+      if func = loader.load(:function, function_name)
         t = func.class.dispatcher.to_type
         return t.is_a?(Puppet::Pops::Types::PVariantType) ? t.types : [t]
       end
@@ -76,8 +76,7 @@ module Pal
     # otherwise. That is, it is not possible to divide a compound expression by line and evaluate each line individually.
     #
     # @param puppet_code [String, nil] the puppet language code to evaluate, must be a complete expression/statement
-    # @param source_file [String, nil] an optional reference to a source (a file or symbolic name/location) - defaults to '<unknown>'
-    #   in error messages.
+    # @param source_file [String, nil] an optional reference to a source (a file or symbolic name/location)
     # @return [Object] what the `puppet_code` evaluates to
     #
     def evaluate_string(puppet_code, source_file = nil)
@@ -109,7 +108,7 @@ module Pal
     # @example Create an instance of a data type
     #   # using an already create type
     #   t = pal.type('Car')
-    #   pal.new_object(t, [{'color' => 'black', 'make' => 't-ford}])
+    #   pal.new_object(t, [{'color' => 'black', 'make' => 't-ford'}])
     #
     #   # letting 'new_object' parse the type from a string
     #   pal.new_object('Car', [{'color' => 'black', 'make' => 't-ford}])
@@ -150,7 +149,7 @@ module Pal
     #
     def plan_signature(plan_name)
       loader = internal_compiler.loaders.private_environment_loader
-      if loader && func = loader.load(:plan, plan_name)
+      if func = loader.load(:plan, plan_name)
         return func.class.dispatcher.to_type
       end
       # Could not find plan
