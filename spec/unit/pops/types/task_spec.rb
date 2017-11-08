@@ -133,7 +133,8 @@ describe 'The Task Type' do
               "supports_noop": true,
               "parameters": {
                  "message": {
-                   "type": "String"
+                   "type": "String",
+                   "sensitive": false
                  },
                  "font": {
                    "type": "Optional[String]"
@@ -456,7 +457,7 @@ describe 'The Task Type' do
       type Service::Init = Task {
         constants => {
           supports_noop => true,
-          input_format => 'stdin:json'
+          input_method => 'stdin'
         },
         attributes => {
           action => Service::Action,
