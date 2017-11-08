@@ -90,7 +90,7 @@ USAGE
 -----
 puppet agent [--certname <NAME>] [-D|--daemonize|--no-daemonize]
   [-d|--debug] [--detailed-exitcodes] [--digest <DIGEST>] [--disable [MESSAGE]] [--enable]
-  [--fingerprint] [-h|--help] [-l|--logdest syslog|eventlog|<FILE>|console]
+  [--fingerprint] [-h|--help] [-l|--logdest syslog|eventlog|<ABS FILEPATH>|console]
   [--masterport <PORT>] [--noop] [-o|--onetime] [-t|--test]
   [-v|--verbose] [-V|--version] [-w|--waitforcert <SECONDS>]
 
