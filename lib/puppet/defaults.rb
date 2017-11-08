@@ -1521,6 +1521,13 @@ EOT
           \"never run.\" If you want puppet agent to never run, you should start
           it with the `--no-client` option. #{AS_DURATION}",
     },
+    :runtimeout => {
+      :default  => 0,
+      :type     => :duration,
+      :desc     => "The maximum amount of time an agent run is allowed to take.
+          A Puppet agent run that exceeds this timeout will be aborted.
+          Defaults to 0, which is unlimited. #{AS_DURATION}",
+    },
     :ca_server => {
       :default    => "$server",
       :desc       => "The server to use for certificate
