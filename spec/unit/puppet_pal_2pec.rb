@@ -208,6 +208,28 @@ describe 'Puppet Pal' do
         end
       end
 
+      context 'supports plans such that' do
+        it '"plan_signature" returns the signatures of a plan' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            manifest = file_containing('afunc.pp', "plan myplan(Integer $a) {  } ")
+            ctx.with_script_compiler(manifest_file: manifest) do |c|
+              signature = c.plan_signature('myplan')
+              [ signature.callable_with?([10]),
+                signature.callable_with?(['nope'])
+              ]
+            end
+          end
+          expect(result).to eq([true, false])
+        end
+
+        it '"plan_signature" returns nil if plan is not found' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler {|c| c.plan_signature('no_where_to_be_found') }
+          end
+          expect(result).to be(nil)
+        end
+      end
+
       context 'supports puppet data types such that' do
         it '"type" parses and returns a Type from a string specification' do
           result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|

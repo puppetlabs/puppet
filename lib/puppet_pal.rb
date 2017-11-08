@@ -151,8 +151,7 @@ module Pal
     def plan_signature(plan_name)
       loader = internal_compiler.loaders.private_environment_loader
       if loader && func = loader.load(:plan, plan_name)
-          require 'byebug'; debugger
-          return func.class.dispatcher.dispatchers[0]
+        return func.class.dispatcher.to_type
       end
       # Could not find plan
       nil
