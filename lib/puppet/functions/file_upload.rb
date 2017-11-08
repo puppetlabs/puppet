@@ -28,7 +28,8 @@ Puppet::Functions.create_function(:file_upload, Puppet::Functions::InternalFunct
         {:operation => 'file_upload'})
     end
 
-    unless Puppet.features.bolt?
+    executor = Puppet.lookup(:bolt_executor) { nil }
+    unless executor && Puppet.features.bolt?
       raise Puppet::ParseErrorWithIssue.from_issue_and_stack(Puppet::Pops::Issues::TASK_MISSING_BOLT, :action => _('do file uploads'))
     end
 
@@ -42,7 +43,9 @@ Puppet::Functions.create_function(:file_upload, Puppet::Functions::InternalFunct
       call_function('debug', "Simulating file upload of '#{found}' - no hosts given - no action taken")
       Puppet::Pops::Types::ExecutionResult::EMPTY_RESULT
     else
-      Puppet::Pops::Types::ExecutionResult.from_bolt(Bolt::Executor.from_uris(hosts).file_upload(found, destination))
+      Puppet::Pops::Types::ExecutionResult.from_bolt(
+        executor.file_upload(executor.from_uris(hosts), found, destination)
+      )
     end
   end
 end

@@ -87,6 +87,7 @@ describe 'the run_command function' do
 
   context 'without bolt feature present' do
     it 'fails and reports that bolt library is required' do
+      Puppet.features.stubs(:bolt?).returns(false)
       expect{eval_and_collect_notices(<<-CODE, node)}.to raise_error(/The 'bolt' library is required to run a command/)
           run_command('echo hello')
       CODE
