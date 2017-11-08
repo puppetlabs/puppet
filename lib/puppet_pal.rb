@@ -42,11 +42,11 @@ module Pal
 
     # Calls a function given by name with arguments specified in an `Array`, and optionally accepts a code block.
     # @param function_name [String] the name of the function to call
-    # @param args [Array] the arguments to the function
+    # @param args [Object] the arguments to the function
     # @param block [Proc] an optional callable block that is given to the called function
     # @return [Object] what the called function returns
     #
-    def call_function(function_name, args=[], &block)
+    def call_function(function_name, *args, &block)
       # TRANSLATORS: do not translate variable name strings in these assertions
       Pal::assert_non_empty_string(function_name, 'function_name', false)
       Pal::assert_type(Pal::T_ANY_ARRAY, args, 'args', false)
@@ -108,13 +108,13 @@ module Pal
     # @example Create an instance of a data type
     #   # using an already create type
     #   t = pal.type('Car')
-    #   pal.new_object(t, [{'color' => 'black', 'make' => 't-ford'}])
+    #   pal.create(t, 'color' => 'black', 'make' => 't-ford')
     #
     #   # letting 'new_object' parse the type from a string
-    #   pal.new_object('Car', [{'color' => 'black', 'make' => 't-ford}])
+    #   pal.create('Car', 'color' => 'black', 'make' => 't-ford)
     #
     # @param type_string [String] a puppet language data type
-    # @return [Puppet::Pops::Types::TypedModelObject] the data type
+    # @return [Puppet::Pops::Types::PAnyType] the data type
     #
     def type(type_string)
       Puppet::Pops::Types::TypeParser.singleton.parse(type_string)
@@ -122,17 +122,16 @@ module Pal
 
     # Creates a new instance of a given data type.
     # @param data_type [String, Puppet::Pops::Types::PAnyType] the data type as a data type or in String form.
-    # @param arguments [Array] an array of the arguments to `new`, defaults to empty array.
+    # @param arguments [Object] one or more arguments to the called `new` function
     # @return [Object] an instance of the given data type,
     #   or raises an error if it was not possible to parse data type or create an instance.
     #
-    def new_object(data_type, arguments = [])
-      Pal::assert_optionally_empty_array(arguments, 'arguments')
+    def create(data_type, *arguments)
       t = data_type.is_a?(String) ? type(data_type) : data_type
       unless t.is_a?(Puppet::Pops::Types::PAnyType)
         raise ArgumentError, _("Given data_type value is not a data type, got '%{type}'") % {type: t.class}
       end
-      call_function('new', [t] + arguments)
+      call_function('new', t, *arguments)
     end
 
     private
@@ -260,7 +259,7 @@ module Pal
   # @param manifest_file [String] a Puppet Language file to load and evaluate before running the plan, mutually exclusive with code_string
   # @param code_string [String] a Puppet Language source string to load and evaluate before running the plan, mutually exclusive with manifest_file
   # @return [Object] returns what the evaluated plan returns
-  # @deprecated Use {#with_script_compiler} and then `call_function('run_plan', [plan_name, plan_args])` on the given compiler - to be removed in 1.0 version
+  # @deprecated Use {#with_script_compiler} and then `call_function('run_plan', plan_name, plan_args)` on the given compiler - to be removed in 1.0 version
   #
   def self.run_plan(plan_name,
       plan_args:     {},
@@ -268,7 +267,7 @@ module Pal
       code_string:   nil
     )
     with_script_compiler(manifest_file: manifest_file, code_string: code_string) do |compiler|
-      compiler.call_function('run_plan', [plan_name, plan_args])
+      compiler.call_function('run_plan', plan_name, plan_args)
     end
   end
 

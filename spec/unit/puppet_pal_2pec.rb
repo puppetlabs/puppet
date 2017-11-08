@@ -165,14 +165,14 @@ describe 'Puppet Pal' do
         it '"call_function" calls a function' do
           result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
             manifest = file_containing('afunc.pp', "function myfunc($a) { $a * 2 } ")
-            ctx.with_script_compiler(manifest_file: manifest) {|c| c.call_function('myfunc', [6]) }
+            ctx.with_script_compiler(manifest_file: manifest) {|c| c.call_function('myfunc', 6) }
           end
           expect(result).to eq(12)
         end
 
         it '"call_function" accepts a call with a ruby block' do
           result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
-            ctx.with_script_compiler {|c| c.call_function('with',[6]) {|x| x * 2} }
+            ctx.with_script_compiler {|c| c.call_function('with', 6) {|x| x * 2} }
           end
           expect(result).to eq(12)
         end
@@ -241,16 +241,16 @@ describe 'Puppet Pal' do
           expect(result.instance?(3.14)).to eq(true)
         end
 
-        it '"new_object" creates a new_object from a puppet data type and args' do
+        it '"create" creates a new object from a puppet data type and args' do
           result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
-            ctx.with_script_compiler { |c| c.new_object(Puppet::Pops::Types::PIntegerType::DEFAULT, ['0x10']) }
+            ctx.with_script_compiler { |c| c.create(Puppet::Pops::Types::PIntegerType::DEFAULT, '0x10') }
           end
           expect(result).to eq(16)
         end
 
-        it '"new_object" creates a new_object from puppet data type in string form and args' do
+        it '"create" creates a new object from puppet data type in string form and args' do
           result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
-            ctx.with_script_compiler { |c| c.new_object('Integer', ['010']) }
+            ctx.with_script_compiler { |c| c.create('Integer', '010') }
           end
           expect(result).to eq(8)
         end
@@ -261,7 +261,7 @@ describe 'Puppet Pal' do
     it 'can call run_plan function to run a plan' do
       result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
         manifest = file_containing('aplan.pp', "plan myplan() { 'brilliant' }")
-        ctx.with_script_compiler(manifest_file: manifest) {|c| c.call_function('run_plan', ['myplan']) }
+        ctx.with_script_compiler(manifest_file: manifest) {|c| c.call_function('run_plan', 'myplan') }
       end
       expect(result).to eq('brilliant')
     end
@@ -448,7 +448,7 @@ describe 'Puppet Pal' do
       # Note, when functions run_task and run_plan move to bolt, this test should be moved
       it 'a plan in a module can be called with run_plan' do
         result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
-          ctx.with_script_compiler {|c| c.call_function('run_plan', ["a::aplan"]) }
+          ctx.with_script_compiler {|c| c.call_function('run_plan', "a::aplan") }
         end
         expect(result).to eq("a::aplan value")
       end
@@ -680,7 +680,7 @@ describe 'Puppet Pal' do
           testing_env_dir # creates the structure
           Puppet[:manifest] = file_containing('afunc.pp', "function myfunc(Integer $a) { $a * 2 } ")
           result = Puppet::Pal.in_environment('pal_env', envpath: environments_dir, facts: node_facts) do |ctx|
-            ctx.with_script_compiler(configured_by_env: true) {|c|  c.call_function('myfunc',[4])}
+            ctx.with_script_compiler(configured_by_env: true) {|c|  c.call_function('myfunc', 4)}
           end
           expect(result).to eql(8)
         end
