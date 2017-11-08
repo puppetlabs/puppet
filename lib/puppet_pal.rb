@@ -43,7 +43,7 @@ module Pal
     # Calls a function given by name with arguments specified in an `Array`, and optionally accepts a code block.
     # @param function_name [String] the name of the function to call
     # @param args [Array] the arguments to the function
-    # @param block [Callable] an optional callable block that is given to the called function
+    # @param block [Proc] an optional callable block that is given to the called function
     # @return [Object] what the called function returns
     #
     def call_function(function_name, args=[], &block)
@@ -53,9 +53,9 @@ module Pal
       internal_evaluator.evaluator.external_call_function(function_name, args, topscope, &block)
     end
 
-    # Returns an Array[Callable] describing the given function's signatures, or empty array if function not found.
+    # Returns an Array[Puppet::Pops::Types::PCallableType] describing the given function's signatures, or empty array if function not found.
     # @param function_name [String] the name of the function to get a signature for
-    # @return [Array[Callable]] an array of Callable signatures, or an empty array if function not found
+    # @return [Array<Puppet::Pops::Types::PCallableType>] an array of callable signatures, or an empty array if function not found
     def function_signatures(function_name)
       loader = internal_compiler.loaders.private_environment_loader
       if loader && func = loader.load(:function, function_name)
@@ -144,9 +144,9 @@ module Pal
   end
 
   class ScriptCompiler < Compiler
-    # Returns the signature Callable of the given plan (the arguments it accepts, and the data type it returns)
+    # Returns the signature callable of the given plan (the arguments it accepts, and the data type it returns)
     # @param plan_name [String] the name of the plan to get the signature of
-    # @return [Callable, nil] returns a Callable data type, or nil if plan is not found
+    # @return [Puppet::Pops::Types::PCallableType, nil] returns a callable data type, or nil if plan is not found
     #
     def plan_signature(plan_name)
       loader = internal_compiler.loaders.private_environment_loader
@@ -180,7 +180,7 @@ module Pal
   #   If given at the environment level, the facts given here are merged with higher priority.
   # @param variables [Hash] optional map of fully qualified variable name to value. If given at the environment level, the variables
   #   given here are merged with higher priority.
-  # @param block [Callable] the block performing operations on compiler
+  # @param block [Proc] the block performing operations on compiler
   # @return [Object] what the block returns
   # @yieldparam [Puppet::Pal::ScriptCompiler] compiler, a ScriptCompiler to perform operations on.
   #
