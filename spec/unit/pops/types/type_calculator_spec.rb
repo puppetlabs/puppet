@@ -152,12 +152,12 @@ describe 'The type calculator' do
       expect(t.value).to eq('foo')
     end
 
-    it 'boolean true translates to PBooleanType' do
-      expect(calculator.infer(true).class).to eq(PBooleanType)
+    it 'boolean true translates to PBooleanType::TRUE' do
+      expect(calculator.infer(true)).to eq(PBooleanType::TRUE)
     end
 
-    it 'boolean false translates to PBooleanType' do
-      expect(calculator.infer(false).class).to eq(PBooleanType)
+    it 'boolean false translates to PBooleanType::FALSE' do
+      expect(calculator.infer(false)).to eq(PBooleanType::FALSE)
     end
 
     it 'regexp translates to PRegexpType' do
