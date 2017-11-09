@@ -105,6 +105,20 @@ describe 'the run_task function' do
       CODE
     end
 
+    it 'nodes can be specified as repeated nested arrays and Targets and combine into one list of nodes' do
+      executable = File.join(env_dir, 'modules/test/tasks/meta.sh')
+
+      executor.expects(:from_uris).with([hostname, hostname2]).returns([host, host2])
+      executor.expects(:run_task).with([host, host2], executable, 'environment', {'message' => 'the message'}).returns(
+        { host => result, host2 => result })
+      result.expects(:to_h).twice.returns(result)
+
+      expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}, '#{hostname2}' => {value => '#{message}'}})"])
+        $a = run_task(Test::Meta({message => "#{message}"}), Target('#{hostname}'), [[Target('#{hostname2}')]],[])
+        notice $a
+      CODE
+    end
+
     context 'the same way as if a task instance was used; when called with'
       context 'a task type' do
         it 'and args hash' do
