@@ -109,20 +109,10 @@ Puppet::Face.define(:module, '1.0.0') do
   end
 
   def warn_unmet_dependencies(environment)
-    error_types = {
-      :non_semantic_version => {
-        :title => _("Non semantic version dependency")
-      },
-      :missing => {
-        :title => _("Missing dependency")
-      },
-      :version_mismatch => {
-        :title => _("Module '%s' (v%s) fails to meet some dependencies:")
-      }
-    }
+    error_types = [:non_semantic_version, :version_mismatch, :missing]
 
     @unmet_deps = {}
-    error_types.each_key do |type|
+    error_types.each do |type|
       @unmet_deps[type] = Hash.new do |hash, key|
         hash[key] = { :errors => [], :parent => nil }
       end
@@ -162,17 +152,16 @@ Puppet::Face.define(:module, '1.0.0') do
       unless @unmet_deps[type].empty?
         @unmet_deps[type].keys.sort_by {|dep| dep }.each do |dep|
           name    = dep.gsub('/', '-')
-          title   = error_types[type][:title]
           errors  = @unmet_deps[type][dep][:errors]
           version = @unmet_deps[type][dep][:version]
 
           msg = case type
                 when :version_mismatch
-                  title % [name, version] + "\n"
+                  _("Module '%{name}' (v%{version}) fails to meet some dependencies:\n") % { name: name, version: version }
                 when :non_semantic_version
-                  title + " '#{name}' (v#{version}):\n"
+                  _("Non semantic version dependency %{name} (v%{version}):\n") % { name: name, version: version }
                 else
-                  title + " '#{name}':\n"
+                  _("Missing dependency '%{name}':\n") % { name: name }
                 end
 
           errors.each { |error_string| msg << "  #{error_string}\n" }

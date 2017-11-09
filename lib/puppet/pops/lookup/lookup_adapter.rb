@@ -383,8 +383,12 @@ class LookupAdapter < DataAdapter
       mp
     else
       unless Puppet[:strict] == :off
-        msg = _("Defining \"data_provider\": \"%{name}\" in metadata.json is deprecated") % { name: provider_name }
-        msg += _(". A '%{config}' file should be used instead") % { config: HieraConfig::CONFIG_FILE_NAME } if mp.nil?
+        msg = if mp.nil?
+                _("Defining \"data_provider\": \"%{provider_name}\" in metadata.json is deprecated. A '%{hiera_config}' file should be used instead") %
+                    { provider_name: provider_name, hiera_config: HieraConfig::CONFIG_FILE_NAME }
+              else
+                _("Defining \"data_provider\": \"%{provider_name}\" in metadata.json is deprecated") % { provider_name: provider_name }
+              end
         Puppet.warn_once('deprecations', "metadata.json#data_provider-#{module_name}", msg, mod.metadata_file)
       end
 
@@ -437,8 +441,13 @@ class LookupAdapter < DataAdapter
       ep
     else
       unless Puppet[:strict] == :off
-        msg = _("Defining environment_data_provider='%{provider_name}' in environment.conf is deprecated") % { provider_name: provider_name }
-        msg += _(". A '%{config}' file should be used instead") % { config: HieraConfig::CONFIG_FILE_NAME } if ep.nil?
+        msg = if ep.nil?
+                _("Defining environment_data_provider='%{provider_name}' in environment.conf is deprecated. A '%{hiera_config}' file should be used instead") %
+                    { provider_name: provider_name, hiera_config: HieraConfig::CONFIG_FILE_NAME }
+              else
+                _("Defining environment_data_provider='%{provider_name}' in environment.conf is deprecated") %
+                    { provider_name: provider_name }
+              end
         Puppet.warn_once('deprecations', 'environment.conf#data_provider', msg, env_path + 'environment.conf')
       end
 
