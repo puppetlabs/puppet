@@ -1,7 +1,7 @@
 Puppet::Type.newtype(:macauthorization) do
 
   @doc = "Manage the Mac OS X authorization database. See the
-    [Apple developer site](https://developer.apple.com/documentation/Security/Conceptual/Security_Overview/Security_Services/chapter_4_section_5.html)
+    [Apple developer site](https://developer.apple.com/library/content/documentation/Security/Conceptual/Security_Overview/AuthenticationAndAuthorization/AuthenticationAndAuthorization.html)
     for more information.
 
     Note that authorization store directives with hyphens in their names have

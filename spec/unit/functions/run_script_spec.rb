@@ -69,10 +69,43 @@ describe 'the run_script function' do
     it 'with fully resolved path of file' do
       executor.expects(:from_uris).with(hosts).returns([host])
       result.expects(:to_h).returns(result)
-      executor.expects(:run_script).with([host], full_path).returns({ host => result })
+      executor.expects(:run_script).with([host], full_path, []).returns({ host => result })
 
       expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{hostname}'}})"])
         $a = run_script('test/uploads/hostname.sh', '#{hostname}')
+        notice $a
+      CODE
+    end
+
+    it 'with host given as Target' do
+      executor.expects(:from_uris).with(hosts).returns([host])
+      result.expects(:to_h).returns(result)
+      executor.expects(:run_script).with([host], full_path, []).returns({ host => result })
+
+      expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{hostname}'}})"])
+        $a = run_script('test/uploads/hostname.sh', Target('#{hostname}'))
+        notice $a
+      CODE
+    end
+
+    it 'with given arguments as a hash of {arguments => [value]}' do
+      executor.expects(:from_uris).with(hosts).returns([host])
+      result.expects(:to_h).returns(result)
+      executor.expects(:run_script).with([host], full_path, ['hello', 'world']).returns({ host => result })
+
+      expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{hostname}'}})"])
+        $a = run_script('test/uploads/hostname.sh', Target('#{hostname}'), arguments => ['hello', 'world'])
+        notice $a
+      CODE
+    end
+
+    it 'with given arguments as a hash of {arguments => []}' do
+      executor.expects(:from_uris).with(hosts).returns([host])
+      result.expects(:to_h).returns(result)
+      executor.expects(:run_script).with([host], full_path, []).returns({ host => result })
+
+      expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{hostname}'}})"])
+        $a = run_script('test/uploads/hostname.sh', Target('#{hostname}'), arguments => [])
         notice $a
       CODE
     end
@@ -86,7 +119,7 @@ describe 'the run_script function' do
 
       it 'with propagated multiple hosts and returns multiple results' do
         executor.expects(:from_uris).with(hosts).returns(nodes)
-        executor.expects(:run_script).with(nodes, full_path).returns({ host => result, host2 => result2 })
+        executor.expects(:run_script).with(nodes, full_path, []).returns({ host => result, host2 => result2 })
         result.expects(:to_h).returns(result)
         result2.expects(:to_h).returns(result2)
 

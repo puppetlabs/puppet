@@ -524,6 +524,10 @@ module TypeFactory
     @error_t ||= TypeParser.singleton.parse('Error', Loaders.static_loader)
   end
 
+  def self.target
+    @target_t ||= TypeParser.singleton.parse('Target')
+  end
+
   # Produce a type corresponding to the class of given unless given is a
   # String, Class or a PAnyType.  When a String is given this is taken as
   # a classname.
