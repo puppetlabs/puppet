@@ -46,7 +46,7 @@ USAGE
 -----
 puppet apply [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
   [-e|--execute] [--detailed-exitcodes] [-L|--loadclasses]
-  [-l|--logdest syslog|eventlog|<FILE>|console] [--noop]
+  [-l|--logdest syslog|eventlog|<ABS FILEPATH>|console] [--noop]
   [--catalog <catalog>] [--write-catalog-summary] <file>
 
 
