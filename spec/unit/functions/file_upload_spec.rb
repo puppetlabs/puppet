@@ -92,9 +92,8 @@ describe 'the file_upload function' do
     end
 
     it 'with target specified as a Target' do
-      executor = mock('executor')
-      Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
-      executor.expects(:file_upload).with(full_dir_path, destination).returns({ host => result })
+      executor.expects(:from_uris).with(hosts).returns([host])
+      executor.expects(:file_upload).with([host], full_dir_path, destination).returns({ host => result })
       result.expects(:to_h).returns(result)
 
       expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
