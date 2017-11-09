@@ -111,7 +111,7 @@ module Pal
     #   pal.create(t, 'color' => 'black', 'make' => 't-ford')
     #
     #   # letting 'new_object' parse the type from a string
-    #   pal.create('Car', 'color' => 'black', 'make' => 't-ford)
+    #   pal.create('Car', 'color' => 'black', 'make' => 't-ford')
     #
     # @param type_string [String] a puppet language data type
     # @return [Puppet::Pops::Types::PAnyType] the data type
