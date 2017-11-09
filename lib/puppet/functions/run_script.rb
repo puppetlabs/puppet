@@ -12,6 +12,13 @@ Puppet::Functions.create_function(:run_script, Puppet::Functions::InternalFuncti
     type 'TargetOrTargets = Variant[String[1], Target, Array[TargetOrTargets]]'
   end
 
+  dispatch :run_script_with_args do
+    scope_param
+    param 'String[1]', :script
+    param 'TargetOrTargets', :targets
+    param 'Struct[arguments => Array[String]]', :arguments
+  end
+
   dispatch :run_script do
     scope_param
     param 'String[1]', :script
@@ -19,6 +26,10 @@ Puppet::Functions.create_function(:run_script, Puppet::Functions::InternalFuncti
   end
 
   def run_script(scope, script, *targets)
+    run_script_with_args(scope, script, targets, 'arguments' => [])
+  end
+
+  def run_script_with_args(scope, script, targets, args_hash)
     unless Puppet[:tasks]
       raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
         Puppet::Pops::Issues::TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING,
@@ -38,8 +49,8 @@ Puppet::Functions.create_function(:run_script, Puppet::Functions::InternalFuncti
       raise Puppet::ParseErrorWithIssue.from_issue_and_stack(Puppet::Pops::Issues::NOT_A_FILE, {:file => script})
     end
 
-    # Ensure that that given targets are all Target instances
-    targets = targets.flatten.map { |t| t.is_a?(String) ? Puppet::Pops::Types::TypeFactory.target.create(t) : t }
+    # Ensure that that given targets are all Target instances)
+    targets = [targets].flatten.map { |t| t.is_a?(String) ? Puppet::Pops::Types::TypeFactory.target.create(t) : t }
     if targets.empty?
       call_function('debug', "Simulating run_script of '#{found}' - no targets given - no action taken")
       Puppet::Pops::Types::ExecutionResult::EMPTY_RESULT
@@ -48,7 +59,7 @@ Puppet::Functions.create_function(:run_script, Puppet::Functions::InternalFuncti
       hosts = targets.map { |h| h.host }
 
       Puppet::Pops::Types::ExecutionResult.from_bolt(
-        executor.run_script(executor.from_uris(hosts), found)
+        executor.run_script(executor.from_uris(hosts), found, args_hash['arguments'])
       )
     end
   end
