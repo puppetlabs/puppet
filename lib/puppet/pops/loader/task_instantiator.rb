@@ -54,7 +54,8 @@ class TaskInstantiator
       Types::Task::PARAMETER_NAME_PATTERN,
       tf.struct(
         tf.optional('description') => tf.string,
-        tf.optional('type') => Types::PStringType::NON_EMPTY
+        tf.optional('type') => Types::PStringType::NON_EMPTY,
+        tf.optional('sensitive') => tf.boolean
       )
     )
 
