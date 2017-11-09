@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.2-73-g035eee5\n"
+"Project-Id-Version: Puppet automation framework 5.3.3-17-g67b1e97\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-10-25 23:09+0000\n"
-"PO-Revision-Date: 2017-10-25 23:09+0000\n"
+"POT-Creation-Date: 2017-11-09 10:40+0000\n"
+"PO-Revision-Date: 2017-11-09 10:40+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -35,29 +35,33 @@ msgstr ""
 msgid "The environmentpath setting cannot be empty or nil."
 msgstr ""
 
-#: ../lib/puppet/agent.rb:35
+#: ../lib/puppet/agent.rb:41
 msgid ""
 "Skipping run of %{client_class}; administratively disabled (Reason: '%{disable_message}');\n"
 "Use 'puppet agent --enable' to re-enable."
 msgstr ""
 
-#: ../lib/puppet/agent.rb:48
+#: ../lib/puppet/agent.rb:63
 msgid "Run of %{client_class} already in progress; skipping  (%{lockfile_path} exists)"
 msgstr ""
 
-#: ../lib/puppet/agent.rb:51
+#: ../lib/puppet/agent.rb:66
+msgid "Execution of %{client_class} did not complete within %{runtimeout} seconds and was terminated."
+msgstr ""
+
+#: ../lib/puppet/agent.rb:71
 msgid "Could not run %{client_class}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/agent.rb:58
+#: ../lib/puppet/agent.rb:78
 msgid "Shutdown/restart in progress (%{status}); skipping run"
 msgstr ""
 
-#: ../lib/puppet/agent.rb:76
+#: ../lib/puppet/agent.rb:96
 msgid "puppet agent: applying configuration"
 msgstr ""
 
-#: ../lib/puppet/agent.rb:107
+#: ../lib/puppet/agent.rb:127
 msgid "Could not create instance of %{client_class}: %{detail}"
 msgstr ""
 
@@ -104,10 +108,6 @@ msgstr ""
 msgid "Could not prepare for execution"
 msgstr ""
 
-#: ../lib/puppet/agent.rb:65
-msgid "Execution of %{client_class} did not complete within %{runtimeout} seconds and was terminated."
-msgstr ""
-
 #: ../lib/puppet/application.rb:353
 msgid "`puppet %{name}` is deprecated and will be removed in a future release."
 msgstr ""
@@ -152,16 +152,8 @@ msgstr ""
 msgid "Starting Puppet client version %{version}"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1727
-msgid "Setting 'archive_files' is deprecated. It will be removed in a future release along with the `inspect` command."
-msgstr ""
-
 #: ../lib/puppet/application/agent.rb:398
 msgid "The puppet agent command does not take parameters"
-msgstr ""
-
-#: ../lib/puppet/defaults.rb:1736
-msgid "Setting 'archive_file_server' is deprecated. It will be removed in a future release along with the `inspect` command."
 msgstr ""
 
 #: ../lib/puppet/application/apply.rb:35
@@ -1579,15 +1571,15 @@ msgstr ""
 msgid "Relative paths must not be fully qualified"
 msgstr ""
 
-#: ../lib/puppet/file_serving/configuration.rb:54
+#: ../lib/puppet/file_serving/configuration.rb:55
 msgid "Cannot find file: Invalid mount '%{mount_name}'"
 msgstr ""
 
-#: ../lib/puppet/file_serving/configuration.rb:55
+#: ../lib/puppet/file_serving/configuration.rb:56
 msgid "Cannot find file: Invalid relative path '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/file_serving/configuration.rb:105
+#: ../lib/puppet/file_serving/configuration.rb:108
 msgid "Error parsing fileserver configuration: %{detail}; using old configuration"
 msgstr ""
 
@@ -1627,11 +1619,11 @@ msgstr ""
 msgid "%{mount} is already mounted at %{name} in %{file}, line %{line_num}"
 msgstr ""
 
-#: ../lib/puppet/file_serving/configuration/parser.rb:110
+#: ../lib/puppet/file_serving/configuration/parser.rb:112
 msgid "Removing mount \"%{mount}\": %{detail}"
 msgstr ""
 
-#: ../lib/puppet/file_serving/configuration/parser.rb:114
+#: ../lib/puppet/file_serving/configuration/parser.rb:116
 msgid "The '%{mount}' module can not have a path. Ignoring attempt to set it"
 msgstr ""
 
@@ -2049,75 +2041,82 @@ msgstr ""
 msgid "Setup server facts for compiling"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:132
+#. TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
+#: ../lib/puppet/indirector/catalog/compiler.rb:133
 msgid "Not inlining absent resource"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:134
+#. TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
+#: ../lib/puppet/indirector/catalog/compiler.rb:136
 msgid "Not inlining resource without sources"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:136
+#. TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
+#: ../lib/puppet/indirector/catalog/compiler.rb:139
 msgid "Not inlining unsupported source scheme"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:157
+#. TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
+#: ../lib/puppet/indirector/catalog/compiler.rb:161
 msgid "Not inlining file outside environment"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:162
+#. TRANSLATORS Inlining refers to adding additional metadata
+#: ../lib/puppet/indirector/catalog/compiler.rb:167
 msgid "Inlining file metadata"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:249
+#: ../lib/puppet/indirector/catalog/compiler.rb:254
 msgid "Could not get metadata for %{resource}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:270
+#: ../lib/puppet/indirector/catalog/compiler.rb:275
 msgid "Unable to find a common checksum type between agent '%{agent_type}' and master '%{master_type}'."
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:275
+#: ../lib/puppet/indirector/catalog/compiler.rb:280
 msgid "Compiled static catalog for %{node} in environment %{environment}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:277
+#: ../lib/puppet/indirector/catalog/compiler.rb:282
 msgid "Compiled static catalog for %{node}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:281
+#: ../lib/puppet/indirector/catalog/compiler.rb:286
 msgid "Compiled catalog for %{node} in environment %{environment}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:283
+#: ../lib/puppet/indirector/catalog/compiler.rb:288
 msgid "Compiled catalog for %{node}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:302
+#. TRANSLATORS Inlined refers to adding additional metadata
+#: ../lib/puppet/indirector/catalog/compiler.rb:308
 msgid "Inlined resource metadata into static catalog for %{node} in environment %{environment}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:304
+#. TRANSLATORS Inlined refers to adding additional metadata
+#: ../lib/puppet/indirector/catalog/compiler.rb:311
 msgid "Inlined resource metadata into static catalog for %{node}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:321
+#: ../lib/puppet/indirector/catalog/compiler.rb:328
 msgid "Found node information"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:329
+#: ../lib/puppet/indirector/catalog/compiler.rb:336
 msgid "Failed when searching for node %{name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:348
+#: ../lib/puppet/indirector/catalog/compiler.rb:355
 msgid "Invalid option use_node for a remote request"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:366
+#: ../lib/puppet/indirector/catalog/compiler.rb:373
 msgid "Could not find node '%{name}'; cannot compile"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:384
+#: ../lib/puppet/indirector/catalog/compiler.rb:391
 msgid "Could not retrieve fact %{fact}"
 msgstr ""
 
@@ -2574,11 +2573,11 @@ msgstr ""
 msgid "Task %{task_name} not found in module %{module_name}."
 msgstr ""
 
-#: ../lib/puppet/module.rb:67
+#: ../lib/puppet/module.rb:68
 msgid "VersionRanges will never be strict when using non-vendored SemanticPuppet gem, version %{version}"
 msgstr ""
 
-#: ../lib/puppet/module.rb:73
+#: ../lib/puppet/module.rb:74
 msgid "VersionRanges will always be strict when using non-vendored SemanticPuppet gem, version %{version}"
 msgstr ""
 
