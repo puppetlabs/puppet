@@ -16,7 +16,7 @@ Puppet::Functions.create_function(:file_upload, Puppet::Functions::InternalFunct
     scope_param
     param 'String[1]', :source
     param 'String[1]', :destination
-    repeated_param 'TargetOrTargets', :nodes
+    repeated_param 'TargetOrTargets', :targets
   end
 
   def file_upload(scope, source, destination, *targets)
@@ -26,7 +26,8 @@ Puppet::Functions.create_function(:file_upload, Puppet::Functions::InternalFunct
         {:operation => 'file_upload'})
     end
 
-    unless Puppet.features.bolt?
+    executor = Puppet.lookup(:bolt_executor) { nil }
+    unless executor && Puppet.features.bolt?
       raise Puppet::ParseErrorWithIssue.from_issue_and_stack(Puppet::Pops::Issues::TASK_MISSING_BOLT, :action => _('do file uploads'))
     end
 
@@ -44,7 +45,9 @@ Puppet::Functions.create_function(:file_upload, Puppet::Functions::InternalFunct
       # Awaits change in the executor, enabling it receive Target instances
       hosts = targets.map { |h| h.host }
 
-      Puppet::Pops::Types::ExecutionResult.from_bolt(Bolt::Executor.from_uris(hosts).file_upload(found, destination))
+      Puppet::Pops::Types::ExecutionResult.from_bolt(
+        executor.file_upload(executor.from_uris(hosts), found, destination)
+      )
     end
   end
 end

@@ -7,6 +7,7 @@ describe 'the file_upload function' do
   include PuppetSpec::Compiler
   include PuppetSpec::Files
 
+  let(:executor) { mock('bolt_executor') }
   let(:tasks_enabled) { true }
   let(:env_name) { 'testenv' }
   let(:environments_dir) { Puppet[:environmentpath] }
@@ -37,6 +38,12 @@ describe 'the file_upload function' do
     Puppet.push_context({:loaders => loaders}, "test-examples")
   end
 
+  around(:each) do |example|
+    Puppet.override(:bolt_executor => executor) do
+      example.run
+    end
+  end
+
   after(:each) do
     Puppet::Pops::Loaders.clear
     Puppet::pop_context()
@@ -60,14 +67,11 @@ describe 'the file_upload function' do
     let(:destination) { '/var/www/html' }
     before(:each) do
       Puppet.features.stubs(:bolt?).returns(true)
-      module ::Bolt; end
-      class ::Bolt::Executor; end
     end
 
     it 'with fully resolved path of file and destination' do
-      executor = mock('executor')
-      Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
-      executor.expects(:file_upload).with(full_path, destination).returns({ host => result })
+      executor.expects(:from_uris).with(hosts).returns([host])
+      executor.expects(:file_upload).with([host], full_path, destination).returns({ host => result })
       result.expects(:to_h).returns(result)
 
       expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
@@ -77,9 +81,8 @@ describe 'the file_upload function' do
     end
 
     it 'with fully resolved path of directory and destination' do
-      executor = mock('executor')
-      Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
-      executor.expects(:file_upload).with(full_dir_path, destination).returns({ host => result })
+      executor.expects(:from_uris).with(hosts).returns([host])
+      executor.expects(:file_upload).with([host], full_dir_path, destination).returns({ host => result })
       result.expects(:to_h).returns(result)
 
       expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
@@ -89,9 +92,8 @@ describe 'the file_upload function' do
     end
 
     it 'with target specified as a Target' do
-      executor = mock('executor')
-      Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
-      executor.expects(:file_upload).with(full_dir_path, destination).returns({ host => result })
+      executor.expects(:from_uris).with(hosts).returns([host])
+      executor.expects(:file_upload).with([host], full_dir_path, destination).returns({ host => result })
       result.expects(:to_h).returns(result)
 
       expect(eval_and_collect_notices(<<-CODE, node)).to eql(["ExecutionResult({'#{hostname}' => {value => '#{message}'}})"])
@@ -108,9 +110,8 @@ describe 'the file_upload function' do
       let(:result2) { { value: message2 } }
 
       it 'with propagates multiple hosts and returns multiple results' do
-        executor = mock('executor')
-        Bolt::Executor.expects(:from_uris).with(hosts).returns(executor)
-        executor.expects(:file_upload).with(full_path, destination).returns({ host => result, host2 => result2 })
+        executor.expects(:from_uris).with(hosts).returns([host, host2])
+        executor.expects(:file_upload).with([host, host2], full_path, destination).returns({ host => result, host2 => result2 })
         result.expects(:to_h).returns(result)
         result2.expects(:to_h).returns(result2)
 
@@ -122,8 +123,7 @@ describe 'the file_upload function' do
     end
 
     it 'without nodes - does not invoke bolt' do
-      executor = mock('executor')
-      Bolt::Executor.expects(:from_uris).never
+      executor.expects(:from_uris).never
       executor.expects(:file_upload).never
 
       expect(eval_and_collect_notices(<<-CODE, node)).to eql(['ExecutionResult({})'])
@@ -133,8 +133,7 @@ describe 'the file_upload function' do
     end
 
     it 'errors when file is not found' do
-      executor = mock('executor')
-      Bolt::Executor.expects(:from_uris).never
+      executor.expects(:from_uris).never
       executor.expects(:file_upload).never
 
       expect{eval_and_collect_notices(<<-CODE, node)}.to raise_error(/No such file or directory: .*nonesuch\.html/)
@@ -145,6 +144,7 @@ describe 'the file_upload function' do
 
   context 'without bolt feature present' do
     it 'fails and reports that bolt library is required' do
+      Puppet.features.stubs(:bolt?).returns(false)
       expect{eval_and_collect_notices(<<-CODE, node)}.to raise_error(/The 'bolt' library is required to do file uploads/)
           file_upload('test/uploads/nonesuch.html', '/some/place')
       CODE
