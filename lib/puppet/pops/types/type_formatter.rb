@@ -330,24 +330,6 @@ class TypeFormatter
     append_array('Pattern', t.patterns.empty?) { append_strings(t.patterns.map(&:regexp)) }
   end
 
-  def append_error_param(ep)
-    case ep
-    when PStringType
-      if ep.value.nil?
-        append_string(ep)
-      else
-        append_string(ep.value)
-      end
-    when PPatternType
-      if ep.patterns.size != 1
-        append_string(ep)
-      else
-        append_string(ep.patterns[0].regexp)
-      end
-    else
-      append_string(ep)
-    end
-  end
 
   # @api private
   def string_PCollectionType(t)
