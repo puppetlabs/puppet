@@ -56,6 +56,7 @@ group(:development, :test) do
   if RUBY_VERSION >= '2.0'
     # pin rubocop as 0.50 requires a higher version of the rainbow gem (see below)
     gem 'rubocop', '~> 0.49.1', :platforms => [:ruby]
+    gem 'rubocop-i18n', '~> 1.2.0', :platforms => [:ruby]
   end
 
   # pin rainbow gem as 2.2.1 requires rubygems 2.6.9+ and (donotwant)

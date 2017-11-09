@@ -14,23 +14,27 @@ describe Puppet::Configurer::PluginHandler do
     Puppet.expects(:err).never
   end
 
-  it "downloads plugins and facts" do
+  it "downloads plugins, facts, and locales" do
     plugin_downloader = stub('plugin-downloader', :evaluate => [])
     facts_downloader = stub('facts-downloader', :evaluate => [])
+    locales_downloader = stub('locales-downloader', :evaluate => [])
 
     factory.expects(:create_plugin_downloader).returns(plugin_downloader)
     factory.expects(:create_plugin_facts_downloader).returns(facts_downloader)
+    factory.expects(:create_locales_downloader).returns(locales_downloader)
 
     pluginhandler.download_plugins(environment)
   end
 
-  it "returns downloaded plugin and fact filenames" do
+  it "returns downloaded plugin, fact, and locale filenames" do
     plugin_downloader = stub('plugin-downloader', :evaluate => %w[/a])
     facts_downloader = stub('facts-downloader', :evaluate => %w[/b])
+    locales_downloader = stub('locales-downloader', :evaluate => %w[/c])
 
     factory.expects(:create_plugin_downloader).returns(plugin_downloader)
     factory.expects(:create_plugin_facts_downloader).returns(facts_downloader)
+    factory.expects(:create_locales_downloader).returns(locales_downloader)
 
-    expect(pluginhandler.download_plugins(environment)).to match_array(%w[/a /b])
+    expect(pluginhandler.download_plugins(environment)).to match_array(%w[/a /b /c])
   end
 end

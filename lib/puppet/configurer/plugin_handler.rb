@@ -11,13 +11,13 @@ class Puppet::Configurer::PluginHandler
   # Retrieve facts from the central server.
   def download_plugins(environment)
     plugin_downloader = @factory.create_plugin_downloader(environment)
-
-    result = []
-
     plugin_fact_downloader = @factory.create_plugin_facts_downloader(environment)
+    locales_downloader = @factory.create_locales_downloader(environment)
+    result = []
     result += plugin_fact_downloader.evaluate
-
     result += plugin_downloader.evaluate
+    result += locales_downloader.evaluate
+
     Puppet::Util::Autoload.reload_changed
 
     result

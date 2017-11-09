@@ -104,6 +104,10 @@ msgstr ""
 msgid "Could not prepare for execution"
 msgstr ""
 
+#: ../lib/puppet/agent.rb:65
+msgid "Execution of %{client_class} did not complete within %{runtimeout} seconds and was terminated."
+msgstr ""
+
 #: ../lib/puppet/application.rb:353
 msgid "`puppet %{name}` is deprecated and will be removed in a future release."
 msgstr ""
@@ -148,8 +152,16 @@ msgstr ""
 msgid "Starting Puppet client version %{version}"
 msgstr ""
 
+#: ../lib/puppet/defaults.rb:1727
+msgid "Setting 'archive_files' is deprecated. It will be removed in a future release along with the `inspect` command."
+msgstr ""
+
 #: ../lib/puppet/application/agent.rb:398
 msgid "The puppet agent command does not take parameters"
+msgstr ""
+
+#: ../lib/puppet/defaults.rb:1736
+msgid "Setting 'archive_file_server' is deprecated. It will be removed in a future release along with the `inspect` command."
 msgstr ""
 
 #: ../lib/puppet/application/apply.rb:35

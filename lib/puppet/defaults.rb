@@ -1498,6 +1498,13 @@ EOT
           \"never run.\" If you want puppet agent to never run, you should start
           it with the `--no-client` option. #{AS_DURATION}",
     },
+    :runtimeout => {
+      :default  => 0,
+      :type     => :duration,
+      :desc     => "The maximum amount of time an agent run is allowed to take.
+          A Puppet agent run that exceeds this timeout will be aborted.
+          Defaults to 0, which is unlimited. #{AS_DURATION}",
+    },
     :ca_server => {
       :default    => "$server",
       :desc       => "The server to use for certificate
@@ -1712,6 +1719,19 @@ EOT
       :default  => "puppet:///pluginfacts",
       :desc     => "Where to retrieve external facts for pluginsync",
     },
+    :localedest => {
+      :type       => :directory,
+      :default    => "$vardir/locales",
+      :desc       => "Where Puppet should store translation files that it pulls down from the central
+      server.",
+    },
+    :localesource => {
+      :default    => "puppet:///locales",
+      :desc       => "From where to retrieve translation files.  The standard Puppet `file` type
+      is used for retrieval, so anything that is a valid file source can
+      be used here.",
+    },
+
     :pluginsync => {
       :default    => true,
       :type       => :boolean,
@@ -1721,9 +1741,8 @@ EOT
         Puppet.deprecation_warning "Setting 'pluginsync' is deprecated."
       }
     },
-
     :pluginsignore => {
-        :default  => ".svn CVS .git .hg",
+        :default  => ".svn CVS .git .hg *.pot",
         :desc     => "What files to ignore when pulling down plugins.",
     }
   )
