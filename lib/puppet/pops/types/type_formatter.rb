@@ -349,6 +349,22 @@ class TypeFormatter
   end
 
   # @api private
+  def string_PURIType(t)
+    append_array('URI', t.parameters.nil?) { append_string(t._pcore_init_hash['parameters']) }
+  end
+
+  def string_URI(t)
+    @bld << 'URI('
+    if @indent
+      append_indented_string(t.to_s, @indent, @indent_width, true)
+      @bld.chomp!
+    else
+      append_string(t.to_s)
+    end
+    @bld << ')'
+  end
+
+  # @api private
   def string_PUnitType(_)
     @bld << 'Unit'
   end

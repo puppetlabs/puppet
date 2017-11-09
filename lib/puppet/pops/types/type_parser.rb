@@ -201,6 +201,7 @@ class TypeParser
         'semverrange'  => TypeFactory.sem_ver_range,
         'timestamp'    => TypeFactory.timestamp,
         'timespan'     => TypeFactory.timespan,
+        'uri'          => TypeFactory.uri,
     }.freeze
   end
 
@@ -355,6 +356,11 @@ class TypeParser
       # 1..m parameters being strings or regular expressions
       raise_invalid_parameters_error('Pattern', '1 or more', parameters.size) unless parameters.size >= 1
       TypeFactory.pattern(*parameters)
+
+    when 'uri'
+      # 1 parameter which is a string or a URI
+      raise_invalid_parameters_error('URI', '1', parameters.size) unless parameters.size == 1
+      TypeFactory.uri(parameters[0])
 
     when 'variant'
       # 1..m parameters being strings or regular expressions
