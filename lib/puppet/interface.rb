@@ -182,6 +182,7 @@ class Puppet::Interface
   def to_s
     "Puppet::Face[#{name.inspect}, #{version.inspect}]"
   end
+  alias_method :inspect, :to_s
 
   # @return [void]
   def deprecate
