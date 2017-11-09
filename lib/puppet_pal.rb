@@ -23,26 +23,234 @@ require 'puppet/parser/script_compiler'
 #   end
 #   # The result is what 'mymodule::myplan' returns
 #
-module Puppet::Pal
+module Puppet
+module Pal
+
+  # @param compiler [Puppet::Pal::Compiler] a configured compiler as obtained in the callback from `with_script_compiler`
+
+  class Compiler
+    attr_reader :internal_compiler
+    protected :internal_compiler
+
+    attr_reader :internal_evaluator
+    protected :internal_evaluator
+
+    def initialize(internal_compiler)
+      @internal_compiler = internal_compiler
+      @internal_evaluator = Puppet::Pops::Parser::EvaluatingParser.new
+    end
+
+    # Calls a function given by name with arguments specified in an `Array`, and optionally accepts a code block.
+    # @param function_name [String] the name of the function to call
+    # @param args [Object] the arguments to the function
+    # @param block [Proc] an optional callable block that is given to the called function
+    # @return [Object] what the called function returns
+    #
+    def call_function(function_name, *args, &block)
+      # TRANSLATORS: do not translate variable name strings in these assertions
+      Pal::assert_non_empty_string(function_name, 'function_name', false)
+      Pal::assert_type(Pal::T_ANY_ARRAY, args, 'args', false)
+      internal_evaluator.evaluator.external_call_function(function_name, args, topscope, &block)
+    end
+
+    # Returns an Array[Puppet::Pops::Types::PCallableType] describing the given function's signatures, or empty array if function not found.
+    # @param function_name [String] the name of the function to get a signature for
+    # @return [Array<Puppet::Pops::Types::PCallableType>] an array of callable signatures, or an empty array if function not found
+    def function_signatures(function_name)
+      loader = internal_compiler.loaders.private_environment_loader
+      if func = loader.load(:function, function_name)
+        t = func.class.dispatcher.to_type
+        return t.is_a?(Puppet::Pops::Types::PVariantType) ? t.types : [t]
+      end
+      # Could not find function
+      Puppet::Pops::EMPTY_ARRAY
+    end
+
+    # Evaluates a string of puppet language code in top scope.
+    # A "source_file" reference to a source can be given - if not an actual file name, by convention the name should
+    # be bracketed with < > to indicate it is something symbolic; for example `<commandline>` if the string was given on the
+    # command line.
+    #
+    # If the given `puppet_code` is `nil` or an empty string, `nil` is returned, otherwise the result of evaluating the
+    # puppet language string. The given string must form a complete and valid expression/statement as an error is raised
+    # otherwise. That is, it is not possible to divide a compound expression by line and evaluate each line individually.
+    #
+    # @param puppet_code [String, nil] the puppet language code to evaluate, must be a complete expression/statement
+    # @param source_file [String, nil] an optional reference to a source (a file or symbolic name/location)
+    # @return [Object] what the `puppet_code` evaluates to
+    #
+    def evaluate_string(puppet_code, source_file = nil)
+      return nil if puppet_code.nil? || puppet_code == ''
+      unless puppet_code.is_a?(String)
+        raise ArgumentError, _("The argument 'puppet_code' must be a String, got %{type}") % { type: puppet_code.class }
+      end
+      internal_evaluator.evaluate_string(topscope, puppet_code, source_file)
+    end
+
+    # Evaluates a puppet language file in top scope.
+    # The file must exist and contain valid puppet language code or an error is raised.
+    #
+    # @param file [Path, String] an absolute path to a file with puppet language code, must exist
+    # @return [Object] what the last evaluated expression in the file evaluated to
+    #
+    def evaluate_file(file)
+      internal_evaluator.evaluate_file(topscope, file)
+    end
+
+    # Parses a puppet data type given in String format and returns that type, or raises an error.
+    # A type is needed in calls to `new` to create an instance of the data type, or to perform type checking
+    # of values - typically using `type.instance?(obj)` to check if `obj` is an instance of the type.
+    #
+    # @example Verify if obj is an instance of a data type
+    #   # evaluates to true
+    #   pal.type('Enum[red, blue]').instance?("blue")
+    #
+    # @example Create an instance of a data type
+    #   # using an already create type
+    #   t = pal.type('Car')
+    #   pal.create(t, 'color' => 'black', 'make' => 't-ford')
+    #
+    #   # letting 'new_object' parse the type from a string
+    #   pal.create('Car', 'color' => 'black', 'make' => 't-ford')
+    #
+    # @param type_string [String] a puppet language data type
+    # @return [Puppet::Pops::Types::PAnyType] the data type
+    #
+    def type(type_string)
+      Puppet::Pops::Types::TypeParser.singleton.parse(type_string)
+    end
+
+    # Creates a new instance of a given data type.
+    # @param data_type [String, Puppet::Pops::Types::PAnyType] the data type as a data type or in String form.
+    # @param arguments [Object] one or more arguments to the called `new` function
+    # @return [Object] an instance of the given data type,
+    #   or raises an error if it was not possible to parse data type or create an instance.
+    #
+    def create(data_type, *arguments)
+      t = data_type.is_a?(String) ? type(data_type) : data_type
+      unless t.is_a?(Puppet::Pops::Types::PAnyType)
+        raise ArgumentError, _("Given data_type value is not a data type, got '%{type}'") % {type: t.class}
+      end
+      call_function('new', t, *arguments)
+    end
+
+    private
+
+    def topscope
+      internal_compiler.topscope
+    end
+  end
+
+  class ScriptCompiler < Compiler
+    # Returns the signature callable of the given plan (the arguments it accepts, and the data type it returns)
+    # @param plan_name [String] the name of the plan to get the signature of
+    # @return [Puppet::Pops::Types::PCallableType, nil] returns a callable data type, or nil if plan is not found
+    #
+    def plan_signature(plan_name)
+      loader = internal_compiler.loaders.private_environment_loader
+      if func = loader.load(:plan, plan_name)
+        return func.class.dispatcher.to_type
+      end
+      # Could not find plan
+      nil
+    end
+  end
+
+  # Defines a context in which multiple operations in an env with a script compiler can be performed in a given block.
+  # The calls that takes place to PAL inside of the given block are all with the same instance of the compiler.
+  # The parameter `configured_by_env` makes it possible to either use the configuration in the environment, or specify
+  # `manifest_file` or `code_string` manually. If neither is given, an empty `code_string` is used.
+  #
+  # @example define a script compiler without any initial logic
+  #   pal.with_script_compiler do | compiler |
+  #     # do things with compiler
+  #   end
+  #
+  # @example define a script compiler with a code_string containing initial logic
+  #   pal.with_script_compiler(code_string: '$myglobal_var = 42')  do | compiler |
+  #     # do things with compiler
+  #   end
+  #
+  # @param configured_by_env [Boolean] when true the environment's settings are used, otherwise the given `manifest_file` or `code_string`
+  # @param manifest_file [String] a Puppet Language file to load and evaluate before calling the given block, mutually exclusive with `code_string`
+  # @param code_string [String] a Puppet Language source string to load and evaluate before calling the given block, mutually exclusive with `manifest_file`
+  # @param facts [Hash] optional map of fact name to fact value - if not given will initialize the facts (which is a slow operation)
+  #   If given at the environment level, the facts given here are merged with higher priority.
+  # @param variables [Hash] optional map of fully qualified variable name to value. If given at the environment level, the variables
+  #   given here are merged with higher priority.
+  # @param block [Proc] the block performing operations on compiler
+  # @return [Object] what the block returns
+  # @yieldparam [Puppet::Pal::ScriptCompiler] compiler, a ScriptCompiler to perform operations on.
+  #
+  def self.with_script_compiler(
+      configured_by_env: false,
+      manifest_file:     nil,
+      code_string:       nil,
+      facts:             nil,
+      variables:         nil,
+      &block
+    )
+    # TRANSLATORS: do not translate variable name strings in these assertions
+    assert_mutually_exclusive(manifest_file, code_string, 'manifest_file', 'code_string')
+    assert_non_empty_string(manifest_file, 'manifest_file', true)
+    assert_non_empty_string(code_string, 'code_string', true)
+    assert_type(T_BOOLEAN, configured_by_env, "configured_by_env", false)
+
+    if configured_by_env
+      unless manifest_file.nil? && code_string.nil?
+        # TRANSLATORS: do not translate the variable names in this error message
+        raise ArgumentError, _("manifest_file or code_string cannot be given when configured_by_env is true")
+      end
+      # Use the manifest setting
+      manifest_file = Puppet[:manifest]
+    else
+      # An "undef" code_string is the only way to override Puppet[:manifest] & Puppet[:code] settings since an
+      # empty string is taken as Puppet[:code] not being set.
+      #
+      if manifest_file.nil? && code_string.nil?
+        code_string = 'undef'
+      end
+    end
+
+    Puppet[:tasks] = true
+    # After the assertions, if code_string is non nil - it has the highest precedence
+    Puppet[:code] = code_string unless code_string.nil?
+    overrides = {}
+    unless facts.nil?
+      overrides[:pal_facts] = Puppet.lookup(:pal_facts).merge(facts)
+    end
+    unless variables.nil?
+      overrides[:pal_variables] = Puppet.lookup(:pal_variables).merge(variables)
+    end
+    Puppet.override(overrides, "PAL::with_script_compiler") do # TRANSLATORS: Do not translate, symbolic name
+      # If manifest_file is nil, the #main method will use the env configured manifest
+      # do things in block while a Script Compiler is in effect
+      main(manifest_file, &block)
+    end
+  end
 
   # Evaluates a Puppet Language script string.
   # @param code_string [String] a snippet of Puppet Language source code
   # @return [Object] what the Puppet Language code_string evaluates to
+  # @deprecated Use {#with_script_compiler} and then evaluate_string on the given compiler - to be removed in 1.0 version
   #
   def self.evaluate_script_string(code_string)
-    Puppet[:tasks] = true
-    Puppet[:code] = code_string
-    main
+    # prevent the default loading of Puppet[:manifest] which is the environment's manifest-dir by default settings
+    # by setting code_string to 'undef'
+    with_script_compiler do |compiler|
+      compiler.evaluate_string(code_string)
+    end
   end
 
   # Evaluates a Puppet Language script (.pp) file.
   # @param manifest_file [String] a file with Puppet Language source code
   # @return [Object] what the Puppet Language manifest_file contents evaluates to
+  # @deprecated Use {#with_script_compiler} and then evaluate_file on the given compiler - to be removed in 1.0 version
   #
   def self.evaluate_script_manifest(manifest_file)
-    assert_non_empty_string(manifest_file, _("manifest file"))
-    Puppet[:tasks] = true
-    main(manifest_file)
+    with_script_compiler do |compiler|
+      compiler.evaluate_file(manifest_file)
+    end
   end
 
   # Runs the given named plan passing arguments by name in a hash.
@@ -51,23 +259,18 @@ module Puppet::Pal
   # @param manifest_file [String] a Puppet Language file to load and evaluate before running the plan, mutually exclusive with code_string
   # @param code_string [String] a Puppet Language source string to load and evaluate before running the plan, mutually exclusive with manifest_file
   # @return [Object] returns what the evaluated plan returns
+  # @deprecated Use {#with_script_compiler} and then `call_function('run_plan', plan_name, plan_args)` on the given compiler - to be removed in 1.0 version
   #
   def self.run_plan(plan_name,
       plan_args:     {},
       manifest_file: nil,
       code_string:   nil
     )
-    # TRANSLATORS: do not translate variable name string in these assertions
-    assert_mutually_exclusive(manifest_file, code_string, 'manifest_file', 'code_string')
-    assert_non_empty_string(manifest_file, 'manifest_file', true)
-    assert_non_empty_string(code_string, 'code_string', true)
-
-    Puppet[:tasks] = true
-    Puppet[:code] = code_string unless code_string.nil?
-    main(manifest_file) do | compiler |
-      compiler.topscope.call_function('run_plan', [plan_name, plan_args])
+    with_script_compiler(manifest_file: manifest_file, code_string: code_string) do |compiler|
+      compiler.call_function('run_plan', plan_name, plan_args)
     end
   end
+
 
   # Defines the context in which to perform puppet operations (evaluation, etc)
   # The code to evaluate in this context is given in a block.
@@ -76,6 +279,7 @@ module Puppet::Pal
   # @param modulepath [Array<String>] an array of directory paths containing Puppet modules, may be empty, defaults to empty array
   # @param settings_hash [Hash] a hash of settings - currently not used for anything, defaults to empty hash
   # @param facts [Hash] optional map of fact name to fact value - if not given will initialize the facts (which is a slow operation)
+  # @param variables [Hash] optional map of fully qualified variable name to value
   # @return [Object] returns what the given block returns
   # @yieldparam [Puppet::Pal] context, a context that responds to Puppet::Pal methods
   #
@@ -96,9 +300,10 @@ module Puppet::Pal
 
     env = Puppet::Node::Environment.create(env_name, modulepath)
 
-    with_loaded_environment(
+    in_environment_context(
       Puppet::Environments::Static.new(env), # The tmp env is the only known env
-      env, facts, variables, &block)
+      env, facts, variables, &block
+      )
   end
 
   # Defines the context in which to perform puppet operations (evaluation, etc)
@@ -121,6 +326,7 @@ module Puppet::Pal
   # @param envpath [String] a path of directories in which there are environments to search for `env_name` (mutually exclusive with `env_dir`).
   #   Should be a single directory, or several directories separated with platform specific `File::PATH_SEPARATOR` character.
   # @param facts [Hash] optional map of fact name to fact value - if not given will initialize the facts (which is a slow operation)
+  # @param variables [Hash] optional map of fully qualified variable name to value
   # @return [Object] returns what the given block returns
   # @yieldparam [Puppet::Pal] context, a context that responds to Puppet::Pal methods
   #
@@ -181,28 +387,27 @@ module Puppet::Pal
       # not have the same effective modulepath).
       environments = Puppet::Environments::StaticDirectory.new(env_name, env_path, env) # The env being used is the only one...
     end
-    with_loaded_environment(environments, env, facts, variables, &block)
+    in_environment_context(environments, env, facts, variables, &block)
   end
 
   private
 
-  def self.with_loaded_environment(environments, env, facts, variables, &block)
-    env.each_plugin_directory do |dir|
-      $LOAD_PATH << dir unless $LOAD_PATH.include?(dir)
-    end
-
-    # Puppet requires Facter, which initializes its lookup paths. Reset Facter to
-    # pickup the new $LOAD_PATH.
-    Facter.reset
-
+  # Prepares the puppet context with pal information - and delegates to the block
+  # No set up is performed at this step - it is delayed until it is known what the
+  # operation is going to be (for example - using a ScriptCompiler).
+  #
+  def self.in_environment_context(environments, env, facts, variables, &block)
+    # Create a default node to use (may be overridden later)
     node = Puppet::Node.new(Puppet[:node_name_value], :environment => env)
 
     Puppet.override(
-      environments: environments,        # The env being used is the only one...
-      current_node: node,                # to allow it to be picked up instead of created
-      variables: variables
+      environments: environments,     # The env being used is the only one...
+      pal_env: env,                   # provide as convenience
+      pal_current_node: node,         # to allow it to be picked up instead of created
+      pal_variables: variables,       # common set of variables across several inner contexts
+      pal_facts: facts                # common set of facts across several inner contexts (or nil)
     ) do
-      prepare_node_facts(node, facts)
+      # DELAY: prepare_node_facts(node, facts)
       return block.call(self)
     end
   end
@@ -243,8 +448,24 @@ module Puppet::Pal
     end
   end
 
-  def self.main(manifest = nil, facts = nil, &block)
-    node = Puppet.lookup(:current_node)
+  # The main routine for script compiler
+  # Picks up information from the puppet context and configures a script compiler which is given to
+  # the provided block
+  #
+  def self.main(manifest = nil, &block)
+    # Configure the load path
+    env = Puppet.lookup(:pal_env)
+    env.each_plugin_directory do |dir|
+      $LOAD_PATH << dir unless $LOAD_PATH.include?(dir)
+    end
+
+    # Puppet requires Facter, which initializes its lookup paths. Reset Facter to
+    # pickup the new $LOAD_PATH.
+    Facter.reset
+
+    node = Puppet.lookup(:pal_current_node)
+    prepare_node_facts(node, Puppet.lookup(:pal_facts))
+
     configured_environment = node.environment || Puppet.lookup(:current_environment)
 
     apply_environment = manifest ?
@@ -287,9 +508,13 @@ module Puppet::Pal
           # create the $settings:: variables
           topscope.merge_settings(node.environment.name, false)
 
-          add_variables(topscope, Puppet.lookup(:variables))
+          add_variables(topscope, Puppet.lookup(:pal_variables))
 
-          compiler.compile(&block)
+          # compiler.compile(&block)
+          compiler.compile do | internal_compiler |
+            # wrap the internal compiler to prevent it from leaking in the PAL API
+            block.call(ScriptCompiler.new(internal_compiler)) unless !block_given?
+          end
 
         rescue Puppet::ParseErrorWithIssue, Puppet::Error => detail
           # already logged and handled by the compiler for these two cases
@@ -304,6 +529,8 @@ module Puppet::Pal
 
   T_STRING = Puppet::Pops::Types::PStringType::NON_EMPTY
   T_STRING_ARRAY = Puppet::Pops::Types::TypeFactory.array_of(T_STRING)
+  T_ANY_ARRAY = Puppet::Pops::Types::TypeFactory.array_of_any
+  T_BOOLEAN = Puppet::Pops::Types::PBooleanType::DEFAULT
 
   def self.assert_type(type, value, what, allow_nil=false)
     Puppet::Pops::Types::TypeAsserter.assert_instance_of(nil, type, value, allow_nil) { _('Puppet Pal: %{what}') % {what: what} }
@@ -323,4 +550,11 @@ module Puppet::Pal
     end
   end
 
+  def self.assert_block_given(block)
+    if block.nil?
+      raise ArgumentError, _("A block must be given")
+    end
+  end
 end
+end
+
