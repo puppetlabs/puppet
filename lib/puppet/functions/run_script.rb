@@ -48,7 +48,7 @@ Puppet::Functions.create_function(:run_script, Puppet::Functions::InternalFuncti
       hosts = targets.map { |h| h.host }
 
       Puppet::Pops::Types::ExecutionResult.from_bolt(
-        executor.run_script(executor.from_uris(hosts), found)
+        executor.run_script(executor.from_uris(hosts), found, [])
       )
     end
   end
