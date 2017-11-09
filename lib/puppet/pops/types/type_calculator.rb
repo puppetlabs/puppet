@@ -614,12 +614,12 @@ class TypeCalculator
 
   # @api private
   def infer_TrueClass(o)
-    PBooleanType::DEFAULT
+    PBooleanType::TRUE
   end
 
   # @api private
   def infer_FalseClass(o)
-    PBooleanType::DEFAULT
+    PBooleanType::FALSE
   end
 
   # @api private
