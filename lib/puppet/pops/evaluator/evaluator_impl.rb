@@ -401,7 +401,9 @@ class EvaluatorImpl
     end
 
     left_o = bin_expr.left_expr
-    if (left.is_a?(Array) || left.is_a?(Hash)) && COLLECTION_OPERATORS.include?(operator)
+    if left.is_a?(URI) && operator == '+'
+      concatenate(left, right)
+    elsif (left.is_a?(Array) || left.is_a?(Hash)) && COLLECTION_OPERATORS.include?(operator)
       # Handle operation on collections
       case operator
       when '+'
@@ -1125,7 +1127,11 @@ class EvaluatorImpl
   # * Hash => a merge, where entries in `y` overrides
   # * any other => error
   #
-  # When x is something else, wrap it in an array first.
+  # When x is a URI, y of type produces:
+  #
+  # * String => merge of URI interpreted x + URI(y) using URI merge semantics
+  # * URI => merge of URI interpreted x + y using URI merge semantics
+  # * any other => error
   #
   # When x is nil, an empty array is used instead.
   #
@@ -1155,11 +1161,18 @@ class EvaluatorImpl
   #   @param hsh_x [Hash] the hash to merge to
   #   @param hsh_y [Hash] hash merged with `hsh_x`
   #   @return [Hash] new hash with `hsh_x` merged with `hsh_y`
+  # @overload concatenate(uri_x, uri_y)
+  #   @param uri_x [URI] the uri to merge to
+  #   @param uri_y [URI] uri to merged with `uri_x`
+  #   @return [URI] new uri with `uri_x` merged with `uri_y`
+  # @overload concatenate(uri_x, string_y)
+  #   @param uri_x [URI] the uri to merge to
+  #   @param string_y [String] string to merge with `uri_x`
+  #   @return [URI] new uri with `uri_x` merged with `string_y`
   # @raise [ArgumentError] when `xxx_x` is neither an Array nor a Hash
   # @raise [ArgumentError] when `xxx_x` is a Hash, and `xxx_y` is neither Array nor Hash.
   #
   def concatenate(x, y)
-    x = [x] unless x.is_a?(Array) || x.is_a?(Hash)
     case x
     when Array
       y = case y
@@ -1186,11 +1199,14 @@ class EvaluatorImpl
           Hash[*y]
         end
       else
-        raise ArgumentError.new(_("Can only append Array or Hash to a Hash"))
+        raise ArgumentError.new(_('Can only append Array or Hash to a Hash'))
       end
       x.merge y # new hash with overwrite
+    when URI
+      raise ArgumentError.new(_('An URI can only be merged with an URI or String')) unless y.is_a?(String) || y.is_a?(URI)
+      x + y
     else
-      raise ArgumentError.new(_("Can only append to an Array or a Hash."))
+      concatenate([x], y)
     end
   end
 

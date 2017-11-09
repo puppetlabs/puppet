@@ -170,6 +170,20 @@ describe 'URI type' do
         CODE
         expect(eval_and_collect_notices(code)).to eq(['urn', 'a:b:c'])
       end
+
+      it 'An URI can be merged with a String using the + operator' do
+        code = <<-CODE
+          notice(String(URI('https://example.com') + '/a/b', '%p'))
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(["URI('https://example.com/a/b')"])
+      end
+
+      it 'An URI can be merged with another URI using the + operator' do
+        code = <<-CODE
+          notice(String(URI('https://example.com') + URI('/a/b'), '%p'))
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(["URI('https://example.com/a/b')"])
+      end
     end
   end
 end
