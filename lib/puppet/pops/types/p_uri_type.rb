@@ -138,6 +138,10 @@ class PURIType < PAnyType
     @parameters.keys.all? { |pn| eval.match?(o.send(pn), @parameters[pn]) }
   end
 
+  def roundtrip_with_string?
+    true
+  end
+
   def _pcore_init_hash
     @parameters == nil? ? EMPTY_HASH : { 'parameters' => @parameters }
   end

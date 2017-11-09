@@ -146,6 +146,14 @@ module Serialization
       expect(val2).to eql(val)
     end
 
+    it 'URI' do
+      val = URI('http://bob:ewing@dallas.example.com:8080/oil/baron?crude=cash#leftovers')
+      write(val)
+      val2 = read
+      expect(val2).to be_a(URI)
+      expect(val2).to eql(val)
+    end
+
     it 'Sensitive with rich data' do
       sval = Time::Timestamp.now
       val = Types::PSensitiveType::Sensitive.new(sval)
