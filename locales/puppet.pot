@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.3-17-g67b1e97\n"
+"Project-Id-Version: Puppet automation framework 5.3.3-20-g490a343\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-11-09 10:40+0000\n"
-"PO-Revision-Date: 2017-11-09 10:40+0000\n"
+"POT-Creation-Date: 2017-11-09 16:09+0000\n"
+"PO-Revision-Date: 2017-11-09 16:09+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -341,7 +341,7 @@ msgstr ""
 msgid "Unknown rendering format '%{format}'"
 msgstr ""
 
-#: ../lib/puppet/application/lookup.rb:351 ../lib/puppet/face/epp.rb:491
+#: ../lib/puppet/application/lookup.rb:351 ../lib/puppet/face/epp.rb:493
 msgid "Incorrect formatted data in %{fact_file} given via the --facts flag"
 msgstr ""
 
@@ -782,112 +782,113 @@ msgstr ""
 msgid "No template specified. No action taken"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:95 ../lib/puppet/face/epp.rb:183 ../lib/puppet/face/parser.rb:116
+#: ../lib/puppet/face/epp.rb:95 ../lib/puppet/face/epp.rb:184
 msgid ""
 "One or more file(s) specified did not exist:\n"
+"%{missing_files_list}"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:98
+#: ../lib/puppet/face/epp.rb:99
 msgid "Errors while validating epp"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:105
+#: ../lib/puppet/face/epp.rb:106
 msgid "Outputs a dump of the internal template parse tree for debugging"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:107 ../lib/puppet/face/parser.rb:68
+#: ../lib/puppet/face/epp.rb:108 ../lib/puppet/face/parser.rb:68
 msgid "A dump of the resulting AST model unless there are syntax or validation errors."
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:130 ../lib/puppet/face/epp.rb:293 ../lib/puppet/face/parser.rb:81
+#: ../lib/puppet/face/epp.rb:131 ../lib/puppet/face/epp.rb:295 ../lib/puppet/face/parser.rb:81
 msgid "<source>"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:132
+#: ../lib/puppet/face/epp.rb:133
 msgid "Dump one epp source expression given on the command line."
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:136
+#: ../lib/puppet/face/epp.rb:137
 msgid "Whether or not to validate the parsed result, if no-validate only syntax errors are reported."
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:140
+#: ../lib/puppet/face/epp.rb:141
 msgid "Whether or not to show a file name header between files."
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:164 ../lib/puppet/face/parser.rb:99
+#: ../lib/puppet/face/epp.rb:165 ../lib/puppet/face/parser.rb:99
 msgid "No input to parse given on command line or stdin"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:191
+#: ../lib/puppet/face/epp.rb:193
 msgid "Renders an epp template as text"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:193
+#: ../lib/puppet/face/epp.rb:195
 msgid "A rendered result of one or more given templates."
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:289
+#: ../lib/puppet/face/epp.rb:291
 msgid "<node_name>"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:290
+#: ../lib/puppet/face/epp.rb:292
 msgid "The name of the node for which facts are obtained. Defaults to facts for the local node."
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:295
+#: ../lib/puppet/face/epp.rb:297
 msgid "Render one inline epp template given on the command line."
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:298
+#: ../lib/puppet/face/epp.rb:300
 msgid "<values_hash>"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:299
+#: ../lib/puppet/face/epp.rb:301
 msgid "A Hash in Puppet DSL form given as arguments to the template being rendered."
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:302
+#: ../lib/puppet/face/epp.rb:304
 msgid "<pp_or_yaml_file>"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:303
+#: ../lib/puppet/face/epp.rb:305
 msgid "A .pp or .yaml file that is processed to produce a hash of values for the template."
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:306
+#: ../lib/puppet/face/epp.rb:308
 msgid "<facts_file>"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:307
+#: ../lib/puppet/face/epp.rb:309
 msgid "A .yaml or .json file containing a hash of facts made available in $facts and $trusted"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:311
+#: ../lib/puppet/face/epp.rb:313
 msgid "Whether or not to show a file name header between rendered results."
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:332
+#: ../lib/puppet/face/epp.rb:334
 msgid "No input to process given on command line or stdin"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:346
+#: ../lib/puppet/face/epp.rb:348
 msgid "error while rendering epp"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:386
+#: ../lib/puppet/face/epp.rb:388
 msgid "Only .yaml or .pp can be used as a --values_file"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:389
+#: ../lib/puppet/face/epp.rb:391
 msgid "Could not load --values_file %{error}"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:392
+#: ../lib/puppet/face/epp.rb:394
 msgid "--values_file option must evaluate to a Hash or undef/nil, got: '%{template_class}'"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:405
+#: ../lib/puppet/face/epp.rb:407
 msgid "--values option must evaluate to a Hash or undef, got: '%{values_class}'"
 msgstr ""
 
@@ -1055,7 +1056,7 @@ msgid "Unable to find metadata.json in module root %{module_path} or parent dire
 msgstr ""
 
 #: ../lib/puppet/face/module/build.rb:60
-msgid "Module built: "
+msgid "Module built: %{path}"
 msgstr ""
 
 #: ../lib/puppet/face/module/changes.rb:3
@@ -1225,23 +1226,26 @@ msgstr ""
 msgid " (no modules installed)"
 msgstr ""
 
-#: ../lib/puppet/face/module/list.rb:114
-msgid "Non semantic version dependency"
-msgstr ""
-
-#: ../lib/puppet/face/module/list.rb:117
-msgid "Missing dependency"
-msgstr ""
-
-#: ../lib/puppet/face/module/list.rb:120
-msgid "Module '%s' (v%s) fails to meet some dependencies:"
-msgstr ""
-
-#: ../lib/puppet/face/module/list.rb:147
+#: ../lib/puppet/face/module/list.rb:137
 msgid "'%{parent_name}' (%{parent_version}) requires '%{dependency_name}' (%{dependency_version})"
 msgstr ""
 
-#: ../lib/puppet/face/module/list.rb:267 ../lib/puppet/face/module/list.rb:272
+#: ../lib/puppet/face/module/list.rb:160
+msgid ""
+"Module '%{name}' (v%{version}) fails to meet some dependencies:\n"
+msgstr ""
+
+#: ../lib/puppet/face/module/list.rb:162
+msgid ""
+"Non semantic version dependency %{name} (v%{version}):\n"
+msgstr ""
+
+#: ../lib/puppet/face/module/list.rb:164
+msgid ""
+"Missing dependency '%{name}':\n"
+msgstr ""
+
+#: ../lib/puppet/face/module/list.rb:256 ../lib/puppet/face/module/list.rb:261
 msgid "invalid"
 msgstr ""
 
@@ -1281,12 +1285,20 @@ msgstr ""
 msgid "The version of the module to uninstall"
 msgstr ""
 
-#: ../lib/puppet/face/module/uninstall.rb:66
-msgid "Preparing to uninstall '%{name}'"
+#: ../lib/puppet/face/module/uninstall.rb:68
+msgid "Preparing to uninstall '%{name}' (%{module_version}) ..."
 msgstr ""
 
-#: ../lib/puppet/face/module/uninstall.rb:77
-msgid "Removed '%{name}'%{module_version} from %{path}"
+#: ../lib/puppet/face/module/uninstall.rb:70
+msgid "Preparing to uninstall '%{name}' ..."
+msgstr ""
+
+#: ../lib/puppet/face/module/uninstall.rb:84
+msgid "Removed '%{name}' (%{module_version}) from %{path}"
+msgstr ""
+
+#: ../lib/puppet/face/module/uninstall.rb:86
+msgid "Removed '%{name}' from %{path}"
 msgstr ""
 
 #: ../lib/puppet/face/module/upgrade.rb:5
@@ -1399,6 +1411,11 @@ msgstr ""
 
 #: ../lib/puppet/face/parser.rb:87
 msgid "Whether or not to validate the parsed result, if no-validate only syntax errors are reported"
+msgstr ""
+
+#: ../lib/puppet/face/parser.rb:116
+msgid ""
+"One or more file(s) specified did not exist:\n"
 msgstr ""
 
 #: ../lib/puppet/face/parser.rb:150
@@ -1809,21 +1826,27 @@ msgid ""
 "    Check your network connection and try again\n"
 msgstr ""
 
-#: ../lib/puppet/forge/errors.rb:92
-msgid "Request to Puppet Forge failed. Detail: "
+#: ../lib/puppet/forge/errors.rb:93
+msgid "Request to Puppet Forge failed. Detail: %{error_message} / %{http_response}."
 msgstr ""
 
-#: ../lib/puppet/forge/errors.rb:102
+#: ../lib/puppet/forge/errors.rb:96
+msgid "Request to Puppet Forge failed. Detail: %{http_response}."
+msgstr ""
+
+#: ../lib/puppet/forge/errors.rb:106
 msgid ""
 "Request to Puppet Forge failed.\n"
 "  The server being queried was %{uri}\n"
 "  The HTTP response we received was '%{response}'\n"
+"  The message we received said '%{message}'\n"
 msgstr ""
 
-#: ../lib/puppet/forge/errors.rb:107
+#: ../lib/puppet/forge/errors.rb:113
 msgid ""
-"\n"
-"  The message we received said '%{message}'"
+"Request to Puppet Forge failed.\n"
+"  The server being queried was %{uri}\n"
+"  The HTTP response we received was '%{response}'\n"
 msgstr ""
 
 #: ../lib/puppet/functions.rb:208
@@ -1935,11 +1958,7 @@ msgid "slice(): block must define at least one parameter. Block has 0."
 msgstr ""
 
 #: ../lib/puppet/functions/slice.rb:105
-msgid "slice(): block must define one parameter, or "
-msgstr ""
-
-#: ../lib/puppet/functions/slice.rb:106
-msgid "the same number of parameters as the given size of the slice (%{slice_size}). Block has %{serving_size}; "
+msgid "slice(): block must define one parameter, or the same number of parameters as the given size of the slice (%{slice_size}). Block has %{serving_size}; %{parameter_names}"
 msgstr ""
 
 #: ../lib/puppet/functions/strftime.rb:39
@@ -1999,23 +2018,31 @@ msgstr ""
 msgid "negative or zero max_paths"
 msgstr ""
 
-#: ../lib/puppet/graph/simple_graph.rb:231
+#: ../lib/puppet/graph/simple_graph.rb:239
 msgid ""
-"Found %{num} dependency cycle:\n"
+"Found %{number_of_cycles} dependency cycle:\n"
+"%{cycle_path_list}\n"
+"Cycle graph written to %{filename}."
 msgid_plural ""
-"Found %{num} dependency cycles:\n"
+"Found %{number_of_cycles} dependency cycles:\n"
+"%{cycle_path_list}\n"
+"Cycle graph written to %{filename}."
 msgstr[0] ""
 msgstr[1] ""
 
-#: ../lib/puppet/graph/simple_graph.rb:239
-msgid "Cycle graph written to %{filename}."
-msgstr ""
-
-#. TRANSLATORS "graph" refers to a command line option and should not be translated
+#. TRANSLATORS '--graph' refers to a command line option and should not be translated
 #. TRANSLATORS OmniGraffle and GraphViz and program names and should not be translated
-#: ../lib/puppet/graph/simple_graph.rb:243
-msgid "Try the '--graph' option and opening the resulting '.dot' file in OmniGraffle or GraphViz"
-msgstr ""
+#: ../lib/puppet/graph/simple_graph.rb:245
+msgid ""
+"Found %{number_of_cycles} dependency cycle:\n"
+"%{cycle_path_list}\n"
+"Try the '--graph' option and opening the resulting '.dot' file in OmniGraffle or GraphViz"
+msgid_plural ""
+"Found %{number_of_cycles} dependency cycles:\n"
+"%{cycle_path_list}\n"
+"Try the '--graph' option and opening the resulting '.dot' file in OmniGraffle or GraphViz"
+msgstr[0] ""
+msgstr[1] ""
 
 #: ../lib/puppet/indirector.rb:25
 msgid "Indirection %{indirection_name} does not exist"
@@ -2685,47 +2712,42 @@ msgstr ""
 msgid "'%{module_name}' (%{version}) requested; '%{module_name}' (%{installed_version}) already installed"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/installer.rb:16 ../lib/puppet/module_tool/errors/shared.rb:66 ../lib/puppet/module_tool/errors/shared.rb:106
-msgid "Could not install module '%{module_name}' (%{version})"
-msgstr ""
-
+#. TRANSLATORS `puppet module upgrade` and `puppet module upgrade` are a command line and should not be translated
 #: ../lib/puppet/module_tool/errors/installer.rb:17
-msgid "  Module '%{module_name}' (%{version}) is already installed"
+msgid ""
+"Could not install module '%{module_name}' (%{requested_version})\n"
+"  Module '%{module_name}' (%{installed_version}) is already installed\n"
+"    Use `puppet module upgrade` to install a different version\n"
+"    Use `puppet module install --force` to re-install only this module\n"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/installer.rb:18
-msgid "    Installed module has had changes made locally"
+#. TRANSLATORS `puppet module upgrade` and `puppet module upgrade` are a command line and should not be translated
+#: ../lib/puppet/module_tool/errors/installer.rb:25
+msgid ""
+"Could not install module '%{module_name}' (%{requested_version})\n"
+"  Module '%{module_name}' (%{installed_version}) is already installed\n"
+"    Installed module has had changes made locally\n"
+"    Use `puppet module upgrade` to install a different version\n"
+"    Use `puppet module install --force` to re-install only this module\n"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/installer.rb:19
-msgid "    Use `puppet module upgrade` to install a different version"
-msgstr ""
-
-#: ../lib/puppet/module_tool/errors/installer.rb:20
-msgid "    Use `puppet module install --force` to re-install only this module"
-msgstr ""
-
-#: ../lib/puppet/module_tool/errors/installer.rb:30
+#: ../lib/puppet/module_tool/errors/installer.rb:41
 msgid "Could not install '%{requested_package}'; no releases are available from %{source}"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/installer.rb:35
-msgid "Could not install '%{requested_package}'"
+#: ../lib/puppet/module_tool/errors/installer.rb:45
+msgid ""
+"Could not install '%{requested_package}'\n"
+"  No releases are available from %{source}\n"
+"    Does '%{requested_package}' have at least one published release?\n"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/installer.rb:37 ../lib/puppet/module_tool/errors/shared.rb:44
-msgid "  No releases are available from %{source}"
-msgstr ""
-
-#: ../lib/puppet/module_tool/errors/installer.rb:38
-msgid "    Does '%{requested_package}' have at least one published release?"
-msgstr ""
-
-#: ../lib/puppet/module_tool/errors/installer.rb:49
+#: ../lib/puppet/module_tool/errors/installer.rb:58
 msgid "'%{module_name}' (%{version}) requested; Path %{dir} is not a directory."
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/installer.rb:53
+#. TRANSLATORS "mkdir -p'%{dir}'" is a command line example and should not be translated
+#: ../lib/puppet/module_tool/errors/installer.rb:63
 msgid ""
 "Could not install module '%{module_name}' (%{version})\n"
 "  Path '%{dir}' exists but is not a directory.\n"
@@ -2733,11 +2755,11 @@ msgid ""
 "  mkdir -p '%{dir}'\n"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/installer.rb:67
+#: ../lib/puppet/module_tool/errors/installer.rb:77
 msgid "'%{module_name}' (%{version}) requested; Permission is denied to create %{dir}."
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/installer.rb:71
+#: ../lib/puppet/module_tool/errors/installer.rb:81
 msgid ""
 "Could not install module '%{module_name}' (%{version})\n"
 "  Permission is denied when trying to create directory '%{dir}'.\n"
@@ -2745,11 +2767,11 @@ msgid ""
 "  parent directories.\n"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/installer.rb:84
+#: ../lib/puppet/module_tool/errors/installer.rb:94
 msgid "Attempt to install file with an invalid path into %{path} under %{dir}"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/installer.rb:88
+#: ../lib/puppet/module_tool/errors/installer.rb:98
 msgid ""
 "Could not install package with an invalid path.\n"
 "  Package attempted to install file into\n"
@@ -2760,16 +2782,12 @@ msgstr ""
 msgid "Could not %{action} '%{module_name}' (%{version}); no version satisfies all dependencies"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:16 ../lib/puppet/module_tool/errors/shared.rb:167 ../lib/puppet/module_tool/errors/upgrader.rb:57
-msgid "Could not %{action} module '%{module_name}' (%{version})"
-msgstr ""
-
-#: ../lib/puppet/module_tool/errors/shared.rb:17
-msgid "  No version of '%{module_name}' can satisfy all dependencies"
-msgstr ""
-
-#: ../lib/puppet/module_tool/errors/shared.rb:18
-msgid "    Use `puppet module %{action} --ignore-dependencies` to %{action} only this module"
+#. TRANSLATORS `puppet module %{action} --ignore-dependencies` is a command line and should not be translated
+#: ../lib/puppet/module_tool/errors/shared.rb:16
+msgid ""
+"Could not %{action} module '%{module_name}' (%{version})\n"
+"  No version of '%{module_name}' can satisfy all dependencies\n"
+"    Use `puppet module %{action} --ignore-dependencies` to %{action} only this module\n"
 msgstr ""
 
 #: ../lib/puppet/module_tool/errors/shared.rb:33
@@ -2781,117 +2799,139 @@ msgid "Could not %{action} '%{module_name}'; no releases matching '%{version}' a
 msgstr ""
 
 #: ../lib/puppet/module_tool/errors/shared.rb:41
-msgid "Could not %{action} '%{module_name}' (%{version})"
-msgstr ""
-
-#: ../lib/puppet/module_tool/errors/shared.rb:45
-msgid "    Does '%{module_name}' have at least one published release?"
+msgid ""
+"Could not %{action} '%{module_name}' (%{version})\n"
+"  No releases are available from %{source}\n"
+"    Does '%{module_name}' have at least one published release?\n"
 msgstr ""
 
 #: ../lib/puppet/module_tool/errors/shared.rb:47
-msgid "  No releases matching '%{version}' are available from %{source}"
+msgid ""
+"Could not %{action} '%{module_name}' (%{version})\n"
+"  No releases matching '%{requested_version}' are available from %{source}\n"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:61
+#: ../lib/puppet/module_tool/errors/shared.rb:62
 msgid "'%{module_name}' (%{version}) requested; installation conflict"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:69
-msgid "  Dependency '%{name}' (%{version}) would overwrite %{dir}"
+#. TRANSLATORS `puppet module install --ignore-dependencies` is a command line and should not be translated
+#: ../lib/puppet/module_tool/errors/shared.rb:72
+msgid ""
+"Could not install module '%{module_name}' (%{requested_version})                  \n"
+"  Dependency '%{name}' (%{version}) would overwrite %{directory}\n"
+"    Currently, '%{current_name}' (%{current_version}) is installed to that directory\n"
+"    Use `puppet module install --ignore-dependencies` to install only this module\n"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:71
-msgid "  Installation would overwrite %{dir}"
+#. TRANSLATORS `puppet module install --ignore-dependencies` is a command line and should not be translated
+#: ../lib/puppet/module_tool/errors/shared.rb:82
+msgid ""
+"Could not install module '%{module_name}' (%{requested_version})                  \n"
+"  Dependency '%{name}' (%{version}) would overwrite %{directory}\n"
+"    Use `puppet module install --ignore-dependencies` to install only this module\n"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:75
-msgid "    Currently, '%{name}' (%{version}) is installed to that directory"
+#. TRANSLATORS `puppet module install --force` is a command line and should not be translated
+#: ../lib/puppet/module_tool/errors/shared.rb:94
+msgid ""
+"Could not install module '%{module_name}' (%{requested_version})\n"
+"  Installation would overwrite %{directory}\n"
+"    Currently, '%{current_name}' (%{current_version}) is installed to that directory\n"
+"    Use `puppet module install --force` to install this module anyway\n"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:79
-msgid "    Use `puppet module install --ignore-dependencies` to install only this module"
-msgstr ""
-
-#: ../lib/puppet/module_tool/errors/shared.rb:81 ../lib/puppet/module_tool/errors/shared.rb:109
-msgid "    Use `puppet module install --force` to install this module anyway"
-msgstr ""
-
-#: ../lib/puppet/module_tool/errors/shared.rb:96
-msgid "'%{module_name}' (%{version}) requested; Invalid dependency cycle"
-msgstr ""
-
-#: ../lib/puppet/module_tool/errors/shared.rb:101
-msgid "You specified '%{name}' (%{version})"
-msgstr ""
-
-#. TRANSLATORS Second half of "You specified a module..."
-#: ../lib/puppet/module_tool/errors/shared.rb:103
-msgid "which depends on '%{name}' (%{version})"
-msgstr ""
-
-#: ../lib/puppet/module_tool/errors/shared.rb:107
-msgid "  No version of '%{module_name}' will satisfy dependencies"
+#. TRANSLATORS `puppet module install --force` is a command line and should not be translated
+#: ../lib/puppet/module_tool/errors/shared.rb:102
+msgid ""
+"Could not install module '%{module_name}' (%{requested_version})\n"
+"  Installation would overwrite %{directory}\n"
+"    Use `puppet module install --force` to install this module anyway\n"
 msgstr ""
 
 #: ../lib/puppet/module_tool/errors/shared.rb:120
-msgid "Could not %{action} '%{module_name}'; module is not installed"
+msgid "'%{module_name}' (%{version}) requested; Invalid dependency cycle"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:125 ../lib/puppet/module_tool/errors/shared.rb:146 ../lib/puppet/module_tool/errors/shared.rb:184
-msgid "Could not %{action} module '%{module_name}'"
-msgstr ""
-
+#. TRANSLATORS This message repeats as separate lines as a list under the heading "You specified '%{name}' (%{version})\n"
 #: ../lib/puppet/module_tool/errors/shared.rb:126
-msgid "  Module '%{module_name}' is not installed"
+msgid "    which depends on '%{name}' (%{version})"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:128
-msgid "    You may have meant `puppet module %{action} %{suggestion}`"
-msgstr ""
-
-#: ../lib/puppet/module_tool/errors/shared.rb:130
-msgid "    Use `puppet module install` to install this module"
-msgstr ""
-
-#. TRANSLATORS "module path" refers to a set of directories where modules may be installed
-#: ../lib/puppet/module_tool/errors/shared.rb:141
-msgid "Could not %{action} '%{module_name}'; module appears in multiple places in the module path"
+#. TRANSLATORS `puppet module install --force` is a command line and should not be translated
+#: ../lib/puppet/module_tool/errors/shared.rb:132
+msgid ""
+"Could not install module '%{requested_module_name}' (%{version})\n"
+"  No version of '%{module_name}' will satisfy dependencies\n"
+"    You specified '%{name}' (%{version})\n"
+"%{dependency_list}\n"
+"    Use `puppet module install --force` to install this module anyway\n"
 msgstr ""
 
 #: ../lib/puppet/module_tool/errors/shared.rb:147
-msgid "  Module '%{module_name}' appears multiple places in the module path"
+msgid "Could not %{action} '%{module_name}'; module is not installed"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:149
+#: ../lib/puppet/module_tool/errors/shared.rb:152
+msgid "    You may have meant `puppet module %{action} %{suggestion}`"
+msgstr ""
+
+#. TRANSLATORS `puppet module install` is a command line and should not be translated
+#: ../lib/puppet/module_tool/errors/shared.rb:157
+msgid ""
+"Could not %{action} module '%{module_name}'\n"
+"  Module '%{module_name}' is not installed\n"
+"%{suggestion_list}\n"
+"    Use `puppet module install` to install this module\n"
+msgstr ""
+
+#: ../lib/puppet/module_tool/errors/shared.rb:164
+msgid ""
+"Could not %{action} module '%{module_name}'\n"
+"  Module '%{module_name}' is not installed\n"
+"%{suggestion_list}\n"
+msgstr ""
+
+#. TRANSLATORS "module path" refers to a set of directories where modules may be installed
+#: ../lib/puppet/module_tool/errors/shared.rb:179
+msgid "Could not %{action} '%{module_name}'; module appears in multiple places in the module path"
+msgstr ""
+
+#. TRANSLATORS This is repeats as separate lines as a list under "Module '%{module_name}' appears multiple places in the module path"
+#: ../lib/puppet/module_tool/errors/shared.rb:185
 msgid "    '%{module_name}' (%{version}) was found in %{path}"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:151
-msgid "    Use the `--modulepath` option to limit the search to specific directories"
+#. TRANSLATORS `--modulepath` is command line option and should not be translated
+#: ../lib/puppet/module_tool/errors/shared.rb:189
+msgid ""
+"Could not %{action} module '%{module_name}'\n"
+"  Module '%{module_name}' appears multiple places in the module path\n"
+"%{module_path_list}\n"
+"    Use the `--modulepath` option to limit the search to specific directories\n"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:162
+#: ../lib/puppet/module_tool/errors/shared.rb:204
 msgid "Could not %{action} '%{module_name}'; module has had changes made locally"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:168
-msgid "  Installed module has had changes made locally"
+#. TRANSLATORS `puppet module %{action} --ignore-changes` is a command line and should not be translated
+#: ../lib/puppet/module_tool/errors/shared.rb:209
+msgid ""
+"Could not %{action} module '%{module_name}' (%{version})\n"
+"  Installed module has had changes made locally\n"
+"    Use `puppet module %{action} --ignore-changes` to %{action} this module anyway\n"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:169
-msgid "    Use `puppet module %{action} --ignore-changes` to %{action} this module anyway"
-msgstr ""
-
-#: ../lib/puppet/module_tool/errors/shared.rb:179
+#: ../lib/puppet/module_tool/errors/shared.rb:222
 msgid "Could not %{action} '%{module_name}'; %{error}"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:185
-msgid "  Failure trying to parse metadata"
-msgstr ""
-
-#: ../lib/puppet/module_tool/errors/shared.rb:186
-msgid "    Original message was: %{message}"
+#: ../lib/puppet/module_tool/errors/shared.rb:226
+msgid ""
+"Could not %{action} module '%{module_name}'\n"
+"  Failure trying to parse metadata\n"
+"    Original message was: %{message}\n"
 msgstr ""
 
 #: ../lib/puppet/module_tool/errors/uninstaller.rb:10
@@ -2899,79 +2939,83 @@ msgid "Could not uninstall '%{module_name}'; no installed version matches"
 msgstr ""
 
 #: ../lib/puppet/module_tool/errors/uninstaller.rb:15
-msgid "Could not uninstall module '%{module_name}' (%{version})"
-msgstr ""
-
-#: ../lib/puppet/module_tool/errors/uninstaller.rb:16
-msgid "  No installed version of '%{module_name}' matches (%{version})"
-msgstr ""
-
-#: ../lib/puppet/module_tool/errors/uninstaller.rb:18
 msgid "    '%{module_name}' (%{version}) is installed in %{path}"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/uninstaller.rb:31
+#: ../lib/puppet/module_tool/errors/uninstaller.rb:18
+msgid ""
+"Could not uninstall module '%{module_name}' (%{version})\n"
+"  No installed version of '%{module_name}' matches (%{version})\n"
+"%{module_versions_list}\n"
+msgstr ""
+
+#: ../lib/puppet/module_tool/errors/uninstaller.rb:33
 msgid "Could not uninstall '%{module_name}'; installed modules still depend upon it"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/uninstaller.rb:37
-msgid "Could not uninstall module '%{module_name}' (v%{requested_version})"
-msgstr ""
-
-#: ../lib/puppet/module_tool/errors/uninstaller.rb:39
-msgid "Could not uninstall module '%{module_name}'"
-msgstr ""
-
 #: ../lib/puppet/module_tool/errors/uninstaller.rb:41
-msgid "  Other installed modules have dependencies on '%{module_name}' (%{version})"
+msgid "    '%{module_name}' (%{version}) requires '%{module_dependency}' (%{dependency_version})"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/uninstaller.rb:43
-msgid "    '%{module_name}' (%{version}) requires '%{module_dep}' (%{dep_version})"
+#. TRANSLATORS `puppet module uninstall --force` is a command line option that should not be translated
+#: ../lib/puppet/module_tool/errors/uninstaller.rb:48
+msgid ""
+"Could not uninstall module '%{module_name}' (v%{requested_version})\n"
+"  Other installed modules have dependencies on '%{module_name}' (%{version})\n"
+"%{module_requirements_list}\n"
+"    Use `puppet module uninstall --force` to uninstall this module anyway\n"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/uninstaller.rb:45
-msgid "    Use `puppet module uninstall --force` to uninstall this module anyway"
+#. TRANSLATORS `puppet module uninstall --force` is a command line option that should not be translated
+#: ../lib/puppet/module_tool/errors/uninstaller.rb:56
+msgid ""
+"Could not uninstall module '%{module_name}'\n"
+"  Other installed modules have dependencies on '%{module_name}' (%{version})\n"
+"%{module_requirements_list}\n"
+"    Use `puppet module uninstall --force` to uninstall this module anyway\n"
 msgstr ""
 
 #: ../lib/puppet/module_tool/errors/upgrader.rb:20
 msgid "Could not upgrade '%{module_name}'; more recent versions not found"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/upgrader.rb:25
-msgid "Could not upgrade module '%{module_name}' (%{version})"
+#. TRANSLATORS `puppet module upgrade --force` is a command line option that should not be translated
+#: ../lib/puppet/module_tool/errors/upgrader.rb:26
+msgid ""
+"Could not upgrade module '%{module_name}' (%{version})\n"
+"  The installed version is already the latest version matching %{version}\n"
+"    Use `puppet module upgrade --force` to upgrade only this module\n"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/upgrader.rb:27
-msgid "  The installed version is already the latest version matching %{version}"
+#. TRANSLATORS `puppet module upgrade --force` is a command line option that should not be translated
+#: ../lib/puppet/module_tool/errors/upgrader.rb:34
+msgid ""
+"Could not upgrade module '%{module_name}' (%{version})\n"
+"  There are %{count} newer versions\n"
+"    No combination of dependency upgrades would satisfy all dependencies\n"
+"    Use `puppet module upgrade --force` to upgrade only this module\n"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/upgrader.rb:29
-msgid "  There are %{count} newer versions"
+#. TRANSLATORS `puppet module upgrade --force` is a command line option that should not be translated
+#: ../lib/puppet/module_tool/errors/upgrader.rb:43
+msgid ""
+"Could not upgrade module '%{module_name}' (%{version})\n"
+"  There are %{count} newer versions\n"
+"    No combination of dependency upgrades would satisfy all dependencies\n"
+"    Dependencies will not be automatically upgraded across major versions\n"
+"    Upgrading one or more of these modules may permit the upgrade to succeed:\n"
+"%{module_dependency_list}\n"
+"    Use `puppet module upgrade --force` to upgrade only this module\n"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/upgrader.rb:30
-msgid "    No combination of dependency upgrades would satisfy all dependencies"
-msgstr ""
-
-#: ../lib/puppet/module_tool/errors/upgrader.rb:32
-msgid "    Dependencies will not be automatically upgraded across major versions"
-msgstr ""
-
-#: ../lib/puppet/module_tool/errors/upgrader.rb:33
-msgid "    Upgrading one or more of these modules may permit the upgrade to succeed:"
-msgstr ""
-
-#: ../lib/puppet/module_tool/errors/upgrader.rb:39
-msgid "    Use `puppet module upgrade --force` to upgrade only this module"
-msgstr ""
-
-#: ../lib/puppet/module_tool/errors/upgrader.rb:52
+#: ../lib/puppet/module_tool/errors/upgrader.rb:65
 msgid "Could not %{action} '%{module_name}' (%{version}); downgrades are not allowed"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/upgrader.rb:58
-msgid "  Downgrading is not allowed."
+#: ../lib/puppet/module_tool/errors/upgrader.rb:69
+msgid ""
+"Could not %{action} module '%{module_name}' (%{version})\n"
+"  Downgrading is not allowed.\n"
 msgstr ""
 
 #: ../lib/puppet/module_tool/install_directory.rb:22
@@ -3053,31 +3097,31 @@ msgid "Invalid line %{count}: %{line}"
 msgstr ""
 
 #: ../lib/puppet/network/auth_config_parser.rb:54
-msgid "allowing %s access"
+msgid "allowing %{value} access"
 msgstr ""
 
 #: ../lib/puppet/network/auth_config_parser.rb:56
-msgid "denying %s access"
+msgid "denying %{value} access"
 msgstr ""
 
 #: ../lib/puppet/network/auth_config_parser.rb:58
-msgid "allowing IP %s access"
+msgid "allowing IP %{value} access"
 msgstr ""
 
 #: ../lib/puppet/network/auth_config_parser.rb:60
-msgid "denying IP %s access"
+msgid "denying IP %{value} access"
 msgstr ""
 
 #: ../lib/puppet/network/auth_config_parser.rb:62
-msgid "allowing 'method' %s"
+msgid "allowing 'method' %{value}"
 msgstr ""
 
 #: ../lib/puppet/network/auth_config_parser.rb:64
-msgid "adding environment %s"
+msgid "adding environment %{value}"
 msgstr ""
 
 #: ../lib/puppet/network/auth_config_parser.rb:66
-msgid "adding authentication %s"
+msgid "adding authentication %{value}"
 msgstr ""
 
 #: ../lib/puppet/network/auth_config_parser.rb:69 ../lib/puppet/util/network_device/config.rb:94
@@ -3266,31 +3310,31 @@ msgid "Server hostname '%{host}' did not match server certificate; %{expected_ce
 msgstr ""
 
 #: ../lib/puppet/network/http/error.rb:23
-msgid "Not Acceptable: "
+msgid "Not Acceptable: %{message}"
 msgstr ""
 
 #: ../lib/puppet/network/http/error.rb:30
-msgid "Not Found: "
+msgid "Not Found: %{message}"
 msgstr ""
 
 #: ../lib/puppet/network/http/error.rb:37
-msgid "Not Authorized: "
+msgid "Not Authorized: %{message}"
 msgstr ""
 
 #: ../lib/puppet/network/http/error.rb:44
-msgid "Bad Request: "
+msgid "Bad Request: %{message}"
 msgstr ""
 
 #: ../lib/puppet/network/http/error.rb:51
-msgid "Method Not Allowed: "
+msgid "Method Not Allowed: %{message}"
 msgstr ""
 
 #: ../lib/puppet/network/http/error.rb:58
-msgid "Unsupported Media Type: "
+msgid "Unsupported Media Type: %{message}"
 msgstr ""
 
 #: ../lib/puppet/network/http/error.rb:66
-msgid "Server Error: "
+msgid "Server Error: %{message}"
 msgstr ""
 
 #: ../lib/puppet/network/http/handler.rb:23
@@ -3314,11 +3358,11 @@ msgid "Failed to close connection for %{site}: %{detail}"
 msgstr ""
 
 #: ../lib/puppet/network/http/rack.rb:26
-msgid "Internal Server Error: \"%s\""
+msgid "Internal Server Error: \"%{message}\""
 msgstr ""
 
 #: ../lib/puppet/network/http/rack.rb:28
-msgid "Puppet Server (Rack): Internal Server Error: Unhandled Exception: \"%s\""
+msgid "Puppet Server (Rack): Internal Server Error: Unhandled Exception: \"%{message}\""
 msgstr ""
 
 #: ../lib/puppet/network/http/request.rb:14
@@ -3338,7 +3382,7 @@ msgid "WEBrick server is already listening"
 msgstr ""
 
 #: ../lib/puppet/network/http/webrick.rb:30
-msgid "Client did not send data within %.1f seconds of connecting"
+msgid "Client did not send data within %{timeout} seconds of connecting"
 msgstr ""
 
 #: ../lib/puppet/network/http/webrick.rb:40
@@ -3437,16 +3481,20 @@ msgstr ""
 msgid "Property option :call is deprecated and no longer used. Please remove it."
 msgstr ""
 
-#: ../lib/puppet/parameter/value_collection.rb:184
-msgid "Invalid value %{value}. "
-msgstr ""
-
-#: ../lib/puppet/parameter/value_collection.rb:186
-msgid "Valid values are %{value_list}. "
+#: ../lib/puppet/parameter/value_collection.rb:186 ../lib/puppet/type/resources.rb:84
+msgid "Invalid value %{value}."
 msgstr ""
 
 #: ../lib/puppet/parameter/value_collection.rb:188
-msgid "Valid values match %{pattern}."
+msgid "Invalid value %{value}. Valid values match %{patterns_list}."
+msgstr ""
+
+#: ../lib/puppet/parameter/value_collection.rb:193
+msgid "Invalid value %{value}. Valid values are %{values_list}."
+msgstr ""
+
+#: ../lib/puppet/parameter/value_collection.rb:196
+msgid "Invalid value %{value}. Valid values are %{values_list}. Valid values match %{patterns_list}."
 msgstr ""
 
 #: ../lib/puppet/parser/ast/pops_bridge.rb:183
@@ -3767,59 +3815,123 @@ msgstr ""
 msgid "Only subclasses can override parameters"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:174
-msgid "Attempt to override an already evaluated resource%{location} with new values"
+#: ../lib/puppet/parser/resource.rb:177 ../lib/puppet/parser/resource.rb:212
+msgid "Attempt to override an already evaluated resource, defined at %{file}:%{line}, with new values"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:175
-msgid ", defined"
+#: ../lib/puppet/parser/resource.rb:179 ../lib/puppet/parser/resource.rb:226
+msgid "Attempt to override an already evaluated resource, defined in %{file}, with new values"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:266
+#: ../lib/puppet/parser/resource.rb:183 ../lib/puppet/parser/resource.rb:228
+msgid "Attempt to override an already evaluated resource, defined at line %{line}, with new values"
+msgstr ""
+
+#: ../lib/puppet/parser/resource.rb:185 ../lib/puppet/parser/resource.rb:236
+msgid "Attempt to override an already evaluated resource with new values"
+msgstr ""
+
+#: ../lib/puppet/parser/resource.rb:193
+msgid "Attempt to override an already evaluated resource, defined at %{file}:%{line}, with new values at %{resource_file}:%{resource_line}"
+msgstr ""
+
+#: ../lib/puppet/parser/resource.rb:198
+msgid "Attempt to override an already evaluated resource, defined at %{file}:%{line}, with new values in %{resource_file}"
+msgstr ""
+
+#: ../lib/puppet/parser/resource.rb:201
+msgid "Attempt to override an already evaluated resource, defined at %{file}:%{line}, with new values at line %{resource_line}"
+msgstr ""
+
+#: ../lib/puppet/parser/resource.rb:204
+msgid "Attempt to override an already evaluated resource, defined in %{file}, with new values at %{resource_file}:%{resource_line}"
+msgstr ""
+
+#: ../lib/puppet/parser/resource.rb:207
+msgid "Attempt to override an already evaluated resource, defined at line %{line}, with new values at %{resource_file}:%{resource_line}"
+msgstr ""
+
+#: ../lib/puppet/parser/resource.rb:214
+msgid "Attempt to override an already evaluated resource, defined in %{file}, with new values in %{resource_file}"
+msgstr ""
+
+#: ../lib/puppet/parser/resource.rb:216
+msgid "Attempt to override an already evaluated resource, defined in %{file}, with new values at line %{resource_line}"
+msgstr ""
+
+#: ../lib/puppet/parser/resource.rb:218
+msgid "Attempt to override an already evaluated resource, defined at line %{line}, with new values in %{resource_file}"
+msgstr ""
+
+#: ../lib/puppet/parser/resource.rb:220
+msgid "Attempt to override an already evaluated resource, defined at line %{line}, with new values at line %{resource_line}"
+msgstr ""
+
+#: ../lib/puppet/parser/resource.rb:222
+msgid "Attempt to override an already evaluated resource with new values at %{resource_file}:%{resource_line}"
+msgstr ""
+
+#: ../lib/puppet/parser/resource.rb:230
+msgid "Attempt to override an already evaluated resource with new values in %{resource_file}"
+msgstr ""
+
+#: ../lib/puppet/parser/resource.rb:232
+msgid "Attempt to override an already evaluated resource with new values at line %{resource_line}"
+msgstr ""
+
+#: ../lib/puppet/parser/resource.rb:327
 msgid "Invalid consume in %{value0}: %{ref} is not a resource"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:273
+#: ../lib/puppet/parser/resource.rb:334
 msgid "Resource %{ref} could not be found; it might not have been produced yet"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:277
+#: ../lib/puppet/parser/resource.rb:338
 msgid "Invalid consume in %{ref}: %{cap} is not a capability resource"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:286
+#: ../lib/puppet/parser/resource.rb:347
 msgid "Resource %{res} tries to consume %{cns} but no 'consumes' mapping exists for %{resource_type} and %{cns_type}"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:305
+#: ../lib/puppet/parser/resource.rb:366
 msgid "Attempt to reassign attribute '%{name}' in '%{resource}' caused by multiple consumed mappings to the same attribute"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:336
-msgid "%{prefix} at %{file}:%{line}%{suffix}"
+#: ../lib/puppet/parser/resource.rb:416
+msgid "Parameter '%{name}' is already set on %{resource} at %{file}:%{line}; cannot redefine"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:338
-msgid "%{prefix} in %{file}%{suffix}"
+#: ../lib/puppet/parser/resource.rb:419
+msgid "Parameter '%{name}' is already set on %{resource} in %{file}; cannot redefine"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:341
-msgid "%{prefix} at line %{line}%{suffix}"
+#: ../lib/puppet/parser/resource.rb:424
+msgid "Parameter '%{name}' is already set on %{resource} at line %{line}; cannot redefine"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:374
-msgid "Parameter '%{name}' is already set on %{resource}"
+#: ../lib/puppet/parser/resource.rb:427
+msgid "Parameter '%{name}' is already set on %{resource}; cannot redefine"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:375
-msgid " by %{source}"
+#: ../lib/puppet/parser/resource.rb:434
+msgid "Parameter '%{name}' is already set on %{resource} by %{source} at %{file}:%{line}; cannot redefine"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:377
-msgid "; cannot redefine"
+#: ../lib/puppet/parser/resource.rb:437
+msgid "Parameter '%{name}' is already set on %{resource} by %{source} in %{file}; cannot redefine"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:413
+#: ../lib/puppet/parser/resource.rb:442
+msgid "Parameter '%{name}' is already set on %{resource} by %{source} at line %{line}; cannot redefine"
+msgstr ""
+
+#: ../lib/puppet/parser/resource.rb:445
+msgid "Parameter '%{name}' is already set on %{resource} by %{source}; cannot redefine"
+msgstr ""
+
+#: ../lib/puppet/parser/resource.rb:485
 msgid "Duplicate parameter '%{param}' for on %{resource}"
 msgstr ""
 
@@ -4808,27 +4920,31 @@ msgstr ""
 msgid "Defining \"data_provider\": \"%{name}\" in metadata.json is deprecated. It is ignored since a '%{config}' with version >= 5 is present"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:386
-msgid "Defining \"data_provider\": \"%{name}\" in metadata.json is deprecated"
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:387
+msgid "Defining \"data_provider\": \"%{provider_name}\" in metadata.json is deprecated. A '%{hiera_config}' file should be used instead"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:387 ../lib/puppet/pops/lookup/lookup_adapter.rb:441
-msgid ". A '%{config}' file should be used instead"
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:390
+msgid "Defining \"data_provider\": \"%{provider_name}\" in metadata.json is deprecated"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:401
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:405
 msgid "Environment '%{env}', cannot find module_data_provider '%{provider}'"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:425 ../lib/puppet/pops/lookup/lookup_adapter.rb:440
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:429 ../lib/puppet/pops/lookup/lookup_adapter.rb:448
 msgid "Defining environment_data_provider='%{provider_name}' in environment.conf is deprecated"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:429
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:433
 msgid "The environment_data_provider='%{provider_name}' setting is ignored since '%{config_path}' version >= 5"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:456
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:445
+msgid "Defining environment_data_provider='%{provider_name}' in environment.conf is deprecated. A '%{hiera_config}' file should be used instead"
+msgstr ""
+
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:465
 msgid "Environment '%{env}', cannot find environment_data_provider '%{provider}'"
 msgstr ""
 
@@ -4853,7 +4969,7 @@ msgid "Error while transforming to Puppet 3 AST: %{message}"
 msgstr ""
 
 #: ../lib/puppet/pops/model/ast_transformer.rb:85
-msgid "Not a valid expression in a collection query: "
+msgid "Not a valid expression in a collection query: %{class_name}"
 msgstr ""
 
 #: ../lib/puppet/pops/model/ast_transformer.rb:114
@@ -5420,7 +5536,7 @@ msgstr ""
 msgid "See /var/pkg-get/admin-fullauto"
 msgstr ""
 
-#: ../lib/puppet/provider/package/blastwave.rb:80
+#: ../lib/puppet/provider/package/blastwave.rb:80 ../lib/puppet/provider/package/pkgutil.rb:73 ../lib/puppet/provider/package/pkgutil.rb:145
 msgid "Cannot match %{line}"
 msgstr ""
 
@@ -5472,51 +5588,49 @@ msgstr ""
 msgid "An LPP source location is required in 'source'"
 msgstr ""
 
-#. TRANSLATORS Full message: "Unable to find package #{pkg} with version #{version} on lpp_source #{source}"
-#: ../lib/puppet/provider/package/nim.rb:101
-msgid "Unable to find package '%{pkg}' "
+#: ../lib/puppet/provider/package/nim.rb:102
+msgid "Unable to find package '%{package}' with version '%{version}' on lpp_source '%{source}'"
 msgstr ""
 
-#. TRANSLATORS Full message: "Unable to find package #{pkg} with version #{version} on lpp_source #{source}"
-#: ../lib/puppet/provider/package/nim.rb:104
-msgid "with version '%{version}' "
+#: ../lib/puppet/provider/package/nim.rb:105
+msgid "Unable to find package '%{package}' on lpp_source '%{source}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/nim.rb:139 ../lib/puppet/provider/package/nim.rb:143
+#: ../lib/puppet/provider/package/nim.rb:138 ../lib/puppet/provider/package/nim.rb:142
 msgid "NIM package provider is unable to downgrade packages"
 msgstr ""
 
-#: ../lib/puppet/provider/package/nim.rb:212
+#: ../lib/puppet/provider/package/nim.rb:211
 msgid ""
 "Unable to parse output from nimclient showres: line does not match expected package header format:\n"
 "'%{line}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/nim.rb:218
+#: ../lib/puppet/provider/package/nim.rb:217
 msgid ""
 "Unable to parse output from nimclient showres: package string does not match expected installp package string format:\n"
 "'%{package_string}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/nim.rb:227
+#: ../lib/puppet/provider/package/nim.rb:226
 msgid ""
 "Unable to parse output from nimclient showres: package string does not match expected rpm package string format:\n"
 "'%{package_string}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/nim.rb:236
+#: ../lib/puppet/provider/package/nim.rb:235
 msgid ""
 "Unable to parse output from nimclient showres: line does not match expected package line format:\n"
 "'%{line}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/nim.rb:248
+#: ../lib/puppet/provider/package/nim.rb:247
 msgid ""
 "Unrecognized package type specifier: '%{package_type_flag}' in package line:\n"
 "'%{line}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/openbsd.rb:49
+#: ../lib/puppet/provider/package/openbsd.rb:49 ../lib/puppet/provider/package/opkg.rb:25
 msgid "Failed to match line %{line}"
 msgstr ""
 
@@ -5530,10 +5644,6 @@ msgstr ""
 
 #: ../lib/puppet/provider/package/openbsd.rb:212
 msgid "%{version} is not available for this package"
-msgstr ""
-
-#: ../lib/puppet/provider/package/opkg.rb:25
-msgid "Failed to match line %s"
 msgstr ""
 
 #: ../lib/puppet/provider/package/pacman.rb:49
@@ -5572,31 +5682,31 @@ msgstr ""
 msgid "Refusing to install package group %{resource_name}, because allow_virtual is false."
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:46 ../lib/puppet/provider/package/pkg.rb:55
-msgid "Unknown format %s: %s[%s]"
+#: ../lib/puppet/provider/package/pkg.rb:46 ../lib/puppet/provider/package/pkg.rb:56
+msgid "Unknown format %{resource_name}: %{full_flags}[%{bad_flag}]"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:85
-msgid "Unknown format %s: %s"
+#: ../lib/puppet/provider/package/pkg.rb:87
+msgid "Unknown format %{resource_name}: %{state}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:104
-msgid "Unknown line format %s: %s"
+#: ../lib/puppet/provider/package/pkg.rb:106
+msgid "Unknown line format %{resource_name}: %{parse_line}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:114
+#: ../lib/puppet/provider/package/pkg.rb:116
 msgid "Unable to unfreeze %{package}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:149
+#: ../lib/puppet/provider/package/pkg.rb:151
 msgid "Implicit version %{should} has %{n} possible matches"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:159
+#: ../lib/puppet/provider/package/pkg.rb:161
 msgid "Selecting version '%{version}' for implicit '%{should}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:215 ../lib/puppet/provider/package/pkg.rb:235
+#: ../lib/puppet/provider/package/pkg.rb:217 ../lib/puppet/provider/package/pkg.rb:237
 msgid "Unable to update %{package}"
 msgstr ""
 
@@ -5628,12 +5738,8 @@ msgstr ""
 msgid "It is highly recommended that you set 'wgetopts=-nv' in your pkgutil.conf."
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkgutil.rb:73 ../lib/puppet/provider/package/pkgutil.rb:145
-msgid "Cannot match %s"
-msgstr ""
-
 #: ../lib/puppet/provider/package/pkgutil.rb:91
-msgid "Package not in pkgutil catalog: %s"
+msgid "Package not in pkgutil catalog: %{package}"
 msgstr ""
 
 #: ../lib/puppet/provider/package/portage.rb:216
@@ -6331,15 +6437,11 @@ msgid "Base64 syntax checker: invalid Acceptor, got: '%{klass}'."
 msgstr ""
 
 #: ../lib/puppet/syntax_checkers/base64.rb:28
-msgid "padding is not correct"
+msgid "Base64 syntax checker: Cannot parse invalid Base64 string - padding is not correct"
 msgstr ""
 
 #: ../lib/puppet/syntax_checkers/base64.rb:30
-msgid "contains letters outside strict base 64 range (or whitespace)"
-msgstr ""
-
-#: ../lib/puppet/syntax_checkers/base64.rb:32
-msgid "Base64 syntax checker: Cannot parse invalid Base64 string - %{msg2}"
+msgid "Base64 syntax checker: Cannot parse invalid Base64 string - contains letters outside strict base 64 range (or whitespace)"
 msgstr ""
 
 #: ../lib/puppet/syntax_checkers/json.rb:17
@@ -6395,7 +6497,7 @@ msgid "Starting to evaluate the resource"
 msgstr ""
 
 #: ../lib/puppet/transaction.rb:180
-msgid "Evaluated in %0.2f seconds"
+msgid "Evaluated in %{seconds} seconds"
 msgstr ""
 
 #: ../lib/puppet/transaction.rb:285
@@ -6802,10 +6904,6 @@ msgstr ""
 msgid "Invalid value %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/resources.rb:84
-msgid "Invalid value %{value}."
-msgstr ""
-
 #: ../lib/puppet/type/resources.rb:103
 msgid "The 'ensure' attribute on %{name} resources does not accept 'absent' as a value"
 msgstr ""
@@ -6843,7 +6941,7 @@ msgid "Repeat must be 1 unless periodmatch is 'distance', not '%{period}'"
 msgstr ""
 
 #: ../lib/puppet/type/schedule.rb:374
-msgid "%s is not a valid day of the week"
+msgid "%{value} is not a valid day of the week"
 msgstr ""
 
 #: ../lib/puppet/type/scheduled_task.rb:34 ../lib/puppet/type/scheduled_task.rb:48
@@ -7503,43 +7601,42 @@ msgstr ""
 msgid "Failed to set process priority to '%{priority}'"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:171
-msgid "Received a Log attribute with invalid encoding:"
+#: ../lib/puppet/util/log.rb:172
+msgid ""
+"Received a Log attribute with invalid encoding:%{log_message}\n"
+"Backtrace:\n"
+"%{backtrace}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:174
-msgid "Backtrace:"
-msgstr ""
-
-#: ../lib/puppet/util/log.rb:228
+#: ../lib/puppet/util/log.rb:227
 msgid "Reopening log files"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:397
+#: ../lib/puppet/util/log.rb:396
 msgid "Could not parse for environment %{env}: %{msg}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:399
+#: ../lib/puppet/util/log.rb:398
 msgid "%{msg} at %{file}:%{line}:%{pos}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:401
+#: ../lib/puppet/util/log.rb:400
 msgid "%{msg}  at %{file}:%{line}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:403
+#: ../lib/puppet/util/log.rb:402
 msgid "%{msg}  at line %{line}:%{pos}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:405
+#: ../lib/puppet/util/log.rb:404
 msgid "%{msg}  at line %{line}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:407
+#: ../lib/puppet/util/log.rb:406
 msgid "%{msg}  in %{file}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:409
+#: ../lib/puppet/util/log.rb:408
 msgid "%{msg} on node %{node}"
 msgstr ""
 
@@ -7675,10 +7772,7 @@ msgstr ""
 #: ../lib/puppet/util/plist.rb:48
 msgid ""
 "Cannot read file %{file_path}; Puppet is skipping it.\n"
-msgstr ""
-
-#: ../lib/puppet/util/plist.rb:48
-msgid "Details: %{detail}"
+"Details: %{detail}"
 msgstr ""
 
 #: ../lib/puppet/util/plist.rb:143
@@ -7705,37 +7799,38 @@ msgstr ""
 msgid "RDOC SUPPORT FOR MANIFEST HAS BEEN REMOVED - See PUP-3638"
 msgstr ""
 
-#. TRANSLATORS message accompanied by date of generation
-#: ../lib/puppet/util/reference.rb:17
-msgid "This page autogenerated on "
+#: ../lib/puppet/util/reference.rb:16
+msgid ""
+"*This page autogenerated on %{current_time}*\n"
 msgstr ""
 
-#: ../lib/puppet/util/reference.rb:35
+#: ../lib/puppet/util/reference.rb:34
 msgid "Could not find section %{name}"
 msgstr ""
 
-#: ../lib/puppet/util/reference.rb:41
+#: ../lib/puppet/util/reference.rb:40
 msgid "creating pdf"
 msgstr ""
 
-#: ../lib/puppet/util/reference.rb:43
+#: ../lib/puppet/util/reference.rb:42
 msgid "Could not find rst2latex"
 msgstr ""
 
-#: ../lib/puppet/util/reference.rb:53
+#: ../lib/puppet/util/reference.rb:52
 msgid "rst2latex failed"
 msgstr ""
 
-#: ../lib/puppet/util/reference.rb:93
+#: ../lib/puppet/util/reference.rb:92
 msgid "%{name} Reference"
 msgstr ""
 
 #. TRANSLATORS message accompanied by date of generation
-#: ../lib/puppet/util/reference.rb:116
+#: ../lib/puppet/util/reference.rb:115
 msgid ""
 "\n"
 "\n"
-"**This page is autogenerated; any changes will get overwritten** *(last generated on "
+"**This page is autogenerated; any changes will get overwritten** *(last generated on %{current_time})*\n"
+"\n"
 msgstr ""
 
 #: ../lib/puppet/util/resource_template.rb:47
