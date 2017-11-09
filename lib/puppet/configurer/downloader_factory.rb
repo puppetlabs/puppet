@@ -31,4 +31,14 @@ class Puppet::Configurer::DownloaderFactory
       source_permissions
     )
   end
+
+  def create_locales_downloader(environment)
+    locales_downloader = Puppet::Configurer::Downloader.new(
+      "locales",
+      Puppet[:localedest],
+      Puppet[:localesource],
+      Puppet[:pluginsignore] + " config.yaml",
+      environment
+    )
+  end
 end

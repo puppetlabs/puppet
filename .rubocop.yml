@@ -1,3 +1,6 @@
+require:
+  rubocop-i18n
+
 AllCops:
   Include:
     - 'lib/**/*.rb'
@@ -787,4 +790,16 @@ Style/TernaryParentheses:
   Enabled: false
 
 Style/YodaCondition:
+  Enabled: false
+
+GetText/DecorateFunctionMessage:
+  Enabled: false
+
+GetText/DecorateString:
+  Enabled: false
+
+GetText/DecorateStringFormattingUsingInterpolation:
+  Enabled: true
+
+GetText/DecorateStringFormattingUsingPercent:
   Enabled: false

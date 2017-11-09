@@ -14,6 +14,10 @@ describe Puppet::Configurer::DownloaderFactory do
     factory.create_plugin_facts_downloader(environment)
   end
 
+  let(:locales_downloader) do
+    factory.create_locales_downloader(environment)
+  end
+
   def ignores_source_permissions(downloader)
     expect(downloader.file[:source_permissions]).to eq(:ignore)
   end
@@ -91,6 +95,35 @@ describe Puppet::Configurer::DownloaderFactory do
       it "ignores source permissions during external fact pluginsync" do
         ignores_source_permissions(facts_downloader)
       end
+    end
+  end
+
+  context "when creating a plugin downloader for module translations" do
+    it 'is named "locales"' do
+      expect(locales_downloader.name).to eq('locales')
+    end
+
+    it 'downloads files into Puppet[:localedest]' do
+      localedest = File.expand_path("/tmp/ldest")
+      Puppet[:localedest] = localedest
+
+      expect(locales_downloader.file[:path]).to eq(localedest)
+    end
+
+    it 'downloads files from Puppet[:localesource]' do
+      Puppet[:localesource] = 'puppet:///myotherlocales'
+
+      expect(locales_downloader.file[:source]).to eq([Puppet[:localesource]])
+    end
+
+    it 'ignores files from Puppet[:pluginsignore], plus config.yaml' do
+      Puppet[:pluginsignore] = 'lignore'
+
+      expect(locales_downloader.file[:ignore]).to eq(['lignore', 'config.yaml'])
+    end
+
+    it "ignores source permissions" do
+      ignores_source_permissions(locales_downloader)
     end
   end
 end
