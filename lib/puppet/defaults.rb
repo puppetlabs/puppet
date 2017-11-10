@@ -166,6 +166,13 @@ module Puppet
         :type     => :boolean,
         :desc     => "Whether to enable experimental performance profiling",
     },
+    :future_features => {
+      :default => false,
+      :type => :boolean,
+      :desc => "Whether or not to enable all features currently being developed for future
+        major releases of Puppet. Should be used with caution, as in development
+        features are experimental and can have unexpected effects."
+    },
     :static_catalogs => {
       :default    => true,
       :type       => :boolean,
