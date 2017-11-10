@@ -35,7 +35,6 @@ prechigh
   nonassoc EPP_START
   left  LBRACK LISTSTART
   left  RBRACK
-  left  QMARK
   left  LCOLLECT LLCOLLECT
   right NOT
   nonassoc SPLAT
@@ -47,6 +46,7 @@ prechigh
   left  LSHIFT RSHIFT
   left  NOTEQUAL ISEQUAL
   left  GREATEREQUAL GREATERTHAN LESSTHAN LESSEQUAL
+  left  QMARK
   left  AND
   left  OR
   left  LBRACE
