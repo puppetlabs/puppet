@@ -114,6 +114,18 @@ describe "egrammar parsing conditionals" do
       "(= $a (? $b (:default => wat) (banana => fruit) (grape => berry)))"
       )
     end
+
+    it '1+2 ? 3 => yes' do
+      expect(dump(parse("1+2 ? 3 => yes"))).to eq(
+      "(? (+ 1 2) (3 => yes))"
+      )
+    end
+
+    it 'true and 1+2 ? 3 => yes' do
+      expect(dump(parse("true and 1+2 ? 3 => yes"))).to eq(
+      "(&& true (? (+ 1 2) (3 => yes)))"
+      )
+    end
   end
 
   context "When parsing case statements" do
