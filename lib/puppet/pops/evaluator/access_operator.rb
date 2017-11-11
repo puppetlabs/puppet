@@ -290,6 +290,19 @@ class AccessOperator
     Types::TypeFactory.pattern(*keys)
   end
 
+  def access_PURIType(o, scope, keys)
+    keys.flatten!
+    if keys.size == 1
+      param = keys[0]
+      unless Types::PURIType::TYPE_URI_PARAM_TYPE.instance?(param)
+        fail(Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'URI-Type', :actual => param.class})
+      end
+      Types::PURIType.new(param)
+    else
+      fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'URI-Type', :min => 1, :actual => keys.size})
+    end
+  end
+
   def access_POptionalType(o, scope, keys)
     keys.flatten!
     if keys.size == 1

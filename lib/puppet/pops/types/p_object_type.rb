@@ -1,4 +1,5 @@
 require_relative 'ruby_generator'
+require_relative 'type_with_members'
 
 module Puppet::Pops
 module Types
@@ -17,6 +18,7 @@ KEY_TYPE_PARAMETERS = 'type_parameters'.freeze
 
 # @api public
 class PObjectType < PMetaType
+  include TypeWithMembers
 
   ATTRIBUTE_KIND_CONSTANT = 'constant'.freeze
   ATTRIBUTE_KIND_DERIVED = 'derived'.freeze
@@ -89,6 +91,7 @@ class PObjectType < PMetaType
   # @api public
   class PAnnotatedMember
     include Annotatable
+    include InvocableMember
 
     # @return [PObjectType] the object type containing this member
     # @api public

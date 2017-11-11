@@ -623,6 +623,11 @@ class TypeCalculator
   end
 
   # @api private
+  def infer_URI(o)
+    PURIType.new(o)
+  end
+
+  # @api private
   # A Puppet::Parser::Resource, or Puppet::Resource
   #
   def infer_Resource(o)

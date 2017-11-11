@@ -1089,6 +1089,23 @@ class StringConverter
     end
   end
 
+  # @api private
+  def string_PURIType(val_type, val, format_map, indentation)
+    f = get_format(val_type, format_map)
+    case f.format
+    when :p
+      fmt = TypeFormatter.singleton
+      indentation = indentation.indenting(f.alt? || indentation.is_indenting?)
+      fmt = fmt.indented(indentation.level, 2) if indentation.is_indenting?
+      fmt.string(val)
+    when :s
+      str_val = val.to_s
+      Kernel.format(f.orig_fmt, f.alt? ? puppet_quote(str_val) : str_val)
+    else
+      raise FormatError.new('URI', f.format, 'sp')
+    end
+  end
+
   # Maps the inferred type of o to a formatting rule
   def get_format(val_t, format_options)
     fmt = format_options.find {|k,_| k.assignable?(val_t) }

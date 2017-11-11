@@ -7,6 +7,8 @@ module Types
 #
 # @api public
 class PObjectTypeExtension < PAnyType
+  include TypeWithMembers
+
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
       'base_type' => {

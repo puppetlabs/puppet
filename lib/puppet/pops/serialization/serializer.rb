@@ -108,7 +108,8 @@ module Serialization
           value.instance_of?(SemanticPuppet::VersionRange),
           value.instance_of?(Time::Timestamp),
           value.instance_of?(Time::Timespan),
-          value.instance_of?(Types::PBinaryType::Binary)
+          value.instance_of?(Types::PBinaryType::Binary),
+          value.is_a?(URI)
         push_written(value)
         @writer.write(value)
       when value.instance_of?(Array)

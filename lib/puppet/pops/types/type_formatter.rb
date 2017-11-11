@@ -330,24 +330,6 @@ class TypeFormatter
     append_array('Pattern', t.patterns.empty?) { append_strings(t.patterns.map(&:regexp)) }
   end
 
-  def append_error_param(ep)
-    case ep
-    when PStringType
-      if ep.value.nil?
-        append_string(ep)
-      else
-        append_string(ep.value)
-      end
-    when PPatternType
-      if ep.patterns.size != 1
-        append_string(ep)
-      else
-        append_string(ep.patterns[0].regexp)
-      end
-    else
-      append_string(ep)
-    end
-  end
 
   # @api private
   def string_PCollectionType(t)
@@ -362,6 +344,22 @@ class TypeFormatter
       @bld.chomp!
     else
       append_string(t._pcore_init_hash)
+    end
+    @bld << ')'
+  end
+
+  # @api private
+  def string_PURIType(t)
+    append_array('URI', t.parameters.nil?) { append_string(t._pcore_init_hash['parameters']) }
+  end
+
+  def string_URI(t)
+    @bld << 'URI('
+    if @indent
+      append_indented_string(t.to_s, @indent, @indent_width, true)
+      @bld.chomp!
+    else
+      append_string(t.to_s)
     end
     @bld << ')'
   end
