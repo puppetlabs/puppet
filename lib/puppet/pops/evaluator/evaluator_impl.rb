@@ -942,7 +942,7 @@ class EvaluatorImpl
 
     obj = receiver[0]
     receiver_type = Types::TypeCalculator.infer(obj)
-    if receiver_type.is_a?(Types::PObjectType)
+    if receiver_type.is_a?(Types::PObjectType) || receiver_type.is_a?(Types::PObjectTypeExtension)
       member = receiver_type[name]
       unless member.nil?
         args = unfold([], o.arguments || [], scope)

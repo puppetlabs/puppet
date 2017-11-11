@@ -26,6 +26,10 @@ class PObjectTypeExtension < PAnyType
     impl_class.new(base_type, init_parameters)
   end
 
+  def [](name)
+    @base_type[name]
+  end
+
   # @api private
   def initialize(base_type, init_parameters)
     pts = base_type.type_parameters(true)
