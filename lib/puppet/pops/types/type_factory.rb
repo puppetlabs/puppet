@@ -524,7 +524,7 @@ module TypeFactory
     @error_t ||= TypeParser.singleton.parse('Error', Loaders.static_loader)
   end
 
-  # Produces a type for Error[K, I]
+  # Produces a type for URI[String or Hash]
   # @api public
   #
   def self.uri(string_uri_or_hash = nil)

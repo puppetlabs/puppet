@@ -35,7 +35,7 @@ describe 'URI type' do
         CODE
       end
 
-      it 'is not assignable unless kind is assignable' do
+      it 'is not assignable unless scheme is assignable' do
         expect(eval_and_collect_notices(<<-CODE)).to eq(%w(false))
           notice(URI[scheme => Enum[http, https]] > URI[scheme => 'ftp'])
         CODE
@@ -132,7 +132,7 @@ describe 'URI type' do
         expect(eval_and_collect_notices(code)).to eq(['false'])
       end
 
-      it 'opaque is path not matched by path' do
+      it 'opaque is not matched by path' do
         code = <<-CODE
             $o = URI('https://example.com/a/b')
             notice($o =~ URI[opaque => '/a/b'])
