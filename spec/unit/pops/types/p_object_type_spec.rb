@@ -1363,6 +1363,23 @@ describe 'The Object Type' do
         notice(type($x) == MyType['hello', 'world'])
         PUPPET
       end
+
+      it 'Attributes of instance of parameterized type can be accessed using function calls' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(['hello', 'world'])
+        type MyType = Object[
+          type_parameters => {
+            p1 => Variant[Undef,String,Regexp,Type[Enum],Type[Pattern]],
+            p2 => Variant[Undef,String,Regexp,Type[Enum],Type[Pattern]],
+          },
+          attributes => {
+            p1 => String,
+            p2 => String
+          }]
+        $x = MyType('hello', 'world')
+        notice($x.p1)
+        notice($x.p2)
+        PUPPET
+      end
     end
   end
 
