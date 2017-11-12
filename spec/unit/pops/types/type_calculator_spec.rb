@@ -1578,8 +1578,10 @@ describe 'The type calculator' do
         expect(calculator.assignable?(t2, t1)).to be_truthy
       end
 
-      it 'An alias for an Iterable Type is Iterable' do
+      it 'An alias for a Type that describes an Iterable instance is assignable to Iterable' do
         t = type_alias_t('MyType', 'Enum[a,b]').resolve(parser, nil)
+
+        # True because String is iterable and an instance of Enum is a String
         expect(calculator.assignable?(iterable_t, t)).to be_truthy
       end
     end
