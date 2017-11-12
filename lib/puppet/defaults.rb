@@ -166,6 +166,13 @@ module Puppet
         :type     => :boolean,
         :desc     => "Whether to enable experimental performance profiling",
     },
+    :future_features => {
+      :default => false,
+      :type => :boolean,
+      :desc => "Whether or not to enable all features currently being developed for future
+        major releases of Puppet. Should be used with caution, as in development
+        features are experimental and can have unexpected effects."
+    },
     :static_catalogs => {
       :default    => true,
       :type       => :boolean,
@@ -294,7 +301,8 @@ module Puppet
         :desc     => "The environment Puppet is running in.  For clients
           (e.g., `puppet agent`) this determines the environment itself, which
           is used to find modules and much more.  For servers (i.e., `puppet master`)
-          this provides the default environment for nodes we know nothing about."
+          this provides the default environment for nodes we know nothing about.",
+        :short    => "E"
     },
     :environmentpath => {
       :default => "$codedir/environments",

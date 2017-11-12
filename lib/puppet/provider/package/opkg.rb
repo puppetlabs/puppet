@@ -22,7 +22,7 @@ Puppet::Type.type(:package).provide :opkg, :source => :opkg, :parent => Puppet::
           packages << new(hash)
           hash = {}
         else
-          warning(_("Failed to match line %s" % line))
+          warning(_("Failed to match line %{line}") % { line: line })
         end
       }
     end

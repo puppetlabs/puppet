@@ -97,14 +97,13 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
     end
 
     if (package_type == nil)
-      #TRANSLATORS Full message: "Unable to find package #{pkg} with version #{version} on lpp_source #{source}"
-      errmsg = _("Unable to find package '%{pkg}' ") % { pkg: pkg }
-      if (version_specified)
-        #TRANSLATORS Full message: "Unable to find package #{pkg} with version #{version} on lpp_source #{source}"
-        errmsg << _("with version '%{version}' ") % { version: version }
-      end
-      #TRANSLATORS Full message: "Unable to find package #{pkg} with version #{version} on lpp_source #{source}"
-      errmsg << "on lpp_source '#{source}'"
+
+      errmsg = if version_specified
+                 _("Unable to find package '%{package}' with version '%{version}' on lpp_source '%{source}'") %
+                     { package: pkg, version: version, source: source }
+               else
+                 _("Unable to find package '%{package}' on lpp_source '%{source}'") % { package: pkg, source: source }
+               end
       self.fail errmsg
     end
 

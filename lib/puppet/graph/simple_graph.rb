@@ -228,19 +228,23 @@ class Puppet::Graph::SimpleGraph
     number_of_cycles = cycles.length
     return if number_of_cycles == 0
 
-    message = n_("Found %{num} dependency cycle:\n", "Found %{num} dependency cycles:\n", number_of_cycles) % { num: number_of_cycles }
+    cycle_path_list = ''
     cycles.each do |cycle|
       paths = paths_in_cycle(cycle)
-      message += paths.map{ |path| '(' + path.join(" => ") + ')'}.join("\n") + "\n"
+      cycle_path_list += paths.map{ |path| '(' + path.join(' => ') + ')'}.join('\n')
     end
 
     if Puppet[:graph] then
       filename = write_cycles_to_graph(cycles)
-      message += _("Cycle graph written to %{filename}.") % { filename: filename }
+      message  = n_("Found %{number_of_cycles} dependency cycle:\n%{cycle_path_list}\nCycle graph written to %{filename}.",
+                    "Found %{number_of_cycles} dependency cycles:\n%{cycle_path_list}\nCycle graph written to %{filename}.", number_of_cycles) %
+          { number_of_cycles: number_of_cycles, cycle_path_list: cycle_path_list, filename: filename }
     else
-      #TRANSLATORS "graph" refers to a command line option and should not be translated
+      #TRANSLATORS '--graph' refers to a command line option and should not be translated
       #TRANSLATORS OmniGraffle and GraphViz and program names and should not be translated
-      message += _("Try the '--graph' option and opening the resulting '.dot' file in OmniGraffle or GraphViz")
+      message = n_("Found %{number_of_cycles} dependency cycle:\n%{cycle_path_list}\nTry the '--graph' option and opening the resulting '.dot' file in OmniGraffle or GraphViz",
+                   "Found %{number_of_cycles} dependency cycles:\n%{cycle_path_list}\nTry the '--graph' option and opening the resulting '.dot' file in OmniGraffle or GraphViz", number_of_cycles) %
+          { number_of_cycles: number_of_cycles, cycle_path_list: cycle_path_list }
     end
     Puppet.err(message)
     cycles

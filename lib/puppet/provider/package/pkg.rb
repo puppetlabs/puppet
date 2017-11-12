@@ -43,7 +43,8 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       when '-'
         {:status => 'known'}
       else
-        raise ArgumentError, _('Unknown format %s: %s[%s]') % [self.name, flags, flags[0..0]]
+        raise ArgumentError, _('Unknown format %{resource_name}: %{full_flags}[%{bad_flag}]') %
+            { resource_name: self.name, full_flags: flags, bad_flag: flags[0..0] }
       end
     ).merge(
       case flags[1..1]
@@ -52,7 +53,8 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       when '-'
         {}
       else
-        raise ArgumentError, _('Unknown format %s: %s[%s]') % [self.name, flags, flags[1..1]]
+        raise ArgumentError, _('Unknown format %{resource_name}: %{full_flags}[%{bad_flag}]') %
+            { resource_name: self.name, full_flags: flags, bad_flag: flags[1..1] }
       end
     )
   end
@@ -82,7 +84,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     when /known/
       {:status => 'known'}
     else
-      raise ArgumentError, _('Unknown format %s: %s') % [self.name, state]
+      raise ArgumentError, _('Unknown format %{resource_name}: %{state}') % { resource_name: self.name, state: state }
     end
   end
 
@@ -101,7 +103,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       {:publisher => $1, :name => $2, :ensure => $3}.merge pkg_state($4).merge(ufoxi_flag($5))
 
     else
-      raise ArgumentError, _('Unknown line format %s: %s') % [self.name, line]
+      raise ArgumentError, _('Unknown line format %{resource_name}: %{parse_line}') % { resource_name: self.name, parse_line: line }
     end).merge({:provider => self.name})
   end
 

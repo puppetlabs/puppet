@@ -168,10 +168,9 @@ class Puppet::Util::Log
   def Log.coerce_string(str)
     return Puppet::Util::CharacterEncoding.convert_to_utf_8(str) if str.valid_encoding?
 
-    annotated_string = _("Received a Log attribute with invalid encoding:")
-    annotated_string << Puppet::Util::CharacterEncoding.convert_to_utf_8(str.dump) << "\n"
     # We only select the last 10 callers in the stack to avoid being spammy
-    annotated_string << _("Backtrace:") << "\n" << caller[0..10].join("\n")
+    _("Received a Log attribute with invalid encoding:%{log_message}\nBacktrace:\n%{backtrace}") %
+        { log_message: Puppet::Util::CharacterEncoding.convert_to_utf_8(str.dump), backtrace: caller[0..10].join("\n") }
   end
 
   public

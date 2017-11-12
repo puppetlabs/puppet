@@ -371,7 +371,7 @@ module Puppet
         values.each { |value|
           unless value.is_a?(String) and
               (value =~ /^[0-6]$/ or value =~ /^(Mon|Tues?|Wed(?:nes)?|Thu(?:rs)?|Fri|Sat(?:ur)?|Sun)(day)?$/i)
-            raise ArgumentError, _("%s is not a valid day of the week") % value
+            raise ArgumentError, _("%{value} is not a valid day of the week") % { value: value }
           end
         }
       end

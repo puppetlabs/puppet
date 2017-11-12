@@ -89,9 +89,12 @@ Could not connect to %{uri}
       rescue JSON::ParserError
       end
 
-      message = _("Request to Puppet Forge failed. Detail: ")
-      message << @message << " / " if @message
-      message << @response << "."
+      message = if @message
+                  _("Request to Puppet Forge failed. Detail: %{error_message} / %{http_response}.") %
+                      { error_message: @message, http_response: @response }
+                else
+                  _("Request to Puppet Forge failed. Detail: %{http_response}.") % { http_response: @response }
+                end
       super(message, original)
     end
 
@@ -99,13 +102,20 @@ Could not connect to %{uri}
     #
     # @return [String] the multiline version of the error message
     def multiline
-      message = _(<<-EOS).chomp % { uri: @uri, response: @response }
+      if @message
+        _(<<-EOS).chomp % { uri: @uri, response: @response, message: @message }
 Request to Puppet Forge failed.
   The server being queried was %{uri}
   The HTTP response we received was '%{response}'
-      EOS
-      message << _("\n  The message we received said '%{message}'") % { message: @message } if @message
-      message
+  The message we received said '%{message}'
+        EOS
+      else
+        _(<<-EOS).chomp % { uri: @uri, response: @response }
+Request to Puppet Forge failed.
+  The server being queried was %{uri}
+  The HTTP response we received was '%{response}'
+        EOS
+      end
     end
   end
 

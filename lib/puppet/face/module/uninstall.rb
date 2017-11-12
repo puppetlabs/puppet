@@ -63,7 +63,13 @@ Puppet::Face.define(:module, '1.0.0') do
       name = name.gsub('/', '-')
 
       Puppet::ModuleTool.set_option_defaults options
-      Puppet.notice _("Preparing to uninstall '%{name}'") % { name: name } << (options[:version] ? " (#{colorize(:cyan, options[:version].sub(/^(?=\d)/, 'v'))})" : '') << " ..."
+      message = if options[:version]
+                  module_version = colorize(:cyan, options[:version].sub(/^(?=\d)/, 'v'))
+                  _("Preparing to uninstall '%{name}' (%{module_version}) ...") % { name: name, module_version: module_version }
+                else
+                  _("Preparing to uninstall '%{name}' ...") % { name: name }
+                end
+      Puppet.notice message
       Puppet::ModuleTool::Applications::Uninstaller.run(name, options)
     end
 
@@ -73,8 +79,13 @@ Puppet::Face.define(:module, '1.0.0') do
         exit 1
       else
         mod = return_value[:affected_modules].first
-        module_version = mod.version ? " (#{colorize(:cyan, mod.version.to_s.sub(/^(?=\d)/, 'v'))})" : ''
-        _("Removed '%{name}'%{module_version} from %{path}") % { name: return_value[:module_name], module_version: module_version, path: mod.modulepath }
+        message = if mod.version
+                    module_version = colorize(:cyan, mod.version.to_s.sub(/^(?=\d)/, 'v'))
+                    _("Removed '%{name}' (%{module_version}) from %{path}") % { name: return_value[:module_name], module_version: module_version, path: mod.modulepath }
+                  else
+                    _("Removed '%{name}' from %{path}") % { name: return_value[:module_name], path: mod.modulepath }
+                  end
+        message
       end
     end
   end

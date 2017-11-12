@@ -268,11 +268,11 @@ describe "the 'defined' function" do
   end
 
   it 'raises error if referencing undef' do
-    expect{func.call(@scope, nil)}.to raise_error(ArgumentError, /'defined' parameter 'vals' expects a value of type String or Type, got Undef/)
+    expect{func.call(@scope, nil)}.to raise_error(ArgumentError, /'defined' parameter 'vals' expects a value of type String, Type\[CatalogEntry\], or Type\[Type\], got Undef/)
   end
 
   it 'raises error if referencing a number' do
-    expect{func.call(@scope, 42)}.to raise_error(ArgumentError, /'defined' parameter 'vals' expects a value of type String or Type, got Integer/)
+    expect{func.call(@scope, 42)}.to raise_error(ArgumentError, /'defined' parameter 'vals' expects a value of type String, Type\[CatalogEntry\], or Type\[Type\], got Integer/)
   end
 
   it 'is false if referencing empty string' do
