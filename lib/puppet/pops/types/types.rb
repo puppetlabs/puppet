@@ -1341,6 +1341,8 @@ class PIterableType < PTypeWithContainedType
         o >= 0
       when PIntegerType
         o.finite_range?
+      when PTypeAliasType
+        instance?(o.resolved_type, guard)
       else
         false
       end

@@ -286,8 +286,8 @@ module Types
           a = detailed_actual_to_s(e, a)
           e = e.map { |t| t.to_alias_expanded_s }
         else
-          e = e.map { |t| t.simple_name }.uniq
-          a = a.simple_name
+          e = e.map { |t| short_name(t) }.uniq
+          a = short_name(a)
         end
         e.insert(0, 'Undef') if optional
         case e.size
@@ -305,8 +305,8 @@ module Types
           a = detailed_actual_to_s(e, a)
           e = e.to_alias_expanded_s
         else
-          e = e.simple_name
-          a = a.simple_name
+          e = short_name(e)
+          a = short_name(a)
         end
         if optional
           e = "Undef or #{e}"
@@ -325,6 +325,16 @@ module Types
     end
 
     private
+
+    def short_name(t)
+      # Ensure that Optional, NotUndef, Sensitive, and Type are reported with included
+      # type parameter.
+      if t.is_a?(PTypeWithContainedType) && !(t.type.nil? || t.type.class == PAnyType)
+        "#{t.name}[#{t.type.name}]"
+      else
+        t.name.nil? ? t.simple_name : t.name
+      end
+    end
 
     # Answers the question if `e` is a specialized type of `a`
     # @param e [PAnyType] the expected type
@@ -430,7 +440,7 @@ module Types
 
     def actual_string
       a = actual
-      a.is_a?(PStringType) && !a.value.nil? ? "'#{a.value}'" : a.simple_name
+      a.is_a?(PStringType) && !a.value.nil? ? "'#{a.value}'" : short_name(a)
     end
   end
 
