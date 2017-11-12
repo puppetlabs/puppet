@@ -177,7 +177,7 @@ class Puppet::Transaction
       else
         resource.info _("Starting to evaluate the resource") if Puppet[:evaltrace] and @catalog.host_config?
         seconds = thinmark { block.call(resource) }
-        resource.info _("Evaluated in %0.2f seconds") % seconds if Puppet[:evaltrace] and @catalog.host_config?
+        resource.info _("Evaluated in %{seconds} seconds") % { seconds: "%0.2f" % seconds } if Puppet[:evaltrace] and @catalog.host_config?
       end
     end
 

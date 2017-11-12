@@ -124,6 +124,10 @@ describe 'The type calculator' do
     TypeFactory.object(hash)
   end
 
+  def iterable_t(t = nil)
+    TypeFactory.iterable(t)
+  end
+
   def types
     Types
   end
@@ -1768,6 +1772,13 @@ describe 'The type calculator' do
         t2 = parser.parse('Type[PositiveIntegerType]', scope)
         expect(calculator.assignable?(t2, t1)).to be_truthy
       end
+
+      it 'An alias for a Type that describes an Iterable instance is assignable to Iterable' do
+        t = type_alias_t('MyType', 'Enum[a,b]').resolve(nil)
+
+        # True because String is iterable and an instance of Enum is a String
+        expect(calculator.assignable?(iterable_t, t)).to be_truthy
+      end
     end
   end
 
@@ -2059,6 +2070,11 @@ describe 'The type calculator' do
         expect(calculator.instance?(t, 15)).to be_truthy
       end
 
+      it 'should consider t an instance of Iterable when aliased type is Iterable' do
+        t = type_alias_t('Alias', 'Enum[a, b]').resolve(nil)
+        expect(calculator.instance?(iterable_t, t)).to be_truthy
+      end
+
       it 'should consider x an instance of the aliased type that uses self recursion' do
         t = type_alias_t('Tree', 'Hash[String,Variant[String,Tree]]')
         loader = Object.new
@@ -2265,6 +2281,11 @@ describe 'The type calculator' do
       [Object, Numeric, Float, String, Regexp, Array, Hash].each do |t|
         expect(calculator.iterable(calculator.type(t))).to eq(nil)
       end
+    end
+
+    it 'should produce an iterable for a type alias of an Iterable type' do
+      t = PTypeAliasType.new('MyAlias', nil, PIntegerType.new(1, 10))
+      expect(calculator.iterable(t).respond_to?(:each)).to eq(true)
     end
   end
 

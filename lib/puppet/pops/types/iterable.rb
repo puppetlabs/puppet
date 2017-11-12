@@ -89,6 +89,8 @@ module Puppet::Pops::Types
         o.finite_range? ? IntegerRangeIterator.new(o) : nil
       when PEnumType
         Iterator.new(o, o.values.each)
+      when PTypeAliasType
+        on(o.resolved_type)
       when Range
         min = o.min
         max = o.max

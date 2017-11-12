@@ -70,7 +70,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
       if line =~ /\s*(\S+)\s+(\S+)\s+(.*)/
         { :alias => $1, :name => $2, :avail => $3 }
       else
-        Puppet.warning _("Cannot match %s") % line
+        Puppet.warning _("Cannot match %{line}") % { line: line }
       end
     end.reject { |h| h.nil? }
   end
@@ -88,7 +88,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
     output = output.split("\n")
 
     if output[-1] == "Not in catalog"
-      Puppet.warning _("Package not in pkgutil catalog: %s") % hash[:justme]
+      Puppet.warning _("Package not in pkgutil catalog: %{package}") % { package: hash[:justme] }
       return nil
     end
 
@@ -142,7 +142,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
 
       return hash
     else
-      Puppet.warning _("Cannot match %s") % line
+      Puppet.warning _("Cannot match %{line}") % { line: line }
       return nil
     end
   end

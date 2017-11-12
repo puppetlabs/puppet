@@ -39,6 +39,7 @@ shared_context 'types_setup' do
       Puppet::Pops::Types::PSensitiveType,
       Puppet::Pops::Types::PBinaryType,
       Puppet::Pops::Types::PInitType,
+      Puppet::Pops::Types::PURIType,
     ]
   end
   def all_types
@@ -181,6 +182,7 @@ shared_context 'types_setup' do
     result << Puppet::Pops::Types::PHashType.new(tf.rich_data_key, tf.rich_data)
     result << Puppet::Pops::Types::PUndefType
     result << Puppet::Pops::Types::PDefaultType
+    result << Puppet::Pops::Types::PURIType
     result << Puppet::Pops::Types::PTupleType.new([tf.rich_data])
     result << tf.error
     result

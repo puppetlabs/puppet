@@ -1414,6 +1414,8 @@ class PIterableType < PTypeWithContainedType
         o >= 0
       when PIntegerType
         o.finite_range?
+      when PTypeAliasType
+        instance?(o.resolved_type, guard)
       else
         false
       end
@@ -3623,6 +3625,7 @@ require_relative 'p_timestamp_type'
 require_relative 'p_binary_type'
 require_relative 'p_init_type'
 require_relative 'p_object_type_extension'
+require_relative 'p_uri_type'
 require_relative 'type_set_reference'
 require_relative 'implementation_registry'
 require_relative 'tree_iterators'

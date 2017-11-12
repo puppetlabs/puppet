@@ -168,6 +168,15 @@ describe 'the type mismatch describer' do
       /parameter 'arg' expects a match for Enum\['a', 'b'\], got Sensitive/))
   end
 
+  it "will report the parameter of Type[<type alias>] using the alias name" do
+    code = <<-CODE
+      type Custom = String[1]
+      Custom.each |$x| { notice($x) }
+    CODE
+    expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
+      /expects an Iterable value, got Type\[Custom\]/))
+  end
+
   context 'when reporting a mismatch between' do
     let(:parser) { TypeParser.singleton }
     let(:subject) { TypeMismatchDescriber.singleton }

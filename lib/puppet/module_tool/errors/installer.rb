@@ -12,13 +12,24 @@ module Puppet::ModuleTool::Errors
     end
 
     def multiline
-      message = []
-      message << _("Could not install module '%{module_name}' (%{version})") % { module_name: @module_name, version: @requested_version }
-      message << _("  Module '%{module_name}' (%{version}) is already installed") % { module_name: @module_name, version: @installed_version }
-      message << _("    Installed module has had changes made locally") unless @local_changes.empty?
-      message << _("    Use `puppet module upgrade` to install a different version")
-      message << _("    Use `puppet module install --force` to re-install only this module")
-      message.join("\n")
+      if @local_changes.empty?
+        #TRANSLATORS `puppet module upgrade` and `puppet module upgrade` are a command line and should not be translated
+        _(<<-MSG).chomp % { module_name: @module_name, requested_version: @requested_version, installed_version: @installed_version }
+Could not install module '%{module_name}' (%{requested_version})
+  Module '%{module_name}' (%{installed_version}) is already installed
+    Use `puppet module upgrade` to install a different version
+    Use `puppet module install --force` to re-install only this module
+        MSG
+      else
+        #TRANSLATORS `puppet module upgrade` and `puppet module upgrade` are a command line and should not be translated
+        _(<<-MSG).chomp % { module_name: @module_name, requested_version: @requested_version, installed_version: @installed_version }
+Could not install module '%{module_name}' (%{requested_version})
+  Module '%{module_name}' (%{installed_version}) is already installed
+    Installed module has had changes made locally
+    Use `puppet module upgrade` to install a different version
+    Use `puppet module install --force` to re-install only this module
+        MSG
+      end
     end
   end
 
@@ -31,13 +42,11 @@ module Puppet::ModuleTool::Errors
     end
 
     def multiline
-      message = []
-      message << _("Could not install '%{requested_package}'") % { requested_package: @requested_package }
-
-      message << _("  No releases are available from %{source}") % { source: @source }
-      message << _("    Does '%{requested_package}' have at least one published release?") % { requested_package: @requested_package }
-
-      message.join("\n")
+      _(<<-MSG).chomp % { requested_package: @requested_package, source: @source }
+Could not install '%{requested_package}'
+  No releases are available from %{source}
+    Does '%{requested_package}' have at least one published release?
+MSG
     end
   end
 
@@ -50,7 +59,8 @@ module Puppet::ModuleTool::Errors
     end
 
     def multiline
-      _(<<-MSG).strip % { module_name: @requested_module, version: @requested_version, dir: @directory }
+      # TRANSLATORS "mkdir -p'%{dir}'" is a command line example and should not be translated
+      _(<<-MSG).chomp % { module_name: @requested_module, version: @requested_version, dir: @directory }
 Could not install module '%{module_name}' (%{version})
   Path '%{dir}' exists but is not a directory.
   A potential solution is to rename the path and then
@@ -68,7 +78,7 @@ Could not install module '%{module_name}' (%{version})
     end
 
     def multiline
-      _(<<-MSG).strip % { module_name: @requested_module, version: @requested_version, dir: @directory }
+      _(<<-MSG).chomp % { module_name: @requested_module, version: @requested_version, dir: @directory }
 Could not install module '%{module_name}' (%{version})
   Permission is denied when trying to create directory '%{dir}'.
   A potential solution is to check the ownership and permissions of
@@ -85,7 +95,7 @@ Could not install module '%{module_name}' (%{version})
     end
 
     def multiline
-      _(<<-MSG).strip % { path: @entry_path.inspect, dir: @directory.inspect }
+      _(<<-MSG).chomp % { path: @entry_path.inspect, dir: @directory.inspect }
 Could not install package with an invalid path.
   Package attempted to install file into
   %{path} under %{dir}.

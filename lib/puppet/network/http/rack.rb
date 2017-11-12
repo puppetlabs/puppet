@@ -23,9 +23,9 @@ class Puppet::Network::HTTP::Rack
       # Send a Status 500 Error on unhandled exceptions.
       response.status = 500
       response['Content-Type'] = 'text/plain'
-      response.write _('Internal Server Error: "%s"') % detail.message
+      response.write _("Internal Server Error: \"%{message}\"") % { message: detail.message }
       # log what happened
-      Puppet.log_exception(detail, _("Puppet Server (Rack): Internal Server Error: Unhandled Exception: \"%s\"") % detail.message)
+      Puppet.log_exception(detail, _("Puppet Server (Rack): Internal Server Error: Unhandled Exception: \"%{message}\"") % { message: detail.message })
     end
     response.finish
   end

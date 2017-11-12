@@ -21,23 +21,36 @@ module Puppet::ModuleTool::Errors
     end
 
     def multiline
-      message = []
-      message << _("Could not upgrade module '%{module_name}' (%{version})") % { module_name: @module_name, version: vstring }
       if @newer_versions.empty?
-        message << _("  The installed version is already the latest version matching %{version}") % { version: vstring }
+        # TRANSLATORS `puppet module upgrade --force` is a command line option that should not be translated
+        _(<<-MSG).chomp % { module_name: @module_name, version: vstring }
+Could not upgrade module '%{module_name}' (%{version})
+  The installed version is already the latest version matching %{version}
+    Use `puppet module upgrade --force` to upgrade only this module
+        MSG
       else
-        message << _("  There are %{count} newer versions") % { count: @newer_versions.length }
-        message << _("    No combination of dependency upgrades would satisfy all dependencies")
-        unless @possible_culprits.empty?
-          message << _("    Dependencies will not be automatically upgraded across major versions")
-          message << _("    Upgrading one or more of these modules may permit the upgrade to succeed:")
-          @possible_culprits.each do |name|
-            message << "    - #{name}"
-          end
+        if @possible_culprits.empty?
+          # TRANSLATORS `puppet module upgrade --force` is a command line option that should not be translated
+          _(<<-MSG).chomp % { module_name: @module_name, version: vstring, count: @newer_versions.length }
+Could not upgrade module '%{module_name}' (%{version})
+  There are %{count} newer versions
+    No combination of dependency upgrades would satisfy all dependencies
+    Use `puppet module upgrade --force` to upgrade only this module
+          MSG
+        else
+          module_dependency_list = @possible_culprits.map {|name| "    - #{name}"}.join("\n")
+          # TRANSLATORS `puppet module upgrade --force` is a command line option that should not be translated
+          _(<<-MSG).chomp % { module_name: @module_name, version: vstring, count: @newer_versions.length, module_dependency_list: module_dependency_list }
+Could not upgrade module '%{module_name}' (%{version})
+  There are %{count} newer versions
+    No combination of dependency upgrades would satisfy all dependencies
+    Dependencies will not be automatically upgraded across major versions
+    Upgrading one or more of these modules may permit the upgrade to succeed:
+%{module_dependency_list}
+    Use `puppet module upgrade --force` to upgrade only this module
+          MSG
         end
       end
-      message << _("    Use `puppet module upgrade --force` to upgrade only this module")
-      message.join("\n")
     end
   end
 
@@ -53,11 +66,10 @@ module Puppet::ModuleTool::Errors
     end
 
     def multiline
-      message = []
-      message << _("Could not %{action} module '%{module_name}' (%{version})") % { action: @action, module_name: @module_name, version: vstring }
-      message << _("  Downgrading is not allowed.")
-
-      message.join("\n")
+      _(<<-MSG).chomp % { action: @action, module_name: @module_name, version: vstring }
+Could not %{action} module '%{module_name}' (%{version})
+  Downgrading is not allowed.
+      MSG
     end
   end
 end

@@ -51,19 +51,19 @@ class AuthConfigParser
     value.strip!
     case var
     when "allow"
-      modify_right(right, :allow, value, _("allowing %s access"), count)
+      modify_right(right, :allow, value, _("allowing %{value} access"), count)
     when "deny"
-      modify_right(right, :deny, value, _("denying %s access"), count)
+      modify_right(right, :deny, value, _("denying %{value} access"), count)
     when "allow_ip"
-      modify_right(right, :allow_ip, value, _("allowing IP %s access"), count)
+      modify_right(right, :allow_ip, value, _("allowing IP %{value} access"), count)
     when "deny_ip"
-      modify_right(right, :deny_ip, value, _("denying IP %s access"), count)
+      modify_right(right, :deny_ip, value, _("denying IP %{value} access"), count)
     when "method"
-      modify_right(right, :restrict_method, value, _("allowing 'method' %s"), count)
+      modify_right(right, :restrict_method, value, _("allowing 'method' %{value}"), count)
     when "environment"
-      modify_right(right, :restrict_environment, value, _("adding environment %s"), count)
+      modify_right(right, :restrict_environment, value, _("adding environment %{value}"), count)
     when /auth(?:enticated)?/
-      modify_right(right, :restrict_authenticated, value, _("adding authentication %s"), count)
+      modify_right(right, :restrict_authenticated, value, _("adding authentication %{value}"), count)
     else
       raise Puppet::ConfigurationError,
         _("Invalid argument '%{var}' at line %{count}") % { var: var, count: count }
@@ -74,7 +74,7 @@ class AuthConfigParser
     value.split(/\s*,\s*/).each do |val|
       begin
         val.strip!
-        right.info msg % val
+        right.info msg % { value: val }
         right.send(method, val)
       rescue Puppet::AuthStoreError => detail
         raise Puppet::ConfigurationError, _("%{detail} at line %{count} of %{file}") % { detail: detail, count: count, file: @file }, detail.backtrace

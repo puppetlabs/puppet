@@ -11,13 +11,15 @@ module Puppet::ModuleTool::Errors
     end
 
     def multiline
-      message = []
-      message << _("Could not uninstall module '%{module_name}' (%{version})") % { module_name: @module_name, version: v(@version) }
-      message << _("  No installed version of '%{module_name}' matches (%{version})") % { module_name: @module_name, version: v(@version) }
-      message += @modules.map do |mod|
+      module_versions_list = @modules.map do |mod|
         _("    '%{module_name}' (%{version}) is installed in %{path}") % { module_name: mod[:name], version: v(mod[:version]), path: mod[:path] }
-      end
-      message.join("\n")
+      end.join("\n")
+
+      _(<<-MSG).chomp  % { module_name: @module_name, version: v(@version) , module_versions_list: module_versions_list }
+Could not uninstall module '%{module_name}' (%{version})
+  No installed version of '%{module_name}' matches (%{version})
+%{module_versions_list}
+      MSG
     end
   end
 
@@ -32,18 +34,32 @@ module Puppet::ModuleTool::Errors
     end
 
     def multiline
-      message = []
+
+      module_requirements_list = @required_by.map do |mod|
+        msg_variables = { module_name: mod['name'], version: v(mod['version']), module_dependency: @module_name,
+                          dependency_version: v(mod['version_requirement']) }
+        _("    '%{module_name}' (%{version}) requires '%{module_dependency}' (%{dependency_version})") % msg_variables
+      end.join("\n")
+
       if @requested_version
-        message << _("Could not uninstall module '%{module_name}' (v%{requested_version})") % { module_name: @module_name, requested_version: @requested_version }
+        msg_variables = { module_name: @module_name, requested_version: @requested_version, version: v(@installed_version),
+                          module_requirements_lis: module_requirements_list }
+        #TRANSLATORS `puppet module uninstall --force` is a command line option that should not be translated
+        _(<<-EOF).chomp % msg_variables
+Could not uninstall module '%{module_name}' (v%{requested_version})
+  Other installed modules have dependencies on '%{module_name}' (%{version})
+%{module_requirements_list}
+    Use `puppet module uninstall --force` to uninstall this module anyway
+        EOF
       else
-        message << _("Could not uninstall module '%{module_name}'") % { module_name: @module_name }
+        #TRANSLATORS `puppet module uninstall --force` is a command line option that should not be translated
+        _(<<-EOF) % { module_name: @module_name, version: v(@installed_version), module_requirements_list: module_requirements_list }
+Could not uninstall module '%{module_name}'
+  Other installed modules have dependencies on '%{module_name}' (%{version})
+%{module_requirements_list}
+    Use `puppet module uninstall --force` to uninstall this module anyway
+        EOF
       end
-      message << _("  Other installed modules have dependencies on '%{module_name}' (%{version})") % { module_name: @module_name, version: v(@installed_version) }
-      message += @required_by.map do |mod|
-        _("    '%{module_name}' (%{version}) requires '%{module_dep}' (%{dep_version})") % { module_name: mod['name'], version: v(mod['version']), module_dep: @module_name, dep_version: v(mod['version_requirement']) }
-      end
-      message << _("    Use `puppet module uninstall --force` to uninstall this module anyway")
-      message.join("\n")
     end
   end
 end

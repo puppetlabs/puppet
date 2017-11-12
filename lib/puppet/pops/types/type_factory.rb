@@ -528,6 +528,13 @@ module TypeFactory
     @target_t ||= TypeParser.singleton.parse('Target')
   end
 
+  # Produces a type for URI[String or Hash]
+  # @api public
+  #
+  def self.uri(string_uri_or_hash = nil)
+    string_uri_or_hash.nil? ? PURIType::DEFAULT : PURIType.new(string_uri_or_hash)
+  end
+
   # Produce a type corresponding to the class of given unless given is a
   # String, Class or a PAnyType.  When a String is given this is taken as
   # a classname.
