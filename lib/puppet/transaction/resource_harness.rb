@@ -13,24 +13,26 @@ class Puppet::Transaction::ResourceHarness
     @persistence = transaction.persistence
   end
 
-  def evaluate(resource)
-    status = Puppet::Resource::Status.new(resource)
+  def evaluate(resources)
+    statuses = resources.map {|r| Puppet::Resource::Status.new(r)}
+    contexts = resources.zip(statuses).map {|r, s| ResourceApplicationContext.from_resource(r, s)}
 
     begin
-      context = ResourceApplicationContext.from_resource(resource, status)
-      perform_changes(resource, context)
+      perform_changes(contexts)
 
-      if status.changed? && ! resource.noop?
-        cache(resource, :synced, Time.now)
-        resource.flush if resource.respond_to?(:flush)
+      contexts.each do |context|
+        resource = context.resource
+        if context.status.changed? && ! resource.noop?
+          cache(resource, :synced, Time.now)
+          resource.flush if resource.respond_to?(:flush)
+        end
       end
     rescue => detail
-      status.failed_because(detail)
+      statuses.each {|status| status.failed_because(detail)}
     ensure
-      status.evaluation_time = Time.now - status.time
+      statuses.each {|status| status.evaluation_time = Time.now - status.time}
     end
-
-    status
+    statuses
   end
 
   def scheduled?(resource)
@@ -67,33 +69,43 @@ class Puppet::Transaction::ResourceHarness
 
   private
 
-  def perform_changes(resource, context)
-    cache(resource, :checked, Time.now)
+  def perform_changes(contexts)
+    contexts.each do |context|
+      resource = context.resource
+      cache(resource, :checked, Time.now)
 
-    # Record the current state in state.yml.
-    context.audited_params.each do |param|
-      cache(resource, param, context.current_values[param])
-    end
-
-    ensure_param = resource.parameter(:ensure)
-    if ensure_param && ensure_param.should
-      ensure_event = sync_if_needed(ensure_param, context)
-    else
-      ensure_event = NO_ACTION
-    end
-
-    if ensure_event == NO_ACTION
-      if context.resource_present?
-        resource.properties.each do |param|
-          sync_if_needed(param, context)
-        end
-      else
-        resource.debug("Nothing to manage: no ensure and the resource doesn't exist")
+      # Record the current state in state.yml.
+      context.audited_params.each do |param|
+        cache(resource, param, context.current_values[param])
       end
     end
 
-    capture_audit_events(resource, context)
-    persist_system_values(resource, context)
+    # Apply ensure if possible, collect resources where that wasn't possible.
+    Puppet.debug "Syncing #{contexts.map {|c| c.resource.to_s}}"
+    action_needed = batch_sync_if_needed(contexts, :ensure)
+
+    action_needed.select! do |c|
+      if c.resource_present?
+        true
+      else
+        c.resource.debug("Nothing to manage: no ensure and the resource doesn't exist")
+        false
+      end
+    end
+
+    # TODO: batch sync for individual properties
+    action_needed.each do |context|
+      resource = context.resource
+      resource.properties.each do |param|
+        sync_if_needed(param, context)
+      end
+    end
+
+    contexts.each do |context|
+      resource = context.resource
+      capture_audit_events(resource, context)
+      persist_system_values(resource, context)
+    end
   end
 
   # We persist the last known values for the properties of a resource after resource
@@ -112,6 +124,89 @@ class Puppet::Transaction::ResourceHarness
                                                      param_to_event[pname.to_s],
                                                      @persistence.get_system_value(resource.ref, pname.to_s)))
     end
+  end
+
+  def batch_sync_if_needed(contexts, parameter_name)
+    ensurables, action_needed = contexts.partition do |context|
+      ensure_param = context.resource.parameter(parameter_name)
+      ensure_param && ensure_param.should
+    end
+
+    actionable, no_action = ensurables.partition do |context|
+      param = context.resource.parameter(parameter_name)
+      # TODO: may need to handle exceptions here
+      param.should && !param.safe_insync?(context.current_values[parameter_name])
+    end
+    action_needed += no_action
+
+    noop, sync = actionable.partition do |context|
+      context.resource.parameter(parameter_name).noop
+    end
+
+    noop.each do |context|
+      param = context.resource.parameter(parameter_name)
+      historical_value = context.historical_values[param.name]
+      current_value = context.current_values[param.name]
+      do_audit = context.audited_params.include?(param.name)
+
+      event = create_change_event(param, current_value, historical_value)
+      if do_audit
+        event = audit_event(event, param, context)
+      end
+
+      brief_audit_message = audit_message(param, do_audit, historical_value, current_value)
+
+      noop(event, param, current_value, brief_audit_message)
+
+      event.calculate_corrective_change(@persistence.get_system_value(context.resource.ref, param.name.to_s))
+      context.record(event)
+      event.send_log
+      context.synced_params << param.name
+    end
+
+    unless sync.empty?
+      events = sync.collect do |context|
+        param = context.resource.parameter(parameter_name)
+        historical_value = context.historical_values[param.name]
+        current_value = context.current_values[param.name]
+        do_audit = context.audited_params.include?(param.name)
+
+        event = create_change_event(param, current_value, historical_value)
+        if do_audit
+          event = audit_event(event, param, context)
+        end
+
+        brief_audit_message = audit_message(param, do_audit, historical_value, current_value)
+
+        [context, event, param, current_value, brief_audit_message]
+      end
+
+      sync_resources = sync.collect {|c| c.resource}
+      if sync_resources.first.class.batchable?
+        sync_resources.first.class.batch_sync(sync_resources, parameter_name)
+      else
+        sync_resources.each {|resource| resource.parameter(parameter_name).sync}
+      end
+
+      events.each do |context, event, param, current_value, audit_message|
+        param = context.resource.parameter(parameter_name)
+        if param.sensitive
+          event.message = param.format(_("changed %s to %s"),
+                                       param.is_to_s(current_value),
+                                       param.should_to_s(param.should)) + audit_message.to_s
+        else
+          event.message = "#{param.change_to_s(current_value, param.should)}#{audit_message}"
+        end
+        event.status = "success"
+
+        event.calculate_corrective_change(@persistence.get_system_value(context.resource.ref, param.name.to_s))
+        context.record(event)
+        event.send_log
+        context.synced_params << param.name
+      end
+    end
+
+    action_needed
   end
 
   def sync_if_needed(param, context)

@@ -226,6 +226,10 @@ class Type
     }
   end
 
+  def self.batchable?
+    self.respond_to?(:batch_sync)
+  end
+
   # @comment These `apply_to` methods are horrible.  They should really be implemented
   #   as part of the usual system of constraints that apply to a type and
   #   provider pair, but were implemented as a separate shadow system.

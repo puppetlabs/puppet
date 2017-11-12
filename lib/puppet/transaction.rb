@@ -89,7 +89,7 @@ class Puppet::Transaction
   # collects all of the changes, executes them, and responds to any
   # necessary events.
   def evaluate(&block)
-    block ||= method(:eval_resource)
+    block ||= method(:eval_resource_group)
     generator = AdditionalResourceGenerator.new(@catalog, nil, @prioritizer)
     @catalog.vertices.each { |resource| generator.generate_additional_resources(resource) }
 
@@ -174,9 +174,14 @@ class Puppet::Transaction
                                 :canceled_resource_handler => canceled_resource_handler,
                                 :graph_cycle_handler => graph_cycle_handler,
                                 :teardown => teardown) do |resource|
-      if resource.is_a?(Puppet::Type::Component)
+      resource = [resource] unless resource.is_a?(Array)
+
+      if resource.any? {|r| r.is_a?(Puppet::Type::Component)}
         Puppet.warning _("Somehow left a component in the relationship graph")
-      else
+      end
+      resource.reject! {|r| r.is_a?(Puppet::Type::Component)}
+
+      unless resource.empty?
         resource.info _("Starting to evaluate the resource") if Puppet[:evaltrace] && @catalog.host_config?
         seconds = thinmark { block.call(resource) }
         resource.info _("Evaluated in %{seconds} seconds") % { seconds: "%0.2f" % seconds } if Puppet[:evaltrace] && @catalog.host_config?
@@ -252,30 +257,36 @@ class Puppet::Transaction
 
   private
 
-  # Apply all changes for a resource
-  def apply(resource, ancestor = nil)
-    status = resource_harness.evaluate(resource)
-    add_resource_status(status)
-    ancestor ||= resource
-    if !(status.failed? || status.failed_to_restart?)
-      event_manager.queue_events(ancestor, status.events)
+  # Apply all changes for an array of resources
+  def apply(resources, ancestor = nil)
+    statuses = resource_harness.evaluate(resources)
+    resources.zip(statuses) do |resource, status|
+      add_resource_status(status)
+      if !(status.failed? || status.failed_to_restart?)
+        event_manager.queue_events(ancestor || resource, status.events)
+      end
     end
   rescue => detail
-    resource.err _("Could not evaluate: %{detail}") % { detail: detail }
+    resources.each {|resource| resource.err _("Could not evaluate: %{detail}") % { detail: detail }}
   end
 
-  # Evaluate a single resource.
-  def eval_resource(resource, ancestor = nil)
-    propagate_failure(resource)
-    if skip?(resource)
-      resource_status(resource).skipped = true
-      resource.debug("Resource is being skipped, unscheduling all events")
-      event_manager.dequeue_all_events_for_resource(resource)
-      persistence.copy_skipped(resource.ref)
-    else
-      resource_status(resource).scheduled = true
-      apply(resource, ancestor)
-      event_manager.process_events(resource)
+  # Evaluate an array of resources.
+  def eval_resource_group(resources, ancestor = nil)
+    resources.each do |resource|
+      propagate_failure(resource)
+      if skip?(resource)
+        resource_status(resource).skipped = true
+        resource.debug("Resource is being skipped, unscheduling all events")
+        event_manager.dequeue_all_events_for_resource(resource)
+        persistence.copy_skipped(resource.ref)
+      end
+    end
+
+    remaining = resources.reject {|r| skip?(r)}
+    unless remaining.empty?
+      remaining.each {|r| resource_status(r).scheduled = true}
+      apply(remaining, ancestor)
+      remaining.each {|r| event_manager.process_events(r)}
     end
   end
 

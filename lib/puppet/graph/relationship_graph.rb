@@ -112,15 +112,31 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
 
     deferred_resources = []
 
+    # if resources are all the same type and it supports batching, group them
+    batched_resources = []
     while continue_while.call() && (resource = next_resource)
       if resource.suitable?
         made_progress = true
 
-        pre_process.call(resource)
+        lookahead_key, lookahead_value = @ready.first
+        if resource.class.batchable? &&
+            ((!batched_resources.empty? && batched_resources[0].class == resource.class) ||
+             (lookahead_value && lookahead_value.suitable? && lookahead_value.class == resource.class))
+          batched_resources << resource
+        elsif !batched_resources.empty?
+          # Apply batched resources
+          Puppet.info "Batching #{batched_resources.map{|r| r.to_s}}"
+          batched_resources.each {|r| pre_process.call(r)}
+          yield batched_resources
+          batched_resources.each {|r| finish(r)}
+          batched_resources.clear
+        else
+          pre_process.call(resource)
 
-        yield resource
+          yield resource
 
-        finish(resource)
+          finish(resource)
+        end
       else
         deferred_resources << resource
       end

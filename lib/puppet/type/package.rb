@@ -66,6 +66,12 @@ module Puppet
       :methods => [:package_settings_insync?, :package_settings, :package_settings=]
     feature :virtual_packages, "The provider accepts virtual package names for install and uninstall."
 
+    def self.batch_sync(resources, param_name)
+      self.fail(Puppet::Error, _("Only ensure is supported for batch application")) if param_name != :ensure
+
+      resources.each { |r| r.parameter(param_name).sync }
+    end
+
     ensurable do
       desc <<-EOT
         What state the package should be in. On packaging systems that can
