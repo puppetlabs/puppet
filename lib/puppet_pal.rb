@@ -71,7 +71,7 @@ module Pal
     # be bracketed with < > to indicate it is something symbolic; for example `<commandline>` if the string was given on the
     # command line.
     #
-    # If the given `puppet_code` is `nil` or an empty string, `nil` is returned, otherwise the result of lexing the
+    # If the given `puppet_code` is `nil`, nil is returned, otherwise the result of lexing the
     # puppet language string. The given string must form a complete and valid token as an error is raised
     # otherwise. That is, it is not possible to divide a token on multiple lines and lex each line individually.
     #
@@ -92,10 +92,12 @@ module Pal
     # @return [Array<Symbol, Puppet::Pops::Parser::LexerSupport::TokenValue] an array of token tuples, or nil if there was no input to lex
     #
     def lex_string(puppet_code, source_file=nil)
-      return nil if puppet_code.nil? || puppet_code == ''
+      return nil if puppet_code.nil?
       unless puppet_code.is_a?(String)
         raise ArgumentError, _("The argument 'puppet_code' must be a String, got %{type}") % { type: puppet_code.class }
       end
+      return [] if puppet_code == ''
+
       lexer = internal_evaluator.parser.lexer
       lexer.lex_string(puppet_code, source_file)
       result = lexer.fullscan()
@@ -105,8 +107,8 @@ module Pal
 
     # Lexes a file of puppet language code in top scope and returns an array of 'tokens'.
     #
-    # If the given `file` is `nil` or an empty string, `nil` is returned, otherwise the result of lexing the
-    # puppet language file.
+    # If the given `file` is `nil`, `nil` is returned, otherwise the result of lexing the
+    # puppet language file (which must exist).
     #
     # For the format of the returned tokens see the `lex_string` method.
     #
@@ -114,10 +116,15 @@ module Pal
     # @return [Array<Symbol, Puppet::Pops::Parser::LexerSupport::TokenValue] an array of token tuples, or nil if there was no input to lex
     #
     def lex_file(file)
-      return nil if file.nil? || file == ''
+      return nil if file.nil?
       unless file.is_a?(String)
         raise ArgumentError, _("The argument 'file' must be a String, got %{type}") % { type: puppet_code.class }
       end
+
+      unless Puppet::FileSystem.exist?(file)
+        raise ArgumentError, _("The argument 'file' must be an existing file - '%{file}' was not found") % { file: file }
+      end
+
       lexer = internal_evaluator.parser.lexer
       lexer.lex_file(file)
       result = lexer.fullscan()
