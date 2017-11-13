@@ -124,6 +124,57 @@ describe 'Puppet Pal' do
         end
       end
 
+      context 'supports lexing such that' do
+        context "lex_string method lexes from a string of puppet code" do
+          it 'and returns tokens' do
+            result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+              ctx.with_script_compiler {|c| c.lex_string('$a = 10') }
+            end
+            expect(result.map {|sym, val| [sym, val[:value]]}).to eq([[:VARIABLE, 'a'],[:EQUALS, '='],[:NUMBER, '10']])
+          end
+
+          it 'and return empty array for empty string input' do
+            result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+              ctx.with_script_compiler {|c| c.lex_string('') }
+            end
+            expect(result).to eq([])
+          end
+
+          it 'and return nil for nil input' do
+            result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+              ctx.with_script_compiler {|c| c.lex_string(nil) }
+            end
+            expect(result).to eq(nil)
+          end
+        end
+
+        context "lex_file method lexes from a file of puppet code" do
+          it 'lexes a given string in a given tmp environment' do
+            result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+              manifest = file_containing('testing.pp', "$a = 42")
+              ctx.with_script_compiler {|c| c.lex_file(manifest) }
+            end
+            expect(result.map {|sym, val| [sym, val[:value]]}).to eq([[:VARIABLE, 'a'],[:EQUALS, '='],[:NUMBER, '42']])
+          end
+
+          it 'and return nil for nil input' do
+            result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+              ctx.with_script_compiler {|c| c.lex_file(nil) }
+            end
+            expect(result).to eq(nil)
+          end
+
+          it 'raises an error if file does not exist' do
+            expect {
+              result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+                ctx.with_script_compiler {|c| c.lex_file('') }
+              end
+            }.to raise_error(/The argument 'file' must be an existing file/)
+          end
+
+        end
+      end
+
       context "variables are supported such that" do
         it 'they can be set in any scope' do
           vars = {'a'=> 10, 'x::y' => 20}
