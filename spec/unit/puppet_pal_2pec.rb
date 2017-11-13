@@ -124,12 +124,24 @@ describe 'Puppet Pal' do
         end
       end
 
-      context "lex_string method" do
-        it 'lexes a given string in a given tmp environment' do
-          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
-            ctx.with_script_compiler {|c| c.lex_string('$a = 10') }
+      context 'supports lexing such that' do
+        context "lex_string method lexes from a string of puppet code" do
+          it 'lexes a given string in a given tmp environment' do
+            result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+              ctx.with_script_compiler {|c| c.lex_string('$a = 10') }
+            end
+            expect(result.map {|sym, val| [sym, val[:value]]}).to eq([[:VARIABLE, 'a'],[:EQUALS, '='],[:NUMBER, '10']])
           end
-          expect(result.map {|sym, val| [sym, val[:value]]}).to eq([[:VARIABLE, 'a'],[:EQUALS, '='],[:NUMBER, '10']])
+        end
+
+        context "lex_file method lexes from a file of puppet code" do
+          it 'lexes a given string in a given tmp environment' do
+            result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+              manifest = file_containing('testing.pp', "$a = 42")
+              ctx.with_script_compiler {|c| c.lex_file(manifest) }
+            end
+            expect(result.map {|sym, val| [sym, val[:value]]}).to eq([[:VARIABLE, 'a'],[:EQUALS, '='],[:NUMBER, '42']])
+          end
         end
       end
 

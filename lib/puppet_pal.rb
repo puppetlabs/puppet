@@ -103,6 +103,28 @@ module Pal
       result
     end
 
+    # Lexes a file of puppet language code in top scope and returns an array of 'tokens'.
+    #
+    # If the given `file` is `nil` or an empty string, `nil` is returned, otherwise the result of lexing the
+    # puppet language file.
+    #
+    # For the format of the returned tokens see the `lex_string` method.
+    #
+    # @param file [String, nil] the puppet language file to lex
+    # @return [Array<Symbol, Puppet::Pops::Parser::LexerSupport::TokenValue] an array of token tuples, or nil if there was no input to lex
+    #
+    def lex_file(file)
+      return nil if file.nil? || file == ''
+      unless file.is_a?(String)
+        raise ArgumentError, _("The argument 'file' must be a String, got %{type}") % { type: puppet_code.class }
+      end
+      lexer = internal_evaluator.parser.lexer
+      lexer.lex_file(file)
+      result = lexer.fullscan()
+      result.pop # throw away EOF token
+      result
+    end
+
     # Evaluates a string of puppet language code in top scope.
     # A "source_file" reference to a source can be given - if not an actual file name, by convention the name should
     # be bracketed with < > to indicate it is something symbolic; for example `<commandline>` if the string was given on the
