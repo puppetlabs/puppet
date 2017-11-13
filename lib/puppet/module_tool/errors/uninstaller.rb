@@ -15,11 +15,18 @@ module Puppet::ModuleTool::Errors
         _("    '%{module_name}' (%{version}) is installed in %{path}") % { module_name: mod[:name], version: v(mod[:version]), path: mod[:path] }
       end.join("\n")
 
-      _(<<-MSG).chomp  % { module_name: @module_name, version: v(@version) , module_versions_list: module_versions_list }
+      if module_versions_list.empty?
+        _(<<-MSG).chomp  % { module_name: @module_name, version: v(@version)}
+Could not uninstall module '%{module_name}' (%{version})
+  No installed version of '%{module_name}' matches (%{version})
+        MSG
+      else
+        _(<<-MSG).chomp  % { module_name: @module_name, version: v(@version), module_versions_list: module_versions_list }
 Could not uninstall module '%{module_name}' (%{version})
   No installed version of '%{module_name}' matches (%{version})
 %{module_versions_list}
-      MSG
+        MSG
+      end
     end
   end
 
@@ -43,7 +50,7 @@ Could not uninstall module '%{module_name}' (%{version})
 
       if @requested_version
         msg_variables = { module_name: @module_name, requested_version: @requested_version, version: v(@installed_version),
-                          module_requirements_lis: module_requirements_list }
+                          module_requirements_list: module_requirements_list }
         #TRANSLATORS `puppet module uninstall --force` is a command line option that should not be translated
         _(<<-EOF).chomp % msg_variables
 Could not uninstall module '%{module_name}' (v%{requested_version})

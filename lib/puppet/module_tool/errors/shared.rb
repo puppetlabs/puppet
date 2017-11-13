@@ -126,16 +126,28 @@ Could not install module '%{module_name}' (%{requested_version})
         _("    which depends on '%{name}' (%{version})") % { name: m[:name], version: v(m[:version]) }
       end.join(",\n")
 
-      msg_variables = { requested_module_name: @requested_module, version: v(@requested_version), module_name: @module_name,
-                        name: @source.first[:name], dependency_list: dependency_list }
-      #TRANSLATORS `puppet module install --force` is a command line and should not be translated
-      _(<<-EOM).chomp % msg_variables
+      if dependency_list.empty?
+        msg_variables = { requested_module_name: @requested_module, version: v(@requested_version), module_name: @module_name,
+                          name: @source.first[:name] }
+        #TRANSLATORS `puppet module install --force` is a command line and should not be translated
+        _(<<-EOM).chomp % msg_variables
+Could not install module '%{requested_module_name}' (%{version})
+  No version of '%{module_name}' will satisfy dependencies
+    You specified '%{name}' (%{version})
+    Use `puppet module install --force` to install this module anyway
+        EOM
+      else
+        msg_variables = { requested_module_name: @requested_module, version: v(@requested_version), module_name: @module_name,
+                          name: @source.first[:name], dependency_list: dependency_list }
+        #TRANSLATORS `puppet module install --force` is a command line and should not be translated
+        _(<<-EOM).chomp % msg_variables
 Could not install module '%{requested_module_name}' (%{version})
   No version of '%{module_name}' will satisfy dependencies
     You specified '%{name}' (%{version})
 %{dependency_list}
     Use `puppet module install --force` to install this module anyway
-      EOM
+        EOM
+      end
     end
   end
 
@@ -153,19 +165,35 @@ Could not install module '%{requested_module_name}' (%{version})
       end.join("\n")
 
       if @action == :upgrade
-        # TRANSLATORS `puppet module install` is a command line and should not be translated
-        _(<<-EOM).chomp % { action: @action, module_name: @module_name, suggestion_list: suggestion_list }
+        if suggestion_list.empty?
+          # TRANSLATORS `puppet module install` is a command line and should not be translated
+          _(<<-EOM).chomp % { action: @action, module_name: @module_name }
+Could not %{action} module '%{module_name}'
+  Module '%{module_name}' is not installed
+    Use `puppet module install` to install this module
+          EOM
+        else
+          # TRANSLATORS `puppet module install` is a command line and should not be translated
+          _(<<-EOM).chomp % { action: @action, module_name: @module_name, suggestion_list: suggestion_list }
 Could not %{action} module '%{module_name}'
   Module '%{module_name}' is not installed
 %{suggestion_list}
     Use `puppet module install` to install this module
-        EOM
+          EOM
+        end
       else
-        _(<<-EOM).chomp % { action: @action, module_name: @module_name, suggestion_list: suggestion_list }
+        if suggestion_list.empty?
+          _(<<-EOM).chomp % { action: @action, module_name: @module_name }
+Could not %{action} module '%{module_name}'
+  Module '%{module_name}' is not installed
+         EOM
+        else
+          _(<<-EOM).chomp % { action: @action, module_name: @module_name, suggestion_list: suggestion_list }
 Could not %{action} module '%{module_name}'
   Module '%{module_name}' is not installed
 %{suggestion_list}
-        EOM
+          EOM
+        end
       end
     end
   end
@@ -185,13 +213,22 @@ Could not %{action} module '%{module_name}'
         _("    '%{module_name}' (%{version}) was found in %{path}") % { module_name: @module_name, version: v(mod.version), path: mod.modulepath }
       end.join("\n")
 
-      # TRANSLATORS `--modulepath` is command line option and should not be translated
-      _(<<-EOM).chomp % { action: @action, module_name: @module_name, module_path_list: module_path_list }
+      if module_path_list.empty?
+        # TRANSLATORS `--modulepath` is command line option and should not be translated
+        _(<<-EOM).chomp % { action: @action, module_name: @module_name }
+Could not %{action} module '%{module_name}'
+  Module '%{module_name}' appears multiple places in the module path
+    Use the `--modulepath` option to limit the search to specific directories
+        EOM
+      else
+        # TRANSLATORS `--modulepath` is command line option and should not be translated
+        _(<<-EOM).chomp % { action: @action, module_name: @module_name, module_path_list: module_path_list }
 Could not %{action} module '%{module_name}'
   Module '%{module_name}' appears multiple places in the module path
 %{module_path_list}
     Use the `--modulepath` option to limit the search to specific directories
-      EOM
+        EOM
+      end
     end
   end
 
