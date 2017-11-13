@@ -1333,6 +1333,8 @@ EOT
         :default  => "$vardir/devices",
         :type     => :directory,
         :mode     => "0750",
+        :owner    => "service",
+        :group    => "service",
         :desc     => "The root directory of devices' $vardir.",
     },
     :deviceconfig => {
