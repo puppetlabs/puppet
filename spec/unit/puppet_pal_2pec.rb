@@ -124,6 +124,15 @@ describe 'Puppet Pal' do
         end
       end
 
+      context "lex_string method" do
+        it 'lexes a given string in a given tmp environment' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler {|c| c.lex_string('$a = 10') }
+          end
+          expect(result.map {|sym, val| [sym, val[:value]]}).to eq([[:VARIABLE, 'a'],[:EQUALS, '='],[:NUMBER, '10']])
+        end
+      end
+
       context "variables are supported such that" do
         it 'they can be set in any scope' do
           vars = {'a'=> 10, 'x::y' => 20}

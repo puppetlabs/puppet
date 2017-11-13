@@ -66,6 +66,43 @@ module Pal
       Puppet::Pops::EMPTY_ARRAY
     end
 
+    # Lexes a string of puppet language code in top scope and returns an array of 'tokens'.
+    # A "source_file" reference to a source can be given - if not an actual file name, by convention the name should
+    # be bracketed with < > to indicate it is something symbolic; for example `<commandline>` if the string was given on the
+    # command line.
+    #
+    # If the given `puppet_code` is `nil` or an empty string, `nil` is returned, otherwise the result of lexing the
+    # puppet language string. The given string must form a complete and valid token as an error is raised
+    # otherwise. That is, it is not possible to divide a token on multiple lines and lex each line individually.
+    #
+    # A token is is encoded as an Array with two entries - the first is always a symbol indicating the kind of token.
+    # The second is a a `TokenValue` object holding the value of the token and meta data about that token. To get
+    # information from the `TokenValue´ use operator `[key]` to get the following keys:
+    #
+    # * `value` -- the value of the lexed token
+    # * `file` -- the name of the file
+    # * `line` -- the line number where the token starts (computed on demand, do not request unless needed)
+    # * `pos` -- the start position on the line where the token starts (computed on demand, do not request unless needed)
+    # * `length` -- the length of the token text
+    # * `offset` -- the byte offset of the token's start
+    # * `locator` -- an object with information about byte/chars/line-endings that can compute further information
+    #
+    # @param puppet_code [String, nil] the puppet language code to lex, must be a complete token
+    # @param source_file [String, nil] an optional reference to a source (a file or symbolic name/location)
+    # @return [Array<Symbol, Puppet::Pops::Parser::LexerSupport::TokenValue] an array of token tuples, or nil if there was no input to lex
+    #
+    def lex_string(puppet_code, source_file=nil)
+      return nil if puppet_code.nil? || puppet_code == ''
+      unless puppet_code.is_a?(String)
+        raise ArgumentError, _("The argument 'puppet_code' must be a String, got %{type}") % { type: puppet_code.class }
+      end
+      lexer = internal_evaluator.parser.lexer
+      lexer.lex_string(puppet_code, source_file)
+      result = lexer.fullscan()
+      result.pop # throw away EOF token
+      result
+    end
+
     # Evaluates a string of puppet language code in top scope.
     # A "source_file" reference to a source can be given - if not an actual file name, by convention the name should
     # be bracketed with < > to indicate it is something symbolic; for example `<commandline>` if the string was given on the
