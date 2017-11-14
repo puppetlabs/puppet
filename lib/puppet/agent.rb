@@ -122,7 +122,7 @@ class Puppet::Agent
   # to it during the yield.
   def with_client(transaction_uuid, job_id = nil)
     begin
-      @client = client_class.new(Puppet::Configurer::DownloaderFactory.new, transaction_uuid, job_id)
+      @client = client_class.new(transaction_uuid, job_id)
     rescue StandardError => detail
       Puppet.log_exception(detail, _("Could not create instance of %{client_class}: %{detail}") % { client_class: client_class, detail: detail })
       return

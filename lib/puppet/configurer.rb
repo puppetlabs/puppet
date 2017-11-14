@@ -8,7 +8,6 @@ require 'securerandom'
 class Puppet::Configurer
   require 'puppet/configurer/fact_handler'
   require 'puppet/configurer/plugin_handler'
-  require 'puppet/configurer/downloader_factory'
 
   include Puppet::Configurer::FactHandler
 
@@ -56,7 +55,7 @@ class Puppet::Configurer
     end
   end
 
-  def initialize(factory = Puppet::Configurer::DownloaderFactory.new, transaction_uuid = nil, job_id = nil)
+  def initialize(transaction_uuid = nil, job_id = nil)
     @running = false
     @splayed = false
     @cached_catalog_status = 'not_used'
@@ -65,7 +64,7 @@ class Puppet::Configurer
     @job_id = job_id
     @static_catalog = true
     @checksum_type = Puppet[:supported_checksum_types]
-    @handler = Puppet::Configurer::PluginHandler.new(factory)
+    @handler = Puppet::Configurer::PluginHandler.new()
   end
 
   # Get the remote catalog, yo.  Returns nil if no catalog can be found.
