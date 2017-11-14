@@ -21,7 +21,7 @@ describe Puppet::ModuleTranslations do
       it 'should attempt to load translations for each module given' do
         Puppet::GettextConfig.expects(:load_translations).with("foo-mod_a", File.join(modpath, "mod_a", "locales"), :po).returns(true)
 
-        Puppet::ModuleTranslations.from_modulepath([module_a])
+        Puppet::ModuleTranslations.load_from_modulepath([module_a])
       end
   end
 
@@ -35,7 +35,7 @@ describe Puppet::ModuleTranslations do
       Puppet::GettextConfig.expects(:current_locale).returns("ja")
       Puppet::GettextConfig.expects(:load_translations).with("foo-mod_a", File.join(vardir, "locales"), :po).returns(true)
 
-      Puppet::ModuleTranslations.from_vardir(vardir)
+      Puppet::ModuleTranslations.load_from_vardir(vardir)
     end
   end
 end

@@ -1,7 +1,13 @@
 require 'puppet/gettext/config'
 
 module Puppet::ModuleTranslations
-  def self.from_modulepath(modules)
+
+  # @api private
+  # Loads translation files for each of the specified modules,
+  # if present. Requires the modules to have `forge_name` specified.
+  # @param [[Module]] modules a list of modules for which to
+  #        load translations
+  def self.load_from_modulepath(modules)
     modules.each do |mod|
       return unless mod.forge_name
 
@@ -9,21 +15,29 @@ module Puppet::ModuleTranslations
       if Puppet::GettextConfig.load_translations(module_name, mod.locale_directory, :po)
         Puppet.debug "Loaded translations for #{module_name}."
       elsif Puppet::GettextConfig.gettext_loaded?
-        Puppet.debug "Could not find translation files for #{module_name} at #{mod.locale_directory}. Skipping i18n initialization."
+        Puppet.debug "Could not find translation files for #{module_name} at #{mod.locale_directory}. Skipping translation initialization."
       else
-        Puppet.warn_once(:gettext_missing, "No gettext library found, skipping i18n initialization.")
+        #TRANSLATORS 'gettext' is the name of a program and should not be translated
+        Puppet.warn_once("gettext_unavailable", "gettext_unavailable", _("No gettext library found, skipping translation initialization."))
       end
     end
   end
 
-  def self.from_vardir(vardir)
+  # @api private
+  # Loads translation files that have been pluginsync'd for modules
+  # from the $vardir.
+  # @param [String] vardir the path to Puppet's vardir
+  def self.load_from_vardir(vardir)
     locale = Puppet::GettextConfig.current_locale
     Dir.glob("#{vardir}/locales/#{locale}/*.po") do |f|
       module_name = File.basename(f, ".po")
       if Puppet::GettextConfig.load_translations(module_name, File.join(vardir, "locales"), :po)
         Puppet.debug "Loaded translations for #{module_name}."
-      else
+      elsif Puppet::GettextConfig.gettext_loaded?
         Puppet.debug "Could not load translations for #{module_name}."
+      else
+        #TRANSLATORS 'gettext' is the name of a program and should not be translated
+        Puppet.warn_once("gettext_unavailable", "gettext_unavailable", _("No gettext library found, skipping translation initialization."))
       end
     end
   end

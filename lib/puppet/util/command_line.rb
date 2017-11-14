@@ -124,8 +124,9 @@ module Puppet
               end
 
               if !Puppet[:disable_i18n]
-                Puppet::ModuleTranslations.from_modulepath(configured_environment.modules)
-                Puppet::ModuleTranslations.from_vardir(Puppet[:vardir])
+                Puppet::GettextConfig.reset_text_domain('cli')
+                Puppet::ModuleTranslations.load_from_modulepath(configured_environment.modules)
+                Puppet::ModuleTranslations.load_from_vardir(Puppet[:vardir])
               end
 
               # Puppet requires Facter, which initializes its lookup paths. Reset Facter to

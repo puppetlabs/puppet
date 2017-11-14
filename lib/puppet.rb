@@ -42,11 +42,8 @@ module Puppet
   require 'puppet/environments'
 
   class << self
-    Puppet::GettextConfig.create_text_domain('production')
-    locale_dir = Puppet::GettextConfig.puppet_locale_path
-    if Puppet::GettextConfig.load_translations('puppet', locale_dir, Puppet::GettextConfig.translation_mode(locale_dir))
-      Puppet::GettextConfig.set_locale(Locale.current.language)
-    end
+    Puppet::GettextConfig.set_locale(Locale.current.language)
+    Puppet::GettextConfig.create_default_text_domain
 
     include Puppet::Util
     attr_reader :features

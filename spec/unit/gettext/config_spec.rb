@@ -18,13 +18,15 @@ describe Puppet::GettextConfig do
   end
 
   describe 'setting and getting the locale' do
-    it 'should return "en" by default' do
+    it 'should return "en" when gettext is unavailable' do
+      Puppet::GettextConfig.expects(:gettext_loaded?).returns(false)
+
       expect(Puppet::GettextConfig.current_locale).to eq('en')
     end
 
     it 'should allow the locale to be set' do
-      Puppet::GettextConfig.set_locale('ja')
-      expect(Puppet::GettextConfig.current_locale).to eq('ja')
+      Puppet::GettextConfig.set_locale('hu')
+      expect(Puppet::GettextConfig.current_locale).to eq('hu')
     end
   end
 
@@ -63,6 +65,20 @@ describe Puppet::GettextConfig do
       it 'should raise an exception' do
         expect { Puppet::GettextConfig.load_translations('puppet', local_path, :bad_format) }.to raise_error(Puppet::Error)
       end
+    end
+  end
+
+  describe "setting up text domains" do
+    it 'should add puppet translations to the default text domain' do
+      Puppet::GettextConfig.expects(:load_translations).with('puppet', local_path, :po).returns(true)
+
+      Puppet::GettextConfig.create_default_text_domain
+    end
+
+    it 'should copy default translations when creating a non-default text domain' do
+      Puppet::GettextConfig.expects(:copy_default_translations).with('test')
+
+      Puppet::GettextConfig.reset_text_domain('test')
     end
   end
 end

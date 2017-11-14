@@ -116,6 +116,11 @@ class Puppet::Configurer
     if options[:pluginsync]
       remote_environment_for_plugins = Puppet::Node::Environment.remote(@environment)
       download_plugins(remote_environment_for_plugins)
+
+      if !Puppet[:disable_i18n]
+        Puppet::GettextConfig.reset_text_domain('agent')
+        Puppet::ModuleTranslations.load_from_vardir(Puppet[:vardir])
+      end
     end
 
     facts_hash = {}
@@ -293,11 +298,10 @@ class Puppet::Configurer
       end
 
       current_environment = Puppet.lookup(:current_environment)
-      local_node_environment =
       if current_environment.name == @environment.intern
-        current_environment
+        local_node_environment = current_environment
       else
-        Puppet::Node::Environment.create(@environment,
+        local_node_environment = Puppet::Node::Environment.create(@environment,
                                          current_environment.modulepath,
                                          current_environment.manifest,
                                          current_environment.config_version)
