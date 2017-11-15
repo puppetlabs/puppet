@@ -304,21 +304,21 @@ describe 'Puppet Pal' do
         }.to raise_error(Puppet::Error)
       end
 
-      it 'it can evaluate the parsed AST' do
+      it 'the "evaluate" method evaluates the parsed AST' do
         result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
-          ctx.with_script_compiler { |c| c.evaluate_ast(c.parse_string('10 + 20')) }
+          ctx.with_script_compiler { |c| c.evaluate(c.parse_string('10 + 20')) }
         end
         expect(result).to eq(30)
       end
 
-      it '"evaluate_literal" can evaluate AST being a representation of a literal value' do
+      it 'the "evaluate_literal" method evaluates AST being a representation of a literal value' do
         result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
           ctx.with_script_compiler { |c| c.evaluate_literal(c.parse_string('{10 => "hello"}')) }
         end
         expect(result).to eq({10 => 'hello'})
       end
 
-      it '"evaluate_literal" errors if ast is not representing a literal value' do
+      it 'the "evaluate_literal" method errors if ast is not representing a literal value' do
         expect do
           Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
             ctx.with_script_compiler { |c| c.evaluate_literal(c.parse_string('{10+1 => "hello"}')) }

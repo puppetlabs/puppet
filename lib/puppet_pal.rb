@@ -101,7 +101,7 @@ module Pal
     # @param ast [Puppet::Pops::Model::PopsObject] typically the returned `Program` from the parse methods, but can be any `Expression`
     # @returns [Object] whatever the ast evaluates to
     #
-    def evaluate_ast(ast)
+    def evaluate(ast)
       internal_evaluator.evaluate(topscope, ast)
     end
 
