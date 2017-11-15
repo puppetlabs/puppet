@@ -84,7 +84,7 @@ class Closure < CallableSignature
     if enforce_parameters
       # Push a temporary parameter scope used while resolving the parameter defaults
       closure_scope.with_parameter_scope(closure_name, parameter_names) do |param_scope|
-        # Assign all non-nil values, even those that represent non-existent paramaters.
+        # Assign all non-nil values, even those that represent non-existent parameters.
         args_hash.each { |k, v| param_scope[k] = v unless v.nil? }
         parameters.each do |p|
           name = p.name
