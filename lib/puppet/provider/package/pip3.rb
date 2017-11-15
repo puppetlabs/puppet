@@ -15,6 +15,9 @@ Puppet::Type.type(:package).provide :pip3,
   has_feature :installable, :uninstallable, :upgradeable, :versionable, :install_options
 
   def self.cmd
-    ["pip3"]
+    if Puppet.features.microsoft_windows?
+      ["pip3.exe"]
+    else
+      ["pip3"]
   end
 end
