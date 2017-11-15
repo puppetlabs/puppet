@@ -296,10 +296,25 @@ module Puppet
     },
     :environment => {
         :default  => "production",
-        :desc     => "The environment Puppet is running in.  For clients
-          (e.g., `puppet agent`) this determines the environment itself, which
-          is used to find modules and much more.  For servers (i.e., `puppet master`)
-          this provides the default environment for nodes we know nothing about.",
+        :desc     => "The environment in which Puppet is running. For clients,
+          such as `puppet agent`, this determines the environment itself, which
+          Puppet uses to find modules and much more. For servers, such as `puppet master`,
+          this provides the default environment for nodes that Puppet knows nothing about.
+
+          When defining an environment in the `[agent]` section, this refers to the
+          environment that the agent requests from the master. The environment doesn't
+          have to exist on the local filesystem because the agent fetches it from the
+          master. This definition is used when running `puppet agent`.
+
+          When defined in the `[user]` section, the environment refers to the path that
+          Puppet uses to search for code and modules related to its execution. This
+          requires the environment to exist locally on the filesystem where puppet is
+          being executed. Puppet subcommands, including `puppet module` and
+          `puppet apply`, use this definition.
+
+          Given that the context and effects vary depending on the
+          [config section](https://puppet.com/docs/puppet/latest/config_file_main.html#config-sections)
+          in which this setting is defined, do not set it globally.",
         :short    => "E"
     },
     :environmentpath => {
