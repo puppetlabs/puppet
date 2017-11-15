@@ -26,8 +26,9 @@ require 'puppet/parser/script_compiler'
 module Puppet
 module Pal
 
-  # @param compiler [Puppet::Pal::Compiler] a configured compiler as obtained in the callback from `with_script_compiler`
-
+  # A configured compiler as obtained in the callback from `with_script_compiler`.
+  # (Later, there may also be a catalog compiler available.)
+  #
   class Compiler
     attr_reader :internal_compiler
     protected :internal_compiler
