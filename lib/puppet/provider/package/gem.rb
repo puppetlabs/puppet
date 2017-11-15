@@ -8,7 +8,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     specified source is used, also pass `--clear-sources` via `install_options`.
     If source is present but is not a valid URL, it will be interpreted as the
     path to a local gem file. If source is not present, the gem will be
-    installed from the default gem repositories.
+    installed from the default gem repositories. Note that to modify this for Windows, it has to be a valid URL.
 
     This provider supports the `install_options` and `uninstall_options` attributes,
     which allow command-line flags to be passed to the gem command.
