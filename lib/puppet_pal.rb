@@ -97,6 +97,41 @@ module Pal
       internal_evaluator.evaluate_file(topscope, file)
     end
 
+    # Evaluates an AST obtained from `parse_string` or `parse_file` in topscope.
+    # @param ast [Puppet::Pops::Model::PopsObject] typically the returned `Program` from the parse methods, but can be any `Expression`
+    # @returns [Object] whatever the ast evaluates to
+    #
+    def evaluate_ast(ast)
+      internal_evaluator.evaluate(topscope, ast)
+    end
+
+    # Parses and validates a puppet language string and returns an instance of Puppet::Pops::Model::Program on success.
+    # If the content is not valid an error is raised.
+    #
+    # @param code_string [String] a puppet language string to parse and validate
+    # @param source_file [String] an optional reference to a file or other location in angled brackets
+    # @return [Puppet::Pops::Model::Program] returns a `Program` instance on success
+    #
+    def parse_string(code_string, source_file = nil)
+      unless code_string.is_a?(String)
+        raise ArgumentError, _("The argument 'code_string' must be a String, got %{type}") % { type: code_string.class }
+      end
+      internal_evaluator.parse_string(code_string, source_file)
+    end
+
+    # Parses and validates a puppet language file and returns an instance of Puppet::Pops::Model::Program on success.
+    # If the content is not valid an error is raised.
+    #
+    # @param file [String] a file with puppet language content to parse and validate
+    # @return [Puppet::Pops::Model::Program] returns a `Program` instance on success
+    #
+    def parse_file(file)
+      unless file.is_a?(String)
+        raise ArgumentError, _("The argument 'file' must be a String, got %{type}") % { type: puppet_code.class }
+      end
+      internal_evaluator.parse_file(file)
+    end
+
     # Parses a puppet data type given in String format and returns that type, or raises an error.
     # A type is needed in calls to `new` to create an instance of the data type, or to perform type checking
     # of values - typically using `type.instance?(obj)` to check if `obj` is an instance of the type.
