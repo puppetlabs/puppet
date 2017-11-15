@@ -311,6 +311,21 @@ describe 'Puppet Pal' do
         expect(result).to eq(30)
       end
 
+      it '"evaluate_literal" can evaluate AST being a representation of a literal value' do
+        result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+          ctx.with_script_compiler { |c| c.evaluate_literal(c.parse_string('{10 => "hello"}')) }
+        end
+        expect(result).to eq({10 => 'hello'})
+      end
+
+      it '"evaluate_literal" errors if ast is not representing a literal value' do
+        expect do
+          Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+            ctx.with_script_compiler { |c| c.evaluate_literal(c.parse_string('{10+1 => "hello"}')) }
+          end
+        end.to raise_error(/does not represent a literal value/)
+      end
+
     end
 
     # Note: When function run_plan moves to bolt, so should this test

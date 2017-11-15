@@ -105,6 +105,21 @@ module Pal
       internal_evaluator.evaluate(topscope, ast)
     end
 
+    # Produces a literal value if the AST obtained from `parse_string` or `parse_file` does not require any actual evaluation.
+    # This method is useful if obtaining an AST that represents literal values; string, integer, float, boolean, regexp, array, hash;
+    # for example from having read this from the command line or as values in some file.
+    #
+    # @param ast [Puppet::Pops::Model::PopsObject] typically the returned `Program` from the parse methods, but can be any `Expression`
+    # @returns [Object] whatever the literal value the ast evaluates to
+    #
+    def evaluate_literal(ast)
+      catch :not_literal do
+        return Puppet::Pops::Evaluator::LiteralEvaluator.new().literal(ast)
+      end
+      # TRANSLATORS, the 'ast' is the name of a parameter, do not translate
+      raise ArgumentError, _("The given 'ast' does not represent a literal value")
+    end
+
     # Parses and validates a puppet language string and returns an instance of Puppet::Pops::Model::Program on success.
     # If the content is not valid an error is raised.
     #
