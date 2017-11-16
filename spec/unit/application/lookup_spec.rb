@@ -498,6 +498,8 @@ Searching for "a"
     end
 
     context 'the global scope' do
+      include PuppetSpec::Files
+
       it "is unaffected by global variables unless '--compile' is used" do
         lookup.options[:node] = node
         lookup.command_line.stubs(:args).returns(['c'])
@@ -509,6 +511,34 @@ Searching for "a"
         lookup.options[:compile] = true
         lookup.command_line.stubs(:args).returns(['c'])
         expect(run_lookup(lookup)).to eql("--- This is C from site.pp\n...")
+      end
+
+      it 'receives extra facts in top scope' do
+        file_path = tmpdir('lookup_spec')
+        filename = File.join(file_path, "facts.yaml")
+        File.open(filename, "w+") { |f| f.write(<<-YAML.unindent) }
+          ---
+          cx: ' C from facts'
+          YAML
+
+        lookup.options[:node] = node
+        lookup.options[:fact_file] = filename
+        lookup.command_line.stubs(:args).returns(['c'])
+        expect(run_lookup(lookup)).to eql("--- This is C from facts\n...")
+      end
+
+      it 'receives extra facts in the facts hash' do
+        file_path = tmpdir('lookup_spec')
+        filename = File.join(file_path, "facts.yaml")
+        File.open(filename, "w+") { |f| f.write(<<-YAML.unindent) }
+          ---
+          cx: ' G from facts'
+        YAML
+
+        lookup.options[:node] = node
+        lookup.options[:fact_file] = filename
+        lookup.command_line.stubs(:args).returns(['g'])
+        expect(run_lookup(lookup)).to eql("--- This is G from facts in facts hash\n...")
       end
     end
 
