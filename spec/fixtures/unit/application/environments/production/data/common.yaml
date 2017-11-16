@@ -18,5 +18,7 @@ f.one:
 
 ab: "%{hiera('a')} and %{hiera('b')}"
 
+g: "This is%{facts.cx} in facts hash"
+
 lookup_options:
   a: first
