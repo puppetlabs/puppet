@@ -265,14 +265,15 @@ module Pal
       false
     end
 
-    # Returns a hash mapping all parameter's name to type
+    # Returns a PStructType describing the parameters as a puppet Struct data type
+    # Note that a `to_s` on the returned structure will result in a human readable Struct datatype as a
+    # description of what a plan expects.
     #
-    def params_hash
-    end
-
-    # Returns a hash mapping all required parameter's name to type
+    # @return [Puppet::Pops::Types::PStructType] a struct data type describing the parameters and their types
     #
-    def required_parameters
+    def params_type
+      dispatcher = @plan_func.class.dispatcher.dispatchers[0]
+      dispatcher.params_struct
     end
   end
 

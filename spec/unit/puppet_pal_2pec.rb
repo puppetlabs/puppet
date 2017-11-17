@@ -239,7 +239,7 @@ describe 'Puppet Pal' do
           expect(result).to eq([true, false])
         end
 
-        it 'a PlanSignature.callable_with? calls a given lambda with any errors' do
+        it 'a PlanSignature.callable_with? calls a given lambda with any errors as a formatted string' do
           result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
             manifest = file_containing('afunc.pp', "plan myplan(Integer $a, Integer $b) {  } ")
             ctx.with_script_compiler(manifest_file: manifest) do |c|
@@ -254,7 +254,7 @@ describe 'Puppet Pal' do
           expect(result).to eq(" parameter 'a' expects an Integer value, got String\n expects a value for parameter 'b'")
         end
 
-        it 'a PlanSignature.callable_with? does not calla  given lambda if there are no errors' do
+        it 'a PlanSignature.callable_with? does not call a given lambda if there are no errors' do
           result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
             manifest = file_containing('afunc.pp', "plan myplan(Integer $a) {  } ")
             ctx.with_script_compiler(manifest_file: manifest) do |c|
@@ -272,6 +272,17 @@ describe 'Puppet Pal' do
             ctx.with_script_compiler {|c| c.plan_signature('no_where_to_be_found') }
           end
           expect(result).to be(nil)
+        end
+
+        it '"PlanSignature#params_type" returns a map of all parameters and their types' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            manifest = file_containing('afunc.pp', "plan myplan(Integer $a, String $b) {  } ")
+            ctx.with_script_compiler(manifest_file: manifest) do |c|
+              c.plan_signature('myplan').params_type
+            end
+          end
+          expect(result.class).to eq(Puppet::Pops::Types::PStructType)
+          expect(result.to_s).to eq("Struct[{'a' => Integer, 'b' => String}]")
         end
       end
 
