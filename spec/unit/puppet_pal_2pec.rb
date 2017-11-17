@@ -194,35 +194,82 @@ describe 'Puppet Pal' do
           expect(result).to eq(12)
         end
 
-        it '"function_signatures" returns the signatures of a function' do
+        it '"function_signature" returns a signature of a function' do
           result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
             manifest = file_containing('afunc.pp', "function myfunc(Integer $a) { $a * 2 } ")
             ctx.with_script_compiler(manifest_file: manifest) do |c|
-              signatures = c.function_signatures('myfunc')
-              expect(signatures.is_a?(Array)).to eq(true)
-              [ signatures[0].callable_with?([10]),
-                signatures[0].callable_with?(['nope'])
+              c.function_signature('myfunc')
+            end
+          end
+          expect(result.class).to eq(Puppet::Pal::FunctionSignature)
+        end
+
+        it '"FunctionSignature#callable_with?" returns boolean if function is callable with given argument values' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            manifest = file_containing('afunc.pp', "function myfunc(Integer $a) { $a * 2 } ")
+            ctx.with_script_compiler(manifest_file: manifest) do |c|
+              signature = c.function_signature('myfunc')
+              [ signature.callable_with?([10]),
+                signature.callable_with?(['nope'])
               ]
             end
           end
           expect(result).to eq([true, false])
         end
 
-        it '"function_signatures" gets the signatures from a ruby function with multiple dispatch' do
+        it '"FunctionSignature#callable_with?" calls a given lambda if there is an error' do
           result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
-            ctx.with_script_compiler {|c| c.function_signatures('lookup') }
+            manifest = file_containing('afunc.pp', "function myfunc(Integer $a) { $a * 2 } ")
+            ctx.with_script_compiler(manifest_file: manifest) do |c|
+              signature = c.function_signature('myfunc')
+              local_result = 'not yay'
+              signature.callable_with?(['nope']) {|error| local_result = error }
+              local_result
+            end
           end
-          expect(result.is_a?(Array)).to eq(true)
-          expect(result.all? {|s| s.is_a?(Puppet::Pops::Types::PCallableType) }).to eq(true)
+          expect(result).to match(/'myfunc' parameter 'a' expects an Integer value, got String/)
         end
 
-        it '"function_signatures" returns an empty array if function is not found' do
+        it '"FunctionSignature#callable_with?" does not call a given lambda when there is no error' do
           result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
-            ctx.with_script_compiler {|c| c.function_signatures('no_where_to_be_found') }
+            manifest = file_containing('afunc.pp', "function myfunc(Integer $a) { $a * 2 } ")
+            ctx.with_script_compiler(manifest_file: manifest) do |c|
+              signature = c.function_signature('myfunc')
+              local_result = 'yay'
+              signature.callable_with?([10]) {|error| local_result = 'not yay' }
+              local_result
+            end
           end
-          expect(result.is_a?(Array)).to eq(true)
-          expect(result.empty?).to eq(true)
+          expect(result).to eq('yay')
         end
+
+        it '"function_signature" gets the signatures from a ruby function with multiple dispatch' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler {|c| c.function_signature('lookup') }
+          end
+          # check two different signatures of the lookup function
+          expect(result.callable_with?(['key'])).to eq(true)
+          expect(result.callable_with?(['key'], lambda() {|k| })).to eq(true)
+        end
+
+        it '"function_signature" returns nil if function is not found' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler {|c| c.function_signature('no_where_to_be_found') }
+          end
+          expect(result).to eq(nil)
+        end
+
+        it '"FunctionSignature#callables" returns an array of callables' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            manifest = file_containing('afunc.pp', "function myfunc(Integer $a) { $a * 2 } ")
+            ctx.with_script_compiler(manifest_file: manifest) do |c|
+              c.function_signature('myfunc').callables
+            end
+          end
+          expect(result.class).to eq(Array)
+          expect(result.all? {|c| c.is_a?(Puppet::Pops::Types::PCallableType)}).to eq(true)
+        end
+
       end
 
       context 'supports plans such that' do
