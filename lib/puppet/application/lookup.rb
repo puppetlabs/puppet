@@ -340,7 +340,6 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
     fact_file = options[:fact_file]
 
     if fact_file
-      original_facts = node.parameters
       if fact_file.end_with?("json")
         given_facts = JSON.parse(Puppet::FileSystem.read(fact_file, :encoding => 'utf-8'))
       else
@@ -350,8 +349,7 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
       unless given_facts.instance_of?(Hash)
         raise _("Incorrect formatted data in %{fact_file} given via the --facts flag") % { fact_file: fact_file }
       end
-
-      node.parameters = original_facts.merge(given_facts)
+      node.add_extra_facts(given_facts)
     end
 
     Puppet[:code] = 'undef' unless options[:compile]

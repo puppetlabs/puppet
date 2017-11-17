@@ -149,6 +149,16 @@ class Puppet::Node
     @parameters[ENVIRONMENT] ||= self.environment.name.to_s
   end
 
+  # Add extra facts, such as facts given to lookup on the command line The
+  # extra facts will override existing ones.
+  # @param extra_facts [Hash{String=>Object}] the facts to tadd
+  # @api private
+  def add_extra_facts(extra_facts)
+    @facts.add_extra_values(extra_facts)
+    @parameters.merge!(extra_facts)
+    nil
+  end
+
   def add_server_facts(facts)
     # Append the current environment to the list of server facts
     @server_facts = facts.merge({ "environment" => self.environment.name.to_s})

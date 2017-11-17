@@ -287,6 +287,14 @@ msgstr ""
 msgid "You must specify a file to back up"
 msgstr ""
 
+#: ../lib/puppet/defaults.rb:1730
+msgid "Setting 'archive_files' is deprecated. It will be removed in a future release along with the `inspect` command."
+msgstr ""
+
+#: ../lib/puppet/defaults.rb:1739
+msgid "Setting 'archive_file_server' is deprecated. It will be removed in a future release along with the `inspect` command."
+msgstr ""
+
 #: ../lib/puppet/application/filebucket.rb:177
 msgid "%{file}: no such file"
 msgstr ""
