@@ -16,13 +16,14 @@ describe Puppet::ModuleTranslations do
       :metadata => {
         :author => 'foo'
       },
-      :environment => mock("environment")) }
+      :environment => mock("environment"))
+    }
 
-      it 'should attempt to load translations for each module given' do
-        Puppet::GettextConfig.expects(:load_translations).with("foo-mod_a", File.join(modpath, "mod_a", "locales"), :po).returns(true)
+    it 'should attempt to load translations for each module given' do
+      Puppet::GettextConfig.expects(:load_translations).with("foo-mod_a", File.join(modpath, "mod_a", "locales"), :po).returns(true)
 
-        Puppet::ModuleTranslations.load_from_modulepath([module_a])
-      end
+      Puppet::ModuleTranslations.load_from_modulepath([module_a])
+    end
   end
 
   describe "loading translations from $vardir" do

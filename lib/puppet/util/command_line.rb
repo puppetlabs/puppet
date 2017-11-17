@@ -123,11 +123,9 @@ module Puppet
                 $LOAD_PATH << dir unless $LOAD_PATH.include?(dir)
               end
 
-              if !Puppet[:disable_i18n]
-                Puppet::GettextConfig.reset_text_domain('cli')
-                Puppet::ModuleTranslations.load_from_modulepath(configured_environment.modules)
-                Puppet::ModuleTranslations.load_from_vardir(Puppet[:vardir])
-              end
+              Puppet::GettextConfig.reset_text_domain('cli')
+              Puppet::ModuleTranslations.load_from_modulepath(configured_environment.modules)
+              Puppet::ModuleTranslations.load_from_vardir(Puppet[:vardir])
 
               # Puppet requires Facter, which initializes its lookup paths. Reset Facter to
               # pickup the new $LOAD_PATH.

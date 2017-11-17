@@ -6,6 +6,8 @@ module Puppet::GettextConfig
   POSIX_PATH = File.absolute_path('../../../../../share/locale', File.dirname(__FILE__))
   WINDOWS_PATH = File.absolute_path('../../../../../../../puppet/share/locale', File.dirname(__FILE__))
 
+  DEFAULT_TEXT_DOMAIN = 'default-text-domain'
+
   # Load gettext helpers and track whether they're available.
   # Used instead of features because we initialize gettext before features is available.
   begin
@@ -45,12 +47,21 @@ module Puppet::GettextConfig
   end
 
   # @api private
+  # Returns a list of the names of the loaded text domains
+  # @return [[String]] the names of the loaded text domains
+  def self.loaded_text_domains
+    return [] if @gettext_disabled || !gettext_loaded?
+
+    return FastGettext.translation_repositories.keys
+  end
+
+  # @api private
   # Clears the translation repository for the given text domain,
   # creating it if it doesn't exist, then adds default translations
   # and switches to using this domain.
   # @param [String] domain_name the name of the domain to create
   def self.reset_text_domain(domain_name)
-    return unless gettext_loaded?
+    return if @gettext_disabled || !gettext_loaded?
 
     FastGettext.add_text_domain(domain_name, type: :chain, chain: [])
     copy_default_translations(domain_name)
@@ -67,12 +78,45 @@ module Puppet::GettextConfig
   # @return true if Puppet translations were successfully loaded, false
   # otherwise
   def self.create_default_text_domain
-    return unless gettext_loaded?
+    return if @gettext_disabled || !gettext_loaded?
 
-    FastGettext.add_text_domain('puppet', type: :chain, chain: [])
-    FastGettext.default_text_domain = 'puppet'
+    FastGettext.add_text_domain(DEFAULT_TEXT_DOMAIN, type: :chain, chain: [])
+    FastGettext.default_text_domain = DEFAULT_TEXT_DOMAIN
 
     load_translations('puppet', puppet_locale_path, translation_mode(puppet_locale_path))
+  end
+
+  # @api private
+  # Switches the active text domain, if the requested domain exists.
+  # @param [String] domain_name the name of the domain to switch to
+  def self.use_text_domain(domain_name)
+    return if @gettext_disabled || !gettext_loaded?
+
+    if FastGettext.translation_repositories.include?(domain_name)
+      FastGettext.text_domain = domain_name
+    end
+  end
+
+  # @api private
+  # Deletes the text domain with the given name
+  # @param [String] domain_name the name of the domain to delete
+  def self.delete_text_domain(domain_name)
+    return if @gettext_disabled || !gettext_loaded?
+
+    FastGettext.translation_repositories.delete(domain_name)
+  end
+
+  # @api private
+  # Deletes all text domains except the default one
+  def self.delete_environment_text_domains
+    return if @gettext_disabled || !gettext_loaded?
+
+    FastGettext.translation_repositories.keys.each do |key|
+      # do not clear default translations
+      next if key == DEFAULT_TEXT_DOMAIN
+
+      FastGettext.translation_repositories.delete(key)
+    end
   end
 
   # @api private
@@ -85,7 +129,7 @@ module Puppet::GettextConfig
   #
   # @param [String] domain_name the name of the domain to add translations to
   def self.copy_default_translations(domain_name)
-    return unless gettext_loaded?
+    return if @gettext_disabled || !gettext_loaded?
 
     if FastGettext.default_text_domain.nil?
       create_default_text_domain
@@ -158,6 +202,8 @@ module Puppet::GettextConfig
   # @param [String] locale_dir the path to the directory containing translations
   # @param [Symbol] file_format the fomat of the translations files, :po or :mo
   def self.add_repository_to_domain(project_name, locale_dir, file_format)
+    return if @gettext_disabled || !gettext_loaded?
+
     current_chain = FastGettext.translation_repositories[FastGettext.text_domain].chain
 
     repository = FastGettext::TranslationRepository.build(project_name,
@@ -171,7 +217,7 @@ module Puppet::GettextConfig
   # Sets the language in which to display strings.
   # @param [String] locale the language portion of a locale string (e.g. "ja")
   def self.set_locale(locale)
-    return if !gettext_loaded?
+    return if @gettext_disabled || !gettext_loaded?
     # make sure we're not using the `available_locales` machinery
     FastGettext.default_available_locales = nil
 

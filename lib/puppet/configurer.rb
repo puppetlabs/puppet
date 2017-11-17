@@ -117,10 +117,8 @@ class Puppet::Configurer
       remote_environment_for_plugins = Puppet::Node::Environment.remote(@environment)
       download_plugins(remote_environment_for_plugins)
 
-      if !Puppet[:disable_i18n]
-        Puppet::GettextConfig.reset_text_domain('agent')
-        Puppet::ModuleTranslations.load_from_vardir(Puppet[:vardir])
-      end
+      Puppet::GettextConfig.reset_text_domain('agent')
+      Puppet::ModuleTranslations.load_from_vardir(Puppet[:vardir])
     end
 
     facts_hash = {}

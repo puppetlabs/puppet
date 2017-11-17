@@ -49,12 +49,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     node = node_from_request(facts, request)
     node.trusted_data = Puppet.lookup(:trusted_information) { Puppet::Context::TrustedInformation.local(node) }.to_h
 
-    if node.environment
-      # TODO Do we want to end up resetting this every time? Do we expect any changes
-      # to the available translations to be loaded each time, and is that worth the extra work?
-      Puppet::GettextConfig.reset_text_domain(node.environment.name)
-      Puppet::ModuleTranslations.load_from_modulepath(node.environment.modules)
-    end
+    node.environment.use_text_domain if node.environment
 
     if catalog = compile(node, request.options)
       return catalog
