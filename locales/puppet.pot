@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.3-196-g2b01dce\n"
+"Project-Id-Version: Puppet automation framework 5.3.3-215-geefdfd2\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-11-13 20:09+0000\n"
-"PO-Revision-Date: 2017-11-13 20:09+0000\n"
+"POT-Creation-Date: 2017-11-17 12:09+0000\n"
+"PO-Revision-Date: 2017-11-17 12:09+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -287,14 +287,6 @@ msgstr ""
 msgid "You must specify a file to back up"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1730
-msgid "Setting 'archive_files' is deprecated. It will be removed in a future release along with the `inspect` command."
-msgstr ""
-
-#: ../lib/puppet/defaults.rb:1739
-msgid "Setting 'archive_file_server' is deprecated. It will be removed in a future release along with the `inspect` command."
-msgstr ""
-
 #: ../lib/puppet/application/filebucket.rb:177
 msgid "%{file}: no such file"
 msgstr ""
@@ -349,7 +341,7 @@ msgstr ""
 msgid "Unknown rendering format '%{format}'"
 msgstr ""
 
-#: ../lib/puppet/application/lookup.rb:351 ../lib/puppet/face/epp.rb:493
+#: ../lib/puppet/application/lookup.rb:350 ../lib/puppet/face/epp.rb:493
 msgid "Incorrect formatted data in %{fact_file} given via the --facts flag"
 msgstr ""
 
@@ -417,95 +409,95 @@ msgstr ""
 msgid "Listing all file instances is not supported.  Please specify a file or directory, e.g. puppet resource file /etc"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:22
+#: ../lib/puppet/configurer.rb:21
 msgid "Puppet configuration client"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:50
+#: ../lib/puppet/configurer.rb:49
 msgid "Removing corrupt state file %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:55
+#: ../lib/puppet/configurer.rb:54
 msgid "Cannot remove %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:77
+#: ../lib/puppet/configurer.rb:76
 msgid "Using cached catalog from environment '%{environment}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:83
+#: ../lib/puppet/configurer.rb:82
 msgid "Not using cache on failed catalog"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:92
+#: ../lib/puppet/configurer.rb:91
 msgid "Not using cached catalog because its environment '%{catalog_env}' does not match '%{local_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:97 ../lib/puppet/configurer.rb:159
+#: ../lib/puppet/configurer.rb:96 ../lib/puppet/configurer.rb:158
 msgid "Using cached catalog from environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:152
+#: ../lib/puppet/configurer.rb:151
 msgid "Could not retrieve catalog; skipping run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:171
+#: ../lib/puppet/configurer.rb:170
 msgid "Applied catalog"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:210
+#: ../lib/puppet/configurer.rb:209
 msgid "Could not select a functional puppet master"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:241
+#: ../lib/puppet/configurer.rb:240
 msgid "Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:281
+#: ../lib/puppet/configurer.rb:280
 msgid "Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:286
+#: ../lib/puppet/configurer.rb:285
 msgid "Using configured environment '%{env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:290
+#: ../lib/puppet/configurer.rb:289
 msgid "Unable to fetch my node definition, but the agent run will continue:"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:315
+#: ../lib/puppet/configurer.rb:314
 msgid "Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:326
+#: ../lib/puppet/configurer.rb:325
 msgid "Catalog environment didn't stabilize after %{tries} fetches, aborting run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:328
+#: ../lib/puppet/configurer.rb:327
 msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:347
+#: ../lib/puppet/configurer.rb:346
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:394 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/configurer.rb:393 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:403
+#: ../lib/puppet/configurer.rb:402
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:415
+#: ../lib/puppet/configurer.rb:414
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:428
+#: ../lib/puppet/configurer.rb:427
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:440
+#: ../lib/puppet/configurer.rb:439
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -545,7 +537,7 @@ msgstr ""
 msgid "TrustedInformation expected a certificate, but none was given."
 msgstr ""
 
-#: ../lib/puppet/face/ca.rb:5 ../lib/puppet/face/certificate.rb:6 ../lib/puppet/face/config.rb:6 ../lib/puppet/face/epp.rb:8 ../lib/puppet/face/facts.rb:6 ../lib/puppet/face/generate.rb:7 ../lib/puppet/face/help.rb:9 ../lib/puppet/face/key.rb:5 ../lib/puppet/face/man.rb:8 ../lib/puppet/face/module.rb:9 ../lib/puppet/face/node.rb:4 ../lib/puppet/face/parser.rb:6 ../lib/puppet/face/plugin.rb:7 ../lib/puppet/face/report.rb:5 ../lib/puppet/face/resource.rb:5 ../lib/puppet/face/status.rb:5
+#: ../lib/puppet/face/ca.rb:5 ../lib/puppet/face/certificate.rb:6 ../lib/puppet/face/config.rb:6 ../lib/puppet/face/epp.rb:8 ../lib/puppet/face/facts.rb:6 ../lib/puppet/face/generate.rb:7 ../lib/puppet/face/help.rb:9 ../lib/puppet/face/key.rb:5 ../lib/puppet/face/man.rb:8 ../lib/puppet/face/module.rb:9 ../lib/puppet/face/node.rb:4 ../lib/puppet/face/parser.rb:6 ../lib/puppet/face/plugin.rb:6 ../lib/puppet/face/report.rb:5 ../lib/puppet/face/resource.rb:5 ../lib/puppet/face/status.rb:5
 msgid "Apache 2 license; see COPYING"
 msgstr ""
 
@@ -1430,26 +1422,26 @@ msgstr ""
 msgid "For puppet parser validate"
 msgstr ""
 
-#: ../lib/puppet/face/plugin.rb:9
+#: ../lib/puppet/face/plugin.rb:8
 msgid "Interact with the Puppet plugin system."
 msgstr ""
 
-#: ../lib/puppet/face/plugin.rb:21
+#: ../lib/puppet/face/plugin.rb:20
 msgid "Download plugins from the puppet master."
 msgstr ""
 
-#: ../lib/puppet/face/plugin.rb:27
+#: ../lib/puppet/face/plugin.rb:26
 msgid ""
 "      A list of the files downloaded, or a confirmation that no files were\n"
 "      downloaded. When used from the Ruby API, this action returns an array of\n"
 "      the files downloaded, which will be empty if none were retrieved.\n"
 msgstr ""
 
-#: ../lib/puppet/face/plugin.rb:52
+#: ../lib/puppet/face/plugin.rb:50
 msgid "No plugins downloaded."
 msgstr ""
 
-#: ../lib/puppet/face/plugin.rb:54
+#: ../lib/puppet/face/plugin.rb:52
 msgid "Downloaded these plugins: %{plugins}"
 msgstr ""
 
@@ -3494,11 +3486,11 @@ msgstr ""
 msgid "The node parameter '%{param_name}' for node '%{node_name}' was already set to '%{value}'. It could not be set to '%{desired_value}'"
 msgstr ""
 
-#: ../lib/puppet/node.rb:174
+#: ../lib/puppet/node.rb:184
 msgid "Host is missing hostname and/or domain: %{name}"
 msgstr ""
 
-#: ../lib/puppet/node.rb:206
+#: ../lib/puppet/node.rb:216
 msgid "Trusted node data modified for node %{name}"
 msgstr ""
 
@@ -6721,10 +6713,6 @@ msgstr ""
 
 #: ../lib/puppet/transaction/resource_harness.rb:261
 msgid "audit change: newly-recorded value %s"
-msgstr ""
-
-#: ../lib/puppet/type.rb:1318
-msgid "The `audit` metaparameter is deprecated and will be ignored in a future release."
 msgstr ""
 
 #: ../lib/puppet/type/augeas.rb:167
