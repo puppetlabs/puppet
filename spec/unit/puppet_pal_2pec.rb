@@ -257,6 +257,77 @@ describe 'Puppet Pal' do
       end
     end
 
+    context 'supports parsing such that' do
+      it '"parse_string" parses a puppet language string' do
+        result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+          ctx.with_script_compiler { |c| c.parse_string('$a = 10') }
+        end
+        expect(result.class).to eq(Puppet::Pops::Model::Program)
+      end
+
+      {  nil      => Puppet::Error,
+        '0xWAT'   => Puppet::ParseErrorWithIssue, 
+        '$0 = 1'  => Puppet::ParseErrorWithIssue, 
+        'else 32' => Puppet::ParseErrorWithIssue,
+      }.each_pair do |input, error_class|
+        it "'parse_string' raises an error for invalid input: '#{input}'" do
+          expect {
+          Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+            ctx.with_script_compiler { |c| c.parse_string(input) }
+          end
+          }.to raise_error(error_class)
+        end
+      end
+
+      it '"parse_file" parses a puppet language string' do
+        result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+          manifest = file_containing('main.pp', "$a = 10")
+          ctx.with_script_compiler { |c| c.parse_file(manifest) }
+        end
+        expect(result.class).to eq(Puppet::Pops::Model::Program)
+      end
+
+      it "'parse_file' raises an error for invalid input: 'else 32'" do
+        expect {
+        Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+          manifest = file_containing('main.pp', "else 32")
+          ctx.with_script_compiler { |c| c.parse_file(manifest) }
+        end
+        }.to raise_error(Puppet::ParseErrorWithIssue)
+      end
+
+      it "'parse_file' raises an error for invalid input, file is not a string" do
+        expect {
+        Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+          ctx.with_script_compiler { |c| c.parse_file(42) }
+        end
+        }.to raise_error(Puppet::Error)
+      end
+
+      it 'the "evaluate" method evaluates the parsed AST' do
+        result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+          ctx.with_script_compiler { |c| c.evaluate(c.parse_string('10 + 20')) }
+        end
+        expect(result).to eq(30)
+      end
+
+      it 'the "evaluate_literal" method evaluates AST being a representation of a literal value' do
+        result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+          ctx.with_script_compiler { |c| c.evaluate_literal(c.parse_string('{10 => "hello"}')) }
+        end
+        expect(result).to eq({10 => 'hello'})
+      end
+
+      it 'the "evaluate_literal" method errors if ast is not representing a literal value' do
+        expect do
+          Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+            ctx.with_script_compiler { |c| c.evaluate_literal(c.parse_string('{10+1 => "hello"}')) }
+          end
+        end.to raise_error(/does not represent a literal value/)
+      end
+
+    end
+
     # Note: When function run_plan moves to bolt, so should this test
     it 'can call run_plan function to run a plan' do
       result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
