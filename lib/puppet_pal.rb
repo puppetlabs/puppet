@@ -200,15 +200,14 @@ module Pal
   end
 
   class ScriptCompiler < Compiler
-    # Returns the signature callable of the given plan (the arguments it accepts, and the data type it returns)
+    # Returns the signature of the given plan name
     # @param plan_name [String] the name of the plan to get the signature of
-    # @return [Puppet::Pops::Types::PCallableType, nil] returns a callable data type, or nil if plan is not found
+    # @return [Puppet::Pal::PlanSignature, nil] returns a PlanSignature, or nil if plan is not found
     #
     def plan_signature(plan_name)
       loader = internal_compiler.loaders.private_environment_loader
       if func = loader.load(:plan, plan_name)
         return PlanSignature.new(func)
-#        return func.class.dispatcher.to_type
       end
       # Could not find plan
       nil
