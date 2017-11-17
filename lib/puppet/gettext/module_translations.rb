@@ -17,8 +17,7 @@ module Puppet::ModuleTranslations
       elsif Puppet::GettextConfig.gettext_loaded?
         Puppet.debug "Could not find translation files for #{module_name} at #{mod.locale_directory}. Skipping translation initialization."
       else
-        #TRANSLATORS 'gettext' is the name of a program and should not be translated
-        Puppet.warn_once("gettext_unavailable", "gettext_unavailable", _("No gettext library found, skipping translation initialization."))
+        Puppet.warn_once("gettext_unavailable", "gettext_unavailable", "No gettext library found, skipping translation initialization.")
       end
     end
   end
@@ -36,8 +35,7 @@ module Puppet::ModuleTranslations
       elsif Puppet::GettextConfig.gettext_loaded?
         Puppet.debug "Could not load translations for #{module_name}."
       else
-        #TRANSLATORS 'gettext' is the name of a program and should not be translated
-        Puppet.warn_once("gettext_unavailable", "gettext_unavailable", _("No gettext library found, skipping translation initialization."))
+        Puppet.warn_once("gettext_unavailable", "gettext_unavailable", "No gettext library found, skipping translation initialization.")
       end
     end
   end
