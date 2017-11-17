@@ -231,12 +231,40 @@ describe 'Puppet Pal' do
             manifest = file_containing('afunc.pp', "plan myplan(Integer $a) {  } ")
             ctx.with_script_compiler(manifest_file: manifest) do |c|
               signature = c.plan_signature('myplan')
-              [ signature.callable_with?([10]),
-                signature.callable_with?(['nope'])
+              [ signature.callable_with?({'a' => 10}),
+                signature.callable_with?({'a' => 'nope'})
               ]
             end
           end
           expect(result).to eq([true, false])
+        end
+
+        it 'a PlanSignature.callable_with? calls a given lambda with any errors' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            manifest = file_containing('afunc.pp', "plan myplan(Integer $a, Integer $b) {  } ")
+            ctx.with_script_compiler(manifest_file: manifest) do |c|
+              signature = c.plan_signature('myplan')
+              local_result = nil
+              signature.callable_with?({'a' => 'nope'}) {|errors| local_result = errors }
+              local_result
+            end
+          end
+          # Note that errors are indented one space and on separate lines
+          #
+          expect(result).to eq(" parameter 'a' expects an Integer value, got String\n expects a value for parameter 'b'")
+        end
+
+        it 'a PlanSignature.callable_with? does not calla  given lambda if there are no errors' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            manifest = file_containing('afunc.pp', "plan myplan(Integer $a) {  } ")
+            ctx.with_script_compiler(manifest_file: manifest) do |c|
+              signature = c.plan_signature('myplan')
+              local_result = 'yay'
+              signature.callable_with?({'a' => 1}) {|errors| local_result = 'not yay' }
+              local_result
+            end
+          end
+          expect(result).to eq('yay')
         end
 
         it '"plan_signature" returns nil if plan is not found' do
