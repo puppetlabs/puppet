@@ -1,5 +1,4 @@
 require 'puppet/face'
-require 'puppet/configurer/downloader_factory'
 require 'puppet/configurer/plugin_handler'
 
 Puppet::Face.define(:plugin, '0.0.1') do
@@ -42,8 +41,7 @@ Puppet::Face.define(:plugin, '0.0.1') do
     when_invoked do |options|
       remote_environment_for_plugins = Puppet::Node::Environment.remote(Puppet[:environment])
 
-      factory = Puppet::Configurer::DownloaderFactory.new
-      handler = Puppet::Configurer::PluginHandler.new(factory)
+      handler = Puppet::Configurer::PluginHandler.new()
       handler.download_plugins(remote_environment_for_plugins)
     end
 

@@ -200,7 +200,7 @@ describe Puppet::Configurer do
     end
 
     it "should create report with passed transaction_uuid and job_id" do
-      @agent = Puppet::Configurer.new(Puppet::Configurer::DownloaderFactory.new, "test_tuuid", "test_jid")
+      @agent = Puppet::Configurer.new("test_tuuid", "test_jid")
       @agent.stubs(:init_storage)
 
       report = Puppet::Transaction::Report.new(nil, "test", "aaaa")
@@ -444,7 +444,7 @@ describe Puppet::Configurer do
   describe "when initialized with a transaction_uuid" do
     it "stores it" do
       SecureRandom.expects(:uuid).never
-      configurer = Puppet::Configurer.new(Puppet::Configurer::DownloaderFactory.new, 'foo')
+      configurer = Puppet::Configurer.new('foo')
       expect(configurer.instance_variable_get(:@transaction_uuid) == 'foo')
     end
   end

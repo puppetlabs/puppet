@@ -4,15 +4,33 @@
 require 'puppet/configurer'
 
 class Puppet::Configurer::PluginHandler
-  def initialize(factory)
-    @factory = factory
-  end
-
   # Retrieve facts from the central server.
   def download_plugins(environment)
-    plugin_downloader = @factory.create_plugin_downloader(environment)
-    plugin_fact_downloader = @factory.create_plugin_facts_downloader(environment)
-    locales_downloader = @factory.create_locales_downloader(environment)
+    source_permissions = Puppet.features.microsoft_windows? ? :ignore : :use
+
+    plugin_downloader = Puppet::Configurer::Downloader.new(
+      "plugin",
+      Puppet[:plugindest],
+      Puppet[:pluginsource],
+      Puppet[:pluginsignore],
+      environment
+    )
+    plugin_fact_downloader = Puppet::Configurer::Downloader.new(
+      "pluginfacts",
+      Puppet[:pluginfactdest],
+      Puppet[:pluginfactsource],
+      Puppet[:pluginsignore],
+      environment,
+      source_permissions
+    )
+    locales_downloader = Puppet::Configurer::Downloader.new(
+      "locales",
+      Puppet[:localedest],
+      Puppet[:localesource],
+      Puppet[:localeignore],
+      environment
+    )
+
     result = []
     result += plugin_fact_downloader.evaluate
     result += plugin_downloader.evaluate

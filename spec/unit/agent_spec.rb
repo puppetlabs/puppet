@@ -66,7 +66,7 @@ describe Puppet::Agent do
   it "should initialize the client's transaction_uuid if passed as a client_option" do
     client = mock 'client'
     transaction_uuid = 'foo'
-    AgentTestClient.expects(:new).with(anything, transaction_uuid, nil).returns client
+    AgentTestClient.expects(:new).with(transaction_uuid, nil).returns client
 
     client.expects(:run)
 
@@ -77,7 +77,7 @@ describe Puppet::Agent do
   it "should initialize the client's job_id if passed as a client_option" do
     client = mock 'client'
     job_id = '289'
-    AgentTestClient.expects(:new).with(anything, anything, job_id).returns client
+    AgentTestClient.expects(:new).with(anything, job_id).returns client
 
     client.expects(:run)
 
