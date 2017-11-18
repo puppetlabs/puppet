@@ -8,7 +8,7 @@ describe 'the break function' do
   include Matchers::Resource
 
   context  do
-    it 'breaks iteration as if at end of input in a map' do
+    it 'breaks iteration as if at end of input in a map for an array' do
       expect(compile_to_catalog(<<-CODE)).to have_resource('Notify[[1, 2]]')
           function please_break() {
             [1,2,3].map |$x| { if $x == 3 { break() } $x }
@@ -17,7 +17,16 @@ describe 'the break function' do
         CODE
     end
 
-    it 'breaks iteration as if at end of input in a reduce' do
+    it 'breaks iteration as if at end of input in a map for a hash' do
+      expect(compile_to_catalog(<<-CODE)).to have_resource('Notify[[1, 2]]')
+          function please_break() {
+            {'a' => 1, 'b' => 2, 'c' => 3}.map |$x, $y| { if $y == 3 { break() } $y }
+          }
+          notify { String(please_break()): }
+        CODE
+    end
+
+    it 'breaks iteration as if at end of input in a reduce for an array' do
       expect(compile_to_catalog(<<-CODE)).to have_resource('Notify[6]')
           function please_break() {
             [1,2,3,4].reduce |$memo, $x| { if $x == 4 { break() } $memo + $x }
@@ -26,10 +35,33 @@ describe 'the break function' do
         CODE
     end
 
-    it 'breaks iteration as if at end of input in an each' do
+    it 'breaks iteration as if at end of input in a reduce for a hash' do
+      expect(compile_to_catalog(<<-CODE)).to have_resource("Notify[['abc', 6]]")
+          function please_break() {
+            {'a' => 1, 'b' => 2, 'c' => 3, 'd' => 4}.reduce |$memo, $x| {
+	      if $x[1] == 4 { break() }
+              $string = "${memo[0]}${x[0]}"
+              $number = $memo[1] + $x[1]
+	      [$string, $number]
+	    }
+          }
+          notify { String(please_break()): }
+        CODE
+    end
+
+    it 'breaks iteration as if at end of input in an each for an array' do
       expect(compile_to_catalog(<<-CODE)).to_not have_resource('Notify[3]')
           function please_break() {
             [1,2,3].each |$x| { if $x == 3 { break() } notify { "$x": } }
+          }
+          please_break()
+        CODE
+    end
+
+    it 'breaks iteration as if at end of input in an each for a hash' do
+      expect(compile_to_catalog(<<-CODE)).to_not have_resource('Notify[3]')
+          function please_break() {
+            {'a' => 1, 'b' => 2, 'c' => 3}.each |$x, $y| { if $y == 3 { break() } notify { "$y": } }
           }
           please_break()
         CODE
