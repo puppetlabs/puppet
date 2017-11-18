@@ -117,8 +117,11 @@ Puppet::Functions.create_function(:each) do
 
   def foreach_Hash_1(hash)
     enumerator = hash.each_pair
-    hash.size.times do
-      yield(enumerator.next)
+    begin
+      hash.size.times do
+        yield(enumerator.next)
+      end
+    rescue StopIteration
     end
     # produces the receiver
     hash
@@ -126,8 +129,11 @@ Puppet::Functions.create_function(:each) do
 
   def foreach_Hash_2(hash)
     enumerator = hash.each_pair
-    hash.size.times do
-      yield(*enumerator.next)
+    begin
+      hash.size.times do
+        yield(*enumerator.next)
+      end
+    rescue StopIteration
     end
     # produces the receiver
     hash

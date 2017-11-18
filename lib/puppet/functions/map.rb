@@ -88,11 +88,21 @@ Puppet::Functions.create_function(:map) do
   end
 
   def map_Hash_1(hash)
-    hash.map {|x, y| yield([x, y]) }
+    result = []
+    begin
+      hash.map {|x, y| result << yield([x, y]) }
+    rescue StopIteration
+    end
+    result
   end
 
   def map_Hash_2(hash)
-    hash.map {|x, y| yield(x, y) }
+    result = []
+    begin
+      hash.map {|x, y| result << yield(x, y) }
+    rescue StopIteration
+    end
+    result
   end
 
   def map_Enumerable_1(enumerable)
