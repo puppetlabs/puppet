@@ -69,7 +69,20 @@ module Puppet
     def self.batch_sync(resources, param_name)
       self.fail(Puppet::Error, _("Only ensure is supported for batch application")) if param_name != :ensure
 
-      resources.each { |r| r.parameter(param_name).sync }
+      # group by provider; actions are left up to the provider, because different ones can group differently
+      groups = Hash.new { |h, k| h[k] = [] }
+      resources.each do |resource|
+        Puppet.info "Resource #{resource.name} with provider #{resource.provider.to_s} should be #{resource.parameter(param_name).should}"
+        groups[resource.provider.class] << resource
+      end
+
+      groups.each do |provider, rs|
+        if provider.respond_to?(:batch_sync)
+          provider.batch_sync(rs)
+        else
+          rs.each { |r| r.parameter(param_name).sync }
+        end
+      end
     end
 
     ensurable do

@@ -30,6 +30,51 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     super
   end
 
+  def self.batch_sync(resources)
+    actions = {:absent => :uninstall, :purged => :purge, :held => :hold}
+    groups = Hash.new { |h, k| h[k] = [] }
+    resources.each do |resource|
+      action = actions[resource.parameter(:ensure).should] || :install
+      groups[action] << resource
+    end
+
+    groups.each do |action, rs|
+      Puppet.debug "#{action} #{rs.map(&:name)}"
+
+      case action
+      when :install
+        # TODO: What if different install_options are used? Or allow_virtual?
+        #       Doesn't handle upgrades or downgrades (if a version or latest is specified).
+        packages = rs.map do |resource|
+          wanted = resource[:name]
+          if resource[:source]
+            wanted = resource[:source]
+          elsif ![true, :present, :installed].include?(resource.parameter(:ensure).should)
+            # No explicit source was specified, so add the package version
+            wanted += "-#{resource.should}"
+            if wanted.scan(ARCH_REGEX)
+              wanted.gsub!(/(.+)(#{ARCH_REGEX})(.+)/,'\1\3\2')
+            end
+          end
+          wanted
+        end
+
+        command = [command(:cmd), '-d', '0', "-e", error_level, "-y", 'install'] + packages
+        output = execute(command)
+
+        if output =~ /^No package (.+) available\.$/
+          raise Puppet::Error, _("Could not find package %{wanted}") % { wanted: $1 }
+        end
+      when :uninstall
+        # TODO: handle uninstall_options, need handling for specific versions?
+        command = [command(:rpm), '-e'] + rs.map(&:name)
+        execute(command)
+      else
+        rs.each { |r| r.parameter(:ensure).sync }
+      end
+    end
+  end
+
   # Retrieve the latest package version information for a given package name
   # and combination of repos to enable and disable.
   #
