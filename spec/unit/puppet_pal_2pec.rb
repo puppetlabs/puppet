@@ -112,6 +112,18 @@ describe 'Puppet Pal' do
             expect { ctx.with_script_compiler {|c| c.evaluate_string('$a') }}.to raise_error(/Unknown variable: 'a'/)
           end
         end
+
+        it 'instantiates definitions in the given code string' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |pal|
+            pal.with_script_compiler do |compiler|
+              compiler.evaluate_string(<<-CODE)
+                plan run_me() { "worked1" }
+                run_plan('run_me')
+                CODE
+            end
+          end
+          expect(result).to eq('worked1')
+        end
       end
 
       context "evaluate_file method" do
@@ -122,6 +134,20 @@ describe 'Puppet Pal' do
           end
           expect(result).to eq(10)
         end
+
+        it 'instantiates definitions in the given code string' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |pal|
+            pal.with_script_compiler do |compiler|
+              manifest = file_containing('testing.pp', (<<-CODE))
+                plan run_me() { "worked1" }
+                run_plan('run_me')
+                CODE
+              pal.with_script_compiler {|c| c.evaluate_file(manifest) }
+            end
+          end
+          expect(result).to eq('worked1')
+        end
+
       end
 
       context "variables are supported such that" do
@@ -311,6 +337,24 @@ describe 'Puppet Pal' do
         expect(result).to eq(30)
       end
 
+      it 'the "evaluate" method instantiates definitions when given a Program' do
+        result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+          ctx.with_script_compiler { |c| c.evaluate(c.parse_string('function foo() { "yay"}; foo()')) }
+        end
+        expect(result).to eq('yay')
+      end
+
+      it 'the "evaluate" method does not instantiates definitions when given ast other than Program' do
+        expect do
+          Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+            ctx.with_script_compiler do |c|
+              program= c.parse_string('function foo() { "yay"}; foo()')
+              c.evaluate(program.body)
+            end
+          end
+        end.to raise_error(/Unknown function: 'foo'/)
+      end
+
       it 'the "evaluate_literal" method evaluates AST being a representation of a literal value' do
         result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
           ctx.with_script_compiler { |c| c.evaluate_literal(c.parse_string('{10 => "hello"}')) }
@@ -322,6 +366,14 @@ describe 'Puppet Pal' do
         expect do
           Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
             ctx.with_script_compiler { |c| c.evaluate_literal(c.parse_string('{10+1 => "hello"}')) }
+          end
+        end.to raise_error(/does not represent a literal value/)
+      end
+
+      it 'the "evaluate_literal" method errors if ast contains definitions' do
+        expect do
+          Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+            ctx.with_script_compiler { |c| c.evaluate_literal(c.parse_string('function foo() { }; 42')) }
           end
         end.to raise_error(/does not represent a literal value/)
       end
