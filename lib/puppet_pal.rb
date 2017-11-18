@@ -84,7 +84,7 @@ module Pal
       unless puppet_code.is_a?(String)
         raise ArgumentError, _("The argument 'puppet_code' must be a String, got %{type}") % { type: puppet_code.class }
       end
-      internal_evaluator.evaluate_string(topscope, puppet_code, source_file)
+      evaluate(parse_string(puppet_code, source_file))
     end
 
     # Evaluates a puppet language file in top scope.
@@ -94,14 +94,21 @@ module Pal
     # @return [Object] what the last evaluated expression in the file evaluated to
     #
     def evaluate_file(file)
-      internal_evaluator.evaluate_file(topscope, file)
+      evaluate(parse_file(file))
     end
 
     # Evaluates an AST obtained from `parse_string` or `parse_file` in topscope.
+    # If the ast is a `Puppet::Pops::Model::Program` (what is returned from the `parse` methods, any definitions
+    # in the program (that is, any function, plan, etc. that is defined will be made available for use).
+    #
     # @param ast [Puppet::Pops::Model::PopsObject] typically the returned `Program` from the parse methods, but can be any `Expression`
     # @returns [Object] whatever the ast evaluates to
     #
     def evaluate(ast)
+      if ast.is_a?(Puppet::Pops::Model::Program)
+        loaders = Puppet.lookup(:loaders)
+        loaders.instantiate_definitions(ast, loaders.public_environment_loader)
+      end
       internal_evaluator.evaluate(topscope, ast)
     end
 
