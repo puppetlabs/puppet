@@ -6601,16 +6601,16 @@ msgstr ""
 msgid "Evaluated in %{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:285
+#: ../lib/puppet/transaction.rb:286
 msgid "Dependency %{dep} has failures: %{status}"
 msgstr ""
 
 #. TRANSLATORS `prefetch` is a function name and should not be translated
-#: ../lib/puppet/transaction.rb:343
+#: ../lib/puppet/transaction.rb:344
 msgid "Could not prefetch %{type_name} provider '%{name}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:371
+#: ../lib/puppet/transaction.rb:372
 msgid "Skipping because of failed dependencies"
 msgstr ""
 
@@ -6659,27 +6659,27 @@ msgid_plural "Would have triggered '%{callback}' from %{count} events"
 msgstr[0] ""
 msgstr[1] ""
 
-#: ../lib/puppet/transaction/persistence.rb:50
+#: ../lib/puppet/transaction/persistence.rb:58
 msgid "Transaction store file %{filename} is not a file, ignoring"
 msgstr ""
 
-#: ../lib/puppet/transaction/persistence.rb:55
+#: ../lib/puppet/transaction/persistence.rb:63
 msgid "Loaded transaction store file"
 msgstr ""
 
-#: ../lib/puppet/transaction/persistence.rb:59
+#: ../lib/puppet/transaction/persistence.rb:67
 msgid "Transaction store file %{filename} is corrupt (%{detail}); replacing"
 msgstr ""
 
-#: ../lib/puppet/transaction/persistence.rb:64
+#: ../lib/puppet/transaction/persistence.rb:72
 msgid "Unable to rename corrupt transaction store file: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/transaction/persistence.rb:65
+#: ../lib/puppet/transaction/persistence.rb:73
 msgid "Could not rename corrupt transaction store file %{filename}; remove manually"
 msgstr ""
 
-#: ../lib/puppet/transaction/persistence.rb:73
+#: ../lib/puppet/transaction/persistence.rb:81
 msgid "Transaction store file %{filename} is valid YAML but not returning a hash. Check the file for corruption, or remove it before continuing."
 msgstr ""
 
