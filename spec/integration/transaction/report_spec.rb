@@ -3,6 +3,11 @@ require 'spec_helper'
 require 'puppet_spec/files'
 
 describe Puppet::Transaction::Report do
+  before :each do
+    # Enable persistence during tests
+    Puppet::Transaction::Persistence.any_instance.stubs(:enabled?).returns(true)
+  end
+
   describe "when using the indirector" do
     after do
       Puppet.settings.stubs(:use)

@@ -93,7 +93,7 @@ class Puppet::Transaction
 
     perform_pre_run_checks
 
-    persistence.load if catalog.host_config?
+    persistence.load if persistence.enabled?(catalog)
 
     Puppet.info _("Applying configuration version '%{version}'") % { version: catalog.version } if catalog.version
 
@@ -145,7 +145,7 @@ class Puppet::Transaction
         end
       end
 
-      persistence.save if catalog.host_config?
+      persistence.save if persistence.enabled?(catalog)
     end
 
     # Graph cycles are returned as an array of arrays
