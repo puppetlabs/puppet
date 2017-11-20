@@ -30,6 +30,24 @@ describe 'ExecutionResult' do
         ])
       end
 
+      it 'is equal to other objects with the same hash' do
+        code = <<-CODE
+            $o1 = ExecutionResult('example.com' => {value => 'hello'})
+            $o2 = ExecutionResult('example.com' => {value => 'hello'})
+            notice($o1 == $o2)
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(%w(true))
+      end
+
+      it 'is not equal to other objects with a different hash' do
+        code = <<-CODE
+            $o1 = ExecutionResult({})
+            $o2 = ExecutionResult('example.com' => {value => 'hello'})
+            notice($o1 == $o2)
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(%w(false))
+      end
+
       it 'can be created with a value' do
         code = <<-CODE
             $o = ExecutionResult('example.com' => {value => 'hello'})
