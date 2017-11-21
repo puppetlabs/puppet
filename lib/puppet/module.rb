@@ -97,9 +97,6 @@ class Puppet::Module
     load_metadata
 
     @absolute_path_to_manifests = Puppet::FileSystem::PathPattern.absolute(manifests)
-
-    # i18n initialization for modules
-    initialize_i18n unless Puppet[:disable_i18n]
   end
 
   # @deprecated The puppetversion module metadata field is no longer used.
@@ -426,21 +423,6 @@ class Puppet::Module
 
   def strict_semver?
     @strict_semver
-  end
-
-  def initialize_i18n
-    # this name takes the form "namespace-module", and should match the name of
-    # the PO file containing the translations.
-    module_name = @forge_name ? @forge_name.gsub("/", "-") : name
-    return if Puppet::GettextConfig.translations_loaded?(module_name)
-
-    if Puppet::GettextConfig.load_translations(module_name, locale_directory, :po)
-      Puppet.debug "i18n initialized for #{module_name}"
-    elsif Puppet::GettextConfig.gettext_loaded?
-      Puppet.debug "Could not find translation files for #{module_name} at #{locale_directory}. Skipping i18n initialization."
-    else
-      Puppet.debug "No gettext library found, skipping i18n initialization."
-    end
   end
 
   private

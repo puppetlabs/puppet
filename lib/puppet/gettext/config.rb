@@ -6,9 +6,10 @@ module Puppet::GettextConfig
   POSIX_PATH = File.absolute_path('../../../../../share/locale', File.dirname(__FILE__))
   WINDOWS_PATH = File.absolute_path('../../../../../../../puppet/share/locale', File.dirname(__FILE__))
 
+  DEFAULT_TEXT_DOMAIN = 'default-text-domain'
+
   # Load gettext helpers and track whether they're available.
   # Used instead of features because we initialize gettext before features is available.
-  # Stubbing gettext if unavailable is handled in puppet.rb.
   begin
     require 'fast_gettext'
     require 'locale'
@@ -34,31 +35,108 @@ module Puppet::GettextConfig
   end
 
   # @api private
-  # Whether translations have been loaded for a given project
-  # @param project_name [String] the project whose translations we are querying
-  # @return [Boolean] true if translations have been loaded for the project
-  def self.translations_loaded?(project_name)
-    return false unless gettext_loaded?
-    if @loaded_repositories[project_name]
-      return true
+  # Returns the currently selected locale from FastGettext,
+  # or 'en' of gettext has not been loaded
+  # @return [String] the active locale
+  def self.current_locale
+    if gettext_loaded?
+      return FastGettext.default_locale
     else
-      return false
+      return 'en'
     end
   end
 
   # @api private
-  # Creates a new empty text domain with the given name, replacing
-  # any existing domain with that name, then switches to using
-  # that domain. Also clears the cache of loaded translations.
-  # @param domain_name [String] the name of the domain to create
-  def self.create_text_domain(domain_name)
-    return unless gettext_loaded?
-    # Clear the cache of loaded translation repositories
-    @loaded_repositories = {}
+  # Returns a list of the names of the loaded text domains
+  # @return [[String]] the names of the loaded text domains
+  def self.loaded_text_domains
+    return [] if @gettext_disabled || !gettext_loaded?
+
+    return FastGettext.translation_repositories.keys
+  end
+
+  # @api private
+  # Clears the translation repository for the given text domain,
+  # creating it if it doesn't exist, then adds default translations
+  # and switches to using this domain.
+  # @param [String] domain_name the name of the domain to create
+  def self.reset_text_domain(domain_name)
+    return if @gettext_disabled || !gettext_loaded?
+
     FastGettext.add_text_domain(domain_name, type: :chain, chain: [])
-    #TODO remove this when we start managing domains per environment
-    FastGettext.default_text_domain = domain_name
+    copy_default_translations(domain_name)
     FastGettext.text_domain = domain_name
+  end
+
+  # @api private
+  # Creates a default text domain containing the translations for
+  # Puppet as the start of chain. When semantic_puppet gets initialized,
+  # its translations are added to this chain. This is used as a cache
+  # so that all non-module translations only need to be loaded once as
+  # we create and reset environment-specific text domains.
+  #
+  # @return true if Puppet translations were successfully loaded, false
+  # otherwise
+  def self.create_default_text_domain
+    return if @gettext_disabled || !gettext_loaded?
+
+    FastGettext.add_text_domain(DEFAULT_TEXT_DOMAIN, type: :chain, chain: [])
+    FastGettext.default_text_domain = DEFAULT_TEXT_DOMAIN
+
+    load_translations('puppet', puppet_locale_path, translation_mode(puppet_locale_path))
+  end
+
+  # @api private
+  # Switches the active text domain, if the requested domain exists.
+  # @param [String] domain_name the name of the domain to switch to
+  def self.use_text_domain(domain_name)
+    return if @gettext_disabled || !gettext_loaded?
+
+    if FastGettext.translation_repositories.include?(domain_name)
+      FastGettext.text_domain = domain_name
+    end
+  end
+
+  # @api private
+  # Deletes the text domain with the given name
+  # @param [String] domain_name the name of the domain to delete
+  def self.delete_text_domain(domain_name)
+    return if @gettext_disabled || !gettext_loaded?
+
+    FastGettext.translation_repositories.delete(domain_name)
+  end
+
+  # @api private
+  # Deletes all text domains except the default one
+  def self.delete_environment_text_domains
+    return if @gettext_disabled || !gettext_loaded?
+
+    FastGettext.translation_repositories.keys.each do |key|
+      # do not clear default translations
+      next if key == DEFAULT_TEXT_DOMAIN
+
+      FastGettext.translation_repositories.delete(key)
+    end
+  end
+
+  # @api private
+  # Adds translations from the default text domain to the specified
+  # text domain. Creates the default text domain if one does not exist
+  # (this will load Puppet's translations).
+  #
+  # Since we are currently (Nov 2017) vendoring semantic_puppet, in normal
+  # flows these translations will be copied along with Puppet's.
+  #
+  # @param [String] domain_name the name of the domain to add translations to
+  def self.copy_default_translations(domain_name)
+    return if @gettext_disabled || !gettext_loaded?
+
+    if FastGettext.default_text_domain.nil?
+      create_default_text_domain
+    end
+
+    puppet_translations = FastGettext.translation_repositories[FastGettext.default_text_domain].chain
+    FastGettext.translation_repositories[domain_name].chain.push(*puppet_translations)
   end
 
   # @api private
@@ -78,7 +156,7 @@ module Puppet::GettextConfig
 
   # @api private
   # Determine which translation file format to use
-  # @param conf_path [String] the path to the gettext config file
+  # @param [String] conf_path the path to the gettext config file
   # @return [Symbol] :mo if in a package structure, :po otherwise
   def self.translation_mode(conf_path)
     if WINDOWS_PATH == conf_path || POSIX_PATH == conf_path
@@ -96,21 +174,21 @@ module Puppet::GettextConfig
 
   # @api private
   # Attempt to load tranlstions for the given project.
-  # @param project_name [String] the project whose translations we want to load
-  # @param locale_dir [String] the path to the directory containing translations
-  # @param file_format [Symbol] translation file format to use, either :po or :mo
+  # @param [String] project_name the project whose translations we want to load
+  # @param [String] locale_dir the path to the directory containing translations
+  # @param [Symbol] file_format translation file format to use, either :po or :mo
   # @return true if initialization succeeded, false otherwise
   def self.load_translations(project_name, locale_dir, file_format)
+    if project_name.nil? || project_name.empty?
+      raise Puppet::Error, "A project name must be specified in order to initialize translations."
+    end
+
     return false if @gettext_disabled || !@gettext_loaded
 
     return false unless locale_dir && Puppet::FileSystem.exist?(locale_dir)
 
     unless file_format == :po || file_format == :mo
       raise Puppet::Error, "Unsupported translation file format #{file_format}; please use :po or :mo"
-    end
-
-    if project_name.nil? || project_name.empty?
-      raise Puppet::Error, "A project name must be specified in order to initialize translations."
     end
 
     add_repository_to_domain(project_name, locale_dir, file_format)
@@ -120,27 +198,26 @@ module Puppet::GettextConfig
   # @api private
   # Add the translations for this project to the domain's repository chain
   # chain for the currently selected text domain, if needed.
-  # @param project_name [String] the name of the project for which to load translations
-  # @param locale_dir [String] the path to the directory containing translations
-  # @param file_format [Symbol] the fomat of the translations files, :po or :mo
+  # @param [String] project_name the name of the project for which to load translations
+  # @param [String] locale_dir the path to the directory containing translations
+  # @param [Symbol] file_format the fomat of the translations files, :po or :mo
   def self.add_repository_to_domain(project_name, locale_dir, file_format)
-    # check if we've already loaded these transltaions
+    return if @gettext_disabled || !gettext_loaded?
+
     current_chain = FastGettext.translation_repositories[FastGettext.text_domain].chain
-    return current_chain if @loaded_repositories[project_name]
 
     repository = FastGettext::TranslationRepository.build(project_name,
                                                           path: locale_dir,
                                                           type: file_format,
                                                           ignore_fuzzy: false)
-    @loaded_repositories[project_name] = true
     current_chain << repository
   end
 
   # @api private
   # Sets the language in which to display strings.
-  # @param locale [String] the language portion of a locale string (e.g. "ja")
+  # @param [String] locale the language portion of a locale string (e.g. "ja")
   def self.set_locale(locale)
-    return if !gettext_loaded?
+    return if @gettext_disabled || !gettext_loaded?
     # make sure we're not using the `available_locales` machinery
     FastGettext.default_available_locales = nil
 

@@ -433,6 +433,20 @@ class Puppet::Node::Environment
     deps
   end
 
+  # Loads module translations for the current environment once for
+  # the lifetime of the environment.
+  def use_text_domain
+    return if Puppet[:disable_i18n]
+
+    if @text_domain.nil?
+      @text_domain = @name
+      Puppet::GettextConfig.reset_text_domain(@text_domain)
+      Puppet::ModuleTranslations.load_from_modulepath(modules)
+    else
+      Puppet::GettextConfig.use_text_domain(@text_domain)
+    end
+  end
+
   # Checks if a reparse is required (cache of files is stale).
   #
   def check_for_reparse
