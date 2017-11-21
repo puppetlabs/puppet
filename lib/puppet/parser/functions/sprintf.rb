@@ -32,6 +32,7 @@ Puppet::Parser::Functions::newfunction(
   The first parameter is format string describing how the rest of the parameters should be formatted.
   See the documentation for the `Kernel::sprintf` function in Ruby for all the details."
 ) do |args|
-  fmt = args.shift
+  fmt = args[0]
+  args = args[1..-1]
   return sprintf(fmt, *args)
 end
