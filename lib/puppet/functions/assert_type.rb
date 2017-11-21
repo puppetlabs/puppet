@@ -1,7 +1,7 @@
 # Returns the given value if it is of the given
-# [data type](https://docs.puppetlabs.com/puppet/latest/reference/lang_data.html), or
+# [data type](https://docs.puppet.com/puppet/latest/reference/lang_data.html), or
 # otherwise either raises an error or executes an optional two-parameter
-# [lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html).
+# [lambda](https://docs.puppet.com/puppet/latest/reference/lang_lambdas.html).
 #
 # The function takes two mandatory arguments, in this order:
 #
@@ -46,7 +46,7 @@
 # ~~~
 #
 # For more information about data types, see the
-# [documentation](https://docs.puppetlabs.com/puppet/latest/reference/lang_data.html).
+# [documentation](https://docs.puppet.com/puppet/latest/reference/lang_data.html).
 #
 # @since 4.0.0
 #

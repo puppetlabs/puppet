@@ -83,7 +83,7 @@ good chance the catalog is not a RAL catalog.
 Be aware that Puppet creates a mini catalog and applies this catalog locally to
 manage file resource from the settings.  This behavior made it difficult and
 time consuming to track down a race condition in
-[PUP-1070](https://tickets.puppetlabs.com/browse/PUP-1070).
+[PUP-1070](https://tickets.puppet.com/browse/PUP-1070).
 
 Even more surprising, the `File[puppetdlockfile]` resource is only added to the
 settings catalog if the file exists on disk.  This caused the race condition as

@@ -656,15 +656,15 @@ module Puppet
         `certname` setting as its requested Subject CN.
 
         This is the name used when managing a node's permissions in
-        [auth.conf](https://docs.puppetlabs.com/puppet/latest/reference/config_file_auth.html).
+        [auth.conf](https://docs.puppet.com/puppet/latest/reference/config_file_auth.html).
         In most cases, it is also used as the node's name when matching
-        [node definitions](https://docs.puppetlabs.com/puppet/latest/reference/lang_node_definitions.html)
+        [node definitions](https://docs.puppet.com/puppet/latest/reference/lang_node_definitions.html)
         and requesting data from an ENC. (This can be changed with the `node_name_value`
         and `node_name_fact` settings, although you should only do so if you have
         a compelling reason.)
 
         A node's certname is available in Puppet manifests as `$trusted['certname']`. (See
-        [Facts and Built-In Variables](https://docs.puppetlabs.com/puppet/latest/reference/lang_facts_and_builtin_vars.html)
+        [Facts and Built-In Variables](https://docs.puppet.com/puppet/latest/reference/lang_facts_and_builtin_vars.html)
         for more details.)
 
         * For best compatibility, you should limit the value of `certname` to
@@ -699,7 +699,7 @@ change this setting; you also need to:
 * On the server: Stop Puppet Server.
 * On the CA server: Revoke and clean the server's old certificate. (`puppet cert clean <NAME>`)
 * On the server: Delete the old certificate (and any old certificate signing requests)
-  from the [ssldir](https://docs.puppetlabs.com/puppet/latest/reference/dirs_ssldir.html).
+  from the [ssldir](https://docs.puppet.com/puppet/latest/reference/dirs_ssldir.html).
 * On the server: Run `puppet agent -t --ca_server <CA HOSTNAME>` to request a new certificate
 * On the CA server: Sign the certificate request, explicitly allowing alternate names
   (`puppet cert sign --allow-dns-alt-names <NAME>`).
@@ -1027,7 +1027,7 @@ EOT
         the request.
 
         For info on autosign configuration files, see
-        [the guide to Puppet's config files](https://docs.puppetlabs.com/puppet/latest/reference/config_about_settings.html).",
+        [the guide to Puppet's config files](https://docs.puppet.com/puppet/latest/reference/config_about_settings.html).",
     },
     :allow_duplicate_certs => {
       :default    => false,
@@ -1420,7 +1420,7 @@ EOT
         For control over logging destinations, see the `--logdest` command line
         option in the manual pages for puppet master, puppet agent, and puppet
         apply. You can see man pages by running `puppet <SUBCOMMAND> --help`,
-        or read them online at https://docs.puppetlabs.com/puppet/latest/reference/man/."
+        or read them online at https://docs.puppet.com/puppet/latest/reference/man/."
     },
     :server => {
       :default => "puppet",
@@ -1483,7 +1483,7 @@ EOT
         event _would_ have been sent.
 
         **Important note:**
-        [The `noop` metaparameter](https://docs.puppetlabs.com/puppet/latest/reference/metaparameter.html#noop)
+        [The `noop` metaparameter](https://docs.puppet.com/puppet/latest/reference/metaparameter.html#noop)
         allows you to apply individual resources in noop mode, and will override
         the global value of the `noop` setting. This means a resource with
         `noop => false` _will_ be changed if necessary, even when running puppet

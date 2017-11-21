@@ -21,7 +21,7 @@ module Puppet
       them to equivalent permissions for systems which represent permissions
       differently, including Windows. For detailed ACL controls on Windows,
       you can leave `mode` unmanaged and use
-      [the puppetlabs/acl module.](https://forge.puppetlabs.com/puppetlabs/acl)
+      [the puppetlabs/acl module.](https://forge.puppet.com/puppetlabs/acl)
 
       Numeric modes should use the standard octal notation of
       `<SETUID/SETGID/STICKY><OWNER><GROUP><OTHER>` (for example, "0644").

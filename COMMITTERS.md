@@ -60,9 +60,9 @@ release candidate are merged.
 **security** - Where critical security fixes are merged.  These change sets
 will then be merged into release branches independently from one another. (i.e.
 no merging up).  Please do not submit pull requests against the security branch
-and instead report all security related issues to security@puppetlabs.com as
+and instead report all security related issues to security@puppet.com as
 per our security policy published at
-[https://puppetlabs.com/security/](https://puppetlabs.com/security/).
+[https://puppet.com/security/](https://puppet.com/security/).
 
 Committer Guide
 ====
@@ -91,8 +91,8 @@ applied to earlier minor releases of a major release, but the patches should
 first be merged into the `security` branch.  Security patches should be merged
 by Puppet Labs staff members.  Pull requests should not be submitted with the
 security branch as the base branch.  Please send all security related
-information or patches to security@puppetlabs.com as per our [Security
-Policy](https://puppetlabs.com/security/).
+information or patches to security@puppet.com as per our [Security
+Policy](https://puppet.com/security/).
 
 The CI systems are configured to run against `master` and `stable`.  Over time,
 these branches will refer to different versions, but their name will remain
@@ -156,9 +156,7 @@ Commit citizen guidelines:
 This section aims to provide guidelines for being a good commit citizen by
 paying attention to our automated build tools.
 
- * Don’t push on a broken build.  (A broken build is defined as a failing job
-   in the [Puppet FOSS](https://jenkins.puppetlabs.com/view/Puppet%20FOSS/)
-   page.)
+ * Don’t push on a broken build.
  * Watch the build until your changes have gone through green
  * Update the ticket status and target version.  The target version field in
    our issue tracker should be updated to be the next release of Puppet.  For
@@ -240,5 +238,4 @@ the branches failing to fast forward while the other succeeds.  Both the
     $ git push puppetlabs master:master stable:stable
 
 That's it!  The committer then updates the pull request, updates the issue in
-our issue tracker, and keeps an eye on the [build
-status](http://jenkins.puppetlabs.com).
+our issue tracker, and keeps an eye on the build.

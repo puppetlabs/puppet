@@ -75,7 +75,7 @@ config.header = <<EOT
 
 See the [configuration guide][confguide] for more details.
 
-[confguide]: https://docs.puppetlabs.com/puppet/latest/reference/config_about_settings.html
+[confguide]: https://docs.puppet.com/puppet/latest/reference/config_about_settings.html
 
 * * *
 
