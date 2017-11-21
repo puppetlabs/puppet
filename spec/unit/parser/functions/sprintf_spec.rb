@@ -44,4 +44,8 @@ describe "the sprintf function" do
     expect(result).to(eql("<overlong:  027   0XBEEF (foo     )>"))
   end
 
+  it 'does not attempt to mutate its arguments' do
+    args = ['%d', 1].freeze
+    result = @scope.function_sprintf(args)
+  end
 end
