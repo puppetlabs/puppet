@@ -12,7 +12,7 @@ Documentation
 -------------
 
 Documentation for Puppet and related projects can be found online at the
-[Puppet Docs site](https://docs.puppetlabs.com).
+[Puppet Docs site](https://puppet.com/docs?_ga=2.178509412.1719389222.1508885271-737885780.1508885271).
 
 HTTP API
 --------
