@@ -29,7 +29,7 @@ for advice.
 
 ## Getting Started
 
-* Make sure you have a [Jira account](https://tickets.puppetlabs.com).
+* Make sure you have a [Jira account](https://tickets.puppet.com).
 * Make sure you have a [GitHub account](https://github.com/signup/free).
 * Submit a ticket for your issue, assuming one does not already exist.
   * Clearly describe the issue including steps to reproduce when it is a bug.
@@ -49,7 +49,7 @@ for advice.
 * Check for unnecessary whitespace with `git diff --check` before committing.
 * Make sure your commit messages are in the proper format. If the commit
   addresses an issue filed in the
-  [Puppet Jira project](https://tickets.puppetlabs.com/browse/PUP), start
+  [Puppet Jira project](https://tickets.puppet.com/browse/PUP), start
   the first line of the commit with the issue number in parentheses.
 
   ```
@@ -164,7 +164,7 @@ ensure the issue has been resolved.
 ## Additional Resources
 
 * [Puppet community guidelines](https://docs.puppet.com/community/community_guidelines.html)
-* [Bug tracker (Jira)](https://tickets.puppetlabs.com)
+* [Bug tracker (Jira)](https://tickets.puppet.com)
 * [Contributor License Agreement](http://links.puppet.com/cla)
 * [General GitHub documentation](https://help.github.com/)
 * [GitHub pull request documentation](https://help.github.com/articles/creating-a-pull-request/)

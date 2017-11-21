@@ -1,8 +1,10 @@
 Puppet
 ======
 
-[![Build Status](https://travis-ci.org/puppetlabs/puppet.png?branch=master)](https://travis-ci.org/puppetlabs/puppet)
-[![Inline docs](https://inch-ci.org/github/puppetlabs/puppet.png)](https://inch-ci.org/github/puppetlabs/puppet)
+[![Travis Status](https://travis-ci.org/puppetlabs/puppet.svg?branch=master)](https://travis-ci.org/puppetlabs/puppet)
+[![Appveyor Status](https://ci.appveyor.com/api/projects/status/cvhpypd4504sevqq/branch/master?svg=true)](https://ci.appveyor.com/project/puppetlabs/puppet/branch/master)
+[![Gem Version](https://badge.fury.io/rb/puppet.svg)](https://badge.fury.io/rb/puppet)
+[![Inline docs](https://inch-ci.org/github/puppetlabs/puppet.svg)](https://inch-ci.org/github/puppetlabs/puppet)
 
 Puppet, an automated administrative engine for your Linux, Unix, and Windows systems, performs
 administrative tasks (such as adding users, installing packages, and updating server
@@ -12,24 +14,24 @@ Documentation
 -------------
 
 Documentation for Puppet and related projects can be found online at the
-[Puppet Docs site](https://docs.puppetlabs.com).
+[Puppet Docs site](https://puppet.com/docs).
 
 HTTP API
 --------
-[HTTP API Index](https://docs.puppetlabs.com/puppet/latest/reference/http_api/http_api_index.html)
+[HTTP API Index](https://docs.puppet.com/puppet/latest/reference/http_api/http_api_index.html)
 
 Installation
 ------------
 
-The best way to run Puppet is with [Puppet Enterprise](https://puppetlabs.com/puppet/puppet-enterprise),
+The best way to run Puppet is with [Puppet Enterprise](https://puppet.com/puppet/puppet-enterprise),
 which also includes orchestration features, a web console, and professional support.
-[The PE documentation is available here.](https://docs.puppetlabs.com/pe/latest)
+[The PE documentation is available here.](https://docs.puppet.com/pe/latest)
 
 To install an open source release of Puppet,
-[see the installation guide on the docs site.](https://docs.puppetlabs.com/puppet/latest/reference/install_pre.html)
+[see the installation guide on the docs site.](https://docs.puppet.com/puppet/latest/reference/install_pre.html)
 
 If you need to run Puppet from source as a tester or developer,
-[see the running from source guide on the docs site.](https://docs.puppetlabs.com/guides/from_source.html)
+[see the running from source guide on the docs site.](https://docs.puppet.com/guides/from_source.html)
 
 Developing and Contributing
 ------
@@ -51,7 +53,7 @@ See [LICENSE](LICENSE) file.
 Support
 -------
 
-Please log tickets and issues at our [JIRA tracker](https://tickets.puppetlabs.com).  A [mailing
+Please log tickets and issues at our [JIRA tracker](https://tickets.puppet.com).  A [mailing
 list](https://groups.google.com/forum/?fromgroups#!forum/puppet-users) is
 available for asking questions and getting help from others. In addition there
 is an active #puppet channel on Freenode.
@@ -71,4 +73,4 @@ a best effort to backport that fix onto the latest Puppet 3 release.
 Long-term support, including security patches and bug fixes, is available for
 commercial customers. Please see the following page for more details:
 
-[Puppet Enterprise Support Lifecycle](https://puppetlabs.com/misc/puppet-enterprise-lifecycle)
+[Puppet Enterprise Support Lifecycle](https://puppet.com/misc/puppet-enterprise-lifecycle)

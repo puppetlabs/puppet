@@ -12,7 +12,7 @@ gettext:
   # The locale that the default messages in the .pot file are in
   default_locale: en
   # The address for sending bug reports.
-  bugs_address: https://tickets.puppetlabs.com
+  bugs_address: https://tickets.puppet.com
   # The holder of the copyright.
   copyright_holder: Puppet, Inc.
   # Patterns for +Dir.glob+ used to find all files that might contain

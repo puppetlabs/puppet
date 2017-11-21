@@ -1,7 +1,7 @@
 require 'hiera/puppet_function'
 
 # Assigns classes to a node using an
-# [array merge lookup](https://docs.puppetlabs.com/hiera/latest/lookup_types.html#array-merge)
+# [array merge lookup](https://docs.puppet.com/hiera/latest/lookup_types.html#array-merge)
 # that retrieves the value for a user-specified key from Hiera's data.
 #
 # This function is deprecated in favor of the `lookup` function in combination with `include`.
@@ -32,13 +32,13 @@ require 'hiera/puppet_function'
 #     * If this argument isn't provided and this function results in a lookup failure, Puppet
 #     fails with a compilation error.
 # 3. The optional name of an arbitrary
-# [hierarchy level](https://docs.puppetlabs.com/hiera/latest/hierarchy.html) to insert at the
+# [hierarchy level](https://docs.puppet.com/hiera/latest/hierarchy.html) to insert at the
 # top of the hierarchy. This lets you temporarily modify the hierarchy for a single lookup.
 #     * If Hiera doesn't find a matching key in the overriding hierarchy level, it continues
 #     searching the rest of the hierarchy.
 #
 # The function uses an
-# [array merge lookup](https://docs.puppetlabs.com/hiera/latest/lookup_types.html#array-merge)
+# [array merge lookup](https://docs.puppet.com/hiera/latest/lookup_types.html#array-merge)
 # to retrieve the `classes` array, so every node gets every class from the hierarchy.
 #
 # @example Using `hiera_include`
@@ -66,7 +66,7 @@ require 'hiera/puppet_function'
 # ~~~
 #
 # You can optionally generate the default value with a
-# [lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html) that
+# [lambda](https://docs.puppet.com/puppet/latest/reference/lang_lambdas.html) that
 # takes one parameter.
 #
 # @example Using `hiera_include` with a lambda

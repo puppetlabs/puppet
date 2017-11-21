@@ -1,4 +1,5 @@
-# Runs a [lambda](http://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html)
+# coding: utf-8
+# Runs a [lambda](http://docs.puppet.com/puppet/latest/reference/lang_lambdas.html)
 # recursively and repeatedly using values from a data structure, then returns the unchanged data structure, or if
 # a lambda is not given, returns an `Iterator` for the tree.
 #
@@ -137,7 +138,7 @@
 #
 #
 # For general examples that demonstrates iteration see the Puppet
-# [iteration](https://docs.puppetlabs.com/puppet/latest/reference/lang_iteration.html)
+# [iteration](https://docs.puppet.com/puppet/latest/reference/lang_iteration.html)
 # documentation.
 #
 # @since 5.0.0

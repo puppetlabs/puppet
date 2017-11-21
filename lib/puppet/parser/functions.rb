@@ -78,11 +78,11 @@ module Puppet::Parser::Functions
   # functions.  For example, template() is defined in
   # {file:lib/puppet/parser/functions/template.rb template.rb} using the
   # {newfunction} method.  Third party Puppet modules such as
-  # [stdlib](https://forge.puppetlabs.com/puppetlabs/stdlib) use this method to
+  # [stdlib](https://forge.puppet.com/puppetlabs/stdlib) use this method to
   # extend the behavior and functionality of Puppet.
   #
   # See also [Docs: Custom
-  # Functions](https://docs.puppetlabs.com/guides/custom_functions.html)
+  # Functions](https://docs.puppet.com/guides/custom_functions.html)
   #
   # @example Define a new Puppet DSL Function
   #     >> Puppet::Parser::Functions.newfunction(:double, :arity => 1,
