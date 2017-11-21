@@ -16,12 +16,12 @@ require 'puppet/parser/script_compiler'
 #   end
 #   # The result is the value 6
 #
-# @example Making a run_plan call
+# @example Calling a function
 #   require 'puppet_pal'
 #   result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: ['/tmp/testmodules']) do |pal|
-#     pal.run_plan('mymodule::myplan', plan_args: { 'arg1' => 10, 'arg2' => '20 })
+#     pal.call_function('mymodule::myfunction', 10, 20)
 #   end
-#   # The result is what 'mymodule::myplan' returns
+#   # The result is what 'mymodule::myfunction' returns
 #
 module Puppet
 module Pal
@@ -307,24 +307,6 @@ module Pal
   def self.evaluate_script_manifest(manifest_file)
     with_script_compiler do |compiler|
       compiler.evaluate_file(manifest_file)
-    end
-  end
-
-  # Runs the given named plan passing arguments by name in a hash.
-  # @param plan_name [String] the name of the plan to run
-  # @param plan_args [Hash] arguments to the plan - a map of plan parameter name to value, defaults to empty hash
-  # @param manifest_file [String] a Puppet Language file to load and evaluate before running the plan, mutually exclusive with code_string
-  # @param code_string [String] a Puppet Language source string to load and evaluate before running the plan, mutually exclusive with manifest_file
-  # @return [Object] returns what the evaluated plan returns
-  # @deprecated Use {#with_script_compiler} and then `call_function('run_plan', plan_name, plan_args)` on the given compiler - to be removed in 1.0 version
-  #
-  def self.run_plan(plan_name,
-      plan_args:     {},
-      manifest_file: nil,
-      code_string:   nil
-    )
-    with_script_compiler(manifest_file: manifest_file, code_string: code_string) do |compiler|
-      compiler.call_function('run_plan', plan_name, plan_args)
     end
   end
 
