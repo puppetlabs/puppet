@@ -236,6 +236,9 @@ class Puppet::Configurer
     # If a cached catalog is explicitly requested, attempt to retrieve it. Skip the node request,
     # don't pluginsync and switch to the catalog's environment if we successfully retrieve it.
     if Puppet[:use_cached_catalog]
+      Puppet::GettextConfig.reset_text_domain('agent')
+      Puppet::ModuleTranslations.load_from_vardir(Puppet[:vardir])
+
       if catalog = prepare_and_retrieve_catalog_from_cache
         options[:catalog] = catalog
         @cached_catalog_status = 'explicitly_requested'
