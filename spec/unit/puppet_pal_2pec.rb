@@ -71,14 +71,6 @@ describe 'Puppet Pal' do
         end
         expect(result).to eq(10)
       end
-
-      it '"run_plan" runs a plan with specified content in a manifest' do
-        result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
-          manifest = file_containing('aplan.pp', "plan myplan() { 'brilliant' }")
-          ctx.run_plan('myplan', manifest_file: manifest)
-        end
-        expect(result).to eq('brilliant')
-      end
     end
 
     context "with a script compiler" do
@@ -117,8 +109,8 @@ describe 'Puppet Pal' do
           result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |pal|
             pal.with_script_compiler do |compiler|
               compiler.evaluate_string(<<-CODE)
-                plan run_me() { "worked1" }
-                run_plan('run_me')
+                function run_me() { "worked1" }
+                run_me()
                 CODE
             end
           end
@@ -139,15 +131,14 @@ describe 'Puppet Pal' do
           result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |pal|
             pal.with_script_compiler do |compiler|
               manifest = file_containing('testing.pp', (<<-CODE))
-                plan run_me() { "worked1" }
-                run_plan('run_me')
+                function run_me() { "worked1" }
+                run_me()
                 CODE
               pal.with_script_compiler {|c| c.evaluate_file(manifest) }
             end
           end
           expect(result).to eq('worked1')
         end
-
       end
 
       context "variables are supported such that" do
@@ -379,15 +370,6 @@ describe 'Puppet Pal' do
       end
 
     end
-
-    # Note: When function run_plan moves to bolt, so should this test
-    it 'can call run_plan function to run a plan' do
-      result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
-        manifest = file_containing('aplan.pp', "plan myplan() { 'brilliant' }")
-        ctx.with_script_compiler(manifest_file: manifest) {|c| c.call_function('run_plan', 'myplan') }
-      end
-      expect(result).to eq('brilliant')
-    end
   end
 
   context 'with code in modules and env' do
@@ -568,14 +550,6 @@ describe 'Puppet Pal' do
         expect(result).to eql('something')
       end
 
-      # Note, when functions run_task and run_plan move to bolt, this test should be moved
-      it 'a plan in a module can be called with run_plan' do
-        result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
-          ctx.with_script_compiler {|c| c.call_function('run_plan', "a::aplan") }
-        end
-        expect(result).to eq("a::aplan value")
-      end
-
       it 'errors if a block is not given to in_tmp_environment' do
         expect do
           Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts)
@@ -668,14 +642,6 @@ describe 'Puppet Pal' do
         expect(result).to be(true)
       end
 
-      # Note when run_plan moves to bolt, this should be tested there
-      it 'a plan in a module can be called with run_plan' do
-        result = Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, facts: node_facts) do |ctx|
-          ctx.with_script_compiler {|c| c.evaluate_string('run_plan("a::aplan")') }
-        end
-        expect(result).to eq("a::aplan value")
-      end
-
       it 'can set variables in any scope' do
         vars = {'a'=> 10, 'x::y' => 20}
         result = Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, facts: node_facts, variables: vars) do |ctx|
@@ -755,23 +721,13 @@ describe 'Puppet Pal' do
         expect(result).to be(true)
       end
 
-      # Note that when run_plan moves to bolt, this needs to move there
-      it 'a plan in a module can be called with run_plan' do
-        testing_env_dir # creates the structure
-        result = Puppet::Pal.in_environment('pal_env', envpath: environments_dir, facts: node_facts) do |ctx|
-          ctx.with_script_compiler {|c| c.evaluate_string('run_plan("a::aplan")') }
-        end
-        expect(result).to eq("a::aplan value")
-      end
-
-      # Note that when run_plan moves to bolt, this needs to move there
       it 'the envpath can have multiple entries - that are searched for the given env' do
         testing_env_dir # creates the structure
         several_dirs = "/tmp/nowhere/to/be/found:#{environments_dir}"
         result = Puppet::Pal.in_environment('pal_env', envpath: environments_dir, facts: node_facts) do |ctx|
-          ctx.with_script_compiler {|c| c.evaluate_string('run_plan("a::aplan")') }
+          ctx.with_script_compiler {|c| c.evaluate_string('a::afunc()') }
         end
-        expect(result).to eq("a::aplan value")
+        expect(result).to eq("a::afunc value")
       end
 
       it 'errors in a meaningful way when a non existing env name is given' do
