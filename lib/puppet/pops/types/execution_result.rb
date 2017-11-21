@@ -104,6 +104,14 @@ module Types
       @result_hash
     end
 
+    def eql?(o)
+      self.class == o.class && self.result_hash == o.result_hash
+    end
+
+    def ==(o)
+      eql?(o)
+    end
+
     private
 
     def convert_errors(result_hash)
