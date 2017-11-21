@@ -34,5 +34,17 @@ Puppet::Parser::Functions::newfunction(
 ) do |args|
   fmt = args[0]
   args = args[1..-1]
-  return sprintf(fmt, *args)
+  begin
+    return sprintf(fmt, *args)
+  rescue KeyError => e
+    if args.size == 1 && args[0].is_a?(Hash)
+      # map the single hash argument such that all top level string keys are symbols
+      # as that allows named arguments to be used in the format string.
+      #
+      result = {}
+      args[0].each_pair { |k,v| result[k.is_a?(String) ? k.to_sym : k] = v }
+      return sprintf(fmt, result)
+    end
+    raise e
+  end
 end
