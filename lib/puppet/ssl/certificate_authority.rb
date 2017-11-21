@@ -399,7 +399,7 @@ class Puppet::SSL::CertificateAuthority
 
       # Check for wildcards in the subjectAltName fields too.
       if csr.subject_alt_names.any? {|x| x.include? '*' }
-        raise CertificateSigningError.new(hostname), _("CSR '%{csr}' subjectAltName contains a wildcard, which is not allowed: %{alt_names}  To continue, this CSR needs to be cleaned.") % { csr: csr.name, alt_names: csr.subject_alt_names.join(', ') }
+        raise CertificateSigningError.new(hostname), _("CSR '%{csr}' subjectAltName contains a wildcard, which is not allowed: %{alt_names}.  To continue, this CSR needs to be cleaned.") % { csr: csr.name, alt_names: csr.subject_alt_names.join(', ') }
       end
     end
 
