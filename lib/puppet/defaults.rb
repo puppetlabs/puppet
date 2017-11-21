@@ -902,19 +902,20 @@ EOT
     :digest_algorithm => {
         :default  => 'md5',
         :type     => :enum,
-        :values => ["md5", "sha256"],
+        :values => ["md5", "sha256", "sha384", "sha512", "sha224"],
         :desc     => 'Which digest algorithm to use for file resources and the filebucket.
-                      Valid values are md5, sha256. Default is md5.',
+                      Valid values are md5, sha256, sha384, sha512, sha224. Default is md5.',
     },
     :supported_checksum_types => {
-      :default => ['md5', 'sha256'],
+      :default => ['md5', 'sha256', 'sha384', 'sha512', 'sha224'],
       :type    => :array,
       :desc    => 'Checksum types supported by this agent for use in file resources of a
                    static catalog. Values must be comma-separated. Valid types are md5,
-                   md5lite, sha256, sha256lite, sha1, sha1lite, mtime, ctime.',
+                   md5lite, sha256, sha256lite, sha384, sha512, 
+		   sha1, sha1lite, sha224, mtime, ctime.',
       :hook    => proc do |value|
         values = munge(value)
-        valid   = ['md5', 'md5lite', 'sha256', 'sha256lite', 'sha1', 'sha1lite', 'mtime', 'ctime']
+        valid   = ['md5', 'md5lite', 'sha256', 'sha256lite', 'sha384', 'sha512', 'sha224', 'sha1', 'sha1lite', 'mtime', 'ctime']
         invalid = values.reject {|alg| valid.include?(alg)}
         if not invalid.empty?
           raise ArgumentError, "Unrecognized checksum types #{invalid} are not supported. Valid values are #{valid}."
