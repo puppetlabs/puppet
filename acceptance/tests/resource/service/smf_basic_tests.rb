@@ -33,9 +33,19 @@ agents.each do |agent|
     assert_match( /ensure => 'running'/, result.stdout, "err: #{agent}")
   end
 
+  step "SMF: ensure non-existent services return :absent"
+  on(agent, puppet("resource service bogus")) do
+    assert_match( /ensure => 'absent'/, result.stdout, "err: #{agent}")
+  end
+
   step "SMF: ensure you can stop the service"
   apply_manifest_on(agent, 'service {tstapp : ensure=>stopped}') do
     assert_match( /changed 'running'.* to 'stopped'/, result.stdout, "err: #{agent}")
+  end
+
+  step "SMF: ensure stopping a non-existent service doesn't throw an error"
+  apply_manifest_on(agent, 'service {bogus : ensure=>stopped}', :acceptable_exit_codes => [0,1,2,4,6]) do
+    assert_equal(exit_code, 0, "'puppet resource service' should have an exit code of 0")
   end
 
   step "SMF: verify with svcs that the service is not online"
