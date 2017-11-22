@@ -2437,7 +2437,7 @@ class PCallableType < PAnyType
 
   # @api private
   def callable_args?(required_callable_t, guard)
-    # If the required callable is euqal or more specific than self, self is acceptable arguments
+    # If the required callable is equal or more specific than self, self is acceptable arguments
     required_callable_t.assignable?(self, guard)
   end
 
