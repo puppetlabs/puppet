@@ -54,20 +54,22 @@ module Pal
       internal_evaluator.evaluator.external_call_function(function_name, args, topscope, &block)
     end
 
-    # Returns an Array[Puppet::Pops::Types::PCallableType] describing the given function's signatures, or empty array if function not found.
+    # Returns an Puppet::Pal::FunctionSignature objects or nil if function is not found
+    # The returned FunctionSignature has information about all overloaded signatures of the function
+    #
+    # @example using function_signature
+    #   # returns true if 'myfunc' is callable with three integer arguments 1, 2, 3
+    #   compiler.function_signature('myfunc').callable_with?([1,2,3])
+    #
     # @param function_name [String] the name of the function to get a signature for
-    # @return [Array<Puppet::Pops::Types::PCallableType>] an array of callable signatures, or an empty array if function not found
+    # @return [Array<Puppet::Pal::FunctionSignature>] an array of callable signatures, or an empty array if function not found
     def function_signature(function_name)
       loader = internal_compiler.loaders.private_environment_loader
       if func = loader.load(:function, function_name)
         return FunctionSignature.new(func)
-#        t = func.class.dispatcher.to_type
-#        return FunctionSignature(t.is_a?(Puppet::Pops::Types::PVariantType) ? t.types : [t])
-        #return t.is_a?(Puppet::Pops::Types::PVariantType) ? t.types : [t]
       end
       # Could not find function
       nil
-#      Puppet::Pops::EMPTY_ARRAY
     end
 
     # Evaluates a string of puppet language code in top scope.
