@@ -399,7 +399,7 @@ describe Puppet::Configurer do
 
     it "sets the checksum_type query param to the default supported_checksum_types in a catalog request" do
       Puppet::Resource::Catalog.indirection.expects(:find).with(anything,
-        has_entries(:checksum_type => 'md5.sha256'))
+        has_entries(:checksum_type => 'md5.sha256.sha384.sha512.sha224'))
       @agent.run
     end
 
