@@ -98,6 +98,13 @@ module Puppet::GettextConfig
   end
 
   # @api private
+  # Delete all text domains.
+  def self.delete_all_text_domains
+    FastGettext.translation_repositories.clear
+    FastGettext.default_text_domain = nil
+  end
+
+  # @api private
   # Deletes the text domain with the given name
   # @param [String] domain_name the name of the domain to delete
   def self.delete_text_domain(domain_name)

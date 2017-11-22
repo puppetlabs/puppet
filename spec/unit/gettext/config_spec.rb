@@ -4,6 +4,7 @@ require 'spec_helper'
 describe Puppet::GettextConfig do
   require 'puppet_spec/files'
   include PuppetSpec::Files
+  include Puppet::GettextConfig
 
   let(:local_path) do
     local_path ||= Puppet::GettextConfig::LOCAL_PATH
@@ -19,6 +20,11 @@ describe Puppet::GettextConfig do
 
   before(:each) do
     Puppet::GettextConfig.stubs(:gettext_loaded?).returns true
+  end
+
+  after(:each) do
+    Puppet::GettextConfig.set_locale('en')
+    Puppet::GettextConfig.delete_all_text_domains
   end
 
   describe 'setting and getting the locale' do
@@ -83,10 +89,31 @@ describe Puppet::GettextConfig do
     end
 
     it 'should copy default translations when creating a non-default text domain' do
-      Puppet::GettextConfig.expects(:copy_default_translations).with('test')
-
       Puppet::GettextConfig.reset_text_domain('test')
       expect(Puppet::GettextConfig.loaded_text_domains).to include(Puppet::GettextConfig::DEFAULT_TEXT_DOMAIN, 'test')
+    end
+  end
+
+  describe "deleting text domains" do
+    it 'can delete a text domain by name' do
+      Puppet::GettextConfig.reset_text_domain('test')
+      expect(Puppet::GettextConfig.loaded_text_domains).to include(Puppet::GettextConfig::DEFAULT_TEXT_DOMAIN, 'test')
+      Puppet::GettextConfig.delete_text_domain(Puppet::GettextConfig::DEFAULT_TEXT_DOMAIN)
+      expect(Puppet::GettextConfig.loaded_text_domains).not_to include(Puppet::GettextConfig::DEFAULT_TEXT_DOMAIN)
+    end
+
+    it 'can delete all non-default text domains' do
+      Puppet::GettextConfig.reset_text_domain('test')
+      expect(Puppet::GettextConfig.loaded_text_domains).to include(Puppet::GettextConfig::DEFAULT_TEXT_DOMAIN, 'test')
+      Puppet::GettextConfig.delete_environment_text_domains
+      expect(Puppet::GettextConfig.loaded_text_domains).not_to include('test')
+    end
+
+    it 'can delete all text domains' do
+      Puppet::GettextConfig.reset_text_domain('test')
+      expect(Puppet::GettextConfig.loaded_text_domains).to include(Puppet::GettextConfig::DEFAULT_TEXT_DOMAIN, 'test')
+      Puppet::GettextConfig.delete_all_text_domains
+      expect(Puppet::GettextConfig.loaded_text_domains).to be_empty
     end
   end
 end
