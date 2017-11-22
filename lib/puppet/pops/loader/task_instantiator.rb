@@ -92,7 +92,9 @@ class TaskInstantiator
       parent_type = 'GenericTask'
     end
 
-    constants['executable'] = Pathname(task_source).relative_path_from(Pathname(loader.path) + 'tasks').to_s
+    if loader.path.nil?
+      return nil
+    end
 
     Types::TypeFactory.object(
       {

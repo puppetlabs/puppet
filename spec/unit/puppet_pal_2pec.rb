@@ -710,6 +710,28 @@ describe 'Puppet Pal' do
           expect(result).to eq(true)
         end
       end
+
+      context 'supports tasks such that' do
+        it '"list_tasks" returns an array with all tasks that can be loaded' do
+          testing_env_dir # creates the structure
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler {|c| c.list_tasks() }
+          end
+          expect(result.is_a?(Array)).to eq(true)
+          expect(result.all? {|s| s.is_a?(Puppet::Pops::Loader::TypedName) }).to eq(true)
+          expect(result.map {|tn| tn.name}).to eq(['a::atask', 'b::atask'])
+        end
+
+        it '"list_tasks" filters on name based on a given regexp' do
+          testing_env_dir # creates the structure
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler {|c| c.list_tasks(/^a::/) }
+          end
+          expect(result.is_a?(Array)).to eq(true)
+          expect(result.all? {|s| s.is_a?(Puppet::Pops::Loader::TypedName) }).to eq(true)
+          expect(result.map {|tn| tn.name}).to eq(['a::atask'])
+        end
+      end
     end
 
     context 'configured as an existing given environment directory such that' do

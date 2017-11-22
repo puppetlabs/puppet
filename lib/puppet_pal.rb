@@ -258,6 +258,47 @@ module Pal
       list_loadable_kind(:plan, filter_regex)
     end
 
+    # Returns an array of TypedName objects for all plans, optionally filtered by a regular expression.
+    # The returned array has more information than just the leaf name - the typical thing is to just get
+    # the name as showing the following example.
+    #
+    # @example getting the names of all plans
+    #   compiler.list_plans.map {|tn| tn.name }
+    #
+    # @param filter_regex [Regexp] an optional regexp that filters based on name (matching names are included in the result)
+    # @return [Array<Puppet::Pops::Loader::TypedName>] an array of typed names
+    #
+    def list_tasks(filter_regex = nil)
+      loader = internal_compiler.loaders.private_environment_loader
+
+      # Must have the base type 'Task' to enable testing if a type is a subtype
+      task_type = loader.load(:type, 'task')
+
+      # Filter on the name given by the user
+      # Then filter out all that are not derived from Task
+      #
+      task_types = list_loadable_kind(:type, filter_regex).select do |tn|
+        # Don't want the "abstract task types" listed
+        next(false) if tn.name == 'task' || tn.name == 'generictask'
+
+        # Must load type to test if it is a subtype of Task
+        t = loader.load(:type, tn.name)
+
+        # Resolve an alias, it may resolve to a subtype of Task
+        if t.is_a?(Puppet::Pops::Types::PTypeAliasType)
+          t = t.resolve(loader).resolved_type
+          # ignore the fact that the resolution may not match the filter_regex, the alias did pass
+        end
+
+        # special cases
+        next(false) if t.nil? || t.is_a?(Puppet::Pops::Types::PUnitType) 
+
+        # keep if a subtype of Task
+        next(task_type.assignable?(t))
+      end
+      task_types
+    end
+
   end
 
   # A FunctionSignature is returned from `function_signature`. Its purpose is to answer questions about the function's parameters
