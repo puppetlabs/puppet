@@ -65,4 +65,9 @@ describe "the sprintf function" do
     expect(result).to eq("{\"foo\"=>1, \"bar\"=>2}")
   end
 
+  it 'named arguments hash with non string keys are tolerated' do
+    result = @scope.function_sprintf(["%<foo>d : %<bar>f", {'foo' => 1, 'bar' => 2, 1 => 2, [1] => 2, false => true, {} => {}}])
+    expect(result).to eq("1 : 2.000000")
+  end
+
 end
