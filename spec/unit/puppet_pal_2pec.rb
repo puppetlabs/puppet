@@ -270,6 +270,26 @@ describe 'Puppet Pal' do
           expect(result.all? {|c| c.is_a?(Puppet::Pops::Types::PCallableType)}).to eq(true)
         end
 
+        it '"list_functions" returns an array with all function names that can be loaded' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler {|c| c.list_functions() }
+          end
+          expect(result.is_a?(Array)).to eq(true)
+          expect(result.all? {|s| s.is_a?(Puppet::Pops::Loader::TypedName) }).to eq(true)
+          # there are certainly more than 30 functions in puppet - (56 when writing this, but some refactoring
+          # may take place, so don't want an exact number here - jsut make sure it found "all of them"
+          expect(result.count).to be > 30
+        end
+
+        it '"list_functions" filters on name based on a given regexp' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler {|c| c.list_functions(/epp/) }
+          end
+          expect(result.is_a?(Array)).to eq(true)
+          expect(result.all? {|s| s.is_a?(Puppet::Pops::Loader::TypedName) }).to eq(true)
+          # there are two functions currently that have 'epp' in their name
+          expect(result.count).to eq(2)
+        end
       end
 
       context 'supports plans such that' do

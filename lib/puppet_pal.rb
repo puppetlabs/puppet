@@ -73,6 +73,25 @@ module Pal
       nil
     end
 
+    # Returns an array of TypedName objects for all functions, optionally filtered by a regular expression.
+    # The returned array has more information than just the leaf name - the typical thing is to just get
+    # the name as showing the following example.
+    #
+    # @example getting the names of all functions
+    #   compiler.list_functions.map {|tn| tn.name }
+    #
+    # @param filter_regex [Regexp] an optional regexp that filters based on name (matching names are included in the result)
+    # @return [Array<Puppet::Pops::Loader::TypedName>] an array of typed names
+    #
+    def list_functions(filter_regex = nil)
+      loader = internal_compiler.loaders.private_environment_loader
+      if filter_regex.nil?
+        loader.discover(:function)
+      else
+        loader.discover(:function) {|f| f.name =~ filter_regex }
+      end
+    end
+
     # Evaluates a string of puppet language code in top scope.
     # A "source_file" reference to a source can be given - if not an actual file name, by convention the name should
     # be bracketed with < > to indicate it is something symbolic; for example `<commandline>` if the string was given on the
