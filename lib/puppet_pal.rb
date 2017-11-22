@@ -84,12 +84,7 @@ module Pal
     # @return [Array<Puppet::Pops::Loader::TypedName>] an array of typed names
     #
     def list_functions(filter_regex = nil)
-      loader = internal_compiler.loaders.private_environment_loader
-      if filter_regex.nil?
-        loader.discover(:function)
-      else
-        loader.discover(:function) {|f| f.name =~ filter_regex }
-      end
+      list_loadable_kind(:function, filter_regex)
     end
 
     # Evaluates a string of puppet language code in top scope.
@@ -217,6 +212,17 @@ module Pal
       call_function('new', t, *arguments)
     end
 
+    protected
+
+    def list_loadable_kind(kind, filter_regex = nil)
+      loader = internal_compiler.loaders.private_environment_loader
+      if filter_regex.nil?
+        loader.discover(kind)
+      else
+        loader.discover(kind) {|f| f.name =~ filter_regex }
+      end
+    end
+
     private
 
     def topscope
@@ -237,6 +243,21 @@ module Pal
       # Could not find plan
       nil
     end
+
+    # Returns an array of TypedName objects for all plans, optionally filtered by a regular expression.
+    # The returned array has more information than just the leaf name - the typical thing is to just get
+    # the name as showing the following example.
+    #
+    # @example getting the names of all plans
+    #   compiler.list_plans.map {|tn| tn.name }
+    #
+    # @param filter_regex [Regexp] an optional regexp that filters based on name (matching names are included in the result)
+    # @return [Array<Puppet::Pops::Loader::TypedName>] an array of typed names
+    #
+    def list_plans(filter_regex = nil)
+      list_loadable_kind(:plan, filter_regex)
+    end
+
   end
 
   # A FunctionSignature is returned from `function_signature`. Its purpose is to answer questions about the function's parameters

@@ -290,6 +290,7 @@ describe 'Puppet Pal' do
           # there are two functions currently that have 'epp' in their name
           expect(result.count).to eq(2)
         end
+
       end
 
       context 'supports plans such that' do
