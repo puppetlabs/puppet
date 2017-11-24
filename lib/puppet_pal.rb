@@ -54,7 +54,7 @@ module Pal
       internal_evaluator.evaluator.external_call_function(function_name, args, topscope, &block)
     end
 
-    # Returns an Puppet::Pal::FunctionSignature objects or nil if function is not found
+    # Returns a Puppet::Pal::FunctionSignature object or nil if function is not found
     # The returned FunctionSignature has information about all overloaded signatures of the function
     #
     # @example using function_signature
@@ -62,7 +62,8 @@ module Pal
     #   compiler.function_signature('myfunc').callable_with?([1,2,3])
     #
     # @param function_name [String] the name of the function to get a signature for
-    # @return [Array<Puppet::Pal::FunctionSignature>] an array of callable signatures, or an empty array if function not found
+    # @return [Puppet::Pal::FunctionSignature] a function signature, or nil if function not found
+    #
     def function_signature(function_name)
       loader = internal_compiler.loaders.private_environment_loader
       if func = loader.load(:function, function_name)
@@ -239,18 +240,18 @@ module Pal
     # given types.
     #
     # @param args [Array] The arguments as given to the function call
-    # @param block [Proc, nil] An optional block, puppet lambda given to the function
+    # @param callable [Proc, nil] An optional ruby Proc or puppet lambda given to the function
     # @yield [String] a formatted error message describing a type mismatch if the function is not callable with given args + block
     # @return [Boolean] true if the function can be called with given args + block, and false otherwise
     # @api public
     #
-    def callable_with?(args, block=nil)
+    def callable_with?(args, callable=nil)
       signatures = @func.class.dispatcher.to_type
       callables = signatures.is_a?(Puppet::Pops::Types::PVariantType) ? signatures.types : [signatures]
 
       return true if callables.any? {|t| t.callable_with?(args) }
       return false unless block_given?
-      args_type = Puppet::Pops::Types::TypeCalculator.singleton.infer_set(block.nil? ? args : args + [block])
+      args_type = Puppet::Pops::Types::TypeCalculator.singleton.infer_set(callable.nil? ? args : args + [callable])
       error_message = Puppet::Pops::Types::TypeMismatchDescriber.describe_signatures(@func.class.name, @func.class.signatures, args_type)
       yield error_message
       false
