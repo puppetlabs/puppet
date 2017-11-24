@@ -194,43 +194,21 @@ describe 'Puppet Pal' do
           expect(result).to eq(12)
         end
 
-        it '"function_signatures" returns the signatures of a function' do
+        it '"function_signature" returns a signature of a function' do
           result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
             manifest = file_containing('afunc.pp', "function myfunc(Integer $a) { $a * 2 } ")
             ctx.with_script_compiler(manifest_file: manifest) do |c|
-              signatures = c.function_signatures('myfunc')
-              expect(signatures.is_a?(Array)).to eq(true)
-              [ signatures[0].callable_with?([10]),
-                signatures[0].callable_with?(['nope'])
-              ]
+              c.function_signature('myfunc')
             end
           end
-          expect(result).to eq([true, false])
+          expect(result.class).to eq(Puppet::Pal::FunctionSignature)
         end
 
-        it '"function_signatures" gets the signatures from a ruby function with multiple dispatch' do
+        it '"FunctionSignature#callable_with?" returns boolean if function is callable with given argument values' do
           result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
-            ctx.with_script_compiler {|c| c.function_signatures('lookup') }
-          end
-          expect(result.is_a?(Array)).to eq(true)
-          expect(result.all? {|s| s.is_a?(Puppet::Pops::Types::PCallableType) }).to eq(true)
-        end
-
-        it '"function_signatures" returns an empty array if function is not found' do
-          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
-            ctx.with_script_compiler {|c| c.function_signatures('no_where_to_be_found') }
-          end
-          expect(result.is_a?(Array)).to eq(true)
-          expect(result.empty?).to eq(true)
-        end
-      end
-
-      context 'supports plans such that' do
-        it '"plan_signature" returns the signatures of a plan' do
-          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
-            manifest = file_containing('afunc.pp', "plan myplan(Integer $a) {  } ")
+            manifest = file_containing('afunc.pp', "function myfunc(Integer $a) { $a * 2 } ")
             ctx.with_script_compiler(manifest_file: manifest) do |c|
-              signature = c.plan_signature('myplan')
+              signature = c.function_signature('myfunc')
               [ signature.callable_with?([10]),
                 signature.callable_with?(['nope'])
               ]
@@ -239,11 +217,119 @@ describe 'Puppet Pal' do
           expect(result).to eq([true, false])
         end
 
+        it '"FunctionSignature#callable_with?" calls a given lambda if there is an error' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            manifest = file_containing('afunc.pp', "function myfunc(Integer $a) { $a * 2 } ")
+            ctx.with_script_compiler(manifest_file: manifest) do |c|
+              signature = c.function_signature('myfunc')
+              local_result = 'not yay'
+              signature.callable_with?(['nope']) {|error| local_result = error }
+              local_result
+            end
+          end
+          expect(result).to match(/'myfunc' parameter 'a' expects an Integer value, got String/)
+        end
+
+        it '"FunctionSignature#callable_with?" does not call a given lambda when there is no error' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            manifest = file_containing('afunc.pp', "function myfunc(Integer $a) { $a * 2 } ")
+            ctx.with_script_compiler(manifest_file: manifest) do |c|
+              signature = c.function_signature('myfunc')
+              local_result = 'yay'
+              signature.callable_with?([10]) {|error| local_result = 'not yay' }
+              local_result
+            end
+          end
+          expect(result).to eq('yay')
+        end
+
+        it '"function_signature" gets the signatures from a ruby function with multiple dispatch' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler {|c| c.function_signature('lookup') }
+          end
+          # check two different signatures of the lookup function
+          expect(result.callable_with?(['key'])).to eq(true)
+          expect(result.callable_with?(['key'], lambda() {|k| })).to eq(true)
+        end
+
+        it '"function_signature" returns nil if function is not found' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler {|c| c.function_signature('no_where_to_be_found') }
+          end
+          expect(result).to eq(nil)
+        end
+
+        it '"FunctionSignature#callables" returns an array of callables' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            manifest = file_containing('afunc.pp', "function myfunc(Integer $a) { $a * 2 } ")
+            ctx.with_script_compiler(manifest_file: manifest) do |c|
+              c.function_signature('myfunc').callables
+            end
+          end
+          expect(result.class).to eq(Array)
+          expect(result.all? {|c| c.is_a?(Puppet::Pops::Types::PCallableType)}).to eq(true)
+        end
+
+      end
+
+      context 'supports plans such that' do
+        it '"plan_signature" returns the signatures of a plan' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            manifest = file_containing('afunc.pp', "plan myplan(Integer $a) {  } ")
+            ctx.with_script_compiler(manifest_file: manifest) do |c|
+              signature = c.plan_signature('myplan')
+              [ signature.callable_with?({'a' => 10}),
+                signature.callable_with?({'a' => 'nope'})
+              ]
+            end
+          end
+          expect(result).to eq([true, false])
+        end
+
+        it 'a PlanSignature.callable_with? calls a given lambda with any errors as a formatted string' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            manifest = file_containing('afunc.pp', "plan myplan(Integer $a, Integer $b) {  } ")
+            ctx.with_script_compiler(manifest_file: manifest) do |c|
+              signature = c.plan_signature('myplan')
+              local_result = nil
+              signature.callable_with?({'a' => 'nope'}) {|errors| local_result = errors }
+              local_result
+            end
+          end
+          # Note that errors are indented one space and on separate lines
+          #
+          expect(result).to eq(" parameter 'a' expects an Integer value, got String\n expects a value for parameter 'b'")
+        end
+
+        it 'a PlanSignature.callable_with? does not call a given lambda if there are no errors' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            manifest = file_containing('afunc.pp', "plan myplan(Integer $a) {  } ")
+            ctx.with_script_compiler(manifest_file: manifest) do |c|
+              signature = c.plan_signature('myplan')
+              local_result = 'yay'
+              signature.callable_with?({'a' => 1}) {|errors| local_result = 'not yay' }
+              local_result
+            end
+          end
+          expect(result).to eq('yay')
+        end
+
         it '"plan_signature" returns nil if plan is not found' do
           result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
             ctx.with_script_compiler {|c| c.plan_signature('no_where_to_be_found') }
           end
           expect(result).to be(nil)
+        end
+
+        it '"PlanSignature#params_type" returns a map of all parameters and their types' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            manifest = file_containing('afunc.pp', "plan myplan(Integer $a, String $b) {  } ")
+            ctx.with_script_compiler(manifest_file: manifest) do |c|
+              c.plan_signature('myplan').params_type
+            end
+          end
+          expect(result.class).to eq(Puppet::Pops::Types::PStructType)
+          expect(result.to_s).to eq("Struct[{'a' => Integer, 'b' => String}]")
         end
       end
 

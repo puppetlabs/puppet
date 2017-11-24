@@ -26,8 +26,9 @@ require 'puppet/parser/script_compiler'
 module Puppet
 module Pal
 
-  # @param compiler [Puppet::Pal::Compiler] a configured compiler as obtained in the callback from `with_script_compiler`
-
+  # A configured compiler as obtained in the callback from `with_script_compiler`.
+  # (Later, there may also be a catalog compiler available.)
+  #
   class Compiler
     attr_reader :internal_compiler
     protected :internal_compiler
@@ -53,17 +54,23 @@ module Pal
       internal_evaluator.evaluator.external_call_function(function_name, args, topscope, &block)
     end
 
-    # Returns an Array[Puppet::Pops::Types::PCallableType] describing the given function's signatures, or empty array if function not found.
+    # Returns a Puppet::Pal::FunctionSignature object or nil if function is not found
+    # The returned FunctionSignature has information about all overloaded signatures of the function
+    #
+    # @example using function_signature
+    #   # returns true if 'myfunc' is callable with three integer arguments 1, 2, 3
+    #   compiler.function_signature('myfunc').callable_with?([1,2,3])
+    #
     # @param function_name [String] the name of the function to get a signature for
-    # @return [Array<Puppet::Pops::Types::PCallableType>] an array of callable signatures, or an empty array if function not found
-    def function_signatures(function_name)
+    # @return [Puppet::Pal::FunctionSignature] a function signature, or nil if function not found
+    #
+    def function_signature(function_name)
       loader = internal_compiler.loaders.private_environment_loader
       if func = loader.load(:function, function_name)
-        t = func.class.dispatcher.to_type
-        return t.is_a?(Puppet::Pops::Types::PVariantType) ? t.types : [t]
+        return FunctionSignature.new(func)
       end
       # Could not find function
-      Puppet::Pops::EMPTY_ARRAY
+      nil
     end
 
     # Evaluates a string of puppet language code in top scope.
@@ -199,17 +206,132 @@ module Pal
   end
 
   class ScriptCompiler < Compiler
-    # Returns the signature callable of the given plan (the arguments it accepts, and the data type it returns)
+    # Returns the signature of the given plan name
     # @param plan_name [String] the name of the plan to get the signature of
-    # @return [Puppet::Pops::Types::PCallableType, nil] returns a callable data type, or nil if plan is not found
+    # @return [Puppet::Pal::PlanSignature, nil] returns a PlanSignature, or nil if plan is not found
     #
     def plan_signature(plan_name)
       loader = internal_compiler.loaders.private_environment_loader
       if func = loader.load(:plan, plan_name)
-        return func.class.dispatcher.to_type
+        return PlanSignature.new(func)
       end
       # Could not find plan
       nil
+    end
+  end
+
+  # A FunctionSignature is returned from `function_signature`. Its purpose is to answer questions about the function's parameters
+  # and if it can be called with a set of parameters.
+  #
+  # It is also possible to get an array of puppet Callable data type where each callable describes one possible way
+  # the function can be called.
+  #
+  # @api public
+  #
+  class FunctionSignature
+    # @api private
+    def initialize(function_instance)
+      @func = function_instance
+    end
+
+    # Returns true if the function can be called with the given arguments and false otherwise.
+    # If the function is not callable, and a code block is given, it is given a formatted error message that describes
+    # the type mismatch. That error message can be quite complex if the function has multiple dispatch depending on
+    # given types.
+    #
+    # @param args [Array] The arguments as given to the function call
+    # @param callable [Proc, nil] An optional ruby Proc or puppet lambda given to the function
+    # @yield [String] a formatted error message describing a type mismatch if the function is not callable with given args + block
+    # @return [Boolean] true if the function can be called with given args + block, and false otherwise
+    # @api public
+    #
+    def callable_with?(args, callable=nil)
+      signatures = @func.class.dispatcher.to_type
+      callables = signatures.is_a?(Puppet::Pops::Types::PVariantType) ? signatures.types : [signatures]
+
+      return true if callables.any? {|t| t.callable_with?(args) }
+      return false unless block_given?
+      args_type = Puppet::Pops::Types::TypeCalculator.singleton.infer_set(callable.nil? ? args : args + [callable])
+      error_message = Puppet::Pops::Types::TypeMismatchDescriber.describe_signatures(@func.class.name, @func.class.signatures, args_type)
+      yield error_message
+      false
+    end
+
+    # Returns an array of Callable puppet data type
+    # @return [Array<Puppet::Pops::Types::PCallableType] one callable per way the function can be called
+    #
+    # @api public
+    #
+    def callables
+      signatures = @func.class.dispatcher.to_type
+      signatures.is_a?(Puppet::Pops::Types::PVariantType) ? signatures.types : [signatures]
+    end
+  end
+
+  # A PlanSignature is returned from `plan_signature`. Its purpose is to answer questions about the plans's parameters
+  # and if it can be called with a hash of named parameters.
+  #
+  # @api public
+  #
+  class PlanSignature
+    def initialize(plan_function)
+      @plan_func = plan_function
+    end
+
+    # Returns true or false depending on if the given PlanSignature is callable with a set of named arguments or not
+    # In addition to returning the boolean outcome, if a block is given, it is called with a string of formatted
+    # error messages that describes the difference between what was given and what is expected. The error message may
+    # have multiple lines of text, and each line is indented one space.
+    #
+    # @example Checking if signature is acceptable
+    #
+    #   signature = pal.plan_signature('myplan')
+    #   signature.callable_with?({x => 10}) { |errors| raise ArgumentError("Ooops: given arguments does not match\n#{errors}") }
+    #
+    # @api public
+    #
+    def callable_with?(args_hash)
+      dispatcher = @plan_func.class.dispatcher.dispatchers[0]
+
+      param_scope = {}
+      # Assign all non-nil values, even those that represent non-existent parameters.
+      args_hash.each { |k, v| param_scope[k] = v unless v.nil? }
+      dispatcher.parameters.each do |p|
+        name = p.name
+        arg = args_hash[name]
+        if arg.nil?
+          # Arg either wasn't given, or it was undef
+          if p.value.nil?
+            # No default. Assign nil if the args_hash included it
+            param_scope[name] = nil if args_hash.include?(name)
+          else
+            # parameter does not have a default value, it will be assigned its default when being called
+            # we assume that the default value is of the correct type and therefore simply skip
+            # checking this
+            # param_scope[name] = param_scope.evaluate(name, p.value, closure_scope, @evaluator)
+          end
+        end
+      end
+
+      errors = Puppet::Pops::Types::TypeMismatchDescriber.singleton.describe_struct_signature(dispatcher.params_struct, param_scope).flatten
+      return true if errors.empty?
+      if block_given?
+        yield errors.map {|e| e.format }.join("\n")
+      end
+      false
+    end
+
+    # Returns a PStructType describing the parameters as a puppet Struct data type
+    # Note that a `to_s` on the returned structure will result in a human readable Struct datatype as a
+    # description of what a plan expects.
+    #
+    # @return [Puppet::Pops::Types::PStructType] a struct data type describing the parameters and their types
+    #
+    # @api public
+    #
+    def params_type
+      dispatcher = @plan_func.class.dispatcher.dispatchers[0]
+      dispatcher.params_struct
     end
   end
 
