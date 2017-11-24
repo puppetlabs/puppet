@@ -606,7 +606,23 @@ describe 'Puppet Pal' do
 
     let(:b_tasks) {
       {
-        'atask' => '',
+        'atask' => "# doing exactly nothing\n",
+        'atask.json' => <<-JSONTEXT.unindent
+          {
+            "description": "test task b::atask",
+            "input_method": "stdin",
+            "parameters": {
+              "string_param": {
+                "description": "A string parameter",
+                "type": "String[1]"
+              },
+              "int_param": {
+                "description": "An integer parameter",
+                "type": "Integer"
+              }
+            }
+          }
+        JSONTEXT
       }
     }
 
@@ -712,6 +728,25 @@ describe 'Puppet Pal' do
       end
 
       context 'supports tasks such that' do
+        it '"task_signature" returns the signatures of a task' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler do |c|
+              signature = c.task_signature('a::atask')
+              [ signature.runnable_with?([{'whatever' => 10}]),
+                signature.runnable_with?([{'anything_goes' => 'foo'}])
+              ]
+            end
+          end
+          expect(result).to eq([true, true])
+        end
+
+        it '"task_signature" returns nil if task is not found' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler {|c| c.task_signature('no_where_to_be_found') }
+          end
+          expect(result).to be(nil)
+        end
+
         it '"list_tasks" returns an array with all tasks that can be loaded' do
           testing_env_dir # creates the structure
           result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
@@ -732,6 +767,7 @@ describe 'Puppet Pal' do
           expect(result.map {|tn| tn.name}).to eq(['a::atask'])
         end
       end
+
     end
 
     context 'configured as an existing given environment directory such that' do
