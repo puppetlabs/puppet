@@ -42,7 +42,7 @@ module Puppet
   require 'puppet/environments'
 
   class << self
-    Puppet::GettextConfig.set_locale(Locale.current.language)
+    Puppet::GettextConfig.setup_locale
     Puppet::GettextConfig.create_default_text_domain
 
     include Puppet::Util
