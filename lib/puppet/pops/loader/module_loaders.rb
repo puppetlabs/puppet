@@ -413,12 +413,9 @@ module ModuleLoaders
     # @return [Array<String>] found paths
     def relative_paths(smart_path)
       root = smart_path.generic_path
-      ext = smart_path.extension
-      ext = nil if ext.empty?
       found = []
       @path_index.each do |path|
-        next unless (ext.nil? || path.end_with?(ext)) && path.start_with?(root)
-        found << Pathname(path).relative_path_from(Pathname(root)).to_s
+        found << Pathname(path).relative_path_from(Pathname(root)).to_s if smart_path.valid_path?(path)
       end
       found
     end

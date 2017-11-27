@@ -217,6 +217,7 @@ describe 'The Loader' do
               },
               'c' => {
                 'types' => c_types,
+                'tasks' => c_tasks,
                 'metadata.json' => metadata_json_c.to_json
               },
             }
@@ -278,7 +279,23 @@ describe 'The Loader' do
 
           let(:b_tasks) {
             {
-              'atask' => '',
+              'atask' => "# doing exactly nothing\n",
+              'atask.json' => <<-JSON.unindent,
+                {
+                  "description": "test task b::atask",
+                  "input_method": "stdin",
+                  "parameters": {
+                    "string_param": {
+                      "description": "A string parameter",
+                      "type": "String[1]"
+                    },
+                    "int_param": {
+                      "description": "An integer parameter",
+                      "type": "Integer"
+                    }
+                  }
+                }
+                JSON
             }
           }
 
@@ -303,6 +320,20 @@ describe 'The Loader' do
               'atype.pp' => <<-PUPPET.unindent,
                 type C::Atype = Integer
             PUPPET
+            }
+          }
+
+          let(:c_tasks) {
+            {
+              'foo.sh' => <<-SH.unindent,
+                # This is a task that does nothing
+                SH
+              'fee.md' => <<-MD.unindent,
+                This is not a task because it has .md extension
+                MD
+              'fum.conf' => <<-CONF.unindent,
+                text=This is not a task because it has .conf extension
+                CONF
             }
           }
 
@@ -346,12 +377,17 @@ describe 'The Loader' do
 
             it 'private loader finds types and tasks in all modules' do
               expect(loader.private_loader.discover(:type) { |t| t.name =~ /^.::.*\z/ }).to(
-                contain_exactly(tn(:type, 'a::atype'), tn(:type, 'b::atype'), tn(:type, 'c::atype'), tn(:type, 'a::atask'), tn(:type, 'b::atask')))
+                contain_exactly(tn(:type, 'a::atype'), tn(:type, 'b::atype'), tn(:type, 'c::atype'), tn(:type, 'a::atask'), tn(:type, 'b::atask'), tn(:type, 'c::foo')))
             end
 
             it 'module loader finds types and tasks only in itself' do
               expect(Loaders.find_loader('a').discover(:type) { |t| t.name =~ /^.::.*\z/ }).to(
                 contain_exactly(tn(:type, 'a::atype'), tn(:type, 'a::atask')))
+            end
+
+            it 'module loader does not consider files with .md and .conf extension to be tasks' do
+              expect(Loaders.find_loader('c').discover(:type) { |t| t.name =~ /(?:foo|fee|fum)\z/ }).to(
+                contain_exactly(tn(:type, 'c::foo')))
             end
           end
           context 'with no explicit dependencies' do
