@@ -214,6 +214,14 @@ module Puppet::GettextConfig
   end
 
   # @api private
+  # Sets FastGettext's locale to the current system locale
+  def self.setup_locale
+    return if @gettext_disabled || !gettext_loaded?
+
+    set_locale(Locale.current.language)
+  end
+
+  # @api private
   # Sets the language in which to display strings.
   # @param [String] locale the language portion of a locale string (e.g. "ja")
   def self.set_locale(locale)
