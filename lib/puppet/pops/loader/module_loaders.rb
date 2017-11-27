@@ -38,12 +38,16 @@ module ModuleLoaders
   end
 
   def self.environment_loader_from(parent_loader, loaders, env_path)
-    ModuleLoaders::FileBased.new(parent_loader,
-      loaders,
-      ENVIRONMENT,
-      env_path,
-      ENVIRONMENT
-    )
+    if env_path.nil? || env_path.empty?
+      EmptyLoader.new(parent_loader, ENVIRONMENT)
+    else
+      FileBased.new(parent_loader,
+        loaders,
+        ENVIRONMENT,
+        env_path,
+        ENVIRONMENT
+      )
+    end
   end
 
   def self.module_loader_from(parent_loader, loaders, module_name, module_path)
@@ -62,6 +66,20 @@ module ModuleLoaders
       environment_path,
       'pcore_resource_types'
     )
+  end
+
+  class EmptyLoader < BaseLoader
+    def find(typed_name)
+      return nil
+    end
+
+    def private_loader
+      @private_loader ||= self
+    end
+
+    def private_loader=(loader)
+      @private_loader = loader
+    end
   end
 
   class AbstractPathBasedModuleLoader < BaseLoader
@@ -91,6 +109,8 @@ module ModuleLoaders
     #
     def initialize(parent_loader, loaders, module_name, path, loader_name, loadables)
       super parent_loader, loader_name
+
+      raise ArgumentError, 'path based loader cannot be instantiated without a path' if path.nil? || path.empty?
 
       @module_name = module_name
       @path = path
@@ -413,12 +433,9 @@ module ModuleLoaders
     # @return [Array<String>] found paths
     def relative_paths(smart_path)
       root = smart_path.generic_path
-      ext = smart_path.extension
-      ext = nil if ext.empty?
       found = []
       @path_index.each do |path|
-        next unless (ext.nil? || path.end_with?(ext)) && path.start_with?(root)
-        found << Pathname(path).relative_path_from(Pathname(root)).to_s
+        found << Pathname(path).relative_path_from(Pathname(root)).to_s if smart_path.valid_path?(path)
       end
       found
     end

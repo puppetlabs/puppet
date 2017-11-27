@@ -93,6 +93,10 @@ module LoaderPaths
       TypedName.new(type, n, name_authority)
     end
 
+    def valid_path?(path)
+      path.end_with?(extension) && path.start_with?(generic_path)
+    end
+
     def valid_name?(typed_name)
       true
     end
@@ -208,6 +212,7 @@ module LoaderPaths
   # match more than one path with one name
   class TaskPath < PuppetSmartPath
     TASKS_PATH = 'tasks'.freeze
+    FORBIDDEN_EXTENSIONS = %w{.conf .md}.freeze
 
     def extension
       EMPTY_STRING
@@ -221,6 +226,20 @@ module LoaderPaths
       TASKS_PATH
     end
 
+    def typed_name(type, name_authority, relative_path, module_name)
+      n = ''
+      n << module_name unless module_name.nil?
+
+      # Remove extension regardless of what it is. A task name cannot contain dots
+      relative_path = relative_path.sub(/\.[^\/]*\z/, '')
+
+      relative_path.split('/').each do |segment|
+        n << '::' if n.size > 0
+        n << segment
+      end
+      TypedName.new(type, n, name_authority)
+    end
+
     def instantiator
       require_relative 'task_instantiator'
       TaskInstantiator
@@ -229,6 +248,14 @@ module LoaderPaths
     def valid_name?(typed_name)
       # TODO: Remove when PE has proper namespace handling
       typed_name.name_parts.size <= 2
+    end
+
+    def valid_path?(path)
+      path.start_with?(generic_path) && is_task_name?(File.basename(path, '.*')) && !FORBIDDEN_EXTENSIONS.any? { |ext| path.end_with?(ext) }
+    end
+
+    def is_task_name?(name)
+      !!(name =~ /^[a-z][a-z0-9_]*$/)
     end
   end
 
