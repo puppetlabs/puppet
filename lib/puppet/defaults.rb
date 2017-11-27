@@ -314,7 +314,7 @@ module Puppet
 
           Given that the context and effects vary depending on the
           [config section](https://puppet.com/docs/puppet/latest/config_file_main.html#config-sections)
-          in which this setting is defined, do not set it globally.",
+          in which the `environment` setting is defined, do not set it globally.",
         :short    => "E"
     },
     :environmentpath => {
