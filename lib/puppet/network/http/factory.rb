@@ -38,6 +38,15 @@ class Puppet::Network::HTTP::Factory
     http.read_timeout = Puppet[:http_read_timeout]
     http.open_timeout = Puppet[:http_connect_timeout]
 
+    if Puppet[:sourceaddress]
+      if http.respond_to?(:local_host)
+        Puppet.debug("Using source IP #{Puppet[:sourceaddress]}")
+        http.local_host = Puppet[:sourceaddress]
+      else
+        raise ArgumentError, "Setting 'sourceaddress' is unsupported by this version of Net::HTTP."
+      end
+    end
+
     if Puppet[:http_debug]
       http.set_debug_output($stderr)
     end
