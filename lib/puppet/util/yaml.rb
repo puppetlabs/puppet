@@ -13,42 +13,15 @@ module Puppet::Util::Yaml
     raise YamlLoadError, "Tried to load unspecified class: #{cls}"
   end
 
-  def self.safe_load(yaml, allowed_classes = [], filename = nil)
-    @psych_safe_load ||= Gem::Version.new(RUBY_VERSION) >= Gem::Version.new('2.1.0')
-    return YAML.safe_load(yaml, allowed_classes, [], false, filename) if @psych_safe_load
-
-    # emulate needed parts of YAML.safe_load for rubies < 2.1.0
-    data = YAML.parse(yaml, filename)
-
-    # safe_load returns false for empty yaml
-    return false unless data.is_a?(Psych::Nodes::Document)
-
-    @known_tags ||= {
-      'encoding' => :skip,
-      'range' => Range,
-      'regexp' => Regexp,
-      'sym' => Symbol,
-      'symbol' => Symbol,
-      'array' => :arg,
-      'hash' => :arg,
-      'struct' => :arg,
-      'object' => :arg,
-    }.freeze
-
-    # raise errors for tags that will cause load of disallowed classes
-    allowed_class_names = allowed_classes.map { |cls| cls.name }
-    data.root.each do |o|
-      next unless o.tag && o.tag =~ /\A!ruby\/([^:]+)(?::(.*))\z/
-      tag = $1
-      arg = $2
-      class_name = @known_tags[tag]
-      disallowed_class(tag) if class_name.nil?
-
-      next if class_name == :skip
-      class_name = arg if class_name == :arg
-      disallowed_class(class_name) unless allowed_class_names.include?(class_name)
+  if Gem::Version.new(RUBY_VERSION.dup) >= Gem::Version.new('2.1.0')
+    def self.safe_load(yaml, allowed_classes = [], filename = nil)
+      YAML.safe_load(yaml, allowed_classes, [], false, filename)
     end
-    data.to_ruby
+  else
+    def self.safe_load(yaml, allowed_classes = [], filename = nil)
+      # Fall back to YAML.load for rubies < 2.1.0
+      YAML.load(yaml, filename)
+    end
   end
 
   def self.load_file(filename, default_value = false, strip_classes = false)

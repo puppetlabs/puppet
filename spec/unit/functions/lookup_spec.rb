@@ -812,7 +812,7 @@ describe "The lookup function" do
           YAML
         end
 
-        it 'fails lookup and reports unspecified class' do
+        it 'fails lookup and reports unspecified class', :if => Gem::Version.new(RUBY_VERSION.dup) >= Gem::Version.new('2.1.0') do
           expect { lookup('a') }.to raise_error do |e|
             expect(e.message).to match(/Tried to load unspecified class: Puppet::Graph::Key/)
           end
