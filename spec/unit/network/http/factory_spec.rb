@@ -110,7 +110,9 @@ describe Puppet::Network::HTTP::Factory do
 
           expect(conn.local_host).to eq('127.0.0.1')
         else
-          expect{create_connection(site)}.to raise_error(ArgumentError)
+          expect {
+            create_connection(site)
+          }.to raise_error(ArgumentError, "Setting 'sourceaddress' is unsupported by this version of Net::HTTP.")
         end
       end
     end
