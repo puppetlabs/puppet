@@ -10,7 +10,7 @@ describe Puppet::Util::Checksums do
     @summer = Puppet::Util::Checksums
   end
 
-  content_sums = [:md5, :md5lite, :sha1, :sha1lite, :sha256, :sha256lite]
+  content_sums = [:md5, :md5lite, :sha1, :sha1lite, :sha256, :sha256lite, :sha512, :sha384, :sha224]
   file_only = [:ctime, :mtime, :none]
 
   content_sums.each do |sumtype|
@@ -42,7 +42,7 @@ describe Puppet::Util::Checksums do
   end
 
   %w{{md5}asdfasdf {sha1}asdfasdf {ctime}asdasdf {mtime}asdfasdf 
-     {sha256}asdfasdf {sha256lite}asdfasdf}.each do |sum|
+     {sha256}asdfasdf {sha256lite}asdfasdf {sha512}asdfasdf {sha384}asdfasdf {sha224}asdfasdf}.each do |sum|
     it "should consider #{sum} to be a checksum" do
       expect(@summer).to be_checksum(sum)
     end
@@ -66,7 +66,7 @@ describe Puppet::Util::Checksums do
     expect(@summer.sumtype("asdfasdfa")).to be_nil
   end
 
-  {:md5 => Digest::MD5, :sha1 => Digest::SHA1, :sha256 => Digest::SHA256}.each do |sum, klass|
+  {:md5 => Digest::MD5, :sha1 => Digest::SHA1, :sha256 => Digest::SHA256, :sha512 => Digest::SHA512, :sha384 => Digest::SHA384}.each do |sum, klass|
     describe("when using #{sum}") do
       it "should use #{klass} to calculate string checksums" do
         klass.expects(:hexdigest).with("mycontent").returns "whatever"
