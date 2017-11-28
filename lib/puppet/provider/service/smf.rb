@@ -107,6 +107,8 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
   end
 
   def stop
+    # Don't try to stop non-existing services (PUP-8167)
+    return if self.status == :absent
     # Wait for the service to actually stop before returning.
     super
     self.wait('offline', 'disabled', 'uninitialized')
