@@ -64,7 +64,7 @@ class TaskInstantiator
       tf.optional('puppet_task_version') => tf.integer,
       tf.optional('supports_noop') => tf.boolean,
       tf.optional('input_method') => tf.enum('stdin', 'environment'),
-      'parameters' => params_t,
+      tf.optional('parameters') => params_t,
       tf.optional('output') => params_t
     )
   end
