@@ -1392,7 +1392,7 @@ class PStringType < PScalarType
   def initialize(size_type_or_value, deprecated_multi_args = EMPTY_ARRAY)
     unless deprecated_multi_args.empty?
       if Puppet[:strict] != :off
-        Puppet.warn_once(:deprecatation, "PStringType#initialize_multi_args", "Passing more than one argument to PStringType#initialize is deprecated")
+        Puppet.warn_once(:deprecation, "PStringType#initialize_multi_args", "Passing more than one argument to PStringType#initialize is deprecated")
       end
       size_type_or_value = deprecated_multi_args[0]
     end
@@ -1445,7 +1445,7 @@ class PStringType < PScalarType
   # @api private
   def values
     if Puppet[:strict] != :off
-      Puppet.warn_once(:deprecatation, "PStringType#values", "Method PStringType#values is deprecated. Use #value instead")
+      Puppet.warn_once(:deprecation, "PStringType#values", "Method PStringType#values is deprecated. Use #value instead")
     end
     @value.is_a?(String) ? [@value] : EMPTY_ARRAY
   end
