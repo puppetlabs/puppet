@@ -139,7 +139,6 @@ basemodulepath = #{File.expand_path("/some/base")}
     end
 
     it "prints the default configured env settings for an env that does not exist" do
-      pending "This case no longer exists because Application will through an error before we even get here because of the non-existent environment"
       Puppet[:environment] = 'doesnotexist'
 
       FS.overlay(
@@ -150,7 +149,7 @@ basemodulepath = #{File.expand_path("/some/base")}
         args = "environmentpath","manifest","modulepath","environment","basemodulepath"
         expect { subject.print(*add_section_option(args, section)) }.to have_printed(<<-OUTPUT)
 environmentpath = #{File.expand_path("/dev/null/environments")}
-manifest = no_manifest
+manifest = 
 modulepath = 
 environment = doesnotexist
 basemodulepath = #{File.expand_path("/some/base")}
