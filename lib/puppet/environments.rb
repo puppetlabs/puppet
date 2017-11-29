@@ -382,6 +382,7 @@ module Puppet::Environments
     # (The intention is that this could be used from a MANUAL cache eviction command (TBD)
     def clear(name)
       @cache.delete(name)
+      Puppet::GettextConfig.delete_text_domain(name)
     end
 
     # Clears all cached environments.
@@ -391,6 +392,7 @@ module Puppet::Environments
       @cache = {}
       @expirations.clear
       @next_expiration = END_OF_TIME
+      Puppet::GettextConfig.delete_environment_text_domains
     end
 
     # Clears all environments that have expired, either by exceeding their time to live, or

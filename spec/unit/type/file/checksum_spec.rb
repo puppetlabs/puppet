@@ -36,6 +36,18 @@ describe checksum do
     expect(@checksum.sum("foobar")).to eq("{sha256}#{sum}")
   end
 
+  it "when using digest_algorithm 'sha512' should return the summed contents with a checksum label" do
+    sum = Digest::SHA512.hexdigest("foobar")
+    @resource[:checksum] = :sha512
+    expect(@checksum.sum("foobar")).to eq("{sha512}#{sum}")
+  end
+
+  it "when using digest_algorithm 'sha384' should return the summed contents with a checksum label" do
+    sum = Digest::SHA384.hexdigest("foobar")
+    @resource[:checksum] = :sha384
+    expect(@checksum.sum("foobar")).to eq("{sha384}#{sum}")
+  end
+
   it "should use :md5 as its default type" do
     expect(@checksum.default).to eq(:md5)
   end

@@ -11,7 +11,7 @@
 # automatically based on the rspec metadata selected with
 # `with_digest_algorithms`.
 
-DIGEST_ALGORITHMS_TO_TRY = ['md5', 'sha256']
+DIGEST_ALGORITHMS_TO_TRY = ['md5', 'sha256', 'sha384', 'sha512', 'sha224']
 
 shared_context('with supported digest algorithms', :uses_checksums => true) do
 
@@ -51,5 +51,50 @@ shared_context("when digest_algorithm is set to md5", :digest_algorithm => 'md5'
 
   def digest(content)
     Puppet::Util::Checksums.md5(content)
+  end
+end
+
+shared_context("when digest_algorithm is set to sha512", :digest_algorithm => 'sha512') do
+  before { Puppet[:digest_algorithm] = 'sha512' }
+  after { Puppet[:digest_algorithm] = nil }
+
+  let(:digest_algorithm) { 'sha512' }
+
+  let(:plaintext) { "my\r\ncontents" }
+  let(:checksum) { 'ed9b62ae313c8e4e3e6a96f937101e85f8f8af8d51dea7772177244087e5d6152778605ad6bdb42886ff1436abaec4fa44acbfe171fda755959b52b0e4e015d4' }
+  let(:bucket_dir) { 'e/d/9/b/6/2/a/e/ed9b62ae313c8e4e3e6a96f937101e85f8f8af8d51dea7772177244087e5d6152778605ad6bdb42886ff1436abaec4fa44acbfe171fda755959b52b0e4e015d4' }
+
+  def digest(content)
+    Puppet::Util::Checksums.sha512(content)
+  end
+end
+
+shared_context("when digest_algorithm is set to sha384", :digest_algorithm => 'sha384') do
+  before { Puppet[:digest_algorithm] = 'sha384' }
+  after { Puppet[:digest_algorithm] = nil }
+
+  let(:digest_algorithm) { 'sha384' }
+
+  let(:plaintext) { "my\r\ncontents" }
+  let(:checksum) { 'f40debfec135e4f2b9fb92110c53aadb8e9bda28bb05f09901480fd70126fe3b70f9f074ce6182ec8184eb1bcabe4440' }
+  let(:bucket_dir) { 'f/4/0/d/e/b/f/e/f40debfec135e4f2b9fb92110c53aadb8e9bda28bb05f09901480fd70126fe3b70f9f074ce6182ec8184eb1bcabe4440' }
+
+  def digest(content)
+    Puppet::Util::Checksums.sha384(content)
+  end
+end
+
+shared_context("when digest_algorithm is set to sha224", :digest_algorithm => 'sha224') do
+  before { Puppet[:digest_algorithm] = 'sha224' }
+  after { Puppet[:digest_algorithm] = nil }
+
+  let(:digest_algorithm) { 'sha224' }
+
+  let(:plaintext) { "my\r\ncontents" }
+  let(:checksum) { 'b8c05079b24c37a0e03f03e611167a3ea24455db3ad638a3a0c7e9cb' }
+  let(:bucket_dir) { 'b/8/c/0/5/0/7/9/b8c05079b24c37a0e03f03e611167a3ea24455db3ad638a3a0c7e9cb' }
+
+  def digest(content)
+    Puppet::Util::Checksums.sha224(content)
   end
 end
