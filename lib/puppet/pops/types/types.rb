@@ -135,8 +135,11 @@ class PAnyType < TypedModelObject
         assignable?(o.resolved_type, guard)
       end
     when PVariantType
-      # Assignable if all contained types are assignable
-      o.types.all? { |vt| assignable?(vt, guard) }
+      # Assignable if all contained types are assignable, or if this is exactly Any
+      return true if self.class == PAnyType
+      # An empty variant may be assignable to NotUndef[T] if T is assignable to empty variant
+      return _assignable?(o, guard) if is_a?(PNotUndefType) && o.types.empty?
+      !o.types.empty? && o.types.all? { |vt| assignable?(vt, guard) }
     when POptionalType
       # Assignable if undef and contained type is assignable
       assignable?(PUndefType::DEFAULT) && (o.type.nil? || assignable?(o.type))
@@ -655,7 +658,12 @@ class PUnitType < PAnyType
 
   DEFAULT = PUnitType.new
 
+  def assignable?(o, guard=nil)
+    true
+  end
+
   protected
+
   # @api private
   def _assignable?(o, guard)
     true
@@ -3019,6 +3027,20 @@ class PVariantType < PAnyType
   end
 
   DEFAULT = PVariantType.new(EMPTY_ARRAY)
+
+  def assignable?(o, guard = nil)
+    # an empty Variant does not match Undef (it is void - not even undef)
+    if o.is_a?(PUndefType) && types.empty?
+      return false
+    end
+
+    return super unless o.is_a?(PVariantType)
+    # If empty, all Variant types match irrespective of the types they hold (including being empty)
+    return true if types.empty?
+    # Since this variant is not empty, an empty Variant cannot match, because it matches nothing
+    # otherwise all types in o must be assignable to this
+    !o.types.empty? && o.types.all? { |vt| super(vt, guard) }
+  end
 
   protected
 

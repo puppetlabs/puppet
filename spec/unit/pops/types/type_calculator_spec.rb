@@ -42,6 +42,13 @@ describe 'The type calculator' do
     TypeFactory.variant(*types)
   end
 
+  def empty_variant_t()
+    t = TypeFactory.variant()
+    # assert this to ensure we did get an empty variant (or tests may pass when not being empty)
+    raise 'typefactory did not return empty variant' unless t.types.empty?
+    t
+  end
+
   def type_alias_t(name, type_string)
     type_expr = Parser::EvaluatingParser.new.parse_string(type_string)
     TypeFactory.type_alias(name, type_expr)
@@ -851,7 +858,6 @@ describe 'The type calculator' do
         t = PTypeReferenceType::DEFAULT
         all_instances = (all_types - [
           PTypeReferenceType, # Avoid comparison with t
-          PVariantType,   # DEFAULT contains no variants, so assignability is never tested and always true
           PTypeAliasType      # DEFAULT resolves to PTypeReferenceType::DEFAULT, i.e. t
         ]).map {|c| c::DEFAULT }
 
@@ -941,6 +947,45 @@ describe 'The type calculator' do
         # not acceptable
         expect(v).not_to be_assignable_to(range_t(0, 4))
         expect(v).not_to be_assignable_to(string_t)
+      end
+
+      it 'an empty Variant is assignable to another empty Variant' do
+        expect(empty_variant_t).to be_assignable_to(empty_variant_t)
+      end
+
+      it 'an empty Variant is assignable to Any' do
+        expect(empty_variant_t).to be_assignable_to(PAnyType::DEFAULT)
+      end
+
+      it 'an empty Variant is assignable to Unit' do
+        expect(empty_variant_t).to be_assignable_to(PUnitType::DEFAULT)
+      end
+
+      it 'an empty Variant is not assignable to any type except empty Variant, Any, NotUndef, and Unit' do
+        assignables = [PUnitType, PAnyType, PNotUndefType]
+        unassignables = all_types - assignables
+        unassignables.each {|t2| expect(empty_variant_t).not_to be_assignable_to(t2::DEFAULT) }
+        assignables.each   {|t2| expect(empty_variant_t).to be_assignable_to(t2::DEFAULT) }
+      end
+
+      it 'an empty Variant is not assignable to Optional[Any] since it is not assignable to Undef' do
+        opt_any = optional_t(any_t)
+        expect(empty_variant_t).not_to be_assignable_to(opt_any)
+      end
+
+      it 'an Optional[Any] is not assignable to empty Variant' do
+        opt_any = optional_t(any_t)
+        expect(opt_any).not_to be_assignable_to(empty_variant_t)
+      end
+
+      it 'an empty Variant is assignable to NotUndef[Variant] since Variant is not Undef' do
+        not_undef_variant = not_undef_t(empty_variant_t)
+        expect(empty_variant_t).to be_assignable_to(not_undef_variant)
+      end
+
+      it 'a NotUndef[Variant] is assignable to empty Variant' do
+        not_undef_variant = not_undef_t(empty_variant_t)
+        expect(not_undef_variant).to be_assignable_to(empty_variant_t)
       end
     end
 
