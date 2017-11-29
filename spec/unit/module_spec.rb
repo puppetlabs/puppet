@@ -227,8 +227,6 @@ describe Puppet::Module do
         tasks_dir = "#{mod_dir}/tasks"
         locale_dir = "#{mod_dir}/locales"
         Puppet::FileSystem.stubs(:exist?).with(metadata_file).returns true
-        # Skip checking for translation config file
-        Puppet::FileSystem.stubs(:exist?).with(locale_dir).returns false
       end
       mod = PuppetSpec::Modules.create(
         'test_gte_req',
@@ -445,31 +443,6 @@ describe Puppet::Module do
     end
   end
 
-
-  describe "initialize_i18n" do
-
-    let(:modpath) { tmpdir('modpath') }
-    let(:modname) { 'i18n' }
-    let(:modroot) { "#{modpath}/#{modname}/" }
-    let(:locale_dir) { "#{modroot}locales" }
-    let(:mod_obj) { PuppetSpec::Modules.create( modname, modpath, :metadata => { :dependencies => [] }, :env => env ) }
-
-    it "is expected to initialize an un-initialized module" do
-      expect(Puppet::GettextConfig.translations_loaded?("puppetlabs-#{modname}")).to be false
-
-      FileUtils.mkdir_p(locale_dir)
-      Puppet::FileSystem.stubs(:exist?).with(locale_dir).returns(true)
-
-      mod_obj.initialize_i18n
-
-      expect(Puppet::GettextConfig.translations_loaded?("puppetlabs-#{modname}")).to be true
-    end
-
-    it "is expected return nil if module is intiailized" do
-      expect(mod_obj.initialize_i18n).to be nil
-    end
-  end
-
   describe "when managing supported platforms" do
     it "should support specifying a supported platform" do
       mod.supports "solaris"
@@ -612,7 +585,6 @@ describe Puppet::Module do
 
       it "after the module is initialized" do
         Puppet::FileSystem.expects(:exist?).with(mod_tasks_dir).never
-        Puppet::GettextConfig.expects(:load_translations).returns(false)
         Puppet::Module::Task.expects(:tasks_in_module).never
         Puppet::Module.new(mod_name, @modpath, env)
       end

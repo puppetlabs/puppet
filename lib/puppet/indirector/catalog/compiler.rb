@@ -49,6 +49,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     node = node_from_request(facts, request)
     node.trusted_data = Puppet.lookup(:trusted_information) { Puppet::Context::TrustedInformation.local(node) }.to_h
 
+    node.environment.use_text_domain if node.environment
+
     if catalog = compile(node, request.options)
       return catalog
     else
