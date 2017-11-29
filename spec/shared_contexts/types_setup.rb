@@ -1,6 +1,7 @@
 shared_context 'types_setup' do
 
   # Do not include the special type Unit in this list
+  # Do not include the type Variant in this list as it needs to be parameterized to be meaningful
   def self.all_types
     [ Puppet::Pops::Types::PAnyType,
       Puppet::Pops::Types::PUndefType,
@@ -23,7 +24,6 @@ shared_context 'types_setup' do
       Puppet::Pops::Types::PResourceType,
       Puppet::Pops::Types::PPatternType,
       Puppet::Pops::Types::PEnumType,
-      Puppet::Pops::Types::PVariantType,
       Puppet::Pops::Types::PStructType,
       Puppet::Pops::Types::PTupleType,
       Puppet::Pops::Types::PCallableType,
@@ -46,6 +46,9 @@ shared_context 'types_setup' do
     self.class.all_types
   end
 
+  # Do not include the Variant type in this list - while it is abstract it is also special in that
+  # it must be parameterized to be meaningful.
+  #
   def self.abstract_types
     [ Puppet::Pops::Types::PAnyType,
       Puppet::Pops::Types::PCallableType,
@@ -63,7 +66,6 @@ shared_context 'types_setup' do
       Puppet::Pops::Types::PPatternType,
       Puppet::Pops::Types::PScalarType,
       Puppet::Pops::Types::PScalarDataType,
-      Puppet::Pops::Types::PVariantType,
       Puppet::Pops::Types::PUndefType,
       Puppet::Pops::Types::PTypeReferenceType,
       Puppet::Pops::Types::PTypeAliasType,
