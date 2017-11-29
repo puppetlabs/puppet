@@ -270,6 +270,27 @@ describe 'Puppet Pal' do
           expect(result.all? {|c| c.is_a?(Puppet::Pops::Types::PCallableType)}).to eq(true)
         end
 
+        it '"list_functions" returns an array with all function names that can be loaded' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler {|c| c.list_functions() }
+          end
+          expect(result.is_a?(Array)).to eq(true)
+          expect(result.all? {|s| s.is_a?(Puppet::Pops::Loader::TypedName) }).to eq(true)
+          # there are certainly more than 30 functions in puppet - (56 when writing this, but some refactoring
+          # may take place, so don't want an exact number here - jsut make sure it found "all of them"
+          expect(result.count).to be > 30
+        end
+
+        it '"list_functions" filters on name based on a given regexp' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler {|c| c.list_functions(/epp/) }
+          end
+          expect(result.is_a?(Array)).to eq(true)
+          expect(result.all? {|s| s.is_a?(Puppet::Pops::Loader::TypedName) }).to eq(true)
+          # there are two functions currently that have 'epp' in their name
+          expect(result.count).to eq(2)
+        end
+
       end
 
       context 'supports plans such that' do
@@ -585,7 +606,23 @@ describe 'Puppet Pal' do
 
     let(:b_tasks) {
       {
-        'atask' => '',
+        'atask' => "# doing exactly nothing\n",
+        'atask.json' => <<-JSONTEXT.unindent
+          {
+            "description": "test task b::atask",
+            "input_method": "stdin",
+            "parameters": {
+              "string_param": {
+                "description": "A string parameter",
+                "type": "String[1]"
+              },
+              "int_param": {
+                "description": "An integer parameter",
+                "type": "Integer"
+              }
+            }
+          }
+        JSONTEXT
       }
     }
 
@@ -689,6 +726,48 @@ describe 'Puppet Pal' do
           expect(result).to eq(true)
         end
       end
+
+      context 'supports tasks such that' do
+        it '"task_signature" returns the signatures of a task' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler do |c|
+              signature = c.task_signature('a::atask')
+              [ signature.runnable_with?([{'whatever' => 10}]),
+                signature.runnable_with?([{'anything_goes' => 'foo'}])
+              ]
+            end
+          end
+          expect(result).to eq([true, true])
+        end
+
+        it '"task_signature" returns nil if task is not found' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler {|c| c.task_signature('no_where_to_be_found') }
+          end
+          expect(result).to be(nil)
+        end
+
+        it '"list_tasks" returns an array with all tasks that can be loaded' do
+          testing_env_dir # creates the structure
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler {|c| c.list_tasks() }
+          end
+          expect(result.is_a?(Array)).to eq(true)
+          expect(result.all? {|s| s.is_a?(Puppet::Pops::Loader::TypedName) }).to eq(true)
+          expect(result.map {|tn| tn.name}).to eq(['a::atask', 'b::atask'])
+        end
+
+        it '"list_tasks" filters on name based on a given regexp' do
+          testing_env_dir # creates the structure
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler {|c| c.list_tasks(/^a::/) }
+          end
+          expect(result.is_a?(Array)).to eq(true)
+          expect(result.all? {|s| s.is_a?(Puppet::Pops::Loader::TypedName) }).to eq(true)
+          expect(result.map {|tn| tn.name}).to eq(['a::atask'])
+        end
+      end
+
     end
 
     context 'configured as an existing given environment directory such that' do

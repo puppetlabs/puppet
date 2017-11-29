@@ -67,10 +67,38 @@ module Pal
     def function_signature(function_name)
       loader = internal_compiler.loaders.private_environment_loader
       if func = loader.load(:function, function_name)
-        return FunctionSignature.new(func)
+        return FunctionSignature.new(func.class)
       end
       # Could not find function
       nil
+    end
+
+    # Returns an array of TypedName objects for all functions, optionally filtered by a regular expression.
+    # The returned array has more information than just the leaf name - the typical thing is to just get
+    # the name as showing the following example.
+    #
+    # @example getting the names of all functions
+    #   compiler.list_functions.map {|tn| tn.name }
+    #
+    # @param filter_regex [Regexp] an optional regexp that filters based on name (matching names are included in the result)
+    # @return [Array<Puppet::Pops::Loader::TypedName>] an array of typed names
+    #
+    def list_functions(filter_regex = nil)
+      list_loadable_kind(:function, filter_regex)
+    end
+
+    # Returns an array of TypedName objects for all functions, optionally filtered by a regular expression.
+    # The returned array has more information than just the leaf name - the typical thing is to just get
+    # the name as showing the following example.
+    #
+    # @example getting the names of all functions
+    #   compiler.list_functions.map {|tn| tn.name }
+    #
+    # @param filter_regex [Regexp] an optional regexp that filters based on name (matching names are included in the result)
+    # @return [Array<Puppet::Pops::Loader::TypedName>] an array of typed names
+    #
+    def list_functions(filter_regex = nil)
+      list_loadable_kind(:function, filter_regex)
     end
 
     # Evaluates a string of puppet language code in top scope.
@@ -198,6 +226,17 @@ module Pal
       call_function('new', t, *arguments)
     end
 
+    protected
+
+    def list_loadable_kind(kind, filter_regex = nil)
+      loader = internal_compiler.loaders.private_environment_loader
+      if filter_regex.nil?
+        loader.discover(kind)
+      else
+        loader.discover(kind) {|f| f.name =~ filter_regex }
+      end
+    end
+
     private
 
     def topscope
@@ -218,6 +257,74 @@ module Pal
       # Could not find plan
       nil
     end
+
+    # Returns an array of TypedName objects for all plans, optionally filtered by a regular expression.
+    # The returned array has more information than just the leaf name - the typical thing is to just get
+    # the name as showing the following example.
+    #
+    # @example getting the names of all plans
+    #   compiler.list_plans.map {|tn| tn.name }
+    #
+    # @param filter_regex [Regexp] an optional regexp that filters based on name (matching names are included in the result)
+    # @return [Array<Puppet::Pops::Loader::TypedName>] an array of typed names
+    #
+    def list_plans(filter_regex = nil)
+      list_loadable_kind(:plan, filter_regex)
+    end
+
+    # Returns the signature callable of the given plan (the arguments it accepts, and the data type it returns)
+    # @param plan_name [String] the name of the plan to get the signature of
+    # @return [Puppet::Pops::Types::PCallableType, nil] returns a callable data type, or nil if plan is not found
+    #
+    def task_signature(task_name)
+      loader = internal_compiler.loaders.private_environment_loader
+      if task_type = loader.load(:type, task_name)
+        return TaskSignature.new(task_type)
+      end
+      # Could not find plan
+      nil
+    end
+
+    # Returns an array of TypedName objects for all plans, optionally filtered by a regular expression.
+    # The returned array has more information than just the leaf name - the typical thing is to just get
+    # the name as showing the following example.
+    #
+    # @example getting the names of all plans
+    #   compiler.list_plans.map {|tn| tn.name }
+    #
+    # @param filter_regex [Regexp] an optional regexp that filters based on name (matching names are included in the result)
+    # @return [Array<Puppet::Pops::Loader::TypedName>] an array of typed names
+    #
+    def list_tasks(filter_regex = nil)
+      loader = internal_compiler.loaders.private_environment_loader
+
+      # Must have the base type 'Task' to enable testing if a type is a subtype
+      task_type = loader.load(:type, 'task')
+
+      # Filter on the name given by the user
+      # Then filter out all that are not derived from Task
+      #
+      task_types = list_loadable_kind(:type, filter_regex).select do |tn|
+        # Don't want the "abstract task types" listed
+        next(false) if tn.name == 'task' || tn.name == 'generictask'
+
+        # Must load type to test if it is a subtype of Task
+        t = loader.load(:type, tn.name)
+
+        # Resolve an alias, it may resolve to a subtype of Task
+        if t.is_a?(Puppet::Pops::Types::PTypeAliasType)
+          t = t.resolve(loader).resolved_type
+          # ignore the fact that the resolution may not match the filter_regex, the alias did pass
+        end
+
+        # special cases
+        next(false) if t.nil? || t.is_a?(Puppet::Pops::Types::PUnitType) 
+
+        # keep if a subtype of Task
+        next(task_type.assignable?(t))
+      end
+      task_types
+    end
   end
 
   # A FunctionSignature is returned from `function_signature`. Its purpose is to answer questions about the function's parameters
@@ -230,8 +337,8 @@ module Pal
   #
   class FunctionSignature
     # @api private
-    def initialize(function_instance)
-      @func = function_instance
+    def initialize(function_class)
+      @func = function_class
     end
 
     # Returns true if the function can be called with the given arguments and false otherwise.
@@ -246,13 +353,13 @@ module Pal
     # @api public
     #
     def callable_with?(args, callable=nil)
-      signatures = @func.class.dispatcher.to_type
+      signatures = @func.dispatcher.to_type
       callables = signatures.is_a?(Puppet::Pops::Types::PVariantType) ? signatures.types : [signatures]
 
       return true if callables.any? {|t| t.callable_with?(args) }
       return false unless block_given?
       args_type = Puppet::Pops::Types::TypeCalculator.singleton.infer_set(callable.nil? ? args : args + [callable])
-      error_message = Puppet::Pops::Types::TypeMismatchDescriber.describe_signatures(@func.class.name, @func.class.signatures, args_type)
+      error_message = Puppet::Pops::Types::TypeMismatchDescriber.describe_signatures(@func.name, @func.signatures, args_type)
       yield error_message
       false
     end
@@ -263,8 +370,27 @@ module Pal
     # @api public
     #
     def callables
-      signatures = @func.class.dispatcher.to_type
+      signatures = @func.dispatcher.to_type
       signatures.is_a?(Puppet::Pops::Types::PVariantType) ? signatures.types : [signatures]
+    end
+  end
+
+  # A TaskSignature is returned from `task_signature`. Its purpose is to answer questions about the task's parameters
+  # and if it can be run/called with a hash of named parameters.
+  #
+  class TaskSignature
+    def initialize(task_type)
+      @task_type = task_type
+    end
+
+    # Returns whether or not the given arguments are acceptable when running the task
+    # @param args_hash [Hash] a hash mapping parameter names to argument values
+    # @yieldparam [String] a formatted error message if a type mismatch occurs that explains the mismatch
+    # @return [Boolean] if the given arguments are acceptable when running the task
+    #
+    def runnable_with?(args_hash)
+      @new_signature ||= FunctionSignature.new(@task_type.new_function)
+      @new_signature.callable_with?(args_hash)
     end
   end
 
