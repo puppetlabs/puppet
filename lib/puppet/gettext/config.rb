@@ -63,7 +63,10 @@ module Puppet::GettextConfig
   def self.reset_text_domain(domain_name)
     return if @gettext_disabled || !gettext_loaded?
 
-    FastGettext.add_text_domain(domain_name, type: :chain, chain: [])
+    FastGettext.add_text_domain(domain_name,
+                                type: :chain,
+                                chain: [],
+                                report_warning: false)
     copy_default_translations(domain_name)
     FastGettext.text_domain = domain_name
   end
@@ -80,7 +83,10 @@ module Puppet::GettextConfig
   def self.create_default_text_domain
     return if @gettext_disabled || !gettext_loaded?
 
-    FastGettext.add_text_domain(DEFAULT_TEXT_DOMAIN, type: :chain, chain: [])
+    FastGettext.add_text_domain(DEFAULT_TEXT_DOMAIN,
+                                type: :chain,
+                                chain: [],
+                                report_warning: false)
     FastGettext.default_text_domain = DEFAULT_TEXT_DOMAIN
 
     load_translations('puppet', puppet_locale_path, translation_mode(puppet_locale_path))
@@ -209,7 +215,7 @@ module Puppet::GettextConfig
     repository = FastGettext::TranslationRepository.build(project_name,
                                                           path: locale_dir,
                                                           type: file_format,
-                                                          ignore_fuzzy: false)
+                                                          report_warning: false)
     current_chain << repository
   end
 
