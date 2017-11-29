@@ -346,9 +346,9 @@ module Puppet
     newparam(:weekday) do
       desc <<-EOT
         The days of the week in which the schedule should be valid.
-        You may specify the full day name (Tuesday), the three character
-        abbreviation (Tue), or a number corresponding to the day of the
-        week where 0 is Sunday, 1 is Monday, etc. Multiple days can be specified
+        You may specify the full day name 'Tuesday', the three character
+        abbreviation 'Tue', or a number (as a string or as an integer) corresponding to the day of the
+        week where 0 is Sunday, 1 is Monday, and so on. Multiple days can be specified
         as an array. If not specified, the day of the week will not be
         considered in the schedule.
 
@@ -369,13 +369,22 @@ module Puppet
       validate do |values|
         values = [values] unless values.is_a?(Array)
         values.each { |value|
-          unless value.is_a?(String) and
-              (value =~ /^[0-6]$/ or value =~ /^(Mon|Tues?|Wed(?:nes)?|Thu(?:rs)?|Fri|Sat(?:ur)?|Sun)(day)?$/i)
+          if weekday_integer?(value) || weekday_string?(value)
+            value
+          else
             raise ArgumentError, _("%{value} is not a valid day of the week") % { value: value }
           end
         }
       end
 
+      def weekday_integer?(value)
+        value.is_a?(Integer) && (0..6).include?(value)
+      end
+
+      def weekday_string?(value)
+        value.is_a?(String) && (value =~ /^[0-6]$/ || value =~ /^(Mon|Tues?|Wed(?:nes)?|Thu(?:rs)?|Fri|Sat(?:ur)?|Sun)(day)?$/i)
+      end
+      
       weekdays = {
         'sun' => 0,
         'mon' => 1,
@@ -390,14 +399,17 @@ module Puppet
         values = [values] unless values.is_a?(Array)
         ret = {}
 
-        values.each { |value|
-           if value =~ /^[0-6]$/
-              index = value.to_i
-           else
-              index = weekdays[value[0,3].downcase]
-           end
-            ret[index] = true
-        }
+        values.each do |value|
+          case value
+          when /^[0-6]$/
+            index = value.to_i
+          when 0..6
+            index = value
+          else
+            index = weekdays[value[0,3].downcase]
+          end
+          ret[index] = true
+        end
         ret
       end
 
