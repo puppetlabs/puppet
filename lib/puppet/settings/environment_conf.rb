@@ -138,13 +138,21 @@ class Puppet::Settings::EnvironmentConf
     section_keys = config.sections.keys
     main = config.sections[:main]
     if section_keys.size > 1
-      Puppet.warning("Invalid sections in environment.conf at '#{path_to_conf_file}'. Environment conf may not have sections. The following sections are being ignored: '#{(section_keys - [:main]).join(',')}'")
+      # warn once per config file path
+      Puppet.warn_once(
+        :invalid_settings_section, "EnvironmentConf-section:#{path_to_conf_file}",
+        "Invalid sections in environment.conf at '#{path_to_conf_file}'. Environment conf may not have sections. The following sections are being ignored: '#{(section_keys - [:main]).join(',')}'"
+      )
       valid = false
     end
 
     extraneous_settings = main.settings.map(&:name) - VALID_SETTINGS
     if !extraneous_settings.empty?
-      Puppet.warning("Invalid settings in environment.conf at '#{path_to_conf_file}'. The following unknown setting(s) are being ignored: #{extraneous_settings.join(', ')}")
+      # warn once per config file path
+      Puppet.warn_once(
+        :invalid_settings, "EnvironmentConf-settings:#{path_to_conf_file}",
+        "Invalid settings in environment.conf at '#{path_to_conf_file}'. The following unknown setting(s) are being ignored: #{extraneous_settings.join(', ')}"
+      )
       valid = false
     end
 
