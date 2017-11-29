@@ -75,7 +75,7 @@ Puppet::Face.define(:config, '0.0.1') do
         if args.length == 1
           puts values.interpolate(args[0].to_sym)
         else
-          args.each do |setting_name|
+          args.sort_by { |key| key }.each do |setting_name|
             puts "#{setting_name} = #{values.interpolate(setting_name.to_sym)}"
           end
         end
