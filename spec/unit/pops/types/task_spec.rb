@@ -246,6 +246,25 @@ describe 'The Task Type' do
           end
         end
 
+        context 'that has no parameters' do
+          let(:testmodule) {
+            {
+              'tasks' => {
+                'hello' => 'echo hello',
+                'hello.json' => '{ "supports_noop": false }'             }
+            }
+          }
+
+          it 'loads the task with parameters set to undef' do
+            compile do
+              module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
+              task = module_loader.load(:task, 'testmodule::hello')
+              expect(task_t.instance?(task)).to be_truthy
+              expect(task.parameters).to be_nil
+            end
+          end
+        end
+
         context 'that has a malformed parameter name' do
           let(:testmodule) {
             {
