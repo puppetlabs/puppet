@@ -272,58 +272,31 @@ module Pal
       list_loadable_kind(:plan, filter_regex)
     end
 
-    # Returns the signature callable of the given plan (the arguments it accepts, and the data type it returns)
-    # @param plan_name [String] the name of the plan to get the signature of
-    # @return [Puppet::Pops::Types::PCallableType, nil] returns a callable data type, or nil if plan is not found
+    # Returns the signature callable of the given task (the arguments it accepts, and the data type it returns)
+    # @param task_name [String] the name of the task to get the signature of
+    # @return [Puppet::Pal::TaskSignature, nil] returns a TaskSignature, or nil if task is not found
     #
     def task_signature(task_name)
       loader = internal_compiler.loaders.private_environment_loader
-      if task_type = loader.load(:type, task_name)
-        return TaskSignature.new(task_type)
+      if task = loader.load(:task, task_name)
+        return TaskSignature.new(task)
       end
-      # Could not find plan
+      # Could not find task
       nil
     end
 
-    # Returns an array of TypedName objects for all plans, optionally filtered by a regular expression.
+    # Returns an array of TypedName objects for all tasks, optionally filtered by a regular expression.
     # The returned array has more information than just the leaf name - the typical thing is to just get
     # the name as showing the following example.
     #
-    # @example getting the names of all plans
-    #   compiler.list_plans.map {|tn| tn.name }
+    # @example getting the names of all tasks
+    #   compiler.list_tasks.map {|tn| tn.name }
     #
     # @param filter_regex [Regexp] an optional regexp that filters based on name (matching names are included in the result)
     # @return [Array<Puppet::Pops::Loader::TypedName>] an array of typed names
     #
     def list_tasks(filter_regex = nil)
-      loader = internal_compiler.loaders.private_environment_loader
-
-      # Must have the base type 'Task' to enable testing if a type is a subtype
-      task_type = loader.load(:type, 'task')
-
-      # Filter on the name given by the user
-      # Then filter out all that are not derived from Task
-      #
-      task_types = list_loadable_kind(:type, filter_regex).select do |tn|
-        # Don't want the "abstract task types" listed
-        next(false) if tn.name == 'task' || tn.name == 'generictask'
-
-        # Must load type to test if it is a subtype of Task
-        t = loader.load(:type, tn.name)
-
-        # Resolve an alias, it may resolve to a subtype of Task
-        if t.is_a?(Puppet::Pops::Types::PTypeAliasType)
-          t = t.resolve(loader).resolved_type
-          # ignore the fact that the resolution may not match the filter_regex, the alias did pass
-        end
-
-        # special cases
-        next(false) if t.nil? || t.is_a?(Puppet::Pops::Types::PUnitType) 
-
-        # keep if a subtype of Task
-        next(task_type.assignable?(t))
-      end
-      task_types
+      list_loadable_kind(:task, filter_regex)
     end
   end
 
@@ -379,8 +352,8 @@ module Pal
   # and if it can be run/called with a hash of named parameters.
   #
   class TaskSignature
-    def initialize(task_type)
-      @task_type = task_type
+    def initialize(task)
+      @task = task
     end
 
     # Returns whether or not the given arguments are acceptable when running the task
@@ -389,8 +362,30 @@ module Pal
     # @return [Boolean] if the given arguments are acceptable when running the task
     #
     def runnable_with?(args_hash)
-      @new_signature ||= FunctionSignature.new(@task_type.new_function)
-      @new_signature.callable_with?(args_hash)
+      params = @task.parameters
+      params_type = if params.nil?
+        T_GENERIC_TASK_HASH
+      else
+        key_to_type = {}
+        @task.parameters.each_pair { |k, v| key_to_type[k] = v['type'] }
+        Puppet::Pops::Types::TypeFactory.struct(key_to_type)
+      end
+      params_type.instance?(args_hash)
+    end
+
+    # Returns the Task instance as a hash
+    #
+    # @return [Hash{String=>Object}] the hash representation of the task
+    def task_hash
+      @task._pcore_init_hash
+    end
+
+    # Returns the Task instance which can be further explored. It contains all meta-data defined for
+    # the task such as the description, parameters, output, etc.
+    #
+    # @return [Puppet::Pops::Types::PuppetObject] An instance of a dynamically created Task class
+    def task
+      @task
     end
   end
 
@@ -818,6 +813,9 @@ module Pal
   T_STRING_ARRAY = Puppet::Pops::Types::TypeFactory.array_of(T_STRING)
   T_ANY_ARRAY = Puppet::Pops::Types::TypeFactory.array_of_any
   T_BOOLEAN = Puppet::Pops::Types::PBooleanType::DEFAULT
+
+  T_GENERIC_TASK_HASH = Puppet::Pops::Types::TypeFactory.hash_kv(
+    Puppet::Pops::Types::TypeFactory.pattern(/\A[a-z][a-z0-9_]*\z/), Puppet::Pops::Types::TypeFactory.data)
 
   def self.assert_type(type, value, what, allow_nil=false)
     Puppet::Pops::Types::TypeAsserter.assert_instance_of(nil, type, value, allow_nil) { _('Puppet Pal: %{what}') % {what: what} }

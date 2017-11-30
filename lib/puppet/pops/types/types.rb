@@ -60,8 +60,6 @@ class TypedModelObject < Object
       RubyMethod.register_ptype(loader, ir),
     ]
     if Puppet[:tasks]
-      types << Task.register_ptype(loader, ir)
-      types << GenericTask.register_ptype(loader, ir)
       types << ExecutionResult.register_ptype(loader, ir)
     end
 

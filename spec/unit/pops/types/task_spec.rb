@@ -35,7 +35,7 @@ describe 'The Task Type' do
     let(:logs) { [] }
     let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
     let(:notices) { logs.select { |log| log.level == :notice }.map { |log| log.message } }
-
+    let(:task_t) { TypeFactory.task }
     before(:each) { Puppet[:tasks] = true }
 
     context 'tasks' do
@@ -69,50 +69,24 @@ describe 'The Task Type' do
           }
         }
 
-        it 'loads task as a GenericTask subtype' do
+        it 'loads task without as a generic Task' do
           compile do
             module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
-            task_t = module_loader.load(:type, 'testmodule::hello')
-            expect(task_t).to be_a(Puppet::Pops::Types::PObjectType)
-            expect(task_t.name).to eq('Testmodule::Hello')
-            expect(task_t.parent.name).to eq('GenericTask')
-
-            task = task_t.create('foo' => 'the foo', 'fee' => 311, 'fum' => false)
-            expect(task).to be_a(Puppet::Pops::Types::Task)
-            expect(task.executable_path).to eql("#{modules_dir}/testmodule/tasks/hello")
-            expect(task.task_json).to eql('{"foo":"the foo","fee":311,"fum":false}')
-            expect(task.task_args).to eql({"foo" => "the foo", "fee"=> 311, "fum" => false})
+            task = module_loader.load(:task, 'testmodule::hello')
+            expect(task_t.instance?(task)).to be_truthy
+            expect(task.name).to eq('testmodule::hello')
+            expect(task._pcore_type).to eq(task_t)
           end
-        end
-
-        it 'evaluator loads and notices an empty GenericTask without parameters' do
-          compile(<<-PUPPET.unindent)
-            notice(Testmodule::Hello())
-          PUPPET
-          expect(notices).to eql(["Testmodule::Hello({})"])
-        end
-
-        it 'evaluator loads and notices an empty GenericTask using {}' do
-          compile(<<-PUPPET.unindent)
-            notice(Testmodule::Hello({}))
-          PUPPET
-          expect(notices).to eql(["Testmodule::Hello({})"])
-        end
-
-        it 'evaluator loads and notices a GenericTask with parameters' do
-          compile(<<-PUPPET.unindent)
-            notice(Testmodule::Hello({foo => 'the foo', fee => 311, fum => false}))
-          PUPPET
-          expect(notices).to eql(["Testmodule::Hello({'foo' => 'the foo', 'fee' => 311, 'fum' => false})"])
         end
 
         context 'without --tasks' do
           before(:each) { Puppet[:tasks] = false }
 
           it 'evaluator does not recognize generic tasks' do
-            expect{compile(<<-PUPPET.unindent)}.to raise_error(/Resource type not found: Testmodule::Hello/)
-              notice(Testmodule::Hello())
-            PUPPET
+            compile do
+              module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
+              expect(module_loader.load(:task, 'testmodule::hello')).to be_nil
+            end
           end
         end
       end
@@ -134,6 +108,7 @@ describe 'The Task Type' do
               "parameters": {
                  "message": {
                    "type": "String",
+                   "description": "the message",
                    "sensitive": false
                  },
                  "font": {
@@ -145,44 +120,21 @@ describe 'The Task Type' do
           }
         }
 
-        it 'loads a task with parameters as a Task subtype' do
+        it 'loads a task with parameters' do
           compile do
             module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
-            task_t = module_loader.load(:type, 'testmodule::hello')
-            expect(task_t).to be_a(Puppet::Pops::Types::PObjectType)
-            expect(task_t.name).to eq('Testmodule::Hello')
-            expect(task_t.parent.name).to eq('Task')
+            task = module_loader.load(:task, 'testmodule::hello')
+            expect(task_t.instance?(task)).to be_truthy
+            expect(task.name).to eq('testmodule::hello')
+            expect(task._pcore_type).to eq(task_t)
+            expect(task.supports_noop).to eql(true)
+            expect(task.puppet_task_version).to eql(1)
+            expect(task.executable).to eql("#{modules_dir}/testmodule/tasks/hello.rb")
 
-            expect(task_t['message']).to be_a(Puppet::Pops::Types::PObjectType::PAttribute)
-            expect(task_t['message'].type).to be_a(Puppet::Pops::Types::PStringType)
-            expect(task_t['supports_noop']).to be_a(Puppet::Pops::Types::PObjectType::PAttribute)
-            expect(task_t['supports_noop'].type).to be_a(Puppet::Pops::Types::PBooleanType)
-            expect(task_t['supports_noop'].kind).to eql('constant')
-            expect(task_t['supports_noop'].value).to eql(true)
-            expect(task_t['puppet_task_version'].type).to be_a(Puppet::Pops::Types::PIntegerType)
-            expect(task_t['puppet_task_version'].kind).to eql('constant')
-            expect(task_t['puppet_task_version'].value).to eql(1)
-
-            task = task_t.create('a message')
-            expect(task).to be_a(Puppet::Pops::Types::Task)
-            expect(task.executable_path).to eql("#{modules_dir}/testmodule/tasks/hello.rb")
-            expect(task.task_json).to eql('{"message":"a message"}')
-            expect(task.task_args).to eql({"message" => "a message"})
+            tp = task.parameters
+            expect(tp['message']['description']).to eql('the message')
+            expect(tp['message']['type']).to be_a(Puppet::Pops::Types::PStringType)
           end
-        end
-
-        it 'evaluator loads and notices a Task with positional parameters' do
-          compile(<<-PUPPET.unindent)
-            notice(Testmodule::Hello('a message'))
-          PUPPET
-          expect(notices).to eql(["Testmodule::Hello({'message' => 'a message'})"])
-        end
-
-        it 'evaluator loads and notices a Task with positional parameters' do
-          compile(<<-PUPPET.unindent)
-            notice(Testmodule::Hello('a message', 'helvetica'))
-          PUPPET
-          expect(notices).to eql(["Testmodule::Hello({'message' => 'a message', 'font' => 'helvetica'})"])
         end
 
         context 'with adjacent directory for init task' do
@@ -205,11 +157,15 @@ describe 'The Task Type' do
             }
           }
 
-          it 'evaluator loads and notices a Task with positional parameters' do
-            compile(<<-PUPPET.unindent)
-            notice(Testmodule('a message'))
-            PUPPET
-            expect(notices).to eql(["Testmodule({'message' => 'a message'})"])
+          it 'loads the init task with parameters and executable' do
+            compile do
+              module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
+              task = module_loader.load(:task, 'testmodule')
+              expect(task_t.instance?(task)).to be_truthy
+              expect(task.executable).to eql("#{modules_dir}/testmodule/tasks/init.sh")
+              expect(task.parameters).to be_a(Hash)
+              expect(task.parameters['message']['type']).to be_a(Puppet::Pops::Types::PStringType)
+            end
           end
         end
 
@@ -233,31 +189,16 @@ describe 'The Task Type' do
             }
           }
 
-          it 'evaluator loads and notices a Task with positional parameters' do
-            compile(<<-PUPPET.unindent)
-            notice(Testmodule::Hello('a message'))
-            PUPPET
-            expect(notices).to eql(["Testmodule::Hello({'message' => 'a message'})"])
+          it 'loads a named task with parameters and executable' do
+            compile do
+              module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
+              task = module_loader.load(:task, 'testmodule::hello')
+              expect(task_t.instance?(task)).to be_truthy
+              expect(task.executable).to eql("#{modules_dir}/testmodule/tasks/hello.sh")
+              expect(task.parameters).to be_a(Hash)
+              expect(task.parameters['message']['type']).to be_a(Puppet::Pops::Types::PStringType)
+            end
           end
-        end
-
-        it 'evaluator fails on invalid number of parameters' do
-          expect { compile(<<-PUPPET.unindent) }.to raise_error(/expects between 1 and 2 arguments, got 3/)
-            notice(Testmodule::Hello('a message', 'helvetica', 'bold'))
-          PUPPET
-        end
-
-        it 'evaluator loads and notices a Task with named parameters' do
-          compile(<<-PUPPET.unindent)
-            notice(Testmodule::Hello({message => 'a message'}))
-          PUPPET
-          expect(notices).to eql(["Testmodule::Hello({'message' => 'a message'})"])
-        end
-
-        it 'evaluator fails on invalid parameter names' do
-          expect { compile(<<-PUPPET.unindent) }.to raise_error(/expects a value for key 'message'.*unrecognized key 'echo'/m)
-            notice(Testmodule::Hello({echo => 'a message'}))
-          PUPPET
         end
 
         context 'using more than two segments in the name' do
@@ -272,19 +213,10 @@ describe 'The Task Type' do
           }
 
           it 'task is not found' do
-            expect{compile(<<-PUPPET.unindent)}.to raise_error(/Resource type not found: Testmodule::Hello::Foo/)
-              notice(Testmodule::Hello::Foo(message => 'a message'))
-            PUPPET
-          end
-        end
-
-        context 'without --tasks' do
-          before(:each) { Puppet[:tasks] = false }
-
-          it 'evaluator does not recognize generic tasks' do
-            expect{compile(<<-PUPPET.unindent)}.to raise_error(/Resource type not found: Testmodule::Hello/)
-              notice(Testmodule::Hello('a message'))
-              PUPPET
+            compile do
+              module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
+              expect(module_loader.load(:task, 'testmodule::hello::foo')).to be_nil
+            end
           end
         end
 
@@ -308,7 +240,7 @@ describe 'The Task Type' do
           it 'fails with unrecognized key error' do
             compile do
               module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
-              expect{module_loader.load(:type, 'testmodule::hello')}.to raise_error(
+              expect{module_loader.load(:task, 'testmodule::hello')}.to raise_error(
                 /The metadata for task testmodule::hello has wrong type, unrecognized key 'supports_nop'/)
             end
           end
@@ -334,7 +266,7 @@ describe 'The Task Type' do
           it 'fails with pattern mismatch error' do
             compile do
               module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
-              expect{module_loader.load(:type, 'testmodule::hello')}.to raise_error(
+              expect{module_loader.load(:task, 'testmodule::hello')}.to raise_error(
                 /entry 'parameters' key of entry 'Message' expects a match for Pattern\[\/\\A\[a-z\]\[a-z0-9_\]\*\\z\/\], got 'Message'/)
             end
           end
@@ -361,116 +293,13 @@ describe 'The Task Type' do
           it 'fails with type mismatch error' do
             compile do
               module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
-              expect{module_loader.load(:type, 'testmodule::hello')}.to raise_error(
+              expect{module_loader.load(:task, 'testmodule::hello')}.to raise_error(
                 /entry 'puppet_task_version' expects an Integer value, got String/)
             end
           end
         end
       end
-
-      context 'with defined type' do
-        let(:testmodule) {
-          {
-            'tasks' => {
-              'hello.rb' => <<-RUBY,
-            require 'json'
-            args = JSON.parse(STDIN.read)
-            puts({message: args['message']}.to_json)
-            exit 0
-            RUBY
-            },
-            'types' => {
-              'hello.pp' => <<-PUPPET
-            type Testmodule::Hello = Task {
-              constants => {
-                supports_noop => true,
-                executable => 'hello.rb'
-              },
-              attributes => {
-                message => String,
-                font => {
-                  type => Optional[String],
-                  value => undef
-                }
-              }
-            }
-            PUPPET
-            }
-          }
-        }
-
-        it 'loads a task defined as a Type' do
-          compile do
-            module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
-            task_t = module_loader.load(:type, 'testmodule::hello').resolve(module_loader)
-            expect(task_t).to be_a(Puppet::Pops::Types::PObjectType)
-            expect(task_t.name).to eq('Testmodule::Hello')
-            task = task_t.create('a message')
-            expect(task.executable_path).to eql("#{modules_dir}/testmodule/tasks/hello.rb")
-          end
-        end
-
-        it 'evaluator loads and notices a Task with named parameters' do
-          compile(<<-PUPPET.unindent)
-            notice(Testmodule::Hello({message => 'a message'}))
-            PUPPET
-          expect(notices).to eql(["Testmodule::Hello({'message' => 'a message'})"])
-        end
-
-        context 'without --tasks' do
-          before(:each) { Puppet[:tasks] = false }
-
-          it 'evaluator fails to load Task' do
-            expect { compile(<<-PUPPET.unindent) }.to raise_error(/unresolved type 'Task'/)
-            notice(Testmodule::Hello({message => 'a message'}))
-            PUPPET
-          end
-        end
-      end
     end
-  end
-
-  it 'can present itself as json' do
-    Puppet[:tasks] = true
-
-    code = <<-PUPPET.unindent
-    
-      type Service::Action = Enum[
-        # Start the service
-        'start',
-        # Stop the service,
-        'stop',
-        # Restart the service
-        'restart',
-        # Ensure that the service is enabled
-        'enable',
-        # Disable the service
-        'disable',
-        # Report the current status of the service
-        'Status'
-      ]
-
-      # @summary Manage and inspect the state of services
-      # @parameter action The operation (start, stop, restart, enable, disable, status) to perform on the service
-      # @parameter service The name of the service to install
-      # @parameter provider The provider to use to manage or inspect the service, defaults to the system service manager
-      type Service::Init = Task {
-        constants => {
-          supports_noop => true,
-          input_method => 'stdin'
-        },
-        attributes => {
-          action => Service::Action,
-          service => String[1],
-          provider => {
-            type => String[1],
-            value => 'system'
-          }
-        }
-      }
-      notice(Service::Init('restart', 'httpd').task_json())
-    PUPPET
-    expect(eval_and_collect_notices(code)[0]).to eql('{"action":"restart","service":"httpd"}')
   end
 end
 end

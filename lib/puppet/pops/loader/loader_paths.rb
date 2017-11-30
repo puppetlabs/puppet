@@ -28,9 +28,10 @@ module LoaderPaths
         # When wanted also add FunctionPath3x to load 3x functions
     when :plan
       result << PlanPathPP.new(loader)
+    when :task
+      result << TaskPath.new(loader) if Puppet[:tasks] && loader.loadables.include?(:task)
     when :type
       result << TypePathPP.new(loader) if loader.loadables.include?(:type_pp)
-      result << TaskPath.new(loader) if Puppet[:tasks] && loader.loadables.include?(:task)
     when :resource_type_pp
       result << ResourceTypeImplPP.new(loader) if loader.loadables.include?(:resource_type_pp)
     else

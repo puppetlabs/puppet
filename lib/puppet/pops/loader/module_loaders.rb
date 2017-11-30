@@ -178,6 +178,16 @@ module ModuleLoaders
             return smart_path.nil? ? nil : instantiate(smart_path, typed_name, origin)
           end
 
+        when :task
+          if !global?
+            # Global name must be the name of the module
+            return nil unless name_parts[0] == module_name
+
+            # Look for the special 'init' Task
+            origin, smart_path = find_existing_path(init_task_name)
+            return smart_path.nil? ? nil : instantiate(smart_path, typed_name, origin)
+          end
+
         when :type
           if !global?
             # Global name must be the name of the module
@@ -185,16 +195,7 @@ module ModuleLoaders
 
             # Look for the special 'init_typeset' TypeSet
             origin, smart_path = find_existing_path(init_typeset_name)
-
-            # The init_typeset has no special meaning unless found under the 'types' folder
-            unless smart_path.is_a?(LoaderPaths::TypePathPP)
-
-              # Look for the special 'init' Task
-              origin, smart_path = find_existing_path(init_type_name)
-
-              # The init has no special meaning unless found under the 'tasks' folder
-              return smart_path.is_a?(LoaderPaths::TaskPath) ? instantiate(smart_path, typed_name, origin) : nil
-            end
+            return nil if smart_path.nil?
 
             value = smart_path.instantiator.create(self, typed_name, origin, get_contents(origin))
             if value.is_a?(Types::PTypeSetType)
@@ -336,8 +337,8 @@ module ModuleLoaders
 
     # @return [TypedName] the fake typed name that maps to the path of an init[arbitrary extension]
     #   file that represents a task named after the module
-    def init_type_name
-      @init_type_name ||= TypedName.new(:type, "#{module_name}::init")
+    def init_task_name
+      @init_task_name ||= TypedName.new(:task, "#{module_name}::init")
     end
 
     # @return [TypedName] the fake typed name that maps to the path of an init.pp file that represents

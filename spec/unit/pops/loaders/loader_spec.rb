@@ -155,11 +155,11 @@ describe 'The Loader' do
           let(:tasks_feature) { true }
 
           it 'finds global tasks in environment' do
-            expect(loader.discover(:type)).to include(tn(:type, 'globtask'))
+            expect(loader.discover(:task)).to include(tn(:task, 'globtask'))
           end
 
           it 'finds tasks prefixed with Environment in environment' do
-            expect(loader.discover(:type)).to include(tn(:type, 'environment::envtask'))
+            expect(loader.discover(:task)).to include(tn(:task, 'environment::envtask'))
           end
         end
 
@@ -375,19 +375,29 @@ describe 'The Loader' do
                 contain_exactly(tn(:plan, 'a::aplan')))
             end
 
-            it 'private loader finds types and tasks in all modules' do
+            it 'private loader finds types in all modules' do
               expect(loader.private_loader.discover(:type) { |t| t.name =~ /^.::.*\z/ }).to(
-                contain_exactly(tn(:type, 'a::atype'), tn(:type, 'b::atype'), tn(:type, 'c::atype'), tn(:type, 'a::atask'), tn(:type, 'b::atask'), tn(:type, 'c::foo')))
+                contain_exactly(tn(:type, 'a::atype'), tn(:type, 'b::atype'), tn(:type, 'c::atype')))
             end
 
-            it 'module loader finds types and tasks only in itself' do
+            it 'private loader finds tasks in all modules' do
+              expect(loader.private_loader.discover(:task) { |t| t.name =~ /^.::.*\z/ }).to(
+                contain_exactly(tn(:task, 'a::atask'), tn(:task, 'b::atask'), tn(:task, 'c::foo')))
+            end
+
+            it 'module loader finds types only in itself' do
               expect(Loaders.find_loader('a').discover(:type) { |t| t.name =~ /^.::.*\z/ }).to(
-                contain_exactly(tn(:type, 'a::atype'), tn(:type, 'a::atask')))
+                contain_exactly(tn(:type, 'a::atype')))
+            end
+
+            it 'module loader finds tasks only in itself' do
+              expect(Loaders.find_loader('a').discover(:task) { |t| t.name =~ /^.::.*\z/ }).to(
+                contain_exactly(tn(:task, 'a::atask')))
             end
 
             it 'module loader does not consider files with .md and .conf extension to be tasks' do
-              expect(Loaders.find_loader('c').discover(:type) { |t| t.name =~ /(?:foo|fee|fum)\z/ }).to(
-                contain_exactly(tn(:type, 'c::foo')))
+              expect(Loaders.find_loader('c').discover(:task) { |t| t.name =~ /(?:foo|fee|fum)\z/ }).to(
+                contain_exactly(tn(:task, 'c::foo')))
             end
 
             context 'and an environment without directory' do
@@ -397,7 +407,13 @@ describe 'The Loader' do
               it 'an EmptyLoader is used and module loader finds types' do
                 Puppet::Pops::Loader::ModuleLoaders::EmptyLoader.any_instance.expects(:find).at_least_once.returns(nil)
                 expect(Loaders.find_loader('a').discover(:type) { |t| t.name =~ /^.::.*\z/ }).to(
-                  contain_exactly(tn(:type, 'a::atype'), tn(:type, 'a::atask')))
+                  contain_exactly(tn(:type, 'a::atype')))
+              end
+
+              it 'an EmptyLoader is used and module loader finds tasks' do
+                Puppet::Pops::Loader::ModuleLoaders::EmptyLoader.any_instance.expects(:find).at_least_once.returns(nil)
+                expect(Loaders.find_loader('a').discover(:task) { |t| t.name =~ /^.::.*\z/ }).to(
+                  contain_exactly(tn(:task, 'a::atask')))
               end
             end
           end
