@@ -1102,13 +1102,23 @@ describe "The lookup function" do
               glob_c: value glob_a
               YAML
             'b.yaml' => <<-YAML.unindent
-              glob_b:
-                c: value glob_b.c
-                d: value glob_b.d
+              glob_d:
+                a: value glob_d.a
+                b: value glob_d.b
             YAML
 
           }
         }
+      end
+
+      it 'finds environment data using globs' do
+        expect(lookup('glob_a')).to eql('value glob_a')
+        expect(warnings).to be_empty
+      end
+
+      it 'finds environment data using interpolated globs' do
+        expect(lookup('glob_d.a')).to eql('value glob_d.a')
+        expect(warnings).to be_empty
       end
     end
 
