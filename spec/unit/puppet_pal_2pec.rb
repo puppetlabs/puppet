@@ -740,6 +740,18 @@ describe 'Puppet Pal' do
           expect(result).to eq([true, true])
         end
 
+        it '"TaskSignature#runnable_with?" calls a given lambda if there is an error in a generic task' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler do |c|
+              signature = c.task_signature('a::atask')
+              local_result = 'not yay'
+              signature.runnable_with?('string_param' => /not data/) {|error| local_result = error }
+              local_result
+            end
+          end
+          expect(result).to match(/Task a::atask:\s+entry 'string_param' expects a Data value, got Regexp/m)
+        end
+
         it '"task_signature" returns the signatures of a task defined with metadata' do
           result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
             ctx.with_script_compiler do |c|
@@ -754,6 +766,18 @@ describe 'Puppet Pal' do
             end
           end
           expect(result).to eq([true, false, 'b::atask', 'A string parameter', 'test task b::atask', Puppet::Pops::Types::PIntegerType::DEFAULT])
+        end
+
+        it '"TaskSignature#runnable_with?" calls a given lambda if there is an error' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler do |c|
+              signature = c.task_signature('b::atask')
+              local_result = 'not yay'
+              signature.runnable_with?('string_param' => 10) {|error| local_result = error }
+              local_result
+            end
+          end
+          expect(result).to match(/Task b::atask:\s+parameter 'string_param' expects a String value, got Integer/m)
         end
 
         it '"task_signature" returns nil if task is not found' do

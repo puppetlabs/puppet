@@ -356,7 +356,11 @@ module Pal
       @task = task
     end
 
-    # Returns whether or not the given arguments are acceptable when running the task
+    # Returns whether or not the given arguments are acceptable when running the task.
+    # In addition to returning the boolean outcome, if a block is given, it is called with a string of formatted
+    # error messages that describes the difference between what was given and what is expected. The error message may
+    # have multiple lines of text, and each line is indented one space.
+    #
     # @param args_hash [Hash] a hash mapping parameter names to argument values
     # @yieldparam [String] a formatted error message if a type mismatch occurs that explains the mismatch
     # @return [Boolean] if the given arguments are acceptable when running the task
@@ -370,7 +374,18 @@ module Pal
         @task.parameters.each_pair { |k, v| key_to_type[k] = v['type'] }
         Puppet::Pops::Types::TypeFactory.struct(key_to_type)
       end
-      params_type.instance?(args_hash)
+      return true if params_type.instance?(args_hash)
+
+      if block_given?
+        tm = Puppet::Pops::Types::TypeMismatchDescriber.singleton
+        error = if params.nil?
+          tm.describe_mismatch('', params_type, Puppet::Pops::Types::TypeCalculator.infer_set(args_hash))
+        else
+          tm.describe_struct_signature(params_type, args_hash).flatten.map {|e| e.format }.join("\n")
+        end
+        yield "Task #{@task.name}:\n#{error}"
+      end
+      false
     end
 
     # Returns the Task instance as a hash
