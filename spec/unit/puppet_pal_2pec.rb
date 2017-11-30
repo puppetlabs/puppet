@@ -728,16 +728,32 @@ describe 'Puppet Pal' do
       end
 
       context 'supports tasks such that' do
-        it '"task_signature" returns the signatures of a task' do
+        it '"task_signature" returns the signatures of a generic task' do
           result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
             ctx.with_script_compiler do |c|
               signature = c.task_signature('a::atask')
-              [ signature.runnable_with?([{'whatever' => 10}]),
-                signature.runnable_with?([{'anything_goes' => 'foo'}])
+              [ signature.runnable_with?('whatever' => 10),
+                signature.runnable_with?('anything_goes' => 'foo')
               ]
             end
           end
           expect(result).to eq([true, true])
+        end
+
+        it '"task_signature" returns the signatures of a task defined with metadata' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler do |c|
+              signature = c.task_signature('b::atask')
+              [ signature.runnable_with?('string_param' => 'foo', 'int_param' => 10),
+                signature.runnable_with?('anything_goes' => 'foo'),
+                signature.task_hash['name'],
+                signature.task_hash['parameters']['string_param']['description'],
+                signature.task.description,
+                signature.task.parameters['int_param']['type'],
+              ]
+            end
+          end
+          expect(result).to eq([true, false, 'b::atask', 'A string parameter', 'test task b::atask', Puppet::Pops::Types::PIntegerType::DEFAULT])
         end
 
         it '"task_signature" returns nil if task is not found' do
@@ -754,7 +770,7 @@ describe 'Puppet Pal' do
           end
           expect(result.is_a?(Array)).to eq(true)
           expect(result.all? {|s| s.is_a?(Puppet::Pops::Loader::TypedName) }).to eq(true)
-          expect(result.map {|tn| tn.name}).to eq(['a::atask', 'b::atask'])
+          expect(result.map {|tn| tn.name}).to contain_exactly('a::atask', 'b::atask')
         end
 
         it '"list_tasks" filters on name based on a given regexp' do

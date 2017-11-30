@@ -528,6 +528,10 @@ module TypeFactory
     @target_t ||= TypeParser.singleton.parse('Target')
   end
 
+  def self.task
+    @task_t ||= TypeParser.singleton.parse('Task')
+  end
+
   # Produces a type for URI[String or Hash]
   # @api public
   #
