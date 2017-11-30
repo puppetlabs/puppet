@@ -113,7 +113,6 @@ module Puppet
   end
 
   require 'puppet/parser/ast/pops_bridge'
-  require 'puppet/bindings'
   require 'puppet/functions'
 
   Puppet::Pops::Model.register_pcore_types
