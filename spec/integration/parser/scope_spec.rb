@@ -316,6 +316,19 @@ describe "Two step scoping for variables" do
       end
     end
 
+    it 'resolves a qualified name in class parameter scope' do
+      expect_the_message_to_be('Does it work? Yes!') do <<-PUPPET
+        class a ( 
+          $var1 = 'Does it work?',
+          $var2 = "${a::var1} Yes!"
+        ) { 
+          notify { 'something': message => $var2 }
+        }
+        include a
+        PUPPET
+      end
+    end
+
     it "finds values in its inherited scope when the inherited class is qualified to the top" do
       expect_the_message_to_be('foo_msg') do <<-MANIFEST
             node default {
