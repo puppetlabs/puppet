@@ -69,7 +69,7 @@ describe 'The Task Type' do
           }
         }
 
-        it 'loads task without as a generic Task' do
+        it 'loads task without metadata as a generic Task' do
           compile do
             module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
             task = module_loader.load(:task, 'testmodule::hello')
@@ -241,7 +241,7 @@ describe 'The Task Type' do
             compile do
               module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
               expect{module_loader.load(:task, 'testmodule::hello')}.to raise_error(
-                /The metadata for task testmodule::hello has wrong type, unrecognized key 'supports_nop'/)
+                /Failed to load metadata for task testmodule::hello:.*unrecognized key 'supports_nop'/)
             end
           end
         end

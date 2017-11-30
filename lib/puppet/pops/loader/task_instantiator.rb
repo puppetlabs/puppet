@@ -37,8 +37,8 @@ class TaskInstantiator
       rescue Types::TypeAssertionError => ex
         # Not strictly a parser error but from the users perspective, the file content didn't parse properly. The
         # ParserError also conveys file info (even though line is unknown)
-        pfx = _('The metadata for task %{name}') % { :name => name }
-        raise Puppet::ParseError.new(ex.message.sub(/\ATask initializer/, pfx), metadata)
+        msg = _('Failed to load metadata for task %{name}: %{reason}') % { :name => name, :reason => ex.message }
+        raise Puppet::ParseError.new(msg, metadata)
       end
     end
   end
