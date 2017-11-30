@@ -1128,11 +1128,12 @@ describe "The lookup function" do
         ---
         version: 5
         hierarchy:
-          - name: Globs
+          - name: Uris
             uris:
               - "http://test.example.com"
               - "/some/arbitrary/path"
               - "urn:with:opaque:path"
+              - "dothis%20-f%20bar"
             data_hash: mod::uri_test_func
         YAML
       end
@@ -1155,7 +1156,8 @@ describe "The lookup function" do
       end
 
       it 'The uris are propagated in the options hash' do
-        expect(lookup('uri', 'merge' => 'unique')).to eql(["http://test.example.com", "/some/arbitrary/path", "urn:with:opaque:path"])
+        expect(lookup('uri', 'merge' => 'unique')).to eql(
+          %w(http://test.example.com /some/arbitrary/path urn:with:opaque:path dothis%20-f%20bar))
         expect(warnings).to be_empty
       end
 
@@ -1165,8 +1167,8 @@ describe "The lookup function" do
         ---
         version: 5
         hierarchy:
-          - name: Globs
-            uri: "}#!@"
+          - name: Uris
+            uri: "dothis -f bar"
             data_hash: mod::uri_test_func
           YAML
         end
