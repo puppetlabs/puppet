@@ -1122,6 +1122,61 @@ describe "The lookup function" do
       end
     end
 
+    context 'and an environment Hiera v5 configuration using uris' do
+      let(:env_hiera_yaml) do
+        <<-YAML.unindent
+        ---
+        version: 5
+        hierarchy:
+          - name: Globs
+            uris:
+              - "http://test.example.com"
+              - "/some/arbitrary/path"
+              - "urn:with:opaque:path"
+            data_hash: mod::uri_test_func
+        YAML
+      end
+
+      let(:env_modules) do
+        {
+          'mod' => { 'lib' => { 'puppet' => { 'functions' => { 'mod' => { 'uri_test_func.rb' => <<-RUBY } } } } }
+            Puppet::Functions.create_function(:'mod::uri_test_func') do
+              dispatch :uri_test_func do
+                param 'Hash', :options
+                param 'Puppet::LookupContext', :context
+              end
+
+              def uri_test_func(options, context)
+                { 'uri' => [ options['uri'] ] }
+              end
+            end
+            RUBY
+        }
+      end
+
+      it 'The uris are propagated in the options hash' do
+        expect(lookup('uri', 'merge' => 'unique')).to eql(["http://test.example.com", "/some/arbitrary/path", "urn:with:opaque:path"])
+        expect(warnings).to be_empty
+      end
+
+      context 'and a uri uses bad syntax' do
+        let(:env_hiera_yaml) do
+          <<-YAML.unindent
+        ---
+        version: 5
+        hierarchy:
+          - name: Globs
+            uri: "}#!@"
+            data_hash: mod::uri_test_func
+          YAML
+        end
+
+        it 'an attempt to lookup raises InvalidURIError' do
+          expect{ lookup('uri', 'merge' => 'unique') }.to raise_error(/bad URI/)
+        end
+      end
+    end
+
     context 'and an environment Hiera v5 configuration using mapped_paths' do
       let(:scope_additions) do
         {
