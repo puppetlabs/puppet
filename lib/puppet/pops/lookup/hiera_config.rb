@@ -543,8 +543,8 @@ class HieraConfigV5 < HieraConfig
     tf = Types::TypeFactory
     nes_t = Types::PStringType::NON_EMPTY
 
-    # Need alias here to avoid ridiculously long regexp burp in case of validation errors.
-    uri_t = Pcore::TYPE_URI_ALIAS
+    # Validated using Ruby URI implementation
+    uri_t = Types::PStringType::NON_EMPTY
 
     # The option name must start with a letter and end with a letter or digit. May contain underscore and dash.
     option_name_t = tf.pattern(/\A[A-Za-z](:?[0-9A-Za-z_-]*[0-9A-Za-z])?\z/)

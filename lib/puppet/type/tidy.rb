@@ -260,8 +260,10 @@ Puppet::Type.newtype(:tidy) do
     end
     found_files = files.find_all { |path| tidy?(path) }.collect { |path| mkfile(path) }
     result = found_files.each { |file| debug "Tidying #{file.ref}" }.sort { |a,b| b[:path] <=> a[:path] }
-    #TRANSLATORS "Tidy" is a program name and should not be translated
-    notice _("Tidying %{count} files") % { count: found_files.size }
+    if found_files.size > 0
+      #TRANSLATORS "Tidy" is a program name and should not be translated
+      notice _("Tidying %{count} files") % { count: found_files.size }
+    end
 
     # No need to worry about relationships if we don't have rmdirs; there won't be
     # any directories.

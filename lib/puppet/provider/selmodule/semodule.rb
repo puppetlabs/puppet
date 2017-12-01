@@ -118,11 +118,13 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
   end
 
   def selmodversion_loaded
-    lines = ()
+    selmod_output = []
+    selmodule_cmd = "#{command(:semodule)} --list"
     begin
-      execpipe("#{command(:semodule)} --list") do |output|
+      execpipe(selmodule_cmd) do |output|
         output.each_line do |line|
           line.chomp!
+          selmod_output << line
           bits = line.split
           if bits[0] == @resource[:name]
             self.debug "load version #{bits[1]}"
@@ -131,7 +133,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
         end
       end
     rescue Puppet::ExecutionFailure
-      raise Puppet::ExecutionFailure, "Could not list policy modules: #{lines.join(' ').chomp!}", $!.backtrace
+      raise Puppet::ExecutionFailure, _("Could not list policy modules: \"%{selmodule_command}\" failed with \"%{selmod_output}\"") % { selmodule_command: selmodule_cmd, selmod_output: selmod_output.join(' ') }
     end
     nil
   end

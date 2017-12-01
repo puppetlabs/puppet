@@ -665,7 +665,7 @@ Performance/DoubleStartEndWith:
   Enabled: false
 
 Performance/RedundantSortBy:
-  Enabled: false
+  Enabled: true
 
 Performance/TimesMap:
   Enabled: false
@@ -715,9 +715,8 @@ Layout/MultilineMethodDefinitionBraceLayout:
 Layout/SpaceInsidePercentLiteralDelimiters:
   Enabled: false
 
-# TODO PUP-7948
 Lint/EmptyExpression:
-  Enabled: false
+  Enabled: true
 
 Lint/EmptyWhen:
   Enabled: false

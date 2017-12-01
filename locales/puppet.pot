@@ -5940,6 +5940,10 @@ msgstr ""
 msgid "Could not prefetch %{resource} provider '%{name}' target '%{target}': %{detail}. Treating as empty"
 msgstr ""
 
+#: ../lib/puppet/provider/selmodule/semodule.rb:136
+msgid "Could not list policy modules: \"%{selmodule_command}\" failed with \"%{selmod_output}\""
+msgstr ""
+
 #: ../lib/puppet/reference/indirection.rb:22
 msgid "Could not build docs for indirector %{name}, terminus %{terminus}: could not locate terminus."
 msgstr ""
