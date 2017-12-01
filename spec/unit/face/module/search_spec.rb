@@ -64,6 +64,17 @@ describe "puppet module search" do
       expect(subject.render(results, ['apache', {}])).to match(/tag2/)
     end
 
+    it 'should mark deprecated modules in search results' do
+      results = {
+        :result => :success,
+        :answers => [
+          {'full_name' => 'puppetlabs-corosync', 'deprecated_at' => Time.new, 'author' => 'Author', 'desc' => 'Summary', 'tag_list' => ['tag1', 'tag2'] },
+        ]
+      }
+
+      expect(subject.render(results, ['apache', {}])).to match(/puppetlabs-corosync.*DEPRECATED/i)
+    end
+
     it 'should elide really long descriptions' do
       results = {
         :result => :success,

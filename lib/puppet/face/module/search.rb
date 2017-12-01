@@ -49,8 +49,10 @@ Puppet::Face.define(:module, '1.0.0') do
       terminal_width = [Puppet::Util::Terminal.width, min_width].max
 
       columns = results[:answers].inject(min_widths) do |hash, result|
+        deprecated_buffer = result['deprecated_at'].nil? ? 0 : 11 # ' DEPRECATED'.length
+
         {
-          'full_name' => [ hash['full_name'], result['full_name'].length          ].max,
+          'full_name' => [ hash['full_name'], result['full_name'].length + deprecated_buffer ].max,
           'desc'      => [ hash['desc'],      result['desc'].length               ].max,
           'author'    => [ hash['author'],    "@#{result['author']}".length       ].max,
           'tag_list'  => [ hash['tag_list'],  result['tag_list'].join(' ').length ].max,
@@ -86,6 +88,7 @@ Puppet::Face.define(:module, '1.0.0') do
       format % [ headers['full_name'], headers['desc'], headers['author'], headers['tag_list'] ] +
       results[:answers].map do |match|
         name, desc, author, keywords = %w{full_name desc author tag_list}.map { |k| match[k] }
+        name += " #{colorize(:red, 'DEPRECATED')}" unless match['deprecated_at'].nil?
         desc = desc[0...(columns['desc'] - 3)] + '...' if desc.length > columns['desc']
         highlight[format % [ name.sub('/', '-'), desc, "@#{author}", [keywords].flatten.join(' ') ]]
       end.join
