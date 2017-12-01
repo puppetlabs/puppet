@@ -211,6 +211,20 @@ static_catalogs=false
       it "logs a warning, but processes the main settings if there are any extraneous settings" do
         content << "dog=arf\n"
         content << "cat=mew\n"
+        loader_from(:filesystem => [envdir, manifestdir, modulepath].flatten,
+                    :directory => envdir) do |loader|
+          expect(loader.get("env1")).to environment(:env1).
+            with_manifest(manifestdir.path).
+            with_modulepath(modulepath.map(&:path)).
+            with_config_version(File.expand_path('/some/script'))
+        end
+
+        expect(@logs.map(&:to_s).join).to match(/Invalid.*at.*\/env1.*unknown setting.*dog, cat/)
+      end
+
+      it "logs a warning, but processes the main settings if there are any ignored sections" do
+        content << "dog=arf\n"
+        content << "cat=mew\n"
         content << "[ignored]\n"
         content << "cow=moo\n"
         loader_from(:filesystem => [envdir, manifestdir, modulepath].flatten,
@@ -221,6 +235,7 @@ static_catalogs=false
             with_config_version(File.expand_path('/some/script'))
         end
 
+        expect(@logs.map(&:to_s).join).to match(/Invalid.*at.*\/env1.*The following sections are being ignored: 'ignored'/)
         expect(@logs.map(&:to_s).join).to match(/Invalid.*at.*\/env1.*unknown setting.*dog, cat/)
       end
 
