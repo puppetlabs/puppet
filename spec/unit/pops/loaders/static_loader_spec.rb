@@ -27,7 +27,7 @@ describe 'the static loader' do
 
   context 'provides access to resource types built into puppet' do
     %w{
-      Auegas
+      Augeas
       Component
       Computer
       Cron
