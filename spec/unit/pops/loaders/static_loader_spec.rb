@@ -24,7 +24,7 @@ describe 'the static loader' do
     let(:loader) { loader = Puppet::Pops::Loader::StaticLoader.new() }
 
     %w{
-      Auegas
+      Augeas
       Component
       Computer
       Cron
