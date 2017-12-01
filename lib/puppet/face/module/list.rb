@@ -150,7 +150,7 @@ Puppet::Face.define(:module, '1.0.0') do
     error_display_order = [:non_semantic_version, :version_mismatch, :missing]
     error_display_order.each do |type|
       unless @unmet_deps[type].empty?
-        @unmet_deps[type].keys.sort_by {|dep| dep }.each do |dep|
+        @unmet_deps[type].keys.sort.each do |dep|
           name    = dep.gsub('/', '-')
           errors  = @unmet_deps[type][dep][:errors]
           version = @unmet_deps[type][dep][:version]

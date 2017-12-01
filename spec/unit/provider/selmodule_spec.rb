@@ -69,5 +69,11 @@ describe provider_class do
       @provider.expects(:execpipe).with("/usr/sbin/semodule --list").yields StringIO.new("bar\t1.2.3\nfoo\t4.4.4\nbang\t1.0.0\n")
       expect(@provider.selmodversion_loaded).to eq("4.4.4")
     end
+
+    it 'should return raise an exception when running selmodule raises an exception' do
+      @provider.expects(:command).with(:semodule).returns "/usr/sbin/semodule"
+      @provider.expects(:execpipe).with("/usr/sbin/semodule --list").yields("this is\nan error").raises(Puppet::ExecutionFailure, 'it failed')
+      expect {@provider.selmodversion_loaded}.to raise_error(Puppet::ExecutionFailure, /Could not list policy modules: ".*" failed with "this is an error"/)
+    end
   end
 end
