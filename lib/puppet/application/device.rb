@@ -155,8 +155,7 @@ you can specify '--server <servername>' as an argument.
   device run against only that device/certificate.
 
 * --user:
-  The user to run as. '--user=root' is required, even when run as root,
-  for runs that create device certificates or keys.
+  The user to run as.
 
 * --verbose:
   Turn on verbose reporting.
