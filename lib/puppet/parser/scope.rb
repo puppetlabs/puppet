@@ -611,6 +611,7 @@ class Puppet::Parser::Scope
       begin
         qs = qualified_scope(class_name)
         unless qs.nil?
+          return qs.get_local_variable(leaf_name) if qs.has_local_variable?(leaf_name)
           iscope = qs.inherited_scope
           return lookup_qualified_variable("#{iscope.source.name}::#{leaf_name}", options) unless iscope.nil?
         end
@@ -621,6 +622,16 @@ class Puppet::Parser::Scope
     end
     # report with leading '::' by using empty class_name
     return handle_not_found('', fqn, options)
+  end
+
+  # @api private
+  def has_local_variable?(name)
+    @ephemeral.last.include?(name)
+  end
+
+  # @api private
+  def get_local_variable(name)
+    @ephemeral.last[name]
   end
 
   def handle_not_found(class_name, variable_name, position, reason = nil)
