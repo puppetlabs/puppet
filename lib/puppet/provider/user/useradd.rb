@@ -42,7 +42,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
       end
     }
 
-  optional_commands :localadd => "luseradd"
+  optional_commands :localadd => "luseradd", :localdelete => "luserdel", :localmodify => "lusermod", :localpassword => "lchage"
   has_feature :libuser if Puppet.features.libuser?
 
   def exists?
@@ -186,18 +186,43 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     cmd << @resource[:name]
   end
 
+  def modifycmd(param, value)
+    if @resource.forcelocal?
+      cmd = [command(param.to_s =~ /password_.+_age/ ? :localpassword : :localmodify)]
+      @custom_environment = Puppet::Util::Libuser.getenv
+    else
+      cmd = [command(param.to_s =~ /password_.+_age/ ? :password : :modify)]
+    end
+    cmd << flag(param) << value
+    cmd += check_allow_dup
+    cmd << @resource[:name]
+
+    cmd
+  end
+
   def deletecmd
-    cmd = [command(:delete)]
+    if @resource.forcelocal?
+      cmd = [command(:localdelete)]
+      @custom_environment = Puppet::Util::Libuser.getenv
+    else
+      cmd = [command(:delete)]
+    end
     cmd += @resource.managehome? ? ['-r'] : []
     cmd << @resource[:name]
   end
 
   def passcmd
+    if @resource.forcelocal?
+      cmd = command(:localpassword)
+      @custom_environment = Puppet::Util::Libuser.getenv
+    else
+      cmd = command(:password)
+    end
     age_limits = [:password_min_age, :password_max_age, :password_warn_days].select { |property| @resource.should(property) }
     if age_limits.empty?
       nil
     else
-      [command(:password),age_limits.collect { |property| [flag(property), @resource.should(property)]}, @resource[:name]].flatten
+      [cmd, age_limits.collect { |property| [flag(property), @resource.should(property)]}, @resource[:name]].flatten
     end
   end
 
