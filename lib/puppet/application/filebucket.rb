@@ -252,7 +252,15 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
         path = options[:bucket] || Puppet[:bucketdir]
         @client = Puppet::FileBucket::Dipper.new(:Path => path)
       else
-        @client = Puppet::FileBucket::Dipper.new(:Server => Puppet[:server])
+        if Puppet[:server_list] && !Puppet[:server_list].empty?
+          server = Puppet[:server_list].first
+          @client = Puppet::FileBucket::Dipper.new(
+            :Server => server[0],
+            :Port => server[1]
+          )
+        else
+          @client = Puppet::FileBucket::Dipper.new(:Server => Puppet[:server])
+        end
       end
     rescue => detail
       Puppet.log_exception(detail)
