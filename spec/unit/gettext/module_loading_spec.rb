@@ -19,8 +19,16 @@ describe Puppet::ModuleTranslations do
       :environment => mock("environment"))
     }
 
-    it 'should attempt to load translations for each module given' do
+    it "should attempt to load translations for each module that has them" do
+      module_a.expects(:has_translations?).returns(true)
       Puppet::GettextConfig.expects(:load_translations).with("foo-mod_a", File.join(modpath, "mod_a", "locales"), :po).returns(true)
+
+      Puppet::ModuleTranslations.load_from_modulepath([module_a])
+    end
+
+    it "should not attempt to load translations for modules that don't have them" do
+      module_a.expects(:has_translations?).returns(false)
+      Puppet::GettextConfig.expects(:load_translations).never
 
       Puppet::ModuleTranslations.load_from_modulepath([module_a])
     end
