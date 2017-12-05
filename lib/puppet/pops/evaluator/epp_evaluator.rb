@@ -71,6 +71,19 @@ class Puppet::Pops::Evaluator::EppEvaluator
       enforce_parameters = true
     end
 
+    # filter out all qualified names and set them in qualified_variables
+    # only pass unqualified (filtered) variable names to the the template
+    filtered_args = {}
+    template_args.each_pair do |k, v|
+      if k =~ /::/
+        k = k[2..-1] if k.start_with?('::')
+        scope[k] = v
+      else
+        filtered_args[k] = v
+      end
+    end
+    template_args = filtered_args
+
     # inline_epp() logic sees all local variables, epp() all global
     if use_global_scope_only
       scope.with_global_scope do |global_scope|
