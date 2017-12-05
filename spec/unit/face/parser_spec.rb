@@ -72,7 +72,7 @@ describe Puppet::Face[:parser, :current] do
           expect { parser.validate(manifest) }.to exit_with(1)
         end
 
-        expect(@logs.join).to match(/environment special.*Syntax error at end of file/)
+        expect(@logs.join).to match(/environment special.*Syntax error at end of input/)
       end
 
     end
@@ -117,7 +117,7 @@ describe Puppet::Face[:parser, :current] do
       output = parser.dump({ :e => '{ invalid =>' })
 
       expect(output).to eq("")
-      expect(@logs[0].message).to eq("Syntax error at end of file")
+      expect(@logs[0].message).to eq("Syntax error at end of input")
       expect(@logs[0].level).to eq(:err)
     end
 
