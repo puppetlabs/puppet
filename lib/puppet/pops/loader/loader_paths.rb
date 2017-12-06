@@ -74,6 +74,10 @@ module LoaderPaths
       @loader.path
     end
 
+    def lib_root?
+      @loader.lib_root?
+    end
+
     # Effective path is the generic path + the name part(s) + extension.
     #
     def effective_path(typed_name, start_index_in_name)
@@ -162,10 +166,11 @@ module LoaderPaths
   end
 
   class FunctionPath4x < RubySmartPath
-    FUNCTION_PATH_4X = File.join('lib', 'puppet', 'functions').freeze
+    SYSTEM_FUNCTION_PATH_4X = File.join('puppet', 'functions').freeze
+    FUNCTION_PATH_4X = File.join('lib', SYSTEM_FUNCTION_PATH_4X).freeze
 
     def relative_path
-      FUNCTION_PATH_4X
+      lib_root? ? SYSTEM_FUNCTION_PATH_4X : FUNCTION_PATH_4X
     end
 
     def instantiator
@@ -174,10 +179,11 @@ module LoaderPaths
   end
 
   class FunctionPath3x < RubySmartPath
-    FUNCTION_PATH_3X = File.join('lib', 'puppet', 'parser', 'functions').freeze
+    SYSTEM_FUNCTION_PATH_3X = File.join('puppet', 'parser', 'functions').freeze
+    FUNCTION_PATH_3X = File.join('lib', SYSTEM_FUNCTION_PATH_3X).freeze
 
     def relative_path
-      FUNCTION_PATH_3X
+      lib_root? ? SYSTEM_FUNCTION_PATH_3X : FUNCTION_PATH_3X
     end
 
     def instantiator
