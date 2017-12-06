@@ -9,7 +9,7 @@ module Puppet::ModuleTranslations
   #        load translations
   def self.load_from_modulepath(modules)
     modules.each do |mod|
-      return unless mod.forge_name && mod.has_translations?(Puppet::GettextConfig.current_locale)
+      next unless mod.forge_name && mod.has_translations?(Puppet::GettextConfig.current_locale)
 
       module_name = mod.forge_name.gsub('/', '-')
       if Puppet::GettextConfig.load_translations(module_name, mod.locale_directory, :po)
