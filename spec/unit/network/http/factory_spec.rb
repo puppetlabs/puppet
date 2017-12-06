@@ -94,5 +94,27 @@ describe Puppet::Network::HTTP::Factory do
         expect(conn.read_timeout).to eq(120)
       end
     end
+
+    context 'source address' do
+      it 'defaults to system-defined' do
+        skip "Requires Ruby >= 2.0" unless RUBY_VERSION.to_i >= 2
+        conn = create_connection(site)
+
+        expect(conn.local_host).to be(nil)
+      end
+
+      it 'sets the local_host address' do
+        Puppet[:sourceaddress] = "127.0.0.1"
+        if RUBY_VERSION.to_i >= 2
+          conn = create_connection(site)
+
+          expect(conn.local_host).to eq('127.0.0.1')
+        else
+          expect {
+            create_connection(site)
+          }.to raise_error(ArgumentError, "Setting 'sourceaddress' is unsupported by this version of Net::HTTP.")
+        end
+      end
+    end
   end
 end

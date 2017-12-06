@@ -99,6 +99,24 @@ describe Puppet::Application do
     end
   end
 
+  describe ".environment_mode" do
+    it "should default to :local" do
+      expect(@appclass.get_environment_mode).to eq(:local)
+    end
+
+    it "should set and get a value" do
+      @appclass.environment_mode :remote
+      expect(@appclass.get_environment_mode).to eq(:remote)
+    end
+
+    it "should error if given a random symbol" do
+      expect{@appclass.environment_mode :foo}.to raise_error(/Invalid environment mode/)
+    end
+
+    it "should error if given a string" do
+      expect{@appclass.environment_mode 'local'}.to raise_error(/Invalid environment mode/)
+    end
+  end
 
 
   # These tests may look a little weird and repetative in its current state;
