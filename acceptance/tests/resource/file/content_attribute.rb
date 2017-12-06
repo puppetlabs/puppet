@@ -43,20 +43,20 @@ agents.each do |agent|
   step "Backup file into the filebucket"
   on agent, puppet_filebucket("backup --local #{target}")
 
-  bucketdir="not set"
-  on agent, puppet_filebucket("--configprint bucketdir") do
-    bucketdir = stdout.chomp
-  end
+  step "Modify file to force apply to retrieve file from local clientbucket"
+  on agent, "echo 'This is the modified file contents' > #{target}"
+
+  dir = on(agent, puppet_filebucket("--configprint clientbucketdir")).stdout.chomp
 
   manifest = %Q|
     filebucket { 'local':
-      path => '#{bucketdir}',
+      path => '#{dir}',
     }
 
     file { '#{target}':
+      ensure  => present,
       content => '{md5}18571d3a04b2bb7ccfdbb2c44c72caa9',
-      ensure => present,
-      backup => local,
+      backup  => local,
     }
   |
 
