@@ -13,6 +13,11 @@ describe "the epp function" do
       expect(eval_template("all your base <%= $what %> to us")).to eq("all your base are belong to us")
     end
 
+    it "looks up a fully qualified value from the scope" do
+      scope["what::is"] = "are belong"
+      expect(eval_template("all your base <%= $what::is %> to us")).to eq("all your base are belong to us")
+    end
+
     it "get nil accessing a variable that does not exist" do
       expect(eval_template("<%= $kryptonite == undef %>")).to eq("true")
     end

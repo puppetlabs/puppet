@@ -91,7 +91,7 @@ class Parser
   #
   def on_error(token,value,stack)
     if token == 0 # denotes end of file
-      value_at = 'end of file'
+      value_at = 'end of input'
     else
       value_at = "'#{value[:value]}'"
     end

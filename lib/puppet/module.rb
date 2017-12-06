@@ -305,6 +305,16 @@ class Puppet::Module
     subpath("locales")
   end
 
+  # Returns true if the module has translation files for the
+  # given locale.
+  # @param [String] locale the two-letter language code to check
+  #        for translations
+  # @return true if the module has a directory for the locale, false
+  #         false otherwise
+  def has_translations?(locale)
+    return Puppet::FileSystem.exist?(File.join(locale_directory, locale))
+  end
+
   def has_external_facts?
     File.directory?(plugin_fact_directory)
   end
