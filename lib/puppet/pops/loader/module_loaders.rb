@@ -27,8 +27,8 @@ module ModuleLoaders
     # to search up the path from this source file's __FILE__ location until it finds the base of
     # puppet.
     #
-    puppet_lib = File.join(File.dirname(__FILE__), '../../../..')
-    ModuleLoaders::FileBased.new(parent_loader,
+    puppet_lib = File.realpath(File.join(File.dirname(__FILE__), '../../..'))
+    LibRootedFileBased.new(parent_loader,
                                                        loaders,
                                                        nil,
                                                        puppet_lib,   # may or may not have a 'lib' above 'puppet'
@@ -311,6 +311,16 @@ module ModuleLoaders
       module_name.nil? || module_name == ENVIRONMENT
     end
 
+    # Answers `true` if the loader used by this instance is rooted beneath 'lib'. This is
+    # typically true for the the system_loader. It will have a path relative to the parent
+    # of 'puppet' instead of the parent of 'lib/puppet' since the 'lib' directory of puppet
+    # is renamed during install. This is significant for loaders that load ruby code.
+    #
+    # @return [Boolean] a boolean answering if the loader is rooted beneath 'lib'.
+    def lib_root?
+      false
+    end
+
     # Produces the private loader for the module. If this module is not already resolved, this will trigger resolution
     #
     def private_loader
@@ -439,6 +449,18 @@ module ModuleLoaders
         found << Pathname(path).relative_path_from(Pathname(root)).to_s if smart_path.valid_path?(path)
       end
       found
+    end
+  end
+
+  # Specialization used by the system_loader which is limited to see what's beneath 'lib' and hence
+  # cannot be rooted in its parent. The 'lib' directory is renamed during install so any attempt
+  # to traverse into it from above would fail.
+  #
+  # @api private
+  #
+  class LibRootedFileBased < FileBased
+    def lib_root?
+      true
     end
   end
 
