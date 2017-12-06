@@ -281,6 +281,23 @@ class Application
       @run_mode = Puppet::Util::RunMode[ mode_name || Puppet.settings.preferred_run_mode ]
     end
 
+    # Sets environment_mode name
+    # @param mode_name [Symbol] The name of the environment mode to run in. May
+    #   be one of :local, :remote, or :not_required. This impacts where the
+    #   application looks for its specified environment. If :not_required or
+    #   :remote are set, the application will not fail if the environment does
+    #   not exist on the local filesystem.
+    def environment_mode(mode_name)
+      raise Puppet::Error, _("Invalid environment mode '%{mode_name}'") % { mode_name: mode_name } unless [:local, :remote, :not_required].include?(mode_name)
+      @environment_mode = mode_name
+    end
+
+    # Gets environment_mode name. If none is set with `environment_mode=`,
+    # default to :local.
+    def get_environment_mode
+      @environment_mode || :local
+    end
+
     # This is for testing only
     def clear_everything_for_tests
       @run_mode = @banner = @run_status = @option_parser_commands = nil
@@ -343,7 +360,7 @@ class Application
       initialize_app_defaults
     end
 
-    Puppet::ApplicationSupport.push_application_context(self.class.run_mode)
+    Puppet::ApplicationSupport.push_application_context(self.class.run_mode, self.class.get_environment_mode)
 
     exit_on_fail(_("Could not initialize"))                { preinit }
     exit_on_fail(_("Could not parse application options")) { parse_options }
