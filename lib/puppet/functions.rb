@@ -186,8 +186,12 @@ module Puppet::Functions
     # and it will fail unless protected with an if defined? if the local
     # variable does not exist in the block's binder.
     #
-    loader = block.binding.eval('loader_injected_arg if defined?(loader_injected_arg)')
-    create_loaded_function(func_name, loader, function_base, &block)
+    begin
+      loader = block.binding.eval('loader_injected_arg if defined?(loader_injected_arg)')
+      create_loaded_function(func_name, loader, function_base, &block)
+    rescue StandardError => e
+      raise ArgumentError, _("Function Load Error for function '%{function_name}': %{message}") % {function_name: func_name, message: e.message}
+    end
   end
 
   # Creates a function in, or in a local loader under the given loader.
@@ -603,9 +607,29 @@ module Puppet::Functions
     # @api public
     #
     def type(assignment_string)
-      result = parser.parse_string("type #{assignment_string}", nil) # no file source :-(
+      # Get location to use in case of error - this produces ruby filename and where call to 'type' occurred
+      # but strips off the rest of the internal "where" as it is not meaningful to user.
+      #
+      rb_location = caller[0].gsub(/:in.*$/, '')
+
+      begin
+        result = parser.parse_string("type #{assignment_string}", nil)
+      rescue StandardError => e
+        # Create a meaningful location for parse errors - show both what went wrong with the parsing
+        # and in which ruby file it was found.
+        raise ArgumentError, _("Parsing of 'type \"#{assignment_string}\"' failed with message: <%{message}>.\n" +
+          "Called from <%{ruby_file_location}>") % {
+            assignment_string: assignment_string,
+            message: e.message,
+            ruby_file_location: rb_location
+        }
+      end
       unless result.body.kind_of?(Puppet::Pops::Model::TypeAlias)
-        raise ArgumentError, _("Expected a type alias assignment on the form 'AliasType = T', got '%{assignment_string}'") % { assignment_string: assignment_string }
+        raise ArgumentError, _("Expected a type alias assignment on the form 'AliasType = T', got '%{assignment_string}'.\n"+
+        "Called from <%{ruby_file_location}>") % {
+          assignment_string: assignment_string,
+          ruby_file_location: rb_location
+        }
       end
       @local_types << result.body
     end

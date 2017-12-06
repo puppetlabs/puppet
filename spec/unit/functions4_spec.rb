@@ -56,7 +56,7 @@ describe 'the 4x function api' do
   it 'refuses to create functions that are not based on the Function class' do
     expect do
       Puppet::Functions.create_function('testing', Object) {}
-    end.to raise_error(ArgumentError, 'Functions must be based on Puppet::Pops::Functions::Function. Got Object')
+    end.to raise_error(ArgumentError, /function 'testing'.*Functions must be based on Puppet::Pops::Functions::Function. Got Object/)
   end
 
   it 'refuses to create functions with parameters that are not named with a symbol' do
@@ -212,15 +212,18 @@ describe 'the 4x function api' do
     end
 
     it 'a function can not be created with parameters declared after a repeated parameter' do
-      expect { create_function_with_param_after_repeated }.to raise_error(ArgumentError, 'Parameters cannot be added after a repeated parameter')
+      expect { create_function_with_param_after_repeated }.to raise_error(ArgumentError, 
+        /function 't1'.*Parameters cannot be added after a repeated parameter/)
     end
 
     it 'a function can not be created with required parameters declared after optional ones' do
-      expect { create_function_with_rq_after_opt }.to raise_error(ArgumentError, 'A required parameter cannot be added after an optional parameter')
+      expect { create_function_with_rq_after_opt }.to raise_error(ArgumentError, 
+        /function 't1'.*A required parameter cannot be added after an optional parameter/)
     end
 
     it 'a function can not be created with required repeated parameters declared after optional ones' do
-      expect { create_function_with_rq_repeated_after_opt }.to raise_error(ArgumentError, 'A required repeated parameter cannot be added after an optional parameter')
+      expect { create_function_with_rq_repeated_after_opt }.to raise_error(ArgumentError,
+        /function 't1'.*A required repeated parameter cannot be added after an optional parameter/)
     end
 
     it 'an error is raised with reference to multiple methods when called with mis-matched arguments' do
