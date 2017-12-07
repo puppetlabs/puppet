@@ -1539,18 +1539,18 @@ class Type
           }
           ## Corrected syntax of debug statement to reflect the way this was called.
           # i.e. before, after, subscribe, notify
-	  self.debug do 
-	    relation = case self.class.name
-	    when "subscribe"
-	      "subscribes"
-	    when "notify"
-	      "notifies"
-	    else
-	      self.class.name
-	    end
+          self.debug do 
+            relation = case self.class.name
+            when "subscribe"
+              "subscribes"
+            when "notify"
+              "notifies"
+            else
+              self.class.name
+            end
 
-	    "#{relation} to #{related_resource.ref}"
-	  end
+              "#{relation} to #{related_resource.ref}"
+          end
         else
           # If there's no callback, there's no point in even adding
           # a label.
@@ -1569,7 +1569,6 @@ class Type
 
             "#{relation} to #{related_resource.ref}"
           end
- 
 	end
 
         Puppet::Relationship.new(source, target, subargs)
