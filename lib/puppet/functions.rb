@@ -577,13 +577,26 @@ module Puppet::Functions
     # @api private
     def create_callable(types, block_type, return_type, from, to)
       mapped_types = types.map do |t|
-        t.is_a?(Puppet::Pops::Types::PAnyType) ? t : Puppet::Pops::Types::TypeParser.singleton.parse(t, loader)
+        t.is_a?(Puppet::Pops::Types::PAnyType) ? t : internal_type_parse(t, loader)
       end
       param_types = Puppet::Pops::Types::PTupleType.new(mapped_types, from > 0 && from == to ? nil : Puppet::Pops::Types::PIntegerType.new(from, to))
-      return_type = Puppet::Pops::Types::TypeParser.singleton.parse(return_type, loader) unless return_type.nil? || return_type.is_a?(Puppet::Pops::Types::PAnyType)
+      return_type = internal_type_parse(return_type, loader) unless return_type.nil? || return_type.is_a?(Puppet::Pops::Types::PAnyType)
       Puppet::Pops::Types::PCallableType.new(param_types, block_type, return_type)
     end
+
+    def internal_type_parse(type_string, loader)
+      begin
+        Puppet::Pops::Types::TypeParser.singleton.parse(type_string, loader)
+      rescue StandardError => e
+        raise ArgumentError, _("Parsing of type string '\"%{type_string}\"' failed with message: <%{message}>.\n") % {
+            type_string: type_string,
+            message: e.message
+        }
+      end
+    end
+    private :internal_type_parse
   end
+
 
   # The LocalTypeAliasBuilder is used by the 'local_types' method to collect the individual
   # type aliases given by the function's author.
@@ -617,7 +630,7 @@ module Puppet::Functions
       rescue StandardError => e
         # Create a meaningful location for parse errors - show both what went wrong with the parsing
         # and in which ruby file it was found.
-        raise ArgumentError, _("Parsing of 'type \"#{assignment_string}\"' failed with message: <%{message}>.\n" +
+        raise ArgumentError, _("Parsing of 'type \"%{assignment_string}\"' failed with message: <%{message}>.\n" +
           "Called from <%{ruby_file_location}>") % {
             assignment_string: assignment_string,
             message: e.message,

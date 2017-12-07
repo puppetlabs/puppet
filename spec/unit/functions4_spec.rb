@@ -470,6 +470,48 @@ describe 'the 4x function api' do
       end
     end
 
+    context 'reports meaningful errors' do
+      let(:parser) {  Puppet::Pops::Parser::EvaluatingParser.new }
+
+      it 'syntax error in local type is reported with puppet source, puppet location, and ruby file containing function' do
+        the_loader = loader()
+        here = get_binding(the_loader)
+        expect do
+          fc = eval(<<-CODE, here)
+            Puppet::Functions.create_function('testing::test') do
+              local_types do
+                type 'MyType += Array[Integer]'
+              end
+              dispatch :test do
+                param 'MyType', :x
+              end
+              def test(x)
+                x
+              end
+            end
+          CODE
+        end.to raise_error(/MyType \+\= Array.*<Syntax error at '\+\=' at line 1:[0-9]+>.*functions4_spec\.rb.*/m)
+        # Note that raised error reports this spec file as the function source since the function is defined here
+      end
+
+      it 'syntax error in param type is reported with puppet source, puppet location, and ruby file containing function' do
+        the_loader = loader()
+        here = get_binding(the_loader)
+        expect do
+          fc = eval(<<-CODE, here)
+            Puppet::Functions.create_function('testing::test') do
+              dispatch :test do
+                param 'Array[1+=1]', :x
+              end
+              def test(x)
+                x
+              end
+            end
+          CODE
+        end.to raise_error(/Parsing of type string '"Array\[1\+=1\]"' failed with message: <Syntax error at '\]' at line 1:[0-9]+/m)
+      end
+
+    end
     context 'can use a loader when parsing types in function dispatch, and' do
       let(:parser) {  Puppet::Pops::Parser::EvaluatingParser.new }
 
