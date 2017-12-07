@@ -28,8 +28,11 @@ results = use_an_environment(env, 'bad environmentpath', master_opts, testdir, p
 
 expectations = {
   :puppet_config => {
-    :exit_code => 1,
-    :matches => [%r{Could not find a directory environment named '#{env}' anywhere in the path.*#{env_path}}],
+    :exit_code => 0,
+    :matches => [%r{basemodulepath = /etc/puppetlabs/code/modules:/opt/puppetlabs/puppet/modules},
+                 %r{modulepath =},
+                 %r{manifest =},
+                 %r{config_version =}],
   },
   :puppet_module_install => {
     :exit_code => 1,
