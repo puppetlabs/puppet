@@ -1539,7 +1539,6 @@ class Type
           }
           ## Corrected syntax of debug statement to reflect the way this was called.
           # i.e. before, after, subscribe, notify
-          #self.debug { "subscribes to #{related_resource.ref}" }
 	  self.debug do 
 	    relation = case self.class.name
 	    when "subscribe"
@@ -1558,7 +1557,6 @@ class Type
           subargs = nil
           ## Corrected syntax of debug statement to reflect the way this was called.
           # i.e. before, after, subscribe, notify
-          #self.debug { "subscribes to #{related_resource.ref}" }
           self.debug do
             relation = case self.class.name
             when "subscribe"
