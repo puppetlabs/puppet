@@ -166,12 +166,14 @@ describe provider_class, :if => Puppet.features.posix? do
 
   describe "when stopping" do
     it "should execute external command 'svcadm disable /system/myservice'" do
+      @provider.stubs(:status).returns :running
       @provider.expects(:texecute).with(:stop, ["/usr/sbin/svcadm", :disable, '-s', "/system/myservice"], true)
       @provider.expects(:wait).with('offline', 'disabled', 'uninitialized')
       @provider.stop
     end
 
     it "should error if timeout occurs while stopping the service" do
+      @provider.stubs(:status).returns :running
       @provider.expects(:texecute).with(:stop, ["/usr/sbin/svcadm", :disable, '-s', "/system/myservice"], true)
       Timeout.expects(:timeout).with(60).raises(Timeout::Error)
       expect { @provider.stop }.to raise_error Puppet::Error, ('Timed out waiting for /system/myservice to transition states')
