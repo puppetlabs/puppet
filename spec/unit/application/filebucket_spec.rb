@@ -111,17 +111,30 @@ describe Puppet::Application::Filebucket do
     end
 
     describe "with remote bucket" do
-
       it "should create a remote Client to the configured server" do
         Puppet[:server] = "puppet.reductivelabs.com"
-
         Puppet::FileBucket::Dipper.expects(:new).with { |h| h[:Server] == "puppet.reductivelabs.com" }
-
         @filebucket.setup
       end
 
-    end
+      it "should default to the first server_list entry if set" do
+        Puppet[:server_list] = "foo,bar,baz"
+        Puppet::FileBucket::Dipper.expects(:new).with { |h| h[:Server] == "foo" }
+        @filebucket.setup
+      end
 
+      it "should fall back to server if server_list is empty" do
+        Puppet[:server_list] = ""
+        Puppet::FileBucket::Dipper.expects(:new).with { |h| h[:Server] == "puppet" }
+        @filebucket.setup
+      end
+
+      it "should take both the server and port specified in server_list" do
+        Puppet[:server_list] = "foo:632,bar:6215,baz:351"
+        Puppet::FileBucket::Dipper.expects(:new).with({ :Server => "foo", :Port => "632" })
+        @filebucket.setup
+      end
+    end
   end
 
   describe "when running" do
