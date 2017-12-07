@@ -12,6 +12,10 @@ describe Puppet::Type.type(:k5login), :unless => Puppet.features.microsoft_windo
     it { is_expected.to be_validattr :path }
     it { is_expected.to be_validattr :principals }
     it { is_expected.to be_validattr :mode }
+    it { is_expected.to be_validattr :selrange }
+    it { is_expected.to be_validattr :selrole }
+    it { is_expected.to be_validattr :seltype }
+    it { is_expected.to be_validattr :seluser }
     # We have one, inline provider implemented.
     it { is_expected.to be_validattr :provider }
   end
@@ -22,7 +26,11 @@ describe Puppet::Type.type(:k5login), :unless => Puppet.features.microsoft_windo
     attrs = {
       :ensure     => 'present',
       :path       => path,
-      :principals => 'fred@EXAMPLE.COM'
+      :principals => 'fred@EXAMPLE.COM',
+      :seluser    => 'user_u',
+      :selrole    => 'role_r',
+      :seltype    => 'type_t',
+      :selrange   => 's0',
     }.merge(attrs)
 
     if content = attrs.delete(:content)
@@ -66,6 +74,19 @@ describe Puppet::Type.type(:k5login), :unless => Puppet.features.microsoft_windo
 
           it "should retrieve its principals correctly" do
             expect(subject[:principals]).to eq(["daniel@EXAMPLE.COM"])
+          end
+        end
+
+        context "with selinux" do
+          subject { resource(:content => "daniel@EXAMPLE.COM\n",).retrieve }
+          it "should return correct values based on SELinux state" do
+            Puppet::Type::K5login::ProviderK5login.any_instance.stubs(:selinux_support?).returns true
+            Puppet::Type::K5login::ProviderK5login.any_instance.stubs(:get_selinux_current_context).returns "user_u:role_r:type_t:s0"
+
+            expect(subject[:seluser]).to eq("user_u")
+            expect(subject[:selrole]).to eq("role_r")
+            expect(subject[:seltype]).to eq("type_t")
+            expect(subject[:selrange]).to eq("s0")
           end
         end
 
