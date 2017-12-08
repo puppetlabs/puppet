@@ -81,6 +81,7 @@ These endpoints accept payload formats formatted as JSON or PSON (MIME types of
 `application/json` and `text/pson`, respectively) except for `File Content` and
 `File Bucket File` which always use `application/octet-stream`.
 
+* [Facts](./http_facts.md)
 * [Catalog](./http_catalog.md)
 * [Node](./http_node.md)
 * [File Bucket File](./http_file_bucket_file.md)
