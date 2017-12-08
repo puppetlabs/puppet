@@ -8,9 +8,9 @@ by running the puppet spec tests.
 
 ## The Puppet Codebase
 
-In order to contribute to puppet you'll need to have a github account. Once you
+In order to contribute to puppet you'll need to have a GitHub account. Once you
 have your account, fork the puppetlabs/puppet repo, and clone it onto your
-local machine. The [github docs have a good
+local machine. The [GitHub docs have a good
 explanation](https://help.github.com/articles/fork-a-repo) of how to do all of
 this.
 
