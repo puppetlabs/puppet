@@ -387,7 +387,8 @@ class Puppet::SSL::CertificateAuthority
     unless csr.subject_alt_names.empty?
       # If you alt names are allowed, they are required. Otherwise they are
       # disallowed. Self-signed certs are implicitly trusted, however.
-      unless options[:allow_dns_alt_names]
+      # Per RFC2818 states you should have the CN in alt names
+      unless options[:allow_dns_alt_names] || csr.subject_alt_names == ["DNS:#{hostname}"]
         raise CertificateSigningError.new(hostname), _("CSR '%{csr}' contains subject alternative names (%{alt_names}), which are disallowed. Use `puppet cert --allow-dns-alt-names sign %{csr}` to sign this request.") % { csr: csr.name, alt_names: csr.subject_alt_names.join(', ') }
       end
 

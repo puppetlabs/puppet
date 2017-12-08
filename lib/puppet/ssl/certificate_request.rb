@@ -89,6 +89,13 @@ DOC
     csr.subject = OpenSSL::X509::Name.new([["CN", common_name]])
     csr.public_key = key.public_key
 
+    # RFC28128: Ensure the CN is also in the SAN
+    if options[:dns_alt_names]
+      options[:dns_alt_names] += ", #{common_name}"
+    else
+      options[:dns_alt_names] = common_name
+    end
+
     if options[:csr_attributes]
       add_csr_attributes(csr, options[:csr_attributes])
     end

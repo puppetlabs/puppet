@@ -119,14 +119,14 @@ describe Puppet::SSL::Host do
       end
 
       it "should not include subjectAltName if not the local node" do
-        @cr.expects(:generate).with(@key, {})
+        @cr.expects(:generate).with(@key, { :dns_alt_names => "not-the-#{Puppet[:certname]}" })
 
         Puppet::SSL::Host.new('not-the-' + Puppet[:certname]).generate
       end
 
       it "should include subjectAltName if I am a CA" do
         @cr.expects(:generate).
-          with(@key, { :dns_alt_names => Puppet[:dns_alt_names] })
+          with(@key, { :dns_alt_names => "#{Puppet[:dns_alt_names]}, #{Puppet[:certname]}" })
 
         Puppet::SSL::Host.localhost
       end
@@ -144,7 +144,7 @@ describe Puppet::SSL::Host do
       it "should not include defaults if we're not the CA" do
         Puppet::SSL::CertificateAuthority.stubs(:ca?).returns false
 
-        @cr.expects(:generate).with(@key, {})
+        @cr.expects(:generate).with(@key, { :dns_alt_names => Puppet[:certname] })
 
         Puppet::SSL::Host.localhost
       end
@@ -152,7 +152,7 @@ describe Puppet::SSL::Host do
       it "should not include defaults if not the local node" do
         Puppet::SSL::CertificateAuthority.stubs(:ca?).returns true
 
-        @cr.expects(:generate).with(@key, {})
+        @cr.expects(:generate).with(@key, { :dns_alt_names => "not-the-#{Puppet[:certname]}" })
 
         Puppet::SSL::Host.new('not-the-' + Puppet[:certname]).generate
       end
@@ -161,7 +161,7 @@ describe Puppet::SSL::Host do
         Puppet::SSL::CertificateAuthority.stubs(:ca?).returns true
         Facter.stubs(:value).with(:fqdn).returns nil
 
-        @cr.expects(:generate).with(@key, {})
+        @cr.expects(:generate).with(@key, { :dns_alt_names => Puppet[:certname] })
 
         Puppet::SSL::Host.localhost
       end
@@ -171,7 +171,7 @@ describe Puppet::SSL::Host do
         Facter.stubs(:value).with(:fqdn).returns 'web.foo.com'
         Facter.stubs(:value).with(:domain).returns 'foo.com'
 
-        @cr.expects(:generate).with(@key, {:dns_alt_names => "puppet, web.foo.com, puppet.foo.com"})
+        @cr.expects(:generate).with(@key, {:dns_alt_names => "puppet, web.foo.com, puppet.foo.com, #{Puppet[:certname]}"})
 
         Puppet::SSL::Host.localhost
       end
@@ -470,7 +470,7 @@ describe Puppet::SSL::Host do
 
       key = stub 'key', :public_key => mock("public_key"), :content => "mycontent"
       @host.stubs(:key).returns(key)
-      @request.expects(:generate).with("mycontent", {})
+      @request.expects(:generate).with("mycontent", { :dns_alt_names => 'myname' })
       Puppet::SSL::CertificateRequest.indirection.expects(:save).with(@request)
 
       expect(@host.generate_certificate_request).to be_truthy

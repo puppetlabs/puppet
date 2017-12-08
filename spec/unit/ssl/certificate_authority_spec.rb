@@ -1138,9 +1138,9 @@ describe "CertificateAuthority.generate" do
         expect( cert.name ).to eq(cn)
       end
 
-      it "should not have any subject_alt_names by default" do
+      it "should have the name in subject_alt_names by default" do
         cert = ca.generate(cn)
-        expect( cert.subject_alt_names ).to be_empty
+        expect( cert.subject_alt_names ).to match_array(["DNS:#{cn}"])
       end
 
       it "should have subject_alt_names if passed dns_alt_names" do

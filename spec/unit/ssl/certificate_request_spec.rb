@@ -125,9 +125,9 @@ describe Puppet::SSL::CertificateRequest do
           end).not_to be
         end
 
-        it "should return no subjectAltNames" do
+        it "should return the CN in subjectAltNames" do
           request.generate(key)
-          expect(request.subject_alt_names).to be_empty
+          expect(request.subject_alt_names).to match_array(["DNS:myname"])
         end
       end
     end
@@ -145,9 +145,9 @@ describe Puppet::SSL::CertificateRequest do
           end).not_to be
         end
 
-        it "should return no subjectAltNames" do
+        it "should return the CN in subjectAltNames" do
           request.generate(key)
-          expect(request.subject_alt_names).to be_empty
+          expect(request.subject_alt_names).to match_array(["DNS:myname"])
         end
       end
     end

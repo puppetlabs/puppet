@@ -174,6 +174,11 @@ DOC
       end
     end
 
+    # RFC2818: Ensure the CN is also in the SAN
+    alt_names = (options[:dns_alt_names] || '').split(/\s*,\s*/)
+    alt_names << name unless alt_names.include?(name) # TODO: lower case comparison
+    options[:dns_alt_names] = alt_names.join(', ')
+
     csr_attributes = Puppet::SSL::CertificateRequestAttributes.new(Puppet[:csr_attributes])
     if csr_attributes.load
       options[:csr_attributes] = csr_attributes.custom_attributes

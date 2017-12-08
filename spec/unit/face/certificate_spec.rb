@@ -123,7 +123,7 @@ describe Puppet::Face[:certificate, '0.0.1'] do
 
         subject.generate(hostname, options)
 
-        expect(csr.subject_alt_names).to be_empty
+        expect(csr.subject_alt_names).to match_array(%W[DNS:#{hostname}])
       end
 
       it "should add the provided dns_alt_names if they are specified" do
