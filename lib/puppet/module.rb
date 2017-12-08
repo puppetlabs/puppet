@@ -456,7 +456,7 @@ class Puppet::Module
 
   def assert_validity
     if !Puppet::Module.is_module_directory_name?(@name) && !Puppet::Module.is_module_namespaced_name?(@name)
-      raise InvalidName, "Invalid module name #{@name}; Module names must begin with a lowercase letter, and can include; Uppercase letters , Lowercase letters, Digits and Underscores (regex '\A[a-z][a-z0-9_]*\Z'), not '#{@name}'"
+      raise InvalidName, "Invalid module name '#{@name}'; Module names must begin with a lowercase letter, and can include; Uppercase letters , Lowercase letters, Digits and Underscores (regex '\A[a-z][a-z0-9_]*\Z')"
     end
   end
 end
