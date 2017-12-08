@@ -265,6 +265,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     # NOTE These specific hooks for paths are ridiculous, but it's a *many*-line
     # fix to not need this, and our goal is to move away from the complication
     # that leads to the fix being too long.
+    return :singular if indirection == "facts"
     return :singular if indirection == "status"
     return :singular if indirection == "certificate_status"
 
