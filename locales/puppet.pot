@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.3-620-g1bb2b30\n"
+"Project-Id-Version: Puppet automation framework 5.3.3-627-g4d4d12e\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-12-11 08:52+0000\n"
-"PO-Revision-Date: 2017-12-11 08:52+0000\n"
+"POT-Creation-Date: 2017-12-11 17:04+0000\n"
+"PO-Revision-Date: 2017-12-11 17:04+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -1877,64 +1877,81 @@ msgid ""
 "  The HTTP response we received was '%{response}'\n"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:208
+#: ../lib/puppet/functions.rb:193
+msgid "Function Load Error for function '%{function_name}': %{message}"
+msgstr ""
+
+#: ../lib/puppet/functions.rb:212
 msgid "Functions must be based on Puppet::Pops::Functions::Function. Got %{function_base}"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:268
+#: ../lib/puppet/functions.rb:272
 msgid "Function Creation Error, cannot create a default dispatcher for function '%{func_name}', no method with this name found"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:346
+#: ../lib/puppet/functions.rb:350
 msgid "No loader present. Call create_loaded_function(:myname, loader,...), instead of 'create_function' if running tests"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:409
+#: ../lib/puppet/functions.rb:413
 msgid "A required parameter cannot be added after an optional parameter"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:458
+#: ../lib/puppet/functions.rb:462
 msgid "A required repeated parameter cannot be added after an optional parameter"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:480
+#: ../lib/puppet/functions.rb:484
 msgid "block_param accepts max 2 arguments (type, name), got %{size}."
 msgstr ""
 
-#: ../lib/puppet/functions.rb:484
+#: ../lib/puppet/functions.rb:488
 msgid "Expected PCallableType or PVariantType thereof, got %{type_class}"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:488
+#: ../lib/puppet/functions.rb:492
 msgid "Expected block_param name to be a Symbol, got %{name_class}"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:495
+#: ../lib/puppet/functions.rb:499
 msgid "Attempt to redefine block"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:517
+#: ../lib/puppet/functions.rb:521
 msgid "Argument to 'return_type' must be a String reference to a Puppet Data Type. Got %{type_class}"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:526
+#: ../lib/puppet/functions.rb:530
 msgid "Parameters cannot be added after a block parameter"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:527
+#: ../lib/puppet/functions.rb:531
 msgid "Parameters cannot be added after a repeated parameter"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:530
+#: ../lib/puppet/functions.rb:534
 msgid "Parameter name argument must be a Symbol. Got %{name_class}"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:543
+#: ../lib/puppet/functions.rb:547
 msgid "Parameter 'type' must be a String reference to a Puppet Data Type. Got %{type_class}"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:608
-msgid "Expected a type alias assignment on the form 'AliasType = T', got '%{assignment_string}'"
+#: ../lib/puppet/functions.rb:591
+msgid ""
+"Parsing of type string '\"%{type_string}\"' failed with message: <%{message}>.\n"
+msgstr ""
+
+#: ../lib/puppet/functions.rb:634
+msgid ""
+"Parsing of 'type \"%{assignment_string}\"' failed with message: <%{message}>.\n"
+"Called from <%{ruby_file_location}>"
+msgstr ""
+
+#: ../lib/puppet/functions.rb:643
+msgid ""
+"Expected a type alias assignment on the form 'AliasType = T', got '%{assignment_string}'.\n"
+"Called from <%{ruby_file_location}>"
 msgstr ""
 
 #: ../lib/puppet/functions/binary_file.rb:15
