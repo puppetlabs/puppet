@@ -623,11 +623,12 @@ module Puppet::Functions
       # Get location to use in case of error - this produces ruby filename and where call to 'type' occurred
       # but strips off the rest of the internal "where" as it is not meaningful to user.
       #
-      rb_location = caller[0].gsub(/:in.*$/, '')
+      rb_location = caller[0]
 
       begin
         result = parser.parse_string("type #{assignment_string}", nil)
       rescue StandardError => e
+        rb_location = rb_location.gsub(/:in.*$/, '')
         # Create a meaningful location for parse errors - show both what went wrong with the parsing
         # and in which ruby file it was found.
         raise ArgumentError, _("Parsing of 'type \"%{assignment_string}\"' failed with message: <%{message}>.\n" +
@@ -638,6 +639,7 @@ module Puppet::Functions
         }
       end
       unless result.body.kind_of?(Puppet::Pops::Model::TypeAlias)
+        rb_location = rb_location.gsub(/:in.*$/, '')
         raise ArgumentError, _("Expected a type alias assignment on the form 'AliasType = T', got '%{assignment_string}'.\n"+
         "Called from <%{ruby_file_location}>") % {
           assignment_string: assignment_string,
