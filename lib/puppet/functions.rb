@@ -186,8 +186,12 @@ module Puppet::Functions
     # and it will fail unless protected with an if defined? if the local
     # variable does not exist in the block's binder.
     #
-    loader = block.binding.eval('loader_injected_arg if defined?(loader_injected_arg)')
-    create_loaded_function(func_name, loader, function_base, &block)
+    begin
+      loader = block.binding.eval('loader_injected_arg if defined?(loader_injected_arg)')
+      create_loaded_function(func_name, loader, function_base, &block)
+    rescue StandardError => e
+      raise ArgumentError, _("Function Load Error for function '%{function_name}': %{message}") % {function_name: func_name, message: e.message}
+    end
   end
 
   # Creates a function in, or in a local loader under the given loader.
@@ -573,13 +577,26 @@ module Puppet::Functions
     # @api private
     def create_callable(types, block_type, return_type, from, to)
       mapped_types = types.map do |t|
-        t.is_a?(Puppet::Pops::Types::PAnyType) ? t : Puppet::Pops::Types::TypeParser.singleton.parse(t, loader)
+        t.is_a?(Puppet::Pops::Types::PAnyType) ? t : internal_type_parse(t, loader)
       end
       param_types = Puppet::Pops::Types::PTupleType.new(mapped_types, from > 0 && from == to ? nil : Puppet::Pops::Types::PIntegerType.new(from, to))
-      return_type = Puppet::Pops::Types::TypeParser.singleton.parse(return_type, loader) unless return_type.nil? || return_type.is_a?(Puppet::Pops::Types::PAnyType)
+      return_type = internal_type_parse(return_type, loader) unless return_type.nil? || return_type.is_a?(Puppet::Pops::Types::PAnyType)
       Puppet::Pops::Types::PCallableType.new(param_types, block_type, return_type)
     end
+
+    def internal_type_parse(type_string, loader)
+      begin
+        Puppet::Pops::Types::TypeParser.singleton.parse(type_string, loader)
+      rescue StandardError => e
+        raise ArgumentError, _("Parsing of type string '\"%{type_string}\"' failed with message: <%{message}>.\n") % {
+            type_string: type_string,
+            message: e.message
+        }
+      end
+    end
+    private :internal_type_parse
   end
+
 
   # The LocalTypeAliasBuilder is used by the 'local_types' method to collect the individual
   # type aliases given by the function's author.
@@ -603,9 +620,31 @@ module Puppet::Functions
     # @api public
     #
     def type(assignment_string)
-      result = parser.parse_string("type #{assignment_string}", nil) # no file source :-(
+      # Get location to use in case of error - this produces ruby filename and where call to 'type' occurred
+      # but strips off the rest of the internal "where" as it is not meaningful to user.
+      #
+      rb_location = caller[0]
+
+      begin
+        result = parser.parse_string("type #{assignment_string}", nil)
+      rescue StandardError => e
+        rb_location = rb_location.gsub(/:in.*$/, '')
+        # Create a meaningful location for parse errors - show both what went wrong with the parsing
+        # and in which ruby file it was found.
+        raise ArgumentError, _("Parsing of 'type \"%{assignment_string}\"' failed with message: <%{message}>.\n" +
+          "Called from <%{ruby_file_location}>") % {
+            assignment_string: assignment_string,
+            message: e.message,
+            ruby_file_location: rb_location
+        }
+      end
       unless result.body.kind_of?(Puppet::Pops::Model::TypeAlias)
-        raise ArgumentError, _("Expected a type alias assignment on the form 'AliasType = T', got '%{assignment_string}'") % { assignment_string: assignment_string }
+        rb_location = rb_location.gsub(/:in.*$/, '')
+        raise ArgumentError, _("Expected a type alias assignment on the form 'AliasType = T', got '%{assignment_string}'.\n"+
+        "Called from <%{ruby_file_location}>") % {
+          assignment_string: assignment_string,
+          ruby_file_location: rb_location
+        }
       end
       @local_types << result.body
     end
