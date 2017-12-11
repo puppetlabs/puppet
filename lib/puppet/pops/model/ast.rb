@@ -25,7 +25,7 @@ class PopsObject
   attr_reader :hash
 
   def initialize
-    @hash = -1631630444118989922
+    @hash = 2270595461303489901
   end
   def _pcore_init_hash
     {}
@@ -2779,6 +2779,37 @@ class HostClassDefinition < NamedDefinition
   alias == eql?
 end
 
+class PlanDefinition < FunctionDefinition
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::PlanDefinition', {
+      'parent' => FunctionDefinition._pcore_type
+    })
+  end
+
+  def _pcore_contents
+    @parameters.each { |value| yield(value) }
+    yield(@body) unless @body.nil?
+    yield(@return_type) unless @return_type.nil?
+  end
+
+  def _pcore_all_contents(path, &block)
+    path << self
+    @parameters.each do |value|
+      block.call(value, path)
+      value._pcore_all_contents(path, &block)
+    end
+    unless @body.nil?
+      block.call(@body, path)
+      @body._pcore_all_contents(path, &block)
+    end
+    unless @return_type.nil?
+      block.call(@return_type, path)
+      @return_type._pcore_all_contents(path, &block)
+    end
+    path.pop
+  end
+end
+
 class LambdaExpression < Expression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LambdaExpression', {
@@ -4725,6 +4756,7 @@ class Program < PopsObject
 end
 
 end
+
 module Model
 @@pcore_ast_initialized = false
 def self.register_pcore_types
@@ -4780,6 +4812,7 @@ def self.register_pcore_types
   Model::SubLocatedExpression,
   Model::HeredocExpression,
   Model::HostClassDefinition,
+  Model::PlanDefinition,
   Model::LambdaExpression,
   Model::IfExpression,
   Model::UnlessExpression,

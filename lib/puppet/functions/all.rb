@@ -94,7 +94,11 @@ Puppet::Functions.create_function(:all) do
 
   def all_Enumerable_2(enumerable)
     enum = Puppet::Pops::Types::Iterable.asserted_iterable(self, enumerable)
-    enum.each_with_index { |e, i| return false unless yield(i, e) }
-    true
+    if enum.hash_style?
+      enum.all? { |entry| yield(*entry) }
+    else
+      enum.each_with_index { |e, i| return false unless yield(i, e) }
+      true
+    end
   end
 end

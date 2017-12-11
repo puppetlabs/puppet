@@ -47,6 +47,12 @@ Puppet::Parser::Functions::newfunction(:create_resources, :arity => -3, :doc => 
     final value of a parameter (just as when setting a parameter to `undef` in a puppet language
     resource declaration).
   ENDHEREDOC
+  if Puppet[:tasks]
+    raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
+      Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING,
+      {:operation => 'create_resources'})
+  end
+
   raise ArgumentError, (_("create_resources(): wrong number of arguments (%{count}; must be 2 or 3)") % { count: args.length }) if args.length > 3
   raise ArgumentError, (_('create_resources(): second argument must be a hash')) unless args[1].is_a?(Hash)
   if args.length == 3

@@ -31,6 +31,10 @@ module PuppetObject
   def _pcore_init_hash
     {}
   end
+
+  def to_s
+    TypeFormatter.string(self)
+  end
 end
 end
 end

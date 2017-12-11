@@ -27,8 +27,8 @@ module ModuleLoaders
     # to search up the path from this source file's __FILE__ location until it finds the base of
     # puppet.
     #
-    puppet_lib = File.join(File.dirname(__FILE__), '../../..')
-    ModuleLoaders::FileBased.new(parent_loader,
+    puppet_lib = File.realpath(File.join(File.dirname(__FILE__), '../../..'))
+    LibRootedFileBased.new(parent_loader,
                                                        loaders,
                                                        nil,
                                                        puppet_lib,   # may or may not have a 'lib' above 'puppet'
@@ -38,19 +38,23 @@ module ModuleLoaders
   end
 
   def self.environment_loader_from(parent_loader, loaders, env_path)
-    ModuleLoaders::FileBased.new(parent_loader,
-      loaders,
-      ENVIRONMENT,
-      File.join(env_path, 'lib'),
-      ENVIRONMENT
-    )
+    if env_path.nil? || env_path.empty?
+      EmptyLoader.new(parent_loader, ENVIRONMENT)
+    else
+      FileBased.new(parent_loader,
+        loaders,
+        ENVIRONMENT,
+        env_path,
+        ENVIRONMENT
+      )
+    end
   end
 
   def self.module_loader_from(parent_loader, loaders, module_name, module_path)
     ModuleLoaders::FileBased.new(parent_loader,
                                                        loaders,
                                                        module_name,
-                                                       File.join(module_path, 'lib'),
+                                                       module_path,
                                                        module_name
                                                        )
   end
@@ -62,6 +66,20 @@ module ModuleLoaders
       environment_path,
       'pcore_resource_types'
     )
+  end
+
+  class EmptyLoader < BaseLoader
+    def find(typed_name)
+      return nil
+    end
+
+    def private_loader
+      @private_loader ||= self
+    end
+
+    def private_loader=(loader)
+      @private_loader = loader
+    end
   end
 
   class AbstractPathBasedModuleLoader < BaseLoader
@@ -92,6 +110,8 @@ module ModuleLoaders
     def initialize(parent_loader, loaders, module_name, path, loader_name, loadables)
       super parent_loader, loader_name
 
+      raise ArgumentError, 'path based loader cannot be instantiated without a path' if path.nil? || path.empty?
+
       @module_name = module_name
       @path = path
       @smart_paths = LoaderPaths::SmartPaths.new(self)
@@ -105,6 +125,20 @@ module ModuleLoaders
 
     def loadables
       @loadables
+    end
+
+    def discover(type, name_authority = Pcore::RUNTIME_NAME_AUTHORITY, &block)
+      global = global?
+      if name_authority == Pcore::RUNTIME_NAME_AUTHORITY
+        smart_paths.effective_paths(type).each do |sp|
+          relative_paths(sp).each do |rp|
+            tp = sp.typed_name(type, name_authority, rp, global ? nil : @module_name)
+            next unless sp.valid_name?(tp)
+            load_typed(tp) unless block_given? && !block.yield(tp)
+          end
+        end
+      end
+      super
     end
 
     # Finds typed/named entity in this module
@@ -130,18 +164,38 @@ module ModuleLoaders
       else
         # The name is in the global name space.
 
-        # The only globally name-spaced elements that may be loaded from modules are functions and resource types
         case typed_name.type
-        when :function
-        when :resource_type
-        when :resource_type_pp
-        when :type
+        when :function, :resource_type, :resource_type_pp
+          # Can be defined in module using a global name. No action required
+
+        when :plan
           if !global?
-            # Global name can only be the module typeset
+            # Global name must be the name of the module
             return nil unless name_parts[0] == module_name
 
+            # Look for the special 'init' plan.
+            origin, smart_path = find_existing_path(init_plan_name)
+            return smart_path.nil? ? nil : instantiate(smart_path, typed_name, origin)
+          end
+
+        when :task
+          if !global?
+            # Global name must be the name of the module
+            return nil unless name_parts[0] == module_name
+
+            # Look for the special 'init' Task
+            origin, smart_path = find_existing_path(init_task_name)
+            return smart_path.nil? ? nil : instantiate(smart_path, typed_name, origin)
+          end
+
+        when :type
+          if !global?
+            # Global name must be the name of the module
+            return nil unless name_parts[0] == module_name
+
+            # Look for the special 'init_typeset' TypeSet
             origin, smart_path = find_existing_path(init_typeset_name)
-            return nil unless smart_path
+            return nil if smart_path.nil?
 
             value = smart_path.instantiator.create(self, typed_name, origin, get_contents(origin))
             if value.is_a?(Types::PTypeSetType)
@@ -162,11 +216,7 @@ module ModuleLoaders
       # The result is an array (that may be empty).
       # Find the file to instantiate, and instantiate the entity if file is found
       origin, smart_path = find_existing_path(typed_name)
-      if smart_path
-        value = smart_path.instantiator.create(self, typed_name, origin, get_contents(origin))
-        # cache the entry and return it
-        return set_entry(typed_name, value, origin)
-      end
+      return instantiate(smart_path, typed_name, origin) unless smart_path.nil?
 
       return nil unless typed_name.type == :type && typed_name.qualified?
 
@@ -188,6 +238,16 @@ module ModuleLoaders
       nil
     end
 
+    def instantiate(smart_path, typed_name, origin)
+      if origin.is_a?(Array)
+        value = smart_path.instantiator.create(self, typed_name, origin)
+      else
+        value = smart_path.instantiator.create(self, typed_name, origin, get_contents(origin))
+      end
+      # cache the entry and return it
+      set_entry(typed_name, value, origin)
+    end
+
     # Abstract method that subclasses override that checks if it is meaningful to search using a generic smart path.
     # This optimization is performed to not be tricked into searching an empty directory over and over again.
     # The implementation may perform a deep search for file content other than directories and cache this in
@@ -207,9 +267,19 @@ module ModuleLoaders
     # Abstract method that subclasses override to answer if the given relative path exists, and if so returns that path
     #
     # @param resolved_path [String] a path resolved by a smart path against the loader's root (if it has one)
-    # @return [Boolean] true if the file exists
+    # @return [String, nil] the found path or nil if no such path was found
     #
     def existing_path(resolved_path)
+      raise NotImplementedError.new
+    end
+
+    # Abstract method that subclasses override to return an array of paths that match the resolved path regardless of
+    # path extension.
+    #
+    # @param resolved_path [String] a path, without extension, resolved by a smart path against the loader's root (if it has one)
+    # @return [Array<String>]
+    #
+    def existing_paths(resolved_path)
       raise NotImplementedError.new
     end
 
@@ -241,12 +311,31 @@ module ModuleLoaders
       module_name.nil? || module_name == ENVIRONMENT
     end
 
+    # Answers `true` if the loader used by this instance is rooted beneath 'lib'. This is
+    # typically true for the the system_loader. It will have a path relative to the parent
+    # of 'puppet' instead of the parent of 'lib/puppet' since the 'lib' directory of puppet
+    # is renamed during install. This is significant for loaders that load ruby code.
+    #
+    # @return [Boolean] a boolean answering if the loader is rooted beneath 'lib'.
+    def lib_root?
+      false
+    end
+
     # Produces the private loader for the module. If this module is not already resolved, this will trigger resolution
     #
     def private_loader
       # The system loader has a nil module_name and it does not have a private_loader as there are no functions
       # that can only by called by puppet runtime - if so, it acts as the private loader directly.
       @private_loader ||= (global? ? self : @loaders.private_loader_for_module(module_name))
+    end
+
+    # Return all paths that matches the given smart path. The returned paths are
+    # relative to the `#generic_path` of the given smart path.
+    #
+    # @param smart_path [SmartPath] the path to find relative paths for
+    # @return [Array<String>] found paths
+    def relative_paths(smart_path)
+      raise NotImplementedError.new
     end
 
     private
@@ -256,16 +345,37 @@ module ModuleLoaders
       @init_typeset_name ||= TypedName.new(:type, "#{module_name}::init_typeset")
     end
 
-    # Find an existing path for the given `typed_name`. Return `nil` if no such path is found
+    # @return [TypedName] the fake typed name that maps to the path of an init[arbitrary extension]
+    #   file that represents a task named after the module
+    def init_task_name
+      @init_task_name ||= TypedName.new(:task, "#{module_name}::init")
+    end
+
+    # @return [TypedName] the fake typed name that maps to the path of an init.pp file that represents
+    #   a plan named after the module
+    def init_plan_name
+      @init_plan_name ||= TypedName.new(:plan, "#{module_name}::init")
+    end
+
+    # Find an existing path or paths for the given `typed_name`. Return `nil` if no path is found
     # @param typed_name [TypedName] the `typed_name` to find a path for
-    # @return [Array,nil] `nil`or a two element array an effective path `String` and the `SmartPath` that produced the effective path.
+    # @return [Array,nil] `nil`or a two element array where the first element is an effective path or array of paths
+    #   (depending on the `SmartPath`) and the second element is the `SmartPath` that produced the effective path or
+    #   paths. A path is a String
     def find_existing_path(typed_name)
       is_global = global?
       smart_paths.effective_paths(typed_name.type).each do |sp|
+        next unless sp.valid_name?(typed_name)
         origin = sp.effective_path(typed_name, is_global ? 0 : 1)
         unless origin.nil?
-          existing = existing_path(origin)
-          return [origin, sp] unless existing.nil?
+          if sp.match_many?
+            # Find all paths that starts with origin
+            origins = existing_paths(origin)
+            return [origins, sp] unless origins.empty?
+          else
+            existing = existing_path(origin)
+            return [origin, sp] unless existing.nil?
+          end
         end
       end
       nil
@@ -288,7 +398,7 @@ module ModuleLoaders
     #
     def initialize(parent_loader, loaders, module_name, path, loader_name, loadables = LOADABLE_KINDS)
       super
-      @path_index = Set.new()
+      @path_index = Set.new
     end
 
     def existing_path(effective_path)
@@ -296,22 +406,61 @@ module ModuleLoaders
       @path_index.include?(effective_path) ? effective_path : nil
     end
 
+    def existing_paths(effective_path)
+      # Select all paths starting with effective_path but reject any path that continues into a subdirectory
+      @path_index.select { |path| path.start_with?(effective_path) }.reject { |path| path[effective_path.size..-1].include?('/')}
+    end
+
     def meaningful_to_search?(smart_path)
       ! add_to_index(smart_path).empty?
     end
 
     def to_s()
-      "(ModuleLoader::FileBased '#{loader_name()}' '#{module_name()}')"
+      "(ModuleLoader::FileBased '#{loader_name}' '#{module_name}')"
     end
 
     def add_to_index(smart_path)
       found = Dir.glob(File.join(smart_path.generic_path, '**', "*#{smart_path.extension}"))
+
+      # The reason for not always rejecting directories here is performance (avoid extra stat calls). The
+      # false positives (directories with a matching extension) is an error in any case and will be caught
+      # later.
+      found = found.reject { |file_name| File.directory?(file_name) } if smart_path.extension.empty?
+
       @path_index.merge(found)
       found
     end
 
     def get_contents(effective_path)
       Puppet::FileSystem.read(effective_path, :encoding => 'utf-8')
+    end
+
+    # Return all paths that matches the given smart path. The returned paths are
+    # relative to the `#generic_path` of the given smart path.
+    #
+    # This method relies on the cache and does not perform any file system access
+    #
+    # @param smart_path [SmartPath] the path to find relative paths for
+    # @return [Array<String>] found paths
+    def relative_paths(smart_path)
+      root = smart_path.generic_path
+      found = []
+      @path_index.each do |path|
+        found << Pathname(path).relative_path_from(Pathname(root)).to_s if smart_path.valid_path?(path)
+      end
+      found
+    end
+  end
+
+  # Specialization used by the system_loader which is limited to see what's beneath 'lib' and hence
+  # cannot be rooted in its parent. The 'lib' directory is renamed during install so any attempt
+  # to traverse into it from above would fail.
+  #
+  # @api private
+  #
+  class LibRootedFileBased < FileBased
+    def lib_root?
+      true
     end
   end
 
@@ -343,7 +492,7 @@ module ModuleLoaders
     end
 
     def to_s()
-      "(ModuleLoader::GemBased '#{loader_name()}' '#{@gem_ref}' [#{module_name()}])"
+      "(ModuleLoader::GemBased '#{loader_name}' '#{@gem_ref}' [#{module_name}])"
     end
   end
 end

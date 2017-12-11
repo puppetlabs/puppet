@@ -117,16 +117,20 @@ Puppet::Functions.create_function(:map) do
   end
 
   def map_Enumerable_2(enumerable)
-    result = []
-    index = 0
     enum = Puppet::Pops::Types::Iterable.asserted_iterable(self, enumerable)
-    begin
-      loop do
-        result << yield(index, enum.next)
-        index = index +1
+    if enum.hash_style?
+      enum.map { |entry| yield(*entry) }
+    else
+      result = []
+      begin
+        index = 0
+        loop do
+          result << yield(index, enum.next)
+          index = index +1
+        end
+      rescue StopIteration
       end
-    rescue StopIteration
+      result
     end
-    result
   end
 end

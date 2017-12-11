@@ -11,6 +11,12 @@ Puppet::Functions.create_function(:include, Puppet::Functions::InternalFunction)
   end
 
   def include(scope, *classes)
+    if Puppet[:tasks]
+      raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
+        Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING,
+        {:operation => 'include'})
+    end
+
     classes = scope.transform_and_assert_classnames(classes.flatten)
     result = classes.map {|name| Puppet::Pops::Types::TypeFactory.host_class(name) }
     scope.compiler.evaluate_classes(classes, scope, false)

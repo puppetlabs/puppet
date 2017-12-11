@@ -1,4 +1,12 @@
 module Puppet::Pops::Types
+
+  # Implemented by classes that can produce an iterator to iterate over their contents
+  module IteratorProducer
+    def iterator
+      raise ArgumentError, 'iterator() is not implemented'
+    end
+  end
+
   # The runtime Iterable type for an Iterable
   module Iterable
     # Produces an `Iterable` for one of the following types with the following characterstics:
@@ -45,6 +53,8 @@ module Puppet::Pops::Types
     # @api public
     def self.on(o)
       case o
+      when IteratorProducer
+        o.iterator
       when Iterable
         o
       when String
@@ -59,10 +69,10 @@ module Puppet::Pops::Types
       when Hash
         # Each element is a two element [key, value] tuple.
         if o.empty?
-          Iterator.new(PHashType::DEFAULT_KEY_PAIR_TUPLE, o.each)
+          HashIterator.new(PHashType::DEFAULT_KEY_PAIR_TUPLE, o.each)
         else
           tc = TypeCalculator.singleton
-          Iterator.new(PTupleType.new([
+          HashIterator.new(PTupleType.new([
             PVariantType.maybe_create(o.keys.map {|e| tc.infer_set(e) }),
             PVariantType.maybe_create(o.values.map {|e| tc.infer_set(e) })], PHashType::KEY_PAIR_TUPLE_SIZE), o.each_pair)
         end
@@ -148,6 +158,10 @@ module Puppet::Pops::Types
       super
     end
 
+    def hash_style?
+      false
+    end
+
     def unbounded?
       true
     end
@@ -217,6 +231,14 @@ module Puppet::Pops::Types
 
     def unbounded?
       Iterable.unbounded?(@enumeration)
+    end
+  end
+
+  # Special iterator used when iterating over hashes. Returns `true` for `#hash_style?` so that
+  # it is possible to differentiate between two element arrays and key => value associations
+  class HashIterator < Iterator
+    def hash_style?
+      true
     end
   end
 

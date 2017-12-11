@@ -78,9 +78,16 @@ class Closure < CallableSignature
     end
   end
 
-  # Call closure with argument assignment by name
+  def call_by_name_with_scope(scope, args_hash, enforce_parameters)
+    call_by_name_internal(scope, args_hash, enforce_parameters)
+   end
+
   def call_by_name(args_hash, enforce_parameters)
-    closure_scope = enclosing_scope
+    call_by_name_internal(enclosing_scope, args_hash, enforce_parameters)
+  end
+
+  # Call closure with argument assignment by name
+  def call_by_name_internal(closure_scope, args_hash, enforce_parameters)
     if enforce_parameters
       # Push a temporary parameter scope used while resolving the parameter defaults
       closure_scope.with_parameter_scope(closure_name, parameter_names) do |param_scope|
@@ -112,6 +119,7 @@ class Closure < CallableSignature
       @evaluator.evaluate_block_with_bindings(closure_scope, args_hash, @model.body)
     end
   end
+  private :call_by_name_internal
 
   def parameters
     @model.parameters

@@ -38,6 +38,62 @@ module Pcore
     add_alias('Pcore::MemberName', TYPE_MEMBER_NAME, loader)
     add_alias('Pcore::TypeName', TYPE_QUALIFIED_REFERENCE, loader)
     add_alias('Pcore::QRef', TYPE_QUALIFIED_REFERENCE, loader)
+
+    if Puppet[:tasks]
+      require_relative 'types/execution_result'
+
+      add_object_type('Target', <<-PUPPET, loader)
+      {
+        attributes => {
+          host => String[1],
+          options => { type => Hash[String[1], Data], value => {} }
+        }
+      }
+      PUPPET
+
+      add_object_type('Task', <<-PUPPET, loader)
+        {
+          attributes => {   
+            # Fully qualified name of the task
+            name => { type => Pattern[/\\A[a-z][a-z0-9_]*(?:::[a-z][a-z0-9_]*)*\\z/] },
+
+            # Full path to executable
+            executable => { type => String },
+
+            # Task description
+            description => { type => Optional[String], value => undef },
+
+            # Puppet Task version
+            puppet_task_version => { type => Integer, value => 1 },
+  
+            # Type, description, and sensitive property of each parameter 
+            parameters => {
+              type => Optional[Hash[
+                Pattern[/\\A[a-z][a-z0-9_]*\\z/],
+                Struct[
+                  Optional[description] => String,
+                  Optional[sensitive] => Boolean,
+                  type => Type[Optional[Data]]]]],
+              value => undef
+            },
+
+             # Type, description, and sensitive property of each output 
+            output => {
+              type => Optional[Hash[
+                Pattern[/\\A[a-z][a-z0-9_]*\\z/],
+                Struct[
+                  Optional[description] => String,
+                  Optional[sensitive] => Boolean,
+                  type => Type[Optional[Data]]]]],
+              value => undef
+            },
+ 
+            supports_noop => { type => Boolean, value => false },
+            input_method => { type => String, value => 'both' },
+          }
+        }
+      PUPPET
+    end
     Types::TypedModelObject.register_ptypes(loader, ir)
 
     @type = create_object_type(loader, ir, Pcore, 'Pcore', nil)

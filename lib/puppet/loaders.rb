@@ -19,6 +19,7 @@ module Puppet
       require 'puppet/pops/loader/loader_paths'
       require 'puppet/pops/loader/simple_environment_loader'
       require 'puppet/pops/loader/predefined_loader'
+      require 'puppet/pops/loader/puppet_plan_instantiator'
     end
   end
 

@@ -7,7 +7,12 @@ class ValidatorFactory_4_0 < Factory
 
   # Produces the checker to use
   def checker diagnostic_producer
-    Checker4_0.new(diagnostic_producer)
+    if Puppet[:tasks]
+      require_relative 'tasks_checker'
+      TasksChecker.new(diagnostic_producer)
+    else
+      Checker4_0.new(diagnostic_producer)
+    end
   end
 
   # Produces the label provider to use

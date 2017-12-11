@@ -15,19 +15,25 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   attr_reader :acceptor
   attr_reader :migration_checker
 
+  def self.check_visitor
+    # Class instance variable rather than Class variable because methods visited
+    # may be overridden in subclass
+    @check_visitor ||= Visitor.new(nil, 'check', 0, 0)
+  end
+
   # Initializes the validator with a diagnostics producer. This object must respond to
   # `:will_accept?` and `:accept`.
   #
   def initialize(diagnostics_producer)
     super()
-    @@check_visitor       ||= Visitor.new(nil, "check", 0, 0)
     @@rvalue_visitor      ||= Visitor.new(nil, "rvalue", 0, 0)
     @@hostname_visitor    ||= Visitor.new(nil, "hostname", 1, 2)
     @@assignment_visitor  ||= Visitor.new(nil, "assign", 0, 1)
     @@query_visitor       ||= Visitor.new(nil, "query", 0, 0)
     @@relation_visitor    ||= Visitor.new(nil, "relation", 0, 0)
-    @@idem_visitor        ||= Visitor.new(self, "idem", 0, 0)
+    @@idem_visitor        ||= Visitor.new(nil, "idem", 0, 0)
 
+    @check_visitor = self.class.check_visitor
     @acceptor = diagnostics_producer
 
     # Use null migration checker unless given in context
@@ -51,7 +57,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   # Performs regular validity check
   def check(o)
-    @@check_visitor.visit_this_0(self, o)
+    @check_visitor.visit_this_0(self, o)
   end
 
   # Performs check if this is a vaid hostname expression

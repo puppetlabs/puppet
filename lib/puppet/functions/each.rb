@@ -151,13 +151,17 @@ Puppet::Functions.create_function(:each) do
 
   def foreach_Enumerable_2(enumerable)
     enum = Puppet::Pops::Types::Iterable.asserted_iterable(self, enumerable)
-    index = 0
-    begin
-      loop do
-        yield(index, enum.next)
-        index += 1
+    if enum.hash_style?
+      enum.each { |entry| yield(*entry) }
+    else
+      begin
+        index = 0
+        loop do
+          yield(index, enum.next)
+          index += 1
+        end
+      rescue StopIteration
       end
-    rescue StopIteration
     end
     # produces the receiver
     enumerable

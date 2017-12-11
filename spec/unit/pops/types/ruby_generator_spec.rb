@@ -208,53 +208,72 @@ describe 'Puppet Ruby Generator' do
   end
 
   context 'when generating from Object types' do
-    def source
-      <<-CODE
-        type MyModule::FirstGenerated = Object[{
-          attributes => {
-            name => String,
-            age  => { type => Integer, value => 30 },
-            what => { type => String, value => 'what is this', kind => constant },
-            uc_name => {
-              type => String,
-              kind => derived,
-              annotations => {
-                RubyMethod => { body => '@name.upcase' }
-              }
-            },
-            other_name => {
-              type => String,
-              kind => derived
+    let (:type_decls) { <<-CODE.unindent }
+      type MyModule::FirstGenerated = Object[{
+        attributes => {
+          name => String,
+          age  => { type => Integer, value => 30 },
+          what => { type => String, value => 'what is this', kind => constant },
+          uc_name => {
+            type => String,
+            kind => derived,
+            annotations => {
+              RubyMethod => { body => '@name.upcase' }
             }
           },
-          functions => {
-            some_other => {
-              type => Callable[1,1]
-            },
-            name_and_age => {
-              type => Callable[1,1],
-              annotations => {
-                RubyMethod => {
-                  parameters => 'joiner',
-                  body => '"\#{@name}\#{joiner}\#{@age}"'
-                }
+          other_name => {
+            type => String,
+            kind => derived
+          },
+        },
+        functions => {
+          some_other => {
+            type => Callable[1,1]
+          },
+          name_and_age => {
+            type => Callable[1,1],
+            annotations => {
+              RubyMethod => {
+                parameters => 'joiner',
+                body => '"\#{@name}\#{joiner}\#{@age}"'
               }
-            },
+            }
+          },
+          '[]' => {
+            type => Callable[1,1],
+            annotations => {
+              RubyMethod => {
+                parameters => 'key',
+                body => @(EOF)
+                  case key
+                  when 'name'
+                    name
+                  when 'age'
+                    age
+                  else
+                    nil
+                  end
+                |-EOF
+              }
+            }
           }
-        }]
-        type MyModule::SecondGenerated = Object[{
-          parent => MyModule::FirstGenerated,
-          attributes => {
-            address => String,
-            zipcode => String,
-            email => String,
-            another => { type => Optional[MyModule::FirstGenerated], value => undef },
-            number => Integer,
-            aref => { type => Optional[MyModule::FirstGenerated], value => undef, kind => reference }
-          }
-        }]
+        }
+      }]
+      type MyModule::SecondGenerated = Object[{
+        parent => MyModule::FirstGenerated,
+        attributes => {
+          address => String,
+          zipcode => String,
+          email => String,
+          another => { type => Optional[MyModule::FirstGenerated], value => undef },
+          number => Integer,
+          aref => { type => Optional[MyModule::FirstGenerated], value => undef, kind => reference }
+        }
+      }]
       CODE
-    end
+
+    let(:type_usage) { '' }
+    let(:source) { type_decls + type_usage }
 
     context 'when generating anonymous classes' do
 
@@ -264,11 +283,12 @@ describe 'Puppet Ruby Generator' do
       let(:second_type) { parser.parse('MyModule::SecondGenerated', loader) }
       let(:first) { generator.create_class(first_type) }
       let(:second) { generator.create_class(second_type) }
+      let(:notices) { [] }
 
       before(:each) do
-        eval_and_collect_notices(source) do |topscope|
+        notices.concat(eval_and_collect_notices(source) do |topscope|
           loader = topscope.compiler.loaders.find_loader(nil)
-        end
+        end)
       end
 
       after(:each) { typeset = nil }
@@ -294,6 +314,12 @@ describe 'Puppet Ruby Generator' do
           expect(inst).to be_a(first)
           expect(inst.name).to eq('Bob Builder')
           expect(inst.age).to eq(52)
+        end
+
+        it 'created instance has a [] method' do
+          inst = first.create('Bob Builder', 52)
+          expect(inst['name']).to eq('Bob Builder')
+          expect(inst['age']).to eq(52)
         end
 
         it 'will perform type assertion of the arguments' do
@@ -377,6 +403,18 @@ describe 'Puppet Ruby Generator' do
           results = []
           wrinst._pcore_all_contents([]) { |v| results << v }
           expect(results).to eq([inst])
+        end
+      end
+
+      context 'when used from Puppet' do
+        let(:type_usage) { <<-PUPPET.unindent }
+          $i = MyModule::FirstGenerated('Bob Builder', 52)
+          notice($i['name'])
+          notice($i['age'])
+        PUPPET
+
+        it 'The [] method is present on a created instance' do
+          expect(notices).to eql(['Bob Builder', '52'])
         end
       end
     end

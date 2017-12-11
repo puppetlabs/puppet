@@ -119,19 +119,25 @@ Puppet::Functions.create_function(:filter) do
   end
 
   def filter_Enumerable_2(enumerable)
-    result = []
-    index = 0
     enum = Puppet::Pops::Types::Iterable.asserted_iterable(self, enumerable)
-    begin
-      loop do
-        it = enum.next
-        if yield(index, it) == true
-          result << it
+    if enum.hash_style?
+      result = {}
+      enum.each { |k, v| result[k] = v if yield(k, v) == true }
+      result
+    else
+      result = []
+      begin
+        index = 0
+        loop do
+          it = enum.next
+          if yield(index, it) == true
+            result << it
+          end
+          index += 1
         end
-        index += 1
+      rescue StopIteration
       end
-    rescue StopIteration
+      result
     end
-    result
   end
 end

@@ -196,8 +196,8 @@ module TypeFactory
   # @param hash [{String=>Object}] the hash of feature groups
   # @return [PObjectType] the created type
   #
-  def self.object(hash = nil)
-    hash.nil? || hash.empty? ? PObjectType::DEFAULT : PObjectType.new(hash)
+  def self.object(hash = nil, loader = nil)
+    hash.nil? || hash.empty? ? PObjectType::DEFAULT : PObjectType.new(hash, loader)
   end
 
   def self.type_set(hash = nil)
@@ -522,6 +522,14 @@ module TypeFactory
   #
   def self.error
     @error_t ||= TypeParser.singleton.parse('Error', Loaders.static_loader)
+  end
+
+  def self.target
+    @target_t ||= TypeParser.singleton.parse('Target')
+  end
+
+  def self.task
+    @task_t ||= TypeParser.singleton.parse('Task')
   end
 
   # Produces a type for URI[String or Hash]

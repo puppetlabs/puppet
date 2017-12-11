@@ -57,8 +57,12 @@ class TypedModelObject < Object
   def self.register_ptypes(loader, ir)
     types = [
       Annotation.register_ptype(loader, ir),
-      RubyMethod.register_ptype(loader, ir)
+      RubyMethod.register_ptype(loader, ir),
     ]
+    if Puppet[:tasks]
+      types << ExecutionResult.register_ptype(loader, ir)
+    end
+
     Types.constants.each do |c|
       next if c == :PType || c == :PHostClassType
       cls = Types.const_get(c)

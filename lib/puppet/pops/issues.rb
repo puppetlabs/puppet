@@ -354,7 +354,7 @@ module Issues
   # Issues when a variable is not a NAME
   #
   ILLEGAL_VARIABLE_EXPRESSION = hard_issue :ILLEGAL_VARIABLE_EXPRESSION do
-    _("Illegal variable expression. %{expresion} did not produce a variable name (String or Numeric).") % { expression: label.a_an_uc(semantic) }
+    _("Illegal variable expression. %{expression} did not produce a variable name (String or Numeric).") % { expression: label.a_an_uc(semantic) }
   end
 
   # Issues when an expression is used illegally in a query.
@@ -749,6 +749,14 @@ module Issues
     _("Illegal %{format} Byte Order mark at beginning of input: %{bom} - remove these from the puppet source") % { format: format_name, bom: bytes }
   end
 
+  NO_SUCH_FILE_OR_DIRECTORY = hard_issue :NO_SUCH_FILE_OR_DIRECTORY, :file do
+    _('No such file or directory: %{file}') % { file: file }
+  end
+
+  NOT_A_FILE = hard_issue :NOT_A_FILE, :file do
+    _('%{file} is not a file') % { file: file }
+  end
+
   NUMERIC_OVERFLOW = hard_issue :NUMERIC_OVERFLOW, :value do
     if value > 0
       _("%{expression} resulted in a value outside of Puppet Integer max range, got '%{value}'") % { expression: label.a_an_uc(semantic), value: ("%#+x" % value) }
@@ -855,6 +863,26 @@ module Issues
 
   SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING = issue :SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING, :path, :klass, :value do
     _("%{path} contains a hash with %{klass} key. It will be converted to the String '%{value}'") % { path: path, klass: label.a_an(klass), value: value }
+  end
+
+  FEATURE_NOT_SUPPORTED_WHEN_SCRIPTING = issue :NOT_SUPPORTED_WHEN_SCRIPTING, :feature do
+    _("The feature '%{feature}' is only available when compiling a catalog") % { feature: feature }
+  end
+
+  CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING = issue :CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING, :operation do
+    _("The catalog operation '%{operation}' is only available when compiling a catalog") % { operation: operation }
+  end
+
+  TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING = issue :TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING, :operation do
+    _("The task operation '%{operation}' is not available when compiling a catalog") % { operation: operation }
+  end
+
+  TASK_MISSING_BOLT = issue :TASK_MISSING_BOLT, :action do
+    _("The 'bolt' library is required to %{action}") % { action: action }
+  end
+
+  UNKNOWN_TASK = issue :UNKNOWN_TASK, :type_name do
+    _('Task not found: %{type_name}') % { type_name: type_name }
   end
 end
 end

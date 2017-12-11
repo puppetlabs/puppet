@@ -23,6 +23,8 @@ token FUNCTION
 token TYPE
 token PRIVATE ATTR
 token APPLICATION PRODUCES CONSUMES SITE
+token PLAN
+token PLAN_R
 token LOW
 
 prechigh
@@ -256,10 +258,9 @@ primary_expression
   | if_expression
   | unless_expression
   | definition_expression
-  # @todo lutter 2014-09-03: application declarations must be at the toplevel
-  # in a manifest - Should be validated, not handled here. helindbe 2015-09-10
   | application_expression
   | hostclass_expression
+  | plan_expression
   | node_definition_expression
   | site_definition_expression
   | epp_render_expression
@@ -486,6 +487,7 @@ attribute_operations
   attribute_name
     : NAME
     | keyword
+    | PLAN_R
 
   # In this version, illegal combinations are validated instead of producing syntax errors
   # (Can give nicer error message "+> is not applicable to...")
@@ -546,6 +548,16 @@ capability_mapping
 capability_kw
   : PRODUCES
   | CONSUMES
+
+#--PLAN
+plan_expression
+  : PLAN stacked_classname parameter_list LBRACE opt_statements RBRACE {
+      # Remove this plan's name from the namestack as all nested plans have been parsed
+      namepop
+      definition = Factory.PLAN(classname(val[1][:value]), val[2], val[4])
+      loc(definition, val[0], val[5])
+      result = add_definition(definition)
+    }
 
 #---HOSTCLASS
 #
@@ -667,6 +679,7 @@ classname
   : NAME
   | WORD
   | CLASSREF
+  | PLAN_R
   | CLASS { error val[0], "'class' keyword not allowed at this location" }
   | STRING { error val[0], "A quoted string is not valid as a name here" }
 
@@ -768,6 +781,8 @@ variable
 reserved_word
   : PRIVATE   { result = Factory.RESERVED(val[0][:value]) ; loc result, val[0] }
   | ATTR      { result = Factory.RESERVED(val[0][:value]) ; loc result, val[0] }
+  | PLAN_R    { result = Factory.RESERVED(val[0][:value], true) ; loc result, val[0] }
+
 
 #---LITERALS (dynamic and static)
 #

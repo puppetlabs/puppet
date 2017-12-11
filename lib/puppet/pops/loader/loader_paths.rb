@@ -6,7 +6,10 @@
 #
 # TODO: Currently only supports loading of functions (2 kinds)
 #
-module Puppet::Pops::Loader::LoaderPaths
+module Puppet::Pops
+module Loader
+module LoaderPaths
+
   # Returns an array of SmartPath, each instantiated with a reference to the given loader (for root path resolution
   # and existence checks). The smart paths in the array appear in precedence order. The returned array may be
   # mutated.
@@ -23,6 +26,10 @@ module Puppet::Pops::Loader::LoaderPaths
           result << FunctionPathPP.new(loader)
         end
         # When wanted also add FunctionPath3x to load 3x functions
+    when :plan
+      result << PlanPathPP.new(loader)
+    when :task
+      result << TaskPath.new(loader) if Puppet[:tasks] && loader.loadables.include?(:task)
     when :type
       result << TypePathPP.new(loader) if loader.loadables.include?(:type_pp)
     when :resource_type_pp
@@ -52,15 +59,23 @@ module Puppet::Pops::Loader::LoaderPaths
       @loader = loader
     end
 
-    def generic_path()
+    def generic_path
       return @generic_path unless @generic_path.nil?
 
-      the_root_path = root_path() # @loader.path
+      the_root_path = root_path # @loader.path
       @generic_path = (the_root_path.nil? ? relative_path : File.join(the_root_path, relative_path))
+    end
+
+    def match_many?
+      false
     end
 
     def root_path
       @loader.path
+    end
+
+    def lib_root?
+      @loader.lib_root?
     end
 
     # Effective path is the generic path + the name part(s) + extension.
@@ -69,11 +84,33 @@ module Puppet::Pops::Loader::LoaderPaths
       "#{File.join(generic_path, typed_name.name_parts)}#{extension}"
     end
 
-    def relative_path()
+    def typed_name(type, name_authority, relative_path, module_name)
+      # Module name is assumed to be included in the path and therefore not added here
+      n = ''
+      unless extension.empty?
+        # Remove extension
+        relative_path = relative_path[0..-(extension.length+1)]
+      end
+      relative_path.split('/').each do |segment|
+        n << '::' if n.size > 0
+        n << segment
+      end
+      TypedName.new(type, n, name_authority)
+    end
+
+    def valid_path?(path)
+      path.end_with?(extension) && path.start_with?(generic_path)
+    end
+
+    def valid_name?(typed_name)
+      true
+    end
+
+    def relative_path
       raise NotImplementedError.new
     end
 
-    def instantiator()
+    def instantiator
       raise NotImplementedError.new
     end
   end
@@ -101,10 +138,6 @@ module Puppet::Pops::Loader::LoaderPaths
       EXTENSION
     end
 
-    def root_path
-      Puppet::FileSystem.dir_string(@loader.path)
-    end
-
     # Duplication of extension information, but avoids one call
     def effective_path(typed_name, start_index_in_name)
       # Puppet name to path always skips the name-space as that is part of the generic path
@@ -114,61 +147,127 @@ module Puppet::Pops::Loader::LoaderPaths
         return nil if start_index_in_name >= parts.size
         parts = parts[start_index_in_name..-1]
       end
-      "#{File.join(generic_path, parts)}.pp"
+      "#{File.join(generic_path, parts)}#{extension}"
+    end
+
+    def typed_name(type, name_authority, relative_path, module_name)
+      n = ''
+      n << module_name unless module_name.nil?
+      unless extension.empty?
+        # Remove extension
+        relative_path = relative_path[0..-(extension.length+1)]
+      end
+      relative_path.split('/').each do |segment|
+        n << '::' if n.size > 0
+        n << segment
+      end
+      TypedName.new(type, n, name_authority)
     end
   end
 
   class FunctionPath4x < RubySmartPath
-    FUNCTION_PATH_4X = File.join('puppet', 'functions')
+    SYSTEM_FUNCTION_PATH_4X = File.join('puppet', 'functions').freeze
+    FUNCTION_PATH_4X = File.join('lib', SYSTEM_FUNCTION_PATH_4X).freeze
 
     def relative_path
-      FUNCTION_PATH_4X
+      lib_root? ? SYSTEM_FUNCTION_PATH_4X : FUNCTION_PATH_4X
     end
 
-    def instantiator()
-      Puppet::Pops::Loader::RubyFunctionInstantiator
+    def instantiator
+      RubyFunctionInstantiator
     end
   end
 
   class FunctionPath3x < RubySmartPath
-    FUNCTION_PATH_3X = File.join('puppet', 'parser', 'functions')
+    SYSTEM_FUNCTION_PATH_3X = File.join('puppet', 'parser', 'functions').freeze
+    FUNCTION_PATH_3X = File.join('lib', SYSTEM_FUNCTION_PATH_3X).freeze
 
     def relative_path
-      FUNCTION_PATH_3X
+      lib_root? ? SYSTEM_FUNCTION_PATH_3X : FUNCTION_PATH_3X
     end
 
-    def instantiator()
-      Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
+    def instantiator
+      RubyLegacyFunctionInstantiator
     end
   end
 
   class FunctionPathPP < PuppetSmartPath
-    # Navigate to directory where 'lib' is, then down again
-    FUNCTION_PATH_PP = File.join('functions')
+    FUNCTION_PATH_PP = 'functions'.freeze
 
     def relative_path
       FUNCTION_PATH_PP
     end
 
-    def instantiator()
-      Puppet::Pops::Loader::PuppetFunctionInstantiator
+    def instantiator
+      PuppetFunctionInstantiator
     end
   end
 
   class TypePathPP < PuppetSmartPath
-    TYPE_PATH_PP = File.join('types')
+    TYPE_PATH_PP = 'types'.freeze
 
     def relative_path
       TYPE_PATH_PP
     end
 
-    def instantiator()
-      Puppet::Pops::Loader::TypeDefinitionInstantiator
+    def instantiator
+      TypeDefinitionInstantiator
+    end
+  end
+
+  # TaskPath is like PuppetSmartPath but it does not use an extension and may
+  # match more than one path with one name
+  class TaskPath < PuppetSmartPath
+    TASKS_PATH = 'tasks'.freeze
+    FORBIDDEN_EXTENSIONS = %w{.conf .md}.freeze
+
+    def extension
+      EMPTY_STRING
+    end
+
+    def match_many?
+      true
+    end
+
+    def relative_path
+      TASKS_PATH
+    end
+
+    def typed_name(type, name_authority, relative_path, module_name)
+      n = ''
+      n << module_name unless module_name.nil?
+
+      # Remove extension regardless of what it is. A task name cannot contain dots
+      relative_path = relative_path.sub(/\.[^\/]*\z/, '')
+
+      relative_path.split('/').each do |segment|
+        n << '::' if n.size > 0
+        n << segment
+      end
+      TypedName.new(type, n, name_authority)
+    end
+
+    def instantiator
+      require_relative 'task_instantiator'
+      TaskInstantiator
+    end
+
+    def valid_name?(typed_name)
+      # TODO: Remove when PE has proper namespace handling
+      typed_name.name_parts.size <= 2
+    end
+
+    def valid_path?(path)
+      path.start_with?(generic_path) && is_task_name?(File.basename(path, '.*')) && !FORBIDDEN_EXTENSIONS.any? { |ext| path.end_with?(ext) }
+    end
+
+    def is_task_name?(name)
+      !!(name =~ /^[a-z][a-z0-9_]*$/)
     end
   end
 
   class ResourceTypeImplPP < PuppetSmartPath
-    RESOURCE_TYPES_PATH_PP = File.join('.resource_types')
+    RESOURCE_TYPES_PATH_PP = '.resource_types'.freeze
 
     def relative_path
       RESOURCE_TYPES_PATH_PP
@@ -178,8 +277,8 @@ module Puppet::Pops::Loader::LoaderPaths
       @loader.path
     end
 
-    def instantiator()
-      Puppet::Pops::Loader::PuppetResourceTypeImplInstantiator
+    def instantiator
+      PuppetResourceTypeImplInstantiator
     end
 
     # The effect paths for resource type impl is the full name
@@ -190,6 +289,18 @@ module Puppet::Pops::Loader::LoaderPaths
       # Resource type to name does not skip the name-space
       # i.e. <module>/mymodule/resource_types/foo.pp is the reource type foo
       "#{File.join(generic_path, typed_name.name_parts)}.pp"
+    end
+  end
+
+  class PlanPathPP < PuppetSmartPath
+    PLAN_PATH_PP = File.join('plans')
+
+    def relative_path
+      PLAN_PATH_PP
+    end
+
+    def instantiator()
+      Puppet::Pops::Loader::PuppetPlanInstantiator
     end
   end
 
@@ -215,7 +326,7 @@ module Puppet::Pops::Loader::LoaderPaths
       unless effective_paths = smart_paths[type]
         # type not yet processed, does the various directories for the type exist ?
         # Get the relative dirs for the type
-        paths_for_type = Puppet::Pops::Loader::LoaderPaths.relative_paths_for_type(type, loader)
+        paths_for_type = LoaderPaths.relative_paths_for_type(type, loader)
         # Check which directories exist in the loader's content/index
         effective_paths = smart_paths[type] = paths_for_type.select { |sp| loader.meaningful_to_search?(sp) }
       end
@@ -223,3 +334,6 @@ module Puppet::Pops::Loader::LoaderPaths
     end
   end
 end
+end
+end
+

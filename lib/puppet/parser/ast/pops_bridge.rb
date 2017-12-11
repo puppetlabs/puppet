@@ -95,7 +95,8 @@ class Puppet::Parser::AST::PopsBridge
     # efficient as it avoids one full scan of all logic via recursive enumeration/yield)
     #
     def instantiate(modname)
-      @program_model.definitions.collect do |d|
+
+      @program_model.definitions.map do |d|
         case d
         when Puppet::Pops::Model::HostClassDefinition
           instantiate_HostClassDefinition(d, modname)
@@ -107,25 +108,17 @@ class Puppet::Parser::AST::PopsBridge
           instantiate_NodeDefinition(d, modname)
         when Puppet::Pops::Model::SiteDefinition
             instantiate_SiteDefinition(d, modname)
-        when Puppet::Pops::Model::FunctionDefinition
-          # The 3x logic calling this will not know what to do with the result, it is compacted away at the end
-          instantiate_FunctionDefinition(d, modname)
-          next
-        when Puppet::Pops::Model::TypeAlias
-          # The 3x logic calling this will not know what to do with the result, it is compacted away at the end
-          instantiate_TypeAlias(d, modname)
-          next
-        when Puppet::Pops::Model::TypeMapping
-          # The 3x logic calling this will not know what to do with the result, it is compacted away at the end
-          instantiate_TypeMapping(d, modname)
-          next
         when Puppet::Pops::Model::Application
           instantiate_ApplicationDefinition(d, modname)
         else
-          raise Puppet::ParseError, "Internal Error: Unknown type of definition - got '#{d.class}'"
+          loaders = Puppet::Pops::Loaders.loaders
+          loaders.instantiate_definition(d, loaders.find_loader(modname))
+
+          # The 3x logic calling this will not know what to do with the result, it is compacted away at the end
+          nil
         end
       end.flatten().compact() # flatten since node definition may have returned an array
-                              # Compact since functions are not understood by compiler
+                              # Compact since 4x definitions are not understood by compiler
     end
 
     def evaluate(scope)
@@ -259,43 +252,6 @@ class Puppet::Parser::AST::PopsBridge
 
       args = @ast_transformer.merge_location(args, o)
       Puppet::Resource::Type.new(:site, 'site', @context.merge(args))
-    end
-
-    # Propagates a found Function to the appropriate loader.
-    # This is for 4x evaluator/loader
-    #
-    def instantiate_FunctionDefinition(function_definition, modname)
-      loader = Puppet::Pops::Loaders.find_loader(modname)
-
-      # Instantiate Function, and store it in the loader
-      typed_name, f = Puppet::Pops::Loader::PuppetFunctionInstantiator.create_from_model(function_definition, loader)
-      loader.set_entry(typed_name, f, function_definition.locator.to_uri(function_definition))
-
-      nil # do not want the function to inadvertently leak into 3x
-    end
-
-    # Propagates a found TypeAlias to the appropriate loader.
-    # This is for 4x evaluator/loader
-    #
-    def instantiate_TypeAlias(type_alias, modname)
-      loader = Puppet::Pops::Loaders.find_loader(modname)
-
-      # Bind the type alias to the loader using the alias
-      Puppet::Pops::Loader::TypeDefinitionInstantiator.create_from_model(type_alias, loader)
-
-      nil # do not want the type alias to inadvertently leak into 3x
-    end
-
-    # Adds the TypeMapping to the ImplementationRegistry
-    # This is for 4x evaluator/loader
-    #
-    def instantiate_TypeMapping(type_mapping, modname)
-      loader = Puppet::Pops::Loaders.find_loader(modname)
-      tf = Puppet::Pops::Types::TypeParser.singleton
-      lhs = tf.interpret(type_mapping.type_expr, loader)
-      rhs = tf.interpret_any(type_mapping.mapping_expr, loader)
-      Puppet::Pops::Loaders.implementation_registry.register_type_mapping(lhs, rhs, loader)
-      nil
     end
 
     def code()

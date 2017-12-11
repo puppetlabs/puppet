@@ -11,6 +11,12 @@ Puppet::Functions.create_function(:require, Puppet::Functions::InternalFunction)
   end
 
   def require_impl(scope, *classes)
+    if Puppet[:tasks]
+      raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
+        Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING,
+        {:operation => 'require'})
+    end
+
     # Make call patterns uniform and protected against nested arrays, also make
     # names absolute if so desired.
     classes = scope.transform_and_assert_classnames(classes.flatten)

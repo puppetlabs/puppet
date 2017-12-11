@@ -74,8 +74,16 @@ class StaticLoader < Loader
   attr_reader :loaded
   def initialize
     @loaded = {}
+    @runtime_3_initialized = false
     create_built_in_types
-    create_resource_type_references
+  end
+
+  def discover(type, name_authority = Pcore::RUNTIME_NAME_AUTHORITY)
+    # Static loader only contains runtime types
+    return EMPTY_ARRAY unless type == :type && name_authority == name_authority = Pcore::RUNTIME_NAME_AUTHORITY
+
+    typed_names = type == :type && name_authority == Pcore::RUNTIME_NAME_AUTHORITY ? @loaded.keys : EMPTY_ARRAY
+    block_given? ? typed_names.select { |tn| yield(tn) } : typed_names
   end
 
   def load_typed(typed_name)
@@ -125,6 +133,14 @@ class StaticLoader < Loader
     PUPPET
 
     register_aliases
+  end
+
+  def runtime_3_init
+    unless @runtime_3_initialized
+      @runtime_3_initialized = true
+      create_resource_type_references
+    end
+    nil
   end
 
   private
