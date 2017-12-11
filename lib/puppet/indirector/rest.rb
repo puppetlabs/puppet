@@ -262,11 +262,13 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
 
   def handle_response(request, response)
     server_version = response[Puppet::Network::HTTP::HEADER_PUPPET_VERSION]
-    if server_version &&
-       SemanticPuppet::Version.parse(server_version).major < MAJOR_VERSION_JSON_DEFAULT &&
-       Puppet[:preferred_serialization_format] != 'pson'
-      Puppet.warning("Downgrading to PSON for future requests")
-      Puppet[:preferred_serialization_format] = 'pson'
+    if server_version
+      Puppet.push_context({:server_agent_version => server_version})
+      if SemanticPuppet::Version.parse(server_version).major < MAJOR_VERSION_JSON_DEFAULT &&
+          Puppet[:preferred_serialization_format] != 'pson'
+        Puppet.warning("Downgrading to PSON for future requests")
+        Puppet[:preferred_serialization_format] = 'pson'
+      end
     end
   end
 
