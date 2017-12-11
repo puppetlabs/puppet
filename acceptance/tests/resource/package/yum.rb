@@ -2,7 +2,10 @@ test_name "test the yum package provider" do
 
   confine :to, {:platform => /(?:centos|el-|fedora)/}, agents
   confine :except, :platform => /centos-4|el-4/ # PUP-5227
-  confine :except, :hypervisor => /ec2/
+  # Skipping tests if facter finds this is an ec2 host, PUP-7774
+  hosts.each do |host|
+    skip_test('Skipping EC2 Hosts') if fact_on(host, 'ec2_metadata')
+  end
 
   tag 'audit:medium',
       'audit:acceptance' # Could be done at the integration (or unit) layer though
