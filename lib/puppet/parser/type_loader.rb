@@ -70,7 +70,7 @@ class Puppet::Parser::TypeLoader
           Puppet.debug {"Automatically imported #{fqname} from #{filename} into #{environment}"}
           return result
         end
-      rescue TypeLoaderError => detail
+      rescue TypeLoaderError
         # I'm not convinced we should just drop these errors, but this
         # preserves existing behaviours.
       end

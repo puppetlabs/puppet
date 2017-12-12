@@ -144,7 +144,7 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
   def try_convert_to_hash(h)
     begin
       h.to_hash
-    rescue NoMethodError => e
+    rescue NoMethodError
       nil
     end
   end

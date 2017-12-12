@@ -23,7 +23,7 @@ class Puppet::SyntaxCheckers::Base64 < Puppet::Plugins::SyntaxCheckers::SyntaxCh
       # Do a strict decode64 on text with all whitespace stripped since the non strict version
       # simply skips all non base64 characters
       Base64.strict_decode64(cleaned_text)
-    rescue => e
+    rescue
       msg = if (cleaned_text.bytes.to_a.size * 8) % 6 != 0
               _("Base64 syntax checker: Cannot parse invalid Base64 string - padding is not correct")
             else

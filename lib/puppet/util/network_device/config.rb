@@ -67,10 +67,10 @@ class Puppet::Util::NetworkDevice::Config
           count += 1
         }
       }
-    rescue Errno::EACCES => detail
+    rescue Errno::EACCES
       Puppet.err _("Configuration error: Cannot read %{file}; cannot serve") % { file: @file }
       #raise Puppet::Error, "Cannot read #{@config}"
-    rescue Errno::ENOENT => detail
+    rescue Errno::ENOENT
       Puppet.err _("Configuration error: '%{file}' does not exit; cannot serve") % { file: @file }
     end
 
