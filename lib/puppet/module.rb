@@ -456,7 +456,11 @@ class Puppet::Module
 
   def assert_validity
     if !Puppet::Module.is_module_directory_name?(@name) && !Puppet::Module.is_module_namespaced_name?(@name)
-      raise InvalidName, "Invalid module name #{@name}; module names must be alphanumeric (plus '-'), not '#{@name}'"
+      raise InvalidName, _(<<-ERROR_STRING).chomp % { name: @name }
+        Invalid module name '%{name}'; module names must match either:
+        An installed module name (ex. modulename) matching the expression /^[a-z][a-z0-9_]*$/ -or-
+        A namespaced module name (ex. author-modulename) matching the expression /^[a-zA-Z0-9]+[-][a-z][a-z0-9_]*$/
+      ERROR_STRING
     end
   end
 end
