@@ -125,7 +125,6 @@ Puppet::Util::Log.newdesttype :logstash_event do
     # logstash_event format is documented at
     # https://logstash.jira.com/browse/LOGSTASH-675
 
-    data = {}
     data = msg.to_hash
     data['version'] = 1
     data['@timestamp'] = data['time']

@@ -209,7 +209,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   end
 
   def dump_HeredocExpression(o)
-    result = ["@(#{o.syntax})", :indent, :break, do_dump(o.text_expr), :dedent, :break]
+    ["@(#{o.syntax})", :indent, :break, do_dump(o.text_expr), :dedent, :break]
   end
 
   def dump_HostClassDefinition o

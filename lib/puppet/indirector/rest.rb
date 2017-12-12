@@ -183,7 +183,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
       # While this way of handling the issue is not perfect, there is at least an error
       # that makes a user aware of the reason for the failure.
       #
-      content_type, body = parse_response(response)
+      _, body = parse_response(response)
       msg = _("Find %{uri} resulted in 404 with the message: %{body}") % { uri: elide(uri_with_query_string, 100), body: body }
       raise Puppet::Error, msg
     else
@@ -315,8 +315,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   # uncompress_body)
   def parse_response(response)
     if response['content-type']
-      [ response['content-type'].gsub(/\s*;.*$/,''),
-        body = uncompress_body(response) ]
+      [ response['content-type'].gsub(/\s*;.*$/,''), uncompress_body(response) ]
     else
       raise _("No content type in http response; cannot parse")
     end

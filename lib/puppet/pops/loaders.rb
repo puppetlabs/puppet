@@ -97,7 +97,7 @@ class Loaders
   end
 
   def register_implementations(obj_classes, name_authority)
-    self.class.register_implementations_with_loader(obj_classes, name_authority, loader = @private_environment_loader)
+    self.class.register_implementations_with_loader(obj_classes, name_authority, @private_environment_loader)
   end
 
   # Register implementations using the global static loader

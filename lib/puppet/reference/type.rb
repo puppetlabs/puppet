@@ -79,7 +79,6 @@ Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource types a
 
       raise _("Could not retrieve property %{sname} on type %{type_name}") % { sname: sname, type_name: type.name } unless property
 
-      doc = nil
       unless doc = property.doc
         $stderr.puts _("No docs for %{type}[%{sname}]") % { type: type, sname: sname }
         next

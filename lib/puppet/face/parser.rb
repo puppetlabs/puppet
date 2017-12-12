@@ -99,7 +99,6 @@ Puppet::Face.define(:parser, '0.0.1') do
           raise Puppet::Error, _("No input to parse given on command line or stdin")
         end
       else
-        missing_files = []
         files = args
         available_files = files.select do |file|
           Puppet::FileSystem.exist?(file)

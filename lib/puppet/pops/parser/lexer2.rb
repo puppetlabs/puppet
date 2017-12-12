@@ -535,7 +535,6 @@ class Lexer2
             scn.pos = before
             invalid_number = scn.peek(after - before) unless invalid_number
           end
-          length = scn.pos - before
           assert_numeric(invalid_number, before)
           scn.pos = before + 1
           lex_error(Issues::ILLEGAL_NUMBER, {:value => invalid_number})
@@ -545,7 +544,6 @@ class Lexer2
     ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
       'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '_'].each do |c|
       @selector[c] = lambda do
-
         scn = @scanner
         before = scn.pos
         value = scn.scan(PATTERN_BARE_WORD)

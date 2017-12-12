@@ -58,7 +58,7 @@ class Puppet::Resource::TypeCollection
 
   def add(instance)
     # return a merged instance, or the given
-    result = catch(:merged) {
+    catch(:merged) {
       send("add_#{instance.type}", instance)
       instance.resource_type_collection = self
       instance

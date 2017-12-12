@@ -154,7 +154,7 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
   def tmpdir
     tmp = '.'
     if $SAFE > 0
-      tmp = @@systmpdir
+      @@systmpdir
     else
       for dir in [ Puppet::Util.get_env('TMPDIR'), Puppet::Util.get_env('TMP'), Puppet::Util.get_env('TEMP'), @@systmpdir, '/tmp']
         if dir and stat = File.stat(dir) and stat.directory? and stat.writable?

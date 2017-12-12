@@ -200,7 +200,6 @@ module Puppet::ModuleTool
     #
     # @param value [Object] The value to be tested
     def validate_data_provider(value)
-      err = nil
       if value.is_a?(String)
         unless value =~ /^[a-zA-Z][a-zA-Z0-9_]*$/
           if value =~ /^[a-zA-Z]/

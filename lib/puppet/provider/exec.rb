@@ -6,8 +6,6 @@ class Puppet::Provider::Exec < Puppet::Provider
 
   def run(command, check = false)
     output = nil
-    status = nil
-    dir = nil
     sensitive = resource.parameters[:command].sensitive
 
     checkexe(command)

@@ -19,7 +19,6 @@ Puppet::Functions.create_function(:find_file, Puppet::Functions::InternalFunctio
   end
 
   def find_file(scope, *args)
-    path = nil
     args.each do |file|
       found = Puppet::Parser::Files.find_file(file, scope.compiler.environment)
       if found && Puppet::FileSystem.exist?(found)

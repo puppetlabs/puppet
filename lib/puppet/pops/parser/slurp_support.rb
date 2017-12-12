@@ -45,9 +45,6 @@ module SlurpSupport
    # Copy from old lexer - can do much better
    def slurp_uqstring
      scn = @scanner
-     last = scn.matched
-     ignore = true
-
      str = slurp(scn, @lexing_context[:uq_slurp_pattern], @lexing_context[:escapes], :ignore_invalid_escapes)
 
      # Terminator may be a single char '$', two characters '${', or empty string '' at the end of intput.
