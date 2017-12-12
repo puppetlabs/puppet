@@ -486,6 +486,11 @@ describe Puppet::Type.type(:schedule) do
           'Fri', 'Sat'] }.not_to raise_error
     end
 
+    it "should accept all integers 0-6 as valid values" do
+      expect {@schedule[:weekday] = [0, 1, 2, 3, 4,
+      5, 6] }.not_to raise_error
+    end
+
     it "should match if the weekday is 'Monday'" do
       @schedule[:weekday] = "Monday"
       expect(@schedule.match?).to be_truthy
@@ -499,6 +504,11 @@ describe Puppet::Type.type(:schedule) do
     it "should match if the weekday is '1'" do
       @schedule[:weekday] = "1"
       expect(@schedule.match?).to be_truthy
+    end
+
+    it "should match if weekday is 1" do
+      @schedule[:weekday] = 1
+      expect(@schedule).to be_match
     end
 
     it "should not match if the weekday is Tuesday" do
@@ -540,6 +550,10 @@ describe Puppet::Type.type(:schedule) do
       @schedule[:weekday] = ["Sun", "Mon"]
       expect(@schedule.match?).to be_truthy
     end
+  end
+
+  it "should raise an error if the weekday is an int higher than 6" do
+    expect { @schedule[:weekday] = 7 }.to raise_error(Puppet::ResourceError, /7 is not a valid day of the week/)
   end
 
   describe Puppet::Type.type(:schedule), "when matching days of week and ranges spanning days, day 1" do
