@@ -11,7 +11,18 @@ test_name "The source attribute" do
   @target_dir_on_windows  = 'C:/windows/temp/source_attr_test_dir'
   @target_dir_on_nix      = '/tmp/source_attr_test_dir'
 
-  checksums = [nil, 'md5', 'md5lite', 'sha256', 'sha256lite', 'ctime', 'mtime']
+  # In case any of the hosts happens to be fips enabled we limit to the lowest
+  # common denominator.
+  checksums_fips = [nil, 'sha256', 'sha256lite', 'ctime', 'mtime']
+  checksums_no_fips = [nil, 'md5', 'md5lite', 'sha256', 'sha256lite', 'ctime', 'mtime']
+ 
+  fips_host_present = hosts.any? { |host| on(host, facter("fips_enabled")).stdout =~ /true/ }
+  
+  if fips_host_present
+    checksums = checksums_fips
+  else
+    checksums = checksums_no_fips
+  end
 
   orig_installed_modules = get_installed_modules_for_hosts hosts
   teardown do
@@ -252,9 +263,16 @@ test_name "The source attribute" do
     byte_after_md5lite = 513
     source_content[byte_after_md5lite] = 'z'
     create_remote_file agent, source, source_content
-    apply_manifest_on agent, "file { '#{localsource_testdir}/targetmd5lite': source => '#{source}', ensure => present, checksum => md5lite } file { '#{localsource_testdir}/targetsha256lite': source => '#{source}', ensure => present, checksum => sha256lite }" do
-      assert_no_match(/(content changed|defined content)/, stdout, "Shouldn't have overwrote any files")
-    end
+    
+    if fips_host_present == 1
+      apply_manifest_on agent, "file { '#{localsource_testdir}/targetsha256lite': source => '#{source}', ensure => present, checksum => sha256lite }" do
+        assert_no_match(/(content changed|defined content)/, stdout, "Shouldn't have overwrote any files")
+      end
+    else
+      apply_manifest_on agent, "file { '#{localsource_testdir}/targetmd5lite': source => '#{source}', ensure => present, checksum => md5lite } file { '#{localsource_testdir}/targetsha256lite': source => '#{source}', ensure => present, checksum => sha256lite }" do
+        assert_no_match(/(content changed|defined content)/, stdout, "Shouldn't have overwrote any files")
+      end
+    end 
 
     local_module_manifest = ""
     checksums.each do |checksum_type|

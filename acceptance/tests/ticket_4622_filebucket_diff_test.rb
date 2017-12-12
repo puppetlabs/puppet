@@ -26,6 +26,13 @@ step "Master: Start Puppet Master" do
   with_puppet_running_on(master, {}) do
     agents.each do |agent|
 
+      if on(agent, facter("fips_enabled")).stdout =~ /true/
+        # We do not want to do a skip_test here as that aborts the tests across all targets
+        # and the whole test gets skipped even if it will succeed on any non-fips platforms
+        puts "Skipping test on platforms in fips mode - (remote) filebucket is not supported"
+        next
+      end
+
       tmpfile = agent.tmpfile('testfile')
       remote_str = "--remote --server #{master}"
       local_str = "--local"
