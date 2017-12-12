@@ -8,6 +8,22 @@ module Puppet
     end
   end
 
+  def self.default_digest_alg
+    if Facter.value(:fips_enabled) == true
+      "sha256"
+    else
+      "md5"
+    end
+  end
+
+  def self.default_checksum_types 
+    if Facter.value(:fips_enabled) == true
+      ['sha256', 'sha384', 'sha512', 'sha224']
+    else
+      ['md5', 'sha256', 'sha384', 'sha512', 'sha224']
+    end
+  end
+
   ############################################################################################
   # NOTE: For information about the available values for the ":type" property of settings,
   #   see the docs for Settings.define_settings
@@ -915,14 +931,14 @@ attempt to download the CRL.
 EOT
     },
     :digest_algorithm => {
-        :default  => 'md5',
+        :default  => lambda { default_digest_alg },
         :type     => :enum,
         :values => ["md5", "sha256", "sha384", "sha512", "sha224"],
         :desc     => 'Which digest algorithm to use for file resources and the filebucket.
                       Valid values are md5, sha256, sha384, sha512, sha224. Default is md5.',
     },
     :supported_checksum_types => {
-      :default => ['md5', 'sha256', 'sha384', 'sha512', 'sha224'],
+      :default => lambda { default_checksum_types },
       :type    => :array,
       :desc    => 'Checksum types supported by this agent for use in file resources of a
                    static catalog. Values must be comma-separated. Valid types are md5,

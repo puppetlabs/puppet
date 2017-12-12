@@ -42,6 +42,17 @@ describe "Defaults" do
     end
   end
 
+  describe ".default_digest_alg" do
+    describe "on everything else" do
+      before(:each) do
+        Facter.stubs(:value).with(:fips_enabled).returns(false)
+      end
+      it "should be false" do
+        expect(Puppet.default_digest_alg).to eq('md5')
+      end
+    end
+  end
+
   describe 'strict' do
     it 'should accept the valid value :off' do
       expect {Puppet.settings[:strict] = 'off'}.to_not raise_exception
