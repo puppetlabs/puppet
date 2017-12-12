@@ -77,8 +77,10 @@ class Dispatch < Evaluator::CallableSignature
             case injection_name
             when :scope
               scope
+            when :pal_script_compiler
+              Puppet.lookup(:pal_script_compiler)
             else
-              raise_error ArgumentError, "Unknown injection #{injection_name}"
+              raise ArgumentError, "Unknown injection #{injection_name}"
             end
         else
           # Careful so no new nil arguments are added since they would override default

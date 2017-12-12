@@ -583,6 +583,18 @@ describe 'Puppet Pal' do
                 end
               end
               RUBY
+            'myscriptcompilerfunc.rb' => <<-RUBY.unindent,
+              Puppet::Functions.create_function(:'a::myscriptcompilerfunc', Puppet::Functions::InternalFunction) do
+                dispatch :myscriptcompilerfunc do
+                  script_compiler_param
+                  param 'String',:name
+                end
+
+                def myscriptcompilerfunc(script_compiler, name)
+                  script_compiler.is_a?(Puppet::Pal::ScriptCompiler) ? name : 'no go'
+                end
+              end
+              RUBY
           }
         }
       }
@@ -978,8 +990,16 @@ describe 'Puppet Pal' do
           end
           expect(result).to eql(40)
         end
-      end
 
+        it 'makes the pal ScriptCompiler available as script_compiler_param to Function dispatcher' do
+          testing_env_dir # creates the structure
+          Puppet[:manifest] = file_containing('noop.pp', "undef")
+          result = Puppet::Pal.in_environment('pal_env', envpath: environments_dir, facts: node_facts) do |ctx|
+            ctx.with_script_compiler(configured_by_env: true) {|c|  c.call_function('a::myscriptcompilerfunc', 'go')}
+          end
+          expect(result).to eql('go')
+        end
+      end
     end
   end
 end

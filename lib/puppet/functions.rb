@@ -706,8 +706,20 @@ module Puppet::Functions
   #
   # @api private
   class InternalDispatchBuilder < DispatcherBuilder
-    def scope_param()
-      @injections << :scope
+    # Inject parameter for `Puppet::Parser::Scope`
+    def scope_param
+      inject(:scope)
+    end
+
+    # Inject parameter for `Puppet::Pal::ScriptCompiler`
+    def script_compiler_param
+      inject(:pal_script_compiler)
+    end
+
+    private
+
+    def inject(injection_name)
+      @injections << injection_name
       # mark what should be picked for this position when dispatching
       @weaving << [@injections.size()-1]
     end

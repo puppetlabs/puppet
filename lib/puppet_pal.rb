@@ -530,18 +530,10 @@ module Pal
     Puppet[:tasks] = true
     # After the assertions, if code_string is non nil - it has the highest precedence
     Puppet[:code] = code_string unless code_string.nil?
-    overrides = {}
-    unless facts.nil?
-      overrides[:pal_facts] = Puppet.lookup(:pal_facts).merge(facts)
-    end
-    unless variables.nil?
-      overrides[:pal_variables] = Puppet.lookup(:pal_variables).merge(variables)
-    end
-    Puppet.override(overrides, "PAL::with_script_compiler") do # TRANSLATORS: Do not translate, symbolic name
-      # If manifest_file is nil, the #main method will use the env configured manifest
-      # do things in block while a Script Compiler is in effect
-      main(manifest_file, &block)
-    end
+
+    # If manifest_file is nil, the #main method will use the env configured manifest
+    # to do things in the block while a Script Compiler is in effect
+    main(manifest_file, facts, variables, &block)
   end
 
   # Evaluates a Puppet Language script string.
@@ -749,7 +741,7 @@ module Pal
   # Picks up information from the puppet context and configures a script compiler which is given to
   # the provided block
   #
-  def self.main(manifest = nil, &block)
+  def self.main(manifest, facts, variables)
     # Configure the load path
     env = Puppet.lookup(:pal_env)
     env.each_plugin_directory do |dir|
@@ -761,7 +753,20 @@ module Pal
     Facter.reset
 
     node = Puppet.lookup(:pal_current_node)
-    prepare_node_facts(node, Puppet.lookup(:pal_facts))
+    pal_facts = Puppet.lookup(:pal_facts)
+    pal_variables = Puppet.lookup(:pal_variables)
+
+    overrides = {}
+    unless facts.nil? || facts.empty?
+      pal_facts = pal_facts.merge(facts)
+      overrides[:pal_facts] = pal_facts
+    end
+    unless variables.nil? || variables.empty?
+      pal_variables = pal_variables.merge(variables)
+      overrides[:pal_variables] = pal_variables
+    end
+
+    prepare_node_facts(node, pal_facts)
 
     configured_environment = node.environment || Puppet.lookup(:current_environment)
 
@@ -805,12 +810,20 @@ module Pal
           # create the $settings:: variables
           topscope.merge_settings(node.environment.name, false)
 
-          add_variables(topscope, Puppet.lookup(:pal_variables))
+          add_variables(topscope, pal_variables)
 
           # compiler.compile(&block)
           compiler.compile do | internal_compiler |
             # wrap the internal compiler to prevent it from leaking in the PAL API
-            block.call(ScriptCompiler.new(internal_compiler)) unless !block_given?
+            if block_given?
+              script_compiler = ScriptCompiler.new(internal_compiler)
+
+              # Make compiler available to Puppet#lookup
+              overrides[:pal_script_compiler] = script_compiler
+              Puppet.override(overrides, "PAL::with_script_compiler") do # TRANSLATORS: Do not translate, symbolic name
+                yield(script_compiler)
+              end
+            end
           end
 
         rescue Puppet::ParseErrorWithIssue, Puppet::Error => detail
