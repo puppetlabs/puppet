@@ -17,7 +17,12 @@ shared_context('with supported digest algorithms', :uses_checksums => true) do
 
   def self.with_digest_algorithms(&block)
     DIGEST_ALGORITHMS_TO_TRY.each do |digest_algorithm|
-      describe("when digest_algorithm is #{digest_algorithm}", :digest_algorithm => digest_algorithm) do
+      describe(
+        "when digest_algorithm is #{digest_algorithm}",
+        {:digest_algorithm => digest_algorithm}.merge(
+          Puppet::Util::Platform.windows? && ['sha384', 'sha512'].include?(digest_algorithm) ? {:skip => "Windows Long File Name support is incomplete PUP-8257"} : {}
+        )
+      ) do
         instance_eval(&block)
       end
     end

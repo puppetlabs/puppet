@@ -145,6 +145,9 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
   describe "listing files in local filebucket" do
     with_digest_algorithms do
       it "should list all files present" do
+        if Puppet::Util::Platform.windows? && digest_algorithm == "sha512"
+          skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
+        end
         Puppet[:bucketdir] =  "/my/bucket"
         file_bucket = tmpdir("bucket")
 
@@ -190,6 +193,9 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
       end
 
       it "should filter with the provided dates" do
+        if Puppet::Util::Platform.windows? && digest_algorithm == "sha512"
+          skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
+        end
         Puppet[:bucketdir] =  "/my/bucket"
         file_bucket = tmpdir("bucket")
 
@@ -294,6 +300,9 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
   describe "backing up and retrieving local files" do
     with_digest_algorithms do
       it "should backup files to a local bucket" do
+        if Puppet::Util::Platform.windows? && digest_algorithm == "sha512"
+          skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
+        end
         Puppet[:bucketdir] = "/non/existent/directory"
         file_bucket = tmpdir("bucket")
 
