@@ -213,4 +213,33 @@ describe Puppet::Util::HttpProxy do
       end
     end
   end
+
+  describe '.request_with_redirects' do
+    let(:dest) { URI.parse('http://mydomain.com/some/path') }
+    let(:http_ok) { stub('http ok', :code => 200, :message => 'HTTP OK') }
+
+    it 'accepts content type and encoding' do
+      Net::HTTP.any_instance.stubs(:head).returns(http_ok)
+      Net::HTTP.any_instance.expects(:get).with do |_, headers|
+        expect(headers)
+          .to match({'Accept' => 'application/octet-stream',
+                     'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3'})
+      end.returns(http_ok)
+
+      subject.request_with_redirects(dest, :get, 0)
+    end
+
+    it 'accepts content type and encoding with a block' do
+      Net::HTTP.any_instance.stubs(:head).returns(http_ok)
+      Net::HTTP.any_instance.expects(:request_get).with do |_, headers, &block|
+        expect(headers)
+          .to match({'Accept' => 'application/octet-stream',
+                     'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3'})
+      end.returns(http_ok)
+
+      subject.request_with_redirects(dest, :get, 0) do
+        # unused
+      end
+    end
+  end
 end

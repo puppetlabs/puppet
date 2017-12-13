@@ -1,5 +1,6 @@
 require 'uri'
 require 'openssl'
+require 'puppet/network/http'
 
 module Puppet::Util::HttpProxy
   def self.proxy(uri)
@@ -180,11 +181,15 @@ module Puppet::Util::HttpProxy
         next
       end
 
+      headers = { 'Accept' => 'application/octet-stream' }
+      if Puppet.features.zlib?
+        headers.merge!({"Accept-Encoding" => Puppet::Network::HTTP::Compression::ACCEPT_ENCODING})
+      end
+
       if block_given?
-        headers = {'Accept' => 'binary', 'accept-encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3'}
         response = proxy.send("request_#{method}".to_sym, current_uri.path, headers, &block)
       else
-        response = proxy.send(method, current_uri.path)
+        response = proxy.send(method, current_uri.path, headers)
       end
 
       Puppet.debug("HTTP #{method.to_s.upcase} request to #{current_uri} returned #{response.code} #{response.message}")
