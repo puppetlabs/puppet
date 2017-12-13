@@ -657,30 +657,7 @@ module Puppet::Functions
   #
   # This is a private, internal, system for creating functions. It supports
   # everything that the public function definition system supports as well as a
-  # few extra features.
-  #
-  # Injection Support
-  # ===
-  # The Function API supports injection of data and services. It is possible to
-  # make injection that takes effect when the function is loaded (for services
-  # and runtime configuration that does not change depending on how/from where
-  # in what context the function is called. It is also possible to inject and
-  # weave argument values into a call.
-  #
-  # Injection of attributes
-  # ---
-  # Injection of attributes is performed by one of the methods `attr_injected`,
-  # and `attr_injected_producer`.  The injected attributes are available via
-  # accessor method calls.
-  #
-  # @example using injected attributes
-  #   Puppet::Functions.create_function('test') do
-  #     attr_injected String, :larger, 'message_larger'
-  #     attr_injected String, :smaller, 'message_smaller'
-  #     def test(a, b)
-  #       a > b ? larger() : smaller()
-  #     end
-  #   end
+  # few extra features such as injection of well known parameters.
   #
   # @api private
   class InternalFunction < Function
@@ -704,26 +681,22 @@ module Puppet::Functions
     end
   end
 
-  # @note WARNING: This style of creating functions is not public. It is a system
-  #   under development that will be used for creating "system" functions.
-  #
   # Injection and Weaving of parameters
   # ---
-  # It is possible to inject and weave parameters into a call. These extra
-  # parameters are not part of the parameters passed from the Puppet logic, and
-  # they can not be overridden by parameters given as arguments in the call.
-  # They are invisible to the Puppet Language.
+  # It is possible to inject and weave a set of well known parameters into a call.
+  # These extra parameters are not part of the parameters passed from the Puppet
+  # logic, and  they can not be overridden by parameters given as arguments in the
+  # call. They are invisible to the Puppet Language.
   #
   # @example using injected parameters
   #   Puppet::Functions.create_function('test') do
   #     dispatch :test do
   #       param 'Scalar', 'a'
   #       param 'Scalar', 'b'
-  #       injected_param 'String', 'larger', 'message_larger'
-  #       injected_param 'String', 'smaller', 'message_smaller'
+  #       scope_param
   #     end
-  #     def test(a, b, larger, smaller)
-  #       a > b ? larger : smaller
+  #     def test(a, b, scope)
+  #       a > b ? scope['a'] : scope['b']
   #     end
   #   end
   #
@@ -731,54 +704,22 @@ module Puppet::Functions
   #
   #     test(10, 20)
   #
-  # Using injected value as default
-  # ---
-  # Default value assignment is handled by using the regular Ruby mechanism (a
-  # value is assigned to the variable).  The dispatch simply indicates that the
-  # value is optional. If the default value should be injected, it can be
-  # handled different ways depending on what is desired:
-  #
-  # * by calling the accessor method for an injected Function class attribute.
-  #   This is suitable if the value is constant across all instantiations of the
-  #   function, and across all calls.
-  # * by injecting a parameter into the call
-  #   to the left of the parameter, and then assigning that as the default value.
-  # * One of the above forms, but using an injected producer instead of a
-  #   directly injected value.
-  #
-  # @example method with injected default values
-  #   Puppet::Functions.create_function('test') do
-  #     dispatch :test do
-  #       injected_param String, 'b_default', 'b_default_value_key'
-  #       param 'Scalar', 'a'
-  #       param 'Scalar', 'b'
-  #     end
-  #     def test(b_default, a, b = b_default)
-  #       # ...
-  #     end
-  #   end
-  #
   # @api private
   class InternalDispatchBuilder < DispatcherBuilder
-    def scope_param()
-      @injections << [:scope, 'scope', '', :dispatcher_internal]
-      # mark what should be picked for this position when dispatching
-      @weaving << [@injections.size()-1]
-    end
-    # TODO: is param name really needed? Perhaps for error messages? (it is unused now)
-    #
-    # @api private
-    def injected_param(type, name, injection_name = '')
-      @injections << [type, name, injection_name]
-      # mark what should be picked for this position when dispatching
-      @weaving << [@injections.size() -1]
+    # Inject parameter for `Puppet::Parser::Scope`
+    def scope_param
+      inject(:scope)
     end
 
-    # TODO: is param name really needed? Perhaps for error messages? (it is unused now)
-    #
-    # @api private
-    def injected_producer_param(type, name, injection_name = '')
-      @injections << [type, name, injection_name, :producer]
+    # Inject parameter for `Puppet::Pal::ScriptCompiler`
+    def script_compiler_param
+      inject(:pal_script_compiler)
+    end
+
+    private
+
+    def inject(injection_name)
+      @injections << injection_name
       # mark what should be picked for this position when dispatching
       @weaving << [@injections.size()-1]
     end

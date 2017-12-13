@@ -72,14 +72,15 @@ class Dispatch < Evaluator::CallableSignature
       new_args = []
       @weaving.each do |knit|
         if knit.is_a?(Array)
-          injection_data = @injections[knit[0]]
+          injection_name = @injections[knit[0]]
           new_args <<
-            case injection_data[3]
-            when :dispatcher_internal
-              # currently only supports :scope injection
+            case injection_name
+            when :scope
               scope
+            when :pal_script_compiler
+              Puppet.lookup(:pal_script_compiler)
             else
-              raise_error ArgumentError, "Unknown injection #{injection_data[3]}"
+              raise ArgumentError, "Unknown injection #{injection_name}"
             end
         else
           # Careful so no new nil arguments are added since they would override default
