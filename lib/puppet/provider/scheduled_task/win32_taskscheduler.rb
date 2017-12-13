@@ -308,7 +308,7 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
       trigger['type']['days_of_week'] = if puppet_trigger['day_of_week']
                                           bitfield_from_days_of_week(puppet_trigger['day_of_week'])
                                         else
-                                          scheduler_days_of_week.inject(0) {|day_flags,day| day_flags |= day}
+                                          scheduler_days_of_week.inject(0) {|day_flags,day| day_flags | day}
                                         end
     when 'monthly'
       trigger['type'] = {

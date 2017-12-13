@@ -259,7 +259,7 @@ module Time
           add_unless_zero(result, KEY_NANOSECONDS, n % 1000)
           n /= 1000
           add_unless_zero(result, KEY_MICROSECONDS, n % 1000)
-          add_unless_zero(result, KEY_MILLISECONDS, n /= 1000)
+          add_unless_zero(result, KEY_MILLISECONDS, n / 1000)
         end
         result[KEY_NEGATIVE] = true if negative?
       end

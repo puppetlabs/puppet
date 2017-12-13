@@ -72,6 +72,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     excludes += %w{cryptdisks-udev}
     excludes += %w{statd-mounting}
     excludes += %w{gssd-mounting}
+    excludes
   end
 
   # List all services of this type.
