@@ -160,8 +160,6 @@ class Puppet::Indirector::Indirection
   # remove it, we expire it and write it back out to disk.  This way people
   # can still use the expired object if they want.
   def expire(key, options={})
-    request = request(:expire, key, nil, options)
-
     return nil unless cache?
 
     return nil unless instance = cache.find(request(:find, key, nil, options))

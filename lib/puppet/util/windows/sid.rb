@@ -71,7 +71,6 @@ module Puppet::Util::Windows
       raw_sid_bytes = nil
       begin
         string_to_sid_ptr(name) do |sid_ptr|
-          valid = ! sid_ptr.nil? && ! sid_ptr.null?
           raw_sid_bytes = sid_ptr.read_array_of_uchar(get_length_sid(sid_ptr))
         end
       rescue
@@ -105,7 +104,6 @@ module Puppet::Util::Windows
       sid_bytes = []
       begin
         string_to_sid_ptr(value) do |ptr|
-          valid = ! ptr.nil? && ! ptr.null?
           sid_bytes = ptr.read_array_of_uchar(get_length_sid(ptr))
         end
       rescue Puppet::Util::Windows::Error => e

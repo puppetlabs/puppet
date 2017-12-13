@@ -84,7 +84,7 @@ module Puppet
       if stacktrace.size > 0
         filename, line = stacktrace[0]
       else
-        file = nil
+        filename = nil
         line = nil
       end
       self.new(
