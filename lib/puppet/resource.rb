@@ -255,7 +255,6 @@ class Puppet::Resource
           "Did you mean (#{(type[:type] || type["type"]).inspect}, #{(type[:title] || type["title"]).inspect }) ?"
       end
 
-      environment = attributes[:environment]
       # In order to avoid an expensive search of 'known_resource_types" and
       # to obey/preserve the implementation of the resource's type - if the
       # given type is a resource type implementation (one of):
@@ -277,7 +276,7 @@ class Puppet::Resource
       end
       @exported = false
 
-      # Set things like strictness first.
+      # Set things like environment, strictness first.
       attributes.each do |attr, value|
         next if attr == :parameters
         send(attr.to_s + "=", value)
