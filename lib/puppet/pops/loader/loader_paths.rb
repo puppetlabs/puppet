@@ -31,6 +31,7 @@ module LoaderPaths
     when :task
       result << TaskPath.new(loader) if Puppet[:tasks] && loader.loadables.include?(:task)
     when :type
+      result << DataTypePath.new(loader) if loader.loadables.include?(:datatype)
       result << TypePathPP.new(loader) if loader.loadables.include?(:type_pp)
     when :resource_type_pp
       result << ResourceTypeImplPP.new(loader) if loader.loadables.include?(:resource_type_pp)
@@ -200,6 +201,19 @@ module LoaderPaths
 
     def instantiator
       PuppetFunctionInstantiator
+    end
+  end
+
+  class DataTypePath < RubySmartPath
+    SYSTEM_TYPE_PATH = File.join('puppet', 'datatypes').freeze
+    TYPE_PATH = File.join('lib', SYSTEM_TYPE_PATH).freeze
+
+    def relative_path
+      lib_root? ? SYSTEM_TYPE_PATH : TYPE_PATH
+    end
+
+    def instantiator
+      RubyDataTypeInstantiator
     end
   end
 

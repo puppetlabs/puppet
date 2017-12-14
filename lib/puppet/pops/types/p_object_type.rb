@@ -527,6 +527,7 @@ class PObjectType < PMetaType
       if impl_name.nil?
         # Use generator to create a default implementation
         @implementation_class = RubyGenerator.new.create_class(self)
+        @implementation_class.class_eval(&@implementation_override) if instance_variable_defined?(:@implementation_override)
       else
         # Can the mapping be loaded?
         class_name = impl_name[0]
@@ -545,6 +546,27 @@ class PObjectType < PMetaType
   def implementation_class=(cls)
     raise ArgumentError, "attempt to redefine implementation class for #{label}" unless @implementation_class.nil?
     @implementation_class = cls
+  end
+
+  # @api private
+  def implementation_override=(block)
+    if !@implementation_class.nil? || instance_variable_defined?(:@implementation_override)
+      raise ArgumentError, "attempt to redefine implementation override for #{label}"
+    end
+    @implementation_override = block
+  end
+
+  def extract_init_hash(o)
+    return o._pcore_init_hash if o.respond_to?(:_pcore_init_hash)
+
+    result = {}
+    pic = parameter_info(o.class)
+    attrs = attributes(true)
+    pic[0].each do |name|
+      v = o.send(name)
+      result[name] = v unless attrs[name].default_value?(v)
+    end
+    result
   end
 
   # @api private
