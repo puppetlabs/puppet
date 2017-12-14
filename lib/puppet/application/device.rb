@@ -1,5 +1,7 @@
 require 'puppet/application'
+require 'puppet/configurer'
 require 'puppet/util/network_device'
+require 'puppet/util/network_device/config'
 
 class Puppet::Application::Device < Puppet::Application
 
@@ -84,8 +86,8 @@ USAGE
 -----
   puppet device [-d|--debug] [--detailed-exitcodes] [--deviceconfig <file>]
                 [-h|--help] [-l|--logdest syslog|<file>|console]
-                [-v|--verbose] [-w|--waitforcert <seconds>]
-                [-t|--target <device>] [--user=<user>] [-V|--version]
+                [-t|--target <device>] [--user=<user>] [-v|--verbose] 
+                [-w|--waitforcert <seconds>] [-V|--version]
 
 
 DESCRIPTION
@@ -151,8 +153,8 @@ you can specify '--server <servername>' as an argument.
   valid JSON.
 
 * --target:
-  Target a specific device/certificate in the device.conf. Doing so will perform a
-  device run against only that device/certificate.
+  Target a specific device in device.conf. Doing so will perform a run for only
+  that device.
 
 * --user:
   The user to run as.
@@ -192,20 +194,22 @@ Licensed under the Apache 2.0 License
 
     env = Puppet.lookup(:environments).get(Puppet[:environment])
     returns = Puppet.override(:current_environment => env, :loaders => Puppet::Pops::Loaders.new(env)) do
-      # find device list
-      require 'puppet/util/network_device/config'
-      devices = Puppet::Util::NetworkDevice::Config.devices.dup
+      # Create device list, optionally limited to a list of one target device
+      devices = {}
       if options[:target]
-        devices.select! { |key, value| key == options[:target] }
-      end
-      if devices.empty?
-        if options[:target]
-          Puppet.err _("Target device / certificate '%{target}' not found in %{config}") % { target: options[:target], config: Puppet[:deviceconfig] }
-        else
-          Puppet.err _("No device found in %{config}") % { config: Puppet[:deviceconfig] }
+        target_device = Puppet::Util::NetworkDevice::Config.device(options[:target])
+        if target_device.nil?
           exit(1)
         end
+        devices[options[:target]] = target_device 
+      else
+        devices = Puppet::Util::NetworkDevice::Config.devices.dup
       end
+      if devices.empty?
+        Puppet.err _("No device found in %{config}") % { config: Puppet[:deviceconfig] }
+        exit(1)
+      end
+      # Iterate over the device list, performing a run for each device
       devices.collect do |devicename,device|
         begin
           device_url = URI.parse(device.url)
@@ -230,7 +234,6 @@ Licensed under the Apache 2.0 License
           # setup the ssl system for this device.
           setup_host
 
-          require 'puppet/configurer'
           configurer = Puppet::Configurer.new
           configurer.run(:network_device => true, :pluginsync => Puppet::Configurer.should_pluginsync?)
         rescue => detail
