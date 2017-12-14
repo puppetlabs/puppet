@@ -42,6 +42,25 @@ describe Puppet::Parser::Scope do
     expect(@scope.inspect).to eq("Scope(foo::bar)")
   end
 
+  it "should generate a path if there is one on the puppet stack" do
+    result = Puppet::Pops::PuppetStack.stack('/tmp/kansas.pp', 42, @scope, 'inspect', [])
+    expect(result).to eq("Scope(/tmp/kansas.pp, 42)")
+  end
+
+  it "should generate an <env> shortened path if path points into the environment" do
+    env_path = @scope.environment.configuration.path_to_env
+    mocked_path = File.join(env_path, 'oz.pp')
+    result = Puppet::Pops::PuppetStack.stack(mocked_path, 42, @scope, 'inspect', [])
+
+    expect(result).to eq("Scope(<env>/oz.pp, 42)")
+  end
+
+  it "should generate a <module> shortened path if path points into a module" do
+    mocked_path = File.join(@scope.environment.full_modulepath[0], 'mymodule', 'oz.pp')
+    result = Puppet::Pops::PuppetStack.stack(mocked_path, 42, @scope, 'inspect', [])
+    expect(result).to eq("Scope(<module>/mymodule/oz.pp, 42)")
+  end
+
   it "should return a scope for use in a test harness" do
     expect(create_test_scope_for_node("node_name_foo")).to be_a_kind_of(Puppet::Parser::Scope)
   end
