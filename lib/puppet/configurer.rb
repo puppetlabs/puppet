@@ -171,7 +171,7 @@ class Puppet::Configurer
     begin
       report.configuration_version = catalog.version
 
-      benchmark(:notice, _("Applied catalog")) do
+      benchmark(:notice, _("Applied catalog in %{seconds} seconds")) do
         catalog.apply(options)
       end
     ensure

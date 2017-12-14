@@ -71,7 +71,7 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
       Puppet::Util::Log.newdestination(report)
 
       begin
-        benchmark(:notice, "Finished catalog run") do
+        benchmark(:notice, "Finished catalog run in %{seconds} seconds") do
           catalog.apply(:report => report)
         end
       rescue => detail
