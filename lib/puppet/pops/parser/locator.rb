@@ -164,8 +164,6 @@ class Locator
   class AbstractLocator < Locator
     attr_accessor :line_index
     attr_accessor :string
-    attr_accessor :prev_offset
-    attr_accessor :prev_line
     attr_reader   :string
     attr_reader   :file
 
@@ -255,19 +253,19 @@ class Locator
 
     # Returns the line number (first line is 1) for the given offset
     def line_for_offset(offset)
-      if prev_offset == offset
+      if @prev_offset == offset
         # use cache
-        return prev_line
+        return @prev_line
       end
       if line_nbr = ary_bsearch_i(line_index, offset)
         # cache
-        prev_offset = offset
-        prev_line = line_nbr
+        @prev_offset = offset
+        @prev_line = line_nbr
         return line_nbr
       end
       # If not found it is after last
       # clear cache
-      prev_offset = prev_line = nil
+      @prev_offset = @prev_line = nil
       return line_index.size
     end
   end
