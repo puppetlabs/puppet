@@ -40,15 +40,6 @@ module Pcore
     add_alias('Pcore::QRef', TYPE_QUALIFIED_REFERENCE, loader)
 
     if Puppet[:tasks]
-      add_object_type('Target', <<-PUPPET, loader)
-      {
-        attributes => {
-          host => String[1],
-          options => { type => Hash[String[1], Data], value => {} }
-        }
-      }
-      PUPPET
-
       add_object_type('Task', <<-PUPPET, loader)
         {
           attributes => {   

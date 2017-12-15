@@ -521,11 +521,7 @@ module TypeFactory
   # @api public
   #
   def self.error
-    @error_t ||= TypeParser.singleton.parse('Error', Loaders.static_loader)
-  end
-
-  def self.target
-    @target_t ||= TypeParser.singleton.parse('Target')
+    @error_t ||= TypeParser.singleton.parse('Error', Loaders.loaders.puppet_system_loader)
   end
 
   def self.task
