@@ -94,6 +94,7 @@ describe Puppet::Application::Filebucket do
 
       it "should create a client with the default bucket if none passed" do
         Puppet[:clientbucketdir] = path
+        Puppet[:bucketdir] = path + "2"
 
         Puppet::FileBucket::Dipper.expects(:new).with { |h| h[:Path] == path }
 
