@@ -400,10 +400,9 @@ module Puppet
     end
 
     newproperty(:expiry, :required_features => :manages_expiry) do
-      desc "The expiry date for this user. Must be provided in
-           a zero-padded YYYY-MM-DD format --- e.g. 2010-02-19.
-           If you want to ensure the user account never expires,
-           you can pass the special value `absent`."
+      desc "The expiry date for this user. Provide as either the special
+           value `absent` to ensure that the account never expires, or as
+           a zero-padded YYYY-MM-DD format -- for example, 2010-02-19."
 
       newvalues :absent
       newvalues /^\d{4}-\d{2}-\d{2}$/
