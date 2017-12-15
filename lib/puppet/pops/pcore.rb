@@ -40,8 +40,6 @@ module Pcore
     add_alias('Pcore::QRef', TYPE_QUALIFIED_REFERENCE, loader)
 
     if Puppet[:tasks]
-      require_relative 'types/execution_result'
-
       add_object_type('Target', <<-PUPPET, loader)
       {
         attributes => {
