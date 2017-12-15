@@ -2363,11 +2363,11 @@ class PCallableType < PAnyType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
       'param_types' => {
-        KEY_TYPE => POptionalType.new(PTupleType::DEFAULT),
+        KEY_TYPE => POptionalType.new(PTypeType.new(PTupleType::DEFAULT)),
         KEY_VALUE => nil
       },
       'block_type' => {
-        KEY_TYPE => POptionalType.new(PCallableType::DEFAULT),
+        KEY_TYPE => POptionalType.new(PTypeType.new(PCallableType::DEFAULT)),
         KEY_VALUE => nil
       },
       'return_type' => {
