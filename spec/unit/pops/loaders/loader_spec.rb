@@ -54,7 +54,9 @@ describe 'The Loader' do
 
   before(:each) do
     Puppet[:tasks] = tasks_feature
-    Puppet.push_context(:loaders => Loaders.new(env))
+    loaders = Loaders.new(env)
+    Puppet.push_context(:loaders => loaders)
+    loaders.pre_load
   end
 
   after(:each) { Puppet.pop_context }
