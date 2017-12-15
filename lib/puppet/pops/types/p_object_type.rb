@@ -457,7 +457,7 @@ class PObjectType < PMetaType
   # @return [Object] the created instance
   # @api private
   def read(value_count, deserializer)
-    reader.read(implementation_class, value_count, deserializer)
+    reader.read(self, implementation_class, value_count, deserializer)
   end
 
   # Write an instance of this type using a serializer
@@ -476,10 +476,7 @@ class PObjectType < PMetaType
     (param_names, param_types, required_param_count) = parameter_info(impl_class)
 
     # Create the callable with a size that reflects the required and optional parameters
-    param_types << required_param_count
-    param_types << param_names.size
-
-    create_type = TypeFactory.callable(*param_types)
+    create_type = TypeFactory.callable(*param_types, required_param_count, param_names.size)
     from_hash_type = TypeFactory.callable(init_hash_type, 1, 1)
 
     # Create and return a #new_XXX function where the dispatchers are added programmatically.
@@ -573,6 +570,10 @@ class PObjectType < PMetaType
   # @return [(Array<String>, Array<PAnyType>, Integer)] array of parameter names, array of parameter types, and a count reflecting the required number of parameters
   def parameter_info(impl_class)
     # Create a types and a names array where optional entries ends up last
+    @parameter_info ||= {}
+    pic = @parameter_info[impl_class]
+    return pic if pic
+
     opt_types = []
     opt_names = []
     non_opt_types = []
@@ -624,7 +625,9 @@ class PObjectType < PMetaType
       end
     end
 
-    [param_names, param_types, non_opt_types.size]
+    pic = [param_names.freeze, param_types.freeze, non_opt_types.size].freeze
+    @parameter_info[impl_class] = pic
+    pic
   end
 
   # @api private
