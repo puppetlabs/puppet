@@ -569,6 +569,10 @@ class StringConverter
     end
   end
 
+  def string_PObjectTypeExtension(val_type, val, format_map, indentation)
+    string_PObjectType(val_type.base_type, val, format_map, indentation)
+  end
+
   def string_PRuntimeType(val_type, val, format_map, indent)
     # Before giving up on this, and use a string representation of the unknown
     # object, a check is made to see if the object can present itself as
