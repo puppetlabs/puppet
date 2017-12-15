@@ -27,8 +27,9 @@ class AccessOperator
   protected
 
   def access_Object(o, scope, keys)
-    if o.is_a?(Puppet::Pops::Types::PuppetObject)
-      access_func = o._pcore_type.functions(true)['[]']
+    type = Puppet::Pops::Types::TypeCalculator.infer(o)
+    if type.is_a?(Puppet::Pops::Types::TypeWithMembers)
+      access_func = type['[]']
       return access_func.invoke(o, scope, keys) unless access_func.nil?
     end
     fail(Issues::OPERATOR_NOT_APPLICABLE, @semantic.left_expr, :operator=>'[]', :left_value => o)
