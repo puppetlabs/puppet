@@ -53,7 +53,7 @@ class Puppet::Util::Storage
       Puppet.warning(_("Checksumfile %{filename} is not a file, ignoring") % { filename: filename })
       return
     end
-    Puppet::Util.benchmark(:debug, "Loaded state") do
+    Puppet::Util.benchmark(:debug, "Loaded state in %{seconds} seconds") do
       begin
         @@state = Puppet::Util::Yaml.load_file(filename)
       rescue Puppet::Util::Yaml::YamlLoadError => detail
@@ -82,7 +82,7 @@ class Puppet::Util::Storage
 
     Puppet.info _("Creating state file %{file}") % { file: Puppet[:statefile] } unless Puppet::FileSystem.exist?(Puppet[:statefile])
 
-    Puppet::Util.benchmark(:debug, "Stored state") do
+    Puppet::Util.benchmark(:debug, "Stored state in %{seconds} seconds") do
       Puppet::Util::Yaml.dump(@@state, Puppet[:statefile])
     end
   end
