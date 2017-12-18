@@ -211,7 +211,7 @@ DOC
     raise Puppet::Error, _("No private key with which to validate certificate with fingerprint: %{fingerprint}") % { fingerprint: certificate.fingerprint } unless key
     unless certificate.content.check_private_key(key.content)
       raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: certificate.fingerprint, cert_name: Puppet[:certname], ssl_dir: Puppet[:ssldir], cert_dir: Puppet[:certdir].gsub('/', '\\') }
-The certificate retrieved from the master does not match the agent's private key.
+The certificate retrieved from the master does not match the agent's private key. Did you forget to run as root?
 Certificate fingerprint: %{fingerprint}
 To fix this, remove the certificate from both the master and the agent and then start a puppet run, which will automatically regenerate a certificate.
 On the master:
