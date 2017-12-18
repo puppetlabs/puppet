@@ -2,7 +2,7 @@
 # that calls Puppet::DataTypes.create_type.
 #
 class Puppet::Pops::Loader::RubyDataTypeInstantiator
-  # Produces an instance of the AnyType class with the given typed_name, or fails with an error if the
+  # Produces an instance of class derived from PAnyType class with the given typed_name, or fails with an error if the
   # given ruby source does not produce this instance when evaluated.
   #
   # @param loader [Puppet::Pops::Loader::Loader] The loader the type is associated with
@@ -10,7 +10,7 @@ class Puppet::Pops::Loader::RubyDataTypeInstantiator
   # @param source_ref [URI, String] a reference to the source / origin of the ruby code to evaluate
   # @param ruby_code_string [String] ruby code in a string
   #
-  # @return [Puppet::Pops::Types::AnyType] - an instantiated data type associated with the given loader
+  # @return [Puppet::Pops::Types::PAnyType] - an instantiated data type associated with the given loader
   #
   def self.create(loader, typed_name, source_ref, ruby_code_string)
     unless ruby_code_string.is_a?(String) && ruby_code_string =~ /Puppet\:\:DataTypes\.create_type/
