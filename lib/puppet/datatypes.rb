@@ -21,7 +21,7 @@
 #     PUPPET
 #   end
 #
-# The above example does not declare an implementation which makes it exactly similar
+# The above example does not declare an implementation which makes it equivalent
 # to adding the following contents in a file named 'user.pp' under the 'types' directory
 # of the module root.
 #
@@ -33,15 +33,27 @@
 #
 # Both declarations are valid and will be found by the module loader.
 #
-# Anatomy of a data type
+# Structure of a data type
 # ---
 #
-# Data types consist of an interface and an implementation. A data type can often be used
-# by only declaring the interface. Unless an implementation is found it will be automatically
-# generated.
+# A Data Type consists of an interface and an implementation. Unless a registered implementation
+# is found, the type system will automatically generate one. An  automatically generated
+# implementation is all that is needed when the interface fully  defines the behaviour (for
+# example in the common case when the data type has no other behaviour than having attributes).
 #
-# In some cases, the generated implementation is not enough. In other cases it might be
-# necessary to declare a data type that maps to an already existing implementation.
+# When the automatically generated implementation is not sufficient, one must be implemented and
+# registered. The implementation can either be done next to the interface definition by passing
+# a block to `implementation`, or map to an existing implementation class by passing the class
+# as an argument to `implementation_class`. An implementation class does not have to be special
+# in other respects than that it must implemented the type's interface. This makes it possible
+# to use existing Ruby data types as data types in the puppet language.
+#
+# Note that when using `implementation_class` there can only be one such implementation across
+# all environments managed by one puppet server and you must handle and install these
+# implementations as if they are part of the puppet platform. In contrast; the type
+# implementations that are done inside of the type's definition are safe to use in different
+# versions in different environments (given that they do not need additional external logic to
+# be loaded).
 #
 # @example Adding implementation on top of the generated type using `implementation`
 #   Puppet::DataTypes.create_type('Auth::User') do
@@ -63,9 +75,9 @@
 #
 # @example Appointing an already existing implementation class
 #
-# Assumes the following class is declared under 'lib/auth/utils' in the module:
+# Assumes the following class is declared under 'lib/puppetx/auth' in the module:
 #
-#   class Auth::Utils::User
+#   class PuppetX::Auth::User
 #     attr_reader :name, :year_of_birth
 #     def initialize(name, year_of_birth)
 #       @name = name
@@ -98,9 +110,9 @@
 #
 #     # This require is optional and only needed in case
 #     # the implementation is not loaded by other means.
-#     require 'auth/utils/user.rb'
+#     require 'lib/puppetx/user.rb'
 #
-#     implementation_class Auth::Utils::User
+#     implementation_class PuppetX::Auth::User
 #   end
 #
 module Puppet::DataTypes
