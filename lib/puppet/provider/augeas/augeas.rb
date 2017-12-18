@@ -168,7 +168,6 @@ Puppet::Type.type(:augeas).provide(:augeas) do
       glob_avail = !aug.match("/augeas/version/pathx/functions/glob").empty?
       opt_ctx = resource[:context].match("^/files/[^'\"\\[\\]]+$") if resource[:context]
 
-      restricted = false
       if resource[:incl]
         aug.set("/augeas/load/Xfm/lens", resource[:lens])
         aug.set("/augeas/load/Xfm/incl", resource[:incl])
@@ -220,7 +219,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
     #validate and tear apart the command
     fail (_("Invalid command: %{cmd}") % { cmd: cmd_array.join(" ") }) if cmd_array.length < 4
-    cmd = cmd_array.shift
+    _ = cmd_array.shift
     path = cmd_array.shift
     comparator = cmd_array.shift
     arg = cmd_array.join(" ")
@@ -251,7 +250,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
     #validate and tear apart the command
     fail(_("Invalid command: %{cmd}") % { cmd: cmd_array.join(" ") }) if cmd_array.length < 3
-    cmd = cmd_array.shift
+    _ = cmd_array.shift
     path = cmd_array.shift
 
     # Need to break apart the clause
@@ -299,7 +298,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
     #validate and tear apart the command
     fail(_("Invalid command: %{cmd}") % { cmd: cmd_array.join(" ") }) if cmd_array.length < 3
-    cmd = cmd_array.shift
+    _ = cmd_array.shift
     path = cmd_array.shift
 
     # Need to break apart the clause

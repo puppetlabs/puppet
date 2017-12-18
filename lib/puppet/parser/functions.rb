@@ -198,7 +198,6 @@ module Puppet::Parser::Functions
   def self.function(name, environment = Puppet.lookup(:current_environment))
     name = name.intern
 
-    func = nil
     unless func = get_function(name, environment)
       autoloader.load(name, environment)
       func = get_function(name, environment)

@@ -22,7 +22,6 @@ class Puppet::Settings::EnvironmentConf
   def self.load_from(path_to_env, global_module_path)
     path_to_env = File.expand_path(path_to_env)
     conf_file = File.join(path_to_env, 'environment.conf')
-    config = nil
 
     begin
       config = Puppet.settings.parse_file(conf_file)

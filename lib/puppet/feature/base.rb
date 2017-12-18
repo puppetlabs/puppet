@@ -83,7 +83,7 @@ Puppet.features.add(:manages_symlinks) do
           attach_function :CreateSymbolicLinkW, [:lpwstr, :lpwstr, :dword], :boolean
 
           true
-        rescue LoadError => err
+        rescue LoadError
           Puppet.debug("CreateSymbolicLink is not available")
           false
         end

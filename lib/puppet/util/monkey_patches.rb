@@ -69,7 +69,7 @@ if Puppet::Util::Platform.windows?
         Puppet::Util::Windows::RootCerts.instance.to_a.uniq { |cert| cert.to_der }.each do |x509|
           begin
             add_cert(x509)
-          rescue OpenSSL::X509::StoreError => e
+          rescue OpenSSL::X509::StoreError
             warn "Failed to add #{x509.subject.to_s}"
           end
         end

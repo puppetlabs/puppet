@@ -286,7 +286,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   def managed_attribute_keys(hash)
     managed_attributes ||= @resource.original_parameters[:attributes] || hash.keys.map{|k| k.to_s}
     managed_attributes = [managed_attributes] unless managed_attributes.is_a?(Array)
-    managed_attributes.map {|attr| key, value = attr.split("="); key.strip.to_sym}
+    managed_attributes.map {|attr| key, _ = attr.split("="); key.strip.to_sym}
   end
 
   def should_include?(key, managed_keys)

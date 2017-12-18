@@ -17,7 +17,6 @@ class Puppet::FileBucket::Dipper
     # Emulate the XMLRPC client
     server      = hash[:Server]
     port        = hash[:Port] || Puppet[:masterport]
-    environment = Puppet[:environment]
 
     if hash.include?(:Path)
       @local_path = hash[:Path]

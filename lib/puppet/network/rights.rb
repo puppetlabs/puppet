@@ -34,7 +34,7 @@ class Rights
 
   def is_forbidden_and_why?(name, args = {})
     res = :nomatch
-    right = @rights.find do |acl|
+    @rights.find do |acl|
       found = false
       # an acl can return :dunno, which means "I'm not qualified to answer your question,
       # please ask someone else". This is used when for instance an acl matches, but not for the

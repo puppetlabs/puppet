@@ -42,7 +42,7 @@ class Puppet::Util::FileType
           else
             return ""
           end
-        rescue Puppet::Error => detail
+        rescue Puppet::Error
           raise
         rescue => detail
           message = _("%{klass} could not read %{path}: %{detail}") % { klass: self.class, path: @path, detail: detail }
@@ -58,7 +58,7 @@ class Puppet::Util::FileType
           val = real_write(text)
           @synced = Time.now
           return val
-        rescue Puppet::Error => detail
+        rescue Puppet::Error
           raise
         rescue => detail
           message = _("%{klass} could not write %{path}: %{detail}") % { klass: self.class, path: @path, detail: detail }

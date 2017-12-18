@@ -401,10 +401,10 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       next if property == :ensure
       value = @resource.should(property)
       if property == :gid and value.nil?
-        value = self.class.next_system_id(id_type='gid')
+        value = self.class.next_system_id('gid')
       end
       if property == :uid and value.nil?
-        value = self.class.next_system_id(id_type='uid')
+        value = self.class.next_system_id('uid')
       end
       if value != "" and not value.nil?
         if property == :members
@@ -430,7 +430,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
         cmd = [:dseditgroup, "-o", "edit", "-n", ".", "-d", member, @resource[:name]]
         begin
           execute(cmd)
-        rescue Puppet::ExecutionFailure => detail
+        rescue Puppet::ExecutionFailure
           # TODO: We're falling back to removing the member using dscl due to rdar://8481241
           # This bug causes dseditgroup to fail to remove a member if that member doesn't exist
           cmd = [:dscl, ".", "-delete", "/Groups/#{@resource.name}", "GroupMembership", member]

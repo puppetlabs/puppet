@@ -442,9 +442,9 @@ class Puppet::Resource::Type
   def convert_from_ast(name)
     value = name.value
     if value.is_a?(Puppet::Parser::AST::Regex)
-      name = value.value
+      value.value
     else
-      name = value
+      value
     end
   end
 
@@ -476,7 +476,7 @@ class Puppet::Resource::Type
       # Note we're doing something somewhat weird here -- we're setting
       # the class's namespace to its fully qualified name.  This means
       # anything inside that class starts looking in that namespace first.
-      @namespace, ignored_shortname = @type == :hostclass ? [@name, ''] : namesplit(@name)
+      @namespace, _ = @type == :hostclass ? [@name, ''] : namesplit(@name)
     end
   end
 

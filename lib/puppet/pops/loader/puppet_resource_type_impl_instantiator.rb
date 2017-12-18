@@ -20,14 +20,14 @@ class PuppetResourceTypeImplInstantiator
     # parse and validate
     model = parser.parse_string(pp_code_string, source_ref)
     statements = if model.is_a?(Model::Program)
-      if model.body.is_a?(Model::BlockExpression)
-        statements = model.body.statements
-      else
-        statements = [model.body]
-      end
-    else
-      statements = EMPTY_ARRAY
-    end
+                   if model.body.is_a?(Model::BlockExpression)
+                     model.body.statements
+                   else
+                     [model.body]
+                   end
+                 else
+                   EMPTY_ARRAY
+                 end
     statements = statements.reject { |s| s.is_a?(Model::Nop) }
     if statements.empty?
       raise ArgumentError, _("The code loaded from %{source_ref} does not create the resource type '%{type_name}' - it is empty") % { source_ref: source_ref, type_name: typed_name.name }

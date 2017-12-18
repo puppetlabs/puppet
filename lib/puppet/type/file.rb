@@ -828,11 +828,11 @@ Puppet::Type.newtype(:file) do
 
     @stat = begin
       Puppet::FileSystem.send(method, self[:path])
-    rescue Errno::ENOENT => error
+    rescue Errno::ENOENT
       nil
-    rescue Errno::ENOTDIR => error
+    rescue Errno::ENOTDIR
       nil
-    rescue Errno::EACCES => error
+    rescue Errno::EACCES
       warning _("Could not stat; permission denied")
       nil
     end

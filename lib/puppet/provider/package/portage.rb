@@ -109,7 +109,6 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     result_format = self.qatom_result_format
     result_fields = self.qatom_result_fields
     @atom ||= begin
-      search_output = nil
       package_info = {}
       # do the search
       search_output = qatom_bin *([@resource[:name], '--format', output_format])

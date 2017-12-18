@@ -227,7 +227,6 @@ class PTypeSetType < PMetaType
   def name_for(t, default_name)
     key = @types.key(t)
     if key.nil?
-      qname = t.name
       if @references.empty?
         default_name
       else

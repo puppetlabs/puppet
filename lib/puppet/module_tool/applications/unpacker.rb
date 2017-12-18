@@ -76,7 +76,7 @@ module Puppet::ModuleTool
       # @api private
       def module_name
         metadata = JSON.parse((root_dir + 'metadata.json').read)
-        name = metadata['name'][/-(.*)/, 1]
+        metadata['name'][/-(.*)/, 1]
       end
 
       # @api private

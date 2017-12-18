@@ -76,8 +76,8 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     # Use directories in reposdir if they are set instead of default
     if reposdir
       # Follow the code from the yum/config.py
-      dirs = reposdir.gsub!("\n", ' ')
-      dirs = reposdir.gsub!(',', ' ')
+      reposdir.gsub!("\n", ' ')
+      reposdir.gsub!(',', ' ')
       dirs = reposdir.split
     end
     dirs.select! { |dir| Puppet::FileSystem.exist?(dir) }
@@ -202,8 +202,6 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   # @return [void]
   def create
     @property_hash[:ensure] = :present
-
-    new_section = current_section
 
     # We fetch a list of properties from the type, then iterate
     # over them, avoiding ensure.  We're relying on .should to

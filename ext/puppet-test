@@ -381,7 +381,6 @@ $args = {}
 $options = {:repeat => 1, :fork => 0, :pause => false, :nodes => []}
 
 begin
-    explicit_waitforcert = false
     result.each { |opt,arg|
         case opt
             # First check to see if the argument is a valid setting;
@@ -396,7 +395,7 @@ begin
             when "--fork"
                 begin
                     $options[:fork] = Integer(arg)
-                rescue => detail
+                rescue
                     $stderr.puts "The argument to 'fork' must be an integer"
                     exit(14)
                 end

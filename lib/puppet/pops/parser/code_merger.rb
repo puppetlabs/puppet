@@ -15,10 +15,10 @@ class Puppet::Pops::Parser::CodeMerger
       case parsed_class.code
       when Puppet::Parser::AST::BlockExpression
         # the BlockExpression wraps a single 4x instruction that is most likely wrapped in a Factory
-        memo += parsed_class.code.children.map {|c| c.is_a?(Puppet::Pops::Model::Factory) ? c.model : c }
+        memo + parsed_class.code.children.map {|c| c.is_a?(Puppet::Pops::Model::Factory) ? c.model : c }
       when Puppet::Pops::Model::Factory
         # If it is a 4x instruction wrapped in a Factory
-        memo += parsed_class.code.model
+        memo + parsed_class.code.model
       else
         # It is the instruction directly
         memo << parsed_class.code

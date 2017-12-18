@@ -252,7 +252,7 @@ module Serialization
           end
         else
           process(value) do
-            (names, types, required_count) = pcore_type.parameter_info(value.class)
+            (names, _, required_count) = pcore_type.parameter_info(value.class)
             args = names.map { |name| value.send(name) }
 
             # Pop optional arguments that are default

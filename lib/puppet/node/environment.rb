@@ -295,7 +295,7 @@ class Puppet::Node::Environment
   # @param forge_name [String] The module name
   # @return [Puppet::Module, nil] The module if found, else nil
   def module_by_forge_name(forge_name)
-    author, modname = forge_name.split('/')
+    _, modname = forge_name.split('/')
     found_mod = self.module(modname)
     found_mod and found_mod.forge_name == forge_name ?
       found_mod :

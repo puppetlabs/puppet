@@ -44,7 +44,7 @@ module Puppet::Util::Windows
       index = 0
       subkey = nil
 
-      subkey_max_len, value_max_len = reg_query_info_key_max_lengths(key)
+      subkey_max_len, _ = reg_query_info_key_max_lengths(key)
 
       begin
         subkey, filetime = reg_enum_key(key, index, subkey_max_len)
@@ -69,7 +69,7 @@ module Puppet::Util::Windows
       index = 0
       subkey = nil
 
-      subkey_max_len, value_max_len = reg_query_info_key_max_lengths(key)
+      _, value_max_len = reg_query_info_key_max_lengths(key)
 
       begin
         subkey, type, data = reg_enum_value(key, index, value_max_len)

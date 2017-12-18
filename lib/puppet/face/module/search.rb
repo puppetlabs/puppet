@@ -44,7 +44,7 @@ Puppet::Face.define(:module, '1.0.0') do
       min_widths = Hash[ *headers.map { |k,v| [k, v.length] }.flatten ]
       min_widths['full_name'] = min_widths['author'] = 12
 
-      min_width = min_widths.inject(0) { |sum,pair| sum += pair.last } + (padding.length * (headers.length - 1))
+      min_width = min_widths.inject(0) { |sum,pair| sum + pair.last } + (padding.length * (headers.length - 1))
 
       terminal_width = [Puppet::Util::Terminal.width, min_width].max
 

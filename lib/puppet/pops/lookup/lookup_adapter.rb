@@ -48,7 +48,6 @@ class LookupAdapter < DataAdapter
 
     key = LookupKey.new(key)
     lookup_invocation.lookup(key, key.module_name) do
-      merge_explained = false
       if lookup_invocation.only_explain_options?
         catch(:no_such_key) { do_lookup(LookupKey::LOOKUP_OPTIONS, lookup_invocation, HASH) }
         nil

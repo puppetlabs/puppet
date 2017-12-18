@@ -11,7 +11,7 @@ class Puppet::Indirector::FileServer < Puppet::Indirector::Terminus
   def authorized?(request)
     return false unless [:find, :search].include?(request.method)
 
-    mount, file_path = configuration.split_path(request)
+    mount, _ = configuration.split_path(request)
 
     # If we're not serving this mount, then access is denied.
     return false unless mount

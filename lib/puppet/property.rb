@@ -364,7 +364,7 @@ class Puppet::Property < Puppet::Parameter
     begin
       @should = should
       insync?(is)
-    rescue => detail
+    rescue
       # Certain operations may fail, but we don't want to fail the transaction if we can
       # avoid it
       msg = "Unknown failure using insync_values? on type: #{self.resource.ref} / property: #{self.name} to compare values #{should} and #{is}"

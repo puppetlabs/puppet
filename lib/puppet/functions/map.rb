@@ -107,7 +107,6 @@ Puppet::Functions.create_function(:map) do
 
   def map_Enumerable_1(enumerable)
     result = []
-    index = 0
     enum = Puppet::Pops::Types::Iterable.asserted_iterable(self, enumerable)
     begin
       loop { result << yield(enum.next) }

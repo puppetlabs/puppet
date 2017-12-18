@@ -144,7 +144,6 @@ module Puppet
       # Puppet::Transaction::Event failure with the given message.
       # @param message [String] the reason for a status failure
       def fail_with_event(message)
-        failed = true
         add_event(@real_resource.event(:name => :resource_error, :status => "failure", :message => message))
       end
 

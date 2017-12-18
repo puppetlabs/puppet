@@ -45,7 +45,7 @@ Puppet::Type.type(:user).provide :openbsd, :parent => :useradd do
           # sp_loginclass field.
           begin
             return unmunge(shadow_property, ent.send(method))
-          rescue => detail
+          rescue
             Puppet.warning "ruby-shadow doesn't support #{method}"
           end
         end

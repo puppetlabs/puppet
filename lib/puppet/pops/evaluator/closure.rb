@@ -318,7 +318,7 @@ class Closure < CallableSignature
     closure_scope = enclosing_scope
 
     parameters.each do |param|
-      arg_type, param_range = create_param_type(param, closure_scope)
+      arg_type, _ = create_param_type(param, closure_scope)
       key_type = type_factory.string(param.name.to_s)
       key_type = type_factory.optional(key_type) unless param.value.nil?
       members[key_type] = arg_type

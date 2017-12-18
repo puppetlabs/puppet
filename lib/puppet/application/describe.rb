@@ -37,7 +37,6 @@ class Formatter
   def scrub(text)
     # For text with no carriage returns, there's nothing to do.
     return text if text !~ /\n/
-    indent = nil
 
     # If we can match an indentation, then just remove that same level of
     # indent from every line.

@@ -124,7 +124,7 @@ class Puppet::Util::Log
       return
     end
 
-    name, type = @desttypes.find do |name, klass|
+    _, type = @desttypes.find do |name, klass|
       klass.match?(dest)
     end
 

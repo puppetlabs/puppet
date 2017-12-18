@@ -107,7 +107,6 @@ class PSemVerRangeType < PAnyType
   end
 
   def self.new_function(type)
-    range_expr = "\\A#{range_pattern}\\Z"
     @new_function ||= Puppet::Functions.create_loaded_function(:new_VersionRange, type.loader) do
       local_types do
         type 'SemVerRangeString = String[1]'

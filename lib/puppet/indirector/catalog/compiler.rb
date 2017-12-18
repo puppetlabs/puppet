@@ -178,7 +178,6 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     # TODO: get property/parameter defaults if entries are nil in the resource
     # For now they're hard-coded to match the File type.
 
-    file_metadata = {}
     list_of_resources.each do |resource|
       sources = [resource[:source]].flatten.compact
       next unless inlineable?(resource, sources)

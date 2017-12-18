@@ -80,7 +80,7 @@ class EvaluatingParser
   end
 
   def convert_to_3x(object, scope)
-    val = evaluator.convert(object, scope, nil)
+    evaluator.convert(object, scope, nil)
   end
 
   def validate(parse_result)

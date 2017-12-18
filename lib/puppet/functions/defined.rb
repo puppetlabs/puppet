@@ -105,7 +105,6 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
   end
 
   def is_defined(scope, *vals)
-    env = scope.environment
     vals.any? do |val|
       case val
       when String
@@ -120,7 +119,6 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
             Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_main_class(scope)
           else
             # Find a resource type, definition or class definition
-            krt = scope.environment.known_resource_types
             Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_resource_type_or_class(scope, val)
           end
         end
@@ -150,7 +148,6 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
           #
           raise  ArgumentError, _('The given class type is a reference to all classes') if val.type.class_name.nil?
           Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_hostclass(scope, val.type.class_name)
-          #scope.environment.known_resource_types.find_hostclass(val.type.class_name)
         end
       else
         raise ArgumentError, _("Invalid argument of type '%{value_class}' to 'defined'") % { value_class: val.class }

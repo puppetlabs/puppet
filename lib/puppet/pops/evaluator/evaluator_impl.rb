@@ -442,9 +442,9 @@ class EvaluatorImpl
           end
         end
         result = left.send(operator, right)
-      rescue NoMethodError => e
+      rescue NoMethodError
         fail(Issues::OPERATOR_NOT_APPLICABLE, left_o, {:operator => operator, :left_value => left})
-      rescue ZeroDivisionError => e
+      rescue ZeroDivisionError
         fail(Issues::DIV_BY_ZERO, bin_expr.right_expr)
       end
       case result

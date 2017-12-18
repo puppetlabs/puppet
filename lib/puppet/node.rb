@@ -30,7 +30,7 @@ class Puppet::Node
     env_name = data['environment']
     env_name = env_name.intern unless env_name.nil?
     @environment_name = env_name
-    environment = env_name
+    environment = env_name # rubocop:disable Lint/UselessAssignment
   end
 
   def self.from_data_hash(data)

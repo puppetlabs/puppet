@@ -471,7 +471,6 @@ class PObjectType < PMetaType
     # @api private
   def create_new_function
     impl_class = implementation_class
-    class_name = impl_class.name || "Anonymous Ruby class for #{name}"
 
     (param_names, param_types, required_param_count) = parameter_info(impl_class)
 

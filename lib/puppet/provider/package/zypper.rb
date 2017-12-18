@@ -126,7 +126,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
 
   def uninstall
     #extract version numbers and convert to integers
-    major, minor, patch = zypper_version.scan(/\d+/).map{ |x| x.to_i }
+    major, minor, _ = zypper_version.scan(/\d+/).map{ |x| x.to_i }
 
     if major < 1
       super
@@ -137,7 +137,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
       end
 
       options << @resource[:name]
-    	
+
       zypper *options
     end
 

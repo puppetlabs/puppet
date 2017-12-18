@@ -63,7 +63,7 @@ Puppet::Face.define(:epp, '0.0.1') do
     when_invoked do |*args|
       options = args.pop
       # pass a dummy node, as facts are not needed for validation
-      options[:node] = node = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}))
+      options[:node] = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}))
       compiler = create_compiler(options)
 
       status = true # no validation error yet
@@ -145,7 +145,7 @@ Puppet::Face.define(:epp, '0.0.1') do
       require 'puppet/pops'
       options = args.pop
       # pass a dummy node, as facts are not needed for dump
-      options[:node] = node = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}))
+      options[:node] = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}))
       options[:header] = options[:header].nil? ? true : options[:header]
       options[:validate] = options[:validate].nil? ? true : options[:validate]
 
@@ -176,7 +176,7 @@ Puppet::Face.define(:epp, '0.0.1') do
         end
 
         show_filename = templates.count > 1
-        dumps = templates.each do |file|
+        templates.each do |file|
           buffer.print dump_parse(Puppet::FileSystem.read(file, :encoding => 'utf-8'), file, options, show_filename)
         end
 

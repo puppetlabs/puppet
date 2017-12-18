@@ -2059,7 +2059,6 @@ class PStructType < PAnyType
     if self == DEFAULT
       PIterableType.new(PHashType::DEFAULT_KEY_PAIR_TUPLE)
     else
-      tc = TypeCalculator.singleton
       PIterableType.new(
         PTupleType.new([
           PVariantType.maybe_create(@elements.map {|se| se.key_type }),
