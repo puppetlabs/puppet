@@ -137,6 +137,7 @@ module Puppet::DataTypes
     builder.create_type(loader)
   end
 
+  # @api private
   class TypeBuilder
     attr_accessor :interface, :implementation, :implementation_class
 
@@ -178,8 +179,9 @@ module Puppet::DataTypes
   end
 
   # The TypeBuilderAPI class exposes only those methods that the builder API provides
-  # @api private
+  # @api public
   class TypeBuilderAPI
+    # @api private
     def initialize(type_builder)
       @type_builder = type_builder
     end
