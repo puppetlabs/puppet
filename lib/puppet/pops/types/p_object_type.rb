@@ -545,6 +545,13 @@ class PObjectType < PMetaType
     @implementation_class = cls
   end
 
+  # The block passed to this method will be passed in a call to `#class_eval` on the dynamically generated
+  # class for this data type. It's indended use is to complement or redefine the generated methods and
+  # attribute readers.
+  #
+  # The method is normally called with the block passed to `#implementation` when a data type is defined using
+  # {Puppet::DataTypes::create_type}.
+  #
   # @api private
   def implementation_override=(block)
     if !@implementation_class.nil? || instance_variable_defined?(:@implementation_override)
