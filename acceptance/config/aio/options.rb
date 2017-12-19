@@ -14,4 +14,4 @@
   :'use-service'               => true, # use service scripts to start/stop stuff
   :puppetservice               => 'puppetserver',
   :'puppetserver-confdir'      => '/etc/puppetlabs/puppetserver/conf.d',
-}.merge(eval File.read('config/common/options.rb'))
+}
