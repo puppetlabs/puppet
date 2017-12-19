@@ -63,6 +63,15 @@ class Loaders
     # 4. module loaders are set up from the create_environment_loader, they register themselves
   end
 
+  # Called after loader has been added to Puppet Context as :loaders so that dynamic types can
+  # be pre-loaded with a fully configured loader system
+  def pre_load
+    @puppet_system_loader.load(:type, 'error')
+
+    # Will move to Bolt
+    @puppet_system_loader.load(:type, 'executionresult')
+  end
+
   # Clears the cached static and puppet_system loaders (to enable testing)
   #
   def self.clear
@@ -86,7 +95,7 @@ class Loaders
     # The static loader can only be changed after a reboot
     if !class_variable_defined?(:@@static_loader) || @@static_loader.nil?
       @@static_loader = Loader::StaticLoader.new()
-      @@static_loader.create_built_in_puppet_types
+      @@static_loader.register_aliases
     end
     @@static_loader
   end

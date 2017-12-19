@@ -64,7 +64,7 @@ class StaticLoader < Loader
   BUILTIN_ALIASES = {
     'Data' => 'Variant[ScalarData,Undef,Hash[String,Data],Array[Data]]',
     'RichDataKey' => 'Variant[String,Numeric]',
-    'RichData' => 'Variant[Scalar,SemVerRange,Binary,Sensitive,Type,TypeSet,Error,URI,Undef,Default,Hash[RichDataKey,RichData],Array[RichData]]',
+    'RichData' => 'Variant[Scalar,SemVerRange,Binary,Sensitive,Type,TypeSet,URI,Object,Undef,Default,Hash[RichDataKey,RichData],Array[RichData]]',
 
     # Backward compatible aliases.
     'Puppet::LookupKey' => 'RichDataKey',
@@ -115,32 +115,17 @@ class StaticLoader < Loader
     @loaded[typed_name]
   end
 
-  def create_built_in_puppet_types
-    Pcore.add_object_type('Error', <<-PUPPET, self)
-      {
-        type_parameters => {
-          kind => Optional[Variant[String,Regexp,Type[Enum],Type[Pattern],Type[NotUndef],Type[Undef]]],
-          issue_code => Optional[Variant[String,Regexp,Type[Enum],Type[Pattern],Type[NotUndef],Type[Undef]]]
-        },
-        attributes => {
-          message => String[1],
-          kind => { type => Optional[String[1]], value => undef },
-          issue_code => { type => Optional[String[1]], value => undef },
-          partial_result => { type => Data, value => undef },
-          details => { type => Optional[Hash[String[1],Data]], value => undef },
-        }
-      }
-    PUPPET
-
-    register_aliases
-  end
-
   def runtime_3_init
     unless @runtime_3_initialized
       @runtime_3_initialized = true
       create_resource_type_references
     end
     nil
+  end
+
+  def register_aliases
+    aliases = BUILTIN_ALIASES.map { |name, string| add_type(name, Types::PTypeAliasType.new(name, Types::TypeFactory.type_reference(string), nil)) }
+    aliases.each { |type| type.resolve(self) }
   end
 
   private
@@ -172,11 +157,6 @@ class StaticLoader < Loader
 
   def create_resource_type_reference(name)
     add_type(name, Types::TypeFactory.resource(name))
-  end
-
-  def register_aliases
-    aliases = BUILTIN_ALIASES.map { |name, string| add_type(name, Types::PTypeAliasType.new(name, Types::TypeFactory.type_reference(string), nil)) }
-    aliases.each { |type| type.resolve(self) }
   end
 end
 end

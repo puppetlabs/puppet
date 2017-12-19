@@ -33,7 +33,7 @@ module ModuleLoaders
                                                        nil,
                                                        puppet_lib,   # may or may not have a 'lib' above 'puppet'
                                                        'puppet_system',
-                                                        [:func_4x]   # only load ruby functions from "puppet"
+                                                        [:func_4x, :datatype]   # only load ruby functions and types from "puppet"
                                                        )
   end
 
@@ -191,7 +191,11 @@ module ModuleLoaders
         when :type
           if !global?
             # Global name must be the name of the module
-            return nil unless name_parts[0] == module_name
+            unless name_parts[0] == module_name
+              # Check for ruby defined data type in global namespace before giving up
+              origin, smart_path = find_existing_path(typed_name)
+              return smart_path.is_a?(LoaderPaths::DataTypePath) ? instantiate(smart_path, typed_name, origin) : nil
+            end
 
             # Look for the special 'init_typeset' TypeSet
             origin, smart_path = find_existing_path(init_typeset_name)

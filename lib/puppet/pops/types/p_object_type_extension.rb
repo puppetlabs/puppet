@@ -28,6 +28,23 @@ class PObjectTypeExtension < PAnyType
     impl_class.new(base_type, init_parameters)
   end
 
+  # Creates an array of type parameters from the attributes of the given instance that matches the
+  # type parameters by name. Type parameters for which there is no matching attribute
+  # will have `nil` in their corresponding position on the array. The array is then passed
+  # as the `init_parameters` argument in a call to `create`
+  #
+  # @return [PObjectTypeExtension] the created extension
+  # @api private
+  def self.create_from_instance(base_type, instance)
+    type_parameters = base_type.type_parameters(true)
+    attrs = base_type.attributes(true)
+    params = type_parameters.keys.map do |pn|
+      attr = attrs[pn]
+      attr.nil? ? nil : instance.send(pn)
+    end
+    create(base_type, params)
+  end
+
   def [](name)
     @base_type[name]
   end
@@ -38,15 +55,10 @@ class PObjectTypeExtension < PAnyType
     raise Puppet::ParseError, _('The %{label}-Type cannot be parameterized using []') % { label: base_type.label } if pts.empty?
     @base_type = base_type
 
-    named_args = false
-    if init_parameters.is_a?(PuppetObject)
-      init_parameters = parameters_from_instance(init_parameters, pts)
-    else
-      named_args = init_parameters.size == 1 && init_parameters[0].is_a?(Hash)
-      if named_args
-        # Catch case when first parameter is an assignable Hash
-        named_args = pts.size >= 1 && !pts.values[0].type.instance?(init_parameters[0])
-      end
+    named_args = init_parameters.size == 1 && init_parameters[0].is_a?(Hash)
+    if named_args
+      # Catch case when first parameter is an assignable Hash
+      named_args = pts.size >= 1 && !pts.values[0].type.instance?(init_parameters[0])
     end
 
     by_name = {}
@@ -142,19 +154,6 @@ class PObjectTypeExtension < PAnyType
   end
 
   protected
-
-  # Creates an array of type parameters from the attributes that matches the
-  # type parameters by name. Type parameters for which there is no matching attribute
-  # will have `nil` in their corresponding position on the array.
-  #
-  # @return [Array] array of values from instance that maps to type parameters
-  def parameters_from_instance(instance, type_parameters)
-    attrs = @base_type.attributes(true)
-    type_parameters.keys.map do |pn|
-      attr = attrs[pn]
-      attr.nil? ? nil : instance.send(pn)
-    end
-  end
 
   # Checks that the given `param_values` hash contains all keys present in the `parameters` of
   # this instance and that each keyed value is a match for the given parameter. The match is done

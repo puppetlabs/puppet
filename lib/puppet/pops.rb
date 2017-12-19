@@ -114,6 +114,7 @@ module Puppet
 
   require 'puppet/parser/ast/pops_bridge'
   require 'puppet/functions'
+  require 'puppet/datatypes'
 
   Puppet::Pops::Model.register_pcore_types
 end

@@ -48,10 +48,11 @@ module Puppet::Pops::Types
     # The value `nil` is returned for all other objects.
     #
     # @param o [Object] The object to produce an `Iterable` for
+    # @param element_type [PAnyType] the element type for the iterator. Optional (inferred if not provided)
     # @return [Iterable,nil] The produced `Iterable` or `nil` if it couldn't be produced
     #
     # @api public
-    def self.on(o)
+    def self.on(o, element_type = nil)
       case o
       when IteratorProducer
         o.iterator
@@ -63,18 +64,24 @@ module Puppet::Pops::Types
         if o.empty?
           Iterator.new(PUnitType::DEFAULT, o.each)
         else
-          tc = TypeCalculator.singleton
-          Iterator.new(PVariantType.maybe_create(o.map {|e| tc.infer_set(e) }), o.each)
+          if element_type.nil?
+            tc = TypeCalculator.singleton
+            element_type = PVariantType.maybe_create(o.map {|e| tc.infer_set(e) })
+          end
+          Iterator.new(element_type, o.each)
         end
       when Hash
         # Each element is a two element [key, value] tuple.
         if o.empty?
           HashIterator.new(PHashType::DEFAULT_KEY_PAIR_TUPLE, o.each)
         else
-          tc = TypeCalculator.singleton
-          HashIterator.new(PTupleType.new([
-            PVariantType.maybe_create(o.keys.map {|e| tc.infer_set(e) }),
-            PVariantType.maybe_create(o.values.map {|e| tc.infer_set(e) })], PHashType::KEY_PAIR_TUPLE_SIZE), o.each_pair)
+          if element_type.nil?
+            tc = TypeCalculator.singleton
+            element_type = PTupleType.new([
+              PVariantType.maybe_create(o.keys.map {|e| tc.infer_set(e) }),
+              PVariantType.maybe_create(o.values.map {|e| tc.infer_set(e) })], PHashType::KEY_PAIR_TUPLE_SIZE)
+          end
+          HashIterator.new(element_type, o.each_pair)
         end
       when Integer
         if o == 0

@@ -457,7 +457,7 @@ class PObjectType < PMetaType
   # @return [Object] the created instance
   # @api private
   def read(value_count, deserializer)
-    reader.read(implementation_class, value_count, deserializer)
+    reader.read(self, implementation_class, value_count, deserializer)
   end
 
   # Write an instance of this type using a serializer
@@ -475,10 +475,7 @@ class PObjectType < PMetaType
     (param_names, param_types, required_param_count) = parameter_info(impl_class)
 
     # Create the callable with a size that reflects the required and optional parameters
-    param_types << required_param_count
-    param_types << param_names.size
-
-    create_type = TypeFactory.callable(*param_types)
+    create_type = TypeFactory.callable(*param_types, required_param_count, param_names.size)
     from_hash_type = TypeFactory.callable(init_hash_type, 1, 1)
 
     # Create and return a #new_XXX function where the dispatchers are added programmatically.
@@ -526,6 +523,7 @@ class PObjectType < PMetaType
       if impl_name.nil?
         # Use generator to create a default implementation
         @implementation_class = RubyGenerator.new.create_class(self)
+        @implementation_class.class_eval(&@implementation_override) if instance_variable_defined?(:@implementation_override)
       else
         # Can the mapping be loaded?
         class_name = impl_name[0]
@@ -546,10 +544,42 @@ class PObjectType < PMetaType
     @implementation_class = cls
   end
 
+  # The block passed to this method will be passed in a call to `#class_eval` on the dynamically generated
+  # class for this data type. It's indended use is to complement or redefine the generated methods and
+  # attribute readers.
+  #
+  # The method is normally called with the block passed to `#implementation` when a data type is defined using
+  # {Puppet::DataTypes::create_type}.
+  #
+  # @api private
+  def implementation_override=(block)
+    if !@implementation_class.nil? || instance_variable_defined?(:@implementation_override)
+      raise ArgumentError, "attempt to redefine implementation override for #{label}"
+    end
+    @implementation_override = block
+  end
+
+  def extract_init_hash(o)
+    return o._pcore_init_hash if o.respond_to?(:_pcore_init_hash)
+
+    result = {}
+    pic = parameter_info(o.class)
+    attrs = attributes(true)
+    pic[0].each do |name|
+      v = o.send(name)
+      result[name] = v unless attrs[name].default_value?(v)
+    end
+    result
+  end
+
   # @api private
   # @return [(Array<String>, Array<PAnyType>, Integer)] array of parameter names, array of parameter types, and a count reflecting the required number of parameters
   def parameter_info(impl_class)
     # Create a types and a names array where optional entries ends up last
+    @parameter_info ||= {}
+    pic = @parameter_info[impl_class]
+    return pic if pic
+
     opt_types = []
     opt_names = []
     non_opt_types = []
@@ -601,7 +631,9 @@ class PObjectType < PMetaType
       end
     end
 
-    [param_names, param_types, non_opt_types.size]
+    pic = [param_names.freeze, param_types.freeze, non_opt_types.size].freeze
+    @parameter_info[impl_class] = pic
+    pic
   end
 
   # @api private

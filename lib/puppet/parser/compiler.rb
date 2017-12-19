@@ -720,6 +720,7 @@ class Puppet::Parser::Compiler
     Puppet.override( @context_overrides , _("For initializing compiler")) do
       # THE MAGIC STARTS HERE ! This triggers parsing, loading etc.
       @catalog.version = environment.known_resource_types.version
+      @loaders.pre_load
     end
 
     @catalog.add_resource(Puppet::Parser::Resource.new("stage", :main, :scope => @topscope))

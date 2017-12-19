@@ -15,7 +15,7 @@ module PuppetObject
         # Create a parameterized type based on the values of this instance that
         # contains a parameter value for each type parameter that matches an
         # attribute by name and type of value
-        @_cached_ptype = PObjectTypeExtension.create(t, self)
+        @_cached_ptype = PObjectTypeExtension.create_from_instance(t, self)
       end
       t = @_cached_ptype
     end

@@ -337,6 +337,27 @@ class TypeFormatter
     append_array('Collection', range.empty? ) { append_elements(range) }
   end
 
+  def string_Object(t)
+    type = TypeCalculator.infer(t)
+    if type.is_a?(PObjectTypeExtension)
+      type = type.base_type
+    end
+    if type.is_a?(PObjectType)
+      init_hash = type.extract_init_hash(t)
+      @bld << type.name << '('
+      if @indent
+        append_indented_string(init_hash, @indent, @indent_width, true)
+        @bld.chomp!
+      else
+        append_string(init_hash)
+      end
+      @bld << ')'
+    else
+      @bld << 'Instance of '
+      append_string(type)
+    end
+  end
+
   def string_PuppetObject(t)
     @bld << t._pcore_type.name << '('
     if @indent
