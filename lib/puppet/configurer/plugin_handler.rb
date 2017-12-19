@@ -4,7 +4,8 @@
 require 'puppet/configurer'
 
 class Puppet::Configurer::PluginHandler
-  # Retrieve facts from the central server.
+  SUPPORTED_LOCALES_MOUNT_AGENT_VERSION = Gem::Version.new("5.3.4")
+
   def download_plugins(environment)
     source_permissions = Puppet.features.microsoft_windows? ? :ignore : :use
 
@@ -23,18 +24,23 @@ class Puppet::Configurer::PluginHandler
       environment,
       source_permissions
     )
-    locales_downloader = Puppet::Configurer::Downloader.new(
-      "locales",
-      Puppet[:localedest],
-      Puppet[:localesource],
-      Puppet[:localeignore],
-      environment
-    )
 
     result = []
     result += plugin_fact_downloader.evaluate
     result += plugin_downloader.evaluate
-    result += locales_downloader.evaluate
+
+    server_agent_version = Puppet.lookup(:server_agent_version) { "0.0" }
+    if Gem::Version.new(server_agent_version) >= SUPPORTED_LOCALES_MOUNT_AGENT_VERSION
+      locales_downloader = Puppet::Configurer::Downloader.new(
+        "locales",
+        Puppet[:localedest],
+        Puppet[:localesource],
+        Puppet[:localeignore],
+        environment
+      )
+      result += locales_downloader.evaluate
+    end
+
 
     Puppet::Util::Autoload.reload_changed
 

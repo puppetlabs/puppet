@@ -195,10 +195,11 @@ class Suite
 
         $options[:repeat].times do |i|
             @count = i
+            escaped_doc = doc.gsub(/%/, '%%')
             if forked?
-                msg = doc + " in PID %s" % Process.pid
+                msg = escaped_doc + " in PID %{process_id} in %%{seconds} seconds" % { process_id: Process.pid }
             else
-                msg = doc
+                msg = escaped_doc + " in %{seconds} seconds"
             end
             Puppet::Util.benchmark(:notice, msg) do
                 begin

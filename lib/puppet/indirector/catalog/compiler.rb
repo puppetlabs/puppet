@@ -276,24 +276,31 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       raise Puppet::Error, _("Unable to find a common checksum type between agent '%{agent_type}' and master '%{master_type}'.") % { agent_type: options[:checksum_type], master_type: known_checksum_types } unless checksum_type
     end
 
-    str = if checksum_type
-            if node.environment
-              _("Compiled static catalog for %{node} in environment %{environment}") % { node: node.name, environment: node.environment }
-            else
-              _("Compiled static catalog for %{node}") % { node: node.name }
-            end
-          else
-            if node.environment
-              _("Compiled catalog for %{node} in environment %{environment}") % { node: node.name, environment: node.environment }
-            else
-              _("Compiled catalog for %{node}") % { node: node.name }
-            end
-          end
+    escaped_node_name = node.name.gsub(/%/, '%%')
+    if checksum_type
+      if node.environment
+        escaped_node_environment = node.environment.to_s.gsub(/%/, '%%')
+        benchmark_str = _("Compiled static catalog for %{node} in environment %{environment} in %%{seconds} seconds") % { node: escaped_node_name, environment: escaped_node_environment }
+        profile_str   = _("Compiled static catalog for %{node} in environment %{environment}") % { node: node.name, environment: node.environment }
+      else
+        benchmark_str = _("Compiled static catalog for %{node} in %%{seconds} seconds") % { node: escaped_node_name }
+        profile_str   = _("Compiled static catalog for %{node}") % { node: node.name }
+      end
+    else
+      if node.environment
+        escaped_node_environment = node.environment.to_s.gsub(/%/, '%%')
+        benchmark_str = _("Compiled catalog for %{node} in environment %{environment} in %%{seconds} seconds") % { node: escaped_node_name, environment: escaped_node_environment }
+        profile_str   = _("Compiled catalog for %{node} in environment %{environment}") % { node: node.name, environment: node.environment }
+      else
+        benchmark_str = _("Compiled catalog for %{node} in %%{seconds} seconds") % { node: escaped_node_name }
+        profile_str   = _("Compiled catalog for %{node}") % { node: node.name }
+      end
+    end
     config = nil
 
-    benchmark(:notice, str) do
+    benchmark(:notice, benchmark_str) do
       compile_type = checksum_type ? :static_compile : :compile
-      Puppet::Util::Profiler.profile(str, [:compiler, compile_type, node.environment, node.name]) do
+      Puppet::Util::Profiler.profile(profile_str, [:compiler, compile_type, node.environment, node.name]) do
         begin
           config = Puppet::Parser::Compiler.compile(node, options[:code_id])
         rescue Puppet::Error => detail
@@ -304,15 +311,21 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         end
 
         if checksum_type && config.is_a?(model)
-          str = if node.environment
-                  #TRANSLATORS Inlined refers to adding additional metadata
-                  _("Inlined resource metadata into static catalog for %{node} in environment %{environment}") % { node: node.name, environment: node.environment }
-                else
-                  #TRANSLATORS Inlined refers to adding additional metadata
-                  _("Inlined resource metadata into static catalog for %{node}") % { node: node.name }
-                end
-          benchmark(:notice, str) do
-            Puppet::Util::Profiler.profile(str, [:compiler, :static_compile_postprocessing, node.environment, node.name]) do
+          escaped_node_name = node.name.gsub(/%/, '%%')
+          if node.environment
+            escaped_node_environment = node.environment.to_s.gsub(/%/, '%%')
+            #TRANSLATORS Inlined refers to adding additional metadata
+            benchmark_str = _("Inlined resource metadata into static catalog for %{node} in environment %{environment} in %%{seconds} seconds") % { node: escaped_node_name, environment: escaped_node_environment }
+            #TRANSLATORS Inlined refers to adding additional metadata
+            profile_str   = _("Inlined resource metadata into static catalog for %{node} in environment %{environment}") % { node: node.name, environment: node.environment }
+          else
+            #TRANSLATORS Inlined refers to adding additional metadata
+            benchmark_str = _("Inlined resource metadata into static catalog for %{node} in %%{seconds} seconds") % { node: escaped_node_name }
+            #TRANSLATORS Inlined refers to adding additional metadata
+            profile_str   = _("Inlined resource metadata into static catalog for %{node}") % { node: node.name }
+          end
+          benchmark(:notice, benchmark_str) do
+            Puppet::Util::Profiler.profile(profile_str, [:compiler, :static_compile_postprocessing, node.environment, node.name]) do
               inline_metadata(config, checksum_type)
             end
           end
