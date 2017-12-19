@@ -191,7 +191,11 @@ module ModuleLoaders
         when :type
           if !global?
             # Global name must be the name of the module
-            return nil unless name_parts[0] == module_name
+            unless name_parts[0] == module_name
+              # Check for ruby defined data type in global namespace before giving up
+              origin, smart_path = find_existing_path(typed_name)
+              return smart_path.is_a?(LoaderPaths::DataTypePath) ? instantiate(smart_path, typed_name, origin) : nil
+            end
 
             # Look for the special 'init_typeset' TypeSet
             origin, smart_path = find_existing_path(init_typeset_name)
