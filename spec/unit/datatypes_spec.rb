@@ -14,9 +14,16 @@ describe "Puppet::DataTypes" do
   let(:environments_dir) { Puppet[:environmentpath] }
 
   let(:mytest) {{
-    'lib' => { 'puppet' => { 'functions' => { 'mytest' => mytest_functions }}}
+    'lib' => {
+      'puppet' => {
+        'datatypes' => { 'mytest' => mytest_datatypes },
+        'functions' => { 'mytest' => mytest_functions }},
+      'puppetx' => { 'mytest' => mytest_classes },
+    }
   }}
 
+  let(:mytest_datatypes) { {} }
+  let(:mytest_classes) { {} }
   let(:mytest_functions) { {
     'to_data.rb' => <<-RUBY.unindent,
       Puppet::Functions.create_function('mytest::to_data') do
@@ -81,6 +88,10 @@ describe "Puppet::DataTypes" do
         'modules' => modules,
       }
     }
+  end
+
+  before(:each) do
+    Puppet[:environment] = 'testing'
   end
 
   context 'when creating type with derived attributes using implementation' do
@@ -213,6 +224,53 @@ describe "Puppet::DataTypes" do
         notice($m == $m2)
         notice($m2.age)
         PUPPET
+    end
+  end
+
+  context 'with data type defined in module' do
+    context 'using already implemented class' do
+
+      let(:mytest_classes) {
+        {
+          'position.rb' => <<-RUBY
+            module PuppetX; module Mytest; class Position
+              attr_reader :x, :y
+  
+              def initialize(x, y)
+                @x = x
+                @y = y
+              end
+            end; end; end
+            RUBY
+        }
+      }
+
+      let(:mytest_datatypes) {
+        {
+          'position.rb' => <<-RUBY
+            Puppet::DataTypes.create_type('Mytest::Position') do
+              interface <<-PUPPET
+                attributes => {
+                  x => Integer,
+                  y => Integer
+                }
+                PUPPET
+
+              load_file('puppetx/mytest/position')
+  
+              implementation_class PuppetX::Mytest::Position
+            end
+            RUBY
+        }
+      }
+
+      after(:each) do
+        ::PuppetX.send(:remove_const, :Mytest)
+      end
+
+      it 'loads and returns value of attribute' do
+        expect(eval_and_collect_notices('notice(Mytest::Position(23, 12).x)', node)).to eql(['23'])
+      end
     end
   end
 end
