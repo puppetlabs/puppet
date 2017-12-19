@@ -6,7 +6,6 @@ require 'fileutils'
 require 'beaker-hostgenerator'
 require 'beaker/dsl/install_utils'
 extend Beaker::DSL::InstallUtils
-$LOAD_PATH << File.expand_path(File.join(File.dirname(__FILE__), 'lib'))
 
 ONE_DAY_IN_SECS  = 24 * 60 * 60
 REPO_CONFIGS_DIR = 'repo-configs'
@@ -24,9 +23,6 @@ DEFAULT_TEST_TARGETS = "#{DEFAULT_MASTER_TEST_TARGET}a-windows2012r2-64a"
 module HarnessOptions
   defaults = {
     :tests  => ['tests'],
-    :log_level => 'debug',
-    :preserve_hosts => 'onfail',
-  }
 
   DEFAULTS = EPEL_MIRROR ? defaults.merge(:epel_url => EPEL_MIRROR) : defaults
 
