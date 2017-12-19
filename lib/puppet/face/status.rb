@@ -13,6 +13,7 @@ Puppet::Indirector::Face.define(:status, '0.0.1') do
   find = get_action(:find)
   find.default = true
   find.summary _("Check status of puppet master server.")
+  #TRANSLATORS the string 'Puppet::Status' is a Puppet language object and should not be translated
   find.returns _(<<-'EOT')
     A "true" response or a low-level connection error. When used from the Ruby
     API: returns a Puppet::Status object.
