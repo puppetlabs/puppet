@@ -16,8 +16,8 @@ describe "Puppet::DataTypes" do
   let(:mytest) {{
     'lib' => {
       'puppet' => {
-        'datatypes' => { 'mytest' => mytest_datatypes },
-        'functions' => { 'mytest' => mytest_functions }},
+        'datatypes' => mytest_datatypes,
+        'functions' => mytest_functions },
       'puppetx' => { 'mytest' => mytest_classes },
     }
   }}
@@ -25,49 +25,51 @@ describe "Puppet::DataTypes" do
   let(:mytest_datatypes) { {} }
   let(:mytest_classes) { {} }
   let(:mytest_functions) { {
-    'to_data.rb' => <<-RUBY.unindent,
-      Puppet::Functions.create_function('mytest::to_data') do
-        def to_data(data)
-          Puppet::Pops::Serialization::ToDataConverter.convert(data, {
-            :rich_data => true,
-            :symbol_as_string => true,
-            :type_by_reference => true,
-            :message_prefix => 'test'
-          })
+    'mytest' => {
+      'to_data.rb' => <<-RUBY.unindent,
+        Puppet::Functions.create_function('mytest::to_data') do
+          def to_data(data)
+            Puppet::Pops::Serialization::ToDataConverter.convert(data, {
+              :rich_data => true,
+              :symbol_as_string => true,
+              :type_by_reference => true,
+              :message_prefix => 'test'
+            })
+          end
         end
-      end
-      RUBY
+        RUBY
 
-    'from_data.rb' => <<-RUBY.unindent,
-      Puppet::Functions.create_function('mytest::from_data') do
-        def from_data(data)
-          Puppet::Pops::Serialization::FromDataConverter.convert(data)
+      'from_data.rb' => <<-RUBY.unindent,
+        Puppet::Functions.create_function('mytest::from_data') do
+          def from_data(data)
+            Puppet::Pops::Serialization::FromDataConverter.convert(data)
+          end
         end
-      end
-      RUBY
+        RUBY
 
-    'serialize.rb' => <<-RUBY.unindent,
-      Puppet::Functions.create_function('mytest::serialize') do
-        def serialize(data)
-          buffer = ''
-          serializer = Puppet::Pops::Serialization::Serializer.new(
-            Puppet::Pops::Serialization::JSON::Writer.new(buffer))
-          serializer.write(data)
-          serializer.finish
-          buffer
+      'serialize.rb' => <<-RUBY.unindent,
+        Puppet::Functions.create_function('mytest::serialize') do
+          def serialize(data)
+            buffer = ''
+            serializer = Puppet::Pops::Serialization::Serializer.new(
+              Puppet::Pops::Serialization::JSON::Writer.new(buffer))
+            serializer.write(data)
+            serializer.finish
+            buffer
+          end
         end
-      end
-      RUBY
+        RUBY
 
-    'deserialize.rb' => <<-RUBY.unindent,
-      Puppet::Functions.create_function('mytest::deserialize') do
-        def deserialize(data)
-          deserializer = Puppet::Pops::Serialization::Deserializer.new(
-            Puppet::Pops::Serialization::JSON::Reader.new(data), Puppet::Pops::Loaders.find_loader(nil))
-          deserializer.read
+      'deserialize.rb' => <<-RUBY.unindent,
+        Puppet::Functions.create_function('mytest::deserialize') do
+          def deserialize(data)
+            deserializer = Puppet::Pops::Serialization::Deserializer.new(
+              Puppet::Pops::Serialization::JSON::Reader.new(data), Puppet::Pops::Loaders.find_loader(nil))
+            deserializer.read
+          end
         end
-      end
-      RUBY
+        RUBY
+      }
   } }
 
   let(:testing_env_dir) do
@@ -227,12 +229,10 @@ describe "Puppet::DataTypes" do
     end
   end
 
-  context 'with data type defined in module' do
-    context 'using already implemented class' do
-
-      let(:mytest_classes) {
-        {
-          'position.rb' => <<-RUBY
+  context 'with data type and class defined in a module' do
+    let(:mytest_classes) {
+      {
+        'position.rb' => <<-RUBY
             module PuppetX; module Mytest; class Position
               attr_reader :x, :y
   
@@ -241,13 +241,18 @@ describe "Puppet::DataTypes" do
                 @y = y
               end
             end; end; end
-            RUBY
-        }
+      RUBY
       }
+    }
 
+    after(:each) do
+      ::PuppetX.send(:remove_const, :Mytest)
+    end
+
+    context 'in module namespace' do
       let(:mytest_datatypes) {
         {
-          'position.rb' => <<-RUBY
+          'mytest' => { 'position.rb' => <<-RUBY
             Puppet::DataTypes.create_type('Mytest::Position') do
               interface <<-PUPPET
                 attributes => {
@@ -261,15 +266,37 @@ describe "Puppet::DataTypes" do
               implementation_class PuppetX::Mytest::Position
             end
             RUBY
+          }
         }
       }
 
-      after(:each) do
-        ::PuppetX.send(:remove_const, :Mytest)
-      end
-
       it 'loads and returns value of attribute' do
         expect(eval_and_collect_notices('notice(Mytest::Position(23, 12).x)', node)).to eql(['23'])
+      end
+    end
+
+    context 'in top namespace' do
+      let(:mytest_datatypes) {
+        {
+          'position.rb' => <<-RUBY
+            Puppet::DataTypes.create_type('Position') do
+              interface <<-PUPPET
+                attributes => {
+                  x => Integer,
+                  y => Integer
+                }
+                PUPPET
+
+              load_file('puppetx/mytest/position')
+  
+              implementation_class PuppetX::Mytest::Position
+            end
+        RUBY
+        }
+      }
+
+      it 'loads and returns value of attribute' do
+        expect(eval_and_collect_notices('notice(Position(23, 12).x)', node)).to eql(['23'])
       end
     end
   end
