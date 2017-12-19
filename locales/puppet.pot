@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.3-641-g41f00d1\n"
+"Project-Id-Version: Puppet automation framework 5.3.3-677-gaa56a58\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-12-18 18:20+0000\n"
-"PO-Revision-Date: 2017-12-18 18:20+0000\n"
+"POT-Creation-Date: 2017-12-19 13:02+0000\n"
+"PO-Revision-Date: 2017-12-19 13:02+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -205,7 +205,7 @@ msgstr ""
 msgid "You must specify the hosts to apply to; valid values are an array or the symbol :all"
 msgstr ""
 
-#: ../lib/puppet/application/describe.rb:182
+#: ../lib/puppet/application/describe.rb:181
 msgid "Display help about resource types"
 msgstr ""
 
@@ -551,6 +551,22 @@ msgstr ""
 
 #: ../lib/puppet/context/trusted_information.rb:48
 msgid "TrustedInformation expected a certificate, but none was given."
+msgstr ""
+
+#: ../lib/puppet/datatypes.rb:133
+msgid "Data Type Load Error for type '%{type_name}': %{message}"
+msgstr ""
+
+#: ../lib/puppet/datatypes.rb:156
+msgid "a data type must have an interface"
+msgstr ""
+
+#: ../lib/puppet/datatypes.rb:195
+msgid "a data type can only have one interface"
+msgstr ""
+
+#: ../lib/puppet/datatypes.rb:200 ../lib/puppet/datatypes.rb:205
+msgid "a data type can only have one implementation"
 msgstr ""
 
 #: ../lib/puppet/face/ca.rb:5 ../lib/puppet/face/certificate.rb:6 ../lib/puppet/face/config.rb:6 ../lib/puppet/face/epp.rb:8 ../lib/puppet/face/facts.rb:6 ../lib/puppet/face/generate.rb:7 ../lib/puppet/face/help.rb:9 ../lib/puppet/face/key.rb:5 ../lib/puppet/face/man.rb:8 ../lib/puppet/face/module.rb:9 ../lib/puppet/face/node.rb:4 ../lib/puppet/face/parser.rb:6 ../lib/puppet/face/plugin.rb:6 ../lib/puppet/face/report.rb:5 ../lib/puppet/face/resource.rb:5 ../lib/puppet/face/status.rb:5
@@ -1441,12 +1457,12 @@ msgstr ""
 msgid "Whether or not to validate the parsed result, if no-validate only syntax errors are reported"
 msgstr ""
 
-#: ../lib/puppet/face/parser.rb:116
+#: ../lib/puppet/face/parser.rb:115
 msgid ""
 "One or more file(s) specified did not exist:\n"
 msgstr ""
 
-#: ../lib/puppet/face/parser.rb:150
+#: ../lib/puppet/face/parser.rb:149
 msgid "For puppet parser validate"
 msgstr ""
 
@@ -1560,35 +1576,35 @@ msgstr ""
 msgid "Cannot determine basic system flavour"
 msgstr ""
 
-#: ../lib/puppet/file_bucket/dipper.rb:40
+#: ../lib/puppet/file_bucket/dipper.rb:39
 msgid "File %{file} does not exist"
 msgstr ""
 
-#: ../lib/puppet/file_bucket/dipper.rb:55
+#: ../lib/puppet/file_bucket/dipper.rb:54
 msgid "Could not back up %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/file_bucket/dipper.rb:63
+#: ../lib/puppet/file_bucket/dipper.rb:62
 msgid "Diff is not supported on this platform"
 msgstr ""
 
-#: ../lib/puppet/file_bucket/dipper.rb:81
+#: ../lib/puppet/file_bucket/dipper.rb:80
 msgid "Please provide a file or checksum do diff with"
 msgstr ""
 
-#: ../lib/puppet/file_bucket/dipper.rb:97
+#: ../lib/puppet/file_bucket/dipper.rb:96
 msgid "Failed to diff files"
 msgstr ""
 
-#: ../lib/puppet/file_bucket/dipper.rb:111 ../lib/puppet/file_bucket/dipper.rb:165
+#: ../lib/puppet/file_bucket/dipper.rb:110 ../lib/puppet/file_bucket/dipper.rb:164
 msgid "File not found"
 msgstr ""
 
-#: ../lib/puppet/file_bucket/dipper.rb:145
+#: ../lib/puppet/file_bucket/dipper.rb:144
 msgid "Could not find file with checksum %{sum}"
 msgstr ""
 
-#: ../lib/puppet/file_bucket/dipper.rb:156 ../lib/puppet/indirector/file_bucket_file/file.rb:42
+#: ../lib/puppet/file_bucket/dipper.rb:155 ../lib/puppet/indirector/file_bucket_file/file.rb:42
 msgid "Listing remote file buckets is not allowed"
 msgstr ""
 
@@ -1958,15 +1974,15 @@ msgstr ""
 msgid "binary_file(): The given file '%{unresolved_path}' does not exist"
 msgstr ""
 
-#: ../lib/puppet/functions/defined.rb:132
+#: ../lib/puppet/functions/defined.rb:130
 msgid "The given resource type is a reference to all kind of types"
 msgstr ""
 
-#: ../lib/puppet/functions/defined.rb:137 ../lib/puppet/functions/defined.rb:151
+#: ../lib/puppet/functions/defined.rb:135 ../lib/puppet/functions/defined.rb:149
 msgid "The given class type is a reference to all classes"
 msgstr ""
 
-#: ../lib/puppet/functions/defined.rb:156
+#: ../lib/puppet/functions/defined.rb:153
 msgid "Invalid argument of type '%{value_class}' to 'defined'"
 msgstr ""
 
@@ -2138,57 +2154,57 @@ msgstr ""
 msgid "Inlining file metadata"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:256
+#: ../lib/puppet/indirector/catalog/compiler.rb:255
 msgid "Could not get metadata for %{resource}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:277
+#: ../lib/puppet/indirector/catalog/compiler.rb:276
 msgid "Unable to find a common checksum type between agent '%{agent_type}' and master '%{master_type}'."
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:282
+#: ../lib/puppet/indirector/catalog/compiler.rb:281
 msgid "Compiled static catalog for %{node} in environment %{environment}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:284
+#: ../lib/puppet/indirector/catalog/compiler.rb:283
 msgid "Compiled static catalog for %{node}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:288
+#: ../lib/puppet/indirector/catalog/compiler.rb:287
 msgid "Compiled catalog for %{node} in environment %{environment}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:290
+#: ../lib/puppet/indirector/catalog/compiler.rb:289
 msgid "Compiled catalog for %{node}"
 msgstr ""
 
 #. TRANSLATORS Inlined refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:310
+#: ../lib/puppet/indirector/catalog/compiler.rb:309
 msgid "Inlined resource metadata into static catalog for %{node} in environment %{environment}"
 msgstr ""
 
 #. TRANSLATORS Inlined refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:313
+#: ../lib/puppet/indirector/catalog/compiler.rb:312
 msgid "Inlined resource metadata into static catalog for %{node}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:330
+#: ../lib/puppet/indirector/catalog/compiler.rb:329
 msgid "Found node information"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:338
+#: ../lib/puppet/indirector/catalog/compiler.rb:337
 msgid "Failed when searching for node %{name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:357
+#: ../lib/puppet/indirector/catalog/compiler.rb:356
 msgid "Invalid option use_node for a remote request"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:375
+#: ../lib/puppet/indirector/catalog/compiler.rb:374
 msgid "Could not find node '%{name}'; cannot compile"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:393
+#: ../lib/puppet/indirector/catalog/compiler.rb:392
 msgid "Could not retrieve fact %{fact}"
 msgstr ""
 
@@ -2383,27 +2399,27 @@ msgstr ""
 msgid "Indirection TTL must be an integer"
 msgstr ""
 
-#: ../lib/puppet/indirector/indirection.rb:169
+#: ../lib/puppet/indirector/indirection.rb:167
 msgid "Expiring the %{cache} cache of %{instance}"
 msgstr ""
 
-#: ../lib/puppet/indirector/indirection.rb:199
+#: ../lib/puppet/indirector/indirection.rb:197
 msgid "Caching %{indirection} for %{request}"
 msgstr ""
 
-#: ../lib/puppet/indirector/indirection.rb:210
+#: ../lib/puppet/indirector/indirection.rb:208
 msgid "Filtered result for %{indirection} %{request}"
 msgstr ""
 
-#: ../lib/puppet/indirector/indirection.rb:239
+#: ../lib/puppet/indirector/indirection.rb:237
 msgid "Not using expired %{indirection} for %{request} from cache; expired at %{expiration}"
 msgstr ""
 
-#: ../lib/puppet/indirector/indirection.rb:246
+#: ../lib/puppet/indirector/indirection.rb:244
 msgid "Cached %{indirection} for %{request} failed: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/indirector/indirection.rb:332
+#: ../lib/puppet/indirector/indirection.rb:330
 msgid "Could not find terminus %{terminus_class} for indirection %{indirection}"
 msgstr ""
 
@@ -2573,7 +2589,7 @@ msgstr ""
 msgid "Error %{code} on SERVER: %{returned_message}"
 msgstr ""
 
-#: ../lib/puppet/indirector/rest.rb:321
+#: ../lib/puppet/indirector/rest.rb:320
 msgid "No content type in http response; cannot parse"
 msgstr ""
 
@@ -3147,19 +3163,19 @@ msgstr ""
 msgid "Invalid 'version' field in metadata.json: %{err}"
 msgstr ""
 
-#: ../lib/puppet/module_tool/metadata.rb:207
+#: ../lib/puppet/module_tool/metadata.rb:206
 msgid "field 'data_provider' contains non-alphanumeric characters"
 msgstr ""
 
-#: ../lib/puppet/module_tool/metadata.rb:209
+#: ../lib/puppet/module_tool/metadata.rb:208
 msgid "field 'data_provider' must begin with a letter"
 msgstr ""
 
-#: ../lib/puppet/module_tool/metadata.rb:213
+#: ../lib/puppet/module_tool/metadata.rb:212
 msgid "field 'data_provider' must be a string"
 msgstr ""
 
-#: ../lib/puppet/module_tool/metadata.rb:221
+#: ../lib/puppet/module_tool/metadata.rb:220
 msgid "Invalid 'version_range' field in metadata.json: %{err}"
 msgstr ""
 
@@ -3550,7 +3566,7 @@ msgstr ""
 msgid "The 'disable_per_environment_manifest' setting is true, and the '%{env_name}' environment has an environment.conf manifest that conflicts with the 'default_manifest' setting."
 msgstr ""
 
-#: ../lib/puppet/node/environment.rb:564 ../lib/puppet/pops/loaders.rb:274
+#: ../lib/puppet/node/environment.rb:564 ../lib/puppet/pops/loaders.rb:283
 msgid "Could not parse for environment %{env}: %{detail}"
 msgstr ""
 
@@ -3818,7 +3834,7 @@ msgstr ""
 msgid "custom functions must be called with a single array that contains the arguments. For example, function_example([1]) instead of function_example(1)"
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:275
+#: ../lib/puppet/parser/functions.rb:274
 msgid "%{name}() can only be called using the 4.x function API. See Scope#call_function"
 msgstr ""
 
@@ -4133,7 +4149,7 @@ msgstr ""
 msgid "No file(s) found for import of '%{pattern}'"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/access_operator.rb:287
+#: ../lib/puppet/pops/evaluator/access_operator.rb:288
 msgid "Cannot use %{key} where %{expected} is expected"
 msgstr ""
 
@@ -4976,16 +4992,24 @@ msgstr ""
 msgid "The code loaded from %{source_ref} produced resource type with the wrong name, expected '%{expected}', actual '%{actual}'"
 msgstr ""
 
+#: ../lib/puppet/pops/loader/ruby_data_type_instantiator.rb:17
+msgid "The code loaded from %{source_ref} does not seem to be a Puppet 5x API data type - no create_type call."
+msgstr ""
+
+#: ../lib/puppet/pops/loader/ruby_data_type_instantiator.rb:24
+msgid "The code loaded from %{source_ref} did not produce a data type when evaluated. Got '%{klass}'"
+msgstr ""
+
+#: ../lib/puppet/pops/loader/ruby_data_type_instantiator.rb:27 ../lib/puppet/pops/loader/ruby_function_instantiator.rb:27
+msgid "The code loaded from %{source_ref} produced mis-matched name, expected '%{type_name}', got %{created_name}"
+msgstr ""
+
 #: ../lib/puppet/pops/loader/ruby_function_instantiator.rb:17
 msgid "The code loaded from %{source_ref} does not seem to be a Puppet 4x API function - no create_function call."
 msgstr ""
 
 #: ../lib/puppet/pops/loader/ruby_function_instantiator.rb:24
 msgid "The code loaded from %{source_ref} did not produce a Function class when evaluated. Got '%{klass}'"
-msgstr ""
-
-#: ../lib/puppet/pops/loader/ruby_function_instantiator.rb:27
-msgid "The code loaded from %{source_ref} produced mis-matched name, expected '%{type_name}', got %{created_name}"
 msgstr ""
 
 #: ../lib/puppet/pops/loader/task_instantiator.rb:16
@@ -5024,7 +5048,7 @@ msgstr ""
 msgid "Attempt to redefine already initialized loaders for environment"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:173
+#: ../lib/puppet/pops/loaders.rb:182
 msgid "Unable to find loader named '%{loader_name}'"
 msgstr ""
 
@@ -5062,51 +5086,51 @@ msgstr ""
 msgid "Recursive lookup detected in [%{name_stack}]"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:94
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:93
 msgid "Lookup of key '%{key}' failed: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:240
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:239
 msgid "value of %{opts} must be a hash"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:247
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:246
 msgid "all %{opts} patterns must match a key starting with module name '%{module_name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:251
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:250
 msgid "all %{opts} keys must start with module name '%{module_name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:376
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:375
 msgid "Defining \"data_provider\": \"%{name}\" in metadata.json is deprecated. It is ignored since a '%{config}' with version >= 5 is present"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:387
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:386
 msgid "Defining \"data_provider\": \"%{provider_name}\" in metadata.json is deprecated. A '%{hiera_config}' file should be used instead"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:390
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:389
 msgid "Defining \"data_provider\": \"%{provider_name}\" in metadata.json is deprecated"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:405
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:404
 msgid "Environment '%{env}', cannot find module_data_provider '%{provider}'"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:429 ../lib/puppet/pops/lookup/lookup_adapter.rb:448
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:428 ../lib/puppet/pops/lookup/lookup_adapter.rb:447
 msgid "Defining environment_data_provider='%{provider_name}' in environment.conf is deprecated"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:433
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:432
 msgid "The environment_data_provider='%{provider_name}' setting is ignored since '%{config_path}' version >= 5"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:445
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:444
 msgid "Defining environment_data_provider='%{provider_name}' in environment.conf is deprecated. A '%{hiera_config}' file should be used instead"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/lookup_adapter.rb:465
+#: ../lib/puppet/pops/lookup/lookup_adapter.rb:464
 msgid "Environment '%{env}', cannot find environment_data_provider '%{provider}'"
 msgstr ""
 
@@ -5194,11 +5218,11 @@ msgstr ""
 msgid "Unable to parse jsonpath \"%{path}\""
 msgstr ""
 
-#: ../lib/puppet/pops/serialization/object.rb:17
+#: ../lib/puppet/pops/serialization/object.rb:16
 msgid "Feature count mismatch for %{value0}. Expected %{required_count} - %{max}, actual %{value_count}"
 msgstr ""
 
-#: ../lib/puppet/pops/serialization/object.rb:28
+#: ../lib/puppet/pops/serialization/object.rb:27
 msgid "Missing default value for %{type_name}[%{name}]"
 msgstr ""
 
@@ -5286,19 +5310,19 @@ msgstr ""
 msgid "The type '%{type}' does not represent a valid set of parameters for %{subject}.new()"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:640
+#: ../lib/puppet/pops/types/p_object_type.rb:671
 msgid "reference to unresolved type '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type_extension.rb:38
+#: ../lib/puppet/pops/types/p_object_type_extension.rb:55
 msgid "The %{label}-Type cannot be parameterized using []"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type_extension.rb:58
+#: ../lib/puppet/pops/types/p_object_type_extension.rb:70
 msgid "'%{pn}' is not a known type parameter for %{label}-Type"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type_extension.rb:71
+#: ../lib/puppet/pops/types/p_object_type_extension.rb:83
 msgid "The %{label}-Type cannot be parameterized using an empty parameter list"
 msgstr ""
 
@@ -5314,51 +5338,51 @@ msgstr ""
 msgid "Options 'include_containers' and 'include_values' cannot both be false"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:928
+#: ../lib/puppet/pops/types/types.rb:924
 msgid "The string '%{str}' cannot be converted to Numeric"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:931
+#: ../lib/puppet/pops/types/types.rb:927
 msgid "Value of type %{type} cannot be converted to Numeric"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1169
+#: ../lib/puppet/pops/types/types.rb:1165
 msgid "The string '%{str}' cannot be converted to Integer"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1172
+#: ../lib/puppet/pops/types/types.rb:1168
 msgid "Value of type %{type} cannot be converted to Integer"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1180
+#: ../lib/puppet/pops/types/types.rb:1176
 msgid "Illegal radix: %{radix}, expected 2, 8, 10, 16, or default"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1293
+#: ../lib/puppet/pops/types/types.rb:1289
 msgid "The string '%{str}' cannot be converted to Float"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1296
+#: ../lib/puppet/pops/types/types.rb:1292
 msgid "Value of type %{type} cannot be converted to Float"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1912
+#: ../lib/puppet/pops/types/types.rb:1908
 msgid "The string '%{str}' cannot be converted to Boolean"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1915
+#: ../lib/puppet/pops/types/types.rb:1911
 msgid "Value of type %{type} cannot be converted to Boolean"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2644
+#: ../lib/puppet/pops/types/types.rb:2639
 msgid "Value of type %{type} cannot be converted to Array"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2850
+#: ../lib/puppet/pops/types/types.rb:2845
 msgid "odd number of arguments for Hash"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2861
+#: ../lib/puppet/pops/types/types.rb:2856
 msgid "Value of type %{type} cannot be converted to Hash"
 msgstr ""
 
@@ -5422,59 +5446,59 @@ msgstr ""
 msgid "invalid comparator for command %{cmd}"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:222 ../lib/puppet/provider/augeas/augeas.rb:253 ../lib/puppet/provider/augeas/augeas.rb:301 ../lib/puppet/provider/augeas/augeas.rb:316
+#: ../lib/puppet/provider/augeas/augeas.rb:221 ../lib/puppet/provider/augeas/augeas.rb:252 ../lib/puppet/provider/augeas/augeas.rb:300 ../lib/puppet/provider/augeas/augeas.rb:315
 msgid "Invalid command: %{cmd}"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:263
+#: ../lib/puppet/provider/augeas/augeas.rb:262
 msgid "Error trying to get path '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:281 ../lib/puppet/provider/augeas/augeas.rb:289 ../lib/puppet/provider/augeas/augeas.rb:337 ../lib/puppet/provider/augeas/augeas.rb:345
+#: ../lib/puppet/provider/augeas/augeas.rb:280 ../lib/puppet/provider/augeas/augeas.rb:288 ../lib/puppet/provider/augeas/augeas.rb:336 ../lib/puppet/provider/augeas/augeas.rb:344
 msgid "Invalid array in command: %{cmd}"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:311
+#: ../lib/puppet/provider/augeas/augeas.rb:310
 msgid "Error trying to match path '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:381
+#: ../lib/puppet/provider/augeas/augeas.rb:380
 msgid "Loading failed for one or more files, see debug for /augeas//error output"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:423
+#: ../lib/puppet/provider/augeas/augeas.rb:422
 msgid "Error sending command '%{command}' with params %{param}/%{message}"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:438
+#: ../lib/puppet/provider/augeas/augeas.rb:437
 msgid "Saving failed, see debug"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:480
+#: ../lib/puppet/provider/augeas/augeas.rb:479
 msgid "Save failed, see debug"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:492
+#: ../lib/puppet/provider/augeas/augeas.rb:491
 msgid "invalid command %{cmd}"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:500 ../lib/puppet/provider/augeas/augeas.rb:505 ../lib/puppet/provider/augeas/augeas.rb:512 ../lib/puppet/provider/augeas/augeas.rb:516 ../lib/puppet/provider/augeas/augeas.rb:522 ../lib/puppet/provider/augeas/augeas.rb:530 ../lib/puppet/provider/augeas/augeas.rb:543 ../lib/puppet/provider/augeas/augeas.rb:547 ../lib/puppet/provider/augeas/augeas.rb:551 ../lib/puppet/provider/augeas/augeas.rb:555 ../lib/puppet/provider/augeas/augeas.rb:559
+#: ../lib/puppet/provider/augeas/augeas.rb:499 ../lib/puppet/provider/augeas/augeas.rb:504 ../lib/puppet/provider/augeas/augeas.rb:511 ../lib/puppet/provider/augeas/augeas.rb:515 ../lib/puppet/provider/augeas/augeas.rb:521 ../lib/puppet/provider/augeas/augeas.rb:529 ../lib/puppet/provider/augeas/augeas.rb:542 ../lib/puppet/provider/augeas/augeas.rb:546 ../lib/puppet/provider/augeas/augeas.rb:550 ../lib/puppet/provider/augeas/augeas.rb:554 ../lib/puppet/provider/augeas/augeas.rb:558
 msgid "Error sending command '%{command}' with params %{params}"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:507 ../lib/puppet/provider/augeas/augeas.rb:524
+#: ../lib/puppet/provider/augeas/augeas.rb:506 ../lib/puppet/provider/augeas/augeas.rb:523
 msgid "command '%{command}' not supported in installed version of ruby-augeas"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:539
+#: ../lib/puppet/provider/augeas/augeas.rb:538
 msgid "Invalid value '%{where}' for where param"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:560
+#: ../lib/puppet/provider/augeas/augeas.rb:559
 msgid "Command '%{command}' is not supported"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:563
+#: ../lib/puppet/provider/augeas/augeas.rb:562
 msgid "Error sending command '%{command}' with params %{params}/%{message}"
 msgstr ""
 
@@ -5490,19 +5514,19 @@ msgstr ""
 msgid "no command specified, cannot create"
 msgstr ""
 
-#: ../lib/puppet/provider/exec.rb:20
+#: ../lib/puppet/provider/exec.rb:18
 msgid "Working directory '%{dir}' does not exist"
 msgstr ""
 
-#: ../lib/puppet/provider/exec.rb:42
+#: ../lib/puppet/provider/exec.rb:40
 msgid "Overriding environment setting '%{env_name}' with '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/provider/exec.rb:46
+#: ../lib/puppet/provider/exec.rb:44
 msgid "Cannot understand environment setting %{setting}"
 msgstr ""
 
-#: ../lib/puppet/provider/exec.rb:96
+#: ../lib/puppet/provider/exec.rb:94
 msgid "'%{command}' is not qualified and no path was specified. Please qualify the command or specify a path."
 msgstr ""
 
@@ -5710,15 +5734,15 @@ msgstr ""
 msgid "Could not list installed Packages: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/appdmg.rb:103 ../lib/puppet/provider/package/pkgdmg.rb:145
+#: ../lib/puppet/provider/package/appdmg.rb:102 ../lib/puppet/provider/package/pkgdmg.rb:144
 msgid "Mac OS X PKG DMGs must specify a package source."
 msgstr ""
 
-#: ../lib/puppet/provider/package/appdmg.rb:106 ../lib/puppet/provider/package/pkgdmg.rb:148
+#: ../lib/puppet/provider/package/appdmg.rb:105 ../lib/puppet/provider/package/pkgdmg.rb:147
 msgid "Mac OS X PKG DMGs must specify a package name."
 msgstr ""
 
-#: ../lib/puppet/provider/package/apple.rb:42
+#: ../lib/puppet/provider/package/apple.rb:41
 msgid "Mac OS X packages must specify a package source"
 msgstr ""
 
@@ -5968,11 +5992,11 @@ msgstr ""
 msgid "Package not in pkgutil catalog: %{package}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/portage.rb:216
+#: ../lib/puppet/provider/package/portage.rb:215
 msgid "No package found with the specified name [%{name}]"
 msgstr ""
 
-#: ../lib/puppet/provider/package/portage.rb:220
+#: ../lib/puppet/provider/package/portage.rb:219
 msgid "More than one package with the specified name [%{search_value}], please use the category parameter to disambiguate"
 msgstr ""
 
@@ -6111,7 +6135,7 @@ msgstr ""
 msgid "Could not retrieve property %{sname} on type %{type_name}"
 msgstr ""
 
-#: ../lib/puppet/reference/type.rb:84
+#: ../lib/puppet/reference/type.rb:83
 msgid "No docs for %{type}[%{sname}]"
 msgstr ""
 
@@ -6127,31 +6151,31 @@ msgstr ""
 msgid "No resource title provided in serialized data"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:481
+#: ../lib/puppet/resource.rb:480
 msgid "The method Puppet::Resource.set_default_parameters is deprecated and will be removed in the next major release of Puppet."
 msgstr ""
 
-#: ../lib/puppet/resource.rb:486
+#: ../lib/puppet/resource.rb:485
 msgid "Cannot evaluate default parameters for %{resource} - not a parser resource"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:526
+#: ../lib/puppet/resource.rb:525
 msgid "The method Puppet::Resource.validate_complete is deprecated and will be removed in the next major release of Puppet."
 msgstr ""
 
-#: ../lib/puppet/resource.rb:532
+#: ../lib/puppet/resource.rb:531
 msgid "Must pass %{param} to %{resource}"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:543
+#: ../lib/puppet/resource.rb:542
 msgid "Expected parameter '%{name}' of '%{value0}' to have type %{value1}, got %{value2}"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:549
+#: ../lib/puppet/resource.rb:548
 msgid "no parameter named '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:664
+#: ../lib/puppet/resource.rb:663
 msgid "No set of title patterns matched the title \"%{title}\"."
 msgstr ""
 
@@ -6304,11 +6328,11 @@ msgstr ""
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
-#: ../lib/puppet/settings/environment_conf.rb:144
+#: ../lib/puppet/settings/environment_conf.rb:143
 msgid "Invalid sections in environment.conf at '%{path_to_conf_file}'. Environment conf may not have sections. The following sections are being ignored: '%{sections}'"
 msgstr ""
 
-#: ../lib/puppet/settings/environment_conf.rb:156
+#: ../lib/puppet/settings/environment_conf.rb:155
 msgid "Invalid settings in environment.conf at '%{path_to_conf_file}'. The following unknown setting(s) are being ignored: %{ignored_settings}"
 msgstr ""
 
@@ -7070,35 +7094,35 @@ msgstr ""
 msgid "Purged %{resource}"
 msgstr ""
 
-#: ../lib/puppet/type/mount.rb:68
+#: ../lib/puppet/type/mount.rb:71
 msgid "Unexpected change from %{current} to unmounted"
 msgstr ""
 
-#: ../lib/puppet/type/mount.rb:134
+#: ../lib/puppet/type/mount.rb:137
 msgid "device must not contain whitespace: %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/mount.rb:160
+#: ../lib/puppet/type/mount.rb:163
 msgid "blockdevice must not contain whitespace: %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/mount.rb:169
+#: ../lib/puppet/type/mount.rb:172
 msgid "fstype must not contain whitespace: %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/mount.rb:170
+#: ../lib/puppet/type/mount.rb:173
 msgid "fstype must not be an empty string"
 msgstr ""
 
-#: ../lib/puppet/type/mount.rb:184
+#: ../lib/puppet/type/mount.rb:187
 msgid "options must not contain whitespace: %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/mount.rb:185
+#: ../lib/puppet/type/mount.rb:188
 msgid "options must not be an empty string"
 msgstr ""
 
-#: ../lib/puppet/type/mount.rb:250
+#: ../lib/puppet/type/mount.rb:253
 msgid "name must not contain whitespace: %{value}"
 msgstr ""
 
@@ -8352,7 +8376,7 @@ msgstr ""
 msgid "Failed to get volume information"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:383 ../lib/puppet/util/windows/security.rb:400 ../lib/puppet/util/windows/sid.rb:127 ../lib/puppet/util/windows/sid.rb:189 ../lib/puppet/util/windows/user.rb:45
+#: ../lib/puppet/util/windows/security.rb:383 ../lib/puppet/util/windows/security.rb:400 ../lib/puppet/util/windows/sid.rb:125 ../lib/puppet/util/windows/sid.rb:187 ../lib/puppet/util/windows/user.rb:45
 msgid "Invalid SID"
 msgstr ""
 
@@ -8392,19 +8416,19 @@ msgstr ""
 msgid "Failed to set security information"
 msgstr ""
 
-#: ../lib/puppet/util/windows/sid.rb:93
+#: ../lib/puppet/util/windows/sid.rb:92
 msgid "Octet string must be an array of bytes"
 msgstr ""
 
-#: ../lib/puppet/util/windows/sid.rb:133
+#: ../lib/puppet/util/windows/sid.rb:131
 msgid "Failed to convert binary SID"
 msgstr ""
 
-#: ../lib/puppet/util/windows/sid.rb:138
+#: ../lib/puppet/util/windows/sid.rb:136
 msgid "ConvertSidToStringSidW failed to allocate buffer for sid"
 msgstr ""
 
-#: ../lib/puppet/util/windows/sid.rb:158
+#: ../lib/puppet/util/windows/sid.rb:156
 msgid "Failed to convert string SID: %{string_sid}"
 msgstr ""
 
