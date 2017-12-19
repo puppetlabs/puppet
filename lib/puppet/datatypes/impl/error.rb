@@ -5,6 +5,15 @@ class Puppet::DataTypes::Error
     new(hash['message'], hash['kind'], hash['issue_code'], hash['partial_result'], hash['details'])
   end
 
+  def _pcore_init_hash
+    result = { 'message' => @message }
+    result['kind'] = @kind unless @kind.nil?
+    result['issue_code'] = @issue_code unless @issue_code.nil?
+    result['partial_result'] = @partial_result unless @partial_result.nil?
+    result['details'] = @details unless @details.nil?
+    result
+  end
+
   def initialize(message, kind = nil, issue_code = nil, partial_result = nil, details = nil)
     @message = message
     @kind = kind
@@ -28,11 +37,6 @@ class Puppet::DataTypes::Error
   end
 
   def to_s
-    # Use Puppet::Pops::Types::StringConverter if it is available
-    if Object.const_defined?(:Puppet) && Puppet.const_defined?(:Pops)
-      Puppet::Pops::Types::StringConverter.singleton.convert(self)
-    else
-      super
-    end
+    Puppet::Pops::Types::StringConverter.singleton.convert(self)
   end
 end
