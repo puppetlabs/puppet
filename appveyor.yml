@@ -49,16 +49,6 @@ test_script:
       # list current OpenSSL install
       gem list openssl
       ruby -ropenssl -e 'puts \"OpenSSL Version - #{OpenSSL::OPENSSL_VERSION}\"; puts \"OpenSSL Library Version - #{OpenSSL::OPENSSL_LIBRARY_VERSION}\"'
-      if ( $(ruby --version) -match "^ruby\s+2\.4" ) {
-        # AppVeyor appears to have OpenSSL headers available already
-        # which msys2 would normally install with:
-        # pacman -S mingw-w64-x86_64-openssl --noconfirm
-        Write-Output "Building OpenSSL gem ~> 2.0.4 to fix Ruby 2.4 / AppVeyor issue"
-        gem install openssl --version '~> 2.0.4' --no-ri --no-rdoc -- --with-openssl-dir=C:\msys64\mingw64 '2>&1'
-        # verify new installation
-        gem list openssl
-        ruby -ropenssl -e 'puts \"OpenSSL Version - #{OpenSSL::OPENSSL_VERSION}\"; puts \"OpenSSL Library Version - #{OpenSSL::OPENSSL_LIBRARY_VERSION}\"'
-      }
       bundle install --jobs 4 --retry 2 --without development extra
       Get-Content Gemfile.lock
       ruby -v
