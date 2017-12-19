@@ -15,8 +15,8 @@ describe Puppet::Face[:plugin, :current] do
     before :each do
       #Server_agent version needs to be at 5.3.4 in order to mount locales
       Puppet.push_context({:server_agent_version => "5.3.4"})
-    end  
-      
+    end
+
     it "downloads plugins, external facts, and locales" do
       Puppet::Configurer::Downloader.any_instance.expects(:evaluate).times(3).returns([])
 
@@ -42,8 +42,8 @@ describe Puppet::Face[:plugin, :current] do
     before :each do
       #Server_agent version needs to be at 5.3.4 in order to mount locales
       Puppet.push_context({:server_agent_version => "5.3.3"})
-    end  
-      
+    end
+
     it "downloads plugins, and external facts, but not locales" do
       Puppet::Configurer::Downloader.any_instance.expects(:evaluate).times(2).returns([])
 
@@ -63,8 +63,8 @@ describe Puppet::Face[:plugin, :current] do
       #Server_agent version needs to be at 5.3.4 in order to mount locales
       #A blank version will default to 0.0
       Puppet.push_context({:server_agent_version => ""})
-    end  
-      
+    end
+
     it "downloads plugins, and external facts, but not locales" do
       Puppet::Configurer::Downloader.any_instance.expects(:evaluate).times(2).returns([])
 

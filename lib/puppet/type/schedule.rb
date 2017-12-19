@@ -384,7 +384,7 @@ module Puppet
       def weekday_string?(value)
         value.is_a?(String) && (value =~ /^[0-6]$/ || value =~ /^(Mon|Tues?|Wed(?:nes)?|Thu(?:rs)?|Fri|Sat(?:ur)?|Sun)(day)?$/i)
       end
-      
+
       weekdays = {
         'sun' => 0,
         'mon' => 1,
