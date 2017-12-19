@@ -55,6 +55,11 @@
 # versions in different environments (given that they do not need additional external logic to
 # be loaded).
 #
+# When using an `implementation_class` it is sometimes desirable to load this class from the
+# 'lib' directory of the module. The method `load_file` is provided to facilitate such a load.
+# The `load_file` will use the `Puppet::Util::Autoload` to search for the given file in the 'lib'
+# directory of the current environment and the 'lib' directory in each included module.
+#
 # @example Adding implementation on top of the generated type using `implementation`
 #   Puppet::DataTypes.create_type('Auth::User') do
 #     interface <<-PUPPET
@@ -108,9 +113,9 @@
 #       }
 #       PUPPET
 #
-#     # This require is optional and only needed in case
+#     # This load_file is optional and only needed in case
 #     # the implementation is not loaded by other means.
-#     require 'lib/puppetx/user.rb'
+#     load_file 'puppetx/auth/user'
 #
 #     implementation_class PuppetX::Auth::User
 #   end
@@ -199,6 +204,10 @@ module Puppet::DataTypes
     def implementation_class(ruby_class)
       raise ArgumentError, _('a data type can only have one implementation') if @type_builder.has_implementation?
       @type_builder.implementation_class = ruby_class
+    end
+
+    def load_file(file_name)
+      Puppet::Util::Autoload.load_file(file_name, nil)
     end
   end
 end
