@@ -197,20 +197,27 @@ module Util
     }
   end
 
+  # execute a block of work and based on the logging level provided, log the provided message with the seconds taken
+  # The message 'msg' should include string ' in %{seconds} seconds' as part of the message and any content should escape
+  # any percent signs '%' so that they are not interpreted as formatting commands
+  #     escaped_str = str.gsub(/%/, '%%')
+  #
+  # @param msg [String] the message to be formated to assigned the %{seconds} seconds take to execute,
+  #                     other percent signs '%' need to be escaped
+  # @param level [Symbol] the logging level for this message
+  # @param object [Object] The object use for logging the message
   def benchmark(*args)
     msg = args.pop
     level = args.pop
-    object = nil
-
-    if args.empty?
-      if respond_to?(level)
-        object = self
-      else
-        object = Puppet
-      end
-    else
-      object = args.pop
-    end
+    object = if args.empty?
+               if respond_to?(level)
+                 self
+               else
+                 Puppet
+               end
+             else
+               args.pop
+             end
 
     raise Puppet::DevError, "Failed to provide level to :benchmark" unless level
 
@@ -223,9 +230,7 @@ module Util
       seconds = Benchmark.realtime {
         yield
       }
-      #TRANSLATORS forms the end of a string indicating how long a
-      # given operation took
-      object.send(level, msg + (_(" in %0.2f seconds") % seconds))
+      object.send(level, msg % { seconds: "%0.2f" % seconds })
       return seconds
     else
       yield
