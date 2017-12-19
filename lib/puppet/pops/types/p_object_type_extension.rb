@@ -55,7 +55,6 @@ class PObjectTypeExtension < PAnyType
     raise Puppet::ParseError, _('The %{label}-Type cannot be parameterized using []') % { label: base_type.label } if pts.empty?
     @base_type = base_type
 
-    named_args = false
     named_args = init_parameters.size == 1 && init_parameters[0].is_a?(Hash)
     if named_args
       # Catch case when first parameter is an assignable Hash
