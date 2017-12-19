@@ -1,6 +1,8 @@
 Committing changes to Puppet
 ====
 
+foo
+
 We would like to make it easier for community members to contribute to Puppet
 using pull requests, even if it makes the task of reviewing and committing
 these changes a little harder.  Pull requests are only ever based on a single
