@@ -386,9 +386,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   }
 
   FUTURE_RESERVED_WORDS = {
-    'application' => true,
-    'produces' => true,
-    'consumes' => true
+    'plan' => true
   }
 
   # for 'class', 'define', and function

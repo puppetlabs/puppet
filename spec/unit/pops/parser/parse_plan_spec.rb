@@ -41,8 +41,8 @@ describe "egrammar parsing of 'plan'" do
       Puppet[:tasks] = false
     end
 
-    it "the keyword 'plan' is a (future) reserved bare word" do
-      expect(dump(parse("$a = plan"))).to eq("(= $a (reserved plan))")
+    it "the keyword 'plan' is a name" do
+      expect(dump(parse("$a = plan"))).to eq("(= $a plan)")
     end
   end
 end

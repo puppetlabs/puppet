@@ -105,8 +105,8 @@ describe 'Lexer2' do
   end
 
   context 'when --no-tasks (the default)' do
-    it "should lex a (future reserved) keyword from 'plan'" do
-      expect(tokens_scanned_from('plan')).to match_tokens2(:PLAN_R)
+    it "should lex a NAME from 'plan'" do
+      expect(tokens_scanned_from('plan')).to match_tokens2(:NAME)
     end
   end
 
