@@ -263,7 +263,12 @@ class Puppet::Provider::NameService < Puppet::Provider
     # reading of the file.
     Puppet::Etc.endgrent
 
-    groups.join(",")
+    uniq_groups = groups.uniq
+    if groups != uniq_groups
+      debug("Removing any duplicate group entries")
+    end
+    # remove any double listed groups
+    uniq_groups.join(",")
   end
 
   # Convert the Etc struct into a hash.
