@@ -12,3 +12,4 @@ forge_host:                  forge-aio01-petest.puppetlabs.com
 log_level:                   debug
 preserve_hosts:              onfail
 helper:                      ./lib/helper.rb
+options_file:                ./config/aio/options.rb
