@@ -25,6 +25,7 @@ Puppet::Face.define(:man, '0.0.1') do
   action(:man) do
     summary _("Display the manual page for a Puppet subcommand.")
     arguments _("<subcommand>")
+    #TRANSLATORS '--render-as s' is a command line option and should not be translated
     returns _(<<-'EOT')
       The man data, in Markdown format, suitable for consumption by Ronn.
 

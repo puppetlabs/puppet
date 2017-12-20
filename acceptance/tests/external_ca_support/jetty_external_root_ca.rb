@@ -34,6 +34,8 @@ jetty_confdir = master['puppetserver-confdir']
 teardown do
   step "Restore /etc/hosts and puppetserver configs; Restart puppetserver"
   on master, "cp -p '#{backupdir}/hosts' /etc/hosts"
+  on master, puppet('config set route_file /etc/puppetlabs/puppet/routes.yaml')
+
   # Please note that the escaped `\cp` command below is intentional. Most
   # linux systems alias `cp` to `cp -i` which causes interactive mode to be
   # invoked when copying directories that do not yet exist at the target
@@ -116,6 +118,9 @@ master_opts = {
 # disable CA service
 # https://github.com/puppetlabs/puppetserver/blob/master/documentation/configuration.markdown#service-bootstrapping
 create_remote_file master, "#{jetty_confdir}/../services.d/ca.cfg", "puppetlabs.services.ca.certificate-authority-disabled-service/certificate-authority-disabled-service"
+# disable pdb connectivity
+on master, puppet('config set route_file /tmp/nonexistent.yaml')
+# restart master
 on(master, "service #{master['puppetservice']} restart")
 
 step "Start the Puppet master service..."
