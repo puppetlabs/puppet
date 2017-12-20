@@ -31,20 +31,49 @@ module Puppet::Util::Errors
     error
   end
 
+
+
+  # Return a human-readable string of this object's file, line, and pos attributes,
+  # if set.
+  #
+  # @return [String] description of file, line, and pos
+  def self.error_location(file, line=nil, pos=nil)
+    file = nil if (file.is_a?(String) && file.empty?)
+    if file and line and pos
+      _("(file: %{file}, line: %{line}, column: %{column})") % { file: file, line: line, column: pos }
+    elsif file and line
+      _("(file: %{file}, line: %{line})") % { file: file, line: line }
+    elsif line and pos
+      _("(line: %{line}, column: %{column})") % { line: line, column: pos }
+    elsif line
+      _("(line: %{line})") % { line: line }
+    elsif file
+      _("(file: %{file})") % { file: file }
+    else
+      ''
+    end
+  end
+
+  # Return a human-readable string of this object's file, line, and pos attributes,
+  # with a proceeding space in the output
+  # if set.
+  #
+  # @return [String] description of file, line, and pos
+  def self.error_location_with_space(file, line=nil, pos=nil)
+    error_location_str = error_location(file, line, pos)
+    if error_location_str.empty?
+      ''
+    else
+      ' ' + error_location_str
+    end
+  end
+
   # Return a human-readable string of this object's file and line attributes,
   # if set.
   #
   # @return [String] description of file and line
   def error_context
-    if file and line
-      _(" at %{file}:%{line}") % { file: file, line: line }
-    elsif line
-      _(" at line %{line}") % { line: line }
-    elsif file
-      _(" in %{file}") % { file: file }
-    else
-      ""
-    end
+    Puppet::Util::Errors.error_location_with_space(file, line)
   end
 
   # Wrap a call in such a way that we always throw the right exception and keep

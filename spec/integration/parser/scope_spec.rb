@@ -47,7 +47,7 @@ describe "Two step scoping for variables" do
           compile_to_catalog("$name = 'never in a 0xF4240 years'", enc_node)
         }.to raise_error(
           Puppet::Error,
-          /Cannot reassign built in \(or already assigned\) variable '\$name' at line 1(\:7)? on node the_node/
+          /Cannot reassign built in \(or already assigned\) variable '\$name' \(line: 1(, column: 7)?\) on node the_node/
         )
     end
 
@@ -58,7 +58,7 @@ describe "Two step scoping for variables" do
           compile_to_catalog("$title = 'never in a 0xF4240 years'", enc_node)
         }.to raise_error(
           Puppet::Error,
-          /Cannot reassign built in \(or already assigned\) variable '\$title' at line 1(\:8)? on node the_node/
+          /Cannot reassign built in \(or already assigned\) variable '\$title' \(line: 1(, column: 8)?\) on node the_node/
         )
     end
 
@@ -695,7 +695,7 @@ describe "Two step scoping for variables" do
         compile_to_catalog("$var = 'top scope'", enc_node)
       }.to raise_error(
         Puppet::Error,
-        /Cannot reassign variable '\$var' at line 1(\:6)? on node the_node/
+        /Cannot reassign variable '\$var' \(line: 1(, column: 6)?\) on node the_node/
       )
     end
 

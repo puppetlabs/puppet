@@ -27,22 +27,12 @@ module Puppet
       @line = line
       @pos = pos
     end
+
     def to_s
       msg = super
       @file = nil if (@file.is_a?(String) && @file.empty?)
-      if @file and @line and @pos
-        "#{msg} at #{@file}:#{@line}:#{@pos}"
-      elsif @file and @line
-        "#{msg} at #{@file}:#{@line}"
-      elsif @line and @pos
-          "#{msg} at line #{@line}:#{@pos}"
-      elsif @line
-        "#{msg} at line #{@line}"
-      elsif @file
-        "#{msg} in #{@file}"
-      else
-        msg
-      end
+      msg += Puppet::Util::Errors.error_location_with_space(@file, @line, @pos)
+      msg
     end
   end
 
