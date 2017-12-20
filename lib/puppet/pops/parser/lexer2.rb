@@ -143,31 +143,9 @@ class Lexer2
   KEYWORDS.each {|k,v| v[1].freeze; v.freeze }
   KEYWORDS.freeze
 
-  # We maintain two different tables of tokens for the constructs
-  # introduced by 'tasks & plans'. Which ones we use is decided in
-  # +initvars+; by selecting one or the other variant, we select whether we
-  # hit the --tasks code paths
-  TASK_MANAGEMENT_TOKENS = {
-    :with_tasks => {
-      'plan' => [:PLAN, 'plan',  4]
-    },
-    :without_tasks => {
-      'plan' => [:PLAN_R, 'plan',  4]
-    }
-  }
-
-  TASK_MANAGEMENT_TOKENS.each do |_, variant|
-    variant.each { |_,v| v[1].freeze; v.freeze }
-    variant.freeze
-  end
-  TASK_MANAGEMENT_TOKENS.freeze
-
   # Reverse lookup of keyword name to string
   KEYWORD_NAMES = {}
   KEYWORDS.each {|k, v| KEYWORD_NAMES[v[0]] = k }
-  TASK_MANAGEMENT_TOKENS.each do |_, variant|
-    variant.each { |k,v| KEYWORD_NAMES[v[0]] = k }
-  end
   KEYWORD_NAMES.freeze
 
   PATTERN_WS        = %r{[[:blank:]\r]+}
@@ -683,8 +661,8 @@ class Lexer2
       :after => nil,
       :line_lexical_start => 0
     }
-    taskm_mode = Puppet[:tasks] ? :with_tasks : :without_tasks
-    @taskm_keywords = TASK_MANAGEMENT_TOKENS[taskm_mode]
+    # Use of --tasks introduces the new keyword 'plan'
+    @taskm_keywords = Puppet[:tasks] ? { 'plan' => [:PLAN, 'plan',  4] }.freeze : EMPTY_HASH
   end
 
   # Scans all of the content and returns it in an array
