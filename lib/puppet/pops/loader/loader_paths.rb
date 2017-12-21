@@ -254,11 +254,15 @@ module LoaderPaths
       # Remove extension regardless of what it is. A task name cannot contain dots
       relative_path = relative_path.sub(/\.[^\/]*\z/, '')
 
-      relative_path.split('/').each do |segment|
-        n << '::' if n.size > 0
-        n << segment
+      if relative_path == 'init' && !(module_name.nil? || module_name.empty?)
+        TypedName.new(type, module_name, name_authority)
+      else
+        relative_path.split('/').each do |segment|
+          n << '::' if n.size > 0
+          n << segment
+        end
+        TypedName.new(type, n, name_authority)
       end
-      TypedName.new(type, n, name_authority)
     end
 
     def instantiator
@@ -315,6 +319,24 @@ module LoaderPaths
 
     def instantiator()
       Puppet::Pops::Loader::PuppetPlanInstantiator
+    end
+
+    def typed_name(type, name_authority, relative_path, module_name)
+      if relative_path == 'init.pp' && !(module_name.nil? || module_name.empty?)
+        TypedName.new(type, module_name, name_authority)
+      else
+        n = ''
+        n << module_name unless module_name.nil?
+        unless extension.empty?
+          # Remove extension
+          relative_path = relative_path[0..-(extension.length+1)]
+        end
+        relative_path.split('/').each do |segment|
+          n << '::' if n.size > 0
+          n << segment
+        end
+        TypedName.new(type, n, name_authority)
+      end
     end
   end
 

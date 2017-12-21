@@ -265,6 +265,9 @@ describe 'The Loader' do
 
           let(:b_plans) {
             {
+              'init.pp' => <<-PUPPET.unindent,
+                plan b() {}
+                PUPPET
               'aplan.pp' => <<-PUPPET.unindent,
                 plan b::aplan() {}
                 PUPPET
@@ -281,6 +284,13 @@ describe 'The Loader' do
 
           let(:b_tasks) {
             {
+              'init.json' => <<-JSON.unindent,
+                {
+                  "description": "test task b",
+                  "parameters": {}
+                }
+                JSON
+              'init.sh' => "# doing exactly nothing\n",
               'atask' => "# doing exactly nothing\n",
               'atask.json' => <<-JSON.unindent,
                 {
@@ -368,8 +378,8 @@ describe 'The Loader' do
             let(:tasks_feature) { true }
 
             it 'private loader finds plans in all modules' do
-              expect(loader.private_loader.discover(:plan) { |t| t.name =~ /^.::.*\z/ }).to(
-                contain_exactly(tn(:plan, 'a::aplan'), tn(:plan, 'b::aplan')))
+              expect(loader.private_loader.discover(:plan) { |t| t.name =~ /^.(?:::.*)?\z/ }).to(
+                contain_exactly(tn(:plan, 'b'), tn(:plan, 'a::aplan'), tn(:plan, 'b::aplan')))
             end
 
             it 'module loader finds plans only in itself' do
@@ -383,8 +393,8 @@ describe 'The Loader' do
             end
 
             it 'private loader finds tasks in all modules' do
-              expect(loader.private_loader.discover(:task) { |t| t.name =~ /^.::.*\z/ }).to(
-                contain_exactly(tn(:task, 'a::atask'), tn(:task, 'b::atask'), tn(:task, 'c::foo')))
+              expect(loader.private_loader.discover(:task) { |t| t.name =~ /^.(?:::.*)?\z/ }).to(
+                contain_exactly(tn(:task, 'a::atask'), tn(:task, 'b::atask'), tn(:task, 'b'), tn(:task, 'c::foo')))
             end
 
             it 'module loader finds types only in itself' do
