@@ -33,10 +33,16 @@ class PuppetPlanInstantiator
     unless the_plan_definition.is_a?(Model::PlanDefinition)
       raise ArgumentError, _("The code loaded from %{source_ref} does not define the plan '%{plan_name}' - no plan found.") % { source_ref: source_ref, plan_name: typed_name.name }
     end
-    unless the_plan_definition.name == typed_name.name
-      expected = typed_name.name
+    # Handle init plans. Only the top level is currently found
+    name_parts = typed_name.name_parts
+    if name_parts[-1] == 'init'
+      expected_name = name_parts[0..-2].join('::')
+    else
+      expected_name = typed_name.name
+    end
+    unless the_plan_definition.name == expected_name
       actual = the_plan_definition.name
-      raise ArgumentError, _("The code loaded from %{source_ref} produced plan with the wrong name, expected %{expected}, actual %{actual}") % { source_ref: source_ref, expected: expected, actual: actual }
+      raise ArgumentError, _("The code loaded from %{source_ref} produced plan with the wrong name, expected %{expected}, actual %{actual}") % { source_ref: source_ref, expected: expected_name, actual: actual }
     end
     unless result.body == the_plan_definition
       raise ArgumentError, _("The code loaded from %{source} contains additional logic - can only contain the plan %{plan_name}") % { source: source_ref, plan_name: typed_name.name }
