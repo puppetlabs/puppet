@@ -714,7 +714,7 @@ describe 'the new function' do
       expect{compile_to_catalog(<<-"MANIFEST"
         $x = Struct[{a => Integer[2]}].new({a => 0})
       MANIFEST
-      )}.to raise_error(Puppet::Error, /entry 'a' expects an Integer\[2, default\]/)
+      )}.to raise_error(Puppet::Error, /entry 'a' expects an Integer\[2\]/)
     end
   end
 
