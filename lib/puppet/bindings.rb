@@ -134,7 +134,8 @@ class Puppet::Bindings
 
     def []=(name, value)
       unless value.is_a?(Puppet::Pops::Binder::Bindings::NamedBindings) || value.is_a?(Proc)
-        raise ArgumentError, "Given value must be a NamedBindings, or a Proc producing one, got: #{value.class}."
+        #TRANSLATORS 'NameBindings' is a class name and should not be translated, 'Proc' refers to a Ruby proc.
+        raise ArgumentError, _("Given value must be a NamedBindings, or a Proc producing one, got: %{class_name}.") % { class_name: value.class }
       end
       @named_bindings[name] = value
     end
