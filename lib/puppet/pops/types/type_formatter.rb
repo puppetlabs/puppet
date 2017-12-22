@@ -680,7 +680,13 @@ class TypeFormatter
   end
 
   def range_array_part(t)
-    t.nil? || t.unbounded? ? EMPTY_ARRAY : [t.from.nil? ? 'default' : t.from.to_s , t.to.nil? ? 'default' : t.to.to_s ]
+    if t.nil? || t.unbounded?
+      EMPTY_ARRAY
+    else
+      result = [t.from.nil? ? 'default' : t.from.to_s]
+      result << t.to.to_s unless t.to.nil?
+      result
+    end
   end
 
   def append_object_hash(hash)

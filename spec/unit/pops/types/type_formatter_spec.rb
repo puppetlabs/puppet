@@ -120,7 +120,7 @@ FORMATTED
       expect(s.string(f.range(1,1))).to eq('Integer[1, 1]')
       expect(s.string(f.range(1,2))).to eq('Integer[1, 2]')
       expect(s.string(f.range(:default, 2))).to eq('Integer[default, 2]')
-      expect(s.string(f.range(2, :default))).to eq('Integer[2, default]')
+      expect(s.string(f.range(2, :default))).to eq('Integer[2]')
     end
 
     it "should yield 'Float' for PFloatType" do
@@ -151,7 +151,7 @@ FORMATTED
       expect(s.string(f.string(f.range(1,1)))).to eq('String[1, 1]')
       expect(s.string(f.string(f.range(1,2)))).to eq('String[1, 2]')
       expect(s.string(f.string(f.range(:default, 2)))).to eq('String[default, 2]')
-      expect(s.string(f.string(f.range(2, :default)))).to eq('String[2, default]')
+      expect(s.string(f.string(f.range(2, :default)))).to eq('String[2]')
     end
 
     it "should yield 'Array[Integer]' for PArrayType[PIntegerType]" do
@@ -176,14 +176,14 @@ FORMATTED
       expect(s.string(f.collection(f.range(1,1)))).to eq('Collection[1, 1]')
       expect(s.string(f.collection(f.range(1,2)))).to eq('Collection[1, 2]')
       expect(s.string(f.collection(f.range(:default, 2)))).to eq('Collection[default, 2]')
-      expect(s.string(f.collection(f.range(2, :default)))).to eq('Collection[2, default]')
+      expect(s.string(f.collection(f.range(2, :default)))).to eq('Collection[2]')
     end
 
     it "should yield 'Array' and from/to for PArrayType" do
       expect(s.string(f.array_of(f.string, f.range(1,1)))).to eq('Array[String, 1, 1]')
       expect(s.string(f.array_of(f.string, f.range(1,2)))).to eq('Array[String, 1, 2]')
       expect(s.string(f.array_of(f.string, f.range(:default, 2)))).to eq('Array[String, default, 2]')
-      expect(s.string(f.array_of(f.string, f.range(2, :default)))).to eq('Array[String, 2, default]')
+      expect(s.string(f.array_of(f.string, f.range(2, :default)))).to eq('Array[String, 2]')
     end
 
     it "should yield 'Iterable' for PIterableType" do
@@ -248,7 +248,7 @@ FORMATTED
       expect(s.string(f.tuple(types, f.range(1,1)))).to eq('Tuple[String, 1, 1]')
       expect(s.string(f.tuple(types, f.range(1,2)))).to eq('Tuple[String, 1, 2]')
       expect(s.string(f.tuple(types, f.range(:default, 2)))).to eq('Tuple[String, 0, 2]')
-      expect(s.string(f.tuple(types, f.range(2, :default)))).to eq('Tuple[String, 2, default]')
+      expect(s.string(f.tuple(types, f.range(2, :default)))).to eq('Tuple[String, 2]')
     end
 
     it "should yield 'Struct' and details for PStructType" do
@@ -266,7 +266,7 @@ FORMATTED
       expect(s.string(f.hash_of(f.string, f.string, f.range(1,1)))).to eq('Hash[String, String, 1, 1]')
       expect(s.string(f.hash_of(f.string, f.string, f.range(1,2)))).to eq('Hash[String, String, 1, 2]')
       expect(s.string(f.hash_of(f.string, f.string, f.range(:default, 2)))).to eq('Hash[String, String, default, 2]')
-      expect(s.string(f.hash_of(f.string, f.string, f.range(2, :default)))).to eq('Hash[String, String, 2, default]')
+      expect(s.string(f.hash_of(f.string, f.string, f.range(2, :default)))).to eq('Hash[String, String, 2]')
     end
 
     it "should yield 'Hash' for PHashType::DEFAULT" do
@@ -349,7 +349,7 @@ FORMATTED
     end
 
     it "should yield 'Callable[t,min,max]' for callable with size constraint (infinite max)" do
-      expect(s.string(f.callable(String, 0))).to eql('Callable[String, 0, default]')
+      expect(s.string(f.callable(String, 0))).to eql('Callable[String, 0]')
     end
 
     it "should yield 'Callable[t,min,max]' for callable with size constraint (capped max)" do
@@ -359,7 +359,7 @@ FORMATTED
     it "should yield 'Callable[min,max]' callable with size > 0" do
       expect(s.string(f.callable(0, 0))).to eql('Callable[0, 0]')
       expect(s.string(f.callable(0, 1))).to eql('Callable[0, 1]')
-      expect(s.string(f.callable(0, :default))).to eql('Callable[0, default]')
+      expect(s.string(f.callable(0, :default))).to eql('Callable[0]')
     end
 
     it "should yield 'Callable[Callable]' for callable with block" do
