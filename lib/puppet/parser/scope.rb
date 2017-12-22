@@ -762,7 +762,7 @@ class Puppet::Parser::Scope
       raise Puppet::ParseError.new(_("Cannot assign to a numeric match result variable '$%{name}'") % { name: name }) # unless options[:ephemeral]
     end
     unless name.is_a? String
-      raise Puppet::ParseError, _("Scope variable name %{value0} is a %{value1}, not a string") % { value0: name.inspect, value1: name.class }
+      raise Puppet::ParseError, _("Scope variable name %{name} is a %{class_type}, not a string") % { name: name.inspect, class_type: name.class }
     end
 
     # Check for reserved variable names

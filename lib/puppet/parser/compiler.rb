@@ -470,7 +470,8 @@ class Puppet::Parser::Compiler
         component = krt.find_hostclass(component_name)
       end
       if component.nil?
-        raise Puppet::ParseError, "Capability mapping error: #{kind} clause references nonexistent #{component_type} #{component_name}"
+        raise Puppet::ParseError, _("Capability mapping error: %{kind} clause references nonexistent %{component_type} %{component_name}") %
+            { kind: kind, component_type: component_type, component_name: component_name }
       end
 
       blueprint = args['blueprint']

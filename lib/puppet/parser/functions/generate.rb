@@ -21,13 +21,11 @@ Puppet::Parser::Functions::newfunction(:generate, :arity => -2, :type => :rvalue
       end
 
       unless valid
-        raise Puppet::ParseError,
-          _("Generators can only contain alphanumerics, file separators, and dashes")
+        raise Puppet::ParseError, _("Generators can only contain alphanumerics, file separators, and dashes")
       end
 
       if args[0] =~ /\.\./
-        raise Puppet::ParseError,
-          _("Can not use generators with '..' in them.")
+        raise Puppet::ParseError, _("Can not use generators with '..' in them.")
       end
 
       begin
