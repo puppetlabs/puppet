@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.3-159-g6b98e25\n"
+"Project-Id-Version: Puppet automation framework 5.3.3-162-gaa11701\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2017-12-19 23:49+0000\n"
-"PO-Revision-Date: 2017-12-19 23:49+0000\n"
+"POT-Creation-Date: 2017-12-27 18:03+0000\n"
+"PO-Revision-Date: 2017-12-27 18:03+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -4265,7 +4265,7 @@ msgid "Illegal +> operation on attribute %{attr}. This operator can not be used 
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:290
-msgid "Illegal name. The given name '%{name}' does not conform to the naming rule /^((::)?[a-z_]w*)(::[a-z]\\w*)*$/"
+msgid "Illegal name. The given name '%{name}' does not conform to the naming rule /^((::)?[a-z_]\\w*)(::[a-z]\\w*)*$/"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:294
@@ -5483,7 +5483,9 @@ msgid "Could not get report.  command execution failed."
 msgstr ""
 
 #: ../lib/puppet/provider/nameservice/directoryservice.rb:199
-msgid "OS X 10.7 requires a Salted SHA512 hash password of 136 characters.            Please check your password and try again."
+msgid ""
+"OS X 10.7 requires a Salted SHA512 hash password of 136 characters. \\\n"
+"           Please check your password and try again."
 msgstr ""
 
 #: ../lib/puppet/provider/nameservice/directoryservice.rb:287
