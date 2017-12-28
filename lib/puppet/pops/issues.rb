@@ -884,5 +884,9 @@ module Issues
   UNKNOWN_TASK = issue :UNKNOWN_TASK, :type_name do
     _('Task not found: %{type_name}') % { type_name: type_name }
   end
+
+  INVALID_TASK_NAME = issue :INVALID_TASK_NAME, :name do
+    _('%{name} is not a valid task name') % { name: name }
+  end
 end
 end
