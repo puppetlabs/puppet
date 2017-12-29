@@ -1594,23 +1594,33 @@ EOT
     :splaylimit => {
       :default    => "$runinterval",
       :type       => :duration,
-      :desc       => "The maximum time to delay before runs.  Defaults to being the same as the
-        run interval. #{AS_DURATION}",
+      :desc       => "The maximum time to delay before an agent's first run when
+        `splay` is enabled. Defaults to the agent's `$runinterval`. The
+        `splay` interval is random and recalculated each time the agent is started or
+        restarted. #{AS_DURATION}",
     },
     :splay => {
       :default    => false,
       :type       => :boolean,
-      :desc       => "Whether to sleep for a pseudo-random (but consistent) amount of time before
-        a run.
+      :desc       => "Whether to sleep for a random amount of time, ranging from
+        immediately up to its `$splaylimit`, before performing its first agent run
+        after a service restart. After this period, the agent runs periodically
+        on its `$runinterval`.
 
-        For example, without `splay` enabled, your agent checks in every 30
-        minutes at :01 and :31 past the hour. After enabling `splay`, the agent
-        will wait the pseudorandom sleep time, say eight minutes, and then check
-        in every 30 minutes, at :09 and :39 after the hour. If you restart the
-        same agent at 12:45 PM, it will wait its eight minutes, and check in at
-        12:52 PM, and every 30 minutes after that, at 1:22 PM, 1:52 PM, and so
-        on. Other agents will have different sleep times, and so will check in
-        at different times even if they are all restarted at the same time.",
+        For example, assume a default 30-minute `$runinterval`, `splay` set to its
+        default of `false`, and an agent starting at :00 past the hour. The agent
+        would check in every 30 minutes at :01 and :31 past the hour.
+
+        With `splay` enabled, it waits any amount of time up to its `$splaylimit`
+        before its first run. For example, it might randomly wait 8 minutes,
+        then start its first run at :08 past the hour. With the `$runinterval`
+        at its default 30 minutes, its next run will be at :38 past the hour.
+
+        If you restart an agent's puppet service with `splay` enabled, it
+        recalculates its splay period and delays its first agent run after
+        restarting for this new period. If you simultaneously restart a group of
+        puppet agents with `splay` enabled, their checkins to your puppet masters
+        can be distributed more evenly.",
     },
     :clientbucketdir => {
       :default  => "$vardir/clientbucket",
