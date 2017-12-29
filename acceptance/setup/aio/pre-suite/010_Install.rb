@@ -13,15 +13,6 @@ step "Install puppet-agent..." do
   install_from_build_data_url('puppet-agent', "#{dev_builds_url}/puppet-agent/#{sha}/artifacts/#{sha}.yaml", hosts)
 end
 
-MASTER_PACKAGES = {
-  :redhat => [
-    'puppetserver',
-  ],
-  :debian => [
-    'puppetserver',
-  ],
-}
-
 step "Install puppetserver..." do
   if master[:hypervisor] == 'ec2'
     if master[:platform].match(/(?:el|centos|oracle|redhat|scientific)/)
