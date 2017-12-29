@@ -1,27 +1,16 @@
 require 'puppet/acceptance/common_utils'
 require 'puppet/acceptance/install_utils'
 
+require 'beaker-puppet'
 extend Puppet::Acceptance::InstallUtils
+extend BeakerPuppet::Install::Puppet5
 
 test_name "Install Packages"
 
 step "Install puppet-agent..." do
-  opts = {
-    :puppet_collection    => 'PC1',
-    :puppet_agent_sha     => ENV['SHA'],
-    # SUITE_VERSION is necessary for Beaker to build a package download
-    # url which is built upon a `git describe` for a SHA.
-    # Beaker currently cannot find or calculate this value based on
-    # the SHA, and thus it must be passed at invocation time.
-    # The one exception is when SHA is a tag like `1.8.0` and
-    # SUITE_VERSION will be equivalent.
-    # RE-8333 may make this unnecessary in the future
-    :puppet_agent_version => ENV['SUITE_VERSION'] || ENV['SHA']
-  }
-  agents.each do |agent|
-    next if agent == master # Avoid SERVER-528
-    install_puppet_agent_dev_repo_on(agent, opts)
-  end
+  dev_builds_url  = ENV['DEV_BUILDS_URL'] || 'http://builds.delivery.puppetlabs.net'
+  sha = ENV['SHA']
+  install_from_build_data_url('puppet-agent', "#{dev_builds_url}/puppet-agent/#{sha}/artifacts/#{sha}.yaml", hosts)
 end
 
 MASTER_PACKAGES = {
@@ -83,13 +72,13 @@ step "Install puppetserver..." do
     if ENV['SERVER_VERSION'].nil? || ENV['SERVER_VERSION'] == 'latest'
       server_version = 'latest'
       server_download_url = "http://nightlies.puppet.com"
+      install_puppetlabs_dev_repo(master, 'puppetserver', server_version, nil, :dev_builds_url => server_download_url)
+      master.install_package('puppetserver')
     else
       server_version = ENV['SERVER_VERSION']
-      server_download_url = "http://builds.delivery.puppetlabs.net"
+      dev_builds_url = ENV['DEV_BUILDS_URL'] || 'http://builds.delivery.puppetlabs.net'
+      install_from_build_data_url('puppetserver', "#{dev_builds_url}/puppetserver/#{server_version}/artifacts/#{server_version}.yaml", master)
     end
-    install_puppetlabs_dev_repo(master, 'puppetserver', server_version, nil, :dev_builds_url => server_download_url)
-    install_puppetlabs_dev_repo(master, 'puppet-agent', ENV['SHA'])
-    master.install_package('puppetserver')
   end
 end
 
