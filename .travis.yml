@@ -6,7 +6,6 @@ sudo: false
 # TODO: Remove when Travis updates its default:
 #   https://github.com/travis-ci/travis-ci/issues/8357
 before_install:
-  - gem install bundler --version 1.15.4
 bundler_args: --without development extra
 script:
   - "bundle exec rake $CHECK"
