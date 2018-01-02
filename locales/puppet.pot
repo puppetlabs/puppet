@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.3-165-g598d701\n"
+"Project-Id-Version: Puppet automation framework 5.3.3-168-g1448218\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-01-02 18:47+0000\n"
-"PO-Revision-Date: 2018-01-02 18:47+0000\n"
+"POT-Creation-Date: 2018-01-02 20:31+0000\n"
+"PO-Revision-Date: 2018-01-02 20:31+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -18,6 +18,14 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: ../lib/hiera_puppet.rb:14
+msgid "Could not find data item %{key} in any Hiera data file and no default supplied"
+msgstr ""
+
+#: ../lib/hiera_puppet.rb:41
+msgid "Please supply a parameter to perform a Hiera lookup"
+msgstr ""
 
 #: ../lib/puppet.rb:4
 msgid "Puppet %{version} requires ruby 1.9.3 or greater."
@@ -1941,7 +1949,8 @@ msgstr ""
 msgid "Expected a type alias assignment on the form 'AliasType = T', got '%{assignment_string}'"
 msgstr ""
 
-#: ../lib/puppet/functions/binary_file.rb:15
+#. TRANSLATORS the string "binary_file()" should not be translated
+#: ../lib/puppet/functions/binary_file.rb:16
 msgid "binary_file(): The given file '%{unresolved_path}' does not exist"
 msgstr ""
 
@@ -3314,7 +3323,15 @@ msgstr ""
 msgid "%{env_name} is not a known environment"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/master/v3/environment.rb:52
+#: ../lib/puppet/network/http/api/master/v3/environment.rb:40
+msgid "Application %{application} assigns nodes to non-existent components: %{component_list}"
+msgstr ""
+
+#: ../lib/puppet/network/http/api/master/v3/environment.rb:46
+msgid "Application %{application} has components without assigned nodes: %{component_list}"
+msgstr ""
+
+#: ../lib/puppet/network/http/api/master/v3/environment.rb:55
 msgid "Application %{app} assigns multiple nodes to component %{comp}"
 msgstr ""
 
@@ -3540,6 +3557,10 @@ msgstr ""
 msgid "Valid values match %{pattern}."
 msgstr ""
 
+#: ../lib/puppet/parser/ast/pops_bridge.rb:125
+msgid "Internal Error: Unknown type of definition - got '%{name}'"
+msgstr ""
+
 #: ../lib/puppet/parser/ast/pops_bridge.rb:183
 msgid "Instantiating Resource with type checked parameters - scope is missing, skipping type checking."
 msgstr ""
@@ -3647,40 +3668,44 @@ msgstr ""
 msgid "Could not find class %{name} for %{node}"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:498
+#: ../lib/puppet/parser/compiler.rb:473
+msgid "Capability mapping error: %{kind} clause references nonexistent %{component_type} %{component_name}"
+msgstr ""
+
+#: ../lib/puppet/parser/compiler.rb:499
 msgid "Could not find node statement with name 'default' or '%{names}'"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:519
+#: ../lib/puppet/parser/compiler.rb:520
 msgid "Evaluated collections"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:534
+#: ../lib/puppet/parser/compiler.rb:535
 msgid "Evaluated definitions"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:563
+#: ../lib/puppet/parser/compiler.rb:564
 msgid "Iterated (%{count}) on generators"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:574
+#: ../lib/puppet/parser/compiler.rb:575
 msgid "Somehow looped more than 1000 times while evaluating host catalog"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:605
+#: ../lib/puppet/parser/compiler.rb:606
 msgid "Could not find resource(s) %{resources} for overriding"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:616
+#: ../lib/puppet/parser/compiler.rb:617
 msgid "Failed to realize virtual resources %{resources}"
 msgstr ""
 
 #. TRANSLATORS "main" is a function name and should not be translated
-#: ../lib/puppet/parser/compiler.rb:646
+#: ../lib/puppet/parser/compiler.rb:647
 msgid "Couldn't find main"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:718
+#: ../lib/puppet/parser/compiler.rb:719
 msgid "For initializing compiler"
 msgstr ""
 
@@ -3801,15 +3826,15 @@ msgstr ""
 msgid "Generators must be fully qualified"
 msgstr ""
 
-#: ../lib/puppet/parser/functions/generate.rb:25
+#: ../lib/puppet/parser/functions/generate.rb:24
 msgid "Generators can only contain alphanumerics, file separators, and dashes"
 msgstr ""
 
-#: ../lib/puppet/parser/functions/generate.rb:30
+#: ../lib/puppet/parser/functions/generate.rb:28
 msgid "Can not use generators with '..' in them."
 msgstr ""
 
-#: ../lib/puppet/parser/functions/generate.rb:36
+#: ../lib/puppet/parser/functions/generate.rb:34
 msgid "Failed to execute generator %{generator}: %{detail}"
 msgstr ""
 
@@ -3818,12 +3843,28 @@ msgstr ""
 msgid "Calling function_include via the Scope class is deprecated. Use Scope#call_function instead"
 msgstr ""
 
-#: ../lib/puppet/parser/functions/inline_template.rb:18
+#: ../lib/puppet/parser/functions/inline_template.rb:17
 msgid "Failed to parse inline template: %{detail}"
 msgstr ""
 
 #: ../lib/puppet/parser/functions/require.rb:39
 msgid "Calling function_require via the Scope class is deprecated. Use Scope#call_function instead"
+msgstr ""
+
+#: ../lib/puppet/parser/functions/template.rb:27
+msgid "Failed to parse template %{file}:"
+msgstr ""
+
+#: ../lib/puppet/parser/functions/template.rb:28
+msgid "  Filepath: %{file_path}"
+msgstr ""
+
+#: ../lib/puppet/parser/functions/template.rb:29
+msgid "  Line: %{line}"
+msgstr ""
+
+#: ../lib/puppet/parser/functions/template.rb:30
+msgid "  Detail: %{detail}"
 msgstr ""
 
 #: ../lib/puppet/parser/relationship.rb:31
@@ -4027,7 +4068,7 @@ msgid "Cannot assign to a numeric match result variable '$%{name}'"
 msgstr ""
 
 #: ../lib/puppet/parser/scope.rb:765
-msgid "Scope variable name %{value0} is a %{value1}, not a string"
+msgid "Scope variable name %{name} is a %{class_type}, not a string"
 msgstr ""
 
 #: ../lib/puppet/parser/scope.rb:770 ../lib/puppet/parser/scope.rb:775
@@ -4064,6 +4105,10 @@ msgstr ""
 #. TRANSLATORS "Resource" is a class name and should not be translated
 #: ../lib/puppet/parser/scope.rb:1094
 msgid "Cannot use an unspecific Resource['class'] where a Resource['class', name] is expected"
+msgstr ""
+
+#: ../lib/puppet/parser/templatewrapper.rb:65
+msgid "Could not find template '%{filename}'"
 msgstr ""
 
 #: ../lib/puppet/parser/templatewrapper.rb:82
@@ -4126,15 +4171,19 @@ msgstr ""
 msgid "Could not find template '%{file}'"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1180
+#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:728
+msgid "break() from context where this is illegal"
+msgstr ""
+
+#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1181
 msgid "Can only append Array or Hash to a Hash"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1184
+#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1185
 msgid "Can only append to an Array or a Hash."
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1214
+#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1215
 msgid "Can only delete from an Array or Hash."
 msgstr ""
 
@@ -4905,8 +4954,20 @@ msgstr ""
 msgid "Attempt to redefine already initialized loaders for environment"
 msgstr ""
 
+#: ../lib/puppet/pops/loaders.rb:155
+msgid "Internal Error: Puppet Context ':loaders' missing"
+msgstr ""
+
 #: ../lib/puppet/pops/loaders.rb:169
 msgid "Unable to find loader named '%{loader_name}'"
+msgstr ""
+
+#: ../lib/puppet/pops/loaders.rb:190
+msgid "Internal Error: did not find public loader for module: '%{module_name}'"
+msgstr ""
+
+#: ../lib/puppet/pops/loaders.rb:231
+msgid "Internal Error: Attempt to redefine loader named '%{name}'"
 msgstr ""
 
 #: ../lib/puppet/pops/lookup.rb:88
@@ -5167,8 +5228,73 @@ msgstr ""
 msgid "The type '%{type}' does not represent a valid set of parameters for %{subject}.new()"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:610
+#: ../lib/puppet/pops/types/p_object_type.rb:136
+msgid "expected %{label} to override an inherited %{feature_type}, but no such %{feature_type} was found"
+msgstr ""
+
+#: ../lib/puppet/pops/types/p_object_type.rb:153
+msgid "%{member} attempts to override %{label}"
+msgstr ""
+
+#: ../lib/puppet/pops/types/p_object_type.rb:156
+msgid "%{member} attempts to override final %{label}"
+msgstr ""
+
+#: ../lib/puppet/pops/types/p_object_type.rb:160
+msgid "%{member} attempts to override %{label} without having override => true"
+msgstr ""
+
+#: ../lib/puppet/pops/types/p_object_type.rb:163
+msgid "%{member} attempts to override %{label} with a type that does not match"
+msgstr ""
+
+#: ../lib/puppet/pops/types/p_object_type.rb:280
+msgid "%{label} of kind 'constant' cannot be combined with final => false"
+msgstr ""
+
+#: ../lib/puppet/pops/types/p_object_type.rb:287
+msgid "%{label} of kind '%{kind}' cannot be combined with an attribute value"
+msgstr ""
+
+#: ../lib/puppet/pops/types/p_object_type.rb:292
+msgid "%{label} of kind 'constant' requires a value"
+msgstr ""
+
+#: ../lib/puppet/pops/types/p_object_type.rb:623
 msgid "reference to unresolved type '%{name}'"
+msgstr ""
+
+#: ../lib/puppet/pops/types/p_object_type.rb:635
+msgid "attribute %{label}[%{key}] is defined as both a constant and an attribute"
+msgstr ""
+
+#: ../lib/puppet/pops/types/p_object_type.rb:667
+msgid "%{label} conflicts with attribute with the same name"
+msgstr ""
+
+#. TRANSLATORS equality_include_type = false should not be translated
+#: ../lib/puppet/pops/types/p_object_type.rb:680
+msgid "equality_include_type = false cannot be combined with non empty equality specification"
+msgstr ""
+
+#: ../lib/puppet/pops/types/p_object_type.rb:692
+msgid "%{label} equality is referencing %{attribute} which is included in equality of %{including_parent}"
+msgstr ""
+
+#: ../lib/puppet/pops/types/p_object_type.rb:699
+msgid "%{label} equality is referencing non existent attribute '%{attribute}'"
+msgstr ""
+
+#: ../lib/puppet/pops/types/p_object_type.rb:701
+msgid "%{label} equality is referencing %{attribute}. Only attribute references are allowed"
+msgstr ""
+
+#: ../lib/puppet/pops/types/p_object_type.rb:705
+msgid "%{label} equality is referencing constant %{attribute}."
+msgstr ""
+
+#: ../lib/puppet/pops/types/p_object_type.rb:706
+msgid "Reference to constant is not allowed in equality"
 msgstr ""
 
 #: ../lib/puppet/pops/types/tree_iterators.rb:38
@@ -5177,6 +5303,26 @@ msgstr ""
 
 #: ../lib/puppet/pops/types/tree_iterators.rb:45
 msgid "Options 'include_containers' and 'include_values' cannot both be false"
+msgstr ""
+
+#: ../lib/puppet/pops/types/type_parser.rb:345
+msgid "Enum parameters must be identifiers or strings"
+msgstr ""
+
+#: ../lib/puppet/pops/types/type_parser.rb:568
+msgid "The expression <%{expression}> is not a valid type specification."
+msgstr ""
+
+#: ../lib/puppet/pops/types/type_parser.rb:573
+msgid "Invalid number of type parameters specified: %{type} requires %{required}, %{given} provided"
+msgstr ""
+
+#: ../lib/puppet/pops/types/type_parser.rb:578
+msgid "Not a parameterized type <%{type}>"
+msgstr ""
+
+#: ../lib/puppet/pops/types/type_parser.rb:582
+msgid "Unknown type <%{type}>"
 msgstr ""
 
 #: ../lib/puppet/property.rb:492
