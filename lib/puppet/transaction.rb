@@ -171,6 +171,9 @@ class Puppet::Transaction
       report.resources_failed_to_generate = true
     end
 
+    # mark the end of transaction evaluate.
+    report.transaction_completed = true
+
     Puppet.debug "Finishing transaction #{object_id}"
   end
 

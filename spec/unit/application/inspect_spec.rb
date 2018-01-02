@@ -70,6 +70,17 @@ describe Puppet::Application::Inspect do
       @inspect.run_command
     end
 
+    it "should not fail if no resource failed" do
+      Puppet::Resource::Catalog::Json.any_instance.stubs(:find).returns(Puppet::Resource::Catalog.new)
+      Puppet::Transaction::Report::Rest.any_instance.expects(:save).with do |request|
+        @report = request.instance
+      end
+
+      @inspect.run_command
+
+      expect(@report.status).to eq("unchanged")
+    end
+
     with_digest_algorithms do
       it "should audit the specified properties" do
         catalog = Puppet::Resource::Catalog.new

@@ -247,6 +247,19 @@ describe Puppet::Transaction::Report do
       end
     end
 
+    it "should be unchanged if there are no other failures or changes and the transaction completed" do
+      @report.transaction_completed = true
+      @report.finalize_report
+
+      expect(@report.status).to eq("unchanged")
+    end
+
+    it "should be failed if there are no other failures or changes and the transaction did not complete" do
+      @report.finalize_report
+
+      expect(@report.status).to eq("failed")
+    end
+
     [:time, :resources, :changes, :events].each do |type|
       it "should add #{type} metrics" do
         @report.finalize_report
@@ -278,12 +291,14 @@ describe Puppet::Transaction::Report do
 
       it "should mark the report as 'failed' if there are failing resources" do
         add_statuses(1) { |status| status.failed = true }
+        @report.transaction_completed = true
         @report.finalize_report
         expect(@report.status).to eq('failed')
       end
 
       it "should mark the report as 'failed' if resources_failed_to_generate" do
         @report.resources_failed_to_generate = true
+        @report.transaction_completed = true
         @report.finalize_report
         expect(@report.status).to eq('failed')
       end
@@ -292,12 +307,14 @@ describe Puppet::Transaction::Report do
     describe "for changes" do
       it "should provide the number of changes from the resource statuses and mark the report as 'changed'" do
         add_statuses(3) { |status| 3.times { status << Puppet::Transaction::Event.new(:status => 'success') } }
+        @report.transaction_completed = true
         @report.finalize_report
         expect(metric(:changes, "total")).to eq(9)
         expect(@report.status).to eq('changed')
       end
 
       it "should provide a total even if there are no changes, and mark the report as 'unchanged'" do
+        @report.transaction_completed = true
         @report.finalize_report
         expect(metric(:changes, "total")).to eq(0)
         expect(@report.status).to eq('unchanged')
@@ -595,6 +612,7 @@ describe Puppet::Transaction::Report do
     report.cached_catalog_status = "not_used"
     report.master_used = "test:000"
     report.add_resource_status(status)
+    report.transaction_completed = true
     report.finalize_report
     report
   end
@@ -612,6 +630,7 @@ describe Puppet::Transaction::Report do
     report.cached_catalog_status = "not_used"
     report.master_used = "test:000"
     report.add_resource_status(status)
+    report.transaction_completed = true
     report.finalize_report
     report
   end
