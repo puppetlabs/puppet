@@ -4,6 +4,9 @@
 
 test_name "Trivial puppet tests"
 
+tag 'audit:medium',
+    'audit:unit'
+
 step "check that puppet apply displays notices"
 agents.each do |host|
   apply_manifest_on(host, "notice 'Hello World'") do

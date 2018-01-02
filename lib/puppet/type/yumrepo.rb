@@ -62,7 +62,7 @@ Puppet::Type.newtype(:yumrepo) do
       parsed = URI.parse(value)
 
       unless VALID_SCHEMES.include?(parsed.scheme)
-        raise "Must be a valid URL"
+        raise _("Must be a valid URL")
       end
     end
   end
@@ -79,7 +79,7 @@ Puppet::Type.newtype(:yumrepo) do
         parsed = URI.parse(uri)
 
         unless VALID_SCHEMES.include?(parsed.scheme)
-          raise "Must be a valid URL"
+          raise _("Must be a valid URL")
         end
       end
     end
@@ -97,6 +97,15 @@ Puppet::Type.newtype(:yumrepo) do
   newproperty(:gpgcheck) do
     desc "Whether to check the GPG signature on packages installed
       from this repository.
+      #{YUM_BOOLEAN_DOC}
+      #{ABSENT_DOC}"
+
+    newvalues(YUM_BOOLEAN, :absent)
+    munge(&munge_yum_bool)
+  end
+
+  newproperty(:payload_gpgcheck) do
+    desc "Whether to check the GPG signature of the packages payload.
       #{YUM_BOOLEAN_DOC}
       #{ABSENT_DOC}"
 
@@ -126,7 +135,7 @@ Puppet::Type.newtype(:yumrepo) do
         parsed = URI.parse(uri)
 
         unless VALID_SCHEMES.include?(parsed.scheme)
-          raise "Must be a valid URL"
+          raise _("Must be a valid URL")
         end
       end
     end
@@ -150,7 +159,7 @@ Puppet::Type.newtype(:yumrepo) do
       parsed = URI.parse(value)
 
       unless VALID_SCHEMES.include?(parsed.scheme)
-        raise "Must be a valid URL"
+        raise _("Must be a valid URL")
       end
     end
   end
@@ -172,7 +181,7 @@ Puppet::Type.newtype(:yumrepo) do
       parsed = URI.parse(value)
 
       unless VALID_SCHEMES.include?(parsed.scheme)
-        raise "Must be a valid URL"
+        raise _("Must be a valid URL")
       end
     end
   end
@@ -258,7 +267,7 @@ Puppet::Type.newtype(:yumrepo) do
     validate do |value|
       next if value.to_s == 'absent'
       unless (1..99).include?(value.to_i)
-        fail("Must be within range 1-99")
+        fail(_("Must be within range 1-99"))
       end
     end
   end
@@ -300,7 +309,7 @@ Puppet::Type.newtype(:yumrepo) do
       parsed = URI.parse(value)
 
       unless VALID_SCHEMES.include?(parsed.scheme)
-        raise "Must be a valid URL"
+        raise _("Must be a valid URL")
       end
     end
   end
@@ -366,7 +375,7 @@ Puppet::Type.newtype(:yumrepo) do
       parsed = URI.parse(value)
 
       unless VALID_SCHEMES.include?(parsed.scheme)
-        raise "Must be a valid URL"
+        raise _("Must be a valid URL")
       end
     end
   end

@@ -133,7 +133,7 @@ describe Puppet::Util::Log.desttypes[:logstash_event] do
       dest = described_class.new
       result = dest.format(@msg)
       expect(result["version"]).to eq(1)
-      expect(result["level"]).to   eq(:info)
+      expect(result["level"]).to   eq('info')
       expect(result["message"]).to eq("So long, and thanks for all the fish.")
       expect(result["source"]).to  eq("a dolphin")
       # timestamp should be within 10 seconds
@@ -195,8 +195,8 @@ describe ":eventlog", :if => Puppet::Util::Platform.windows? do
 
   def expects_message_with_type(klass, level, eventlog_type, eventlog_id)
     eventlog = stub('eventlog')
-    eventlog.expects(:report_event).with(has_entries(:source => "Puppet", :event_type => eventlog_type, :event_id => eventlog_id, :data => "a hitchhiker: don't panic"))
-    Win32::EventLog.stubs(:open).returns(eventlog)
+    eventlog.expects(:report_event).with(has_entries(:event_type => eventlog_type, :event_id => eventlog_id, :data => "a hitchhiker: don't panic"))
+    Puppet::Util::Windows::EventLog.stubs(:open).returns(eventlog)
 
     msg = Puppet::Util::Log.new(:level => level, :message => "don't panic", :source => "a hitchhiker")
     dest = klass.new
@@ -207,9 +207,22 @@ describe ":eventlog", :if => Puppet::Util::Platform.windows? do
     expect(Puppet.features.eventlog?).to be_truthy
   end
 
-  it "logs to the Application event log" do
+  it "should truncate extremely long log messages" do
+    long_msg = "x" * 32000
+    expected_truncated_msg = "#{'x' * 31785}...Message exceeds character length limit, truncating."
+    expected_data = "a vogon ship: " + expected_truncated_msg
+
     eventlog = stub('eventlog')
-    Win32::EventLog.expects(:open).with('Application').returns(stub('eventlog'))
+    eventlog.expects(:report_event).with(has_entries(:event_type => 2, :event_id => 2, :data => expected_data))
+    msg = Puppet::Util::Log.new(:level => :warning, :message => long_msg, :source => "a vogon ship")
+    Puppet::Util::Windows::EventLog.stubs(:open).returns(eventlog)
+
+    dest = klass.new
+    dest.handle(msg)
+  end
+  
+  it "logs to the Puppet Application event log" do
+    Puppet::Util::Windows::EventLog.expects(:open).with('Puppet').returns(stub('eventlog'))
 
     klass.new
   end

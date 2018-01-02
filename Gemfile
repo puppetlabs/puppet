@@ -53,7 +53,14 @@ group(:development, :test) do
   gem "multi_json", "1.7.7", :require => false, :platforms => [:ruby, :jruby]
   gem "json-schema", "2.1.1", :require => false, :platforms => [:ruby, :jruby]
 
-  gem "rubocop", "~> 0.39.0", :platforms => [:ruby]
+  if RUBY_VERSION >= '2.0'
+    # pin rubocop as 0.50 requires a higher version of the rainbow gem (see below)
+    gem 'rubocop', '~> 0.49.1', :platforms => [:ruby]
+    gem 'rubocop-i18n', '~> 1.2.0', :platforms => [:ruby]
+  end
+
+  # pin rainbow gem as 2.2.1 requires rubygems 2.6.9+ and (donotwant)
+  gem "rainbow", "< 2.2.1", :platforms => [:ruby]
 
   gem 'rdoc', "~> 4.1", :platforms => [:ruby]
   gem 'yard'
@@ -63,13 +70,12 @@ group(:development, :test) do
   gem 'addressable', '< 2.5.0'
   gem 'webmock', '~> 1.24'
   gem 'vcr', '~> 2.9'
-  gem "hocon", :require => false
   gem "hiera-eyaml", :require => false
 end
 
 group(:development) do
   if RUBY_PLATFORM != 'java'
-    gem 'ruby-prof', :require => false
+    gem 'ruby-prof', '>= 0.16.0', :require => false
   end
 end
 

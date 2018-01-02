@@ -12,22 +12,6 @@ module Puppet
       desc "Where email should be sent.  Multiple values
         should be specified as an array.  The file and the
         recipient entries are mutually exclusive."
-
-      def is_to_s(value)
-        if value.include?(:absent)
-          super
-        else
-          value.join(",")
-        end
-      end
-
-      def should_to_s(value)
-        if value.include?(:absent)
-          super
-        else
-          value.join(",")
-        end
-      end
     end
 
     newproperty(:file) do
@@ -36,7 +20,7 @@ module Puppet
 
       validate do |value|
 	unless Puppet::Util.absolute_path?(value)
-	  fail Puppet::Error, "File paths must be fully qualified, not '#{value}'"
+	  fail Puppet::Error, _("File paths must be fully qualified, not '%{value}'") % { value: value }
 	end
       end
     end
@@ -55,7 +39,7 @@ module Puppet
 
     validate do
       if self[:recipient] && self[:file]
-	self.fail "You cannot specify both a recipient and a file"
+	self.fail _("You cannot specify both a recipient and a file")
       end
     end
   end

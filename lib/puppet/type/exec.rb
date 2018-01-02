@@ -101,7 +101,7 @@ module Puppet
 
       # Make output a bit prettier
       def change_to_s(currentvalue, newvalue)
-        "executed successfully"
+        _("executed successfully")
       end
 
       # First verify that all of our checks pass.
@@ -135,7 +135,7 @@ module Puppet
             end
           end
         rescue Timeout::Error
-          self.fail Puppet::Error, "Command exceeded timeout", $!
+          self.fail Puppet::Error, _("Command exceeded timeout"), $!
         end
 
         if log = @resource[:logoutput]
@@ -159,9 +159,9 @@ module Puppet
         unless self.should.include?(@status.exitstatus.to_s)
           if @resource.parameter(:command).sensitive
             # Don't print sensitive commands in the clear
-            self.fail("[command redacted] returned #{@status.exitstatus} instead of one of [#{self.should.join(",")}]")
+            self.fail(_("[command redacted] returned %{status} instead of one of [%{expected}]") % { status: @status.exitstatus, expected: self.should.join(",") })
           else
-            self.fail("'#{self.resource[:command]}' returned #{@status.exitstatus} instead of one of [#{self.should.join(",")}]")
+            self.fail(_("'%{cmd}' returned %{status} instead of one of [%{expected}]") % { cmd: self.resource[:command], status: @status.exitstatus, expected: self.should.join(",") })
           end
         end
 
@@ -179,7 +179,7 @@ module Puppet
         any output is logged at the `err` log level."
 
       validate do |command|
-        raise ArgumentError, "Command must be a String, got value of class #{command.class}" unless command.is_a? String
+        raise ArgumentError, _("Command must be a String, got value of class %{klass}") % { klass: command.class } unless command.is_a? String
       end
     end
 
@@ -208,9 +208,9 @@ module Puppet
 
       validate do |user|
         if Puppet.features.microsoft_windows?
-          self.fail "Unable to execute commands as other users on Windows"
+          self.fail _("Unable to execute commands as other users on Windows")
         elsif !Puppet.features.root? && resource.current_username() != user
-          self.fail "Only root can execute commands as other users"
+          self.fail _("Only root can execute commands as other users")
         end
       end
     end
@@ -256,16 +256,17 @@ module Puppet
     end
 
     newparam(:environment) do
-      desc "Any additional environment variables you want to set for a
-        command.  Note that if you use this to set PATH, it will override
-        the `path` attribute.  Multiple environment variables should be
-        specified as an array."
+      desc "An array of any additional environment variables you want to set for a
+        command. e.g.: `[ 'HOME=/root', 'MAIL=root@example.com']`
+        Note that if you use this to set PATH, it will override the `path`
+        attribute. Multiple environment variables should be specified as an
+        array."
 
       validate do |values|
         values = [values] unless values.is_a? Array
         values.each do |value|
           unless value =~ /\w+=/
-            raise ArgumentError, "Invalid environment setting '#{value}'"
+            raise ArgumentError, _("Invalid environment setting '%{value}'") % { value: value }
           end
         end
       end
@@ -278,7 +279,7 @@ module Puppet
         if value =~ /^0?[0-7]{1,4}$/
           return value.to_i(8)
         else
-          raise Puppet::Error, "The umask specification is invalid: #{value.inspect}"
+          raise Puppet::Error, _("The umask specification is invalid: %{value}") % { value: value.inspect }
         end
       end
     end
@@ -294,7 +295,7 @@ module Puppet
         begin
           value = Float(value)
         rescue ArgumentError
-          raise ArgumentError, "The timeout must be a number.", $!.backtrace
+          raise ArgumentError, _("The timeout must be a number."), $!.backtrace
         end
         [value, 0.0].max
       end
@@ -312,11 +313,11 @@ module Puppet
       munge do |value|
         if value.is_a?(String)
           unless value =~ /^[\d]+$/
-            raise ArgumentError, "Tries must be an integer"
+            raise ArgumentError, _("Tries must be an integer")
           end
           value = Integer(value)
         end
-        raise ArgumentError, "Tries must be an integer >= 1" if value < 1
+        raise ArgumentError, _("Tries must be an integer >= 1") if value < 1
         value
       end
 
@@ -329,11 +330,11 @@ module Puppet
       munge do |value|
         if value.is_a?(String)
           unless value =~ /^[-\d.]+$/
-            raise ArgumentError, "try_sleep must be a number"
+            raise ArgumentError, _("try_sleep must be a number")
           end
           value = Float(value)
         end
-        raise ArgumentError, "try_sleep cannot be a negative number" if value < 0
+        raise ArgumentError, _("try_sleep cannot be a negative number") if value < 0
         value
       end
 
@@ -448,7 +449,7 @@ module Puppet
         begin
           output, status = provider.run(value, true)
         rescue Timeout::Error
-          err "Check #{value.inspect} exceeded timeout"
+          err _("Check %{value} exceeded timeout") % { value: value.inspect }
           return false
         end
 
@@ -500,7 +501,7 @@ module Puppet
         begin
           output, status = provider.run(value, true)
         rescue Timeout::Error
-          err "Check #{value.inspect} exceeded timeout"
+          err _("Check %{value} exceeded timeout") % { value: value.inspect }
           return false
         end
 

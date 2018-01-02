@@ -201,8 +201,6 @@ module EppSupport
           if s.end_with? "<%"
             @mode = :error
             @issue = Issues::EPP_UNBALANCED_EXPRESSION
-          else
-            mode = :epp
           end
           return s
 

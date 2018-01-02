@@ -47,22 +47,22 @@ class Puppet::Transaction::Persistence
       return
     end
     unless File.file?(filename)
-      Puppet.warning("Transaction store file #{filename} is not a file, ignoring")
+      Puppet.warning(_("Transaction store file %{filename} is not a file, ignoring") % { filename: filename })
       return
     end
 
     result = nil
-    Puppet::Util.benchmark(:debug, "Loaded transaction store file") do
+    Puppet::Util.benchmark(:debug, _("Loaded transaction store file in %{seconds} seconds")) do
       begin
         result = Puppet::Util::Yaml.load_file(filename, false, true)
       rescue Puppet::Util::Yaml::YamlLoadError => detail
-        Puppet.log_exception(detail, "Transaction store file #{filename} is corrupt (#{detail}); replacing", { :level => :warning })
+        Puppet.log_exception(detail, _("Transaction store file %{filename} is corrupt (%{detail}); replacing") % { filename: filename, detail: detail }, { :level => :warning })
 
         begin
           File.rename(filename, filename + ".bad")
         rescue => detail
-          Puppet.log_exception(detail, "Unable to rename corrupt transaction store file: #{detail}")
-          raise Puppet::Error, "Could not rename corrupt transaction store file #{filename}; remove manually", detail.backtrace
+          Puppet.log_exception(detail, _("Unable to rename corrupt transaction store file: %{detail}") % { detail: detail })
+          raise Puppet::Error, _("Could not rename corrupt transaction store file %{filename}; remove manually") % { filename: filename }, detail.backtrace
         end
 
         result = {}
@@ -70,7 +70,7 @@ class Puppet::Transaction::Persistence
     end
 
     unless result.is_a?(Hash)
-      Puppet.err "Transaction store file #{filename} is valid YAML but not returning a hash. Check the file for corruption, or remove it before continuing."
+      Puppet.err _("Transaction store file %{filename} is valid YAML but not returning a hash. Check the file for corruption, or remove it before continuing.") % { filename: filename }
       return
     end
 

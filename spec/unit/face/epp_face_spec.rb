@@ -201,8 +201,12 @@ describe Puppet::Face[:epp, :current] do
       expect(eppface.render(:e => 'hello <%= $x %>', :values => '{x => "mr X"}')).to eq("hello mr X")
     end
 
-    it "adds values given in a puppet hash given on command line with --values" do
-      expect(eppface.render(:e => 'hello <%= $x %>', :values => '{x => "mr X"}')).to eq("hello mr X")
+    it "adds fully qualified values given in a puppet hash given on command line with --values" do
+      expect(eppface.render(:e => 'hello <%= $mr::x %>', :values => '{mr::x => "mr X"}')).to eq("hello mr X")
+    end
+
+    it "adds fully qualified values with leading :: given in a puppet hash given on command line with --values" do
+      expect(eppface.render(:e => 'hello <%= $::mr %>', :values => '{"::mr" => "mr X"}')).to eq("hello mr X")
     end
 
     it "adds values given in a puppet hash produced by a .pp file given with --values_file" do
@@ -239,7 +243,7 @@ describe Puppet::Face[:epp, :current] do
 
     it 'initializes the 4x loader' do
       expect(eppface.render({ :e => <<-EPP.unindent })).to eql("\nString\n\nInteger\n\nBoolean\n")
-        <% $data = [type('a',generalized), type(2,generalized), type(true)] -%>
+        <% $data = [type('a',generalized), type(2,generalized), type(true,generalized)] -%>
         <% $data.each |$value| { %>
         <%= $value %>
         <% } -%>

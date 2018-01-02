@@ -2,6 +2,14 @@ test_name 'C98120, C98077: Sensitive Data is redacted on CLI, logs, reports' do
   require 'puppet/acceptance/puppet_type_test_tools.rb'
   extend Puppet::Acceptance::PuppetTypeTestTools
 
+tag 'audit:high',
+    'audit:acceptance',   # Tests that sensitive data is retains integrity
+                          # between server and agent transport/application.
+                          # Leaving at acceptance layer due to validate
+                          # written logs.
+    'server'
+
+
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type)
   fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"
@@ -106,7 +114,7 @@ test_name 'C98120, C98077: Sensitive Data is redacted on CLI, logs, reports' do
         on(agent, puppet("agent -t --debug --trace --show_diff --server #{master.hostname} --environment #{tmp_environment} --logdest '#{logfile}' --logdest 'console'"),
            :accept_all_exit_codes => true) do |result|
           assert(result.exit_code==2,'puppet agent run failed')
-          run_assertions(assertion_code, result)
+          run_assertions(assertion_code, result) unless agent['locale'] == 'ja'
         end
 
         step "assert no redacted data in log" do

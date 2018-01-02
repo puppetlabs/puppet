@@ -124,22 +124,21 @@ describe Puppet::Resource::CapabilityFinder do
           expect(result['host']).to eq('chost')
         end
 
-        it 'should return nil if no resource matches code_id' do
+        it 'should fail if no resource matches code_id' do
           Puppet::Resource::CapabilityFinder.stubs(:search).with('production', code_id, capability).returns []
 
-          result = Puppet::Resource::CapabilityFinder.find('production', code_id, capability)
-          expect(result).to be_nil
+          expect { Puppet::Resource::CapabilityFinder.find('production', code_id, capability) }.to raise_error(Puppet::Error, /expected exactly one resource but got 2/)
         end
 
         it 'should fail if multiple resources match code_id' do
           Puppet::Resource::CapabilityFinder.stubs(:search).with('production', code_id, capability).returns resources
 
-          expect { Puppet::Resource::CapabilityFinder.find('production', code_id, capability) }.to raise_error(Puppet::DevError, /expected exactly one resource/)
+          expect { Puppet::Resource::CapabilityFinder.find('production', code_id, capability) }.to raise_error(Puppet::DevError, /expected exactly one resource but got 2/)
         end
 
         it 'should fail if no code_id was specified' do
           Puppet::Resource::CapabilityFinder.stubs(:search).with('production', nil, capability).returns resources
-          expect { Puppet::Resource::CapabilityFinder.find('production', nil, capability) }.to raise_error(Puppet::DevError, /expected exactly one resource/)
+          expect { Puppet::Resource::CapabilityFinder.find('production', nil, capability) }.to raise_error(Puppet::DevError, /expected exactly one resource but got 2/)
         end
       end
     end

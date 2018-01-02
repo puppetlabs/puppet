@@ -46,7 +46,7 @@ module Puppet::ModuleTool
         tmpdirpath = Pathname.new tmpdir
 
         symlinks.each do |s|
-          Puppet.warning "Symlinks in modules are unsupported. Please investigate symlink #{s.relative_path_from tmpdirpath}->#{Puppet::FileSystem.readlink(s)}."
+          Puppet.warning _("Symlinks in modules are unsupported. Please investigate symlink %{from}->%{to}.") % { from: s.relative_path_from(tmpdirpath), to: Puppet::FileSystem.readlink(s) }
         end
       end
 
@@ -55,7 +55,7 @@ module Puppet::ModuleTool
         begin
           Puppet::ModuleTool::Tar.instance.unpack(@filename.to_s, tmpdir, [@module_path.stat.uid, @module_path.stat.gid].join(':'))
         rescue Puppet::ExecutionFailure => e
-          raise RuntimeError, "Could not extract contents of module archive: #{e.message}"
+          raise RuntimeError, _("Could not extract contents of module archive: %{message}") % { message: e.message }
         end
       end
 
@@ -69,14 +69,14 @@ module Puppet::ModuleTool
         if metadata_file
           @root_dir = Pathname.new(metadata_file).dirname
         else
-          raise "No valid metadata.json found!"
+          raise _("No valid metadata.json found!")
         end
       end
 
       # @api private
       def module_name
         metadata = JSON.parse((root_dir + 'metadata.json').read)
-        name = metadata['name'][/-(.*)/, 1]
+        metadata['name'][/-(.*)/, 1]
       end
 
       # @api private

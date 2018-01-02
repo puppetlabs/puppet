@@ -56,7 +56,7 @@ describe 'the 4x function api' do
   it 'refuses to create functions that are not based on the Function class' do
     expect do
       Puppet::Functions.create_function('testing', Object) {}
-    end.to raise_error(ArgumentError, 'Functions must be based on Puppet::Pops::Functions::Function. Got Object')
+    end.to raise_error(ArgumentError, /function 'testing'.*Functions must be based on Puppet::Pops::Functions::Function. Got Object/)
   end
 
   it 'refuses to create functions with parameters that are not named with a symbol' do
@@ -200,7 +200,7 @@ describe 'the 4x function api' do
     it 'a function can use inexact argument mapping' do
       f = create_function_with_inexact_dispatch
       func = f.new(:closure_scope, :loader)
-      expect(func.call({}, 3,4,5)).to eql([Fixnum, Fixnum, Fixnum])
+      expect(func.call({}, 3.0,4.0,5.0)).to eql([Float, Float, Float])
       expect(func.call({}, 'Apple', 'Banana')).to eql([String, String])
     end
 
@@ -212,15 +212,18 @@ describe 'the 4x function api' do
     end
 
     it 'a function can not be created with parameters declared after a repeated parameter' do
-      expect { create_function_with_param_after_repeated }.to raise_error(ArgumentError, 'Parameters cannot be added after a repeated parameter')
+      expect { create_function_with_param_after_repeated }.to raise_error(ArgumentError, 
+        /function 't1'.*Parameters cannot be added after a repeated parameter/)
     end
 
     it 'a function can not be created with required parameters declared after optional ones' do
-      expect { create_function_with_rq_after_opt }.to raise_error(ArgumentError, 'A required parameter cannot be added after an optional parameter')
+      expect { create_function_with_rq_after_opt }.to raise_error(ArgumentError, 
+        /function 't1'.*A required parameter cannot be added after an optional parameter/)
     end
 
     it 'a function can not be created with required repeated parameters declared after optional ones' do
-      expect { create_function_with_rq_repeated_after_opt }.to raise_error(ArgumentError, 'A required repeated parameter cannot be added after an optional parameter')
+      expect { create_function_with_rq_repeated_after_opt }.to raise_error(ArgumentError,
+        /function 't1'.*A required repeated parameter cannot be added after an optional parameter/)
     end
 
     it 'an error is raised with reference to multiple methods when called with mis-matched arguments' do
@@ -250,35 +253,6 @@ describe 'the 4x function api' do
 
       it 'is not included in a signature mismatch description' do
         expect { func.call({}, 2.3) }.to raise_error { |e| expect(e.message).not_to match(/String/) }
-      end
-    end
-
-    context 'can use injection' do
-      before :all do
-        injector = Puppet::Pops::Binder::Injector.create('test') do
-          bind.name('a_string').to('evoe')
-          bind.name('an_int').to(42)
-        end
-        Puppet.push_context({:injector => injector}, "injector for testing function API")
-      end
-
-      after :all do
-        Puppet.pop_context()
-      end
-
-      it 'attributes can be injected' do
-        f1 = create_function_with_class_injection()
-        f = f1.new(:closure_scope, :loader)
-        expect(f.test_attr2()).to eql("evoe")
-        expect(f.serial().produce(nil)).to eql(42)
-        expect(f.test_attr().class.name).to eql("FunctionAPISpecModule::TestDuck")
-      end
-
-      it 'parameters can be injected and woven with regular dispatch' do
-        f1 = create_function_with_param_injection_regular()
-        f = f1.new(:closure_scope, :loader)
-        expect(f.call(nil, 10, 20)).to eql("evoe! 10, and 20 < 42 = true")
-        expect(f.call(nil, 50, 20)).to eql("evoe! 50, and 20 < 42 = false")
       end
     end
 
@@ -469,6 +443,7 @@ describe 'the 4x function api' do
       let(:parser) {  Puppet::Pops::Parser::EvaluatingParser.new }
       let(:node) { 'node.example.com' }
       let(:scope) { s = create_test_scope_for_node(node); s }
+      let(:loader) { Puppet::Pops::Loaders.find_loader(nil) }
 
       it 'function with required block can be called' do
         # construct ruby function to call
@@ -484,9 +459,9 @@ describe 'the 4x function api' do
           end
         end
         # add the function to the loader (as if it had been loaded from somewhere)
-        the_loader = loader()
+        the_loader = loader
         f = fc.new({}, the_loader)
-        loader.add_function('testing::test', f)
+        loader.set_entry(Puppet::Pops::Loader::TypedName.new(:function, 'testing::test'), f)
         # evaluate a puppet call
         source = "testing::test(10) |$x| { $x+1 }"
         program = parser.parse_string(source, __FILE__)
@@ -495,6 +470,48 @@ describe 'the 4x function api' do
       end
     end
 
+    context 'reports meaningful errors' do
+      let(:parser) {  Puppet::Pops::Parser::EvaluatingParser.new }
+
+      it 'syntax error in local type is reported with puppet source, puppet location, and ruby file containing function' do
+        the_loader = loader()
+        here = get_binding(the_loader)
+        expect do
+          fc = eval(<<-CODE, here)
+            Puppet::Functions.create_function('testing::test') do
+              local_types do
+                type 'MyType += Array[Integer]'
+              end
+              dispatch :test do
+                param 'MyType', :x
+              end
+              def test(x)
+                x
+              end
+            end
+          CODE
+        end.to raise_error(/MyType \+\= Array.*<Syntax error at '\+\=' at line 1:[0-9]+>.*functions4_spec\.rb.*/m)
+        # Note that raised error reports this spec file as the function source since the function is defined here
+      end
+
+      it 'syntax error in param type is reported with puppet source, puppet location, and ruby file containing function' do
+        the_loader = loader()
+        here = get_binding(the_loader)
+        expect do
+          fc = eval(<<-CODE, here)
+            Puppet::Functions.create_function('testing::test') do
+              dispatch :test do
+                param 'Array[1+=1]', :x
+              end
+              def test(x)
+                x
+              end
+            end
+          CODE
+        end.to raise_error(/Parsing of type string '"Array\[1\+=1\]"' failed with message: <Syntax error at '\]' at line 1:[0-9]+/m)
+      end
+
+    end
     context 'can use a loader when parsing types in function dispatch, and' do
       let(:parser) {  Puppet::Pops::Parser::EvaluatingParser.new }
 
@@ -839,18 +856,6 @@ describe 'the 4x function api' do
     end
   end
 
-  def create_function_with_class_injection
-    f = Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
-      attr_injected Puppet::Pops::Types::TypeFactory.type_of(FunctionAPISpecModule::TestDuck), :test_attr
-      attr_injected Puppet::Pops::Types::TypeFactory.string(), :test_attr2, "a_string"
-      attr_injected_producer Puppet::Pops::Types::TypeFactory.integer(), :serial, "an_int"
-
-      def test(x,y,a=1, b=1, *c)
-        x <= y ? x : y
-      end
-    end
-  end
-
   def create_function_with_param_injection_regular
     f = Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
       attr_injected Puppet::Pops::Types::TypeFactory.type_of(FunctionAPISpecModule::TestDuck), :test_attr
@@ -999,7 +1004,7 @@ describe 'the 4x function api' do
   end
 
   def type_alias_t(name, type_string)
-    type_expr = Puppet::Pops::Parser::EvaluatingParser.new.parse_string(type_string).current
+    type_expr = Puppet::Pops::Parser::EvaluatingParser.new.parse_string(type_string)
     Puppet::Pops::Types::TypeFactory.type_alias(name, type_expr)
   end
 

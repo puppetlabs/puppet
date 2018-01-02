@@ -7,7 +7,12 @@ class ValidatorFactory_4_0 < Factory
 
   # Produces the checker to use
   def checker diagnostic_producer
-    Checker4_0.new(diagnostic_producer)
+    if Puppet[:tasks]
+      require_relative 'tasks_checker'
+      TasksChecker.new(diagnostic_producer)
+    else
+      Checker4_0.new(diagnostic_producer)
+    end
   end
 
   # Produces the label provider to use
@@ -28,7 +33,6 @@ class ValidatorFactory_4_0 < Factory
     p[Issues::FUTURE_RESERVED_WORD]          = :deprecation
 
     p[Issues::DUPLICATE_KEY]                 = Puppet[:strict] == :off ? :ignore : Puppet[:strict]
-    p[Issues::DUPLICATE_DEFAULT]             = Puppet[:strict] == :off ? :ignore : Puppet[:strict]
     p[Issues::NAME_WITH_HYPHEN]              = :error
     p[Issues::EMPTY_RESOURCE_SPECIALIZATION] = :ignore
     p[Issues::CLASS_NOT_VIRTUALIZABLE]      = Puppet[:strict] == :off ? :warning : Puppet[:strict]

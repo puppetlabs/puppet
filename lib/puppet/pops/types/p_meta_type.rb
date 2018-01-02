@@ -10,6 +10,8 @@ KEY_VALUE = 'value'.freeze
 class PMetaType < PAnyType
   include Annotatable
 
+  attr_reader :loader
+
   def self.register_ptype(loader, ir)
     # Abstract type. It doesn't register anything
   end
@@ -17,6 +19,10 @@ class PMetaType < PAnyType
   def accept(visitor, guard)
     annotatable_accept(visitor, guard)
     super
+  end
+
+  def instance?(o, guard = nil)
+    assignable?(TypeCalculator.infer(o), guard)
   end
 
   # Called from the TypeParser once it has found a type using the Loader. The TypeParser will
@@ -27,18 +33,19 @@ class PMetaType < PAnyType
   # @param loader [Loader::Loader] loader to use when loading type aliases
   # @return [PTypeAliasType] the receiver of the call, i.e. `self`
   # @api private
-  def resolve(type_parser, loader)
-    unless @i12n_hash_expression.nil?
+  def resolve(loader)
+    unless @init_hash_expression.nil?
+      @loader = loader
       @self_recursion = true # assumed while it being found out below
 
-      i12n_hash_expression = @i12n_hash_expression
-      @i12n_hash_expression = nil
-      if i12n_hash_expression.is_a?(Model::LiteralHash)
-        i12n_hash = resolve_literal_hash(type_parser, loader, i12n_hash_expression)
+      init_hash_expression = @init_hash_expression
+      @init_hash_expression = nil
+      if init_hash_expression.is_a?(Model::LiteralHash)
+        init_hash = resolve_literal_hash(loader, init_hash_expression)
       else
-        i12n_hash = resolve_hash(type_parser, loader, i12n_hash_expression)
+        init_hash = resolve_hash(loader, init_hash_expression)
       end
-      initialize_from_hash(i12n_hash)
+      _pcore_init_from_hash(init_hash)
 
       # Find out if this type is recursive. A recursive type has performance implications
       # on several methods and this knowledge is used to avoid that for non-recursive
@@ -50,25 +57,29 @@ class PMetaType < PAnyType
     self
   end
 
-  def resolve_literal_hash(type_parser, loader, i12n_hash_expression)
-    type_parser.interpret_LiteralHash(i12n_hash_expression, loader)
+  def resolve_literal_hash(loader, init_hash_expression)
+    TypeParser.singleton.interpret_LiteralHash(init_hash_expression, loader)
   end
 
-  def resolve_hash(type_parser, loader, i12n_hash)
-    resolve_type_refs(type_parser, loader, i12n_hash)
+  def resolve_hash(loader, init_hash)
+    resolve_type_refs(loader, init_hash)
   end
 
-  def resolve_type_refs(type_parser, loader, o)
+  def resolve_type_refs(loader, o)
     case o
     when Hash
-      Hash[o.map { |k, v| [resolve_type_refs(type_parser, loader, k), resolve_type_refs(type_parser, loader, v)] }]
+      Hash[o.map { |k, v| [resolve_type_refs(loader, k), resolve_type_refs(loader, v)] }]
     when Array
-      o.map { |e| resolve_type_refs(type_parser, loader, e) }
+      o.map { |e| resolve_type_refs(loader, e) }
     when PAnyType
-      o.resolve(type_parser, loader)
+      o.resolve(loader)
     else
       o
     end
+  end
+
+  def resolved?
+    @init_hash_expression.nil?
   end
 
   # Returns the expanded string the form of the alias, e.g. <alias name> = <resolved type>

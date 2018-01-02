@@ -103,13 +103,13 @@ describe Puppet::Face[:help, '0.0.1'] do
     end
 
     it "returns an 'unavailable' summary if the 'agent' application fails to generate help" do
-      Puppet::Application['agent'].class.any_instance.stubs(:help).raises(ArgumentError, "whoops")
+      Puppet::Application['agent'].class.any_instance.stubs(:summary).raises(ArgumentError, "whoops")
 
       expect(subject).to match(/agent\s+! Subcommand unavailable due to error\. Check error logs\./)
     end
 
     it "returns an 'unavailable' summary if the legacy application raises a LoadError" do
-      Puppet::Application['agent'].class.any_instance.stubs(:help).raises(LoadError, "cannot load such file -- yard")
+      Puppet::Application['agent'].class.any_instance.stubs(:summary).raises(LoadError, "cannot load such file -- yard")
 
       expect(subject).to match(/agent\s+! Subcommand unavailable due to error\. Check error logs\./)
     end

@@ -50,11 +50,11 @@ class Puppet::Property::Ensure < Puppet::Property
   def change_to_s(currentvalue, newvalue)
     begin
       if currentvalue == :absent || currentvalue.nil?
-        return "created"
+        return _("created")
       elsif newvalue == :absent
-        return "removed"
+        return _("removed")
       else
-        return "#{self.name} changed '#{self.is_to_s(currentvalue)}' to '#{self.should_to_s(newvalue)}'"
+        return _('%{name} changed %{is} to %{should}') % { name: name, is: is_to_s(currentvalue), should: should_to_s(newvalue) }
       end
     rescue Puppet::Error, Puppet::DevError
       raise

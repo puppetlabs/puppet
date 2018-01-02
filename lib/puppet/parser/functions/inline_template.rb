@@ -4,6 +4,12 @@ Puppet::Parser::Functions::newfunction(:inline_template, :type => :rvalue, :arit
   more information. Note that if multiple template strings are specified, their
   output is all concatenated and returned as the output of the function.") do |vals|
 
+  if Puppet[:tasks]
+    raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
+      Puppet::Pops::Issues::FEATURE_NOT_SUPPORTED_WHEN_SCRIPTING,
+      {:feature => 'ERB inline_template'})
+  end
+
   require 'erb'
 
     vals.collect do |string|
@@ -15,7 +21,7 @@ Puppet::Parser::Functions::newfunction(:inline_template, :type => :rvalue, :arit
         wrapper.result(string)
       rescue => detail
         raise Puppet::ParseError,
-          "Failed to parse inline template: #{detail}", detail.backtrace
+          _("Failed to parse inline template: %{detail}") % { detail: detail }, detail.backtrace
       end
     end.join("")
 end

@@ -134,42 +134,18 @@ class Lexer2
     'type'     => [:TYPE,     'type',     4],
     'attr'     => [:ATTR,     'attr',     4],
     'private'  => [:PRIVATE,  'private',  7],
+    'application' => [:APPLICATION, 'application',  11],
+    'consumes'    => [:CONSUMES,    'consumes',  8],
+    'produces'    => [:PRODUCES,    'produces',  8],
+    'site'        => [:SITE,        'site',  4],
   }
 
   KEYWORDS.each {|k,v| v[1].freeze; v.freeze }
   KEYWORDS.freeze
 
-  # We maintain two different tables of tokens for the constructs
-  # introduced by application management. Which ones we use is decided in
-  # +initvars+; by selecting one or the other variant, we select whether we
-  # hit the appmgmt-specific code paths
-  APP_MANAGEMENT_TOKENS = {
-    :with_appm => {
-      'application' => [:APPLICATION, 'application',  11],
-      'consumes'    => [:CONSUMES,    'consumes',  8],
-      'produces'    => [:PRODUCES,    'produces',  8],
-      'site'        => [:SITE,        'site',  4]
-    },
-    :without_appm => {
-      'application' => [:APPLICATION_R, 'application',  11],
-      'consumes'    => [:CONSUMES_R,    'consumes',  8],
-      'produces'    => [:PRODUCES_R,    'produces',  8],
-      'site'        => [:SITE_R,        'site',  4]
-    }
-  }
-
-  APP_MANAGEMENT_TOKENS.each do |_, variant|
-    variant.each { |_,v| v[1].freeze; v.freeze }
-    variant.freeze
-  end
-  APP_MANAGEMENT_TOKENS.freeze
-
   # Reverse lookup of keyword name to string
   KEYWORD_NAMES = {}
   KEYWORDS.each {|k, v| KEYWORD_NAMES[v[0]] = k }
-  APP_MANAGEMENT_TOKENS.each do |_, variant|
-    variant.each { |k,v| KEYWORD_NAMES[v[0]] = k }
-  end
   KEYWORD_NAMES.freeze
 
   PATTERN_WS        = %r{[[:blank:]\r]+}
@@ -537,7 +513,6 @@ class Lexer2
             scn.pos = before
             invalid_number = scn.peek(after - before) unless invalid_number
           end
-          length = scn.pos - before
           assert_numeric(invalid_number, before)
           scn.pos = before + 1
           lex_error(Issues::ILLEGAL_NUMBER, {:value => invalid_number})
@@ -547,12 +522,11 @@ class Lexer2
     ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
       'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '_'].each do |c|
       @selector[c] = lambda do
-
         scn = @scanner
         before = scn.pos
         value = scn.scan(PATTERN_BARE_WORD)
         if value && value =~ PATTERN_NAME
-          emit_completed(KEYWORDS[value] || @appm_keywords[value] || [:NAME, value.freeze, scn.pos - before], before)
+          emit_completed(KEYWORDS[value] || @taskm_keywords[value] || [:NAME, value.freeze, scn.pos - before], before)
         elsif value
           emit_completed([:WORD, value.freeze, scn.pos - before], before)
         else
@@ -630,10 +604,10 @@ class Lexer2
   # overloading of = does not allow passing more than one argument).
   #
   def string=(string)
-    lex_string(string, '')
+    lex_string(string, nil)
   end
 
-  def lex_string(string, path='')
+  def lex_string(string, path=nil)
     initvars
     assert_not_bom(string)
     @scanner = StringScanner.new(string)
@@ -687,8 +661,8 @@ class Lexer2
       :after => nil,
       :line_lexical_start => 0
     }
-    appm_mode = Puppet[:app_management] ? :with_appm : :without_appm
-    @appm_keywords = APP_MANAGEMENT_TOKENS[appm_mode]
+    # Use of --tasks introduces the new keyword 'plan'
+    @taskm_keywords = Puppet[:tasks] ? { 'plan' => [:PLAN, 'plan',  4] }.freeze : EMPTY_HASH
   end
 
   # Scans all of the content and returns it in an array

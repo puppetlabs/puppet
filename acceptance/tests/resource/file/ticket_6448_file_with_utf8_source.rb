@@ -1,4 +1,8 @@
 test_name 'Ensure a file resource can have a UTF-8 source attribute, content, and path when served via a module' do
+  tag 'audit:high',
+      'broken:images',
+      'audit:acceptance'
+
   skip_test 'requires a master for serving module content' if master.nil?
 
   require 'puppet/acceptance/environment_utils'
@@ -81,4 +85,3 @@ test_name 'Ensure a file resource can have a UTF-8 source attribute, content, an
     end
   end
 end
-

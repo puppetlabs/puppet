@@ -7,9 +7,15 @@ test_name "C98093 - a resource changed outside of Puppet will be reported as a c
   require 'puppet/acceptance/agent_fqdn_utils'
   extend Puppet::Acceptance::AgentFqdnUtils
 
+  tag 'audit:medium',
+      'audit:integration',
+      'audit:refactor',    # Uses a server currently, but is testing agent report
+      'broken:images'
+
   test_file_name  = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, test_file_name)
   tmp_file        = {}
+
 
   agents.each do |agent|
     tmp_file[agent_to_fqdn(agent)] = agent.tmpfile(tmp_environment)
@@ -67,7 +73,7 @@ test_name "C98093 - a resource changed outside of Puppet will be reported as a c
         step 'Run agent to correct the files absence' do
           on(agent, puppet("agent -t --environment '#{tmp_environment}' --server #{master.hostname}"), :acceptable_exit_codes => 2)
         end
- 
+
         #Verify the file resource is created
         step 'Verify the file resource is created' do
           on(agent, "cat '#{tmp_file[agent_to_fqdn(agent)]}'").stdout do |file_result|

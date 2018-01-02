@@ -28,7 +28,7 @@ describe 'the new function' do
       $x = Integer.new(undef)
       notify { "one${x}word": }
     MANIFEST
-    )}.to raise_error(Puppet::Error, /expects an Integer value, got Undef/)
+    )}.to raise_error(Puppet::Error, /of type Undef cannot be converted to Integer/)
   end
 
   it 'errors if converted value is not assignable to the type' do
@@ -37,6 +37,26 @@ describe 'the new function' do
       notify { "one${x}word": }
     MANIFEST
     )}.to raise_error(Puppet::Error, /expects an Integer\[1, 5\] value, got Integer\[42, 42\]/)
+  end
+
+  it 'accepts and returns a second parameter that is an instance of the first, even when the type has no backing new_function' do
+    expect(eval_and_collect_notices(<<-MANIFEST)).to eql(%w(true true true true true true))
+      notice(undef == Undef(undef))
+
+      notice(default == Default(default))
+
+      notice(Any == Type(Any))
+
+      $b = Binary('YmluYXI=')
+      notice($b == Binary($b))
+
+      $t = Timestamp('2012-03-04T09:10:11.001')
+      notice($t == Timestamp($t))
+
+      type MyObject = Object[{attributes => {'type' => String}}]
+      $o = MyObject('Remote')
+      notice($o == MyObject($o))
+    MANIFEST
   end
 
   context 'when invoked on NotUndef' do
@@ -274,11 +294,11 @@ describe 'the new function' do
         '+ 0XGG'=> :error,
         '- 0XGG'=> :error,
       }.each do |str, result|
-        it "errors when given the non octal value compliant string '#{str}'" do
+        it "errors when given the non hexadecimal value compliant string '#{str}'" do
           expect{compile_to_catalog(<<-"MANIFEST"
             $x = Integer.new("#{str}", 8)
           MANIFEST
-        )}.to raise_error(Puppet::Error, /invalid value/)
+        )}.to raise_error(Puppet::Error, /The string '#{Regexp.escape(str)}' cannot be converted to Integer/)
         end
       end
     end
@@ -301,7 +321,7 @@ describe 'the new function' do
         '0b10'  => :error,
         '0B10'  => :error,
       }.each do |str, result|
-        it "errors when given the non octal value compliant string '#{str}'" do
+        it "errors when given the non binary value compliant string '#{str}'" do
           expect{compile_to_catalog(<<-"MANIFEST"
             $x = Integer.new("#{str}", 10)
           MANIFEST
@@ -332,28 +352,28 @@ describe 'the new function' do
         expect{compile_to_catalog(<<-"MANIFEST"
           $x = Integer.new('10', 3)
         MANIFEST
-      )}.to raise_error(Puppet::Error, /rejected: parameter 'radix'/m)
+      )}.to raise_error(Puppet::Error, /Illegal radix/)
       end
 
       it 'radix is wrong and when given in long form' do
         expect{compile_to_catalog(<<-"MANIFEST"
           $x = Integer.new({from =>'10', radix=>3})
         MANIFEST
-      )}.to raise_error(Puppet::Error, /rejected: parameter 'hash_args' entry 'radix'/m)
+      )}.to raise_error(Puppet::Error, /Illegal radix/)
       end
 
       it 'value is not numeric and given directly' do
         expect{compile_to_catalog(<<-"MANIFEST"
           $x = Integer.new('eleven', 10)
         MANIFEST
-      )}.to raise_error(Puppet::Error, /invalid value/)
+      )}.to raise_error(Puppet::Error, /The string 'eleven' cannot be converted to Integer/)
       end
 
       it 'value is not numeric and given in long form' do
         expect{compile_to_catalog(<<-"MANIFEST"
       $x = Integer.new({from => 'eleven', radix => 10})
         MANIFEST
-      )}.to raise_error(Puppet::Error, /invalid value/)
+      )}.to raise_error(Puppet::Error, /The string 'eleven' cannot be converted to Integer/)
       end
     end
   end
@@ -518,21 +538,21 @@ describe 'the new function' do
       expect{compile_to_catalog(<<-"MANIFEST"
         $x = Boolean.new('hello')
       MANIFEST
-      )}.to raise_error(Puppet::Error, /cannot be converted to Boolean/)
+      )}.to raise_error(Puppet::Error, /The string 'hello' cannot be converted to Boolean/)
     end
 
     it "does not convert an undef (as may be expected, but is handled as every other undef)" do
       expect{compile_to_catalog(<<-"MANIFEST"
         $x = Boolean.new(undef)
       MANIFEST
-      )}.to raise_error(Puppet::Error, /expects a Boolean value, got Undef/)
+      )}.to raise_error(Puppet::Error, /of type Undef cannot be converted to Boolean/)
     end
   end
 
   context 'when invoked on Array' do
     { []            => 'Notify[Array[Unit], []]',
       [true]        => 'Notify[Array[Boolean], [true]]',
-      {'a'=>true, 'b' => false}   => 'Notify[Array[Array[Scalar]], [[a, true], [b, false]]]',
+      {'a'=>true, 'b' => false}   => 'Notify[Array[Array[ScalarData]], [[a, true], [b, false]]]',
       'abc'         => 'Notify[Array[String[1, 1]], [a, b, c]]',
       3             => 'Notify[Array[Integer], [0, 1, 2]]',
     }.each do |input, result|
@@ -546,8 +566,8 @@ describe 'the new function' do
     end
 
     {
-      true          => /cannot be converted to Array/,
-      42.3          => /cannot be converted to Array/,
+      true          => /of type Boolean cannot be converted to Array/,
+      42.3          => /of type Float cannot be converted to Array/,
     }.each do |input, error_match|
       it "errors when given an non convertible #{input.inspect} when wrap is not given" do
         expect{compile_to_catalog(<<-"MANIFEST"
@@ -630,7 +650,7 @@ describe 'the new function' do
       end
     end
 
-    { true             => /cannot be converted to Hash/,
+    { true             => /Value of type Boolean cannot be converted to Hash/,
       [1,2,3]          => /odd number of arguments for Hash/,
     }.each do |input, error_match|
       it "errors when given an non convertible #{input.inspect}" do
@@ -638,6 +658,42 @@ describe 'the new function' do
           $x = Hash.new(#{input.inspect})
         MANIFEST
         )}.to raise_error(Puppet::Error, error_match)
+      end
+    end
+
+    context 'when using the optional "tree" format' do
+      it 'can convert a tree in flat form to a hash' do
+        expect(compile_to_catalog(<<-"MANIFEST"
+          $x = Hash.new([[[0], a],[[1,0], b],[[1,1], c],[[2,0], d]], tree)
+          notify { test: message => $x }
+        MANIFEST
+        )).to have_resource('Notify[test]').with_parameter(:message, { 0 => 'a', 1 => { 0 => 'b', 1=> 'c'}, 2 => {0 => 'd'} })
+      end
+
+      it 'preserves array in flattened tree but overwrites entries if they are present' do
+        expect(compile_to_catalog(<<-"MANIFEST"
+          $x = Hash.new([[[0], a],[[1,0], b],[[1,1], c],[[2], [overwritten, kept]], [[2,0], d]], tree)
+          notify { test: message => $x }
+        MANIFEST
+        )).to have_resource('Notify[test]').with_parameter(:message, { 0 => 'a', 1 => { 0 => 'b', 1=> 'c'}, 2 => ['d', 'kept'] })
+      end
+
+      it 'preserves hash in flattened tree but overwrites entries if they are present' do
+        expect(compile_to_catalog(<<-"MANIFEST"
+          $x = Hash.new([[[0], a],[[1,0], b],[[1,1], c],[[2], {0 => 0, kept => 1}], [[2,0], d]], tree)
+          notify { test: message => $x }
+        MANIFEST
+  )).to have_resource('Notify[test]').with_parameter(:message, { 0 => 'a', 1 => { 0 => 'b', 1=> 'c'}, 2 => {0=>'d', 'kept'=>1} })
+      end
+    end
+
+    context 'when using the optional "tree_hash" format' do
+      it 'turns array in flattened tree into hash' do
+        expect(compile_to_catalog(<<-"MANIFEST"
+          $x = Hash.new([[[0], a],[[1,0], b],[[1,1], c],[[2], [overwritten, kept]], [[2,0], d]], hash_tree)
+          notify { test: message => $x }
+        MANIFEST
+        )).to have_resource('Notify[test]').with_parameter(:message, { 0=>'a', 1=>{ 0=>'b', 1=>'c'}, 2=>{0=>'d', 1=>'kept'}})
       end
     end
   end
@@ -658,7 +714,7 @@ describe 'the new function' do
       expect{compile_to_catalog(<<-"MANIFEST"
         $x = Struct[{a => Integer[2]}].new({a => 0})
       MANIFEST
-      )}.to raise_error(Puppet::Error, /entry 'a' expects an Integer\[2, default\]/)
+      )}.to raise_error(Puppet::Error, /entry 'a' expects an Integer\[2\]/)
     end
   end
 
@@ -689,6 +745,16 @@ describe 'the new function' do
         notify { "${type($x, generalized)}, $x": }
       MANIFEST
       )).to have_resource('Notify[Boolean, true]')
+    end
+  end
+
+  context 'when invoked on a Type' do
+    it 'creates a Type from its string representation' do
+      expect(compile_to_catalog(<<-MANIFEST
+        $x = Type.new('Integer[3,10]')
+        notify { "${type($x)}": }
+      MANIFEST
+      )).to have_resource('Notify[Type[Integer[3, 10]]]')
     end
   end
 end

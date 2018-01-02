@@ -31,7 +31,11 @@ Puppet::Type.type(:package).provide :pip,
     packages = []
     pip_cmd = self.pip_cmd
     return [] unless pip_cmd
-    execpipe "#{pip_cmd} freeze" do |process|
+    command = [pip_cmd, 'freeze']
+    if Puppet::Util::Package.versioncmp(self.pip_version, '8.1.0') >= 0 # a >= b
+      command << '--all'
+    end
+    execpipe command do |process|
       process.collect do |line|
         next unless options = parse(line)
         packages << new(options)
@@ -40,7 +44,8 @@ Puppet::Type.type(:package).provide :pip,
 
     # Pip can also upgrade pip, but it's not listed in freeze so need to special case it
     # Pip list would also show pip installed version, but "pip list" doesn't exist for older versions of pip (E.G v1.0)
-    if version = self.pip_version
+    # Not needed when "pip freeze --all" is available
+    if Puppet::Util::Package.versioncmp(self.pip_version, '8.1.0') == -1 && version = self.pip_version
       packages << new({:ensure => version, :name => File.basename(pip_cmd), :provider => name})
     end
 
@@ -48,7 +53,11 @@ Puppet::Type.type(:package).provide :pip,
   end
 
   def self.cmd
-    ["pip", "pip-python"]
+    if Puppet.features.microsoft_windows?
+      ["pip.exe"]
+    else
+      ["pip", "pip-python"]
+    end
   end
 
   def self.pip_cmd

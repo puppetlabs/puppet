@@ -1,4 +1,9 @@
 test_name 'parser validate' do
+
+tag 'audit:medium',
+    'audit:unit'   # Parser validation should be core to ruby
+                   # and platform agnostic.
+
   require 'puppet/acceptance/environment_utils'
   extend Puppet::Acceptance::EnvironmentUtils
   require 'puppet/acceptance/temp_file_utils'
@@ -40,7 +45,7 @@ notice 42 =~ MyInteger
       on(agent, puppet("parser validate #{tmp_manifest}"), :accept_all_exit_codes => true) do |result|
         assert_equal(result.exit_code, 1, 'parser validate did not exit with 1 upon parse failure')
         expected = /Error: Could not parse for environment production: This Name has no effect\. A value was produced and then forgotten \(one or more preceding expressions may have the wrong form\) at .*_broken\.pp:1:1/
-        assert_match(expected, result.output, "parser validate did not output correctly: '#{result.output}'. expected: '#{expected.to_s}'")
+        assert_match(expected, result.output, "parser validate did not output correctly: '#{result.output}'. expected: '#{expected.to_s}'") unless agent['locale'] == 'ja'
       end
     end
 

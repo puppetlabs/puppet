@@ -30,6 +30,7 @@ class Puppet::Settings
   require 'puppet/settings/value_translator'
   require 'puppet/settings/environment_conf'
   require 'puppet/settings/server_list_setting'
+  require 'puppet/settings/certificate_revocation_setting'
 
   # local reference for convenience
   PuppetOptionParser = Puppet::Util::CommandLine::PuppetOptionParser
@@ -369,7 +370,7 @@ class Puppet::Settings
       begin
         setting.handle(self.value(setting.name))
       rescue InterpolationError => err
-        raise InterpolationError, err, err.backtrace unless options[:ignore_interpolation_dependency_errors]
+        raise InterpolationError, err.message, err.backtrace unless options[:ignore_interpolation_dependency_errors]
         #swallow. We're not concerned if we can't call hooks because dependencies don't exist yet
         #we'll get another chance after application defaults are initialized
       end
@@ -670,7 +671,8 @@ class Puppet::Settings
       :symbolic_enum   => SymbolicEnumSetting,
       :priority   => PrioritySetting,
       :autosign   => AutosignSetting,
-      :server_list => ServerListSetting
+      :server_list => ServerListSetting,
+      :certificate_revocation => CertificateRevocationSetting
   }
 
   # Create a new setting.  The value is passed in because it's used to determine

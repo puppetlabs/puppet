@@ -57,6 +57,23 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
     expect(result.content).to eq("1\r\n")
   end
 
+  it "should find file content of tasks in modules" do
+    path = tmpfile("task_file_content")
+    Dir.mkdir(path)
+
+    modpath = File.join(path, "myothermod")
+    FileUtils.mkdir_p(File.join(modpath, "tasks"))
+    file = File.join(modpath, "tasks", "mytask")
+    File.open(file, "wb") { |f| f.write "I'm a task" }
+
+    env = Puppet::Node::Environment.create(:foo, [path])
+    result = Puppet::FileServing::Content.indirection.find("tasks/myothermod/mytask", :environment => env)
+
+    expect(result).not_to be_nil
+    expect(result).to be_instance_of(Puppet::FileServing::Content)
+    expect(result.content).to eq("I'm a task")
+  end
+
   it "should find file content in files when node name expansions are used" do
     Puppet::FileSystem.stubs(:exist?).returns true
     Puppet::FileSystem.stubs(:exist?).with(Puppet[:fileserverconfig]).returns(true)
@@ -70,6 +87,7 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
 
     # Use a real mount, so the integration is a bit deeper.
     mount1 = Puppet::FileServing::Configuration::Mount::File.new("one")
+    mount1.stubs(:globalallow?).returns true
     mount1.stubs(:allowed?).returns true
     mount1.path = File.join(path, "%h")
 

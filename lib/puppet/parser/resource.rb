@@ -6,13 +6,11 @@ require 'puppet/resource'
 class Puppet::Parser::Resource < Puppet::Resource
   require 'puppet/parser/resource/param'
   require 'puppet/util/tagging'
-  require 'puppet/parser/yaml_trimmer'
 
   include Puppet::Util
   include Puppet::Util::MethodHelper
   include Puppet::Util::Errors
   include Puppet::Util::Logging
-  include Puppet::Parser::YamlTrimmer
 
   attr_accessor :source, :scope, :collector_id
   attr_accessor :virtual, :override, :translated, :catalog, :evaluated
@@ -60,7 +58,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     return unless self.class?
 
     unless stage = catalog.resource(:stage, self[:stage] || (scope && scope.resource && scope.resource[:stage]) || :main)
-      raise ArgumentError, "Could not find stage #{self[:stage] || :main} specified by #{self}"
+      raise ArgumentError, _("Could not find stage %{stage} specified by %{resource}") % { stage: self[:stage] || :main, resource: self }
     end
 
     self[:stage] ||= stage.title unless stage.title == :main
@@ -70,7 +68,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   # Retrieve the associated definition and evaluate it.
   def evaluate
     return if evaluated?
-    Puppet::Util::Profiler.profile("Evaluated resource #{self}", [:compiler, :evaluate_resource, self]) do
+    Puppet::Util::Profiler.profile(_("Evaluated resource %{res}") % { res: self }, [:compiler, :evaluate_resource, self]) do
       @evaluated = true
       if builtin_type?
         devfail "Cannot evaluate a builtin type (#{type})"
@@ -99,7 +97,6 @@ class Puppet::Parser::Resource < Puppet::Resource
   #
   def finish_evaluation
     return if @evaluation_finished
-    add_defaults
     add_scope_tags
     @evaluation_finished = true
   end
@@ -124,12 +121,24 @@ class Puppet::Parser::Resource < Puppet::Resource
     @finished
   end
 
-  def initialize(type, title, attributes)
-    raise ArgumentError, 'Resources require a hash as last argument' unless attributes.is_a? Hash
-    raise ArgumentError, 'Resources require a scope' unless attributes[:scope]
-    super
+  def initialize(type, title, attributes, with_defaults = true)
+    raise ArgumentError, _('Resources require a hash as last argument') unless attributes.is_a? Hash
+    raise ArgumentError, _('Resources require a scope') unless attributes[:scope]
+    super(type, title, attributes)
 
     @source ||= scope.source
+
+    if with_defaults
+      scope.lookupdefaults(self.type).each_pair do |name, param|
+        unless @parameters.include?(name)
+          self.debug "Adding default for #{name}"
+
+          param = param.dup
+          @parameters[name] = param
+          tag(*param.value) if param.name == :tag
+        end
+      end
+    end
   end
 
   # Is this resource modeling an isomorphic resource type?
@@ -156,8 +165,81 @@ class Puppet::Parser::Resource < Puppet::Resource
     # Test the resource scope, to make sure the resource is even allowed
     # to override.
     unless self.source.object_id == resource.source.object_id || resource.source.child_of?(self.source)
-      raise Puppet::ParseError.new("Only subclasses can override parameters", resource.file, resource.line)
+      raise Puppet::ParseError.new(_("Only subclasses can override parameters"), resource.file, resource.line)
     end
+
+    if evaluated?
+      strict = Puppet[:strict]
+      unless strict == :off
+        if strict == :error
+          msg = if file && file != ''
+                  if line
+                    _('Attempt to override an already evaluated resource, defined at %{file}:%{line}, with new values') % { file: file, line: line }
+                  else
+                    _('Attempt to override an already evaluated resource, defined in %{file}, with new values') % { file: file }
+                  end
+                else
+                  if line
+                    _('Attempt to override an already evaluated resource, defined at line %{line}, with new values') % { line: line }
+                  else
+                    _('Attempt to override an already evaluated resource with new values')
+                  end
+                end
+          raise Puppet::ParseError.new(msg, resource.file, resource.line)
+        else
+          msg = case
+                  # all 4 variables set
+                  when file && file != '' && line && resource.file && resource.file != '' && resource.line
+                    _('Attempt to override an already evaluated resource, defined at %{file}:%{line}, with new values at %{resource_file}:%{resource_line}') %
+                        { file: file, line: line, resource_file: resource.file, resource_line: resource.line }
+
+                  # 3 variables set
+                  when file && file != '' && line && resource.file && resource.file != ''
+                    _('Attempt to override an already evaluated resource, defined at %{file}:%{line}, with new values in %{resource_file}') %
+                        { file: file, line: line, resource_file: resource.file }
+                  when file && file != '' && line && resource.line
+                    _('Attempt to override an already evaluated resource, defined at %{file}:%{line}, with new values at line %{resource_line}') %
+                        { file: file, line: line, resource_line: resource.line }
+                  when file && file != '' && resource.file && resource.file != '' && resource.line
+                    _('Attempt to override an already evaluated resource, defined in %{file}, with new values at %{resource_file}:%{resource_line}') %
+                        { file: file, resource_file: resource.file, resource_line: resource.line }
+                  when line && resource.file && resource.file != '' && resource.line
+                    _('Attempt to override an already evaluated resource, defined at line %{line}, with new values at %{resource_file}:%{resource_line}') %
+                        { line: line, resource_file: resource.file, resource_line: resource.line }
+
+                  # 2 variables set
+                  when file && file != '' && line
+                    _('Attempt to override an already evaluated resource, defined at %{file}:%{line}, with new values') % { file: file, line: line }
+                  when file && file != '' && resource.file && resource.file != ''
+                    _('Attempt to override an already evaluated resource, defined in %{file}, with new values in %{resource_file}') % { file: file, resource_file: resource.file }
+                  when file && file != '' && resource.line
+                    _('Attempt to override an already evaluated resource, defined in %{file}, with new values at line %{resource_line}') % { file: file, resource_line: resource.line }
+                  when line && resource.file && resource.file != ''
+                    _('Attempt to override an already evaluated resource, defined at line %{line}, with new values in %{resource_file}') % { line: line, resource_file: resource.file }
+                  when line && resource.line
+                    _('Attempt to override an already evaluated resource, defined at line %{line}, with new values at line %{resource_line}') % { line: line, resource_line: resource.line }
+                  when resource.file && resource.file != '' && resource.line
+                    _('Attempt to override an already evaluated resource with new values at %{resource_file}:%{resource_line}') % { resource_file: resource.file, resource_line: resource.line }
+
+                  # 1 variable set
+                  when file && file != ''
+                    _('Attempt to override an already evaluated resource, defined in %{file}, with new values') % { file: file }
+                  when line
+                    _('Attempt to override an already evaluated resource, defined at line %{line}, with new values') % { line: line }
+                  when resource.file && resource.file != ''
+                    _('Attempt to override an already evaluated resource with new values in %{resource_file}') % { resource_file: resource.file }
+                  when resource.line
+                    _('Attempt to override an already evaluated resource with new values at line %{resource_line}') % { resource_line: resource.line }
+
+                  else
+                    # no variables set
+                    _('Attempt to override an already evaluated resource with new values')
+                end
+          Puppet.warning(msg)
+        end
+      end
+    end
+
     # Some of these might fail, but they'll fail in the way we want.
     resource.parameters.each do |name, param|
       override_parameter(param)
@@ -190,7 +272,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   alias []= set_parameter
 
   def to_hash
-    @parameters.reduce({}) do |result, (_, param)|
+    parse_title.merge(@parameters.reduce({}) do |result, (_, param)|
       value = param.value
       value = (:undef == value) ? nil : value
 
@@ -206,7 +288,7 @@ class Puppet::Parser::Resource < Puppet::Resource
         end
       end
       result
-    end
+    end)
   end
 
   # Convert this resource to a RAL resource.
@@ -242,18 +324,18 @@ class Puppet::Parser::Resource < Puppet::Resource
     map = {}
     [ self[:consume] ].flatten.map do |ref|
       # Assert that the ref really is a resource reference
-      raise Puppet::Error, "Invalid consume in #{self.ref}: #{ref} is not a resource" unless ref.is_a?(Puppet::Resource)
+      raise Puppet::Error, _("Invalid consume in %{value0}: %{ref} is not a resource") % { value0: self.ref, ref: ref } unless ref.is_a?(Puppet::Resource)
 
       # Resolve references
       t = ref.type
       t = Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_resource_type(scope, t) unless t == 'class' || t == 'node'
       cap = catalog.resource(t, ref.title)
       if cap.nil?
-        raise "Resource #{ref} could not be found; it might not have been produced yet"
+        raise Puppet::Error, _("Resource %{ref} could not be found; it might not have been produced yet") % { ref: ref }
       end
 
       # Ensure that the found resource is a capability resource
-      raise Puppet::Error, "Invalid consume in #{ref}: #{cap} is not a capability resource" unless cap.resource_type.is_capability?
+      raise Puppet::Error, _("Invalid consume in %{ref}: %{cap} is not a capability resource") % { ref: ref, cap: cap } unless cap.resource_type.is_capability?
       cap
     end.each do |cns|
       # Establish mappings
@@ -262,7 +344,7 @@ class Puppet::Parser::Resource < Puppet::Resource
       end
       # @todo lutter 2015-08-03: catch this earlier, can we do this during
       # static analysis ?
-      raise "Resource #{self} tries to consume #{cns} but no 'consumes' mapping exists for #{self.resource_type} and #{cns.type}" unless blueprint
+      raise _("Resource %{res} tries to consume %{cns} but no 'consumes' mapping exists for %{resource_type} and %{cns_type}") % { res: self, cns: cns, resource_type: self.resource_type, cns_type: cns.type } unless blueprint
 
       # setup scope that has, for each attr of cns, a binding to cns[attr]
       scope.with_global_scope do |global_scope|
@@ -281,7 +363,7 @@ class Puppet::Parser::Resource < Puppet::Resource
             # @todo lutter 2015-07-01: this should be caught by the checker
             # much earlier. We consume several capres, at least two of which
             # want to map to the same parameter (PUP-5080)
-            raise "Attempt to reassign attribute '#{name}' in '#{self}' caused by multiple consumed mappings to the same attribute" if map[name]
+            raise _("Attempt to reassign attribute '%{name}' in '%{resource}' caused by multiple consumed mappings to the same attribute") % { name: name, resource: self } if map[name]
             map[name] = value
           end
         end
@@ -300,17 +382,6 @@ class Puppet::Parser::Resource < Puppet::Resource
   end
 
   private
-
-  # Add default values from our definition.
-  def add_defaults
-    scope.lookupdefaults(self.type).each do |name, param|
-      unless @parameters.include?(name)
-        self.debug "Adding default for #{name}"
-
-        @parameters[name] = param.dup
-      end
-    end
-  end
 
   def add_scope_tags
     scope_resource = scope.resource
@@ -334,17 +405,48 @@ class Puppet::Parser::Resource < Puppet::Resource
     # than replacing an existing one.
     (set_parameter(param) and return) unless current = @parameters[param.name]
 
+    # Parameter is already set - if overriding with a default - simply ignore the setting of the default value
+    return if scope.is_default?(type, param.name, param.value)
+
     # The parameter is already set.  Fail if they're not allowed to override it.
-    unless param.source.child_of?(current.source)
-      msg = "Parameter '#{param.name}' is already set on #{self}"
-      msg += " by #{current.source}" if current.source.to_s != ""
-      if current.file or current.line
-        fields = []
-        fields << current.file if current.file
-        fields << current.line.to_s if current.line
-        msg += " at #{fields.join(":")}"
-      end
-      msg += "; cannot redefine"
+    unless param.source.child_of?(current.source) || param.source.equal?(current.source) && scope.is_default?(type, param.name, current.value)
+      msg = if current.source.to_s == ''
+              if current.file && current.file != ''
+                if current.line
+                  _("Parameter '%{name}' is already set on %{resource} at %{file}:%{line}; cannot redefine") %
+                      { name: param.name, resource: ref, file: current.file, line: current.line }
+                else
+                  _("Parameter '%{name}' is already set on %{resource} in %{file}; cannot redefine") %
+                      { name: param.name, resource: ref, file: current.file }
+                end
+              else
+                if current.line
+                  _("Parameter '%{name}' is already set on %{resource} at line %{line}; cannot redefine") %
+                      { name: param.name, resource: ref, line: current.line }
+                else
+                  _("Parameter '%{name}' is already set on %{resource}; cannot redefine") %
+                      { name: param.name, resource: ref }
+                end
+              end
+            else
+              if current.file && current.file != ''
+                if current.line
+                  _("Parameter '%{name}' is already set on %{resource} by %{source} at %{file}:%{line}; cannot redefine") %
+                      { name: param.name, resource: ref, source: current.source.to_s, file: current.file, line: current.line }
+                else
+                  _("Parameter '%{name}' is already set on %{resource} by %{source} in %{file}; cannot redefine") %
+                      { name: param.name, resource: ref, source: current.source.to_s, file: current.file }
+                end
+              else
+                if current.line
+                  _("Parameter '%{name}' is already set on %{resource} by %{source} at line %{line}; cannot redefine") %
+                      { name: param.name, resource: ref, source: current.source.to_s, line: current.line }
+                else
+                  _("Parameter '%{name}' is already set on %{resource} by %{source}; cannot redefine") %
+                      { name: param.name, resource: ref, source: current.source.to_s }
+                end
+              end
+            end
       raise Puppet::ParseError.new(msg, param.file, param.line)
     end
 
@@ -380,7 +482,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   def extract_parameters(params)
     params.each do |param|
       # Don't set the same parameter twice
-      self.fail Puppet::ParseError, "Duplicate parameter '#{param.name}' for on #{self}" if @parameters[param.name]
+      self.fail Puppet::ParseError, _("Duplicate parameter '%{param}' for on %{resource}") % { param: param.name, resource: self } if @parameters[param.name]
 
       set_parameter(param)
     end

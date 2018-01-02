@@ -2,6 +2,10 @@ test_name "puppet module install (with version)"
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
+tag 'audit:low',       # Install via pmt is not the primary support workflow
+    'audit:acceptance',
+    'audit:refactor'   # Wrap steps in blocks in accordance with Beaker style guide
+
 confine :except, :platform => /centos-4|el-4/ # PUP-5226
 
 module_author = "pmtacceptance"

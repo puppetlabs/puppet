@@ -7,6 +7,46 @@ describe provider_class do
   include PuppetSpec::Fixtures
   it_behaves_like 'RHEL package provider', provider_class, 'yum'
 
+  describe "when supplied the source param" do
+    let(:name) { 'baz' }
+
+    let(:resource) do
+      Puppet::Type.type(:package).new(
+        :name => name,
+        :provider => 'yum',
+      )
+    end
+
+    let(:provider) do
+      provider = provider_class.new
+      provider.resource = resource
+      provider
+    end
+
+    before { provider_class.stubs(:command).with(:cmd).returns("/usr/bin/yum") }
+
+    context "when installing" do
+      it "should use the supplied source as the explicit path to a package to install" do
+        resource[:ensure] = :present
+        resource[:source] = "/foo/bar/baz-1.1.0.rpm"
+        provider.expects(:execute).with(["/usr/bin/yum", "-d", "0", "-e", "0", "-y", :install, "/foo/bar/baz-1.1.0.rpm"])
+        provider.install
+      end
+    end
+
+    context "when ensuring a specific version" do
+      it "should use the suppplied source as the explicit path to the package to update" do
+        # The first query response informs yum provider that package 1.1.0 is
+        # already installed, and the second that it's been upgraded
+        provider.expects(:query).twice.returns({:ensure => "1.1.0"}, {:ensure => "1.2.0"})
+        resource[:ensure] = "1.2.0"
+        resource[:source] = "http://foo.repo.com/baz-1.2.0.rpm"
+        provider.expects(:execute).with(["/usr/bin/yum", "-d", "0", "-e", "0", "-y", 'update',  "http://foo.repo.com/baz-1.2.0.rpm"])
+        provider.install
+      end
+    end
+  end
+
   describe "parsing the output of check-update" do
     describe "with no multiline entries" do
       let(:check_update) { File.read(my_fixture("yum-check-update-simple.txt")) }
@@ -23,6 +63,7 @@ describe provider_class do
         expect(output['gawk.i686']).to eq([{:name => 'gawk', :epoch => '0', :version => '4.1.0', :release => '3.fc20', :arch => 'i686'}])
         expect(output['dhclient.i686']).to eq([{:name => 'dhclient', :epoch => '12', :version => '4.1.1', :release => '38.P1.fc20', :arch => 'i686'}])
         expect(output['selinux-policy.noarch']).to eq([{:name => 'selinux-policy', :epoch => '0', :version => '3.12.1', :release => '163.fc20', :arch => 'noarch'}])
+        expect(output['java-1.8.0-openjdk.x86_64']).to eq([{:name => 'java-1.8.0-openjdk', :epoch => '1', :version => '1.8.0.131', :release => '2.b11.el7_3', :arch => 'x86_64'}])
       end
     end
     describe "with multiline entries" do
@@ -59,6 +100,13 @@ describe provider_class do
       end
       it "includes updates before 'Update'" do
         expect(output).to include("yum-plugin-fastestmirror.noarch")
+      end
+    end
+    describe "with improper package names in output" do
+      it "raises an exception parsing package name" do
+        expect {
+          described_class.update_to_hash('badpackagename', '1')
+        }.to raise_exception(Exception, /Failed to parse/)
       end
     end
     describe "with trailing plugin output" do

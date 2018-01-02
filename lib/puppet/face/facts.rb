@@ -3,9 +3,9 @@ require 'puppet/node/facts'
 
 Puppet::Indirector::Face.define(:facts, '0.0.1') do
   copyright "Puppet Inc.", 2011
-  license   "Apache 2 license; see COPYING"
+  license   _("Apache 2 license; see COPYING")
 
-  summary "Retrieve and store facts."
+  summary _("Retrieve and store facts.")
   description <<-'EOT'
     This subcommand manages facts, which are collections of normalized system
     information used by Puppet. It can read facts directly from the local system
@@ -13,8 +13,8 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
   EOT
 
   find = get_action(:find)
-  find.summary "Retrieve a node's facts."
-  find.arguments "[<node_certname>]"
+  find.summary _("Retrieve a node's facts.")
+  find.arguments _("[<node_certname>]")
   find.returns <<-'EOT'
     A hash containing some metadata and (under the "values" key) the set
     of facts for the requested node. When used from the Ruby API: A

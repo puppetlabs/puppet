@@ -126,6 +126,14 @@ describe "the Puppet::Pops::Serialization when using #{packer_module.name}" do
       expect(val2).to be_a(Types::PBinaryType::Binary)
       expect(val2).to eql(val)
     end
+
+    it 'URI' do
+      val = URI('http://bob:ewing@dallas.example.com:8080/oil/baron?crude=cash#leftovers')
+      write(val)
+      val2 = read
+      expect(val2).to be_a(URI)
+      expect(val2).to eql(val)
+    end
   end
 
   context 'will fail on attempts to write' do

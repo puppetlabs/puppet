@@ -101,6 +101,9 @@ describe Puppet::Type.type(:package).provider(:pkg) do
     end
 
     context ":latest" do
+      before do
+        described_class.expects(:pkg).with(:refresh)
+      end
       it "should work correctly for ensure latest on solaris 11 (UFOXI) when there are no further packages to install" do
         described_class.expects(:pkg).with(:list,'-Hvn','dummy').returns File.read(my_fixture('dummy_solaris11.installed'))
         expect(provider.latest).to eq('1.0.6,5.11-0.175.0.0.0.2.537:20131230T130000Z')

@@ -15,7 +15,7 @@ describe Puppet::Transaction::Report do
 
       Facter.stubs(:value).returns "host.domain.com"
 
-      report = Puppet::Transaction::Report.new("apply")
+      report = Puppet::Transaction::Report.new
 
       terminus.expects(:process).with(report)
 
@@ -31,7 +31,7 @@ describe Puppet::Transaction::Report do
 
       log = Puppet::Util::Log.new(:level => :info, :message => "foo")
 
-      report = Puppet::Transaction::Report.new("apply")
+      report = Puppet::Transaction::Report.new
       report.add_resource_status(status)
       report << log
 

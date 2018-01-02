@@ -2,6 +2,10 @@ test_name "Agent should use environment given by ENC"
 require 'puppet/acceptance/classifier_utils.rb'
 extend Puppet::Acceptance::ClassifierUtils
 
+tag 'audit:medium',
+    'audit:integration',
+    'server'
+
 testdir = create_tmpdir_for_user master, 'use_enc_env'
 
 if master.is_pe?

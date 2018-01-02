@@ -7,7 +7,7 @@ matrix:
 
 # Ruby versions under test
 platform:
-  - Ruby23-x64
+  - Ruby24-x64
   - Ruby21-x64
 
 # Note that locales are mainly code page changes and are not the FULL set of localization
@@ -46,6 +46,9 @@ test_script:
       $Env:PATH = "C:\${Env:PLATFORM}\bin;${Env:PATH}"
       $Env:LOG_SPEC_ORDER = 'true'
       Get-ChildItem Env: | % { Write-Output "$($_.Key): $($_.Value)"  }
+      # list current OpenSSL install
+      gem list openssl
+      ruby -ropenssl -e 'puts \"OpenSSL Version - #{OpenSSL::OPENSSL_VERSION}\"; puts \"OpenSSL Library Version - #{OpenSSL::OPENSSL_LIBRARY_VERSION}\"'
       bundle install --jobs 4 --retry 2 --without development extra
       Get-Content Gemfile.lock
       ruby -v

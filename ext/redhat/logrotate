@@ -15,7 +15,7 @@
   nocreate
   sharedscripts
   postrotate
-   ([ -x /etc/init.d/puppet ] && /etc/init.d/puppet reload > /dev/null 2>&1) ||
+   ([ -x /etc/init.d/puppet ] && /etc/init.d/puppet rotate > /dev/null 2>&1) ||
     ([ -x /usr/bin/systemctl ] && /usr/bin/systemctl kill -s USR2 puppet.service > /dev/null 2>&1) || true
   endscript
 }

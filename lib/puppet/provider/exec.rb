@@ -6,8 +6,6 @@ class Puppet::Provider::Exec < Puppet::Provider
 
   def run(command, check = false)
     output = nil
-    status = nil
-    dir = nil
     sensitive = resource.parameters[:command].sensitive
 
     checkexe(command)
@@ -17,7 +15,7 @@ class Puppet::Provider::Exec < Puppet::Provider
         if check
           dir = nil
         else
-          self.fail "Working directory '#{dir}' does not exist"
+          self.fail _("Working directory '%{dir}' does not exist") % { dir: dir }
         end
       end
     end
@@ -39,11 +37,11 @@ class Puppet::Provider::Exec < Puppet::Provider
               env_name = $1
               value = $2
               if environment.include?(env_name) || environment.include?(env_name.to_sym)
-                warning "Overriding environment setting '#{env_name}' with '#{value}'"
+                warning _("Overriding environment setting '%{env_name}' with '%{value}'") % { env_name: env_name, value: value }
               end
               environment[env_name] = value
             else
-              warning "Cannot understand environment setting #{setting.inspect}"
+              warning _("Cannot understand environment setting %{setting}") % { setting: setting.inspect }
             end
           end
         end
@@ -93,6 +91,6 @@ class Puppet::Provider::Exec < Puppet::Provider
   def validatecmd(command)
     exe = extractexe(command)
     # if we're not fully qualified, require a path
-    self.fail "'#{command}' is not qualified and no path was specified. Please qualify the command or specify a path." if !absolute_path?(exe) and resource[:path].nil?
+    self.fail _("'%{command}' is not qualified and no path was specified. Please qualify the command or specify a path.") % { command: command } if !absolute_path?(exe) and resource[:path].nil?
   end
 end

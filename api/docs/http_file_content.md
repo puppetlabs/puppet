@@ -16,6 +16,7 @@ The endpoint path includes a `:mount_point` which can be one of the following ty
 * `modules/<MODULE>` --- a semi-magical mount point which allows access to the `files` subdirectory of `<MODULE>` --- see [the docs on file serving](https://docs.puppet.com/puppet/latest/reference/file_serving.html).
 * `plugins` --- a highly magical mount point which merges the `lib`  directory of every module together. Used for syncing plugins; not intended for general consumption. Per-module sub-paths can not be specified.
 * `pluginfacts` --- a highly magical mount point which merges the `facts.d` directory of every module together. Used for syncing external facts; not intended for general consumption. Per-module sub-paths can not be specified.
+* `tasks/<MODULE>` --- a semi-magical mount point which allows access to files in the `tasks` subdirectory of `<MODULE>` --- see the [the docs on file serving](https://docs.puppet.com/puppet/latest/reference/file_serving.html).
 
 `:name` is the path to the file within the `:mount_point` that is requested.
 
@@ -25,7 +26,7 @@ GET
 
 ### Supported Response Formats
 
-binary (the raw binary content)
+`application/octet-stream`
 
 ### Parameters
 
@@ -38,7 +39,7 @@ None
 #### File found
 
     GET /puppet/v3/file_content/modules/example/my_file?environment=env
-    Accept: binary
+    Accept: application/octet-stream
 
     HTTP/1.1 200 OK
     Content-Type: application/octet-stream
@@ -50,7 +51,7 @@ None
 #### File not found
 
     GET /puppet/v3/file_content/modules/example/not_found?environment=env
-    Accept: binary
+    Accept: application/octet-stream
 
     HTTP/1.1 404 Not Found
     Content-Type: text/plain

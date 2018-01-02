@@ -8,6 +8,10 @@ disable_pe_enterprise_mcollective_agent_classes
 test_name "autosign command and csr attributes behavior (#7243,#7244)" do
   confine :except, :platform => /^cisco_/ # See PUP-5827
 
+  tag 'audit:high',        # cert/ca core behavior
+      'audit:integration',
+      'server'             # Ruby implementation is deprecated
+
   def assert_key_generated(name)
     assert_match(/Creating a new SSL key for #{name}/, stdout, "Expected agent to create a new SSL key for autosigning")
   end
@@ -65,8 +69,10 @@ EOF
                   "--waitforcert 0",
                   "--ssldir", "'#{testdirs[agent]}/ssldir-autosign'",
                   "--certname #{certname}"), :acceptable_exit_codes => [0,2])
-        assert_key_generated(agent)
-        assert_match(/Caching certificate for #{agent}/, stdout, "Expected certificate to be autosigned")
+        unless agent['locale'] == 'ja'
+          assert_key_generated(agent)
+          assert_match(/Caching certificate for #{agent}/, stdout, "Expected certificate to be autosigned")
+        end
       end
     end
   end
@@ -104,8 +110,10 @@ EOF
                         "--waitforcert 0",
                         "--ssldir", "'#{testdirs[agent]}/ssldir-reject'",
                         "--certname #{certname}"), :acceptable_exit_codes => [1])
-        assert_key_generated(agent)
-        assert_match(/no certificate found/, stdout, "Expected certificate to not be autosigned")
+        unless agent['locale'] == 'ja'
+          assert_key_generated(agent)
+          assert_match(/no certificate found/, stdout, "Expected certificate to not be autosigned")
+        end
       end
     end
   end
@@ -172,7 +180,7 @@ custom_attributes:
                          "--ssldir", "'#{testdirs[agent]}/ssldir-attrs'",
                          "--csr_attributes '#{agent_csr_attributes[agent]}'",
                          "--certname #{certname}"), :acceptable_exit_codes => [0,2])
-        assert_key_generated(agent)
+        assert_key_generated(agent) unless agent['locale'] == 'ja'
       end
     end
   end

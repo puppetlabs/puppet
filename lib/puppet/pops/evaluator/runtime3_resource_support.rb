@@ -60,7 +60,7 @@ module Runtime3ResourceSupport
         # Classes are evaluated immediately
         scope.compiler.evaluate_classes([resource_title], scope, false) if resolved_type == CLASS_STRING
 
-        # Turn the resource into a PType (a reference to a resource type)
+        # Turn the resource into a PTypeType (a reference to a resource type)
         # weed out nil's
         resource_to_ptype(resource)
     end

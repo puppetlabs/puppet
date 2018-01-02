@@ -42,36 +42,6 @@ describe "Defaults" do
     end
   end
 
-  describe 'cfacter' do
-
-    before :each do
-      Facter.reset
-    end
-
-    it 'should default to false' do
-      expect(Puppet.settings[:cfacter]).to be_falsey
-    end
-
-    it 'should raise an error if cfacter is not installed' do
-      Puppet.features.stubs(:cfacter?).returns false
-      expect { Puppet.settings[:cfacter] = true }.to raise_exception ArgumentError, 'cfacter version 0.2.0 or later is not installed.'
-    end
-
-    it 'should raise an error if facter has already evaluated facts' do
-      Facter[:facterversion]
-      Puppet.features.stubs(:cfacter?).returns true
-      expect { Puppet.settings[:cfacter] = true }.to raise_exception ArgumentError, 'facter has already evaluated facts.'
-    end
-
-    it 'should initialize cfacter when set to true' do
-      Puppet.features.stubs(:cfacter?).returns true
-      CFacter = mock
-      CFacter.stubs(:initialize)
-      Puppet.settings[:cfacter] = true
-    end
-
-  end
-
   describe 'strict' do
     it 'should accept the valid value :off' do
       expect {Puppet.settings[:strict] = 'off'}.to_not raise_exception
@@ -91,12 +61,12 @@ describe "Defaults" do
   end
 
   describe 'supported_checksum_types' do
-    it 'should default to md5,sha256' do
-      expect(Puppet.settings[:supported_checksum_types]).to eq(['md5', 'sha256'])
+    it 'should default to md5,sha256,sha512,sha384,sha224' do
+      expect(Puppet.settings[:supported_checksum_types]).to eq(['md5', 'sha256', 'sha384', 'sha512', 'sha224'])
     end
 
     it 'should raise an error on an unsupported checksum type' do
-      expect { Puppet.settings[:supported_checksum_types] = ['md5', 'foo'] }.to raise_exception ArgumentError, 'Unrecognized checksum types ["foo"] are not supported. Valid values are ["md5", "md5lite", "sha256", "sha256lite", "sha1", "sha1lite", "mtime", "ctime"].'
+      expect { Puppet.settings[:supported_checksum_types] = ['md5', 'foo'] }.to raise_exception ArgumentError, 'Unrecognized checksum types ["foo"] are not supported. Valid values are ["md5", "md5lite", "sha256", "sha256lite", "sha384", "sha512", "sha224", "sha1", "sha1lite", "mtime", "ctime"].'
     end
 
     it 'should not raise an error on setting a valid list of checksum types' do

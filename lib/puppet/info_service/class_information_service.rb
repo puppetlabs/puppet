@@ -15,7 +15,7 @@ class Puppet::InfoService::ClassInformationService
     # feature flags in effect.
 
     unless env_file_hash.is_a?(Hash)
-      raise ArgumentError, 'Given argument must be a Hash'
+      raise ArgumentError, _('Given argument must be a Hash')
     end
 
     result = {}
@@ -52,14 +52,14 @@ class Puppet::InfoService::ClassInformationService
   end
 
   def parse_file(f)
-    return {:error => "The file #{f} does not exist"} unless Puppet::FileSystem.exist?(f)
+    return {:error => _("The file %{f} does not exist") % { f: f }} unless Puppet::FileSystem.exist?(f)
 
     begin
       parse_result = @parser.parse_file(f)
       {:classes =>
         parse_result.definitions.select {|d| d.is_a?(Puppet::Pops::Model::HostClassDefinition)}.map do |d|
           {:name   => d.name,
-           :params => params = d.parameters.map {|p| extract_param(p) }
+           :params => d.parameters.map {|p| extract_param(p) }
           }
         end
       }
@@ -105,7 +105,6 @@ class Puppet::InfoService::ClassInformationService
 
   # Extracts the source for the expression
   def extract_value_source(value_expr)
-    position = Puppet::Pops::Adapters::SourcePosAdapter.adapt(value_expr)
-    position.extract_tree_text
+    value_expr.locator.extract_tree_text(value_expr)
   end
 end

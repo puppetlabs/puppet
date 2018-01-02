@@ -14,6 +14,7 @@ require 'puppet/util'
 require "puppet/util/rubygems"
 require "puppet/util/limits"
 require 'puppet/util/colors'
+require 'puppet/gettext/module_translations'
 
 module Puppet
   module Util
@@ -63,7 +64,7 @@ module Puppet
       #
       # @return [void]
       def execute
-        Puppet::Util.exit_on_fail("initialize global default settings") do
+        Puppet::Util.exit_on_fail(_("Could not initialize global default settings")) do
           Puppet.initialize_settings(args)
         end
 
@@ -122,6 +123,10 @@ module Puppet
                 $LOAD_PATH << dir unless $LOAD_PATH.include?(dir)
               end
 
+              Puppet::GettextConfig.reset_text_domain('cli')
+              Puppet::ModuleTranslations.load_from_modulepath(configured_environment.modules)
+              Puppet::ModuleTranslations.load_from_vardir(Puppet[:vardir])
+
               # Puppet requires Facter, which initializes its lookup paths. Reset Facter to
               # pickup the new $LOAD_PATH.
               Facter.reset
@@ -159,10 +164,10 @@ module Puppet
             puts Puppet.version
           elsif @command_line.subcommand_name.nil? && args.count > 0
             # If the subcommand is truly nil and there is an arg, it's an option; print out the invalid option message
-            puts colorize(:hred, "Error: Could not parse application options: invalid option: #{args[0]}")
+            puts colorize(:hred, _("Error: Could not parse application options: invalid option: %{opt}") % { opt: args[0] })
             exit 1
           else
-            puts "See 'puppet help' for help on available puppet subcommands"
+            puts _("See 'puppet help' for help on available puppet subcommands")
           end
         end
       end
@@ -175,7 +180,7 @@ module Puppet
         end
 
         def run
-          puts colorize(:hred, "Error: Unknown Puppet subcommand '#{@subcommand_name}'")
+          puts colorize(:hred, _("Error: Unknown Puppet subcommand '%{cmd}'") % { cmd: @subcommand_name })
           super
           exit 1
         end

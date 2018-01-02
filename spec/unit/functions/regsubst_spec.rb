@@ -30,7 +30,7 @@ describe 'the regsubst function' do
     end
 
     it 'should raise an Error if given a bad flag' do
-      expect { regsubst('foo', 'bar', 'gazonk', 'X') }.to raise_error(/parameter 'flags' expects a match for Pattern\[\/\^\[GEIM\]\*\$\/\], got 'X'/)
+      expect { regsubst('foo', 'bar', 'gazonk', 'X') }.to raise_error(/parameter 'flags' expects an undef value or a match for Pattern\[\/\^\[GEIM\]\*\$\/\], got 'X'/)
     end
 
     it 'should raise an Error if given a bad encoding' do

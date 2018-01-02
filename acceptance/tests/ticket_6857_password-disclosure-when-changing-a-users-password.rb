@@ -1,5 +1,9 @@
 test_name "#6857: redact password hashes when applying in noop mode"
 
+tag 'audit:medium',
+    'audit:refactor',    # Use block style `test_name`
+    'audit:integration'
+
 require 'puppet/acceptance/common_utils'
 extend Puppet::Acceptance::CommandUtils
 
@@ -40,7 +44,9 @@ user { '#{username}':
 }
 MANIFEST
 
-apply_manifest_on(hosts_to_test, adduser_manifest )
-apply_manifest_on(hosts_to_test, changepass_manifest ) do |result|
-  assert_match( /current_value \[old password hash redacted\], should be \[new password hash redacted\]/ , "#{result.host}: #{result.stdout}" )
+hosts_to_test.each do |host|
+  apply_manifest_on(host, adduser_manifest )
+  apply_manifest_on(host, changepass_manifest ) do |result|
+    assert_match( /current_value \[old password hash redacted\], should be \[new password hash redacted\]/ , "#{result.host}: #{result.stdout}" ) unless host['locale'] == 'ja'
+  end
 end

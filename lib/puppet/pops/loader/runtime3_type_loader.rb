@@ -13,6 +13,11 @@ class Runtime3TypeLoader < BaseLoader
     @resource_3x_loader = env_path.nil? ? nil : ModuleLoaders.pcore_resource_type_loader_from(parent_loader, loaders, env_path)
   end
 
+  def discover(type, name_authority = Pcore::RUNTIME_NAME_AUTHORITY, &block)
+    # TODO: Use generated index of all known types (requires separate utility).
+    parent.discover(type, name_authority, &block)
+  end
+
   def to_s()
     "(Runtime3TypeLoader '#{loader_name()}')"
   end

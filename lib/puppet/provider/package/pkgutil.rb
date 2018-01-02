@@ -15,8 +15,8 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
 
   def self.healthcheck()
     unless Puppet::FileSystem.exist?("/var/opt/csw/pkgutil/admin")
-      Puppet.notice "It is highly recommended you create '/var/opt/csw/pkgutil/admin'."
-      Puppet.notice "See /var/opt/csw/pkgutil"
+      Puppet.notice _("It is highly recommended you create '/var/opt/csw/pkgutil/admin'.")
+      Puppet.notice _("See /var/opt/csw/pkgutil")
     end
 
     correct_wgetopts = false
@@ -26,7 +26,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
       end
     end
     if ! correct_wgetopts
-      Puppet.notice "It is highly recommended that you set 'wgetopts=-nv' in your pkgutil.conf."
+      Puppet.notice _("It is highly recommended that you set 'wgetopts=-nv' in your pkgutil.conf.")
     end
   end
 
@@ -70,7 +70,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
       if line =~ /\s*(\S+)\s+(\S+)\s+(.*)/
         { :alias => $1, :name => $2, :avail => $3 }
       else
-        Puppet.warning "Cannot match %s" % line
+        Puppet.warning _("Cannot match %{line}") % { line: line }
       end
     end.reject { |h| h.nil? }
   end
@@ -88,7 +88,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
     output = output.split("\n")
 
     if output[-1] == "Not in catalog"
-      Puppet.warning "Package not in pkgutil catalog: %s" % hash[:justme]
+      Puppet.warning _("Package not in pkgutil catalog: %{package}") % { package: hash[:justme] }
       return nil
     end
 
@@ -142,7 +142,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
 
       return hash
     else
-      Puppet.warning "Cannot match %s" % line
+      Puppet.warning _("Cannot match %{line}") % { line: line }
       return nil
     end
   end

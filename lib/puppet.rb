@@ -1,7 +1,7 @@
 require 'puppet/version'
 
 if Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new("1.9.3")
-  raise LoadError, "Puppet #{Puppet.version} requires ruby 1.9.3 or greater."
+  raise LoadError, _("Puppet %{version} requires ruby 1.9.3 or greater.") % { version: Puppet.version }
 end
 
 Puppet::OLDEST_RECOMMENDED_RUBY_VERSION = '2.1.0'
@@ -17,54 +17,11 @@ require 'puppet/settings'
 require 'puppet/util/feature'
 require 'puppet/util/suidmanager'
 require 'puppet/util/run_mode'
+# PSON is deprecated, use JSON instead
 require 'puppet/external/pson/common'
 require 'puppet/external/pson/version'
 require 'puppet/external/pson/pure'
-
-# When running within puppetserver, the gettext-setup gem might not be available, so
-# we need to skip initializing i18n functionality and stub out methods normally
-# supplied by gettext-setup. Can be removed in Puppet 5. See PUP-7116.
-begin
-  require 'gettext-setup'
-  require 'locale'
-
-  # e.g. ~/code/puppet/locales. Also when running as a gem.
-  local_locale_path = File.absolute_path('../locales', File.dirname(__FILE__))
-  # e.g. /opt/puppetlabs/puppet/share/locale
-  posix_system_locale_path = File.absolute_path('../../../share/locale', File.dirname(__FILE__))
-  # e.g. C:\Program Files\Puppet Labs\Puppet\puppet\share\locale
-  win32_system_locale_path = File.absolute_path('../../../../../puppet/share/locale', File.dirname(__FILE__))
-
-  if File.exist?(local_locale_path)
-    locale_path = local_locale_path
-  elsif Puppet::Util::Platform.windows? && File.exist?(win32_system_locale_path)
-    locale_path = win32_system_locale_path
-  elsif !Puppet::Util::Platform.windows? && File.exist?(posix_system_locale_path)
-    locale_path = posix_system_locale_path
-  else
-    # We couldn't load our locale data.
-    raise LoadError, "could not find locale data, skipping Gettext initialization"
-  end
-
-  Puppet::LOCALE_PATH = locale_path
-  Puppet::GETTEXT_AVAILABLE = true
-rescue LoadError
-  def _(msg)
-    msg
-  end
-
-  def n_(*args, &block)
-    # assume two string args (singular and plural English form) and the count
-    # to pluralize on
-    plural = args[2] == 1 ? args[0] : args[1]
-    # if a block is passed, prefer that over the string selection above
-    block ? block.call : plural
-  end
-
-  Puppet::LOCALE_PATH = nil
-  Puppet::GETTEXT_AVAILABLE = false
-end
-
+require 'puppet/gettext/config'
 
 
 #------------------------------------------------------------
@@ -85,15 +42,8 @@ module Puppet
   require 'puppet/environments'
 
   class << self
-    if Puppet::GETTEXT_AVAILABLE && Puppet::LOCALE_PATH
-      if GettextSetup.method(:initialize).parameters.count == 1
-        # Will load translations from PO files only
-        GettextSetup.initialize(Puppet::LOCALE_PATH)
-      else
-        GettextSetup.initialize(Puppet::LOCALE_PATH, :file_format => :mo)
-      end
-      FastGettext.locale = GettextSetup.negotiate_locale(Locale.current.language)
-    end
+    Puppet::GettextConfig.setup_locale
+    Puppet::GettextConfig.create_default_text_domain
 
     include Puppet::Util
     attr_reader :features
@@ -177,7 +127,7 @@ module Puppet
   # Now that settings are loaded we have the code loaded to be able to issue
   # deprecation warnings. Warn if we're on a deprecated ruby version.
   if Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new(Puppet::OLDEST_RECOMMENDED_RUBY_VERSION)
-    Puppet.deprecation_warning("Support for ruby version #{RUBY_VERSION} is deprecated and will be removed in a future release. See https://docs.puppet.com/puppet/latest/system_requirements.html#ruby for a list of supported ruby versions.")
+    Puppet.deprecation_warning(_("Support for ruby version %{version} is deprecated and will be removed in a future release. See https://docs.puppet.com/puppet/latest/system_requirements.html#ruby for a list of supported ruby versions.") % { version: RUBY_VERSION })
   end
 
   # Initialize puppet's settings. This is intended only for use by external tools that are not
@@ -224,7 +174,7 @@ module Puppet
   # code was deprecated in 2008, but this is still in heavy use.  I suppose
   # this can count as a soft deprecation for the next dev. --daniel 2011-04-12
   def self.newtype(name, options = {}, &block)
-    Puppet.deprecation_warning("Creating #{name} via Puppet.newtype is deprecated and will be removed in a future release. Use Puppet::Type.newtype instead.")
+    Puppet.deprecation_warning(_("Creating %{name} via Puppet.newtype is deprecated and will be removed in a future release. Use Puppet::Type.newtype instead.") % { name: name })
     Puppet::Type.newtype(name, options, &block)
   end
 
@@ -243,16 +193,18 @@ module Puppet
     basemodulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
 
     if environmentpath.nil? || environmentpath.empty?
-      raise(Puppet::Error, "The environmentpath setting cannot be empty or nil.")
+      raise(Puppet::Error, _("The environmentpath setting cannot be empty or nil."))
     else
       loaders = Puppet::Environments::Directories.from_path(environmentpath, basemodulepath)
       # in case the configured environment (used for the default sometimes)
       # doesn't exist
       default_environment = Puppet[:environment].to_sym
       if default_environment == :production
+        modulepath = settings[:modulepath]
+        modulepath = (modulepath.nil? || '' == modulepath) ? basemodulepath : Puppet::Node::Environment.split_path(modulepath)
         loaders << Puppet::Environments::StaticPrivate.new(
           Puppet::Node::Environment.create(default_environment,
-                                           basemodulepath,
+                                           modulepath,
                                            Puppet::Node::Environment::NO_MANIFEST))
       end
     end
@@ -264,6 +216,8 @@ module Puppet
         Puppet::Network::HTTP::NoCachePool.new
       },
       :ssl_host => proc { Puppet::SSL::Host.localhost },
+      :certificate_revocation => proc { Puppet[:certificate_revocation] },
+      :plugins => proc { Puppet::Plugins::Configuration.load_plugins }
     }
   end
 
@@ -350,4 +304,4 @@ require 'puppet/data_binding'
 require 'puppet/util/storage'
 require 'puppet/status'
 require 'puppet/file_bucket/file'
-require 'puppet/plugins'
+require 'puppet/plugins/configuration'

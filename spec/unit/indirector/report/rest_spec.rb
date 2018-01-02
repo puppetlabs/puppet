@@ -45,23 +45,49 @@ describe Puppet::Transaction::Report::Rest do
   end
 
   describe "#save" do
-    let(:http_method) { :put }
     let(:response) { mock_response(200, 'body') }
     let(:connection) { stub('mock http connection', :put => response, :verify_callback= => nil) }
     let(:instance) { model.new('the thing', 'some contents') }
     let(:request) { save_request(instance.name, instance) }
+    let(:body) { ["store", "http"].to_pson }
 
     before :each do
       terminus.stubs(:network).returns(connection)
     end
 
     it "deserializes the response as an array of report processor names" do
-      processors = ["store", "http"]
-      body = processors.to_pson()
       response = mock_response('200', body, 'text/pson')
       connection.expects(:put).returns response
 
       expect(terminus.save(request)).to eq(["store", "http"])
+    end
+
+    describe "when handling the response" do
+      describe "when the server major version is less than 5" do
+        it "raises if the save fails and we're not using pson" do
+          Puppet[:preferred_serialization_format] = "json"
+
+          response = mock_response('500', '{}', 'text/pson')
+          response.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns("4.10.1")
+          connection.expects(:put).returns response
+
+          expect {
+            terminus.save(request)
+          }.to raise_error(Puppet::Error, /Server version 4.10.1 does not accept reports in 'json'/)
+        end
+
+        it "raises with HTTP 500 if the save fails and we're already using pson" do
+          Puppet[:preferred_serialization_format] = "pson"
+
+          response = mock_response('500', '{}', 'text/pson')
+          response.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns("4.10.1")
+          connection.expects(:put).returns response
+
+          expect {
+            terminus.save(request)
+          }.to raise_error(Net::HTTPError, /Error 500 on SERVER/)
+        end
+      end
     end
   end
 end

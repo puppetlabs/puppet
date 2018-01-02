@@ -2625,7 +2625,7 @@ describe "The lookup function" do
 
           it 'fails and reports error' do
             expect{lookup('mod_a::a')}.to raise_error(
-              "Return type of 'lookup_key' function named 'mod_a::pp_lookup_key' is incorrect, expects a value of type Undef, Scalar, Sensitive, Type, Hash, or Array, got Runtime")
+              "Return type of 'lookup_key' function named 'mod_a::pp_lookup_key' is incorrect, expects a RichData value, got Runtime")
           end
         end
       end

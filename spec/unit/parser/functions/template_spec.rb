@@ -81,6 +81,14 @@ describe "the template function" do
     }.to raise_error(Puppet::ParseError, /undefined method `lookupvar'/)
   end
 
+  it 'is not available when --tasks is on' do
+    Puppet[:tasks] = true
+    expect {
+      eval_template("<%= lookupvar('myvar') %>")
+    }.to raise_error(Puppet::ParseError, /is only available when compiling a catalog/)
+
+  end
+
   def eval_template(content)
     Puppet::FileSystem.stubs(:read_preserve_line_endings).with("template").returns(content)
     Puppet::Parser::Files.stubs(:find_template).returns("template")

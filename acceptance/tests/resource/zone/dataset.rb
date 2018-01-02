@@ -2,6 +2,11 @@ test_name "Zone: dataset configuration"
 
 confine :to, :platform => 'solaris'
 
+tag 'audit:medium',
+    'audit:refactor',  # Use block style `test_name`
+    'audit:acceptance' # Could be done as integration tests, but would
+                       # require drastically changing the system running the test
+
 require 'puppet/acceptance/solaris_util'
 extend Puppet::Acceptance::ZoneUtils
 
@@ -47,22 +52,22 @@ agents.each do |agent|
   end
   step "Zone: dataset - basic test, a single data set should change to another"
   apply_manifest_on(agent,'zone {tstzone : ensure=>configured, dataset=>"tstpool/yy", path=>"/tstzones/mnt" }') do
-    assert_match(/dataset changed 'tstpool.xx'.* to .'tstpool.yy'./, result.stdout, "err: #{agent}")
+    assert_match(/dataset changed tstpool\/xx to \['tstpool\/yy'\]/, result.stdout, "err: #{agent}")
   end
   step "Zone: dataset - basic test, idempotency"
   apply_manifest_on(agent,'zone {tstzone : ensure=>configured, dataset=>"tstpool/yy", path=>"/tstzones/mnt" }') do
-    assert_no_match(/dataset changed 'tstpool.xx'.* to .'tstpool.yy'./, result.stdout, "err: #{agent}")
+    assert_no_match(/dataset changed tstpool\/xx to \['tstpool\/yy'\]/, result.stdout, "err: #{agent}")
   end
   step "Zone: dataset - array test, should change to an array"
   apply_manifest_on(agent,'zone {tstzone : ensure=>configured, dataset=>["tstpool/yy","tstpool/zz"], path=>"/tstzones/mnt" }') do
-    assert_match(/dataset changed 'tstpool.yy'.* to .'tstpool.yy', 'tstpool.zz'./, result.stdout, "err: #{agent}")
+    assert_match(/dataset changed tstpool\/yy to \['tstpool\/yy', 'tstpool\/zz'\]/, result.stdout, "err: #{agent}")
   end
   step "Zone: dataset - array test, should change one single element"
   apply_manifest_on(agent,'zone {tstzone : ensure=>configured, dataset=>["tstpool/xx","tstpool/zz"], path=>"/tstzones/mnt" }') do
-    assert_match(/dataset changed 'tstpool.yy,tstpool.zz'.* to .'tstpool.xx', 'tstpool.zz'./, result.stdout, "err: #{agent}")
+    assert_match(/dataset changed tstpool\/yy,tstpool\/zz to \['tstpool\/xx', 'tstpool\/zz'\]/, result.stdout, "err: #{agent}")
   end
   step "Zone: dataset - array test, should remove elements"
   apply_manifest_on(agent,'zone {tstzone : ensure=>configured, dataset=>[], path=>"/tstzones/mnt" }') do
-    assert_match(/dataset changed 'tstpool.zz,tstpool.xx'.* to ../, result.stdout, "err: #{agent}")
+    assert_match(/dataset changed tstpool\/zz,tstpool\/xx to \[\]/, result.stdout, "err: #{agent}")
   end
 end

@@ -48,7 +48,7 @@ config = Puppet::Util::Reference.newreference(:configuration, :depth => 1, :doc 
 end
 
 config.header = <<EOT
-## Configuration Settings
+## Configuration settings
 
 * Each of these settings can be specified in `puppet.conf` or on the
   command line.
@@ -67,6 +67,8 @@ config.header = <<EOT
   combined with other units, and defaults to seconds when omitted. Examples are
   '3600' which is equivalent to '1h' (one hour), and '1825d' which is equivalent
   to '5y' (5 years).
+* If you use the `splay` setting, note that the period that it waits changes
+  each time the Puppet agent is restarted.
 * Settings that take a single file or directory can optionally set the owner,
   group, and mode for their value: `rundir = $vardir/run { owner = puppet,
   group = puppet, mode = 644 }`
@@ -75,7 +77,7 @@ config.header = <<EOT
 
 See the [configuration guide][confguide] for more details.
 
-[confguide]: http://docs.puppetlabs.com/puppet/latest/reference/config_about_settings.html
+[confguide]: https://puppet.com/docs/puppet/latest/config_about_settings.html
 
 * * *
 

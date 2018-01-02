@@ -1,6 +1,10 @@
 test_name "Pluginsync'ed external facts should be resolvable on the agent"
 confine :except, :platform => 'cisco_nexus' #See BKR-749
 
+tag 'audit:medium',
+    'audit:integration',
+    'server'
+
 #
 # This test is intended to ensure that external facts downloaded onto an agent via
 # pluginsync are resolvable. In Linux, the external fact should have the same
@@ -93,7 +97,7 @@ with_puppet_running_on master, master_opts, codedir do
 
     step "Use plugin face to download to the agent"
     on(agent, puppet('plugin', 'download', '--server', master, '--pluginfactdest', pluginfactdest))
-    assert_match(/Downloaded these plugins: .*external_fact/, stdout)
+    assert_match(/Downloaded these plugins: .*external_fact/, stdout) unless agent['locale'] == 'ja'
 
     step "Ensure it resolves correctly"
     on(agent, puppet('apply', '--pluginfactdest', pluginfactdest, '-e', "'notify { \"foo is ${foo}\": }'"))

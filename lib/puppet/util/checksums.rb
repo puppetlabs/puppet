@@ -10,7 +10,7 @@ module Puppet::Util::Checksums
   # It's not a good idea to use some of these in some contexts: for example, I
   # wouldn't try bucketing a file using the :none checksum type.
   def known_checksum_types
-    [:sha256, :sha256lite, :md5, :md5lite, :sha1, :sha1lite,
+    [:sha256, :sha256lite, :md5, :md5lite, :sha1, :sha1lite, :sha512, :sha384, :sha224, 
       :mtime, :ctime, :none]
   end
 
@@ -81,6 +81,87 @@ module Puppet::Util::Checksums
 
   def sha256lite_hex_length
     sha256_hex_length
+  end
+
+  # Calculate a checksum using Digest::SHA384.
+  def sha384(content)
+    require 'digest/sha2'
+    Digest::SHA384.hexdigest(content)
+  end
+
+  def sha384?(string)
+    string =~ /^\h{96}$/
+  end
+
+  def sha384_file(filename, lite = false)
+    require 'digest/sha2'
+
+    digest = Digest::SHA384.new
+    checksum_file(digest, filename,  lite)
+  end
+
+  def sha384_stream(lite = false, &block)
+    require 'digest/sha2'
+    digest = Digest::SHA384.new
+    checksum_stream(digest, block, lite)
+  end
+
+  def sha384_hex_length
+    96
+  end
+
+  # Calculate a checksum using Digest::SHA512.
+  def sha512(content)
+    require 'digest/sha2'
+    Digest::SHA512.hexdigest(content)
+  end
+
+  def sha512?(string)
+    string =~ /^\h{128}$/
+  end
+
+  def sha512_file(filename, lite = false)
+    require 'digest/sha2'
+
+    digest = Digest::SHA512.new
+    checksum_file(digest, filename,  lite)
+  end
+
+  def sha512_stream(lite = false, &block)
+    require 'digest/sha2'
+    digest = Digest::SHA512.new
+    checksum_stream(digest, block, lite)
+  end
+
+  def sha512_hex_length
+    128
+  end
+
+  # Calculate a checksum using Digest::SHA224.
+  def sha224(content)
+    require 'openssl'
+    OpenSSL::Digest::SHA224.new.hexdigest(content)
+  end
+
+  def sha224?(string)
+    string =~ /^\h{56}$/
+  end
+
+  def sha224_file(filename, lite = false)
+    require 'openssl'
+
+    digest = OpenSSL::Digest::SHA224.new
+    checksum_file(digest, filename,  lite)
+  end
+
+  def sha224_stream(lite = false, &block)
+    require 'openssl'
+    digest = OpenSSL::Digest::SHA224.new
+    checksum_stream(digest, block, lite)
+  end
+
+  def sha224_hex_length
+    56
   end
 
   # Calculate a checksum using Digest::MD5.

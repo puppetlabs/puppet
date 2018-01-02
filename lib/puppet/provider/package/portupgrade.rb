@@ -90,7 +90,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
     end
 
     if output =~ /\*\* No such /
-      raise Puppet::ExecutionFailure, "Could not find package #{@resource[:name]}"
+      raise Puppet::ExecutionFailure, _("Could not find package %{name}") % { name: @resource[:name] }
     end
 
     # No return code required, so do nil to be clean
@@ -148,10 +148,10 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
       # Seriously - this section should never be called in a perfect world.
       # as verification that the port is installed has already happened in query.
       if output =~ /^\*\* No matching package /
-        raise Puppet::ExecutionFailure, "Could not find package #{@resource[:name]}"
+        raise Puppet::ExecutionFailure, _("Could not find package %{name}") % { name: @resource[:name] }
       else
         # Any other error (dump output to log)
-        raise Puppet::ExecutionFailure, "Unexpected output from portversion: #{output}"
+        raise Puppet::ExecutionFailure, _("Unexpected output from portversion: %{output}") % { output: output }
       end
 
       # Just in case we still are running, return nil
@@ -160,7 +160,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
 
     # At this point normal operation has finished and we shouldn't have been called.
     # Error out and let the admin deal with it.
-    raise Puppet::Error, "portversion.latest() - fatal error with portversion: #{output}"
+    raise Puppet::Error, _("portversion.latest() - fatal error with portversion: %{output}") % { output: output }
   end
 
   ###### Query subcommand - return a hash of details if exists, or nil if it doesn't.

@@ -78,26 +78,24 @@ Puppet::Face.define(:help, '0.0.1') do
   def render_application_help(applicationname)
     return Puppet::Application[applicationname].help
   rescue StandardError, LoadError => detail
-    msg = _(<<-MSG)
-Could not load help for the application #{applicationname}.
-Please check the error logs for more information.
-
-Detail: "#{detail.message}"
-MSG
-    fail ArgumentError, msg, detail.backtrace
+    message = []
+    message << _('Could not load help for the application %{application_name}.') % { application_name: applicationname }
+    message << _('Please check the error logs for more information.')
+    message << ''
+    message << _('Detail: "%{detail}"') % { detail: detail.message }
+    fail ArgumentError, message.join("\n"), detail.backtrace
   end
 
   def render_face_help(facename, actionname, version)
     face, action = load_face_help(facename, actionname, version)
     return template_for(face, action).result(binding)
   rescue StandardError, LoadError => detail
-    msg = _(<<-MSG)
-Could not load help for the face #{facename}.
-Please check the error logs for more information.
-
-Detail: "#{detail.message}"
-MSG
-    fail ArgumentError, msg, detail.backtrace
+    message = []
+    message << _('Could not load help for the face %{face_name}.') % { face_name: facename }
+    message << _('Please check the error logs for more information.')
+    message << ''
+    message << _('Detail: "%{detail}"') % { detail: detail.message }
+    fail ArgumentError, message.join("\n"), detail.backtrace
   end
 
   def load_face_help(facename, actionname, version)
@@ -105,7 +103,7 @@ MSG
     if actionname
       action = face.get_action(actionname.to_sym)
       if not action
-        fail ArgumentError, _("Unable to load action #{actionname} from #{face}")
+        fail ArgumentError, _("Unable to load action %{actionname} from %{face}") % { actionname: actionname, face: face }
       end
     end
 
@@ -153,25 +151,29 @@ MSG
           result << [ "! #{appname}", _("! Subcommand unavailable due to error. Check error logs.") ]
         end
       else
-        result << [appname, horribly_extract_summary_from(appname)]
+        begin
+          summary = Puppet::Application[appname].summary
+          if summary.empty?
+            summary = horribly_extract_summary_from(appname)
+          end
+          result << [appname, summary]
+        rescue StandardError, LoadError
+          result << ["! #{appname}", _("! Subcommand unavailable due to error. Check error logs.")]
+        end
       end
     end
   end
 
   def horribly_extract_summary_from(appname)
-    begin
-      help = Puppet::Application[appname].help.split("\n")
-      # Now we find the line with our summary, extract it, and return it.  This
-      # depends on the implementation coincidence of how our pages are
-      # formatted.  If we can't match the pattern we expect we return the empty
-      # string to ensure we don't blow up in the summary. --daniel 2011-04-11
-      while line = help.shift do
-        if md = /^puppet-#{appname}\([^\)]+\) -- (.*)$/.match(line) then
-          return md[1]
-        end
+    help = Puppet::Application[appname].help.split("\n")
+    # Now we find the line with our summary, extract it, and return it.  This
+    # depends on the implementation coincidence of how our pages are
+    # formatted.  If we can't match the pattern we expect we return the empty
+    # string to ensure we don't blow up in the summary. --daniel 2011-04-11
+    while line = help.shift do
+      if md = /^puppet-#{appname}\([^\)]+\) -- (.*)$/.match(line) then
+        return md[1]
       end
-    rescue StandardError, LoadError
-      return _("! Subcommand unavailable due to error. Check error logs.")
     end
     return ''
   end

@@ -1,14 +1,8 @@
-begin
-  require 'gettext-setup'
-rescue LoadError
-  def _(msg)
-    msg
-  end
-end
-
 module SemanticPuppet
-  if defined?(GettextSetup)
-    GettextSetup.initialize(File.absolute_path('semantic_puppet/locales', File.dirname(__FILE__)))
+  locales_path = File.absolute_path('../locales', File.dirname(__FILE__))
+  # Only create a translation repository of the relevant translations exist
+  if Puppet::FileSystem.exist?(File.join(locales_path, Puppet::GettextConfig.current_locale))
+    Puppet::GettextConfig.load_translations('semantic_puppet', locales_path, :po)
   end
 
   autoload :Version, 'semantic_puppet/version'

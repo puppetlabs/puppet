@@ -3,9 +3,9 @@ require 'puppet/ssl/host'
 
 Puppet::Indirector::Face.define(:certificate, '0.0.1') do
   copyright "Puppet Inc.", 2011
-  license   "Apache 2 license; see COPYING"
+  license   _("Apache 2 license; see COPYING")
 
-  summary "Provide access to the CA for certificate management."
+  summary _("Provide access to the CA for certificate management.")
   description <<-EOT
     This subcommand interacts with a local or remote Puppet certificate
     authority. Currently, its behavior is not a full superset of `puppet
@@ -14,9 +14,9 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
     signed certificate.
   EOT
 
-  option "--ca-location LOCATION" do
+  option "--ca-location " + _("LOCATION") do
     required
-    summary "Which certificate authority to use (local or remote)."
+    summary _("Which certificate authority to use (local or remote).")
     description <<-EOT
       Whether to act on the local certificate authority or one provided by a
       remote puppet master. Allowed values are 'local' and 'remote.'
@@ -26,15 +26,15 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
 
     before_action do |action, args, options|
       unless [:remote, :local, :only].include? options[:ca_location].to_sym
-        raise ArgumentError, "Valid values for ca-location are 'remote', 'local', 'only'."
+        raise ArgumentError, _("Valid values for ca-location are 'remote', 'local', 'only'.")
       end
       Puppet::SSL::Host.ca_location = options[:ca_location].to_sym
     end
   end
 
   action :generate do
-    summary "Generate a new certificate signing request."
-    arguments "<host>"
+    summary _("Generate a new certificate signing request.")
+    arguments _("<host>")
     returns "Nothing."
     description <<-EOT
       Generates and submits a certificate signing request (CSR) for the
@@ -53,8 +53,8 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
 
     # Duplicate the option here explicitly to distinguish if it was passed arg
     # us vs. set in the config file.
-    option "--dns-alt-names NAMES" do
-      summary "Additional DNS names to add to the certificate request"
+    option "--dns-alt-names "+ _("NAMES") do
+      summary _("Additional DNS names to add to the certificate request")
       description Puppet.settings.setting(:dns_alt_names).desc
     end
 
@@ -70,7 +70,7 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
       # jeffweiss 17 april 2012
 
       global_setting_from_cli = Puppet.settings.set_by_cli?(:dns_alt_names) == true
-      raise ArgumentError, "Can't specify both --dns_alt_names and --dns-alt-names" if options[:dns_alt_names] and global_setting_from_cli
+      raise ArgumentError, _("Can't specify both --dns_alt_names and --dns-alt-names") if options[:dns_alt_names] and global_setting_from_cli
       options[:dns_alt_names] = Puppet[:dns_alt_names] if global_setting_from_cli
 
       # If dns_alt_names are specified via the command line, we will always add
@@ -86,7 +86,7 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
   end
 
   action :list do
-    summary "List all certificate signing requests."
+    summary _("List all certificate signing requests.")
     returns <<-EOT
       An array of #inspect output from CSR objects. This output is
       currently messy, but does contain the names of nodes requesting
@@ -102,8 +102,8 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
   end
 
   action :sign do
-    summary "Sign a certificate signing request for HOST."
-    arguments "<host>"
+    summary _("Sign a certificate signing request for HOST.")
+    arguments _("<host>")
     returns <<-EOT
       A string that appears to be (but isn't) an x509 certificate.
     EOT
@@ -114,14 +114,14 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
     EOT
 
     option("--[no-]allow-dns-alt-names") do
-      summary "Whether or not to accept DNS alt names in the certificate request"
+      summary _("Whether or not to accept DNS alt names in the certificate request")
     end
 
     when_invoked do |name, options|
       host = Puppet::SSL::Host.new(name)
       if Puppet::SSL::Host.ca_location == :remote
         if options[:allow_dns_alt_names]
-          raise ArgumentError, "--allow-dns-alt-names may not be specified with a remote CA"
+          raise ArgumentError, _("--allow-dns-alt-names may not be specified with a remote CA")
         end
 
         host.desired_state = 'signed'
@@ -130,7 +130,7 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
         # We have to do this case manually because we need to specify
         # allow_dns_alt_names.
         unless ca = Puppet::SSL::CertificateAuthority.instance
-          raise ArgumentError, "This process is not configured as a certificate authority"
+          raise ArgumentError, _("This process is not configured as a certificate authority")
         end
 
         signing_options = {allow_dns_alt_names: options[:allow_dns_alt_names]}
@@ -142,8 +142,8 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
 
   # Indirector action doc overrides
   find = get_action(:find)
-  find.summary "Retrieve a certificate."
-  find.arguments "<host>"
+  find.summary _("Retrieve a certificate.")
+  find.arguments _("<host>")
   find.render_as = :s
   find.returns <<-EOT
     An x509 SSL certificate.
@@ -153,8 +153,8 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
   EOT
 
   destroy = get_action(:destroy)
-  destroy.summary "Delete a certificate."
-  destroy.arguments "<host>"
+  destroy.summary _("Delete a certificate.")
+  destroy.arguments _("<host>")
   destroy.returns "Nothing."
   destroy.description <<-EOT
     Deletes a certificate. This action currently only works on the local CA.

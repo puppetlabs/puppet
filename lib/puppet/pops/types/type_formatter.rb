@@ -24,6 +24,26 @@ class TypeFormatter
     @singleton
   end
 
+  def expanded
+    tf = clone
+    tf.instance_variable_set(:@expanded, true)
+    tf
+  end
+
+  def indented(indent = 0, indent_width = 2)
+    tf = clone
+    tf.instance_variable_set(:@indent, indent)
+    tf.instance_variable_set(:@indent_width, indent_width)
+    tf
+  end
+
+  def ruby(ref_ctor)
+    tf = clone
+    tf.instance_variable_set(:@ruby, true)
+    tf.instance_variable_set(:@ref_ctor, ref_ctor)
+    tf
+  end
+
   # Produces a string representing the type
   # @api public
   #
@@ -84,9 +104,9 @@ class TypeFormatter
     if @ruby && t.is_a?(PAnyType)
       @ruby = false
       begin
-        @bld << @ref_ctor << "('"
-        @@string_visitor.visit_this_0(self, t)
-        @bld << "')"
+        @bld << @ref_ctor << '('
+        @@string_visitor.visit_this_0(self, TypeFormatter.new.string(t))
+        @bld << ')'
       ensure
         @ruby = true
       end
@@ -129,13 +149,15 @@ class TypeFormatter
   def string_PDefaultType(_) ; @bld << 'Default' ; end
 
   # @api private
-  def string_PBooleanType(_) ; @bld << 'Boolean' ; end
+  def string_PBooleanType(t)
+    append_array('Boolean', t.value.nil?) { append_string(t.value) }
+  end
 
   # @api private
   def string_PScalarType(_)  ; @bld << 'Scalar'  ; end
 
   # @api private
-  def string_PDataType(_)    ; @bld << 'Data'    ; end
+  def string_PScalarDataType(_)  ; @bld << 'ScalarData'  ; end
 
   # @api private
   def string_PNumericType(_) ; @bld << 'Numeric' ; end
@@ -149,8 +171,13 @@ class TypeFormatter
   end
 
   # @api private
-  def string_PType(t)
+  def string_PTypeType(t)
     append_array('Type', t.type.nil?) { append_string(t.type) }
+  end
+
+  # @api private
+  def string_PInitType(t)
+    append_array('Init', t.type.nil?)  { append_strings([t.type, *t.init_args]) }
   end
 
   # @api private
@@ -188,7 +215,13 @@ class TypeFormatter
 
   # @api private
   def string_PEnumType(t)
-    append_array('Enum', t.values.empty?) { append_strings(t.values) }
+    append_array('Enum', t.values.empty?) do
+      append_strings(t.values)
+      if t.case_insensitive?
+        @bld << COMMA_SEP
+        append_string(true)
+      end
+    end
   end
 
   # @api private
@@ -297,18 +330,59 @@ class TypeFormatter
     append_array('Pattern', t.patterns.empty?) { append_strings(t.patterns.map(&:regexp)) }
   end
 
+
   # @api private
   def string_PCollectionType(t)
     range = range_array_part(t.size_type)
     append_array('Collection', range.empty? ) { append_elements(range) }
   end
 
+  def string_Object(t)
+    type = TypeCalculator.infer(t)
+    if type.is_a?(PObjectTypeExtension)
+      type = type.base_type
+    end
+    if type.is_a?(PObjectType)
+      init_hash = type.extract_init_hash(t)
+      @bld << type.name << '('
+      if @indent
+        append_indented_string(init_hash, @indent, @indent_width, true)
+        @bld.chomp!
+      else
+        append_string(init_hash)
+      end
+      @bld << ')'
+    else
+      @bld << 'Instance of '
+      append_string(type)
+    end
+  end
+
   def string_PuppetObject(t)
-    @bld << t._ptype.name << '('
-    append_indented_string(t.i12n_hash, @indent || 0, @indent_width || 2, true)
-    @bld.chomp!
+    @bld << t._pcore_type.name << '('
+    if @indent
+      append_indented_string(t._pcore_init_hash, @indent, @indent_width, true)
+      @bld.chomp!
+    else
+      append_string(t._pcore_init_hash)
+    end
     @bld << ')'
-    newline if @indent
+  end
+
+  # @api private
+  def string_PURIType(t)
+    append_array('URI', t.parameters.nil?) { append_string(t._pcore_init_hash['parameters']) }
+  end
+
+  def string_URI(t)
+    @bld << 'URI('
+    if @indent
+      append_indented_string(t.to_s, @indent, @indent_width, true)
+      @bld.chomp!
+    else
+      append_string(t.to_s)
+    end
+    @bld << ')'
   end
 
   # @api private
@@ -318,7 +392,7 @@ class TypeFormatter
 
   # @api private
   def string_PRuntimeType(t)
-    append_array('Runtime') { append_strings([t.runtime, t.name_or_pattern]) }
+    append_array('Runtime', t.runtime.nil? && t.name_or_pattern.nil?) { append_strings([t.runtime, t.name_or_pattern]) }
   end
 
   # @api private
@@ -326,7 +400,7 @@ class TypeFormatter
     if t.has_empty_range?
       append_array('Array') { append_strings([0, 0]) }
     else
-      append_array('Array', t == PArrayType::DATA) do
+      append_array('Array', t == PArrayType::DEFAULT) do
         append_strings([t.element_type], true)
         append_elements(range_array_part(t.size_type), true)
         chomp_list
@@ -339,7 +413,7 @@ class TypeFormatter
     if t.has_empty_range?
       append_array('Hash') { append_strings([0, 0]) }
     else
-      append_array('Hash', t == PHashType::DATA) do
+      append_array('Hash', t == PHashType::DEFAULT) do
         append_strings([t.key_type, t.value_type], true)
         append_elements(range_array_part(t.size_type), true)
         chomp_list
@@ -353,7 +427,7 @@ class TypeFormatter
   end
 
   # @api private
-  def string_PHostClassType(t)
+  def string_PClassType(t)
     append_array('Class', t.class_name.nil?) { append_elements([t.class_name]) }
   end
 
@@ -380,7 +454,7 @@ class TypeFormatter
 
   # @api private
   def string_PAnnotatedMember(m)
-    hash = m.i12n_hash
+    hash = m._pcore_init_hash
     if hash.size == 1
       string(m.type)
     else
@@ -398,7 +472,7 @@ class TypeFormatter
   # @api private
   def string_PTypeSetType(t)
     append_array('TypeSet') do
-      append_hash(t.i12n_hash.each, proc { |k| @bld << symbolic_key(k) }) do |k,v|
+      append_hash(t._pcore_init_hash.each, proc { |k| @bld << symbolic_key(k) }) do |k,v|
         case k
         when KEY_TYPES
           old_ts = @type_set
@@ -426,15 +500,26 @@ class TypeFormatter
   # @api private
   def string_PObjectType(t)
     if @expanded
-      append_object_hash(t.i12n_hash(@type_set.nil? || !@type_set.defines_type?(t)))
+      append_object_hash(t._pcore_init_hash(@type_set.nil? || !@type_set.defines_type?(t)))
     else
       @bld << (@type_set ? @type_set.name_for(t, t.label) : t.label)
     end
   end
 
+  def string_PObjectTypeExtension(t)
+    append_array(@type_set ? @type_set.name_for(t, t.name) : t.name, false) do
+      ips = t.init_parameters
+      if ips.is_a?(Array)
+        append_strings(ips)
+      else
+        append_string(ips)
+      end
+    end
+  end
+
   # @api private
   def string_PSensitiveType(t)
-    append_array('Sensitive') { append_string(t.type) }
+    append_array('Sensitive', PAnyType::DEFAULT == t.type) { append_string(t.type) }
   end
 
   # @api private
@@ -464,7 +549,7 @@ class TypeFormatter
   def format_type_alias_type(t, expand)
     if @type_set.nil?
       @bld << t.name
-      if expand
+      if expand && !Loader::StaticLoader::BUILTIN_ALIASES.include?(t.name)
         @bld << ' = '
         append_string(t.resolved_type)
       end
@@ -484,7 +569,17 @@ class TypeFormatter
 
   # @api private
   def string_Array(t)
-    append_array('') { append_strings(t) }
+    append_array('') do
+      if @indent && !is_short_array?(t)
+        @indent += 1
+        t.each { |elem| newline; append_string(elem); @bld << COMMA_SEP }
+        chomp_list
+        @indent -= 1
+        newline
+      else
+        append_strings(t)
+      end
+    end
   end
 
   # @api private
@@ -501,7 +596,7 @@ class TypeFormatter
   end
 
   # @api private
-  def string_NilClass(t)     ; @bld << (@ruby ? 'nil' : '?') ; end
+  def string_NilClass(t)     ; @bld << (@ruby ? 'nil' : 'undef') ; end
 
   # @api private
   def string_Numeric(t)      ; @bld << t.to_s    ; end
@@ -569,8 +664,29 @@ class TypeFormatter
 
   HASH_ENTRY_OP = ' => '.freeze
 
+  def is_short_array?(t)
+    t.empty? || 100 - @indent * @indent_width > t.inject(0) do |sum, elem|
+      case elem
+      when true, false, nil, Numeric, Symbol
+        sum + elem.inspect.length()
+      when String
+        sum + 2 + elem.length
+      when Hash, Array
+        sum + (elem.empty? ? 2 : 1000)
+      else
+        sum + 1000
+      end
+    end
+  end
+
   def range_array_part(t)
-    t.nil? || t.unbounded? ? EMPTY_ARRAY : [t.from.nil? ? 'default' : t.from.to_s , t.to.nil? ? 'default' : t.to.to_s ]
+    if t.nil? || t.unbounded?
+      EMPTY_ARRAY
+    else
+      result = [t.from.nil? ? 'default' : t.from.to_s]
+      result << t.to.to_s unless t.to.nil?
+      result
+    end
   end
 
   def append_object_hash(hash)

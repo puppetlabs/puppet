@@ -30,7 +30,7 @@ class Puppet::Indirector::Ldap < Puppet::Indirector::Terminus
   # Find the ldap node, return the class list and parent node specially,
   # and everything else in a parameter hash.
   def ldapsearch(filter)
-    raise ArgumentError.new("You must pass a block to ldapsearch") unless block_given?
+    raise ArgumentError.new(_("You must pass a block to ldapsearch")) unless block_given?
 
     found = false
     count = 0
@@ -47,10 +47,10 @@ class Puppet::Indirector::Ldap < Puppet::Indirector::Terminus
         # Try reconnecting to ldap if we get an exception and we haven't yet retried.
         count += 1
         @connection = nil
-        Puppet.warning "Retrying LDAP connection"
+        Puppet.warning _("Retrying LDAP connection")
         retry
       else
-        error = Puppet::Error.new("LDAP Search failed")
+        error = Puppet::Error.new(_("LDAP Search failed"))
         error.set_backtrace(detail.backtrace)
         raise error
       end
@@ -62,13 +62,14 @@ class Puppet::Indirector::Ldap < Puppet::Indirector::Terminus
   # Create an ldap connection.
   def connection
     unless @connection
-      raise Puppet::Error, "Could not set up LDAP Connection: Missing ruby/ldap libraries" unless Puppet.features.ldap?
+      #TRANSLATORS "ruby/ldap libraries" are code dependencies
+      raise Puppet::Error, _("Could not set up LDAP Connection: Missing ruby/ldap libraries") unless Puppet.features.ldap?
       begin
         conn = Puppet::Util::Ldap::Connection.instance
         conn.start
         @connection = conn.connection
       rescue => detail
-        message = "Could not connect to LDAP: #{detail}"
+        message = _("Could not connect to LDAP: %{detail}") % { detail: detail }
         Puppet.log_exception(detail, message)
         raise Puppet::Error, message, detail.backtrace
       end

@@ -19,7 +19,15 @@ module Puppet
     end
 
     newproperty(:key) do
-      desc "The key itself; generally a long string of uuencoded characters."
+      desc "The key itself; generally a long string of uuencoded characters. The `key`
+        attribute may not contain whitespace.
+
+        Make sure to omit the following in this attribute (and specify them in
+        other attributes):
+
+        * Key headers (e.g. 'ssh-rsa') --- put these in the `type` attribute.
+        * Key identifiers / comments (e.g. 'joescomputer.local') --- put these in
+          the `name` attribute/resource title."
     end
 
     # FIXME This should automagically check for aliases to the hosts, just
@@ -41,10 +49,10 @@ module Puppet
 
       validate do |value|
         if value =~ /\s/
-          raise Puppet::Error, "Aliases cannot include whitespace"
+          raise Puppet::Error, _("Aliases cannot include whitespace")
         end
         if value =~ /,/
-          raise Puppet::Error, "Aliases must be provided as an array, not a comma-separated list"
+          raise Puppet::Error, _("Aliases must be provided as an array, not a comma-separated list")
         end
       end
     end
@@ -55,8 +63,8 @@ module Puppet
       isnamevar
 
       validate do |value|
-        raise Puppet::Error, "Resourcename cannot include whitespaces" if value =~ /\s/
-        raise Puppet::Error, "No comma in resourcename allowed. If you want to specify aliases use the host_aliases property" if value.include?(',')
+        raise Puppet::Error, _("Resourcename cannot include whitespaces") if value =~ /\s/
+        raise Puppet::Error, _("No comma in resourcename allowed. If you want to specify aliases use the host_aliases property") if value.include?(',')
       end
     end
 

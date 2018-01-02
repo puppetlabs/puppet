@@ -97,7 +97,7 @@ class X509Collector
         next unless public_key_info = extract_public_key_info(path, meaning)
         public_key, priority, name = public_key_info
         pem = public_key.to_s
-        existing_priority, existing_name, existing_public_key = key_data[pem]
+        existing_priority, _, _ = key_data[pem]
         next if existing_priority and existing_priority < priority
         key_data[pem] = priority, name, public_key
       rescue
@@ -106,7 +106,7 @@ class X509Collector
     end
     name_to_key_hash = {}
     key_data.each do |pem, data|
-      priority, name, public_key = data
+      _, name, public_key = data
       if name_to_key_hash[name]
         suffix_num = 2
         while name_to_key_hash[name + " (#{suffix_num})"]

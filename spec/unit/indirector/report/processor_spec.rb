@@ -30,7 +30,7 @@ describe Puppet::Transaction::Report::Processor, " when processing a report" do
     Puppet[:reports] = 'none'
 
     request = Puppet::Indirector::Request.new(:indirection_name, :head, "key", nil)
-    report = Puppet::Transaction::Report.new('apply')
+    report = Puppet::Transaction::Report.new
     request.instance = report
 
     @reporter.save(request)
@@ -66,7 +66,7 @@ describe Puppet::Transaction::Report::Processor, " when processing a report" do
     @report_type = mock 'one'
     @dup_report = mock 'dupe report'
     @dup_report.stubs(:process)
-    @report = Puppet::Transaction::Report.new('apply')
+    @report = Puppet::Transaction::Report.new
     @report.expects(:dup).returns(@dup_report)
 
     @request = stub 'request', :instance => @report

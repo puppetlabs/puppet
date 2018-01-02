@@ -1,5 +1,11 @@
 test_name "#4131: should not create host without IP attribute"
 
+tag 'audit:low',
+    'audit:refactor',  # Use block style `test_name`
+    'audit:acceptance' # Could be done at the integration (or unit) layer though
+                       # actual changing of resources could irreparably damage a
+                       # host running this, or require special permissions.
+
 agents.each do |agent|
   file = agent.tmpfile('4131-require-ip')
 
@@ -13,7 +19,7 @@ agents.each do |agent|
   on(agent, puppet_resource('host', 'test', "target=#{file}",
               "host_aliases=alias")) do
     fail_test "puppet didn't complain about the missing attribute" unless
-      stderr.include? 'ip is a required attribute for hosts'
+      stderr.include? 'ip is a required attribute for hosts' unless agent['locale'] == 'ja'
   end
 
   step "verify that the host was not added to the file"

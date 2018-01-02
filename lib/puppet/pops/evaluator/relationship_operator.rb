@@ -91,7 +91,7 @@ class RelationshipOperator
   end
 
   # Asserts (and returns) the type if it is a PCatalogEntryType
-  # (A PCatalogEntryType is the base class of PHostClassType, and PResourceType).
+  # (A PCatalogEntryType is the base class of PClassType, and PResourceType).
   #
   def assert_catalog_type(o, scope)
     unless @type_calculator.assignable?(@catalog_type, o)
@@ -103,14 +103,14 @@ class RelationshipOperator
     o
   end
 
-  RELATIONSHIP_OPERATORS = [:'->', :'~>', :'<-', :'<~']
-  REVERSE_OPERATORS      = [:'<-', :'<~']
+  RELATIONSHIP_OPERATORS = ['->', '~>', '<-', '<~'].freeze
+  REVERSE_OPERATORS      = ['<-', '<~'].freeze
   RELATION_TYPE = {
-    :'->' => :relationship,
-    :'<-' => :relationship,
-    :'~>' => :subscription,
-    :'<~' => :subscription
-  }
+    '->' => :relationship,
+    '<-' => :relationship,
+    '~>' => :subscription,
+    '<~' => :subscription
+  }.freeze
 
   # Evaluate a relationship.
   # TODO: The error reporting is not fine grained since evaluation has already taken place
@@ -151,8 +151,25 @@ class RelationshipOperator
       # Add the relationships to the catalog
       source.each {|s| target.each {|t| add_relationship(s, t, RELATION_TYPE[relationship_expression.operator], scope) }}
 
-      # Produce the transformed source RHS (if this is a chain, this does not need to be done again)
-      real.slice(1)
+      # The result is the transformed source RHS unless it is empty, in which case the transformed LHS is returned.
+      # This closes the gap created by an empty set of references in a chain of relationship
+      # such that X -> [ ] -> Y results in  X -> Y.
+      #result = real[1].empty? ? real[0] : real[1]
+      if real[1].empty?
+        # right side empty, simply use the left (whatever it may be)
+        result = real[0]
+      else
+        right = real[1]
+        if right.size == 1 && right[0].is_a?(Puppet::Pops::Evaluator::Collectors::AbstractCollector)
+          # the collector when evaluated later may result in an empty set, if so, the
+          # lazy relationship forming logic needs to have access to the left value.
+          adapter = Puppet::Pops::Adapters::EmptyAlternativeAdapter.adapt(right[0])
+          adapter.empty_alternative = real[0]
+        end
+        result = right
+      end
+      result
+
     rescue NotCatalogTypeError => e
       fail(Issues::NOT_CATALOG_TYPE, relationship_expression, {:type => @type_calculator.string(e.type)})
     rescue IllegalRelationshipOperandError => e

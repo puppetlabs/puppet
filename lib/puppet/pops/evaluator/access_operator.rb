@@ -27,6 +27,11 @@ class AccessOperator
   protected
 
   def access_Object(o, scope, keys)
+    type = Puppet::Pops::Types::TypeCalculator.infer(o)
+    if type.is_a?(Puppet::Pops::Types::TypeWithMembers)
+      access_func = type['[]']
+      return access_func.invoke(o, scope, keys) unless access_func.nil?
+    end
     fail(Issues::OPERATOR_NOT_APPLICABLE, @semantic.left_expr, :operator=>'[]', :left_value => o)
   end
 
@@ -144,10 +149,22 @@ class AccessOperator
     end
   end
 
+  def access_PBooleanType(o, scope, keys)
+    keys.flatten!
+    assert_keys(keys, o, 1, 1, TrueClass, FalseClass)
+    Types::TypeFactory.boolean(keys[0])
+  end
+
   def access_PEnumType(o, scope, keys)
     keys.flatten!
+    last = keys.last
+    case_insensitive = false
+    if last == true || last == false
+      keys = keys[0...-1]
+      case_insensitive = last
+    end
     assert_keys(keys, o, 1, Float::INFINITY, String)
-    Types::TypeFactory.enum(*keys)
+    Types::PEnumType.new(keys, case_insensitive)
   end
 
   def access_PVariantType(o, scope, keys)
@@ -268,7 +285,7 @@ class AccessOperator
     expected = expected_classes.map {|c| label_provider.label(c) }.join(' or ')
     fail(Issues::BAD_TYPE_SPECIALIZATION, @semantic.keys[key_index], {
       :type => type,
-      :message => "Cannot use #{bad_key_type_name(actual)} where #{expected} is expected"
+      :message => _("Cannot use %{key} where %{expected} is expected") % { key: bad_key_type_name(actual), expected: expected }
     })
   end
 
@@ -276,6 +293,19 @@ class AccessOperator
     keys.flatten!
     assert_keys(keys, o, 1, Float::INFINITY, String, Regexp, Types::PPatternType, Types::PRegexpType)
     Types::TypeFactory.pattern(*keys)
+  end
+
+  def access_PURIType(o, scope, keys)
+    keys.flatten!
+    if keys.size == 1
+      param = keys[0]
+      unless Types::PURIType::TYPE_URI_PARAM_TYPE.instance?(param)
+        fail(Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'URI-Type', :actual => param.class})
+      end
+      Types::PURIType.new(param)
+    else
+      fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'URI-Type', :min => 1, :actual => keys.size})
+    end
   end
 
   def access_POptionalType(o, scope, keys)
@@ -310,10 +340,14 @@ class AccessOperator
 
   def access_PObjectType(o, scope, keys)
     keys.flatten!
-    if keys.size == 1
-      Types::TypeFactory.object(keys[0])
+    if o.resolved? && !o.name.nil?
+      Types::PObjectTypeExtension.create(o, keys)
     else
-      fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Object-Type', :min => 1, :actual => keys.size})
+      if keys.size == 1
+        Types::TypeFactory.object(keys[0])
+      else
+        fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Object-Type', :min => 1, :actual => keys.size})
+      end
     end
   end
 
@@ -347,16 +381,23 @@ class AccessOperator
     end
   end
 
-  def access_PType(o, scope, keys)
+  def access_PTypeType(o, scope, keys)
     keys.flatten!
     if keys.size == 1
       unless keys[0].is_a?(Types::PAnyType)
         fail(Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Type-Type', :actual => keys[0].class})
       end
-      Types::PType.new(keys[0])
+      Types::PTypeType.new(keys[0])
     else
       fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Type-Type', :min => 1, :actual => keys.size})
     end
+  end
+
+  def access_PInitType(o, scope, keys)
+    unless keys[0].is_a?(Types::PAnyType)
+      fail(Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Init-Type', :actual => keys[0].class})
+    end
+    Types::TypeFactory.init(*keys)
   end
 
   def access_PIterableType(o, scope, keys)
@@ -616,7 +657,9 @@ class AccessOperator
     return result_type_array ? result : result.pop
   end
 
-  def access_PHostClassType(o, scope, keys)
+  NS = '::'.freeze
+
+  def access_PClassType(o, scope, keys)
     blamed = keys.size == 0 ? @semantic : @semantic.keys[0]
     keys_orig_size = keys.size
 
@@ -642,30 +685,14 @@ class AccessOperator
     end
 
     if o.class_name.nil?
-      # The type argument may be a Resource Type - the Puppet Language allows a reference such as
-      # Class[Foo], and this is interpreted as Class[Resource[Foo]] - which is ok as long as the resource
-      # does not have a title. This should probably be deprecated.
-      #
       result = keys.each_with_index.map do |c, i|
-        name = if c.is_a?(Types::PResourceType) && !c.type_name.nil? && c.title.nil?
-                 strict_check(c, i)
-                 # type_name is already downcase. Don't waste time trying to downcase again
-                 c.type_name
-               elsif c.is_a?(String)
-                 c.downcase
-               elsif c.is_a?(Types::PTypeReferenceType)
-                 strict_check(c, i)
-                 c.type_string.downcase
-               else
-                 fail(Issues::ILLEGAL_HOSTCLASS_NAME, @semantic.keys[i], {:name => c})
-               end
+        fail(Issues::ILLEGAL_HOSTCLASS_NAME, @semantic.keys[i], {:name => c}) unless c.is_a?(String)
+        name = c.downcase
+        # Remove leading '::' since all references are global, and 3x runtime does the wrong thing
+        name = name[2..-1] if name[0,2] == NS
 
-        if name =~ Patterns::NAME
-          # Remove leading '::' since all references are global, and 3x runtime does the wrong thing
-          Types::PHostClassType.new(name.sub(/^::/, EMPTY_STRING))
-        else
-          fail(Issues::ILLEGAL_NAME, @semantic.keys[i], {:name=>c})
-        end
+        fail(Issues::ILLEGAL_NAME, @semantic.keys[i], {:name=>c}) unless name =~ Patterns::NAME
+        Types::PClassType.new(name)
       end
     else
       # lookup class resource and return one or more parameter values
@@ -687,21 +714,6 @@ class AccessOperator
     # returns single type as type, else an array of types
     return result_type_array ? result : result.pop
   end
-
-  # PUP-6083 - Using Class[Foo] is deprecated since an arbitrary foo will trigger a "resource not found"
-  # @api private
-  def strict_check(name, index)
-    if Puppet[:strict] != :off
-      msg = 'Upper cased class-name in a Class[<class-name>] is deprecated, class-name should be a lowercase string'
-      case Puppet[:strict]
-      when :error
-        fail(Issues::ILLEGAL_HOSTCLASS_NAME, @semantic.keys[index], {:name => name})
-      when :warning
-        Puppet.warn_once(:deprecation, 'ClassReferenceInUpperCase', msg)
-      end
-    end
-  end
-
 end
 end
 end

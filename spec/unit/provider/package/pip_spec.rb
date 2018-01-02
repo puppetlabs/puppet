@@ -2,11 +2,11 @@
 require 'spec_helper'
 
 provider_class = Puppet::Type.type(:package).provider(:pip)
-osfamilies = { ['All', nil] => ['pip', 'pip-python'] }
+osfamilies = { 'windows' => ['pip.exe'], 'other' => ['pip', 'pip-python'] }
 
 describe provider_class do
 
-  before do
+  before do  
     @resource = Puppet::Resource.new(:package, "fake_package")
     @provider = provider_class.new(@resource)
     @client = stub_everything('client')
@@ -31,13 +31,19 @@ describe provider_class do
   end
 
   describe "cmd" do
-    it "should return pip-python on legacy systems" do
-      Facter.stubs(:value).with(:osfamily).returns("legacy")
+
+    it "should return 'pip.exe' by default on Windows systems" do
+      Puppet.features.stubs(:microsoft_windows?).returns true
+      expect(provider_class.cmd[0]).to eq('pip.exe')
+    end
+
+    it "could return pip-python on legacy redhat systems which rename pip" do
+      Puppet.features.stubs(:microsoft_windows?).returns false
       expect(provider_class.cmd[1]).to eq('pip-python')
     end
 
-    it "should return pip by default" do
-      Facter.stubs(:value).with(:osfamily).returns("All")
+    it "should return pip by default on other systems" do
+      Puppet.features.stubs(:microsoft_windows?).returns false
       expect(provider_class.cmd[0]).to eq('pip')
     end
 
@@ -46,10 +52,10 @@ describe provider_class do
   describe "instances" do
 
     osfamilies.each do |osfamily, pip_cmds|
-      it "should return an array on #{osfamily} when #{pip_cmds.join(' or ')} is present" do
-        Facter.stubs(:value).with(:osfamily).returns(osfamily.first)
-        Facter.stubs(:value).with(:operatingsystemmajrelease).returns(osfamily.last)
-        pip_cmds.each do |pip_cmd|
+
+      it "should return an array on #{osfamily} systems when #{pip_cmds.join(' or ')} is present" do
+        Puppet.features.stubs(:microsoft_windows?).returns (osfamily == 'windows')
+        pip_cmds.each do |pip_cmd|  
           pip_cmds.each do |cmd|
             unless cmd == pip_cmd
               provider_class.expects(:which).with(cmd).returns(nil)
@@ -59,19 +65,34 @@ describe provider_class do
           provider_class.expects(:which).with(pip_cmd).returns("/fake/bin/#{pip_cmd}")
           p = stub("process")
           p.expects(:collect).yields("real_package==1.2.5")
-          provider_class.expects(:execpipe).with("/fake/bin/#{pip_cmd} freeze").yields(p)
+          provider_class.expects(:execpipe).with(["/fake/bin/#{pip_cmd}", "freeze"]).yields(p)
           provider_class.instances
         end
       end
 
-      it "should return an empty array on #{osfamily} when #{pip_cmds.join(' and ')} are missing" do
-        Facter.stubs(:value).with(:osfamily).returns(osfamily.first)
-        Facter.stubs(:value).with(:operatingsystemmajrelease).returns(osfamily.last)
+      context "with pip version >= 8.1.0" do
+        versions = ['8.1.0', '9.0.1']
+        versions.each do |version|
+          it "should use the --all option when version is '#{version}'" do
+            Puppet.features.stubs(:microsoft_windows?).returns (osfamily == 'windows')
+            provider_class.stubs(:pip_cmd).returns('/fake/bin/pip')
+            provider_class.stubs(:pip_version).returns(version)
+            p = stub("process")
+            p.expects(:collect).yields("real_package==1.2.5")
+            provider_class.expects(:execpipe).with(["/fake/bin/pip", "freeze", "--all"]).yields(p)
+            provider_class.instances
+          end
+        end
+      end
+
+      it "should return an empty array on #{osfamily} systems when #{pip_cmds.join(' and ')} are missing" do
+        Puppet.features.stubs(:microsoft_windows?).returns (osfamily == 'windows')
         pip_cmds.each do |cmd|
           provider_class.expects(:which).with(cmd).returns nil
         end
         expect(provider_class.instances).to eq([])
       end
+
     end
 
   end
@@ -125,6 +146,7 @@ describe provider_class do
         provider_class.stubs(:pip_version).returns('1.0.1')
         provider_class.stubs(:which).with('pip').returns("/fake/bin/pip")
         provider_class.stubs(:which).with('pip-python').returns("/fake/bin/pip")
+        provider_class.stubs(:which).with('pip.exe').returns("/fake/bin/pip")
       end
 
       it "should find a version number for new_pip_package" do
@@ -181,6 +203,7 @@ describe provider_class do
         provider_class.stubs(:pip_version).returns('1.5.4')
         provider_class.stubs(:which).with('pip').returns("/fake/bin/pip")
         provider_class.stubs(:which).with('pip-python').returns("/fake/bin/pip")
+        provider_class.stubs(:which).with('pip.exe').returns("/fake/bin/pip")
       end
 
       it "should find a version number for real_package" do
@@ -343,10 +366,10 @@ describe provider_class do
     end
 
     osfamilies.each do |osfamily, pip_cmds|
+
       pip_cmds.each do |pip_cmd|
-        it "should retry on #{osfamily} if #{pip_cmd} has not yet been found" do
-          Facter.stubs(:value).with(:osfamily).returns(osfamily.first)
-          Facter.stubs(:value).with(:operatingsystemmajrelease).returns(osfamily.last)
+        it "should retry on #{osfamily} systems if #{pip_cmd} has not yet been found" do
+          Puppet.features.stubs(:microsoft_windows?).returns (osfamily == 'windows')
           @provider.expects(:pip).twice.with('freeze').raises(NoMethodError).then.returns(nil)
           pip_cmds.each do |cmd|
             unless cmd == pip_cmd
@@ -358,9 +381,8 @@ describe provider_class do
         end
       end
 
-      it "should fail on #{osfamily} if #{pip_cmds.join(' and ')} are missing" do
-        Facter.stubs(:value).with(:osfamily).returns(osfamily.first)
-        Facter.stubs(:value).with(:operatingsystemmajrelease).returns(osfamily.last)
+      it "should fail on #{osfamily} systems if #{pip_cmds.join(' and ')} are missing" do
+        Puppet.features.stubs(:microsoft_windows?).returns (osfamily == 'windows')
         @provider.expects(:pip).with('freeze').raises(NoMethodError)
         pip_cmds.each do |pip_cmd|
           @provider.expects(:which).with(pip_cmd).returns(nil)
@@ -368,9 +390,8 @@ describe provider_class do
         expect { @provider.method(:lazy_pip).call("freeze") }.to raise_error(NoMethodError)
       end
 
-      it "should output a useful error message on #{osfamily} if #{pip_cmds.join(' and ')} are missing" do
-        Facter.stubs(:value).with(:osfamily).returns(osfamily.first)
-        Facter.stubs(:value).with(:operatingsystemmajrelease).returns(osfamily.last)
+      it "should output a useful error message on #{osfamily} systems if #{pip_cmds.join(' and ')} are missing" do
+        Puppet.features.stubs(:microsoft_windows?).returns (osfamily == 'windows')
         @provider.expects(:pip).with('freeze').raises(NoMethodError)
         pip_cmds.each do |pip_cmd|
           @provider.expects(:which).with(pip_cmd).returns(nil)

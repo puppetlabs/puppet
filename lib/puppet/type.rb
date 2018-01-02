@@ -1161,12 +1161,6 @@ class Type
     # Put the default provider first, then the rest of the suitable providers.
     provider_instances = {}
     providers_by_source.collect do |provider|
-      self.properties.find_all do |property|
-        provider.supports_parameter?(property)
-      end.collect do |property|
-        property.name
-      end
-
       provider.instances.collect do |instance|
         # We always want to use the "first" provider instance we find, unless the resource
         # is already managed and has a different provider set
@@ -1342,9 +1336,9 @@ class Type
 
     def properties_to_audit(list)
       if !list.kind_of?(Array) && list.to_sym == :all
-        list = all_properties
+        all_properties
       else
-        list = Array(list).collect { |p| p.to_sym }
+        Array(list).collect { |p| p.to_sym }
       end
     end
   end
@@ -1356,9 +1350,9 @@ class Type
 
       The order of the log levels, in decreasing priority, is:
 
-      * `crit`
       * `emerg`
       * `alert`
+      * `crit`
       * `err`
       * `warning`
       * `notice`
@@ -1543,12 +1537,25 @@ class Type
             :event => self.class.events,
             :callback => method
           }
-          self.debug { "subscribes to #{related_resource.ref}" }
         else
           # If there's no callback, there's no point in even adding
           # a label.
           subargs = nil
-          self.debug { "subscribes to #{related_resource.ref}" }
+        end
+
+        ## Corrected syntax of debug statement to reflect the way this was called.
+        # i.e. before, after, subscribe, notify
+        self.debug do
+          relation = case self.class.name
+          when "subscribe"
+            "subscribes"
+          when "notify"
+            "notifies"
+          else
+            self.class.name
+          end
+
+          "#{relation} to #{related_resource.ref}"
         end
 
         Puppet::Relationship.new(source, target, subargs)

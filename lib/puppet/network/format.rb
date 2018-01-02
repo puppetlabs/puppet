@@ -6,14 +6,12 @@ class Puppet::Network::Format
   include Puppet::Confiner
 
   attr_reader :name, :mime
-  attr_accessor :intern_method, :render_method, :intern_multiple_method, :render_multiple_method, :weight, :required_methods, :extension
+  attr_accessor :intern_method, :render_method, :intern_multiple_method, :render_multiple_method, :weight, :required_methods, :extension, :charset
 
   def init_attribute(name, default)
-    if value = @options[name]
-      @options.delete(name)
-    else
-      value = default
-    end
+    value = @options.delete(name)
+    value = default if value.nil?
+
     self.send(name.to_s + "=", value)
   end
 
@@ -36,6 +34,7 @@ class Puppet::Network::Format
     init_attribute(:weight, 5)
     init_attribute(:required_methods, method_list.keys)
     init_attribute(:extension, name.to_s)
+    init_attribute(:charset, nil)
 
     method_list.each do |method, value|
       init_attribute(method, value)
@@ -70,7 +69,8 @@ class Puppet::Network::Format
   def render_multiple(instances)
     # This method implicitly assumes that all instances are of the same type.
     return instances[0].class.send(render_multiple_method, instances) if instances[0].class.respond_to?(render_multiple_method)
-    raise NotImplementedError, "#{instances[0].class} does not respond to #{render_multiple_method}; can not intern multiple instances to #{mime}"
+    raise NotImplementedError, _("%{klass} does not respond to %{method}; can not render multiple instances to %{mime}") \
+                               % { klass: instances[0].class, method: render_multiple_method, mime: mime }
   end
 
   def required_methods_present?(klass)

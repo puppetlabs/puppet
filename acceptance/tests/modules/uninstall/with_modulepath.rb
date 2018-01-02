@@ -1,5 +1,10 @@
 test_name "puppet module uninstall (with modulepath)"
 
+tag 'audit:low',       # Module management via pmt is not the primary support workflow
+    'audit:acceptance',
+    'audit:refactor'   # Master is not required for this test. Replace with agents.each
+                       # Wrap steps in blocks in accordance with Beaker style guide
+
 codedir = master.puppet('master')['codedir']
 
 teardown do

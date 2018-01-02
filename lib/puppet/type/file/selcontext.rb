@@ -29,7 +29,12 @@ module Puppet
     def retrieve
       return :absent unless @resource.stat
       context = self.get_selinux_current_context(@resource[:path])
-      parse_selinux_context(name, context)
+      is = parse_selinux_context(name, context)
+      if name == :selrange and selinux_support?
+        self.selinux_category_to_label(is)
+      else
+        is
+      end
     end
 
     def retrieve_default_context(property)
@@ -55,6 +60,18 @@ module Puppet
         true
       else
         super
+      end
+    end
+
+    def unsafe_munge(should)
+      if not selinux_support?
+        return should
+      end
+
+      if name == :selrange
+        self.selinux_category_to_label(should)
+      else
+        should
       end
     end
 

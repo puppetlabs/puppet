@@ -21,6 +21,10 @@ class Puppet::IndirectorTesting
     new(data['value'])
   end
 
+  def to_binary
+    value
+  end
+
   def to_data_hash
     { 'value' => value }
   end

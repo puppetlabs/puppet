@@ -1,5 +1,8 @@
 test_name "puppet module build (agent)"
 
+tag 'audit:medium',
+    'audit:acceptance'
+
 agents.each do |agent|
   teardown do
     on agent, 'rm -rf bar'
@@ -13,6 +16,6 @@ agents.each do |agent|
 
   step 'build'
   on(agent, puppet('module build bar')) do
-    assert_match(/Module built: .*\/bar\/pkg\/foo-bar-.*\.tar\.gz/, stdout)
+    assert_match(/Module built: .*\/bar\/pkg\/foo-bar-.*\.tar\.gz/, stdout) unless agent['locale'] == 'ja'
   end
 end

@@ -4,13 +4,14 @@ require 'fileutils'
 require 'win32/daemon'
 require 'win32/dir'
 require 'win32/process'
-require 'win32/eventlog'
+
+# This file defines utilities for logging to eventlog. While it lives inside
+# Puppet, it is completely independent and loads no other parts of Puppet, so we
+# can safely require *just* it.
+require 'puppet/util/windows/eventlog'
 
 class WindowsDaemon < Win32::Daemon
   CREATE_NEW_CONSOLE          = 0x00000010
-  EVENTLOG_ERROR_TYPE         = 0x0001
-  EVENTLOG_WARNING_TYPE       = 0x0002
-  EVENTLOG_INFORMATION_TYPE   = 0x0004
 
   @run_thread = nil
   @LOG_TO_FILE = false
@@ -127,28 +128,21 @@ class WindowsDaemon < Win32::Daemon
         File.open(LOG_FILE, 'a:UTF-8') { |f| f.puts("#{Time.now} Puppet (#{level}): #{msg}") }
       end
 
-      case level
-        when :debug, :info, :notice
-          report_windows_event(EVENTLOG_INFORMATION_TYPE,0x01,msg.to_s)
-        when :err, :alert, :emerg, :crit
-          report_windows_event(EVENTLOG_ERROR_TYPE,0x03,msg.to_s)
-        else
-          report_windows_event(EVENTLOG_WARNING_TYPE,0x02,msg.to_s)
-      end
+      native_type, native_id = Puppet::Util::Windows::EventLog.to_native(level)
+      report_windows_event(native_type, native_id, msg.to_s)
     end
   end
 
   def report_windows_event(type,id,message)
     begin
       eventlog = nil
-      eventlog = Win32::EventLog.open("Application")
+      eventlog = Puppet::Util::Windows::EventLog.open("Puppet")
       eventlog.report_event(
-        :source      => "Puppet",
         :event_type  => type,   # EVENTLOG_ERROR_TYPE, etc
         :event_id    => id,     # 0x01 or 0x02, 0x03 etc.
         :data        => message # "the message"
       )
-    rescue Exception => e
+    rescue Exception
       # Ignore all errors
     ensure
       if (!eventlog.nil?)

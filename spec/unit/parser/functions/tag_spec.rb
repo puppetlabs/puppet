@@ -25,4 +25,11 @@ describe "the 'tag' function" do
     expect(resource).to be_tagged("one")
     expect(resource).to be_tagged("two")
   end
+
+  it 'is not available when --tasks is on' do
+    Puppet[:tasks] = true
+    expect do
+      @scope.function_tag(['one', 'two'])
+    end.to raise_error(Puppet::ParseError, /is only available when compiling a catalog/)
+  end
 end

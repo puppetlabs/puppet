@@ -20,6 +20,16 @@ class BaseLoader < Loader
     @last_result = nil      # the value of the last name (optimization)
   end
 
+  def discover(type, name_authority = Pcore::RUNTIME_NAME_AUTHORITY, &block)
+    result = []
+    @named_values.each_pair do |key, entry|
+      result << key unless entry.nil? || entry.value.nil? || key.type != type || (block_given? && !yield(key))
+    end
+    result.concat(parent.discover(type, name_authority, &block))
+    result.uniq!
+    result
+  end
+
   # @api public
   #
   def load_typed(typed_name)
@@ -109,8 +119,8 @@ class BaseLoader < Loader
   private
 
   def fail_redefine(entry)
-    origin_info = entry.origin ? "Originally set #{origin_label(entry.origin)}." : "Set at unknown location"
-    raise ArgumentError, "Attempt to redefine entity '#{entry.typed_name}'. #{origin_info}"
+    origin_info = entry.origin ? _("Originally set %{original}.") % { original: origin_label(entry.origin) } : _("Set at unknown location")
+    raise ArgumentError, _("Attempt to redefine entity '%{name}'. %{origin_info}") % { name: entry.typed_name, origin_info: origin_info }
   end
 
   # TODO: Should not really be here?? - TODO: A Label provider ? semantics for the URI?

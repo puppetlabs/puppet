@@ -2,11 +2,14 @@ require 'uri'
 
 module Puppet::Pops
 module Pcore
+  include Types::PuppetObject
+
   TYPE_URI_RX = Types::TypeFactory.regexp(URI.regexp)
   TYPE_URI = Types::TypeFactory.pattern(TYPE_URI_RX)
   TYPE_URI_ALIAS = Types::PTypeAliasType.new('Pcore::URI', nil, TYPE_URI)
   TYPE_SIMPLE_TYPE_NAME = Types::TypeFactory.pattern(/\A[A-Z]\w*\z/)
   TYPE_QUALIFIED_REFERENCE = Types::TypeFactory.pattern(/\A[A-Z][\w]*(?:::[A-Z][\w]*)*\z/)
+  TYPE_MEMBER_NAME = Types::PPatternType.new([Types::PRegexpType.new(Patterns::PARAM_NAME)])
 
   KEY_PCORE_URI = 'pcore_uri'.freeze
   KEY_PCORE_VERSION = 'pcore_version'.freeze
@@ -17,28 +20,77 @@ module Pcore
 
   RUNTIME_NAME_AUTHORITY = 'http://puppet.com/2016.1/runtime'
 
+  def self._pcore_type
+    @type
+  end
+
+  def self.annotate(instance, annotations_hash)
+    annotations_hash.each_pair do |type, init_hash|
+      type.implementation_class.annotate(instance) { init_hash }
+    end
+    instance
+  end
+
   def self.init(loader, ir, for_agent)
     add_alias('Pcore::URI_RX', TYPE_URI_RX, loader)
     add_type(TYPE_URI_ALIAS, loader)
     add_alias('Pcore::SimpleTypeName', TYPE_SIMPLE_TYPE_NAME, loader)
+    add_alias('Pcore::MemberName', TYPE_MEMBER_NAME, loader)
     add_alias('Pcore::TypeName', TYPE_QUALIFIED_REFERENCE, loader)
     add_alias('Pcore::QRef', TYPE_QUALIFIED_REFERENCE, loader)
-    begin
-    Types::TypedModelObject.register_ptypes(loader, ir)
-    rescue Exception => e
-      puts e.message
+
+    if Puppet[:tasks]
+      add_object_type('Task', <<-PUPPET, loader)
+        {
+          attributes => {   
+            # Fully qualified name of the task
+            name => { type => Pattern[/\\A[a-z][a-z0-9_]*(?:::[a-z][a-z0-9_]*)*\\z/] },
+
+            # Full path to executable
+            executable => { type => String },
+
+            # Task description
+            description => { type => Optional[String], value => undef },
+
+            # Puppet Task version
+            puppet_task_version => { type => Integer, value => 1 },
+  
+            # Type, description, and sensitive property of each parameter 
+            parameters => {
+              type => Optional[Hash[
+                Pattern[/\\A[a-z][a-z0-9_]*\\z/],
+                Struct[
+                  Optional[description] => String,
+                  Optional[sensitive] => Boolean,
+                  type => Type[Optional[Data]]]]],
+              value => undef
+            },
+
+             # Type, description, and sensitive property of each output 
+            output => {
+              type => Optional[Hash[
+                Pattern[/\\A[a-z][a-z0-9_]*\\z/],
+                Struct[
+                  Optional[description] => String,
+                  Optional[sensitive] => Boolean,
+                  type => Type[Optional[Data]]]]],
+              value => undef
+            },
+ 
+            supports_noop => { type => Boolean, value => false },
+            input_method => { type => String, value => 'both' },
+          }
+        }
+      PUPPET
     end
+    Types::TypedModelObject.register_ptypes(loader, ir)
+
+    @type = create_object_type(loader, ir, Pcore, 'Pcore', nil)
 
     ir.register_implementation_namespace('Pcore', 'Puppet::Pops::Pcore', loader)
+    ir.register_implementation_namespace('Puppet::AST', 'Puppet::Pops::Model', loader)
+    ir.register_implementation('Puppet::AST::Locator', 'Puppet::Pops::Parser::Locator::Locator19', loader)
     unless for_agent
-      ir.register_implementation_namespace('Puppet::AST', 'Puppet::Pops::Model', loader)
-      ast_type_set = Serialization::RGen::TypeGenerator.new.generate_type_set('Puppet::AST', Puppet::Pops::Model, loader)
-
-      # Extend the Puppet::AST type set with the Locator (it's not an RGen class, but nevertheless, used in the model)
-      ast_ts_i12n = ast_type_set.i12n_hash
-      ast_ts_i12n['types'] = ast_ts_i12n['types'].merge('Locator' => Parser::Locator::Locator19.register_ptype(loader, ir))
-      add_type(Types::PTypeSetType.new(ast_ts_i12n), loader)
-
       Resource.register_ptypes(loader, ir)
       Lookup::Context.register_ptype(loader, ir);
       Lookup::DataProvider.register_types(loader)
@@ -59,17 +111,17 @@ module Pcore
   #
   # @api private
   def self.create_object_type(loader, ir, impl_class, type_name, parent_name, attributes_hash = EMPTY_HASH, functions_hash = EMPTY_HASH, equality = nil)
-    i12n_hash = {}
-    i12n_hash[Types::KEY_PARENT] = Types::PTypeReferenceType.new(parent_name) unless parent_name.nil?
-    i12n_hash[Types::KEY_ATTRIBUTES] = attributes_hash unless attributes_hash.empty?
-    i12n_hash[Types::KEY_FUNCTIONS] = functions_hash unless functions_hash.empty?
-    i12n_hash[Types::KEY_EQUALITY] = equality unless equality.nil?
+    init_hash = {}
+    init_hash[Types::KEY_PARENT] = Types::PTypeReferenceType.new(parent_name) unless parent_name.nil?
+    init_hash[Types::KEY_ATTRIBUTES] = attributes_hash unless attributes_hash.empty?
+    init_hash[Types::KEY_FUNCTIONS] = functions_hash unless functions_hash.empty?
+    init_hash[Types::KEY_EQUALITY] = equality unless equality.nil?
     ir.register_implementation(type_name, impl_class, loader)
-    add_type(Types::PObjectType.new(type_name, i12n_hash), loader)
+    add_type(Types::PObjectType.new(type_name, init_hash), loader)
   end
 
   def self.add_object_type(name, body, loader)
-    add_type(Types::PObjectType.new(name, Parser::EvaluatingParser.new.parse_string(body).current.body), loader)
+    add_type(Types::PObjectType.new(name, Parser::EvaluatingParser.new.parse_string(body).body), loader)
   end
 
   def self.add_alias(name, type, loader, name_authority = RUNTIME_NAME_AUTHORITY)
@@ -89,8 +141,7 @@ module Pcore
     aliases.each do |name, type_string|
       add_type(Types::PTypeAliasType.new(name, Types::TypeFactory.type_reference(type_string), nil), loader, name_authority)
     end
-    parser = Types::TypeParser.singleton
-    aliases.each_key.map { |name| loader.load(:type, name).resolve(parser, loader) }
+    aliases.each_key.map { |name| loader.load(:type, name).resolve(loader) }
   end
 end
 end

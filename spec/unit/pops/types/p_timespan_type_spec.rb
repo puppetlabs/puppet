@@ -24,6 +24,20 @@ describe 'Timespan type' do
       expect(eval_and_collect_notices(code)).to eq(%w(true true false false))
     end
 
+    it 'does not consider an Integer to be an instance' do
+      code = <<-CODE
+        notice(assert_type(Timespan, 1234))
+      CODE
+      expect { eval_and_collect_notices(code) }.to raise_error(/expects a Timespan value, got Integer/)
+    end
+
+    it 'does not consider a Float to be an instance' do
+      code = <<-CODE
+        notice(assert_type(Timespan, 1.234))
+      CODE
+      expect { eval_and_collect_notices(code) }.to raise_error(/expects a Timespan value, got Float/)
+    end
+
     context "when parameterized" do
       it 'is equal other types with the same parameterization' do
         code = <<-CODE
@@ -91,6 +105,13 @@ describe 'Timespan type' do
         CODE
         expect(eval_and_collect_notices(code)).to eq(
           %w(1-11:23:13.0 0-11:23:13.0 1-11:23:00.0 1-11:00:00.0 0-11:23:00.0 0-00:23:13.0 1-00:00:00.0 0-11:00:00.0 0-00:23:00.0 0-00:00:13.0))
+      end
+
+      it 'it cannot be created using an empty formats array' do
+        code = <<-CODE
+            notice(Timespan('1d11h23m13s', []))
+        CODE
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /parameter 'format' variant 1 expects size to be at least 1, got 0/)
       end
 
       it 'can be created from a integer that represents seconds since epoch' do

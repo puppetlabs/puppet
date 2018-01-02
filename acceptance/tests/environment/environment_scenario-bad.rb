@@ -4,6 +4,12 @@ extend Puppet::Acceptance::EnvironmentUtils
 require 'puppet/acceptance/classifier_utils'
 extend Puppet::Acceptance::ClassifierUtils
 
+tag 'audit:medium',
+    'audit:unit',  # The error responses for the agent should be covered by Ruby unit tests.
+                   # The server 404/400 response should be covered by server integration tests.
+    'server'
+
+
 classify_nodes_as_agent_specified_if_classifer_present
 
 step 'setup environments'
@@ -48,9 +54,14 @@ expectations = {
   },
   :puppet_agent => {
     :exit_code => 1,
-    :matches => [%r{(Warning|Error).*(404|400).*Could not find environment '#{env}'},
-                 %r{Could not retrieve catalog; skipping run}],
   },
 }
+
+agents.each do |host|
+  unless host['locale'] == 'ja'
+    expectations[:puppet_agent][:matches] = [%r{(Warning|Error).*(404|400).*Could not find environment '#{env}'},
+                                             %r{Could not retrieve catalog; skipping run}]
+  end
+end
 
 assert_review(review_results(results,expectations))

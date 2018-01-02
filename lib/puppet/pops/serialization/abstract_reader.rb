@@ -170,6 +170,10 @@ class AbstractReader
       # are written as binary data.
       read_payload(data) { |ep| Types::PBinaryType::Binary.new(ep.read) }
     end
+
+    register_type(Extension::URI) do |data|
+      read_payload(data) { |ep| URI(ep.read) }
+    end
   end
 end
 end

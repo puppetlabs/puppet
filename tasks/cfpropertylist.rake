@@ -1,6 +1,6 @@
 task 'cfpropertylist' do
   if defined? Pkg::Config and Pkg::Config.project_root
-    cfp_version = "2.2.7"
+    cfp_version = "2.3.5"
     libdir = File.join(Pkg::Config.project_root, "lib")
     source = "https://github.com/ckruse/CFPropertyList/archive/cfpropertylist-#{cfp_version}.tar.gz"
     target_dir = Pkg::Util::File.mktemp

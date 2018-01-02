@@ -7,7 +7,7 @@ def self.register_ptypes(loader, ir)
   types = [Param, ResourceTypeImpl].map do |c|
     c.register_ptype(loader, ir)
   end
-  types.each {|t| t.resolve(Types::TypeParser.singleton, loader) }
+  types.each {|t| t.resolve(loader) }
 end
 
 class ResourceTypeImpl
@@ -21,7 +21,7 @@ class ResourceTypeImpl
   include Puppet::CompilableResourceType
 
   # Returns the Puppet Type for this instance.
-  def self._ptype
+  def self._pcore_type
     @ptype
   end
 

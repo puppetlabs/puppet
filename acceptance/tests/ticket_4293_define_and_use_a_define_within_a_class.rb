@@ -6,6 +6,11 @@
 # Description: using a defined type in the class it's declared in
 # causes an error.
 
+tag 'audit:high', # basic language functionality
+    'audit:unit',
+    'audit:refactor', # Use block style `test_name`
+    'audit:delete'
+
 manifest = <<PP
 class foo {
   define do_notify($msg) {

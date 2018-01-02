@@ -18,8 +18,8 @@ describe Puppet::Face[:config, '0.0.1'] do
     Puppet[:syslogfacility] = "file"
 
     expect { subject.print("trace", "syslogfacility") }.to have_printed(<<-OUTPUT)
-trace = true
 syslogfacility = file
+trace = true
     OUTPUT
   end
 
@@ -108,11 +108,11 @@ syslogfacility = file
       ) do
         args = "environmentpath","manifest","modulepath","environment","basemodulepath"
         expect { subject.print(*add_section_option(args, section)) }.to have_printed(<<-OUTPUT)
+basemodulepath = #{File.expand_path("/some/base")}
+environment = production
 environmentpath = #{File.expand_path("/dev/null/environments")}
 manifest = #{File.expand_path("/dev/null/environments/production/manifests")}
 modulepath = #{File.expand_path("/dev/null/environments/production/modules")}#{File::PATH_SEPARATOR}#{File.expand_path("/some/base")}
-environment = production
-basemodulepath = #{File.expand_path("/some/base")}
         OUTPUT
       end
     end
@@ -129,11 +129,11 @@ basemodulepath = #{File.expand_path("/some/base")}
       ) do
         args = "environmentpath","manifest","modulepath","environment","basemodulepath"
         expect { subject.print(*add_section_option(args, section)) }.to have_printed(<<-OUTPUT)
+basemodulepath = #{File.expand_path("/some/base")}
+environment = production
 environmentpath = #{File.expand_path("/dev/null/environments")}
 manifest = #{File.expand_path("/dev/null/environments/production/manifests")}
 modulepath = #{File.expand_path("/custom/modules")}#{File::PATH_SEPARATOR}#{File.expand_path("/some/base")}
-environment = production
-basemodulepath = #{File.expand_path("/some/base")}
         OUTPUT
       end
     end
@@ -148,11 +148,11 @@ basemodulepath = #{File.expand_path("/some/base")}
       ) do
         args = "environmentpath","manifest","modulepath","environment","basemodulepath"
         expect { subject.print(*add_section_option(args, section)) }.to have_printed(<<-OUTPUT)
+basemodulepath = #{File.expand_path("/some/base")}
+environment = doesnotexist
 environmentpath = #{File.expand_path("/dev/null/environments")}
 manifest = 
 modulepath = 
-environment = doesnotexist
-basemodulepath = #{File.expand_path("/some/base")}
         OUTPUT
       end
     end

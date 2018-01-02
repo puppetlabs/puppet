@@ -1,8 +1,12 @@
 test_name "Augeas services file" do
 
-  skip_test 'requires augeas which is included in AIO' if @options[:type] != 'aio'
+  tag 'risk:medium',
+      'audit:medium',
+      'audit:acceptance',
+      'audit:refactor'      # move to types test dir
+                            # use single manifest/apply
 
-  tag 'risk:medium'
+  skip_test 'requires augeas which is included in AIO' if @options[:type] != 'aio'
 
   confine :except, :platform => 'windows'
   confine :except, :platform => 'osx'

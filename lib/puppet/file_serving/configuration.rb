@@ -4,7 +4,9 @@ require 'puppet/file_serving/mount'
 require 'puppet/file_serving/mount/file'
 require 'puppet/file_serving/mount/modules'
 require 'puppet/file_serving/mount/plugins'
+require 'puppet/file_serving/mount/locales'
 require 'puppet/file_serving/mount/pluginfacts'
+require 'puppet/file_serving/mount/tasks'
 
 class Puppet::FileServing::Configuration
   require 'puppet/file_serving/configuration/parser'
@@ -50,8 +52,8 @@ class Puppet::FileServing::Configuration
 
     mount_name, path = request.key.split(File::Separator, 2)
 
-    raise(ArgumentError, "Cannot find file: Invalid mount '#{mount_name}'") unless mount_name =~ %r{^[-\w]+$}
-    raise(ArgumentError, "Cannot find file: Invalid relative path '#{path}'") if path and path.split('/').include?('..')
+    raise(ArgumentError, _("Cannot find file: Invalid mount '%{mount_name}'") % { mount_name: mount_name }) unless mount_name =~ %r{^[-\w]+$}
+    raise(ArgumentError, _("Cannot find file: Invalid relative path '%{path}'") % { path: path }) if path and path.split('/').include?('..')
 
     return nil unless mount = find_mount(mount_name, request.environment)
     if mount.name == "modules" and mount_name != "modules"
@@ -80,8 +82,12 @@ class Puppet::FileServing::Configuration
     @mounts["modules"].allow('*') if @mounts["modules"].empty?
     @mounts["plugins"] ||= Mount::Plugins.new("plugins")
     @mounts["plugins"].allow('*') if @mounts["plugins"].empty?
+    @mounts["locales"] ||= Mount::Locales.new("locales")
+    @mounts["locales"].allow('*') if @mounts["locales"].empty?
     @mounts["pluginfacts"] ||= Mount::PluginFacts.new("pluginfacts")
     @mounts["pluginfacts"].allow('*') if @mounts["pluginfacts"].empty?
+    @mounts["tasks"] ||= Mount::Tasks.new("tasks")
+    @mounts["tasks"].allow('*') if @mounts["tasks"].empty?
   end
 
   # Read the configuration file.
@@ -99,7 +105,7 @@ class Puppet::FileServing::Configuration
       newmounts = @parser.parse
       @mounts = newmounts
     rescue => detail
-      Puppet.log_exception(detail, "Error parsing fileserver configuration: #{detail}; using old configuration")
+      Puppet.log_exception(detail, _("Error parsing fileserver configuration: %{detail}; using old configuration") % { detail: detail })
     end
 
   ensure

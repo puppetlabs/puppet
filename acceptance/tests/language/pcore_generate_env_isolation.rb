@@ -2,6 +2,10 @@ test_name 'C98345: ensure puppet generate assures env. isolation' do
   require 'puppet/acceptance/environment_utils.rb'
   extend Puppet::Acceptance::EnvironmentUtils
 
+tag 'audit:medium',
+    'audit:integration',
+    'server'
+
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type)
   tmp_environment2 = mk_tmp_environment_with_teardown(master, app_type)
@@ -48,8 +52,10 @@ test_name 'C98345: ensure puppet generate assures env. isolation' do
       step 'run agent in environment with type with an extra parameter. try to use this parameter' do
         on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment2}"),
            :accept_all_exit_codes => true) do |result|
-          assert_match("Error: no parameter named 'other'", result.output,
-                       'did not produce environment isolation issue as expected')
+          unless agent['locale'] == 'ja'
+            assert_match("Error: no parameter named 'other'", result.output,
+                         'did not produce environment isolation issue as expected')
+          end
         end
       end
     end

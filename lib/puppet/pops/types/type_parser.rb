@@ -34,13 +34,13 @@ class TypeParser
   #
   def parse(string, context = nil)
     model = @parser.parse_string(string)
-    interpret(model.current.body, context)
+    interpret(model.model.body, context)
   end
 
   # @api private
   def parse_literal(string, context = nil)
-    model = @parser.parse_string(string)
-    interpret_any(model.current.body, context)
+    factory = @parser.parse_string(string)
+    interpret_any(factory.model.body, context)
   end
 
   # @param ast [Puppet::Pops::Model::PopsObject] the ast to interpret
@@ -69,8 +69,28 @@ class TypeParser
     interpret_any(o.body, context)
   end
 
+  # @api private
+  def interpret_TypeAlias(o, context)
+    Loader::TypeDefinitionInstantiator.create_type(o.name, o.type_expr, Pcore::RUNTIME_NAME_AUTHORITY).resolve(loader_from_context(o, context))
+  end
+
+  # @api private
+  def interpret_TypeDefinition(o, context)
+    Loader::TypeDefinitionInstantiator.create_runtime_type(o)
+  end
+
+  # @api private
   def interpret_LambdaExpression(o, context)
     o
+  end
+
+  # @api private
+  def interpret_HeredocExpression(o, context)
+    interpret_any(o.text_expr, context)
+  end
+
+  def interpret_SubLocatedExpression(o, context)
+    interpret_any(o.expr, context)
   end
 
   # @api private
@@ -143,6 +163,7 @@ class TypeParser
         'integer'      => TypeFactory.integer,
         'float'        => TypeFactory.float,
         'numeric'      => TypeFactory.numeric,
+        'init'         => TypeFactory.init,
         'iterable'     => TypeFactory.iterable,
         'iterator'     => TypeFactory.iterator,
         'string'       => TypeFactory.string,
@@ -152,17 +173,17 @@ class TypeParser
         'boolean'      => TypeFactory.boolean,
         'pattern'      => TypeFactory.pattern,
         'regexp'       => TypeFactory.regexp,
-        'data'         => TypeFactory.data,
-        'array'        => TypeFactory.array_of_data,
-        'hash'         => TypeFactory.hash_of_data,
+        'array'        => TypeFactory.array_of_any,
+        'hash'         => TypeFactory.hash_of_any,
         'class'        => TypeFactory.host_class,
         'resource'     => TypeFactory.resource,
         'collection'   => TypeFactory.collection,
         'scalar'       => TypeFactory.scalar,
+        'scalardata'   => TypeFactory.scalar_data,
         'catalogentry' => TypeFactory.catalog_entry,
         'undef'        => TypeFactory.undef,
-        'notundef'     => TypeFactory.not_undef(),
-        'default'      => TypeFactory.default(),
+        'notundef'     => TypeFactory.not_undef,
+        'default'      => TypeFactory.default,
         'any'          => TypeFactory.any,
         'variant'      => TypeFactory.variant,
         'optional'     => TypeFactory.optional,
@@ -179,8 +200,9 @@ class TypeParser
         'semver'       => TypeFactory.sem_ver,
         'semverrange'  => TypeFactory.sem_ver_range,
         'timestamp'    => TypeFactory.timestamp,
-        'timespan'     => TypeFactory.timespan
-    }
+        'timespan'     => TypeFactory.timespan,
+        'uri'          => TypeFactory.uri,
+    }.freeze
   end
 
   # @api private
@@ -192,7 +214,7 @@ class TypeParser
       loader = loader_from_context(name_ast, context)
       unless loader.nil?
         type = loader.load(:type, name)
-        type = type.resolve(self, loader) unless type.nil?
+        type = type.resolve(loader) unless type.nil?
       end
       type || TypeFactory.type_reference(name_ast.cased_value)
     end
@@ -305,7 +327,7 @@ class TypeParser
         if param_start.nil?
           type = type_str
         else
-          tps = interpret_any(@parser.parse_string(type_str[param_start..-1]).current, context)
+          tps = interpret_any(@parser.parse_string(type_str[param_start..-1]).model, context)
           raise_invalid_parameters_error(type.to_s, '1', tps.size) unless tps.size == 1
           type = type_str[0..param_start-1]
           parameters = [type] + tps
@@ -319,18 +341,31 @@ class TypeParser
       TypeFactory.regexp(parameters[0])
 
     when 'enum'
-      # 1..m parameters being strings
+      # 1..m parameters being string
+      last = parameters.last
+      case_insensitive = false
+      if last == true || last == false
+        parameters = parameters[0...-1]
+        case_insensitive = last
+      end
       raise_invalid_parameters_error('Enum', '1 or more', parameters.size) unless parameters.size >= 1
-      TypeFactory.enum(*parameters)
+      parameters.each { |p|  raise Puppet::ParseError, 'Enum parameters must be identifiers or strings' unless p.is_a?(String) }
+      PEnumType.new(parameters, case_insensitive)
 
     when 'pattern'
       # 1..m parameters being strings or regular expressions
       raise_invalid_parameters_error('Pattern', '1 or more', parameters.size) unless parameters.size >= 1
       TypeFactory.pattern(*parameters)
 
+    when 'uri'
+      # 1 parameter which is a string or a URI
+      raise_invalid_parameters_error('URI', '1', parameters.size) unless parameters.size == 1
+      TypeFactory.uri(parameters[0])
+
     when 'variant'
       # 1..m parameters being strings or regular expressions
       raise_invalid_parameters_error('Variant', '1 or more', parameters.size) unless parameters.size >= 1
+      parameters.each { |p| assert_type(ast, p) }
       TypeFactory.variant(*parameters)
 
     when 'tuple'
@@ -370,6 +405,12 @@ class TypeParser
       raise_invalid_type_specification_error(ast) unless h.is_a?(Hash)
       TypeFactory.struct(h)
 
+    when 'boolean'
+      raise_invalid_parameters_error('Boolean', '1', parameters.size) unless parameters.size == 1
+      p = parameters[0]
+      raise Puppet::ParseError, 'Boolean parameter must be true or false' unless p == true || p == false
+      TypeFactory.boolean(p)
+
     when 'integer'
       if parameters.size == 1
         case parameters[0]
@@ -391,6 +432,10 @@ class TypeParser
     when 'typeset'
       raise_invalid_parameters_error('Object', 1, parameters.size) unless parameters.size == 1
       TypeFactory.type_set(parameters[0])
+
+    when 'init'
+      assert_type(ast, parameters[0])
+      TypeFactory.init(*parameters)
 
     when 'iterable'
       if parameters.size != 1
@@ -458,7 +503,7 @@ class TypeParser
       assert_type(ast, param) unless param.is_a?(String)
       TypeFactory.optional(param)
 
-    when 'any', 'data', 'catalogentry', 'boolean', 'scalar', 'undef', 'numeric', 'default', 'semverrange'
+    when 'any', 'data', 'catalogentry', 'scalar', 'undef', 'numeric', 'default', 'semverrange'
       raise_unparameterized_type_error(qref)
 
     when 'notundef'
@@ -501,14 +546,16 @@ class TypeParser
       type = nil
       unless loader.nil?
         type = loader.load(:type, type_name)
-        type = type.resolve(self, loader) unless type.nil?
+        type = type.resolve(loader) unless type.nil?
       end
 
       if type.nil?
-        TypeFactory.type_reference(original_text_of(qref.eContainer))
+        TypeFactory.type_reference(original_text_of(ast))
       elsif type.is_a?(PResourceType)
         raise_invalid_parameters_error(qref.cased_value, 1, parameters.size) unless parameters.size == 1
         TypeFactory.resource(type.type_name, parameters[0])
+      elsif type.is_a?(PObjectType)
+        PObjectTypeExtension.create(type, parameters)
       else
         # Must be a type alias. They can't use parameters (yet)
         raise_unparameterized_type_error(qref)
@@ -556,8 +603,7 @@ class TypeParser
   end
 
   def original_text_of(ast)
-    position = Adapters::SourcePosAdapter.adapt(ast)
-    position.extract_tree_text
+    ast.locator.extract_tree_text(ast)
   end
 end
 end

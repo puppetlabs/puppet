@@ -23,6 +23,13 @@ class Puppet::Pops::Loader::DependencyLoader < Puppet::Pops::Loader::BaseLoader
     @dependency_loaders = dependency_loaders
   end
 
+  def discover(type, name_authority = Puppet::Pops::Pcore::RUNTIME_NAME_AUTHORITY, &block)
+    result = []
+    @dependency_loaders.each { |loader| result.concat(loader.discover(type, name_authority, &block)) }
+    result.concat(super)
+    result
+  end
+
   # Finds name in a loader this loader depends on / can see
   #
   def find(typed_name)

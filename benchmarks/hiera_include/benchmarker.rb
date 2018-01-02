@@ -37,7 +37,6 @@ class Benchmarker
     dummy_class_manifest = File.join(manifests_dir, 'foo.pp')
     hiera_yaml = File.join(@target, 'hiera.yaml')
     datadir = File.join(@target, 'data')
-    localdir = File.dirname(File.realpath(__FILE__))
     common_yaml = File.join(datadir, 'common.yaml')
     groups_yaml = File.join(datadir, 'groups.yaml')
 

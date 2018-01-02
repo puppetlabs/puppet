@@ -72,11 +72,24 @@ describe Puppet::Provider::Mount do
 
   describe Puppet::Provider::Mount, " when remounting" do
 
-    it "should use '-o remount' if the resource specifies it supports remounting" do
-      @mounter.stubs(:info)
-      @resource.stubs(:[]).with(:remounts).returns(:true)
-      @mounter.expects(:mountcmd).with("-o", "remount", @name)
-      @mounter.remount
+    context "if the resource supports remounting" do
+      context "given explicit options on AIX" do
+        it "should combine the options with 'remount'" do
+          @mounter.stubs(:info)
+          @mounter.stubs(:options).returns('ro')
+          @resource.stubs(:[]).with(:remounts).returns(:true)
+          Facter.expects(:value).with(:operatingsystem).returns 'AIX'
+          @mounter.expects(:mountcmd).with("-o", "ro,remount", @name)
+          @mounter.remount
+        end
+      end
+
+      it "should use '-o remount'" do
+        @mounter.stubs(:info)
+        @resource.stubs(:[]).with(:remounts).returns(:true)
+        @mounter.expects(:mountcmd).with("-o", "remount", @name)
+        @mounter.remount
+      end
     end
 
     it "should mount with '-o update' on OpenBSD" do

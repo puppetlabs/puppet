@@ -1,5 +1,3 @@
-require 'rgen/metamodel_builder'
-
 module Puppet::Pops
 module Types
 # The ClassLoader provides a Class instance given a class name or a meta-type.
@@ -26,7 +24,7 @@ class ClassLoader
     when Array
       provide_from_name_path(name.join('::'), name)
 
-    when PAnyType, PType
+    when PAnyType, PTypeType
       provide_from_type(name)
 
     else
@@ -46,8 +44,8 @@ class ClassLoader
       # There is no other thing to load except this Enum meta type
       RGen::MetamodelBuilder::MMBase::Boolean
 
-    when PType
-      # TODO: PType should has a type argument (a PAnyType) so the Class' class could be returned
+    when PTypeType
+      # TODO: PTypeType should have a type argument (a PAnyType) so the Class' class could be returned
       #       (but this only matters in special circumstances when meta programming has been used).
       Class
 
@@ -86,24 +84,24 @@ class ClassLoader
     # If class is already loaded, try this first
     result = find_class(name_path)
 
-    unless result.is_a?(Class)
+    unless result.is_a?(Module)
       # Attempt to load it using the auto loader
       loaded_path = nil
       if paths_for_name(name_path).find {|path| loaded_path = path; @autoloader.load(path, Puppet.lookup(:current_environment)) }
         result = find_class(name_path)
-        unless result.is_a?(Class)
+        unless result.is_a?(Module)
           raise RuntimeError, "Loading of #{name} using relative path: '#{loaded_path}' did not create expected class"
         end
       end
     end
-    return nil unless result.is_a?(Class)
+    return nil unless result.is_a?(Module)
     result
   end
 
   def self.find_class(name_path)
     name_path.reduce(Object) do |ns, name|
       begin
-        ns.const_get(name)
+        ns.const_get(name, false) # don't search ancestors
       rescue NameError
         return nil
       end

@@ -19,9 +19,10 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
 
   attr_reader :host, :repository
 
-  def initialize(host = Puppet[:module_repository])
+  def initialize(host = Puppet[:module_repository], strict_semver = true)
     @host = host
     @repository = Puppet::Forge::Repository.new(host, USER_AGENT)
+    @strict_semver = strict_semver
   end
 
   # Return a list of module metadata hashes that match the search query.
@@ -119,7 +120,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
   class ModuleRelease < SemanticPuppet::Dependency::ModuleRelease
     attr_reader :install_dir, :metadata
 
-    def initialize(source, data)
+    def initialize(source, data, strict_semver = true)
       @data = data
       @metadata = meta = data['metadata']
 
@@ -131,7 +132,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
         dependencies = meta['dependencies'].collect do |dep|
           begin
             Puppet::ModuleTool::Metadata.new.add_dependency(dep['name'], dep['version_requirement'], dep['repository'])
-            Puppet::ModuleTool.parse_module_dependency(release, dep)[0..1]
+            Puppet::ModuleTool.parse_module_dependency(release, dep, strict_semver)[0..1]
           rescue ArgumentError => e
             raise ArgumentError, "Malformed dependency: #{dep['name']}. Exception was: #{e}"
           end
@@ -165,6 +166,8 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
     def prepare
       return @unpacked_into if @unpacked_into
 
+      Puppet.warning "#{@metadata['name']} has been deprecated by its author! View module on Puppet Forge for more info." if deprecated?
+
       download(@data['file_uri'], tmpfile)
       validate_checksum(tmpfile, @data['file_md5'])
       unpack(tmpfile, tmpdir)
@@ -197,7 +200,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
 
     def validate_checksum(file, checksum)
       if Digest::MD5.file(file.path).hexdigest != checksum
-        raise RuntimeError, "Downloaded release for #{name} did not match expected checksum"
+        raise RuntimeError, _("Downloaded release for %{name} did not match expected checksum") % { name: name }
       end
     end
 
@@ -205,8 +208,12 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
       begin
         Puppet::ModuleTool::Applications::Unpacker.unpack(file.path, destination)
       rescue Puppet::ExecutionFailure => e
-        raise RuntimeError, "Could not extract contents of module archive: #{e.message}"
+        raise RuntimeError, _("Could not extract contents of module archive: %{message}") % { message: e.message }
       end
+    end
+
+    def deprecated?
+      @data['module'] && (@data['module']['deprecated_at'] != nil)
     end
   end
 
@@ -216,9 +223,9 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
     l = list.map do |release|
       metadata = release['metadata']
       begin
-        ModuleRelease.new(self, release)
+        ModuleRelease.new(self, release, @strict_semver)
       rescue ArgumentError => e
-        Puppet.warning "Cannot consider release #{metadata['name']}-#{metadata['version']}: #{e}"
+        Puppet.warning _("Cannot consider release %{name}-%{version}: %{error}") % { name: metadata['name'], version: metadata['version'], error: e }
         false
       end
     end

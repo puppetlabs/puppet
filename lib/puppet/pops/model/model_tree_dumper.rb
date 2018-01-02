@@ -29,7 +29,8 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   end
 
   def dump_Factory o
-    do_dump(o.current)
+    o['locator'] ||= Puppet::Pops::Parser::Locator.locator("<not from source>", nil)
+    do_dump(o.model)
   end
 
   def dump_Application o
@@ -208,12 +209,23 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   end
 
   def dump_HeredocExpression(o)
-    result = ["@(#{o.syntax})", :indent, :break, do_dump(o.text_expr), :dedent, :break]
+    ["@(#{o.syntax})", :indent, :break, do_dump(o.text_expr), :dedent, :break]
   end
 
   def dump_HostClassDefinition o
     result = ["class", o.name]
     result << ["inherits", o.parent_class] if o.parent_class
+    result << ["parameters"] + o.parameters.collect {|p| do_dump(p) } if o.parameters.size() > 0
+    if o.body
+      result << do_dump(o.body)
+    else
+      result << []
+    end
+    result
+  end
+
+  def dump_PlanDefinition o
+    result = ["plan", o.name]
     result << ["parameters"] + o.parameters.collect {|p| do_dump(p) } if o.parameters.size() > 0
     if o.body
       result << do_dump(o.body)
@@ -280,8 +292,8 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   end
 
   def dump_ResourceOverrideExpression o
-    form = o.form == :regular ? '' : o.form.to_s + "-"
-    result = [form+"override", do_dump(o.resources), :indent]
+    form = o.form == 'regular' ? '' : o.form + '-'
+    result = [form+'override', do_dump(o.resources), :indent]
     o.operations.each do |p|
       result << :break << do_dump(p)
     end
@@ -398,8 +410,8 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   end
 
   def dump_ResourceDefaultsExpression o
-    form = o.form == :regular ? '' : o.form.to_s + "-"
-    result = [form+"resource-defaults", do_dump(o.type_ref), :indent]
+    form = o.form == 'regular' ? '' : o.form + '-'
+    result = [form+'resource-defaults', do_dump(o.type_ref), :indent]
     o.operations.each do |p|
       result << :break << do_dump(p)
     end
@@ -408,8 +420,8 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   end
 
   def dump_ResourceExpression o
-    form = o.form == :regular ? '' : o.form.to_s + "-"
-    result = [form+"resource", do_dump(o.type_name), :indent]
+    form = o.form == 'regular' ? '' : o.form + '-'
+    result = [form+'resource', do_dump(o.type_name), :indent]
     o.bodies.each do |b|
       result << :break << do_dump(b)
     end

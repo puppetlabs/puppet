@@ -72,6 +72,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
                                 :from => :expiry_from_attr },
     {:aix_attr => :maxage,     :puppet_prop => :password_max_age},
     {:aix_attr => :minage,     :puppet_prop => :password_min_age},
+    {:aix_attr => :pwdwarntime, :puppet_prop => :password_warn_days},
     {:aix_attr => :attributes, :puppet_prop => :attributes},
     { :aix_attr => :gecos,      :puppet_prop => :comment },
   ]
@@ -167,7 +168,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
 
   # Check that a group exists and is valid
   def verify_group(value)
-    if value.is_a? Integer or value.is_a? Fixnum
+    if value.is_a? Integer
       groupname = groupname_by_id(value)
       raise ArgumentError, "AIX group must be a valid existing group" unless groupname
     else
@@ -285,7 +286,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   def managed_attribute_keys(hash)
     managed_attributes ||= @resource.original_parameters[:attributes] || hash.keys.map{|k| k.to_s}
     managed_attributes = [managed_attributes] unless managed_attributes.is_a?(Array)
-    managed_attributes.map {|attr| key, value = attr.split("="); key.strip.to_sym}
+    managed_attributes.map {|attr| key, _ = attr.split("="); key.strip.to_sym}
   end
 
   def should_include?(key, managed_keys)

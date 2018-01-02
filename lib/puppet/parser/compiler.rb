@@ -10,6 +10,8 @@ require 'puppet/pops'
 # Maintain a graph of scopes, along with a bunch of data
 # about the individual catalog we're compiling.
 class Puppet::Parser::Compiler
+  include Puppet::Parser::AbstractCompiler
+
   extend Forwardable
 
   include Puppet::Util
@@ -42,27 +44,12 @@ class Puppet::Parser::Compiler
  end
 
   attr_reader :node, :facts, :collections, :catalog, :resources, :relationships, :topscope
-
-  # The injector that provides lookup services, or nil if accessed before the compiler has started compiling and
-  # bootstrapped. The injector is initialized and available before any manifests are evaluated.
-  #
-  # @return [Puppet::Pops::Binder::Injector, nil] The injector that provides lookup services for this compiler/environment
-  # @api public
-  #
-  attr_accessor :injector
+  attr_reader :qualified_variables
 
   # Access to the configured loaders for 4x
   # @return [Puppet::Pops::Loader::Loaders] the configured loaders
   # @api private
   attr_reader :loaders
-
-  # The injector that provides lookup services during the creation of the {#injector}.
-  # @return [Puppet::Pops::Binder::Injector, nil] The injector that provides lookup services during injector creation
-  #   for this compiler/environment
-  #
-  # @api private
-  #
-  attr_accessor :boot_injector
 
   # The id of code input to the compiler.
   # @api private
@@ -107,7 +94,8 @@ class Puppet::Parser::Compiler
     @catalog.add_resource(resource)
 
     if not resource.class? and resource[:stage]
-      raise ArgumentError, "Only classes can set 'stage'; normal resources like #{resource} cannot change run stage"
+      #TRANSLATORS "stage" is a keyword in Puppet and should not be translated
+      raise ArgumentError, _("Only classes can set 'stage'; normal resources like %{resource} cannot change run stage") % { resource: resource }
     end
 
     # Stages should not be inside of classes.  They are always a
@@ -133,7 +121,8 @@ class Puppet::Parser::Compiler
           return if upstream.keys.map(&:type).include?('Site')
         end
       end
-      raise ArgumentError, "Application instances like '#{resource}' can only be contained within a Site"
+      #TRANSLATORS "Site" is a puppet keyword and should not be translated
+      raise ArgumentError, _("Application instances like '%{resource}' can only be contained within a Site") % { resource: resource }
     end
   end
 
@@ -163,44 +152,43 @@ class Puppet::Parser::Compiler
   # Compiler our catalog.  This mostly revolves around finding and evaluating classes.
   # This is the main entry into our catalog.
   def compile
-    Puppet.override( @context_overrides , "For compiling #{node.name}") do
+    Puppet.override( @context_overrides , _("For compiling %{node}") % { node: node.name }) do
       @catalog.environment_instance = environment
 
       # Set the client's parameters into the top scope.
-      Puppet::Util::Profiler.profile("Compile: Set node parameters", [:compiler, :set_node_params]) { set_node_parameters }
+      Puppet::Util::Profiler.profile(_("Compile: Set node parameters"), [:compiler, :set_node_params]) { set_node_parameters }
 
-      Puppet::Util::Profiler.profile("Compile: Created settings scope", [:compiler, :create_settings_scope]) { create_settings_scope }
+      Puppet::Util::Profiler.profile(_("Compile: Created settings scope"), [:compiler, :create_settings_scope]) { create_settings_scope }
 
-      activate_binder
+      Puppet::Util::Profiler.profile(_("Compile: Evaluated capability mappings"), [:compiler, :evaluate_capability_mappings]) { evaluate_capability_mappings }
 
-      Puppet::Util::Profiler.profile("Compile: Evaluated capability mappings", [:compiler, :evaluate_capability_mappings]) { evaluate_capability_mappings }
+      #TRANSLATORS "main" is a function name and should not be translated
+      Puppet::Util::Profiler.profile(_("Compile: Evaluated main"), [:compiler, :evaluate_main]) { evaluate_main }
 
-      Puppet::Util::Profiler.profile("Compile: Evaluated main", [:compiler, :evaluate_main]) { evaluate_main }
+      Puppet::Util::Profiler.profile(_("Compile: Evaluated site"), [:compiler, :evaluate_site]) { evaluate_site }
 
-      Puppet::Util::Profiler.profile("Compile: Evaluated site", [:compiler, :evaluate_site]) { evaluate_site }
+      Puppet::Util::Profiler.profile(_("Compile: Evaluated AST node"), [:compiler, :evaluate_ast_node]) { evaluate_ast_node }
 
-      Puppet::Util::Profiler.profile("Compile: Evaluated AST node", [:compiler, :evaluate_ast_node]) { evaluate_ast_node }
+      Puppet::Util::Profiler.profile(_("Compile: Evaluated node classes"), [:compiler, :evaluate_node_classes]) { evaluate_node_classes }
 
-      Puppet::Util::Profiler.profile("Compile: Evaluated node classes", [:compiler, :evaluate_node_classes]) { evaluate_node_classes }
-
-      Puppet::Util::Profiler.profile("Compile: Evaluated application instances", [:compiler, :evaluate_applications]) { evaluate_applications }
+      Puppet::Util::Profiler.profile(_("Compile: Evaluated application instances"), [:compiler, :evaluate_applications]) { evaluate_applications }
 
       # New capability mappings may have been defined when the site was evaluated
-      Puppet::Util::Profiler.profile("Compile: Evaluated site capability mappings", [:compiler, :evaluate_capability_mappings]) { evaluate_capability_mappings }
+      Puppet::Util::Profiler.profile(_("Compile: Evaluated site capability mappings"), [:compiler, :evaluate_capability_mappings]) { evaluate_capability_mappings }
 
-      Puppet::Util::Profiler.profile("Compile: Evaluated generators", [:compiler, :evaluate_generators]) { evaluate_generators }
+      Puppet::Util::Profiler.profile(_("Compile: Evaluated generators"), [:compiler, :evaluate_generators]) { evaluate_generators }
 
-      Puppet::Util::Profiler.profile("Compile: Validate Catalog pre-finish", [:compiler, :validate_pre_finish]) do
+      Puppet::Util::Profiler.profile(_("Compile: Validate Catalog pre-finish"), [:compiler, :validate_pre_finish]) do
         validate_catalog(CatalogValidator::PRE_FINISH)
       end
 
-      Puppet::Util::Profiler.profile("Compile: Finished catalog", [:compiler, :finish_catalog]) { finish }
+      Puppet::Util::Profiler.profile(_("Compile: Finished catalog"), [:compiler, :finish_catalog]) { finish }
 
-      Puppet::Util::Profiler.profile("Compile: Prune", [:compiler, :prune_catalog]) { prune_catalog }
+      Puppet::Util::Profiler.profile(_("Compile: Prune"), [:compiler, :prune_catalog]) { prune_catalog }
 
       fail_on_unevaluated
 
-      Puppet::Util::Profiler.profile("Compile: Validate Catalog final", [:compiler, :validate_final]) do
+      Puppet::Util::Profiler.profile(_("Compile: Validate Catalog final"), [:compiler, :validate_final]) do
         validate_catalog(CatalogValidator::FINAL)
       end
 
@@ -222,7 +210,6 @@ class Puppet::Parser::Compiler
       :current_environment => environment,
       :global_scope => @topscope,             # 4x placeholder for new global scope
       :loaders  => @loaders,                  # 4x loaders
-      :injector => lambda {|| injector() }    # 4x API - via context instead of via compiler
     }
   end
 
@@ -331,14 +318,14 @@ class Puppet::Parser::Compiler
     @applications.each do |app|
       components = []
       mapping = app.parameters[:nodes] ? app.parameters[:nodes].value : {}
-      raise Puppet::Error, "Invalid node mapping in #{app.ref}: Mapping must be a hash" unless mapping.is_a?(Hash)
+      raise Puppet::Error, _("Invalid node mapping in %{app}: Mapping must be a hash") % { app: app.ref } unless mapping.is_a?(Hash)
       all_mapped = Set.new
       mapping.each do |k,v|
-        raise Puppet::Error, "Invalid node mapping in #{app.ref}: Key #{k} is not a Node" unless k.is_a?(Puppet::Resource) && k.type == 'Node'
+        raise Puppet::Error, _("Invalid node mapping in %{app}: Key %{k} is not a Node") % { app: app.ref, k: k } unless k.is_a?(Puppet::Resource) && k.type == 'Node'
         v = [v] unless v.is_a?(Array)
         v.each do |res|
-          raise Puppet::Error, "Invalid node mapping in #{app.ref}: Value #{res} is not a resource" unless res.is_a?(Puppet::Resource)
-          raise Puppet::Error, "Application #{app.ref} maps component #{res} to multiple nodes" if all_mapped.add?(res.ref).nil?
+          raise Puppet::Error, _("Invalid node mapping in %{app}: Value %{res} is not a resource") % { app: app.ref, res: res } unless res.is_a?(Puppet::Resource)
+          raise Puppet::Error, _("Application %{app} maps component %{res} to multiple nodes") % { app: app.ref, res: res } if all_mapped.add?(res.ref).nil?
           components << res if k.title == node.name
         end
       end
@@ -383,7 +370,7 @@ class Puppet::Parser::Compiler
     end
 
     hostclasses = classes.collect do |name|
-      environment.known_resource_types.find_hostclass(name) or raise Puppet::Error, "Could not find class #{name} for #{node.name}"
+      environment.known_resource_types.find_hostclass(name) or raise Puppet::Error, _("Could not find class %{name} for %{node}") % { name: name, node: node.name }
     end
 
     if class_parameters
@@ -425,6 +412,8 @@ class Puppet::Parser::Compiler
     set_options(options)
     initvars
     add_catalog_validators
+    # Resolutions of fully qualified variable names
+    @qualified_variables = {}
   end
 
   # Create a new scope, with either a specified parent scope or
@@ -439,43 +428,6 @@ class Puppet::Parser::Compiler
   # Return any overrides for the given resource.
   def resource_overrides(resource)
     @resource_overrides[resource.ref]
-  end
-
-  def injector
-    create_injector if @injector.nil?
-    @injector
-  end
-
-  def boot_injector
-    create_boot_injector(nil) if @boot_injector.nil?
-    @boot_injector
-  end
-
-  # Creates the boot injector from registered system, default, and injector config.
-  # @return [Puppet::Pops::Binder::Injector] the created boot injector
-  # @api private Cannot be 'private' since it is called from the BindingsComposer.
-  #
-  def create_boot_injector(env_boot_bindings)
-    assert_binder_active()
-    pb = Puppet::Pops::Binder
-    boot_contribution = pb::SystemBindings.injector_boot_contribution(env_boot_bindings)
-    final_contribution = pb::SystemBindings.final_contribution
-    binder = pb::Binder.new(pb::BindingsFactory.layered_bindings(final_contribution, boot_contribution))
-    @boot_injector = pb::Injector.new(binder)
-  end
-
-  # Answers if Puppet Binder should be active or not, and if it should and is not active, then it is activated.
-  # @return [Boolean] true if the Puppet Binder should be activated
-  def activate_binder
-    # TODO: this should be in a central place
-    Puppet::Parser::ParserFactory.assert_rgen_installed()
-    @@binder_loaded ||= false
-    unless @@binder_loaded
-      require 'puppet/pops'
-      require 'puppet/plugins/configuration'
-      @@binder_loaded = true
-    end
-    true
   end
 
   private
@@ -545,7 +497,7 @@ class Puppet::Parser::Compiler
     end
 
     unless (astnode ||= krt.node("default"))
-      raise Puppet::ParseError, "Could not find node statement with name 'default' or '#{node.names.join(", ")}'"
+      raise Puppet::ParseError, _("Could not find node statement with name 'default' or '%{names}'") % { names: node.names.join(", ") }
     end
 
     # Create a resource to model this node, and then add it to the list
@@ -566,7 +518,7 @@ class Puppet::Parser::Compiler
       # We have to iterate over a dup of the array because
       # collections can delete themselves from the list, which
       # changes its length and causes some collections to get missed.
-      Puppet::Util::Profiler.profile("Evaluated collections", [:compiler, :evaluate_collections]) do
+      Puppet::Util::Profiler.profile(_("Evaluated collections"), [:compiler, :evaluate_collections]) do
         found_something = false
         @collections.dup.each do |collection|
           found_something = true if collection.evaluate
@@ -581,14 +533,14 @@ class Puppet::Parser::Compiler
   # evaluate_generators loop.
   def evaluate_definitions
     exceptwrap do
-      Puppet::Util::Profiler.profile("Evaluated definitions", [:compiler, :evaluate_definitions]) do
+      Puppet::Util::Profiler.profile(_("Evaluated definitions"), [:compiler, :evaluate_definitions]) do
         urs = unevaluated_resources.each do |resource|
-         begin
+          begin
             resource.evaluate
-         rescue Puppet::Pops::Evaluator::PuppetStopIteration => detail
-           # needs to be handled specifically as the error has the file/line/position where this
-           # occurred rather than the resource
-           fail(Puppet::Pops::Issues::RUNTIME_ERROR, detail, {:detail => detail.message}, detail)
+          rescue Puppet::Pops::Evaluator::PuppetStopIteration => detail
+            # needs to be handled specifically as the error has the file/line/position where this
+            # occurred rather than the resource
+            fail(Puppet::Pops::Issues::RUNTIME_ERROR, detail, {:detail => detail.message}, detail)
 
           rescue Puppet::Error => e
             # PuppetError has the ability to wrap an exception, if so, use the wrapped exception's
@@ -610,7 +562,7 @@ class Puppet::Parser::Compiler
     loop do
       done = true
 
-      Puppet::Util::Profiler.profile("Iterated (#{count + 1}) on generators", [:compiler, :iterate_on_generators]) do
+      Puppet::Util::Profiler.profile(_("Iterated (%{count}) on generators") % { count: count + 1 }, [:compiler, :iterate_on_generators]) do
         # Call collections first, then definitions.
         done = false if evaluate_collections
         done = false if evaluate_definitions
@@ -621,7 +573,7 @@ class Puppet::Parser::Compiler
       count += 1
 
       if count > 1000
-        raise Puppet::ParseError, "Somehow looped more than 1000 times while evaluating host catalog"
+        raise Puppet::ParseError, _("Somehow looped more than 1000 times while evaluating host catalog")
       end
     end
   end
@@ -652,7 +604,7 @@ class Puppet::Parser::Compiler
     remaining = @resource_overrides.values.flatten.collect(&:ref)
 
     if !remaining.empty?
-      raise Puppet::ParseError, "Could not find resource(s) #{remaining.join(', ')} for overriding"
+      raise Puppet::ParseError, _("Could not find resource(s) %{resources} for overriding") % { resources: remaining.join(', ') }
     end
   end
 
@@ -663,7 +615,7 @@ class Puppet::Parser::Compiler
   def fail_on_unevaluated_resource_collections
     remaining = @collections.collect(&:unresolved_resources).flatten.compact
     if !remaining.empty?
-      raise Puppet::ParseError, "Failed to realize virtual resources #{remaining.join(', ')}"
+      raise Puppet::ParseError, _("Failed to realize virtual resources %{resources}") % { resources: remaining.join(', ') }
     end
   end
 
@@ -692,13 +644,13 @@ class Puppet::Parser::Compiler
 
   def add_resource_metaparams
     unless main = catalog.resource(:class, :main)
-      raise "Couldn't find main"
+      #TRANSLATORS "main" is a function name and should not be translated
+      raise _("Couldn't find main")
     end
 
     names = Puppet::Type.metaparams.select do |name|
       !Puppet::Parser::Resource.relationship_parameter?(name)
     end
-
     data = {}
     catalog.walk(main, :out) do |source, target|
       if source_data = data[source] || metaparams_as_data(source, names)
@@ -765,9 +717,10 @@ class Puppet::Parser::Compiler
     # It cannot survive the initvars method, and is later reinstated
     # as part of compiling...
     #
-    Puppet.override( @context_overrides , "For initializing compiler") do
+    Puppet.override( @context_overrides , _("For initializing compiler")) do
       # THE MAGIC STARTS HERE ! This triggers parsing, loading etc.
       @catalog.version = environment.known_resource_types.version
+      @loaders.pre_load
     end
 
     @catalog.add_resource(Puppet::Parser::Resource.new("stage", :main, :scope => @topscope))
@@ -786,53 +739,7 @@ class Puppet::Parser::Compiler
   end
 
   def sanitize_node(node)
-    # Resurrect "trusted information" that comes from node/fact terminus.
-    # The current way this is done in puppet db (currently the only one)
-    # is to store the node parameter 'trusted' as a hash of the trusted information.
-    #
-    # Thus here there are two main cases:
-    # 1. This terminus was used in a real agent call (only meaningful if someone curls the request as it would
-    #  fail since the result is a hash of two catalogs).
-    # 2  It is a command line call with a given node that use a terminus that:
-    # 2.1 does not include a 'trusted' fact - use local from node trusted information
-    # 2.2 has a 'trusted' fact - this in turn could be
-    # 2.2.1 puppet db having stored trusted node data as a fact (not a great design)
-    # 2.2.2 some other terminus having stored a fact called "trusted" (most likely that would have failed earlier, but could
-    #       be spoofed).
-    #
-    # For the reasons above, the resurrection of trusted node data with authenticated => true is only performed
-    # if user is running as root, else it is resurrected as unauthenticated.
-    #
-    trusted_param = node.parameters['trusted']
-    if trusted_param
-      # Blows up if it is a parameter as it will be set as $trusted by the compiler as if it was a variable
-      node.parameters.delete('trusted')
-      unless trusted_param.is_a?(Hash) && %w{authenticated certname extensions}.all? {|key| trusted_param.has_key?(key) }
-        # trusted is some kind of garbage, do not resurrect
-        trusted_param = nil
-      end
-    else
-      # trusted may be Boolean false if set as a fact by someone
-      trusted_param = nil
-    end
-
-    # The options for node.trusted_data in priority order are:
-    # 1) node came with trusted_data so use that
-    # 2) else if there is :trusted_information in the puppet context
-    # 3) else if the node provided a 'trusted' parameter (parsed out above)
-    # 4) last, fallback to local node trusted information
-    #
-    # Note that trusted_data should be a hash, but (2) and (4) are not
-    # hashes, so we to_h at the end
-    if !node.trusted_data
-      trusted = Puppet.lookup(:trusted_information) do
-        trusted_param || Puppet::Context::TrustedInformation.local(node)
-      end
-
-      # Ruby 1.9.3 can't apply to_h to a hash, so check first
-      node.trusted_data = trusted.is_a?(Hash) ? trusted : trusted.to_h
-    end
-
+    node.sanitize
     node
   end
 
@@ -847,9 +754,7 @@ class Puppet::Parser::Compiler
     catalog.server_version = node.parameters["serverversion"]
     @topscope.set_trusted(node.trusted_data)
 
-    if Puppet[:trusted_server_facts]
-      @topscope.set_server_facts(node.server_facts)
-    end
+    @topscope.set_server_facts(node.server_facts)
 
     facts_hash = node.facts.nil? ? {} : node.facts.values
     @topscope.set_facts(facts_hash)
@@ -881,21 +786,4 @@ class Puppet::Parser::Compiler
     # The order of these is significant for speed due to short-circuiting
     resources.reject { |resource| resource.evaluated? or resource.virtual? or resource.builtin_type? }
   end
-
-  # Creates the injector from bindings found in the current environment.
-  # @return [void]
-  # @api private
-  #
-  def create_injector
-    assert_binder_active()
-    composer = Puppet::Pops::Binder::BindingsComposer.new()
-    layered_bindings = composer.compose(topscope)
-    @injector = Puppet::Pops::Binder::Injector.new(Puppet::Pops::Binder::Binder.new(layered_bindings))
-  end
-
-  def assert_binder_active
-    unless activate_binder()
-      raise Puppet::DevError, "The Puppet Binder was not activated"
-    end
-  end  # Creates a diagnostic producer
 end

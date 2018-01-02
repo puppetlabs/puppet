@@ -893,26 +893,31 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should fail if it can't backup the file" do
+      # Default: file[:backup] = true
       file.stubs(:stat).returns stub('stat', :ftype => 'file')
       file.stubs(:perform_backup).returns false
 
-      expect { file.remove_existing(:file) }.to raise_error(Puppet::Error, /Could not back up; will not replace/)
+      expect { file.remove_existing(:file) }.to raise_error(Puppet::Error, /Could not back up; will not remove/)
     end
 
     describe "backing up directories" do
-      it "should not backup directories if force is false" do
+      it "should not backup directories if backup is true and force is false" do
+        # Default: file[:backup] = true
         file[:force] = false
         file.stubs(:stat).returns stub('stat', :ftype => 'directory')
+
         file.expects(:perform_backup).never
+        file.expects(:warning).with("Could not back up file of type directory")
         expect(file.remove_existing(:file)).to eq(false)
       end
 
-      it "should backup directories if force is true" do
+      it "should backup directories if backup is true and force is true" do
+        # Default: file[:backup] = true
         file[:force] = true
-        FileUtils.expects(:rmtree).with(file[:path])
-
         file.stubs(:stat).returns stub('stat', :ftype => 'directory')
-        file.expects(:perform_backup).once.returns(true)
+
+        FileUtils.expects(:rmtree).with(file[:path])
+        file.expects(:perform_backup).returns(true)
 
         expect(file.remove_existing(:file)).to eq(true)
       end
@@ -924,18 +929,17 @@ describe Puppet::Type.type(:file) do
       expect(file.remove_existing(:file)).to eq(false)
     end
 
-    it "should not remove directories and should not invalidate the stat unless force is set" do
+    it "should not remove directories and should not invalidate the stat unless force is true" do
+      file[:force] = false
       # Actually call stat to set @needs_stat to nil
       file.stat
       file.stubs(:stat).returns stub('stat', :ftype => 'directory')
 
-      file.remove_existing(:file)
-
       expect(file.instance_variable_get(:@stat)).to eq(nil)
-      expect(@logs).to be_any {|log| log.level == :notice and log.message =~ /Not removing directory; use 'force' to override/}
     end
 
-    it "should remove a directory if force is set" do
+    it "should remove a directory if backup is true and force is true" do
+      # Default: file[:backup] = true
       file[:force] = true
       file.stubs(:stat).returns stub('stat', :ftype => 'directory')
 
@@ -966,10 +970,11 @@ describe Puppet::Type.type(:file) do
       expect(Puppet::FileSystem.exist?(file[:path])).to eq(false)
     end
 
-    it "should fail if the file is not a file, link, or directory" do
-      file.stubs(:stat).returns stub('stat', :ftype => 'socket')
+    it "should fail if the file is not a directory, link, file, fifo, socket, or is unknown" do
+      file.stubs(:stat).returns stub('stat', :ftype => 'blockSpecial')
 
-      expect { file.remove_existing(:file) }.to raise_error(Puppet::Error, /Could not back up files of type socket/)
+      file.expects(:warning).with("Could not back up file of type blockSpecial")
+      expect { file.remove_existing(:file) }.to raise_error(Puppet::Error, /Could not remove files of type blockSpecial/)
     end
 
     it "should invalidate the existing stat of the file" do
@@ -1464,6 +1469,8 @@ describe Puppet::Type.type(:file) do
   describe "when using source" do
     before do
       file[:source] = File.expand_path('/one')
+      # Contents of an empty file generate the below hash values
+      # in case you need to add support for additional algorithms in future
       @checksum_values = {
         :md5 => 'd41d8cd98f00b204e9800998ecf8427e',
         :md5lite => 'd41d8cd98f00b204e9800998ecf8427e',
@@ -1471,6 +1478,9 @@ describe Puppet::Type.type(:file) do
         :sha256lite => 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
         :sha1 => 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
         :sha1lite => 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
+        :sha224 => 'd14a028c2a3a2bc9476102bb288234c415a2b01f828ea62ac5b3e42f',
+        :sha384 => '38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b',
+        :sha512 => 'cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e',
         :mtime => 'Jan 26 13:59:49 2016',
         :ctime => 'Jan 26 13:59:49 2016'
       }
@@ -1564,6 +1574,9 @@ describe Puppet::Type.type(:file) do
         :sha256lite => 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
         :sha1 => 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
         :sha1lite => 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
+        :sha224 => 'd14a028c2a3a2bc9476102bb288234c415a2b01f828ea62ac5b3e42f',
+        :sha384 => '38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b',
+        :sha512 => 'cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e',
       }
     end
 

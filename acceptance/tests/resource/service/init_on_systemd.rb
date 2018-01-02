@@ -5,6 +5,11 @@ test_name 'SysV on default Systemd Service Provider Validation' do
     stdout =~ /systemctl/
   end
 
+  tag 'audit:medium',
+      'audit:acceptance' # Could be done at the integration (or unit) layer though
+                         # actual changing of resources could irreparably damage a
+                         # host running this, or require special permissions.
+
   require 'puppet/acceptance/service_utils'
   extend Puppet::Acceptance::ServiceUtils
 

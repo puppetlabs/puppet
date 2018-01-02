@@ -1,10 +1,16 @@
-test_name "the agent --disable/--enable functionality should manage the agent lockfile properly"
+test_name "C4553 - agent --disable/--enable functionality should manage the agent lockfile properly"
 confine :except, :platform => 'cisco_nexus' #See BKR-749
+
+tag 'audit:integration', # lockfile uses the standard `vardir` location to store/query lockfile.
+                         # The validation of the `vardir` at the OS level
+                         # should be accomplished in another test.
+    'audit:medium',
+    'audit:refactor'     # This test should not require a master. Remove the use of `with_puppet_running_on`.
 
 #
 # This test is intended to ensure that puppet agent --enable/--disable
 #  work properly, both in terms of complying with our public "API" around
-#  lockfile semantics ( http://links.puppetlabs.com/agent_lockfiles ), and
+#  lockfile semantics ( http://links.puppet.com/agent_lockfiles ), and
 #  in terms of actually restricting or allowing new agent runs to begin.
 #
 
@@ -66,7 +72,7 @@ with_puppet_running_on(master, {}) do
                      :acceptable_exit_codes => [1]) do
           disabled_regex = /administratively disabled.*'#{expected_message}'/
           unless result.stdout =~ disabled_regex
-            fail_test("Unexpected output from attempt to run agent disabled; expecting to match '#{disabled_regex}', got '#{result.stdout}' on agent '#{agent}'")
+            fail_test("Unexpected output from attempt to run agent disabled; expecting to match '#{disabled_regex}', got '#{result.stdout}' on agent '#{agent}'") unless agent['locale'] == 'ja'
           end
         end
       end

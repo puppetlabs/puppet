@@ -34,7 +34,7 @@ module Serialization
   end
 
   def parse(string)
-    parser.parse_string(string, '/home/tester/experiments/manifests/init.pp').current
+    parser.parse_string(string, '/home/tester/experiments/manifests/init.pp')
   end
 
   context 'can write and read a' do
@@ -145,6 +145,14 @@ module Serialization
       expect(val2).to eql(val)
     end
 
+    it 'URI' do
+      val = URI('http://bob:ewing@dallas.example.com:8080/oil/baron?crude=cash#leftovers')
+      write(val)
+      val2 = read
+      expect(val2).to be_a(URI)
+      expect(val2).to eql(val)
+    end
+
     it 'Sensitive with rich data' do
       sval = Time::Timestamp.now
       val = Types::PSensitiveType::Sensitive.new(sval)
@@ -225,6 +233,28 @@ module Serialization
         expect(val2).to be_a(Types::PObjectType)
         expect(val2).to eql(val)
       end
+
+      context 'ObjectType' do
+        let(:type) do
+          Types::PObjectType.new({
+            'name' => 'MyType',
+            'type_parameters' => {
+              'x' => Types::PIntegerType::DEFAULT
+            },
+            'attributes' => {
+              'x' => Types::PIntegerType::DEFAULT
+            }
+          })
+        end
+
+        it 'with preserved parameters' do
+          val = type.create(34)._pcore_type
+          write(val)
+          val2 = read
+          expect(val2).to be_a(Types::PObjectTypeExtension)
+          expect(val2).to eql(val)
+        end
+      end
     end
 
     it 'Array of rich data' do
@@ -281,6 +311,92 @@ module Serialization
         write(expr)
         expr2 = read
         expect(dumper.dump(expr)).to eq(dumper.dump(expr2))
+      end
+    end
+
+    context 'PuppetObject' do
+      before(:each) do
+        class DerivedArray < Array
+          include Types::PuppetObject
+
+          def self._pcore_type
+            @type
+          end
+
+          def self.register_ptype(loader, ir)
+            @type = Pcore.create_object_type(loader, ir, DerivedArray, 'DerivedArray', nil, 'values' => Types::PArrayType::DEFAULT)
+              .resolve(loader)
+          end
+
+          def initialize(values)
+            concat(values)
+          end
+
+          def values
+            Array.new(self)
+          end
+        end
+
+        class DerivedHash < Hash
+          include Types::PuppetObject
+
+          def self._pcore_type
+            @type
+          end
+
+          def self.register_ptype(loader, ir)
+            @type = Pcore.create_object_type(loader, ir, DerivedHash, 'DerivedHash', nil, '_pcore_init_hash' => Types::PHashType::DEFAULT)
+              .resolve(loader)
+          end
+
+          def initialize(_pcore_init_hash)
+            merge!(_pcore_init_hash)
+          end
+
+          def _pcore_init_hash
+            result = {}
+            result.merge!(self)
+            result
+          end
+        end
+      end
+
+      after(:each) do
+        x = Puppet::Pops::Serialization
+        x.send(:remove_const, :DerivedArray) if x.const_defined?(:DerivedArray)
+        x.send(:remove_const, :DerivedHash) if x.const_defined?(:DerivedHash)
+      end
+
+      it 'derived from Array' do
+        DerivedArray.register_ptype(loader, loaders.implementation_registry)
+
+        # Sensitive omitted because it doesn't respond to ==
+        val = DerivedArray.new([
+          Time::Timespan.from_fields(false, 3, 12, 40, 31, 123),
+          Time::Timestamp.now,
+          SemanticPuppet::Version.parse('1.2.3-alpha2'),
+          SemanticPuppet::VersionRange.parse('>=1.2.3-alpha2 <1.2.4'),
+          Types::PBinaryType::Binary.from_base64('w5ZzdGVuIG1lZCByw7ZzdGVuCg==')
+        ])
+        write(val)
+        val2 = read
+        expect(val2).to eql(val)
+      end
+
+      it 'derived from Hash' do
+        DerivedHash.register_ptype(loader, loaders.implementation_registry)
+
+        # Sensitive omitted because it doesn't respond to ==
+        val = DerivedHash.new({
+          'duration' => Time::Timespan.from_fields(false, 3, 12, 40, 31, 123),
+          'time' => Time::Timestamp.now,
+          'version' => SemanticPuppet::Version.parse('1.2.3-alpha2'),
+          'range' => SemanticPuppet::VersionRange.parse('>=1.2.3-alpha2 <1.2.4'),
+          'binary' => Types::PBinaryType::Binary.from_base64('w5ZzdGVuIG1lZCByw7ZzdGVuCg==')
+        })
+        write(val)
+        val2 = read
+        expect(val2).to eql(val)
       end
     end
   end

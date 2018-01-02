@@ -312,7 +312,46 @@ describe 'collectors' do
         MANIFEST
       end
 
+      context 'when overriding an already evaluated resource' do
+        let(:logs) { [] }
+        let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
+        let(:manifest) { <<-MANIFEST }
+          define foo($message) {
+            notify { "testing": message => $message }
+          }
+          foo { test: message => 'given' }
+          define delayed {
+            Foo <|  |> { message => 'overridden' }
+          }
+          delayed {'do it now': }
+        MANIFEST
+
+        around(:each) do |example|
+          Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+            example.run
+          end
+        end
+
+        it 'and --strict=off, it silently skips the override' do
+          Puppet[:strict] = :off
+          expect_the_message_to_be(['given'], manifest)
+          expect(warnings).to be_empty
+        end
+
+        it 'and --strict=warning, it warns about the attempt to override and skips it' do
+          Puppet[:strict] = :warning
+          expect_the_message_to_be(['given'], manifest)
+          expect(warnings).to include(
+            /Attempt to override an already evaluated resource, defined at line 4, with new values at line 6/)
+        end
+
+        it 'and --strict=error, it fails compilation' do
+          Puppet[:strict] = :error
+          expect { compile_to_catalog(manifest) }.to raise_error(
+            /Attempt to override an already evaluated resource, defined at line 4, with new values at line 6/)
+          expect(warnings).to be_empty
+        end
+      end
     end
   end
-
 end

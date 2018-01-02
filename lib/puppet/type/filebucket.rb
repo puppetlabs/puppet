@@ -17,11 +17,6 @@ module Puppet
         details. These backups can be used for manual recovery of content, but
         are more commonly used to display changes and differences in a tool like
         Puppet Dashboard.
-      - **Content distribution.** The optional static compiler populates the
-        puppet master's filebucket with the _desired_ content for each file,
-        then instructs the agent to retrieve the content for a specific
-        checksum. For more details,
-        [see the `static_compiler` section in the catalog indirection docs](https://docs.puppetlabs.com/puppet/latest/reference/indirection.html#catalog).
 
       To use a central filebucket for backups, you will usually want to declare
       a filebucket resource and a resource default for the `backup` attribute
@@ -71,11 +66,11 @@ module Puppet
 
       validate do |value|
         if value.is_a? Array
-          raise ArgumentError, "You can only have one filebucket path"
+          raise ArgumentError, _("You can only have one filebucket path")
         end
 
         if value.is_a? String and not Puppet::Util.absolute_path?(value)
-          raise ArgumentError, "Filebucket paths must be absolute"
+          raise ArgumentError, _("Filebucket paths must be absolute")
         end
 
         true
@@ -111,7 +106,7 @@ module Puppet
       begin
         @bucket = Puppet::FileBucket::Dipper.new(args)
       rescue => detail
-        message = "Could not create #{type} filebucket: #{detail}"
+        message = _("Could not create %{type} filebucket: %{detail}") % { type: type, detail: detail }
         self.log_exception(detail, message)
         self.fail(message)
       end

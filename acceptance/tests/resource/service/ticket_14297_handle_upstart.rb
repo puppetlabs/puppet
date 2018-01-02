@@ -5,6 +5,13 @@ confine :to, :platform => 'ubuntu'
 # vivid and above use systemd rather than upstart
 confine :except, :platform => /ubuntu-1?[v-z|5-9]/
 
+tag 'audit:low',
+    'audit:delete',
+    'audit:refactor',  # Use block style `test_run`
+    'audit:acceptance' # Could be done at the integration (or unit) layer though
+                       # actual changing of resources could irreparably damage a
+                       # host running this, or require special permissions.
+
 # pick any ubuntu agent
 agent = agents.first
 skip_test "No suitable hosts found" if agent.nil?

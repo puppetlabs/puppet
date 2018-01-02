@@ -2,6 +2,11 @@ test_name 'C99044: lookup should allow rich data as values' do
   require 'puppet/acceptance/environment_utils.rb'
   extend Puppet::Acceptance::EnvironmentUtils
 
+tag 'audit:medium',
+    'audit:acceptance',
+    'audit:refactor',  # Master is not needed for this test. Refactor
+                       # to use puppet apply with a local environment.
+
   # The following two lines are required for the puppetserver service to
   # start correctly. These should be removed when PUP-7102 is resolved.
   confdir = master.puppet('master')['confdir']

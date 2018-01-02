@@ -17,9 +17,14 @@ skip_test "Test only supported on Jetty" unless @options[:is_puppetserver]
 #
 test_name "Puppet agent and master work when both configured with externally issued certificates from independent intermediate CAs"
 
+tag 'audit:medium',
+    'audit:integration',  # This could also be a component in a platform workflow test.
+    'server'
+
 step "Copy certificates and configuration files to the master..."
 fixture_dir = File.expand_path('../fixtures', __FILE__)
 testdir = master.tmpdir('jetty_external_root_ca')
+backupdir = master.tmpdir('jetty_external_root_ca_backup')
 fixtures = PuppetX::Acceptance::ExternalCertFixtures.new(fixture_dir, testdir)
 
 jetty_confdir = master['puppetserver-confdir']
@@ -27,10 +32,23 @@ jetty_confdir = master['puppetserver-confdir']
 # Register our cleanup steps early in a teardown so that they will happen even
 # if execution aborts part way.
 teardown do
-  step "Restore /etc/hosts and webserver.conf"
-  on master, "cp -p '#{testdir}/hosts' /etc/hosts"
-  on master, "cp -p '#{testdir}/webserver.conf.orig' '#{jetty_confdir}/webserver.conf'"
+  step "Restore /etc/hosts and puppetserver configs; Restart puppetserver"
+  on master, "cp -p '#{backupdir}/hosts' /etc/hosts"
+  on master, puppet('config set route_file /etc/puppetlabs/puppet/routes.yaml')
+
+  # Please note that the escaped `\cp` command below is intentional. Most
+  # linux systems alias `cp` to `cp -i` which causes interactive mode to be
+  # invoked when copying directories that do not yet exist at the target
+  # location, even when using the force flag. The escape ensures that an
+  # alias is not used.
+  on master, "\\cp -frp #{backupdir}/puppetserver/* #{jetty_confdir}/../"
+  on(master, "service #{master['puppetservice']} restart")
 end
+
+# Backup files in scope for modification by test
+on master, "cp -p /etc/hosts '#{backupdir}/hosts'"
+on master, "cp -rp '#{jetty_confdir}/..' '#{backupdir}/puppetserver'"
+
 
 # Read all of the CA certificates.
 
@@ -53,12 +71,7 @@ create_remote_file master, "#{testdir}/master_rogue.key", fixtures.master_key_ro
 ##
 # Now create the master and agent puppet.conf
 #
-# We need to create the public directory for Passenger and the modules
-# directory to avoid `Error: Could not evaluate: Could not retrieve information
-# from environment production source(s) puppet://master1.example.org/plugins`
-on master, "mkdir -p #{testdir}/etc/{master/{public,modules/empty/lib},agent}"
-# Backup /etc/hosts
-on master, "cp -p /etc/hosts '#{testdir}/hosts'"
+on master, "mkdir -p #{testdir}/etc/agent"
 
 # Make master1.example.org resolve if it doesn't already.
 on master, "grep -q -x '#{fixtures.host_entry}' /etc/hosts || echo '#{fixtures.host_entry}' >> /etc/hosts"
@@ -68,16 +81,14 @@ create_remote_file master, "#{testdir}/etc/agent/puppet.conf.crl", fixtures.agen
 create_remote_file master, "#{testdir}/etc/agent/puppet.conf.email", fixtures.agent_conf_email
 
 # auth.conf to allow *.example.com access to the rest API
-create_remote_file master, "#{testdir}/etc/master/auth.conf", fixtures.auth_conf
-
-create_remote_file master, "#{testdir}/etc/master/config.ru", fixtures.config_ru
+create_remote_file master, "#{jetty_confdir}/auth.conf", fixtures.auth_conf
+# set use-legacy-auth-conf = false
+# to override the default setting in older puppetserver versions
+modify_tk_config(master, options['puppetserver-config'], {'jruby-puppet' => {'use-legacy-auth-conf' => false}})
 
 step "Set filesystem permissions and ownership for the master"
 # These permissions are required for the JVM to start Puppet as puppet
-on master, "chown -R puppet:puppet #{testdir}/etc/master"
-on master, "chown -R puppet:puppet #{testdir}/*.crt"
-on master, "chown -R puppet:puppet #{testdir}/*.key"
-on master, "chown -R puppet:puppet #{testdir}/*.crl"
+on master, "chown -R puppet:puppet #{testdir}/*.{crt,key,crl}"
 
 # These permissions are just for testing, end users should protect their
 # private keys.
@@ -93,18 +104,24 @@ on master, "mkdir -p #{testdir}/etc/agent/ssl/{public_keys,certs,certificate_req
 create_remote_file master, "#{testdir}/etc/agent/ssl/certs/#{fixtures.agent_name}.pem", fixtures.agent_cert
 create_remote_file master, "#{testdir}/etc/agent/ssl/private_keys/#{fixtures.agent_name}.pem", fixtures.agent_key
 
-on master, "cp -p '#{jetty_confdir}/webserver.conf' '#{testdir}/webserver.conf.orig'"
 create_remote_file master, "#{jetty_confdir}/webserver.conf",
                    fixtures.jetty_webserver_conf_for_trustworthy_master
 
 master_opts = {
     'master' => {
-        'ca' => false,
         'certname' => fixtures.master_name,
         'ssl_client_header' => "HTTP_X_CLIENT_DN",
         'ssl_client_verify_header' => "HTTP_X_CLIENT_VERIFY"
     }
 }
+
+# disable CA service
+# https://github.com/puppetlabs/puppetserver/blob/master/documentation/configuration.markdown#service-bootstrapping
+create_remote_file master, "#{jetty_confdir}/../services.d/ca.cfg", "puppetlabs.services.ca.certificate-authority-disabled-service/certificate-authority-disabled-service"
+# disable pdb connectivity
+on master, puppet('config set route_file /tmp/nonexistent.yaml')
+# restart master
+on(master, "service #{master['puppetservice']} restart")
 
 step "Start the Puppet master service..."
 with_puppet_running_on(master, master_opts) do

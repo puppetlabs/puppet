@@ -1,4 +1,8 @@
 test_name 'C99977 corrupted clientbucket' do
+
+  tag 'audit:medium',
+      'audit:integration'
+
   agents.each do |agent|
     tmpfile = agent.tmpfile('c99977file')
     unmanaged_content = "unmanaged\n"
@@ -41,7 +45,7 @@ test_name 'C99977 corrupted clientbucket' do
 
     step 'manage file again' do
       apply_manifest_on(agent, manifest) do |result|
-        assert_match(/Warning: Existing backup does not match its expected sum, .*Overwriting corrupted backup/, result.stderr)
+        assert_match(/Warning: Existing backup does not match its expected sum, .*Overwriting corrupted backup/, result.stderr) unless agent['locale'] == 'ja'
         on(agent, "cat #{tmpfile}") do |r2|
           assert_equal(managed_content, r2.stdout)
         end

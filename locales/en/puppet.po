@@ -1,0 +1,19 @@
+# English translations for Puppet automation framework package.
+# Copyright (C) 2017 Puppet, Inc.
+# This file is distributed under the same license as the Puppet automation framework package.
+# Automatically generated, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Puppet automation framework 5.3.3-51-gc11ddbe\n"
+"\n"
+"Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
+"POT-Creation-Date: 2017-11-17 12:09+0000\n"
+"PO-Revision-Date: 2017-11-17 12:09+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"

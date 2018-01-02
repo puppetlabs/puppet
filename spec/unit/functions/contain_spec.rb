@@ -172,7 +172,7 @@ describe 'The "contain" function' do
 
       expect { apply_compiled_manifest(manifest) }.to raise_error(
         Puppet::Error,
-        /Found 1 dependency cycle/
+        /One or more resource dependency cycles detected in graph/
       )
     end
   end
@@ -295,4 +295,5 @@ describe 'The "contain" function' do
 
   it_should_behave_like 'all functions transforming relative to absolute names', :contain
   it_should_behave_like 'an inclusion function, regardless of the type of class reference,', :contain
+  it_should_behave_like 'an inclusion function, when --tasks is on,', :contain
 end

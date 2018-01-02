@@ -1,4 +1,7 @@
 test_name "file resource: set default modes"
+tag 'audit:high',
+    'audit:refactor',   # Use block style `test_name`
+    'audit:acceptance'
 
 def regexp_mode(mode)
   Regexp.new("mode\s*=>\s*'0?#{mode}'")
@@ -25,7 +28,7 @@ agents.each do |agent|
     assert_no_match(/foobar/, stdout)
   end
 
-  step "set execute git on file if explicitly specified"
+  step "set execute bit on file if explicitly specified"
   file_750 = "#{parent}/file_750.txt"
   on(agent, puppet_resource("file", file_750, "ensure=file", "mode=0750")) do
     assert_match(regexp_mode(750), stdout)

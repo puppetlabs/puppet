@@ -3,6 +3,10 @@ extend Puppet::Acceptance::CAUtils
 
 test_name "Puppet cert generate behavior (#6112)" do
 
+  tag 'audit:low',          # cli/ca behavior for non-standard workflows
+      'audit:integration',
+      'server'              # Ruby CA is deprecated
+
   # This acceptance test documents the behavior of `puppet cert generate` calls
   # for three cases:
   #
@@ -63,7 +67,7 @@ test_name "Puppet cert generate behavior (#6112)" do
   def fail_to_generate_cert_on_agent_that_is_not_ca(host, cn, autosign)
     return if master.is_pe?
     on(host, puppet('cert', 'generate', cn, '--autosign', autosign), :acceptable_exit_codes => [23])
-    assert_match(/Error: The certificate retrieved from the master does not match the agent's private key./, stderr, "Should not be able to generate a certificate on an agent that is not also the CA, with autosign #{autosign}.")
+    assert_match(/Error: The certificate retrieved from the master does not match the agent's private key. Did you forget to run as root\?/, stderr, "Should not be able to generate a certificate on an agent that is not also the CA, with autosign #{autosign}.")
   end
 
   def generate_and_clean_cert_with_dns_alt_names(host, cn, autosign)

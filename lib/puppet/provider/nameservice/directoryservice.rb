@@ -98,7 +98,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       begin
         dscl_output = execute(get_exec_preamble("-list"))
       rescue Puppet::ExecutionFailure
-        fail("Could not get #{@resource_type.name} list from DirectoryService")
+        fail(_("Could not get %{resource} list from DirectoryService") % { resource: @resource_type.name })
       end
       dscl_output.split("\n")
     end
@@ -157,7 +157,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     begin
       dscl_output = execute(dscl_vector)
     rescue Puppet::ExecutionFailure
-      fail("Could not get report.  command execution failed.")
+      fail(_("Could not get report.  command execution failed."))
     end
 
     dscl_plist = self.parse_dscl_plist_data(dscl_output)
@@ -196,8 +196,8 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     # zeroes. If someone attempts to use a password hash that worked with
     # a previous version of OS X, we will fail early and warn them.
     if password_hash.length != 136
-      fail("OS X 10.7 requires a Salted SHA512 hash password of 136 characters. \
-           Please check your password and try again.")
+      fail(_("OS X 10.7 requires a Salted SHA512 hash password of 136 characters. \
+           Please check your password and try again."))
     end
 
     plist_file = "#{users_plist_dir}/#{resource_name}.plist"
@@ -284,7 +284,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     elsif id_type == 'gid'
       dscl_args << '/Groups' << 'gid'
     else
-      fail("Invalid id_type #{id_type}. Only 'uid' and 'gid' supported")
+      fail(_("Invalid id_type %{id_type}. Only 'uid' and 'gid' supported") % { id_type: id_type })
     end
     dscl_out = dscl(dscl_args)
     # We're ok with throwing away negative uids here.
@@ -333,7 +333,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       guid = guid_plist["dsAttrTypeStandard:#{ns_to_ds_attribute_map[:guid]}"][0]
       self.class.set_password(@resource.name, guid, passphrase)
     rescue Puppet::ExecutionFailure => detail
-      fail("Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}")
+      fail(_("Could not set %{param} on %{resource}[%{name}]: %{detail}") % { param: param, resource: @resource.class.name, name: @resource.name, detail: detail })
     end
   end
 
@@ -362,7 +362,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       begin
         execute(exec_arg_vector)
       rescue Puppet::ExecutionFailure => detail
-        fail("Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}")
+        fail(_("Could not set %{param} on %{resource}[%{name}]: %{detail}") % { param: param, resource: @resource.class.name, name: @resource.name, detail: detail })
       end
     end
   end
@@ -389,7 +389,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     begin
       execute(exec_arg_vector)
     rescue Puppet::ExecutionFailure => detail
-      fail("Could not set GeneratedUID for #{@resource.class.name} #{@resource.name}: #{detail}")
+      fail(_("Could not set GeneratedUID for %{resource} %{name}: %{detail}") % { resource: @resource.class.name, name: @resource.name, detail: detail })
     end
 
     if value = @resource.should(:password) and value != ""
@@ -401,10 +401,10 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       next if property == :ensure
       value = @resource.should(property)
       if property == :gid and value.nil?
-        value = self.class.next_system_id(id_type='gid')
+        value = self.class.next_system_id('gid')
       end
       if property == :uid and value.nil?
-        value = self.class.next_system_id(id_type='uid')
+        value = self.class.next_system_id('uid')
       end
       if value != "" and not value.nil?
         if property == :members
@@ -417,7 +417,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
           begin
             execute(exec_arg_vector)
           rescue Puppet::ExecutionFailure => detail
-            fail("Could not create #{@resource.class.name} #{@resource.name}: #{detail}")
+            fail(_("Could not create %{resource} %{name}: %{detail}") % { resource: @resource.class.name, name: @resource.name, detail: detail })
           end
         end
       end
@@ -430,14 +430,14 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
         cmd = [:dseditgroup, "-o", "edit", "-n", ".", "-d", member, @resource[:name]]
         begin
           execute(cmd)
-        rescue Puppet::ExecutionFailure => detail
+        rescue Puppet::ExecutionFailure
           # TODO: We're falling back to removing the member using dscl due to rdar://8481241
           # This bug causes dseditgroup to fail to remove a member if that member doesn't exist
           cmd = [:dscl, ".", "-delete", "/Groups/#{@resource.name}", "GroupMembership", member]
           begin
             execute(cmd)
           rescue Puppet::ExecutionFailure => detail
-            fail("Could not remove #{member} from group: #{@resource.name}, #{detail}")
+            fail(_("Could not remove %{member} from group: %{resource}, %{detail}") % { member: member, resource: @resource.name, detail: detail })
           end
         end
       end
@@ -451,7 +451,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
         begin
           execute(cmd)
         rescue Puppet::ExecutionFailure => detail
-          fail("Could not add #{new_member} to group: #{@resource.name}, #{detail}")
+          fail(_("Could not add %{new_member} to group: %{name}, %{detail}") % { new_member: new_member, name: @resource.name, detail: detail })
         end
       end
     end

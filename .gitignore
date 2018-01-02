@@ -16,10 +16,8 @@ ext/packaging/
 pkg/
 Gemfile.lock
 Gemfile.local
-.bundle/
 puppet-acceptance/
 /.project
-.idea/
 .ruby-version
 .ruby-gemset
 acceptance/junit
@@ -29,3 +27,7 @@ acceptance/.bundle
 *~
 /*.samples
 coverage/
+# Files and directory added by RubyMine IDE
+*.iml
+.rakeTasks
+.idea/

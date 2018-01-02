@@ -66,7 +66,7 @@ Puppet::Functions.create_function(:regsubst) do
 
   def regsubst_regexp(target, pattern, replacement, flags = nil)
     pattern = (pattern.pattern || '') if pattern.is_a?(Puppet::Pops::Types::PRegexpType)
-    inner_regsubst(target, pattern, replacement, operation = flags == 'G' ? :gsub : :sub)
+    inner_regsubst(target, pattern, replacement, flags == 'G' ? :gsub : :sub)
   end
 
   def inner_regsubst(target, re, replacement, op)

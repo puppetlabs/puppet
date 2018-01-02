@@ -245,10 +245,6 @@ describe Puppet::Indirector::Request do
     expect(Puppet::Indirector::Request.new(:myind, :find, "key", nil).description).to eq("/myind/key")
   end
 
-  it "should be able to return the URI-escaped key" do
-    expect(Puppet::Indirector::Request.new(:myind, :find, "my key", nil).escaped_key).to eq(Puppet::Util.uri_encode("my key"))
-  end
-
   it "should set its environment to an environment instance when a string is specified as its environment" do
     env = Puppet::Node::Environment.create(:foo, [])
 

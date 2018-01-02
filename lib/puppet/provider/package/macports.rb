@@ -61,9 +61,9 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
   def install
     should = @resource.should(:ensure)
     if [:latest, :installed, :present].include?(should)
-      output = port("-q", :install, @resource[:name])
+      port("-q", :install, @resource[:name])
     else
-      output = port("-q", :install, @resource[:name], "@#{should}")
+      port("-q", :install, @resource[:name], "@#{should}")
     end
     # MacPorts now correctly exits non-zero with appropriate errors in
     # situations where a port cannot be found or installed.

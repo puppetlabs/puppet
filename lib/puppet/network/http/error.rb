@@ -20,50 +20,54 @@ module Puppet::Network::HTTP::Error
   class HTTPNotAcceptableError < HTTPError
     CODE = 406
     def initialize(message, issue_kind = Issues::RUNTIME_ERROR)
-      super("Not Acceptable: " + message, CODE, issue_kind)
+      super(_("Not Acceptable: %{message}") % { message: message }, CODE, issue_kind)
     end
   end
 
   class HTTPNotFoundError < HTTPError
     CODE = 404
     def initialize(message, issue_kind = Issues::RUNTIME_ERROR)
-      super("Not Found: " + message, CODE, issue_kind)
+      super(_("Not Found: %{message}") % { message: message }, CODE, issue_kind)
     end
   end
 
   class HTTPNotAuthorizedError < HTTPError
     CODE = 403
     def initialize(message, issue_kind = Issues::RUNTIME_ERROR)
-      super("Not Authorized: " + message, CODE, issue_kind)
+      super(_("Not Authorized: %{message}") % { message: message }, CODE, issue_kind)
     end
   end
 
   class HTTPBadRequestError < HTTPError
     CODE = 400
     def initialize(message, issue_kind = Issues::RUNTIME_ERROR)
-      super("Bad Request: " + message, CODE, issue_kind)
+      super(_("Bad Request: %{message}") % { message: message }, CODE, issue_kind)
     end
   end
 
   class HTTPMethodNotAllowedError < HTTPError
     CODE = 405
     def initialize(message, issue_kind = Issues::RUNTIME_ERROR)
-      super("Method Not Allowed: " + message, CODE, issue_kind)
+      super(_("Method Not Allowed: %{message}") % { message: message }, CODE, issue_kind)
+    end
+  end
+
+  class HTTPUnsupportedMediaTypeError < HTTPError
+    CODE = 415
+    def initialize(message, issue_kind = Issues::RUNTIME_ERROR)
+      super(_("Unsupported Media Type: %{message}") % { message: message }, CODE, issue_kind)
     end
   end
 
   class HTTPServerError < HTTPError
     CODE = 500
 
-    attr_reader :backtrace
-
     def initialize(original_error, issue_kind = Issues::RUNTIME_ERROR)
-      super("Server Error: " + original_error.message, CODE, issue_kind)
-      @backtrace = ["Warning: The 'stacktrace' property is deprecated and will be removed in a future version of Puppet. For security reasons, stacktraces are not returned with Puppet HTTP Error responses."]
+      super(_("Server Error: %{message}") % { message: original_error.message }, CODE, issue_kind)
     end
 
     def to_json
-      JSON({:message => message, :issue_kind => @issue_kind, :stacktrace => self.backtrace})
+      JSON({:message => message, :issue_kind => @issue_kind})
     end
   end
 end

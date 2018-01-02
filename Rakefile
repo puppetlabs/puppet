@@ -69,10 +69,15 @@ end
 
 desc 'run static analysis with rubocop'
 task(:rubocop) do
-  require 'rubocop'
-  cli = RuboCop::CLI.new
-  exit_code = cli.run(%w(--display-cop-names --format simple))
-  raise "RuboCop detected offenses" if exit_code != 0
+  if RUBY_VERSION < '2.0'
+    puts 'rubocop tests require Ruby 2.0 or higher'
+    puts 'skipping rubocop'
+  else
+    require 'rubocop'
+    cli = RuboCop::CLI.new
+    exit_code = cli.run(%w(--display-cop-names --format simple))
+    raise "RuboCop detected offenses" if exit_code != 0
+  end
 end
 
 desc "verify that commit messages match CONTRIBUTING.md requirements"
@@ -92,8 +97,9 @@ task(:commits) do
       raise "\n\n\n\tThis commit summary didn't match CONTRIBUTING.md guidelines:\n" \
         "\n\t\t#{commit_summary}\n" \
         "\tThe commit summary (i.e. the first line of the commit message) should start with one of:\n"  \
-        "\t\t(pup-<digits>) # this is most common and should be a ticket at tickets.puppetlabs.com\n" \
+        "\t\t(PUP-<digits>) # this is most common and should be a ticket at tickets.puppet.com\n" \
         "\t\t(docs)\n" \
+        "\t\t(docs)(DOCUMENT-<digits>)\n" \
         "\t\t(maint)\n" \
         "\t\t(packaging)\n" \
         "\n\tThis test for the commit summary is case-insensitive.\n\n\n"

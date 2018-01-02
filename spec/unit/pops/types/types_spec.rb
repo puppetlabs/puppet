@@ -153,6 +153,40 @@ describe 'Puppet Type System' do
     end
   end
 
+  context 'Boolean type' do
+    it 'parameterized type is assignable to base type' do
+      code = <<-CODE
+        notice(Boolean[true] < Boolean)
+        notice(Boolean[false] < Boolean)
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true', 'true'])
+    end
+
+    it 'boolean literals are instances of the base type' do
+      code = <<-CODE
+        notice(true =~ Boolean)
+        notice(false =~ Boolean)
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true', 'true'])
+    end
+
+    it 'boolean literals are instances of type parameterized with the same literal' do
+      code = <<-CODE
+        notice(true =~ Boolean[true])
+        notice(false =~ Boolean[false])
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true', 'true'])
+    end
+
+    it 'boolean literals are not instances of type parameterized with a different literal' do
+      code = <<-CODE
+        notice(true =~ Boolean[false])
+        notice(false =~ Boolean[true])
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['false', 'false'])
+    end
+  end
+
   context 'Enum type' do
     it 'sorts its entries' do
       code = <<-CODE
@@ -166,6 +200,22 @@ describe 'Puppet Type System' do
         Enum[a,b,c,b,a].each |$e| { notice $e }
       CODE
       expect(eval_and_collect_notices(code)).to eq(['a', 'b', 'c'])
+    end
+
+    it 'is case sensitive by default' do
+      code = <<-CODE
+        notice('A' =~ Enum[a,b])
+        notice('a' =~ Enum[a,b])
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['false', 'true'])
+    end
+
+    it 'is case insensitive when last parameter argument is true' do
+      code = <<-CODE
+        notice('A' =~ Enum[a,b,true])
+        notice('a' =~ Enum[a,b,true])
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true', 'true'])
     end
   end
 
@@ -291,6 +341,8 @@ describe 'Puppet Type System' do
     let!(:mix_ints) { tf.variant(overlapping_ints, adjacent_ints) }
     let!(:overlapping_floats) { tf.variant(tf.float_range(10.0, 20.0), tf.float_range(18.0, 28.0)) }
     let!(:enums) { tf.variant(tf.enum('a', 'b'), tf.enum('b', 'c')) }
+    let!(:enums_s_is) { tf.variant(tf.enum('a', 'b'), tf.enum('b', 'c', true)) }
+    let!(:enums_is_is) { tf.variant(tf.enum('A', 'b', true), tf.enum('B', 'c', true)) }
     let!(:patterns) { tf.variant(tf.pattern('a', 'b'), tf.pattern('b', 'c')) }
     let!(:with_undef) { tf.variant(tf.undef, tf.range(1,10)) }
     let!(:all_optional) { tf.variant(tf.optional(tf.range(1,10)), tf.optional(tf.range(11,20))) }
@@ -315,6 +367,14 @@ describe 'Puppet Type System' do
 
       it 'are enums, the result is an enum' do
         expect(enums.normalize).to eq(tf.enum('a', 'b', 'c'))
+      end
+
+      it 'are case sensitive versus case insensitive enums, does not merge the enums' do
+        expect(enums_s_is.normalize).to eq(enums_s_is)
+      end
+
+      it 'are case insensitive enums, result is case insensitive and unique irrespective of case' do
+        expect(enums_is_is.normalize).to eq(tf.enum('a', 'b', 'c', true))
       end
 
       it 'are patterns, the result is a pattern' do
@@ -352,12 +412,34 @@ describe 'Puppet Type System' do
     end
 
     it 'can be created with a runtime and, puppet name pattern, and runtime replacement' do
-      expect(tf.runtime('ruby', [/^MyPackage::(.*)$/, 'MyModule::\1']).to_s).to eq("Runtime[ruby, [/^MyPackage::(.*)$/, \"MyModule::\\\\1\"]]")
+      expect(tf.runtime('ruby', [/^MyPackage::(.*)$/, 'MyModule::\1']).to_s).to eq("Runtime[ruby, [/^MyPackage::(.*)$/, 'MyModule::\\1']]")
     end
 
     it 'will map a Puppet name to a runtime type' do
       t = tf.runtime('ruby', [/^MyPackage::(.*)$/, 'MyModule::\1'])
       expect(t.from_puppet_name('MyPackage::MyType').to_s).to eq("Runtime[ruby, 'MyModule::MyType']")
+    end
+
+    it 'with parameters is assignable to the default Runtime type' do
+      code = <<-CODE
+      notice(Runtime[ruby, 'Symbol'] < Runtime)
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true'])
+    end
+
+    it 'with parameters is not assignable from the default Runtime type' do
+      code = <<-CODE
+      notice(Runtime < Runtime[ruby, 'Symbol'])
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['false'])
+    end
+
+    it 'default is assignable to itself' do
+      code = <<-CODE
+      notice(Runtime < Runtime)
+      notice(Runtime <= Runtime)
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['false', 'true'])
     end
   end
 
@@ -439,7 +521,7 @@ describe 'Puppet Type System' do
       type Foo = Variant[Foo,String,Integer]
       assert_type(Foo, /x/)
       CODE
-      expect { eval_and_collect_notices(code) }.to raise_error(/expects a value of type String or Integer, got Regexp/)
+      expect { eval_and_collect_notices(code) }.to raise_error(/expects a Foo = Variant\[String, Integer\] value, got Regexp/)
     end
 
     it 'will handle a scalar correctly in combinations of nested aliased variants' do
@@ -548,19 +630,19 @@ describe 'Puppet Type System' do
   context 'instantiation via new_function is supported by' do
     let(:loader) { Loader::BaseLoader.new(nil, "types_unit_test_loader") }
     it 'Integer' do
-      func_class = tf.integer.new_function(loader)
+      func_class = tf.integer.new_function
       expect(func_class).to be_a(Class)
       expect(func_class.superclass).to be(Puppet::Functions::Function)
     end
 
     it 'Optional[Integer]' do
-      func_class = tf.optional(tf.integer).new_function(loader)
+      func_class = tf.optional(tf.integer).new_function
       expect(func_class).to be_a(Class)
       expect(func_class.superclass).to be(Puppet::Functions::Function)
     end
 
     it 'Regexp' do
-      func_class = tf.regexp.new_function(loader)
+      func_class = tf.regexp.new_function
       expect(func_class).to be_a(Class)
       expect(func_class.superclass).to be(Puppet::Functions::Function)
     end
@@ -571,7 +653,7 @@ describe 'Puppet Type System' do
 
       it 'Any, Scalar, Collection' do
         [tf.any, tf.scalar, tf.collection ].each do |t|
-        expect { t.new_function(loader)
+        expect { t.new_function
         }.to raise_error(ArgumentError, /Creation of new instance of type '#{t.to_s}' is not supported/)
       end
     end
@@ -603,6 +685,36 @@ describe 'Puppet Type System' do
       [tf.any, tf.scalar, tf.collection ].each do |t|
         expect { t.create }.to raise_error(ArgumentError, /Creation of new instance of type '#{t.to_s}' is not supported/)
       end
+    end
+  end
+
+  context 'creation of parameterized type via ruby create function on class' do
+    around(:each) do |example|
+      Puppet.override(:loaders => Loaders.new(Puppet::Node::Environment.create(:testing, []))) do
+        example.run
+      end
+    end
+
+    it 'is supported by Integer' do
+      int_type = tf.integer.class.create(0, 32)
+      expect(int_type).to eq(tf.range(0, 32))
+    end
+
+    it 'is supported by Regexp' do
+      rx_type = tf.regexp.class.create('[a-z]+')
+      expect(rx_type).to eq(tf.regexp(/[a-z]+/))
+    end
+  end
+
+  context 'backward compatibility' do
+    it 'PTypeType can be accessed from PType' do
+      # should appoint the exact same instance
+      expect(PType).to equal(PTypeType)
+    end
+
+    it 'PClassType can be accessed from PHostClassType' do
+      # should appoint the exact same instance
+      expect(PHostClassType).to equal(PClassType)
     end
   end
 end

@@ -222,7 +222,10 @@ describe Puppet::Module do
       env = Puppet::Node::Environment.create(:testing, [@modpath])
 
       ['test_gte_req', 'test_specific_req', 'foobar'].each do |mod_name|
-        metadata_file = "#{@modpath}/#{mod_name}/metadata.json"
+        mod_dir = "#{@modpath}/#{mod_name}"
+        metadata_file = "#{mod_dir}/metadata.json"
+        tasks_dir = "#{mod_dir}/tasks"
+        locale_dir = "#{mod_dir}/locales"
         Puppet::FileSystem.stubs(:exist?).with(metadata_file).returns true
       end
       mod = PuppetSpec::Modules.create(
@@ -440,35 +443,6 @@ describe Puppet::Module do
     end
   end
 
-
-  describe "initialize_i18n" do
-
-    let(:modpath) { tmpdir('modpath') }
-    let(:modname) { 'puppetlabs-i18n'}
-    let(:modroot) { "#{modpath}/#{modname}/" }
-    let(:config_path) { "#{modroot}/locales/config.yaml" }
-    let(:mod_obj) { PuppetSpec::Modules.create( modname, modpath, :metadata => { :dependencies => [] }, :env => env ) }
-
-    it "is expected to initialize an un-initialized module" do
-      expect(GettextSetup.translation_repositories.has_key? modname).to be false
-
-      FileUtils.mkdir_p("#{mod_obj.path}/locales")
-      config = {
-        "gettext" => {
-          "project_name" => modname
-        }
-      }
-      File.open(config_path, 'w') { |file| file.write(config.to_yaml) }
-
-      mod_obj.initialize_i18n
-
-      expect(GettextSetup.translation_repositories.has_key? modname).to be true
-    end
-    it "is expected return nil if module is intiailized" do
-      expect(mod_obj.initialize_i18n).to be nil
-    end
-  end
-
   describe "when managing supported platforms" do
     it "should support specifying a supported platform" do
       mod.supports "solaris"
@@ -552,6 +526,84 @@ describe Puppet::Module do
 
   it "should return the path to the plugin directory" do
     expect(mod.plugin_directory).to eq(File.join(path, "lib"))
+  end
+
+  it "should return the path to the tasks directory" do
+    expect(mod.tasks_directory).to eq(File.join(path, "tasks"))
+  end
+
+  describe "when finding tasks" do
+    before do
+      Puppet::FileSystem.unstub(:exist?)
+      @modpath = tmpdir('modpath')
+      Puppet.settings[:modulepath] = @modpath
+    end
+
+    it "should have an empty array for the tasks when the tasks directory does not exist" do
+      mod = PuppetSpec::Modules.create('tasks_test_nodir', @modpath, :environment => env)
+      expect(mod.tasks).to eq([])
+    end
+
+    it "should have an empty array for the tasks when the tasks directory does exist and is empty" do
+      mod = PuppetSpec::Modules.create('tasks_test_empty', @modpath, {:environment => env,
+                                                                      :tasks => []})
+      expect(mod.tasks).to eq([])
+    end
+
+    it "should list the expected tasks when the required files exist" do
+      fake_tasks = [['task1'], ['task2.sh', 'task2.json']]
+      mod = PuppetSpec::Modules.create('tasks_smoke', @modpath, {:environment => env,
+                                                                 :tasks => fake_tasks})
+
+      expect(mod.tasks.count).to eq(2)
+      expect(mod.tasks.map{|t| t.name}.sort).to eq(['tasks_smoke::task1', 'tasks_smoke::task2'])
+      expect(mod.tasks.map{|t| t.class}).to eq([Puppet::Module::Task] * 2)
+    end
+
+    it "should be able to find individual task files when they exist" do
+      task_exe = 'stateskatetask.stk'
+      mod = PuppetSpec::Modules.create('task_file_smoke', @modpath, {:environment => env,
+                                                                     :tasks => [[task_exe]]})
+
+      expect(mod.task_file(task_exe)).to eq("#{mod.path}/tasks/#{task_exe}")
+    end
+
+    it "should return nil when asked for an individual task file if it does not exist" do
+      mod = PuppetSpec::Modules.create('task_file_neg', @modpath, {:environment => env,
+                                                                   :tasks => []})
+      expect(mod.task_file('nosuchtask')).to be_nil
+    end
+
+    describe "does the task finding" do
+      before :each do
+        Puppet::FileSystem.unstub(:exist?)
+        Puppet::Module::Task.unstub(:tasks_in_module)
+      end
+
+      let(:mod_name) { 'tasks_test_lazy' }
+      let(:mod_tasks_dir) { File.join(@modpath, mod_name, 'tasks') }
+
+      it "after the module is initialized" do
+        Puppet::FileSystem.expects(:exist?).with(mod_tasks_dir).never
+        Puppet::Module::Task.expects(:tasks_in_module).never
+        Puppet::Module.new(mod_name, @modpath, env)
+      end
+
+      it "when the tasks method is called" do
+        Puppet::Module::Task.expects(:tasks_in_module)
+        mod = PuppetSpec::Modules.create(mod_name, @modpath, {:environment => env,
+                                                              :tasks => [['itascanstaccatotask']]})
+        mod.tasks
+      end
+
+      it "only once for the lifetime of the module object" do
+        Dir.expects(:glob).with("#{mod_tasks_dir}/*").once.returns ['allalaskataskattacktactics']
+        mod = PuppetSpec::Modules.create(mod_name, @modpath, {:environment => env,
+                                                              :tasks => []})
+        mod.tasks
+        mod.tasks
+      end
+    end
   end
 end
 
@@ -694,7 +746,15 @@ describe Puppet::Module do
         Puppet[:strict] = :off
       end
 
-      it "should warn about a failure to parse" do
+      it "should not warn about a failure to parse" do
+        File.stubs(:read).with(mymod_metadata, {:encoding => 'utf-8'}).returns(my_fixture('trailing-comma.json'))
+
+        expect(mymod.has_metadata?).to be_falsey
+        expect(@logs).to_not have_matching_log(/mymod has an invalid and unparsable metadata\.json file.*/)
+      end
+
+      it "should log debug output about a failure to parse when --debug is on" do
+        Puppet[:log_level] = :debug
         File.stubs(:read).with(mymod_metadata, {:encoding => 'utf-8'}).returns(my_fixture('trailing-comma.json'))
 
         expect(mymod.has_metadata?).to be_falsey
@@ -717,7 +777,7 @@ describe Puppet::Module do
     end
 
   def a_module_with_metadata(data)
-    File.stubs(:read).with("/path/metadata.json", {:encoding => 'utf-8'}).returns data.to_pson
+    File.stubs(:read).with("/path/metadata.json", {:encoding => 'utf-8'}).returns data.to_json
     Puppet::Module.new("foo", "/path", mock("env"))
   end
 
@@ -839,5 +899,69 @@ describe Puppet::Module do
         "version_requirement" => "< 5.0.0"
       }
     ])
+  end
+
+  context 'when parsing VersionRange' do
+    let(:logs) { [] }
+    let(:notices) { logs.select { |log| log.level == :notice }.map { |log| log.message } }
+
+    it 'can parse a strict range' do
+      expect(Puppet::Module.parse_range('>=1.0.0', true).include?(SemanticPuppet::Version.parse('1.0.1-rc1'))).to be_falsey
+    end
+
+    it 'can parse a non-strict range' do
+      expect(Puppet::Module.parse_range('>=1.0.0', false).include?(SemanticPuppet::Version.parse('1.0.1-rc1'))).to be_truthy
+    end
+
+    context 'using parse method with an arity of 1' do
+      around(:each) do |example|
+        begin
+          example.run
+        ensure
+          Puppet::Module.instance_variable_set(:@semver_gem_version, nil)
+          Puppet::Module.instance_variable_set(:@parse_range_method, nil)
+        end
+      end
+
+      it 'will notify when non-strict ranges cannot be parsed' do
+        Puppet::Module.instance_variable_set(:@semver_gem_version, SemanticPuppet::Version.parse('1.0.0'))
+        Puppet::Module.instance_variable_set(:@parse_range_method, Proc.new { |str| SemanticPuppet::VersionRange.parse(str, true) })
+
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          expect(Puppet::Module.parse_range('>=1.0.0', false).include?(SemanticPuppet::Version.parse('1.0.1-rc1'))).to be_falsey
+        end
+        expect(notices).to include(/VersionRanges will always be strict when using non-vendored SemanticPuppet gem, version 1\.0\.0/)
+      end
+
+      it 'will notify when strict ranges cannot be parsed' do
+        Puppet::Module.instance_variable_set(:@semver_gem_version, SemanticPuppet::Version.parse('0.1.4'))
+        Puppet::Module.instance_variable_set(:@parse_range_method, Proc.new { |str| SemanticPuppet::VersionRange.parse(str, false) })
+
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          expect(Puppet::Module.parse_range('>=1.0.0', true).include?(SemanticPuppet::Version.parse('1.0.1-rc1'))).to be_truthy
+        end
+        expect(notices).to include(/VersionRanges will never be strict when using non-vendored SemanticPuppet gem, version 0\.1\.4/)
+      end
+
+      it 'will not notify when strict ranges can be parsed' do
+        Puppet::Module.instance_variable_set(:@semver_gem_version, SemanticPuppet::Version.parse('1.0.0'))
+        Puppet::Module.instance_variable_set(:@parse_range_method, Proc.new { |str| SemanticPuppet::VersionRange.parse(str, true) })
+
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          expect(Puppet::Module.parse_range('>=1.0.0', true).include?(SemanticPuppet::Version.parse('1.0.1-rc1'))).to be_falsey
+        end
+        expect(notices).to be_empty
+      end
+
+      it 'will not notify when non-strict ranges can be parsed' do
+        Puppet::Module.instance_variable_set(:@semver_gem_version, SemanticPuppet::Version.parse('0.1.4'))
+        Puppet::Module.instance_variable_set(:@parse_range_method, Proc.new { |str| SemanticPuppet::VersionRange.parse(str, false) })
+
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          expect(Puppet::Module.parse_range('>=1.0.0', false).include?(SemanticPuppet::Version.parse('1.0.1-rc1'))).to be_truthy
+        end
+        expect(notices).to be_empty
+      end
+    end
   end
 end

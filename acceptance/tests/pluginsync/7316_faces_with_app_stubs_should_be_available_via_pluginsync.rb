@@ -1,5 +1,9 @@
 test_name "the pluginsync functionality should sync app definitions, and they should be runnable afterwards"
 
+tag 'audit:medium',
+    'audit:integration',
+    'server'
+
 #
 # This test is intended to ensure that pluginsync syncs face definitions to the agents.
 # Further, the face should be runnable on the agent after the sync has occurred.

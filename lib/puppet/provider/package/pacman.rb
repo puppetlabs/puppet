@@ -46,7 +46,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     end
 
     unless self.query
-      fail("Could not find package '#{@resource[:name]}'")
+      fail(_("Could not find package '%{name}'") % { name: @resource[:name] })
     end
   end
 
@@ -82,13 +82,13 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
           if match = regex.match(line)
             packages[match.captures[0]] = match.captures[1]
           else
-            warning("Failed to match line '#{line}'")
+            warning(_("Failed to match line '%{line}'") % { line: line })
           end
         end
       end
       packages
     rescue Puppet::ExecutionFailure
-      fail("Error getting installed packages")
+      fail(_("Error getting installed packages"))
     end
   end
 
@@ -173,7 +173,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
     if version
       unless @resource.allow_virtual?
-        warning("#{resource_name} is a group, but allow_virtual is false.")
+        warning(_("%{resource_name} is a group, but allow_virtual is false.") % { resource_name: resource_name })
         return nil
       end
     else
@@ -200,7 +200,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
     is_group = self.class.group?(resource_name)
 
-    fail("Refusing to uninstall package group #{resource_name}, because allow_virtual is false.") if is_group && !@resource.allow_virtual?
+    fail(_("Refusing to uninstall package group %{resource_name}, because allow_virtual is false.") % { resource_name: resource_name }) if is_group && !@resource.allow_virtual?
 
     cmd = %w{--noconfirm --noprogressbar}
     cmd += uninstall_options if @resource[:uninstall_options]
@@ -230,7 +230,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     begin
       source_uri = URI.parse source
     rescue => detail
-      self.fail Puppet::Error, "Invalid source '#{source}': #{detail}", detail
+      self.fail Puppet::Error, _("Invalid source '%{source}': %{detail}") % { source: source, detail: detail }, detail
     end
 
     source = case source_uri.scheme
@@ -239,9 +239,9 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     when /ftp/i then source
     when /file/i then source_uri.path
     when /puppet/i
-      fail "puppet:// URL is not supported by pacman"
+      fail _("puppet:// URL is not supported by pacman")
     else
-      fail "Source #{source} is not supported by pacman"
+      fail _("Source %{source} is not supported by pacman") % { source: source }
     end
     pacman "--noconfirm", "--noprogressbar", "-Sy"
     pacman "--noconfirm", "--noprogressbar", "-U", source
@@ -251,7 +251,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     resource_name = @resource[:name]
 
     # Refuse to install if not allowing virtual packages and the resource is a group
-    fail("Refusing to install package group #{resource_name}, because allow_virtual is false.") if self.class.group?(resource_name) && !@resource.allow_virtual?
+    fail(_("Refusing to install package group %{resource_name}, because allow_virtual is false.") % { resource_name: resource_name }) if self.class.group?(resource_name) && !@resource.allow_virtual?
 
     cmd = %w{--noconfirm --needed --noprogressbar}
     cmd += install_options if @resource[:install_options]

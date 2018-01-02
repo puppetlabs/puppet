@@ -4,7 +4,7 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
   copyright "Puppet Inc.", 2011
   license   "Apache 2 license; see COPYING"
 
-  summary "Compile, save, view, and convert catalogs."
+  summary _("Compile, save, view, and convert catalogs.")
   description <<-'EOT'
     This subcommand deals with catalogs, which are compiled per-node artifacts
     generated from a set of Puppet manifests. By default, it interacts with the
@@ -64,14 +64,14 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
       catalog = Puppet::Face[:catalog, "0.0.1"].find(Puppet[:certname]) or raise "Could not find catalog for #{Puppet[:certname]}"
       catalog = catalog.to_ral
 
-      report = Puppet::Transaction::Report.new("apply")
+      report = Puppet::Transaction::Report.new
       report.configuration_version = catalog.version
       report.environment = Puppet[:environment]
 
       Puppet::Util::Log.newdestination(report)
 
       begin
-        benchmark(:notice, "Finished catalog run") do
+        benchmark(:notice, "Finished catalog run in %{seconds} seconds") do
           catalog.apply(:report => report)
         end
       rescue => detail

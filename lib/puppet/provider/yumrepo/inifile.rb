@@ -76,8 +76,8 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     # Use directories in reposdir if they are set instead of default
     if reposdir
       # Follow the code from the yum/config.py
-      dirs = reposdir.gsub!("\n", ' ')
-      dirs = reposdir.gsub!(',', ' ')
+      reposdir.gsub!("\n", ' ')
+      reposdir.gsub!(',', ' ')
       dirs = reposdir.split
     end
     dirs.select! { |dir| Puppet::FileSystem.exist?(dir) }
@@ -181,7 +181,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   # Save all yum repository files and force the mode to 0644
   # @api private
   # @return [void]
-  def self.store
+  def self.store(resource)
     inifile = self.virtual_inifile
     inifile.store
 
@@ -189,7 +189,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     inifile.each_file do |file|
       current_mode = Puppet::FileSystem.stat(file).mode & 0777
       unless current_mode == target_mode
-        Puppet.info "changing mode of #{file} from %03o to %03o" % [current_mode, target_mode]
+        resource.info "changing mode of #{file} from %03o to %03o" % [current_mode, target_mode]
         Puppet::FileSystem.chmod(target_mode, file)
       end
     end
@@ -202,8 +202,6 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   # @return [void]
   def create
     @property_hash[:ensure] = :present
-
-    new_section = current_section
 
     # We fetch a list of properties from the type, then iterate
     # over them, avoiding ensure.  We're relying on .should to
@@ -245,7 +243,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   # @api public
   # @return [void]
   def flush
-    self.class.store
+    self.class.store(self)
   end
 
   # Generate setters and getters for our INI properties.

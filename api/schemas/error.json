@@ -11,11 +11,6 @@
         "issue_kind": {
             "description": "A unique label to identify the error class",
             "type": "string"
-        },
-        "stacktrace": {
-            "description": "**Deprecated**. For 5xx responses only, a message containing a deprecation warning. This property will be removed in a future release of Puppet.",
-            "type": "array",
-            "items": { "type": "string" }
         }
     },
     "required": ["message", "issue_kind"],

@@ -8,19 +8,18 @@ $LOAD_PATH.unshift File.join(dir, 'lib')
 # Don't want puppet getting the command line arguments for rake or autotest
 ARGV.clear
 
-# Stub out gettext's `_` method, which attempts to load translations.
-# Several of our mocks (mostly around file system interaction) are broken by
-# FastGettext's implementation of this method.
-def _(msg)
-  msg
-end
-
 begin
   require 'rubygems'
 rescue LoadError
 end
 
 require 'puppet'
+
+# Stub out gettext's `_` and `n_()` methods, which attempt to load translations.
+# Several of our mocks (mostly around file system interaction) are broken by
+# FastGettext's implementation of these methods.
+require 'puppet/gettext/stubs'
+
 gem 'rspec', '>=3.1.0'
 require 'rspec/expectations'
 require 'rspec/its'
@@ -83,17 +82,6 @@ RSpec.configure do |config|
   tmpdir = Puppet::FileSystem.expand_path(Dir.mktmpdir("rspecrun"))
   oldtmpdir = Puppet::FileSystem.expand_path(Dir.tmpdir())
   ENV['TMPDIR'] = tmpdir
-
-  if Puppet::Util::Platform.windows?
-    config.output_stream = $stdout
-    config.error_stream = $stderr
-
-    config.formatters.each do |f|
-      if not f.instance_variable_get(:@output).kind_of?(::File)
-        f.instance_variable_set(:@output, $stdout)
-      end
-    end
-  end
 
   Puppet::Test::TestHelper.initialize
 

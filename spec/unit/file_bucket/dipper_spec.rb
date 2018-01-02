@@ -91,15 +91,24 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
         end
 
         it "should properly diff files on the filebucket" do
-          file1 = make_tmp_file("OriginalContent")
-          file2 = make_tmp_file("ModifiedContent")
+          file1 = make_tmp_file("OriginalContent\n")
+          file2 = make_tmp_file("ModifiedContent\n")
           @dipper = Puppet::FileBucket::Dipper.new(:Path => tmpdir("bucket"))
           checksum1 = @dipper.backup(file1)
           checksum2 = @dipper.backup(file2)
 
           # Diff without the context
-          diff12 = `diff -uN #{file1} #{file2} | sed '1,2d'`
-          diff21 = `diff -uN #{file2} #{file1} | sed '1,2d'`
+          # Lines we need to see match 'Content' instead of trimming diff output filter out
+          # surrounding noise...or hard code the check values
+          if Facter.value(:osfamily) == 'Solaris' &&
+            Puppet::Util::Package.versioncmp(Facter.value(:operatingsystemrelease), '11.0') >= 0
+            # Use gdiff on Solaris
+            diff12 = Puppet::Util::Execution.execute("gdiff -uN #{file1} #{file2}| grep Content")
+            diff21 = Puppet::Util::Execution.execute("gdiff -uN #{file2} #{file1}| grep Content")
+          else
+            diff12 = Puppet::Util::Execution.execute("diff -uN #{file1} #{file2}| grep Content")
+            diff21 = Puppet::Util::Execution.execute("diff -uN #{file2} #{file1}| grep Content")
+          end
 
           expect(@dipper.diff(checksum1, checksum2, nil, nil)).to include(diff12)
           expect(@dipper.diff(checksum1, nil, nil, file2)).to include(diff12)

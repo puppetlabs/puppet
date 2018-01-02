@@ -233,7 +233,7 @@ describe Puppet::Transaction::ResourceHarness do
         @harness.evaluate(resource)
       end.to raise_error(Exception)
 
-      expect(@logs.first.message).to eq("change from absent to present failed: Exception")
+      expect(@logs.first.message).to eq("change from 'absent' to 'present' failed: Exception")
       expect(@logs.first.level).to eq(:err)
     end
 
@@ -296,7 +296,7 @@ describe Puppet::Transaction::ResourceHarness do
 
     it "should log and pass the exception through" do
       expect { @harness.evaluate(@resource) }.to raise_error(Exception, /baz/)
-      expect(@logs.first.message).to eq("change from absent to 1 failed: baz")
+      expect(@logs.first.message).to eq("change from 'absent' to 1 failed: baz")
       expect(@logs.first.level).to eq(:err)
     end
   end
@@ -325,7 +325,7 @@ describe Puppet::Transaction::ResourceHarness do
 
     it "should log and pass the exception through" do
       expect { @harness.evaluate(@resource) }.to raise_error(Exception, /slithy/)
-      expect(@logs.first.message).to eq("change from absent to 1 failed: slithy")
+      expect(@logs.first.message).to eq("change from 'absent' to 1 failed: slithy")
       expect(@logs.first.level).to eq(:err)
     end
   end

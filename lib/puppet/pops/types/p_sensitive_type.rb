@@ -38,8 +38,8 @@ class PSensitiveType < PTypeWithContainedType
     o.is_a?(Sensitive) && @type.instance?(o.unwrap, guard)
   end
 
-  def self.new_function(_, loader)
-    @new_function ||= Puppet::Functions.create_loaded_function(:new_Sensitive, loader) do
+  def self.new_function(type)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_Sensitive, type.loader) do
 
       dispatch :from_sensitive do
         param 'Sensitive', :value

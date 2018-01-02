@@ -76,7 +76,30 @@ class Puppet::Settings::IniFile
     lines.select { |line| line.is_a?(SettingLine) }
   end
 
+  def settings_exist_in_default_section?
+    lines_in(DEFAULT_SECTION_NAME).any? { |line| line.is_a?(SettingLine) }
+  end
+
+  def section_exists_with_default_section_name?
+    section_lines.any? do |section|
+      !section.is_a?(DefaultSection) && section.name == DEFAULT_SECTION_NAME
+    end
+  end
+
+  def set_default_section_write_sectionline(value)
+    if index = @lines.find_index { |line| line.is_a?(DefaultSection) }
+      @lines[index].write_sectionline = true
+    end
+  end
+
   def write(fh)
+    # If no real section line for the default section exists, configure the
+    # DefaultSection object to write its section line. (DefaultSection objects
+    # don't write the section line unless explicitly configured to do so)
+    if settings_exist_in_default_section? && !section_exists_with_default_section_name?
+      set_default_section_write_sectionline(true)
+    end
+
     fh.truncate(0)
     fh.rewind
     @lines.each do |line|
@@ -161,11 +184,17 @@ class Puppet::Settings::IniFile
   end
 
   class DefaultSection < SectionLine
+    attr_accessor :write_sectionline
+
     def initialize
+      @write_sectionline = false
       super("", DEFAULT_SECTION_NAME, "")
     end
 
     def write(fh)
+      if @write_sectionline
+        super(fh)
+      end
     end
   end
 end

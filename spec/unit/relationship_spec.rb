@@ -151,74 +151,53 @@ describe Puppet::Relationship, " when matching edges with a non-standard event" 
   end
 end
 
-describe Puppet::Relationship, "when converting to pson" do
+describe Puppet::Relationship, "when converting to json" do
   before do
-    @edge = Puppet::Relationship.new(:a, :b, :event => :random, :callback => :whatever)
+    @edge = Puppet::Relationship.new('a', 'b', :event => :random, :callback => :whatever)
   end
 
   it "should store the stringified source as the source in the data" do
-    expect(PSON.parse(@edge.to_pson)["source"]).to eq("a")
+    expect(JSON.parse(@edge.to_json)["source"]).to eq("a")
   end
 
   it "should store the stringified target as the target in the data" do
-    expect(PSON.parse(@edge.to_pson)['target']).to eq("b")
+    expect(JSON.parse(@edge.to_json)['target']).to eq("b")
   end
 
-  it "should store the psonified event as the event in the data" do
-    expect(PSON.parse(@edge.to_pson)["event"]).to eq("random")
+  it "should store the jsonified event as the event in the data" do
+    expect(JSON.parse(@edge.to_json)["event"]).to eq("random")
   end
 
   it "should not store an event when none is set" do
     @edge.event = nil
-    expect(PSON.parse(@edge.to_pson)["event"]).to be_nil
+    expect(JSON.parse(@edge.to_json)).not_to include('event')
   end
 
-  it "should store the psonified callback as the callback in the data" do
+  it "should store the jsonified callback as the callback in the data" do
     @edge.callback = "whatever"
-    expect(PSON.parse(@edge.to_pson)["callback"]).to eq("whatever")
+    expect(JSON.parse(@edge.to_json)["callback"]).to eq("whatever")
   end
 
   it "should not store a callback when none is set in the edge" do
     @edge.callback = nil
-    expect(PSON.parse(@edge.to_pson)["callback"]).to be_nil
+    expect(JSON.parse(@edge.to_json)).not_to include('callback')
   end
 end
 
-describe Puppet::Relationship, "when converting from pson" do
-  before do
-    @event = "random"
-    @callback = "whatever"
-    @data = {
-      "source" => "mysource",
-      "target" => "mytarget",
-      "event" => @event,
-      "callback" => @callback
-    }
-    @pson = {
-      "type" => "Puppet::Relationship",
-      "data" => @data
-    }
-  end
-
-  def pson_result_should
-    Puppet::Relationship.expects(:new).with { |*args| yield args }
-  end
-
-  # LAK:NOTE For all of these tests, we convert back to the edge so we can
-  # trap the actual data structure then.
+describe Puppet::Relationship, "when converting from json" do
   it "should pass the source in as the first argument" do
-    expect(Puppet::Relationship.from_data_hash("source" => "mysource", "target" => "mytarget").source).to eq("mysource")
+    expect(Puppet::Relationship.from_data_hash("source" => "mysource", "target" => "mytarget").source).to eq('mysource')
   end
 
   it "should pass the target in as the second argument" do
-    expect(Puppet::Relationship.from_data_hash("source" => "mysource", "target" => "mytarget").target).to eq("mytarget")
+    expect(Puppet::Relationship.from_data_hash("source" => "mysource", "target" => "mytarget").target).to eq('mytarget')
   end
 
   it "should pass the event as an argument if it's provided" do
-    expect(Puppet::Relationship.from_data_hash("source" => "mysource", "target" => "mytarget", "event" => "myevent", "callback" => "eh").event).to eq("myevent")
+    expect(Puppet::Relationship.from_data_hash("source" => "mysource", "target" => "mytarget", "event" => "myevent", "callback" => "eh").event).to eq(:myevent)
   end
 
   it "should pass the callback as an argument if it's provided" do
-    expect(Puppet::Relationship.from_data_hash("source" => "mysource", "target" => "mytarget", "callback" => "mycallback").callback).to eq("mycallback")
+    expect(Puppet::Relationship.from_data_hash("source" => "mysource", "target" => "mytarget", "callback" => "mycallback").callback).to eq(:mycallback)
   end
 end

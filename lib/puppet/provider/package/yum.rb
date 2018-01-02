@@ -26,7 +26,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   defaultfor :osfamily => :redhat
 
   def self.prefetch(packages)
-    raise Puppet::Error, "The yum provider can only be used as root" if Process.euid != 0
+    raise Puppet::Error, _("The yum provider can only be used as root") if Process.euid != 0
     super
   end
 
@@ -80,7 +80,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     elsif output.exitstatus == 0
       self.debug "#{command(:cmd)} check-update exited with 0; no package updates available."
     else
-      self.warning "Could not check for updates, '#{command(:cmd)} check-update' exited with #{output.exitstatus}"
+      self.warning _("Could not check for updates, '%{cmd} check-update' exited with %{status}") % { cmd: command(:cmd), status: output.exitstatus }
     end
     updates
   end
@@ -107,7 +107,15 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   end
 
   def self.update_to_hash(pkgname, pkgversion)
-    name, arch = pkgname.split('.')
+    
+    # The pkgname string has two parts: name, and architecture. Architecture
+    # is the portion of the string following the last "." character. All
+    # characters preceding the final dot are the package name. Parse out
+    # these two pieces of component data.
+    name, _, arch = pkgname.rpartition('.')
+    if name.empty?
+      raise _("Failed to parse package name and architecture from '%{pkgname}'") % { pkgname: pkgname }
+    end
 
     match = pkgversion.match(/^(?:(\d+):)?(\S+)-(\S+)$/)
     epoch = match[1] || '0'
@@ -167,17 +175,32 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
         operation = :install
       end
       should = nil
-    when true, false, Symbol
+    when true, :present, :installed
+      # if we have been given a source and we were not asked for a specific
+      # version feed it to yum directly
+      if @resource[:source]
+        wanted = @resource[:source]
+        self.debug "Installing directly from #{wanted}"
+      end
+      should = nil
+    when false,:absent
       # pass
       should = nil
     else
-      # Add the package version
-      wanted += "-#{should}"
-      if wanted.scan(ARCH_REGEX)
-        self.debug "Detected Arch argument in package! - Moving arch to end of version string"
-        wanted.gsub!(/(.+)(#{ARCH_REGEX})(.+)/,'\1\3\2')
+      if @resource[:source]
+        # An explicit source was supplied, which means we're ensuring a specific
+        # version, and also supplying the path to a package that supplies that
+        # version.
+        wanted = @resource[:source]
+        self.debug "Installing directly from #{wanted}"
+      else
+        # No explicit source was specified, so add the package version
+        wanted += "-#{should}"
+        if wanted.scan(ARCH_REGEX)
+          self.debug "Detected Arch argument in package! - Moving arch to end of version string"
+          wanted.gsub!(/(.+)(#{ARCH_REGEX})(.+)/,'\1\3\2')
+        end
       end
-
       current_package = self.query
       if current_package
         if rpm_compareEVR(rpm_parse_evr(should), rpm_parse_evr(current_package[:ensure])) < 0
@@ -197,18 +220,18 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     output = execute(command)
 
     if output =~ /^No package #{wanted} available\.$/
-      raise Puppet::Error, "Could not find package #{wanted}"
+      raise Puppet::Error, _("Could not find package %{wanted}") % { wanted: wanted }
     end
 
     # If a version was specified, query again to see if it is a matching version
     if should
       is = self.query
-      raise Puppet::Error, "Could not find package #{self.name}" unless is
+      raise Puppet::Error, _("Could not find package %{name}") % { name: self.name } unless is
 
       # FIXME: Should we raise an exception even if should == :latest
       # and yum updated us to a version other than @param_hash[:ensure] ?
       vercmp_result = rpm_compareEVR(rpm_parse_evr(should), rpm_parse_evr(is[:ensure]))
-      raise Puppet::Error, "Failed to update to version #{should}, got version #{is[:ensure]} instead" if vercmp_result != 0
+      raise Puppet::Error, _("Failed to update to version %{should}, got version %{version} instead") % { should: should, version: is[:ensure] } if vercmp_result != 0
     end
   end
 

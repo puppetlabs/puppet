@@ -2,14 +2,13 @@
 require 'spec_helper'
 require 'puppet'
 require 'puppet_spec/files'
-require 'semver'
 
 describe Puppet do
   include PuppetSpec::Files
 
   context "#version" do
     it "should be valid semver" do
-      expect(SemVer).to be_valid Puppet.version
+      expect(SemanticPuppet::Version).to be_valid Puppet.version
     end
   end
 
@@ -39,6 +38,39 @@ describe Puppet do
     expect($LOAD_PATH).to include two
   end
 
+  it 'should propagate --modulepath to base environment' do
+    Puppet::Node::Environment.expects(:create).with(
+      is_a(Symbol), ['/my/modules'], Puppet::Node::Environment::NO_MANIFEST)
+
+    Puppet.base_context({
+      :environmentpath => '/envs',
+      :basemodulepath => '/base/modules',
+      :modulepath => '/my/modules'
+    })
+  end
+
+  it 'empty modulepath does not override basemodulepath' do
+    Puppet::Node::Environment.expects(:create).with(
+      is_a(Symbol), ['/base/modules'], Puppet::Node::Environment::NO_MANIFEST)
+
+    Puppet.base_context({
+      :environmentpath => '/envs',
+      :basemodulepath => '/base/modules',
+      :modulepath => ''
+    })
+  end
+
+  it 'nil modulepath does not override basemodulepath' do
+    Puppet::Node::Environment.expects(:create).with(
+      is_a(Symbol), ['/base/modules'], Puppet::Node::Environment::NO_MANIFEST)
+
+    Puppet.base_context({
+      :environmentpath => '/envs',
+      :basemodulepath => '/base/modules',
+      :modulepath => nil
+    })
+  end
+
   context "Puppet::OLDEST_RECOMMENDED_RUBY_VERSION" do
     it "should have an oldest recommended ruby version constant" do
       expect(Puppet::OLDEST_RECOMMENDED_RUBY_VERSION).not_to be_nil
@@ -49,7 +81,7 @@ describe Puppet do
     end
 
     it "should match a semver version" do
-      expect(SemVer).to be_valid(Puppet::OLDEST_RECOMMENDED_RUBY_VERSION)
+      expect(SemanticPuppet::Version).to be_valid(Puppet::OLDEST_RECOMMENDED_RUBY_VERSION)
     end
   end
 

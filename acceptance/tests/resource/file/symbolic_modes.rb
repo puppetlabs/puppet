@@ -1,130 +1,131 @@
-test_name "file resource: symbolic modes"
-confine :except, :platform => /^eos-/ # See ARISTA-37
-confine :except, :platform => /^solaris-10/
-confine :except, :platform => /^windows/
-confine :to, {}, hosts.select { |host| ! host[:roles].include?('master') }
+test_name 'file resource: symbolic modes' do
+  confine :except, :platform => /^eos-/ # See ARISTA-37
+  confine :except, :platform => /^solaris-10/
+  confine :except, :platform => /^windows/
+  confine :to, {}, hosts.select {|host| !host[:roles].include?('master')}
+  tag 'audit:high',
+      'audit:acceptance'
 
-require 'puppet/acceptance/temp_file_utils'
-extend Puppet::Acceptance::TempFileUtils
+  require 'puppet/acceptance/temp_file_utils'
+  extend Puppet::Acceptance::TempFileUtils
 
-module FileModeAssertions
-  include Beaker::DSL::Assertions
+  class FileSymlink
+    attr_reader :mode, :path, :start_mode, :symbolic_mode
 
-  def assert_create(agent, manifest, path, expected_mode)
-    testcase.apply_manifest_on(agent, manifest) do
-      assert_match(/File\[#{Regexp.escape(path)}\]\/ensure: created/, testcase.stdout, "Failed to create #{path}")
+    def initialize(base_dir, file_type, symbolic_mode, mode, start_mode=nil)
+      @base_dir      = base_dir
+      @file_type     = file_type
+      @symbolic_mode = symbolic_mode
+      @mode          = mode
+      @start_mode    = start_mode
+
+      if @start_mode.nil?
+        @path= "#{@base_dir}/#{@file_type}_#{@symbolic_mode}_#{@mode.to_s(8)}"
+      else
+        @path= "#{@base_dir}/#{@file_type}_#{@symbolic_mode}_#{@start_mode.to_s(8)}_#{@mode.to_s(8)}"
+      end
     end
 
-    assert_mode(agent, path, expected_mode)
-  end
-
-  def assert_mode(agent, path, expected_mode)
-    permissions = testcase.stat(agent, path)
-    assert_equal(expected_mode, permissions[2], "current mode #{permissions[2].to_s(8)} doesn't match expected mode #{expected_mode.to_s(8)}")
-  end
-
-  def assert_mode_change(agent, manifest, path, symbolic_mode, start_mode, expected_mode)
-    testcase.apply_manifest_on(agent, manifest) do
-      assert_match(/mode changed '#{'%04o' % start_mode}'.* to '#{'%04o' % expected_mode}'/, testcase.stdout,
-                   "couldn't set mode to #{symbolic_mode}")
+    # does the mode of the file/directory change from start_mode to puppet apply
+    def mode_changes?
+      ! @start_mode.nil? && @start_mode != @mode
     end
 
-    assert_mode(agent, path, expected_mode)
-  end
-
-  def assert_no_mode_change(agent, manifest)
-    testcase.apply_manifest_on(agent, manifest) do
-      assert_no_match(/mode changed/, testcase.stdout, "reapplied the symbolic mode change")
+    def get_manifest
+      "file { #{@path.inspect}: ensure => '#{@file_type}', mode => '#{@symbolic_mode}' }"
     end
   end
-end
 
-class ActionModeTest
-  include FileModeAssertions
+  class BaseTest
+    include Beaker::DSL::Assertions
 
-  attr_reader :testcase
-
-  def initialize(testcase, agent, basedir, symbolic_mode)
-    @testcase = testcase
-    @agent = agent
-    @basedir = basedir
-    @symbolic_mode = symbolic_mode
-
-    @file = "#{basedir}/file"
-    @dir =  "#{basedir}/dir"
-
-    testcase.on(agent, "rm -rf #{@file} #{@dir}")
-  end
-
-  def get_manifest(path, type, symbolic_mode)
-    "file { #{path.inspect}: ensure => #{type}, mode => '#{symbolic_mode}' }"
-  end
-end
-
-class CreatesModeTest < ActionModeTest
-  def initialize(testcase, agent, basedir, symbolic_mode)
-    super(testcase, agent, basedir, symbolic_mode)
-  end
-
-  def assert_file_mode(expected_mode)
-    manifest = get_manifest(@file, 'file', @symbolic_mode)
-    assert_create(@agent, manifest, @file, expected_mode)
-    assert_no_mode_change(@agent, manifest)
-  end
-
-  def assert_dir_mode(expected_mode)
-    manifest = get_manifest(@dir, 'directory', @symbolic_mode)
-    assert_create(@agent, manifest, @dir, expected_mode)
-    assert_no_mode_change(@agent, manifest)
-  end
-end
-
-class ModifiesModeTest < ActionModeTest
-  def initialize(testcase, agent, basedir, symbolic_mode, start_mode)
-    super(testcase, agent, basedir, symbolic_mode)
-
-    @start_mode = start_mode
-
-    testcase.on(agent, "touch #{@file} && chown symuser:symgroup #{@file} && chmod #{start_mode.to_s(8)} #{@file}")
-    testcase.on(agent, "mkdir -p #{@dir} && chown symuser:symgroup #{@dir} && chmod #{start_mode.to_s(8)} #{@dir}")
-  end
-
-  def assert_file_mode(expected_mode)
-    manifest = get_manifest(@file, 'file', @symbolic_mode)
-    if @start_mode != expected_mode
-      assert_mode_change(@agent, manifest, @file, @symbolic_mode, @start_mode, expected_mode)
+    def initialize(testcase, agent, base_dir)
+      @testcase       = testcase
+      @agent          = agent
+      @base_dir       = base_dir
+      @file_list      = []
+      @directory_list = []
     end
-    assert_no_mode_change(@agent, manifest)
-  end
 
-  def assert_dir_mode(expected_mode)
-    manifest = get_manifest(@dir, 'directory', @symbolic_mode)
-    if @start_mode != expected_mode
-      assert_mode_change(@agent, manifest, @dir, @symbolic_mode, @start_mode, expected_mode)
+    def assert_mode(agent, path, expected_mode)
+      permissions = @testcase.stat(agent, path)
+      assert_equal(expected_mode, permissions[2], "'#{path}' current mode #{permissions[2].to_s(8)} doesn't match expected mode #{expected_mode.to_s(8)}")
     end
-    assert_no_mode_change(@agent, manifest)
-  end
-end
 
-class ModeTest
-  def initialize(testcase, agent, basedir)
-    @testcase = testcase
-    @agent = agent
-    @basedir = basedir
+    def manifest
+      manifest_array = (@file_list + @directory_list).map {|x| x.get_manifest}
+      @testcase.step(manifest_array)
+      manifest_array.join("\n")
+    end
+
+    def puppet_reapply
+      @testcase.apply_manifest_on(@agent, manifest) do |apply_result|
+        assert_no_match(/mode changed/, apply_result.stdout, "reapplied the symbolic mode change")
+        (@file_list + @directory_list).each do |file|
+          assert_no_match(/#{Regexp.escape(file.path)}/, apply_result.stdout, "Expected to not see '#{file.path}' in 'puppet apply' output")
+        end
+      end
+    end
   end
 
-  def assert_creates(symbolic_mode, file_mode, dir_mode)
-    creates = CreatesModeTest.new(@testcase, @agent, @basedir, symbolic_mode)
-    creates.assert_file_mode(file_mode)
-    creates.assert_dir_mode(dir_mode)
+  class CreateTest < BaseTest
+
+    def symlink_file(symbolic_mode, mode)
+      @file_list << FileSymlink.new(@base_dir, 'file', symbolic_mode, mode)
+    end
+
+    def symlink_directory(symbolic_mode, mode)
+      @directory_list << FileSymlink.new(@base_dir, 'directory', symbolic_mode, mode)
+    end
+
+    def puppet_apply
+      apply_result = @testcase.apply_manifest_on(@agent, manifest).stdout
+      (@file_list + @directory_list).each do |file|
+        assert_match(/File\[#{Regexp.escape(file.path)}\]\/ensure: created/, apply_result, "Failed to create #{file.path}")
+        assert_mode(@agent, file.path, file.mode)
+      end
+    end
   end
 
-  def assert_modifies(symbolic_mode, start_mode, file_mode, dir_mode)
-    modifies = ModifiesModeTest.new(@testcase, @agent, @basedir, symbolic_mode, start_mode)
-    modifies.assert_file_mode(file_mode)
-    modifies.assert_dir_mode(dir_mode)
+  class ModifyTest < BaseTest
+
+    def symlink_file(symbolic_mode, start_mode, mode)
+      @file_list << FileSymlink.new(@base_dir, 'file', symbolic_mode, mode, start_mode)
+    end
+
+    def symlink_directory(symbolic_mode, start_mode, mode)
+      @directory_list << FileSymlink.new(@base_dir, 'directory', symbolic_mode, mode, start_mode)
+    end
+
+    def create_starting_state
+      files       = @file_list.collect {|x| "'#{x.path}'" }
+      directories = @directory_list.collect {|x| "'#{x.path}'" }
+
+      @testcase.on(@agent, "touch #{files.join(' ')}")
+      @testcase.on(@agent, "mkdir -p #{directories.join(' ')}")
+      @testcase.on(@agent, "chown symuser:symgroup #{files.join(' ')} #{directories.join(' ')}")
+      cmd_list = []
+      (@file_list + @directory_list).each do |file|
+        cmd_list << "chmod #{file.start_mode.to_s(8)} '#{file.path}'"
+      end
+      @testcase.on(@agent, cmd_list.join(' && '))
+    end
+
+    def puppet_apply
+      @testcase.step(manifest)
+      apply_result = @testcase.apply_manifest_on(@agent, manifest).stdout
+      @testcase.step(apply_result)
+      (@file_list + @directory_list).each do |file|
+        if file.mode_changes?
+          assert_match(/File\[#{Regexp.escape(file.path)}.* mode changed '#{'%04o' % file.start_mode}'.* to '#{'%04o' % file.mode}'/,
+                       apply_result, "couldn't set mode to #{file.symbolic_mode}")
+        else
+          assert_no_match(/#{Regexp.escape(file.path)}.*mode changed/, apply_result, "reapplied the symbolic mode change for file #{file.path}")
+        end
+        assert_mode(@agent, file.path, file.mode)
+      end
+    end
   end
-end
 
 # For your reference:
 # 4000    the set-user-ID-on-execution bit
@@ -178,89 +179,151 @@ end
 # l mandatory file and record locking refers to a file's ability to have its reading or writing
 #     permissions locked while a program is accessing that file.
 #
-agents.each do |agent|
-  is_solaris = agent['platform'].include?('solaris')
+  agents.each do |agent|
+    is_solaris = agent['platform'].include?('solaris')
 
-  on(agent, puppet("resource user symuser ensure=present"))
-  on(agent, puppet("resource group symgroup ensure=present"))
+    on(agent, puppet('resource user symuser ensure=present'))
+    on(agent, puppet('resource group symgroup ensure=present'))
+    base_dir_create = agent.tmpdir('symbolic-modes-create_test')
+    base_dir_modify = agent.tmpdir('symbolic-modes-modify_test')
 
-  teardown do
-    on(agent, puppet("resource user symuser ensure=absent"))
-    on(agent, puppet("resource group symgroup ensure=absent"))
+    teardown do
+      on(agent, puppet('resource user symuser ensure=absent'))
+      on(agent, puppet('resource group symgroup ensure=absent'))
+      on(agent, "rm -rf '#{base_dir_create}' '#{base_dir_modify}'")
+    end
+
+    create_test = CreateTest.new(self, agent, base_dir_create)
+    create_test.symlink_file('u=r', 00444)
+    create_test.symlink_file('u=w', 00244)
+    create_test.symlink_file('u=x', 00144)
+    create_test.symlink_file('u=rw', 00644)
+    create_test.symlink_file('u=rwx', 00744)
+    create_test.symlink_file('u=rwxt', 01744)
+    create_test.symlink_file('u=rwxs', 04744)
+    create_test.symlink_file('u=rwxts', 05744)
+
+    create_test.symlink_file('ug=r', 00444)
+    create_test.symlink_file('ug=rw', 00664)
+    create_test.symlink_file('ug=rwx', 00774)
+    create_test.symlink_file('ug=rwxt', 01774)
+    create_test.symlink_file('ug=rwxs', 06774)
+    create_test.symlink_file('ug=rwxts', 07774)
+
+    create_test.symlink_file('ugo=r', 00444)
+    create_test.symlink_file('ugo=rw', 00666)
+    create_test.symlink_file('ugo=rwx', 00777)
+    create_test.symlink_file('ugo=rwxt', 01777)
+    #create_test.symlink_file('ugo=rwxs', 06777)  ## BUG, puppet creates 07777
+    create_test.symlink_file('ugo=rwxts', 07777)
+
+    create_test.symlink_file('u=rwx,go=rx', 00755)
+    create_test.symlink_file('u=rwx,g=rx,o=r', 00754)
+    create_test.symlink_file('u=rwx,g=rx,o=', 00750)
+    create_test.symlink_file('a=rwx', 00777)
+
+    create_test.symlink_file('u+r', 00644)
+    create_test.symlink_file('u+w', 00644)
+    create_test.symlink_file('u+x', 00744)
+    create_test.symlink_directory('u=r', 00455)
+    create_test.symlink_directory('u=w', 00255)
+    create_test.symlink_directory('u=x', 00155)
+    create_test.symlink_directory('u=rw', 00655)
+    create_test.symlink_directory('u=rwx', 00755)
+    create_test.symlink_directory('u=rwxt', 01755)
+    create_test.symlink_directory('u=rwxs', 04755)
+    create_test.symlink_directory('u=rwxts', 05755)
+
+    create_test.symlink_directory('ug=r', 00445)
+    create_test.symlink_directory('ug=rw', 00665)
+    create_test.symlink_directory('ug=rwx', 00775)
+    create_test.symlink_directory('ug=rwxt', 01775)
+    create_test.symlink_directory('ug=rwxs', 06775)
+    create_test.symlink_directory('ug=rwxts', 07775)
+
+    create_test.symlink_directory('ugo=r', 00444)
+    create_test.symlink_directory('ugo=rw', 00666)
+    create_test.symlink_directory('ugo=rwx', 00777)
+    create_test.symlink_directory('ugo=rwxt', 01777)
+    #create_test.symlink_directory('ugo=rwxs', 06777)  ## BUG, puppet creates 07777
+    create_test.symlink_directory('ugo=rwxts', 07777)
+
+    create_test.symlink_directory('u=rwx,go=rx', 00755)
+    create_test.symlink_directory('u=rwx,g=rx,o=r', 00754)
+    create_test.symlink_directory('u=rwx,g=rx,o=', 00750)
+    create_test.symlink_directory('a=rwx', 00777)
+
+    create_test.symlink_directory('u+r', 00755)
+    create_test.symlink_directory('u+w', 00755)
+    create_test.symlink_directory('u+x', 00755)
+    create_test.puppet_apply()
+    create_test.puppet_reapply()
+
+    modify_test = ModifyTest.new(self, agent, base_dir_modify)
+    modify_test.symlink_file('u+r', 00200, 00600)
+    modify_test.symlink_file('u+r', 00600, 00600)
+    modify_test.symlink_file('u+w', 00500, 00700)
+    modify_test.symlink_file('u+w', 00400, 00600)
+    modify_test.symlink_file('u+x', 00700, 00700)
+    modify_test.symlink_file('u+x', 00600, 00700)
+    modify_test.symlink_file('u+X', 00100, 00100)
+    modify_test.symlink_file('u+X', 00200, 00200)
+    modify_test.symlink_file('u+X', 00410, 00510)
+    modify_test.symlink_file('a+X', 00600, 00600)
+    modify_test.symlink_file('a+X', 00700, 00711)
+
+    modify_test.symlink_file('u+s', 00744, 04744)
+    modify_test.symlink_file('g+s', 00744, 02744)
+    modify_test.symlink_file('u+t', 00744, 01744)
+
+    modify_test.symlink_file('u-r', 00200, 00200)
+    modify_test.symlink_file('u-r', 00600, 00200)
+    modify_test.symlink_file('u-w', 00500, 00500)
+    modify_test.symlink_file('u-w', 00600, 00400)
+    modify_test.symlink_file('u-x', 00700, 00600)
+    modify_test.symlink_file('u-x', 00600, 00600)
+
+    modify_test.symlink_file('u-s', 04744, 00744)
+    modify_test.symlink_file('g-s', 02744, 00744)
+    modify_test.symlink_file('u-t', 01744, 00744)
+
+    modify_test.symlink_directory('u+r', 00200, 00600)
+    modify_test.symlink_directory('u+r', 00600, 00600)
+    modify_test.symlink_directory('u+w', 00500, 00700)
+    modify_test.symlink_directory('u+w', 00400, 00600)
+    modify_test.symlink_directory('u+x', 00700, 00700)
+    modify_test.symlink_directory('u+x', 00600, 00700)
+    modify_test.symlink_directory('u+X', 00100, 00100)
+    modify_test.symlink_directory('u+X', 00200, 00300)
+    modify_test.symlink_directory('u+X', 00410, 00510)
+    modify_test.symlink_directory('a+X', 00600, 00711)
+    modify_test.symlink_directory('a+X', 00700, 00711)
+
+    modify_test.symlink_directory('u+s', 00744, 04744)
+    modify_test.symlink_directory('g+s', 00744, 02744)
+    modify_test.symlink_directory('u+t', 00744, 01744)
+
+    modify_test.symlink_directory('u-r', 00200, 00200)
+    modify_test.symlink_directory('u-r', 00600, 00200)
+    modify_test.symlink_directory('u-w', 00500, 00500)
+    modify_test.symlink_directory('u-w', 00600, 00400)
+    modify_test.symlink_directory('u-x', 00700, 00600)
+    modify_test.symlink_directory('u-x', 00600, 00600)
+
+    modify_test.symlink_directory('u-s', 04744, 00744)
+    # using chmod 2744 on a directory to set the start_mode fails on Solaris
+    modify_test.symlink_directory('g-s', 02744, 00744) unless is_solaris
+    modify_test.symlink_directory('u-t', 01744, 00744)
+    modify_test.create_starting_state
+    modify_test.puppet_apply
+    modify_test.puppet_reapply
+
+    # these raise
+    # test.assert_raises('')
+    # test.assert_raises(' ')
+    # test.assert_raises('u=X')
+    # test.assert_raises('u-X')
+    # test.assert_raises('+l')
+    # test.assert_raises('-l')
   end
-
-  basedir = agent.tmpdir('symbolic-modes')
-  on(agent, "mkdir -p #{basedir}")
-
-  test = ModeTest.new(self, agent, basedir)
-  test.assert_creates('u=r',            00444, 00455)
-  test.assert_creates('u=w',            00244, 00255)
-  test.assert_creates('u=x',            00144, 00155)
-  test.assert_creates('u=rw',           00644, 00655)
-  test.assert_creates('u=rwx',          00744, 00755)
-  test.assert_creates('u=rwxt',         01744, 01755)
-  test.assert_creates('u=rwxs',         04744, 04755)
-  test.assert_creates('u=rwxts',        05744, 05755)
-
-  test.assert_creates('ug=r',           00444, 00445)
-  test.assert_creates('ug=rw',          00664, 00665)
-  test.assert_creates('ug=rwx',         00774, 00775)
-  test.assert_creates('ug=rwxt',        01774, 01775)
-  test.assert_creates('ug=rwxs',        06774, 06775)
-  test.assert_creates('ug=rwxts',       07774, 07775)
-
-  test.assert_creates('ugo=r',          00444, 00444)
-  test.assert_creates('ugo=rw',         00666, 00666)
-  test.assert_creates('ugo=rwx',        00777, 00777)
-  test.assert_creates('ugo=rwxt',       01777, 01777)
-  # # test.assert_creates('ugo=rwxs',       06777, 06777)  ## BUG, puppet creates 07777
-  test.assert_creates('ugo=rwxts',      07777, 07777)
-
-  test.assert_creates('u=rwx,go=rx',    00755, 00755)
-  test.assert_creates('u=rwx,g=rx,o=r', 00754, 00754)
-  test.assert_creates('u=rwx,g=rx,o=',  00750, 00750)
-  test.assert_creates('a=rwx',          00777, 00777)
-
-  test.assert_creates('u+r',            00644, 00755)
-  test.assert_creates('u+w',            00644, 00755)
-  test.assert_creates('u+x',            00744, 00755)
-
-  test.assert_modifies('u+r',           00200, 00600, 00600)
-  test.assert_modifies('u+r',           00600, 00600, 00600)
-  test.assert_modifies('u+w',           00500, 00700, 00700)
-  test.assert_modifies('u+w',           00400, 00600, 00600)
-  test.assert_modifies('u+x',           00700, 00700, 00700)
-  test.assert_modifies('u+x',           00600, 00700, 00700)
-  test.assert_modifies('u+X',           00100, 00100, 00100)
-  test.assert_modifies('u+X',           00200, 00200, 00300)
-  test.assert_modifies('u+X',           00410, 00510, 00510)
-  test.assert_modifies('a+X',           00600, 00600, 00711)
-  test.assert_modifies('a+X',           00700, 00711, 00711)
-
-  test.assert_modifies('u+s',           00744, 04744, 04744)
-  test.assert_modifies('g+s',           00744, 02744, 02744)
-  test.assert_modifies('u+t',           00744, 01744, 01744)
-
-  test.assert_modifies('u-r',           00200, 00200, 00200)
-  test.assert_modifies('u-r',           00600, 00200, 00200)
-  test.assert_modifies('u-w',           00500, 00500, 00500)
-  test.assert_modifies('u-w',           00600, 00400, 00400)
-  test.assert_modifies('u-x',           00700, 00600, 00600)
-  test.assert_modifies('u-x',           00600, 00600, 00600)
-
-  test.assert_modifies('u-s',           04744, 00744, 00744)
-  # using chmod 2744 on a directory to set the startmode fails on Solaris
-  test.assert_modifies('g-s',           02744, 00744, 00744) unless is_solaris
-  test.assert_modifies('u-t',           01744, 00744, 00744)
-
-  # these raise
-  # test.assert_raises('')
-  # test.assert_raises(' ')
-  # test.assert_raises('u=X')
-  # test.assert_raises('u-X')
-  # test.assert_raises('+l')
-  # test.assert_raises('-l')
-
-  step "clean up old test things"
-  on agent, "rm -rf #{basedir}"
 end

@@ -1,6 +1,6 @@
 Puppet::Face.define(:module, '1.0.0') do
   action(:build) do
-    summary "Build a module release package."
+    summary _("Build a module release package.")
     description <<-EOT
       Prepares a local module for release on the Puppet Forge by building a
       ready-to-upload archive file.
@@ -13,7 +13,7 @@ Puppet::Face.define(:module, '1.0.0') do
       `pkg` directory.
     EOT
 
-    returns "Pathname object representing the path to the release archive."
+    returns _("Pathname object representing the path to the release archive.")
 
     examples <<-EOT
       Build a module release:
@@ -30,12 +30,12 @@ Puppet::Face.define(:module, '1.0.0') do
       Module built: /Users/kelseyhightower/puppetlabs-apache/pkg/puppetlabs-apache-0.0.1.tar.gz
     EOT
 
-    arguments "[<path>]"
+    arguments _("[<path>]")
 
     when_invoked do |*args|
       options = args.pop
       if options.nil? or args.length > 1 then
-        raise ArgumentError, "puppet module build only accepts 0 or 1 arguments"
+        raise ArgumentError, _("puppet module build only accepts 0 or 1 arguments")
       end
 
       module_path = args.first
@@ -43,11 +43,11 @@ Puppet::Face.define(:module, '1.0.0') do
         pwd = Dir.pwd
         module_path = Puppet::ModuleTool.find_module_root(pwd)
         if module_path.nil?
-          raise "Unable to find metadata.json in module root #{pwd} or parent directories. See <https://docs.puppetlabs.com/puppet/latest/reference/modules_publishing.html> for required file format."
+          raise _("Unable to find metadata.json in module root %{pwd} or parent directories. See <https://docs.puppetlabs.com/puppet/latest/reference/modules_publishing.html> for required file format.") % { pwd: pwd }
         end
       else
         unless Puppet::ModuleTool.is_module_root?(module_path)
-          raise "Unable to find metadata.json in module root #{module_path} or parent directories. See <https://docs.puppetlabs.com/puppet/latest/reference/modules_publishing.html> for required file format."
+          raise _("Unable to find metadata.json in module root %{module_path} or parent directories. See <https://docs.puppetlabs.com/puppet/latest/reference/modules_publishing.html> for required file format.") % { module_path: module_path }
         end
       end
 
@@ -57,7 +57,7 @@ Puppet::Face.define(:module, '1.0.0') do
 
     when_rendering :console do |return_value|
       # Get the string representation of the Pathname object.
-      "Module built: " + return_value.expand_path.to_s
+      _("Module built: %{path}") % { path: return_value.expand_path.to_s }
     end
   end
 end

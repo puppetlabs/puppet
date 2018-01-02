@@ -67,7 +67,7 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
   # use pw to update password hash
   def password=(cryptopw)
     Puppet.debug "change password for user '#{@resource[:name]}' method called with hash '#{cryptopw}'"
-    stdin, stdout, stderr = Open3.popen3("pw user mod #{@resource[:name]} -H 0")
+    stdin, _, _ = Open3.popen3("pw user mod #{@resource[:name]} -H 0")
     stdin.puts(cryptopw)
     stdin.close
     Puppet.debug "finished password for user '#{@resource[:name]}' method called with hash '#{cryptopw}'"

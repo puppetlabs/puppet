@@ -30,8 +30,13 @@ describe TypeParser do
       /The expression <Array\[notAType\]> is not a valid type specification/)
   end
 
+  it "rejects an unknown type parameter in a variant" do
+    expect { parser.parse("Variant[Integer,'not a type']") }.to raise_error(Puppet::ParseError,
+      /The expression <Variant\[Integer,'not a type'\]> is not a valid type specification/)
+  end
+
   [
-    'Any', 'Data', 'CatalogEntry', 'Boolean', 'Scalar', 'Undef', 'Numeric', 'Default'
+    'Any', 'Data', 'CatalogEntry', 'Scalar', 'Undef', 'Numeric', 'Default'
   ].each do |name|
     it "does not support parameterizing unparameterized type <#{name}>" do
       expect { parser.parse("#{name}[Integer]") }.to raise_unparameterized_error_for(name)
@@ -54,12 +59,12 @@ describe TypeParser do
     expect(the_type_parsed_from(types.default)).to be_the_type(types.default)
   end
 
-  it "interprets an unparameterized Array as an Array of Data" do
-    expect(parser.parse("Array")).to be_the_type(types.array_of_data)
+  it "interprets an unparameterized Array as an Array of Any" do
+    expect(parser.parse("Array")).to be_the_type(types.array_of_any)
   end
 
-  it "interprets an unparameterized Hash as a Hash of Scalar to Data" do
-    expect(parser.parse("Hash")).to be_the_type(types.hash_of_data)
+  it "interprets an unparameterized Hash as a Hash of Any, Any" do
+    expect(parser.parse("Hash")).to be_the_type(types.hash_of_any)
   end
 
   it "interprets a parameterized Array[0, 0] as an empty hash with no key and value type" do
@@ -72,6 +77,18 @@ describe TypeParser do
 
   it "interprets a parameterized Hash[t] as a Hash of Scalar to t" do
     expect(parser.parse("Hash[Scalar, Integer]")).to be_the_type(types.hash_of(types.integer))
+  end
+
+  it 'interprets an Boolean with a true parameter to represent boolean true' do
+    expect(parser.parse('Boolean[true]')).to be_the_type(types.boolean(true))
+  end
+
+  it 'interprets an Boolean with a false parameter to represent boolean false' do
+    expect(parser.parse('Boolean[false]')).to be_the_type(types.boolean(false))
+  end
+
+  it 'does not accept non-boolean parameters' do
+    expect{parser.parse('Boolean["false"]')}.to raise_error(/Boolean parameter must be true or false/)
   end
 
   it 'interprets an Integer with one parameter to have unbounded upper range' do
@@ -223,11 +240,11 @@ describe TypeParser do
 
   context 'without a scope' do
     it "interprets anything that is not a built in type to be a type reference" do
-      expect(parser.parse('File')).to eq(types.type_reference('File'))
+      expect(parser.parse('TestType')).to eq(types.type_reference('TestType'))
     end
 
     it "interprets anything that is not a built in type with parameterers to be type reference with parameters" do
-      expect(parser.parse("File['/tmp/foo']")).to eq(types.type_reference("File['/tmp/foo']"))
+      expect(parser.parse("TestType['/tmp/foo']")).to eq(types.type_reference("TestType['/tmp/foo']"))
     end
   end
 
@@ -369,6 +386,26 @@ describe TypeParser do
     t = parser.parse('Nonesuch[{a=>undef,b=>true,c=>false,d=>default,e=>"string",f=>0,g=>1.0,h=>[1,2,3]}]')
     expect(t).to be_a(PTypeReferenceType)
     expect(t.type_string).to eql('Nonesuch[{a=>undef,b=>true,c=>false,d=>default,e=>"string",f=>0,g=>1.0,h=>[1,2,3]}]')
+  end
+
+  it 'parses a parameterized Enum using identifiers' do
+    t = parser.parse('Enum[a, b]')
+    expect(t).to be_a(PEnumType)
+    expect(t.to_s).to eql("Enum['a', 'b']")
+  end
+
+  it 'parses a parameterized Enum using strings' do
+    t = parser.parse("Enum['a', 'b']")
+    expect(t).to be_a(PEnumType)
+    expect(t.to_s).to eql("Enum['a', 'b']")
+  end
+
+  it 'rejects a parameterized Enum using type refs' do
+    expect { parser.parse('Enum[A, B]') }.to raise_error(/Enum parameters must be identifiers or strings/)
+  end
+
+  it 'rejects a parameterized Enum using integers' do
+    expect { parser.parse('Enum[1, 2]') }.to raise_error(/Enum parameters must be identifiers or strings/)
   end
 
   matcher :be_the_type do |type|

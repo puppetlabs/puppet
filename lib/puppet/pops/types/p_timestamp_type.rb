@@ -8,10 +8,10 @@ module Types
       )
     end
 
-    def self.new_function(_, loader)
-      @new_function ||= Puppet::Functions.create_loaded_function(:new_timestamp, loader) do
+    def self.new_function(type)
+      @new_function ||= Puppet::Functions.create_loaded_function(:new_timestamp, type.loader) do
         local_types do
-          type 'Formats = Variant[String[2],Array[String[2]], 1]'
+          type 'Formats = Variant[String[2],Array[String[2], 1]]'
         end
 
         dispatch :now do
@@ -61,6 +61,10 @@ module Types
 
     def impl_class
       Time::Timestamp
+    end
+
+    def instance?(o, guard = nil)
+      o.is_a?(Time::Timestamp) && o >= @from && o <= @to
     end
 
     DEFAULT = PTimestampType.new(nil, nil)

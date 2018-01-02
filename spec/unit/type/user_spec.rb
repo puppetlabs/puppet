@@ -86,7 +86,7 @@ describe Puppet::Type.type(:user) do
     end
   end
 
-  properties = [:ensure, :uid, :gid, :home, :comment, :shell, :password, :password_min_age, :password_max_age, :groups, :roles, :auths, :profiles, :project, :keys, :expiry]
+  properties = [:ensure, :uid, :gid, :home, :comment, :shell, :password, :password_min_age, :password_max_age, :password_warn_days, :groups, :roles, :auths, :profiles, :project, :keys, :expiry]
 
   properties.each do |property|
     it "should have a #{property} property" do
@@ -314,6 +314,16 @@ describe Puppet::Type.type(:user) do
     end
   end
 
+  describe "when managing warning password days" do
+    it "should accept a negative warning days" do
+      expect { described_class.new(:name => 'foo', :password_warn_days => '-1') }.to_not raise_error
+    end
+
+    it "should fail with an empty warning days" do
+      expect { described_class.new(:name => 'foo', :password_warn_days => '') }.to raise_error(Puppet::Error, /warning days must be provided as a number/)
+    end
+  end
+
   describe "when managing passwords" do
     before do
       @password = described_class.new(:name => 'foo', :password => 'mypass').parameter(:password)
@@ -369,8 +379,7 @@ describe Puppet::Type.type(:user) do
             is.force_encoding(Encoding::ASCII_8BIT)
             should.force_encoding(Encoding::UTF_8)
             expect(Encoding.compatible?(is, should)).to be_falsey
-            # append Regexp with 'n' to set encoding to ASCII_8BIT
-            expect(comment_property.change_to_s(is,should)).to match(/changed '\xE2\x98\x83' to '\xDB\xBF'/n)
+            expect(comment_property.change_to_s(is,should)).to match(/changed '\u{E2}\u{98}\u{83}' to '\u{DB}\u{BF}'/)
           end
         end
 
@@ -379,8 +388,7 @@ describe Puppet::Type.type(:user) do
             is.force_encoding(Encoding::UTF_8)
             should.force_encoding(Encoding::UTF_8)
             expect(Encoding.compatible?(is, should)).to be_truthy
-            # append Regexp with 'u' to set encoding to UTF_8
-            expect(comment_property.change_to_s(is,should)).to match(/changed '\u2603' to '\u06FF'/u)
+            expect(comment_property.change_to_s(is,should)).to match(/changed '\u{2603}' to '\u{6FF}'/u)
           end
         end
       end

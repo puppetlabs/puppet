@@ -124,7 +124,7 @@ class Puppet::Util::Log
       return
     end
 
-    name, type = @desttypes.find do |name, klass|
+    _, type = @desttypes.find do |name, klass|
       klass.match?(dest)
     end
 
@@ -163,12 +163,29 @@ class Puppet::Util::Log
     end
   end
 
+  private
+  # produces UTF-8 strings or dumps strings when they cannot be re-encoded
+  def Log.coerce_string(str)
+    return Puppet::Util::CharacterEncoding.convert_to_utf_8(str) if str.valid_encoding?
+
+    # We only select the last 10 callers in the stack to avoid being spammy
+    message = _("Received a Log attribute with invalid encoding:%{log_message}") %
+        { log_message: Puppet::Util::CharacterEncoding.convert_to_utf_8(str.dump)}
+    message += '\n' + _("Backtrace:\n%{backtrace}") % { backtrace: caller[0..10].join("\n") }
+    message
+  end
+
+  public
+
   # Route the actual message. FIXME There are lots of things this method
   # should do, like caching and a bit more.  It's worth noting that there's
   # a potential for a loop here, if the machine somehow gets the destination set as
   # itself.
   def Log.newmessage(msg)
     return if @levels.index(msg.level) < @loglevel
+
+    msg.message = coerce_string(msg.message)
+    msg.source = coerce_string(msg.source)
 
     queuemessage(msg) if @destinations.length == 0
 
@@ -209,7 +226,7 @@ class Puppet::Util::Log
 
   # Reopen all of our logs.
   def Log.reopen
-    Puppet.notice "Reopening log files"
+    Puppet.notice _("Reopening log files")
     types = @destinations.keys
     @destinations.each { |type, dest|
       dest.close if dest.respond_to?(:close)
@@ -315,7 +332,7 @@ class Puppet::Util::Log
 
   def to_data_hash
     {
-      'level' => @level,
+      'level' => @level.to_s,
       'message' => to_s,
       'source' => @source,
       'tags' => @tags.to_a,
@@ -338,10 +355,6 @@ class Puppet::Util::Log
       hash[name] = instance_variable_get(attr_name) if instance_variable_defined?(attr_name)
     end
     hash
-  end
-
-  def to_pson(*args)
-    to_data_hash.to_pson(*args)
   end
 
   def message=(msg)
@@ -382,19 +395,19 @@ class Puppet::Util::Log
     # Issue based messages do not have details in the message. It
     # must be appended here
     unless issue_code.nil?
-      msg = "Could not parse for environment #{environment}: #{msg}" unless environment.nil?
+      msg = _("Could not parse for environment %{env}: %{msg}") % { env: environment, msg: msg } unless environment.nil?
       if file && line && pos
-        msg = "#{msg} at #{file}:#{line}:#{pos}"
+        msg = _("%{msg} at %{file}:%{line}:%{pos}") % { msg: msg, file: file, line: line, pos: pos }
       elsif file and line
-        msg = "#{msg}  at #{file}:#{line}"
+        msg = _("%{msg}  at %{file}:%{line}") % { msg: msg, file: file, line: line }
       elsif line && pos
-        msg = "#{msg}  at line #{line}:#{pos}"
+        msg = _("%{msg}  at line %{line}:%{pos}") % { msg: msg, line: line, pos: pos }
       elsif line
-        msg = "#{msg}  at line #{line}"
+        msg = _("%{msg}  at line %{line}") % { msg: msg, line: line }
       elsif file
-        msg = "#{msg}  in #{file}"
+        msg = _("%{msg}  in %{file}") % { msg: msg, file: file }
       end
-      msg = "#{msg} on node #{node}" unless node.nil?
+      msg = _("%{msg} on node %{node}") % { msg: msg, node: node } unless node.nil?
       if @backtrace.is_a?(Array)
         msg += "\n"
         msg += @backtrace.join("\n")
@@ -405,7 +418,7 @@ class Puppet::Util::Log
 
 end
 
-# This is for backward compatibility from when we changed the constant to Puppet::Util::Log
-# because the reports include the constant name.  Apparently the alias was created in
-# March 2007, should could probably be removed soon.
+# This is for backward compatibility from when we changed the constant to
+# Puppet::Util::Log because the reports include the constant name. It was
+# considered for removal but left in due to risk of breakage (PUP-7502).
 Puppet::Log = Puppet::Util::Log

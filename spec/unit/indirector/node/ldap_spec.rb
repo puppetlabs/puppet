@@ -18,13 +18,15 @@ describe Puppet::Node::Ldap do
     let(:request) { Puppet::Indirector::Request.new(:node, :find, nodename, nil, :environment => environment) }
 
     it "should convert the hostname into a search filter" do
-      entry = stub 'entry', :dn => 'cn=mynode.domain.com,ou=hosts,dc=madstop,dc=com', :vals => %w{}, :to_hash => {}
+      node_indirection.stubs(:ldap_entry_to_hash).returns({})
+      entry = stub 'entry', :dn => 'cn=mynode.domain.com,ou=hosts,dc=madstop,dc=com', :vals => %w{}
       node_indirection.expects(:ldapsearch).with("(&(objectclass=puppetClient)(cn=#{nodename}))").yields entry
       node_indirection.name2hash(nodename)
     end
 
     it "should convert any found entry into a hash" do
-      entry = stub 'entry', :dn => 'cn=mynode.domain.com,ou=hosts,dc=madstop,dc=com', :vals => %w{}, :to_hash => {}
+      node_indirection.stubs(:ldap_entry_to_hash).returns({})
+      entry = stub 'entry', :dn => 'cn=mynode.domain.com,ou=hosts,dc=madstop,dc=com', :vals => %w{}
       node_indirection.expects(:ldapsearch).with("(&(objectclass=puppetClient)(cn=#{nodename}))").yields entry
       myhash = {"myhash" => true}
       node_indirection.expects(:entry2hash).with(entry).returns myhash
@@ -34,7 +36,8 @@ describe Puppet::Node::Ldap do
     # This heavily tests our entry2hash method, so we don't have to stub out the stupid entry information any more.
     describe "when an ldap entry is found" do
       before do
-        @entry = stub 'entry', :dn => 'cn=mynode,ou=hosts,dc=madstop,dc=com', :vals => %w{}, :to_hash => {}
+        @entry = stub 'entry', :dn => 'cn=mynode,ou=hosts,dc=madstop,dc=com', :vals => %w{}
+        node_indirection.stubs(:ldap_entry_to_hash).returns({})
         node_indirection.stubs(:ldapsearch).yields @entry
       end
 
@@ -56,7 +59,7 @@ describe Puppet::Node::Ldap do
       end
 
       it "should deduplicate class values" do
-        @entry.stubs(:to_hash).returns({})
+        node_indirection.stubs(:ldap_entry_to_hash).returns({})
         node_indirection.stubs(:class_attributes).returns(%w{one two})
         @entry.stubs(:vals).with("one").returns(%w{a b})
         @entry.stubs(:vals).with("two").returns(%w{b c})
@@ -64,7 +67,7 @@ describe Puppet::Node::Ldap do
       end
 
       it "should add the entry's environment to the hash" do
-        @entry.stubs(:to_hash).returns("environment" => %w{production})
+        node_indirection.stubs(:ldap_entry_to_hash).returns(:environment => %w{production})
         expect(node_indirection.entry2hash(@entry)[:environment]).to eq("production")
       end
 
@@ -77,37 +80,37 @@ describe Puppet::Node::Ldap do
 
       it "should not add the stacked parameter as a normal parameter" do
         @entry.stubs(:vals).with("puppetvar").returns(%w{one=two three=four})
-        @entry.stubs(:to_hash).returns("puppetvar" => %w{one=two three=four})
+        node_indirection.stubs(:ldap_entry_to_hash).returns("puppetvar" => %w{one=two three=four})
         expect(node_indirection.entry2hash(@entry)[:parameters]["puppetvar"]).to be_nil
       end
 
       it "should add all other attributes as parameters in the hash" do
-        @entry.stubs(:to_hash).returns("foo" => %w{one two})
+        node_indirection.stubs(:ldap_entry_to_hash).returns("foo" => %w{one two})
         expect(node_indirection.entry2hash(@entry)[:parameters]["foo"]).to eq(%w{one two})
       end
 
       it "should return single-value parameters as strings, not arrays" do
-        @entry.stubs(:to_hash).returns("foo" => %w{one})
+        node_indirection.stubs(:ldap_entry_to_hash).returns("foo" => %w{one})
         expect(node_indirection.entry2hash(@entry)[:parameters]["foo"]).to eq("one")
       end
 
       it "should convert 'true' values to the boolean 'true'" do
-        @entry.stubs(:to_hash).returns({"one" => ["true"]})
+        node_indirection.stubs(:ldap_entry_to_hash).returns({"one" => ["true"]})
         expect(node_indirection.entry2hash(@entry)[:parameters]["one"]).to eq(true)
       end
 
       it "should convert 'false' values to the boolean 'false'" do
-        @entry.stubs(:to_hash).returns({"one" => ["false"]})
+        node_indirection.stubs(:ldap_entry_to_hash).returns({"one" => ["false"]})
         expect(node_indirection.entry2hash(@entry)[:parameters]["one"]).to eq(false)
       end
 
       it "should convert 'true' values to the boolean 'true' inside an array" do
-        @entry.stubs(:to_hash).returns({"one" => ["true", "other"]})
+        node_indirection.stubs(:ldap_entry_to_hash).returns({"one" => ["true", "other"]})
         expect(node_indirection.entry2hash(@entry)[:parameters]["one"]).to eq([true, "other"])
       end
 
       it "should convert 'false' values to the boolean 'false' inside an array" do
-        @entry.stubs(:to_hash).returns({"one" => ["false", "other"]})
+        node_indirection.stubs(:ldap_entry_to_hash).returns({"one" => ["false", "other"]})
         expect(node_indirection.entry2hash(@entry)[:parameters]["one"]).to eq([false, "other"])
       end
 
@@ -191,15 +194,36 @@ describe Puppet::Node::Ldap do
         expect(node_indirection.find(request).parameters).to include({"one" => false})
       end
 
-      it "should merge the node's facts after the parameters from ldap are assigned" do
-        # Make sure we've got data to start with, so the parameters are actually set.
-        params = {"one" => "yay", "two" => "hooray"}
-        @result[:parameters] = params
+      context("when merging facts") do
+        let(:request_facts) { Puppet::Node::Facts.new('test', 'foo' => 'bar') }
+        let(:indirection_facts) { Puppet::Node::Facts.new('test', 'baz' => 'qux') }
 
-        # Node implements its own merge so that an existing param takes
-        # precedence over facts. We get the same result here by merging params
-        # into facts
-        expect(node_indirection.find(request).parameters).to eq(facts.values.merge(params))
+        it "should merge facts from the request if supplied" do
+          request.options[:facts] = request_facts
+          Puppet::Node::Facts.stubs(:find) { indirection_facts }
+
+          expect(node_indirection.find(request).parameters).to include(request_facts.values)
+          expect(node_indirection.find(request).facts).to eq(request_facts)
+        end
+
+        it "should find facts if none are supplied" do
+          Puppet::Node::Facts.indirection.stubs(:find).with(nodename, :environment => environment).returns(indirection_facts)
+          request.options.delete(:facts)
+
+          expect(node_indirection.find(request).parameters).to include(indirection_facts.values)
+          expect(node_indirection.find(request).facts).to eq(indirection_facts)
+        end
+
+        it "should merge the node's facts after the parameters from ldap are assigned" do
+          # Make sure we've got data to start with, so the parameters are actually set.
+          params = {"one" => "yay", "two" => "hooray"}
+          @result[:parameters] = params
+
+          # Node implements its own merge so that an existing param takes
+          # precedence over facts. We get the same result here by merging params
+          # into facts
+          expect(node_indirection.find(request).parameters).to eq(facts.values.merge(params))
+        end
       end
 
       describe "and a parent node is specified" do

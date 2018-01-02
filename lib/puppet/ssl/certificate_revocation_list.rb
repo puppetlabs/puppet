@@ -1,5 +1,6 @@
 require 'puppet/ssl/base'
 require 'puppet/indirector'
+require 'puppet/ssl/certificate_signer'
 
 # Manage the CRL.
 class Puppet::SSL::CertificateRevocationList < Puppet::SSL::Base
@@ -26,7 +27,7 @@ DOC
 
   # Knows how to create a CRL with our system defaults.
   def generate(cert, cakey)
-    Puppet.info "Creating a new certificate revocation list"
+    Puppet.info _("Creating a new certificate revocation list")
 
     create_crl_issued_by(cert)
     start_at_initial_crl_number
@@ -46,7 +47,7 @@ DOC
   # CA, then write the CRL back to disk. The REASON must be one of the
   # OpenSSL::OCSP::REVOKED_* reasons
   def revoke(serial, cakey, reason = OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE)
-    Puppet.notice "Revoked certificate with serial #{serial}"
+    Puppet.notice _("Revoked certificate with serial %{serial}") % { serial: serial }
     time = Time.now
 
     add_certificate_revocation_for(serial, reason, time)
@@ -105,6 +106,6 @@ private
   end
 
   def sign_with(cakey)
-    @content.sign(cakey, OpenSSL::Digest::SHA1.new)
+    Puppet::SSL::CertificateSigner.new.sign(@content, cakey)
   end
 end

@@ -9,6 +9,15 @@ describe "Application instantiation" do
   let(:env) { Puppet::Node::Environment.create(:testing, []) }
   let(:node) { Puppet::Node.new('test', :environment => env) }
   let(:loaders) { Puppet::Pops::Loaders.new(env) }
+  let(:logs) { [] }
+  let(:notices) { logs.select { |log| log.level == :notice }.map { |log| log.message } }
+  let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
+
+  def compile_collect_log(string)
+    Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+      compile_to_catalog(string, Puppet::Node.new('other', :environment => env))
+    end
+  end
 
   def compile_to_env_catalog(string, code_id=nil)
     Puppet[:code] = string
@@ -16,7 +25,6 @@ describe "Application instantiation" do
   end
 
   around :each do |example|
-    Puppet[:app_management] = true
     Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
     Puppet::Parser::EnvironmentCompiler.any_instance.stubs(:loaders).returns(loaders)
     Puppet.override(:loaders => loaders, :current_environment => env) do
@@ -27,7 +35,6 @@ describe "Application instantiation" do
       example.run
       Puppet::Type.rmtype(:cap)
     end
-    Puppet[:app_management] = false
   end
 
   MANIFEST = <<-EOS
@@ -683,6 +690,33 @@ EOS
         }
       EOS
       }.to raise_error(Puppet::Error, /maps component P\[one\] to multiple nodes/)
+    end
+  end
+
+  describe "site containing a resource named 'plan'" do
+    it 'finds an application named plan' do
+      expect {compile_collect_log(<<-PUPPET)}.not_to raise_error
+        define plan::node_file() {
+          file { "/tmp/plans/${name}.txt":
+            content => "this is ${name}.txt",
+          }
+        }
+        Plan::Node_file produces Node_file {}
+        application plan() {
+          plan::node_file { "node_file_${name}":
+            export => Node_file["node_file_${name}"]
+          }
+        }
+        site {
+          plan { "test":
+            nodes       => {
+              Node["test.example.com"] => Plan::Node_file["node_file_plan_test"],
+            }
+          }
+        }
+        PUPPET
+
+      expect(warnings).to include(/Use of future reserved word: 'plan'/)
     end
   end
 end

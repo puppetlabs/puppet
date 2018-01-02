@@ -18,7 +18,7 @@ class ModelLabelProvider
     @@label_visitor.visit_this_0(self, o)
   end
 
-  def label_Factory o                     ; label(o.current)                    end
+  def label_Factory o                     ; label(o.model)                      end
   def label_Array o                       ; "Array"                             end
   def label_LiteralInteger o              ; "Literal Integer"                   end
   def label_LiteralFloat o                ; "Literal Float"                     end
@@ -60,6 +60,7 @@ class ModelLabelProvider
   def label_HeredocExpression o           ; "'@(#{o.syntax})' expression"       end
   def label_HostClassDefinition o         ; "Host Class Definition"             end
   def label_FunctionDefinition o          ; "Function Definition"               end
+  def label_PlanDefinition o              ; "Plan Definition"                   end
   def label_NodeDefinition o              ; "Node Definition"                   end
   def label_SiteDefinition o              ; "Site Definition"                   end
   def label_ResourceTypeDefinition o      ; "'define' expression"               end
@@ -122,7 +123,8 @@ class ModelLabelProvider
       simple_name = o.name.split('::').last
       simple_name[1..-5] + "-Type"
     else
-      o.name
+      n = o.name
+      n.nil? ? 'Anonymous Class' : n
     end
   end
 end

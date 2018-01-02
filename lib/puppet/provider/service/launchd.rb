@@ -4,10 +4,9 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     This provider manages jobs with `launchd`, which is the default service
     framework for Mac OS X (and may be available for use on other platforms).
 
-    For `launchd` documentation, see:
+    For more information, see the `launchd` man page:
 
-    * <https://developer.apple.com/macosx/launchd.html>
-    * <http://launchd.macosforge.org/>
+    * <https://developer.apple.com/legacy/library/documentation/Darwin/Reference/ManPages/man8/launchd.8.html>
 
     This provider reads plists out of the following directories:
 
@@ -141,7 +140,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
         if job.has_key?("Label")
           @label_to_path_map[job["Label"]] = filepath
         else
-          Puppet.warning("The #{filepath} plist does not contain a 'label' key; " +
+          Puppet.debug("The #{filepath} plist does not contain a 'label' key; " +
                        "Puppet is skipping it")
           next
         end
@@ -239,7 +238,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # directly.
   def start
     return ucommand(:start) if resource[:start]
-    job_path, job_plist = plist_from_label(resource[:name])
+    job_path, _ = plist_from_label(resource[:name])
     did_enable_job = false
     cmds = []
     cmds << :launchctl << :load
@@ -262,7 +261,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
   def stop
     return ucommand(:stop) if resource[:stop]
-    job_path, job_plist = plist_from_label(resource[:name])
+    job_path, _ = plist_from_label(resource[:name])
     did_disable_job = false
     cmds = []
     cmds << :launchctl << :unload
@@ -298,7 +297,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     job_plist_disabled = nil
     overrides_disabled = nil
 
-    job_path, job_plist = plist_from_label(resource[:name])
+    _, job_plist = plist_from_label(resource[:name])
     job_plist_disabled = job_plist["Disabled"] if job_plist.has_key?("Disabled")
 
     if FileTest.file?(self.class.launchd_overrides) and overrides = self.class.read_plist(self.class.launchd_overrides)

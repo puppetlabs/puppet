@@ -1,5 +1,8 @@
 test_name "puppet module list (with missing dependencies)"
 
+tag 'audit:low',
+    'audit:unit'
+
 teardown do
   on master, "rm -rf #{master['distmoduledir']}/thelock"
   on master, "rm -rf #{master['distmoduledir']}/appleseed"

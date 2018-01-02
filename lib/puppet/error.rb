@@ -3,7 +3,7 @@ module Puppet
   class Error < RuntimeError
     attr_accessor :original
     def initialize(message, original=nil)
-      super(message)
+      super(Puppet::Util::CharacterEncoding.scrub(message))
       @original = original
     end
   end
@@ -77,6 +77,23 @@ module Puppet
       msg = "Could not parse for environment #{environment}: #{msg}" if environment
       msg = "#{msg} on node #{node}" if node
       msg
+    end
+
+    def self.from_issue_and_stack(issue, args = {})
+      stacktrace = Puppet::Pops::PuppetStack.stacktrace()
+      if stacktrace.size > 0
+        filename, line = stacktrace[0]
+      else
+        filename = nil
+        line = nil
+      end
+      self.new(
+            issue.format(args),
+            filename,
+            line,
+            nil,
+            nil,
+            issue.issue_code)
     end
   end
 

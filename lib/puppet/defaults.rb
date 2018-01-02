@@ -15,26 +15,6 @@ module Puppet
 
   AS_DURATION = %q{This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y).}
 
-  # This is defined first so that the facter implementation is replaced before other setting defaults are evaluated.
-  define_settings(:main,
-    :cfacter => {
-        :default => false,
-        :type    => :boolean,
-        :desc    => 'Whether to enable a pre-Facter 3.0 release of native Facter (distributed as
-          the "cfacter" package). This is not necessary if Facter 3.0 or later is installed.
-          This setting is deprecated, as Facter 3 is now the default in puppet-agent.',
-        :hook    => proc do |value|
-          return unless value
-          raise ArgumentError, 'facter has already evaluated facts.' if Facter.instance_variable_get(:@collection)
-          raise ArgumentError, 'cfacter version 0.2.0 or later is not installed.' unless Puppet.features.cfacter?
-          CFacter.initialize
-
-          # Setup Facter's logging again now that native facter is initialized
-          Puppet::Util::Logging.setup_facter_logging!
-        end
-    }
-  )
-
   define_settings(:main,
     :confdir  => {
         :default  => nil,
@@ -146,6 +126,19 @@ module Puppet
         munge(value)
         value.to_sym
       end
+    },
+    :disable_i18n => {
+      :default => false,
+      :type    => :boolean,
+      :desc    => "If true, turns off all translations of Puppet and module
+        log messages, which affects error, warning, and info log messages,
+        as well as any translations in the report and CLI.",
+      :hook    => proc do |value|
+        if value
+          require 'puppet/gettext/stubs'
+          Puppet::GettextConfig.disable_gettext
+        end
+      end
     }
   )
 
@@ -173,10 +166,19 @@ module Puppet
         :type     => :boolean,
         :desc     => "Whether to enable experimental performance profiling",
     },
+    :future_features => {
+      :default => false,
+      :type => :boolean,
+      :desc => "Whether or not to enable all features currently being developed for future
+        major releases of Puppet. Should be used with caution, as in development
+        features are experimental and can have unexpected effects."
+    },
     :static_catalogs => {
       :default    => true,
       :type       => :boolean,
-      :desc       => "Whether to compile a static catalog."
+      :desc       => "Whether to compile a [static catalog](https://docs.puppet.com/puppet/latest/static_catalogs.html#enabling-or-disabling-static-catalogs),
+        which occurs only on a Puppet Server master when the `code-id-command` and
+        `code-content-command` settings are configured in its `puppetserver.conf` file.",
     },
     :strict_environment_mode => {
       :default    => false,
@@ -328,31 +330,6 @@ module Puppet
         <https://docs.puppet.com/puppet/latest/reference/environments.html>",
       :type    => :path,
     },
-    :always_cache_features => {
-      :type     => :boolean,
-      :default  => false,
-      :hook     => proc { |value|
-        Puppet.deprecation_warning "Setting 'always_cache_features' is
-deprecated and has been replaced by 'always_retry_plugins'."
-      },
-      :desc     => <<-'EOT'
-        This setting is deprecated and has been replaced by always_retry_plugins.
-
-        Affects how we cache attempts to load Puppet 'features'.  If false, then
-        calls to `Puppet.features.<feature>?` will always attempt to load the
-        feature (which can be an expensive operation) unless it has already been
-        loaded successfully.  This makes it possible for a single agent run to,
-        e.g., install a package that provides the underlying capabilities for
-        a feature, and then later load that feature during the same run (even if
-        the feature had been tested earlier and had not been available).
-
-        If this setting is set to true, then features will only be checked once,
-        and if they are not available, the negative result is cached and returned
-        for all subsequent attempts to load the feature.  This behavior is almost
-        always appropriate for the server, and can result in a significant performance
-        improvement for features that are checked frequently.
-      EOT
-    },
     :always_retry_plugins => {
         :type     => :boolean,
         :default  => true,
@@ -451,8 +428,7 @@ deprecated and has been replaced by 'always_retry_plugins'."
       :type       => :terminus,
       :default    => nil,
       :desc       => "How to store cached nodes.
-      Valid values are (none), 'json', 'msgpack', 'yaml' or write only yaml ('write_only_yaml').
-      The master application defaults to 'write_only_yaml', all others to none.",
+      Valid values are (none), 'json', 'msgpack', 'yaml' or write only yaml ('write_only_yaml').",
     },
     :data_binding_terminus => {
       :type    => :terminus,
@@ -642,14 +618,11 @@ deprecated and has been replaced by 'always_retry_plugins'."
           class, or definition other than in the site manifest.",
     },
     :trusted_server_facts => {
-      :default => false,
+      :default => true,
       :type    => :boolean,
-      :desc    => "When enabled, Puppet creates a protected top-scope variable called $server_facts.
-        This variable name can't be re-used in any local scope, and can't be overridden
-        by agent-provided facts.
-
-        The $server_facts variable is a hash, containing server-provided information
-        like the current node's environment and the version of Puppet running on the server.",
+      :deprecated => :completely,
+      :desc    => "The 'trusted_server_facts' setting is deprecated and has no effect as the
+        feature this enabled is now always on. The setting will be removed in a future version of puppet.",
     },
     :preview_outputdir => {
       :default => '$vardir/preview',
@@ -662,14 +635,12 @@ deprecated and has been replaced by 'always_retry_plugins'."
   )
 
   define_settings(:main,
+      # Whether the application management feature is on or off - now deprecated and always on.
       :app_management => {
           :default  => false,
           :type     => :boolean,
-          :desc     => "Whether the application management feature is on or off. You must restart Puppet Server after changing this setting.",
-          :hook     => proc do |value|
-            # Statically loaded resource types differ depending on setting
-            Puppet::Pops::Loaders.clear
-          end
+          :desc       => "This setting has no effect and will be removed in a future Puppet version.",
+          :deprecated => :completely,
       }
   )
 
@@ -720,13 +691,13 @@ deprecated and has been replaced by 'always_retry_plugins'."
         for more details.)
 
         * For best compatibility, you should limit the value of `certname` to
-          only use letters, numbers, periods, underscores, and dashes. (That is,
+          only use lowercase letters, numbers, periods, underscores, and dashes. (That is,
           it should match `/\A[a-z0-9._-]+\Z/`.)
         * The special value `ca` is reserved, and can't be used as the certname
           for a normal node.
 
         Defaults to the node's fully qualified domain name.",
-      :hook => proc { |value| raise(ArgumentError, "Certificate names must be lower case; see #1168") unless value == value.downcase }},
+      :hook => proc { |value| raise(ArgumentError, "Certificate names must be lower case") unless value == value.downcase }},
     :dns_alt_names => {
       :default => '',
       :desc    => <<EOT,
@@ -921,28 +892,45 @@ EOT
         This is distinct from the certificate authority's CRL."
     },
     :certificate_revocation => {
-        :default  => true,
-        :type     => :boolean,
-        :desc     => "Whether certificate revocation should be supported by downloading a
-          Certificate Revocation List (CRL)
-          to all clients.  If enabled, CA chaining will almost definitely not work.",
+        :default  => 'chain',
+        :type     => :certificate_revocation,
+        :desc     => <<EOT
+Whether certificate revocation checking should be enabled, and what level of checking should be performed.
+
+When certificate_revocation is set to 'true' or 'chain', Puppet will download the CA CRL and will perform revocation
+checking against each certificate in the chain.
+
+Puppet is unable to load multiple CRLs, so if certificate_revocation is set to 'chain' and Puppet attempts to verify
+a certificate signed by a root CA the behavior is equivalent to the 'leaf' setting, and if Puppet attempts to verify
+a certificate signed by an intermediate CA then verification will fail as Puppet will be unable to load the multiple
+CRLs required for full chain checking. As such the 'chain' setting is limited in functionality and is meant as a stand
+in pending the implementation of full chain checking.
+
+When certificate_revocation is set to 'leaf', Puppet will download the CA CRL and will verify the leaf certificate
+against that CRL. CRLs will not be fetched or checked for the rest of the certificates in the chain. If you are using
+an intermediate CA certificate and want to enable certificate revocation checking, this setting must be set to 'leaf'.
+
+When certificate_revocation is set to 'false', Puppet will disable all certificate revocation checking and will not
+attempt to download the CRL.
+EOT
     },
     :digest_algorithm => {
         :default  => 'md5',
         :type     => :enum,
-        :values => ["md5", "sha256"],
+        :values => ["md5", "sha256", "sha384", "sha512", "sha224"],
         :desc     => 'Which digest algorithm to use for file resources and the filebucket.
-                      Valid values are md5, sha256. Default is md5.',
+                      Valid values are md5, sha256, sha384, sha512, sha224. Default is md5.',
     },
     :supported_checksum_types => {
-      :default => ['md5', 'sha256'],
+      :default => ['md5', 'sha256', 'sha384', 'sha512', 'sha224'],
       :type    => :array,
       :desc    => 'Checksum types supported by this agent for use in file resources of a
                    static catalog. Values must be comma-separated. Valid types are md5,
-                   md5lite, sha256, sha256lite, sha1, sha1lite, mtime, ctime.',
+                   md5lite, sha256, sha256lite, sha384, sha512, 
+		   sha1, sha1lite, sha224, mtime, ctime.',
       :hook    => proc do |value|
         values = munge(value)
-        valid   = ['md5', 'md5lite', 'sha256', 'sha256lite', 'sha1', 'sha1lite', 'mtime', 'ctime']
+        valid   = ['md5', 'md5lite', 'sha256', 'sha256lite', 'sha384', 'sha512', 'sha224', 'sha1', 'sha1lite', 'mtime', 'ctime']
         invalid = values.reject {|alg| valid.include?(alg)}
         if not invalid.empty?
           raise ArgumentError, "Unrecognized checksum types #{invalid} are not supported. Valid values are #{valid}."
@@ -1063,7 +1051,7 @@ EOT
         the request.
 
         For info on autosign configuration files, see
-        [the guide to Puppet's config files](http://docs.puppetlabs.com/puppet/latest/reference/config_about_settings.html).",
+        [the guide to Puppet's config files](https://docs.puppetlabs.com/puppet/latest/reference/config_about_settings.html).",
     },
     :allow_duplicate_certs => {
       :default    => false,
@@ -1076,11 +1064,6 @@ EOT
       :type       => :duration,
       :desc       => "The default TTL for new certificates.
       #{AS_DURATION}"
-    },
-    :req_bits => {
-      :default    => 4096,
-      :desc       => "This setting has no effect and will be removed in a future Puppet version.",
-      :deprecated => :completely,
     },
     :keylength => {
       :default    => 4096,
@@ -1123,7 +1106,7 @@ EOT
         :desc       => "The address the agent should use to initiate requests.",
       },
       :bindaddress => {
-        :default    => "0.0.0.0",
+        :default    => "*",
         :desc       => "The address a listening server should bind to.",
       }
   )
@@ -1389,7 +1372,7 @@ EOT
         makes to the master. WARNING: This setting is mutually exclusive with
         node_name_fact.  Changing this setting also requires changes to the default
         auth.conf configuration on the Puppet Master.  Please see
-        http://links.puppetlabs.com/node_name_value for more information."
+        http://links.puppet.com/node_name_value for more information."
     },
     :node_name_fact => {
       :default => "",
@@ -1397,7 +1380,7 @@ EOT
         makes to the master. WARNING: This setting is mutually exclusive with
         node_name_value.  Changing this setting also requires changes to the default
         auth.conf configuration on the Puppet Master.  Please see
-        http://links.puppetlabs.com/node_name_fact for more information.",
+        http://links.puppet.com/node_name_fact for more information.",
       :hook => proc do |value|
         if !value.empty? and Puppet[:node_name_value] != Puppet[:certname]
           raise "Cannot specify both the node_name_value and node_name_fact settings"
@@ -1561,7 +1544,7 @@ EOT
       :desc       => "The port to use for the certificate authority.",
     },
     :preferred_serialization_format => {
-      :default    => "pson",
+      :default    => "json",
       :desc       => "The preferred means of serializing
       ruby instances for passing over the wire.  This won't guarantee that all
       instances will be serialized using this method, since not all classes
@@ -1611,23 +1594,33 @@ EOT
     :splaylimit => {
       :default    => "$runinterval",
       :type       => :duration,
-      :desc       => "The maximum time to delay before runs.  Defaults to being the same as the
-        run interval. #{AS_DURATION}",
+      :desc       => "The maximum time to delay before an agent's first run when
+        `splay` is enabled. Defaults to the agent's `$runinterval`. The
+        `splay` interval is random and recalculated each time the agent is started or
+        restarted. #{AS_DURATION}",
     },
     :splay => {
       :default    => false,
       :type       => :boolean,
-      :desc       => "Whether to sleep for a pseudo-random (but consistent) amount of time before
-        a run.
+      :desc       => "Whether to sleep for a random amount of time, ranging from
+        immediately up to its `$splaylimit`, before performing its first agent run
+        after a service restart. After this period, the agent runs periodically
+        on its `$runinterval`.
 
-        For example, without `splay` enabled, your agent checks in every 30
-        minutes at :01 and :31 past the hour. After enabling `splay`, the agent
-        will wait the pseudorandom sleep time, say eight minutes, and then check
-        in every 30 minutes, at :09 and :39 after the hour. If you restart the
-        same agent at 12:45 PM, it will wait its eight minutes, and check in at
-        12:52 PM, and every 30 minutes after that, at 1:22 PM, 1:52 PM, and so
-        on. Other agents will have different sleep times, and so will check in
-        at different times even if they are all restarted at the same time.",
+        For example, assume a default 30-minute `$runinterval`, `splay` set to its
+        default of `false`, and an agent starting at :00 past the hour. The agent
+        would check in every 30 minutes at :01 and :31 past the hour.
+
+        With `splay` enabled, it waits any amount of time up to its `$splaylimit`
+        before its first run. For example, it might randomly wait 8 minutes,
+        then start its first run at :08 past the hour. With the `$runinterval`
+        at its default 30 minutes, its next run will be at :38 past the hour.
+
+        If you restart an agent's puppet service with `splay` enabled, it
+        recalculates its splay period and delays its first agent run after
+        restarting for this new period. If you simultaneously restart a group of
+        puppet agents with `splay` enabled, their checkins to your puppet masters
+        can be distributed more evenly.",
     },
     :clientbucketdir => {
       :default  => "$vardir/clientbucket",
@@ -1739,28 +1732,6 @@ EOT
     }
   )
 
-  define_settings(:inspect,
-    :archive_files => {
-        :type     => :boolean,
-        :default  => false,
-        :desc     => "During an inspect run, whether to archive files whose contents are audited to a file bucket. Note that the `inspect` command is deprecated.",
-        :hook => proc { |value|
-          if Puppet[:strict] != :off
-            Puppet.deprecation_warning(_("Setting 'archive_files' is deprecated. It will be removed in a future release along with the `inspect` command."))
-          end
-        }
-    },
-    :archive_file_server => {
-        :default  => "$server",
-        :desc     => "During an inspect run, the file bucket server to archive files to if archive_files is set. Note that the `inspect` command is deprecated.",
-        :hook => proc { |value|
-          if Puppet[:strict] != :off
-            Puppet.deprecation_warning(_("Setting 'archive_file_server' is deprecated. It will be removed in a future release along with the `inspect` command."))
-          end
-        }
-    }
-  )
-
   # Plugin information.
 
   define_settings(
@@ -1786,6 +1757,19 @@ EOT
       :default  => "puppet:///pluginfacts",
       :desc     => "Where to retrieve external facts for pluginsync",
     },
+    :localedest => {
+      :type       => :directory,
+      :default    => "$vardir/locales",
+      :desc       => "Where Puppet should store translation files that it pulls down from the central
+      server.",
+    },
+    :localesource => {
+      :default    => "puppet:///locales",
+      :desc       => "From where to retrieve translation files.  The standard Puppet `file` type
+      is used for retrieval, so anything that is a valid file source can
+      be used here.",
+    },
+
     :pluginsync => {
       :default    => true,
       :type       => :boolean,
@@ -1795,9 +1779,8 @@ EOT
         Puppet.deprecation_warning "Setting 'pluginsync' is deprecated."
       }
     },
-
     :pluginsignore => {
-        :default  => ".svn CVS .git .hg",
+        :default  => ".svn CVS .git .hg *.pot",
         :desc     => "What files to ignore when pulling down plugins.",
     }
   )
@@ -2007,6 +1990,14 @@ EOT
     :desc => <<-'EOT'
       Causes an evaluation error when referencing unknown variables. (This does not affect
       referencing variables that are explicitly set to undef).
+    EOT
+    },
+  :tasks => {
+    :default => false,
+    :type => :boolean,
+    :desc => <<-'EOT'
+      Turns on experimental support for tasks and plans in the puppet language. This is for internal API use only.
+      Do not change this setting.
     EOT
     }
   )

@@ -279,6 +279,45 @@ describe Puppet::Provider do
       expect(subject.name).to eq(type.defaultprovider.name)
     end
 
+    describe "regex matches" do
+      it "should match a singular regex" do
+        Facter.expects(:value).with(:osfamily).at_least_once.returns "solaris"
+
+        one = type.provide(:one) do
+          defaultfor :osfamily => /solaris/
+        end
+
+        expect(one).to be_default
+      end
+
+      it "should not match a non-matching regex " do
+        Facter.expects(:value).with(:osfamily).at_least_once.returns "redhat"
+
+        one = type.provide(:one) do
+          defaultfor :osfamily => /solaris/
+        end
+
+        expect(one).to_not be_default
+      end
+
+      it "should allow a mix of regex and string" do
+
+        Facter.expects(:value).with(:operatingsystem).at_least_once.returns "fedora"
+        Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns "24"
+
+        one = type.provide(:one) do
+          defaultfor :operatingsystem => "fedora", :operatingsystemmajrelease => /^2[2-9]$/
+        end
+
+        two = type.provide(:two) do
+          defaultfor :operatingsystem => /fedora/, :operatingsystemmajrelease => '24'
+        end
+
+        expect(one).to be_default
+        expect(two).to be_default
+      end
+    end
+
     describe "when there are multiple defaultfor's of equal specificity" do
       before :each do
         subject.defaultfor :operatingsystem => :os1
@@ -306,12 +345,21 @@ describe Puppet::Provider do
       before :each do
         subject.defaultfor :operatingsystem => :os1
         subject.defaultfor :operatingsystem => :os2, :operatingsystemmajrelease => "42"
+        subject.defaultfor :operatingsystem => :os3, :operatingsystemmajrelease => /^4[2-9]$/
       end
 
       let(:alternate) { type.provide(:alternate) {} }
 
       it "should be default for a more specific, but matching, defaultfor" do
         Facter.expects(:value).with(:operatingsystem).at_least_once.returns :os2
+        Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns "42"
+
+        expect(provider).to be_default
+        expect(alternate).not_to be_default
+      end
+
+      it "should be default for a more specific, but matching, defaultfor with regex" do
+        Facter.expects(:value).with(:operatingsystem).at_least_once.returns :os3
         Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns "42"
 
         expect(provider).to be_default

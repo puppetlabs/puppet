@@ -35,6 +35,7 @@ require 'puppet/indirector'
 #
 # @api public
 class Puppet::Transaction::Report
+  include Puppet::Util::PsychSupport
   extend Puppet::Indirector
 
   indirects :report, :terminus_class => :processor
@@ -50,6 +51,9 @@ class Puppet::Transaction::Report
 
   # The id of the code input to the compiler.
   attr_accessor :code_id
+
+  # The id of the job responsible for this run.
+  attr_accessor :job_id
 
   # A master generated catalog uuid, useful for connecting a single catalog to multiple reports.
   attr_accessor :catalog_uuid
@@ -94,12 +98,6 @@ class Puppet::Transaction::Report
   # @return [Time] A time object indicating when the report data was generated
   #
   attr_reader :time
-
-  # The 'kind' of report is the name of operation that triggered the report to be produced.
-  # Typically "apply".
-  # @return [String] the kind of operation that triggered the generation of the report.
-  #
-  attr_reader :kind
 
   # The status of the client run is an enumeration: 'failed', 'changed' or 'unchanged'
   # @return [String] the status of the run - one of the values 'failed', 'changed', or 'unchanged'
@@ -178,7 +176,8 @@ class Puppet::Transaction::Report
   def compute_status(resource_metrics, change_metric)
     if resources_failed_to_generate ||
        !transaction_completed ||
-       (resource_metrics["failed"] || 0) > 0
+       (resource_metrics["failed"] || 0) > 0 ||
+       (resource_metrics["failed_to_restart"] || 0) > 0
       'failed'
     elsif change_metric > 0
       'changed'
@@ -212,19 +211,19 @@ class Puppet::Transaction::Report
   end
 
   # @api private
-  def initialize(kind, configuration_version=nil, environment=nil, transaction_uuid=nil)
+  def initialize(configuration_version=nil, environment=nil, transaction_uuid=nil, job_id=nil)
     @metrics = {}
     @logs = []
     @resource_statuses = {}
     @external_times ||= {}
     @host = Puppet[:node_name_value]
     @time = Time.now
-    @kind = kind
-    @report_format = 6
+    @report_format = 7
     @puppet_version = Puppet.version
     @configuration_version = configuration_version
     @transaction_uuid = transaction_uuid
     @code_id = nil
+    @job_id = job_id
     @catalog_uuid = nil
     @cached_catalog_status = nil
     @master_used = nil
@@ -257,6 +256,10 @@ class Puppet::Transaction::Report
       @catalog_uuid = catalog_uuid
     end
 
+    if job_id = data['job_id']
+      @job_id = job_id
+    end
+
     if code_id = data['code_id']
       @code_id = code_id
     end
@@ -268,50 +271,54 @@ class Puppet::Transaction::Report
     if @time.is_a? String
       @time = Time.parse(@time)
     end
-    @kind = data['kind']
 
     @metrics = {}
     data['metrics'].each do |name, hash|
-      @metrics[name] = Puppet::Util::Metric.from_data_hash(hash)
+      # Older versions contain tags that causes Psych to create instances directly
+      @metrics[name] = hash.is_a?(Puppet::Util::Metric) ? hash : Puppet::Util::Metric.from_data_hash(hash)
     end
 
     @logs = data['logs'].map do |record|
-      Puppet::Util::Log.from_data_hash(record)
+      # Older versions contain tags that causes Psych to create instances directly
+      record.is_a?(Puppet::Util::Log) ? record : Puppet::Util::Log.from_data_hash(record)
     end
 
     @resource_statuses = {}
-    data['resource_statuses'].map do |record|
-      if record[1] == {}
-        status = nil
+    data['resource_statuses'].map do |key, rs|
+      @resource_statuses[key] = if rs == Puppet::Resource::EMPTY_HASH
+        nil
       else
-        status = Puppet::Resource::Status.from_data_hash(record[1])
+        # Older versions contain tags that causes Psych to create instances directly
+        rs.is_a?(Puppet::Resource::Status) ? rs : Puppet::Resource::Status.from_data_hash(rs)
       end
-      @resource_statuses[record[0]] = status
     end
   end
 
   def to_data_hash
-    {
+    hash = {
       'host' => @host,
       'time' => @time.iso8601(9),
       'configuration_version' => @configuration_version,
       'transaction_uuid' => @transaction_uuid,
-      'catalog_uuid' => @catalog_uuid,
-      'code_id' => @code_id,
-      'cached_catalog_status' => @cached_catalog_status,
       'report_format' => @report_format,
       'puppet_version' => @puppet_version,
-      'kind' => @kind,
       'status' => @status,
       'noop' => @noop,
       'noop_pending' => @noop_pending,
       'environment' => @environment,
-      'master_used' => @master_used,
-      'logs' => @logs,
-      'metrics' => @metrics,
-      'resource_statuses' => @resource_statuses,
+      'logs' => @logs.map { |log| log.to_data_hash },
+      'metrics' => Hash[@metrics.map { |key, metric| [key, metric.to_data_hash] }],
+      'resource_statuses' => Hash[@resource_statuses.map { |key, rs| [key, rs.nil? ? nil : rs.to_data_hash] }],
       'corrective_change' => @corrective_change,
     }
+
+    # The following is include only when set
+    hash['master_used'] = @master_used unless @master_used.nil?
+    hash['catalog_uuid'] = @catalog_uuid unless @catalog_uuid.nil?
+    hash['code_id'] = @code_id unless @code_id.nil?
+    hash['job_id'] = @job_id unless @job_id.nil?
+    hash['cached_catalog_status'] = @cached_catalog_status unless @cached_catalog_status.nil?
+    hash
   end
 
   # @return [String] the host name
@@ -383,24 +390,16 @@ class Puppet::Transaction::Report
   #
   def exit_status
     status = 0
-    status |= 2 if @metrics["changes"]["total"] > 0
-    status |= 4 if @metrics["resources"]["failed"] > 0
-    status |= 4 if @metrics["resources"]["failed_to_restart"] > 0
+    if @metrics["changes"] && @metrics["changes"]["total"] &&
+        @metrics["resources"] && @metrics["resources"]["failed"] &&
+        @metrics["resources"]["failed_to_restart"]
+      status |= 2 if @metrics["changes"]["total"] > 0
+      status |= 4 if @metrics["resources"]["failed"] > 0
+      status |= 4 if @metrics["resources"]["failed_to_restart"] > 0
+    else
+      status = -1
+    end
     status
-  end
-
-  # @api private
-  #
-  def to_yaml_properties
-    super - [:@external_times, :@resources_failed_to_generate]
-  end
-
-  def self.supported_formats
-    [:pson, :yaml]
-  end
-
-  def self.default_format
-    :pson
   end
 
   private

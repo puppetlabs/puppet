@@ -106,7 +106,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
 
     unless self.query
       raise Puppet::ExecutionFailure.new(
-        "Could not find package #{self.name}"
+        _("Could not find package %{name}") % { name: self.name }
       )
     end
   end
@@ -126,7 +126,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
 
   def uninstall
     #extract version numbers and convert to integers
-    major, minor, patch = zypper_version.scan(/\d+/).map{ |x| x.to_i }
+    major, minor, _ = zypper_version.scan(/\d+/).map{ |x| x.to_i }
 
     if major < 1
       super
@@ -137,7 +137,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
       end
 
       options << @resource[:name]
-    	
+
       zypper *options
     end
 

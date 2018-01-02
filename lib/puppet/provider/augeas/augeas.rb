@@ -84,7 +84,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
       sc = StringScanner.new(line)
       cmd = sc.scan(/\w+|==|!=/)
       formals = COMMANDS[cmd]
-      fail("Unknown command #{cmd}") unless formals
+      fail(_("Unknown command %{cmd}") % { cmd: cmd }) unless formals
       argline << cmd
       narg = 0
       formals.each do |f|
@@ -102,12 +102,12 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             nbracket -= 1 if ch == "]"
             inSingleTick = !inSingleTick if ch == "'"
             inDoubleTick = !inDoubleTick if ch == "\""
-            fail("unmatched [") if nbracket < 0
+            fail(_("unmatched [")) if nbracket < 0
           end until ((nbracket == 0 && !inSingleTick && !inDoubleTick && (ch =~ /\s/)) || sc.eos?)
             len = sc.pos - start
             len -= 1 unless sc.eos?
           unless p = sc.string[start, len]
-            fail("missing path argument #{narg} for #{cmd}")
+            fail(_("missing path argument %{narg} for %{cmd}") % { narg: narg, cmd: cmd })
           end
           # Rip off any ticks if they are there.
           p = p[1, (p.size - 2)] if p[0,1] == "'" || p[0,1] == "\""
@@ -126,12 +126,12 @@ Puppet::Type.type(:augeas).provide(:augeas) do
           else
             argline << sc.scan(/[^\s]+/)
           end
-          fail("missing string argument #{narg} for #{cmd}") unless argline[-1]
+          fail(_("missing string argument %{narg} for %{cmd}") % { narg: narg, cmd: cmd }) unless argline[-1]
         elsif f == :comparator
           argline << sc.scan(/(==|!=|=~|<=|>=|<|>)/)
           unless argline[-1]
             puts sc.rest
-            fail("invalid comparator for command #{cmd}")
+            fail(_("invalid comparator for command %{cmd}") % { cmd: cmd })
           end
         elsif f == :int
           argline << sc.scan(/\d+/).to_i
@@ -168,7 +168,6 @@ Puppet::Type.type(:augeas).provide(:augeas) do
       glob_avail = !aug.match("/augeas/version/pathx/functions/glob").empty?
       opt_ctx = resource[:context].match("^/files/[^'\"\\[\\]]+$") if resource[:context]
 
-      restricted = false
       if resource[:incl]
         aug.set("/augeas/load/Xfm/lens", resource[:lens])
         aug.set("/augeas/load/Xfm/incl", resource[:incl])
@@ -203,7 +202,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
   def is_numeric?(s)
     case s
-    when Fixnum
+    when Integer
       true
     when String
       s.match(/\A[+-]?\d+?(\.\d+)?\Z/n) == nil ? false : true
@@ -219,8 +218,8 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     return_value = false
 
     #validate and tear apart the command
-    fail ("Invalid command: #{cmd_array.join(" ")}") if cmd_array.length < 4
-    cmd = cmd_array.shift
+    fail (_("Invalid command: %{cmd}") % { cmd: cmd_array.join(" ") }) if cmd_array.length < 4
+    _ = cmd_array.shift
     path = cmd_array.shift
     comparator = cmd_array.shift
     arg = cmd_array.join(" ")
@@ -250,8 +249,8 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     return_value = false
 
     #validate and tear apart the command
-    fail("Invalid command: #{cmd_array.join(" ")}") if cmd_array.length < 3
-    cmd = cmd_array.shift
+    fail(_("Invalid command: %{cmd}") % { cmd: cmd_array.join(" ") }) if cmd_array.length < 3
+    _ = cmd_array.shift
     path = cmd_array.shift
 
     # Need to break apart the clause
@@ -260,7 +259,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
     #Get the match paths from augeas
     result = @aug.match(path) || []
-    fail("Error trying to get path '#{path}'") if (result == -1)
+    fail(_("Error trying to get path '%{path}'") % { path: path }) if (result == -1)
 
     #Get the values of the match paths from augeas
     values = result.collect{|r| @aug.get(r)}
@@ -278,7 +277,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         new_array = eval arg
         return_value = (values == new_array)
       rescue
-        fail("Invalid array in command: #{cmd_array.join(" ")}")
+        fail(_("Invalid array in command: %{cmd}") % { cmd: cmd_array.join(" ") })
       end
     when "!="
       begin
@@ -286,7 +285,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         new_array = eval arg
         return_value = (values != new_array)
       rescue
-        fail("Invalid array in command: #{cmd_array.join(" ")}")
+        fail(_("Invalid array in command: %{cmd}") % { cmd: cmd_array.join(" ") })
       end
     end
     !!return_value
@@ -298,8 +297,8 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     return_value = false
 
     #validate and tear apart the command
-    fail("Invalid command: #{cmd_array.join(" ")}") if cmd_array.length < 3
-    cmd = cmd_array.shift
+    fail(_("Invalid command: %{cmd}") % { cmd: cmd_array.join(" ") }) if cmd_array.length < 3
+    _ = cmd_array.shift
     path = cmd_array.shift
 
     # Need to break apart the clause
@@ -308,12 +307,12 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
     #Get the values from augeas
     result = @aug.match(path) || []
-    fail("Error trying to match path '#{path}'") if (result == -1)
+    fail(_("Error trying to match path '%{path}'") % { path: path }) if (result == -1)
 
     # Now do the work
     case verb
     when "size"
-      fail("Invalid command: #{cmd_array.join(" ")}") if clause_array.length != 2
+      fail(_("Invalid command: %{cmd}") % { cmd: cmd_array.join(" ") }) if clause_array.length != 2
       comparator = clause_array.shift
       arg = clause_array.shift
       case comparator
@@ -334,7 +333,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         new_array = eval arg
         return_value = (result == new_array)
       rescue
-        fail("Invalid array in command: #{cmd_array.join(" ")}")
+        fail(_("Invalid array in command: %{cmd}") % { cmd: cmd_array.join(" ") })
       end
     when "!="
       begin
@@ -342,7 +341,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         new_array = eval arg
         return_value = (result != new_array)
       rescue
-        fail("Invalid array in command: #{cmd_array.join(" ")}")
+        fail(_("Invalid array in command: %{cmd}") % { cmd: cmd_array.join(" ") })
       end
     end
     !!return_value
@@ -378,7 +377,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     errors = @aug.match("/augeas//error")
     unless errors.empty?
       if path && !@aug.match(path).empty?
-        warning("Loading failed for one or more files, see debug for /augeas//error output")
+        warning(_("Loading failed for one or more files, see debug for /augeas//error output"))
       else
         debug("Loading failed for one or more files, output from /augeas//error:")
       end
@@ -420,7 +419,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
           when "match"; return_value = process_match(cmd_array)
           end
         rescue StandardError => e
-          fail("Error sending command '#{command}' with params #{cmd_array[1..-1].inspect}/#{e.message}")
+          fail(_("Error sending command '%{command}' with params %{param}/%{message}") % { command: command, param: cmd_array[1..-1].inspect, message: e.message })
         end
       end
 
@@ -435,7 +434,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
           save_result = @aug.save
           unless save_result
             print_put_errors
-            fail("Saving failed, see debug")
+            fail(_("Saving failed, see debug"))
           end
 
           saved_files = @aug.match("/augeas/events/saved")
@@ -477,7 +476,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     do_execute_changes
     unless @aug.save
       print_put_errors
-      fail("Save failed, see debug")
+      fail(_("Save failed, see debug"))
     end
 
     :executed
@@ -489,7 +488,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
   def do_execute_changes
     commands = parse_commands(resource[:changes])
     commands.each do |cmd_array|
-      fail("invalid command #{cmd_array.join[" "]}") if cmd_array.length < 2
+      fail(_("invalid command %{cmd}") % { value0: cmd_array.join[" "] }) if cmd_array.length < 2
       command = cmd_array[0]
       cmd_array.shift
       begin
@@ -497,37 +496,37 @@ Puppet::Type.type(:augeas).provide(:augeas) do
           when "set"
             debug("sending command '#{command}' with params #{cmd_array.inspect}")
             rv = aug.set(cmd_array[0], cmd_array[1])
-            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
+            fail(_("Error sending command '%{command}' with params %{params}") % { command: command, params: cmd_array.inspect }) if (!rv)
           when "setm"
             if aug.respond_to?(command)
               debug("sending command '#{command}' with params #{cmd_array.inspect}")
               rv = aug.setm(cmd_array[0], cmd_array[1], cmd_array[2])
-              fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (rv == -1)
+              fail(_("Error sending command '%{command}' with params %{params}") % { command: command, params: cmd_array.inspect }) if (rv == -1)
             else
-              fail("command '#{command}' not supported in installed version of ruby-augeas")
+              fail(_("command '%{command}' not supported in installed version of ruby-augeas") % { command: command })
             end
           when "rm", "remove"
             debug("sending command '#{command}' with params #{cmd_array.inspect}")
             rv = aug.rm(cmd_array[0])
-            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (rv == -1)
+            fail(_("Error sending command '%{command}' with params %{params}") % { command: command, params: cmd_array.inspect }) if (rv == -1)
           when "clear"
             debug("sending command '#{command}' with params #{cmd_array.inspect}")
             rv = aug.clear(cmd_array[0])
-            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
+            fail(_("Error sending command '%{command}' with params %{params}") % { command: command, params: cmd_array.inspect }) if (!rv)
           when "clearm"
             # Check command exists ... doesn't currently in ruby-augeas 0.4.1
             if aug.respond_to?(command)
               debug("sending command '#{command}' with params #{cmd_array.inspect}")
               rv = aug.clearm(cmd_array[0], cmd_array[1])
-              fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
+              fail(_("Error sending command '%{command}' with params %{params}") % { command: command, params: cmd_array.inspect }) if (!rv)
             else
-              fail("command '#{command}' not supported in installed version of ruby-augeas")
+              fail(_("command '%{command}' not supported in installed version of ruby-augeas") % { command: command })
             end
           when "touch"
             debug("sending command '#{command}' (match, set) with params #{cmd_array.inspect}")
             if aug.match(cmd_array[0]).empty?
               rv = aug.clear(cmd_array[0])
-              fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
+              fail(_("Error sending command '%{command}' with params %{params}") % { command: command, params: cmd_array.inspect }) if (!rv)
             end
           when "insert", "ins"
             label = cmd_array[0]
@@ -536,31 +535,31 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             case where
               when "before"; before = true
               when "after"; before = false
-              else fail("Invalid value '#{where}' for where param")
+              else fail(_("Invalid value '%{where}' for where param") % { where: where })
             end
             debug("sending command '#{command}' with params #{[label, where, path].inspect}")
             rv = aug.insert(path, label, before)
-            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (rv == -1)
+            fail(_("Error sending command '%{command}' with params %{params}") % { command: command, params: cmd_array.inspect }) if (rv == -1)
           when "defvar"
             debug("sending command '#{command}' with params #{cmd_array.inspect}")
             rv = aug.defvar(cmd_array[0], cmd_array[1])
-            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
+            fail(_("Error sending command '%{command}' with params %{params}") % { command: command, params: cmd_array.inspect }) if (!rv)
           when "defnode"
             debug("sending command '#{command}' with params #{cmd_array.inspect}")
             rv = aug.defnode(cmd_array[0], cmd_array[1], cmd_array[2])
-            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
+            fail(_("Error sending command '%{command}' with params %{params}") % { command: command, params: cmd_array.inspect }) if (!rv)
           when "mv", "move"
             debug("sending command '#{command}' with params #{cmd_array.inspect}")
             rv = aug.mv(cmd_array[0], cmd_array[1])
-            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (rv == -1)
+            fail(_("Error sending command '%{command}' with params %{params}") % { command: command, params: cmd_array.inspect }) if (rv == -1)
           when "rename"
             debug("sending command '#{command}' with params #{cmd_array.inspect}")
             rv = aug.rename(cmd_array[0], cmd_array[1])
-            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (rv == -1)
-          else fail("Command '#{command}' is not supported")
+            fail(_("Error sending command '%{command}' with params %{params}") % { command: command, params: cmd_array.inspect }) if (rv == -1)
+          else fail(_("Command '%{command}' is not supported") % { command: command })
         end
       rescue StandardError => e
-        fail("Error sending command '#{command}' with params #{cmd_array.inspect}/#{e.message}")
+        fail(_("Error sending command '%{command}' with params %{params}/%{message}") % { command: command, params: cmd_array.inspect, message: e.message })
       end
     end
   end

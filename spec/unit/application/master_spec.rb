@@ -13,7 +13,6 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
     Puppet::Util::Log.stubs(:newdestination)
 
     Puppet::Node.indirection.stubs(:terminus_class=)
-    Puppet::Node.indirection.stubs(:cache_class=)
     Puppet::Node::Facts.indirection.stubs(:terminus_class=)
     Puppet::Node::Facts.indirection.stubs(:cache_class=)
     Puppet::Transaction::Report.indirection.stubs(:terminus_class=)
@@ -206,10 +205,27 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
 
         @master.setup
       end
-
-
     end
 
+    it "should not set Puppet[:node_cache_terminus] by default" do
+      # This is normally called early in the application lifecycle but in our
+      # spec testing we don't actually do a full application initialization so
+      # we call it here to validate the (possibly) overridden settings are as we
+      # expect
+      @master.initialize_app_defaults
+      @master.setup
+
+      expect(Puppet[:node_cache_terminus]).to be(nil)
+    end
+
+    it "should honor Puppet[:node_cache_terminus] by setting the cache_class to its value" do
+      # PUP-6060 - ensure we honor this value if specified
+      @master.initialize_app_defaults
+      Puppet[:node_cache_terminus] = 'plain'
+      @master.setup
+
+      expect(Puppet::Node.indirection.cache_class).to eq(:plain)
+    end
   end
 
   describe "when running" do
@@ -244,15 +260,15 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
         expect { @master.compile }.to exit_with 0
       end
 
-      it "should convert the catalog to a pure-resource catalog and use 'PSON::pretty_generate' to pretty-print the catalog" do
+      it "should convert the catalog to a pure-resource catalog and use 'JSON::pretty_generate' to pretty-print the catalog" do
         catalog = Puppet::Resource::Catalog.new
-        PSON.stubs(:pretty_generate)
+        JSON.stubs(:pretty_generate)
         Puppet::Resource::Catalog.indirection.expects(:find).returns catalog
 
         catalog.expects(:to_resource).returns("rescat")
 
         @master.options[:node] = "foo"
-        PSON.expects(:pretty_generate).with('rescat', :allow_nan => true, :max_nesting => false)
+        JSON.expects(:pretty_generate).with('rescat', :allow_nan => true, :max_nesting => false)
 
         expect { @master.compile }.to exit_with 0
       end
@@ -339,7 +355,7 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
       end
 
       it "should log a deprecation notice when running a WEBrick server" do
-        Puppet.expects(:deprecation_warning).with("The WEBrick Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppetlabs.com/deprecate-rack-webrick-servers for more information.")
+        Puppet.expects(:deprecation_warning).with("The WEBrick Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppet.com/deprecate-rack-webrick-servers for more information.")
 
         @master.main
       end
@@ -378,7 +394,7 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
         end
 
         it "should log a deprecation notice" do
-          Puppet.expects(:deprecation_warning).with("The Rack Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppetlabs.com/deprecate-rack-webrick-servers for more information.")
+          Puppet.expects(:deprecation_warning).with("The Rack Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppet.com/deprecate-rack-webrick-servers for more information.")
 
           @master.main
         end

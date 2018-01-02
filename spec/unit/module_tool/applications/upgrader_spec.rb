@@ -2,7 +2,6 @@ require 'spec_helper'
 require 'puppet/module_tool/applications'
 require 'puppet_spec/module_tool/shared_functions'
 require 'puppet_spec/module_tool/stub_source'
-require 'semver'
 require 'tmpdir'
 
 describe Puppet::ModuleTool::Applications::Upgrader do

@@ -93,7 +93,7 @@ module Puppet
         values.each { |value|
           unless  value.is_a?(String) and
               value =~ /\d+(:\d+){0,2}\s*-\s*\d+(:\d+){0,2}/
-            self.fail "Invalid range value '#{value}'"
+            self.fail _("Invalid range value '%{value}'") % { value: value }
           end
         }
       end
@@ -110,15 +110,15 @@ module Puppet
             range << val.split(":").collect { |n| n.to_i }
           }
 
-          self.fail "Invalid range #{value}" if range.length != 2
+          self.fail _("Invalid range %{value}") % { value: value } if range.length != 2
 
           # Make sure the hours are valid
           [range[0][0], range[1][0]].each do |n|
-            raise ArgumentError, "Invalid hour '#{n}'" if n < 0 or n > 23
+            raise ArgumentError, _("Invalid hour '%{n}'") % { n: n } if n < 0 or n > 23
           end
 
           [range[0][1], range[1][1]].each do |n|
-            raise ArgumentError, "Invalid minute '#{n}'" if n and (n < 0 or n > 59)
+            raise ArgumentError, _("Invalid minute '%{n}'") % { n: n } if n and (n < 0 or n > 59)
           end
           ret << range
         }
@@ -152,7 +152,7 @@ module Puppet
 
             unless time.hour == range[0]
               self.devfail(
-                "Incorrectly converted time: #{time}: #{time.hour} vs #{range[0]}"
+                _("Incorrectly converted time: %{time}: %{hour} vs %{value}") % { time: time, hour: time.hour, value: range[0] }
               )
             end
 
@@ -161,7 +161,7 @@ module Puppet
 
           unless limits[0] < limits[1]
             self.info(
-            "Assuming upper limit should be that time the next day"
+            _("Assuming upper limit should be that time the next day")
             )
 
             # Find midnight between the two days. Adding one second
@@ -319,7 +319,7 @@ module Puppet
       validate do |value|
         unless value.is_a?(Integer) or value =~ /^\d+$/
           raise Puppet::Error,
-            "Repeat must be a number"
+            _("Repeat must be a number")
         end
 
         # This implicitly assumes that 'periodmatch' is distance -- that
@@ -328,7 +328,7 @@ module Puppet
 
         if value != 1 and @resource[:periodmatch] != :distance
           raise Puppet::Error,
-            "Repeat must be 1 unless periodmatch is 'distance', not '#{@resource[:periodmatch]}'"
+            _("Repeat must be 1 unless periodmatch is 'distance', not '%{period}'") % { period: @resource[:periodmatch] }
         end
       end
 
@@ -346,9 +346,9 @@ module Puppet
     newparam(:weekday) do
       desc <<-EOT
         The days of the week in which the schedule should be valid.
-        You may specify the full day name (Tuesday), the three character
-        abbreviation (Tue), or a number corresponding to the day of the
-        week where 0 is Sunday, 1 is Monday, etc. Multiple days can be specified
+        You may specify the full day name 'Tuesday', the three character
+        abbreviation 'Tue', or a number (as a string or as an integer) corresponding to the day of the
+        week where 0 is Sunday, 1 is Monday, and so on. Multiple days can be specified
         as an array. If not specified, the day of the week will not be
         considered in the schedule.
 
@@ -369,11 +369,20 @@ module Puppet
       validate do |values|
         values = [values] unless values.is_a?(Array)
         values.each { |value|
-          unless value.is_a?(String) and
-              (value =~ /^[0-6]$/ or value =~ /^(Mon|Tues?|Wed(?:nes)?|Thu(?:rs)?|Fri|Sat(?:ur)?|Sun)(day)?$/i)
-            raise ArgumentError, "%s is not a valid day of the week" % value
+          if weekday_integer?(value) || weekday_string?(value)
+            value
+          else
+            raise ArgumentError, _("%{value} is not a valid day of the week") % { value: value }
           end
         }
+      end
+
+      def weekday_integer?(value)
+        value.is_a?(Integer) && (0..6).include?(value)
+      end
+
+      def weekday_string?(value)
+        value.is_a?(String) && (value =~ /^[0-6]$/ || value =~ /^(Mon|Tues?|Wed(?:nes)?|Thu(?:rs)?|Fri|Sat(?:ur)?|Sun)(day)?$/i)
       end
 
       weekdays = {
@@ -390,14 +399,17 @@ module Puppet
         values = [values] unless values.is_a?(Array)
         ret = {}
 
-        values.each { |value|
-           if value =~ /^[0-6]$/
-              index = value.to_i
-           else
-              index = weekdays[value[0,3].downcase]
-           end
-            ret[index] = true
-        }
+        values.each do |value|
+          case value
+          when /^[0-6]$/
+            index = value.to_i
+          when 0..6
+            index = value
+          else
+            index = weekdays[value[0,3].downcase]
+          end
+          ret[index] = true
+        end
         ret
       end
 

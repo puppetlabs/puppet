@@ -56,7 +56,7 @@ context 'installing myresource' do
 
       it "should allow setting an install_options parameter" do
         resource[:install_options] = [ '--force', {'--bindir' => '/usr/bin' } ]
-        provider.expects(:execute).with { |args| args[5] == '--force' && args[6] == '--bindir=/usr/bin' }.returns ''
+        provider.expects(:execute).with { |args| args[2] == '--force' && args[3] == '--bindir=/usr/bin' }.returns ''
         provider.install
       end
 
@@ -137,12 +137,12 @@ context 'installing myresource' do
       end
 
       it "should return an empty array when no gems installed" do
-        provider_class.expects(:execute).with(%w{/my/gem list --local}).returns("\n")
+        provider_class.expects(:execute).with(%w{/my/gem list --local}, {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}}).returns("\n")
         expect(provider_class.instances).to eq([])
       end
 
       it "should return ensure values as an array of installed versions" do
-        provider_class.expects(:execute).with(%w{/my/gem list --local}).returns <<-HEREDOC.gsub(/        /, '')
+        provider_class.expects(:execute).with(%w{/my/gem list --local}, {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}}).returns <<-HEREDOC.gsub(/        /, '')
         systemu (1.2.0)
         vagrant (0.8.7, 0.6.9)
         HEREDOC
@@ -154,7 +154,7 @@ context 'installing myresource' do
       end
 
       it "should ignore platform specifications" do
-        provider_class.expects(:execute).with(%w{/my/gem list --local}).returns <<-HEREDOC.gsub(/        /, '')
+        provider_class.expects(:execute).with(%w{/my/gem list --local}, {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}}).returns <<-HEREDOC.gsub(/        /, '')
         systemu (1.2.0)
         nokogiri (1.6.1 ruby java x86-mingw32 x86-mswin32-60, 1.4.4.1 x86-mswin32)
         HEREDOC
@@ -166,7 +166,7 @@ context 'installing myresource' do
       end
 
       it "should not fail when an unmatched line is returned" do
-        provider_class.expects(:execute).with(%w{/my/gem list --local}).
+        provider_class.expects(:execute).with(%w{/my/gem list --local}, {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}}).
           returns(File.read(my_fixture('line-with-1.8.5-warning')))
 
         expect(provider_class.instances.map {|p| p.properties}).
@@ -186,7 +186,7 @@ context 'installing myresource' do
     describe "listing gems" do
       describe "searching for a single package" do
         it "searches for an exact match" do
-          provider_class.expects(:execute).with(includes('^bundler$')).returns(File.read(my_fixture('gem-list-single-package')))
+          provider_class.expects(:execute).with(includes('\Abundler\z'), {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}}).returns(File.read(my_fixture('gem-list-single-package')))
           expected = {:name => 'bundler', :ensure => %w[1.6.2], :provider => :gem}
           expect(provider_class.gemlist({:justme => 'bundler'})).to eq(expected)
         end

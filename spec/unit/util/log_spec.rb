@@ -18,6 +18,75 @@ describe Puppet::Util::Log do
     expect(message).to eq("foo")
   end
 
+  context "given a message with invalid encoding" do
+    let(:logs) { [] }
+    let(:invalid_message) { "\xFD\xFBfoo".force_encoding(Encoding::Shift_JIS) }
+
+    before do
+      Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(logs))
+      Puppet::Util::Log.new(:level => :notice, :message => invalid_message)
+    end
+
+    it "does not raise an error" do
+      expect { Puppet::Util::Log.new(:level => :notice, :message => invalid_message) }.not_to raise_error
+    end
+
+    it "includes a backtrace in the log" do
+      expect(logs.last.message).to match(/Backtrace:\n.*in `newmessage'\n.*in `initialize'/ )
+    end
+
+    it "warns that message included invalid encoding" do
+      expect(logs.last.message).to match(/Received a Log attribute with invalid encoding/)
+    end
+
+    it "includes the 'dump' of the invalid message" do
+      expect(logs.last.message).to match(/\"\\xFD\\xFBfoo\"/)
+    end
+  end
+
+  # need a string that cannot be converted to US-ASCII or other encodings easily
+  # different UTF-8 widths
+  # 1-byte A
+  # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
+  # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
+  # 4-byte ܎ - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
+  let (:mixed_utf8) { "A\u06FF\u16A0\u{2070E}" } # Aۿᚠ܎
+
+  it "converts a given non-UTF-8 message to UTF-8" do
+    logs = []
+    Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(logs))
+    Puppet::Util::Log.newdestination(:console)
+
+    # HIRAGANA LETTER SO
+    # In Windows_31J: \x82 \xbb - 130 187
+    # In Unicode: \u305d - \xe3 \x81 \x9d - 227 129 157
+    win_31j_msg = [130, 187].pack('C*').force_encoding(Encoding::Windows_31J)
+    utf_8_msg = "\u305d"
+
+    $stdout.expects(:puts).with("\e[mNotice: #{mixed_utf8}: #{utf_8_msg}\e[0m")
+
+    # most handlers do special things with a :source => 'Puppet', so use something else
+    Puppet::Util::Log.new(:level => :notice, :message => win_31j_msg, :source => mixed_utf8)
+    expect(logs.last.message).to eq(utf_8_msg)
+  end
+
+  it "converts a given non-UTF-8 source to UTF-8" do
+    logs = []
+    Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(logs))
+    Puppet::Util::Log.newdestination(:console)
+
+    # HIRAGANA LETTER SO
+    # In Windows_31J: \x82 \xbb - 130 187
+    # In Unicode: \u305d - \xe3 \x81 \x9d - 227 129 157
+    win_31j_msg = [130, 187].pack('C*').force_encoding(Encoding::Windows_31J)
+    utf_8_msg = "\u305d"
+
+    $stdout.expects(:puts).with("\e[mNotice: #{utf_8_msg}: #{mixed_utf8}\e[0m")
+
+    Puppet::Util::Log.new(:level => :notice, :message => mixed_utf8, :source => win_31j_msg)
+    expect(logs.last.source).to eq(utf_8_msg)
+  end
+
   describe ".setup_default" do
     it "should default to :syslog" do
       Puppet.features.stubs(:syslog?).returns(true)
@@ -251,20 +320,20 @@ describe Puppet::Util::Log do
 
   describe Puppet::Util::Log::DestEventlog, :if => Puppet.features.eventlog? do
     before :each do
-      Win32::EventLog.stubs(:open).returns(stub 'mylog')
-      Win32::EventLog.stubs(:report_event)
-      Win32::EventLog.stubs(:close)
+      Puppet::Util::Windows::EventLog.stubs(:open).returns(stub 'mylog')
+      Puppet::Util::Windows::EventLog.stubs(:report_event)
+      Puppet::Util::Windows::EventLog.stubs(:close)
       Puppet.features.stubs(:eventlog?).returns(true)
     end
 
-    it "should restrict its suitability" do
-      Puppet.features.expects(:eventlog?).returns(false)
+    it "should restrict its suitability to Windows" do
+      Puppet.features.expects(:microsoft_windows?).returns(false)
 
       expect(Puppet::Util::Log::DestEventlog.suitable?('whatever')).to eq(false)
     end
 
-    it "should open the 'Application' event log" do
-      Win32::EventLog.expects(:open).with('Application')
+    it "should open the 'Puppet' event log" do
+      Puppet::Util::Windows::EventLog.expects(:open).with('Puppet')
 
       Puppet::Util::Log.newdestination(:eventlog)
     end
@@ -272,7 +341,7 @@ describe Puppet::Util::Log do
     it "should close the event log" do
       log = stub('myeventlog')
       log.expects(:close)
-      Win32::EventLog.expects(:open).returns(log)
+      Puppet::Util::Windows::EventLog.expects(:open).returns(log)
 
       Puppet::Util::Log.newdestination(:eventlog)
       Puppet::Util::Log.close(:eventlog)
@@ -471,24 +540,25 @@ describe Puppet::Util::Log do
   describe "to_yaml" do
     it "should not include the @version attribute" do
       log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :version => 100)
-      expect(log.to_yaml_properties).not_to include('@version')
+      expect(log.to_data_hash.keys).not_to include('version')
     end
 
-    it "should include attributes @level, @message, @source, @tags, and @time" do
+    it "should include attributes 'file', 'line', 'level', 'message', 'source', 'tags', and 'time'" do
       log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :version => 100)
-      expect(log.to_yaml_properties).to match_array([:@level, :@message, :@source, :@tags, :@time])
+      expect(log.to_data_hash.keys).to match_array(%w(file line level message source tags time))
     end
 
-    it "should include attributes @file and @line if specified" do
+    it "should include attributes 'file' and 'line' if specified" do
       log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :file => "foo", :line => 35)
-      expect(log.to_yaml_properties).to include(:@file)
-      expect(log.to_yaml_properties).to include(:@line)
+      expect(log.to_data_hash.keys).to include('file')
+      expect(log.to_data_hash.keys).to include('line')
     end
   end
 
-  it "should round trip through pson" do
-    log = Puppet::Util::Log.new(:level => 'notice', :message => 'hooray', :file => 'thefile', :line => 1729, :source => 'specs', :tags => ['a', 'b', 'c'])
-    tripped = Puppet::Util::Log.from_data_hash(PSON.parse(log.to_pson))
+  let(:log) { Puppet::Util::Log.new(:level => 'notice', :message => 'hooray', :file => 'thefile', :line => 1729, :source => 'specs', :tags => ['a', 'b', 'c']) }
+
+  it "should round trip through json" do
+    tripped = Puppet::Util::Log.from_data_hash(JSON.parse(log.to_json))
 
     expect(tripped.file).to eq(log.file)
     expect(tripped.line).to eq(log.line)
@@ -497,5 +567,9 @@ describe Puppet::Util::Log do
     expect(tripped.source).to eq(log.source)
     expect(tripped.tags).to eq(log.tags)
     expect(tripped.time).to eq(log.time)
+  end
+
+  it 'to_data_hash returns value that is instance of to Data' do
+    expect(Puppet::Pops::Types::TypeFactory.data.instance?(log.to_data_hash)).to be_truthy
   end
 end

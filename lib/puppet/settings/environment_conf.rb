@@ -22,7 +22,6 @@ class Puppet::Settings::EnvironmentConf
   def self.load_from(path_to_env, global_module_path)
     path_to_env = File.expand_path(path_to_env)
     conf_file = File.join(path_to_env, 'environment.conf')
-    config = nil
 
     begin
       config = Puppet.settings.parse_file(conf_file)
@@ -141,8 +140,10 @@ class Puppet::Settings::EnvironmentConf
       # warn once per config file path
       Puppet.warn_once(
         :invalid_settings_section, "EnvironmentConf-section:#{path_to_conf_file}",
-        "Invalid sections in environment.conf at '#{path_to_conf_file}'. Environment conf may not have sections. The following sections are being ignored: '#{(section_keys - [:main]).join(',')}'"
-      )
+        _("Invalid sections in environment.conf at '%{path_to_conf_file}'. Environment conf may not have sections. The following sections are being ignored: '%{sections}'") % {
+          path_to_conf_file: path_to_conf_file,
+          sections: (section_keys - [:main]).join(',')
+        })
       valid = false
     end
 
@@ -151,8 +152,10 @@ class Puppet::Settings::EnvironmentConf
       # warn once per config file path
       Puppet.warn_once(
         :invalid_settings, "EnvironmentConf-settings:#{path_to_conf_file}",
-        "Invalid settings in environment.conf at '#{path_to_conf_file}'. The following unknown setting(s) are being ignored: #{extraneous_settings.join(', ')}"
-      )
+        _("Invalid settings in environment.conf at '%{path_to_conf_file}'. The following unknown setting(s) are being ignored: %{ignored_settings}") % {
+          path_to_conf_file: path_to_conf_file,
+          ignored_settings: extraneous_settings.join(', ')
+        })
       valid = false
     end
 

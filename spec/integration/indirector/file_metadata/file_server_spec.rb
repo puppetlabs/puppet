@@ -42,6 +42,16 @@ describe Puppet::Indirector::FileMetadata::FileServer, " when finding files" do
     end
   end
 
+  describe "that are tasks in modules" do
+    with_checksum_types("task_file_content", "mymod/tasks/mytask") do
+      it "should return the correct metadata" do
+        env = Puppet::Node::Environment.create(:foo, [env_path])
+        result = Puppet::FileServing::Metadata.indirection.find("tasks/mymod/mytask", :environment => env, :checksum_type => checksum_type)
+        expect_correct_checksum(result, checksum_type, checksum, Puppet::FileServing::Metadata)
+      end
+    end
+  end
+
   describe "when node name expansions are used" do
     with_checksum_types("file_server_testing", "mynode/myfile") do
       it "should return the correct metadata" do
@@ -50,6 +60,7 @@ describe Puppet::Indirector::FileMetadata::FileServer, " when finding files" do
 
         # Use a real mount, so the integration is a bit deeper.
         mount1 = Puppet::FileServing::Configuration::Mount::File.new("one")
+        mount1.stubs(:globalallow?).returns true
         mount1.stubs(:allowed?).returns true
         mount1.path = File.join(env_path, "%h")
 

@@ -43,7 +43,7 @@ class Puppet::Transaction
 
     @persistence = Puppet::Transaction::Persistence.new
 
-    @report = report || Puppet::Transaction::Report.new("apply", catalog.version, catalog.environment)
+    @report = report || Puppet::Transaction::Report.new(catalog.version, catalog.environment)
 
     @prioritizer = prioritizer
 
@@ -79,7 +79,7 @@ class Puppet::Transaction
       prerun_errors.each do |res, detail|
         res.log_exception(detail)
       end
-      raise Puppet::Error, "Some pre-run checks failed"
+      raise Puppet::Error, _("Some pre-run checks failed")
     end
   end
 
@@ -95,7 +95,7 @@ class Puppet::Transaction
 
     persistence.load if catalog.host_config?
 
-    Puppet.info "Applying configuration version '#{catalog.version}'" if catalog.version
+    Puppet.info _("Applying configuration version '%{version}'") % { version: catalog.version } if catalog.version
 
     continue_while = lambda { !stop_processing? }
 
@@ -118,7 +118,7 @@ class Puppet::Transaction
       # is one, it must have been selected by the user.
       return if missing_tags?(resource)
       if resource.provider
-        resource.err "Provider #{resource.provider.class.name} is not functional on this host"
+        resource.err _("Provider %{name} is not functional on this host") % { name: resource.provider.class.name }
       else
         providerless_types << resource.type
       end
@@ -134,18 +134,33 @@ class Puppet::Transaction
     teardown = lambda do
       # Just once per type. No need to punish the user.
       providerless_types.uniq.each do |type|
-        Puppet.err "Could not find a suitable provider for #{type}"
+        Puppet.err _("Could not find a suitable provider for %{type}") % { type: type }
       end
 
       post_evalable_providers.each do |provider|
         begin
           provider.post_resource_eval
         rescue => detail
-          Puppet.log_exception(detail, "post_resource_eval failed for provider #{provider}")
+          Puppet.log_exception(detail, _("post_resource_eval failed for provider %{provider}") % { provider: provider })
         end
       end
 
       persistence.save if catalog.host_config?
+    end
+
+    # Graph cycles are returned as an array of arrays
+    # - outer array is an array of cycles
+    # - each inner array is an array of resources involved in a cycle
+    # Short circuit resource evaluation if we detect cycle(s) in the graph. Mark
+    # each corresponding resource as failed in the report before we fail to
+    # ensure accurate reporting.
+    graph_cycle_handler = lambda do |cycles|
+      cycles.flatten.uniq.each do |resource|
+        # We add a failed resource event to the status to ensure accurate
+        # reporting through the event manager.
+        resource_status(resource).fail_with_event(_('resource is part of a dependency cycle'))
+      end
+      raise Puppet::Error, _('One or more resource dependency cycles detected in graph')
     end
 
     # Generate the relationship graph, set up our generator to use it
@@ -155,13 +170,14 @@ class Puppet::Transaction
                                 :pre_process => pre_process,
                                 :overly_deferred_resource_handler => overly_deferred_resource_handler,
                                 :canceled_resource_handler => canceled_resource_handler,
+                                :graph_cycle_handler => graph_cycle_handler,
                                 :teardown => teardown) do |resource|
       if resource.is_a?(Puppet::Type::Component)
-        Puppet.warning "Somehow left a component in the relationship graph"
+        Puppet.warning _("Somehow left a component in the relationship graph")
       else
-        resource.info "Starting to evaluate the resource" if Puppet[:evaltrace] and @catalog.host_config?
+        resource.info _("Starting to evaluate the resource") if Puppet[:evaltrace] and @catalog.host_config?
         seconds = thinmark { block.call(resource) }
-        resource.info "Evaluated in %0.2f seconds" % seconds if Puppet[:evaltrace] and @catalog.host_config?
+        resource.info _("Evaluated in %{seconds} seconds") % { seconds: "%0.2f" % seconds } if Puppet[:evaltrace] and @catalog.host_config?
       end
     end
 
@@ -184,7 +200,9 @@ class Puppet::Transaction
 
   # Are there any failed resources in this transaction?
   def any_failed?
-    report.resource_statuses.values.detect { |status| status.failed? }
+    report.resource_statuses.values.detect { |status|
+      status.failed? || status.failed_to_restart?
+    }
   end
 
   # Find all of the changed resources.
@@ -232,9 +250,12 @@ class Puppet::Transaction
   def apply(resource, ancestor = nil)
     status = resource_harness.evaluate(resource)
     add_resource_status(status)
-    event_manager.queue_events(ancestor || resource, status.events) unless status.failed?
+    ancestor ||= resource
+    if !(status.failed? || status.failed_to_restart?)
+      event_manager.queue_events(ancestor, status.events)
+    end
   rescue => detail
-    resource.err "Could not evaluate: #{detail}"
+    resource.err _("Could not evaluate: %{detail}") % { detail: detail }
   end
 
   # Evaluate a single resource.
@@ -251,10 +272,6 @@ class Puppet::Transaction
     end
   end
 
-  def failed?(resource)
-    s = resource_status(resource) and s.failed?
-  end
-
   # Does this resource have any failed dependencies?
   def failed_dependencies?(resource)
     # When we introduced the :whit into the graph, to reduce the combinatorial
@@ -268,7 +285,7 @@ class Puppet::Transaction
       # See above. --daniel 2011-06-06
       unless suppress_report then
         s.failed_dependencies.each do |dep|
-          resource.notice "Dependency #{dep} has failures: #{resource_status(dep).failed}"
+          resource.notice _("Dependency %{dep} has failures: %{status}") % { dep: dep, status: resource_status(dep).failed }
         end
       end
     end
@@ -288,7 +305,7 @@ class Puppet::Transaction
     relationship_graph.direct_dependencies_of(resource).each do |dep|
       if (s = resource_status(dep))
         failed.merge(s.failed_dependencies) if s.dependency_failed?
-        if s.failed?
+        if s.failed? || s.failed_to_restart?
           failed.add(dep)
         end
       end
@@ -325,7 +342,8 @@ class Puppet::Transaction
     begin
       provider_class.prefetch(resources)
     rescue LoadError, Puppet::MissingCommand => detail
-      Puppet.log_exception(detail, "Could not prefetch #{type_name} provider '#{provider_class.name}': #{detail}")
+      #TRANSLATORS `prefetch` is a function name and should not be translated
+      Puppet.log_exception(detail, _("Could not prefetch %{type_name} provider '%{name}': %{detail}") % { type_name: type_name, name: provider_class.name, detail: detail })
     end
     @prefetched_providers[type_name][provider_class.name] = true
   end
@@ -353,7 +371,7 @@ class Puppet::Transaction
       # like class and stage.  This is undesirable; while just skipping the
       # output isn't perfect, it is RC-safe. --daniel 2011-06-07
       unless resource.class == Puppet::Type.type(:whit) then
-        resource.warning "Skipping because of failed dependencies"
+        resource.warning _("Skipping because of failed dependencies")
       end
     elsif resource.virtual?
       resource.debug "Skipping because virtual"

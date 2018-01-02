@@ -48,12 +48,12 @@ module Puppet::FileSystem
     def validate
       @pathname.each_filename do |e|
         if e =~ TRAVERSAL
-          raise(InvalidPattern, "PathPatterns cannot be created with directory traversals.")
+          raise(InvalidPattern, _("PathPatterns cannot be created with directory traversals."))
         end
       end
       case @pathname.to_s
       when CURRENT_DRIVE_RELATIVE_WINDOWS
-        raise(InvalidPattern, "A PathPattern cannot be a Windows current drive relative path.")
+        raise(InvalidPattern, _("A PathPattern cannot be a Windows current drive relative path."))
       end
     end
 
@@ -61,7 +61,7 @@ module Puppet::FileSystem
       begin
         @pathname = Pathname.new(pattern.strip)
       rescue ArgumentError => error
-        raise InvalidPattern.new("PathPatterns cannot be created with a zero byte.", error)
+        raise InvalidPattern.new(_("PathPatterns cannot be created with a zero byte."), error)
       end
       validate
     end
@@ -76,9 +76,9 @@ module Puppet::FileSystem
       super
       case @pathname.to_s
       when ABSOLUTE_WINDOWS
-        raise(InvalidPattern, "A relative PathPattern cannot be prefixed with a drive.")
+        raise(InvalidPattern, _("A relative PathPattern cannot be prefixed with a drive."))
       when ABSOLUTE_UNIX
-        raise(InvalidPattern, "A relative PathPattern cannot be an absolute path.")
+        raise(InvalidPattern, _("A relative PathPattern cannot be an absolute path."))
       end
     end
   end
@@ -91,7 +91,7 @@ module Puppet::FileSystem
     def validate
       super
       if @pathname.to_s !~ ABSOLUTE_UNIX and @pathname.to_s !~ ABSOLUTE_WINDOWS
-        raise(InvalidPattern, "An absolute PathPattern cannot be a relative path.")
+        raise(InvalidPattern, _("An absolute PathPattern cannot be a relative path."))
       end
     end
   end
