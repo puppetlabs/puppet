@@ -97,7 +97,7 @@ node default {
   \\$msgs = hiera_array('message')
   notify {\\$msgs:}
   class {'#{@module_name}':
-    result_dir => hiera('result_dir')[\\$::hostname],
+    result_dir => hiera('result_dir')[\\"host_\\${::hostname}\\"],
   }
 }
 ",
@@ -281,7 +281,7 @@ def find_tmp_dirs
   agents.each do |agent|
     h = on(agent, facter("hostname")).stdout.chomp
     t = agent.tmpdir("#{@module_name}_results")
-    tmp_dirs += "  #{h}: '#{t}'\n"
+    tmp_dirs += "  host_#{h}: '#{t}'\n"
     host_to_result_dir[h] = t
   end
   result = {
