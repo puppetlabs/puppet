@@ -243,5 +243,11 @@ describe Puppet::Util::HttpProxy do
         # unused
       end
     end
+
+    it 'only makes a single HEAD request' do
+      Net::HTTP.any_instance.expects(:head).with(anything, anything).returns(http_ok)
+
+      subject.request_with_redirects(dest, :head, 0)
+    end
   end
 end

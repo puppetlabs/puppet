@@ -187,10 +187,12 @@ module Puppet::Util::HttpProxy
         next
       end
 
-      if block_given?
-        response = proxy.send("request_#{method}".to_sym, current_uri.path, headers, &block)
-      else
-        response = proxy.send(method, current_uri.path, headers)
+      if method != :head
+        if block_given?
+          response = proxy.send("request_#{method}".to_sym, current_uri.path, headers, &block)
+        else
+          response = proxy.send(method, current_uri.path, headers)
+        end
       end
 
       Puppet.debug("HTTP #{method.to_s.upcase} request to #{current_uri} returned #{response.code} #{response.message}")
