@@ -132,6 +132,10 @@ class Puppet::Transaction::Report
   #
   attr_accessor :resources_failed_to_generate
 
+  # @return [Boolean] true if the transaction completed it's evaluate
+  #
+  attr_accessor :transaction_completed
+
   def self.from_data_hash(data)
     obj = self.allocate
     obj.initialize_from_hash(data)
@@ -172,7 +176,9 @@ class Puppet::Transaction::Report
 
   # @api private
   def compute_status(resource_metrics, change_metric)
-    if resources_failed_to_generate || (resource_metrics["failed"] || 0) > 0
+    if resources_failed_to_generate ||
+       !transaction_completed ||
+       (resource_metrics["failed"] || 0) > 0
       'failed'
     elsif change_metric > 0
       'changed'

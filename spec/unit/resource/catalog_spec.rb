@@ -653,6 +653,17 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @catalog.apply(:ignoreschedules => true)
     end
 
+    it "should detect transaction failure and report it" do
+      @transaction.stubs(:evaluate).raises(RuntimeError, 'transaction failed.')
+      report = Puppet::Transaction::Report.new
+
+      expect { @catalog.apply(:report => report) }.to raise_error(RuntimeError)
+      #report.transaction_completed = true
+      report.finalize_report
+
+      expect(report.status).to eq('failed')
+    end
+
     describe "host catalogs" do
 
       # super() doesn't work in the setup method for some reason
