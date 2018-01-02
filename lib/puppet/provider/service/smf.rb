@@ -107,8 +107,6 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
   end
 
   def stop
-    # Don't try to stop non-existing services (PUP-8167)
-    return if self.status == :absent
     # Wait for the service to actually stop before returning.
     super
     self.wait('offline', 'disabled', 'uninitialized')
@@ -137,8 +135,8 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
       states = service_states
       state = states[1] == "-" ? states[0] : states[1]
     rescue Puppet::ExecutionFailure
-      debug "Could not get status on service #{self.name} #{$!}"
-      return :absent
+      info "Could not get status on service #{self.name}"
+      return :stopped
     end
 
     case state
