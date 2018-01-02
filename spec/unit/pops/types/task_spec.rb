@@ -96,26 +96,43 @@ describe 'The Task Type' do
           {
             'tasks' => {
               'hello.rb' => <<-RUBY,
-            require 'json'
-            args = JSON.parse(STDIN.read)
-            puts({message: args['message']}.to_json)
-            exit 0
-            RUBY
-            'hello.json' => <<-JSON
-            {
-              "puppet_task_version": 1,
-              "supports_noop": true,
-              "parameters": {
-                 "message": {
-                   "type": "String",
-                   "description": "the message",
-                   "sensitive": false
-                 },
-                 "font": {
-                   "type": "Optional[String]"
-                 }
-            }}
-            JSON
+                require 'json'
+                args = JSON.parse(STDIN.read)
+                puts({message: args['message']}.to_json)
+                exit 0
+                RUBY
+              'hello.json' => <<-JSON,
+                {
+                  "puppet_task_version": 1,
+                  "supports_noop": true,
+                  "parameters": {
+                     "message": {
+                       "type": "String",
+                       "description": "the message",
+                       "sensitive": false
+                     },
+                     "font": {
+                       "type": "Optional[String]"
+                     }
+                }}
+                JSON
+              'non_data.rb' => <<-RUBY,
+                require 'json'
+                args = JSON.parse(STDIN.read)
+                puts({message: args['message']}.to_json)
+                exit 0
+                RUBY
+              'non_data.json' => <<-JSON
+                {
+                  "puppet_task_version": 1,
+                  "supports_noop": true,
+                  "parameters": {
+                     "arg": {
+                       "type": "Hash",
+                       "description": "the non data param"
+                     }
+                }}
+                JSON
             }
           }
         }
@@ -134,6 +151,16 @@ describe 'The Task Type' do
             tp = task.parameters
             expect(tp['message']['description']).to eql('the message')
             expect(tp['message']['type']).to be_a(Puppet::Pops::Types::PStringType)
+          end
+        end
+
+        it 'loads a task with non-Data parameter' do
+          compile do
+            module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
+            task = module_loader.load(:task, 'testmodule::non_data')
+            expect(task_t.instance?(task)).to be_truthy
+            tp = task.parameters
+            expect(tp['arg']['type']).to be_a(Puppet::Pops::Types::PHashType)
           end
         end
 

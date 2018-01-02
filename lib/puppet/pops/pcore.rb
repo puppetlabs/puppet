@@ -62,7 +62,7 @@ module Pcore
                 Struct[
                   Optional[description] => String,
                   Optional[sensitive] => Boolean,
-                  type => Type[Optional[Data]]]]],
+                  type => Type]]],
               value => undef
             },
 
@@ -73,7 +73,7 @@ module Pcore
                 Struct[
                   Optional[description] => String,
                   Optional[sensitive] => Boolean,
-                  type => Type[Optional[Data]]]]],
+                  type => Type]]],
               value => undef
             },
  
