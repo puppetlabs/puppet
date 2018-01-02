@@ -674,7 +674,8 @@ class Type
         # make sure the parameter doesn't have any errors
         property.value = value
       rescue Puppet::Error, ArgumentError => detail
-        error = Puppet::ResourceError.new("Parameter #{name} failed on #{ref}: #{detail}")
+        error = Puppet::ResourceError.new(_("Parameter %{name} failed on %{ref}: %{detail}") %
+                                              { name: name, ref: ref, detail: detail })
         adderrorcontext(error, detail)
         raise error
       end
@@ -1494,7 +1495,8 @@ class Type
       @value.each do |ref|
         unless @resource.catalog.resource(ref.to_s)
           description = self.class.direction == :in ? "dependency" : "dependent"
-          fail ResourceError, "Could not find #{description} #{ref} for #{resource.ref}"
+          fail ResourceError, _("Could not find %{description} %{ref} for %{resource}") %
+              { description: description, ref: ref, resource: resource.ref }
         end
       end
     end
