@@ -23,8 +23,12 @@ Puppet::Parser::Functions::newfunction(:template, :type => :rvalue, :arity => -2
         wrapper.result
       rescue => detail
         info = detail.backtrace.first.split(':')
-        raise Puppet::ParseError,
-          "Failed to parse template #{file}:\n  Filepath: #{info[0]}\n  Line: #{info[1]}\n  Detail: #{detail}\n"
+        message = []
+        message << _("Failed to parse template %{file}:") % { file: file }
+        message << _("  Filepath: %{file_path}") % { file_path: info[0] }
+        message << _("  Line: %{line}") % { line: info[1] }
+        message << _("  Detail: %{detail}") % { detail: detail }
+        raise Puppet::ParseError, message.join("\n") + "\n"
       end
     end.join("")
 end

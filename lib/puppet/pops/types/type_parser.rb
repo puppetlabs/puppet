@@ -342,7 +342,7 @@ class TypeParser
     when 'enum'
       # 1..m parameters being strings
       raise_invalid_parameters_error('Enum', '1 or more', parameters.size) unless parameters.size >= 1
-      parameters.each { |p|  raise Puppet::ParseError, 'Enum parameters must be identifiers or strings' unless p.is_a?(String) }
+      parameters.each { |p| raise Puppet::ParseError, _('Enum parameters must be identifiers or strings') unless p.is_a?(String) }
       TypeFactory.enum(*parameters)
 
     when 'pattern'
@@ -565,21 +565,21 @@ class TypeParser
   end
 
   def raise_invalid_type_specification_error(ast)
-    raise Puppet::ParseError,
-      "The expression <#{original_text_of(ast)}> is not a valid type specification."
+    raise Puppet::ParseError, _("The expression <%{expression}> is not a valid type specification.") %
+        { expression: original_text_of(ast) }
   end
 
   def raise_invalid_parameters_error(type, required, given)
-    raise Puppet::ParseError,
-      "Invalid number of type parameters specified: #{type} requires #{required}, #{given} provided"
+    raise Puppet::ParseError, _("Invalid number of type parameters specified: %{type} requires %{required}, %{given} provided") %
+        { type: type, required: required, given: given }
   end
 
   def raise_unparameterized_type_error(ast)
-    raise Puppet::ParseError, "Not a parameterized type <#{original_text_of(ast)}>"
+    raise Puppet::ParseError, _("Not a parameterized type <%{type}>") % { type: original_text_of(ast) }
   end
 
   def raise_unknown_type_error(ast)
-    raise Puppet::ParseError, "Unknown type <#{original_text_of(ast)}>"
+    raise Puppet::ParseError, _("Unknown type <%{type}>") % { type: original_text_of(ast) }
   end
 
   def original_text_of(ast)

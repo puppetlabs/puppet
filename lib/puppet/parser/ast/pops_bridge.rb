@@ -122,7 +122,7 @@ class Puppet::Parser::AST::PopsBridge
         when Puppet::Pops::Model::Application
           instantiate_ApplicationDefinition(d, modname)
         else
-          raise Puppet::ParseError, "Internal Error: Unknown type of definition - got '#{d.class}'"
+          raise Puppet::ParseError, _("Internal Error: Unknown type of definition - got '%{name}'") % { name: d.class }
         end
       end.flatten().compact() # flatten since node definition may have returned an array
                               # Compact since functions are not understood by compiler
