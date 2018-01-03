@@ -58,6 +58,22 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     end
   end
 
+  it "should be the default provider on Amazon Linux 2017.12" do
+    Facter.stubs(:value).with(:osfamily).returns(:redhat)
+    Facter.stubs(:value).with(:operatingsystem).returns(:amazon)
+    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("2017")
+    Facter.stubs(:value).with(:operatingsystemrelease).returns("2017.12")
+    expect(described_class).to be_default
+  end
+
+  it "should not be the default provider on Amazon Linux 2017.09" do
+    Facter.stubs(:value).with(:osfamily).returns(:redhat)
+    Facter.stubs(:value).with(:operatingsystem).returns(:amazon)
+    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("2017")
+    Facter.stubs(:value).with(:operatingsystemrelease).returns("2017.09")
+    expect(described_class).not_to be_default
+  end
+
   it "should be the default provider on cumulus3" do
     Facter.stubs(:value).with(:osfamily).returns(:debian)
     Facter.stubs(:value).with(:operatingsystem).returns('CumulusLinux')
