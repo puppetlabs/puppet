@@ -98,11 +98,11 @@ module Puppet::ModuleTool::Errors
     def multiline
       dependency_list = []
       dependency_list << _("You specified '%{name}' (%{version})") % { name: @source.first[:name], version: v(@requested_version) }
-      dependency_list = @source[1..-1].map do |m|
+      dependency_list += @source[1..-1].map do |m|
         #TRANSLATORS This message repeats as separate lines as a list under the heading "You specified '%{name}' (%{version})\n"
-        _("which depends on '%{name}' (%{version})") % { name: m[:name], version: v(m[:version]) }
+        _("This depends on '%{name}' (%{version})") % { name: m[:name], version: v(m[:version]) }
       end
-      message         = []
+      message = []
       message << _("Could not install module '%{module_name}' (%{version})") % { module_name: @requested_module, version: v(@requested_version) }
       message << _("  No version of '%{module_name}' will satisfy dependencies") % { module_name: @module_name }
       message << dependency_list.map {|s| "    #{s}".join(",\n")}
