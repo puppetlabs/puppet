@@ -127,14 +127,27 @@ module ModuleLoaders
       @loadables
     end
 
-    def discover(type, name_authority = Pcore::RUNTIME_NAME_AUTHORITY, &block)
+    def discover(type, error_collector = nil, name_authority = Pcore::RUNTIME_NAME_AUTHORITY, &block)
       global = global?
       if name_authority == Pcore::RUNTIME_NAME_AUTHORITY
         smart_paths.effective_paths(type).each do |sp|
           relative_paths(sp).each do |rp|
             tp = sp.typed_name(type, name_authority, rp, global ? nil : @module_name)
             next unless sp.valid_name?(tp)
-            load_typed(tp) unless block_given? && !block.yield(tp)
+            begin
+              load_typed(tp) unless block_given? && !block.yield(tp)
+            rescue StandardError => e
+              if error_collector.nil?
+                Puppet.warn_once(:unloadable_entity, tp.to_s, e.message)
+              else
+                err = Puppet::DataTypes::Error.new(
+                  Issues::LOADER_FAILURE.format(:type => type),
+                  'PUPPET_LOADER_FAILURE',
+                  Issues::LOADER_FAILURE.issue_code, nil,
+                  { 'original_error' => e.message })
+                error_collector << err unless error_collector.include?(err)
+              end
+            end
           end
         end
       end

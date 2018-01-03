@@ -40,13 +40,18 @@ class Loader
   # found values for which the given block returns true. All found entries will be returned if no
   # block is given.
   #
+  # Errors that occur function discovery will either be logged as warnings or collected by the optional
+  # `error_collector` array. When provided, it will receive {Puppet::DataTypes::Error} instances describing
+  # each error in detail and no warnings will be logged.
+  #
   # @param type [Symbol] the type of values to search for
+  # @param error_collector [Array<Puppet::DataTypes::Error>] an optional array that will receive errors during load
   # @param name_authority [String] the name authority, defaults to the pcore runtime
   # @yield [typed_name] optional block to filter the results
   # @yieldparam [TypedName] typed_name the typed name of a found entry
   # @yieldreturn [Boolean] `true` to keep the entry, `false` to discard it.
   # @return [Array<TypedName>] the list of names of discovered values
-  def discover(type, name_authority = Pcore::RUNTIME_NAME_AUTHORITY, &block)
+  def discover(type, error_collector = nil, name_authority = Pcore::RUNTIME_NAME_AUTHORITY, &block)
     return EMPTY_ARRAY
   end
 

@@ -884,5 +884,9 @@ module Issues
   UNKNOWN_TASK = issue :UNKNOWN_TASK, :type_name do
     _('Task not found: %{type_name}') % { type_name: type_name }
   end
+
+  LOADER_FAILURE = issue :LOADER_FAILURE, :type do
+    _('Failed to load: %{type_name}') % { type: type }
+  end
 end
 end
