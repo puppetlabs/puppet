@@ -70,7 +70,7 @@
 #
 # @example turning a string or array into a hash with index keys
 #
-# ~~puppet
+# ~~~puppet
 # # Array ['a', 'b', 'c'] to Hash with index results in
 # # {0 => 'a', 1 => 'b', 2 => 'c'}
 # Hash(['a', 'b', 'c'].map |$i, $v| { [$i, $v]})
