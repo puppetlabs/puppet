@@ -2429,11 +2429,12 @@ end
       if p.is_a?(Puppet::Property)
         p.sensitive = true
       elsif p.is_a?(Puppet::Parameter)
-        warning("Unable to mark '#{name}' as sensitive: #{name} is a parameter and not a property, and cannot be automatically redacted.")
+        warning(_("Unable to mark '%{name}' as sensitive: %{name} is a parameter and not a property, and cannot be automatically redacted.") %
+                    { name: name })
       elsif self.class.attrclass(name)
-        warning("Unable to mark '#{name}' as sensitive: the property itself was not assigned a value.")
+        warning(_("Unable to mark '%{name}' as sensitive: the property itself was not assigned a value.") % { name: name })
       else
-        err("Unable to mark '#{name}' as sensitive: the property itself is not defined on #{type}.")
+        err(_("Unable to mark '%{name}' as sensitive: the property itself is not defined on %{type}.") % { name: name, type: type })
       end
     end
   end
